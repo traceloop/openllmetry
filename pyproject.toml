@@ -1,0 +1,62 @@
+[tool.poetry]
+name = "openllmetry"
+version = "0.0.1"
+description = "OpenTelemetry instrumentation for Large Language Models related libraries"
+license = "Apache-2.0"
+authors = [
+    "Gal Kleinman <gal@traceloop.com>",
+    "Nir Gazit <nir@traceloop.com>",
+    "Tomer Friedman <tomer@traceloop.com>"
+]
+readme = "README.md"
+include = ["VERSION", "README.md"]
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.commitizen]
+name = "cz_conventional_commits"
+version = "0.0.1"
+tag_format = "v$version"
+version_files = [
+    "VERSION",
+    "pyproject.toml:^version",
+    "traceloop-sdk/VERSION",
+    "traceloop-sdk/pyproject.toml:^version",
+    "traceloop-sdk/src/traceloop/sdk/__init__.py:^__version",
+    "opentelemetry-semconv-llm/VERSION",
+    "opentelemetry-semconv-llm/pyproject.toml:^version",
+    "opentelemetry-semconv-llm/src/opentelemetry/semconv/llm/__init__.py:^__version",
+    "opentelemetry-instrumentation-weviate/VERSION",
+    "opentelemetry-instrumentation-weviate/pyproject.toml:^version",
+    "opentelemetry-instrumentation-weviate/src/opentelemetry/instrumentation/weviate/__init__.py:^__version",
+    "opentelemetry-instrumentation-pinecone/VERSION",
+    "opentelemetry-instrumentation-pinecone/pyproject.toml:^version",
+    "opentelemetry-instrumentation-pinecone/src/opentelemetry/instrumentation/pinecone/__init__.py:^__version",
+    "opentelemetry-instrumentation-openai/VERSION",
+    "opentelemetry-instrumentation-openai/pyproject.toml:^version",
+    "opentelemetry-instrumentation-openai/src/opentelemetry/instrumentation/openai/__init__.py:^__version",
+    "opentelemetry-instrumentation-cohere/VERSION",
+    "opentelemetry-instrumentation-cohere/pyproject.toml:^version",
+    "opentelemetry-instrumentation-cohere/src/opentelemetry/instrumentation/cohere/__init__.py:^__version",
+    "opentelemetry-instrumentation-chroma/VERSION",
+    "opentelemetry-instrumentation-chroma/pyproject.toml:^version",
+    "opentelemetry-instrumentation-chroma/src/opentelemetry/instrumentation/chroma/__init__.py:^__version",
+    "opentelemetry-instrumentation-anthropic/VERSION",
+    "opentelemetry-instrumentation-anthropic/pyproject.toml:^version",
+    "opentelemetry-instrumentation-anthropic/src/opentelemetry/instrumentation/anthropic/__init__.py:^__version",
+]
+update_changelog_on_bump = true
+changelog_incremental = true
+bump_message = "bump: $current_version → $new_version"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+
+[tool.poetry.dev-dependencies]
+ipython = "^8.15.0"
+mypy = "^1.5.1"
+flake8 = "^6.1.0"
+dunamai = "^1.18.0"
+commitizen = "^3.7.0"

@@ -1,0 +1,1 @@
+# Chroma Vector Database OpenTelemetry Instrumentation
