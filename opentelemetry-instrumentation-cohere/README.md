@@ -1,0 +1,1 @@
+# Cohere Client OpenTelemetry Instrumentation

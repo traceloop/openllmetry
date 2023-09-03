@@ -1,0 +1,22 @@
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+name = "opentelemetry-instrumentation-pinecone"
+description = "OpenTelemetry Pinecone instrumentation"
+readme = "README.md"
+include = ["VERSION", "README.md", "CHANGELOG.md"]
+license = "Apache-2.0"
+authors = [
+    "Gal Kleinman <gal@traceloop.com>",
+    "Nir Gazit <nir@traceloop.com>",
+    "Tomer Friedman <tomer@traceloop.com>"
+]
+packages = [{ include = "src/opentelemetry" }]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+
+[tool.poetry.dev-dependencies]
+flake8 = "^6.1.0"
