@@ -3,8 +3,8 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
-name = "opentelemetry-instrumentation-weviate"
-description = "OpenTelemetry Weviate instrumentation"
+name = "opentelemetry-semconv-llm"
+description = "OpenTelemetry Semantic Conventions Extension for Large Language Models"
 readme = "README.md"
 include = ["VERSION", "README.md", "CHANGELOG.md"]
 license = "Apache-2.0"
