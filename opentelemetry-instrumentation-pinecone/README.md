@@ -1,0 +1,1 @@
+# Pinecone Vector Database OpenTelemetry Instrumentation
