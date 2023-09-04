@@ -1,0 +1,25 @@
+[tool.poetry]
+name = "sample-app"
+version = "0.1.0"
+description = ""
+readme = "README.md"
+include = ["VERSION", "README.md", "CHANGELOG.md"]
+license = "Apache-2.0"
+authors = [
+    "Gal Kleinman <gal@traceloop.com>",
+    "Nir Gazit <nir@traceloop.com>",
+    "Tomer Friedman <tomer@traceloop.com>"
+]
+packages = [{include = "sample_app"}]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+pinecone-datasets = "^0.6.1"
+pinecone-client = {extras = ["grpc"], version = "^2.2.2"}
+openai = "^0.28.0"
+python-dotenv = "^1.0.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
