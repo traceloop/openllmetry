@@ -1,1 +1,0 @@
-# Weviate Vector Database OpenTelemetry Instrumentation
