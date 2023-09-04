@@ -1,1 +1,0 @@
-# OpenAI Client OpenTelemetry Instrumentation

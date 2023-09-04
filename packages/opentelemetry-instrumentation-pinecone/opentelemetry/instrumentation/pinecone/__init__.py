@@ -1,0 +1,1 @@
+"""OpenTelemetry Pinecone instrumentation"""
