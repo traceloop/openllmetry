@@ -1,0 +1,68 @@
+{
+  "name": "opentelemetry-semantic-conventions-llm",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "library",
+  "sourceRoot": "packages/opentelemetry-semantic-conventions-llm/opentelemetry/semconv/llm",
+  "targets": {
+    "lock": {
+      "executor": "@nxlv/python:run-commands",
+      "options": {
+        "command": "poetry lock --no-update",
+        "cwd": "packages/opentelemetry-semantic-conventions-llm"
+      }
+    },
+    "add": {
+      "executor": "@nxlv/python:add",
+      "options": {}
+    },
+    "update": {
+      "executor": "@nxlv/python:update",
+      "options": {}
+    },
+    "remove": {
+      "executor": "@nxlv/python:remove",
+      "options": {}
+    },
+    "build": {
+      "executor": "@nxlv/python:build",
+      "outputs": ["{projectRoot}/dist"],
+      "options": {
+        "outputPath": "packages/opentelemetry-semantic-conventions-llm/dist",
+        "publish": false,
+        "lockedVersions": true,
+        "bundleLocalDependencies": true
+      }
+    },
+    "install": {
+      "executor": "@nxlv/python:install",
+      "options": {
+        "silent": false,
+        "args": "",
+        "cacheDir": ".cache/pypoetry",
+        "verbose": false,
+        "debug": false
+      }
+    },
+    "lint": {
+      "executor": "@nxlv/python:flake8",
+      "outputs": [
+        "{workspaceRoot}/reports/packages/opentelemetry-semantic-conventions-llm/pylint.txt"
+      ],
+      "options": {
+        "outputFile": "reports/packages/opentelemetry-semantic-conventions-llm/pylint.txt"
+      }
+    },
+    "test": {
+      "executor": "@nxlv/python:run-commands",
+      "outputs": [
+        "{workspaceRoot}/reports/packages/opentelemetry-semantic-conventions-llm/unittests",
+        "{workspaceRoot}/coverage/packages/opentelemetry-semantic-conventions-llm"
+      ],
+      "options": {
+        "command": "poetry run pytest tests/",
+        "cwd": "packages/opentelemetry-semantic-conventions-llm"
+      }
+    }
+  },
+  "tags": []
+}

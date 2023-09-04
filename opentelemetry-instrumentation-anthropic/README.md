@@ -1,1 +1,0 @@
-# Anthropic Client OpenTelemetry Instrumentation
