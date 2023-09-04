@@ -5,7 +5,7 @@
 </p>
 <h1 align="center">Open LLMetry</h1>
 <p align="center">
-  <p align="center">Open-source observability to your LLM application</p>
+  <p align="center">Open-source observability for your LLM application</p>
 </p>
 <h4 align="center">
     <a href="https://traceloop.com/docs/python-sdk/getting-started"><strong>Get started »</strong></a>
@@ -45,18 +45,10 @@ It's built and maintained by Traceloop under the Apache 2.0 license.
 pip install traceloop-sdk
 ```
 
-Then, you can start testing your microservices:
+Then, you can start instrumenting your code:
 
-```js
-const traceloop = new TraceLoop();
-
-await traceloop.axiosInstance.post("http://my.awesome.website/orders/create");
-await traceloop.fetchTraces();
-
-expectTrace(traceloop.serviceByName("emails-service"))
-  .toReceiveHttpRequest()
-  .ofMethod("POST")
-  .withBody({ emailTemplate: "orderCreated", itemId: "123" });
+```python
+Tracer.init(app_name="your_app_name")
 ```
 
 More info can be found in our [docs](https://traceloop.com/docs/python-sdk/getting-started).
