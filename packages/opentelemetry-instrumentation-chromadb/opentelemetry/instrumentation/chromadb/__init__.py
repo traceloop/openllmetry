@@ -1,0 +1,1 @@
+"""OpenTelemetry Chroma DB instrumentation"""

@@ -1,0 +1,1 @@
+"""OpenTelemetry Vertex AI instrumentation"""
