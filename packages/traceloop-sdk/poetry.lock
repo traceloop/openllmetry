@@ -818,6 +818,7 @@ develop = true
 [package.dependencies]
 openai = "^0.28.0"
 opentelemetry-api = "^1.19.0"
+opentelemetry-instrumentation = "^0.40b0"
 opentelemetry-semantic-conventions-llm = {path = "../opentelemetry-semantic-conventions-llm", develop = true}
 
 [package.source]
@@ -835,6 +836,7 @@ develop = true
 
 [package.dependencies]
 opentelemetry-api = "^1.19.0"
+opentelemetry-instrumentation = "^0.40b0"
 opentelemetry-semantic-conventions-llm = {path = "../opentelemetry-semantic-conventions-llm", develop = true}
 
 [package.source]
