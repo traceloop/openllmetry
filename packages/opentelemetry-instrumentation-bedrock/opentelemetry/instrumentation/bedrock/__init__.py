@@ -1,0 +1,1 @@
+"""OpenTelemetry Bedrock instrumentation"""
