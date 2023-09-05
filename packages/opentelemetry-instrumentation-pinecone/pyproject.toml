@@ -26,6 +26,7 @@ include = "opentelemetry/instrumentation/pinecone"
 [tool.poetry.dependencies]
 python = ">=3.8.1,<3.12"
 opentelemetry-api = "^1.19.0"
+opentelemetry-instrumentation = "^0.40b0"
 
 [tool.poetry.dependencies.opentelemetry-semantic-conventions-llm]
 path = "../opentelemetry-semantic-conventions-llm"
