@@ -11,7 +11,7 @@ addopts = "--cov --cov-report html:'../../coverage/packages/sample-app/html' --c
 
 [tool.poetry]
 name = "sample-app"
-version = "1.0.0"
+version = "0.0.1"
 description = "Sample Application using Traceloop SDK"
 authors = [
   "Gal Kleinman <gal@traceloop.com>",
@@ -21,15 +21,16 @@ authors = [
 license = "Apache-2.0"
 readme = "README.md"
 
-  [[tool.poetry.packages]]
-  include = "sample_app"
+[[tool.poetry.packages]]
+include = "sample_app"
 
-  [tool.poetry.dependencies]
-  python = ">=3.8.1,<3.12"
+[tool.poetry.dependencies]
+python = ">=3.8.1,<3.12"
+openai = "^0.28.0"
 
-    [tool.poetry.dependencies.traceloop-sdk]
-    path = "../traceloop-sdk"
-    develop = true
+[tool.poetry.dependencies.traceloop-sdk]
+path = "../traceloop-sdk"
+develop = true
 
 [tool.poetry.group.dev.dependencies]
 autopep8 = "2.0.4"
