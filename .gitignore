@@ -41,3 +41,5 @@ Thumbs.db
 .cache/
 reports/
 .vscode/
+
+.env
