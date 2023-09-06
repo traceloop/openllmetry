@@ -17,7 +17,7 @@ from opentelemetry.semconv.llm import SpanAttributes, LLMRequestTypeValues
 
 logger = logging.getLogger(__name__)
 
-_instruments = ("openai ~= 0.27.8",)
+_instruments = ("openai >= 0.27.0",)
 __version__ = "0.1.0"
 
 WRAPPED_METHODS = [
