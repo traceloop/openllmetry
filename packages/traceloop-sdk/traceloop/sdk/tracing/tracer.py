@@ -17,12 +17,15 @@ TRACER_NAME = "traceloop.tracer"
 TRACELOOP_API_ENDPOINT = "https://api.traceloop.dev/v1/traces"
 EXCLUDED_URLS = "api.openai.com,openai.azure.com"
 
-ctx_correlation_id: contextvars.ContextVar[str] = contextvars.ContextVar("correlation_id")
+ctx_correlation_id: contextvars.ContextVar[str] = contextvars.ContextVar(
+    "correlation_id"
+)
 ctx_workflow_name: contextvars.ContextVar[str] = contextvars.ContextVar("workflow_name")
+
 
 def init_openai_instrumentor():
     if importlib.util.find_spec("openai") is not None:
-        from traceloop.instrumentation.openai import OpenAIInstrumentor
+        from opentelemetry.instrumentation.openai import OpenAIInstrumentor
 
         instrumentor = OpenAIInstrumentor()
         if not instrumentor.is_instrumented_by_opentelemetry:
@@ -94,8 +97,6 @@ class Tracing:
         Tracing.init_spans_processor()
         Tracing.__otel_tracer_provider.add_span_processor(Tracing.__spans_processor)
 
-        Tracing.__otel_tracer_provider.
-
         init_instrumentations()
 
         Tracing.__initialized = True
@@ -116,7 +117,7 @@ class Tracing:
             endpoint=api_endpoint,
             headers={
                 "Authorization": f"Bearer {api_key}",
-            }
+            },
         )
 
     @staticmethod
@@ -128,7 +129,9 @@ class Tracing:
             tracer_provider = TracerProvider()
             trace.set_tracer_provider(tracer_provider)
         elif not hasattr(default_provider, "add_span_processor"):
-            logging.error("Cannot add span processor to the default provider since it doesn't support it")
+            logging.error(
+                "Cannot add span processor to the default provider since it doesn't support it"
+            )
             return
         else:
             tracer_provider = default_provider
