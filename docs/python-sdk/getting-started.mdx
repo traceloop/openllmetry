@@ -1,0 +1,54 @@
+---
+title: "Getting Started"
+---
+
+Install Traceloop by following these 2 easy steps and get instant monitoring.
+
+<Info>
+  You will need to get an API key from the Traceloop platform. If you don't have
+  access yet, request one at https://traceloop.com/waitlist.
+</Info>
+
+## Install the SDK
+
+<Tabs>
+  <Tab title="Poetry">
+  
+  Run the following command in your terminal:
+
+```bash
+poetry add traceloop-sdk
+```
+
+  </Tab>
+  <Tab title="Pip">
+    Run the following command in your terminal:
+
+```bash
+pip install traceloop-sdk
+```
+
+You should also add Traceloop to your `requirements.txt` file as `traceloop-sdk`.
+
+  </Tab>
+</Tabs>
+
+## Configure the Instrumentation in your app
+
+Go to [Traceloop](https://app.traceloop.com), click on the organization icon at the top right corner and select `API Keys`.
+Generate a new API key and copy it over. It won't be shown again.
+
+Set the API key as an environment variable in your app named `TRACELOOP_API_KEY`.
+For on-prem deployments, set `TRACELOOP_API_ENDPOINT` to the URL of your Traceloop instance.
+
+In your LLM app, initialize the Traceloop tracer like this:
+
+```python
+Tracer.init(app_name="your_app_name")
+```
+
+Done! You'll get instant visibility into everything that's happening with your LLM.
+If you're calling a vector DB, or any other external service or database, you'll also see it in your Traceloop dashboard.
+
+Next, you can annotate specific workflows, chains, and agents to get better visibility into complex processes in your app.
+See [Decorators](/python-sdk/decorators) for more information.
