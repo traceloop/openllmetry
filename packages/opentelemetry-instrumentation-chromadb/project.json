@@ -2,7 +2,7 @@
   "name": "opentelemetry-instrumentation-chromadb",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "projectType": "library",
-  "sourceRoot": "packages/opentelemetry-instrumentation-chromadb/opentelemetry_instrumentation_chromadb",
+  "sourceRoot": "packages/opentelemetry-instrumentation-chromadb/opentelemetry/instrumentation/chromadb",
   "targets": {
     "lock": {
       "executor": "@nxlv/python:run-commands",

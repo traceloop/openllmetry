@@ -2,7 +2,7 @@
   "name": "opentelemetry-instrumentation-vertexai",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "projectType": "library",
-  "sourceRoot": "packages/opentelemetry-instrumentation-vertexai/opentelemetry_instrumentation_vertexai",
+  "sourceRoot": "packages/opentelemetry-instrumentation-vertexai/opentelemetry/instrumentation/vertexai",
   "targets": {
     "lock": {
       "executor": "@nxlv/python:run-commands",

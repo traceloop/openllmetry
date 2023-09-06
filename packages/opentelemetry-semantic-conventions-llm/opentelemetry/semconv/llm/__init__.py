@@ -19,11 +19,6 @@ class SpanAttributes:
     LLM_COMPLETIONS = "llm.completions"
     LLM_CHAT_STOP_SEQUENCES = "llm.chat.stop_sequences"
 
-    # OpenAI
-    OPENAI_API_VERSION = "openai.api_version"
-    OPENAI_API_BASE = "openai.api_base"
-    OPENAI_API_TYPE = "openai.api_type"
-
 
 class LLMRequestTypeValues(Enum):
     COMPLETION = "completion"

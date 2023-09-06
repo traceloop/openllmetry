@@ -2,7 +2,7 @@
   "name": "opentelemetry-instrumentation-cohere",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "projectType": "library",
-  "sourceRoot": "packages/opentelemetry-instrumentation-cohere/opentelemetry_instrumentation_cohere",
+  "sourceRoot": "packages/opentelemetry-instrumentation-cohere/opentelemetry/instrumentation/cohere",
   "targets": {
     "lock": {
       "executor": "@nxlv/python:run-commands",

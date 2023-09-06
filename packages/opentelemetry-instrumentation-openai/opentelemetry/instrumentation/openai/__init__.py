@@ -13,11 +13,11 @@ from opentelemetry.instrumentation.utils import (
     unwrap,
 )
 
-from traceloop.semconv import SpanAttributes, LLMRequestTypeValues
+from opentelemetry.semconv.llm import SpanAttributes, LLMRequestTypeValues
 
 logger = logging.getLogger(__name__)
 
-_instruments = ("openai ~= 0.27.8",)
+_instruments = ("openai >= 0.27.0",)
 __version__ = "0.1.0"
 
 WRAPPED_METHODS = [
@@ -42,9 +42,11 @@ def _set_span_attribute(span, name, value):
 
 
 def _set_api_attributes(span):
-    _set_span_attribute(span, SpanAttributes.OPENAI_API_BASE, openai.api_base)
-    _set_span_attribute(span, SpanAttributes.OPENAI_API_TYPE, openai.api_type)
-    _set_span_attribute(span, SpanAttributes.OPENAI_API_VERSION, openai.api_version)
+    _set_span_attribute(span, OpenAISpanAttributes.OPENAI_API_BASE, openai.api_base)
+    _set_span_attribute(span, OpenAISpanAttributes.OPENAI_API_TYPE, openai.api_type)
+    _set_span_attribute(
+        span, OpenAISpanAttributes.OPENAI_API_VERSION, openai.api_version
+    )
 
     return
 
@@ -192,6 +194,12 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
                 span.set_status(Status(StatusCode.OK))
 
         return response
+
+
+class OpenAISpanAttributes:
+    OPENAI_API_VERSION = "openai.api_version"
+    OPENAI_API_BASE = "openai.api_base"
+    OPENAI_API_TYPE = "openai.api_type"
 
 
 class OpenAIInstrumentor(BaseInstrumentor):

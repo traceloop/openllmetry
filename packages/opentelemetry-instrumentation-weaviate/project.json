@@ -2,7 +2,7 @@
   "name": "opentelemetry-instrumentation-weaviate",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "projectType": "library",
-  "sourceRoot": "packages/opentelemetry-instrumentation-weaviate/opentelemetry_instrumentation_weaviate",
+  "sourceRoot": "packages/opentelemetry-instrumentation-weaviate/opentelemetry/instrumentation/weaviate",
   "targets": {
     "lock": {
       "executor": "@nxlv/python:run-commands",
