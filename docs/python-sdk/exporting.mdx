@@ -1,0 +1,42 @@
+---
+title: "Exporting your traces"
+---
+
+Since Traceloop SDK is using OpenTelemetry under the hood, you can see everything
+in any observability platform that supports OpenTelemetry.
+
+## Traceloop
+
+Go to [Traceloop dashboard](https://app.traceloop.com), click on the organization icon
+at the top right corner and select API Keys.
+Generate a new API key and copy it over. It won’t be shown again.
+
+Set the API key as an environment variable in your app named `TRACELOOP_API_KEY`.
+For on-prem deployments, set `TRACELOOP_API_ENDPOINT` to the URL of your Traceloop instance.
+
+Done! You'll get instant visibility into everything that's happening with your LLM.
+If you're calling a vector DB, or any other external service or database, you'll also see it in the Traceloop dashboard.
+
+## Datadog
+
+With datadog, there are 2 options - you can either export directly to a Datadog Agent in your cluster, or through an OpenTelemetry Collector (which requires that you deploy one in your cluster).
+
+See also [Datadog documentation](https://docs.datadoghq.com/opentelemetry/)
+
+If you're using Datadog, and have an agent in your cluster, it's the easiest to just export directly to it. To do that, first enable the OTLP GRPC collector in your agent configuration. This depends on your exact deployment of Datadog's agent. For example, if you're using the Helm chart, you can add this to your `values.yaml`:
+
+```yaml
+otlp:
+  receiver:
+    protocols:
+      grpc:
+        enabled: true
+```
+
+See [this](https://docs.datadoghq.com/opentelemetry/otlp_ingest_in_the_agent/?tab=kuberneteshelmvaluesyaml#enabling-otlp-ingestion-on-the-datadog-agent) for other options.
+
+Then, set this env var, and you're done!
+
+```bash
+TRACELOOP_API_ENDPOINT=http://<datadog-agent>:4317
+```

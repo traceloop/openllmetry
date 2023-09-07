@@ -39,19 +39,56 @@ OpenLLMetry is a set of extensions built on top of [OpenTelemetry](https://opent
 
 It's built and maintained by Traceloop under the Apache 2.0 license.
 
+The repo contains standard OpenTelemetry instrumentations for LLM providers and Vector DBs, as well as a Traceloop SDK that makes it easy to get started with OpenLLMetry, while still outputting standard OpenTelemetry data that can be connected to your observability stack.
+If you already have OpenTelemetry instrumented, you can just add any of our instrumentations directly.
+
 ## 🚀 Getting Started
+
+The easiest to get started is to use our SDK.
+For a complete guide, go to our [docs](https://traceloop.com/docs/python-sdk/getting-started).
+
+Install the SDK into your project:
 
 ```python
 pip install traceloop-sdk
 ```
 
-Then, you can start instrumenting your code:
+To start instrumenting your code, just add this line to your code:
 
 ```python
 Traceloop.init(app_name="your_app_name")
 ```
 
-More info can be found in our [docs](https://traceloop.com/docs/python-sdk/getting-started).
+Next, you need to decide where to export the traces to. You can choose between:
+
+### Traceloop
+
+Open an account at [app.traceloop.com](https://app.traceloop.com), and then set an env var with your API key:
+
+```bash
+TRACELOOP_API_KEY=your_api_key
+```
+
+### Datadog
+
+With datadog, there are 2 options - you can either export directly to a Datadog Agent in your cluster, or through an OpenTelemetry Collector (which requires that you deploy one in your cluster).
+See also [Datadog's documentation](https://docs.datadoghq.com/opentelemetry/).
+
+If you're using Datadog, and have an agent in your cluster, it's the easiest to just export directly to it. To do that, first enable the OTLP GRPC collector in your agent configuration. This depends on your exact deployment of Datadog's agent. For example, if you're using the Helm chart, you can add this to your `values.yaml` (see [this](https://docs.datadoghq.com/opentelemetry/otlp_ingest_in_the_agent/?tab=kuberneteshelmvaluesyaml#enabling-otlp-ingestion-on-the-datadog-agent) for other options):
+
+```yaml
+otlp:
+  receiver:
+    protocols:
+      grpc:
+        enabled: true
+```
+
+Then, set this env var, and you're done!
+
+```bash
+TRACELOOP_API_ENDPOINT=http://<datadog-agent>:4317
+```
 
 ## What do we instrument?
 
