@@ -1,12 +1,12 @@
 import os
 import openai
+import requests
 
-from traceloop.sdk import Traceloop, Tracing
+from traceloop.sdk import Traceloop
 from traceloop.sdk.decorators import task, agent, workflow, tool
 
 openai.api_key = os.getenv("OPENAI_API_KEY")
 Traceloop.init(app_name="joke_generation_service")
-Tracing.set_correlation_id("testing_correlation_id")
 
 
 @task(name="joke_creation")
@@ -58,6 +58,8 @@ def generate_signature(joke: str):
 
 @workflow(name="pirate_joke_generator")
 def joke_workflow():
+    Traceloop.set_correlation_id("joke_12345")
+
     eng_joke = create_joke()
     pirate_joke = translate_joke_to_pirate(eng_joke)
     signature = generate_signature(pirate_joke)
