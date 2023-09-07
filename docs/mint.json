@@ -55,9 +55,14 @@
       "pages": [
         "python-sdk/introduction",
         "python-sdk/getting-started",
+        "python-sdk/exporting",
         "python-sdk/decorators",
         "python-sdk/advanced"
       ]
+    },
+    {
+      "group": "Contribute",
+      "pages": ["contributing/overview"]
     }
   ],
   "footerSocials": {
