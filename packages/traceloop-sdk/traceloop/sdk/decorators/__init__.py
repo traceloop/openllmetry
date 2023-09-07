@@ -2,8 +2,9 @@ from functools import wraps
 from typing import Optional
 
 from traceloop.sdk.semconv import SpanAttributes, TraceloopSpanKindValues
-from traceloop.sdk.tracing import Tracing, get_tracer, get_async_tracer
+from traceloop.sdk.tracing import get_tracer, set_workflow_name
 from traceloop.sdk.utils import camel_to_snake
+from opentelemetry.context import set_value, attach, get_current
 
 
 def task(
@@ -81,8 +82,9 @@ def workflow_method(name: Optional[str] = None, correlation_id: Optional[str] = 
         @wraps(fn)
         def wrap(*args, **kwargs):
             workflow_name = name or fn.__name__
-            Tracing.set_workflow_name(workflow_name)
-            span_name = f"{name}.workflow" if name else f"{fn.__name__}.workflow"
+            set_workflow_name(workflow_name)
+            span_name = f"{workflow_name}.workflow"
+
             with (
                 get_tracer(flush_on_exit=True) as tracer,
                 tracer.start_as_current_span(span_name) as span,
@@ -154,8 +156,8 @@ def atask_method(
                 if name
                 else f"{fn.__name__}.{tlp_span_kind.value}"
             )
-            async with (
-                get_async_tracer() as tracer,
+            with (
+                get_tracer() as tracer,
                 tracer.start_as_current_span(span_name) as span,
             ):
                 span.set_attribute(
@@ -204,10 +206,12 @@ def aworkflow_method(name: Optional[str] = None, correlation_id: Optional[str] =
     def decorate(fn):
         @wraps(fn)
         async def wrap(*args, **kwargs):
-            Tracing.set_workflow_name(name or fn.__name__)
-            span_name = f"{name}.workflow" if name else f"{fn.__name__}.workflow"
-            async with (
-                get_async_tracer(flush_on_exit=True) as tracer,
+            workflow_name = name or fn.__name__
+            set_workflow_name(workflow_name)
+            span_name = f"{workflow_name}.workflow"
+
+            with (
+                get_tracer(flush_on_exit=True) as tracer,
                 tracer.start_as_current_span(span_name) as span,
             ):
                 span.set_attribute(

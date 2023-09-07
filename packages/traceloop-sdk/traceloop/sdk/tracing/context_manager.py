@@ -1,21 +1,13 @@
-from contextlib import contextmanager, asynccontextmanager
+from contextlib import contextmanager
 
-from traceloop.sdk.tracing.tracing import Tracing
+from traceloop.sdk.tracing.tracing import TracerWrapper
 
 
 @contextmanager
 def get_tracer(flush_on_exit: bool = False):
+    wrapper = TracerWrapper()
     try:
-        yield Tracing.get_tracer()
+        yield wrapper.get_tracer()
     finally:
         if flush_on_exit:
-            Tracing.flush()
-
-
-@asynccontextmanager
-async def get_async_tracer(flush_on_exit: bool = False):
-    try:
-        yield Tracing.get_tracer()
-    finally:
-        if flush_on_exit:
-            Tracing.flush()
+            wrapper.flush()
