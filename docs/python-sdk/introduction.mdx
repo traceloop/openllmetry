@@ -1,0 +1,44 @@
+---
+title: "Introduction"
+---
+
+Traceloop's Python SDK allows you to easily start monitoring and debugging your LLM execution.
+Tracing is done in a non-intrusive way, built on top of OpenTelemetry.
+
+<Tip>
+  You can use Traceloop whether you use a framework like LangChain, or directly
+  interact with a foundation model API.
+</Tip>
+
+```python
+Tracer.init(app_name="joke_generation_service")
+
+@workflow(name="joke_creation")
+def create_joke():
+    completion = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo",
+        messages=[{"role": "user", "content": "Tell me a joke about opentelemetry"}],
+    )
+
+    return completion.choices[0].message.content
+```
+
+## Getting Started
+
+Select from the following guides to learn more about how to use Jest OpenTelemetry:
+
+<CardGroup>
+  <Card
+    title="Getting Started"
+    icon="bars-staggered"
+    href="/python-sdk/getting-started"
+  >
+    Set up Traceloop python SDK in your project
+  </Card>
+  <Card title="Decorators" icon="code" href="/python-sdk/decorators">
+    Learn how to annotate your code to enrich your traces
+  </Card>
+  <Card title="Advanced Configurations" icon="code" href="/python-sdk/advanced">
+    Advanced features you can use to further customize Traceloop
+  </Card>
+</CardGroup>

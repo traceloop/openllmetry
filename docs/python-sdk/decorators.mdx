@@ -1,0 +1,92 @@
+---
+title: "Decorators"
+---
+
+At the most basic configuration, traceloop logs all prompts and responses to an LLM model.
+This is useful to get a better understanding of what your model is doing, but it is not enough to get a full picture of the process.
+
+Traceloop SDK supports several decorators that can be used to get better visibility into the processes in your application:
+
+## Workflows and Tasks
+
+Sometimes called a "chain", is a decorator for a multi-step process that can be traced as a single unit.
+Use it as `@workflow(name="my_workflow")`.
+We will consider every call to OpenAI as a distinct step (or task). You can even annotate the task with a name, using `@task(name="my_task")`.
+
+<Tip>
+  The `name` argument is optional. If you don't provide it, we will use the
+  function name as the workflow or task name.
+</Tip>
+
+```python
+@task(name="joke_creation")
+def create_joke():
+    completion = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo",
+        messages=[{"role": "user", "content": "Tell me a joke about opentelemetry"}],
+    )
+
+    return completion.choices[0].message.content
+
+@task(name="signature_generation")
+def generate_signature(joke: str):
+    completion = openai.Completion.create(
+        model="text-davinci-003",
+        prompt="add a signature to the joke:\n\n" + joke,
+    )
+
+    return completion.choices[0].text
+
+
+@workflow(name="pirate_joke_generator")
+def joke_workflow():
+    eng_joke = create_joke()
+    pirate_joke = translate_joke_to_pirate(eng_joke)
+    signature = generate_signature(pirate_joke)
+    print(pirate_joke + "\n\n" + signature)
+```
+
+## Agents and Tools
+
+Similarily, if you use autonomous agents, you can use the `@agent` decorator to trace them as a single unit.
+Each tool should be marked with `@tool`.
+
+```python
+@agent(name="joke_translation")
+def translate_joke_to_pirate(joke: str):
+    completion = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo",
+        messages=[{"role": "user", "content": f"Translate the below joke to pirate-like english:\n\n{joke}"}],
+    )
+
+    history_jokes_tool()
+
+    return completion.choices[0].message.content
+
+
+@tool(name="history_jokes")
+def history_jokes_tool():
+    completion = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo",
+        messages=[{"role": "user", "content": f"get some history jokes"}],
+    )
+
+    return completion.choices[0].message.content
+```
+
+## Decorating Classes
+
+While the examples above shows how to decorate functions, you can also decorate classes.
+In this case, you will also need to provide the name of the method that runs the workflow, task, agent or tool.
+
+```python
+@agent(name="base_joke_generator", method_name="generate_joke")
+class JokeAgent:
+    def generate_joke(self):
+        completion = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=[{"role": "user", "content": "Tell me a joke about Traceloop"}],
+        )
+
+        return completion.choices[0].message.content
+```
