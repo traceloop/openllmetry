@@ -2,8 +2,7 @@ from functools import wraps
 from typing import Optional
 
 from traceloop.sdk.semconv import SpanAttributes, TraceloopSpanKindValues
-from traceloop.sdk.tracing.context_manager import get_tracer, get_async_tracer
-from traceloop.sdk.tracing.tracer import Tracing
+from traceloop.sdk.tracing import Tracing, get_tracer, get_async_tracer
 from traceloop.sdk.utils import camel_to_snake
 
 

@@ -5,13 +5,12 @@ from typing import Optional
 
 from opentelemetry import trace
 from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
-from opentelemetry.sdk.trace import TracerProvider, SpanProcessor, Tracer
+from opentelemetry.sdk.trace import TracerProvider, SpanProcessor
 import importlib.util
 
-from opentelemetry.sdk.trace.export import SpanExporter
+from opentelemetry.sdk.trace.export import SpanExporter, BatchSpanProcessor
 from opentelemetry.trace import get_tracer_provider, ProxyTracerProvider
 from traceloop.sdk.semconv import SpanAttributes
-from traceloop.sdk.tracing import NoLogSpanBatchProcessor
 
 TRACER_NAME = "traceloop.tracer"
 TRACELOOP_API_ENDPOINT = "https://api.traceloop.dev/v1/traces"
@@ -80,7 +79,6 @@ class Tracing:
     __initialized: bool = False
     __spans_exporter: SpanExporter = None
     __spans_processor: SpanProcessor = None
-    __otel_tracer: Tracer = None
     __otel_tracer_provider: TracerProvider = None
 
     @staticmethod
@@ -140,7 +138,7 @@ class Tracing:
 
     @staticmethod
     def init_spans_processor():
-        Tracing.__spans_processor = NoLogSpanBatchProcessor(Tracing.__spans_exporter)
+        Tracing.__spans_processor = BatchSpanProcessor(Tracing.__spans_exporter)
         Tracing.__spans_processor.on_start = span_processor_on_start
 
     @staticmethod
@@ -153,4 +151,5 @@ class Tracing:
 
     @staticmethod
     def set_workflow_name(workflow_name: str):
+        print(f"setting workflow name to {workflow_name}")
         ctx_workflow_name.set(workflow_name)

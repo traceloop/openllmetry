@@ -1,12 +1,12 @@
 import os
 import openai
 
+from traceloop.sdk import Traceloop, Tracing
 from traceloop.sdk.decorators import task, agent, workflow, tool
-from traceloop.sdk.tracing.tracer import Tracing
 
 openai.api_key = os.getenv("OPENAI_API_KEY")
-Tracing.init(app_name="joke_generation_service")
-Tracing.set_correlation_id("gal12345")
+Traceloop.init(app_name="joke_generation_service")
+Tracing.set_correlation_id("testing_correlation_id")
 
 
 @task(name="joke_creation")

@@ -1,6 +1,6 @@
 from contextlib import contextmanager, asynccontextmanager
 
-from traceloop.sdk.tracing.tracer import Tracing
+from traceloop.sdk.tracing.tracing import Tracing
 
 
 @contextmanager
