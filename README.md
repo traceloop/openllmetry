@@ -48,7 +48,7 @@ pip install traceloop-sdk
 Then, you can start instrumenting your code:
 
 ```python
-Tracer.init(app_name="your_app_name")
+Traceloop.init(app_name="your_app_name")
 ```
 
 More info can be found in our [docs](https://traceloop.com/docs/python-sdk/getting-started).
@@ -89,4 +89,5 @@ Not sure where to get started? You can:
 - [Twitter](https://twitter.com/traceloopdev) (Get news fast)
 
 ## 🙏 Special Thanks
+
 To @patrickdebois, who [suggested the great name](https://x.com/patrickdebois/status/1695518950715473991?s=46&t=zn2SOuJcSVq-Pe2Ysevzkg) we're now using for this repo!
