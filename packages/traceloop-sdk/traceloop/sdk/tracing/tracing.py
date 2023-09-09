@@ -8,6 +8,7 @@ from opentelemetry.sdk.trace import TracerProvider, SpanProcessor
 from opentelemetry.sdk.trace.export import SpanExporter, BatchSpanProcessor
 from opentelemetry.trace import get_tracer_provider, ProxyTracerProvider
 from opentelemetry.context import get_value, attach, set_value
+from opentelemetry.util.re import parse_env_headers
 from traceloop.sdk.semconv import SpanAttributes
 
 TRACER_NAME = "traceloop.tracer"
@@ -64,11 +65,14 @@ def init_spans_exporter() -> SpanExporter:
     api_endpoint = os.getenv("TRACELOOP_API_ENDPOINT") or TRACELOOP_API_ENDPOINT
     headers = os.getenv("TRACELOOP_HEADERS") or {}
 
+    if isinstance(headers, str):
+        headers = parse_env_headers(headers)
+
     return OTLPSpanExporter(
         endpoint=api_endpoint,
         headers={
             "Authorization": f"Bearer {api_key}",
-        } + headers,
+        } | headers,
     )
 
 
