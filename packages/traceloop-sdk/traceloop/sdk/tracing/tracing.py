@@ -62,12 +62,13 @@ def span_processor_on_start(span, parent_context):
 def init_spans_exporter() -> SpanExporter:
     api_key = os.getenv("TRACELOOP_API_KEY")
     api_endpoint = os.getenv("TRACELOOP_API_ENDPOINT") or TRACELOOP_API_ENDPOINT
+    headers = os.getenv("TRACELOOP_HEADERS") or {}
 
     return OTLPSpanExporter(
         endpoint=api_endpoint,
         headers={
             "Authorization": f"Bearer {api_key}",
-        },
+        } + headers,
     )
 
 
