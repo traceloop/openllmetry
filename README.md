@@ -96,7 +96,7 @@ Since Honeycomb natively supports OpenTelemetry, you just need to route the trac
 API key:
 
 ```bash
-TRACELOOP_API_ENDPOINT=api.honeycomb.io:443
+TRACELOOP_API_ENDPOINT=https://api.honeycomb.io
 TRACELOOP_HEADERS="x-honeycomb-team=<YOUR_API_KEY>"
 ```
 
@@ -106,7 +106,7 @@ Since SigNoz natively supports OpenTelemetry, you just need to route the traces 
 API key:
 
 ```bash
-TRACELOOP_API_ENDPOINT=https://ingest.{region}.signoz.cloud:443
+TRACELOOP_API_ENDPOINT=https://ingest.{region}.signoz.cloud
 TRACELOOP_HEADERS="signoz-access-token=<SIGNOZ_INGESTION_KEY>"
 ```
 
