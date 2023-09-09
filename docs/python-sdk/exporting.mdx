@@ -23,7 +23,11 @@ With datadog, there are 2 options - you can either export directly to a Datadog 
 
 See also [Datadog documentation](https://docs.datadoghq.com/opentelemetry/)
 
-If you're using Datadog, and have an agent in your cluster, it's the easiest to just export directly to it. To do that, first enable the OTLP GRPC collector in your agent configuration. This depends on your exact deployment of Datadog's agent. For example, if you're using the Helm chart, you can add this to your `values.yaml`:
+Exporting directly to an agent is easiest.
+To do that, first enable the OTLP GRPC collector in your agent configuration.
+This depends on how you deployed your Datadog agent. For example, if you've used a Helm chart,
+you can add the following to your `values.yaml`
+(see [this](https://docs.datadoghq.com/opentelemetry/otlp_ingest_in_the_agent/?tab=kuberneteshelmvaluesyaml#enabling-otlp-ingestion-on-the-datadog-agent) for other options):
 
 ```yaml
 otlp:
@@ -33,10 +37,47 @@ otlp:
         enabled: true
 ```
 
-See [this](https://docs.datadoghq.com/opentelemetry/otlp_ingest_in_the_agent/?tab=kuberneteshelmvaluesyaml#enabling-otlp-ingestion-on-the-datadog-agent) for other options.
-
 Then, set this env var, and you're done!
 
 ```bash
-TRACELOOP_API_ENDPOINT=http://<datadog-agent>:4317
+TRACELOOP_API_ENDPOINT=http://<datadog-agent-hostname>:4317
+```
+
+## Honeycomb
+
+Since Honeycomb natively supports OpenTelemetry, you just need to route the traces to Honeycomb's endpoint and set the
+API key:
+
+```bash
+TRACELOOP_API_ENDPOINT=api.honeycomb.io:443
+TRACELOOP_HEADERS="x-honeycomb-team=<YOUR_API_KEY>"
+```
+
+## SigNoz
+
+### With SigNoz cloud
+
+Since SigNoz natively supports OpenTelemetry, you just need to route the traces to SigNoz's endpoint and set the
+API key:
+
+```bash
+TRACELOOP_API_ENDPOINT=https://ingest.{region}.signoz.cloud:443
+TRACELOOP_HEADERS="signoz-access-token=<SIGNOZ_INGESTION_KEY>"
+```
+
+Where `region` depends on the choice of your SigNoz cloud region:
+| Region | Endpoint |
+| ------ | -------- |
+| US | ingest.us.signoz.cloud:443 |
+| IN | ingest.in.signoz.cloud:443 |
+| EU | ingest.eu.signoz.cloud:443 |
+
+Validate your configuration by [following these instructions](https://signoz.io/docs/instrumentation/python/#validating-instrumentation-by-checking-for-traces)
+
+### With Self-Hosted version
+
+Once you have an up and running instance of SigNoz, use the following environment variables to export your traces:
+
+```bash
+TRACELOOP_API_ENDPOINT="http://localhost:4317"
 ```

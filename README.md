@@ -74,7 +74,7 @@ TRACELOOP_API_KEY=your_api_key
 With datadog, there are 2 options - you can either export directly to a Datadog Agent in your cluster, or through an OpenTelemetry Collector (which requires that you deploy one in your cluster).
 See also [Datadog's documentation](https://docs.datadoghq.com/opentelemetry/).
 
-If you're using Datadog, and have an agent in your cluster, it's the easiest to just export directly to it. To do that, first enable the OTLP GRPC collector in your agent configuration. This depends on your exact deployment of Datadog's agent. For example, if you're using the Helm chart, you can add this to your `values.yaml` (see [this](https://docs.datadoghq.com/opentelemetry/otlp_ingest_in_the_agent/?tab=kuberneteshelmvaluesyaml#enabling-otlp-ingestion-on-the-datadog-agent) for other options):
+Exporting directly to an agent is easiest. To do that, first enable the OTLP GRPC collector in your agent configuration. This depends on how you deployed your Datadog agent. For example, if you've used a Helm chart, you can add the following to your `values.yaml` (see [this](https://docs.datadoghq.com/opentelemetry/otlp_ingest_in_the_agent/?tab=kuberneteshelmvaluesyaml#enabling-otlp-ingestion-on-the-datadog-agent) for other options):
 
 ```yaml
 otlp:
@@ -87,10 +87,32 @@ otlp:
 Then, set this env var, and you're done!
 
 ```bash
-TRACELOOP_API_ENDPOINT=http://<datadog-agent>:4317
+TRACELOOP_API_ENDPOINT=http://<datadog-agent-hostname>:4317
 ```
 
-## What do we instrument?
+## Honeycomb
+
+Since Honeycomb natively supports OpenTelemetry, you just need to route the traces to Honeycomb's endpoint and set the
+API key:
+
+```bash
+TRACELOOP_API_ENDPOINT=api.honeycomb.io:443
+TRACELOOP_HEADERS="x-honeycomb-team=<YOUR_API_KEY>"
+```
+
+## SigNoz
+
+Since SigNoz natively supports OpenTelemetry, you just need to route the traces to SigNoz's endpoint and set the
+API key:
+
+```bash
+TRACELOOP_API_ENDPOINT=https://ingest.{region}.signoz.cloud:443
+TRACELOOP_HEADERS="signoz-access-token=<SIGNOZ_INGESTION_KEY>"
+```
+
+Make sure to set the region to the region you're using (see [table](https://signoz.io/docs/instrumentation/python/#send-traces-to-signoz-cloud)).
+
+## 🪗 What do we instrument?
 
 OpenLLMetry can instrument everything that [OpenTelemetry already instruments](https://github.com/open-telemetry/opentelemetry-python-contrib/tree/main/instrumentation) - so things like your DB, API calls, and more. On top of that, we built a set of custom extensions that instrument things like your calls to OpenAI or Anthropic, or your Vector DB like Pinecone, Chroma, or Weaviate.
 
@@ -128,3 +150,7 @@ Not sure where to get started? You can:
 ## 🙏 Special Thanks
 
 To @patrickdebois, who [suggested the great name](https://x.com/patrickdebois/status/1695518950715473991?s=46&t=zn2SOuJcSVq-Pe2Ysevzkg) we're now using for this repo!
+
+```
+
+```
