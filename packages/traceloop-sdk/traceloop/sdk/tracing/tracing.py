@@ -1,6 +1,7 @@
 import logging
 import os
 import importlib.util
+import requests
 
 from opentelemetry import trace
 from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
@@ -12,7 +13,7 @@ from opentelemetry.util.re import parse_env_headers
 from traceloop.sdk.semconv import SpanAttributes
 
 TRACER_NAME = "traceloop.tracer"
-TRACELOOP_API_ENDPOINT = "https://api.traceloop.dev/v1/traces"
+TRACELOOP_API_ENDPOINT = "https://api.traceloop.dev"
 EXCLUDED_URLS = "api.openai.com,openai.azure.com"
 
 
@@ -67,9 +68,9 @@ def init_spans_exporter() -> SpanExporter:
 
     if isinstance(headers, str):
         headers = parse_env_headers(headers)
-
+        
     return OTLPSpanExporter(
-        endpoint=api_endpoint,
+        endpoint=f"{api_endpoint}/v1/traces",
         headers={
             "Authorization": f"Bearer {api_key}",
         } | headers,
