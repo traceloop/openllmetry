@@ -7,22 +7,27 @@ from opentelemetry.util.re import parse_env_headers
 
 from traceloop.sdk.tracing.tracing import TracerWrapper, set_correlation_id
 
-TRACELOOP_API_ENDPOINT = "https://api.traceloop.dev"
+DEFAULT_ENDPOINT = "https://api.traceloop.dev"
 
 
 class Traceloop:
     __tracer_wrapper: TracerWrapper
 
     @staticmethod
-    def init(app_name: Optional[str] = None) -> None:
-        api_key = os.getenv("TRACELOOP_API_KEY")
-        api_endpoint = os.getenv("TRACELOOP_API_ENDPOINT") or TRACELOOP_API_ENDPOINT
-        headers = os.getenv("TRACELOOP_HEADERS") or {}
+    def init(
+        app_name: Optional[str] = None,
+        api_endpoint: str = DEFAULT_ENDPOINT,
+        api_key: str = None,
+        headers: dict[str, str] = {},
+    ) -> None:
+        api_key = os.getenv("TRACELOOP_API_KEY") or api_key
+        api_endpoint = os.getenv("TRACELOOP_API_ENDPOINT") or api_endpoint
+        headers = os.getenv("TRACELOOP_HEADERS") or headers
         if isinstance(headers, str):
             headers = parse_env_headers(headers)
 
         # auto-create a dashboard on Traceloop if no export endpoint is provided
-        if api_endpoint == TRACELOOP_API_ENDPOINT and not api_key:
+        if api_endpoint == DEFAULT_ENDPOINT and not api_key:
             if os.path.exists("/tmp/traceloop_key.txt") and os.path.exists(
                 "/tmp/traceloop_url.txt"
             ):

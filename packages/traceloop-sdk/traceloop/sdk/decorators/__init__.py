@@ -3,8 +3,8 @@ from typing import Optional
 
 from traceloop.sdk.semconv import SpanAttributes, TraceloopSpanKindValues
 from traceloop.sdk.tracing import get_tracer, set_workflow_name
+from traceloop.sdk.tracing.tracing import TracerWrapper
 from traceloop.sdk.utils import camel_to_snake
-from opentelemetry.context import set_value, attach, get_current
 
 
 def task(
@@ -27,6 +27,9 @@ def task_method(
     def decorate(fn):
         @wraps(fn)
         def wrap(*args, **kwargs):
+            if not TracerWrapper.verify_initialized():
+                return fn(*args, **kwargs)
+
             span_name = (
                 f"{name}.{tlp_span_kind.value}"
                 if name
@@ -81,6 +84,9 @@ def workflow_method(name: Optional[str] = None, correlation_id: Optional[str] = 
     def decorate(fn):
         @wraps(fn)
         def wrap(*args, **kwargs):
+            if not TracerWrapper.verify_initialized():
+                return fn(*args, **kwargs)
+
             workflow_name = name or fn.__name__
             set_workflow_name(workflow_name)
             span_name = f"{workflow_name}.workflow"
@@ -151,6 +157,9 @@ def atask_method(
     def decorate(fn):
         @wraps(fn)
         async def wrap(*args, **kwargs):
+            if not TracerWrapper.verify_initialized():
+                return fn(*args, **kwargs)
+
             span_name = (
                 f"{name}.{tlp_span_kind.value}"
                 if name
@@ -206,6 +215,9 @@ def aworkflow_method(name: Optional[str] = None, correlation_id: Optional[str] =
     def decorate(fn):
         @wraps(fn)
         async def wrap(*args, **kwargs):
+            if not TracerWrapper.verify_initialized():
+                return fn(*args, **kwargs)
+
             workflow_name = name or fn.__name__
             set_workflow_name(workflow_name)
             span_name = f"{workflow_name}.workflow"
