@@ -20,7 +20,9 @@ class TracerWrapper(object):
     def __new__(cls) -> "TracerWrapper":
         if not hasattr(cls, "instance"):
             obj = cls.instance = super(TracerWrapper, cls).__new__(cls)
-            obj.__spans_exporter: SpanExporter = init_spans_exporter()
+            obj.__spans_exporter: SpanExporter = init_spans_exporter(
+                TracerWrapper.endpoint, TracerWrapper.headers
+            )
             obj.__tracer_provider: TracerProvider = init_tracer_provider()
             obj.__spans_processor: SpanProcessor = BatchSpanProcessor(
                 obj.__spans_exporter
