@@ -2,6 +2,7 @@ import logging
 import os
 import importlib.util
 
+from colorama import Fore
 from opentelemetry import trace
 from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
 from opentelemetry.sdk.trace import TracerProvider, SpanProcessor
@@ -38,6 +39,21 @@ class TracerWrapper(object):
     def set_endpoint(endpoint: str, headers: dict[str, str]) -> None:
         TracerWrapper.endpoint = endpoint
         TracerWrapper.headers = headers
+
+    @classmethod
+    def verify_initialized(cls) -> bool:
+        if hasattr(cls, "instance"):
+            return True
+
+        if (os.getenv("TRACELOOP_SUPPRESS_WARNINGS") or "false").lower() == "true":
+            return False
+
+        print(
+            Fore.RED
+            + "Warning: Traceloop not initialized, make sure you call Traceloop.init()"
+        )
+        print(Fore.RESET)
+        return False
 
     def flush(self):
         self.__spans_processor.force_flush()
