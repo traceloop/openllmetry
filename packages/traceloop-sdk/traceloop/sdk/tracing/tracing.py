@@ -32,6 +32,11 @@ class TracerWrapper(object):
 
         return cls.instance
 
+    @staticmethod
+    def set_endpoint(endpoint: str, headers: dict[str, str]) -> None:
+        TracerWrapper.endpoint = endpoint
+        TracerWrapper.headers = headers
+
     def flush(self):
         self.__spans_processor.force_flush()
 
