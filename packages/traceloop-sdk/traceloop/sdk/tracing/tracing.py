@@ -1,7 +1,6 @@
 import logging
 import os
 import importlib.util
-import requests
 
 from opentelemetry import trace
 from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
@@ -18,23 +17,20 @@ EXCLUDED_URLS = "api.openai.com,openai.azure.com"
 
 
 class TracerWrapper(object):
-    initialized: bool = False
-
     def __new__(cls) -> "TracerWrapper":
         if not hasattr(cls, "instance"):
-            cls.instance = super(TracerWrapper, cls).__new__(cls)
+            obj = cls.instance = super(TracerWrapper, cls).__new__(cls)
+            obj.__spans_exporter: SpanExporter = init_spans_exporter()
+            obj.__tracer_provider: TracerProvider = init_tracer_provider()
+            obj.__spans_processor: SpanProcessor = BatchSpanProcessor(
+                obj.__spans_exporter
+            )
+            obj.__spans_processor.on_start = span_processor_on_start
+            obj.__tracer_provider.add_span_processor(obj.__spans_processor)
+
+            init_instrumentations()
+
         return cls.instance
-
-    def __init__(self) -> None:
-        self.__spans_exporter: SpanExporter = init_spans_exporter()
-        self.__tracer_provider: TracerProvider = init_tracer_provider()
-        self.__spans_processor: SpanProcessor = BatchSpanProcessor(
-            self.__spans_exporter
-        )
-        self.__spans_processor.on_start = span_processor_on_start
-        self.__tracer_provider.add_span_processor(self.__spans_processor)
-
-        init_instrumentations()
 
     def flush(self):
         self.__spans_processor.force_flush()
@@ -68,12 +64,13 @@ def init_spans_exporter() -> SpanExporter:
 
     if isinstance(headers, str):
         headers = parse_env_headers(headers)
-        
+
     return OTLPSpanExporter(
         endpoint=f"{api_endpoint}/v1/traces",
         headers={
             "Authorization": f"Bearer {api_key}",
-        } | headers,
+        }
+        | headers,
     )
 
 
