@@ -158,7 +158,7 @@ def atask_method(
         @wraps(fn)
         async def wrap(*args, **kwargs):
             if not TracerWrapper.verify_initialized():
-                return fn(*args, **kwargs)
+                return await fn(*args, **kwargs)
 
             span_name = (
                 f"{name}.{tlp_span_kind.value}"
@@ -216,7 +216,7 @@ def aworkflow_method(name: Optional[str] = None, correlation_id: Optional[str] =
         @wraps(fn)
         async def wrap(*args, **kwargs):
             if not TracerWrapper.verify_initialized():
-                return fn(*args, **kwargs)
+                return await fn(*args, **kwargs)
 
             workflow_name = name or fn.__name__
             set_workflow_name(workflow_name)
