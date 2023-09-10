@@ -11,13 +11,15 @@ addopts = "--cov --cov-report html:'../../coverage/packages/traceloop-sdk/html' 
 
 [tool.poetry]
 name = "traceloop-sdk"
-version = "0.0.39"
+version = "0.0.40"
 description = "Traceloop Software Development Kit (SDK) for Python"
 authors = [
   "Gal Kleinman <gal@traceloop.com>",
   "Nir Gazit <nir@traceloop.com>",
   "Tomer Friedman <tomer@traceloop.com>"
 ]
+repository = "https://github.com/traceloop/openllmetry"
+documentation = "https://traceloop.com/docs/python-sdk"
 license = "Apache-2.0"
 readme = "README.md"
 
