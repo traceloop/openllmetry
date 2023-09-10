@@ -62,20 +62,10 @@ def span_processor_on_start(span, parent_context):
         span.set_attribute(SpanAttributes.TRACELOOP_CORRELATION_ID, correlation_id)
 
 
-def init_spans_exporter() -> SpanExporter:
-    api_key = os.getenv("TRACELOOP_API_KEY")
-    api_endpoint = os.getenv("TRACELOOP_API_ENDPOINT") or TRACELOOP_API_ENDPOINT
-    headers = os.getenv("TRACELOOP_HEADERS") or {}
-
-    if isinstance(headers, str):
-        headers = parse_env_headers(headers)
-
+def init_spans_exporter(api_endpoint: str, headers: dict[str, str]) -> SpanExporter:
     return OTLPSpanExporter(
         endpoint=f"{api_endpoint}/v1/traces",
-        headers={
-            "Authorization": f"Bearer {api_key}",
-        }
-        | headers,
+        headers=headers,
     )
 
 
