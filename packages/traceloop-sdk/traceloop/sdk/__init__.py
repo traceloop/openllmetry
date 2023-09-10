@@ -23,8 +23,11 @@ class Traceloop:
 
         # auto-create a dashboard on Traceloop if no export endpoint is provided
         if api_endpoint == TRACELOOP_API_ENDPOINT and not api_key:
-            if os.path.exists("/tmp/traceloop_key.txt"):
+            if os.path.exists("/tmp/traceloop_key.txt") and os.path.exists(
+                "/tmp/traceloop_url.txt"
+            ):
                 api_key = open("/tmp/traceloop_key.txt").read()
+                access_url = open("/tmp/traceloop_url.txt").read()
             else:
                 print(
                     Fore.YELLOW
@@ -32,13 +35,14 @@ class Traceloop:
                 )
                 res = requests.post(
                     "https://app.traceloop.com/api/registration/auto-create"
-                )
-                api_key = res.json()["apiKey"]
-                print(Fore.YELLOW + "Set TRACELOOP_API_KEY to", api_key)
+                ).json()
+                access_url = f"https://app.traceloop.com/trace?skt={res['uiAccessKey']}"
+                api_key = res["apiKey"]
+                print(Fore.YELLOW + "TRACELOOP_API_KEY=", api_key)
                 open("/tmp/traceloop_key.txt", "w").write(api_key)
+                open("/tmp/traceloop_url.txt", "w").write(access_url)
             print(
-                Fore.GREEN
-                + f"\nGo to https://app.traceloop.com/trace?orgToken={api_key} to see a live dashboard\n",
+                Fore.GREEN + f"\nGo to {access_url} to see a live dashboard\n",
             )
             print(Fore.RESET)
 
