@@ -20,13 +20,18 @@ EXCLUDED_URLS = "api.openai.com,openai.azure.com"
 class TracerWrapper(object):
     initialized: bool = False
 
+    @staticmethod
+    def set_endpoint(endpoint: str, headers: dict[str, str]) -> None:
+        TracerWrapper.endpoint = endpoint
+        TracerWrapper.headers = headers
+
     def __new__(cls) -> "TracerWrapper":
         if not hasattr(cls, "instance"):
             cls.instance = super(TracerWrapper, cls).__new__(cls)
         return cls.instance
 
     def __init__(self) -> None:
-        self.__spans_exporter: SpanExporter = init_spans_exporter()
+        self.__spans_exporter: SpanExporter = init_spans_exporter(TracerWrapper.endpoint, TracerWrapper.headers)
         self.__tracer_provider: TracerProvider = init_tracer_provider()
         self.__spans_processor: SpanProcessor = BatchSpanProcessor(
             self.__spans_exporter
@@ -61,19 +66,10 @@ def span_processor_on_start(span, parent_context):
         span.set_attribute(SpanAttributes.TRACELOOP_CORRELATION_ID, correlation_id)
 
 
-def init_spans_exporter() -> SpanExporter:
-    api_key = os.getenv("TRACELOOP_API_KEY")
-    api_endpoint = os.getenv("TRACELOOP_API_ENDPOINT") or TRACELOOP_API_ENDPOINT
-    headers = os.getenv("TRACELOOP_HEADERS") or {}
-
-    if isinstance(headers, str):
-        headers = parse_env_headers(headers)
-        
+def init_spans_exporter(api_endpoint: str, headers: dict[str, str]) -> SpanExporter:
     return OTLPSpanExporter(
         endpoint=f"{api_endpoint}/v1/traces",
-        headers={
-            "Authorization": f"Bearer {api_key}",
-        } | headers,
+        headers=headers,
     )
 
 
