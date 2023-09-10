@@ -22,21 +22,23 @@ class Traceloop:
             headers = parse_env_headers(headers)
 
         # auto-create a dashboard on Traceloop if no export endpoint is provided
-        if api_endpoint == TRACELOOP_API_ENDPOINT and api_key is None:
-            if os.path.exists("traceloop_key.txt"):
-                api_key = open("traceloop_key.txt").read()
+        if api_endpoint == TRACELOOP_API_ENDPOINT and not api_key:
+            if os.path.exists("/tmp/traceloop_key.txt"):
+                api_key = open("/tmp/traceloop_key.txt").read()
             else:
                 print(
-                    "No Traceloop API key provided, auto-creating a dashboard on Traceloop"
+                    Fore.YELLOW
+                    + "No Traceloop API key provided, auto-creating a dashboard on Traceloop",
                 )
                 res = requests.post(
                     "https://app.traceloop.com/api/registration/auto-create"
                 )
                 api_key = res.json()["apiKey"]
-                open("traceloop_key.txt", "w").write(api_key)
+                print(Fore.YELLOW + "Set TRACELOOP_API_KEY to", api_key)
+                open("/tmp/traceloop_key.txt", "w").write(api_key)
             print(
                 Fore.GREEN
-                + f"Go to https://app.traceloop.com/trace?orgToken={api_key} to see a live dashboard"
+                + f"\nGo to https://app.traceloop.com/trace?orgToken={api_key} to see a live dashboard\n",
             )
             print(Fore.RESET)
 
