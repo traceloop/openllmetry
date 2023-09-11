@@ -42,6 +42,16 @@ Then, set this env var, and you're done!
 ```bash
 TRACELOOP_API_ENDPOINT=http://<datadog-agent-hostname>:4317
 ```
+## New Relic
+
+Since New Relic natively supports OpenTelemetry, you just need to route the traces to New Relic's endpoint and set the API key:
+
+```bash
+TRACELOOP_API_ENDPOINT=https://otlp.nr-data.net:443
+TRACELOOP_HEADERS="api-key=<YOUR_NEWRELIC_LICENSE_KEY>"
+```
+
+for more information check out the [docs link](https://docs.newrelic.com/docs/more-integrations/open-source-telemetry-integrations/opentelemetry/get-started/opentelemetry-set-up-your-app/#review-settings)
 
 ## Honeycomb
 
