@@ -66,8 +66,6 @@ Next, you need to decide where to export the traces to. You can choose between:
 - [x] [Honeycomb](https://traceloop.com/docs/python-sdk/exporting#honeycomb)
 - [x] [SigNoz](https://traceloop.com/docs/python-sdk/exporting#signoz)
 
-
-
 ## 🪗 What do we instrument?
 
 OpenLLMetry can instrument everything that [OpenTelemetry already instruments](https://github.com/open-telemetry/opentelemetry-python-contrib/tree/main/instrumentation) - so things like your DB, API calls, and more. On top of that, we built a set of custom extensions that instrument things like your calls to OpenAI or Anthropic, or your Vector DB like Pinecone, Chroma, or Weaviate.
