@@ -60,57 +60,11 @@ Traceloop.init(app_name="your_app_name")
 ```
 
 Next, you need to decide where to export the traces to. You can choose between:
-
-### Traceloop
-
-Open an account at [app.traceloop.com](https://app.traceloop.com), and then set an env var with your API key:
-
-```bash
-TRACELOOP_API_KEY=your_api_key
-```
-
-### Datadog
-
-With datadog, there are 2 options - you can either export directly to a Datadog Agent in your cluster, or through an OpenTelemetry Collector (which requires that you deploy one in your cluster).
-See also [Datadog's documentation](https://docs.datadoghq.com/opentelemetry/).
-
-Exporting directly to an agent is easiest. To do that, first enable the OTLP GRPC collector in your agent configuration. This depends on how you deployed your Datadog agent. For example, if you've used a Helm chart, you can add the following to your `values.yaml` (see [this](https://docs.datadoghq.com/opentelemetry/otlp_ingest_in_the_agent/?tab=kuberneteshelmvaluesyaml#enabling-otlp-ingestion-on-the-datadog-agent) for other options):
-
-```yaml
-otlp:
-  receiver:
-    protocols:
-      grpc:
-        enabled: true
-```
-
-Then, set this env var, and you're done!
-
-```bash
-TRACELOOP_API_ENDPOINT=http://<datadog-agent-hostname>:4317
-```
-
-## Honeycomb
-
-Since Honeycomb natively supports OpenTelemetry, you just need to route the traces to Honeycomb's endpoint and set the
-API key:
-
-```bash
-TRACELOOP_API_ENDPOINT=https://api.honeycomb.io
-TRACELOOP_HEADERS="x-honeycomb-team=<YOUR_API_KEY>"
-```
-
-## SigNoz
-
-Since SigNoz natively supports OpenTelemetry, you just need to route the traces to SigNoz's endpoint and set the
-API key:
-
-```bash
-TRACELOOP_API_ENDPOINT=https://ingest.{region}.signoz.cloud
-TRACELOOP_HEADERS="signoz-access-token=<SIGNOZ_INGESTION_KEY>"
-```
-
-Make sure to set the region to the region you're using (see [table](https://signoz.io/docs/instrumentation/python/#send-traces-to-signoz-cloud)).
+- [x] [Traceloop](https://traceloop.com/docs/python-sdk/exporting#traceloop)
+- [x] [Datadog](https://traceloop.com/docs/python-sdk/exporting#datadog)
+- [x] [New Relic](https://traceloop.com/docs/python-sdk/exporting#new-relic)
+- [x] [Honeycomb](https://traceloop.com/docs/python-sdk/exporting#honeycomb)
+- [x] [SigNoz](https://traceloop.com/docs/python-sdk/exporting#signoz)
 
 ## 🪗 What do we instrument?
 
