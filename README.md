@@ -59,7 +59,11 @@ To start instrumenting your code, just add this line to your code:
 Traceloop.init(app_name="your_app_name")
 ```
 
-Next, you need to decide where to export the traces to. You can choose between:
+Next, you need to decide where to export the traces to. You can choose between the following providers:
+- [x] [Traceloop](#traceloop)
+- [x] [Datadog](#datadog)
+- [x] [Honeycomb](#honeycomb)
+- [x] [SigNoz](#signoz)
 
 ### Traceloop
 
@@ -90,7 +94,7 @@ Then, set this env var, and you're done!
 TRACELOOP_API_ENDPOINT=http://<datadog-agent-hostname>:4317
 ```
 
-## Honeycomb
+### Honeycomb
 
 Since Honeycomb natively supports OpenTelemetry, you just need to route the traces to Honeycomb's endpoint and set the
 API key:
@@ -100,7 +104,7 @@ TRACELOOP_API_ENDPOINT=https://api.honeycomb.io
 TRACELOOP_HEADERS="x-honeycomb-team=<YOUR_API_KEY>"
 ```
 
-## SigNoz
+### SigNoz
 
 Since SigNoz natively supports OpenTelemetry, you just need to route the traces to SigNoz's endpoint and set the
 API key:
