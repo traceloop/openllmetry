@@ -59,7 +59,7 @@ To start instrumenting your code, just add this line to your code:
 Traceloop.init(app_name="your_app_name")
 ```
 
-Next, you need to decide where to export the traces to. You can choose between the following providers:
+Next, you need to decide where to export the traces to. You can choose between:
 - [x] [Traceloop](#traceloop)
 - [x] [Datadog](#datadog)
 - [x] [Honeycomb](#honeycomb)
