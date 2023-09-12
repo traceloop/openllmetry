@@ -59,7 +59,10 @@ To start instrumenting your code, just add this line to your code:
 Traceloop.init(app_name="your_app_name")
 ```
 
-Next, you need to decide where to export the traces to. You can choose between:
+Next, you need to decide where to export the traces to
+
+## ⏫ Supported destinations
+
 - [x] [Traceloop](https://traceloop.com/docs/python-sdk/exporting#traceloop)
 - [x] [Datadog](https://traceloop.com/docs/python-sdk/exporting#datadog)
 - [x] [New Relic](https://traceloop.com/docs/python-sdk/exporting#new-relic)
@@ -104,7 +107,3 @@ Not sure where to get started? You can:
 ## 🙏 Special Thanks
 
 To @patrickdebois, who [suggested the great name](https://x.com/patrickdebois/status/1695518950715473991?s=46&t=zn2SOuJcSVq-Pe2Ysevzkg) we're now using for this repo!
-
-```
-
-```
