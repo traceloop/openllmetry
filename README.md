@@ -59,7 +59,7 @@ To start instrumenting your code, just add this line to your code:
 Traceloop.init(app_name="your_app_name")
 ```
 
-Next, you need to decide where to export the traces to
+Next, you need to decide where to export the traces to.
 
 ## ⏫ Supported destinations
 
