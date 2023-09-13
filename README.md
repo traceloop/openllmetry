@@ -79,6 +79,7 @@ OpenLLMetry can instrument everything that [OpenTelemetry already instruments](h
 - [ ] Anthropic
 - [ ] Cohere
 - [ ] Replicate
+- [ ] HuggingFace
 - [ ] Vertex AI (GCP)
 - [ ] Bedrock (AWS)
 
@@ -87,6 +88,12 @@ OpenLLMetry can instrument everything that [OpenTelemetry already instruments](h
 - [ ] Pinecone
 - [ ] Chroma
 - [ ] Weaviate
+
+### Frameworks
+
+- [x] Haystack
+- [ ] LangChain
+- [ ] LlamaIndex
 
 ## 🌱 Contributing
 
