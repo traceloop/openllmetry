@@ -10,7 +10,7 @@ from opentelemetry.sdk.trace.export import SpanExporter, BatchSpanProcessor
 from opentelemetry.trace import get_tracer_provider, ProxyTracerProvider
 from opentelemetry.context import get_value, attach, set_value
 from opentelemetry.util.re import parse_env_headers
-from traceloop.sdk.semconv import SpanAttributes
+from opentelemetry.semconv.ai import SpanAttributes
 
 TRACER_NAME = "traceloop.tracer"
 TRACELOOP_API_ENDPOINT = "https://api.traceloop.dev"

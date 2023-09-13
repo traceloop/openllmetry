@@ -1,17 +1,17 @@
 [tool.coverage.run]
 branch = true
-source = [ "opentelemetry/semconv/llm" ]
+source = [ "opentelemetry/semconv/ai" ]
 
 [tool.coverage.report]
 exclude_lines = ['if TYPE_CHECKING:']
 show_missing = true
 
 [tool.pytest.ini_options]
-addopts = "--cov --cov-report html:'../../coverage/packages/opentelemetry-semantic-conventions-llm/html' --cov-report xml:'../../coverage/packages/opentelemetry-semantic-conventions-llm/coverage.xml' --html='../../reports/packages/opentelemetry-semantic-conventions-llm/unittests/html/index.html' --junitxml='../../reports/packages/opentelemetry-semantic-conventions-llm/unittests/junit.xml'"
+addopts = "--cov --cov-report html:'../../coverage/packages/opentelemetry-semantic-conventions-ai/html' --cov-report xml:'../../coverage/packages/opentelemetry-semantic-conventions-ai/coverage.xml' --html='../../reports/packages/opentelemetry-semantic-conventions-ai/unittests/html/index.html' --junitxml='../../reports/packages/opentelemetry-semantic-conventions-ai/unittests/junit.xml'"
 
 [tool.poetry]
-name = "opentelemetry-semantic-conventions-llm"
-version = "0.0.2"
+name = "opentelemetry-semantic-conventions-ai"
+version = "0.0.1"
 description = "OpenTelemetry Semantic Conventions Extension for Large Language Models"
 authors = [
   "Gal Kleinman <gal@traceloop.com>",
@@ -22,7 +22,7 @@ license = "Apache-2.0"
 readme = "README.md"
 
 [[tool.poetry.packages]]
-include = "opentelemetry/semconv/llm"
+include = "opentelemetry/semconv/ai"
 
 [tool.poetry.dependencies]
 python = ">=3.8.1,<3.12"

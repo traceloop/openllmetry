@@ -1,14 +1,14 @@
 {
-  "name": "opentelemetry-semantic-conventions-llm",
+  "name": "opentelemetry-semantic-conventions-ai",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "projectType": "library",
-  "sourceRoot": "packages/opentelemetry-semantic-conventions-llm/opentelemetry/semconv/llm",
+  "sourceRoot": "packages/opentelemetry-semantic-conventions-ai/opentelemetry/semconv/ai",
   "targets": {
     "lock": {
       "executor": "@nxlv/python:run-commands",
       "options": {
         "command": "poetry lock --no-update",
-        "cwd": "packages/opentelemetry-semantic-conventions-llm"
+        "cwd": "packages/opentelemetry-semantic-conventions-ai"
       }
     },
     "add": {
@@ -27,7 +27,7 @@
       "executor": "@nxlv/python:build",
       "outputs": ["{projectRoot}/dist"],
       "options": {
-        "outputPath": "packages/opentelemetry-semantic-conventions-llm/dist",
+        "outputPath": "packages/opentelemetry-semantic-conventions-ai/dist",
         "publish": false,
         "lockedVersions": true,
         "bundleLocalDependencies": true
@@ -46,21 +46,21 @@
     "lint": {
       "executor": "@nxlv/python:flake8",
       "outputs": [
-        "{workspaceRoot}/reports/packages/opentelemetry-semantic-conventions-llm/pylint.txt"
+        "{workspaceRoot}/reports/packages/opentelemetry-semantic-conventions-ai/pylint.txt"
       ],
       "options": {
-        "outputFile": "reports/packages/opentelemetry-semantic-conventions-llm/pylint.txt"
+        "outputFile": "reports/packages/opentelemetry-semantic-conventions-ai/pylint.txt"
       }
     },
     "test": {
       "executor": "@nxlv/python:run-commands",
       "outputs": [
-        "{workspaceRoot}/reports/packages/opentelemetry-semantic-conventions-llm/unittests",
-        "{workspaceRoot}/coverage/packages/opentelemetry-semantic-conventions-llm"
+        "{workspaceRoot}/reports/packages/opentelemetry-semantic-conventions-ai/unittests",
+        "{workspaceRoot}/coverage/packages/opentelemetry-semantic-conventions-ai"
       ],
       "options": {
         "command": "poetry run pytest tests/",
-        "cwd": "packages/opentelemetry-semantic-conventions-llm"
+        "cwd": "packages/opentelemetry-semantic-conventions-ai"
       }
     }
   },
