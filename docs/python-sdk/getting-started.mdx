@@ -1,0 +1,58 @@
+---
+title: "Getting Started"
+---
+
+Install Traceloop by following these 2 easy steps and get instant monitoring.
+
+## Install the SDK
+
+<Tabs>
+  <Tab title="Poetry">
+  
+  Run the following command in your terminal:
+
+```bash
+poetry add traceloop-sdk
+```
+
+  </Tab>
+  <Tab title="Pip">
+    Run the following command in your terminal:
+
+```bash
+pip install traceloop-sdk
+```
+
+You should also add Traceloop to your `requirements.txt` file as `traceloop-sdk`.
+
+  </Tab>
+</Tabs>
+
+## Configure the Instrumentation in your app
+
+In your LLM app, initialize the Traceloop tracer like this:
+
+```python
+Traceloop.init(app_name="your_app_name")
+```
+
+You'll need to [start a new span](https://opentelemetry-python.readthedocs.io/en/latest/api/trace.html)
+for each operation you want to trace. We have a set of [decorators](/python-sdk/decorators) to make this easier.
+
+Lastly, you'll need to configure where to export your traces.
+The 2 variables controlling this are `TRACELOOP_API_KEY` and `TRACELOOP_API_ENDPOINT`.
+
+For Traceloop, read on. For other options, see [Exporting](/python-sdk/exporting).
+
+### Using Traceloop Cloud
+
+Set Traceloop's API key as an environment variable in your app named `TRACELOOP_API_KEY`.
+For on-prem deployments, set `TRACELOOP_API_ENDPOINT` to the URL of your Traceloop instance.
+
+Done! You'll get instant visibility into everything that's happening with your LLM.
+If you're calling a vector DB, or any other external service or database, you'll also see it in the Traceloop dashboard.
+
+## Next Steps
+
+You can annotate specific workflows, chains, and agents to get better visibility into complex processes in your app.
+See [Decorators](/python-sdk/decorators) for more information.

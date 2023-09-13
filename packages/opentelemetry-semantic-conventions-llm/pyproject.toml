@@ -1,6 +1,6 @@
 [tool.coverage.run]
 branch = true
-source = [ "opentelemetry" ]
+source = [ "opentelemetry/semconv/llm" ]
 
 [tool.coverage.report]
 exclude_lines = ['if TYPE_CHECKING:']
@@ -11,14 +11,18 @@ addopts = "--cov --cov-report html:'../../coverage/packages/opentelemetry-semant
 
 [tool.poetry]
 name = "opentelemetry-semantic-conventions-llm"
-version = "0.0.1"
+version = "0.0.2"
 description = "OpenTelemetry Semantic Conventions Extension for Large Language Models"
-authors = [ ]
-license = 'Proprietary'
-readme = 'README.md'
+authors = [
+  "Gal Kleinman <gal@traceloop.com>",
+  "Nir Gazit <nir@traceloop.com>",
+  "Tomer Friedman <tomer@traceloop.com>"
+]
+license = "Apache-2.0"
+readme = "README.md"
 
 [[tool.poetry.packages]]
-include = "opentelemetry"
+include = "opentelemetry/semconv/llm"
 
 [tool.poetry.dependencies]
 python = ">=3.8.1,<3.12"

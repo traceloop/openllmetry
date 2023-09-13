@@ -1,0 +1,77 @@
+{
+  "name": "traceloop",
+  "favicon": "/favicon.png",
+  "logo": {
+    "light": "/logo/light.svg",
+    "dark": "/logo/dark.svg"
+  },
+  "colors": {
+    "primary": "#FFB53D",
+    "light": "#FFF238",
+    "dark": "#FF3D5D",
+    "anchors": {
+      "from": "#FFF238",
+      "to": "#FF3D5D"
+    },
+    "background": {
+      "dark": "#121212"
+    }
+  },
+  "topbarLinks": [
+    {
+      "name": "Website",
+      "url": "https://www.traceloop.com"
+    }
+  ],
+  "topbarCtaButton": {
+    "type": "link",
+    "name": "Join waitlist",
+    "url": "https://traceloop.com/waitlist"
+  },
+  "anchors": [
+    {
+      "name": "Python SDK",
+      "icon": "python",
+      "url": "python-sdk"
+    },
+    {
+      "name": "Community",
+      "icon": "slack",
+      "url": "https://join.slack.com/t/traceloopcommunity/shared_invite/zt-1plpfpm6r-zOHKI028VkpcWdobX65C~g"
+    },
+    {
+      "name": "GitHub",
+      "icon": "github",
+      "url": "https://github.com/traceloop"
+    }
+  ],
+  "navigation": [
+    {
+      "group": "Learn",
+      "pages": ["introduction"]
+    },
+    {
+      "group": "Quick Start",
+      "pages": [
+        "python-sdk/introduction",
+        "python-sdk/getting-started",
+        "python-sdk/exporting",
+        "python-sdk/decorators",
+        "python-sdk/advanced"
+      ]
+    },
+    {
+      "group": "Contribute",
+      "pages": ["contributing/overview"]
+    }
+  ],
+  "footerSocials": {
+    "github": "https://github.com/traceloop",
+    "twitter": "https://twitter.com/traceloopdev"
+  },
+  "analytics": {
+    "posthog": {
+      "apiKey": "phc_S07ERHfM7mBYvjzzW18gxfTjhly2dOD8y2WiRYajV5J"
+    }
+  }
+}
