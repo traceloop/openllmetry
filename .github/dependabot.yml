@@ -18,7 +18,7 @@ updates:
       interval: "weekly"
     labels:
       - "opentelemetry-instrumentation-chromadb"
-    - package-ecosystem: "pip"
+  - package-ecosystem: "pip"
     directory: "/packages/opentelemetry-instrumentation-cohere"
     schedule:
       interval: "weekly"
