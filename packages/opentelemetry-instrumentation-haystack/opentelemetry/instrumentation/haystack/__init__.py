@@ -17,24 +17,21 @@ from opentelemetry.semconv.llm import SpanAttributes, LLMRequestTypeValues
 
 logger = logging.getLogger(__name__)
 
-_instruments = ("openai >= 0.27.0",)
+_instruments = ("farm-haystack >= 1.20.1",)
 __version__ = "0.1.0"
 
 WRAPPED_METHODS = [
     {
-        "object": "ChatCompletion",
-        "method": "create",
+        "package": "haystack.nodes.prompt.invocation_layer.chatgpt",
+        "object": "ChatGPTInvocationLayer",
+        "method": "_execute_openai_request",
         "span_name": "openai.chat",
     },
     {
-        "object": "Completion",
-        "method": "create",
+        "package": "haystack.nodes.prompt.invocation_layer.open_ai",
+        "object": "OpenAIInvocationLayer",
+        "method": "_execute_openai_request",
         "span_name": "openai.completion",
-    },
-    {
-        "object": "PromptNode",
-        "method": "run",
-        "span_name": "openai.prompt",
     },
 ]
 
@@ -46,46 +43,27 @@ def _set_span_attribute(span, name, value):
     return
 
 
-def _set_api_attributes(span):
-    _set_span_attribute(span, OpenAISpanAttributes.OPENAI_API_BASE, openai.api_base)
-    _set_span_attribute(span, OpenAISpanAttributes.OPENAI_API_TYPE, openai.api_type)
-    _set_span_attribute(
-        span, OpenAISpanAttributes.OPENAI_API_VERSION, openai.api_version
-    )
-
-    return
-
-
-def _set_span_prompts(span, messages):
-    if messages is None:
-        return
-
-    for i, msg in enumerate(messages):
-        prefix = f"{SpanAttributes.LLM_PROMPTS}.{i}"
-        _set_span_attribute(span, f"{prefix}.role", msg.get("role"))
-        _set_span_attribute(span, f"{prefix}.content", msg.get("content"))
-
-
 def _set_input_attributes(span, llm_request_type, kwargs):
-    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, kwargs.get("model"))
+    base_payload = kwargs.get("base_payload")
     _set_span_attribute(
-        span, SpanAttributes.LLM_REQUEST_MAX_TOKENS, kwargs.get("max_tokens")
-    )
-    _set_span_attribute(span, SpanAttributes.LLM_TEMPERATURE, kwargs.get("temperature"))
-    _set_span_attribute(span, SpanAttributes.LLM_TOP_P, kwargs.get("top_p"))
-    _set_span_attribute(
-        span, SpanAttributes.LLM_FREQUENCY_PENALTY, kwargs.get("frequency_penalty")
+        span, SpanAttributes.LLM_REQUEST_MODEL, base_payload.get("model")
     )
     _set_span_attribute(
-        span, SpanAttributes.LLM_PRESENCE_PENALTY, kwargs.get("presence_penalty")
+        span, SpanAttributes.LLM_TEMPERATURE, base_payload.get("temperature")
+    )
+    _set_span_attribute(span, SpanAttributes.LLM_TOP_P, base_payload.get("top_p"))
+    _set_span_attribute(
+        span,
+        SpanAttributes.LLM_FREQUENCY_PENALTY,
+        base_payload.get("frequency_penalty"),
+    )
+    _set_span_attribute(
+        span, SpanAttributes.LLM_PRESENCE_PENALTY, base_payload.get("presence_penalty")
     )
 
-    if llm_request_type == LLMRequestTypeValues.CHAT:
-        _set_span_prompts(span, kwargs.get("messages"))
-    elif llm_request_type == LLMRequestTypeValues.COMPLETION:
-        _set_span_attribute(
-            span, f"{SpanAttributes.LLM_PROMPTS}.0.user", kwargs.get("prompt")
-        )
+    _set_span_attribute(
+        span, f"{SpanAttributes.LLM_PROMPTS}.0.user", kwargs.get("prompt")
+    )
 
     return
 
@@ -94,39 +72,19 @@ def _set_span_completions(span, llm_request_type, choices):
     if choices is None:
         return
 
-    for choice in choices:
-        index = choice.get("index")
+    for index, message in enumerate(choices):
         prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{index}"
-        _set_span_attribute(
-            span, f"{prefix}.finish_reason", choice.get("finish_reason")
-        )
 
         if llm_request_type == LLMRequestTypeValues.CHAT:
-            message = choice.get("message")
             if message is not None:
-                _set_span_attribute(span, f"{prefix}.role", message.get("role"))
-                _set_span_attribute(span, f"{prefix}.content", message.get("content"))
+                _set_span_attribute(span, f"{prefix}.role", "assistant")
+                _set_span_attribute(span, f"{prefix}.content", message)
         elif llm_request_type == LLMRequestTypeValues.COMPLETION:
-            _set_span_attribute(span, f"{prefix}.content", choice.get("text"))
+            _set_span_attribute(span, f"{prefix}.content", message)
 
 
 def _set_response_attributes(span, llm_request_type, response):
-    _set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, response.get("model"))
-    _set_span_completions(span, llm_request_type, response.get("choices"))
-
-    usage = response.get("usage")
-    if usage is not None:
-        _set_span_attribute(
-            span, SpanAttributes.LLM_USAGE_TOTAL_TOKENS, usage.get("total_tokens")
-        )
-        _set_span_attribute(
-            span,
-            SpanAttributes.LLM_USAGE_COMPLETION_TOKENS,
-            usage.get("completion_tokens"),
-        )
-        _set_span_attribute(
-            span, SpanAttributes.LLM_USAGE_PROMPT_TOKENS, usage.get("prompt_tokens")
-        )
+    _set_span_completions(span, llm_request_type, response)
 
     return
 
@@ -172,8 +130,6 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
             SpanAttributes.LLM_REQUEST_TYPE: llm_request_type.value,
         },
     ) as span:
-        if span.is_recording():
-            _set_api_attributes(span)
         try:
             if span.is_recording():
                 _set_input_attributes(span, llm_request_type, kwargs)
@@ -207,8 +163,8 @@ class OpenAISpanAttributes:
     OPENAI_API_TYPE = "openai.api_type"
 
 
-class OpenAIInstrumentor(BaseInstrumentor):
-    """An instrumentor for OpenAI's client library."""
+class HaystackInstrumentor(BaseInstrumentor):
+    """An instrumentor for the Haystack framework."""
 
     def instrumentation_dependencies(self) -> Collection[str]:
         return _instruments
@@ -217,13 +173,21 @@ class OpenAIInstrumentor(BaseInstrumentor):
         tracer_provider = kwargs.get("tracer_provider")
         tracer = get_tracer(__name__, __version__, tracer_provider)
         for wrapped_method in WRAPPED_METHODS:
+            wrap_package = wrapped_method.get("package")
             wrap_object = wrapped_method.get("object")
             wrap_method = wrapped_method.get("method")
             wrap_function_wrapper(
-                "openai", f"{wrap_object}.{wrap_method}", _wrap(tracer, wrapped_method)
+                wrap_package,
+                f"{wrap_object}.{wrap_method}" if wrap_object else wrap_method,
+                _wrap(tracer, wrapped_method),
             )
 
     def _uninstrument(self, **kwargs):
         for wrapped_method in WRAPPED_METHODS:
+            wrap_package = wrapped_method.get("package")
             wrap_object = wrapped_method.get("object")
-            unwrap(f"openai.{wrap_object}", wrapped_method.get("method"))
+            wrap_method = wrapped_method.get("method")
+            unwrap(
+                f"{wrap_package}.{wrap_object}" if wrap_object else wrap_package,
+                wrap_method,
+            )

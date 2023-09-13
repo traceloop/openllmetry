@@ -38,6 +38,10 @@ opentelemetry-instrumentation-openai = "^0.0.3"
 opentelemetry-instrumentation-pinecone = "^0.0.2"
 colorama = "^0.4.6"
 
+[tool.poetry.dependencies.opentelemetry-instrumentation-haystack]
+path = "../opentelemetry-instrumentation-haystack"
+develop = true
+
 [tool.poetry.group.dev.dependencies]
 autopep8 = "2.0.4"
 flake8 = "6.1.0"
