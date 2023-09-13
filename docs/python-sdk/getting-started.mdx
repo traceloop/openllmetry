@@ -36,7 +36,10 @@ In your LLM app, initialize the Traceloop tracer like this:
 Traceloop.init(app_name="your_app_name")
 ```
 
-Next, you'll need to configure where to export your traces.
+You'll need to [start a new span](https://opentelemetry-python.readthedocs.io/en/latest/api/trace.html)
+for each operation you want to trace. We have a set of [decorators](/python-sdk/decorators) to make this easier.
+
+Lastly, you'll need to configure where to export your traces.
 The 2 variables controlling this are `TRACELOOP_API_KEY` and `TRACELOOP_API_ENDPOINT`.
 
 For Traceloop, read on. For other options, see [Exporting](/python-sdk/exporting).
