@@ -502,21 +502,40 @@ wrapt = ">=1.0.0,<2.0.0"
 test = ["opentelemetry-test-utils (==0.40b0)"]
 
 [[package]]
+name = "opentelemetry-instrumentation-haystack"
+version = "0.0.1"
+description = "OpenTelemetry Haystack instrumentation"
+category = "main"
+optional = false
+python-versions = ">=3.8.1,<3.12"
+files = []
+develop = true
+
+[package.dependencies]
+opentelemetry-api = "^1.19.0"
+opentelemetry-instrumentation = "^0.40b0"
+opentelemetry-semantic-conventions-ai = "^0.0.1"
+
+[package.source]
+type = "directory"
+url = "../opentelemetry-instrumentation-haystack"
+
+[[package]]
 name = "opentelemetry-instrumentation-openai"
-version = "0.0.3"
+version = "0.0.4"
 description = "OpenTelemetry OpenAI instrumentation"
 category = "main"
 optional = false
 python-versions = ">=3.8.1,<3.12"
 files = [
-    {file = "opentelemetry_instrumentation_openai-0.0.3-py3-none-any.whl", hash = "sha256:d73c6688277ddfcb107b0b5ab4bab6053c094914a688d49260ccd7ac06d7ceaa"},
-    {file = "opentelemetry_instrumentation_openai-0.0.3.tar.gz", hash = "sha256:ef9ac7f853eb06b7137998bd6350a5fd79a91047f4c6e29fe2dcf5f9318174bb"},
+    {file = "opentelemetry_instrumentation_openai-0.0.4-py3-none-any.whl", hash = "sha256:24b329f7d1705f885be612570e35bb92342d93abe9f00bfe3c4e945e4cebc111"},
+    {file = "opentelemetry_instrumentation_openai-0.0.4.tar.gz", hash = "sha256:47e1ca43debcd5545e23df2d531b091dd0caff2f22d9674b4cffcd78784451ea"},
 ]
 
 [package.dependencies]
 opentelemetry-api = ">=1.19.0,<2.0.0"
 opentelemetry-instrumentation = ">=0.40b0,<0.41"
-opentelemetry-semantic-conventions-llm = ">=0.0.2,<0.0.3"
+opentelemetry-semantic-conventions-ai = ">=0.0.1,<0.0.2"
 
 [[package]]
 name = "opentelemetry-instrumentation-pinecone"
@@ -646,6 +665,18 @@ files = [
 ]
 
 [[package]]
+name = "opentelemetry-semantic-conventions-ai"
+version = "0.0.1"
+description = "OpenTelemetry Semantic Conventions Extension for Large Language Models"
+category = "main"
+optional = false
+python-versions = ">=3.8.1,<3.12"
+files = [
+    {file = "opentelemetry_semantic_conventions_ai-0.0.1-py3-none-any.whl", hash = "sha256:6cb93dc16eebf686e80eecd99787e6f6dce01e3950f0143cdd4dc1af1047f710"},
+    {file = "opentelemetry_semantic_conventions_ai-0.0.1.tar.gz", hash = "sha256:565b58aa8a768e6abaddb33eee2554a01fb58db1daea974bb74cea91070dc17e"},
+]
+
+[[package]]
 name = "opentelemetry-semantic-conventions-llm"
 version = "0.0.2"
 description = "OpenTelemetry Semantic Conventions Extension for Large Language Models"
@@ -699,25 +730,25 @@ testing = ["pytest", "pytest-benchmark"]
 
 [[package]]
 name = "protobuf"
-version = "4.24.2"
+version = "4.24.3"
 description = ""
 category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "protobuf-4.24.2-cp310-abi3-win32.whl", hash = "sha256:58e12d2c1aa428ece2281cef09bbaa6938b083bcda606db3da4e02e991a0d924"},
-    {file = "protobuf-4.24.2-cp310-abi3-win_amd64.whl", hash = "sha256:77700b55ba41144fc64828e02afb41901b42497b8217b558e4a001f18a85f2e3"},
-    {file = "protobuf-4.24.2-cp37-abi3-macosx_10_9_universal2.whl", hash = "sha256:237b9a50bd3b7307d0d834c1b0eb1a6cd47d3f4c2da840802cd03ea288ae8880"},
-    {file = "protobuf-4.24.2-cp37-abi3-manylinux2014_aarch64.whl", hash = "sha256:25ae91d21e3ce8d874211110c2f7edd6384816fb44e06b2867afe35139e1fd1c"},
-    {file = "protobuf-4.24.2-cp37-abi3-manylinux2014_x86_64.whl", hash = "sha256:c00c3c7eb9ad3833806e21e86dca448f46035242a680f81c3fe068ff65e79c74"},
-    {file = "protobuf-4.24.2-cp37-cp37m-win32.whl", hash = "sha256:4e69965e7e54de4db989289a9b971a099e626f6167a9351e9d112221fc691bc1"},
-    {file = "protobuf-4.24.2-cp37-cp37m-win_amd64.whl", hash = "sha256:c5cdd486af081bf752225b26809d2d0a85e575b80a84cde5172a05bbb1990099"},
-    {file = "protobuf-4.24.2-cp38-cp38-win32.whl", hash = "sha256:6bd26c1fa9038b26c5c044ee77e0ecb18463e957fefbaeb81a3feb419313a54e"},
-    {file = "protobuf-4.24.2-cp38-cp38-win_amd64.whl", hash = "sha256:bb7aa97c252279da65584af0456f802bd4b2de429eb945bbc9b3d61a42a8cd16"},
-    {file = "protobuf-4.24.2-cp39-cp39-win32.whl", hash = "sha256:2b23bd6e06445699b12f525f3e92a916f2dcf45ffba441026357dea7fa46f42b"},
-    {file = "protobuf-4.24.2-cp39-cp39-win_amd64.whl", hash = "sha256:839952e759fc40b5d46be319a265cf94920174d88de31657d5622b5d8d6be5cd"},
-    {file = "protobuf-4.24.2-py3-none-any.whl", hash = "sha256:3b7b170d3491ceed33f723bbf2d5a260f8a4e23843799a3906f16ef736ef251e"},
-    {file = "protobuf-4.24.2.tar.gz", hash = "sha256:7fda70797ddec31ddfa3576cbdcc3ddbb6b3078b737a1a87ab9136af0570cd6e"},
+    {file = "protobuf-4.24.3-cp310-abi3-win32.whl", hash = "sha256:20651f11b6adc70c0f29efbe8f4a94a74caf61b6200472a9aea6e19898f9fcf4"},
+    {file = "protobuf-4.24.3-cp310-abi3-win_amd64.whl", hash = "sha256:3d42e9e4796a811478c783ef63dc85b5a104b44aaaca85d4864d5b886e4b05e3"},
+    {file = "protobuf-4.24.3-cp37-abi3-macosx_10_9_universal2.whl", hash = "sha256:6e514e8af0045be2b56e56ae1bb14f43ce7ffa0f68b1c793670ccbe2c4fc7d2b"},
+    {file = "protobuf-4.24.3-cp37-abi3-manylinux2014_aarch64.whl", hash = "sha256:ba53c2f04798a326774f0e53b9c759eaef4f6a568ea7072ec6629851c8435959"},
+    {file = "protobuf-4.24.3-cp37-abi3-manylinux2014_x86_64.whl", hash = "sha256:f6ccbcf027761a2978c1406070c3788f6de4a4b2cc20800cc03d52df716ad675"},
+    {file = "protobuf-4.24.3-cp37-cp37m-win32.whl", hash = "sha256:1b182c7181a2891e8f7f3a1b5242e4ec54d1f42582485a896e4de81aa17540c2"},
+    {file = "protobuf-4.24.3-cp37-cp37m-win_amd64.whl", hash = "sha256:b0271a701e6782880d65a308ba42bc43874dabd1a0a0f41f72d2dac3b57f8e76"},
+    {file = "protobuf-4.24.3-cp38-cp38-win32.whl", hash = "sha256:e29d79c913f17a60cf17c626f1041e5288e9885c8579832580209de8b75f2a52"},
+    {file = "protobuf-4.24.3-cp38-cp38-win_amd64.whl", hash = "sha256:067f750169bc644da2e1ef18c785e85071b7c296f14ac53e0900e605da588719"},
+    {file = "protobuf-4.24.3-cp39-cp39-win32.whl", hash = "sha256:2da777d34b4f4f7613cdf85c70eb9a90b1fbef9d36ae4a0ccfe014b0b07906f1"},
+    {file = "protobuf-4.24.3-cp39-cp39-win_amd64.whl", hash = "sha256:f631bb982c5478e0c1c70eab383af74a84be66945ebf5dd6b06fc90079668d0b"},
+    {file = "protobuf-4.24.3-py3-none-any.whl", hash = "sha256:f6f8dc65625dadaad0c8545319c2e2f0424fede988368893ca3844261342c11a"},
+    {file = "protobuf-4.24.3.tar.gz", hash = "sha256:12e9ad2ec079b833176d2921be2cb24281fa591f0b119b208b788adc48c2561d"},
 ]
 
 [[package]]
@@ -869,20 +900,20 @@ use-chardet-on-py3 = ["chardet (>=3.0.2,<6)"]
 
 [[package]]
 name = "setuptools"
-version = "68.1.2"
+version = "68.2.2"
 description = "Easily download, build, install, upgrade, and uninstall Python packages"
 category = "main"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "setuptools-68.1.2-py3-none-any.whl", hash = "sha256:3d8083eed2d13afc9426f227b24fd1659489ec107c0e86cec2ffdde5c92e790b"},
-    {file = "setuptools-68.1.2.tar.gz", hash = "sha256:3d4dfa6d95f1b101d695a6160a7626e15583af71a5f52176efa5d39a054d475d"},
+    {file = "setuptools-68.2.2-py3-none-any.whl", hash = "sha256:b454a35605876da60632df1a60f736524eb73cc47bbc9f3f1ef1b644de74fd2a"},
+    {file = "setuptools-68.2.2.tar.gz", hash = "sha256:4ac1475276d2f1c48684874089fefcd83bd7162ddaafb81fac866ba0db282a87"},
 ]
 
 [package.extras]
-docs = ["furo", "jaraco.packaging (>=9.3)", "jaraco.tidelift (>=1.4)", "pygments-github-lexers (==0.0.5)", "rst.linker (>=1.9)", "sphinx (>=3.5,<=7.1.2)", "sphinx-favicon", "sphinx-hoverxref (<2)", "sphinx-inline-tabs", "sphinx-lint", "sphinx-notfound-page (==0.8.3)", "sphinx-reredirects", "sphinxcontrib-towncrier"]
+docs = ["furo", "jaraco.packaging (>=9.3)", "jaraco.tidelift (>=1.4)", "pygments-github-lexers (==0.0.5)", "rst.linker (>=1.9)", "sphinx (>=3.5)", "sphinx-favicon", "sphinx-hoverxref (<2)", "sphinx-inline-tabs", "sphinx-lint", "sphinx-notfound-page (>=1,<2)", "sphinx-reredirects", "sphinxcontrib-towncrier"]
 testing = ["build[virtualenv]", "filelock (>=3.4.0)", "flake8-2020", "ini2toml[lite] (>=0.9)", "jaraco.develop (>=7.21)", "jaraco.envs (>=2.2)", "jaraco.path (>=3.2.0)", "pip (>=19.1)", "pytest (>=6)", "pytest-black (>=0.3.7)", "pytest-checkdocs (>=2.4)", "pytest-cov", "pytest-enabler (>=2.2)", "pytest-mypy (>=0.9.1)", "pytest-perf", "pytest-ruff", "pytest-timeout", "pytest-xdist", "tomli-w (>=1.0.0)", "virtualenv (>=13.0.0)", "wheel"]
-testing-integration = ["build[virtualenv]", "filelock (>=3.4.0)", "jaraco.envs (>=2.2)", "jaraco.path (>=3.2.0)", "pytest", "pytest-enabler", "pytest-xdist", "tomli", "virtualenv (>=13.0.0)", "wheel"]
+testing-integration = ["build[virtualenv] (>=1.0.3)", "filelock (>=3.4.0)", "jaraco.envs (>=2.2)", "jaraco.path (>=3.2.0)", "packaging (>=23.1)", "pytest", "pytest-enabler", "pytest-xdist", "tomli", "virtualenv (>=13.0.0)", "wheel"]
 
 [[package]]
 name = "termcolor"
@@ -1045,4 +1076,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8.1,<3.12"
-content-hash = "de6d57beaffd278592e0ba00af0838932f7fafe42a559ce7d6f441a614bc4aa6"
+content-hash = "286c99924164fcfec33bcf050ca08c2cf7507d5df81e02f2045b4d6eb2c08784"

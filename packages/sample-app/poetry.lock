@@ -1302,7 +1302,7 @@ develop = true
 [package.dependencies]
 opentelemetry-api = "^1.19.0"
 opentelemetry-instrumentation = "^0.40b0"
-opentelemetry-semantic-conventions-llm = "^0.0.2"
+opentelemetry-semantic-conventions-ai = "^0.0.1"
 
 [package.source]
 type = "directory"
@@ -1310,7 +1310,7 @@ url = "../opentelemetry-instrumentation-haystack"
 
 [[package]]
 name = "opentelemetry-instrumentation-openai"
-version = "0.0.3"
+version = "0.0.4"
 description = "OpenTelemetry OpenAI instrumentation"
 category = "main"
 optional = false
@@ -1321,7 +1321,7 @@ develop = true
 [package.dependencies]
 opentelemetry-api = "^1.19.0"
 opentelemetry-instrumentation = "^0.40b0"
-opentelemetry-semantic-conventions-llm = "^0.0.2"
+opentelemetry-semantic-conventions-ai = "^0.0.1"
 
 [package.source]
 type = "directory"
@@ -1452,6 +1452,18 @@ python-versions = ">=3.7"
 files = [
     {file = "opentelemetry_semantic_conventions-0.40b0-py3-none-any.whl", hash = "sha256:7ebbaf86755a0948902e68637e3ae516c50222c30455e55af154ad3ffe283839"},
     {file = "opentelemetry_semantic_conventions-0.40b0.tar.gz", hash = "sha256:5a7a491873b15ab7c4907bbfd8737645cc87ca55a0a326c1755d1b928d8a0fae"},
+]
+
+[[package]]
+name = "opentelemetry-semantic-conventions-ai"
+version = "0.0.1"
+description = "OpenTelemetry Semantic Conventions Extension for Large Language Models"
+category = "main"
+optional = false
+python-versions = ">=3.8.1,<3.12"
+files = [
+    {file = "opentelemetry_semantic_conventions_ai-0.0.1-py3-none-any.whl", hash = "sha256:6cb93dc16eebf686e80eecd99787e6f6dce01e3950f0143cdd4dc1af1047f710"},
+    {file = "opentelemetry_semantic_conventions_ai-0.0.1.tar.gz", hash = "sha256:565b58aa8a768e6abaddb33eee2554a01fb58db1daea974bb74cea91070dc17e"},
 ]
 
 [[package]]
@@ -2690,7 +2702,7 @@ telegram = ["requests"]
 
 [[package]]
 name = "traceloop-sdk"
-version = "0.0.40"
+version = "0.0.41"
 description = "Traceloop Software Development Kit (SDK) for Python"
 category = "main"
 optional = false
@@ -2703,12 +2715,13 @@ colorama = "^0.4.6"
 opentelemetry-api = "^1.19.0"
 opentelemetry-exporter-otlp-proto-http = "^1.19.0"
 opentelemetry-instrumentation-haystack = {path = "../opentelemetry-instrumentation-haystack", develop = true}
-opentelemetry-instrumentation-openai = "^0.0.3"
+opentelemetry-instrumentation-openai = "^0.0.4"
 opentelemetry-instrumentation-pinecone = "^0.0.2"
 opentelemetry-instrumentation-pymysql = "^0.40b0"
 opentelemetry-instrumentation-requests = "^0.40b0"
 opentelemetry-instrumentation-urllib3 = "^0.40b0"
 opentelemetry-sdk = "^1.19.0"
+opentelemetry-semantic-conventions-ai = "^0.0.1"
 
 [package.source]
 type = "directory"

@@ -13,7 +13,7 @@ from opentelemetry.instrumentation.utils import (
     unwrap,
 )
 
-from opentelemetry.semconv.llm import SpanAttributes, LLMRequestTypeValues
+from opentelemetry.semconv.ai import SpanAttributes, LLMRequestTypeValues
 
 logger = logging.getLogger(__name__)
 
@@ -30,11 +30,6 @@ WRAPPED_METHODS = [
         "object": "Completion",
         "method": "create",
         "span_name": "openai.completion",
-    },
-    {
-        "object": "PromptNode",
-        "method": "run",
-        "span_name": "openai.prompt",
     },
 ]
 
