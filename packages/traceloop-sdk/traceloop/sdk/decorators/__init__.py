@@ -1,7 +1,8 @@
 from functools import wraps
 from typing import Optional
 
-from traceloop.sdk.semconv import SpanAttributes, TraceloopSpanKindValues
+from opentelemetry.semconv.ai import SpanAttributes, TraceloopSpanKindValues
+
 from traceloop.sdk.tracing import get_tracer, set_workflow_name
 from traceloop.sdk.tracing.tracing import TracerWrapper
 from traceloop.sdk.utils import camel_to_snake
