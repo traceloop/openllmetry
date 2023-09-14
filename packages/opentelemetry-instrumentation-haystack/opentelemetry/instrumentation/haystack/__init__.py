@@ -11,6 +11,9 @@ from opentelemetry.instrumentation.haystack.wrap_openai import wrap as openai_wr
 from opentelemetry.instrumentation.haystack.wrap_pipeline import (
     wrap as pipeline_wrapper,
 )
+from opentelemetry.instrumentation.haystack.wrap_node import (
+    wrap as node_wrapper,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -35,6 +38,18 @@ WRAPPED_METHODS = [
         "object": "Pipeline",
         "method": "run",
         "wrapper": pipeline_wrapper,
+    },
+    {
+        "package": "haystack.nodes.prompt.prompt_node",
+        "object": "PromptNode",
+        "method": "run",
+        "wrapper": node_wrapper,
+    },
+    {
+        "package": "haystack.nodes.retriever.dense",
+        "object": "EmbeddingRetriever",
+        "method": "retrieve",
+        "wrapper": node_wrapper,
     },
 ]
 

@@ -20,12 +20,6 @@ prompt_node = PromptNode(
 pipeline = Pipeline()
 pipeline.add_node(component=prompt_node, name="PromptNode", inputs=["Query"])
 
-
-# @workflow(name="joker")
-# def run(query: str):
 query = "OpenTelemetry"
 result = pipeline.run(query)
 print(result["answers"][0].answer)
-
-
-# run("OpenTelemetry")
