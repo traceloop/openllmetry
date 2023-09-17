@@ -12,3 +12,15 @@ def camel_to_snake(s):
         return s.lower()
 
     return cameltosnake(s[0].lower() + s[1:])
+
+
+def is_notebook():
+    try:
+        from IPython import get_ipython
+
+        ip = get_ipython()
+        if ip is None:
+            return False
+        return True
+    except Exception:
+        return False

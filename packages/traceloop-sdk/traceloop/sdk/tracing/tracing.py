@@ -11,6 +11,7 @@ from opentelemetry.exporter.otlp.proto.http.trace_exporter import (
 from opentelemetry.sdk.trace import TracerProvider, SpanProcessor
 from opentelemetry.sdk.trace.export import (
     SpanExporter,
+    SimpleSpanProcessor,
     BatchSpanProcessor,
     ConsoleSpanExporter,
 )
@@ -18,6 +19,8 @@ from opentelemetry.trace import get_tracer_provider, ProxyTracerProvider
 from opentelemetry.context import get_value, attach, set_value
 from opentelemetry.util.re import parse_env_headers
 from opentelemetry.semconv.ai import SpanAttributes
+
+from traceloop.sdk.utils import is_notebook
 
 TRACER_NAME = "traceloop.tracer"
 TRACELOOP_API_ENDPOINT = "https://api.traceloop.dev"
@@ -32,14 +35,17 @@ class TracerWrapper(object):
                 TracerWrapper.endpoint, TracerWrapper.headers
             )
             obj.__tracer_provider: TracerProvider = init_tracer_provider()
-            obj.__spans_processor: SpanProcessor = BatchSpanProcessor(
-                obj.__spans_exporter
+            obj.__spans_processor: SpanProcessor = (
+                SimpleSpanProcessor(obj.__spans_exporter)
+                if is_notebook()
+                else BatchSpanProcessor(obj.__spans_exporter)
             )
             obj.__spans_processor.on_start = span_processor_on_start
             obj.__tracer_provider.add_span_processor(obj.__spans_processor)
 
             init_instrumentations()
 
+            # Force flushes for debug environments (e.g. local development)
             atexit.register(obj.exit_handler)
 
         return cls.instance
