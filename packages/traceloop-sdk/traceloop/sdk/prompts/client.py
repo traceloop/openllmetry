@@ -92,7 +92,7 @@ class RetryIfServerError(retry_if_exception):
 
 @retry(
     wait=wait_exponential(multiplier=1, min=4),
-    stop=stop_after_attempt(TRACELOOP_PROMPT_MANAGER_MAX_RETRIES),
+    stop=stop_after_attempt(MAX_RETRIES),
     retry=RetryIfServerError(),
 )
 def fetch_url(url):

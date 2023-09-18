@@ -14,5 +14,3 @@ class PromptRegistry:
     def load(self, prompts_json: dict):
         for prompt_obj in prompts_json["prompts"]:
             self._prompts[prompt_obj["key"]] = Prompt(**prompt_obj)
-
-        print(self._prompts)
