@@ -37,6 +37,9 @@ opentelemetry-instrumentation-urllib3 = "^0.40b0"
 opentelemetry-instrumentation-openai = "^0.0.3"
 opentelemetry-instrumentation-pinecone = "^0.0.2"
 colorama = "^0.4.6"
+tenacity = "^8.2.3"
+pydantic = "^2.3.0"
+jinja2 = "^3.1.2"
 
 [tool.poetry.group.dev.dependencies]
 autopep8 = "2.0.4"

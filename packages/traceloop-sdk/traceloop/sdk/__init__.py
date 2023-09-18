@@ -5,6 +5,7 @@ from typing import Optional
 from colorama import Fore
 from opentelemetry.util.re import parse_env_headers
 
+from traceloop.sdk.prompts.client import PromptRegistryClient
 from traceloop.sdk.tracing.tracing import TracerWrapper, set_correlation_id
 
 DEFAULT_ENDPOINT = "https://api.traceloop.dev"
@@ -58,6 +59,8 @@ class Traceloop:
 
         TracerWrapper.set_endpoint(api_endpoint, headers)
         Traceloop.__tracer_wrapper = TracerWrapper()
+
+        PromptRegistryClient().run()
 
     @staticmethod
     def set_correlation_id(correlation_id: str) -> None:
