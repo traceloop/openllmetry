@@ -12,12 +12,10 @@ from tenacity import RetryError, retry, stop_after_attempt, wait_exponential, re
 
 from traceloop.sdk.prompts.model import Prompt, PromptVersion
 from traceloop.sdk.prompts.registry import PromptRegistry
-from traceloop.sdk.tracing.tracing import TRACELOOP_API_ENDPOINT
 
+TRACELOOP_BASE_URL = os.getenv("TRACELOOP_BASE_URL") or "https://app-staging.traceloop.dev"
 TRACELOOP_PROMPT_MANAGER_MAX_RETRIES = os.getenv("TRACELOOP_PROMPT_MANAGER_MAX_RETRIES") or 3
-
-STUB_JSON = '{"prompts": [{"id": "bla", "key": "my_prompt", "created_at": 111111, "updated_at": 111111, "versions": [{"id": "123", "hash": "", "version": 0, "provider": "openai", "templating_engine": "jinja2", "messages": [{ "index": 0, "template": "Hello, {{ name }}!", "role": "user"}], "model_config": {}, "created_at": 1111}]}]}'
-
+PROMPTS_ENDOINT = f"{TRACELOOP_BASE_URL}/api/prompts"
 
 class PromptRegistryClient:
     _poller_thread: Thread
@@ -32,14 +30,15 @@ class PromptRegistryClient:
             obj._jinja_env = Environment()
             obj._stop_polling_event = Event()
             obj._poller_thread = Thread(target=refresh_prompts, args=(
-            obj._registry, obj._stop_polling_event, 5, f"https://postman-echo.com/get"))
+                obj._registry, obj._stop_polling_event, 5))
 
             atexit.register(obj._stop_polling_event.set)
 
         return cls.instance
 
     def run(self):
-        self._registry.loads(STUB_JSON)
+        response = fetch_url(PROMPTS_ENDOINT)
+        self._registry.load(response)
         self._poller_thread.start()
 
     def render_prompt(self, key: str, **args):
@@ -109,12 +108,12 @@ def refresh_prompts(
         prompt_registry: PromptRegistry,
         stop_polling_event: Event,
         seconds_interval: Optional[int] = 5,
-        url: Optional[str] = f"{TRACELOOP_API_ENDPOINT}/prompts"
+        endpoint: Optional[str] = PROMPTS_ENDOINT
 ):
     while not stop_polling_event.is_set():
         try:
-            response = fetch_url(url)
-            prompt_registry.loads(STUB_JSON)
+            response = fetch_url(endpoint)
+            prompt_registry.load(response)
         except RetryError:
             logging.error("Request failed after retries : stopped polling")
             break

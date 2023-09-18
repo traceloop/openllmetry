@@ -1,3 +1,4 @@
+import datetime
 from typing import List, Optional
 
 from pydantic import BaseModel, ConfigDict
@@ -30,7 +31,7 @@ class PromptVersion(RegistryObjectBaseModel):
     hash: str
     version: int
     name: Optional[str] = None
-    created_at: int
+    created_at: datetime.datetime
     provider: str
     templating_engine: str
     messages: List[Message]
@@ -41,5 +42,5 @@ class Prompt(RegistryObjectBaseModel):
     id: str
     versions: List[PromptVersion]
     key: str
-    created_at: int
-    updated_at: int
+    created_at: datetime.datetime
+    updated_at: datetime.datetime
