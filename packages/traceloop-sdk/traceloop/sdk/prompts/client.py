@@ -10,12 +10,14 @@ from typing import Optional
 from jinja2 import Environment
 from tenacity import RetryError, retry, stop_after_attempt, wait_exponential, retry_if_exception
 
-from traceloop.sdk.prompts.model import Prompt, PromptVersion
+from traceloop.sdk.prompts.model import Prompt, PromptVersion, TemplateEngine
 from traceloop.sdk.prompts.registry import PromptRegistry
 
 TRACELOOP_BASE_URL = os.getenv("TRACELOOP_BASE_URL") or "https://app-staging.traceloop.dev"
-TRACELOOP_PROMPT_MANAGER_MAX_RETRIES = os.getenv("TRACELOOP_PROMPT_MANAGER_MAX_RETRIES") or 3
+MAX_RETRIES = os.getenv("TRACELOOP_PROMPT_MANAGER_MAX_RETRIES") or 3
+POLLING_INTERVAL = os.getenv("TRACELOOP_PROMPT_MANAGER_POLLING_INTERVAL") or 5
 PROMPTS_ENDOINT = f"{TRACELOOP_BASE_URL}/api/prompts"
+
 
 class PromptRegistryClient:
     _poller_thread: Thread
@@ -30,7 +32,7 @@ class PromptRegistryClient:
             obj._jinja_env = Environment()
             obj._stop_polling_event = Event()
             obj._poller_thread = Thread(target=refresh_prompts, args=(
-                obj._registry, obj._stop_polling_event, 5))
+                obj._registry, obj._stop_polling_event, POLLING_INTERVAL))
 
             atexit.register(obj._stop_polling_event.set)
 
@@ -56,7 +58,7 @@ class PromptRegistryClient:
         return params_dict
 
     def render_messages(self, prompt_version: PromptVersion, **args):
-        if prompt_version.templating_engine == "jinja2":
+        if prompt_version.templating_engine == TemplateEngine.JINJA2:
             rendered_messages = []
             for msg in prompt_version.messages:
                 template = self._jinja_env.from_string(msg.template)

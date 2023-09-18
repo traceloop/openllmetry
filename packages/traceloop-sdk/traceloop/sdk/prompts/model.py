@@ -4,6 +4,10 @@ from typing import List, Optional
 from pydantic import BaseModel, ConfigDict
 
 
+class TemplateEngine:
+    JINJA2 = "jinja2"
+
+
 class RegistryObjectBaseModel(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
