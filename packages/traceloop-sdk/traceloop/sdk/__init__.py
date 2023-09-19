@@ -8,7 +8,14 @@ from opentelemetry.util.re import parse_env_headers
 from traceloop.sdk.prompts.client import PromptRegistryClient
 from traceloop.sdk.tracing.tracing import TracerWrapper, set_correlation_id
 
-DEFAULT_ENDPOINT = "https://api.traceloop.dev"
+
+def is_prompt_registry_enabled():
+    # return os.getenv("TRACELOOP_PROMPT_REGISTRY_ENABLED") == "true"
+    return True
+
+
+def base_url():
+    return os.getenv("TRACELOOP_BASE_URL") or "https://api.traceloop.com"
 
 
 class Traceloop:
@@ -16,21 +23,21 @@ class Traceloop:
 
     @staticmethod
     def init(
-        app_name: Optional[str] = None,
-        api_endpoint: str = DEFAULT_ENDPOINT,
-        api_key: str = None,
-        headers: dict[str, str] = {},
+            app_name: Optional[str] = None,
+            api_endpoint: str = base_url(),
+            api_key: str = None,
+            headers: dict[str, str] = {},
     ) -> None:
         api_key = os.getenv("TRACELOOP_API_KEY") or api_key
-        api_endpoint = os.getenv("TRACELOOP_API_ENDPOINT") or api_endpoint
+        api_endpoint = os.getenv("TRACELOOP_BASE_URL") or api_endpoint
         headers = os.getenv("TRACELOOP_HEADERS") or headers
         if isinstance(headers, str):
             headers = parse_env_headers(headers)
 
         # auto-create a dashboard on Traceloop if no export endpoint is provided
-        if api_endpoint == DEFAULT_ENDPOINT and not api_key:
+        if api_endpoint == base_url() and not api_key:
             if os.path.exists("/tmp/traceloop_key.txt") and os.path.exists(
-                "/tmp/traceloop_url.txt"
+                    "/tmp/traceloop_url.txt"
             ):
                 api_key = open("/tmp/traceloop_key.txt").read()
                 access_url = open("/tmp/traceloop_url.txt").read()
@@ -54,13 +61,14 @@ class Traceloop:
 
         if api_key:
             headers = {
-                "Authorization": f"Bearer {api_key}",
-            } | headers
+                          "Authorization": f"Bearer {api_key}",
+                      } | headers
 
         TracerWrapper.set_endpoint(api_endpoint, headers)
         Traceloop.__tracer_wrapper = TracerWrapper()
 
-        PromptRegistryClient().run()
+        if is_prompt_registry_enabled():
+            PromptRegistryClient().run()
 
     @staticmethod
     def set_correlation_id(correlation_id: str) -> None:

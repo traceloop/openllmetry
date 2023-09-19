@@ -1,4 +1,3 @@
-import json
 import typing
 
 from traceloop.sdk.prompts.model import Prompt

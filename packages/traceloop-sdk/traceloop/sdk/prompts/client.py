@@ -1,6 +1,7 @@
 import atexit
 import logging
 import os
+import threading
 import time
 import typing
 import requests
@@ -10,17 +11,18 @@ from typing import Optional
 from jinja2 import Environment
 from tenacity import RetryError, retry, stop_after_attempt, wait_exponential, retry_if_exception
 
+from traceloop.sdk import base_url
 from traceloop.sdk.prompts.model import Prompt, PromptVersion, TemplateEngine
 from traceloop.sdk.prompts.registry import PromptRegistry
 
-TRACELOOP_BASE_URL = os.getenv("TRACELOOP_BASE_URL") or "https://app-staging.traceloop.dev"
 MAX_RETRIES = os.getenv("TRACELOOP_PROMPT_MANAGER_MAX_RETRIES") or 3
 POLLING_INTERVAL = os.getenv("TRACELOOP_PROMPT_MANAGER_POLLING_INTERVAL") or 5
-PROMPTS_ENDOINT = f"{TRACELOOP_BASE_URL}/api/prompts"
+PROMPTS_ENDPOINT = f"{base_url()}/api/prompts"
 
 
 class PromptRegistryClient:
     _poller_thread: Thread
+    _exit_monitor: Thread
     _registry: PromptRegistry
     _jinja_env: Environment
     _stop_polling_thread: Event
@@ -31,16 +33,19 @@ class PromptRegistryClient:
             obj._registry = PromptRegistry()
             obj._jinja_env = Environment()
             obj._stop_polling_event = Event()
+            obj._exit_monitor = Thread(target=monitor_exit, args=(obj._stop_polling_event,), daemon=True)
             obj._poller_thread = Thread(target=refresh_prompts, args=(
                 obj._registry, obj._stop_polling_event, POLLING_INTERVAL))
 
+            atexit.register(lambda: print("program ended"))
             atexit.register(obj._stop_polling_event.set)
 
         return cls.instance
 
     def run(self):
-        response = fetch_url(PROMPTS_ENDOINT)
+        response = fetch_url(PROMPTS_ENDPOINT)
         self._registry.load(response)
+        self._exit_monitor.start()
         self._poller_thread.start()
 
     def render_prompt(self, key: str, **args):
@@ -110,7 +115,7 @@ def refresh_prompts(
         prompt_registry: PromptRegistry,
         stop_polling_event: Event,
         seconds_interval: Optional[int] = 5,
-        endpoint: Optional[str] = PROMPTS_ENDOINT
+        endpoint: Optional[str] = PROMPTS_ENDPOINT
 ):
     while not stop_polling_event.is_set():
         try:
@@ -121,3 +126,10 @@ def refresh_prompts(
             break
 
         time.sleep(seconds_interval)
+
+
+def monitor_exit(exit_event: Event):
+    main_thread = threading.main_thread()
+    main_thread.join()
+    exit_event.set()
+    print("event was set")
