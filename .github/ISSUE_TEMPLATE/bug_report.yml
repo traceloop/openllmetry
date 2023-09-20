@@ -15,6 +15,7 @@ body:
         - "Bedrock Instrumentation"
         - "Chromadb Instrumentation"
         - "Cohere Instrumentation"
+        - "Haystack Instrumentation"
         - "OpenAI Instrumentation"
         - "Pinecone Instrumentation"
         - "VertexAI Instrumentation"
@@ -61,13 +62,13 @@ body:
       description: "What did actually happen? Add screenshots, if applicable."
       placeholder: "It actually ..."
   - type: input
-    id: node-version
+    id: python-version
     validations:
       required: false
     attributes:
-      label: "🤖 Node Version"
+      label: "🤖 Python Version"
       description: >
-        What Node version are you using?
+        What Python version are you using?
   - type: textarea
     id: additional-context
     validations:

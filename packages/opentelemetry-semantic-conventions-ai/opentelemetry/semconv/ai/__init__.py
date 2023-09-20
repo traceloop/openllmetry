@@ -19,8 +19,21 @@ class SpanAttributes:
     LLM_COMPLETIONS = "llm.completions"
     LLM_CHAT_STOP_SEQUENCES = "llm.chat.stop_sequences"
 
+    # LLM Workflows
+    TRACELOOP_SPAN_KIND = "traceloop.span.kind"
+    TRACELOOP_WORKFLOW_NAME = "traceloop.workflow.name"
+    TRACELOOP_ENTITY_NAME = "traceloop.entity.name"
+
 
 class LLMRequestTypeValues(Enum):
     COMPLETION = "completion"
     CHAT = "chat"
+    UNKNOWN = "unknown"
+
+
+class TraceloopSpanKindValues(Enum):
+    WORKFLOW = "workflow"
+    TASK = "task"
+    AGENT = "agent"
+    TOOL = "tool"
     UNKNOWN = "unknown"

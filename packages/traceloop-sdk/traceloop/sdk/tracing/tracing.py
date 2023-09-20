@@ -1,16 +1,26 @@
+import atexit
 import logging
 import os
 import importlib.util
 
 from colorama import Fore
 from opentelemetry import trace
-from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
+from opentelemetry.exporter.otlp.proto.http.trace_exporter import (
+    OTLPSpanExporter,
+)
 from opentelemetry.sdk.trace import TracerProvider, SpanProcessor
-from opentelemetry.sdk.trace.export import SpanExporter, BatchSpanProcessor
+from opentelemetry.sdk.trace.export import (
+    SpanExporter,
+    SimpleSpanProcessor,
+    BatchSpanProcessor,
+    ConsoleSpanExporter,
+)
 from opentelemetry.trace import get_tracer_provider, ProxyTracerProvider
 from opentelemetry.context import get_value, attach, set_value
 from opentelemetry.util.re import parse_env_headers
-from traceloop.sdk.semconv import SpanAttributes
+from opentelemetry.semconv.ai import SpanAttributes
+
+from traceloop.sdk.utils import is_notebook
 
 TRACER_NAME = "traceloop.tracer"
 TRACELOOP_API_ENDPOINT = "https://api.traceloop.dev"
@@ -25,15 +35,23 @@ class TracerWrapper(object):
                 TracerWrapper.endpoint, TracerWrapper.headers
             )
             obj.__tracer_provider: TracerProvider = init_tracer_provider()
-            obj.__spans_processor: SpanProcessor = BatchSpanProcessor(
-                obj.__spans_exporter
+            obj.__spans_processor: SpanProcessor = (
+                SimpleSpanProcessor(obj.__spans_exporter)
+                if is_notebook()
+                else BatchSpanProcessor(obj.__spans_exporter)
             )
             obj.__spans_processor.on_start = span_processor_on_start
             obj.__tracer_provider.add_span_processor(obj.__spans_processor)
 
             init_instrumentations()
 
+            # Force flushes for debug environments (e.g. local development)
+            atexit.register(obj.exit_handler)
+
         return cls.instance
+
+    def exit_handler(self):
+        self.flush()
 
     @staticmethod
     def set_endpoint(endpoint: str, headers: dict[str, str]) -> None:
@@ -81,9 +99,10 @@ def span_processor_on_start(span, parent_context):
 
 
 def init_spans_exporter(api_endpoint: str, headers: dict[str, str]) -> SpanExporter:
-    return OTLPSpanExporter(
-        endpoint=f"{api_endpoint}/v1/traces",
-        headers=headers,
+    return (
+        ConsoleSpanExporter()
+        if os.getenv("TRACELOOP_CONSOLE")
+        else OTLPSpanExporter(endpoint=f"{api_endpoint}/v1/traces", headers=headers)
     )
 
 
@@ -106,10 +125,20 @@ def init_tracer_provider() -> TracerProvider:
 
 
 def init_instrumentations():
+    init_haystack_instrumentor()
     init_openai_instrumentor()
     init_requests_instrumentor()
     init_urllib3_instrumentor()
     init_pymysql_instrumentor()
+
+
+def init_haystack_instrumentor():
+    if importlib.util.find_spec("haystack") is not None:
+        from opentelemetry.instrumentation.haystack import HaystackInstrumentor
+
+        instrumentor = HaystackInstrumentor()
+        if not instrumentor.is_instrumented_by_opentelemetry:
+            instrumentor.instrument()
 
 
 def init_openai_instrumentor():
