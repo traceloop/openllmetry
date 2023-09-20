@@ -508,28 +508,26 @@ description = "OpenTelemetry Haystack instrumentation"
 category = "main"
 optional = false
 python-versions = ">=3.8.1,<3.12"
-files = []
-develop = true
+files = [
+    {file = "opentelemetry_instrumentation_haystack-0.0.1-py3-none-any.whl", hash = "sha256:c51624162a306dc171d8b06584acf7ffa64dc5d071b03b02476f0bb7f85d8217"},
+    {file = "opentelemetry_instrumentation_haystack-0.0.1.tar.gz", hash = "sha256:076b8f8012785c151b34e0ddc0378d027ca60159f5a27f5175288cf0bb5c12b8"},
+]
 
 [package.dependencies]
-opentelemetry-api = "^1.19.0"
-opentelemetry-instrumentation = "^0.40b0"
-opentelemetry-semantic-conventions-ai = "^0.0.1"
-
-[package.source]
-type = "directory"
-url = "../opentelemetry-instrumentation-haystack"
+opentelemetry-api = ">=1.19.0,<2.0.0"
+opentelemetry-instrumentation = ">=0.40b0,<0.41"
+opentelemetry-semantic-conventions-ai = ">=0.0.1,<0.0.2"
 
 [[package]]
 name = "opentelemetry-instrumentation-openai"
-version = "0.0.4"
+version = "0.0.5"
 description = "OpenTelemetry OpenAI instrumentation"
 category = "main"
 optional = false
 python-versions = ">=3.8.1,<3.12"
 files = [
-    {file = "opentelemetry_instrumentation_openai-0.0.4-py3-none-any.whl", hash = "sha256:24b329f7d1705f885be612570e35bb92342d93abe9f00bfe3c4e945e4cebc111"},
-    {file = "opentelemetry_instrumentation_openai-0.0.4.tar.gz", hash = "sha256:47e1ca43debcd5545e23df2d531b091dd0caff2f22d9674b4cffcd78784451ea"},
+    {file = "opentelemetry_instrumentation_openai-0.0.5-py3-none-any.whl", hash = "sha256:575e7a4e65da36487b6d43d61b1180bf2cd43abdd89746160d730905179437a2"},
+    {file = "opentelemetry_instrumentation_openai-0.0.5.tar.gz", hash = "sha256:fc681eac55006087b1e2d622dbab925c2209e95da319e102ee53fb1d80801af8"},
 ]
 
 [package.dependencies]
@@ -1076,4 +1074,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8.1,<3.12"
-content-hash = "286c99924164fcfec33bcf050ca08c2cf7507d5df81e02f2045b4d6eb2c08784"
+content-hash = "1fc72e1e3c93ac3dbe29ee59b5cec1e6d57219ea3245c30b5818f65de3953fa3"

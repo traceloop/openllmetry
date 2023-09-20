@@ -15,7 +15,7 @@ from opentelemetry.instrumentation.utils import (
     unwrap,
 )
 
-from traceloop.semconv import SpanAttributes, LLMRequestTypeValues
+from opentelemetry.semconv.ai import SpanAttributes
 
 logger = logging.getLogger(__name__)
 
@@ -24,17 +24,17 @@ __version__ = "0.1.0"
 
 WRAPPED_METHODS = [
     {
-        "object": "Index",
+        "object": "GRPCIndex",
         "method": "query",
         "span_name": "pinecone.query",
     },
     {
-        "object": "Index",
+        "object": "GRPCIndex",
         "method": "upsert",
         "span_name": "pinecone.upsert",
     },
     {
-        "object": "Index",
+        "object": "GRPCIndex",
         "method": "delete",
         "span_name": "pinecone.delete",
     },

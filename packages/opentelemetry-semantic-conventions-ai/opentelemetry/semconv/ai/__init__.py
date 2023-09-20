@@ -19,6 +19,10 @@ class SpanAttributes:
     LLM_COMPLETIONS = "llm.completions"
     LLM_CHAT_STOP_SEQUENCES = "llm.chat.stop_sequences"
 
+    # Vector DB
+    VECTOR_DB_VENDOR = "vector_db.vendor"
+    VECTOR_DB_QUERY_TOP_K = "vector_db.query.top_k"
+
     # LLM Workflows
     TRACELOOP_SPAN_KIND = "traceloop.span.kind"
     TRACELOOP_WORKFLOW_NAME = "traceloop.workflow.name"
