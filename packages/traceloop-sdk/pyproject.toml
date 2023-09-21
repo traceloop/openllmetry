@@ -39,6 +39,7 @@ opentelemetry-instrumentation-openai = "^0.0.5"
 opentelemetry-instrumentation-pinecone = "^0.0.2"
 opentelemetry-instrumentation-haystack = "^0.0.1"
 colorama = "^0.4.6"
+farm-haystack = "^1.20.1"
 
 [tool.poetry.group.dev.dependencies]
 autopep8 = "2.0.4"

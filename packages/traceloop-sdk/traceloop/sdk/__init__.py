@@ -20,6 +20,7 @@ class Traceloop:
         api_endpoint: str = DEFAULT_ENDPOINT,
         api_key: str = None,
         headers: dict[str, str] = {},
+        disable_batch=False,
         exporter: SpanExporter = None,
     ) -> None:
         api_key = os.getenv("TRACELOOP_API_KEY") or api_key
@@ -59,7 +60,9 @@ class Traceloop:
             } | headers
 
         TracerWrapper.set_endpoint(api_endpoint, headers)
-        Traceloop.__tracer_wrapper = TracerWrapper(exporter=exporter)
+        Traceloop.__tracer_wrapper = TracerWrapper(
+            disable_batch=disable_batch, exporter=exporter
+        )
 
     @staticmethod
     def set_correlation_id(correlation_id: str) -> None:

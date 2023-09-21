@@ -28,7 +28,9 @@ EXCLUDED_URLS = "api.openai.com,openai.azure.com"
 
 
 class TracerWrapper(object):
-    def __new__(cls, exporter: SpanExporter = None) -> "TracerWrapper":
+    def __new__(
+        cls, disable_batch=False, exporter: SpanExporter = None
+    ) -> "TracerWrapper":
         if not hasattr(cls, "instance"):
             obj = cls.instance = super(TracerWrapper, cls).__new__(cls)
             obj.__spans_exporter: SpanExporter = (
@@ -37,11 +39,15 @@ class TracerWrapper(object):
                 else init_spans_exporter(TracerWrapper.endpoint, TracerWrapper.headers)
             )
             obj.__tracer_provider: TracerProvider = init_tracer_provider()
-            obj.__spans_processor: SpanProcessor = (
-                SimpleSpanProcessor(obj.__spans_exporter)
-                if is_notebook()
-                else BatchSpanProcessor(obj.__spans_exporter)
-            )
+            if disable_batch or is_notebook():
+                obj.__spans_processor: SpanProcessor = SimpleSpanProcessor(
+                    obj.__spans_exporter
+                )
+            else:
+                obj.__spans_processor: SpanProcessor = BatchSpanProcessor(
+                    obj.__spans_exporter
+                )
+
             obj.__spans_processor.on_start = span_processor_on_start
             obj.__tracer_provider.add_span_processor(obj.__spans_processor)
 

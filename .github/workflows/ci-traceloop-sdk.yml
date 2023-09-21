@@ -1,10 +1,10 @@
 name: CI - Traceloop SDK
 
 on:
+  pull_request:
   push:
     branches:
       - 'main'
-  pull_request:
 
 jobs:
 
@@ -22,7 +22,7 @@ jobs:
           python-version: 3.11
 
       - name: Install Poetry
-        uses: dschep/install-poetry-action@v1.2
+        uses: snok/install-poetry@v1
 
       - name: Cache Poetry virtualenv
         uses: actions/cache@v1
@@ -33,19 +33,13 @@ jobs:
           restore-keys: |
             poetry-${{ hashFiles('**/poetry.lock') }}
 
-      - name: Set Poetry config
-        run: |
-          poetry config settings.virtualenvs.in-project false
-          poetry config settings.virtualenvs.path ~/.virtualenvs
-
-      - name: Switch to python-sdk
-        run: cd packages/traceloop-sdk
-
       - name: Install Dependencies
+        working-directory: packages/traceloop-sdk
         run: poetry install
         if: steps.cache.outputs.cache-hit != 'true'
 
       - name: Test with pytest
         env:
           OPENAI_API_KEY: ${{ secrets.OPEN_API_KEY }}
-        run: poetry run pytest --cov . -n 2
+        working-directory: packages/traceloop-sdk
+        run: poetry run pytest
