@@ -1,4 +1,3 @@
-import atexit
 import logging
 import os
 import threading
@@ -11,13 +10,19 @@ from typing import Optional
 from jinja2 import Environment
 from tenacity import RetryError, retry, stop_after_attempt, wait_exponential, retry_if_exception
 
-from traceloop.sdk import base_url
 from traceloop.sdk.prompts.model import Prompt, PromptVersion, TemplateEngine
 from traceloop.sdk.prompts.registry import PromptRegistry
 
 MAX_RETRIES = os.getenv("TRACELOOP_PROMPT_MANAGER_MAX_RETRIES") or 3
 POLLING_INTERVAL = os.getenv("TRACELOOP_PROMPT_MANAGER_POLLING_INTERVAL") or 5
-PROMPTS_ENDPOINT = f"{base_url()}/api/prompts"
+PROMPTS_ENDPOINT = f"https://app-staging.traceloop.dev/api/prompts"
+
+
+def get_effective_version(prompt: Prompt) -> PromptVersion:
+    if len(prompt.versions) == 0:
+        raise f"No versions exist for {prompt.key} prompt"
+
+    return next(v for v in prompt.versions if v.id == prompt.target.version)
 
 
 class PromptRegistryClient:
@@ -37,9 +42,6 @@ class PromptRegistryClient:
             obj._poller_thread = Thread(target=refresh_prompts, args=(
                 obj._registry, obj._stop_polling_event, POLLING_INTERVAL))
 
-            atexit.register(lambda: print("program ended"))
-            atexit.register(obj._stop_polling_event.set)
-
         return cls.instance
 
     def run(self):
@@ -53,12 +55,12 @@ class PromptRegistryClient:
         if prompt is None:
             raise f"Prompt {key} does not exist"
 
-        prompt_version = self.get_effective_version(prompt)
+        prompt_version = get_effective_version(prompt)
         params_dict = {
             "messages": self.render_messages(prompt_version, **args)
         }
-
-        params_dict.update(prompt_version.model_config)
+        params_dict.update(prompt_version.llm_config)
+        params_dict.pop("mode")
 
         return params_dict
 
@@ -74,13 +76,6 @@ class PromptRegistryClient:
             return rendered_messages
         else:
             raise f"Templating engine {prompt_version.templating_engine} is not supported"
-
-    def get_effective_version(self, prompt: Prompt):
-        if len(prompt.versions) == 0:
-            raise f"No versions exist for {prompt.key} prompt"
-
-        # TODO: get version by targeting
-        return prompt.versions[0]
 
 
 class RetryIfServerError(retry_if_exception):
@@ -102,7 +97,9 @@ class RetryIfServerError(retry_if_exception):
 )
 def fetch_url(url):
     try:
-        with requests.get(url) as response:
+        with requests.get(url, headers={
+            "Authorization": f"Bearer {os.getenv('TRACELOOP_API_KEY')}"
+        }) as response:
             return response.json()
     except requests.exceptions.HTTPError as e:
         raise e
@@ -132,4 +129,3 @@ def monitor_exit(exit_event: Event):
     main_thread = threading.main_thread()
     main_thread.join()
     exit_event.set()
-    print("event was set")

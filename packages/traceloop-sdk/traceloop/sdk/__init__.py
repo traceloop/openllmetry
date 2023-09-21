@@ -1,21 +1,13 @@
 import os
 import requests
-from typing import Optional
 
+from typing import Optional
 from colorama import Fore
 from opentelemetry.util.re import parse_env_headers
 
+from traceloop.sdk.config import base_url, is_prompt_registry_enabled
 from traceloop.sdk.prompts.client import PromptRegistryClient
 from traceloop.sdk.tracing.tracing import TracerWrapper, set_correlation_id
-
-
-def is_prompt_registry_enabled():
-    # return os.getenv("TRACELOOP_PROMPT_REGISTRY_ENABLED") == "true"
-    return True
-
-
-def base_url():
-    return os.getenv("TRACELOOP_BASE_URL") or "https://api.traceloop.com"
 
 
 class Traceloop:
