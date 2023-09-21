@@ -13,8 +13,8 @@ from opentelemetry.sdk.trace.export import (
     SpanExporter,
     SimpleSpanProcessor,
     BatchSpanProcessor,
-    ConsoleSpanExporter,
 )
+from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
 from opentelemetry.trace import get_tracer_provider, ProxyTracerProvider
 from opentelemetry.context import get_value, attach, set_value
 from opentelemetry.util.re import parse_env_headers
@@ -28,11 +28,13 @@ EXCLUDED_URLS = "api.openai.com,openai.azure.com"
 
 
 class TracerWrapper(object):
-    def __new__(cls) -> "TracerWrapper":
+    def __new__(cls, exporter: SpanExporter = None) -> "TracerWrapper":
         if not hasattr(cls, "instance"):
             obj = cls.instance = super(TracerWrapper, cls).__new__(cls)
-            obj.__spans_exporter: SpanExporter = init_spans_exporter(
-                TracerWrapper.endpoint, TracerWrapper.headers
+            obj.__spans_exporter: SpanExporter = (
+                exporter
+                if exporter
+                else init_spans_exporter(TracerWrapper.endpoint, TracerWrapper.headers)
             )
             obj.__tracer_provider: TracerProvider = init_tracer_provider()
             obj.__spans_processor: SpanProcessor = (
@@ -99,11 +101,7 @@ def span_processor_on_start(span, parent_context):
 
 
 def init_spans_exporter(api_endpoint: str, headers: dict[str, str]) -> SpanExporter:
-    return (
-        ConsoleSpanExporter()
-        if os.getenv("TRACELOOP_CONSOLE")
-        else OTLPSpanExporter(endpoint=f"{api_endpoint}/v1/traces", headers=headers)
-    )
+    return OTLPSpanExporter(endpoint=f"{api_endpoint}/v1/traces", headers=headers)
 
 
 def init_tracer_provider() -> TracerProvider:

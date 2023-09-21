@@ -48,6 +48,9 @@ pytest-sugar = "0.9.7"
 pytest-cov = "4.1.0"
 pytest-html = "4.0.0"
 
+[tool.poetry.group.test.dependencies]
+openai = "^0.28.0"
+
 [build-system]
 requires = [ "poetry-core" ]
 build-backend = "poetry.core.masonry.api"

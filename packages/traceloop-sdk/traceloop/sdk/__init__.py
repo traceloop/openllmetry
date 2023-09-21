@@ -3,6 +3,7 @@ import requests
 from typing import Optional
 
 from colorama import Fore
+from opentelemetry.sdk.trace.export import SpanExporter
 from opentelemetry.util.re import parse_env_headers
 
 from traceloop.sdk.tracing.tracing import TracerWrapper, set_correlation_id
@@ -19,6 +20,7 @@ class Traceloop:
         api_endpoint: str = DEFAULT_ENDPOINT,
         api_key: str = None,
         headers: dict[str, str] = {},
+        exporter: SpanExporter = None,
     ) -> None:
         api_key = os.getenv("TRACELOOP_API_KEY") or api_key
         api_endpoint = os.getenv("TRACELOOP_API_ENDPOINT") or api_endpoint
@@ -57,7 +59,7 @@ class Traceloop:
             } | headers
 
         TracerWrapper.set_endpoint(api_endpoint, headers)
-        Traceloop.__tracer_wrapper = TracerWrapper()
+        Traceloop.__tracer_wrapper = TracerWrapper(exporter=exporter)
 
     @staticmethod
     def set_correlation_id(correlation_id: str) -> None:

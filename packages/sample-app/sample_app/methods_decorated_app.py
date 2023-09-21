@@ -58,7 +58,7 @@ def generate_signature(joke: str):
 
 @workflow(name="pirate_joke_generator")
 def joke_workflow():
-    Traceloop.set_correlation_id("joke_12345")
+    # Traceloop.set_correlation_id("joke_12345")
 
     eng_joke = create_joke()
     pirate_joke = translate_joke_to_pirate(eng_joke)
@@ -66,4 +66,4 @@ def joke_workflow():
     print(pirate_joke + "\n\n" + signature)
 
 
-joke_workflow()
+# joke_workflow()
