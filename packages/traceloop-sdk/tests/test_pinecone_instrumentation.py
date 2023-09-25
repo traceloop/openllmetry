@@ -56,8 +56,7 @@ def test_pinecone_retrieval(exporter):
     @workflow(name="query_with_retrieve")
     def run_query(query: str):
         query_with_contexts = retrieve(query)
-        print(query_with_contexts)
-        print(complete(query_with_contexts))
+        complete(query_with_contexts)
 
     query = (
         "Which training method should I use for sentence transformers when "
