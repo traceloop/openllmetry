@@ -6,7 +6,7 @@ from colorama import Fore
 from opentelemetry.sdk.trace.export import SpanExporter
 from opentelemetry.util.re import parse_env_headers
 
-from traceloop.sdk.config import base_url, is_prompt_registry_enabled
+from traceloop.sdk.config import base_url, is_prompt_registry_enabled, is_tracing_enabled
 from traceloop.sdk.prompts.client import PromptRegistryClient
 from traceloop.sdk.tracing.tracing import TracerWrapper, set_correlation_id
 
@@ -23,6 +23,12 @@ class Traceloop:
         disable_batch=False,
         exporter: SpanExporter = None,
     ) -> None:
+        if is_prompt_registry_enabled():
+            PromptRegistryClient().run()
+
+        if not is_tracing_enabled():
+            return
+
         api_key = os.getenv("TRACELOOP_API_KEY") or api_key
         api_endpoint = os.getenv("TRACELOOP_BASE_URL") or api_endpoint
         headers = os.getenv("TRACELOOP_HEADERS") or headers
@@ -63,9 +69,6 @@ class Traceloop:
         Traceloop.__tracer_wrapper = TracerWrapper(
             disable_batch=disable_batch, exporter=exporter
         )
-
-        if is_prompt_registry_enabled():
-            PromptRegistryClient().run()
 
     @staticmethod
     def set_correlation_id(correlation_id: str) -> None:
