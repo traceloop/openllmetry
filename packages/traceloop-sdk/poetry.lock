@@ -1301,54 +1301,54 @@ test = ["opentelemetry-test-utils (==0.40b0)"]
 
 [[package]]
 name = "opentelemetry-instrumentation-haystack"
-version = "0.0.2"
+version = "0.0.3"
 description = "OpenTelemetry Haystack instrumentation"
 category = "main"
 optional = false
 python-versions = ">=3.8.1,<3.12"
 files = [
-    {file = "opentelemetry_instrumentation_haystack-0.0.2-py3-none-any.whl", hash = "sha256:1bed27d7029a90093906005591db8ece8edea34ff778f1efa36df3477258d3ba"},
-    {file = "opentelemetry_instrumentation_haystack-0.0.2.tar.gz", hash = "sha256:57cb6544db90f4228437e9ed69a67243b136a8162ce7f3eade6b015b9d856811"},
+    {file = "opentelemetry_instrumentation_haystack-0.0.3-py3-none-any.whl", hash = "sha256:e6c0dc48e8d613c63c148d8c2a388b9338cf035c06d8406157af7739c87eaa29"},
+    {file = "opentelemetry_instrumentation_haystack-0.0.3.tar.gz", hash = "sha256:ae4736cef41ea814f723d533e8173f4868606934e03d00cc5e3f5deaf1d569b1"},
 ]
 
 [package.dependencies]
 opentelemetry-api = ">=1.19.0,<2.0.0"
 opentelemetry-instrumentation = ">=0.40b0,<0.41"
-opentelemetry-semantic-conventions-ai = ">=0.0.2,<0.0.3"
+opentelemetry-semantic-conventions-ai = ">=0.0.3,<0.0.4"
 
 [[package]]
 name = "opentelemetry-instrumentation-openai"
-version = "0.0.6"
+version = "0.0.8"
 description = "OpenTelemetry OpenAI instrumentation"
 category = "main"
 optional = false
 python-versions = ">=3.8.1,<3.12"
 files = [
-    {file = "opentelemetry_instrumentation_openai-0.0.6-py3-none-any.whl", hash = "sha256:91b898afca47913d19446352e54816ab0777bcd4bad228696d2e4bcadaa75c4f"},
-    {file = "opentelemetry_instrumentation_openai-0.0.6.tar.gz", hash = "sha256:dd2f17e9c604c0a70a684bd4a81239afc128679ce292920b0b6111e814bcdb79"},
+    {file = "opentelemetry_instrumentation_openai-0.0.8-py3-none-any.whl", hash = "sha256:1ef0485dc083fe6951166b27f0bc1ee9d558f8497a7da0f3fb122a1d6a4f077c"},
+    {file = "opentelemetry_instrumentation_openai-0.0.8.tar.gz", hash = "sha256:945b28312c294201847452c2096508fd732e00b3d0c3ab4c4cd56bd0e0763e7c"},
 ]
 
 [package.dependencies]
 opentelemetry-api = ">=1.19.0,<2.0.0"
 opentelemetry-instrumentation = ">=0.40b0,<0.41"
-opentelemetry-semantic-conventions-ai = ">=0.0.2,<0.0.3"
+opentelemetry-semantic-conventions-ai = ">=0.0.3,<0.0.4"
 
 [[package]]
 name = "opentelemetry-instrumentation-pinecone"
-version = "0.0.3"
+version = "0.0.4"
 description = "OpenTelemetry Pinecone instrumentation"
 category = "main"
 optional = false
 python-versions = ">=3.8.1,<3.12"
 files = [
-    {file = "opentelemetry_instrumentation_pinecone-0.0.3-py3-none-any.whl", hash = "sha256:a9e8714b24102155f70a0d9c60b702d0b25c7d972579d81b8703bf069d2227c0"},
-    {file = "opentelemetry_instrumentation_pinecone-0.0.3.tar.gz", hash = "sha256:4e8e5b7014eca4e248e2ce140fdcc79a1e21675f477ef3a19801141b432454d0"},
+    {file = "opentelemetry_instrumentation_pinecone-0.0.4-py3-none-any.whl", hash = "sha256:519ddc31ebd2bd173c5df9d02668dfa4519c929d4a6a930a9b61e6cf12cf9465"},
+    {file = "opentelemetry_instrumentation_pinecone-0.0.4.tar.gz", hash = "sha256:926ef2b71a25f51d9cef645a9366d6bcd3411cc34f78f0aa9d68a5fc7fa0b9ea"},
 ]
 
 [package.dependencies]
 opentelemetry-api = ">=1.19.0,<2.0.0"
 opentelemetry-instrumentation = ">=0.40b0,<0.41"
-opentelemetry-semantic-conventions-ai = ">=0.0.2,<0.0.3"
+opentelemetry-semantic-conventions-ai = ">=0.0.3,<0.0.4"
 
 [[package]]
 name = "opentelemetry-instrumentation-pymysql"
@@ -1462,14 +1462,14 @@ files = [
 
 [[package]]
 name = "opentelemetry-semantic-conventions-ai"
-version = "0.0.2"
+version = "0.0.3"
 description = "OpenTelemetry Semantic Conventions Extension for Large Language Models"
 category = "main"
 optional = false
 python-versions = ">=3.8.1,<3.12"
 files = [
-    {file = "opentelemetry_semantic_conventions_ai-0.0.2-py3-none-any.whl", hash = "sha256:93751a830131790ed36d76d7f86dd54af55738ab0ae7c4ba5b184e57f7d04f24"},
-    {file = "opentelemetry_semantic_conventions_ai-0.0.2.tar.gz", hash = "sha256:d4aaa4aeb5a697b00fcd540f9e290cdb06eb1d7d67c3fab1e0d18691dcc6630a"},
+    {file = "opentelemetry_semantic_conventions_ai-0.0.3-py3-none-any.whl", hash = "sha256:b9e1753bbb9d6ff9df9d0fcb27a571b49f96d2f2a4786acffcde8e43f13a7f1f"},
+    {file = "opentelemetry_semantic_conventions_ai-0.0.3.tar.gz", hash = "sha256:204492e05fdb25386b16bae8eb9f46b8002c711270c21f924cc230454918c01f"},
 ]
 
 [[package]]
@@ -3013,4 +3013,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8.1,<3.12"
-content-hash = "68cd7777cbb2b238140ee5b999996ed06b63bd52fbfffe85ca88aab74d92918e"
+content-hash = "0af76d96a824c191fd1b29cb30e6f75fccaeb8f7ef22cf1f06eea557eb9b2f0d"

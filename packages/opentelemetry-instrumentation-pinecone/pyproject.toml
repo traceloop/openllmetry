@@ -11,7 +11,7 @@ addopts = "--cov --cov-report html:'../../coverage/packages/opentelemetry-instru
 
 [tool.poetry]
 name = "opentelemetry-instrumentation-pinecone"
-version = "0.0.3"
+version = "0.0.4"
 description = "OpenTelemetry Pinecone instrumentation"
 authors = [
   "Gal Kleinman <gal@traceloop.com>",
@@ -27,7 +27,7 @@ include = "opentelemetry/instrumentation/pinecone"
 python = ">=3.8.1,<3.12"
 opentelemetry-api = "^1.19.0"
 opentelemetry-instrumentation = "^0.40b0"
-opentelemetry-semantic-conventions-ai = "^0.0.2"
+opentelemetry-semantic-conventions-ai = "^0.0.3"
 
 [tool.poetry.group.dev.dependencies]
 autopep8 = "2.0.4"
