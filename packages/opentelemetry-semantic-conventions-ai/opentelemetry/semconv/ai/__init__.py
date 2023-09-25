@@ -19,10 +19,15 @@ class SpanAttributes:
     LLM_COMPLETIONS = "llm.completions"
     LLM_CHAT_STOP_SEQUENCES = "llm.chat.stop_sequences"
 
+    # Vector DB
+    VECTOR_DB_VENDOR = "vector_db.vendor"
+    VECTOR_DB_QUERY_TOP_K = "vector_db.query.top_k"
+
     # LLM Workflows
     TRACELOOP_SPAN_KIND = "traceloop.span.kind"
     TRACELOOP_WORKFLOW_NAME = "traceloop.workflow.name"
     TRACELOOP_ENTITY_NAME = "traceloop.entity.name"
+    TRACELOOP_CORRELATION_ID = "traceloop.correlation.id"
 
 
 class LLMRequestTypeValues(Enum):

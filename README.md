@@ -85,7 +85,7 @@ OpenLLMetry can instrument everything that [OpenTelemetry already instruments](h
 
 ### Vector DBs
 
-- [ ] Pinecone
+- [x] Pinecone
 - [ ] Chroma
 - [ ] Weaviate
 
