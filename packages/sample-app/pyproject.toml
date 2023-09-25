@@ -29,6 +29,14 @@ python = ">=3.8.1,<3.12"
 openai = "^0.28.0"
 requests = "^2.31.0"
 
+[tool.poetry.dependencies.opentelemetry-instrumentation-openai]
+path = "../opentelemetry-instrumentation-openai"
+develop = true
+
+[tool.poetry.dependencies.opentelemetry-instrumentation-haystack]
+path = "../opentelemetry-instrumentation-haystack"
+develop = true
+
 [tool.poetry.dependencies.traceloop-sdk]
 path = "../traceloop-sdk"
 develop = true

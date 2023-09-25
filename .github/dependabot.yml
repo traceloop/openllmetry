@@ -1,0 +1,62 @@
+version: 2
+updates:
+  - package-ecosystem: "pip"
+    directory: "/packages/opentelemetry-instrumentation-anthropic"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "opentelemetry-instrumentation-anthropic"
+  - package-ecosystem: "pip"
+    directory: "/packages/opentelemetry-instrumentation-bedrock"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "opentelemetry-instrumentation-bedrock"
+  - package-ecosystem: "pip"
+    directory: "/packages/opentelemetry-instrumentation-chromadb"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "opentelemetry-instrumentation-chromadb"
+  - package-ecosystem: "pip"
+    directory: "/packages/opentelemetry-instrumentation-cohere"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "opentelemetry-instrumentation-cohere"
+  - package-ecosystem: "pip"
+    directory: "/packages/opentelemetry-instrumentation-openai"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "opentelemetry-instrumentation-openai"
+  - package-ecosystem: "pip"
+    directory: "/packages/opentelemetry-instrumentation-pinecone"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "opentelemetry-instrumentation-pinecone"
+  - package-ecosystem: "pip"
+    directory: "/packages/opentelemetry-instrumentation-vertexai"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "opentelemetry-instrumentation-vertexai"
+  - package-ecosystem: "pip"
+    directory: "/packages/opentelemetry-instrumentation-weaviate"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "opentelemetry-instrumentation-weaviate"
+  - package-ecosystem: "pip"
+    directory: "/packages/opentelemetry-semantic-conventions-llm"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "opentelemetry-semantic-conventions-llm"
+  - package-ecosystem: "pip"
+    directory: "/packages/traceloop-sdk"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "traceloop-sdk"

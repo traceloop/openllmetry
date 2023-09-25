@@ -3,6 +3,7 @@ import requests
 
 from typing import Optional
 from colorama import Fore
+from opentelemetry.sdk.trace.export import SpanExporter
 from opentelemetry.util.re import parse_env_headers
 
 from traceloop.sdk.config import base_url, is_prompt_registry_enabled
@@ -15,10 +16,12 @@ class Traceloop:
 
     @staticmethod
     def init(
-            app_name: Optional[str] = None,
-            api_endpoint: str = base_url(),
-            api_key: str = None,
-            headers: dict[str, str] = {},
+        app_name: Optional[str] = None,
+        api_endpoint: str = base_url(),
+        api_key: str = None,
+        headers: dict[str, str] = {},
+        disable_batch=False,
+        exporter: SpanExporter = None,
     ) -> None:
         api_key = os.getenv("TRACELOOP_API_KEY") or api_key
         api_endpoint = os.getenv("TRACELOOP_BASE_URL") or api_endpoint
@@ -57,7 +60,9 @@ class Traceloop:
                       } | headers
 
         TracerWrapper.set_endpoint(api_endpoint, headers)
-        Traceloop.__tracer_wrapper = TracerWrapper()
+        Traceloop.__tracer_wrapper = TracerWrapper(
+            disable_batch=disable_batch, exporter=exporter
+        )
 
         if is_prompt_registry_enabled():
             PromptRegistryClient().run()

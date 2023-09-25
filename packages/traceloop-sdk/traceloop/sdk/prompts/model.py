@@ -9,7 +9,8 @@ class TemplateEngine:
 
 
 class RegistryObjectBaseModel(BaseModel):
-    model_config = ConfigDict(arbitrary_types_allowed=True)
+    class Config:
+        arbitrary_types_allowed = True
 
 
 class Message(RegistryObjectBaseModel):
