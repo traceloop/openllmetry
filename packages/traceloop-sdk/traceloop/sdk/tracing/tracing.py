@@ -23,7 +23,7 @@ from opentelemetry.semconv.ai import SpanAttributes
 from traceloop.sdk.utils import is_notebook
 
 TRACER_NAME = "traceloop.tracer"
-EXCLUDED_URLS = "api.openai.com,openai.azure.com"
+EXCLUDED_URLS = "api.openai.com,openai.azure.com,pinecone.io"
 
 
 class TracerWrapper(object):
@@ -128,20 +128,12 @@ def init_tracer_provider() -> TracerProvider:
 
 
 def init_instrumentations():
-    init_haystack_instrumentor()
     init_openai_instrumentor()
+    init_pinecone_instrumentor()
+    init_haystack_instrumentor()
     init_requests_instrumentor()
     init_urllib3_instrumentor()
     init_pymysql_instrumentor()
-
-
-def init_haystack_instrumentor():
-    if importlib.util.find_spec("haystack") is not None:
-        from opentelemetry.instrumentation.haystack import HaystackInstrumentor
-
-        instrumentor = HaystackInstrumentor()
-        if not instrumentor.is_instrumented_by_opentelemetry:
-            instrumentor.instrument()
 
 
 def init_openai_instrumentor():
@@ -149,6 +141,24 @@ def init_openai_instrumentor():
         from opentelemetry.instrumentation.openai import OpenAIInstrumentor
 
         instrumentor = OpenAIInstrumentor()
+        if not instrumentor.is_instrumented_by_opentelemetry:
+            instrumentor.instrument()
+
+
+def init_pinecone_instrumentor():
+    if importlib.util.find_spec("pinecone") is not None:
+        from opentelemetry.instrumentation.pinecone import PineconeInstrumentor
+
+        instrumentor = PineconeInstrumentor()
+        if not instrumentor.is_instrumented_by_opentelemetry:
+            instrumentor.instrument()
+
+
+def init_haystack_instrumentor():
+    if importlib.util.find_spec("haystack") is not None:
+        from opentelemetry.instrumentation.haystack import HaystackInstrumentor
+
+        instrumentor = HaystackInstrumentor()
         if not instrumentor.is_instrumented_by_opentelemetry:
             instrumentor.instrument()
 

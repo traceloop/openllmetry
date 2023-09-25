@@ -11,7 +11,7 @@ addopts = "--cov --cov-report html:'../../coverage/packages/opentelemetry-semant
 
 [tool.poetry]
 name = "opentelemetry-semantic-conventions-ai"
-version = "0.0.1"
+version = "0.0.3"
 description = "OpenTelemetry Semantic Conventions Extension for Large Language Models"
 authors = [
   "Gal Kleinman <gal@traceloop.com>",
