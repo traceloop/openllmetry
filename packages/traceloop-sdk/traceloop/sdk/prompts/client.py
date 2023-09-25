@@ -7,7 +7,7 @@ import requests
 
 from threading import Thread, Event
 from typing import Optional
-from jinja2 import Environment
+from jinja2 import Environment, meta
 from tenacity import RetryError, retry, stop_after_attempt, wait_exponential, retry_if_exception
 
 from traceloop.sdk.prompts.model import Prompt, PromptVersion, TemplateEngine
@@ -15,12 +15,12 @@ from traceloop.sdk.prompts.registry import PromptRegistry
 
 MAX_RETRIES = os.getenv("TRACELOOP_PROMPT_MANAGER_MAX_RETRIES") or 3
 POLLING_INTERVAL = os.getenv("TRACELOOP_PROMPT_MANAGER_POLLING_INTERVAL") or 5
-PROMPTS_ENDPOINT = f"https://app-staging.traceloop.dev/api/prompts"
+PROMPTS_ENDPOINT = f"http://app.traceloop.dev/api/prompts"
 
 
 def get_effective_version(prompt: Prompt) -> PromptVersion:
     if len(prompt.versions) == 0:
-        raise f"No versions exist for {prompt.key} prompt"
+        raise Exception(f"No versions exist for {prompt.key} prompt")
 
     return next(v for v in prompt.versions if v.id == prompt.target.version)
 
@@ -53,7 +53,7 @@ class PromptRegistryClient:
     def render_prompt(self, key: str, **args):
         prompt = self._registry.get_prompt_by_key(key)
         if prompt is None:
-            raise f"Prompt {key} does not exist"
+            raise Exception(f"Prompt {key} does not exist")
 
         prompt_version = get_effective_version(prompt)
         params_dict = {
@@ -69,13 +69,19 @@ class PromptRegistryClient:
             rendered_messages = []
             for msg in prompt_version.messages:
                 template = self._jinja_env.from_string(msg.template)
-                rendered_msg = template.render(args)
+                template_variables = meta.find_undeclared_variables(self._jinja_env.parse(msg.template))
+                missing_variables = template_variables.difference(set(args.keys()))
+                if missing_variables == set():
+                    rendered_msg = template.render(args)
+                else:
+                    raise Exception(f"Input variables: {','.join(str(var) for var in missing_variables)} are missing")
+
                 # TODO: support other types than openai chat structure
                 rendered_messages.append({"role": msg.role, "content": rendered_msg})
 
             return rendered_messages
         else:
-            raise f"Templating engine {prompt_version.templating_engine} is not supported"
+            raise Exception(f"Templating engine {prompt_version.templating_engine} is not supported")
 
 
 class RetryIfServerError(retry_if_exception):
@@ -87,7 +93,11 @@ class RetryIfServerError(retry_if_exception):
             ] = Exception,
     ) -> None:
         self.exception_types = exception_types
-        super().__init__(lambda e: isinstance(e, requests.exceptions.HTTPError) and (500 <= e.code < 600))
+        super().__init__(lambda e: check_http_error(e))
+
+
+def check_http_error(e):
+    return isinstance(e, requests.exceptions.HTTPError) and (500 <= e.response.status_code < 600)
 
 
 @retry(
@@ -96,16 +106,14 @@ class RetryIfServerError(retry_if_exception):
     retry=RetryIfServerError(),
 )
 def fetch_url(url):
-    try:
-        with requests.get(url, headers={
-            "Authorization": f"Bearer {os.getenv('TRACELOOP_API_KEY')}"
-        }) as response:
-            return response.json()
-    except requests.exceptions.HTTPError as e:
-        raise e
-    except Exception as e:
-        if 500 <= e.code < 600:
-            raise e
+    response = requests.get(url, headers={
+        "Authorization": f"Bearer {os.getenv('TRACELOOP_API_KEY')}"
+    })
+
+    if response.status_code != 200:
+        raise requests.exceptions.HTTPError(response=response)
+    else:
+        return response.json()
 
 
 def refresh_prompts(
