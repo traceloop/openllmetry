@@ -129,21 +129,12 @@ def init_tracer_provider() -> TracerProvider:
 
 
 def init_instrumentations():
-    init_haystack_instrumentor()
     init_openai_instrumentor()
     init_pinecone_instrumentor()
+    init_haystack_instrumentor()
     init_requests_instrumentor()
     init_urllib3_instrumentor()
     init_pymysql_instrumentor()
-
-
-def init_haystack_instrumentor():
-    if importlib.util.find_spec("haystack") is not None:
-        from opentelemetry.instrumentation.haystack import HaystackInstrumentor
-
-        instrumentor = HaystackInstrumentor()
-        if not instrumentor.is_instrumented_by_opentelemetry:
-            instrumentor.instrument()
 
 
 def init_openai_instrumentor():
@@ -160,6 +151,15 @@ def init_pinecone_instrumentor():
         from opentelemetry.instrumentation.pinecone import PineconeInstrumentor
 
         instrumentor = PineconeInstrumentor()
+        if not instrumentor.is_instrumented_by_opentelemetry:
+            instrumentor.instrument()
+
+
+def init_haystack_instrumentor():
+    if importlib.util.find_spec("haystack") is not None:
+        from opentelemetry.instrumentation.haystack import HaystackInstrumentor
+
+        instrumentor = HaystackInstrumentor()
         if not instrumentor.is_instrumented_by_opentelemetry:
             instrumentor.instrument()
 
