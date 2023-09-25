@@ -39,6 +39,7 @@ opentelemetry-instrumentation-openai = "^0.0.6"
 opentelemetry-instrumentation-pinecone = "^0.0.3"
 opentelemetry-instrumentation-haystack = "^0.0.2"
 colorama = "^0.4.6"
+farm-haystack = "^1.20.1"
 
 [tool.poetry.group.dev.dependencies]
 autopep8 = "2.0.4"
@@ -47,6 +48,9 @@ pytest = "7.4.1"
 pytest-sugar = "0.9.7"
 pytest-cov = "4.1.0"
 pytest-html = "4.0.0"
+
+[tool.poetry.group.test.dependencies]
+openai = "^0.28.0"
 
 [build-system]
 requires = [ "poetry-core" ]
