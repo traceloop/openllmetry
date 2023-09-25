@@ -29,6 +29,8 @@ class SpanAttributes:
     TRACELOOP_ENTITY_NAME = "traceloop.entity.name"
     TRACELOOP_CORRELATION_ID = "traceloop.correlation.id"
 
+    TEMP_VARIABLE = "temp.variable"
+
 
 class LLMRequestTypeValues(Enum):
     COMPLETION = "completion"

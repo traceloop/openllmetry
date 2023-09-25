@@ -60,6 +60,13 @@
         "command": "poetry run pytest tests/",
         "cwd": "packages/traceloop-sdk"
       }
+    },
+    "bump": {
+      "executor": "@nxlv/python:run-commands",
+      "options": {
+        "command": "cz bump --changelog",
+        "cwd": "packages/traceloop-sdk"
+      }
     }
   },
   "tags": []
