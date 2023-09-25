@@ -24,7 +24,7 @@ from traceloop.sdk.utils import is_notebook
 
 TRACER_NAME = "traceloop.tracer"
 TRACELOOP_API_ENDPOINT = "https://api.traceloop.dev"
-EXCLUDED_URLS = "api.openai.com,openai.azure.com,pinecone.io"
+EXCLUDED_URLS = "api.openai.com,openai.azure.com,api.anthropic.com,pinecone.io"
 
 
 class TracerWrapper(object):
@@ -142,6 +142,15 @@ def init_openai_instrumentor():
         from opentelemetry.instrumentation.openai import OpenAIInstrumentor
 
         instrumentor = OpenAIInstrumentor()
+        if not instrumentor.is_instrumented_by_opentelemetry:
+            instrumentor.instrument()
+
+
+def init_anthropic_instrumentor():
+    if importlib.util.find_spec("anthropic") is not None:
+        from opentelemetry.instrumentation.anthropic import AnthropicInstrumentor
+
+        instrumentor = AnthropicInstrumentor()
         if not instrumentor.is_instrumented_by_opentelemetry:
             instrumentor.instrument()
 
