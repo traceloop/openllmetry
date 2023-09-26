@@ -40,6 +40,7 @@ jobs:
       - name: Test with pytest
         env:
           OPENAI_API_KEY: ${{ secrets.OPEN_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           PINECONE_API_KEY: ${{ secrets.PINECONE_API_KEY }}
           PINECONE_ENVIRONMENT: ${{ secrets.PINECONE_ENVIRONMENT }}
           TRACELOOP_PROMPT_REGISTRY_ENABLED: false
