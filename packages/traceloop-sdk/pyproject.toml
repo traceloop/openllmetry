@@ -11,7 +11,7 @@ addopts = "--cov --cov-report html:'../../coverage/packages/traceloop-sdk/html' 
 
 [tool.poetry]
 name = "traceloop-sdk"
-version = "0.1.0"
+version = "0.0.46"
 description = "Traceloop Software Development Kit (SDK) for Python"
 authors = [
   "Gal Kleinman <gal@traceloop.com>",
@@ -58,7 +58,7 @@ farm-haystack = "^1.20.1"
 
 [tool.commitizen]
 name = "cz_conventional_commits"
-tag_format = "$version"
+tag_format = "traceloop-sdk_v$version"
 version_scheme = "pep440"
 version_provider = "poetry"
 update_changelog_on_bump = true

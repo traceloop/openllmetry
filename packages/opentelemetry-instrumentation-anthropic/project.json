@@ -62,7 +62,15 @@
         "command": "poetry run pytest tests/",
         "cwd": "packages/opentelemetry-instrumentation-anthropic"
       }
+    },
+    "bump": {
+      "executor": "@nxlv/python:run-commands",
+      "options": {
+        "command": "cz bump --changelog",
+        "cwd": "packages/opentelemetry-instrumentation-anthropic"
+      }
     }
   },
+  "implicitDependencies": ["packages/opentelemetry-semantic-conventions-ai"],
   "tags": []
 }

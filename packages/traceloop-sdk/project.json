@@ -67,7 +67,15 @@
         "command": "cz bump --changelog",
         "cwd": "packages/traceloop-sdk"
       }
+    },
+    "bumpInternalDependencies": {
+      "executor": "@nxlv/python:run-commands",
+      "options": {
+        "command": "cz bump --changelog --internal",
+        "cwd": "packages/traceloop-sdk"
+      }
     }
   },
+  "implicitDependencies": ["packages/opentelemetry-instrumentation-*"],
   "tags": []
 }

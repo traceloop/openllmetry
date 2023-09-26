@@ -62,6 +62,13 @@
         "command": "poetry run pytest tests/",
         "cwd": "packages/opentelemetry-semantic-conventions-ai"
       }
+    },
+    "bump": {
+      "executor": "@nxlv/python:run-commands",
+      "options": {
+        "command": "cz bump --changelog",
+        "cwd": "packages/traceloop-sdk"
+      }
     }
   },
   "tags": []

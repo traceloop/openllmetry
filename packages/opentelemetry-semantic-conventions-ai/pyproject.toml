@@ -35,6 +35,14 @@ pytest-sugar = "0.9.7"
 pytest-cov = "4.1.0"
 pytest-html = "4.0.0"
 
+[tool.commitizen]
+name = "cz_conventional_commits"
+tag_format = "opentelemetry-semantic-conventions-ai_v$version"
+version_scheme = "pep440"
+version_provider = "poetry"
+update_changelog_on_bump = true
+major_version_zero = true
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"

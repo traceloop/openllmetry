@@ -62,7 +62,15 @@
         "command": "poetry run pytest tests/",
         "cwd": "packages/opentelemetry-instrumentation-chromadb"
       }
+    },
+    "bump": {
+      "executor": "@nxlv/python:run-commands",
+      "options": {
+        "command": "cz bump --changelog",
+        "cwd": "packages/opentelemetry-instrumentation-chromadb"
+      }
     }
   },
+  "implicitDependencies": ["packages/opentelemetry-semantic-conventions-ai"],
   "tags": []
 }
