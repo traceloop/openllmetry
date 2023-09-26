@@ -35,6 +35,8 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: 18
+      - uses: nrwl/nx-set-shas@v3
+      - run: npm ci
 
       - name: Install Dependencies
         run: npx nx affected -t install
