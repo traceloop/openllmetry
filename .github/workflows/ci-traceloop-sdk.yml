@@ -31,6 +31,10 @@ jobs:
           key: poetry-${{ hashFiles('**/poetry.lock') }}
           restore-keys: |
             poetry-${{ hashFiles('**/poetry.lock') }}
+      
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
 
       - name: Install Dependencies
         run: npx nx affected -t install
