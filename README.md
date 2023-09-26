@@ -76,7 +76,7 @@ OpenLLMetry can instrument everything that [OpenTelemetry already instruments](h
 ### LLM Providers
 
 - [x] OpenAI / Azure OpenAI
-- [ ] Anthropic
+- [x] Anthropic
 - [ ] Cohere
 - [ ] Replicate
 - [ ] HuggingFace
