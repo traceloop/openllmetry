@@ -3,7 +3,6 @@
 import logging
 from typing import Collection
 from wrapt import wrap_function_wrapper
-import pinecone
 
 from opentelemetry import context as context_api
 from opentelemetry.trace import get_tracer, SpanKind

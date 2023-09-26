@@ -1,16 +1,11 @@
 import logging
-from typing import Collection
-
-from wrapt import wrap_function_wrapper
 
 from opentelemetry import context as context_api
-from opentelemetry.trace import get_tracer, SpanKind
+from opentelemetry.trace import SpanKind
 from opentelemetry.trace.status import Status, StatusCode
 
-from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.instrumentation.utils import (
-    _SUPPRESS_INSTRUMENTATION_KEY,
-    unwrap,
+    _SUPPRESS_INSTRUMENTATION_KEY
 )
 from opentelemetry.semconv.ai import SpanAttributes, LLMRequestTypeValues
 from opentelemetry.instrumentation.haystack.utils import (
