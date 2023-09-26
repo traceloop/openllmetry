@@ -1,0 +1,39 @@
+---
+title: "Prompt Registry"
+description: "Manage your prompts on the Traceloop platform"
+---
+
+<Frame>
+  <img src="/img/prompt.png" />
+</Frame>
+
+You can use Traceloop to manage your prompts and model configurations.
+That way you can easily experiement with different prompts, run pre-defined tests, and rollout changes gradually and safely.
+
+<Info>
+  This feature is still in beta. To get access to it, [sign up
+  here](https://www.traceloop.com/waitlist).
+</Info>
+
+To enable this on the SDK, you'll need to set an environment variable: `TRACELOOP_PROMPT_REGISTRY_ENABLED=true`.
+
+Assume you created the following prompt with the key `joke_generator` in the UI:
+
+```
+Tell me a joke about OpenTelemetry as a {{persona}}
+```
+
+Then, you can retrieve it with `get_prompt`:
+
+```python
+from traceloop.sdk.prompts import get_prompt
+
+prompt_args = get_prompt("joke_generator", persona="pirate")
+completion = openai.ChatCompletion.create(**prompt_args)
+```
+
+<Tip>
+  The returned variable `prompt_args` is compatible with the API used by the
+  foundation models SDKs (OpenAI, Anthropic, etc.) which means you can directly
+  plug in the response to the appropriate API call.
+</Tip>

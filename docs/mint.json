@@ -25,8 +25,8 @@
   ],
   "topbarCtaButton": {
     "type": "link",
-    "name": "Join waitlist",
-    "url": "https://traceloop.com/waitlist"
+    "name": "Start now",
+    "url": "https://app.traceloop.com/"
   },
   "anchors": [
     {
@@ -52,17 +52,22 @@
     },
     {
       "group": "Quick Start",
-      "pages": [
-        "python-sdk/introduction",
-        "python-sdk/getting-started",
-        "python-sdk/exporting",
-        "python-sdk/decorators",
-        "python-sdk/advanced"
-      ]
+      "pages": ["python-sdk/introduction", "python-sdk/getting-started"]
+    },
+    {
+      "group": "Tracing",
+      "pages": ["python-sdk/decorators", "python-sdk/exporting"]
+    },
+    {
+      "group": "Prompt Management",
+      "pages": ["python-sdk/prompts"]
     },
     {
       "group": "Contribute",
-      "pages": ["contributing/overview"]
+      "pages": [
+        "python-sdk/contributing/overview",
+        "python-sdk/contributing/developing"
+      ]
     }
   ],
   "footerSocials": {
