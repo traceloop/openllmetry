@@ -63,12 +63,27 @@
         "cwd": "packages/opentelemetry-instrumentation-anthropic"
       }
     },
+    "update-internal-deps": {
+      "executor": "@nxlv/python:run-commands",
+      "options": {
+        "command": "poetry add opentelemetry-semantic-conventions-ai@latest",
+        "cwd": "packages/opentelemetry-instrumentation-anthropic"
+      }
+    },
     "bump": {
       "executor": "@nxlv/python:run-commands",
       "options": {
-        "command": "cz bump --changelog",
+        "command": "cz bump --files-only --yes --changelog",
         "cwd": "packages/opentelemetry-instrumentation-anthropic"
       }
+    },
+    "release": {
+      "executor": "@nxlv/python:run-commands",
+      "options": {
+        "command": "poetry publish --build",
+        "cwd": "packages/opentelemetry-instrumentation-anthropic"
+      },
+      "dependsOn": ["update-internal-deps", "lock", "bump"]
     }
   },
   "implicitDependencies": ["packages/opentelemetry-semantic-conventions-ai"],
