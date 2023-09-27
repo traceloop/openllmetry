@@ -64,6 +64,10 @@ def test_open_ai_function_calls(exporter):
         function_call_test()
 
     function_call_test_workflow()
-    spans = exporter.get_finished_spans()
 
-    # TODO logical assertion
+    spans = exporter.get_finished_spans()
+    open_ai_span = spans[0]
+    assert (
+        open_ai_span.attributes["llm.completions.0.function_call.name"]
+        == "get_current_weather"
+    )
