@@ -129,7 +129,7 @@ def init_instrumentations():
     init_openai_instrumentor()
     init_anthropic_instrumentor()
     init_pinecone_instrumentor()
-    # init_haystack_instrumentor()
+    init_haystack_instrumentor()
     init_requests_instrumentor()
     init_urllib3_instrumentor()
     init_pymysql_instrumentor()
