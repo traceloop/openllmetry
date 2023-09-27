@@ -1626,14 +1626,14 @@ opentelemetry-semantic-conventions-ai = ">=0.0.4,<0.0.5"
 
 [[package]]
 name = "opentelemetry-instrumentation-pinecone"
-version = "0.0.5"
+version = "0.0.6"
 description = "OpenTelemetry Pinecone instrumentation"
 category = "main"
 optional = false
 python-versions = ">=3.8.1,<4"
 files = [
-    {file = "opentelemetry_instrumentation_pinecone-0.0.5-py3-none-any.whl", hash = "sha256:d99e2c01d98398061eb0ecf7aaaf770e63b6235a90c32571d67cd4b53d5eaf12"},
-    {file = "opentelemetry_instrumentation_pinecone-0.0.5.tar.gz", hash = "sha256:912cc3e116ac28cb3312a3df3824402e1a005180d5ae7933660f588de1c6128f"},
+    {file = "opentelemetry_instrumentation_pinecone-0.0.6-py3-none-any.whl", hash = "sha256:a84e9ce258357fb093e41dd7035db767e41805f4573e625351a8e2094708165f"},
+    {file = "opentelemetry_instrumentation_pinecone-0.0.6.tar.gz", hash = "sha256:1d5304b1fcf674e4a20f4391007e9f31d468e32ef87a0c4f14c08f608f716539"},
 ]
 
 [package.dependencies]
@@ -3371,4 +3371,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8.1,<4"
-content-hash = "fc91649793e7ce806ec0193f828b100d209f31c3b1a4659b32137eb2f71cb485"
+content-hash = "83ba6b43c136c6e6c51f997b69f7ebf87d67faf2c3af2b4fd7bafcf7ec4d067d"
