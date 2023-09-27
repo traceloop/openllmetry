@@ -101,6 +101,10 @@ def _set_span_completions(span, llm_request_type, choices):
             if message is not None:
                 _set_span_attribute(span, f"{prefix}.role", message.get("role"))
                 _set_span_attribute(span, f"{prefix}.content", message.get("content"))
+                function_call = message.get("function_call")
+                if function_call:
+                    _set_span_attribute(span, f"{prefix}.function_call.name", function_call.get("name"))
+                    _set_span_attribute(span, f"{prefix}.function_call.arguments", function_call.get("arguments"))
         elif llm_request_type == LLMRequestTypeValues.COMPLETION:
             _set_span_attribute(span, f"{prefix}.content", choice.get("text"))
 
