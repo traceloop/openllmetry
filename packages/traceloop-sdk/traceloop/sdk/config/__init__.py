@@ -6,7 +6,7 @@ def is_tracing_enabled() -> bool:
 
 
 def is_prompt_registry_enabled() -> bool:
-    return (os.getenv("TRACELOOP_PROMPT_REGISTRY_ENABLED") or "true") == "true"
+    return (os.getenv("TRACELOOP_PROMPT_REGISTRY_ENABLED") or "false") == "true"
 
 
 def base_url() -> str:
