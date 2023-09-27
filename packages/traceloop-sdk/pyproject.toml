@@ -44,6 +44,10 @@ tenacity = "^8.2.3"
 pydantic = "^1.10.12"
 jinja2 = "^3.1.2"
 
+[tool.poetry.dependencies.opentelemetry-instrumentation-cohere]
+path = "../opentelemetry-instrumentation-cohere"
+develop = true
+
 [tool.poetry.group.dev.dependencies]
 autopep8 = "2.0.4"
 flake8 = "6.1.0"
@@ -57,6 +61,7 @@ openai = "^0.28.0"
 anthropic = "^0.3.11"
 farm-haystack = "^1.20.1"
 pinecone-client = {extras = ["grpc"], version = "^2.2.4"}
+cohere = "^4.27"
 
 [build-system]
 requires = [ "poetry-core" ]
