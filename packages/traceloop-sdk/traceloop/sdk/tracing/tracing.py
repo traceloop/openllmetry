@@ -14,11 +14,9 @@ from opentelemetry.sdk.trace.export import (
     SimpleSpanProcessor,
     BatchSpanProcessor,
 )
-from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
 from opentelemetry.trace import get_tracer_provider, ProxyTracerProvider
 from opentelemetry.context import get_value, attach, set_value
 
-from opentelemetry.util.re import parse_env_headers
 from opentelemetry.semconv.ai import SpanAttributes
 from traceloop.sdk.utils import is_notebook
 

@@ -1,6 +1,5 @@
 import os
 import openai
-import requests
 
 from traceloop.sdk import Traceloop
 from traceloop.sdk.decorators import task, agent, workflow, tool
@@ -40,7 +39,7 @@ def translate_joke_to_pirate(joke: str):
 def history_jokes_tool():
     completion = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
-        messages=[{"role": "user", "content": f"get some history jokes"}],
+        messages=[{"role": "user", "content": "get some history jokes"}],
     )
 
     return completion.choices[0].message.content
