@@ -2,10 +2,10 @@
 title: "Getting Started"
 ---
 
-Install Traceloop by following these 2 easy steps and get instant monitoring.
+Install Traceloop by following these 3 easy steps and get instant monitoring.
 
-## Install the SDK
-
+<Steps>
+<Step title="Install the SDK">
 <Tabs>
   <Tab title="Poetry">
   
@@ -27,18 +27,40 @@ You should also add Traceloop to your `requirements.txt` file as `traceloop-sdk`
 
   </Tab>
 </Tabs>
-
-## Configure the Instrumentation in your app
-
 In your LLM app, initialize the Traceloop tracer like this:
 
 ```python
 Traceloop.init(app_name="your_app_name")
 ```
 
-You'll need to [start a new span](https://opentelemetry-python.readthedocs.io/en/latest/api/trace.html)
-for each operation you want to trace. We have a set of [decorators](/python-sdk/decorators) to make this easier.
+</Step>
+<Step title="Annotate your workflows">
+You'll need to start a [new span](https://opentelemetry-python.readthedocs.io/en/latest/api/trace.html)
+for each operation you want to trace. 
+If you're using an LLM framework like Haystack, Langchain or LlamaIndex - 
+we'll create the appropriate workflow and tasks for you.
 
+Otherwise, you'll need to do it yourself.
+We have a set of [decorators](/python-sdk/decorators) to make this easier.
+Assume you have a function that renders a prompt and calls an LLM, simply add `@workflow` (or `@aworkflow` if
+it's an asynchronous method).
+
+```python
+@workflow(name="suggest_answers")
+def suggest_answers(question: str):
+  ...
+```
+
+For more information, see the [dedicated section in the docs](/python-sdk/decorators).
+
+</Step>
+<Step title="Configure trace exporting">
+<Tip>
+  If you just want to explore - you don't need to do anything! Just run your app
+  without setting any environment variable and a new account will automatically
+  be created for you so you can start seeing traces from your developement
+  environment.
+</Tip>
 Lastly, you'll need to configure where to export your traces.
 The 2 variables controlling this are `TRACELOOP_API_KEY` and `TRACELOOP_API_ENDPOINT`.
 
@@ -52,7 +74,5 @@ For on-prem deployments, set `TRACELOOP_API_ENDPOINT` to the URL of your Tracelo
 Done! You'll get instant visibility into everything that's happening with your LLM.
 If you're calling a vector DB, or any other external service or database, you'll also see it in the Traceloop dashboard.
 
-## Next Steps
-
-You can annotate specific workflows, chains, and agents to get better visibility into complex processes in your app.
-See [Decorators](/python-sdk/decorators) for more information.
+</Step>
+</Steps>

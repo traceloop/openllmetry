@@ -63,11 +63,13 @@ Next, you need to decide where to export the traces to.
 
 ## ⏫ Supported destinations
 
-- [x] [Traceloop](https://traceloop.com/docs/python-sdk/exporting#traceloop)
-- [x] [Datadog](https://traceloop.com/docs/python-sdk/exporting#datadog)
-- [x] [New Relic](https://traceloop.com/docs/python-sdk/exporting#new-relic)
-- [x] [Honeycomb](https://traceloop.com/docs/python-sdk/exporting#honeycomb)
-- [x] [SigNoz](https://traceloop.com/docs/python-sdk/exporting#signoz)
+- [x] Traceloop
+- [x] Datadog
+- [x] New Relic
+- [x] Honeycomb
+- [x] SigNoz
+
+See [our docs](https://traceloop.com/docs/python-sdk/exporting) for instructions on how to connect to each one.
 
 ## 🪗 What do we instrument?
 
