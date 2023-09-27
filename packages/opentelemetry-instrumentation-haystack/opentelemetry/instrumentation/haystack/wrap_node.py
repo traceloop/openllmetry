@@ -1,7 +1,6 @@
 import logging
 from opentelemetry import context as context_api
-from opentelemetry.context import get_value, attach, set_value
-from opentelemetry.trace import get_tracer, SpanKind
+from opentelemetry.context import attach, set_value
 from opentelemetry.instrumentation.utils import (
     _SUPPRESS_INSTRUMENTATION_KEY,
 )
