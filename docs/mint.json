@@ -78,5 +78,8 @@
     "posthog": {
       "apiKey": "phc_S07ERHfM7mBYvjzzW18gxfTjhly2dOD8y2WiRYajV5J"
     }
+  },
+  "feedback": {
+    "thumbsRating": true
   }
 }
