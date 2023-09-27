@@ -1,6 +1,7 @@
 """OpenTelemetry Pinecone instrumentation"""
 
 import logging
+import pinecone
 from typing import Collection
 from wrapt import wrap_function_wrapper
 
@@ -37,6 +38,21 @@ WRAPPED_METHODS = [
         "method": "delete",
         "span_name": "pinecone.delete",
     },
+    {
+        "object": "Index",
+        "method": "query",
+        "span_name": "pinecone.query",
+    },
+    {
+        "object": "Index",
+        "method": "upsert",
+        "span_name": "pinecone.upsert",
+    },
+    {
+        "object": "Index",
+        "method": "delete",
+        "span_name": "pinecone.delete",
+    },
 ]
 
 
@@ -60,10 +76,6 @@ def _with_tracer_wrapper(func):
 
     def _with_tracer(tracer, to_wrap):
         def wrapper(wrapped, instance, args, kwargs):
-            # prevent double wrapping
-            if hasattr(wrapped, "__wrapped__"):
-                return wrapped(*args, **kwargs)
-
             return func(tracer, to_wrap, wrapped, instance, args, kwargs)
 
         return wrapper
@@ -124,11 +136,12 @@ class PineconeInstrumentor(BaseInstrumentor):
         for wrapped_method in WRAPPED_METHODS:
             wrap_object = wrapped_method.get("object")
             wrap_method = wrapped_method.get("method")
-            wrap_function_wrapper(
-                "pinecone",
-                f"{wrap_object}.{wrap_method}",
-                _wrap(tracer, wrapped_method),
-            )
+            if getattr(pinecone, wrap_object, None):
+                wrap_function_wrapper(
+                    "pinecone",
+                    f"{wrap_object}.{wrap_method}",
+                    _wrap(tracer, wrapped_method),
+                )
 
     def _uninstrument(self, **kwargs):
         for wrapped_method in WRAPPED_METHODS:
