@@ -2,7 +2,8 @@ import pinecone
 from traceloop.sdk import Traceloop
 from traceloop.sdk.decorators import workflow
 from concurrent.futures import ThreadPoolExecutor
-import contextvars, functools
+import contextvars
+import functools
 
 Traceloop.init("thread_pool_repro")
 
