@@ -1,5 +1,5 @@
 ---
-title: "Exporting your traces"
+title: "Exporting your Traces"
 description: "Connect to any observability platform - Traceloop, Datadog, Honeycomb, and others"
 ---
 
@@ -13,7 +13,7 @@ in any observability platform that supports OpenTelemetry.
   Generate a new API key and copy it over. It won’t be shown again.
 
 Set the API key as an environment variable in your app named `TRACELOOP_API_KEY`.
-For on-prem deployments, set `TRACELOOP_API_ENDPOINT` to the URL of your Traceloop instance.
+For on-prem deployments, set `TRACELOOP_BASE_URL` to the URL of your Traceloop instance.
 
 Done! You'll get instant visibility into everything that's happening with your LLM.
 If you're calling a vector DB, or any other external service or database, you'll also see it in the Traceloop dashboard.
@@ -42,7 +42,7 @@ otlp:
 Then, set this env var, and you're done!
 
 ```bash
-TRACELOOP_API_ENDPOINT=http://<datadog-agent-hostname>:4317
+TRACELOOP_BASE_URL=http://<datadog-agent-hostname>:4317
 ```
 
 </Accordion>
@@ -51,7 +51,7 @@ TRACELOOP_API_ENDPOINT=http://<datadog-agent-hostname>:4317
 Since New Relic natively supports OpenTelemetry, you just need to route the traces to New Relic's endpoint and set the API key:
 
 ```bash
-TRACELOOP_API_ENDPOINT=https://otlp.nr-data.net:443
+TRACELOOP_BASE_URL=https://otlp.nr-data.net:443
 TRACELOOP_HEADERS="api-key=<YOUR_NEWRELIC_LICENSE_KEY>"
 ```
 
@@ -64,7 +64,7 @@ Since Honeycomb natively supports OpenTelemetry, you just need to route the trac
 API key:
 
 ```bash
-TRACELOOP_API_ENDPOINT=https://api.honeycomb.io
+TRACELOOP_BASE_URL=https://api.honeycomb.io
 TRACELOOP_HEADERS="x-honeycomb-team=<YOUR_API_KEY>"
 ```
 
@@ -77,7 +77,7 @@ Since SigNoz natively supports OpenTelemetry, you just need to route the traces 
 ingestion key:
 
 ```bash
-TRACELOOP_API_ENDPOINT=https://ingest.{region}.signoz.cloud
+TRACELOOP_BASE_URL=https://ingest.{region}.signoz.cloud
 TRACELOOP_HEADERS="signoz-access-token=<SIGNOZ_INGESTION_KEY>"
 ```
 
@@ -95,7 +95,7 @@ Validate your configuration by [following these instructions](https://signoz.io/
 Once you have an up and running instance of SigNoz, use the following environment variables to export your traces:
 
 ```bash
-TRACELOOP_API_ENDPOINT="http://localhost:4317"
+TRACELOOP_BASE_URL="http://localhost:4317"
 ```
 
 </Accordion>
