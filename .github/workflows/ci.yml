@@ -26,13 +26,8 @@ jobs:
         with:
           node-version: 18
 
-      # - uses: nrwl/nx-set-shas@v3
-      - run: | 
-          echo "NX_HEAD=$(git rev-parse HEAD)" >> $GITHUB_ENV |
-          echo "NX_BASE=ff3dc15848b28aa68397bba457d6113418986d97" >> $GITHUB_ENV
+      - uses: nrwl/nx-set-shas@v3
       - run: npm ci
-
-
       - run: npx nx affected -t install --with dev
       - run: npx nx affected -t lint --parallel=3
   
@@ -55,10 +50,7 @@ jobs:
         with:
           node-version: 18
 
-      # - uses: nrwl/nx-set-shas@v3
-      - run: | 
-          echo "NX_HEAD=$(git rev-parse HEAD)" >> $GITHUB_ENV |
-          echo "NX_BASE=ff3dc15848b28aa68397bba457d6113418986d97" >> $GITHUB_ENV
+      - uses: nrwl/nx-set-shas@v3
 
       - run: npm ci
 
@@ -93,10 +85,7 @@ jobs:
         with:
           node-version: 18
 
-      # - uses: nrwl/nx-set-shas@v3
-      - run: | 
-          echo "NX_HEAD=$(git rev-parse HEAD)" >> $GITHUB_ENV |
-          echo "NX_BASE=ff3dc15848b28aa68397bba457d6113418986d97" >> $GITHUB_ENV
+      - uses: nrwl/nx-set-shas@v3
 
       - run: npm ci
 
