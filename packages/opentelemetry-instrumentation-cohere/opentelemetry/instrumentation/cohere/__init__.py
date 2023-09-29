@@ -26,6 +26,11 @@ WRAPPED_METHODS = [
         "method": "generate",
         "span_name": "cohere.completion",
     },
+    {
+        "object": "Client",
+        "method": "rerank",
+        "span_name": "cohere.completion",
+    },
 ]
 
 
