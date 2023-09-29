@@ -1611,22 +1611,20 @@ opentelemetry-semantic-conventions-ai = ">=0.0.4,<0.0.5"
 
 [[package]]
 name = "opentelemetry-instrumentation-cohere"
-version = "0.0.1"
+version = "0.0.2"
 description = "OpenTelemetry Cohere instrumentation"
 category = "main"
 optional = false
 python-versions = ">=3.8.1,<4"
-files = []
-develop = true
+files = [
+    {file = "opentelemetry_instrumentation_cohere-0.0.2-py3-none-any.whl", hash = "sha256:eb77de12aa293a97784895c6e7319b3af36649f78c9bd931a6fcabffa1be0889"},
+    {file = "opentelemetry_instrumentation_cohere-0.0.2.tar.gz", hash = "sha256:9aa6435567b2fcd6552a705e3cc97d2d8fdfdf2b58bb8e7487e99ef9b8e6f793"},
+]
 
 [package.dependencies]
-opentelemetry-api = "^1.19.0"
-opentelemetry-instrumentation = "^0.40b0"
-opentelemetry-semantic-conventions-ai = "^0.0.4"
-
-[package.source]
-type = "directory"
-url = "../opentelemetry-instrumentation-cohere"
+opentelemetry-api = ">=1.19.0,<2.0.0"
+opentelemetry-instrumentation = ">=0.40b0,<0.41"
+opentelemetry-semantic-conventions-ai = ">=0.0.4,<0.0.5"
 
 [[package]]
 name = "opentelemetry-instrumentation-dbapi"
@@ -1672,13 +1670,16 @@ version = "0.0.10"
 description = "OpenTelemetry OpenAI instrumentation"
 category = "main"
 optional = false
-python-versions = "*"
-files = []
-develop = true
+python-versions = ">=3.8.1,<4"
+files = [
+    {file = "opentelemetry_instrumentation_openai-0.0.10-py3-none-any.whl", hash = "sha256:cd39e53a9d5a4987471d8f7491c7c0b413f8b691dbe2cd21f53a38d4e38a3a90"},
+    {file = "opentelemetry_instrumentation_openai-0.0.10.tar.gz", hash = "sha256:8094b128c1b8fe0955df3cc80170916219949d5e000be996b60c7312e4263d95"},
+]
 
-[package.source]
-type = "directory"
-url = "../opentelemetry-instrumentation-openai"
+[package.dependencies]
+opentelemetry-api = ">=1.19.0,<2.0.0"
+opentelemetry-instrumentation = ">=0.40b0,<0.41"
+opentelemetry-semantic-conventions-ai = ">=0.0.4,<0.0.5"
 
 [[package]]
 name = "opentelemetry-instrumentation-pinecone"
@@ -3427,4 +3428,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8.1,<4"
-content-hash = "c932f72847ff98e819da8c5c00023a3481e6a2a09efb210c82dd38e4b921d0a9"
+content-hash = "dbc8be168ef18fda58bad5f515a0457083fed5586a2abc2cb60d1f500b4acd8a"
