@@ -21,7 +21,9 @@ from opentelemetry.semconv.ai import SpanAttributes
 from traceloop.sdk.utils import is_notebook
 
 TRACER_NAME = "traceloop.tracer"
-EXCLUDED_URLS = "api.openai.com,openai.azure.com,api.anthropic.com,pinecone.io"
+EXCLUDED_URLS = (
+    "api.openai.com,openai.azure.com,api.anthropic.com,api.cohere.ai,pinecone.io"
+)
 
 
 class TracerWrapper(object):
@@ -128,6 +130,7 @@ def init_tracer_provider() -> TracerProvider:
 def init_instrumentations():
     init_openai_instrumentor()
     init_anthropic_instrumentor()
+    init_cohere_instrumentor()
     init_pinecone_instrumentor()
     # init_haystack_instrumentor()
     init_requests_instrumentor()
@@ -149,6 +152,15 @@ def init_anthropic_instrumentor():
         from opentelemetry.instrumentation.anthropic import AnthropicInstrumentor
 
         instrumentor = AnthropicInstrumentor()
+        if not instrumentor.is_instrumented_by_opentelemetry:
+            instrumentor.instrument()
+
+
+def init_cohere_instrumentor():
+    if importlib.util.find_spec("cohere") is not None:
+        from opentelemetry.instrumentation.cohere import CohereInstrumentor
+
+        instrumentor = CohereInstrumentor()
         if not instrumentor.is_instrumented_by_opentelemetry:
             instrumentor.instrument()
 
