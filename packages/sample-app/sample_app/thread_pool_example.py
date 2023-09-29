@@ -5,10 +5,10 @@ from concurrent.futures import ThreadPoolExecutor
 import contextvars
 import functools
 
-Traceloop.init("thread_pool_repro")
+Traceloop.init("thread_pool_example")
 
 
-@workflow("test_thread_pool")
+@workflow("retrieval_flow")
 def do_retrieval(index: pinecone.Index):
     with ThreadPoolExecutor(max_workers=3) as executor:
         for _ in range(3):
