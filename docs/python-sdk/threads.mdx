@@ -7,23 +7,26 @@ Since many LLM operations tend to be I/O bound, it is often useful to use thread
 Usually, you'll use the `ThreadPoolExecutor` class from the `concurrent.futures` module in the Python standard library, like this:
 
 ```python
-index = pinecone.Index("index")
+indexes = [pinecone.Index(f"index{i}") for i in range(3)]
 executor = ThreadPoolExecutor(max_workers=3)
-executor.submit(index.query, [1.0, 2.0, 3.0], top_k=10)
+for i in range(3):
+    executor.submit(indexes[i].query, [1.0, 2.0, 3.0], top_k=10)
 ```
 
-However, since OpenTelemetry (which is what we use under the hood in OpenLLMetry, hence the name)
-relies on [Python's context](https://docs.python.org/3/library/contextvars.html) to propagate the trace - this will not work. You'll need to explictly propagate
-the context to the thread:
+Unfortunately, this won't work as you expect and may cause you to see "broken" traces or missing spans.
+The reason relies in how OpenTelemetry (which is what we use under the hood in OpenLLMetry, hence the name)
+uses [Python's context](https://docs.python.org/3/library/contextvars.html) to propagate the trace.
+You'll need to explictly propagate the context to the threads:
 
 ```python
-index = pinecone.Index("index")
+indexes = [pinecone.Index(f"index{i}") for i in range(3)]
 executor = ThreadPoolExecutor(max_workers=3)
-ctx = contextvars.copy_context()
-executor.submit(
-    ctx.run,
-    functools.partial(index.query, [1.0, 2.0, 3.0], top_k=10),
-)
+for i in range(3):
+    ctx = contextvars.copy_context()
+    executor.submit(
+        ctx.run,
+        functools.partial(index.query, [1.0, 2.0, 3.0], top_k=10),
+    )
 ```
 
 Also check out the [full example](https://github.com/traceloop/openllmetry/blob/main/packages/sample-app/sample_app/thread_pool_example.py).
