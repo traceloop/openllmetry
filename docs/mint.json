@@ -56,7 +56,11 @@
     },
     {
       "group": "Tracing",
-      "pages": ["python-sdk/decorators", "python-sdk/exporting"]
+      "pages": [
+        "python-sdk/decorators",
+        "python-sdk/exporting",
+        "python-sdk/threads"
+      ]
     },
     {
       "group": "Prompt Management",

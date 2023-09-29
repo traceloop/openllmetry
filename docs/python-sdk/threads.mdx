@@ -1,0 +1,29 @@
+---
+title: "Usage with Threads"
+description: "How to use OpenLLMetry with `ThreadPoolExecutor` and other thread-based libraries."
+---
+
+Since many LLM operations tend to be I/O bound, it is often useful to use threads to perform multiple operations at once.
+Usually, you'll use the `ThreadPoolExecutor` class from the `concurrent.futures` module in the Python standard library, like this:
+
+```python
+index = pinecone.Index("index")
+executor = ThreadPoolExecutor(max_workers=3)
+executor.submit(index.query, [1.0, 2.0, 3.0], top_k=10)
+```
+
+However, since OpenTelemetry (which is what we use under the hood in OpenLLMetry, hence the name)
+relies on [Python's context](https://docs.python.org/3/library/contextvars.html) to propagate the trace - this will not work. You'll need to explictly propagate
+the context to the thread:
+
+```python
+index = pinecone.Index("index")
+executor = ThreadPoolExecutor(max_workers=3)
+ctx = contextvars.copy_context()
+executor.submit(
+    ctx.run,
+    functools.partial(index.query, [1.0, 2.0, 3.0], top_k=10),
+)
+```
+
+Also check out the [full example](https://github.com/traceloop/openllmetry/blob/main/packages/sample-app/sample_app/thread_pool_example.py).
