@@ -56,7 +56,11 @@
     },
     {
       "group": "Tracing",
-      "pages": ["python-sdk/decorators", "python-sdk/exporting"]
+      "pages": [
+        "python-sdk/decorators",
+        "python-sdk/exporting",
+        "python-sdk/threads"
+      ]
     },
     {
       "group": "Prompt Management",
@@ -79,7 +83,12 @@
       "apiKey": "phc_S07ERHfM7mBYvjzzW18gxfTjhly2dOD8y2WiRYajV5J"
     }
   },
+  "modeToggle": {
+    "default": "dark",
+    "isHidden": true
+  },
   "feedback": {
-    "thumbsRating": true
+    "thumbsRating": true,
+    "suggestEdit": true
   }
 }

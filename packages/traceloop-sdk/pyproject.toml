@@ -11,7 +11,7 @@ addopts = "--cov --cov-report html:'../../coverage/packages/traceloop-sdk/html' 
 
 [tool.poetry]
 name = "traceloop-sdk"
-version = "0.0.51"
+version = "0.0.53"
 description = "Traceloop Software Development Kit (SDK) for Python"
 authors = [
   "Gal Kleinman <gal@traceloop.com>",
@@ -35,8 +35,9 @@ opentelemetry-exporter-otlp-proto-http = "^1.19.0"
 opentelemetry-instrumentation-requests = "^0.40b0"
 opentelemetry-instrumentation-pymysql = "^0.40b0"
 opentelemetry-instrumentation-urllib3 = "^0.40b0"
-opentelemetry-instrumentation-openai = "^0.0.9"
+opentelemetry-instrumentation-openai = "^0.0.10"
 opentelemetry-instrumentation-anthropic = "^0.0.6"
+opentelemetry-instrumentation-cohere = "^0.0.2"
 opentelemetry-instrumentation-pinecone = "^0.0.6"
 opentelemetry-instrumentation-haystack = "^0.0.4"
 colorama = "^0.4.6"
@@ -50,13 +51,14 @@ flake8 = "6.1.0"
 pytest = "7.4.1"
 pytest-sugar = "0.9.7"
 pytest-cov = "4.1.0"
-pytest-html = "4.0.0"
+pytest-html = "4.0.2"
 
 [tool.poetry.group.test.dependencies]
 openai = "^0.28.0"
 anthropic = "^0.3.11"
 farm-haystack = "^1.20.1"
 pinecone-client = {extras = ["grpc"], version = "^2.2.4"}
+cohere = "^4.27"
 
 [build-system]
 requires = [ "poetry-core" ]
