@@ -32,7 +32,7 @@ opentelemetry-semantic-conventions-ai = "^0.0.4"
 [tool.poetry.group.dev.dependencies]
 autopep8 = "2.0.4"
 flake8 = "6.1.0"
-pytest = "7.4.1"
+pytest = "7.4.2"
 pytest-sugar = "0.9.7"
 pytest-cov = "4.1.0"
 pytest-html = "4.0.2"
