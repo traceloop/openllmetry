@@ -28,8 +28,13 @@ WRAPPED_METHODS = [
     },
     {
         "object": "Client",
+        "method": "chat",
+        "span_name": "cohere.chat",
+    },
+    {
+        "object": "Client",
         "method": "rerank",
-        "span_name": "cohere.completion",
+        "span_name": "cohere.rerank",
     },
 ]
 
@@ -41,7 +46,7 @@ def _set_span_attribute(span, name, value):
     return
 
 
-def _set_input_attributes(span, kwargs):
+def _set_input_attributes(span, llm_request_type, kwargs):
     _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, kwargs.get("model"))
     _set_span_attribute(
         span, SpanAttributes.LLM_REQUEST_MAX_TOKENS, kwargs.get("max_tokens_to_sample")
@@ -55,25 +60,35 @@ def _set_input_attributes(span, kwargs):
         span, SpanAttributes.LLM_PRESENCE_PENALTY, kwargs.get("presence_penalty")
     )
 
-    _set_span_attribute(
-        span, f"{SpanAttributes.LLM_PROMPTS}.0.user", kwargs.get("prompt")
-    )
+    if llm_request_type == LLMRequestTypeValues.COMPLETION:
+        _set_span_attribute(
+            span, f"{SpanAttributes.LLM_PROMPTS}.0.user", kwargs.get("prompt")
+        )
+    elif llm_request_type == LLMRequestTypeValues.CHAT:
+        _set_span_attribute(
+            span, f"{SpanAttributes.LLM_PROMPTS}.0.user", kwargs.get("message")
+        )
 
     return
 
 
-def _set_span_completions(span, completion):
+def _set_span_chat_response(span, response):
     index = 0
     prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{index}"
-    _set_span_attribute(
-        span, f"{prefix}.finish_reason", completion.get("finish_reason")
-    )
-    _set_span_attribute(span, f"{prefix}.content", completion.get("completion"))
+    _set_span_attribute(span, f"{prefix}.content", response.text)
 
 
-def _set_response_attributes(span, response):
-    _set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, response.get("model"))
-    _set_span_completions(span, response)
+def _set_span_generations_response(span, generations):
+    for index, generation in enumerate(generations):
+        prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{index}"
+        _set_span_attribute(span, f"{prefix}.content", generation.text)
+
+
+def _set_response_attributes(span, llm_request_type, response):
+    if llm_request_type == LLMRequestTypeValues.CHAT:
+        _set_span_chat_response(span, response)
+    elif llm_request_type == LLMRequestTypeValues.COMPLETION:
+        _set_span_generations_response(span, response)
 
 
 def _with_tracer_wrapper(func):
@@ -88,6 +103,17 @@ def _with_tracer_wrapper(func):
     return _with_tracer
 
 
+def _llm_request_type_by_method(method_name):
+    if method_name == "chat":
+        return LLMRequestTypeValues.CHAT
+    elif method_name == "generate":
+        return LLMRequestTypeValues.COMPLETION
+    elif method_name == "rerank":
+        return LLMRequestTypeValues.RERANK
+    else:
+        return LLMRequestTypeValues.UNKNOWN
+
+
 @_with_tracer_wrapper
 def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
     """Instruments and calls every function defined in TO_WRAP."""
@@ -95,17 +121,18 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
         return wrapped(*args, **kwargs)
 
     name = to_wrap.get("span_name")
+    llm_request_type = _llm_request_type_by_method(to_wrap.get("method"))
     with tracer.start_as_current_span(
         name,
         kind=SpanKind.CLIENT,
         attributes={
             SpanAttributes.LLM_VENDOR: "Cohere",
-            SpanAttributes.LLM_REQUEST_TYPE: LLMRequestTypeValues.COMPLETION,
+            SpanAttributes.LLM_REQUEST_TYPE: llm_request_type.value,
         },
     ) as span:
         try:
             if span.is_recording():
-                _set_input_attributes(span, kwargs)
+                _set_input_attributes(span, llm_request_type, kwargs)
 
         except Exception as ex:  # pylint: disable=broad-except
             logger.warning(
@@ -117,7 +144,7 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
         if response:
             try:
                 if span.is_recording():
-                    _set_response_attributes(span, response)
+                    _set_response_attributes(span, llm_request_type, response)
 
             except Exception as ex:  # pylint: disable=broad-except
                 logger.warning(
