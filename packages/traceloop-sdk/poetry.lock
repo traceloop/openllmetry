@@ -1603,24 +1603,24 @@ wrapt = ">=1.0.0,<2.0.0"
 
 [[package]]
 name = "opentelemetry-instrumentation-anthropic"
-version = "0.0.6"
+version = "0.0.7"
 description = "OpenTelemetry Anthropic instrumentation"
 category = "main"
 optional = false
 python-versions = ">=3.8.1,<4"
 files = [
-    {file = "opentelemetry_instrumentation_anthropic-0.0.6-py3-none-any.whl", hash = "sha256:1f93bc1ff154460541171a6e3344f95a93b5e1667ba814c7bd751c0fdc1221a2"},
-    {file = "opentelemetry_instrumentation_anthropic-0.0.6.tar.gz", hash = "sha256:7d9c8503bd53cfd9479ee61821b220b8c7ffaee65aaf0d14efe1a823042b5d2f"},
+    {file = "opentelemetry_instrumentation_anthropic-0.0.7-py3-none-any.whl", hash = "sha256:1652215ab436727d15ffb4a32944d877f7266caef63e6f6eeff35ade0e0d8d84"},
+    {file = "opentelemetry_instrumentation_anthropic-0.0.7.tar.gz", hash = "sha256:327f41717977146ed283e8484301d6dad7bc91be0aab8903361a858bed9e6dbd"},
 ]
 
 [package.dependencies]
 opentelemetry-api = ">=1.19.0,<2.0.0"
 opentelemetry-instrumentation = ">=0.40b0,<0.41"
-opentelemetry-semantic-conventions-ai = ">=0.0.4,<0.0.5"
+opentelemetry-semantic-conventions-ai = ">=0.0.5,<0.0.6"
 
 [[package]]
 name = "opentelemetry-instrumentation-cohere"
-version = "0.0.2"
+version = "0.0.3"
 description = "OpenTelemetry Cohere instrumentation"
 category = "main"
 optional = false
@@ -1631,7 +1631,7 @@ develop = true
 [package.dependencies]
 opentelemetry-api = "^1.19.0"
 opentelemetry-instrumentation = "^0.40b0"
-opentelemetry-semantic-conventions-ai = "^0.0.4"
+opentelemetry-semantic-conventions-ai = "^0.0.5"
 
 [package.source]
 type = "directory"
@@ -1660,54 +1660,54 @@ test = ["opentelemetry-test-utils (==0.40b0)"]
 
 [[package]]
 name = "opentelemetry-instrumentation-haystack"
-version = "0.0.4"
+version = "0.0.5"
 description = "OpenTelemetry Haystack instrumentation"
 category = "main"
 optional = false
 python-versions = ">=3.8.1,<4"
 files = [
-    {file = "opentelemetry_instrumentation_haystack-0.0.4-py3-none-any.whl", hash = "sha256:ee95b2558aea9ea42f204fd392be2d39399357f9968b05ba80ccae5cd46b6327"},
-    {file = "opentelemetry_instrumentation_haystack-0.0.4.tar.gz", hash = "sha256:5bfead569cff87247192c187a873b9a09f81d6d9e4787e84f8937f67d53632dd"},
+    {file = "opentelemetry_instrumentation_haystack-0.0.5-py3-none-any.whl", hash = "sha256:98d81cfa090dc184e91eca2a60745af26a91f70f3c3c12d1073950db092f9098"},
+    {file = "opentelemetry_instrumentation_haystack-0.0.5.tar.gz", hash = "sha256:0c69b3a7d970b8697fe932d643de0063dd7879e7fff46a7324dacbb614c2c767"},
 ]
 
 [package.dependencies]
 opentelemetry-api = ">=1.19.0,<2.0.0"
 opentelemetry-instrumentation = ">=0.40b0,<0.41"
-opentelemetry-semantic-conventions-ai = ">=0.0.4,<0.0.5"
+opentelemetry-semantic-conventions-ai = ">=0.0.5,<0.0.6"
 
 [[package]]
 name = "opentelemetry-instrumentation-openai"
-version = "0.0.10"
+version = "0.0.11"
 description = "OpenTelemetry OpenAI instrumentation"
 category = "main"
 optional = false
 python-versions = ">=3.8.1,<4"
 files = [
-    {file = "opentelemetry_instrumentation_openai-0.0.10-py3-none-any.whl", hash = "sha256:cd39e53a9d5a4987471d8f7491c7c0b413f8b691dbe2cd21f53a38d4e38a3a90"},
-    {file = "opentelemetry_instrumentation_openai-0.0.10.tar.gz", hash = "sha256:8094b128c1b8fe0955df3cc80170916219949d5e000be996b60c7312e4263d95"},
+    {file = "opentelemetry_instrumentation_openai-0.0.11-py3-none-any.whl", hash = "sha256:d9498e7fa488b60b00cd3621d7e77ce0a67c383bb797cdd8f8b1fceaf7eb67ab"},
+    {file = "opentelemetry_instrumentation_openai-0.0.11.tar.gz", hash = "sha256:c8df804f223d08809fc58852540b0990af88af69f6eb4e4f68921d62a24d5a64"},
 ]
 
 [package.dependencies]
 opentelemetry-api = ">=1.19.0,<2.0.0"
 opentelemetry-instrumentation = ">=0.40b0,<0.41"
-opentelemetry-semantic-conventions-ai = ">=0.0.4,<0.0.5"
+opentelemetry-semantic-conventions-ai = ">=0.0.5,<0.0.6"
 
 [[package]]
 name = "opentelemetry-instrumentation-pinecone"
-version = "0.0.6"
+version = "0.0.7"
 description = "OpenTelemetry Pinecone instrumentation"
 category = "main"
 optional = false
 python-versions = ">=3.8.1,<4"
 files = [
-    {file = "opentelemetry_instrumentation_pinecone-0.0.6-py3-none-any.whl", hash = "sha256:a84e9ce258357fb093e41dd7035db767e41805f4573e625351a8e2094708165f"},
-    {file = "opentelemetry_instrumentation_pinecone-0.0.6.tar.gz", hash = "sha256:1d5304b1fcf674e4a20f4391007e9f31d468e32ef87a0c4f14c08f608f716539"},
+    {file = "opentelemetry_instrumentation_pinecone-0.0.7-py3-none-any.whl", hash = "sha256:2c856de1c19a489266a33918f112942a5b016b0ee89dabc3e1cee496b5476100"},
+    {file = "opentelemetry_instrumentation_pinecone-0.0.7.tar.gz", hash = "sha256:61b1582618bd66306261d1ec30623df4de863dcc976d216320cd3b869bd88e0e"},
 ]
 
 [package.dependencies]
 opentelemetry-api = ">=1.19.0,<2.0.0"
 opentelemetry-instrumentation = ">=0.40b0,<0.41"
-opentelemetry-semantic-conventions-ai = ">=0.0.4,<0.0.5"
+opentelemetry-semantic-conventions-ai = ">=0.0.5,<0.0.6"
 
 [[package]]
 name = "opentelemetry-instrumentation-pymysql"
@@ -1821,14 +1821,14 @@ files = [
 
 [[package]]
 name = "opentelemetry-semantic-conventions-ai"
-version = "0.0.4"
+version = "0.0.5"
 description = "OpenTelemetry Semantic Conventions Extension for Large Language Models"
 category = "main"
 optional = false
 python-versions = ">=3.8.1,<4"
 files = [
-    {file = "opentelemetry_semantic_conventions_ai-0.0.4-py3-none-any.whl", hash = "sha256:f3a4f8a3118a03a8ee97ead16213850a43e1b97ee5f7e056bc9be2c43c2d2652"},
-    {file = "opentelemetry_semantic_conventions_ai-0.0.4.tar.gz", hash = "sha256:8998c8ba61cbd745e29e3215d219f761d3648cad2f74c68559b6dd584d35c677"},
+    {file = "opentelemetry_semantic_conventions_ai-0.0.5-py3-none-any.whl", hash = "sha256:caa1f5dd43168ad7b4a6d8888a7c0df90bfb022a2a5273b9c80c98d004926992"},
+    {file = "opentelemetry_semantic_conventions_ai-0.0.5.tar.gz", hash = "sha256:cfea4a636fe500e7f2cb9a400d3c8e8f408674d3f0a3391077292dfff1b3763a"},
 ]
 
 [[package]]
@@ -3439,4 +3439,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8.1,<4"
-content-hash = "c932f72847ff98e819da8c5c00023a3481e6a2a09efb210c82dd38e4b921d0a9"
+content-hash = "bb52434ef61d71cd5d5d320e240e45a3250a8dcc8ef4cf0929fdc2354fbaafcc"
