@@ -33,6 +33,7 @@ class SpanAttributes:
 class LLMRequestTypeValues(Enum):
     COMPLETION = "completion"
     CHAT = "chat"
+    RERANK = "rerank"
     UNKNOWN = "unknown"
 
 
