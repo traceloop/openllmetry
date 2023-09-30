@@ -66,7 +66,8 @@ def test_cohere_rerank(exporter):
             "Washington, D.C. (also known as simply Washington or D.C., and officially "
             + "as the District of Columbia) is the capital of the United States. It is a federal district. ",
             "Capital punishment (the death penalty) has existed in the United States "
-            + "since before the United States was a country. As of 2017, capital punishment is legal in 30 of the 50 states.",
+            + "since before the United States was a country. As of 2017, capital "
+            + "punishment is legal in 30 of the 50 states.",
             "North Dakota is a state in the United States. 672,591 people lived"
             + " in North Dakota in the year 2010. The capital and seat of government is Bismarck.",
         ]
