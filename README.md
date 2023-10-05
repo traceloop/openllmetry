@@ -44,22 +44,29 @@ If you already have OpenTelemetry instrumented, you can just add any of our inst
 
 ## 🚀 Getting Started
 
-The easiest to get started is to use our SDK.
+The easiest way to get started is to use our SDK.
 For a complete guide, go to our [docs](https://traceloop.com/docs/python-sdk/getting-started).
 
-Install the SDK into your project:
+Install the SDK:
 
 ```python
 pip install traceloop-sdk
 ```
 
-To start instrumenting your code, just add this line to your code:
+Then, to start instrumenting your code, just add this line to your code:
 
 ```python
 Traceloop.init(app_name="your_app_name")
 ```
 
-Next, you need to decide where to export the traces to.
+That's it. You're now tracing your code with OpenLLMetry!
+If you're running this locally, you may want to disable batch sending, so you can see the traces immediately:
+
+```python
+Traceloop.init(app_name="your_app_name", disable_batch=True)
+```
+
+Now, you need to decide where to export the traces to.
 
 ## ⏫ Supported destinations
 
@@ -99,7 +106,7 @@ OpenLLMetry can instrument everything that [OpenTelemetry already instruments](h
 
 ## 🌱 Contributing
 
-Whether it's big or small, we love contributions ❤️ Check out our guide to see how to [get started](https://traceloop.com/docs/contributing/overview).
+Whether it's big or small, we love contributions ❤️ Check out our guide to see how to [get started](https://traceloop.com/docs/python-sdk/contributing/overview).
 
 Not sure where to get started? You can:
 
