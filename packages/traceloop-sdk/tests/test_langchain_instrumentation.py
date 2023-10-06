@@ -10,7 +10,7 @@ def test_langchain(exporter):
 
     Title: {title}
     Era: {era}
-    Playwright: This is a synopsis for the above play:"""
+    Playwright: This is a synopsis for the above play:"""  # noqa: E501
     synopsis_prompt_template = PromptTemplate(input_variables=["title", "era"], template=synopsis_template)
     synopsis_chain = LLMChain(llm=llm, prompt=synopsis_prompt_template, output_key="synopsis")
 
@@ -19,7 +19,7 @@ def test_langchain(exporter):
 
     Play Synopsis:
     {synopsis}
-    Review from a New York Times play critic of the above play:"""
+    Review from a New York Times play critic of the above play:"""  # noqa: E501
     prompt_template = PromptTemplate(input_variables=["synopsis"], template=template)
     review_chain = LLMChain(llm=llm, prompt=prompt_template, output_key="review")
 
@@ -29,7 +29,7 @@ def test_langchain(exporter):
         # Here we return multiple variables
         output_variables=["synopsis", "review"],
         verbose=True)
-    overall_chain({"title":"Tragedy at sunset on the beach", "era": "Victorian England"})
+    overall_chain({"title": "Tragedy at sunset on the beach", "era": "Victorian England"})
 
     spans = exporter.get_finished_spans()
     print([span.name for span in spans])

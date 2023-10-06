@@ -183,6 +183,7 @@ def init_haystack_instrumentor():
         if not instrumentor.is_instrumented_by_opentelemetry:
             instrumentor.instrument()
 
+
 def init_langchain_instrumentor():
     if importlib.util.find_spec("langchain") is not None:
         from opentelemetry.instrumentation.langchain import LangchainInstrumentor
@@ -190,6 +191,7 @@ def init_langchain_instrumentor():
         instrumentor = LangchainInstrumentor()
         if not instrumentor.is_instrumented_by_opentelemetry:
             instrumentor.instrument()
+
 
 def init_requests_instrumentor():
     if importlib.util.find_spec("requests") is not None:
