@@ -1,8 +1,7 @@
 from opentelemetry import context as context_api
 
 from opentelemetry.instrumentation.utils import (
-    _SUPPRESS_INSTRUMENTATION_KEY,
-    unwrap,
+    _SUPPRESS_INSTRUMENTATION_KEY
 )
 
 from opentelemetry.semconv.ai import SpanAttributes, TraceloopSpanKindValues

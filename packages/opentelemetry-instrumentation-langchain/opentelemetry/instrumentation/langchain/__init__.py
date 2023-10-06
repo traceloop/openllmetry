@@ -6,10 +6,7 @@ from wrapt import wrap_function_wrapper
 from opentelemetry.trace import get_tracer
 
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
-from opentelemetry.instrumentation.utils import (
-    _SUPPRESS_INSTRUMENTATION_KEY,
-    unwrap,
-)
+from opentelemetry.instrumentation.utils import unwrap
 
 from opentelemetry.instrumentation.langchain.task_wrapper import task_wrapper
 from opentelemetry.instrumentation.langchain.workflow_wrapper import workflow_wrapper
