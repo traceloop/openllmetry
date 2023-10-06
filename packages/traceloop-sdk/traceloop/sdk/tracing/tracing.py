@@ -133,6 +133,7 @@ def init_instrumentations():
     init_cohere_instrumentor()
     init_pinecone_instrumentor()
     # init_haystack_instrumentor()
+    init_langchain_instrumentor()
     init_requests_instrumentor()
     init_urllib3_instrumentor()
     init_pymysql_instrumentor()
@@ -182,6 +183,13 @@ def init_haystack_instrumentor():
         if not instrumentor.is_instrumented_by_opentelemetry:
             instrumentor.instrument()
 
+def init_langchain_instrumentor():
+    if importlib.util.find_spec("langchain") is not None:
+        from opentelemetry.instrumentation.langchain import LangchainInstrumentor
+
+        instrumentor = LangchainInstrumentor()
+        if not instrumentor.is_instrumented_by_opentelemetry:
+            instrumentor.instrument()
 
 def init_requests_instrumentor():
     if importlib.util.find_spec("requests") is not None:
