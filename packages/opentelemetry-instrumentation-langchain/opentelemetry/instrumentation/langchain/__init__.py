@@ -18,14 +18,28 @@ __version__ = "0.1.0"
 
 WRAPPED_METHODS = [
     {
-        "package": "langchain",
+        "package": "langchain.chains",
         "object": "LLMChain",
         "method": "__call__",
         "span_name": "langchain_llm.task",
         "wrapper": task_wrapper,
     },
     {
-        "package": "langchain",
+        "package": "langchain.chains",
+        "object": "LLMChain",
+        "method": "acall",
+        "span_name": "langchain_llm.task",
+        "wrapper": task_wrapper,
+    },
+    {
+        "package": "langchain.chains",
+        "object": "LLMChain",
+        "method": "__call__",
+        "span_name": "langchain_llm.task",
+        "wrapper": task_wrapper,
+    },
+    {
+        "package": "langchain.chains",
         "object": "LLMChain",
         "method": "acall",
         "span_name": "langchain_llm.task",

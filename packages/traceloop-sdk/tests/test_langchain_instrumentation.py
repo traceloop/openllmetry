@@ -14,7 +14,6 @@ def test_langchain(exporter):
     synopsis_prompt_template = PromptTemplate(input_variables=["title", "era"], template=synopsis_template)
     synopsis_chain = LLMChain(llm=llm, prompt=synopsis_prompt_template, output_key="synopsis")
 
-    llm = OpenAI(temperature=.7)
     template = """You are a play critic from the New York Times. Given the synopsis of play, it is your job to write a review for that play.
 
     Play Synopsis:

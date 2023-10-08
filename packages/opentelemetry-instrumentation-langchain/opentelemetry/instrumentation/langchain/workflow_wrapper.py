@@ -1,4 +1,5 @@
 from opentelemetry import context as context_api
+from opentelemetry.context import attach, set_value
 
 from opentelemetry.instrumentation.utils import (
     _SUPPRESS_INSTRUMENTATION_KEY,
@@ -16,6 +17,7 @@ def workflow_wrapper(tracer, to_wrap, wrapped, instance, args, kwargs):
         return wrapped(*args, **kwargs)
 
     name = to_wrap.get("span_name")
+    attach(set_value("workflow_name", name))
     with tracer.start_as_current_span(name) as span:
         span.set_attribute(
             SpanAttributes.TRACELOOP_SPAN_KIND,
