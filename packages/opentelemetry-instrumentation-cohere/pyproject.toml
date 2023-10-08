@@ -27,7 +27,7 @@ include = "opentelemetry/instrumentation/cohere"
 [tool.poetry.dependencies]
 python = ">=3.8.1,<4"
 opentelemetry-api = "^1.19.0"
-opentelemetry-instrumentation = "^0.40b0"
+opentelemetry-instrumentation = ">=0.40,<0.42"
 opentelemetry-semantic-conventions-ai = "^0.0.5"
 
 [tool.poetry.group.dev.dependencies]
