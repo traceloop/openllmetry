@@ -97,11 +97,12 @@ OpenLLMetry can instrument everything that [OpenTelemetry already instruments](h
 - [x] Pinecone
 - [ ] Chroma
 - [ ] Weaviate
+- [ ] Milvus
 
 ### Frameworks
 
+- [x] LangChain
 - [x] Haystack
-- [ ] LangChain
 - [ ] LlamaIndex
 
 ## 🌱 Contributing
