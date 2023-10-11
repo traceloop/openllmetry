@@ -57,6 +57,7 @@ Then, to start instrumenting your code, just add this line to your code:
 
 ```python
 from traceloop.sdk import Traceloop
+
 Traceloop.init(app_name="your_app_name")
 ```
 
