@@ -31,6 +31,7 @@ In your LLM app, initialize the Traceloop tracer like this:
 
 ```python
 from traceloop.sdk import Traceloop
+
 Traceloop.init(app_name="your_app_name")
 ```
 
@@ -63,14 +64,23 @@ For more information, see the [dedicated section in the docs](/python-sdk/decora
   environment.
 </Tip>
 Lastly, you'll need to configure where to export your traces.
-The 2 variables controlling this are `TRACELOOP_API_KEY` and `TRACELOOP_BASE_URL`.
+The 2 environment variables controlling this are `TRACELOOP_API_KEY` and `TRACELOOP_BASE_URL`.
 
 For Traceloop, read on. For other options, see [Exporting](/python-sdk/exporting).
 
 ### Using Traceloop Cloud
 
-Set Traceloop's API key as an environment variable in your app named `TRACELOOP_API_KEY`.
-For on-prem deployments, set `TRACELOOP_BASE_URL` to the URL of your Traceloop instance.
+Go to app.traceloop.com, and create a new account.
+Then, click on the cog button on the top right corner, and copy the API key.
+Click **Generate API Key** to generate an API key for the developement environment and click **Copy API Key** to copy it over.
+
+<Warning>Make sure to copy it as it won't be shown again.</Warning>
+
+<Frame>
+  <img src="/img/apikey.png" />
+</Frame>
+
+Set the copied Traceloop's API key as an environment variable in your app named `TRACELOOP_API_KEY`.
 
 Done! You'll get instant visibility into everything that's happening with your LLM.
 If you're calling a vector DB, or any other external service or database, you'll also see it in the Traceloop dashboard.
