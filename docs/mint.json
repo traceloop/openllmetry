@@ -79,8 +79,8 @@
     "twitter": "https://twitter.com/traceloopdev"
   },
   "analytics": {
-    "posthog": {
-      "apiKey": "phc_S07ERHfM7mBYvjzzW18gxfTjhly2dOD8y2WiRYajV5J"
+    "gtm": {
+      "tagId": "GTM-NDQVZMH"
     }
   },
   "modeToggle": {
