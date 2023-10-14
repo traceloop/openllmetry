@@ -56,6 +56,8 @@ pip install traceloop-sdk
 Then, to start instrumenting your code, just add this line to your code:
 
 ```python
+from traceloop.sdk import Traceloop
+
 Traceloop.init(app_name="your_app_name")
 ```
 
@@ -97,11 +99,12 @@ OpenLLMetry can instrument everything that [OpenTelemetry already instruments](h
 - [x] Pinecone
 - [ ] Chroma
 - [ ] Weaviate
+- [ ] Milvus
 
 ### Frameworks
 
+- [x] LangChain
 - [x] Haystack
-- [ ] LangChain
 - [ ] LlamaIndex
 
 ## 🌱 Contributing
