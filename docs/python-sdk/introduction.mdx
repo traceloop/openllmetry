@@ -16,6 +16,9 @@ You can choose to export the traces to Traceloop, or to your existing observabil
 </Tip>
 
 ```python
+from traceloop.sdk import Traceloop
+from traceloop.sdk.decorators import workflow
+
 Traceloop.init(app_name="joke_generation_service")
 
 @workflow(name="joke_creation")
