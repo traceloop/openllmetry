@@ -11,7 +11,7 @@ addopts = "--cov --cov-report html:'../../coverage/packages/traceloop-sdk/html' 
 
 [tool.poetry]
 name = "traceloop-sdk"
-version = "0.0.56"
+version = "0.0.57"
 description = "Traceloop Software Development Kit (SDK) for Python"
 authors = [
   "Gal Kleinman <gal@traceloop.com>",
@@ -32,6 +32,7 @@ opentelemetry-api = "^1.19.0"
 opentelemetry-sdk = "^1.19.0"
 opentelemetry-semantic-conventions-ai = "^0.0.5"
 opentelemetry-exporter-otlp-proto-http = "^1.19.0"
+opentelemetry-exporter-otlp-proto-grpc = "^1.19.0"
 opentelemetry-instrumentation-requests = "^0.40b0"
 opentelemetry-instrumentation-pymysql = "^0.40b0"
 opentelemetry-instrumentation-urllib3 = "^0.40b0"
