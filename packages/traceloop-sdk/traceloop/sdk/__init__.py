@@ -6,7 +6,11 @@ from colorama import Fore
 from opentelemetry.sdk.trace.export import SpanExporter
 from opentelemetry.util.re import parse_env_headers
 
-from traceloop.sdk.config import base_url, is_prompt_registry_enabled, is_tracing_enabled
+from traceloop.sdk.config import (
+    base_url,
+    is_prompt_registry_enabled,
+    is_tracing_enabled,
+)
 from traceloop.sdk.prompts.client import PromptRegistryClient
 from traceloop.sdk.tracing.tracing import TracerWrapper, set_correlation_id
 
@@ -36,9 +40,9 @@ class Traceloop:
             headers = parse_env_headers(headers)
 
         # auto-create a dashboard on Traceloop if no export endpoint is provided
-        if api_endpoint == base_url() and not api_key:
+        if not exporter and api_endpoint == base_url() and not api_key:
             if os.path.exists("/tmp/traceloop_key.txt") and os.path.exists(
-                    "/tmp/traceloop_url.txt"
+                "/tmp/traceloop_url.txt"
             ):
                 api_key = open("/tmp/traceloop_key.txt").read()
                 access_url = open("/tmp/traceloop_url.txt").read()
@@ -62,8 +66,8 @@ class Traceloop:
 
         if api_key:
             headers = {
-                          "Authorization": f"Bearer {api_key}",
-                      } | headers
+                "Authorization": f"Bearer {api_key}",
+            } | headers
 
         TracerWrapper.set_endpoint(api_endpoint, headers)
         Traceloop.__tracer_wrapper = TracerWrapper(
