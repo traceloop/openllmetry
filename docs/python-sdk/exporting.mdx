@@ -1,6 +1,6 @@
 ---
 title: "Exporting your Traces"
-description: "Connect to any observability platform - Traceloop, Datadog, Honeycomb, and others"
+description: "Connect to any observability platform - Traceloop, Dynatrace, Datadog, Honeycomb, and others"
 ---
 
 Since Traceloop SDK is using OpenTelemetry under the hood, you can see everything
@@ -17,6 +17,19 @@ For on-prem deployments, set `TRACELOOP_BASE_URL` to the URL of your Traceloop i
 
 Done! You'll get instant visibility into everything that's happening with your LLM.
 If you're calling a vector DB, or any other external service or database, you'll also see it in the Traceloop dashboard.
+
+</Accordion>
+
+<Accordion title="Dynatrace">
+  Analyze all collected LLM traces within Dynatrace by using the native OpenTelemetry ingest endpoint of your Dynatrace environment.
+  
+  Go to your Dynatrace environment and create a new access token under **Manage Access Tokens**.  
+  The access token needs the following permission scopes that allow the ingest of OpenTelemetry spans, metrics and logs (openTelemetryTrace.ingest, metrics.ingest, logs.ingest).
+
+  Set `TRACELOOP_BASE_URL` environment variable to the URL of your Dynatrace OpenTelemetry ingest endpoint (e.g.: TRACELOOP_BASE_URL=https:\<YOUR_ENV>.live.dynatrace.com\api\v2\otlp).
+  Set the `TRACELOOP_HEADERS` environment variable to include your previously created access token (e.g.: TRACELOOP_HEADERS=Authorization=Api-Token%20<YOUR_ACCESS_TOKEN>).
+
+  Done! All the exported spans along with their span attributes will show up within the Dynatrace trace view.
 
 </Accordion>
 
