@@ -1,4 +1,5 @@
 import os
+import sys
 import requests
 
 from typing import Optional
@@ -20,7 +21,7 @@ class Traceloop:
 
     @staticmethod
     def init(
-        app_name: Optional[str] = None,
+        app_name: Optional[str] = sys.argv[0],
         api_endpoint: str = base_url(),
         api_key: str = None,
         headers: dict[str, str] = {},
@@ -85,7 +86,7 @@ class Traceloop:
 
         print(Fore.RESET)
 
-        TracerWrapper.set_endpoint(api_endpoint, headers)
+        TracerWrapper.set_static_params(app_name, api_endpoint, headers)
         Traceloop.__tracer_wrapper = TracerWrapper(
             disable_batch=disable_batch, exporter=exporter
         )

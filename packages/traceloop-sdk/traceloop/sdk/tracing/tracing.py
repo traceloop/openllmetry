@@ -11,6 +11,7 @@ from opentelemetry.exporter.otlp.proto.http.trace_exporter import (
 from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import (
     OTLPSpanExporter as GRPCExporter,
 )
+from opentelemetry.sdk.resources import SERVICE_NAME, Resource
 from opentelemetry.sdk.trace import TracerProvider, SpanProcessor
 from opentelemetry.sdk.trace.export import (
     SpanExporter,
@@ -40,7 +41,10 @@ class TracerWrapper(object):
                 if exporter
                 else init_spans_exporter(TracerWrapper.endpoint, TracerWrapper.headers)
             )
-            obj.__tracer_provider: TracerProvider = init_tracer_provider()
+            obj.__resource = Resource(attributes={SERVICE_NAME: TracerWrapper.app_name})
+            obj.__tracer_provider: TracerProvider = init_tracer_provider(
+                resource=obj.__resource
+            )
             if disable_batch or is_notebook():
                 obj.__spans_processor: SpanProcessor = SimpleSpanProcessor(
                     obj.__spans_exporter
@@ -64,7 +68,10 @@ class TracerWrapper(object):
         self.flush()
 
     @staticmethod
-    def set_endpoint(endpoint: str, headers: dict[str, str]) -> None:
+    def set_static_params(
+        app_name: str, endpoint: str, headers: dict[str, str]
+    ) -> None:
+        TracerWrapper.app_name = app_name
         TracerWrapper.endpoint = endpoint
         TracerWrapper.headers = headers
 
@@ -115,12 +122,12 @@ def init_spans_exporter(api_endpoint: str, headers: dict[str, str]) -> SpanExpor
         return GRPCExporter(endpoint=f"{api_endpoint}", headers=headers)
 
 
-def init_tracer_provider() -> TracerProvider:
+def init_tracer_provider(resource: Resource) -> TracerProvider:
     provider: TracerProvider = None
     default_provider: TracerProvider = get_tracer_provider()
 
     if isinstance(default_provider, ProxyTracerProvider):
-        provider = TracerProvider()
+        provider = TracerProvider(resource=resource)
         trace.set_tracer_provider(provider)
     elif not hasattr(default_provider, "add_span_processor"):
         logging.error(
