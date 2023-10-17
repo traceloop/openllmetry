@@ -6,7 +6,10 @@ import importlib.util
 from colorama import Fore
 from opentelemetry import trace
 from opentelemetry.exporter.otlp.proto.http.trace_exporter import (
-    OTLPSpanExporter,
+    OTLPSpanExporter as HTTPExporter,
+)
+from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import (
+    OTLPSpanExporter as GRPCExporter,
 )
 from opentelemetry.sdk.trace import TracerProvider, SpanProcessor
 from opentelemetry.sdk.trace.export import (
@@ -106,7 +109,10 @@ def span_processor_on_start(span, parent_context):
 
 
 def init_spans_exporter(api_endpoint: str, headers: dict[str, str]) -> SpanExporter:
-    return OTLPSpanExporter(endpoint=f"{api_endpoint}/v1/traces", headers=headers)
+    if "http" in api_endpoint.lower() or "https" in api_endpoint.lower():
+        return HTTPExporter(endpoint=f"{api_endpoint}/v1/traces", headers=headers)
+    else:
+        return GRPCExporter(endpoint=f"{api_endpoint}", headers=headers)
 
 
 def init_tracer_provider() -> TracerProvider:

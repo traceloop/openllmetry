@@ -26,7 +26,7 @@ With datadog, there are 2 options - you can either export directly to a Datadog 
 See also [Datadog documentation](https://docs.datadoghq.com/opentelemetry/).
 
 Exporting directly to an agent is easiest.
-To do that, first enable the OTLP GRPC collector in your agent configuration.
+To do that, first enable the OTLP HTTP collector in your agent configuration.
 This depends on how you deployed your Datadog agent. For example, if you've used a Helm chart,
 you can add the following to your `values.yaml`
 (see [this](https://docs.datadoghq.com/opentelemetry/otlp_ingest_in_the_agent/?tab=kuberneteshelmvaluesyaml#enabling-otlp-ingestion-on-the-datadog-agent) for other options):
@@ -35,14 +35,14 @@ you can add the following to your `values.yaml`
 otlp:
   receiver:
     protocols:
-      grpc:
+      http:
         enabled: true
 ```
 
 Then, set this env var, and you're done!
 
 ```bash
-TRACELOOP_BASE_URL=http://<datadog-agent-hostname>:4317
+TRACELOOP_BASE_URL=http://<datadog-agent-hostname>:4318
 ```
 
 </Accordion>
@@ -70,14 +70,88 @@ TRACELOOP_HEADERS="x-honeycomb-team=<YOUR_API_KEY>"
 
 </Accordion>
 
-<Accordion title="SignNoz">
+<Accordion title="Grafana Tempo">
+First, go to the Grafana Cloud account page under `https://grafana.com/orgs/<your org name>`,
+and click on **Send Traces** under Tempo. In **Grafana Data Source settings**,
+note the `URL` and the `User` values. Click **Generate now** to generate an API key and copy it.
+
+### With Grafana Agent
+
+Make sure you have an agent installed and running in your cluster.
+The host to target your traces is constructed is the hostname of the `URL` noted above, without the `https://` and the trailing `/tempo`.
+
+Add this to the configuration of your agent:
+
+```yaml
+traces:
+  configs:
+    - name: default
+      remote_write:
+        - endpoint: <Grafana Hostname>:443
+          basic_auth:
+            username: <User from Grafana Cloud>
+            password: <Grafana Cloud API Token>
+      receivers:
+        otlp:
+          protocols:
+            grpc:
+```
+
+<Warning>
+  Note the endpoint. The URL you need to use is without `https` and the trailing
+  `/`. So `https://tempo-us-central1.grafana.net/tempo` should be used as
+  `tempo-us-central1.grafana.net:443`.
+</Warning>
+
+Set this as an environment variable in your app:
+
+```bash
+TRACELOOP_BASE_URL=http://<grafana-agent-hostname>:4318
+```
+
+### Without Grafana Agent
+
+Grafana cloud currently only supports sending traces to some of its regions.
+Before you begin, [check out this list](https://grafana.com/docs/grafana-cloud/monitor-infrastructure/otlp/send-data-otlp/)
+and make sure your region is supported.
+
+In a terminal, type:
+
+```bash
+echo -n "<your user id>:<your api key>" | base64
+```
+
+Note the result which is a base64 encoding of your user id and api key.
+
+The URL you'll use as the destination for the traces depends on your region/zone. For example, for AWS US Central this will be `prod-us-central-0`.
+See [here](https://grafana.com/docs/grafana-cloud/monitor-infrastructure/otlp/send-data-otlp/#before-you-begin) for the names of the zones you should use below.
+
+Then, you can set the following environment variables when running your app with Traceloop SDK installed:
+
+```bash
+TRACELOOP_BASE_URL=https://otlp-gateway-<zone>.grafana.net/otlp
+TRACELOOP_HEADERS="Authorization=Basic%20<base64 encoded user id and api key>"
+```
+
+<Accordion title="OpenTelemetry Collector">
+Since Traceloop is emitting standard OTLP HTTP (standard OpenTelemetry protocol), you can use any OpenTelemetry Collector, which gives you the flexibility
+to then connect to any backend you want.
+First, [deploy an OpenTelemetry Collector](https://opentelemetry.io/docs/kubernetes/operator/automatic/#create-an-opentelemetry-collector-optional)
+in your cluster.
+Then, point the output of the Traceloop SDK to the collector by setting:
+```bash
+TRACELOOP_BASE_URL=https://<opentelemetry-collector-hostname>:4318
+```
+</Accordion>
+
+<Accordion title="SigNoz">
 ### With SigNoz cloud
 
 Since SigNoz natively supports OpenTelemetry, you just need to route the traces to SigNoz's endpoint and set the
-ingestion key:
+ingestion key (note no `https` in the URL):
 
 ```bash
-TRACELOOP_BASE_URL=https://ingest.{region}.signoz.cloud
+TRACELOOP_BASE_URL=ingest.{region}.signoz.cloud
 TRACELOOP_HEADERS="signoz-access-token=<SIGNOZ_INGESTION_KEY>"
 ```
 
@@ -95,7 +169,7 @@ Validate your configuration by [following these instructions](https://signoz.io/
 Once you have an up and running instance of SigNoz, use the following environment variables to export your traces:
 
 ```bash
-TRACELOOP_BASE_URL="http://localhost:4317"
+TRACELOOP_BASE_URL="http://localhost:4318"
 ```
 
 </Accordion>

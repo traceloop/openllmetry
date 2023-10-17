@@ -31,7 +31,11 @@ class Traceloop:
             PromptRegistryClient().run()
 
         if not is_tracing_enabled():
+            print(Fore.YELLOW + "Traceloop is disabled")
             return
+
+        if exporter:
+            print(Fore.GREEN + "Traceloop exporting traces to a custom exporter")
 
         api_key = os.getenv("TRACELOOP_API_KEY") or api_key
         api_endpoint = os.getenv("TRACELOOP_BASE_URL") or api_endpoint
@@ -40,7 +44,8 @@ class Traceloop:
             headers = parse_env_headers(headers)
 
         # auto-create a dashboard on Traceloop if no export endpoint is provided
-        if not exporter and api_endpoint == base_url() and not api_key:
+        if not exporter and api_endpoint == "https://api.traceloop.com" and not api_key:
+            headers = None  # disable headers if we're auto-creating a dashboard
             if os.path.exists("/tmp/traceloop_key.txt") and os.path.exists(
                 "/tmp/traceloop_url.txt"
             ):
@@ -62,12 +67,23 @@ class Traceloop:
             print(
                 Fore.GREEN + f"\nGo to {access_url} to see a live dashboard\n",
             )
-            print(Fore.RESET)
 
-        if api_key:
+        if headers:
+            print(
+                Fore.GREEN
+                + f"Traceloop exporting traces to {api_endpoint}, authenticating with custom headers"
+            )
+
+        if api_key and not headers:
+            print(
+                Fore.GREEN
+                + f"Traceloop exporting traces to {api_endpoint} authenticating with bearer token"
+            )
             headers = {
                 "Authorization": f"Bearer {api_key}",
-            } | headers
+            }
+
+        print(Fore.RESET)
 
         TracerWrapper.set_endpoint(api_endpoint, headers)
         Traceloop.__tracer_wrapper = TracerWrapper(

@@ -70,12 +70,14 @@ Traceloop.init(app_name="your_app_name", disable_batch=True)
 
 Now, you need to decide where to export the traces to.
 
-## ⏫ Supported destinations
+## ⏫ Supported (and tested) destinations
 
 - [x] Traceloop
 - [x] Datadog
 - [x] New Relic
 - [x] Honeycomb
+- [x] Grafana Tempo
+- [x] OpenTelemetry Collector
 - [x] SigNoz
 
 See [our docs](https://traceloop.com/docs/python-sdk/exporting) for instructions on how to connect to each one.
