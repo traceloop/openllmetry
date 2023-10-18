@@ -73,6 +73,7 @@ Now, you need to decide where to export the traces to.
 ## ⏫ Supported (and tested) destinations
 
 - [x] Traceloop
+- [x] Dynatrace
 - [x] Datadog
 - [x] New Relic
 - [x] Honeycomb
