@@ -132,8 +132,10 @@ def init_instrumentations():
     init_anthropic_instrumentor()
     init_cohere_instrumentor()
     init_pinecone_instrumentor()
+    init_chroma_instrumentor()
     # init_haystack_instrumentor()
     init_langchain_instrumentor()
+    init_transformers_instrumentor()
     init_requests_instrumentor()
     init_urllib3_instrumentor()
     init_pymysql_instrumentor()
@@ -175,6 +177,17 @@ def init_pinecone_instrumentor():
             instrumentor.instrument()
 
 
+def init_chroma_instrumentor():
+    if importlib.util.find_spec("chromadb") is not None:
+        print("chromadb found")
+        from opentelemetry.instrumentation.chromadb import ChromaInstrumentor
+
+        instrumentor = ChromaInstrumentor()
+        if not instrumentor.is_instrumented_by_opentelemetry:
+            print("chromadb instrumented")
+            instrumentor.instrument()
+
+
 def init_haystack_instrumentor():
     if importlib.util.find_spec("haystack") is not None:
         from opentelemetry.instrumentation.haystack import HaystackInstrumentor
@@ -189,6 +202,15 @@ def init_langchain_instrumentor():
         from opentelemetry.instrumentation.langchain import LangchainInstrumentor
 
         instrumentor = LangchainInstrumentor()
+        if not instrumentor.is_instrumented_by_opentelemetry:
+            instrumentor.instrument()
+
+
+def init_transformers_instrumentor():
+    if importlib.util.find_spec("transformers") is not None:
+        from opentelemetry.instrumentation.transformers import TransformersInstrumentor
+
+        instrumentor = TransformersInstrumentor()
         if not instrumentor.is_instrumented_by_opentelemetry:
             instrumentor.instrument()
 

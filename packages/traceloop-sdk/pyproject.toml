@@ -11,7 +11,7 @@ addopts = "--cov --cov-report html:'../../coverage/packages/traceloop-sdk/html' 
 
 [tool.poetry]
 name = "traceloop-sdk"
-version = "0.0.55"
+version = "0.0.56a6"
 description = "Traceloop Software Development Kit (SDK) for Python"
 authors = [
   "Gal Kleinman <gal@traceloop.com>",
@@ -40,11 +40,17 @@ opentelemetry-instrumentation-anthropic = "^0.0.7"
 opentelemetry-instrumentation-cohere = "^0.0.3"
 opentelemetry-instrumentation-pinecone = "^0.0.7"
 opentelemetry-instrumentation-haystack = "^0.0.5"
-opentelemetry-instrumentation-langchain = "^0.0.1"
+opentelemetry-instrumentation-langchain = "0.0.2a1"
+#opentelemetry-instrumentation-chromadb = "0.0.1a3"
+opentelemetry-instrumentation-transformers = "0.0.1a3"
 colorama = "^0.4.6"
 tenacity = "^8.2.3"
 pydantic = "^1.10.12"
 jinja2 = "^3.1.2"
+
+[tool.poetry.dependencies.opentelemetry-instrumentation-chromadb]
+path = "../opentelemetry-instrumentation-chromadb"
+develop = true
 
 [tool.poetry.group.dev.dependencies]
 autopep8 = "2.0.4"
@@ -61,6 +67,7 @@ farm-haystack = "^1.20.1"
 pinecone-client = {extras = ["grpc"], version = "^2.2.4"}
 cohere = "^4.27"
 langchain = "^0.0.310"
+chromadb = "^0.4.14"
 
 [build-system]
 requires = [ "poetry-core" ]

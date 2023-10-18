@@ -32,6 +32,8 @@ farm-haystack = "^1.20.1"
 pinecone-datasets = "^0.6.1"
 pinecone-client = {extras = ["grpc"], version = "^2.2.4"}
 langchain = "^0.0.310"
+tiktoken = "^0.5.1"
+chromadb = "^0.4.13"
 
 [tool.poetry.dependencies.opentelemetry-instrumentation-openai]
 path = "../opentelemetry-instrumentation-openai"
