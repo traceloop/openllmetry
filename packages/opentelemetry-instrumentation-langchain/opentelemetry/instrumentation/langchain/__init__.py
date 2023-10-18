@@ -14,7 +14,7 @@ from opentelemetry.instrumentation.langchain.workflow_wrapper import workflow_wr
 logger = logging.getLogger(__name__)
 
 _instruments = ("langchain >= 0.0.200",)
-__version__ = "0.1.0"
+__version__ = "0.0.2"
 
 WRAPPED_METHODS = [
     {

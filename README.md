@@ -56,6 +56,8 @@ pip install traceloop-sdk
 Then, to start instrumenting your code, just add this line to your code:
 
 ```python
+from traceloop.sdk import Traceloop
+
 Traceloop.init(app_name="your_app_name")
 ```
 
@@ -68,12 +70,15 @@ Traceloop.init(app_name="your_app_name", disable_batch=True)
 
 Now, you need to decide where to export the traces to.
 
-## ⏫ Supported destinations
+## ⏫ Supported (and tested) destinations
 
 - [x] Traceloop
+- [x] Dynatrace
 - [x] Datadog
 - [x] New Relic
 - [x] Honeycomb
+- [x] Grafana Tempo
+- [x] OpenTelemetry Collector
 - [x] SigNoz
 
 See [our docs](https://traceloop.com/docs/python-sdk/exporting) for instructions on how to connect to each one.
@@ -97,11 +102,12 @@ OpenLLMetry can instrument everything that [OpenTelemetry already instruments](h
 - [x] Pinecone
 - [x] Chroma
 - [ ] Weaviate
+- [ ] Milvus
 
 ### Frameworks
 
+- [x] LangChain
 - [x] Haystack
-- [ ] LangChain
 - [ ] LlamaIndex
 
 ## 🌱 Contributing

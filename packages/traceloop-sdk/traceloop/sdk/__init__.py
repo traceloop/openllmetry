@@ -1,4 +1,5 @@
 import os
+import sys
 import requests
 
 from typing import Optional
@@ -6,7 +7,11 @@ from colorama import Fore
 from opentelemetry.sdk.trace.export import SpanExporter
 from opentelemetry.util.re import parse_env_headers
 
-from traceloop.sdk.config import base_url, is_prompt_registry_enabled, is_tracing_enabled
+from traceloop.sdk.config import (
+    base_url,
+    is_prompt_registry_enabled,
+    is_tracing_enabled,
+)
 from traceloop.sdk.prompts.client import PromptRegistryClient
 from traceloop.sdk.tracing.tracing import TracerWrapper, set_correlation_id
 
@@ -16,7 +21,7 @@ class Traceloop:
 
     @staticmethod
     def init(
-        app_name: Optional[str] = None,
+        app_name: Optional[str] = sys.argv[0],
         api_endpoint: str = base_url(),
         api_key: str = None,
         headers: dict[str, str] = {},
@@ -27,7 +32,11 @@ class Traceloop:
             PromptRegistryClient().run()
 
         if not is_tracing_enabled():
+            print(Fore.YELLOW + "Traceloop is disabled")
             return
+
+        if exporter:
+            print(Fore.GREEN + "Traceloop exporting traces to a custom exporter")
 
         api_key = os.getenv("TRACELOOP_API_KEY") or api_key
         api_endpoint = os.getenv("TRACELOOP_BASE_URL") or api_endpoint
@@ -36,9 +45,10 @@ class Traceloop:
             headers = parse_env_headers(headers)
 
         # auto-create a dashboard on Traceloop if no export endpoint is provided
-        if api_endpoint == base_url() and not api_key:
+        if not exporter and api_endpoint == "https://api.traceloop.com" and not api_key:
+            headers = None  # disable headers if we're auto-creating a dashboard
             if os.path.exists("/tmp/traceloop_key.txt") and os.path.exists(
-                    "/tmp/traceloop_url.txt"
+                "/tmp/traceloop_url.txt"
             ):
                 api_key = open("/tmp/traceloop_key.txt").read()
                 access_url = open("/tmp/traceloop_url.txt").read()
@@ -58,14 +68,25 @@ class Traceloop:
             print(
                 Fore.GREEN + f"\nGo to {access_url} to see a live dashboard\n",
             )
-            print(Fore.RESET)
 
-        if api_key:
+        if headers:
+            print(
+                Fore.GREEN
+                + f"Traceloop exporting traces to {api_endpoint}, authenticating with custom headers"
+            )
+
+        if api_key and not headers:
+            print(
+                Fore.GREEN
+                + f"Traceloop exporting traces to {api_endpoint} authenticating with bearer token"
+            )
             headers = {
-                          "Authorization": f"Bearer {api_key}",
-                      } | headers
+                "Authorization": f"Bearer {api_key}",
+            }
 
-        TracerWrapper.set_endpoint(api_endpoint, headers)
+        print(Fore.RESET)
+
+        TracerWrapper.set_static_params(app_name, api_endpoint, headers)
         Traceloop.__tracer_wrapper = TracerWrapper(
             disable_batch=disable_batch, exporter=exporter
         )
