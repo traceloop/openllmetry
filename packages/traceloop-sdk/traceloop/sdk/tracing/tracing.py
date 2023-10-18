@@ -145,6 +145,7 @@ def init_instrumentations():
     init_anthropic_instrumentor()
     init_cohere_instrumentor()
     init_pinecone_instrumentor()
+    init_chroma_instrumentor()
     # init_haystack_instrumentor()
     init_langchain_instrumentor()
     init_requests_instrumentor()
@@ -184,6 +185,15 @@ def init_pinecone_instrumentor():
         from opentelemetry.instrumentation.pinecone import PineconeInstrumentor
 
         instrumentor = PineconeInstrumentor()
+        if not instrumentor.is_instrumented_by_opentelemetry:
+            instrumentor.instrument()
+
+
+def init_chroma_instrumentor():
+    if importlib.util.find_spec("chromadb") is not None:
+        from opentelemetry.instrumentation.chromadb import ChromaInstrumentor
+
+        instrumentor = ChromaInstrumentor()
         if not instrumentor.is_instrumented_by_opentelemetry:
             instrumentor.instrument()
 
