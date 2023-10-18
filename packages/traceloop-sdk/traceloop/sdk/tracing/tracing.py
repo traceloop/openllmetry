@@ -216,7 +216,6 @@ def init_langchain_instrumentor():
             instrumentor.instrument()
 
 
-
 def init_requests_instrumentor():
     if importlib.util.find_spec("requests") is not None:
         from opentelemetry.instrumentation.requests import RequestsInstrumentor

@@ -8,10 +8,7 @@ from opentelemetry.trace import get_tracer
 from wrapt import wrap_function_wrapper
 
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
-from opentelemetry.instrumentation.utils import (
-    _SUPPRESS_INSTRUMENTATION_KEY,
-    unwrap,
-)
+from opentelemetry.instrumentation.utils import unwrap
 
 from opentelemetry.instrumentation.chromadb.wrapper import _wrap
 
@@ -51,7 +48,7 @@ WRAPPED_METHODS = [
         "method": "update",
         "span_name": "chroma.update"
     },
-        {
+    {
         "object": "Collection",
         "method": "upsert",
         "span_name": "chroma.upsert"
