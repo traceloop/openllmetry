@@ -18,7 +18,7 @@ from opentelemetry.instrumentation.chromadb.wrapper import _wrap
 logger = logging.getLogger(__name__)
 
 _instruments = ("chromadb >= 0.3",)
-__version__ = "0.0.1"
+__version__ = "0.0.2"
 
 WRAPPED_METHODS = [
     {

@@ -135,7 +135,6 @@ def init_instrumentations():
     init_chroma_instrumentor()
     # init_haystack_instrumentor()
     init_langchain_instrumentor()
-    init_transformers_instrumentor()
     init_requests_instrumentor()
     init_urllib3_instrumentor()
     init_pymysql_instrumentor()
@@ -205,14 +204,6 @@ def init_langchain_instrumentor():
         if not instrumentor.is_instrumented_by_opentelemetry:
             instrumentor.instrument()
 
-
-def init_transformers_instrumentor():
-    if importlib.util.find_spec("transformers") is not None:
-        from opentelemetry.instrumentation.transformers import TransformersInstrumentor
-
-        instrumentor = TransformersInstrumentor()
-        if not instrumentor.is_instrumented_by_opentelemetry:
-            instrumentor.instrument()
 
 
 def init_requests_instrumentor():
