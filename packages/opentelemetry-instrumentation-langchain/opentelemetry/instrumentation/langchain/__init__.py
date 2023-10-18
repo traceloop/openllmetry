@@ -14,49 +14,21 @@ from opentelemetry.instrumentation.langchain.workflow_wrapper import workflow_wr
 logger = logging.getLogger(__name__)
 
 _instruments = ("langchain >= 0.0.200",)
-__version__ = "0.1.0"
+__version__ = "0.0.2"
 
 WRAPPED_METHODS = [
     {
-        "package": "langchain.chains",
-        "object": "LLMChain",
+        "package": "langchain.chains.base",
+        "object": "Chain",
         "method": "__call__",
         "span_name": "langchain_llm.task",
         "wrapper": task_wrapper,
     },
     {
-        "package": "langchain.chains",
-        "object": "LLMChain",
+        "package": "langchain.chains.base",
+        "object": "Chain",
         "method": "acall",
         "span_name": "langchain_llm.task",
-        "wrapper": task_wrapper,
-    },
-    {
-        "package": "langchain.chains",
-        "object": "LLMChain",
-        "method": "__call__",
-        "span_name": "langchain_llm.task",
-        "wrapper": task_wrapper,
-    },
-    {
-        "package": "langchain.chains",
-        "object": "LLMChain",
-        "method": "acall",
-        "span_name": "langchain_llm.task",
-        "wrapper": task_wrapper,
-    },
-    {
-        "package": "langchain.chains",
-        "object": "TransformChain",
-        "method": "__call__",
-        "span_name": "langchain_transform.task",
-        "wrapper": task_wrapper,
-    },
-    {
-        "package": "langchain.chains",
-        "object": "TransformChain",
-        "method": "acall",
-        "span_name": "langchain_transform.task",
         "wrapper": task_wrapper,
     },
     {
