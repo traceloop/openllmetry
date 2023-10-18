@@ -96,7 +96,8 @@ TRACELOOP_HEADERS="x-honeycomb-team=<YOUR_API_KEY>"
 <Accordion title="Grafana Tempo">
 First, go to the Grafana Cloud account page under `https://grafana.com/orgs/<your org name>`,
 and click on **Send Traces** under Tempo. In **Grafana Data Source settings**,
-note the `URL` and the `User` values. Click **Generate now** to generate an API key and copy it.
+note the `URL` value. Click **Generate now** to generate an API key and copy it.
+Note also the `Stack ID` value (you can find it in the URL `https://grafana.com/orgs/<Your Org Name>/stacks/<Stack ID>`).
 
 ### With Grafana Agent
 
@@ -112,7 +113,7 @@ traces:
       remote_write:
         - endpoint: <Grafana Hostname>:443
           basic_auth:
-            username: <User from Grafana Cloud>
+            username: <Stack ID from Grafana Cloud>
             password: <Grafana Cloud API Token>
       receivers:
         otlp:
@@ -141,7 +142,7 @@ and make sure your region is supported.
 In a terminal, type:
 
 ```bash
-echo -n "<your user id>:<your api key>" | base64
+echo -n "<your stack id>:<your api key>" | base64
 ```
 
 Note the result which is a base64 encoding of your user id and api key.
@@ -153,7 +154,7 @@ Then, you can set the following environment variables when running your app with
 
 ```bash
 TRACELOOP_BASE_URL=https://otlp-gateway-<zone>.grafana.net/otlp
-TRACELOOP_HEADERS="Authorization=Basic%20<base64 encoded user id and api key>"
+TRACELOOP_HEADERS="Authorization=Basic%20<base64 encoded stack id and api key>"
 ```
 
 </Accordion>
