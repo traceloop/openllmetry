@@ -107,7 +107,8 @@ OpenLLMetry can instrument everything that [OpenTelemetry already instruments](h
 ### Frameworks
 
 - [x] LangChain
-- [x] Haystack
+- [x] [Haystack](https://haystack.deepset.ai/integrations/traceloop)
+- [x] [LiteLLM](https://docs.litellm.ai/docs/observability/traceloop_integration)
 - [ ] LlamaIndex
 
 ## 🌱 Contributing
