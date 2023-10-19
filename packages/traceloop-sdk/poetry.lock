@@ -1524,13 +1524,13 @@ text-helpers = ["chardet (>=5.1.0,<6.0.0)"]
 
 [[package]]
 name = "langsmith"
-version = "0.0.46"
+version = "0.0.47"
 description = "Client library to connect to the LangSmith LLM Tracing and Evaluation Platform."
 optional = false
 python-versions = ">=3.8.1,<4.0"
 files = [
-    {file = "langsmith-0.0.46-py3-none-any.whl", hash = "sha256:65a9f22ff504fa6b62236e3fdaae9060c30ae14ed9b6d1945837a4695e8bfeea"},
-    {file = "langsmith-0.0.46.tar.gz", hash = "sha256:9ca35719fab7caf3367bc0fcd636c670c83edbf0fe9de5c7a38bf37767fd62f0"},
+    {file = "langsmith-0.0.47-py3-none-any.whl", hash = "sha256:90279d4888e4513f83703becf38a6d92b7c7d696b120872fa1fb28c5c67bfd91"},
+    {file = "langsmith-0.0.47.tar.gz", hash = "sha256:04b8373cbfcf7b9c28ba53174206095c50dc09ae1131a99b501f92776c8ad0c8"},
 ]
 
 [package.dependencies]
@@ -2254,21 +2254,19 @@ test = ["httpretty (>=1.0,<2.0)", "opentelemetry-instrumentation-requests[instru
 
 [[package]]
 name = "opentelemetry-instrumentation-transformers"
-version = "0.0.1a5"
+version = "0.0.1"
 description = "OpenTelemetry transformers instrumentation"
 optional = false
 python-versions = ">=3.8.1,<4"
-files = []
-develop = true
+files = [
+    {file = "opentelemetry_instrumentation_transformers-0.0.1-py3-none-any.whl", hash = "sha256:5563d2df89ee39258c8787a48b18d080a4ab57fda8e304dd834da98561695ec5"},
+    {file = "opentelemetry_instrumentation_transformers-0.0.1.tar.gz", hash = "sha256:18af8fb3ad591dd34d58bad15f0539738b7a16d4e9cb53524f166707e64b942f"},
+]
 
 [package.dependencies]
-opentelemetry-api = "^1.19.0"
-opentelemetry-instrumentation = "^0.40b0"
-opentelemetry-semantic-conventions-ai = "^0.0.5"
-
-[package.source]
-type = "directory"
-url = "../opentelemetry-instrumentation-transformers"
+opentelemetry-api = ">=1.19.0,<2.0.0"
+opentelemetry-instrumentation = ">=0.40b0,<0.41"
+opentelemetry-semantic-conventions-ai = ">=0.0.5,<0.0.6"
 
 [[package]]
 name = "opentelemetry-instrumentation-urllib3"
@@ -4435,4 +4433,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8.1,<4"
-content-hash = "f4daa3bc9e2bde6b935b9b499bbca502f619ce934fd273edd0c2d25133c74e49"
+content-hash = "beb5b9a2becd558ae74df976761fe916b493d9d3bc5504efbd0967384abaf787"
