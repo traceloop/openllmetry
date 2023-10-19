@@ -493,13 +493,13 @@ colorama = {version = "*", markers = "platform_system == \"Windows\""}
 
 [[package]]
 name = "cohere"
-version = "4.30"
+version = "4.31"
 description = ""
 optional = false
 python-versions = ">=3.7,<4.0"
 files = [
-    {file = "cohere-4.30-py3-none-any.whl", hash = "sha256:98f3c49c8ad5f9b3386085160007d6c16b7fc3c9f78c9611376e55e150929f65"},
-    {file = "cohere-4.30.tar.gz", hash = "sha256:9c9ccd68789830e9f5b10c04f1af2a2e01fac98ccfef043f4b2d76095b0ea6f5"},
+    {file = "cohere-4.31-py3-none-any.whl", hash = "sha256:f52cb6308a7d28e99fbd68711b370368be6a96e3b2e60554d1b3a30198b0c5e6"},
+    {file = "cohere-4.31.tar.gz", hash = "sha256:1ba3b1d9b0bba2bca79b1ab234b39714f47b987d8a87e20ed548ef72820c615e"},
 ]
 
 [package.dependencies]
@@ -774,20 +774,20 @@ weaviate = ["weaviate-client (>2)"]
 
 [[package]]
 name = "fastapi"
-version = "0.103.2"
+version = "0.104.0"
 description = "FastAPI framework, high performance, easy to learn, fast to code, ready for production"
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.8"
 files = [
-    {file = "fastapi-0.103.2-py3-none-any.whl", hash = "sha256:3270de872f0fe9ec809d4bd3d4d890c6d5cc7b9611d721d6438f9dacc8c4ef2e"},
-    {file = "fastapi-0.103.2.tar.gz", hash = "sha256:75a11f6bfb8fc4d2bec0bd710c2d5f2829659c0e8c0afd5560fdda6ce25ec653"},
+    {file = "fastapi-0.104.0-py3-none-any.whl", hash = "sha256:456482c1178fb7beb2814b88e1885bc49f9a81f079665016feffe3e1c6a7663e"},
+    {file = "fastapi-0.104.0.tar.gz", hash = "sha256:9c44de45693ae037b0c6914727a29c49a40668432b67c859a87851fc6a7b74c6"},
 ]
 
 [package.dependencies]
 anyio = ">=3.7.1,<4.0.0"
 pydantic = ">=1.7.4,<1.8 || >1.8,<1.8.1 || >1.8.1,<2.0.0 || >2.0.0,<2.0.1 || >2.0.1,<2.1.0 || >2.1.0,<3.0.0"
 starlette = ">=0.27.0,<0.28.0"
-typing-extensions = ">=4.5.0"
+typing-extensions = ">=4.8.0"
 
 [package.extras]
 all = ["email-validator (>=2.0.0)", "httpx (>=0.23.0)", "itsdangerous (>=1.1.0)", "jinja2 (>=2.11.2)", "orjson (>=3.2.1)", "pydantic-extra-types (>=2.0.0)", "pydantic-settings (>=2.0.0)", "python-multipart (>=0.0.5)", "pyyaml (>=5.3.1)", "ujson (>=4.0.1,!=4.0.2,!=4.1.0,!=4.2.0,!=4.3.0,!=5.0.0,!=5.1.0)", "uvicorn[standard] (>=0.12.0)"]
@@ -1524,13 +1524,13 @@ text-helpers = ["chardet (>=5.1.0,<6.0.0)"]
 
 [[package]]
 name = "langsmith"
-version = "0.0.44"
+version = "0.0.46"
 description = "Client library to connect to the LangSmith LLM Tracing and Evaluation Platform."
 optional = false
 python-versions = ">=3.8.1,<4.0"
 files = [
-    {file = "langsmith-0.0.44-py3-none-any.whl", hash = "sha256:5e7e5b45360ce89a2d5d6066a3b9fdd31b1f874a0cf19b1666c9792fecef0a1b"},
-    {file = "langsmith-0.0.44.tar.gz", hash = "sha256:74a262ba23a958ca1a4863d5386c151be462e40ccfcb8b39d0a5d8c9eaa40164"},
+    {file = "langsmith-0.0.46-py3-none-any.whl", hash = "sha256:65a9f22ff504fa6b62236e3fdaae9060c30ae14ed9b6d1945837a4695e8bfeea"},
+    {file = "langsmith-0.0.46.tar.gz", hash = "sha256:9ca35719fab7caf3367bc0fcd636c670c83edbf0fe9de5c7a38bf37767fd62f0"},
 ]
 
 [package.dependencies]
@@ -1873,13 +1873,13 @@ test = ["codecov (>=2.1)", "pytest (>=7.2)", "pytest-cov (>=4.0)"]
 
 [[package]]
 name = "num2words"
-version = "0.5.12"
+version = "0.5.13"
 description = "Modules to convert numbers to words. Easily extensible."
 optional = false
 python-versions = "*"
 files = [
-    {file = "num2words-0.5.12-py3-none-any.whl", hash = "sha256:9eeef488658226ab36818c06d7aeb956d19b530fb62030596b6802fb4659f30e"},
-    {file = "num2words-0.5.12.tar.gz", hash = "sha256:7e7c0b0f080405aa3a1dd9d32b1ca90b3bf03bab17b8e54db05e1b78301a0988"},
+    {file = "num2words-0.5.13-py3-none-any.whl", hash = "sha256:39e662c663f0a7e15415431ea68eb3dc711b49e3b776d93403e1da0a219ca4ee"},
+    {file = "num2words-0.5.13.tar.gz", hash = "sha256:a3064716fbbf90d75c449450cebfbc73a6a13e63b2531d09bdecc3ab1a2209cf"},
 ]
 
 [package.dependencies]
@@ -2254,19 +2254,21 @@ test = ["httpretty (>=1.0,<2.0)", "opentelemetry-instrumentation-requests[instru
 
 [[package]]
 name = "opentelemetry-instrumentation-transformers"
-version = "0.0.1a3"
+version = "0.0.1a5"
 description = "OpenTelemetry transformers instrumentation"
 optional = false
 python-versions = ">=3.8.1,<4"
-files = [
-    {file = "opentelemetry_instrumentation_transformers-0.0.1a3-py3-none-any.whl", hash = "sha256:4dd421060b78821ba3978747f27e882f03a48b375ac746e3b45d8a5051a92b70"},
-    {file = "opentelemetry_instrumentation_transformers-0.0.1a3.tar.gz", hash = "sha256:3a0d4545dba8263abdcf76663743c90176ff54dc7a82c53b2d175ba5ca9e3b67"},
-]
+files = []
+develop = true
 
 [package.dependencies]
-opentelemetry-api = ">=1.19.0,<2.0.0"
-opentelemetry-instrumentation = ">=0.40b0,<0.41"
-opentelemetry-semantic-conventions-ai = ">=0.0.5,<0.0.6"
+opentelemetry-api = "^1.19.0"
+opentelemetry-instrumentation = "^0.40b0"
+opentelemetry-semantic-conventions-ai = "^0.0.5"
+
+[package.source]
+type = "directory"
+url = "../opentelemetry-instrumentation-transformers"
 
 [[package]]
 name = "opentelemetry-instrumentation-urllib3"
@@ -4433,4 +4435,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8.1,<4"
-content-hash = "532e5c5a4b844ef148bfe9e2c8668b2e21a162948d8a36539cea333a40df0e48"
+content-hash = "f4daa3bc9e2bde6b935b9b499bbca502f619ce934fd273edd0c2d25133c74e49"
