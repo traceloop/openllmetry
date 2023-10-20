@@ -8,11 +8,11 @@
   <p align="center">Open-source observability for your LLM application</p>
 </p>
 <h4 align="center">
-    <a href="https://traceloop.com/docs/python-sdk/getting-started"><strong>Get started »</strong></a>
+    <a href="https://traceloop.com/docs/openllmetry/getting-started"><strong>Get started »</strong></a>
     <br />
     <br />
   <a href="https://join.slack.com/t/traceloopcommunity/shared_invite/zt-1plpfpm6r-zOHKI028VkpcWdobX65C~g">Slack</a> |
-  <a href="https://traceloop.com/docs/python-sdk/introduction">Docs</a> |
+  <a href="https://traceloop.com/docs/openllmetry/introduction">Docs</a> |
   <a href="https://www.traceloop.com">Website</a>
 </h4>
 
@@ -45,7 +45,7 @@ If you already have OpenTelemetry instrumented, you can just add any of our inst
 ## 🚀 Getting Started
 
 The easiest way to get started is to use our SDK.
-For a complete guide, go to our [docs](https://traceloop.com/docs/python-sdk/getting-started).
+For a complete guide, go to our [docs](https://traceloop.com/docs/openllmetry/getting-started).
 
 Install the SDK:
 
@@ -81,7 +81,7 @@ Now, you need to decide where to export the traces to.
 - [x] OpenTelemetry Collector
 - [x] SigNoz
 
-See [our docs](https://traceloop.com/docs/python-sdk/exporting) for instructions on how to connect to each one.
+See [our docs](https://traceloop.com/docs/openllmetry/exporting) for instructions on how to connect to each one.
 
 ## 🪗 What do we instrument?
 
@@ -113,7 +113,7 @@ OpenLLMetry can instrument everything that [OpenTelemetry already instruments](h
 
 ## 🌱 Contributing
 
-Whether it's big or small, we love contributions ❤️ Check out our guide to see how to [get started](https://traceloop.com/docs/python-sdk/contributing/overview).
+Whether it's big or small, we love contributions ❤️ Check out our guide to see how to [get started](https://traceloop.com/docs/openllmetry/contributing/overview).
 
 Not sure where to get started? You can:
 
