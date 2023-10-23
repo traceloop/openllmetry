@@ -45,7 +45,7 @@ class Traceloop:
             headers = parse_env_headers(headers)
 
         # auto-create a dashboard on Traceloop if no export endpoint is provided
-        if not exporter and api_endpoint == "https://api-staging.traceloop.com" and not api_key:
+        if not exporter and api_endpoint == "https://api.traceloop.com" and not api_key:
             headers = None  # disable headers if we're auto-creating a dashboard
             if os.path.exists("/tmp/traceloop_key.txt") and os.path.exists(
                 "/tmp/traceloop_url.txt"

@@ -16,7 +16,7 @@ from traceloop.sdk.tracing.tracing import set_prompt_tracing_context
 
 MAX_RETRIES = os.getenv("TRACELOOP_PROMPT_MANAGER_MAX_RETRIES") or 3
 POLLING_INTERVAL = os.getenv("TRACELOOP_PROMPT_MANAGER_POLLING_INTERVAL") or 5
-PROMPTS_ENDPOINT = "https://app-staging.traceloop.dev/api/prompts"
+PROMPTS_ENDPOINT = "https://app.traceloop.com/api/prompts"
 
 
 def get_effective_version(prompt: Prompt) -> PromptVersion:
