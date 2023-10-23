@@ -12,7 +12,7 @@ Traceloop.init(app_name="prompt_registry_example_app")
 
 @task(name="generate_joke")
 def generate_pirate_joke():
-    prompt_args = get_prompt("joke_generator", persona="pirate")
+    prompt_args = get_prompt("joke_generator_new", persona="pirate")
     completion = openai.ChatCompletion.create(**prompt_args)
 
     return completion.choices[0].message.content
