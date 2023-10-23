@@ -78,10 +78,11 @@ Now, you need to decide where to export the traces to.
 - [x] [New Relic](https://www.traceloop.com/docs/openllmetry/integrations/newrelic)
 - [x] [Honeycomb](https://www.traceloop.com/docs/openllmetry/integrations/honeycomb)
 - [x] [Grafana Tempo](https://www.traceloop.com/docs/openllmetry/integrations/grafana)
-- [x] [OpenTelemetry Collector](https://www.traceloop.com/docs/openllmetry/integrations/otel-collector)
+- [x] [HyperDX](https://www.traceloop.com/docs/openllmetry/integrations/hyperdx)
 - [x] [SigNoz](https://www.traceloop.com/docs/openllmetry/integrations/signoz)
+- [x] [OpenTelemetry Collector](https://www.traceloop.com/docs/openllmetry/integrations/otel-collector)
 
-See [our docs](https://traceloop.com/docs/openllmetry/integrations/exporting) for instructions on how to connect to each one.
+See [our docs](https://traceloop.com/docs/openllmetry/integrations/exporting) for instructions on connecting to each one.
 
 ## 🪗 What do we instrument?
 
