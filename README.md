@@ -81,7 +81,7 @@ Now, you need to decide where to export the traces to.
 - [x] [OpenTelemetry Collector](https://www.traceloop.com/docs/openllmetry/integrations/otel-collector)
 - [x] [SigNoz](https://www.traceloop.com/docs/openllmetry/integrations/signoz)
 
-See [our docs](https://traceloop.com/docs/openllmetry/exporting) for instructions on how to connect to each one.
+See [our docs](https://traceloop.com/docs/openllmetry/integrations/exporting) for instructions on how to connect to each one.
 
 ## 🪗 What do we instrument?
 
