@@ -8,7 +8,7 @@
   <p align="center">Open-source observability for your LLM application</p>
 </p>
 <h4 align="center">
-    <a href="https://traceloop.com/docs/openllmetry/getting-started"><strong>Get started »</strong></a>
+    <a href="https://traceloop.com/docs/openllmetry/getting-started-python"><strong>Get started »</strong></a>
     <br />
     <br />
   <a href="https://join.slack.com/t/traceloopcommunity/shared_invite/zt-1plpfpm6r-zOHKI028VkpcWdobX65C~g">Slack</a> |
@@ -45,7 +45,7 @@ If you already have OpenTelemetry instrumented, you can just add any of our inst
 ## 🚀 Getting Started
 
 The easiest way to get started is to use our SDK.
-For a complete guide, go to our [docs](https://traceloop.com/docs/openllmetry/getting-started).
+For a complete guide, go to our [docs](https://traceloop.com/docs/openllmetry/getting-started-python).
 
 Install the SDK:
 
@@ -72,14 +72,14 @@ Now, you need to decide where to export the traces to.
 
 ## ⏫ Supported (and tested) destinations
 
-- [x] Traceloop
-- [x] Dynatrace
-- [x] Datadog
-- [x] New Relic
-- [x] Honeycomb
-- [x] Grafana Tempo
-- [x] OpenTelemetry Collector
-- [x] SigNoz
+- [x] [Traceloop](https://www.traceloop.com/docs/openllmetry/integrations/traceloop)
+- [x] [Dynatrace](https://www.traceloop.com/docs/openllmetry/integrations/dynatrace)
+- [x] [Datadog](https://www.traceloop.com/docs/openllmetry/integrations/datadog)
+- [x] [New Relic](https://www.traceloop.com/docs/openllmetry/integrations/newrelic)
+- [x] [Honeycomb](https://www.traceloop.com/docs/openllmetry/integrations/honeycomb)
+- [x] [Grafana Tempo](https://www.traceloop.com/docs/openllmetry/integrations/grafana)
+- [x] [OpenTelemetry Collector](https://www.traceloop.com/docs/openllmetry/integrations/otel-collector)
+- [x] [SigNoz](https://www.traceloop.com/docs/openllmetry/integrations/signoz)
 
 See [our docs](https://traceloop.com/docs/openllmetry/exporting) for instructions on how to connect to each one.
 
