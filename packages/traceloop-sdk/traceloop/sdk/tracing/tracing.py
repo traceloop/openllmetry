@@ -32,7 +32,7 @@ EXCLUDED_URLS = (
 
 class TracerWrapper(object):
     def __new__(
-        cls, disable_batch=False, exporter: SpanExporter = None
+            cls, disable_batch=False, exporter: SpanExporter = None
     ) -> "TracerWrapper":
         if not hasattr(cls, "instance"):
             obj = cls.instance = super(TracerWrapper, cls).__new__(cls)
@@ -69,7 +69,7 @@ class TracerWrapper(object):
 
     @staticmethod
     def set_static_params(
-        app_name: str, endpoint: str, headers: dict[str, str]
+            app_name: str, endpoint: str, headers: dict[str, str]
     ) -> None:
         TracerWrapper.app_name = app_name
         TracerWrapper.endpoint = endpoint
@@ -142,8 +142,10 @@ def span_processor_on_start(span, parent_context):
         if prompt_version_name is not None:
             span.set_attribute("traceloop.prompt.version_name", prompt_version_name)
 
+
 def is_llm_span(span) -> bool:
     return span.attributes.get(SpanAttributes.LLM_REQUEST_TYPE) is not None
+
 
 def init_spans_exporter(api_endpoint: str, headers: dict[str, str]) -> SpanExporter:
     if "http" in api_endpoint.lower() or "https" in api_endpoint.lower():
