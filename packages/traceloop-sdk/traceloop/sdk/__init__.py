@@ -14,7 +14,11 @@ from traceloop.sdk.config import (
     is_tracing_enabled,
 )
 from traceloop.sdk.prompts.client import PromptRegistryClient
-from traceloop.sdk.tracing.tracing import TracerWrapper, set_association_properties, set_correlation_id
+from traceloop.sdk.tracing.tracing import (
+    TracerWrapper,
+    set_association_properties,
+    set_correlation_id,
+)
 
 
 class Traceloop:
@@ -93,7 +97,7 @@ class Traceloop:
         )
 
     @staticmethod
-    @deprecated(version="0.0.62", reason="Use set_association_properties instead")  
+    @deprecated(version="0.0.62", reason="Use set_association_properties instead")
     def set_correlation_id(correlation_id: str) -> None:
         set_correlation_id(correlation_id)
 
