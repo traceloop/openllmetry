@@ -41,7 +41,7 @@ class PirateJokeAgent(JokeAgent):
 
 @aworkflow(name="jokes_generation")
 async def joke_generator():
-    Traceloop.set_correlation_id("user_12345")
+    Traceloop.set_association_properties({"user_id": "user_12345"})
 
     requests.get("https://www.google.com")
     print(f"Simple Joke: {await JokeAgent().generate_joke()}")

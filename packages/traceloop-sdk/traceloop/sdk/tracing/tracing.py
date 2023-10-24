@@ -101,6 +101,10 @@ def set_correlation_id(correlation_id: str) -> None:
     attach(set_value("correlation_id", correlation_id))
 
 
+def set_association_properties(properties: dict) -> None:
+    attach(set_value("association_properties", properties))
+
+
 def set_workflow_name(workflow_name: str) -> None:
     attach(set_value("workflow_name", workflow_name))
 
@@ -113,6 +117,11 @@ def span_processor_on_start(span, parent_context):
     correlation_id = get_value("correlation_id")
     if correlation_id is not None:
         span.set_attribute(SpanAttributes.TRACELOOP_CORRELATION_ID, correlation_id)
+
+    association_properties = get_value("association_properties")
+    if association_properties is not None:
+        for key, value in association_properties.items():
+            span.set_attribute(f"{SpanAttributes.TRACELOOP_ASSOCIATION_PROPERTIES}.{key}", value)
 
 
 def init_spans_exporter(api_endpoint: str, headers: dict[str, str]) -> SpanExporter:
