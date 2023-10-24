@@ -171,3 +171,6 @@ cython_debug/
 
 # PyCharm
 .idea/
+
+# NX
+.nx

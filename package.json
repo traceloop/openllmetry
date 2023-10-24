@@ -5,8 +5,8 @@
   "scripts": {},
   "private": true,
   "devDependencies": {
-    "@nxlv/python": "^16.1.2",
-    "nx": "16.7.4",
+    "@nxlv/python": "^16.1.4",
+    "nx": "17.0.1",
     "nx-cloud": "latest"
   },
   "workspaces": [
