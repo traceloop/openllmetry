@@ -101,6 +101,10 @@ def set_correlation_id(correlation_id: str) -> None:
     attach(set_value("correlation_id", correlation_id))
 
 
+def set_association_properties(properties: dict) -> None:
+    attach(set_value("association_properties", properties))
+
+
 def set_workflow_name(workflow_name: str) -> None:
     attach(set_value("workflow_name", workflow_name))
 
@@ -120,6 +124,11 @@ def span_processor_on_start(span, parent_context):
     if correlation_id is not None:
         span.set_attribute(SpanAttributes.TRACELOOP_CORRELATION_ID, correlation_id)
 
+    association_properties = get_value("association_properties")
+    if association_properties is not None:
+        for key, value in association_properties.items():
+            span.set_attribute(f"{SpanAttributes.TRACELOOP_ASSOCIATION_PROPERTIES}.{key}", value)
+
     if is_llm_span(span):
         prompt_key = get_value("prompt_key")
         if prompt_key is not None:
@@ -132,7 +141,6 @@ def span_processor_on_start(span, parent_context):
         prompt_version_name = get_value("prompt_version_name")
         if prompt_version_name is not None:
             span.set_attribute("traceloop.prompt.version_name", prompt_version_name)
-
 
 def is_llm_span(span) -> bool:
     return span.attributes.get(SpanAttributes.LLM_REQUEST_TYPE) is not None
