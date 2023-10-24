@@ -10,12 +10,14 @@ from typing import Optional
 from jinja2 import Environment, meta
 from tenacity import RetryError, retry, stop_after_attempt, wait_exponential, retry_if_exception
 
+from traceloop.sdk import base_url
 from traceloop.sdk.prompts.model import Prompt, PromptVersion, TemplateEngine
 from traceloop.sdk.prompts.registry import PromptRegistry
+from traceloop.sdk.tracing.tracing import set_prompt_tracing_context
 
 MAX_RETRIES = os.getenv("TRACELOOP_PROMPT_MANAGER_MAX_RETRIES") or 3
 POLLING_INTERVAL = os.getenv("TRACELOOP_PROMPT_MANAGER_POLLING_INTERVAL") or 5
-PROMPTS_ENDPOINT = "https://app.traceloop.com/api/prompts"
+PROMPTS_ENDPOINT = f"{base_url()}/api/prompts"
 
 
 def get_effective_version(prompt: Prompt) -> PromptVersion:
@@ -61,6 +63,8 @@ class PromptRegistryClient:
         }
         params_dict.update(prompt_version.llm_config)
         params_dict.pop("mode")
+
+        set_prompt_tracing_context(prompt.key, prompt_version.version, prompt_version.name)
 
         return params_dict
 
