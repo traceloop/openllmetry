@@ -43,17 +43,17 @@ class PromptVersion(RegistryObjectBaseModel):
     llm_config: ModelConfig
 
 
-# class Target(RegistryObjectBaseModel):
-#     id: str
-#     updated_at: datetime.datetime
-#     prompt_id: str
-#     version: str
+class Target(RegistryObjectBaseModel):
+    id: str
+    updated_at: datetime.datetime
+    prompt_id: str
+    version: str
 
 
 class Prompt(RegistryObjectBaseModel):
     id: str
     versions: List[PromptVersion]
-    # target: Target
+    target: Target
     key: str
     created_at: datetime.datetime
     updated_at: datetime.datetime
