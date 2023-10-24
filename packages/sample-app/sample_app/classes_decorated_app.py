@@ -36,7 +36,7 @@ class PirateJokeAgent(JokeAgent):
 
 @workflow(name="jokes_generation")
 def joke_generator():
-    Traceloop.set_correlation_id("user_12345")
+    Traceloop.set_association_properties({"user_id": "user_12345"})
 
     print(f"Simple Joke: {JokeAgent().generate_joke()}")
     print(f"Pirate Joke: {PirateJokeAgent().generate_joke()}")
