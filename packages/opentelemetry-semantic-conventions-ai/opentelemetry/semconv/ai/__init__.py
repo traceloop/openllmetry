@@ -27,6 +27,9 @@ class SpanAttributes:
     TRACELOOP_SPAN_KIND = "traceloop.span.kind"
     TRACELOOP_WORKFLOW_NAME = "traceloop.workflow.name"
     TRACELOOP_ENTITY_NAME = "traceloop.entity.name"
+    TRACELOOP_ASSOCIATION_PROPERTIES = "traceloop.association.properties"
+
+    # Deprecated
     TRACELOOP_CORRELATION_ID = "traceloop.correlation.id"
 
 
