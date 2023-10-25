@@ -2160,13 +2160,13 @@ opentelemetry-semantic-conventions-ai = ">=0.0.7,<0.0.8"
 
 [[package]]
 name = "opentelemetry-instrumentation-langchain"
-version = "0.0.5"
+version = "0.0.6"
 description = "OpenTelemetry Langchain instrumentation"
 optional = false
 python-versions = ">=3.8.1,<4"
 files = [
-    {file = "opentelemetry_instrumentation_langchain-0.0.5-py3-none-any.whl", hash = "sha256:e1f067574fcb15fe438d13125b5ab6ecf6b030e1d772e18b5ddeb1e527c450fe"},
-    {file = "opentelemetry_instrumentation_langchain-0.0.5.tar.gz", hash = "sha256:85fe0f220c5fede7fe0b1ad408f5d18f40a972ba70e22af25819cb64e1cda402"},
+    {file = "opentelemetry_instrumentation_langchain-0.0.6-py3-none-any.whl", hash = "sha256:b24079197d13e307bcb9f3b160b8c257a8ef5f797f28a72085c99d14401ae3a3"},
+    {file = "opentelemetry_instrumentation_langchain-0.0.6.tar.gz", hash = "sha256:b88c6f7d9806a5678469a24f2fb8d00e0b7dbd6e412a2beaa9924400057ae4ad"},
 ]
 
 [package.dependencies]
@@ -4425,4 +4425,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8.1,<4"
-content-hash = "6e1b0cff9df6018c6c72100062a9e43f1eb5ba0c816fc75ca994849b74c2ce2f"
+content-hash = "ae7f7426ebc555c179dd11abd174ecfc90ceb949579a62793ea939b3bec74bb0"
