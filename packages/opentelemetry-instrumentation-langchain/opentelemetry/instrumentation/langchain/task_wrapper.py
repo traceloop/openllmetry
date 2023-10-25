@@ -15,7 +15,7 @@ def task_wrapper(tracer, to_wrap, wrapped, instance, args, kwargs):
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
         return wrapped(*args, **kwargs)
 
-    name = instance.__class__.__name__
+    name = to_wrap.get("span_name")
     with tracer.start_as_current_span(name) as span:
         span.set_attribute(
             SpanAttributes.TRACELOOP_SPAN_KIND,
