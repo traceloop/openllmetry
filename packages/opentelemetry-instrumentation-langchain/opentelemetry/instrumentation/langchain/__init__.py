@@ -44,6 +44,20 @@ WRAPPED_METHODS = [
         "method": "acall",
         "span_name": "langchain.workflow",
         "wrapper": workflow_wrapper,
+    },
+    {
+        "package": "langchain.chains",
+        "object": "RetrievalQA",
+        "method": "__call__",
+        "span_name": "retrieval_qa.workflow",
+        "wrapper": workflow_wrapper,
+    },
+    {
+        "package": "langchain.chains",
+        "object": "RetrievalQA",
+        "method": "acall",
+        "span_name": "retrieval_qa.workflow",
+        "wrapper": workflow_wrapper,
     }
 ]
 
