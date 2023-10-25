@@ -11,7 +11,7 @@ addopts = "--cov --cov-report html:'../../coverage/packages/opentelemetry-instru
 
 [tool.poetry]
 name = "opentelemetry-instrumentation-langchain"
-version = "0.0.4"
+version = "0.0.5"
 description = "OpenTelemetry Langchain instrumentation"
 authors = [
   "Gal Kleinman <gal@traceloop.com>",
