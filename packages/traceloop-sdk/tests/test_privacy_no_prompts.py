@@ -1,5 +1,14 @@
+import os
+import pytest
 import openai
 from traceloop.sdk.decorators import workflow, task
+
+
+@pytest.fixture(autouse=True)
+def disable_trace_content():
+    os.environ["TRACELOOP_TRACE_CONTENT"] = "false"
+    yield
+    os.environ["TRACELOOP_TRACE_CONTENT"] = "true"
 
 
 def test_simple_workflow(exporter):
@@ -25,3 +34,7 @@ def test_simple_workflow(exporter):
         "joke_creation.task",
         "pirate_joke_generator.workflow",
     ]
+    open_ai_span = spans[0]
+    assert open_ai_span.attributes["llm.usage.prompt_tokens"] == 15
+    assert not open_ai_span.attributes.get("llm.prompts.0.content")
+    assert not open_ai_span.attributes.get("llm.prompts.0.completions")

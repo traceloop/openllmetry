@@ -2354,15 +2354,17 @@ description = "OpenTelemetry OpenAI instrumentation"
 category = "main"
 optional = false
 python-versions = ">=3.8.1,<4"
-files = [
-    {file = "opentelemetry_instrumentation_openai-0.0.14-py3-none-any.whl", hash = "sha256:61594f90ce2eb5839c00d1d1ee97613fe1a398226a1f8f302ad340d9b2c1bc67"},
-    {file = "opentelemetry_instrumentation_openai-0.0.14.tar.gz", hash = "sha256:9acb4a8645259d23800196425ee4b367dbde6a7b57bf4b5a0bac5c0761bb9a44"},
-]
+files = []
+develop = true
 
 [package.dependencies]
-opentelemetry-api = ">=1.20.0,<2.0.0"
-opentelemetry-instrumentation = ">=0.41b0,<0.42"
-opentelemetry-semantic-conventions-ai = ">=0.0.7,<0.0.8"
+opentelemetry-api = "^1.20.0"
+opentelemetry-instrumentation = "^0.41b0"
+opentelemetry-semantic-conventions-ai = "^0.0.7"
+
+[package.source]
+type = "directory"
+url = "../opentelemetry-instrumentation-openai"
 
 [[package]]
 name = "opentelemetry-instrumentation-pinecone"
@@ -4751,4 +4753,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8.1,<4"
-content-hash = "880fe16b7998a732e485c3eca07f694791be896838ecc7dae835de609eac5782"
+content-hash = "009d82ca10b9db330220c2ec406eb15d3b0655261655d76229b289ab3811c29c"
