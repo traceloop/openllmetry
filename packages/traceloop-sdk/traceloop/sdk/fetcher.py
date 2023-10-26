@@ -16,6 +16,7 @@ from tenacity import (
 )
 
 from traceloop.sdk.prompts.registry import PromptRegistry
+from traceloop.sdk.prompts.client import PromptRegistryClient
 from traceloop.sdk.tracing.content_allow_list import ContentAllowList
 
 MAX_RETRIES = os.getenv("TRACELOOP_PROMPT_MANAGER_MAX_RETRIES") or 3
@@ -31,12 +32,10 @@ class Fetcher:
     def __init__(
         self,
         base_url: str,
-        prompt_registry: PromptRegistry,
-        content_allow_list: ContentAllowList,
     ):
         self._base_url = base_url
-        self._prompt_registry = prompt_registry
-        self._content_allow_list = content_allow_list
+        self._prompt_registry = PromptRegistryClient()._registry
+        self._content_allow_list = ContentAllowList()
         self._stop_polling_event = Event()
         self._exit_monitor = Thread(
             target=monitor_exit, args=(self._stop_polling_event,), daemon=True

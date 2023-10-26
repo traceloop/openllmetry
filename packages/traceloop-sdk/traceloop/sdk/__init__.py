@@ -38,11 +38,7 @@ class Traceloop:
         api_endpoint = os.getenv("TRACELOOP_BASE_URL") or api_endpoint
 
         if traceloop_sync_enabled and api_endpoint.find("traceloop.com") != -1:
-            Fetcher(
-                base_url=api_endpoint,
-                prompt_registry=PromptRegistryClient()._registry,
-                content_allow_list=ContentAllowList(),
-            ).run()
+            Fetcher(base_url=api_endpoint).run()
         else:
             print(
                 Fore.YELLOW + "Tracloop syncing configuration and prompts" + Fore.RESET
