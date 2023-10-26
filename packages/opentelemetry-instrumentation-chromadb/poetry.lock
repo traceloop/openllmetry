@@ -296,14 +296,14 @@ importlib-metadata = ">=6.0,<7.0"
 
 [[package]]
 name = "opentelemetry-instrumentation"
-version = "0.40b0"
+version = "0.41b0"
 description = "Instrumentation Tools & Auto Instrumentation for OpenTelemetry Python"
 category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "opentelemetry_instrumentation-0.40b0-py3-none-any.whl", hash = "sha256:789d3726e698aa9526dd247b461b9172f99a4345571546c4aecf40279679fc8e"},
-    {file = "opentelemetry_instrumentation-0.40b0.tar.gz", hash = "sha256:08bebe6a752514ed61e901e9fee5ccf06ae7533074442e707d75bb65f3e0aa17"},
+    {file = "opentelemetry_instrumentation-0.41b0-py3-none-any.whl", hash = "sha256:0ef9e5705ceca0205992a4a845ae4251ce6ec15a1206ca07c2b00afb0c5bd386"},
+    {file = "opentelemetry_instrumentation-0.41b0.tar.gz", hash = "sha256:214382ba10dfd29d4e24898a4c7ef18b7368178a6277a1aec95cdb75cabf4612"},
 ]
 
 [package.dependencies]
@@ -313,14 +313,14 @@ wrapt = ">=1.0.0,<2.0.0"
 
 [[package]]
 name = "opentelemetry-semantic-conventions"
-version = "0.40b0"
+version = "0.41b0"
 description = "OpenTelemetry Semantic Conventions"
 category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "opentelemetry_semantic_conventions-0.40b0-py3-none-any.whl", hash = "sha256:7ebbaf86755a0948902e68637e3ae516c50222c30455e55af154ad3ffe283839"},
-    {file = "opentelemetry_semantic_conventions-0.40b0.tar.gz", hash = "sha256:5a7a491873b15ab7c4907bbfd8737645cc87ca55a0a326c1755d1b928d8a0fae"},
+    {file = "opentelemetry_semantic_conventions-0.41b0-py3-none-any.whl", hash = "sha256:45404391ed9e50998183a4925ad1b497c01c143f06500c3b9c3d0013492bb0f2"},
+    {file = "opentelemetry_semantic_conventions-0.41b0.tar.gz", hash = "sha256:0ce5b040b8a3fc816ea5879a743b3d6fe5db61f6485e4def94c6ee4d402e1eb7"},
 ]
 
 [[package]]
@@ -636,4 +636,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8.1,<4"
-content-hash = "b2d04340c00064b6ccf37c425371a741e5f55118a89066f1772f98937e1794ae"
+content-hash = "7773832d8e7585a7e71000f6c4a98381c6a65bb3bbf2c21540cb69470439544e"
