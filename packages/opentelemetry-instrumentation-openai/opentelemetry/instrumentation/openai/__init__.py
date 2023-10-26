@@ -1,4 +1,5 @@
 import logging
+import os
 from typing import Collection
 from wrapt import wrap_function_wrapper
 import openai
@@ -32,6 +33,12 @@ WRAPPED_METHODS = [
         "span_name": "openai.completion",
     },
 ]
+
+
+def should_send_prompts():
+    return os.getenv("TRACELOOP_TRACE_CONTENT") or context_api.get_value(
+        "override_enable_content_tracing"
+    )
 
 
 def _set_span_attribute(span, name, value):
@@ -75,12 +82,13 @@ def _set_input_attributes(span, llm_request_type, kwargs):
         span, SpanAttributes.LLM_PRESENCE_PENALTY, kwargs.get("presence_penalty")
     )
 
-    if llm_request_type == LLMRequestTypeValues.CHAT:
-        _set_span_prompts(span, kwargs.get("messages"))
-    elif llm_request_type == LLMRequestTypeValues.COMPLETION:
-        _set_span_attribute(
-            span, f"{SpanAttributes.LLM_PROMPTS}.0.user", kwargs.get("prompt")
-        )
+    if should_send_prompts():
+        if llm_request_type == LLMRequestTypeValues.CHAT:
+            _set_span_prompts(span, kwargs.get("messages"))
+        elif llm_request_type == LLMRequestTypeValues.COMPLETION:
+            _set_span_attribute(
+                span, f"{SpanAttributes.LLM_PROMPTS}.0.user", kwargs.get("prompt")
+            )
 
     return
 
@@ -103,15 +111,22 @@ def _set_span_completions(span, llm_request_type, choices):
                 _set_span_attribute(span, f"{prefix}.content", message.get("content"))
                 function_call = message.get("function_call")
                 if function_call:
-                    _set_span_attribute(span, f"{prefix}.function_call.name", function_call.get("name"))
-                    _set_span_attribute(span, f"{prefix}.function_call.arguments", function_call.get("arguments"))
+                    _set_span_attribute(
+                        span, f"{prefix}.function_call.name", function_call.get("name")
+                    )
+                    _set_span_attribute(
+                        span,
+                        f"{prefix}.function_call.arguments",
+                        function_call.get("arguments"),
+                    )
         elif llm_request_type == LLMRequestTypeValues.COMPLETION:
             _set_span_attribute(span, f"{prefix}.content", choice.get("text"))
 
 
 def _set_response_attributes(span, llm_request_type, response):
     _set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, response.get("model"))
-    _set_span_completions(span, llm_request_type, response.get("choices"))
+    if should_send_prompts():
+        _set_span_completions(span, llm_request_type, response.get("choices"))
 
     usage = response.get("usage")
     if usage is not None:

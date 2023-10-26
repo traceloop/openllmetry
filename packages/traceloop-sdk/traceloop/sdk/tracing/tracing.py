@@ -22,17 +22,16 @@ from opentelemetry.trace import get_tracer_provider, ProxyTracerProvider
 from opentelemetry.context import get_value, attach, set_value
 
 from opentelemetry.semconv.ai import SpanAttributes
+from traceloop.sdk.tracing.content_allow_list import ContentAllowList
 from traceloop.sdk.utils import is_notebook
 
 TRACER_NAME = "traceloop.tracer"
-EXCLUDED_URLS = (
-    "api.openai.com,openai.azure.com,api.anthropic.com,api.cohere.ai,pinecone.io"
-)
+EXCLUDED_URLS = "api.openai.com,openai.azure.com,api.anthropic.com,api.cohere.ai,pinecone.io,traceloop.com"
 
 
 class TracerWrapper(object):
     def __new__(
-            cls, disable_batch=False, exporter: SpanExporter = None
+        cls, disable_batch=False, exporter: SpanExporter = None
     ) -> "TracerWrapper":
         if not hasattr(cls, "instance"):
             obj = cls.instance = super(TracerWrapper, cls).__new__(cls)
@@ -54,10 +53,12 @@ class TracerWrapper(object):
                     obj.__spans_exporter
                 )
 
-            obj.__spans_processor.on_start = span_processor_on_start
+            obj.__spans_processor.on_start = obj._span_processor_on_start
             obj.__tracer_provider.add_span_processor(obj.__spans_processor)
 
             init_instrumentations()
+
+            obj.__content_allow_list = ContentAllowList()
 
             # Force flushes for debug environments (e.g. local development)
             atexit.register(obj.exit_handler)
@@ -67,11 +68,50 @@ class TracerWrapper(object):
     def exit_handler(self):
         self.flush()
 
+    def _span_processor_on_start(self, span, parent_context):
+        workflow_name = get_value("workflow_name")
+        if workflow_name is not None:
+            span.set_attribute(SpanAttributes.TRACELOOP_WORKFLOW_NAME, workflow_name)
+
+        correlation_id = get_value("correlation_id")
+        if correlation_id is not None:
+            span.set_attribute(SpanAttributes.TRACELOOP_CORRELATION_ID, correlation_id)
+
+        association_properties = get_value("association_properties")
+        if association_properties is not None:
+            for key, value in association_properties.items():
+                span.set_attribute(
+                    f"{SpanAttributes.TRACELOOP_ASSOCIATION_PROPERTIES}.{key}", value
+                )
+
+            if (
+                not self.enable_content_tracing
+                and self.__content_allow_list.is_allowed(association_properties)
+            ):
+                attach(set_value("override_enable_content_tracing", True))
+
+        if is_llm_span(span):
+            prompt_key = get_value("prompt_key")
+            if prompt_key is not None:
+                span.set_attribute("traceloop.prompt.key", prompt_key)
+
+            prompt_version = get_value("prompt_version")
+            if prompt_version is not None:
+                span.set_attribute("traceloop.prompt.version", prompt_version)
+
+            prompt_version_name = get_value("prompt_version_name")
+            if prompt_version_name is not None:
+                span.set_attribute("traceloop.prompt.version_name", prompt_version_name)
+
     @staticmethod
     def set_static_params(
-            app_name: str, endpoint: str, headers: dict[str, str]
+        app_name: str,
+        enable_content_tracing: bool,
+        endpoint: str,
+        headers: dict[str, str],
     ) -> None:
         TracerWrapper.app_name = app_name
+        TracerWrapper.enable_content_tracing = enable_content_tracing
         TracerWrapper.endpoint = endpoint
         TracerWrapper.headers = headers
 
@@ -113,34 +153,6 @@ def set_prompt_tracing_context(key: str, version: int, version_name: str) -> Non
     attach(set_value("prompt_key", key))
     attach(set_value("prompt_version", version))
     attach(set_value("prompt_version_name", version_name))
-
-
-def span_processor_on_start(span, parent_context):
-    workflow_name = get_value("workflow_name")
-    if workflow_name is not None:
-        span.set_attribute(SpanAttributes.TRACELOOP_WORKFLOW_NAME, workflow_name)
-
-    correlation_id = get_value("correlation_id")
-    if correlation_id is not None:
-        span.set_attribute(SpanAttributes.TRACELOOP_CORRELATION_ID, correlation_id)
-
-    association_properties = get_value("association_properties")
-    if association_properties is not None:
-        for key, value in association_properties.items():
-            span.set_attribute(f"{SpanAttributes.TRACELOOP_ASSOCIATION_PROPERTIES}.{key}", value)
-
-    if is_llm_span(span):
-        prompt_key = get_value("prompt_key")
-        if prompt_key is not None:
-            span.set_attribute("traceloop.prompt.key", prompt_key)
-
-        prompt_version = get_value("prompt_version")
-        if prompt_version is not None:
-            span.set_attribute("traceloop.prompt.version", prompt_version)
-
-        prompt_version_name = get_value("prompt_version_name")
-        if prompt_version_name is not None:
-            span.set_attribute("traceloop.prompt.version_name", prompt_version_name)
 
 
 def is_llm_span(span) -> bool:

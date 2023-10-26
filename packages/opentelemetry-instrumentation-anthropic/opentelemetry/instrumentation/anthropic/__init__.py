@@ -1,5 +1,6 @@
 """OpenTelemetry Anthropic instrumentation"""
 import logging
+import os
 from typing import Collection
 from wrapt import wrap_function_wrapper
 
@@ -29,6 +30,12 @@ WRAPPED_METHODS = [
 ]
 
 
+def should_send_prompts():
+    return not os.getenv("TRACELOOP_TRACE_CONTENT") or context_api.get_value(
+        "override_enable_content_tracing"
+    )
+
+
 def _set_span_attribute(span, name, value):
     if value is not None:
         if value != "":
@@ -50,9 +57,10 @@ def _set_input_attributes(span, kwargs):
         span, SpanAttributes.LLM_PRESENCE_PENALTY, kwargs.get("presence_penalty")
     )
 
-    _set_span_attribute(
-        span, f"{SpanAttributes.LLM_PROMPTS}.0.user", kwargs.get("prompt")
-    )
+    if should_send_prompts():
+        _set_span_attribute(
+            span, f"{SpanAttributes.LLM_PROMPTS}.0.user", kwargs.get("prompt")
+        )
 
     return
 
@@ -66,7 +74,8 @@ def _set_span_completions(span, llm_request_type, completion):
 
 def _set_response_attributes(span, llm_request_type, response):
     _set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, response.get("model"))
-    _set_span_completions(span, llm_request_type, response)
+    if should_send_prompts():
+        _set_span_completions(span, llm_request_type, response)
 
 
 def _with_tracer_wrapper(func):

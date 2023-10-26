@@ -9,11 +9,12 @@ from opentelemetry.sdk.trace.export import SpanExporter
 from opentelemetry.util.re import parse_env_headers
 
 from traceloop.sdk.config import (
-    base_url,
-    is_prompt_registry_enabled,
+    is_content_tracing_enabled,
     is_tracing_enabled,
 )
+from traceloop.sdk.fetcher import Fetcher
 from traceloop.sdk.prompts.client import PromptRegistryClient
+from traceloop.sdk.tracing.content_allow_list import ContentAllowList
 from traceloop.sdk.tracing.tracing import (
     TracerWrapper,
     set_association_properties,
@@ -27,25 +28,38 @@ class Traceloop:
     @staticmethod
     def init(
         app_name: Optional[str] = sys.argv[0],
-        api_endpoint: str = base_url(),
+        api_endpoint: str = "https://api.traceloop.com",
         api_key: str = None,
         headers: dict[str, str] = {},
         disable_batch=False,
         exporter: SpanExporter = None,
+        traceloop_sync_enabled: bool = True,
     ) -> None:
-        if is_prompt_registry_enabled():
-            PromptRegistryClient().run()
+        api_endpoint = os.getenv("TRACELOOP_BASE_URL") or api_endpoint
+
+        if traceloop_sync_enabled and api_endpoint.find("traceloop.com") != -1:
+            Fetcher(
+                base_url=api_endpoint,
+                prompt_registry=PromptRegistryClient()._registry,
+                content_allow_list=ContentAllowList(),
+            ).run()
+        else:
+            print(
+                Fore.YELLOW + "Tracloop syncing configuration and prompts" + Fore.RESET
+            )
 
         if not is_tracing_enabled():
-            print(Fore.YELLOW + "Traceloop is disabled")
+            print(Fore.YELLOW + "Tracing is disabled" + Fore.RESET)
             return
+
+        enable_content_tracing = is_content_tracing_enabled()
 
         if exporter:
             print(Fore.GREEN + "Traceloop exporting traces to a custom exporter")
 
         api_key = os.getenv("TRACELOOP_API_KEY") or api_key
-        api_endpoint = os.getenv("TRACELOOP_BASE_URL") or api_endpoint
         headers = os.getenv("TRACELOOP_HEADERS") or headers
+
         if isinstance(headers, str):
             headers = parse_env_headers(headers)
 
@@ -91,7 +105,9 @@ class Traceloop:
 
         print(Fore.RESET)
 
-        TracerWrapper.set_static_params(app_name, api_endpoint, headers)
+        TracerWrapper.set_static_params(
+            app_name, enable_content_tracing, api_endpoint, headers
+        )
         Traceloop.__tracer_wrapper = TracerWrapper(
             disable_batch=disable_batch, exporter=exporter
         )
