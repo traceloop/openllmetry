@@ -109,10 +109,11 @@ def set_workflow_name(workflow_name: str) -> None:
     attach(set_value("workflow_name", workflow_name))
 
 
-def set_prompt_tracing_context(key: str, version: int, version_name: str) -> None:
+def set_prompt_tracing_context(key: str, version: int, version_name: str, version_hash: str) -> None:
     attach(set_value("prompt_key", key))
     attach(set_value("prompt_version", version))
     attach(set_value("prompt_version_name", version_name))
+    attach(set_value("prompt_version_hash", version_hash))
 
 
 def span_processor_on_start(span, parent_context):
@@ -141,6 +142,10 @@ def span_processor_on_start(span, parent_context):
         prompt_version_name = get_value("prompt_version_name")
         if prompt_version_name is not None:
             span.set_attribute("traceloop.prompt.version_name", prompt_version_name)
+
+        prompt_version_hash = get_value("prompt_version_hash")
+        if prompt_version_hash is not None:
+            span.set_attribute("traceloop.prompt.version_hash", prompt_version_hash)
 
 
 def is_llm_span(span) -> bool:
