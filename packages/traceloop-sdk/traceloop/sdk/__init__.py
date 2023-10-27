@@ -37,11 +37,14 @@ class Traceloop:
     ) -> None:
         api_endpoint = os.getenv("TRACELOOP_BASE_URL") or api_endpoint
 
-        if traceloop_sync_enabled and api_endpoint.find("traceloop.com") != -1:
+        if (
+            traceloop_sync_enabled
+            and api_endpoint.find("traceloop.com") != -1
+            and not exporter
+        ):
             Fetcher(base_url=api_endpoint).run()
-        else:
             print(
-                Fore.YELLOW + "Tracloop syncing configuration and prompts" + Fore.RESET
+                Fore.GREEN + "Tracloop syncing configuration and prompts" + Fore.RESET
             )
 
         if not is_tracing_enabled():
