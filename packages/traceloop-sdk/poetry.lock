@@ -2242,14 +2242,14 @@ wrapt = ">=1.0.0,<2.0.0"
 
 [[package]]
 name = "opentelemetry-instrumentation-anthropic"
-version = "0.0.10"
+version = "0.0.12"
 description = "OpenTelemetry Anthropic instrumentation"
 category = "main"
 optional = false
 python-versions = ">=3.8.1,<4"
 files = [
-    {file = "opentelemetry_instrumentation_anthropic-0.0.10-py3-none-any.whl", hash = "sha256:dfc36bce4887d360be37e3afd24926aa88c70c8251fd70b54c85cb9caa840f68"},
-    {file = "opentelemetry_instrumentation_anthropic-0.0.10.tar.gz", hash = "sha256:d2f2489e7ebfa85a2f5d073a84a86f16722e12a574ec45c503e3ac7711401faa"},
+    {file = "opentelemetry_instrumentation_anthropic-0.0.12-py3-none-any.whl", hash = "sha256:0740a0b92fbca5d98aa18634280bf324e7641c63e36aa37330d417a097d36cc7"},
+    {file = "opentelemetry_instrumentation_anthropic-0.0.12.tar.gz", hash = "sha256:5a628f27d05614acabf9ab453c8cb6017935cf54e74e07c121c209c299a0bd76"},
 ]
 
 [package.dependencies]
@@ -2277,14 +2277,14 @@ opentelemetry-semantic-conventions-ai = ">=0.0.7,<0.0.8"
 
 [[package]]
 name = "opentelemetry-instrumentation-cohere"
-version = "0.0.6"
+version = "0.0.8"
 description = "OpenTelemetry Cohere instrumentation"
 category = "main"
 optional = false
 python-versions = ">=3.8.1,<4"
 files = [
-    {file = "opentelemetry_instrumentation_cohere-0.0.6-py3-none-any.whl", hash = "sha256:494f3f8b61747b3ab5196d3827b21a387b4c32e6930cc918b1fd1bbec69bd4d7"},
-    {file = "opentelemetry_instrumentation_cohere-0.0.6.tar.gz", hash = "sha256:19b4a016c28aa27f9743e096b6d335f8447d2b223848099e5e3529dd83160cbf"},
+    {file = "opentelemetry_instrumentation_cohere-0.0.8-py3-none-any.whl", hash = "sha256:273be3406f0617ce0e13d23455bfdd37f9aa5210cc691860c5d1e568bd6dffc4"},
+    {file = "opentelemetry_instrumentation_cohere-0.0.8.tar.gz", hash = "sha256:abd7b7d78ac2ae269643290ad5192f62c800ec7e5478611c4c52d8ab5f1a1a23"},
 ]
 
 [package.dependencies]
@@ -2314,23 +2314,6 @@ wrapt = ">=1.0.0,<2.0.0"
 test = ["opentelemetry-test-utils (==0.41b0)"]
 
 [[package]]
-name = "opentelemetry-instrumentation-haystack"
-version = "0.0.8"
-description = "OpenTelemetry Haystack instrumentation"
-category = "main"
-optional = false
-python-versions = ">=3.8.1,<4"
-files = [
-    {file = "opentelemetry_instrumentation_haystack-0.0.8-py3-none-any.whl", hash = "sha256:dff5f8459c6ad70639bb5d1d8bb8ee7d22e8b07b2228551c5a3bda493cd20623"},
-    {file = "opentelemetry_instrumentation_haystack-0.0.8.tar.gz", hash = "sha256:ca0b12f4a1264a4004ad60f81d1c6ef411db57ba0ba7bd1fa900a2527e51414d"},
-]
-
-[package.dependencies]
-opentelemetry-api = ">=1.20.0,<2.0.0"
-opentelemetry-instrumentation = ">=0.41b0,<0.42"
-opentelemetry-semantic-conventions-ai = ">=0.0.7,<0.0.8"
-
-[[package]]
 name = "opentelemetry-instrumentation-langchain"
 version = "0.0.7"
 description = "OpenTelemetry Langchain instrumentation"
@@ -2349,14 +2332,14 @@ opentelemetry-semantic-conventions-ai = ">=0.0.7,<0.0.8"
 
 [[package]]
 name = "opentelemetry-instrumentation-openai"
-version = "0.0.14"
+version = "0.0.16"
 description = "OpenTelemetry OpenAI instrumentation"
 category = "main"
 optional = false
 python-versions = ">=3.8.1,<4"
 files = [
-    {file = "opentelemetry_instrumentation_openai-0.0.14-py3-none-any.whl", hash = "sha256:61594f90ce2eb5839c00d1d1ee97613fe1a398226a1f8f302ad340d9b2c1bc67"},
-    {file = "opentelemetry_instrumentation_openai-0.0.14.tar.gz", hash = "sha256:9acb4a8645259d23800196425ee4b367dbde6a7b57bf4b5a0bac5c0761bb9a44"},
+    {file = "opentelemetry_instrumentation_openai-0.0.16-py3-none-any.whl", hash = "sha256:0466823401a11ca58ad3dae0d76afcbcd60a0870854ca08ebc2df80a2549c79e"},
+    {file = "opentelemetry_instrumentation_openai-0.0.16.tar.gz", hash = "sha256:7c0c65d25739d96453a25999fd092b2f08b6135e587506a5585b359098ef8375"},
 ]
 
 [package.dependencies]
@@ -4751,4 +4734,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8.1,<4"
-content-hash = "880fe16b7998a732e485c3eca07f694791be896838ecc7dae835de609eac5782"
+content-hash = "1df8690ce9a305b5fafe1313580bf68714c30b2f83aa8bcd201761a1d70dac9d"
