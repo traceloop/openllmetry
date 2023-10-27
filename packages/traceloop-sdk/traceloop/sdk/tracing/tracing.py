@@ -84,11 +84,11 @@ class TracerWrapper(object):
                     f"{SpanAttributes.TRACELOOP_ASSOCIATION_PROPERTIES}.{key}", value
                 )
 
-            if (
-                not self.enable_content_tracing
-                and self.__content_allow_list.is_allowed(association_properties)
-            ):
-                attach(set_value("override_enable_content_tracing", True))
+            if not self.enable_content_tracing:
+                if self.__content_allow_list.is_allowed(association_properties):
+                    attach(set_value("override_enable_content_tracing", True))
+                else:
+                    attach(set_value("override_enable_content_tracing", False))
 
         if is_llm_span(span):
             prompt_key = get_value("prompt_key")

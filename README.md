@@ -58,14 +58,14 @@ Then, to start instrumenting your code, just add this line to your code:
 ```python
 from traceloop.sdk import Traceloop
 
-Traceloop.init(app_name="your_app_name")
+Traceloop.init()
 ```
 
 That's it. You're now tracing your code with OpenLLMetry!
 If you're running this locally, you may want to disable batch sending, so you can see the traces immediately:
 
 ```python
-Traceloop.init(app_name="your_app_name", disable_batch=True)
+Traceloop.init(disable_batch=True)
 ```
 
 Now, you need to decide where to export the traces to.
