@@ -34,7 +34,7 @@ class PromptRegistryClient:
         params_dict.pop("mode")
 
         set_prompt_tracing_context(
-            prompt.key, prompt_version.version, prompt_version.name
+            prompt.key, prompt_version.version, prompt_version.name, prompt_version.hash
         )
 
         return params_dict
