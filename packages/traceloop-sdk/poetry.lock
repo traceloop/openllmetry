@@ -1605,14 +1605,14 @@ adal = ["adal (>=1.0.2)"]
 
 [[package]]
 name = "langchain"
-version = "0.0.315"
+version = "0.0.317"
 description = "Building applications with LLMs through composability"
 category = "dev"
 optional = false
 python-versions = ">=3.8.1,<4.0"
 files = [
-    {file = "langchain-0.0.315-py3-none-any.whl", hash = "sha256:00bcbb5c2e4dfa4ce3aa2acff5465682741db9fa8f78929a70aa97241f50cadd"},
-    {file = "langchain-0.0.315.tar.gz", hash = "sha256:245c59a938b5ca26b2ae497e96c088b074b94fa3af915d1cfab5564fb36412ef"},
+    {file = "langchain-0.0.317-py3-none-any.whl", hash = "sha256:bca76a7d9fbf18bc284b1bf8884c3a88c8f17dc8168ba2123132033b0efdd8df"},
+    {file = "langchain-0.0.317.tar.gz", hash = "sha256:c0e0e835e749d62af86340a3e07fb10d65c9e0c8f66a2d443cded81dbb85835a"},
 ]
 
 [package.dependencies]
@@ -4734,4 +4734,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8.1,<4"
-content-hash = "1df8690ce9a305b5fafe1313580bf68714c30b2f83aa8bcd201761a1d70dac9d"
+content-hash = "d7d5668b2f964ecdeb0b14f8538de5fcbdcb92fd8b1dee10ae839880f5006ef4"
