@@ -1,5 +1,6 @@
 """OpenTelemetry Cohere instrumentation"""
 import logging
+import os
 from typing import Collection
 from wrapt import wrap_function_wrapper
 
@@ -39,6 +40,12 @@ WRAPPED_METHODS = [
 ]
 
 
+def should_send_prompts():
+    return (
+        os.getenv("TRACELOOP_TRACE_CONTENT") or "true"
+    ).lower() == "true" or context_api.get_value("override_enable_content_tracing")
+
+
 def _set_span_attribute(span, name, value):
     if value is not None:
         if value != "":
@@ -60,14 +67,15 @@ def _set_input_attributes(span, llm_request_type, kwargs):
         span, SpanAttributes.LLM_PRESENCE_PENALTY, kwargs.get("presence_penalty")
     )
 
-    if llm_request_type == LLMRequestTypeValues.COMPLETION:
-        _set_span_attribute(
-            span, f"{SpanAttributes.LLM_PROMPTS}.0.user", kwargs.get("prompt")
-        )
-    elif llm_request_type == LLMRequestTypeValues.CHAT:
-        _set_span_attribute(
-            span, f"{SpanAttributes.LLM_PROMPTS}.0.user", kwargs.get("message")
-        )
+    if should_send_prompts():
+        if llm_request_type == LLMRequestTypeValues.COMPLETION:
+            _set_span_attribute(
+                span, f"{SpanAttributes.LLM_PROMPTS}.0.user", kwargs.get("prompt")
+            )
+        elif llm_request_type == LLMRequestTypeValues.CHAT:
+            _set_span_attribute(
+                span, f"{SpanAttributes.LLM_PROMPTS}.0.user", kwargs.get("message")
+            )
 
     return
 
@@ -85,10 +93,11 @@ def _set_span_generations_response(span, generations):
 
 
 def _set_response_attributes(span, llm_request_type, response):
-    if llm_request_type == LLMRequestTypeValues.CHAT:
-        _set_span_chat_response(span, response)
-    elif llm_request_type == LLMRequestTypeValues.COMPLETION:
-        _set_span_generations_response(span, response)
+    if should_send_prompts():
+        if llm_request_type == LLMRequestTypeValues.CHAT:
+            _set_span_chat_response(span, response)
+        elif llm_request_type == LLMRequestTypeValues.COMPLETION:
+            _set_span_generations_response(span, response)
 
 
 def _with_tracer_wrapper(func):
