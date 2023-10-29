@@ -10,11 +10,11 @@ from opentelemetry.instrumentation.utils import unwrap
 
 from opentelemetry.instrumentation.langchain.task_wrapper import task_wrapper
 from opentelemetry.instrumentation.langchain.workflow_wrapper import workflow_wrapper
+from opentelemetry.instrumentation.langchain.version import __version__
 
 logger = logging.getLogger(__name__)
 
 _instruments = ("langchain >= 0.0.200",)
-__version__ = "0.0.2"
 
 WRAPPED_METHODS = [
     {
