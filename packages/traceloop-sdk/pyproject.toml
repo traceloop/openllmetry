@@ -43,7 +43,6 @@ opentelemetry-instrumentation-pinecone = {path="../opentelemetry-instrumentation
 opentelemetry-instrumentation-langchain = {path="../opentelemetry-instrumentation-langchain", develop=true}
 opentelemetry-instrumentation-chromadb = {path="../opentelemetry-instrumentation-chromadb", develop=true}
 opentelemetry-instrumentation-transformers = {path="../opentelemetry-instrumentation-transformers", develop=true}
-
 colorama = "^0.4.6"
 tenacity = "^8.2.3"
 pydantic = "^1.10.12"
