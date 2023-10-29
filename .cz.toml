@@ -1,6 +1,6 @@
 [tool.commitizen]
 name = "cz_conventional_commits"
-tag_format = "$version"
+tag_format = "v$version"
 version_scheme = "pep440"
 major_version_zero = true
 update_changelog_on_bump = true

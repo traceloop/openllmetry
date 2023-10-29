@@ -69,6 +69,14 @@
         "command": "sed -i$SEP '' \"s|{.*path.*|\"^{args.version}\"|\" pyproject.toml",
         "cwd": "packages/opentelemetry-instrumentation-pinecone"
       }
+    },
+    "release": {
+      "executor": "@nxlv/python:run-commands",
+      "options": {
+        "command": "poetry publish --build",
+        "cwd": "packages/traceloop-sdk"
+      },
+      "dependsOn": ["^release", "replace-local-dependencies"]
     }
   },
   "tags": []

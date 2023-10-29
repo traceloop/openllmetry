@@ -67,6 +67,14 @@
         "command": "sed -i$SEP '' \"s|{.*path.*|\"^{args.version}\"|\" pyproject.toml",
         "cwd": "packages/traceloop-sdk"
       }
+    },
+    "release": {
+      "executor": "@nxlv/python:run-commands",
+      "options": {
+        "command": "poetry publish --build",
+        "cwd": "packages/traceloop-sdk"
+      },
+      "dependsOn": ["^release", "replace-local-dependencies"]
     }
   },
   "tags": []
