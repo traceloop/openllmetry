@@ -19,6 +19,7 @@ authors = [
   "Tomer Friedman <tomer@traceloop.com>"
 ]
 license = "Apache-2.0"
+include = ["VERSION"]
 readme = "README.md"
 
 [[tool.poetry.packages]]
