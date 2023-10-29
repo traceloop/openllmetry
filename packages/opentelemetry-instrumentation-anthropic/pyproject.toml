@@ -11,7 +11,7 @@ addopts = "--cov --cov-report html:'../../coverage/packages/opentelemetry-instru
 
 [tool.poetry]
 name = "opentelemetry-instrumentation-anthropic"
-version = "0.1.0"
+version = "0.0.70"
 description = "OpenTelemetry Anthropic instrumentation"
 authors = [
   "Gal Kleinman <gal@traceloop.com>",
@@ -37,18 +37,6 @@ pytest = "7.4.1"
 pytest-sugar = "0.9.7"
 pytest-cov = "4.1.0"
 pytest-html = "4.0.2"
-
-
-[tool.commitizen]
-name = "cz_conventional_commits"
-tag_format = "$version"
-version_scheme = "pep440"
-version_provider = "poetry"
-major_version_zero = true
-version_files = [
-    "pyproject.toml:tool.poetry.version",
-    "opentelemetry/instrumentation/anthropic/version.py"
-]
 
 [build-system]
 requires = ["poetry-core"]
