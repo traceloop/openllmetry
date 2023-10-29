@@ -62,6 +62,13 @@
         "command": "poetry run pytest tests/",
         "cwd": "packages/opentelemetry-instrumentation-transformers"
       }
+    },
+    "replace-local-dependencies": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "sed -i$SEP '' \"s|{.*path.*|\"^{args.version}\"|\" pyproject.toml",
+        "cwd": "packages/opentelemetry-instrumentation-transformers"
+      }
     }
   },
   "tags": []
