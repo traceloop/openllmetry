@@ -50,35 +50,30 @@ jobs:
           persist-credentials: false
           fetch-depth: 0
 
-      - name: Set up Python 3.11
-        uses: actions/setup-python@v1
-        with:
-          python-version: 3.11
-
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
-
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 18
-    
-      - run: npm ci
-      
-      - name: Build Instrumentations
-        run: npx nx run-many -t build-release --projects=tag:instrumentation
-      
-      - run: mkdir instrumentations-dist
-      - run: cp packages/opentelemetry-instrumentation-*/dist/* instrumentations-dist
-      
-    #   - name: Retrieve release distributions
-    #     uses: actions/download-artifact@v3
+    #   - name: Set up Python 3.11
+    #     uses: actions/setup-python@v1
     #     with:
-    #       path: instrumentations-dist/
+    #       python-version: 3.11
 
-      - name: Publish release distributions to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          packages-dir: instrumentations-dist/
+    #   - name: Install Poetry
+    #     uses: snok/install-poetry@v1
+
+    #   - uses: actions/setup-node@v3
+    #     with:
+    #       node-version: 18
+    
+    #   - run: npm ci
+      
+    #   - name: Build Instrumentations
+    #     run: npx nx run-many -t build-release --projects=tag:instrumentation
+      
+    #   - run: mkdir instrumentations-dist
+    #   - run: cp packages/opentelemetry-instrumentation-*/dist/* instrumentations-dist
+
+    #   - name: Publish release distributions to PyPI
+    #     uses: pypa/gh-action-pypi-publish@release/v1
+    #     with:
+    #       packages-dir: instrumentations-dist/
     
   
   release-sdk:
@@ -108,7 +103,7 @@ jobs:
       - run: npm ci
       
       - name: Build Traceloop SDK
-        run: npx nx traceloop-sdk:build-release
+        run: npx nx run traceloop-sdk:build-release
 
       - name: Publish release distributions to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
