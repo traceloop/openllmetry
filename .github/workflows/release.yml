@@ -4,7 +4,7 @@ on:
     workflow_dispatch:
 
 jobs:
-  release:
+  bump-version:
     runs-on: ubuntu-latest
 
     steps:
@@ -38,11 +38,75 @@ jobs:
       - name: Print Version
         run: echo "Bumped to version ${{ steps.cz.outputs.version }}"
 
+
+  release-instrumentations:
+    runs-on: ubuntu-latest
+    needs:
+      - bump-version
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v1
+        with:
+          python-version: 3.11
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+
       - uses: actions/setup-node@v3
         with:
           node-version: 18
     
       - run: npm ci
-      - name: Publish Packages
-        run: npx nx run traceloop-sdk:release
       
+      - name: Build Instrumentations
+        run: npx nx run-many -t build-release --projects=tag:instrumentation
+      
+      - run: mkdir instrumentations-dist
+      - run: cp packages/opentelemetry-instrumentation-*/dist/* instrumentations-dist
+
+      - name: Publish release distributions to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: instrumentations-dist/
+    
+  
+  release-sdk:
+    runs-on: ubuntu-latest
+    needs:
+      - release-instrumentations
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v1
+        with:
+          python-version: 3.11
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
+    
+      - run: npm ci
+      
+      - name: Build Traceloop SDK
+        run: npx nx run traceloop-sdk:build-release
+
+      - name: Publish release distributions to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: packages/traceloop-sdk/dist/

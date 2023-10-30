@@ -3,9 +3,6 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "projectType": "library",
   "sourceRoot": "packages/traceloop-sdk/traceloop_sdk",
-  "nx": {
-    "implicitDependencies": ["opentelemetry-instrumentation-*"]
-  },
   "targets": {
     "lock": {
       "executor": "@nxlv/python:run-commands",
@@ -64,21 +61,16 @@
         "cwd": "packages/traceloop-sdk"
       }
     },
-    "replace-local-dependencies": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "sed -i$SEP '' \"s|{.*path.*|\"^$(poetry version -s)\"|\" pyproject.toml",
-        "cwd": "packages/traceloop-sdk"
-      }
-    },
-    "release": {
+    "build-release": {
       "executor": "@nxlv/python:run-commands",
       "options": {
-        "command": "poetry publish --build",
+        "commands": [
+          "chmod +x ../../scripts/build-release.sh",
+          "../../scripts/build-release.sh"
+        ],
         "cwd": "packages/traceloop-sdk"
-      },
-      "dependsOn": ["^release", "replace-local-dependencies"]
+      }
     }
   },
-  "tags": []
+  "tags": ["sdk"]
 }
