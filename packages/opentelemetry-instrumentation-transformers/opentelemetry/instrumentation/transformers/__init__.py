@@ -9,11 +9,11 @@ from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.instrumentation.utils import unwrap
 
 from opentelemetry.instrumentation.transformers.text_generation_pipeline_wrapper import text_generation_pipeline_wrapper
+from opentelemetry.instrumentation.transformers.version import __version__
 
 logger = logging.getLogger(__name__)
 
 _instruments = ("transformers >= 4.0",)
-__version__ = "0.0.1"
 
 WRAPPED_METHODS = [
     {

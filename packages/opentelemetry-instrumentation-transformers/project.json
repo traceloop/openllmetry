@@ -62,6 +62,21 @@
         "command": "poetry run pytest tests/",
         "cwd": "packages/opentelemetry-instrumentation-transformers"
       }
+    },
+    "replace-local-dependencies": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "sed -i$SEP '' \"s|{.*path.*|\"^$(poetry version -s)\"|\" pyproject.toml",
+        "cwd": "packages/opentelemetry-instrumentation-transformers"
+      }
+    },
+    "release": {
+      "executor": "@nxlv/python:run-commands",
+      "options": {
+        "command": "poetry publish --build",
+        "cwd": "packages/opentelemetry-instrumentation-transformers"
+      },
+      "dependsOn": ["^release", "replace-local-dependencies"]
     }
   },
   "tags": []

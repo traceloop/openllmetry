@@ -14,13 +14,13 @@ from opentelemetry.instrumentation.utils import (
     _SUPPRESS_INSTRUMENTATION_KEY,
     unwrap,
 )
+from opentelemetry.instrumentation.pinecone.version import __version__
 
 from opentelemetry.semconv.ai import SpanAttributes
 
 logger = logging.getLogger(__name__)
 
 _instruments = ("pinecone-client ~= 2.2.2",)
-__version__ = "0.1.0"
 
 WRAPPED_METHODS = [
     {

@@ -14,11 +14,11 @@ from opentelemetry.instrumentation.haystack.wrap_pipeline import (
 from opentelemetry.instrumentation.haystack.wrap_node import (
     wrap as node_wrapper,
 )
+from opentelemetry.instrumentation.haystack.version import __version__
 
 logger = logging.getLogger(__name__)
 
 _instruments = ("farm-haystack >= 1.20.1",)
-__version__ = "0.1.0"
 
 WRAPPED_METHODS = [
     {

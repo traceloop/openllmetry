@@ -30,19 +30,19 @@ include = "traceloop/sdk"
 python = ">=3.8.1,<4"
 opentelemetry-api = "^1.20.0"
 opentelemetry-sdk = "^1.20.0"
-opentelemetry-semantic-conventions-ai = "^0.0.7"
 opentelemetry-exporter-otlp-proto-http = "^1.20.0"
 opentelemetry-exporter-otlp-proto-grpc = "^1.20.0"
 opentelemetry-instrumentation-requests = "^0.41b0"
 opentelemetry-instrumentation-pymysql = "^0.41b0"
 opentelemetry-instrumentation-urllib3 = "^0.41b0"
-opentelemetry-instrumentation-openai = "^0.0.16"
-opentelemetry-instrumentation-anthropic = "^0.0.12"
-opentelemetry-instrumentation-cohere = "^0.0.8"
-opentelemetry-instrumentation-pinecone = "^0.0.10"
-opentelemetry-instrumentation-langchain = "0.0.7"
-opentelemetry-instrumentation-chromadb = "0.0.6"
-opentelemetry-instrumentation-transformers = "0.0.4"
+opentelemetry-semantic-conventions-ai = "^0.0.7"
+opentelemetry-instrumentation-openai = {path="../opentelemetry-instrumentation-openai", develop=true}
+opentelemetry-instrumentation-anthropic = {path="../opentelemetry-instrumentation-anthropic", develop=true}
+opentelemetry-instrumentation-cohere = {path="../opentelemetry-instrumentation-cohere", develop=true}
+opentelemetry-instrumentation-pinecone = {path="../opentelemetry-instrumentation-pinecone", develop=true}
+opentelemetry-instrumentation-langchain = {path="../opentelemetry-instrumentation-langchain", develop=true}
+opentelemetry-instrumentation-chromadb = {path="../opentelemetry-instrumentation-chromadb", develop=true}
+opentelemetry-instrumentation-transformers = {path="../opentelemetry-instrumentation-transformers", develop=true}
 colorama = "^0.4.6"
 tenacity = "^8.2.3"
 pydantic = "^1.10.12"
