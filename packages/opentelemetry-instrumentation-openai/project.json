@@ -62,6 +62,21 @@
         "command": "poetry run pytest tests/",
         "cwd": "packages/opentelemetry-instrumentation-openai"
       }
+    },
+    "replace-local-dependencies": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "sed -i$SEP '' \"s|{.*path.*|\"^$(poetry version -s)\"|\" pyproject.toml",
+        "cwd": "packages/opentelemetry-instrumentation-openai"
+      }
+    },
+    "release": {
+      "executor": "@nxlv/python:run-commands",
+      "options": {
+        "command": "poetry publish --build",
+        "cwd": "packages/opentelemetry-instrumentation-openai"
+      },
+      "dependsOn": ["^release", "replace-local-dependencies"]
     }
   },
   "tags": []

@@ -15,11 +15,11 @@ from opentelemetry.instrumentation.utils import (
 )
 
 from opentelemetry.semconv.ai import SpanAttributes, LLMRequestTypeValues
+from opentelemetry.instrumentation.cohere.version import __version__
 
 logger = logging.getLogger(__name__)
 
 _instruments = ("cohere >= 4.2.7",)
-__version__ = "0.1.0"
 
 WRAPPED_METHODS = [
     {
