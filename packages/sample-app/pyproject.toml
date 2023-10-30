@@ -31,7 +31,7 @@ requests = "^2.31.0"
 farm-haystack = "^1.20.1"
 pinecone-datasets = "^0.6.1"
 pinecone-client = {extras = ["grpc"], version = "^2.2.4"}
-langchain = "^0.0.317"
+langchain = "^0.0.325"
 # workaround for: https://github.com/python-poetry/poetry-plugin-export/issues/183
 urllib3 = ">=1.25.4,<1.27"
 
