@@ -67,7 +67,10 @@
     "replace-local-dependencies": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "sed -i$SEP '' \"s|{.*path.*|\"^$(poetry version -s)\"|\" pyproject.toml",
+        "commands": [
+          "chmod +x ../../scripts/replace-local-deps-versions.sh",
+          "../../scripts/replace-local-deps-versions.sh"
+        ],
         "cwd": "packages/traceloop-sdk"
       }
     },
