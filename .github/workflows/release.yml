@@ -2,7 +2,6 @@ name: Release - Traceloop SDK & Standalone Instrumentations
 
 on:
     workflow_dispatch:
-    pull_request:
 
 jobs:
   bump-version:
@@ -22,22 +21,24 @@ jobs:
       - name: Install Poetry
         uses: snok/install-poetry@v1
 
-    #   - name: Bump Version, Create Tag and Changelog
-    #     uses: commitizen-tools/commitizen-action@master
-    #     with:
-    #       github_token: ${{ secrets.GH_ACCESS_TOKEN }}
-    #       changelog_increment_filename: body.md
+      - name: Bump Version, Create Tag and Changelog
+        uses: commitizen-tools/commitizen-action@master
+        with:
+          github_token: ${{ secrets.GH_ACCESS_TOKEN }}
+          changelog_increment_filename: body.md
 
-    #   - name: Create Release
-    #     uses: softprops/action-gh-release@v1
-    #     with:
-    #       body_path: "body.md"
-    #       tag_name: ${{ env.REVISION }}
-    #     env:
-    #       GITHUB_TOKEN: ${{ secrets.GH_ACCESS_TOKEN }}
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          body_path: "body.md"
+          tag_name: ${{ env.REVISION }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_ACCESS_TOKEN }}
 
-    #   - name: Print Version
-    #     run: echo "Bumped to version ${{ steps.cz.outputs.version }}"
+      - name: Print Version
+        run: echo "Bumped to version ${{ steps.cz.outputs.version }}"
+
+
   release-instrumentations:
     runs-on: ubuntu-latest
     needs:
@@ -50,30 +51,30 @@ jobs:
           persist-credentials: false
           fetch-depth: 0
 
-    #   - name: Set up Python 3.11
-    #     uses: actions/setup-python@v1
-    #     with:
-    #       python-version: 3.11
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v1
+        with:
+          python-version: 3.11
 
-    #   - name: Install Poetry
-    #     uses: snok/install-poetry@v1
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
 
-    #   - uses: actions/setup-node@v3
-    #     with:
-    #       node-version: 18
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
     
-    #   - run: npm ci
+      - run: npm ci
       
-    #   - name: Build Instrumentations
-    #     run: npx nx run-many -t build-release --projects=tag:instrumentation
+      - name: Build Instrumentations
+        run: npx nx run-many -t build-release --projects=tag:instrumentation
       
-    #   - run: mkdir instrumentations-dist
-    #   - run: cp packages/opentelemetry-instrumentation-*/dist/* instrumentations-dist
+      - run: mkdir instrumentations-dist
+      - run: cp packages/opentelemetry-instrumentation-*/dist/* instrumentations-dist
 
-    #   - name: Publish release distributions to PyPI
-    #     uses: pypa/gh-action-pypi-publish@release/v1
-    #     with:
-    #       packages-dir: instrumentations-dist/
+      - name: Publish release distributions to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: instrumentations-dist/
     
   
   release-sdk:
