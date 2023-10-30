@@ -63,21 +63,16 @@
         "cwd": "packages/opentelemetry-instrumentation-anthropic"
       }
     },
-    "replace-local-dependencies": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "sed -i$SEP '' \"s|{.*path.*|\"^$(poetry version -s)\"|\" pyproject.toml",
-        "cwd": "packages/opentelemetry-instrumentation-anthropic"
-      }
-    },
-    "release": {
+    "build-release": {
       "executor": "@nxlv/python:run-commands",
       "options": {
-        "command": "poetry publish --build",
-        "cwd": "packages/traceloop-sdk"
-      },
-      "dependsOn": ["^release", "replace-local-dependencies"]
+        "commands": [
+          "chmod +x ../../scripts/build-release.sh",
+          "../../scripts/build-release.sh"
+        ],
+        "cwd": "packages/opentelemetry-instrumentation-anthropic"
+      }
     }
   },
-  "tags": []
+  "tags": ["instrumentation"]
 }
