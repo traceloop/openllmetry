@@ -42,6 +42,7 @@ jobs:
         with:
           node-version: 18
     
+      - run: npm ci
       - name: Publish Packages
         run: npx nx traceloop:release
       
