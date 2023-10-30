@@ -63,9 +63,13 @@ jobs:
           node-version: 18
     
       - run: npm ci
+      
       - name: Build Instrumentations
         run: npx nx run-many -t build-release --projects=tag:instrumentation
+      
+      - run: mkdir instrumentations-dist
       - run: cp packages/opentelemetry-instrumentation-*/dist/* instrumentations-dist
+      
       - name: Retrieve release distributions
         uses: actions/download-artifact@v3
         with:
@@ -99,10 +103,10 @@ jobs:
           node-version: 18
     
       - run: npm ci
+      
       - name: Build Traceloop SDK
         run: npx nx traceloop-sdk:build-release
-      - run: mkdir instrumentations-dist
-      - run: cp packages/opentelemetry-instrumentation-*/dist/* instrumentations-dist
+      
       - name: Retrieve release distributions
         uses: actions/download-artifact@v3
         with:
