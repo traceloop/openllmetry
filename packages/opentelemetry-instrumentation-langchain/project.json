@@ -63,24 +63,16 @@
         "cwd": "packages/opentelemetry-instrumentation-langchain"
       }
     },
-    "replace-local-dependencies": {
-      "executor": "nx:run-commands",
+    "build-release": {
+      "executor": "@nxlv/python:run-commands",
       "options": {
         "commands": [
-          "chmod +x ../../scripts/replace-local-deps-versions.sh",
-          "../../scripts/replace-local-deps-versions.sh"
+          "chmod +x ../../scripts/build-release.sh",
+          "../../scripts/build-release.sh"
         ],
         "cwd": "packages/opentelemetry-instrumentation-langchain"
       }
-    },
-    "release": {
-      "executor": "@nxlv/python:run-commands",
-      "options": {
-        "command": "poetry publish --build",
-        "cwd": "packages/opentelemetry-instrumentation-langchain"
-      },
-      "dependsOn": ["^release", "replace-local-dependencies"]
     }
   },
-  "tags": []
+  "tags": ["instrumentation"]
 }

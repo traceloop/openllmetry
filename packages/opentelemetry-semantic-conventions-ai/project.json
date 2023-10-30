@@ -62,24 +62,6 @@
         "command": "poetry run pytest tests/",
         "cwd": "packages/opentelemetry-semantic-conventions-ai"
       }
-    },
-    "replace-local-dependencies": {
-      "executor": "nx:run-commands",
-      "options": {
-        "commands": [
-          "chmod +x ../../scripts/replace-local-deps-versions.sh",
-          "../../scripts/replace-local-deps-versions.sh"
-        ],
-        "cwd": "packages/opentelemetry-semantic-conventions-ai"
-      }
-    },
-    "release": {
-      "executor": "@nxlv/python:run-commands",
-      "options": {
-        "command": "poetry publish --build",
-        "cwd": "packages/opentelemetry-semantic-conventions-ai"
-      },
-      "dependsOn": ["^release", "replace-local-dependencies"]
     }
   },
   "tags": []

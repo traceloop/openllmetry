@@ -63,24 +63,17 @@
         "cwd": "packages/opentelemetry-instrumentation-weaviate"
       }
     },
-    "replace-local-dependencies": {
-      "executor": "nx:run-commands",
-      "options": {
-        "commands": [
-          "chmod +x ../../scripts/replace-local-deps-versions.sh",
-          "../../scripts/replace-local-deps-versions.sh"
-        ],
-        "cwd": "packages/opentelemetry-instrumentation-weaviate"
-      }
-    },
-    "release": {
+    "build-release": {
       "executor": "@nxlv/python:run-commands",
       "options": {
-        "command": "poetry publish --build",
+        "commands": [
+          "chmod +x ../../scripts/build-release.sh",
+          "../../scripts/build-release.sh"
+        ],
         "cwd": "packages/opentelemetry-instrumentation-weaviate"
       },
-      "dependsOn": ["^release", "replace-local-dependencies"]
+      "dependsOn": ["^build-release"]
     }
   },
-  "tags": []
+  "tags": ["instrumentation"]
 }
