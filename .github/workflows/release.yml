@@ -44,5 +44,5 @@ jobs:
     
       - run: npm ci
       - name: Publish Packages
-        run: npx nx run traceloop:release
+        run: npx nx run traceloop-sdk:release
       
