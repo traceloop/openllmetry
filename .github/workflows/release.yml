@@ -70,13 +70,16 @@ jobs:
       - run: mkdir instrumentations-dist
       - run: cp packages/opentelemetry-instrumentation-*/dist/* instrumentations-dist
       
-      - name: Retrieve release distributions
-        uses: actions/download-artifact@v3
-        with:
-          path: instrumentations-dist/
+    #   - name: Retrieve release distributions
+    #     uses: actions/download-artifact@v3
+    #     with:
+    #       path: instrumentations-dist/
 
       - name: Publish release distributions to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: instrumentations-dist/
+    
   
   release-sdk:
     runs-on: ubuntu-latest
@@ -106,11 +109,8 @@ jobs:
       
       - name: Build Traceloop SDK
         run: npx nx traceloop-sdk:build-release
-      
-      - name: Retrieve release distributions
-        uses: actions/download-artifact@v3
-        with:
-          path: packages/traceloop-sdk/dist/
 
       - name: Publish release distributions to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: packages/traceloop-sdk/dist/
