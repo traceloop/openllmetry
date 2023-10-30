@@ -24,7 +24,7 @@ jobs:
       - name: Bump Version, Create Tag and Changelog
         uses: commitizen-tools/commitizen-action@master
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          github_token: ${{ secrets.GH_ACCESS_TOKEN }}
           changelog_increment_filename: body.md
 
       - name: Create Release
@@ -33,8 +33,15 @@ jobs:
           body_path: "body.md"
           tag_name: ${{ env.REVISION }}
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GH_ACCESS_TOKEN }}
 
       - name: Print Version
         run: echo "Bumped to version ${{ steps.cz.outputs.version }}"
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
+    
+      - name: Publish Packages
+        run: npx nx traceloop:release
       
