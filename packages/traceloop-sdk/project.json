@@ -3,6 +3,9 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "projectType": "library",
   "sourceRoot": "packages/traceloop-sdk/traceloop_sdk",
+  "nx": {
+    "implicitDependencies": ["opentelemetry-instrumentation-*"]
+  },
   "targets": {
     "lock": {
       "executor": "@nxlv/python:run-commands",
@@ -64,7 +67,7 @@
     "replace-local-dependencies": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "sed -i$SEP '' \"s|{.*path.*|\"^{args.version}\"|\" pyproject.toml",
+        "command": "sed -i$SEP '' \"s|{.*path.*|\"^$(poetry version -s)\"|\" pyproject.toml",
         "cwd": "packages/traceloop-sdk"
       }
     },
