@@ -1,3 +1,9 @@
+## v0.1.3 (2023-10-30)
+
+### Fix
+
+- **ci-cd**: fix release workflow publish step
+
 ## v0.1.2 (2023-10-30)
 
 ### Fix
