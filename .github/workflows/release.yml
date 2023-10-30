@@ -64,7 +64,7 @@ jobs:
     
       - run: npm ci
       - name: Build Instrumentations
-        run: nx run-many -t build-release --projects=tag:instrumentation
+        run: npx nx run-many -t build-release --projects=tag:instrumentation
       - run: cp packages/opentelemetry-instrumentation-*/dist/* instrumentations-dist
       - name: Retrieve release distributions
         uses: actions/download-artifact@v3
