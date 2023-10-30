@@ -101,6 +101,7 @@ jobs:
       - run: npm ci
       - name: Build Traceloop SDK
         run: npx nx traceloop-sdk:build-release
+      - run: mkdir instrumentations-dist
       - run: cp packages/opentelemetry-instrumentation-*/dist/* instrumentations-dist
       - name: Retrieve release distributions
         uses: actions/download-artifact@v3
