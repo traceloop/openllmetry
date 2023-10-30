@@ -15,11 +15,11 @@ from opentelemetry.instrumentation.utils import (
 )
 
 from opentelemetry.semconv.ai import SpanAttributes, LLMRequestTypeValues
+from opentelemetry.instrumentation.openai.version import __version__
 
 logger = logging.getLogger(__name__)
 
 _instruments = ("openai >= 0.27.0",)
-__version__ = "0.1.0"
 
 WRAPPED_METHODS = [
     {

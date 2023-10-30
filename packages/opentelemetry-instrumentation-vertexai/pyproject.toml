@@ -28,7 +28,7 @@ include = "opentelemetry/instrumentation/vertexai"
 python = ">=3.8.1,<3.12"
 opentelemetry-api = "^1.20.0"
 opentelemetry-instrumentation = "^0.41b0"
-opentelemetry-semantic-conventions-ai = {path="../opentelemetry-semantic-conventions-ai", develop=true}
+opentelemetry-semantic-conventions-ai = "^0.0.7"
 
 [tool.poetry.group.dev.dependencies]
 autopep8 = "2.0.4"
