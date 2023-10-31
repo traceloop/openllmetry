@@ -11,7 +11,7 @@ addopts = "--cov --cov-report html:'../../coverage/packages/traceloop-sdk/html' 
 
 [tool.poetry]
 name = "traceloop-sdk"
-version = "0.1.4"
+version = "0.1.5"
 description = "Traceloop Software Development Kit (SDK) for Python"
 authors = [
   "Gal Kleinman <gal@traceloop.com>",
