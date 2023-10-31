@@ -40,6 +40,7 @@ class Traceloop:
         if (
             traceloop_sync_enabled
             and api_endpoint.find("traceloop.com") != -1
+            and api_key
             and not exporter
         ):
             Fetcher(base_url=api_endpoint).run()
