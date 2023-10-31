@@ -11,7 +11,7 @@ addopts = "--cov --cov-report html:'../../coverage/packages/opentelemetry-instru
 
 [tool.poetry]
 name = "opentelemetry-instrumentation-cohere"
-version = "0.1.3"
+version = "0.1.4"
 description = "OpenTelemetry Cohere instrumentation"
 authors = [
   "Gal Kleinman <gal@traceloop.com>",

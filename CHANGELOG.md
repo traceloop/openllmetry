@@ -1,3 +1,10 @@
+## v0.1.4 (2023-10-31)
+
+### Fix
+
+- disable syncing when no API key is defined (#135)
+- **ci-cd**: finalize release flow (#133)
+
 ## v0.1.3 (2023-10-30)
 
 ### Fix
