@@ -1,3 +1,9 @@
+## v0.1.5 (2023-10-31)
+
+### Fix
+
+- **ci-cd**: release workflow fetches the outdated commit on release package jobs
+
 ## v0.1.4 (2023-10-31)
 
 ### Fix
