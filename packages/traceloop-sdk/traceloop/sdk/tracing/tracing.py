@@ -13,6 +13,8 @@ from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import (
 )
 from opentelemetry.sdk.resources import SERVICE_NAME, Resource
 from opentelemetry.sdk.trace import TracerProvider, SpanProcessor
+from opentelemetry.propagators.textmap import TextMapPropagator
+from opentelemetry.propagate import set_global_textmap
 from opentelemetry.sdk.trace.export import (
     SpanExporter,
     SimpleSpanProcessor,
@@ -31,30 +33,42 @@ EXCLUDED_URLS = "api.openai.com,openai.azure.com,api.anthropic.com,api.cohere.ai
 
 class TracerWrapper(object):
     def __new__(
-        cls, disable_batch=False, exporter: SpanExporter = None
+        cls,
+        disable_batch=False,
+        processor: SpanProcessor = None,
+        propagator: TextMapPropagator = None,
+        exporter: SpanExporter = None,
     ) -> "TracerWrapper":
         if not hasattr(cls, "instance"):
             obj = cls.instance = super(TracerWrapper, cls).__new__(cls)
-            obj.__spans_exporter: SpanExporter = (
-                exporter
-                if exporter
-                else init_spans_exporter(TracerWrapper.endpoint, TracerWrapper.headers)
-            )
             obj.__resource = Resource(attributes={SERVICE_NAME: TracerWrapper.app_name})
             obj.__tracer_provider: TracerProvider = init_tracer_provider(
                 resource=obj.__resource
             )
-            if disable_batch or is_notebook():
-                obj.__spans_processor: SpanProcessor = SimpleSpanProcessor(
-                    obj.__spans_exporter
-                )
+            if processor:
+                obj.__spans_processor: SpanProcessor = processor
             else:
-                obj.__spans_processor: SpanProcessor = BatchSpanProcessor(
-                    obj.__spans_exporter
+                obj.__spans_exporter: SpanExporter = (
+                    exporter
+                    if exporter
+                    else init_spans_exporter(
+                        TracerWrapper.endpoint, TracerWrapper.headers
+                    )
                 )
+                if disable_batch or is_notebook():
+                    obj.__spans_processor: SpanProcessor = SimpleSpanProcessor(
+                        obj.__spans_exporter
+                    )
+                else:
+                    obj.__spans_processor: SpanProcessor = BatchSpanProcessor(
+                        obj.__spans_exporter
+                    )
 
             obj.__spans_processor.on_start = obj._span_processor_on_start
             obj.__tracer_provider.add_span_processor(obj.__spans_processor)
+
+            if propagator:
+                set_global_textmap(propagator)
 
             init_instrumentations()
 
