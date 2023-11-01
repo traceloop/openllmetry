@@ -1,3 +1,10 @@
+## v0.1.6 (2023-11-01)
+
+### Fix
+
+- **sdk**: allow overriding processor & propagator (#139)
+- proper propagation of api key to fetcher (#138)
+
 ## v0.1.5 (2023-10-31)
 
 ### Fix
