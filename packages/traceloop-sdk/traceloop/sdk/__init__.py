@@ -36,6 +36,7 @@ class Traceloop:
         traceloop_sync_enabled: bool = True,
     ) -> None:
         api_endpoint = os.getenv("TRACELOOP_BASE_URL") or api_endpoint
+        api_key = os.getenv("TRACELOOP_API_KEY") or api_key
 
         if (
             traceloop_sync_enabled
@@ -43,7 +44,7 @@ class Traceloop:
             and api_key
             and not exporter
         ):
-            Fetcher(base_url=api_endpoint).run()
+            Fetcher(base_url=api_endpoint, api_key=api_key).run()
             print(
                 Fore.GREEN + "Tracloop syncing configuration and prompts" + Fore.RESET
             )
@@ -57,7 +58,6 @@ class Traceloop:
         if exporter:
             print(Fore.GREEN + "Traceloop exporting traces to a custom exporter")
 
-        api_key = os.getenv("TRACELOOP_API_KEY") or api_key
         headers = os.getenv("TRACELOOP_HEADERS") or headers
 
         if isinstance(headers, str):

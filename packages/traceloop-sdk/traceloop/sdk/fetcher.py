@@ -32,8 +32,10 @@ class Fetcher:
     def __init__(
         self,
         base_url: str,
+        api_key: str
     ):
         self._base_url = base_url
+        self._api_key = api_key
         self._prompt_registry = PromptRegistryClient()._registry
         self._content_allow_list = ContentAllowList()
         self._stop_polling_event = Event()
@@ -45,14 +47,15 @@ class Fetcher:
             args=(
                 self._prompt_registry,
                 self._content_allow_list,
-                base_url,
+                self._base_url,
+                self._api_key,
                 self._stop_polling_event,
                 POLLING_INTERVAL,
             ),
         )
 
     def run(self):
-        refresh_data(self._base_url, self._prompt_registry, self._content_allow_list)
+        refresh_data(self._base_url, self._api_key, self._prompt_registry, self._content_allow_list)
         self._exit_monitor.start()
         self._poller_thread.start()
 
@@ -80,9 +83,9 @@ def check_http_error(e):
     stop=stop_after_attempt(MAX_RETRIES),
     retry=RetryIfServerError(),
 )
-def fetch_url(url):
+def fetch_url(url: str, api_key: str):
     response = requests.get(
-        url, headers={"Authorization": f"Bearer {os.getenv('TRACELOOP_API_KEY')}"}
+        url, headers={"Authorization": f"Bearer {api_key}"}
     )
 
     if response.status_code != 200:
@@ -95,12 +98,13 @@ def thread_func(
     prompt_registry: PromptRegistry,
     content_allow_list: ContentAllowList,
     base_url: str,
+    api_key: str,
     stop_polling_event: Event,
     seconds_interval: Optional[int] = 5,
 ):
     while not stop_polling_event.is_set():
         try:
-            refresh_data(base_url, prompt_registry, content_allow_list)
+            refresh_data(base_url, api_key, prompt_registry, content_allow_list)
         except RetryError:
             logging.error("Request failed after retries : stopped polling")
             break
@@ -109,12 +113,12 @@ def thread_func(
 
 
 def refresh_data(
-    base_url: str, prompt_registry: PromptRegistry, content_allow_list: ContentAllowList
+    base_url: str, api_key: str, prompt_registry: PromptRegistry, content_allow_list: ContentAllowList
 ):
-    response = fetch_url(f"{base_url}/v1/prompts")
+    response = fetch_url(f"{base_url}/v1/prompts", api_key)
     prompt_registry.load(response)
 
-    response = fetch_url(f"{base_url}/v1/config/pii/tracing-allow-list")
+    response = fetch_url(f"{base_url}/v1/config/pii/tracing-allow-list", api_key)
     content_allow_list.load(response)
 
 
