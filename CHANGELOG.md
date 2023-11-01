@@ -1,3 +1,9 @@
+## v0.1.7 (2023-11-01)
+
+### Fix
+
+- **tracing**: add missing prompt manager template variables to span attributes (#140)
+
 ## v0.1.6 (2023-11-01)
 
 ### Fix
