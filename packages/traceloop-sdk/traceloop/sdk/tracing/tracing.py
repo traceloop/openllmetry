@@ -121,6 +121,14 @@ class TracerWrapper(object):
             if prompt_version_hash is not None:
                 span.set_attribute("traceloop.prompt.version_hash", prompt_version_hash)
 
+            prompt_template_variables = get_value("prompt_template_variables")
+            if prompt_version_hash is not None:
+                print(prompt_template_variables)
+                for key, value in prompt_template_variables.items():
+                    span.set_attribute(
+                        f"traceloop.prompt.template_variables.{key}", value
+                    )
+
     @staticmethod
     def set_static_params(
         app_name: str,
@@ -168,12 +176,13 @@ def set_workflow_name(workflow_name: str) -> None:
 
 
 def set_prompt_tracing_context(
-    key: str, version: int, version_name: str, version_hash: str
+    key: str, version: int, version_name: str, version_hash: str, template_variables: dict
 ) -> None:
     attach(set_value("prompt_key", key))
     attach(set_value("prompt_version", version))
     attach(set_value("prompt_version_name", version_name))
     attach(set_value("prompt_version_hash", version_hash))
+    attach(set_value("prompt_template_variables", template_variables))
 
 
 def is_llm_span(span) -> bool:
