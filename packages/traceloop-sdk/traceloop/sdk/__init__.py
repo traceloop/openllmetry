@@ -45,6 +45,7 @@ class Traceloop:
             and api_endpoint.find("traceloop.com") != -1
             and api_key
             and not exporter
+            and not processor
         ):
             Fetcher(base_url=api_endpoint, api_key=api_key).run()
             print(
@@ -57,7 +58,7 @@ class Traceloop:
 
         enable_content_tracing = is_content_tracing_enabled()
 
-        if exporter:
+        if exporter or processor:
             print(Fore.GREEN + "Traceloop exporting traces to a custom exporter")
 
         headers = os.getenv("TRACELOOP_HEADERS") or headers
@@ -66,7 +67,12 @@ class Traceloop:
             headers = parse_env_headers(headers)
 
         # auto-create a dashboard on Traceloop if no export endpoint is provided
-        if not exporter and api_endpoint == "https://api.traceloop.com" and not api_key:
+        if (
+            not exporter
+            and not processor
+            and api_endpoint == "https://api.traceloop.com"
+            and not api_key
+        ):
             headers = None  # disable headers if we're auto-creating a dashboard
             if os.path.exists("/tmp/traceloop_key.txt") and os.path.exists(
                 "/tmp/traceloop_url.txt"
@@ -90,13 +96,13 @@ class Traceloop:
                 Fore.GREEN + f"\nGo to {access_url} to see a live dashboard\n",
             )
 
-        if headers:
+        if not exporter and not processor and headers:
             print(
                 Fore.GREEN
                 + f"Traceloop exporting traces to {api_endpoint}, authenticating with custom headers"
             )
 
-        if api_key and not headers:
+        if api_key and not exporter and not processor and not headers:
             print(
                 Fore.GREEN
                 + f"Traceloop exporting traces to {api_endpoint} authenticating with bearer token"
