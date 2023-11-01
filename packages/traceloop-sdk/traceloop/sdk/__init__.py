@@ -5,7 +5,9 @@ import requests
 
 from typing import Optional
 from colorama import Fore
+from opentelemetry.sdk.trace import SpanProcessor
 from opentelemetry.sdk.trace.export import SpanExporter
+from opentelemetry.propagators.textmap import TextMapPropagator
 from opentelemetry.util.re import parse_env_headers
 
 from traceloop.sdk.config import (
@@ -13,8 +15,6 @@ from traceloop.sdk.config import (
     is_tracing_enabled,
 )
 from traceloop.sdk.fetcher import Fetcher
-from traceloop.sdk.prompts.client import PromptRegistryClient
-from traceloop.sdk.tracing.content_allow_list import ContentAllowList
 from traceloop.sdk.tracing.tracing import (
     TracerWrapper,
     set_association_properties,
@@ -33,6 +33,8 @@ class Traceloop:
         headers: dict[str, str] = {},
         disable_batch=False,
         exporter: SpanExporter = None,
+        processor: SpanProcessor = None,
+        propagator: TextMapPropagator = None,
         traceloop_sync_enabled: bool = True,
     ) -> None:
         api_endpoint = os.getenv("TRACELOOP_BASE_URL") or api_endpoint
@@ -109,7 +111,10 @@ class Traceloop:
             app_name, enable_content_tracing, api_endpoint, headers
         )
         Traceloop.__tracer_wrapper = TracerWrapper(
-            disable_batch=disable_batch, exporter=exporter
+            disable_batch=disable_batch,
+            processor=processor,
+            propagator=propagator,
+            exporter=exporter,
         )
 
     @staticmethod
