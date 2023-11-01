@@ -88,6 +88,8 @@ def fetch_url(url: str, api_key: str):
         url, headers={"Authorization": f"Bearer {api_key}"}
     )
 
+    print(response.status_code)
+
     if response.status_code != 200:
         raise requests.exceptions.HTTPError(response=response)
     else:
@@ -118,8 +120,8 @@ def refresh_data(
     response = fetch_url(f"{base_url}/v1/prompts", api_key)
     prompt_registry.load(response)
 
-    response = fetch_url(f"{base_url}/v1/config/pii/tracing-allow-list", api_key)
-    content_allow_list.load(response)
+    # response = fetch_url(f"{base_url}/v1/config/pii/tracing-allow-list", api_key)
+    # content_allow_list.load(response)
 
 
 def monitor_exit(exit_event: Event):
