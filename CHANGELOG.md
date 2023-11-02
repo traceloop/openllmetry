@@ -1,3 +1,9 @@
+## v0.1.8 (2023-11-02)
+
+### Fix
+
+- **prompt-registry**: remove redundant variables print
+
 ## v0.1.7 (2023-11-01)
 
 ### Fix
