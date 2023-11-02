@@ -123,7 +123,6 @@ class TracerWrapper(object):
 
             prompt_template_variables = get_value("prompt_template_variables")
             if prompt_version_hash is not None:
-                print(prompt_template_variables)
                 for key, value in prompt_template_variables.items():
                     span.set_attribute(
                         f"traceloop.prompt.template_variables.{key}", value
