@@ -1,3 +1,9 @@
+## v0.1.10 (2023-11-03)
+
+### Fix
+
+- errors on logging openai streaming completion calls (#144)
+
 ## v0.1.9 (2023-11-03)
 
 ### Fix
