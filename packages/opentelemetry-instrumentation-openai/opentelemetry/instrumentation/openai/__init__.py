@@ -87,8 +87,11 @@ def _set_input_attributes(span, llm_request_type, kwargs):
         if llm_request_type == LLMRequestTypeValues.CHAT:
             _set_span_prompts(span, kwargs.get("messages"))
         elif llm_request_type == LLMRequestTypeValues.COMPLETION:
+            prompt = kwargs.get("prompt")
             _set_span_attribute(
-                span, f"{SpanAttributes.LLM_PROMPTS}.0.user", kwargs.get("prompt")
+                span,
+                f"{SpanAttributes.LLM_PROMPTS}.0.user",
+                prompt[0] if isinstance(prompt, list) else prompt,
             )
 
     return
