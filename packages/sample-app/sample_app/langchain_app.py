@@ -17,22 +17,21 @@ def langchain_app():
 
     first_prompt_messages = [
         SystemMessage(content="You are a funny sarcastic nerd."),
-        HumanMessage(content="Tell me a joke about OpenTelemetry.")
+        HumanMessage(content="Tell me a joke about OpenTelemetry."),
     ]
     first_prompt_template = ChatPromptTemplate.from_messages(first_prompt_messages)
     first_chain = LLMChain(llm=chat, prompt=first_prompt_template, output_key="joke")
 
     second_prompt_messages = [
         SystemMessage(content="You are an Elf."),
-        HumanMessagePromptTemplate.from_template("Translate the joke below into Sindarin language:\n {joke}")
+        HumanMessagePromptTemplate.from_template(
+            "Translate the joke below into Sindarin language:\n {joke}"
+        ),
     ]
     second_prompt_template = ChatPromptTemplate.from_messages(second_prompt_messages)
     second_chain = LLMChain(llm=chat, prompt=second_prompt_template)
 
-    workflow = SequentialChain(
-        chains=[first_chain, second_chain],
-        input_variables=[]
-    )
+    workflow = SequentialChain(chains=[first_chain, second_chain], input_variables=[])
     workflow({})
 
 
