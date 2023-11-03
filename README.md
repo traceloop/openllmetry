@@ -3,7 +3,7 @@
 <img width="300" src="https://raw.githubusercontent.com/traceloop/openllmetry/main/img/logo.png">
 </a>
 </p>
-<h1 align="center">Open LLMetry</h1>
+<h1 align="center">OpenLLMetry</h1>
 <p align="center">
   <p align="center">Open-source observability for your LLM application</p>
 </p>
@@ -49,7 +49,7 @@ For a complete guide, go to our [docs](https://traceloop.com/docs/openllmetry/ge
 
 Install the SDK:
 
-```python
+```bash
 pip install traceloop-sdk
 ```
 

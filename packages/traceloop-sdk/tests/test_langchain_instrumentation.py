@@ -5,14 +5,18 @@ from langchain.chains import SequentialChain
 
 
 def test_langchain(exporter):
-    llm = OpenAI(temperature=.7)
+    llm = OpenAI(temperature=0.7)
     synopsis_template = """You are a playwright. Given the title of play and the era it is set in, it is your job to write a synopsis for that title.
 
     Title: {title}
     Era: {era}
     Playwright: This is a synopsis for the above play:"""  # noqa: E501
-    synopsis_prompt_template = PromptTemplate(input_variables=["title", "era"], template=synopsis_template)
-    synopsis_chain = LLMChain(llm=llm, prompt=synopsis_prompt_template, output_key="synopsis")
+    synopsis_prompt_template = PromptTemplate(
+        input_variables=["title", "era"], template=synopsis_template
+    )
+    synopsis_chain = LLMChain(
+        llm=llm, prompt=synopsis_prompt_template, output_key="synopsis"
+    )
 
     template = """You are a play critic from the New York Times. Given the synopsis of play, it is your job to write a review for that play.
 
@@ -27,8 +31,11 @@ def test_langchain(exporter):
         input_variables=["era", "title"],
         # Here we return multiple variables
         output_variables=["synopsis", "review"],
-        verbose=True)
-    overall_chain({"title": "Tragedy at sunset on the beach", "era": "Victorian England"})
+        verbose=True,
+    )
+    overall_chain(
+        {"title": "Tragedy at sunset on the beach", "era": "Victorian England"}
+    )
 
     spans = exporter.get_finished_spans()
     print([span.name for span in spans])
@@ -36,7 +43,8 @@ def test_langchain(exporter):
     assert set(
         [
             "openai.completion",
-            "langchain_llm.task",
+            "langchain.task.LLMChain",
+            "langchain.task.SequentialChain",
             "langchain.workflow",
         ]
     ).issubset([span.name for span in spans])
