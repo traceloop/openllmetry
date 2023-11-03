@@ -15,7 +15,7 @@ Traceloop.init(app_name="langchain_agent")
 
 
 def langchain_app():
-    llm = OpenAI(temperature=0)
+    llm = OpenAI(temperature=0, streaming=True)
     search = DuckDuckGoSearchAPIWrapper()
     llm_math_chain = LLMMathChain.from_llm(llm)
     tools = [
