@@ -33,6 +33,25 @@ def test_simple_workflow(exporter):
     assert open_ai_span.attributes.get("llm.completions.0.content")
 
 
+def test_streaming(exporter):
+    openai.ChatCompletion.create(
+        model="gpt-3.5-turbo",
+        messages=[{"role": "user", "content": "Tell me a joke about opentelemetry"}],
+        stream=True,
+    )
+
+    spans = exporter.get_finished_spans()
+    assert [span.name for span in spans] == [
+        "openai.chat",
+    ]
+    open_ai_span = spans[0]
+    assert (
+        open_ai_span.attributes["llm.prompts.0.content"]
+        == "Tell me a joke about opentelemetry"
+    )
+    assert open_ai_span.attributes.get("llm.completions.0.content")
+
+
 def test_open_ai_function_calls(exporter):
     @task(name="function_call_test")
     def function_call_test():

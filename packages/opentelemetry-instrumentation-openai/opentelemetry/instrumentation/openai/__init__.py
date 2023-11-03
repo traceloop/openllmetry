@@ -1,5 +1,6 @@
 import logging
 import os
+import types
 from typing import Collection
 from wrapt import wrap_function_wrapper
 import openai
@@ -145,6 +146,30 @@ def _set_response_attributes(span, llm_request_type, response):
     return
 
 
+def _build_from_streaming_response(response):
+    complete_response = {"choices": [], "model": ""}
+    for item in response:
+        for choice in item.get("choices"):
+            index = choice.get("index")
+            if len(complete_response.get("choices")) <= index:
+                complete_response["choices"].append(
+                    {
+                        "index": index,
+                        "message": {"content": "", "role": ""},
+                    }
+                )
+            complete_choice = complete_response.get("choices")[index]
+            if choice.get("finish_reason"):
+                complete_choice["finish_reason"] = choice.get("finish_reason")
+            if choice.get("delta").get("content"):
+                complete_choice["message"]["content"] += choice.get("delta").get(
+                    "content"
+                )
+            if choice.get("delta").get("role"):
+                complete_choice["message"]["role"] = choice.get("delta").get("role")
+    return complete_response
+
+
 def _with_tracer_wrapper(func):
     """Helper for providing tracer for wrapper functions."""
 
@@ -202,7 +227,14 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
         if response:
             try:
                 if span.is_recording():
-                    _set_response_attributes(span, llm_request_type, response)
+                    if isinstance(response, types.GeneratorType):
+                        _set_response_attributes(
+                            span,
+                            llm_request_type,
+                            _build_from_streaming_response(response),
+                        )
+                    else:
+                        _set_response_attributes(span, llm_request_type, response)
 
             except Exception as ex:  # pylint: disable=broad-except
                 logger.warning(
