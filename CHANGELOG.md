@@ -1,3 +1,10 @@
+## v0.1.9 (2023-11-03)
+
+### Fix
+
+- **langchain**: improved support for agents and tools with Langchain (#143)
+- support streaming API for OpenAI (#142)
+
 ## v0.1.8 (2023-11-02)
 
 ### Fix
