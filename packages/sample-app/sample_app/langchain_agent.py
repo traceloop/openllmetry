@@ -22,7 +22,8 @@ def langchain_app():
         Tool(
             name="Search",
             func=search.run,
-            description="useful for when you need to answer questions about current events. You should ask targeted questions",
+            description="useful for when you need to answer questions about "
+            + "current events. You should ask targeted questions",
         ),
         Tool(
             name="Calculator",
@@ -38,7 +39,9 @@ def langchain_app():
 
     print(
         mrkl.run(
-            "What is the full name of the artist who recently released an album called 'The Storm Before the Calm' and are they in the FooBar database? If so, what albums of theirs are in the FooBar database?"
+            "What is the full name of the artist who recently released an album called "
+            + "'The Storm Before the Calm' and are they in the FooBar database? "
+            + "If so, what albums of theirs are in the FooBar database?"
         )
     )
 
