@@ -12,6 +12,8 @@ from opentelemetry.instrumentation.langchain.task_wrapper import task_wrapper
 from opentelemetry.instrumentation.langchain.workflow_wrapper import workflow_wrapper
 from opentelemetry.instrumentation.langchain.version import __version__
 
+from opentelemetry.semconv.ai import TraceloopSpanKindValues
+
 logger = logging.getLogger(__name__)
 
 _instruments = ("langchain >= 0.0.200",)
@@ -21,14 +23,12 @@ WRAPPED_METHODS = [
         "package": "langchain.chains.base",
         "object": "Chain",
         "method": "__call__",
-        "span_name": "langchain_llm.task",
         "wrapper": task_wrapper,
     },
     {
         "package": "langchain.chains.base",
         "object": "Chain",
         "method": "acall",
-        "span_name": "langchain_llm.task",
         "wrapper": task_wrapper,
     },
     {
@@ -46,6 +46,22 @@ WRAPPED_METHODS = [
         "wrapper": workflow_wrapper,
     },
     {
+        "package": "langchain.agents",
+        "object": "AgentExecutor",
+        "method": "_call",
+        "span_name": "langchain.agent",
+        "kind": TraceloopSpanKindValues.AGENT.value,
+        "wrapper": workflow_wrapper,
+    },
+    {
+        "package": "langchain.tools",
+        "object": "Tool",
+        "method": "_run",
+        "span_name": "langchain.tool",
+        "kind": TraceloopSpanKindValues.TOOL.value,
+        "wrapper": task_wrapper,
+    },
+    {
         "package": "langchain.chains",
         "object": "RetrievalQA",
         "method": "__call__",
@@ -58,7 +74,7 @@ WRAPPED_METHODS = [
         "method": "acall",
         "span_name": "retrieval_qa.workflow",
         "wrapper": workflow_wrapper,
-    }
+    },
 ]
 
 

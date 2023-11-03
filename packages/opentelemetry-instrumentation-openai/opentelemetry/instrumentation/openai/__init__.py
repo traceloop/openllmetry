@@ -88,7 +88,7 @@ def _set_input_attributes(span, llm_request_type, kwargs):
             _set_span_prompts(span, kwargs.get("messages"))
         elif llm_request_type == LLMRequestTypeValues.COMPLETION:
             _set_span_attribute(
-                span, f"{SpanAttributes.LLM_PROMPTS}.0.user", kwargs.get("prompt")
+                span, f"{SpanAttributes.LLM_PROMPTS}.0.user", kwargs.get("prompt")[0]
             )
 
     return
