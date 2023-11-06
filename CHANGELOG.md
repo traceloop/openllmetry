@@ -1,3 +1,9 @@
+## v0.1.11 (2023-11-06)
+
+### Fix
+
+- **sdk**: max_tokens are now optional from the backend (#153)
+
 ## v0.1.10 (2023-11-03)
 
 ### Fix
