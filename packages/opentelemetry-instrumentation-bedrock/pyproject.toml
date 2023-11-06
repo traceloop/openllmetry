@@ -11,7 +11,7 @@ addopts = "--cov --cov-report html:'../../coverage/packages/opentelemetry-instru
 
 [tool.poetry]
 name = "opentelemetry-instrumentation-bedrock"
-version = "0.1.10"
+version = "0.1.11"
 description = "OpenTelemetry Bedrock instrumentation"
 authors = [
   "Gal Kleinman <gal@traceloop.com>",
