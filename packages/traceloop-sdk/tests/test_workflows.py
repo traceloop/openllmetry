@@ -1,11 +1,17 @@
-import openai
+import pytest
+from openai import OpenAI
 from traceloop.sdk.decorators import workflow, task
 
 
-def test_simple_workflow(exporter):
+@pytest.fixture
+def openai_client():
+    return OpenAI()
+
+
+def test_simple_workflow(exporter, openai_client):
     @task(name="joke_creation")
     def create_joke():
-        completion = openai.ChatCompletion.create(
+        completion = openai_client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[
                 {"role": "user", "content": "Tell me a joke about opentelemetry"}

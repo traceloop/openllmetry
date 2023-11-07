@@ -49,7 +49,7 @@ class Traceloop:
         ):
             Fetcher(base_url=api_endpoint, api_key=api_key).run()
             print(
-                Fore.GREEN + "Tracloop syncing configuration and prompts" + Fore.RESET
+                Fore.GREEN + "Traceloop syncing configuration and prompts" + Fore.RESET
             )
 
         if not is_tracing_enabled():
