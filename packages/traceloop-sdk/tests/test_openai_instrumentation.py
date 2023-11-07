@@ -1,11 +1,17 @@
-import openai
+import pytest
+from openai import OpenAI
 from traceloop.sdk.decorators import workflow, task
 
 
-def test_simple_workflow(exporter):
+@pytest.fixture
+def openai_client():
+    return OpenAI()
+
+
+def test_simple_workflow(exporter, openai_client):
     @task(name="joke_creation")
     def create_joke():
-        completion = openai.ChatCompletion.create(
+        completion = openai_client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[
                 {"role": "user", "content": "Tell me a joke about opentelemetry"}
@@ -33,8 +39,8 @@ def test_simple_workflow(exporter):
     assert open_ai_span.attributes.get("llm.completions.0.content")
 
 
-def test_completion(exporter):
-    openai.Completion.create(
+def test_completion(exporter, openai_client):
+    openai_client.completions.create(
         model="davinci",
         prompt="Tell me a joke about opentelemetry",
     )
@@ -51,8 +57,8 @@ def test_completion(exporter):
     assert open_ai_span.attributes.get("llm.completions.0.content")
 
 
-def test_completion_langchain_style(exporter):
-    openai.Completion.create(
+def test_completion_langchain_style(exporter, openai_client):
+    openai_client.completions.create(
         model="davinci",
         prompt=["Tell me a joke about opentelemetry"],
     )
@@ -69,8 +75,8 @@ def test_completion_langchain_style(exporter):
     assert open_ai_span.attributes.get("llm.completions.0.content")
 
 
-def test_streaming(exporter):
-    openai.ChatCompletion.create(
+def test_streaming(exporter, openai_client):
+    openai_client.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=[{"role": "user", "content": "Tell me a joke about opentelemetry"}],
         stream=True,
@@ -88,10 +94,10 @@ def test_streaming(exporter):
     assert open_ai_span.attributes.get("llm.completions.0.content")
 
 
-def test_open_ai_function_calls(exporter):
+def test_open_ai_function_calls(exporter, openai_client):
     @task(name="function_call_test")
     def function_call_test():
-        completion = openai.ChatCompletion.create(
+        completion = openai_client.chat.completions.create(
             model="gpt-4",
             messages=[
                 {"role": "user", "content": "What's the weather like in Boston?"}

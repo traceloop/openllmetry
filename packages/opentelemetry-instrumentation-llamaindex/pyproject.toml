@@ -1,18 +1,18 @@
 [tool.coverage.run]
 branch = true
-source = [ "opentelemetry/instrumentation/transformers" ]
+source = [ "opentelemetry/instrumentation/llamaindex" ]
 
 [tool.coverage.report]
 exclude_lines = ['if TYPE_CHECKING:']
 show_missing = true
 
 [tool.pytest.ini_options]
-addopts = "--cov --cov-report html:'../../coverage/packages/opentelemetry-instrumentation-transformers/html' --cov-report xml:'../../coverage/packages/opentelemetry-instrumentation-anthropic/coverage.xml' --html='../../reports/packages/opentelemetry-instrumentation-anthropic/unittests/html/index.html' --junitxml='../../reports/packages/opentelemetry-instrumentation-anthropic/unittests/junit.xml'"
+addopts = "--cov --cov-report html:'../../coverage/packages/opentelemetry-instrumentation-llamaindex/html' --cov-report xml:'../../coverage/packages/opentelemetry-instrumentation-anthropic/coverage.xml' --html='../../reports/packages/opentelemetry-instrumentation-anthropic/unittests/html/index.html' --junitxml='../../reports/packages/opentelemetry-instrumentation-anthropic/unittests/junit.xml'"
 
 [tool.poetry]
-name = "opentelemetry-instrumentation-transformers"
-version = "0.1.12"
-description = "OpenTelemetry transformers instrumentation"
+name = "opentelemetry-instrumentation-llamaindex"
+version = "0.1.10"
+description = "OpenTelemetry LlamaIndex instrumentation"
 authors = [
   "Gal Kleinman <gal@traceloop.com>",
   "Nir Gazit <nir@traceloop.com>",
@@ -22,7 +22,7 @@ license = "Apache-2.0"
 readme = "README.md"
 
 [[tool.poetry.packages]]
-include = "opentelemetry/instrumentation/transformers"
+include = "opentelemetry/instrumentation/llamaindex"
 
 [tool.poetry.dependencies]
 python = ">=3.8.1,<4"

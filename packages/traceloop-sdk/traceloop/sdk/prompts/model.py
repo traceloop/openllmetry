@@ -24,7 +24,7 @@ class ModelConfig(RegistryObjectBaseModel):
     mode: str
     model: str
     temperature: float
-    max_tokens: int
+    max_tokens: Optional[int]
     top_p: float
     stop: List[str]
     frequency_penalty: float
