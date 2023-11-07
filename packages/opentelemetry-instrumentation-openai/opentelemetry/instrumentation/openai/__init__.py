@@ -2,6 +2,7 @@ import logging
 import os
 import types
 import itertools
+import pkg_resources
 from typing import Collection
 from wrapt import wrap_function_wrapper
 import openai
@@ -23,14 +24,31 @@ logger = logging.getLogger(__name__)
 
 _instruments = ("openai >= 0.27.0",)
 
-WRAPPED_METHODS = [
+WRAPPED_METHODS_VERSION_0 = [
     {
+        "module": "openai",
         "object": "ChatCompletion",
         "method": "create",
         "span_name": "openai.chat",
     },
     {
+        "module": "openai",
         "object": "Completion",
+        "method": "create",
+        "span_name": "openai.completion",
+    },
+]
+
+WRAPPED_METHODS_VERSION_1 = [
+    {
+        "module": "openai.resources.chat.completions",
+        "object": "Completions",
+        "method": "create",
+        "span_name": "openai.chat",
+    },
+    {
+        "module": "openai.resources.completions",
+        "object": "Completions",
         "method": "create",
         "span_name": "openai.completion",
     },
@@ -43,6 +61,10 @@ def should_send_prompts():
     ).lower() == "true" or context_api.get_value("override_enable_content_tracing")
 
 
+def is_openai_v1():
+    return pkg_resources.get_distribution("openai").version >= "1.0.0"
+
+
 def _set_span_attribute(span, name, value):
     if value is not None:
         if value != "":
@@ -51,7 +73,11 @@ def _set_span_attribute(span, name, value):
 
 
 def _set_api_attributes(span):
-    _set_span_attribute(span, OpenAISpanAttributes.OPENAI_API_BASE, openai.api_base)
+    _set_span_attribute(
+        span,
+        OpenAISpanAttributes.OPENAI_API_BASE,
+        openai.base_url if hasattr(openai, "base_url") else openai.api_base,
+    )
     _set_span_attribute(span, OpenAISpanAttributes.OPENAI_API_TYPE, openai.api_type)
     _set_span_attribute(
         span, OpenAISpanAttributes.OPENAI_API_VERSION, openai.api_version
@@ -103,6 +129,9 @@ def _set_span_completions(span, llm_request_type, choices):
         return
 
     for choice in choices:
+        if is_openai_v1() and not isinstance(choice, dict):
+            choice = choice.__dict__
+
         index = choice.get("index")
         prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{index}"
         _set_span_attribute(
@@ -112,10 +141,16 @@ def _set_span_completions(span, llm_request_type, choices):
         if llm_request_type == LLMRequestTypeValues.CHAT:
             message = choice.get("message")
             if message is not None:
+                if is_openai_v1() and not isinstance(message, dict):
+                    message = message.__dict__
+
                 _set_span_attribute(span, f"{prefix}.role", message.get("role"))
                 _set_span_attribute(span, f"{prefix}.content", message.get("content"))
                 function_call = message.get("function_call")
                 if function_call:
+                    if is_openai_v1() and not isinstance(function_call, dict):
+                        function_call = function_call.__dict__
+
                     _set_span_attribute(
                         span, f"{prefix}.function_call.name", function_call.get("name")
                     )
@@ -135,6 +170,9 @@ def _set_response_attributes(span, llm_request_type, response):
 
     usage = response.get("usage")
     if usage is not None:
+        if is_openai_v1() and not isinstance(usage, dict):
+            usage = usage.__dict__
+
         _set_span_attribute(
             span, SpanAttributes.LLM_USAGE_TOTAL_TOKENS, usage.get("total_tokens")
         )
@@ -153,7 +191,13 @@ def _set_response_attributes(span, llm_request_type, response):
 def _build_from_streaming_response(llm_request_type, response):
     complete_response = {"choices": [], "model": ""}
     for item in response:
+        if is_openai_v1():
+            item = item.__dict__
+
         for choice in item.get("choices"):
+            if is_openai_v1():
+                choice = choice.__dict__
+
             index = choice.get("index")
             if len(complete_response.get("choices")) <= index:
                 complete_response["choices"].append(
@@ -165,12 +209,14 @@ def _build_from_streaming_response(llm_request_type, response):
             if choice.get("finish_reason"):
                 complete_choice["finish_reason"] = choice.get("finish_reason")
             if llm_request_type == LLMRequestTypeValues.CHAT:
-                if choice.get("delta").get("content"):
-                    complete_choice["message"]["content"] += choice.get("delta").get(
-                        "content"
-                    )
-                if choice.get("delta").get("role"):
-                    complete_choice["message"]["role"] = choice.get("delta").get("role")
+                delta = choice.get("delta")
+                if is_openai_v1():
+                    delta = delta.__dict__
+
+                if delta.get("content"):
+                    complete_choice["message"]["content"] += delta.get("content")
+                if delta.get("role"):
+                    complete_choice["message"]["role"] = delta.get("role")
             else:
                 complete_choice["text"] += choice.get("text")
     return complete_response
@@ -181,10 +227,6 @@ def _with_tracer_wrapper(func):
 
     def _with_tracer(tracer, to_wrap):
         def wrapper(wrapped, instance, args, kwargs):
-            # prevent double wrapping
-            if hasattr(wrapped, "__wrapped__"):
-                return wrapped(*args, **kwargs)
-
             return func(tracer, to_wrap, wrapped, instance, args, kwargs)
 
         return wrapper
@@ -192,13 +234,21 @@ def _with_tracer_wrapper(func):
     return _with_tracer
 
 
-def _llm_request_type_by_object(object_name):
-    if object_name == "Completion":
-        return LLMRequestTypeValues.COMPLETION
-    elif object_name == "ChatCompletion":
-        return LLMRequestTypeValues.CHAT
+def _llm_request_type_by_module_object(module_name, object_name):
+    if is_openai_v1():
+        if module_name == "openai.resources.chat.completions":
+            return LLMRequestTypeValues.CHAT
+        elif module_name == "openai.resources.completions":
+            return LLMRequestTypeValues.COMPLETION
+        else:
+            return LLMRequestTypeValues.UNKNOWN
     else:
-        return LLMRequestTypeValues.UNKNOWN
+        if object_name == "Completion":
+            return LLMRequestTypeValues.COMPLETION
+        elif object_name == "ChatCompletion":
+            return LLMRequestTypeValues.CHAT
+        else:
+            return LLMRequestTypeValues.UNKNOWN
 
 
 @_with_tracer_wrapper
@@ -208,7 +258,9 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
         return wrapped(*args, **kwargs)
 
     name = to_wrap.get("span_name")
-    llm_request_type = _llm_request_type_by_object(to_wrap.get("object"))
+    llm_request_type = _llm_request_type_by_module_object(
+        to_wrap.get("module"), to_wrap.get("object")
+    )
     with tracer.start_as_current_span(
         name,
         kind=SpanKind.CLIENT,
@@ -233,7 +285,9 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
         if response:
             try:
                 if span.is_recording():
-                    if isinstance(response, types.GeneratorType):
+                    if isinstance(response, types.GeneratorType) or isinstance(
+                        response, openai.Stream
+                    ):
                         response, to_extract_spans = itertools.tee(response)
                         _set_response_attributes(
                             span,
@@ -243,7 +297,11 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
                             ),
                         )
                     else:
-                        _set_response_attributes(span, llm_request_type, response)
+                        _set_response_attributes(
+                            span,
+                            llm_request_type,
+                            response.__dict__ if is_openai_v1() else response,
+                        )
 
             except Exception as ex:  # pylint: disable=broad-except
                 logger.warning(
@@ -271,14 +329,24 @@ class OpenAIInstrumentor(BaseInstrumentor):
     def _instrument(self, **kwargs):
         tracer_provider = kwargs.get("tracer_provider")
         tracer = get_tracer(__name__, __version__, tracer_provider)
-        for wrapped_method in WRAPPED_METHODS:
+
+        wrapped_methods = (
+            WRAPPED_METHODS_VERSION_1 if is_openai_v1() else WRAPPED_METHODS_VERSION_0
+        )
+        for wrapped_method in wrapped_methods:
+            wrap_module = wrapped_method.get("module")
             wrap_object = wrapped_method.get("object")
             wrap_method = wrapped_method.get("method")
             wrap_function_wrapper(
-                "openai", f"{wrap_object}.{wrap_method}", _wrap(tracer, wrapped_method)
+                wrap_module,
+                f"{wrap_object}.{wrap_method}",
+                _wrap(tracer, wrapped_method),
             )
 
     def _uninstrument(self, **kwargs):
-        for wrapped_method in WRAPPED_METHODS:
+        wrapped_methods = (
+            WRAPPED_METHODS_VERSION_1 if is_openai_v1() else WRAPPED_METHODS_VERSION_0
+        )
+        for wrapped_method in wrapped_methods:
             wrap_object = wrapped_method.get("object")
             unwrap(f"openai.{wrap_object}", wrapped_method.get("method"))
