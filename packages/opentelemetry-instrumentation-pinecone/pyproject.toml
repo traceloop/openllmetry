@@ -36,7 +36,7 @@ flake8 = "6.1.0"
 pytest = "7.4.1"
 pytest-sugar = "0.9.7"
 pytest-cov = "4.1.0"
-pytest-html = "4.0.2"
+pytest-html = "4.1.1"
 
 [build-system]
 requires = [ "poetry-core" ]
