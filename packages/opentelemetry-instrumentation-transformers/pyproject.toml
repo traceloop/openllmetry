@@ -11,7 +11,7 @@ addopts = "--cov --cov-report html:'../../coverage/packages/opentelemetry-instru
 
 [tool.poetry]
 name = "opentelemetry-instrumentation-transformers"
-version = "0.1.12"
+version = "0.2.0"
 description = "OpenTelemetry transformers instrumentation"
 authors = [
   "Gal Kleinman <gal@traceloop.com>",
