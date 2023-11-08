@@ -16,7 +16,7 @@ from opentelemetry.semconv.ai import TraceloopSpanKindValues
 
 logger = logging.getLogger(__name__)
 
-_instruments = ("llama-index >= 0.0.200",)
+_instruments = ("llama-index >= 0.7.0",)
 
 WRAPPED_METHODS = [
     {
