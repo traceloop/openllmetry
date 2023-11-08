@@ -221,6 +221,7 @@ def init_instrumentations():
     init_chroma_instrumentor()
     # init_haystack_instrumentor()
     init_langchain_instrumentor()
+    init_llama_index_instrumentor()
     init_transformers_instrumentor()
     init_requests_instrumentor()
     init_urllib3_instrumentor()
@@ -295,6 +296,15 @@ def init_transformers_instrumentor():
         from opentelemetry.instrumentation.transformers import TransformersInstrumentor
 
         instrumentor = TransformersInstrumentor()
+        if not instrumentor.is_instrumented_by_opentelemetry:
+            instrumentor.instrument()
+
+
+def init_llama_index_instrumentor():
+    if importlib.util.find_spec("llama_index") is not None:
+        from opentelemetry.instrumentation.llamaindex import LlamaIndexInstrumentor
+
+        instrumentor = LlamaIndexInstrumentor()
         if not instrumentor.is_instrumented_by_opentelemetry:
             instrumentor.instrument()
 
