@@ -1,3 +1,9 @@
+## v0.2.0 (2023-11-08)
+
+### Feat
+
+- llamaindex auto instrumentation (#157)
+
 ## v0.1.12 (2023-11-07)
 
 ### Fix
