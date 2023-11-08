@@ -38,7 +38,6 @@ urllib3 = ">=1.25.4,<1.27"
 duckduckgo-search = "^3.9.3"
 numexpr = "^2.8.7"
 torch = "^2.1.0"
-inflection = "^0.5.1"
 
 [tool.poetry.dependencies.opentelemetry-instrumentation-openai]
 path = "../opentelemetry-instrumentation-openai"

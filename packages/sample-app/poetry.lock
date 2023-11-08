@@ -2656,7 +2656,7 @@ url = "../opentelemetry-instrumentation-langchain"
 
 [[package]]
 name = "opentelemetry-instrumentation-llamaindex"
-version = "0.1.10"
+version = "0.1.12"
 description = "OpenTelemetry LlamaIndex instrumentation"
 optional = false
 python-versions = ">=3.8.1,<4"
@@ -2664,6 +2664,7 @@ files = []
 develop = true
 
 [package.dependencies]
+inflection = "^0.5.1"
 opentelemetry-api = "^1.20.0"
 opentelemetry-instrumentation = "^0.41b0"
 opentelemetry-semantic-conventions-ai = "^0.0.7"
@@ -4846,4 +4847,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.12"
-content-hash = "9c62101d93cea36b44da9e4f77075bc035f4bc7059b4e9cc591e471fa56b537c"
+content-hash = "aac0542c7455afac849392176adb94ce5e677705bc686fb6f8182c1556f468d3"
