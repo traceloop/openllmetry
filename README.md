@@ -80,6 +80,7 @@ Now, you need to decide where to export the traces to.
 - [x] [Grafana Tempo](https://www.traceloop.com/docs/openllmetry/integrations/grafana)
 - [x] [HyperDX](https://www.traceloop.com/docs/openllmetry/integrations/hyperdx)
 - [x] [SigNoz](https://www.traceloop.com/docs/openllmetry/integrations/signoz)
+- [x] [Splunk](https://www.traceloop.com/docs/openllmetry/integrations/splunk)
 - [x] [OpenTelemetry Collector](https://www.traceloop.com/docs/openllmetry/integrations/otel-collector)
 
 See [our docs](https://traceloop.com/docs/openllmetry/integrations/exporting) for instructions on connecting to each one.
@@ -108,9 +109,9 @@ OpenLLMetry can instrument everything that [OpenTelemetry already instruments](h
 ### Frameworks
 
 - [x] LangChain
+- [x] [LlamaIndex](https://docs.llamaindex.ai/en/stable/module_guides/observability/observability.html#openllmetry)
 - [x] [Haystack](https://haystack.deepset.ai/integrations/traceloop)
 - [x] [LiteLLM](https://docs.litellm.ai/docs/observability/traceloop_integration)
-- [x] LlamaIndex
 
 ## 🌱 Contributing
 
