@@ -359,13 +359,13 @@ files = [
 
 [[package]]
 name = "pytest"
-version = "7.4.1"
+version = "7.4.3"
 description = "pytest: simple powerful testing with Python"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "pytest-7.4.1-py3-none-any.whl", hash = "sha256:460c9a59b14e27c602eb5ece2e47bec99dc5fc5f6513cf924a7d03a578991b1f"},
-    {file = "pytest-7.4.1.tar.gz", hash = "sha256:2f2301e797521b23e4d2585a0a3d7b5e50fdddaaf7e7d6773ea26ddb17c213ab"},
+    {file = "pytest-7.4.3-py3-none-any.whl", hash = "sha256:0d009c083ea859a71b76adf7c1d502e4bc170b80a8ef002da5806527b9591fac"},
+    {file = "pytest-7.4.3.tar.gz", hash = "sha256:d989d136982de4e3b29dabcc838ad581c64e8ed52c11fbe86ddebd9da0818cd5"},
 ]
 
 [package.dependencies]
@@ -399,13 +399,13 @@ testing = ["fields", "hunter", "process-tests", "pytest-xdist", "six", "virtuale
 
 [[package]]
 name = "pytest-html"
-version = "4.0.0"
+version = "4.1.1"
 description = "pytest plugin for generating HTML reports"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "pytest_html-4.0.0-py3-none-any.whl", hash = "sha256:79c4677ed6196417bf290d8b81f706342ae49f726f623728efa3f7dfff09f8eb"},
-    {file = "pytest_html-4.0.0.tar.gz", hash = "sha256:3b473cc278272f8b5a34cd3bf10f88ac5fcb17cb5af22f9323514af00c310e64"},
+    {file = "pytest_html-4.1.1-py3-none-any.whl", hash = "sha256:c8152cea03bd4e9bee6d525573b67bbc6622967b72b9628dda0ea3e2a0b5dd71"},
+    {file = "pytest_html-4.1.1.tar.gz", hash = "sha256:70a01e8ae5800f4a074b56a4cb1025c8f4f9b038bba5fe31e3c98eb996686f07"},
 ]
 
 [package.dependencies]
@@ -596,4 +596,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8.1,<4"
-content-hash = "1fcce26d5251aa253b9dd7a13c73c22a077eda5b5914cdc54b132aeb8e705963"
+content-hash = "ed82d7c075f3afb14e1d5e48532fa4286ba519e41fbb17f159d6b4ff583ed208"
