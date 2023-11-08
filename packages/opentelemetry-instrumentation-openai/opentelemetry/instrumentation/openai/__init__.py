@@ -249,6 +249,12 @@ def _llm_request_type_by_module_object(module_name, object_name):
             return LLMRequestTypeValues.CHAT
         else:
             return LLMRequestTypeValues.UNKNOWN
+        
+
+def is_streaming_response(response):
+    return isinstance(response, types.GeneratorType) or (is_openai_v1() and isinstance(
+        response, openai.Stream
+    ))
 
 
 @_with_tracer_wrapper
@@ -285,9 +291,7 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
         if response:
             try:
                 if span.is_recording():
-                    if isinstance(response, types.GeneratorType) or isinstance(
-                        response, openai.Stream
-                    ):
+                    if is_streaming_response(response):
                         response, to_extract_spans = itertools.tee(response)
                         _set_response_attributes(
                             span,

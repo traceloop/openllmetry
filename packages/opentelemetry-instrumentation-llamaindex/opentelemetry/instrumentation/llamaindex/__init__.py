@@ -16,65 +16,63 @@ from opentelemetry.semconv.ai import TraceloopSpanKindValues
 
 logger = logging.getLogger(__name__)
 
-_instruments = ("llamaindex >= 0.0.200",)
+_instruments = ("llama-index >= 0.0.200",)
 
 WRAPPED_METHODS = [
     {
-        "package": "llamaindex.i.base",
-        "object": "Chain",
-        "method": "__call__",
-        "wrapper": task_wrapper,
-    },
-    {
-        "package": "llamaindex.chains.base",
-        "object": "Chain",
-        "method": "acall",
-        "wrapper": task_wrapper,
-    },
-    {
-        "package": "llamaindex.chains",
-        "object": "SequentialChain",
-        "method": "__call__",
-        "span_name": "llamaindex.workflow",
+        "package": "llama_index.indices.query.base",
+        "object": "BaseQueryEngine",
+        "method": "query",
         "wrapper": workflow_wrapper,
     },
     {
-        "package": "llamaindex.chains",
-        "object": "SequentialChain",
-        "method": "acall",
-        "span_name": "llamaindex.workflow",
+        "package": "llama_index.indices.query.base",
+        "object": "BaseQueryEngine",
+        "method": "aquery",
         "wrapper": workflow_wrapper,
     },
     {
-        "package": "llamaindex.agents",
-        "object": "AgentExecutor",
-        "method": "_call",
-        "span_name": "llamaindex.agent",
-        "kind": TraceloopSpanKindValues.AGENT.value,
-        "wrapper": workflow_wrapper,
+        "package": "llama_index.indices.base_retriever",
+        "object": "BaseRetriever",
+        "method": "retrieve",
+        "span_name": "retrieve",
+        "wrapper": task_wrapper
     },
     {
-        "package": "llamaindex.tools",
-        "object": "Tool",
-        "method": "_run",
-        "span_name": "llamaindex.tool",
-        "kind": TraceloopSpanKindValues.TOOL.value,
-        "wrapper": task_wrapper,
+        "package": "llama_index.indices.base_retriever",
+        "object": "BaseRetriever",
+        "method": "aretrieve",
+        "span_name": "retrieve",
+        "wrapper": task_wrapper
     },
     {
-        "package": "llamaindex.chains",
-        "object": "RetrievalQA",
-        "method": "__call__",
-        "span_name": "retrieval_qa.workflow",
-        "wrapper": workflow_wrapper,
+        "package": "llama_index.embeddings.base",
+        "object": "BaseEmbedding",
+        "method": "get_query_embedding",
+        "span_name": "get_query_embedding",
+        "wrapper": task_wrapper
     },
     {
-        "package": "llamaindex.chains",
-        "object": "RetrievalQA",
-        "method": "acall",
-        "span_name": "retrieval_qa.workflow",
-        "wrapper": workflow_wrapper,
+        "package": "llama_index.embeddings.base",
+        "object": "BaseEmbedding",
+        "method": "aget_query_embedding",
+        "span_name": "get_query_embedding",
+        "wrapper": task_wrapper
     },
+    {
+        "package": "llama_index.response_synthesizers",
+        "object": "BaseSynthesizer",
+        "method": "synthesize",
+        "span_name": "synthesize",
+        "wrapper": task_wrapper
+    },
+    {
+        "package": "llama_index.response_synthesizers",
+        "object": "BaseSynthesizer",
+        "method": "asynthesize",
+        "span_name": "synthesize",
+        "wrapper": task_wrapper
+    }
 ]
 
 

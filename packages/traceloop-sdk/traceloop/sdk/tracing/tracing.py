@@ -301,7 +301,7 @@ def init_transformers_instrumentor():
 
 
 def init_llama_index_instrumentor():
-    if importlib.util.find_spec("llama-index") is not None:
+    if importlib.util.find_spec("llama_index") is not None:
         from opentelemetry.instrumentation.llamaindex import LlamaIndexInstrumentor
 
         instrumentor = LlamaIndexInstrumentor()

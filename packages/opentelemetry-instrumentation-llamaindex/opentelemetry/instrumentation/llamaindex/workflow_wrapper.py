@@ -1,5 +1,6 @@
 from opentelemetry import context as context_api
 from opentelemetry.context import attach, set_value
+from inflection import underscore
 
 from opentelemetry.instrumentation.utils import (
     _SUPPRESS_INSTRUMENTATION_KEY,
@@ -16,12 +17,12 @@ def workflow_wrapper(tracer, to_wrap, wrapped, instance, args, kwargs):
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
         return wrapped(*args, **kwargs)
 
-    name = to_wrap.get("span_name")
+    name = f"llama_index_{underscore(instance.__class__.__name__)}"
     kind = to_wrap.get("kind") or TraceloopSpanKindValues.WORKFLOW.value
 
     attach(set_value("workflow_name", name))
 
-    with tracer.start_as_current_span(name) as span:
+    with tracer.start_as_current_span(f"{name}.workflow") as span:
         span.set_attribute(
             SpanAttributes.TRACELOOP_SPAN_KIND,
             kind,
