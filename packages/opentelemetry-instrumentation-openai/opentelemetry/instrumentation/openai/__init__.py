@@ -249,7 +249,7 @@ def _llm_request_type_by_module_object(module_name, object_name):
             return LLMRequestTypeValues.CHAT
         else:
             return LLMRequestTypeValues.UNKNOWN
-        
+
 
 def is_streaming_response(response):
     return isinstance(response, types.GeneratorType) or (is_openai_v1() and isinstance(

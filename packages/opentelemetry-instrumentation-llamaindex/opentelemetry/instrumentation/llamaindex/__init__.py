@@ -12,8 +12,6 @@ from opentelemetry.instrumentation.llamaindex.task_wrapper import task_wrapper
 from opentelemetry.instrumentation.llamaindex.workflow_wrapper import workflow_wrapper
 from opentelemetry.instrumentation.llamaindex.version import __version__
 
-from opentelemetry.semconv.ai import TraceloopSpanKindValues
-
 logger = logging.getLogger(__name__)
 
 _instruments = ("llama-index >= 0.7.0",)
