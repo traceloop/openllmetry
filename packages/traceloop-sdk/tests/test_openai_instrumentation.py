@@ -76,11 +76,14 @@ def test_completion_langchain_style(exporter, openai_client):
 
 
 def test_streaming(exporter, openai_client):
-    openai_client.chat.completions.create(
+    response = openai_client.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=[{"role": "user", "content": "Tell me a joke about opentelemetry"}],
         stream=True,
     )
+
+    for part in response:
+        pass
 
     spans = exporter.get_finished_spans()
     assert [span.name for span in spans] == [
