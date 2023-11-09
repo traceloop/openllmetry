@@ -1,22 +1,23 @@
-from openai import OpenAI
+import os
+import openai
 
 from traceloop.sdk import Traceloop
 from traceloop.sdk.decorators import workflow
 
-client = OpenAI()
-Traceloop.init(app_name="joke_generation_service")
+openai.api_key = os.getenv("OPENAI_API_KEY")
+Traceloop.init(app_name="story_service")
 
 
-@workflow(name="streaming_joke_creation")
+@workflow(name="streaming_story")
 def joke_workflow():
-    stream = client.chat.completions.create(
+    stream = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
-        messages=[{"role": "user", "content": "Tell me a joke about opentelemetry"}],
+        messages=[{"role": "user", "content": "Tell me a story about opentelemetry"}],
         stream=True,
     )
 
     for part in stream:
-        print(part.choices[0].delta.content or "", end="")
+        print(part.choices[0].delta.get("content") or "", end="")
     print()
 
 
