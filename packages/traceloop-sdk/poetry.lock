@@ -1489,13 +1489,13 @@ referencing = ">=0.28.0"
 
 [[package]]
 name = "langchain"
-version = "0.0.330"
+version = "0.0.333"
 description = "Building applications with LLMs through composability"
 optional = false
 python-versions = ">=3.8.1,<4.0"
 files = [
-    {file = "langchain-0.0.330-py3-none-any.whl", hash = "sha256:ed557f4d680e02d9a05b175cae1ba146b7239d4d429d1d5271d4578b4956dbd6"},
-    {file = "langchain-0.0.330.tar.gz", hash = "sha256:5bed52769b63d76eb63589193e2efb66f5c7c429726af608e658f635335bd46a"},
+    {file = "langchain-0.0.333-py3-none-any.whl", hash = "sha256:7ee619bbdccfe15bcc4e255a30b5f2e75f9d230cdbaf572f4063dc59d4b03af6"},
+    {file = "langchain-0.0.333.tar.gz", hash = "sha256:64e00ecee3dd316a97f825429e286a1b207315a0cc753bcc1cd5cfcb92abbc39"},
 ]
 
 [package.dependencies]
@@ -1504,7 +1504,7 @@ anyio = "<4.0"
 async-timeout = {version = ">=4.0.0,<5.0.0", markers = "python_version < \"3.11\""}
 dataclasses-json = ">=0.5.7,<0.7"
 jsonpatch = ">=1.33,<2.0"
-langsmith = ">=0.0.52,<0.1.0"
+langsmith = ">=0.0.62,<0.1.0"
 numpy = ">=1,<2"
 pydantic = ">=1,<3"
 PyYAML = ">=5.3"
@@ -1529,17 +1529,18 @@ text-helpers = ["chardet (>=5.1.0,<6.0.0)"]
 
 [[package]]
 name = "langsmith"
-version = "0.0.60"
+version = "0.0.62"
 description = "Client library to connect to the LangSmith LLM Tracing and Evaluation Platform."
 optional = false
 python-versions = ">=3.8.1,<4.0"
 files = [
-    {file = "langsmith-0.0.60-py3-none-any.whl", hash = "sha256:94f9ef9898fa5fb5afed72538bb3ccca9a92a841b37654d699c732a76c623379"},
-    {file = "langsmith-0.0.60.tar.gz", hash = "sha256:f63513398d8d4530e3aa552926924c8443ac9d21c3812f303fa20fa2c44a9a42"},
+    {file = "langsmith-0.0.62-py3-none-any.whl", hash = "sha256:d50fe00eee06001ac5f705d4ff09c6b4a2f20688d57de5fbd6974a510da672fa"},
+    {file = "langsmith-0.0.62.tar.gz", hash = "sha256:196b16bea6856a83c8d95f3f709beebc6c72ea82c113021d3f62ac7cbde51bfe"},
 ]
 
 [package.dependencies]
 pydantic = ">=1,<3"
+pytest-subtests = ">=0.11.0,<0.12.0"
 requests = ">=2,<3"
 
 [[package]]
@@ -2890,6 +2891,21 @@ pytest = ">=7.0.0"
 
 [package.extras]
 test = ["black (>=22.1.0)", "flake8 (>=4.0.1)", "pre-commit (>=2.17.0)", "tox (>=3.24.5)"]
+
+[[package]]
+name = "pytest-subtests"
+version = "0.11.0"
+description = "unittest subTest() support and subtests fixture"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "pytest-subtests-0.11.0.tar.gz", hash = "sha256:51865c88457545f51fb72011942f0a3c6901ee9e24cbfb6d1b9dc1348bafbe37"},
+    {file = "pytest_subtests-0.11.0-py3-none-any.whl", hash = "sha256:453389984952eec85ab0ce0c4f026337153df79587048271c7fd0f49119c07e4"},
+]
+
+[package.dependencies]
+attrs = ">=19.2.0"
+pytest = ">=7.0"
 
 [[package]]
 name = "pytest-sugar"
@@ -4515,4 +4531,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8.1,<4"
-content-hash = "f5cc417bd0f24500670bd7e763ad21e62fea3c50e83eb4fbc673299a8b0236d8"
+content-hash = "b81ceaacd159604cfb3e8552843a4517620ee08356c564a9b11cf7c37073f7ff"
