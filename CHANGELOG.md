@@ -1,3 +1,9 @@
+## v0.2.1 (2023-11-09)
+
+### Fix
+
+- **openai**: yield chunks for streaming (#166)
+
 ## v0.2.0 (2023-11-08)
 
 ### Feat
