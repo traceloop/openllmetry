@@ -100,27 +100,27 @@ OpenLLMetry can instrument everything that [OpenTelemetry already instruments](h
 
 ### LLM Providers
 
-- [x] OpenAI / Azure OpenAI
-- [x] Anthropic
-- [x] Cohere
+- ✅ OpenAI / Azure OpenAI
+- ✅ Anthropic
+- ✅ Cohere
+- ✅ HuggingFace
 - [ ] Replicate
-- [x] HuggingFace
 - [ ] Vertex AI (GCP)
 - [ ] Bedrock (AWS)
 
 ### Vector DBs
 
-- [x] Pinecone
-- [x] Chroma
+- ✅ Pinecone
+- ✅ Chroma
 - [ ] Weaviate
 - [ ] Milvus
 
 ### Frameworks
 
-- [x] LangChain
-- [x] [LlamaIndex](https://docs.llamaindex.ai/en/stable/module_guides/observability/observability.html#openllmetry)
-- [x] [Haystack](https://haystack.deepset.ai/integrations/traceloop)
-- [x] [LiteLLM](https://docs.litellm.ai/docs/observability/traceloop_integration)
+- ✅ LangChain
+- ✅ [LlamaIndex](https://docs.llamaindex.ai/en/stable/module_guides/observability/observability.html#openllmetry)
+- ✅ [Haystack](https://haystack.deepset.ai/integrations/traceloop)
+- ✅ [LiteLLM](https://docs.litellm.ai/docs/observability/traceloop_integration)
 
 ## 🌱 Contributing
 
