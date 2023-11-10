@@ -1,3 +1,13 @@
+## v0.3.0 (2023-11-10)
+
+### Feat
+
+- sdk telemetry data (#168)
+
+### Fix
+
+- make auto-create path persisted (#170)
+
 ## v0.2.1 (2023-11-09)
 
 ### Fix
