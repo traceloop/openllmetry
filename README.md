@@ -17,15 +17,24 @@
 </h4>
 
 <h4 align="center">
+  <a href="https://github.com/traceloop/openllmetry/releases">
+    <img src="https://img.shields.io/github/release/traceloop/openllmetry">
+  </a>
+  <a href="https://pepy.tech/project/traceloop-sdk">
+  <img src="https://static.pepy.tech/badge/traceloop-sdk">
+  </a>
    <a href="https://github.com/traceloop/openllmetry/blob/main/LICENSE">
     <img src="https://img.shields.io/badge/license-Apache 2.0-blue.svg" alt="OpenLLMetry is released under the Apache-2.0 License">
+  </a>
+  <a href="https://github.com/traceloop/openllmetry/actions/workflows/ci.yml">
+  <img src="https://github.com/traceloop/openllmetry/actions/workflows/ci.yml/badge.svg">
+  </a>
+  <a href="https://github.com/traceloop/openllmetry/issues">
+    <img src="https://img.shields.io/github/commit-activity/m/traceloop/openllmetry" alt="git commit activity" />
   </a>
   <a href="https://www.ycombinator.com/companies/traceloop"><img src="https://img.shields.io/website?color=%23f26522&down_message=Y%20Combinator&label=Backed&logo=ycombinator&style=flat-square&up_message=Y%20Combinator&url=https%3A%2F%2Fwww.ycombinator.com"></a>
   <a href="https://github.com/traceloop/openllmetry/blob/main/CONTRIBUTING.md">
     <img src="https://img.shields.io/badge/PRs-Welcome-brightgreen" alt="PRs welcome!" />
-  </a>
-  <a href="https://github.com/traceloop/openllmetry/issues">
-    <img src="https://img.shields.io/github/commit-activity/m/traceloop/openllmetry" alt="git commit activity" />
   </a>
   <a href="https://join.slack.com/t/traceloopcommunity/shared_invite/zt-1plpfpm6r-zOHKI028VkpcWdobX65C~g">
     <img src="https://img.shields.io/badge/chat-on%20Slack-blueviolet" alt="Slack community channel" />
@@ -35,7 +44,9 @@
   </a>
 </h4>
 
-OpenLLMetry is a set of extensions built on top of [OpenTelemetry](https://opentelemetry.io/) that gives you complete observability over your LLM application. Because it uses OpenTelemetry under the hood, it can be connected to your existing observability solutions - Datadog, Honeycomb, and others.
+Looking for the JS/TS version? Check out [OpenLLMetry-JS](https://github.com/traceloop/openllmetry-js).
+
+OpenLLMetry is a set of extensions built on top of [OpenTelemetry](https://opentelemetry.io/) that gives you complete observability over your LLM application. Because it uses OpenTelemetry under the hood, [it can be connected to your existing observability solutions](https://www.traceloop.com/docs/openllmetry/integrations/introduction) - Datadog, Honeycomb, and others.
 
 It's built and maintained by Traceloop under the Apache 2.0 license.
 
@@ -67,8 +78,6 @@ If you're running this locally, you may want to disable batch sending, so you ca
 ```python
 Traceloop.init(disable_batch=True)
 ```
-
-Now, you need to decide where to export the traces to.
 
 ## ⏫ Supported (and tested) destinations
 
