@@ -2,6 +2,7 @@ import os
 import uuid
 from pathlib import Path
 import logging
+import sys
 from posthog import Posthog
 from traceloop.sdk.version import __version__
 
@@ -15,7 +16,7 @@ class Telemetry:
             obj = cls.instance = super(Telemetry, cls).__new__(cls)
             obj._telemetry_enabled = (
                 os.getenv("TRACELOOP_TELEMETRY") or "true"
-            ).lower() == "true"
+            ).lower() == "true" and "pytest" not in sys.modules
 
             if obj._telemetry_enabled:
                 obj._posthog = Posthog(
