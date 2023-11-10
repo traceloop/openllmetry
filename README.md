@@ -81,16 +81,16 @@ Traceloop.init(disable_batch=True)
 
 ## ⏫ Supported (and tested) destinations
 
-- [x] [Traceloop](https://www.traceloop.com/docs/openllmetry/integrations/traceloop)
-- [x] [Dynatrace](https://www.traceloop.com/docs/openllmetry/integrations/dynatrace)
-- [x] [Datadog](https://www.traceloop.com/docs/openllmetry/integrations/datadog)
-- [x] [New Relic](https://www.traceloop.com/docs/openllmetry/integrations/newrelic)
-- [x] [Honeycomb](https://www.traceloop.com/docs/openllmetry/integrations/honeycomb)
-- [x] [Grafana Tempo](https://www.traceloop.com/docs/openllmetry/integrations/grafana)
-- [x] [HyperDX](https://www.traceloop.com/docs/openllmetry/integrations/hyperdx)
-- [x] [SigNoz](https://www.traceloop.com/docs/openllmetry/integrations/signoz)
-- [x] [Splunk](https://www.traceloop.com/docs/openllmetry/integrations/splunk)
-- [x] [OpenTelemetry Collector](https://www.traceloop.com/docs/openllmetry/integrations/otel-collector)
+- ✅ [Traceloop](https://www.traceloop.com/docs/openllmetry/integrations/traceloop)
+- ✅ [Dynatrace](https://www.traceloop.com/docs/openllmetry/integrations/dynatrace)
+- ✅ [Datadog](https://www.traceloop.com/docs/openllmetry/integrations/datadog)
+- ✅ [New Relic](https://www.traceloop.com/docs/openllmetry/integrations/newrelic)
+- ✅ [Honeycomb](https://www.traceloop.com/docs/openllmetry/integrations/honeycomb)
+- ✅ [Grafana Tempo](https://www.traceloop.com/docs/openllmetry/integrations/grafana)
+- ✅ [HyperDX](https://www.traceloop.com/docs/openllmetry/integrations/hyperdx)
+- ✅ [SigNoz](https://www.traceloop.com/docs/openllmetry/integrations/signoz)
+- ✅ [Splunk](https://www.traceloop.com/docs/openllmetry/integrations/splunk)
+- ✅ [OpenTelemetry Collector](https://www.traceloop.com/docs/openllmetry/integrations/otel-collector)
 
 See [our docs](https://traceloop.com/docs/openllmetry/integrations/exporting) for instructions on connecting to each one.
 
@@ -104,16 +104,16 @@ OpenLLMetry can instrument everything that [OpenTelemetry already instruments](h
 - ✅ Anthropic
 - ✅ Cohere
 - ✅ HuggingFace
-- [ ] Replicate
-- [ ] Vertex AI (GCP)
-- [ ] Bedrock (AWS)
+- ⏳ Replicate
+- ⏳ Vertex AI (GCP)
+- ⏳ Bedrock (AWS)
 
 ### Vector DBs
 
 - ✅ Pinecone
 - ✅ Chroma
-- [ ] Weaviate
-- [ ] Milvus
+- ⏳ Weaviate
+- ⏳ Milvus
 
 ### Frameworks
 
