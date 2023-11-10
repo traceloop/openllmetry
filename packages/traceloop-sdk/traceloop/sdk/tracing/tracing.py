@@ -24,6 +24,7 @@ from opentelemetry.trace import get_tracer_provider, ProxyTracerProvider
 from opentelemetry.context import get_value, attach, set_value
 
 from opentelemetry.semconv.ai import SpanAttributes
+from traceloop.sdk import Telemetry
 from traceloop.sdk.tracing.content_allow_list import ContentAllowList
 from traceloop.sdk.utils import is_notebook
 
@@ -46,8 +47,26 @@ class TracerWrapper(object):
                 resource=obj.__resource
             )
             if processor:
+                Telemetry().capture("tracer:init", {"processor": "custom"})
                 obj.__spans_processor: SpanProcessor = processor
             else:
+                if exporter:
+                    Telemetry().capture(
+                        "tracer:init",
+                        {
+                            "exporter": "custom",
+                            "processor": "simple" if disable_batch else "batch",
+                        },
+                    )
+                else:
+                    Telemetry().capture(
+                        "tracer:init",
+                        {
+                            "exporter": TracerWrapper.endpoint,
+                            "processor": "simple" if disable_batch else "batch",
+                        },
+                    )
+
                 obj.__spans_exporter: SpanExporter = (
                     exporter
                     if exporter
@@ -175,7 +194,11 @@ def set_workflow_name(workflow_name: str) -> None:
 
 
 def set_prompt_tracing_context(
-    key: str, version: int, version_name: str, version_hash: str, template_variables: dict
+    key: str,
+    version: int,
+    version_name: str,
+    version_hash: str,
+    template_variables: dict,
 ) -> None:
     attach(set_value("prompt_key", key))
     attach(set_value("prompt_version", version))
@@ -230,6 +253,7 @@ def init_instrumentations():
 
 def init_openai_instrumentor():
     if importlib.util.find_spec("openai") is not None:
+        Telemetry().capture("instrumentation:openai:init")
         from opentelemetry.instrumentation.openai import OpenAIInstrumentor
 
         instrumentor = OpenAIInstrumentor()
@@ -239,6 +263,7 @@ def init_openai_instrumentor():
 
 def init_anthropic_instrumentor():
     if importlib.util.find_spec("anthropic") is not None:
+        Telemetry().capture("instrumentation:anthropic:init")
         from opentelemetry.instrumentation.anthropic import AnthropicInstrumentor
 
         instrumentor = AnthropicInstrumentor()
@@ -248,6 +273,7 @@ def init_anthropic_instrumentor():
 
 def init_cohere_instrumentor():
     if importlib.util.find_spec("cohere") is not None:
+        Telemetry().capture("instrumentation:cohere:init")
         from opentelemetry.instrumentation.cohere import CohereInstrumentor
 
         instrumentor = CohereInstrumentor()
@@ -257,6 +283,7 @@ def init_cohere_instrumentor():
 
 def init_pinecone_instrumentor():
     if importlib.util.find_spec("pinecone") is not None:
+        Telemetry().capture("instrumentation:pinecone:init")
         from opentelemetry.instrumentation.pinecone import PineconeInstrumentor
 
         instrumentor = PineconeInstrumentor()
@@ -266,6 +293,7 @@ def init_pinecone_instrumentor():
 
 def init_chroma_instrumentor():
     if importlib.util.find_spec("chromadb") is not None:
+        Telemetry().capture("instrumentation:chromadb:init")
         from opentelemetry.instrumentation.chromadb import ChromaInstrumentor
 
         instrumentor = ChromaInstrumentor()
@@ -275,6 +303,7 @@ def init_chroma_instrumentor():
 
 def init_haystack_instrumentor():
     if importlib.util.find_spec("haystack") is not None:
+        Telemetry().capture("instrumentation:haystack:init")
         from opentelemetry.instrumentation.haystack import HaystackInstrumentor
 
         instrumentor = HaystackInstrumentor()
@@ -284,6 +313,7 @@ def init_haystack_instrumentor():
 
 def init_langchain_instrumentor():
     if importlib.util.find_spec("langchain") is not None:
+        Telemetry().capture("instrumentation:langchain:init")
         from opentelemetry.instrumentation.langchain import LangchainInstrumentor
 
         instrumentor = LangchainInstrumentor()
@@ -293,6 +323,7 @@ def init_langchain_instrumentor():
 
 def init_transformers_instrumentor():
     if importlib.util.find_spec("transformers") is not None:
+        Telemetry().capture("instrumentation:transformers:init")
         from opentelemetry.instrumentation.transformers import TransformersInstrumentor
 
         instrumentor = TransformersInstrumentor()
@@ -302,6 +333,7 @@ def init_transformers_instrumentor():
 
 def init_llama_index_instrumentor():
     if importlib.util.find_spec("llama_index") is not None:
+        Telemetry().capture("instrumentation:llamaindex:init")
         from opentelemetry.instrumentation.llamaindex import LlamaIndexInstrumentor
 
         instrumentor = LlamaIndexInstrumentor()
