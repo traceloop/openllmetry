@@ -10,6 +10,7 @@ from opentelemetry.sdk.trace.export import SpanExporter
 from opentelemetry.propagators.textmap import TextMapPropagator
 from opentelemetry.util.re import parse_env_headers
 
+from traceloop.sdk.telemetry import Telemetry
 from traceloop.sdk.config import (
     is_content_tracing_enabled,
     is_tracing_enabled,
@@ -37,6 +38,8 @@ class Traceloop:
         propagator: TextMapPropagator = None,
         traceloop_sync_enabled: bool = True,
     ) -> None:
+        Telemetry()
+
         api_endpoint = os.getenv("TRACELOOP_BASE_URL") or api_endpoint
         api_key = os.getenv("TRACELOOP_API_KEY") or api_key
 

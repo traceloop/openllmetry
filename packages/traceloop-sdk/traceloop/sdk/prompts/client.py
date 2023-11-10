@@ -1,4 +1,5 @@
 from jinja2 import Environment, meta
+from traceloop.sdk import Telemetry
 from traceloop.sdk.prompts.model import Prompt, PromptVersion, TemplateEngine
 from traceloop.sdk.prompts.registry import PromptRegistry
 from traceloop.sdk.tracing.tracing import set_prompt_tracing_context
@@ -24,6 +25,8 @@ class PromptRegistryClient:
         return cls.instance
 
     def render_prompt(self, key: str, **args):
+        Telemetry().capture("prompt:rendered")
+
         prompt = self._registry.get_prompt_by_key(key)
         if prompt is None:
             raise Exception(f"Prompt {key} does not exist")
@@ -34,7 +37,11 @@ class PromptRegistryClient:
         params_dict.pop("mode")
 
         set_prompt_tracing_context(
-            prompt.key, prompt_version.version, prompt_version.name, prompt_version.hash, args
+            prompt.key,
+            prompt_version.version,
+            prompt_version.name,
+            prompt_version.hash,
+            args,
         )
 
         return params_dict
