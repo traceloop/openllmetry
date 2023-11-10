@@ -2,6 +2,7 @@ import os
 import sys
 from deprecated import deprecated
 import requests
+from pathlib import Path
 
 from typing import Optional
 from colorama import Fore
@@ -24,6 +25,11 @@ from traceloop.sdk.tracing.tracing import (
 
 
 class Traceloop:
+    AUTO_CREATED_KEY_PATH = str(
+        Path.home() / ".cache" / "traceloop" / "auto_created_key"
+    )
+    AUTO_CREATED_URL = str(Path.home() / ".cache" / "traceloop" / "auto_created_url")
+
     __tracer_wrapper: TracerWrapper
 
     @staticmethod
@@ -77,12 +83,12 @@ class Traceloop:
             and not api_key
         ):
             headers = None  # disable headers if we're auto-creating a dashboard
-            if os.path.exists("/tmp/traceloop_key.txt") and os.path.exists(
-                "/tmp/traceloop_url.txt"
-            ):
-                api_key = open("/tmp/traceloop_key.txt").read()
-                access_url = open("/tmp/traceloop_url.txt").read()
-            else:
+            if not os.path.exists(Traceloop.AUTO_CREATED_KEY_PATH):
+                os.makedirs(
+                    os.path.dirname(Traceloop.AUTO_CREATED_KEY_PATH), exist_ok=True
+                )
+                os.makedirs(os.path.dirname(Traceloop.AUTO_CREATED_URL), exist_ok=True)
+
                 print(
                     Fore.YELLOW
                     + "No Traceloop API key provided, auto-creating a dashboard on Traceloop",
@@ -93,8 +99,13 @@ class Traceloop:
                 access_url = f"https://app.traceloop.com/trace?skt={res['uiAccessKey']}"
                 api_key = res["apiKey"]
                 print(Fore.YELLOW + "TRACELOOP_API_KEY=", api_key)
-                open("/tmp/traceloop_key.txt", "w").write(api_key)
-                open("/tmp/traceloop_url.txt", "w").write(access_url)
+
+                open(Traceloop.AUTO_CREATED_KEY_PATH, "w").write(api_key)
+                open(Traceloop.AUTO_CREATED_URL, "w").write(access_url)
+            else:
+                api_key = open("/tmp/traceloop_key.txt").read()
+                access_url = open("/tmp/traceloop_url.txt").read()
+
             print(
                 Fore.GREEN + f"\nGo to {access_url} to see a live dashboard\n",
             )
