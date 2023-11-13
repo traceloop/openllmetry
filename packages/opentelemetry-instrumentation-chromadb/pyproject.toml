@@ -28,7 +28,7 @@ include = "opentelemetry/instrumentation/chromadb"
 python = ">=3.8.1,<4"
 opentelemetry-api = "^1.20.0"
 opentelemetry-semantic-conventions = "^0.41b0"
-opentelemetry-instrumentation = "^0.41b0"
+opentelemetry-instrumentation = ">=0.41,<0.43"
 opentelemetry-semantic-conventions-ai = "^0.0.7"
 
 [tool.poetry.group.dev.dependencies]
