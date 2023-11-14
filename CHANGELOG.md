@@ -1,3 +1,9 @@
+## v0.3.1 (2023-11-14)
+
+### Fix
+
+- disable telemetry in tests (#171)
+
 ## v0.3.0 (2023-11-10)
 
 ### Feat
