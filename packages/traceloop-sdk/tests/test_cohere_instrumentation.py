@@ -48,6 +48,14 @@ def test_cohere_chat(exporter):
         == "Tell me a joke, pirate style"
     )
     assert cohere_span.attributes.get("llm.completions.0.content") == res.text
+    assert cohere_span.attributes.get("llm.usage.prompt_tokens") == 69
+    assert cohere_span.attributes.get(
+        "llm.usage.total_tokens"
+    ) == cohere_span.attributes.get(
+        "llm.usage.completion_tokens"
+    ) + cohere_span.attributes.get(
+        "llm.usage.prompt_tokens"
+    )
 
 
 def test_cohere_rerank(exporter):
