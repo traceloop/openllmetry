@@ -85,6 +85,23 @@ def _set_span_chat_response(span, response):
     prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{index}"
     _set_span_attribute(span, f"{prefix}.content", response.text)
 
+    if response.token_count:
+        _set_span_attribute(
+            span,
+            SpanAttributes.LLM_USAGE_TOTAL_TOKENS,
+            response.token_count.get("total_tokens"),
+        )
+        _set_span_attribute(
+            span,
+            SpanAttributes.LLM_USAGE_COMPLETION_TOKENS,
+            response.token_count.get("response_tokens"),
+        )
+        _set_span_attribute(
+            span,
+            SpanAttributes.LLM_USAGE_PROMPT_TOKENS,
+            response.token_count.get("prompt_tokens"),
+        )
+
 
 def _set_span_generations_response(span, generations):
     for index, generation in enumerate(generations):
