@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -32,15 +32,15 @@ jobs:
       - run: npx nx affected -t install --with dev
       - run: npx nx affected -t lint --parallel=3
 
-  build-and-test:
-    name: Build & Test
+  build-and-test-packages:
+    name: Build & Test Packages
     runs-on: ubuntu-latest
     strategy:
       matrix:
         python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -60,10 +60,10 @@ jobs:
       - run: npm ci
 
       - name: Install
-        run: npx nx affected -t install --with dev
+        run: npx nx affected -t install --with dev --projects=tag:instrumentation,tag:sdk --parallel=3
       
       - name: Build
-        run: npx nx affected -t build --parallel=3
+        run: npx nx affected -t build --projects=tag:instrumentation,tag:sdk --parallel=3
       
       - name: Test
         env:
@@ -73,4 +73,37 @@ jobs:
           PINECONE_API_KEY: ${{ secrets.PINECONE_API_KEY }}
           PINECONE_ENVIRONMENT: ${{ secrets.PINECONE_ENVIRONMENT }}
           TRACELOOP_API_KEY: ${{ secrets.TRACELOOP_API_KEY }}
-        run: npx nx affected -t test --parallel=3
+        run: npx nx affected -t test --projects=tag:instrumentation,tag:sdk --parallel=3
+  
+  build-sample-app:
+      name: Build Sample App
+      runs-on: ubuntu-latest
+      strategy:
+        matrix:
+          python-version: ["3.11"]
+
+      steps:
+        - uses: actions/checkout@v4
+          with:
+            fetch-depth: 0
+
+        - name: Set up Python ${{ matrix.python-version }}
+          uses: actions/setup-python@v1
+          with:
+            python-version: ${{ matrix.python-version }}
+        - name: Install Poetry
+          uses: snok/install-poetry@v1
+
+        - uses: actions/setup-node@v3
+          with:
+            node-version: 18
+
+        - uses: nrwl/nx-set-shas@v3
+
+        - run: npm ci
+
+        - name: Install
+          run: npx nx sample-app install
+        
+        - name: Build
+          run: npx nx sample-app build
