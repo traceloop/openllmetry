@@ -1,3 +1,10 @@
+## v0.3.2 (2023-11-16)
+
+### Fix
+
+- python 3.8 compatibility (#198)
+- **cohere**: cohere chat token usage (#196)
+
 ## v0.3.1 (2023-11-14)
 
 ### Fix
