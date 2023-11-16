@@ -22,6 +22,7 @@ from traceloop.sdk.tracing.tracing import (
     set_association_properties,
     set_correlation_id,
 )
+from typing import Dict
 
 
 class Traceloop:
@@ -37,7 +38,7 @@ class Traceloop:
         app_name: Optional[str] = sys.argv[0],
         api_endpoint: str = "https://api.traceloop.com",
         api_key: str = None,
-        headers: dict[str, str] = {},
+        headers: Dict[str, str] = {},
         disable_batch=False,
         exporter: SpanExporter = None,
         processor: SpanProcessor = None,
