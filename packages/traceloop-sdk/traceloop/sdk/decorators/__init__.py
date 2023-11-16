@@ -36,14 +36,13 @@ def task_method(
                 if name
                 else f"{fn.__name__}.{tlp_span_kind.value}"
             )
-            with get_tracer() as tracer, tracer.start_as_current_span(
-                span_name
-            ) as span:
-                span.set_attribute(
-                    SpanAttributes.TRACELOOP_SPAN_KIND, tlp_span_kind.value
-                )
-                span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, name)
-                return fn(*args, **kwargs)
+            with get_tracer() as tracer:
+                with tracer.start_as_current_span(span_name) as span:
+                    span.set_attribute(
+                        SpanAttributes.TRACELOOP_SPAN_KIND, tlp_span_kind.value
+                    )
+                    span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, name)
+                    return fn(*args, **kwargs)
 
         return wrap
 
@@ -92,17 +91,15 @@ def workflow_method(name: Optional[str] = None, correlation_id: Optional[str] = 
             set_workflow_name(workflow_name)
             span_name = f"{workflow_name}.workflow"
 
-            with (
-                get_tracer(flush_on_exit=True) as tracer,
-                tracer.start_as_current_span(span_name) as span,
-            ):
-                span.set_attribute(
-                    SpanAttributes.TRACELOOP_SPAN_KIND,
-                    TraceloopSpanKindValues.WORKFLOW.value,
-                )
-                span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, name)
+            with get_tracer(flush_on_exit=True) as tracer:
+                with tracer.start_as_current_span(span_name) as span:
+                    span.set_attribute(
+                        SpanAttributes.TRACELOOP_SPAN_KIND,
+                        TraceloopSpanKindValues.WORKFLOW.value,
+                    )
+                    span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, name)
 
-                return fn(*args, **kwargs)
+                    return fn(*args, **kwargs)
 
         return wrap
 
@@ -166,15 +163,13 @@ def atask_method(
                 if name
                 else f"{fn.__name__}.{tlp_span_kind.value}"
             )
-            with (
-                get_tracer() as tracer,
-                tracer.start_as_current_span(span_name) as span,
-            ):
-                span.set_attribute(
-                    SpanAttributes.TRACELOOP_SPAN_KIND, tlp_span_kind.value
-                )
-                span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, name)
-                return await fn(*args, **kwargs)
+            with get_tracer() as tracer:
+                with tracer.start_as_current_span(span_name) as span:
+                    span.set_attribute(
+                        SpanAttributes.TRACELOOP_SPAN_KIND, tlp_span_kind.value
+                    )
+                    span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, name)
+                    return await fn(*args, **kwargs)
 
         return wrap
 
@@ -223,21 +218,19 @@ def aworkflow_method(name: Optional[str] = None, correlation_id: Optional[str] =
             set_workflow_name(workflow_name)
             span_name = f"{workflow_name}.workflow"
 
-            with (
-                get_tracer(flush_on_exit=True) as tracer,
-                tracer.start_as_current_span(span_name) as span,
-            ):
-                span.set_attribute(
-                    SpanAttributes.TRACELOOP_SPAN_KIND,
-                    TraceloopSpanKindValues.WORKFLOW.value,
-                )
-                span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, name)
-
-                if correlation_id:
+            with get_tracer(flush_on_exit=True) as tracer:
+                with tracer.start_as_current_span(span_name) as span:
                     span.set_attribute(
-                        SpanAttributes.TRACELOOP_CORRELATION_ID, correlation_id
+                        SpanAttributes.TRACELOOP_SPAN_KIND,
+                        TraceloopSpanKindValues.WORKFLOW.value,
                     )
-                return await fn(*args, **kwargs)
+                    span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, name)
+
+                    if correlation_id:
+                        span.set_attribute(
+                            SpanAttributes.TRACELOOP_CORRELATION_ID, correlation_id
+                        )
+                    return await fn(*args, **kwargs)
 
         return wrap
 
