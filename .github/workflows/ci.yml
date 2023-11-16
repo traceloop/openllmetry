@@ -9,19 +9,16 @@ on:
 jobs:
   lint:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
-      - name: Set up Python ${{ matrix.python-version }}
+      - name: Set up Python 3.11
         uses: actions/setup-python@v1
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: 3.11
       - name: Install Poetry
         uses: snok/install-poetry@v1
 
@@ -36,6 +33,9 @@ jobs:
 
   test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
 
     steps:
       - uses: actions/checkout@v3
@@ -76,10 +76,10 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Set up Python ${{ matrix.python-version }}
+      - name: Set up Python 3.11
         uses: actions/setup-python@v1
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: 3.11
       - name: Install Poetry
         uses: snok/install-poetry@v1
 
