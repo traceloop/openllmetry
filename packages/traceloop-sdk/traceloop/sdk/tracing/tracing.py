@@ -27,6 +27,7 @@ from opentelemetry.semconv.ai import SpanAttributes
 from traceloop.sdk import Telemetry
 from traceloop.sdk.tracing.content_allow_list import ContentAllowList
 from traceloop.sdk.utils import is_notebook
+from typing import Dict
 
 TRACER_NAME = "traceloop.tracer"
 EXCLUDED_URLS = "api.openai.com,openai.azure.com,api.anthropic.com,api.cohere.ai,pinecone.io,traceloop.com"
@@ -152,7 +153,7 @@ class TracerWrapper(object):
         app_name: str,
         enable_content_tracing: bool,
         endpoint: str,
-        headers: dict[str, str],
+        headers: Dict[str, str],
     ) -> None:
         TracerWrapper.app_name = app_name
         TracerWrapper.enable_content_tracing = enable_content_tracing
@@ -211,7 +212,7 @@ def is_llm_span(span) -> bool:
     return span.attributes.get(SpanAttributes.LLM_REQUEST_TYPE) is not None
 
 
-def init_spans_exporter(api_endpoint: str, headers: dict[str, str]) -> SpanExporter:
+def init_spans_exporter(api_endpoint: str, headers: Dict[str, str]) -> SpanExporter:
     if "http" in api_endpoint.lower() or "https" in api_endpoint.lower():
         return HTTPExporter(endpoint=f"{api_endpoint}/v1/traces", headers=headers)
     else:
