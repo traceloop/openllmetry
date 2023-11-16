@@ -8,6 +8,7 @@ on:
 
 jobs:
   lint:
+    name: Lint
     runs-on: ubuntu-latest
 
     steps:
@@ -31,7 +32,8 @@ jobs:
       - run: npx nx affected -t install --with dev
       - run: npx nx affected -t lint --parallel=3
 
-  test:
+  build-and-test:
+    name: Build & Test
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -57,7 +59,12 @@ jobs:
 
       - run: npm ci
 
-      - run: npx nx affected -t install --with dev
+      - name: Install
+        run: npx nx affected -t install --with dev
+      
+      - name: Build
+        run: npx nx affected -t build --parallel=3
+      
       - name: Test
         env:
           OPENAI_API_KEY: ${{ secrets.OPEN_API_KEY }}
@@ -67,29 +74,3 @@ jobs:
           PINECONE_ENVIRONMENT: ${{ secrets.PINECONE_ENVIRONMENT }}
           TRACELOOP_API_KEY: ${{ secrets.TRACELOOP_API_KEY }}
         run: npx nx affected -t test --parallel=3
-
-  build:
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-
-      - name: Set up Python 3.11
-        uses: actions/setup-python@v1
-        with:
-          python-version: 3.11
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
-
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 18
-
-      - uses: nrwl/nx-set-shas@v3
-
-      - run: npm ci
-
-      - run: npx nx affected -t install --with dev
-      - run: npx nx affected -t build --parallel=3
