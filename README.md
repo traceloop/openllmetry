@@ -62,7 +62,7 @@ For a complete guide, go to our [docs](https://traceloop.com/docs/openllmetry/ge
 Install the SDK:
 
 ```bash
-pip install traceloop-sdk --extra-index-url https://pip.traceloop.com/simple/
+pip install traceloop-sdk
 ```
 
 Then, to start instrumenting your code, just add this line to your code:
