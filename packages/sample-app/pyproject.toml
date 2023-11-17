@@ -37,6 +37,8 @@ llama-index = "^0.8.59"
 urllib3 = ">=1.25.4,<1.27"
 duckduckgo-search = "^3.9.3"
 torch = "^2.1.0"
+chromadb = "^0.4.17"
+pandas = "~2.0.3"
 
 [tool.poetry.dependencies.opentelemetry-instrumentation-openai]
 path = "../opentelemetry-instrumentation-openai"
