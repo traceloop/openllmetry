@@ -61,7 +61,7 @@ pytest-html = "4.1.1"
 
 [tool.poetry.group.test.dependencies]
 openai = "^1.1.0"
-anthropic = "^0.5.0"
+anthropic = ">=0.5,<0.8"
 # farm-haystack = "^1.20.1"
 pinecone-client = {extras = ["grpc"], version = "^2.2.4"}
 cohere = "^4.27"
