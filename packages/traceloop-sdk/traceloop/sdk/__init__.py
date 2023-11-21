@@ -99,6 +99,7 @@ class Traceloop:
                 ).json()
                 access_url = f"https://app.traceloop.com/trace?skt={res['uiAccessKey']}"
                 api_key = res["apiKey"]
+
                 print(Fore.YELLOW + "TRACELOOP_API_KEY=", api_key)
 
                 open(Traceloop.AUTO_CREATED_KEY_PATH, "w").write(api_key)
