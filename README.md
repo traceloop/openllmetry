@@ -1,10 +1,10 @@
 <img referrerpolicy="no-referrer-when-downgrade" src="https://static.scarf.sh/a.png?x-pxid=f54554a7-6000-42a3-997f-9a18867f2e91" />
 <p align="center">
 <a href="https://www.traceloop.com/#gh-light-mode-only">
-<img width="300" src="https://raw.githubusercontent.com/traceloop/openllmetry/main/img/logo-light.png">
+<img width="600" src="https://raw.githubusercontent.com/traceloop/openllmetry/main/img/logo-light.png">
 </a>
 <a href="https://www.traceloop.com/#gh-dark-mode-only">
-<img width="300" src="https://raw.githubusercontent.com/traceloop/openllmetry/main/img/logo-dark.png">
+<img width="600" src="https://raw.githubusercontent.com/traceloop/openllmetry/main/img/logo-dark.png">
 </a>
 </p>
 <p align="center">
