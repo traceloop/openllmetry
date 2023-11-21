@@ -1,10 +1,12 @@
 name: CI
 
 on:
-  pull_request:
-  push:
-    branches:
-      - "main"
+  pull_request_target:
+    types: [opened, synchronize]
+  # pull_request:
+  # push:
+  #   branches:
+  #     - "main"
 
 jobs:
   lint:
