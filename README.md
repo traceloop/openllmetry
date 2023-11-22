@@ -16,7 +16,7 @@
     <br />
   <a href="https://join.slack.com/t/traceloopcommunity/shared_invite/zt-1plpfpm6r-zOHKI028VkpcWdobX65C~g">Slack</a> |
   <a href="https://traceloop.com/docs/openllmetry/introduction">Docs</a> |
-  <a href="https://www.traceloop.com">Website</a>
+  <a href="https://www.traceloop.com/openllmetry">Website</a>
 </h4>
 
 <h4 align="center">
