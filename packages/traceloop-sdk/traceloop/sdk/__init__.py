@@ -146,4 +146,3 @@ class Traceloop:
 
     def set_association_properties(properties: dict) -> None:
         set_association_properties(properties)
-
