@@ -83,8 +83,20 @@ class Traceloop:
             and api_endpoint == "https://api.traceloop.com"
             and not api_key
         ):
+            if not Telemetry().feature_enabled("auto_create_dashboard"):
+                print(
+                    Fore.RED
+                    + "Error: Missing Traceloop API key,"
+                    + " go to https://https://app.traceloop.com/settings/api-keys to create one"
+                )
+                print("Set the TRACELOOP_API_KEY environment variable to the key")
+                print(Fore.RESET)
+                return
+
             headers = None  # disable headers if we're auto-creating a dashboard
-            if not os.path.exists(Traceloop.AUTO_CREATED_KEY_PATH):
+            if not os.path.exists(
+                Traceloop.AUTO_CREATED_KEY_PATH
+            ) or not os.path.exists(Traceloop.AUTO_CREATED_URL):
                 os.makedirs(
                     os.path.dirname(Traceloop.AUTO_CREATED_KEY_PATH), exist_ok=True
                 )
