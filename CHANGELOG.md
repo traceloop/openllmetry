@@ -1,3 +1,9 @@
+## v0.3.4 (2023-11-22)
+
+### Fix
+
+- **sdk**: flag for dashboard auto-creation (#210)
+
 ## v0.3.3 (2023-11-22)
 
 ### Fix
