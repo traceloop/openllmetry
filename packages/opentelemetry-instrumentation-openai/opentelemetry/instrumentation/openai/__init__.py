@@ -108,6 +108,8 @@ def _set_input_attributes(span, llm_request_type, kwargs):
     _set_span_attribute(
         span, SpanAttributes.LLM_PRESENCE_PENALTY, kwargs.get("presence_penalty")
     )
+    _set_span_attribute(span, SpanAttributes.LLM_USER, kwargs.get("user"))
+    _set_span_attribute(span, SpanAttributes.LLM_HEADERS, str(kwargs.get("headers")))
 
     if should_send_prompts():
         if llm_request_type == LLMRequestTypeValues.CHAT:

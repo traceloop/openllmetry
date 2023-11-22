@@ -12,6 +12,8 @@ class SpanAttributes:
     LLM_USAGE_COMPLETION_TOKENS = "llm.usage.completion_tokens"
     LLM_USAGE_PROMPT_TOKENS = "llm.usage.prompt_tokens"
     LLM_TEMPERATURE = "llm.temperature"
+    LLM_USER = "llm.user"
+    LLM_HEADERS = "llm.headers"
     LLM_TOP_P = "llm.top_p"
     LLM_FREQUENCY_PENALTY = "llm.frequency_penalty"
     LLM_PRESENCE_PENALTY = "llm.presence_penalty"
