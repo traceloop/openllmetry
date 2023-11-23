@@ -1,3 +1,9 @@
+## v0.3.5 (2023-11-23)
+
+### Fix
+
+- **llama-index**: support ollama completion (#212)
+
 ## v0.3.4 (2023-11-22)
 
 ### Fix
