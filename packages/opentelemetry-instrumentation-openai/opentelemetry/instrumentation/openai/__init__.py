@@ -122,6 +122,18 @@ def _set_input_attributes(span, llm_request_type, kwargs):
                 prompt[0] if isinstance(prompt, list) else prompt,
             )
 
+        functions = kwargs.get("functions")
+        if functions:
+            for i, function in enumerate(functions):
+                prefix = f"{SpanAttributes.LLM_FUNCTIONS}.{i}"
+                _set_span_attribute(span, f"{prefix}.name", function.get("name"))
+                _set_span_attribute(
+                    span, f"{prefix}.description", function.get("description")
+                )
+                _set_span_attribute(
+                    span, f"{prefix}.parameters", function.get("parameters")
+                )
+
     return
 
 
