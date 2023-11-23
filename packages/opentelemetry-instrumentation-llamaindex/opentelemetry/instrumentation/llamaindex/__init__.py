@@ -10,6 +10,7 @@ from opentelemetry.instrumentation.utils import unwrap
 
 from opentelemetry.instrumentation.llamaindex.task_wrapper import task_wrapper
 from opentelemetry.instrumentation.llamaindex.workflow_wrapper import workflow_wrapper
+from opentelemetry.instrumentation.llamaindex.custom_llm_wrapper import custom_llm_wrapper
 from opentelemetry.instrumentation.llamaindex.version import __version__
 
 logger = logging.getLogger(__name__)
@@ -70,6 +71,13 @@ WRAPPED_METHODS = [
         "method": "asynthesize",
         "span_name": "synthesize",
         "wrapper": task_wrapper
+    },
+    {
+        "package": "llama_index.llms.ollama",
+        "object": "Ollama",
+        "method": "complete",
+        "span_name": "ollama.completion",
+        "wrapper": custom_llm_wrapper
     }
 ]
 
