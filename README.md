@@ -14,7 +14,7 @@
     <a href="https://traceloop.com/docs/openllmetry/getting-started-python"><strong>Get started »</strong></a>
     <br />
     <br />
-  <a href="https://join.slack.com/t/traceloopcommunity/shared_invite/zt-1plpfpm6r-zOHKI028VkpcWdobX65C~g">Slack</a> |
+  <a href="https://traceloop.com/slack">Slack</a> |
   <a href="https://traceloop.com/docs/openllmetry/introduction">Docs</a> |
   <a href="https://www.traceloop.com/openllmetry">Website</a>
 </h4>
@@ -39,7 +39,7 @@
   <a href="https://github.com/traceloop/openllmetry/blob/main/CONTRIBUTING.md">
     <img src="https://img.shields.io/badge/PRs-Welcome-brightgreen" alt="PRs welcome!" />
   </a>
-  <a href="https://join.slack.com/t/traceloopcommunity/shared_invite/zt-1plpfpm6r-zOHKI028VkpcWdobX65C~g">
+  <a href="https://traceloop.com/slack">
     <img src="https://img.shields.io/badge/chat-on%20Slack-blueviolet" alt="Slack community channel" />
   </a>
   <a href="https://twitter.com/traceloopdev">
@@ -132,11 +132,11 @@ Whether it's big or small, we love contributions ❤️ Check out our guide to s
 Not sure where to get started? You can:
 
 - [Book a free pairing session with one of our teammates](mailto:nir@traceloop.com?subject=Pairing%20session&body=I'd%20like%20to%20do%20a%20pairing%20session!)!
-- Join our <a href="https://join.slack.com/t/traceloopcommunity/shared_invite/zt-1plpfpm6r-zOHKI028VkpcWdobX65C~g">Slack</a>, and ask us any questions there.
+- Join our <a href="https://traceloop.com/slack">Slack</a>, and ask us any questions there.
 
 ## 💚 Community & Support
 
-- [Slack](https://join.slack.com/t/traceloopcommunity/shared_invite/zt-1plpfpm6r-zOHKI028VkpcWdobX65C~g) (For live discussion with the community and the Traceloop team)
+- [Slack](https://traceloop.com/slack) (For live discussion with the community and the Traceloop team)
 - [GitHub Discussions](https://github.com/traceloop/openllmetry/discussions) (For help with building and deeper conversations about features)
 - [GitHub Issues](https://github.com/traceloop/openllmetry/issues) (For any bugs and errors you encounter using OpenLLMetry)
 - [Twitter](https://twitter.com/traceloopdev) (Get news fast)
