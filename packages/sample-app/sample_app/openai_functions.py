@@ -37,7 +37,8 @@ response = openai.ChatCompletion.create(
         },
         {
             "name": "github_fetcher",
-            "description": "Gets the code commits for a github repository and a specific owner. if you don't have the required parameters in the specification, you need to ask the user to provide them",
+            "description": "Gets the code commits for a github repository and a specific owner. if you don't"
+            + " have the required parameters in the specification, you need to ask the user to provide them",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -51,7 +52,8 @@ response = openai.ChatCompletion.create(
                     },
                     "since": {
                         "type": "string",
-                        "description": "Only show notifications updated after the given time. This is a timestamp in ISO 8601 format: YYYY-MM-DDTHH:MM:SSZ.",
+                        "description": "Only show notifications updated after the given time. This is a timestamp "
+                        + "in ISO 8601 format: YYYY-MM-DDTHH:MM:SSZ.",
                     },
                 },
                 "required": ["owner", "repo"],
