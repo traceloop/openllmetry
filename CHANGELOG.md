@@ -1,3 +1,9 @@
+## v0.3.6 (2023-11-27)
+
+### Fix
+
+- **openai**: attributes for functions in request (#211)
+
 ## v0.3.5 (2023-11-23)
 
 ### Fix
