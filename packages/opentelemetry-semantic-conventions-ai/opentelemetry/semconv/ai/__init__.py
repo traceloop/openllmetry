@@ -20,6 +20,7 @@ class SpanAttributes:
     LLM_PROMPTS = "llm.prompts"
     LLM_COMPLETIONS = "llm.completions"
     LLM_CHAT_STOP_SEQUENCES = "llm.chat.stop_sequences"
+    LLM_REQUEST_FUNCTIONS = "llm.request.functions"
 
     # Vector DB
     VECTOR_DB_VENDOR = "vector_db.vendor"

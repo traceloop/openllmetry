@@ -125,7 +125,7 @@ def _set_input_attributes(span, llm_request_type, kwargs):
         functions = kwargs.get("functions")
         if functions:
             for i, function in enumerate(functions):
-                prefix = f"{SpanAttributes.LLM_FUNCTIONS}.{i}"
+                prefix = f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.{i}"
                 _set_span_attribute(span, f"{prefix}.name", function.get("name"))
                 _set_span_attribute(
                     span, f"{prefix}.description", function.get("description")
