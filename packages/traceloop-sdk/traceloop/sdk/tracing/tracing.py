@@ -30,7 +30,7 @@ from traceloop.sdk.utils import is_notebook
 from typing import Dict
 
 TRACER_NAME = "traceloop.tracer"
-EXCLUDED_URLS = "api.openai.com,openai.azure.com,api.anthropic.com,api.cohere.ai,pinecone.io,traceloop.com"
+EXCLUDED_URLS = "api.openai.com,openai.azure.com,api.anthropic.com,api.cohere.ai,pinecone.io,traceloop.com,posthog.com"
 
 
 class TracerWrapper(object):

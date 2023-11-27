@@ -1,5 +1,6 @@
 import logging
 import os
+import json
 import types
 import pkg_resources
 from typing import Collection
@@ -131,7 +132,7 @@ def _set_input_attributes(span, llm_request_type, kwargs):
                     span, f"{prefix}.description", function.get("description")
                 )
                 _set_span_attribute(
-                    span, f"{prefix}.parameters", function.get("parameters")
+                    span, f"{prefix}.parameters", json.dumps(function.get("parameters"))
                 )
 
     return
