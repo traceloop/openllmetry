@@ -250,6 +250,7 @@ def init_instrumentations():
     init_requests_instrumentor()
     init_urllib3_instrumentor()
     init_pymysql_instrumentor()
+    init_bedrock_instrumentor()
 
 
 def init_openai_instrumentor():
@@ -365,5 +366,13 @@ def init_pymysql_instrumentor():
         from opentelemetry.instrumentation.pymysql import PyMySQLInstrumentor
 
         instrumentor = PyMySQLInstrumentor()
+        if not instrumentor.is_instrumented_by_opentelemetry:
+            instrumentor.instrument()
+
+def init_bedrock_instrumentor():
+    if importlib.util.find_spec("boto3") is not None:
+        from opentelemetry.instrumentation.bedrock import BedrockInstrumentor
+
+        instrumentor = BedrockInstrumentor()
         if not instrumentor.is_instrumented_by_opentelemetry:
             instrumentor.instrument()

@@ -40,6 +40,7 @@ torch = "^2.1.0"
 chromadb = "^0.4.17"
 pandas = "~2.0.3"
 tokenizers = "~0.14.0"
+boto3 = "^1.33.1"
 
 [tool.poetry.dependencies.opentelemetry-instrumentation-openai]
 path = "../opentelemetry-instrumentation-openai"

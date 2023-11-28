@@ -44,6 +44,7 @@ opentelemetry-instrumentation-langchain = {path="../opentelemetry-instrumentatio
 opentelemetry-instrumentation-chromadb = {path="../opentelemetry-instrumentation-chromadb", develop=true}
 opentelemetry-instrumentation-transformers = {path="../opentelemetry-instrumentation-transformers", develop=true}
 opentelemetry-instrumentation-llamaindex = {path="../opentelemetry-instrumentation-llamaindex", develop=true}
+opentelemetry-instrumentation-bedrock = {path="../opentelemetry-instrumentation-bedrock", develop=true}
 colorama = "^0.4.6"
 tenacity = "^8.2.3"
 pydantic = "^2.5.0"
