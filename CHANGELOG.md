@@ -1,3 +1,13 @@
+## v0.4.0 (2023-11-29)
+
+### Feat
+
+- bedrock support (#218)
+
+### Fix
+
+- lint issues
+
 ## v0.3.6 (2023-11-27)
 
 ### Fix
