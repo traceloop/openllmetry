@@ -107,9 +107,9 @@ OpenLLMetry can instrument everything that [OpenTelemetry already instruments](h
 - ✅ Anthropic
 - ✅ Cohere
 - ✅ HuggingFace
+- ✅ Bedrock (AWS)
 - ⏳ Replicate
 - ⏳ Vertex AI (GCP)
-- ✅ Bedrock (AWS)
 
 ### Vector DBs
 
