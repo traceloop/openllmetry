@@ -14,7 +14,7 @@ class ReusableStreamingBody(StreamingBody):
         super().__init__(raw_stream, content_length)
         self._buffer = None
         self._buffer_cursor = 0
-    
+
     def read(self, amt=None):
         """Read at most amt bytes from the stream.
 
@@ -28,7 +28,7 @@ class ReusableStreamingBody(StreamingBody):
                 raise ReadTimeoutError(endpoint_url=e.url, error=e)
             except URLLib3ProtocolError as e:
                 raise ResponseStreamingError(error=e)
-            
+
             self._amount_read += len(self._buffer)
             if amt is None or (not self._buffer and amt > 0):
                 # If the server sends empty contents or

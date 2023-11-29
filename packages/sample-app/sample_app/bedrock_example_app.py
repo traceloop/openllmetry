@@ -19,9 +19,9 @@ def create_joke():
     })
 
     response = brt.invoke_model(
-        body=body, 
-        modelId='cohere.command-text-v14', 
-        accept='application/json', 
+        body=body,
+        modelId='cohere.command-text-v14',
+        accept='application/json',
         contentType='application/json'
     )
 
@@ -29,8 +29,10 @@ def create_joke():
 
     return response_body.get('generations')[0].get('text')
 
+
 @workflow(name="pirate_joke_generator")
 def joke_workflow():
     print(create_joke())
+
 
 joke_workflow()

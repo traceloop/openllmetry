@@ -30,7 +30,8 @@ from traceloop.sdk.utils import is_notebook
 from typing import Dict
 
 TRACER_NAME = "traceloop.tracer"
-EXCLUDED_URLS = "api.openai.com,openai.azure.com,api.anthropic.com,api.cohere.ai,pinecone.io,traceloop.com,posthog.com,bedrock-runtime"
+EXCLUDED_URLS = ("api.openai.com,openai.azure.com,api.anthropic.com,api.cohere.ai,pinecone.io,traceloop.com,"
+                 "posthog.com,bedrock-runtime")
 
 
 class TracerWrapper(object):
@@ -368,6 +369,7 @@ def init_pymysql_instrumentor():
         instrumentor = PyMySQLInstrumentor()
         if not instrumentor.is_instrumented_by_opentelemetry:
             instrumentor.instrument()
+
 
 def init_bedrock_instrumentor():
     if importlib.util.find_spec("boto3") is not None:

@@ -1,6 +1,5 @@
 """OpenTelemetry Bedrock instrumentation"""
 from functools import wraps
-from itertools import tee
 import json
 import logging
 import os
@@ -10,7 +9,6 @@ from wrapt import wrap_function_wrapper
 
 from opentelemetry import context as context_api
 from opentelemetry.trace import get_tracer, SpanKind
-from opentelemetry.trace.status import Status, StatusCode
 
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.instrumentation.utils import (
@@ -64,7 +62,7 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
     """Instruments and calls every function defined in TO_WRAP."""
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
         return wrapped(*args, **kwargs)
-    
+
     if kwargs.get("service_name") == "bedrock-runtime":
         client = wrapped(*args, **kwargs)
         client.invoke_model = _instrumented_model_invoke(client.invoke_model, tracer)
@@ -88,7 +86,7 @@ def _instrumented_model_invoke(fn, tracer):
 
             if span.is_recording():
                 (vendor, model) = kwargs.get("modelId").split(".")
-                
+
                 _set_span_attribute(span, SpanAttributes.LLM_VENDOR, vendor)
                 _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, model)
 
@@ -100,10 +98,11 @@ def _instrumented_model_invoke(fn, tracer):
                     _set_ai21_span_attributes(span, request_body, response_body)
                 elif vendor == "meta":
                     _set_llama_span_attributes(span, request_body, response_body)
-              
+
             return response
-    
+
     return with_instrumentation
+
 
 def _set_cohere_span_attributes(span, request_body, response_body):
     _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TYPE, LLMRequestTypeValues.COMPLETION.value)
@@ -117,6 +116,7 @@ def _set_cohere_span_attributes(span, request_body, response_body):
         for i, generation in enumerate(response_body.get("generations")):
             _set_span_attribute(span, f"{SpanAttributes.LLM_COMPLETIONS}.{i}.content", generation.get("text"))
 
+
 def _set_anthropic_span_attributes(span, request_body, response_body):
     _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TYPE, LLMRequestTypeValues.COMPLETION.value)
     _set_span_attribute(span, SpanAttributes.LLM_TOP_P, request_body.get("top_p"))
@@ -127,6 +127,7 @@ def _set_anthropic_span_attributes(span, request_body, response_body):
         _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.0.user", request_body.get("prompt"))
         _set_span_attribute(span, f"{SpanAttributes.LLM_COMPLETIONS}.0.content", response_body.get("completion"))
 
+
 def _set_ai21_span_attributes(span, request_body, response_body):
     _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TYPE, LLMRequestTypeValues.COMPLETION.value)
     _set_span_attribute(span, SpanAttributes.LLM_TOP_P, request_body.get("topP"))
@@ -134,10 +135,17 @@ def _set_ai21_span_attributes(span, request_body, response_body):
     _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MAX_TOKENS, request_body.get("maxTokens"))
 
     if should_send_prompts():
-        _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.0.user", request_body.get("prompt"))
+        _set_span_attribute(
+            span,
+            f"{SpanAttributes.LLM_PROMPTS}.0.user", request_body.get("prompt")
+        )
 
         for i, completion in enumerate(response_body.get("completions")):
-            _set_span_attribute(span, f"{SpanAttributes.LLM_COMPLETIONS}.{i}.content", completion.get("data").get("text"))
+            _set_span_attribute(
+                span,
+                f"{SpanAttributes.LLM_COMPLETIONS}.{i}.content", completion.get("data").get("text")
+            )
+
 
 def _set_llama_span_attributes(span, request_body, response_body):
     _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TYPE, LLMRequestTypeValues.COMPLETION.value)
