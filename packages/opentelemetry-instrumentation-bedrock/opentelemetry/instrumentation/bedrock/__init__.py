@@ -47,7 +47,6 @@ def _set_span_attribute(span, name, value):
     return
 
 
-
 def _with_tracer_wrapper(func):
     """Helper for providing tracer for wrapper functions."""
 
