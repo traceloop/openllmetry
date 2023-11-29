@@ -8,13 +8,6 @@ Traceloop.init(app_name="joke_generation_service")
 brt = boto3.client(service_name='bedrock-runtime')
 
 
-# def fullname(o):
-#     klass = o.__class__
-#     module = klass.__module__
-#     if module == 'builtins':
-#         return klass.__qualname__ # avoid outputs like 'builtins.str'
-#     return module + '.' + klass.__qualname__
-
 @task(name="joke_creation")
 def create_joke():
 
@@ -31,10 +24,10 @@ def create_joke():
         accept='application/json', 
         contentType='application/json'
     )
-    # response_body = json.loads(response.get('body').read())
 
-    # return response_body.get('generations')[0].get('text')
-    return None
+    response_body = json.loads(response.get('body').read())
+
+    return response_body.get('generations')[0].get('text')
 
 @workflow(name="pirate_joke_generator")
 def joke_workflow():

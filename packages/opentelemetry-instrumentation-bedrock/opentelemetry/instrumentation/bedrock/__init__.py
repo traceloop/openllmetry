@@ -5,6 +5,7 @@ import json
 import logging
 import os
 from typing import Collection
+from opentelemetry.instrumentation.bedrock.reusable_streaming_body import ReusableStreamingBody
 from wrapt import wrap_function_wrapper
 
 from opentelemetry import context as context_api
@@ -83,11 +84,12 @@ def _instrumented_model_invoke(fn, tracer):
             kind=SpanKind.CLIENT
         ) as span:
             response = fn(*args, **kwargs)
+            response['body'] = ReusableStreamingBody(response['body']._raw_stream, response['body']._content_length)
             request_body = json.loads(kwargs.get("body"))
-            response_body = _get_body(response, kwargs.get("accept"))
+            response_body = json.loads(response.get("body").read())
 
-            if span.is_recording() and modelId:
-                (vendor, model) = kwargs.get("modelId")
+            if span.is_recording():
+                (vendor, model) = kwargs.get("modelId").split(".")
                 
                 _set_span_attribute(span, SpanAttributes.LLM_VENDOR, vendor)
                 _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, model)
@@ -105,7 +107,6 @@ def _instrumented_model_invoke(fn, tracer):
                     _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.0.user", request_body.get("prompt"))
 
                     for i, generation in enumerate(response_body.get("generations")):
-                        print(f"{i}:", generation.get("text"))
                         _set_span_attribute(span, f"{SpanAttributes.LLM_COMPLETIONS}.{i}.content", generation.get("text"))
               
             return response
