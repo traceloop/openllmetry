@@ -150,7 +150,7 @@ def _set_llama_span_attributes(span, request_body, response_body):
         _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.0.user", request_body.get("prompt"))
 
         for i, generation in enumerate(response_body.get("generations")):
-            _set_span_attribute(span, f"{SpanAttributes.LLM_COMPLETIONS}.{i}.content", generation.get("text"))
+            _set_span_attribute(span, f"{SpanAttributes.LLM_COMPLETIONS}.{i}.content", response_body)
 
 
 class BedrockInstrumentor(BaseInstrumentor):
