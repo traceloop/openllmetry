@@ -1,3 +1,4 @@
+from typing import Optional
 from jinja2 import Environment, meta
 from traceloop.sdk import Telemetry
 from traceloop.sdk.prompts.model import Prompt, PromptVersion, TemplateEngine
@@ -12,6 +13,27 @@ def get_effective_version(prompt: Prompt) -> PromptVersion:
     return next(v for v in prompt.versions if v.id == prompt.target.version)
 
 
+def get_version_by_name(prompt: Prompt, name: str) -> PromptVersion:
+    if len(prompt.versions) == 0:
+        raise Exception(f"No versions exist for {prompt.key} prompt")
+
+    return next(v for v in prompt.versions if v.name == name)
+
+
+def get_version_by_hash(prompt: Prompt, hash: str) -> PromptVersion:
+    if len(prompt.versions) == 0:
+        raise Exception(f"No versions exist for {prompt.key} prompt")
+
+    return next(v for v in prompt.versions if v.hash == hash)
+
+
+def get_specific_version(prompt: Prompt, version: int) -> PromptVersion:
+    if len(prompt.versions) == 0:
+        raise Exception(f"No versions exist for {prompt.key} prompt")
+
+    return next(v for v in prompt.versions if v.version == version)
+
+
 class PromptRegistryClient:
     _registry: PromptRegistry
     _jinja_env: Environment
@@ -24,15 +46,35 @@ class PromptRegistryClient:
 
         return cls.instance
 
-    def render_prompt(self, key: str, **args):
+    def render_prompt(
+            self,
+            key: str,
+            version: Optional[int] = None,
+            version_name: Optional[str] = None,
+            version_hash: Optional[str] = None,
+            variables: dict = {}
+            ):
+
         Telemetry().capture("prompt:rendered")
 
         prompt = self._registry.get_prompt_by_key(key)
         if prompt is None:
             raise Exception(f"Prompt {key} does not exist")
 
-        prompt_version = get_effective_version(prompt)
-        params_dict = {"messages": self.render_messages(prompt_version, **args)}
+        prompt_version = None
+        try:
+            if version is not None:
+                prompt_version = get_specific_version(prompt, version)
+            elif version_name is not None:
+                prompt_version = get_version_by_name(prompt, version_name)
+            elif version_hash is not None:
+                prompt_version = get_version_by_hash(prompt, version_hash)
+            else:
+                prompt_version = get_effective_version(prompt)
+        except StopIteration:
+            raise Exception(f"Prompt {key} does not have an available version to render")
+
+        params_dict = {"messages": self.render_messages(prompt_version, **variables)}
         params_dict.update(prompt_version.llm_config)
         params_dict.pop("mode")
 
@@ -41,7 +83,7 @@ class PromptRegistryClient:
             prompt_version.version,
             prompt_version.name,
             prompt_version.hash,
-            args,
+            variables,
         )
 
         return params_dict
