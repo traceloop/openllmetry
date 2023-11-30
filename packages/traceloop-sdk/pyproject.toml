@@ -66,7 +66,7 @@ anthropic = "^0.7.2"
 # farm-haystack = "^1.20.1"
 pinecone-client = {extras = ["grpc"], version = "^2.2.4"}
 cohere = "^4.34"
-langchain = ">=0.0.330,<0.0.336"
+langchain = ">=0.0.330,<0.0.344"
 chromadb = "^0.4.17"
 
 [build-system]
