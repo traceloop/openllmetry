@@ -1,3 +1,9 @@
+## v0.4.1 (2023-11-30)
+
+### Fix
+
+- **traceloop-sdk**: support explicit prompt versioning in prompt management (#221)
+
 ## v0.4.0 (2023-11-29)
 
 ### Feat
