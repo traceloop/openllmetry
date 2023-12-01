@@ -2,7 +2,6 @@ from langchain.prompts import PromptTemplate
 from langchain.llms import OpenAI
 from langchain.schema import StrOutputParser
 from langchain.chat_models import ChatOpenAI
-from langchain.prompts import PromptTemplate
 from langchain import LLMChain
 from langchain.chains import SequentialChain
 
