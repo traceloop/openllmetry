@@ -1,3 +1,9 @@
+## v0.4.2 (2023-12-01)
+
+### Fix
+
+- **openai**: langchain streaming bug (#225)
+
 ## v0.4.1 (2023-11-30)
 
 ### Fix
