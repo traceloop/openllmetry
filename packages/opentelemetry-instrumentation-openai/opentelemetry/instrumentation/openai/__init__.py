@@ -205,6 +205,7 @@ def _set_response_attributes(span, llm_request_type, response):
 def _build_from_streaming_response(span, llm_request_type, response):
     complete_response = {"choices": [], "model": ""}
     for item in response:
+        item_to_yield = item
         if is_openai_v1():
             item = item.__dict__
 
@@ -234,7 +235,7 @@ def _build_from_streaming_response(span, llm_request_type, response):
             else:
                 complete_choice["text"] += choice.get("text")
 
-        yield item
+        yield item_to_yield
 
     _set_response_attributes(
         span,
