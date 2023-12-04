@@ -8,8 +8,8 @@ from opentelemetry.trace import get_tracer
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.instrumentation.utils import unwrap
 
-from opentelemetry.instrumentation.llamaindex.task_wrapper import task_wrapper
-from opentelemetry.instrumentation.llamaindex.workflow_wrapper import workflow_wrapper
+from opentelemetry.instrumentation.llamaindex.task_wrapper import task_wrapper, atask_wrapper
+from opentelemetry.instrumentation.llamaindex.workflow_wrapper import workflow_wrapper, aworkflow_wrapper
 from opentelemetry.instrumentation.llamaindex.custom_llm_wrapper import custom_llm_wrapper
 from opentelemetry.instrumentation.llamaindex.version import __version__
 
@@ -28,7 +28,7 @@ WRAPPED_METHODS = [
         "package": "llama_index.indices.query.base",
         "object": "BaseQueryEngine",
         "method": "aquery",
-        "wrapper": workflow_wrapper,
+        "wrapper": aworkflow_wrapper,
     },
     {
         "package": "llama_index.indices.base_retriever",
@@ -42,7 +42,7 @@ WRAPPED_METHODS = [
         "object": "BaseRetriever",
         "method": "aretrieve",
         "span_name": "retrieve",
-        "wrapper": task_wrapper
+        "wrapper": atask_wrapper
     },
     {
         "package": "llama_index.embeddings.base",
@@ -56,7 +56,7 @@ WRAPPED_METHODS = [
         "object": "BaseEmbedding",
         "method": "aget_query_embedding",
         "span_name": "get_query_embedding",
-        "wrapper": task_wrapper
+        "wrapper": atask_wrapper
     },
     {
         "package": "llama_index.response_synthesizers",
@@ -70,7 +70,7 @@ WRAPPED_METHODS = [
         "object": "BaseSynthesizer",
         "method": "asynthesize",
         "span_name": "synthesize",
-        "wrapper": task_wrapper
+        "wrapper": atask_wrapper
     },
     {
         "package": "llama_index.llms.ollama",
