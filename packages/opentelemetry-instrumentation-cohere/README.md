@@ -1,7 +1,7 @@
 # OpenTelemetry Cohere Instrumentation
 
 <a href="https://pypi.org/project/opentelemetry-instrumentation-cohere/">
-    <img src=" https://badge.fury.io/py/opentelemetry-instrumentation-cohere.svg">
+    <img src="https://badge.fury.io/py/opentelemetry-instrumentation-cohere.svg">
 </a>
 
 This library allows tracing calls to any of Cohere's endpoints sent with the official [Cohere library](https://github.com/cohere-ai/cohere-python).

@@ -1,7 +1,7 @@
 # OpenTelemetry LlamaIndex Instrumentation
 
 <a href="https://pypi.org/project/opentelemetry-instrumentation-llamaindex/">
-    <img src=" https://badge.fury.io/py/opentelemetry-instrumentation-llamaindex.svg">
+    <img src="https://badge.fury.io/py/opentelemetry-instrumentation-llamaindex.svg">
 </a>
 
 This library allows tracing complete LLM applications built with [LlamaIndex](https://github.com/run-llama/llama_index).

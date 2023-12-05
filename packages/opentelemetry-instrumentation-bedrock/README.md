@@ -1,7 +1,7 @@
 # OpenTelemetry Bedrock Instrumentation
 
 <a href="https://pypi.org/project/opentelemetry-instrumentation-bedrock/">
-    <img src=" https://badge.fury.io/py/opentelemetry-instrumentation-bedrock.svg">
+    <img src="https://badge.fury.io/py/opentelemetry-instrumentation-bedrock.svg">
 </a>
 
 This library allows tracing any of AWS Bedrock's models prompts and completions sent with [Boto3](https://github.com/boto/boto3) to Bedrock.
