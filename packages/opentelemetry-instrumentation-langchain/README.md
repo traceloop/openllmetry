@@ -1,7 +1,7 @@
 # OpenTelemetry Langchain Instrumentation
 
 <a href="https://pypi.org/project/opentelemetry-instrumentation-langchain/">
-    <img src=" https://badge.fury.io/py/opentelemetry-instrumentation-langchain.svg">
+    <img src="https://badge.fury.io/py/opentelemetry-instrumentation-langchain.svg">
 </a>
 
 This library allows tracing complete LLM applications built with [Langchain](https://github.com/langchain-ai/langchain).

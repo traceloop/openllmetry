@@ -1,7 +1,7 @@
 # OpenTelemetry Anthropic Instrumentation
 
 <a href="https://pypi.org/project/opentelemetry-instrumentation-anthropic/">
-    <img src=" https://badge.fury.io/py/opentelemetry-instrumentation-anthropic.svg">
+    <img src="https://badge.fury.io/py/opentelemetry-instrumentation-anthropic.svg">
 </a>
 
 This library allows tracing Anthropic prompts and completions sent with the official [Anthropic library](https://github.com/anthropics/anthropic-sdk-python).

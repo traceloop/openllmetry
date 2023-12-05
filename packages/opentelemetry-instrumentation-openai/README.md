@@ -1,7 +1,7 @@
 # OpenTelemetry OpenAI Instrumentation
 
 <a href="https://pypi.org/project/opentelemetry-instrumentation-openai/">
-    <img src=" https://badge.fury.io/py/opentelemetry-instrumentation-openai.svg">
+    <img src="https://badge.fury.io/py/opentelemetry-instrumentation-openai.svg">
 </a>
 
 This library allows tracing OpenAI prompts and completions sent with the official [OpenAI library](https://github.com/openai/openai-python).

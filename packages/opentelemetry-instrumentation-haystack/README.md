@@ -1,7 +1,7 @@
 # OpenTelemetry Haystack Instrumentation
 
 <a href="https://pypi.org/project/opentelemetry-instrumentation-haystack/">
-    <img src=" https://badge.fury.io/py/opentelemetry-instrumentation-haystack.svg">
+    <img src="https://badge.fury.io/py/opentelemetry-instrumentation-haystack.svg">
 </a>
 
 This library allows tracing complete LLM applications built with [Haystack](https://github.com/deepset-ai/haystack).

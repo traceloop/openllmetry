@@ -1,7 +1,7 @@
 # OpenTelemetry HuggingFace Transformers Instrumentation
 
 <a href="https://pypi.org/project/opentelemetry-instrumentation-transformers/">
-    <img src=" https://badge.fury.io/py/opentelemetry-instrumentation-transformers.svg">
+    <img src="https://badge.fury.io/py/opentelemetry-instrumentation-transformers.svg">
 </a>
 
 This library allows tracing texte generation calls sent with the official [HuggingFace Transformers library](https://github.com/huggingface/transformers).
