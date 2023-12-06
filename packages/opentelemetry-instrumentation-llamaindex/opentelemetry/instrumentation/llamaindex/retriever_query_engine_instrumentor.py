@@ -1,5 +1,3 @@
-import contextvars
-
 from wrapt import wrap_function_wrapper
 from opentelemetry.context import attach, set_value
 
@@ -16,12 +14,13 @@ class RetrieverQueryEngineInstrumentor:
         self._tracer = tracer
 
     def instrument(self):
-        wrap_function_wrapper(MODULE_NAME,f"{CLASS_NAME}.query", query_wrapper(self._tracer))
+        wrap_function_wrapper(MODULE_NAME, f"{CLASS_NAME}.query", query_wrapper(self._tracer))
         wrap_function_wrapper(MODULE_NAME, f"{CLASS_NAME}.aquery", aquery_wrapper(self._tracer))
 
 
 def set_workflow_context():
     attach(set_value("workflow_name", WORKFLOW_NAME))
+
 
 @_with_tracer_wrapper
 def query_wrapper(tracer, wrapped, instance, args, kwargs):

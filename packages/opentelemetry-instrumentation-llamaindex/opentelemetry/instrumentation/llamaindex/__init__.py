@@ -1,14 +1,13 @@
 """OpenTelemetry LlamaIndex instrumentation"""
 import logging
 from typing import Collection
-from wrapt import wrap_function_wrapper
 
 from opentelemetry.trace import get_tracer
 
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
-from opentelemetry.instrumentation.utils import unwrap
 
-from opentelemetry.instrumentation.llamaindex.retriever_query_engine_instrumentor import RetrieverQueryEngineInstrumentor
+from opentelemetry.instrumentation.llamaindex.retriever_query_engine_instrumentor import (
+    RetrieverQueryEngineInstrumentor)
 from opentelemetry.instrumentation.llamaindex.base_retriever_instrumentor import BaseRetrieverInstrumentor
 from opentelemetry.instrumentation.llamaindex.base_synthesizer_instrumentor import BaseSynthesizerInstrumentor
 from opentelemetry.instrumentation.llamaindex.version import __version__
@@ -16,6 +15,7 @@ from opentelemetry.instrumentation.llamaindex.version import __version__
 logger = logging.getLogger(__name__)
 
 _instruments = ("llama-index >= 0.7.0",)
+
 
 class LlamaIndexInstrumentor(BaseInstrumentor):
     """An instrumentor for LlamaIndex SDK."""
@@ -26,15 +26,14 @@ class LlamaIndexInstrumentor(BaseInstrumentor):
     def _instrument(self, **kwargs):
         tracer_provider = kwargs.get("tracer_provider")
         tracer = get_tracer(__name__, __version__, tracer_provider)
-        
+
         RetrieverQueryEngineInstrumentor(tracer).instrument()
         BaseRetrieverInstrumentor(tracer).instrument()
         BaseSynthesizerInstrumentor(tracer).instrument()
-        
+
         # wrap_function_wrapper("llama_index.embeddings.base", "BaseEmbedding.get_query_embedding", task_wrapper)
         # wrap_function_wrapper("llama_index.embeddings.base", "BaseEmbedding.aget_query_embedding", atask_wrapper)
         # wrap_function_wrapper("llama_index.llms.ollama", "Ollama.complete", custom_llm_wrapper)
-
 
     def _uninstrument(self, **kwargs):
         pass

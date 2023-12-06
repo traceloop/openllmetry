@@ -1,5 +1,6 @@
 from contextlib import asynccontextmanager
 
+
 def _with_tracer_wrapper(func):
     def _with_tracer(tracer):
         def wrapper(wrapped, instance, args, kwargs):
@@ -8,6 +9,7 @@ def _with_tracer_wrapper(func):
         return wrapper
 
     return _with_tracer
+
 
 @asynccontextmanager
 async def start_as_current_span_async(tracer, *args, **kwargs):

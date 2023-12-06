@@ -7,13 +7,15 @@ MODULE_NAME = "llama_index.response_synthesizers"
 CLASS_NAME = "BaseSynthesizer"
 TASK_NAME = "synthesize"
 
+
 class BaseSynthesizerInstrumentor:
     def __init__(self, tracer):
         self._tracer = tracer
 
     def instrument(self):
-        wrap_function_wrapper(MODULE_NAME,f"{CLASS_NAME}.synthesize", synthesize_wrapper(self._tracer))
-        wrap_function_wrapper(MODULE_NAME,f"{CLASS_NAME}.asynthesize", asynthesize_wrapper(self._tracer))
+        wrap_function_wrapper(MODULE_NAME, f"{CLASS_NAME}.synthesize", synthesize_wrapper(self._tracer))
+        wrap_function_wrapper(MODULE_NAME, f"{CLASS_NAME}.asynthesize", asynthesize_wrapper(self._tracer))
+
 
 @_with_tracer_wrapper
 def synthesize_wrapper(tracer, wrapped, instance, args, kwargs):

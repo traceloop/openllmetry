@@ -13,8 +13,9 @@ class BaseRetrieverInstrumentor:
         self._tracer = tracer
 
     def instrument(self):
-        wrap_function_wrapper(MODULE_NAME,f"{CLASS_NAME}.retrieve", retrieve_wrapper(self._tracer))
+        wrap_function_wrapper(MODULE_NAME, f"{CLASS_NAME}.retrieve", retrieve_wrapper(self._tracer))
         wrap_function_wrapper(MODULE_NAME, f"{CLASS_NAME}.aretrieve", aretrieve_wrapper(self._tracer))
+
 
 @_with_tracer_wrapper
 def retrieve_wrapper(tracer, wrapped, instance, args, kwargs):

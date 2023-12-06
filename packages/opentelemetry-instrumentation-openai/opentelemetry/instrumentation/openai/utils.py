@@ -1,5 +1,3 @@
-import os
-
 from importlib.metadata import version
 from contextlib import asynccontextmanager
 
