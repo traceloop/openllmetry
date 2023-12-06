@@ -4287,8 +4287,8 @@ colorama = "^0.4.6"
 deprecated = "^1.2.14"
 jinja2 = "^3.1.2"
 opentelemetry-api = "^1.21.0"
-opentelemetry-exporter-otlp-proto-grpc = "^1.21.0"
-opentelemetry-exporter-otlp-proto-http = "^1.21.0"
+opentelemetry-exporter-otlp-proto-grpc = "^1.20.0"
+opentelemetry-exporter-otlp-proto-http = "^1.20.0"
 opentelemetry-instrumentation-anthropic = {path = "../opentelemetry-instrumentation-anthropic", develop = true}
 opentelemetry-instrumentation-bedrock = {path = "../opentelemetry-instrumentation-bedrock", develop = true}
 opentelemetry-instrumentation-chromadb = {path = "../opentelemetry-instrumentation-chromadb", develop = true}
@@ -4301,7 +4301,7 @@ opentelemetry-instrumentation-pymysql = "^0.42b0"
 opentelemetry-instrumentation-requests = "^0.42b0"
 opentelemetry-instrumentation-transformers = {path = "../opentelemetry-instrumentation-transformers", develop = true}
 opentelemetry-instrumentation-urllib3 = "^0.42b0"
-opentelemetry-sdk = "^1.21.0"
+opentelemetry-sdk = "^1.20.0"
 opentelemetry-semantic-conventions-ai = "^0.0.12"
 posthog = "^3.0.2"
 pydantic = "^2.5.0"
@@ -4878,4 +4878,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8.1,<3.12"
-content-hash = "8f978d8ed390f44d9dda862d15045b4bfed3a2a4e9aa40a6cbdd0ad9daa279ad"
+content-hash = "6368c8e4cb62fe3a59440e0343624f8510dbe99240e97096f5479fa354d00d16"
