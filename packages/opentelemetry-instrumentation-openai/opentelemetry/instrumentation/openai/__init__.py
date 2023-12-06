@@ -1,10 +1,7 @@
 import logging
-import os
 import json
 import types
-import pkg_resources
 from typing import Collection
-from wrapt import wrap_function_wrapper
 import openai
 
 from opentelemetry import context as context_api
@@ -18,51 +15,15 @@ from opentelemetry.instrumentation.utils import (
 )
 
 from opentelemetry.semconv.ai import SpanAttributes, LLMRequestTypeValues
+
+from opentelemetry.instrumentation.openai.utils import is_openai_v1
+from opentelemetry.instrumentation.openai.v0 import OpenAIV0Instrumentor
+from opentelemetry.instrumentation.openai.v1 import OpenAIV1Instrumentor
 from opentelemetry.instrumentation.openai.version import __version__
 
 logger = logging.getLogger(__name__)
 
 _instruments = ("openai >= 0.27.0",)
-
-WRAPPED_METHODS_VERSION_0 = [
-    {
-        "module": "openai",
-        "object": "ChatCompletion",
-        "method": "create",
-        "span_name": "openai.chat",
-    },
-    {
-        "module": "openai",
-        "object": "Completion",
-        "method": "create",
-        "span_name": "openai.completion",
-    },
-]
-
-WRAPPED_METHODS_VERSION_1 = [
-    {
-        "module": "openai.resources.chat.completions",
-        "object": "Completions",
-        "method": "create",
-        "span_name": "openai.chat",
-    },
-    {
-        "module": "openai.resources.completions",
-        "object": "Completions",
-        "method": "create",
-        "span_name": "openai.completion",
-    },
-]
-
-
-def should_send_prompts():
-    return (
-        os.getenv("TRACELOOP_TRACE_CONTENT") or "true"
-    ).lower() == "true" or context_api.get_value("override_enable_content_tracing")
-
-
-def is_openai_v1():
-    return pkg_resources.get_distribution("openai").version >= "1.0.0"
 
 
 def _set_span_attribute(span, name, value):
@@ -353,26 +314,13 @@ class OpenAIInstrumentor(BaseInstrumentor):
         return _instruments
 
     def _instrument(self, **kwargs):
-        tracer_provider = kwargs.get("tracer_provider")
-        tracer = get_tracer(__name__, __version__, tracer_provider)
-
-        wrapped_methods = (
-            WRAPPED_METHODS_VERSION_1 if is_openai_v1() else WRAPPED_METHODS_VERSION_0
-        )
-        for wrapped_method in wrapped_methods:
-            wrap_module = wrapped_method.get("module")
-            wrap_object = wrapped_method.get("object")
-            wrap_method = wrapped_method.get("method")
-            wrap_function_wrapper(
-                wrap_module,
-                f"{wrap_object}.{wrap_method}",
-                _wrap(tracer, wrapped_method),
-            )
+        if is_openai_v1():
+            OpenAIV1Instrumentor().instrument(**kwargs)
+        else:
+            OpenAIV0Instrumentor().instrument(**kwargs)
 
     def _uninstrument(self, **kwargs):
-        wrapped_methods = (
-            WRAPPED_METHODS_VERSION_1 if is_openai_v1() else WRAPPED_METHODS_VERSION_0
-        )
-        for wrapped_method in wrapped_methods:
-            wrap_object = wrapped_method.get("object")
-            unwrap(f"openai.{wrap_object}", wrapped_method.get("method"))
+        if is_openai_v1():
+            OpenAIV1Instrumentor().uninstrument(**kwargs)
+        else:
+            OpenAIV0Instrumentor().uninstrument(**kwargs)

@@ -21,7 +21,11 @@ from llama_index.evaluation import BatchEvalRunner
 import pandas as pd
 from traceloop.sdk import Traceloop
 
-Traceloop.init(app_name="llama_index_example")
+import logging
+import sys
+
+logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
+logging.getLogger().addHandler(logging.StreamHandler(stream=sys.stdout))
 
 nest_asyncio.apply()
 
@@ -51,6 +55,9 @@ dataset_generator = DatasetGenerator.from_documents(
 )
 
 questions = dataset_generator.generate_questions_from_nodes(num=1)
+print(questions)
+
+# Traceloop.init(app_name="llama_index_example")
 
 runner = BatchEvalRunner(
     {"faithfulness": faithfulness_gpt4, "relevancy": relevancy_gpt4},
