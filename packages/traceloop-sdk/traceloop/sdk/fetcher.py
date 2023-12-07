@@ -29,11 +29,7 @@ class Fetcher:
     _exit_monitor: Thread
     _stop_polling_thread: Event
 
-    def __init__(
-        self,
-        base_url: str,
-        api_key: str
-    ):
+    def __init__(self, base_url: str, api_key: str):
         self._base_url = base_url
         self._api_key = api_key
         self._prompt_registry = PromptRegistryClient()._registry
@@ -55,7 +51,12 @@ class Fetcher:
         )
 
     def run(self):
-        refresh_data(self._base_url, self._api_key, self._prompt_registry, self._content_allow_list)
+        refresh_data(
+            self._base_url,
+            self._api_key,
+            self._prompt_registry,
+            self._content_allow_list,
+        )
         self._exit_monitor.start()
         self._poller_thread.start()
 
@@ -84,9 +85,7 @@ def check_http_error(e):
     retry=RetryIfServerError(),
 )
 def fetch_url(url: str, api_key: str):
-    response = requests.get(
-        url, headers={"Authorization": f"Bearer {api_key}"}
-    )
+    response = requests.get(url, headers={"Authorization": f"Bearer {api_key}"})
 
     if response.status_code != 200:
         raise requests.exceptions.HTTPError(response=response)
@@ -113,7 +112,10 @@ def thread_func(
 
 
 def refresh_data(
-    base_url: str, api_key: str, prompt_registry: PromptRegistry, content_allow_list: ContentAllowList
+    base_url: str,
+    api_key: str,
+    prompt_registry: PromptRegistry,
+    content_allow_list: ContentAllowList,
 ):
     response = fetch_url(f"{base_url}/v1/prompts", api_key)
     prompt_registry.load(response)
