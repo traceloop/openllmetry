@@ -11,7 +11,7 @@ addopts = "--cov --cov-report html:'../../coverage/packages/opentelemetry-instru
 
 [tool.poetry]
 name = "opentelemetry-instrumentation-anthropic"
-version = "0.4.2"
+version = "0.5.0"
 description = "OpenTelemetry Anthropic instrumentation"
 authors = [
   "Gal Kleinman <gal@traceloop.com>",

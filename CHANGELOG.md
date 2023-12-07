@@ -1,3 +1,9 @@
+## v0.5.0 (2023-12-07)
+
+### Feat
+
+- **sdk**: support vision api for prompt management (#234)
+
 ## v0.4.2 (2023-12-01)
 
 ### Fix
