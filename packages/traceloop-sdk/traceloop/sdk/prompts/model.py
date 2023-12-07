@@ -1,7 +1,8 @@
 import datetime
-from typing import List, Optional
+from typing import List, Literal, Optional, Union
+from typing_extensions import Annotated
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class TemplateEngine:
@@ -13,10 +14,27 @@ class RegistryObjectBaseModel(BaseModel):
         arbitrary_types_allowed = True
 
 
+class TextContent(RegistryObjectBaseModel):
+    type: Literal["text"]
+    text: str
+
+
+class Url(RegistryObjectBaseModel):
+    url: str
+
+
+class ImageContent(RegistryObjectBaseModel):
+    type: Literal["image_url"]
+    image_url: Url
+
+
+Content = Annotated[Union[TextContent, ImageContent], Field(discriminator="type")]
+
+
 class Message(RegistryObjectBaseModel):
     index: int
     role: str
-    template: str
+    template: Union[str, List[Content]]
     variables: Optional[List[str]] = []
 
 
