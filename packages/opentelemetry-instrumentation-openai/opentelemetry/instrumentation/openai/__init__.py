@@ -92,8 +92,13 @@ def _set_span_prompts(span, messages):
 
     for i, msg in enumerate(messages):
         prefix = f"{SpanAttributes.LLM_PROMPTS}.{i}"
+        if isinstance(msg.get("content"), str):
+            content = msg.get("content")
+        elif isinstance(msg.get("content"), list):
+            content = json.dumps(msg.get("content"))
+
         _set_span_attribute(span, f"{prefix}.role", msg.get("role"))
-        _set_span_attribute(span, f"{prefix}.content", msg.get("content"))
+        _set_span_attribute(span, f"{prefix}.content", content)
 
 
 def _set_input_attributes(span, llm_request_type, kwargs):
