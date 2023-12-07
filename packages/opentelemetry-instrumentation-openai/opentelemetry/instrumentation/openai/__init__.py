@@ -1,5 +1,3 @@
-import logging
-
 from typing import Collection
 
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor

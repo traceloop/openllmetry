@@ -9,6 +9,8 @@ from opentelemetry import context as context_api
 from opentelemetry.semconv.ai import SpanAttributes, LLMRequestTypeValues
 from opentelemetry.instrumentation.openai.utils import is_openai_v1
 
+from opentelemetry.trace.status import Status, StatusCode
+
 
 OPENAI_API_VERSION = "openai.api_version"
 OPENAI_API_BASE = "openai.api_base"

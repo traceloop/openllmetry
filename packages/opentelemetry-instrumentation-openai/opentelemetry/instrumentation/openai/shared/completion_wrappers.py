@@ -18,8 +18,7 @@ from opentelemetry.instrumentation.openai.shared import (
 
 from opentelemetry.instrumentation.openai.utils import is_openai_v1
 
-from opentelemetry.trace import get_tracer, SpanKind
-from opentelemetry.trace.status import Status, StatusCode
+from opentelemetry.trace import SpanKind
 
 SPAN_NAME = "openai.completion"
 LLM_REQUEST_TYPE = LLMRequestTypeValues.COMPLETION
@@ -73,7 +72,7 @@ async def acompletion_wrapper(tracer, wrapped, instance, args, kwargs):
 
         if should_send_prompts():
             _set_completions(span, kwargs.get("messages"))
-    
+
         return response
 
 
@@ -106,5 +105,3 @@ def _set_completions(span, choices):
             _set_span_attribute(span, f"{prefix}.content", choice.get("text"))
     except Exception as e:
         logger.warning("Failed to set completion attributes, error: %s", str(e))
-
-

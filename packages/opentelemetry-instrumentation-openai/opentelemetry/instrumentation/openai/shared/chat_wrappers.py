@@ -16,8 +16,7 @@ from opentelemetry.instrumentation.openai.shared import (
     should_send_prompts,
 )
 
-from opentelemetry.trace import get_tracer, SpanKind
-from opentelemetry.trace.status import Status, StatusCode
+from opentelemetry.trace import SpanKind
 
 from opentelemetry.instrumentation.openai.utils import is_openai_v1
 
@@ -50,7 +49,7 @@ def chat_wrapper(tracer, wrapped, instance, args, kwargs):
                 response = response.__dict__
 
             _set_response_attributes(span, response)
-            
+
         if should_send_prompts():
             _set_completions(span, response.get("choices"))
 
@@ -65,11 +64,11 @@ async def achat_wrapper(tracer, wrapped, instance, args, kwargs):
     async with start_as_current_span_async(tracer=tracer, name=SPAN_NAME, kind=SpanKind.CLIENT) as span:
         _set_request_attributes(span, LLM_REQUEST_TYPE, kwargs)
         if should_send_prompts():
-            _set_span_prompts(span, kwargs.get("messages"))
+            _set_prompts(span, kwargs.get("messages"))
             _set_functions_attributes(span, kwargs.get("functions"))
 
         response = await wrapped(*args, **kwargs)
-        
+
         if is_streaming_response(response):
             # TODO: WTH is this?
             _build_from_streaming_response(span, LLM_REQUEST_TYPE, response)
@@ -78,7 +77,7 @@ async def achat_wrapper(tracer, wrapped, instance, args, kwargs):
                 response_dict = response.__dict__
 
             _set_response_attributes(span, response_dict)
-            
+
         if should_send_prompts():
             _set_completions(span, response_dict.get("choices"))
 
@@ -96,7 +95,7 @@ def _set_prompts(span, messages):
             _set_span_attribute(span, f"{prefix}.content", msg.get("content"))
     except Exception as ex:  # pylint: disable=broad-except
         logger.warning("Failed to set prompts for openai span, error: %s", str(ex))
-        
+
 
 def _set_completions(span, choices):
     if choices is None:
