@@ -1,5 +1,7 @@
 from typing import Collection
 
+from opentelemetry import context as context_api
+
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.trace import get_tracer
 from wrapt import wrap_function_wrapper
