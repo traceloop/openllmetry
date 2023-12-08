@@ -1,3 +1,9 @@
+## v0.5.1 (2023-12-08)
+
+### Fix
+
+- support async workflows in llama-index and openai (#233)
+
 ## v0.5.0 (2023-12-07)
 
 ### Feat
