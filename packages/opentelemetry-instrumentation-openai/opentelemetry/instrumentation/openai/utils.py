@@ -1,8 +1,9 @@
-import os
-
+from importlib.metadata import version
 from contextlib import asynccontextmanager
 
-from opentelemetry import context as context_api
+
+def is_openai_v1():
+    return version("openai") >= "1.0.0"
 
 
 def _with_tracer_wrapper(func):
@@ -19,9 +20,3 @@ def _with_tracer_wrapper(func):
 async def start_as_current_span_async(tracer, *args, **kwargs):
     with tracer.start_as_current_span(*args, **kwargs) as span:
         yield span
-
-
-def should_send_prompts():
-    return (
-        os.getenv("TRACELOOP_TRACE_CONTENT") or "true"
-    ).lower() == "true" or context_api.get_value("override_enable_content_tracing")

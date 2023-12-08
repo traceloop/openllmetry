@@ -1,3 +1,5 @@
+import asyncio
+
 import chromadb
 import os
 import openai
@@ -30,8 +32,14 @@ index = VectorStoreIndex.from_documents(
     documents, storage_context=storage_context, service_context=service_context
 )
 
-# Query Data
-query_engine = index.as_query_engine()
-response = query_engine.query("What did the author do growing up?")
 
-print(response)
+async def main():
+    # Query Data
+    query_engine = index.as_query_engine()
+    response = await query_engine.aquery("What did the author do growing up?")
+
+    print(response)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
