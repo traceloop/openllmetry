@@ -10,6 +10,8 @@ from opentelemetry.instrumentation.llamaindex.retriever_query_engine_instrumento
     RetrieverQueryEngineInstrumentor)
 from opentelemetry.instrumentation.llamaindex.base_retriever_instrumentor import BaseRetrieverInstrumentor
 from opentelemetry.instrumentation.llamaindex.base_synthesizer_instrumentor import BaseSynthesizerInstrumentor
+from opentelemetry.instrumentation.llamaindex.base_embedding_instrumentor import BaseEmbeddingInstrumentor
+from opentelemetry.instrumentation.llamaindex.custom_llm_instrumentor import CustomLLMInstrumentor
 from opentelemetry.instrumentation.llamaindex.version import __version__
 
 logger = logging.getLogger(__name__)
@@ -30,10 +32,8 @@ class LlamaIndexInstrumentor(BaseInstrumentor):
         RetrieverQueryEngineInstrumentor(tracer).instrument()
         BaseRetrieverInstrumentor(tracer).instrument()
         BaseSynthesizerInstrumentor(tracer).instrument()
-
-        # wrap_function_wrapper("llama_index.embeddings.base", "BaseEmbedding.get_query_embedding", task_wrapper)
-        # wrap_function_wrapper("llama_index.embeddings.base", "BaseEmbedding.aget_query_embedding", atask_wrapper)
-        # wrap_function_wrapper("llama_index.llms.ollama", "Ollama.complete", custom_llm_wrapper)
+        BaseEmbeddingInstrumentor(tracer).instrument()
+        CustomLLMInstrumentor(tracer).instrument()
 
     def _uninstrument(self, **kwargs):
         pass
