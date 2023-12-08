@@ -75,7 +75,7 @@ def _handle_request(span, kwargs):
 
 def _handle_response(response, span):
     if is_openai_v1():
-        response_dict = response.__dict__
+        response_dict = response.model_dump()
     else:
         response_dict = response
 
@@ -110,9 +110,6 @@ def _set_completions(span, choices):
         return
 
     for choice in choices:
-        if is_openai_v1() and not isinstance(choice, dict):
-            choice = choice.__dict__
-
         index = choice.get("index")
         prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{index}"
         _set_span_attribute(
@@ -123,18 +120,12 @@ def _set_completions(span, choices):
         if not message:
             return
 
-        if is_openai_v1() and not isinstance(message, dict):
-            message = message.__dict__
-
         _set_span_attribute(span, f"{prefix}.role", message.get("role"))
         _set_span_attribute(span, f"{prefix}.content", message.get("content"))
 
         function_call = message.get("function_call")
         if not function_call:
             return
-
-        if is_openai_v1() and not isinstance(function_call, dict):
-            function_call = function_call.__dict__
 
         _set_span_attribute(
             span, f"{prefix}.function_call.name", function_call.get("name")
@@ -149,12 +140,9 @@ def _build_from_streaming_response(span, response):
     for item in response:
         item_to_yield = item
         if is_openai_v1():
-            item = item.__dict__
+            item = item.model_dump()
 
         for choice in item.get("choices"):
-            if is_openai_v1():
-                choice = choice.__dict__
-
             index = choice.get("index")
             if len(complete_response.get("choices")) <= index:
                 complete_response["choices"].append(
@@ -165,8 +153,6 @@ def _build_from_streaming_response(span, response):
                 complete_choice["finish_reason"] = choice.get("finish_reason")
 
             delta = choice.get("delta")
-            if is_openai_v1():
-                delta = delta.__dict__
 
             if delta.get("content"):
                 complete_choice["message"]["content"] += delta.get("content")

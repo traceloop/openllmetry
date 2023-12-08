@@ -74,7 +74,7 @@ def _handle_request(span, kwargs):
 
 def _handle_response(response, span):
     if is_openai_v1():
-        response_dict = response.__dict__
+        response_dict = response.model_dump()
     else:
         response_dict = response
 
@@ -104,9 +104,6 @@ def _set_completions(span, choices):
 
     try:
         for choice in choices:
-            if is_openai_v1() and not isinstance(choice, dict):
-                choice = choice.__dict__
-
             index = choice.get("index")
             prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{index}"
             _set_span_attribute(
@@ -122,12 +119,9 @@ def _build_from_streaming_response(span, response):
     for item in response:
         item_to_yield = item
         if is_openai_v1():
-            item = item.__dict__
+            item = item.model_dump()
 
         for choice in item.get("choices"):
-            if is_openai_v1():
-                choice = choice.__dict__
-
             index = choice.get("index")
             if len(complete_response.get("choices")) <= index:
                 complete_response["choices"].append({"index": index, "text": ""})
