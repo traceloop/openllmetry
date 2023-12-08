@@ -47,14 +47,13 @@ class PromptRegistryClient:
         return cls.instance
 
     def render_prompt(
-            self,
-            key: str,
-            version: Optional[int] = None,
-            version_name: Optional[str] = None,
-            version_hash: Optional[str] = None,
-            variables: dict = {}
-            ):
-
+        self,
+        key: str,
+        version: Optional[int] = None,
+        version_name: Optional[str] = None,
+        version_hash: Optional[str] = None,
+        variables: dict = {},
+    ):
         Telemetry().capture("prompt:rendered")
 
         prompt = self._registry.get_prompt_by_key(key)
@@ -72,10 +71,14 @@ class PromptRegistryClient:
             else:
                 prompt_version = get_effective_version(prompt)
         except StopIteration:
-            raise Exception(f"Prompt {key} does not have an available version to render")
+            raise Exception(
+                f"Prompt {key} does not have an available version to render"
+            )
 
         params_dict = {"messages": self.render_messages(prompt_version, **variables)}
-        params_dict.update(prompt_version.llm_config)
+        params_dict.update(
+            (k, v) for k, v in iter(prompt_version.llm_config) if v not in [None, []]
+        )
         params_dict.pop("mode")
 
         set_prompt_tracing_context(
@@ -92,19 +95,45 @@ class PromptRegistryClient:
         if prompt_version.templating_engine == TemplateEngine.JINJA2:
             rendered_messages = []
             for msg in prompt_version.messages:
-                template = self._jinja_env.from_string(msg.template)
-                template_variables = meta.find_undeclared_variables(
-                    self._jinja_env.parse(msg.template)
-                )
-                missing_variables = template_variables.difference(set(args.keys()))
-                if missing_variables == set():
-                    rendered_msg = template.render(args)
-                else:
-                    raise Exception(
-                        f"Input variables: {','.join(str(var) for var in missing_variables)} are missing"
+                if isinstance(msg.template, str):
+                    template = self._jinja_env.from_string(msg.template)
+                    template_variables = meta.find_undeclared_variables(
+                        self._jinja_env.parse(msg.template)
                     )
+                    missing_variables = template_variables.difference(set(args.keys()))
+                    if missing_variables == set():
+                        rendered_msg = template.render(args)
+                    else:
+                        raise Exception(
+                            f"Input variables: {','.join(str(var) for var in missing_variables)} are missing"
+                        )
 
-                # TODO: support other types than openai chat structure
+                else:
+                    rendered_msg = []
+                    template_variables = []
+                    for content in msg.template:
+                        if content.type == "text":
+                            template = self._jinja_env.from_string(content.text)
+                            template_variables = meta.find_undeclared_variables(
+                                self._jinja_env.parse(msg.template)
+                            )
+                            missing_variables = template_variables.difference(
+                                set(args.keys())
+                            )
+                            if missing_variables != set():
+                                raise Exception(
+                                    f"Input variables: {','.join(str(var) for var in missing_variables)} are missing"
+                                )
+
+                            rendered_msg.append(
+                                {
+                                    "type": "text",
+                                    "text": template.render(args),
+                                }
+                            )
+                        elif content.type == "image_url":
+                            rendered_msg.append(content.dict())
+
                 rendered_messages.append({"role": msg.role, "content": rendered_msg})
 
             return rendered_messages

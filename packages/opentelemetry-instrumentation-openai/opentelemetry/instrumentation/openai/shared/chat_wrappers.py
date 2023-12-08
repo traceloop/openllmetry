@@ -1,3 +1,4 @@
+import json
 import logging
 
 from opentelemetry import context as context_api
@@ -93,8 +94,13 @@ def _set_prompts(span, messages):
     try:
         for i, msg in enumerate(messages):
             prefix = f"{SpanAttributes.LLM_PROMPTS}.{i}"
+            if isinstance(msg.get("content"), str):
+                content = msg.get("content")
+            elif isinstance(msg.get("content"), list):
+                content = json.dumps(msg.get("content"))
+
             _set_span_attribute(span, f"{prefix}.role", msg.get("role"))
-            _set_span_attribute(span, f"{prefix}.content", msg.get("content"))
+            _set_span_attribute(span, f"{prefix}.content", content)
     except Exception as ex:  # pylint: disable=broad-except
         logger.warning("Failed to set prompts for openai span, error: %s", str(ex))
 
