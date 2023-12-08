@@ -2,6 +2,8 @@ import os
 
 from contextlib import asynccontextmanager
 
+from opentelemetry import context as context_api
+
 
 def _with_tracer_wrapper(func):
     def _with_tracer(tracer):

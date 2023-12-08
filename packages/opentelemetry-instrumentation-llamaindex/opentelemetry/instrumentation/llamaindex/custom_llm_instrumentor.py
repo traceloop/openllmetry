@@ -1,4 +1,3 @@
-import os
 import importlib
 
 from wrapt import wrap_function_wrapper
@@ -7,7 +6,7 @@ from inflection import underscore
 from opentelemetry import context as context_api
 
 from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
-from opentelemetry.semconv.ai import SpanAttributes, TraceloopSpanKindValues, LLMRequestTypeValues
+from opentelemetry.semconv.ai import SpanAttributes, LLMRequestTypeValues
 from opentelemetry.instrumentation.llamaindex.utils import (
     _with_tracer_wrapper, start_as_current_span_async, should_send_prompts
 )
@@ -15,6 +14,7 @@ from opentelemetry.instrumentation.llamaindex.utils import (
 from llama_index.llms.custom import CustomLLM
 
 MODULE_NAME = "llama_index.llms"
+
 
 class CustomLLMInstrumentor:
     def __init__(self, tracer):
@@ -31,9 +31,10 @@ class CustomLLMInstrumentor:
             wrap_function_wrapper(cls.__module__, f"{cls.__name__}.acomplete", acomplete_wrapper(self._tracer))
             wrap_function_wrapper(cls.__module__, f"{cls.__name__}.chat", chat_wrapper(self._tracer))
             wrap_function_wrapper(cls.__module__, f"{cls.__name__}.achat", achat_wrapper(self._tracer))
-        
+
     def unistrument(self):
         pass
+
 
 def _set_span_attribute(span, name, value):
     if value is not None:
@@ -102,7 +103,6 @@ async def acomplete_wrapper(tracer, wrapped, instance: CustomLLM, args, kwargs):
         return response
 
 
-
 def _handle_request(span, llm_request_type, args, kwargs, instance: CustomLLM):
     _set_span_attribute(span, SpanAttributes.LLM_VENDOR, instance.__class__.__name__)
     _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TYPE, llm_request_type.value)
@@ -132,6 +132,7 @@ def _handle_response(span, llm_request_type, instance, response):
             _set_span_attribute(span, f"{SpanAttributes.LLM_COMPLETIONS}.0.content", response.text)
 
     return
+
 
 def snake_case_class_name(instance):
     return underscore(instance.__class__.__name__)
