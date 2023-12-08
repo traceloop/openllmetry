@@ -32,26 +32,9 @@ def chat_wrapper(tracer, wrapped, instance, args, kwargs):
         return wrapped(*args, **kwargs)
 
     with tracer.start_as_current_span(SPAN_NAME, kind=SpanKind.CLIENT) as span:
-        _set_request_attributes(span, LLM_REQUEST_TYPE, kwargs)
-        if should_send_prompts():
-            _set_prompts(span, kwargs.get("messages"))
-            _set_functions_attributes(span, kwargs.get("functions"))
-
+        _handle_request(span, kwargs)
         response = wrapped(*args, **kwargs)
-
-        print(response)
-
-        if is_streaming_response(response):
-            # TODO: WTH is this?
-            _build_from_streaming_response(span, LLM_REQUEST_TYPE, response)
-        else:
-            if is_openai_v1():
-                response = response.__dict__
-
-            _set_response_attributes(span, response)
-
-        if should_send_prompts():
-            _set_completions(span, response.get("choices"))
+        _handle_response(response, span)
 
         return response
 
@@ -62,26 +45,34 @@ async def achat_wrapper(tracer, wrapped, instance, args, kwargs):
         return wrapped(*args, **kwargs)
 
     async with start_as_current_span_async(tracer=tracer, name=SPAN_NAME, kind=SpanKind.CLIENT) as span:
-        _set_request_attributes(span, LLM_REQUEST_TYPE, kwargs)
-        if should_send_prompts():
-            _set_prompts(span, kwargs.get("messages"))
-            _set_functions_attributes(span, kwargs.get("functions"))
-
+        _handle_request(span, kwargs)
         response = await wrapped(*args, **kwargs)
-
-        if is_streaming_response(response):
-            # TODO: WTH is this?
-            _build_from_streaming_response(span, LLM_REQUEST_TYPE, response)
-        else:
-            if is_openai_v1():
-                response_dict = response.__dict__
-
-            _set_response_attributes(span, response_dict)
-
-        if should_send_prompts():
-            _set_completions(span, response_dict.get("choices"))
+        _handle_response(response, span)
 
         return response
+
+
+def _handle_request(span, kwargs):
+    _set_request_attributes(span, LLM_REQUEST_TYPE, kwargs)
+    if should_send_prompts():
+        _set_prompts(span, kwargs.get("messages"))
+        _set_functions_attributes(span, kwargs.get("functions"))
+
+
+def _handle_response(response, span):
+    if is_openai_v1():
+        response_dict = response.__dict__
+    else:
+        response_dict = response
+
+    if is_streaming_response(response):
+        # TODO: WTH is this?
+        _build_from_streaming_response(span, LLM_REQUEST_TYPE, response)
+    else:
+        _set_response_attributes(span, response_dict)
+
+    if should_send_prompts():
+        _set_completions(span, response_dict.get("choices"))
 
 
 def _set_prompts(span, messages):
