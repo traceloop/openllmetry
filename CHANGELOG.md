@@ -1,3 +1,9 @@
+## v0.5.2 (2023-12-09)
+
+### Fix
+
+- send SDK version on fetch requests (#239)
+
 ## v0.5.1 (2023-12-08)
 
 ### Fix
