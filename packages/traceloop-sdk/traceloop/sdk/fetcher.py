@@ -18,6 +18,7 @@ from tenacity import (
 from traceloop.sdk.prompts.registry import PromptRegistry
 from traceloop.sdk.prompts.client import PromptRegistryClient
 from traceloop.sdk.tracing.content_allow_list import ContentAllowList
+from traceloop.sdk.version import __version__
 
 MAX_RETRIES = os.getenv("TRACELOOP_PROMPT_MANAGER_MAX_RETRIES") or 3
 POLLING_INTERVAL = os.getenv("TRACELOOP_PROMPT_MANAGER_POLLING_INTERVAL") or 5
@@ -85,7 +86,13 @@ def check_http_error(e):
     retry=RetryIfServerError(),
 )
 def fetch_url(url: str, api_key: str):
-    response = requests.get(url, headers={"Authorization": f"Bearer {api_key}"})
+    response = requests.get(
+        url,
+        headers={
+            "Authorization": f"Bearer {api_key}",
+            "X-Traceloop-SDK-Version": __version__,
+        },
+    )
 
     if response.status_code != 200:
         raise requests.exceptions.HTTPError(response=response)
