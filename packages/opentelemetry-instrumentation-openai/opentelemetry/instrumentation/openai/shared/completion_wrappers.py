@@ -31,6 +31,7 @@ logger = logging.getLogger(__name__)
 
 @_with_tracer_wrapper
 def completion_wrapper(tracer, wrapped, instance, args, kwargs):
+    print("comp")
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
         return wrapped(*args, **kwargs)
 
@@ -39,6 +40,7 @@ def completion_wrapper(tracer, wrapped, instance, args, kwargs):
 
     _handle_request(span, kwargs)
     response = wrapped(*args, **kwargs)
+    print("sync: ", response)
 
     if is_streaming_response(response):
         # span will be closed after the generator is done
@@ -52,6 +54,7 @@ def completion_wrapper(tracer, wrapped, instance, args, kwargs):
 
 @_with_tracer_wrapper
 async def acompletion_wrapper(tracer, wrapped, instance, args, kwargs):
+    print("acomp")
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
         return wrapped(*args, **kwargs)
 
@@ -60,6 +63,7 @@ async def acompletion_wrapper(tracer, wrapped, instance, args, kwargs):
     ) as span:
         _handle_request(span, kwargs)
         response = await wrapped(*args, **kwargs)
+        print("async: ", response)
         _handle_response(response, span)
 
         return response
