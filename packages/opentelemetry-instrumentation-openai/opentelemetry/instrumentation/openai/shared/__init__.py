@@ -131,6 +131,7 @@ def _set_response_attributes(span, response):
 
 
 def is_streaming_response(response):
-    return isinstance(response, types.GeneratorType) or (
-        is_openai_v1() and isinstance(response, openai.Stream)
-    )
+    if is_openai_v1():
+        return isinstance(response, openai.Stream)
+
+    return isinstance(response, types.GeneratorType) or isinstance(response, types.AsyncGeneratorType)
