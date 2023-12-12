@@ -7,8 +7,7 @@ from opentelemetry.semconv.ai import SpanAttributes, LLMRequestTypeValues
 
 from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
 from opentelemetry.instrumentation.openai.utils import (
-    _with_tracer_wrapper,
-    start_as_current_span_async,
+    _with_tracer_wrapper
 )
 from opentelemetry.instrumentation.openai.shared import (
     _set_request_attributes,
