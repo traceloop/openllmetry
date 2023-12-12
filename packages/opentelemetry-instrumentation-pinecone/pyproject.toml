@@ -11,7 +11,7 @@ addopts = "--cov --cov-report html:'../../coverage/packages/opentelemetry-instru
 
 [tool.poetry]
 name = "opentelemetry-instrumentation-pinecone"
-version = "0.5.2"
+version = "0.5.3"
 description = "OpenTelemetry Pinecone instrumentation"
 authors = [
   "Gal Kleinman <gal@traceloop.com>",

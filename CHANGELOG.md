@@ -1,3 +1,9 @@
+## v0.5.3 (2023-12-12)
+
+### Fix
+
+- **openai**: async streaming instrumentation (#245)
+
 ## v0.5.2 (2023-12-09)
 
 ### Fix
