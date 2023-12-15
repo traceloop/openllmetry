@@ -45,12 +45,14 @@ opentelemetry-instrumentation-chromadb = {path="../opentelemetry-instrumentation
 opentelemetry-instrumentation-transformers = {path="../opentelemetry-instrumentation-transformers", develop=true}
 opentelemetry-instrumentation-llamaindex = {path="../opentelemetry-instrumentation-llamaindex", develop=true}
 opentelemetry-instrumentation-bedrock = {path="../opentelemetry-instrumentation-bedrock", develop=true}
+opentelemetry-instrumentation-replicate = {path="../opentelemetry-instrumentation-replicate", develop=true}
 colorama = "^0.4.6"
 tenacity = "^8.2.3"
 pydantic = "^2.5.0"
 jinja2 = "^3.1.2"
 deprecated = "^1.2.14"
 posthog = "^3.0.2"
+replicate = "^0.22.0"
 
 [tool.poetry.group.dev.dependencies]
 autopep8 = "2.0.4"
@@ -73,3 +75,6 @@ chromadb = "^0.4.17"
 requires = [ "poetry-core" ]
 build-backend = "poetry.core.masonry.api"
 
+[tool.pyright]
+venvPath="/Users/k/personal/openllmetry/packages/traceloop-sdk/.venv"
+venv="20.25.0"

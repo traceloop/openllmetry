@@ -252,6 +252,7 @@ def init_instrumentations():
     init_urllib3_instrumentor()
     init_pymysql_instrumentor()
     init_bedrock_instrumentor()
+    init_replicate_intrumentor()
 
 
 def init_openai_instrumentor():
@@ -376,5 +377,14 @@ def init_bedrock_instrumentor():
         from opentelemetry.instrumentation.bedrock import BedrockInstrumentor
 
         instrumentor = BedrockInstrumentor()
+        if not instrumentor.is_instrumented_by_opentelemetry:
+            instrumentor.instrument()
+
+def init_replicate_intrumentor():
+    if importlib.util.find_spec("replicate") is not None:
+        Telemetry().capture("instrumentation:replicate:init")
+        from opentelemetry.instrumentation.replicate import ReplicateInstrumentor
+
+        instrumentor = ReplicateInstrumentor()
         if not instrumentor.is_instrumented_by_opentelemetry:
             instrumentor.instrument()
