@@ -158,4 +158,8 @@ class ReplicateInstrumentor(BaseInstrumentor):
             )
 
     def _uninstrument(self, **kwargs):
-        pass
+        for wrapper_method in WRAPPED_METHODS:
+            unwrap(
+                wrapper_method.get("module"),
+                wrapper_method.get("method", "")
+            )
