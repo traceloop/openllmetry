@@ -6,7 +6,7 @@ import typing
 import requests
 
 from threading import Thread, Event
-from typing import Dict, Optional
+from typing import Optional
 from tenacity import (
     RetryError,
     retry,
@@ -61,9 +61,6 @@ class Fetcher:
         self._exit_monitor.start()
         self._poller_thread.start()
 
-    def post(self, api: str, body: Dict[str, str]):
-        post_url(f"{self._base_url}/v1/traceloop/{api}", self._api_key, body)
-
 
 class RetryIfServerError(retry_if_exception):
     def __init__(
@@ -103,20 +100,6 @@ def fetch_url(url: str, api_key: str):
         return response.json()
 
 
-def post_url(url: str, api_key: str, body: Dict[str, str]):
-    response = requests.post(
-        url,
-        headers={
-            "Authorization": f"Bearer {api_key}",
-            "X-Traceloop-SDK-Version": __version__,
-        },
-        json=body,
-    )
-
-    if response.status_code != 200:
-        raise requests.exceptions.HTTPError(response=response)
-
-
 def thread_func(
     prompt_registry: PromptRegistry,
     content_allow_list: ContentAllowList,
@@ -141,10 +124,10 @@ def refresh_data(
     prompt_registry: PromptRegistry,
     content_allow_list: ContentAllowList,
 ):
-    response = fetch_url(f"{base_url}/v1/traceloop/prompts", api_key)
+    response = fetch_url(f"{base_url}/v1/prompts", api_key)
     prompt_registry.load(response)
 
-    response = fetch_url(f"{base_url}/v1/traceloop/pii/tracing-allow-list", api_key)
+    response = fetch_url(f"{base_url}/v1/config/pii/tracing-allow-list", api_key)
     content_allow_list.load(response)
 
 
