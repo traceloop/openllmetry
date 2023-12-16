@@ -30,11 +30,18 @@ from traceloop.sdk.utils import is_notebook
 from typing import Dict
 
 TRACER_NAME = "traceloop.tracer"
-EXCLUDED_URLS = ("api.openai.com,openai.azure.com,api.anthropic.com,api.cohere.ai,pinecone.io,traceloop.com,"
-                 "posthog.com,bedrock-runtime")
+EXCLUDED_URLS = (
+    "api.openai.com,openai.azure.com,api.anthropic.com,api.cohere.ai,pinecone.io,traceloop.com,"
+    "posthog.com,bedrock-runtime"
+)
 
 
 class TracerWrapper(object):
+    app_name: str = "unknown"
+    enable_content_tracing: bool = True
+    endpoint: str = None
+    headers: Dict[str, str] = {}
+
     def __new__(
         cls,
         disable_batch=False,
@@ -44,6 +51,9 @@ class TracerWrapper(object):
     ) -> "TracerWrapper":
         if not hasattr(cls, "instance"):
             obj = cls.instance = super(TracerWrapper, cls).__new__(cls)
+            if not TracerWrapper.endpoint:
+                return obj
+
             obj.__resource = Resource(attributes={SERVICE_NAME: TracerWrapper.app_name})
             obj.__tracer_provider: TracerProvider = init_tracer_provider(
                 resource=obj.__resource
