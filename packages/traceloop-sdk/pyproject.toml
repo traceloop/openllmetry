@@ -74,7 +74,3 @@ chromadb = "^0.4.17"
 [build-system]
 requires = [ "poetry-core" ]
 build-backend = "poetry.core.masonry.api"
-
-[tool.pyright]
-venvPath="/Users/k/personal/openllmetry/packages/traceloop-sdk/.venv"
-venv="20.25.0"
