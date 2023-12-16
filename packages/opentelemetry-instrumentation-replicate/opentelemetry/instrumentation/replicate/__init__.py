@@ -15,7 +15,7 @@ from opentelemetry.instrumentation.utils import (
 )
 
 from opentelemetry.semconv.ai import SpanAttributes, LLMRequestTypeValues
-from opentelemetry.instrumentation.anthropic.version import __version__
+from opentelemetry.instrumentation.replicate.version import __version__
 
 logger = logging.getLogger(__name__)
 
@@ -120,7 +120,7 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
 
         except Exception as ex:  # pylint: disable=broad-except
             logger.warning(
-                "Failed to set input attributes for anthropic span, error: %s", str(ex)
+                "Failed to set input attributes for replicate span, error: %s", str(ex)
             )
 
         response = wrapped(*args, **kwargs)
@@ -132,7 +132,7 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
 
             except Exception as ex:  # pylint: disable=broad-except
                 logger.warning(
-                    "Failed to set response attributes for openai span, error: %s",
+                    "Failed to set response attributes for replicate span, error: %s",
                     str(ex),
                 )
             if span.is_recording():
