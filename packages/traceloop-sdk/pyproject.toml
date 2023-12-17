@@ -52,7 +52,6 @@ pydantic = "^2.5.0"
 jinja2 = "^3.1.2"
 deprecated = "^1.2.14"
 posthog = "^3.0.2"
-replicate = "^0.22.0"
 
 [tool.poetry.group.dev.dependencies]
 autopep8 = "2.0.4"
@@ -70,6 +69,7 @@ pinecone-client = {extras = ["grpc"], version = "^2.2.4"}
 cohere = "^4.34"
 langchain = "^0.0.343"
 chromadb = "^0.4.17"
+replicate = "^0.22.0"
 
 [build-system]
 requires = [ "poetry-core" ]
