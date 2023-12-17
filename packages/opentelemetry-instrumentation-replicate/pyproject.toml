@@ -21,7 +21,7 @@ readme = 'README.md'
   include = "opentelemetry/instrumentation/replicate"
 
   [tool.poetry.dependencies]
-  python = ">=3.9,<3.11"
+  python = ">=3.9,<4"
 
   [tool.poetry.group.dev.dependencies]
   autopep8 = "2.0.2"
