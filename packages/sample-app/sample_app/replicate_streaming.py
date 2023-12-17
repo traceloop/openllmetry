@@ -20,11 +20,3 @@ def chat_stream_workflow():
 
 chat_stream_workflow()
 
-
-#model = replicate.models.get("kvfrans/clipdraw")
-#version = model.versions.get("5797a99edc939ea0e9242d5e8c9cb3bc7d125b1eac21bda852e5cb79ede2cd9b")
-#prediction = replicate.predictions.create(
-#    version=version,
-#    input={"prompt":"Watercolor painting of an underwater submarine"})
-#print(prediction)
-

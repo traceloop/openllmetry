@@ -19,19 +19,3 @@ def image_workflow():
 
 image_workflow()
 
-#model_version = "meta/llama-2-70b-chat:02e509c789964a7ea8736978a43525956ef40397be9033abf9fd2badfe68c9e3"
-#for event in replicate.stream(
-#    model_version,
-#    input={
-#        "prompt": "Please write a haiku about llamas.",
-#    },
-#):
-#    print(str(event), end="")
-#
-#model = replicate.models.get("kvfrans/clipdraw")
-#version = model.versions.get("5797a99edc939ea0e9242d5e8c9cb3bc7d125b1eac21bda852e5cb79ede2cd9b")
-#prediction = replicate.predictions.create(
-#    version=version,
-#    input={"prompt":"Watercolor painting of an underwater submarine"})
-#print(prediction)
-
