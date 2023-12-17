@@ -9,7 +9,6 @@ def test_replicate_image_generation(exporter):
             "stability-ai/stable-diffusion:27b93a2413e7f36cd83da926f3656280b2931564ff050bf9575f1fdf9bcd7478",
             input={"prompt": "robots"}
         )
-        print(image)
 
 
     @workflow(name="robot_image_generator")
@@ -35,7 +34,7 @@ def test_replicate_image_generation_stream(exporter):
                 "prompt": "robots",
             },
         ):
-            print(str(event), end="")
+            continue
 
     @workflow(name="robot_image_generator_stream")
     def image_workflow():
@@ -59,7 +58,6 @@ def test_replicate_image_generation_predictions(exporter):
             version,
             input={"prompt": "robots"}
         )
-        print(prediction)
 
 
     @workflow(name="robot_image_generator_predictions")
