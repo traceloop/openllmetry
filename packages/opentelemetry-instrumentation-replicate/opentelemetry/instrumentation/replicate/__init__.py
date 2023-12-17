@@ -52,39 +52,43 @@ def _set_span_attribute(span, name, value):
             span.set_attribute(name, value)
     return
 
+input_attribute_map = {
+    "prompt": f"{SpanAttributes.LLM_PROMPTS}.0.user",
+    "temperature": SpanAttributes.LLM_TEMPERATURE,
+    "top_p": SpanAttributes.LLM_TOP_P,
+}
 
-def _set_input_attributes(span, kwargs):
-    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, kwargs.get("model"))
-    _set_span_attribute(
-        span, SpanAttributes.LLM_REQUEST_MAX_TOKENS, kwargs.get("max_tokens_to_sample")
-    )
-    _set_span_attribute(span, SpanAttributes.LLM_TEMPERATURE, kwargs.get("temperature"))
-    _set_span_attribute(span, SpanAttributes.LLM_TOP_P, kwargs.get("top_p"))
-    _set_span_attribute(
-        span, SpanAttributes.LLM_FREQUENCY_PENALTY, kwargs.get("frequency_penalty")
-    )
-    _set_span_attribute(
-        span, SpanAttributes.LLM_PRESENCE_PENALTY, kwargs.get("presence_penalty")
-    )
+def _set_input_attributes(span, args, kwargs):
+    if args != None and len(args) > 0:
+        _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, args[0])
+    elif kwargs.get("version"):
+        _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, kwargs.get("version").id)
+    else:
+        _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, "unknown")
 
-    if should_send_prompts():
-        _set_span_attribute(
-            span, f"{SpanAttributes.LLM_PROMPTS}.0.user", kwargs.get("prompt")
-        )
-
+    input_attribute = kwargs.get("input")
+    for key in input_attribute:
+        if key in input_attribute_map:
+            if key == "prompt" and not should_send_prompts():
+                continue;
+            _set_span_attribute(
+                span,
+                input_attribute_map.get(key, f"llm.request.{key}"),
+                input_attribute.get(key)
+            )
     return
 
 
-def _set_span_completions(span, llm_request_type, response):
-    index = 0
-    prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{index}"
-    _set_span_attribute(span, f"{prefix}.content", response)
+def _set_span_completions(span, response):
+    if response != None and type(response) == list:
+        for (index, item) in enumerate(response):
+            prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{index}"
+            _set_span_attribute(span, f"{prefix}.content", item)
 
-
-def _set_response_attributes(span, llm_request_type, response):
-    _set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, response)
+def _set_response_attributes(span, response):
     if should_send_prompts():
-        _set_span_completions(span, llm_request_type, response)
+        _set_span_completions(span, response)
+    return
 
 
 def _with_tracer_wrapper(func):
@@ -111,12 +115,12 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
         kind=SpanKind.CLIENT,
         attributes={
             SpanAttributes.LLM_VENDOR: "Replicate",
-            SpanAttributes.LLM_REQUEST_TYPE: LLMRequestTypeValues.UNKNOWN,
+            SpanAttributes.LLM_REQUEST_TYPE: LLMRequestTypeValues.COMPLETION.value,
         },
     ) as span:
         try:
             if span.is_recording():
-                _set_input_attributes(span, kwargs)
+                _set_input_attributes(span, args, kwargs)
 
         except Exception as ex:  # pylint: disable=broad-except
             logger.warning(
