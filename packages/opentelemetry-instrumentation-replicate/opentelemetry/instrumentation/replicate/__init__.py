@@ -1,6 +1,7 @@
 """OpenTelemetry Replicate instrumentation"""
 import logging
 import os
+import types
 from typing import Collection
 from wrapt import wrap_function_wrapper
 
@@ -45,6 +46,8 @@ def should_send_prompts():
         os.getenv("TRACELOOP_TRACE_CONTENT") or "true"
     ).lower() == "true" or context_api.get_value("override_enable_content_tracing")
 
+def is_streaming_response(response):
+    return isinstance(response, types.GeneratorType)
 
 def _set_span_attribute(span, name, value):
     if value is not None:
@@ -80,16 +83,56 @@ def _set_input_attributes(span, args, kwargs):
 
 
 def _set_span_completions(span, response):
-    if response != None and type(response) == list:
+    if response == None:
+        return
+    if type(response) == list:
         for (index, item) in enumerate(response):
             prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{index}"
             _set_span_attribute(span, f"{prefix}.content", item)
+    elif type(response) == str:
+        _set_span_attribute(span, f"{SpanAttributes.LLM_COMPLETIONS}.0.content", response)
 
 def _set_response_attributes(span, response):
     if should_send_prompts():
         _set_span_completions(span, response)
     return
 
+def _build_from_streaming_response(span, response):
+    complete_response = ""
+    for item in response:
+        item_to_yield = item
+        complete_response += str(item)
+
+        yield item_to_yield
+
+    _set_response_attributes(span, complete_response)
+
+    span.set_status(Status(StatusCode.OK))
+    span.end()
+
+
+def _handle_request(span, args, kwargs):
+    try:
+        if span.is_recording():
+            _set_input_attributes(span, args, kwargs)
+
+    except Exception as ex:  # pylint: disable=broad-except
+        logger.warning(
+            "Failed to set input attributes for replicate span, error: %s", str(ex)
+        )
+
+def _handle_response(span, response):
+    try:
+        if span.is_recording():
+            _set_response_attributes(span, response)
+
+    except Exception as ex:  # pylint: disable=broad-except
+        logger.warning(
+            "Failed to set response attributes for replicate span, error: %s",
+            str(ex),
+        )
+    if span.is_recording():
+        span.set_status(Status(StatusCode.OK))
 
 def _with_tracer_wrapper(func):
     """Helper for providing tracer for wrapper functions."""
@@ -110,39 +153,27 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
         return wrapped(*args, **kwargs)
 
     name = to_wrap.get("span_name")
-    with tracer.start_as_current_span(
+    span = tracer.start_span(
         name,
         kind=SpanKind.CLIENT,
         attributes={
             SpanAttributes.LLM_VENDOR: "Replicate",
             SpanAttributes.LLM_REQUEST_TYPE: LLMRequestTypeValues.COMPLETION.value,
         },
-    ) as span:
-        try:
-            if span.is_recording():
-                _set_input_attributes(span, args, kwargs)
+    )
 
-        except Exception as ex:  # pylint: disable=broad-except
-            logger.warning(
-                "Failed to set input attributes for replicate span, error: %s", str(ex)
-            )
+    _handle_request(span, args, kwargs)
 
-        response = wrapped(*args, **kwargs)
+    response = wrapped(*args, **kwargs)
 
-        if response:
-            try:
-                if span.is_recording():
-                    _set_response_attributes(span, response)
+    if response:
+        if is_streaming_response(response):
+            return _build_from_streaming_response(span, response)
+        else:
+            _handle_response(span, response)
 
-            except Exception as ex:  # pylint: disable=broad-except
-                logger.warning(
-                    "Failed to set response attributes for replicate span, error: %s",
-                    str(ex),
-                )
-            if span.is_recording():
-                span.set_status(Status(StatusCode.OK))
-
-        return response
+    span.end()
+    return response
 
 
 class ReplicateInstrumentor(BaseInstrumentor):

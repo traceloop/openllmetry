@@ -12,12 +12,12 @@ def generate_chat_stream():
         model_version,
         input={"prompt": "tiny robot"}
     )
-    return chat_stream
+    for event in chat_stream:
+        print(str(event), end="")
 
 @workflow(name="chat_stream_generator")
 def chat_stream_workflow():
-    for event in generate_chat_stream():
-        print(str(event), end="")
+    generate_chat_stream()
 
 chat_stream_workflow()
 
