@@ -7,9 +7,10 @@ Traceloop.init(app_name="chat_stream_generation_service")
 
 @task(name="chat_stream_generation")
 def generate_chat_stream():
-    chat_stream = replicate.run(
-      "stability-ai/stable-diffusion:27b93a2413e7f36cd83da926f3656280b2931564ff050bf9575f1fdf9bcd7478",
-      input={"prompt": "tiny robot"}
+    model_version = "meta/llama-2-70b-chat:02e509c789964a7ea8736978a43525956ef40397be9033abf9fd2badfe68c9e3"
+    chat_stream = replicate.stream(
+        model_version,
+        input={"prompt": "tiny robot"}
     )
     return chat_stream
 
