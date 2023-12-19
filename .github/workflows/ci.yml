@@ -92,6 +92,7 @@ jobs:
           PINECONE_API_KEY: ${{ secrets.PINECONE_API_KEY }}
           PINECONE_ENVIRONMENT: ${{ secrets.PINECONE_ENVIRONMENT }}
           TRACELOOP_API_KEY: ${{ secrets.TRACELOOP_API_KEY }}
+          VERTEXAI_API_KEY: ${{ secrets.VERTEXAI_API_KEY }}
         run: npx nx affected -t test --exclude='sample-app' --parallel=3
   
   build-sample-app:

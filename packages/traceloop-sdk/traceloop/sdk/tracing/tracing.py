@@ -262,6 +262,7 @@ def init_instrumentations():
     init_urllib3_instrumentor()
     init_pymysql_instrumentor()
     init_bedrock_instrumentor()
+    init_vertexai_instrumentor()
 
 
 def init_openai_instrumentor():
@@ -386,5 +387,13 @@ def init_bedrock_instrumentor():
         from opentelemetry.instrumentation.bedrock import BedrockInstrumentor
 
         instrumentor = BedrockInstrumentor()
+        if not instrumentor.is_instrumented_by_opentelemetry:
+            instrumentor.instrument()
+
+def init_vertexai_instrumentor():
+    if importlib.util.find_spec("google-cloud-aiplatform") is not None:
+        from opentelemetry.instrumentation.vertexai import VertexAiInstrumentor
+
+        instrumentor = VertexAiInstrumentor()
         if not instrumentor.is_instrumented_by_opentelemetry:
             instrumentor.instrument()

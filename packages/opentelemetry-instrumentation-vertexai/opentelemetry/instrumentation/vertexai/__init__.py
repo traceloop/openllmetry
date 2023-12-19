@@ -19,13 +19,50 @@ from opentelemetry.instrumentation.vertexai.version import __version__
 
 logger = logging.getLogger(__name__)
 
-_instruments = ("vertexai >= 0.3.11",)
+_instruments = ("google-cloud-aiplatform >= 1.38.1",)
 
 WRAPPED_METHODS = [
     {
-        "object": "Completions",
+        "package": "google.cloud.aiplatform",
+        "object": "TextDataset",
         "method": "create",
-        "span_name": "vertexai.completion",
+        "span_name": "vertexai.text_dataset.create",
+    },
+    {
+        "package": "google.cloud.aiplatform",
+        "object": "TextDataset",
+        "method": "delete",
+        "span_name": "vertexai.text_dataset.delete",
+    },
+    {
+        "package": "google.cloud.aiplatform",
+        "object": "TextDataset",
+        "method": "export_data",
+        "span_name": "vertexai.text_dataset.export_data",
+    },
+    {
+        "package": "google.cloud.aiplatform",
+        "object": "TextDataset",
+        "method": "import_data",
+        "span_name": "vertexai.text_dataset.import_data",
+    },
+    {
+        "package": "google.cloud.aiplatform",
+        "object": "AutoMLTextTrainingJob",
+        "method": "run",
+        "span_name": "vertexai.auto_ml_text_training_job.run",
+    },
+    {
+        "package": "google.cloud.aiplatform",
+        "object": "Endpoint",
+        "method": "predict",
+        "span_name": "vertexai.endpoint.predict",
+    },
+    {
+        "package": "google.cloud.aiplatform",
+        "object": "Model",
+        "method": "batch_predict",
+        "span_name": "vertexai.model.batch_predict",
     },
 ]
 
@@ -34,6 +71,10 @@ def should_send_prompts():
     return (
         os.getenv("TRACELOOP_TRACE_CONTENT") or "true"
     ).lower() == "true" or context_api.get_value("override_enable_content_tracing")
+
+
+def is_streaming_response(response):
+    return isinstance(response, types.GeneratorType)
 
 
 def _set_span_attribute(span, name, value):
@@ -142,18 +183,20 @@ class VertextAIInstrumentor(BaseInstrumentor):
         tracer_provider = kwargs.get("tracer_provider")
         tracer = get_tracer(__name__, __version__, tracer_provider)
         for wrapped_method in WRAPPED_METHODS:
+            wrap_package = wrapped_method.get("package")
             wrap_object = wrapped_method.get("object")
             wrap_method = wrapped_method.get("method")
             wrap_function_wrapper(
-                "anthropic.resources.completions",
+                wrap_package,
                 f"{wrap_object}.{wrap_method}",
                 _wrap(tracer, wrapped_method),
             )
 
     def _uninstrument(self, **kwargs):
         for wrapped_method in WRAPPED_METHODS:
+            wrap_package = wrapped_method.get("package")
             wrap_object = wrapped_method.get("object")
             unwrap(
-                f"anthropic.resources.completions.{wrap_object}",
-                wrapped_method.get("method"),
+                f"{wrap_package}.{wrap_object}",
+                wrapped_method.get("method", ""),
             )
