@@ -264,6 +264,7 @@ def init_instrumentations():
     init_bedrock_instrumentor()
     init_vertexai_instrumentor()
     init_replicate_intrumentor()
+    init_vertexai_instrumentor()
 
 
 def init_openai_instrumentor():
@@ -407,5 +408,14 @@ def init_replicate_intrumentor():
         from opentelemetry.instrumentation.replicate import ReplicateInstrumentor
 
         instrumentor = ReplicateInstrumentor()
+        if not instrumentor.is_instrumented_by_opentelemetry:
+            instrumentor.instrument()
+
+
+def init_vertexai_instrumentor():
+    if importlib.util.find_spec("google-cloud-aiplatform") is not None:
+        from opentelemetry.instrumentation.vertexai import VertexAiInstrumentor
+
+        instrumentor = VertexAiInstrumentor()
         if not instrumentor.is_instrumented_by_opentelemetry:
             instrumentor.instrument()
