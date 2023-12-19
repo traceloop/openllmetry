@@ -1,3 +1,5 @@
+import sys
+import pytest
 import replicate
 from traceloop.sdk.decorators import workflow, task
 
@@ -24,6 +26,7 @@ def test_replicate_image_generation(exporter):
     ]
 
 
+@pytest.mark.skipif(sys.version_info < (3, 9), reason="requires python3.9")
 def test_replicate_image_generation_stream(exporter):
     @task(name="image_generation_stream")
     def generate_image_stream():
