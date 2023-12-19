@@ -264,6 +264,7 @@ def init_instrumentations():
     init_bedrock_instrumentor()
     init_replicate_instrumentor()
     init_vertexai_instrumentor()
+    init_replicate_intrumentor()
 
 
 def init_openai_instrumentor():
