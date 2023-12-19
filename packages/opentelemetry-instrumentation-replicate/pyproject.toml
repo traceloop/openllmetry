@@ -21,11 +21,14 @@ readme = 'README.md'
 include = "opentelemetry/instrumentation/replicate"
 
 [tool.poetry.dependencies]
-python = ">=3.8,<4"
+python = ">=3.8.1,<4"
+opentelemetry-api = "^1.21.0"
+opentelemetry-instrumentation = "^0.42b0"
+opentelemetry-semantic-conventions-ai = "^0.0.12"
 
 [tool.poetry.group.dev.dependencies]
 autopep8 = "2.0.2"
-flake8 = "6.0.0"
+flake8 = "6.1.0"
 pytest = "7.3.1"
 pytest-sugar = "0.9.7"
 pytest-cov = "4.1.0"

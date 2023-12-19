@@ -1,3 +1,5 @@
+import sys
+import pytest
 import replicate
 from traceloop.sdk.decorators import workflow, task
 
@@ -6,7 +8,7 @@ def test_replicate_image_generation(exporter):
     @task(name="image_generation")
     def generate_image():
         replicate.run(
-            "stability-ai/stable-diffusion:27b93a2413e7f36cd83da926f3656280b2931564ff050bf9575f1fdf9bcd7478",
+            "stability-ai/stable-diffusion:ac732df83cea7fff18b8472768c88ad041fa750ff7682a21affe81863cbe77e4",
             input={"prompt": "robots"},
         )
 
@@ -24,6 +26,7 @@ def test_replicate_image_generation(exporter):
     ]
 
 
+@pytest.mark.skipif(sys.version_info < (3, 9), reason="requires python3.9")
 def test_replicate_image_generation_stream(exporter):
     @task(name="image_generation_stream")
     def generate_image_stream():
@@ -31,7 +34,7 @@ def test_replicate_image_generation_stream(exporter):
         for event in replicate.stream(
             model_version,
             input={
-                "prompt": "robots",
+                "prompt": "tell me a joke about opentelemetry",
             },
         ):
             continue
