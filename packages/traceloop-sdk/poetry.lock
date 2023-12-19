@@ -126,17 +126,17 @@ typing-extensions = {version = ">=4.0.0", markers = "python_version < \"3.9\""}
 
 [[package]]
 name = "anthropic"
-version = "0.7.7"
+version = "0.7.8"
 description = "The official Python library for the anthropic API"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "anthropic-0.7.7-py3-none-any.whl", hash = "sha256:49a4b0194faa958ec156e4d242a3b6e029d91389bbed1fc267b5b903a4cfef0d"},
-    {file = "anthropic-0.7.7.tar.gz", hash = "sha256:781ce7bcf8d377e4077b71a0c9045c2f7947db6f6c9fe70352e2a7838e055e59"},
+    {file = "anthropic-0.7.8-py3-none-any.whl", hash = "sha256:268db974578e34d1449cd0d22389394f0c61795ace9a101dcde4eab4b98439bf"},
+    {file = "anthropic-0.7.8.tar.gz", hash = "sha256:61bc698553b24bc7721cf71db8de50703f3025ea2d14fa4bcb5b1d2bf37f9e40"},
 ]
 
 [package.dependencies]
-anyio = ">=3.5.0,<4"
+anyio = ">=3.5.0,<5"
 distro = ">=1.7.0,<2"
 httpx = ">=0.23.0,<1"
 pydantic = ">=1.9.0,<3"
