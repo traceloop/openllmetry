@@ -78,6 +78,10 @@ def should_send_prompts():
     ).lower() == "true" or context_api.get_value("override_enable_content_tracing")
 
 
+def is_streaming_response(response):
+    return isinstance(response, types.GeneratorType)
+
+
 def _set_span_attribute(span, name, value):
     if value is not None:
         if value != "":
