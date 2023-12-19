@@ -45,6 +45,7 @@ transformers = "^4.35.2"
 replicate = "^0.22.0"
 google-cloud-aiplatform = "^1.38.1"
 replicate = "^0.22.0"
+google-cloud-aiplatform = "^1.38.1"
 
 [tool.poetry.dependencies.opentelemetry-instrumentation-openai]
 path = "../opentelemetry-instrumentation-openai"
