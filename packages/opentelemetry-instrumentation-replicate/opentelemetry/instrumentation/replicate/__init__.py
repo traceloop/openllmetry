@@ -57,6 +57,7 @@ def _set_span_attribute(span, name, value):
             span.set_attribute(name, value)
     return
 
+
 input_attribute_map = {
     "prompt": f"{SpanAttributes.LLM_PROMPTS}.0.user",
     "temperature": SpanAttributes.LLM_TEMPERATURE,
@@ -137,6 +138,7 @@ def _handle_request(span, args, kwargs):
             "Failed to set input attributes for replicate span, error: %s", str(ex)
         )
 
+
 def _handle_response(span, response):
     try:
         if span.is_recording():
@@ -149,6 +151,7 @@ def _handle_response(span, response):
         )
     if span.is_recording():
         span.set_status(Status(StatusCode.OK))
+
 
 def _with_tracer_wrapper(func):
     """Helper for providing tracer for wrapper functions."""
