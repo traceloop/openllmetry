@@ -46,8 +46,10 @@ def should_send_prompts():
         os.getenv("TRACELOOP_TRACE_CONTENT") or "true"
     ).lower() == "true" or context_api.get_value("override_enable_content_tracing")
 
+
 def is_streaming_response(response):
     return isinstance(response, types.GeneratorType)
+
 
 def _set_span_attribute(span, name, value):
     if value is not None:
@@ -55,17 +57,21 @@ def _set_span_attribute(span, name, value):
             span.set_attribute(name, value)
     return
 
+
 input_attribute_map = {
     "prompt": f"{SpanAttributes.LLM_PROMPTS}.0.user",
     "temperature": SpanAttributes.LLM_TEMPERATURE,
     "top_p": SpanAttributes.LLM_TOP_P,
 }
 
+
 def _set_input_attributes(span, args, kwargs):
-    if args != None and len(args) > 0:
+    if args is not None and len(args) > 0:
         _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, args[0])
     elif kwargs.get("version"):
-        _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, kwargs.get("version").id)
+        _set_span_attribute(
+            span, SpanAttributes.LLM_REQUEST_MODEL, kwargs.get("version").id
+        )
     else:
         _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, "unknown")
 
@@ -73,29 +79,40 @@ def _set_input_attributes(span, args, kwargs):
     for key in input_attribute:
         if key in input_attribute_map:
             if key == "prompt" and not should_send_prompts():
-                continue;
+                continue
             _set_span_attribute(
                 span,
                 input_attribute_map.get(key, f"llm.request.{key}"),
-                input_attribute.get(key)
+                input_attribute.get(key),
             )
     return
 
 
 def _set_span_completions(span, response):
-    if response == None:
+    if response is None:
         return
-    if type(response) == list:
-        for (index, item) in enumerate(response):
+    if isinstance(response, list):
+        for index, item in enumerate(response):
             prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{index}"
             _set_span_attribute(span, f"{prefix}.content", item)
-    elif type(response) == str:
-        _set_span_attribute(span, f"{SpanAttributes.LLM_COMPLETIONS}.0.content", response)
+    elif isinstance(response, str):
+        _set_span_attribute(
+            span, f"{SpanAttributes.LLM_COMPLETIONS}.0.content", response
+        )
+
 
 def _set_response_attributes(span, response):
     if should_send_prompts():
-        _set_span_completions(span, response)
+        if isinstance(response, list):
+            for index, item in enumerate(response):
+                prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{index}"
+                _set_span_attribute(span, f"{prefix}.content", item)
+        elif isinstance(response, str):
+            _set_span_attribute(
+                span, f"{SpanAttributes.LLM_COMPLETIONS}.0.content", response
+            )
     return
+
 
 def _build_from_streaming_response(span, response):
     complete_response = ""
@@ -121,6 +138,7 @@ def _handle_request(span, args, kwargs):
             "Failed to set input attributes for replicate span, error: %s", str(ex)
         )
 
+
 def _handle_response(span, response):
     try:
         if span.is_recording():
@@ -133,6 +151,7 @@ def _handle_response(span, response):
         )
     if span.is_recording():
         span.set_status(Status(StatusCode.OK))
+
 
 def _with_tracer_wrapper(func):
     """Helper for providing tracer for wrapper functions."""
@@ -194,7 +213,4 @@ class ReplicateInstrumentor(BaseInstrumentor):
 
     def _uninstrument(self, **kwargs):
         for wrapper_method in WRAPPED_METHODS:
-            unwrap(
-                wrapper_method.get("module"),
-                wrapper_method.get("method", "")
-            )
+            unwrap(wrapper_method.get("module"), wrapper_method.get("method", ""))
