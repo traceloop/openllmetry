@@ -47,6 +47,7 @@ opentelemetry-instrumentation-llamaindex = {path="../opentelemetry-instrumentati
 opentelemetry-instrumentation-bedrock = {path="../opentelemetry-instrumentation-bedrock", develop=true}
 opentelemetry-instrumentation-replicate = {path="../opentelemetry-instrumentation-replicate", develop=true}
 opentelemetry-instrumentation-vertexai = {path="../opentelemetry-instrumentation-vertexai", develop=true}
+opentelemetry-instrumentation-replicate = {path="../opentelemetry-instrumentation-replicate", develop=true}
 colorama = "^0.4.6"
 tenacity = "^8.2.3"
 pydantic = ">=1"
@@ -72,6 +73,7 @@ langchain = "^0.0.343"
 chromadb = "^0.4.17"
 replicate = "^0.22.0"
 google-cloud-aiplatform = "^1.38.1"
+replicate = "^0.22.0"
 
 [build-system]
 requires = [ "poetry-core" ]
