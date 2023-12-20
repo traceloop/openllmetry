@@ -42,7 +42,6 @@ pandas = "~2.0.3"
 tokenizers = "~0.14.0"
 boto3 = "^1.33.1"
 transformers = "^4.35.2"
-google-cloud-aiplatform = "^1.38.1"
 replicate = "^0.22.0"
 google-cloud-aiplatform = "^1.38.1"
 

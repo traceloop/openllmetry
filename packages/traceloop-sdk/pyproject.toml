@@ -45,7 +45,6 @@ opentelemetry-instrumentation-chromadb = {path="../opentelemetry-instrumentation
 opentelemetry-instrumentation-transformers = {path="../opentelemetry-instrumentation-transformers", develop=true}
 opentelemetry-instrumentation-llamaindex = {path="../opentelemetry-instrumentation-llamaindex", develop=true}
 opentelemetry-instrumentation-bedrock = {path="../opentelemetry-instrumentation-bedrock", develop=true}
-opentelemetry-instrumentation-vertexai = {path="../opentelemetry-instrumentation-vertexai", develop=true}
 opentelemetry-instrumentation-replicate = {path="../opentelemetry-instrumentation-replicate", develop=true}
 opentelemetry-instrumentation-vertexai = {path="../opentelemetry-instrumentation-vertexai", develop=true}
 colorama = "^0.4.6"
@@ -71,7 +70,6 @@ pinecone-client = {extras = ["grpc"], version = "^2.2.4"}
 cohere = "^4.34"
 langchain = "^0.0.343"
 chromadb = "^0.4.17"
-google-cloud-aiplatform = "^1.38.1"
 replicate = "^0.22.0"
 google-cloud-aiplatform = "^1.38.1"
 
