@@ -23,46 +23,34 @@ _instruments = ("google-cloud-aiplatform >= 1.38.1",)
 
 WRAPPED_METHODS = [
     {
-        "package": "google.cloud.aiplatform",
-        "object": "TextDataset",
-        "method": "create",
-        "span_name": "vertexai.text_dataset.create",
+        "package": "vertexai.preview.generative_models",
+        "object": "GenerativeModel",
+        "method": "generate_content",
+        "span_name": "vertexai.preview.generate_content",
     },
     {
-        "package": "google.cloud.aiplatform",
-        "object": "TextDataset",
-        "method": "delete",
-        "span_name": "vertexai.text_dataset.delete",
-    },
-    {
-        "package": "google.cloud.aiplatform",
-        "object": "TextDataset",
-        "method": "export_data",
-        "span_name": "vertexai.text_dataset.export_data",
-    },
-    {
-        "package": "google.cloud.aiplatform",
-        "object": "TextDataset",
-        "method": "import_data",
-        "span_name": "vertexai.text_dataset.import_data",
-    },
-    {
-        "package": "google.cloud.aiplatform",
-        "object": "AutoMLTextTrainingJob",
-        "method": "run",
-        "span_name": "vertexai.auto_ml_text_training_job.run",
-    },
-    {
-        "package": "google.cloud.aiplatform",
-        "object": "Endpoint",
+        "package": "vertexai.language_models",
+        "object": "TextGenerationModel",
         "method": "predict",
-        "span_name": "vertexai.endpoint.predict",
+        "span_name": "vertexai.predict",
     },
     {
-        "package": "google.cloud.aiplatform",
-        "object": "Model",
-        "method": "batch_predict",
-        "span_name": "vertexai.model.batch_predict",
+        "package": "vertexai.language_models",
+        "object": "TextGenerationModel",
+        "method": "predict_async",
+        "span_name": "vertexai.predict_async",
+    },
+    {
+        "package": "vertexai.language_models",
+        "object": "TextGenerationModel",
+        "method": "predict_streaming",
+        "span_name": "vertexai.predict_streaming",
+    },
+    {
+        "package": "vertexai.language_models",
+        "object": "TextGenerationModel",
+        "method": "predict_streaming_async",
+        "span_name": "vertexai.predict_streaming_async",
     },
 ]
 
