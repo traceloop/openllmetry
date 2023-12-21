@@ -1,4 +1,3 @@
-<img referrerpolicy="no-referrer-when-downgrade" src="https://static.scarf.sh/a.png?x-pxid=f54554a7-6000-42a3-997f-9a18867f2e91" />
 <p align="center">
 <a href="https://www.traceloop.com/openllmetry#gh-light-mode-only">
 <img width="600" src="https://raw.githubusercontent.com/traceloop/openllmetry/main/img/logo-light.png">
@@ -108,7 +107,7 @@ OpenLLMetry can instrument everything that [OpenTelemetry already instruments](h
 - ✅ Cohere
 - ✅ HuggingFace
 - ✅ Bedrock (AWS)
-- ⏳ Replicate
+- ✅ Replicate
 - ⏳ Vertex AI (GCP)
 
 ### Vector DBs
