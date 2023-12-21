@@ -4,6 +4,8 @@ import json
 import types
 import logging
 
+from importlib.metadata import version
+
 from opentelemetry import context as context_api
 
 from opentelemetry.semconv.ai import SpanAttributes
@@ -135,3 +137,10 @@ def is_streaming_response(response):
         return isinstance(response, openai.Stream)
 
     return isinstance(response, types.GeneratorType) or isinstance(response, types.AsyncGeneratorType)
+
+
+def model_as_dict(model):
+    if version("pydantic") < "2.0.0":
+        return model.dict()
+
+    return model.model_dump()
