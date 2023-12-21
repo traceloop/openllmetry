@@ -262,7 +262,6 @@ def init_instrumentations():
     init_urllib3_instrumentor()
     init_pymysql_instrumentor()
     init_bedrock_instrumentor()
-    init_vertexai_instrumentor()
     init_replicate_intrumentor()
     init_vertexai_instrumentor()
 
