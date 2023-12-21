@@ -174,7 +174,7 @@ async def _abuild_from_streaming_response(span, response):
 
 def _accumulate_stream_items(item, complete_response):
     if is_openai_v1():
-        item = model_as_dict(item.model_dump)
+        item = model_as_dict(item)
 
     for choice in item.get("choices"):
         index = choice.get("index")
