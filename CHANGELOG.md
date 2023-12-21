@@ -1,3 +1,14 @@
+## v0.7.0 (2023-12-21)
+
+### Feat
+
+- replicate support (#248)
+
+### Fix
+
+- support pydantic v1 (#282)
+- broken tests (#281)
+
 ## v0.6.0 (2023-12-16)
 
 ### Feat

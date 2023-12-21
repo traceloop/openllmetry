@@ -11,7 +11,7 @@ addopts = "--cov --cov-report html:'../../coverage/packages/opentelemetry-instru
 
 [tool.poetry]
 name = "opentelemetry-instrumentation-haystack"
-version = "0.6.0"
+version = "0.7.0"
 description = "OpenTelemetry Haystack instrumentation"
 authors = [
   "Gal Kleinman <gal@traceloop.com>",
