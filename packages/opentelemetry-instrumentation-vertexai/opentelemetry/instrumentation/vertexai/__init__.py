@@ -126,6 +126,8 @@ def _set_input_attributes(span, args, kwargs):
             input_attribute_map.get("prompt"),
             prompt,
         )
+    else:
+        _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, "unknown")
 
     for key in kwargs:
         if key in input_attribute_map:        
