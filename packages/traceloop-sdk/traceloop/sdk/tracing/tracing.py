@@ -391,7 +391,6 @@ def init_bedrock_instrumentor():
         if not instrumentor.is_instrumented_by_opentelemetry:
             instrumentor.instrument()
 
-
 def init_replicate_instrumentor():
     if importlib.util.find_spec("replicate") is not None:
         Telemetry().capture("instrumentation:replicate:init")
