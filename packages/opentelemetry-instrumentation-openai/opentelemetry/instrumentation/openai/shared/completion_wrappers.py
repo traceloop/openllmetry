@@ -16,6 +16,7 @@ from opentelemetry.instrumentation.openai.shared import (
     _set_response_attributes,
     is_streaming_response,
     should_send_prompts,
+    model_as_dict,
 )
 
 from opentelemetry.instrumentation.openai.utils import is_openai_v1
@@ -74,7 +75,7 @@ def _handle_request(span, kwargs):
 
 def _handle_response(response, span):
     if is_openai_v1():
-        response_dict = response.model_dump()
+        response_dict = model_as_dict(response)
     else:
         response_dict = response
 
@@ -119,7 +120,7 @@ def _build_from_streaming_response(span, response):
     for item in response:
         item_to_yield = item
         if is_openai_v1():
-            item = item.model_dump()
+            item = model_as_dict(item)
 
         for choice in item.get("choices"):
             index = choice.get("index")
