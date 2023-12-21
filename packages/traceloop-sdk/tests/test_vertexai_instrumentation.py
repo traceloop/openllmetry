@@ -1,5 +1,4 @@
 import os
-import pytest
 import asyncio
 import vertexai
 from traceloop.sdk.decorators import workflow, aworkflow
@@ -36,6 +35,7 @@ def test_vertexai_generate_content(exporter):
 
     spans = exporter.get_finished_spans()
     assert [span.name for span in spans] == [
+        'POST',
         "vertexai.generate_content",
         "generate_content.workflow",
     ]
@@ -130,11 +130,11 @@ def test_vertexai_stream_async(exporter):
             "top_k": 40,  # A top_k of 1 means the selected token is the most probable among all tokens.
         }
 
-        responses = text_generation_model.predict_streaming(prompt="Give me ten interview questions for the role of program manager.", **parameters)
+        responses = text_generation_model.predict_streaming_async(prompt="Give me ten interview questions for the role of program manager.", **parameters)
         
-        result = [response for response in responses]
+        result = [response async for response in responses]
         return result
-    
+            
     asyncio.run(async_streaming_prediction())
 
     spans = exporter.get_finished_spans()

@@ -262,7 +262,7 @@ def init_instrumentations():
     init_urllib3_instrumentor()
     init_pymysql_instrumentor()
     init_bedrock_instrumentor()
-    init_replicate_intrumentor()
+    init_replicate_instrumentor()
     init_vertexai_instrumentor()
 
 
@@ -392,7 +392,7 @@ def init_bedrock_instrumentor():
             instrumentor.instrument()
 
 
-def init_replicate_intrumentor():
+def init_replicate_instrumentor():
     if importlib.util.find_spec("replicate") is not None:
         Telemetry().capture("instrumentation:replicate:init")
         from opentelemetry.instrumentation.replicate import ReplicateInstrumentor
@@ -405,8 +405,8 @@ def init_replicate_intrumentor():
 def init_vertexai_instrumentor():
     if importlib.util.find_spec("vertexai") is not None:
         Telemetry().capture("instrumentation:vertexai:init")
-        from opentelemetry.instrumentation.vertexai import VertexAiInstrumentor
+        from opentelemetry.instrumentation.vertexai import VertexAIInstrumentor
 
-        instrumentor = VertexAiInstrumentor()
+        instrumentor = VertexAIInstrumentor()
         if not instrumentor.is_instrumented_by_opentelemetry:
             instrumentor.instrument()
