@@ -403,8 +403,8 @@ def init_replicate_instrumentor():
 def init_vertexai_instrumentor():
     if importlib.util.find_spec("google-cloud-aiplatform") is not None:
         Telemetry().capture("instrumentation:vertexai:init")
-        from opentelemetry.instrumentation.vertexai import VertexAiInstrumentor
+        from opentelemetry.instrumentation.vertexai import VertexAIInstrumentor
 
-        instrumentor = VertexAiInstrumentor()
+        instrumentor = VertexAIInstrumentor()
         if not instrumentor.is_instrumented_by_opentelemetry:
             instrumentor.instrument()
