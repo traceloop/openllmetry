@@ -25,9 +25,7 @@
     },
     "build": {
       "executor": "@nxlv/python:build",
-      "outputs": [
-        "{projectRoot}/dist"
-      ],
+      "outputs": ["{projectRoot}/dist"],
       "options": {
         "outputPath": "packages/opentelemetry-instrumentation-replicate/dist",
         "publish": false,
@@ -66,5 +64,5 @@
       }
     }
   },
-  "tags": []
+  "tags": ["instrumentation"]
 }
