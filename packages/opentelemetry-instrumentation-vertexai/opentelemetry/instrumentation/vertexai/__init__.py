@@ -1,4 +1,5 @@
 """OpenTelemetry Vertex AI instrumentation"""
+import asyncio
 import logging
 import os
 import types
@@ -17,6 +18,8 @@ from opentelemetry.instrumentation.utils import (
 
 from opentelemetry.semconv.ai import SpanAttributes, LLMRequestTypeValues
 from opentelemetry.instrumentation.vertexai.version import __version__
+
+from vertexai.generative_models._generative_models import Part
 
 logger = logging.getLogger(__name__)
 
@@ -94,11 +97,30 @@ input_attribute_map = {
 def _set_input_attributes(span, args, kwargs):
 
     if (should_send_prompts() and args is not None and len(args) > 0):
+        prompt = ''
+        for arg in args:
+            if isinstance(arg, str):
+                prompt = f"{prompt}{arg}\n"
+            elif isinstance(arg, list):
+                for subarg in arg:
+                    if isinstance(subarg, str):
+                        prompt = f"{prompt}{subarg}\n"
+                    # Gemini
+                    elif isinstance(subarg, Part):
+                        if hasattr(subarg, 'text'):
+                            prompt = f"{prompt}text: {subarg.text.file_uri}\n"
+                        elif hasattr(subarg, 'mime_type'):
+                            prompt = f"{prompt}mime_type: {subarg.mime_type}\n"
+                        elif hasattr(subarg, 'inline_data'):
+                            prompt = f"{prompt}data: {subarg.inline_data.data}\nmime_type: {subarg.inline_data.mime_type}\n"
+                        elif hasattr(subarg, 'file_data'):
+                            prompt = f"{prompt}file_uri: {subarg.file_data.file_uri}\nmime_type: {subarg.file_data.mime_type}\n"
+
         _set_span_attribute(
-                span,
-                input_attribute_map.get("prompt"),
-                args[0],
-            )
+            span,
+            input_attribute_map.get("prompt"),
+            prompt,
+        )
 
     for key in kwargs:
         if key in input_attribute_map:        
@@ -113,15 +135,37 @@ def is_streaming_response(response):
     return isinstance(response, types.GeneratorType)
 
 def _set_response_attributes(span, response):
-    if hasattr(response, 'text') and should_send_prompts():
-        if isinstance(response.text, list):
-            for index, item in enumerate(response):
-                prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{index}"
-                _set_span_attribute(span, f"{prefix}.content", item.text)
-        elif isinstance(response.text, str):
-            _set_span_attribute(
-                span, f"{SpanAttributes.LLM_COMPLETIONS}.0.content", response.text
-            )
+    if should_send_prompts():
+        if hasattr(response, 'text') and should_send_prompts():
+            if hasattr(response, '_raw_response') and hasattr(response._raw_response, 'usage_metadata'):
+                _set_span_attribute(
+                    span, SpanAttributes.LLM_USAGE_TOTAL_TOKENS, response._raw_response.usage_metadata.total_token_count
+                )
+                _set_span_attribute(
+                    span, SpanAttributes.LLM_USAGE_COMPLETION_TOKENS, response._raw_response.usage_metadata.candidates_token_count
+                )
+                _set_span_attribute(
+                    span, SpanAttributes.LLM_USAGE_PROMPT_TOKENS, response._raw_response.usage_metadata.prompt_token_count
+                )
+
+
+            if isinstance(response.text, list):
+                for index, item in enumerate(response):
+                    prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{index}"
+                    _set_span_attribute(span, f"{prefix}.content", item.text)
+            elif isinstance(response.text, str):
+                _set_span_attribute(
+                    span, f"{SpanAttributes.LLM_COMPLETIONS}.0.content", response.text
+                )
+        else:
+            if isinstance(response, list):
+                for index, item in enumerate(response):
+                    prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{index}"
+                    _set_span_attribute(span, f"{prefix}.content", item)
+            elif isinstance(response, str):
+                _set_span_attribute(
+                    span, f"{SpanAttributes.LLM_COMPLETIONS}.0.content", response
+                )
 
     return
 
