@@ -13,7 +13,7 @@ addopts = "--cov --cov-report html:'../../coverage/packages/opentelemetry-instru
 name = "opentelemetry-instrumentation-replicate"
 version = "0.7.0"
 description = "OpenTelemetry Replicate instrumentation"
-authors = []
+authors = [ "Kartik Prajapati <kartik@ktklab.org>" ]
 license = 'Apache-2.0'
 readme = 'README.md'
 
