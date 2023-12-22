@@ -38,6 +38,7 @@ def predict_text() -> str:
     """Ideation example with a Large Language Model"""
 
     parameters = {
+        "temperature": 0.1,
         "max_output_tokens": 256,  # Token limit determines the maximum amount of text output.
         "top_p": 0.8,  # Tokens are selected from most probable to least until the sum of their probabilities equals the top_p value.
         "top_k": 40,  # A top_k of 1 means the selected token is the most probable among all tokens.
@@ -71,5 +72,5 @@ async def async_predict_text() -> str:
 
 if __name__ == "__main__":
     # print(generate_text())
-    # print(predict_text)
-    print(asyncio.run(async_predict_text()))
+    # print(predict_text())
+    # print(asyncio.run(async_predict_text()))

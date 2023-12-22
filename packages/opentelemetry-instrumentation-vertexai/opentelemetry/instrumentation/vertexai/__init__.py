@@ -30,10 +30,22 @@ WRAPPED_METHODS = [
         "span_name": "vertexai.generate_content",
     },
     {
+        "package": "vertexai.preview.generative_models",
+        "object": "GenerativeModel",
+        "method": "__init__",
+        "span_name": "vertexai.__init__",
+    },
+    {
         "package": "vertexai.language_models",
         "object": "TextGenerationModel",
         "method": "predict",
         "span_name": "vertexai.predict",
+    },
+    {
+        "package": "vertexai.language_models",
+        "object": "TextGenerationModel",
+        "method": "from_pretrained",
+        "span_name": "vertexai.from_pretrained",
     },
     {
         "package": "vertexai.language_models",
@@ -62,58 +74,56 @@ def should_send_prompts():
     ).lower() == "true" or context_api.get_value("override_enable_content_tracing")
 
 
-def is_streaming_response(response):
-    return isinstance(response, types.GeneratorType)
-
-
 def _set_span_attribute(span, name, value):
     if value is not None:
         if value != "":
             span.set_attribute(name, value)
     return
 
-
 input_attribute_map = {
     "prompt": f"{SpanAttributes.LLM_PROMPTS}.0.user",
+    "max_output_tokens": SpanAttributes.LLM_REQUEST_MAX_TOKENS,
     "temperature": SpanAttributes.LLM_TEMPERATURE,
     "top_p": SpanAttributes.LLM_TOP_P,
+    # "top_k": SpanAttributes.LLM_TOP_K,
+    "presence_penalty": SpanAttributes.LLM_PRESENCE_PENALTY,
+    "frequency_penalty": SpanAttributes.LLM_FREQUENCY_PENALTY
 }
 
 
 def _set_input_attributes(span, args, kwargs):
-    if args is not None and len(args) > 0:
-        _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, args[0])
-    elif kwargs.get("version"):
-        _set_span_attribute(
-            span, SpanAttributes.LLM_REQUEST_MODEL, kwargs.get("version").id
-        )
-    else:
-        _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, "unknown")
 
-    input_attribute = kwargs.get("input")
-    for key in input_attribute:
-        if key in input_attribute_map:
-            if key == "prompt" and not should_send_prompts():
-                continue
+    if (should_send_prompts() and args is not None and len(args) > 0):
+        _set_span_attribute(
+                span,
+                input_attribute_map.get("prompt"),
+                args[0],
+            )
+
+    for key in kwargs:
+        if key in input_attribute_map:        
             _set_span_attribute(
                 span,
-                input_attribute_map.get(key, f"llm.request.{key}"),
-                input_attribute.get(key),
+                input_attribute_map.get(key),
+                kwargs.get(key),
             )
     return
 
-
-def _set_span_completions(span, llm_request_type, completion):
-    index = 0
-    prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{index}"
-    _set_span_attribute(span, f"{prefix}.finish_reason", completion.get("stop_reason"))
-    _set_span_attribute(span, f"{prefix}.content", completion.get("completion"))
-
+def is_streaming_response(response):
+    return isinstance(response, types.GeneratorType)
 
 def _set_response_attributes(span, response):
-    _set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, response.get("model"))
-    if should_send_prompts():
-        _set_span_completions(span, response)
+    if hasattr(response, 'text') and should_send_prompts():
+        if isinstance(response.text, list):
+            for index, item in enumerate(response):
+                prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{index}"
+                _set_span_attribute(span, f"{prefix}.content", item.text)
+        elif isinstance(response.text, str):
+            _set_span_attribute(
+                span, f"{SpanAttributes.LLM_COMPLETIONS}.0.content", response.text
+            )
+
+    return
 
 def _build_from_streaming_response(span, response):
     complete_response = ""
@@ -135,7 +145,7 @@ def _handle_request(span, args, kwargs):
 
     except Exception as ex:  # pylint: disable=broad-except
         logger.warning(
-            "Failed to set input attributes for vertexai span, error: %s", str(ex)
+            "Failed to set input attributes for VertexAI span, error: %s", str(ex)
         )
 
 def _handle_response(span, response):
@@ -145,7 +155,7 @@ def _handle_response(span, response):
 
     except Exception as ex:  # pylint: disable=broad-except
         logger.warning(
-            "Failed to set response attributes for vertexai span, error: %s",
+            "Failed to set response attributes for VertexAI span, error: %s",
             str(ex),
         )
     if span.is_recording():
@@ -175,10 +185,20 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
         name,
         kind=SpanKind.CLIENT,
         attributes={
-            SpanAttributes.LLM_VENDOR: "Replicate",
+            SpanAttributes.LLM_VENDOR: "VertexAI",
             SpanAttributes.LLM_REQUEST_TYPE: LLMRequestTypeValues.COMPLETION.value,
         },
     )
+    global llm_model
+
+
+    if (to_wrap.get('method') == 'from_pretrained' or to_wrap.get('method') == "__init__") and args is not None and len(args) > 0:
+        llm_model = args[0]
+
+    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, llm_model)
+    _set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, llm_model)
+
+    print('>>> args', args, kwargs)
 
     _handle_request(span, args, kwargs)
 
@@ -194,7 +214,7 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
     return response
 
 
-class VertexAiInstrumentor(BaseInstrumentor):
+class VertexAIInstrumentor(BaseInstrumentor):
     """An instrumentor for VertextAI's client library."""
 
     def instrumentation_dependencies(self) -> Collection[str]:
