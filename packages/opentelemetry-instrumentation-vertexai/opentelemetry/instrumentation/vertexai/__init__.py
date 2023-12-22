@@ -5,6 +5,7 @@ import os
 import types
 from typing import Collection
 from wrapt import wrap_function_wrapper
+from contextlib import asynccontextmanager
 
 from opentelemetry import context as context_api
 from opentelemetry.trace import get_tracer, SpanKind
@@ -13,7 +14,7 @@ from opentelemetry.trace.status import Status, StatusCode
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.instrumentation.utils import (
     _SUPPRESS_INSTRUMENTATION_KEY,
-    unwrap,
+    unwrap
 )
 
 from opentelemetry.semconv.ai import SpanAttributes, LLMRequestTypeValues
@@ -132,7 +133,7 @@ def _set_input_attributes(span, args, kwargs):
     return
 
 def is_streaming_response(response):
-    return isinstance(response, types.GeneratorType)
+    return isinstance(response, types.GeneratorType) or isinstance(response, types.AsyncGeneratorType)
 
 def _set_response_attributes(span, response):
     if should_send_prompts():
@@ -182,6 +183,19 @@ def _build_from_streaming_response(span, response):
     span.set_status(Status(StatusCode.OK))
     span.end()
 
+async def _abuild_from_streaming_response(span, response):
+    complete_response = ""
+    async for item in response:
+        item_to_yield = item
+        complete_response += str(item)
+
+        yield item_to_yield
+
+    _set_response_attributes(span, complete_response)
+
+    span.set_status(Status(StatusCode.OK))
+    span.end()
+
 def _handle_request(span, args, kwargs):
     try:
         if span.is_recording():
@@ -217,6 +231,51 @@ def _with_tracer_wrapper(func):
 
     return _with_tracer
 
+
+@asynccontextmanager
+async def start_as_current_span_async(tracer, *args, **kwargs):
+    with tracer.start_as_current_span(*args, **kwargs) as span:
+        yield span
+
+@_with_tracer_wrapper
+async def _awrap(tracer, to_wrap, wrapped, instance, args, kwargs):
+    if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
+        return await wrapped(*args, **kwargs)
+
+    async with start_as_current_span_async(
+            tracer=tracer, 
+            name=to_wrap.get("span_name"), 
+            kind=SpanKind.CLIENT, 
+            attributes={
+                SpanAttributes.LLM_VENDOR: "VertexAI",
+                SpanAttributes.LLM_REQUEST_TYPE: LLMRequestTypeValues.COMPLETION.value,
+            }
+        ) as span:
+    
+        global llm_model
+
+
+        if (to_wrap.get('method') == 'from_pretrained' or to_wrap.get('method') == "__init__") and args is not None and len(args) > 0:
+            llm_model = args[0]
+
+        _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, llm_model)
+        _set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, llm_model)
+
+        print('>>> args', args, kwargs)
+
+        _handle_request(span, args, kwargs)
+
+        response = await wrapped(*args, **kwargs)
+
+        if response:
+            if is_streaming_response(response):
+                return _abuild_from_streaming_response(span, response)
+            else:
+                _handle_response(span, response)
+
+        span.end()
+
+        return response
 
 @_with_tracer_wrapper
 def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
@@ -271,10 +330,11 @@ class VertexAIInstrumentor(BaseInstrumentor):
             wrap_package = wrapped_method.get("package")
             wrap_object = wrapped_method.get("object")
             wrap_method = wrapped_method.get("method")
+
             wrap_function_wrapper(
                 wrap_package,
                 f"{wrap_object}.{wrap_method}",
-                _wrap(tracer, wrapped_method),
+                _awrap(tracer, wrapped_method) if wrap_method.endswith('_async') else _wrap(tracer, wrapped_method),
             )
 
     def _uninstrument(self, **kwargs):
