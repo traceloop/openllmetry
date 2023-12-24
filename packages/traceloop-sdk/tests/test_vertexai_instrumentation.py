@@ -35,7 +35,6 @@ def test_vertexai_generate_content(exporter):
 
     spans = exporter.get_finished_spans()
     assert [span.name for span in spans] == [
-        'POST',
         "vertexai.generate_content",
         "generate_content.workflow",
     ]

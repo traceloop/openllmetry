@@ -24,7 +24,7 @@ from vertexai.generative_models._generative_models import Part
 
 logger = logging.getLogger(__name__)
 
-_instruments = ("google-cloud-aiplatform >= 1.38.1",)
+_instruments = ("google-cloud-aiplatform",)
 
 WRAPPED_METHODS = [
     {
@@ -32,12 +32,6 @@ WRAPPED_METHODS = [
         "object": "GenerativeModel",
         "method": "generate_content",
         "span_name": "vertexai.generate_content",
-    },
-    {
-        "package": "vertexai.preview.generative_models",
-        "object": "GenerativeModel",
-        "method": "__init__",
-        "span_name": "vertexai.__init__",
     },
     {
         "package": "vertexai.language_models",
@@ -48,26 +42,20 @@ WRAPPED_METHODS = [
     {
         "package": "vertexai.language_models",
         "object": "TextGenerationModel",
-        "method": "from_pretrained",
-        "span_name": "vertexai.from_pretrained",
-    },
-    {
-        "package": "vertexai.language_models",
-        "object": "TextGenerationModel",
         "method": "predict_async",
-        "span_name": "vertexai.predict_async",
+        "span_name": "vertexai.predict",
     },
     {
         "package": "vertexai.language_models",
         "object": "TextGenerationModel",
         "method": "predict_streaming",
-        "span_name": "vertexai.predict_streaming",
+        "span_name": "vertexai.predict",
     },
     {
         "package": "vertexai.language_models",
         "object": "TextGenerationModel",
         "method": "predict_streaming_async",
-        "span_name": "vertexai.predict_streaming_async",
+        "span_name": "vertexai.predict",
     },
 ]
 
@@ -93,7 +81,6 @@ input_attribute_map = {
     "max_output_tokens": SpanAttributes.LLM_REQUEST_MAX_TOKENS,
     "temperature": SpanAttributes.LLM_TEMPERATURE,
     "top_p": SpanAttributes.LLM_TOP_P,
-    # "top_k": SpanAttributes.LLM_TOP_K,
     "presence_penalty": SpanAttributes.LLM_PRESENCE_PENALTY,
     "frequency_penalty": SpanAttributes.LLM_FREQUENCY_PENALTY
 }
@@ -126,53 +113,49 @@ def _set_input_attributes(span, args, kwargs):
             input_attribute_map.get("prompt"),
             prompt,
         )
-    else:
-        _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, "unknown")
 
-    for key in kwargs:
-        if key in input_attribute_map:        
-            _set_span_attribute(
-                span,
-                input_attribute_map.get(key),
-                kwargs.get(key),
-            )
+    _set_span_attribute(span, SpanAttributes.LLM_TEMPERATURE, kwargs.get('temperature'))
+    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MAX_TOKENS, kwargs.get('max_output_tokens'))
+    _set_span_attribute(span, SpanAttributes.LLM_TOP_P, kwargs.get('top_p'))
+    _set_span_attribute(span, SpanAttributes.LLM_PRESENCE_PENALTY, kwargs.get('presence_penalty'))
+    _set_span_attribute(span, SpanAttributes.LLM_FREQUENCY_PENALTY, kwargs.get('frequency_penalty'))
+
     return
 
 def is_streaming_response(response):
     return isinstance(response, types.GeneratorType) or isinstance(response, types.AsyncGeneratorType)
 
 def _set_response_attributes(span, response):
-    if should_send_prompts():
-        if hasattr(response, 'text') and should_send_prompts():
-            if hasattr(response, '_raw_response') and hasattr(response._raw_response, 'usage_metadata'):
-                _set_span_attribute(
-                    span, SpanAttributes.LLM_USAGE_TOTAL_TOKENS, response._raw_response.usage_metadata.total_token_count
-                )
-                _set_span_attribute(
-                    span, SpanAttributes.LLM_USAGE_COMPLETION_TOKENS, response._raw_response.usage_metadata.candidates_token_count
-                )
-                _set_span_attribute(
-                    span, SpanAttributes.LLM_USAGE_PROMPT_TOKENS, response._raw_response.usage_metadata.prompt_token_count
-                )
+    if hasattr(response, 'text'):
+        if hasattr(response, '_raw_response') and hasattr(response._raw_response, 'usage_metadata'):
+            _set_span_attribute(
+                span, SpanAttributes.LLM_USAGE_TOTAL_TOKENS, response._raw_response.usage_metadata.total_token_count
+            )
+            _set_span_attribute(
+                span, SpanAttributes.LLM_USAGE_COMPLETION_TOKENS, response._raw_response.usage_metadata.candidates_token_count
+            )
+            _set_span_attribute(
+                span, SpanAttributes.LLM_USAGE_PROMPT_TOKENS, response._raw_response.usage_metadata.prompt_token_count
+            )
 
 
-            if isinstance(response.text, list):
-                for index, item in enumerate(response):
-                    prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{index}"
-                    _set_span_attribute(span, f"{prefix}.content", item.text)
-            elif isinstance(response.text, str):
-                _set_span_attribute(
-                    span, f"{SpanAttributes.LLM_COMPLETIONS}.0.content", response.text
-                )
-        else:
-            if isinstance(response, list):
-                for index, item in enumerate(response):
-                    prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{index}"
-                    _set_span_attribute(span, f"{prefix}.content", item)
-            elif isinstance(response, str):
-                _set_span_attribute(
-                    span, f"{SpanAttributes.LLM_COMPLETIONS}.0.content", response
-                )
+        if isinstance(response.text, list):
+            for index, item in enumerate(response):
+                prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{index}"
+                _set_span_attribute(span, f"{prefix}.content", item.text)
+        elif isinstance(response.text, str):
+            _set_span_attribute(
+                span, f"{SpanAttributes.LLM_COMPLETIONS}.0.content", response.text
+            )
+    else:
+        if isinstance(response, list):
+            for index, item in enumerate(response):
+                prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{index}"
+                _set_span_attribute(span, f"{prefix}.content", item)
+        elif isinstance(response, str):
+            _set_span_attribute(
+                span, f"{SpanAttributes.LLM_COMPLETIONS}.0.content", response
+            )
 
     return
 
@@ -257,17 +240,6 @@ async def _awrap(tracer, to_wrap, wrapped, instance, args, kwargs):
                 SpanAttributes.LLM_REQUEST_TYPE: LLMRequestTypeValues.COMPLETION.value,
             }
         ) as span:
-    
-        global llm_model
-
-
-        if (to_wrap.get('method') == 'from_pretrained' or to_wrap.get('method') == "__init__") and args is not None and len(args) > 0:
-            llm_model = args[0]
-
-        _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, llm_model)
-        _set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, llm_model)
-
-        print('>>> args', args, kwargs)
 
         _handle_request(span, args, kwargs)
 
@@ -298,16 +270,6 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
             SpanAttributes.LLM_REQUEST_TYPE: LLMRequestTypeValues.COMPLETION.value,
         },
     )
-    global llm_model
-
-
-    if (to_wrap.get('method') == 'from_pretrained' or to_wrap.get('method') == "__init__") and args is not None and len(args) > 0:
-        llm_model = args[0]
-
-    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, llm_model)
-    _set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, llm_model)
-
-    print('>>> args', args, kwargs)
 
     _handle_request(span, args, kwargs)
 
