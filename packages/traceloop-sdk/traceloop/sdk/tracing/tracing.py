@@ -32,7 +32,8 @@ from typing import Dict
 TRACER_NAME = "traceloop.tracer"
 EXCLUDED_URLS = (
     "api.openai.com,openai.azure.com,api.anthropic.com,api.cohere.ai,pinecone.io,traceloop.com,"
-    "posthog.com,bedrock-runtime"
+    "posthog.com,bedrock-runtime",
+    "https://oauth2.googleapis.com/token"
 )
 
 
