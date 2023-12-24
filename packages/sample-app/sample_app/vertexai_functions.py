@@ -72,5 +72,5 @@ async def async_predict_text() -> str:
 
 if __name__ == "__main__":
     # print(generate_text())
-    # print(predict_text())
-    print(asyncio.run(async_predict_text()))
+    print(predict_text())
+    # print(asyncio.run(async_predict_text()))

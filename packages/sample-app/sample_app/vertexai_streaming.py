@@ -29,7 +29,7 @@ def streaming_prediction() -> str:
     result = [response for response in responses]
     return result
 
-@aworkflow("async_stream_prediction")
+@aworkflow("stream_prediction_async")
 async def async_streaming_prediction() -> str:
     """Async Streaming Text Example with a Large Language Model"""
 
@@ -47,5 +47,5 @@ async def async_streaming_prediction() -> str:
 
 
 if __name__ == "__main__":
-    # print(streaming_prediction())
-    print(asyncio.run(async_streaming_prediction()))
+    print(streaming_prediction())
+    # print(asyncio.run(async_streaming_prediction()))

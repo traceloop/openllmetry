@@ -30,7 +30,7 @@ from traceloop.sdk.utils import is_notebook
 from typing import Dict
 
 TRACER_NAME = "traceloop.tracer"
-EXCLUDED_URLS = "api.openai.com,openai.azure.com,api.anthropic.com,api.cohere.ai,pinecone.io,traceloop.com,posthog.com,bedrock-runtime,oauth2.googleapis.com"
+EXCLUDED_URLS = "api.openai.com,openai.azure.com,api.anthropic.com,api.cohere.ai,pinecone.io,traceloop.com,posthog.com,bedrock-runtime,oauth2.googleapis.com/token"
 
 
 class TracerWrapper(object):
@@ -250,7 +250,7 @@ def init_instrumentations():
     init_anthropic_instrumentor()
     init_cohere_instrumentor()
     init_pinecone_instrumentor()
-    # init_chroma_instrumentor()
+    init_chroma_instrumentor()
     # init_haystack_instrumentor()
     init_langchain_instrumentor()
     init_llama_index_instrumentor()
@@ -398,10 +398,10 @@ def init_replicate_instrumentor():
             instrumentor.instrument()
         
 def init_vertexai_instrumentor():
-    if importlib.util.find_spec("google-cloud-aiplatform") is not None:
+    if importlib.util.find_spec("vertexai") is not None:
         Telemetry().capture("instrumentation:vertexai:init")
-        from opentelemetry.instrumentation.vertexai import VertexAiInstrumentor
+        from opentelemetry.instrumentation.vertexai import VertexAIInstrumentor
 
-        instrumentor = VertexAiInstrumentor()
+        instrumentor = VertexAIInstrumentor()
         if not instrumentor.is_instrumented_by_opentelemetry:
             instrumentor.instrument(excluded_urls=EXCLUDED_URLS)
