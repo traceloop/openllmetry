@@ -47,5 +47,5 @@ async def async_streaming_prediction() -> str:
 
 
 if __name__ == "__main__":
-    print(streaming_prediction())
-    # print(asyncio.run(async_streaming_prediction()))
+    # print(streaming_prediction())
+    print(asyncio.run(async_streaming_prediction()))

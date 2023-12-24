@@ -63,26 +63,17 @@ def should_send_prompts():
         os.getenv("TRACELOOP_TRACE_CONTENT") or "true"
     ).lower() == "true" or context_api.get_value("override_enable_content_tracing")
 
-
 def is_streaming_response(response):
     return isinstance(response, types.GeneratorType)
 
+def is_async_streaming_response(response):
+    return isinstance(response, types.AsyncGeneratorType)
 
 def _set_span_attribute(span, name, value):
     if value is not None:
         if value != "":
             span.set_attribute(name, value)
     return
-
-input_attribute_map = {
-    "prompt": f"{SpanAttributes.LLM_PROMPTS}.0.user",
-    "max_output_tokens": SpanAttributes.LLM_REQUEST_MAX_TOKENS,
-    "temperature": SpanAttributes.LLM_TEMPERATURE,
-    "top_p": SpanAttributes.LLM_TOP_P,
-    "presence_penalty": SpanAttributes.LLM_PRESENCE_PENALTY,
-    "frequency_penalty": SpanAttributes.LLM_FREQUENCY_PENALTY
-}
-
 
 def _set_input_attributes(span, args, kwargs):
 
@@ -93,25 +84,16 @@ def _set_input_attributes(span, args, kwargs):
                 prompt = f"{prompt}{arg}\n"
             elif isinstance(arg, list):
                 for subarg in arg:
-                    if isinstance(subarg, str):
-                        prompt = f"{prompt}{subarg}\n"
-                    # Gemini
-                    elif isinstance(subarg, Part):
-                        if hasattr(subarg, 'text'):
-                            prompt = f"{prompt}text: {subarg.text.file_uri}\n"
-                        elif hasattr(subarg, 'mime_type'):
-                            prompt = f"{prompt}mime_type: {subarg.mime_type}\n"
-                        elif hasattr(subarg, 'inline_data'):
-                            prompt = f"{prompt}data: {subarg.inline_data.data}\nmime_type: {subarg.inline_data.mime_type}\n"
-                        elif hasattr(subarg, 'file_data'):
-                            prompt = f"{prompt}file_uri: {subarg.file_data.file_uri}\nmime_type: {subarg.file_data.mime_type}\n"
+                    prompt = f"{prompt}{subarg}\n"
 
         _set_span_attribute(
             span,
-            input_attribute_map.get("prompt"),
+            f"{SpanAttributes.LLM_PROMPTS}.0.user",
             prompt,
         )
 
+    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, 'unknown')
+    _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.0.user", kwargs.get('prompt'))
     _set_span_attribute(span, SpanAttributes.LLM_TEMPERATURE, kwargs.get('temperature'))
     _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MAX_TOKENS, kwargs.get('max_output_tokens'))
     _set_span_attribute(span, SpanAttributes.LLM_TOP_P, kwargs.get('top_p'))
@@ -120,10 +102,9 @@ def _set_input_attributes(span, args, kwargs):
 
     return
 
-def is_streaming_response(response):
-    return isinstance(response, types.GeneratorType) or isinstance(response, types.AsyncGeneratorType)
-
 def _set_response_attributes(span, response):
+    _set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, 'unknown')
+
     if hasattr(response, 'text'):
         if hasattr(response, '_raw_response') and hasattr(response._raw_response, 'usage_metadata'):
             _set_span_attribute(
@@ -220,36 +201,6 @@ def _with_tracer_wrapper(func):
 
 
 @_with_tracer_wrapper
-async def _awrap(tracer, to_wrap, wrapped, instance, args, kwargs):
-    if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
-        return await wrapped(*args, **kwargs)
-
-    name = to_wrap.get("span_name")
-    span = tracer.start_span(
-        name,
-        kind=SpanKind.CLIENT,
-        attributes={
-            SpanAttributes.LLM_VENDOR: "VertexAI",
-            SpanAttributes.LLM_REQUEST_TYPE: LLMRequestTypeValues.COMPLETION.value,
-        },
-    )
-
-    _handle_request(span, args, kwargs)
-
-    response = await wrapped(*args, **kwargs)
-
-    if response:
-        if is_streaming_response(response):
-            # span will be closed after the generator is done
-            return _abuild_from_streaming_response(span, response)
-        else:
-            _handle_response(span, response)
-
-    span.end()
-
-    return response
-
-@_with_tracer_wrapper
 def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
 
     """Instruments and calls every function defined in TO_WRAP."""
@@ -273,6 +224,8 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
     if response:
         if is_streaming_response(response):
             return _build_from_streaming_response(span, response)
+        elif is_async_streaming_response(response):
+            return _abuild_from_streaming_response(span, response)
         else:
             _handle_response(span, response)
 
@@ -297,7 +250,7 @@ class VertexAIInstrumentor(BaseInstrumentor):
             wrap_function_wrapper(
                 wrap_package,
                 f"{wrap_object}.{wrap_method}",
-                _awrap(tracer, wrapped_method) if wrap_method.endswith('_async') else _wrap(tracer, wrapped_method),
+                _wrap(tracer, wrapped_method),
             )
 
     def _uninstrument(self, **kwargs):
