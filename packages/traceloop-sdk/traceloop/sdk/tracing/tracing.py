@@ -30,11 +30,7 @@ from traceloop.sdk.utils import is_notebook
 from typing import Dict
 
 TRACER_NAME = "traceloop.tracer"
-EXCLUDED_URLS = (
-    "api.openai.com,openai.azure.com,api.anthropic.com,api.cohere.ai,pinecone.io,traceloop.com,"
-    "posthog.com,bedrock-runtime",
-    "https://oauth2.googleapis.com/token"
-)
+EXCLUDED_URLS = "api.openai.com,openai.azure.com,api.anthropic.com,api.cohere.ai,pinecone.io,traceloop.com,posthog.com,bedrock-runtime,oauth2.googleapis.com"
 
 
 class TracerWrapper(object):
@@ -254,7 +250,7 @@ def init_instrumentations():
     init_anthropic_instrumentor()
     init_cohere_instrumentor()
     init_pinecone_instrumentor()
-    init_chroma_instrumentor()
+    # init_chroma_instrumentor()
     # init_haystack_instrumentor()
     init_langchain_instrumentor()
     init_llama_index_instrumentor()
@@ -264,8 +260,6 @@ def init_instrumentations():
     init_pymysql_instrumentor()
     init_bedrock_instrumentor()
     init_replicate_instrumentor()
-    init_vertexai_instrumentor()
-    init_replicate_intrumentor()
     init_vertexai_instrumentor()
 
 
@@ -410,4 +404,4 @@ def init_vertexai_instrumentor():
 
         instrumentor = VertexAiInstrumentor()
         if not instrumentor.is_instrumented_by_opentelemetry:
-            instrumentor.instrument()
+            instrumentor.instrument(excluded_urls=EXCLUDED_URLS)
