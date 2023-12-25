@@ -1,5 +1,4 @@
 import os
-import asyncio
 import vertexai
 from vertexai.language_models import TextGenerationModel
 from vertexai.preview.generative_models import GenerativeModel, Part
@@ -13,6 +12,7 @@ location = os.getenv('VERTEXAI_LOCATION')
 
 # Initialize Vertex AI
 vertexai.init(project=project_id, location=location)
+
 
 @workflow("generate_content")
 def generate_text() -> str:
@@ -33,15 +33,16 @@ def generate_text() -> str:
     )
     return response.text
 
+
 @workflow("predict")
 def predict_text() -> str:
     """Ideation example with a Large Language Model"""
 
     parameters = {
         "temperature": 0.1,
-        "max_output_tokens": 256,  # Token limit determines the maximum amount of text output.
-        "top_p": 0.8,  # Tokens are selected from most probable to least until the sum of their probabilities equals the top_p value.
-        "top_k": 40,  # A top_k of 1 means the selected token is the most probable among all tokens.
+        "max_output_tokens": 256,
+        "top_p": 0.8,
+        "top_k": 40,
     }
 
     model = TextGenerationModel.from_pretrained("text-bison@001")
@@ -52,14 +53,15 @@ def predict_text() -> str:
 
     return response.text
 
+
 @aworkflow("predict_async")
 async def async_predict_text() -> str:
     """Async Ideation example with a Large Language Model"""
 
     parameters = {
-        "max_output_tokens": 256,  # Token limit determines the maximum amount of text output.
-        "top_p": 0.8,  # Tokens are selected from most probable to least until the sum of their probabilities equals the top_p value.
-        "top_k": 40,  # A top_k of 1 means the selected token is the most probable among all tokens.
+        "max_output_tokens": 256,
+        "top_p": 0.8,
+        "top_k": 40,
     }
 
     model = TextGenerationModel.from_pretrained("text-bison@001")

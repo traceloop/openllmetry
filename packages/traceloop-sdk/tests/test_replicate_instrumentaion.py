@@ -5,11 +5,10 @@ from traceloop.sdk.decorators import workflow, task
 def test_replicate_image_generation(exporter):
     @task(name="image_generation")
     def generate_image():
-        image = replicate.run(
+        replicate.run(
             "stability-ai/stable-diffusion:27b93a2413e7f36cd83da926f3656280b2931564ff050bf9575f1fdf9bcd7478",
             input={"prompt": "robots"}
         )
-
 
     @workflow(name="robot_image_generator")
     def image_workflow():
@@ -23,6 +22,7 @@ def test_replicate_image_generation(exporter):
         "image_generation.task",
         "robot_image_generator.workflow",
     ]
+
 
 def test_replicate_image_generation_stream(exporter):
     @task(name="image_generation_stream")
@@ -49,16 +49,16 @@ def test_replicate_image_generation_stream(exporter):
         "robot_image_generator_stream.workflow",
     ]
 
+
 def test_replicate_image_generation_predictions(exporter):
     @task(name="image_generation_predictions")
     def generate_image_predictions():
         model = replicate.models.get("kvfrans/clipdraw")
         version = model.versions.get("5797a99edc939ea0e9242d5e8c9cb3bc7d125b1eac21bda852e5cb79ede2cd9b")
-        prediction = replicate.predictions.create(
+        replicate.predictions.create(
             version,
             input={"prompt": "robots"}
         )
-
 
     @workflow(name="robot_image_generator_predictions")
     def image_workflow():
