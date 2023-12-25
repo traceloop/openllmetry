@@ -88,7 +88,7 @@ def test_vertexai_predict_async(exporter):
 
     spans = exporter.get_finished_spans()
     assert [span.name for span in spans] == [
-        "vertexai.predict_async",
+        "vertexai.predict",
         "predict_async.workflow",
     ]
 
@@ -113,7 +113,7 @@ def test_vertexai_stream(exporter):
 
     spans = exporter.get_finished_spans()
     assert [span.name for span in spans] == [
-        "vertexai.predict_streaming",
+        "vertexai.predict",
         "stream_prediction.workflow",
     ]
 
@@ -138,6 +138,6 @@ def test_vertexai_stream_async(exporter):
 
     spans = exporter.get_finished_spans()
     assert [span.name for span in spans] == [
-        "vertexai.predict_streaming_async",
+        "vertexai.predict",
         "stream_prediction_async.workflow",
     ]
