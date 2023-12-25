@@ -43,6 +43,7 @@ tokenizers = "~0.14.0"
 boto3 = "^1.33.1"
 transformers = "^4.35.2"
 replicate = "^0.22.0"
+google-cloud-aiplatform = "^1.38.1"
 
 [tool.poetry.dependencies.opentelemetry-instrumentation-openai]
 path = "../opentelemetry-instrumentation-openai"
@@ -58,6 +59,10 @@ develop = true
 
 [tool.poetry.dependencies.opentelemetry-instrumentation-replicate]
 path = "../opentelemetry-instrumentation-replicate"
+develop = true
+
+[tool.poetry.dependencies.opentelemetry-instrumentation-vertexai]
+path = "../opentelemetry-instrumentation-vertexai"
 develop = true
 
 [tool.poetry.dependencies.traceloop-sdk]

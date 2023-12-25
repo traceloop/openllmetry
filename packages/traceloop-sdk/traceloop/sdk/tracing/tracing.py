@@ -30,10 +30,16 @@ from traceloop.sdk.utils import is_notebook
 from typing import Dict
 
 TRACER_NAME = "traceloop.tracer"
-EXCLUDED_URLS = (
-    "api.openai.com,openai.azure.com,api.anthropic.com,api.cohere.ai,pinecone.io,traceloop.com,"
-    "posthog.com,bedrock-runtime"
-)
+EXCLUDED_URLS = '''
+    api.openai.com,
+    openai.azure.com,
+    api.anthropic.com,
+    api.cohere.ai,
+    pinecone.io,
+    traceloop.com,
+    posthog.com,
+    bedrock-runtime,
+    oauth2.googleapis.com/token'''
 
 
 class TracerWrapper(object):
@@ -262,7 +268,8 @@ def init_instrumentations():
     init_urllib3_instrumentor()
     init_pymysql_instrumentor()
     init_bedrock_instrumentor()
-    init_replicate_intrumentor()
+    init_replicate_instrumentor()
+    init_vertexai_instrumentor()
 
 
 def init_openai_instrumentor():
@@ -391,7 +398,7 @@ def init_bedrock_instrumentor():
             instrumentor.instrument()
 
 
-def init_replicate_intrumentor():
+def init_replicate_instrumentor():
     if importlib.util.find_spec("replicate") is not None:
         Telemetry().capture("instrumentation:replicate:init")
         from opentelemetry.instrumentation.replicate import ReplicateInstrumentor
@@ -399,3 +406,13 @@ def init_replicate_intrumentor():
         instrumentor = ReplicateInstrumentor()
         if not instrumentor.is_instrumented_by_opentelemetry:
             instrumentor.instrument()
+
+
+def init_vertexai_instrumentor():
+    if importlib.util.find_spec("vertexai") is not None:
+        Telemetry().capture("instrumentation:vertexai:init")
+        from opentelemetry.instrumentation.vertexai import VertexAIInstrumentor
+
+        instrumentor = VertexAIInstrumentor()
+        if not instrumentor.is_instrumented_by_opentelemetry:
+            instrumentor.instrument(excluded_urls=EXCLUDED_URLS)

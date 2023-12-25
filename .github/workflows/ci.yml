@@ -49,7 +49,7 @@ jobs:
           username: ${{ github.triggering_actor }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      
+
       - name: Check User Permission
         if: steps.checkAccess.outputs.require-result == 'false'
         run: |
@@ -57,7 +57,7 @@ jobs:
           echo "Current permission level is ${{ steps.checkAccess.outputs.user-permission }}"
           echo "Job originally triggered by ${{ github.actor }}"
           exit 1
-      
+
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
@@ -80,10 +80,10 @@ jobs:
 
       - name: Install
         run: npx nx affected -t install --exclude='sample-app' --with dev --parallel=3
-      
+
       - name: Build
         run: npx nx affected -t build --exclude='sample-app' --parallel=3
-      
+
       - name: Test
         env:
           OPENAI_API_KEY: ${{ secrets.OPEN_API_KEY }}
@@ -93,37 +93,39 @@ jobs:
           PINECONE_API_KEY: ${{ secrets.PINECONE_API_KEY }}
           PINECONE_ENVIRONMENT: ${{ secrets.PINECONE_ENVIRONMENT }}
           TRACELOOP_API_KEY: ${{ secrets.TRACELOOP_API_KEY }}
+          VERTEXAI_PROJECT_ID: ${{ secrets.VERTEXAI_PROJECT_ID }}
+          VERTEXAI_LOCATION: ${{ secrets.VERTEXAI_LOCATION }}
         run: npx nx affected -t test --exclude='sample-app' --parallel=3
-  
+
   build-sample-app:
-      name: Build Sample App
-      runs-on: ubuntu-latest
-      strategy:
-        matrix:
-          python-version: ["3.11"]
+    name: Build Sample App
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11"]
 
-      steps:
-        - uses: actions/checkout@v4
-          with:
-            fetch-depth: 0
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-        - name: Set up Python ${{ matrix.python-version }}
-          uses: actions/setup-python@v1
-          with:
-            python-version: ${{ matrix.python-version }}
-        - name: Install Poetry
-          uses: snok/install-poetry@v1
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v1
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
 
-        - uses: actions/setup-node@v3
-          with:
-            node-version: 18
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
 
-        - uses: nrwl/nx-set-shas@v3
+      - uses: nrwl/nx-set-shas@v3
 
-        - run: npm ci
+      - run: npm ci
 
-        - name: Install
-          run: npx nx run sample-app:install
-        
-        - name: Build
-          run: npx nx run sample-app:build
+      - name: Install
+        run: npx nx run sample-app:install
+
+      - name: Build
+        run: npx nx run sample-app:build
