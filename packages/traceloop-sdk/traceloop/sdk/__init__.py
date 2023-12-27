@@ -32,6 +32,7 @@ class Traceloop:
     AUTO_CREATED_URL = str(Path.home() / ".cache" / "traceloop" / "auto_created_url")
 
     __tracer_wrapper: TracerWrapper
+    __fetcher: Fetcher
 
     @staticmethod
     def init(
@@ -57,7 +58,8 @@ class Traceloop:
             and not exporter
             and not processor
         ):
-            Fetcher(base_url=api_endpoint, api_key=api_key).run()
+            Traceloop.__fetcher = Fetcher(base_url=api_endpoint, api_key=api_key)
+            Traceloop.__fetcher.run()
             print(
                 Fore.GREEN + "Traceloop syncing configuration and prompts" + Fore.RESET
             )
@@ -158,3 +160,27 @@ class Traceloop:
 
     def set_association_properties(properties: dict) -> None:
         set_association_properties(properties)
+
+    def report_score(
+        association_property_name: str,
+        association_property_id: str,
+        score: float,
+    ):
+        if not Traceloop.__fetcher:
+            print(
+                Fore.RED
+                + "Error: Cannot report score. Missing Traceloop API key,"
+                + " go to https://https://app.traceloop.com/settings/api-keys to create one"
+            )
+            print("Set the TRACELOOP_API_KEY environment variable to the key")
+            print(Fore.RESET)
+            return
+
+        Traceloop.__fetcher.post(
+            "score",
+            {
+                "entity_name": f"traceloop.association.properties.{association_property_name}",
+                "entity_id": association_property_id,
+                "score": score,
+            },
+        )
