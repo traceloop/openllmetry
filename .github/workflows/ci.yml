@@ -96,7 +96,7 @@ jobs:
           VERTEXAI_PROJECT_ID: ${{ secrets.VERTEXAI_PROJECT_ID }}
           VERTEXAI_LOCATION: ${{ secrets.VERTEXAI_LOCATION }}
         run: npx nx affected -t test --exclude='sample-app' --parallel=3
-
+  
   build-sample-app:
       name: Build Sample App
       runs-on: ubuntu-latest
