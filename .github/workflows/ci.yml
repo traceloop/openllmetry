@@ -96,36 +96,36 @@ jobs:
           VERTEXAI_PROJECT_ID: ${{ secrets.VERTEXAI_PROJECT_ID }}
           VERTEXAI_LOCATION: ${{ secrets.VERTEXAI_LOCATION }}
         run: npx nx affected -t test --exclude='sample-app' --parallel=3
-      
+
   build-sample-app:
-        name: Build Sample App
-        runs-on: ubuntu-latest
-        strategy:
-          matrix:
-            python-version: ["3.11"]
+      name: Build Sample App
+      runs-on: ubuntu-latest
+      strategy:
+        matrix:
+          python-version: ["3.11"]
 
-        steps:
-          - uses: actions/checkout@v4
-            with:
-              fetch-depth: 0
+      steps:
+        - uses: actions/checkout@v4
+          with:
+            fetch-depth: 0
 
-          - name: Set up Python ${{ matrix.python-version }}
-            uses: actions/setup-python@v1
-            with:
-              python-version: ${{ matrix.python-version }}
-          - name: Install Poetry
-            uses: snok/install-poetry@v1
+        - name: Set up Python ${{ matrix.python-version }}
+          uses: actions/setup-python@v1
+          with:
+            python-version: ${{ matrix.python-version }}
+        - name: Install Poetry
+          uses: snok/install-poetry@v1
 
-          - uses: actions/setup-node@v3
-            with:
-              node-version: 18
+        - uses: actions/setup-node@v3
+          with:
+            node-version: 18
 
-          - uses: nrwl/nx-set-shas@v3
+        - uses: nrwl/nx-set-shas@v3
 
-          - run: npm ci
+        - run: npm ci
 
-          - name: Install
-            run: npx nx run sample-app:install
-          
-          - name: Build
-            run: npx nx run sample-app:build
+        - name: Install
+          run: npx nx run sample-app:install
+        
+        - name: Build
+          run: npx nx run sample-app:build
