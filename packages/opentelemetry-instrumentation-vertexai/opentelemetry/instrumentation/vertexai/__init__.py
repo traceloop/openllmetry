@@ -22,7 +22,7 @@ from vertexai.generative_models._generative_models import Part
 
 logger = logging.getLogger(__name__)
 
-_instruments = ("google-cloud-aiplatform",)
+_instruments = ("google-cloud-aiplatform >= 1.38.1",)
 
 WRAPPED_METHODS = [
     {
