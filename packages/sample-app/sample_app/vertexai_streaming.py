@@ -10,7 +10,6 @@ Traceloop.init(app_name="stream_prediction_service")
 project_id = os.getenv('VERTEXAI_PROJECT_ID')
 location = os.getenv('VERTEXAI_LOCATION')
 
-# Initialize Vertex AI
 vertexai.init(project=project_id, location=location)
 
 
@@ -53,5 +52,4 @@ async def async_streaming_prediction() -> str:
 
 
 if __name__ == "__main__":
-    # print(streaming_prediction())
     print(asyncio.run(async_streaming_prediction()))

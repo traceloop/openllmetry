@@ -415,4 +415,4 @@ def init_vertexai_instrumentor():
 
         instrumentor = VertexAIInstrumentor()
         if not instrumentor.is_instrumented_by_opentelemetry:
-            instrumentor.instrument(excluded_urls=EXCLUDED_URLS)
+            instrumentor.instrument()

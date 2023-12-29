@@ -8,7 +8,6 @@ from vertexai.preview.generative_models import GenerativeModel, Part
 project_id = os.getenv('VERTEXAI_PROJECT_ID')
 location = os.getenv('VERTEXAI_LOCATION')
 
-# Initialize Vertex AI
 vertexai.init(project=project_id, location=location)
 
 
@@ -17,16 +16,12 @@ def test_vertexai_generate_content(exporter):
     def generate_text() -> str:
         """Generate content with Multimodal Model (Gemini)"""
 
-        # Load the model
         multimodal_model = GenerativeModel("gemini-pro-vision")
-        # Query the model
         response = multimodal_model.generate_content(
             [
-                # Add an example image
                 Part.from_uri(
                     "gs://generativeai-downloads/images/scones.jpg", mime_type="image/jpeg"
                 ),
-                # Add an example query
                 "what is shown in this image?",
             ]
         )
