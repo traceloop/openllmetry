@@ -97,6 +97,7 @@ def _set_input_attributes(span, args, kwargs):
     _set_span_attribute(span, SpanAttributes.LLM_TEMPERATURE, kwargs.get('temperature'))
     _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MAX_TOKENS, kwargs.get('max_output_tokens'))
     _set_span_attribute(span, SpanAttributes.LLM_TOP_P, kwargs.get('top_p'))
+    _set_span_attribute(span, SpanAttributes.LLM_TOP_K, kwargs.get('top_k'))
     _set_span_attribute(span, SpanAttributes.LLM_PRESENCE_PENALTY, kwargs.get('presence_penalty'))
     _set_span_attribute(span, SpanAttributes.LLM_FREQUENCY_PENALTY, kwargs.get('frequency_penalty'))
 
