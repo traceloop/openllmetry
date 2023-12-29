@@ -18,8 +18,6 @@ from opentelemetry.instrumentation.utils import (
 from opentelemetry.semconv.ai import SpanAttributes, LLMRequestTypeValues
 from opentelemetry.instrumentation.vertexai.version import __version__
 
-from vertexai.generative_models._generative_models import Part
-
 logger = logging.getLogger(__name__)
 
 _instruments = ("google-cloud-aiplatform >= 1.38.1",)
