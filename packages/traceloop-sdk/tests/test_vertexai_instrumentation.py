@@ -2,7 +2,7 @@ import os
 import asyncio
 import vertexai
 from traceloop.sdk.decorators import workflow, aworkflow
-from vertexai.language_models import TextGenerationModel
+from vertexai.language_models import TextGenerationModel, ChatModel, InputOutputTextPair
 from vertexai.preview.generative_models import GenerativeModel, Part
 
 project_id = os.getenv('VERTEXAI_PROJECT_ID')
@@ -139,4 +139,78 @@ def test_vertexai_stream_async(exporter):
     assert [span.name for span in spans] == [
         "vertexai.predict",
         "stream_prediction_async.workflow",
+    ]
+
+def test_vertexai_chat(exporter):
+    @workflow("send_message")
+    def chat() -> str:
+        """Chat Example with a Large Language Model"""
+
+        chat_model = ChatModel.from_pretrained("chat-bison@001")
+
+        parameters = {
+            "max_output_tokens": 256,
+            "top_p": 0.95,
+            "top_k": 40,
+        }
+
+        chat = chat_model.start_chat(
+            context="My name is Miles. You are an astronomer, knowledgeable about the solar system.",
+            examples=[
+                InputOutputTextPair(
+                    input_text="How many moons does Mars have?",
+                    output_text="The planet Mars has two moons, Phobos and Deimos.",
+                ),
+            ],
+        )
+
+        response = chat.send_message(
+            "How many planets are there in the solar system?", **parameters
+        )
+
+        return response.text
+    chat()
+
+    spans = exporter.get_finished_spans()
+    assert [span.name for span in spans] == [
+        "vertexai.send_message",
+        "send_message.workflow",
+    ]
+
+def test_vertexai_chat_stream(exporter):
+    @workflow("stream_send_message")
+    def chat_streaming() -> str:
+        """Streaming Chat Example with a Large Language Model"""
+
+        chat_model = ChatModel.from_pretrained("chat-bison")
+
+        parameters = {
+            "temperature": 0.8,
+            "max_output_tokens": 256,
+            "top_p": 0.95,
+            "top_k": 40,
+        }
+
+        chat = chat_model.start_chat(
+            context="My name is Miles. You are an astronomer, knowledgeable about the solar system.",
+            examples=[
+                InputOutputTextPair(
+                    input_text="How many moons does Mars have?",
+                    output_text="The planet Mars has two moons, Phobos and Deimos.",
+                ),
+            ],
+        )
+
+        responses = chat.send_message_streaming(
+            message="How many planets are there in the solar system?", **parameters
+        )
+
+        result = [response for response in responses]
+        return result
+    chat_streaming()
+
+    spans = exporter.get_finished_spans()
+    assert [span.name for span in spans] == [
+        "vertexai.send_message",
+        "stream_send_message.workflow",
     ]

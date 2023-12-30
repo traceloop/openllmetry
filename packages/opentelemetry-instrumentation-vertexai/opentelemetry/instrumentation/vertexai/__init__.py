@@ -53,6 +53,18 @@ WRAPPED_METHODS = [
         "method": "predict_streaming_async",
         "span_name": "vertexai.predict",
     },
+    {
+        "package": "vertexai.language_models",
+        "object": "ChatSession",
+        "method": "send_message",
+        "span_name": "vertexai.send_message",
+    },
+    {
+        "package": "vertexai.language_models",
+        "object": "ChatSession",
+        "method": "send_message_streaming",
+        "span_name": "vertexai.send_message",
+    },
 ]
 
 
