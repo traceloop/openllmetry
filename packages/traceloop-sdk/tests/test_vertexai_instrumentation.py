@@ -30,10 +30,16 @@ def test_vertexai_generate_content(exporter):
     generate_text()
 
     spans = exporter.get_finished_spans()
+    print('>>> spans', [span.name for span in spans])
     assert [span.name for span in spans] == [
         "vertexai.generate_content",
         "generate_content.workflow",
     ]
+
+    vertexai_span = spans[0]
+    assert (
+        "what is shown in this image?" in vertexai_span.attributes["llm.prompts.0.user"]
+    )
 
 
 def test_vertexai_predict(exporter):
@@ -62,6 +68,11 @@ def test_vertexai_predict(exporter):
         "predict.workflow",
     ]
 
+    vertexai_span = spans[0]
+    assert (
+        "Give me ten interview questions for the role of program manager." in vertexai_span.attributes["llm.prompts.0.user"]
+    )
+
 
 def test_vertexai_predict_async(exporter):
     @aworkflow("predict_async")
@@ -89,6 +100,11 @@ def test_vertexai_predict_async(exporter):
         "predict_async.workflow",
     ]
 
+    vertexai_span = spans[0]
+    assert (
+        "Give me ten interview questions for the role of program manager." in vertexai_span.attributes["llm.prompts.0.user"]
+    )
+
 
 def test_vertexai_stream(exporter):
     @workflow("stream_prediction")
@@ -113,6 +129,11 @@ def test_vertexai_stream(exporter):
         "vertexai.predict",
         "stream_prediction.workflow",
     ]
+
+    vertexai_span = spans[0]
+    assert (
+        "Give me ten interview questions for the role of program manager." in vertexai_span.attributes["llm.prompts.0.user"]
+    )
 
 
 def test_vertexai_stream_async(exporter):
@@ -140,6 +161,11 @@ def test_vertexai_stream_async(exporter):
         "vertexai.predict",
         "stream_prediction_async.workflow",
     ]
+
+    vertexai_span = spans[0]
+    assert (
+        "Give me ten interview questions for the role of program manager." in vertexai_span.attributes["llm.prompts.0.user"]
+    )
 
 def test_vertexai_chat(exporter):
     @workflow("send_message")
@@ -176,6 +202,11 @@ def test_vertexai_chat(exporter):
         "vertexai.send_message",
         "send_message.workflow",
     ]
+
+    vertexai_span = spans[0]
+    assert (
+        "How many planets are there in the solar system?" in vertexai_span.attributes["llm.prompts.0.user"]
+    )
 
 def test_vertexai_chat_stream(exporter):
     @workflow("stream_send_message")
@@ -214,3 +245,8 @@ def test_vertexai_chat_stream(exporter):
         "vertexai.send_message",
         "stream_send_message.workflow",
     ]
+
+    vertexai_span = spans[0]
+    assert (
+        vertexai_span.attributes["llm.top_p"] == 0.95
+    )
