@@ -25,12 +25,12 @@ def test_vertexai_generate_content(exporter):
                 "what is shown in this image?",
             ]
         )
+        print(response)
         return response.text
 
     generate_text()
 
     spans = exporter.get_finished_spans()
-    print('>>> spans', [span.name for span in spans])
     assert [span.name for span in spans] == [
         "vertexai.generate_content",
         "generate_content.workflow",
