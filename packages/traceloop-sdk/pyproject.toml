@@ -35,7 +35,7 @@ opentelemetry-exporter-otlp-proto-grpc = "^1.20.0"
 opentelemetry-instrumentation-requests = "^0.42b0"
 opentelemetry-instrumentation-pymysql = "^0.42b0"
 opentelemetry-instrumentation-urllib3 = "^0.42b0"
-opentelemetry-semantic-conventions-ai = "^0.0.12"
+opentelemetry-semantic-conventions-ai = "^0.0.13"
 opentelemetry-instrumentation-openai = {path="../opentelemetry-instrumentation-openai", develop=true}
 opentelemetry-instrumentation-anthropic = {path="../opentelemetry-instrumentation-anthropic", develop=true}
 opentelemetry-instrumentation-cohere = {path="../opentelemetry-instrumentation-cohere", develop=true}
