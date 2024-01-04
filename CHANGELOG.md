@@ -1,3 +1,14 @@
+## v0.8.0 (2024-01-04)
+
+### Feat
+
+- **semconv**: added top-k (#291)
+
+### Fix
+
+- support anthropic v0.8.1 (#301)
+- **ci**: fix replicate release (#285)
+
 ## v0.7.0 (2023-12-21)
 
 ### Feat

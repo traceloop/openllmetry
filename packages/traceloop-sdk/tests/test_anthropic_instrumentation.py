@@ -27,3 +27,9 @@ def test_anthropic_completion(exporter):
         "joke_creation.task",
         "pirate_joke_generator.workflow",
     ]
+    anthropic_span = spans[0]
+    assert (
+        anthropic_span.attributes["llm.prompts.0.user"]
+        == f"{HUMAN_PROMPT}\nHello world\n{AI_PROMPT}"
+    )
+    assert anthropic_span.attributes.get("llm.completions.0.content")

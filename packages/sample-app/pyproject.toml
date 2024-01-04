@@ -43,6 +43,8 @@ tokenizers = "~0.14.0"
 boto3 = "^1.33.1"
 transformers = "^4.35.2"
 replicate = "^0.22.0"
+cohere = "^4.40"
+anthropic = "^0.8.1"
 google-cloud-aiplatform = "^1.38.1"
 
 [tool.poetry.dependencies.opentelemetry-instrumentation-openai]
