@@ -22,12 +22,26 @@ logger = logging.getLogger(__name__)
 
 _instruments = ("google-cloud-aiplatform >= 1.38.1",)
 
+llm_model = 'unknown'
+
 WRAPPED_METHODS = [
+    {
+        "package": "vertexai.preview.generative_models",
+        "object": "GenerativeModel",
+        "method": "__init__",
+        "span_name": "vertexai.__init__",
+    },
     {
         "package": "vertexai.preview.generative_models",
         "object": "GenerativeModel",
         "method": "generate_content",
         "span_name": "vertexai.generate_content",
+    },
+    {
+        "package": "vertexai.language_models",
+        "object": "TextGenerationModel",
+        "method": "from_pretrained",
+        "span_name": "vertexai.from_pretrained",
     },
     {
         "package": "vertexai.language_models",
@@ -52,6 +66,12 @@ WRAPPED_METHODS = [
         "object": "TextGenerationModel",
         "method": "predict_streaming_async",
         "span_name": "vertexai.predict",
+    },
+    {
+        "package": "vertexai.language_models",
+        "object": "ChatModel",
+        "method": "from_pretrained",
+        "span_name": "vertexai.from_pretrained",
     },
     {
         "package": "vertexai.language_models",
@@ -102,7 +122,7 @@ def _set_input_attributes(span, args, kwargs):
             prompt,
         )
 
-    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, 'unknown')
+    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, llm_model)
     _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.0.user", kwargs.get('prompt'))
     _set_span_attribute(span, SpanAttributes.LLM_TEMPERATURE, kwargs.get('temperature'))
     _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MAX_TOKENS, kwargs.get('max_output_tokens'))
@@ -114,7 +134,7 @@ def _set_input_attributes(span, args, kwargs):
     return
 
 def _set_response_attributes(span, response):
-    _set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, 'unknown')
+    _set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, llm_model)
 
     if hasattr(response, 'text'):
         if hasattr(response, '_raw_response') and hasattr(response._raw_response, 'usage_metadata'):
@@ -210,12 +230,17 @@ def _with_tracer_wrapper(func):
 
     return _with_tracer
 
-
 @_with_tracer_wrapper
 def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
 
     """Instruments and calls every function defined in TO_WRAP."""
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
+        return wrapped(*args, **kwargs)
+    
+    global llm_model
+
+    if (to_wrap.get('method') == 'from_pretrained' or to_wrap.get('method') == "__init__") and args is not None and len(args) > 0:
+        llm_model = args[0]
         return wrapped(*args, **kwargs)
 
     name = to_wrap.get("span_name")
