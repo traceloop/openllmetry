@@ -72,6 +72,15 @@ def test_vertexai_predict(exporter):
     assert (
         "Give me ten interview questions for the role of program manager." in vertexai_span.attributes["llm.prompts.0.user"]
     )
+    assert (
+        vertexai_span.attributes["llm.top_p"] == 0.8
+    )
+    assert (
+        vertexai_span.attributes["llm.request.max_tokens"] == 256
+    )
+    assert (
+        vertexai_span.attributes["llm.top_k"] == 40
+    )
 
 
 def test_vertexai_predict_async(exporter):
@@ -104,6 +113,15 @@ def test_vertexai_predict_async(exporter):
     assert (
         "Give me ten interview questions for the role of program manager." in vertexai_span.attributes["llm.prompts.0.user"]
     )
+    assert (
+        vertexai_span.attributes["llm.top_p"] == 0.8
+    )
+    assert (
+        vertexai_span.attributes["llm.request.max_tokens"] == 256
+    )
+    assert (
+        vertexai_span.attributes["llm.top_k"] == 40
+    )
 
 
 def test_vertexai_stream(exporter):
@@ -133,6 +151,15 @@ def test_vertexai_stream(exporter):
     vertexai_span = spans[0]
     assert (
         "Give me ten interview questions for the role of program manager." in vertexai_span.attributes["llm.prompts.0.user"]
+    )
+    assert (
+        vertexai_span.attributes["llm.top_p"] == 0.8
+    )
+    assert (
+        vertexai_span.attributes["llm.request.max_tokens"] == 256
+    )
+    assert (
+        vertexai_span.attributes["llm.top_k"] == 40
     )
 
 
@@ -165,6 +192,15 @@ def test_vertexai_stream_async(exporter):
     vertexai_span = spans[0]
     assert (
         "Give me ten interview questions for the role of program manager." in vertexai_span.attributes["llm.prompts.0.user"]
+    )
+    assert (
+        vertexai_span.attributes["llm.top_p"] == 0.8
+    )
+    assert (
+        vertexai_span.attributes["llm.request.max_tokens"] == 256
+    )
+    assert (
+        vertexai_span.attributes["llm.top_k"] == 40
     )
 
 def test_vertexai_chat(exporter):
@@ -206,6 +242,15 @@ def test_vertexai_chat(exporter):
     vertexai_span = spans[0]
     assert (
         "How many planets are there in the solar system?" in vertexai_span.attributes["llm.prompts.0.user"]
+    )
+    assert (
+        vertexai_span.attributes["llm.top_p"] == 0.95
+    )
+    assert (
+        vertexai_span.attributes["llm.request.max_tokens"] == 256
+    )
+    assert (
+        vertexai_span.attributes["llm.top_k"] == 40
     )
 
 def test_vertexai_chat_stream(exporter):
@@ -249,4 +294,13 @@ def test_vertexai_chat_stream(exporter):
     vertexai_span = spans[0]
     assert (
         vertexai_span.attributes["llm.top_p"] == 0.95
+    )
+    assert (
+        vertexai_span.attributes["llm.temperature"] == 0.8
+    )
+    assert (
+        vertexai_span.attributes["llm.request.max_tokens"] == 256
+    )
+    assert (
+        vertexai_span.attributes["llm.top_k"] == 40
     )
