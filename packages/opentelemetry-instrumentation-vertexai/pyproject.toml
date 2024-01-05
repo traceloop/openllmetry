@@ -13,7 +13,12 @@ addopts = "--cov --cov-report html:'../../coverage/packages/opentelemetry-instru
 name = "opentelemetry-instrumentation-vertexai"
 version = "0.8.0"
 description = "OpenTelemetry Vertex AI instrumentation"
-authors = [ "Swaroop <maddisaiswaroop@gmail.com>" ]
+authors = [
+  "Gal Kleinman <gal@traceloop.com>",
+  "Nir Gazit <nir@traceloop.com>",
+  "Tomer Friedman <tomer@traceloop.com>",
+  "Swaroop <maddisaiswaroop@gmail.com>"
+]
 license = "Apache-2.0"
 readme = "README.md"
 
