@@ -62,6 +62,10 @@ develop = true
 path = "../opentelemetry-instrumentation-replicate"
 develop = true
 
+[tool.poetry.dependencies.opentelemetry-instrumentation-vertexai]
+path = "../opentelemetry-instrumentation-vertexai"
+develop = true
+
 [tool.poetry.dependencies.traceloop-sdk]
 path = "../traceloop-sdk"
 develop = true
