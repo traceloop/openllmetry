@@ -1,4 +1,5 @@
 import os
+import asyncio
 import vertexai
 from vertexai.language_models import TextGenerationModel, ChatModel, InputOutputTextPair
 from vertexai.preview.generative_models import GenerativeModel, Part
@@ -98,4 +99,4 @@ def chat() -> str:
 
 
 if __name__ == "__main__":
-    print(chat())
+    print(asyncio.run(async_predict_text()))

@@ -83,4 +83,4 @@ def chat_streaming() -> str:
 
 
 if __name__ == "__main__":
-    print(asyncio.run(async_streaming_prediction()))
+    print(chat_streaming())

@@ -1,4 +1,5 @@
 """OpenTelemetry Vertex AI instrumentation"""
+import asyncio
 import logging
 import os
 import types
@@ -173,7 +174,7 @@ def _build_from_streaming_response(span, response):
     complete_response = ""
     for item in response:
         item_to_yield = item
-        complete_response += str(item)
+        complete_response += str(item.text)
 
         yield item_to_yield
 
@@ -186,7 +187,7 @@ async def _abuild_from_streaming_response(span, response):
     complete_response = ""
     async for item in response:
         item_to_yield = item
-        complete_response += str(item)
+        complete_response += str(item.text)
 
         yield item_to_yield
 

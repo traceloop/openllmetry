@@ -1,4 +1,5 @@
 import os
+import pytest
 import asyncio
 import vertexai
 from traceloop.sdk.decorators import workflow, aworkflow
@@ -25,10 +26,9 @@ def test_vertexai_generate_content(exporter):
                 "what is shown in this image?",
             ]
         )
-        print(response)
-        return response.text
+        return response
 
-    generate_text()
+    response = generate_text()
 
     spans = exporter.get_finished_spans()
     assert [span.name for span in spans] == [
@@ -39,6 +39,18 @@ def test_vertexai_generate_content(exporter):
     vertexai_span = spans[0]
     assert (
         "what is shown in this image?" in vertexai_span.attributes["llm.prompts.0.user"]
+    )
+    assert (
+        vertexai_span.attributes["llm.usage.total_tokens"] == response._raw_response.usage_metadata.total_token_count
+    )
+    assert (
+        vertexai_span.attributes["llm.usage.prompt_tokens"] == response._raw_response.usage_metadata.prompt_token_count
+    )
+    assert (
+        vertexai_span.attributes["llm.usage.completion_tokens"] == response._raw_response.usage_metadata.candidates_token_count
+    )
+    assert (
+        vertexai_span.attributes['llm.completions.0.content'] == response.text
     )
 
 
@@ -60,7 +72,7 @@ def test_vertexai_predict(exporter):
         )
 
         return response.text
-    predict_text()
+    response = predict_text()
 
     spans = exporter.get_finished_spans()
     assert [span.name for span in spans] == [
@@ -81,7 +93,9 @@ def test_vertexai_predict(exporter):
     assert (
         vertexai_span.attributes["llm.top_k"] == 40
     )
-
+    assert (
+       vertexai_span.attributes['llm.completions.0.content'] == response
+    )
 
 def test_vertexai_predict_async(exporter):
     @aworkflow("predict_async")
@@ -123,10 +137,9 @@ def test_vertexai_predict_async(exporter):
         vertexai_span.attributes["llm.top_k"] == 40
     )
 
-
 def test_vertexai_stream(exporter):
     @workflow("stream_prediction")
-    def streaming_prediction() -> str:
+    def streaming_prediction() -> list:
         """Streaming Text Example with a Large Language Model"""
 
         text_generation_model = TextGenerationModel.from_pretrained("text-bison")
@@ -139,9 +152,9 @@ def test_vertexai_stream(exporter):
             prompt="Give me ten interview questions for the role of program manager.",
             **parameters)
 
-        result = [response for response in responses]
+        result = [response.text for response in responses]
         return result
-    streaming_prediction()
+    response = streaming_prediction()
     spans = exporter.get_finished_spans()
     assert [span.name for span in spans] == [
         "vertexai.predict",
@@ -161,11 +174,13 @@ def test_vertexai_stream(exporter):
     assert (
         vertexai_span.attributes["llm.top_k"] == 40
     )
-
+    assert (
+        vertexai_span.attributes["llm.completions.0.content"] == ''.join(response)
+    )
 
 def test_vertexai_stream_async(exporter):
     @aworkflow("stream_prediction_async")
-    async def async_streaming_prediction() -> str:
+    async def async_streaming_prediction() -> list:
         """Streaming Text Example with a Large Language Model"""
 
         text_generation_model = TextGenerationModel.from_pretrained("text-bison")
@@ -179,9 +194,9 @@ def test_vertexai_stream_async(exporter):
             prompt="Give me ten interview questions for the role of program manager.",
             **parameters
         )
-        result = [response async for response in responses]
+        result = [response.text async for response in responses]
         return result
-    asyncio.run(async_streaming_prediction())
+    response = asyncio.run(async_streaming_prediction())
 
     spans = exporter.get_finished_spans()
     assert [span.name for span in spans] == [
@@ -201,6 +216,9 @@ def test_vertexai_stream_async(exporter):
     )
     assert (
         vertexai_span.attributes["llm.top_k"] == 40
+    )
+    assert (
+        vertexai_span.attributes["llm.completions.0.content"] == ''.join(response)
     )
 
 def test_vertexai_chat(exporter):
@@ -231,7 +249,7 @@ def test_vertexai_chat(exporter):
         )
 
         return response.text
-    chat()
+    response = chat()
 
     spans = exporter.get_finished_spans()
     assert [span.name for span in spans] == [
@@ -252,13 +270,16 @@ def test_vertexai_chat(exporter):
     assert (
         vertexai_span.attributes["llm.top_k"] == 40
     )
+    assert (
+        vertexai_span.attributes["llm.completions.0.content"] == response
+    )
 
 def test_vertexai_chat_stream(exporter):
     @workflow("stream_send_message")
-    def chat_streaming() -> str:
+    def chat_streaming() -> list:
         """Streaming Chat Example with a Large Language Model"""
 
-        chat_model = ChatModel.from_pretrained("chat-bison")
+        chat_model = ChatModel.from_pretrained("chat-bison@001")
 
         parameters = {
             "temperature": 0.8,
@@ -281,9 +302,9 @@ def test_vertexai_chat_stream(exporter):
             message="How many planets are there in the solar system?", **parameters
         )
 
-        result = [response for response in responses]
+        result = [response.text for response in responses]
         return result
-    chat_streaming()
+    response = chat_streaming()
 
     spans = exporter.get_finished_spans()
     assert [span.name for span in spans] == [
@@ -303,4 +324,7 @@ def test_vertexai_chat_stream(exporter):
     )
     assert (
         vertexai_span.attributes["llm.top_k"] == 40
+    )
+    assert (
+        vertexai_span.attributes["llm.completions.0.content"] == ''.join(response)
     )
