@@ -38,7 +38,7 @@ def retrieve(openai_client, index, query):
 @task("complete")
 def complete(openai_client, prompt):
     res = openai_client.completions.create(
-        model="text-davinci-003",
+        model="davinci-002",
         prompt=prompt,
         temperature=0,
         max_tokens=400,
