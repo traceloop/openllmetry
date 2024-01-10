@@ -11,7 +11,7 @@ addopts = "--cov --cov-report html:'../../coverage/packages/opentelemetry-instru
 
 [tool.poetry]
 name = "opentelemetry-instrumentation-chromadb"
-version = "0.8.1"
+version = "0.8.2"
 description = "OpenTelemetry Chroma DB instrumentation"
 authors = [
   "Gal Kleinman <gal@traceloop.com>",

@@ -1,3 +1,10 @@
+## v0.8.2 (2024-01-10)
+
+### Fix
+
+- version bump error with replicate (#318)
+- version bump error with replicate (#318)
+
 ## v0.8.1 (2024-01-10)
 
 ### Fix
