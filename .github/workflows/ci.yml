@@ -36,6 +36,9 @@ jobs:
   build-and-test-packages:
     name: Build & Test Packages
     runs-on: ubuntu-latest
+    permissions:
+      contents: 'read'
+      id-token: 'write'
     strategy:
       matrix:
         python-version: ["3.8", "3.9", "3.10", "3.11"]
@@ -73,6 +76,12 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: 18
+
+      - uses: 'google-github-actions/auth@v2'
+        with:
+          project_id: 'my-project'
+          workload_identity_provider: $GCP_WORKLOAD_IDENTITY_PROVIDER
+        
 
       - uses: nrwl/nx-set-shas@v3
 
