@@ -1,4 +1,5 @@
 """OpenTelemetry Vertex AI instrumentation"""
+import asyncio
 import logging
 import os
 import types
@@ -250,6 +251,49 @@ def _with_tracer_wrapper(func):
 
     return _with_tracer
 
+@_with_tracer_wrapper
+async def _awrap(tracer, to_wrap, wrapped, instance, args, kwargs):
+    """Instruments and calls every function defined in TO_WRAP."""
+    if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
+        return await wrapped(*args, **kwargs)
+
+    global llm_model
+
+    if (
+        (
+            to_wrap.get("method") == "from_pretrained"
+            or to_wrap.get("method") == "__init__"
+        )
+        and args is not None
+        and len(args) > 0
+    ):
+        llm_model = args[0]
+        return await wrapped(*args, **kwargs)
+
+    name = to_wrap.get("span_name")
+    span = tracer.start_span(
+        name,
+        kind=SpanKind.CLIENT,
+        attributes={
+            SpanAttributes.LLM_VENDOR: "VertexAI",
+            SpanAttributes.LLM_REQUEST_TYPE: LLMRequestTypeValues.COMPLETION.value,
+        },
+    )
+
+    _handle_request(span, args, kwargs)
+
+    response = await wrapped(*args, **kwargs)
+
+    if response:
+        if is_streaming_response(response):
+            return _build_from_streaming_response(span, response)
+        elif is_async_streaming_response(response):
+            return _abuild_from_streaming_response(span, response)
+        else:
+            _handle_response(span, response)
+
+    span.end()
+    return response
 
 @_with_tracer_wrapper
 def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
@@ -313,7 +357,7 @@ class VertexAIInstrumentor(BaseInstrumentor):
             wrap_function_wrapper(
                 wrap_package,
                 f"{wrap_object}.{wrap_method}",
-                _wrap(tracer, wrapped_method),
+                _awrap(tracer, wrapped_method) if wrap_method == 'predict_async' else _wrap(tracer, wrapped_method),
             )
 
     def _uninstrument(self, **kwargs):

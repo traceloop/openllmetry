@@ -90,7 +90,6 @@ def test_vertexai_predict(exporter):
     assert vertexai_span.attributes["llm.top_k"] == 40
     assert vertexai_span.attributes["llm.completions.0.content"] == response
 
-
 def test_vertexai_predict_async(exporter):
     @aworkflow("predict_async")
     async def async_predict_text() -> str:
@@ -110,7 +109,7 @@ def test_vertexai_predict_async(exporter):
 
         return response.text
 
-    asyncio.run(async_predict_text())
+    response = asyncio.run(async_predict_text())
 
     spans = exporter.get_finished_spans()
     assert [span.name for span in spans] == [
@@ -127,6 +126,7 @@ def test_vertexai_predict_async(exporter):
     assert vertexai_span.attributes["llm.top_p"] == 0.8
     assert vertexai_span.attributes["llm.request.max_tokens"] == 256
     assert vertexai_span.attributes["llm.top_k"] == 40
+    assert vertexai_span.attributes["llm.completions.0.content"] == response
 
 
 def test_vertexai_stream(exporter):
