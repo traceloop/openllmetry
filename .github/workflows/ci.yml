@@ -79,7 +79,6 @@ jobs:
 
       - uses: "google-github-actions/auth@v2"
         with:
-          project_id: "my-project"
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
 
       - uses: nrwl/nx-set-shas@v3
