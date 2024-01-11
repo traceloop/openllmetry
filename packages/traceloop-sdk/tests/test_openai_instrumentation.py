@@ -42,7 +42,7 @@ def test_simple_workflow(exporter, openai_client):
 
 def test_completion(exporter, openai_client):
     openai_client.completions.create(
-        model="davinci",
+        model="davinci-002",
         prompt="Tell me a joke about opentelemetry",
     )
 
@@ -60,7 +60,7 @@ def test_completion(exporter, openai_client):
 
 def test_completion_langchain_style(exporter, openai_client):
     openai_client.completions.create(
-        model="davinci",
+        model="davinci-002",
         prompt=["Tell me a joke about opentelemetry"],
     )
 
