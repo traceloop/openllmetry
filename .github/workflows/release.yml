@@ -120,6 +120,7 @@ jobs:
   test-sdk-installation:
     runs-on: ubuntu-latest
     needs:
+      - bump-version
       - release-sdk
     permissions:
       id-token: write
@@ -130,4 +131,4 @@ jobs:
           python-version: 3.11
 
       - name: Install Traceloop SDK
-        run: pip install traceloop-sdk==${{ needs.release-sdk.outputs.new_version }}
+        run: pip install traceloop-sdk==${{ needs.bump-version.outputs.new_version }}
