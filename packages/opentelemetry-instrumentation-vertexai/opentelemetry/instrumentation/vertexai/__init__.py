@@ -1,5 +1,4 @@
 """OpenTelemetry Vertex AI instrumentation"""
-import asyncio
 import logging
 import os
 import types
@@ -11,10 +10,7 @@ from opentelemetry.trace import get_tracer, SpanKind
 from opentelemetry.trace.status import Status, StatusCode
 
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
-from opentelemetry.instrumentation.utils import (
-    _SUPPRESS_INSTRUMENTATION_KEY,
-    unwrap
-)
+from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY, unwrap
 
 from opentelemetry.semconv.ai import SpanAttributes, LLMRequestTypeValues
 from opentelemetry.instrumentation.vertexai.version import __version__
@@ -23,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 _instruments = ("google-cloud-aiplatform >= 1.38.1",)
 
-llm_model = 'unknown'
+llm_model = "unknown"
 
 WRAPPED_METHODS = [
     {
@@ -94,11 +90,14 @@ def should_send_prompts():
         os.getenv("TRACELOOP_TRACE_CONTENT") or "true"
     ).lower() == "true" or context_api.get_value("override_enable_content_tracing")
 
+
 def is_streaming_response(response):
     return isinstance(response, types.GeneratorType)
 
+
 def is_async_streaming_response(response):
     return isinstance(response, types.AsyncGeneratorType)
+
 
 def _set_span_attribute(span, name, value):
     if value is not None:
@@ -106,10 +105,10 @@ def _set_span_attribute(span, name, value):
             span.set_attribute(name, value)
     return
 
-def _set_input_attributes(span, args, kwargs):
 
-    if (should_send_prompts() and args is not None and len(args) > 0):
-        prompt = ''
+def _set_input_attributes(span, args, kwargs):
+    if should_send_prompts() and args is not None and len(args) > 0:
+        prompt = ""
         for arg in args:
             if isinstance(arg, str):
                 prompt = f"{prompt}{arg}\n"
@@ -124,31 +123,47 @@ def _set_input_attributes(span, args, kwargs):
         )
 
     _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, llm_model)
-    _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.0.user", kwargs.get('prompt'))
-    _set_span_attribute(span, SpanAttributes.LLM_TEMPERATURE, kwargs.get('temperature'))
-    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MAX_TOKENS, kwargs.get('max_output_tokens'))
-    _set_span_attribute(span, SpanAttributes.LLM_TOP_P, kwargs.get('top_p'))
-    _set_span_attribute(span, SpanAttributes.LLM_TOP_K, kwargs.get('top_k'))
-    _set_span_attribute(span, SpanAttributes.LLM_PRESENCE_PENALTY, kwargs.get('presence_penalty'))
-    _set_span_attribute(span, SpanAttributes.LLM_FREQUENCY_PENALTY, kwargs.get('frequency_penalty'))
+    _set_span_attribute(
+        span, f"{SpanAttributes.LLM_PROMPTS}.0.user", kwargs.get("prompt")
+    )
+    _set_span_attribute(span, SpanAttributes.LLM_TEMPERATURE, kwargs.get("temperature"))
+    _set_span_attribute(
+        span, SpanAttributes.LLM_REQUEST_MAX_TOKENS, kwargs.get("max_output_tokens")
+    )
+    _set_span_attribute(span, SpanAttributes.LLM_TOP_P, kwargs.get("top_p"))
+    _set_span_attribute(span, SpanAttributes.LLM_TOP_K, kwargs.get("top_k"))
+    _set_span_attribute(
+        span, SpanAttributes.LLM_PRESENCE_PENALTY, kwargs.get("presence_penalty")
+    )
+    _set_span_attribute(
+        span, SpanAttributes.LLM_FREQUENCY_PENALTY, kwargs.get("frequency_penalty")
+    )
 
     return
+
 
 def _set_response_attributes(span, response):
     _set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, llm_model)
 
-    if hasattr(response, 'text'):
-        if hasattr(response, '_raw_response') and hasattr(response._raw_response, 'usage_metadata'):
+    if hasattr(response, "text"):
+        if hasattr(response, "_raw_response") and hasattr(
+            response._raw_response, "usage_metadata"
+        ):
             _set_span_attribute(
-                span, SpanAttributes.LLM_USAGE_TOTAL_TOKENS, response._raw_response.usage_metadata.total_token_count
+                span,
+                SpanAttributes.LLM_USAGE_TOTAL_TOKENS,
+                response._raw_response.usage_metadata.total_token_count,
             )
             _set_span_attribute(
-                span, SpanAttributes.LLM_USAGE_COMPLETION_TOKENS, response._raw_response.usage_metadata.candidates_token_count
+                span,
+                SpanAttributes.LLM_USAGE_COMPLETION_TOKENS,
+                response._raw_response.usage_metadata.candidates_token_count,
             )
             _set_span_attribute(
-                span, SpanAttributes.LLM_USAGE_PROMPT_TOKENS, response._raw_response.usage_metadata.prompt_token_count
+                span,
+                SpanAttributes.LLM_USAGE_PROMPT_TOKENS,
+                response._raw_response.usage_metadata.prompt_token_count,
             )
-
 
         if isinstance(response.text, list):
             for index, item in enumerate(response):
@@ -170,6 +185,7 @@ def _set_response_attributes(span, response):
 
     return
 
+
 def _build_from_streaming_response(span, response):
     complete_response = ""
     for item in response:
@@ -182,6 +198,7 @@ def _build_from_streaming_response(span, response):
 
     span.set_status(Status(StatusCode.OK))
     span.end()
+
 
 async def _abuild_from_streaming_response(span, response):
     complete_response = ""
@@ -196,6 +213,7 @@ async def _abuild_from_streaming_response(span, response):
     span.set_status(Status(StatusCode.OK))
     span.end()
 
+
 def _handle_request(span, args, kwargs):
     try:
         if span.is_recording():
@@ -205,6 +223,7 @@ def _handle_request(span, args, kwargs):
         logger.warning(
             "Failed to set input attributes for VertexAI span, error: %s", str(ex)
         )
+
 
 def _handle_response(span, response):
     try:
@@ -231,16 +250,23 @@ def _with_tracer_wrapper(func):
 
     return _with_tracer
 
+
 @_with_tracer_wrapper
 def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
-
     """Instruments and calls every function defined in TO_WRAP."""
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
         return wrapped(*args, **kwargs)
-    
+
     global llm_model
 
-    if (to_wrap.get('method') == 'from_pretrained' or to_wrap.get('method') == "__init__") and args is not None and len(args) > 0:
+    if (
+        (
+            to_wrap.get("method") == "from_pretrained"
+            or to_wrap.get("method") == "__init__"
+        )
+        and args is not None
+        and len(args) > 0
+    ):
         llm_model = args[0]
         return wrapped(*args, **kwargs)
 
