@@ -71,6 +71,7 @@ cohere = "^4.34"
 langchain = "^0.0.343"
 chromadb = "^0.4.17"
 replicate = "^0.22.0"
+google-cloud-aiplatform = "^1.39.0"
 
 [build-system]
 requires = [ "poetry-core" ]
