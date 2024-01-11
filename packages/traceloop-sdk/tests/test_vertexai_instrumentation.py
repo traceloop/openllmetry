@@ -1,14 +1,10 @@
-import os
 import asyncio
 import vertexai
 from traceloop.sdk.decorators import workflow, aworkflow
 from vertexai.language_models import TextGenerationModel, ChatModel, InputOutputTextPair
 from vertexai.preview.generative_models import GenerativeModel, Part
 
-project_id = os.getenv("VERTEXAI_PROJECT_ID")
-location = os.getenv("VERTEXAI_LOCATION")
-
-vertexai.init(project=project_id, location=location)
+vertexai.init()
 
 
 def test_vertexai_generate_content(exporter):
