@@ -16,7 +16,8 @@ description = "OpenTelemetry Vertex AI instrumentation"
 authors = [
   "Gal Kleinman <gal@traceloop.com>",
   "Nir Gazit <nir@traceloop.com>",
-  "Tomer Friedman <tomer@traceloop.com>"
+  "Tomer Friedman <tomer@traceloop.com>",
+  "Swaroop <maddisaiswaroop@gmail.com>"
 ]
 license = "Apache-2.0"
 readme = "README.md"
@@ -25,7 +26,7 @@ readme = "README.md"
 include = "opentelemetry/instrumentation/vertexai"
 
 [tool.poetry.dependencies]
-python = ">=3.8.1,<3.12"
+python = ">=3.8.1,<4"
 opentelemetry-api = "^1.21.0"
 opentelemetry-instrumentation = "^0.42b0"
 opentelemetry-semantic-conventions-ai = "^0.0.13"
