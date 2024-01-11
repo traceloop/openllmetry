@@ -1,3 +1,9 @@
+## v0.9.0 (2024-01-11)
+
+### Feat
+
+- google-vertexai-instrumentation (#289)
+
 ## v0.8.2 (2024-01-10)
 
 ### Fix
