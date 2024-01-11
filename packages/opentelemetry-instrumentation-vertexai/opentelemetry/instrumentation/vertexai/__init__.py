@@ -1,5 +1,4 @@
 """OpenTelemetry Vertex AI instrumentation"""
-import asyncio
 import logging
 import os
 import types
@@ -251,6 +250,7 @@ def _with_tracer_wrapper(func):
 
     return _with_tracer
 
+
 @_with_tracer_wrapper
 async def _awrap(tracer, to_wrap, wrapped, instance, args, kwargs):
     """Instruments and calls every function defined in TO_WRAP."""
@@ -294,6 +294,7 @@ async def _awrap(tracer, to_wrap, wrapped, instance, args, kwargs):
 
     span.end()
     return response
+
 
 @_with_tracer_wrapper
 def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):

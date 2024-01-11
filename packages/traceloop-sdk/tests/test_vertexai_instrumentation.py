@@ -90,6 +90,7 @@ def test_vertexai_predict(exporter):
     assert vertexai_span.attributes["llm.top_k"] == 40
     assert vertexai_span.attributes["llm.completions.0.content"] == response
 
+
 def test_vertexai_predict_async(exporter):
     @aworkflow("predict_async")
     async def async_predict_text() -> str:
