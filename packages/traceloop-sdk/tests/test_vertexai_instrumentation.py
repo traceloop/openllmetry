@@ -36,6 +36,7 @@ def test_vertexai_generate_content(exporter):
     assert (
         "what is shown in this image?" in vertexai_span.attributes["llm.prompts.0.user"]
     )
+    assert vertexai_span.attributes["llm.request.model"] == "gemini-pro-vision"
     assert (
         vertexai_span.attributes["llm.usage.total_tokens"]
         == response._raw_response.usage_metadata.total_token_count
@@ -79,6 +80,7 @@ def test_vertexai_predict(exporter):
     ]
 
     vertexai_span = spans[0]
+    assert vertexai_span.attributes["llm.request.model"] == "text-bison@001"
     assert (
         "Give me ten interview questions for the role of program manager."
         in vertexai_span.attributes["llm.prompts.0.user"]
@@ -117,6 +119,7 @@ def test_vertexai_predict_async(exporter):
     ]
 
     vertexai_span = spans[0]
+    assert vertexai_span.attributes["llm.request.model"] == "text-bison@001"
     assert (
         "Give me ten interview questions for the role of program manager."
         in vertexai_span.attributes["llm.prompts.0.user"]
@@ -153,6 +156,7 @@ def test_vertexai_stream(exporter):
     ]
 
     vertexai_span = spans[0]
+    assert vertexai_span.attributes["llm.request.model"] == "text-bison"
     assert (
         "Give me ten interview questions for the role of program manager."
         in vertexai_span.attributes["llm.prompts.0.user"]
@@ -191,6 +195,7 @@ def test_vertexai_stream_async(exporter):
     ]
 
     vertexai_span = spans[0]
+    assert vertexai_span.attributes["llm.request.model"] == "text-bison"
     assert (
         "Give me ten interview questions for the role of program manager."
         in vertexai_span.attributes["llm.prompts.0.user"]
@@ -239,6 +244,7 @@ def test_vertexai_chat(exporter):
     ]
 
     vertexai_span = spans[0]
+    assert vertexai_span.attributes["llm.request.model"] == "chat-bison@001"
     assert (
         "How many planets are there in the solar system?"
         in vertexai_span.attributes["llm.prompts.0.user"]
@@ -289,6 +295,7 @@ def test_vertexai_chat_stream(exporter):
     ]
 
     vertexai_span = spans[0]
+    assert vertexai_span.attributes["llm.request.model"] == "chat-bison@001"
     assert vertexai_span.attributes["llm.top_p"] == 0.95
     assert vertexai_span.attributes["llm.temperature"] == 0.8
     assert vertexai_span.attributes["llm.request.max_tokens"] == 256
