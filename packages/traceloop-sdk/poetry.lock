@@ -2139,13 +2139,13 @@ sympy = "*"
 
 [[package]]
 name = "openai"
-version = "1.7.1"
+version = "1.7.2"
 description = "The official Python library for the openai API"
 optional = false
 python-versions = ">=3.7.1"
 files = [
-    {file = "openai-1.7.1-py3-none-any.whl", hash = "sha256:e52ad7ea015331edc584e6e9c98741c819d7ffbbd2ecc50bf1f55c33f9cb3f77"},
-    {file = "openai-1.7.1.tar.gz", hash = "sha256:7556e6aa30e20254b1ad68de49bb5ef4d8106bfac5e8a78abdc1daa911fbb1fb"},
+    {file = "openai-1.7.2-py3-none-any.whl", hash = "sha256:8f41b90a762f5fd9d182b45851041386fed94c8ad240a70abefee61a68e0ef53"},
+    {file = "openai-1.7.2.tar.gz", hash = "sha256:c73c78878258b07f1b468b0602c6591f25a1478f49ecb90b9bd44b7cc80bce73"},
 ]
 
 [package.dependencies]
@@ -2266,7 +2266,7 @@ develop = true
 [package.dependencies]
 opentelemetry-api = "^1.22.0"
 opentelemetry-instrumentation = ">=0.42,<0.44"
-opentelemetry-semantic-conventions-ai = "^0.0.13"
+opentelemetry-semantic-conventions-ai = "^0.0.14"
 
 [package.source]
 type = "directory"
@@ -2306,7 +2306,7 @@ develop = true
 [package.dependencies]
 opentelemetry-api = "^1.22.0"
 opentelemetry-instrumentation = ">=0.42,<0.44"
-opentelemetry-semantic-conventions-ai = "^0.0.13"
+opentelemetry-semantic-conventions-ai = "^0.0.14"
 
 [package.source]
 type = "directory"
@@ -2325,7 +2325,7 @@ develop = true
 opentelemetry-api = "^1.22.0"
 opentelemetry-instrumentation = ">=0.42,<0.44"
 opentelemetry-semantic-conventions = ">=0.42,<0.44"
-opentelemetry-semantic-conventions-ai = "^0.0.13"
+opentelemetry-semantic-conventions-ai = "^0.0.14"
 
 [package.source]
 type = "directory"
@@ -2343,7 +2343,7 @@ develop = true
 [package.dependencies]
 opentelemetry-api = "^1.22.0"
 opentelemetry-instrumentation = ">=0.42,<0.44"
-opentelemetry-semantic-conventions-ai = "^0.0.13"
+opentelemetry-semantic-conventions-ai = "^0.0.14"
 
 [package.source]
 type = "directory"
@@ -2403,7 +2403,7 @@ develop = true
 [package.dependencies]
 opentelemetry-api = "^1.22.0"
 opentelemetry-instrumentation = ">=0.42,<0.44"
-opentelemetry-semantic-conventions-ai = "^0.0.13"
+opentelemetry-semantic-conventions-ai = "^0.0.14"
 
 [package.source]
 type = "directory"
@@ -2422,7 +2422,7 @@ develop = true
 inflection = "^0.5.1"
 opentelemetry-api = "^1.22.0"
 opentelemetry-instrumentation = ">=0.42,<0.44"
-opentelemetry-semantic-conventions-ai = "^0.0.13"
+opentelemetry-semantic-conventions-ai = "^0.0.14"
 
 [package.source]
 type = "directory"
@@ -2440,7 +2440,7 @@ develop = true
 [package.dependencies]
 opentelemetry-api = "^1.22.0"
 opentelemetry-instrumentation = ">=0.42,<0.44"
-opentelemetry-semantic-conventions-ai = "^0.0.13"
+opentelemetry-semantic-conventions-ai = "^0.0.14"
 
 [package.source]
 type = "directory"
@@ -2458,7 +2458,7 @@ develop = true
 [package.dependencies]
 opentelemetry-api = "^1.22.0"
 opentelemetry-instrumentation = ">=0.42,<0.44"
-opentelemetry-semantic-conventions-ai = "^0.0.13"
+opentelemetry-semantic-conventions-ai = "^0.0.14"
 
 [package.source]
 type = "directory"
@@ -2496,7 +2496,7 @@ develop = true
 [package.dependencies]
 opentelemetry-api = "^1.22.0"
 opentelemetry-instrumentation = ">=0.42,<0.44"
-opentelemetry-semantic-conventions-ai = "^0.0.13"
+opentelemetry-semantic-conventions-ai = "^0.0.14"
 
 [package.source]
 type = "directory"
@@ -2535,7 +2535,7 @@ develop = true
 [package.dependencies]
 opentelemetry-api = "^1.22.0"
 opentelemetry-instrumentation = ">=0.42,<0.44"
-opentelemetry-semantic-conventions-ai = "^0.0.13"
+opentelemetry-semantic-conventions-ai = "^0.0.14"
 
 [package.source]
 type = "directory"
@@ -2575,7 +2575,7 @@ develop = true
 [package.dependencies]
 opentelemetry-api = "^1.22.0"
 opentelemetry-instrumentation = ">=0.42,<0.44"
-opentelemetry-semantic-conventions-ai = "^0.0.13"
+opentelemetry-semantic-conventions-ai = "^0.0.14"
 
 [package.source]
 type = "directory"
@@ -2624,13 +2624,13 @@ files = [
 
 [[package]]
 name = "opentelemetry-semantic-conventions-ai"
-version = "0.0.13"
+version = "0.0.14"
 description = "OpenTelemetry Semantic Conventions Extension for Large Language Models"
 optional = false
 python-versions = ">=3.8.1,<4"
 files = [
-    {file = "opentelemetry_semantic_conventions_ai-0.0.13-py3-none-any.whl", hash = "sha256:60c6cde55ffa39b6a6a219aad75c5de7964bad95418f06a82350763150d25d96"},
-    {file = "opentelemetry_semantic_conventions_ai-0.0.13.tar.gz", hash = "sha256:f9425dfb39c519f627fff753c2369dca799051b8cd4dab54e5230c990d2e055a"},
+    {file = "opentelemetry_semantic_conventions_ai-0.0.14-py3-none-any.whl", hash = "sha256:06723937dbba2f4c2fb6d7d421e5e7a25c1c931546e048a4b19d7bc4803c906e"},
+    {file = "opentelemetry_semantic_conventions_ai-0.0.14.tar.gz", hash = "sha256:1e8026bc149ba232bba8618b1601a7cc9384a02e8b218a0665ef1da050c43d38"},
 ]
 
 [[package]]
@@ -4151,4 +4151,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8.1,<4"
-content-hash = "1d9d39989c1d72d15a9d1a4950a670bb5915abad1a9fd91436973193ead63bac"
+content-hash = "15be423b429853b5762d20deb6159a4250cbd8ef9e7888291d954d5e70f69052"
