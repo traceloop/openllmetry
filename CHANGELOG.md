@@ -1,3 +1,9 @@
+## v0.9.1 (2024-01-12)
+
+### Fix
+
+- **openai**: instrument embeddings APIs (#335)
+
 ## v0.9.0 (2024-01-11)
 
 ### Feat
