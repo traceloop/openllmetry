@@ -6,9 +6,6 @@ source = [ "sample_app" ]
 exclude_lines = [ "if TYPE_CHECKING:" ]
 show_missing = true
 
-[tool.pytest.ini_options]
-addopts = "--cov --cov-report html:'../../coverage/packages/sample-app/html' --cov-report xml:'../../coverage/packages/sample-app/coverage.xml' --html='../../reports/packages/sample-app/unittests/html/index.html' --junitxml='../../reports/packages/sample-app/unittests/junit.xml'"
-
 [tool.poetry]
 name = "sample-app"
 version = "0.0.1"
@@ -37,11 +34,11 @@ llama-index = "^0.8.59"
 urllib3 = ">=1.25.4,<1.27"
 duckduckgo-search = "^3.9.3"
 torch = "^2.1.0"
-chromadb = "^0.4.17"
+chromadb = "^0.4.22"
 pandas = "~2.0.3"
-tokenizers = "~0.14.0"
+tokenizers = "~0.15.0"
 boto3 = "^1.33.1"
-transformers = "^4.35.2"
+transformers = "^4.36.2"
 replicate = "^0.22.0"
 cohere = "^4.40"
 anthropic = "^0.8.1"
@@ -73,8 +70,8 @@ develop = true
 
 [tool.poetry.group.dev.dependencies]
 autopep8 = "2.0.4"
-flake8 = "6.1.0"
-pytest = "7.4.3"
+flake8 = "7.0.0"
+pytest = "7.4.4"
 pytest-sugar = "0.9.7"
 pytest-cov = "4.1.0"
 pytest-html = "4.1.1"
