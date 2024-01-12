@@ -72,6 +72,7 @@ def disabled_test_pinecone_grpc_retrieval(exporter, openai_client):
 
     spans = exporter.get_finished_spans()
     assert [span.name for span in spans] == [
+        "openai.embeddings",
         "pinecone.query",
         "retrieve.task",
         "openai.completion",
@@ -95,6 +96,7 @@ def test_pinecone_retrieval(exporter, openai_client):
 
     spans = exporter.get_finished_spans()
     assert [span.name for span in spans] == [
+        "openai.embeddings",
         "pinecone.query",
         "retrieve.task",
         "openai.completion",
