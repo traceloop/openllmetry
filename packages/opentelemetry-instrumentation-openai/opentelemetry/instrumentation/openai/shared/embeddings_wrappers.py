@@ -32,7 +32,11 @@ def embeddings_wrapper(tracer, wrapped, instance, args, kwargs):
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
         return wrapped(*args, **kwargs)
 
-    with tracer.start_as_current_span(name=SPAN_NAME, kind=SpanKind.CLIENT) as span:
+    with tracer.start_as_current_span(
+        name=SPAN_NAME,
+        kind=SpanKind.CLIENT,
+        attributes={SpanAttributes.LLM_REQUEST_TYPE: LLM_REQUEST_TYPE.value},
+    ) as span:
         _handle_request(span, kwargs)
         response = wrapped(*args, **kwargs)
         _handle_response(response, span)
@@ -46,7 +50,10 @@ async def aembeddings_wrapper(tracer, wrapped, instance, args, kwargs):
         return wrapped(*args, **kwargs)
 
     async with start_as_current_span_async(
-        tracer=tracer, name=SPAN_NAME, kind=SpanKind.CLIENT
+        tracer=tracer,
+        name=SPAN_NAME,
+        kind=SpanKind.CLIENT,
+        attributes={SpanAttributes.LLM_REQUEST_TYPE: LLM_REQUEST_TYPE.value},
     ) as span:
         _handle_request(span, kwargs)
         response = await wrapped(*args, **kwargs)
@@ -56,7 +63,7 @@ async def aembeddings_wrapper(tracer, wrapped, instance, args, kwargs):
 
 
 def _handle_request(span, kwargs):
-    _set_request_attributes(span, LLM_REQUEST_TYPE, kwargs)
+    _set_request_attributes(span, kwargs)
     if should_send_prompts():
         _set_prompts(span, kwargs.get("input"))
 

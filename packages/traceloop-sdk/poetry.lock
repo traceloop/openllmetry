@@ -2282,7 +2282,7 @@ wrapt = ">=1.0.0,<2.0.0"
 
 [[package]]
 name = "opentelemetry-instrumentation-anthropic"
-version = "0.9.2"
+version = "0.9.3"
 description = "OpenTelemetry Anthropic instrumentation"
 optional = false
 python-versions = ">=3.8.1,<4"
@@ -2322,7 +2322,7 @@ test = ["opentelemetry-instrumentation-asgi[instruments]", "opentelemetry-test-u
 
 [[package]]
 name = "opentelemetry-instrumentation-bedrock"
-version = "0.9.2"
+version = "0.9.3"
 description = "OpenTelemetry Bedrock instrumentation"
 optional = false
 python-versions = ">=3.8.1,<4"
@@ -2340,7 +2340,7 @@ url = "../opentelemetry-instrumentation-bedrock"
 
 [[package]]
 name = "opentelemetry-instrumentation-chromadb"
-version = "0.9.2"
+version = "0.9.3"
 description = "OpenTelemetry Chroma DB instrumentation"
 optional = false
 python-versions = ">=3.8.1,<4"
@@ -2359,7 +2359,7 @@ url = "../opentelemetry-instrumentation-chromadb"
 
 [[package]]
 name = "opentelemetry-instrumentation-cohere"
-version = "0.9.2"
+version = "0.9.3"
 description = "OpenTelemetry Cohere instrumentation"
 optional = false
 python-versions = ">=3.8.1,<4"
@@ -2419,7 +2419,7 @@ test = ["httpx (>=0.22,<1.0)", "opentelemetry-instrumentation-fastapi[instrument
 
 [[package]]
 name = "opentelemetry-instrumentation-langchain"
-version = "0.9.2"
+version = "0.9.3"
 description = "OpenTelemetry Langchain instrumentation"
 optional = false
 python-versions = ">=3.8.1,<4"
@@ -2437,7 +2437,7 @@ url = "../opentelemetry-instrumentation-langchain"
 
 [[package]]
 name = "opentelemetry-instrumentation-llamaindex"
-version = "0.9.2"
+version = "0.9.3"
 description = "OpenTelemetry LlamaIndex instrumentation"
 optional = false
 python-versions = ">=3.8.1,<4"
@@ -2456,7 +2456,7 @@ url = "../opentelemetry-instrumentation-llamaindex"
 
 [[package]]
 name = "opentelemetry-instrumentation-openai"
-version = "0.9.2"
+version = "0.9.3"
 description = "OpenTelemetry OpenAI instrumentation"
 optional = false
 python-versions = ">=3.8.1,<4"
@@ -2474,7 +2474,7 @@ url = "../opentelemetry-instrumentation-openai"
 
 [[package]]
 name = "opentelemetry-instrumentation-pinecone"
-version = "0.9.2"
+version = "0.9.3"
 description = "OpenTelemetry Pinecone instrumentation"
 optional = false
 python-versions = ">=3.8.1,<4"
@@ -2512,7 +2512,7 @@ test = ["opentelemetry-instrumentation-pymysql[instruments]", "opentelemetry-tes
 
 [[package]]
 name = "opentelemetry-instrumentation-replicate"
-version = "0.9.2"
+version = "0.9.3"
 description = "OpenTelemetry Replicate instrumentation"
 optional = false
 python-versions = ">=3.8.1,<4"
@@ -2551,7 +2551,7 @@ test = ["httpretty (>=1.0,<2.0)", "opentelemetry-instrumentation-requests[instru
 
 [[package]]
 name = "opentelemetry-instrumentation-transformers"
-version = "0.9.2"
+version = "0.9.3"
 description = "OpenTelemetry transformers instrumentation"
 optional = false
 python-versions = ">=3.8.1,<4"
@@ -2591,7 +2591,7 @@ test = ["httpretty (>=1.0,<2.0)", "opentelemetry-instrumentation-urllib3[instrum
 
 [[package]]
 name = "opentelemetry-instrumentation-vertexai"
-version = "0.9.2"
+version = "0.9.3"
 description = "OpenTelemetry Vertex AI instrumentation"
 optional = false
 python-versions = ">=3.8.1,<4"
