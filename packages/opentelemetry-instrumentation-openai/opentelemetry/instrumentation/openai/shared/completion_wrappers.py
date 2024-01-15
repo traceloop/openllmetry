@@ -36,7 +36,11 @@ def completion_wrapper(tracer, wrapped, instance, args, kwargs):
         return wrapped(*args, **kwargs)
 
     # span needs to be opened and closed manually because the response is a generator
-    span = tracer.start_span(SPAN_NAME, kind=SpanKind.CLIENT)
+    span = tracer.start_span(
+        SPAN_NAME,
+        kind=SpanKind.CLIENT,
+        attributes={SpanAttributes.LLM_REQUEST_TYPE: LLM_REQUEST_TYPE.value},
+    )
 
     _handle_request(span, kwargs)
     response = wrapped(*args, **kwargs)
@@ -57,7 +61,10 @@ async def acompletion_wrapper(tracer, wrapped, instance, args, kwargs):
         return wrapped(*args, **kwargs)
 
     async with start_as_current_span_async(
-        tracer=tracer, name=SPAN_NAME, kind=SpanKind.CLIENT
+        tracer=tracer,
+        name=SPAN_NAME,
+        kind=SpanKind.CLIENT,
+        attributes={SpanAttributes.LLM_REQUEST_TYPE: LLM_REQUEST_TYPE.value},
     ) as span:
         _handle_request(span, kwargs)
         response = await wrapped(*args, **kwargs)
@@ -67,7 +74,7 @@ async def acompletion_wrapper(tracer, wrapped, instance, args, kwargs):
 
 
 def _handle_request(span, kwargs):
-    _set_request_attributes(span, LLM_REQUEST_TYPE, kwargs)
+    _set_request_attributes(span, kwargs)
     if should_send_prompts():
         _set_prompts(span, kwargs.get("prompt"))
         _set_functions_attributes(span, kwargs.get("functions"))
