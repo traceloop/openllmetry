@@ -41,6 +41,7 @@ class LLMRequestTypeValues(Enum):
     COMPLETION = "completion"
     CHAT = "chat"
     RERANK = "rerank"
+    EMBEDDING = "embedding"
     UNKNOWN = "unknown"
 
 

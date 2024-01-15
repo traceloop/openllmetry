@@ -6,12 +6,9 @@ source = [ "opentelemetry/instrumentation/langchain" ]
 exclude_lines = ['if TYPE_CHECKING:']
 show_missing = true
 
-[tool.pytest.ini_options]
-addopts = "--cov --cov-report html:'../../coverage/packages/opentelemetry-instrumentation-langchain/html' --cov-report xml:'../../coverage/packages/opentelemetry-instrumentation-anthropic/coverage.xml' --html='../../reports/packages/opentelemetry-instrumentation-anthropic/unittests/html/index.html' --junitxml='../../reports/packages/opentelemetry-instrumentation-anthropic/unittests/junit.xml'"
-
 [tool.poetry]
 name = "opentelemetry-instrumentation-langchain"
-version = "0.8.2"
+version = "0.9.2"
 description = "OpenTelemetry Langchain instrumentation"
 authors = [
   "Gal Kleinman <gal@traceloop.com>",
@@ -26,17 +23,15 @@ include = "opentelemetry/instrumentation/langchain"
 
 [tool.poetry.dependencies]
 python = ">=3.8.1,<4"
-opentelemetry-api = "^1.21.0"
-opentelemetry-instrumentation = "^0.42b0"
-opentelemetry-semantic-conventions-ai = "^0.0.13"
+opentelemetry-api = "^1.22.0"
+opentelemetry-instrumentation = "0.43b0"
+opentelemetry-semantic-conventions-ai = "^0.0.14"
 
 [tool.poetry.group.dev.dependencies]
 autopep8 = "2.0.4"
-flake8 = "6.1.0"
-pytest = "7.4.3"
+flake8 = "7.0.0"
+pytest = "7.4.4"
 pytest-sugar = "0.9.7"
-pytest-cov = "4.1.0"
-pytest-html = "4.1.1"
 
 [build-system]
 requires = ["poetry-core"]

@@ -1,3 +1,21 @@
+## v0.9.2 (2024-01-12)
+
+### Fix
+
+- otel deps (#336)
+
+## v0.9.1 (2024-01-12)
+
+### Fix
+
+- **openai**: instrument embeddings APIs (#335)
+
+## v0.9.0 (2024-01-11)
+
+### Feat
+
+- google-vertexai-instrumentation (#289)
+
 ## v0.8.2 (2024-01-10)
 
 ### Fix

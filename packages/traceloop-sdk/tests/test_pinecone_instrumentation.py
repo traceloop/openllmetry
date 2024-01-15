@@ -56,7 +56,8 @@ def run_query(openai_client, index, query: str):
     complete(openai_client, query_with_contexts)
 
 
-def test_pinecone_grpc_retrieval(exporter, openai_client):
+# GRPC package of Pinecone is conflicting with google-cloud-aiplatform
+def disabled_test_pinecone_grpc_retrieval(exporter, openai_client):
     pinecone.init(
         api_key=os.getenv("PINECONE_API_KEY"),
         environment=os.getenv("PINECONE_ENVIRONMENT"),
@@ -71,6 +72,7 @@ def test_pinecone_grpc_retrieval(exporter, openai_client):
 
     spans = exporter.get_finished_spans()
     assert [span.name for span in spans] == [
+        "openai.embeddings",
         "pinecone.query",
         "retrieve.task",
         "openai.completion",
@@ -94,6 +96,7 @@ def test_pinecone_retrieval(exporter, openai_client):
 
     spans = exporter.get_finished_spans()
     assert [span.name for span in spans] == [
+        "openai.embeddings",
         "pinecone.query",
         "retrieve.task",
         "openai.completion",
