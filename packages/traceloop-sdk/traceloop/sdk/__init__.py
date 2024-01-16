@@ -8,6 +8,7 @@ from typing import Optional
 from colorama import Fore
 from opentelemetry.sdk.trace import SpanProcessor
 from opentelemetry.sdk.trace.export import SpanExporter
+from opentelemetry.sdk.resources import SERVICE_NAME
 from opentelemetry.propagators.textmap import TextMapPropagator
 from opentelemetry.util.re import parse_env_headers
 
@@ -45,6 +46,7 @@ class Traceloop:
         processor: SpanProcessor = None,
         propagator: TextMapPropagator = None,
         traceloop_sync_enabled: bool = True,
+        resource_attributes: dict = {},
     ) -> None:
         Telemetry()
 
@@ -143,8 +145,9 @@ class Traceloop:
 
         print(Fore.RESET)
 
+        resource_attributes = resource_attributes.update({SERVICE_NAME: app_name})
         TracerWrapper.set_static_params(
-            app_name, enable_content_tracing, api_endpoint, headers
+            resource_attributes, enable_content_tracing, api_endpoint, headers
         )
         Traceloop.__tracer_wrapper = TracerWrapper(
             disable_batch=disable_batch,
