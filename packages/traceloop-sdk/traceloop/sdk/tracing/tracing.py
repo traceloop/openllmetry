@@ -11,7 +11,7 @@ from opentelemetry.exporter.otlp.proto.http.trace_exporter import (
 from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import (
     OTLPSpanExporter as GRPCExporter,
 )
-from opentelemetry.sdk.resources import SERVICE_NAME, Resource
+from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider, SpanProcessor
 from opentelemetry.propagators.textmap import TextMapPropagator
 from opentelemetry.propagate import set_global_textmap
@@ -44,7 +44,7 @@ EXCLUDED_URLS = """
 
 
 class TracerWrapper(object):
-    app_name: str = "unknown"
+    resource_attributes: dict = {}
     enable_content_tracing: bool = True
     endpoint: str = None
     headers: Dict[str, str] = {}
@@ -61,7 +61,7 @@ class TracerWrapper(object):
             if not TracerWrapper.endpoint:
                 return obj
 
-            obj.__resource = Resource(attributes={SERVICE_NAME: TracerWrapper.app_name})
+            obj.__resource = Resource(attributes=TracerWrapper.resource_attributes)
             obj.__tracer_provider: TracerProvider = init_tracer_provider(
                 resource=obj.__resource
             )
@@ -168,12 +168,12 @@ class TracerWrapper(object):
 
     @staticmethod
     def set_static_params(
-        app_name: str,
+        resource_attributes: dict,
         enable_content_tracing: bool,
         endpoint: str,
         headers: Dict[str, str],
     ) -> None:
-        TracerWrapper.app_name = app_name
+        TracerWrapper.resource_attributes = resource_attributes
         TracerWrapper.enable_content_tracing = enable_content_tracing
         TracerWrapper.endpoint = endpoint
         TracerWrapper.headers = headers
