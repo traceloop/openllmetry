@@ -49,11 +49,13 @@ WRAPPED_METHODS_VERSION_1 = [
     },
 ]
 
+
 def _set_span_attribute(span, name, value):
     if value is not None:
         if value != "":
             span.set_attribute(name, value)
     return
+
 
 def _set_api_attributes(span):
     _set_span_attribute(
@@ -113,6 +115,9 @@ def _set_response_attributes(span, response):
     )
     _set_span_attribute(
         span, SpanAttributes.LLM_USAGE_PROMPT_TOKENS, usage.get("input_token_count"),
+    )
+    _set_span_attribute(
+        span, f"{SpanAttributes.LLM_COMPLETIONS}.0.content", response["results"][0]["generated_text"]
     )
 
     return
