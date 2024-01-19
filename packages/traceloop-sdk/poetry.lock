@@ -2292,7 +2292,7 @@ develop = true
 [package.dependencies]
 opentelemetry-api = "^1.22.0"
 opentelemetry-instrumentation = "0.43b0"
-opentelemetry-semantic-conventions-ai = "^0.0.14"
+opentelemetry-semantic-conventions-ai = "^0.0.15"
 
 [package.source]
 type = "directory"
@@ -2332,7 +2332,7 @@ develop = true
 [package.dependencies]
 opentelemetry-api = "^1.22.0"
 opentelemetry-instrumentation = "0.43b0"
-opentelemetry-semantic-conventions-ai = "^0.0.14"
+opentelemetry-semantic-conventions-ai = "^0.0.15"
 
 [package.source]
 type = "directory"
@@ -2351,7 +2351,7 @@ develop = true
 opentelemetry-api = "^1.22.0"
 opentelemetry-instrumentation = "0.43b0"
 opentelemetry-semantic-conventions = "0.43b0"
-opentelemetry-semantic-conventions-ai = "^0.0.14"
+opentelemetry-semantic-conventions-ai = "^0.0.15"
 
 [package.source]
 type = "directory"
@@ -2369,7 +2369,7 @@ develop = true
 [package.dependencies]
 opentelemetry-api = "^1.22.0"
 opentelemetry-instrumentation = "0.43b0"
-opentelemetry-semantic-conventions-ai = "^0.0.14"
+opentelemetry-semantic-conventions-ai = "^0.0.15"
 
 [package.source]
 type = "directory"
@@ -2429,7 +2429,7 @@ develop = true
 [package.dependencies]
 opentelemetry-api = "^1.22.0"
 opentelemetry-instrumentation = "0.43b0"
-opentelemetry-semantic-conventions-ai = "^0.0.14"
+opentelemetry-semantic-conventions-ai = "^0.0.15"
 
 [package.source]
 type = "directory"
@@ -2448,7 +2448,7 @@ develop = true
 inflection = "^0.5.1"
 opentelemetry-api = "^1.22.0"
 opentelemetry-instrumentation = "0.43b0"
-opentelemetry-semantic-conventions-ai = "^0.0.14"
+opentelemetry-semantic-conventions-ai = "^0.0.15"
 
 [package.source]
 type = "directory"
@@ -2466,7 +2466,7 @@ develop = true
 [package.dependencies]
 opentelemetry-api = "^1.22.0"
 opentelemetry-instrumentation = "0.43b0"
-opentelemetry-semantic-conventions-ai = "^0.0.14"
+opentelemetry-semantic-conventions-ai = "^0.0.15"
 
 [package.source]
 type = "directory"
@@ -2484,7 +2484,7 @@ develop = true
 [package.dependencies]
 opentelemetry-api = "^1.22.0"
 opentelemetry-instrumentation = "0.43b0"
-opentelemetry-semantic-conventions-ai = "^0.0.14"
+opentelemetry-semantic-conventions-ai = "^0.0.15"
 
 [package.source]
 type = "directory"
@@ -2522,7 +2522,7 @@ develop = true
 [package.dependencies]
 opentelemetry-api = "^1.22.0"
 opentelemetry-instrumentation = "0.43b0"
-opentelemetry-semantic-conventions-ai = "^0.0.14"
+opentelemetry-semantic-conventions-ai = "^0.0.15"
 
 [package.source]
 type = "directory"
@@ -2561,7 +2561,7 @@ develop = true
 [package.dependencies]
 opentelemetry-api = "^1.22.0"
 opentelemetry-instrumentation = "0.43b0"
-opentelemetry-semantic-conventions-ai = "^0.0.14"
+opentelemetry-semantic-conventions-ai = "^0.0.15"
 
 [package.source]
 type = "directory"
@@ -2601,7 +2601,7 @@ develop = true
 [package.dependencies]
 opentelemetry-api = "^1.22.0"
 opentelemetry-instrumentation = "0.43b0"
-opentelemetry-semantic-conventions-ai = "^0.0.14"
+opentelemetry-semantic-conventions-ai = "^0.0.15"
 
 [package.source]
 type = "directory"
@@ -2609,12 +2609,17 @@ url = "../opentelemetry-instrumentation-vertexai"
 
 [[package]]
 name = "opentelemetry-instrumentation-watsonx"
-version = "0.1.0"
-description = ""
+version = "0.9.4"
+description = "OpenTelemetry IBM Watsonx Instrumentation"
 optional = false
 python-versions = ">=3.8.1,<4"
 files = []
 develop = true
+
+[package.dependencies]
+opentelemetry-api = "^1.22.0"
+opentelemetry-instrumentation = "0.43b0"
+opentelemetry-semantic-conventions-ai = "^0.0.15"
 
 [package.source]
 type = "directory"
@@ -2663,13 +2668,13 @@ files = [
 
 [[package]]
 name = "opentelemetry-semantic-conventions-ai"
-version = "0.0.14"
+version = "0.0.15"
 description = "OpenTelemetry Semantic Conventions Extension for Large Language Models"
 optional = false
 python-versions = ">=3.8.1,<4"
 files = [
-    {file = "opentelemetry_semantic_conventions_ai-0.0.14-py3-none-any.whl", hash = "sha256:06723937dbba2f4c2fb6d7d421e5e7a25c1c931546e048a4b19d7bc4803c906e"},
-    {file = "opentelemetry_semantic_conventions_ai-0.0.14.tar.gz", hash = "sha256:1e8026bc149ba232bba8618b1601a7cc9384a02e8b218a0665ef1da050c43d38"},
+    {file = "opentelemetry_semantic_conventions_ai-0.0.15-py3-none-any.whl", hash = "sha256:94811e66768a88f8bdd9cc34b478171ad10e16abda6b07e6070cf10ab50dbcdb"},
+    {file = "opentelemetry_semantic_conventions_ai-0.0.15.tar.gz", hash = "sha256:75a23a61af7d34755a1c2be76511cc54e5c711c0b5ecfe90b018203cc7fa57cc"},
 ]
 
 [[package]]
@@ -4190,4 +4195,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8.1,<4"
-content-hash = "629b5102f5eabbc954ae0dd6f901afe484655972068e09af2f1bc4bd0b7ebeba"
+content-hash = "727c3f986d6af4652d1773a24149fe5d210680084d8768f3d16e911589f80ee8"

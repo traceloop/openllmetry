@@ -8,6 +8,9 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = ">=3.8.1,<4"
+opentelemetry-api = "^1.22.0"
+opentelemetry-instrumentation = "0.43b0"
+opentelemetry-semantic-conventions-ai = "^0.0.15"
 
 [[tool.poetry.packages]]
 include = "opentelemetry/instrumentation/watsonx"
