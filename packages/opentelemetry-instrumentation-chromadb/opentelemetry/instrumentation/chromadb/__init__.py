@@ -7,7 +7,6 @@ import chromadb.api.client
 
 from typing import Collection
 
-print("hello chromaDB instrumentation")
 from opentelemetry.trace import get_tracer
 from wrapt import wrap_function_wrapper
 
@@ -26,7 +25,7 @@ WRAPPED_METHODS = [
         "package": chromadb.api.segment,
         "object": "SegmentAPI",
         "method": "_query",
-        "span_name": "chroma.segment._query"
+        "span_name": "chroma.query.segment._query"
     },
     {
         "package": chromadb,
@@ -99,7 +98,6 @@ class ChromaInstrumentor(BaseInstrumentor):
                     f"{wrap_object}.{wrap_method}",
                     _wrap(tracer, wrapped_method),
                 )
-                print("Wrapped ", wrap_package, wrap_object, wrap_method)
         
 
     def _uninstrument(self, **kwargs):

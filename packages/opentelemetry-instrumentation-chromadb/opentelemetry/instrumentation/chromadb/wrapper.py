@@ -28,12 +28,10 @@ def _set_span_attribute(span, name, value):
 @_with_tracer_wrapper
 def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
     """Instruments and calls every function defined in TO_WRAP."""
-    print("[IN_WRAPPER] wrapped:", wrapped)
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
         return wrapped(*args, **kwargs)
 
     name = to_wrap.get("span_name")
-    print("[IN_WRAPPER] name:", name)
     with tracer.start_as_current_span(name) as span:
         span.set_attribute(SpanAttributes.DB_SYSTEM, "chroma")
         span.set_attribute(SpanAttributes.DB_OPERATION, to_wrap.get("method"))
@@ -46,6 +44,8 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
             _set_peek_attributes(span, kwargs)
         elif to_wrap.get("method") == "query":
             _set_query_attributes(span, kwargs)
+        elif to_wrap.get("method") == "_query":
+            _set_segment_query_attributes(span, kwargs)
         elif to_wrap.get("method") == "modify":
             _set_modify_attributes(span, kwargs)
         elif to_wrap.get("method") == "update":
@@ -55,9 +55,6 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
         elif to_wrap.get("method") == "delete":
             _set_delete_attributes(span, kwargs)
 
-        print("[IN WRAPPER] method: ", to_wrap.get("method"))
-        print("[IN WRAPPER] args", args)
-        print("[IN WRAPPER] kwargs", kwargs)
         return_value = wrapped(*args, **kwargs)
 
     return return_value
@@ -121,6 +118,12 @@ def _set_query_attributes(span, kwargs):
     _set_span_attribute(span, "db.chroma.query.where", _encode_where(kwargs.get("where")))
     _set_span_attribute(span, "db.chroma.query.where_document", _encode_where_document(kwargs.get("where_document")))
     _set_span_attribute(span, "db.chroma.query.include", _encode_include(kwargs.get("include")))
+
+
+def _set_segment_query_attributes(span, kwargs):
+    _set_span_attribute(span, "db.chroma.query.segment._query.collection_id", str(kwargs.get("collection_id")))
+    _set_span_attribute(span, "db.chroma.query.segment._query.query_embeddings", str([str(l) for l in kwargs.get("query_embeddings")])
+)
 
 
 def _set_modify_attributes(span, kwargs):
