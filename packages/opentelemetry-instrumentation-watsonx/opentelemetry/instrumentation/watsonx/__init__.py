@@ -102,8 +102,7 @@ def _set_input_attributes(span, instance, kwargs):
 
 
 def _set_response_attributes(span, response):
-    _set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, response.get("model"))
-   # Set other attributes
+    _set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, response.get("model_id"))
 
     usage = response['results'][0]
     _set_span_attribute(
