@@ -28,10 +28,12 @@ def _set_span_attribute(span, name, value):
 @_with_tracer_wrapper
 def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
     """Instruments and calls every function defined in TO_WRAP."""
+    print("[IN_WRAPPER] wrapped:", wrapped)
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
         return wrapped(*args, **kwargs)
 
     name = to_wrap.get("span_name")
+    print("[IN_WRAPPER] name:", name)
     with tracer.start_as_current_span(name) as span:
         span.set_attribute(SpanAttributes.DB_SYSTEM, "chroma")
         span.set_attribute(SpanAttributes.DB_OPERATION, to_wrap.get("method"))

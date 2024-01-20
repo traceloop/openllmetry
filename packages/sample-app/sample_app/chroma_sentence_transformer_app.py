@@ -1,6 +1,4 @@
 # pip install pandas, sentence_transformers
-
-import os
 import pandas as pd
 import chromadb
 from chromadb.utils.embedding_functions import SentenceTransformerEmbeddingFunction
@@ -11,10 +9,11 @@ Traceloop.init(app_name="chroma_sentence_transformer_app", disable_batch=True)
 
 embedding_function = SentenceTransformerEmbeddingFunction()
 
-claim_df = pd.read_json("data/scifact/scifact_claims.jsonl", lines=True).head(10)
-corpus_df = pd.read_json("data/scifact/scifact_corpus.jsonl", lines=True).head(10)
-
 chroma_client = chromadb.Client()
+
+claim_df = pd.read_json("/home/paolo/dev/openllmetry/packages/sample-app/data/scifact/scifact_claims.jsonl", lines=True).head(10)
+corpus_df = pd.read_json("/home/paolo/dev/openllmetry/packages/sample-app/data/scifact/scifact_corpus.jsonl", lines=True).head(10)
+
 scifact_corpus_collection = chroma_client.create_collection(
     name="scifact_corpus", embedding_function=embedding_function
 )
