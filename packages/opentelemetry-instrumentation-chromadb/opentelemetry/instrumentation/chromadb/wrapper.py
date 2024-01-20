@@ -53,6 +53,9 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
         elif to_wrap.get("method") == "delete":
             _set_delete_attributes(span, kwargs)
 
+        print("[IN WRAPPER] method: ", to_wrap.get("method"))
+        print("[IN WRAPPER] args", args)
+        print("[IN WRAPPER] kwargs", kwargs)
         return_value = wrapped(*args, **kwargs)
 
     return return_value
