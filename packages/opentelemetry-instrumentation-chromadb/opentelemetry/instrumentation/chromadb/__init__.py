@@ -98,7 +98,6 @@ class ChromaInstrumentor(BaseInstrumentor):
                     f"{wrap_object}.{wrap_method}",
                     _wrap(tracer, wrapped_method),
                 )
-        
 
     def _uninstrument(self, **kwargs):
         for wrapped_method in WRAPPED_METHODS:
@@ -108,4 +107,3 @@ class ChromaInstrumentor(BaseInstrumentor):
             wrapped = getattr(wrap_package, wrap_object, None)
             if wrapped:
                 unwrap(wrapped, wrapped_method.get("method"))
-

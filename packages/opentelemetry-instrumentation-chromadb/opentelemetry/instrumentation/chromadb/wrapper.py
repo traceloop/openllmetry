@@ -124,9 +124,10 @@ def _set_query_attributes(span, kwargs):
 def _set_segment_query_attributes(span, kwargs):
     _set_span_attribute(span, "db.chroma.query.segment._query.collection_id", str(kwargs.get("collection_id")))
 
+
 def _add_segment_query_embeddings_events(span, kwargs):
-    for l in kwargs.get("query_embeddings"):
-        span.add_event(str(l))
+    for embeddings in kwargs.get("query_embeddings"):
+        span.add_event(str(embeddings))
 
 
 def _set_modify_attributes(span, kwargs):

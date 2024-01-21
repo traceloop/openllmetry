@@ -40,7 +40,7 @@ scifact_corpus_collection = chroma_client.create_collection(
 batch_size = 100
 
 for i in range(0, len(corpus_df), batch_size):
-    batch_df = corpus_df[i : i + batch_size]
+    batch_df = corpus_df[i:i + batch_size]
     scifact_corpus_collection.add(
         ids=batch_df["doc_id"]
         .apply(lambda x: str(x))
