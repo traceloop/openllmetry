@@ -1,19 +1,37 @@
 # pip install pandas, sentence_transformers
-import pandas as pd
+import pathlib
+
 import chromadb
-from chromadb.utils.embedding_functions import SentenceTransformerEmbeddingFunction
-from traceloop.sdk import Traceloop
+from chromadb.utils.embedding_functions import (
+    SentenceTransformerEmbeddingFunction,
+)
 from opentelemetry.sdk.trace.export import ConsoleSpanExporter
+import pandas as pd
+from traceloop.sdk import Traceloop
 from traceloop.sdk.decorators import workflow
 
-Traceloop.init(app_name="chroma_sentence_transformer_app", disable_batch=True, exporter=ConsoleSpanExporter())
+
+Traceloop.init(
+    app_name="chroma_sentence_transformer_app",
+    disable_batch=True,
+    exporter=ConsoleSpanExporter(),
+)
 
 embedding_function = SentenceTransformerEmbeddingFunction()
 
 chroma_client = chromadb.Client()
 
-claim_df = pd.read_json("/home/paolo/dev/openllmetry/packages/sample-app/data/scifact/scifact_claims.jsonl", lines=True).head(10)
-corpus_df = pd.read_json("/home/paolo/dev/openllmetry/packages/sample-app/data/scifact/scifact_corpus.jsonl", lines=True).head(10)
+data_root_dir = pathlib.Path(__file__).parent.parent / "data"
+
+claim_df = pd.read_json(
+    (data_root_dir / "scifact/scifact_claims.jsonl").resolve(),
+    lines=True,
+).head(10)
+
+corpus_df = pd.read_json(
+    (data_root_dir / "scifact/scifact_corpus.jsonl").resolve(),
+    lines=True,
+).head(10)
 
 scifact_corpus_collection = chroma_client.create_collection(
     name="scifact_corpus", embedding_function=embedding_function
@@ -22,7 +40,7 @@ scifact_corpus_collection = chroma_client.create_collection(
 batch_size = 100
 
 for i in range(0, len(corpus_df), batch_size):
-    batch_df = corpus_df[i: i + batch_size]
+    batch_df = corpus_df[i : i + batch_size]
     scifact_corpus_collection.add(
         ids=batch_df["doc_id"]
         .apply(lambda x: str(x))
@@ -69,6 +87,7 @@ def assess_claims(claims):
     scifact_corpus_collection.query(
         query_texts=claims, include=["documents", "distances"], n_results=3
     )
+
 
 samples = claim_df.sample(2)
 assess_claims(samples["claim"].tolist())
