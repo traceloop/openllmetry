@@ -126,8 +126,11 @@ def _set_segment_query_attributes(span, kwargs):
 
 
 def _add_segment_query_embeddings_events(span, kwargs):
-    for embeddings in kwargs.get("query_embeddings"):
-        span.add_event(str(embeddings))
+    for i, embeddings in enumerate(kwargs.get("query_embeddings", [])):
+        span.add_event(
+            name=f"query_embeddings_{i}",
+            attributes={"embeddings":str(embeddings)}
+        )
 
 
 def _set_modify_attributes(span, kwargs):

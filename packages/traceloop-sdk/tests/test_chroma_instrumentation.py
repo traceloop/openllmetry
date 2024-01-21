@@ -75,3 +75,21 @@ def test_chroma_query(exporter, collection):
     assert span.attributes.get("db.chroma.query.query_texts_count") == 1
     assert span.attributes.get("db.chroma.query.n_results") == 2
     assert span.attributes.get("db.chroma.query.where") == "{'source': 'student info'}"
+
+
+def test_chroma_query_segment_query(exporter, collection):
+    add_documents(collection)
+    query_collection(collection)
+
+    spans = exporter.get_finished_spans()
+    span = next(span for span in spans if span.name == "chroma.query.segment._query")
+    assert len(span.attributes.get("db.chroma.query.segment._query.collection_id")) > 0
+    events = span.events
+    assert len(events) > 0
+    for i, event in enumerate(events):
+        assert event.name == f"query_embeddings_{i}"
+        embeddings = event.attributes.get("embeddings")
+        eval_embeddings = eval(embeddings)
+        assert len(eval_embeddings) > 100
+        for number in eval_embeddings:
+            assert number >= -1 and number <= 1
