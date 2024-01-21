@@ -129,7 +129,7 @@ def _add_segment_query_embeddings_events(span, kwargs):
     for i, embeddings in enumerate(kwargs.get("query_embeddings", [])):
         span.add_event(
             name=f"query_embeddings_{i}",
-            attributes={"embeddings":str(embeddings)}
+            attributes={"embeddings": str(embeddings)}
         )
 
 
