@@ -3,9 +3,10 @@ import pandas as pd
 import chromadb
 from chromadb.utils.embedding_functions import SentenceTransformerEmbeddingFunction
 from traceloop.sdk import Traceloop
+from opentelemetry.sdk.trace.export import ConsoleSpanExporter
 from traceloop.sdk.decorators import workflow
 
-Traceloop.init(app_name="chroma_sentence_transformer_app", disable_batch=True)
+Traceloop.init(app_name="chroma_sentence_transformer_app", disable_batch=True, exporter=ConsoleSpanExporter())
 
 embedding_function = SentenceTransformerEmbeddingFunction()
 

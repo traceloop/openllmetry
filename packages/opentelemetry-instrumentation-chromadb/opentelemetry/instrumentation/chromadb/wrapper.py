@@ -46,6 +46,7 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
             _set_query_attributes(span, kwargs)
         elif to_wrap.get("method") == "_query":
             _set_segment_query_attributes(span, kwargs)
+            _add_segment_query_embeddings_events(span, kwargs)
         elif to_wrap.get("method") == "modify":
             _set_modify_attributes(span, kwargs)
         elif to_wrap.get("method") == "update":
@@ -122,8 +123,10 @@ def _set_query_attributes(span, kwargs):
 
 def _set_segment_query_attributes(span, kwargs):
     _set_span_attribute(span, "db.chroma.query.segment._query.collection_id", str(kwargs.get("collection_id")))
-    _set_span_attribute(span, "db.chroma.query.segment._query.query_embeddings", str([str(l) for l in kwargs.get("query_embeddings")])
-)
+
+def _add_segment_query_embeddings_events(span, kwargs):
+    for l in kwargs.get("query_embeddings"):
+        span.add_event(str(l))
 
 
 def _set_modify_attributes(span, kwargs):
