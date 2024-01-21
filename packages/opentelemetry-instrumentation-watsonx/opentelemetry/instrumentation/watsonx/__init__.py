@@ -7,7 +7,6 @@ from wrapt import wrap_function_wrapper
 
 from opentelemetry import context as context_api
 from opentelemetry.trace import get_tracer, SpanKind
-from opentelemetry.trace.status import Status, StatusCode
 
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.instrumentation.utils import (
@@ -97,7 +96,7 @@ def _set_input_attributes(span, instance, kwargs):
     _set_span_attribute(span, SpanAttributes.LLM_REPETITION_PENALTY, modelParameters.get("repetition_penalty"))
     _set_span_attribute(span, SpanAttributes.LLM_TEMPERATURE, modelParameters.get("temperature"))
     _set_span_attribute(span, SpanAttributes.LLM_TOP_P, modelParameters.get("top_p"))
-    
+
     return
 
 
@@ -106,7 +105,8 @@ def _set_response_attributes(span, response):
 
     usage = response['results'][0]
     _set_span_attribute(
-        span, SpanAttributes.LLM_USAGE_TOTAL_TOKENS, usage.get("input_token_count") + usage.get("generated_token_count"),
+        span,
+        SpanAttributes.LLM_USAGE_TOTAL_TOKENS, usage.get("input_token_count") + usage.get("generated_token_count"),
     )
     _set_span_attribute(
         span,
