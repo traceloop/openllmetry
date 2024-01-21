@@ -3,7 +3,6 @@
 import logging
 import chromadb
 import chromadb.api.segment
-import chromadb.api.client
 
 from typing import Collection
 
