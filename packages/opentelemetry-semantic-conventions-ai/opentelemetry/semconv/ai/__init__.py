@@ -36,6 +36,13 @@ class SpanAttributes:
     # Deprecated
     TRACELOOP_CORRELATION_ID = "traceloop.correlation.id"
 
+    # Watson/genai LLM
+    LLM_DECODING_METHOD = "llm.watsonx.decoding_method"
+    LLM_RANDOM_SEED = "llm.watsonx.random_seed"
+    LLM_MAX_NEW_TOKENS = "llm.watsonx.max_new_tokens"
+    LLM_MIN_NEW_TOKENS = "llm.watsonx.min_new_tokens"
+    LLM_REPETITION_PENALTY = "llm.watsonx.repetition_penalty"
+
 
 class LLMRequestTypeValues(Enum):
     COMPLETION = "completion"
