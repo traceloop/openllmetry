@@ -37,6 +37,10 @@ class SpanAttributes:
     TRACELOOP_CORRELATION_ID = "traceloop.correlation.id"
 
 
+class EventName(Enum):
+    VECTOR_DB_QUERY_EMBEDDINGS = "vector_db.query.embeddings"
+
+
 class LLMRequestTypeValues(Enum):
     COMPLETION = "completion"
     CHAT = "chat"
