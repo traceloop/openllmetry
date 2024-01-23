@@ -4,7 +4,7 @@ from opentelemetry import context as context_api
 from opentelemetry.instrumentation.utils import (
     _SUPPRESS_INSTRUMENTATION_KEY,
 )
-
+import itertools
 
 def _with_tracer_wrapper(func):
     """Helper for providing tracer for wrapper functions."""
@@ -57,6 +57,8 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
             _set_delete_attributes(span, kwargs)
 
         return_value = wrapped(*args, **kwargs)
+        if to_wrap.get("method") == "query":
+            _add_query_result_events(span, return_value)
 
     return return_value
 
@@ -128,10 +130,28 @@ def _set_segment_query_attributes(span, kwargs):
 def _add_segment_query_embeddings_events(span, kwargs):
     for i, embeddings in enumerate(kwargs.get("query_embeddings", [])):
         span.add_event(
-            name=f"query_embeddings_{i}",
+            name=f"db.chroma.query.segment._query.query_embeddings.{i}",
             attributes={"embeddings": str(embeddings)}
         )
 
+
+def _add_query_result_events(span, kwargs):
+    zipped = itertools.zip_longest(
+        kwargs.get("ids", []),
+        kwargs.get("distances", []),
+        kwargs.get("metadata", []),
+        kwargs.get("documents", [])
+    )
+    for i, tuple_ in enumerate(zipped):
+        span.add_event(
+            name=f"db.chroma.query.result.{i}",
+            attributes={
+                "ids": tuple_[0],
+                "distances": tuple_[1],
+                "metadata": tuple_[2],
+                "documents": tuple_[3],
+            }
+        )
 
 def _set_modify_attributes(span, kwargs):
     _set_span_attribute(span, "db.chroma.modify.name", kwargs.get("name"))
