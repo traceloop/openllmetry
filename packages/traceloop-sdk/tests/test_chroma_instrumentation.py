@@ -76,6 +76,29 @@ def test_chroma_query(exporter, collection):
     assert span.attributes.get("db.chroma.query.n_results") == 2
     assert span.attributes.get("db.chroma.query.where") == "{'source': 'student info'}"
 
+    events = span.events
+    assert len(events) > 0
+    for i, event in enumerate(events):
+        assert event.name == f"db.chroma.query.result.{i}"
+        ids = event.attributes.get("ids")
+        distances = event.attributes.get("distances")
+        documents = event.attributes.get("documents")
+
+        # We have lists of same length as result
+        assert len(ids) > 0
+        assert len(ids) == len(distances)
+        assert len(distances) == len(documents)
+
+        for id_ in ids:
+            assert len(id_) > 0
+
+        for distance in distances:
+            assert distance >= 0
+
+        for document in documents:
+            assert len(document) > 0
+            assert isinstance(document, str)
+
 
 def test_chroma_query_segment_query(exporter, collection):
     add_documents(collection)
@@ -86,32 +109,10 @@ def test_chroma_query_segment_query(exporter, collection):
     assert len(span.attributes.get("db.chroma.query.segment._query.collection_id")) > 0
     events = span.events
     assert len(events) > 0
-    for event in events:
-        if "db.chroma.query.segment._query." in event.name:
-            embeddings = event.attributes.get("embeddings")
-            eval_embeddings = eval(embeddings)
-            assert len(eval_embeddings) > 100
-            for number in eval_embeddings:
-                assert number >= -1 and number <= 1
-
-        if "db.chroma.query.segment.result" in event.name:
-            ids = event.attributes.get("ids")
-            distances = event.attributes.get("distances")
-            metadata = event.attributes.get("metadata")
-            documents = event.attributes.get("documents")
-
-            # We have lists of same length as result
-            assert len(ids) > 0
-            assert len(ids) == len(distances)
-            assert len(distances) == len(metadata)
-            assert len(metadata) == len(documents)
-
-            for id_ in ids:
-                assert id_ > 0
-
-            for distance in distances:
-                assert distance >= 0
-
-            for document in documents:
-                assert len(document) > 0
-                assert isinstance(document, str)
+    for i, event in enumerate(events):
+        assert event.name == f"db.chroma.query.segment._query.query_embeddings.{i}"
+        embeddings = event.attributes.get("embeddings")
+        eval_embeddings = eval(embeddings)
+        assert len(eval_embeddings) > 100
+        for number in eval_embeddings:
+            assert number >= -1 and number <= 1
