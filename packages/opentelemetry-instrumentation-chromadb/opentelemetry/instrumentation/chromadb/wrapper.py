@@ -6,6 +6,7 @@ from opentelemetry.instrumentation.utils import (
 )
 import itertools
 
+
 def _with_tracer_wrapper(func):
     """Helper for providing tracer for wrapper functions."""
 
@@ -152,6 +153,7 @@ def _add_query_result_events(span, kwargs):
                 "documents": tuple_[3],
             }
         )
+
 
 def _set_modify_attributes(span, kwargs):
     _set_span_attribute(span, "db.chroma.modify.name", kwargs.get("name"))
