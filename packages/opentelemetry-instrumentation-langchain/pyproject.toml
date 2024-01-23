@@ -8,7 +8,7 @@ show_missing = true
 
 [tool.poetry]
 name = "opentelemetry-instrumentation-langchain"
-version = "0.9.4"
+version = "0.10.0"
 description = "OpenTelemetry Langchain instrumentation"
 authors = [
   "Gal Kleinman <gal@traceloop.com>",
@@ -25,7 +25,7 @@ include = "opentelemetry/instrumentation/langchain"
 python = ">=3.8.1,<4"
 opentelemetry-api = "^1.22.0"
 opentelemetry-instrumentation = "0.43b0"
-opentelemetry-semantic-conventions-ai = "^0.0.14"
+opentelemetry-semantic-conventions-ai = "^0.0.15"
 
 [tool.poetry.group.dev.dependencies]
 autopep8 = "2.0.4"

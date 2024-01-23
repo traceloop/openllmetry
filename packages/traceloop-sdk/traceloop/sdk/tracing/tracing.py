@@ -271,6 +271,7 @@ def init_instrumentations():
     init_bedrock_instrumentor()
     init_replicate_instrumentor()
     init_vertexai_instrumentor()
+    init_watsonx_instrumentor()
 
 
 def init_openai_instrumentor():
@@ -415,5 +416,15 @@ def init_vertexai_instrumentor():
         from opentelemetry.instrumentation.vertexai import VertexAIInstrumentor
 
         instrumentor = VertexAIInstrumentor()
+        if not instrumentor.is_instrumented_by_opentelemetry:
+            instrumentor.instrument()
+
+
+def init_watsonx_instrumentor():
+    if importlib.util.find_spec("ibm_watson_machine_learning") is not None:
+        Telemetry().capture("instrumentation:watsonx:init")
+        from opentelemetry.instrumentation.watsonx import WatsonxInstrumentor
+
+        instrumentor = WatsonxInstrumentor()
         if not instrumentor.is_instrumented_by_opentelemetry:
             instrumentor.instrument()
