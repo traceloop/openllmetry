@@ -145,7 +145,7 @@ class Traceloop:
 
         print(Fore.RESET)
 
-        resource_attributes = resource_attributes.update({SERVICE_NAME: app_name})
+        resource_attributes.update({SERVICE_NAME: app_name})
         TracerWrapper.set_static_params(
             resource_attributes, enable_content_tracing, api_endpoint, headers
         )
