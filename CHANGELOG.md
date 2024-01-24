@@ -1,3 +1,19 @@
+## v0.10.1 (2024-01-24)
+
+### Fix
+
+- `resource_attributes` always being None (#359)
+
+## v0.10.0 (2024-01-22)
+
+### Feat
+
+- watsonx support for traceloop (#341)
+
+### Fix
+
+- **sdk**: support arbitrary resources (#338)
+
 ## v0.9.4 (2024-01-15)
 
 ### Fix
