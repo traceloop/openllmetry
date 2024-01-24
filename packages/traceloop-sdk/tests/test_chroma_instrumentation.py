@@ -2,6 +2,8 @@ from os import getcwd
 import pytest
 import chromadb
 
+from opentelemetry.semconv.ai import EventName
+
 from traceloop.sdk.decorators import task
 
 chroma = chromadb.PersistentClient(path=getcwd())
@@ -110,7 +112,7 @@ def test_chroma_query_segment_query(exporter, collection):
     events = span.events
     assert len(events) > 0
     for i, event in enumerate(events):
-        assert event.name == f"db.chroma.query.segment._query.query_embeddings.{i}"
+        assert event.name == f"{EventName.VECTOR_DB_QUERY_EMBEDDINGS}.{i}"
         embeddings = event.attributes.get("embeddings")
         eval_embeddings = eval(embeddings)
         assert len(eval_embeddings) > 100
