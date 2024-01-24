@@ -108,40 +108,64 @@ class TracerWrapper(object):
 
             if propagator:
                 set_global_textmap(propagator)
-
+            
+            instrument_set = False
             if not instruments:
                 init_instrumentations()
+                instrument_set = True
             else:
                 if 'openai' in instruments:
                     init_openai_instrumentor()
+                    instrument_set = True
                 if 'anthropic' in instruments:
                     init_anthropic_instrumentor()
+                    instrument_set = True
                 if 'cohere' in instruments:
                     init_cohere_instrumentor()
+                    instrument_set = True
                 if 'pinecone' in instruments:
                     init_pinecone_instrumentor()
+                    instrument_set = True
                 if 'chroma' in instruments:
                     init_chroma_instrumentor()
+                    instrument_set = True
                 if 'langchain' in instruments:
                     init_langchain_instrumentor()
+                    instrument_set = True
                 if 'llama_index' in instruments:
                     init_llama_index_instrumentor()
+                    instrument_set = True
                 if 'transformers' in instruments:
                     init_transformers_instrumentor()
+                    instrument_set = True
                 if 'requests' in instruments:
                     init_requests_instrumentor()
+                    instrument_set = True
                 if 'urllib3' in instruments:
                     init_urllib3_instrumentor()
+                    instrument_set = True
                 if 'pymysql' in instruments:
                     init_pymysql_instrumentor()
+                    instrument_set = True
                 if 'bedrock' in instruments:
                     init_bedrock_instrumentor()
+                    instrument_set = True
                 if 'replicate' in instruments:
                     init_replicate_instrumentor()
+                    instrument_set = True
                 if 'vertexai' in instruments:
                     init_vertexai_instrumentor()
+                    instrument_set = True
                 if 'watsonx' in instruments:
                     init_watsonx_instrumentor()
+                    instrument_set = True
+                
+            if not instrument_set:
+                print(
+                    Fore.RED
+                    + "Warning: No valid instruments set. Remove 'instrument' argument to use all instruments, or set a valid instrument."
+                )
+                print(Fore.RESET)
 
             obj.__content_allow_list = ContentAllowList()
 
