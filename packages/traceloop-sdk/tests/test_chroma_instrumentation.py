@@ -114,7 +114,6 @@ def test_chroma_query_segment_query(exporter, collection):
     for i, event in enumerate(events):
         assert event.name == f"{EventName.VECTOR_DB_QUERY_EMBEDDINGS}.{i}"
         embeddings = event.attributes.get("embeddings")
-        eval_embeddings = eval(embeddings)
-        assert len(eval_embeddings) > 100
-        for number in eval_embeddings:
+        assert len(embeddings) > 100
+        for number in embeddings:
             assert number >= -1 and number <= 1
