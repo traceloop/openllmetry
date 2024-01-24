@@ -44,6 +44,10 @@ class SpanAttributes:
     LLM_REPETITION_PENALTY = "llm.watsonx.repetition_penalty"
 
 
+class EventName(Enum):
+    VECTOR_DB_QUERY_EMBEDDINGS = "vector_db.query.embeddings"
+
+
 class LLMRequestTypeValues(Enum):
     COMPLETION = "completion"
     CHAT = "chat"
