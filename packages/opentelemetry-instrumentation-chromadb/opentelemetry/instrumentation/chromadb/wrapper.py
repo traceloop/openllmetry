@@ -1,4 +1,5 @@
 from opentelemetry.semconv.trace import SpanAttributes
+from opentelemetry.semconv.ai import EventName  
 
 from opentelemetry import context as context_api
 from opentelemetry.instrumentation.utils import (
@@ -131,7 +132,7 @@ def _set_segment_query_attributes(span, kwargs):
 def _add_segment_query_embeddings_events(span, kwargs):
     for i, embeddings in enumerate(kwargs.get("query_embeddings", [])):
         span.add_event(
-            name=f"db.chroma.query.segment._query.query_embeddings.{i}",
+            name=f"{EventName.VECTOR_DB_QUERY_EMBEDDINGS}.{i}",
             attributes={"embeddings": str(embeddings)}
         )
 
