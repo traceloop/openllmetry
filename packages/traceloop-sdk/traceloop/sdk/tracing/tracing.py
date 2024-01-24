@@ -55,6 +55,7 @@ class TracerWrapper(object):
         processor: SpanProcessor = None,
         propagator: TextMapPropagator = None,
         exporter: SpanExporter = None,
+        instruments = []
     ) -> "TracerWrapper":
         if not hasattr(cls, "instance"):
             obj = cls.instance = super(TracerWrapper, cls).__new__(cls)
@@ -108,7 +109,39 @@ class TracerWrapper(object):
             if propagator:
                 set_global_textmap(propagator)
 
-            init_instrumentations()
+            if not instruments:
+                init_instrumentations()
+            else:
+                if 'openai' in instruments:
+                    init_openai_instrumentor()
+                if 'anthropic' in instruments:
+                    init_anthropic_instrumentor()
+                if 'cohere' in instruments:
+                    init_cohere_instrumentor()
+                if 'pinecone' in instruments:
+                    init_pinecone_instrumentor()
+                if 'chroma' in instruments:
+                    init_chroma_instrumentor()
+                if 'langchain' in instruments:
+                    init_langchain_instrumentor()
+                if 'llama_index' in instruments:
+                    init_llama_index_instrumentor()
+                if 'transformers' in instruments:
+                    init_transformers_instrumentor()
+                if 'requests' in instruments:
+                    init_requests_instrumentor()
+                if 'urllib3' in instruments:
+                    init_urllib3_instrumentor()
+                if 'pymysql' in instruments:
+                    init_pymysql_instrumentor()
+                if 'bedrock' in instruments:
+                    init_bedrock_instrumentor()
+                if 'replicate' in instruments:
+                    init_replicate_instrumentor()
+                if 'vertexai' in instruments:
+                    init_vertexai_instrumentor()
+                if 'watsonx' in instruments:
+                    init_watsonx_instrumentor()
 
             obj.__content_allow_list = ContentAllowList()
 

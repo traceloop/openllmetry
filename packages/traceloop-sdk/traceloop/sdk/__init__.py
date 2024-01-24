@@ -47,6 +47,7 @@ class Traceloop:
         propagator: TextMapPropagator = None,
         traceloop_sync_enabled: bool = True,
         resource_attributes: dict = {},
+        instruments = []
     ) -> None:
         Telemetry()
 
@@ -154,6 +155,7 @@ class Traceloop:
             processor=processor,
             propagator=propagator,
             exporter=exporter,
+            instruments=instruments
         )
 
     @staticmethod
