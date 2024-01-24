@@ -112,7 +112,7 @@ def test_chroma_query_segment_query(exporter, collection):
     events = span.events
     assert len(events) > 0
     for i, event in enumerate(events):
-        assert event.name == f"{EventName.VECTOR_DB_QUERY_EMBEDDINGS}.{i}"
+        assert event.name == f"{EventName.VECTOR_DB_QUERY_EMBEDDINGS.value}.{i}"
         embeddings = event.attributes.get("embeddings")
         assert len(embeddings) > 100
         for number in embeddings:

@@ -132,7 +132,7 @@ def _set_segment_query_attributes(span, kwargs):
 def _add_segment_query_embeddings_events(span, kwargs):
     for i, embeddings in enumerate(kwargs.get("query_embeddings", [])):
         span.add_event(
-            name=f"{EventName.VECTOR_DB_QUERY_EMBEDDINGS}.{i}",
+            name=f"{EventName.VECTOR_DB_QUERY_EMBEDDINGS.value}.{i}",
             attributes={"embeddings": embeddings}
         )
 
