@@ -108,7 +108,7 @@ class TracerWrapper(object):
 
             if propagator:
                 set_global_textmap(propagator)
-            
+
             instrument_set = False
             if not instruments:
                 init_instrumentations()
@@ -159,11 +159,12 @@ class TracerWrapper(object):
                 if 'watsonx' in instruments:
                     init_watsonx_instrumentor()
                     instrument_set = True
-                
+
             if not instrument_set:
                 print(
                     Fore.RED
-                    + "Warning: No valid instruments set. Remove 'instrument' argument to use all instruments, or set a valid instrument."
+                    + "Warning: No valid instruments set. Remove 'instrument'"
+                    "argument to use all instruments, or set a valid instrument."
                 )
                 print(Fore.RESET)
 
