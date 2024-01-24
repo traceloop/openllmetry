@@ -9,7 +9,12 @@ pytest_plugins = []
 @pytest.fixture(scope="session")
 def exporter():
     exporter = InMemorySpanExporter()
-    Traceloop.init(app_name="test", disable_batch=True, exporter=exporter)
+    Traceloop.init(
+        app_name="test",
+        resource_attributes={"something": "yes"},
+        disable_batch=True,
+        exporter=exporter,
+    )
     return exporter
 
 
