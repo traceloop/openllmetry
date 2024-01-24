@@ -147,10 +147,10 @@ def _add_query_result_events(span, kwargs):
         span.add_event(
             name=f"db.chroma.query.result.{i}",
             attributes={
-                "ids": tuple_[0],
-                "distances": tuple_[1],
-                "metadata": tuple_[2],
-                "documents": tuple_[3],
+                "ids": tuple_[0] or [],
+                "distances": tuple_[1] or [],
+                "metadata": tuple_[2] or [],
+                "documents": tuple_[3] or [],
             }
         )
 
