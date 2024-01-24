@@ -55,7 +55,7 @@ class TracerWrapper(object):
         processor: SpanProcessor = None,
         propagator: TextMapPropagator = None,
         exporter: SpanExporter = None,
-        instruments = []
+        instruments=[]
     ) -> "TracerWrapper":
         if not hasattr(cls, "instance"):
             obj = cls.instance = super(TracerWrapper, cls).__new__(cls)
