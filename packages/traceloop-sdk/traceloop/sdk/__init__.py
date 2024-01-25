@@ -3,7 +3,6 @@ import sys
 from deprecated import deprecated
 import requests
 from pathlib import Path
-from enum import Enum
 
 from typing import Optional
 from colorama import Fore
@@ -14,6 +13,7 @@ from opentelemetry.propagators.textmap import TextMapPropagator
 from opentelemetry.util.re import parse_env_headers
 
 from traceloop.sdk.telemetry import Telemetry
+from traceloop.sdk.instruments import Instruments
 from traceloop.sdk.config import (
     is_content_tracing_enabled,
     is_tracing_enabled,
@@ -48,7 +48,7 @@ class Traceloop:
         propagator: TextMapPropagator = None,
         traceloop_sync_enabled: bool = True,
         resource_attributes: dict = {},
-        instruments=None
+        instruments: set[Instruments] = {}
     ) -> None:
         Telemetry()
 
@@ -190,21 +190,3 @@ class Traceloop:
                 "score": score,
             },
         )
-
-
-class Instruments(Enum):
-    OPENAI = "openai"
-    ANTHROPIC = "anthropic"
-    COHERE = "cohere"
-    PINECONE = "pinecone"
-    CHROMA = "chroma"
-    LANGCHAIN = "langchain"
-    LLAMA_INDEX = "llama_index"
-    TRANSFORMERS = "transformers"
-    REQUESTS = "requests"
-    URLLIB3 = "urllib3"
-    PYMYSQL = "pymysql"
-    BEDROCK = "bedrock"
-    REPLICATE = "replicate"
-    VERTEXAI = "vertexai"
-    WATSONX = "watsonx"
