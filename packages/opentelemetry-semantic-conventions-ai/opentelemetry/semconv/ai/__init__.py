@@ -44,16 +44,10 @@ class SpanAttributes:
     LLM_REPETITION_PENALTY = "llm.watsonx.repetition_penalty"
 
 
-class EventName(Enum):
+class EventAttributes(Enum):
     VECTOR_DB_QUERY_EMBEDDINGS = "vector_db.query.embeddings"
     VECTOR_DB_QUERY_RESULT = "vector_db.query.result"
-
-
-class EmbeddingsEventAttributes(Enum):
     VECTOR = "vector_db.query.embeddings.vector"
-
-
-class VectorDBQueryResultAttributes(Enum):
     IDS = "vector_db.query.result.ids"
     DISTANCES = "vector_db.query.result.distances"
     METADATA = "vector_db.query.result.metadata"
