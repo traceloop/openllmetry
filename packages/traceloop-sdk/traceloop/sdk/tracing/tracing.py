@@ -113,7 +113,6 @@ class TracerWrapper(object):
             instrument_set = False
             if not instruments:
                 instrument_set = init_instrumentations()
-                print("all")
             else:
                 if 'openai' in instruments:
                     if not init_openai_instrumentor():
@@ -123,7 +122,6 @@ class TracerWrapper(object):
                         )
                         print(Fore.RESET)
                     else:
-                        print("openai")
                         instrument_set = True
                 if 'anthropic' in instruments:
                     if not init_anthropic_instrumentor():
@@ -133,7 +131,6 @@ class TracerWrapper(object):
                         )
                         print(Fore.RESET)
                     else:
-                        print("anthropic")
                         instrument_set = True
                 if 'cohere' in instruments:
                     if not init_cohere_instrumentor():
