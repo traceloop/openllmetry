@@ -1,5 +1,6 @@
 """OpenTelemetry Anthropic instrumentation"""
 import logging
+import os
 from typing import Collection
 from wrapt import wrap_function_wrapper
 
@@ -14,11 +15,11 @@ from opentelemetry.instrumentation.utils import (
 )
 
 from opentelemetry.semconv.ai import SpanAttributes, LLMRequestTypeValues
+from opentelemetry.instrumentation.anthropic.version import __version__
 
 logger = logging.getLogger(__name__)
 
 _instruments = ("anthropic >= 0.3.11",)
-__version__ = "0.1.0"
 
 WRAPPED_METHODS = [
     {
@@ -27,6 +28,12 @@ WRAPPED_METHODS = [
         "span_name": "anthropic.completion",
     },
 ]
+
+
+def should_send_prompts():
+    return (
+        os.getenv("TRACELOOP_TRACE_CONTENT") or "true"
+    ).lower() == "true" or context_api.get_value("override_enable_content_tracing")
 
 
 def _set_span_attribute(span, name, value):
@@ -50,23 +57,45 @@ def _set_input_attributes(span, kwargs):
         span, SpanAttributes.LLM_PRESENCE_PENALTY, kwargs.get("presence_penalty")
     )
 
-    _set_span_attribute(
-        span, f"{SpanAttributes.LLM_PROMPTS}.0.user", kwargs.get("prompt")
-    )
+    if should_send_prompts():
+        _set_span_attribute(
+            span, f"{SpanAttributes.LLM_PROMPTS}.0.user", kwargs.get("prompt")
+        )
 
     return
 
 
-def _set_span_completions(span, llm_request_type, completion):
+def _set_span_completions(span, response):
     index = 0
     prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{index}"
-    _set_span_attribute(span, f"{prefix}.finish_reason", completion.get("stop_reason"))
-    _set_span_attribute(span, f"{prefix}.content", completion.get("completion"))
+    _set_span_attribute(span, f"{prefix}.finish_reason", response.get("stop_reason"))
+    _set_span_attribute(span, f"{prefix}.content", response.get("completion"))
 
 
-def _set_response_attributes(span, llm_request_type, response):
+def _set_token_usage(span, anthropic, request, response):
+    if not isinstance(response, dict):
+        response = response.__dict__
+
+    prompt_tokens = anthropic.count_tokens(request.get("prompt"))
+    completion_tokens = anthropic.count_tokens(response.get("completion"))
+    total_tokens = prompt_tokens + completion_tokens
+
+    print(f"prompt_tokens: {prompt_tokens}")
+    print(f"completion_tokens: {completion_tokens}")
+
+    _set_span_attribute(span, SpanAttributes.LLM_USAGE_PROMPT_TOKENS, prompt_tokens)
+    _set_span_attribute(
+        span, SpanAttributes.LLM_USAGE_COMPLETION_TOKENS, completion_tokens
+    )
+    _set_span_attribute(span, SpanAttributes.LLM_USAGE_TOTAL_TOKENS, total_tokens)
+
+
+def _set_response_attributes(span, response):
+    if not isinstance(response, dict):
+        response = response.__dict__
     _set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, response.get("model"))
-    _set_span_completions(span, llm_request_type, response)
+    if should_send_prompts():
+        _set_span_completions(span, response)
 
 
 def _with_tracer_wrapper(func):
@@ -93,7 +122,7 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
         kind=SpanKind.CLIENT,
         attributes={
             SpanAttributes.LLM_VENDOR: "Anthropic",
-            SpanAttributes.LLM_REQUEST_TYPE: LLMRequestTypeValues.COMPLETION,
+            SpanAttributes.LLM_REQUEST_TYPE: LLMRequestTypeValues.COMPLETION.value,
         },
     ) as span:
         try:
@@ -111,10 +140,11 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
             try:
                 if span.is_recording():
                     _set_response_attributes(span, response)
+                    _set_token_usage(span, instance._client, kwargs, response)
 
             except Exception as ex:  # pylint: disable=broad-except
                 logger.warning(
-                    "Failed to set response attributes for openai span, error: %s",
+                    "Failed to set response attributes for anthropic span, error: %s",
                     str(ex),
                 )
             if span.is_recording():

@@ -171,3 +171,9 @@ cython_debug/
 
 # PyCharm
 .idea/
+
+# NX
+.nx
+
+# Test artifcats
+chroma.sqlite3

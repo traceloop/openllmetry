@@ -1,5 +1,5 @@
-import os
 import openai
+import os
 
 from traceloop.sdk import Traceloop
 from traceloop.sdk.decorators import task, agent, workflow, tool
@@ -48,7 +48,7 @@ def history_jokes_tool():
 @task(name="signature_generation")
 def generate_signature(joke: str):
     completion = openai.Completion.create(
-        model="text-davinci-003",
+        model="davinci-002",
         prompt="add a signature to the joke:\n\n" + joke,
     )
 
@@ -57,12 +57,16 @@ def generate_signature(joke: str):
 
 @workflow(name="pirate_joke_generator")
 def joke_workflow():
-    # Traceloop.set_correlation_id("joke_12345")
+    Traceloop.set_association_properties(
+        {"user_id": "user_12345", "chat_id": "chat_9871"}
+    )
 
     eng_joke = create_joke()
     pirate_joke = translate_joke_to_pirate(eng_joke)
     signature = generate_signature(pirate_joke)
     print(pirate_joke + "\n\n" + signature)
 
+    Traceloop.report_score("chat_id", "chat_9871", 1)
 
-# joke_workflow()
+
+joke_workflow()

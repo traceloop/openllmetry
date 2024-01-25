@@ -62,7 +62,18 @@
         "command": "poetry run pytest tests/",
         "cwd": "packages/opentelemetry-instrumentation-weaviate"
       }
+    },
+    "build-release": {
+      "executor": "@nxlv/python:run-commands",
+      "options": {
+        "commands": [
+          "chmod +x ../../scripts/build-release.sh",
+          "../../scripts/build-release.sh"
+        ],
+        "cwd": "packages/opentelemetry-instrumentation-weaviate"
+      },
+      "dependsOn": ["^build-release"]
     }
   },
-  "tags": []
+  "tags": ["instrumentation"]
 }

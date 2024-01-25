@@ -62,7 +62,17 @@
         "command": "poetry run pytest tests/",
         "cwd": "packages/opentelemetry-instrumentation-bedrock"
       }
+    },
+    "build-release": {
+      "executor": "@nxlv/python:run-commands",
+      "options": {
+        "commands": [
+          "chmod +x ../../scripts/build-release.sh",
+          "../../scripts/build-release.sh"
+        ],
+        "cwd": "packages/opentelemetry-instrumentation-bedrock"
+      }
     }
   },
-  "tags": []
+  "tags": ["instrumentation"]
 }

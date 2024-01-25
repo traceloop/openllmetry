@@ -1,19 +1,22 @@
 name: CI
 
 on:
-  pull_request:
+  pull_request_target:
+    types: [opened, synchronize]
   push:
     branches:
       - "main"
 
 jobs:
   lint:
+    name: Lint
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          ref: ${{  github.event.pull_request.head.sha }}
 
       - name: Set up Python 3.11
         uses: actions/setup-python@v1
@@ -21,74 +24,115 @@ jobs:
           python-version: 3.11
       - name: Install Poetry
         uses: snok/install-poetry@v1
-      
+
       - uses: actions/setup-node@v3
         with:
           node-version: 18
 
       - uses: nrwl/nx-set-shas@v3
       - run: npm ci
-
-
       - run: npx nx affected -t install --with dev
       - run: npx nx affected -t lint --parallel=3
-  
-  test:
+
+  build-and-test-packages:
+    name: Build & Test Packages
     runs-on: ubuntu-latest
+    permissions:
+      contents: "read"
+      id-token: "write"
+    strategy:
+      matrix:
+        python-version: ["3.8", "3.9", "3.10", "3.11"]
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Get User Permission
+        id: checkAccess
+        uses: actions-cool/check-user-permission@v2
+        with:
+          require: write
+          username: ${{ github.triggering_actor }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check User Permission
+        if: steps.checkAccess.outputs.require-result == 'false'
+        run: |
+          echo "${{ github.triggering_actor }} does not have permissions on this repo."
+          echo "Current permission level is ${{ steps.checkAccess.outputs.user-permission }}"
+          echo "Job originally triggered by ${{ github.actor }}"
+          exit 1
+
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          ref: ${{  github.event.pull_request.head.sha }}
 
-      - name: Set up Python 3.11
+      - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v1
         with:
-          python-version: 3.11
+          python-version: ${{ matrix.python-version }}
       - name: Install Poetry
         uses: snok/install-poetry@v1
-      
+
       - uses: actions/setup-node@v3
         with:
           node-version: 18
 
+      - uses: "google-github-actions/auth@v2"
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+
       - uses: nrwl/nx-set-shas@v3
+
       - run: npm ci
 
+      - name: Install
+        run: npx nx affected -t install --exclude='sample-app' --with dev --parallel=3
 
-      - run: npx nx affected -t install --with dev
+      - name: Build
+        run: npx nx affected -t build --exclude='sample-app' --parallel=3
+
       - name: Test
         env:
           OPENAI_API_KEY: ${{ secrets.OPEN_API_KEY }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          COHERE_API_KEY: ${{ secrets.COHERE_API_KEY }}
+          REPLICATE_API_TOKEN: ${{ secrets.REPLICATE_API_TOKEN }}
           PINECONE_API_KEY: ${{ secrets.PINECONE_API_KEY }}
           PINECONE_ENVIRONMENT: ${{ secrets.PINECONE_ENVIRONMENT }}
-          TRACELOOP_PROMPT_REGISTRY_ENABLED: false
-        run: npx nx affected -t test --parallel=3
+          TRACELOOP_API_KEY: ${{ secrets.TRACELOOP_API_KEY }}
+        run: npx nx affected -t test --exclude='sample-app' --parallel=3
 
-  build:
+  build-sample-app:
+    name: Build Sample App
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11"]
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Set up Python 3.11
+      - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v1
         with:
-          python-version: 3.11
+          python-version: ${{ matrix.python-version }}
       - name: Install Poetry
         uses: snok/install-poetry@v1
-      
+
       - uses: actions/setup-node@v3
         with:
           node-version: 18
 
       - uses: nrwl/nx-set-shas@v3
+
       - run: npm ci
 
+      - name: Install
+        run: npx nx run sample-app:install
 
-      - run: npx nx affected -t install --with dev
-      - run: npx nx affected -t build --parallel=3
-      
+      - name: Build
+        run: npx nx run sample-app:build

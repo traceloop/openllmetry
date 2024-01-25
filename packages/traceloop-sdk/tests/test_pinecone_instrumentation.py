@@ -1,20 +1,26 @@
 import os
+import pytest
 import pinecone
-import openai
+from openai import OpenAI
 from traceloop.sdk.decorators import workflow, task
 
 
+@pytest.fixture
+def openai_client():
+    return OpenAI()
+
+
 @task("retrieve")
-def retrieve(index, query):
+def retrieve(openai_client, index, query):
     context_limit = 3750
-    res = openai.Embedding.create(input=[query], engine="text-embedding-ada-002")
+    res = openai_client.embeddings.create(input=[query], model="text-embedding-ada-002")
 
     # retrieve from Pinecone
-    xq = res["data"][0]["embedding"]
+    xq = res.data[0].embedding
 
     # get relevant contexts
     res = index.query(xq, top_k=3, include_metadata=True)
-    contexts = [x["metadata"]["text"] for x in res["matches"]]
+    contexts = [x["metadata"]["text"] for x in res.matches]
 
     # build our prompt with the retrieved contexts included
     prompt_start = "Answer the question based on the context below.\n\n" + "Context:\n"
@@ -30,9 +36,9 @@ def retrieve(index, query):
 
 
 @task("complete")
-def complete(prompt):
-    res = openai.Completion.create(
-        engine="text-davinci-003",
+def complete(openai_client, prompt):
+    res = openai_client.completions.create(
+        model="davinci-002",
         prompt=prompt,
         temperature=0,
         max_tokens=400,
@@ -41,16 +47,17 @@ def complete(prompt):
         presence_penalty=0,
         stop=None,
     )
-    return res["choices"][0]["text"].strip()
+    return res.choices[0].text.strip()
 
 
 @workflow(name="query_with_retrieve")
-def run_query(index, query: str):
-    query_with_contexts = retrieve(index, query)
-    complete(query_with_contexts)
+def run_query(openai_client, index, query: str):
+    query_with_contexts = retrieve(openai_client, index, query)
+    complete(openai_client, query_with_contexts)
 
 
-def test_pinecone_grpc_retrieval(exporter):
+# GRPC package of Pinecone is conflicting with google-cloud-aiplatform
+def disabled_test_pinecone_grpc_retrieval(exporter, openai_client):
     pinecone.init(
         api_key=os.getenv("PINECONE_API_KEY"),
         environment=os.getenv("PINECONE_ENVIRONMENT"),
@@ -61,10 +68,11 @@ def test_pinecone_grpc_retrieval(exporter):
         "Which training method should I use for sentence transformers when "
         + "I only have pairs of related sentences?"
     )
-    run_query(index, query)
+    run_query(openai_client, index, query)
 
     spans = exporter.get_finished_spans()
     assert [span.name for span in spans] == [
+        "openai.embeddings",
         "pinecone.query",
         "retrieve.task",
         "openai.completion",
@@ -73,7 +81,7 @@ def test_pinecone_grpc_retrieval(exporter):
     ]
 
 
-def test_pinecone_retrieval(exporter):
+def test_pinecone_retrieval(exporter, openai_client):
     pinecone.init(
         api_key=os.getenv("PINECONE_API_KEY"),
         environment=os.getenv("PINECONE_ENVIRONMENT"),
@@ -84,10 +92,11 @@ def test_pinecone_retrieval(exporter):
         "Which training method should I use for sentence transformers when "
         + "I only have pairs of related sentences?"
     )
-    run_query(index, query)
+    run_query(openai_client, index, query)
 
     spans = exporter.get_finished_spans()
     assert [span.name for span in spans] == [
+        "openai.embeddings",
         "pinecone.query",
         "retrieve.task",
         "openai.completion",

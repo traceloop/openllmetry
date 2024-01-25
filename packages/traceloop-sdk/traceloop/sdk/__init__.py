@@ -1,48 +1,111 @@
 import os
+import sys
+from deprecated import deprecated
 import requests
+from pathlib import Path
 
 from typing import Optional
 from colorama import Fore
+from opentelemetry.sdk.trace import SpanProcessor
 from opentelemetry.sdk.trace.export import SpanExporter
+from opentelemetry.sdk.resources import SERVICE_NAME
+from opentelemetry.propagators.textmap import TextMapPropagator
 from opentelemetry.util.re import parse_env_headers
 
-from traceloop.sdk.config import base_url, is_prompt_registry_enabled, is_tracing_enabled
-from traceloop.sdk.prompts.client import PromptRegistryClient
-from traceloop.sdk.tracing.tracing import TracerWrapper, set_correlation_id
+from traceloop.sdk.telemetry import Telemetry
+from traceloop.sdk.config import (
+    is_content_tracing_enabled,
+    is_tracing_enabled,
+)
+from traceloop.sdk.fetcher import Fetcher
+from traceloop.sdk.tracing.tracing import (
+    TracerWrapper,
+    set_association_properties,
+    set_correlation_id,
+)
+from typing import Dict
 
 
 class Traceloop:
+    AUTO_CREATED_KEY_PATH = str(
+        Path.home() / ".cache" / "traceloop" / "auto_created_key"
+    )
+    AUTO_CREATED_URL = str(Path.home() / ".cache" / "traceloop" / "auto_created_url")
+
     __tracer_wrapper: TracerWrapper
+    __fetcher: Fetcher
 
     @staticmethod
     def init(
-        app_name: Optional[str] = None,
-        api_endpoint: str = base_url(),
+        app_name: Optional[str] = sys.argv[0],
+        api_endpoint: str = "https://api.traceloop.com",
         api_key: str = None,
-        headers: dict[str, str] = {},
+        headers: Dict[str, str] = {},
         disable_batch=False,
         exporter: SpanExporter = None,
+        processor: SpanProcessor = None,
+        propagator: TextMapPropagator = None,
+        traceloop_sync_enabled: bool = True,
+        resource_attributes: dict = {},
     ) -> None:
-        if is_prompt_registry_enabled():
-            PromptRegistryClient().run()
+        Telemetry()
+
+        api_endpoint = os.getenv("TRACELOOP_BASE_URL") or api_endpoint
+        api_key = os.getenv("TRACELOOP_API_KEY") or api_key
+
+        if (
+            traceloop_sync_enabled
+            and api_endpoint.find("traceloop.com") != -1
+            and api_key
+            and not exporter
+            and not processor
+        ):
+            Traceloop.__fetcher = Fetcher(base_url=api_endpoint, api_key=api_key)
+            Traceloop.__fetcher.run()
+            print(
+                Fore.GREEN + "Traceloop syncing configuration and prompts" + Fore.RESET
+            )
 
         if not is_tracing_enabled():
+            print(Fore.YELLOW + "Tracing is disabled" + Fore.RESET)
             return
 
-        api_key = os.getenv("TRACELOOP_API_KEY") or api_key
-        api_endpoint = os.getenv("TRACELOOP_BASE_URL") or api_endpoint
+        enable_content_tracing = is_content_tracing_enabled()
+
+        if exporter or processor:
+            print(Fore.GREEN + "Traceloop exporting traces to a custom exporter")
+
         headers = os.getenv("TRACELOOP_HEADERS") or headers
+
         if isinstance(headers, str):
             headers = parse_env_headers(headers)
 
         # auto-create a dashboard on Traceloop if no export endpoint is provided
-        if api_endpoint == base_url() and not api_key:
-            if os.path.exists("/tmp/traceloop_key.txt") and os.path.exists(
-                    "/tmp/traceloop_url.txt"
-            ):
-                api_key = open("/tmp/traceloop_key.txt").read()
-                access_url = open("/tmp/traceloop_url.txt").read()
-            else:
+        if (
+            not exporter
+            and not processor
+            and api_endpoint == "https://api.traceloop.com"
+            and not api_key
+        ):
+            if not Telemetry().feature_enabled("auto_create_dashboard"):
+                print(
+                    Fore.RED
+                    + "Error: Missing Traceloop API key,"
+                    + " go to https://https://app.traceloop.com/settings/api-keys to create one"
+                )
+                print("Set the TRACELOOP_API_KEY environment variable to the key")
+                print(Fore.RESET)
+                return
+
+            headers = None  # disable headers if we're auto-creating a dashboard
+            if not os.path.exists(
+                Traceloop.AUTO_CREATED_KEY_PATH
+            ) or not os.path.exists(Traceloop.AUTO_CREATED_URL):
+                os.makedirs(
+                    os.path.dirname(Traceloop.AUTO_CREATED_KEY_PATH), exist_ok=True
+                )
+                os.makedirs(os.path.dirname(Traceloop.AUTO_CREATED_URL), exist_ok=True)
+
                 print(
                     Fore.YELLOW
                     + "No Traceloop API key provided, auto-creating a dashboard on Traceloop",
@@ -52,24 +115,75 @@ class Traceloop:
                 ).json()
                 access_url = f"https://app.traceloop.com/trace?skt={res['uiAccessKey']}"
                 api_key = res["apiKey"]
+
                 print(Fore.YELLOW + "TRACELOOP_API_KEY=", api_key)
-                open("/tmp/traceloop_key.txt", "w").write(api_key)
-                open("/tmp/traceloop_url.txt", "w").write(access_url)
+
+                open(Traceloop.AUTO_CREATED_KEY_PATH, "w").write(api_key)
+                open(Traceloop.AUTO_CREATED_URL, "w").write(access_url)
+            else:
+                api_key = open("/tmp/traceloop_key.txt").read()
+                access_url = open("/tmp/traceloop_url.txt").read()
+
             print(
                 Fore.GREEN + f"\nGo to {access_url} to see a live dashboard\n",
             )
-            print(Fore.RESET)
 
-        if api_key:
+        if not exporter and not processor and headers:
+            print(
+                Fore.GREEN
+                + f"Traceloop exporting traces to {api_endpoint}, authenticating with custom headers"
+            )
+
+        if api_key and not exporter and not processor and not headers:
+            print(
+                Fore.GREEN
+                + f"Traceloop exporting traces to {api_endpoint} authenticating with bearer token"
+            )
             headers = {
-                          "Authorization": f"Bearer {api_key}",
-                      } | headers
+                "Authorization": f"Bearer {api_key}",
+            }
 
-        TracerWrapper.set_endpoint(api_endpoint, headers)
+        print(Fore.RESET)
+
+        resource_attributes.update({SERVICE_NAME: app_name})
+        TracerWrapper.set_static_params(
+            resource_attributes, enable_content_tracing, api_endpoint, headers
+        )
         Traceloop.__tracer_wrapper = TracerWrapper(
-            disable_batch=disable_batch, exporter=exporter
+            disable_batch=disable_batch,
+            processor=processor,
+            propagator=propagator,
+            exporter=exporter,
         )
 
     @staticmethod
+    @deprecated(version="0.0.62", reason="Use set_association_properties instead")
     def set_correlation_id(correlation_id: str) -> None:
         set_correlation_id(correlation_id)
+
+    def set_association_properties(properties: dict) -> None:
+        set_association_properties(properties)
+
+    def report_score(
+        association_property_name: str,
+        association_property_id: str,
+        score: float,
+    ):
+        if not Traceloop.__fetcher:
+            print(
+                Fore.RED
+                + "Error: Cannot report score. Missing Traceloop API key,"
+                + " go to https://https://app.traceloop.com/settings/api-keys to create one"
+            )
+            print("Set the TRACELOOP_API_KEY environment variable to the key")
+            print(Fore.RESET)
+            return
+
+        Traceloop.__fetcher.post(
+            "score",
+            {
+                "entity_name": f"traceloop.association.properties.{association_property_name}",
+                "entity_id": association_property_id,
+                "score": score,
+            },
+        )

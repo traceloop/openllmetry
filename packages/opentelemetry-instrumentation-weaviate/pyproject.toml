@@ -6,12 +6,9 @@ source = [ "opentelemetry/instrumentation/weaviate" ]
 exclude_lines = ['if TYPE_CHECKING:']
 show_missing = true
 
-[tool.pytest.ini_options]
-addopts = "--cov --cov-report html:'../../coverage/packages/opentelemetry-instrumentation-weaviate/html' --cov-report xml:'../../coverage/packages/opentelemetry-instrumentation-weaviate/coverage.xml' --html='../../reports/packages/opentelemetry-instrumentation-weaviate/unittests/html/index.html' --junitxml='../../reports/packages/opentelemetry-instrumentation-weaviate/unittests/junit.xml'"
-
 [tool.poetry]
 name = "opentelemetry-instrumentation-weaviate"
-version = "0.0.1"
+version = "0.10.1"
 description = "OpenTelemetry Weaviate instrumentation"
 authors = [
   "Gal Kleinman <gal@traceloop.com>",
@@ -26,17 +23,15 @@ include = "opentelemetry/instrumentation/weaviate"
 
 [tool.poetry.dependencies]
 python = ">=3.8.1,<3.12"
-opentelemetry-api = "^1.20.0"
-opentelemetry-instrumentation = "^0.40b0"
-opentelemetry-semantic-conventions-llm = "^0.0.1"
+opentelemetry-api = "^1.22.0"
+opentelemetry-instrumentation = "0.43b0"
+opentelemetry-semantic-conventions-ai = "^0.0.17"
 
 [tool.poetry.group.dev.dependencies]
 autopep8 = "2.0.4"
-flake8 = "6.1.0"
-pytest = "7.4.1"
+flake8 = "7.0.0"
+pytest = "7.4.4"
 pytest-sugar = "0.9.7"
-pytest-cov = "4.1.0"
-pytest-html = "4.0.0"
 
 [build-system]
 requires = ["poetry-core"]

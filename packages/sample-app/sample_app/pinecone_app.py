@@ -65,7 +65,7 @@ def retrieve(query):
 @task("complete")
 def complete(prompt):
     res = openai.Completion.create(
-        engine="text-davinci-003",
+        engine="davinci-002",
         prompt=prompt,
         temperature=0,
         max_tokens=400,

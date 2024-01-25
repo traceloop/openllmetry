@@ -1,0 +1,39 @@
+[tool.coverage.run]
+branch = true
+source = [ "opentelemetry/instrumentation/llamaindex" ]
+
+[tool.coverage.report]
+exclude_lines = ['if TYPE_CHECKING:']
+show_missing = true
+
+[tool.poetry]
+name = "opentelemetry-instrumentation-llamaindex"
+version = "0.10.1"
+description = "OpenTelemetry LlamaIndex instrumentation"
+authors = [
+  "Gal Kleinman <gal@traceloop.com>",
+  "Nir Gazit <nir@traceloop.com>",
+  "Tomer Friedman <tomer@traceloop.com>"
+]
+license = "Apache-2.0"
+readme = "README.md"
+
+[[tool.poetry.packages]]
+include = "opentelemetry/instrumentation/llamaindex"
+
+[tool.poetry.dependencies]
+python = ">=3.8.1,<4"
+opentelemetry-api = "^1.22.0"
+opentelemetry-instrumentation = "0.43b0"
+opentelemetry-semantic-conventions-ai = "^0.0.17"
+inflection = "^0.5.1"
+
+[tool.poetry.group.dev.dependencies]
+autopep8 = "2.0.4"
+flake8 = "7.0.0"
+pytest = "7.4.4"
+pytest-sugar = "0.9.7"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
