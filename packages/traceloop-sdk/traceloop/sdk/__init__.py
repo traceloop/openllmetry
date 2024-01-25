@@ -190,6 +190,8 @@ class Traceloop:
                 "score": score,
             },
         )
+
+
 class Instruments(Enum):
     OPENAI = "openai"
     ANTHROPIC = "anthropic"
