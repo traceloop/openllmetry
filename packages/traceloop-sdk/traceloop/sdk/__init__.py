@@ -3,6 +3,7 @@ import sys
 from deprecated import deprecated
 import requests
 from pathlib import Path
+from enum import Enum
 
 from typing import Optional
 from colorama import Fore
@@ -47,7 +48,7 @@ class Traceloop:
         propagator: TextMapPropagator = None,
         traceloop_sync_enabled: bool = True,
         resource_attributes: dict = {},
-        instruments=[]
+        instruments=None
     ) -> None:
         Telemetry()
 
@@ -189,3 +190,19 @@ class Traceloop:
                 "score": score,
             },
         )
+class Instruments(Enum):
+    OPENAI = "openai"
+    ANTHROPIC = "anthropic"
+    COHERE = "cohere"
+    PINECONE = "pinecone"
+    CHROMA = "chroma"
+    LANGCHAIN = "langchain"
+    LLAMA_INDEX = "llama_index"
+    TRANSFORMERS = "transformers"
+    REQUESTS = "requests"
+    URLLIB3 = "urllib3"
+    PYMYSQL = "pymysql"
+    BEDROCK = "bedrock"
+    REPLICATE = "replicate"
+    VERTEXAI = "vertexai"
+    WATSONX = "watsonx"

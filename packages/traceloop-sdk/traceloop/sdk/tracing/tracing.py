@@ -3,6 +3,7 @@ import logging
 import os
 import importlib.util
 
+
 from colorama import Fore
 from opentelemetry import trace
 from opentelemetry.exporter.otlp.proto.http.trace_exporter import (
@@ -55,7 +56,7 @@ class TracerWrapper(object):
         processor: SpanProcessor = None,
         propagator: TextMapPropagator = None,
         exporter: SpanExporter = None,
-        instruments=[]
+        instruments=None
     ) -> "TracerWrapper":
         if not hasattr(cls, "instance"):
             obj = cls.instance = super(TracerWrapper, cls).__new__(cls)
@@ -111,54 +112,146 @@ class TracerWrapper(object):
 
             instrument_set = False
             if not instruments:
-                init_instrumentations()
-                instrument_set = True
+                instrument_set = init_instrumentations()
+                print("all")
             else:
                 if 'openai' in instruments:
-                    init_openai_instrumentor()
-                    instrument_set = True
+                    if not init_openai_instrumentor():
+                        print(
+                            Fore.RED
+                            + "Warning: OpenAI library does not exist."
+                        )
+                        print(Fore.RESET)
+                    else:
+                        print("openai")
+                        instrument_set = True
                 if 'anthropic' in instruments:
-                    init_anthropic_instrumentor()
-                    instrument_set = True
+                    if not init_anthropic_instrumentor():
+                        print(
+                            Fore.RED
+                            + "Warning: Anthropic library does not exist."
+                        )
+                        print(Fore.RESET)
+                    else:
+                        print("anthropic")
+                        instrument_set = True
                 if 'cohere' in instruments:
-                    init_cohere_instrumentor()
-                    instrument_set = True
+                    if not init_cohere_instrumentor():
+                        print(
+                            Fore.RED
+                            + "Warning: Cohere library does not exist."
+                        )
+                        print(Fore.RESET)
+                    else:
+                        instrument_set = True
                 if 'pinecone' in instruments:
-                    init_pinecone_instrumentor()
-                    instrument_set = True
+                    if not init_pinecone_instrumentor():
+                        print(
+                            Fore.RED
+                            + "Warning: Pinecone library does not exist."
+                        )
+                        print(Fore.RESET)
+                    else:
+                        instrument_set = True
                 if 'chroma' in instruments:
-                    init_chroma_instrumentor()
-                    instrument_set = True
+                    if not init_chroma_instrumentor():
+                        print(
+                            Fore.RED
+                            + "Warning: Chroma library does not exist."
+                        )
+                        print(Fore.RESET)
+                    else:
+                        instrument_set = True
                 if 'langchain' in instruments:
-                    init_langchain_instrumentor()
-                    instrument_set = True
+                    if not init_langchain_instrumentor():
+                        print(
+                            Fore.RED
+                            + "Warning: LangChain library does not exist."
+                        )
+                        print(Fore.RESET)
+                    else:
+                        instrument_set = True
                 if 'llama_index' in instruments:
-                    init_llama_index_instrumentor()
-                    instrument_set = True
+                    if not init_llama_index_instrumentor():
+                        print(
+                            Fore.RED
+                            + "Warning: LlamaIndex library does not exist."
+                        )
+                        print(Fore.RESET)
+                    else:
+                        instrument_set = True
                 if 'transformers' in instruments:
-                    init_transformers_instrumentor()
-                    instrument_set = True
+                    if not init_transformers_instrumentor():
+                        print(
+                            Fore.RED
+                            + "Warning: Transformers library does not exist."
+                        )
+                        print(Fore.RESET)
+                    else:
+                        instrument_set = True
                 if 'requests' in instruments:
-                    init_requests_instrumentor()
-                    instrument_set = True
+                    if not init_requests_instrumentor():
+                        print(
+                            Fore.RED
+                            + "Warning: Requests library does not exist."
+                        )
+                        print(Fore.RESET)
+                    else:
+                        instrument_set = True
                 if 'urllib3' in instruments:
-                    init_urllib3_instrumentor()
-                    instrument_set = True
+                    if not init_urllib3_instrumentor():
+                        print(
+                            Fore.RED
+                            + "Warning: urllib3 library does not exist."
+                        )
+                        print(Fore.RESET)
+                    else:
+                        instrument_set = True
                 if 'pymysql' in instruments:
-                    init_pymysql_instrumentor()
-                    instrument_set = True
+                    if not init_pymysql_instrumentor():
+                        print(
+                            Fore.RED
+                            + "Warning: PyMySQL library does not exist."
+                        )
+                        print(Fore.RESET)
+                    else:
+                        instrument_set = True
                 if 'bedrock' in instruments:
-                    init_bedrock_instrumentor()
-                    instrument_set = True
+                    if not init_bedrock_instrumentor():
+                        print(
+                            Fore.RED
+                            + "Warning: Bedrock library does not exist."
+                        )
+                        print(Fore.RESET)
+                    else:
+                        instrument_set = True
                 if 'replicate' in instruments:
-                    init_replicate_instrumentor()
-                    instrument_set = True
+                    if not init_replicate_instrumentor():
+                        print(
+                            Fore.RED
+                            + "Warning: Replicate library does not exist."
+                        )
+                        print(Fore.RESET)
+                    else:
+                        instrument_set = True
                 if 'vertexai' in instruments:
-                    init_vertexai_instrumentor()
-                    instrument_set = True
+                    if not init_vertexai_instrumentor():
+                        print(
+                            Fore.RED
+                            + "Warning: Vertex AI library does not exist."
+                        )
+                        print(Fore.RESET)
+                    else:
+                        instrument_set = True
                 if 'watsonx' in instruments:
-                    init_watsonx_instrumentor()
-                    instrument_set = True
+                    if not init_watsonx_instrumentor():
+                        print(
+                            Fore.RED
+                            + "Warning: Watsonx library does not exist."
+                        )
+                        print(Fore.RESET)
+                    else:
+                        instrument_set = True
 
             if not instrument_set:
                 print(
@@ -330,6 +423,7 @@ def init_instrumentations():
     init_replicate_instrumentor()
     init_vertexai_instrumentor()
     init_watsonx_instrumentor()
+    return True
 
 
 def init_openai_instrumentor():
@@ -340,6 +434,7 @@ def init_openai_instrumentor():
         instrumentor = OpenAIInstrumentor()
         if not instrumentor.is_instrumented_by_opentelemetry:
             instrumentor.instrument()
+    return True
 
 
 def init_anthropic_instrumentor():
@@ -350,6 +445,7 @@ def init_anthropic_instrumentor():
         instrumentor = AnthropicInstrumentor()
         if not instrumentor.is_instrumented_by_opentelemetry:
             instrumentor.instrument()
+    return True
 
 
 def init_cohere_instrumentor():
@@ -360,6 +456,7 @@ def init_cohere_instrumentor():
         instrumentor = CohereInstrumentor()
         if not instrumentor.is_instrumented_by_opentelemetry:
             instrumentor.instrument()
+    return True
 
 
 def init_pinecone_instrumentor():
@@ -370,6 +467,7 @@ def init_pinecone_instrumentor():
         instrumentor = PineconeInstrumentor()
         if not instrumentor.is_instrumented_by_opentelemetry:
             instrumentor.instrument()
+    return True
 
 
 def init_chroma_instrumentor():
@@ -380,6 +478,7 @@ def init_chroma_instrumentor():
         instrumentor = ChromaInstrumentor()
         if not instrumentor.is_instrumented_by_opentelemetry:
             instrumentor.instrument()
+    return True
 
 
 def init_haystack_instrumentor():
@@ -390,6 +489,7 @@ def init_haystack_instrumentor():
         instrumentor = HaystackInstrumentor()
         if not instrumentor.is_instrumented_by_opentelemetry:
             instrumentor.instrument()
+    return True
 
 
 def init_langchain_instrumentor():
@@ -400,6 +500,7 @@ def init_langchain_instrumentor():
         instrumentor = LangchainInstrumentor()
         if not instrumentor.is_instrumented_by_opentelemetry:
             instrumentor.instrument()
+    return True
 
 
 def init_transformers_instrumentor():
@@ -410,6 +511,7 @@ def init_transformers_instrumentor():
         instrumentor = TransformersInstrumentor()
         if not instrumentor.is_instrumented_by_opentelemetry:
             instrumentor.instrument()
+    return True
 
 
 def init_llama_index_instrumentor():
@@ -420,6 +522,7 @@ def init_llama_index_instrumentor():
         instrumentor = LlamaIndexInstrumentor()
         if not instrumentor.is_instrumented_by_opentelemetry:
             instrumentor.instrument()
+    return True
 
 
 def init_requests_instrumentor():
@@ -429,6 +532,7 @@ def init_requests_instrumentor():
         instrumentor = RequestsInstrumentor()
         if not instrumentor.is_instrumented_by_opentelemetry:
             instrumentor.instrument(excluded_urls=EXCLUDED_URLS)
+    return True
 
 
 def init_urllib3_instrumentor():
@@ -438,6 +542,7 @@ def init_urllib3_instrumentor():
         instrumentor = URLLib3Instrumentor()
         if not instrumentor.is_instrumented_by_opentelemetry:
             instrumentor.instrument(excluded_urls=EXCLUDED_URLS)
+    return True
 
 
 def init_pymysql_instrumentor():
@@ -447,6 +552,7 @@ def init_pymysql_instrumentor():
         instrumentor = PyMySQLInstrumentor()
         if not instrumentor.is_instrumented_by_opentelemetry:
             instrumentor.instrument()
+    return True
 
 
 def init_bedrock_instrumentor():
@@ -456,6 +562,7 @@ def init_bedrock_instrumentor():
         instrumentor = BedrockInstrumentor()
         if not instrumentor.is_instrumented_by_opentelemetry:
             instrumentor.instrument()
+    return True
 
 
 def init_replicate_instrumentor():
@@ -466,6 +573,7 @@ def init_replicate_instrumentor():
         instrumentor = ReplicateInstrumentor()
         if not instrumentor.is_instrumented_by_opentelemetry:
             instrumentor.instrument()
+    return True
 
 
 def init_vertexai_instrumentor():
@@ -476,6 +584,7 @@ def init_vertexai_instrumentor():
         instrumentor = VertexAIInstrumentor()
         if not instrumentor.is_instrumented_by_opentelemetry:
             instrumentor.instrument()
+    return True
 
 
 def init_watsonx_instrumentor():
@@ -486,3 +595,4 @@ def init_watsonx_instrumentor():
         instrumentor = WatsonxInstrumentor()
         if not instrumentor.is_instrumented_by_opentelemetry:
             instrumentor.instrument()
+    return True
