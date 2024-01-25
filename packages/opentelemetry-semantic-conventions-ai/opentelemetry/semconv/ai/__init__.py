@@ -45,13 +45,16 @@ class SpanAttributes:
 
 
 class EventAttributes(Enum):
+    # Query Embeddings
     VECTOR_DB_QUERY_EMBEDDINGS = "vector_db.query.embeddings"
+    VECTOR_DB_QUERY_EMBEDDINGS_VECTOR = "vector_db.query.embeddings.vector"
+
+    # Query Result
     VECTOR_DB_QUERY_RESULT = "vector_db.query.result"
-    VECTOR = "vector_db.query.embeddings.vector"
-    IDS = "vector_db.query.result.ids"
-    DISTANCES = "vector_db.query.result.distances"
-    METADATA = "vector_db.query.result.metadata"
-    DOCUMENTS = "vector_db.query.result.documents"
+    VECTOR_DB_QUERY_RESULT_IDS = "vector_db.query.result.ids"
+    VECTOR_DB_QUERY_RESULT_DISTANCES = "vector_db.query.result.distances"
+    VECTOR_DB_QUERY_RESULT_METADATA = "vector_db.query.result.metadata"
+    VECTOR_DB_QUERY_RESULT_DOCUMENTS = "vector_db.query.result.documents"
 
 
 class LLMRequestTypeValues(Enum):
