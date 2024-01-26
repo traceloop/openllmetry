@@ -80,9 +80,9 @@ def test_chroma_query(exporter, collection):
     assert len(events) > 0
     for i, event in enumerate(events):
         assert event.name == f"vector_db.query.result.{i}"
-        ids = event.attributes.get("vector_db.query.result.ids")
-        distances = event.attributes.get("vector_db.query.result.distances")
-        documents = event.attributes.get("vector_db.query.result.documents")
+        ids = event.attributes.get(f"{event.name}.ids")
+        distances = event.attributes.get(f"{event.name}.distances")
+        documents = event.attributes.get(f"{event.name}.documents")
 
         # We have lists of same length as result
         assert len(ids) > 0
@@ -111,7 +111,7 @@ def test_chroma_query_segment_query(exporter, collection):
     assert len(events) > 0
     for i, event in enumerate(events):
         assert event.name == f"vector_db.query.embeddings.{i}"
-        embeddings = event.attributes.get("vector_db.query.embeddings.vector")
+        embeddings = event.attributes.get(f"{event.name}.vector")
         assert len(embeddings) > 100
         for number in embeddings:
             assert number >= -1 and number <= 1
