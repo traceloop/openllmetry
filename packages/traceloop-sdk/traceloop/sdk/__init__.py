@@ -4,7 +4,7 @@ from deprecated import deprecated
 import requests
 from pathlib import Path
 
-from typing import Optional
+from typing import Optional, Set
 from colorama import Fore
 from opentelemetry.sdk.trace import SpanProcessor
 from opentelemetry.sdk.trace.export import SpanExporter
@@ -13,6 +13,7 @@ from opentelemetry.propagators.textmap import TextMapPropagator
 from opentelemetry.util.re import parse_env_headers
 
 from traceloop.sdk.telemetry import Telemetry
+from traceloop.sdk.instruments import Instruments
 from traceloop.sdk.config import (
     is_content_tracing_enabled,
     is_tracing_enabled,
@@ -47,6 +48,7 @@ class Traceloop:
         propagator: TextMapPropagator = None,
         traceloop_sync_enabled: bool = True,
         resource_attributes: dict = {},
+        instruments: Optional[Set[Instruments]] = None,
     ) -> None:
         Telemetry()
 
@@ -154,6 +156,7 @@ class Traceloop:
             processor=processor,
             propagator=propagator,
             exporter=exporter,
+            instruments=instruments,
         )
 
     @staticmethod
