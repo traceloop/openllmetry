@@ -1,5 +1,5 @@
 from opentelemetry.semconv.trace import SpanAttributes
-from opentelemetry.semconv.ai import Events
+from opentelemetry.semconv.ai import Events, EventAttributes
 
 from opentelemetry import context as context_api
 from opentelemetry.instrumentation.utils import (
@@ -148,10 +148,10 @@ def _add_query_result_events(span, kwargs):
         span.add_event(
             name=f"{Events.VECTOR_DB_QUERY_RESULT.value}.{i}",
             attributes={
-                f"{Events.VECTOR_DB_QUERY_RESULT.value}.{i}.ids": tuple_[0] or [],
-                f"{Events.VECTOR_DB_QUERY_RESULT.value}.{i}.distances": tuple_[1] or [],
-                f"{Events.VECTOR_DB_QUERY_RESULT.value}.{i}.metadata": tuple_[2] or [],
-                f"{Events.VECTOR_DB_QUERY_RESULT.value}.{i}.documents": tuple_[3] or [],
+                f"{EventAttributes.VECTOR_DB_QUERY_RESULT_IDS.value.format(i=i)}": tuple_[0] or [],
+                f"{EventAttributes.VECTOR_DB_QUERY_RESULT_DISTANCES.value.format(i=i)}": tuple_[1] or [],
+                f"{EventAttributes.VECTOR_DB_QUERY_RESULT_METADATA.value.format(i=i)}": tuple_[2] or [],
+                f"{EventAttributes.VECTOR_DB_QUERY_RESULT_DOCUMENTS.value.format(i=i)}": tuple_[3] or [],
             }
         )
 
