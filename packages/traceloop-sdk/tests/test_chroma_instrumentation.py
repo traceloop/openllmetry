@@ -2,8 +2,6 @@ from os import getcwd
 import pytest
 import chromadb
 
-from opentelemetry.semconv.ai import EventName
-
 from traceloop.sdk.decorators import task
 
 chroma = chromadb.PersistentClient(path=getcwd())
@@ -81,10 +79,10 @@ def test_chroma_query(exporter, collection):
     events = span.events
     assert len(events) > 0
     for i, event in enumerate(events):
-        assert event.name == f"db.chroma.query.result.{i}"
-        ids = event.attributes.get("ids")
-        distances = event.attributes.get("distances")
-        documents = event.attributes.get("documents")
+        assert event.name == f"vector_db.query.result.{i}"
+        ids = event.attributes.get("vector_db.query.result.ids")
+        distances = event.attributes.get("vector_db.query.result.distances")
+        documents = event.attributes.get("vector_db.query.result.documents")
 
         # We have lists of same length as result
         assert len(ids) > 0
@@ -112,8 +110,8 @@ def test_chroma_query_segment_query(exporter, collection):
     events = span.events
     assert len(events) > 0
     for i, event in enumerate(events):
-        assert event.name == f"{EventName.VECTOR_DB_QUERY_EMBEDDINGS.value}.{i}"
-        embeddings = event.attributes.get("embeddings")
+        assert event.name == f"vector_db.query.embeddings.{i}"
+        embeddings = event.attributes.get("vector_db.query.embeddings.vector")
         assert len(embeddings) > 100
         for number in embeddings:
             assert number >= -1 and number <= 1

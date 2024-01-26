@@ -1,5 +1,5 @@
 from opentelemetry.semconv.trace import SpanAttributes
-from opentelemetry.semconv.ai import EventName
+from opentelemetry.semconv.ai import Events, EventAttributes
 
 from opentelemetry import context as context_api
 from opentelemetry.instrumentation.utils import (
@@ -132,8 +132,8 @@ def _set_segment_query_attributes(span, kwargs):
 def _add_segment_query_embeddings_events(span, kwargs):
     for i, embeddings in enumerate(kwargs.get("query_embeddings", [])):
         span.add_event(
-            name=f"{EventName.VECTOR_DB_QUERY_EMBEDDINGS.value}.{i}",
-            attributes={"embeddings": embeddings}
+            name=f"{Events.VECTOR_DB_QUERY_EMBEDDINGS.value}.{i}",
+            attributes={f"{EventAttributes.VECTOR_DB_QUERY_EMBEDDINGS_VECTOR.value}": embeddings}
         )
 
 
@@ -146,12 +146,12 @@ def _add_query_result_events(span, kwargs):
     )
     for i, tuple_ in enumerate(zipped):
         span.add_event(
-            name=f"db.chroma.query.result.{i}",
+            name=f"{Events.VECTOR_DB_QUERY_RESULT.value}.{i}",
             attributes={
-                "ids": tuple_[0] or [],
-                "distances": tuple_[1] or [],
-                "metadata": tuple_[2] or [],
-                "documents": tuple_[3] or [],
+                f"{EventAttributes.VECTOR_DB_QUERY_RESULT_IDS.value}": tuple_[0] or [],
+                f"{EventAttributes.VECTOR_DB_QUERY_RESULT_DISTANCES.value}": tuple_[1] or [],
+                f"{EventAttributes.VECTOR_DB_QUERY_RESULT_METADATA.value}": tuple_[2] or [],
+                f"{EventAttributes.VECTOR_DB_QUERY_RESULT_DOCUMENTS.value}": tuple_[3] or [],
             }
         )
 
