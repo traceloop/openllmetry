@@ -29,7 +29,7 @@ from traceloop.sdk import Telemetry
 from traceloop.sdk.instruments import Instruments
 from traceloop.sdk.tracing.content_allow_list import ContentAllowList
 from traceloop.sdk.utils import is_notebook
-from typing import Dict
+from typing import Dict, Optional, Set
 
 TRACER_NAME = "traceloop.tracer"
 EXCLUDED_URLS = """
@@ -57,7 +57,7 @@ class TracerWrapper(object):
         processor: SpanProcessor = None,
         propagator: TextMapPropagator = None,
         exporter: SpanExporter = None,
-        instruments=None
+        instruments: Optional[Set[Instruments]] = None,
     ) -> "TracerWrapper":
         if not hasattr(cls, "instance"):
             obj = cls.instance = super(TracerWrapper, cls).__new__(cls)
@@ -119,54 +119,42 @@ class TracerWrapper(object):
                 for instrument in instruments:
                     if instrument == Instruments.OPENAI:
                         if not init_openai_instrumentor():
-                            print(
-                                Fore.RED
-                                + "Warning: OpenAI library does not exist."
-                            )
+                            print(Fore.RED + "Warning: OpenAI library does not exist.")
                             print(Fore.RESET)
                         else:
                             instrument_set = True
                     elif instrument == Instruments.ANTHROPIC:
                         if not init_anthropic_instrumentor():
                             print(
-                                Fore.RED
-                                + "Warning: Anthropic library does not exist."
+                                Fore.RED + "Warning: Anthropic library does not exist."
                             )
                             print(Fore.RESET)
                         else:
                             instrument_set = True
                     elif instrument == Instruments.COHERE:
                         if not init_cohere_instrumentor():
-                            print(
-                                Fore.RED
-                                + "Warning: Cohere library does not exist."
-                            )
+                            print(Fore.RED + "Warning: Cohere library does not exist.")
                             print(Fore.RESET)
                         else:
                             instrument_set = True
                     elif instrument == Instruments.PINECONE:
                         if not init_pinecone_instrumentor():
                             print(
-                                Fore.RED
-                                + "Warning: Pinecone library does not exist."
+                                Fore.RED + "Warning: Pinecone library does not exist."
                             )
                             print(Fore.RESET)
                         else:
                             instrument_set = True
                     elif instrument == Instruments.CHROMA:
                         if not init_chroma_instrumentor():
-                            print(
-                                Fore.RED
-                                + "Warning: Chroma library does not exist."
-                            )
+                            print(Fore.RED + "Warning: Chroma library does not exist.")
                             print(Fore.RESET)
                         else:
                             instrument_set = True
                     elif instrument == Instruments.LANGCHAIN:
                         if not init_langchain_instrumentor():
                             print(
-                                Fore.RED
-                                + "Warning: LangChain library does not exist."
+                                Fore.RED + "Warning: LangChain library does not exist."
                             )
                             print(Fore.RESET)
                         else:
@@ -174,8 +162,7 @@ class TracerWrapper(object):
                     elif instrument == Instruments.LLAMA_INDEX:
                         if not init_llama_index_instrumentor():
                             print(
-                                Fore.RED
-                                + "Warning: LlamaIndex library does not exist."
+                                Fore.RED + "Warning: LlamaIndex library does not exist."
                             )
                             print(Fore.RESET)
                         else:
@@ -192,44 +179,33 @@ class TracerWrapper(object):
                     elif instrument == Instruments.REQUESTS:
                         if not init_requests_instrumentor():
                             print(
-                                Fore.RED
-                                + "Warning: Requests library does not exist."
+                                Fore.RED + "Warning: Requests library does not exist."
                             )
                             print(Fore.RESET)
                         else:
                             instrument_set = True
                     elif instrument == Instruments.URLLIB3:
                         if not init_urllib3_instrumentor():
-                            print(
-                                Fore.RED
-                                + "Warning: urllib3 library does not exist."
-                            )
+                            print(Fore.RED + "Warning: urllib3 library does not exist.")
                             print(Fore.RESET)
                         else:
                             instrument_set = True
                     elif instrument == Instruments.PYMYSQL:
                         if not init_pymysql_instrumentor():
-                            print(
-                                Fore.RED
-                                + "Warning: PyMySQL library does not exist."
-                            )
+                            print(Fore.RED + "Warning: PyMySQL library does not exist.")
                             print(Fore.RESET)
                         else:
                             instrument_set = True
                     elif instrument == Instruments.BEDROCK:
                         if not init_bedrock_instrumentor():
-                            print(
-                                Fore.RED
-                                + "Warning: Bedrock library does not exist."
-                            )
+                            print(Fore.RED + "Warning: Bedrock library does not exist.")
                             print(Fore.RESET)
                         else:
                             instrument_set = True
                     elif instrument == Instruments.REPLICATE:
                         if not init_replicate_instrumentor():
                             print(
-                                Fore.RED
-                                + "Warning: Replicate library does not exist."
+                                Fore.RED + "Warning: Replicate library does not exist."
                             )
                             print(Fore.RESET)
                         else:
@@ -237,32 +213,29 @@ class TracerWrapper(object):
                     elif instrument == Instruments.VERTEXAI:
                         if not init_vertexai_instrumentor():
                             print(
-                                Fore.RED
-                                + "Warning: Vertex AI library does not exist."
+                                Fore.RED + "Warning: Vertex AI library does not exist."
                             )
                             print(Fore.RESET)
                         else:
                             instrument_set = True
                     elif instrument == Instruments.WATSONX:
                         if not init_watsonx_instrumentor():
-                            print(
-                                Fore.RED
-                                + "Warning: Watsonx library does not exist."
-                            )
+                            print(Fore.RED + "Warning: Watsonx library does not exist.")
                             print(Fore.RESET)
                         else:
                             instrument_set = True
                     else:
                         print(
-                                Fore.RED
-                                + "Warning: " + instrument + " library does not exist."
-                            )
+                            Fore.RED
+                            + "Warning: "
+                            + instrument
+                            + " library does not exist."
+                        )
                         print(Fore.RESET)
 
             if not instrument_set:
                 print(
-                    Fore.RED
-                    + "Warning: No valid instruments set. Remove 'instrument' "
+                    Fore.RED + "Warning: No valid instruments set. Remove 'instrument' "
                     "argument to use all instruments, or set a valid instrument."
                 )
                 print(Fore.RESET)
