@@ -48,7 +48,7 @@ class Traceloop:
         propagator: TextMapPropagator = None,
         traceloop_sync_enabled: bool = True,
         resource_attributes: dict = {},
-        instruments: set[Instruments] = {}
+        instruments=None
     ) -> None:
         Telemetry()
 
