@@ -261,7 +261,7 @@ def init_instrumentations():
     init_cohere_instrumentor()
     init_pinecone_instrumentor()
     init_chroma_instrumentor()
-    # init_haystack_instrumentor()
+    init_haystack_instrumentor()
     init_langchain_instrumentor()
     init_llama_index_instrumentor()
     init_transformers_instrumentor()

@@ -1,3 +1,9 @@
+## v0.10.2 (2024-01-25)
+
+### Fix
+
+- re-enabled haystack instrumentation (#77)
+
 ## v0.10.1 (2024-01-24)
 
 ### Fix
