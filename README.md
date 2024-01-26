@@ -99,7 +99,7 @@ See [our docs](https://traceloop.com/docs/openllmetry/integrations/exporting) fo
 
 ## 🪗 What do we instrument?
 
-OpenLLMetry can instrument everything that [OpenTelemetry already instruments](https://github.com/open-telemetry/opentelemetry-python-contrib/tree/main/instrumentation) - so things like your DB, API calls, and more. On top of that, we built a set of custom extensions that instrument things like your calls to OpenAI or Anthropic, or your Vector DB like Pinecone, Chroma, or Weaviate.
+OpenLLMetry can instrument everything that [OpenTelemetry already instruments](https://github.com/open-telemetry/opentelemetry-python-contrib/tree/main/instrumentation) - so things like your DB, API calls, and more. On top of that, we built a set of custom extensions that instrument things like your calls to OpenAI or Anthropic, or your Vector DB like Chroma, Pinecone, Qdrant or Weaviate.
 
 ### LLM Providers
 
@@ -114,8 +114,9 @@ OpenLLMetry can instrument everything that [OpenTelemetry already instruments](h
 
 ### Vector DBs
 
-- ✅ Pinecone
 - ✅ Chroma
+- ✅ Pinecone
+- ✅ Qdrant
 - ⏳ Weaviate
 - ⏳ Milvus
 

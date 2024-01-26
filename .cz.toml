@@ -22,6 +22,8 @@ version_files = [
     "packages/opentelemetry-instrumentation-openai/opentelemetry/instrumentation/openai/version.py",
     "packages/opentelemetry-instrumentation-pinecone/pyproject.toml:^version",
     "packages/opentelemetry-instrumentation-pinecone/opentelemetry/instrumentation/pinecone/version.py",
+    "packages/opentelemetry-instrumentation-qdrant/pyproject.toml:^version",
+    "packages/opentelemetry-instrumentation-qdrant/opentelemetry/instrumentation/qdrant/version.py",
     "packages/opentelemetry-instrumentation-replicate/pyproject.toml:^version",
     "packages/opentelemetry-instrumentation-replicate/opentelemetry/instrumentation/replicate/version.py",
     "packages/opentelemetry-instrumentation-transformers/pyproject.toml:^version",

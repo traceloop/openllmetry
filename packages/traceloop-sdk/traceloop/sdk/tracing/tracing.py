@@ -260,6 +260,7 @@ def init_instrumentations():
     init_anthropic_instrumentor()
     init_cohere_instrumentor()
     init_pinecone_instrumentor()
+    init_qdrant_instrumentor()
     init_chroma_instrumentor()
     init_haystack_instrumentor()
     init_langchain_instrumentor()
@@ -310,6 +311,16 @@ def init_pinecone_instrumentor():
         from opentelemetry.instrumentation.pinecone import PineconeInstrumentor
 
         instrumentor = PineconeInstrumentor()
+        if not instrumentor.is_instrumented_by_opentelemetry:
+            instrumentor.instrument()
+
+
+def init_qdrant_instrumentor():
+    if importlib.util.find_spec("qdrant_client") is not None:
+        Telemetry().capture("instrumentation:qdrant:init")
+        from opentelemetry.instrumentation.qdrant import QdrantInstrumentor
+
+        instrumentor = QdrantInstrumentor()
         if not instrumentor.is_instrumented_by_opentelemetry:
             instrumentor.instrument()
 

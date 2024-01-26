@@ -37,6 +37,7 @@ opentelemetry-instrumentation-openai = {path="../opentelemetry-instrumentation-o
 opentelemetry-instrumentation-anthropic = {path="../opentelemetry-instrumentation-anthropic", develop=true}
 opentelemetry-instrumentation-cohere = {path="../opentelemetry-instrumentation-cohere", develop=true}
 opentelemetry-instrumentation-pinecone = {path="../opentelemetry-instrumentation-pinecone", develop=true}
+opentelemetry-instrumentation-qdrant = {path="../opentelemetry-instrumentation-qdrant", develop=true}
 opentelemetry-instrumentation-langchain = {path="../opentelemetry-instrumentation-langchain", develop=true}
 opentelemetry-instrumentation-chromadb = {path="../opentelemetry-instrumentation-chromadb", develop=true}
 opentelemetry-instrumentation-transformers = {path="../opentelemetry-instrumentation-transformers", develop=true}
@@ -52,6 +53,7 @@ pydantic = ">=1"
 jinja2 = "^3.1.2"
 deprecated = "^1.2.14"
 posthog = "^3.0.2"
+qdrant-client = "^1.7.1"
 
 [tool.poetry.group.dev.dependencies]
 autopep8 = "2.0.4"
