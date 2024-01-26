@@ -49,6 +49,7 @@ class SpanAttributes:
 
 class Events(Enum):
     VECTOR_DB_QUERY_EMBEDDINGS = "vector_db.query.embeddings"
+    DB_PINECONE_QUERY_RESULT = "db.pinecone.query.result"
     VECTOR_DB_QUERY_RESULT = "vector_db.query.result"
 
 
@@ -61,6 +62,11 @@ class EventAttributes(Enum):
     VECTOR_DB_QUERY_RESULT_DISTANCES = "vector_db.query.result.{i}.distances"
     VECTOR_DB_QUERY_RESULT_METADATA = "vector_db.query.result.{i}.metadata"
     VECTOR_DB_QUERY_RESULT_DOCUMENTS = "vector_db.query.result.{i}.documents"
+
+    # Query Result (from Pinecone)
+    DB_PINECONE_QUERY_RESULT_ID = "db.pinecone.query.result.id"
+    DB_PINECONE_QUERY_RESULT_SCORE = "db.pinecone.query.result.score"
+    DB_PINECONE_QUERY_RESULT_VECTOR = "db.pinecone.query.result.vector"
 
 
 class LLMRequestTypeValues(Enum):
