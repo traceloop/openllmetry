@@ -51,13 +51,13 @@ class Events(Enum):
 
 class EventAttributes(Enum):
     # Query Embeddings
-    VECTOR_DB_QUERY_EMBEDDINGS_VECTOR = "vector_db.query.embeddings.vector"
+    VECTOR_DB_QUERY_EMBEDDINGS_VECTOR = "vector_db.query.embeddings.{i}.vector"
 
     # Query Result
-    VECTOR_DB_QUERY_RESULT_IDS = "vector_db.query.result.ids"
-    VECTOR_DB_QUERY_RESULT_DISTANCES = "vector_db.query.result.distances"
-    VECTOR_DB_QUERY_RESULT_METADATA = "vector_db.query.result.metadata"
-    VECTOR_DB_QUERY_RESULT_DOCUMENTS = "vector_db.query.result.documents"
+    VECTOR_DB_QUERY_RESULT_IDS = "vector_db.query.result.{i}.ids"
+    VECTOR_DB_QUERY_RESULT_DISTANCES = "vector_db.query.result.{i}.distances"
+    VECTOR_DB_QUERY_RESULT_METADATA = "vector_db.query.result.{i}.metadata"
+    VECTOR_DB_QUERY_RESULT_DOCUMENTS = "vector_db.query.result.{i}.documents"
 
 
 class LLMRequestTypeValues(Enum):
