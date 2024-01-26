@@ -112,7 +112,7 @@ class TracerWrapper(object):
                 set_global_textmap(propagator)
 
             instrument_set = False
-            if not instruments:
+            if instruments is None:
                 init_instrumentations()
                 instrument_set = True
             else:
