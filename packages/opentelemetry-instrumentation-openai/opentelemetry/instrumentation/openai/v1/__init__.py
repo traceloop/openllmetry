@@ -2,11 +2,14 @@ from typing import Collection
 
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.trace import get_tracer
+
+from opentelemetry.metrics import get_meter
+
 from wrapt import wrap_function_wrapper
 
 from opentelemetry.instrumentation.openai.shared.chat_wrappers import (
     chat_wrapper,
-    achat_wrapper,
+    achat_wrapper, metrics_chat_wrapper,
 )
 from opentelemetry.instrumentation.openai.shared.completion_wrappers import (
     completion_wrapper,
@@ -28,6 +31,38 @@ class OpenAIV1Instrumentor(BaseInstrumentor):
     def _instrument(self, **kwargs):
         tracer_provider = kwargs.get("tracer_provider")
         tracer = get_tracer(__name__, __version__, tracer_provider)
+
+        # meter and counters are inited here
+        meter_provider = kwargs.get("meter_provider")
+        meter = get_meter(__name__, __version__, meter_provider)
+        total_token_counter = meter.create_counter(
+            name="chat.completions.token.total.usage",
+            unit="",
+            description="chat completions total token usage",
+        )
+
+        completion_token_counter = meter.create_counter(
+            name="chat.completions.token.completion.usage",
+            unit="",
+            description="chat completions completion token usage"
+        )
+
+        prompt_token_counter = meter.create_counter(
+            name="chat.completions.token.prompt.usage",
+            unit="",
+            description="chat completions prompt token usage"
+        )
+
+        wrap_function_wrapper(
+            "openai.resources.chat.completions",
+            "Completions.create",
+            # support multi metrics counters
+            metrics_chat_wrapper({
+                "total_tokens": total_token_counter,
+                "completion_tokens": completion_token_counter,
+                "prompt_tokens": prompt_token_counter
+            }),
+        )
 
         wrap_function_wrapper(
             "openai.resources.chat.completions",

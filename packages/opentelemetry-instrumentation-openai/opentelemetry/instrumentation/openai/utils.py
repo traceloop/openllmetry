@@ -6,6 +6,16 @@ def is_openai_v1():
     return version("openai") >= "1.0.0"
 
 
+def _with_metric_wrapper(func):
+    def _with_metric(metric):
+        def wrapper(wrapped, instance, args, kwargs):
+            return func(metric, wrapped, instance, args, kwargs)
+
+        return wrapper
+
+    return _with_metric
+
+
 def _with_tracer_wrapper(func):
     def _with_tracer(tracer):
         def wrapper(wrapped, instance, args, kwargs):

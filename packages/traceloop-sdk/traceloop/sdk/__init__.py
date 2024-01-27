@@ -8,14 +8,16 @@ from typing import Optional
 from colorama import Fore
 from opentelemetry.sdk.trace import SpanProcessor
 from opentelemetry.sdk.trace.export import SpanExporter
+from opentelemetry.sdk.metrics.export import MetricExporter
 from opentelemetry.sdk.resources import SERVICE_NAME
 from opentelemetry.propagators.textmap import TextMapPropagator
 from opentelemetry.util.re import parse_env_headers
 
+from traceloop.sdk.metrics.metrics import MetricsWrapper
 from traceloop.sdk.telemetry import Telemetry
 from traceloop.sdk.config import (
     is_content_tracing_enabled,
-    is_tracing_enabled,
+    is_tracing_enabled, is_metrics_enable,
 )
 from traceloop.sdk.fetcher import Fetcher
 from traceloop.sdk.tracing.tracing import (
@@ -43,6 +45,8 @@ class Traceloop:
         headers: Dict[str, str] = {},
         disable_batch=False,
         exporter: SpanExporter = None,
+        metrics_exporter: MetricExporter = None,
+        metrics_headers: Dict[str, str] = {},
         processor: SpanProcessor = None,
         propagator: TextMapPropagator = None,
         traceloop_sync_enabled: bool = True,
@@ -146,6 +150,22 @@ class Traceloop:
         print(Fore.RESET)
 
         resource_attributes = resource_attributes.update({SERVICE_NAME: app_name})
+
+        # metrics init
+        if not is_metrics_enable():
+            print(Fore.YELLOW + "Metrics is disabled" + Fore.RESET)
+            return
+
+        if metrics_exporter:
+            print(Fore.GREEN + "Traceloop exporting metrics to a custom exporter")
+
+        metrics_endpoint = os.getenv("TRACELOOP_METRICS_ENDPOINT") or "localhost:4317"
+        metrics_headers = os.getenv("TRACELOOP_METRICS_HEADERS") or metrics_headers
+
+        MetricsWrapper.set_static_params(resource_attributes, metrics_endpoint, metrics_headers)
+        Traceloop.__metrics_wrapper = MetricsWrapper(exporter=metrics_exporter)
+
+        # tracer init
         TracerWrapper.set_static_params(
             resource_attributes, enable_content_tracing, api_endpoint, headers
         )

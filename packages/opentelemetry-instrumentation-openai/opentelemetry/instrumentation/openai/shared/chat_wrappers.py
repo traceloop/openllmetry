@@ -1,12 +1,13 @@
 import json
 import logging
+from typing import Dict
 
 from opentelemetry import context as context_api
-
+from opentelemetry.metrics import Counter
 from opentelemetry.semconv.ai import SpanAttributes, LLMRequestTypeValues
 
 from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
-from opentelemetry.instrumentation.openai.utils import _with_tracer_wrapper
+from opentelemetry.instrumentation.openai.utils import _with_tracer_wrapper, _with_metric_wrapper
 from opentelemetry.instrumentation.openai.shared import (
     _set_request_attributes,
     _set_span_attribute,
@@ -25,6 +26,27 @@ SPAN_NAME = "openai.chat"
 LLM_REQUEST_TYPE = LLMRequestTypeValues.CHAT
 
 logger = logging.getLogger(__name__)
+
+
+@_with_metric_wrapper
+def metrics_chat_wrapper(counter_map: Dict[str, Counter], wrapped, instance, args, kwargs):
+    if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
+        return wrapped(*args, **kwargs)
+
+    response = wrapped(*args, **kwargs)
+    if is_openai_v1():
+        response_dict = model_as_dict(response)
+    else:
+        response_dict = response
+
+    usage = response_dict.get("usage")
+
+    if usage is not None:
+        for name, counter in counter_map.items():
+            if name in usage:
+                counter.add(usage[name])
+
+    return response
 
 
 @_with_tracer_wrapper
