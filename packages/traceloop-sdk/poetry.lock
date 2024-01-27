@@ -2962,7 +2962,7 @@ develop = true
 [package.dependencies]
 opentelemetry-api = "^1.22.0"
 opentelemetry-instrumentation = "0.43b0"
-opentelemetry-semantic-conventions-ai = "^0.0.17"
+opentelemetry-semantic-conventions-ai = "^0.0.19"
 
 [package.source]
 type = "directory"
@@ -5479,4 +5479,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8.1,<4"
-content-hash = "a319b53d8b603ad16af24283dc1b288111bde71e0504111edb0a0cc3fa5522ce"
+content-hash = "62061a6a88adddd2b3a14b68b831ecea9237dec0b4a08790ca584c3c720ce93e"
