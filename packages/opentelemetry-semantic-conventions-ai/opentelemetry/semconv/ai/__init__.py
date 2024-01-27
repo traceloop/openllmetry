@@ -53,11 +53,16 @@ class EventAttributes(Enum):
     # Query Embeddings
     VECTOR_DB_QUERY_EMBEDDINGS_VECTOR = "vector_db.query.embeddings.{i}.vector"
 
-    # Query Result
+    # Query Result (from ChromeDB)
     VECTOR_DB_QUERY_RESULT_IDS = "vector_db.query.result.{i}.ids"
     VECTOR_DB_QUERY_RESULT_DISTANCES = "vector_db.query.result.{i}.distances"
     VECTOR_DB_QUERY_RESULT_METADATA = "vector_db.query.result.{i}.metadata"
     VECTOR_DB_QUERY_RESULT_DOCUMENTS = "vector_db.query.result.{i}.documents"
+
+    # Query Result (from Pinecone)
+    VECTOR_DB_QUERY_RESULT_ID = "vector_db.query.result.{i}.id"
+    VECTOR_DB_QUERY_RESULT_SCORE = "vector_db.query.result.{i}.score"
+    VECTOR_DB_QUERY_RESULT_VECTOR = "vector_db.query.result.{i}.vector"
 
 
 class LLMRequestTypeValues(Enum):
