@@ -24,7 +24,6 @@ class MetricsWrapper(object):
             if not MetricsWrapper.endpoint:
                 return obj
 
-            # 初始化Metrics导出器，可能需要headers
             obj.__metrics_exporter: MetricExporter = (
                 exporter if exporter
                 else init_metrics_exporter(
