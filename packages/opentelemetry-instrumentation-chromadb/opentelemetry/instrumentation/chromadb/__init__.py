@@ -2,6 +2,8 @@
 
 import logging
 import chromadb
+import chromadb.api.segment
+
 from typing import Collection
 
 from opentelemetry.trace import get_tracer
@@ -19,45 +21,60 @@ _instruments = ("chromadb >= 0.3",)
 
 WRAPPED_METHODS = [
     {
+        "package": chromadb.api.segment,
+        "object": "SegmentAPI",
+        "method": "_query",
+        "span_name": "chroma.query.segment._query"
+    },
+    {
+        "package": chromadb,
         "object": "Collection",
         "method": "add",
         "span_name": "chroma.add"
     },
     {
+        "package": chromadb,
         "object": "Collection",
         "method": "get",
         "span_name": "chroma.get"
     },
     {
+        "package": chromadb,
         "object": "Collection",
         "method": "peek",
         "span_name": "chroma.peek"
     },
     {
+        "package": chromadb,
         "object": "Collection",
         "method": "query",
         "span_name": "chroma.query"
     },
     {
+        "package": chromadb,
         "object": "Collection",
         "method": "modify",
         "span_name": "chroma.modify"
     },
     {
+        "package": chromadb,
         "object": "Collection",
         "method": "update",
         "span_name": "chroma.update"
     },
     {
+        "package": chromadb,
         "object": "Collection",
         "method": "upsert",
         "span_name": "chroma.upsert"
     },
     {
+        "package": chromadb,
         "object": "Collection",
         "method": "delete",
         "span_name": "chroma.delete"
-    }
+    },
+
 ]
 
 
@@ -71,16 +88,21 @@ class ChromaInstrumentor(BaseInstrumentor):
         tracer_provider = kwargs.get("tracer_provider")
         tracer = get_tracer(__name__, __version__, tracer_provider)
         for wrapped_method in WRAPPED_METHODS:
+            wrap_package = wrapped_method.get("package")
             wrap_object = wrapped_method.get("object")
             wrap_method = wrapped_method.get("method")
-            if getattr(chromadb, wrap_object, None):
+            if getattr(wrap_package, wrap_object, None):
                 wrap_function_wrapper(
-                    "chromadb",
+                    wrap_package,
                     f"{wrap_object}.{wrap_method}",
                     _wrap(tracer, wrapped_method),
                 )
 
     def _uninstrument(self, **kwargs):
         for wrapped_method in WRAPPED_METHODS:
+            wrap_package = wrapped_method.get("package")
             wrap_object = wrapped_method.get("object")
-            unwrap(f"chromadb.{wrap_object}", wrapped_method.get("method"))
+
+            wrapped = getattr(wrap_package, wrap_object, None)
+            if wrapped:
+                unwrap(wrapped, wrapped_method.get("method"))
