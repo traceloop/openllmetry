@@ -63,9 +63,7 @@ def _set_api_attributes(span):
         "https://us-south.ml.cloud.ibm.com",
     )
     _set_span_attribute(span, WatsonxSpanAttributes.WATSONX_API_TYPE, "watsonx.ai")
-    _set_span_attribute(
-        span, WatsonxSpanAttributes.WATSONX_API_VERSION, "1.0"
-    )
+    _set_span_attribute(span, WatsonxSpanAttributes.WATSONX_API_VERSION, "1.0")
 
     return
 
@@ -88,35 +86,57 @@ def _set_input_attributes(span, instance, kwargs):
     _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, instance.model_id)
     # Set other attributes
     modelParameters = instance.params
-    _set_span_attribute(span, SpanAttributes.LLM_DECODING_METHOD, modelParameters.get("decoding_method"))
-    _set_span_attribute(span, SpanAttributes.LLM_RANDOM_SEED, modelParameters.get("random_seed"))
-    _set_span_attribute(span, SpanAttributes.LLM_MAX_NEW_TOKENS, modelParameters.get("max_new_tokens"))
-    _set_span_attribute(span, SpanAttributes.LLM_MIN_NEW_TOKENS, modelParameters.get("min_new_tokens"))
+    _set_span_attribute(
+        span, SpanAttributes.LLM_DECODING_METHOD, modelParameters.get("decoding_method")
+    )
+    _set_span_attribute(
+        span, SpanAttributes.LLM_RANDOM_SEED, modelParameters.get("random_seed")
+    )
+    _set_span_attribute(
+        span, SpanAttributes.LLM_MAX_NEW_TOKENS, modelParameters.get("max_new_tokens")
+    )
+    _set_span_attribute(
+        span, SpanAttributes.LLM_MIN_NEW_TOKENS, modelParameters.get("min_new_tokens")
+    )
     _set_span_attribute(span, SpanAttributes.LLM_TOP_K, modelParameters.get("top_k"))
-    _set_span_attribute(span, SpanAttributes.LLM_REPETITION_PENALTY, modelParameters.get("repetition_penalty"))
-    _set_span_attribute(span, SpanAttributes.LLM_TEMPERATURE, modelParameters.get("temperature"))
+    _set_span_attribute(
+        span,
+        SpanAttributes.LLM_REPETITION_PENALTY,
+        modelParameters.get("repetition_penalty"),
+    )
+    _set_span_attribute(
+        span, SpanAttributes.LLM_TEMPERATURE, modelParameters.get("temperature")
+    )
     _set_span_attribute(span, SpanAttributes.LLM_TOP_P, modelParameters.get("top_p"))
 
     return
 
 
 def _set_response_attributes(span, response):
-    _set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, response.get("model_id"))
+    _set_span_attribute(
+        span, SpanAttributes.LLM_RESPONSE_MODEL, response.get("model_id")
+    )
 
-    usage = response['results'][0]
+    usage = response["results"][0]
     _set_span_attribute(
         span,
-        SpanAttributes.LLM_USAGE_TOTAL_TOKENS, usage.get("input_token_count") + usage.get("generated_token_count"),
+        SpanAttributes.LLM_USAGE_TOTAL_TOKENS,
+        usage.get("input_token_count") + usage.get("generated_token_count"),
     )
     _set_span_attribute(
         span,
-        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS, usage.get("generated_token_count"),
+        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS,
+        usage.get("generated_token_count"),
     )
     _set_span_attribute(
-        span, SpanAttributes.LLM_USAGE_PROMPT_TOKENS, usage.get("input_token_count"),
+        span,
+        SpanAttributes.LLM_USAGE_PROMPT_TOKENS,
+        usage.get("input_token_count"),
     )
     _set_span_attribute(
-        span, f"{SpanAttributes.LLM_COMPLETIONS}.0.content", response["results"][0]["generated_text"]
+        span,
+        f"{SpanAttributes.LLM_COMPLETIONS}.0.content",
+        response["results"][0]["generated_text"],
     )
 
     return
@@ -175,13 +195,10 @@ class WatsonxInstrumentor(BaseInstrumentor):
         return _instruments
 
     def _instrument(self, **kwargs):
-        print("calling instrument")
         tracer_provider = kwargs.get("tracer_provider")
         tracer = get_tracer(__name__, __version__, tracer_provider)
 
-        wrapped_methods = (
-            WRAPPED_METHODS_VERSION_1
-        )
+        wrapped_methods = WRAPPED_METHODS_VERSION_1
         for wrapped_method in wrapped_methods:
             wrap_module = wrapped_method.get("module")
             wrap_object = wrapped_method.get("object")
@@ -193,9 +210,7 @@ class WatsonxInstrumentor(BaseInstrumentor):
             )
 
     def _uninstrument(self, **kwargs):
-        wrapped_methods = (
-            WRAPPED_METHODS_VERSION_1
-        )
+        wrapped_methods = WRAPPED_METHODS_VERSION_1
         for wrapped_method in wrapped_methods:
             wrap_object = wrapped_method.get("object")
             unwrap(f"openai.{wrap_object}", wrapped_method.get("method"))
