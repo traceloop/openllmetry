@@ -112,13 +112,13 @@ frozenlist = ">=1.1.0"
 
 [[package]]
 name = "anthropic"
-version = "0.9.0"
+version = "0.12.0"
 description = "The official Python library for the anthropic API"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "anthropic-0.9.0-py3-none-any.whl", hash = "sha256:0eb93b2ec175f31573c830b9d9063bc47972a175ee5a04c791af39e30d402978"},
-    {file = "anthropic-0.9.0.tar.gz", hash = "sha256:5324cfc86ef3623c5b90eb5c27245f56abf8ae3a55055268abd20354cf2a9c76"},
+    {file = "anthropic-0.12.0-py3-none-any.whl", hash = "sha256:d2f706c8dc95c7974e71c901c55245eeda5f129e78c3e3e6752411d4aecfe416"},
+    {file = "anthropic-0.12.0.tar.gz", hash = "sha256:f61bc5f83d195a0b1b5d92d4e5d9a131cab196bfdf9c8f69b73a815a40665e12"},
 ]
 
 [package.dependencies]
@@ -129,6 +129,9 @@ pydantic = ">=1.9.0,<3"
 sniffio = "*"
 tokenizers = ">=0.13.0"
 typing-extensions = ">=4.7,<5"
+
+[package.extras]
+vertex = ["google-auth (>=2,<3)"]
 
 [[package]]
 name = "anyio"
@@ -5212,4 +5215,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8.1,<4"
-content-hash = "a8beb991ccafbb7dcf228892c507fdf481a294766221f3bf874d723449bef48a"
+content-hash = "b74fe66c5b662e513c6168503a28913169c20a4094719ab044534f75a27ad155"
