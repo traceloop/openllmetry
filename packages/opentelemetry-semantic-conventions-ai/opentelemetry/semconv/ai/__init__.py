@@ -53,7 +53,7 @@ class EventAttributes(Enum):
     # Query Embeddings
     VECTOR_DB_QUERY_EMBEDDINGS_VECTOR = "vector_db.query.embeddings.{i}.vector"
 
-    # Query Result (from ChromeDB)
+    # Query Result (from ChromaDB)
     VECTOR_DB_QUERY_RESULT_IDS = "vector_db.query.result.{i}.ids"
     VECTOR_DB_QUERY_RESULT_DISTANCES = "vector_db.query.result.{i}.distances"
     VECTOR_DB_QUERY_RESULT_METADATA = "vector_db.query.result.{i}.metadata"
