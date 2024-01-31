@@ -1,5 +1,4 @@
 from opentelemetry.semconv.trace import SpanAttributes
-from opentelemetry.semconv.ai import Events, EventAttributes
 
 from opentelemetry import context as context_api
 from opentelemetry.instrumentation.utils import (
