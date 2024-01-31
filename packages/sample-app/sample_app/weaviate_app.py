@@ -8,22 +8,14 @@ from weaviate.util import generate_uuid5
 from traceloop.sdk import Traceloop
 from traceloop.sdk.decorators import task, workflow
 
-
-# Set this to True for first run
-create_data = False
-log_to_stdout = True
-kwargs = {
-    "app_name": "weviate_st_app",
-    "disable_batch": True,
-}
-if log_to_stdout:
-    kwargs["exporter"] = ConsoleSpanExporter()
-
 # Init trace
-Traceloop.init(**kwargs)
+Traceloop.init(
+    app_name="weaviate_app",
+    disable_batch=True,
+    exporter=ConsoleSpanExporter()
+)
 
-
-# Code is taken from official documentation.
+# Code is adapted from official documentation.
 # V4 documentation: https://weaviate.io/developers/weaviate/client-libraries/python
 
 client = weaviate.connect_to_wcs(
