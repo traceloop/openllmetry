@@ -26,9 +26,9 @@ include = "traceloop/sdk"
 [tool.poetry.dependencies]
 python = ">=3.8.1,<4"
 opentelemetry-api = "^1.22.0"
-opentelemetry-sdk = "^1.20.0"
-opentelemetry-exporter-otlp-proto-http = "^1.20.0"
-opentelemetry-exporter-otlp-proto-grpc = "^1.20.0"
+opentelemetry-sdk = "^1.22.0"
+opentelemetry-exporter-otlp-proto-http = "^1.22.0"
+opentelemetry-exporter-otlp-proto-grpc = "^1.22.0"
 opentelemetry-instrumentation-requests = "0.43b0"
 opentelemetry-instrumentation-pymysql = "0.43b0"
 opentelemetry-instrumentation-urllib3 = "0.43b0"
@@ -49,9 +49,9 @@ opentelemetry-instrumentation-watsonx = {path="../opentelemetry-instrumentation-
 colorama = "^0.4.6"
 tenacity = "^8.2.3"
 pydantic = ">=1"
-jinja2 = "^3.1.2"
+jinja2 = "^3.1.3"
 deprecated = "^1.2.14"
-posthog = "^3.0.2"
+posthog = "^3.3.4"
 
 [tool.poetry.group.dev.dependencies]
 autopep8 = "2.0.4"
@@ -60,15 +60,15 @@ pytest = "8.0.0"
 pytest-sugar = "0.9.7"
 
 [tool.poetry.group.test.dependencies]
-openai = "^1.7.1"
-anthropic = "^0.9.0"
-farm-haystack = "~1.20.1"
+openai = "^1.10.0"
+anthropic = "^0.13.0"
+farm-haystack = "~1.24.0"
 pinecone-client = "^2.2.4"
-cohere = "^4.42"
-langchain = "^0.1.0"
+cohere = "^4.45"
+langchain = "^0.1.4"
 chromadb = "^0.4.22"
-replicate = "^0.22.0"
-google-cloud-aiplatform = "^1.39.0"
+replicate = "^0.23.1"
+google-cloud-aiplatform = "^1.40.0"
 
 [build-system]
 requires = [ "poetry-core" ]
