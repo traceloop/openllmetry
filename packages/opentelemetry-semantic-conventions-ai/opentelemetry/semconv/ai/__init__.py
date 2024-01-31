@@ -45,24 +45,24 @@ class SpanAttributes:
 
 
 class Events(Enum):
-    VECTOR_DB_QUERY_EMBEDDINGS = "vector_db.query.embeddings"
-    VECTOR_DB_QUERY_RESULT = "vector_db.query.result"
+    DB_QUERY_EMBEDDINGS = "db.query.embeddings"
+    DB_QUERY_RESULT = "db.query.result"
 
 
 class EventAttributes(Enum):
     # Query Embeddings
-    VECTOR_DB_QUERY_EMBEDDINGS_VECTOR = "vector_db.query.embeddings.{i}.vector"
+    DB_QUERY_EMBEDDINGS_VECTOR = "db.query.embeddings.vector"
 
     # Query Result (from ChromaDB)
-    VECTOR_DB_QUERY_RESULT_IDS = "vector_db.query.result.{i}.ids"
-    VECTOR_DB_QUERY_RESULT_DISTANCES = "vector_db.query.result.{i}.distances"
-    VECTOR_DB_QUERY_RESULT_METADATA = "vector_db.query.result.{i}.metadata"
-    VECTOR_DB_QUERY_RESULT_DOCUMENTS = "vector_db.query.result.{i}.documents"
+    DB_CHROMADB_QUERY_RESULT_IDS = "db.chromadb.query.result.ids"
+    DB_CHROMADB_QUERY_RESULT_DISTANCES = "db.chromadb.query.result.distances"
+    DB_CHROMADB_QUERY_RESULT_METADATA = "db.chromadb.query.result.metadata"
+    DB_CHROMADB_QUERY_RESULT_DOCUMENTS = "db.chromadb.query.result.documents"
 
     # Query Result (from Pinecone)
-    VECTOR_DB_QUERY_RESULT_ID = "vector_db.query.result.{i}.id"
-    VECTOR_DB_QUERY_RESULT_SCORE = "vector_db.query.result.{i}.score"
-    VECTOR_DB_QUERY_RESULT_VECTOR = "vector_db.query.result.{i}.vector"
+    DB_PINECONE_QUERY_RESULT_ID = "db.pinecone.query.result.id"
+    DB_PINECONE_QUERY_RESULT_SCORE = "db.pinecone.query.result.score"
+    DB_PINECONE_QUERY_RESULT_VECTOR = "db.pinecone.query.result.vector"
 
 
 class LLMRequestTypeValues(Enum):
