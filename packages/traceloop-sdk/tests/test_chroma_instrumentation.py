@@ -79,7 +79,7 @@ def test_chroma_query(exporter, collection):
     events = span.events
     assert len(events) > 0
     for i, event in enumerate(events):
-        assert event.name == f"vector_db.query.result.{i}"
+        assert event.name == "db.chromadb.query.result"
         ids = event.attributes.get(f"{event.name}.ids")
         distances = event.attributes.get(f"{event.name}.distances")
         documents = event.attributes.get(f"{event.name}.documents")
@@ -110,7 +110,7 @@ def test_chroma_query_segment_query(exporter, collection):
     events = span.events
     assert len(events) > 0
     for i, event in enumerate(events):
-        assert event.name == f"vector_db.query.embeddings.{i}"
+        assert event.name == "db.query.embeddings"
         embeddings = event.attributes.get(f"{event.name}.vector")
         assert len(embeddings) > 100
         for number in embeddings:

@@ -132,8 +132,8 @@ def _set_segment_query_attributes(span, kwargs):
 def _add_segment_query_embeddings_events(span, kwargs):
     for i, embeddings in enumerate(kwargs.get("query_embeddings", [])):
         span.add_event(
-            name=f"{Events.VECTOR_DB_QUERY_EMBEDDINGS.value}.{i}",
-            attributes={f"{Events.VECTOR_DB_QUERY_EMBEDDINGS.value}.{i}.vector": embeddings}
+            name="db.query.embeddings",
+            attributes={"db.query.embeddings.vector": embeddings}
         )
 
 
@@ -146,12 +146,12 @@ def _add_query_result_events(span, kwargs):
     )
     for i, tuple_ in enumerate(zipped):
         span.add_event(
-            name=f"{Events.VECTOR_DB_QUERY_RESULT.value}.{i}",
+            name="db.chromadb.query.result",
             attributes={
-                f"{EventAttributes.VECTOR_DB_QUERY_RESULT_IDS.value.format(i=i)}": tuple_[0] or [],
-                f"{EventAttributes.VECTOR_DB_QUERY_RESULT_DISTANCES.value.format(i=i)}": tuple_[1] or [],
-                f"{EventAttributes.VECTOR_DB_QUERY_RESULT_METADATA.value.format(i=i)}": tuple_[2] or [],
-                f"{EventAttributes.VECTOR_DB_QUERY_RESULT_DOCUMENTS.value.format(i=i)}": tuple_[3] or [],
+                "db.chromadb.query.result.ids": tuple_[0] or [],
+                "db.chromadb.query.result.distances": tuple_[1] or [],
+                "db.chromadb.query.result.metadata": tuple_[2] or [],
+                "db.chromadb.query.result.documents": tuple_[3] or [],
             }
         )
 

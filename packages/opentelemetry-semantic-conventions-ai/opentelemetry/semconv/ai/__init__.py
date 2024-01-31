@@ -46,7 +46,8 @@ class SpanAttributes:
 
 class Events(Enum):
     DB_QUERY_EMBEDDINGS = "db.query.embeddings"
-    DB_QUERY_RESULT = "db.query.result"
+    DB_PINECONE_QUERY_RESULT = "db.pinecone.query.result"
+    DB_CRHOMADB_QUERY_RESULT = "db.chromadb.query.result"
 
 
 class EventAttributes(Enum):
