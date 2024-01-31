@@ -84,8 +84,6 @@ def _set_prompts(span, prompt):
     try:
         if isinstance(prompt, list):
             for i, p in enumerate(prompt):
-                print("HEYYY")
-                print(p)
                 _set_span_attribute(
                     span, f"{SpanAttributes.LLM_PROMPTS}.{i}.content", p
                 )
