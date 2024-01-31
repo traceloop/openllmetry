@@ -16,6 +16,7 @@ from opentelemetry.instrumentation.openai.shared import (
     is_streaming_response,
     should_send_prompts,
     model_as_dict,
+    _get_openai_base_url,
 )
 from opentelemetry.trace import SpanKind
 from opentelemetry.trace.status import Status, StatusCode
@@ -25,26 +26,42 @@ from opentelemetry.instrumentation.openai.utils import is_openai_v1
 SPAN_NAME = "openai.chat"
 LLM_REQUEST_TYPE = LLMRequestTypeValues.CHAT
 
+OPENAI_LLM_USAGE_TOKEN_TYPES = ["prompt_tokens", "completion_tokens"]
+
 logger = logging.getLogger(__name__)
 
 
 @_with_metric_wrapper
-def metrics_chat_wrapper(counter_map: Dict[str, Counter], wrapped, instance, args, kwargs):
+def metrics_chat_wrapper(counter: Counter, wrapped, instance, args, kwargs):
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
         return wrapped(*args, **kwargs)
 
-    response = wrapped(*args, **kwargs)
+    try:
+        response = wrapped(*args, **kwargs)
+    except Exception as e: # pylint: disable=broad-except
+        attributes = {
+            "error.type": e.__class__.__name__,
+            "server.address": _get_openai_base_url(),
+        }
+        counter.add(1, attributes=attributes)
+        raise e
+
     if is_openai_v1():
         response_dict = model_as_dict(response)
     else:
         response_dict = response
 
-    usage = response_dict.get("usage")
+    usage = response_dict.get("usage")  # type: dict
 
     if usage is not None:
-        for name, counter in counter_map.items():
-            if name in usage:
-                counter.add(usage[name])
+        for name, val in usage.items():
+            if name in OPENAI_LLM_USAGE_TOKEN_TYPES:
+                attributes = {
+                    "llm.response.model": response_dict.get("model") or None,
+                    "llm.usage.token_type": name.split('_')[0],
+                    "server.address": _get_openai_base_url(),
+                }
+                counter.add(val, attributes=attributes)
 
     return response
 

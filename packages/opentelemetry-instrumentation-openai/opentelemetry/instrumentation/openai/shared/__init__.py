@@ -129,6 +129,13 @@ def _set_response_attributes(span, response):
         )
 
 
+def _get_openai_base_url():
+    base_url = openai.base_url if hasattr(openai, "base_url") else openai.api_base
+    if not base_url:
+        return ""
+    return base_url
+
+
 def is_streaming_response(response):
     if is_openai_v1():
         return isinstance(response, openai.Stream)

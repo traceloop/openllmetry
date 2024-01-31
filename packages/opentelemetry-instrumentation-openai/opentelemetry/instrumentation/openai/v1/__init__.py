@@ -35,33 +35,17 @@ class OpenAIV1Instrumentor(BaseInstrumentor):
         # meter and counters are inited here
         meter_provider = kwargs.get("meter_provider")
         meter = get_meter(__name__, __version__, meter_provider)
-        total_token_counter = meter.create_counter(
-            name="chat.completions.token.total.usage",
-            unit="",
-            description="chat completions total token usage",
-        )
 
-        completion_token_counter = meter.create_counter(
-            name="chat.completions.token.completion.usage",
-            unit="",
-            description="chat completions completion token usage"
-        )
-
-        prompt_token_counter = meter.create_counter(
-            name="chat.completions.token.prompt.usage",
-            unit="",
-            description="chat completions prompt token usage"
+        token_counter = meter.create_counter(
+            name="llm.openai.chat_completions.tokens",
+            unit="token",
+            description="Number of tokens used in prompt and completions."
         )
 
         wrap_function_wrapper(
             "openai.resources.chat.completions",
             "Completions.create",
-            # support multi metrics counters
-            metrics_chat_wrapper({
-                "total_tokens": total_token_counter,
-                "completion_tokens": completion_token_counter,
-                "prompt_tokens": prompt_token_counter
-            }),
+            metrics_chat_wrapper(token_counter),
         )
 
         wrap_function_wrapper(
