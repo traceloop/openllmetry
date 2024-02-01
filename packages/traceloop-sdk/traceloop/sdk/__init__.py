@@ -4,7 +4,7 @@ from deprecated import deprecated
 import requests
 from pathlib import Path
 
-from typing import Optional
+from typing import Optional, Set
 from colorama import Fore
 from opentelemetry.sdk.trace import SpanProcessor
 from opentelemetry.sdk.trace.export import SpanExporter
@@ -15,6 +15,7 @@ from opentelemetry.util.re import parse_env_headers
 
 from traceloop.sdk.metrics.metrics import MetricsWrapper
 from traceloop.sdk.telemetry import Telemetry
+from traceloop.sdk.instruments import Instruments
 from traceloop.sdk.config import (
     is_content_tracing_enabled,
     is_tracing_enabled, is_metrics_enable,
@@ -51,6 +52,7 @@ class Traceloop:
         propagator: TextMapPropagator = None,
         traceloop_sync_enabled: bool = True,
         resource_attributes: dict = {},
+        instruments: Optional[Set[Instruments]] = None,
     ) -> None:
         Telemetry()
 
@@ -149,8 +151,6 @@ class Traceloop:
 
         print(Fore.RESET)
 
-        resource_attributes = resource_attributes.update({SERVICE_NAME: app_name})
-
         # metrics init
         if not is_metrics_enable():
             print(Fore.YELLOW + "Metrics is disabled" + Fore.RESET)
@@ -166,6 +166,7 @@ class Traceloop:
         Traceloop.__metrics_wrapper = MetricsWrapper(exporter=metrics_exporter)
 
         # tracer init
+        resource_attributes.update({SERVICE_NAME: app_name})
         TracerWrapper.set_static_params(
             resource_attributes, enable_content_tracing, api_endpoint, headers
         )
@@ -174,6 +175,7 @@ class Traceloop:
             processor=processor,
             propagator=propagator,
             exporter=exporter,
+            instruments=instruments,
         )
 
     @staticmethod

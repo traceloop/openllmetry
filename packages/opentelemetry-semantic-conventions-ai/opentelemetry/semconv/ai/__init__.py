@@ -36,6 +36,29 @@ class SpanAttributes:
     # Deprecated
     TRACELOOP_CORRELATION_ID = "traceloop.correlation.id"
 
+    # Watson/genai LLM
+    LLM_DECODING_METHOD = "llm.watsonx.decoding_method"
+    LLM_RANDOM_SEED = "llm.watsonx.random_seed"
+    LLM_MAX_NEW_TOKENS = "llm.watsonx.max_new_tokens"
+    LLM_MIN_NEW_TOKENS = "llm.watsonx.min_new_tokens"
+    LLM_REPETITION_PENALTY = "llm.watsonx.repetition_penalty"
+
+
+class Events(Enum):
+    VECTOR_DB_QUERY_EMBEDDINGS = "vector_db.query.embeddings"
+    VECTOR_DB_QUERY_RESULT = "vector_db.query.result"
+
+
+class EventAttributes(Enum):
+    # Query Embeddings
+    VECTOR_DB_QUERY_EMBEDDINGS_VECTOR = "vector_db.query.embeddings.{i}.vector"
+
+    # Query Result
+    VECTOR_DB_QUERY_RESULT_IDS = "vector_db.query.result.{i}.ids"
+    VECTOR_DB_QUERY_RESULT_DISTANCES = "vector_db.query.result.{i}.distances"
+    VECTOR_DB_QUERY_RESULT_METADATA = "vector_db.query.result.{i}.metadata"
+    VECTOR_DB_QUERY_RESULT_DOCUMENTS = "vector_db.query.result.{i}.documents"
+
 
 class LLMRequestTypeValues(Enum):
     COMPLETION = "completion"
