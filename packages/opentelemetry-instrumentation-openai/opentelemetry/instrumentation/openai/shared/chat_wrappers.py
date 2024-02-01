@@ -1,6 +1,5 @@
 import json
 import logging
-from typing import Dict
 
 from opentelemetry import context as context_api
 from opentelemetry.metrics import Counter
@@ -38,7 +37,7 @@ def metrics_chat_wrapper(counter: Counter, wrapped, instance, args, kwargs):
 
     try:
         response = wrapped(*args, **kwargs)
-    except Exception as e: # pylint: disable=broad-except
+    except Exception as e:  # pylint: disable=broad-except
         attributes = {
             "error.type": e.__class__.__name__,
             "server.address": _get_openai_base_url(),
