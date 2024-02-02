@@ -46,6 +46,7 @@ opentelemetry-instrumentation-bedrock = {path="../opentelemetry-instrumentation-
 opentelemetry-instrumentation-replicate = {path="../opentelemetry-instrumentation-replicate", develop=true}
 opentelemetry-instrumentation-vertexai = {path="../opentelemetry-instrumentation-vertexai", develop=true}
 opentelemetry-instrumentation-watsonx = {path="../opentelemetry-instrumentation-watsonx", develop=true}
+opentelemetry-instrumentation-weaviate = {path="../opentelemetry-instrumentation-weaviate", develop=true}
 colorama = "^0.4.6"
 tenacity = "^8.2.3"
 pydantic = ">=1"

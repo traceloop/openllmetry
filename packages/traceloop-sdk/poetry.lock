@@ -1062,6 +1062,25 @@ type = "directory"
 url = "../opentelemetry-instrumentation-watsonx"
 
 [[package]]
+name = "opentelemetry-instrumentation-weaviate"
+version = "0.10.3"
+description = "OpenTelemetry Weaviate instrumentation"
+optional = false
+python-versions = ">=3.8.1,<4"
+files = []
+develop = true
+
+[package.dependencies]
+opentelemetry-api = "^1.22.0"
+opentelemetry-instrumentation = "0.43b0"
+opentelemetry-semantic-conventions-ai = "^0.0.19"
+weaviate-client = "^3.26.0"
+
+[package.source]
+type = "directory"
+url = "../opentelemetry-instrumentation-weaviate"
+
+[[package]]
 name = "opentelemetry-proto"
 version = "1.22.0"
 description = "OpenTelemetry Python Proto"
@@ -1202,6 +1221,17 @@ python-versions = ">=3.8"
 files = [
     {file = "pycodestyle-2.11.1-py2.py3-none-any.whl", hash = "sha256:44fe31000b2d866f2e41841b18528a505fbd7fef9017b04eff4e2648a0fadc67"},
     {file = "pycodestyle-2.11.1.tar.gz", hash = "sha256:41ba0e7afc9752dfb53ced5489e89f8186be00e599e712660695b7a75ff2663f"},
+]
+
+[[package]]
+name = "pycparser"
+version = "2.21"
+description = "C parser in Python"
+optional = false
+python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
+files = [
+    {file = "pycparser-2.21-py2.py3-none-any.whl", hash = "sha256:8ee45429555515e1f6b185e78100aea234072576aa43ab53aefcae078162fca9"},
+    {file = "pycparser-2.21.tar.gz", hash = "sha256:e644fdec12f7872f86c58ff790da456218b10f863970249516d60a5eaca77206"},
 ]
 
 [[package]]

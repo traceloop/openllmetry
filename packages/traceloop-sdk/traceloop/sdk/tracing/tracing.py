@@ -224,6 +224,13 @@ class TracerWrapper(object):
                             print(Fore.RESET)
                         else:
                             instrument_set = True
+                    elif instrument == Instruments.WEAVIATE:
+                        if not init_weaviate_instrumentor():
+                            print(Fore.RED + "Warning: Weaviate library does not exist.")
+                            print(Fore.RESET)
+                        else:
+                            instrument_set = True
+
                     else:
                         print(
                             Fore.RED
@@ -402,6 +409,7 @@ def init_instrumentations():
     init_replicate_instrumentor()
     init_vertexai_instrumentor()
     init_watsonx_instrumentor()
+    init_weaviate_instrumentor()
 
 
 def init_openai_instrumentor():
@@ -571,6 +579,17 @@ def init_watsonx_instrumentor():
         from opentelemetry.instrumentation.watsonx import WatsonxInstrumentor
 
         instrumentor = WatsonxInstrumentor()
+        if not instrumentor.is_instrumented_by_opentelemetry:
+            instrumentor.instrument()
+    return True
+
+
+def init_weaviate_instrumentor():
+    if importlib.util.find_spec("ibm_watson_machine_learning") is not None:
+        Telemetry().capture("instrumentation:weaviate:init")
+        from opentelemetry.instrumentation.weaviate import WeaviateInstrumentor
+
+        instrumentor = WeaviateInstrumentor()
         if not instrumentor.is_instrumented_by_opentelemetry:
             instrumentor.instrument()
     return True
