@@ -398,7 +398,7 @@ def init_instrumentations():
     init_cohere_instrumentor()
     init_pinecone_instrumentor()
     init_chroma_instrumentor()
-    init_haystack_instrumentor()
+    # init_haystack_instrumentor()
     init_langchain_instrumentor()
     init_llama_index_instrumentor()
     init_transformers_instrumentor()
@@ -585,7 +585,7 @@ def init_watsonx_instrumentor():
 
 
 def init_weaviate_instrumentor():
-    if importlib.util.find_spec("ibm_watson_machine_learning") is not None:
+    if importlib.util.find_spec("weaviate") is not None:
         Telemetry().capture("instrumentation:weaviate:init")
         from opentelemetry.instrumentation.weaviate import WeaviateInstrumentor
 
