@@ -4,7 +4,7 @@ import openai
 from langchain.agents import AgentType
 from langchain.agents import initialize_agent, Tool
 from langchain.chains import LLMMathChain
-from langchain.llms import OpenAI
+from langchain_community.llms.openai import OpenAI
 from langchain.utilities import DuckDuckGoSearchAPIWrapper
 
 

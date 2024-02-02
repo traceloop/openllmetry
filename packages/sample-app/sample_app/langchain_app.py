@@ -3,7 +3,7 @@ import openai
 
 from langchain.schema import SystemMessage, HumanMessage
 from langchain.prompts import ChatPromptTemplate, HumanMessagePromptTemplate
-from langchain.chat_models import ChatOpenAI
+from langchain_community.chat_models import ChatOpenAI
 from langchain.chains import LLMChain, SequentialChain
 
 from traceloop.sdk import Traceloop
