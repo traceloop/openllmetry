@@ -1005,13 +1005,13 @@ tooling-extras = ["pyaml (>=23.7.0)", "pypandoc-binary (>=1.11)", "pytest (>=7.4
 
 [[package]]
 name = "weaviate-client"
-version = "4.4.0"
+version = "4.4.1"
 description = "A python native Weaviate client"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "weaviate-client-4.4.0.tar.gz", hash = "sha256:ba6b03c070fe6d1c1ce47b4985e5b7908ea978baeb37ac60f617937b53fc0340"},
-    {file = "weaviate_client-4.4.0-py3-none-any.whl", hash = "sha256:31f2d75ff2fc4fa910b6e939e7937d60b719b1e055fa42a327af36882c137b7a"},
+    {file = "weaviate-client-4.4.1.tar.gz", hash = "sha256:c005a21076c4d84421e92cf00d0919b8e92d4f59682827a526e10ec7d6b1e217"},
+    {file = "weaviate_client-4.4.1-py3-none-any.whl", hash = "sha256:4480352dcbe837e704d78d453e62d7c60977650c1016fc477e4ae08dd66c00b4"},
 ]
 
 [package.dependencies]
