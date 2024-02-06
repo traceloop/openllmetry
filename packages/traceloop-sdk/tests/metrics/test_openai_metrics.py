@@ -1,5 +1,3 @@
-import time
-import opentelemetry.sdk.metrics.export
 import pytest
 from openai import OpenAI
 
@@ -16,7 +14,8 @@ def test_chat_completion_metrics(metrics_test_context, openai_client):
         model="gpt-3.5-turbo",
         messages=[
             {"role": "system",
-             "content": "You are a poetic assistant, skilled in explaining complex programming concepts with creative flair."},
+             "content": "You are a poetic assistant, skilled in explaining complex programming concepts with creative "
+                        "flair."},
             {"role": "user", "content": "Compose a poem that explains the concept of recursion in programming."}
         ]
     )
@@ -37,4 +36,3 @@ def test_chat_completion_metrics(metrics_test_context, openai_client):
                         assert data_point.value > 0
 
     assert found_metric is True
-
