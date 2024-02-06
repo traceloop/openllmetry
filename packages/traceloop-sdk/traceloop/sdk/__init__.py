@@ -71,7 +71,7 @@ class Traceloop:
             print(
                 Fore.GREEN + "Traceloop syncing configuration and prompts" + Fore.RESET
             )
-
+        # TODO: trace abd metrics disabled should not affect the other
         if not is_tracing_enabled():
             print(Fore.YELLOW + "Tracing is disabled" + Fore.RESET)
             return
@@ -151,20 +151,6 @@ class Traceloop:
 
         print(Fore.RESET)
 
-        # metrics init
-        if not is_metrics_enable():
-            print(Fore.YELLOW + "Metrics is disabled" + Fore.RESET)
-            return
-
-        if metrics_exporter:
-            print(Fore.GREEN + "Traceloop exporting metrics to a custom exporter")
-
-        metrics_endpoint = os.getenv("TRACELOOP_METRICS_ENDPOINT") or "localhost:4317"
-        metrics_headers = os.getenv("TRACELOOP_METRICS_HEADERS") or metrics_headers
-
-        MetricsWrapper.set_static_params(resource_attributes, metrics_endpoint, metrics_headers)
-        Traceloop.__metrics_wrapper = MetricsWrapper(exporter=metrics_exporter)
-
         # tracer init
         resource_attributes.update({SERVICE_NAME: app_name})
         TracerWrapper.set_static_params(
@@ -177,6 +163,21 @@ class Traceloop:
             exporter=exporter,
             instruments=instruments,
         )
+
+        # metrics init
+        if not is_metrics_enable():
+            print(Fore.YELLOW + "Metrics is disabled" + Fore.RESET)
+            return
+
+        if metrics_exporter:
+            print(Fore.GREEN + "Traceloop exporting metrics to a custom exporter")
+
+        # should we take empty TRACELOOP_METRICS_ENDPOINT env var as metric report is not enable?
+        metrics_endpoint = os.getenv("TRACELOOP_METRICS_ENDPOINT") or "localhost:4317"
+        metrics_headers = os.getenv("TRACELOOP_METRICS_HEADERS") or metrics_headers
+
+        MetricsWrapper.set_static_params(resource_attributes, metrics_endpoint, metrics_headers)
+        Traceloop.__metrics_wrapper = MetricsWrapper(exporter=metrics_exporter)
 
     @staticmethod
     @deprecated(version="0.0.62", reason="Use set_association_properties instead")
