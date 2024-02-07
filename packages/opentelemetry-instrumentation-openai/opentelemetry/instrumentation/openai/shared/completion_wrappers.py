@@ -154,6 +154,7 @@ def _build_from_streaming_response(span, response):
     span.set_status(Status(StatusCode.OK))
     span.end()
 
+
 async def _abuild_from_streaming_response(span, response):
     complete_response = {"choices": [], "model": ""}
     async for item in response:

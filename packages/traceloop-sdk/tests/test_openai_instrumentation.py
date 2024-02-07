@@ -94,6 +94,7 @@ def test_completion_langchain_style(exporter, openai_client):
     )
     assert open_ai_span.attributes.get("llm.completions.0.content")
 
+
 def test_completion_streaming(exporter, openai_client):
     response = openai_client.completions.create(
         model="davinci-002",
@@ -114,6 +115,7 @@ def test_completion_streaming(exporter, openai_client):
         == "Tell me a joke about opentelemetry"
     )
     assert open_ai_span.attributes.get("llm.completions.0.content")
+
 
 def test_chat_streaming(exporter, openai_client):
     response = openai_client.chat.completions.create(
