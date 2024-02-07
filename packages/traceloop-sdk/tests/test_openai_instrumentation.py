@@ -94,8 +94,28 @@ def test_completion_langchain_style(exporter, openai_client):
     )
     assert open_ai_span.attributes.get("llm.completions.0.content")
 
+def test_completion_streaming(exporter, openai_client):
+    response = openai_client.completions.create(
+        model="davinci-002",
+        prompt="Tell me a joke about opentelemetry",
+        stream=True,
+    )
 
-def test_streaming(exporter, openai_client):
+    for part in response:
+        pass
+
+    spans = exporter.get_finished_spans()
+    assert [span.name for span in spans] == [
+        "openai.completion",
+    ]
+    open_ai_span = spans[0]
+    assert (
+        open_ai_span.attributes["llm.prompts.0.user"]
+        == "Tell me a joke about opentelemetry"
+    )
+    assert open_ai_span.attributes.get("llm.completions.0.content")
+
+def test_chat_streaming(exporter, openai_client):
     response = openai_client.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=[{"role": "user", "content": "Tell me a joke about opentelemetry"}],
