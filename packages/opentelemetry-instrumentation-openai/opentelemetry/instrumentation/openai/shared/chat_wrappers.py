@@ -1,8 +1,9 @@
 import json
 import logging
+import time
 
 from opentelemetry import context as context_api
-from opentelemetry.metrics import Counter
+from opentelemetry.metrics import Counter, Histogram
 from opentelemetry.semconv.ai import SpanAttributes, LLMRequestTypeValues
 
 from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
@@ -31,18 +32,32 @@ logger = logging.getLogger(__name__)
 
 
 @_with_metric_wrapper
-def metrics_chat_wrapper(counter: Counter, wrapped, instance, args, kwargs):
+def metrics_chat_wrapper(token_counter: Counter,
+                         choice_counter: Counter,
+                         duration_histogram: Histogram,
+                         wrapped, instance, args, kwargs):
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
         return wrapped(*args, **kwargs)
 
     try:
+        # record time for duration
+        start_time = time.time()
         response = wrapped(*args, **kwargs)
+        end_time = time.time()
     except Exception as e:  # pylint: disable=broad-except
+        end_time = time.time()
+        duration = end_time - start_time if 'start_time' in locals() else 0
         attributes = {
             "error.type": e.__class__.__name__,
             "server.address": _get_openai_base_url(),
         }
-        counter.add(1, attributes=attributes)
+
+        token_counter.add(1, attributes=attributes)
+        choice_counter.add(1, attributes=attributes)
+        # if there are legal duration, record it
+        if duration > 0:
+            duration_histogram.record(duration, attributes=attributes)
+
         raise e
 
     if is_openai_v1():
@@ -50,17 +65,31 @@ def metrics_chat_wrapper(counter: Counter, wrapped, instance, args, kwargs):
     else:
         response_dict = response
 
-    usage = response_dict.get("usage")  # type: dict
+    shared_attributes = {
+        "llm.response.model": response_dict.get("model") or None,
+        "server.address": _get_openai_base_url(),
+    }
 
+    # token
+    usage = response_dict.get("usage")  # type: dict
     if usage is not None:
         for name, val in usage.items():
             if name in OPENAI_LLM_USAGE_TOKEN_TYPES:
-                attributes = {
-                    "llm.response.model": response_dict.get("model") or None,
-                    "llm.usage.token_type": name.split('_')[0],
-                    "server.address": _get_openai_base_url(),
-                }
-                counter.add(val, attributes=attributes)
+                attributes_with_token_type = {**shared_attributes, "llm.usage.token_type": name.split('_')[0]}
+                token_counter.add(val, attributes=attributes_with_token_type)
+
+    # choices
+    choices = response_dict.get("choices")
+    if choices is not None:
+        choice_counter.add(len(choices), attributes=shared_attributes)
+
+        for choice in choices:
+            attributes_with_reason = {**shared_attributes, "llm.response.finish_reason": choice["finish_reason"]}
+            choice_counter.add(1, attributes=attributes_with_reason)
+
+    # duration
+    duration = end_time - start_time
+    duration_histogram.record(duration, attributes=shared_attributes)
 
     return response
 

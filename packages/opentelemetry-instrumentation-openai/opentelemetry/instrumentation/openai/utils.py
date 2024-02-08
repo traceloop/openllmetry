@@ -7,9 +7,9 @@ def is_openai_v1():
 
 
 def _with_metric_wrapper(func):
-    def _with_metric(metric):
+    def _with_metric(token_counter, choice_counter, duration_histogram):
         def wrapper(wrapped, instance, args, kwargs):
-            return func(metric, wrapped, instance, args, kwargs)
+            return func(token_counter, choice_counter, duration_histogram, wrapped, instance, args, kwargs)
 
         return wrapper
 

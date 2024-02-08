@@ -15,7 +15,6 @@ def metrics_test_context():
 
     exporter = InMemorySpanExporter()
 
-    print("before invoked set_meter_provider2")
     metrics.set_meter_provider(provider)
 
     Traceloop.init(

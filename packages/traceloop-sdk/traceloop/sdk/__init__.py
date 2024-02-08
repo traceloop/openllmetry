@@ -165,6 +165,7 @@ class Traceloop:
         )
 
         # metrics init
+        # TODO: trace abd metrics disabled should not affect the other
         if not is_metrics_enable():
             print(Fore.YELLOW + "Metrics is disabled" + Fore.RESET)
             return

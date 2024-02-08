@@ -39,13 +39,25 @@ class OpenAIV1Instrumentor(BaseInstrumentor):
         token_counter = meter.create_counter(
             name="llm.openai.chat_completions.tokens",
             unit="token",
-            description="Number of tokens used in prompt and completions."
+            description="Number of tokens used in prompt and completions"
+        )
+
+        choice_counter = meter.create_counter(
+            name="llm.openai.chat_completions.choices",
+            unit="choice",
+            description="Number of choices returned by chat completions call"
+        )
+
+        duration_histogram = meter.create_histogram(
+            name="llm.openai.chat_completions.duration",
+            unit="s",
+            description="Duration of chat completion operation"
         )
 
         wrap_function_wrapper(
             "openai.resources.chat.completions",
             "Completions.create",
-            metrics_chat_wrapper(token_counter),
+            metrics_chat_wrapper(token_counter, choice_counter, duration_histogram),
         )
 
         wrap_function_wrapper(
