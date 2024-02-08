@@ -1,5 +1,6 @@
 from os import getcwd
 import pytest
+import json
 import chromadb
 
 from traceloop.sdk.decorators import task
@@ -111,7 +112,7 @@ def test_chroma_query_segment_query(exporter, collection):
     assert len(events) > 0
     for i, event in enumerate(events):
         assert event.name == f"vector_db.query.embeddings.{i}"
-        embeddings = event.attributes.get(f"{event.name}.vector")
+        embeddings = json.loads(event.attributes.get(f"{event.name}.vector"))
         assert len(embeddings) > 100
         for number in embeddings:
             assert number >= -1 and number <= 1

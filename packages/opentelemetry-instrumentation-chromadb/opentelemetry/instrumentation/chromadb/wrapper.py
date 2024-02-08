@@ -6,6 +6,7 @@ from opentelemetry.instrumentation.utils import (
     _SUPPRESS_INSTRUMENTATION_KEY,
 )
 import itertools
+import json
 
 
 def _with_tracer_wrapper(func):
@@ -133,7 +134,9 @@ def _add_segment_query_embeddings_events(span, kwargs):
     for i, embeddings in enumerate(kwargs.get("query_embeddings", [])):
         span.add_event(
             name=f"{Events.VECTOR_DB_QUERY_EMBEDDINGS.value}.{i}",
-            attributes={f"{Events.VECTOR_DB_QUERY_EMBEDDINGS.value}.{i}.vector": embeddings}
+            attributes={
+                f"{Events.VECTOR_DB_QUERY_EMBEDDINGS.value}.{i}.vector": json.dumps(embeddings)
+            }
         )
 
 
