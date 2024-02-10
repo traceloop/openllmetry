@@ -31,3 +31,9 @@ def test_simple_workflow(exporter, openai_client):
         "joke_creation.task",
         "pirate_joke_generator.workflow",
     ]
+    open_ai_span = spans[0]
+    assert (
+        open_ai_span.attributes["llm.prompts.0.content"]
+        == "Tell me a joke about opentelemetry"
+    )
+    assert open_ai_span.attributes.get("llm.completions.0.content")

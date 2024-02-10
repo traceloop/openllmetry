@@ -1,12 +1,5 @@
 import json
-import pytest
-from openai import OpenAI
 from traceloop.sdk.decorators import workflow, task
-
-
-@pytest.fixture
-def openai_client():
-    return OpenAI()
 
 
 def test_embeddings(exporter, openai_client):
@@ -54,64 +47,6 @@ def test_simple_workflow(exporter, openai_client):
     open_ai_span = spans[0]
     assert (
         open_ai_span.attributes["llm.prompts.0.content"]
-        == "Tell me a joke about opentelemetry"
-    )
-    assert open_ai_span.attributes.get("llm.completions.0.content")
-
-
-def test_completion(exporter, openai_client):
-    openai_client.completions.create(
-        model="davinci-002",
-        prompt="Tell me a joke about opentelemetry",
-    )
-
-    spans = exporter.get_finished_spans()
-    assert [span.name for span in spans] == [
-        "openai.completion",
-    ]
-    open_ai_span = spans[0]
-    assert (
-        open_ai_span.attributes["llm.prompts.0.user"]
-        == "Tell me a joke about opentelemetry"
-    )
-    assert open_ai_span.attributes.get("llm.completions.0.content")
-
-
-def test_completion_langchain_style(exporter, openai_client):
-    openai_client.completions.create(
-        model="davinci-002",
-        prompt=["Tell me a joke about opentelemetry"],
-    )
-
-    spans = exporter.get_finished_spans()
-    assert [span.name for span in spans] == [
-        "openai.completion",
-    ]
-    open_ai_span = spans[0]
-    assert (
-        open_ai_span.attributes["llm.prompts.0.user"]
-        == "Tell me a joke about opentelemetry"
-    )
-    assert open_ai_span.attributes.get("llm.completions.0.content")
-
-
-def test_completion_streaming(exporter, openai_client):
-    response = openai_client.completions.create(
-        model="davinci-002",
-        prompt="Tell me a joke about opentelemetry",
-        stream=True,
-    )
-
-    for part in response:
-        pass
-
-    spans = exporter.get_finished_spans()
-    assert [span.name for span in spans] == [
-        "openai.completion",
-    ]
-    open_ai_span = spans[0]
-    assert (
-        open_ai_span.attributes["llm.prompts.0.user"]
         == "Tell me a joke about opentelemetry"
     )
     assert open_ai_span.attributes.get("llm.completions.0.content")
