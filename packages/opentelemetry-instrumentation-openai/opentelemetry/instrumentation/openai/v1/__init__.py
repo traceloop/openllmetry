@@ -17,8 +17,9 @@ from opentelemetry.instrumentation.openai.shared.completion_wrappers import (
 )
 from opentelemetry.instrumentation.openai.shared.embeddings_wrappers import (
     embeddings_wrapper,
-    aembeddings_wrapper,
+    aembeddings_wrapper, embeddings_metrics_wrapper,
 )
+from opentelemetry.instrumentation.openai.shared.image_gen_wrappers import image_gen_metrics_wrapper
 from opentelemetry.instrumentation.openai.version import __version__
 
 _instruments = ("openai >= 1.0.0",)
@@ -36,19 +37,19 @@ class OpenAIV1Instrumentor(BaseInstrumentor):
         meter_provider = kwargs.get("meter_provider")
         meter = get_meter(__name__, __version__, meter_provider)
 
-        token_counter = meter.create_counter(
+        chat_token_counter = meter.create_counter(
             name="llm.openai.chat_completions.tokens",
             unit="token",
             description="Number of tokens used in prompt and completions"
         )
 
-        choice_counter = meter.create_counter(
+        chat_choice_counter = meter.create_counter(
             name="llm.openai.chat_completions.choices",
             unit="choice",
             description="Number of choices returned by chat completions call"
         )
 
-        duration_histogram = meter.create_histogram(
+        chat_duration_histogram = meter.create_histogram(
             name="llm.openai.chat_completions.duration",
             unit="s",
             description="Duration of chat completion operation"
@@ -57,7 +58,7 @@ class OpenAIV1Instrumentor(BaseInstrumentor):
         wrap_function_wrapper(
             "openai.resources.chat.completions",
             "Completions.create",
-            metrics_chat_wrapper(token_counter, choice_counter, duration_histogram),
+            metrics_chat_wrapper(chat_token_counter, chat_choice_counter, chat_duration_histogram),
         )
 
         wrap_function_wrapper(
@@ -70,6 +71,33 @@ class OpenAIV1Instrumentor(BaseInstrumentor):
             "Completions.create",
             completion_wrapper(tracer),
         )
+
+        embeddings_token_counter = meter.create_counter(
+            name="llm.openai.embeddings.tokens",
+            unit="token",
+            description="Number of tokens used in prompt and completions"
+        )
+
+        embeddings_vector_size_counter = meter.create_counter(
+            name="llm.openai.embeddings.vector_size",
+            unit="element",
+            description="he size of returned vector"
+        )
+
+        embeddings_duration_histogram = meter.create_histogram(
+            name="llm.openai.embeddings.duration",
+            unit="s",
+            description="Duration of embeddings operation"
+        )
+
+        wrap_function_wrapper(
+            "openai.resources.embeddings",
+            "Embeddings.create",
+            embeddings_metrics_wrapper(embeddings_token_counter,
+                                       embeddings_vector_size_counter,
+                                       embeddings_duration_histogram),
+        )
+
         wrap_function_wrapper(
             "openai.resources.embeddings",
             "Embeddings.create",
@@ -89,6 +117,17 @@ class OpenAIV1Instrumentor(BaseInstrumentor):
             "openai.resources.embeddings",
             "AsyncEmbeddings.create",
             aembeddings_wrapper(tracer),
+        )
+
+        image_gen_duration_histogram = meter.create_histogram(
+            name="llm.openai.image_generations.duration",
+            unit="s",
+            description="Duration of embeddings operation"
+        )
+        wrap_function_wrapper(
+            "openai.resources.images",
+            "Images.generate",
+            image_gen_metrics_wrapper(image_gen_duration_histogram),
         )
 
     def _uninstrument(self, **kwargs):

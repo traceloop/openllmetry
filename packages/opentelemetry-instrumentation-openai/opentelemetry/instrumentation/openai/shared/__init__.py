@@ -16,6 +16,8 @@ OPENAI_API_VERSION = "openai.api_version"
 OPENAI_API_BASE = "openai.api_base"
 OPENAI_API_TYPE = "openai.api_type"
 
+OPENAI_LLM_USAGE_TOKEN_TYPES = ["prompt_tokens", "completion_tokens"]
+
 logger = logging.getLogger(__name__)
 
 

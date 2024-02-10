@@ -7,7 +7,7 @@ from opentelemetry.metrics import Counter, Histogram
 from opentelemetry.semconv.ai import SpanAttributes, LLMRequestTypeValues
 
 from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
-from opentelemetry.instrumentation.openai.utils import _with_tracer_wrapper, _with_metric_wrapper
+from opentelemetry.instrumentation.openai.utils import _with_tracer_wrapper, _with_chat_metric_wrapper
 from opentelemetry.instrumentation.openai.shared import (
     _set_request_attributes,
     _set_span_attribute,
@@ -16,7 +16,7 @@ from opentelemetry.instrumentation.openai.shared import (
     is_streaming_response,
     should_send_prompts,
     model_as_dict,
-    _get_openai_base_url,
+    _get_openai_base_url, OPENAI_LLM_USAGE_TOKEN_TYPES,
 )
 from opentelemetry.trace import SpanKind
 from opentelemetry.trace.status import Status, StatusCode
@@ -26,12 +26,10 @@ from opentelemetry.instrumentation.openai.utils import is_openai_v1
 SPAN_NAME = "openai.chat"
 LLM_REQUEST_TYPE = LLMRequestTypeValues.CHAT
 
-OPENAI_LLM_USAGE_TOKEN_TYPES = ["prompt_tokens", "completion_tokens"]
-
 logger = logging.getLogger(__name__)
 
 
-@_with_metric_wrapper
+@_with_chat_metric_wrapper
 def metrics_chat_wrapper(token_counter: Counter,
                          choice_counter: Counter,
                          duration_histogram: Histogram,

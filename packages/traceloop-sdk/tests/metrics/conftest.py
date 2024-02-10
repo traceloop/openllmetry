@@ -27,6 +27,9 @@ def metrics_test_context():
     return provider, reader
 
 
-@pytest.fixture(autouse=True)
+@pytest.fixture(scope="session", autouse=True)
 def clear_metrics_test_context(metrics_test_context):
-    print("clear_metrics_test_context invoked")
+    provider, reader = metrics_test_context
+
+    reader.shutdown()
+    provider.shutdown()

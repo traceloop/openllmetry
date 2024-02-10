@@ -71,7 +71,7 @@ class Traceloop:
             print(
                 Fore.GREEN + "Traceloop syncing configuration and prompts" + Fore.RESET
             )
-        # TODO: trace abd metrics disabled should not affect the other
+
         if not is_tracing_enabled():
             print(Fore.YELLOW + "Tracing is disabled" + Fore.RESET)
             return
@@ -165,7 +165,6 @@ class Traceloop:
         )
 
         # metrics init
-        # TODO: trace abd metrics disabled should not affect the other
         if not is_metrics_enable():
             print(Fore.YELLOW + "Metrics is disabled" + Fore.RESET)
             return
@@ -173,8 +172,7 @@ class Traceloop:
         if metrics_exporter:
             print(Fore.GREEN + "Traceloop exporting metrics to a custom exporter")
 
-        # should we take empty TRACELOOP_METRICS_ENDPOINT env var as metric report is not enable?
-        metrics_endpoint = os.getenv("TRACELOOP_METRICS_ENDPOINT") or "localhost:4317"
+        metrics_endpoint = os.getenv("TRACELOOP_METRICS_ENDPOINT")
         metrics_headers = os.getenv("TRACELOOP_METRICS_HEADERS") or metrics_headers
 
         MetricsWrapper.set_static_params(resource_attributes, metrics_endpoint, metrics_headers)
