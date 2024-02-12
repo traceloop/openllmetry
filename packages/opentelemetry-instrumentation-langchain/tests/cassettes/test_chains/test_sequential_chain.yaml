@@ -40,27 +40,22 @@ interactions:
   response:
     body:
       string: !!binary |
-        MQgZACC+qfrVu6nesLa1IavblC5miIQl7IdALQHapwvH3ztwaK51v42lUc/CsXVvDDCLy9LASnXF
-        EhNf/lQ5xnVlvqAbT/jvAUhS0oiU101Pj9u3P3/4/PD7O1+/fPb1p2c3D7e3z29/cfunH/v3L56m
-        4wFIdfrEOdKIFPx3/JnruimHVEvHA5B2LV/FJY248+j2o0cP7jy+d+/ab621sKYRad7idG94cIre
-        pnpKZJTQw8qlSmZPI349AMC/7+iw92oakfCb/WZvrTrHv1ileKCe8YPkqE3I8NJmJStHEPbabUb5
-        iX2PeNpi6a0QRJI/Bh3Bnmlj5ND6KVPmc1f4Uhs7dAxvoLyAAt7NOQY8dWSiGurRqiqo5gcnK/uD
-        fmxWO5HfIAlXUrqmzL1n4kINJ7wbJna/aGSfu6g0rV8zkw2QPSTJBdwnZVeVDL6wic0Qhy8UwY0L
-        FoI8YodHXydl9K0aCHPr7HVleGZjnECYatmhu9gMlTPnl4o5IIAtTlYGfNtLYdPd+tutrmQhGTOH
-        HnRI9GaO5FdfJpjMS6zUGEE/BbG07oEJQvJdMmHtrXCDCOFUmSmk2vCb/WY4o9F2aEzbG11Yu3Dt
-        HtzAbEc0mrnsbpbjLPj+0uqsF3awBdmsXCAGwpUn1DOcc+PwI1TYc6U9d+JotJMOeEl5gfEVWTt7
-        X9hNcsAGZSqEKFtRNASz0ckVrcciJRFL6hWFebtXVVTs1S8aEFj1C+sGCXbfYVr5aMwhFzahjTIv
-        kOHJylydV70My45MzmMXNGHktNx1axKICiFMGqOreNbDQzj+qZzD7Ti242zib+IsiOMsRqo7Gl+Y
-        lAtCJH0E+VqbDypIhiIrUo1RzSY4IoIRstIsxmXAxI0Rx9xk28Y5k5RRz9B64SPmeBt4bmTjV1Ja
-        uPxcYcBUtMm64umk5guEOkpC5jE4rYNirMmir6Zw6Amr/TERLwmVhno1KDT4+IAfRekXs2Ni0KRR
-        A8cu3Is4yUnchtQEsSMd0NW14do1LgTioh046QNTGnH7211a563VydMI66qtiUqSRX9m7YumEUly
-        hpbipu3/A/B78A3sTjOnMZ6ek7ZW1y3+jHrD5mnEwzvmRSlHc9BAcffBwyc4eQXw45B7dx4dgP8P
-        /x8MAw==
+        IVwPACC+r6rtWqb/MMtO6dpypXWYgiWeaYIhIL3oyv9cDhxuL7p3tEZzfAwwwTgdY3qAeZZmZWtu
+        cmnsFATxaUvAF/zbABR76kBhX9Lqsr47fpOX8/NZP9/c+fKoxue3evPw4lJ3h8fUNgDp5rcEpw7k
+        cus/g+5LEo+aqW0AOrV8kfTU4eji8OLi7OT86or3W3vtJVEHGoqvTtZnK5/qRleJjGIzLBw1BjHq
+        8LUBgL9vLOT9hTrQt/wtf6N3lQfpF7Dj7ZRNHFXt//qOcBi/EaKBMdRYSswDnJPAxJEOa28tU5Ls
+        ZSGWm9cYHAfPP7pAt/gQg2uNnHE/D4lzv8ZH4eTjQvkETtGlxTPuFzznOnAVbxHzHF0Mo1RElGNM
+        BBEFUHEd7TbhuiXfEXN2wVYrynaY5JVnHjg7+mRlB6Bw9WWNa1vZYJsyTNygs9TejzfCYWzhki1q
+        NpRJiSzpPAlV3MBVUGUWTtK3iCSAWKOPUeB1EpwmC0rJJ7BRtsadyZFLaj7DRg07I2I2rzOvcSfW
+        amYPk5i0gUm2DguV95vEkyqmHDSOvE4+qujyLAh5ANBs2Ro/GR25F4NukXSWFhvxygunlh3ZpSZO
+        kNsi4clr4WM0HVtiQEm8IJ5BshMpcAXeEAI/wEzcEMsNnnQYtjFzQpiqc8zYckq2RiYCQnABAy51
+        OOzdlHQoVTdGHfKUEjUe4K/jZzK19dSBzLXQXOH/BvjuEcWT8SDUgfwYKlX3xX+67iQbdTg/Em5Q
+        cDFAYB4dnzZwHQZwsPbyrAH+N/8bAwM=
     headers:
       CF-Cache-Status:
       - DYNAMIC
       CF-RAY:
-      - 8545df9efbf109c5-HFA
+      - 85460d2cd8cf09cd-HFA
       Cache-Control:
       - no-cache, must-revalidate
       Connection:
@@ -70,14 +65,14 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Mon, 12 Feb 2024 15:30:36 GMT
+      - Mon, 12 Feb 2024 16:01:40 GMT
       Server:
       - cloudflare
       Set-Cookie:
-      - __cf_bm=rqY6gQRkPF6W4eePL3jd82RF98NwIeYW9pc7guPly_c-1707751836-1-AcjP2+S9otxsn25kgFcdS4k/67AHXztWLufZCeFrTulXhKFl2+J+comMN7iY1ktBOOnVyAtCaOE2OQFfu2PVulI=;
-        path=/; expires=Mon, 12-Feb-24 16:00:36 GMT; domain=.api.openai.com; HttpOnly;
+      - __cf_bm=.DD._YsvS8FyY3QhQh7kMT76oTH2rsP3GKUFHHLuvW0-1707753700-1-AaBEIisF+FAsBAqv8WWtnqwNx2w1rdbQgnavcU+F0wHR6i530ARktydt1OgKxCiOSp7VRgU1yDGq7q/ajUJwuHY=;
+        path=/; expires=Mon, 12-Feb-24 16:31:40 GMT; domain=.api.openai.com; HttpOnly;
         Secure; SameSite=None
-      - _cfuvid=LTLnuUvvkY8.oGqc00ybdkzNRcOB2jwiVDEjXHD58Js-1707751836063-0-604800000;
+      - _cfuvid=7QQGbQ6UDVdalZl0HoN9mBQJLtzhxMu7AHNfVc7sfSA-1707753700916-0-604800000;
         path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
       Transfer-Encoding:
       - chunked
@@ -90,7 +85,7 @@ interactions:
       openai-organization:
       - traceloop
       openai-processing-ms:
-      - '2408'
+      - '1358'
       openai-version:
       - '2020-10-01'
       strict-transport-security:
@@ -108,31 +103,23 @@ interactions:
       x-ratelimit-reset-tokens:
       - 76ms
       x-request-id:
-      - req_d2c5ba6c3ff20176b994d62ea3c9c6e9
+      - req_ab3d8517d212265aef59f89119f461a1
     status:
       code: 200
       message: OK
 - request:
     body: '{"model": "gpt-3.5-turbo-instruct", "prompt": ["You are a play critic from
       the New York Times. Given the synopsis of play, it is your job to write a review
-      for that play.\n\n    Play Synopsis:\n     \n\nIn the midst of Victorian England,
-      a young couple, Arthur and Elizabeth, escape to the peaceful shores of the beach
-      at sunset. As they stroll along the sandy shore, they bask in the beauty of
-      the setting sun and the tranquility of the ocean. However, their idyllic evening
-      is shattered when they stumble upon a gruesome scene - a body lying lifeless
-      on the sand. Suddenly, their romantic getaway turns into a nightmare as they
-      are thrust into the midst of a murder investigation.\n\nAs they try to unravel
-      the mystery of the tragedy, Arthur and Elizabeth find themselves entangled in
-      a web of secrets, lies, and betrayal. Each new clue they uncover leads them
-      closer to the truth, but also deeper into danger. With the help of a determined
-      detective, they race against time to solve the case and bring the culprit to
-      justice.\n\nBut as the sun sets on the beach, the truth is finally revealed,
-      and it is more tragic than anyone could have imagined. In this gripping tale
-      of love, betrayal, and murder, Arthur and Elizabeth must come to terms with
-      the harsh realities of the world around them, and the consequences of their
-      own actions. Will they be able to find peace in the midst of the tragedy at
-      sunset on the beach, or will they be\n    Review from a New York Times play
-      critic of the above play:"], "frequency_penalty": 0, "logit_bias": {}, "max_tokens":
+      for that play.\n\n    Play Synopsis:\n    \n\n\"Tragedy at Sunset on the Beach\"
+      is a gripping tale set in the opulent and strict society of Victorian England.
+      Wealthy socialite, Lady Margaret, invites her friends and family to her seaside
+      estate for an extravagant dinner party. As the sun sets over the beach, tensions
+      rise and secrets are revealed, exposing the true nature of each character. But
+      when a shocking tragedy strikes, the guests are left scrambling to uncover the
+      truth and save their reputations. With themes of love, betrayal, and societal
+      expectations, this tragic play will keep audiences on the edge of their seats
+      until the final curtain falls.\n    Review from a New York Times play critic
+      of the above play:"], "frequency_penalty": 0, "logit_bias": {}, "max_tokens":
       256, "n": 1, "presence_penalty": 0, "temperature": 0.7, "top_p": 1}'
     headers:
       accept:
@@ -142,12 +129,12 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '1630'
+      - '1013'
       content-type:
       - application/json
       cookie:
-      - __cf_bm=rqY6gQRkPF6W4eePL3jd82RF98NwIeYW9pc7guPly_c-1707751836-1-AcjP2+S9otxsn25kgFcdS4k/67AHXztWLufZCeFrTulXhKFl2+J+comMN7iY1ktBOOnVyAtCaOE2OQFfu2PVulI=;
-        _cfuvid=LTLnuUvvkY8.oGqc00ybdkzNRcOB2jwiVDEjXHD58Js-1707751836063-0-604800000
+      - __cf_bm=.DD._YsvS8FyY3QhQh7kMT76oTH2rsP3GKUFHHLuvW0-1707753700-1-AaBEIisF+FAsBAqv8WWtnqwNx2w1rdbQgnavcU+F0wHR6i530ARktydt1OgKxCiOSp7VRgU1yDGq7q/ajUJwuHY=;
+        _cfuvid=7QQGbQ6UDVdalZl0HoN9mBQJLtzhxMu7AHNfVc7sfSA-1707753700916-0-604800000
       host:
       - api.openai.com
       user-agent:
@@ -171,28 +158,28 @@ interactions:
   response:
     body:
       string: !!binary |
-        MQwbACC+ryq2e5n+Y5KrslO6tittajUNpmAJCUXwANA6pdy7dyqFcOpCwhzjHiq4MS0OhEOzO7fx
-        1R9ZB9U1paFbx7++ViCIkw34C98dgCRTGpHy2srxif36949dvynt4Rf31x9e1/pE6Etdrr/989tv
-        aTgASc+vOUcakYL/j5dZ11Y4RGsaDkD6avlNPKURdx/fefz44d0n9x/1vdSqE5c0Is0tjvdPD4/R
-        7azHREbFb7hxUcnsacS/BwB490uB8f6WRqRn9Vl9ln7t1TlQyv55v2TKy7MEcRBMrhxS55oP/Qv1
-        +oBugJBLrwMUmLhc2YHZCRO3WBx6QfmIHch2f3LCrxyQij8kh5pQxTd1LlSnoWeqFdrBI3eCg7Br
-        rzMKXqwb8IXF0k0U5gG9A8gQ3ufR13Nh9KYVhLXbxKbUDY0p86UX+KLGoqkjDdU6ygso4CYoOj2r
-        z+pvl2r7UP2AAYkhcIVmYJVoxSaxIMNYhUr0Ksqh5gNW8mC79FJ2ILfgoArfgrE3GNX/uhSJXR2W
-        c6p5B31iXSu9zlJnO1LPI5bdQ5hNWpM6Kyhs3T3Y9hN+WxhxiaoWchB2r/hB0yTPArMJ17WfNPIA
-        YLfM1tl1ZXjmyqDGaSMJ+7rRK1efWhABcw3/wnGpQ69GVy56rHTOxuGYd6AfuQH5S+wgY1zUMk8I
-        RdZajyWL5GoknNsNgg8VonbJQuYLKCR6QoBF50jAY7eQYrURJQBY8rAdsfI8sSkK0+QQR6PS6Fx4
-        b5cwMfCqIVqp4AQC9Lw3blALo50nh7Abbb3sTTcX4BEV1O5YjOQQ7FhCHgMal0BeL2RlV+r2iYNz
-        yJWxLQqSCQJidR4nT+ASA8GkXmaXVAzwwpQD0VulBleX2AF+lYfafsI3lBdU3pBLZyWDm3i8egta
-        0cAb5jYucz/xJMIr7Q1icKbwAUwzy6+3HVqzIpNfFUIovK289bdvCyN9XFxiKKjVsJBRDjYThb/s
-        AYIIAbEwLlKpYElDk5RKRJwcXPUFYb3sKExXdhAKuZUZbQdB/3+E9VggjlWNEUazZPDd6rXeM2XC
-        ARy0yUqzVJ7cIISsdZllsQOpYP4YrBNy9+ONsWiflzg202sIhmiLThohnEbcefpQ0bmZnj2NqL2U
-        1pTJknuZNfB8GpEob+Qpbsc/HIDnwb+4O82cxnj+qtRM1xYvQ99w9TTi/p0H45tTXk5QC9G9h4/Q
-        0S+gP9c8fHTnAHw4fDgYAw==
+        MfgaACC+X9Pq7svpv9qQsDtkbhujvXmSABk0XUg1JWG3N1ytLaUPLaFmO6QfGpEGUSw+9SXhUiKZ
+        IRGPiK5JXseun+Uz0E2IL/jvCkgypBapn0te39fd5e76x+Mn25s3n+kXx/L6eHV5+d3264ftxTY1
+        KyBZ95r7SC1S8FO87G0umUNMU7MC0qnls3hILS7uzu/ubq7uzi9++6vZBs6pRRpLrK82N+tYamfr
+        QUY5EmZOJj17avH3CgD+fSWGvr+kFumZPtNnaVdp5OEECmwXdQ6w2kf9CVM/PUsQB6G3uXDOoiMB
+        xPdjsmWcYl2qHYzKY3fJdEJ3YEiIPmo1HAFsclDrn5TpID6B8P8tsD1+kz6sCik+1zGTDht8UW22
+        gduTkPV2Rr/UIFFUcfZmBVf8txBHTyXkQMED5mh1WVnyA7Ht8R0NJ3xPdaTK8Z7DmQhPZrAHBbtU
+        y/Co0gdOzS+jjLpk9icY+PQ4TFwxLuzhm2f6TH/KdDqeaf9kg29IGdtZYmrgj5Lzfsn5hCPTgUOI
+        LvMTjtzB9sh24AYdR6UT5YFiecqZ+KlwHxRiakOPR+binnP2CZbBaVLhTOFg36+2JX7cPnt4wLV0
+        g48dwepaICtMlhH7cF85HFQZlQ9MmYd494i6MM7MBYT5eRnghTi6K8zkoQENg+iIgUtMYOE4b5U4
+        waDUw+opi3IgU3+fKOBsulocSeAeBwghDglHoTjAmebM7vmELrMOCPjGjhIThorVqHuYNjF8Ueku
+        O3BV36dj6icIpY9VSuFBVArBWd3XsMyF1Sdas7nBo9pRdEQ6L/llGCZW1WVxKupCrzW0PMzZ4GMd
+        UE1cPlmfMFzj+3pUeUT1isz7QGXOomODiifDvLxSFCpWTCN8YA2wgD4T3HaYFJiYanSVSS9Fb9rn
+        xcUUwcftJkZPHhg4y4Grw5ZoZsDKaICYT3qDroqOouPuZ4Yhy56DN3mJiTWEHaiZdABCg00Kippd
+        BrlaFpRZg4ckYvzMuEFv80w67KMlaNSRNXFFMcB2jZV6pu5BkBmU3XBrBOxYtU6M0SHYAKqHRpXt
+        85nnjGmDHWZCpViNeJnJQ3K6T6Lsjfe8WLBTbhc7KhaVNwtjn0kqwqovq9CCS0bwpRbnn67KNpZq
+        nacWuuS8mtvEEvdyYODO1CJ1uxElaaH/V8Dzup+5OI2c2lI+I5Vqc4mXYY+s/i8hvtAvTmnXFmK6
+        Aru8uQW3vgC+JLm+vFsB/6/+XxkD
     headers:
       CF-Cache-Status:
       - DYNAMIC
       CF-RAY:
-      - 8545dfafaf7409c5-HFA
+      - 85460d36f9c709cd-HFA
       Cache-Control:
       - no-cache, must-revalidate
       Connection:
@@ -202,7 +189,7 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Mon, 12 Feb 2024 15:30:38 GMT
+      - Mon, 12 Feb 2024 16:01:43 GMT
       Server:
       - cloudflare
       Transfer-Encoding:
@@ -216,7 +203,7 @@ interactions:
       openai-organization:
       - traceloop
       openai-processing-ms:
-      - '2646'
+      - '2682'
       openai-version:
       - '2020-10-01'
       strict-transport-security:
@@ -228,13 +215,13 @@ interactions:
       x-ratelimit-remaining-requests:
       - '2999'
       x-ratelimit-remaining-tokens:
-      - '249382'
+      - '249537'
       x-ratelimit-reset-requests:
       - 20ms
       x-ratelimit-reset-tokens:
-      - 148ms
+      - 111ms
       x-request-id:
-      - req_b0ce5cee94b14d07f21ff31ee0bd6cde
+      - req_6963b51741f6cce52c7dfdb0d1963b23
     status:
       code: 200
       message: OK
