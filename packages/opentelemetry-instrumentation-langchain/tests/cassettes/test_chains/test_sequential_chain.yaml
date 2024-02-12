@@ -1,0 +1,241 @@
+interactions:
+- request:
+    body: '{"model": "gpt-3.5-turbo-instruct", "prompt": ["You are a playwright. Given
+      the title of play and the era it is set in, it is your job to write a synopsis
+      for that title.\n\n    Title: Tragedy at sunset on the beach\n    Era: Victorian
+      England\n    Playwright: This is a synopsis for the above play:"], "frequency_penalty":
+      0, "logit_bias": {}, "max_tokens": 256, "n": 1, "presence_penalty": 0, "temperature":
+      0.7, "top_p": 1}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate, br
+      connection:
+      - keep-alive
+      content-length:
+      - '426'
+      content-type:
+      - application/json
+      host:
+      - api.openai.com
+      user-agent:
+      - OpenAI/Python 1.12.0
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.12.0
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.9.5
+    method: POST
+    uri: https://api.openai.com/v1/completions
+  response:
+    body:
+      string: !!binary |
+        MQgZACC+qfrVu6nesLa1IavblC5miIQl7IdALQHapwvH3ztwaK51v42lUc/CsXVvDDCLy9LASnXF
+        EhNf/lQ5xnVlvqAbT/jvAUhS0oiU101Pj9u3P3/4/PD7O1+/fPb1p2c3D7e3z29/cfunH/v3L56m
+        4wFIdfrEOdKIFPx3/JnruimHVEvHA5B2LV/FJY248+j2o0cP7jy+d+/ab621sKYRad7idG94cIre
+        pnpKZJTQw8qlSmZPI349AMC/7+iw92oakfCb/WZvrTrHv1ileKCe8YPkqE3I8NJmJStHEPbabUb5
+        iX2PeNpi6a0QRJI/Bh3Bnmlj5ND6KVPmc1f4Uhs7dAxvoLyAAt7NOQY8dWSiGurRqiqo5gcnK/uD
+        fmxWO5HfIAlXUrqmzL1n4kINJ7wbJna/aGSfu6g0rV8zkw2QPSTJBdwnZVeVDL6wic0Qhy8UwY0L
+        FoI8YodHXydl9K0aCHPr7HVleGZjnECYatmhu9gMlTPnl4o5IIAtTlYGfNtLYdPd+tutrmQhGTOH
+        HnRI9GaO5FdfJpjMS6zUGEE/BbG07oEJQvJdMmHtrXCDCOFUmSmk2vCb/WY4o9F2aEzbG11Yu3Dt
+        HtzAbEc0mrnsbpbjLPj+0uqsF3awBdmsXCAGwpUn1DOcc+PwI1TYc6U9d+JotJMOeEl5gfEVWTt7
+        X9hNcsAGZSqEKFtRNASz0ckVrcciJRFL6hWFebtXVVTs1S8aEFj1C+sGCXbfYVr5aMwhFzahjTIv
+        kOHJylydV70My45MzmMXNGHktNx1axKICiFMGqOreNbDQzj+qZzD7Ti242zib+IsiOMsRqo7Gl+Y
+        lAtCJH0E+VqbDypIhiIrUo1RzSY4IoIRstIsxmXAxI0Rx9xk28Y5k5RRz9B64SPmeBt4bmTjV1Ja
+        uPxcYcBUtMm64umk5guEOkpC5jE4rYNirMmir6Zw6Amr/TERLwmVhno1KDT4+IAfRekXs2Ni0KRR
+        A8cu3Is4yUnchtQEsSMd0NW14do1LgTioh046QNTGnH7211a563VydMI66qtiUqSRX9m7YumEUly
+        hpbipu3/A/B78A3sTjOnMZ6ek7ZW1y3+jHrD5mnEwzvmRSlHc9BAcffBwyc4eQXw45B7dx4dgP8P
+        /x8MAw==
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 8545df9efbf109c5-HFA
+      Cache-Control:
+      - no-cache, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - br
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 12 Feb 2024 15:30:36 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=rqY6gQRkPF6W4eePL3jd82RF98NwIeYW9pc7guPly_c-1707751836-1-AcjP2+S9otxsn25kgFcdS4k/67AHXztWLufZCeFrTulXhKFl2+J+comMN7iY1ktBOOnVyAtCaOE2OQFfu2PVulI=;
+        path=/; expires=Mon, 12-Feb-24 16:00:36 GMT; domain=.api.openai.com; HttpOnly;
+        Secure; SameSite=None
+      - _cfuvid=LTLnuUvvkY8.oGqc00ybdkzNRcOB2jwiVDEjXHD58Js-1707751836063-0-604800000;
+        path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
+      Transfer-Encoding:
+      - chunked
+      access-control-allow-origin:
+      - '*'
+      alt-svc:
+      - h3=":443"; ma=86400
+      openai-model:
+      - gpt-3.5-turbo-instruct
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '2408'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=15724800; includeSubDomains
+      x-ratelimit-limit-requests:
+      - '3000'
+      x-ratelimit-limit-tokens:
+      - '250000'
+      x-ratelimit-remaining-requests:
+      - '2999'
+      x-ratelimit-remaining-tokens:
+      - '249682'
+      x-ratelimit-reset-requests:
+      - 20ms
+      x-ratelimit-reset-tokens:
+      - 76ms
+      x-request-id:
+      - req_d2c5ba6c3ff20176b994d62ea3c9c6e9
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"model": "gpt-3.5-turbo-instruct", "prompt": ["You are a play critic from
+      the New York Times. Given the synopsis of play, it is your job to write a review
+      for that play.\n\n    Play Synopsis:\n     \n\nIn the midst of Victorian England,
+      a young couple, Arthur and Elizabeth, escape to the peaceful shores of the beach
+      at sunset. As they stroll along the sandy shore, they bask in the beauty of
+      the setting sun and the tranquility of the ocean. However, their idyllic evening
+      is shattered when they stumble upon a gruesome scene - a body lying lifeless
+      on the sand. Suddenly, their romantic getaway turns into a nightmare as they
+      are thrust into the midst of a murder investigation.\n\nAs they try to unravel
+      the mystery of the tragedy, Arthur and Elizabeth find themselves entangled in
+      a web of secrets, lies, and betrayal. Each new clue they uncover leads them
+      closer to the truth, but also deeper into danger. With the help of a determined
+      detective, they race against time to solve the case and bring the culprit to
+      justice.\n\nBut as the sun sets on the beach, the truth is finally revealed,
+      and it is more tragic than anyone could have imagined. In this gripping tale
+      of love, betrayal, and murder, Arthur and Elizabeth must come to terms with
+      the harsh realities of the world around them, and the consequences of their
+      own actions. Will they be able to find peace in the midst of the tragedy at
+      sunset on the beach, or will they be\n    Review from a New York Times play
+      critic of the above play:"], "frequency_penalty": 0, "logit_bias": {}, "max_tokens":
+      256, "n": 1, "presence_penalty": 0, "temperature": 0.7, "top_p": 1}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate, br
+      connection:
+      - keep-alive
+      content-length:
+      - '1630'
+      content-type:
+      - application/json
+      cookie:
+      - __cf_bm=rqY6gQRkPF6W4eePL3jd82RF98NwIeYW9pc7guPly_c-1707751836-1-AcjP2+S9otxsn25kgFcdS4k/67AHXztWLufZCeFrTulXhKFl2+J+comMN7iY1ktBOOnVyAtCaOE2OQFfu2PVulI=;
+        _cfuvid=LTLnuUvvkY8.oGqc00ybdkzNRcOB2jwiVDEjXHD58Js-1707751836063-0-604800000
+      host:
+      - api.openai.com
+      user-agent:
+      - OpenAI/Python 1.12.0
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.12.0
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.9.5
+    method: POST
+    uri: https://api.openai.com/v1/completions
+  response:
+    body:
+      string: !!binary |
+        MQwbACC+ryq2e5n+Y5KrslO6tittajUNpmAJCUXwANA6pdy7dyqFcOpCwhzjHiq4MS0OhEOzO7fx
+        1R9ZB9U1paFbx7++ViCIkw34C98dgCRTGpHy2srxif36949dvynt4Rf31x9e1/pE6Etdrr/989tv
+        aTgASc+vOUcakYL/j5dZ11Y4RGsaDkD6avlNPKURdx/fefz44d0n9x/1vdSqE5c0Is0tjvdPD4/R
+        7azHREbFb7hxUcnsacS/BwB490uB8f6WRqRn9Vl9ln7t1TlQyv55v2TKy7MEcRBMrhxS55oP/Qv1
+        +oBugJBLrwMUmLhc2YHZCRO3WBx6QfmIHch2f3LCrxyQij8kh5pQxTd1LlSnoWeqFdrBI3eCg7Br
+        rzMKXqwb8IXF0k0U5gG9A8gQ3ufR13Nh9KYVhLXbxKbUDY0p86UX+KLGoqkjDdU6ygso4CYoOj2r
+        z+pvl2r7UP2AAYkhcIVmYJVoxSaxIMNYhUr0Ksqh5gNW8mC79FJ2ILfgoArfgrE3GNX/uhSJXR2W
+        c6p5B31iXSu9zlJnO1LPI5bdQ5hNWpM6Kyhs3T3Y9hN+WxhxiaoWchB2r/hB0yTPArMJ17WfNPIA
+        YLfM1tl1ZXjmyqDGaSMJ+7rRK1efWhABcw3/wnGpQ69GVy56rHTOxuGYd6AfuQH5S+wgY1zUMk8I
+        RdZajyWL5GoknNsNgg8VonbJQuYLKCR6QoBF50jAY7eQYrURJQBY8rAdsfI8sSkK0+QQR6PS6Fx4
+        b5cwMfCqIVqp4AQC9Lw3blALo50nh7Abbb3sTTcX4BEV1O5YjOQQ7FhCHgMal0BeL2RlV+r2iYNz
+        yJWxLQqSCQJidR4nT+ASA8GkXmaXVAzwwpQD0VulBleX2AF+lYfafsI3lBdU3pBLZyWDm3i8egta
+        0cAb5jYucz/xJMIr7Q1icKbwAUwzy6+3HVqzIpNfFUIovK289bdvCyN9XFxiKKjVsJBRDjYThb/s
+        AYIIAbEwLlKpYElDk5RKRJwcXPUFYb3sKExXdhAKuZUZbQdB/3+E9VggjlWNEUazZPDd6rXeM2XC
+        ARy0yUqzVJ7cIISsdZllsQOpYP4YrBNy9+ONsWiflzg202sIhmiLThohnEbcefpQ0bmZnj2NqL2U
+        1pTJknuZNfB8GpEob+Qpbsc/HIDnwb+4O82cxnj+qtRM1xYvQ99w9TTi/p0H45tTXk5QC9G9h4/Q
+        0S+gP9c8fHTnAHw4fDgYAw==
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 8545dfafaf7409c5-HFA
+      Cache-Control:
+      - no-cache, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - br
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 12 Feb 2024 15:30:38 GMT
+      Server:
+      - cloudflare
+      Transfer-Encoding:
+      - chunked
+      access-control-allow-origin:
+      - '*'
+      alt-svc:
+      - h3=":443"; ma=86400
+      openai-model:
+      - gpt-3.5-turbo-instruct
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '2646'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=15724800; includeSubDomains
+      x-ratelimit-limit-requests:
+      - '3000'
+      x-ratelimit-limit-tokens:
+      - '250000'
+      x-ratelimit-remaining-requests:
+      - '2999'
+      x-ratelimit-remaining-tokens:
+      - '249382'
+      x-ratelimit-reset-requests:
+      - 20ms
+      x-ratelimit-reset-tokens:
+      - 148ms
+      x-request-id:
+      - req_b0ce5cee94b14d07f21ff31ee0bd6cde
+    status:
+      code: 200
+      message: OK
+version: 1

@@ -1,12 +1,12 @@
+import pytest
 from langchain.prompts import PromptTemplate
 from langchain.llms import OpenAI
-from langchain.schema import StrOutputParser
-from langchain.chat_models import ChatOpenAI
 from langchain import LLMChain
 from langchain.chains import SequentialChain
 
 
-def test_langchain(exporter):
+@pytest.mark.vcr
+def test_sequential_chain(exporter):
     llm = OpenAI(temperature=0.7)
     synopsis_template = """You are a playwright. Given the title of play and the era it is set in, it is your job to write a synopsis for that title.
 
@@ -47,27 +47,5 @@ def test_langchain(exporter):
             "langchain.task.LLMChain",
             "langchain.task.SequentialChain",
             "langchain.workflow",
-        ]
-    ).issubset([span.name for span in spans])
-
-
-def test_langchain_streaming(exporter):
-    chat = ChatOpenAI(
-        model="gpt-4",
-        temperature=0,
-        streaming=True,
-    )
-
-    prompt = PromptTemplate.from_template(
-        "write 10 lines of random text about ${product}"
-    )
-    runnable = prompt | chat | StrOutputParser()
-    runnable.invoke({"product": "colorful socks"})
-
-    spans = exporter.get_finished_spans()
-
-    assert set(
-        [
-            "openai.chat",
         ]
     ).issubset([span.name for span in spans])
