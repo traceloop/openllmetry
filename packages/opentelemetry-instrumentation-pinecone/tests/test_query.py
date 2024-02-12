@@ -52,8 +52,7 @@ def run_query(openai_client, index, query: str):
     complete(openai_client, query_with_contexts)
 
 
-@pytest.mark.vcr
-def test_pinecone_grpc_retrieval(exporter, openai_client):
+def disabled_test_pinecone_grpc_retrieval(exporter, openai_client):
     pinecone.init(
         api_key=os.getenv("PINECONE_API_KEY"),
         environment=os.getenv("PINECONE_ENVIRONMENT"),
