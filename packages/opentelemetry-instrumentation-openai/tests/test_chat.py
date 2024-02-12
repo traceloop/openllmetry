@@ -1,3 +1,7 @@
+import pytest
+
+
+@pytest.mark.vcr
 def test_chat_streaming(exporter, openai_client, vcr):
     response = openai_client.chat.completions.create(
         model="gpt-3.5-turbo",

@@ -33,3 +33,8 @@ def clear_exporter(exporter):
 @pytest.fixture
 def openai_client():
     return OpenAI()
+
+
+@pytest.fixture(scope="module")
+def vcr_config():
+    return {"filter_headers": ["authorization"]}

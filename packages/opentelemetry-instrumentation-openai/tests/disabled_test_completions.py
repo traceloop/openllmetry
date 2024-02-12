@@ -1,4 +1,4 @@
-def test_completion(exporter, openai_client, vcr):
+def test_completion(exporter, openai_client):
     openai_client.completions.create(
         model="davinci-002",
         prompt="Tell me a joke about opentelemetry",
