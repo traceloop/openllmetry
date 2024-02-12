@@ -3,8 +3,6 @@ import pytest
 import json
 import chromadb
 
-from traceloop.sdk.decorators import task
-
 chroma = chromadb.PersistentClient(path=getcwd())
 
 
@@ -14,7 +12,6 @@ def collection():
     chroma.delete_collection(name="Students")
 
 
-@task(name="add_documents")
 def add_documents(collection):
     student_info = """
     Alexandra Thompson, a 19-year-old computer science sophomore with a 3.7 GPA,
