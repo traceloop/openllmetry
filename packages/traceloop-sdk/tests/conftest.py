@@ -1,4 +1,5 @@
 """Unit tests configuration module."""
+
 import pytest
 from traceloop.sdk import Traceloop
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
@@ -21,3 +22,8 @@ def exporter():
 @pytest.fixture(autouse=True)
 def clear_exporter(exporter):
     exporter.clear()
+
+
+@pytest.fixture(scope="module")
+def vcr_config():
+    return {"filter_headers": ["authorization"]}

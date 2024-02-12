@@ -1,64 +1,5 @@
 interactions:
 - request:
-    body: '{"batch": [{"properties": {"hardware.cpus": 8, "hardware.gpus": 0, "libraries.colab":
-      false, "libraries.cuda": false, "libraries.haystack": "1.20.1", "libraries.ipython":
-      false, "libraries.pytest": "7.4.4", "libraries.ray": false, "libraries.torch":
-      "2.1.2", "libraries.transformers": "4.32.1", "os.containerized": false, "os.family":
-      "Darwin", "os.machine": "arm64", "os.version": "23.2.0", "pipeline.classname":
-      "Pipeline", "pipeline.config_hash": "cb625af54d7cca8ff36e1a3fe3b92f9a", "pipeline.nodes.PromptNode":
-      1, "pipeline.run_parameters.debug": false, "pipeline.run_parameters.documents":
-      [0], "pipeline.run_parameters.file_paths": 0, "pipeline.run_parameters.labels":
-      0, "pipeline.run_parameters.meta": 1, "pipeline.run_parameters.params": false,
-      "pipeline.run_parameters.queries": true, "pipeline.runs": 1, "pipeline.type":
-      "Query", "python.version": "3.9.5", "$lib": "posthog-python", "$lib_version":
-      "3.4.0", "$geoip_disable": true}, "timestamp": "2024-02-12T16:00:18.213737+00:00",
-      "context": {}, "distinct_id": "38bf70b0-c13e-495a-ba7d-86d91682d7af", "event":
-      "Pipeline"}], "sentAt": "2024-02-12T16:00:18.718825+00:00", "api_key": "phc_C44vUK9R1J6HYVdfJarTEPqVAoRPJzMXzFcj8PIrJgP"}'
-    headers:
-      Accept:
-      - '*/*'
-      Accept-Encoding:
-      - gzip, deflate, br
-      Connection:
-      - keep-alive
-      Content-Length:
-      - '1193'
-      Content-Type:
-      - application/json
-      User-Agent:
-      - posthog-python/3.4.0
-    method: POST
-    uri: https://eu.posthog.com/batch/
-  response:
-    body:
-      string: '{"status": 1}'
-    headers:
-      Connection:
-      - keep-alive
-      Content-Type:
-      - application/json
-      Cross-Origin-Opener-Policy:
-      - same-origin
-      Date:
-      - Mon, 12 Feb 2024 16:00:18 GMT
-      Referrer-Policy:
-      - same-origin
-      Transfer-Encoding:
-      - chunked
-      Via:
-      - 1.1 13ccd839fb2a1f5455d22e9152fa0226.cloudfront.net (CloudFront)
-      X-Amz-Cf-Id:
-      - d5oQvB1F6WjCWRUiLODTYyqmyVZhEIfxpRd2V_Srysdchf-SiED6kA==
-      X-Amz-Cf-Pop:
-      - TLV50-C1
-      X-Cache:
-      - Miss from cloudfront
-      X-Content-Type-Options:
-      - nosniff
-    status:
-      code: 200
-      message: OK
-- request:
     body: '{"model": "gpt-4", "max_tokens": 100, "temperature": 0.7, "top_p": 1, "n":
       1, "stream": false, "stop": null, "presence_penalty": 0, "frequency_penalty":
       0, "logit_bias": {}, "messages": [{"role": "user", "content": "Tell me a joke
@@ -67,7 +8,7 @@ interactions:
       Accept:
       - '*/*'
       Accept-Encoding:
-      - gzip, deflate, br
+      - gzip, deflate
       Connection:
       - keep-alive
       Content-Length:
@@ -80,36 +21,36 @@ interactions:
     uri: https://api.openai.com/v1/chat/completions
   response:
     body:
-      string: !!binary |
-        IaAIACBW6rJ3U23umRWCCgBsGUUDn/DRTaEH1MN//A20GjzxAwvDAPNwLcGAA0xPPf5lSuBWtnd/
-        A4CyiBgoTN98KI3ozO3lYH6o8sv5Ubo734ulP7WTz5ur+6GfHFA7AEi/5zz0mrjbYqAyrSDAXD7G
-        I2IYzPqz2WQ0HcyFd6SOuCAGSozvjDv96WCkNZrqLOSOGB4CAPg9NQB6974nhn77FrowKDHgTwBZ
-        LTgx0JtzmfNvylMbUBlb94CBbtJvRFrVPE4MV5d86S1vv1GkjzDi7RtpFvFXI/Y7zovNR/Wo6PbX
-        E60jiGVYIM2iTCXou+h+1yzHRq55b9/CTCUr5Dj5j2BN6MRY/e6IQS2FkMFUuOBlA9cMMZDz2pgw
-        /wHwlKn6MvgrZKyWxr94XXDliGEwNRlQTSoANBxWvlCgItOjeeAjIZr+gZc4Uwm3xmZpS6ulEMF/
-        YAAD
+      string: "{\n  \"id\": \"chatcmpl-8rTfG7fyWGdA5DC58aQH6ji7Z3KvN\",\n  \"object\":
+        \"chat.completion\",\n  \"created\": 1707756106,\n  \"model\": \"gpt-4-0613\",\n
+        \ \"choices\": [\n    {\n      \"index\": 0,\n      \"message\": {\n        \"role\":
+        \"assistant\",\n        \"content\": \"Why don't developers trust OpenTelemetry
+        at parties?\\n\\nBecause it always traces their steps!\"\n      },\n      \"logprobs\":
+        null,\n      \"finish_reason\": \"stop\"\n    }\n  ],\n  \"usage\": {\n    \"prompt_tokens\":
+        16,\n    \"completion_tokens\": 18,\n    \"total_tokens\": 34\n  },\n  \"system_fingerprint\":
+        null\n}\n"
     headers:
       CF-Cache-Status:
       - DYNAMIC
       CF-RAY:
-      - 85460b32fac409c1-HFA
+      - 854647f04dc709c9-HFA
       Cache-Control:
       - no-cache, must-revalidate
       Connection:
       - keep-alive
       Content-Encoding:
-      - br
+      - gzip
       Content-Type:
       - application/json
       Date:
-      - Mon, 12 Feb 2024 16:00:21 GMT
+      - Mon, 12 Feb 2024 16:41:50 GMT
       Server:
       - cloudflare
       Set-Cookie:
-      - __cf_bm=2TMZax1LXu0lFj7EM3JxGbdTRvMWCHR0cvRjZw1Bc.I-1707753621-1-AdXyw5p6Y0Asuz+tyED//UwlhBKit7/tObttzjwuvOLrCBI1Q7IJ0RbtoulLPOhNlTguv3l0/Fv5levwXC0uIms=;
-        path=/; expires=Mon, 12-Feb-24 16:30:21 GMT; domain=.api.openai.com; HttpOnly;
+      - __cf_bm=OJ7JZIU_hZoGqAL4u89b05B_P_jwglnsPY2ZkG2a.OA-1707756110-1-AeYc525nPgbJkEMH3q0s/K4RfzfA/xSmOhJorKTEBDh4O/E3mcW98Z+l1IeRfKxdwAdEYuCJjohHFVFXP/Wn134=;
+        path=/; expires=Mon, 12-Feb-24 17:11:50 GMT; domain=.api.openai.com; HttpOnly;
         Secure; SameSite=None
-      - _cfuvid=CecybKUE2TFVNxyRmgSGMehcG_6l8.kFzw5u7Gk3mAQ-1707753621862-0-604800000;
+      - _cfuvid=LbK8sFt2isK3urO0cOoLz2tHccsQjAdr2im2TqO9PPw-1707756110192-0-604800000;
         path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
       Transfer-Encoding:
       - chunked
@@ -122,7 +63,7 @@ interactions:
       openai-organization:
       - traceloop
       openai-processing-ms:
-      - '3228'
+      - '3696'
       openai-version:
       - '2020-10-01'
       strict-transport-security:
@@ -140,7 +81,7 @@ interactions:
       x-ratelimit-reset-tokens:
       - 82ms
       x-request-id:
-      - req_990fcda6f14945da9b26f8cec42ec919
+      - req_c62ccb52b68a2f3d0f47e6332522c2ee
     status:
       code: 200
       message: OK

@@ -5,7 +5,7 @@ interactions:
       Accept:
       - '*/*'
       Accept-Encoding:
-      - gzip, deflate, br
+      - gzip, deflate
       Connection:
       - keep-alive
       Content-Length:
@@ -15,30 +15,15 @@ interactions:
       User-Agent:
       - python-requests/2.31.0
       x-goog-api-client:
-      - gl-python/3.9.5 auth/2.27.0 cred-type/u
+      - gl-python/3.11.1 auth/2.27.0 cred-type/u
     method: POST
     uri: https://oauth2.googleapis.com/token
   response:
     body:
-      string: !!binary |
-        H4sIAAAAAAAC/71St5ajWBDN5yv6dLxS4wWTgTBCEtB4k+jAwz2Ek3CCOfvvC91Bh5Nt+OpVXVO3
-        /vx6e3sPAUi67tY396R+//32PocYsw8RNuVu0cxd6oXPrUxjGx0Nspk0zkH7gK3YOIKZAJ6gG11J
-        Le3AZlQQQ8a75jhdMFdDNCK2uNbtocto4dkNx9cAzz2K0I3cVkFyup8n4rUML0oiVQKpa9HoiZpa
-        TKl63Hwxk+pEn4fyGN1I7oAxDyi7EnkNYReI3O5C7j4rflemZyoLj5l/YXXCZA3WFPWT5GEKxEZo
-        hMel1/3FkNE64LFBEXQEPRDv/2yWk1cLn0l3g5thnGSYr2oHmjbZNpD3fdv9/viYpmmfNU1WJmEL
-        uz1oqo9w6PMPUDZDvGvLsE+bZ/X2t/buUXbJc4Qg2ZdNBuu3laaG8V/nhnUK1mmzT6oQlt/Kv1K6
-        9fO3UC4Jn8nz+wfGPxEm8zmPJAA1eDbtRUZVKHdy1bfBUabkyrlrPIsFhUCo/BmqVkYovI3469sv
-        fExzjbviCpPmCkhQKJiKiZW/6PB6PCOJx26YFwfVYarvV5oW4MpWauKTMYGlGa+YuIIwaFQby7WK
-        xwiLu8AkiwhDNog8qTcIGVcLfdJ4f1KtVYbF9motzupplYVzrVrlw1rDwEknArdFgZUtgXRfVF5s
-        Yk8efI+bwEzWEcbUkeSgAHPmlXOIJWeIjz9csav/X1xL7Mob10uxlJe6KLhmyet6/UlZWEwtwKwU
-        9tbXfEVQG7PvqmUkMSP4wSgjV2yjr4jIFtw5BFRiEbivMcLZYeXsZTjBwEXz0H2lceXMoRu0weZx
-        xYtde41YRDwszwGWbZmomlOO9mKgmtt+mlL/GdkxYd+dGhSlsWGFrojIRbPqZXF1sRF1EchNR3Ja
-        MyoEXOEBvp7Holgls7/n5IE+0EhAh3oodC6gqNdOHaNgyi1ax1TepJEDRdNdHA8HssPQAHX53aBI
-        ybH1iwcz0ecLFUhmffdzvDSuuzQ1XuEl6ij+hnPodfF4vZtZn/ZkcXJdo/W523yNe8UkGq+1olwQ
-        Gs7PJwkIgWyqfF7ZmHHIwhOpC524iodGxkYTOhrxTdYyojvySLLjU7wOUxVZb3J0n4y44EYwV3dL
-        5ygDpRGlLEF/cVQ60RBDPrnjAy+lbBSPQl71jcha4rPHpEm6WJJMPypPe55Q2+b7o2MKjm/26Y1A
-        kV7nLVejPI9/smkN/Hk88HlK4S8kMo1CRBb5k5/FXRbZrRdihCAFsq4Un+cdqrDvv/79DyKapiqF
-        BQAA
+      string: "{\n  \"access_token\": \"ya29.a0AfB_byC6UZDiJ61aWiSbwwvHrxC0DJgM6VKOBCKVLtiVFzSf6wXQD3ear9WtswXLKlqgqlTRwSNpWgjKot8hufNn1qgl9YHnkOAXfR4hkf_Sq29x4RvCWszhkR1VdzA4VFoHimzn0rRKuGVysQ4dVnCYjUksUJITB9Csj-gaCgYKAV0SARASFQHGX2Mi8ff2KxjfNqgt_vmdr0vS6g0174\",\n
+        \ \"expires_in\": 3599,\n  \"scope\": \"openid https://www.googleapis.com/auth/userinfo.email
+        https://www.googleapis.com/auth/cloud-platform https://www.googleapis.com/auth/sqlservice.login\",\n
+        \ \"token_type\": \"Bearer\",\n  \"id_token\": \"eyJhbGciOiJSUzI1NiIsImtpZCI6ImVkODA2ZjE4NDJiNTg4MDU0YjE4YjY2OWRkMWEwOWE0ZjM2N2FmYzQiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL2FjY291bnRzLmdvb2dsZS5jb20iLCJhenAiOiI3NjQwODYwNTE4NTAtNnFyNHA2Z3BpNmhuNTA2cHQ4ZWp1cTgzZGkzNDFodXIuYXBwcy5nb29nbGV1c2VyY29udGVudC5jb20iLCJhdWQiOiI3NjQwODYwNTE4NTAtNnFyNHA2Z3BpNmhuNTA2cHQ4ZWp1cTgzZGkzNDFodXIuYXBwcy5nb29nbGV1c2VyY29udGVudC5jb20iLCJzdWIiOiIxMTMxNzM3OTI4NDYwMzA2NjcyMjUiLCJoZCI6InRyYWNlbG9vcC5jb20iLCJlbWFpbCI6Im5pckB0cmFjZWxvb3AuY29tIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsImF0X2hhc2giOiJtM1N4M2I4eF9MSTlxLWxvbUJHZXVRIiwiaWF0IjoxNzA3NzU2NDUyLCJleHAiOjE3MDc3NjAwNTJ9.gXCPsC81kFxqv1i6QjkA6wOot2nn_3QhDHYBqqIQv5Bta0oDY50uy5A1cZ7PHvPaBJijybZKA186Awr-B56BvygUkQ_ChAkufkcuBsxAQixofws74QPCn4c4ax6lP5qdI5pyBcuRH4iB5HiZc-lr0j322KC6-v0sgcRXa4VpwTMlvxHKV1TxZvqMS9sOTOdQGWjkb-gyS4tGjVanJZGV4nOknN4E5FhNxwZej1oz4NCdgn-hTbBG7zeBK8qV4DOIDbsv7Shv3Hz6-hEteUclB65xP_5wG5yI4TyB_QpwRBZtKGq0DHWV_beEk0bOsaLvSmPMr4DtnIwmw19o_r7x3g\"\n}"
     headers:
       Alt-Svc:
       - h3=":443"; ma=2592000,h3-29=":443"; ma=2592000
@@ -49,7 +34,7 @@ interactions:
       Content-Type:
       - application/json; charset=utf-8
       Date:
-      - Mon, 12 Feb 2024 16:18:39 GMT
+      - Mon, 12 Feb 2024 16:47:32 GMT
       Expires:
       - Mon, 01 Jan 1990 00:00:00 GMT
       Pragma:

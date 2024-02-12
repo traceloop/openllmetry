@@ -15,6 +15,7 @@ def test_replicate_image_generation(exporter):
     ]
 
 
+@pytest.mark.vcr
 def test_replicate_image_generation_predictions(exporter):
     model = replicate.models.get("kvfrans/clipdraw")
     version = model.versions.get(

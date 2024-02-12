@@ -102,7 +102,6 @@ def test_chroma_query(exporter, collection):
             assert isinstance(document, str)
 
 
-@pytest.mark.vcr
 def test_chroma_query_segment_query(exporter, collection):
     add_documents(collection)
     query_collection(collection)
