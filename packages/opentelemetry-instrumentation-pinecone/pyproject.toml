@@ -33,6 +33,17 @@ flake8 = "7.0.0"
 pytest = "7.4.4"
 pytest-sugar = "0.9.7"
 
+[tool.poetry.group.test.dependencies]
+langchain = "^0.1.0"
+openai = "^1.12.0"
+pytest = "7.4.4"
+pytest-sugar = "0.9.7"
+vcrpy = "^6.0.1"
+pytest-recording = "^0.13.1"
+opentelemetry-sdk = "^1.22.0"
+opentelemetry-instrumentation-openai = {path="../opentelemetry-instrumentation-openai", develop=true}
+pinecone-client = {extras = ["grpc"], version = "^2.2.4"}
+
 [build-system]
 requires = [ "poetry-core" ]
 build-backend = "poetry.core.masonry.api"

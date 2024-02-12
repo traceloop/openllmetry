@@ -1,0 +1,415 @@
+interactions:
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate, br
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.31.0
+      api-key:
+      - 4fc603f7-f097-425f-8bef-e0578aa7db49
+    method: GET
+    uri: https://controller.gcp-starter.pinecone.io/actions/whoami
+  response:
+    body:
+      string: '{"project_name":"90c5d9e","user_name":"","user_label":""}'
+    headers:
+      Alt-Svc:
+      - h3=":443"; ma=2592000,h3-29=":443"; ma=2592000
+      Content-Length:
+      - '57'
+      Date:
+      - Mon, 12 Feb 2024 16:07:22 GMT
+      Server:
+      - Google Frontend
+      Via:
+      - 1.1 google
+      X-Cloud-Trace-Context:
+      - bf7f8be5eb6abdd369555250b4805621
+      access-control-allow-origin:
+      - '*'
+      access-control-expose-headers:
+      - '*'
+      content-type:
+      - application/json
+      vary:
+      - origin,access-control-request-method,access-control-request-headers
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"input": ["Which training method should I use for sentence transformers
+      when I only have pairs of related sentences?"], "model": "text-embedding-ada-002",
+      "encoding_format": "base64"}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate, br
+      connection:
+      - keep-alive
+      content-length:
+      - '184'
+      content-type:
+      - application/json
+      host:
+      - api.openai.com
+      user-agent:
+      - OpenAI/Python 1.12.0
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.12.0
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.9.5
+    method: POST
+    uri: https://api.openai.com/v1/embeddings
+  response:
+    body:
+      string: !!binary |
+        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
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 8546158f4b8409b9-HFA
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - br
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 12 Feb 2024 16:07:23 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=bM_jWYdNYO7c87225cI4Qkt_IS_Sklj5u9J_l6MvjB0-1707754043-1-AVESL5DqKg5f2XeMfU9/ZwBiLw9vSVl73Jrj0XSnBPfsOAxxYF9nbHbTpQpJPbYpzIf8uPUGWeIYTDiug+Gjy1g=;
+        path=/; expires=Mon, 12-Feb-24 16:37:23 GMT; domain=.api.openai.com; HttpOnly;
+        Secure; SameSite=None
+      - _cfuvid=RPVVr0HLWbXvsw93RvQjp2kZ2IHQYp4hfzcc32mmi_c-1707754043045-0-604800000;
+        path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
+      Transfer-Encoding:
+      - chunked
+      access-control-allow-origin:
+      - '*'
+      alt-svc:
+      - h3=":443"; ma=86400
+      openai-model:
+      - text-embedding-ada-002
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '32'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=15724800; includeSubDomains
+      x-ratelimit-limit-requests:
+      - '5000'
+      x-ratelimit-limit-tokens:
+      - '5000000'
+      x-ratelimit-remaining-requests:
+      - '4999'
+      x-ratelimit-remaining-tokens:
+      - '4999973'
+      x-ratelimit-reset-requests:
+      - 12ms
+      x-ratelimit-reset-tokens:
+      - 0s
+      x-request-id:
+      - req_8b81f2fd4ab36065cefb7f68970f10f2
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"model": "davinci-002", "prompt": "Answer the question based on the context
+      below.\n\nContext:\npooling approach. Or we can''t use it in its current form.
+      Now the solution to this problem was introduced by two people in 2019 Nils Reimers
+      and Irenia Gurevich. They introduced what is the first sentence transformer
+      or sentence BERT. And it was found that sentence BERT or S BERT outformed all
+      of the previous Save the Art models on pretty much all benchmarks. Not all of
+      them but most of them. And it did it in a very quick time. So if we compare
+      it to BERT, if we wanted to find the most similar sentence pair from 10,000
+      sentences in that 2019 paper they found that with BERT that took 65 hours. With
+      S BERT embeddings they could create all the embeddings in just around five seconds.
+      And then they could compare all those with cosine similarity in 0.01 seconds.
+      So it''s a lot faster. We go from 65 hours to just over five seconds which is
+      I think pretty incredible. Now I think that''s pretty much all the context we
+      need behind sentence transformers. And what we do now is dive into a little
+      bit of how they actually work. Now we said before we have the core transform
+      models and what S BERT does is fine tunes on sentence pairs using what is called
+      a Siamese architecture or Siamese network. What we mean by a Siamese network
+      is that we have what we can see, what can view as two BERT models that are identical
+      and the weights between those two models are tied. Now in reality when implementing
+      this we just use a single BERT model. And what we do is we process one sentence,
+      a sentence A through the model and then we process another sentence, sentence
+      B through the model. And that''s the sentence pair. So with our cross-linked
+      we were processing the sentence pair together. We were putting them both together,
+      processing them all at once. This time we process them separately. And during
+      training what happens is the weights within BERT are optimized to reduce the
+      difference between two vector embeddings or two sentence\n\n---\n\npairs of
+      related sentences you can go ahead and actually try training or fine-tuning
+      using NLI with multiple negative ranking loss. If you don''t have that fine.
+      Another option is that you have a semantic textual similarity data set or STS
+      and what this is is you have so you have sentence A here, sentence B here and
+      then you have a score from from 0 to 1 that tells you the similarity between
+      those two scores and you would train this using something like cosine similarity
+      loss. Now if that''s not an option and your focus or use case is on building
+      a sentence transformer for another language where there is no current sentence
+      transformer you can use multilingual parallel data. So what I mean by that is
+      so parallel data just means translation pairs so if you have for example a English
+      sentence and then you have another language here so it can it can be anything
+      I''m just going to put XX and that XX is your target language you can fine-tune
+      a model using something called multilingual knowledge distillation and what
+      that does is takes a monolingual model for example in English and using those
+      translation pairs it distills the knowledge the semantic similarity knowledge
+      from that monolingual English model into a multilingual model which can handle
+      both English and your target language. So they''re three options quite popular
+      very common that you can go for and as a supervised methods the chances are
+      that probably going to outperform anything you do with unsupervised training
+      at least for now. So if none of those sound like something\n\n---\n\nWe''re
+      going to be focusing on one specific training method which I think is quite
+      useful because all it really needs is a reasonably small data set of parallel
+      data which is simply translation pairs from a source language like English to
+      whichever other language you''re using. So obviously if you are wanting to train
+      a sentence transformer in a language that doesn''t really have that much data,
+      it''s particularly sentence similarity data, this can be really useful for actually
+      taking a high performing, for example, English sentence transformer and transferring
+      that knowledge or distilling that knowledge into a sentence transformer for
+      your own language. So I think this will be pretty useful for a lot of you. And
+      let''s jump straight into it. Before we really get into the whole multilingual
+      sentence transformer part of the video, I just want to sort of give an impression
+      of what these multilingual sentence transformers are actually doing. So on here
+      we can see a single English sentence or brief phrase down at the bottom, I love
+      plants, and the rest of these are all in Italian. So what we have here are a
+      vector representations of dense vector representations of these phrases. And
+      a monolingual sentence transformer, which is most of the sentence transformers,
+      will only cope with one language. So we would hope that phrases that have a
+      similar meaning end up within the same sort of vector space. So like we have
+      for amo lippiante here, and I love plants, these are kind of in the same space.
+      A monolingual sentence transformer would do that for similar sentences. So in
+      English, we might have I love plants and I like plants, which is actually what
+      we have up here. So this here is Italian for I like plants. And we would hope
+      that they''re in a similar area, whereas irrelevant or\n\nQuestion: Which training
+      method should I use for sentence transformers when I only have pairs of related
+      sentences?\nAnswer:", "frequency_penalty": 0, "max_tokens": 400, "presence_penalty":
+      0, "stop": null, "temperature": 0, "top_p": 1}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate, br
+      connection:
+      - keep-alive
+      content-length:
+      - '5631'
+      content-type:
+      - application/json
+      cookie:
+      - __cf_bm=bM_jWYdNYO7c87225cI4Qkt_IS_Sklj5u9J_l6MvjB0-1707754043-1-AVESL5DqKg5f2XeMfU9/ZwBiLw9vSVl73Jrj0XSnBPfsOAxxYF9nbHbTpQpJPbYpzIf8uPUGWeIYTDiug+Gjy1g=;
+        _cfuvid=RPVVr0HLWbXvsw93RvQjp2kZ2IHQYp4hfzcc32mmi_c-1707754043045-0-604800000
+      host:
+      - api.openai.com
+      user-agent:
+      - OpenAI/Python 1.12.0
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.12.0
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.9.5
+    method: POST
+    uri: https://api.openai.com/v1/completions
+  response:
+    body:
+      string: !!binary |
+        QWQqACB+P1V3LdN/N7tVUnrF6GITI04PUNKnboLD/7e1i4rG4uI16DUrsIDTNYADC2xhSuk2jz/S
+        TCRiT+k84W8GkM1JgUxRuvooXI5a053Z3cHx193XsbPDt5Evh7t3p98/G1TLAJLJO5tECpT4K70Y
+        KUrHyYqnWgbQr+VtnJNCe9gaDvu9Vq+3dlchOTtSoFx/WG9svdXqLGudiTUcSeEhA4DfEYdN3pEC
+        4U4qGO1RRQblehc5+iO0Q6mDdo4dcp10DZEL7ZM1SPyVKu2QQlC06VtLkoB4lhG0Z/T4uZMYG4/+
+        0Z9VHJMVr3Az0wmVyJLvMAqGUbeqQ6MQL44Qpy0NWoW1bxIKDpQTc7TDgbqXXHn0az5+clBYM0xW
+        yjryKWEe8WnTDOL5qsFq6E+AmxFltK1BROVPCXNbwFWsdAb/v2MCQBkAU67uQWik0JodczItg0wi
+        KfjKORmRnTb1Ugl0lRQojRVLOtZ/BjzBNnsV9ZRJwbVtVAYpyvSSZM4+kkK73R6YFchgRJcK32s5
+        k6J+TriETe1+e5AB/9l/ZgAD
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 854615963de509b9-HFA
+      Cache-Control:
+      - no-cache, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - br
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 12 Feb 2024 16:07:26 GMT
+      Server:
+      - cloudflare
+      Transfer-Encoding:
+      - chunked
+      access-control-allow-origin:
+      - '*'
+      alt-svc:
+      - h3=":443"; ma=86400
+      openai-model:
+      - davinci-002
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '2440'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=15724800; includeSubDomains
+      x-ratelimit-limit-requests:
+      - '3000'
+      x-ratelimit-limit-tokens:
+      - '250000'
+      x-ratelimit-remaining-requests:
+      - '2999'
+      x-ratelimit-remaining-tokens:
+      - '248233'
+      x-ratelimit-reset-requests:
+      - 20ms
+      x-ratelimit-reset-tokens:
+      - 424ms
+      x-request-id:
+      - req_f46f09dcfea127670fdf6290f268648c
+    status:
+      code: 200
+      message: OK
+version: 1
