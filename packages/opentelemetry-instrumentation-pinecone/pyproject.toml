@@ -42,7 +42,7 @@ vcrpy = "^6.0.1"
 pytest-recording = "^0.13.1"
 opentelemetry-sdk = "^1.22.0"
 opentelemetry-instrumentation-openai = {path="../opentelemetry-instrumentation-openai", develop=true}
-pinecone-client = {extras = ["grpc"], version = "^2.2.4"}
+pinecone-client = "^2.2.4"
 
 [build-system]
 requires = [ "poetry-core" ]

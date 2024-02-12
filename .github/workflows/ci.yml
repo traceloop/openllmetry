@@ -75,13 +75,6 @@ jobs:
 
       - name: Test
         env:
-          OPENAI_API_KEY: sk-abcdef
-          ANTHROPIC_API_KEY: 1111111
-          COHERE_API_KEY: 1111111
-          REPLICATE_API_TOKEN: 1111111
-          PINECONE_API_KEY: 1111111
-          PINECONE_ENVIRONMENT: 1111111
-          TRACELOOP_API_KEY: 1111111
           HAYSTACK_TELEMETRY_ENABLED: False
         run: npx nx affected -t test --exclude='sample-app' --parallel=3
 

@@ -1,3 +1,7 @@
+import pytest
+
+
+@pytest.mark.vcr
 def test_embeddings(exporter, openai_client):
     openai_client.embeddings.create(
         input="Tell me a joke about opentelemetry",

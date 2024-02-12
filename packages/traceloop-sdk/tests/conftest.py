@@ -1,5 +1,6 @@
 """Unit tests configuration module."""
 
+import os
 import pytest
 from traceloop.sdk import Traceloop
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
@@ -22,6 +23,11 @@ def exporter():
 @pytest.fixture(autouse=True)
 def clear_exporter(exporter):
     exporter.clear()
+
+
+@pytest.fixture(autouse=True)
+def environment():
+    os.environ["OPENAI_API_KEY"] = "test_api_key"
 
 
 @pytest.fixture(scope="module")

@@ -1,3 +1,7 @@
+import pytest
+
+
+@pytest.mark.vcr
 def test_open_ai_function_calls(exporter, openai_client):
     openai_client.chat.completions.create(
         model="gpt-4",

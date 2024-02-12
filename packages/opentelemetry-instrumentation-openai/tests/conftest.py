@@ -1,6 +1,7 @@
 """Unit tests configuration module."""
 
 import pytest
+import os
 from openai import OpenAI
 from opentelemetry import trace
 from opentelemetry.sdk.trace import TracerProvider
@@ -28,6 +29,11 @@ def exporter():
 @pytest.fixture(autouse=True)
 def clear_exporter(exporter):
     exporter.clear()
+
+
+@pytest.fixture(autouse=True)
+def environment():
+    os.environ["OPENAI_API_KEY"] = "test_api_key"
 
 
 @pytest.fixture

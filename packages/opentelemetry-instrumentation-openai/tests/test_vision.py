@@ -1,6 +1,8 @@
 import json
+import pytest
 
 
+@pytest.mark.vcr
 def test_vision(exporter, openai_client):
     response = openai_client.chat.completions.create(
         model="gpt-4-vision-preview",
