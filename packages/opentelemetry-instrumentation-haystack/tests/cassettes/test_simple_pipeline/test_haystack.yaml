@@ -11,9 +11,9 @@ interactions:
       0, "pipeline.run_parameters.meta": 1, "pipeline.run_parameters.params": false,
       "pipeline.run_parameters.queries": true, "pipeline.runs": 1, "pipeline.type":
       "Query", "python.version": "3.9.5", "$lib": "posthog-python", "$lib_version":
-      "3.4.0", "$geoip_disable": true}, "timestamp": "2024-02-12T15:25:45.716597+00:00",
+      "3.4.0", "$geoip_disable": true}, "timestamp": "2024-02-12T16:00:18.213737+00:00",
       "context": {}, "distinct_id": "38bf70b0-c13e-495a-ba7d-86d91682d7af", "event":
-      "Pipeline"}], "sentAt": "2024-02-12T15:25:46.222320+00:00", "api_key": "phc_C44vUK9R1J6HYVdfJarTEPqVAoRPJzMXzFcj8PIrJgP"}'
+      "Pipeline"}], "sentAt": "2024-02-12T16:00:18.718825+00:00", "api_key": "phc_C44vUK9R1J6HYVdfJarTEPqVAoRPJzMXzFcj8PIrJgP"}'
     headers:
       Accept:
       - '*/*'
@@ -40,15 +40,15 @@ interactions:
       Cross-Origin-Opener-Policy:
       - same-origin
       Date:
-      - Mon, 12 Feb 2024 15:25:46 GMT
+      - Mon, 12 Feb 2024 16:00:18 GMT
       Referrer-Policy:
       - same-origin
       Transfer-Encoding:
       - chunked
       Via:
-      - 1.1 1b1bef0e3ba5fb60100bf0604c62143e.cloudfront.net (CloudFront)
+      - 1.1 13ccd839fb2a1f5455d22e9152fa0226.cloudfront.net (CloudFront)
       X-Amz-Cf-Id:
-      - pcOjUlmkKbuxkm5LISub1yym_djsHuih0DJfpNxFWjepjmIBCd21fw==
+      - d5oQvB1F6WjCWRUiLODTYyqmyVZhEIfxpRd2V_Srysdchf-SiED6kA==
       X-Amz-Cf-Pop:
       - TLV50-C1
       X-Cache:
@@ -81,17 +81,18 @@ interactions:
   response:
     body:
       string: !!binary |
-        ITwIACC+zPbuLNNr6k7F9cwIH3KtrzugQPXYMelAbUEcHH+wBMM8bCupJRZxeurxL2uJ+RV7+6sA
-        KmLSoCgPJGpsPbrgrq6LCT7Z2Di/PvjZbO46e0f+rJN8xItHTCMKIA7LJBJLO1Zi4As2FFAuHyUx
-        aUzOT8zPz07OzsyBJw3HSU0alFkZnRmdmJucthrmXESJJ40nBQC/pwKgvfcjaUyM3EIVhiNN/ASQ
-        4zohDQq8L7wERmiEwNrWXWjQXf6NmE2/IA4kwIytMy8e4lovOLOJudZQb4r7Xns2z0ZkvywEw7ZW
-        xQVR4vddVNi9kZouig//A13VnFnHoScN09Y1Bs3fxNugrRlpkBe2LsK/Al4Sots37pB13Fh5E64S
-        40ljcs6loNRzgllgPyXAMJqeUTEiqfF33tLCZImzrshOatq6Vv/KAAM=
+        IaAIACBW6rJ3U23umRWCCgBsGUUDn/DRTaEH1MN//A20GjzxAwvDAPNwLcGAA0xPPf5lSuBWtnd/
+        A4CyiBgoTN98KI3ozO3lYH6o8sv5Ubo734ulP7WTz5ur+6GfHFA7AEi/5zz0mrjbYqAyrSDAXD7G
+        I2IYzPqz2WQ0HcyFd6SOuCAGSozvjDv96WCkNZrqLOSOGB4CAPg9NQB6974nhn77FrowKDHgTwBZ
+        LTgx0JtzmfNvylMbUBlb94CBbtJvRFrVPE4MV5d86S1vv1GkjzDi7RtpFvFXI/Y7zovNR/Wo6PbX
+        E60jiGVYIM2iTCXou+h+1yzHRq55b9/CTCUr5Dj5j2BN6MRY/e6IQS2FkMFUuOBlA9cMMZDz2pgw
+        /wHwlKn6MvgrZKyWxr94XXDliGEwNRlQTSoANBxWvlCgItOjeeAjIZr+gZc4Uwm3xmZpS6ulEMF/
+        YAAD
     headers:
       CF-Cache-Status:
       - DYNAMIC
       CF-RAY:
-      - 8545d899cb2c09c9-HFA
+      - 85460b32fac409c1-HFA
       Cache-Control:
       - no-cache, must-revalidate
       Connection:
@@ -101,14 +102,14 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Mon, 12 Feb 2024 15:25:50 GMT
+      - Mon, 12 Feb 2024 16:00:21 GMT
       Server:
       - cloudflare
       Set-Cookie:
-      - __cf_bm=ijVIfazOV9eOxxNOOrAarAyQvuFj8rCGqH5QvzTWJG4-1707751550-1-ASWRX7q8v9nbiBRzkd/sDJwka8wx4mFq70+HEPlEEewrF1O+Bqf+VdFuhW1NSWB71Y9AZpB2Enc7HSHu5gDjuH8=;
-        path=/; expires=Mon, 12-Feb-24 15:55:50 GMT; domain=.api.openai.com; HttpOnly;
+      - __cf_bm=2TMZax1LXu0lFj7EM3JxGbdTRvMWCHR0cvRjZw1Bc.I-1707753621-1-AdXyw5p6Y0Asuz+tyED//UwlhBKit7/tObttzjwuvOLrCBI1Q7IJ0RbtoulLPOhNlTguv3l0/Fv5levwXC0uIms=;
+        path=/; expires=Mon, 12-Feb-24 16:30:21 GMT; domain=.api.openai.com; HttpOnly;
         Secure; SameSite=None
-      - _cfuvid=QBOLid3Qf0LtyeBTnvreD6jl_hwrsL.YgnwJiui0ZFw-1707751550349-0-604800000;
+      - _cfuvid=CecybKUE2TFVNxyRmgSGMehcG_6l8.kFzw5u7Gk3mAQ-1707753621862-0-604800000;
         path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
       Transfer-Encoding:
       - chunked
@@ -121,7 +122,7 @@ interactions:
       openai-organization:
       - traceloop
       openai-processing-ms:
-      - '4251'
+      - '3228'
       openai-version:
       - '2020-10-01'
       strict-transport-security:
@@ -139,7 +140,7 @@ interactions:
       x-ratelimit-reset-tokens:
       - 82ms
       x-request-id:
-      - req_73a55cc044c3ea7465a0a4efd0d59a8d
+      - req_990fcda6f14945da9b26f8cec42ec919
     status:
       code: 200
       message: OK
