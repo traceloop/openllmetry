@@ -38,8 +38,12 @@ def add_documents(collection):
 
     collection.add(
         documents=[student_info, club_info, university_info],
-        metadatas=[{"source": "student info"}, {"source": "club info"}, {'source': 'university info'}],
-        ids=["id1", "id2", "id3"]
+        metadatas=[
+            {"source": "student info"},
+            {"source": "club info"},
+            {"source": "university info"},
+        ],
+        ids=["id1", "id2", "id3"],
     )
 
 
@@ -60,7 +64,7 @@ def query_collection(collection):
     collection.query(
         query_texts=["What is the student name?"],
         n_results=2,
-        where={"source": "student info"}
+        where={"source": "student info"},
     )
 
 
@@ -101,6 +105,7 @@ def test_chroma_query(exporter, collection):
             assert isinstance(document, str)
 
 
+@pytest.mark.vcr
 def test_chroma_query_segment_query(exporter, collection):
     add_documents(collection)
     query_collection(collection)
