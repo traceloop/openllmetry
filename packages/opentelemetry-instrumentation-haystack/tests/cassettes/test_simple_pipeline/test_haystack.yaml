@@ -1,0 +1,146 @@
+interactions:
+- request:
+    body: '{"batch": [{"properties": {"hardware.cpus": 8, "hardware.gpus": 0, "libraries.colab":
+      false, "libraries.cuda": false, "libraries.haystack": "1.20.1", "libraries.ipython":
+      false, "libraries.pytest": "7.4.4", "libraries.ray": false, "libraries.torch":
+      "2.1.2", "libraries.transformers": "4.32.1", "os.containerized": false, "os.family":
+      "Darwin", "os.machine": "arm64", "os.version": "23.2.0", "pipeline.classname":
+      "Pipeline", "pipeline.config_hash": "cb625af54d7cca8ff36e1a3fe3b92f9a", "pipeline.nodes.PromptNode":
+      1, "pipeline.run_parameters.debug": false, "pipeline.run_parameters.documents":
+      [0], "pipeline.run_parameters.file_paths": 0, "pipeline.run_parameters.labels":
+      0, "pipeline.run_parameters.meta": 1, "pipeline.run_parameters.params": false,
+      "pipeline.run_parameters.queries": true, "pipeline.runs": 1, "pipeline.type":
+      "Query", "python.version": "3.9.5", "$lib": "posthog-python", "$lib_version":
+      "3.4.0", "$geoip_disable": true}, "timestamp": "2024-02-12T15:25:45.716597+00:00",
+      "context": {}, "distinct_id": "38bf70b0-c13e-495a-ba7d-86d91682d7af", "event":
+      "Pipeline"}], "sentAt": "2024-02-12T15:25:46.222320+00:00", "api_key": "phc_C44vUK9R1J6HYVdfJarTEPqVAoRPJzMXzFcj8PIrJgP"}'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate, br
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '1193'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - posthog-python/3.4.0
+    method: POST
+    uri: https://eu.posthog.com/batch/
+  response:
+    body:
+      string: '{"status": 1}'
+    headers:
+      Connection:
+      - keep-alive
+      Content-Type:
+      - application/json
+      Cross-Origin-Opener-Policy:
+      - same-origin
+      Date:
+      - Mon, 12 Feb 2024 15:25:46 GMT
+      Referrer-Policy:
+      - same-origin
+      Transfer-Encoding:
+      - chunked
+      Via:
+      - 1.1 1b1bef0e3ba5fb60100bf0604c62143e.cloudfront.net (CloudFront)
+      X-Amz-Cf-Id:
+      - pcOjUlmkKbuxkm5LISub1yym_djsHuih0DJfpNxFWjepjmIBCd21fw==
+      X-Amz-Cf-Pop:
+      - TLV50-C1
+      X-Cache:
+      - Miss from cloudfront
+      X-Content-Type-Options:
+      - nosniff
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"model": "gpt-4", "max_tokens": 100, "temperature": 0.7, "top_p": 1, "n":
+      1, "stream": false, "stop": null, "presence_penalty": 0, "frequency_penalty":
+      0, "logit_bias": {}, "messages": [{"role": "user", "content": "Tell me a joke
+      about OpenTelemetry\n"}]}'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate, br
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '256'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - python-requests/2.31.0
+    method: POST
+    uri: https://api.openai.com/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        ITwIACC+zPbuLNNr6k7F9cwIH3KtrzugQPXYMelAbUEcHH+wBMM8bCupJRZxeurxL2uJ+RV7+6sA
+        KmLSoCgPJGpsPbrgrq6LCT7Z2Di/PvjZbO46e0f+rJN8xItHTCMKIA7LJBJLO1Zi4As2FFAuHyUx
+        aUzOT8zPz07OzsyBJw3HSU0alFkZnRmdmJucthrmXESJJ40nBQC/pwKgvfcjaUyM3EIVhiNN/ASQ
+        4zohDQq8L7wERmiEwNrWXWjQXf6NmE2/IA4kwIytMy8e4lovOLOJudZQb4r7Xns2z0ZkvywEw7ZW
+        xQVR4vddVNi9kZouig//A13VnFnHoScN09Y1Bs3fxNugrRlpkBe2LsK/Al4Sots37pB13Fh5E64S
+        40ljcs6loNRzgllgPyXAMJqeUTEiqfF33tLCZImzrshOatq6Vv/KAAM=
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 8545d899cb2c09c9-HFA
+      Cache-Control:
+      - no-cache, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - br
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 12 Feb 2024 15:25:50 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=ijVIfazOV9eOxxNOOrAarAyQvuFj8rCGqH5QvzTWJG4-1707751550-1-ASWRX7q8v9nbiBRzkd/sDJwka8wx4mFq70+HEPlEEewrF1O+Bqf+VdFuhW1NSWB71Y9AZpB2Enc7HSHu5gDjuH8=;
+        path=/; expires=Mon, 12-Feb-24 15:55:50 GMT; domain=.api.openai.com; HttpOnly;
+        Secure; SameSite=None
+      - _cfuvid=QBOLid3Qf0LtyeBTnvreD6jl_hwrsL.YgnwJiui0ZFw-1707751550349-0-604800000;
+        path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
+      Transfer-Encoding:
+      - chunked
+      access-control-allow-origin:
+      - '*'
+      alt-svc:
+      - h3=":443"; ma=86400
+      openai-model:
+      - gpt-4-0613
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '4251'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=15724800; includeSubDomains
+      x-ratelimit-limit-requests:
+      - '5000'
+      x-ratelimit-limit-tokens:
+      - '80000'
+      x-ratelimit-remaining-requests:
+      - '4999'
+      x-ratelimit-remaining-tokens:
+      - '79890'
+      x-ratelimit-reset-requests:
+      - 12ms
+      x-ratelimit-reset-tokens:
+      - 82ms
+      x-request-id:
+      - req_73a55cc044c3ea7465a0a4efd0d59a8d
+    status:
+      code: 200
+      message: OK
+version: 1

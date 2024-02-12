@@ -1,8 +1,10 @@
 import os
+import pytest
 from haystack.nodes import PromptNode, PromptTemplate, AnswerParser
 from haystack.pipelines import Pipeline
 
 
+@pytest.mark.vcr
 def test_haystack(exporter):
     prompt = PromptTemplate(
         prompt="Tell me a joke about {query}\n",
