@@ -1,20 +1,19 @@
 def test_completion(exporter, openai_client, vcr):
-    with vcr.use_cassette("completion.yaml"):
-        openai_client.completions.create(
-            model="davinci-002",
-            prompt="Tell me a joke about opentelemetry",
-        )
+    openai_client.completions.create(
+        model="davinci-002",
+        prompt="Tell me a joke about opentelemetry",
+    )
 
-        spans = exporter.get_finished_spans()
-        assert [span.name for span in spans] == [
-            "openai.completion",
-        ]
-        open_ai_span = spans[0]
-        assert (
-            open_ai_span.attributes["llm.prompts.0.user"]
-            == "Tell me a joke about opentelemetry"
-        )
-        assert open_ai_span.attributes.get("llm.completions.0.content")
+    spans = exporter.get_finished_spans()
+    assert [span.name for span in spans] == [
+        "openai.completion",
+    ]
+    open_ai_span = spans[0]
+    assert (
+        open_ai_span.attributes["llm.prompts.0.user"]
+        == "Tell me a joke about opentelemetry"
+    )
+    assert open_ai_span.attributes.get("llm.completions.0.content")
 
 
 def test_completion_langchain_style(exporter, openai_client):
