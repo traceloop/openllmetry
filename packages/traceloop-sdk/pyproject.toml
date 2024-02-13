@@ -8,7 +8,7 @@ show_missing = true
 
 [tool.poetry]
 name = "traceloop-sdk"
-version = "0.10.3"
+version = "0.10.5"
 description = "Traceloop Software Development Kit (SDK) for Python"
 authors = [
   "Gal Kleinman <gal@traceloop.com>",
@@ -61,15 +61,9 @@ pytest-sugar = "0.9.7"
 
 [tool.poetry.group.test.dependencies]
 openai = "^1.7.1"
-anthropic = "^0.9.0"
-farm-haystack = "~1.20.1"
-pinecone-client = "^2.2.4"
-cohere = "^4.42"
-langchain = "^0.1.5"
-chromadb = "^0.4.22"
-replicate = "^0.22.0"
-google-cloud-aiplatform = "^1.39.0"
-langchain-community = "^0.0.17"
+vcrpy = "^6.0.1"
+pytest-recording = "^0.13.1"
+pydantic = "<2"
 
 [build-system]
 requires = [ "poetry-core" ]

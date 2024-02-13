@@ -1,8 +1,9 @@
 name: CI
 
 on:
-  pull_request_target:
-    types: [opened, synchronize]
+  pull_request:
+    branches:
+      - "main"
   push:
     branches:
       - "main"
@@ -45,23 +46,6 @@ jobs:
         python-version: ["3.8", "3.9", "3.10", "3.11"]
 
     steps:
-      - name: Get User Permission
-        id: checkAccess
-        uses: actions-cool/check-user-permission@v2
-        with:
-          require: write
-          username: ${{ github.triggering_actor }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Check User Permission
-        if: steps.checkAccess.outputs.require-result == 'false'
-        run: |
-          echo "${{ github.triggering_actor }} does not have permissions on this repo."
-          echo "Current permission level is ${{ steps.checkAccess.outputs.user-permission }}"
-          echo "Job originally triggered by ${{ github.actor }}"
-          exit 1
-
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
@@ -71,17 +55,13 @@ jobs:
         uses: actions/setup-python@v1
         with:
           python-version: ${{ matrix.python-version }}
+
       - name: Install Poetry
         uses: snok/install-poetry@v1
 
       - uses: actions/setup-node@v3
         with:
           node-version: 18
-
-      - uses: "google-github-actions/auth@v2"
-        with:
-          project_id: ${{ secrets.GCP_PROJECT_ID }}
-          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
 
       - uses: nrwl/nx-set-shas@v3
 
@@ -95,13 +75,7 @@ jobs:
 
       - name: Test
         env:
-          OPENAI_API_KEY: ${{ secrets.OPEN_API_KEY }}
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          COHERE_API_KEY: ${{ secrets.COHERE_API_KEY }}
-          REPLICATE_API_TOKEN: ${{ secrets.REPLICATE_API_TOKEN }}
-          PINECONE_API_KEY: ${{ secrets.PINECONE_API_KEY }}
-          PINECONE_ENVIRONMENT: ${{ secrets.PINECONE_ENVIRONMENT }}
-          TRACELOOP_API_KEY: ${{ secrets.TRACELOOP_API_KEY }}
+          HAYSTACK_TELEMETRY_ENABLED: False
         run: npx nx affected -t test --exclude='sample-app' --parallel=3
 
   build-sample-app:

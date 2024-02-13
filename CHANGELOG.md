@@ -1,3 +1,15 @@
+## v0.10.5 (2024-02-13)
+
+### Fix
+
+- **langchain**: backport to 0.0.346 (#418)
+
+## v0.10.4 (2024-02-08)
+
+### Fix
+
+- **openai**: handle OpenAI async completion streaming responses (#409)
+
 ## v0.10.3 (2024-01-30)
 
 ### Fix

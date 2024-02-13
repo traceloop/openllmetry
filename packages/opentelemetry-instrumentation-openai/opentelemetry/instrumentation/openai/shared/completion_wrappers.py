@@ -68,7 +68,12 @@ async def acompletion_wrapper(tracer, wrapped, instance, args, kwargs):
     ) as span:
         _handle_request(span, kwargs)
         response = await wrapped(*args, **kwargs)
-        _handle_response(response, span)
+
+        if is_streaming_response(response):
+            # span will be closed after the generator is done
+            return _abuild_from_streaming_response(span, response)
+        else:
+            _handle_response(response, span)
 
         return response
 
@@ -125,6 +130,34 @@ def _set_completions(span, choices):
 def _build_from_streaming_response(span, response):
     complete_response = {"choices": [], "model": ""}
     for item in response:
+        item_to_yield = item
+        if is_openai_v1():
+            item = model_as_dict(item)
+
+        for choice in item.get("choices"):
+            index = choice.get("index")
+            if len(complete_response.get("choices")) <= index:
+                complete_response["choices"].append({"index": index, "text": ""})
+            complete_choice = complete_response.get("choices")[index]
+            if choice.get("finish_reason"):
+                complete_choice["finish_reason"] = choice.get("finish_reason")
+
+            complete_choice["text"] += choice.get("text")
+
+        yield item_to_yield
+
+    _set_response_attributes(span, complete_response)
+
+    if should_send_prompts():
+        _set_completions(span, complete_response.get("choices"))
+
+    span.set_status(Status(StatusCode.OK))
+    span.end()
+
+
+async def _abuild_from_streaming_response(span, response):
+    complete_response = {"choices": [], "model": ""}
+    async for item in response:
         item_to_yield = item
         if is_openai_v1():
             item = model_as_dict(item)
