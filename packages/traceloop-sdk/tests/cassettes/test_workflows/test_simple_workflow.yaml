@@ -1,0 +1,102 @@
+interactions:
+- request:
+    body: '{"messages": [{"role": "user", "content": "Tell me a joke about opentelemetry"}],
+      "model": "gpt-3.5-turbo"}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '107'
+      content-type:
+      - application/json
+      host:
+      - api.openai.com
+      user-agent:
+      - OpenAI/Python 1.12.0
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.12.0
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.9.5
+    method: POST
+    uri: https://api.openai.com/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA1SRT08CMRDF7/spxp5ZsgsBlIvRmwf/HEgwEUNKd9ittp2mnVUJ4bubLgvopYf3
+        +l5/M91nAEJXYg5CNZKV9Sa/Dov4opZfZmSL7d1DOa6nr1UsVPP4tGjFICVo84GKT6mhIusNsiZ3
+        tFVAyZhay1kxm02mN6OyMyxVaFKs9pyPh5Oc27ChvJiW4z7ZkFYYxRzeMgCAfXcmRlfhj5hDMTgp
+        FmOUNYr5+RKACGSSImSMOrJ0LAYXU5FjdB32stlBpSt49ugYDVrksINGBwQJiixWWrrblVu5e1Sy
+        jQjc4A6+pWOsYIPMGICDVBiBtmBkWzeM4Ur0rx3OmIZqH2iTRnKtMWd9q52OzTqgjOQSUmTyx/gh
+        A3jv1tH+m1D4QNbzmukTXSosJ8c6cfmAP+asN5lYmos+HmU9n4i7yGjXW+1qDD7objeJMjtkvwAA
+        AP//AwB7h+a6GgIAAA==
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 85465bd8cea909c9-HFA
+      Cache-Control:
+      - no-cache, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 12 Feb 2024 16:55:22 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=TkrINgoCmmTaqg05VQ1WHEolPihzU6u57hugghHXWwc-1707756922-1-ATkknLOEsgPnsTzmYjxPFIpBt23UFZQ6s/363rmVG1No8qV6Hf6NG/eS+wuP0S8QLYUa6XR+wZ2Ea+e/wnE+sFg=;
+        path=/; expires=Mon, 12-Feb-24 17:25:22 GMT; domain=.api.openai.com; HttpOnly;
+        Secure; SameSite=None
+      - _cfuvid=UFML5ZGMwerkaoj2b3b9N4PRATR9slp7OOJ3eSiyuW4-1707756922521-0-604800000;
+        path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
+      Transfer-Encoding:
+      - chunked
+      access-control-allow-origin:
+      - '*'
+      alt-svc:
+      - h3=":443"; ma=86400
+      openai-model:
+      - gpt-3.5-turbo-0613
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '332'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=15724800; includeSubDomains
+      x-ratelimit-limit-requests:
+      - '5000'
+      x-ratelimit-limit-tokens:
+      - '160000'
+      x-ratelimit-remaining-requests:
+      - '4999'
+      x-ratelimit-remaining-tokens:
+      - '159974'
+      x-ratelimit-reset-requests:
+      - 12ms
+      x-ratelimit-reset-tokens:
+      - 9ms
+      x-request-id:
+      - req_d671bdc2c19fd05b41f607444a181b1f
+    status:
+      code: 200
+      message: OK
+version: 1

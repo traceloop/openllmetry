@@ -1,0 +1,111 @@
+interactions:
+- request:
+    body: '{"model": "davinci-002", "prompt": "Tell me a joke about opentelemetry",
+      "stream": true}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '88'
+      content-type:
+      - application/json
+      host:
+      - api.openai.com
+      user-agent:
+      - OpenAI/Python 1.12.0
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.12.0
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.9.5
+    method: POST
+    uri: https://api.openai.com/v1/completions
+  response:
+    body:
+      string: 'data: {"id":"cmpl-8rU81qUL0w7iJexMLJYsg1nUnUZu7","object":"text_completion","created":1707757889,"choices":[{"text":".\n\n","index":0,"logprobs":null,"finish_reason":null}],"model":"davinci-002"}
+
+
+        data: {"id":"cmpl-8rU81qUL0w7iJexMLJYsg1nUnUZu7","object":"text_completion","created":1707757889,"choices":[{"text":"OP","index":0,"logprobs":null,"finish_reason":null}],"model":"davinci-002"}
+
+
+        data: {"id":"cmpl-8rU81qUL0w7iJexMLJYsg1nUnUZu7","object":"text_completion","created":1707757889,"choices":[{"text":"EN","index":0,"logprobs":null,"finish_reason":null}],"model":"davinci-002"}
+
+
+        data: {"id":"cmpl-8rU81qUL0w7iJexMLJYsg1nUnUZu7","object":"text_completion","created":1707757889,"choices":[{"text":"T","index":0,"logprobs":null,"finish_reason":null}],"model":"davinci-002"}
+
+
+        data: {"id":"cmpl-8rU81qUL0w7iJexMLJYsg1nUnUZu7","object":"text_completion","created":1707757889,"choices":[{"text":"","index":0,"logprobs":null,"finish_reason":"stop"}],"model":"davinci-002"}
+
+
+        data: [DONE]
+
+
+        '
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 8546737919b909c1-HFA
+      Cache-Control:
+      - no-cache, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Type:
+      - text/event-stream
+      Date:
+      - Mon, 12 Feb 2024 17:11:29 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=TjHANioIQDz1WMG719e9GXn.42QzfAnG0dH9awPNqDk-1707757889-1-AWC0wRI2j8+0fSgwORy2y5GcvOInCeVvww2j9YhYdZzz4ZkgSwwUoEAk8N1S0vGVDdIsWGCvOPUN+kyew1D8GSI=;
+        path=/; expires=Mon, 12-Feb-24 17:41:29 GMT; domain=.api.openai.com; HttpOnly;
+        Secure; SameSite=None
+      - _cfuvid=O4hUzPakmT.WjhI.Pw2hu8ilrT4EUlB7kDmt0rBPQLQ-1707757889752-0-604800000;
+        path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
+      Transfer-Encoding:
+      - chunked
+      access-control-allow-origin:
+      - '*'
+      alt-svc:
+      - h3=":443"; ma=86400
+      openai-model:
+      - davinci-002
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '45'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=15724800; includeSubDomains
+      x-ratelimit-limit-requests:
+      - '3000'
+      x-ratelimit-limit-tokens:
+      - '250000'
+      x-ratelimit-remaining-requests:
+      - '2999'
+      x-ratelimit-remaining-tokens:
+      - '249975'
+      x-ratelimit-reset-requests:
+      - 20ms
+      x-ratelimit-reset-tokens:
+      - 5ms
+      x-request-id:
+      - req_933c7953e50739bbd588b14542770259
+    status:
+      code: 200
+      message: OK
+version: 1
