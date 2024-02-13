@@ -8,7 +8,7 @@ show_missing = true
 
 [tool.poetry]
 name = "opentelemetry-instrumentation-bedrock"
-version = "0.10.5"
+version = "0.11.0"
 description = "OpenTelemetry Bedrock instrumentation"
 authors = [
   "Gal Kleinman <gal@traceloop.com>",
