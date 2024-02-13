@@ -55,7 +55,9 @@ def task_method(
                     res = fn(*args, **kwargs)
 
                     if _should_send_prompts():
-                        span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_OUTPUT, res)
+                        span.set_attribute(
+                            SpanAttributes.TRACELOOP_ENTITY_OUTPUT, json.dumps(res)
+                        )
 
                     return res
 
@@ -123,7 +125,9 @@ def workflow_method(name: Optional[str] = None, correlation_id: Optional[str] = 
                     res = fn(*args, **kwargs)
 
                     if _should_send_prompts():
-                        span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_OUTPUT, res)
+                        span.set_attribute(
+                            SpanAttributes.TRACELOOP_ENTITY_OUTPUT, json.dumps(res)
+                        )
 
                     return res
 
@@ -205,7 +209,9 @@ def atask_method(
                     res = await fn(*args, **kwargs)
 
                     if _should_send_prompts():
-                        span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_OUTPUT, res)
+                        span.set_attribute(
+                            SpanAttributes.TRACELOOP_ENTITY_OUTPUT, json.dumps(res)
+                        )
 
                     return res
 
@@ -278,7 +284,9 @@ def aworkflow_method(name: Optional[str] = None, correlation_id: Optional[str] =
                     res = await fn(*args, **kwargs)
 
                     if _should_send_prompts():
-                        span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_OUTPUT, res)
+                        span.set_attribute(
+                            SpanAttributes.TRACELOOP_ENTITY_OUTPUT, json.dumps(res)
+                        )
 
                     return res
 

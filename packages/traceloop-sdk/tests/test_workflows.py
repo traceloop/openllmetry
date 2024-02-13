@@ -44,4 +44,4 @@ def test_simple_workflow(exporter, openai_client):
         "kwargs": {"subject": "OpenTelemetry"},
     }
 
-    assert task_span.attributes.get("traceloop.entity.output") == joke
+    assert json.loads(task_span.attributes.get("traceloop.entity.output")) == joke
