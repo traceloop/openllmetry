@@ -8,7 +8,6 @@ from langchain.chains import LLMChain, SequentialChain, TransformChain
 
 from traceloop.sdk import Traceloop
 
-openai.api_key = os.getenv("OPENAI_API_KEY")
 Traceloop.init(app_name="langchain_example")
 
 

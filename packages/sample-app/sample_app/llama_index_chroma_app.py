@@ -2,7 +2,6 @@ import asyncio
 
 import chromadb
 import os
-import openai
 
 from llama_index import VectorStoreIndex, SimpleDirectoryReader, ServiceContext
 from llama_index.vector_stores import ChromaVectorStore
@@ -11,7 +10,6 @@ from llama_index.embeddings import HuggingFaceEmbedding
 from traceloop.sdk import Traceloop
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
-openai.api_key = os.environ["OPENAI_API_KEY"]
 
 Traceloop.init(app_name="llama_index_example")
 
