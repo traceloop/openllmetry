@@ -1,6 +1,3 @@
-import os
-import openai
-
 from langchain.schema import SystemMessage, HumanMessage
 from langchain.prompts import ChatPromptTemplate, HumanMessagePromptTemplate
 from langchain_community.chat_models import ChatOpenAI
