@@ -1,6 +1,6 @@
 interactions:
 - request:
-    body: '{"messages": [{"role": "user", "content": "Tell me a joke about opentelemetry"}],
+    body: '{"messages": [{"role": "user", "content": "Tell me a joke about OpenTelemetry"}],
       "model": "gpt-3.5-turbo"}'
     headers:
       accept:
@@ -36,18 +36,18 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAAA1SRT08CMRDF7/spxp5ZsgsBlIvRmwf/HEgwEUNKd9ittp2mnVUJ4bubLgvopYf3
-        +l5/M91nAEJXYg5CNZKV9Sa/Dov4opZfZmSL7d1DOa6nr1UsVPP4tGjFICVo84GKT6mhIusNsiZ3
-        tFVAyZhay1kxm02mN6OyMyxVaFKs9pyPh5Oc27ChvJiW4z7ZkFYYxRzeMgCAfXcmRlfhj5hDMTgp
-        FmOUNYr5+RKACGSSImSMOrJ0LAYXU5FjdB32stlBpSt49ugYDVrksINGBwQJiixWWrrblVu5e1Sy
-        jQjc4A6+pWOsYIPMGICDVBiBtmBkWzeM4Ur0rx3OmIZqH2iTRnKtMWd9q52OzTqgjOQSUmTyx/gh
-        A3jv1tH+m1D4QNbzmukTXSosJ8c6cfmAP+asN5lYmos+HmU9n4i7yGjXW+1qDD7objeJMjtkvwAA
-        AP//AwB7h+a6GgIAAA==
+        H4sIAAAAAAAAA1SRT08CMRDF7/spxp6B7AorKxcTD16I4WLUKIaU7rBb6XaadmBFwnc3Xf7FSw/v
+        zZv83nSfAAhdigkIVUtWjTP9wrvq6Xfa5uOpbovtNv14neXrIntevrtW9GKClt+o+JwaKGqcQdZk
+        j7byKBnj1mycjotROh7mndFQiSbGKsf94SDv88YvqZ/eZcNTsiatMIgJfCYAAPvujYy2xB8xgbR3
+        VhoMQVYoJpchAOHJREXIEHRgaVn0rqYiy2g77Ld6B60MwDXCzKF9QYMNst+B8xS7gbZbzVgCE0hj
+        ukEnPWsMDzC3c/uISm4CgmZYW2oD1NTGYfZSIUioiEpg3eCNOBEcLuiGKudpGWvajTEXfaWtDvXC
+        owxkI2Zgcsf4IQH46k60+ddaOE+N4wXTGm1cmOXHdeL6KVfzdnQymViaqz68T058IuwCY7NYaVuh
+        d15394qUySH5AwAA//8DAJrMQ4wuAgAA
     headers:
       CF-Cache-Status:
       - DYNAMIC
       CF-RAY:
-      - 85465bd8cea909c9-HFA
+      - 854e5a16dda409cd-HFA
       Cache-Control:
       - no-cache, must-revalidate
       Connection:
@@ -57,14 +57,14 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Mon, 12 Feb 2024 16:55:22 GMT
+      - Tue, 13 Feb 2024 16:12:16 GMT
       Server:
       - cloudflare
       Set-Cookie:
-      - __cf_bm=TkrINgoCmmTaqg05VQ1WHEolPihzU6u57hugghHXWwc-1707756922-1-ATkknLOEsgPnsTzmYjxPFIpBt23UFZQ6s/363rmVG1No8qV6Hf6NG/eS+wuP0S8QLYUa6XR+wZ2Ea+e/wnE+sFg=;
-        path=/; expires=Mon, 12-Feb-24 17:25:22 GMT; domain=.api.openai.com; HttpOnly;
+      - __cf_bm=0bvI3Z_vwqHjtAzex9Nyslo5MvRZHnGmqYqW9mdgUCc-1707840736-1.0-AVAkZCXx5XhwzBIfTNklRI8zl7mXHePuOiErG2Sh6v9/h1pKHcmLlAQvF8FvKGQTRVSiLZyT5Qlj4bOHm6XRsnk=;
+        path=/; expires=Tue, 13-Feb-24 16:42:16 GMT; domain=.api.openai.com; HttpOnly;
         Secure; SameSite=None
-      - _cfuvid=UFML5ZGMwerkaoj2b3b9N4PRATR9slp7OOJ3eSiyuW4-1707756922521-0-604800000;
+      - _cfuvid=JqbEPJNLYeI1J8b90KVpYInAy4kTq.43kv7nw0j_LNQ-1707840736482-0.0-604800000;
         path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
       Transfer-Encoding:
       - chunked
@@ -77,7 +77,7 @@ interactions:
       openai-organization:
       - traceloop
       openai-processing-ms:
-      - '332'
+      - '460'
       openai-version:
       - '2020-10-01'
       strict-transport-security:
@@ -95,7 +95,7 @@ interactions:
       x-ratelimit-reset-tokens:
       - 9ms
       x-request-id:
-      - req_d671bdc2c19fd05b41f607444a181b1f
+      - req_e802a10fcb6c17271f65febb97334b8f
     status:
       code: 200
       message: OK

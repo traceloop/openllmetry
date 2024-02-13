@@ -1,7 +1,7 @@
 import pytest
 from langchain.prompts import PromptTemplate
 from langchain.schema import StrOutputParser
-from langchain.chat_models import ChatOpenAI
+from langchain_community.chat_models import ChatOpenAI
 
 
 @pytest.mark.vcr
