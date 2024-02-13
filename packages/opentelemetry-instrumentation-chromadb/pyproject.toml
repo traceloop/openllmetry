@@ -34,6 +34,12 @@ flake8 = "7.0.0"
 pytest = "7.4.4"
 pytest-sugar = "0.9.7"
 
+[tool.poetry.group.test.dependencies]
+chromadb = "^0.4.22"
+pytest = "7.4.4"
+pytest-sugar = "0.9.7"
+opentelemetry-sdk = "^1.22.0"
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"

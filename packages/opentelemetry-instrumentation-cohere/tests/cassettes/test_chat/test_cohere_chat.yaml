@@ -1,0 +1,66 @@
+interactions:
+- request:
+    body: '{"message": "Tell me a joke, pirate style", "conversation_id": "", "model":
+      "command", "return_chat_history": false, "return_prompt": false, "return_preamble":
+      false, "chat_history": null, "preamble_override": null, "temperature": 0.8,
+      "max_tokens": null, "stream": false, "user_name": null, "p": null, "k": null,
+      "search_queries_only": null, "documents": null, "connectors": null}'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate, br
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '381'
+      Content-Type:
+      - application/json
+      Request-Source:
+      - python-sdk-4.46
+      User-Agent:
+      - python-requests/2.31.0
+    method: POST
+    uri: https://api.cohere.ai/v1/chat
+  response:
+    body:
+      string: "{\"response_id\":\"598d0165-c0cd-4f1a-a678-bad8b99db660\",\"text\":\"Arrrr,
+        matey! Shiver me timbers, here's a pirate-style joke for ye:\\n\\nWhy did
+        the pirate want to join the YMCA? \\n\\nBecause he wanted to change his arrrrt!\\n\\nArrrr,
+        matey, ye scurvy dog, ye be laughin' like a regular deckhand now, ain't ye?
+        \\n\\n reclamation Bay argh hai ya'rrr \U0001F334\u26F5\uFE0F\u2693\uFE0F\",\"generation_id\":\"98e851d4-b4e7-4aec-91cf-79620537c58e\",\"token_count\":{\"prompt_tokens\":69,\"response_tokens\":100,\"total_tokens\":169,\"billed_tokens\":158},\"meta\":{\"api_version\":{\"version\":\"1\"},\"billed_units\":{\"input_tokens\":58,\"output_tokens\":100}},\"tool_inputs\":null}"
+    headers:
+      Alt-Svc:
+      - h3=":443"; ma=2592000,h3-29=":443"; ma=2592000
+      Content-Length:
+      - '624'
+      Via:
+      - 1.1 google
+      access-control-expose-headers:
+      - X-Debug-Trace-ID
+      content-type:
+      - application/json
+      date:
+      - Mon, 12 Feb 2024 15:03:48 GMT
+      num_chars:
+      - '323'
+      num_tokens:
+      - '158'
+      server:
+      - envoy
+      vary:
+      - Origin
+      x-debug-trace-id:
+      - 01b72c50faaee65ff02d0dd60523d411
+      x-endpoint-monthly-call-limit:
+      - '500'
+      x-envoy-upstream-service-time:
+      - '3081'
+      x-trial-endpoint-call-limit:
+      - '10'
+      x-trial-endpoint-call-remaining:
+      - '8'
+    status:
+      code: 200
+      message: OK
+version: 1
