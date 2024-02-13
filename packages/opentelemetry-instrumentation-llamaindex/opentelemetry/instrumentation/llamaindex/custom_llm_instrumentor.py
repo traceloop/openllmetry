@@ -11,9 +11,12 @@ from opentelemetry.instrumentation.llamaindex.utils import (
     _with_tracer_wrapper, start_as_current_span_async, should_send_prompts
 )
 
-from llama_index.llms.custom import CustomLLM
-
-MODULE_NAME = "llama_index.llms"
+try:
+    from llama_index.core.llms import CustomLLM
+    MODULE_NAME = "llama_index.core.llms"
+except ModuleNotFoundError:
+    from llama_index.legacy.llms.custom import CustomLLM
+    MODULE_NAME = "llama_index.legacy.llms"
 
 
 class CustomLLMInstrumentor:
