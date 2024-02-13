@@ -23,17 +23,15 @@ class LlamaIndexInstrumentor(BaseInstrumentor):
 
     def _set_instruments(self) -> Collection[str]:
         try:
-            core_version = package_version("llama-index-core")
+            package_version("llama-index-core")
             return ("llama-index-core >= 0.10.0",)
         except PackageNotFoundError:
             try:
-                legacy_version = package_version("llama-index-legacy")
-                if legacy_version:
-                    return ("llama-index-legacy >= 0.7.0, <= 0.9.48",)
+                package_version("llama-index-legacy")
+                return ("llama-index-legacy >= 0.7.0, <= 0.9.48",)
             except PackageNotFoundError:
-                pass
-        # Default or error handling if neither package version is found
-        return None
+                logger.error("Neither llama-index-core nor llama-index-legacy package is found. "
+                             "Ensure one is installed.")
 
     def instrumentation_dependencies(self) -> Collection[str]:
         return self._set_instruments()
