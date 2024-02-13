@@ -60,22 +60,23 @@ async def acompletion_wrapper(tracer, wrapped, instance, args, kwargs):
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
         return wrapped(*args, **kwargs)
 
-    async with start_as_current_span_async(
-        tracer=tracer,
+    span = tracer.start_span(
         name=SPAN_NAME,
         kind=SpanKind.CLIENT,
         attributes={SpanAttributes.LLM_REQUEST_TYPE: LLM_REQUEST_TYPE.value},
-    ) as span:
-        _handle_request(span, kwargs)
-        response = await wrapped(*args, **kwargs)
+    )
 
-        if is_streaming_response(response):
-            # span will be closed after the generator is done
-            return _abuild_from_streaming_response(span, response)
-        else:
-            _handle_response(response, span)
+    _handle_request(span, kwargs)
+    response = await wrapped(*args, **kwargs)
 
-        return response
+    if is_streaming_response(response):
+        # span will be closed after the generator is done
+        return _abuild_from_streaming_response(span, response)
+    else:
+        _handle_response(response, span)
+
+    span.end()
+    return response
 
 
 def _handle_request(span, kwargs):
