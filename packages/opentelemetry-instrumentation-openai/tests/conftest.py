@@ -2,7 +2,7 @@
 
 import pytest
 import os
-from openai import OpenAI
+from openai import OpenAI, AsyncOpenAI
 from opentelemetry import trace
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
@@ -39,6 +39,11 @@ def environment():
 @pytest.fixture
 def openai_client():
     return OpenAI()
+
+
+@pytest.fixture
+def async_openai_client():
+    return AsyncOpenAI()
 
 
 @pytest.fixture(scope="module")
