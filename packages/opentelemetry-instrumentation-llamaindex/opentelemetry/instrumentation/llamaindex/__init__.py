@@ -1,5 +1,6 @@
 """OpenTelemetry LlamaIndex instrumentation"""
 import logging
+from importlib.metadata import version as package_version, PackageNotFoundError
 from typing import Collection
 
 from opentelemetry.trace import get_tracer
@@ -16,14 +17,26 @@ from opentelemetry.instrumentation.llamaindex.version import __version__
 
 logger = logging.getLogger(__name__)
 
-_instruments = ("llama-index >= 0.7.0",)
-
 
 class LlamaIndexInstrumentor(BaseInstrumentor):
     """An instrumentor for LlamaIndex SDK."""
 
+    def _set_instruments(self) -> Collection[str]:
+        try:
+            core_version = package_version("llama-index-core")
+            return ("llama-index-core >= 0.10.0",)
+        except PackageNotFoundError:
+            try:
+                legacy_version = package_version("llama-index-legacy")
+                if legacy_version:
+                    return ("llama-index-legacy >= 0.7.0, <= 0.9.48",)
+            except PackageNotFoundError:
+                pass
+        # Default or error handling if neither package version is found
+        return None
+
     def instrumentation_dependencies(self) -> Collection[str]:
-        return _instruments
+        return self._set_instruments()
 
     def _instrument(self, **kwargs):
         tracer_provider = kwargs.get("tracer_provider")

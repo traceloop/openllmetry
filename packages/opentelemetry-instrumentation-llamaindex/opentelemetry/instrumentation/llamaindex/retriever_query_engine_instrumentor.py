@@ -4,7 +4,10 @@ from opentelemetry.context import attach, set_value
 from opentelemetry.instrumentation.llamaindex.utils import _with_tracer_wrapper, start_as_current_span_async
 from opentelemetry.semconv.ai import SpanAttributes, TraceloopSpanKindValues
 
-MODULE_NAME = "llama_index.query_engine.retriever_query_engine"
+try:
+    MODULE_NAME = "llama_index.core.query_engine.retriever_query_engine"
+except ModuleNotFoundError:
+    MODULE_NAME = "llama_index.legacy.query_engine.retriever_query_engine"
 CLASS_NAME = "RetrieverQueryEngine"
 WORKFLOW_NAME = "llama_index_retriever_query"
 

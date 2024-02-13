@@ -3,7 +3,10 @@ from wrapt import wrap_function_wrapper
 from opentelemetry.instrumentation.llamaindex.utils import _with_tracer_wrapper, start_as_current_span_async
 from opentelemetry.semconv.ai import SpanAttributes, TraceloopSpanKindValues
 
-MODULE_NAME = "llama_index.embeddings.base"
+try:
+    MODULE_NAME = "llama_index.core.embeddings"
+except ModuleNotFoundError:
+    MODULE_NAME = "llama_index.legacy.embeddings.base"
 CLASS_NAME = "BaseEmbedding"
 TASK_NAME = "get_query_embedding"
 

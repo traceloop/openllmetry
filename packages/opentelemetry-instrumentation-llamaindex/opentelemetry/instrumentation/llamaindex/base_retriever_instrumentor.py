@@ -3,7 +3,10 @@ from wrapt import wrap_function_wrapper
 from opentelemetry.instrumentation.llamaindex.utils import _with_tracer_wrapper, start_as_current_span_async
 from opentelemetry.semconv.ai import SpanAttributes, TraceloopSpanKindValues
 
-MODULE_NAME = "llama_index.indices.base_retriever"
+try:
+    MODULE_NAME = "llama_index.core.indices.base_retriever"
+except ModuleNotFoundError:
+    MODULE_NAME = "llama_index.legacy.indices.base_retriever"
 CLASS_NAME = "BaseRetriever"
 TASK_NAME = "retrieve"
 

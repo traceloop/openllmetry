@@ -3,7 +3,10 @@ from wrapt import wrap_function_wrapper
 from opentelemetry.instrumentation.llamaindex.utils import _with_tracer_wrapper, start_as_current_span_async
 from opentelemetry.semconv.ai import SpanAttributes, TraceloopSpanKindValues
 
-MODULE_NAME = "llama_index.response_synthesizers"
+try:
+    MODULE_NAME = "llama_index.core.response_synthesizers"
+except ModuleNotFoundError:
+    MODULE_NAME = "llama_index.legacy.response_synthesizers.base"
 CLASS_NAME = "BaseSynthesizer"
 TASK_NAME = "synthesize"
 
