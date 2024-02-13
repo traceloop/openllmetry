@@ -1,3 +1,13 @@
+## v0.11.0 (2024-02-13)
+
+### Feat
+
+- support both new and legacy llama_index versions (#420)
+
+### Fix
+
+- **sdk**: support input/output of tasks & workflows (#419)
+
 ## v0.10.5 (2024-02-13)
 
 ### Fix
