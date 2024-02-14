@@ -1,3 +1,9 @@
+## v0.11.1 (2024-02-14)
+
+### Fix
+
+- **openai**: handle async streaming responses for openai v1 client (#421)
+
 ## v0.11.0 (2024-02-13)
 
 ### Feat
