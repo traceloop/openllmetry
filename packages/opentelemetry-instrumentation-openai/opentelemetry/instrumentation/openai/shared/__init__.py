@@ -140,7 +140,9 @@ def _get_openai_base_url():
 
 def is_streaming_response(response):
     if is_openai_v1():
-        return isinstance(response, openai.Stream)
+        return isinstance(response, openai.Stream) or isinstance(
+            response, openai.AsyncStream
+        )
 
     return isinstance(response, types.GeneratorType) or isinstance(
         response, types.AsyncGeneratorType

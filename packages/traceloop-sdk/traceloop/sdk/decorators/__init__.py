@@ -1,6 +1,9 @@
+import json
 from functools import wraps
+import os
 from typing import Optional
 
+from opentelemetry import context as context_api
 from opentelemetry.semconv.ai import SpanAttributes, TraceloopSpanKindValues
 
 from traceloop.sdk.tracing import get_tracer, set_workflow_name
@@ -42,7 +45,21 @@ def task_method(
                         SpanAttributes.TRACELOOP_SPAN_KIND, tlp_span_kind.value
                     )
                     span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, name)
-                    return fn(*args, **kwargs)
+
+                    if _should_send_prompts():
+                        span.set_attribute(
+                            SpanAttributes.TRACELOOP_ENTITY_INPUT,
+                            json.dumps({"args": args, "kwargs": kwargs}),
+                        )
+
+                    res = fn(*args, **kwargs)
+
+                    if _should_send_prompts():
+                        span.set_attribute(
+                            SpanAttributes.TRACELOOP_ENTITY_OUTPUT, json.dumps(res)
+                        )
+
+                    return res
 
         return wrap
 
@@ -99,7 +116,20 @@ def workflow_method(name: Optional[str] = None, correlation_id: Optional[str] = 
                     )
                     span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, name)
 
-                    return fn(*args, **kwargs)
+                    if _should_send_prompts():
+                        span.set_attribute(
+                            SpanAttributes.TRACELOOP_ENTITY_INPUT,
+                            json.dumps({"args": args, "kwargs": kwargs}),
+                        )
+
+                    res = fn(*args, **kwargs)
+
+                    if _should_send_prompts():
+                        span.set_attribute(
+                            SpanAttributes.TRACELOOP_ENTITY_OUTPUT, json.dumps(res)
+                        )
+
+                    return res
 
         return wrap
 
@@ -169,7 +199,21 @@ def atask_method(
                         SpanAttributes.TRACELOOP_SPAN_KIND, tlp_span_kind.value
                     )
                     span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, name)
-                    return await fn(*args, **kwargs)
+
+                    if _should_send_prompts():
+                        span.set_attribute(
+                            SpanAttributes.TRACELOOP_ENTITY_INPUT,
+                            json.dumps({"args": args, "kwargs": kwargs}),
+                        )
+
+                    res = await fn(*args, **kwargs)
+
+                    if _should_send_prompts():
+                        span.set_attribute(
+                            SpanAttributes.TRACELOOP_ENTITY_OUTPUT, json.dumps(res)
+                        )
+
+                    return res
 
         return wrap
 
@@ -230,7 +274,21 @@ def aworkflow_method(name: Optional[str] = None, correlation_id: Optional[str] =
                         span.set_attribute(
                             SpanAttributes.TRACELOOP_CORRELATION_ID, correlation_id
                         )
-                    return await fn(*args, **kwargs)
+
+                    if _should_send_prompts():
+                        span.set_attribute(
+                            SpanAttributes.TRACELOOP_ENTITY_INPUT,
+                            json.dumps({"args": args, "kwargs": kwargs}),
+                        )
+
+                    res = await fn(*args, **kwargs)
+
+                    if _should_send_prompts():
+                        span.set_attribute(
+                            SpanAttributes.TRACELOOP_ENTITY_OUTPUT, json.dumps(res)
+                        )
+
+                    return res
 
         return wrap
 
@@ -263,3 +321,9 @@ def atool(name: Optional[str] = None, method_name: Optional[str] = None):
     return atask(
         name=name, method_name=method_name, tlp_span_kind=TraceloopSpanKindValues.TOOL
     )
+
+
+def _should_send_prompts():
+    return (
+        os.getenv("TRACELOOP_TRACE_CONTENT") or "true"
+    ).lower() == "true" or context_api.get_value("override_enable_content_tracing")

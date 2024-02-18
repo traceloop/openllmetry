@@ -7,6 +7,7 @@ def openai_client():
     return OpenAI()
 
 
+@pytest.mark.vcr
 def test_resource_attributes(exporter, openai_client):
     openai_client.chat.completions.create(
         model="gpt-3.5-turbo",

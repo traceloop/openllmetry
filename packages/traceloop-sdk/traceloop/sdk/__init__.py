@@ -97,7 +97,7 @@ class Traceloop:
                 print(
                     Fore.RED
                     + "Error: Missing Traceloop API key,"
-                    + " go to https://https://app.traceloop.com/settings/api-keys to create one"
+                    + " go to https://app.traceloop.com/settings/api-keys to create one"
                 )
                 print("Set the TRACELOOP_API_KEY environment variable to the key")
                 print(Fore.RESET)
@@ -195,7 +195,7 @@ class Traceloop:
             print(
                 Fore.RED
                 + "Error: Cannot report score. Missing Traceloop API key,"
-                + " go to https://https://app.traceloop.com/settings/api-keys to create one"
+                + " go to https://app.traceloop.com/settings/api-keys to create one"
             )
             print("Set the TRACELOOP_API_KEY environment variable to the key")
             print(Fore.RESET)
