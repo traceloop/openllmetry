@@ -61,6 +61,17 @@
         "cwd": "packages/traceloop-sdk"
       }
     },
+    "test-metrics": {
+      "executor": "@nxlv/python:run-commands",
+      "outputs": [
+        "{workspaceRoot}/reports/packages/traceloop-sdk/unittests",
+        "{workspaceRoot}/coverage/packages/traceloop-sdk"
+      ],
+      "options": {
+        "command": "poetry run pytest tests/metrics",
+        "cwd": "packages/traceloop-sdk"
+      }
+    },
     "build-release": {
       "executor": "@nxlv/python:run-commands",
       "options": {

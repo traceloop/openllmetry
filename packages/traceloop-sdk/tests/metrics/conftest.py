@@ -1,3 +1,5 @@
+import os
+
 import pytest
 from traceloop.sdk import Traceloop
 from opentelemetry import metrics
@@ -33,3 +35,13 @@ def clear_metrics_test_context(metrics_test_context):
 
     reader.shutdown()
     provider.shutdown()
+
+
+@pytest.fixture(autouse=True)
+def environment():
+    os.environ["OPENAI_API_KEY"] = "test_api_key"
+
+
+@pytest.fixture(scope="module")
+def vcr_config():
+    return {"filter_headers": ["authorization"]}

@@ -7,6 +7,7 @@ def openai_client():
     return OpenAI()
 
 
+@pytest.mark.vcr
 def test_chat_completion_metrics(metrics_test_context, openai_client):
     provider, reader = metrics_test_context
 
@@ -53,6 +54,7 @@ def test_chat_completion_metrics(metrics_test_context, openai_client):
     assert found_duration_metric is True
 
 
+@pytest.mark.vcr
 def test_embeddings_metrics(metrics_test_context, openai_client):
     provider, reader = metrics_test_context
     openai_client.embeddings.create(
@@ -91,6 +93,7 @@ def test_embeddings_metrics(metrics_test_context, openai_client):
     assert found_duration_metric
 
 
+@pytest.mark.vcr
 def test_image_gen_metrics(metrics_test_context, openai_client):
     provider, reader = metrics_test_context
     openai_client.images.generate(
