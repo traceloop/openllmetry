@@ -15,11 +15,11 @@ from opentelemetry.instrumentation.llamaindex.utils import (
 
 
 try:
-    from llama_index.core.llms import CustomLLM
+    from llama_index.core.llms.custom import CustomLLM
 
-    MODULE_NAME = "llama_index.core.llms"
+    MODULE_NAME = "llama_index.llms"
 except ModuleNotFoundError:
-    from llama_index.llms.custom import CustomLLM
+    from llama_index.llms import CustomLLM
 
     MODULE_NAME = "llama_index.llms"
 
