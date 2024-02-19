@@ -21,6 +21,7 @@ def test_completion(exporter, openai_client):
 
 
 @pytest.mark.vcr
+@pytest.mark.asyncio
 async def test_async_completion(exporter, async_openai_client):
     await async_openai_client.completions.create(
         model="davinci-002",
@@ -82,6 +83,7 @@ def test_completion_streaming(exporter, openai_client):
 
 
 @pytest.mark.vcr
+@pytest.mark.asyncio
 async def test_async_completion_streaming(exporter, async_openai_client):
     response = await async_openai_client.completions.create(
         model="davinci-002",
