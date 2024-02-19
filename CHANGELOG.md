@@ -1,3 +1,25 @@
+## v0.11.2 (2024-02-16)
+
+### Fix
+
+- **sdk**: url for getting API key (#424)
+
+## v0.11.1 (2024-02-14)
+
+### Fix
+
+- **openai**: handle async streaming responses for openai v1 client (#421)
+
+## v0.11.0 (2024-02-13)
+
+### Feat
+
+- support both new and legacy llama_index versions (#420)
+
+### Fix
+
+- **sdk**: support input/output of tasks & workflows (#419)
+
 ## v0.10.5 (2024-02-13)
 
 ### Fix
