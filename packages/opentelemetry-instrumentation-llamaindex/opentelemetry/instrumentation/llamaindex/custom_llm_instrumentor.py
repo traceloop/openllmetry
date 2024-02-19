@@ -8,15 +8,20 @@ from opentelemetry import context as context_api
 from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
 from opentelemetry.semconv.ai import SpanAttributes, LLMRequestTypeValues
 from opentelemetry.instrumentation.llamaindex.utils import (
-    _with_tracer_wrapper, start_as_current_span_async, should_send_prompts
+    _with_tracer_wrapper,
+    start_as_current_span_async,
+    should_send_prompts,
 )
+
 
 try:
     from llama_index.core.llms import CustomLLM
+
     MODULE_NAME = "llama_index.core.llms"
 except ModuleNotFoundError:
-    from llama_index.legacy.llms.custom import CustomLLM
-    MODULE_NAME = "llama_index.legacy.llms"
+    from llama_index.llms.custom import CustomLLM
+
+    MODULE_NAME = "llama_index.llms"
 
 
 class CustomLLMInstrumentor:
@@ -26,14 +31,28 @@ class CustomLLMInstrumentor:
     def instrument(self):
         module = importlib.import_module(MODULE_NAME)
         custom_llms_classes = [
-            cls for name, cls in module.__dict__.items() if isinstance(cls, type) and issubclass(cls, CustomLLM)
+            cls
+            for name, cls in module.__dict__.items()
+            if isinstance(cls, type) and issubclass(cls, CustomLLM)
         ]
 
         for cls in custom_llms_classes:
-            wrap_function_wrapper(cls.__module__, f"{cls.__name__}.complete", complete_wrapper(self._tracer))
-            wrap_function_wrapper(cls.__module__, f"{cls.__name__}.acomplete", acomplete_wrapper(self._tracer))
-            wrap_function_wrapper(cls.__module__, f"{cls.__name__}.chat", chat_wrapper(self._tracer))
-            wrap_function_wrapper(cls.__module__, f"{cls.__name__}.achat", achat_wrapper(self._tracer))
+            wrap_function_wrapper(
+                cls.__module__,
+                f"{cls.__name__}.complete",
+                complete_wrapper(self._tracer),
+            )
+            wrap_function_wrapper(
+                cls.__module__,
+                f"{cls.__name__}.acomplete",
+                acomplete_wrapper(self._tracer),
+            )
+            wrap_function_wrapper(
+                cls.__module__, f"{cls.__name__}.chat", chat_wrapper(self._tracer)
+            )
+            wrap_function_wrapper(
+                cls.__module__, f"{cls.__name__}.achat", achat_wrapper(self._tracer)
+            )
 
     def unistrument(self):
         pass
@@ -53,7 +72,9 @@ def chat_wrapper(tracer, wrapped, instance: CustomLLM, args, kwargs):
 
     llm_request_type = LLMRequestTypeValues.CHAT
 
-    with tracer.start_as_current_span(f"{snake_case_class_name(instance)}.chat") as span:
+    with tracer.start_as_current_span(
+        f"{snake_case_class_name(instance)}.chat"
+    ) as span:
         _handle_request(span, llm_request_type, args, kwargs, instance)
         response = wrapped(*args, **kwargs)
         _handle_response(span, llm_request_type, instance, response)
@@ -68,7 +89,9 @@ async def achat_wrapper(tracer, wrapped, instance: CustomLLM, args, kwargs):
 
     llm_request_type = LLMRequestTypeValues.CHAT
 
-    async with start_as_current_span_async(tracer=tracer, name=f"{snake_case_class_name(instance)}.chat") as span:
+    async with start_as_current_span_async(
+        tracer=tracer, name=f"{snake_case_class_name(instance)}.chat"
+    ) as span:
         _handle_request(span, llm_request_type, args, kwargs, instance)
         response = await wrapped(*args, **kwargs)
         _handle_response(span, llm_request_type, instance, response)
@@ -83,7 +106,9 @@ def complete_wrapper(tracer, wrapped, instance: CustomLLM, args, kwargs):
 
     llm_request_type = LLMRequestTypeValues.COMPLETION
 
-    with tracer.start_as_current_span(f"{snake_case_class_name(instance)}.completion") as span:
+    with tracer.start_as_current_span(
+        f"{snake_case_class_name(instance)}.completion"
+    ) as span:
         _handle_request(span, llm_request_type, args, kwargs, instance)
         response = wrapped(*args, **kwargs)
         _handle_response(span, llm_request_type, instance, response)
@@ -98,7 +123,9 @@ async def acomplete_wrapper(tracer, wrapped, instance: CustomLLM, args, kwargs):
 
     llm_request_type = LLMRequestTypeValues.COMPLETION
 
-    async with start_as_current_span_async(tracer=tracer, name=f"{snake_case_class_name(instance)}.completion") as span:
+    async with start_as_current_span_async(
+        tracer=tracer, name=f"{snake_case_class_name(instance)}.completion"
+    ) as span:
         _handle_request(span, llm_request_type, args, kwargs, instance)
         response = await wrapped(*args, **kwargs)
         _handle_response(span, llm_request_type, instance, response)
@@ -109,8 +136,12 @@ async def acomplete_wrapper(tracer, wrapped, instance: CustomLLM, args, kwargs):
 def _handle_request(span, llm_request_type, args, kwargs, instance: CustomLLM):
     _set_span_attribute(span, SpanAttributes.LLM_VENDOR, instance.__class__.__name__)
     _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TYPE, llm_request_type.value)
-    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, instance.metadata.model_name)
-    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MAX_TOKENS, instance.metadata.context_window)
+    _set_span_attribute(
+        span, SpanAttributes.LLM_REQUEST_MODEL, instance.metadata.model_name
+    )
+    _set_span_attribute(
+        span, SpanAttributes.LLM_REQUEST_MAX_TOKENS, instance.metadata.context_window
+    )
     _set_span_attribute(span, SpanAttributes.LLM_TOP_P, instance.metadata.num_output)
 
     if should_send_prompts():
@@ -128,11 +159,15 @@ def _handle_request(span, llm_request_type, args, kwargs, instance: CustomLLM):
 
 
 def _handle_response(span, llm_request_type, instance, response):
-    _set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, instance.metadata.model_name)
+    _set_span_attribute(
+        span, SpanAttributes.LLM_RESPONSE_MODEL, instance.metadata.model_name
+    )
 
     if should_send_prompts():
         if llm_request_type == LLMRequestTypeValues.COMPLETION:
-            _set_span_attribute(span, f"{SpanAttributes.LLM_COMPLETIONS}.0.content", response.text)
+            _set_span_attribute(
+                span, f"{SpanAttributes.LLM_COMPLETIONS}.0.content", response.text
+            )
 
     return
 
