@@ -125,7 +125,6 @@ def test_pinecone_retrieval(exporter, openai_client):
         score = event.attributes.get(f"{event.name}.score")
         metadata = event.attributes.get(f"{event.name}.metadata")
         vector = event.attributes.get(f"{event.name}.vector")
-
         assert len(id) > 0
         assert score > 0
         assert len(metadata) > 0
