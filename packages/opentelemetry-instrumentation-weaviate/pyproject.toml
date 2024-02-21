@@ -42,6 +42,7 @@ vcrpy = "^6.0.1"
 pytest-recording = "^0.13.1"
 opentelemetry-sdk = "^1.22.0"
 opentelemetry-instrumentation-openai = {path="../opentelemetry-instrumentation-openai", develop=true}
+traceloop-sdk = {path="../traceloop-sdk", develop=true}
 weaviate-client = "^3.26.0"
 
 
