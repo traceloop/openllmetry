@@ -1,5 +1,9 @@
 version: 2
 updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
   - package-ecosystem: "pip"
     directory: "/packages/opentelemetry-instrumentation-anthropic"
     schedule:
@@ -25,6 +29,24 @@ updates:
     labels:
       - "opentelemetry-instrumentation-cohere"
   - package-ecosystem: "pip"
+    directory: "/packages/opentelemetry-instrumentation-haystack"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "opentelemetry-instrumentation-haystack"
+  - package-ecosystem: "pip"
+    directory: "/packages/opentelemetry-instrumentation-langchain"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "opentelemetry-instrumentation-langchain"
+  - package-ecosystem: "pip"
+    directory: "/packages/opentelemetry-instrumentation-llamaindex"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "opentelemetry-instrumentation-llamaindex"
+  - package-ecosystem: "pip"
     directory: "/packages/opentelemetry-instrumentation-openai"
     schedule:
       interval: "weekly"
@@ -37,11 +59,35 @@ updates:
     labels:
       - "opentelemetry-instrumentation-pinecone"
   - package-ecosystem: "pip"
+    directory: "/packages/opentelemetry-instrumentation-qdrant"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "opentelemetry-instrumentation-qdrant"
+  - package-ecosystem: "pip"
+    directory: "/packages/opentelemetry-instrumentation-replicate"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "opentelemetry-instrumentation-replicate"
+  - package-ecosystem: "pip"
+    directory: "/packages/opentelemetry-instrumentation-transformers"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "opentelemetry-instrumentation-transformers"
+  - package-ecosystem: "pip"
     directory: "/packages/opentelemetry-instrumentation-vertexai"
     schedule:
       interval: "weekly"
     labels:
       - "opentelemetry-instrumentation-vertexai"
+  - package-ecosystem: "pip"
+    directory: "/packages/opentelemetry-instrumentation-watsonx"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "opentelemetry-instrumentation-watsonx"
   - package-ecosystem: "pip"
     directory: "/packages/opentelemetry-instrumentation-weaviate"
     schedule:
