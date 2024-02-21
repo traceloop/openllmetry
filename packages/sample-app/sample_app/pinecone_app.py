@@ -3,9 +3,12 @@
 from pinecone_datasets import load_dataset
 import os
 import pinecone
-import openai
+from openai import OpenAI
+
 from traceloop.sdk import Traceloop
 from traceloop.sdk.decorators import task, workflow
+
+client = OpenAI()
 
 Traceloop.init(app_name="pinecone_app")
 
@@ -40,14 +43,14 @@ index = pinecone.GRPCIndex(index_name)
 @task("retrieve")
 def retrieve(query):
     context_limit = 3750
-    res = openai.Embedding.create(input=[query], engine="text-embedding-ada-002")
+    res = client.embeddings.create(input=[query], engine="text-embedding-ada-002")
 
     # retrieve from Pinecone
-    xq = res["data"][0]["embedding"]
+    xq = res.data[0].embedding
 
     # get relevant contexts
     res = index.query(xq, top_k=3, include_metadata=True)
-    contexts = [x["metadata"]["text"] for x in res["matches"]]
+    contexts = [x["metadata"]["text"] for x in res.matches]
 
     # build our prompt with the retrieved contexts included
     prompt_start = "Answer the question based on the context below.\n\n" + "Context:\n"
@@ -64,7 +67,7 @@ def retrieve(query):
 
 @task("complete")
 def complete(prompt):
-    res = openai.Completion.create(
+    res = client.completions.create(
         engine="davinci-002",
         prompt=prompt,
         temperature=0,
@@ -74,7 +77,7 @@ def complete(prompt):
         presence_penalty=0,
         stop=None,
     )
-    return res["choices"][0]["text"].strip()
+    return res.choices[0].text.strip()
 
 
 @workflow(name="query_with_retrieve")

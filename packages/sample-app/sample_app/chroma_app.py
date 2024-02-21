@@ -2,16 +2,17 @@
 
 import os
 import pandas as pd
-import openai
+from openai import OpenAI
+
 import chromadb
 from chromadb.utils.embedding_functions import OpenAIEmbeddingFunction
 from traceloop.sdk import Traceloop
 from traceloop.sdk.decorators import workflow
 
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
 Traceloop.init(app_name="chroma_app")
 
-
-openai.api_key = os.getenv("OPENAI_API_KEY")
 embedding_function = OpenAIEmbeddingFunction(api_key=os.getenv("OPENAI_API_KEY"))
 
 claim_df = pd.read_json("data/scifact/scifact_claims.jsonl", lines=True)
@@ -79,7 +80,7 @@ def assess_claims(claims):
         if len(context) == 0:
             responses.append("NEE")
             continue
-        response = openai.ChatCompletion.create(
+        response = client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=build_prompt_with_context(claim=claim, context=context),
             max_tokens=3,
