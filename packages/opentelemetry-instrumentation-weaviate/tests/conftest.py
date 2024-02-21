@@ -35,7 +35,9 @@ def clear_exporter(exporter):
 @pytest.fixture(autouse=True)
 def environment():
     os.environ["WEAVIATE_API_KEY"] = "weaviate-api-key"
-    os.environ["WEAVIATE_CLUSTER_URL"] = "weaviate-cluster-url"
+    os.environ["WEAVIATE_CLUSTER_URL"] = (
+        "https://traceloop-dev-2bw7rt4q.weaviate.network"
+    )
     os.environ["OPENAI_API_KEY"] = "open-api-key"
 
 
@@ -43,5 +45,4 @@ def environment():
 def vcr_config():
     return {
         "filter_headers": ["authorization", "x-openai-api-key"],
-        "record_mode": "new_episodes",
     }

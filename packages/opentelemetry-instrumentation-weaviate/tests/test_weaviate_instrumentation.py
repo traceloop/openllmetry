@@ -2,12 +2,11 @@ import json
 import os
 
 import pytest
-from traceloop.sdk.decorators import task
 import weaviate
 
 
-@pytest.fixture(scope="session")
-def client():
+@pytest.fixture
+def client(environment):
     auth_config = weaviate.auth.AuthApiKey(api_key=os.environ["WEAVIATE_API_KEY"])
     client = weaviate.Client(
         url=os.getenv("WEAVIATE_CLUSTER_URL"),
@@ -17,7 +16,7 @@ def client():
             "X-OpenAI-Api-Key": os.environ["OPENAI_API_KEY"],
         },
     )
-    yield client
+    return client
 
 
 schemas = {
@@ -81,27 +80,22 @@ raw_query = """
  """
 
 
-@task("create_schemas")
 def create_schemas(client: weaviate.Client):
     client.schema.create(schemas)
 
 
-@task("create_schema")
 def create_schema(client: weaviate.Client):
     client.schema.create_class(article_schema)
 
 
-@task("get_schema")
 def get_schema(client: weaviate.Client):
     return client.schema.get("Article")  # Get the schema to test connection
 
 
-@task("delete_schema")
 def delete_schema(client: weaviate.Client):
     client.schema.delete_class("Article")
 
 
-@task("create_object")
 def create_object(client: weaviate.Client):
     return client.data_object.create(
         data_object={
@@ -112,7 +106,6 @@ def create_object(client: weaviate.Client):
     )
 
 
-@task("batch_create")
 def create_batch(client: weaviate.Client):
     objs = [
         {
@@ -141,27 +134,22 @@ def create_batch(client: weaviate.Client):
             batch.add_data_object(obj, class_name="Article")
 
 
-@task("query_get")
 def query_get(client):
     return client.query.get(class_name="Article", properties=["author"]).do()
 
 
-@task("query_aggregate")
 def query_aggregate(client):
     return client.query.aggregate(class_name="Article").with_meta_count().do()
 
 
-@task("query_raw")
 def query_raw(client):
     return client.query.raw(raw_query)
 
 
-@task("delete_schemas")
 def delete_all(client: weaviate.Client):
     client.schema.delete_all()
 
 
-@task("validate")
 def validate():
     return client.data_object.validate(
         data_object={
