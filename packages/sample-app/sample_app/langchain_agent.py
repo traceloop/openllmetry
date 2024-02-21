@@ -1,16 +1,12 @@
-import os
-import openai
-
 from langchain.agents import AgentType
 from langchain.agents import initialize_agent, Tool
 from langchain.chains import LLMMathChain
-from langchain.llms import OpenAI
+from langchain_community.llms.openai import OpenAI
 from langchain.utilities import DuckDuckGoSearchAPIWrapper
 
 
 from traceloop.sdk import Traceloop
 
-openai.api_key = os.getenv("OPENAI_API_KEY")
 Traceloop.init(app_name="langchain_agent")
 
 

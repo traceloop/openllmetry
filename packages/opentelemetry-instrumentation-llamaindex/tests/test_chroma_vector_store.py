@@ -1,10 +1,14 @@
 import pytest
 import chromadb
 
-from llama_index import VectorStoreIndex, SimpleDirectoryReader, ServiceContext
-from llama_index.vector_stores import ChromaVectorStore
-from llama_index.storage.storage_context import StorageContext
-from llama_index.embeddings import OpenAIEmbedding
+from llama_index.core import (
+    VectorStoreIndex,
+    SimpleDirectoryReader,
+    ServiceContext,
+    StorageContext,
+)
+from llama_index.vector_stores.chroma import ChromaVectorStore
+from llama_index.embeddings.openai import OpenAIEmbedding
 
 
 @pytest.mark.vcr
@@ -13,7 +17,7 @@ def test_query(exporter):
     chroma_collection = chroma_client.create_collection("quickstart")
 
     # define embedding function
-    embed_model = OpenAIEmbedding()
+    embed_model = OpenAIEmbedding(model="text-embedding-3-large")
 
     # load documents
     documents = SimpleDirectoryReader("./data/paul_graham/").load_data()
