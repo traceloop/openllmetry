@@ -3,10 +3,9 @@ import asyncio
 import chromadb
 import os
 
-from llama_index import VectorStoreIndex, SimpleDirectoryReader, ServiceContext
-from llama_index.vector_stores import ChromaVectorStore
-from llama_index.storage.storage_context import StorageContext
-from llama_index.embeddings import HuggingFaceEmbedding
+from llama_index.core import VectorStoreIndex, SimpleDirectoryReader, StorageContext
+from llama_index.vector_stores.chroma import ChromaVectorStore
+from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 from traceloop.sdk import Traceloop
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
@@ -25,9 +24,8 @@ documents = SimpleDirectoryReader("./data/paul_graham/").load_data()
 # set up ChromaVectorStore and load in data
 vector_store = ChromaVectorStore(chroma_collection=chroma_collection)
 storage_context = StorageContext.from_defaults(vector_store=vector_store)
-service_context = ServiceContext.from_defaults(embed_model=embed_model)
 index = VectorStoreIndex.from_documents(
-    documents, storage_context=storage_context, service_context=service_context
+    documents, storage_context=storage_context, embed_model=embed_model
 )
 
 
