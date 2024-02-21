@@ -34,9 +34,9 @@ def clear_exporter(exporter):
 
 @pytest.fixture(autouse=True)
 def environment():
-    os.environ["WEAVIATE_API_KEY"] = "weaviate-api-key"
+    os.environ["WEAVIATE_API_KEY"] = "api-key"
     os.environ["WEAVIATE_CLUSTER_URL"] = (
-        "https://traceloop-dev-2bw7rt4q.weaviate.network"
+        "https://traceloop-sandbox-3azqlud3.weaviate.network"
     )
     os.environ["OPENAI_API_KEY"] = "open-api-key"
 
