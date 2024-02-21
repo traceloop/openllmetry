@@ -1,20 +1,21 @@
 import asyncio
 import os
 import requests
-import openai
-
+from openai import OpenAI
 
 from traceloop.sdk import Traceloop
 from traceloop.sdk.decorators import aagent, aworkflow
 
-openai.api_key = os.getenv("OPENAI_API_KEY")
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+
 Traceloop.init(app_name="joke_generation_service")
 
 
 @aagent(name="base_joke_generator", method_name="generate_joke")
 class JokeAgent:
     async def generate_joke(self):
-        completion = openai.ChatCompletion.create(
+        completion = client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[{"role": "user", "content": "Tell me a joke about Donald Trump"}],
         )
@@ -28,7 +29,7 @@ class PirateJokeAgent(JokeAgent):
         return await self.generation_helper()
 
     async def generation_helper(self):
-        completion = openai.ChatCompletion.create(
+        completion = client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[
                 {"role": "system", "content": "You are a funny sarcastic pirate"},
