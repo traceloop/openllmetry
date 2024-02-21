@@ -1,6 +1,6 @@
 import pytest
 from langchain.prompts import PromptTemplate
-from langchain.llms import OpenAI
+from langchain_community.llms.openai import OpenAI
 from langchain import LLMChain
 from langchain.chains import SequentialChain
 

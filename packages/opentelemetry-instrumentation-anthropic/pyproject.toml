@@ -8,7 +8,7 @@ show_missing = true
 
 [tool.poetry]
 name = "opentelemetry-instrumentation-anthropic"
-version = "0.11.2"
+version = "0.11.3"
 description = "OpenTelemetry Anthropic instrumentation"
 authors = [
   "Gal Kleinman <gal@traceloop.com>",
@@ -34,7 +34,7 @@ pytest = "7.4.4"
 pytest-sugar = "0.9.7"
 
 [tool.poetry.group.test.dependencies]
-anthropic = "^0.9.0"
+anthropic = ">=0.9,<0.17"
 pytest = "7.4.4"
 pytest-sugar = "0.9.7"
 vcrpy = "^6.0.1"

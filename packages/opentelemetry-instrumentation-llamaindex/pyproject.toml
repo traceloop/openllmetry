@@ -8,7 +8,7 @@ show_missing = true
 
 [tool.poetry]
 name = "opentelemetry-instrumentation-llamaindex"
-version = "0.11.2"
+version = "0.11.3"
 description = "OpenTelemetry LlamaIndex instrumentation"
 authors = [
   "Gal Kleinman <gal@traceloop.com>",
@@ -22,7 +22,7 @@ readme = "README.md"
 include = "opentelemetry/instrumentation/llamaindex"
 
 [tool.poetry.dependencies]
-python = ">=3.8.1,<4"
+python = ">=3.8.1,<3.12"
 opentelemetry-api = "^1.22.0"
 opentelemetry-instrumentation = "0.43b0"
 opentelemetry-semantic-conventions-ai = "^0.0.20"
@@ -31,8 +31,18 @@ inflection = "^0.5.1"
 [tool.poetry.group.dev.dependencies]
 autopep8 = "2.0.4"
 flake8 = "7.0.0"
-pytest = "7.4.4"
-pytest-sugar = "0.9.7"
+
+[tool.poetry.group.test.dependencies]
+vcrpy = "^6.0.1"
+pytest-recording = "^0.13.1"
+pytest-asyncio = "^0.23.5"
+chromadb = "^0.4.22"
+openai = "^1.12.0"
+opentelemetry-sdk = "^1.22.0"
+llama-index = "^0.10.10"
+opentelemetry-instrumentation-openai = {path="../opentelemetry-instrumentation-openai", develop=true}
+opentelemetry-instrumentation-chromadb = {path="../opentelemetry-instrumentation-chromadb", develop=true}
+
 
 [build-system]
 requires = ["poetry-core"]
