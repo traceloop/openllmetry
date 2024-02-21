@@ -6,7 +6,7 @@
   "private": true,
   "devDependencies": {
     "@nxlv/python": "^16.1.4",
-    "nx": "17.1.3",
+    "nx": "18.0.4",
     "nx-cloud": "latest"
   },
   "workspaces": [
