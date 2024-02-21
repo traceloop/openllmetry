@@ -1,0 +1,97 @@
+interactions:
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.31.0
+      content-type:
+      - application/json
+    method: GET
+    uri: https://traceloop-dev-2bw7rt4q.weaviate.network/v1/schema
+  response:
+    body:
+      string: '{"classes":[{"class":"Article","description":"An Article class to store
+        a text","invertedIndexConfig":{"bm25":{"b":0.75,"k1":1.2},"cleanupIntervalSeconds":60,"stopwords":{"additions":null,"preset":"en","removals":null}},"multiTenancyConfig":{"enabled":false},"properties":[{"dataType":["text"],"description":"The
+        name of the author","indexFilterable":true,"indexSearchable":true,"name":"author","tokenization":"whitespace"},{"dataType":["text"],"description":"The
+        text content","indexFilterable":true,"indexSearchable":true,"name":"text","tokenization":"word"}],"replicationConfig":{"factor":1},"shardingConfig":{"virtualPerPhysical":128,"desiredCount":1,"actualCount":1,"desiredVirtualCount":128,"actualVirtualCount":128,"key":"_id","strategy":"hash","function":"murmur3"},"vectorIndexConfig":{"skip":false,"cleanupIntervalSeconds":300,"maxConnections":64,"efConstruction":128,"ef":-1,"dynamicEfMin":100,"dynamicEfMax":500,"dynamicEfFactor":8,"vectorCacheMaxObjects":1000000000000,"flatSearchCutoff":40000,"distance":"cosine","pq":{"enabled":false,"bitCompression":false,"segments":0,"centroids":256,"trainingLimit":100000,"encoder":{"type":"kmeans","distribution":"log-normal"}}},"vectorIndexType":"hnsw","vectorizer":"none"}]}
+
+        '
+    headers:
+      Access-Control-Allow-Headers:
+      - Content-Type, Authorization, Batch, X-Openai-Api-Key, X-Openai-Organization,
+        X-Openai-Baseurl, X-Anyscale-Baseurl, X-Anyscale-Api-Key, X-Cohere-Api-Key,
+        X-Cohere-Baseurl, X-Huggingface-Api-Key, X-Azure-Api-Key, X-Palm-Api-Key,
+        X-Jinaai-Api-Key, X-Aws-Access-Key, X-Aws-Secret-Key
+      Access-Control-Allow-Methods:
+      - '*'
+      Access-Control-Allow-Origin:
+      - '*'
+      Alt-Svc:
+      - h3=":443"; ma=2592000,h3-29=":443"; ma=2592000
+      Content-Length:
+      - '1230'
+      Content-Type:
+      - application/json
+      Date:
+      - Wed, 21 Feb 2024 08:08:02 GMT
+      Server:
+      - nginx/1.24.0
+      Vary:
+      - Origin
+      Via:
+      - 1.1 google
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '0'
+      User-Agent:
+      - python-requests/2.31.0
+      content-type:
+      - application/json
+    method: DELETE
+    uri: https://traceloop-dev-2bw7rt4q.weaviate.network/v1/schema/Article
+  response:
+    body:
+      string: ''
+    headers:
+      Access-Control-Allow-Headers:
+      - Content-Type, Authorization, Batch, X-Openai-Api-Key, X-Openai-Organization,
+        X-Openai-Baseurl, X-Anyscale-Baseurl, X-Anyscale-Api-Key, X-Cohere-Api-Key,
+        X-Cohere-Baseurl, X-Huggingface-Api-Key, X-Azure-Api-Key, X-Palm-Api-Key,
+        X-Jinaai-Api-Key, X-Aws-Access-Key, X-Aws-Secret-Key
+      Access-Control-Allow-Methods:
+      - '*'
+      Access-Control-Allow-Origin:
+      - '*'
+      Alt-Svc:
+      - h3=":443"; ma=2592000,h3-29=":443"; ma=2592000
+      Content-Length:
+      - '0'
+      Date:
+      - Wed, 21 Feb 2024 08:08:02 GMT
+      Server:
+      - nginx/1.24.0
+      Vary:
+      - Origin
+      Via:
+      - 1.1 google
+    status:
+      code: 200
+      message: OK
+version: 1
