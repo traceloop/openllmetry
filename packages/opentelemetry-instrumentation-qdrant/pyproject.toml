@@ -1,15 +1,15 @@
 [tool.coverage.run]
 branch = true
-source = [ "opentelemetry/instrumentation/pinecone" ]
+source = [ "opentelemetry/instrumentation/qdrant" ]
 
 [tool.coverage.report]
 exclude_lines = [ "if TYPE_CHECKING:" ]
 show_missing = true
 
 [tool.poetry]
-name = "opentelemetry-instrumentation-pinecone"
+name = "opentelemetry-instrumentation-qdrant"
 version = "0.11.3"
-description = "OpenTelemetry Pinecone instrumentation"
+description = "OpenTelemetry Qdrant instrumentation"
 authors = [
   "Gal Kleinman <gal@traceloop.com>",
   "Nir Gazit <nir@traceloop.com>",
@@ -19,7 +19,7 @@ license = "Apache-2.0"
 readme = "README.md"
 
 [[tool.poetry.packages]]
-include = "opentelemetry/instrumentation/pinecone"
+include = "opentelemetry/instrumentation/qdrant"
 
 [tool.poetry.dependencies]
 python = ">=3.8.1,<4"
@@ -30,18 +30,12 @@ opentelemetry-semantic-conventions-ai = "^0.0.20"
 [tool.poetry.group.dev.dependencies]
 autopep8 = "2.0.4"
 flake8 = "7.0.0"
-pytest = "8.0.1"
-pytest-sugar = "0.9.7"
 
 [tool.poetry.group.test.dependencies]
-openai = "^1.12.0"
-pytest = "8.0.1"
+qdrant-client = "^1.7.3"
+pytest = "7.4.4"
 pytest-sugar = "0.9.7"
-vcrpy = "^6.0.1"
-pytest-recording = "^0.13.1"
 opentelemetry-sdk = "^1.22.0"
-opentelemetry-instrumentation-openai = {path="../opentelemetry-instrumentation-openai", develop=true}
-pinecone-client = "^2.2.4"
 
 [build-system]
 requires = [ "poetry-core" ]
