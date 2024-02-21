@@ -6,9 +6,7 @@ from opentelemetry import context as context_api
 from opentelemetry.semconv.ai import SpanAttributes, LLMRequestTypeValues
 
 from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
-from opentelemetry.instrumentation.openai.utils import (
-    _with_tracer_wrapper
-)
+from opentelemetry.instrumentation.openai.utils import _with_tracer_wrapper
 from opentelemetry.instrumentation.openai.shared import (
     _set_request_attributes,
     _set_span_attribute,
@@ -35,7 +33,11 @@ def chat_wrapper(tracer, wrapped, instance, args, kwargs):
         return wrapped(*args, **kwargs)
 
     # span needs to be opened and closed manually because the response is a generator
-    span = tracer.start_span(SPAN_NAME, kind=SpanKind.CLIENT)
+    span = tracer.start_span(
+        SPAN_NAME,
+        kind=SpanKind.CLIENT,
+        attributes={SpanAttributes.LLM_REQUEST_TYPE: LLM_REQUEST_TYPE.value},
+    )
 
     _handle_request(span, kwargs)
     response = wrapped(*args, **kwargs)
@@ -55,7 +57,11 @@ async def achat_wrapper(tracer, wrapped, instance, args, kwargs):
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
         return wrapped(*args, **kwargs)
 
-    span = tracer.start_span(SPAN_NAME, kind=SpanKind.CLIENT)
+    span = tracer.start_span(
+        SPAN_NAME,
+        kind=SpanKind.CLIENT,
+        attributes={SpanAttributes.LLM_REQUEST_TYPE: LLM_REQUEST_TYPE.value},
+    )
     _handle_request(span, kwargs)
     response = await wrapped(*args, **kwargs)
 
@@ -70,7 +76,7 @@ async def achat_wrapper(tracer, wrapped, instance, args, kwargs):
 
 
 def _handle_request(span, kwargs):
-    _set_request_attributes(span, LLM_REQUEST_TYPE, kwargs)
+    _set_request_attributes(span, kwargs)
     if should_send_prompts():
         _set_prompts(span, kwargs.get("messages"))
         _set_functions_attributes(span, kwargs.get("functions"))

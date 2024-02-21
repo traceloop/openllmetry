@@ -1,4 +1,5 @@
 """OpenTelemetry Langchain instrumentation"""
+
 import logging
 from typing import Collection
 from wrapt import wrap_function_wrapper
@@ -16,7 +17,7 @@ from opentelemetry.semconv.ai import TraceloopSpanKindValues
 
 logger = logging.getLogger(__name__)
 
-_instruments = ("langchain >= 0.0.200",)
+_instruments = ("langchain >= 0.0.346",)
 
 WRAPPED_METHODS = [
     {

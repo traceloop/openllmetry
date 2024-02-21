@@ -6,17 +6,15 @@ source = [ "opentelemetry/instrumentation/vertexai" ]
 exclude_lines = ['if TYPE_CHECKING:']
 show_missing = true
 
-[tool.pytest.ini_options]
-addopts = "--cov --cov-report html:'../../coverage/packages/opentelemetry-instrumentation-vertexai/html' --cov-report xml:'../../coverage/packages/opentelemetry-instrumentation-vertexai/coverage.xml' --html='../../reports/packages/opentelemetry-instrumentation-vertexai/unittests/html/index.html' --junitxml='../../reports/packages/opentelemetry-instrumentation-vertexai/unittests/junit.xml'"
-
 [tool.poetry]
 name = "opentelemetry-instrumentation-vertexai"
-version = "0.8.1"
+version = "0.11.3"
 description = "OpenTelemetry Vertex AI instrumentation"
 authors = [
   "Gal Kleinman <gal@traceloop.com>",
   "Nir Gazit <nir@traceloop.com>",
-  "Tomer Friedman <tomer@traceloop.com>"
+  "Tomer Friedman <tomer@traceloop.com>",
+  "Swaroop <maddisaiswaroop@gmail.com>"
 ]
 license = "Apache-2.0"
 readme = "README.md"
@@ -25,18 +23,24 @@ readme = "README.md"
 include = "opentelemetry/instrumentation/vertexai"
 
 [tool.poetry.dependencies]
-python = ">=3.8.1,<3.12"
-opentelemetry-api = "^1.21.0"
-opentelemetry-instrumentation = "^0.42b0"
-opentelemetry-semantic-conventions-ai = "^0.0.13"
+python = ">=3.8.1,<4"
+opentelemetry-api = "^1.22.0"
+opentelemetry-instrumentation = "0.43b0"
+opentelemetry-semantic-conventions-ai = "^0.0.20"
 
 [tool.poetry.group.dev.dependencies]
 autopep8 = "2.0.4"
-flake8 = "6.1.0"
-pytest = "7.4.3"
+flake8 = "7.0.0"
+pytest = "7.4.4"
 pytest-sugar = "0.9.7"
-pytest-cov = "4.1.0"
-pytest-html = "4.1.1"
+
+[tool.poetry.group.test.dependencies]
+pytest = "7.4.4"
+pytest-sugar = "0.9.7"
+vcrpy = "^6.0.1"
+pytest-recording = "^0.13.1"
+opentelemetry-sdk = "^1.22.0"
+google-cloud-aiplatform = "^1.39.0"
 
 [build-system]
 requires = ["poetry-core"]

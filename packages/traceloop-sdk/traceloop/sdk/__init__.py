@@ -4,14 +4,16 @@ from deprecated import deprecated
 import requests
 from pathlib import Path
 
-from typing import Optional
+from typing import Optional, Set
 from colorama import Fore
 from opentelemetry.sdk.trace import SpanProcessor
 from opentelemetry.sdk.trace.export import SpanExporter
+from opentelemetry.sdk.resources import SERVICE_NAME
 from opentelemetry.propagators.textmap import TextMapPropagator
 from opentelemetry.util.re import parse_env_headers
 
 from traceloop.sdk.telemetry import Telemetry
+from traceloop.sdk.instruments import Instruments
 from traceloop.sdk.config import (
     is_content_tracing_enabled,
     is_tracing_enabled,
@@ -45,6 +47,8 @@ class Traceloop:
         processor: SpanProcessor = None,
         propagator: TextMapPropagator = None,
         traceloop_sync_enabled: bool = True,
+        resource_attributes: dict = {},
+        instruments: Optional[Set[Instruments]] = None,
     ) -> None:
         Telemetry()
 
@@ -89,7 +93,7 @@ class Traceloop:
                 print(
                     Fore.RED
                     + "Error: Missing Traceloop API key,"
-                    + " go to https://https://app.traceloop.com/settings/api-keys to create one"
+                    + " go to https://app.traceloop.com/settings/api-keys to create one"
                 )
                 print("Set the TRACELOOP_API_KEY environment variable to the key")
                 print(Fore.RESET)
@@ -143,14 +147,16 @@ class Traceloop:
 
         print(Fore.RESET)
 
+        resource_attributes.update({SERVICE_NAME: app_name})
         TracerWrapper.set_static_params(
-            app_name, enable_content_tracing, api_endpoint, headers
+            resource_attributes, enable_content_tracing, api_endpoint, headers
         )
         Traceloop.__tracer_wrapper = TracerWrapper(
             disable_batch=disable_batch,
             processor=processor,
             propagator=propagator,
             exporter=exporter,
+            instruments=instruments,
         )
 
     @staticmethod
@@ -170,7 +176,7 @@ class Traceloop:
             print(
                 Fore.RED
                 + "Error: Cannot report score. Missing Traceloop API key,"
-                + " go to https://https://app.traceloop.com/settings/api-keys to create one"
+                + " go to https://app.traceloop.com/settings/api-keys to create one"
             )
             print("Set the TRACELOOP_API_KEY environment variable to the key")
             print(Fore.RESET)

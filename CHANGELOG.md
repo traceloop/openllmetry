@@ -1,3 +1,108 @@
+## v0.11.3 (2024-02-19)
+
+### Fix
+
+- **llamaindex**: support both new and legacy llama_index versions (#422)
+
+## v0.11.2 (2024-02-16)
+
+### Fix
+
+- **sdk**: url for getting API key (#424)
+
+## v0.11.1 (2024-02-14)
+
+### Fix
+
+- **openai**: handle async streaming responses for openai v1 client (#421)
+
+## v0.11.0 (2024-02-13)
+
+### Feat
+
+- support both new and legacy llama_index versions (#420)
+
+### Fix
+
+- **sdk**: support input/output of tasks & workflows (#419)
+
+## v0.10.5 (2024-02-13)
+
+### Fix
+
+- **langchain**: backport to 0.0.346 (#418)
+
+## v0.10.4 (2024-02-08)
+
+### Fix
+
+- **openai**: handle OpenAI async completion streaming responses (#409)
+
+## v0.10.3 (2024-01-30)
+
+### Fix
+
+- README
+
+## v0.10.2 (2024-01-25)
+
+### Fix
+
+- re-enabled haystack instrumentation (#77)
+
+## v0.10.1 (2024-01-24)
+
+### Fix
+
+- `resource_attributes` always being None (#359)
+
+## v0.10.0 (2024-01-22)
+
+### Feat
+
+- watsonx support for traceloop (#341)
+
+### Fix
+
+- **sdk**: support arbitrary resources (#338)
+
+## v0.9.4 (2024-01-15)
+
+### Fix
+
+- bug in managed prompts (#337)
+
+## v0.9.3 (2024-01-15)
+
+### Fix
+
+- support langchain v0.1 (#320)
+
+## v0.9.2 (2024-01-12)
+
+### Fix
+
+- otel deps (#336)
+
+## v0.9.1 (2024-01-12)
+
+### Fix
+
+- **openai**: instrument embeddings APIs (#335)
+
+## v0.9.0 (2024-01-11)
+
+### Feat
+
+- google-vertexai-instrumentation (#289)
+
+## v0.8.2 (2024-01-10)
+
+### Fix
+
+- version bump error with replicate (#318)
+- version bump error with replicate (#318)
+
 ## v0.8.1 (2024-01-10)
 
 ### Fix

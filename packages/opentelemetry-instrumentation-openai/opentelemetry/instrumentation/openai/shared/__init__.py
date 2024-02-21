@@ -63,16 +63,13 @@ def _set_functions_attributes(span, functions):
         )
 
 
-def _set_request_attributes(span, llm_request_type, kwargs):
+def _set_request_attributes(span, kwargs):
     if not span.is_recording():
         return
 
     try:
         _set_api_attributes(span)
         _set_span_attribute(span, SpanAttributes.LLM_VENDOR, "OpenAI")
-        _set_span_attribute(
-            span, SpanAttributes.LLM_REQUEST_TYPE, llm_request_type.value
-        )
         _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, kwargs.get("model"))
         _set_span_attribute(
             span, SpanAttributes.LLM_REQUEST_MAX_TOKENS, kwargs.get("max_tokens")
@@ -134,9 +131,13 @@ def _set_response_attributes(span, response):
 
 def is_streaming_response(response):
     if is_openai_v1():
-        return isinstance(response, openai.Stream)
+        return isinstance(response, openai.Stream) or isinstance(
+            response, openai.AsyncStream
+        )
 
-    return isinstance(response, types.GeneratorType) or isinstance(response, types.AsyncGeneratorType)
+    return isinstance(response, types.GeneratorType) or isinstance(
+        response, types.AsyncGeneratorType
+    )
 
 
 def model_as_dict(model):

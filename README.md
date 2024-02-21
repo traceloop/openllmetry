@@ -93,6 +93,7 @@ Traceloop.init(disable_batch=True)
 - ✅ [SigNoz](https://www.traceloop.com/docs/openllmetry/integrations/signoz)
 - ✅ [Splunk](https://www.traceloop.com/docs/openllmetry/integrations/splunk)
 - ✅ [OpenTelemetry Collector](https://www.traceloop.com/docs/openllmetry/integrations/otel-collector)
+- ✅ [IBM Instana](https://www.traceloop.com/docs/openllmetry/integrations/instana)
 
 See [our docs](https://traceloop.com/docs/openllmetry/integrations/exporting) for instructions on connecting to each one.
 
@@ -108,12 +109,14 @@ OpenLLMetry can instrument everything that [OpenTelemetry already instruments](h
 - ✅ HuggingFace
 - ✅ Bedrock (AWS)
 - ✅ Replicate
-- ⏳ Vertex AI (GCP)
+- ✅ Vertex AI (GCP)
+- ✅ IBM Watsonx AI
 
 ### Vector DBs
 
 - ✅ Pinecone
 - ✅ Chroma
+- ⏳ Qdrant
 - ⏳ Weaviate
 - ⏳ Milvus
 

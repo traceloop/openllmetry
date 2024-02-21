@@ -3,6 +3,7 @@ import logging
 import os
 import importlib.util
 
+
 from colorama import Fore
 from opentelemetry import trace
 from opentelemetry.exporter.otlp.proto.http.trace_exporter import (
@@ -11,7 +12,7 @@ from opentelemetry.exporter.otlp.proto.http.trace_exporter import (
 from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import (
     OTLPSpanExporter as GRPCExporter,
 )
-from opentelemetry.sdk.resources import SERVICE_NAME, Resource
+from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider, SpanProcessor
 from opentelemetry.propagators.textmap import TextMapPropagator
 from opentelemetry.propagate import set_global_textmap
@@ -25,19 +26,27 @@ from opentelemetry.context import get_value, attach, set_value
 
 from opentelemetry.semconv.ai import SpanAttributes
 from traceloop.sdk import Telemetry
+from traceloop.sdk.instruments import Instruments
 from traceloop.sdk.tracing.content_allow_list import ContentAllowList
 from traceloop.sdk.utils import is_notebook
-from typing import Dict
+from typing import Dict, Optional, Set
 
 TRACER_NAME = "traceloop.tracer"
-EXCLUDED_URLS = (
-    "api.openai.com,openai.azure.com,api.anthropic.com,api.cohere.ai,pinecone.io,traceloop.com,"
-    "posthog.com,bedrock-runtime"
-)
+EXCLUDED_URLS = """
+    api.openai.com,
+    openai.azure.com,
+    api.anthropic.com,
+    api.cohere.ai,
+    pinecone.io,
+    traceloop.com,
+    posthog.com,
+    bedrock-runtime,
+    googleapis.com,
+    githubusercontent.com"""
 
 
 class TracerWrapper(object):
-    app_name: str = "unknown"
+    resource_attributes: dict = {}
     enable_content_tracing: bool = True
     endpoint: str = None
     headers: Dict[str, str] = {}
@@ -48,13 +57,14 @@ class TracerWrapper(object):
         processor: SpanProcessor = None,
         propagator: TextMapPropagator = None,
         exporter: SpanExporter = None,
+        instruments: Optional[Set[Instruments]] = None,
     ) -> "TracerWrapper":
         if not hasattr(cls, "instance"):
             obj = cls.instance = super(TracerWrapper, cls).__new__(cls)
             if not TracerWrapper.endpoint:
                 return obj
 
-            obj.__resource = Resource(attributes={SERVICE_NAME: TracerWrapper.app_name})
+            obj.__resource = Resource(attributes=TracerWrapper.resource_attributes)
             obj.__tracer_provider: TracerProvider = init_tracer_provider(
                 resource=obj.__resource
             )
@@ -101,7 +111,134 @@ class TracerWrapper(object):
             if propagator:
                 set_global_textmap(propagator)
 
-            init_instrumentations()
+            instrument_set = False
+            if instruments is None:
+                init_instrumentations()
+                instrument_set = True
+            else:
+                for instrument in instruments:
+                    if instrument == Instruments.OPENAI:
+                        if not init_openai_instrumentor():
+                            print(Fore.RED + "Warning: OpenAI library does not exist.")
+                            print(Fore.RESET)
+                        else:
+                            instrument_set = True
+                    elif instrument == Instruments.ANTHROPIC:
+                        if not init_anthropic_instrumentor():
+                            print(
+                                Fore.RED + "Warning: Anthropic library does not exist."
+                            )
+                            print(Fore.RESET)
+                        else:
+                            instrument_set = True
+                    elif instrument == Instruments.COHERE:
+                        if not init_cohere_instrumentor():
+                            print(Fore.RED + "Warning: Cohere library does not exist.")
+                            print(Fore.RESET)
+                        else:
+                            instrument_set = True
+                    elif instrument == Instruments.PINECONE:
+                        if not init_pinecone_instrumentor():
+                            print(
+                                Fore.RED + "Warning: Pinecone library does not exist."
+                            )
+                            print(Fore.RESET)
+                        else:
+                            instrument_set = True
+                    elif instrument == Instruments.CHROMA:
+                        if not init_chroma_instrumentor():
+                            print(Fore.RED + "Warning: Chroma library does not exist.")
+                            print(Fore.RESET)
+                        else:
+                            instrument_set = True
+                    elif instrument == Instruments.LANGCHAIN:
+                        if not init_langchain_instrumentor():
+                            print(
+                                Fore.RED + "Warning: LangChain library does not exist."
+                            )
+                            print(Fore.RESET)
+                        else:
+                            instrument_set = True
+                    elif instrument == Instruments.LLAMA_INDEX:
+                        if not init_llama_index_instrumentor():
+                            print(
+                                Fore.RED + "Warning: LlamaIndex library does not exist."
+                            )
+                            print(Fore.RESET)
+                        else:
+                            instrument_set = True
+                    elif instrument == Instruments.TRANSFORMERS:
+                        if not init_transformers_instrumentor():
+                            print(
+                                Fore.RED
+                                + "Warning: Transformers library does not exist."
+                            )
+                            print(Fore.RESET)
+                        else:
+                            instrument_set = True
+                    elif instrument == Instruments.REQUESTS:
+                        if not init_requests_instrumentor():
+                            print(
+                                Fore.RED + "Warning: Requests library does not exist."
+                            )
+                            print(Fore.RESET)
+                        else:
+                            instrument_set = True
+                    elif instrument == Instruments.URLLIB3:
+                        if not init_urllib3_instrumentor():
+                            print(Fore.RED + "Warning: urllib3 library does not exist.")
+                            print(Fore.RESET)
+                        else:
+                            instrument_set = True
+                    elif instrument == Instruments.PYMYSQL:
+                        if not init_pymysql_instrumentor():
+                            print(Fore.RED + "Warning: PyMySQL library does not exist.")
+                            print(Fore.RESET)
+                        else:
+                            instrument_set = True
+                    elif instrument == Instruments.BEDROCK:
+                        if not init_bedrock_instrumentor():
+                            print(Fore.RED + "Warning: Bedrock library does not exist.")
+                            print(Fore.RESET)
+                        else:
+                            instrument_set = True
+                    elif instrument == Instruments.REPLICATE:
+                        if not init_replicate_instrumentor():
+                            print(
+                                Fore.RED + "Warning: Replicate library does not exist."
+                            )
+                            print(Fore.RESET)
+                        else:
+                            instrument_set = True
+                    elif instrument == Instruments.VERTEXAI:
+                        if not init_vertexai_instrumentor():
+                            print(
+                                Fore.RED + "Warning: Vertex AI library does not exist."
+                            )
+                            print(Fore.RESET)
+                        else:
+                            instrument_set = True
+                    elif instrument == Instruments.WATSONX:
+                        if not init_watsonx_instrumentor():
+                            print(Fore.RED + "Warning: Watsonx library does not exist.")
+                            print(Fore.RESET)
+                        else:
+                            instrument_set = True
+                    else:
+                        print(
+                            Fore.RED
+                            + "Warning: "
+                            + instrument
+                            + " library does not exist."
+                        )
+                        print(Fore.RESET)
+
+            if not instrument_set:
+                print(
+                    Fore.RED + "Warning: No valid instruments set. Remove 'instrument' "
+                    "argument to use all instruments, or set a valid instrument."
+                )
+                print(Fore.RESET)
 
             obj.__content_allow_list = ContentAllowList()
 
@@ -161,12 +298,12 @@ class TracerWrapper(object):
 
     @staticmethod
     def set_static_params(
-        app_name: str,
+        resource_attributes: dict,
         enable_content_tracing: bool,
         endpoint: str,
         headers: Dict[str, str],
     ) -> None:
-        TracerWrapper.app_name = app_name
+        TracerWrapper.resource_attributes = resource_attributes
         TracerWrapper.enable_content_tracing = enable_content_tracing
         TracerWrapper.endpoint = endpoint
         TracerWrapper.headers = headers
@@ -254,7 +391,7 @@ def init_instrumentations():
     init_cohere_instrumentor()
     init_pinecone_instrumentor()
     init_chroma_instrumentor()
-    # init_haystack_instrumentor()
+    init_haystack_instrumentor()
     init_langchain_instrumentor()
     init_llama_index_instrumentor()
     init_transformers_instrumentor()
@@ -262,7 +399,9 @@ def init_instrumentations():
     init_urllib3_instrumentor()
     init_pymysql_instrumentor()
     init_bedrock_instrumentor()
-    init_replicate_intrumentor()
+    init_replicate_instrumentor()
+    init_vertexai_instrumentor()
+    init_watsonx_instrumentor()
 
 
 def init_openai_instrumentor():
@@ -273,6 +412,7 @@ def init_openai_instrumentor():
         instrumentor = OpenAIInstrumentor()
         if not instrumentor.is_instrumented_by_opentelemetry:
             instrumentor.instrument()
+    return True
 
 
 def init_anthropic_instrumentor():
@@ -283,6 +423,7 @@ def init_anthropic_instrumentor():
         instrumentor = AnthropicInstrumentor()
         if not instrumentor.is_instrumented_by_opentelemetry:
             instrumentor.instrument()
+    return True
 
 
 def init_cohere_instrumentor():
@@ -293,6 +434,7 @@ def init_cohere_instrumentor():
         instrumentor = CohereInstrumentor()
         if not instrumentor.is_instrumented_by_opentelemetry:
             instrumentor.instrument()
+    return True
 
 
 def init_pinecone_instrumentor():
@@ -303,6 +445,7 @@ def init_pinecone_instrumentor():
         instrumentor = PineconeInstrumentor()
         if not instrumentor.is_instrumented_by_opentelemetry:
             instrumentor.instrument()
+    return True
 
 
 def init_chroma_instrumentor():
@@ -313,6 +456,7 @@ def init_chroma_instrumentor():
         instrumentor = ChromaInstrumentor()
         if not instrumentor.is_instrumented_by_opentelemetry:
             instrumentor.instrument()
+    return True
 
 
 def init_haystack_instrumentor():
@@ -323,6 +467,7 @@ def init_haystack_instrumentor():
         instrumentor = HaystackInstrumentor()
         if not instrumentor.is_instrumented_by_opentelemetry:
             instrumentor.instrument()
+    return True
 
 
 def init_langchain_instrumentor():
@@ -333,6 +478,7 @@ def init_langchain_instrumentor():
         instrumentor = LangchainInstrumentor()
         if not instrumentor.is_instrumented_by_opentelemetry:
             instrumentor.instrument()
+    return True
 
 
 def init_transformers_instrumentor():
@@ -343,6 +489,7 @@ def init_transformers_instrumentor():
         instrumentor = TransformersInstrumentor()
         if not instrumentor.is_instrumented_by_opentelemetry:
             instrumentor.instrument()
+    return True
 
 
 def init_llama_index_instrumentor():
@@ -353,6 +500,7 @@ def init_llama_index_instrumentor():
         instrumentor = LlamaIndexInstrumentor()
         if not instrumentor.is_instrumented_by_opentelemetry:
             instrumentor.instrument()
+    return True
 
 
 def init_requests_instrumentor():
@@ -362,6 +510,7 @@ def init_requests_instrumentor():
         instrumentor = RequestsInstrumentor()
         if not instrumentor.is_instrumented_by_opentelemetry:
             instrumentor.instrument(excluded_urls=EXCLUDED_URLS)
+    return True
 
 
 def init_urllib3_instrumentor():
@@ -371,6 +520,7 @@ def init_urllib3_instrumentor():
         instrumentor = URLLib3Instrumentor()
         if not instrumentor.is_instrumented_by_opentelemetry:
             instrumentor.instrument(excluded_urls=EXCLUDED_URLS)
+    return True
 
 
 def init_pymysql_instrumentor():
@@ -380,6 +530,7 @@ def init_pymysql_instrumentor():
         instrumentor = PyMySQLInstrumentor()
         if not instrumentor.is_instrumented_by_opentelemetry:
             instrumentor.instrument()
+    return True
 
 
 def init_bedrock_instrumentor():
@@ -389,9 +540,10 @@ def init_bedrock_instrumentor():
         instrumentor = BedrockInstrumentor()
         if not instrumentor.is_instrumented_by_opentelemetry:
             instrumentor.instrument()
+    return True
 
 
-def init_replicate_intrumentor():
+def init_replicate_instrumentor():
     if importlib.util.find_spec("replicate") is not None:
         Telemetry().capture("instrumentation:replicate:init")
         from opentelemetry.instrumentation.replicate import ReplicateInstrumentor
@@ -399,3 +551,26 @@ def init_replicate_intrumentor():
         instrumentor = ReplicateInstrumentor()
         if not instrumentor.is_instrumented_by_opentelemetry:
             instrumentor.instrument()
+    return True
+
+
+def init_vertexai_instrumentor():
+    if importlib.util.find_spec("vertexai") is not None:
+        Telemetry().capture("instrumentation:vertexai:init")
+        from opentelemetry.instrumentation.vertexai import VertexAIInstrumentor
+
+        instrumentor = VertexAIInstrumentor()
+        if not instrumentor.is_instrumented_by_opentelemetry:
+            instrumentor.instrument()
+    return True
+
+
+def init_watsonx_instrumentor():
+    if importlib.util.find_spec("ibm_watson_machine_learning") is not None:
+        Telemetry().capture("instrumentation:watsonx:init")
+        from opentelemetry.instrumentation.watsonx import WatsonxInstrumentor
+
+        instrumentor = WatsonxInstrumentor()
+        if not instrumentor.is_instrumented_by_opentelemetry:
+            instrumentor.instrument()
+    return True

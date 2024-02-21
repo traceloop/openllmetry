@@ -1,9 +1,12 @@
 from opentelemetry.semconv.trace import SpanAttributes
+from opentelemetry.semconv.ai import Events, EventAttributes
 
 from opentelemetry import context as context_api
 from opentelemetry.instrumentation.utils import (
     _SUPPRESS_INSTRUMENTATION_KEY,
 )
+import itertools
+import json
 
 
 def _with_tracer_wrapper(func):
@@ -44,6 +47,9 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
             _set_peek_attributes(span, kwargs)
         elif to_wrap.get("method") == "query":
             _set_query_attributes(span, kwargs)
+        elif to_wrap.get("method") == "_query":
+            _set_segment_query_attributes(span, kwargs)
+            _add_segment_query_embeddings_events(span, kwargs)
         elif to_wrap.get("method") == "modify":
             _set_modify_attributes(span, kwargs)
         elif to_wrap.get("method") == "update":
@@ -54,6 +60,8 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
             _set_delete_attributes(span, kwargs)
 
         return_value = wrapped(*args, **kwargs)
+        if to_wrap.get("method") == "query":
+            _add_query_result_events(span, return_value)
 
     return return_value
 
@@ -116,6 +124,39 @@ def _set_query_attributes(span, kwargs):
     _set_span_attribute(span, "db.chroma.query.where", _encode_where(kwargs.get("where")))
     _set_span_attribute(span, "db.chroma.query.where_document", _encode_where_document(kwargs.get("where_document")))
     _set_span_attribute(span, "db.chroma.query.include", _encode_include(kwargs.get("include")))
+
+
+def _set_segment_query_attributes(span, kwargs):
+    _set_span_attribute(span, "db.chroma.query.segment._query.collection_id", str(kwargs.get("collection_id")))
+
+
+def _add_segment_query_embeddings_events(span, kwargs):
+    for i, embeddings in enumerate(kwargs.get("query_embeddings", [])):
+        span.add_event(
+            name=f"{Events.VECTOR_DB_QUERY_EMBEDDINGS.value}.{i}",
+            attributes={
+                f"{Events.VECTOR_DB_QUERY_EMBEDDINGS.value}.{i}.vector": json.dumps(embeddings)
+            }
+        )
+
+
+def _add_query_result_events(span, kwargs):
+    zipped = itertools.zip_longest(
+        kwargs.get("ids", []),
+        kwargs.get("distances", []),
+        kwargs.get("metadata", []),
+        kwargs.get("documents", [])
+    )
+    for i, tuple_ in enumerate(zipped):
+        span.add_event(
+            name=f"{Events.VECTOR_DB_QUERY_RESULT.value}.{i}",
+            attributes={
+                f"{EventAttributes.VECTOR_DB_QUERY_RESULT_IDS.value.format(i=i)}": tuple_[0] or [],
+                f"{EventAttributes.VECTOR_DB_QUERY_RESULT_DISTANCES.value.format(i=i)}": tuple_[1] or [],
+                f"{EventAttributes.VECTOR_DB_QUERY_RESULT_METADATA.value.format(i=i)}": tuple_[2] or [],
+                f"{EventAttributes.VECTOR_DB_QUERY_RESULT_DOCUMENTS.value.format(i=i)}": tuple_[3] or [],
+            }
+        )
 
 
 def _set_modify_attributes(span, kwargs):

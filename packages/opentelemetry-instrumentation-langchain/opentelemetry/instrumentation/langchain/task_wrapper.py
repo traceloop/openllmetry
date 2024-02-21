@@ -17,7 +17,7 @@ def task_wrapper(tracer, to_wrap, wrapped, instance, args, kwargs):
     if instance.__class__.__name__ in ("AgentExecutor"):
         return wrapped(*args, **kwargs)
 
-    if hasattr(instance, "name"):
+    if hasattr(instance, "name") and instance.name:
         name = f"{to_wrap.get('span_name')}.{instance.name.lower()}"
     elif to_wrap.get("span_name"):
         name = to_wrap.get("span_name")

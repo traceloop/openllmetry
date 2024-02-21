@@ -6,12 +6,9 @@ source = [ "traceloop/sdk" ]
 exclude_lines = [ "if TYPE_CHECKING:" ]
 show_missing = true
 
-[tool.pytest.ini_options]
-addopts = "--cov --cov-report html:'../../coverage/packages/traceloop-sdk/html' --cov-report xml:'../../coverage/packages/traceloop-sdk/coverage.xml' --html='../../reports/packages/traceloop-sdk/unittests/html/index.html' --junitxml='../../reports/packages/traceloop-sdk/unittests/junit.xml'"
-
 [tool.poetry]
 name = "traceloop-sdk"
-version = "0.8.1"
+version = "0.11.3"
 description = "Traceloop Software Development Kit (SDK) for Python"
 authors = [
   "Gal Kleinman <gal@traceloop.com>",
@@ -28,14 +25,14 @@ include = "traceloop/sdk"
 
 [tool.poetry.dependencies]
 python = ">=3.8.1,<4"
-opentelemetry-api = "^1.21.0"
+opentelemetry-api = "^1.22.0"
 opentelemetry-sdk = "^1.20.0"
 opentelemetry-exporter-otlp-proto-http = "^1.20.0"
 opentelemetry-exporter-otlp-proto-grpc = "^1.20.0"
-opentelemetry-instrumentation-requests = "^0.42b0"
-opentelemetry-instrumentation-pymysql = "^0.42b0"
-opentelemetry-instrumentation-urllib3 = "^0.42b0"
-opentelemetry-semantic-conventions-ai = "^0.0.13"
+opentelemetry-instrumentation-requests = "0.43b0"
+opentelemetry-instrumentation-pymysql = "0.43b0"
+opentelemetry-instrumentation-urllib3 = "0.43b0"
+opentelemetry-semantic-conventions-ai = "^0.0.20"
 opentelemetry-instrumentation-openai = {path="../opentelemetry-instrumentation-openai", develop=true}
 opentelemetry-instrumentation-anthropic = {path="../opentelemetry-instrumentation-anthropic", develop=true}
 opentelemetry-instrumentation-cohere = {path="../opentelemetry-instrumentation-cohere", develop=true}
@@ -44,8 +41,11 @@ opentelemetry-instrumentation-langchain = {path="../opentelemetry-instrumentatio
 opentelemetry-instrumentation-chromadb = {path="../opentelemetry-instrumentation-chromadb", develop=true}
 opentelemetry-instrumentation-transformers = {path="../opentelemetry-instrumentation-transformers", develop=true}
 opentelemetry-instrumentation-llamaindex = {path="../opentelemetry-instrumentation-llamaindex", develop=true}
+opentelemetry-instrumentation-haystack = {path="../opentelemetry-instrumentation-haystack", develop=true}
 opentelemetry-instrumentation-bedrock = {path="../opentelemetry-instrumentation-bedrock", develop=true}
 opentelemetry-instrumentation-replicate = {path="../opentelemetry-instrumentation-replicate", develop=true}
+opentelemetry-instrumentation-vertexai = {path="../opentelemetry-instrumentation-vertexai", develop=true}
+opentelemetry-instrumentation-watsonx = {path="../opentelemetry-instrumentation-watsonx", develop=true}
 colorama = "^0.4.6"
 tenacity = "^8.2.3"
 pydantic = ">=1"
@@ -55,21 +55,15 @@ posthog = "^3.0.2"
 
 [tool.poetry.group.dev.dependencies]
 autopep8 = "2.0.4"
-flake8 = "6.1.0"
-pytest = "7.4.3"
+flake8 = "7.0.0"
+pytest = "7.4.4"
 pytest-sugar = "0.9.7"
-pytest-cov = "4.1.0"
-pytest-html = "4.1.1"
 
 [tool.poetry.group.test.dependencies]
-openai = "^1.3.7"
-anthropic = "^0.8.1"
-# farm-haystack = "^1.20.1"
-pinecone-client = {extras = ["grpc"], version = "^2.2.4"}
-cohere = "^4.34"
-langchain = "^0.0.343"
-chromadb = "^0.4.17"
-replicate = "^0.22.0"
+openai = "^1.7.1"
+vcrpy = "^6.0.1"
+pytest-recording = "^0.13.1"
+pydantic = "<2"
 
 [build-system]
 requires = [ "poetry-core" ]

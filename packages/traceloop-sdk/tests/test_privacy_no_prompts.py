@@ -16,6 +16,7 @@ def openai_client():
     return OpenAI()
 
 
+@pytest.mark.vcr
 def test_simple_workflow(exporter, openai_client):
     @task(name="joke_creation")
     def create_joke():
