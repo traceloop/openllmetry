@@ -1,6 +1,5 @@
 import pytest
 from qdrant_client import QdrantClient, models
-from traceloop.sdk.decorators import task
 from opentelemetry.semconv.ai import SpanAttributes
 
 
@@ -14,7 +13,6 @@ COLLECTION_NAME = "test_collection"
 EMBEDDING_DIM = 384
 
 
-@task(name="upsert")
 def upsert(qdrant: QdrantClient):
     qdrant.create_collection(
         COLLECTION_NAME,
@@ -40,7 +38,6 @@ def test_qdrant_upsert(exporter, qdrant):
     assert span.attributes.get("qdrant.upsert.points_count") == 2
 
 
-@task(name="upsert")
 def upload_collection(qdrant: QdrantClient):
     qdrant.create_collection(
         COLLECTION_NAME,
@@ -68,7 +65,6 @@ def test_qdrant_upload_collection(exporter, qdrant):
     assert span.attributes.get("qdrant.upload_collection.points_count") == 3
 
 
-@task(name="search")
 def search(qdrant: QdrantClient):
     qdrant.search(COLLECTION_NAME, query_vector=[0.1] * EMBEDDING_DIM, limit=1)
 
@@ -84,7 +80,6 @@ def test_qdrant_searchs(exporter, qdrant):
     assert span.attributes.get(SpanAttributes.VECTOR_DB_QUERY_TOP_K) == 1
 
 
-@task(name="search_batch")
 def search_batch(qdrant: QdrantClient):
     qdrant.search_batch(
         COLLECTION_NAME, requests=[models.SearchRequest(vector=[0.1] * EMBEDDING_DIM, limit=10),
