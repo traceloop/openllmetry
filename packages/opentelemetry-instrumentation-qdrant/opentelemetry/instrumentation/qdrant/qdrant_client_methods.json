@@ -1,0 +1,117 @@
+[
+    {
+        "object": "QdrantClient",
+        "method": "upsert",
+        "span_name": "qdrant.upsert"
+    },
+    {
+        "object": "QdrantClient",
+        "method": "add",
+        "span_name": "qdrant.add"
+    },
+    {
+        "object": "QdrantClient",
+        "method": "upload_points",
+        "span_name": "qdrant.upload_points"
+    },
+    {
+        "object": "QdrantClient",
+        "method": "upload_records",
+        "span_name": "qdrant.upload_records"
+    },
+    {
+        "object": "QdrantClient",
+        "method": "upload_collection",
+        "span_name": "qdrant.upload_collection"
+    },
+    {
+        "object": "QdrantClient",
+        "method": "search",
+        "span_name": "qdrant.search"
+    },
+    {
+        "object": "QdrantClient",
+        "method": "search_batch",
+        "span_name": "qdrant.search_batch"
+    },
+    {
+        "object": "QdrantClient",
+        "method": "search_groups",
+        "span_name": "qdrant.search_groups"
+    },
+    {
+        "object": "QdrantClient",
+        "method": "query",
+        "span_name": "qdrant.query"
+    },
+    {
+        "object": "QdrantClient",
+        "method": "query_batch",
+        "span_name": "qdrant.query_batch"
+    },
+    {
+        "object": "QdrantClient",
+        "method": "discover",
+        "span_name": "qdrant.discover"
+    },
+    {
+        "object": "QdrantClient",
+        "method": "discover_batch",
+        "span_name": "qdrant.discover_batch"
+    },
+    {
+        "object": "QdrantClient",
+        "method": "recommend",
+        "span_name": "qdrant.recommend"
+    },
+    {
+        "object": "QdrantClient",
+        "method": "recommend_batch",
+        "span_name": "qdrant.recommend_batch"
+    },
+    {
+        "object": "QdrantClient",
+        "method": "recommend_groups",
+        "span_name": "qdrant.recommend_groups"
+    },
+    {
+        "object": "QdrantClient",
+        "method": "scroll",
+        "span_name": "qdrant.scroll"
+    },
+    {
+        "object": "QdrantClient",
+        "method": "delete",
+        "span_name": "qdrant.delete"
+    },
+    {
+        "object": "QdrantClient",
+        "method": "delete_vectors",
+        "span_name": "qdrant.delete_vectors"
+    },
+    {
+        "object": "QdrantClient",
+        "method": "delete_payload",
+        "span_name": "qdrant.delete_payload"
+    },
+    {
+        "object": "QdrantClient",
+        "method": "set_payload",
+        "span_name": "qdrant.set_payload"
+    },
+    {
+        "object": "QdrantClient",
+        "method": "overwrite_payload",
+        "span_name": "qdrant.overwrite_payload"
+    },
+    {
+        "object": "QdrantClient",
+        "method": "update_vectors",
+        "span_name": "qdrant.update_vectors"
+    },
+    {
+        "object": "QdrantClient",
+        "method": "batch_update_points",
+        "span_name": "qdrant.batch_update_points"
+    }
+]
