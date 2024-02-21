@@ -8,7 +8,7 @@ show_missing = true
 
 [tool.poetry]
 name = "traceloop-sdk"
-version = "0.10.3"
+version = "0.11.3"
 description = "Traceloop Software Development Kit (SDK) for Python"
 authors = [
   "Gal Kleinman <gal@traceloop.com>",
@@ -32,7 +32,7 @@ opentelemetry-exporter-otlp-proto-grpc = "^1.20.0"
 opentelemetry-instrumentation-requests = "0.43b0"
 opentelemetry-instrumentation-pymysql = "0.43b0"
 opentelemetry-instrumentation-urllib3 = "0.43b0"
-opentelemetry-semantic-conventions-ai = "^0.0.19"
+opentelemetry-semantic-conventions-ai = "^0.0.20"
 opentelemetry-instrumentation-openai = {path="../opentelemetry-instrumentation-openai", develop=true}
 opentelemetry-instrumentation-anthropic = {path="../opentelemetry-instrumentation-anthropic", develop=true}
 opentelemetry-instrumentation-cohere = {path="../opentelemetry-instrumentation-cohere", develop=true}
@@ -57,20 +57,14 @@ posthog = "^3.0.2"
 [tool.poetry.group.dev.dependencies]
 autopep8 = "2.0.4"
 flake8 = "7.0.0"
-pytest = "7.4.4"
+pytest = "8.0.1"
 pytest-sugar = "0.9.7"
 
 [tool.poetry.group.test.dependencies]
 openai = "^1.7.1"
-anthropic = "^0.9.0"
-farm-haystack = "~1.20.1"
-pinecone-client = "^2.2.4"
-cohere = "^4.42"
-langchain = "^0.1.0"
-chromadb = "^0.4.22"
-replicate = "^0.22.0"
-google-cloud-aiplatform = "^1.39.0"
-qdrant-client = "^1.7.1"
+vcrpy = "^6.0.1"
+pytest-recording = "^0.13.1"
+pydantic = "<2"
 
 [build-system]
 requires = [ "poetry-core" ]

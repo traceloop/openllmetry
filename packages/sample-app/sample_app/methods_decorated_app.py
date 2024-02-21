@@ -1,16 +1,18 @@
-import openai
 import os
 
 from traceloop.sdk import Traceloop
 from traceloop.sdk.decorators import task, agent, workflow, tool
 
-openai.api_key = os.getenv("OPENAI_API_KEY")
+from openai import OpenAI
+
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
 Traceloop.init(app_name="joke_generation_service")
 
 
 @task(name="joke_creation")
 def create_joke():
-    completion = openai.ChatCompletion.create(
+    completion = client.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=[{"role": "user", "content": "Tell me a joke about opentelemetry"}],
     )
@@ -20,7 +22,7 @@ def create_joke():
 
 @agent(name="joke_translation")
 def translate_joke_to_pirate(joke: str):
-    completion = openai.ChatCompletion.create(
+    completion = client.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=[
             {
@@ -37,7 +39,7 @@ def translate_joke_to_pirate(joke: str):
 
 @tool(name="history_jokes")
 def history_jokes_tool():
-    completion = openai.ChatCompletion.create(
+    completion = client.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=[{"role": "user", "content": "get some history jokes"}],
     )
@@ -47,9 +49,8 @@ def history_jokes_tool():
 
 @task(name="signature_generation")
 def generate_signature(joke: str):
-    completion = openai.Completion.create(
-        model="davinci-002",
-        prompt="add a signature to the joke:\n\n" + joke,
+    completion = client.completions.create(
+        model="davinci-002", prompt="add a signature to the joke:\n\n" + joke
     )
 
     return completion.choices[0].text

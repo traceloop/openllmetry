@@ -68,6 +68,7 @@ def openai_client():
     return OpenAI()
 
 
+@pytest.mark.vcr
 def test_prompt_management(exporter, openai_client):
     PromptRegistryClient()._registry.load(prompts_json=json.loads(prompts_json))
     prompt_args = get_prompt(key="joke_generator", variables={"style": "pirate"})

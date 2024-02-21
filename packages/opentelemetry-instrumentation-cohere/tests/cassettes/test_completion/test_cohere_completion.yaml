@@ -1,0 +1,66 @@
+interactions:
+- request:
+    body: '{"model": "command", "prompt": "Tell me a joke, pirate style", "prompt_vars":
+      {}, "preset": null, "num_generations": null, "max_tokens": null, "temperature":
+      null, "k": null, "p": null, "frequency_penalty": null, "presence_penalty": null,
+      "end_sequences": null, "stop_sequences": null, "return_likelihoods": null, "truncate":
+      null, "logit_bias": {}, "stream": false}'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate, br
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '366'
+      Content-Type:
+      - application/json
+      Request-Source:
+      - python-sdk-4.46
+      User-Agent:
+      - python-requests/2.31.0
+    method: POST
+    uri: https://api.cohere.ai/v1/generate
+  response:
+    body:
+      string: '{"id":"c31be0e7-2bdc-4ac4-9b57-63ad96d4bbb2","generations":[{"id":"ead5d18e-8649-494e-83cf-3d4553ec593a","text":"
+        Argh, matey! Shiver me timbers, here''s a pirate-style joke for ye:\n\nWhy
+        did the pirate captain lead his crew across the jungle? \n\nSaid captain had
+        a parrrrty at his X, and needed more arrrrrrrrs to attend it. \n\nArgh :)","finish_reason":"COMPLETE"}],"prompt":"Tell
+        me a joke, pirate style","meta":{"api_version":{"version":"1"},"billed_units":{"input_tokens":7,"output_tokens":69}}}'
+    headers:
+      Alt-Svc:
+      - h3=":443"; ma=2592000,h3-29=":443"; ma=2592000
+      Content-Length:
+      - '501'
+      Via:
+      - 1.1 google
+      access-control-expose-headers:
+      - X-Debug-Trace-ID
+      content-type:
+      - application/json
+      date:
+      - Mon, 12 Feb 2024 15:03:51 GMT
+      num_chars:
+      - '247'
+      num_tokens:
+      - '76'
+      server:
+      - envoy
+      vary:
+      - Origin
+      x-debug-trace-id:
+      - 650d7187a681dbe0c0a429014e742b07
+      x-endpoint-monthly-call-limit:
+      - '500'
+      x-envoy-upstream-service-time:
+      - '2086'
+      x-trial-endpoint-call-limit:
+      - '10'
+      x-trial-endpoint-call-remaining:
+      - '8'
+    status:
+      code: 200
+      message: OK
+version: 1
