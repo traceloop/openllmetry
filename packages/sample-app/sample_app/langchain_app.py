@@ -1,14 +1,10 @@
-import os
-import openai
-
 from langchain.schema import SystemMessage, HumanMessage
 from langchain.prompts import ChatPromptTemplate, HumanMessagePromptTemplate
-from langchain.chat_models import ChatOpenAI
+from langchain_community.chat_models import ChatOpenAI
 from langchain.chains import LLMChain, SequentialChain, TransformChain
 
 from traceloop.sdk import Traceloop
 
-openai.api_key = os.getenv("OPENAI_API_KEY")
 Traceloop.init(app_name="langchain_example")
 
 
