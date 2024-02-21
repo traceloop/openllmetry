@@ -172,6 +172,7 @@ def validate():
     )
 
 
+@pytest.mark.vcr
 def test_weaviate_delete_all(client, exporter):
     delete_all(client)
 
@@ -182,6 +183,7 @@ def test_weaviate_delete_all(client, exporter):
     assert span.attributes.get("db.operation") == "delete_all"
 
 
+@pytest.mark.vcr
 def test_weaviate_create_schemas(client, exporter):
     delete_all(client)
     create_schemas(client)
@@ -195,6 +197,7 @@ def test_weaviate_create_schemas(client, exporter):
     )
 
 
+@pytest.mark.vcr
 def test_weaviate_create_schema(client, exporter):
     delete_all(client)
     create_schema(client)
@@ -211,6 +214,7 @@ def test_weaviate_create_schema(client, exporter):
     )
 
 
+@pytest.mark.vcr
 def test_weaviate_get_schema(client, exporter):
     delete_all(client)
     create_schema(client)
@@ -232,6 +236,7 @@ def test_weaviate_get_schema(client, exporter):
     assert span.attributes.get("db.weaviate.schema.get.class_name") == '"Article"'
 
 
+@pytest.mark.vcr
 def test_weaviate_delete_schema(client, exporter):
     delete_all(client)
     create_schema(client)
@@ -248,6 +253,7 @@ def test_weaviate_delete_schema(client, exporter):
     )
 
 
+@pytest.mark.vcr
 def test_weaviate_create_data_object(client, exporter):
     delete_all(client)
     create_schema(client)
@@ -270,6 +276,7 @@ def test_weaviate_create_data_object(client, exporter):
     )
 
 
+@pytest.mark.vcr
 def test_weaviate_create_batch(client, exporter):
     delete_all(client)
     create_schema(client)
@@ -300,6 +307,7 @@ def test_weaviate_create_batch(client, exporter):
     )
 
 
+@pytest.mark.vcr
 def test_weaviate_query_get(client, exporter):
     delete_all(client)
     create_schema(client)
@@ -320,6 +328,7 @@ def test_weaviate_query_get(client, exporter):
     assert span.attributes.get("db.operation") == "do"
 
 
+@pytest.mark.vcr
 def test_weaviate_query_aggregate(client, exporter):
     delete_all(client)
     create_schema(client)
@@ -341,6 +350,7 @@ def test_weaviate_query_aggregate(client, exporter):
     assert span.attributes.get("db.operation") == "do"
 
 
+@pytest.mark.vcr
 def test_weaviate_query_raw(client, exporter):
     delete_all(client)
     create_schema(client)

@@ -41,4 +41,7 @@ def environment():
 
 @pytest.fixture(scope="module")
 def vcr_config():
-    return {"filter_headers": ["authorization"]}
+    return {
+        "filter_headers": ["authorization", "x-openai-api-key"],
+        "record_mode": "new_episodes",
+    }
