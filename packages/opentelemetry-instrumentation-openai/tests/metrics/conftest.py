@@ -1,5 +1,3 @@
-import os
-
 import pytest
 from opentelemetry import metrics
 from opentelemetry.sdk.resources import Resource
