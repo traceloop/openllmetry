@@ -45,3 +45,18 @@ def test_simple_workflow(exporter, openai_client):
     }
 
     assert json.loads(task_span.attributes.get("traceloop.entity.output")) == joke
+
+
+def test_unserializable_workflow(exporter):
+    @task(name="unserializable_task")
+    def unserializable_task(obj: object):
+        return object()
+
+    @workflow(name="unserializable_workflow")
+    def unserializable_workflow(obj: object):
+        return unserializable_task(obj)
+
+    unserializable_task(object())
+
+    spans = exporter.get_finished_spans()
+    assert [span.name for span in spans] == ["unserializable_task.task"]
