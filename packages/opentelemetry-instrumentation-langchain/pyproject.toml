@@ -42,6 +42,7 @@ pytest = "7.4.4"
 pytest-sugar = "0.9.7"
 vcrpy = "^6.0.1"
 pytest-recording = "^0.13.1"
+pytest-asyncio = "^0.23.5"
 opentelemetry-sdk = "^1.22.0"
 opentelemetry-instrumentation-openai = {path="../opentelemetry-instrumentation-openai", develop=true}
 
