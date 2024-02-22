@@ -76,6 +76,56 @@ WRAPPED_METHODS = [
         "span_name": "retrieval_qa.workflow",
         "wrapper": workflow_wrapper,
     },
+    {
+        "package": "langchain.prompts.base",
+        "object": "BasePromptTemplate",
+        "method": "invoke",
+        "wrapper": task_wrapper,
+    },
+    {
+        "package": "langchain.prompts.base",
+        "object": "BasePromptTemplate",
+        "method": "ainvoke",
+        "wrapper": task_wrapper,
+    },
+    {
+        "package": "langchain.chat_models.base",
+        "object": "BaseChatModel",
+        "method": "invoke",
+        "wrapper": task_wrapper,
+    },
+    {
+        "package": "langchain.chat_models.base",
+        "object": "BaseChatModel",
+        "method": "ainvoke",
+        "wrapper": task_wrapper,
+    },
+    {
+        "package": "langchain.schema",
+        "object": "BaseOutputParser",
+        "method": "invoke",
+        "wrapper": task_wrapper,
+    },
+    {
+        "package": "langchain.schema",
+        "object": "BaseOutputParser",
+        "method": "ainvoke",
+        "wrapper": task_wrapper,
+    },
+    {
+        "package": "langchain.schema.runnable",
+        "object": "RunnableSequence",
+        "method": "invoke",
+        "span_name": "langchain.workflow",
+        "wrapper": workflow_wrapper,
+    },
+    {
+        "package": "langchain.schema.runnable",
+        "object": "RunnableSequence",
+        "method": "ainvoke",
+        "span_name": "langchain.workflow",
+        "wrapper": workflow_wrapper,
+    },
 ]
 
 
