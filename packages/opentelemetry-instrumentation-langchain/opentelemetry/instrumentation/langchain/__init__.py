@@ -9,8 +9,14 @@ from opentelemetry.trace import get_tracer
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.instrumentation.utils import unwrap
 
-from opentelemetry.instrumentation.langchain.task_wrapper import task_wrapper
-from opentelemetry.instrumentation.langchain.workflow_wrapper import workflow_wrapper
+from opentelemetry.instrumentation.langchain.task_wrapper import (
+    task_wrapper,
+    atask_wrapper,
+)
+from opentelemetry.instrumentation.langchain.workflow_wrapper import (
+    workflow_wrapper,
+    aworkflow_wrapper,
+)
 from opentelemetry.instrumentation.langchain.version import __version__
 
 from opentelemetry.semconv.ai import TraceloopSpanKindValues
@@ -30,7 +36,7 @@ WRAPPED_METHODS = [
         "package": "langchain.chains.base",
         "object": "Chain",
         "method": "acall",
-        "wrapper": task_wrapper,
+        "wrapper": atask_wrapper,
     },
     {
         "package": "langchain.chains",
@@ -44,7 +50,7 @@ WRAPPED_METHODS = [
         "object": "SequentialChain",
         "method": "acall",
         "span_name": "langchain.workflow",
-        "wrapper": workflow_wrapper,
+        "wrapper": aworkflow_wrapper,
     },
     {
         "package": "langchain.agents",
@@ -74,7 +80,7 @@ WRAPPED_METHODS = [
         "object": "RetrievalQA",
         "method": "acall",
         "span_name": "retrieval_qa.workflow",
-        "wrapper": workflow_wrapper,
+        "wrapper": aworkflow_wrapper,
     },
     {
         "package": "langchain.prompts.base",
@@ -86,7 +92,7 @@ WRAPPED_METHODS = [
         "package": "langchain.prompts.base",
         "object": "BasePromptTemplate",
         "method": "ainvoke",
-        "wrapper": task_wrapper,
+        "wrapper": atask_wrapper,
     },
     {
         "package": "langchain.chat_models.base",
@@ -98,7 +104,7 @@ WRAPPED_METHODS = [
         "package": "langchain.chat_models.base",
         "object": "BaseChatModel",
         "method": "ainvoke",
-        "wrapper": task_wrapper,
+        "wrapper": atask_wrapper,
     },
     {
         "package": "langchain.schema",
@@ -110,7 +116,7 @@ WRAPPED_METHODS = [
         "package": "langchain.schema",
         "object": "BaseOutputParser",
         "method": "ainvoke",
-        "wrapper": task_wrapper,
+        "wrapper": atask_wrapper,
     },
     {
         "package": "langchain.schema.runnable",
@@ -124,7 +130,7 @@ WRAPPED_METHODS = [
         "object": "RunnableSequence",
         "method": "ainvoke",
         "span_name": "langchain.workflow",
-        "wrapper": workflow_wrapper,
+        "wrapper": aworkflow_wrapper,
     },
 ]
 

@@ -1,3 +1,4 @@
+import asyncio
 from langchain.prompts import ChatPromptTemplate
 from langchain.output_parsers.openai_functions import JsonOutputFunctionsParser
 from langchain_community.utils.openai_functions import (
@@ -19,15 +20,17 @@ class Joke(BaseModel):
     punchline: str = Field(description="answer to resolve the joke")
 
 
-openai_functions = [convert_pydantic_to_openai_function(Joke)]
+async def chain():
+    openai_functions = [convert_pydantic_to_openai_function(Joke)]
 
-prompt = ChatPromptTemplate.from_messages(
-    [("system", "You are helpful assistant"), ("user", "{input}")]
-)
-model = ChatOpenAI(model="gpt-3.5-turbo")
-output_parser = JsonOutputFunctionsParser()
+    prompt = ChatPromptTemplate.from_messages(
+        [("system", "You are helpful assistant"), ("user", "{input}")]
+    )
+    model = ChatOpenAI(model="gpt-3.5-turbo")
+    output_parser = JsonOutputFunctionsParser()
 
-chain = prompt | model.bind(functions=openai_functions) | output_parser
-result = chain.invoke({"input": "tell me a short joke"})
+    chain = prompt | model.bind(functions=openai_functions) | output_parser
+    return await chain.ainvoke({"input": "tell me a short joke"})
 
-print(result)
+
+print(asyncio.run(chain()))

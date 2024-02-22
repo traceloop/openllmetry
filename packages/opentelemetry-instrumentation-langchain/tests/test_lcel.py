@@ -39,9 +39,69 @@ def test_simple_lcel(exporter):
         "langchain.workflow",
     ] == [span.name for span in spans]
 
+    workflow_span = next(span for span in spans if span.name == "langchain.workflow")
+    prompt_task_span = next(
+        span for span in spans if span.name == "langchain.task.ChatPromptTemplate"
+    )
+    chat_openai_task_span = next(
+        span for span in spans if span.name == "langchain.task.ChatOpenAI"
+    )
+    output_parser_task_span = next(
+        span
+        for span in spans
+        if span.name == "langchain.task.JsonOutputFunctionsParser"
+    )
+
+    assert prompt_task_span.parent.span_id == workflow_span.context.span_id
+    assert chat_openai_task_span.parent.span_id == workflow_span.context.span_id
+    assert output_parser_task_span.parent.span_id == workflow_span.context.span_id
+
 
 @pytest.mark.vcr
-def test_langchain_streaming(exporter):
+@pytest.mark.asyncio
+async def test_async_lcel(exporter):
+
+    chat = ChatOpenAI(
+        model="gpt-4",
+        temperature=0,
+    )
+
+    prompt = PromptTemplate.from_template(
+        "write 10 lines of random text about ${product}"
+    )
+    runnable = prompt | chat | StrOutputParser()
+    await runnable.ainvoke({"product": "colorful socks"})
+
+    spans = exporter.get_finished_spans()
+
+    assert set(
+        [
+            "langchain.task.PromptTemplate",
+            "openai.chat",
+            "langchain.task.ChatOpenAI",
+            "langchain.task.StrOutputParser",
+            "langchain.workflow",
+        ]
+    ) == set([span.name for span in spans])
+
+    workflow_span = next(span for span in spans if span.name == "langchain.workflow")
+    prompt_task_span = next(
+        span for span in spans if span.name == "langchain.task.PromptTemplate"
+    )
+    chat_openai_task_span = next(
+        span for span in spans if span.name == "langchain.task.ChatOpenAI"
+    )
+    output_parser_task_span = next(
+        span for span in spans if span.name == "langchain.task.StrOutputParser"
+    )
+
+    assert prompt_task_span.parent.span_id == workflow_span.context.span_id
+    assert chat_openai_task_span.parent.span_id == workflow_span.context.span_id
+    assert output_parser_task_span.parent.span_id == workflow_span.context.span_id
+
+
+@pytest.mark.vcr
+def test_streaming(exporter):
 
     chat = ChatOpenAI(
         model="gpt-4",
@@ -57,8 +117,10 @@ def test_langchain_streaming(exporter):
 
     spans = exporter.get_finished_spans()
 
-    assert set(
-        [
-            "openai.chat",
-        ]
-    ).issubset([span.name for span in spans])
+    assert [
+        "langchain.task.PromptTemplate",
+        "openai.chat",
+        "langchain.task.ChatOpenAI",
+        "langchain.task.StrOutputParser",
+        "langchain.workflow",
+    ] == [span.name for span in spans]
