@@ -37,6 +37,17 @@ class OpenAIV1Instrumentor(BaseInstrumentor):
         meter_provider = kwargs.get("meter_provider")
         meter = get_meter(__name__, __version__, meter_provider)
 
+        wrap_function_wrapper(
+            "openai.resources.chat.completions",
+            "Completions.create",
+            chat_wrapper(tracer),
+        )
+        wrap_function_wrapper(
+            "openai.resources.completions",
+            "Completions.create",
+            completion_wrapper(tracer),
+        )
+
         chat_token_counter = meter.create_counter(
             name="llm.openai.chat_completions.tokens",
             unit="token",
@@ -59,17 +70,6 @@ class OpenAIV1Instrumentor(BaseInstrumentor):
             "openai.resources.chat.completions",
             "Completions.create",
             metrics_chat_wrapper(chat_token_counter, chat_choice_counter, chat_duration_histogram),
-        )
-
-        wrap_function_wrapper(
-            "openai.resources.chat.completions",
-            "Completions.create",
-            chat_wrapper(tracer),
-        )
-        wrap_function_wrapper(
-            "openai.resources.completions",
-            "Completions.create",
-            completion_wrapper(tracer),
         )
 
         embeddings_token_counter = meter.create_counter(

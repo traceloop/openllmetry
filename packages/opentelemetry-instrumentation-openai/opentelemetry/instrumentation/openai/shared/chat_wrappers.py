@@ -1,3 +1,4 @@
+import inspect
 import json
 import logging
 import time
@@ -58,10 +59,14 @@ def metrics_chat_wrapper(token_counter: Counter,
 
         raise e
 
-    if is_openai_v1():
-        response_dict = model_as_dict(response)
+    if is_streaming_response(response) or inspect.isgenerator(response):
+        return _build_metrics_from_streaming_response(token_counter, choice_counter, duration_histogram,
+                                                      start_time, response)
     else:
-        response_dict = response
+        if is_openai_v1():
+            response_dict = model_as_dict(response)
+        else:
+            response_dict = response
 
     shared_attributes = {
         "llm.response.model": response_dict.get("model") or None,
@@ -209,6 +214,37 @@ def _set_completions(span, choices):
         )
 
 
+def _build_metrics_from_streaming_response(token_counter: Counter,
+                                           choice_counter: Counter,
+                                           duration_histogram: Histogram,
+                                           start_time: float, response):
+    complete_response = {"choices": [], "model": ""}
+    for item in response:
+        item_to_yield = item
+        _accumulate_stream_items(item, complete_response)
+
+        yield item_to_yield
+
+    shared_attributes = {
+        "llm.response.model": complete_response.get("model") or None,
+        "server.address": _get_openai_base_url(),
+        "stream": True
+    }
+
+    # no token count in stream response, token_counter ignored
+
+    choices = complete_response.get("choices")
+    if choices is not None:
+        choice_counter.add(len(choices), attributes=shared_attributes)
+
+        for choice in choices:
+            attributes_with_reason = {**shared_attributes, "llm.response.finish_reason": choice["finish_reason"]}
+            choice_counter.add(1, attributes=attributes_with_reason)
+
+    duration = time.time() - start_time
+    duration_histogram.record(duration, attributes=shared_attributes)
+
+
 def _build_from_streaming_response(span, response):
     complete_response = {"choices": [], "model": ""}
     for item in response:
@@ -246,6 +282,8 @@ async def _abuild_from_streaming_response(span, response):
 def _accumulate_stream_items(item, complete_response):
     if is_openai_v1():
         item = model_as_dict(item)
+
+    complete_response["model"] = item.get("model")
 
     for choice in item.get("choices"):
         index = choice.get("index")

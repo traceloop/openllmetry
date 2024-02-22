@@ -114,7 +114,6 @@ def test_image_gen_metrics(metrics_test_context, openai_client):
         for sm in rm.scope_metrics:
             for metric in sm.metrics:
                 if metric.name == 'llm.openai.image_generations.duration':
-                    print(f"{metric=}")
                     found_duration_metric = True
                     assert any(data_point.count > 0 for data_point in metric.data.data_points)
                     assert any(data_point.sum > 0 for data_point in metric.data.data_points)
