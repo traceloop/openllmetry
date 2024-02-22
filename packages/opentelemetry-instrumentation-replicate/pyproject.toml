@@ -35,7 +35,7 @@ pytest-sugar = "0.9.7"
 vcrpy = "^6.0.1"
 pytest-recording = "^0.13.1"
 opentelemetry-sdk = "^1.22.0"
-replicate = "^0.23.1"
+replicate = ">=0.23.1,<0.25.0"
 
 [build-system]
 requires = ["poetry-core"]
