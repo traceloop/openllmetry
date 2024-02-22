@@ -1,12 +1,12 @@
 import os
 
 import pytest
-from traceloop.sdk import Traceloop
 from opentelemetry import metrics
 from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.metrics import MeterProvider
 from opentelemetry.sdk.metrics.export import InMemoryMetricReader
-from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
+
+from opentelemetry.instrumentation.openai import OpenAIInstrumentor
 
 
 @pytest.fixture(scope="session")
@@ -15,16 +15,9 @@ def metrics_test_context():
     reader = InMemoryMetricReader()
     provider = MeterProvider(metric_readers=[reader], resource=resource)
 
-    exporter = InMemorySpanExporter()
-
     metrics.set_meter_provider(provider)
 
-    Traceloop.init(
-        app_name="test",
-        resource_attributes={"something": "yes"},
-        disable_batch=True,
-        exporter=exporter,
-    )
+    OpenAIInstrumentor().instrument()
 
     return provider, reader
 
@@ -35,11 +28,6 @@ def clear_metrics_test_context(metrics_test_context):
 
     reader.shutdown()
     provider.shutdown()
-
-
-@pytest.fixture(autouse=True)
-def environment():
-    os.environ["OPENAI_API_KEY"] = "test_api_key"
 
 
 @pytest.fixture(scope="module")

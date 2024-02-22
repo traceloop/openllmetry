@@ -1,7 +1,6 @@
 interactions:
 - request:
-    body: '{"model": "davinci-002", "prompt": "Tell me a joke about opentelemetry",
-      "stream": true}'
+    body: '{"model": "davinci-002", "prompt": ["Tell me a joke about opentelemetry"]}'
     headers:
       accept:
       - application/json
@@ -10,7 +9,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '88'
+      - '74'
       content-type:
       - application/json
       host:
@@ -35,45 +34,35 @@ interactions:
     uri: https://api.openai.com/v1/completions
   response:
     body:
-      string: 'data: {"id":"cmpl-8rU81qUL0w7iJexMLJYsg1nUnUZu7","object":"text_completion","created":1707757889,"choices":[{"text":".\n\n","index":0,"logprobs":null,"finish_reason":null}],"model":"davinci-002"}
-
-
-        data: {"id":"cmpl-8rU81qUL0w7iJexMLJYsg1nUnUZu7","object":"text_completion","created":1707757889,"choices":[{"text":"OP","index":0,"logprobs":null,"finish_reason":null}],"model":"davinci-002"}
-
-
-        data: {"id":"cmpl-8rU81qUL0w7iJexMLJYsg1nUnUZu7","object":"text_completion","created":1707757889,"choices":[{"text":"EN","index":0,"logprobs":null,"finish_reason":null}],"model":"davinci-002"}
-
-
-        data: {"id":"cmpl-8rU81qUL0w7iJexMLJYsg1nUnUZu7","object":"text_completion","created":1707757889,"choices":[{"text":"T","index":0,"logprobs":null,"finish_reason":null}],"model":"davinci-002"}
-
-
-        data: {"id":"cmpl-8rU81qUL0w7iJexMLJYsg1nUnUZu7","object":"text_completion","created":1707757889,"choices":[{"text":"","index":0,"logprobs":null,"finish_reason":"stop"}],"model":"davinci-002"}
-
-
-        data: [DONE]
-
-
-        '
+      string: !!binary |
+        H4sIAAAAAAAAA0SQT0/CMBjG7/sUb3p2ZkMR3A08GU0khsSDmGV0r6zS9a3tW8JC+O6mG7JLD8+v
+        z5/2lAAIVYsChGytTuehC1N8e1ouJy9d+F19dE2+9vrw/hoWE3ETb9P2ByVHB+ORS0mt1ciKzICl
+        w4oxJuazbD59zPPZXQ9aqlFHW10dlJEqzbJLomxISfSigM8EAODUnzAUREfaIjsl/e3GbMy6QSCL
+        hlFj1Lt/mnqu5L526oAulTaA1AoNw2L1DD5YS459X9hnK1PjURSQXRVNO+toG3eYoPVV/1ZG+aZ0
+        WHkycY5Gs+NG9PycAHz1rwi+2qEoLuuFddRaLpn2aGLkfMgT43+NLH+4QCau9KhP7pPYcE7+AAAA
+        //8DAIIfaOOnAQAA
     headers:
       CF-Cache-Status:
       - DYNAMIC
       CF-RAY:
-      - 8546737919b909c1-HFA
+      - 8595eb5089f7bb2f-MXP
       Cache-Control:
       - no-cache, must-revalidate
       Connection:
       - keep-alive
+      Content-Encoding:
+      - gzip
       Content-Type:
-      - text/event-stream
+      - application/json
       Date:
-      - Mon, 12 Feb 2024 17:11:29 GMT
+      - Thu, 22 Feb 2024 08:39:33 GMT
       Server:
       - cloudflare
       Set-Cookie:
-      - __cf_bm=TjHANioIQDz1WMG719e9GXn.42QzfAnG0dH9awPNqDk-1707757889-1-AWC0wRI2j8+0fSgwORy2y5GcvOInCeVvww2j9YhYdZzz4ZkgSwwUoEAk8N1S0vGVDdIsWGCvOPUN+kyew1D8GSI=;
-        path=/; expires=Mon, 12-Feb-24 17:41:29 GMT; domain=.api.openai.com; HttpOnly;
+      - __cf_bm=7_07UQ1q86SE4.aE_SCFut89xwEVtvhcOBdP4bF9Lu8-1708591173-1.0-AdAfwNiLPHZYZJP2S0Z0M1TQEH+4OS8m3tC8kz4t4iJ3bgCij1+YPZosP+olayr+QB0aU9LOcWlgP/nvOZYFyQg=;
+        path=/; expires=Thu, 22-Feb-24 09:09:33 GMT; domain=.api.openai.com; HttpOnly;
         Secure; SameSite=None
-      - _cfuvid=O4hUzPakmT.WjhI.Pw2hu8ilrT4EUlB7kDmt0rBPQLQ-1707757889752-0-604800000;
+      - _cfuvid=74X6.ZRJWvGRra8AKyTnxVJqYMA.asKOUsnmRDFYlk4-1708591173640-0.0-604800000;
         path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
       Transfer-Encoding:
       - chunked
@@ -86,7 +75,7 @@ interactions:
       openai-organization:
       - traceloop
       openai-processing-ms:
-      - '45'
+      - '134'
       openai-version:
       - '2020-10-01'
       strict-transport-security:
@@ -104,7 +93,7 @@ interactions:
       x-ratelimit-reset-tokens:
       - 5ms
       x-request-id:
-      - req_933c7953e50739bbd588b14542770259
+      - req_4de4435b902f2d791bc968680a7e097c
     status:
       code: 200
       message: OK

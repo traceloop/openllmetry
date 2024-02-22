@@ -1,0 +1,154 @@
+interactions:
+- request:
+    body: '{"model": "davinci-002", "prompt": "Tell me a joke about opentelemetry",
+      "stream": true}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '88'
+      content-type:
+      - application/json
+      host:
+      - api.openai.com
+      user-agent:
+      - AsyncOpenAI/Python 1.12.0
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - async:asyncio
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.12.0
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.9.5
+    method: POST
+    uri: https://api.openai.com/v1/completions
+  response:
+    body:
+      string: 'data: {"id":"cmpl-8uyu6bD0SpeA5HoZJyRxyKYDaf2eV","object":"text_completion","created":1708591174,"choices":[{"text":".\n\n","index":0,"logprobs":null,"finish_reason":null}],"model":"davinci-002"}
+
+
+        data: {"id":"cmpl-8uyu6bD0SpeA5HoZJyRxyKYDaf2eV","object":"text_completion","created":1708591174,"choices":[{"text":"Far","index":0,"logprobs":null,"finish_reason":null}],"model":"davinci-002"}
+
+
+        data: {"id":"cmpl-8uyu6bD0SpeA5HoZJyRxyKYDaf2eV","object":"text_completion","created":1708591174,"choices":[{"text":"mer","index":0,"logprobs":null,"finish_reason":null}],"model":"davinci-002"}
+
+
+        data: {"id":"cmpl-8uyu6bD0SpeA5HoZJyRxyKYDaf2eV","object":"text_completion","created":1708591174,"choices":[{"text":"
+        Op","index":0,"logprobs":null,"finish_reason":null}],"model":"davinci-002"}
+
+
+        data: {"id":"cmpl-8uyu6bD0SpeA5HoZJyRxyKYDaf2eV","object":"text_completion","created":1708591174,"choices":[{"text":"ent","index":0,"logprobs":null,"finish_reason":null}],"model":"davinci-002"}
+
+
+        data: {"id":"cmpl-8uyu6bD0SpeA5HoZJyRxyKYDaf2eV","object":"text_completion","created":1708591174,"choices":[{"text":"cl","index":0,"logprobs":null,"finish_reason":null}],"model":"davinci-002"}
+
+
+        data: {"id":"cmpl-8uyu6bD0SpeA5HoZJyRxyKYDaf2eV","object":"text_completion","created":1708591174,"choices":[{"text":"ality","index":0,"logprobs":null,"finish_reason":null}],"model":"davinci-002"}
+
+
+        data: {"id":"cmpl-8uyu6bD0SpeA5HoZJyRxyKYDaf2eV","object":"text_completion","created":1708591174,"choices":[{"text":"
+        discovers","index":0,"logprobs":null,"finish_reason":null}],"model":"davinci-002"}
+
+
+        data: {"id":"cmpl-8uyu6bD0SpeA5HoZJyRxyKYDaf2eV","object":"text_completion","created":1708591174,"choices":[{"text":"
+        that","index":0,"logprobs":null,"finish_reason":null}],"model":"davinci-002"}
+
+
+        data: {"id":"cmpl-8uyu6bD0SpeA5HoZJyRxyKYDaf2eV","object":"text_completion","created":1708591174,"choices":[{"text":"
+        the","index":0,"logprobs":null,"finish_reason":null}],"model":"davinci-002"}
+
+
+        data: {"id":"cmpl-8uyu6bD0SpeA5HoZJyRxyKYDaf2eV","object":"text_completion","created":1708591174,"choices":[{"text":"
+        researchers","index":0,"logprobs":null,"finish_reason":null}],"model":"davinci-002"}
+
+
+        data: {"id":"cmpl-8uyu6bD0SpeA5HoZJyRxyKYDaf2eV","object":"text_completion","created":1708591174,"choices":[{"text":"
+        have","index":0,"logprobs":null,"finish_reason":null}],"model":"davinci-002"}
+
+
+        data: {"id":"cmpl-8uyu6bD0SpeA5HoZJyRxyKYDaf2eV","object":"text_completion","created":1708591174,"choices":[{"text":"
+        found","index":0,"logprobs":null,"finish_reason":null}],"model":"davinci-002"}
+
+
+        data: {"id":"cmpl-8uyu6bD0SpeA5HoZJyRxyKYDaf2eV","object":"text_completion","created":1708591174,"choices":[{"text":"
+        a","index":0,"logprobs":null,"finish_reason":null}],"model":"davinci-002"}
+
+
+        data: {"id":"cmpl-8uyu6bD0SpeA5HoZJyRxyKYDaf2eV","object":"text_completion","created":1708591174,"choices":[{"text":"
+        way","index":0,"logprobs":null,"finish_reason":null}],"model":"davinci-002"}
+
+
+        data: {"id":"cmpl-8uyu6bD0SpeA5HoZJyRxyKYDaf2eV","object":"text_completion","created":1708591174,"choices":[{"text":"
+        to","index":0,"logprobs":null,"finish_reason":"length"}],"model":"davinci-002"}
+
+
+        data: [DONE]
+
+
+        '
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 8595eb576c21baf3-MXP
+      Cache-Control:
+      - no-cache, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Type:
+      - text/event-stream
+      Date:
+      - Thu, 22 Feb 2024 08:39:34 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=HpoI1bzQahkh9C642hJQjq7TWJHA8_zguIJ59IB8hxw-1708591174-1.0-Af/XhPQuIUYovekL/ScmGwlYa5zSdUvDGcbaoR7khpqR7sODwPKPV/JZZ9HDCm8B+xa5SvtiQYo1Dxyoxpa1OnY=;
+        path=/; expires=Thu, 22-Feb-24 09:09:34 GMT; domain=.api.openai.com; HttpOnly;
+        Secure; SameSite=None
+      - _cfuvid=WqTH5LlUYEEee8pAbVNChJfiAt83JOyO0nUSd4lpcq0-1708591174641-0.0-604800000;
+        path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
+      Transfer-Encoding:
+      - chunked
+      access-control-allow-origin:
+      - '*'
+      alt-svc:
+      - h3=":443"; ma=86400
+      openai-model:
+      - davinci-002
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '42'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=15724800; includeSubDomains
+      x-ratelimit-limit-requests:
+      - '3000'
+      x-ratelimit-limit-tokens:
+      - '250000'
+      x-ratelimit-remaining-requests:
+      - '2999'
+      x-ratelimit-remaining-tokens:
+      - '249975'
+      x-ratelimit-reset-requests:
+      - 20ms
+      x-ratelimit-reset-tokens:
+      - 5ms
+      x-request-id:
+      - req_2e001b10ae2aea70735254f0faf3157a
+    status:
+      code: 200
+      message: OK
+version: 1
