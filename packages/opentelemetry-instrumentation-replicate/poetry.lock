@@ -676,13 +676,13 @@ files = [
 
 [[package]]
 name = "replicate"
-version = "0.23.1"
+version = "0.24.0"
 description = "Python client for Replicate"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "replicate-0.23.1-py3-none-any.whl", hash = "sha256:fef5faac3a5458796ad1905ddb39bc1bf314137ea03c58d3ec8bff437105a530"},
-    {file = "replicate-0.23.1.tar.gz", hash = "sha256:980cf50cb25804f27dd4177c193f3532fb7b00efe4f18380f97a953c6aaa46b2"},
+    {file = "replicate-0.24.0-py3-none-any.whl", hash = "sha256:88c0a87b2ab8ae80ff6ac722b1a555a5fd3f48a567bb4f9447cdd0e920e05d1e"},
+    {file = "replicate-0.24.0.tar.gz", hash = "sha256:3b85b5d9624bb6f95a74238c8a24d5af0ea255ed2194fcc29ef85e16e5286552"},
 ]
 
 [package.dependencies]
@@ -992,4 +992,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8.1,<4"
-content-hash = "1bcf661abd7fe6fd89bc19aa3109948325700dd3c17f27e90c5ef8fd21c6ec03"
+content-hash = "9b9e277dc6cbefcd6cfca5240e86da36391bcf4e579ccbd87859eb403b145182"
