@@ -18,7 +18,8 @@ from traceloop.sdk.telemetry import Telemetry
 from traceloop.sdk.instruments import Instruments
 from traceloop.sdk.config import (
     is_content_tracing_enabled,
-    is_tracing_enabled, is_metrics_enable,
+    is_tracing_enabled,
+    is_metrics_enabled,
 )
 from traceloop.sdk.fetcher import Fetcher
 from traceloop.sdk.tracing.tracing import (
@@ -151,7 +152,7 @@ class Traceloop:
 
         print(Fore.RESET)
 
-        # tracer init
+        # Tracer init
         resource_attributes.update({SERVICE_NAME: app_name})
         TracerWrapper.set_static_params(
             resource_attributes, enable_content_tracing, api_endpoint, headers
@@ -164,8 +165,8 @@ class Traceloop:
             instruments=instruments,
         )
 
-        # metrics init
-        if not is_metrics_enable():
+        # Metrics init: disabled for Traceloop as we don't have a metrics endpoint (yet)
+        if api_endpoint.find("traceloop.com") != -1 or not is_metrics_enabled():
             print(Fore.YELLOW + "Metrics is disabled" + Fore.RESET)
             return
 
@@ -175,7 +176,9 @@ class Traceloop:
         metrics_endpoint = os.getenv("TRACELOOP_METRICS_ENDPOINT")
         metrics_headers = os.getenv("TRACELOOP_METRICS_HEADERS") or metrics_headers
 
-        MetricsWrapper.set_static_params(resource_attributes, metrics_endpoint, metrics_headers)
+        MetricsWrapper.set_static_params(
+            resource_attributes, metrics_endpoint, metrics_headers
+        )
         Traceloop.__metrics_wrapper = MetricsWrapper(exporter=metrics_exporter)
 
     @staticmethod
