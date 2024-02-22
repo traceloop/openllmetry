@@ -11,7 +11,7 @@ interactions:
       accept:
       - application/json
       accept-encoding:
-      - gzip, deflate, br
+      - gzip, deflate
       connection:
       - keep-alive
       content-length:
@@ -35,41 +35,42 @@ interactions:
       x-stainless-runtime:
       - CPython
       x-stainless-runtime-version:
-      - 3.9.5
+      - 3.11.1
     method: POST
     uri: https://api.openai.com/v1/chat/completions
   response:
     body:
       string: !!binary |
-        IVQKACD+v27+zjK9c78pUM23TUdxpG0IeJJDQuv/d1PoAOl2E8ekgA7k46XRYZrF6ZjWS6M84rJ1
-        Lu5sBqcvqjnJuxuHCEUCRuD51PJG1xej+XBQud/eZ2Xm/G3Ev94f++74MX8a1T8Jzh0iqFkpuOX0
-        LkMM0kJJCLu5/EgkYOQOr0cDzxu618Q7jUpEDUbItL3wL/sXtmtn6uLa9frch7kquDBg9O8QEW1m
-        BhHq30/ASBZeZdEYARjwIyK0qhZghKkxhbFTaXEOAOnrOhnJrq6JPEyiHfNpXQtViCCnTW++qkqM
-        gghW/geMsAlghO10ABbgO19RSQ+mPLKFRD42K/iK14LSQiZUWEOL6Ypy1YiHAOcBdCd5XhdSSFBf
-        LNXKWOzyTEzbQmbmMsAO6rg7xbydhv1Qq0y3amaah2xzWvyy11owfT1Hoh26oNpZ9Qp0qxptY6sq
-        IQ0YDQd7anA6ACDfB380AGilez12TusjEcBAnBYyE61uC4ecQKpjPktmY5cLP4WzcwwD
+        H4sIAAAAAAAAA1yRT2/bMAzF7/4UHC+9JIVTJ2niS089tMAwoIcNwzwYskzbamVJkOimRpDvPsjN
+        n2YXQeDT++mR3CcAqGrMAWUnWPZOzzfvW/rxksmd/PjeUvZeV/XL77F5lEKInziLDlu9kuST61ba
+        3mliZc2nLD0Jpkhd3KebdXa33Cwnobc16WhrHc+z29WcB1/Zebq4Wx2dnVWSAubwJwEA2E9nzGhq
+        +sAc0tmp0lMIoiXMz48A0FsdKyhCUIGFYZxdRGkNk4mxzaD1F6EZjIzpSym0vgICoBH9hHy2b/SF
+        BoDCt0NPhmNc3BcYiAdXYF7gr24EaQddmxsG7ggqJUepCWKmGgYH1QiKA+nmocBZgW4wstPK0GR/
+        YtiJALyzwMpT/a3AA55/Phxvh/MotG2dt1X4rzNslFGhKz2JYE0Med1ocqL9nWY/XI0Tnbe945Lt
+        G5lIvl9/cvGy7YuYZUeRLQt9qS/SbXJMimEMTH3ZKNOSd15Nm8DGlZv1YrUW26VIMTkk/wAAAP//
+        AwAWbp3jkwIAAA==
     headers:
       CF-Cache-Status:
       - DYNAMIC
       CF-RAY:
-      - 8598ed44dbee0e85-MXP
+      - 8599dbe26894ba91-MXP
       Cache-Control:
       - no-cache, must-revalidate
       Connection:
       - keep-alive
       Content-Encoding:
-      - br
+      - gzip
       Content-Type:
       - application/json
       Date:
-      - Thu, 22 Feb 2024 17:25:11 GMT
+      - Thu, 22 Feb 2024 20:08:05 GMT
       Server:
       - cloudflare
       Set-Cookie:
-      - __cf_bm=v.N.pqrY4Sdg0bF9GeVVxMO9Rv8DwjEtn8_CtY1Ussk-1708622711-1.0-AUgJp3FyvvEbfyRlWJ/rGwc8IVDc0amaOl89UwA+rgAT0V24b3dRK6Rqbf5qWDZ1snkivtOIyEh63zqzBLLxfVo=;
-        path=/; expires=Thu, 22-Feb-24 17:55:11 GMT; domain=.api.openai.com; HttpOnly;
+      - __cf_bm=A6Ao3y.gQUB87AvCcH9CfpcpIVpbC.CYgLDGfbPlWzE-1708632485-1.0-AfBZX5/1IXnvN0umw4nYgw/S+Tz8XdpKJWVXRqk6MJkdcBgLOFinzB/vW/FV3/t00rnStqveSbzKaST/9I8g5ZM=;
+        path=/; expires=Thu, 22-Feb-24 20:38:05 GMT; domain=.api.openai.com; HttpOnly;
         Secure; SameSite=None
-      - _cfuvid=9p7kRehDeaVuaYN7zQ1HmfNCK2xKedFmpjpRJp8Obn0-1708622711718-0.0-604800000;
+      - _cfuvid=XAprj7cmSgjqtNLR9uAu7mwcHbj0fVnCey5_IKJ7hqQ-1708632485616-0.0-604800000;
         path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
       Transfer-Encoding:
       - chunked
@@ -82,7 +83,7 @@ interactions:
       openai-organization:
       - traceloop
       openai-processing-ms:
-      - '959'
+      - '957'
       openai-version:
       - '2020-10-01'
       strict-transport-security:
@@ -100,7 +101,7 @@ interactions:
       x-ratelimit-reset-tokens:
       - 11ms
       x-request-id:
-      - req_c0f65e011daf68594566e214e2ca41b8
+      - req_dca6fee6a155e706c99757aebba49d8a
     status:
       code: 200
       message: OK

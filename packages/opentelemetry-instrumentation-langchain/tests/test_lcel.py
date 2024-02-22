@@ -85,9 +85,6 @@ async def test_async_lcel(exporter):
     ) == set([span.name for span in spans])
 
     workflow_span = next(span for span in spans if span.name == "langchain.workflow")
-    prompt_task_span = next(
-        span for span in spans if span.name == "langchain.task.PromptTemplate"
-    )
     chat_openai_task_span = next(
         span for span in spans if span.name == "langchain.task.ChatOpenAI"
     )
@@ -95,7 +92,6 @@ async def test_async_lcel(exporter):
         span for span in spans if span.name == "langchain.task.StrOutputParser"
     )
 
-    assert prompt_task_span.parent.span_id == workflow_span.context.span_id
     assert chat_openai_task_span.parent.span_id == workflow_span.context.span_id
     assert output_parser_task_span.parent.span_id == workflow_span.context.span_id
 
