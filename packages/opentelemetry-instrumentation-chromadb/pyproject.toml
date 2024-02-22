@@ -8,7 +8,7 @@ show_missing = true
 
 [tool.poetry]
 name = "opentelemetry-instrumentation-chromadb"
-version = "0.11.3"
+version = "0.12.0"
 description = "OpenTelemetry Chroma DB instrumentation"
 authors = [
   "Gal Kleinman <gal@traceloop.com>",
