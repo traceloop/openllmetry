@@ -19,20 +19,14 @@ from opentelemetry.instrumentation.watsonx.version import __version__
 
 logger = logging.getLogger(__name__)
 
-_instruments = ("ibm_watson_machine_learning >= 1.0.327",)
+_instruments = ("ibm_watson_machine_learning >= 1.0.347",)
 
-WRAPPED_METHODS_VERSION_1 = [
+WRAPPED_METHODS_WATSON_ML_VERSION_1 = [
     {
         "module": "ibm_watson_machine_learning.foundation_models",
         "object": "Model",
         "method": "generate",
         "span_name": "watsonx.generate",
-    },
-    {
-        "module": "ibm_watson_machine_learning.foundation_models",
-        "object": "Model",
-        "method": "generate_text",
-        "span_name": "watsonx.generate_text",
     },
     {
         "module": "ibm_watson_machine_learning.foundation_models",
@@ -46,6 +40,32 @@ WRAPPED_METHODS_VERSION_1 = [
         "method": "get_details",
         "span_name": "watsonx.get_details",
     },
+]
+
+WRAPPED_METHODS_WATSON_AI_VERSION_1 = [
+    {
+        "module": "ibm_watsonx_ai.foundation_models",
+        "object": "ModelInference",
+        "method": "generate",
+        "span_name": "watsonx.generate",
+    },
+    {
+        "module": "ibm_watsonx_ai.foundation_models",
+        "object": "ModelInference",
+        "method": "generate_text_stream",
+        "span_name": "watsonx.generate_text_stream",
+    },
+    {
+        "module": "ibm_watsonx_ai.foundation_models",
+        "object": "ModelInference",
+        "method": "get_details",
+        "span_name": "watsonx.get_details",
+    },
+]
+
+WATSON_MODULES = [
+    WRAPPED_METHODS_WATSON_ML_VERSION_1,
+    WRAPPED_METHODS_WATSON_AI_VERSION_1,
 ]
 
 
@@ -77,67 +97,131 @@ def should_send_prompts():
 def _set_input_attributes(span, instance, kwargs):
     if should_send_prompts() and kwargs is not None and len(kwargs) > 0:
         prompt = kwargs.get("prompt")
-        _set_span_attribute(
-            span,
-            f"{SpanAttributes.LLM_PROMPTS}.0.user",
-            prompt,
-        )
+        if isinstance(prompt, list):
+            for index, input in enumerate(prompt):
+                _set_span_attribute(
+                    span,
+                    f"{SpanAttributes.LLM_PROMPTS}.{index}.user",
+                    input,
+                )
+        else:
+            _set_span_attribute(
+                span,
+                f"{SpanAttributes.LLM_PROMPTS}.user",
+                prompt,
+            )
 
     _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, instance.model_id)
     # Set other attributes
     modelParameters = instance.params
-    _set_span_attribute(
-        span, SpanAttributes.LLM_DECODING_METHOD, modelParameters.get("decoding_method")
-    )
-    _set_span_attribute(
-        span, SpanAttributes.LLM_RANDOM_SEED, modelParameters.get("random_seed")
-    )
-    _set_span_attribute(
-        span, SpanAttributes.LLM_MAX_NEW_TOKENS, modelParameters.get("max_new_tokens")
-    )
-    _set_span_attribute(
-        span, SpanAttributes.LLM_MIN_NEW_TOKENS, modelParameters.get("min_new_tokens")
-    )
-    _set_span_attribute(span, SpanAttributes.LLM_TOP_K, modelParameters.get("top_k"))
-    _set_span_attribute(
-        span,
-        SpanAttributes.LLM_REPETITION_PENALTY,
-        modelParameters.get("repetition_penalty"),
-    )
-    _set_span_attribute(
-        span, SpanAttributes.LLM_TEMPERATURE, modelParameters.get("temperature")
-    )
-    _set_span_attribute(span, SpanAttributes.LLM_TOP_P, modelParameters.get("top_p"))
+    if modelParameters is not None:
+        _set_span_attribute(
+            span, SpanAttributes.LLM_DECODING_METHOD, modelParameters.get("decoding_method", None)
+        )
+        _set_span_attribute(
+            span, SpanAttributes.LLM_RANDOM_SEED, modelParameters.get("random_seed", None)
+        )
+        _set_span_attribute(
+            span, SpanAttributes.LLM_MAX_NEW_TOKENS, modelParameters.get("max_new_tokens", None)
+        )
+        _set_span_attribute(
+            span, SpanAttributes.LLM_MIN_NEW_TOKENS, modelParameters.get("min_new_tokens", None)
+        )
+        _set_span_attribute(span, SpanAttributes.LLM_TOP_K, modelParameters.get("top_k", None))
+        _set_span_attribute(
+            span,
+            SpanAttributes.LLM_REPETITION_PENALTY,
+            modelParameters.get("repetition_penalty", None),
+        )
+        _set_span_attribute(
+            span, SpanAttributes.LLM_TEMPERATURE, modelParameters.get("temperature", None)
+        )
+        _set_span_attribute(span, SpanAttributes.LLM_TOP_P, modelParameters.get("top_p", None))
 
     return
 
 
-def _set_response_attributes(span, response):
+def _set_single_response_attributes(span, response, index) -> int:
+
+    token_sum = 0
+    if not isinstance(response, (dict, str)):
+        return token_sum
+
+    if isinstance(response, str):
+        if index is not None:
+            _set_span_attribute(
+                span,
+                f"{SpanAttributes.LLM_COMPLETIONS}.{index}.content",
+                response,
+            )
+        else:
+            _set_span_attribute(
+                span,
+                f"{SpanAttributes.LLM_COMPLETIONS}.content",
+                response,
+            )
+        return token_sum
+
+    usage = response["results"][0]
+    token_sum = usage.get("input_token_count") + usage.get("generated_token_count")
     _set_span_attribute(
         span, SpanAttributes.LLM_RESPONSE_MODEL, response.get("model_id")
     )
 
-    usage = response["results"][0]
-    _set_span_attribute(
-        span,
-        SpanAttributes.LLM_USAGE_TOTAL_TOKENS,
-        usage.get("input_token_count") + usage.get("generated_token_count"),
-    )
-    _set_span_attribute(
-        span,
-        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS,
-        usage.get("generated_token_count"),
-    )
-    _set_span_attribute(
-        span,
-        SpanAttributes.LLM_USAGE_PROMPT_TOKENS,
-        usage.get("input_token_count"),
-    )
-    _set_span_attribute(
-        span,
-        f"{SpanAttributes.LLM_COMPLETIONS}.0.content",
-        response["results"][0]["generated_text"],
-    )
+    if index is not None:
+        _set_span_attribute(
+            span,
+            f"{SpanAttributes.LLM_USAGE_COMPLETION_TOKENS}.{index}",
+            usage.get("generated_token_count"),
+        )
+        _set_span_attribute(
+            span,
+            f"{SpanAttributes.LLM_USAGE_PROMPT_TOKENS}.{index}",
+            usage.get("input_token_count"),
+        )
+        _set_span_attribute(
+            span,
+            f"{SpanAttributes.LLM_COMPLETIONS}.{index}.content",
+            response["results"][0]["generated_text"],
+        )
+    else:
+        _set_span_attribute(
+            span,
+            f"{SpanAttributes.LLM_USAGE_COMPLETION_TOKENS}",
+            usage.get("generated_token_count"),
+        )
+        _set_span_attribute(
+            span,
+            f"{SpanAttributes.LLM_USAGE_PROMPT_TOKENS}",
+            usage.get("input_token_count"),
+        )
+        _set_span_attribute(
+            span,
+            f"{SpanAttributes.LLM_COMPLETIONS}.content",
+            response["results"][0]["generated_text"],
+        )
+
+    return token_sum
+
+
+def _set_response_attributes(span, responses):
+    total_token = 0
+    if isinstance(responses, list) and len(responses) > 1:
+        for index, response in enumerate(responses):
+            total_token += _set_single_response_attributes(span, response, index)
+    elif isinstance(responses, list) and len(responses) == 1:
+        response = responses[0]
+        total_token = _set_single_response_attributes(span, response, None)
+    elif isinstance(responses, dict):
+        response = responses
+        total_token = _set_single_response_attributes(span, response, None)
+
+    if total_token != 0:
+        _set_span_attribute(
+            span,
+            f"{SpanAttributes.LLM_USAGE_TOTAL_TOKENS}",
+            total_token,
+            )
 
     return
 
@@ -198,19 +282,20 @@ class WatsonxInstrumentor(BaseInstrumentor):
         tracer_provider = kwargs.get("tracer_provider")
         tracer = get_tracer(__name__, __version__, tracer_provider)
 
-        wrapped_methods = WRAPPED_METHODS_VERSION_1
-        for wrapped_method in wrapped_methods:
-            wrap_module = wrapped_method.get("module")
-            wrap_object = wrapped_method.get("object")
-            wrap_method = wrapped_method.get("method")
-            wrap_function_wrapper(
-                wrap_module,
-                f"{wrap_object}.{wrap_method}",
-                _wrap(tracer, wrapped_method),
-            )
+        for wrapped_methods in WATSON_MODULES:
+            for wrapped_method in wrapped_methods:
+                wrap_module = wrapped_method.get("module")
+                wrap_object = wrapped_method.get("object")
+                wrap_method = wrapped_method.get("method")
+                wrap_function_wrapper(
+                    wrap_module,
+                    f"{wrap_object}.{wrap_method}",
+                    _wrap(tracer, wrapped_method),
+                )
 
     def _uninstrument(self, **kwargs):
-        wrapped_methods = WRAPPED_METHODS_VERSION_1
-        for wrapped_method in wrapped_methods:
-            wrap_object = wrapped_method.get("object")
-            unwrap(f"openai.{wrap_object}", wrapped_method.get("method"))
+        for wrapped_methods in WATSON_MODULES:
+            for wrapped_method in wrapped_methods:
+                wrap_module = wrapped_method.get("module")
+                wrap_object = wrapped_method.get("object")
+                unwrap(f"{wrap_module}.{wrap_object}", wrapped_method.get("method"))
