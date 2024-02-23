@@ -1,3 +1,9 @@
+## v0.12.2 (2024-02-23)
+
+### Fix
+
+- **cohere**: enrich rerank attributes (#476)
+
 ## v0.12.1 (2024-02-23)
 
 ### Fix
