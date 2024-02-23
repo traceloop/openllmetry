@@ -1,3 +1,9 @@
+## v0.12.1 (2024-02-23)
+
+### Fix
+
+- **llamaindex**: support query pipeline (#475)
+
 ## v0.12.0 (2024-02-22)
 
 ### Feat
