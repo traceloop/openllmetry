@@ -1,11 +1,20 @@
 import os
-import pytest
 import cohere
+from traceloop.sdk import Traceloop
+from traceloop.sdk.decorators import workflow
+
+Traceloop.init()
+
+co = cohere.Client(os.environ.get("COHERE_API_KEY"))
 
 
-@pytest.mark.vcr
-def test_cohere_rerank(exporter):
-    co = cohere.Client(os.environ.get("COHERE_API_KEY"))
+@workflow(name="pirate_joke_generator")
+def joke_workflow():
+    return co.chat(model="command", message="Tell me a joke, pirate style")
+
+
+@workflow(name="rerank")
+def rerank():
     query = "What is the capital of the United States?"
     documents = [
         "Carson City is the capital city of the American state of Nevada."
@@ -25,25 +34,14 @@ def test_cohere_rerank(exporter):
     ]
 
     results = co.rerank(
-        query=query, documents=documents, top_n=3, model="rerank-multilingual-v2.0"
+        query=query,
+        documents=documents,
+        top_n=3,
+        model="rerank-multilingual-v2.0",
     )
+    print(results)
 
-    spans = exporter.get_finished_spans()
-    cohere_span = spans[0]
-    assert cohere_span.name == "cohere.rerank"
-    assert cohere_span.attributes.get("llm.vendor") == "Cohere"
-    assert cohere_span.attributes.get("llm.request.type") == "rerank"
-    assert cohere_span.attributes.get("llm.request.model") == "rerank-multilingual-v2.0"
-    assert cohere_span.attributes.get(f"llm.prompts.{len(documents)}.role") == "user"
-    assert cohere_span.attributes.get(f"llm.prompts.{len(documents)}.content") == query
 
-    for i, doc in enumerate(documents):
-        assert cohere_span.attributes.get(f"llm.prompts.{i}.role") == "system"
-        assert cohere_span.attributes.get(f"llm.prompts.{i}.content") == doc
-
-    for idx, result in enumerate(results):
-        assert cohere_span.attributes.get(f"llm.completions.{idx}.role") == "assistant"
-        assert (
-            cohere_span.attributes.get(f"llm.completions.{idx}.content")
-            == f"Doc {result.index}, Score: {result.relevance_score}\n{result.document['text']}"
-        )
+# res = joke_workflow()
+# print(res)
+rerank()
