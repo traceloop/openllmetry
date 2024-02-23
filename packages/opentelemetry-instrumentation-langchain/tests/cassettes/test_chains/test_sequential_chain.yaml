@@ -40,27 +40,27 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAAA4xUwW7cRgy9+ysIXXqRF463rgvfEtRFDu2hsNsCrguDO0NpaI9mVJLSehPk3wNK
-        axvtJb0I0HDIeXyPfJ9PABqOzRU0YRjz6Y9ye3eHv+Xd/u738fzjT3fb7ua6/5nPz6bH26b123X3
-        SME8w+jZHkIdxkzGtazhIIRGXvHd5dnl5cXF5cV2CQw1Uva0frTT7ebi1CbZ1VMuajIFO2anyoG0
-        uYK/TgAAPi9fWN/y5PtyX+6bW8Ge4gHQ4GYqSga1gCWCD4Qh3TfACgi98Dhy6SEKDgh+jddribhP
-        BrWDPzhYFcYC16XPWOIGbhPBmPEAXc257nXJyDyTeoL/7AmzpQNgiTAKz5yppwg3XEJGFuhw4Hxo
-        YZ8qJJwJerREQtEBWyIWUELlSEBqaARdlQWwV9RpGEggUKadoDO7gY91TzNJC7jC0al4P/rS9877
-        bo+1R5KOgkGHAaPHei4KViHINOwybZzE9wNHtbU3nFkTdKTGMxuTthBRnkApiD/iqBLHSAUiKQsp
-        oBAIzYSZYguZMDrRVgHBBHsOYJMUJ4xmKqYrrSsx3ymMaMIojvmXKm/Uta5ch4Ei7NkSIETuOg5T
-        NogUWHlpGA1CnXKER6ojSuRP5O/IwZLDcIVrjgqRUDbwK2HZJ87UQvLBGHZsXCcFraWF67hHiS2M
-        udrCkuETQajFpOYXxVfgsJuUC6m2R0rU9RMsrn7EqU/mGl1n/oQ7stSCkNOgL81oquHJETp1edV2
-        EUPBqHhzCsJKS3kaqq0nU4HE/arvCxTnqYoT5cLW0kktq5wJRRMIYV60PLbgc/E2qss4b+ADmeAB
-        cwu5zrR2lasqYM4Q6kCrookw+urguknGAToumOkb45gJ52UsEv13ORy8KwYhLfQtNPy5suSWQjl7
-        ZkBd1jQkFAxGsg4jQsDReEbzS2pVDpkLtfB/rWGY1E6VCEapcQr2Olb0PObqA+4p6xL4mv7LKbQG
-        JlvXf7lGM/oaL4BrUfpnohJW5p+IFguaRsBxJBT0yGZxu8XYuER6bq7g7PUk136UunMTLFPOr+cd
-        F9b0IIRai3uhWh2bJfrlBODvxUAnxZ6aq6NxNqPUYbQHq09UvOAP79ZyzZttvwXPvz8/Rq0a5rfA
-        9mx74o98OfkKAAD//wMAfP793zAGAAA=
+        H4sIAAAAAAAAA1RUTW8cNwy9+1cQe14v4rj116Vwg6B1arS3pkFTGByJM8NGI01IajaLIP89oGbj
+        j8tiVuQjxfee+PUEYMNxcwObMM3p9Gq5pnf7+NvV9Mc/f344XPzKb36/P7ztX53dfZDN1rNL9z8F
+        c4TRF3sIZZoTGZe8hoMQGnnFs8tXVxfnr3+6vG6BqURKDhtmOz3f/XxqVbpyyllNarAjeiwcSDc3
+        8O8JAMDX9gtrLwd/zB/zXQYbCSaOalD69udvDlaEMQMJbqFkQFAKqUaK0BGGEdBAa1ayLSAMUurs
+        4D1hsvEAKKxWgqApDGgjCfRFAGFP9IlyBCHz0XZwO5U8eNMJWFvzjrAa9zUB5ggjYVQTT7rHeIA7
+        xY5Swi3sx+IQygMOFMFKQ/+4QVcNQknxdCQUowj3RSK8jXuUuIPbtZXWDEqmrVND40IKQVBHwAGd
+        zjVxLEJbMMrKJSsIKzWQUpBWQAiEFsJEcQfO67FF5mE0mKUMQqqk23a6EsYKc8KhOqmHRrEwaRNB
+        cOAAtFA23cEtTAc1Ei5VIRLa6KyrlUQZRmJJpUzbdiEEDZgjJk/FvkcWwJQglImco+T32UIijOzE
+        FxdlZEl7ztFbYwhV0dqYXrAjEzxg2r3kH3rOUWEkUUo9BKw+Jz+aKSbyamzefQtWJHupPbUbC6Sy
+        UPPEM12OgovTs/fb9USJ86At0QuHEWXyiGdS5mFC4wBvcDbkDO9wIt05++/ZxoZAEV4wtckgkpHj
+        KbbPYLzQKohJtRE6GvnoBFeA4gE6Gjir81Sz4ELphXncB+rv42jcMK7lSg4EM2Eg9/HR7GBVsgLn
+        RnqHZol6phQB9XE6DEaiMFV1/+ZeSm4WZIEZ1drgPQZaASUrfa6Uw9E2LQ9DU28H7zmllehQ8udK
+        qxOKwN4Dz6d8fM0vZnGXLAS5gFZZeCmiv8BfOR3AeKJjFUpplZ0VBuF5dnmeFkgUnNwsKVGEvasy
+        o/oj2kKkQGyrbWsyntAoHdzZP+yf465tsra0OEf6srmBV48nqQyzlM4XXK4pPZ73nFnHByHUkn3P
+        qZV506LfTgD+a8uxKg60uTkuxc0sZZrtwconyl7w4mwtt3layU/B1+eXx6gVw/QscH114k2+nXwH
+        AAD//wMA7P6fXwwGAAA=
     headers:
       CF-Cache-Status:
       - DYNAMIC
       CF-RAY:
-      - 85463f520e3509bd-HFA
+      - 8599dbc1aa720e8b-MXP
       Cache-Control:
       - no-cache, must-revalidate
       Connection:
@@ -70,14 +70,14 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Mon, 12 Feb 2024 16:35:56 GMT
+      - Thu, 22 Feb 2024 20:08:01 GMT
       Server:
       - cloudflare
       Set-Cookie:
-      - __cf_bm=WGtFrGQEzBEHzZkPpDFVWiu49vO0IvOQZAo9YGn8h9g-1707755756-1-ARGZW2W4jSLwugq2xufrU1LCNC4Yb6dLxs51C8upSrUV6VdyCYpzVmJCzqR7hEvtvK9PWVRbuYjA3lvwd88eeI8=;
-        path=/; expires=Mon, 12-Feb-24 17:05:56 GMT; domain=.api.openai.com; HttpOnly;
+      - __cf_bm=9NuHyDZIMakT15own8nk.Fw5RkIE8yaH5UAlOjN_hNM-1708632481-1.0-Ab+1XDwre0yOAmQjsP0MyZ0lpk7ST6THx7v7+XVL+hyO011XDjZx0W5VYGqY4W0KDvElkYrGNV/a+4osduAzDXA=;
+        path=/; expires=Thu, 22-Feb-24 20:38:01 GMT; domain=.api.openai.com; HttpOnly;
         Secure; SameSite=None
-      - _cfuvid=HoFXXKRxpIs5K4t_aRsh1mgSQu2RekjNK2PbsD5kp4s-1707755756257-0-604800000;
+      - _cfuvid=Zy_cZ2ergrwNiP.Jz4CzeosEr7eQDa8qETn0ExU6DLQ-1708632481546-0.0-604800000;
         path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
       Transfer-Encoding:
       - chunked
@@ -90,7 +90,7 @@ interactions:
       openai-organization:
       - traceloop
       openai-processing-ms:
-      - '2754'
+      - '2355'
       openai-version:
       - '2020-10-01'
       strict-transport-security:
@@ -102,37 +102,37 @@ interactions:
       x-ratelimit-remaining-requests:
       - '2999'
       x-ratelimit-remaining-tokens:
-      - '249682'
+      - '249683'
       x-ratelimit-reset-requests:
       - 20ms
       x-ratelimit-reset-tokens:
       - 76ms
       x-request-id:
-      - req_5a76ea0bf61d83362e9487987c7a8146
+      - req_b9fd55c360b7ca6ee87ff7a98241b549
     status:
       code: 200
       message: OK
 - request:
     body: '{"model": "gpt-3.5-turbo-instruct", "prompt": ["You are a play critic from
       the New York Times. Given the synopsis of play, it is your job to write a review
-      for that play.\n\n    Play Synopsis:\n    \n\n\"Tragedy at Sunset on the Beach\"
-      is a gripping drama set in the height of Victorian England. The play follows
-      the lives of the wealthy and privileged Sinclair family, who have gathered at
-      their seaside estate for a grand summer celebration. However, as the sun sets
-      on the beach, their perfect facade begins to crumble.\n\nAmidst the lavish festivities,
-      dark secrets and hidden desires are revealed, leading to a tragic turn of events.
-      The family''s patriarch, Lord Sinclair, is faced with a difficult decision that
-      could jeopardize everything he holds dear. Meanwhile, his ambitious son, Edward,
-      plots to take control of the family business, and his estranged daughter, Elizabeth,
-      returns with a shocking revelation.\n\nAs tensions rise and emotions run high,
-      the family is forced to confront the harsh realities of their privileged lives.
-      Betrayal, love, and loss all come to a head in a dramatic finale as the sun
-      sets on the beach, leaving the Sinclair family forever changed.\n\nWith a compelling
-      cast of characters and a captivating storyline, \"Tragedy at Sunset on the Beach\"
-      is a must-see production that explores the dark side of Victorian society and
-      the devastating consequences of keeping up appearances.\n    Review from a New
-      York Times play critic of the above play:"], "frequency_penalty": 0, "logit_bias":
-      {}, "max_tokens": 256, "n": 1, "presence_penalty": 0, "temperature": 0.7, "top_p":
+      for that play.\n\n    Play Synopsis:\n    \n\nIn the midst of the Victorian
+      era, on a secluded beach at sunset, a group of wealthy aristocrats gather for
+      a weekend retreat. Among them is the beautiful and headstrong Lady Isabella,
+      who is engaged to the wealthy but cold-hearted Lord Edward. As the sun sets
+      and the waves crash against the shore, tensions rise and secrets are revealed.
+      \n\nAs the night progresses, the group is plagued by a series of tragic events.
+      A mysterious death, a stolen heirloom, and a scandalous affair all come to light,
+      leading to a whirlwind of accusations and betrayal. Lady Isabella finds herself
+      caught in the middle of it all, torn between her love for Lord Edward and her
+      growing feelings for the charming and enigmatic Captain James.\n\nWith the arrival
+      of a determined detective, the truth behind the tragedy begins to unravel. As
+      the sun rises on the beach, the once peaceful retreat turns into a battlefield
+      as the characters must confront their past and face the consequences of their
+      actions. Will love conquer all or will the tragedy at sunset on the beach leave
+      no survivors? Only time will tell in this gripping Victorian drama filled with
+      passion, deceit, and ultimately, a tragic end.\n    Review from a New York Times
+      play critic of the above play:"], "frequency_penalty": 0, "logit_bias": {},
+      "max_tokens": 256, "n": 1, "presence_penalty": 0, "temperature": 0.7, "top_p":
       1}'
     headers:
       accept:
@@ -142,12 +142,12 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '1613'
+      - '1577'
       content-type:
       - application/json
       cookie:
-      - __cf_bm=WGtFrGQEzBEHzZkPpDFVWiu49vO0IvOQZAo9YGn8h9g-1707755756-1-ARGZW2W4jSLwugq2xufrU1LCNC4Yb6dLxs51C8upSrUV6VdyCYpzVmJCzqR7hEvtvK9PWVRbuYjA3lvwd88eeI8=;
-        _cfuvid=HoFXXKRxpIs5K4t_aRsh1mgSQu2RekjNK2PbsD5kp4s-1707755756257-0-604800000
+      - __cf_bm=9NuHyDZIMakT15own8nk.Fw5RkIE8yaH5UAlOjN_hNM-1708632481-1.0-Ab+1XDwre0yOAmQjsP0MyZ0lpk7ST6THx7v7+XVL+hyO011XDjZx0W5VYGqY4W0KDvElkYrGNV/a+4osduAzDXA=;
+        _cfuvid=Zy_cZ2ergrwNiP.Jz4CzeosEr7eQDa8qETn0ExU6DLQ-1708632481546-0.0-604800000
       host:
       - api.openai.com
       user-agent:
@@ -171,28 +171,28 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAAA4xUwWokNxC9+yuKuexlPGwIEye+bcCEQCABm3jjdViqpdetWqulplTd494l/x6k
-        nnWygZBcGlpSVb1671V9uiDaid9d086NU7z8Vu8e3O38Y0j309vjgO+Whx8eSv7t7S/5o9vt6+vc
-        fYCzGmF4tvcuj1OESU7btVOwoWb86ur11dXxeHX8pl2M2SPWsGGyy68Px0ubtcuXkorp7OwcHbI4
-        lN01vbsgIvrUvrTVqsGP6TE97u6UB/iV2Oh2TgVGOZEF0PdgFx53JIWYHE8mC5ukgbzyyGSBjTzi
-        gkKSLLcYz/pEc/LQDjGulHv6VZxlFU50k4bIyb8qFGQIVLIT2HqgexUzJDqJhZpKxbGBPIwlEidP
-        IxeD9nOkYllXQ4yShj1ZkEJT5JWMn1AaBJ69IDnUNpg+5FkTVrKgeR5CexGlYs59+zmBo4W1lZlU
-        FokY4OlWkossSj2PEtdD5eougAqscZB7Yhq0RpV5HKHkENEpV/Uql0wFXMSDUKy2M2lexJ9BTtAe
-        zqhj9+Q1T9RnbRdzUl4QzyXqyT+QvCovwT079jjQmy1nmVOFVz7r11X99l9yUumaY4TfJGM6ZY2+
-        lgriPRJ5FFGUPZWQ3VOFoVgQW1tl31gy5UEcYUGy8kKM42I1jwus7AxaajE8T1CLKznl3uD3m8gV
-        GY0YO+i/tEmdShpqfQsQpXxKtI3Hs5igNCR95FOhs/WK8YADNSw59VEqvbATsNExsamwVkp+yvqX
-        wltT1Ug8dmKS50IlJ7rxJ1a/3+w/qExTRdOxWUSTa8onaAt2OZnmeKA3lZ4AUtisqbZ2E+Ujd7Cz
-        ECimnKrBPM9DMNTy3td2sgUoRV7PnCCVZqXkCWNutjp3ylHBfqU69HNEss+c+TXxKK5pcjZFG45J
-        86AopepaD/+eu2yTU1uQNKPWUCnYUwT7xn+1SRt5E0e9JI7Yhv8kMdZnC740maIZ+ED3VWsLGLdx
-        62DKK8c9xbxg4z3mUvb0P7YQnqeY9Tw+gbUEUnDczNCm8bxP6BSgIJ4msHJy1SuKalddLVRclZ6f
-        FyjH+N+l2y5ta1OSx/Puml6/nMQ8TJq7umLTHOPLeS9JSniv4JJT3bQRabCwa/d/XBD93hb0XHjA
-        7vq8mHd/qqAoP7egJL4kPzs1D2SkkYUlxEQlRL2AJAupCkDFeX5JYg5CwtTElAtkSy0XAAAA//8D
-        AEkcujaRBgAA
+        H4sIAAAAAAAAA3RUTW8jNwy951cQPjvBfrWb5pYtWrRFuofuogu0KRa0RM8w0UgKSdkeLPrfC2rs
+        OJdeBhqRFB/fI/ntAmDFcXUDqzDVdHm9+4Hu3v8xp+2Xvz4+fdzePbwbPvxe2/bNJ75drd27bB4o
+        mEcYHexrKFNNZFzyYg5CaOQvvn7/6vr7t2/eXb/uhqlESh42VLt8e/XdpTXZlEvOatKCHaPHwoF0
+        dQN/XwAAfOtfWHJ5MNzn+3y/up04qoGNBJWDNSF9agRKZpwHKFtAUAqpRYqwIQwjoIG2rGRruF99
+        6icouT/xwR3uV2D4SArYIlMOpG5GsDa1ZK00hYfSJNMMNkppw9hjNWCOmNy8L5Ki5/6TgxVhzIDC
+        aiUIml7BF7bRH8RE2ShCQDXAHAFhEK7VkasVmRNnWoONrFATzhAp8Y5EAaGWPcm2pR4nvKNeLx0q
+        SQd95fz8LGVawBmKrfvxVBWwQhTcZ+BspZtKbY4IPIk6fr/cEyYbZwgjCgYj0TUkJ3Pu5oDVeIc9
+        +x3GGX5V3FBK2IF1j5Li5UgoXupdkQg/xT1KvIJbdW2ETKFlwR0t1Rhl5ZIVhJUW0L36R6LqpRsP
+        o8FYnOMMbGelHBnuHIqNNJ1UpTjQsRoWUHINnJ3PDm6kidVkhg3ZnmiJONfqLFVMFTeJ1kBaKTCm
+        dHb/n5pHlMlx/IjVkDP8hhPpFXzuELZFNhwjZUhlR4AxKmAGOpggJJxJHC5nEx4awVEdTEKebBm0
+        A9RUrL8IKMI7TCfFIhl5dor9GIzPSYqNJGB79qEpx94oMnfmYmeuvGzDkHjCA9iIBntOqRNML0ZD
+        reVM8ZnQKiW24GsAIikP2Rmkw1NjZaM1bE8tmXDHOkIoam0iPaGJZMjeX31ATTBrLWJHTc/du8Hw
+        CJzBeHpm6DxuJLhQ05SOS2AZ9OMK0O7vb0Qp9UgOKOXF3dM+NU5sc5d0Q9hsPqXpHO5ZySXqIe4T
+        BSc0DkA7yqa+Qxx0TXgcxl/KnnYka9g7mSYtzV6kvphvrCjmhPWm3iwArHjPTolUve8S5QiUaOpZ
+        yhakTNh7f5rVyKXsXSg4UJwXFvzHkeWu8FnHvmv7WuUc6bC6gVfPN6kMVcrGV3BuKT3fbzmzjl+F
+        UEv2TZwoDzauuv3fC4B/+gJviv8pPVXJClpwKxUU5ecWlMSX5Gen5oGMNLIwgZiohKg3kGRNzaCy
+        JfkliTkICVMTAy6QLbVcAAAAAP//AwBR+2ScsQYAAA==
     headers:
       CF-Cache-Status:
       - DYNAMIC
       CF-RAY:
-      - 85463f64bd5009bd-HFA
+      - 8599dbd1efba0e8b-MXP
       Cache-Control:
       - no-cache, must-revalidate
       Connection:
@@ -202,7 +202,7 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Mon, 12 Feb 2024 16:35:59 GMT
+      - Thu, 22 Feb 2024 20:08:04 GMT
       Server:
       - cloudflare
       Transfer-Encoding:
@@ -216,7 +216,7 @@ interactions:
       openai-organization:
       - traceloop
       openai-processing-ms:
-      - '2690'
+      - '2295'
       openai-version:
       - '2020-10-01'
       strict-transport-security:
@@ -228,13 +228,13 @@ interactions:
       x-ratelimit-remaining-requests:
       - '2999'
       x-ratelimit-remaining-tokens:
-      - '249389'
+      - '249396'
       x-ratelimit-reset-requests:
       - 20ms
       x-ratelimit-reset-tokens:
-      - 146ms
+      - 144ms
       x-request-id:
-      - req_03207d98c1f9a3d0d552d59ad7deaf0f
+      - req_046213cfe6291d983ed25863287aad7b
     status:
       code: 200
       message: OK

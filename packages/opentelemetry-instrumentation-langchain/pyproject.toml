@@ -8,7 +8,7 @@ show_missing = true
 
 [tool.poetry]
 name = "opentelemetry-instrumentation-langchain"
-version = "0.11.3"
+version = "0.12.0"
 description = "OpenTelemetry Langchain instrumentation"
 authors = [
   "Gal Kleinman <gal@traceloop.com>",
@@ -31,7 +31,7 @@ opentelemetry-semantic-conventions-ai = "^0.0.20"
 autopep8 = "2.0.4"
 flake8 = "7.0.0"
 pytest = "7.4.4"
-pytest-sugar = "0.9.7"
+pytest-sugar = "1.0.0"
 
 
 [tool.poetry.group.test.dependencies]
@@ -39,9 +39,10 @@ langchain = "^0.1.6"
 langchain-community = "^0.0.19"
 openai = "^1.12.0"
 pytest = "7.4.4"
-pytest-sugar = "0.9.7"
+pytest-sugar = "1.0.0"
 vcrpy = "^6.0.1"
 pytest-recording = "^0.13.1"
+pytest-asyncio = "^0.23.5"
 opentelemetry-sdk = "^1.22.0"
 opentelemetry-instrumentation-openai = {path="../opentelemetry-instrumentation-openai", develop=true}
 
