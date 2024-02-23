@@ -556,13 +556,13 @@ files = [
 
 [[package]]
 name = "pytest"
-version = "7.4.4"
+version = "8.0.1"
 description = "pytest: simple powerful testing with Python"
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.8"
 files = [
-    {file = "pytest-7.4.4-py3-none-any.whl", hash = "sha256:b090cdf5ed60bf4c45261be03239c2c1c22df034fbffe691abe93cd80cea01d8"},
-    {file = "pytest-7.4.4.tar.gz", hash = "sha256:2cf0005922c6ace4a3e2ec8b4080eb0d9753fdc93107415332f50ce9e7994280"},
+    {file = "pytest-8.0.1-py3-none-any.whl", hash = "sha256:3e4f16fe1c0a9dc9d9389161c127c3edc5d810c38d6793042fb81d9f48a59fca"},
+    {file = "pytest-8.0.1.tar.gz", hash = "sha256:267f6563751877d772019b13aacbe4e860d73fe8f651f28112e9ac37de7513ae"},
 ]
 
 [package.dependencies]
@@ -570,7 +570,7 @@ colorama = {version = "*", markers = "sys_platform == \"win32\""}
 exceptiongroup = {version = ">=1.0.0rc8", markers = "python_version < \"3.11\""}
 iniconfig = "*"
 packaging = "*"
-pluggy = ">=0.12,<2.0"
+pluggy = ">=1.3.0,<2.0"
 tomli = {version = ">=1.0.0", markers = "python_version < \"3.11\""}
 
 [package.extras]
@@ -676,13 +676,13 @@ files = [
 
 [[package]]
 name = "replicate"
-version = "0.23.1"
+version = "0.24.0"
 description = "Python client for Replicate"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "replicate-0.23.1-py3-none-any.whl", hash = "sha256:fef5faac3a5458796ad1905ddb39bc1bf314137ea03c58d3ec8bff437105a530"},
-    {file = "replicate-0.23.1.tar.gz", hash = "sha256:980cf50cb25804f27dd4177c193f3532fb7b00efe4f18380f97a953c6aaa46b2"},
+    {file = "replicate-0.24.0-py3-none-any.whl", hash = "sha256:88c0a87b2ab8ae80ff6ac722b1a555a5fd3f48a567bb4f9447cdd0e920e05d1e"},
+    {file = "replicate-0.24.0.tar.gz", hash = "sha256:3b85b5d9624bb6f95a74238c8a24d5af0ea255ed2194fcc29ef85e16e5286552"},
 ]
 
 [package.dependencies]
@@ -992,4 +992,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8.1,<4"
-content-hash = "3144f80a3566a8c692c063823826b2181680905f4ba7191be2dea7b09af035db"
+content-hash = "9b9e277dc6cbefcd6cfca5240e86da36391bcf4e579ccbd87859eb403b145182"

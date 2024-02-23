@@ -1,18 +1,19 @@
 import os
 
-import openai
+from openai import OpenAI
 
 from traceloop.sdk import Traceloop
 from traceloop.sdk.decorators import agent, workflow
 
-openai.api_key = os.getenv("OPENAI_API_KEY")
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
 Traceloop.init(app_name="joke_generation_service")
 
 
 @agent(name="base_joke_generator", method_name="generate_joke")
 class JokeAgent:
     def generate_joke(self):
-        completion = openai.ChatCompletion.create(
+        completion = client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[{"role": "user", "content": "Tell me a joke about Donald Trump"}],
         )
@@ -23,7 +24,7 @@ class JokeAgent:
 @agent(method_name="generate_joke")
 class PirateJokeAgent(JokeAgent):
     def generate_joke(self):
-        completion = openai.ChatCompletion.create(
+        completion = client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[
                 {"role": "system", "content": "You are a funny sarcastic pirate"},

@@ -1,3 +1,20 @@
+## v0.12.0 (2024-02-22)
+
+### Feat
+
+- Qdrant instrumentation (#364)
+
+### Fix
+
+- **langchain**: support LCEL (#473)
+- **sdk**: fail gracefully in case input/output serialization failure (#472)
+
+## v0.11.3 (2024-02-19)
+
+### Fix
+
+- **llamaindex**: support both new and legacy llama_index versions (#422)
+
 ## v0.11.2 (2024-02-16)
 
 ### Fix
