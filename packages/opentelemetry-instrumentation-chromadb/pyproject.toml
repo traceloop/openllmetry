@@ -32,12 +32,12 @@ opentelemetry-semantic-conventions-ai = "^0.0.20"
 autopep8 = "2.0.4"
 flake8 = "7.0.0"
 pytest = "8.0.1"
-pytest-sugar = "0.9.7"
+pytest-sugar = "1.0.0"
 
 [tool.poetry.group.test.dependencies]
 chromadb = "^0.4.22"
 pytest = "8.0.1"
-pytest-sugar = "0.9.7"
+pytest-sugar = "1.0.0"
 opentelemetry-sdk = "^1.22.0"
 
 [build-system]
