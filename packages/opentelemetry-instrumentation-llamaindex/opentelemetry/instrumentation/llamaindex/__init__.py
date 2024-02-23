@@ -22,6 +22,9 @@ from opentelemetry.instrumentation.llamaindex.base_embedding_instrumentor import
 from opentelemetry.instrumentation.llamaindex.custom_llm_instrumentor import (
     CustomLLMInstrumentor,
 )
+from opentelemetry.instrumentation.llamaindex.query_pipeline_instrumentor import (
+    QueryPipelineInstrumentor,
+)
 from opentelemetry.instrumentation.llamaindex.version import __version__
 
 logger = logging.getLogger(__name__)
@@ -44,6 +47,7 @@ class LlamaIndexInstrumentor(BaseInstrumentor):
         BaseSynthesizerInstrumentor(tracer).instrument()
         BaseEmbeddingInstrumentor(tracer).instrument()
         CustomLLMInstrumentor(tracer).instrument()
+        QueryPipelineInstrumentor(tracer).instrument()
 
     def _uninstrument(self, **kwargs):
         pass

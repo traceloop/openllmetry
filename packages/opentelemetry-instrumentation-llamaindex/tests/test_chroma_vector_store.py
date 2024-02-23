@@ -12,7 +12,7 @@ from llama_index.embeddings.openai import OpenAIEmbedding
 
 
 @pytest.mark.vcr
-def test_query(exporter):
+def test_rag_with_chroma(exporter):
     chroma_client = chromadb.EphemeralClient()
     chroma_collection = chroma_client.create_collection("quickstart")
 
