@@ -6,34 +6,36 @@ def is_openai_v1():
     return version("openai") >= "1.0.0"
 
 
-def _with_chat_metric_wrapper(func):
-    def _with_metric(token_counter, choice_counter, duration_histogram):
-        def wrapper(wrapped, instance, args, kwargs):
-            return func(token_counter, choice_counter, duration_histogram, wrapped, instance, args, kwargs)
-
-        return wrapper
-
-    return _with_metric
-
-
-def _with_embeddings_metric_wrapper(func):
-    def _with_metric(token_counter, vector_size_counter, duration_histogram):
-        def wrapper(wrapped, instance, args, kwargs):
-            return func(token_counter, vector_size_counter, duration_histogram, wrapped, instance, args, kwargs)
-
-        return wrapper
-
-    return _with_metric
-
-
 def _with_image_gen_metric_wrapper(func):
-    def _with_metric(duration_histogram):
+    def _with_metric(duration_histogram, exception_counter):
         def wrapper(wrapped, instance, args, kwargs):
-            return func(duration_histogram, wrapped, instance, args, kwargs)
+            return func(duration_histogram, exception_counter, wrapped, instance, args, kwargs)
 
         return wrapper
 
     return _with_metric
+
+
+def _with_embeddings_telemetry_wrapper(func):
+    def _with_embeddings_telemetry(tracer, token_counter, vector_size_counter, duration_histogram, exception_counter):
+        def wrapper(wrapped, instance, args, kwargs):
+            return func(tracer, token_counter, vector_size_counter, duration_histogram, exception_counter,
+                        wrapped, instance, args, kwargs)
+
+        return wrapper
+
+    return _with_embeddings_telemetry
+
+
+def _with_chat_telemetry_wrapper(func):
+    def _with_chat_telemetry(tracer, token_counter, choice_counter, duration_histogram, exception_counter):
+        def wrapper(wrapped, instance, args, kwargs):
+            return func(tracer, token_counter, choice_counter, duration_histogram, exception_counter,
+                        wrapped, instance, args, kwargs)
+
+        return wrapper
+
+    return _with_chat_telemetry
 
 
 def _with_tracer_wrapper(func):

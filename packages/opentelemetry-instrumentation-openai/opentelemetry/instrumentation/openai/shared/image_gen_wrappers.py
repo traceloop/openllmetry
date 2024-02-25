@@ -3,7 +3,7 @@ import time
 from opentelemetry import context as context_api
 from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
 
-from opentelemetry.metrics import Histogram
+from opentelemetry.metrics import Counter, Histogram
 
 from opentelemetry.instrumentation.openai import is_openai_v1
 from opentelemetry.instrumentation.openai.shared import _get_openai_base_url, model_as_dict
@@ -12,6 +12,7 @@ from opentelemetry.instrumentation.openai.utils import _with_image_gen_metric_wr
 
 @_with_image_gen_metric_wrapper
 def image_gen_metrics_wrapper(duration_histogram: Histogram,
+                              exception_counter: Counter,
                               wrapped, instance, args, kwargs):
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
         return wrapped(*args, **kwargs)
@@ -24,13 +25,15 @@ def image_gen_metrics_wrapper(duration_histogram: Histogram,
     except Exception as e:  # pylint: disable=broad-except
         end_time = time.time()
         duration = end_time - start_time if 'start_time' in locals() else 0
+
         attributes = {
             "error.type": e.__class__.__name__,
-            "server.address": _get_openai_base_url(),
         }
 
-        if duration > 0:
+        if duration > 0 and duration_histogram:
             duration_histogram.record(duration, attributes=attributes)
+        if exception_counter:
+            exception_counter.add(1, attributes=attributes)
 
         raise e
 
@@ -46,6 +49,7 @@ def image_gen_metrics_wrapper(duration_histogram: Histogram,
     }
 
     duration = end_time - start_time
-    duration_histogram.record(duration, attributes=shared_attributes)
+    if duration_histogram:
+        duration_histogram.record(duration, attributes=shared_attributes)
 
     return response

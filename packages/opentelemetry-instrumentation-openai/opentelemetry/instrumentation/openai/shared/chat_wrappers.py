@@ -1,4 +1,3 @@
-import inspect
 import json
 import logging
 import time
@@ -8,7 +7,7 @@ from opentelemetry.metrics import Counter, Histogram
 from opentelemetry.semconv.ai import SpanAttributes, LLMRequestTypeValues
 
 from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
-from opentelemetry.instrumentation.openai.utils import _with_tracer_wrapper, _with_chat_metric_wrapper
+from opentelemetry.instrumentation.openai.utils import _with_tracer_wrapper, _with_chat_telemetry_wrapper
 from opentelemetry.instrumentation.openai.shared import (
     _set_request_attributes,
     _set_span_attribute,
@@ -17,9 +16,10 @@ from opentelemetry.instrumentation.openai.shared import (
     is_streaming_response,
     should_send_prompts,
     model_as_dict,
-    _get_openai_base_url, OPENAI_LLM_USAGE_TOKEN_TYPES,
+    _get_openai_base_url,
+    OPENAI_LLM_USAGE_TOKEN_TYPES,
 )
-from opentelemetry.trace import SpanKind
+from opentelemetry.trace import SpanKind, Tracer
 from opentelemetry.trace.status import Status, StatusCode
 
 from opentelemetry.instrumentation.openai.utils import is_openai_v1
@@ -30,75 +30,13 @@ LLM_REQUEST_TYPE = LLMRequestTypeValues.CHAT
 logger = logging.getLogger(__name__)
 
 
-@_with_chat_metric_wrapper
-def metrics_chat_wrapper(token_counter: Counter,
-                         choice_counter: Counter,
-                         duration_histogram: Histogram,
-                         wrapped, instance, args, kwargs):
-    if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
-        return wrapped(*args, **kwargs)
-
-    try:
-        # record time for duration
-        start_time = time.time()
-        response = wrapped(*args, **kwargs)
-        end_time = time.time()
-    except Exception as e:  # pylint: disable=broad-except
-        end_time = time.time()
-        duration = end_time - start_time if 'start_time' in locals() else 0
-        attributes = {
-            "error.type": e.__class__.__name__,
-            "server.address": _get_openai_base_url(),
-        }
-
-        token_counter.add(1, attributes=attributes)
-        choice_counter.add(1, attributes=attributes)
-        # if there are legal duration, record it
-        if duration > 0:
-            duration_histogram.record(duration, attributes=attributes)
-
-        raise e
-
-    if is_streaming_response(response) or inspect.isgenerator(response):
-        return _build_metrics_from_streaming_response(token_counter, choice_counter, duration_histogram,
-                                                      start_time, response)
-    else:
-        if is_openai_v1():
-            response_dict = model_as_dict(response)
-        else:
-            response_dict = response
-
-    shared_attributes = {
-        "llm.response.model": response_dict.get("model") or None,
-        "server.address": _get_openai_base_url(),
-    }
-
-    # token
-    usage = response_dict.get("usage")  # type: dict
-    if usage is not None:
-        for name, val in usage.items():
-            if name in OPENAI_LLM_USAGE_TOKEN_TYPES:
-                attributes_with_token_type = {**shared_attributes, "llm.usage.token_type": name.split('_')[0]}
-                token_counter.add(val, attributes=attributes_with_token_type)
-
-    # choices
-    choices = response_dict.get("choices")
-    if choices is not None:
-        choice_counter.add(len(choices), attributes=shared_attributes)
-
-        for choice in choices:
-            attributes_with_reason = {**shared_attributes, "llm.response.finish_reason": choice["finish_reason"]}
-            choice_counter.add(1, attributes=attributes_with_reason)
-
-    # duration
-    duration = end_time - start_time
-    duration_histogram.record(duration, attributes=shared_attributes)
-
-    return response
-
-
-@_with_tracer_wrapper
-def chat_wrapper(tracer, wrapped, instance, args, kwargs):
+@_with_chat_telemetry_wrapper
+def chat_wrapper(tracer: Tracer,
+                 token_counter: Counter,
+                 choice_counter: Counter,
+                 duration_histogram: Histogram,
+                 exception_counter: Counter,
+                 wrapped, instance, args, kwargs):
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
         return wrapped(*args, **kwargs)
 
@@ -110,13 +48,34 @@ def chat_wrapper(tracer, wrapped, instance, args, kwargs):
     )
 
     _handle_request(span, kwargs)
-    response = wrapped(*args, **kwargs)
+
+    try:
+        start_time = time.time()
+        response = wrapped(*args, **kwargs)
+        end_time = time.time()
+    except Exception as e:  # pylint: disable=broad-except
+        end_time = time.time()
+        duration = end_time - start_time if 'start_time' in locals() else 0
+
+        attributes = {
+            "error.type": e.__class__.__name__,
+        }
+
+        if duration > 0 and duration_histogram:
+            duration_histogram.record(duration, attributes=attributes)
+        if exception_counter:
+            exception_counter.add(1, attributes=attributes)
+
+        raise e
 
     if is_streaming_response(response):
         # span will be closed after the generator is done
-        return _build_from_streaming_response(span, response)
+        return _build_from_streaming_response(span, response, token_counter, choice_counter, duration_histogram,
+                                              start_time)
 
-    _handle_response(response, span)
+    duration = end_time - start_time
+
+    _handle_response(response, span, token_counter, choice_counter, duration_histogram, duration)
     span.end()
 
     return response
@@ -152,18 +111,57 @@ def _handle_request(span, kwargs):
         _set_functions_attributes(span, kwargs.get("functions"))
 
 
-def _handle_response(response, span):
+def _handle_response(response, span, token_counter=None, choice_counter=None, duration_histogram=None, duration=None):
     if is_openai_v1():
         response_dict = model_as_dict(response)
     else:
         response_dict = response
 
+    # metrics record
+    _set_chat_metrics(token_counter, choice_counter, duration_histogram, response_dict, duration)
+
+    # span attributes
     _set_response_attributes(span, response_dict)
 
     if should_send_prompts():
         _set_completions(span, response_dict.get("choices"))
 
     return response
+
+
+def _set_chat_metrics(token_counter, choice_counter, duration_histogram, response_dict, duration):
+    shared_attributes = {
+        "llm.response.model": response_dict.get("model") or None,
+        "server.address": _get_openai_base_url(),
+    }
+
+    # token metrics
+    usage = response_dict.get("usage")  # type: dict
+    if usage and token_counter:
+        _set_token_counter_metrics(token_counter, usage, shared_attributes)
+
+    # choices metrics
+    choices = response_dict.get("choices")
+    if choices and choice_counter:
+        _set_choice_counter_metrics(choice_counter, choices, shared_attributes)
+
+    # duration metrics
+    if duration and isinstance(duration, (float, int)) and duration_histogram:
+        duration_histogram.record(duration, attributes=shared_attributes)
+
+
+def _set_choice_counter_metrics(choice_counter, choices, shared_attributes):
+    choice_counter.add(len(choices), attributes=shared_attributes)
+    for choice in choices:
+        attributes_with_reason = {**shared_attributes, "llm.response.finish_reason": choice["finish_reason"]}
+        choice_counter.add(1, attributes=attributes_with_reason)
+
+
+def _set_token_counter_metrics(token_counter, usage, shared_attributes):
+    for name, val in usage.items():
+        if name in OPENAI_LLM_USAGE_TOKEN_TYPES:
+            attributes_with_token_type = {**shared_attributes, "llm.usage.token_type": name.split('_')[0]}
+            token_counter.add(val, attributes=attributes_with_token_type)
 
 
 def _set_prompts(span, messages):
@@ -214,10 +212,8 @@ def _set_completions(span, choices):
         )
 
 
-def _build_metrics_from_streaming_response(token_counter: Counter,
-                                           choice_counter: Counter,
-                                           duration_histogram: Histogram,
-                                           start_time: float, response):
+def _build_from_streaming_response(span, response, token_counter=None, choice_counter=None, duration_histogram=None,
+                                   start_time=None):
     complete_response = {"choices": [], "model": ""}
     for item in response:
         item_to_yield = item
@@ -231,27 +227,18 @@ def _build_metrics_from_streaming_response(token_counter: Counter,
         "stream": True
     }
 
-    # no token count in stream response, token_counter ignored
+    # can't get token usage in stream mode
+    # choice metrics
+    if choice_counter and complete_response.get("choices"):
+        _set_choice_counter_metrics(choice_counter, complete_response.get("choices"), shared_attributes)
 
-    choices = complete_response.get("choices")
-    if choices is not None:
-        choice_counter.add(len(choices), attributes=shared_attributes)
-
-        for choice in choices:
-            attributes_with_reason = {**shared_attributes, "llm.response.finish_reason": choice["finish_reason"]}
-            choice_counter.add(1, attributes=attributes_with_reason)
-
-    duration = time.time() - start_time
-    duration_histogram.record(duration, attributes=shared_attributes)
-
-
-def _build_from_streaming_response(span, response):
-    complete_response = {"choices": [], "model": ""}
-    for item in response:
-        item_to_yield = item
-        _accumulate_stream_items(item, complete_response)
-
-        yield item_to_yield
+    # duration metrics
+    if start_time and isinstance(start_time, (float, int)):
+        duration = time.time() - start_time
+    else:
+        duration = None
+    if duration and isinstance(duration, (float, int)) and duration_histogram:
+        duration_histogram.record(duration, attributes=shared_attributes)
 
     _set_response_attributes(span, complete_response)
 
