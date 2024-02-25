@@ -15,7 +15,7 @@ def test_cohere_chat(exporter):
     assert cohere_span.attributes.get("llm.request.type") == "chat"
     assert cohere_span.attributes.get("llm.request.model") == "command"
     assert (
-        cohere_span.attributes.get("llm.prompts.0.user")
+        cohere_span.attributes.get("llm.prompts.0.content")
         == "Tell me a joke, pirate style"
     )
     assert cohere_span.attributes.get("llm.completions.0.content") == res.text

@@ -8,7 +8,7 @@ show_missing = true
 
 [tool.poetry]
 name = "opentelemetry-instrumentation-weaviate"
-version = "0.11.3"
+version = "0.12.2"
 description = "OpenTelemetry Weaviate instrumentation"
 authors = [
   "Gal Kleinman <gal@traceloop.com>",

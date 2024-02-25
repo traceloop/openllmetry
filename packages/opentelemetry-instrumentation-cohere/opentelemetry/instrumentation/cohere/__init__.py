@@ -1,4 +1,5 @@
 """OpenTelemetry Cohere instrumentation"""
+
 import logging
 import os
 from typing import Collection
@@ -69,12 +70,33 @@ def _set_input_attributes(span, llm_request_type, kwargs):
 
     if should_send_prompts():
         if llm_request_type == LLMRequestTypeValues.COMPLETION:
+            _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.0.role", "user")
             _set_span_attribute(
-                span, f"{SpanAttributes.LLM_PROMPTS}.0.user", kwargs.get("prompt")
+                span, f"{SpanAttributes.LLM_PROMPTS}.0.content", kwargs.get("prompt")
             )
         elif llm_request_type == LLMRequestTypeValues.CHAT:
+            _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.0.role", "user")
             _set_span_attribute(
-                span, f"{SpanAttributes.LLM_PROMPTS}.0.user", kwargs.get("message")
+                span, f"{SpanAttributes.LLM_PROMPTS}.0.content", kwargs.get("message")
+            )
+        elif llm_request_type == LLMRequestTypeValues.RERANK:
+            for index, document in enumerate(kwargs.get("documents")):
+                _set_span_attribute(
+                    span, f"{SpanAttributes.LLM_PROMPTS}.{index}.role", "system"
+                )
+                _set_span_attribute(
+                    span, f"{SpanAttributes.LLM_PROMPTS}.{index}.content", document
+                )
+
+            _set_span_attribute(
+                span,
+                f"{SpanAttributes.LLM_PROMPTS}.{len(kwargs.get('documents'))}.role",
+                "user",
+            )
+            _set_span_attribute(
+                span,
+                f"{SpanAttributes.LLM_PROMPTS}.{len(kwargs.get('documents'))}.content",
+                kwargs.get("query"),
             )
 
     return
@@ -109,12 +131,29 @@ def _set_span_generations_response(span, generations):
         _set_span_attribute(span, f"{prefix}.content", generation.text)
 
 
+def _set_span_rerank_response(span, response):
+    for idx, doc in enumerate(response.results):
+        print(doc.index, doc.relevance_score, doc.document["text"])
+        prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{idx}"
+        _set_span_attribute(span, f"{prefix}.role", "assistant")
+        content = f"Doc {doc.index}, Score: {doc.relevance_score}"
+        if doc.document["text"]:
+            content += f"\n{doc.document['text']}"
+        _set_span_attribute(
+            span,
+            f"{prefix}.content",
+            content,
+        )
+
+
 def _set_response_attributes(span, llm_request_type, response):
     if should_send_prompts():
         if llm_request_type == LLMRequestTypeValues.CHAT:
             _set_span_chat_response(span, response)
         elif llm_request_type == LLMRequestTypeValues.COMPLETION:
             _set_span_generations_response(span, response)
+        elif llm_request_type == LLMRequestTypeValues.RERANK:
+            _set_span_rerank_response(span, response)
 
 
 def _with_tracer_wrapper(func):
@@ -174,7 +213,7 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
 
             except Exception as ex:  # pylint: disable=broad-except
                 logger.warning(
-                    "Failed to set response attributes for openai span, error: %s",
+                    "Failed to set response attributes for cohere span, error: %s",
                     str(ex),
                 )
             if span.is_recording():

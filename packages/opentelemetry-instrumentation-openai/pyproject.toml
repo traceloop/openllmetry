@@ -8,7 +8,7 @@ show_missing = true
 
 [tool.poetry]
 name = "opentelemetry-instrumentation-openai"
-version = "0.11.3"
+version = "0.12.2"
 description = "OpenTelemetry OpenAI instrumentation"
 authors = [
   "Gal Kleinman <gal@traceloop.com>",
@@ -33,7 +33,7 @@ flake8 = "7.0.0"
 
 [tool.poetry.group.test.dependencies]
 pytest = "8.0.1"
-pytest-sugar = "0.9.7"
+pytest-sugar = "1.0.0"
 vcrpy = "^6.0.1"
 pytest-recording = "^0.13.1"
 openai = {extras = ["datalib"], version = "^1.12.0"}
