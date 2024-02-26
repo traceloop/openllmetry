@@ -2132,7 +2132,7 @@ test = ["opentelemetry-instrumentation-asgi[instruments]", "opentelemetry-test-u
 
 [[package]]
 name = "opentelemetry-instrumentation-chromadb"
-version = "0.12.2"
+version = "0.12.4"
 description = "OpenTelemetry Chroma DB instrumentation"
 optional = false
 python-versions = ">=3.8.1,<4"
@@ -2151,7 +2151,7 @@ url = "../opentelemetry-instrumentation-chromadb"
 
 [[package]]
 name = "opentelemetry-instrumentation-cohere"
-version = "0.12.2"
+version = "0.12.4"
 description = "OpenTelemetry Cohere instrumentation"
 optional = false
 python-versions = ">=3.8.1,<4"
@@ -2191,7 +2191,7 @@ test = ["httpx (>=0.22,<1.0)", "opentelemetry-instrumentation-fastapi[instrument
 
 [[package]]
 name = "opentelemetry-instrumentation-openai"
-version = "0.12.2"
+version = "0.12.4"
 description = "OpenTelemetry OpenAI instrumentation"
 optional = false
 python-versions = ">=3.8.1,<4"
