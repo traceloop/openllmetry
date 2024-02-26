@@ -7,6 +7,7 @@ from opentelemetry.semconv.ai import SpanAttributes, LLMRequestTypeValues
 from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
 from opentelemetry.instrumentation.openai.utils import _with_tracer_wrapper
 from opentelemetry.instrumentation.openai.shared import (
+    _set_client_attributes,
     _set_request_attributes,
     _set_span_attribute,
     _set_functions_attributes,
@@ -39,7 +40,7 @@ def completion_wrapper(tracer, wrapped, instance, args, kwargs):
         attributes={SpanAttributes.LLM_REQUEST_TYPE: LLM_REQUEST_TYPE.value},
     )
 
-    _handle_request(span, kwargs)
+    _handle_request(span, kwargs, instance)
     response = wrapped(*args, **kwargs)
 
     if is_streaming_response(response):
@@ -63,7 +64,7 @@ async def acompletion_wrapper(tracer, wrapped, instance, args, kwargs):
         attributes={SpanAttributes.LLM_REQUEST_TYPE: LLM_REQUEST_TYPE.value},
     )
 
-    _handle_request(span, kwargs)
+    _handle_request(span, kwargs, instance)
     response = await wrapped(*args, **kwargs)
 
     if is_streaming_response(response):
@@ -76,11 +77,12 @@ async def acompletion_wrapper(tracer, wrapped, instance, args, kwargs):
     return response
 
 
-def _handle_request(span, kwargs):
+def _handle_request(span, kwargs, instance):
     _set_request_attributes(span, kwargs)
     if should_send_prompts():
         _set_prompts(span, kwargs.get("prompt"))
         _set_functions_attributes(span, kwargs.get("functions"))
+    _set_client_attributes(span, instance)
 
 
 def _handle_response(response, span):
@@ -140,7 +142,8 @@ def _build_from_streaming_response(span, response):
             if choice.get("finish_reason"):
                 complete_choice["finish_reason"] = choice.get("finish_reason")
 
-            complete_choice["text"] += choice.get("text")
+            if choice.get("text"):
+                complete_choice["text"] += choice.get("text")
 
         yield item_to_yield
 

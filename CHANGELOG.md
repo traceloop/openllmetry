@@ -1,3 +1,38 @@
+## v0.12.4 (2024-02-26)
+
+### Fix
+
+- **sdk**: fail gracefully if input/output is not json serializable (#525)
+
+## v0.12.3 (2024-02-26)
+
+### Fix
+
+- new PR template (#524)
+
+## v0.12.2 (2024-02-23)
+
+### Fix
+
+- **cohere**: enrich rerank attributes (#476)
+
+## v0.12.1 (2024-02-23)
+
+### Fix
+
+- **llamaindex**: support query pipeline (#475)
+
+## v0.12.0 (2024-02-22)
+
+### Feat
+
+- Qdrant instrumentation (#364)
+
+### Fix
+
+- **langchain**: support LCEL (#473)
+- **sdk**: fail gracefully in case input/output serialization failure (#472)
+
 ## v0.11.3 (2024-02-19)
 
 ### Fix

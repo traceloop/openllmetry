@@ -543,10 +543,10 @@ def init_urllib3_instrumentor():
 
 
 def init_pymysql_instrumentor():
-    if importlib.util.find_spec("pymysql") is not None:
-        from opentelemetry.instrumentation.pymysql import PyMySQLInstrumentor
+    if importlib.util.find_spec("sqlalchemy") is not None:
+        from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
 
-        instrumentor = PyMySQLInstrumentor()
+        instrumentor = SQLAlchemyInstrumentor()
         if not instrumentor.is_instrumented_by_opentelemetry:
             instrumentor.instrument()
     return True

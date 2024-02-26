@@ -8,7 +8,7 @@ show_missing = true
 
 [tool.poetry]
 name = "opentelemetry-instrumentation-qdrant"
-version = "0.11.3"
+version = "0.12.4"
 description = "OpenTelemetry Qdrant instrumentation"
 authors = [
   "Gal Kleinman <gal@traceloop.com>",
@@ -23,8 +23,8 @@ include = "opentelemetry/instrumentation/qdrant"
 
 [tool.poetry.dependencies]
 python = ">=3.8.1,<4"
-opentelemetry-api = "^1.22.0"
-opentelemetry-instrumentation = "0.43b0"
+opentelemetry-api = "^1.23.0"
+opentelemetry-instrumentation = "0.44b0"
 opentelemetry-semantic-conventions-ai = "^0.0.20"
 
 [tool.poetry.group.dev.dependencies]
@@ -33,9 +33,9 @@ flake8 = "7.0.0"
 
 [tool.poetry.group.test.dependencies]
 qdrant-client = "^1.7.3"
-pytest = "7.4.4"
-pytest-sugar = "0.9.7"
-opentelemetry-sdk = "^1.22.0"
+pytest = "8.0.2"
+pytest-sugar = "1.0.0"
+opentelemetry-sdk = "^1.23.0"
 
 [build-system]
 requires = [ "poetry-core" ]
