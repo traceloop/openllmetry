@@ -23,8 +23,8 @@ include = "opentelemetry/instrumentation/pinecone"
 
 [tool.poetry.dependencies]
 python = ">=3.8.1,<4"
-opentelemetry-api = "^1.22.0"
-opentelemetry-instrumentation = "0.43b0"
+opentelemetry-api = "^1.23.0"
+opentelemetry-instrumentation = "0.44b0"
 opentelemetry-semantic-conventions-ai = "^0.0.20"
 
 [tool.poetry.group.dev.dependencies]
@@ -39,7 +39,7 @@ pytest = "8.0.2"
 pytest-sugar = "1.0.0"
 vcrpy = "^6.0.1"
 pytest-recording = "^0.13.1"
-opentelemetry-sdk = "^1.22.0"
+opentelemetry-sdk = "^1.23.0"
 opentelemetry-instrumentation-openai = {path="../opentelemetry-instrumentation-openai", develop=true}
 pinecone-client = "^2.2.4"
 
