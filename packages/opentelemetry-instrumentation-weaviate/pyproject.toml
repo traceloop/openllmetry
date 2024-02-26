@@ -32,7 +32,7 @@ weaviate-client = "^4.4.0"
 autopep8 = "2.0.4"
 flake8 = "7.0.0"
 pytest = "7.4.4"
-pytest-sugar = "0.9.7"
+pytest-sugar = "1.0.0"
 
 [build-system]
 requires = ["poetry-core"]
