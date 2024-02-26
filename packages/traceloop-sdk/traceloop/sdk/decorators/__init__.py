@@ -212,18 +212,24 @@ def atask_method(
                     )
                     span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, name)
 
-                    if _should_send_prompts():
-                        span.set_attribute(
-                            SpanAttributes.TRACELOOP_ENTITY_INPUT,
-                            json.dumps({"args": args, "kwargs": kwargs}),
-                        )
+                    try:
+                        if _should_send_prompts():
+                            span.set_attribute(
+                                SpanAttributes.TRACELOOP_ENTITY_INPUT,
+                                json.dumps({"args": args, "kwargs": kwargs}),
+                            )
+                    except TypeError:
+                        pass  # Some args might not be serializable
 
                     res = await fn(*args, **kwargs)
 
-                    if _should_send_prompts():
-                        span.set_attribute(
-                            SpanAttributes.TRACELOOP_ENTITY_OUTPUT, json.dumps(res)
-                        )
+                    try:
+                        if _should_send_prompts():
+                            span.set_attribute(
+                                SpanAttributes.TRACELOOP_ENTITY_OUTPUT, json.dumps(res)
+                            )
+                    except TypeError:
+                        pass  # Some args might not be serializable
 
                     return res
 

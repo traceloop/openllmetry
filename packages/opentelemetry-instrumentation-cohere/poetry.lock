@@ -278,13 +278,13 @@ files = [
 
 [[package]]
 name = "cohere"
-version = "4.48"
+version = "4.51"
 description = "Python SDK for the Cohere API"
 optional = false
 python-versions = ">=3.8,<4.0"
 files = [
-    {file = "cohere-4.48-py3-none-any.whl", hash = "sha256:d8a84900533725e62c536a73426e367cd97cde464e34d39bd2cf7fd18f3e319d"},
-    {file = "cohere-4.48.tar.gz", hash = "sha256:874578aad8c67d5b73f4705cf03341d94f302012288190613a6b1ed2fac3e010"},
+    {file = "cohere-4.51-py3-none-any.whl", hash = "sha256:71193475ba08b00244bcc6de0e4fa1de869eaa82d6a00e04ab07f64429498268"},
+    {file = "cohere-4.51.tar.gz", hash = "sha256:01fb092ea9038dd4fb360efb3506fad2451ed231cb6774e324b993c9374a550a"},
 ]
 
 [package.dependencies]
