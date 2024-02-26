@@ -1062,6 +1062,24 @@ type = "directory"
 url = "../opentelemetry-instrumentation-vertexai"
 
 [[package]]
+name = "opentelemetry-instrumentation-watsonx"
+version = "0.12.3"
+description = "OpenTelemetry IBM Watsonx Instrumentation"
+optional = false
+python-versions = ">=3.8.1,<4"
+files = []
+develop = true
+
+[package.dependencies]
+opentelemetry-api = "^1.22.0"
+opentelemetry-instrumentation = "0.43b0"
+opentelemetry-semantic-conventions-ai = "^0.0.20"
+
+[package.source]
+type = "directory"
+url = "../opentelemetry-instrumentation-watsonx"
+
+[[package]]
 name = "opentelemetry-proto"
 version = "1.22.0"
 description = "OpenTelemetry Python Proto"
@@ -1800,4 +1818,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8.1,<3.12"
-content-hash = "ea878d81d2da0a0ef4d5bd8705cb32c73b9dd74dc88db6a60ba2ea006118cde9"
+content-hash = "5f144239003e7547fb9f87623e7fc81c2c272549907b5629d1f848c4ab350372"
