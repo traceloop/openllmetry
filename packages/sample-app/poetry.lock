@@ -3398,26 +3398,6 @@ type = "directory"
 url = "../opentelemetry-instrumentation-cohere"
 
 [[package]]
-name = "opentelemetry-instrumentation-dbapi"
-version = "0.44b0"
-description = "OpenTelemetry Database API instrumentation"
-optional = false
-python-versions = ">=3.8"
-files = [
-    {file = "opentelemetry_instrumentation_dbapi-0.44b0-py3-none-any.whl", hash = "sha256:36333c7b2bbc6df660f5de965e0c0e8b02885c5b36016ec6386e6bba41c71280"},
-    {file = "opentelemetry_instrumentation_dbapi-0.44b0.tar.gz", hash = "sha256:8cbec84d01e7a7eabf2518186e74e6b95a25ec190ad834df409048dc8e0dbf86"},
-]
-
-[package.dependencies]
-opentelemetry-api = ">=1.12,<2.0"
-opentelemetry-instrumentation = "0.44b0"
-opentelemetry-semantic-conventions = "0.44b0"
-wrapt = ">=1.0.0,<2.0.0"
-
-[package.extras]
-test = ["opentelemetry-test-utils (==0.44b0)"]
-
-[[package]]
 name = "opentelemetry-instrumentation-fastapi"
 version = "0.44b0"
 description = "OpenTelemetry FastAPI Instrumentation"
@@ -3531,26 +3511,6 @@ type = "directory"
 url = "../opentelemetry-instrumentation-pinecone"
 
 [[package]]
-name = "opentelemetry-instrumentation-pymysql"
-version = "0.44b0"
-description = "OpenTelemetry PyMySQL instrumentation"
-optional = false
-python-versions = ">=3.8"
-files = [
-    {file = "opentelemetry_instrumentation_pymysql-0.44b0-py3-none-any.whl", hash = "sha256:d47b8b7c1cdc2822cb3a32d77c7a705e3fc3f34128f3d705a93dc2938ac88a34"},
-    {file = "opentelemetry_instrumentation_pymysql-0.44b0.tar.gz", hash = "sha256:7b1ad00af7152391e4209b91e57ff2dd3e78b75316a4c6c14e0cf8e616bdeb11"},
-]
-
-[package.dependencies]
-opentelemetry-api = ">=1.12,<2.0"
-opentelemetry-instrumentation = "0.44b0"
-opentelemetry-instrumentation-dbapi = "0.44b0"
-
-[package.extras]
-instruments = ["pymysql (<2)"]
-test = ["opentelemetry-instrumentation-pymysql[instruments]", "opentelemetry-test-utils (==0.44b0)"]
-
-[[package]]
 name = "opentelemetry-instrumentation-qdrant"
 version = "0.12.4"
 description = "OpenTelemetry Qdrant instrumentation"
@@ -3606,6 +3566,28 @@ opentelemetry-util-http = "0.44b0"
 [package.extras]
 instruments = ["requests (>=2.0,<3.0)"]
 test = ["httpretty (>=1.0,<2.0)", "opentelemetry-instrumentation-requests[instruments]", "opentelemetry-test-utils (==0.44b0)"]
+
+[[package]]
+name = "opentelemetry-instrumentation-sqlalchemy"
+version = "0.44b0"
+description = "OpenTelemetry SQLAlchemy instrumentation"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "opentelemetry_instrumentation_sqlalchemy-0.44b0-py3-none-any.whl", hash = "sha256:078d299e9a3788369e2f6644def8c7d45f09cf65c6215d5121a5515fdd9ca118"},
+    {file = "opentelemetry_instrumentation_sqlalchemy-0.44b0.tar.gz", hash = "sha256:9341603aa0314cbc9325a5997ab9733ff67fbd38a475376753f21dd8d3c67ed7"},
+]
+
+[package.dependencies]
+opentelemetry-api = ">=1.12,<2.0"
+opentelemetry-instrumentation = "0.44b0"
+opentelemetry-semantic-conventions = "0.44b0"
+packaging = ">=21.0"
+wrapt = ">=1.11.2"
+
+[package.extras]
+instruments = ["sqlalchemy"]
+test = ["opentelemetry-instrumentation-sqlalchemy[instruments]", "opentelemetry-sdk (>=1.12,<2.0)", "pytest"]
 
 [[package]]
 name = "opentelemetry-instrumentation-transformers"
@@ -5381,10 +5363,10 @@ opentelemetry-instrumentation-langchain = {path = "../opentelemetry-instrumentat
 opentelemetry-instrumentation-llamaindex = {path = "../opentelemetry-instrumentation-llamaindex", develop = true}
 opentelemetry-instrumentation-openai = {path = "../opentelemetry-instrumentation-openai", develop = true}
 opentelemetry-instrumentation-pinecone = {path = "../opentelemetry-instrumentation-pinecone", develop = true}
-opentelemetry-instrumentation-pymysql = "0.44b0"
 opentelemetry-instrumentation-qdrant = {path = "../opentelemetry-instrumentation-qdrant", develop = true}
 opentelemetry-instrumentation-replicate = {path = "../opentelemetry-instrumentation-replicate", develop = true}
 opentelemetry-instrumentation-requests = "0.44b0"
+opentelemetry-instrumentation-sqlalchemy = "0.44b0"
 opentelemetry-instrumentation-transformers = {path = "../opentelemetry-instrumentation-transformers", develop = true}
 opentelemetry-instrumentation-urllib3 = "0.44b0"
 opentelemetry-instrumentation-vertexai = {path = "../opentelemetry-instrumentation-vertexai", develop = true}
