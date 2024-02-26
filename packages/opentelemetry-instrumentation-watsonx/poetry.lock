@@ -229,13 +229,13 @@ ibm-cos-sdk-core = "2.13.4"
 
 [[package]]
 name = "ibm-watson-machine-learning"
-version = "1.0.347"
+version = "1.0.348"
 description = "IBM Watson Machine Learning API Client"
 optional = false
 python-versions = ">=3.10"
 files = [
-    {file = "ibm_watson_machine_learning-1.0.347-py3-none-any.whl", hash = "sha256:5ac0b6ec9a08adaf1c2a2b414bbf0aed8d8f3d77adef29bda725c8483580169b"},
-    {file = "ibm_watson_machine_learning-1.0.347.tar.gz", hash = "sha256:62ef043ddf6c093b2d7b1f6fe68ebbe4e79db5a4d9852d651a1192ad2e2ad723"},
+    {file = "ibm_watson_machine_learning-1.0.348-py3-none-any.whl", hash = "sha256:46cec3bcc9c6522440290d284845390158b92573d9759b77b6987d22580a1222"},
+    {file = "ibm_watson_machine_learning-1.0.348.tar.gz", hash = "sha256:9eceaae1c7b01457c9d5e3bdfb24209a828b4c6212b159dbfd9fdb9a74268e14"},
 ]
 
 [package.dependencies]
@@ -1158,4 +1158,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<4"
-content-hash = "54782c4bef19cac99130fcb91ba1e56a2995a7ae61beec96b0dd83d5ab6289c1"
+content-hash = "f8207278873ceae8e0546de48baba5e70f5470e9e919e11f92b405576cfeb08b"
