@@ -20,8 +20,8 @@ from opentelemetry.instrumentation.openai.shared.embeddings_wrappers import (
     aembeddings_wrapper,
 )
 from opentelemetry.instrumentation.openai.shared.image_gen_wrappers import image_gen_metrics_wrapper
+from opentelemetry.instrumentation.openai.utils import is_metrics_enabled
 from opentelemetry.instrumentation.openai.version import __version__
-from traceloop.sdk import is_metrics_enabled
 
 _instruments = ("openai >= 1.0.0",)
 

@@ -1,9 +1,14 @@
 from importlib.metadata import version
 from contextlib import asynccontextmanager
+import os
 
 
 def is_openai_v1():
     return version("openai") >= "1.0.0"
+
+
+def is_metrics_enabled() -> bool:
+    return (os.getenv("TRACELOOP_METRICS_ENABLED") or "true").lower() == "true"
 
 
 def _with_image_gen_metric_wrapper(func):
