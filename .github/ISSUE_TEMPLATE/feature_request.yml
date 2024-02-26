@@ -20,7 +20,7 @@ body:
         - "Llamaindex Instrumentation"
         - "OpenAI Instrumentation"
         - "Pinecone Instrumentation"
-        - "Dqrant Instrumentation"
+        - "Qdrant Instrumentation"
         - "Replicate Instrumentation"
         - "Transformers Instrumentation"
         - "VertexAI Instrumentation"
