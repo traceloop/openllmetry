@@ -1,7 +1,7 @@
 import pytest
 import json
 from openai import OpenAI
-from traceloop.sdk.decorators import workflow, task
+from traceloop.sdk.decorators import workflow, task, aworkflow, atask
 
 
 @pytest.fixture
@@ -57,6 +57,22 @@ def test_unserializable_workflow(exporter):
         return unserializable_task(obj)
 
     unserializable_task(object())
+
+    spans = exporter.get_finished_spans()
+    assert [span.name for span in spans] == ["unserializable_task.task"]
+
+
+@pytest.mark.asyncio
+async def test_unserializable_async_workflow(exporter):
+    @atask(name="unserializable_task")
+    async def unserializable_task(obj: object):
+        return object()
+
+    @aworkflow(name="unserializable_workflow")
+    async def unserializable_workflow(obj: object):
+        return await unserializable_task(obj)
+
+    await unserializable_task(object())
 
     spans = exporter.get_finished_spans()
     assert [span.name for span in spans] == ["unserializable_task.task"]
