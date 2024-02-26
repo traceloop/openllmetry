@@ -140,7 +140,8 @@ def _build_from_streaming_response(span, response):
             if choice.get("finish_reason"):
                 complete_choice["finish_reason"] = choice.get("finish_reason")
 
-            complete_choice["text"] += choice.get("text")
+            if choice.get("text"):
+                complete_choice["text"] += choice.get("text")
 
         yield item_to_yield
 
