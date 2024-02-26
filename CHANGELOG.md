@@ -1,3 +1,9 @@
+## v0.12.4 (2024-02-26)
+
+### Fix
+
+- **sdk**: fail gracefully if input/output is not json serializable (#525)
+
 ## v0.12.3 (2024-02-26)
 
 ### Fix
