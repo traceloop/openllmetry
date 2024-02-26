@@ -31,6 +31,7 @@ def _set_span_attribute(span, name, value):
             span.set_attribute(name, value)
     return
 
+
 def _set_client_attributes(span, instance):
     if not span.is_recording():
         return
@@ -43,12 +44,13 @@ def _set_client_attributes(span, instance):
         if isinstance(client, (openai.AsyncOpenAI, openai.OpenAI)):
             _set_span_attribute(span, OPENAI_API_BASE, str(client.base_url))
         if isinstance(client, (openai.AsyncAzureOpenAI, openai.AzureOpenAI)):
-            _set_span_attribute(span, OPENAI_API_VERSION, client._api_version) # pylint: disable=protected-access
+            _set_span_attribute(span, OPENAI_API_VERSION, client._api_version)  # pylint: disable=protected-access
 
     except Exception as ex:  # pylint: disable=broad-except
         logger.warning(
             "Failed to set api attributes for openai v1 span, error: %s", str(ex)
         )
+
 
 def _set_api_attributes(span):
     if not span.is_recording():
