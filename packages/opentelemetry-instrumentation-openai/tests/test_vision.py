@@ -39,3 +39,4 @@ def test_vision(exporter, openai_client):
     ]
 
     assert open_ai_span.attributes.get("llm.completions.0.content")
+    assert open_ai_span.attributes["openai.api_base"] == "https://api.openai.com/v1/"
