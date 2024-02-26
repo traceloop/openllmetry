@@ -1,5 +1,4 @@
 import openai
-import os
 import pytest
 
 
@@ -28,7 +27,7 @@ def test_embeddings(exporter, openai_client):
 def test_azure_openai_embeddings(exporter):
     api_key = "redacted"
     azure_deployment = "redacted"
-    
+
     openai_client = openai.AzureOpenAI(
         api_key=api_key,
         azure_endpoint=f"https://{azure_deployment}.openai.azure.com",
