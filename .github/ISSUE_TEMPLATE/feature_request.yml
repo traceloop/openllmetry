@@ -17,7 +17,7 @@ body:
         - "Cohere Instrumentation"
         - "Haystack Instrumentation"
         - "Langchain Instrumentation"
-        - "Llamaindex Instrumentation"
+        - "LlamaIndex Instrumentation"
         - "OpenAI Instrumentation"
         - "Pinecone Instrumentation"
         - "Qdrant Instrumentation"
