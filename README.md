@@ -117,7 +117,7 @@ OpenLLMetry can instrument everything that [OpenTelemetry already instruments](h
 - ✅ Chroma
 - ✅ Pinecone
 - ✅ Qdrant
-- ⏳ Weaviate
+- ✅ Weaviate
 - ⏳ Milvus
 
 ### Frameworks

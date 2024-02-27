@@ -1,4 +1,5 @@
 # Tested with weaviate-client==4.4.0
+# This is not yet compatible with traceloop
 import os
 from opentelemetry.sdk.trace.export import ConsoleSpanExporter
 import weaviate
