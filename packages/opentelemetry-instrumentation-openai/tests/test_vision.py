@@ -22,7 +22,7 @@ def test_vision(exporter, openai_client):
         ],
     )
 
-    for part in response:
+    for _ in response:
         pass
 
     spans = exporter.get_finished_spans()
