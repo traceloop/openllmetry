@@ -46,3 +46,4 @@ def test_open_ai_function_calls(exporter, openai_client):
         open_ai_span.attributes["llm.completions.0.function_call.name"]
         == "get_current_weather"
     )
+    assert open_ai_span.attributes["openai.api_base"] == "https://api.openai.com/v1/"
