@@ -17,3 +17,4 @@ class Instruments(Enum):
     REPLICATE = "replicate"
     VERTEXAI = "vertexai"
     WATSONX = "watsonx"
+    WEAVIATE = "weaviate"
