@@ -173,7 +173,6 @@ def test_weaviate_delete_all(client, exporter):
 
 @pytest.mark.vcr
 def test_weaviate_create_schemas(client, exporter):
-    delete_all(client)
     create_schemas(client)
 
     spans = exporter.get_finished_spans()
@@ -187,7 +186,6 @@ def test_weaviate_create_schemas(client, exporter):
 
 @pytest.mark.vcr
 def test_weaviate_create_schema(client, exporter):
-    delete_all(client)
     create_schema(client)
 
     spans = exporter.get_finished_spans()
@@ -204,8 +202,6 @@ def test_weaviate_create_schema(client, exporter):
 
 @pytest.mark.vcr
 def test_weaviate_get_schema(client, exporter):
-    delete_all(client)
-    create_schema(client)
     get_schema(client)
 
     spans = exporter.get_finished_spans()
@@ -226,8 +222,6 @@ def test_weaviate_get_schema(client, exporter):
 
 @pytest.mark.vcr
 def test_weaviate_delete_schema(client, exporter):
-    delete_all(client)
-    create_schema(client)
     delete_schema(client)
 
     spans = exporter.get_finished_spans()
@@ -243,8 +237,6 @@ def test_weaviate_delete_schema(client, exporter):
 
 @pytest.mark.vcr
 def test_weaviate_create_data_object(client, exporter):
-    delete_all(client)
-    create_schema(client)
     create_object(client)
 
     spans = exporter.get_finished_spans()
@@ -266,8 +258,6 @@ def test_weaviate_create_data_object(client, exporter):
 
 @pytest.mark.vcr
 def test_weaviate_create_batch(client, exporter):
-    delete_all(client)
-    create_schema(client)
     create_batch(client)
 
     spans = exporter.get_finished_spans()
@@ -297,9 +287,6 @@ def test_weaviate_create_batch(client, exporter):
 
 @pytest.mark.vcr
 def test_weaviate_query_get(client, exporter):
-    delete_all(client)
-    create_schema(client)
-    create_batch(client)
     query_get(client)
 
     spans = exporter.get_finished_spans()
@@ -318,9 +305,6 @@ def test_weaviate_query_get(client, exporter):
 
 @pytest.mark.vcr
 def test_weaviate_query_aggregate(client, exporter):
-    delete_all(client)
-    create_schema(client)
-    create_batch(client)
     query_aggregate(client)
 
     spans = exporter.get_finished_spans()
@@ -340,9 +324,6 @@ def test_weaviate_query_aggregate(client, exporter):
 
 @pytest.mark.vcr
 def test_weaviate_query_raw(client, exporter):
-    delete_all(client)
-    create_schema(client)
-    create_batch(client)
     query_raw(client)
 
     spans = exporter.get_finished_spans()
