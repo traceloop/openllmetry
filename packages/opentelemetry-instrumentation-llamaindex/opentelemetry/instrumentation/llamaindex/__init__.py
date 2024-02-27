@@ -7,6 +7,9 @@ from opentelemetry.trace import get_tracer
 
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 
+from opentelemetry.instrumentation.llamaindex.base_agent_instrumentor import (
+    BaseAgentInstrumentor,
+)
 from opentelemetry.instrumentation.llamaindex.retriever_query_engine_instrumentor import (
     RetrieverQueryEngineInstrumentor,
 )
@@ -15,6 +18,9 @@ from opentelemetry.instrumentation.llamaindex.base_retriever_instrumentor import
 )
 from opentelemetry.instrumentation.llamaindex.base_synthesizer_instrumentor import (
     BaseSynthesizerInstrumentor,
+)
+from opentelemetry.instrumentation.llamaindex.base_tool_instrumentor import (
+    BaseToolInstrumentor,
 )
 from opentelemetry.instrumentation.llamaindex.base_embedding_instrumentor import (
     BaseEmbeddingInstrumentor,
@@ -48,6 +54,8 @@ class LlamaIndexInstrumentor(BaseInstrumentor):
         BaseEmbeddingInstrumentor(tracer).instrument()
         CustomLLMInstrumentor(tracer).instrument()
         QueryPipelineInstrumentor(tracer).instrument()
+        BaseAgentInstrumentor(tracer).instrument()
+        BaseToolInstrumentor(tracer).instrument()
 
     def _uninstrument(self, **kwargs):
         pass
