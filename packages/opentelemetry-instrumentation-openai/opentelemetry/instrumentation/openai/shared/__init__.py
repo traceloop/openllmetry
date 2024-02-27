@@ -175,5 +175,9 @@ def is_streaming_response(response):
 def model_as_dict(model):
     if version("pydantic") < "2.0.0":
         return model.dict()
-
-    return model.model_dump()
+    if hasattr(model, "model_dump"):
+        return model.model_dump()
+    elif hasattr(model, "parse"):  # Raw API response
+        return model_as_dict(model.parse())
+    else:
+        return model

@@ -68,7 +68,7 @@ def test_completion_streaming(exporter, openai_client):
         stream=True,
     )
 
-    for part in response:
+    for _ in response:
         pass
 
     spans = exporter.get_finished_spans()
