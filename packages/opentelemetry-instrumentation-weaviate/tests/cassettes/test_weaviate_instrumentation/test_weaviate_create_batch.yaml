@@ -409,4 +409,57 @@ interactions:
     status:
       code: 200
       message: OK
+- request:
+    body: '{"class": "Article", "properties": {"author": "Robert", "text": "Once upon
+      a time, someone wrote a book..."}}'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '109'
+      User-Agent:
+      - python-requests/2.31.0
+      content-type:
+      - application/json
+    method: POST
+    uri: https://traceloop-sandbox-3azqlud3.weaviate.network/v1/batch/objects
+  response:
+    body:
+      string: '{"class":"Article","creationTimeUnix":1708545822064,"id":"36a820e5-8db5-4771-9a92-7b805943f0dd","lastUpdateTimeUnix":1708545822064,"properties":{"author":"Robert","text":"Once
+        upon a time, someone wrote a book..."}}
+
+        '
+    headers:
+      Access-Control-Allow-Headers:
+      - Content-Type, Authorization, Batch, X-Openai-Api-Key, X-Openai-Organization,
+        X-Openai-Baseurl, X-Anyscale-Baseurl, X-Anyscale-Api-Key, X-Cohere-Api-Key,
+        X-Cohere-Baseurl, X-Huggingface-Api-Key, X-Azure-Api-Key, X-Palm-Api-Key,
+        X-Jinaai-Api-Key, X-Aws-Access-Key, X-Aws-Secret-Key
+      Access-Control-Allow-Methods:
+      - '*'
+      Access-Control-Allow-Origin:
+      - '*'
+      Alt-Svc:
+      - h3=":443"; ma=2592000,h3-29=":443"; ma=2592000
+      Content-Length:
+      - '216'
+      Content-Type:
+      - application/json
+      Date:
+      - Wed, 21 Feb 2024 20:03:42 GMT
+      Server:
+      - nginx/1.24.0
+      Vary:
+      - Origin
+      Via:
+      - 1.1 google
+    status:
+      code: 200
+      message: OK
+version: 1
+
 version: 1
