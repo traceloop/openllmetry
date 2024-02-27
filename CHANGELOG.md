@@ -1,3 +1,12 @@
+## v0.12.5 (2024-02-27)
+
+### Fix
+
+- **llamaindex**: instrument agents & tools (#533)
+- **openai**: Fix `with_raw_response` redirect crashing span (#536)
+- **openai**: track client attributes for v1 SDK of OpenAI (#522)
+- **sdk**: replaced MySQL instrumentor with SQLAlchemy (#531)
+
 ## v0.12.4 (2024-02-26)
 
 ### Fix
