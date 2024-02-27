@@ -9,7 +9,7 @@ pytest_plugins = []
 
 @pytest.fixture(autouse=True)
 def environment():
-    pass  # os.environ["OPENAI_API_KEY"] = "test_api_key"
+    os.environ["OPENAI_API_KEY"] = "test_api_key"
 
 
 @pytest.fixture
