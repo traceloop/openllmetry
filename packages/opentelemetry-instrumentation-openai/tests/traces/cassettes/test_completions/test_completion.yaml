@@ -1,11 +1,6 @@
 interactions:
 - request:
-    body: '{"messages": [{"role": "user", "content": "What''s the weather like in
-      Boston?"}], "model": "gpt-4", "function_call": "auto", "functions": [{"name":
-      "get_current_weather", "description": "Get the current weather in a given location",
-      "parameters": {"type": "object", "properties": {"location": {"type": "string",
-      "description": "The city and state, e.g. San Francisco, CA"}, "unit": {"type":
-      "string", "enum": ["celsius", "fahrenheit"]}}, "required": ["location"]}}]}'
+    body: '{"model": "davinci-002", "prompt": "Tell me a joke about opentelemetry"}'
     headers:
       accept:
       - application/json
@@ -14,7 +9,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '466'
+      - '72'
       content-type:
       - application/json
       host:
@@ -36,22 +31,20 @@ interactions:
       x-stainless-runtime-version:
       - 3.9.5
     method: POST
-    uri: https://api.openai.com/v1/chat/completions
+    uri: https://api.openai.com/v1/completions
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAAA1yRW0vDQBCF3/MrhnlupaltE/OoiCIiCPogRsJ2O03S7iXsTrBa+t9l00taX5Zh
-        zp5vzs5uIwCsF5gBykqw1I0apu49eZov3tT0sXodv4j0Xm5W6u734eN5HeMgOOx8RZKPritpdaOI
-        a2v2snQkmAI1TkZJMk3SybQTtF2QCray4eFkOJrF1wdHZWtJHjP4jAAAtt0ZspkFbTCD0eDY0eS9
-        KAmz0yUAdFaFDgrva8/CMA56UVrDZEJc0yp1JixbI0PqQgqlLoAAaITukCVxIVvnyHDxTYIrcmdw
-        ABSubDUZDulxmxuAHJWVIpBzzCDHW+s51LnZ4cm5O1S708uULRtn5/5fUFzWpvZV4Uh4a8KQy9zR
-        kfbVrbK92A42zuqGC7ZrMoGcjvdc7D+tF+PZQWTLQvX9mzQ6BEX/45l0saxNSa5x9Wmv0S76AwAA
-        //8DAJDkVkZOAgAA
+        H4sIAAAAAAAAA0SQMU/DMBSE9/yKJ89YcpJCQ1ZQxcbQBQoocuxHYnD8gu3Soqr/HTmJ2sXDnb+7
+        0ztlAMxoVgNTw2h5dfhZFY/5lpSMyub+Yehed8+bl7Xe7A7sJv2m9gtVTETEY2wUDaPFaMjNtvIo
+        I6bEfC3uRVlWt2IyBtJoE6blr3HKcCGKBenJKAyshrcMAOA0vTAXJIJ3BNa0Xvq/d7fleggBJRSi
+        EFxUPC9reKJ53YQZp/HIahAXxVI3empThdtbe9E/jTOhbzzKQC41WXRd7NnknzOAj2ngPsgOWb0M
+        Y6OnYYxNpG90KbKa89j1FFcvv1vMSFHaq16sstRwzv4BAAD//wMAdLAgAoIBAAA=
     headers:
       CF-Cache-Status:
       - DYNAMIC
       CF-RAY:
-      - 854672653e9709c5-HFA
+      - 85c022da9a47bb14-MXP
       Cache-Control:
       - no-cache, must-revalidate
       Connection:
@@ -61,14 +54,14 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Mon, 12 Feb 2024 17:10:48 GMT
+      - Tue, 27 Feb 2024 11:37:30 GMT
       Server:
       - cloudflare
       Set-Cookie:
-      - __cf_bm=TuNPTWsTeMzqubABLWZEiwVCbDBuju0.NOYAeTG3OPE-1707757848-1-ARLpLh/DzTiUI7j9jOVIHe/TqWllVUm7iB853z45TFFYXQaJrwcC7FAtForG5gmJZLw6mZ8t+8XJ7olyiIo37b4=;
-        path=/; expires=Mon, 12-Feb-24 17:40:48 GMT; domain=.api.openai.com; HttpOnly;
+      - __cf_bm=8L78ss5z_LU7MemkD1pN_f_BDP7v_lYCqYqih9Zvicg-1709033850-1.0-AWIUdFiaopi5JT1nAItlYRWgcI6QDySDIp81VWqC+Jk/H93vqmteXVRKn7I1MiaEbV+LEP50bUYOxo25WKbMTaU=;
+        path=/; expires=Tue, 27-Feb-24 12:07:30 GMT; domain=.api.openai.com; HttpOnly;
         Secure; SameSite=None
-      - _cfuvid=3yFj0CRCs1IsBeVyJOVvXfyMR2vMqXBDwRIwh96ssBM-1707757848183-0-604800000;
+      - _cfuvid=2D2znqizYnNBE.eWDDC23lZ7TacISDzNSSkQWwb4cZQ-1709033850735-0.0-604800000;
         path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
       Transfer-Encoding:
       - chunked
@@ -77,29 +70,29 @@ interactions:
       alt-svc:
       - h3=":443"; ma=86400
       openai-model:
-      - gpt-4-0613
+      - davinci-002
       openai-organization:
       - traceloop
       openai-processing-ms:
-      - '2656'
+      - '358'
       openai-version:
       - '2020-10-01'
       strict-transport-security:
       - max-age=15724800; includeSubDomains
       x-ratelimit-limit-requests:
-      - '5000'
+      - '3000'
       x-ratelimit-limit-tokens:
-      - '80000'
+      - '250000'
       x-ratelimit-remaining-requests:
-      - '4999'
+      - '2999'
       x-ratelimit-remaining-tokens:
-      - '79974'
+      - '249975'
       x-ratelimit-reset-requests:
-      - 12ms
+      - 20ms
       x-ratelimit-reset-tokens:
-      - 19ms
+      - 5ms
       x-request-id:
-      - req_c93a7e3930665fb2d8d7c7c04765684e
+      - req_a7de5715969ad94860f4bf724e99032e
     status:
       code: 200
       message: OK

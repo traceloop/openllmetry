@@ -16,6 +16,8 @@ OPENAI_API_VERSION = "openai.api_version"
 OPENAI_API_BASE = "openai.api_base"
 OPENAI_API_TYPE = "openai.api_type"
 
+OPENAI_LLM_USAGE_TOKEN_TYPES = ["prompt_tokens", "completion_tokens"]
+
 logger = logging.getLogger(__name__)
 
 
@@ -150,6 +152,15 @@ def _set_response_attributes(span, response):
         logger.warning(
             "Failed to set response attributes for openai span, error: %s", str(ex)
         )
+
+
+def _get_openai_base_url(instance):
+    if hasattr(instance, '_client'):
+        client = instance._client  # pylint: disable=protected-access
+        if isinstance(client, (openai.AsyncOpenAI, openai.OpenAI)):
+            return str(client.base_url)
+
+    return ""
 
 
 def is_streaming_response(response):

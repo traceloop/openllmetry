@@ -49,12 +49,14 @@ def test_embeddings_with_raw_response(exporter, openai_client):
 
 @pytest.mark.vcr
 def test_azure_openai_embeddings(exporter):
-    api_key = "redacted"
-    azure_deployment = "redacted"
+    api_key = "test-api-key"
+    azure_resource = "test-resource"
+    azure_deployment = "test-deployment"
 
     openai_client = openai.AzureOpenAI(
         api_key=api_key,
-        azure_endpoint=f"https://{azure_deployment}.openai.azure.com",
+        azure_endpoint=f"https://{azure_resource}.openai.azure.com",
+        azure_deployment=azure_deployment,
         api_version="2023-07-01-preview",
     )
     openai_client.embeddings.create(
@@ -73,5 +75,8 @@ def test_azure_openai_embeddings(exporter):
     )
     assert open_ai_span.attributes["llm.request.model"] == "embedding"
     assert open_ai_span.attributes["llm.usage.prompt_tokens"] == 8
-    assert open_ai_span.attributes["openai.api_base"] == "https://redacted.openai.azure.com/openai/"
+    assert (
+        open_ai_span.attributes["openai.api_base"]
+        == f"https://{azure_resource}.openai.azure.com/openai/deployments/{azure_deployment}/"
+    )
     assert open_ai_span.attributes["openai.api_version"] == "2023-07-01-preview"
