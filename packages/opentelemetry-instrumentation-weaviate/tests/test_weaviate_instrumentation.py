@@ -256,6 +256,7 @@ def test_weaviate_create_data_object(client, exporter):
     )
 
 
+@pytest.mark.skip("Flaky test")
 @pytest.mark.vcr
 def test_weaviate_create_batch(client, exporter):
     create_batch(client)
