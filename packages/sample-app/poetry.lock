@@ -313,17 +313,17 @@ lxml = ["lxml"]
 
 [[package]]
 name = "boto3"
-version = "1.34.49"
+version = "1.34.50"
 description = "The AWS SDK for Python"
 optional = false
 python-versions = ">= 3.8"
 files = [
-    {file = "boto3-1.34.49-py3-none-any.whl", hash = "sha256:ce8d1de03024f52a1810e8d71ad4dba3a5b9bb48b35567191500e3432a9130b4"},
-    {file = "boto3-1.34.49.tar.gz", hash = "sha256:96b9dc85ce8d52619b56ca7b1ac1423eaf0af5ce132904bcc8aa81396eec2abf"},
+    {file = "boto3-1.34.50-py3-none-any.whl", hash = "sha256:8d709365231234bc4f0ca98fdf33a25eeebf78072853c6aa3d259f0f5cf09877"},
+    {file = "boto3-1.34.50.tar.gz", hash = "sha256:290952be7899560039cb0042e8a2354f61a7dead0d0ca8bea6ba901930df0468"},
 ]
 
 [package.dependencies]
-botocore = ">=1.34.49,<1.35.0"
+botocore = ">=1.34.50,<1.35.0"
 jmespath = ">=0.7.1,<2.0.0"
 s3transfer = ">=0.10.0,<0.11.0"
 
@@ -332,13 +332,13 @@ crt = ["botocore[crt] (>=1.21.0,<2.0a0)"]
 
 [[package]]
 name = "botocore"
-version = "1.34.49"
+version = "1.34.50"
 description = "Low-level, data-driven core of boto 3."
 optional = false
 python-versions = ">= 3.8"
 files = [
-    {file = "botocore-1.34.49-py3-none-any.whl", hash = "sha256:4ed9d7603a04b5bb5bd5de63b513bc2c8a7e8b1cd0088229c5ceb461161f43b6"},
-    {file = "botocore-1.34.49.tar.gz", hash = "sha256:d89410bc60673eaff1699f3f1fdcb0e3a5e1f7a6a048c0d88c3ce5c3549433ec"},
+    {file = "botocore-1.34.50-py3-none-any.whl", hash = "sha256:fda510559dbe796eefdb59561cc81be1b99afba3dee53fd23db9a3d587adc0ab"},
+    {file = "botocore-1.34.50.tar.gz", hash = "sha256:33ab82cb96c4bb684f0dbafb071808e4817d83debc88b223e7d988256370c6d7"},
 ]
 
 [package.dependencies]
@@ -523,13 +523,13 @@ virtualenv = ["virtualenv (>=20.0.35)"]
 
 [[package]]
 name = "cachetools"
-version = "5.3.2"
+version = "5.3.3"
 description = "Extensible memoizing collections and decorators"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "cachetools-5.3.2-py3-none-any.whl", hash = "sha256:861f35a13a451f94e301ce2bec7cac63e881232ccce7ed67fab9b5df4d3beaa1"},
-    {file = "cachetools-5.3.2.tar.gz", hash = "sha256:086ee420196f7b2ab9ca2db2520aca326318b68fe5ba8bc4d49cca91add450f2"},
+    {file = "cachetools-5.3.3-py3-none-any.whl", hash = "sha256:0abad1021d3f8325b2fc1d2e9c8b9c9d57b04c3932657a72465447332c24d945"},
+    {file = "cachetools-5.3.3.tar.gz", hash = "sha256:ba29e2dfa0b8b556606f097407ed1aa62080ee108ab0dc5ec9d6a723a007d105"},
 ]
 
 [[package]]
@@ -1915,19 +1915,19 @@ requests = ">=2,<3"
 
 [[package]]
 name = "llama-index"
-version = "0.10.12"
+version = "0.10.13.post1"
 description = "Interface between LLMs and your data"
 optional = false
-python-versions = ">=3.8.1,<3.12"
+python-versions = ">=3.8.1,<4.0"
 files = [
-    {file = "llama_index-0.10.12-py3-none-any.whl", hash = "sha256:6d179049112f0b4d65b908b2bc8e2521ed31db57f76b60b2fe3657ec5b71e5f9"},
-    {file = "llama_index-0.10.12.tar.gz", hash = "sha256:84150cdb52f84fbe527a321d10dfec361ffd2596a8ef1f13d19f2e36bb7a101d"},
+    {file = "llama_index-0.10.13.post1-py3-none-any.whl", hash = "sha256:3a1281eb5b5505d3c4b5d8da036561e267c5b9311bd3ddbeeab3e1eeb92df86a"},
+    {file = "llama_index-0.10.13.post1.tar.gz", hash = "sha256:55a8bb34b4f538fb33f6db914d89ad2dbc7ae5e0ec24d8bc4238ed05ff502ee2"},
 ]
 
 [package.dependencies]
 llama-index-agent-openai = ">=0.1.4,<0.2.0"
 llama-index-cli = ">=0.1.2,<0.2.0"
-llama-index-core = ">=0.10.12,<0.11.0"
+llama-index-core = ">=0.10.13,<0.11.0"
 llama-index-embeddings-openai = ">=0.1.5,<0.2.0"
 llama-index-indices-managed-llama-cloud = ">=0.1.2,<0.2.0"
 llama-index-legacy = ">=0.9.48,<0.10.0"
