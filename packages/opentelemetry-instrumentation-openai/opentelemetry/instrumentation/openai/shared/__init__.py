@@ -154,11 +154,13 @@ def _set_response_attributes(span, response):
         )
 
 
-def _get_openai_base_url():
-    base_url = openai.base_url if hasattr(openai, "base_url") else openai.api_base
-    if not base_url:
-        return ""
-    return base_url
+def _get_openai_base_url(instance):
+    if hasattr(instance, '_client'):
+        client = instance._client  # pylint: disable=protected-access
+        if isinstance(client, (openai.AsyncOpenAI, openai.OpenAI)):
+            return str(client.base_url)
+
+    return ""
 
 
 def is_streaming_response(response):

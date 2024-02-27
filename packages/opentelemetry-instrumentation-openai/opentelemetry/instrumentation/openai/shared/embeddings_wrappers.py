@@ -48,8 +48,6 @@ def embeddings_wrapper(tracer,
         attributes={SpanAttributes.LLM_REQUEST_TYPE: LLM_REQUEST_TYPE.value},
     ) as span:
         _handle_request(span, kwargs, instance)
-        response = wrapped(*args, **kwargs)
-        _handle_response(response, span)
 
         try:
             # record time for duration
@@ -73,7 +71,7 @@ def embeddings_wrapper(tracer,
 
         duration = end_time - start_time
 
-        _handle_response(response, span, token_counter, vector_size_counter, duration_histogram, duration)
+        _handle_response(response, span, instance, token_counter, vector_size_counter, duration_histogram, duration)
 
         return response
 
@@ -103,22 +101,22 @@ def _handle_request(span, kwargs, instance):
     _set_client_attributes(span, instance)
 
 
-def _handle_response(response, span, token_counter=None, vector_size_counter=None, duration_histogram=None,
-                     duration=None):
+def _handle_response(response, span, instance=None, token_counter=None, vector_size_counter=None,
+                     duration_histogram=None, duration=None):
     if is_openai_v1():
         response_dict = model_as_dict(response)
     else:
         response_dict = response
     # metrics record
-    _set_embeddings_metrics(token_counter, vector_size_counter, duration_histogram, response_dict, duration)
+    _set_embeddings_metrics(instance, token_counter, vector_size_counter, duration_histogram, response_dict, duration)
     # span attributes
     _set_response_attributes(span, response_dict)
 
 
-def _set_embeddings_metrics(token_counter, vector_size_counter, duration_histogram, response_dict, duration):
+def _set_embeddings_metrics(instance, token_counter, vector_size_counter, duration_histogram, response_dict, duration):
     shared_attributes = {
         "llm.response.model": response_dict.get("model") or None,
-        "server.address": _get_openai_base_url(),
+        "server.address": _get_openai_base_url(instance),
     }
 
     # token count metrics

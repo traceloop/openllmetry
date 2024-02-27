@@ -37,17 +37,21 @@ def test_chat_completion_metrics(metrics_test_context, openai_client):
                     found_token_metric = True
                     for data_point in metric.data.data_points:
                         assert data_point.attributes['llm.usage.token_type'] in ['completion', 'prompt']
+                        assert len(data_point.attributes['server.address']) > 0
                         assert data_point.value > 0
 
                 if metric.name == 'llm.openai.chat_completions.choices':
                     found_choice_metric = True
                     for data_point in metric.data.data_points:
                         assert data_point.value >= 1
+                        assert len(data_point.attributes['server.address']) > 0
 
                 if metric.name == 'llm.openai.chat_completions.duration':
                     found_duration_metric = True
                     assert any(data_point.count > 0 for data_point in metric.data.data_points)
                     assert any(data_point.sum > 0 for data_point in metric.data.data_points)
+                    assert all(len(data_point.attributes['server.address']) > 0
+                               for data_point in metric.data.data_points)
 
     assert found_token_metric is True
     assert found_choice_metric is True
@@ -77,16 +81,20 @@ def test_embeddings_metrics(metrics_test_context, openai_client):
                     found_token_metric = True
                     for data_point in metric.data.data_points:
                         assert data_point.value > 0
+                        assert len(data_point.attributes['server.address']) > 0
 
                 if metric.name == 'llm.openai.embeddings.vector_size':
                     found_vector_size_metric = True
                     for data_point in metric.data.data_points:
                         assert data_point.value > 0
+                        assert len(data_point.attributes['server.address']) > 0
 
                 if metric.name == 'llm.openai.embeddings.duration':
                     found_duration_metric = True
                     assert any(data_point.count > 0 for data_point in metric.data.data_points)
                     assert any(data_point.sum > 0 for data_point in metric.data.data_points)
+                    assert all(len(data_point.attributes['server.address']) > 0
+                               for data_point in metric.data.data_points)
 
     assert found_token_metric
     assert found_vector_size_metric
@@ -117,5 +125,7 @@ def test_image_gen_metrics(metrics_test_context, openai_client):
                     found_duration_metric = True
                     assert any(data_point.count > 0 for data_point in metric.data.data_points)
                     assert any(data_point.sum > 0 for data_point in metric.data.data_points)
+                    assert all(len(data_point.attributes['server.address']) > 0
+                               for data_point in metric.data.data_points)
 
     assert found_duration_metric

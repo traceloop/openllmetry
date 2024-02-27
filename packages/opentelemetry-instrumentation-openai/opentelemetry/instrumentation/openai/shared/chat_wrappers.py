@@ -49,7 +49,6 @@ def chat_wrapper(tracer: Tracer,
     )
 
     _handle_request(span, kwargs, instance)
-    response = wrapped(*args, **kwargs)
 
     try:
         start_time = time.time()
@@ -72,12 +71,12 @@ def chat_wrapper(tracer: Tracer,
 
     if is_streaming_response(response):
         # span will be closed after the generator is done
-        return _build_from_streaming_response(span, response, token_counter, choice_counter, duration_histogram,
-                                              start_time)
+        return _build_from_streaming_response(span, response, instance, token_counter, choice_counter,
+                                              duration_histogram, start_time)
 
     duration = end_time - start_time
 
-    _handle_response(response, span, token_counter, choice_counter, duration_histogram, duration)
+    _handle_response(response, span, instance, token_counter, choice_counter, duration_histogram, duration)
     span.end()
 
     return response
@@ -114,14 +113,15 @@ def _handle_request(span, kwargs, instance):
         _set_functions_attributes(span, kwargs.get("functions"))
 
 
-def _handle_response(response, span, token_counter=None, choice_counter=None, duration_histogram=None, duration=None):
+def _handle_response(response, span, instance=None, token_counter=None, choice_counter=None, duration_histogram=None,
+                     duration=None):
     if is_openai_v1():
         response_dict = model_as_dict(response)
     else:
         response_dict = response
 
     # metrics record
-    _set_chat_metrics(token_counter, choice_counter, duration_histogram, response_dict, duration)
+    _set_chat_metrics(instance, token_counter, choice_counter, duration_histogram, response_dict, duration)
 
     # span attributes
     _set_response_attributes(span, response_dict)
@@ -132,10 +132,10 @@ def _handle_response(response, span, token_counter=None, choice_counter=None, du
     return response
 
 
-def _set_chat_metrics(token_counter, choice_counter, duration_histogram, response_dict, duration):
+def _set_chat_metrics(instance, token_counter, choice_counter, duration_histogram, response_dict, duration):
     shared_attributes = {
         "llm.response.model": response_dict.get("model") or None,
-        "server.address": _get_openai_base_url(),
+        "server.address": _get_openai_base_url(instance),
     }
 
     # token metrics
@@ -215,8 +215,8 @@ def _set_completions(span, choices):
         )
 
 
-def _build_from_streaming_response(span, response, token_counter=None, choice_counter=None, duration_histogram=None,
-                                   start_time=None):
+def _build_from_streaming_response(span, response, instance=None, token_counter=None, choice_counter=None,
+                                   duration_histogram=None, start_time=None):
     complete_response = {"choices": [], "model": ""}
     for item in response:
         item_to_yield = item
@@ -226,7 +226,7 @@ def _build_from_streaming_response(span, response, token_counter=None, choice_co
 
     shared_attributes = {
         "llm.response.model": complete_response.get("model") or None,
-        "server.address": _get_openai_base_url(),
+        "server.address": _get_openai_base_url(instance),
         "stream": True
     }
 

@@ -45,7 +45,7 @@ def image_gen_metrics_wrapper(duration_histogram: Histogram,
     shared_attributes = {
         # not provide response.model in ImagesResponse response, use model in request kwargs
         "llm.response.model": kwargs.get("model") or None,
-        "server.address": _get_openai_base_url(),
+        "server.address": _get_openai_base_url(instance),
     }
 
     duration = end_time - start_time
