@@ -1,0 +1,216 @@
+interactions:
+- request:
+    body: '{"messages": [{"role": "system", "content": "You are a poetic assistant,
+      skilled in explaining complex programming concepts with creative flair."}, {"role":
+      "user", "content": "Compose a poem that explains the concept of recursion in
+      programming."}], "model": "gpt-3.5-turbo"}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '276'
+      content-type:
+      - application/json
+      host:
+      - api.openai.com
+      user-agent:
+      - OpenAI/Python 1.12.0
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.12.0
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.9.5
+    method: POST
+    uri: https://api.openai.com/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA1RUTY/bNhC9+1cMdOlFa9h198N7C4oiSNFTmrRA62IxJkciN+SMMhzZVYP97wUl
+        7272IlAcvcfHN/P0bQXQRN/cQ+MCmstDuro7f92l283j1832j/jzr/+Fd9Mm3L7/86/u2knTVoQc
+        H8nZM2rtJA+JLAovZaeERpV1e7vZb3a7u91uLmTxlCqsH+xqt76+slGPcrXZ/nh9QQaJjkpzD3+v
+        AAC+zc+qkT3929zDpn3eyVQK9tTcv3wE0KikutNgKbEYsjXta9EJG/Es+wODBQIlTBmkAyeeWkBw
+        wo4GgyLQRab2wB/JjVqiMJwJT1QAYUAzUm7npaKPfQYfT5FpfeB30I3sqhfgMKXIPUQrlLr6eRIZ
+        4BwtRL68tRXhkR1VGZSor+uZWqVXzLkyOBmH9YEP/Fv8QoCQo6ooKHWJnM1nsAlE7iJHm97I9pSq
+        bE+0HA21W6NhlYgJsFsw6wP/LulUuQaVY6JcIKH2tICelQGyh17RVW8+s+KJ5jvmqRhppNJCwokU
+        jlPVpNGhESR09L3+j2MpERm8pARMxci/2MJigfTNFUY+Kw4FMPWi0UKVthANQhYdJDmRrg/8C7ow
+        2w6eiiP2y71JW5jIQGOpWk3m5tvF/SPhaFO1P0kfXfVew2QhgwU0OAv/YFBMlg58CipjH+CIhcBh
+        qRPBvg6Oj9XS0kI0GLmT5MvM/yijMk1gF+SlSzT3v7SVuhoHI5skP/cBMuqJEqCBPrvQQuQ6SpCx
+        jw4TuCBK8wllykMQnl4nuROlEymckefxyKK0bi5ReHrJUJK+NrvmjceUXvarwBIelLAI17zU6y/w
+        pxXAP3NWxzfxawaVPNiDyRfiSrjbL3TN69/htbi9uQS5MTFM3xX2+9VFYVPqTOWHLnJPOmhcotsN
+        D3c32+sb3P+Em2b1tPofAAD//wMA63XtVMQEAAA=
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 85c02270cc530e83-MXP
+      Cache-Control:
+      - no-cache, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 27 Feb 2024 11:37:16 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=LapoVNthWzSWvfSwdppCcrPcChMfdUL_qeISR8GMV8A-1709033836-1.0-AQpk5uU8Ch+YpLRklM+PdXeuiEyNk1RSzgBjqOJnhiSPadlKyTdmlSLeV/IZQExN0Iu45C9zSMuEh2TQ9RRSRb8=;
+        path=/; expires=Tue, 27-Feb-24 12:07:16 GMT; domain=.api.openai.com; HttpOnly;
+        Secure; SameSite=None
+      - _cfuvid=qX6oaBDoAmh3KF_aYYz3Txay.LYmSYkm4y6XEQuFm1I-1709033836384-0.0-604800000;
+        path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
+      Transfer-Encoding:
+      - chunked
+      access-control-allow-origin:
+      - '*'
+      alt-svc:
+      - h3=":443"; ma=86400
+      openai-model:
+      - gpt-3.5-turbo-0125
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '3094'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=15724800; includeSubDomains
+      x-ratelimit-limit-requests:
+      - '5000'
+      x-ratelimit-limit-tokens:
+      - '160000'
+      x-ratelimit-remaining-requests:
+      - '4999'
+      x-ratelimit-remaining-tokens:
+      - '159940'
+      x-ratelimit-reset-requests:
+      - 12ms
+      x-ratelimit-reset-tokens:
+      - 22ms
+      x-request-id:
+      - req_805d5d4316663a38f3522f0bf8899bce
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"messages": [{"role": "system", "content": "You are a poetic assistant,
+      skilled in explaining complex programming concepts with creative flair."}, {"role":
+      "user", "content": "Compose a poem that explains the concept of recursion in
+      programming."}], "model": "gpt-3.5-turbo"}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '276'
+      content-type:
+      - application/json
+      cookie:
+      - __cf_bm=LapoVNthWzSWvfSwdppCcrPcChMfdUL_qeISR8GMV8A-1709033836-1.0-AQpk5uU8Ch+YpLRklM+PdXeuiEyNk1RSzgBjqOJnhiSPadlKyTdmlSLeV/IZQExN0Iu45C9zSMuEh2TQ9RRSRb8=;
+        _cfuvid=qX6oaBDoAmh3KF_aYYz3Txay.LYmSYkm4y6XEQuFm1I-1709033836384-0.0-604800000
+      host:
+      - api.openai.com
+      user-agent:
+      - OpenAI/Python 1.12.0
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.12.0
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.9.5
+    method: POST
+    uri: https://api.openai.com/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA1RUwW7bSAy9+ysIXfaiGE7cZJ3cUiCHou1lF213sV4E9IiSphmRUw5lVS3y74uR
+        ZLt7kYAh+fjm8XF+rgAKXxUPULgWzXUxXO2Gb1vZ/RV275++yMe78PbT7svnD56P33SkoswVcvhK
+        zk5VayddDGReeA47JTTKqNe/b+432+1uezcFOqko5LIm2tV2fXtlvR7kanN9c7tUtuIdpeIB/lkB
+        APycvpkjV/S9eIBNeTrpKCVsqHg4JwEUKiGfFJiST4ZsRXkJOmEjnmi/Y7CWQAlDB1KDk4pKQHDC
+        jqJBVKml56rc8x/kek1e+LcEB8LeRjDtwwiVUAJMlvPWe36EumeXRQCHIXhuwFuiUGfcCtkRJAFF
+        pXLPn1jxSFNSVDkE6hIM3lpAiELmHdQBva73vOcP/oUAofOqoqBUB3K2wIMMfD4S/pUuKEVCW3Aj
+        aU3OTn8vvN7zWyV8AQTD9AKeTSB1GAIpRE+OUgmJMttHriBJOFIWrQMMYQbVudeRoAlEE9lH0Ha0
+        dhI1EzA/8QKEIBKh8kfPswC1hCrfIuBImiDMt7TBJ6MKctp6z0/o2klOqCgcc3pFFElntnmEHf7I
+        eE8daZPjR+9M1EufwDPgLxwPAX/MJP8mgwMNeRRQEeo0fi0zZ8+1Z2800U3lWf2h9RqiSIDYT8Mt
+        YWhJCVyLkqDSnJ4lzW6AUXo9dRY+TfaAicDlTzIVbhZlBzTXziVRpVHsIJ3Ge2GfhJuJ/J8C1B0U
+        XZ6GTyfLlkCBGmQD5Aoaxcm8i88H0VDl6y0NuukCCINwpVmqFicPn82Tg2nsYis85rogjXcnZDd5
+        Asx3FCilxdx+buVkmmqK6GhdLMv3et7aIE02fN5w7kM4n2fVU/ushEk4b2gyiXP56wrg3+l16P+3
+        8EVU6aI9m7wQZ8Dt/QxXXN6jS/B6d7tETQzDJXBz82a1MCzSmIy659pzQxrVz49FHZ93d9e3d3j/
+        BjfF6nX1HwAAAP//AwBM29N2NgUAAA==
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 85c022861cab0e83-MXP
+      Cache-Control:
+      - no-cache, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 27 Feb 2024 11:37:19 GMT
+      Server:
+      - cloudflare
+      Transfer-Encoding:
+      - chunked
+      access-control-allow-origin:
+      - '*'
+      alt-svc:
+      - h3=":443"; ma=86400
+      openai-model:
+      - gpt-3.5-turbo-0125
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '3165'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=15724800; includeSubDomains
+      x-ratelimit-limit-requests:
+      - '5000'
+      x-ratelimit-limit-tokens:
+      - '160000'
+      x-ratelimit-remaining-requests:
+      - '4999'
+      x-ratelimit-remaining-tokens:
+      - '159940'
+      x-ratelimit-reset-requests:
+      - 12ms
+      x-ratelimit-reset-tokens:
+      - 22ms
+      x-request-id:
+      - req_99d963ee52187db213dbb11b33f38cdb
+    status:
+      code: 200
+      message: OK
+version: 1

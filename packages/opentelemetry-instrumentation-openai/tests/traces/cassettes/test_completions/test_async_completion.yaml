@@ -1,8 +1,6 @@
 interactions:
 - request:
-    body: '{"messages": [{"role": "user", "content": [{"type": "text", "text": "What
-      is in this image?"}, {"type": "image_url", "image_url": {"url": "https://source.unsplash.com/8xznAGy4HcY/800x400"}}]}],
-      "model": "gpt-4-vision-preview"}'
+    body: '{"model": "davinci-002", "prompt": "Tell me a joke about opentelemetry"}'
     headers:
       accept:
       - application/json
@@ -11,17 +9,17 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '226'
+      - '72'
       content-type:
       - application/json
       host:
       - api.openai.com
       user-agent:
-      - OpenAI/Python 1.12.0
+      - AsyncOpenAI/Python 1.12.0
       x-stainless-arch:
       - arm64
       x-stainless-async:
-      - 'false'
+      - async:asyncio
       x-stainless-lang:
       - python
       x-stainless-os:
@@ -33,21 +31,23 @@ interactions:
       x-stainless-runtime-version:
       - 3.9.5
     method: POST
-    uri: https://api.openai.com/v1/chat/completions
+    uri: https://api.openai.com/v1/completions
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAAA0xPzU7DMAx+FSvnFq2iW0evoHEAwYVdQGgyrdcE0jiKvY0x7d1RhhjcLH//B+N6
-        04LpLGo3Rl/O07J5eLz5uktpF9Fd877CxfNyen9r9wtTgOG3d+r0V3PR8Rg9qeOQwS4RKmXHqpk0
-        zbSZ11cFmJF78lkyRC3rsqoms3LrxHEoY6Kto10WbwQHMi0cTEw8Rl0pf1AQ00J9Oc/m56g/pJoV
-        YJQV/T/2tD5mumXXUX68HMxIcnZP7PNhUMSJYtBTcw5K4bTryRK4EQcCsbwTQBBKjgR4DTIyqy0g
-        sfcuDGCd9wJqUeFnO2CATeg3HjXjEVUpBZMLrV1wYleJUDjkIE9hUJvTXejp07QwOb4evwEAAP//
-        AwCB3rzokwEAAA==
+        H4sIAAAAAAAAA0SQTU8CMRCG7/srxp7FLCzoujclGk9+REwMxpDSHdnRbmdtBwEJ/510l8Clh/fp
+        +9FuEwBFpSpAmbqxvXz1O8xM/jaaTscvt+8j61+bcPO4MmX2dK/O422ef6OR6BBcy8xw3VgUYtdh
+        41ELxsT+VXqdZlk+6reg5hJttJX6j5yhXpoODpaKyWBQBXwkAADb9oSuIDrA0txrTxhg7EnIaAvo
+        PfszuDMcNkGwhkD/CBSAnGHv0YjdQEABYUgvYFJRgIfJ5LmtbNPJlbhWBaRHxfKi8TyPS9zS2qP+
+        RY5CNfOoA7s4yKJbSKVavksAPtt3LINeoCoO+1XjuW5kJvyDLkbmXZ46/diJ9S8PUFi0PemDYRIb
+        dskeAAD//wMAfzc9YqkBAAA=
     headers:
       CF-Cache-Status:
       - DYNAMIC
       CF-RAY:
-      - 854672779dcc09cb-HFA
+      - 85c022dfd9270d55-MXP
+      Cache-Control:
+      - no-cache, must-revalidate
       Connection:
       - keep-alive
       Content-Encoding:
@@ -55,43 +55,45 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Mon, 12 Feb 2024 17:10:50 GMT
+      - Tue, 27 Feb 2024 11:37:31 GMT
       Server:
       - cloudflare
       Set-Cookie:
-      - __cf_bm=D29fEtZBsaErhV_J66xrEEtNpdJNLOS3I5qUMBnW6UI-1707757850-1-AUFw6XKpJgRdxORMEIeGF4lYnOenj2xt9Ox3zioXSmiafh+8Tolq5EsPRgRwhA5SbVsgGRmC1vl5A9RtaOTJ1cw=;
-        path=/; expires=Mon, 12-Feb-24 17:40:50 GMT; domain=.api.openai.com; HttpOnly;
+      - __cf_bm=IXJpG29AzJMXZ6prF1r01o77ey3WeJOFqtKGddVGXgs-1709033851-1.0-ARcd5NTXKKUsTNeJaMrjYyY6xuehvSeVQb6NpDYF90G82UN9pgJwvriJS7D8T6BxjGaLVuVycUDuyNerFdCdkhY=;
+        path=/; expires=Tue, 27-Feb-24 12:07:31 GMT; domain=.api.openai.com; HttpOnly;
         Secure; SameSite=None
-      - _cfuvid=P0Ff54IPoiBJ9YXP4WJClvAyUOWN_RYp0ZilmncDTeE-1707757850522-0-604800000;
+      - _cfuvid=DHQXOj5CdWf6_c54rUVJswqBYhaHimsKEKNeVfqxV7c-1709033851489-0.0-604800000;
         path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
       Transfer-Encoding:
       - chunked
+      access-control-allow-origin:
+      - '*'
       alt-svc:
       - h3=":443"; ma=86400
       openai-model:
-      - gpt-4-1106-vision-preview
+      - davinci-002
       openai-organization:
       - traceloop
       openai-processing-ms:
-      - '2064'
+      - '356'
       openai-version:
       - '2020-10-01'
       strict-transport-security:
       - max-age=15724800; includeSubDomains
       x-ratelimit-limit-requests:
-      - '1500'
+      - '3000'
       x-ratelimit-limit-tokens:
-      - '40000'
+      - '250000'
       x-ratelimit-remaining-requests:
-      - '1489'
+      - '2999'
       x-ratelimit-remaining-tokens:
-      - '39977'
+      - '249975'
       x-ratelimit-reset-requests:
-      - 9m40.586s
+      - 20ms
       x-ratelimit-reset-tokens:
-      - 34ms
+      - 5ms
       x-request-id:
-      - req_681015a8fa04e3e28ee260ee4bc078c8
+      - req_8d2b44ed96a168f7baffb8a6f694d774
     status:
       code: 200
       message: OK
