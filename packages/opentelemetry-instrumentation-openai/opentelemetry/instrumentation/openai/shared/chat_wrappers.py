@@ -9,6 +9,7 @@ from opentelemetry.semconv.ai import SpanAttributes, LLMRequestTypeValues
 from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
 from opentelemetry.instrumentation.openai.utils import _with_tracer_wrapper, _with_chat_telemetry_wrapper
 from opentelemetry.instrumentation.openai.shared import (
+    _set_client_attributes,
     _set_request_attributes,
     _set_span_attribute,
     _set_functions_attributes,
@@ -47,7 +48,8 @@ def chat_wrapper(tracer: Tracer,
         attributes={SpanAttributes.LLM_REQUEST_TYPE: LLM_REQUEST_TYPE.value},
     )
 
-    _handle_request(span, kwargs)
+    _handle_request(span, kwargs, instance)
+    response = wrapped(*args, **kwargs)
 
     try:
         start_time = time.time()
@@ -91,7 +93,7 @@ async def achat_wrapper(tracer, wrapped, instance, args, kwargs):
         kind=SpanKind.CLIENT,
         attributes={SpanAttributes.LLM_REQUEST_TYPE: LLM_REQUEST_TYPE.value},
     )
-    _handle_request(span, kwargs)
+    _handle_request(span, kwargs, instance)
     response = await wrapped(*args, **kwargs)
 
     if is_streaming_response(response):
@@ -104,8 +106,9 @@ async def achat_wrapper(tracer, wrapped, instance, args, kwargs):
     return response
 
 
-def _handle_request(span, kwargs):
+def _handle_request(span, kwargs, instance):
     _set_request_attributes(span, kwargs)
+    _set_client_attributes(span, instance)
     if should_send_prompts():
         _set_prompts(span, kwargs.get("messages"))
         _set_functions_attributes(span, kwargs.get("functions"))

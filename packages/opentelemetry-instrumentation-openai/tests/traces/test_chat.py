@@ -22,3 +22,4 @@ def test_chat_streaming(exporter, openai_client, vcr):
         == "Tell me a joke about opentelemetry"
     )
     assert open_ai_span.attributes.get("llm.completions.0.content")
+    assert open_ai_span.attributes.get("openai.api_base") == "https://api.openai.com/v1/"

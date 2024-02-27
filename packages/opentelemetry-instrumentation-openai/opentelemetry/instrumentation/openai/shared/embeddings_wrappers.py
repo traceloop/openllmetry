@@ -12,6 +12,7 @@ from opentelemetry.instrumentation.openai.utils import (
     _with_embeddings_telemetry_wrapper,
 )
 from opentelemetry.instrumentation.openai.shared import (
+    _set_client_attributes,
     _set_request_attributes,
     _set_span_attribute,
     _set_response_attributes,
@@ -46,7 +47,9 @@ def embeddings_wrapper(tracer,
         kind=SpanKind.CLIENT,
         attributes={SpanAttributes.LLM_REQUEST_TYPE: LLM_REQUEST_TYPE.value},
     ) as span:
-        _handle_request(span, kwargs)
+        _handle_request(span, kwargs, instance)
+        response = wrapped(*args, **kwargs)
+        _handle_response(response, span)
 
         try:
             # record time for duration
@@ -86,17 +89,18 @@ async def aembeddings_wrapper(tracer, wrapped, instance, args, kwargs):
             kind=SpanKind.CLIENT,
             attributes={SpanAttributes.LLM_REQUEST_TYPE: LLM_REQUEST_TYPE.value},
     ) as span:
-        _handle_request(span, kwargs)
+        _handle_request(span, kwargs, instance)
         response = await wrapped(*args, **kwargs)
         _handle_response(response, span)
 
         return response
 
 
-def _handle_request(span, kwargs):
+def _handle_request(span, kwargs, instance):
     _set_request_attributes(span, kwargs)
     if should_send_prompts():
         _set_prompts(span, kwargs.get("input"))
+    _set_client_attributes(span, instance)
 
 
 def _handle_response(response, span, token_counter=None, vector_size_counter=None, duration_histogram=None,
