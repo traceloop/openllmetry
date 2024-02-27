@@ -32,8 +32,31 @@ def _set_span_attribute(span, name, value):
     return
 
 
+def _set_client_attributes(span, instance):
+    if not span.is_recording():
+        return
+
+    if not is_openai_v1():
+        return
+
+    try:
+        client = instance._client  # pylint: disable=protected-access
+        if isinstance(client, (openai.AsyncOpenAI, openai.OpenAI)):
+            _set_span_attribute(span, OPENAI_API_BASE, str(client.base_url))
+        if isinstance(client, (openai.AsyncAzureOpenAI, openai.AzureOpenAI)):
+            _set_span_attribute(span, OPENAI_API_VERSION, client._api_version)  # pylint: disable=protected-access
+
+    except Exception as ex:  # pylint: disable=broad-except
+        logger.warning(
+            "Failed to set api attributes for openai v1 span, error: %s", str(ex)
+        )
+
+
 def _set_api_attributes(span):
     if not span.is_recording():
+        return
+
+    if is_openai_v1():
         return
 
     try:
@@ -143,5 +166,9 @@ def is_streaming_response(response):
 def model_as_dict(model):
     if version("pydantic") < "2.0.0":
         return model.dict()
-
-    return model.model_dump()
+    if hasattr(model, "model_dump"):
+        return model.model_dump()
+    elif hasattr(model, "parse"):  # Raw API response
+        return model_as_dict(model.parse())
+    else:
+        return model

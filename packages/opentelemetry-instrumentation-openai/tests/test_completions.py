@@ -18,6 +18,7 @@ def test_completion(exporter, openai_client):
         == "Tell me a joke about opentelemetry"
     )
     assert open_ai_span.attributes.get("llm.completions.0.content")
+    assert open_ai_span.attributes.get("openai.api_base") == "https://api.openai.com/v1/"
 
 
 @pytest.mark.vcr
@@ -67,7 +68,7 @@ def test_completion_streaming(exporter, openai_client):
         stream=True,
     )
 
-    for part in response:
+    for _ in response:
         pass
 
     spans = exporter.get_finished_spans()
@@ -80,6 +81,7 @@ def test_completion_streaming(exporter, openai_client):
         == "Tell me a joke about opentelemetry"
     )
     assert open_ai_span.attributes.get("llm.completions.0.content")
+    assert open_ai_span.attributes.get("openai.api_base") == "https://api.openai.com/v1/"
 
 
 @pytest.mark.vcr
@@ -91,7 +93,7 @@ async def test_async_completion_streaming(exporter, async_openai_client):
         stream=True,
     )
 
-    async for part in response:
+    async for _ in response:
         pass
 
     spans = exporter.get_finished_spans()
@@ -104,3 +106,4 @@ async def test_async_completion_streaming(exporter, async_openai_client):
         == "Tell me a joke about opentelemetry"
     )
     assert open_ai_span.attributes.get("llm.completions.0.content")
+    assert open_ai_span.attributes.get("openai.api_base") == "https://api.openai.com/v1/"
