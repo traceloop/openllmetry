@@ -25,7 +25,7 @@ def test_embeddings(exporter, openai_client):
 
 @pytest.mark.vcr
 def test_embeddings_with_raw_response(exporter, openai_client):
-    openai_client.embeddings.with_raw_response.create(
+    response = openai_client.embeddings.with_raw_response.create(
         input="Tell me a joke about opentelemetry",
         model="text-embedding-ada-002",
     )
@@ -38,6 +38,13 @@ def test_embeddings_with_raw_response(exporter, openai_client):
         open_ai_span.attributes["llm.prompts.0.content"]
         == "Tell me a joke about opentelemetry"
     )
+
+    assert open_ai_span.attributes["llm.request.model"] == "text-embedding-ada-002"
+    assert open_ai_span.attributes["llm.usage.prompt_tokens"] == 8
+    assert open_ai_span.attributes["openai.api_base"] == "https://api.openai.com/v1/"
+
+    parsed_response = response.parse()
+    assert parsed_response.data[0]
 
 
 @pytest.mark.vcr
