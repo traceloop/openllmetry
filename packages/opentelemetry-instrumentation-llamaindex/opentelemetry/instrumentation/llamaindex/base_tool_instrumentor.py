@@ -9,11 +9,20 @@ from opentelemetry.instrumentation.llamaindex.utils import (
 from opentelemetry.semconv.ai import SpanAttributes, TraceloopSpanKindValues
 
 
-V9_MODULE_NAME = "llama_index.tools.types"
-V10_MODULE_NAME = "llama_index.core.tools.types"
-V10_LEGACY_MODULE_NAME = "llama_index.legacy.tools.types"
-
-CLASS_NAME = "AsyncBaseTool"
+TO_INSTRUMENT = [
+    {
+        "class": "FunctionTool",
+        "v9_module": "llama_index.tools.function_tool",
+        "v10_module": "llama_index.core.tools.function_tool",
+        "v10_legacy_module": "llama_index.legacy.tools.function_tool",
+    },
+    {
+        "class": "QueryEngineTool",
+        "v9_module": "llama_index.tools.query_engine",
+        "v10_module": "llama_index.core.tools.query_engine",
+        "v10_legacy_module": "llama_index.legacy.tools.query_engine",
+    },
+]
 
 
 class BaseToolInstrumentor:
@@ -21,20 +30,21 @@ class BaseToolInstrumentor:
         self._tracer = tracer
 
     def instrument(self):
-        try:
-            package_version("llama-index-core")
-            self._instrument_module(V10_MODULE_NAME)
-            self._instrument_module(V10_LEGACY_MODULE_NAME)
+        for module in TO_INSTRUMENT:
+            try:
+                package_version("llama-index-core")
+                self._instrument_module(module["v10_module"], module["class"])
+                self._instrument_module(module["v10_legacy_module"], module["class"])
 
-        except PackageNotFoundError:
-            self._instrument_module(V9_MODULE_NAME)
+            except PackageNotFoundError:
+                self._instrument_module(module["v9_module"], module["class"])
 
-    def _instrument_module(self, module_name):
+    def _instrument_module(self, module_name, class_name):
         wrap_function_wrapper(
-            module_name, f"{CLASS_NAME}.call", query_wrapper(self._tracer)
+            module_name, f"{class_name}.call", query_wrapper(self._tracer)
         )
         wrap_function_wrapper(
-            module_name, f"{CLASS_NAME}.acall", aquery_wrapper(self._tracer)
+            module_name, f"{class_name}.acall", aquery_wrapper(self._tracer)
         )
 
 
