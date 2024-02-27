@@ -9,7 +9,7 @@ def test_chat_streaming(exporter, openai_client, vcr):
         stream=True,
     )
 
-    for part in response:
+    for _ in response:
         pass
 
     spans = exporter.get_finished_spans()
