@@ -40,18 +40,18 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAAA1yRT0/jMBDF7/kUozm3KFkoLbntwoUDnLigzSoy7jTxYs9E9oQuqvrdVy79y8Wy
-        5vn9/Py8KQDQLbEGtL1RGwY/XYyf49y+uKoM6/W1lI8P/WuYvYb48fx4j5PskLe/ZPXgurISBk/q
-        hL9kG8koZWo1Lxezu6qaz3ZCkCX5bOsGnd5My9vqeu/oxVlKWMPvAgBgs1tzNl7SP6yhnBwmgVIy
-        HWF9PASAUXyeoEnJJTWsODmJVliJc1wevT8TViPbnLq1xvsLIACyCTtkR9raMUZibddktKd4BgdA
-        E7sxEGtOj5uGARr0Yk0mN1hDg78kqfAEnn422PAWj+7tfrc9vs5LN0R5S9/C4sqxS30bySThfNFl
-        9uJA+7Orc7xoCIcoYdBW5Z04kxc/vrh4+riTWC32oooafzYvy2KfFNNnUgrtynFHcYjuWG6xLf4D
-        AAD//wMAqtXH1VMCAAA=
+        H4sIAAAAAAAAA1yRMU/DMBCF9/yK080tSkkpSTZQByQGJhggKHLdaxLq2MG+qKAq/x05TZOWxTrd
+        8/vu+XwMALDaYgooS8GybtQ8PnwvH17X62hV0HPyLmIppTmUL5v9W/KEM+8wmy+SfHbdSFM3irgy
+        +iRLS4LJUxf3YRJGUXwX90JttqS8rWh4vpyHq0U0OEpTSXKYwkcAAHDsT59Nb+kHUwhn505NzomC
+        MB0vAaA1yndQOFc5FppxNonSaCbt4+pWqQth12rpU+dSKHUFBEAt6h5ZEOeytZY05wcSXJK9gAOg
+        sEVbk2afHo+ZBshQGSk8OcMUMnw0jn2d6Q5HZzdU3fgyZYrGmo37FxR3la5cmVsSzmg/5Dp3cKZ9
+        9qtsr7aDjTV1wzmbPWlPjm9PXJw+bRIXq0Fkw0JN/SQOhqDofh1Tne8qXZBtbDXuNeiCPwAAAP//
+        AwDHdYS7TgIAAA==
     headers:
       CF-Cache-Status:
       - DYNAMIC
       CF-RAY:
-      - 8595eb5ccd58a31f-FCO
+      - 85c0230d9b243751-MXP
       Cache-Control:
       - no-cache, must-revalidate
       Connection:
@@ -61,14 +61,14 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Thu, 22 Feb 2024 08:39:36 GMT
+      - Tue, 27 Feb 2024 11:37:39 GMT
       Server:
       - cloudflare
       Set-Cookie:
-      - __cf_bm=_rd5IlDHi_GsR1.J.XKrwYlMLLQ_gAVl6B2xPPth3TI-1708591176-1.0-ARH5ECyv2FyUJRjMj3wNBkBZYf8XemoJD3257OBd32n/NTxzs6OhmosdcCXEr8umSjtVumzPLZpcWywcfftD+A4=;
-        path=/; expires=Thu, 22-Feb-24 09:09:36 GMT; domain=.api.openai.com; HttpOnly;
+      - __cf_bm=sG3vZ44YUZtqaBM7MmXBm4aexlEvGS_R4s7LytRuRQ4-1709033859-1.0-AZKffJIvS2ZFAZcCRlbzP6f0YNI8lBw7raj9j9KocuByfsGH+Nc7BV3Jc3nbs5shcyhj7iMZTXQEnT5iJqPMl/A=;
+        path=/; expires=Tue, 27-Feb-24 12:07:39 GMT; domain=.api.openai.com; HttpOnly;
         Secure; SameSite=None
-      - _cfuvid=6H5g78PRJq2.qa15F2lPWyXlp.PKULC.iWc9TAFwo2Y-1708591176422-0.0-604800000;
+      - _cfuvid=O4mcbApiXXsQ1k3kavC8usvlrNkVws27Cm0.jUYN470-1709033859585-0.0-604800000;
         path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
       Transfer-Encoding:
       - chunked
@@ -81,7 +81,7 @@ interactions:
       openai-organization:
       - traceloop
       openai-processing-ms:
-      - '1016'
+      - '1224'
       openai-version:
       - '2020-10-01'
       strict-transport-security:
@@ -99,7 +99,108 @@ interactions:
       x-ratelimit-reset-tokens:
       - 19ms
       x-request-id:
-      - req_feca2c2a743ffee38cd3ed89fed33e8a
+      - req_8282a3e2e2be971c97ccc05cf215d9aa
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"messages": [{"role": "user", "content": "What''s the weather like in
+      Boston?"}], "model": "gpt-4", "function_call": "auto", "functions": [{"name":
+      "get_current_weather", "description": "Get the current weather in a given location",
+      "parameters": {"type": "object", "properties": {"location": {"type": "string",
+      "description": "The city and state, e.g. San Francisco, CA"}, "unit": {"type":
+      "string", "enum": ["celsius", "fahrenheit"]}}, "required": ["location"]}}]}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '466'
+      content-type:
+      - application/json
+      cookie:
+      - __cf_bm=sG3vZ44YUZtqaBM7MmXBm4aexlEvGS_R4s7LytRuRQ4-1709033859-1.0-AZKffJIvS2ZFAZcCRlbzP6f0YNI8lBw7raj9j9KocuByfsGH+Nc7BV3Jc3nbs5shcyhj7iMZTXQEnT5iJqPMl/A=;
+        _cfuvid=O4mcbApiXXsQ1k3kavC8usvlrNkVws27Cm0.jUYN470-1709033859585-0.0-604800000
+      host:
+      - api.openai.com
+      user-agent:
+      - OpenAI/Python 1.12.0
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.12.0
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.9.5
+    method: POST
+    uri: https://api.openai.com/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA1yRy24CMQxF9/MVltdQ8SqFWaIuKiRUqdtONQoZz4MmzjTxiFaIf6/CYyjdRJZv
+        7vGNc0gAsCkwBdS1Em1bM1zsv2Yr3r2uJ5sNvayN755LotWmqJ19w0F0uO2OtFxdD9rZ1pA0js+y
+        9qSEInX8NFqOptPF4/IkWFeQibaqleFsOJqPpxdH7RpNAVN4TwAADqczZuOCvjGF0eDasRSCqgjT
+        /hIAemdiB1UITRDFgoObqB0LcYzLnTF/hLJjHVPnWhlzBwRAVvaErEhy3XlPLPmelNTk/8ABUPmq
+        s8QS0+MhY4AMjdMqkjNMIcOVCxLrjI/YO4+X6ti/zLiq9W4b/gXFsuEm1LknFRzHIfe5kyvt47TK
+        7m472HpnW8nFfRJH8mJy5uLt027ieH4RxYkyt/5ykVyCYvgJQjYvG67It77p95ock18AAAD//wMA
+        pD0dCU4CAAA=
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 85c02316ab1f3751-MXP
+      Cache-Control:
+      - no-cache, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 27 Feb 2024 11:37:40 GMT
+      Server:
+      - cloudflare
+      Transfer-Encoding:
+      - chunked
+      access-control-allow-origin:
+      - '*'
+      alt-svc:
+      - h3=":443"; ma=86400
+      openai-model:
+      - gpt-4-0613
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '1129'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=15724800; includeSubDomains
+      x-ratelimit-limit-requests:
+      - '5000'
+      x-ratelimit-limit-tokens:
+      - '80000'
+      x-ratelimit-remaining-requests:
+      - '4999'
+      x-ratelimit-remaining-tokens:
+      - '79974'
+      x-ratelimit-reset-requests:
+      - 12ms
+      x-ratelimit-reset-tokens:
+      - 19ms
+      x-request-id:
+      - req_3c015274d0d3c106f3680bc7be49b620
     status:
       code: 200
       message: OK
