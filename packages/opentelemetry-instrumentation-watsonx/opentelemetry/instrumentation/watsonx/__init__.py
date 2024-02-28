@@ -23,26 +23,38 @@ _instruments = ("ibm_watson_machine_learning >= 1.0.347",)
 
 WRAPPED_METHODS_WATSON_ML_VERSION_1 = [
     {
-        "module": "ibm_watson_machine_learning.foundation_models",
-        "object": "Model",
+        "module": "ibm_watson_machine_learning.foundation_models.inference",
+        "object": "ModelInference",
+        "method": "__init__",
+        "span_name": "watsonx.model_init",
+    },
+    {
+        "module": "ibm_watson_machine_learning.foundation_models.inference",
+        "object": "ModelInference",
         "method": "generate",
         "span_name": "watsonx.generate",
     },
     {
-        "module": "ibm_watson_machine_learning.foundation_models",
-        "object": "Model",
+        "module": "ibm_watson_machine_learning.foundation_models.inference",
+        "object": "ModelInference",
         "method": "generate_text_stream",
         "span_name": "watsonx.generate_text_stream",
     },
     {
-        "module": "ibm_watson_machine_learning.foundation_models",
-        "object": "Model",
+        "module": "ibm_watson_machine_learning.foundation_models.inference",
+        "object": "ModelInference",
         "method": "get_details",
         "span_name": "watsonx.get_details",
     },
 ]
 
 WRAPPED_METHODS_WATSON_AI_VERSION_1 = [
+    {
+        "module": "ibm_watsonx_ai.foundation_models",
+        "object": "ModelInference",
+        "method": "__init__",
+        "span_name": "watsonx.model_init",
+    },
     {
         "module": "ibm_watsonx_ai.foundation_models",
         "object": "ModelInference",
@@ -256,11 +268,13 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
     )
 
     _set_api_attributes(span)
-    _set_input_attributes(span, instance, kwargs)
+    if "model_init" not in name:
+        _set_input_attributes(span, instance, kwargs)
 
     response = wrapped(*args, **kwargs)
 
-    _set_response_attributes(span, response)
+    if "model_init" not in name:
+        _set_response_attributes(span, response)
 
     span.end()
     return response
