@@ -1,3 +1,14 @@
+## v0.13.0 (2024-02-28)
+
+### Feat
+
+- basic Support for OpenTelemetry Metrics and Token Usage Metrics in OpenAI V1 (#369)
+- **weaviate**: implement weaviate instrumentation (#394)
+
+### Fix
+
+- **watsonx**: exclude http request, adding span for model initialization (#543)
+
 ## v0.12.5 (2024-02-27)
 
 ### Fix
