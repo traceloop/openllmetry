@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "opentelemetry-instrumentation-watsonx"
-version = "0.12.5"
+version = "0.13.0"
 description = "OpenTelemetry IBM Watsonx Instrumentation"
 authors = ["Guangya Liu <gyliu@ibm.com>"]
 license = "Apache-2.0"
