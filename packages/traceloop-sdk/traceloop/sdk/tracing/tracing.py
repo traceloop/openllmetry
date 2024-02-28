@@ -33,6 +33,9 @@ from typing import Dict, Optional, Set
 
 TRACER_NAME = "traceloop.tracer"
 EXCLUDED_URLS = """
+    iam.cloud.ibm.com,
+    dataplatform.cloud.ibm.com,
+    ml.cloud.ibm.com,
     api.openai.com,
     openai.azure.com,
     api.anthropic.com,
