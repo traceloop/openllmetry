@@ -16,7 +16,7 @@ authors = [
   "Tomer Friedman <tomer@traceloop.com>"
 ]
 repository = "https://github.com/traceloop/openllmetry"
-documentation = "https://traceloop.com/docs/python-sdk"
+documentation = "https://traceloop.com/docs/openllmetry"
 license = "Apache-2.0"
 readme = "README.md"
 

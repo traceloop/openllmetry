@@ -15,6 +15,7 @@ authors = [
   "Nir Gazit <nir@traceloop.com>",
   "Tomer Friedman <tomer@traceloop.com>"
 ]
+repository = "https://github.com/traceloop/openllmetry/tree/main/packages/opentelemetry-instrumentation-anthropic"
 license = "Apache-2.0"
 readme = "README.md"
 
