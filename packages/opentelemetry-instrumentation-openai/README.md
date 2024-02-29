@@ -12,6 +12,14 @@ This library allows tracing OpenAI prompts and completions sent with the officia
 pip install opentelemetry-instrumentation-openai
 ```
 
+## Example usage
+
+```python
+from opentelemetry.instrumentation.openai import OpenAIInstrumentor
+
+OpenAIInstrumentor().instrument()
+```
+
 ## Privacy
 
 **By default, this instrumentation logs prompts, completions, and embeddings to span attributes**. This gives you a clear visibility into how your LLM application is working, and can make it easy to debug and evaluate the quality of the outputs.
