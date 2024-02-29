@@ -12,6 +12,14 @@ This library allows tracing complete LLM applications built with [Haystack](http
 pip install opentelemetry-instrumentation-haystack
 ```
 
+## Example usage
+
+```python
+from opentelemetry.instrumentation.haystack import HaystackInstrumentor
+
+HaystackInstrumentor().instrument()
+```
+
 ## Privacy
 
 **By default, this instrumentation logs prompts, completions, and embeddings to span attributes**. This gives you a clear visibility into how your LLM application is working, and can make it easy to debug and evaluate the quality of the outputs.

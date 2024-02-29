@@ -8,6 +8,14 @@ This library allows tracing IBM Watsonx prompts and completions sent with the of
 pip install opentelemetry-instrumentation-watsonx
 ```
 
+## Example usage
+
+```python
+from opentelemetry.instrumentation.watsonx import WatsonxInstrumentor
+
+WatsonxInstrumentor().instrument()
+```
+
 ## Privacy
 
 **By default, this instrumentation logs prompts, completions, and embeddings to span attributes**. This gives you a clear visibility into how your LLM application is working, and can make it easy to debug and evaluate the quality of the outputs.

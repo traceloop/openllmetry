@@ -12,6 +12,14 @@ This library allows tracing complete LLM applications built with [LlamaIndex](ht
 pip install opentelemetry-instrumentation-llamaindex
 ```
 
+## Example usage
+
+```python
+from opentelemetry.instrumentation.llamaindex import LlamaIndexInstrumentor
+
+LlamaIndexInstrumentor().instrument()
+```
+
 ## Privacy
 
 **By default, this instrumentation logs prompts, completions, and embeddings to span attributes**. This gives you a clear visibility into how your LLM application is working, and can make it easy to debug and evaluate the quality of the outputs.

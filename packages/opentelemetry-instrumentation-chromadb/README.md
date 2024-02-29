@@ -9,5 +9,13 @@ This library allows tracing client-side calls to Chroma vector DB sent with the 
 ## Installation
 
 ```bash
-pip install opentelemetry-instrumentation-chroma
+pip install opentelemetry-instrumentation-chromadb
+```
+
+## Example usage
+
+```python
+from opentelemetry.instrumentation.chromadb import ChromaInstrumentor
+
+ChromaInstrumentor().instrument()
 ```
