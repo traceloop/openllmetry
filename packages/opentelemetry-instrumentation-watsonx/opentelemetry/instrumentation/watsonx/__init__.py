@@ -2,11 +2,13 @@
 
 import logging
 import os
+import types
 from typing import Collection
 from wrapt import wrap_function_wrapper
 
 from opentelemetry import context as context_api
 from opentelemetry.trace import get_tracer, SpanKind
+from opentelemetry.trace.status import Status, StatusCode
 
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.instrumentation.utils import (
@@ -153,6 +155,35 @@ def _set_input_attributes(span, instance, kwargs):
     return
 
 
+def _set_stream_response_attributes(span, stream_response):
+    _set_span_attribute(
+        span,
+        SpanAttributes.LLM_RESPONSE_MODEL,
+        stream_response.get("model_id")
+    )
+    _set_span_attribute(
+        span,
+        SpanAttributes.LLM_USAGE_PROMPT_TOKENS,
+        stream_response.get("input_token_count"),
+    )
+    _set_span_attribute(
+        span,
+        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS,
+        stream_response.get("generated_token_count"),
+    )
+    total_token = stream_response.get("input_token_count") + stream_response.get("generated_token_count")
+    _set_span_attribute(
+        span,
+        SpanAttributes.LLM_USAGE_TOTAL_TOKENS,
+        total_token,
+        )
+    _set_span_attribute(
+        span,
+        f"{SpanAttributes.LLM_COMPLETIONS}.content",
+        stream_response.get("generated_text"),
+    )
+
+
 def _set_single_response_attributes(span, response, index) -> int:
 
     token_sum = 0
@@ -238,6 +269,33 @@ def _set_response_attributes(span, responses):
     return
 
 
+def _build_and_set_stream_response(span, response, raw_flag):
+    stream_generated_text = ""
+    stream_generated_token_count = 0
+    stream_input_token_count = 0
+    for item in response:
+        stream_model_id = item["model_id"]
+        stream_generated_text += item["results"][0]["generated_text"]
+        stream_input_token_count += item["results"][0]["input_token_count"]
+        stream_generated_token_count = item["results"][0]["generated_token_count"]
+
+        if raw_flag:
+            yield item
+        else:
+            yield item["results"][0]["generated_text"]
+
+    stream_response = {
+        "model_id": stream_model_id,
+        "generated_text": stream_generated_text,
+        "generated_token_count": stream_generated_token_count,
+        "input_token_count": stream_input_token_count,
+    }
+    _set_stream_response_attributes(span, stream_response)
+
+    span.set_status(Status(StatusCode.OK))
+    span.end()
+
+
 def _with_tracer_wrapper(func):
     """Helper for providing tracer for wrapper functions."""
 
@@ -270,11 +328,19 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
     _set_api_attributes(span)
     if "model_init" not in name:
         _set_input_attributes(span, instance, kwargs)
+        if to_wrap.get("method") == "generate_text_stream":
+            if (raw_flag := kwargs.get("raw_response", None)) is None:
+                kwargs = {**kwargs, "raw_response": True}
+            elif raw_flag is False:
+                kwargs["raw_response"] = True
 
     response = wrapped(*args, **kwargs)
 
     if "model_init" not in name:
-        _set_response_attributes(span, response)
+        if isinstance(response, types.GeneratorType):
+            return _build_and_set_stream_response(span, response, raw_flag)
+        else:
+            _set_response_attributes(span, response)
 
     span.end()
     return response
