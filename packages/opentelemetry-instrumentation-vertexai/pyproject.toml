@@ -16,6 +16,7 @@ authors = [
   "Tomer Friedman <tomer@traceloop.com>",
   "Swaroop <maddisaiswaroop@gmail.com>"
 ]
+repository = "https://github.com/traceloop/openllmetry/tree/main/packages/opentelemetry-instrumentation-vertexai"
 license = "Apache-2.0"
 readme = "README.md"
 
