@@ -6,9 +6,9 @@ from traceloop.sdk import Traceloop
 from dotenv import load_dotenv
 load_dotenv()
 
-Traceloop.init()
-
 os.environ['OTEL_EXPORTER_OTLP_INSECURE'] = 'True'
+
+Traceloop.init(app_name="watsonx_example")
 
 
 def get_credentials(api_key):
