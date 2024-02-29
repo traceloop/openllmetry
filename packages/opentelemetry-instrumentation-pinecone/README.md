@@ -11,3 +11,11 @@ This library allows tracing client-side calls to Pinecone vector DB sent with th
 ```bash
 pip install opentelemetry-instrumentation-pinecone
 ```
+
+## Example usage
+
+```python
+from opentelemetry.instrumentation.pinecone import PineconeInstrumentor
+
+PineconeInstrumentor().instrument()
+```

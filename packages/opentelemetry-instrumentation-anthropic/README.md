@@ -12,6 +12,14 @@ This library allows tracing Anthropic prompts and completions sent with the offi
 pip install opentelemetry-instrumentation-anthropic
 ```
 
+## Example usage
+
+```python
+from opentelemetry.instrumentation.anthropic import AnthropicInstrumentor
+
+AnthropicInstrumentor().instrument()
+```
+
 ## Privacy
 
 **By default, this instrumentation logs prompts, completions, and embeddings to span attributes**. This gives you a clear visibility into how your LLM application is working, and can make it easy to debug and evaluate the quality of the outputs.

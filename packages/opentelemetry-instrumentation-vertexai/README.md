@@ -12,6 +12,14 @@ This library allows tracing VertexAI prompts and completions sent with the offic
 pip install opentelemetry-instrumentation-vertexai
 ```
 
+## Example usage
+
+```python
+from opentelemetry.instrumentation.vertexai import VertexAIInstrumentor
+
+VertexAIInstrumentor().instrument()
+```
+
 ## Privacy
 
 **By default, this instrumentation logs prompts, completions, and embeddings to span attributes**. This gives you a clear visibility into how your LLM application is working, and can make it easy to debug and evaluate the quality of the outputs.
