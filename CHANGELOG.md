@@ -1,3 +1,11 @@
+## v0.13.1 (2024-03-01)
+
+### Fix
+
+- **watsonx**: Watsonx stream generate support (#552)
+- **watsonx instrumentation**: Init OTEL_EXPORTER_OTLP_INSECURE before import watsonx models (#549)
+- link back to repo in pyproject.toml (#548)
+
 ## v0.13.0 (2024-02-28)
 
 ### Feat
