@@ -1,0 +1,710 @@
+interactions:
+- request:
+    body: apikey=test_api_key&grant_type=urn%3Aibm%3Aparams%3Aoauth%3Agrant-type%3Aapikey
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '111'
+      Content-Type:
+      - application/x-www-form-urlencoded
+      User-Agent:
+      - python-requests/2.31.0
+    method: POST
+    uri: https://iam.cloud.ibm.com/oidc/token
+  response:
+    body:
+      string: '{"access_token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoibm9uZSIsInN1YiI6Im5vb25lQGlibS5jb20iLCJpYW1faWQiOiJJQk1pZC0xMDAwMDBQVzAwIiwiYWNjb3VudCI6eyJic3MiOiJhYmMxMjMifSwiaWF0IjoxNzA4NTkzNzM3LCJleHAiOjIwMjM5NTM3Mzd9.iYXuVHrO3J-InoMRvwM2ENUlUWsiLzut_9wo97McECU","refresh_token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoibm9uZSIsInN1YiI6Im5vb25lQGlibS5jb20iLCJpYW1faWQiOiJJQk1pZC0xMDAwMDBQVzAwIiwiYWNjb3VudCI6eyJic3MiOiJhYmMxMjMifSwiaWF0IjoxNzA4NTkzNzM3LCJleHAiOjIwMjM5NTM3Mzd9.iYXuVHrO3J-InoMRvwM2ENUlUWsiLzut_9wo97McECU","token_type":"Bearer","expires_in":3600,"expiration":1709282409,"refresh_token_expiration":1709538009,"scope":"ibm
+        openid"}'
+    headers:
+      Akamai-GRN:
+      - 0.0fd82317.1709278812.17b200ab
+      Cache-Control:
+      - no-cache, no-store, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Language:
+      - en-US
+      Content-Type:
+      - application/json
+      Date:
+      - Fri, 01 Mar 2024 07:40:13 GMT
+      Expires:
+      - '0'
+      Pragma:
+      - no-cache
+      Vary:
+      - Accept-Encoding
+      content-length:
+      - '2966'
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains
+      transaction-id:
+      - Y25wdHo-31b6d7991eef4e599ba5dddeb9bb8a23
+      x-content-type-options:
+      - nosniff
+      x-correlation-id:
+      - Y25wdHo-31b6d7991eef4e599ba5dddeb9bb8a23
+      x-proxy-upstream-service-time:
+      - '113'
+      x-request-id:
+      - 5b2b662c-ebdb-4d1b-a622-67ea1ee187f0
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Type:
+      - application/json
+      ML-Instance-ID:
+      - invalid
+      User-Agent:
+      - python-requests/2.31.0
+      X-WML-User-Client:
+      - PythonClient
+      x-wml-internal-switch-to-new-v4:
+      - 'true'
+    method: GET
+    uri: https://api.dataplatform.cloud.ibm.com/v2/spaces?limit=1
+  response:
+    body:
+      string: "{\n  \"first\": {\n    \"href\": \"https://api.dataplatform.cloud.ibm.com/v2/spaces?limit=1\"\n
+        \ },\n  \"limit\": 1,\n  \"resources\": []\n}"
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 85d77f6c4be7cf25-SJC
+      Cache-Control:
+      - no-cache, no-store, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Type:
+      - application/json
+      Date:
+      - Fri, 01 Mar 2024 07:40:14 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=xbvBukzibPkorn4MxPHYRCu7IIh_yq3V49ijD8AjiyU-1709278814-1.0-ASrGmuRpwXFeahr3U9u4J2qzeNcYK2gMD51eAuAu67QWbL6W7mhNwjF+6p1ro0siFNPpVq8KrDaRiSh+iW/Yz/4=;
+        path=/; expires=Fri, 01-Mar-24 08:10:14 GMT; domain=.dataplatform.cloud.ibm.com;
+        HttpOnly; Secure; SameSite=None
+      Strict-Transport-Security:
+      - max-age=15724800; includeSubDomains
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      X-XSS-Protection:
+      - 1; mode=block
+      - 1; mode=block
+      content-length:
+      - '124'
+      user-agent:
+      - python-requests/2.31.0
+      x-global-transaction-id:
+      - ZTZjNDkzN2YtMjBhZS00MzY5LTkyYjMtZmExMTVhZDY1MmFm
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Type:
+      - application/json
+      ML-Instance-ID:
+      - invalid
+      User-Agent:
+      - python-requests/2.31.0
+      X-WML-User-Client:
+      - PythonClient
+      x-wml-internal-switch-to-new-v4:
+      - 'true'
+    method: GET
+    uri: https://api.dataplatform.cloud.ibm.com/v2/projects/c1234567-2222-2222-3333-444444444444
+  response:
+    body:
+      string: '{"metadata":{"guid":"c1234567-2222-2222-3333-444444444444","url":"/v2/projects/c1234567-2222-2222-3333-444444444444","created_at":"2023-10-31T04:35:59.982Z","updated_at":"2023-10-31T04:36:01.922Z"},"entity":{"name":"none''s
+        sandbox","generator":"wx-registration-sandbox","description":"A project to
+        try things in","storage":{"type":"bmcos_object_storage","guid":"029fd735-8b39-4f63-ae3e-184cd09e2ef4","properties":{"bucket_name":"nonessandbox-donotdelete-pr-fxebzqo5e7buoh","bucket_region":"us-south","credentials":{"admin":{"api_key":"test-api-key","service_id":"iam-ServiceId-test-service-id","access_key_id":"test-access-key","secret_access_key":"test-secret"},"editor":{"api_key":"test-api-key","service_id":"iam-ServiceId-test-service-id","access_key_id":"test-access-key","secret_access_key":"test-secret","resource_key_crn":"crn:v1:bluemix:public:cloud-object-storage:global:a/d756617575ff631f32abc00000000000:029fd735-8b39-4f63-ae3e-184cd09e2ef4:resource-key:5bdbe824-1b45-4c52-9455-1fa2ca81b7ed"},"viewer":{"api_key":"test-api-key","service_id":"iam-ServiceId-test-service-id","access_key_id":"test-access-key","secret_access_key":"test-secret","resource_key_crn":"crn:v1:bluemix:public:cloud-object-storage:global:a/d756617575ff631f32abc00000000000:029fd735-8b39-4f63-ae3e-184cd09e2ef4:resource-key:51e93fea-39fa-4b4f-b9cf-3aa14f98edf9"}},"endpoint_url":"https://s3.us-south.cloud-object-storage.appdomain.cloud"}},"compute":[{"type":"machine_learning","guid":"fd36e2e7-6b2b-480d-90a7-000000000000","name":"WatsonMachineLearning","crn":"crn:v1:bluemix:public:pm-20:us-south:a/d756617575ff631f32abc00000000000:fd36e2e7-6b2b-480d-90a7-000000000000::","credentials":{}}],"scope":{"bss_account_id":"d756617575ff631f32abc00000000000","saml_instance_name":"IBM
+        w3id","enforce_members":true},"type":"wx","public":false,"creator":"none@cn.ibm.com","creator_iam_id":"IBMid-110000SDS1","catalog":{"public":false,"guid":"3f5851db-d08d-4d56-98e6-7fa55a2e1fb8"}}}'
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 85d77f7bd91e234f-SJC
+      Connection:
+      - keep-alive
+      Content-Type:
+      - application/json; charset=utf-8
+      Date:
+      - Fri, 01 Mar 2024 07:40:16 GMT
+      ETag:
+      - W/"8ed-Yz2q1+Gj6GwUDN+TPCQljQxzpEk"
+      Server:
+      - cloudflare
+      Server-Timing:
+      - intid;desc=bf555e523d65360b
+      Set-Cookie:
+      - __cf_bm=KqYjuOJSDiDBLKKNunFrKp.FPXdlUZw1fk3hHhTegGg-1709278816-1.0-AX6s8uF6PAB84wgCuCsdLhXVsqJLI325l3Onk+LFirbZRLHeVNNw+ix1nZtNfaSC70b7fzNmeYfZFPDtTD1zd4U=;
+        path=/; expires=Fri, 01-Mar-24 08:10:16 GMT; domain=.dataplatform.cloud.ibm.com;
+        HttpOnly; Secure; SameSite=None
+      Strict-Transport-Security:
+      - max-age=15724800; includeSubDomains
+      Transfer-Encoding:
+      - chunked
+      Vary:
+      - Accept-Encoding
+      X-IBM-API-Version:
+      - 2.43.2
+      X-XSS-Protection:
+      - 1; mode=block
+      content-length:
+      - '2285'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Type:
+      - application/json
+      User-Agent:
+      - python-requests/2.31.0
+    method: GET
+    uri: https://us-south.ml.cloud.ibm.com/ml/v4/instances/fd36e2e7-6b2b-480d-90a7-000000000000?version=2024-02-15&project_id=c1234567-2222-2222-3333-444444444444
+  response:
+    body:
+      string: "{\n  \"entity\": {\n    \"account\": {\n      \"id\": \"d756617575ff631f32abc00000000000\"\n
+        \   },\n    \"consumption\": {\n      \"capacity_unit_hours\": {\n        \"current\":
+        0.0,\n        \"limit\": 20.0\n      },\n      \"deployment_job_count\": {\n
+        \       \"limit\": 100\n      },\n      \"do_job_count\": {\n        \"limit\":
+        2\n      },\n      \"gpu_count\": {\n        \"limit\": 0\n      },\n      \"token_count\":
+        {\n        \"current\": 224,\n        \"limit\": 50000\n      }\n    },\n
+        \   \"crn\": \"crn:v1:bluemix:public:pm-20:us-south:a/d756617575ff631f32abc00000000000:fd36e2e7-6b2b-480d-90a7-000000000000::\",\n
+        \   \"plan\": {\n      \"id\": \"3f6acf43-ede8-413a-ac69-f8af3bb0cbfe\",\n
+        \     \"name\": \"lite\",\n      \"version\": 2\n    },\n    \"resource_group_id\":
+        \"70727d441e174dd0afad5e36a73b986e\",\n    \"service_endpoints\": \"public\",\n
+        \   \"status\": \"Active\"\n  },\n  \"metadata\": {\n    \"created_at\": \"2023-08-04T05:44:54.592Z\",\n
+        \   \"modified_at\": \"2023-08-04T05:44:54.592Z\",\n    \"tags\": [],\n    \"id\":
+        \"fd36e2e7-6b2b-480d-90a7-000000000000\"\n  }\n}"
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 85d77f8a5933d01d-SJC
+      Cache-Control:
+      - no-cache, no-store, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Type:
+      - application/json
+      Date:
+      - Fri, 01 Mar 2024 07:40:19 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - cloudflare
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      X-Xss-Protection:
+      - 1; mode=block
+      - 1; mode=block
+      content-length:
+      - '984'
+      server-timing:
+      - intid;desc=ad5006bad716e217
+      x-global-transaction-id:
+      - 2b69333e156c65be7816105bc20ab690
+      - 2b69333e156c65be7816105bc20ab690
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.31.0
+      X-WML-User-Client:
+      - PythonClient
+    method: GET
+    uri: https://us-south.ml.cloud.ibm.com/ml/v1-beta/foundation_model_specs?version=2023-09-30
+  response:
+    body:
+      string: '{"total_count":14,"limit":100,"first":{"href":"https://us-south.ml.cloud.ibm.com/ml/v1-beta/foundation_model_specs?version=2023-09-30"},"resources":[{"model_id":"bigcode/starcoder","label":"starcoder-15.5b","provider":"BigCode","source":"Hugging
+        Face","short_description":"The StarCoder models are 15.5B parameter models
+        that can generate code from natural language descriptions.","long_description":"The
+        StarCoder models are 15.5B parameter models trained on 80+ programming languages
+        from The Stack (v1.2), with opt-out requests excluded. The model uses Multi
+        Query Attention, a context window of 8192 tokens, and was trained using the
+        Fill-in-the-Middle objective on 1 trillion tokens.","tier":"class_2","number_params":"15.5b","min_shot_size":0,"task_ids":["code"],"tasks":[{"id":"retrieval_augmented_generation","ratings":{"quality":1}},{"id":"code"}],"model_limits":{"max_sequence_length":8192},"limits":{"lite":{"call_time":"5m0s","max_output_tokens":8191},"v2-professional":{"call_time":"5m0s","max_output_tokens":8191},"v2-standard":{"call_time":"5m0s","max_output_tokens":8191}},"lifecycle":[{"id":"available","start_date":"2023-08-31"},{"id":"constricted","label":"deprecated
+        and constricted","start_date":"2024-02-15","alternative_model_ids":["ibm-mistralai/mixtral-8x7b-instruct-v01-q"]},{"id":"withdrawn","start_date":"2024-03-21","alternative_model_ids":["ibm-mistralai/mixtral-8x7b-instruct-v01-q"]}]},{"model_id":"bigscience/mt0-xxl","label":"mt0-xxl-13b","provider":"BigScience","source":"Hugging
+        Face","short_description":"An instruction-tuned iteration on mT5.","long_description":"mt0-xxl
+        (13B) is an instruction-tuned iteration on mT5. Like BLOOMZ, it was fine-tuned
+        on a cross-lingual task mixture dataset (xP3) using multitask prompted finetuning
+        (MTF).","tier":"class_2","number_params":"13b","min_shot_size":0,"task_ids":["question_answering","summarization","classification","generation"],"tasks":[{"id":"question_answering","ratings":{"quality":3}},{"id":"summarization","ratings":{"quality":3}},{"id":"retrieval_augmented_generation","ratings":{"quality":2}},{"id":"classification","ratings":{"quality":3}},{"id":"generation"},{"id":"extraction","ratings":{"quality":2}}],"model_limits":{"max_sequence_length":4096},"limits":{"lite":{"call_time":"5m0s","max_output_tokens":700},"v2-professional":{"call_time":"5m0s","max_output_tokens":4095},"v2-standard":{"call_time":"5m0s","max_output_tokens":4095}},"lifecycle":[{"id":"available","start_date":"2023-07-07"}]},{"model_id":"eleutherai/gpt-neox-20b","label":"gpt-neox-20b","provider":"EleutherAI","source":"Hugging
+        Face","short_description":"A 20 billion parameter autoregressive language
+        model trained on the Pile.","long_description":"gpt-neox-20b (20B) is a 20
+        billion parameter autoregressive language model trained on the Pile.","tier":"class_3","number_params":"20b","min_shot_size":1,"task_ids":["summarization","classification","generation"],"tasks":[{"id":"question_answering","ratings":{"quality":2}},{"id":"summarization","ratings":{"quality":3}},{"id":"retrieval_augmented_generation","ratings":{"quality":1}},{"id":"classification","ratings":{"quality":3}},{"id":"generation"},{"id":"extraction","ratings":{"quality":2}}],"model_limits":{"max_sequence_length":8192},"limits":{"lite":{"call_time":"5m0s","max_output_tokens":700},"v2-professional":{"call_time":"5m0s","max_output_tokens":8191},"v2-standard":{"call_time":"5m0s","max_output_tokens":8191}},"lifecycle":[{"id":"available","start_date":"2023-07-07"},{"id":"constricted","label":"deprecated
+        and constricted","start_date":"2024-02-15","alternative_model_ids":["ibm-mistralai/mixtral-8x7b-instruct-v01-q"]},{"id":"withdrawn","start_date":"2024-03-21","alternative_model_ids":["ibm-mistralai/mixtral-8x7b-instruct-v01-q"]}]},{"model_id":"google/flan-t5-xl","label":"flan-t5-xl-3b","provider":"Google","source":"Hugging
+        Face","short_description":"A pretrained T5 - an encoder-decoder model pre-trained
+        on a mixture of supervised / unsupervised tasks converted into a text-to-text
+        format.","long_description":"flan-t5-xl (3B) is a 3 billion parameter model
+        based on the Flan-T5 family. It is a pretrained T5 - an encoder-decoder model
+        pre-trained on a mixture of supervised / unsupervised tasks converted into
+        a text-to-text format, and fine-tuned on the Fine-tuned Language Net (FLAN)
+        with instructions for better zero-shot and few-shot performance.","tier":"class_1","number_params":"3b","min_shot_size":0,"task_ids":["question_answering","summarization","retrieval_augmented_generation","classification","generation","extraction"],"tasks":[{"id":"question_answering"},{"id":"summarization","tags":["function_prompt_tune_trainable"]},{"id":"retrieval_augmented_generation"},{"id":"classification","tags":["function_prompt_tune_trainable"]},{"id":"generation","tags":["function_prompt_tune_trainable"]},{"id":"extraction"}],"model_limits":{"max_sequence_length":4096},"limits":{"lite":{"call_time":"5m0s","max_output_tokens":4095},"v2-professional":{"call_time":"5m0s","max_output_tokens":4095},"v2-standard":{"call_time":"5m0s","max_output_tokens":4095}},"lifecycle":[{"id":"available","start_date":"2023-12-07"}],"training_parameters":{"init_method":{"supported":["random","text"],"default":"random"},"init_text":{"default":"text"},"num_virtual_tokens":{"supported":[20,50,100],"default":100},"num_epochs":{"default":20,"min":1,"max":50},"verbalizer":{"default":"Input:
+        {{input}} Output:"},"batch_size":{"default":16,"min":1,"max":16},"max_input_tokens":{"default":256,"min":1,"max":256},"max_output_tokens":{"default":128,"min":1,"max":128},"torch_dtype":{"default":"bfloat16"},"accumulate_steps":{"default":16,"min":1,"max":128},"learning_rate":{"default":0.3,"min":0.00001,"max":0.5}}},{"model_id":"google/flan-t5-xxl","label":"flan-t5-xxl-11b","provider":"Google","source":"Hugging
+        Face","short_description":"flan-t5-xxl is an 11 billion parameter model based
+        on the Flan-T5 family.","long_description":"flan-t5-xxl (11B) is an 11 billion
+        parameter model based on the Flan-T5 family. It is a pretrained T5 - an encoder-decoder
+        model pre-trained on a mixture of supervised / unsupervised tasks converted
+        into a text-to-text format, and fine-tuned on the Fine-tuned Language Net
+        (FLAN) with instructions for better zero-shot and few-shot performance.","tier":"class_2","number_params":"11b","min_shot_size":0,"task_ids":["question_answering","summarization","retrieval_augmented_generation","classification","generation","extraction"],"tasks":[{"id":"question_answering","ratings":{"quality":4}},{"id":"summarization","ratings":{"quality":4}},{"id":"retrieval_augmented_generation","ratings":{"quality":3}},{"id":"classification","ratings":{"quality":4}},{"id":"generation"},{"id":"extraction","ratings":{"quality":4}}],"model_limits":{"max_sequence_length":4096},"limits":{"lite":{"call_time":"5m0s","max_output_tokens":700},"v2-professional":{"call_time":"5m0s","max_output_tokens":4095},"v2-standard":{"call_time":"5m0s","max_output_tokens":4095}},"lifecycle":[{"id":"available","start_date":"2023-07-07"}]},{"model_id":"google/flan-ul2","label":"flan-ul2-20b","provider":"Google","source":"Hugging
+        Face","short_description":"flan-ul2 is an encoder decoder model based on the
+        T5 architecture and instruction-tuned using the Fine-tuned Language Net.","long_description":"flan-ul2
+        (20B) is an encoder decoder model based on the T5 architecture and instruction-tuned
+        using the Fine-tuned Language Net (FLAN). Compared to the original UL2 model,
+        flan-ul2 (20B) is more usable for few-shot in-context learning because it
+        was trained with a three times larger receptive field. flan-ul2 (20B) outperforms
+        flan-t5 (11B) by an overall relative improvement of +3.2%.","tier":"class_3","number_params":"20b","min_shot_size":0,"task_ids":["question_answering","summarization","retrieval_augmented_generation","classification","generation","extraction"],"tasks":[{"id":"question_answering","ratings":{"quality":4}},{"id":"summarization","ratings":{"quality":4}},{"id":"retrieval_augmented_generation","ratings":{"quality":4}},{"id":"classification","ratings":{"quality":4}},{"id":"generation"},{"id":"extraction","ratings":{"quality":4}}],"model_limits":{"max_sequence_length":4096},"limits":{"lite":{"call_time":"5m0s","max_output_tokens":700},"v2-professional":{"call_time":"5m0s","max_output_tokens":4095},"v2-standard":{"call_time":"5m0s","max_output_tokens":4095}},"lifecycle":[{"id":"available","start_date":"2023-07-07"}]},{"model_id":"ibm-mistralai/mixtral-8x7b-instruct-v01-q","label":"mixtral-8x7b-instruct-v01-q","provider":"Mistral
+        AI","tuned_by":"IBM","source":"Hugging Face","short_description":"Mixtral-8-7b-instruct-v01-gptq
+        model is made with AutoGPTQ, which mainly leverages the quantization technique
+        to ''compress'' the model weights from FP16 to 4-bit INT and performs ''decompression''
+        on-the-fly before computation (in FP16)","long_description":"This model is
+        made with AutoGPTQ, which mainly leverages the quantization technique to ''compress''
+        the model weights from FP16 to 4-bit INT and performs ''decompression'' on-the-fly
+        before computation (in FP16). As a result, the GPU memory, and the data transferring
+        between GPU memory and GPU compute engine, compared to the original FP16 model,
+        is greatly reduced. The major quantization parameters used in the process
+        are listed below.","tier":"class_2","number_params":"46.7b","min_shot_size":1,"task_ids":["summarization","retrieval_augmented_generation","classification","generation","code","extraction"],"tasks":[{"id":"summarization","ratings":{"quality":4}},{"id":"retrieval_augmented_generation","ratings":{"quality":3}},{"id":"classification","ratings":{"quality":4}},{"id":"generation"},{"id":"code"},{"id":"extraction","ratings":{"quality":4}}],"model_limits":{"max_sequence_length":32768},"limits":{"lite":{"call_time":"5m0s","max_output_tokens":4096},"v2-professional":{"call_time":"5m0s","max_output_tokens":4096},"v2-standard":{"call_time":"5m0s","max_output_tokens":4096}},"lifecycle":[{"id":"available","start_date":"2024-02-15"}]},{"model_id":"ibm/granite-13b-chat-v1","label":"granite-13b-chat-v1","provider":"IBM","source":"IBM","short_description":"The
+        Granite model series is a family of IBM-trained, dense decoder-only models,
+        which are particularly well-suited for generative tasks.","long_description":"Granite
+        models are designed to be used for a wide range of generative and non-generative
+        tasks with appropriate prompt engineering. They employ a GPT-style decoder-only
+        architecture, with additional innovations from IBM Research and the open community.","tier":"class_1","number_params":"13b","min_shot_size":0,"task_ids":["question_answering","summarization","classification","generation","extraction"],"tasks":[{"id":"question_answering","ratings":{"quality":3}},{"id":"summarization","ratings":{"quality":2}},{"id":"retrieval_augmented_generation","ratings":{"quality":2}},{"id":"classification","ratings":{"quality":3}},{"id":"generation"},{"id":"extraction","ratings":{"quality":2}}],"model_limits":{"max_sequence_length":8192},"limits":{"lite":{"call_time":"5m0s","max_output_tokens":8191},"v2-professional":{"call_time":"5m0s","max_output_tokens":8191},"v2-standard":{"call_time":"5m0s","max_output_tokens":8191}},"lifecycle":[{"id":"available","start_date":"2023-09-28"},{"id":"constricted","label":"deprecated
+        and constricted","start_date":"2024-01-11","alternative_model_ids":["ibm/granite-13b-chat-v2"]},{"id":"withdrawn","start_date":"2024-04-11","alternative_model_ids":["ibm/granite-13b-chat-v2"]}]},{"model_id":"ibm/granite-13b-chat-v2","label":"granite-13b-chat-v2","provider":"IBM","source":"IBM","short_description":"The
+        Granite model series is a family of IBM-trained, dense decoder-only models,
+        which are particularly well-suited for generative tasks.","long_description":"Granite
+        models are designed to be used for a wide range of generative and non-generative
+        tasks with appropriate prompt engineering. They employ a GPT-style decoder-only
+        architecture, with additional innovations from IBM Research and the open community.","tier":"class_1","number_params":"13b","min_shot_size":0,"task_ids":["question_answering","summarization","classification","generation","extraction"],"tasks":[{"id":"question_answering","ratings":{"quality":3}},{"id":"summarization","ratings":{"quality":2}},{"id":"retrieval_augmented_generation","ratings":{"quality":2}},{"id":"classification","ratings":{"quality":3}},{"id":"generation"},{"id":"extraction","ratings":{"quality":2}}],"model_limits":{"max_sequence_length":8192},"limits":{"lite":{"call_time":"5m0s","max_output_tokens":8191},"v2-professional":{"call_time":"5m0s","max_output_tokens":8191},"v2-standard":{"call_time":"5m0s","max_output_tokens":8191}},"lifecycle":[{"id":"available","start_date":"2024-02-15"}]},{"model_id":"ibm/granite-13b-instruct-v1","label":"granite-13b-instruct-v1","provider":"IBM","source":"IBM","short_description":"The
+        Granite model series is a family of IBM-trained, dense decoder-only models,
+        which are particularly well-suited for generative tasks.","long_description":"Granite
+        models are designed to be used for a wide range of generative and non-generative
+        tasks with appropriate prompt engineering. They employ a GPT-style decoder-only
+        architecture, with additional innovations from IBM Research and the open community.","tier":"class_1","number_params":"13b","min_shot_size":0,"task_ids":["question_answering","summarization","classification","generation","extraction"],"tasks":[{"id":"question_answering","ratings":{"quality":3}},{"id":"summarization","ratings":{"quality":2}},{"id":"retrieval_augmented_generation","ratings":{"quality":2}},{"id":"classification","ratings":{"quality":3}},{"id":"generation"},{"id":"extraction","ratings":{"quality":2}}],"model_limits":{"max_sequence_length":8192},"limits":{"lite":{"call_time":"5m0s","max_output_tokens":8191},"v2-professional":{"call_time":"5m0s","max_output_tokens":8191},"v2-standard":{"call_time":"5m0s","max_output_tokens":8191}},"lifecycle":[{"id":"available","start_date":"2023-09-28"},{"id":"constricted","label":"deprecated
+        and constricted","start_date":"2024-01-11","alternative_model_ids":["ibm/granite-13b-instruct-v2"]},{"id":"withdrawn","start_date":"2024-04-11","alternative_model_ids":["ibm/granite-13b-instruct-v2"]}]},{"model_id":"ibm/granite-13b-instruct-v2","label":"granite-13b-instruct-v2","provider":"IBM","source":"IBM","short_description":"The
+        Granite model series is a family of IBM-trained, dense decoder-only models,
+        which are particularly well-suited for generative tasks.","long_description":"Granite
+        models are designed to be used for a wide range of generative and non-generative
+        tasks with appropriate prompt engineering. They employ a GPT-style decoder-only
+        architecture, with additional innovations from IBM Research and the open community.","tier":"class_1","number_params":"13b","min_shot_size":0,"task_ids":["question_answering","summarization","classification","generation","extraction"],"tasks":[{"id":"question_answering","ratings":{"quality":3}},{"id":"summarization","ratings":{"quality":2}},{"id":"retrieval_augmented_generation","ratings":{"quality":2}},{"id":"classification","ratings":{"quality":3}},{"id":"generation"},{"id":"extraction","ratings":{"quality":2}}],"model_limits":{"max_sequence_length":8192},"limits":{"lite":{"call_time":"5m0s","max_output_tokens":8191},"v2-professional":{"call_time":"5m0s","max_output_tokens":8191},"v2-standard":{"call_time":"5m0s","max_output_tokens":8191}},"lifecycle":[{"id":"available","start_date":"2023-12-01"}]},{"model_id":"ibm/mpt-7b-instruct2","label":"mpt-7b-instruct2","provider":"Mosaic","tuned_by":"IBM","source":"Hugging
+        Face","short_description":"MPT-7B is a decoder-style transformer pretrained
+        from scratch on 1T tokens of English text and code. This model was trained
+        by IBM.","long_description":"MPT-7B is part of the family of MosaicPretrainedTransformer
+        (MPT) models, which use a modified transformer architecture optimized for
+        efficient training and inference. These architectural changes include performance-optimized
+        layer implementations and the elimination of context length limits by replacing
+        positional embeddings with Attention with Linear Biases (ALiBi).","tier":"class_1","number_params":"7b","min_shot_size":0,"task_ids":["summarization","classification","generation","extraction"],"tasks":[{"id":"question_answering","ratings":{"quality":2}},{"id":"summarization","ratings":{"quality":3}},{"id":"retrieval_augmented_generation","ratings":{"quality":1}},{"id":"classification","ratings":{"quality":3}},{"id":"generation"},{"id":"extraction","ratings":{"quality":3}}],"model_limits":{"max_sequence_length":2048},"limits":{"lite":{"call_time":"5m0s","max_output_tokens":500},"v2-professional":{"call_time":"5m0s","max_output_tokens":2047},"v2-standard":{"call_time":"5m0s","max_output_tokens":2047}},"lifecycle":[{"id":"available","start_date":"2023-07-07"},{"id":"constricted","label":"deprecated
+        and constricted","start_date":"2024-02-15","alternative_model_ids":["ibm-mistralai/mixtral-8x7b-instruct-v01-q"]},{"id":"withdrawn","start_date":"2024-03-21","alternative_model_ids":["ibm-mistralai/mixtral-8x7b-instruct-v01-q"]}]},{"model_id":"meta-llama/llama-2-13b-chat","label":"llama-2-13b-chat","provider":"Meta","source":"Hugging
+        Face","short_description":"Llama-2-13b-chat is an auto-regressive language
+        model that uses an optimized transformer architecture.","long_description":"Llama-2-13b-chat
+        is a pretrained and fine-tuned generative text model with 13 billion parameters,
+        optimized for dialogue use cases.","tier":"class_1","number_params":"13b","min_shot_size":1,"task_ids":["question_answering","summarization","retrieval_augmented_generation","classification","generation","code","extraction"],"tasks":[{"id":"question_answering","ratings":{"quality":4}},{"id":"summarization","ratings":{"quality":3},"tags":["function_prompt_tune_trainable"]},{"id":"retrieval_augmented_generation","ratings":{"quality":4}},{"id":"classification","ratings":{"quality":4},"tags":["function_prompt_tune_trainable"]},{"id":"generation","tags":["function_prompt_tune_trainable"]},{"id":"code"},{"id":"extraction","ratings":{"quality":4}}],"model_limits":{"max_sequence_length":4096,"training_data_max_records":10000},"limits":{"lite":{"call_time":"5m0s","max_output_tokens":2048},"v2-professional":{"call_time":"5m0s","max_output_tokens":4095},"v2-standard":{"call_time":"5m0s","max_output_tokens":4095}},"lifecycle":[{"id":"available","start_date":"2023-11-09"}],"training_parameters":{"init_method":{"supported":["random","text"],"default":"random"},"init_text":{"default":"text"},"num_virtual_tokens":{"supported":[20,50,100],"default":100},"num_epochs":{"default":20,"min":1,"max":50},"verbalizer":{"default":"{{input}}"},"batch_size":{"default":8,"min":1,"max":16},"max_input_tokens":{"default":256,"min":1,"max":256},"max_output_tokens":{"default":128,"min":1,"max":128},"torch_dtype":{"default":"bfloat16"},"accumulate_steps":{"default":16,"min":1,"max":128},"learning_rate":{"default":0.002,"min":0.00001,"max":0.5}}},{"model_id":"meta-llama/llama-2-70b-chat","label":"llama-2-70b-chat","provider":"Meta","source":"Hugging
+        Face","short_description":"Llama-2-70b-chat is an auto-regressive language
+        model that uses an optimized transformer architecture.","long_description":"Llama-2-70b-chat
+        is a pretrained and fine-tuned generative text model with 70 billion parameters,
+        optimized for dialogue use cases.","tier":"class_2","number_params":"70b","min_shot_size":1,"task_ids":["question_answering","summarization","retrieval_augmented_generation","classification","generation","code","extraction"],"tasks":[{"id":"question_answering","ratings":{"quality":4}},{"id":"summarization","ratings":{"quality":3}},{"id":"retrieval_augmented_generation","ratings":{"quality":4}},{"id":"classification","ratings":{"quality":4}},{"id":"generation"},{"id":"code"},{"id":"extraction","ratings":{"quality":4}}],"model_limits":{"max_sequence_length":4096},"limits":{"lite":{"call_time":"5m0s","max_output_tokens":900},"v2-professional":{"call_time":"5m0s","max_output_tokens":4095},"v2-standard":{"call_time":"5m0s","max_output_tokens":4095}},"lifecycle":[{"id":"available","start_date":"2023-09-07"}]}]}'
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 85d77f99ac9bfb30-SJC
+      Cache-Control:
+      - no-cache, no-store, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Security-Policy:
+      - default-src 'none'; script-src 'self'; connect-src 'self'; img-src 'self';
+        style-src 'self'; frame-ancestors 'none'; form-action 'self';
+      Content-Type:
+      - application/json
+      Date:
+      - Fri, 01 Mar 2024 07:40:21 GMT
+      Pragma:
+      - no-cache
+      Referrer-Policy:
+      - strict-origin
+      Server:
+      - cloudflare
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains
+      - max-age=31536000; includeSubDomains
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - DENY
+      X-Global-Transaction-Id:
+      - f3e873e79ffafdac7314f3574732fa78
+      X-Xss-Protection:
+      - 1; mode=block
+      - 1; mode=block
+      content-length:
+      - '20289'
+      server-timing:
+      - intid;desc=5a2496c49beac3a1
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.31.0
+      X-WML-User-Client:
+      - PythonClient
+    method: GET
+    uri: https://us-south.ml.cloud.ibm.com/ml/v1-beta/foundation_model_specs?version=2023-09-30
+  response:
+    body:
+      string: '{"total_count":14,"limit":100,"first":{"href":"https://us-south.ml.cloud.ibm.com/ml/v1-beta/foundation_model_specs?version=2023-09-30"},"resources":[{"model_id":"bigcode/starcoder","label":"starcoder-15.5b","provider":"BigCode","source":"Hugging
+        Face","short_description":"The StarCoder models are 15.5B parameter models
+        that can generate code from natural language descriptions.","long_description":"The
+        StarCoder models are 15.5B parameter models trained on 80+ programming languages
+        from The Stack (v1.2), with opt-out requests excluded. The model uses Multi
+        Query Attention, a context window of 8192 tokens, and was trained using the
+        Fill-in-the-Middle objective on 1 trillion tokens.","tier":"class_2","number_params":"15.5b","min_shot_size":0,"task_ids":["code"],"tasks":[{"id":"retrieval_augmented_generation","ratings":{"quality":1}},{"id":"code"}],"model_limits":{"max_sequence_length":8192},"limits":{"lite":{"call_time":"5m0s","max_output_tokens":8191},"v2-professional":{"call_time":"5m0s","max_output_tokens":8191},"v2-standard":{"call_time":"5m0s","max_output_tokens":8191}},"lifecycle":[{"id":"available","start_date":"2023-08-31"},{"id":"constricted","label":"deprecated
+        and constricted","start_date":"2024-02-15","alternative_model_ids":["ibm-mistralai/mixtral-8x7b-instruct-v01-q"]},{"id":"withdrawn","start_date":"2024-03-21","alternative_model_ids":["ibm-mistralai/mixtral-8x7b-instruct-v01-q"]}]},{"model_id":"bigscience/mt0-xxl","label":"mt0-xxl-13b","provider":"BigScience","source":"Hugging
+        Face","short_description":"An instruction-tuned iteration on mT5.","long_description":"mt0-xxl
+        (13B) is an instruction-tuned iteration on mT5. Like BLOOMZ, it was fine-tuned
+        on a cross-lingual task mixture dataset (xP3) using multitask prompted finetuning
+        (MTF).","tier":"class_2","number_params":"13b","min_shot_size":0,"task_ids":["question_answering","summarization","classification","generation"],"tasks":[{"id":"question_answering","ratings":{"quality":3}},{"id":"summarization","ratings":{"quality":3}},{"id":"retrieval_augmented_generation","ratings":{"quality":2}},{"id":"classification","ratings":{"quality":3}},{"id":"generation"},{"id":"extraction","ratings":{"quality":2}}],"model_limits":{"max_sequence_length":4096},"limits":{"lite":{"call_time":"5m0s","max_output_tokens":700},"v2-professional":{"call_time":"5m0s","max_output_tokens":4095},"v2-standard":{"call_time":"5m0s","max_output_tokens":4095}},"lifecycle":[{"id":"available","start_date":"2023-07-07"}]},{"model_id":"eleutherai/gpt-neox-20b","label":"gpt-neox-20b","provider":"EleutherAI","source":"Hugging
+        Face","short_description":"A 20 billion parameter autoregressive language
+        model trained on the Pile.","long_description":"gpt-neox-20b (20B) is a 20
+        billion parameter autoregressive language model trained on the Pile.","tier":"class_3","number_params":"20b","min_shot_size":1,"task_ids":["summarization","classification","generation"],"tasks":[{"id":"question_answering","ratings":{"quality":2}},{"id":"summarization","ratings":{"quality":3}},{"id":"retrieval_augmented_generation","ratings":{"quality":1}},{"id":"classification","ratings":{"quality":3}},{"id":"generation"},{"id":"extraction","ratings":{"quality":2}}],"model_limits":{"max_sequence_length":8192},"limits":{"lite":{"call_time":"5m0s","max_output_tokens":700},"v2-professional":{"call_time":"5m0s","max_output_tokens":8191},"v2-standard":{"call_time":"5m0s","max_output_tokens":8191}},"lifecycle":[{"id":"available","start_date":"2023-07-07"},{"id":"constricted","label":"deprecated
+        and constricted","start_date":"2024-02-15","alternative_model_ids":["ibm-mistralai/mixtral-8x7b-instruct-v01-q"]},{"id":"withdrawn","start_date":"2024-03-21","alternative_model_ids":["ibm-mistralai/mixtral-8x7b-instruct-v01-q"]}]},{"model_id":"google/flan-t5-xl","label":"flan-t5-xl-3b","provider":"Google","source":"Hugging
+        Face","short_description":"A pretrained T5 - an encoder-decoder model pre-trained
+        on a mixture of supervised / unsupervised tasks converted into a text-to-text
+        format.","long_description":"flan-t5-xl (3B) is a 3 billion parameter model
+        based on the Flan-T5 family. It is a pretrained T5 - an encoder-decoder model
+        pre-trained on a mixture of supervised / unsupervised tasks converted into
+        a text-to-text format, and fine-tuned on the Fine-tuned Language Net (FLAN)
+        with instructions for better zero-shot and few-shot performance.","tier":"class_1","number_params":"3b","min_shot_size":0,"task_ids":["question_answering","summarization","retrieval_augmented_generation","classification","generation","extraction"],"tasks":[{"id":"question_answering"},{"id":"summarization","tags":["function_prompt_tune_trainable"]},{"id":"retrieval_augmented_generation"},{"id":"classification","tags":["function_prompt_tune_trainable"]},{"id":"generation","tags":["function_prompt_tune_trainable"]},{"id":"extraction"}],"model_limits":{"max_sequence_length":4096},"limits":{"lite":{"call_time":"5m0s","max_output_tokens":4095},"v2-professional":{"call_time":"5m0s","max_output_tokens":4095},"v2-standard":{"call_time":"5m0s","max_output_tokens":4095}},"lifecycle":[{"id":"available","start_date":"2023-12-07"}],"training_parameters":{"init_method":{"supported":["random","text"],"default":"random"},"init_text":{"default":"text"},"num_virtual_tokens":{"supported":[20,50,100],"default":100},"num_epochs":{"default":20,"min":1,"max":50},"verbalizer":{"default":"Input:
+        {{input}} Output:"},"batch_size":{"default":16,"min":1,"max":16},"max_input_tokens":{"default":256,"min":1,"max":256},"max_output_tokens":{"default":128,"min":1,"max":128},"torch_dtype":{"default":"bfloat16"},"accumulate_steps":{"default":16,"min":1,"max":128},"learning_rate":{"default":0.3,"min":0.00001,"max":0.5}}},{"model_id":"google/flan-t5-xxl","label":"flan-t5-xxl-11b","provider":"Google","source":"Hugging
+        Face","short_description":"flan-t5-xxl is an 11 billion parameter model based
+        on the Flan-T5 family.","long_description":"flan-t5-xxl (11B) is an 11 billion
+        parameter model based on the Flan-T5 family. It is a pretrained T5 - an encoder-decoder
+        model pre-trained on a mixture of supervised / unsupervised tasks converted
+        into a text-to-text format, and fine-tuned on the Fine-tuned Language Net
+        (FLAN) with instructions for better zero-shot and few-shot performance.","tier":"class_2","number_params":"11b","min_shot_size":0,"task_ids":["question_answering","summarization","retrieval_augmented_generation","classification","generation","extraction"],"tasks":[{"id":"question_answering","ratings":{"quality":4}},{"id":"summarization","ratings":{"quality":4}},{"id":"retrieval_augmented_generation","ratings":{"quality":3}},{"id":"classification","ratings":{"quality":4}},{"id":"generation"},{"id":"extraction","ratings":{"quality":4}}],"model_limits":{"max_sequence_length":4096},"limits":{"lite":{"call_time":"5m0s","max_output_tokens":700},"v2-professional":{"call_time":"5m0s","max_output_tokens":4095},"v2-standard":{"call_time":"5m0s","max_output_tokens":4095}},"lifecycle":[{"id":"available","start_date":"2023-07-07"}]},{"model_id":"google/flan-ul2","label":"flan-ul2-20b","provider":"Google","source":"Hugging
+        Face","short_description":"flan-ul2 is an encoder decoder model based on the
+        T5 architecture and instruction-tuned using the Fine-tuned Language Net.","long_description":"flan-ul2
+        (20B) is an encoder decoder model based on the T5 architecture and instruction-tuned
+        using the Fine-tuned Language Net (FLAN). Compared to the original UL2 model,
+        flan-ul2 (20B) is more usable for few-shot in-context learning because it
+        was trained with a three times larger receptive field. flan-ul2 (20B) outperforms
+        flan-t5 (11B) by an overall relative improvement of +3.2%.","tier":"class_3","number_params":"20b","min_shot_size":0,"task_ids":["question_answering","summarization","retrieval_augmented_generation","classification","generation","extraction"],"tasks":[{"id":"question_answering","ratings":{"quality":4}},{"id":"summarization","ratings":{"quality":4}},{"id":"retrieval_augmented_generation","ratings":{"quality":4}},{"id":"classification","ratings":{"quality":4}},{"id":"generation"},{"id":"extraction","ratings":{"quality":4}}],"model_limits":{"max_sequence_length":4096},"limits":{"lite":{"call_time":"5m0s","max_output_tokens":700},"v2-professional":{"call_time":"5m0s","max_output_tokens":4095},"v2-standard":{"call_time":"5m0s","max_output_tokens":4095}},"lifecycle":[{"id":"available","start_date":"2023-07-07"}]},{"model_id":"ibm-mistralai/mixtral-8x7b-instruct-v01-q","label":"mixtral-8x7b-instruct-v01-q","provider":"Mistral
+        AI","tuned_by":"IBM","source":"Hugging Face","short_description":"Mixtral-8-7b-instruct-v01-gptq
+        model is made with AutoGPTQ, which mainly leverages the quantization technique
+        to ''compress'' the model weights from FP16 to 4-bit INT and performs ''decompression''
+        on-the-fly before computation (in FP16)","long_description":"This model is
+        made with AutoGPTQ, which mainly leverages the quantization technique to ''compress''
+        the model weights from FP16 to 4-bit INT and performs ''decompression'' on-the-fly
+        before computation (in FP16). As a result, the GPU memory, and the data transferring
+        between GPU memory and GPU compute engine, compared to the original FP16 model,
+        is greatly reduced. The major quantization parameters used in the process
+        are listed below.","tier":"class_2","number_params":"46.7b","min_shot_size":1,"task_ids":["summarization","retrieval_augmented_generation","classification","generation","code","extraction"],"tasks":[{"id":"summarization","ratings":{"quality":4}},{"id":"retrieval_augmented_generation","ratings":{"quality":3}},{"id":"classification","ratings":{"quality":4}},{"id":"generation"},{"id":"code"},{"id":"extraction","ratings":{"quality":4}}],"model_limits":{"max_sequence_length":32768},"limits":{"lite":{"call_time":"5m0s","max_output_tokens":4096},"v2-professional":{"call_time":"5m0s","max_output_tokens":4096},"v2-standard":{"call_time":"5m0s","max_output_tokens":4096}},"lifecycle":[{"id":"available","start_date":"2024-02-15"}]},{"model_id":"ibm/granite-13b-chat-v1","label":"granite-13b-chat-v1","provider":"IBM","source":"IBM","short_description":"The
+        Granite model series is a family of IBM-trained, dense decoder-only models,
+        which are particularly well-suited for generative tasks.","long_description":"Granite
+        models are designed to be used for a wide range of generative and non-generative
+        tasks with appropriate prompt engineering. They employ a GPT-style decoder-only
+        architecture, with additional innovations from IBM Research and the open community.","tier":"class_1","number_params":"13b","min_shot_size":0,"task_ids":["question_answering","summarization","classification","generation","extraction"],"tasks":[{"id":"question_answering","ratings":{"quality":3}},{"id":"summarization","ratings":{"quality":2}},{"id":"retrieval_augmented_generation","ratings":{"quality":2}},{"id":"classification","ratings":{"quality":3}},{"id":"generation"},{"id":"extraction","ratings":{"quality":2}}],"model_limits":{"max_sequence_length":8192},"limits":{"lite":{"call_time":"5m0s","max_output_tokens":8191},"v2-professional":{"call_time":"5m0s","max_output_tokens":8191},"v2-standard":{"call_time":"5m0s","max_output_tokens":8191}},"lifecycle":[{"id":"available","start_date":"2023-09-28"},{"id":"constricted","label":"deprecated
+        and constricted","start_date":"2024-01-11","alternative_model_ids":["ibm/granite-13b-chat-v2"]},{"id":"withdrawn","start_date":"2024-04-11","alternative_model_ids":["ibm/granite-13b-chat-v2"]}]},{"model_id":"ibm/granite-13b-chat-v2","label":"granite-13b-chat-v2","provider":"IBM","source":"IBM","short_description":"The
+        Granite model series is a family of IBM-trained, dense decoder-only models,
+        which are particularly well-suited for generative tasks.","long_description":"Granite
+        models are designed to be used for a wide range of generative and non-generative
+        tasks with appropriate prompt engineering. They employ a GPT-style decoder-only
+        architecture, with additional innovations from IBM Research and the open community.","tier":"class_1","number_params":"13b","min_shot_size":0,"task_ids":["question_answering","summarization","classification","generation","extraction"],"tasks":[{"id":"question_answering","ratings":{"quality":3}},{"id":"summarization","ratings":{"quality":2}},{"id":"retrieval_augmented_generation","ratings":{"quality":2}},{"id":"classification","ratings":{"quality":3}},{"id":"generation"},{"id":"extraction","ratings":{"quality":2}}],"model_limits":{"max_sequence_length":8192},"limits":{"lite":{"call_time":"5m0s","max_output_tokens":8191},"v2-professional":{"call_time":"5m0s","max_output_tokens":8191},"v2-standard":{"call_time":"5m0s","max_output_tokens":8191}},"lifecycle":[{"id":"available","start_date":"2024-02-15"}]},{"model_id":"ibm/granite-13b-instruct-v1","label":"granite-13b-instruct-v1","provider":"IBM","source":"IBM","short_description":"The
+        Granite model series is a family of IBM-trained, dense decoder-only models,
+        which are particularly well-suited for generative tasks.","long_description":"Granite
+        models are designed to be used for a wide range of generative and non-generative
+        tasks with appropriate prompt engineering. They employ a GPT-style decoder-only
+        architecture, with additional innovations from IBM Research and the open community.","tier":"class_1","number_params":"13b","min_shot_size":0,"task_ids":["question_answering","summarization","classification","generation","extraction"],"tasks":[{"id":"question_answering","ratings":{"quality":3}},{"id":"summarization","ratings":{"quality":2}},{"id":"retrieval_augmented_generation","ratings":{"quality":2}},{"id":"classification","ratings":{"quality":3}},{"id":"generation"},{"id":"extraction","ratings":{"quality":2}}],"model_limits":{"max_sequence_length":8192},"limits":{"lite":{"call_time":"5m0s","max_output_tokens":8191},"v2-professional":{"call_time":"5m0s","max_output_tokens":8191},"v2-standard":{"call_time":"5m0s","max_output_tokens":8191}},"lifecycle":[{"id":"available","start_date":"2023-09-28"},{"id":"constricted","label":"deprecated
+        and constricted","start_date":"2024-01-11","alternative_model_ids":["ibm/granite-13b-instruct-v2"]},{"id":"withdrawn","start_date":"2024-04-11","alternative_model_ids":["ibm/granite-13b-instruct-v2"]}]},{"model_id":"ibm/granite-13b-instruct-v2","label":"granite-13b-instruct-v2","provider":"IBM","source":"IBM","short_description":"The
+        Granite model series is a family of IBM-trained, dense decoder-only models,
+        which are particularly well-suited for generative tasks.","long_description":"Granite
+        models are designed to be used for a wide range of generative and non-generative
+        tasks with appropriate prompt engineering. They employ a GPT-style decoder-only
+        architecture, with additional innovations from IBM Research and the open community.","tier":"class_1","number_params":"13b","min_shot_size":0,"task_ids":["question_answering","summarization","classification","generation","extraction"],"tasks":[{"id":"question_answering","ratings":{"quality":3}},{"id":"summarization","ratings":{"quality":2}},{"id":"retrieval_augmented_generation","ratings":{"quality":2}},{"id":"classification","ratings":{"quality":3}},{"id":"generation"},{"id":"extraction","ratings":{"quality":2}}],"model_limits":{"max_sequence_length":8192},"limits":{"lite":{"call_time":"5m0s","max_output_tokens":8191},"v2-professional":{"call_time":"5m0s","max_output_tokens":8191},"v2-standard":{"call_time":"5m0s","max_output_tokens":8191}},"lifecycle":[{"id":"available","start_date":"2023-12-01"}]},{"model_id":"ibm/mpt-7b-instruct2","label":"mpt-7b-instruct2","provider":"Mosaic","tuned_by":"IBM","source":"Hugging
+        Face","short_description":"MPT-7B is a decoder-style transformer pretrained
+        from scratch on 1T tokens of English text and code. This model was trained
+        by IBM.","long_description":"MPT-7B is part of the family of MosaicPretrainedTransformer
+        (MPT) models, which use a modified transformer architecture optimized for
+        efficient training and inference. These architectural changes include performance-optimized
+        layer implementations and the elimination of context length limits by replacing
+        positional embeddings with Attention with Linear Biases (ALiBi).","tier":"class_1","number_params":"7b","min_shot_size":0,"task_ids":["summarization","classification","generation","extraction"],"tasks":[{"id":"question_answering","ratings":{"quality":2}},{"id":"summarization","ratings":{"quality":3}},{"id":"retrieval_augmented_generation","ratings":{"quality":1}},{"id":"classification","ratings":{"quality":3}},{"id":"generation"},{"id":"extraction","ratings":{"quality":3}}],"model_limits":{"max_sequence_length":2048},"limits":{"lite":{"call_time":"5m0s","max_output_tokens":500},"v2-professional":{"call_time":"5m0s","max_output_tokens":2047},"v2-standard":{"call_time":"5m0s","max_output_tokens":2047}},"lifecycle":[{"id":"available","start_date":"2023-07-07"},{"id":"constricted","label":"deprecated
+        and constricted","start_date":"2024-02-15","alternative_model_ids":["ibm-mistralai/mixtral-8x7b-instruct-v01-q"]},{"id":"withdrawn","start_date":"2024-03-21","alternative_model_ids":["ibm-mistralai/mixtral-8x7b-instruct-v01-q"]}]},{"model_id":"meta-llama/llama-2-13b-chat","label":"llama-2-13b-chat","provider":"Meta","source":"Hugging
+        Face","short_description":"Llama-2-13b-chat is an auto-regressive language
+        model that uses an optimized transformer architecture.","long_description":"Llama-2-13b-chat
+        is a pretrained and fine-tuned generative text model with 13 billion parameters,
+        optimized for dialogue use cases.","tier":"class_1","number_params":"13b","min_shot_size":1,"task_ids":["question_answering","summarization","retrieval_augmented_generation","classification","generation","code","extraction"],"tasks":[{"id":"question_answering","ratings":{"quality":4}},{"id":"summarization","ratings":{"quality":3},"tags":["function_prompt_tune_trainable"]},{"id":"retrieval_augmented_generation","ratings":{"quality":4}},{"id":"classification","ratings":{"quality":4},"tags":["function_prompt_tune_trainable"]},{"id":"generation","tags":["function_prompt_tune_trainable"]},{"id":"code"},{"id":"extraction","ratings":{"quality":4}}],"model_limits":{"max_sequence_length":4096,"training_data_max_records":10000},"limits":{"lite":{"call_time":"5m0s","max_output_tokens":2048},"v2-professional":{"call_time":"5m0s","max_output_tokens":4095},"v2-standard":{"call_time":"5m0s","max_output_tokens":4095}},"lifecycle":[{"id":"available","start_date":"2023-11-09"}],"training_parameters":{"init_method":{"supported":["random","text"],"default":"random"},"init_text":{"default":"text"},"num_virtual_tokens":{"supported":[20,50,100],"default":100},"num_epochs":{"default":20,"min":1,"max":50},"verbalizer":{"default":"{{input}}"},"batch_size":{"default":8,"min":1,"max":16},"max_input_tokens":{"default":256,"min":1,"max":256},"max_output_tokens":{"default":128,"min":1,"max":128},"torch_dtype":{"default":"bfloat16"},"accumulate_steps":{"default":16,"min":1,"max":128},"learning_rate":{"default":0.002,"min":0.00001,"max":0.5}}},{"model_id":"meta-llama/llama-2-70b-chat","label":"llama-2-70b-chat","provider":"Meta","source":"Hugging
+        Face","short_description":"Llama-2-70b-chat is an auto-regressive language
+        model that uses an optimized transformer architecture.","long_description":"Llama-2-70b-chat
+        is a pretrained and fine-tuned generative text model with 70 billion parameters,
+        optimized for dialogue use cases.","tier":"class_2","number_params":"70b","min_shot_size":1,"task_ids":["question_answering","summarization","retrieval_augmented_generation","classification","generation","code","extraction"],"tasks":[{"id":"question_answering","ratings":{"quality":4}},{"id":"summarization","ratings":{"quality":3}},{"id":"retrieval_augmented_generation","ratings":{"quality":4}},{"id":"classification","ratings":{"quality":4}},{"id":"generation"},{"id":"code"},{"id":"extraction","ratings":{"quality":4}}],"model_limits":{"max_sequence_length":4096},"limits":{"lite":{"call_time":"5m0s","max_output_tokens":900},"v2-professional":{"call_time":"5m0s","max_output_tokens":4095},"v2-standard":{"call_time":"5m0s","max_output_tokens":4095}},"lifecycle":[{"id":"available","start_date":"2023-09-07"}]}]}'
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 85d77fa3b92d1758-SJC
+      Cache-Control:
+      - no-cache, no-store, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Security-Policy:
+      - default-src 'none'; script-src 'self'; connect-src 'self'; img-src 'self';
+        style-src 'self'; frame-ancestors 'none'; form-action 'self';
+      Content-Type:
+      - application/json
+      Date:
+      - Fri, 01 Mar 2024 07:40:23 GMT
+      Pragma:
+      - no-cache
+      Referrer-Policy:
+      - strict-origin
+      Server:
+      - cloudflare
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains
+      - max-age=31536000; includeSubDomains
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - DENY
+      X-Global-Transaction-Id:
+      - e9d2f51a99de349846496f3b00e452b2
+      X-Xss-Protection:
+      - 1; mode=block
+      - 1; mode=block
+      content-length:
+      - '20289'
+      server-timing:
+      - intid;desc=d8374ea8873e89e5
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"model_id": "google/flan-ul2", "input": "Write an epigram about the sun",
+      "project_id": "c1234567-2222-2222-3333-444444444444"}'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '128'
+      Content-Type:
+      - application/json
+      ML-Instance-ID:
+      - fd36e2e7-6b2b-480d-90a7-000000000000
+      User-Agent:
+      - python-requests/2.31.0
+      X-WML-User-Client:
+      - PythonClient
+      x-wml-internal-switch-to-new-v4:
+      - 'true'
+    method: POST
+    uri: https://us-south.ml.cloud.ibm.com/ml/v1-beta/generation/text_stream?version=2024-02-15
+  response:
+    body:
+      string: 'id: 1
+
+        event: message
+
+        data: {"model_id":"google/flan-ul2","created_at":"2024-03-01T07:40:24.839Z","results":[{"generated_text":"","generated_token_count":0,"input_token_count":8,"stop_reason":"not_finished"}],"system":{"warnings":[{"message":"This
+        model is a Non-IBM Product governed by a third-party license that may impose
+        use restrictions and other obligations. By using this model you agree to its
+        terms as identified in the following URL.","id":"disclaimer_warning","more_info":"https://dataplatform.cloud.ibm.com/docs/content/wsj/analyze-data/fm-models.html?context=wx"}]}}
+
+
+        id: 2
+
+        event: message
+
+        data: {"model_id":"google/flan-ul2","created_at":"2024-03-01T07:40:24.885Z","results":[{"generated_text":"the","generated_token_count":1,"input_token_count":0,"stop_reason":"not_finished"}]}
+
+
+        id: 3
+
+        event: message
+
+        data: {"model_id":"google/flan-ul2","created_at":"2024-03-01T07:40:24.909Z","results":[{"generated_text":"
+        sun","generated_token_count":2,"input_token_count":0,"stop_reason":"not_finished"}]}
+
+
+        id: 4
+
+        event: message
+
+        data: {"model_id":"google/flan-ul2","created_at":"2024-03-01T07:40:24.934Z","results":[{"generated_text":"
+        is","generated_token_count":3,"input_token_count":0,"stop_reason":"not_finished"}]}
+
+
+        id: 5
+
+        event: message
+
+        data: {"model_id":"google/flan-ul2","created_at":"2024-03-01T07:40:24.958Z","results":[{"generated_text":"
+        the","generated_token_count":4,"input_token_count":0,"stop_reason":"not_finished"}]}
+
+
+        id: 6
+
+        event: message
+
+        data: {"model_id":"google/flan-ul2","created_at":"2024-03-01T07:40:24.982Z","results":[{"generated_text":"
+        most","generated_token_count":5,"input_token_count":0,"stop_reason":"not_finished"}]}
+
+
+        id: 7
+
+        event: message
+
+        data: {"model_id":"google/flan-ul2","created_at":"2024-03-01T07:40:25.006Z","results":[{"generated_text":"
+        important","generated_token_count":6,"input_token_count":0,"stop_reason":"not_finished"}]}
+
+
+        id: 8
+
+        event: message
+
+        data: {"model_id":"google/flan-ul2","created_at":"2024-03-01T07:40:25.030Z","results":[{"generated_text":"
+        star","generated_token_count":7,"input_token_count":0,"stop_reason":"not_finished"}]}
+
+
+        id: 9
+
+        event: message
+
+        data: {"model_id":"google/flan-ul2","created_at":"2024-03-01T07:40:25.054Z","results":[{"generated_text":"
+        in","generated_token_count":8,"input_token_count":0,"stop_reason":"not_finished"}]}
+
+
+        id: 10
+
+        event: message
+
+        data: {"model_id":"google/flan-ul2","created_at":"2024-03-01T07:40:25.078Z","results":[{"generated_text":"
+        the","generated_token_count":9,"input_token_count":0,"stop_reason":"not_finished"}]}
+
+
+        id: 11
+
+        event: message
+
+        data: {"model_id":"google/flan-ul2","created_at":"2024-03-01T07:40:25.101Z","results":[{"generated_text":"
+        sky","generated_token_count":10,"input_token_count":0,"stop_reason":"not_finished"}]}
+
+
+        id: 12
+
+        event: message
+
+        data: {"model_id":"google/flan-ul2","created_at":"2024-03-01T07:40:25.125Z","results":[{"generated_text":"","generated_token_count":11,"input_token_count":0,"stop_reason":"eos_token"}]}
+
+
+        '
+    headers:
+      Access-Control-Allow-Credentials:
+      - 'true'
+      Access-Control-Allow-Headers:
+      - Cache-Control
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 85d77fabef7c6899-SJC
+      Cache-Control:
+      - no-cache, no-store, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Security-Policy:
+      - default-src 'none'; script-src 'self'; connect-src 'self'; img-src 'self';
+        style-src 'self'; frame-ancestors 'none'; form-action 'self';
+      Content-Type:
+      - text/event-stream
+      Date:
+      - Fri, 01 Mar 2024 07:40:24 GMT
+      Pragma:
+      - no-cache
+      Referrer-Policy:
+      - strict-origin
+      Server:
+      - cloudflare
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains
+      - max-age=31536000; includeSubDomains
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - DENY
+      X-Global-Transaction-Id:
+      - 6f753df033bacb45f1d1750e3fb78cd7
+      X-Xss-Protection:
+      - 1; mode=block
+      - 1; mode=block
+      server-timing:
+      - intid;desc=3f21e93a12e36a86
+    status:
+      code: 200
+      message: OK
+version: 1
