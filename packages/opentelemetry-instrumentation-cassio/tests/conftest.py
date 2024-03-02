@@ -7,7 +7,7 @@ from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
 from opentelemetry.sdk.trace.export import SimpleSpanProcessor
 from opentelemetry.instrumentation.openai import OpenAIInstrumentor
-from opentelemetry.instrumentation.cassio import cassioInstrumentor
+from opentelemetry.instrumentation.cassio import CassIOInstrumentor
 
 pytest_plugins = []
 
@@ -35,8 +35,6 @@ def clear_exporter(exporter):
 @pytest.fixture(autouse=True)
 def environment():
     os.environ["OPENAI_API_KEY"] = "test_api_key"
-    os.environ["cassio_API_KEY"] = "test_api_key"
-    os.environ["cassio_ENVIRONMENT"] = "gcp-starter"
 
 
 @pytest.fixture(scope="module")
