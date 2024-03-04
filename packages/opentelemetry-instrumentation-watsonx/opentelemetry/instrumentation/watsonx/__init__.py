@@ -121,7 +121,7 @@ def _set_input_attributes(span, instance, kwargs):
         else:
             _set_span_attribute(
                 span,
-                f"{SpanAttributes.LLM_PROMPTS}.user",
+                f"{SpanAttributes.LLM_PROMPTS}.0.user",
                 prompt,
             )
 
@@ -179,94 +179,73 @@ def _set_stream_response_attributes(span, stream_response):
         )
     _set_span_attribute(
         span,
-        f"{SpanAttributes.LLM_COMPLETIONS}.content",
+        f"{SpanAttributes.LLM_COMPLETIONS}.0.content",
         stream_response.get("generated_text"),
     )
 
 
-def _set_single_response_attributes(span, response, index) -> int:
+def _set_completion_content_attributes(span, response, index) -> str:
+    if not isinstance(response, dict):
+        return
 
-    token_sum = 0
-    if not isinstance(response, (dict, str)):
-        return token_sum
-
-    if isinstance(response, str):
-        if index is not None:
-            _set_span_attribute(
-                span,
-                f"{SpanAttributes.LLM_COMPLETIONS}.{index}.content",
-                response,
-            )
-        else:
-            _set_span_attribute(
-                span,
-                f"{SpanAttributes.LLM_COMPLETIONS}.content",
-                response,
-            )
-        return token_sum
-
-    usage = response["results"][0]
-    token_sum = usage.get("input_token_count") + usage.get("generated_token_count")
     _set_span_attribute(
-        span, SpanAttributes.LLM_RESPONSE_MODEL, response.get("model_id")
+        span,
+        f"{SpanAttributes.LLM_COMPLETIONS}.{index}.content",
+        response["results"][0]["generated_text"],
     )
 
-    if index is not None:
-        _set_span_attribute(
-            span,
-            f"{SpanAttributes.LLM_USAGE_COMPLETION_TOKENS}.{index}",
-            usage.get("generated_token_count"),
-        )
-        _set_span_attribute(
-            span,
-            f"{SpanAttributes.LLM_USAGE_PROMPT_TOKENS}.{index}",
-            usage.get("input_token_count"),
-        )
-        _set_span_attribute(
-            span,
-            f"{SpanAttributes.LLM_COMPLETIONS}.{index}.content",
-            response["results"][0]["generated_text"],
-        )
-    else:
-        _set_span_attribute(
-            span,
-            f"{SpanAttributes.LLM_USAGE_COMPLETION_TOKENS}",
-            usage.get("generated_token_count"),
-        )
-        _set_span_attribute(
-            span,
-            f"{SpanAttributes.LLM_USAGE_PROMPT_TOKENS}",
-            usage.get("input_token_count"),
-        )
-        _set_span_attribute(
-            span,
-            f"{SpanAttributes.LLM_COMPLETIONS}.content",
-            response["results"][0]["generated_text"],
-        )
+    return response.get("model_id")
 
-    return token_sum
+
+def _token_usage_count(responses):
+    prompt_token = 0
+    completion_token = 0
+    if isinstance(responses, list):
+        for response in responses:
+            prompt_token += response["results"][0]["input_token_count"]
+            completion_token += response["results"][0]["generated_token_count"]
+    elif isinstance(responses, dict):
+        response = responses
+        prompt_token = response["results"][0]["input_token_count"]
+        completion_token = response["results"][0]["generated_token_count"]
+
+    return prompt_token, completion_token
 
 
 def _set_response_attributes(span, responses):
-    total_token = 0
-    if isinstance(responses, list) and len(responses) > 1:
+    if not isinstance(responses, (list, dict)):
+        return
+
+    if isinstance(responses, list):
+        if len(responses) == 0:
+            return
         for index, response in enumerate(responses):
-            total_token += _set_single_response_attributes(span, response, index)
-    elif isinstance(responses, list) and len(responses) == 1:
-        response = responses[0]
-        total_token = _set_single_response_attributes(span, response, None)
+            model_id = _set_completion_content_attributes(span, response, index)
     elif isinstance(responses, dict):
         response = responses
-        total_token = _set_single_response_attributes(span, response, None)
+        model_id = _set_completion_content_attributes(span, response, 0)
 
-    if total_token != 0:
+    _set_span_attribute(
+        span, SpanAttributes.LLM_RESPONSE_MODEL, model_id
+    )
+
+    prompt_token, completion_token = _token_usage_count(responses)
+    if (prompt_token + completion_token) != 0:
         _set_span_attribute(
             span,
-            f"{SpanAttributes.LLM_USAGE_TOTAL_TOKENS}",
-            total_token,
+            SpanAttributes.LLM_USAGE_COMPLETION_TOKENS,
+            completion_token,
+        )
+        _set_span_attribute(
+            span,
+            SpanAttributes.LLM_USAGE_PROMPT_TOKENS,
+            prompt_token,
+        )
+        _set_span_attribute(
+            span,
+            SpanAttributes.LLM_USAGE_TOTAL_TOKENS,
+            prompt_token + completion_token,
             )
-
-    return
 
 
 def _build_and_set_stream_response(span, response, raw_flag):
