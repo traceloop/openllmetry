@@ -11,9 +11,9 @@ def test_generate(exporter, watson_ai_model):
     watson_ai_model.generate(prompt="What is 1 + 1?")
     spans = exporter.get_finished_spans()
     watsonx_ai_span = spans[1]
-    assert watsonx_ai_span.attributes["llm.prompts.user"] == "What is 1 + 1?"
+    assert watsonx_ai_span.attributes["llm.prompts.0.user"] == "What is 1 + 1?"
     assert watsonx_ai_span.attributes["llm.vendor"] == "Watsonx"
-    assert watsonx_ai_span.attributes.get("llm.completions.content")
+    assert watsonx_ai_span.attributes.get("llm.completions.0.content")
     assert watsonx_ai_span.attributes.get("llm.usage.total_tokens")
 
 
@@ -29,7 +29,7 @@ def test_generate_text_stream(exporter, watson_ai_model):
         generated_text += chunk
     spans = exporter.get_finished_spans()
     watsonx_ai_span = spans[1]
-    assert watsonx_ai_span.attributes["llm.prompts.user"] == "Write an epigram about the sun"
+    assert watsonx_ai_span.attributes["llm.prompts.0.user"] == "Write an epigram about the sun"
     assert watsonx_ai_span.attributes["llm.vendor"] == "Watsonx"
-    assert watsonx_ai_span.attributes["llm.completions.content"] == generated_text
+    assert watsonx_ai_span.attributes["llm.completions.0.content"] == generated_text
     assert watsonx_ai_span.attributes.get("llm.usage.total_tokens")
