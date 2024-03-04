@@ -31,7 +31,7 @@ opentelemetry-semantic-conventions-ai = "^0.0.20"
 [tool.poetry.group.dev.dependencies]
 autopep8 = "2.0.4"
 flake8 = "7.0.0"
-pytest = "8.0.2"
+pytest = "8.1.0"
 pytest-sugar = "1.0.0"
 
 
@@ -39,7 +39,7 @@ pytest-sugar = "1.0.0"
 langchain = "^0.1.6"
 langchain-community = ">=0.0.19,<0.0.25"
 openai = "^1.12.0"
-pytest = "8.0.2"
+pytest = "8.1.0"
 pytest-sugar = "1.0.0"
 vcrpy = "^6.0.1"
 pytest-recording = "^0.13.1"
