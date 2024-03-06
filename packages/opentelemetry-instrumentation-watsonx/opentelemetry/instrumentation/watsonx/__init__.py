@@ -3,12 +3,15 @@
 import logging
 import os
 import types
+import time
 from typing import Collection
 from wrapt import wrap_function_wrapper
 
 from opentelemetry import context as context_api
 from opentelemetry.trace import get_tracer, SpanKind
 from opentelemetry.trace.status import Status, StatusCode
+from opentelemetry.metrics import get_meter
+from opentelemetry.metrics import Counter, Histogram
 
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.instrumentation.utils import (
@@ -106,6 +109,10 @@ def should_send_prompts():
     return (
         os.getenv("TRACELOOP_TRACE_CONTENT") or "true"
     ).lower() == "true" or context_api.get_value("override_enable_content_tracing")
+
+
+def is_metrics_enabled() -> bool:
+    return (os.getenv("TRACELOOP_METRICS_ENABLED") or "true").lower() == "true"
 
 
 def _set_input_attributes(span, instance, kwargs):
@@ -212,7 +219,7 @@ def _token_usage_count(responses):
     return prompt_token, completion_token
 
 
-def _set_response_attributes(span, responses):
+def _set_response_attributes(span, responses, token_counter):
     if not isinstance(responses, (list, dict)):
         return
 
@@ -228,6 +235,11 @@ def _set_response_attributes(span, responses):
     _set_span_attribute(
         span, SpanAttributes.LLM_RESPONSE_MODEL, model_id
     )
+
+    shared_attributes = {
+        "llm.response.model": model_id,
+        # "server.address": _get_openai_base_url(instance),
+    }
 
     prompt_token, completion_token = _token_usage_count(responses)
     if (prompt_token + completion_token) != 0:
@@ -246,7 +258,10 @@ def _set_response_attributes(span, responses):
             SpanAttributes.LLM_USAGE_TOTAL_TOKENS,
             prompt_token + completion_token,
             )
-
+        attributes_with_token_type = {**shared_attributes, "llm.usage.token_type": "completion"}
+        token_counter.add(completion_token, attributes=attributes_with_token_type)
+        attributes_with_token_type = {**shared_attributes, "llm.usage.token_type": "prompt"}
+        token_counter.add(prompt_token, attributes=attributes_with_token_type)
 
 def _build_and_set_stream_response(span, response, raw_flag):
     stream_generated_text = ""
@@ -278,9 +293,18 @@ def _build_and_set_stream_response(span, response, raw_flag):
 def _with_tracer_wrapper(func):
     """Helper for providing tracer for wrapper functions."""
 
-    def _with_tracer(tracer, to_wrap):
+    def _with_tracer(tracer, to_wrap, 
+                     token_counter,
+                     choice_counter,
+                     duration_histogram,
+                     exception_counter):
         def wrapper(wrapped, instance, args, kwargs):
-            return func(tracer, to_wrap, wrapped, instance, args, kwargs)
+            return func(tracer, to_wrap, 
+                        token_counter,
+                        choice_counter,
+                        duration_histogram,
+                        exception_counter,                        
+                        wrapped, instance, args, kwargs)
 
         return wrapper
 
@@ -288,7 +312,13 @@ def _with_tracer_wrapper(func):
 
 
 @_with_tracer_wrapper
-def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
+def _wrap(tracer, 
+          to_wrap, 
+          token_counter: Counter,
+          choice_counter: Counter,
+          duration_histogram: Histogram,
+          exception_counter: Counter,
+          wrapped, instance, args, kwargs):
     """Instruments and calls every function defined in TO_WRAP."""
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
         return wrapped(*args, **kwargs)
@@ -313,13 +343,32 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
             elif raw_flag is False:
                 kwargs["raw_response"] = True
 
-    response = wrapped(*args, **kwargs)
+    try:
+        start_time = time.time()
+        response = wrapped(*args, **kwargs)
+        end_time = time.time()
+    except Exception as e:  # pylint: disable=broad-except
+        end_time = time.time()
+        duration = end_time - start_time if 'start_time' in locals() else 0
+
+        attributes = {
+            "error.type": e.__class__.__name__,
+        }
+
+        if duration > 0 and duration_histogram:
+            duration_histogram.record(duration, attributes=attributes)
+        if exception_counter:
+            exception_counter.add(1, attributes=attributes)
+
+        raise e
 
     if "model_init" not in name:
         if isinstance(response, types.GeneratorType):
             return _build_and_set_stream_response(span, response, raw_flag)
         else:
-            _set_response_attributes(span, response)
+            _set_response_attributes(span, response, token_counter)
+
+    duration = end_time - start_time
 
     span.end()
     return response
@@ -341,6 +390,37 @@ class WatsonxInstrumentor(BaseInstrumentor):
         tracer_provider = kwargs.get("tracer_provider")
         tracer = get_tracer(__name__, __version__, tracer_provider)
 
+        meter_provider = kwargs.get("meter_provider")
+        meter = get_meter(__name__, __version__, meter_provider)
+
+        if is_metrics_enabled():
+            token_counter = meter.create_counter(
+                name="llm.watsonx.completions.tokens",
+                unit="token",
+                description="Number of tokens used in prompt and completions"
+            )
+
+            choice_counter = meter.create_counter(
+                name="llm.watsonx.completions.choices",
+                unit="choice",
+                description="Number of choices returned by completions call"
+            )
+
+            duration_histogram = meter.create_histogram(
+                name="llm.watsonx.completions.duration",
+                unit="s",
+                description="Duration of completion operation"
+            )
+
+            exception_counter = meter.create_counter(
+                name="llm.watsonx.completionss.exceptions",
+                unit="time",
+                description="Number of exceptions occurred during completions"
+            )
+        else:
+            (token_counter, choice_counter,
+             duration_histogram, exception_counter) = None, None, None, None
+
         for wrapped_methods in WATSON_MODULES:
             for wrapped_method in wrapped_methods:
                 wrap_module = wrapped_method.get("module")
@@ -349,7 +429,12 @@ class WatsonxInstrumentor(BaseInstrumentor):
                 wrap_function_wrapper(
                     wrap_module,
                     f"{wrap_object}.{wrap_method}",
-                    _wrap(tracer, wrapped_method),
+                    _wrap(tracer, 
+                          wrapped_method,
+                          token_counter,
+                          choice_counter,
+                          duration_histogram,
+                          exception_counter),
                 )
 
     def _uninstrument(self, **kwargs):
