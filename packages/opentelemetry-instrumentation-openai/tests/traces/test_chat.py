@@ -9,10 +9,12 @@ def test_chat_streaming(exporter, openai_client, vcr):
         stream=True,
     )
 
+    chunk_count = 0
     for _ in response:
-        pass
+        chunk_count += 1
 
     spans = exporter.get_finished_spans()
+
     assert [span.name for span in spans] == [
         "openai.chat",
     ]
@@ -22,4 +24,9 @@ def test_chat_streaming(exporter, openai_client, vcr):
         == "Tell me a joke about opentelemetry"
     )
     assert open_ai_span.attributes.get("llm.completions.0.content")
-    assert open_ai_span.attributes.get("openai.api_base") == "https://api.openai.com/v1/"
+    assert (
+        open_ai_span.attributes.get("openai.api_base") == "https://api.openai.com/v1/"
+    )
+
+    events = open_ai_span.events
+    assert len(events) == chunk_count
