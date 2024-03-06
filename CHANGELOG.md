@@ -1,3 +1,10 @@
+## v0.13.2 (2024-03-06)
+
+### Fix
+
+- **openai**: span events on completion chunks in streaming (#586)
+- **openai**: streaming metrics (#585)
+
 ## v0.13.1 (2024-03-01)
 
 ### Fix
