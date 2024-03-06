@@ -281,6 +281,8 @@ def _build_from_streaming_response(
     time_of_first_token = start_time  # will be updated when first token is received
 
     for item in response:
+        span.add_event(name="llm.content.completion.chunk")
+
         item_to_yield = item
 
         if first_token and streaming_time_to_first_token:
