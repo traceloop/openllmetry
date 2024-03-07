@@ -9,7 +9,6 @@ from opentelemetry.instrumentation.llamaindex.utils import (
 )
 from opentelemetry.semconv.ai import SpanAttributes, TraceloopSpanKindValues
 
-V9_MODULE_NAME = "llama_index.query_pipeline.query"
 V10_MODULE_NAME = "llama_index.core.query_pipeline.query"
 V10_LEGACY_MODULE_NAME = "llama_index.legacy.query_pipeline.query"
 
@@ -28,7 +27,7 @@ class QueryPipelineInstrumentor:
             self._instrument_module(V10_LEGACY_MODULE_NAME)
 
         except PackageNotFoundError:
-            self._instrument_module(V9_MODULE_NAME)
+            pass  # not supported before v10
 
     def _instrument_module(self, module_name):
         wrap_function_wrapper(
