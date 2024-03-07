@@ -191,7 +191,7 @@ def _set_stream_response_attributes(span, stream_response):
     )
 
 
-def _set_completion_content_attributes(span, response, index) -> str:
+def _set_completion_content_attributes(span, response, index, choice_counter) -> str:
     if not isinstance(response, dict):
         return
 
@@ -200,8 +200,11 @@ def _set_completion_content_attributes(span, response, index) -> str:
         f"{SpanAttributes.LLM_COMPLETIONS}.{index}.content",
         response["results"][0]["generated_text"],
     )
+    model_id = response.get("model_id")
+    attributes_with_reason = {"llm.response.model": model_id, "llm.response.finish_reason": response["results"][0]["stop_reason"]}
+    choice_counter.add(1, attributes=attributes_with_reason)
 
-    return response.get("model_id")
+    return model_id
 
 
 def _token_usage_count(responses):
@@ -219,7 +222,7 @@ def _token_usage_count(responses):
     return prompt_token, completion_token
 
 
-def _set_response_attributes(span, responses, token_counter):
+def _set_response_attributes(span, responses, token_counter, choice_counter, duration_histogram, duration):
     if not isinstance(responses, (list, dict)):
         return
 
@@ -227,19 +230,14 @@ def _set_response_attributes(span, responses, token_counter):
         if len(responses) == 0:
             return
         for index, response in enumerate(responses):
-            model_id = _set_completion_content_attributes(span, response, index)
+            model_id = _set_completion_content_attributes(span, response, index, choice_counter)
     elif isinstance(responses, dict):
         response = responses
-        model_id = _set_completion_content_attributes(span, response, 0)
+        model_id = _set_completion_content_attributes(span, response, 0, choice_counter)
 
     _set_span_attribute(
         span, SpanAttributes.LLM_RESPONSE_MODEL, model_id
     )
-
-    shared_attributes = {
-        "llm.response.model": model_id,
-        # "server.address": _get_openai_base_url(instance),
-    }
 
     prompt_token, completion_token = _token_usage_count(responses)
     if (prompt_token + completion_token) != 0:
@@ -258,10 +256,19 @@ def _set_response_attributes(span, responses, token_counter):
             SpanAttributes.LLM_USAGE_TOTAL_TOKENS,
             prompt_token + completion_token,
             )
+
+        shared_attributes = {
+            "llm.response.model": model_id,
+            # "server.address": _get_openai_base_url(instance),
+        }
         attributes_with_token_type = {**shared_attributes, "llm.usage.token_type": "completion"}
         token_counter.add(completion_token, attributes=attributes_with_token_type)
         attributes_with_token_type = {**shared_attributes, "llm.usage.token_type": "prompt"}
         token_counter.add(prompt_token, attributes=attributes_with_token_type)
+        
+    if duration and isinstance(duration, (float, int)) and duration_histogram:
+        duration_histogram.record(duration, attributes=shared_attributes)
+        
 
 def _build_and_set_stream_response(span, response, raw_flag):
     stream_generated_text = ""
@@ -347,7 +354,7 @@ def _wrap(tracer,
         start_time = time.time()
         response = wrapped(*args, **kwargs)
         end_time = time.time()
-    except Exception as e:  # pylint: disable=broad-except
+    except Exception as e:
         end_time = time.time()
         duration = end_time - start_time if 'start_time' in locals() else 0
 
@@ -366,9 +373,8 @@ def _wrap(tracer,
         if isinstance(response, types.GeneratorType):
             return _build_and_set_stream_response(span, response, raw_flag)
         else:
-            _set_response_attributes(span, response, token_counter)
-
-    duration = end_time - start_time
+            duration = end_time - start_time
+            _set_response_attributes(span, response, token_counter, choice_counter, duration_histogram, duration)
 
     span.end()
     return response
