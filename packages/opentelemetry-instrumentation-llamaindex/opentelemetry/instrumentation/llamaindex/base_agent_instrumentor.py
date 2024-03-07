@@ -12,13 +12,11 @@ from opentelemetry.semconv.ai import SpanAttributes, TraceloopSpanKindValues
 TO_INSTRUMENT = [
     {
         "class": "AgentRunner",
-        "v9_module": "llama_index.agent.runner.base",
         "v10_module": "llama_index.core.agent.runner.base",
         "v10_legacy_module": "llama_index.legacy.agent.runner.base",
     },
     {
         "class": "OpenAIAssistantAgent",
-        "v9_module": "llama_index.agent.openai_assistant_agent",
         "v10_module": "llama_index.agent.openai.openai_assistant_agent",
         "v10_legacy_module": "llama_index.legacy.agent.openai_assistant_agent",
     },
@@ -37,7 +35,7 @@ class BaseAgentInstrumentor:
                 self._instrument_module(module["v10_legacy_module"], module["class"])
 
             except PackageNotFoundError:
-                self._instrument_module(module["v9_module"], module["class"])
+                pass  # not supported before v10
 
     def _instrument_module(self, module_name, class_name):
         wrap_function_wrapper(
