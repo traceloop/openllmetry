@@ -201,8 +201,10 @@ def _set_completion_content_attributes(span, response, index, choice_counter) ->
         response["results"][0]["generated_text"],
     )
     model_id = response.get("model_id")
-    attributes_with_reason = {"llm.response.model": model_id, "llm.response.finish_reason": response["results"][0]["stop_reason"]}
-    choice_counter.add(1, attributes=attributes_with_reason)
+
+    if choice_counter:
+        attributes_with_reason = {"llm.response.model": model_id, "llm.response.finish_reason": response["results"][0]["stop_reason"]}
+        choice_counter.add(1, attributes=attributes_with_reason)
 
     return model_id
 
@@ -261,16 +263,17 @@ def _set_response_attributes(span, responses, token_counter, choice_counter, dur
             "llm.response.model": model_id,
             # "server.address": _get_openai_base_url(instance),
         }
-        attributes_with_token_type = {**shared_attributes, "llm.usage.token_type": "completion"}
-        token_counter.add(completion_token, attributes=attributes_with_token_type)
-        attributes_with_token_type = {**shared_attributes, "llm.usage.token_type": "prompt"}
-        token_counter.add(prompt_token, attributes=attributes_with_token_type)
+        if token_counter:
+            attributes_with_token_type = {**shared_attributes, "llm.usage.token_type": "completion"}
+            token_counter.add(completion_token, attributes=attributes_with_token_type)
+            attributes_with_token_type = {**shared_attributes, "llm.usage.token_type": "prompt"}
+            token_counter.add(prompt_token, attributes=attributes_with_token_type)
         
     if duration and isinstance(duration, (float, int)) and duration_histogram:
         duration_histogram.record(duration, attributes=shared_attributes)
         
 
-def _build_and_set_stream_response(span, response, raw_flag):
+def _build_and_set_stream_response(span, response, raw_flag, token_counter, choice_counter, duration_histogram, start_time):
     stream_generated_text = ""
     stream_generated_token_count = 0
     stream_input_token_count = 0
@@ -279,11 +282,18 @@ def _build_and_set_stream_response(span, response, raw_flag):
         stream_generated_text += item["results"][0]["generated_text"]
         stream_input_token_count += item["results"][0]["input_token_count"]
         stream_generated_token_count = item["results"][0]["generated_token_count"]
+        stream_finish_reason = item["results"][0]["stop_reason"]
 
         if raw_flag:
             yield item
         else:
             yield item["results"][0]["generated_text"]
+
+    shared_attributes = {
+        "llm.response.model": stream_model_id,
+        # "server.address": _get_openai_base_url(instance),
+        "stream": True        
+    }
 
     stream_response = {
         "model_id": stream_model_id,
@@ -292,6 +302,25 @@ def _build_and_set_stream_response(span, response, raw_flag):
         "input_token_count": stream_input_token_count,
     }
     _set_stream_response_attributes(span, stream_response)
+    # choice counter
+    if choice_counter:
+        attributes_with_reason = {**shared_attributes, "llm.response.finish_reason": stream_finish_reason}
+        choice_counter.add(1, attributes=attributes_with_reason)
+
+    # token counter
+    if token_counter:
+        attributes_with_token_type = {**shared_attributes, "llm.usage.token_type": "completion"}
+        token_counter.add(stream_generated_token_count, attributes=attributes_with_token_type)
+        attributes_with_token_type = {**shared_attributes, "llm.usage.token_type": "prompt"}
+        token_counter.add(stream_input_token_count, attributes=attributes_with_token_type)
+    
+    # duration histogram
+    if start_time and isinstance(start_time, (float, int)):
+        duration = time.time() - start_time
+    else:
+        duration = None
+    if duration and isinstance(duration, (float, int)) and duration_histogram:
+        duration_histogram.record(duration, attributes=shared_attributes)
 
     span.set_status(Status(StatusCode.OK))
     span.end()
@@ -371,7 +400,7 @@ def _wrap(tracer,
 
     if "model_init" not in name:
         if isinstance(response, types.GeneratorType):
-            return _build_and_set_stream_response(span, response, raw_flag)
+            return _build_and_set_stream_response(span, response, raw_flag, token_counter, choice_counter, duration_histogram, start_time)
         else:
             duration = end_time - start_time
             _set_response_attributes(span, response, token_counter, choice_counter, duration_histogram, duration)
