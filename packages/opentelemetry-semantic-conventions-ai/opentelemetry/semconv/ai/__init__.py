@@ -16,6 +16,7 @@ class SpanAttributes:
     LLM_HEADERS = "llm.headers"
     LLM_TOP_P = "llm.top_p"
     LLM_TOP_K = "llm.top_k"
+    LLM_IS_STREAMING = "llm.is_streaming"
     LLM_FREQUENCY_PENALTY = "llm.frequency_penalty"
     LLM_PRESENCE_PENALTY = "llm.presence_penalty"
     LLM_PROMPTS = "llm.prompts"

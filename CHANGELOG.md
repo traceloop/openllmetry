@@ -1,3 +1,17 @@
+## v0.13.3 (2024-03-07)
+
+### Fix
+
+- **llamaindex**: backport to support v0.9.x (#590)
+- **openai**: is_streaming attribute (#589)
+
+## v0.13.2 (2024-03-06)
+
+### Fix
+
+- **openai**: span events on completion chunks in streaming (#586)
+- **openai**: streaming metrics (#585)
+
 ## v0.13.1 (2024-03-01)
 
 ### Fix
