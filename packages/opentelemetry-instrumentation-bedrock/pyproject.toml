@@ -37,3 +37,6 @@ pytest-sugar = "1.0.0"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[project.entry-points.opentelemetry_instrumentor]
+boto3 = "opentelemetry.instrumentation.bedrock:BedrockInstrumentor"
