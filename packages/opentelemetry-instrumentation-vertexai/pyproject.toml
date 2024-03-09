@@ -46,3 +46,6 @@ google-cloud-aiplatform = "^1.39.0"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[project.entry-points.opentelemetry_instrumentor]
+vertexai = "opentelemetry.instrumentation.vertexai:VertexAIInstrumentor"
