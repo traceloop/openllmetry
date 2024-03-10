@@ -44,3 +44,6 @@ pytest-asyncio = "^0.23.5"
 [build-system]
 requires = [ "poetry-core" ]
 build-backend = "poetry.core.masonry.api"
+
+[project.entry-points.opentelemetry_instrumentor]
+openai = "opentelemetry.instrumentation.openai:OpenAIInstrumentor"
