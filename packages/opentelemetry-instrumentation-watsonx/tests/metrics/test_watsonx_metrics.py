@@ -10,7 +10,7 @@ def test_generate_metrics(metrics_test_context, watson_ai_model):
         return
 
     provider, reader = metrics_test_context
-    
+
     watson_ai_model.generate(prompt="What is 1 + 1?")
 
     metrics_data = reader.get_metrics_data()
@@ -61,7 +61,7 @@ def test_generate_stream_metrics(metrics_test_context, watson_ai_model):
         return
 
     provider, reader = metrics_test_context
-    
+
     response = watson_ai_model.generate_text_stream(prompt="Write an epigram about the sun")
     generated_text = ""
     for chunk in response:
