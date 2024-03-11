@@ -17,6 +17,12 @@ updates:
     labels:
       - "opentelemetry-instrumentation-bedrock"
   - package-ecosystem: "pip"
+    directory: "/packages/opentelemetry-instrumentation-cassio"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "opentelemetry-instrumentation-cassio"
+  - package-ecosystem: "pip"
     directory: "/packages/opentelemetry-instrumentation-chromadb"
     schedule:
       interval: "weekly"

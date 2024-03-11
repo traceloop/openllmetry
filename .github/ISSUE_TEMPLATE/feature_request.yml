@@ -13,6 +13,7 @@ body:
       options:
         - "Anthropic Instrumentation"
         - "Bedrock Instrumentation"
+        - "CassIO Instrumentation"
         - "Chromadb Instrumentation"
         - "Cohere Instrumentation"
         - "Haystack Instrumentation"
