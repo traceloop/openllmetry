@@ -24,7 +24,6 @@ logger = logging.getLogger(__name__)
 _instruments = ("pinecone-client ~= 2.2.2",)
 
 
-
 class Events(Enum):
     DB_QUERY_EMBEDDINGS = "db.query.embeddings"
     DB_QUERY_RESULT = "db.query.result"
@@ -41,7 +40,6 @@ class EventAttributes(Enum):
     DB_QUERY_RESULT_METADATA = "db.query.result.metadata"
     DB_QUERY_RESULT_VECTOR = "db.query.result.vector"
     DB_QUERY_RESULT_DOCUMENT = "db.query.result.document"
-
 
 
 WRAPPED_METHODS = [
