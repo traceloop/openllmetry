@@ -48,25 +48,21 @@ class SpanAttributes:
 
 
 class Events(Enum):
-    VECTOR_DB_QUERY_EMBEDDINGS = "vector_db.query.embeddings"
-    DB_PINECONE_QUERY_RESULT = "db.pinecone.query.result"
-    VECTOR_DB_QUERY_RESULT = "vector_db.query.result"
+    DB_QUERY_EMBEDDINGS = "db.query.embeddings"
+    DB_QUERY_RESULT = "db.query.result"
 
 
 class EventAttributes(Enum):
     # Query Embeddings
-    VECTOR_DB_QUERY_EMBEDDINGS_VECTOR = "vector_db.query.embeddings.{i}.vector"
+    DB_QUERY_EMBEDDINGS_VECTOR = "db.query.embeddings.vector"
 
-    # Query Result
-    VECTOR_DB_QUERY_RESULT_IDS = "vector_db.query.result.{i}.ids"
-    VECTOR_DB_QUERY_RESULT_DISTANCES = "vector_db.query.result.{i}.distances"
-    VECTOR_DB_QUERY_RESULT_METADATA = "vector_db.query.result.{i}.metadata"
-    VECTOR_DB_QUERY_RESULT_DOCUMENTS = "vector_db.query.result.{i}.documents"
-
-    # Query Result (from Pinecone)
-    DB_PINECONE_QUERY_RESULT_ID = "db.pinecone.query.result.id"
-    DB_PINECONE_QUERY_RESULT_SCORE = "db.pinecone.query.result.score"
-    DB_PINECONE_QUERY_RESULT_VECTOR = "db.pinecone.query.result.vector"
+    # Query Result (canonical format)
+    DB_QUERY_RESULT_ID = "db.query.result.id"
+    DB_QUERY_RESULT_SCORE = "db.query.result.score"
+    DB_QUERY_RESULT_DISTANCE = "db.query.result.distance"
+    DB_QUERY_RESULT_METADATA = "db.query.result.metadata"
+    DB_QUERY_RESULT_VECTOR = "db.query.result.vector"
+    DB_QUERY_RESULT_DOCUMENT = "db.query.result.document"
 
 
 class LLMRequestTypeValues(Enum):

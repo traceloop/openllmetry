@@ -1,5 +1,4 @@
 from opentelemetry.semconv.trace import SpanAttributes
-from opentelemetry.semconv.ai import Events, EventAttributes
 
 from opentelemetry import context as context_api
 from opentelemetry.instrumentation.utils import (
@@ -7,6 +6,25 @@ from opentelemetry.instrumentation.utils import (
 )
 import itertools
 import json
+from enum import Enum
+
+
+class Events(Enum):
+    DB_QUERY_EMBEDDINGS = "db.query.embeddings"
+    DB_QUERY_RESULT = "db.query.result"
+
+
+class EventAttributes(Enum):
+    # Query Embeddings
+    DB_QUERY_EMBEDDINGS_VECTOR = "db.query.embeddings.vector"
+
+    # Query Result (canonical format)
+    DB_QUERY_RESULT_ID = "db.query.result.id"
+    DB_QUERY_RESULT_SCORE = "db.query.result.score"
+    DB_QUERY_RESULT_DISTANCE = "db.query.result.distance"
+    DB_QUERY_RESULT_METADATA = "db.query.result.metadata"
+    DB_QUERY_RESULT_VECTOR = "db.query.result.vector"
+    DB_QUERY_RESULT_DOCUMENT = "db.query.result.document"
 
 
 def _with_tracer_wrapper(func):
@@ -133,29 +151,83 @@ def _set_segment_query_attributes(span, kwargs):
 def _add_segment_query_embeddings_events(span, kwargs):
     for i, embeddings in enumerate(kwargs.get("query_embeddings", [])):
         span.add_event(
-            name=f"{Events.VECTOR_DB_QUERY_EMBEDDINGS.value}.{i}",
+            name=Events.DB_QUERY_EMBEDDINGS.value,
             attributes={
-                f"{Events.VECTOR_DB_QUERY_EMBEDDINGS.value}.{i}.vector": json.dumps(embeddings)
+                EventAttributes.DB_QUERY_EMBEDDINGS_VECTOR.value: json.dumps(embeddings)
             }
         )
 
 
 def _add_query_result_events(span, kwargs):
+    """
+    There's a lot of logic here involved in converting the query result
+    format from ChromaDB into the canonical format (taken from Pinecone)
+
+    This is because Chroma query result looks like this:
+
+        {
+           ids: [1, 2, 3...],
+           distances: [0.3, 0.5, 0.6...],
+           metadata: ["some metadata text", "another metadata text",...],
+           documents: ["retrieved text", "retrieved text2", ...]
+        }
+
+    We'd like instead to log it like this:
+
+        [
+            {"id": 1, "distance": 0.3,  "document": "retrieved text", "metadata": "some metadata text",
+            {"id": 2, "distance" 0.5, , "document": "retrieved text2": "another metadata text",
+            {"id": 3, "distance": 0.6, "document": ..., "metadata": ...
+        ]
+
+    If you'd like to understand better why, please read the discussions on PR #370:
+    https://github.com/traceloop/openllmetry/pull/370
+
+    The goal is to set a canonical format which we call as a Semantic Convention.
+    """
+    print("kwargs", kwargs)
     zipped = itertools.zip_longest(
         kwargs.get("ids", []),
         kwargs.get("distances", []),
-        kwargs.get("metadata", []),
+        kwargs.get("metadatas", []),
         kwargs.get("documents", [])
     )
-    for i, tuple_ in enumerate(zipped):
+    zipped = list(zipped)
+    for tuple_ in zipped:
+        attributes = {
+            EventAttributes.DB_QUERY_RESULT_ID.value: None,
+            EventAttributes.DB_QUERY_RESULT_DISTANCE.value: None,
+            EventAttributes.DB_QUERY_RESULT_METADATA.value: None,
+            EventAttributes.DB_QUERY_RESULT_DOCUMENT.value: None,
+        }
+
+        attributes_order = [
+            "ids", "distances", "metadatas", "documents"
+        ]
+        attributes_mapping_to_canonical_format = {
+            "ids": EventAttributes.DB_QUERY_RESULT_ID.value,
+            "distances": EventAttributes.DB_QUERY_RESULT_DISTANCE.value,
+            "metadatas": EventAttributes.DB_QUERY_RESULT_METADATA.value,
+            "documents": EventAttributes.DB_QUERY_RESULT_DOCUMENT.value,
+        }
+        for j, attr in enumerate(tuple_):
+            original_attribute_name = attributes_order[j]
+            canonical_name = (
+                attributes_mapping_to_canonical_format[original_attribute_name]
+            )
+            try:
+                value = attr[0]
+                if isinstance(value, dict):
+                    value = json.dumps(value)
+
+                attributes[canonical_name] = value
+            except (IndexError, TypeError):
+                # Don't send missing values as nulls, OpenTelemetry dislikes them!
+                del attributes[canonical_name]
+
         span.add_event(
-            name=f"{Events.VECTOR_DB_QUERY_RESULT.value}.{i}",
-            attributes={
-                f"{EventAttributes.VECTOR_DB_QUERY_RESULT_IDS.value.format(i=i)}": tuple_[0] or [],
-                f"{EventAttributes.VECTOR_DB_QUERY_RESULT_DISTANCES.value.format(i=i)}": tuple_[1] or [],
-                f"{EventAttributes.VECTOR_DB_QUERY_RESULT_METADATA.value.format(i=i)}": tuple_[2] or [],
-                f"{EventAttributes.VECTOR_DB_QUERY_RESULT_DOCUMENTS.value.format(i=i)}": tuple_[3] or [],
-            }
+            name=Events.DB_QUERY_RESULT.value,
+            attributes=attributes
         )
 
 
