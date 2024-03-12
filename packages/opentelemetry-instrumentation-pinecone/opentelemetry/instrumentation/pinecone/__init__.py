@@ -4,6 +4,7 @@ import logging
 import pinecone
 from typing import Collection
 from wrapt import wrap_function_wrapper
+from enum import Enum
 
 from opentelemetry import context as context_api
 from opentelemetry.trace import get_tracer, SpanKind
@@ -21,6 +22,27 @@ from opentelemetry.semconv.ai import SpanAttributes
 logger = logging.getLogger(__name__)
 
 _instruments = ("pinecone-client ~= 2.2.2",)
+
+
+
+class Events(Enum):
+    DB_QUERY_EMBEDDINGS = "db.query.embeddings"
+    DB_QUERY_RESULT = "db.query.result"
+
+
+class EventAttributes(Enum):
+    # Query Embeddings
+    DB_QUERY_EMBEDDINGS_VECTOR = "db.query.embeddings.vector"
+
+    # Query Result (canonical format)
+    DB_QUERY_RESULT_ID = "db.query.result.id"
+    DB_QUERY_RESULT_SCORE = "db.query.result.score"
+    DB_QUERY_RESULT_DISTANCE = "db.query.result.distance"
+    DB_QUERY_RESULT_METADATA = "db.query.result.metadata"
+    DB_QUERY_RESULT_VECTOR = "db.query.result.vector"
+    DB_QUERY_RESULT_DOCUMENT = "db.query.result.document"
+
+
 
 WRAPPED_METHODS = [
     {
@@ -107,9 +129,9 @@ def _set_query_input_attributes(span, kwargs):
     if queries:
         for vector in queries:
             span.add_event(
-                name="db.query.embeddings",
+                name=Events.DB_QUERY_EMBEDDINGS.value,
                 attributes={
-                    "db.query.embeddings.vector": vector
+                    EventAttributes.DB_QUERY_EMBEDDINGS_VECTOR.value: vector
                 }
             )
 
@@ -121,14 +143,12 @@ def _set_query_response(span, response):
 
     for match in matches:
         span.add_event(
-            name="db.pinecone.query.result",
-            # Unlike chroma, pinecone returns one result per query
-            # So EventAttributes end up looking slightly different
+            name=Events.DB_QUERY_RESULT.value,
             attributes={
-                "db.pinecone.query.result.id": match.get("id"),
-                "db.pinecone.query.result.score": match.get("score"),
-                "db.pinecone.query.result.metadata": str(match.get("metadata")),
-                "db.pinecone.query.result.vector": match.get("values"),
+                EventAttributes.DB_QUERY_RESULT_ID.value: match.get("id"),
+                EventAttributes.DB_QUERY_RESULT_SCORE.value: match.get("score"),
+                EventAttributes.DB_QUERY_RESULT_METADATA.value: str(match.get("metadata")),
+                EventAttributes.DB_QUERY_RESULT_VECTOR.value: match.get("values"),
             }
         )
 
