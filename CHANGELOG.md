@@ -1,4 +1,10 @@
-## v0.14.0 (2024-03-12)
+## v0.14.1 (2024-03-12)
+
+### Fix
+
+- **sdk**: protect against unserializable inputs/outputs (#626)
+
+## 0.14.0 (2024-03-12)
 
 ### Feat
 
