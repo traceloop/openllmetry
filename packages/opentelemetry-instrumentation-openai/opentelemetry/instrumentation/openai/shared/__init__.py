@@ -90,6 +90,23 @@ def _set_functions_attributes(span, functions):
         )
 
 
+def set_tools_attributes(span, tools):
+    if not tools:
+        return
+
+    for i, tool in enumerate(tools):
+        function = tool.get("function")
+        if not function:
+            continue
+
+        prefix = f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.{i}"
+        _set_span_attribute(span, f"{prefix}.name", function.get("name"))
+        _set_span_attribute(span, f"{prefix}.description", function.get("description"))
+        _set_span_attribute(
+            span, f"{prefix}.parameters", json.dumps(function.get("parameters"))
+        )
+
+
 def _set_request_attributes(span, kwargs):
     if not span.is_recording():
         return
