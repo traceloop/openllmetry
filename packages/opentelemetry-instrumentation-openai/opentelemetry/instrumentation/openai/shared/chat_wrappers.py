@@ -16,6 +16,7 @@ from opentelemetry.instrumentation.openai.shared import (
     _set_request_attributes,
     _set_span_attribute,
     _set_functions_attributes,
+    set_tools_attributes,
     _set_response_attributes,
     is_streaming_response,
     should_send_prompts,
@@ -137,7 +138,10 @@ def _handle_request(span, kwargs, instance):
     _set_client_attributes(span, instance)
     if should_send_prompts():
         _set_prompts(span, kwargs.get("messages"))
-        _set_functions_attributes(span, kwargs.get("functions"))
+        if kwargs.get("functions"):
+            _set_functions_attributes(span, kwargs.get("functions"))
+        elif kwargs.get("tools"):
+            set_tools_attributes(span, kwargs.get("tools"))
 
 
 def _handle_response(
@@ -253,15 +257,28 @@ def _set_completions(span, choices):
         _set_span_attribute(span, f"{prefix}.content", message.get("content"))
 
         function_call = message.get("function_call")
-        if not function_call:
-            return
+        if function_call:
+            _set_span_attribute(
+                span, f"{prefix}.function_call.name", function_call.get("name")
+            )
+            _set_span_attribute(
+                span,
+                f"{prefix}.function_call.arguments",
+                function_call.get("arguments"),
+            )
 
-        _set_span_attribute(
-            span, f"{prefix}.function_call.name", function_call.get("name")
-        )
-        _set_span_attribute(
-            span, f"{prefix}.function_call.arguments", function_call.get("arguments")
-        )
+        tool_calls = message.get("tool_calls")
+        if tool_calls:
+            _set_span_attribute(
+                span,
+                f"{prefix}.function_call.name",
+                tool_calls[0].get("function").get("name"),
+            )
+            _set_span_attribute(
+                span,
+                f"{prefix}.function_call.arguments",
+                tool_calls[0].get("function").get("arguments"),
+            )
 
 
 def _build_from_streaming_response(
