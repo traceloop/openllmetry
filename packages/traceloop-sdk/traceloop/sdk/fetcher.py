@@ -100,10 +100,10 @@ def fetch_url(url: str, api_key: str):
     if response.status_code != 200:
         if response.status_code == 401 or response.status_code == 403:
             logging.error("Authorization error: Invalid API key.")
-        
         raise requests.exceptions.HTTPError(response=response)
     else:
         return response.json()
+
 
 def post_url(url: str, api_key: str, body: Dict[str, str]):
     response = requests.post(
