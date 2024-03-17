@@ -1,3 +1,10 @@
+## v0.14.3 (2024-03-17)
+
+### Fix
+
+- support python 3.12 (#639)
+- **traceloop-sdk**: Log error message when providing wrong API key. (#638)
+
 ## v0.14.2 (2024-03-15)
 
 ### Fix

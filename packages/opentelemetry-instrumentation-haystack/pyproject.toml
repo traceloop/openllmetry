@@ -8,7 +8,7 @@ show_missing = true
 
 [tool.poetry]
 name = "opentelemetry-instrumentation-haystack"
-version = "0.14.2"
+version = "0.14.3"
 description = "OpenTelemetry Haystack instrumentation"
 authors = [
   "Gal Kleinman <gal@traceloop.com>",
