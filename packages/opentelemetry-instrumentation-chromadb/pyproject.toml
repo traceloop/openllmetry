@@ -23,7 +23,7 @@ readme = "README.md"
 include = "opentelemetry/instrumentation/chromadb"
 
 [tool.poetry.dependencies]
-python = ">=3.8.1,<4"
+python = ">=3.9,<4"
 opentelemetry-api = "^1.23.0"
 opentelemetry-semantic-conventions = "0.44b0"
 opentelemetry-instrumentation = "0.44b0"
