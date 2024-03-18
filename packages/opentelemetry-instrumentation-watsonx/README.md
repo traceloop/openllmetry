@@ -27,3 +27,17 @@ To disable logging, set the `TRACELOOP_TRACE_CONTENT` environment variable to `f
 ```bash
 TRACELOOP_TRACE_CONTENT=false
 ```
+
+## SSL Issue
+
+In case of SSL handshake issues (or similar ones) as follows:
+
+```
+E0423 17:04:25.197068000 6150713344 ssl_transport_security.cc:1420]    Handshake failed with fatal error SSL_ERROR_SSL: error:100000f7:SSL routines:OPENSSL_internal:WRONG_VERSION_NUMBER.
+```
+
+You can instruct the exporter with an environment variable to ignore SSL errors:
+
+```bash
+OTEL_EXPORTER_OTLP_INSECURE=true
+```
