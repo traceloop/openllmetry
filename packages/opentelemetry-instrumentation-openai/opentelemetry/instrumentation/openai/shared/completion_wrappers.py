@@ -15,6 +15,9 @@ from opentelemetry.instrumentation.openai.shared import (
     is_streaming_response,
     should_send_prompts,
     model_as_dict,
+    should_record_stream_token_usage,
+    get_token_count_from_string,
+    _set_span_stream_usage,
 )
 
 from opentelemetry.instrumentation.openai.utils import is_openai_v1
@@ -45,7 +48,7 @@ def completion_wrapper(tracer, wrapped, instance, args, kwargs):
 
     if is_streaming_response(response):
         # span will be closed after the generator is done
-        return _build_from_streaming_response(span, response)
+        return _build_from_streaming_response(span, response, kwargs)
     else:
         _handle_response(response, span)
 
@@ -127,12 +130,14 @@ def _set_completions(span, choices):
         logger.warning("Failed to set completion attributes, error: %s", str(e))
 
 
-def _build_from_streaming_response(span, response):
+def _build_from_streaming_response(span, response, request_kwargs=None):
     complete_response = {"choices": [], "model": ""}
     for item in response:
         item_to_yield = item
         if is_openai_v1():
             item = model_as_dict(item)
+
+        complete_response["model"] = item.get("model")
 
         for choice in item.get("choices"):
             index = choice.get("index")
@@ -148,6 +153,34 @@ def _build_from_streaming_response(span, response):
         yield item_to_yield
 
     _set_response_attributes(span, complete_response)
+
+    # use tiktoken calculate token usage
+    if should_record_stream_token_usage():
+        prompt_usage = -1
+        completion_usage = -1
+
+        # prompt_usage
+        if request_kwargs and request_kwargs.get("prompt"):
+            prompt_content = request_kwargs.get("prompt")
+            model_name = request_kwargs.get("model") or None
+
+            if model_name:
+                prompt_usage = get_token_count_from_string(prompt_content, model_name)
+
+        # completion_usage
+        if complete_response.get("choices"):
+            completion_content = ""
+            model_name = complete_response.get("model") or None
+
+            for choice in complete_response.get("choices"):  # type: dict
+                if choice.get("text"):
+                    completion_content += choice.get("text")
+
+            if model_name:
+                completion_usage = get_token_count_from_string(completion_content, model_name)
+
+        # span record
+        _set_span_stream_usage(span, prompt_usage, completion_usage)
 
     if should_send_prompts():
         _set_completions(span, complete_response.get("choices"))

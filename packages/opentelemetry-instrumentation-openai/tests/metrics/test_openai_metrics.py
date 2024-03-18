@@ -1,3 +1,5 @@
+import os
+
 import pytest
 from openai import OpenAI
 
@@ -56,6 +58,48 @@ def test_chat_completion_metrics(metrics_test_context, openai_client):
     assert found_token_metric is True
     assert found_choice_metric is True
     assert found_duration_metric is True
+
+
+@pytest.mark.vcr
+def test_chat_completion_metrics_stream(metrics_test_context, openai_client):
+    # set os env for token usage record in stream mode
+    original_value = os.environ.get("TRACELOOP_STREAM_TOKEN_USAGE")
+    os.environ["TRACELOOP_STREAM_TOKEN_USAGE"] = "true"
+
+    try:
+        provider, reader = metrics_test_context
+
+        _ = openai_client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[{"role": "user", "content": "Tell me a joke about opentelemetry"}],
+            stream=True,
+        )
+
+        metrics_data = reader.get_metrics_data()
+        resource_metrics = metrics_data.resource_metrics
+        assert len(resource_metrics) > 0
+
+        found_token_metric = None
+
+        for rm in resource_metrics:
+            for sm in rm.scope_metrics:
+                for metric in sm.metrics:
+
+                    if metric.name == 'llm.openai.chat_completions.tokens':
+                        found_token_metric = True
+                        for data_point in metric.data.data_points:
+                            assert data_point.attributes['llm.usage.token_type'] in ['completion', 'prompt']
+                            assert len(data_point.attributes['server.address']) > 0
+                            assert data_point.value > 0
+
+        assert found_token_metric is True
+
+    finally:
+        # unset env
+        if original_value is None:
+            del os.environ["TRACELOOP_STREAM_TOKEN_USAGE"]
+        else:
+            os.environ["TRACELOOP_STREAM_TOKEN_USAGE"] = original_value
 
 
 @pytest.mark.vcr
