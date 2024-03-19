@@ -20,7 +20,10 @@ def test_completion(exporter, openai_client):
         == "Tell me a joke about opentelemetry"
     )
     assert open_ai_span.attributes.get("llm.completions.0.content")
-    assert open_ai_span.attributes.get("openai.api_base") == "https://api.openai.com/v1/"
+    assert (
+        open_ai_span.attributes.get("openai.api_base") == "https://api.openai.com/v1/"
+    )
+    assert open_ai_span.attributes.get("llm.is_streaming") is False
 
 
 @pytest.mark.vcr
@@ -88,7 +91,9 @@ def test_completion_streaming(exporter, openai_client):
             == "Tell me a joke about opentelemetry"
         )
         assert open_ai_span.attributes.get("llm.completions.0.content")
-        assert open_ai_span.attributes.get("openai.api_base") == "https://api.openai.com/v1/"
+        assert (
+            open_ai_span.attributes.get("openai.api_base") == "https://api.openai.com/v1/"
+        )
 
         # check token usage attributes for stream
         completion_tokens = open_ai_span.attributes.get("llm.usage.completion_tokens")
@@ -126,4 +131,6 @@ async def test_async_completion_streaming(exporter, async_openai_client):
         == "Tell me a joke about opentelemetry"
     )
     assert open_ai_span.attributes.get("llm.completions.0.content")
-    assert open_ai_span.attributes.get("openai.api_base") == "https://api.openai.com/v1/"
+    assert (
+        open_ai_span.attributes.get("openai.api_base") == "https://api.openai.com/v1/"
+    )

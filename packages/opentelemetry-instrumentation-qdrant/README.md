@@ -11,3 +11,11 @@ This library allows tracing client-side calls to Qdrant vector DB sent with the 
 ```bash
 pip install opentelemetry-instrumentation-qdrant
 ```
+
+## Example usage
+
+```python
+from opentelemetry.instrumentation.qdrant import QdrantInstrumentor
+
+QdrantInstrumentor().instrument()
+```

@@ -33,6 +33,9 @@ from typing import Dict, Optional, Set
 
 TRACER_NAME = "traceloop.tracer"
 EXCLUDED_URLS = """
+    iam.cloud.ibm.com,
+    dataplatform.cloud.ibm.com,
+    ml.cloud.ibm.com,
     api.openai.com,
     openai.azure.com,
     api.anthropic.com,
@@ -226,7 +229,9 @@ class TracerWrapper(object):
                             instrument_set = True
                     elif instrument == Instruments.WEAVIATE:
                         if not init_weaviate_instrumentor():
-                            print(Fore.RED + "Warning: Weaviate library does not exist.")
+                            print(
+                                Fore.RED + "Warning: Weaviate library does not exist."
+                            )
                             print(Fore.RESET)
                         else:
                             instrument_set = True
@@ -236,7 +241,12 @@ class TracerWrapper(object):
                             Fore.RED
                             + "Warning: "
                             + instrument
-                            + " library does not exist."
+                            + " instrumentation does not exist."
+                        )
+                        print(
+                            "Usage:\n"
+                            + "from traceloop.sdk.instruments import Instruments\n"
+                            + 'Traceloop.init(app_name="...", instruments=set([Instruments.OPENAI]))'
                         )
                         print(Fore.RESET)
 

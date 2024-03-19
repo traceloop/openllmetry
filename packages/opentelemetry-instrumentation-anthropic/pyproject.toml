@@ -8,13 +8,14 @@ show_missing = true
 
 [tool.poetry]
 name = "opentelemetry-instrumentation-anthropic"
-version = "0.12.5"
+version = "0.14.3"
 description = "OpenTelemetry Anthropic instrumentation"
 authors = [
   "Gal Kleinman <gal@traceloop.com>",
   "Nir Gazit <nir@traceloop.com>",
   "Tomer Friedman <tomer@traceloop.com>"
 ]
+repository = "https://github.com/traceloop/openllmetry/tree/main/packages/opentelemetry-instrumentation-anthropic"
 license = "Apache-2.0"
 readme = "README.md"
 
@@ -22,26 +23,28 @@ readme = "README.md"
 include = "opentelemetry/instrumentation/anthropic"
 
 [tool.poetry.dependencies]
-python = ">=3.8.1,<4"
+python = ">=3.9,<4"
 opentelemetry-api = "^1.23.0"
 opentelemetry-instrumentation = "0.44b0"
-opentelemetry-semantic-conventions-ai = "^0.0.20"
+opentelemetry-semantic-conventions-ai = "^0.0.23"
 
 [tool.poetry.group.dev.dependencies]
 autopep8 = "2.0.4"
 flake8 = "7.0.0"
-pytest = "8.0.2"
+pytest = "8.1.0"
 pytest-sugar = "1.0.0"
 
 [tool.poetry.group.test.dependencies]
 anthropic = ">=0.9,<0.17"
-pytest = "8.0.2"
+pytest = "8.1.0"
 pytest-sugar = "1.0.0"
 vcrpy = "^6.0.1"
 pytest-recording = "^0.13.1"
 opentelemetry-sdk = "^1.23.0"
 
-
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[project.entry-points.opentelemetry_instrumentor]
+anthropic = "opentelemetry.instrumentation.anthropic:AnthropicInstrumentor"

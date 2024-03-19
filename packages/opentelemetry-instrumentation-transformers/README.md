@@ -12,6 +12,14 @@ This library allows tracing texte generation calls sent with the official [Huggi
 pip install opentelemetry-instrumentation-transformers
 ```
 
+## Example usage
+
+```python
+from opentelemetry.instrumentation.transformers import TransformersInstrumentor
+
+TransformersInstrumentor().instrument()
+```
+
 ## Privacy
 
 **By default, this instrumentation logs prompts, completions, and embeddings to span attributes**. This gives you a clear visibility into how your LLM application is working, and can make it easy to debug and evaluate the quality of the outputs.

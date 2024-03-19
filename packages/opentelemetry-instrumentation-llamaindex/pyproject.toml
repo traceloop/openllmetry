@@ -8,13 +8,14 @@ show_missing = true
 
 [tool.poetry]
 name = "opentelemetry-instrumentation-llamaindex"
-version = "0.12.5"
+version = "0.14.3"
 description = "OpenTelemetry LlamaIndex instrumentation"
 authors = [
   "Gal Kleinman <gal@traceloop.com>",
   "Nir Gazit <nir@traceloop.com>",
   "Tomer Friedman <tomer@traceloop.com>"
 ]
+repository = "https://github.com/traceloop/openllmetry/tree/main/packages/opentelemetry-instrumentation-llamaindex"
 license = "Apache-2.0"
 readme = "README.md"
 
@@ -22,10 +23,10 @@ readme = "README.md"
 include = "opentelemetry/instrumentation/llamaindex"
 
 [tool.poetry.dependencies]
-python = ">=3.8.1,<3.12"
+python = ">=3.9,<4"
 opentelemetry-api = "^1.23.0"
 opentelemetry-instrumentation = "0.44b0"
-opentelemetry-semantic-conventions-ai = "^0.0.20"
+opentelemetry-semantic-conventions-ai = "^0.0.23"
 inflection = "^0.5.1"
 
 [tool.poetry.group.dev.dependencies]
@@ -37,7 +38,7 @@ vcrpy = "^6.0.1"
 pytest-recording = "^0.13.1"
 pytest-asyncio = "^0.23.5"
 chromadb = "^0.4.22"
-openai = "^1.12.0"
+openai = "=1.12.0"
 opentelemetry-sdk = "^1.23.0"
 llama-index = "^0.10.10"
 llama-index-postprocessor-cohere-rerank = "^0.1.2"
@@ -46,8 +47,11 @@ opentelemetry-instrumentation-cohere = {path="../opentelemetry-instrumentation-c
 opentelemetry-instrumentation-chromadb = {path="../opentelemetry-instrumentation-chromadb", develop=true}
 sqlalchemy = "^2.0.27"
 llama-index-agent-openai = "^0.1.5"
-
+llama-index-vector-stores-chroma = "^0.1.5"
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[project.entry-points.opentelemetry_instrumentor]
+llama_index = "opentelemetry.instrumentation.llamaindex:LlamaIndexInstrumentor"

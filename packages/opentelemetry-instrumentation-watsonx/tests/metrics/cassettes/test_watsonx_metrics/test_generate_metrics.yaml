@@ -18,11 +18,11 @@ interactions:
     uri: https://iam.cloud.ibm.com/oidc/token
   response:
     body:
-      string: '{"access_token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoibm9uZSIsInN1YiI6Im5vb25lQGlibS5jb20iLCJpYW1faWQiOiJJQk1pZC0xMDAwMDBQVzAwIiwiYWNjb3VudCI6eyJic3MiOiJhYmMxMjMifSwiaWF0IjoxNzA4NTkzNzM3LCJleHAiOjIwMjM5NTM3Mzd9.iYXuVHrO3J-InoMRvwM2ENUlUWsiLzut_9wo97McECU","refresh_token":"eyJhbGciOiJydCJ9.eyJpYW1faWQiOiJJQk1pZC0xMTAwMDBTRFMxIiwiYWNjb3VudF9pZCI6ImQ3NTY2MTc1NzVmZjYzMWYzMmFiYzkzNzI1ZDIxYjdjIn0.f8p9rFmcUEa1cBeBteWI1upnP5l4f9dysuKKFn6tO83FLZBDvIi3UubtxVdgmGh7VfB2ZgmgpIE0ZyPYVmJef3JfAGEJYkvC87xPzrCVyBSlnoRrQUW6oBfJVQYZEsFtd9lVJlN0-HCCLNR0aFnEPKBNfBM1YA2enkq5aSL6NjTp_JJR4SadpchKNmeUj9HIzoAGU8sRSHr5rHS156hUwc5W-ecZflS_KFLEmE-Zv1zNZ6jTuRF4bLmLKIPK-9pODu7wFEMi5GX3KbTMbTs1Vgg9i6bPso_8FWS2Wv29cjMrIEe2fMZBAGP4d6BYicITrExJoOblWwRyIq-ahPSYWwJ-dJI6lbYXefBtK2Om-7a8NtuQ8a1qRlL5NHmD8Ks42GxuRzRiGv8lV_OdySgBSm6cLLgPquLTU8ERreKnZeV6b9e8P-UiYEaWgz1HvvWAproZFu9e0zCWwPQU9dR2ZpecEssX9t0O9Eo1lnittvv_LpXR5yOISMKuYfT8ipawyOxNtGE7fuh05sBrzsmj0Uw1auy36uojzMKO4oSqkDI6mTFn_z0VBOIY1Zh3ly0g9VQEQlFwt-sWK2MshFD2Hjez7-AWT_ydorFL2497TGBn5JpiNcdExlZYXuRGXl4HY5c-sWbdVNb14Yhft1h6Fof0YhASnwH0k3JCQfo_ec_P6NMZeypK-fZLe5ma4H3Z1lo3Jji7J0zMwbPpWjcUheUlgLqJb2Pyr3k9GQxu9bErnHShIUdxM-4x3JNnKe-PwwyxMW9VR_cglwnYfWqflXBtttnmYGgSKc5KEZMuY6-Jj6HhwDF4RUlc6mFK_v_1KVtQUyULZbGX6ctZKBxSysgl6p7mbDbzdLwLNZisulITyCt-LQzWsLL4WWOQxRQF-UykGR63_6temZ--EJi9wRmm9fJ5qdfCHdsI9v1pA3LOuNFsPfJE63TeYCdG2kf7JF_2ElLo_IaQTDQ5TunU4GV-LLoc6b-7dhFdI8fQfGvO4ZPWLFQZ9lCfDUiGmbkEWUhgy59lWtKVuqpVB2qJWKYwUg-P41m_zFlIETj4sz0ELNtR32H6F9I5A6F5vvX2P30wAvW2PBsSnWE474fb5EUI_ejweOyEz-067Qis4JIUsguIbmI8-JDuMDobSbyFA2_ujkUBjcbRqrQs4bY86hbu-w_-Wqf1qbKYxpV8Mb3SQLM0PaCAhCjbq9o5gcfhUhP-9HWgCla04BVTPqrf7nJc270bcyKb_HDar3SiTYgxDe-WFCXP2uX_QS1EziqkP-uPvnlaz1yjC8Uxw76MzuTbmPxllcH8RuOnAz2ai-9nXKM2RiN06D62bE0mc-NB1k1Q8ZYr6YsW-rAPIJ6BC8NL","token_type":"Bearer","expires_in":3600,"expiration":1708597208,"refresh_token_expiration":1708852808,"scope":"ibm
+      string: '{"access_token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoibm9uZSIsInN1YiI6Im5vb25lQGlibS5jb20iLCJpYW1faWQiOiJJQk1pZC0xMDAwMDBQVzAwIiwiYWNjb3VudCI6eyJic3MiOiJhYmMxMjMifSwiaWF0IjoxNzA4NTkzNzM3LCJleHAiOjIwMjM5NTM3Mzd9.iYXuVHrO3J-InoMRvwM2ENUlUWsiLzut_9wo97McECU","refresh_token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoibm9uZSIsInN1YiI6Im5vb25lQGlibS5jb20iLCJpYW1faWQiOiJJQk1pZC0xMDAwMDBQVzAwIiwiYWNjb3VudCI6eyJic3MiOiJhYmMxMjMifSwiaWF0IjoxNzA4NTkzNzM3LCJleHAiOjIwMjM5NTM3Mzd9.iYXuVHrO3J-InoMRvwM2ENUlUWsiLzut_9wo97McECU","token_type":"Bearer","expires_in":3600,"expiration":1710085141,"refresh_token_expiration":1710340741,"scope":"ibm
         openid"}'
     headers:
       Akamai-GRN:
-      - 0.0fd82317.1708593609.d7826af2
+      - 0.0fd82317.1710081544.5e6fe028
       Cache-Control:
       - no-cache, no-store, must-revalidate
       Connection:
@@ -32,7 +32,7 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Thu, 22 Feb 2024 09:20:11 GMT
+      - Sun, 10 Mar 2024 14:39:04 GMT
       Expires:
       - '0'
       Pragma:
@@ -44,15 +44,15 @@ interactions:
       strict-transport-security:
       - max-age=31536000; includeSubDomains
       transaction-id:
-      - aGg2cjQ-41496baa032e4acea087cc873ff16117
+      - d2JzOGg-ee7a755b98324d9abbfe9d16d1093d84
       x-content-type-options:
       - nosniff
       x-correlation-id:
-      - aGg2cjQ-41496baa032e4acea087cc873ff16117
+      - d2JzOGg-ee7a755b98324d9abbfe9d16d1093d84
       x-proxy-upstream-service-time:
-      - '1854'
+      - '79'
       x-request-id:
-      - b3b8c9c1-8870-4858-ae58-87eeee555126
+      - 9ca2ec7f-9f23-4d59-87ca-6925e9bec6f4
     status:
       code: 200
       message: OK
@@ -85,7 +85,7 @@ interactions:
       CF-Cache-Status:
       - DYNAMIC
       CF-RAY:
-      - 859626dbe823aaac-SJC
+      - 86240d606eef7afd-SJC
       Cache-Control:
       - no-cache, no-store, must-revalidate
       Connection:
@@ -93,14 +93,14 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Thu, 22 Feb 2024 09:20:12 GMT
+      - Sun, 10 Mar 2024 14:39:06 GMT
       Pragma:
       - no-cache
       Server:
       - cloudflare
       Set-Cookie:
-      - __cf_bm=L.jvKqMtMng97Pz4E5xddajxdSS9.YZlxfgEZdbpoCw-1708593612-1.0-AXnflGd9ZAAv5TOURqGcb44U9Eu0qWVI3Px/goxvuNMx5NnogX8BPuVX0StrBu6DtDvr6pKJFrS8mW0wVfxAq9U=;
-        path=/; expires=Thu, 22-Feb-24 09:50:12 GMT; domain=.dataplatform.cloud.ibm.com;
+      - __cf_bm=kvHxUv5OMBOSNkrfn9aa6XnQKF8WI3pmqMbYn_KbjIc-1710081546-1.0.1.1-dX_Qzqp1wrcjlmn_uvUTrb55QXhRLpK.e0jI7ET1NC9_fBh0C38UDR4Dz9L_YZI1HNiAqH7Ca_WqT2MsSRr2Ig;
+        path=/; expires=Sun, 10-Mar-24 15:09:06 GMT; domain=.dataplatform.cloud.ibm.com;
         HttpOnly; Secure; SameSite=None
       Strict-Transport-Security:
       - max-age=15724800; includeSubDomains
@@ -116,7 +116,7 @@ interactions:
       user-agent:
       - python-requests/2.31.0
       x-global-transaction-id:
-      - NWI3NWM3YmYtYmMzYy00MWQ5LWI2NmEtMTA3MmMxYmM0NjJk
+      - YWRjMmQ5MWItY2U5YS00Yzg5LTliYjktNjY5MjIwNDg2MTM4
     status:
       code: 200
       message: OK
@@ -143,30 +143,30 @@ interactions:
     uri: https://api.dataplatform.cloud.ibm.com/v2/projects/c1234567-2222-2222-3333-444444444444
   response:
     body:
-      string: '{"metadata":{"guid":"c1234567-2222-2222-3333-444444444444","url":"/v2/projects/c1234567-2222-2222-3333-444444444444","created_at":"2023-10-31T04:35:59.982Z","updated_at":"2023-10-31T04:36:01.922Z"},"entity":{"name":"test''s
+      string: '{"metadata":{"guid":"c1234567-2222-2222-3333-444444444444","url":"/v2/projects/c1234567-2222-2222-3333-444444444444","created_at":"2023-10-31T04:35:59.982Z","updated_at":"2023-10-31T04:36:01.922Z"},"entity":{"name":"none''s
         sandbox","generator":"wx-registration-sandbox","description":"A project to
-        try things in","storage":{"type":"bmcos_object_storage","guid":"029fd735-8b39-4f63-ae3e-184cd09e2ef4","properties":{"bucket_name":"testsandbox-donotdelete-pr-fxebzqo5e7buoh","bucket_region":"us-south","credentials":{"admin":{"api_key":"BRvKLoH1Zv3rgdMKRGzicrU0e_DHTGqnHPeGcsV042Ku","service_id":"iam-ServiceId-77aa8112-1ccf-41c7-a23b-7ae9a7383d18","access_key_id":"75156d5c76b84b5aa8c52c5e30fa7b94","secret_access_key":"89972f9d00ad41d50373dc063b2abfb235304253e6d3a85a"},"editor":{"api_key":"meK4GP8qxQz8DwHsyjZ1Tfb0XFd_HPMq3tKGS2tHHov5","service_id":"iam-ServiceId-748a6634-45fa-4ac5-98c9-92ef2225589c","access_key_id":"5bdbe8241b454c5294551fa2ca81b7ed","secret_access_key":"2c9c16cf1fda09fc767abeeb3fb83916e85a9de8a0beca17","resource_key_crn":"crn:v1:bluemix:public:cloud-object-storage:global:a/d756617575ff631f32abc93725d21b7c:029fd735-8b39-4f63-ae3e-184cd09e2ef4:resource-key:5bdbe824-1b45-4c52-9455-1fa2ca81b7ed"},"viewer":{"api_key":"2l3HLVvUxDeCxIvgoujd_eBITVgonzT2fEvk7J-uDdX6","service_id":"iam-ServiceId-1d3fb404-1c75-40e6-a58c-dfaf78876a7b","access_key_id":"51e93fea39fa4b4fb9cf3aa14f98edf9","secret_access_key":"6948048c49422b36a14013ead56e6a42ff4cf77fd50263a2","resource_key_crn":"crn:v1:bluemix:public:cloud-object-storage:global:a/d756617575ff631f32abc93725d21b7c:029fd735-8b39-4f63-ae3e-184cd09e2ef4:resource-key:51e93fea-39fa-4b4f-b9cf-3aa14f98edf9"}},"endpoint_url":"https://s3.us-south.cloud-object-storage.appdomain.cloud"}},"compute":[{"type":"machine_learning","guid":"fd36e2e7-6b2b-480d-90a7-62b0e78389d3","name":"WatsonMachineLearning","crn":"crn:v1:bluemix:public:pm-20:us-south:a/d756617575ff631f32abc93725d21b7c:fd36e2e7-6b2b-480d-90a7-62b0e78389d3::","credentials":{}}],"scope":{"bss_account_id":"d756617575ff631f32abc93725d21b7c","saml_instance_name":"IBM
+        try things in","storage":{"type":"bmcos_object_storage","guid":"029fd735-8b39-4f63-ae3e-184cd09e2ef4","properties":{"bucket_name":"nonessandbox-donotdelete-pr-fxebzqo5e7buoh","bucket_region":"us-south","credentials":{"admin":{"api_key":"test_api_key","service_id":"iam-ServiceId-test-serviceid","access_key_id":"test_access_key_id","secret_access_key":"test_secret_access_key"},"editor":{"api_key":"test_api_key","service_id":"iam-ServiceId-test_service_id","access_key_id":"test_access_key_id","secret_access_key":"test_secret_access_key","resource_key_crn":"crn:v1:bluemix:public:cloud-object-storage:global:a/d756617575ff631f32abc93725d21b7c:029fd735-8b39-4f63-ae3e-184cd09e2ef4:resource-key:5bdbe824-1b45-4c52-9455-1fa2ca81b7ed"},"viewer":{"api_key":"test_api_key","service_id":"iam-ServiceId-1d3fb404-1c75-40e6-a58c-dfaf78876a7b","access_key_id":"test_access_key_id","secret_access_key":"test_secret_access_key","resource_key_crn":"crn:v1:bluemix:public:cloud-object-storage:global:a/d756617575ff631f32abc93725d21b7c:029fd735-8b39-4f63-ae3e-184cd09e2ef4:resource-key:51e93fea-39fa-4b4f-b9cf-3aa14f98edf9"}},"endpoint_url":"https://s3.us-south.cloud-object-storage.appdomain.cloud"}},"compute":[{"type":"machine_learning","guid":"fd36e2e7-6b2b-480d-90a7-62b0e78389d3","name":"WatsonMachineLearning","crn":"crn:v1:bluemix:public:pm-20:us-south:a/d756617575ff631f32abc93725d21b7c:fd36e2e7-6b2b-480d-90a7-62b0e78389d3::","credentials":{}}],"scope":{"bss_account_id":"test_bss_account_id","saml_instance_name":"IBM
         w3id","enforce_members":true},"type":"wx","public":false,"creator":"none@ibm.com","creator_iam_id":"IBMid-110000SDS1","catalog":{"public":false,"guid":"3f5851db-d08d-4d56-98e6-7fa55a2e1fb8"}}}'
     headers:
       CF-Cache-Status:
       - DYNAMIC
       CF-RAY:
-      - 859626e9ee41984e-SJC
+      - 86240d687b7dfa56-SJC
       Connection:
       - keep-alive
       Content-Type:
       - application/json; charset=utf-8
       Date:
-      - Thu, 22 Feb 2024 09:20:14 GMT
+      - Sun, 10 Mar 2024 14:39:07 GMT
       ETag:
       - W/"8ed-Yz2q1+Gj6GwUDN+TPCQljQxzpEk"
       Server:
       - cloudflare
       Server-Timing:
-      - intid;desc=e424aa0ceb8e5c66
+      - intid;desc=cabbc7acef1b5221
       Set-Cookie:
-      - __cf_bm=U58d9NWb8b1S5tc8afiPdxbo.y2PfFORjPyfFajKE9Y-1708593614-1.0-ASmGOngYWiUAqOpUtfhIQG1UolPLkh8/sZyNdMyCi8gx5K4zGDkd9AZtyH/ddcqmZ047Zyu+fft6quvVFH77wxQ=;
-        path=/; expires=Thu, 22-Feb-24 09:50:14 GMT; domain=.dataplatform.cloud.ibm.com;
+      - __cf_bm=p9IP9Oop.cDJrxgo0780kn4j6KjKGoegXDllKu9wVAc-1710081547-1.0.1.1-qRkCTHVGr7pPZtK6WjPCfHIG762k4OTHmC7Ibx2ylCUuFfQXYq1mzCWrCsU17ZMKacRLTvbw86xVQki8mACtmg;
+        path=/; expires=Sun, 10-Mar-24 15:09:07 GMT; domain=.dataplatform.cloud.ibm.com;
         HttpOnly; Secure; SameSite=None
       Strict-Transport-Security:
       - max-age=15724800; includeSubDomains
@@ -197,7 +197,7 @@ interactions:
       User-Agent:
       - python-requests/2.31.0
     method: GET
-    uri: https://us-south.ml.cloud.ibm.com/ml/v4/instances/fd36e2e7-6b2b-480d-90a7-62b0e78389d3?version=2024-02-07&project_id=c1234567-2222-2222-3333-444444444444
+    uri: https://us-south.ml.cloud.ibm.com/ml/v4/instances/fd36e2e7-6b2b-480d-90a7-62b0e78389d3?version=2024-02-15&project_id=c1234567-2222-2222-3333-444444444444
   response:
     body:
       string: "{\n  \"entity\": {\n    \"account\": {\n      \"id\": \"d756617575ff631f32abc93725d21b7c\"\n
@@ -205,7 +205,7 @@ interactions:
         0.0,\n        \"limit\": 20.0\n      },\n      \"deployment_job_count\": {\n
         \       \"limit\": 100\n      },\n      \"do_job_count\": {\n        \"limit\":
         2\n      },\n      \"gpu_count\": {\n        \"limit\": 0\n      },\n      \"token_count\":
-        {\n        \"current\": 3238,\n        \"limit\": 50000\n      }\n    },\n
+        {\n        \"current\": 38768,\n        \"limit\": 50000\n      }\n    },\n
         \   \"crn\": \"crn:v1:bluemix:public:pm-20:us-south:a/d756617575ff631f32abc93725d21b7c:fd36e2e7-6b2b-480d-90a7-62b0e78389d3::\",\n
         \   \"plan\": {\n      \"id\": \"3f6acf43-ede8-413a-ac69-f8af3bb0cbfe\",\n
         \     \"name\": \"lite\",\n      \"version\": 2\n    },\n    \"resource_group_id\":
@@ -217,7 +217,7 @@ interactions:
       CF-Cache-Status:
       - DYNAMIC
       CF-RAY:
-      - 859626f2a95496d5-SJC
+      - 86240d711dc517e8-SJC
       Cache-Control:
       - no-cache, no-store, must-revalidate
       Connection:
@@ -225,7 +225,7 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Thu, 22 Feb 2024 09:20:16 GMT
+      - Sun, 10 Mar 2024 14:39:09 GMT
       Pragma:
       - no-cache
       Server:
@@ -240,12 +240,12 @@ interactions:
       - 1; mode=block
       - 1; mode=block
       content-length:
-      - '985'
+      - '986'
       server-timing:
-      - intid;desc=ff5f93e0947e46ca
+      - intid;desc=73a6eb0ff323dd4f
       x-global-transaction-id:
-      - fda95b503eb4ad5fb712b4616f37a511
-      - fda95b503eb4ad5fb712b4616f37a511
+      - 32e01464a69a75993c198cdc05a4f275
+      - 32e01464a69a75993c198cdc05a4f275
     status:
       code: 200
       message: OK
@@ -312,7 +312,7 @@ interactions:
         before computation (in FP16). As a result, the GPU memory, and the data transferring
         between GPU memory and GPU compute engine, compared to the original FP16 model,
         is greatly reduced. The major quantization parameters used in the process
-        are listed below.","tier":"class_2","number_params":"7b","min_shot_size":1,"task_ids":["summarization","retrieval_augmented_generation","classification","generation","code","extraction"],"tasks":[{"id":"summarization","ratings":{"quality":4}},{"id":"retrieval_augmented_generation","ratings":{"quality":3}},{"id":"classification","ratings":{"quality":4}},{"id":"generation"},{"id":"code"},{"id":"extraction","ratings":{"quality":4}}],"model_limits":{"max_sequence_length":32768},"limits":{"lite":{"call_time":"5m0s","max_output_tokens":4096},"v2-professional":{"call_time":"5m0s","max_output_tokens":4096},"v2-standard":{"call_time":"5m0s","max_output_tokens":4096}},"lifecycle":[{"id":"available","start_date":"2024-02-15"}]},{"model_id":"ibm/granite-13b-chat-v1","label":"granite-13b-chat-v1","provider":"IBM","source":"IBM","short_description":"The
+        are listed below.","tier":"class_1","number_params":"46.7b","min_shot_size":1,"task_ids":["summarization","retrieval_augmented_generation","classification","generation","code","extraction"],"tasks":[{"id":"summarization","ratings":{"quality":4}},{"id":"retrieval_augmented_generation","ratings":{"quality":3}},{"id":"classification","ratings":{"quality":4}},{"id":"generation"},{"id":"code"},{"id":"extraction","ratings":{"quality":4}}],"model_limits":{"max_sequence_length":32768},"limits":{"lite":{"call_time":"5m0s","max_output_tokens":4096},"v2-professional":{"call_time":"5m0s","max_output_tokens":4096},"v2-standard":{"call_time":"5m0s","max_output_tokens":4096}},"lifecycle":[{"id":"available","start_date":"2024-02-15"}]},{"model_id":"ibm/granite-13b-chat-v1","label":"granite-13b-chat-v1","provider":"IBM","source":"IBM","short_description":"The
         Granite model series is a family of IBM-trained, dense decoder-only models,
         which are particularly well-suited for generative tasks.","long_description":"Granite
         models are designed to be used for a wide range of generative and non-generative
@@ -355,7 +355,7 @@ interactions:
       CF-Cache-Status:
       - DYNAMIC
       CF-RAY:
-      - 859626fadc44968e-SJC
+      - 86240d8efe1c1679-SJC
       Cache-Control:
       - no-cache, no-store, must-revalidate
       Connection:
@@ -366,7 +366,7 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Thu, 22 Feb 2024 09:20:17 GMT
+      - Sun, 10 Mar 2024 14:39:13 GMT
       Pragma:
       - no-cache
       Referrer-Policy:
@@ -383,14 +383,14 @@ interactions:
       X-Frame-Options:
       - DENY
       X-Global-Transaction-Id:
-      - ff2c0dd34be8bc75be0658354ea46fce
+      - fc7c168dbef4b4718a372f300af51e23
       X-Xss-Protection:
       - 1; mode=block
       - 1; mode=block
       content-length:
-      - '20286'
+      - '20289'
       server-timing:
-      - intid;desc=6122dac9ab3d34f5
+      - intid;desc=2486fca3eb8d1e32
     status:
       code: 200
       message: OK
@@ -457,7 +457,7 @@ interactions:
         before computation (in FP16). As a result, the GPU memory, and the data transferring
         between GPU memory and GPU compute engine, compared to the original FP16 model,
         is greatly reduced. The major quantization parameters used in the process
-        are listed below.","tier":"class_2","number_params":"7b","min_shot_size":1,"task_ids":["summarization","retrieval_augmented_generation","classification","generation","code","extraction"],"tasks":[{"id":"summarization","ratings":{"quality":4}},{"id":"retrieval_augmented_generation","ratings":{"quality":3}},{"id":"classification","ratings":{"quality":4}},{"id":"generation"},{"id":"code"},{"id":"extraction","ratings":{"quality":4}}],"model_limits":{"max_sequence_length":32768},"limits":{"lite":{"call_time":"5m0s","max_output_tokens":4096},"v2-professional":{"call_time":"5m0s","max_output_tokens":4096},"v2-standard":{"call_time":"5m0s","max_output_tokens":4096}},"lifecycle":[{"id":"available","start_date":"2024-02-15"}]},{"model_id":"ibm/granite-13b-chat-v1","label":"granite-13b-chat-v1","provider":"IBM","source":"IBM","short_description":"The
+        are listed below.","tier":"class_1","number_params":"46.7b","min_shot_size":1,"task_ids":["summarization","retrieval_augmented_generation","classification","generation","code","extraction"],"tasks":[{"id":"summarization","ratings":{"quality":4}},{"id":"retrieval_augmented_generation","ratings":{"quality":3}},{"id":"classification","ratings":{"quality":4}},{"id":"generation"},{"id":"code"},{"id":"extraction","ratings":{"quality":4}}],"model_limits":{"max_sequence_length":32768},"limits":{"lite":{"call_time":"5m0s","max_output_tokens":4096},"v2-professional":{"call_time":"5m0s","max_output_tokens":4096},"v2-standard":{"call_time":"5m0s","max_output_tokens":4096}},"lifecycle":[{"id":"available","start_date":"2024-02-15"}]},{"model_id":"ibm/granite-13b-chat-v1","label":"granite-13b-chat-v1","provider":"IBM","source":"IBM","short_description":"The
         Granite model series is a family of IBM-trained, dense decoder-only models,
         which are particularly well-suited for generative tasks.","long_description":"Granite
         models are designed to be used for a wide range of generative and non-generative
@@ -500,7 +500,7 @@ interactions:
       CF-Cache-Status:
       - DYNAMIC
       CF-RAY:
-      - 8596270a8c76cf97-SJC
+      - 86240db14e3cfaa6-SJC
       Cache-Control:
       - no-cache, no-store, must-revalidate
       Connection:
@@ -511,7 +511,7 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Thu, 22 Feb 2024 09:20:19 GMT
+      - Sun, 10 Mar 2024 14:39:19 GMT
       Pragma:
       - no-cache
       Referrer-Policy:
@@ -528,14 +528,14 @@ interactions:
       X-Frame-Options:
       - DENY
       X-Global-Transaction-Id:
-      - ad1b8e09c092d27d6e519e09d363000c
+      - c3237d3e07a5223e0212f32079686aec
       X-Xss-Protection:
       - 1; mode=block
       - 1; mode=block
       content-length:
-      - '20286'
+      - '20289'
       server-timing:
-      - intid;desc=63815d23d02236a6
+      - intid;desc=1833a5ef0774f896
     status:
       code: 200
       message: OK
@@ -562,10 +562,10 @@ interactions:
       x-wml-internal-switch-to-new-v4:
       - 'true'
     method: POST
-    uri: https://us-south.ml.cloud.ibm.com/ml/v1-beta/generation/text?version=2024-02-07
+    uri: https://us-south.ml.cloud.ibm.com/ml/v1-beta/generation/text?version=2024-02-15
   response:
     body:
-      string: '{"model_id":"google/flan-ul2","created_at":"2024-02-22T09:20:21.911Z","results":[{"generated_text":"2","generated_token_count":2,"input_token_count":7,"stop_reason":"eos_token"}],"system":{"warnings":[{"message":"This
+      string: '{"model_id":"google/flan-ul2","created_at":"2024-03-10T14:39:21.676Z","results":[{"generated_text":"2","generated_token_count":2,"input_token_count":7,"stop_reason":"eos_token"}],"system":{"warnings":[{"message":"This
         model is a Non-IBM Product governed by a third-party license that may impose
         use restrictions and other obligations. By using this model you agree to its
         terms as identified in the following URL.","id":"disclaimer_warning","more_info":"https://dataplatform.cloud.ibm.com/docs/content/wsj/analyze-data/fm-models.html?context=wx"}]}}'
@@ -573,7 +573,7 @@ interactions:
       CF-Cache-Status:
       - DYNAMIC
       CF-RAY:
-      - 859627153ca1d019-SJC
+      - 86240dbcaabe2554-SJC
       Cache-Control:
       - no-cache, no-store, must-revalidate
       Connection:
@@ -584,7 +584,7 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Thu, 22 Feb 2024 09:20:21 GMT
+      - Sun, 10 Mar 2024 14:39:21 GMT
       Pragma:
       - no-cache
       Referrer-Policy:
@@ -601,14 +601,14 @@ interactions:
       X-Frame-Options:
       - DENY
       X-Global-Transaction-Id:
-      - dfffec31a2eff49c92e229ac6c87ded1
+      - 5695fe810db2738f8a7dc27fda767606
       X-Xss-Protection:
       - 1; mode=block
       - 1; mode=block
       content-length:
       - '549'
       server-timing:
-      - intid;desc=82b56e387558591a
+      - intid;desc=13f6d8d510c5c552
     status:
       code: 200
       message: OK

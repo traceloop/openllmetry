@@ -12,6 +12,14 @@ This library allows tracing complete LLM applications built with [Langchain](htt
 pip install opentelemetry-instrumentation-langchain
 ```
 
+## Example usage
+
+```python
+from opentelemetry.instrumentation.langchain import LangchainInstrumentor
+
+LangchainInstrumentor().instrument()
+```
+
 ## Privacy
 
 **By default, this instrumentation logs prompts, completions, and embeddings to span attributes**. This gives you a clear visibility into how your LLM application is working, and can make it easy to debug and evaluate the quality of the outputs.

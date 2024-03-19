@@ -12,6 +12,14 @@ This library allows tracing Replicate prompts and image generation sent with the
 pip install opentelemetry-instrumentation-replicate
 ```
 
+## Example usage
+
+```python
+from opentelemetry.instrumentation.replicate import ReplicateInstrumentor
+
+ReplicateInstrumentor().instrument()
+```
+
 ## Privacy
 
 **By default, this instrumentation logs prompts, completions, and embeddings to span attributes**. This gives you a clear visibility into how your LLM application is working, and can make it easy to debug and evaluate the quality of the outputs.

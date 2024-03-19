@@ -8,9 +8,10 @@ show_missing = true
 
 [tool.poetry]
 name = "opentelemetry-instrumentation-replicate"
-version = "0.12.5"
+version = "0.14.3"
 description = "OpenTelemetry Replicate instrumentation"
 authors = [ "Kartik Prajapati <kartik@ktklab.org>" ]
+repository = "https://github.com/traceloop/openllmetry/tree/main/packages/opentelemetry-instrumentation-replicate"
 license = 'Apache-2.0'
 readme = 'README.md'
 
@@ -18,19 +19,19 @@ readme = 'README.md'
 include = "opentelemetry/instrumentation/replicate"
 
 [tool.poetry.dependencies]
-python = ">=3.8.1,<4"
+python = ">=3.9,<4"
 opentelemetry-api = "^1.23.0"
 opentelemetry-instrumentation = "0.44b0"
-opentelemetry-semantic-conventions-ai = "^0.0.20"
+opentelemetry-semantic-conventions-ai = "^0.0.23"
 
 [tool.poetry.group.dev.dependencies]
 autopep8 = "2.0.4"
 flake8 = "7.0.0"
-pytest = "8.0.2"
+pytest = "8.1.0"
 pytest-sugar = "1.0.0"
 
 [tool.poetry.group.test.dependencies]
-pytest = "8.0.2"
+pytest = "8.1.0"
 pytest-sugar = "1.0.0"
 vcrpy = "^6.0.1"
 pytest-recording = "^0.13.1"
@@ -40,3 +41,6 @@ replicate = ">=0.23.1,<0.25.0"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[project.entry-points.opentelemetry_instrumentor]
+replicate = "opentelemetry.instrumentation.replicate:ReplicateInstrumentor"

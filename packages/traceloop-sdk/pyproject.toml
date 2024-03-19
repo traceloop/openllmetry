@@ -8,7 +8,7 @@ show_missing = true
 
 [tool.poetry]
 name = "traceloop-sdk"
-version = "0.12.5"
+version = "0.14.3"
 description = "Traceloop Software Development Kit (SDK) for Python"
 authors = [
   "Gal Kleinman <gal@traceloop.com>",
@@ -16,7 +16,7 @@ authors = [
   "Tomer Friedman <tomer@traceloop.com>"
 ]
 repository = "https://github.com/traceloop/openllmetry"
-documentation = "https://traceloop.com/docs/python-sdk"
+documentation = "https://traceloop.com/docs/openllmetry"
 license = "Apache-2.0"
 readme = "README.md"
 
@@ -24,7 +24,7 @@ readme = "README.md"
 include = "traceloop/sdk"
 
 [tool.poetry.dependencies]
-python = ">=3.8.1,<3.12"
+python = ">=3.9,<4"
 opentelemetry-api = "^1.23.0"
 opentelemetry-sdk = "^1.20.0"
 opentelemetry-exporter-otlp-proto-http = "^1.20.0"
@@ -32,7 +32,7 @@ opentelemetry-exporter-otlp-proto-grpc = "^1.20.0"
 opentelemetry-instrumentation-requests = "0.44b0"
 opentelemetry-instrumentation-sqlalchemy = "0.44b0"
 opentelemetry-instrumentation-urllib3 = "0.44b0"
-opentelemetry-semantic-conventions-ai = "^0.0.20"
+opentelemetry-semantic-conventions-ai = "^0.0.23"
 opentelemetry-instrumentation-openai = {path="../opentelemetry-instrumentation-openai", develop=true}
 opentelemetry-instrumentation-anthropic = {path="../opentelemetry-instrumentation-anthropic", develop=true}
 opentelemetry-instrumentation-cohere = {path="../opentelemetry-instrumentation-cohere", develop=true}
@@ -58,7 +58,7 @@ posthog = "^3.0.2"
 [tool.poetry.group.dev.dependencies]
 autopep8 = "2.0.4"
 flake8 = "7.0.0"
-pytest = "8.0.2"
+pytest = "8.1.0"
 pytest-sugar = "1.0.0"
 
 [tool.poetry.group.test.dependencies]

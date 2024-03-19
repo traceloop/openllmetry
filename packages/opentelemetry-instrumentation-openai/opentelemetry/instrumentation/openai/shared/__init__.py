@@ -50,7 +50,9 @@ def _set_client_attributes(span, instance):
         if isinstance(client, (openai.AsyncOpenAI, openai.OpenAI)):
             _set_span_attribute(span, OPENAI_API_BASE, str(client.base_url))
         if isinstance(client, (openai.AsyncAzureOpenAI, openai.AzureOpenAI)):
-            _set_span_attribute(span, OPENAI_API_VERSION, client._api_version)  # pylint: disable=protected-access
+            _set_span_attribute(
+                span, OPENAI_API_VERSION, client._api_version
+            )  # pylint: disable=protected-access
 
     except Exception as ex:  # pylint: disable=broad-except
         logger.warning(
@@ -92,6 +94,23 @@ def _set_functions_attributes(span, functions):
         )
 
 
+def set_tools_attributes(span, tools):
+    if not tools:
+        return
+
+    for i, tool in enumerate(tools):
+        function = tool.get("function")
+        if not function:
+            continue
+
+        prefix = f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.{i}"
+        _set_span_attribute(span, f"{prefix}.name", function.get("name"))
+        _set_span_attribute(span, f"{prefix}.description", function.get("description"))
+        _set_span_attribute(
+            span, f"{prefix}.parameters", json.dumps(function.get("parameters"))
+        )
+
+
 def _set_request_attributes(span, kwargs):
     if not span.is_recording():
         return
@@ -116,6 +135,9 @@ def _set_request_attributes(span, kwargs):
         _set_span_attribute(span, SpanAttributes.LLM_USER, kwargs.get("user"))
         _set_span_attribute(
             span, SpanAttributes.LLM_HEADERS, str(kwargs.get("headers"))
+        )
+        _set_span_attribute(
+            span, SpanAttributes.LLM_IS_STREAMING, kwargs.get("stream") or False
         )
     except Exception as ex:  # pylint: disable=broad-except
         logger.warning(
@@ -179,7 +201,7 @@ def _set_span_stream_usage(span, prompt_tokens, completion_tokens):
 
 
 def _get_openai_base_url(instance):
-    if hasattr(instance, '_client'):
+    if hasattr(instance, "_client"):
         client = instance._client  # pylint: disable=protected-access
         if isinstance(client, (openai.AsyncOpenAI, openai.OpenAI)):
             return str(client.base_url)
