@@ -237,7 +237,7 @@ def should_record_stream_token_usage():
     ).lower() == "true"
 
 
-def get_token_count_from_string(string: str, model_name: str) -> [int | None]:
+def get_token_count_from_string(string: str, model_name: str):
     if not should_record_stream_token_usage():
         return None
 
