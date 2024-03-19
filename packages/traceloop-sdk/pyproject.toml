@@ -54,6 +54,7 @@ pydantic = ">=1"
 jinja2 = "^3.1.2"
 deprecated = "^1.2.14"
 posthog = "^3.0.2"
+tiktoken = "^0.6.0"
 
 [tool.poetry.group.dev.dependencies]
 autopep8 = "2.0.4"
