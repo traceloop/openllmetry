@@ -1,4 +1,5 @@
 """OpenTelemetry Anthropic instrumentation"""
+
 import logging
 import os
 from typing import Collection
@@ -23,7 +24,14 @@ _instruments = ("anthropic >= 0.3.11",)
 
 WRAPPED_METHODS = [
     {
+        "package": "anthropic.resources.completions",
         "object": "Completions",
+        "method": "create",
+        "span_name": "anthropic.completion",
+    },
+    {
+        "package": "anthropic.resources.messages",
+        "object": "Messages",
         "method": "create",
         "span_name": "anthropic.completion",
     },
@@ -58,26 +66,52 @@ def _set_input_attributes(span, kwargs):
     )
 
     if should_send_prompts():
-        _set_span_attribute(
-            span, f"{SpanAttributes.LLM_PROMPTS}.0.user", kwargs.get("prompt")
-        )
-
-    return
+        if kwargs.get("prompt") is not None:
+            _set_span_attribute(
+                span, f"{SpanAttributes.LLM_PROMPTS}.0.user", kwargs.get("prompt")
+            )
+        elif kwargs.get("messages") is not None:
+            for i, message in enumerate(kwargs.get("messages")):
+                _set_span_attribute(
+                    span,
+                    f"{SpanAttributes.LLM_PROMPTS}.{i}.{message.get('role')}",
+                    message.get("content"),
+                )
 
 
 def _set_span_completions(span, response):
     index = 0
     prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{index}"
     _set_span_attribute(span, f"{prefix}.finish_reason", response.get("stop_reason"))
-    _set_span_attribute(span, f"{prefix}.content", response.get("completion"))
+    if response.get("completion"):
+        _set_span_attribute(span, f"{prefix}.content", response.get("completion"))
+    elif response.get("content"):
+        for i, content in enumerate(response.get("content")):
+            _set_span_attribute(
+                span,
+                f"{SpanAttributes.LLM_COMPLETIONS}.{i}.content",
+                content.text,
+            )
 
 
 def _set_token_usage(span, anthropic, request, response):
     if not isinstance(response, dict):
         response = response.__dict__
 
-    prompt_tokens = anthropic.count_tokens(request.get("prompt"))
-    completion_tokens = anthropic.count_tokens(response.get("completion"))
+    prompt_tokens = 0
+    if request.get("prompt"):
+        prompt_tokens = anthropic.count_tokens(request.get("prompt"))
+    elif request.get("messages"):
+        prompt_tokens = sum(
+            [anthropic.count_tokens(m.get("content")) for m in request.get("messages")]
+        )
+
+    completion_tokens = 0
+    if response.get("completion"):
+        completion_tokens = anthropic.count_tokens(response.get("completion"))
+    elif response.get("content"):
+        completion_tokens = anthropic.count_tokens(response.get("content")[0].text)
+
     total_tokens = prompt_tokens + completion_tokens
 
     _set_span_attribute(span, SpanAttributes.LLM_USAGE_PROMPT_TOKENS, prompt_tokens)
@@ -160,10 +194,11 @@ class AnthropicInstrumentor(BaseInstrumentor):
         tracer_provider = kwargs.get("tracer_provider")
         tracer = get_tracer(__name__, __version__, tracer_provider)
         for wrapped_method in WRAPPED_METHODS:
+            wrap_package = wrapped_method.get("package")
             wrap_object = wrapped_method.get("object")
             wrap_method = wrapped_method.get("method")
             wrap_function_wrapper(
-                "anthropic.resources.completions",
+                wrap_package,
                 f"{wrap_object}.{wrap_method}",
                 _wrap(tracer, wrapped_method),
             )
