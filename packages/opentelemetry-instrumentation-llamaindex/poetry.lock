@@ -2160,7 +2160,7 @@ test = ["opentelemetry-instrumentation-asgi[instruments]", "opentelemetry-test-u
 
 [[package]]
 name = "opentelemetry-instrumentation-chromadb"
-version = "0.14.2"
+version = "0.14.3"
 description = "OpenTelemetry Chroma DB instrumentation"
 optional = false
 python-versions = ">=3.9,<4"
@@ -2173,13 +2173,16 @@ opentelemetry-instrumentation = "0.44b0"
 opentelemetry-semantic-conventions = "0.44b0"
 opentelemetry-semantic-conventions-ai = "^0.0.23"
 
+[package.extras]
+instruments = []
+
 [package.source]
 type = "directory"
 url = "../opentelemetry-instrumentation-chromadb"
 
 [[package]]
 name = "opentelemetry-instrumentation-cohere"
-version = "0.14.2"
+version = "0.14.3"
 description = "OpenTelemetry Cohere instrumentation"
 optional = false
 python-versions = ">=3.9,<4"
@@ -2190,6 +2193,9 @@ develop = true
 opentelemetry-api = "^1.23.0"
 opentelemetry-instrumentation = "0.44b0"
 opentelemetry-semantic-conventions-ai = "^0.0.23"
+
+[package.extras]
+instruments = []
 
 [package.source]
 type = "directory"
@@ -2219,7 +2225,7 @@ test = ["httpx (>=0.22,<1.0)", "opentelemetry-instrumentation-fastapi[instrument
 
 [[package]]
 name = "opentelemetry-instrumentation-openai"
-version = "0.14.2"
+version = "0.14.3"
 description = "OpenTelemetry OpenAI instrumentation"
 optional = false
 python-versions = ">=3.9,<4"
@@ -2230,6 +2236,9 @@ develop = true
 opentelemetry-api = "^1.23.0"
 opentelemetry-instrumentation = "0.44b0"
 opentelemetry-semantic-conventions-ai = "^0.0.23"
+
+[package.extras]
+instruments = []
 
 [package.source]
 type = "directory"
@@ -4190,7 +4199,10 @@ files = [
 docs = ["furo", "jaraco.packaging (>=9.3)", "jaraco.tidelift (>=1.4)", "rst.linker (>=1.9)", "sphinx (>=3.5)", "sphinx-lint"]
 testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "pytest (>=6)", "pytest-checkdocs (>=2.4)", "pytest-cov", "pytest-enabler (>=2.2)", "pytest-ignore-flaky", "pytest-mypy", "pytest-ruff (>=0.2.1)"]
 
+[extras]
+instruments = []
+
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<4"
-content-hash = "39a97851e56686516eb7ba01ec28a8acc7ae69cceed0d70278c24a7f9c648d6c"
+content-hash = "f204f94a4927a0199267b3dc6041251904e2c54db248c1ba45194619b0b24e93"
