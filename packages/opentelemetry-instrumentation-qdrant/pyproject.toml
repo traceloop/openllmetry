@@ -42,5 +42,8 @@ opentelemetry-sdk = "^1.23.0"
 requires = [ "poetry-core" ]
 build-backend = "poetry.core.masonry.api"
 
-[project.entry-points.opentelemetry_instrumentor]
+[tool.poetry.extras]
+instruments = ["qdrant-client"]
+
+[tool.poetry.plugins."opentelemetry_instrumentor"]
 qdrant_client = "opentelemetry.instrumentation.qdrant:QdrantInstrumentor"

@@ -46,5 +46,8 @@ opentelemetry-sdk = "^1.23.0"
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
-[project.entry-points.opentelemetry_instrumentor]
+[tool.poetry.extras]
+instruments = ["cohere"]
+
+[tool.poetry.plugins."opentelemetry_instrumentor"]
 cohere = "opentelemetry.instrumentation.cohere:CohereInstrumentor"

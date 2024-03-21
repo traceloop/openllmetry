@@ -53,5 +53,8 @@ llama-index-vector-stores-chroma = "^0.1.5"
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
-[project.entry-points.opentelemetry_instrumentor]
-llama_index = "opentelemetry.instrumentation.llamaindex:LlamaIndexInstrumentor"
+[tool.poetry.extras]
+instruments = ["llama-index"]
+
+[tool.poetry.plugins."opentelemetry_instrumentor"]
+llama-index = "opentelemetry.instrumentation.llamaindex:LlamaIndexInstrumentor"

@@ -51,5 +51,8 @@ opentelemetry-instrumentation-openai = {path="../opentelemetry-instrumentation-o
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
-[project.entry-points.opentelemetry_instrumentor]
+[tool.poetry.extras]
+instruments = ["langchain"]
+
+[tool.poetry.plugins."opentelemetry_instrumentor"]
 langchain = "opentelemetry.instrumentation.langchain:LangchainInstrumentor"
