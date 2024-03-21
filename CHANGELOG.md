@@ -1,3 +1,9 @@
+## v0.14.5 (2024-03-21)
+
+### Fix
+
+- **anthropic**: support messages API (#671)
+
 ## v0.14.4 (2024-03-21)
 
 ### Fix

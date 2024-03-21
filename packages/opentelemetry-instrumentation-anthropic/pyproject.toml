@@ -8,7 +8,7 @@ show_missing = true
 
 [tool.poetry]
 name = "opentelemetry-instrumentation-anthropic"
-version = "0.14.4"
+version = "0.14.5"
 description = "OpenTelemetry Anthropic instrumentation"
 authors = [
   "Gal Kleinman <gal@traceloop.com>",
