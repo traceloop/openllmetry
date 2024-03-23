@@ -37,7 +37,7 @@ pytest = "8.1.0"
 pytest-sugar = "1.0.0"
 vcrpy = "^6.0.1"
 pytest-recording = "^0.13.1"
-openai = {extras = ["datalib"], version = "^1.12.0"}
+openai = {extras = ["datalib"], version = "^1.14.2"}
 opentelemetry-sdk = "^1.23.0"
 pytest-asyncio = "^0.23.5"
 

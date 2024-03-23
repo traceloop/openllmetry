@@ -22,6 +22,12 @@ from opentelemetry.instrumentation.openai.shared.embeddings_wrappers import (
 from opentelemetry.instrumentation.openai.shared.image_gen_wrappers import (
     image_gen_metrics_wrapper,
 )
+from opentelemetry.instrumentation.openai.v1.assistant_wrappers import (
+    assistants_create_wrapper,
+    runs_create_wrapper,
+    runs_retrieve_wrapper,
+    messages_list_wrapper,
+)
 from opentelemetry.instrumentation.openai.utils import is_metrics_enabled
 from opentelemetry.instrumentation.openai.version import __version__
 
@@ -186,6 +192,27 @@ class OpenAIV1Instrumentor(BaseInstrumentor):
             image_gen_metrics_wrapper(
                 image_gen_duration_histogram, image_gen_exception_counter
             ),
+        )
+
+        wrap_function_wrapper(
+            "openai.resources.beta.assistants",
+            "Assistants.create",
+            assistants_create_wrapper(tracer),
+        )
+        wrap_function_wrapper(
+            "openai.resources.beta.threads.runs",
+            "Runs.create",
+            runs_create_wrapper(tracer),
+        )
+        wrap_function_wrapper(
+            "openai.resources.beta.threads.runs",
+            "Runs.retrieve",
+            runs_retrieve_wrapper(tracer),
+        )
+        wrap_function_wrapper(
+            "openai.resources.beta.threads.messages",
+            "Messages.list",
+            messages_list_wrapper(tracer),
         )
 
     def _uninstrument(self, **kwargs):
