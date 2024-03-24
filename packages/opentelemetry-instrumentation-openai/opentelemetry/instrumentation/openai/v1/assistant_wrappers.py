@@ -1,4 +1,3 @@
-import json
 import logging
 import time
 from typing_extensions import override
@@ -114,10 +113,12 @@ def messages_list_wrapper(tracer, wrapped, instance, args, kwargs):
 
     for i, msg in enumerate(messages):
         prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{i}"
-        content = json.dumps(msg.get("content"))
+        content = msg.get("content")
 
         _set_span_attribute(span, f"{prefix}.role", msg.get("role"))
-        _set_span_attribute(span, f"{prefix}.content", content)
+        _set_span_attribute(
+            span, f"{prefix}.content", content[0].get("text").get("value")
+        )
 
     span.end(run.get("end_time"))
 
