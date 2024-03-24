@@ -8,7 +8,7 @@ show_missing = true
 
 [tool.poetry]
 name = "opentelemetry-instrumentation-openai"
-version = "0.14.3"
+version = "0.14.5"
 description = "OpenTelemetry OpenAI instrumentation"
 authors = [
   "Gal Kleinman <gal@traceloop.com>",
@@ -46,5 +46,8 @@ pytest-asyncio = "^0.23.5"
 requires = [ "poetry-core" ]
 build-backend = "poetry.core.masonry.api"
 
-[project.entry-points.opentelemetry_instrumentor]
+[tool.poetry.extras]
+instruments = ["openai"]
+
+[tool.poetry.plugins."opentelemetry_instrumentor"]
 openai = "opentelemetry.instrumentation.openai:OpenAIInstrumentor"
