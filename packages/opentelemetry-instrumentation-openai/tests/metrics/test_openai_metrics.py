@@ -1,3 +1,5 @@
+import os
+
 import pytest
 from openai import OpenAI
 
@@ -74,99 +76,109 @@ def test_chat_completion_metrics(metrics_test_context, openai_client):
 
 @pytest.mark.vcr
 def test_chat_streaming_metrics(metrics_test_context, openai_client):
-    provider, reader = metrics_test_context
+    original_value = os.environ.get("TRACELOOP_STREAM_TOKEN_USAGE")
+    os.environ["TRACELOOP_STREAM_TOKEN_USAGE"] = "true"
 
-    response = openai_client.chat.completions.create(
-        model="gpt-3.5-turbo",
-        messages=[
-            {
-                "role": "system",
-                "content": "You are a poetic assistant, skilled in explaining complex programming concepts with "
-                "creative flair.",
-            },
-            {
-                "role": "user",
-                "content": "Compose a poem that explains the concept of recursion in programming.",
-            },
-        ],
-        stream=True,
-    )
+    try:
+        provider, reader = metrics_test_context
 
-    for _ in response:
-        pass
+        response = openai_client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {
+                    "role": "system",
+                    "content": "You are a poetic assistant, skilled in explaining complex programming concepts with "
+                    "creative flair.",
+                },
+                {
+                    "role": "user",
+                    "content": "Compose a poem that explains the concept of recursion in programming.",
+                },
+            ],
+            stream=True,
+        )
 
-    metrics_data = reader.get_metrics_data()
-    resource_metrics = metrics_data.resource_metrics
-    assert len(resource_metrics) > 0
+        for _ in response:
+            pass
 
-    found_token_metric = False
-    found_choice_metric = False
-    found_duration_metric = False
-    found_time_to_first_token_metric = False
-    found_time_to_generate_metric = False
+        metrics_data = reader.get_metrics_data()
+        resource_metrics = metrics_data.resource_metrics
+        assert len(resource_metrics) > 0
 
-    for rm in resource_metrics:
-        for sm in rm.scope_metrics:
-            for metric in sm.metrics:
+        found_token_metric = False
+        found_choice_metric = False
+        found_duration_metric = False
+        found_time_to_first_token_metric = False
+        found_time_to_generate_metric = False
 
-                if metric.name == "llm.openai.chat_completions.tokens":
-                    found_token_metric = True
-                    for data_point in metric.data.data_points:
-                        assert data_point.attributes["llm.usage.token_type"] in [
-                            "completion",
-                            "prompt",
-                        ]
-                        assert len(data_point.attributes["server.address"]) > 0
-                        assert data_point.value > 0
+        for rm in resource_metrics:
+            for sm in rm.scope_metrics:
+                for metric in sm.metrics:
 
-                if metric.name == "llm.openai.chat_completions.choices":
-                    found_choice_metric = True
-                    for data_point in metric.data.data_points:
-                        assert data_point.value >= 1
-                        assert len(data_point.attributes["server.address"]) > 0
+                    if metric.name == "llm.openai.chat_completions.tokens":
+                        found_token_metric = True
+                        for data_point in metric.data.data_points:
+                            assert data_point.attributes["llm.usage.token_type"] in [
+                                "completion",
+                                "prompt",
+                            ]
+                            assert len(data_point.attributes["server.address"]) > 0
+                            assert data_point.value > 0
 
-                if metric.name == "llm.openai.chat_completions.duration":
-                    found_duration_metric = True
-                    assert any(
-                        data_point.count > 0 for data_point in metric.data.data_points
-                    )
-                    assert any(
-                        data_point.sum > 0 for data_point in metric.data.data_points
-                    )
-                    assert all(
-                        len(data_point.attributes["server.address"]) > 0
-                        for data_point in metric.data.data_points
-                    )
+                    if metric.name == "llm.openai.chat_completions.choices":
+                        found_choice_metric = True
+                        for data_point in metric.data.data_points:
+                            assert data_point.value >= 1
+                            assert len(data_point.attributes["server.address"]) > 0
 
-                if (
-                    metric.name
-                    == "llm.openai.chat_completions.streaming_time_to_first_token"
-                ):
-                    found_time_to_first_token_metric = True
-                    assert any(
-                        data_point.count > 0 for data_point in metric.data.data_points
-                    )
-                    assert any(
-                        data_point.sum > 0 for data_point in metric.data.data_points
-                    )
+                    if metric.name == "llm.openai.chat_completions.duration":
+                        found_duration_metric = True
+                        assert any(
+                            data_point.count > 0 for data_point in metric.data.data_points
+                        )
+                        assert any(
+                            data_point.sum > 0 for data_point in metric.data.data_points
+                        )
+                        assert all(
+                            len(data_point.attributes["server.address"]) > 0
+                            for data_point in metric.data.data_points
+                        )
 
-                if (
-                    metric.name
-                    == "llm.openai.chat_completions.streaming_time_to_generate"
-                ):
-                    found_time_to_generate_metric = True
-                    assert any(
-                        data_point.count > 0 for data_point in metric.data.data_points
-                    )
-                    assert any(
-                        data_point.sum > 0 for data_point in metric.data.data_points
-                    )
+                    if (
+                        metric.name
+                        == "llm.openai.chat_completions.streaming_time_to_first_token"
+                    ):
+                        found_time_to_first_token_metric = True
+                        assert any(
+                            data_point.count > 0 for data_point in metric.data.data_points
+                        )
+                        assert any(
+                            data_point.sum > 0 for data_point in metric.data.data_points
+                        )
 
-    assert found_token_metric is True
-    assert found_choice_metric is True
-    assert found_duration_metric is True
-    assert found_time_to_first_token_metric is True
-    assert found_time_to_generate_metric is True
+                    if (
+                        metric.name
+                        == "llm.openai.chat_completions.streaming_time_to_generate"
+                    ):
+                        found_time_to_generate_metric = True
+                        assert any(
+                            data_point.count > 0 for data_point in metric.data.data_points
+                        )
+                        assert any(
+                            data_point.sum > 0 for data_point in metric.data.data_points
+                        )
+
+        assert found_token_metric is True
+        assert found_choice_metric is True
+        assert found_duration_metric is True
+        assert found_time_to_first_token_metric is True
+        assert found_time_to_generate_metric is True
+    finally:
+        # unset env
+        if original_value is None:
+            del os.environ["TRACELOOP_STREAM_TOKEN_USAGE"]
+        else:
+            os.environ["TRACELOOP_STREAM_TOKEN_USAGE"] = original_value
 
 
 @pytest.mark.vcr
