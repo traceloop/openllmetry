@@ -41,7 +41,7 @@ EXCLUDED_URLS = """
     api.anthropic.com,
     api.cohere.ai,
     pinecone.io,
-    traceloop.com,
+    api.traceloop.com,
     posthog.com,
     bedrock-runtime,
     googleapis.com,
