@@ -203,7 +203,6 @@ def _add_query_result_events(span, kwargs):
 
     The goal is to set a canonical format which we call as a Semantic Convention.
     """
-    print("kwargs", kwargs)
     zipped = itertools.zip_longest(
         kwargs.get("ids", []),
         kwargs.get("distances", []),
