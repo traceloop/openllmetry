@@ -196,31 +196,35 @@ class OpenAIV1Instrumentor(BaseInstrumentor):
             ),
         )
 
-        wrap_function_wrapper(
-            "openai.resources.beta.assistants",
-            "Assistants.create",
-            assistants_create_wrapper(tracer),
-        )
-        wrap_function_wrapper(
-            "openai.resources.beta.threads.runs",
-            "Runs.create",
-            runs_create_wrapper(tracer),
-        )
-        wrap_function_wrapper(
-            "openai.resources.beta.threads.runs",
-            "Runs.retrieve",
-            runs_retrieve_wrapper(tracer),
-        )
-        wrap_function_wrapper(
-            "openai.resources.beta.threads.runs",
-            "Runs.create_and_stream",
-            runs_create_and_stream_wrapper(tracer),
-        )
-        wrap_function_wrapper(
-            "openai.resources.beta.threads.messages",
-            "Messages.list",
-            messages_list_wrapper(tracer),
-        )
+        # Beta APIs may not be available consistently in all versions
+        try:
+            wrap_function_wrapper(
+                "openai.resources.beta.assistants",
+                "Assistants.create",
+                assistants_create_wrapper(tracer),
+            )
+            wrap_function_wrapper(
+                "openai.resources.beta.threads.runs",
+                "Runs.create",
+                runs_create_wrapper(tracer),
+            )
+            wrap_function_wrapper(
+                "openai.resources.beta.threads.runs",
+                "Runs.retrieve",
+                runs_retrieve_wrapper(tracer),
+            )
+            wrap_function_wrapper(
+                "openai.resources.beta.threads.runs",
+                "Runs.create_and_stream",
+                runs_create_and_stream_wrapper(tracer),
+            )
+            wrap_function_wrapper(
+                "openai.resources.beta.threads.messages",
+                "Messages.list",
+                messages_list_wrapper(tracer),
+            )
+        except AttributeError:
+            pass
 
     def _uninstrument(self, **kwargs):
         pass
