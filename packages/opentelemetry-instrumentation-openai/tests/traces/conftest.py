@@ -23,3 +23,10 @@ def exporter():
 @pytest.fixture(autouse=True)
 def clear_exporter(exporter):
     exporter.clear()
+
+
+@pytest.fixture(scope="module")
+def vcr_config():
+    return {
+        "ignore_hosts": ["openaipublic.blob.core.windows.net"],
+    }
