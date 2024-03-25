@@ -30,4 +30,7 @@ def clear_metrics_test_context(metrics_test_context):
 
 @pytest.fixture(scope="module")
 def vcr_config():
-    return {"filter_headers": ["authorization"]}
+    return {
+        "filter_headers": ["authorization"],
+        "ignore_hosts": ["openaipublic.blob.core.windows.net"],
+    }

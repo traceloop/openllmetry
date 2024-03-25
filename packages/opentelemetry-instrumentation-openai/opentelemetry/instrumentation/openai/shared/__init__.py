@@ -6,17 +6,21 @@ import logging
 
 from importlib.metadata import version
 
+import tiktoken
+
 from opentelemetry import context as context_api
 
 from opentelemetry.semconv.ai import SpanAttributes
 from opentelemetry.instrumentation.openai.utils import is_openai_v1
-
 
 OPENAI_API_VERSION = "openai.api_version"
 OPENAI_API_BASE = "openai.api_base"
 OPENAI_API_TYPE = "openai.api_type"
 
 OPENAI_LLM_USAGE_TOKEN_TYPES = ["prompt_tokens", "completion_tokens"]
+
+# tiktoken encodings map for different model, key is model_name, value is tiktoken encoding
+tiktoken_encodings = {}
 
 logger = logging.getLogger(__name__)
 
@@ -82,6 +86,23 @@ def _set_functions_attributes(span, functions):
         return
 
     for i, function in enumerate(functions):
+        prefix = f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.{i}"
+        _set_span_attribute(span, f"{prefix}.name", function.get("name"))
+        _set_span_attribute(span, f"{prefix}.description", function.get("description"))
+        _set_span_attribute(
+            span, f"{prefix}.parameters", json.dumps(function.get("parameters"))
+        )
+
+
+def set_tools_attributes(span, tools):
+    if not tools:
+        return
+
+    for i, tool in enumerate(tools):
+        function = tool.get("function")
+        if not function:
+            continue
+
         prefix = f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.{i}"
         _set_span_attribute(span, f"{prefix}.name", function.get("name"))
         _set_span_attribute(span, f"{prefix}.description", function.get("description"))
@@ -159,6 +180,26 @@ def _set_response_attributes(span, response):
         )
 
 
+def _set_span_stream_usage(span, prompt_tokens, completion_tokens):
+    if not span.is_recording():
+        return
+
+    if type(completion_tokens) is int and completion_tokens >= 0:
+        _set_span_attribute(
+            span, SpanAttributes.LLM_USAGE_COMPLETION_TOKENS, completion_tokens
+        )
+
+    if type(prompt_tokens) is int and prompt_tokens >= 0:
+        _set_span_attribute(
+            span, SpanAttributes.LLM_USAGE_PROMPT_TOKENS, prompt_tokens
+        )
+
+    if type(prompt_tokens) is int and type(completion_tokens) is int and completion_tokens + prompt_tokens >= 0:
+        _set_span_attribute(
+            span, SpanAttributes.LLM_USAGE_TOTAL_TOKENS, completion_tokens + prompt_tokens
+        )
+
+
 def _get_openai_base_url(instance):
     if hasattr(instance, "_client"):
         client = instance._client  # pylint: disable=protected-access
@@ -188,3 +229,29 @@ def model_as_dict(model):
         return model_as_dict(model.parse())
     else:
         return model
+
+
+def should_record_stream_token_usage():
+    return (
+            os.getenv("TRACELOOP_STREAM_TOKEN_USAGE") or "false"
+    ).lower() == "true"
+
+
+def get_token_count_from_string(string: str, model_name: str):
+    if not should_record_stream_token_usage():
+        return None
+
+    if tiktoken_encodings.get(model_name) is None:
+        try:
+            encoding = tiktoken.encoding_for_model(model_name)
+        except KeyError as ex:
+            # no such model_name in tiktoken
+            logger.warning(f"Failed to get tiktoken encoding for model_name {model_name}, error: {str(ex)}")
+            return None
+
+        tiktoken_encodings[model_name] = encoding
+    else:
+        encoding = tiktoken_encodings.get(model_name)
+
+    token_count = len(encoding.encode(string))
+    return token_count

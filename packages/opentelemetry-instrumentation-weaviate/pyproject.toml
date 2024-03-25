@@ -8,7 +8,7 @@ show_missing = true
 
 [tool.poetry]
 name = "opentelemetry-instrumentation-weaviate"
-version = "0.14.1"
+version = "0.14.5"
 description = "OpenTelemetry Weaviate instrumentation"
 authors = [
   "Gal Kleinman <gal@traceloop.com>",
@@ -23,11 +23,12 @@ readme = "README.md"
 include = "opentelemetry/instrumentation/weaviate"
 
 [tool.poetry.dependencies]
-python = ">=3.8.1,<3.12"
+python = ">=3.9,<4"
 opentelemetry-api = "^1.23.0"
 opentelemetry-instrumentation = "0.44b0"
 opentelemetry-semantic-conventions-ai = "^0.1.0"
 weaviate-client = "^3.26.0"
+tiktoken = "^0.6.0"
 
 [tool.poetry.group.dev.dependencies]
 autopep8 = "2.0.4"
@@ -49,5 +50,8 @@ weaviate-client = "^3.26.0"
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
-[project.entry-points.opentelemetry_instrumentor]
-weaviate = "opentelemetry.instrumentation.weaviate:WeaviateInstrumentor"
+[tool.poetry.extras]
+instruments = ["weaviate-client"]
+
+[tool.poetry.plugins."opentelemetry_instrumentor"]
+weaviate_client = "opentelemetry.instrumentation.weaviate:WeaviateInstrumentor"

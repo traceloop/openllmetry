@@ -41,7 +41,7 @@ EXCLUDED_URLS = """
     api.anthropic.com,
     api.cohere.ai,
     pinecone.io,
-    traceloop.com,
+    api.traceloop.com,
     posthog.com,
     bedrock-runtime,
     googleapis.com,
@@ -229,7 +229,9 @@ class TracerWrapper(object):
                             instrument_set = True
                     elif instrument == Instruments.WEAVIATE:
                         if not init_weaviate_instrumentor():
-                            print(Fore.RED + "Warning: Weaviate library does not exist.")
+                            print(
+                                Fore.RED + "Warning: Weaviate library does not exist."
+                            )
                             print(Fore.RESET)
                         else:
                             instrument_set = True
@@ -239,7 +241,12 @@ class TracerWrapper(object):
                             Fore.RED
                             + "Warning: "
                             + instrument
-                            + " library does not exist."
+                            + " instrumentation does not exist."
+                        )
+                        print(
+                            "Usage:\n"
+                            + "from traceloop.sdk.instruments import Instruments\n"
+                            + 'Traceloop.init(app_name="...", instruments=set([Instruments.OPENAI]))'
                         )
                         print(Fore.RESET)
 

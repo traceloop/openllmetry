@@ -16,12 +16,16 @@ from opentelemetry.instrumentation.openai.shared import (
     _set_request_attributes,
     _set_span_attribute,
     _set_functions_attributes,
+    set_tools_attributes,
     _set_response_attributes,
     is_streaming_response,
     should_send_prompts,
     model_as_dict,
     _get_openai_base_url,
     OPENAI_LLM_USAGE_TOKEN_TYPES,
+    should_record_stream_token_usage,
+    get_token_count_from_string,
+    _set_span_stream_usage,
 )
 from opentelemetry.trace import SpanKind, Tracer
 from opentelemetry.trace.status import Status, StatusCode
@@ -91,6 +95,7 @@ def chat_wrapper(
             streaming_time_to_first_token,
             streaming_time_to_generate,
             start_time,
+            kwargs
         )
 
     duration = end_time - start_time
@@ -137,7 +142,10 @@ def _handle_request(span, kwargs, instance):
     _set_client_attributes(span, instance)
     if should_send_prompts():
         _set_prompts(span, kwargs.get("messages"))
-        _set_functions_attributes(span, kwargs.get("functions"))
+        if kwargs.get("functions"):
+            _set_functions_attributes(span, kwargs.get("functions"))
+        elif kwargs.get("tools"):
+            set_tools_attributes(span, kwargs.get("tools"))
 
 
 def _handle_response(
@@ -253,15 +261,28 @@ def _set_completions(span, choices):
         _set_span_attribute(span, f"{prefix}.content", message.get("content"))
 
         function_call = message.get("function_call")
-        if not function_call:
-            return
+        if function_call:
+            _set_span_attribute(
+                span, f"{prefix}.function_call.name", function_call.get("name")
+            )
+            _set_span_attribute(
+                span,
+                f"{prefix}.function_call.arguments",
+                function_call.get("arguments"),
+            )
 
-        _set_span_attribute(
-            span, f"{prefix}.function_call.name", function_call.get("name")
-        )
-        _set_span_attribute(
-            span, f"{prefix}.function_call.arguments", function_call.get("arguments")
-        )
+        tool_calls = message.get("tool_calls")
+        if tool_calls:
+            _set_span_attribute(
+                span,
+                f"{prefix}.function_call.name",
+                tool_calls[0].get("function").get("name"),
+            )
+            _set_span_attribute(
+                span,
+                f"{prefix}.function_call.arguments",
+                tool_calls[0].get("function").get("arguments"),
+            )
 
 
 def _build_from_streaming_response(
@@ -274,6 +295,7 @@ def _build_from_streaming_response(
     streaming_time_to_first_token=None,
     streaming_time_to_generate=None,
     start_time=None,
+    request_kwargs=None
 ):
     complete_response = {"choices": [], "model": ""}
 
@@ -300,7 +322,47 @@ def _build_from_streaming_response(
         "stream": True,
     }
 
-    # can't get token usage in stream mode
+    # use tiktoken calculate token usage
+    if should_record_stream_token_usage():
+        # kwargs={'model': 'gpt-3.5', 'messages': [{'role': 'user', 'content': '...'}], 'stream': True}
+        prompt_usage = -1
+        completion_usage = -1
+
+        # prompt_usage
+        if request_kwargs and request_kwargs.get("messages"):
+            prompt_content = ""
+            model_name = request_kwargs.get("model") or None
+            for msg in request_kwargs.get("messages"):
+                if msg.get("content"):
+                    prompt_content += msg.get("content")
+            if model_name:
+                prompt_usage = get_token_count_from_string(prompt_content, model_name)
+
+        # completion_usage
+        if complete_response.get("choices"):
+            completion_content = ""
+            model_name = complete_response.get("model") or None
+
+            for choice in complete_response.get("choices"):  # type: dict
+                if choice.get("message") and choice.get("message").get("content"):
+                    completion_content += choice["message"]["content"]
+
+            if model_name:
+                completion_usage = get_token_count_from_string(completion_content, model_name)
+
+        # span record
+        _set_span_stream_usage(span, prompt_usage, completion_usage)
+
+        # metrics record
+        if token_counter:
+            if type(prompt_usage) is int and prompt_usage >= 0:
+                attributes_with_token_type = {**shared_attributes, "llm.usage.token_type": "prompt"}
+                token_counter.add(prompt_usage, attributes=attributes_with_token_type)
+
+            if type(completion_usage) is int and completion_usage >= 0:
+                attributes_with_token_type = {**shared_attributes, "llm.usage.token_type": "completion"}
+                token_counter.add(completion_usage, attributes=attributes_with_token_type)
+
     # choice metrics
     if choice_counter and complete_response.get("choices"):
         _set_choice_counter_metrics(
