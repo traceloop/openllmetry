@@ -214,7 +214,6 @@ def test_weaviate_get_schema(client, exporter):
         if span.name == "db.weaviate.schema.get"
         and span.attributes.get("db.weaviate.schema.get.class_name")
     )
-    print(span.attributes)
     assert span.attributes.get("db.system") == "weaviate"
     assert span.attributes.get("db.operation") == "get"
     assert span.attributes.get("db.weaviate.schema.get.class_name") == '"Article"'

@@ -147,13 +147,13 @@ wrapt = ">=1.0.0,<2.0.0"
 
 [[package]]
 name = "opentelemetry-semantic-conventions-ai"
-version = "0.0.23"
+version = "0.1.1"
 description = "OpenTelemetry Semantic Conventions Extension for Large Language Models"
 optional = false
-python-versions = ">=3.8.1,<4"
+python-versions = "<4,>=3.9"
 files = [
-    {file = "opentelemetry_semantic_conventions_ai-0.0.23-py3-none-any.whl", hash = "sha256:b5d7b5880c59385160436d8dfc6786c008346a131393cf821f5494b070248450"},
-    {file = "opentelemetry_semantic_conventions_ai-0.0.23.tar.gz", hash = "sha256:6e79d918f27881b2998bdd38a51670fca1af3f1d356f21fba276d03a1100381b"},
+    {file = "opentelemetry_semantic_conventions_ai-0.1.1-py3-none-any.whl", hash = "sha256:3ba3a4006231a88ad3c42c49ad4d4343783f1c3ccc92d45368f648aac02b3cc6"},
+    {file = "opentelemetry_semantic_conventions_ai-0.1.1.tar.gz", hash = "sha256:4ffa9725634889c7a6a917d13ff3589b3004a17526cd66b75875aedc50aae336"},
 ]
 
 [[package]]
@@ -383,4 +383,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<4"
-content-hash = "f7b35b54255ec4fe7b3f905588347dd312e8ce35b1786f6030668f658cce8d91"
+content-hash = "605fe47b6bee00dbe0f1ec6273d45f775e60cf291d66340adf4ba9ad4c8a9a8d"

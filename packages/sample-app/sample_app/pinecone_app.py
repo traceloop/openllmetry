@@ -17,6 +17,8 @@ pinecone.init(
 )
 index_name = "gen-qa-openai-fast"
 
+open_ai_client = OpenAI()
+
 
 @workflow(name="create_index")
 def gen_index():
@@ -32,24 +34,25 @@ def gen_index():
             dimension=1536,  # dimensionality of text-embedding-ada-002
             metric="cosine",
         )
-        index = pinecone.GRPCIndex(index_name)
+        index = pinecone.Index(index_name)
         for batch in dataset.iter_documents(batch_size=100):
             index.upsert(batch)
 
 
-index = pinecone.GRPCIndex(index_name)
+index = pinecone.Index(index_name)
 
 
 @task("retrieve")
 def retrieve(query):
     context_limit = 3750
-    res = client.embeddings.create(input=[query], engine="text-embedding-ada-002")
+    res = open_ai_client.embeddings.create(input=[query], model="text-embedding-ada-002")
 
     # retrieve from Pinecone
     xq = res.data[0].embedding
+    xq = res.data[0].embedding
 
     # get relevant contexts
-    res = index.query(xq, top_k=3, include_metadata=True)
+    res = index.query(vector=xq, top_k=3, include_metadata=True, include_values=True)
     contexts = [x["metadata"]["text"] for x in res.matches]
 
     # build our prompt with the retrieved contexts included
@@ -67,8 +70,8 @@ def retrieve(query):
 
 @task("complete")
 def complete(prompt):
-    res = client.completions.create(
-        engine="davinci-002",
+    res = open_ai_client.completions.create(
+        model="davinci-002",
         prompt=prompt,
         temperature=0,
         max_tokens=400,
