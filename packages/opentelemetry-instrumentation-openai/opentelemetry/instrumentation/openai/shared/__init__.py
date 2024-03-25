@@ -6,8 +6,6 @@ import logging
 
 from importlib.metadata import version
 
-import tiktoken
-
 from opentelemetry import context as context_api
 
 from opentelemetry.semconv.ai import SpanAttributes
@@ -190,13 +188,17 @@ def _set_span_stream_usage(span, prompt_tokens, completion_tokens):
         )
 
     if type(prompt_tokens) is int and prompt_tokens >= 0:
-        _set_span_attribute(
-            span, SpanAttributes.LLM_USAGE_PROMPT_TOKENS, prompt_tokens
-        )
+        _set_span_attribute(span, SpanAttributes.LLM_USAGE_PROMPT_TOKENS, prompt_tokens)
 
-    if type(prompt_tokens) is int and type(completion_tokens) is int and completion_tokens + prompt_tokens >= 0:
+    if (
+        type(prompt_tokens) is int
+        and type(completion_tokens) is int
+        and completion_tokens + prompt_tokens >= 0
+    ):
         _set_span_attribute(
-            span, SpanAttributes.LLM_USAGE_TOTAL_TOKENS, completion_tokens + prompt_tokens
+            span,
+            SpanAttributes.LLM_USAGE_TOTAL_TOKENS,
+            completion_tokens + prompt_tokens,
         )
 
 
@@ -232,21 +234,23 @@ def model_as_dict(model):
 
 
 def should_record_stream_token_usage():
-    return (
-            os.getenv("TRACELOOP_STREAM_TOKEN_USAGE") or "false"
-    ).lower() == "true"
+    return (os.getenv("TRACELOOP_STREAM_TOKEN_USAGE") or "false").lower() == "true"
 
 
 def get_token_count_from_string(string: str, model_name: str):
     if not should_record_stream_token_usage():
         return None
 
+    import tiktoken
+
     if tiktoken_encodings.get(model_name) is None:
         try:
             encoding = tiktoken.encoding_for_model(model_name)
         except KeyError as ex:
             # no such model_name in tiktoken
-            logger.warning(f"Failed to get tiktoken encoding for model_name {model_name}, error: {str(ex)}")
+            logger.warning(
+                f"Failed to get tiktoken encoding for model_name {model_name}, error: {str(ex)}"
+            )
             return None
 
         tiktoken_encodings[model_name] = encoding
