@@ -26,7 +26,7 @@ include = "opentelemetry/instrumentation/llamaindex"
 python = ">=3.8.1,<3.12"
 opentelemetry-api = "^1.23.0"
 opentelemetry-instrumentation = "0.44b0"
-opentelemetry-semantic-conventions-ai = "^0.0.23"
+opentelemetry-semantic-conventions-ai = "^0.1.0"
 inflection = "^0.5.1"
 
 [tool.poetry.group.dev.dependencies]

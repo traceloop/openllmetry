@@ -4,7 +4,6 @@ import logging
 import pinecone
 from typing import Collection
 from wrapt import wrap_function_wrapper
-from enum import Enum
 
 from opentelemetry import context as context_api
 from opentelemetry.trace import get_tracer, SpanKind
@@ -15,6 +14,7 @@ from opentelemetry.instrumentation.utils import (
     _SUPPRESS_INSTRUMENTATION_KEY,
     unwrap,
 )
+from opentelemetry.semconv.ai import EventAttributes, Events
 from opentelemetry.instrumentation.pinecone.version import __version__
 
 from opentelemetry.semconv.ai import SpanAttributes
@@ -22,24 +22,6 @@ from opentelemetry.semconv.ai import SpanAttributes
 logger = logging.getLogger(__name__)
 
 _instruments = ("pinecone-client ~= 2.2.2",)
-
-
-class Events(Enum):
-    DB_QUERY_EMBEDDINGS = "db.query.embeddings"
-    DB_QUERY_RESULT = "db.query.result"
-
-
-class EventAttributes(Enum):
-    # Query Embeddings
-    DB_QUERY_EMBEDDINGS_VECTOR = "db.query.embeddings.vector"
-
-    # Query Result (canonical format)
-    DB_QUERY_RESULT_ID = "db.query.result.id"
-    DB_QUERY_RESULT_SCORE = "db.query.result.score"
-    DB_QUERY_RESULT_DISTANCE = "db.query.result.distance"
-    DB_QUERY_RESULT_METADATA = "db.query.result.metadata"
-    DB_QUERY_RESULT_VECTOR = "db.query.result.vector"
-    DB_QUERY_RESULT_DOCUMENT = "db.query.result.document"
 
 
 WRAPPED_METHODS = [
@@ -101,8 +83,12 @@ def _set_query_input_attributes(span, kwargs):
     _set_span_attribute(span, "pinecone.query.top_k", kwargs.get("top_k"))
     _set_span_attribute(span, "pinecone.query.namespace", kwargs.get("namespace"))
     _set_span_attribute(span, "pinecone.query.filter", kwargs.get("filter"))
-    _set_span_attribute(span, "pinecone.query.include_values", kwargs.get("include_values"))
-    _set_span_attribute(span, "pinecone.query.include_metadata", kwargs.get("include_metadata"))
+    _set_span_attribute(
+        span, "pinecone.query.include_values", kwargs.get("include_values")
+    )
+    _set_span_attribute(
+        span, "pinecone.query.include_metadata", kwargs.get("include_metadata")
+    )
 
     # Log query embeddings
     # We assume user will pass either vector, sparse_vector or queries
@@ -113,14 +99,14 @@ def _set_query_input_attributes(span, kwargs):
     if vector:
         span.add_event(
             name="db.query.embeddings",
-            attributes={"db.query.embeddings.vector": vector}
+            attributes={"db.query.embeddings.vector": vector},
         )
 
     sparse_vector = kwargs.get("sparse_vector")
     if sparse_vector:
         span.add_event(
             name="db.query.embeddings",
-            attributes={"db.query.embeddings.vector": sparse_vector}
+            attributes={"db.query.embeddings.vector": sparse_vector},
         )
 
     queries = kwargs.get("queries")
@@ -128,9 +114,7 @@ def _set_query_input_attributes(span, kwargs):
         for vector in queries:
             span.add_event(
                 name=Events.DB_QUERY_EMBEDDINGS.value,
-                attributes={
-                    EventAttributes.DB_QUERY_EMBEDDINGS_VECTOR.value: vector
-                }
+                attributes={EventAttributes.DB_QUERY_EMBEDDINGS_VECTOR.value: vector},
             )
 
 
@@ -145,9 +129,11 @@ def _set_query_response(span, response):
             attributes={
                 EventAttributes.DB_QUERY_RESULT_ID.value: match.get("id"),
                 EventAttributes.DB_QUERY_RESULT_SCORE.value: match.get("score"),
-                EventAttributes.DB_QUERY_RESULT_METADATA.value: str(match.get("metadata")),
+                EventAttributes.DB_QUERY_RESULT_METADATA.value: str(
+                    match.get("metadata")
+                ),
                 EventAttributes.DB_QUERY_RESULT_VECTOR.value: match.get("values"),
-            }
+            },
         )
 
 

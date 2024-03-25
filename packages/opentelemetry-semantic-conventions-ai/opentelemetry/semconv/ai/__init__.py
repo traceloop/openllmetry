@@ -25,8 +25,8 @@ class SpanAttributes:
     LLM_REQUEST_FUNCTIONS = "llm.request.functions"
 
     # Vector DB
-    VECTOR_DB_VENDOR = "vector_db.vendor"
-    VECTOR_DB_QUERY_TOP_K = "vector_db.query.top_k"
+    VECTOR_DB_VENDOR = "db.system"
+    VECTOR_DB_QUERY_TOP_K = "db.vector.query.top_k"
 
     # LLM Workflows
     TRACELOOP_SPAN_KIND = "traceloop.span.kind"
@@ -48,21 +48,21 @@ class SpanAttributes:
 
 
 class Events(Enum):
-    DB_QUERY_EMBEDDINGS = "db.query.embeddings"
-    DB_QUERY_RESULT = "db.query.result"
+    DB_QUERY_EMBEDDINGS = "db.vector.embeddings"
+    DB_QUERY_RESULT = "db.vector.result"
 
 
 class EventAttributes(Enum):
     # Query Embeddings
-    DB_QUERY_EMBEDDINGS_VECTOR = "db.query.embeddings.vector"
+    DB_QUERY_EMBEDDINGS_VECTOR = "db.vector.embeddings.vector"
 
     # Query Result (canonical format)
-    DB_QUERY_RESULT_ID = "db.query.result.id"
-    DB_QUERY_RESULT_SCORE = "db.query.result.score"
-    DB_QUERY_RESULT_DISTANCE = "db.query.result.distance"
-    DB_QUERY_RESULT_METADATA = "db.query.result.metadata"
-    DB_QUERY_RESULT_VECTOR = "db.query.result.vector"
-    DB_QUERY_RESULT_DOCUMENT = "db.query.result.document"
+    DB_QUERY_RESULT_ID = "db.vector.query.id"
+    DB_QUERY_RESULT_SCORE = "db.vector.query.score"
+    DB_QUERY_RESULT_DISTANCE = "db.vector.query.distance"
+    DB_QUERY_RESULT_METADATA = "db.vector.query.metadata"
+    DB_QUERY_RESULT_VECTOR = "db.vector.query.vector"
+    DB_QUERY_RESULT_DOCUMENT = "db.vector.query.document"
 
 
 class LLMRequestTypeValues(Enum):
