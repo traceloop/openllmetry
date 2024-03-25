@@ -26,7 +26,7 @@ include = "opentelemetry/instrumentation/transformers"
 python = ">=3.9,<4"
 opentelemetry-api = "^1.23.0"
 opentelemetry-instrumentation = "0.44b0"
-opentelemetry-semantic-conventions-ai = "^0.0.23"
+opentelemetry-semantic-conventions-ai = "^0.1.1"
 
 [tool.poetry.group.dev.dependencies]
 autopep8 = "2.0.4"
