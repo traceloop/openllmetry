@@ -52,7 +52,9 @@ def run_query(openai_client, index, query: str):
     complete(openai_client, query_with_contexts)
 
 
-@pytest.mark.skip("GRPC package of Pinecone is conflicting with google-cloud-aiplatform")
+@pytest.mark.skip(
+    "GRPC package of Pinecone is conflicting with google-cloud-aiplatform"
+)
 def test_pinecone_grpc_retrieval(exporter, openai_client):
     pinecone.init(
         api_key=os.getenv("PINECONE_API_KEY"),
@@ -103,7 +105,9 @@ def test_pinecone_retrieval(exporter, openai_client):
     events = span.events
     assert len(events) > 0
 
-    embeddings_events = [event for event in span.events if "db.query.embeddings" in event.name]
+    embeddings_events = [
+        event for event in span.events if "db.query.embeddings" in event.name
+    ]
     for event in embeddings_events:
         assert event.name == "db.query.embeddings"
         vector = event.attributes.get(f"{event.name}.vector")
@@ -111,13 +115,17 @@ def test_pinecone_retrieval(exporter, openai_client):
         for v in vector:
             assert v >= -1 and v <= 1
 
-    usage_events = [event for event in span.events if "pinecone.query.usage" in event.name]
+    usage_events = [
+        event for event in span.events if "pinecone.query.usage" in event.name
+    ]
     assert len(usage_events) == 1
     usage_event = usage_events[0]
     assert usage_event.name == "pinecone.query.usage"
     assert usage_event.attributes.get("readUnits") >= 0
 
-    query_result_events = [event for event in span.events if "db.pinecone.query.result" in event.name]
+    query_result_events = [
+        event for event in span.events if "db.pinecone.query.result" in event.name
+    ]
     for event in query_result_events:
         assert event.name == "db.pinecone.query.result"
 

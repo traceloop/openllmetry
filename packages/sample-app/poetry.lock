@@ -2939,6 +2939,7 @@ description = "Nvidia JIT LTO Library"
 optional = false
 python-versions = ">=3"
 files = [
+    {file = "nvidia_nvjitlink_cu12-12.4.99-py3-none-manylinux2014_aarch64.whl", hash = "sha256:75d6498c96d9adb9435f2bbdbddb479805ddfb97b5c1b32395c694185c20ca57"},
     {file = "nvidia_nvjitlink_cu12-12.4.99-py3-none-manylinux2014_x86_64.whl", hash = "sha256:c6428836d20fe7e327191c175791d38570e10762edc588fb46749217cd444c74"},
     {file = "nvidia_nvjitlink_cu12-12.4.99-py3-none-win_amd64.whl", hash = "sha256:991905ffa2144cb603d8ca7962d75c35334ae82bf92820b6ba78157277da1ad2"},
 ]
@@ -3138,7 +3139,7 @@ develop = true
 [package.dependencies]
 opentelemetry-api = "^1.23.0"
 opentelemetry-instrumentation = "0.44b0"
-opentelemetry-semantic-conventions-ai = "^0.1.0"
+opentelemetry-semantic-conventions-ai = "^0.1.1"
 
 [package.extras]
 instruments = []
@@ -3181,7 +3182,7 @@ develop = true
 [package.dependencies]
 opentelemetry-api = "^1.23.0"
 opentelemetry-instrumentation = "0.44b0"
-opentelemetry-semantic-conventions-ai = "^0.1.0"
+opentelemetry-semantic-conventions-ai = "^0.1.1"
 
 [package.source]
 type = "directory"
@@ -3200,7 +3201,7 @@ develop = true
 opentelemetry-api = "^1.23.0"
 opentelemetry-instrumentation = "0.44b0"
 opentelemetry-semantic-conventions = "0.44b0"
-opentelemetry-semantic-conventions-ai = "^0.1.0"
+opentelemetry-semantic-conventions-ai = "^0.1.1"
 
 [package.extras]
 instruments = []
@@ -3221,7 +3222,7 @@ develop = true
 [package.dependencies]
 opentelemetry-api = "^1.23.0"
 opentelemetry-instrumentation = "0.44b0"
-opentelemetry-semantic-conventions-ai = "^0.1.0"
+opentelemetry-semantic-conventions-ai = "^0.1.1"
 
 [package.extras]
 instruments = []
@@ -3264,7 +3265,7 @@ develop = true
 [package.dependencies]
 opentelemetry-api = "^1.23.0"
 opentelemetry-instrumentation = "0.44b0"
-opentelemetry-semantic-conventions-ai = "^0.1.0"
+opentelemetry-semantic-conventions-ai = "^0.1.1"
 
 [package.extras]
 instruments = []
@@ -3285,7 +3286,7 @@ develop = true
 [package.dependencies]
 opentelemetry-api = "^1.23.0"
 opentelemetry-instrumentation = "0.44b0"
-opentelemetry-semantic-conventions-ai = "^0.1.0"
+opentelemetry-semantic-conventions-ai = "^0.1.1"
 
 [package.extras]
 instruments = []
@@ -3307,7 +3308,7 @@ develop = true
 inflection = "^0.5.1"
 opentelemetry-api = "^1.23.0"
 opentelemetry-instrumentation = "0.44b0"
-opentelemetry-semantic-conventions-ai = "^0.1.0"
+opentelemetry-semantic-conventions-ai = "^0.1.1"
 tiktoken = "^0.6.0"
 
 [package.extras]
@@ -3329,7 +3330,7 @@ develop = true
 [package.dependencies]
 opentelemetry-api = "^1.23.0"
 opentelemetry-instrumentation = "0.44b0"
-opentelemetry-semantic-conventions-ai = "^0.1.0"
+opentelemetry-semantic-conventions-ai = "^0.1.1"
 
 [package.extras]
 instruments = []
@@ -3350,7 +3351,7 @@ develop = true
 [package.dependencies]
 opentelemetry-api = "^1.23.0"
 opentelemetry-instrumentation = "0.44b0"
-opentelemetry-semantic-conventions-ai = "^0.1.0"
+opentelemetry-semantic-conventions-ai = "^0.1.1"
 
 [package.extras]
 instruments = []
@@ -3371,7 +3372,7 @@ develop = true
 [package.dependencies]
 opentelemetry-api = "^1.23.0"
 opentelemetry-instrumentation = "0.44b0"
-opentelemetry-semantic-conventions-ai = "^0.1.0"
+opentelemetry-semantic-conventions-ai = "^0.1.1"
 
 [package.extras]
 instruments = []
@@ -3392,7 +3393,7 @@ develop = true
 [package.dependencies]
 opentelemetry-api = "^1.23.0"
 opentelemetry-instrumentation = "0.44b0"
-opentelemetry-semantic-conventions-ai = "^0.1.0"
+opentelemetry-semantic-conventions-ai = "^0.1.1"
 
 [package.extras]
 instruments = []
@@ -3456,7 +3457,7 @@ develop = true
 [package.dependencies]
 opentelemetry-api = "^1.23.0"
 opentelemetry-instrumentation = "0.44b0"
-opentelemetry-semantic-conventions-ai = "^0.1.0"
+opentelemetry-semantic-conventions-ai = "^0.1.1"
 
 [package.source]
 type = "directory"
@@ -3496,7 +3497,7 @@ develop = true
 [package.dependencies]
 opentelemetry-api = "^1.23.0"
 opentelemetry-instrumentation = "0.44b0"
-opentelemetry-semantic-conventions-ai = "^0.1.0"
+opentelemetry-semantic-conventions-ai = "^0.1.1"
 
 [package.extras]
 instruments = []
@@ -3517,7 +3518,7 @@ develop = true
 [package.dependencies]
 opentelemetry-api = "^1.23.0"
 opentelemetry-instrumentation = "0.44b0"
-opentelemetry-semantic-conventions-ai = "^0.1.0"
+opentelemetry-semantic-conventions-ai = "^0.1.1"
 
 [package.source]
 type = "directory"
@@ -3535,7 +3536,7 @@ develop = true
 [package.dependencies]
 opentelemetry-api = "^1.23.0"
 opentelemetry-instrumentation = "0.44b0"
-opentelemetry-semantic-conventions-ai = "^0.1.0"
+opentelemetry-semantic-conventions-ai = "^0.1.1"
 tiktoken = "^0.6.0"
 
 [package.extras]
@@ -3588,13 +3589,13 @@ files = [
 
 [[package]]
 name = "opentelemetry-semantic-conventions-ai"
-version = "0.1.0"
+version = "0.1.1"
 description = "OpenTelemetry Semantic Conventions Extension for Large Language Models"
 optional = false
-python-versions = "<4,>=3.8.1"
+python-versions = "<4,>=3.9"
 files = [
-    {file = "opentelemetry_semantic_conventions_ai-0.1.0-py3-none-any.whl", hash = "sha256:d2246b420af03a751b6eb98a4f8f481f76248658218b7d86f7a0417bb185d89e"},
-    {file = "opentelemetry_semantic_conventions_ai-0.1.0.tar.gz", hash = "sha256:b95062c74ddc60466750449c470fcc484048ea2b31d1a704cc4ac73317316c1a"},
+    {file = "opentelemetry_semantic_conventions_ai-0.1.1-py3-none-any.whl", hash = "sha256:3ba3a4006231a88ad3c42c49ad4d4343783f1c3ccc92d45368f648aac02b3cc6"},
+    {file = "opentelemetry_semantic_conventions_ai-0.1.1.tar.gz", hash = "sha256:4ffa9725634889c7a6a917d13ff3589b3004a17526cd66b75875aedc50aae336"},
 ]
 
 [[package]]
@@ -5257,7 +5258,7 @@ opentelemetry-instrumentation-vertexai = {path = "../opentelemetry-instrumentati
 opentelemetry-instrumentation-watsonx = {path = "../opentelemetry-instrumentation-watsonx", develop = true}
 opentelemetry-instrumentation-weaviate = {path = "../opentelemetry-instrumentation-weaviate", develop = true}
 opentelemetry-sdk = "^1.20.0"
-opentelemetry-semantic-conventions-ai = "^0.1.0"
+opentelemetry-semantic-conventions-ai = "^0.1.1"
 posthog = "^3.0.2"
 pydantic = ">=1"
 tenacity = "^8.2.3"

@@ -632,7 +632,7 @@ develop = true
 [package.dependencies]
 opentelemetry-api = "^1.23.0"
 opentelemetry-instrumentation = "0.44b0"
-opentelemetry-semantic-conventions-ai = "^0.1.0"
+opentelemetry-semantic-conventions-ai = "^0.1.1"
 
 [package.extras]
 instruments = []
@@ -670,13 +670,13 @@ files = [
 
 [[package]]
 name = "opentelemetry-semantic-conventions-ai"
-version = "0.1.0"
+version = "0.1.1"
 description = "OpenTelemetry Semantic Conventions Extension for Large Language Models"
 optional = false
-python-versions = "<4,>=3.8.1"
+python-versions = "<4,>=3.9"
 files = [
-    {file = "opentelemetry_semantic_conventions_ai-0.1.0-py3-none-any.whl", hash = "sha256:d2246b420af03a751b6eb98a4f8f481f76248658218b7d86f7a0417bb185d89e"},
-    {file = "opentelemetry_semantic_conventions_ai-0.1.0.tar.gz", hash = "sha256:b95062c74ddc60466750449c470fcc484048ea2b31d1a704cc4ac73317316c1a"},
+    {file = "opentelemetry_semantic_conventions_ai-0.1.1-py3-none-any.whl", hash = "sha256:3ba3a4006231a88ad3c42c49ad4d4343783f1c3ccc92d45368f648aac02b3cc6"},
+    {file = "opentelemetry_semantic_conventions_ai-0.1.1.tar.gz", hash = "sha256:4ffa9725634889c7a6a917d13ff3589b3004a17526cd66b75875aedc50aae336"},
 ]
 
 [[package]]
@@ -1522,4 +1522,4 @@ instruments = ["weaviate-client"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<4"
-content-hash = "922cb9b2ba0139197d8b67a1d50868b6f4723c69116f66469910cd2f448b1755"
+content-hash = "255f04828458adda2480b9dff7c51c6772f0a7b791ec46a5416a792b76899a73"
