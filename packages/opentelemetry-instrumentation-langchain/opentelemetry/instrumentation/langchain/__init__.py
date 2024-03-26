@@ -4,11 +4,13 @@ import logging
 from typing import Collection
 from opentelemetry.instrumentation.langchain.config import Config
 from wrapt import wrap_function_wrapper
+from importlib.metadata import version as package_version, PackageNotFoundError
 
 from opentelemetry.trace import get_tracer
 
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.instrumentation.utils import unwrap
+from opentelemetry.instrumentation.langchain.utils import _with_tracer_wrapper
 
 from opentelemetry.instrumentation.langchain.task_wrapper import (
     task_wrapper,
@@ -27,6 +29,8 @@ from opentelemetry.instrumentation.langchain.custom_chat_wrapper import (
     achat_wrapper,
 )
 from opentelemetry.instrumentation.langchain.version import __version__
+from opentelemetry import context as context_api
+from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
 
 from opentelemetry.semconv.ai import TraceloopSpanKindValues
 
@@ -34,74 +38,42 @@ logger = logging.getLogger(__name__)
 
 _instruments = ("langchain >= 0.0.346", "langchain-core > 0.1.0")
 
-WRAPPED_METHODS = [
+TO_INSTRUMENT = [
     {
-        "package": "langchain.chains.base",
-        "object": "Chain",
-        "method": "__call__",
-        "wrapper": task_wrapper,
-    },
-    {
-        "package": "langchain.chains.base",
-        "object": "Chain",
-        "method": "acall",
-        "wrapper": atask_wrapper,
+        "package": "langchain.chains",
+        "class": "LLMChain",
     },
     {
         "package": "langchain.chains",
-        "object": "SequentialChain",
-        "method": "__call__",
-        "span_name": "langchain.workflow",
-        "wrapper": workflow_wrapper,
+        "class": "TransformChain",
     },
     {
         "package": "langchain.chains",
-        "object": "SequentialChain",
-        "method": "acall",
+        "class": "SequentialChain",
         "span_name": "langchain.workflow",
-        "wrapper": aworkflow_wrapper,
     },
     {
         "package": "langchain.agents",
-        "object": "AgentExecutor",
-        "method": "_call",
+        "class": "Agent",
         "span_name": "langchain.agent",
         "kind": TraceloopSpanKindValues.AGENT.value,
-        "wrapper": workflow_wrapper,
+    },
+    {
+        "package": "langchain.agents",
+        "class": "AgentExecutor",
+        "span_name": "langchain.agent",
+        "kind": TraceloopSpanKindValues.AGENT.value,
     },
     {
         "package": "langchain.tools",
-        "object": "Tool",
-        "method": "_run",
+        "class": "Tool",
         "span_name": "langchain.tool",
         "kind": TraceloopSpanKindValues.TOOL.value,
-        "wrapper": task_wrapper,
     },
     {
         "package": "langchain.chains",
-        "object": "RetrievalQA",
-        "method": "__call__",
+        "class": "RetrievalQA",
         "span_name": "retrieval_qa.workflow",
-        "wrapper": workflow_wrapper,
-    },
-    {
-        "package": "langchain.chains",
-        "object": "RetrievalQA",
-        "method": "acall",
-        "span_name": "retrieval_qa.workflow",
-        "wrapper": aworkflow_wrapper,
-    },
-    {
-        "package": "langchain.prompts.base",
-        "object": "BasePromptTemplate",
-        "method": "invoke",
-        "wrapper": task_wrapper,
-    },
-    {
-        "package": "langchain.prompts.base",
-        "object": "BasePromptTemplate",
-        "method": "ainvoke",
-        "wrapper": atask_wrapper,
     },
     {
         "package": "langchain.chat_models.base",
@@ -132,14 +104,6 @@ WRAPPED_METHODS = [
         "object": "RunnableSequence",
         "method": "invoke",
         "span_name": "langchain.workflow",
-        "wrapper": workflow_wrapper,
-    },
-    {
-        "package": "langchain.schema.runnable",
-        "object": "RunnableSequence",
-        "method": "ainvoke",
-        "span_name": "langchain.workflow",
-        "wrapper": aworkflow_wrapper,
     },
     {
         "package": "langchain_core.language_models.llms",
@@ -157,6 +121,13 @@ WRAPPED_METHODS = [
     },
 ]
 
+@_with_tracer_wrapper
+def _init_wrapper(tracer, span_name, kind_name, wrapped, instance, args, kwargs):
+    if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
+        print("SUPPRESS_INSTRUMENTATION_KEY", _SUPPRESS_INSTRUMENTATION_KEY)
+        return wrapped(*args, **kwargs)
+    kwargs["callbacks"] = [SpanCallbackHandler(tracer, span_name, kind_name)]
+    return wrapped(*args, **kwargs)
 
 class LangchainInstrumentor(BaseInstrumentor):
     """An instrumentor for Langchain SDK."""
@@ -171,16 +142,17 @@ class LangchainInstrumentor(BaseInstrumentor):
     def _instrument(self, **kwargs):
         tracer_provider = kwargs.get("tracer_provider")
         tracer = get_tracer(__name__, __version__, tracer_provider)
-        for wrapped_method in WRAPPED_METHODS:
-            wrap_package = wrapped_method.get("package")
-            wrap_object = wrapped_method.get("object")
-            wrap_method = wrapped_method.get("method")
-            wrapper = wrapped_method.get("wrapper")
-            wrap_function_wrapper(
-                wrap_package,
-                f"{wrap_object}.{wrap_method}" if wrap_object else wrap_method,
-                wrapper(tracer, wrapped_method),
-            )
+        for module in TO_INSTRUMENT:
+            try:
+                wrap_package = module.get("package")
+                wrap_class = module.get("class")
+                wrap_span_name = module.get("span_name", None)
+                wrap_kind_name = module.get("kind", None)
+                wrap_function_wrapper(
+                    wrap_package, f"{wrap_class}.__init__", _init_wrapper(tracer, wrap_span_name, wrap_kind_name)
+                )
+            except PackageNotFoundError:
+                pass
 
     def _uninstrument(self, **kwargs):
         for wrapped_method in WRAPPED_METHODS:
