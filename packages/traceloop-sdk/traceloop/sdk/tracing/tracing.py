@@ -74,6 +74,7 @@ class TracerWrapper(object):
             if processor:
                 Telemetry().capture("tracer:init", {"processor": "custom"})
                 obj.__spans_processor: SpanProcessor = processor
+                obj.__spans_processor_original_on_start = processor.on_start
             else:
                 if exporter:
                     Telemetry().capture(
@@ -107,6 +108,7 @@ class TracerWrapper(object):
                     obj.__spans_processor: SpanProcessor = BatchSpanProcessor(
                         obj.__spans_exporter
                     )
+                obj.__spans_processor_original_on_start = None
 
             obj.__spans_processor.on_start = obj._span_processor_on_start
             obj.__tracer_provider.add_span_processor(obj.__spans_processor)
@@ -312,6 +314,10 @@ class TracerWrapper(object):
                     span.set_attribute(
                         f"traceloop.prompt.template_variables.{key}", value
                     )
+
+        # Call original on_start method if it exists in custom processor
+        if self.__spans_processor_original_on_start:
+            self.__spans_processor_original_on_start(span, parent_context)
 
     @staticmethod
     def set_static_params(
