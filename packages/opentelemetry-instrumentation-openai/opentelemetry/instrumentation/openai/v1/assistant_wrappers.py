@@ -1,6 +1,5 @@
 import logging
 import time
-from typing_extensions import override
 from opentelemetry import context as context_api
 from opentelemetry.instrumentation.openai.shared import (
     _set_span_attribute,
@@ -129,98 +128,6 @@ def runs_create_and_stream_wrapper(tracer, wrapped, instance, args, kwargs):
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
         return wrapped(*args, **kwargs)
 
-    from openai import AssistantEventHandler
-
-    class EventHandleWrapper(AssistantEventHandler):
-
-        _current_text_index = 0
-
-        def __init__(self, original_handler, span):
-            super().__init__()
-            self._original_handler = original_handler
-            self._span = span
-
-        @override
-        def on_end(self):
-            self._original_handler.on_end()
-            self._span.end()
-
-        @override
-        def on_event(self, event):
-            self._original_handler.on_event(event)
-
-        @override
-        def on_run_step_created(self, run_step):
-            self._original_handler.on_run_step_created(run_step)
-
-        @override
-        def on_run_step_delta(self, delta, snapshot):
-            self._original_handler.on_run_step_delta(delta, snapshot)
-
-        @override
-        def on_run_step_done(self, run_step):
-            self._original_handler.on_run_step_done(run_step)
-
-        @override
-        def on_tool_call_created(self, tool_call):
-            self._original_handler.on_tool_call_created(tool_call)
-
-        @override
-        def on_tool_call_delta(self, delta, snapshot):
-            self._original_handler.on_tool_call_delta(delta, snapshot)
-
-        @override
-        def on_tool_call_done(self, tool_call):
-            self._original_handler.on_tool_call_done(tool_call)
-
-        @override
-        def on_exception(self, exception: Exception):
-            self._original_handler.on_exception(exception)
-
-        @override
-        def on_timeout(self):
-            self._original_handler.on_timeout()
-
-        @override
-        def on_message_created(self, message):
-            self._original_handler.on_message_created(message)
-
-        @override
-        def on_message_delta(self, delta, snapshot):
-            self._original_handler.on_message_delta(delta, snapshot)
-
-        @override
-        def on_message_done(self, message):
-            self._original_handler.on_message_done(message)
-
-        @override
-        def on_text_created(self, text):
-            self._original_handler.on_text_created(text)
-
-        @override
-        def on_text_delta(self, delta, snapshot):
-            self._original_handler.on_text_delta(delta, snapshot)
-
-        @override
-        def on_text_done(self, text):
-            self._original_handler.on_text_done(text)
-            _set_span_attribute(
-                self._span,
-                f"{SpanAttributes.LLM_COMPLETIONS}.{self._current_text_index}.role",
-                "assistant",
-            )
-            _set_span_attribute(
-                self._span,
-                f"{SpanAttributes.LLM_COMPLETIONS}.{self._current_text_index}.content",
-                text.value,
-            )
-
-            self._current_text_index += 1
-
-        @override
-        def on_image_file_done(self, image_file):
-            self._original_handler.on_image_file_done(image_file)
-
     assistant_id = kwargs.get("assistant_id")
     instructions = kwargs.get("instructions")
 
@@ -246,6 +153,10 @@ def runs_create_and_stream_wrapper(tracer, wrapped, instance, args, kwargs):
     )
     _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.1.role", "system")
     _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.1.content", instructions)
+
+    from opentelemetry.instrumentation.openai.v1.event_handler_wrapper import (
+        EventHandleWrapper,
+    )
 
     kwargs["event_handler"] = EventHandleWrapper(
         original_handler=kwargs["event_handler"], span=span
