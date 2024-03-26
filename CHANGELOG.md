@@ -1,3 +1,17 @@
+## v0.15.0 (2024-03-26)
+
+### Feat
+
+- **openai**: assistants API (#673)
+- **pinecone**: instrument pinecone query embeddings (#368)
+
+### Fix
+
+- **traceloop-sdk**: custom span processor's on_start is honored (#695)
+- **openai**: do not import tiktoken if not used
+- **sdk**: exclude api.traceloop.com from requests
+- **openai**: Support report token usage in stream mode (#661)
+
 ## v0.14.5 (2024-03-21)
 
 ### Fix
