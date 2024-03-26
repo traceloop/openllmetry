@@ -1,5 +1,6 @@
 import pytest
 from openai import OpenAI
+from traceloop.sdk.decorators import workflow
 
 
 @pytest.fixture
@@ -18,3 +19,15 @@ def test_resource_attributes(exporter, openai_client):
     open_ai_span = spans[0]
     assert open_ai_span.resource.attributes["something"] == "yes"
     assert open_ai_span.resource.attributes["service.name"] == "test"
+
+
+def test_custom_span_processor(exporter_with_custom_span_processor, openai_client):
+    @workflow()
+    def run_workflow():
+        pass
+
+    run_workflow()
+
+    spans = exporter_with_custom_span_processor.get_finished_spans()
+    workflow_span = spans[0]
+    assert workflow_span.attributes["custom_span"] == "yes"
