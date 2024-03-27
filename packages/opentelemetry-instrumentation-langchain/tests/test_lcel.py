@@ -6,6 +6,9 @@ from langchain.output_parsers.openai_functions import JsonOutputFunctionsParser
 from langchain_community.utils.openai_functions import (
     convert_pydantic_to_openai_function,
 )
+from langchain_community.llms.huggingface_text_gen_inference import (
+    HuggingFaceTextGenInference,
+)
 from langchain_community.chat_models import ChatOpenAI
 from langchain_core.pydantic_v1 import BaseModel, Field
 
@@ -120,3 +123,39 @@ def test_streaming(exporter):
         "langchain.task.StrOutputParser",
         "langchain.workflow",
     ] == [span.name for span in spans]
+
+
+@pytest.mark.vcr
+def test_custom_llm(exporter):
+    prompt = ChatPromptTemplate.from_messages(
+        [("system", "You are helpful assistant"), ("user", "{input}")]
+    )
+    model = HuggingFaceTextGenInference(
+        inference_server_url="https://w8qtunpthvh1r7a0.us-east-1.aws.endpoints.huggingface.cloud"
+    )
+
+    chain = prompt | model
+    response = chain.invoke({"input": "tell me a short joke"})
+
+    spans = exporter.get_finished_spans()
+
+    assert [
+        "langchain.task.ChatPromptTemplate",
+        "HuggingFaceTextGenInference.chat",
+        "langchain.workflow",
+    ] == [span.name for span in spans]
+
+    hugging_face_span = next(
+        span for span in spans if span.name == "HuggingFaceTextGenInference.chat"
+    )
+
+    assert hugging_face_span.attributes["llm.request.type"] == "completion"
+    assert (
+        hugging_face_span.attributes["llm.request.model"]
+        == "HuggingFaceTextGenInference"
+    )
+    assert (
+        hugging_face_span.attributes["llm.prompts.0.user"]
+        == "System: You are helpful assistant\nHuman: tell me a short joke"
+    )
+    assert hugging_face_span.attributes["llm.completions.0.content"] == response

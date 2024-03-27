@@ -17,7 +17,7 @@ def llm_wrapper(tracer, to_wrap, wrapped, instance, args, kwargs):
     with tracer.start_as_current_span(name) as span:
         _handle_request(span, args, kwargs, instance)
         return_value = wrapped(*args, **kwargs)
-        _handle_response(span, args, kwargs, instance)
+        _handle_response(span, return_value)
 
     return return_value
 
