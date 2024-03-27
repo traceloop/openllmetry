@@ -41,7 +41,7 @@ EXCLUDED_URLS = """
     api.anthropic.com,
     api.cohere.ai,
     pinecone.io,
-    api.traceloop.com,
+    traceloop.com,
     posthog.com,
     bedrock-runtime,
     googleapis.com,
@@ -434,7 +434,7 @@ def init_openai_instrumentor():
         Telemetry().capture("instrumentation:openai:init")
         from opentelemetry.instrumentation.openai import OpenAIInstrumentor
 
-        instrumentor = OpenAIInstrumentor()
+        instrumentor = OpenAIInstrumentor(enrich_assistant=True)
         if not instrumentor.is_instrumented_by_opentelemetry:
             instrumentor.instrument()
     return True

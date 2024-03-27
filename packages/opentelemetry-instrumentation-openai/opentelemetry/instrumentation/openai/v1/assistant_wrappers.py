@@ -11,6 +11,7 @@ from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
 from opentelemetry.semconv.ai import SpanAttributes, LLMRequestTypeValues
 
 from opentelemetry.instrumentation.openai.utils import _with_tracer_wrapper
+from opentelemetry.instrumentation.openai.shared.config import Config
 
 logger = logging.getLogger(__name__)
 
@@ -91,22 +92,30 @@ def messages_list_wrapper(tracer, wrapped, instance, args, kwargs):
     )
 
     i = 0
-    if assistants.get(run["assistant_id"]) is not None:
+    if assistants.get(run["assistant_id"]) is not None or Config.enrich_assistant:
+        if Config.enrich_assistant:
+            assistant = model_as_dict(
+                instance._client.beta.assistants.retrieve(run["assistant_id"])
+            )
+            assistants[run["assistant_id"]] = assistant
+        else:
+            assistant = assistants[run["assistant_id"]]
+
         _set_span_attribute(
             span,
             SpanAttributes.LLM_REQUEST_MODEL,
-            assistants[run["assistant_id"]]["model"],
+            assistant["model"],
         )
         _set_span_attribute(
             span,
             SpanAttributes.LLM_RESPONSE_MODEL,
-            assistants[run["assistant_id"]]["model"],
+            assistant["model"],
         )
         _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.{i}.role", "system")
         _set_span_attribute(
             span,
             f"{SpanAttributes.LLM_PROMPTS}.{i}.content",
-            assistants[run["assistant_id"]]["instructions"],
+            assistant["instructions"],
         )
         i += 1
     _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.{i}.role", "system")
@@ -143,7 +152,15 @@ def runs_create_and_stream_wrapper(tracer, wrapped, instance, args, kwargs):
     )
 
     i = 0
-    if assistants.get(assistant_id) is not None:
+    if assistants.get(assistant_id) is not None or Config.enrich_assistant:
+        if Config.enrich_assistant:
+            assistant = model_as_dict(
+                instance._client.beta.assistants.retrieve(assistant_id)
+            )
+            assistants[assistant_id] = assistant
+        else:
+            assistant = assistants[assistant_id]
+
         _set_span_attribute(
             span, SpanAttributes.LLM_REQUEST_MODEL, assistants[assistant_id]["model"]
         )
