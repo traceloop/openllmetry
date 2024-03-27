@@ -102,12 +102,18 @@ def test_existing_assistant(exporter, openai_client):
         "openai.assistant.run",
     ]
     open_ai_span = spans[0]
-    assert open_ai_span.attributes["llm.request.type"] == "chat"
+    assert open_ai_span.attributes["llm.request.model"] == "gpt-4-turbo-preview"
+    assert open_ai_span.attributes["llm.response.model"] == "gpt-4-turbo-preview"
     assert (
-        open_ai_span.attributes.get("llm.prompts.0.content")
-        == "Please address the user as Jane Doe. The user has a premium account."
+        open_ai_span.attributes["llm.prompts.0.content"]
+        == "You are a personal math tutor. Write and run code to answer math questions."
     )
     assert open_ai_span.attributes["llm.prompts.0.role"] == "system"
+    assert (
+        open_ai_span.attributes.get("llm.prompts.1.content")
+        == "Please address the user as Jane Doe. The user has a premium account."
+    )
+    assert open_ai_span.attributes["llm.prompts.1.role"] == "system"
 
     for idx, message in enumerate(messages.data):
         assert (
@@ -207,11 +213,18 @@ def test_streaming_existing_assistant(exporter, openai_client):
     ]
     open_ai_span = spans[0]
     assert open_ai_span.attributes["llm.request.type"] == "chat"
+    assert open_ai_span.attributes["llm.request.model"] == "gpt-4-turbo-preview"
+    assert open_ai_span.attributes["llm.response.model"] == "gpt-4-turbo-preview"
     assert (
-        open_ai_span.attributes.get("llm.prompts.0.content")
-        == "Please address the user as Jane Doe. The user has a premium account."
+        open_ai_span.attributes["llm.prompts.0.content"]
+        == "You are a personal math tutor. Write and run code to answer math questions."
     )
     assert open_ai_span.attributes["llm.prompts.0.role"] == "system"
+    assert (
+        open_ai_span.attributes.get("llm.prompts.1.content")
+        == "Please address the user as Jane Doe. The user has a premium account."
+    )
+    assert open_ai_span.attributes["llm.prompts.1.role"] == "system"
 
     for idx, message in enumerate(assistant_messages):
         assert open_ai_span.attributes[f"llm.completions.{idx}.content"] == message
