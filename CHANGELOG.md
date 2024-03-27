@@ -1,3 +1,9 @@
+## v0.15.2 (2024-03-27)
+
+### Fix
+
+- **openai**: enrich assistant data if not available (#705)
+
 ## v0.15.1 (2024-03-27)
 
 ### Fix
