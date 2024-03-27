@@ -1,3 +1,9 @@
+## v0.15.1 (2024-03-27)
+
+### Fix
+
+- **openai**: support pre-created assistants (#701)
+
 ## v0.15.0 (2024-03-26)
 
 ### Feat
