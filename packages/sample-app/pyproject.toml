@@ -23,8 +23,6 @@ include = "sample_app"
 
 [tool.poetry.dependencies]
 python = ">=3.9,<4"
-# Resolves a dependency conflict between `pydantic` and `transformers`
-pydantic = "<2"
 openai = "^1.12.0"
 requests = "^2.31.0"
 # farm-haystack = "=1.20.1"
@@ -45,10 +43,11 @@ cohere = "^4.40"
 anthropic = "^0.21.3"
 # google-cloud-aiplatform = "^1.44.0"
 python-dotenv = "^1.0.1"
-langchain = "^0.1.9"
-langchain-community = "^0.0.24"
+langchain = "^0.1.13"
+langchain-community = "^0.0.29"
 llama-index-embeddings-huggingface = "^0.1.4"
 litellm = "^1.32.4"
+text-generation = "^0.7.0"
 
 [tool.poetry.dependencies.opentelemetry-instrumentation-openai]
 path = "../opentelemetry-instrumentation-openai"

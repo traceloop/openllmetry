@@ -978,4 +978,4 @@ instruments = []
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<4"
-content-hash = "1d2b3df8a3980d251ee1d1cbb0224039b4103e59984d3865d214bc5c89f57e3e"
+content-hash = "9f47b5097e935eb470dcf1ceaeb8209f3a4ab2f44522b76a8ca2222d6a676f9a"
