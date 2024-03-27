@@ -2160,7 +2160,7 @@ test = ["opentelemetry-instrumentation-asgi[instruments]", "opentelemetry-test-u
 
 [[package]]
 name = "opentelemetry-instrumentation-chromadb"
-version = "0.14.5"
+version = "0.15.2"
 description = "OpenTelemetry Chroma DB instrumentation"
 optional = false
 python-versions = ">=3.9,<4"
@@ -2182,7 +2182,7 @@ url = "../opentelemetry-instrumentation-chromadb"
 
 [[package]]
 name = "opentelemetry-instrumentation-cohere"
-version = "0.14.5"
+version = "0.15.2"
 description = "OpenTelemetry Cohere instrumentation"
 optional = false
 python-versions = ">=3.9,<4"
@@ -2192,6 +2192,7 @@ develop = true
 [package.dependencies]
 opentelemetry-api = "^1.23.0"
 opentelemetry-instrumentation = "0.44b0"
+opentelemetry-semantic-conventions = "0.44b0"
 opentelemetry-semantic-conventions-ai = "^0.1.1"
 
 [package.extras]
@@ -2225,7 +2226,7 @@ test = ["httpx (>=0.22,<1.0)", "opentelemetry-instrumentation-fastapi[instrument
 
 [[package]]
 name = "opentelemetry-instrumentation-openai"
-version = "0.14.5"
+version = "0.15.2"
 description = "OpenTelemetry OpenAI instrumentation"
 optional = false
 python-versions = ">=3.9,<4"
@@ -2235,6 +2236,7 @@ develop = true
 [package.dependencies]
 opentelemetry-api = "^1.23.0"
 opentelemetry-instrumentation = "0.44b0"
+opentelemetry-semantic-conventions = "0.44b0"
 opentelemetry-semantic-conventions-ai = "^0.1.1"
 
 [package.extras]
@@ -4205,4 +4207,4 @@ instruments = []
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<4"
-content-hash = "ba47ab66f6c425f984d2bd5175e6a9c133ee31fdc7b75f7afaf9163b2c6ae870"
+content-hash = "bd5a281b7375dae34c28ee1ec6ecb8a4153a8f50adb9abf8e7d7612f63966ad9"
