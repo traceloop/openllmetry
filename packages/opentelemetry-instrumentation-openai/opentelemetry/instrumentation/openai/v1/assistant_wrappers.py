@@ -90,23 +90,28 @@ def messages_list_wrapper(tracer, wrapped, instance, args, kwargs):
         start_time=run.get("start_time"),
     )
 
+    i = 0
+    if assistants.get(run["assistant_id"]) is not None:
+        _set_span_attribute(
+            span,
+            SpanAttributes.LLM_REQUEST_MODEL,
+            assistants[run["assistant_id"]]["model"],
+        )
+        _set_span_attribute(
+            span,
+            SpanAttributes.LLM_RESPONSE_MODEL,
+            assistants[run["assistant_id"]]["model"],
+        )
+        _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.{i}.role", "system")
+        _set_span_attribute(
+            span,
+            f"{SpanAttributes.LLM_PROMPTS}.{i}.content",
+            assistants[run["assistant_id"]]["instructions"],
+        )
+        i += 1
+    _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.{i}.role", "system")
     _set_span_attribute(
-        span, SpanAttributes.LLM_REQUEST_MODEL, assistants[run["assistant_id"]]["model"]
-    )
-    _set_span_attribute(
-        span,
-        SpanAttributes.LLM_RESPONSE_MODEL,
-        assistants[run["assistant_id"]]["model"],
-    )
-    _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.0.role", "system")
-    _set_span_attribute(
-        span,
-        f"{SpanAttributes.LLM_PROMPTS}.0.content",
-        assistants[run["assistant_id"]]["instructions"],
-    )
-    _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.1.role", "system")
-    _set_span_attribute(
-        span, f"{SpanAttributes.LLM_PROMPTS}.1.content", run["instructions"]
+        span, f"{SpanAttributes.LLM_PROMPTS}.{i}.content", run["instructions"]
     )
 
     for i, msg in enumerate(messages):
@@ -137,22 +142,25 @@ def runs_create_and_stream_wrapper(tracer, wrapped, instance, args, kwargs):
         attributes={SpanAttributes.LLM_REQUEST_TYPE: LLMRequestTypeValues.CHAT.value},
     )
 
-    _set_span_attribute(
-        span, SpanAttributes.LLM_REQUEST_MODEL, assistants[assistant_id]["model"]
-    )
-    _set_span_attribute(
-        span,
-        SpanAttributes.LLM_RESPONSE_MODEL,
-        assistants[assistant_id]["model"],
-    )
-    _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.0.role", "system")
-    _set_span_attribute(
-        span,
-        f"{SpanAttributes.LLM_PROMPTS}.0.content",
-        assistants[assistant_id]["instructions"],
-    )
-    _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.1.role", "system")
-    _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.1.content", instructions)
+    i = 0
+    if assistants.get(assistant_id) is not None:
+        _set_span_attribute(
+            span, SpanAttributes.LLM_REQUEST_MODEL, assistants[assistant_id]["model"]
+        )
+        _set_span_attribute(
+            span,
+            SpanAttributes.LLM_RESPONSE_MODEL,
+            assistants[assistant_id]["model"],
+        )
+        _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.{i}.role", "system")
+        _set_span_attribute(
+            span,
+            f"{SpanAttributes.LLM_PROMPTS}.{i}.content",
+            assistants[assistant_id]["instructions"],
+        )
+        i += 1
+    _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.{i}.role", "system")
+    _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.{i}.content", instructions)
 
     from opentelemetry.instrumentation.openai.v1.event_handler_wrapper import (
         EventHandleWrapper,
