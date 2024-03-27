@@ -1,0 +1,1414 @@
+interactions:
+- request:
+    body: '{"model": "gpt-4-turbo-preview", "instructions": "You are a personal math
+      tutor. Write and run code to answer math questions.", "name": "Math Tutor",
+      "tools": [{"type": "code_interpreter"}]}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '190'
+      content-type:
+      - application/json
+      host:
+      - api.openai.com
+      openai-beta:
+      - assistants=v1
+      user-agent:
+      - OpenAI/Python 1.14.3
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.14.3
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.12.1
+    method: POST
+    uri: https://api.openai.com/v1/assistants
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAAyyPzU7DMBCE73mKlc+kUqS2KLnyIwHlBAhRhKJtvG2NEttdr4lQlHdHdrjsYeab
+        Ge1UACijVQMKQ5DW7152dzfjejgf6+Hpdn95c4/3+9ODukqgO3xTJ/+wCYJWFqNjQiHdYjKr66ra
+        bDf1ts6exYFS5BnlDK9RHC8ZTaFj48U4qxqwse+zPDhNfeJPXsp1KZEPrvRMP4bGJWhsEI5dCoYE
+        frgIyAQInjg4iz0MaUvS1gre2QgBWg0cLXROE4gDtGEkXsBLpJDbVsuAONen5s8CAGDKN8m/Pj+S
+        KlpjhdgzCbHKwFwAfOX40fTUGp0bFmUgQY2CqoFpLuY/AAAA//8DAPzSqOR1AQAA
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 86b19e2d3a151901-FRA
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Wed, 27 Mar 2024 18:59:29 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=ZLwRr2gVrANVYxmSYrpZve.05Tl5R4KqD2IPXbz9QQM-1711565969-1.0.1.1-tLZNHH5l4eexz26X9_z3cCXqcgHXXmHwa9hvfBUNCC72eX9AV_YSzHBPJzYE96b6xsvbLMhuKkubRQiRU2ZXhg;
+        path=/; expires=Wed, 27-Mar-24 19:29:29 GMT; domain=.api.openai.com; HttpOnly;
+        Secure; SameSite=None
+      - _cfuvid=E_TV0sxiEiZjxprNdcabksbj0uJ_HOnnSlmnkqd3nCQ-1711565969735-0.0.1.1-604800000;
+        path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
+      Transfer-Encoding:
+      - chunked
+      alt-svc:
+      - h3=":443"; ma=86400
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '105'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=15724800; includeSubDomains
+      x-request-id:
+      - req_a422c82f3e49ada541ab0dfcd8e8dd65
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '2'
+      content-type:
+      - application/json
+      cookie:
+      - __cf_bm=ZLwRr2gVrANVYxmSYrpZve.05Tl5R4KqD2IPXbz9QQM-1711565969-1.0.1.1-tLZNHH5l4eexz26X9_z3cCXqcgHXXmHwa9hvfBUNCC72eX9AV_YSzHBPJzYE96b6xsvbLMhuKkubRQiRU2ZXhg;
+        _cfuvid=E_TV0sxiEiZjxprNdcabksbj0uJ_HOnnSlmnkqd3nCQ-1711565969735-0.0.1.1-604800000
+      host:
+      - api.openai.com
+      openai-beta:
+      - assistants=v1
+      user-agent:
+      - OpenAI/Python 1.14.3
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.14.3
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.12.1
+    method: POST
+    uri: https://api.openai.com/v1/threads
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA6rmUlBQykxRslJQKskoSk1MiTf1tAxLSXf1jDJ3TAlx9Q7JrSgLcgtM91LSASnN
+        T8pKTS5BKIeIJhelJpakpsQngmQMzQ0NTc1MLc0swXK5qSWJKYkliUpWCtW1XLUAAAAA//8DAKCg
+        iBZxAAAA
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 86b19e2f6c181901-FRA
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Wed, 27 Mar 2024 18:59:30 GMT
+      Server:
+      - cloudflare
+      Transfer-Encoding:
+      - chunked
+      alt-svc:
+      - h3=":443"; ma=86400
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '33'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=15724800; includeSubDomains
+      x-request-id:
+      - req_e5c3ec57c42c2f53199f6487c569a23b
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"content": "I need to solve the equation `3x + 11 = 14`. Can you help
+      me?", "role": "user"}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '92'
+      content-type:
+      - application/json
+      cookie:
+      - __cf_bm=ZLwRr2gVrANVYxmSYrpZve.05Tl5R4KqD2IPXbz9QQM-1711565969-1.0.1.1-tLZNHH5l4eexz26X9_z3cCXqcgHXXmHwa9hvfBUNCC72eX9AV_YSzHBPJzYE96b6xsvbLMhuKkubRQiRU2ZXhg;
+        _cfuvid=E_TV0sxiEiZjxprNdcabksbj0uJ_HOnnSlmnkqd3nCQ-1711565969735-0.0.1.1-604800000
+      host:
+      - api.openai.com
+      openai-beta:
+      - assistants=v1
+      user-agent:
+      - OpenAI/Python 1.14.3
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.14.3
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.12.1
+    method: POST
+    uri: https://api.openai.com/v1/threads/thread_5I9VdgEIZ7AdTEKTmxvRFQgJ/messages
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA1yQT0/CQBDF7/0Uk141xFX+CIkxxmAE5IAQjRpSxu5Qara72J1tIKTf3ewWOHiZ
+        ZN78Zt7LHCKAOJfxAOLCZslaXBcv08n7bZXOP3j8nE7NrN11GF96znz/UMqe5U1JKFsFWYsZNdO0
+        JGSSCXpC9ITodDv93lWYobW5ZdScBC/tlAp6c6cRT01n1H+T2XD02XuQi+FkUeyq16dZNm5cSqf/
+        3SiNIr/uLJXHJEYzaR/jKwIAOITq7fbbgDLtOKCN6rvBmQKIK1QugCPQRBLYgDWqIuANAf065Nxo
+        WN3s4AKEgDsQ7VULHlHD3jjYkNpCQfdnB/8ArQ2HNetjLY+TOjrVZUi+zhUluWyYoBTEKJHRB6yj
+        +g8AAP//AwDCTEHosAEAAA==
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 86b19e312e491901-FRA
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Wed, 27 Mar 2024 18:59:30 GMT
+      Server:
+      - cloudflare
+      Transfer-Encoding:
+      - chunked
+      alt-svc:
+      - h3=":443"; ma=86400
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '115'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=15724800; includeSubDomains
+      x-request-id:
+      - req_f0b354c2ba7230c9e3e2928858e694c5
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"assistant_id": "asst_pLSLECw4mhf9mKDZqUoJFZgI", "instructions": "Please
+      address the user as Jane Doe. The user has a premium account.", "stream": true}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '153'
+      content-type:
+      - application/json
+      cookie:
+      - __cf_bm=ZLwRr2gVrANVYxmSYrpZve.05Tl5R4KqD2IPXbz9QQM-1711565969-1.0.1.1-tLZNHH5l4eexz26X9_z3cCXqcgHXXmHwa9hvfBUNCC72eX9AV_YSzHBPJzYE96b6xsvbLMhuKkubRQiRU2ZXhg;
+        _cfuvid=E_TV0sxiEiZjxprNdcabksbj0uJ_HOnnSlmnkqd3nCQ-1711565969735-0.0.1.1-604800000
+      host:
+      - api.openai.com
+      openai-beta:
+      - assistants=v1
+      user-agent:
+      - OpenAI/Python 1.14.3
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - 'false'
+      x-stainless-custom-event-handler:
+      - 'true'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.14.3
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.12.1
+      x-stainless-stream-helper:
+      - threads.runs.create_and_stream
+    method: POST
+    uri: https://api.openai.com/v1/threads/thread_5I9VdgEIZ7AdTEKTmxvRFQgJ/runs
+  response:
+    body:
+      string: 'event: thread.run.created
+
+        data: {"id":"run_nZIoGKw73JNucZ0IdmOZiKmA","object":"thread.run","created_at":1711565970,"assistant_id":"asst_pLSLECw4mhf9mKDZqUoJFZgI","thread_id":"thread_5I9VdgEIZ7AdTEKTmxvRFQgJ","status":"queued","started_at":null,"expires_at":1711566570,"cancelled_at":null,"failed_at":null,"completed_at":null,"required_action":null,"last_error":null,"model":"gpt-4-turbo-preview","instructions":"Please
+        address the user as Jane Doe. The user has a premium account.","tools":[{"type":"code_interpreter"}],"file_ids":[],"metadata":{},"usage":null}
+
+
+        event: thread.run.queued
+
+        data: {"id":"run_nZIoGKw73JNucZ0IdmOZiKmA","object":"thread.run","created_at":1711565970,"assistant_id":"asst_pLSLECw4mhf9mKDZqUoJFZgI","thread_id":"thread_5I9VdgEIZ7AdTEKTmxvRFQgJ","status":"queued","started_at":null,"expires_at":1711566570,"cancelled_at":null,"failed_at":null,"completed_at":null,"required_action":null,"last_error":null,"model":"gpt-4-turbo-preview","instructions":"Please
+        address the user as Jane Doe. The user has a premium account.","tools":[{"type":"code_interpreter"}],"file_ids":[],"metadata":{},"usage":null}
+
+
+        event: thread.run.in_progress
+
+        data: {"id":"run_nZIoGKw73JNucZ0IdmOZiKmA","object":"thread.run","created_at":1711565970,"assistant_id":"asst_pLSLECw4mhf9mKDZqUoJFZgI","thread_id":"thread_5I9VdgEIZ7AdTEKTmxvRFQgJ","status":"in_progress","started_at":1711565970,"expires_at":1711566570,"cancelled_at":null,"failed_at":null,"completed_at":null,"required_action":null,"last_error":null,"model":"gpt-4-turbo-preview","instructions":"Please
+        address the user as Jane Doe. The user has a premium account.","tools":[{"type":"code_interpreter"}],"file_ids":[],"metadata":{},"usage":null}
+
+
+        event: thread.run.step.created
+
+        data: {"id":"step_EnrLyC8GiOql4FlDJzQHLUCI","object":"thread.run.step","created_at":1711565971,"run_id":"run_nZIoGKw73JNucZ0IdmOZiKmA","assistant_id":"asst_pLSLECw4mhf9mKDZqUoJFZgI","thread_id":"thread_5I9VdgEIZ7AdTEKTmxvRFQgJ","type":"message_creation","status":"in_progress","cancelled_at":null,"completed_at":null,"expires_at":1711566570,"failed_at":null,"last_error":null,"step_details":{"type":"message_creation","message_creation":{"message_id":"msg_zfjym99gKhhrtA3Rn4UpQTw3"}},"usage":null}
+
+
+        event: thread.run.step.in_progress
+
+        data: {"id":"step_EnrLyC8GiOql4FlDJzQHLUCI","object":"thread.run.step","created_at":1711565971,"run_id":"run_nZIoGKw73JNucZ0IdmOZiKmA","assistant_id":"asst_pLSLECw4mhf9mKDZqUoJFZgI","thread_id":"thread_5I9VdgEIZ7AdTEKTmxvRFQgJ","type":"message_creation","status":"in_progress","cancelled_at":null,"completed_at":null,"expires_at":1711566570,"failed_at":null,"last_error":null,"step_details":{"type":"message_creation","message_creation":{"message_id":"msg_zfjym99gKhhrtA3Rn4UpQTw3"}},"usage":null}
+
+
+        event: thread.message.created
+
+        data: {"id":"msg_zfjym99gKhhrtA3Rn4UpQTw3","object":"thread.message","created_at":1711565971,"assistant_id":"asst_pLSLECw4mhf9mKDZqUoJFZgI","thread_id":"thread_5I9VdgEIZ7AdTEKTmxvRFQgJ","run_id":"run_nZIoGKw73JNucZ0IdmOZiKmA","status":"in_progress","incomplete_details":null,"incomplete_at":null,"completed_at":null,"role":"assistant","content":[],"file_ids":[],"metadata":{}}
+
+
+        event: thread.message.in_progress
+
+        data: {"id":"msg_zfjym99gKhhrtA3Rn4UpQTw3","object":"thread.message","created_at":1711565971,"assistant_id":"asst_pLSLECw4mhf9mKDZqUoJFZgI","thread_id":"thread_5I9VdgEIZ7AdTEKTmxvRFQgJ","run_id":"run_nZIoGKw73JNucZ0IdmOZiKmA","status":"in_progress","incomplete_details":null,"incomplete_at":null,"completed_at":null,"role":"assistant","content":[],"file_ids":[],"metadata":{}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_zfjym99gKhhrtA3Rn4UpQTw3","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"Of","annotations":[]}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_zfjym99gKhhrtA3Rn4UpQTw3","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"
+        course"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_zfjym99gKhhrtA3Rn4UpQTw3","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":","}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_zfjym99gKhhrtA3Rn4UpQTw3","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"
+        Jane"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_zfjym99gKhhrtA3Rn4UpQTw3","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"
+        Doe"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_zfjym99gKhhrtA3Rn4UpQTw3","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"."}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_zfjym99gKhhrtA3Rn4UpQTw3","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"
+        To"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_zfjym99gKhhrtA3Rn4UpQTw3","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"
+        solve"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_zfjym99gKhhrtA3Rn4UpQTw3","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"
+        the"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_zfjym99gKhhrtA3Rn4UpQTw3","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"
+        equation"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_zfjym99gKhhrtA3Rn4UpQTw3","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"
+        \\("}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_zfjym99gKhhrtA3Rn4UpQTw3","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"3"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_zfjym99gKhhrtA3Rn4UpQTw3","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"x"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_zfjym99gKhhrtA3Rn4UpQTw3","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"
+        +"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_zfjym99gKhhrtA3Rn4UpQTw3","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"
+        "}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_zfjym99gKhhrtA3Rn4UpQTw3","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"11"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_zfjym99gKhhrtA3Rn4UpQTw3","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"
+        ="}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_zfjym99gKhhrtA3Rn4UpQTw3","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"
+        "}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_zfjym99gKhhrtA3Rn4UpQTw3","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"14"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_zfjym99gKhhrtA3Rn4UpQTw3","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"\\"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_zfjym99gKhhrtA3Rn4UpQTw3","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"),"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_zfjym99gKhhrtA3Rn4UpQTw3","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"
+        we"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_zfjym99gKhhrtA3Rn4UpQTw3","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"
+        need"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_zfjym99gKhhrtA3Rn4UpQTw3","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"
+        to"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_zfjym99gKhhrtA3Rn4UpQTw3","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"
+        isolate"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_zfjym99gKhhrtA3Rn4UpQTw3","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"
+        \\("}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_zfjym99gKhhrtA3Rn4UpQTw3","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"x"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_zfjym99gKhhrtA3Rn4UpQTw3","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"\\"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_zfjym99gKhhrtA3Rn4UpQTw3","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":")."}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_zfjym99gKhhrtA3Rn4UpQTw3","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"
+        This"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_zfjym99gKhhrtA3Rn4UpQTw3","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"
+        involves"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_zfjym99gKhhrtA3Rn4UpQTw3","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"
+        two"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_zfjym99gKhhrtA3Rn4UpQTw3","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"
+        steps"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_zfjym99gKhhrtA3Rn4UpQTw3","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":":\n\n"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_zfjym99gKhhrtA3Rn4UpQTw3","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"1"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_zfjym99gKhhrtA3Rn4UpQTw3","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"."}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_zfjym99gKhhrtA3Rn4UpQTw3","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"
+        Subtract"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_zfjym99gKhhrtA3Rn4UpQTw3","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"
+        "}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_zfjym99gKhhrtA3Rn4UpQTw3","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"11"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_zfjym99gKhhrtA3Rn4UpQTw3","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"
+        from"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_zfjym99gKhhrtA3Rn4UpQTw3","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"
+        both"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_zfjym99gKhhrtA3Rn4UpQTw3","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"
+        sides"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_zfjym99gKhhrtA3Rn4UpQTw3","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"
+        of"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_zfjym99gKhhrtA3Rn4UpQTw3","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"
+        the"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_zfjym99gKhhrtA3Rn4UpQTw3","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"
+        equation"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_zfjym99gKhhrtA3Rn4UpQTw3","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"
+        to"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_zfjym99gKhhrtA3Rn4UpQTw3","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"
+        get"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_zfjym99gKhhrtA3Rn4UpQTw3","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"
+        rid"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_zfjym99gKhhrtA3Rn4UpQTw3","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"
+        of"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_zfjym99gKhhrtA3Rn4UpQTw3","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"
+        the"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_zfjym99gKhhrtA3Rn4UpQTw3","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"
+        +"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_zfjym99gKhhrtA3Rn4UpQTw3","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"11"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_zfjym99gKhhrtA3Rn4UpQTw3","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"
+        on"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_zfjym99gKhhrtA3Rn4UpQTw3","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"
+        the"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_zfjym99gKhhrtA3Rn4UpQTw3","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"
+        left"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_zfjym99gKhhrtA3Rn4UpQTw3","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"
+        side"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_zfjym99gKhhrtA3Rn4UpQTw3","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":".\n"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_zfjym99gKhhrtA3Rn4UpQTw3","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"2"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_zfjym99gKhhrtA3Rn4UpQTw3","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"."}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_zfjym99gKhhrtA3Rn4UpQTw3","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"
+        Divide"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_zfjym99gKhhrtA3Rn4UpQTw3","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"
+        both"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_zfjym99gKhhrtA3Rn4UpQTw3","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"
+        sides"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_zfjym99gKhhrtA3Rn4UpQTw3","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"
+        by"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_zfjym99gKhhrtA3Rn4UpQTw3","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"
+        "}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_zfjym99gKhhrtA3Rn4UpQTw3","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"3"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_zfjym99gKhhrtA3Rn4UpQTw3","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"
+        to"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_zfjym99gKhhrtA3Rn4UpQTw3","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"
+        solve"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_zfjym99gKhhrtA3Rn4UpQTw3","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"
+        for"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_zfjym99gKhhrtA3Rn4UpQTw3","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"
+        \\("}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_zfjym99gKhhrtA3Rn4UpQTw3","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"x"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_zfjym99gKhhrtA3Rn4UpQTw3","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"\\"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_zfjym99gKhhrtA3Rn4UpQTw3","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":").\n\n"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_zfjym99gKhhrtA3Rn4UpQTw3","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"Let"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_zfjym99gKhhrtA3Rn4UpQTw3","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"''s"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_zfjym99gKhhrtA3Rn4UpQTw3","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"
+        solve"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_zfjym99gKhhrtA3Rn4UpQTw3","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"
+        it"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_zfjym99gKhhrtA3Rn4UpQTw3","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"
+        step"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_zfjym99gKhhrtA3Rn4UpQTw3","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"
+        by"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_zfjym99gKhhrtA3Rn4UpQTw3","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"
+        step"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_zfjym99gKhhrtA3Rn4UpQTw3","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"."}}]}}
+
+
+        event: thread.message.completed
+
+        data: {"id":"msg_zfjym99gKhhrtA3Rn4UpQTw3","object":"thread.message","created_at":1711565971,"assistant_id":"asst_pLSLECw4mhf9mKDZqUoJFZgI","thread_id":"thread_5I9VdgEIZ7AdTEKTmxvRFQgJ","run_id":"run_nZIoGKw73JNucZ0IdmOZiKmA","status":"completed","incomplete_details":null,"incomplete_at":null,"completed_at":1711565975,"role":"assistant","content":[{"type":"text","text":{"value":"Of
+        course, Jane Doe. To solve the equation \\(3x + 11 = 14\\), we need to isolate
+        \\(x\\). This involves two steps:\n\n1. Subtract 11 from both sides of the
+        equation to get rid of the +11 on the left side.\n2. Divide both sides by
+        3 to solve for \\(x\\).\n\nLet''s solve it step by step.","annotations":[]}}],"file_ids":[],"metadata":{}}
+
+
+        event: thread.run.step.completed
+
+        data: {"id":"step_EnrLyC8GiOql4FlDJzQHLUCI","object":"thread.run.step","created_at":1711565971,"run_id":"run_nZIoGKw73JNucZ0IdmOZiKmA","assistant_id":"asst_pLSLECw4mhf9mKDZqUoJFZgI","thread_id":"thread_5I9VdgEIZ7AdTEKTmxvRFQgJ","type":"message_creation","status":"completed","cancelled_at":null,"completed_at":1711565976,"expires_at":1711566570,"failed_at":null,"last_error":null,"step_details":{"type":"message_creation","message_creation":{"message_id":"msg_zfjym99gKhhrtA3Rn4UpQTw3"}},"usage":{"prompt_tokens":145,"completion_tokens":82,"total_tokens":227}}
+
+
+        event: thread.run.step.created
+
+        data: {"id":"step_zwAc2i3u10tGWWoi5shoVcL8","object":"thread.run.step","created_at":1711565976,"run_id":"run_nZIoGKw73JNucZ0IdmOZiKmA","assistant_id":"asst_pLSLECw4mhf9mKDZqUoJFZgI","thread_id":"thread_5I9VdgEIZ7AdTEKTmxvRFQgJ","type":"tool_calls","status":"in_progress","cancelled_at":null,"completed_at":null,"expires_at":1711566570,"failed_at":null,"last_error":null,"step_details":{"type":"tool_calls","tool_calls":[]},"usage":null}
+
+
+        event: thread.run.step.in_progress
+
+        data: {"id":"step_zwAc2i3u10tGWWoi5shoVcL8","object":"thread.run.step","created_at":1711565976,"run_id":"run_nZIoGKw73JNucZ0IdmOZiKmA","assistant_id":"asst_pLSLECw4mhf9mKDZqUoJFZgI","thread_id":"thread_5I9VdgEIZ7AdTEKTmxvRFQgJ","type":"tool_calls","status":"in_progress","cancelled_at":null,"completed_at":null,"expires_at":1711566570,"failed_at":null,"last_error":null,"step_details":{"type":"tool_calls","tool_calls":[]},"usage":null}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_zwAc2i3u10tGWWoi5shoVcL8","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"id":"call_yQ8bX4TCFUnbC8X6lKY52tOu","type":"code_interpreter","code_interpreter":{"input":"","outputs":[]}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_zwAc2i3u10tGWWoi5shoVcL8","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":"from"}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_zwAc2i3u10tGWWoi5shoVcL8","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":"
+        symp"}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_zwAc2i3u10tGWWoi5shoVcL8","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":"y"}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_zwAc2i3u10tGWWoi5shoVcL8","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":"
+        import"}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_zwAc2i3u10tGWWoi5shoVcL8","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":"
+        symbols"}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_zwAc2i3u10tGWWoi5shoVcL8","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":","}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_zwAc2i3u10tGWWoi5shoVcL8","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":"
+        Eq"}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_zwAc2i3u10tGWWoi5shoVcL8","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":","}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_zwAc2i3u10tGWWoi5shoVcL8","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":"
+        solve"}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_zwAc2i3u10tGWWoi5shoVcL8","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":"\n\n"}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_zwAc2i3u10tGWWoi5shoVcL8","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":"#"}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_zwAc2i3u10tGWWoi5shoVcL8","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":"
+        Define"}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_zwAc2i3u10tGWWoi5shoVcL8","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":"
+        the"}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_zwAc2i3u10tGWWoi5shoVcL8","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":"
+        symbol"}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_zwAc2i3u10tGWWoi5shoVcL8","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":"\n"}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_zwAc2i3u10tGWWoi5shoVcL8","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":"x"}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_zwAc2i3u10tGWWoi5shoVcL8","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":"
+        ="}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_zwAc2i3u10tGWWoi5shoVcL8","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":"
+        symbols"}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_zwAc2i3u10tGWWoi5shoVcL8","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":"(''"}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_zwAc2i3u10tGWWoi5shoVcL8","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":"x"}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_zwAc2i3u10tGWWoi5shoVcL8","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":"'')\n\n"}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_zwAc2i3u10tGWWoi5shoVcL8","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":"#"}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_zwAc2i3u10tGWWoi5shoVcL8","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":"
+        Define"}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_zwAc2i3u10tGWWoi5shoVcL8","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":"
+        the"}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_zwAc2i3u10tGWWoi5shoVcL8","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":"
+        equation"}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_zwAc2i3u10tGWWoi5shoVcL8","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":"\n"}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_zwAc2i3u10tGWWoi5shoVcL8","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":"equ"}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_zwAc2i3u10tGWWoi5shoVcL8","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":"ation"}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_zwAc2i3u10tGWWoi5shoVcL8","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":"
+        ="}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_zwAc2i3u10tGWWoi5shoVcL8","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":"
+        Eq"}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_zwAc2i3u10tGWWoi5shoVcL8","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":"("}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_zwAc2i3u10tGWWoi5shoVcL8","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":"3"}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_zwAc2i3u10tGWWoi5shoVcL8","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":"*x"}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_zwAc2i3u10tGWWoi5shoVcL8","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":"
+        +"}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_zwAc2i3u10tGWWoi5shoVcL8","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":"
+        "}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_zwAc2i3u10tGWWoi5shoVcL8","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":"11"}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_zwAc2i3u10tGWWoi5shoVcL8","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":","}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_zwAc2i3u10tGWWoi5shoVcL8","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":"
+        "}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_zwAc2i3u10tGWWoi5shoVcL8","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":"14"}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_zwAc2i3u10tGWWoi5shoVcL8","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":")\n\n"}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_zwAc2i3u10tGWWoi5shoVcL8","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":"#"}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_zwAc2i3u10tGWWoi5shoVcL8","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":"
+        Solve"}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_zwAc2i3u10tGWWoi5shoVcL8","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":"
+        the"}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_zwAc2i3u10tGWWoi5shoVcL8","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":"
+        equation"}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_zwAc2i3u10tGWWoi5shoVcL8","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":"\n"}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_zwAc2i3u10tGWWoi5shoVcL8","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":"solution"}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_zwAc2i3u10tGWWoi5shoVcL8","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":"
+        ="}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_zwAc2i3u10tGWWoi5shoVcL8","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":"
+        solve"}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_zwAc2i3u10tGWWoi5shoVcL8","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":"(e"}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_zwAc2i3u10tGWWoi5shoVcL8","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":"qu"}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_zwAc2i3u10tGWWoi5shoVcL8","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":"ation"}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_zwAc2i3u10tGWWoi5shoVcL8","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":","}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_zwAc2i3u10tGWWoi5shoVcL8","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":"
+        x"}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_zwAc2i3u10tGWWoi5shoVcL8","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":")\n"}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_zwAc2i3u10tGWWoi5shoVcL8","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":"solution"}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_zwAc2i3u10tGWWoi5shoVcL8","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"outputs":[{"index":0,"type":"logs","logs":"[1]"}]}}]}}}
+
+
+        event: thread.run.step.completed
+
+        data: {"id":"step_zwAc2i3u10tGWWoi5shoVcL8","object":"thread.run.step","created_at":1711565976,"run_id":"run_nZIoGKw73JNucZ0IdmOZiKmA","assistant_id":"asst_pLSLECw4mhf9mKDZqUoJFZgI","thread_id":"thread_5I9VdgEIZ7AdTEKTmxvRFQgJ","type":"tool_calls","status":"completed","cancelled_at":null,"completed_at":1711565986,"expires_at":1711566570,"failed_at":null,"last_error":null,"step_details":{"type":"tool_calls","tool_calls":[{"id":"call_yQ8bX4TCFUnbC8X6lKY52tOu","type":"code_interpreter","code_interpreter":{"input":"from
+        sympy import symbols, Eq, solve\n\n# Define the symbol\nx = symbols(''x'')\n\n#
+        Define the equation\nequation = Eq(3*x + 11, 14)\n\n# Solve the equation\nsolution
+        = solve(equation, x)\nsolution","outputs":[{"type":"logs","logs":"[1]"}]}}]},"usage":{"prompt_tokens":229,"completion_tokens":61,"total_tokens":290}}
+
+
+        event: thread.run.step.created
+
+        data: {"id":"step_BYV8kCea0TGNVc3vFdCV8Z65","object":"thread.run.step","created_at":1711565986,"run_id":"run_nZIoGKw73JNucZ0IdmOZiKmA","assistant_id":"asst_pLSLECw4mhf9mKDZqUoJFZgI","thread_id":"thread_5I9VdgEIZ7AdTEKTmxvRFQgJ","type":"message_creation","status":"in_progress","cancelled_at":null,"completed_at":null,"expires_at":1711566570,"failed_at":null,"last_error":null,"step_details":{"type":"message_creation","message_creation":{"message_id":"msg_g0QemiiTfaLVHlZHhbN6hyTD"}},"usage":null}
+
+
+        event: thread.run.step.in_progress
+
+        data: {"id":"step_BYV8kCea0TGNVc3vFdCV8Z65","object":"thread.run.step","created_at":1711565986,"run_id":"run_nZIoGKw73JNucZ0IdmOZiKmA","assistant_id":"asst_pLSLECw4mhf9mKDZqUoJFZgI","thread_id":"thread_5I9VdgEIZ7AdTEKTmxvRFQgJ","type":"message_creation","status":"in_progress","cancelled_at":null,"completed_at":null,"expires_at":1711566570,"failed_at":null,"last_error":null,"step_details":{"type":"message_creation","message_creation":{"message_id":"msg_g0QemiiTfaLVHlZHhbN6hyTD"}},"usage":null}
+
+
+        event: thread.message.created
+
+        data: {"id":"msg_g0QemiiTfaLVHlZHhbN6hyTD","object":"thread.message","created_at":1711565986,"assistant_id":"asst_pLSLECw4mhf9mKDZqUoJFZgI","thread_id":"thread_5I9VdgEIZ7AdTEKTmxvRFQgJ","run_id":"run_nZIoGKw73JNucZ0IdmOZiKmA","status":"in_progress","incomplete_details":null,"incomplete_at":null,"completed_at":null,"role":"assistant","content":[],"file_ids":[],"metadata":{}}
+
+
+        event: thread.message.in_progress
+
+        data: {"id":"msg_g0QemiiTfaLVHlZHhbN6hyTD","object":"thread.message","created_at":1711565986,"assistant_id":"asst_pLSLECw4mhf9mKDZqUoJFZgI","thread_id":"thread_5I9VdgEIZ7AdTEKTmxvRFQgJ","run_id":"run_nZIoGKw73JNucZ0IdmOZiKmA","status":"in_progress","incomplete_details":null,"incomplete_at":null,"completed_at":null,"role":"assistant","content":[],"file_ids":[],"metadata":{}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_g0QemiiTfaLVHlZHhbN6hyTD","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"The","annotations":[]}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_g0QemiiTfaLVHlZHhbN6hyTD","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"
+        solution"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_g0QemiiTfaLVHlZHhbN6hyTD","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"
+        to"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_g0QemiiTfaLVHlZHhbN6hyTD","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"
+        the"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_g0QemiiTfaLVHlZHhbN6hyTD","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"
+        equation"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_g0QemiiTfaLVHlZHhbN6hyTD","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"
+        \\("}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_g0QemiiTfaLVHlZHhbN6hyTD","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"3"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_g0QemiiTfaLVHlZHhbN6hyTD","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"x"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_g0QemiiTfaLVHlZHhbN6hyTD","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"
+        +"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_g0QemiiTfaLVHlZHhbN6hyTD","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"
+        "}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_g0QemiiTfaLVHlZHhbN6hyTD","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"11"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_g0QemiiTfaLVHlZHhbN6hyTD","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"
+        ="}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_g0QemiiTfaLVHlZHhbN6hyTD","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"
+        "}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_g0QemiiTfaLVHlZHhbN6hyTD","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"14"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_g0QemiiTfaLVHlZHhbN6hyTD","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"\\)"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_g0QemiiTfaLVHlZHhbN6hyTD","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"
+        is"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_g0QemiiTfaLVHlZHhbN6hyTD","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"
+        \\("}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_g0QemiiTfaLVHlZHhbN6hyTD","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"x"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_g0QemiiTfaLVHlZHhbN6hyTD","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"
+        ="}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_g0QemiiTfaLVHlZHhbN6hyTD","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"
+        "}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_g0QemiiTfaLVHlZHhbN6hyTD","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"1"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_g0QemiiTfaLVHlZHhbN6hyTD","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"\\"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_g0QemiiTfaLVHlZHhbN6hyTD","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":")."}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_g0QemiiTfaLVHlZHhbN6hyTD","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"
+        If"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_g0QemiiTfaLVHlZHhbN6hyTD","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"
+        you"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_g0QemiiTfaLVHlZHhbN6hyTD","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"
+        have"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_g0QemiiTfaLVHlZHhbN6hyTD","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"
+        any"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_g0QemiiTfaLVHlZHhbN6hyTD","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"
+        more"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_g0QemiiTfaLVHlZHhbN6hyTD","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"
+        questions"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_g0QemiiTfaLVHlZHhbN6hyTD","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"
+        or"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_g0QemiiTfaLVHlZHhbN6hyTD","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"
+        need"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_g0QemiiTfaLVHlZHhbN6hyTD","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"
+        further"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_g0QemiiTfaLVHlZHhbN6hyTD","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"
+        assistance"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_g0QemiiTfaLVHlZHhbN6hyTD","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":","}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_g0QemiiTfaLVHlZHhbN6hyTD","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"
+        feel"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_g0QemiiTfaLVHlZHhbN6hyTD","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"
+        free"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_g0QemiiTfaLVHlZHhbN6hyTD","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"
+        to"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_g0QemiiTfaLVHlZHhbN6hyTD","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"
+        ask"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_g0QemiiTfaLVHlZHhbN6hyTD","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"!"}}]}}
+
+
+        event: thread.message.completed
+
+        data: {"id":"msg_g0QemiiTfaLVHlZHhbN6hyTD","object":"thread.message","created_at":1711565986,"assistant_id":"asst_pLSLECw4mhf9mKDZqUoJFZgI","thread_id":"thread_5I9VdgEIZ7AdTEKTmxvRFQgJ","run_id":"run_nZIoGKw73JNucZ0IdmOZiKmA","status":"completed","incomplete_details":null,"incomplete_at":null,"completed_at":1711565988,"role":"assistant","content":[{"type":"text","text":{"value":"The
+        solution to the equation \\(3x + 11 = 14\\) is \\(x = 1\\). If you have any
+        more questions or need further assistance, feel free to ask!","annotations":[]}}],"file_ids":[],"metadata":{}}
+
+
+        event: thread.run.step.completed
+
+        data: {"id":"step_BYV8kCea0TGNVc3vFdCV8Z65","object":"thread.run.step","created_at":1711565986,"run_id":"run_nZIoGKw73JNucZ0IdmOZiKmA","assistant_id":"asst_pLSLECw4mhf9mKDZqUoJFZgI","thread_id":"thread_5I9VdgEIZ7AdTEKTmxvRFQgJ","type":"message_creation","status":"completed","cancelled_at":null,"completed_at":1711565988,"expires_at":1711566570,"failed_at":null,"last_error":null,"step_details":{"type":"message_creation","message_creation":{"message_id":"msg_g0QemiiTfaLVHlZHhbN6hyTD"}},"usage":{"prompt_tokens":301,"completion_tokens":41,"total_tokens":342}}
+
+
+        event: thread.run.completed
+
+        data: {"id":"run_nZIoGKw73JNucZ0IdmOZiKmA","object":"thread.run","created_at":1711565970,"assistant_id":"asst_pLSLECw4mhf9mKDZqUoJFZgI","thread_id":"thread_5I9VdgEIZ7AdTEKTmxvRFQgJ","status":"completed","started_at":1711565970,"expires_at":null,"cancelled_at":null,"failed_at":null,"completed_at":1711565989,"required_action":null,"last_error":null,"model":"gpt-4-turbo-preview","instructions":"Please
+        address the user as Jane Doe. The user has a premium account.","tools":[{"type":"code_interpreter"}],"file_ids":[],"metadata":{},"usage":{"prompt_tokens":675,"completion_tokens":184,"total_tokens":859}}
+
+
+        event: done
+
+        data: [DONE]
+
+
+        '
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 86b19e3368b01901-FRA
+      Connection:
+      - keep-alive
+      Content-Type:
+      - text/event-stream; charset=utf-8
+      Date:
+      - Wed, 27 Mar 2024 18:59:30 GMT
+      Server:
+      - cloudflare
+      Transfer-Encoding:
+      - chunked
+      alt-svc:
+      - h3=":443"; ma=86400
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '337'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=15724800; includeSubDomains
+      x-request-id:
+      - req_017c1f0c65dffdb0b354fd4e0a7c1ea9
+    status:
+      code: 200
+      message: OK
+version: 1
