@@ -15,7 +15,7 @@ def exporter():
     provider.add_span_processor(processor)
     trace.set_tracer_provider(provider)
 
-    OpenAIInstrumentor().instrument()
+    OpenAIInstrumentor(enrich_assistant=True).instrument()
 
     return exporter
 
