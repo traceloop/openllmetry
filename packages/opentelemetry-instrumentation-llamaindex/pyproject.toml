@@ -32,7 +32,7 @@ inflection = "^0.5.1"
 tiktoken = "^0.6.0"
 
 [tool.poetry.group.dev.dependencies]
-autopep8 = "2.0.4"
+autopep8 = "2.1.0"
 flake8 = "7.0.0"
 
 [tool.poetry.group.test.dependencies]
