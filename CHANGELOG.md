@@ -1,3 +1,10 @@
+## v0.15.3 (2024-03-28)
+
+### Fix
+
+- instrumentation deps without the SDK (#707)
+- **langchain**: support custom models (#706)
+
 ## v0.15.2 (2024-03-27)
 
 ### Fix
