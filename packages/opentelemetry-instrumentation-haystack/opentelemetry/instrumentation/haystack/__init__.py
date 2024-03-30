@@ -18,7 +18,7 @@ from opentelemetry.instrumentation.haystack.version import __version__
 
 logger = logging.getLogger(__name__)
 
-_instruments = ("farm-haystack >= 1.20.1",)
+_instruments = ("haystack-ai >= 2.0.0",)
 
 WRAPPED_METHODS = [
     {

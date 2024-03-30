@@ -36,7 +36,7 @@ pytest = "8.1.0"
 pytest-sugar = "1.0.0"
 
 [tool.poetry.group.test.dependencies]
-farm-haystack = "~1.20.1"
+haystack-ai = "~2.0.0"
 pytest = "8.1.0"
 pytest-sugar = "1.0.0"
 vcrpy = "^6.0.1"
@@ -48,7 +48,7 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.extras]
-instruments = ["farm-haystack"]
+instruments = ["haystack-ai"]
 
 [tool.poetry.plugins."opentelemetry_instrumentor"]
-farm_haystack = "opentelemetry.instrumentation.haystack:HaystackInstrumentor"
+haystack-ai = "opentelemetry.instrumentation.haystack:HaystackInstrumentor"
