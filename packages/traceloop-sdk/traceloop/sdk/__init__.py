@@ -174,7 +174,7 @@ class Traceloop:
         if metrics_exporter:
             print(Fore.GREEN + "Traceloop exporting metrics to a custom exporter")
 
-        metrics_endpoint = os.getenv("TRACELOOP_METRICS_ENDPOINT")
+        metrics_endpoint = os.getenv("TRACELOOP_METRICS_ENDPOINT") or api_endpoint
         metrics_headers = os.getenv("TRACELOOP_METRICS_HEADERS") or metrics_headers
 
         MetricsWrapper.set_static_params(
