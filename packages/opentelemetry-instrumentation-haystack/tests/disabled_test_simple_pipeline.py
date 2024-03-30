@@ -1,31 +1,34 @@
 import os
 import pytest
-from haystack.nodes import PromptNode, PromptTemplate, AnswerParser
-from haystack.pipelines import Pipeline
+from haystack import Pipeline
+from haystack.components.generators import OpenAIChatGenerator
+from haystack.components.builders import DynamicChatPromptBuilder
+from haystack.dataclasses import ChatMessage
 
 
 @pytest.mark.vcr
 def test_haystack(exporter):
-    prompt = PromptTemplate(
-        prompt="Tell me a joke about {query}\n",
-        output_parser=AnswerParser(),
-    )
 
-    prompt_node = PromptNode(
-        model_name_or_path="gpt-4",
-        api_key=os.getenv("OPENAI_API_KEY"),
-        default_prompt_template=prompt,
-    )
+    prompt_builder = DynamicChatPromptBuilder()
+    api_key=os.getenv("OPENAI_API_KEY"),
+    llm = OpenAIChatGenerator(api_key=api_key, model="gpt-4")
 
-    pipeline = Pipeline()
-    pipeline.add_node(component=prompt_node, name="PromptNode", inputs=["Query"])
-    pipeline.run("OpenTelemetry")
+
+    pipe = Pipeline()
+    pipe.add_component("prompt_builder", prompt_builder)
+    pipe.add_component("llm", llm)
+
+    pipe.connect("prompt_builder.prompt", "llm.messages")
+    location = "Berlin"
+    messages = [ChatMessage.from_system("Always respond in German even if some input data is in other languages."),
+                ChatMessage.from_user("Tell me about {{location}}")]
+    pipe.run(data={"prompt_builder": {"template_variables":{"location": location}, "prompt_source": messages}})
+
 
     spans = exporter.get_finished_spans()
     assert set(
         [
             "openai.chat",
-            "PromptNode.task",
             "haystack_pipeline.workflow",
         ]
     ).issubset([span.name for span in spans])
