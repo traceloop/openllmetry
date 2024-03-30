@@ -2,34 +2,28 @@
 
 import json
 import logging
-
+import os
 from typing import Collection
-from wrapt import wrap_function_wrapper
 
+from anthropic._streaming import AsyncStream, Stream
 from opentelemetry import context as context_api
-from opentelemetry.trace import get_tracer, SpanKind
-from opentelemetry.trace.status import Status, StatusCode
-
-from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
-from opentelemetry.instrumentation.utils import (
-    _SUPPRESS_INSTRUMENTATION_KEY,
-    unwrap,
-)
-
-from anthropic._streaming import Stream, AsyncStream
-
-from opentelemetry.semconv.ai import SpanAttributes, LLMRequestTypeValues
-
 from opentelemetry.instrumentation.anthropic.config import Config
 from opentelemetry.instrumentation.anthropic.streaming import (
-    _build_from_streaming_response,
     _abuild_from_streaming_response,
+    _build_from_streaming_response,
 )
 from opentelemetry.instrumentation.anthropic.utils import (
     set_span_attribute,
     should_send_prompts,
 )
 from opentelemetry.instrumentation.anthropic.version import __version__
+from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
+from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY, unwrap
+from opentelemetry.metrics import Counter, Histogram, get_meter
+from opentelemetry.semconv.ai import LLMRequestTypeValues, SpanAttributes
+from opentelemetry.trace import SpanKind, get_tracer
+from opentelemetry.trace.status import Status, StatusCode
+from wrapt import wrap_function_wrapper
 
 logger = logging.getLogger(__name__)
 
@@ -179,9 +173,21 @@ async def _set_token_usage_a(span, anthropic, request, response):
     set_span_attribute(span, SpanAttributes.LLM_USAGE_TOTAL_TOKENS, total_tokens)
 
 
-def _set_token_usage(span, anthropic, request, response):
+def _set_token_usage(
+    span,
+    anthropic,
+    request,
+    response,
+    token_counter: Counter = None,
+    choice_counter: Counter = None,
+):
     if not isinstance(response, dict):
         response = response.__dict__
+
+    shared_attributes = {
+        "llm.response.model": response.get("model") or None,
+        # TODO "server.address": "",
+    }
 
     prompt_tokens = 0
     if request.get("prompt"):
@@ -191,13 +197,41 @@ def _set_token_usage(span, anthropic, request, response):
             [anthropic.count_tokens(m.get("content")) for m in request.get("messages")]
         )
 
+    if token_counter and type(prompt_tokens) is int and prompt_tokens >= 0:
+        token_counter.add(
+            prompt_tokens,
+            attributes={
+                **shared_attributes,
+                "llm.usage.token_type": "prompt",
+            },
+        )
+
     completion_tokens = 0
     if response.get("completion"):
         completion_tokens = anthropic.count_tokens(response.get("completion"))
     elif response.get("content"):
         completion_tokens = anthropic.count_tokens(response.get("content")[0].text)
 
+    if token_counter and type(completion_tokens) is int and completion_tokens >= 0:
+        token_counter.add(
+            completion_tokens,
+            attributes={
+                **shared_attributes,
+                "llm.usage.token_type": "completion",
+            },
+        )
+
     total_tokens = prompt_tokens + completion_tokens
+
+    content = response.get("content")
+    if choice_counter and type(content) is list:
+        choice_counter.add(
+            len(response.get("content")),
+            attributes={
+                **shared_attributes,
+                "llm.response.finish_reason": response.get("stop_reason"),
+            },
+        )
 
     set_span_attribute(span, SpanAttributes.LLM_USAGE_PROMPT_TOKENS, prompt_tokens)
     set_span_attribute(
@@ -240,8 +274,49 @@ def _with_tracer_wrapper(func):
     return _with_tracer
 
 
-@_with_tracer_wrapper
-def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
+def _with_chat_telemetry_wrapper(func):
+    """Helper for providing tracer for wrapper functions. Includes metric collectors."""
+
+    def _with_chat_telemetry(
+        tracer,
+        to_wrap,
+        token_counter: Counter,
+        choice_counter: Counter,
+        duration_histogram: Histogram,
+        exception_counter: Counter,
+    ):
+        def wrapper(wrapped, instance, args, kwargs):
+            return func(
+                tracer,
+                to_wrap,
+                token_counter,
+                choice_counter,
+                duration_histogram,
+                exception_counter,
+                wrapped,
+                instance,
+                args,
+                kwargs,
+            )
+
+        return wrapper
+
+    return _with_chat_telemetry
+
+
+@_with_chat_telemetry_wrapper
+def _wrap(
+    tracer,
+    to_wrap,
+    token_counter: Counter,
+    choice_counter: Counter,
+    duration_histogram: Histogram,
+    exception_counter: Counter,
+    wrapped,
+    instance,
+    args,
+    kwargs,
+):
     """Instruments and calls every function defined in TO_WRAP."""
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
         return wrapped(*args, **kwargs)
@@ -272,7 +347,14 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
         try:
             if span.is_recording():
                 _set_response_attributes(span, response)
-                _set_token_usage(span, instance._client, kwargs, response)
+                _set_token_usage(
+                    span,
+                    instance._client,
+                    kwargs,
+                    response,
+                    token_counter,
+                    choice_counter,
+                )
 
         except Exception as ex:  # pylint: disable=broad-except
             logger.warning(
@@ -330,6 +412,10 @@ async def _awrap(tracer, to_wrap, wrapped, instance, args, kwargs):
     return response
 
 
+def is_metrics_enabled() -> bool:
+    return (os.getenv("TRACELOOP_METRICS_ENABLED") or "true").lower() == "true"
+
+
 class AnthropicInstrumentor(BaseInstrumentor):
     """An instrumentor for Anthropic's client library."""
 
@@ -343,6 +429,43 @@ class AnthropicInstrumentor(BaseInstrumentor):
     def _instrument(self, **kwargs):
         tracer_provider = kwargs.get("tracer_provider")
         tracer = get_tracer(__name__, __version__, tracer_provider)
+
+        # meter and counters are inited here
+        meter_provider = kwargs.get("meter_provider")
+        meter = get_meter(__name__, __version__, meter_provider)
+
+        if is_metrics_enabled():
+            token_counter = meter.create_counter(
+                name="llm.anthropic.completion.tokens",
+                unit="token",
+                description="Number of tokens used in prompt and completions",
+            )
+
+            choice_counter = meter.create_counter(
+                name="llm.anthropic.completion.choices",
+                unit="choice",
+                description="Number of choices returned by chat completions call",
+            )
+
+            duration_histogram = meter.create_histogram(
+                name="llm.anthropic.completion.duration",
+                unit="s",
+                description="Duration of chat completion operation",
+            )
+
+            exception_counter = meter.create_counter(
+                name="llm.anthropic.completion.exceptions",
+                unit="time",
+                description="Number of exceptions occurred during chat completions",
+            )
+        else:
+            (
+                token_counter,
+                choice_counter,
+                duration_histogram,
+                exception_counter,
+            ) = (None, None, None)
+
         for wrapped_method in WRAPPED_METHODS:
             wrap_package = wrapped_method.get("package")
             wrap_object = wrapped_method.get("object")
@@ -351,7 +474,14 @@ class AnthropicInstrumentor(BaseInstrumentor):
                 wrap_function_wrapper(
                     wrap_package,
                     f"{wrap_object}.{wrap_method}",
-                    _wrap(tracer, wrapped_method),
+                    _wrap(
+                        tracer,
+                        wrapped_method,
+                        token_counter,
+                        choice_counter,
+                        duration_histogram,
+                        exception_counter,
+                    ),
                 )
             except ModuleNotFoundError:
                 pass  # that's ok, we don't want to fail if some methods do not exist
