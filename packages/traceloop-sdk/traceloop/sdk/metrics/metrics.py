@@ -49,9 +49,9 @@ class MetricsWrapper(object):
 
 def init_metrics_exporter(endpoint: str, headers: Dict[str, str]) -> MetricExporter:
     if "http" in endpoint.lower() or "https" in endpoint.lower():
-        return HTTPExporter(endpoint=endpoint)
+        return HTTPExporter(endpoint=f"{endpoint}/v1/metrics", headers=headers)
     else:
-        return GRPCExporter(endpoint=endpoint)
+        return GRPCExporter(endpoint=endpoint, headers=headers)
 
 
 def init_metrics_provider(exporter: MetricExporter,
