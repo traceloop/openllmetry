@@ -16,6 +16,7 @@ class JokeAgent:
         completion = client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[{"role": "user", "content": "Tell me a joke about Donald Trump"}],
+            logprobs=True,
         )
 
         return completion.choices[0].message.content
@@ -30,6 +31,7 @@ class PirateJokeAgent(JokeAgent):
                 {"role": "system", "content": "You are a funny sarcastic pirate"},
                 {"role": "user", "content": "Tell me a joke about Donald Trump"},
             ],
+            logprobs=True,
         )
 
         return completion.choices[0].message.content
