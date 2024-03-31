@@ -63,9 +63,9 @@ def _set_response_attributes(span, llm_request_type, response):
 
 
 def _llm_request_type_by_object(object_name):
-    if object_name == "OpenAIInvocationLayer":
+    if object_name == "OpenAIGenerator":
         return LLMRequestTypeValues.COMPLETION
-    elif object_name == "ChatGPTInvocationLayer":
+    elif object_name == "OpenAIChatGenerator":
         return LLMRequestTypeValues.CHAT
     else:
         return LLMRequestTypeValues.UNKNOWN
