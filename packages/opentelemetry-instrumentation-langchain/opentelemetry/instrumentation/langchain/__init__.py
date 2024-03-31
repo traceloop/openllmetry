@@ -39,6 +39,10 @@ logger = logging.getLogger(__name__)
 _instruments = ("langchain >= 0.0.346", "langchain-core > 0.1.0")
 
 TO_INSTRUMENT = [
+    # {
+    #     "package": "langchain.chains.base",
+    #     "class": "Chain",
+    # },
     {
         "package": "langchain.chains",
         "class": "LLMChain",

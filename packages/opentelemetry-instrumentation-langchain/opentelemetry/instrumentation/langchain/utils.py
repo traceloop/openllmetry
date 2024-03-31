@@ -11,10 +11,8 @@ def _with_tracer_wrapper(func):
 
     def _with_tracer(tracer, span_name, kind):
         def wrapper(wrapped, instance, args, kwargs):
-            return func(tracer,span_name, kind, wrapped, instance, args, kwargs)
-
+            return func(tracer, span_name, kind, wrapped, instance, args, kwargs)
         return wrapper
-
     return _with_tracer
 
 
