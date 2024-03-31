@@ -43,7 +43,6 @@ def task_method(
                     span.set_attribute(
                         SpanAttributes.TRACELOOP_SPAN_KIND, tlp_span_kind.value
                     )
-                    span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, name)
 
                     try:
                         if _should_send_prompts():
