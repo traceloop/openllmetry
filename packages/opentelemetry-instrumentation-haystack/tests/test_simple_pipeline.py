@@ -11,7 +11,7 @@ from haystack.utils import Secret
 def test_haystack(exporter):
 
     prompt_builder = DynamicChatPromptBuilder()
-    api_key=os.getenv("OPENAI_API_KEY"),
+    api_key=os.getenv("OPENAI_API_KEY")
     llm = OpenAIChatGenerator(api_key=Secret.from_token(api_key), model="gpt-4")
 
 
