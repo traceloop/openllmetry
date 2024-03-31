@@ -7,7 +7,7 @@ from opentelemetry import context as context_api
 from opentelemetry.semconv.ai import SpanAttributes, TraceloopSpanKindValues
 
 from traceloop.sdk.tracing import get_tracer, set_workflow_name
-from traceloop.sdk.tracing.tracing import TracerWrapper
+from traceloop.sdk.tracing.tracing import TracerWrapper, set_entity_name
 from traceloop.sdk.utils import camel_to_snake
 
 
@@ -34,11 +34,10 @@ def task_method(
             if not TracerWrapper.verify_initialized():
                 return fn(*args, **kwargs)
 
-            span_name = (
-                f"{name}.{tlp_span_kind.value}"
-                if name
-                else f"{fn.__name__}.{tlp_span_kind.value}"
-            )
+            task_name = name or fn.__name__
+            span_name = f"{task_name}.{tlp_span_kind.value}"
+            set_entity_name(task_name)
+
             with get_tracer() as tracer:
                 with tracer.start_as_current_span(span_name) as span:
                     span.set_attribute(
