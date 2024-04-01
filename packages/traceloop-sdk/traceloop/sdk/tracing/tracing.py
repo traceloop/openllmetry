@@ -5,7 +5,7 @@ import importlib.util
 
 
 from colorama import Fore
-from opentelemetry import trace, context
+from opentelemetry import trace
 from opentelemetry.exporter.otlp.proto.http.trace_exporter import (
     OTLPSpanExporter as HTTPExporter,
 )
@@ -22,7 +22,7 @@ from opentelemetry.sdk.trace.export import (
     BatchSpanProcessor,
 )
 from opentelemetry.trace import get_tracer_provider, ProxyTracerProvider
-from opentelemetry.context import get_value, attach, set_value, Context
+from opentelemetry.context import get_value, attach, set_value
 
 from opentelemetry.semconv.ai import SpanAttributes
 from traceloop.sdk import Telemetry
@@ -370,14 +370,14 @@ def set_workflow_name(workflow_name: str) -> None:
 
 
 def set_entity_name(entity_name: str) -> None:
-    ctx = context.get_current()
-    parent = get_value("entity_name", ctx)
+    # ctx = context.get_current()
+    parent = get_value("entity_name")
     if parent is None:
         chained_entity_name = entity_name
     else:
         chained_entity_name = f"{parent}.{entity_name}"
 
-    attach(set_value("entity_name", chained_entity_name, ctx))
+    attach(set_value("entity_name", chained_entity_name))
 
 
 def set_prompt_tracing_context(

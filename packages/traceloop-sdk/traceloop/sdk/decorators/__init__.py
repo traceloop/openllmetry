@@ -36,13 +36,15 @@ def task_method(
 
             task_name = name or fn.__name__
             span_name = f"{task_name}.{tlp_span_kind.value}"
-            set_entity_name(task_name)
 
             with get_tracer() as tracer:
                 with tracer.start_as_current_span(span_name) as span:
+                    set_entity_name(task_name)
+
                     span.set_attribute(
                         SpanAttributes.TRACELOOP_SPAN_KIND, tlp_span_kind.value
                     )
+                    span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, task_name)
 
                     try:
                         if _should_send_prompts():
