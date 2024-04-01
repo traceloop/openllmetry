@@ -63,6 +63,20 @@ class Telemetry:
         except Exception:
             pass
 
+    def log_exception(self, exception: Exception):
+        try:  # don't fail if telemetry fails
+            if self._telemetry_enabled:
+                self._posthog.capture(
+                    self._anon_id(),
+                    "exception",
+                    {
+                        **self._context(),
+                        "exception": str(exception),
+                    },
+                )
+        except Exception:
+            pass
+
     def feature_enabled(self, key: str):
         try:  # don't fail if telemetry fails
             if self._telemetry_enabled:

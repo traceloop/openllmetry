@@ -5,7 +5,7 @@ from opentelemetry import context as context_api
 from opentelemetry.semconv.ai import SpanAttributes, LLMRequestTypeValues
 
 from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
-from opentelemetry.instrumentation.openai.utils import _with_tracer_wrapper
+from opentelemetry.instrumentation.openai.utils import _with_tracer_wrapper, dont_throw
 from opentelemetry.instrumentation.openai.shared import (
     _set_client_attributes,
     _set_request_attributes,
@@ -80,6 +80,7 @@ async def acompletion_wrapper(tracer, wrapped, instance, args, kwargs):
     return response
 
 
+@dont_throw
 def _handle_request(span, kwargs, instance):
     _set_request_attributes(span, kwargs)
     if should_send_prompts():
@@ -88,6 +89,7 @@ def _handle_request(span, kwargs, instance):
     _set_client_attributes(span, instance)
 
 
+@dont_throw
 def _handle_response(response, span):
     if is_openai_v1():
         response_dict = model_as_dict(response)
@@ -177,7 +179,9 @@ def _build_from_streaming_response(span, response, request_kwargs=None):
                     completion_content += choice.get("text")
 
             if model_name:
-                completion_usage = get_token_count_from_string(completion_content, model_name)
+                completion_usage = get_token_count_from_string(
+                    completion_content, model_name
+                )
 
         # span record
         _set_span_stream_usage(span, prompt_usage, completion_usage)

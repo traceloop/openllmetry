@@ -10,6 +10,7 @@ from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
 from opentelemetry.instrumentation.openai.utils import (
     _with_tracer_wrapper,
     _with_chat_telemetry_wrapper,
+    dont_throw,
 )
 from opentelemetry.instrumentation.openai.shared import (
     _set_client_attributes,
@@ -95,7 +96,7 @@ def chat_wrapper(
             streaming_time_to_first_token,
             streaming_time_to_generate,
             start_time,
-            kwargs
+            kwargs,
         )
 
     duration = end_time - start_time
@@ -137,6 +138,7 @@ async def achat_wrapper(tracer, wrapped, instance, args, kwargs):
     return response
 
 
+@dont_throw
 def _handle_request(span, kwargs, instance):
     _set_request_attributes(span, kwargs)
     _set_client_attributes(span, instance)
@@ -148,6 +150,7 @@ def _handle_request(span, kwargs, instance):
             set_tools_attributes(span, kwargs.get("tools"))
 
 
+@dont_throw
 def _handle_response(
     response,
     span,
@@ -295,7 +298,7 @@ def _build_from_streaming_response(
     streaming_time_to_first_token=None,
     streaming_time_to_generate=None,
     start_time=None,
-    request_kwargs=None
+    request_kwargs=None,
 ):
     complete_response = {"choices": [], "model": ""}
 
@@ -348,7 +351,9 @@ def _build_from_streaming_response(
                     completion_content += choice["message"]["content"]
 
             if model_name:
-                completion_usage = get_token_count_from_string(completion_content, model_name)
+                completion_usage = get_token_count_from_string(
+                    completion_content, model_name
+                )
 
         # span record
         _set_span_stream_usage(span, prompt_usage, completion_usage)
@@ -356,12 +361,20 @@ def _build_from_streaming_response(
         # metrics record
         if token_counter:
             if type(prompt_usage) is int and prompt_usage >= 0:
-                attributes_with_token_type = {**shared_attributes, "llm.usage.token_type": "prompt"}
+                attributes_with_token_type = {
+                    **shared_attributes,
+                    "llm.usage.token_type": "prompt",
+                }
                 token_counter.add(prompt_usage, attributes=attributes_with_token_type)
 
             if type(completion_usage) is int and completion_usage >= 0:
-                attributes_with_token_type = {**shared_attributes, "llm.usage.token_type": "completion"}
-                token_counter.add(completion_usage, attributes=attributes_with_token_type)
+                attributes_with_token_type = {
+                    **shared_attributes,
+                    "llm.usage.token_type": "completion",
+                }
+                token_counter.add(
+                    completion_usage, attributes=attributes_with_token_type
+                )
 
     # choice metrics
     if choice_counter and complete_response.get("choices"):
