@@ -370,7 +370,6 @@ def set_workflow_name(workflow_name: str) -> None:
 
 
 def set_entity_name(entity_name: str) -> None:
-    # ctx = context.get_current()
     parent = get_value("entity_name")
     if parent is None:
         chained_entity_name = entity_name
