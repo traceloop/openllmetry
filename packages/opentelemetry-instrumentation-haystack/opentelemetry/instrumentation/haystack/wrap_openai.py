@@ -16,11 +16,16 @@ from opentelemetry.instrumentation.haystack.utils import (
 logger = logging.getLogger(__name__)
 
 
-def _set_input_attributes(span, kwargs):
+def _set_input_attributes(span, llm_request_type, kwargs):
     
-    set_span_attribute(
-        span, f"{SpanAttributes.LLM_PROMPTS}.0.user", kwargs.get("prompt")
-    )
+    if llm_request_type == LLMRequestTypeValues.COMPLETION:
+        set_span_attribute(
+            span, f"{SpanAttributes.LLM_PROMPTS}.0.user", kwargs.get("prompt")
+        )
+    elif llm_request_type == LLMRequestTypeValues.CHAT:
+        set_span_attribute(
+            span, f"{SpanAttributes.LLM_PROMPTS}.0.user", kwargs.get("messages")
+        )
 
     if "generation_kwargs" in kwargs and kwargs["generation_kwargs"] != None:
         generation_kwargs = kwargs["generation_kwargs"]
@@ -98,7 +103,7 @@ def wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
     ) as span:
         try:
             if span.is_recording():
-                _set_input_attributes(span, kwargs)
+                _set_input_attributes(span, llm_request_type, kwargs)
 
         except Exception as ex:  # pylint: disable=broad-except
             logger.warning(
