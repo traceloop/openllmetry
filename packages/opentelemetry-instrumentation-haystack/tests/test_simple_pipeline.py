@@ -11,9 +11,8 @@ from haystack.utils import Secret
 def test_haystack(exporter):
 
     prompt_builder = DynamicChatPromptBuilder()
-    api_key=os.getenv("OPENAI_API_KEY")
+    api_key = os.getenv("OPENAI_API_KEY")
     llm = OpenAIChatGenerator(api_key=Secret.from_token(api_key), model="gpt-4")
-
 
     pipe = Pipeline()
     pipe.add_component("prompt_builder", prompt_builder)
@@ -21,7 +20,14 @@ def test_haystack(exporter):
     pipe.connect("prompt_builder.prompt", "llm.messages")
     query = "OpenTelemetry"
     messages = [ChatMessage.from_user("Tell me a joke about {{query}}")]
-    pipe.run(data={"prompt_builder": {"template_variables":{"query": query}, "prompt_source": messages}})
+    pipe.run(
+        data={
+            "prompt_builder": {
+                "template_variables": {"query": query},
+                "prompt_source": messages,
+            }
+        }
+    )
 
     spans = exporter.get_finished_spans()
     assert set(

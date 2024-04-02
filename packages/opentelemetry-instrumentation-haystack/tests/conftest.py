@@ -29,6 +29,7 @@ def exporter():
 def environment():
     os.environ["OPENAI_API_KEY"] = "test_api_key"
 
+
 @pytest.fixture(autouse=True)
 def clear_exporter(exporter):
     exporter.clear()

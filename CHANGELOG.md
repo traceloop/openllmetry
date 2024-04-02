@@ -1,3 +1,9 @@
+## v0.15.4 (2024-03-31)
+
+### Fix
+
+- **traceloop-sdk**: default value for metrics endpoint (#711)
+
 ## v0.15.3 (2024-03-28)
 
 ### Fix
