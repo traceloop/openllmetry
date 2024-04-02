@@ -16,27 +16,36 @@ from opentelemetry.instrumentation.haystack.utils import (
 logger = logging.getLogger(__name__)
 
 
-def _set_input_attributes(span, llm_request_type, kwargs):
-    base_payload = kwargs.get("base_payload")
-    set_span_attribute(
-        span, SpanAttributes.LLM_REQUEST_MODEL, base_payload.get("model")
-    )
-    set_span_attribute(
-        span, SpanAttributes.LLM_TEMPERATURE, base_payload.get("temperature")
-    )
-    set_span_attribute(span, SpanAttributes.LLM_TOP_P, base_payload.get("top_p"))
-    set_span_attribute(
-        span,
-        SpanAttributes.LLM_FREQUENCY_PENALTY,
-        base_payload.get("frequency_penalty"),
-    )
-    set_span_attribute(
-        span, SpanAttributes.LLM_PRESENCE_PENALTY, base_payload.get("presence_penalty")
-    )
-
+def _set_input_attributes(span, kwargs):
+    
     set_span_attribute(
         span, f"{SpanAttributes.LLM_PROMPTS}.0.user", kwargs.get("prompt")
     )
+
+    if "generation_kwargs" in kwargs and kwargs["generation_kwargs"] != None:
+        generation_kwargs = kwargs["generation_kwargs"]
+        if "model" in generation_kwargs:
+            set_span_attribute(
+                span, SpanAttributes.LLM_REQUEST_MODEL, generation_kwargs["model"]
+            )
+        if "temperature" in generation_kwargs:
+            set_span_attribute(
+                span, SpanAttributes.LLM_TEMPERATURE, generation_kwargs["temperature"]
+            )
+        if "top_p" in generation_kwargs:
+            set_span_attribute(span, SpanAttributes.LLM_TOP_P, generation_kwargs["top_p"])
+        if "frequency_penalty" in generation_kwargs:
+            set_span_attribute(
+                span,
+                SpanAttributes.LLM_FREQUENCY_PENALTY,
+                generation_kwargs["frequency_penalty"],
+            )
+        if "presence_penalty" in generation_kwargs:
+            set_span_attribute(
+                span,
+                SpanAttributes.LLM_PRESENCE_PENALTY,
+                generation_kwargs["presence_penalty"]
+            )
 
     return
 
@@ -89,7 +98,7 @@ def wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
     ) as span:
         try:
             if span.is_recording():
-                _set_input_attributes(span, llm_request_type, kwargs)
+                _set_input_attributes(span, kwargs)
 
         except Exception as ex:  # pylint: disable=broad-except
             logger.warning(
