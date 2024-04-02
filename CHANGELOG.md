@@ -1,3 +1,9 @@
+## v0.15.6 (2024-04-02)
+
+### Fix
+
+- **sdk**: stricter dependencies for instrumentations
+
 ## v0.15.5 (2024-04-02)
 
 ### Fix
