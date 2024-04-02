@@ -3,11 +3,11 @@ from traceloop.sdk.decorators import task, workflow
 
 
 @pytest.mark.vcr
-def test_nested_tasks(exporter):    
+def test_nested_tasks(exporter):
     @workflow(name="some_workflow")
     def some_workflow():
         return outer_task()
-    
+
     @task(name="outer_task")
     def outer_task():
         return inner_task()
@@ -15,11 +15,11 @@ def test_nested_tasks(exporter):
     @task(name="inner_task")
     def inner_task():
         return inner_inner_task()
-    
+
     @task(name="inner_inner_task")
     def inner_inner_task():
         return
-    
+
     some_workflow()
 
     spans = exporter.get_finished_spans()
@@ -29,7 +29,7 @@ def test_nested_tasks(exporter):
         "outer_task.task",
         "some_workflow.workflow",
     ]
-    
+
     inner_inner_task_span = spans[0]
     inner_task_span = spans[1]
     outer_task_span = spans[2]
