@@ -370,13 +370,15 @@ def set_workflow_name(workflow_name: str) -> None:
 
 
 def set_entity_name(entity_name: str) -> None:
+    attach(set_value("entity_name", entity_name))
+
+
+def get_chained_entity_name(entity_name: str) -> str:
     parent = get_value("entity_name")
     if parent is None:
-        chained_entity_name = entity_name
+        return entity_name
     else:
-        chained_entity_name = f"{parent}.{entity_name}"
-
-    attach(set_value("entity_name", chained_entity_name))
+        return f"{parent}.{entity_name}"
 
 
 def set_prompt_tracing_context(

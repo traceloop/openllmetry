@@ -7,7 +7,7 @@ from opentelemetry import context as context_api
 from opentelemetry.semconv.ai import SpanAttributes, TraceloopSpanKindValues
 
 from traceloop.sdk.tracing import get_tracer, set_workflow_name
-from traceloop.sdk.tracing.tracing import TracerWrapper, set_entity_name
+from traceloop.sdk.tracing.tracing import TracerWrapper, set_entity_name, get_chained_entity_name
 from traceloop.sdk.utils import camel_to_snake
 
 
@@ -39,12 +39,13 @@ def task_method(
 
             with get_tracer() as tracer:
                 with tracer.start_as_current_span(span_name) as span:
-                    set_entity_name(task_name)
+                    chained_entity_name = get_chained_entity_name(task_name)
+                    set_entity_name(chained_entity_name)
 
                     span.set_attribute(
                         SpanAttributes.TRACELOOP_SPAN_KIND, tlp_span_kind.value
                     )
-                    span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, task_name)
+                    span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, chained_entity_name)
 
                     try:
                         if _should_send_prompts():
