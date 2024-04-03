@@ -35,8 +35,9 @@ def clear_exporter(exporter):
 @pytest.fixture(autouse=True)
 def environment():
     os.environ["OPENAI_API_KEY"] = "test_api_key"
+    os.environ["ANTHROPIC_API_KEY"] = "test"
 
 
 @pytest.fixture(scope="module")
 def vcr_config():
-    return {"filter_headers": ["authorization"]}
+    return {"filter_headers": ["authorization", "x-api-key"]}

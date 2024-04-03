@@ -1,0 +1,71 @@
+interactions:
+- request:
+    body: '{"max_tokens_to_sample": 256, "model": "claude-2", "prompt": "You are helpful
+      assistant\n\nHuman: tell me a short joke\n\nAssistant:"}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      anthropic-version:
+      - '2023-06-01'
+      connection:
+      - keep-alive
+      content-length:
+      - '134'
+      content-type:
+      - application/json
+      host:
+      - api.anthropic.com
+      user-agent:
+      - Anthropic/Python 0.21.3
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 0.21.3
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.12.1
+    method: POST
+    uri: https://api.anthropic.com/v1/complete
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA4yPsQoCMRBEf2XdxiaKdwriNYJYWImFehbCEZM9DeSSaDbKIf67KAqWljPwHjN3
+        5DYQFqh8Eyyx8Q4FGv1tqkG2zid5s1oMl7Gc16PruOTtZrVD8YsUCOWpBSVdl0HCwahWWYLI0mlI
+        AQ4tGI5k6ynMSMkUCQx3I/DN99hcSHdQYGQfqgvJ+Ba+U6RzIqcIBTZek33NsjJp6uX97INggXu3
+        d4vUSFegQOuP1T8HHk8AAAD//wMAyuHvxvwAAAA=
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 86ea44843f83a25f-FCO
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Wed, 03 Apr 2024 15:59:46 GMT
+      Server:
+      - cloudflare
+      Transfer-Encoding:
+      - chunked
+      request-id:
+      - req_01DTh7TraXq8NmQxhiz1yaBU
+      via:
+      - 1.1 google
+      x-cloud-trace-context:
+      - 0d9db74e18924fe257bdf146f49bd918
+    status:
+      code: 200
+      message: OK
+version: 1
