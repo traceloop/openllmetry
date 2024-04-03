@@ -9,7 +9,7 @@ from langchain_community.utils.openai_functions import (
 from langchain_community.llms.huggingface_text_gen_inference import (
     HuggingFaceTextGenInference,
 )
-from langchain_community.chat_models import ChatOpenAI
+from langchain_community.chat_models import ChatOpenAI, ChatAnthropic
 from langchain_core.pydantic_v1 import BaseModel, Field
 
 
@@ -159,3 +159,33 @@ def test_custom_llm(exporter):
         == "System: You are helpful assistant\nHuman: tell me a short joke"
     )
     assert hugging_face_span.attributes["llm.completions.0.content"] == response
+
+
+@pytest.mark.vcr
+def test_anthropic(exporter):
+    prompt = ChatPromptTemplate.from_messages(
+        [("system", "You are helpful assistant"), ("user", "{input}")]
+    )
+    model = ChatAnthropic(model="claude-2")
+
+    chain = prompt | model
+    response = chain.invoke({"input": "tell me a short joke"})
+
+    spans = exporter.get_finished_spans()
+
+    assert [
+        "langchain.task.ChatPromptTemplate",
+        "langchain.task.ChatAnthropic",
+        "langchain.workflow",
+    ] == [span.name for span in spans]
+
+    anthropic_span = next(
+        span for span in spans if span.name == "langchain.task.ChatAnthropic"
+    )
+
+    assert anthropic_span.attributes["llm.request.type"] == "chat"
+    assert anthropic_span.attributes["llm.request.model"] == "claude-2"
+    assert (
+        anthropic_span.attributes["llm.prompts.0.user"] == "You are helpful assistant"
+    )
+    assert anthropic_span.attributes["llm.completions.0.content"] == response.content
