@@ -25,14 +25,14 @@ include = "traceloop/sdk"
 
 [tool.poetry.dependencies]
 python = ">=3.9,<4"
-opentelemetry-api = "^1.23.0"
-opentelemetry-sdk = "^1.20.0"
-opentelemetry-exporter-otlp-proto-http = "^1.20.0"
-opentelemetry-exporter-otlp-proto-grpc = "^1.20.0"
-opentelemetry-instrumentation-requests = "0.44b0"
-opentelemetry-instrumentation-sqlalchemy = "0.44b0"
-opentelemetry-instrumentation-urllib3 = "0.44b0"
-opentelemetry-semantic-conventions-ai = "^0.1.1"
+opentelemetry-api = "^1.24.0"
+opentelemetry-sdk = "^1.24.0"
+opentelemetry-exporter-otlp-proto-http = "^1.24.0"
+opentelemetry-exporter-otlp-proto-grpc = "^1.24.0"
+opentelemetry-instrumentation-requests = "^0.45b0"
+opentelemetry-instrumentation-sqlalchemy = "^0.45b0"
+opentelemetry-instrumentation-urllib3 = "^0.45b0"
+opentelemetry-semantic-conventions-ai = "0.1.1"
 opentelemetry-instrumentation-openai = {path="../opentelemetry-instrumentation-openai", develop=true}
 opentelemetry-instrumentation-anthropic = {path="../opentelemetry-instrumentation-anthropic", develop=true}
 opentelemetry-instrumentation-cohere = {path="../opentelemetry-instrumentation-cohere", develop=true}
