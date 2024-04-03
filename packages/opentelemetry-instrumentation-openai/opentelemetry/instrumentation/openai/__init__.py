@@ -13,9 +13,12 @@ _instruments = ("openai >= 0.27.0",)
 class OpenAIInstrumentor(BaseInstrumentor):
     """An instrumentor for OpenAI's client library."""
 
-    def __init__(self, enrich_assistant: bool = False):
+    def __init__(
+        self, enrich_assistant: bool = False, enrich_token_usage: bool = False
+    ):
         super().__init__()
         Config.enrich_assistant = enrich_assistant
+        Config.enrich_token_usage = enrich_token_usage
 
     def instrumentation_dependencies(self) -> Collection[str]:
         return _instruments
