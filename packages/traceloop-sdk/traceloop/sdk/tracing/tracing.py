@@ -60,6 +60,7 @@ class TracerWrapper(object):
         processor: SpanProcessor = None,
         propagator: TextMapPropagator = None,
         exporter: SpanExporter = None,
+        should_enrich_metrics: bool = True,
         instruments: Optional[Set[Instruments]] = None,
     ) -> "TracerWrapper":
         if not hasattr(cls, "instance"):
@@ -118,7 +119,7 @@ class TracerWrapper(object):
 
             instrument_set = False
             if instruments is None:
-                init_instrumentations()
+                init_instrumentations(should_enrich_metrics)
                 instrument_set = True
             else:
                 for instrument in instruments:
@@ -424,8 +425,8 @@ def init_tracer_provider(resource: Resource) -> TracerProvider:
     return provider
 
 
-def init_instrumentations():
-    init_openai_instrumentor()
+def init_instrumentations(should_enrich_metrics: bool):
+    init_openai_instrumentor(should_enrich_metrics)
     init_anthropic_instrumentor()
     init_cohere_instrumentor()
     init_pinecone_instrumentor()
@@ -445,13 +446,14 @@ def init_instrumentations():
     init_weaviate_instrumentor()
 
 
-def init_openai_instrumentor():
+def init_openai_instrumentor(should_enrich_metrics: bool):
     if importlib.util.find_spec("openai") is not None:
         Telemetry().capture("instrumentation:openai:init")
         from opentelemetry.instrumentation.openai import OpenAIInstrumentor
 
         instrumentor = OpenAIInstrumentor(
-            enrich_assistant=True, enrich_token_usage=True
+            enrich_assistant=should_enrich_metrics,
+            enrich_token_usage=should_enrich_metrics,
         )
         if not instrumentor.is_instrumented_by_opentelemetry:
             instrumentor.instrument()
