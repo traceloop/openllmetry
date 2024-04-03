@@ -1,3 +1,9 @@
+## v0.15.7 (2024-04-03)
+
+### Fix
+
+- enrich spans with related entity name + support entities nesting (#713)
+
 ## v0.15.6 (2024-04-02)
 
 ### Fix
