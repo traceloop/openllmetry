@@ -1,3 +1,11 @@
+## v0.15.9 (2024-04-03)
+
+### Fix
+
+- **openai**: switch to init flag for token usage enrichment (#745)
+- **anthropic**: support multi-modal (#746)
+- **langchain**: instrument chat models (#741)
+
 ## v0.15.8 (2024-04-03)
 
 ### Fix
