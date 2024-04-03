@@ -450,7 +450,9 @@ def init_openai_instrumentor():
         Telemetry().capture("instrumentation:openai:init")
         from opentelemetry.instrumentation.openai import OpenAIInstrumentor
 
-        instrumentor = OpenAIInstrumentor(enrich_assistant=True)
+        instrumentor = OpenAIInstrumentor(
+            enrich_assistant=True, enrich_token_usage=True
+        )
         if not instrumentor.is_instrumented_by_opentelemetry:
             instrumentor.instrument()
     return True
