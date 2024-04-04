@@ -35,7 +35,7 @@ flake8 = "7.0.0"
 
 [tool.poetry.group.test.dependencies]
 qdrant-client = "^1.7.3"
-pytest = "8.1.0"
+pytest = "8.1.1"
 pytest-sugar = "1.0.0"
 opentelemetry-sdk = "^1.23.0"
 
