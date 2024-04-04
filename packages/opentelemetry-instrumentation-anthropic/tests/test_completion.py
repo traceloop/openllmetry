@@ -53,6 +53,12 @@ def test_anthropic_message_create(exporter):
         anthropic_span.attributes.get("llm.completions.0.content")
         == response.content[0].text
     )
+    assert anthropic_span.attributes["llm.usage.prompt_tokens"] == 8
+    assert (
+        anthropic_span.attributes["llm.usage.completion_tokens"]
+        + anthropic_span.attributes["llm.usage.prompt_tokens"]
+        == anthropic_span.attributes["llm.usage.total_tokens"]
+    )
 
 
 @pytest.mark.vcr
@@ -103,4 +109,10 @@ def test_anthropic_multi_modal(exporter):
     assert (
         anthropic_span.attributes.get("llm.completions.0.content")
         == response.content[0].text
+    )
+    assert anthropic_span.attributes["llm.usage.prompt_tokens"] == 1381
+    assert (
+        anthropic_span.attributes["llm.usage.completion_tokens"]
+        + anthropic_span.attributes["llm.usage.prompt_tokens"]
+        == anthropic_span.attributes["llm.usage.total_tokens"]
     )
