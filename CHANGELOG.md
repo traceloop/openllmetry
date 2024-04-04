@@ -1,3 +1,9 @@
+## v0.15.11 (2024-04-04)
+
+### Fix
+
+- **openai**: async streaming metrics (#749)
+
 ## v0.15.10 (2024-04-04)
 
 ### Fix
