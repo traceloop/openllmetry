@@ -52,6 +52,7 @@ class Traceloop:
         processor: SpanProcessor = None,
         propagator: TextMapPropagator = None,
         traceloop_sync_enabled: bool = True,
+        should_enrich_metrics: bool = True,
         resource_attributes: dict = {},
         instruments: Optional[Set[Instruments]] = None,
     ) -> None:
@@ -162,6 +163,7 @@ class Traceloop:
             processor=processor,
             propagator=propagator,
             exporter=exporter,
+            should_enrich_metrics=should_enrich_metrics,
             instruments=instruments,
         )
 

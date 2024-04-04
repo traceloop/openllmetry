@@ -60,6 +60,7 @@ class TracerWrapper(object):
         processor: SpanProcessor = None,
         propagator: TextMapPropagator = None,
         exporter: SpanExporter = None,
+        should_enrich_metrics: bool = True,
         instruments: Optional[Set[Instruments]] = None,
     ) -> "TracerWrapper":
         if not hasattr(cls, "instance"):
@@ -118,7 +119,7 @@ class TracerWrapper(object):
 
             instrument_set = False
             if instruments is None:
-                init_instrumentations()
+                init_instrumentations(should_enrich_metrics)
                 instrument_set = True
             else:
                 for instrument in instruments:
@@ -274,6 +275,10 @@ class TracerWrapper(object):
         if workflow_name is not None:
             span.set_attribute(SpanAttributes.TRACELOOP_WORKFLOW_NAME, workflow_name)
 
+        entity_name = get_value("entity_name")
+        if entity_name is not None:
+            span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, entity_name)
+
         correlation_id = get_value("correlation_id")
         if correlation_id is not None:
             span.set_attribute(SpanAttributes.TRACELOOP_CORRELATION_ID, correlation_id)
@@ -365,6 +370,18 @@ def set_workflow_name(workflow_name: str) -> None:
     attach(set_value("workflow_name", workflow_name))
 
 
+def set_entity_name(entity_name: str) -> None:
+    attach(set_value("entity_name", entity_name))
+
+
+def get_chained_entity_name(entity_name: str) -> str:
+    parent = get_value("entity_name")
+    if parent is None:
+        return entity_name
+    else:
+        return f"{parent}.{entity_name}"
+
+
 def set_prompt_tracing_context(
     key: str,
     version: int,
@@ -408,8 +425,8 @@ def init_tracer_provider(resource: Resource) -> TracerProvider:
     return provider
 
 
-def init_instrumentations():
-    init_openai_instrumentor()
+def init_instrumentations(should_enrich_metrics: bool):
+    init_openai_instrumentor(should_enrich_metrics)
     init_anthropic_instrumentor()
     init_cohere_instrumentor()
     init_pinecone_instrumentor()
@@ -429,7 +446,7 @@ def init_instrumentations():
     init_weaviate_instrumentor()
 
 
-def init_openai_instrumentor():
+def init_openai_instrumentor(should_enrich_metrics: bool):
     if importlib.util.find_spec("openai") is not None:
         Telemetry().capture("instrumentation:openai:init")
         from opentelemetry.instrumentation.openai import OpenAIInstrumentor
@@ -437,6 +454,8 @@ def init_openai_instrumentor():
         instrumentor = OpenAIInstrumentor(
             enrich_assistant=True,
             exception_logger=lambda e: Telemetry().log_exception(e),
+            enrich_assistant=should_enrich_metrics,
+            enrich_token_usage=should_enrich_metrics,
         )
         if not instrumentor.is_instrumented_by_opentelemetry:
             instrumentor.instrument()

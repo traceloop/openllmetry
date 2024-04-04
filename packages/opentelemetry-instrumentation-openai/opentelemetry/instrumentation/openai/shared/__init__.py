@@ -9,7 +9,10 @@ from importlib.metadata import version
 from opentelemetry import context as context_api
 
 from opentelemetry.semconv.ai import SpanAttributes
-from opentelemetry.instrumentation.openai.utils import is_openai_v1
+from opentelemetry.instrumentation.openai.utils import (
+    is_openai_v1,
+    should_record_stream_token_usage,
+)
 
 OPENAI_API_VERSION = "openai.api_version"
 OPENAI_API_BASE = "openai.api_base"
@@ -227,10 +230,6 @@ def model_as_dict(model):
         return model_as_dict(model.parse())
     else:
         return model
-
-
-def should_record_stream_token_usage():
-    return (os.getenv("TRACELOOP_STREAM_TOKEN_USAGE") or "false").lower() == "true"
 
 
 def get_token_count_from_string(string: str, model_name: str):

@@ -1,3 +1,35 @@
+## v0.15.9 (2024-04-03)
+
+### Fix
+
+- **openai**: switch to init flag for token usage enrichment (#745)
+- **anthropic**: support multi-modal (#746)
+- **langchain**: instrument chat models (#741)
+
+## v0.15.8 (2024-04-03)
+
+### Fix
+
+- bump otel -> 0.45.0 (#740)
+
+## v0.15.7 (2024-04-03)
+
+### Fix
+
+- enrich spans with related entity name + support entities nesting (#713)
+
+## v0.15.6 (2024-04-02)
+
+### Fix
+
+- **sdk**: stricter dependencies for instrumentations
+
+## v0.15.5 (2024-04-02)
+
+### Fix
+
+- **openai**: missing metric for v0 instrumentation (#735)
+
 ## v0.15.4 (2024-03-31)
 
 ### Fix

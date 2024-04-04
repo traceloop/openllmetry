@@ -3,6 +3,8 @@ from contextlib import asynccontextmanager
 import logging
 import os
 
+from opentelemetry.instrumentation.openai.shared.config import Config
+
 
 def is_openai_v1():
     return version("openai") >= "1.0.0"
@@ -10,6 +12,10 @@ def is_openai_v1():
 
 def is_metrics_enabled() -> bool:
     return (os.getenv("TRACELOOP_METRICS_ENABLED") or "true").lower() == "true"
+
+
+def should_record_stream_token_usage():
+    return Config.enrich_token_usage
 
 
 def _with_image_gen_metric_wrapper(func):
