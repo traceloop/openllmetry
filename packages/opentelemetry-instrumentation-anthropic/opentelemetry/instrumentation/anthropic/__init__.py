@@ -148,6 +148,20 @@ def _set_response_attributes(span, response):
     if not isinstance(response, dict):
         response = response.__dict__
     _set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, response.get("model"))
+
+    if response.get("usage"):
+        prompt_tokens = response.get("usage").input_tokens
+        completion_tokens = response.get("usage").output_tokens
+        _set_span_attribute(span, SpanAttributes.LLM_USAGE_PROMPT_TOKENS, prompt_tokens)
+        _set_span_attribute(
+            span, SpanAttributes.LLM_USAGE_COMPLETION_TOKENS, completion_tokens
+        )
+        _set_span_attribute(
+            span,
+            SpanAttributes.LLM_USAGE_TOTAL_TOKENS,
+            prompt_tokens + completion_tokens,
+        )
+
     if should_send_prompts():
         _set_span_completions(span, response)
 
