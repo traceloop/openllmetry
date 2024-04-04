@@ -1,7 +1,7 @@
 import json
 import pytest
 from pathlib import Path
-from anthropic import Anthropic, HUMAN_PROMPT, AI_PROMPT
+from anthropic import Anthropic, HUMAN_PROMPT, AI_PROMPT, AsyncAnthropic
 
 
 @pytest.mark.vcr
@@ -20,8 +20,8 @@ def test_anthropic_completion(exporter):
     ]
     anthropic_span = spans[0]
     assert (
-        anthropic_span.attributes["llm.prompts.0.user"]
-        == f"{HUMAN_PROMPT}\nHello world\n{AI_PROMPT}"
+            anthropic_span.attributes["llm.prompts.0.user"]
+            == f"{HUMAN_PROMPT}\nHello world\n{AI_PROMPT}"
     )
     assert anthropic_span.attributes.get("llm.completions.0.content")
 
@@ -46,18 +46,18 @@ def test_anthropic_message_create(exporter):
     ]
     anthropic_span = spans[0]
     assert (
-        anthropic_span.attributes["llm.prompts.0.user"]
-        == "Tell me a joke about OpenTelemetry"
+            anthropic_span.attributes["llm.prompts.0.user"]
+            == "Tell me a joke about OpenTelemetry"
     )
     assert (
-        anthropic_span.attributes.get("llm.completions.0.content")
-        == response.content[0].text
+            anthropic_span.attributes.get("llm.completions.0.content")
+            == response.content[0].text
     )
     assert anthropic_span.attributes["llm.usage.prompt_tokens"] == 8
     assert (
-        anthropic_span.attributes["llm.usage.completion_tokens"]
-        + anthropic_span.attributes["llm.usage.prompt_tokens"]
-        == anthropic_span.attributes["llm.usage.total_tokens"]
+            anthropic_span.attributes["llm.usage.completion_tokens"]
+            + anthropic_span.attributes["llm.usage.prompt_tokens"]
+            == anthropic_span.attributes["llm.usage.total_tokens"]
     )
 
 
@@ -107,12 +107,121 @@ def test_anthropic_multi_modal(exporter):
         ]
     )
     assert (
-        anthropic_span.attributes.get("llm.completions.0.content")
-        == response.content[0].text
+            anthropic_span.attributes.get("llm.completions.0.content")
+            == response.content[0].text
     )
     assert anthropic_span.attributes["llm.usage.prompt_tokens"] == 1381
     assert (
-        anthropic_span.attributes["llm.usage.completion_tokens"]
-        + anthropic_span.attributes["llm.usage.prompt_tokens"]
-        == anthropic_span.attributes["llm.usage.total_tokens"]
+            anthropic_span.attributes["llm.usage.completion_tokens"]
+            + anthropic_span.attributes["llm.usage.prompt_tokens"]
+            == anthropic_span.attributes["llm.usage.total_tokens"]
+    )
+
+
+@pytest.mark.vcr
+def test_anthropic_message_streaming(exporter):
+    client = Anthropic()
+    response = client.messages.create(
+        max_tokens=1024,
+        messages=[
+            {
+                "role": "user",
+                "content": "Tell me a joke about OpenTelemetry",
+            }
+        ],
+        model="claude-3-haiku-20240307",
+        stream=True,
+    )
+
+    for _ in response:
+        pass
+
+    spans = exporter.get_finished_spans()
+    assert [span.name for span in spans] == [
+        "anthropic.completion",
+    ]
+    anthropic_span = spans[0]
+    assert (
+            anthropic_span.attributes["llm.prompts.0.user"]
+            == "Tell me a joke about OpenTelemetry"
+    )
+    assert (anthropic_span.attributes.get("llm.completions.0.content"))
+    assert anthropic_span.attributes["llm.usage.prompt_tokens"] == 8
+    assert (
+            anthropic_span.attributes["llm.usage.completion_tokens"]
+            + anthropic_span.attributes["llm.usage.prompt_tokens"]
+            == anthropic_span.attributes["llm.usage.total_tokens"]
+    )
+
+
+@pytest.mark.vcr
+@pytest.mark.asyncio
+async def test_async_anthropic_message_create(exporter):
+    client = AsyncAnthropic()
+    response = await client.messages.create(
+        max_tokens=1024,
+        messages=[
+            {
+                "role": "user",
+                "content": "Tell me a joke about OpenTelemetry",
+            }
+        ],
+        model="claude-3-opus-20240229",
+    )
+
+    spans = exporter.get_finished_spans()
+    assert [span.name for span in spans] == [
+        "anthropic.completion",
+    ]
+    anthropic_span = spans[0]
+    assert (
+            anthropic_span.attributes["llm.prompts.0.user"]
+            == "Tell me a joke about OpenTelemetry"
+    )
+    assert (
+            anthropic_span.attributes.get("llm.completions.0.content")
+            == response.content[0].text
+    )
+    assert anthropic_span.attributes["llm.usage.prompt_tokens"] == 8
+    assert (
+            anthropic_span.attributes["llm.usage.completion_tokens"]
+            + anthropic_span.attributes["llm.usage.prompt_tokens"]
+            == anthropic_span.attributes["llm.usage.total_tokens"]
+    )
+
+
+@pytest.mark.vcr
+@pytest.mark.asyncio
+async def test_async_anthropic_message_streaming(exporter):
+    client = AsyncAnthropic()
+    response = await client.messages.create(
+        max_tokens=1024,
+        messages=[
+            {
+                "role": "user",
+                "content": "Tell me a joke about OpenTelemetry",
+            }
+        ],
+        model="claude-3-haiku-20240307",
+        stream=True,
+    )
+
+    async for _ in response:
+        pass
+
+    spans = exporter.get_finished_spans()
+    assert [span.name for span in spans] == [
+        "anthropic.completion",
+    ]
+    anthropic_span = spans[0]
+    assert (
+            anthropic_span.attributes["llm.prompts.0.user"]
+            == "Tell me a joke about OpenTelemetry"
+    )
+    assert (anthropic_span.attributes.get("llm.completions.0.content"))
+    assert anthropic_span.attributes["llm.usage.prompt_tokens"] == 8
+    assert (
+            anthropic_span.attributes["llm.usage.completion_tokens"]
+            + anthropic_span.attributes["llm.usage.prompt_tokens"]
+            == anthropic_span.attributes["llm.usage.total_tokens"]
     )

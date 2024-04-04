@@ -16,6 +16,8 @@ from opentelemetry.instrumentation.utils import (
     unwrap,
 )
 
+from anthropic._streaming import Stream, AsyncStream
+
 from opentelemetry.semconv.ai import SpanAttributes, LLMRequestTypeValues
 from opentelemetry.instrumentation.anthropic.version import __version__
 
@@ -36,7 +38,37 @@ WRAPPED_METHODS = [
         "method": "create",
         "span_name": "anthropic.completion",
     },
+    {
+        "package": "anthropic.resources.messages",
+        "object": "Messages",
+        "method": "stream",
+        "span_name": "anthropic.completion.stream",
+    },
 ]
+WRAPPED_AMETHODS = [
+    {
+        "package": "anthropic.resources.completions",
+        "object": "AsyncCompletions",
+        "method": "create",
+        "span_name": "anthropic.completion",
+    },
+    {
+        "package": "anthropic.resources.messages",
+        "object": "AsyncMessages",
+        "method": "create",
+        "span_name": "anthropic.completion",
+    },
+    {
+        "package": "anthropic.resources.messages",
+        "object": "AsyncMessages",
+        "method": "stream",
+        "span_name": "anthropic.completion.stream",
+    },
+]
+
+
+def is_streaming_response(response):
+    return isinstance(response, Stream) or isinstance(response, AsyncStream)
 
 
 def should_send_prompts():
@@ -86,6 +118,7 @@ def _set_input_attributes(span, kwargs):
     _set_span_attribute(
         span, SpanAttributes.LLM_PRESENCE_PENALTY, kwargs.get("presence_penalty")
     )
+    _set_span_attribute(span, SpanAttributes.LLM_IS_STREAMING, kwargs.get("stream"))
 
     if should_send_prompts():
         if kwargs.get("prompt") is not None:
@@ -102,6 +135,22 @@ def _set_input_attributes(span, kwargs):
                 )
 
 
+def _set_completions(span, choices):
+    if not span.is_recording() or not choices:
+        return
+
+    try:
+        for choice in choices:
+            index = choice.get("index")
+            prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{index}"
+            _set_span_attribute(
+                span, f"{prefix}.finish_reason", choice.get("finish_reason")
+            )
+            _set_span_attribute(span, f"{prefix}.content", choice.get("text"))
+    except Exception as e:
+        logger.warning("Failed to set completion attributes, error: %s", str(e))
+
+
 def _set_span_completions(span, response):
     index = 0
     prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{index}"
@@ -115,6 +164,33 @@ def _set_span_completions(span, response):
                 f"{SpanAttributes.LLM_COMPLETIONS}.{i}.content",
                 content.text,
             )
+
+
+async def _set_token_usage_a(span, anthropic, request, response):
+    if not isinstance(response, dict):
+        response = response.__dict__
+
+    prompt_tokens = 0
+    if request.get("prompt"):
+        prompt_tokens = await anthropic.count_tokens(request.get("prompt"))
+    elif request.get("messages"):
+        prompt_tokens = sum(
+            [await anthropic.count_tokens(m.get("content")) for m in request.get("messages")]
+        )
+
+    completion_tokens = 0
+    if response.get("completion"):
+        completion_tokens = await anthropic.count_tokens(response.get("completion"))
+    elif response.get("content"):
+        completion_tokens = await anthropic.count_tokens(response.get("content")[0].text)
+
+    total_tokens = prompt_tokens + completion_tokens
+
+    _set_span_attribute(span, SpanAttributes.LLM_USAGE_PROMPT_TOKENS, prompt_tokens)
+    _set_span_attribute(
+        span, SpanAttributes.LLM_USAGE_COMPLETION_TOKENS, completion_tokens
+    )
+    _set_span_attribute(span, SpanAttributes.LLM_USAGE_TOTAL_TOKENS, total_tokens)
 
 
 def _set_token_usage(span, anthropic, request, response):
@@ -178,6 +254,125 @@ def _with_tracer_wrapper(func):
     return _with_tracer
 
 
+def _build_from_streaming_response(
+        span,
+        response,
+        instance,
+        kwargs
+):
+    complete_response = {"events": [], "model": "", "usage": {}}
+    for item in response:
+        item_to_yield = item
+        if item.type == 'message_start':
+            complete_response["model"] = item.message.model
+            complete_response["usage"] = item.message.usage
+        elif item.type == 'content_block_start':
+            index = item.index
+            if len(complete_response.get("events")) <= index:
+                complete_response["events"].append({"index": index, "text": ""})
+        elif item.type == 'content_block_delta' and item.delta.type == 'text_delta':
+            index = item.index
+            complete_response.get("events")[index]["text"] += item.delta.text
+        elif item.type == 'message_delta':
+            for event in complete_response.get("events", []):
+                event["finish_reason"] = item.delta.stop_reason
+        yield item_to_yield
+
+    # prompt_usage
+    prompt_tokens = 0
+    if kwargs.get("prompt"):
+        prompt_tokens = instance.count_tokens(kwargs.get("prompt"))
+    elif kwargs.get("messages"):
+        prompt_tokens = sum(
+            [instance.count_tokens(m.get("content")) for m in kwargs.get("messages")]
+        )
+
+    # completion_usage
+    completion_content = ""
+    if complete_response.get("events"):
+        for event in complete_response.get("events"):  # type: dict
+            if event.get("text"):
+                completion_content += event.get("text")
+    completion_tokens = instance.count_tokens(completion_content)
+
+    total_tokens = prompt_tokens + completion_tokens
+
+    _set_span_attribute(span, SpanAttributes.LLM_USAGE_PROMPT_TOKENS, prompt_tokens)
+    _set_span_attribute(
+        span, SpanAttributes.LLM_USAGE_COMPLETION_TOKENS, completion_tokens
+    )
+    _set_span_attribute(span, SpanAttributes.LLM_USAGE_TOTAL_TOKENS, total_tokens)
+
+    _set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, complete_response.get("model"))
+
+    if should_send_prompts():
+        _set_completions(span, complete_response.get("events"))
+    if span.is_recording():
+        span.set_status(Status(StatusCode.OK))
+
+    span.set_status(Status(StatusCode.OK))
+    span.end()
+
+
+async def _abuild_from_streaming_response(
+        span,
+        response,
+        instance,
+        kwargs
+):
+    complete_response = {"events": [], "model": ""}
+    async for item in response:
+        item_to_yield = item
+        if item.type == 'message_start':
+            complete_response["model"] = item.message.model
+            complete_response["usage"] = item.message.usage
+        elif item.type == 'content_block_start':
+            index = item.index
+            if len(complete_response.get("events")) <= index:
+                complete_response["events"].append({"index": index, "text": ""})
+        elif item.type == 'content_block_delta' and item.delta.type == 'text_delta':
+            index = item.index
+            complete_response.get("events")[index]["text"] += item.delta.text
+        elif item.type == 'message_delta':
+            for event in complete_response.get("events", []):
+                event["finish_reason"] = item.delta.stop_reason
+        yield item_to_yield
+
+    # prompt_usage
+    prompt_tokens = 0
+    if kwargs.get("prompt"):
+        prompt_tokens = await instance.count_tokens(kwargs.get("prompt"))
+    elif kwargs.get("messages"):
+        prompt_tokens = sum(
+            [await instance.count_tokens(m.get("content")) for m in kwargs.get("messages")]
+        )
+
+    # completion_usage
+    completion_content = ""
+    if complete_response.get("events"):
+        for event in complete_response.get("events"):  # type: dict
+            if event.get("text"):
+                completion_content += event.get("text")
+
+    completion_tokens = await instance.count_tokens(completion_content)
+    total_tokens = prompt_tokens + completion_tokens
+
+    _set_span_attribute(span, SpanAttributes.LLM_USAGE_PROMPT_TOKENS, prompt_tokens)
+    _set_span_attribute(
+        span, SpanAttributes.LLM_USAGE_COMPLETION_TOKENS, completion_tokens
+    )
+    _set_span_attribute(span, SpanAttributes.LLM_USAGE_TOTAL_TOKENS, total_tokens)
+
+    _set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, complete_response.get("model"))
+    if should_send_prompts():
+        _set_completions(span, complete_response.get("events"))
+    if span.is_recording():
+        span.set_status(Status(StatusCode.OK))
+
+    span.set_status(Status(StatusCode.OK))
+    span.end()
+
+
 @_with_tracer_wrapper
 def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
     """Instruments and calls every function defined in TO_WRAP."""
@@ -185,40 +380,87 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
         return wrapped(*args, **kwargs)
 
     name = to_wrap.get("span_name")
-    with tracer.start_as_current_span(
+    span = tracer.start_span(
         name,
         kind=SpanKind.CLIENT,
         attributes={
             SpanAttributes.LLM_VENDOR: "Anthropic",
             SpanAttributes.LLM_REQUEST_TYPE: LLMRequestTypeValues.COMPLETION.value,
         },
-    ) as span:
+    )
+    try:
+        if span.is_recording():
+            _set_input_attributes(span, kwargs)
+
+    except Exception as ex:  # pylint: disable=broad-except
+        logger.warning(
+            "Failed to set input attributes for anthropic span, error: %s", str(ex)
+        )
+
+    response = wrapped(*args, **kwargs)
+
+    if is_streaming_response(response):
+        return _build_from_streaming_response(span, response, instance._client, kwargs)
+    elif response:
         try:
             if span.is_recording():
-                _set_input_attributes(span, kwargs)
+                _set_response_attributes(span, response)
+                _set_token_usage(span, instance._client, kwargs, response)
 
         except Exception as ex:  # pylint: disable=broad-except
             logger.warning(
-                "Failed to set input attributes for anthropic span, error: %s", str(ex)
+                "Failed to set response attributes for anthropic span, error: %s",
+                str(ex),
             )
+        if span.is_recording():
+            span.set_status(Status(StatusCode.OK))
+    span.end()
+    return response
 
-        response = wrapped(*args, **kwargs)
 
-        if response:
-            try:
-                if span.is_recording():
-                    _set_response_attributes(span, response)
-                    _set_token_usage(span, instance._client, kwargs, response)
+@_with_tracer_wrapper
+async def _a_wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
+    """Instruments and calls every function defined in TO_WRAP."""
+    if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
+        return wrapped(*args, **kwargs)
 
-            except Exception as ex:  # pylint: disable=broad-except
-                logger.warning(
-                    "Failed to set response attributes for anthropic span, error: %s",
-                    str(ex),
-                )
+    name = to_wrap.get("span_name")
+    span = tracer.start_span(
+        name,
+        kind=SpanKind.CLIENT,
+        attributes={
+            SpanAttributes.LLM_VENDOR: "Anthropic",
+            SpanAttributes.LLM_REQUEST_TYPE: LLMRequestTypeValues.COMPLETION.value,
+        },
+    )
+    try:
+        if span.is_recording():
+            _set_input_attributes(span, kwargs)
+
+    except Exception as ex:  # pylint: disable=broad-except
+        logger.warning(
+            "Failed to set input attributes for anthropic span, error: %s", str(ex)
+        )
+
+    response = await wrapped(*args, **kwargs)
+
+    if is_streaming_response(response):
+        return _abuild_from_streaming_response(span, response, instance._client, kwargs)
+    elif response:
+        try:
             if span.is_recording():
-                span.set_status(Status(StatusCode.OK))
+                _set_response_attributes(span, response)
+                await _set_token_usage_a(span, instance._client, kwargs, response)
 
-        return response
+        except Exception as ex:  # pylint: disable=broad-except
+            logger.warning(
+                "Failed to set response attributes for anthropic span, error: %s",
+                str(ex),
+            )
+        if span.is_recording():
+            span.set_status(Status(StatusCode.OK))
+    span.end()
+    return response
 
 
 class AnthropicInstrumentor(BaseInstrumentor):
@@ -239,9 +481,24 @@ class AnthropicInstrumentor(BaseInstrumentor):
                 f"{wrap_object}.{wrap_method}",
                 _wrap(tracer, wrapped_method),
             )
+        for wrapped_method in WRAPPED_AMETHODS:
+            wrap_package = wrapped_method.get("package")
+            wrap_object = wrapped_method.get("object")
+            wrap_method = wrapped_method.get("method")
+            wrap_function_wrapper(
+                wrap_package,
+                f"{wrap_object}.{wrap_method}",
+                _a_wrap(tracer, wrapped_method),
+            )
 
     def _uninstrument(self, **kwargs):
         for wrapped_method in WRAPPED_METHODS:
+            wrap_object = wrapped_method.get("object")
+            unwrap(
+                f"anthropic.resources.completions.{wrap_object}",
+                wrapped_method.get("method"),
+            )
+        for wrapped_method in WRAPPED_AMETHODS:
             wrap_object = wrapped_method.get("object")
             unwrap(
                 f"anthropic.resources.completions.{wrap_object}",
