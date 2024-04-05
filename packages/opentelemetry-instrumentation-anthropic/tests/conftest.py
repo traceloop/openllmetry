@@ -7,7 +7,6 @@ from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
 from opentelemetry.sdk.trace.export import SimpleSpanProcessor
 from opentelemetry.instrumentation.anthropic import AnthropicInstrumentor
-
 pytest_plugins = []
 
 
@@ -32,7 +31,7 @@ def clear_exporter(exporter):
 
 @pytest.fixture(autouse=True)
 def environment():
-    os.environ["ANTHROPIC_API_KEY"] = "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"
+    os.environ["ANTHROPIC_API_KEY"] = "test_api_key"
 
 
 @pytest.fixture(scope="module")
