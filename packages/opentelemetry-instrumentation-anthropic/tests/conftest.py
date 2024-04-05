@@ -20,7 +20,7 @@ def exporter():
     provider.add_span_processor(processor)
     trace.set_tracer_provider(provider)
 
-    AnthropicInstrumentor().instrument()
+    AnthropicInstrumentor(enrich_token_usage=True).instrument()
 
     return exporter
 
@@ -32,7 +32,7 @@ def clear_exporter(exporter):
 
 @pytest.fixture(autouse=True)
 def environment():
-    os.environ["ANTHROPIC_API_KEY"] = "test_api_key"
+    os.environ["ANTHROPIC_API_KEY"] = "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"
 
 
 @pytest.fixture(scope="module")

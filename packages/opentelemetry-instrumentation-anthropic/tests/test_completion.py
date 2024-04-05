@@ -133,8 +133,10 @@ def test_anthropic_message_streaming(exporter):
         stream=True,
     )
 
-    for _ in response:
-        pass
+    response_content = ""
+    for event in response:
+        if event.type == 'content_block_delta' and event.delta.type == 'text_delta':
+            response_content += event.delta.text
 
     spans = exporter.get_finished_spans()
     assert [span.name for span in spans] == [
@@ -145,7 +147,7 @@ def test_anthropic_message_streaming(exporter):
             anthropic_span.attributes["llm.prompts.0.user"]
             == "Tell me a joke about OpenTelemetry"
     )
-    assert (anthropic_span.attributes.get("llm.completions.0.content"))
+    assert (anthropic_span.attributes.get("llm.completions.0.content") == response_content)
     assert anthropic_span.attributes["llm.usage.prompt_tokens"] == 8
     assert (
             anthropic_span.attributes["llm.usage.completion_tokens"]
@@ -205,9 +207,10 @@ async def test_async_anthropic_message_streaming(exporter):
         model="claude-3-haiku-20240307",
         stream=True,
     )
-
-    async for _ in response:
-        pass
+    response_content = ""
+    async for event in response:
+        if event.type == 'content_block_delta' and event.delta.type == 'text_delta':
+            response_content += event.delta.text
 
     spans = exporter.get_finished_spans()
     assert [span.name for span in spans] == [

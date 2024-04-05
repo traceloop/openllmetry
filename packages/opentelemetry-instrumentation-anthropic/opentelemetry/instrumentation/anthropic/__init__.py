@@ -2,7 +2,7 @@
 
 import json
 import logging
-import os
+
 from typing import Collection
 from wrapt import wrap_function_wrapper
 
@@ -19,6 +19,11 @@ from opentelemetry.instrumentation.utils import (
 from anthropic._streaming import Stream, AsyncStream
 
 from opentelemetry.semconv.ai import SpanAttributes, LLMRequestTypeValues
+
+from opentelemetry.instrumentation.anthropic.config import Config
+from opentelemetry.instrumentation.anthropic.streaming import _build_from_streaming_response, \
+    _abuild_from_streaming_response
+from opentelemetry.instrumentation.anthropic.utils import _set_span_attribute, should_send_prompts
 from opentelemetry.instrumentation.anthropic.version import __version__
 
 logger = logging.getLogger(__name__)
@@ -71,12 +76,6 @@ def is_streaming_response(response):
     return isinstance(response, Stream) or isinstance(response, AsyncStream)
 
 
-def should_send_prompts():
-    return (
-        os.getenv("TRACELOOP_TRACE_CONTENT") or "true"
-    ).lower() == "true" or context_api.get_value("override_enable_content_tracing")
-
-
 def _dump_content(content):
     if isinstance(content, str):
         return content
@@ -96,13 +95,6 @@ def _dump_content(content):
                 }
             )
     return json.dumps(json_serializable)
-
-
-def _set_span_attribute(span, name, value):
-    if value is not None:
-        if value != "":
-            span.set_attribute(name, value)
-    return
 
 
 def _set_input_attributes(span, kwargs):
@@ -133,22 +125,6 @@ def _set_input_attributes(span, kwargs):
                     f"{SpanAttributes.LLM_PROMPTS}.{i}.user",
                     _dump_content(message.get("content")),
                 )
-
-
-def _set_completions(span, choices):
-    if not span.is_recording() or not choices:
-        return
-
-    try:
-        for choice in choices:
-            index = choice.get("index")
-            prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{index}"
-            _set_span_attribute(
-                span, f"{prefix}.finish_reason", choice.get("finish_reason")
-            )
-            _set_span_attribute(span, f"{prefix}.content", choice.get("text"))
-    except Exception as e:
-        logger.warning("Failed to set completion attributes, error: %s", str(e))
 
 
 def _set_span_completions(span, response):
@@ -254,121 +230,6 @@ def _with_tracer_wrapper(func):
     return _with_tracer
 
 
-def _build_from_streaming_response(
-        span,
-        response,
-        instance,
-        kwargs
-):
-    complete_response = {"events": [], "model": "", "usage": {}}
-    for item in response:
-        item_to_yield = item
-        if item.type == 'message_start':
-            complete_response["model"] = item.message.model
-            complete_response["usage"] = item.message.usage
-        elif item.type == 'content_block_start':
-            index = item.index
-            if len(complete_response.get("events")) <= index:
-                complete_response["events"].append({"index": index, "text": ""})
-        elif item.type == 'content_block_delta' and item.delta.type == 'text_delta':
-            index = item.index
-            complete_response.get("events")[index]["text"] += item.delta.text
-        elif item.type == 'message_delta':
-            for event in complete_response.get("events", []):
-                event["finish_reason"] = item.delta.stop_reason
-        yield item_to_yield
-
-    # prompt_usage
-    prompt_tokens = 0
-    if kwargs.get("prompt"):
-        prompt_tokens = instance.count_tokens(kwargs.get("prompt"))
-    elif kwargs.get("messages"):
-        prompt_tokens = sum(
-            [instance.count_tokens(m.get("content")) for m in kwargs.get("messages")]
-        )
-
-    # completion_usage
-    completion_content = ""
-    if complete_response.get("events"):
-        for event in complete_response.get("events"):  # type: dict
-            if event.get("text"):
-                completion_content += event.get("text")
-    completion_tokens = instance.count_tokens(completion_content)
-
-    total_tokens = prompt_tokens + completion_tokens
-
-    _set_span_attribute(span, SpanAttributes.LLM_USAGE_PROMPT_TOKENS, prompt_tokens)
-    _set_span_attribute(
-        span, SpanAttributes.LLM_USAGE_COMPLETION_TOKENS, completion_tokens
-    )
-    _set_span_attribute(span, SpanAttributes.LLM_USAGE_TOTAL_TOKENS, total_tokens)
-
-    _set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, complete_response.get("model"))
-
-    if should_send_prompts():
-        _set_completions(span, complete_response.get("events"))
-
-    span.set_status(Status(StatusCode.OK))
-    span.end()
-
-
-async def _abuild_from_streaming_response(
-        span,
-        response,
-        instance,
-        kwargs
-):
-    complete_response = {"events": [], "model": ""}
-    async for item in response:
-        item_to_yield = item
-        if item.type == 'message_start':
-            complete_response["model"] = item.message.model
-            complete_response["usage"] = item.message.usage
-        elif item.type == 'content_block_start':
-            index = item.index
-            if len(complete_response.get("events")) <= index:
-                complete_response["events"].append({"index": index, "text": ""})
-        elif item.type == 'content_block_delta' and item.delta.type == 'text_delta':
-            index = item.index
-            complete_response.get("events")[index]["text"] += item.delta.text
-        elif item.type == 'message_delta':
-            for event in complete_response.get("events", []):
-                event["finish_reason"] = item.delta.stop_reason
-        yield item_to_yield
-
-    # prompt_usage
-    prompt_tokens = 0
-    if kwargs.get("prompt"):
-        prompt_tokens = await instance.count_tokens(kwargs.get("prompt"))
-    elif kwargs.get("messages"):
-        prompt_tokens = sum(
-            [await instance.count_tokens(m.get("content")) for m in kwargs.get("messages")]
-        )
-
-    # completion_usage
-    completion_content = ""
-    if complete_response.get("events"):
-        for event in complete_response.get("events"):  # type: dict
-            if event.get("text"):
-                completion_content += event.get("text")
-
-    completion_tokens = await instance.count_tokens(completion_content)
-    total_tokens = prompt_tokens + completion_tokens
-
-    _set_span_attribute(span, SpanAttributes.LLM_USAGE_PROMPT_TOKENS, prompt_tokens)
-    _set_span_attribute(
-        span, SpanAttributes.LLM_USAGE_COMPLETION_TOKENS, completion_tokens
-    )
-    _set_span_attribute(span, SpanAttributes.LLM_USAGE_TOTAL_TOKENS, total_tokens)
-
-    _set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, complete_response.get("model"))
-    if should_send_prompts():
-        _set_completions(span, complete_response.get("events"))
-
-    span.set_status(Status(StatusCode.OK))
-    span.end()
-
-
 @_with_tracer_wrapper
 def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
     """Instruments and calls every function defined in TO_WRAP."""
@@ -415,7 +276,7 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
 
 
 @_with_tracer_wrapper
-async def _a_wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
+async def _awrap(tracer, to_wrap, wrapped, instance, args, kwargs):
     """Instruments and calls every function defined in TO_WRAP."""
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
         return wrapped(*args, **kwargs)
@@ -462,6 +323,12 @@ async def _a_wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
 class AnthropicInstrumentor(BaseInstrumentor):
     """An instrumentor for Anthropic's client library."""
 
+    def __init__(
+            self, enrich_token_usage: bool = False
+    ):
+        super().__init__()
+        Config.enrich_token_usage = enrich_token_usage
+
     def instrumentation_dependencies(self) -> Collection[str]:
         return _instruments
 
@@ -484,7 +351,7 @@ class AnthropicInstrumentor(BaseInstrumentor):
             wrap_function_wrapper(
                 wrap_package,
                 f"{wrap_object}.{wrap_method}",
-                _a_wrap(tracer, wrapped_method),
+                _awrap(tracer, wrapped_method),
             )
 
     def _uninstrument(self, **kwargs):
