@@ -42,7 +42,7 @@ WRAPPED_METHODS = [
         "package": "anthropic.resources.messages",
         "object": "Messages",
         "method": "stream",
-        "span_name": "anthropic.completion.stream",
+        "span_name": "anthropic.completion",
     },
 ]
 WRAPPED_AMETHODS = [
@@ -62,7 +62,7 @@ WRAPPED_AMETHODS = [
         "package": "anthropic.resources.messages",
         "object": "AsyncMessages",
         "method": "stream",
-        "span_name": "anthropic.completion.stream",
+        "span_name": "anthropic.completion",
     },
 ]
 
@@ -307,8 +307,6 @@ def _build_from_streaming_response(
 
     if should_send_prompts():
         _set_completions(span, complete_response.get("events"))
-    if span.is_recording():
-        span.set_status(Status(StatusCode.OK))
 
     span.set_status(Status(StatusCode.OK))
     span.end()
@@ -366,8 +364,6 @@ async def _abuild_from_streaming_response(
     _set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, complete_response.get("model"))
     if should_send_prompts():
         _set_completions(span, complete_response.get("events"))
-    if span.is_recording():
-        span.set_status(Status(StatusCode.OK))
 
     span.set_status(Status(StatusCode.OK))
     span.end()

@@ -1,5 +1,4 @@
 import asyncio
-import os
 import requests
 from anthropic import AsyncAnthropic
 
@@ -9,6 +8,7 @@ from traceloop.sdk.decorators import aagent, aworkflow
 anthropic = AsyncAnthropic()
 
 Traceloop.init(app_name="joke_generation_service")
+
 
 @aagent(name="base_joke_generator", method_name="generate_joke")
 class JokeAgent:
