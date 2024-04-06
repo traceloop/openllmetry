@@ -221,7 +221,7 @@ async def test_async_anthropic_message_streaming(exporter):
             anthropic_span.attributes["llm.prompts.0.user"]
             == "Tell me a joke about OpenTelemetry"
     )
-    assert (anthropic_span.attributes.get("llm.completions.0.content"))
+    assert (anthropic_span.attributes.get("llm.completions.0.content") == response_content)
     assert anthropic_span.attributes["llm.usage.prompt_tokens"] == 8
     assert (
             anthropic_span.attributes["llm.usage.completion_tokens"]
