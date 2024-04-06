@@ -38,23 +38,23 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAAA2xU22ocMQz9FdUvbWB2SbaF0nkpFAqFPrTQhd6mBO1YO+PGIzmWnM005N+LJ5cm
-        JU82sqSjo3PwlQvetW7S4fT45KV9y9/PP/4I5/s3m5lnjz9e/2HXOJsT1SxSxYFc47LEGkDVoIZs
-        rnG9sBGba39e3eUbXdaX5Wjdl5KpgZEyPVdA+C1nBLiTYvApEW8p0kSW57bjjr+OM/jgwUYCTxcU
-        JVEGT33wBCZQlB5Xve34HfVY4zbSDAdkI19TLWO/BEMGNUoKyB40IS/dhyg7elYx31+miIwWhNuO
-        H3WHUKtAEvFKpeSeQHZK+QJ3IQabYZ9xooPkM7ARDVKWi+Cp0qzr8Zg9HHCu4/QSI/W2DEGXSbKB
-        3cN4NIQX9R56bSDKoM2SuZDQI9hnmcAHtRx2pRLUWY0mXcN2pJuVpoizgtywO0j2Cp1b6ju39Opc
-        Jd90Dg5j6EfATLAv7HEiNozQC/eUTCHwE8qsYLvMAplSJiW2BYjYQq4TlMw0g+wBIdN5ITVAhWAw
-        yQUp2JilDCPgEyyaCl0NFXioHYQJJMMkmRa9dF3hv9TbA3QEDTxEqurkRb1aVDhY7bFocgg2Bga8
-        WWMDWirtqk5d+A6V4LxQnmshMnzYbj/fDb+unO93O5ZJshSNM2gZBlLTG8Ef+7Qf5X9/VulvZXjo
-        xc7Bi7CmdQOTcLAF34OnXRlu0zClGPqF19ED+f5591+Le65POQSwz6J654roj9bu+lfjJvEUXev6
-        iMXT6uVKUtHV5njz6nizeeMapybpNBOqsGsdsT+1kvnuQeuauCfXcomxcWX5INorFzgVOzU5I1bX
-        nrxunBR7GNqcvLq+/gsAAP//AwChHsWyfwQAAA==
+        H4sIAAAAAAAAA3xTXW/UQAz8K2ZfClJatQUEzQuiKgge+BJFCHGo8mWdZNuNHdbeS0PV/4427VEV
+        JJ4uWs+M7fHclQve1W7Q7mz/4Mvrk5Nzfc1Pjz9+4vb9NOg7fvnNVc7mkQqKVLEjV7kksTygalBD
+        Nle5RtiIzdXfr7Z4o8tSWX5q9zknqqCnRDsKCOdyQYBryQYfRuJTijSQpble8Yq/9jP44MF6Ak8b
+        ijJSAk9N8AQmkJXus14U1jE1WCrW0wwTspEvYEvYLI8hAY5jDA1aEN5RoA2lGQbZ0IPCf3U5RuSl
+        WK/4nj4EBWSQkXhXJaeGQNZKaYPrEIPN0CYcaJJ0AdajwZhkEzyVRYtBHpOHCecyTkdMCY0qaCRG
+        aqwCZA90OUoysD8dPRrCw/IdGq0gSqc3yGUffQStJPBBLYV1LqvqrEaD7sFbA4xRJr3zTkvnwGop
+        D8T2rxu6SHcYuMBC15tC4OJeT7CmHjdB0oIZKbWSBuTiQXurtO1dbDzt6ea6Y8RZQXjRmCR5WLll
+        +GrlYOpD00OPxSIveR0JBkIO3C0Z2YO3N7wlV5dWWt27SLUVWzlI1N6uWBjbk9ye/mKZGhnj/GuJ
+        AbRRpqKX6GcmNQXrk+SuL5P84+cevJGpBKVauMtifR4kSdY4g+auu9VA+yuvJYL6/wSu3F0Giyuo
+        ENqbLe5wS/iK7yoMayoWNVGUYuFxMEnkQRK0Uq5Ofs9d/6jcIJ6iq10TMXvafbwrY9bdw/3DJ/uH
+        h0eucmoyniVCFXa1I/ZnlhNvC1rM4YZczTnGyuXlr19fucBjtjOTC2J19cGzykm2e0/Pj66vfwMA
+        AP//AwDpcnXwWQQAAA==
     headers:
       CF-Cache-Status:
       - DYNAMIC
       CF-RAY:
-      - 86ff601f8a14a718-PHX
+      - 87084fd0e8292b96-LAX
       Connection:
       - keep-alive
       Content-Encoding:
@@ -62,7 +62,7 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Sat, 06 Apr 2024 05:28:49 GMT
+      - Sun, 07 Apr 2024 07:30:30 GMT
       Server:
       - cloudflare
       Transfer-Encoding:
@@ -70,21 +70,21 @@ interactions:
       anthropic-ratelimit-requests-limit:
       - '5'
       anthropic-ratelimit-requests-remaining:
-      - '2'
+      - '3'
       anthropic-ratelimit-requests-reset:
-      - '2024-04-06T05:29:00Z'
+      - '2024-04-07T07:31:00Z'
       anthropic-ratelimit-tokens-limit:
       - '10000'
       anthropic-ratelimit-tokens-remaining:
       - '8000'
       anthropic-ratelimit-tokens-reset:
-      - '2024-04-06T05:29:00Z'
+      - '2024-04-07T07:31:00Z'
       request-id:
-      - req_01BmL7hY6bcua6mz1FYRg6Ng
+      - req_01HBJrHQNkCXVEy7ctxYUHLu
       via:
       - 1.1 google
       x-cloud-trace-context:
-      - 9159618da0d3687846e8e67f31e18e19
+      - 7576a88f449dc1524e86b032fde2dc7f
     status:
       code: 200
       message: OK

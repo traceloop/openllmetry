@@ -40,19 +40,18 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAAA0xRTa8TMQz8K5bP6aPt+wD2Dj0jOIAQqrwbsxs1tZfYad9r1f+OsqgSJysz45mx
-        csUUscOjjfv1Zvf04s+vL/pZjj/qaff89dP3y+4LBvS3mZuKzWhkDFg0N4DMkjmJY8BBxVkcu5/X
-        u975tTHL6PDbxJCONDLYpGcD4xMXylC0SuQIhQcnGWumAjbRzAZJ4EQlaTXoSxonh0GzlkYMucYk
-        IxSOAd44Zz0H0EIycgBnygFIIvS5MtBIScyBoM80HKCn4TAusQ/QWi2mv2u+x1JhoLJ4xdaBYCZ3
-        LgI+kUNWPRiYHvm8PNOBmzVZGqCnAsNExUELRHKCU7JKOV3Ik0qAc/IJfOJW/F8e9NwOaVhWGdn8
-        nVPO3ApLXHD1iYtB5KEwWVMnAUsXfsDbr4BHjZyxwyFTjbx6XOlcbbVdb5/W2+1HDGiu876tqmCH
-        LHHvtcidMP5TWQbGTmrOAevyyd0Vk8zV964HFsNu8/hhE1Cr/w++X99ufwEAAP//AwBqjdJrRAIA
-        AA==
+        H4sIAAAAAAAAA0yRzW4bMQyEX4XgWQ78U6TuHnNtDwHaS1oUBi0RWtVaaitSTraG372QkxQ9ERiO
+        hh+pC6aAA04aD+vNw+7j8vXL45+nX/vPT/ft+5Qey0tAh7bM3F2sSpHRYS25C6Sa1EgMHfoixmI4
+        /Li8+41feudWBvw2MqSJIoOO5Vlhs4ZamgQOUNkbSWyZKuhIMyskgTPVVJqCL7nUrvjcQpIIlYOD
+        UkkiO1g45/LsIFZmcUAS4JgbO6B6c4QeRTCTGVcBipREDQiOmfwJjuRP8cZxB53wbTxVBj6z5AV0
+        Js/hFuwrk3F/S5nEdwxdpomtJk8ZfJnmoslSkdewY01xNAf9NpXUOvzbNv1sAUozOKdzCnn5R2Yj
+        Q6D6ihZqme/w+tPhVAJnHNBnaoFXu1WZm6626+2H9Xb7CR2qlflQmbQIDsgSDtaqvDeUfzcWzzhI
+        y9lhu/3kcMEkc7ODlROL4rDZ7TcOS7P/xfv99foXAAD//wMAL+xLpykCAAA=
     headers:
       CF-Cache-Status:
       - DYNAMIC
       CF-RAY:
-      - 86ff5fcf6cf62b4d-LAX
+      - 87084f770ff52b4e-LAX
       Connection:
       - keep-alive
       Content-Encoding:
@@ -60,7 +59,7 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Sat, 06 Apr 2024 05:28:32 GMT
+      - Sun, 07 Apr 2024 07:30:15 GMT
       Server:
       - cloudflare
       Transfer-Encoding:
@@ -68,21 +67,21 @@ interactions:
       anthropic-ratelimit-requests-limit:
       - '5'
       anthropic-ratelimit-requests-remaining:
-      - '3'
+      - '4'
       anthropic-ratelimit-requests-reset:
-      - '2024-04-06T05:29:00Z'
+      - '2024-04-07T07:31:00Z'
       anthropic-ratelimit-tokens-limit:
       - '10000'
       anthropic-ratelimit-tokens-remaining:
-      - '8000'
+      - '9000'
       anthropic-ratelimit-tokens-reset:
-      - '2024-04-06T05:29:00Z'
+      - '2024-04-07T07:31:00Z'
       request-id:
-      - req_01Sdi5Rm8CbtcMstLEwFoe5D
+      - req_019Tyb3EFZtrPg8Ht9LaeSHy
       via:
       - 1.1 google
       x-cloud-trace-context:
-      - a01ea6fc91c2e4630081c9a1a794545e
+      - 0662eeb7ff6f3d29fa85e4082e85a4cd
     status:
       code: 200
       message: OK

@@ -23,7 +23,7 @@ from opentelemetry.semconv.ai import SpanAttributes, LLMRequestTypeValues
 from opentelemetry.instrumentation.anthropic.config import Config
 from opentelemetry.instrumentation.anthropic.streaming import _build_from_streaming_response, \
     _abuild_from_streaming_response
-from opentelemetry.instrumentation.anthropic.utils import _set_span_attribute, should_send_prompts
+from opentelemetry.instrumentation.anthropic.utils import set_span_attribute, should_send_prompts
 from opentelemetry.instrumentation.anthropic.version import __version__
 
 logger = logging.getLogger(__name__)
@@ -98,29 +98,29 @@ def _dump_content(content):
 
 
 def _set_input_attributes(span, kwargs):
-    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, kwargs.get("model"))
-    _set_span_attribute(
+    set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, kwargs.get("model"))
+    set_span_attribute(
         span, SpanAttributes.LLM_REQUEST_MAX_TOKENS, kwargs.get("max_tokens_to_sample")
     )
-    _set_span_attribute(span, SpanAttributes.LLM_TEMPERATURE, kwargs.get("temperature"))
-    _set_span_attribute(span, SpanAttributes.LLM_TOP_P, kwargs.get("top_p"))
-    _set_span_attribute(
+    set_span_attribute(span, SpanAttributes.LLM_TEMPERATURE, kwargs.get("temperature"))
+    set_span_attribute(span, SpanAttributes.LLM_TOP_P, kwargs.get("top_p"))
+    set_span_attribute(
         span, SpanAttributes.LLM_FREQUENCY_PENALTY, kwargs.get("frequency_penalty")
     )
-    _set_span_attribute(
+    set_span_attribute(
         span, SpanAttributes.LLM_PRESENCE_PENALTY, kwargs.get("presence_penalty")
     )
-    _set_span_attribute(span, SpanAttributes.LLM_IS_STREAMING, kwargs.get("stream"))
+    set_span_attribute(span, SpanAttributes.LLM_IS_STREAMING, kwargs.get("stream"))
 
     if should_send_prompts():
         if kwargs.get("prompt") is not None:
-            _set_span_attribute(
+            set_span_attribute(
                 span, f"{SpanAttributes.LLM_PROMPTS}.0.user", kwargs.get("prompt")
             )
 
         elif kwargs.get("messages") is not None:
             for i, message in enumerate(kwargs.get("messages")):
-                _set_span_attribute(
+                set_span_attribute(
                     span,
                     f"{SpanAttributes.LLM_PROMPTS}.{i}.user",
                     _dump_content(message.get("content")),
@@ -130,12 +130,12 @@ def _set_input_attributes(span, kwargs):
 def _set_span_completions(span, response):
     index = 0
     prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{index}"
-    _set_span_attribute(span, f"{prefix}.finish_reason", response.get("stop_reason"))
+    set_span_attribute(span, f"{prefix}.finish_reason", response.get("stop_reason"))
     if response.get("completion"):
-        _set_span_attribute(span, f"{prefix}.content", response.get("completion"))
+        set_span_attribute(span, f"{prefix}.content", response.get("completion"))
     elif response.get("content"):
         for i, content in enumerate(response.get("content")):
-            _set_span_attribute(
+            set_span_attribute(
                 span,
                 f"{SpanAttributes.LLM_COMPLETIONS}.{i}.content",
                 content.text,
@@ -162,11 +162,11 @@ async def _set_token_usage_a(span, anthropic, request, response):
 
     total_tokens = prompt_tokens + completion_tokens
 
-    _set_span_attribute(span, SpanAttributes.LLM_USAGE_PROMPT_TOKENS, prompt_tokens)
-    _set_span_attribute(
+    set_span_attribute(span, SpanAttributes.LLM_USAGE_PROMPT_TOKENS, prompt_tokens)
+    set_span_attribute(
         span, SpanAttributes.LLM_USAGE_COMPLETION_TOKENS, completion_tokens
     )
-    _set_span_attribute(span, SpanAttributes.LLM_USAGE_TOTAL_TOKENS, total_tokens)
+    set_span_attribute(span, SpanAttributes.LLM_USAGE_TOTAL_TOKENS, total_tokens)
 
 
 def _set_token_usage(span, anthropic, request, response):
@@ -189,26 +189,26 @@ def _set_token_usage(span, anthropic, request, response):
 
     total_tokens = prompt_tokens + completion_tokens
 
-    _set_span_attribute(span, SpanAttributes.LLM_USAGE_PROMPT_TOKENS, prompt_tokens)
-    _set_span_attribute(
+    set_span_attribute(span, SpanAttributes.LLM_USAGE_PROMPT_TOKENS, prompt_tokens)
+    set_span_attribute(
         span, SpanAttributes.LLM_USAGE_COMPLETION_TOKENS, completion_tokens
     )
-    _set_span_attribute(span, SpanAttributes.LLM_USAGE_TOTAL_TOKENS, total_tokens)
+    set_span_attribute(span, SpanAttributes.LLM_USAGE_TOTAL_TOKENS, total_tokens)
 
 
 def _set_response_attributes(span, response):
     if not isinstance(response, dict):
         response = response.__dict__
-    _set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, response.get("model"))
+    set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, response.get("model"))
 
     if response.get("usage"):
         prompt_tokens = response.get("usage").input_tokens
         completion_tokens = response.get("usage").output_tokens
-        _set_span_attribute(span, SpanAttributes.LLM_USAGE_PROMPT_TOKENS, prompt_tokens)
-        _set_span_attribute(
+        set_span_attribute(span, SpanAttributes.LLM_USAGE_PROMPT_TOKENS, prompt_tokens)
+        set_span_attribute(
             span, SpanAttributes.LLM_USAGE_COMPLETION_TOKENS, completion_tokens
         )
-        _set_span_attribute(
+        set_span_attribute(
             span,
             SpanAttributes.LLM_USAGE_TOTAL_TOKENS,
             prompt_tokens + completion_tokens,
