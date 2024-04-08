@@ -39,7 +39,12 @@ async def achat_wrapper(tracer, to_wrap, wrapped, instance, args, kwargs):
 
 
 def _handle_request(span, args, kwargs, instance):
-    model = instance.model if hasattr(instance, "model") else instance.model_name
+    if hasattr(instance, "model"):
+        model = instance.model
+    elif hasattr(instance, "model_id"):
+        model = instance.model_id
+    else:
+        model = instance.model_name
     span.set_attribute(SpanAttributes.LLM_REQUEST_TYPE, LLMRequestTypeValues.CHAT.value)
     span.set_attribute(SpanAttributes.LLM_REQUEST_MODEL, model)
     span.set_attribute(SpanAttributes.LLM_RESPONSE_MODEL, model)

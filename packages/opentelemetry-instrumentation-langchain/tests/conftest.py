@@ -36,6 +36,9 @@ def clear_exporter(exporter):
 def environment():
     os.environ["OPENAI_API_KEY"] = "test_api_key"
     os.environ["ANTHROPIC_API_KEY"] = "test"
+    os.environ["AWS_ACCESS_KEY_ID"]="test_access_key_id"
+    os.environ["AWS_SECRET_ACCESS_KEY"]="test_secret_access_key"
+    os.environ["AWS_SESSION_TOKEN"]="test_session_token"
 
 
 @pytest.fixture(scope="module")

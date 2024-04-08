@@ -9,7 +9,7 @@ from langchain_community.utils.openai_functions import (
 from langchain_community.llms.huggingface_text_gen_inference import (
     HuggingFaceTextGenInference,
 )
-from langchain_community.chat_models import ChatOpenAI, ChatAnthropic
+from langchain_community.chat_models import BedrockChat, ChatOpenAI, ChatAnthropic
 from langchain_core.pydantic_v1 import BaseModel, Field
 
 
@@ -189,3 +189,33 @@ def test_anthropic(exporter):
         anthropic_span.attributes["llm.prompts.0.user"] == "You are helpful assistant"
     )
     assert anthropic_span.attributes["llm.completions.0.content"] == response.content
+
+
+@pytest.mark.vcr
+def test_bedrock(exporter):
+    prompt = ChatPromptTemplate.from_messages(
+        [("system", "You are helpful assistant"), ("user", "{input}")]
+    )
+    model = BedrockChat(model_id="anthropic.claude-3-haiku-20240307-v1:0")
+
+    chain = prompt | model
+    response = chain.invoke({"input": "tell me a short joke"})
+
+    spans = exporter.get_finished_spans()
+
+    assert [
+        "langchain.task.ChatPromptTemplate",
+        "langchain.task.BedrockChat",
+        "langchain.workflow",
+    ] == [span.name for span in spans]
+
+    bedrock_span = next(
+        span for span in spans if span.name == "langchain.task.BedrockChat"
+    )
+
+    assert bedrock_span.attributes["llm.request.type"] == "chat"
+    assert bedrock_span.attributes["llm.request.model"] == "anthropic.claude-3-haiku-20240307-v1:0"
+    assert (
+        bedrock_span.attributes["llm.prompts.0.user"] == "You are helpful assistant"
+    )
+    assert bedrock_span.attributes["llm.completions.0.content"] == response.content
