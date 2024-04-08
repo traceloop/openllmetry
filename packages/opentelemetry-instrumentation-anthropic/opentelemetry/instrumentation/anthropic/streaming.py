@@ -5,6 +5,7 @@ from opentelemetry.instrumentation.anthropic.utils import (
     set_span_attribute,
     should_send_prompts,
 )
+from opentelemetry.metrics import Counter, Histogram, Meter, get_meter
 from opentelemetry.semconv.ai import SpanAttributes
 from opentelemetry.trace.status import Status, StatusCode
 
@@ -30,7 +31,15 @@ def _process_response_item(item, complete_response):
         logger.warning("Failed to process response item, error: %s", str(ex))
 
 
-def _set_token_usage(span, complete_response, prompt_tokens, completion_tokens):
+def _set_token_usage(
+    span,
+    complete_response,
+    prompt_tokens,
+    completion_tokens,
+    metric_attributes: dict = {},
+    token_counter: Counter = None,
+    choice_counter: Counter = None,
+):
     total_tokens = prompt_tokens + completion_tokens
     set_span_attribute(span, SpanAttributes.LLM_USAGE_PROMPT_TOKENS, prompt_tokens)
     set_span_attribute(
@@ -41,6 +50,39 @@ def _set_token_usage(span, complete_response, prompt_tokens, completion_tokens):
     set_span_attribute(
         span, SpanAttributes.LLM_RESPONSE_MODEL, complete_response.get("model")
     )
+
+    if token_counter and type(prompt_tokens) is int and prompt_tokens >= 0:
+        token_counter.add(
+            prompt_tokens,
+            attributes={
+                **metric_attributes,
+                "llm.usage.token_type": "prompt",
+            },
+        )
+
+    if token_counter and type(completion_tokens) is int and completion_tokens >= 0:
+        token_counter.add(
+            completion_tokens,
+            attributes={
+                **metric_attributes,
+                "llm.usage.token_type": "completion",
+            },
+        )
+
+    choices = 0
+    if type(complete_response.get("content")) is list:
+        choices = len(complete_response.get("content"))
+    elif complete_response.get("completion"):
+        choices = 1
+
+    if choices > 0 and choice_counter:
+        choice_counter.add(
+            choices,
+            attributes={
+                **metric_attributes,
+                "llm.response.stop_reason": complete_response.get("stop_reason"),
+            },
+        )
 
 
 def _set_completions(span, events):
@@ -59,11 +101,22 @@ def _set_completions(span, events):
         logger.warning("Failed to set completion attributes, error: %s", str(e))
 
 
-def _build_from_streaming_response(span, response, instance, kwargs):
+def _build_from_streaming_response(
+    span,
+    response,
+    instance,
+    token_counter: Counter = None,
+    choice_counter: Counter = None,
+    kwargs: dict = {},
+):
     complete_response = {"events": [], "model": "", "usage": {}}
     for item in response:
         yield item
         _process_response_item(item, complete_response)
+
+    metric_attributes = {
+        "llm.response.model": complete_response.get("model"),
+    }
 
     # calculate token usage
     if Config.enrich_token_usage:
@@ -93,7 +146,15 @@ def _build_from_streaming_response(span, response, instance, kwargs):
                 if model_name:
                     completion_tokens = instance.count_tokens(completion_content)
 
-            _set_token_usage(span, complete_response, prompt_tokens, completion_tokens)
+            _set_token_usage(
+                span,
+                complete_response,
+                prompt_tokens,
+                completion_tokens,
+                metric_attributes,
+                token_counter,
+                choice_counter,
+            )
         except Exception as e:
             logger.warning("Failed to set token usage, error: %s", str(e))
 

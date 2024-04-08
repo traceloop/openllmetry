@@ -51,6 +51,7 @@ WRAPPED_METHODS = [
         "object": "Messages",
         "method": "stream",
         "span_name": "anthropic.completion",
+        "metric_name": "anthropic.messages",
     },
 ]
 WRAPPED_AMETHODS = [
@@ -59,18 +60,21 @@ WRAPPED_AMETHODS = [
         "object": "AsyncCompletions",
         "method": "create",
         "span_name": "anthropic.completion",
+        "metric_name": "anthropic.completion",
     },
     {
         "package": "anthropic.resources.messages",
         "object": "AsyncMessages",
         "method": "create",
         "span_name": "anthropic.completion",
+        "metric_name": "anthropic.messages",
     },
     {
         "package": "anthropic.resources.messages",
         "object": "AsyncMessages",
         "method": "stream",
         "span_name": "anthropic.completion",
+        "metric_name": "anthropic.messages",
     },
 ]
 
@@ -182,12 +186,15 @@ def _set_token_usage(
     anthropic,
     request,
     response,
-    metric_attributes: dict = {},
     token_counter: Counter = None,
     choice_counter: Counter = None,
 ):
     if not isinstance(response, dict):
         response = response.__dict__
+
+    metric_attributes = {
+        "llm.response.model": response.get("model"),
+    }
 
     prompt_tokens = 0
     if request.get("prompt"):
@@ -337,20 +344,6 @@ def _create_metrics(meter: Meter, name: str):
     return token_counter, choice_counter, duration_histogram, exception_counter
 
 
-def _get_shared_metric_attributes(response: dict = None, exception: Exception = None):
-    if response:
-        if not isinstance(response, dict):
-            response = response.__dict__
-        return {
-            "llm.response.model": response.get("model"),
-        }
-    if exception:
-        return {
-            "error.type": exception.__class__.__name__,
-        }
-    return {}
-
-
 @_with_chat_telemetry_wrapper
 def _wrap(
     tracer: Tracer,
@@ -386,31 +379,35 @@ def _wrap(
             "Failed to set input attributes for anthropic span, error: %s", str(ex)
         )
 
-    response = None
-    exception = None
-    metric_attributes = {}
-
     start_time = time.time()
-    end_time = None
     try:
         response = wrapped(*args, **kwargs)
     except Exception as e:  # pylint: disable=broad-except
-        exception = e
-        raise e
-    finally:
         end_time = time.time()
+        attributes = {
+            "error.type": e.__class__.__name__,
+        }
 
-        metric_attributes = _get_shared_metric_attributes(response, exception)
-
-        if end_time and duration_histogram:
+        if duration_histogram:
             duration = end_time - start_time
-            duration_histogram.record(duration, attributes=metric_attributes)
+            duration_histogram.record(duration, attributes=attributes)
 
-        if exception and exception_counter:
-            exception_counter.add(1, attributes=metric_attributes)
+        if exception_counter:
+            exception_counter.add(1, attributes=attributes)
+
+        raise e
+
+    end_time = time.time()
 
     if is_streaming_response(response):
-        return _build_from_streaming_response(span, response, instance._client, kwargs)
+        return _build_from_streaming_response(
+            span,
+            response,
+            instance._client,
+            token_counter,
+            choice_counter,
+            kwargs,
+        )
     elif response:
         try:
             if span.is_recording():
@@ -420,7 +417,6 @@ def _wrap(
                     instance._client,
                     kwargs,
                     response,
-                    metric_attributes,
                     token_counter,
                     choice_counter,
                 )
