@@ -124,13 +124,13 @@ class TracerWrapper(object):
             else:
                 for instrument in instruments:
                     if instrument == Instruments.OPENAI:
-                        if not init_openai_instrumentor():
+                        if not init_openai_instrumentor(should_enrich_metrics):
                             print(Fore.RED + "Warning: OpenAI library does not exist.")
                             print(Fore.RESET)
                         else:
                             instrument_set = True
                     elif instrument == Instruments.ANTHROPIC:
-                        if not init_anthropic_instrumentor():
+                        if not init_anthropic_instrumentor(should_enrich_metrics):
                             print(
                                 Fore.RED + "Warning: Anthropic library does not exist."
                             )
