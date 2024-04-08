@@ -10,6 +10,8 @@ version_files = [
     "packages/opentelemetry-instrumentation-anthropic/opentelemetry/instrumentation/anthropic/version.py",
     "packages/opentelemetry-instrumentation-bedrock/pyproject.toml:^version",
     "packages/opentelemetry-instrumentation-bedrock/opentelemetry/instrumentation/bedrock/version.py",
+    "packages/opentelemetry-instrumentation-cassio/pyproject.toml:^version",
+    "packages/opentelemetry-instrumentation-cassio/opentelemetry/instrumentation/cassio/version.py",
     "packages/opentelemetry-instrumentation-chromadb/pyproject.toml:^version",
     "packages/opentelemetry-instrumentation-chromadb/opentelemetry/instrumentation/chromadb/version.py",
     "packages/opentelemetry-instrumentation-cohere/pyproject.toml:^version",
