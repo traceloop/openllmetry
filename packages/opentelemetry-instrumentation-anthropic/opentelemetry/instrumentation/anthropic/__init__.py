@@ -221,10 +221,15 @@ def _set_token_usage(
 
     total_tokens = prompt_tokens + completion_tokens
 
-    content = response.get("content")
-    if choice_counter and type(content) is list:
+    choices = 0
+    if type(response.get("content")) is list:
+        choices = len(response.get("content"))
+    elif response.get("completion"):
+        choices = 1
+
+    if choices > 0 and choice_counter:
         choice_counter.add(
-            len(response.get("content")),
+            choices,
             attributes={
                 **metric_attributes,
                 "llm.response.stop_reason": response.get("stop_reason"),
