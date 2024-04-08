@@ -44,14 +44,14 @@ WRAPPED_METHODS = [
         "object": "Messages",
         "method": "create",
         "span_name": "anthropic.completion",
-        "metric_name": "anthropic.messages",
+        "metric_name": "anthropic.completion",
     },
     {
         "package": "anthropic.resources.messages",
         "object": "Messages",
         "method": "stream",
         "span_name": "anthropic.completion",
-        "metric_name": "anthropic.messages",
+        "metric_name": "anthropic.completion",
     },
 ]
 WRAPPED_AMETHODS = [
@@ -67,14 +67,14 @@ WRAPPED_AMETHODS = [
         "object": "AsyncMessages",
         "method": "create",
         "span_name": "anthropic.completion",
-        "metric_name": "anthropic.messages",
+        "metric_name": "anthropic.completion",
     },
     {
         "package": "anthropic.resources.messages",
         "object": "AsyncMessages",
         "method": "stream",
         "span_name": "anthropic.completion",
-        "metric_name": "anthropic.messages",
+        "metric_name": "anthropic.completion",
     },
 ]
 

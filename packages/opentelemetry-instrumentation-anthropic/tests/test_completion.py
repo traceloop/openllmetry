@@ -143,7 +143,7 @@ def test_anthropic_message_create(exporter, reader):
     for rm in resource_metrics:
         for sm in rm.scope_metrics:
             for metric in sm.metrics:
-                if metric.name == "llm.anthropic.messages.tokens":
+                if metric.name == "llm.anthropic.completion.tokens":
                     found_token_metric = True
                     for data_point in metric.data.data_points:
                         assert data_point.attributes["llm.usage.token_type"] in [
@@ -156,7 +156,7 @@ def test_anthropic_message_create(exporter, reader):
                         )
                         assert data_point.value > 0
 
-                if metric.name == "llm.anthropic.messages.choices":
+                if metric.name == "llm.anthropic.completion.choices":
                     found_choice_metric = True
                     for data_point in metric.data.data_points:
                         assert data_point.value >= 1
@@ -165,7 +165,7 @@ def test_anthropic_message_create(exporter, reader):
                             == "claude-3-opus-20240229"
                         )
 
-                if metric.name == "llm.anthropic.messages.duration":
+                if metric.name == "llm.anthropic.completion.duration":
                     found_duration_metric = True
                     assert any(
                         data_point.count > 0 for data_point in metric.data.data_points
@@ -180,7 +180,7 @@ def test_anthropic_message_create(exporter, reader):
                         for data_point in metric.data.data_points
                     )
 
-                if metric.name == "llm.anthropic.messages.exceptions":
+                if metric.name == "llm.anthropic.completion.exceptions":
                     found_exception_metric = True
                     for data_point in metric.data.data_points:
                         assert data_point.value == 1
@@ -298,7 +298,7 @@ def test_anthropic_message_streaming(exporter, reader):
     for rm in resource_metrics:
         for sm in rm.scope_metrics:
             for metric in sm.metrics:
-                if metric.name == "llm.anthropic.messages.tokens":
+                if metric.name == "llm.anthropic.completion.tokens":
                     found_token_metric = True
                     for data_point in metric.data.data_points:
                         assert data_point.attributes["llm.usage.token_type"] in [
@@ -311,7 +311,7 @@ def test_anthropic_message_streaming(exporter, reader):
                         )
                         assert data_point.value > 0
 
-                if metric.name == "llm.anthropic.messages.choices":
+                if metric.name == "llm.anthropic.completion.choices":
                     found_choice_metric = True
                     for data_point in metric.data.data_points:
                         assert data_point.value >= 1
@@ -320,7 +320,7 @@ def test_anthropic_message_streaming(exporter, reader):
                             == "claude-3-haiku-20240307"
                         )
 
-                if metric.name == "llm.anthropic.messages.duration":
+                if metric.name == "llm.anthropic.completion.duration":
                     found_duration_metric = True
                     assert any(
                         data_point.count > 0 for data_point in metric.data.data_points
