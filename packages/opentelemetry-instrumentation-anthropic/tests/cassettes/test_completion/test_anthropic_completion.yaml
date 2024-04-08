@@ -6,7 +6,7 @@ interactions:
       accept:
       - application/json
       accept-encoding:
-      - gzip, deflate, br
+      - gzip, deflate
       anthropic-version:
       - '2023-06-01'
       connection:
@@ -18,34 +18,34 @@ interactions:
       host:
       - api.anthropic.com
       user-agent:
-      - Anthropic/Python 0.9.0
+      - Anthropic/Python 0.21.3
       x-stainless-arch:
-      - arm64
+      - other:amd64
       x-stainless-async:
       - 'false'
       x-stainless-lang:
       - python
       x-stainless-os:
-      - MacOS
+      - Windows
       x-stainless-package-version:
-      - 0.9.0
+      - 0.21.3
       x-stainless-runtime:
       - CPython
       x-stainless-runtime-version:
-      - 3.9.5
+      - 3.9.13
     method: POST
     uri: https://api.anthropic.com/v1/complete
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAAA4yOQQrCMBQFr6JvnYq1uxygBBfSistCiO2nBpOfahJQxLuLRcGlyzcww3sg3SeC
-        RB/85CjZwBCww5fodbmr4yHbpr5Vrdoem+pU7c9jhvhVJBaKnAtLCMQUJn0lE2c+r0iXTNwTBHwY
-        yL3rzuSBCssxGU5Fudp8VEh03LHK3rCEgAuj/ufP8wUAAP//AwCrEt2bywAAAA==
+        H4sIAAAAAAAAA4yOsQrCMBRFf0XvnIp1cMgoLRS6lIJOhRDap1TS92qTiCL+u1gUHB3vgXO4D4T7
+        SNBoZRgdhV4YCn33JWad5ufjVF2r3NdZvS+z7UF2t1BC/Soai4KckyUUfJDRTGT9zOfl6RKJW4LC
+        IB25d93Z2FHSsw+WQ5KuNh8VGg03XMTBsoaCk5P558/zBQAA//8DAJPkGKTLAAAA
     headers:
       CF-Cache-Status:
       - DYNAMIC
       CF-RAY:
-      - 8545870d6dc009c7-HFA
+      - 87084f286b44103c-LAX
       Connection:
       - keep-alive
       Content-Encoding:
@@ -53,17 +53,17 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Mon, 12 Feb 2024 14:30:06 GMT
+      - Sun, 07 Apr 2024 07:29:54 GMT
       Server:
       - cloudflare
       Transfer-Encoding:
       - chunked
-      Via:
-      - 1.1 google
-      X-Cloud-Trace-Context:
-      - 96aea32e8c59fb4bb3219fed5a3aac2e
       request-id:
-      - req_01P66j1p8yrFoDi9tE7kCuA5
+      - req_01UeezAJTpSFWGDxF7RbHs7q
+      via:
+      - 1.1 google
+      x-cloud-trace-context:
+      - f50c80863bf690164a40dada9496b472
     status:
       code: 200
       message: OK
