@@ -1,3 +1,10 @@
+## v0.15.12 (2024-04-08)
+
+### Fix
+
+- **anthropic**: do not fail for missing methods
+- **anthropic**: Async and streaming Anthropic (#750)
+
 ## v0.15.11 (2024-04-04)
 
 ### Fix
