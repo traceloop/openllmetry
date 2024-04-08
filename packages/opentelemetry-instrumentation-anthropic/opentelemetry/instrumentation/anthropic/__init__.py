@@ -44,7 +44,7 @@ WRAPPED_METHODS = [
         "object": "Messages",
         "method": "create",
         "span_name": "anthropic.completion",
-        "metric_name": "anthropic.completion",
+        "metric_name": "anthropic.messages",
     },
     {
         "package": "anthropic.resources.messages",
