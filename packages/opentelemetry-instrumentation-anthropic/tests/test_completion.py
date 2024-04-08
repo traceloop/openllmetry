@@ -14,11 +14,16 @@ def test_anthropic_completion(exporter, reader):
         max_tokens_to_sample=2048,
         top_p=0.1,
     )
+    try:
+        client.completions.create(
+            unknown_parameter="unknown",
+        )
+    except Exception:
+        pass
 
     spans = exporter.get_finished_spans()
-    assert [span.name for span in spans] == [
-        "anthropic.completion",
-    ]
+    assert all(span.name == "anthropic.completion" for span in spans)
+
     anthropic_span = spans[0]
     assert (
             anthropic_span.attributes["llm.prompts.0.user"]
@@ -33,7 +38,7 @@ def test_anthropic_completion(exporter, reader):
     found_token_metric = False
     found_choice_metric = False
     found_duration_metric = False
-    # TODO found_exception_metric = False
+    found_exception_metric = False
 
     for rm in resource_metrics:
         for sm in rm.scope_metrics:
@@ -70,14 +75,22 @@ def test_anthropic_completion(exporter, reader):
                         data_point.sum > 0 for data_point in metric.data.data_points
                     )
                     assert all(
-                        data_point.attributes["llm.response.model"]
+                        data_point.attributes.get("llm.response.model")
                         == "claude-instant-1.2"
+                        or data_point.attributes.get("error.type") == "TypeError"
                         for data_point in metric.data.data_points
                     )
+
+                if metric.name == "llm.anthropic.completion.exceptions":
+                    found_exception_metric = True
+                    for data_point in metric.data.data_points:
+                        assert data_point.value == 1
+                        assert data_point.attributes["error.type"] == "TypeError"
 
     assert found_token_metric is True
     assert found_choice_metric is True
     assert found_duration_metric is True
+    assert found_exception_metric is True
 
 
 @pytest.mark.vcr
@@ -93,11 +106,16 @@ def test_anthropic_message_create(exporter, reader):
         ],
         model="claude-3-opus-20240229",
     )
+    try:
+        client.messages.create(
+            unknown_parameter="unknown",
+        )
+    except Exception:
+        pass
 
     spans = exporter.get_finished_spans()
-    assert [span.name for span in spans] == [
-        "anthropic.completion",
-    ]
+    assert all(span.name == "anthropic.completion" for span in spans)
+
     anthropic_span = spans[0]
     assert (
             anthropic_span.attributes["llm.prompts.0.user"]
@@ -290,7 +308,7 @@ async def test_async_anthropic_message_streaming(exporter):
     found_token_metric = False
     found_choice_metric = False
     found_duration_metric = False
-    # TODO found_exception_metric = False
+    found_exception_metric = False
 
     for rm in resource_metrics:
         for sm in rm.scope_metrics:
@@ -319,7 +337,6 @@ async def test_async_anthropic_message_streaming(exporter):
 
                 if metric.name == "llm.anthropic.messages.duration":
                     found_duration_metric = True
-                    print(metric.data.data_points)
                     assert any(
                         data_point.count > 0 for data_point in metric.data.data_points
                     )
@@ -327,11 +344,19 @@ async def test_async_anthropic_message_streaming(exporter):
                         data_point.sum > 0 for data_point in metric.data.data_points
                     )
                     assert all(
-                        data_point.attributes["llm.response.model"]
+                        data_point.attributes.get("llm.response.model")
                         == "claude-3-opus-20240229"
+                        or data_point.attributes.get("error.type") == "TypeError"
                         for data_point in metric.data.data_points
                     )
+
+                if metric.name == "llm.anthropic.completion.exceptions":
+                    found_exception_metric = True
+                    for data_point in metric.data.data_points:
+                        assert data_point.value == 1
+                        assert data_point.attributes["error.type"] == "TypeError"
 
     assert found_token_metric is True
     assert found_choice_metric is True
     assert found_duration_metric is True
+    assert found_exception_metric is True
