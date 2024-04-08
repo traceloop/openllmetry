@@ -106,11 +106,20 @@ def _build_from_streaming_response(
     token_counter: Counter = None,
     choice_counter: Counter = None,
     duration_histogram: Histogram = None,
+    exception_counter: Counter = None,
     kwargs: dict = {},
 ):
     complete_response = {"events": [], "model": "", "usage": {}}
     for item in response:
-        yield item
+        try:
+            yield item
+        except Exception as e:
+            attributes = {
+                "error.type": e.__class__.__name__,
+            }
+            if exception_counter:
+                exception_counter.add(1, attributes=attributes)
+            raise e
         _process_response_item(item, complete_response)
 
     metric_attributes = {

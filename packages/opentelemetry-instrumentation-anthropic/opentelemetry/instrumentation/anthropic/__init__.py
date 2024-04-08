@@ -405,6 +405,7 @@ def _wrap(
             token_counter,
             choice_counter,
             duration_histogram,
+            exception_counter,
             kwargs,
         )
     elif response:
