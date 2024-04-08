@@ -1,26 +1,29 @@
 import logging
-from opentelemetry.instrumentation.anthropic.utils import set_span_attribute, should_send_prompts
-from opentelemetry.trace.status import Status, StatusCode
-from opentelemetry.semconv.ai import SpanAttributes
 
 from opentelemetry.instrumentation.anthropic.config import Config
+from opentelemetry.instrumentation.anthropic.utils import (
+    set_span_attribute,
+    should_send_prompts,
+)
+from opentelemetry.semconv.ai import SpanAttributes
+from opentelemetry.trace.status import Status, StatusCode
 
 logger = logging.getLogger(__name__)
 
 
 def _process_response_item(item, complete_response):
     try:
-        if item.type == 'message_start':
+        if item.type == "message_start":
             complete_response["model"] = item.message.model
             complete_response["usage"] = item.message.usage
-        elif item.type == 'content_block_start':
+        elif item.type == "content_block_start":
             index = item.index
             if len(complete_response.get("events")) <= index:
                 complete_response["events"].append({"index": index, "text": ""})
-        elif item.type == 'content_block_delta' and item.delta.type == 'text_delta':
+        elif item.type == "content_block_delta" and item.delta.type == "text_delta":
             index = item.index
             complete_response.get("events")[index]["text"] += item.delta.text
-        elif item.type == 'message_delta':
+        elif item.type == "message_delta":
             for event in complete_response.get("events", []):
                 event["finish_reason"] = item.delta.stop_reason
     except Exception as ex:
@@ -35,7 +38,9 @@ def _set_token_usage(span, complete_response, prompt_tokens, completion_tokens):
     )
     set_span_attribute(span, SpanAttributes.LLM_USAGE_TOTAL_TOKENS, total_tokens)
 
-    set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, complete_response.get("model"))
+    set_span_attribute(
+        span, SpanAttributes.LLM_RESPONSE_MODEL, complete_response.get("model")
+    )
 
 
 def _set_completions(span, events):
@@ -54,12 +59,7 @@ def _set_completions(span, events):
         logger.warning("Failed to set completion attributes, error: %s", str(e))
 
 
-def _build_from_streaming_response(
-        span,
-        response,
-        instance,
-        kwargs
-):
+def _build_from_streaming_response(span, response, instance, kwargs):
     complete_response = {"events": [], "model": "", "usage": {}}
     for item in response:
         yield item
@@ -76,7 +76,10 @@ def _build_from_streaming_response(
                 prompt_tokens = instance.count_tokens(kwargs.get("prompt"))
             elif kwargs.get("messages"):
                 prompt_tokens = sum(
-                    [instance.count_tokens(m.get("content")) for m in kwargs.get("messages")]
+                    [
+                        instance.count_tokens(m.get("content"))
+                        for m in kwargs.get("messages")
+                    ]
                 )
 
             # completion_usage
@@ -101,12 +104,7 @@ def _build_from_streaming_response(
     span.end()
 
 
-async def _abuild_from_streaming_response(
-        span,
-        response,
-        instance,
-        kwargs
-):
+async def _abuild_from_streaming_response(span, response, instance, kwargs):
     complete_response = {"events": [], "model": ""}
     async for item in response:
         yield item
@@ -123,7 +121,10 @@ async def _abuild_from_streaming_response(
                 prompt_tokens = await instance.count_tokens(kwargs.get("prompt"))
             elif kwargs.get("messages"):
                 prompt_tokens = sum(
-                    [await instance.count_tokens(m.get("content")) for m in kwargs.get("messages")]
+                    [
+                        await instance.count_tokens(m.get("content"))
+                        for m in kwargs.get("messages")
+                    ]
                 )
 
             # completion_usage
