@@ -37,12 +37,14 @@ WRAPPED_METHODS = [
         "object": "Completions",
         "method": "create",
         "span_name": "anthropic.completion",
+        "metric_name": "anthropic.completion",
     },
     {
         "package": "anthropic.resources.messages",
         "object": "Messages",
         "method": "create",
         "span_name": "anthropic.completion",
+        "metric_name": "anthropic.completion",
     },
     {
         "package": "anthropic.resources.messages",
@@ -282,13 +284,19 @@ def _with_chat_telemetry_wrapper(func):
 
     def _with_chat_telemetry(
         tracer,
-        meter,
+        token_counter,
+        choice_counter,
+        duration_histogram,
+        exception_counter,
         to_wrap,
     ):
         def wrapper(wrapped, instance, args, kwargs):
             return func(
                 tracer,
-                meter,
+                token_counter,
+                choice_counter,
+                duration_histogram,
+                exception_counter,
                 to_wrap,
                 wrapped,
                 instance,
@@ -301,27 +309,27 @@ def _with_chat_telemetry_wrapper(func):
     return _with_chat_telemetry
 
 
-def _create_metrics(meter: Meter):
+def _create_metrics(meter: Meter, name: str):
     token_counter = meter.create_counter(
-        name="llm.anthropic.completion.tokens",
+        name=f"llm.{name}.tokens",
         unit="token",
         description="Number of tokens used in prompt and completions",
     )
 
     choice_counter = meter.create_counter(
-        name="llm.anthropic.completion.choices",
+        name=f"llm.{name}.choices",
         unit="choice",
         description="Number of choices returned by chat completions call",
     )
 
     duration_histogram = meter.create_histogram(
-        name="llm.anthropic.completion.duration",
+        name=f"llm.{name}.duration",
         unit="s",
         description="Duration of chat completion operation",
     )
 
     exception_counter = meter.create_counter(
-        name="llm.anthropic.completion.exceptions",
+        name=f"llm.{name}.exceptions",
         unit="time",
         description="Number of exceptions occurred during chat completions",
     )
@@ -346,7 +354,10 @@ def _get_shared_metric_attributes(response: dict = None, exception: Exception = 
 @_with_chat_telemetry_wrapper
 def _wrap(
     tracer: Tracer,
-    meter: Meter,
+    token_counter: Counter,
+    choice_counter: Counter,
+    duration_histogram: Histogram,
+    exception_counter: Counter,
     to_wrap,
     wrapped,
     instance,
@@ -356,21 +367,6 @@ def _wrap(
     """Instruments and calls every function defined in TO_WRAP."""
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
         return wrapped(*args, **kwargs)
-
-    if is_metrics_enabled():
-        (
-            token_counter,
-            choice_counter,
-            duration_histogram,
-            exception_counter,
-        ) = _create_metrics(meter)
-    else:
-        (
-            token_counter,
-            choice_counter,
-            duration_histogram,
-            exception_counter,
-        ) = (None, None, None)
 
     name = to_wrap.get("span_name")
     span = tracer.start_span(
@@ -506,17 +502,38 @@ class AnthropicInstrumentor(BaseInstrumentor):
         meter_provider = kwargs.get("meter_provider")
         meter = get_meter(__name__, __version__, meter_provider)
 
+        created_metrics = {}
         for wrapped_method in WRAPPED_METHODS:
             wrap_package = wrapped_method.get("package")
             wrap_object = wrapped_method.get("object")
             wrap_method = wrapped_method.get("method")
+            metric_name = wrapped_method.get("metric_name")
+            if is_metrics_enabled():
+                if created_metrics.get(metric_name) is None:
+                    created_metrics[metric_name] = _create_metrics(meter, metric_name)
+                (
+                    token_counter,
+                    choice_counter,
+                    duration_histogram,
+                    exception_counter,
+                ) = created_metrics[metric_name]
+            else:
+                (
+                    token_counter,
+                    choice_counter,
+                    duration_histogram,
+                    exception_counter,
+                ) = (None, None, None)
             try:
                 wrap_function_wrapper(
                     wrap_package,
                     f"{wrap_object}.{wrap_method}",
                     _wrap(
                         tracer,
-                        meter,
+                        token_counter,
+                        choice_counter,
+                        duration_histogram,
+                        exception_counter,
                         wrapped_method,
                     ),
                 )
