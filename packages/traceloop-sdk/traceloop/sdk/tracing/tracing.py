@@ -358,10 +358,6 @@ class TracerWrapper(object):
         return self.__tracer_provider.get_tracer(TRACER_NAME)
 
 
-def set_correlation_id(correlation_id: str) -> None:
-    attach(set_value("correlation_id", correlation_id))
-
-
 def set_association_properties(properties: dict) -> None:
     attach(set_value("association_properties", properties))
 
