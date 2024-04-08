@@ -541,7 +541,17 @@ async def _awrap(
         raise e
 
     if is_streaming_response(response):
-        return _abuild_from_streaming_response(span, response, instance._client, kwargs)
+        return _abuild_from_streaming_response(
+            span,
+            response,
+            instance._client,
+            start_time,
+            token_counter,
+            choice_counter,
+            duration_histogram,
+            exception_counter,
+            kwargs,
+        )
     elif response:
         try:
             metric_attributes = {

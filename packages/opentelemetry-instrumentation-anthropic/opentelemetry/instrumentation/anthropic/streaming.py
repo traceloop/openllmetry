@@ -180,11 +180,40 @@ def _build_from_streaming_response(
     span.end()
 
 
-async def _abuild_from_streaming_response(span, response, instance, kwargs):
+async def _abuild_from_streaming_response(
+    span,
+    response,
+    instance,
+    start_time,
+    token_counter: Counter = None,
+    choice_counter: Counter = None,
+    duration_histogram: Histogram = None,
+    exception_counter: Counter = None,
+    kwargs: dict = {},
+):
     complete_response = {"events": [], "model": ""}
     async for item in response:
-        yield item
+        try:
+            yield item
+        except Exception as e:
+            attributes = {
+                "error.type": e.__class__.__name__,
+            }
+            if exception_counter:
+                exception_counter.add(1, attributes=attributes)
+            raise e
         _process_response_item(item, complete_response)
+
+    metric_attributes = {
+        "llm.response.model": complete_response.get("model"),
+    }
+
+    if duration_histogram:
+        duration = time.time() - start_time
+        duration_histogram.record(
+            duration,
+            attributes=metric_attributes,
+        )
 
     # calculate token usage
     if Config.enrich_token_usage:
@@ -214,7 +243,15 @@ async def _abuild_from_streaming_response(span, response, instance, kwargs):
                 if model_name:
                     completion_tokens = await instance.count_tokens(completion_content)
 
-            _set_token_usage(span, complete_response, prompt_tokens, completion_tokens)
+            _set_token_usage(
+                span,
+                complete_response,
+                prompt_tokens,
+                completion_tokens,
+                metric_attributes,
+                token_counter,
+                choice_counter,
+            )
         except Exception as e:
             logger.warning("Failed to set token usage, error: %s", str(e))
 
