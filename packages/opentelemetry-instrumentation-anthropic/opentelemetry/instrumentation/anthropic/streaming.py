@@ -6,7 +6,7 @@ from opentelemetry.instrumentation.anthropic.utils import (
     set_span_attribute,
     should_send_prompts,
 )
-from opentelemetry.metrics import Counter, Histogram, Meter, get_meter
+from opentelemetry.metrics import Counter, Histogram
 from opentelemetry.semconv.ai import SpanAttributes
 from opentelemetry.trace.status import Status, StatusCode
 

@@ -7,7 +7,6 @@ import time
 from typing import Collection
 
 from anthropic._streaming import AsyncStream, Stream
-from anthropic.types.message import ContentBlock, Message, Usage
 from opentelemetry import context as context_api
 from opentelemetry.instrumentation.anthropic.config import Config
 from opentelemetry.instrumentation.anthropic.streaming import (
