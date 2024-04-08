@@ -538,9 +538,10 @@ class AnthropicInstrumentor(BaseInstrumentor):
 
     def _uninstrument(self, **kwargs):
         for wrapped_method in WRAPPED_METHODS:
+            wrap_package = wrapped_method.get("package")
             wrap_object = wrapped_method.get("object")
             unwrap(
-                f"anthropic.resources.completions.{wrap_object}",
+                f"{wrap_package}.{wrap_object}",
                 wrapped_method.get("method"),
             )
         for wrapped_method in WRAPPED_AMETHODS:
