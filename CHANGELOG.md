@@ -1,3 +1,11 @@
+## v0.15.13 (2024-04-08)
+
+### Fix
+
+- **sdk**: custom instruments missing parameters (#769)
+- **sdk**: import of removed method
+- **sdk**: removed deprecated set_context
+
 ## v0.15.12 (2024-04-08)
 
 ### Fix
