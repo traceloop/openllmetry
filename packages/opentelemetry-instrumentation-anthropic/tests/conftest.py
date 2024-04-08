@@ -5,8 +5,11 @@ import os
 import pytest
 from opentelemetry import metrics, trace
 from opentelemetry.instrumentation.anthropic import AnthropicInstrumentor
-from opentelemetry.sdk.metrics import MeterProvider
-from opentelemetry.sdk.metrics.export import InMemoryMetricReader
+from opentelemetry.sdk.metrics import Counter, Histogram, MeterProvider
+from opentelemetry.sdk.metrics.export import (
+    AggregationTemporality,
+    InMemoryMetricReader,
+)
 from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import SimpleSpanProcessor
@@ -29,7 +32,9 @@ def exporter():
 
 @pytest.fixture(scope="session")
 def reader():
-    reader = InMemoryMetricReader()
+    reader = InMemoryMetricReader(
+        {Counter: AggregationTemporality.DELTA, Histogram: AggregationTemporality.DELTA}
+    )
     return reader
 
 
@@ -48,13 +53,15 @@ def instrument(exporter, reader, meter_provider):
 
     yield
 
+    exporter.shutdown()
     reader.shutdown()
     meter_provider.shutdown()
 
 
 @pytest.fixture(autouse=True)
-def clear_exporter(exporter):
+def clear_exporter_reader(exporter, reader):
     exporter.clear()
+    reader.get_metrics_data()
 
 
 @pytest.fixture(autouse=True)
