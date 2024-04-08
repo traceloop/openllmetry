@@ -342,7 +342,7 @@ def test_anthropic_message_streaming(exporter, reader):
 
 @pytest.mark.vcr
 @pytest.mark.asyncio
-async def test_async_anthropic_message_create(exporter):
+async def test_async_anthropic_message_create(exporter, reader):
     client = AsyncAnthropic()
     response = await client.messages.create(
         max_tokens=1024,
@@ -354,6 +354,12 @@ async def test_async_anthropic_message_create(exporter):
         ],
         model="claude-3-opus-20240229",
     )
+    try:
+        await client.messages.create(
+            unknown_parameter="unknown",
+        )
+    except Exception:
+        pass
 
     spans = exporter.get_finished_spans()
     assert [span.name for span in spans] == [
@@ -374,6 +380,66 @@ async def test_async_anthropic_message_create(exporter):
             + anthropic_span.attributes["llm.usage.prompt_tokens"]
             == anthropic_span.attributes["llm.usage.total_tokens"]
     )
+
+    metrics_data = reader.get_metrics_data()
+    resource_metrics = metrics_data.resource_metrics
+    assert len(resource_metrics) > 0
+
+    found_token_metric = False
+    found_choice_metric = False
+    found_duration_metric = False
+    found_exception_metric = False
+
+    for rm in resource_metrics:
+        for sm in rm.scope_metrics:
+            for metric in sm.metrics:
+                if metric.name == "llm.anthropic.completion.tokens":
+                    found_token_metric = True
+                    for data_point in metric.data.data_points:
+                        assert data_point.attributes["llm.usage.token_type"] in [
+                            "completion",
+                            "prompt",
+                        ]
+                        assert (
+                            data_point.attributes["llm.response.model"]
+                            == "claude-3-opus-20240229"
+                        )
+                        assert data_point.value > 0
+
+                if metric.name == "llm.anthropic.completion.choices":
+                    found_choice_metric = True
+                    for data_point in metric.data.data_points:
+                        assert data_point.value >= 1
+                        assert (
+                            data_point.attributes["llm.response.model"]
+                            == "claude-3-opus-20240229"
+                        )
+
+                if metric.name == "llm.anthropic.completion.duration":
+                    found_duration_metric = True
+                    assert any(
+                        data_point.count > 0 for data_point in metric.data.data_points
+                    )
+                    assert any(
+                        data_point.sum > 0 for data_point in metric.data.data_points
+                    )
+                    assert all(
+                        data_point.attributes.get("llm.response.model")
+                        == "claude-3-opus-20240229"
+                        or data_point.attributes.get("error.type") == "TypeError"
+                        for data_point in metric.data.data_points
+                    )
+
+                if metric.name == "llm.anthropic.completion.exceptions":
+                    found_exception_metric = True
+                    for data_point in metric.data.data_points:
+                        assert data_point.value == 1
+                        assert data_point.attributes["error.type"] == "TypeError"
+
+    assert found_token_metric is True
+    assert found_choice_metric is True
+    assert found_duration_metric is True
+    assert found_exception_metric is True
 
 
 @pytest.mark.vcr

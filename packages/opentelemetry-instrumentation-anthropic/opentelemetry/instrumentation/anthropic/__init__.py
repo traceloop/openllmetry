@@ -149,7 +149,15 @@ def _set_span_completions(span, response):
             )
 
 
-async def _set_token_usage_a(span, anthropic, request, response):
+async def _set_token_usage_a(
+    span,
+    anthropic,
+    request,
+    response,
+    metric_attributes: dict = {},
+    token_counter: Counter = None,
+    choice_counter: Counter = None,
+):
     if not isinstance(response, dict):
         response = response.__dict__
 
@@ -164,6 +172,15 @@ async def _set_token_usage_a(span, anthropic, request, response):
             ]
         )
 
+    if token_counter and type(prompt_tokens) is int and prompt_tokens >= 0:
+        token_counter.add(
+            prompt_tokens,
+            attributes={
+                **metric_attributes,
+                "llm.usage.token_type": "prompt",
+            },
+        )
+
     completion_tokens = 0
     if response.get("completion"):
         completion_tokens = await anthropic.count_tokens(response.get("completion"))
@@ -172,7 +189,31 @@ async def _set_token_usage_a(span, anthropic, request, response):
             response.get("content")[0].text
         )
 
+    if token_counter and type(completion_tokens) is int and completion_tokens >= 0:
+        token_counter.add(
+            completion_tokens,
+            attributes={
+                **metric_attributes,
+                "llm.usage.token_type": "completion",
+            },
+        )
+
     total_tokens = prompt_tokens + completion_tokens
+
+    choices = 0
+    if type(response.get("content")) is list:
+        choices = len(response.get("content"))
+    elif response.get("completion"):
+        choices = 1
+
+    if choices > 0 and choice_counter:
+        choice_counter.add(
+            choices,
+            attributes={
+                **metric_attributes,
+                "llm.response.stop_reason": response.get("stop_reason"),
+            },
+        )
 
     set_span_attribute(span, SpanAttributes.LLM_USAGE_PROMPT_TOKENS, prompt_tokens)
     set_span_attribute(
@@ -445,8 +486,20 @@ def _wrap(
     span.end()
     return response
 
-@_with_tracer_wrapper
-async def _awrap(tracer, to_wrap, wrapped, instance, args, kwargs):
+
+@_with_chat_telemetry_wrapper
+async def _awrap(
+    tracer,
+    token_counter: Counter,
+    choice_counter: Counter,
+    duration_histogram: Histogram,
+    exception_counter: Counter,
+    to_wrap,
+    wrapped,
+    instance,
+    args,
+    kwargs,
+):
     """Instruments and calls every function defined in TO_WRAP."""
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
         return wrapped(*args, **kwargs)
@@ -469,15 +522,52 @@ async def _awrap(tracer, to_wrap, wrapped, instance, args, kwargs):
             "Failed to set input attributes for anthropic span, error: %s", str(ex)
         )
 
-    response = await wrapped(*args, **kwargs)
+    start_time = time.time()
+    try:
+        response = await wrapped(*args, **kwargs)
+    except Exception as e:  # pylint: disable=broad-except
+        end_time = time.time()
+        attributes = {
+            "error.type": e.__class__.__name__,
+        }
+
+        if duration_histogram:
+            duration = end_time - start_time
+            duration_histogram.record(duration, attributes=attributes)
+
+        if exception_counter:
+            exception_counter.add(1, attributes=attributes)
+
+        raise e
 
     if is_streaming_response(response):
         return _abuild_from_streaming_response(span, response, instance._client, kwargs)
     elif response:
         try:
+            metric_attributes = {
+                "llm.response.model": (
+                    response if isinstance(response, dict) else response.__dict__
+                ).get("model"),
+            }
+
+            if duration_histogram:
+                duration = time.time() - start_time
+                duration_histogram.record(
+                    duration,
+                    attributes=metric_attributes,
+                )
+
             if span.is_recording():
                 _set_response_attributes(span, response)
-                await _set_token_usage_a(span, instance._client, kwargs, response)
+                await _set_token_usage_a(
+                    span,
+                    instance._client,
+                    kwargs,
+                    response,
+                    metric_attributes,
+                    token_counter,
+                    choice_counter,
+                )
 
         except Exception as ex:  # pylint: disable=broad-except
             logger.warning(
@@ -558,7 +648,14 @@ class AnthropicInstrumentor(BaseInstrumentor):
                 wrap_function_wrapper(
                     wrap_package,
                     f"{wrap_object}.{wrap_method}",
-                    _awrap(tracer, wrapped_method),
+                    _awrap(
+                        tracer,
+                        token_counter,
+                        choice_counter,
+                        duration_histogram,
+                        exception_counter,
+                        wrapped_method,
+                    ),
                 )
             except ModuleNotFoundError:
                 pass  # that's ok, we don't want to fail if some methods do not exist
