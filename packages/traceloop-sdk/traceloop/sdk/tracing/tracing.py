@@ -427,7 +427,7 @@ def init_tracer_provider(resource: Resource) -> TracerProvider:
 
 def init_instrumentations(should_enrich_metrics: bool):
     init_openai_instrumentor(should_enrich_metrics)
-    init_anthropic_instrumentor()
+    init_anthropic_instrumentor(should_enrich_metrics)
     init_cohere_instrumentor()
     init_pinecone_instrumentor()
     init_qdrant_instrumentor()
@@ -460,12 +460,14 @@ def init_openai_instrumentor(should_enrich_metrics: bool):
     return True
 
 
-def init_anthropic_instrumentor():
+def init_anthropic_instrumentor(should_enrich_metrics: bool):
     if importlib.util.find_spec("anthropic") is not None:
         Telemetry().capture("instrumentation:anthropic:init")
         from opentelemetry.instrumentation.anthropic import AnthropicInstrumentor
 
-        instrumentor = AnthropicInstrumentor()
+        instrumentor = AnthropicInstrumentor(
+            enrich_token_usage=should_enrich_metrics,
+        )
         if not instrumentor.is_instrumented_by_opentelemetry:
             instrumentor.instrument()
     return True
