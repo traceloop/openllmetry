@@ -1,4 +1,5 @@
 import logging
+import time
 
 from opentelemetry.instrumentation.anthropic.config import Config
 from opentelemetry.instrumentation.anthropic.utils import (
@@ -69,20 +70,16 @@ def _set_token_usage(
             },
         )
 
-    choices = 0
-    if type(complete_response.get("content")) is list:
-        choices = len(complete_response.get("content"))
-    elif complete_response.get("completion"):
-        choices = 1
-
-    if choices > 0 and choice_counter:
-        choice_counter.add(
-            choices,
-            attributes={
-                **metric_attributes,
-                "llm.response.stop_reason": complete_response.get("stop_reason"),
-            },
-        )
+    # TODO is it right?
+    if type(complete_response.get("events")) is list and choice_counter:
+        for event in complete_response.get("events"):
+            choice_counter.add(
+                1,
+                attributes={
+                    **metric_attributes,
+                    "llm.response.finish_reason": event.get("finish_reason"),
+                },
+            )
 
 
 def _set_completions(span, events):
@@ -105,8 +102,10 @@ def _build_from_streaming_response(
     span,
     response,
     instance,
+    start_time,
     token_counter: Counter = None,
     choice_counter: Counter = None,
+    duration_histogram: Histogram = None,
     kwargs: dict = {},
 ):
     complete_response = {"events": [], "model": "", "usage": {}}
@@ -117,6 +116,13 @@ def _build_from_streaming_response(
     metric_attributes = {
         "llm.response.model": complete_response.get("model"),
     }
+
+    if duration_histogram:
+        duration = time.time() - start_time
+        duration_histogram.record(
+            duration,
+            attributes=metric_attributes,
+        )
 
     # calculate token usage
     if Config.enrich_token_usage:

@@ -186,15 +186,12 @@ def _set_token_usage(
     anthropic,
     request,
     response,
+    metric_attributes: dict = {},
     token_counter: Counter = None,
     choice_counter: Counter = None,
 ):
     if not isinstance(response, dict):
         response = response.__dict__
-
-    metric_attributes = {
-        "llm.response.model": response.get("model"),
-    }
 
     prompt_tokens = 0
     if request.get("prompt"):
@@ -404,12 +401,27 @@ def _wrap(
             span,
             response,
             instance._client,
+            start_time,
             token_counter,
             choice_counter,
+            duration_histogram,
             kwargs,
         )
     elif response:
         try:
+            metric_attributes = {
+                "llm.response.model": (
+                    response if isinstance(response, dict) else response.__dict__
+                ).get("model"),
+            }
+
+            if duration_histogram:
+                duration = time.time() - start_time
+                duration_histogram.record(
+                    duration,
+                    attributes=metric_attributes,
+                )
+
             if span.is_recording():
                 _set_response_attributes(span, response)
                 _set_token_usage(
@@ -417,6 +429,7 @@ def _wrap(
                     instance._client,
                     kwargs,
                     response,
+                    metric_attributes,
                     token_counter,
                     choice_counter,
                 )
