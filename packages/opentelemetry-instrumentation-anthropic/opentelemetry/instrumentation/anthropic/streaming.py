@@ -1,33 +1,46 @@
 import logging
-from opentelemetry.instrumentation.anthropic.utils import set_span_attribute, should_send_prompts
-from opentelemetry.trace.status import Status, StatusCode
-from opentelemetry.semconv.ai import SpanAttributes
+import time
 
 from opentelemetry.instrumentation.anthropic.config import Config
+from opentelemetry.instrumentation.anthropic.utils import (
+    set_span_attribute,
+    should_send_prompts,
+)
+from opentelemetry.metrics import Counter, Histogram
+from opentelemetry.semconv.ai import SpanAttributes
+from opentelemetry.trace.status import Status, StatusCode
 
 logger = logging.getLogger(__name__)
 
 
 def _process_response_item(item, complete_response):
     try:
-        if item.type == 'message_start':
+        if item.type == "message_start":
             complete_response["model"] = item.message.model
             complete_response["usage"] = item.message.usage
-        elif item.type == 'content_block_start':
+        elif item.type == "content_block_start":
             index = item.index
             if len(complete_response.get("events")) <= index:
                 complete_response["events"].append({"index": index, "text": ""})
-        elif item.type == 'content_block_delta' and item.delta.type == 'text_delta':
+        elif item.type == "content_block_delta" and item.delta.type == "text_delta":
             index = item.index
             complete_response.get("events")[index]["text"] += item.delta.text
-        elif item.type == 'message_delta':
+        elif item.type == "message_delta":
             for event in complete_response.get("events", []):
                 event["finish_reason"] = item.delta.stop_reason
     except Exception as ex:
         logger.warning("Failed to process response item, error: %s", str(ex))
 
 
-def _set_token_usage(span, complete_response, prompt_tokens, completion_tokens):
+def _set_token_usage(
+    span,
+    complete_response,
+    prompt_tokens,
+    completion_tokens,
+    metric_attributes: dict = {},
+    token_counter: Counter = None,
+    choice_counter: Counter = None,
+):
     total_tokens = prompt_tokens + completion_tokens
     set_span_attribute(span, SpanAttributes.LLM_USAGE_PROMPT_TOKENS, prompt_tokens)
     set_span_attribute(
@@ -35,7 +48,38 @@ def _set_token_usage(span, complete_response, prompt_tokens, completion_tokens):
     )
     set_span_attribute(span, SpanAttributes.LLM_USAGE_TOTAL_TOKENS, total_tokens)
 
-    set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, complete_response.get("model"))
+    set_span_attribute(
+        span, SpanAttributes.LLM_RESPONSE_MODEL, complete_response.get("model")
+    )
+
+    if token_counter and type(prompt_tokens) is int and prompt_tokens >= 0:
+        token_counter.add(
+            prompt_tokens,
+            attributes={
+                **metric_attributes,
+                "llm.usage.token_type": "prompt",
+            },
+        )
+
+    if token_counter and type(completion_tokens) is int and completion_tokens >= 0:
+        token_counter.add(
+            completion_tokens,
+            attributes={
+                **metric_attributes,
+                "llm.usage.token_type": "completion",
+            },
+        )
+
+    # TODO is it right?
+    if type(complete_response.get("events")) is list and choice_counter:
+        for event in complete_response.get("events"):
+            choice_counter.add(
+                1,
+                attributes={
+                    **metric_attributes,
+                    "llm.response.finish_reason": event.get("finish_reason"),
+                },
+            )
 
 
 def _set_completions(span, events):
@@ -55,15 +99,39 @@ def _set_completions(span, events):
 
 
 def _build_from_streaming_response(
-        span,
-        response,
-        instance,
-        kwargs
+    span,
+    response,
+    instance,
+    start_time,
+    token_counter: Counter = None,
+    choice_counter: Counter = None,
+    duration_histogram: Histogram = None,
+    exception_counter: Counter = None,
+    kwargs: dict = {},
 ):
     complete_response = {"events": [], "model": "", "usage": {}}
     for item in response:
-        yield item
+        try:
+            yield item
+        except Exception as e:
+            attributes = {
+                "error.type": e.__class__.__name__,
+            }
+            if exception_counter:
+                exception_counter.add(1, attributes=attributes)
+            raise e
         _process_response_item(item, complete_response)
+
+    metric_attributes = {
+        "llm.response.model": complete_response.get("model"),
+    }
+
+    if duration_histogram:
+        duration = time.time() - start_time
+        duration_histogram.record(
+            duration,
+            attributes=metric_attributes,
+        )
 
     # calculate token usage
     if Config.enrich_token_usage:
@@ -76,7 +144,10 @@ def _build_from_streaming_response(
                 prompt_tokens = instance.count_tokens(kwargs.get("prompt"))
             elif kwargs.get("messages"):
                 prompt_tokens = sum(
-                    [instance.count_tokens(m.get("content")) for m in kwargs.get("messages")]
+                    [
+                        instance.count_tokens(m.get("content"))
+                        for m in kwargs.get("messages")
+                    ]
                 )
 
             # completion_usage
@@ -90,7 +161,15 @@ def _build_from_streaming_response(
                 if model_name:
                     completion_tokens = instance.count_tokens(completion_content)
 
-            _set_token_usage(span, complete_response, prompt_tokens, completion_tokens)
+            _set_token_usage(
+                span,
+                complete_response,
+                prompt_tokens,
+                completion_tokens,
+                metric_attributes,
+                token_counter,
+                choice_counter,
+            )
         except Exception as e:
             logger.warning("Failed to set token usage, error: %s", str(e))
 
@@ -102,15 +181,39 @@ def _build_from_streaming_response(
 
 
 async def _abuild_from_streaming_response(
-        span,
-        response,
-        instance,
-        kwargs
+    span,
+    response,
+    instance,
+    start_time,
+    token_counter: Counter = None,
+    choice_counter: Counter = None,
+    duration_histogram: Histogram = None,
+    exception_counter: Counter = None,
+    kwargs: dict = {},
 ):
     complete_response = {"events": [], "model": ""}
     async for item in response:
-        yield item
+        try:
+            yield item
+        except Exception as e:
+            attributes = {
+                "error.type": e.__class__.__name__,
+            }
+            if exception_counter:
+                exception_counter.add(1, attributes=attributes)
+            raise e
         _process_response_item(item, complete_response)
+
+    metric_attributes = {
+        "llm.response.model": complete_response.get("model"),
+    }
+
+    if duration_histogram:
+        duration = time.time() - start_time
+        duration_histogram.record(
+            duration,
+            attributes=metric_attributes,
+        )
 
     # calculate token usage
     if Config.enrich_token_usage:
@@ -123,7 +226,10 @@ async def _abuild_from_streaming_response(
                 prompt_tokens = await instance.count_tokens(kwargs.get("prompt"))
             elif kwargs.get("messages"):
                 prompt_tokens = sum(
-                    [await instance.count_tokens(m.get("content")) for m in kwargs.get("messages")]
+                    [
+                        await instance.count_tokens(m.get("content"))
+                        for m in kwargs.get("messages")
+                    ]
                 )
 
             # completion_usage
@@ -137,7 +243,15 @@ async def _abuild_from_streaming_response(
                 if model_name:
                     completion_tokens = await instance.count_tokens(completion_content)
 
-            _set_token_usage(span, complete_response, prompt_tokens, completion_tokens)
+            _set_token_usage(
+                span,
+                complete_response,
+                prompt_tokens,
+                completion_tokens,
+                metric_attributes,
+                token_counter,
+                choice_counter,
+            )
         except Exception as e:
             logger.warning("Failed to set token usage, error: %s", str(e))
 
