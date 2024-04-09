@@ -12,20 +12,6 @@ interactions:
       Content-Type:
       - !!binary |
         YXBwbGljYXRpb24vanNvbg==
-      User-Agent:
-      - !!binary |
-        Qm90bzMvMS4zNC43MiBtZC9Cb3RvY29yZSMxLjM0Ljc5IHVhLzIuMCBvcy9tYWNvcyMyMy40LjAg
-        bWQvYXJjaCNhcm02NCBsYW5nL3B5dGhvbiMzLjEyLjIgbWQvcHlpbXBsI0NQeXRob24gY2ZnL3Jl
-        dHJ5LW1vZGUjbGVnYWN5IEJvdG9jb3JlLzEuMzQuNzk=
-      X-Amz-Date:
-      - !!binary |
-        MjAyNDA0MDlUMDM1MzQ4Wg==
-      amz-sdk-invocation-id:
-      - !!binary |
-        MWJiZjY3YmQtZDgyZC00ZDViLTk3MjgtYmFhMzhjNDFiNGZm
-      amz-sdk-request:
-      - !!binary |
-        YXR0ZW1wdD0x
     method: POST
     uri: https://bedrock-runtime.us-east-1.amazonaws.com/model/anthropic.claude-3-haiku-20240307-v1%3A0/invoke
   response:
