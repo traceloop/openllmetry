@@ -199,7 +199,13 @@ def test_bedrock(exporter):
     )
     model = BedrockChat(
         model_id="anthropic.claude-3-haiku-20240307-v1:0",
-        client=boto3.client('bedrock-runtime', region_name="us-east-1"),
+        client=boto3.client(
+            'bedrock-runtime',
+            aws_access_key_id="AKIAO0Y4W4IRWHCFPUHH",
+            aws_secret_access_key="6yXG05XtZbS0buBvBcJz2CqON1XtW8AUCQ718cgu",
+            aws_session_token="a/mock/token",
+            region_name="us-east-1"
+        ),
     )
 
     chain = prompt | model
