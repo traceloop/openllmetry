@@ -11,6 +11,7 @@ from langchain_community.llms.huggingface_text_gen_inference import (
 )
 from langchain_community.chat_models import BedrockChat, ChatOpenAI, ChatAnthropic
 from langchain_core.pydantic_v1 import BaseModel, Field
+import boto3
 
 
 @pytest.mark.vcr
@@ -196,7 +197,10 @@ def test_bedrock(exporter):
     prompt = ChatPromptTemplate.from_messages(
         [("system", "You are helpful assistant"), ("user", "{input}")]
     )
-    model = BedrockChat(model_id="anthropic.claude-3-haiku-20240307-v1:0")
+    model = BedrockChat(
+        model_id="anthropic.claude-3-haiku-20240307-v1:0",
+        client=boto3.client('bedrock-runtime', region_name="us-east-1"),
+    )
 
     chain = prompt | model
     response = chain.invoke({"input": "tell me a short joke"})
