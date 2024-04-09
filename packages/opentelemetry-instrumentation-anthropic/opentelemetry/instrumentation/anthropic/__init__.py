@@ -21,9 +21,14 @@ from anthropic._streaming import Stream, AsyncStream
 from opentelemetry.semconv.ai import SpanAttributes, LLMRequestTypeValues
 
 from opentelemetry.instrumentation.anthropic.config import Config
-from opentelemetry.instrumentation.anthropic.streaming import _build_from_streaming_response, \
-    _abuild_from_streaming_response
-from opentelemetry.instrumentation.anthropic.utils import set_span_attribute, should_send_prompts
+from opentelemetry.instrumentation.anthropic.streaming import (
+    _build_from_streaming_response,
+    _abuild_from_streaming_response,
+)
+from opentelemetry.instrumentation.anthropic.utils import (
+    set_span_attribute,
+    should_send_prompts,
+)
 from opentelemetry.instrumentation.anthropic.version import __version__
 
 logger = logging.getLogger(__name__)
@@ -151,14 +156,19 @@ async def _set_token_usage_a(span, anthropic, request, response):
         prompt_tokens = await anthropic.count_tokens(request.get("prompt"))
     elif request.get("messages"):
         prompt_tokens = sum(
-            [await anthropic.count_tokens(m.get("content")) for m in request.get("messages")]
+            [
+                await anthropic.count_tokens(m.get("content"))
+                for m in request.get("messages")
+            ]
         )
 
     completion_tokens = 0
     if response.get("completion"):
         completion_tokens = await anthropic.count_tokens(response.get("completion"))
     elif response.get("content"):
-        completion_tokens = await anthropic.count_tokens(response.get("content")[0].text)
+        completion_tokens = await anthropic.count_tokens(
+            response.get("content")[0].text
+        )
 
     total_tokens = prompt_tokens + completion_tokens
 
@@ -323,9 +333,7 @@ async def _awrap(tracer, to_wrap, wrapped, instance, args, kwargs):
 class AnthropicInstrumentor(BaseInstrumentor):
     """An instrumentor for Anthropic's client library."""
 
-    def __init__(
-            self, enrich_token_usage: bool = False
-    ):
+    def __init__(self, enrich_token_usage: bool = False):
         super().__init__()
         Config.enrich_token_usage = enrich_token_usage
 
@@ -339,20 +347,27 @@ class AnthropicInstrumentor(BaseInstrumentor):
             wrap_package = wrapped_method.get("package")
             wrap_object = wrapped_method.get("object")
             wrap_method = wrapped_method.get("method")
-            wrap_function_wrapper(
-                wrap_package,
-                f"{wrap_object}.{wrap_method}",
-                _wrap(tracer, wrapped_method),
-            )
+            try:
+                wrap_function_wrapper(
+                    wrap_package,
+                    f"{wrap_object}.{wrap_method}",
+                    _wrap(tracer, wrapped_method),
+                )
+            except ModuleNotFoundError:
+                pass  # that's ok, we don't want to fail if some methods do not exist
+
         for wrapped_method in WRAPPED_AMETHODS:
             wrap_package = wrapped_method.get("package")
             wrap_object = wrapped_method.get("object")
             wrap_method = wrapped_method.get("method")
-            wrap_function_wrapper(
-                wrap_package,
-                f"{wrap_object}.{wrap_method}",
-                _awrap(tracer, wrapped_method),
-            )
+            try:
+                wrap_function_wrapper(
+                    wrap_package,
+                    f"{wrap_object}.{wrap_method}",
+                    _awrap(tracer, wrapped_method),
+                )
+            except ModuleNotFoundError:
+                pass  # that's ok, we don't want to fail if some methods do not exist
 
     def _uninstrument(self, **kwargs):
         for wrapped_method in WRAPPED_METHODS:

@@ -21,7 +21,7 @@ def test_resource_attributes(exporter, openai_client):
     assert open_ai_span.resource.attributes["service.name"] == "test"
 
 
-def test_custom_span_processor(exporter_with_custom_span_processor, openai_client):
+def test_custom_span_processor(exporter_with_custom_span_processor):
     @workflow()
     def run_workflow():
         pass
@@ -31,3 +31,15 @@ def test_custom_span_processor(exporter_with_custom_span_processor, openai_clien
     spans = exporter_with_custom_span_processor.get_finished_spans()
     workflow_span = spans[0]
     assert workflow_span.attributes["custom_span"] == "yes"
+
+
+def test_instruments(exporter_with_custom_instrumentations):
+    @workflow()
+    def run_workflow():
+        pass
+
+    run_workflow()
+
+    spans = exporter_with_custom_instrumentations.get_finished_spans()
+    workflow_span = spans[0]
+    assert workflow_span

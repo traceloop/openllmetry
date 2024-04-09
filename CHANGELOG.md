@@ -1,3 +1,18 @@
+## v0.15.13 (2024-04-08)
+
+### Fix
+
+- **sdk**: custom instruments missing parameters (#769)
+- **sdk**: import of removed method
+- **sdk**: removed deprecated set_context
+
+## v0.15.12 (2024-04-08)
+
+### Fix
+
+- **anthropic**: do not fail for missing methods
+- **anthropic**: Async and streaming Anthropic (#750)
+
 ## v0.15.11 (2024-04-04)
 
 ### Fix
