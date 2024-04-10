@@ -1,0 +1,55 @@
+interactions:
+- request:
+    body: '{"prompt": "Human: Tell me a joke about opentelemetry Assistant:", "max_tokens_to_sample":
+      200, "temperature": 0.5}'
+    headers:
+      Accept:
+      - !!binary |
+        YXBwbGljYXRpb24vanNvbg==
+      Content-Length:
+      - '115'
+      Content-Type:
+      - !!binary |
+        YXBwbGljYXRpb24vanNvbg==
+      User-Agent:
+      - !!binary |
+        Qm90bzMvMS4zNC44MCBtZC9Cb3RvY29yZSMxLjM0LjgwIHVhLzIuMCBvcy9tYWNvcyMyMy4yLjAg
+        bWQvYXJjaCNhcm02NCBsYW5nL3B5dGhvbiMzLjExLjEgbWQvcHlpbXBsI0NQeXRob24gY2ZnL3Jl
+        dHJ5LW1vZGUjbGVnYWN5IEJvdG9jb3JlLzEuMzQuODA=
+      X-Amz-Date:
+      - !!binary |
+        MjAyNDA0MTBUMDIxNjU4Wg==
+      amz-sdk-invocation-id:
+      - !!binary |
+        Y2NmZWY4ZGQtZGQxMS00MjEyLWI3MzAtNGMzY2JhMDUyMjc4
+      amz-sdk-request:
+      - !!binary |
+        YXR0ZW1wdD0x
+    method: POST
+    uri: https://bedrock-runtime.us-east-1.amazonaws.com/model/anthropic.claude-v2%3A1/invoke
+  response:
+    body:
+      string: '{"completion":" Here''s a silly joke about opentelemetry:\n\nWhat do
+        you call an open source monitoring framework that tracks distributed traces?
+        \nOpenTele-metry!","stop_reason":"stop_sequence","stop":"\n\nHuman:"}'
+    headers:
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '214'
+      Content-Type:
+      - application/json
+      Date:
+      - Wed, 10 Apr 2024 02:17:00 GMT
+      X-Amzn-Bedrock-Input-Token-Count:
+      - '18'
+      X-Amzn-Bedrock-Invocation-Latency:
+      - '1641'
+      X-Amzn-Bedrock-Output-Token-Count:
+      - '38'
+      x-amzn-RequestId:
+      - 19740e07-510e-4cdb-b461-4bfa0d670f6c
+    status:
+      code: 200
+      message: OK
+version: 1
