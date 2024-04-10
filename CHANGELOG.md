@@ -1,3 +1,13 @@
+## v0.16.0 (2024-04-10)
+
+### Feat
+
+- **instrumentation-anthropic**: Support for OpenTelemetry metrics for Anthropic (#764)
+
+### Fix
+
+- **bedrock**: support anthropic v3 (#770)
+
 ## v0.15.13 (2024-04-08)
 
 ### Fix
