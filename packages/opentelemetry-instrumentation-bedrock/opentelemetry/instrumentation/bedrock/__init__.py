@@ -1,10 +1,13 @@
 """OpenTelemetry Bedrock instrumentation"""
+
 from functools import wraps
 import json
 import logging
 import os
 from typing import Collection
-from opentelemetry.instrumentation.bedrock.reusable_streaming_body import ReusableStreamingBody
+from opentelemetry.instrumentation.bedrock.reusable_streaming_body import (
+    ReusableStreamingBody,
+)
 from wrapt import wrap_function_wrapper
 
 from opentelemetry import context as context_api
@@ -24,11 +27,7 @@ logger = logging.getLogger(__name__)
 _instruments = ("boto3 >= 1.28.57",)
 
 WRAPPED_METHODS = [
-    {
-        "package": "botocore.client",
-        "object": "ClientCreator",
-        "method": "create_client"
-    }
+    {"package": "botocore.client", "object": "ClientCreator", "method": "create_client"}
 ]
 
 
@@ -76,11 +75,12 @@ def _instrumented_model_invoke(fn, tracer):
     @wraps(fn)
     def with_instrumentation(*args, **kwargs):
         with tracer.start_as_current_span(
-            "bedrock.completion",
-            kind=SpanKind.CLIENT
+            "bedrock.completion", kind=SpanKind.CLIENT
         ) as span:
             response = fn(*args, **kwargs)
-            response['body'] = ReusableStreamingBody(response['body']._raw_stream, response['body']._content_length)
+            response["body"] = ReusableStreamingBody(
+                response["body"]._raw_stream, response["body"]._content_length
+            )
             request_body = json.loads(kwargs.get("body"))
             response_body = json.loads(response.get("body").read())
 
@@ -93,7 +93,14 @@ def _instrumented_model_invoke(fn, tracer):
                 if vendor == "cohere":
                     _set_cohere_span_attributes(span, request_body, response_body)
                 elif vendor == "anthropic":
-                    _set_anthropic_span_attributes(span, request_body, response_body)
+                    if "prompt" in request_body:
+                        _set_anthropic_completion_span_attributes(
+                            span, request_body, response_body
+                        )
+                    elif "messages" in request_body:
+                        _set_anthropic_messages_span_attributes(
+                            span, request_body, response_body
+                        )
                 elif vendor == "ai21":
                     _set_ai21_span_attributes(span, request_body, response_body)
                 elif vendor == "meta":
@@ -105,59 +112,136 @@ def _instrumented_model_invoke(fn, tracer):
 
 
 def _set_cohere_span_attributes(span, request_body, response_body):
-    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TYPE, LLMRequestTypeValues.COMPLETION.value)
+    _set_span_attribute(
+        span, SpanAttributes.LLM_REQUEST_TYPE, LLMRequestTypeValues.COMPLETION.value
+    )
     _set_span_attribute(span, SpanAttributes.LLM_TOP_P, request_body.get("p"))
-    _set_span_attribute(span, SpanAttributes.LLM_TEMPERATURE, request_body.get("temperature"))
-    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MAX_TOKENS, request_body.get("max_tokens"))
-
-    if should_send_prompts():
-        _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.0.user", request_body.get("prompt"))
-
-        for i, generation in enumerate(response_body.get("generations")):
-            _set_span_attribute(span, f"{SpanAttributes.LLM_COMPLETIONS}.{i}.content", generation.get("text"))
-
-
-def _set_anthropic_span_attributes(span, request_body, response_body):
-    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TYPE, LLMRequestTypeValues.COMPLETION.value)
-    _set_span_attribute(span, SpanAttributes.LLM_TOP_P, request_body.get("top_p"))
-    _set_span_attribute(span, SpanAttributes.LLM_TEMPERATURE, request_body.get("temperature"))
-    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MAX_TOKENS, request_body.get("max_tokens_to_sample"))
-
-    if should_send_prompts():
-        _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.0.user", request_body.get("prompt"))
-        _set_span_attribute(span, f"{SpanAttributes.LLM_COMPLETIONS}.0.content", response_body.get("completion"))
-
-
-def _set_ai21_span_attributes(span, request_body, response_body):
-    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TYPE, LLMRequestTypeValues.COMPLETION.value)
-    _set_span_attribute(span, SpanAttributes.LLM_TOP_P, request_body.get("topP"))
-    _set_span_attribute(span, SpanAttributes.LLM_TEMPERATURE, request_body.get("temperature"))
-    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MAX_TOKENS, request_body.get("maxTokens"))
+    _set_span_attribute(
+        span, SpanAttributes.LLM_TEMPERATURE, request_body.get("temperature")
+    )
+    _set_span_attribute(
+        span, SpanAttributes.LLM_REQUEST_MAX_TOKENS, request_body.get("max_tokens")
+    )
 
     if should_send_prompts():
         _set_span_attribute(
+            span, f"{SpanAttributes.LLM_PROMPTS}.0.user", request_body.get("prompt")
+        )
+
+        for i, generation in enumerate(response_body.get("generations")):
+            _set_span_attribute(
+                span,
+                f"{SpanAttributes.LLM_COMPLETIONS}.{i}.content",
+                generation.get("text"),
+            )
+
+
+def _set_anthropic_completion_span_attributes(span, request_body, response_body):
+    _set_span_attribute(
+        span, SpanAttributes.LLM_REQUEST_TYPE, LLMRequestTypeValues.COMPLETION.value
+    )
+    _set_span_attribute(span, SpanAttributes.LLM_TOP_P, request_body.get("top_p"))
+    _set_span_attribute(
+        span, SpanAttributes.LLM_TEMPERATURE, request_body.get("temperature")
+    )
+    _set_span_attribute(
+        span,
+        SpanAttributes.LLM_REQUEST_MAX_TOKENS,
+        request_body.get("max_tokens_to_sample"),
+    )
+
+    if should_send_prompts():
+        _set_span_attribute(
+            span, f"{SpanAttributes.LLM_PROMPTS}.0.user", request_body.get("prompt")
+        )
+        _set_span_attribute(
             span,
-            f"{SpanAttributes.LLM_PROMPTS}.0.user", request_body.get("prompt")
+            f"{SpanAttributes.LLM_COMPLETIONS}.0.content",
+            response_body.get("completion"),
+        )
+
+
+def _set_anthropic_messages_span_attributes(span, request_body, response_body):
+    _set_span_attribute(
+        span, SpanAttributes.LLM_REQUEST_TYPE, LLMRequestTypeValues.CHAT.value
+    )
+    _set_span_attribute(span, SpanAttributes.LLM_TOP_P, request_body.get("top_p"))
+    _set_span_attribute(
+        span, SpanAttributes.LLM_TEMPERATURE, request_body.get("temperature")
+    )
+    _set_span_attribute(
+        span,
+        SpanAttributes.LLM_REQUEST_MAX_TOKENS,
+        request_body.get("max_tokens"),
+    )
+
+    if should_send_prompts():
+        for idx, message in enumerate(request_body.get("messages")):
+            _set_span_attribute(
+                span, f"{SpanAttributes.LLM_PROMPTS}.{idx}.role", message.get("role")
+            )
+            _set_span_attribute(
+                span,
+                f"{SpanAttributes.LLM_PROMPTS}.0.content",
+                json.dumps(message.get("content")),
+            )
+
+        _set_span_attribute(
+            span, f"{SpanAttributes.LLM_COMPLETIONS}.0.content", "assistant"
+        )
+        _set_span_attribute(
+            span,
+            f"{SpanAttributes.LLM_COMPLETIONS}.0.content",
+            json.dumps(response_body.get("content")),
+        )
+
+
+def _set_ai21_span_attributes(span, request_body, response_body):
+    _set_span_attribute(
+        span, SpanAttributes.LLM_REQUEST_TYPE, LLMRequestTypeValues.COMPLETION.value
+    )
+    _set_span_attribute(span, SpanAttributes.LLM_TOP_P, request_body.get("topP"))
+    _set_span_attribute(
+        span, SpanAttributes.LLM_TEMPERATURE, request_body.get("temperature")
+    )
+    _set_span_attribute(
+        span, SpanAttributes.LLM_REQUEST_MAX_TOKENS, request_body.get("maxTokens")
+    )
+
+    if should_send_prompts():
+        _set_span_attribute(
+            span, f"{SpanAttributes.LLM_PROMPTS}.0.user", request_body.get("prompt")
         )
 
         for i, completion in enumerate(response_body.get("completions")):
             _set_span_attribute(
                 span,
-                f"{SpanAttributes.LLM_COMPLETIONS}.{i}.content", completion.get("data").get("text")
+                f"{SpanAttributes.LLM_COMPLETIONS}.{i}.content",
+                completion.get("data").get("text"),
             )
 
 
 def _set_llama_span_attributes(span, request_body, response_body):
-    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TYPE, LLMRequestTypeValues.COMPLETION.value)
+    _set_span_attribute(
+        span, SpanAttributes.LLM_REQUEST_TYPE, LLMRequestTypeValues.COMPLETION.value
+    )
     _set_span_attribute(span, SpanAttributes.LLM_TOP_P, request_body.get("top_p"))
-    _set_span_attribute(span, SpanAttributes.LLM_TEMPERATURE, request_body.get("temperature"))
-    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MAX_TOKENS, request_body.get("max_gen_len"))
+    _set_span_attribute(
+        span, SpanAttributes.LLM_TEMPERATURE, request_body.get("temperature")
+    )
+    _set_span_attribute(
+        span, SpanAttributes.LLM_REQUEST_MAX_TOKENS, request_body.get("max_gen_len")
+    )
 
     if should_send_prompts():
-        _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.0.user", request_body.get("prompt"))
+        _set_span_attribute(
+            span, f"{SpanAttributes.LLM_PROMPTS}.0.user", request_body.get("prompt")
+        )
 
         for i, generation in enumerate(response_body.get("generations")):
-            _set_span_attribute(span, f"{SpanAttributes.LLM_COMPLETIONS}.{i}.content", response_body)
+            _set_span_attribute(
+                span, f"{SpanAttributes.LLM_COMPLETIONS}.{i}.content", response_body
+            )
 
 
 class BedrockInstrumentor(BaseInstrumentor):
