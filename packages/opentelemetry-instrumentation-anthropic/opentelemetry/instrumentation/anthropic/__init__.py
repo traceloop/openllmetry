@@ -128,8 +128,11 @@ def _set_input_attributes(span, kwargs):
             for i, message in enumerate(kwargs.get("messages")):
                 set_span_attribute(
                     span,
-                    f"{SpanAttributes.LLM_PROMPTS}.{i}.user",
+                    f"{SpanAttributes.LLM_PROMPTS}.{i}.content",
                     _dump_content(message.get("content")),
+                )
+                set_span_attribute(
+                    span, f"{SpanAttributes.LLM_PROMPTS}.{i}.role", message.get("role")
                 )
 
 

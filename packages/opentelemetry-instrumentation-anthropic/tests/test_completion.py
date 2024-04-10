@@ -26,8 +26,8 @@ def test_anthropic_completion(exporter, reader):
 
     anthropic_span = spans[0]
     assert (
-            anthropic_span.attributes["llm.prompts.0.user"]
-            == f"{HUMAN_PROMPT}\nHello world\n{AI_PROMPT}"
+        anthropic_span.attributes["llm.prompts.0.user"]
+        == f"{HUMAN_PROMPT}\nHello world\n{AI_PROMPT}"
     )
     assert anthropic_span.attributes.get("llm.completions.0.content")
 
@@ -117,18 +117,19 @@ def test_anthropic_message_create(exporter, reader):
 
     anthropic_span = spans[0]
     assert (
-            anthropic_span.attributes["llm.prompts.0.user"]
-            == "Tell me a joke about OpenTelemetry"
+        anthropic_span.attributes["llm.prompts.0.content"]
+        == "Tell me a joke about OpenTelemetry"
     )
+    assert (anthropic_span.attributes["llm.prompts.0.role"]) == "user"
     assert (
-            anthropic_span.attributes.get("llm.completions.0.content")
-            == response.content[0].text
+        anthropic_span.attributes.get("llm.completions.0.content")
+        == response.content[0].text
     )
     assert anthropic_span.attributes["llm.usage.prompt_tokens"] == 8
     assert (
-            anthropic_span.attributes["llm.usage.completion_tokens"]
-            + anthropic_span.attributes["llm.usage.prompt_tokens"]
-            == anthropic_span.attributes["llm.usage.total_tokens"]
+        anthropic_span.attributes["llm.usage.completion_tokens"]
+        + anthropic_span.attributes["llm.usage.prompt_tokens"]
+        == anthropic_span.attributes["llm.usage.total_tokens"]
     )
 
     metrics_data = reader.get_metrics_data()
@@ -224,7 +225,7 @@ def test_anthropic_multi_modal(exporter):
         "anthropic.completion",
     ]
     anthropic_span = spans[0]
-    assert anthropic_span.attributes["llm.prompts.0.user"] == json.dumps(
+    assert anthropic_span.attributes["llm.prompts.0.content"] == json.dumps(
         [
             {"type": "text", "text": "What do you see?"},
             {
@@ -237,15 +238,16 @@ def test_anthropic_multi_modal(exporter):
             },
         ]
     )
+    assert (anthropic_span.attributes["llm.prompts.0.role"]) == "user"
     assert (
-            anthropic_span.attributes.get("llm.completions.0.content")
-            == response.content[0].text
+        anthropic_span.attributes.get("llm.completions.0.content")
+        == response.content[0].text
     )
     assert anthropic_span.attributes["llm.usage.prompt_tokens"] == 1381
     assert (
-            anthropic_span.attributes["llm.usage.completion_tokens"]
-            + anthropic_span.attributes["llm.usage.prompt_tokens"]
-            == anthropic_span.attributes["llm.usage.total_tokens"]
+        anthropic_span.attributes["llm.usage.completion_tokens"]
+        + anthropic_span.attributes["llm.usage.prompt_tokens"]
+        == anthropic_span.attributes["llm.usage.total_tokens"]
     )
 
 
@@ -266,7 +268,7 @@ def test_anthropic_message_streaming(exporter, reader):
 
     response_content = ""
     for event in response:
-        if event.type == 'content_block_delta' and event.delta.type == 'text_delta':
+        if event.type == "content_block_delta" and event.delta.type == "text_delta":
             response_content += event.delta.text
 
     spans = exporter.get_finished_spans()
@@ -275,15 +277,18 @@ def test_anthropic_message_streaming(exporter, reader):
     ]
     anthropic_span = spans[0]
     assert (
-            anthropic_span.attributes["llm.prompts.0.user"]
-            == "Tell me a joke about OpenTelemetry"
+        anthropic_span.attributes["llm.prompts.0.content"]
+        == "Tell me a joke about OpenTelemetry"
     )
-    assert (anthropic_span.attributes.get("llm.completions.0.content") == response_content)
+    assert (anthropic_span.attributes["llm.prompts.0.role"]) == "user"
+    assert (
+        anthropic_span.attributes.get("llm.completions.0.content") == response_content
+    )
     assert anthropic_span.attributes["llm.usage.prompt_tokens"] == 8
     assert (
-            anthropic_span.attributes["llm.usage.completion_tokens"]
-            + anthropic_span.attributes["llm.usage.prompt_tokens"]
-            == anthropic_span.attributes["llm.usage.total_tokens"]
+        anthropic_span.attributes["llm.usage.completion_tokens"]
+        + anthropic_span.attributes["llm.usage.prompt_tokens"]
+        == anthropic_span.attributes["llm.usage.total_tokens"]
     )
 
     metrics_data = reader.get_metrics_data()
@@ -367,18 +372,19 @@ async def test_async_anthropic_message_create(exporter, reader):
     ]
     anthropic_span = spans[0]
     assert (
-            anthropic_span.attributes["llm.prompts.0.user"]
-            == "Tell me a joke about OpenTelemetry"
+        anthropic_span.attributes["llm.prompts.0.content"]
+        == "Tell me a joke about OpenTelemetry"
     )
+    assert (anthropic_span.attributes["llm.prompts.0.role"]) == "user"
     assert (
-            anthropic_span.attributes.get("llm.completions.0.content")
-            == response.content[0].text
+        anthropic_span.attributes.get("llm.completions.0.content")
+        == response.content[0].text
     )
     assert anthropic_span.attributes["llm.usage.prompt_tokens"] == 8
     assert (
-            anthropic_span.attributes["llm.usage.completion_tokens"]
-            + anthropic_span.attributes["llm.usage.prompt_tokens"]
-            == anthropic_span.attributes["llm.usage.total_tokens"]
+        anthropic_span.attributes["llm.usage.completion_tokens"]
+        + anthropic_span.attributes["llm.usage.prompt_tokens"]
+        == anthropic_span.attributes["llm.usage.total_tokens"]
     )
 
     metrics_data = reader.get_metrics_data()
@@ -459,7 +465,7 @@ async def test_async_anthropic_message_streaming(exporter, reader):
     )
     response_content = ""
     async for event in response:
-        if event.type == 'content_block_delta' and event.delta.type == 'text_delta':
+        if event.type == "content_block_delta" and event.delta.type == "text_delta":
             response_content += event.delta.text
 
     spans = exporter.get_finished_spans()
@@ -468,15 +474,18 @@ async def test_async_anthropic_message_streaming(exporter, reader):
     ]
     anthropic_span = spans[0]
     assert (
-            anthropic_span.attributes["llm.prompts.0.user"]
-            == "Tell me a joke about OpenTelemetry"
+        anthropic_span.attributes["llm.prompts.0.content"]
+        == "Tell me a joke about OpenTelemetry"
     )
-    assert (anthropic_span.attributes.get("llm.completions.0.content") == response_content)
+    assert (anthropic_span.attributes["llm.prompts.0.role"]) == "user"
+    assert (
+        anthropic_span.attributes.get("llm.completions.0.content") == response_content
+    )
     assert anthropic_span.attributes["llm.usage.prompt_tokens"] == 8
     assert (
-            anthropic_span.attributes["llm.usage.completion_tokens"]
-            + anthropic_span.attributes["llm.usage.prompt_tokens"]
-            == anthropic_span.attributes["llm.usage.total_tokens"]
+        anthropic_span.attributes["llm.usage.completion_tokens"]
+        + anthropic_span.attributes["llm.usage.prompt_tokens"]
+        == anthropic_span.attributes["llm.usage.total_tokens"]
     )
 
     metrics_data = reader.get_metrics_data()
