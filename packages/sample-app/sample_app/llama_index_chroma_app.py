@@ -16,7 +16,7 @@ chroma_client = chromadb.EphemeralClient()
 chroma_collection = chroma_client.create_collection("quickstart")
 
 # define embedding function
-embed_model = HuggingFaceEmbedding(model_name="BAAI/bge-base-en-v1.5")
+# embed_model = HuggingFaceEmbedding(model_name="BAAI/bge-base-en-v1.5")
 
 # load documents
 documents = SimpleDirectoryReader("./data/paul_graham/").load_data()
@@ -25,7 +25,8 @@ documents = SimpleDirectoryReader("./data/paul_graham/").load_data()
 vector_store = ChromaVectorStore(chroma_collection=chroma_collection)
 storage_context = StorageContext.from_defaults(vector_store=vector_store)
 index = VectorStoreIndex.from_documents(
-    documents, storage_context=storage_context, embed_model=embed_model
+    documents,
+    storage_context=storage_context,
 )
 
 
