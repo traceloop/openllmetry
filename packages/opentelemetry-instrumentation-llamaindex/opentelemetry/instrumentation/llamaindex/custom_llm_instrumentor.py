@@ -1,4 +1,5 @@
 import importlib
+import pkgutil
 
 from wrapt import wrap_function_wrapper
 from inflection import underscore
@@ -13,6 +14,7 @@ from opentelemetry.instrumentation.llamaindex.utils import (
     should_send_prompts,
 )
 
+import llama_index.llms
 
 try:
     from llama_index.core.llms.custom import CustomLLM
@@ -29,9 +31,13 @@ class CustomLLMInstrumentor:
         self._tracer = tracer
 
     def instrument(self):
-        module = importlib.import_module(MODULE_NAME)
+        packages = pkgutil.iter_modules(llama_index.llms.__path__)
+        modules = [
+            importlib.import_module(f"llama_index.llms.{p.name}") for p in packages
+        ]
         custom_llms_classes = [
             cls
+            for module in modules
             for name, cls in module.__dict__.items()
             if isinstance(cls, type) and issubclass(cls, CustomLLM)
         ]
