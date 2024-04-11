@@ -24,7 +24,7 @@ def _set_input_attributes(span, llm_request_type, kwargs):
         )
     elif llm_request_type == LLMRequestTypeValues.CHAT:
         set_span_attribute(
-            span, f"{SpanAttributes.LLM_PROMPTS}.0.user", kwargs.get("messages")
+            span, f"{SpanAttributes.LLM_PROMPTS}.0.user", [message.content for message in kwargs.get("messages")]
         )
 
     if "generation_kwargs" in kwargs and kwargs["generation_kwargs"] != None:
