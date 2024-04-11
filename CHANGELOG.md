@@ -1,3 +1,11 @@
+## v0.16.1 (2024-04-11)
+
+### Fix
+
+- **llamaindex**: proper support for custom LLMs (#776)
+- **anthropic**: prompt attribute name (#775)
+- **langchain**: BedrockChat model name should be model_id (#763)
+
 ## v0.16.0 (2024-04-10)
 
 ### Feat
