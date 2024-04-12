@@ -92,9 +92,9 @@ def wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
 
     llm_request_type = _llm_request_type_by_object(to_wrap.get("object"))
     with tracer.start_as_current_span(
-        "openai.chat"
+        "haystack.openai.chat"
         if llm_request_type == LLMRequestTypeValues.CHAT
-        else "openai.completion",
+        else "haystack.openai.completion",
         kind=SpanKind.CLIENT,
         attributes={
             SpanAttributes.LLM_VENDOR: "OpenAI",
