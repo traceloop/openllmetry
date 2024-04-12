@@ -21,6 +21,10 @@ from opentelemetry.instrumentation.langchain.custom_llm_wrapper import (
     llm_wrapper,
     allm_wrapper,
 )
+from opentelemetry.instrumentation.langchain.custom_chat_wrapper import (
+    chat_wrapper,
+    achat_wrapper,
+)
 from opentelemetry.instrumentation.langchain.version import __version__
 
 from opentelemetry.semconv.ai import TraceloopSpanKindValues
@@ -101,14 +105,14 @@ WRAPPED_METHODS = [
     {
         "package": "langchain.chat_models.base",
         "object": "BaseChatModel",
-        "method": "invoke",
-        "wrapper": task_wrapper,
+        "method": "generate",
+        "wrapper": chat_wrapper,
     },
     {
         "package": "langchain.chat_models.base",
         "object": "BaseChatModel",
-        "method": "ainvoke",
-        "wrapper": atask_wrapper,
+        "method": "agenerate",
+        "wrapper": achat_wrapper,
     },
     {
         "package": "langchain.schema",

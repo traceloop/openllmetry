@@ -1,6 +1,5 @@
 import os
 import sys
-from deprecated import deprecated
 import requests
 from pathlib import Path
 
@@ -25,7 +24,6 @@ from traceloop.sdk.fetcher import Fetcher
 from traceloop.sdk.tracing.tracing import (
     TracerWrapper,
     set_association_properties,
-    set_correlation_id,
 )
 from typing import Dict
 
@@ -52,6 +50,7 @@ class Traceloop:
         processor: SpanProcessor = None,
         propagator: TextMapPropagator = None,
         traceloop_sync_enabled: bool = True,
+        should_enrich_metrics: bool = True,
         resource_attributes: dict = {},
         instruments: Optional[Set[Instruments]] = None,
     ) -> None:
@@ -162,6 +161,7 @@ class Traceloop:
             processor=processor,
             propagator=propagator,
             exporter=exporter,
+            should_enrich_metrics=should_enrich_metrics,
             instruments=instruments,
         )
 
@@ -181,11 +181,6 @@ class Traceloop:
             resource_attributes, metrics_endpoint, metrics_headers
         )
         Traceloop.__metrics_wrapper = MetricsWrapper(exporter=metrics_exporter)
-
-    @staticmethod
-    @deprecated(version="0.0.62", reason="Use set_association_properties instead")
-    def set_correlation_id(correlation_id: str) -> None:
-        set_correlation_id(correlation_id)
 
     def set_association_properties(properties: dict) -> None:
         set_association_properties(properties)

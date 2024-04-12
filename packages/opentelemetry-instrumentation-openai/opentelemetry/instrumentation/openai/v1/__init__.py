@@ -160,7 +160,15 @@ class OpenAIV1Instrumentor(BaseInstrumentor):
         wrap_function_wrapper(
             "openai.resources.chat.completions",
             "AsyncCompletions.create",
-            achat_wrapper(tracer),
+            achat_wrapper(
+                tracer,
+                chat_token_counter,
+                chat_choice_counter,
+                chat_duration_histogram,
+                chat_exception_counter,
+                streaming_time_to_first_token,
+                streaming_time_to_generate,
+            ),
         )
         wrap_function_wrapper(
             "openai.resources.completions",
