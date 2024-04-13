@@ -1,6 +1,6 @@
 import os
 from haystack import Pipeline
-from haystack.components.generators.chat import OpenAIChatGenerator
+from haystack.components.generators import OpenAIGenerator
 from haystack.components.builders import PromptBuilder
 from haystack.dataclasses import ChatMessage
 from haystack.utils import Secret
@@ -19,7 +19,7 @@ def haystack_app():
     
     # initialize
     api_key=os.getenv("OPENAI_API_KEY")
-    generator = OpenAIChatGenerator(api_key=Secret.from_token(api_key), model="gpt-3.5-turbo")
+    generator = OpenAIGenerator(api_key=Secret.from_token(api_key), model="gpt-3.5-turbo")
 
     # initialize document store, load data and store in document store
     document_store = InMemoryDocumentStore()
@@ -63,5 +63,11 @@ def haystack_app():
     basic_rag_pipeline.connect("text_embedder.embedding", "retriever.query_embedding")
     basic_rag_pipeline.connect("retriever", "prompt_builder.documents")
     basic_rag_pipeline.connect("prompt_builder", "llm")
+
+    question = "What does Rhodes Statue look like?"
+
+    response = basic_rag_pipeline.run({"text_embedder": {"text": question}, "prompt_builder": {"question": question}})
+
+    print(response["llm"]["replies"][0])
 
 haystack_app()
