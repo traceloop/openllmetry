@@ -16,12 +16,10 @@ def task_wrapper(tracer, to_wrap, wrapped, instance, args, kwargs):
     if instance.__class__.__name__ in ("AgentExecutor"):
         return wrapped(*args, **kwargs)
 
-    if hasattr(instance, "name") and instance.name:
-        name = f"{to_wrap.get('span_name')}.{instance.name.lower()}"
-    elif to_wrap.get("span_name"):
-        name = to_wrap.get("span_name")
-    else:
-        name = f"langchain.task.{instance.__class__.__name__}"
+    config = args[1] if len(args) > 1 else {}
+    run_name = config.get("run_name") or instance.get_name()
+    name = f"{run_name}.langchain.task" if run_name else to_wrap.get("span_name")
+
     kind = to_wrap.get("kind") or TraceloopSpanKindValues.TASK.value
     with tracer.start_as_current_span(name) as span:
         span.set_attribute(
@@ -45,12 +43,10 @@ async def atask_wrapper(tracer, to_wrap, wrapped, instance, args, kwargs):
     if instance.__class__.__name__ in ("AgentExecutor"):
         return wrapped(*args, **kwargs)
 
-    if hasattr(instance, "name") and instance.name:
-        name = f"{to_wrap.get('span_name')}.{instance.name.lower()}"
-    elif to_wrap.get("span_name"):
-        name = to_wrap.get("span_name")
-    else:
-        name = f"langchain.task.{instance.__class__.__name__}"
+    config = args[1] if len(args) > 1 else {}
+    run_name = config.get("run_name") or instance.get_name()
+    name = f"{run_name}.langchain.task" if run_name else to_wrap.get("span_name")
+
     kind = to_wrap.get("kind") or TraceloopSpanKindValues.TASK.value
     with tracer.start_as_current_span(name) as span:
         span.set_attribute(

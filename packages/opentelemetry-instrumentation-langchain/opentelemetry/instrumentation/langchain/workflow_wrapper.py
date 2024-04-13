@@ -16,7 +16,9 @@ def workflow_wrapper(tracer, to_wrap, wrapped, instance, args, kwargs):
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
         return wrapped(*args, **kwargs)
 
-    name = to_wrap.get("span_name")
+    config = args[1] if len(args) > 1 else {}
+    run_name = config.get("run_name") or instance.get_name()
+    name = f"{run_name}.langchain.workflow" if run_name else to_wrap.get("span_name")
     kind = to_wrap.get("kind") or TraceloopSpanKindValues.WORKFLOW.value
 
     attach(set_value("workflow_name", name))
@@ -39,7 +41,9 @@ async def aworkflow_wrapper(tracer, to_wrap, wrapped, instance, args, kwargs):
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
         return wrapped(*args, **kwargs)
 
-    name = to_wrap.get("span_name")
+    config = args[1] if len(args) > 1 else {}
+    run_name = config.get("run_name") or instance.get_name()
+    name = f"{run_name}.langchain.workflow" if run_name else to_wrap.get("span_name")
     kind = to_wrap.get("kind") or TraceloopSpanKindValues.WORKFLOW.value
 
     attach(set_value("workflow_name", name))
