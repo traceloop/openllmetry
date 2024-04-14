@@ -41,11 +41,11 @@ def test_sequential_chain(exporter):
 
     spans = exporter.get_finished_spans()
 
-    assert set(
-        [
-            "openai.completion",
-            "langchain.task.LLMChain",
-            "langchain.task.SequentialChain",
-            "langchain.workflow",
-        ]
-    ).issubset([span.name for span in spans])
+    assert [
+        "openai.completion",
+        "LLMChain.langchain.task",
+        "openai.completion",
+        "LLMChain.langchain.task",
+        "SequentialChain.langchain.task",
+        "SequentialChain.langchain.workflow",
+    ] == [span.name for span in spans]

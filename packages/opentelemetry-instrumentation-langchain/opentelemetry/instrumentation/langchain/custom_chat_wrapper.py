@@ -14,7 +14,7 @@ def chat_wrapper(tracer, to_wrap, wrapped, instance, args, kwargs):
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
         return wrapped(*args, **kwargs)
 
-    name = f"langchain.task.{instance.__class__.__name__}"
+    name = f"{instance.__class__.__name__}.langchain.task"
     with tracer.start_as_current_span(name) as span:
         _handle_request(span, args, kwargs, instance)
         return_value = wrapped(*args, **kwargs)
@@ -29,7 +29,7 @@ async def achat_wrapper(tracer, to_wrap, wrapped, instance, args, kwargs):
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
         return wrapped(*args, **kwargs)
 
-    name = f"langchain.task.{instance.__class__.__name__}"
+    name = f"{instance.__class__.__name__}.langchain.task"
     with tracer.start_as_current_span(name) as span:
         _handle_request(span, args, kwargs, instance)
         return_value = await wrapped(*args, **kwargs)
