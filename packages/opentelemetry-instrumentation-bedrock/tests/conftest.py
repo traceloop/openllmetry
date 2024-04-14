@@ -26,7 +26,7 @@ def exporter():
 
 @pytest.fixture(scope="session", autouse=True)
 def instrument(exporter):
-    BedrockInstrumentor().instrument()
+    BedrockInstrumentor(enrich_token_usage=True).instrument()
 
     yield
 

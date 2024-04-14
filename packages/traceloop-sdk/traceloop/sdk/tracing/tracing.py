@@ -203,7 +203,7 @@ class TracerWrapper(object):
                         else:
                             instrument_set = True
                     elif instrument == Instruments.BEDROCK:
-                        if not init_bedrock_instrumentor():
+                        if not init_bedrock_instrumentor(should_enrich_metrics):
                             print(Fore.RED + "Warning: Bedrock library does not exist.")
                             print(Fore.RESET)
                         else:
@@ -435,7 +435,7 @@ def init_instrumentations(should_enrich_metrics: bool):
     init_requests_instrumentor()
     init_urllib3_instrumentor()
     init_pymysql_instrumentor()
-    init_bedrock_instrumentor()
+    init_bedrock_instrumentor(should_enrich_metrics)
     init_replicate_instrumentor()
     init_vertexai_instrumentor()
     init_watsonx_instrumentor()
@@ -586,11 +586,11 @@ def init_pymysql_instrumentor():
     return True
 
 
-def init_bedrock_instrumentor():
+def init_bedrock_instrumentor(should_enrich_metrics: bool):
     if importlib.util.find_spec("boto3") is not None:
         from opentelemetry.instrumentation.bedrock import BedrockInstrumentor
 
-        instrumentor = BedrockInstrumentor()
+        instrumentor = BedrockInstrumentor(enrich_token_usage=should_enrich_metrics)
         if not instrumentor.is_instrumented_by_opentelemetry:
             instrumentor.instrument()
     return True

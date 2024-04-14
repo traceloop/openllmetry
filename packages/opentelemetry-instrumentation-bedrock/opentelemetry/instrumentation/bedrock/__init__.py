@@ -5,10 +5,12 @@ import json
 import logging
 import os
 from typing import Collection
+from opentelemetry.instrumentation.bedrock.config import Config
 from opentelemetry.instrumentation.bedrock.reusable_streaming_body import (
     ReusableStreamingBody,
 )
 from wrapt import wrap_function_wrapper
+import anthropic
 
 from opentelemetry import context as context_api
 from opentelemetry.trace import get_tracer, SpanKind
@@ -23,6 +25,8 @@ from opentelemetry.semconv.ai import SpanAttributes, LLMRequestTypeValues
 from opentelemetry.instrumentation.bedrock.version import __version__
 
 logger = logging.getLogger(__name__)
+
+anthropic_client = anthropic.Anthropic()
 
 _instruments = ("boto3 >= 1.28.57",)
 
@@ -150,6 +154,26 @@ def _set_anthropic_completion_span_attributes(span, request_body, response_body)
         request_body.get("max_tokens_to_sample"),
     )
 
+    if Config.enrich_token_usage:
+        prompt_tokens = _count_anthropic_tokens([request_body.get("prompt")])
+        completion_tokens = _count_anthropic_tokens([response_body.get("completion")])
+
+        _set_span_attribute(
+            span,
+            SpanAttributes.LLM_USAGE_PROMPT_TOKENS,
+            prompt_tokens,
+        )
+        _set_span_attribute(
+            span,
+            SpanAttributes.LLM_USAGE_COMPLETION_TOKENS,
+            completion_tokens,
+        )
+        _set_span_attribute(
+            span,
+            SpanAttributes.LLM_USAGE_TOTAL_TOKENS,
+            prompt_tokens + completion_tokens,
+        )
+
     if should_send_prompts():
         _set_span_attribute(
             span, f"{SpanAttributes.LLM_PROMPTS}.0.user", request_body.get("prompt")
@@ -175,6 +199,36 @@ def _set_anthropic_messages_span_attributes(span, request_body, response_body):
         request_body.get("max_tokens"),
     )
 
+    if Config.enrich_token_usage:
+        messages = [message.get("content") for message in request_body.get("messages")]
+        prompt_tokens = _count_anthropic_tokens(
+            [
+                content.get("text")
+                for message in messages
+                for content in message
+                if content.get("type") == "text"
+            ]
+        )
+        completion_tokens = _count_anthropic_tokens(
+            [content.get("text") for content in response_body.get("content")]
+        )
+
+        _set_span_attribute(
+            span,
+            SpanAttributes.LLM_USAGE_PROMPT_TOKENS,
+            prompt_tokens,
+        )
+        _set_span_attribute(
+            span,
+            SpanAttributes.LLM_USAGE_COMPLETION_TOKENS,
+            completion_tokens,
+        )
+        _set_span_attribute(
+            span,
+            SpanAttributes.LLM_USAGE_TOTAL_TOKENS,
+            prompt_tokens + completion_tokens,
+        )
+
     if should_send_prompts():
         for idx, message in enumerate(request_body.get("messages")):
             _set_span_attribute(
@@ -194,6 +248,13 @@ def _set_anthropic_messages_span_attributes(span, request_body, response_body):
             f"{SpanAttributes.LLM_COMPLETIONS}.0.content",
             json.dumps(response_body.get("content")),
         )
+
+
+def _count_anthropic_tokens(messages: list[str]):
+    count = 0
+    for message in messages:
+        count += anthropic_client.count_tokens(text=message)
+    return count
 
 
 def _set_ai21_span_attributes(span, request_body, response_body):
@@ -246,6 +307,10 @@ def _set_llama_span_attributes(span, request_body, response_body):
 
 class BedrockInstrumentor(BaseInstrumentor):
     """An instrumentor for Bedrock's client library."""
+
+    def __init__(self, enrich_token_usage: bool = False):
+        super().__init__()
+        Config.enrich_token_usage = enrich_token_usage
 
     def instrumentation_dependencies(self) -> Collection[str]:
         return _instruments
