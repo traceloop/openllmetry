@@ -31,6 +31,9 @@ from opentelemetry.instrumentation.llamaindex.custom_llm_instrumentor import (
 from opentelemetry.instrumentation.llamaindex.query_pipeline_instrumentor import (
     QueryPipelineInstrumentor,
 )
+from opentelemetry.instrumentation.llamaindex.query_engine_instrumentor import (
+    QueryEngineInstrumentor,
+)
 from opentelemetry.instrumentation.llamaindex.version import __version__
 
 logger = logging.getLogger(__name__)
@@ -54,6 +57,7 @@ class LlamaIndexInstrumentor(BaseInstrumentor):
         BaseEmbeddingInstrumentor(tracer).instrument()
         CustomLLMInstrumentor(tracer).instrument()
         QueryPipelineInstrumentor(tracer).instrument()
+        QueryEngineInstrumentor(tracer).instrument()
         BaseAgentInstrumentor(tracer).instrument()
         BaseToolInstrumentor(tracer).instrument()
 
