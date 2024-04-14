@@ -32,6 +32,15 @@ def test_anthropic_2_completion(exporter, brt):
     )
     assert anthropic_span.attributes.get("llm.completions.0.content") == completion
 
+    assert anthropic_span.attributes.get("llm.usage.prompt_tokens") == 13
+    assert anthropic_span.attributes.get(
+        "llm.usage.completion_tokens"
+    ) + anthropic_span.attributes.get(
+        "llm.usage.prompt_tokens"
+    ) == anthropic_span.attributes.get(
+        "llm.usage.total_tokens"
+    )
+
 
 @pytest.mark.vcr
 def test_anthropic_3_completion(exporter, brt):
@@ -72,4 +81,13 @@ def test_anthropic_3_completion(exporter, brt):
     assert (
         json.loads(anthropic_span.attributes.get("llm.completions.0.content"))
         == completion
+    )
+
+    assert anthropic_span.attributes.get("llm.usage.prompt_tokens") == 9
+    assert anthropic_span.attributes.get(
+        "llm.usage.completion_tokens"
+    ) + anthropic_span.attributes.get(
+        "llm.usage.prompt_tokens"
+    ) == anthropic_span.attributes.get(
+        "llm.usage.total_tokens"
     )

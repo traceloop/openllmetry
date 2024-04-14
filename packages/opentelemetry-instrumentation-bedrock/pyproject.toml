@@ -28,6 +28,7 @@ opentelemetry-api = "^1.24.0"
 opentelemetry-instrumentation = "^0.45b0"
 opentelemetry-semantic-conventions = "^0.45b0"
 opentelemetry-semantic-conventions-ai = "0.1.1"
+anthropic = "^0.25.1"
 
 [tool.poetry.group.dev.dependencies]
 autopep8 = "2.1.0"
