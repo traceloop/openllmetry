@@ -46,7 +46,7 @@ python-dotenv = "^1.0.1"
 langchain = "^0.1.13"
 langchain-community = "^0.0.29"
 llama-index-embeddings-huggingface = "^0.1.4"
-litellm = "^1.32.4"
+litellm = "^1.34.42"
 text-generation = "^0.7.0"
 
 [tool.poetry.dependencies.opentelemetry-instrumentation-openai]
