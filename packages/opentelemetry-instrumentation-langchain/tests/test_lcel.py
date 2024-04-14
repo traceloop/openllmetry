@@ -30,30 +30,34 @@ def test_simple_lcel(exporter):
     model = ChatOpenAI(model="gpt-3.5-turbo")
     output_parser = JsonOutputFunctionsParser()
 
-    chain = prompt | model.bind(functions=openai_functions) | output_parser
+    chain = (
+        prompt | model.bind(functions=openai_functions) | output_parser
+    ).with_config({"run_name": "ThisIsATestChain", "tags": ["test_tag"]})
     chain.invoke({"input": "tell me a short joke"})
 
     spans = exporter.get_finished_spans()
 
     assert [
-        "langchain.task.ChatPromptTemplate",
+        "ChatPromptTemplate.langchain.task",
         "openai.chat",
-        "langchain.task.ChatOpenAI",
-        "langchain.task.JsonOutputFunctionsParser",
-        "langchain.workflow",
+        "ChatOpenAI.langchain.task",
+        "JsonOutputFunctionsParser.langchain.task",
+        "ThisIsATestChain.langchain.workflow",
     ] == [span.name for span in spans]
 
-    workflow_span = next(span for span in spans if span.name == "langchain.workflow")
+    workflow_span = next(
+        span for span in spans if span.name == "ThisIsATestChain.langchain.workflow"
+    )
     prompt_task_span = next(
-        span for span in spans if span.name == "langchain.task.ChatPromptTemplate"
+        span for span in spans if span.name == "ChatPromptTemplate.langchain.task"
     )
     chat_openai_task_span = next(
-        span for span in spans if span.name == "langchain.task.ChatOpenAI"
+        span for span in spans if span.name == "ChatOpenAI.langchain.task"
     )
     output_parser_task_span = next(
         span
         for span in spans
-        if span.name == "langchain.task.JsonOutputFunctionsParser"
+        if span.name == "JsonOutputFunctionsParser.langchain.task"
     )
 
     assert prompt_task_span.parent.span_id == workflow_span.context.span_id
@@ -80,20 +84,22 @@ async def test_async_lcel(exporter):
 
     assert set(
         [
-            "langchain.task.PromptTemplate",
+            "PromptTemplate.langchain.task",
             "openai.chat",
-            "langchain.task.ChatOpenAI",
-            "langchain.task.StrOutputParser",
-            "langchain.workflow",
+            "ChatOpenAI.langchain.task",
+            "StrOutputParser.langchain.task",
+            "RunnableSequence.langchain.workflow",
         ]
     ) == set([span.name for span in spans])
 
-    workflow_span = next(span for span in spans if span.name == "langchain.workflow")
+    workflow_span = next(
+        span for span in spans if span.name == "RunnableSequence.langchain.workflow"
+    )
     chat_openai_task_span = next(
-        span for span in spans if span.name == "langchain.task.ChatOpenAI"
+        span for span in spans if span.name == "ChatOpenAI.langchain.task"
     )
     output_parser_task_span = next(
-        span for span in spans if span.name == "langchain.task.StrOutputParser"
+        span for span in spans if span.name == "StrOutputParser.langchain.task"
     )
 
     assert chat_openai_task_span.parent.span_id == workflow_span.context.span_id
@@ -118,11 +124,11 @@ def test_streaming(exporter):
     spans = exporter.get_finished_spans()
 
     assert [
-        "langchain.task.PromptTemplate",
+        "PromptTemplate.langchain.task",
         "openai.chat",
-        "langchain.task.ChatOpenAI",
-        "langchain.task.StrOutputParser",
-        "langchain.workflow",
+        "ChatOpenAI.langchain.task",
+        "StrOutputParser.langchain.task",
+        "RunnableSequence.langchain.workflow",
     ] == [span.name for span in spans]
 
 
@@ -141,9 +147,9 @@ def test_custom_llm(exporter):
     spans = exporter.get_finished_spans()
 
     assert [
-        "langchain.task.ChatPromptTemplate",
+        "ChatPromptTemplate.langchain.task",
         "HuggingFaceTextGenInference.chat",
-        "langchain.workflow",
+        "RunnableSequence.langchain.workflow",
     ] == [span.name for span in spans]
 
     hugging_face_span = next(
@@ -175,13 +181,13 @@ def test_anthropic(exporter):
     spans = exporter.get_finished_spans()
 
     assert [
-        "langchain.task.ChatPromptTemplate",
-        "langchain.task.ChatAnthropic",
-        "langchain.workflow",
+        "ChatPromptTemplate.langchain.task",
+        "ChatAnthropic.langchain.task",
+        "RunnableSequence.langchain.workflow",
     ] == [span.name for span in spans]
 
     anthropic_span = next(
-        span for span in spans if span.name == "langchain.task.ChatAnthropic"
+        span for span in spans if span.name == "ChatAnthropic.langchain.task"
     )
 
     assert anthropic_span.attributes["llm.request.type"] == "chat"
@@ -200,11 +206,11 @@ def test_bedrock(exporter):
     model = BedrockChat(
         model_id="anthropic.claude-3-haiku-20240307-v1:0",
         client=boto3.client(
-            'bedrock-runtime',
-            aws_access_key_id="AKIAO0Y4W4IRWHCFPUHH",
-            aws_secret_access_key="6yXG05XtZbS0buBvBcJz2CqON1XtW8AUCQ718cgu",
+            "bedrock-runtime",
+            aws_access_key_id="test_key",
+            aws_secret_access_key="test_secret",
             aws_session_token="a/mock/token",
-            region_name="us-east-1"
+            region_name="us-east-1",
         ),
     )
 
@@ -214,18 +220,19 @@ def test_bedrock(exporter):
     spans = exporter.get_finished_spans()
 
     assert [
-        "langchain.task.ChatPromptTemplate",
-        "langchain.task.BedrockChat",
-        "langchain.workflow",
+        "ChatPromptTemplate.langchain.task",
+        "BedrockChat.langchain.task",
+        "RunnableSequence.langchain.workflow",
     ] == [span.name for span in spans]
 
     bedrock_span = next(
-        span for span in spans if span.name == "langchain.task.BedrockChat"
+        span for span in spans if span.name == "BedrockChat.langchain.task"
     )
 
     assert bedrock_span.attributes["llm.request.type"] == "chat"
-    assert bedrock_span.attributes["llm.request.model"] == "anthropic.claude-3-haiku-20240307-v1:0"
     assert (
-        bedrock_span.attributes["llm.prompts.0.user"] == "You are helpful assistant"
+        bedrock_span.attributes["llm.request.model"]
+        == "anthropic.claude-3-haiku-20240307-v1:0"
     )
+    assert bedrock_span.attributes["llm.prompts.0.user"] == "You are helpful assistant"
     assert bedrock_span.attributes["llm.completions.0.content"] == response.content
