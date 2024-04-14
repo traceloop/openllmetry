@@ -1,3 +1,10 @@
+## v0.16.2 (2024-04-14)
+
+### Fix
+
+- **bedrock**: enrich token usage for anthropic calls (#805)
+- **langchain**: use chain names if exist (#804)
+
 ## v0.16.1 (2024-04-11)
 
 ### Fix
