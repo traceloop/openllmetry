@@ -43,3 +43,15 @@ def test_instruments(exporter_with_custom_instrumentations):
     spans = exporter_with_custom_instrumentations.get_finished_spans()
     workflow_span = spans[0]
     assert workflow_span
+
+
+def test_no_metrics(exporter_with_no_metrics):
+    @workflow()
+    def run_workflow():
+        pass
+
+    run_workflow()
+
+    spans = exporter_with_no_metrics.get_finished_spans()
+    workflow_span = spans[0]
+    assert workflow_span
