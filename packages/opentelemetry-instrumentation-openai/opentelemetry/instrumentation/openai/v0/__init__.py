@@ -128,7 +128,19 @@ class OpenAIV0Instrumentor(BaseInstrumentor):
                 streaming_time_to_generate,
             ),
         )
-        wrap_function_wrapper("openai", "ChatCompletion.acreate", achat_wrapper(tracer))
+        wrap_function_wrapper(
+            "openai",
+            "ChatCompletion.acreate",
+            achat_wrapper(
+                tracer,
+                chat_token_counter,
+                chat_choice_counter,
+                chat_duration_histogram,
+                chat_exception_counter,
+                streaming_time_to_first_token,
+                streaming_time_to_generate,
+            ),
+        )
         wrap_function_wrapper(
             "openai",
             "Embedding.create",
@@ -141,7 +153,15 @@ class OpenAIV0Instrumentor(BaseInstrumentor):
             ),
         )
         wrap_function_wrapper(
-            "openai", "Embedding.acreate", aembeddings_wrapper(tracer)
+            "openai",
+            "Embedding.acreate",
+            aembeddings_wrapper(
+                tracer,
+                embeddings_token_counter,
+                embeddings_vector_size_counter,
+                embeddings_duration_histogram,
+                embeddings_exception_counter,
+            ),
         )
 
     def _uninstrument(self, **kwargs):
