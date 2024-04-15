@@ -1,3 +1,9 @@
+## v0.16.4 (2024-04-15)
+
+### Fix
+
+- **anthropic**: fix issue with disabled metrics (#820)
+
 ## v0.16.3 (2024-04-15)
 
 ### Fix
