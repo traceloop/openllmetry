@@ -81,3 +81,27 @@ def exporter_with_custom_instrumentations():
     # Restore singleton if any
     if _trace_wrapper_instance:
         TracerWrapper.instance = _trace_wrapper_instance
+
+
+@pytest.fixture
+def exporter_with_no_metrics():
+    # Clear singleton if existed
+    if hasattr(TracerWrapper, "instance"):
+        _trace_wrapper_instance = TracerWrapper.instance
+        del TracerWrapper.instance
+
+    os.environ["TRACELOOP_METRICS_ENABLED"] = "false"
+
+    exporter = InMemorySpanExporter()
+
+    Traceloop.init(
+        exporter=exporter,
+        disable_batch=True,
+    )
+
+    yield exporter
+
+    # Restore singleton if any
+    if _trace_wrapper_instance:
+        TracerWrapper.instance = _trace_wrapper_instance
+        os.environ["TRACELOOP_METRICS_ENABLED"] = "true"
