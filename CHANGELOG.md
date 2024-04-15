@@ -1,3 +1,9 @@
+## v0.16.3 (2024-04-15)
+
+### Fix
+
+- **openai**: missing metrics for OpenAI v0 instrumentation (#818)
+
 ## v0.16.2 (2024-04-14)
 
 ### Fix
