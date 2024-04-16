@@ -7,7 +7,6 @@ from opentelemetry.semconv.ai import SpanAttributes, LLMRequestTypeValues
 
 from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
 from opentelemetry.instrumentation.openai.utils import (
-    _with_tracer_wrapper,
     start_as_current_span_async,
     _with_embeddings_telemetry_wrapper,
 )
@@ -89,7 +88,7 @@ def embeddings_wrapper(
         return response
 
 
-@_with_tracer_wrapper
+@_with_embeddings_telemetry_wrapper
 async def aembeddings_wrapper(
     tracer,
     token_counter: Counter,
