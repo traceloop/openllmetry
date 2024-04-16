@@ -178,7 +178,13 @@ class OpenAIV1Instrumentor(BaseInstrumentor):
         wrap_function_wrapper(
             "openai.resources.embeddings",
             "AsyncEmbeddings.create",
-            aembeddings_wrapper(tracer),
+            aembeddings_wrapper(
+                tracer,
+                embeddings_token_counter,
+                embeddings_vector_size_counter,
+                embeddings_duration_histogram,
+                embeddings_exception_counter,
+            ),
         )
 
         if is_metrics_enabled():
