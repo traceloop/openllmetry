@@ -1131,13 +1131,13 @@ files = [
 
 [[package]]
 name = "openai"
-version = "1.16.1"
+version = "1.20.0"
 description = "The official Python library for the openai API"
 optional = false
 python-versions = ">=3.7.1"
 files = [
-    {file = "openai-1.16.1-py3-none-any.whl", hash = "sha256:77ef3db6110071f7154859e234250fb945a36554207a30a4491092eadb73fcb5"},
-    {file = "openai-1.16.1.tar.gz", hash = "sha256:58922c785d167458b46e3c76e7b1bc2306f313ee9b71791e84cbf590abe160f2"},
+    {file = "openai-1.20.0-py3-none-any.whl", hash = "sha256:9fcc75256b2425393800e358cd520b02b5ab1a8731921e45aa7ae6aec3ee8187"},
+    {file = "openai-1.20.0.tar.gz", hash = "sha256:d7c0e824b7da3c043731943965c737595cf9631c913b7a1464c502fdf492b9a9"},
 ]
 
 [package.dependencies]
