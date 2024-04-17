@@ -35,7 +35,7 @@ class Traceloop:
     AUTO_CREATED_URL = str(Path.home() / ".cache" / "traceloop" / "auto_created_url")
 
     __tracer_wrapper: TracerWrapper
-    __fetcher: Fetcher
+    __fetcher: Fetcher = None
 
     @staticmethod
     def init(
