@@ -635,7 +635,7 @@ class AnthropicInstrumentor(BaseInstrumentor):
                     choice_counter,
                     duration_histogram,
                     exception_counter,
-                ) = (None, None, None)
+                ) = (None, None, None, None)
             try:
                 wrap_function_wrapper(
                     wrap_package,

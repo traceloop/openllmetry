@@ -1,3 +1,23 @@
+## v0.16.5 (2024-04-17)
+
+### Fix
+
+- **sdk**: warn for reporting score when not using Traceloop (#829)
+- **openai**: fix aembeddings init error (#828)
+- **openai**: missing aembedding metrics
+
+## v0.16.4 (2024-04-15)
+
+### Fix
+
+- **anthropic**: fix issue with disabled metrics (#820)
+
+## v0.16.3 (2024-04-15)
+
+### Fix
+
+- **openai**: missing metrics for OpenAI v0 instrumentation (#818)
+
 ## v0.16.2 (2024-04-14)
 
 ### Fix
