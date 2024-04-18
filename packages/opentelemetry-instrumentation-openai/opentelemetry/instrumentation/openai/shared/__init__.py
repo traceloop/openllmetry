@@ -46,19 +46,13 @@ def _set_client_attributes(span, instance):
     if not is_openai_v1():
         return
 
-    try:
-        client = instance._client  # pylint: disable=protected-access
-        if isinstance(client, (openai.AsyncOpenAI, openai.OpenAI)):
-            _set_span_attribute(span, OPENAI_API_BASE, str(client.base_url))
-        if isinstance(client, (openai.AsyncAzureOpenAI, openai.AzureOpenAI)):
-            _set_span_attribute(
-                span, OPENAI_API_VERSION, client._api_version
-            )  # pylint: disable=protected-access
-
-    except Exception as ex:  # pylint: disable=broad-except
-        logger.warning(
-            "Failed to set api attributes for openai v1 span, error: %s", str(ex)
-        )
+    client = instance._client  # pylint: disable=protected-access
+    if isinstance(client, (openai.AsyncOpenAI, openai.OpenAI)):
+        _set_span_attribute(span, OPENAI_API_BASE, str(client.base_url))
+    if isinstance(client, (openai.AsyncAzureOpenAI, openai.AzureOpenAI)):
+        _set_span_attribute(
+            span, OPENAI_API_VERSION, client._api_version
+        )  # pylint: disable=protected-access
 
 
 def _set_api_attributes(span):
@@ -68,16 +62,11 @@ def _set_api_attributes(span):
     if is_openai_v1():
         return
 
-    try:
-        base_url = openai.base_url if hasattr(openai, "base_url") else openai.api_base
+    base_url = openai.base_url if hasattr(openai, "base_url") else openai.api_base
 
-        _set_span_attribute(span, OPENAI_API_BASE, base_url)
-        _set_span_attribute(span, OPENAI_API_TYPE, openai.api_type)
-        _set_span_attribute(span, OPENAI_API_VERSION, openai.api_version)
-    except Exception as ex:  # pylint: disable=broad-except
-        logger.warning(
-            "Failed to set api attributes for openai span, error: %s", str(ex)
-        )
+    _set_span_attribute(span, OPENAI_API_BASE, base_url)
+    _set_span_attribute(span, OPENAI_API_TYPE, openai.api_type)
+    _set_span_attribute(span, OPENAI_API_VERSION, openai.api_version)
 
     return
 
@@ -146,35 +135,28 @@ def _set_response_attributes(span, response):
     if not span.is_recording():
         return
 
-    try:
-        _set_span_attribute(
-            span, SpanAttributes.LLM_RESPONSE_MODEL, response.get("model")
-        )
+    _set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, response.get("model"))
 
-        usage = response.get("usage")
-        if not usage:
-            return
-
-        if is_openai_v1() and not isinstance(usage, dict):
-            usage = usage.__dict__
-
-        _set_span_attribute(
-            span, SpanAttributes.LLM_USAGE_TOTAL_TOKENS, usage.get("total_tokens")
-        )
-        _set_span_attribute(
-            span,
-            SpanAttributes.LLM_USAGE_COMPLETION_TOKENS,
-            usage.get("completion_tokens"),
-        )
-        _set_span_attribute(
-            span, SpanAttributes.LLM_USAGE_PROMPT_TOKENS, usage.get("prompt_tokens")
-        )
-
+    usage = response.get("usage")
+    if not usage:
         return
-    except Exception as ex:  # pylint: disable=broad-except
-        logger.warning(
-            "Failed to set response attributes for openai span, error: %s", str(ex)
-        )
+
+    if is_openai_v1() and not isinstance(usage, dict):
+        usage = usage.__dict__
+
+    _set_span_attribute(
+        span, SpanAttributes.LLM_USAGE_TOTAL_TOKENS, usage.get("total_tokens")
+    )
+    _set_span_attribute(
+        span,
+        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS,
+        usage.get("completion_tokens"),
+    )
+    _set_span_attribute(
+        span, SpanAttributes.LLM_USAGE_PROMPT_TOKENS, usage.get("prompt_tokens")
+    )
+
+    return
 
 
 def _set_span_stream_usage(span, prompt_tokens, completion_tokens):

@@ -22,6 +22,7 @@ class OpenAIInstrumentor(BaseInstrumentor):
         super().__init__()
         Config.enrich_assistant = enrich_assistant
         Config.enrich_token_usage = enrich_token_usage
+        Config.exception_logger = exception_logger
 
     def instrumentation_dependencies(self) -> Collection[str]:
         return _instruments

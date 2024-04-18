@@ -106,32 +106,27 @@ def _set_prompts(span, prompt):
     if not span.is_recording() or not prompt:
         return
 
-    try:
-        _set_span_attribute(
-            span,
-            f"{SpanAttributes.LLM_PROMPTS}.0.user",
-            prompt[0] if isinstance(prompt, list) else prompt,
-        )
-    except Exception as ex:  # pylint: disable=broad-except
-        logger.warning("Failed to set prompts for openai span, error: %s", str(ex))
+    _set_span_attribute(
+        span,
+        f"{SpanAttributes.LLM_PROMPTS}.0.user",
+        prompt[0] if isinstance(prompt, list) else prompt,
+    )
 
 
 def _set_completions(span, choices):
     if not span.is_recording() or not choices:
         return
 
-    try:
-        for choice in choices:
-            index = choice.get("index")
-            prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{index}"
-            _set_span_attribute(
-                span, f"{prefix}.finish_reason", choice.get("finish_reason")
-            )
-            _set_span_attribute(span, f"{prefix}.content", choice.get("text"))
-    except Exception as e:
-        logger.warning("Failed to set completion attributes, error: %s", str(e))
+    for choice in choices:
+        index = choice.get("index")
+        prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{index}"
+        _set_span_attribute(
+            span, f"{prefix}.finish_reason", choice.get("finish_reason")
+        )
+        _set_span_attribute(span, f"{prefix}.content", choice.get("text"))
 
 
+@dont_throw
 def _build_from_streaming_response(span, response, request_kwargs=None):
     complete_response = {"choices": [], "model": ""}
     for item in response:
@@ -174,7 +169,7 @@ def _build_from_streaming_response(span, response, request_kwargs=None):
             completion_content = ""
             model_name = complete_response.get("model") or None
 
-            for choice in complete_response.get("choices"):  # type: dict
+            for choice in complete_response.get("choices"):
                 if choice.get("text"):
                     completion_content += choice.get("text")
 
@@ -193,6 +188,7 @@ def _build_from_streaming_response(span, response, request_kwargs=None):
     span.end()
 
 
+@dont_throw
 async def _abuild_from_streaming_response(span, response):
     complete_response = {"choices": [], "model": ""}
     async for item in response:

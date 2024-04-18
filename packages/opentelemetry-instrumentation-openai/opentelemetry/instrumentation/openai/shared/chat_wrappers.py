@@ -281,18 +281,15 @@ def _set_prompts(span, messages):
     if not span.is_recording() or messages is None:
         return
 
-    try:
-        for i, msg in enumerate(messages):
-            prefix = f"{SpanAttributes.LLM_PROMPTS}.{i}"
-            if isinstance(msg.get("content"), str):
-                content = msg.get("content")
-            elif isinstance(msg.get("content"), list):
-                content = json.dumps(msg.get("content"))
+    for i, msg in enumerate(messages):
+        prefix = f"{SpanAttributes.LLM_PROMPTS}.{i}"
+        if isinstance(msg.get("content"), str):
+            content = msg.get("content")
+        elif isinstance(msg.get("content"), list):
+            content = json.dumps(msg.get("content"))
 
-            _set_span_attribute(span, f"{prefix}.role", msg.get("role"))
-            _set_span_attribute(span, f"{prefix}.content", content)
-    except Exception as ex:  # pylint: disable=broad-except
-        logger.warning("Failed to set prompts for openai span, error: %s", str(ex))
+        _set_span_attribute(span, f"{prefix}.role", msg.get("role"))
+        _set_span_attribute(span, f"{prefix}.content", content)
 
 
 def _set_completions(span, choices):
@@ -364,7 +361,7 @@ def _set_streaming_token_metrics(
         completion_content = ""
         model_name = complete_response.get("model") or None
 
-        for choice in complete_response.get("choices"):  # type: dict
+        for choice in complete_response.get("choices"):
             if choice.get("message") and choice.get("message").get("content"):
                 completion_content += choice["message"]["content"]
 
@@ -393,6 +390,7 @@ def _set_streaming_token_metrics(
             token_counter.add(completion_usage, attributes=attributes_with_token_type)
 
 
+@dont_throw
 def _build_from_streaming_response(
     span,
     response,
@@ -459,6 +457,7 @@ def _build_from_streaming_response(
     span.end()
 
 
+@dont_throw
 async def _abuild_from_streaming_response(
     span,
     response,

@@ -448,7 +448,6 @@ def init_openai_instrumentor(should_enrich_metrics: bool):
         from opentelemetry.instrumentation.openai import OpenAIInstrumentor
 
         instrumentor = OpenAIInstrumentor(
-            enrich_assistant=True,
             exception_logger=lambda e: Telemetry().log_exception(e),
             enrich_assistant=should_enrich_metrics,
             enrich_token_usage=should_enrich_metrics,
