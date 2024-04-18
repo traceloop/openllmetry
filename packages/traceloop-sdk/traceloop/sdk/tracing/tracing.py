@@ -124,13 +124,13 @@ class TracerWrapper(object):
             else:
                 for instrument in instruments:
                     if instrument == Instruments.OPENAI:
-                        if not init_openai_instrumentor():
+                        if not init_openai_instrumentor(should_enrich_metrics):
                             print(Fore.RED + "Warning: OpenAI library does not exist.")
                             print(Fore.RESET)
                         else:
                             instrument_set = True
                     elif instrument == Instruments.ANTHROPIC:
-                        if not init_anthropic_instrumentor():
+                        if not init_anthropic_instrumentor(should_enrich_metrics):
                             print(
                                 Fore.RED + "Warning: Anthropic library does not exist."
                             )
@@ -203,7 +203,7 @@ class TracerWrapper(object):
                         else:
                             instrument_set = True
                     elif instrument == Instruments.BEDROCK:
-                        if not init_bedrock_instrumentor():
+                        if not init_bedrock_instrumentor(should_enrich_metrics):
                             print(Fore.RED + "Warning: Bedrock library does not exist.")
                             print(Fore.RESET)
                         else:
@@ -358,10 +358,6 @@ class TracerWrapper(object):
         return self.__tracer_provider.get_tracer(TRACER_NAME)
 
 
-def set_correlation_id(correlation_id: str) -> None:
-    attach(set_value("correlation_id", correlation_id))
-
-
 def set_association_properties(properties: dict) -> None:
     attach(set_value("association_properties", properties))
 
@@ -427,7 +423,7 @@ def init_tracer_provider(resource: Resource) -> TracerProvider:
 
 def init_instrumentations(should_enrich_metrics: bool):
     init_openai_instrumentor(should_enrich_metrics)
-    init_anthropic_instrumentor()
+    init_anthropic_instrumentor(should_enrich_metrics)
     init_cohere_instrumentor()
     init_pinecone_instrumentor()
     init_qdrant_instrumentor()
@@ -439,7 +435,7 @@ def init_instrumentations(should_enrich_metrics: bool):
     init_requests_instrumentor()
     init_urllib3_instrumentor()
     init_pymysql_instrumentor()
-    init_bedrock_instrumentor()
+    init_bedrock_instrumentor(should_enrich_metrics)
     init_replicate_instrumentor()
     init_vertexai_instrumentor()
     init_watsonx_instrumentor()
@@ -462,12 +458,14 @@ def init_openai_instrumentor(should_enrich_metrics: bool):
     return True
 
 
-def init_anthropic_instrumentor():
+def init_anthropic_instrumentor(should_enrich_metrics: bool):
     if importlib.util.find_spec("anthropic") is not None:
         Telemetry().capture("instrumentation:anthropic:init")
         from opentelemetry.instrumentation.anthropic import AnthropicInstrumentor
 
-        instrumentor = AnthropicInstrumentor()
+        instrumentor = AnthropicInstrumentor(
+            enrich_token_usage=should_enrich_metrics,
+        )
         if not instrumentor.is_instrumented_by_opentelemetry:
             instrumentor.instrument()
     return True
@@ -590,11 +588,11 @@ def init_pymysql_instrumentor():
     return True
 
 
-def init_bedrock_instrumentor():
+def init_bedrock_instrumentor(should_enrich_metrics: bool):
     if importlib.util.find_spec("boto3") is not None:
         from opentelemetry.instrumentation.bedrock import BedrockInstrumentor
 
-        instrumentor = BedrockInstrumentor()
+        instrumentor = BedrockInstrumentor(enrich_token_usage=should_enrich_metrics)
         if not instrumentor.is_instrumented_by_opentelemetry:
             instrumentor.instrument()
     return True

@@ -1,3 +1,75 @@
+## v0.16.5 (2024-04-17)
+
+### Fix
+
+- **sdk**: warn for reporting score when not using Traceloop (#829)
+- **openai**: fix aembeddings init error (#828)
+- **openai**: missing aembedding metrics
+
+## v0.16.4 (2024-04-15)
+
+### Fix
+
+- **anthropic**: fix issue with disabled metrics (#820)
+
+## v0.16.3 (2024-04-15)
+
+### Fix
+
+- **openai**: missing metrics for OpenAI v0 instrumentation (#818)
+
+## v0.16.2 (2024-04-14)
+
+### Fix
+
+- **bedrock**: enrich token usage for anthropic calls (#805)
+- **langchain**: use chain names if exist (#804)
+
+## v0.16.1 (2024-04-11)
+
+### Fix
+
+- **llamaindex**: proper support for custom LLMs (#776)
+- **anthropic**: prompt attribute name (#775)
+- **langchain**: BedrockChat model name should be model_id (#763)
+
+## v0.16.0 (2024-04-10)
+
+### Feat
+
+- **instrumentation-anthropic**: Support for OpenTelemetry metrics for Anthropic (#764)
+
+### Fix
+
+- **bedrock**: support anthropic v3 (#770)
+
+## v0.15.13 (2024-04-08)
+
+### Fix
+
+- **sdk**: custom instruments missing parameters (#769)
+- **sdk**: import of removed method
+- **sdk**: removed deprecated set_context
+
+## v0.15.12 (2024-04-08)
+
+### Fix
+
+- **anthropic**: do not fail for missing methods
+- **anthropic**: Async and streaming Anthropic (#750)
+
+## v0.15.11 (2024-04-04)
+
+### Fix
+
+- **openai**: async streaming metrics (#749)
+
+## v0.15.10 (2024-04-04)
+
+### Fix
+
+- **anthropic**: token usage (#747)
+
 ## v0.15.9 (2024-04-03)
 
 ### Fix

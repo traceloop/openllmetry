@@ -1,6 +1,5 @@
 import os
 import sys
-from deprecated import deprecated
 import requests
 from pathlib import Path
 
@@ -25,7 +24,6 @@ from traceloop.sdk.fetcher import Fetcher
 from traceloop.sdk.tracing.tracing import (
     TracerWrapper,
     set_association_properties,
-    set_correlation_id,
 )
 from typing import Dict
 
@@ -37,7 +35,7 @@ class Traceloop:
     AUTO_CREATED_URL = str(Path.home() / ".cache" / "traceloop" / "auto_created_url")
 
     __tracer_wrapper: TracerWrapper
-    __fetcher: Fetcher
+    __fetcher: Fetcher = None
 
     @staticmethod
     def init(
@@ -183,11 +181,6 @@ class Traceloop:
             resource_attributes, metrics_endpoint, metrics_headers
         )
         Traceloop.__metrics_wrapper = MetricsWrapper(exporter=metrics_exporter)
-
-    @staticmethod
-    @deprecated(version="0.0.62", reason="Use set_association_properties instead")
-    def set_correlation_id(correlation_id: str) -> None:
-        set_correlation_id(correlation_id)
 
     def set_association_properties(properties: dict) -> None:
         set_association_properties(properties)

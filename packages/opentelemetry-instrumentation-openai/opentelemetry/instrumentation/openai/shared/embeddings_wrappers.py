@@ -7,7 +7,6 @@ from opentelemetry.semconv.ai import SpanAttributes, LLMRequestTypeValues
 
 from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
 from opentelemetry.instrumentation.openai.utils import (
-    _with_tracer_wrapper,
     dont_throw,
     start_as_current_span_async,
     _with_embeddings_telemetry_wrapper,
@@ -90,8 +89,18 @@ def embeddings_wrapper(
         return response
 
 
-@_with_tracer_wrapper
-async def aembeddings_wrapper(tracer, wrapped, instance, args, kwargs):
+@_with_embeddings_telemetry_wrapper
+async def aembeddings_wrapper(
+    tracer,
+    token_counter: Counter,
+    vector_size_counter: Counter,
+    duration_histogram: Histogram,
+    exception_counter: Counter,
+    wrapped,
+    instance,
+    args,
+    kwargs,
+):
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
         return wrapped(*args, **kwargs)
 
@@ -102,8 +111,36 @@ async def aembeddings_wrapper(tracer, wrapped, instance, args, kwargs):
         attributes={SpanAttributes.LLM_REQUEST_TYPE: LLM_REQUEST_TYPE.value},
     ) as span:
         _handle_request(span, kwargs, instance)
-        response = await wrapped(*args, **kwargs)
-        _handle_response(response, span)
+        try:
+            # record time for duration
+            start_time = time.time()
+            response = wrapped(*args, **kwargs)
+            end_time = time.time()
+        except Exception as e:  # pylint: disable=broad-except
+            end_time = time.time()
+            duration = end_time - start_time if "start_time" in locals() else 0
+            attributes = {
+                "error.type": e.__class__.__name__,
+            }
+
+            # if there are legal duration, record it
+            if duration > 0 and duration_histogram:
+                duration_histogram.record(duration, attributes=attributes)
+            if exception_counter:
+                exception_counter.add(1, attributes=attributes)
+
+            raise e
+
+        duration = end_time - start_time
+        _handle_response(
+            response,
+            span,
+            instance,
+            token_counter,
+            vector_size_counter,
+            duration_histogram,
+            duration,
+        )
 
         return response
 

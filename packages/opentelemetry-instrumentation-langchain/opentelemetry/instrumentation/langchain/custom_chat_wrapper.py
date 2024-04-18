@@ -14,7 +14,7 @@ def chat_wrapper(tracer, to_wrap, wrapped, instance, args, kwargs):
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
         return wrapped(*args, **kwargs)
 
-    name = f"langchain.task.{instance.__class__.__name__}"
+    name = f"{instance.__class__.__name__}.langchain.task"
     with tracer.start_as_current_span(name) as span:
         _handle_request(span, args, kwargs, instance)
         return_value = wrapped(*args, **kwargs)
@@ -29,7 +29,7 @@ async def achat_wrapper(tracer, to_wrap, wrapped, instance, args, kwargs):
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
         return wrapped(*args, **kwargs)
 
-    name = f"langchain.task.{instance.__class__.__name__}"
+    name = f"{instance.__class__.__name__}.langchain.task"
     with tracer.start_as_current_span(name) as span:
         _handle_request(span, args, kwargs, instance)
         return_value = await wrapped(*args, **kwargs)
@@ -39,7 +39,14 @@ async def achat_wrapper(tracer, to_wrap, wrapped, instance, args, kwargs):
 
 
 def _handle_request(span, args, kwargs, instance):
-    model = instance.model if hasattr(instance, "model") else instance.model_name
+    if hasattr(instance, "model"):
+        model = instance.model
+    elif hasattr(instance, "model_name"):
+        model = instance.model_name
+    elif hasattr(instance, "model_id"):
+        model = instance.model_id
+    else:
+        model = "unknown"
     span.set_attribute(SpanAttributes.LLM_REQUEST_TYPE, LLMRequestTypeValues.CHAT.value)
     span.set_attribute(SpanAttributes.LLM_REQUEST_MODEL, model)
     span.set_attribute(SpanAttributes.LLM_RESPONSE_MODEL, model)

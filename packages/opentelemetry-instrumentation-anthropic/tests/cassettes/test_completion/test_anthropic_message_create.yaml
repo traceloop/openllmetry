@@ -20,41 +20,42 @@ interactions:
       user-agent:
       - Anthropic/Python 0.21.3
       x-stainless-arch:
-      - arm64
+      - other:amd64
       x-stainless-async:
       - 'false'
       x-stainless-lang:
       - python
       x-stainless-os:
-      - MacOS
+      - Windows
       x-stainless-package-version:
       - 0.21.3
       x-stainless-runtime:
       - CPython
       x-stainless-runtime-version:
-      - 3.11.1
+      - 3.9.13
     method: POST
     uri: https://api.anthropic.com/v1/messages
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAAA3xU32/TQAz+V8y9DKS02roxtLwgIRDSpIEEQzwQVLk5Nzma3B22r12Y9r+jS9ux
-        jmlPkRz78/fDya1x1pSml2Z+fPLx0+uzS0+X79PF+ZXV/vzLOX79ZgqjQ6TcRSLYkCkMhy4XUMSJ
-        oldTmDp4Ja+m/HG771e6yW/GR2m+JqYCWmI6EkD4FVYEuAhJ4XMkf00d9aQ8lJWv/Pd2AOssaEtg
-        aU1diMQgiqyQxPnmcOZtnnlHNSahPDPABr2SBQ2gjPVYdBmAogB6Cz0p8a4aOTRMIi8yyoeb2KFH
-        dcGXlT/YAi7PQojkJxIS1wRLxp42gVegLWpGWjtLWV62xSJb94csbHDIVBryxKhUQB26jmotRi50
-        EwMr6P0ei4rwciQuRabKrpZtbxcaeQXLwGCdKLtFyjJlEKVepnDd0tbY2OEgEPzo4CawFajMiFiZ
-        EagyowVFZWDTuroFZIJF0BZWNEAdfE1RBZw/dHqaPZpAZa4f21oZYFoSy2h6m7N1ndPhIAOIqC2E
-        JSAw/U4kCtpySE0L+ISip7I+koPGDJ17aozbhY5kuqV49UTGz7HchbK7D5TEtDcfmDrcH1SWQbwM
-        3KOvaWxfUItrF3gr7Vnye8Rl8nW+MszrR1vvw3N97BzJ9qYWA6ANUf/DKh59HTV6aNB5WJBm4Wsn
-        bicuU0zeEo9XmZHCcp/dyPVI/knIzQ/0Tc3dz8L0wVJnSlN3mCxNTichJpnMjmdnx7PZhSmMaIhz
-        JpTgTWnI27km9vsXksP2NZnSp64rTBr/I+WtcT4mnWtYkRdTnrwpTEj6sDQ7Ob27+wsAAP//AwBR
-        l9dZpgQAAA==
+        H4sIAAAAAAAAA5SUwW7cRgyGX4WZi1tAazjboml1KVIghxyMuqiBFogKY1biSvSOhhOSo7Vg+N2L
+        md24dpBLTwI4HPL/P3L06GhwrZt1vLt6e3vz93S44Z/v15/WP67lerpP9P6Da5ytCUsWqvoRXeOE
+        Qwl4VVLz0Vzjeo6G0Vz76fFLvuFDOamf1v2ZBRuYUPBCwcM9HxD8jrPB7wnjLQac0WRtu9jFv6YV
+        BhrAJoQBFwycUMAPnL7K/rWLv2Hvs2LJXeHoo+EAxmDi+xokATVMCj4OMKOhnKNJeBRUfVM6fnhI
+        wUdvxLHt4qseQOUucMK4Uc7SI/BOURa/o0C2wl78jEeWA9jkrdRdaMBiUtGA9/D+5qM2EGgnXgi1
+        qVKMOWhRSlFN8ozRGhgxonjDBnoOAXs75eJDYjGwZ0mDNw/fVY/aFFdC/blu4FG/hz0LDKQmtMuF
+        iK5qOOsl3E54Yp+CXxU4VshHlkGhc7Vi52qhzlVaTefgOFE/gReEA67Qc+wxmQLF19O4LCQ30Lnb
+        r+F3DgT3KNXwS12lIcWxObeguHBYUEGwZxkojlVe8jYVkB4EP2dUA69AVm4vWChOwnmcCvHqs+TO
+        1AuXMVGPennSdf2N8b+S9kzyP8efs49G5o0WhBm9ZsEyLD0JOjW8UEgoe5bZxx4rvh1OfiGWCuWZ
+        uuZxRDU9rco39huH10yLqtFThB1aEb+Q0nnvSpccB5TyBisr3p/N+ZQC9XWdL/RZSr3xQmcD91kN
+        Ah0QJj4CR4SZxsn+x+spSyDoAwTa46V7+qdxMw8YXOv64POAmx82nLJutlfbH6+2219c49Q43Ql6
+        5ehah3G4syzxy4GWEcceXRtzCI3L9afTPjqKKdud8QGjuvbtu8Zxtpeh7fbq6elfAAAA//8DALAq
+        KXrTBAAA
     headers:
       CF-Cache-Status:
       - DYNAMIC
       CF-RAY:
-      - 8680efb61bc38e48-TLV
+      - 87084f30df5f31f7-LAX
       Connection:
       - keep-alive
       Content-Encoding:
@@ -62,17 +63,29 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Thu, 21 Mar 2024 21:11:58 GMT
+      - Sun, 07 Apr 2024 07:30:05 GMT
       Server:
       - cloudflare
       Transfer-Encoding:
       - chunked
+      anthropic-ratelimit-requests-limit:
+      - '5'
+      anthropic-ratelimit-requests-remaining:
+      - '5'
+      anthropic-ratelimit-requests-reset:
+      - '2024-04-07T07:31:00Z'
+      anthropic-ratelimit-tokens-limit:
+      - '10000'
+      anthropic-ratelimit-tokens-remaining:
+      - '10000'
+      anthropic-ratelimit-tokens-reset:
+      - '2024-04-07T07:31:00Z'
       request-id:
-      - req_01TZFbadFrRyyYtZGgLvhZog
+      - req_01A7u6aDNi2C6mvDawgML8jB
       via:
       - 1.1 google
       x-cloud-trace-context:
-      - 5328627a4cee77f64a54665a11460f58
+      - ef9f2bfaf4cbc96c6557e43e805aa4f1
     status:
       code: 200
       message: OK

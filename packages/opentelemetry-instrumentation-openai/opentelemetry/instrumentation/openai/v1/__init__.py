@@ -160,7 +160,15 @@ class OpenAIV1Instrumentor(BaseInstrumentor):
         wrap_function_wrapper(
             "openai.resources.chat.completions",
             "AsyncCompletions.create",
-            achat_wrapper(tracer),
+            achat_wrapper(
+                tracer,
+                chat_token_counter,
+                chat_choice_counter,
+                chat_duration_histogram,
+                chat_exception_counter,
+                streaming_time_to_first_token,
+                streaming_time_to_generate,
+            ),
         )
         wrap_function_wrapper(
             "openai.resources.completions",
@@ -170,7 +178,13 @@ class OpenAIV1Instrumentor(BaseInstrumentor):
         wrap_function_wrapper(
             "openai.resources.embeddings",
             "AsyncEmbeddings.create",
-            aembeddings_wrapper(tracer),
+            aembeddings_wrapper(
+                tracer,
+                embeddings_token_counter,
+                embeddings_vector_size_counter,
+                embeddings_duration_histogram,
+                embeddings_exception_counter,
+            ),
         )
 
         if is_metrics_enabled():
