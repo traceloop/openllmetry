@@ -4,9 +4,7 @@ from opentelemetry import context as context_api
 from opentelemetry.trace import SpanKind
 from opentelemetry.trace.status import Status, StatusCode
 
-from opentelemetry.instrumentation.utils import (
-    _SUPPRESS_INSTRUMENTATION_KEY
-)
+from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
 from opentelemetry.semconv.ai import SpanAttributes, LLMRequestTypeValues
 from opentelemetry.instrumentation.haystack.utils import (
     with_tracer_wrapper,
@@ -17,26 +15,44 @@ logger = logging.getLogger(__name__)
 
 
 def _set_input_attributes(span, llm_request_type, kwargs):
-    base_payload = kwargs.get("base_payload")
-    set_span_attribute(
-        span, SpanAttributes.LLM_REQUEST_MODEL, base_payload.get("model")
-    )
-    set_span_attribute(
-        span, SpanAttributes.LLM_TEMPERATURE, base_payload.get("temperature")
-    )
-    set_span_attribute(span, SpanAttributes.LLM_TOP_P, base_payload.get("top_p"))
-    set_span_attribute(
-        span,
-        SpanAttributes.LLM_FREQUENCY_PENALTY,
-        base_payload.get("frequency_penalty"),
-    )
-    set_span_attribute(
-        span, SpanAttributes.LLM_PRESENCE_PENALTY, base_payload.get("presence_penalty")
-    )
 
-    set_span_attribute(
-        span, f"{SpanAttributes.LLM_PROMPTS}.0.user", kwargs.get("prompt")
-    )
+    if llm_request_type == LLMRequestTypeValues.COMPLETION:
+        set_span_attribute(
+            span, f"{SpanAttributes.LLM_PROMPTS}.0.user", kwargs.get("prompt")
+        )
+    elif llm_request_type == LLMRequestTypeValues.CHAT:
+        set_span_attribute(
+            span,
+            f"{SpanAttributes.LLM_PROMPTS}.0.user",
+            [message.content for message in kwargs.get("messages")],
+        )
+
+    if "generation_kwargs" in kwargs and kwargs["generation_kwargs"] is not None:
+        generation_kwargs = kwargs["generation_kwargs"]
+        if "model" in generation_kwargs:
+            set_span_attribute(
+                span, SpanAttributes.LLM_REQUEST_MODEL, generation_kwargs["model"]
+            )
+        if "temperature" in generation_kwargs:
+            set_span_attribute(
+                span, SpanAttributes.LLM_TEMPERATURE, generation_kwargs["temperature"]
+            )
+        if "top_p" in generation_kwargs:
+            set_span_attribute(
+                span, SpanAttributes.LLM_TOP_P, generation_kwargs["top_p"]
+            )
+        if "frequency_penalty" in generation_kwargs:
+            set_span_attribute(
+                span,
+                SpanAttributes.LLM_FREQUENCY_PENALTY,
+                generation_kwargs["frequency_penalty"],
+            )
+        if "presence_penalty" in generation_kwargs:
+            set_span_attribute(
+                span,
+                SpanAttributes.LLM_PRESENCE_PENALTY,
+                generation_kwargs["presence_penalty"],
+            )
 
     return
 
@@ -63,9 +79,9 @@ def _set_response_attributes(span, llm_request_type, response):
 
 
 def _llm_request_type_by_object(object_name):
-    if object_name == "OpenAIInvocationLayer":
+    if object_name == "OpenAIGenerator":
         return LLMRequestTypeValues.COMPLETION
-    elif object_name == "ChatGPTInvocationLayer":
+    elif object_name == "OpenAIChatGenerator":
         return LLMRequestTypeValues.CHAT
     else:
         return LLMRequestTypeValues.UNKNOWN
@@ -78,9 +94,11 @@ def wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
 
     llm_request_type = _llm_request_type_by_object(to_wrap.get("object"))
     with tracer.start_as_current_span(
-        "openai.chat"
-        if llm_request_type == LLMRequestTypeValues.CHAT
-        else "openai.completion",
+        (
+            "haystack.openai.chat"
+            if llm_request_type == LLMRequestTypeValues.CHAT
+            else "haystack.openai.completion"
+        ),
         kind=SpanKind.CLIENT,
         attributes={
             SpanAttributes.LLM_VENDOR: "OpenAI",
