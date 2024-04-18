@@ -27,7 +27,7 @@ def _set_input_attributes(span, llm_request_type, kwargs):
             [message.content for message in kwargs.get("messages")],
         )
 
-    if "generation_kwargs" in kwargs and kwargs["generation_kwargs"] != None:
+    if "generation_kwargs" in kwargs and kwargs["generation_kwargs"] is not None:
         generation_kwargs = kwargs["generation_kwargs"]
         if "model" in generation_kwargs:
             set_span_attribute(
