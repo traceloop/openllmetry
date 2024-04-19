@@ -1,5 +1,5 @@
 import logging
-from opentelemetry.instrumentation.cohere.config import Config
+from opentelemetry.instrumentation.qdrant.config import Config
 
 
 def dont_throw(func):
