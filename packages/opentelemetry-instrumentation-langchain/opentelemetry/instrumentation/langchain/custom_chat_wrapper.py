@@ -4,7 +4,10 @@ from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
 
 from opentelemetry.semconv.ai import SpanAttributes, LLMRequestTypeValues
 
-from opentelemetry.instrumentation.langchain.utils import _with_tracer_wrapper
+from opentelemetry.instrumentation.langchain.utils import (
+    _with_tracer_wrapper,
+    dont_throw,
+)
 from opentelemetry.instrumentation.langchain.utils import should_send_prompts
 
 
@@ -38,6 +41,7 @@ async def achat_wrapper(tracer, to_wrap, wrapped, instance, args, kwargs):
     return return_value
 
 
+@dont_throw
 def _handle_request(span, args, kwargs, instance):
     if hasattr(instance, "model"):
         model = instance.model
@@ -52,15 +56,20 @@ def _handle_request(span, args, kwargs, instance):
     span.set_attribute(SpanAttributes.LLM_RESPONSE_MODEL, model)
 
     if should_send_prompts():
-        for idx, prompt in enumerate(args[0][0]):
+        messages = args[0] if len(args) > 0 else kwargs.get("messages", [])
+        for idx, prompt in enumerate(messages[0]):
+            span.set_attribute(
+                f"{SpanAttributes.LLM_PROMPTS}.{idx}.role",
+                "user" if prompt.type == "human" else prompt.type,
+            )
             if isinstance(prompt.content, list):
                 span.set_attribute(
-                    f"{SpanAttributes.LLM_PROMPTS}.{idx}.user",
+                    f"{SpanAttributes.LLM_PROMPTS}.{idx}.content",
                     json.dumps(prompt.content),
                 )
             else:
                 span.set_attribute(
-                    f"{SpanAttributes.LLM_PROMPTS}.{idx}.user", prompt.content
+                    f"{SpanAttributes.LLM_PROMPTS}.{idx}.content", prompt.content
                 )
 
 

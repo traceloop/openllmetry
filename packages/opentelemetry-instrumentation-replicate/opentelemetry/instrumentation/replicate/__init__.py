@@ -1,8 +1,11 @@
 """OpenTelemetry Replicate instrumentation"""
+
 import logging
 import os
 import types
 from typing import Collection
+from opentelemetry.instrumentation.replicate.config import Config
+from opentelemetry.instrumentation.replicate.utils import dont_throw
 from wrapt import wrap_function_wrapper
 
 from opentelemetry import context as context_api
@@ -88,19 +91,7 @@ def _set_input_attributes(span, args, kwargs):
     return
 
 
-def _set_span_completions(span, response):
-    if response is None:
-        return
-    if isinstance(response, list):
-        for index, item in enumerate(response):
-            prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{index}"
-            _set_span_attribute(span, f"{prefix}.content", item)
-    elif isinstance(response, str):
-        _set_span_attribute(
-            span, f"{SpanAttributes.LLM_COMPLETIONS}.0.content", response
-        )
-
-
+@dont_throw
 def _set_response_attributes(span, response):
     if should_send_prompts():
         if isinstance(response, list):
@@ -128,28 +119,17 @@ def _build_from_streaming_response(span, response):
     span.end()
 
 
+@dont_throw
 def _handle_request(span, args, kwargs):
-    try:
-        if span.is_recording():
-            _set_input_attributes(span, args, kwargs)
-
-    except Exception as ex:  # pylint: disable=broad-except
-        logger.warning(
-            "Failed to set input attributes for replicate span, error: %s", str(ex)
-        )
-
-
-def _handle_response(span, response):
-    try:
-        if span.is_recording():
-            _set_response_attributes(span, response)
-
-    except Exception as ex:  # pylint: disable=broad-except
-        logger.warning(
-            "Failed to set response attributes for replicate span, error: %s",
-            str(ex),
-        )
     if span.is_recording():
+        _set_input_attributes(span, args, kwargs)
+
+
+@dont_throw
+def _handle_response(span, response):
+    if span.is_recording():
+        _set_response_attributes(span, response)
+
         span.set_status(Status(StatusCode.OK))
 
 
@@ -197,6 +177,10 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
 
 class ReplicateInstrumentor(BaseInstrumentor):
     """An instrumentor for Replicate's client library."""
+
+    def __init__(self, exception_logger=None):
+        super().__init__()
+        Config.exception_logger = exception_logger
 
     def instrumentation_dependencies(self) -> Collection[str]:
         return _instruments
