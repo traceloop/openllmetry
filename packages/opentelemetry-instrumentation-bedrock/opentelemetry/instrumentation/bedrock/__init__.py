@@ -311,9 +311,10 @@ def _set_llama_span_attributes(span, request_body, response_body):
 class BedrockInstrumentor(BaseInstrumentor):
     """An instrumentor for Bedrock's client library."""
 
-    def __init__(self, enrich_token_usage: bool = False):
+    def __init__(self, enrich_token_usage: bool = False, exception_logger=None):
         super().__init__()
         Config.enrich_token_usage = enrich_token_usage
+        Config.exception_logger = exception_logger
 
     def instrumentation_dependencies(self) -> Collection[str]:
         return _instruments
