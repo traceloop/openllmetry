@@ -1,3 +1,13 @@
+## v0.16.6 (2024-04-19)
+
+### Fix
+
+- properly handle and report exceptions (#748)
+- **langchain**: bug when retrieving messages as kwargs from model invoke (#856)
+- **openai**: handle filtered content (#854)
+- **bedrock**: loosen version requirement of anthropic (#830)
+- **haystack**: V2 Support (#710)
+
 ## v0.16.5 (2024-04-17)
 
 ### Fix
