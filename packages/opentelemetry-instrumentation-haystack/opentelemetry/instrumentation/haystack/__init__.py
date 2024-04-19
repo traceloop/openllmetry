@@ -1,5 +1,6 @@
 import logging
 from typing import Collection
+from opentelemetry.instrumentation.haystack.config import Config
 from wrapt import wrap_function_wrapper
 
 from opentelemetry.trace import get_tracer
@@ -11,51 +12,40 @@ from opentelemetry.instrumentation.haystack.wrap_openai import wrap as openai_wr
 from opentelemetry.instrumentation.haystack.wrap_pipeline import (
     wrap as pipeline_wrapper,
 )
-from opentelemetry.instrumentation.haystack.wrap_node import (
-    wrap as node_wrapper,
-)
 from opentelemetry.instrumentation.haystack.version import __version__
 
 logger = logging.getLogger(__name__)
 
-_instruments = ("farm-haystack >= 1.20.1",)
+_instruments = ("haystack-ai >= 2.0.0",)
 
 WRAPPED_METHODS = [
     {
-        "package": "haystack.nodes.prompt.invocation_layer.chatgpt",
-        "object": "ChatGPTInvocationLayer",
-        "method": "_execute_openai_request",
+        "package": "haystack.components.generators.openai",
+        "object": "OpenAIGenerator",
+        "method": "run",
         "wrapper": openai_wrapper,
     },
     {
-        "package": "haystack.nodes.prompt.invocation_layer.open_ai",
-        "object": "OpenAIInvocationLayer",
-        "method": "_execute_openai_request",
+        "package": "haystack.components.generators.chat.openai",
+        "object": "OpenAIChatGenerator",
+        "method": "run",
         "wrapper": openai_wrapper,
     },
     {
-        "package": "haystack.pipelines.base",
+        "package": "haystack.core.pipeline.pipeline",
         "object": "Pipeline",
         "method": "run",
         "wrapper": pipeline_wrapper,
-    },
-    {
-        "package": "haystack.nodes.prompt.prompt_node",
-        "object": "PromptNode",
-        "method": "run",
-        "wrapper": node_wrapper,
-    },
-    {
-        "package": "haystack.nodes.retriever.dense",
-        "object": "EmbeddingRetriever",
-        "method": "retrieve",
-        "wrapper": node_wrapper,
     },
 ]
 
 
 class HaystackInstrumentor(BaseInstrumentor):
     """An instrumentor for the Haystack framework."""
+
+    def __init__(self, exception_logger=None):
+        super().__init__()
+        Config.exception_logger = exception_logger
 
     def instrumentation_dependencies(self) -> Collection[str]:
         return _instruments

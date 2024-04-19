@@ -2,6 +2,7 @@
 
 import logging
 from typing import Collection
+from opentelemetry.instrumentation.langchain.config import Config
 from wrapt import wrap_function_wrapper
 
 from opentelemetry.trace import get_tracer
@@ -159,6 +160,10 @@ WRAPPED_METHODS = [
 
 class LangchainInstrumentor(BaseInstrumentor):
     """An instrumentor for Langchain SDK."""
+
+    def __init__(self, exception_logger=None):
+        super().__init__()
+        Config.exception_logger = exception_logger
 
     def instrumentation_dependencies(self) -> Collection[str]:
         return _instruments

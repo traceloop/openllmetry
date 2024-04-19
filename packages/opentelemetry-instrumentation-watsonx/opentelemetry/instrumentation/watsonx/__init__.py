@@ -1,9 +1,12 @@
 """OpenTelemetry IBM Watsonx AI instrumentation"""
+
 import logging
 import os
 import types
 import time
 from typing import Collection
+from opentelemetry.instrumentation.watsonx.config import Config
+from opentelemetry.instrumentation.watsonx.utils import dont_throw
 from wrapt import wrap_function_wrapper
 
 from opentelemetry import context as context_api
@@ -136,36 +139,48 @@ def _set_input_attributes(span, instance, kwargs):
     modelParameters = instance.params
     if modelParameters is not None:
         _set_span_attribute(
-            span, SpanAttributes.LLM_DECODING_METHOD, modelParameters.get("decoding_method", None)
+            span,
+            SpanAttributes.LLM_DECODING_METHOD,
+            modelParameters.get("decoding_method", None),
         )
         _set_span_attribute(
-            span, SpanAttributes.LLM_RANDOM_SEED, modelParameters.get("random_seed", None)
+            span,
+            SpanAttributes.LLM_RANDOM_SEED,
+            modelParameters.get("random_seed", None),
         )
         _set_span_attribute(
-            span, SpanAttributes.LLM_MAX_NEW_TOKENS, modelParameters.get("max_new_tokens", None)
+            span,
+            SpanAttributes.LLM_MAX_NEW_TOKENS,
+            modelParameters.get("max_new_tokens", None),
         )
         _set_span_attribute(
-            span, SpanAttributes.LLM_MIN_NEW_TOKENS, modelParameters.get("min_new_tokens", None)
+            span,
+            SpanAttributes.LLM_MIN_NEW_TOKENS,
+            modelParameters.get("min_new_tokens", None),
         )
-        _set_span_attribute(span, SpanAttributes.LLM_TOP_K, modelParameters.get("top_k", None))
+        _set_span_attribute(
+            span, SpanAttributes.LLM_TOP_K, modelParameters.get("top_k", None)
+        )
         _set_span_attribute(
             span,
             SpanAttributes.LLM_REPETITION_PENALTY,
             modelParameters.get("repetition_penalty", None),
         )
         _set_span_attribute(
-            span, SpanAttributes.LLM_TEMPERATURE, modelParameters.get("temperature", None)
+            span,
+            SpanAttributes.LLM_TEMPERATURE,
+            modelParameters.get("temperature", None),
         )
-        _set_span_attribute(span, SpanAttributes.LLM_TOP_P, modelParameters.get("top_p", None))
+        _set_span_attribute(
+            span, SpanAttributes.LLM_TOP_P, modelParameters.get("top_p", None)
+        )
 
     return
 
 
 def _set_stream_response_attributes(span, stream_response):
     _set_span_attribute(
-        span,
-        SpanAttributes.LLM_RESPONSE_MODEL,
-        stream_response.get("model_id")
+        span, SpanAttributes.LLM_RESPONSE_MODEL, stream_response.get("model_id")
     )
     _set_span_attribute(
         span,
@@ -177,12 +192,14 @@ def _set_stream_response_attributes(span, stream_response):
         SpanAttributes.LLM_USAGE_COMPLETION_TOKENS,
         stream_response.get("generated_token_count"),
     )
-    total_token = stream_response.get("input_token_count") + stream_response.get("generated_token_count")
+    total_token = stream_response.get("input_token_count") + stream_response.get(
+        "generated_token_count"
+    )
     _set_span_attribute(
         span,
         SpanAttributes.LLM_USAGE_TOTAL_TOKENS,
         total_token,
-        )
+    )
     _set_span_attribute(
         span,
         f"{SpanAttributes.LLM_COMPLETIONS}.0.content",
@@ -203,9 +220,10 @@ def _set_completion_content_attributes(span, response, index, response_counter) 
         model_id = response.get("model_id")
 
         if response_counter:
-            attributes_with_reason = {"llm.response.model": model_id,
-                                      "llm.response.stop_reason": results[0]["stop_reason"]
-                                      }
+            attributes_with_reason = {
+                "llm.response.model": model_id,
+                "llm.response.stop_reason": results[0]["stop_reason"],
+            }
             response_counter.add(1, attributes=attributes_with_reason)
 
         return model_id
@@ -228,7 +246,10 @@ def _token_usage_count(responses):
     return prompt_token, completion_token
 
 
-def _set_response_attributes(span, responses, token_counter, response_counter, duration_histogram, duration):
+@dont_throw
+def _set_response_attributes(
+    span, responses, token_counter, response_counter, duration_histogram, duration
+):
     if not isinstance(responses, (list, dict)):
         return
 
@@ -236,16 +257,18 @@ def _set_response_attributes(span, responses, token_counter, response_counter, d
         if len(responses) == 0:
             return
         for index, response in enumerate(responses):
-            model_id = _set_completion_content_attributes(span, response, index, response_counter)
+            model_id = _set_completion_content_attributes(
+                span, response, index, response_counter
+            )
     elif isinstance(responses, dict):
         response = responses
-        model_id = _set_completion_content_attributes(span, response, 0, response_counter)
+        model_id = _set_completion_content_attributes(
+            span, response, 0, response_counter
+        )
 
     if model_id is None:
         return
-    _set_span_attribute(
-        span, SpanAttributes.LLM_RESPONSE_MODEL, model_id
-    )
+    _set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, model_id)
 
     prompt_token, completion_token = _token_usage_count(responses)
     if (prompt_token + completion_token) != 0:
@@ -263,28 +286,36 @@ def _set_response_attributes(span, responses, token_counter, response_counter, d
             span,
             SpanAttributes.LLM_USAGE_TOTAL_TOKENS,
             prompt_token + completion_token,
-            )
+        )
 
         shared_attributes = {
             "llm.response.model": model_id,
         }
         if token_counter:
-            attributes_with_token_type = {**shared_attributes, "llm.usage.token_type": "completion"}
+            attributes_with_token_type = {
+                **shared_attributes,
+                "llm.usage.token_type": "completion",
+            }
             token_counter.add(completion_token, attributes=attributes_with_token_type)
-            attributes_with_token_type = {**shared_attributes, "llm.usage.token_type": "prompt"}
+            attributes_with_token_type = {
+                **shared_attributes,
+                "llm.usage.token_type": "prompt",
+            }
             token_counter.add(prompt_token, attributes=attributes_with_token_type)
 
     if duration and isinstance(duration, (float, int)) and duration_histogram:
         duration_histogram.record(duration, attributes=shared_attributes)
 
 
-def _build_and_set_stream_response(span,
-                                   response,
-                                   raw_flag,
-                                   token_counter,
-                                   response_counter,
-                                   duration_histogram,
-                                   start_time):
+def _build_and_set_stream_response(
+    span,
+    response,
+    raw_flag,
+    token_counter,
+    response_counter,
+    duration_histogram,
+    start_time,
+):
     stream_generated_text = ""
     stream_generated_token_count = 0
     stream_input_token_count = 0
@@ -300,10 +331,7 @@ def _build_and_set_stream_response(span,
         else:
             yield item["results"][0]["generated_text"]
 
-    shared_attributes = {
-        "llm.response.model": stream_model_id,
-        "stream": True
-    }
+    shared_attributes = {"llm.response.model": stream_model_id, "stream": True}
 
     stream_response = {
         "model_id": stream_model_id,
@@ -314,15 +342,28 @@ def _build_and_set_stream_response(span,
     _set_stream_response_attributes(span, stream_response)
     # response counter
     if response_counter:
-        attributes_with_reason = {**shared_attributes, "llm.response.stop_reason": stream_stop_reason}
+        attributes_with_reason = {
+            **shared_attributes,
+            "llm.response.stop_reason": stream_stop_reason,
+        }
         response_counter.add(1, attributes=attributes_with_reason)
 
     # token counter
     if token_counter:
-        attributes_with_token_type = {**shared_attributes, "llm.usage.token_type": "completion"}
-        token_counter.add(stream_generated_token_count, attributes=attributes_with_token_type)
-        attributes_with_token_type = {**shared_attributes, "llm.usage.token_type": "prompt"}
-        token_counter.add(stream_input_token_count, attributes=attributes_with_token_type)
+        attributes_with_token_type = {
+            **shared_attributes,
+            "llm.usage.token_type": "completion",
+        }
+        token_counter.add(
+            stream_generated_token_count, attributes=attributes_with_token_type
+        )
+        attributes_with_token_type = {
+            **shared_attributes,
+            "llm.usage.token_type": "prompt",
+        }
+        token_counter.add(
+            stream_input_token_count, attributes=attributes_with_token_type
+        )
 
     # duration histogram
     if start_time and isinstance(start_time, (float, int)):
@@ -339,18 +380,27 @@ def _build_and_set_stream_response(span,
 def _with_tracer_wrapper(func):
     """Helper for providing tracer for wrapper functions."""
 
-    def _with_tracer(tracer, to_wrap,
-                     token_counter,
-                     response_counter,
-                     duration_histogram,
-                     exception_counter):
+    def _with_tracer(
+        tracer,
+        to_wrap,
+        token_counter,
+        response_counter,
+        duration_histogram,
+        exception_counter,
+    ):
         def wrapper(wrapped, instance, args, kwargs):
-            return func(tracer, to_wrap,
-                        token_counter,
-                        response_counter,
-                        duration_histogram,
-                        exception_counter,
-                        wrapped, instance, args, kwargs)
+            return func(
+                tracer,
+                to_wrap,
+                token_counter,
+                response_counter,
+                duration_histogram,
+                exception_counter,
+                wrapped,
+                instance,
+                args,
+                kwargs,
+            )
 
         return wrapper
 
@@ -358,13 +408,18 @@ def _with_tracer_wrapper(func):
 
 
 @_with_tracer_wrapper
-def _wrap(tracer,
-          to_wrap,
-          token_counter: Counter,
-          response_counter: Counter,
-          duration_histogram: Histogram,
-          exception_counter: Counter,
-          wrapped, instance, args, kwargs):
+def _wrap(
+    tracer,
+    to_wrap,
+    token_counter: Counter,
+    response_counter: Counter,
+    duration_histogram: Histogram,
+    exception_counter: Counter,
+    wrapped,
+    instance,
+    args,
+    kwargs,
+):
     """Instruments and calls every function defined in TO_WRAP."""
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
         return wrapped(*args, **kwargs)
@@ -395,7 +450,7 @@ def _wrap(tracer,
         end_time = time.time()
     except Exception as e:
         end_time = time.time()
-        duration = end_time - start_time if 'start_time' in locals() else 0
+        duration = end_time - start_time if "start_time" in locals() else 0
 
         attributes = {
             "error.type": e.__class__.__name__,
@@ -410,14 +465,25 @@ def _wrap(tracer,
 
     if "generate" in name:
         if isinstance(response, types.GeneratorType):
-            return _build_and_set_stream_response(span, response, raw_flag,
-                                                  token_counter,
-                                                  response_counter,
-                                                  duration_histogram,
-                                                  start_time)
+            return _build_and_set_stream_response(
+                span,
+                response,
+                raw_flag,
+                token_counter,
+                response_counter,
+                duration_histogram,
+                start_time,
+            )
         else:
             duration = end_time - start_time
-            _set_response_attributes(span, response, token_counter, response_counter, duration_histogram, duration)
+            _set_response_attributes(
+                span,
+                response,
+                token_counter,
+                response_counter,
+                duration_histogram,
+                duration,
+            )
 
     span.end()
     return response
@@ -431,6 +497,10 @@ class WatsonxSpanAttributes:
 
 class WatsonxInstrumentor(BaseInstrumentor):
     """An instrumentor for Watsonx's client library."""
+
+    def __init__(self, exception_logger=None):
+        super().__init__()
+        Config.exception_logger = exception_logger
 
     def instrumentation_dependencies(self) -> Collection[str]:
         return _instruments
@@ -446,29 +516,33 @@ class WatsonxInstrumentor(BaseInstrumentor):
             token_counter = meter.create_counter(
                 name="llm.watsonx.completions.tokens",
                 unit="token",
-                description="Number of tokens used in prompt and completions"
+                description="Number of tokens used in prompt and completions",
             )
 
             response_counter = meter.create_counter(
                 name="llm.watsonx.completions.responses",
                 unit="response",
-                description="Number of response returned by completions call"
+                description="Number of response returned by completions call",
             )
 
             duration_histogram = meter.create_histogram(
                 name="llm.watsonx.completions.duration",
                 unit="s",
-                description="Duration of completion operation"
+                description="Duration of completion operation",
             )
 
             exception_counter = meter.create_counter(
                 name="llm.watsonx.completionss.exceptions",
                 unit="time",
-                description="Number of exceptions occurred during completions"
+                description="Number of exceptions occurred during completions",
             )
         else:
-            (token_counter, response_counter,
-             duration_histogram, exception_counter) = None, None, None, None
+            (token_counter, response_counter, duration_histogram, exception_counter) = (
+                None,
+                None,
+                None,
+                None,
+            )
 
         for wrapped_methods in WATSON_MODULES:
             for wrapped_method in wrapped_methods:
@@ -478,12 +552,14 @@ class WatsonxInstrumentor(BaseInstrumentor):
                 wrap_function_wrapper(
                     wrap_module,
                     f"{wrap_object}.{wrap_method}",
-                    _wrap(tracer,
-                          wrapped_method,
-                          token_counter,
-                          response_counter,
-                          duration_histogram,
-                          exception_counter),
+                    _wrap(
+                        tracer,
+                        wrapped_method,
+                        token_counter,
+                        response_counter,
+                        duration_histogram,
+                        exception_counter,
+                    ),
                 )
 
     def _uninstrument(self, **kwargs):

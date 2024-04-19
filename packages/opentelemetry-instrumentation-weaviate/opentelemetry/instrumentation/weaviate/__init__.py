@@ -6,6 +6,7 @@ from typing import Collection
 
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.instrumentation.utils import unwrap
+from opentelemetry.instrumentation.weaviate.config import Config
 from opentelemetry.instrumentation.weaviate.version import __version__
 from opentelemetry.instrumentation.weaviate.wrapper import _wrap
 from opentelemetry.trace import get_tracer
@@ -119,6 +120,10 @@ WRAPPED_METHODS = [
 
 class WeaviateInstrumentor(BaseInstrumentor):
     """An instrumentor for Weaviate's client library."""
+
+    def __init__(self, exception_logger=None):
+        super().__init__()
+        Config.exception_logger = exception_logger
 
     def instrumentation_dependencies(self) -> Collection[str]:
         return _instruments

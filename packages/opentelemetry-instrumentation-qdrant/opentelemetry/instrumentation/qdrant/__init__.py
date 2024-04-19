@@ -3,6 +3,7 @@
 import json
 import logging
 from pathlib import Path
+from opentelemetry.instrumentation.qdrant.config import Config
 from opentelemetry.instrumentation.qdrant.wrapper import _wrap
 import qdrant_client
 from typing import Collection
@@ -36,6 +37,10 @@ MODULE = "qdrant_client"
 
 class QdrantInstrumentor(BaseInstrumentor):
     """An instrumentor for Qdrant's client library."""
+
+    def __init__(self, exception_logger=None):
+        super().__init__()
+        Config.exception_logger = exception_logger
 
     def instrumentation_dependencies(self) -> Collection[str]:
         return _instruments
