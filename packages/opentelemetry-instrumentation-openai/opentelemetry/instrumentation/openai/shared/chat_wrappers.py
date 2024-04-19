@@ -542,7 +542,10 @@ def _accumulate_stream_items(item, complete_response):
 
         delta = choice.get("delta")
 
-        if delta.get("content"):
+        if delta and delta.get("content"):
             complete_choice["message"]["content"] += delta.get("content")
-        if delta.get("role"):
+        if delta and delta.get("role"):
             complete_choice["message"]["role"] = delta.get("role")
+
+        if choice.get("content_filter_results"):
+            complete_choice["message"]["content"] = "FILTERED"
