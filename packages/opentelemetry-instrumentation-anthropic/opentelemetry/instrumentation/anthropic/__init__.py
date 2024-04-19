@@ -10,10 +10,11 @@ from anthropic._streaming import AsyncStream, Stream
 from opentelemetry import context as context_api
 from opentelemetry.instrumentation.anthropic.config import Config
 from opentelemetry.instrumentation.anthropic.streaming import (
-    _abuild_from_streaming_response,
-    _build_from_streaming_response,
+    abuild_from_streaming_response,
+    build_from_streaming_response,
 )
 from opentelemetry.instrumentation.anthropic.utils import (
+    dont_throw,
     set_span_attribute,
     should_send_prompts,
 )
@@ -103,6 +104,7 @@ def _dump_content(content):
     return json.dumps(json_serializable)
 
 
+@dont_throw
 def _set_input_attributes(span, kwargs):
     set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, kwargs.get("model"))
     set_span_attribute(
@@ -151,7 +153,8 @@ def _set_span_completions(span, response):
             )
 
 
-async def _set_token_usage_a(
+@dont_throw
+async def _aset_token_usage(
     span,
     anthropic,
     request,
@@ -224,6 +227,7 @@ async def _set_token_usage_a(
     set_span_attribute(span, SpanAttributes.LLM_USAGE_TOTAL_TOKENS, total_tokens)
 
 
+@dont_throw
 def _set_token_usage(
     span,
     anthropic,
@@ -292,6 +296,7 @@ def _set_token_usage(
     set_span_attribute(span, SpanAttributes.LLM_USAGE_TOTAL_TOKENS, total_tokens)
 
 
+@dont_throw
 def _set_response_attributes(span, response):
     if not isinstance(response, dict):
         response = response.__dict__
@@ -384,6 +389,15 @@ def _create_metrics(meter: Meter, name: str):
     return token_counter, choice_counter, duration_histogram, exception_counter
 
 
+@dont_throw
+def _calculate_metrics_attributes(response):
+    if not isinstance(response, dict):
+        response = response.__dict__
+    return {
+        "llm.response.model": response.get("model"),
+    }
+
+
 @_with_chat_telemetry_wrapper
 def _wrap(
     tracer: Tracer,
@@ -410,14 +424,9 @@ def _wrap(
             SpanAttributes.LLM_REQUEST_TYPE: LLMRequestTypeValues.COMPLETION.value,
         },
     )
-    try:
-        if span.is_recording():
-            _set_input_attributes(span, kwargs)
 
-    except Exception as ex:  # pylint: disable=broad-except
-        logger.warning(
-            "Failed to set input attributes for anthropic span, error: %s", str(ex)
-        )
+    if span.is_recording():
+        _set_input_attributes(span, kwargs)
 
     start_time = time.time()
     try:
@@ -440,7 +449,7 @@ def _wrap(
     end_time = time.time()
 
     if is_streaming_response(response):
-        return _build_from_streaming_response(
+        return build_from_streaming_response(
             span,
             response,
             instance._client,
@@ -453,11 +462,7 @@ def _wrap(
         )
     elif response:
         try:
-            metric_attributes = {
-                "llm.response.model": (
-                    response if isinstance(response, dict) else response.__dict__
-                ).get("model"),
-            }
+            metric_attributes = _calculate_metrics_attributes(response)
 
             if duration_histogram:
                 duration = time.time() - start_time
@@ -543,7 +548,7 @@ async def _awrap(
         raise e
 
     if is_streaming_response(response):
-        return _abuild_from_streaming_response(
+        return abuild_from_streaming_response(
             span,
             response,
             instance._client,
@@ -555,37 +560,27 @@ async def _awrap(
             kwargs,
         )
     elif response:
-        try:
-            metric_attributes = {
-                "llm.response.model": (
-                    response if isinstance(response, dict) else response.__dict__
-                ).get("model"),
-            }
+        metric_attributes = _calculate_metrics_attributes(response)
 
-            if duration_histogram:
-                duration = time.time() - start_time
-                duration_histogram.record(
-                    duration,
-                    attributes=metric_attributes,
-                )
-
-            if span.is_recording():
-                _set_response_attributes(span, response)
-                await _set_token_usage_a(
-                    span,
-                    instance._client,
-                    kwargs,
-                    response,
-                    metric_attributes,
-                    token_counter,
-                    choice_counter,
-                )
-
-        except Exception as ex:  # pylint: disable=broad-except
-            logger.warning(
-                "Failed to set response attributes for anthropic span, error: %s",
-                str(ex),
+        if duration_histogram:
+            duration = time.time() - start_time
+            duration_histogram.record(
+                duration,
+                attributes=metric_attributes,
             )
+
+        if span.is_recording():
+            _set_response_attributes(span, response)
+            await _aset_token_usage(
+                span,
+                instance._client,
+                kwargs,
+                response,
+                metric_attributes,
+                token_counter,
+                choice_counter,
+            )
+
         if span.is_recording():
             span.set_status(Status(StatusCode.OK))
     span.end()
@@ -599,8 +594,9 @@ def is_metrics_enabled() -> bool:
 class AnthropicInstrumentor(BaseInstrumentor):
     """An instrumentor for Anthropic's client library."""
 
-    def __init__(self, enrich_token_usage: bool = False):
+    def __init__(self, exception_logger=None, enrich_token_usage: bool = False):
         super().__init__()
+        Config.exception_logger = exception_logger
         Config.enrich_token_usage = enrich_token_usage
 
     def instrumentation_dependencies(self) -> Collection[str]:
