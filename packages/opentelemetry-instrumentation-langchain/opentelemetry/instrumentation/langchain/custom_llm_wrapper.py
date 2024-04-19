@@ -3,7 +3,10 @@ from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
 
 from opentelemetry.semconv.ai import SpanAttributes, LLMRequestTypeValues
 
-from opentelemetry.instrumentation.langchain.utils import _with_tracer_wrapper
+from opentelemetry.instrumentation.langchain.utils import (
+    _with_tracer_wrapper,
+    dont_throw,
+)
 from opentelemetry.instrumentation.langchain.utils import should_send_prompts
 
 
@@ -37,6 +40,7 @@ async def allm_wrapper(tracer, to_wrap, wrapped, instance, args, kwargs):
     return return_value
 
 
+@dont_throw
 def _handle_request(span, args, kwargs, instance):
     span.set_attribute(
         SpanAttributes.LLM_REQUEST_TYPE, LLMRequestTypeValues.COMPLETION.value
@@ -48,6 +52,7 @@ def _handle_request(span, args, kwargs, instance):
             span.set_attribute(f"{SpanAttributes.LLM_PROMPTS}.{idx}.user", prompt)
 
 
+@dont_throw
 def _handle_response(span, return_value):
     print(return_value)
     if should_send_prompts():
