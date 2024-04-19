@@ -1,6 +1,6 @@
 import logging
 
-from opentelemetry.instrumentation.bedrock.config import Config
+from opentelemetry.instrumentation.pinecone.config import Config
 
 
 def dont_throw(func):
