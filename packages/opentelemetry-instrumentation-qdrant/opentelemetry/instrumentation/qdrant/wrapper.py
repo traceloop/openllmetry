@@ -1,4 +1,5 @@
 from opentelemetry import context as context_api
+from opentelemetry.instrumentation.qdrant.utils import dont_throw
 from opentelemetry.trace.status import Status, StatusCode
 from opentelemetry.instrumentation.utils import (
     _SUPPRESS_INSTRUMENTATION_KEY,
@@ -74,6 +75,7 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
     return response
 
 
+@dont_throw
 def _set_collection_name_attribute(span, method, args, kwargs):
     _set_span_attribute(
         span,
@@ -82,6 +84,7 @@ def _set_collection_name_attribute(span, method, args, kwargs):
     )
 
 
+@dont_throw
 def _set_upsert_attributes(span, args, kwargs):
     points = kwargs.get("points") or args[1]
     if isinstance(points, list):
@@ -93,16 +96,19 @@ def _set_upsert_attributes(span, args, kwargs):
     _set_span_attribute(span, "qdrant.upsert.points_count", length)
 
 
+@dont_throw
 def _set_upload_attributes(span, args, kwargs, method_name, param_name):
     points = list(kwargs.get(param_name) or args[1])
     _set_span_attribute(span, f"qdrant.{method_name}.points_count", len(points))
 
 
+@dont_throw
 def _set_search_attributes(span, args, kwargs):
     limit = kwargs.get("limit") or 10
     _set_span_attribute(span, SpanAttributes.VECTOR_DB_QUERY_TOP_K, limit)
 
 
+@dont_throw
 def _set_batch_search_attributes(span, args, kwargs, method):
     requests = kwargs.get("requests") or []
     _set_span_attribute(span, f"qdrant.{method}.requests_count", len(requests))

@@ -1,3 +1,4 @@
+from opentelemetry.instrumentation.chromadb.utils import dont_throw
 from opentelemetry.semconv.trace import SpanAttributes
 
 from opentelemetry import context as context_api
@@ -97,6 +98,7 @@ def count_or_none(obj):
     return None
 
 
+@dont_throw
 def _set_add_attributes(span, kwargs):
     _set_span_attribute(
         span, "db.chroma.add.ids_count", count_or_none(kwargs.get("ids"))
@@ -112,6 +114,7 @@ def _set_add_attributes(span, kwargs):
     )
 
 
+@dont_throw
 def _set_get_attributes(span, kwargs):
     _set_span_attribute(
         span, "db.chroma.get.ids_count", count_or_none(kwargs.get("ids"))
@@ -129,10 +132,12 @@ def _set_get_attributes(span, kwargs):
     )
 
 
+@dont_throw
 def _set_peek_attributes(span, kwargs):
     _set_span_attribute(span, "db.chroma.peek.limit", kwargs.get("limit"))
 
 
+@dont_throw
 def _set_query_attributes(span, kwargs):
     _set_span_attribute(
         span,
@@ -158,6 +163,7 @@ def _set_query_attributes(span, kwargs):
     )
 
 
+@dont_throw
 def _set_segment_query_attributes(span, kwargs):
     _set_span_attribute(
         span,
@@ -166,6 +172,7 @@ def _set_segment_query_attributes(span, kwargs):
     )
 
 
+@dont_throw
 def _add_segment_query_embeddings_events(span, kwargs):
     for i, embeddings in enumerate(kwargs.get("query_embeddings", [])):
         span.add_event(
@@ -176,6 +183,7 @@ def _add_segment_query_embeddings_events(span, kwargs):
         )
 
 
+@dont_throw
 def _add_query_result_events(span, kwargs):
     """
     There's a lot of logic here involved in converting the query result
@@ -243,11 +251,13 @@ def _add_query_result_events(span, kwargs):
         span.add_event(name=Events.DB_QUERY_RESULT.value, attributes=attributes)
 
 
+@dont_throw
 def _set_modify_attributes(span, kwargs):
     _set_span_attribute(span, "db.chroma.modify.name", kwargs.get("name"))
     # TODO: Add metadata attribute
 
 
+@dont_throw
 def _set_update_attributes(span, kwargs):
     _set_span_attribute(
         span, "db.chroma.update.ids_count", count_or_none(kwargs.get("ids"))
@@ -265,6 +275,7 @@ def _set_update_attributes(span, kwargs):
     )
 
 
+@dont_throw
 def _set_upsert_attributes(span, kwargs):
     _set_span_attribute(
         span,
@@ -279,6 +290,7 @@ def _set_upsert_attributes(span, kwargs):
     )
 
 
+@dont_throw
 def _set_delete_attributes(span, kwargs):
     _set_span_attribute(
         span, "db.chroma.delete.ids_count", count_or_none(kwargs.get("ids"))
