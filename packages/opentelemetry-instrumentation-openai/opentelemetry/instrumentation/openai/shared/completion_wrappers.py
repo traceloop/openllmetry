@@ -48,7 +48,7 @@ def completion_wrapper(tracer, wrapped, instance, args, kwargs):
 
     if is_streaming_response(response):
         # span will be closed after the generator is done
-        return _build_from_streaming_response(span, response, kwargs)
+        return _build_from_streaming_response(span, kwargs, response)
     else:
         _handle_response(response, span)
 
@@ -72,7 +72,7 @@ async def acompletion_wrapper(tracer, wrapped, instance, args, kwargs):
 
     if is_streaming_response(response):
         # span will be closed after the generator is done
-        return _abuild_from_streaming_response(span, response)
+        return _abuild_from_streaming_response(span, kwargs, response)
     else:
         _handle_response(response, span)
 
@@ -113,6 +113,7 @@ def _set_prompts(span, prompt):
     )
 
 
+@dont_throw
 def _set_completions(span, choices):
     if not span.is_recording() or not choices:
         return
@@ -127,30 +128,43 @@ def _set_completions(span, choices):
 
 
 @dont_throw
-def _build_from_streaming_response(span, response, request_kwargs=None):
+def _build_from_streaming_response(span, request_kwargs, response):
     complete_response = {"choices": [], "model": ""}
     for item in response:
-        item_to_yield = item
-        if is_openai_v1():
-            item = model_as_dict(item)
-
-        complete_response["model"] = item.get("model")
-
-        for choice in item.get("choices"):
-            index = choice.get("index")
-            if len(complete_response.get("choices")) <= index:
-                complete_response["choices"].append({"index": index, "text": ""})
-            complete_choice = complete_response.get("choices")[index]
-            if choice.get("finish_reason"):
-                complete_choice["finish_reason"] = choice.get("finish_reason")
-
-            if choice.get("text"):
-                complete_choice["text"] += choice.get("text")
-
-        yield item_to_yield
+        yield item
+        _accumulate_streaming_response(complete_response, item)
 
     _set_response_attributes(span, complete_response)
 
+    _set_token_usage(span, request_kwargs, complete_response)
+
+    if should_send_prompts():
+        _set_completions(span, complete_response.get("choices"))
+
+    span.set_status(Status(StatusCode.OK))
+    span.end()
+
+
+@dont_throw
+async def _abuild_from_streaming_response(span, request_kwargs, response):
+    complete_response = {"choices": [], "model": ""}
+    async for item in response:
+        yield item
+        _accumulate_streaming_response(complete_response, item)
+
+    _set_response_attributes(span, complete_response)
+
+    _set_token_usage(span, request_kwargs, complete_response)
+
+    if should_send_prompts():
+        _set_completions(span, complete_response.get("choices"))
+
+    span.set_status(Status(StatusCode.OK))
+    span.end()
+
+
+@dont_throw
+def _set_token_usage(span, request_kwargs, complete_response):
     # use tiktoken calculate token usage
     if should_record_stream_token_usage():
         prompt_usage = -1
@@ -181,37 +195,23 @@ def _build_from_streaming_response(span, response, request_kwargs=None):
         # span record
         _set_span_stream_usage(span, prompt_usage, completion_usage)
 
-    if should_send_prompts():
-        _set_completions(span, complete_response.get("choices"))
-
-    span.set_status(Status(StatusCode.OK))
-    span.end()
-
 
 @dont_throw
-async def _abuild_from_streaming_response(span, response):
-    complete_response = {"choices": [], "model": ""}
-    async for item in response:
-        item_to_yield = item
-        if is_openai_v1():
-            item = model_as_dict(item)
+def _accumulate_streaming_response(complete_response, item):
+    if is_openai_v1():
+        item = model_as_dict(item)
 
-        for choice in item.get("choices"):
-            index = choice.get("index")
-            if len(complete_response.get("choices")) <= index:
-                complete_response["choices"].append({"index": index, "text": ""})
-            complete_choice = complete_response.get("choices")[index]
-            if choice.get("finish_reason"):
-                complete_choice["finish_reason"] = choice.get("finish_reason")
+    complete_response["model"] = item.get("model")
 
+    for choice in item.get("choices"):
+        index = choice.get("index")
+        if len(complete_response.get("choices")) <= index:
+            complete_response["choices"].append({"index": index, "text": ""})
+        complete_choice = complete_response.get("choices")[index]
+        if choice.get("finish_reason"):
+            complete_choice["finish_reason"] = choice.get("finish_reason")
+
+        if choice.get("text"):
             complete_choice["text"] += choice.get("text")
 
-        yield item_to_yield
-
-    _set_response_attributes(span, complete_response)
-
-    if should_send_prompts():
-        _set_completions(span, complete_response.get("choices"))
-
-    span.set_status(Status(StatusCode.OK))
-    span.end()
+    return complete_response

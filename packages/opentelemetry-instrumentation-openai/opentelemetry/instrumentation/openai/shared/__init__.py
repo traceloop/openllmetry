@@ -10,6 +10,7 @@ from opentelemetry import context as context_api
 
 from opentelemetry.semconv.ai import SpanAttributes
 from opentelemetry.instrumentation.openai.utils import (
+    dont_throw,
     is_openai_v1,
     should_record_stream_token_usage,
 )
@@ -131,6 +132,7 @@ def _set_request_attributes(span, kwargs):
     )
 
 
+@dont_throw
 def _set_response_attributes(span, response):
     if not span.is_recording():
         return
@@ -159,6 +161,7 @@ def _set_response_attributes(span, response):
     return
 
 
+@dont_throw
 def _set_span_stream_usage(span, prompt_tokens, completion_tokens):
     if not span.is_recording():
         return
