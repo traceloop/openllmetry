@@ -77,7 +77,7 @@ class Telemetry:
     def log_exception(self, exception: Exception):
         try:  # don't fail if telemetry fails
             if self._telemetry_enabled:
-                sentry_sdk.capture_exception(exception)
+                sentry_sdk.capture_exception(exception, {**self._context()})
         except Exception:
             pass
 
