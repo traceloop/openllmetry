@@ -3,6 +3,7 @@
 import logging
 import os
 from typing import Collection
+from opentelemetry.instrumentation.cohere.utils import dont_throw
 from wrapt import wrap_function_wrapper
 
 from opentelemetry import context as context_api
@@ -54,6 +55,7 @@ def _set_span_attribute(span, name, value):
     return
 
 
+@dont_throw
 def _set_input_attributes(span, llm_request_type, kwargs):
     _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, kwargs.get("model"))
     _set_span_attribute(
@@ -146,6 +148,7 @@ def _set_span_rerank_response(span, response):
         )
 
 
+@dont_throw
 def _set_response_attributes(span, llm_request_type, response):
     if should_send_prompts():
         if llm_request_type == LLMRequestTypeValues.CHAT:
@@ -195,28 +198,14 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
             SpanAttributes.LLM_REQUEST_TYPE: llm_request_type.value,
         },
     ) as span:
-        try:
-            if span.is_recording():
-                _set_input_attributes(span, llm_request_type, kwargs)
-
-        except Exception as ex:  # pylint: disable=broad-except
-            logger.warning(
-                "Failed to set input attributes for cohere span, error: %s", str(ex)
-            )
+        if span.is_recording():
+            _set_input_attributes(span, llm_request_type, kwargs)
 
         response = wrapped(*args, **kwargs)
 
         if response:
-            try:
-                if span.is_recording():
-                    _set_response_attributes(span, llm_request_type, response)
-
-            except Exception as ex:  # pylint: disable=broad-except
-                logger.warning(
-                    "Failed to set response attributes for cohere span, error: %s",
-                    str(ex),
-                )
             if span.is_recording():
+                _set_response_attributes(span, llm_request_type, response)
                 span.set_status(Status(StatusCode.OK))
 
         return response
@@ -224,6 +213,10 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
 
 class CohereInstrumentor(BaseInstrumentor):
     """An instrumentor for Cohere's client library."""
+
+    def __init__(self, exception_logger=None):
+        super().__init__()
+        self.exception_logger = exception_logger
 
     def instrumentation_dependencies(self) -> Collection[str]:
         return _instruments
