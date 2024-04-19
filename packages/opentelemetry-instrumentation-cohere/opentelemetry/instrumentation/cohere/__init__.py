@@ -3,6 +3,7 @@
 import logging
 import os
 from typing import Collection
+from opentelemetry.instrumentation.cohere.config import Config
 from opentelemetry.instrumentation.cohere.utils import dont_throw
 from wrapt import wrap_function_wrapper
 
@@ -216,7 +217,7 @@ class CohereInstrumentor(BaseInstrumentor):
 
     def __init__(self, exception_logger=None):
         super().__init__()
-        self.exception_logger = exception_logger
+        Config.exception_logger = exception_logger
 
     def instrumentation_dependencies(self) -> Collection[str]:
         return _instruments
