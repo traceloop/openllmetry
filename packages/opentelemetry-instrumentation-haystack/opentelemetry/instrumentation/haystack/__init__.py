@@ -1,5 +1,6 @@
 import logging
 from typing import Collection
+from opentelemetry.instrumentation.haystack.config import Config
 from wrapt import wrap_function_wrapper
 
 from opentelemetry.trace import get_tracer
@@ -41,6 +42,10 @@ WRAPPED_METHODS = [
 
 class HaystackInstrumentor(BaseInstrumentor):
     """An instrumentor for the Haystack framework."""
+
+    def __init__(self, exception_logger=None):
+        super().__init__()
+        Config.exception_logger = exception_logger
 
     def instrumentation_dependencies(self) -> Collection[str]:
         return _instruments
