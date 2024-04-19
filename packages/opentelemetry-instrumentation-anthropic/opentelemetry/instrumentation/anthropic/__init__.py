@@ -594,7 +594,7 @@ def is_metrics_enabled() -> bool:
 class AnthropicInstrumentor(BaseInstrumentor):
     """An instrumentor for Anthropic's client library."""
 
-    def __init__(self, exception_logger=None, enrich_token_usage: bool = False):
+    def __init__(self, enrich_token_usage: bool = False, exception_logger=None):
         super().__init__()
         Config.exception_logger = exception_logger
         Config.enrich_token_usage = enrich_token_usage
