@@ -463,6 +463,7 @@ def init_anthropic_instrumentor(should_enrich_metrics: bool):
         from opentelemetry.instrumentation.anthropic import AnthropicInstrumentor
 
         instrumentor = AnthropicInstrumentor(
+            exception_logger=lambda e: Telemetry().log_exception(e),
             enrich_token_usage=should_enrich_metrics,
         )
         if not instrumentor.is_instrumented_by_opentelemetry:
@@ -475,7 +476,9 @@ def init_cohere_instrumentor():
         Telemetry().capture("instrumentation:cohere:init")
         from opentelemetry.instrumentation.cohere import CohereInstrumentor
 
-        instrumentor = CohereInstrumentor()
+        instrumentor = CohereInstrumentor(
+            exception_logger=lambda e: Telemetry().log_exception(e),
+        )
         if not instrumentor.is_instrumented_by_opentelemetry:
             instrumentor.instrument()
     return True
@@ -486,7 +489,9 @@ def init_pinecone_instrumentor():
         Telemetry().capture("instrumentation:pinecone:init")
         from opentelemetry.instrumentation.pinecone import PineconeInstrumentor
 
-        instrumentor = PineconeInstrumentor()
+        instrumentor = PineconeInstrumentor(
+            exception_logger=lambda e: Telemetry().log_exception(e),
+        )
         if not instrumentor.is_instrumented_by_opentelemetry:
             instrumentor.instrument()
     return True
@@ -497,7 +502,9 @@ def init_qdrant_instrumentor():
         Telemetry().capture("instrumentation:qdrant:init")
         from opentelemetry.instrumentation.qdrant import QdrantInstrumentor
 
-        instrumentor = QdrantInstrumentor()
+        instrumentor = QdrantInstrumentor(
+            exception_logger=lambda e: Telemetry().log_exception(e),
+        )
         if not instrumentor.is_instrumented_by_opentelemetry:
             instrumentor.instrument()
 
@@ -507,7 +514,9 @@ def init_chroma_instrumentor():
         Telemetry().capture("instrumentation:chromadb:init")
         from opentelemetry.instrumentation.chromadb import ChromaInstrumentor
 
-        instrumentor = ChromaInstrumentor()
+        instrumentor = ChromaInstrumentor(
+            exception_logger=lambda e: Telemetry().log_exception(e),
+        )
         if not instrumentor.is_instrumented_by_opentelemetry:
             instrumentor.instrument()
     return True
@@ -518,7 +527,9 @@ def init_haystack_instrumentor():
         Telemetry().capture("instrumentation:haystack:init")
         from opentelemetry.instrumentation.haystack import HaystackInstrumentor
 
-        instrumentor = HaystackInstrumentor()
+        instrumentor = HaystackInstrumentor(
+            exception_logger=lambda e: Telemetry().log_exception(e),
+        )
         if not instrumentor.is_instrumented_by_opentelemetry:
             instrumentor.instrument()
     return True
@@ -529,7 +540,9 @@ def init_langchain_instrumentor():
         Telemetry().capture("instrumentation:langchain:init")
         from opentelemetry.instrumentation.langchain import LangchainInstrumentor
 
-        instrumentor = LangchainInstrumentor()
+        instrumentor = LangchainInstrumentor(
+            exception_logger=lambda e: Telemetry().log_exception(e),
+        )
         if not instrumentor.is_instrumented_by_opentelemetry:
             instrumentor.instrument()
     return True
@@ -540,7 +553,9 @@ def init_transformers_instrumentor():
         Telemetry().capture("instrumentation:transformers:init")
         from opentelemetry.instrumentation.transformers import TransformersInstrumentor
 
-        instrumentor = TransformersInstrumentor()
+        instrumentor = TransformersInstrumentor(
+            exception_logger=lambda e: Telemetry().log_exception(e),
+        )
         if not instrumentor.is_instrumented_by_opentelemetry:
             instrumentor.instrument()
     return True
@@ -551,7 +566,9 @@ def init_llama_index_instrumentor():
         Telemetry().capture("instrumentation:llamaindex:init")
         from opentelemetry.instrumentation.llamaindex import LlamaIndexInstrumentor
 
-        instrumentor = LlamaIndexInstrumentor()
+        instrumentor = LlamaIndexInstrumentor(
+            exception_logger=lambda e: Telemetry().log_exception(e),
+        )
         if not instrumentor.is_instrumented_by_opentelemetry:
             instrumentor.instrument()
     return True
@@ -591,7 +608,10 @@ def init_bedrock_instrumentor(should_enrich_metrics: bool):
     if importlib.util.find_spec("boto3") is not None:
         from opentelemetry.instrumentation.bedrock import BedrockInstrumentor
 
-        instrumentor = BedrockInstrumentor(enrich_token_usage=should_enrich_metrics)
+        instrumentor = BedrockInstrumentor(
+            exception_logger=lambda e: Telemetry().log_exception(e),
+            enrich_token_usage=should_enrich_metrics,
+        )
         if not instrumentor.is_instrumented_by_opentelemetry:
             instrumentor.instrument()
     return True
@@ -602,7 +622,9 @@ def init_replicate_instrumentor():
         Telemetry().capture("instrumentation:replicate:init")
         from opentelemetry.instrumentation.replicate import ReplicateInstrumentor
 
-        instrumentor = ReplicateInstrumentor()
+        instrumentor = ReplicateInstrumentor(
+            exception_logger=lambda e: Telemetry().log_exception(e),
+        )
         if not instrumentor.is_instrumented_by_opentelemetry:
             instrumentor.instrument()
     return True
@@ -613,7 +635,9 @@ def init_vertexai_instrumentor():
         Telemetry().capture("instrumentation:vertexai:init")
         from opentelemetry.instrumentation.vertexai import VertexAIInstrumentor
 
-        instrumentor = VertexAIInstrumentor()
+        instrumentor = VertexAIInstrumentor(
+            exception_logger=lambda e: Telemetry().log_exception(e),
+        )
         if not instrumentor.is_instrumented_by_opentelemetry:
             instrumentor.instrument()
     return True
@@ -624,7 +648,9 @@ def init_watsonx_instrumentor():
         Telemetry().capture("instrumentation:watsonx:init")
         from opentelemetry.instrumentation.watsonx import WatsonxInstrumentor
 
-        instrumentor = WatsonxInstrumentor()
+        instrumentor = WatsonxInstrumentor(
+            exception_logger=lambda e: Telemetry().log_exception(e),
+        )
         if not instrumentor.is_instrumented_by_opentelemetry:
             instrumentor.instrument()
     return True
@@ -635,7 +661,9 @@ def init_weaviate_instrumentor():
         Telemetry().capture("instrumentation:weaviate:init")
         from opentelemetry.instrumentation.weaviate import WeaviateInstrumentor
 
-        instrumentor = WeaviateInstrumentor()
+        instrumentor = WeaviateInstrumentor(
+            exception_logger=lambda e: Telemetry().log_exception(e),
+        )
         if not instrumentor.is_instrumented_by_opentelemetry:
             instrumentor.instrument()
     return True
