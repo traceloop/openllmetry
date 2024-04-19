@@ -4,6 +4,7 @@ from typing import Optional
 
 from opentelemetry import context as context_api
 from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
+from opentelemetry.instrumentation.weaviate.utils import dont_throw
 from opentelemetry.semconv.trace import SpanAttributes
 
 
@@ -93,6 +94,7 @@ class _Instrumentor:
                 getter(idx, attribute),
             )
 
+    @dont_throw
     def instrument(self, method_name, span, args, kwargs):
         attributes = self.mapped_attributes.get(method_name)
         if attributes:

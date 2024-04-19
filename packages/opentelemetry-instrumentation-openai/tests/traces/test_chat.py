@@ -2,7 +2,7 @@ import pytest
 
 
 @pytest.mark.vcr
-def test_chat(exporter, openai_client, vcr):
+def test_chat(exporter, openai_client):
     openai_client.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=[{"role": "user", "content": "Tell me a joke about opentelemetry"}],
