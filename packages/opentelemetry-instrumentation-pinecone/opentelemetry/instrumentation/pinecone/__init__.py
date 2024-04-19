@@ -1,6 +1,8 @@
 """OpenTelemetry Pinecone instrumentation"""
 
 import logging
+from opentelemetry.instrumentation.pinecone.config import Config
+from opentelemetry.instrumentation.pinecone.utils import dont_throw
 import pinecone
 from typing import Collection
 from wrapt import wrap_function_wrapper
@@ -65,6 +67,7 @@ def _set_span_attribute(span, name, value):
     return
 
 
+@dont_throw
 def _set_query_input_attributes(span, kwargs):
     # Pinecone-client 2.2.2 query kwargs
     # vector: Optional[List[float]] = None,
@@ -118,6 +121,7 @@ def _set_query_input_attributes(span, kwargs):
             )
 
 
+@dont_throw
 def _set_query_response(span, response):
     span.add_event("pinecone.query.usage", response.get("usage"))
 
@@ -171,34 +175,21 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
             SpanAttributes.VECTOR_DB_VENDOR: "Pinecone",
         },
     ) as span:
-        try:
-            if span.is_recording():
-                if to_wrap.get("method") == "query":
-                    _set_query_input_attributes(span, kwargs)
-                else:
-                    _set_input_attributes(span, kwargs)
-
-        except Exception as ex:  # pylint: disable=broad-except
-            logger.warning(
-                "Failed to set input attributes for openai span, error: %s", str(ex)
-            )
+        if span.is_recording():
+            if to_wrap.get("method") == "query":
+                _set_query_input_attributes(span, kwargs)
+            else:
+                _set_input_attributes(span, kwargs)
 
         response = wrapped(*args, **kwargs)
 
         if response:
-            try:
-                if span.is_recording():
-                    if to_wrap.get("method") == "query":
-                        _set_query_response(span, response)
-                    else:
-                        _set_response_attributes(span, response)
-
-            except Exception as ex:  # pylint: disable=broad-except
-                logger.warning(
-                    "Failed to set response attributes for openai span, error: %s",
-                    str(ex),
-                )
             if span.is_recording():
+                if to_wrap.get("method") == "query":
+                    _set_query_response(span, response)
+                else:
+                    _set_response_attributes(span, response)
+
                 span.set_status(Status(StatusCode.OK))
 
         return response
@@ -206,6 +197,10 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
 
 class PineconeInstrumentor(BaseInstrumentor):
     """An instrumentor for Pinecone's client library."""
+
+    def __init__(self, exception_logger=None):
+        super().__init__()
+        Config.exception_logger = exception_logger
 
     def instrumentation_dependencies(self) -> Collection[str]:
         return _instruments

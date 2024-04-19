@@ -10,6 +10,7 @@ from opentelemetry import context as context_api
 
 from opentelemetry.semconv.ai import SpanAttributes
 from opentelemetry.instrumentation.openai.utils import (
+    dont_throw,
     is_openai_v1,
     should_record_stream_token_usage,
 )
@@ -46,19 +47,13 @@ def _set_client_attributes(span, instance):
     if not is_openai_v1():
         return
 
-    try:
-        client = instance._client  # pylint: disable=protected-access
-        if isinstance(client, (openai.AsyncOpenAI, openai.OpenAI)):
-            _set_span_attribute(span, OPENAI_API_BASE, str(client.base_url))
-        if isinstance(client, (openai.AsyncAzureOpenAI, openai.AzureOpenAI)):
-            _set_span_attribute(
-                span, OPENAI_API_VERSION, client._api_version
-            )  # pylint: disable=protected-access
-
-    except Exception as ex:  # pylint: disable=broad-except
-        logger.warning(
-            "Failed to set api attributes for openai v1 span, error: %s", str(ex)
-        )
+    client = instance._client  # pylint: disable=protected-access
+    if isinstance(client, (openai.AsyncOpenAI, openai.OpenAI)):
+        _set_span_attribute(span, OPENAI_API_BASE, str(client.base_url))
+    if isinstance(client, (openai.AsyncAzureOpenAI, openai.AzureOpenAI)):
+        _set_span_attribute(
+            span, OPENAI_API_VERSION, client._api_version
+        )  # pylint: disable=protected-access
 
 
 def _set_api_attributes(span):
@@ -68,16 +63,11 @@ def _set_api_attributes(span):
     if is_openai_v1():
         return
 
-    try:
-        base_url = openai.base_url if hasattr(openai, "base_url") else openai.api_base
+    base_url = openai.base_url if hasattr(openai, "base_url") else openai.api_base
 
-        _set_span_attribute(span, OPENAI_API_BASE, base_url)
-        _set_span_attribute(span, OPENAI_API_TYPE, openai.api_type)
-        _set_span_attribute(span, OPENAI_API_VERSION, openai.api_version)
-    except Exception as ex:  # pylint: disable=broad-except
-        logger.warning(
-            "Failed to set api attributes for openai span, error: %s", str(ex)
-        )
+    _set_span_attribute(span, OPENAI_API_BASE, base_url)
+    _set_span_attribute(span, OPENAI_API_TYPE, openai.api_type)
+    _set_span_attribute(span, OPENAI_API_VERSION, openai.api_version)
 
     return
 
@@ -116,76 +106,62 @@ def _set_request_attributes(span, kwargs):
     if not span.is_recording():
         return
 
-    try:
-        _set_api_attributes(span)
-        _set_span_attribute(span, SpanAttributes.LLM_VENDOR, "OpenAI")
-        _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, kwargs.get("model"))
+    _set_api_attributes(span)
+    _set_span_attribute(span, SpanAttributes.LLM_VENDOR, "OpenAI")
+    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, kwargs.get("model"))
+    _set_span_attribute(
+        span, SpanAttributes.LLM_REQUEST_MAX_TOKENS, kwargs.get("max_tokens")
+    )
+    _set_span_attribute(span, SpanAttributes.LLM_TEMPERATURE, kwargs.get("temperature"))
+    _set_span_attribute(span, SpanAttributes.LLM_TOP_P, kwargs.get("top_p"))
+    _set_span_attribute(
+        span, SpanAttributes.LLM_FREQUENCY_PENALTY, kwargs.get("frequency_penalty")
+    )
+    _set_span_attribute(
+        span, SpanAttributes.LLM_PRESENCE_PENALTY, kwargs.get("presence_penalty")
+    )
+    _set_span_attribute(span, SpanAttributes.LLM_USER, kwargs.get("user"))
+    _set_span_attribute(span, SpanAttributes.LLM_HEADERS, str(kwargs.get("headers")))
+    # The new OpenAI SDK removed the `headers` and create new field called `extra_headers`
+    if kwargs.get("extra_headers") is not None:
         _set_span_attribute(
-            span, SpanAttributes.LLM_REQUEST_MAX_TOKENS, kwargs.get("max_tokens")
+            span, SpanAttributes.LLM_HEADERS, str(kwargs.get("extra_headers"))
         )
-        _set_span_attribute(
-            span, SpanAttributes.LLM_TEMPERATURE, kwargs.get("temperature")
-        )
-        _set_span_attribute(span, SpanAttributes.LLM_TOP_P, kwargs.get("top_p"))
-        _set_span_attribute(
-            span, SpanAttributes.LLM_FREQUENCY_PENALTY, kwargs.get("frequency_penalty")
-        )
-        _set_span_attribute(
-            span, SpanAttributes.LLM_PRESENCE_PENALTY, kwargs.get("presence_penalty")
-        )
-        _set_span_attribute(span, SpanAttributes.LLM_USER, kwargs.get("user"))
-        _set_span_attribute(
-            span, SpanAttributes.LLM_HEADERS, str(kwargs.get("headers"))
-        )
-        # The new OpenAI SDK removed the `headers` and create new field called `extra_headers`
-        if kwargs.get("extra_headers") is not None:
-            _set_span_attribute(
-                span, SpanAttributes.LLM_HEADERS, str(kwargs.get("extra_headers"))
-            )
-        _set_span_attribute(
-            span, SpanAttributes.LLM_IS_STREAMING, kwargs.get("stream") or False
-        )
-    except Exception as ex:  # pylint: disable=broad-except
-        logger.warning(
-            "Failed to set input attributes for openai span, error: %s", str(ex)
-        )
+    _set_span_attribute(
+        span, SpanAttributes.LLM_IS_STREAMING, kwargs.get("stream") or False
+    )
 
 
+@dont_throw
 def _set_response_attributes(span, response):
     if not span.is_recording():
         return
 
-    try:
-        _set_span_attribute(
-            span, SpanAttributes.LLM_RESPONSE_MODEL, response.get("model")
-        )
+    _set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, response.get("model"))
 
-        usage = response.get("usage")
-        if not usage:
-            return
-
-        if is_openai_v1() and not isinstance(usage, dict):
-            usage = usage.__dict__
-
-        _set_span_attribute(
-            span, SpanAttributes.LLM_USAGE_TOTAL_TOKENS, usage.get("total_tokens")
-        )
-        _set_span_attribute(
-            span,
-            SpanAttributes.LLM_USAGE_COMPLETION_TOKENS,
-            usage.get("completion_tokens"),
-        )
-        _set_span_attribute(
-            span, SpanAttributes.LLM_USAGE_PROMPT_TOKENS, usage.get("prompt_tokens")
-        )
-
+    usage = response.get("usage")
+    if not usage:
         return
-    except Exception as ex:  # pylint: disable=broad-except
-        logger.warning(
-            "Failed to set response attributes for openai span, error: %s", str(ex)
-        )
+
+    if is_openai_v1() and not isinstance(usage, dict):
+        usage = usage.__dict__
+
+    _set_span_attribute(
+        span, SpanAttributes.LLM_USAGE_TOTAL_TOKENS, usage.get("total_tokens")
+    )
+    _set_span_attribute(
+        span,
+        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS,
+        usage.get("completion_tokens"),
+    )
+    _set_span_attribute(
+        span, SpanAttributes.LLM_USAGE_PROMPT_TOKENS, usage.get("prompt_tokens")
+    )
+
+    return
 
 
+@dont_throw
 def _set_span_stream_usage(span, prompt_tokens, completion_tokens):
     if not span.is_recording():
         return
