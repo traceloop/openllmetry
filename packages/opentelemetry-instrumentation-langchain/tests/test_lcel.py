@@ -2,6 +2,7 @@ import pytest
 from langchain.prompts import PromptTemplate
 from langchain.prompts import ChatPromptTemplate
 from langchain.schema import StrOutputParser
+from langchain_core.messages import HumanMessage, SystemMessage
 from langchain.output_parsers.openai_functions import JsonOutputFunctionsParser
 from langchain_community.utils.openai_functions import (
     convert_pydantic_to_openai_function,
@@ -135,7 +136,7 @@ def test_streaming(exporter):
 @pytest.mark.vcr
 def test_custom_llm(exporter):
     prompt = ChatPromptTemplate.from_messages(
-        [("system", "You are helpful assistant"), ("user", "{input}")]
+        [("system", "You are a helpful assistant"), ("user", "{input}")]
     )
     model = HuggingFaceTextGenInference(
         inference_server_url="https://w8qtunpthvh1r7a0.us-east-1.aws.endpoints.huggingface.cloud"
@@ -163,15 +164,56 @@ def test_custom_llm(exporter):
     )
     assert (
         hugging_face_span.attributes["llm.prompts.0.user"]
-        == "System: You are helpful assistant\nHuman: tell me a short joke"
+        == "System: You are a helpful assistant\nHuman: tell me a short joke"
     )
     assert hugging_face_span.attributes["llm.completions.0.content"] == response
 
 
 @pytest.mark.vcr
+def test_openai(exporter):
+    model = ChatOpenAI(model="gpt-3.5-turbo")
+
+    response = model.generate(
+        messages=[
+            [
+                SystemMessage(content="You are a helpful assistant"),
+                HumanMessage(content="Tell me a joke about OpenTelemetry"),
+            ]
+        ]
+    )
+
+    spans = exporter.get_finished_spans()
+
+    assert [
+        "openai.chat",
+        "ChatOpenAI.langchain.task",
+    ] == [span.name for span in spans]
+
+    openai_span = next(
+        span for span in spans if span.name == "ChatOpenAI.langchain.task"
+    )
+
+    assert openai_span.attributes["llm.request.type"] == "chat"
+    assert openai_span.attributes["llm.request.model"] == "gpt-3.5-turbo"
+    assert (
+        openai_span.attributes["llm.prompts.0.content"] == "You are a helpful assistant"
+    )
+    assert openai_span.attributes["llm.prompts.0.role"] == "system"
+    assert (
+        openai_span.attributes["llm.prompts.1.content"]
+        == "Tell me a joke about OpenTelemetry"
+    )
+    assert openai_span.attributes["llm.prompts.1.role"] == "user"
+    assert (
+        openai_span.attributes["llm.completions.0.content"]
+        == response.generations[0][0].text
+    )
+
+
+@pytest.mark.vcr
 def test_anthropic(exporter):
     prompt = ChatPromptTemplate.from_messages(
-        [("system", "You are helpful assistant"), ("user", "{input}")]
+        [("system", "You are a helpful assistant"), ("user", "{input}")]
     )
     model = ChatAnthropic(model="claude-2")
 
@@ -193,7 +235,8 @@ def test_anthropic(exporter):
     assert anthropic_span.attributes["llm.request.type"] == "chat"
     assert anthropic_span.attributes["llm.request.model"] == "claude-2"
     assert (
-        anthropic_span.attributes["llm.prompts.0.user"] == "You are helpful assistant"
+        anthropic_span.attributes["llm.prompts.0.content"]
+        == "You are a helpful assistant"
     )
     assert anthropic_span.attributes["llm.completions.0.content"] == response.content
 
@@ -201,7 +244,7 @@ def test_anthropic(exporter):
 @pytest.mark.vcr
 def test_bedrock(exporter):
     prompt = ChatPromptTemplate.from_messages(
-        [("system", "You are helpful assistant"), ("user", "{input}")]
+        [("system", "You are a helpful assistant"), ("user", "{input}")]
     )
     model = BedrockChat(
         model_id="anthropic.claude-3-haiku-20240307-v1:0",
@@ -234,5 +277,8 @@ def test_bedrock(exporter):
         bedrock_span.attributes["llm.request.model"]
         == "anthropic.claude-3-haiku-20240307-v1:0"
     )
-    assert bedrock_span.attributes["llm.prompts.0.user"] == "You are helpful assistant"
+    assert (
+        bedrock_span.attributes["llm.prompts.0.content"]
+        == "You are a helpful assistant"
+    )
     assert bedrock_span.attributes["llm.completions.0.content"] == response.content
