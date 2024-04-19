@@ -7,6 +7,7 @@ from opentelemetry.trace.status import Status, StatusCode
 from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
 from opentelemetry.semconv.ai import SpanAttributes, LLMRequestTypeValues
 from opentelemetry.instrumentation.haystack.utils import (
+    dont_throw,
     with_tracer_wrapper,
     set_span_attribute,
 )
@@ -14,6 +15,7 @@ from opentelemetry.instrumentation.haystack.utils import (
 logger = logging.getLogger(__name__)
 
 
+@dont_throw
 def _set_input_attributes(span, llm_request_type, kwargs):
 
     if llm_request_type == LLMRequestTypeValues.COMPLETION:
@@ -72,10 +74,9 @@ def _set_span_completions(span, llm_request_type, choices):
             set_span_attribute(span, f"{prefix}.content", message)
 
 
+@dont_throw
 def _set_response_attributes(span, llm_request_type, response):
     _set_span_completions(span, llm_request_type, response)
-
-    return
 
 
 def _llm_request_type_by_object(object_name):
@@ -105,28 +106,15 @@ def wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
             SpanAttributes.LLM_REQUEST_TYPE: llm_request_type.value,
         },
     ) as span:
-        try:
-            if span.is_recording():
-                _set_input_attributes(span, llm_request_type, kwargs)
-
-        except Exception as ex:  # pylint: disable=broad-except
-            logger.warning(
-                "Failed to set input attributes for openai span, error: %s", str(ex)
-            )
+        if span.is_recording():
+            _set_input_attributes(span, llm_request_type, kwargs)
 
         response = wrapped(*args, **kwargs)
 
         if response:
-            try:
-                if span.is_recording():
-                    _set_response_attributes(span, llm_request_type, response)
-
-            except Exception as ex:  # pylint: disable=broad-except
-                logger.warning(
-                    "Failed to set response attributes for openai span, error: %s",
-                    str(ex),
-                )
             if span.is_recording():
+                _set_response_attributes(span, llm_request_type, response)
+
                 span.set_status(Status(StatusCode.OK))
 
         return response

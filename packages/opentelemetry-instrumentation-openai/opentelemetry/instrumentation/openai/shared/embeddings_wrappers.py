@@ -7,6 +7,7 @@ from opentelemetry.semconv.ai import SpanAttributes, LLMRequestTypeValues
 
 from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
 from opentelemetry.instrumentation.openai.utils import (
+    dont_throw,
     start_as_current_span_async,
     _with_embeddings_telemetry_wrapper,
 )
@@ -144,6 +145,7 @@ async def aembeddings_wrapper(
         return response
 
 
+@dont_throw
 def _handle_request(span, kwargs, instance):
     _set_request_attributes(span, kwargs)
     if should_send_prompts():
@@ -151,6 +153,7 @@ def _handle_request(span, kwargs, instance):
     _set_client_attributes(span, instance)
 
 
+@dont_throw
 def _handle_response(
     response,
     span,
@@ -217,17 +220,12 @@ def _set_prompts(span, prompt):
     if not span.is_recording() or not prompt:
         return
 
-    try:
-        if isinstance(prompt, list):
-            for i, p in enumerate(prompt):
-                _set_span_attribute(
-                    span, f"{SpanAttributes.LLM_PROMPTS}.{i}.content", p
-                )
-        else:
-            _set_span_attribute(
-                span,
-                f"{SpanAttributes.LLM_PROMPTS}.0.content",
-                prompt,
-            )
-    except Exception as ex:  # pylint: disable=broad-except
-        logger.warning("Failed to set prompts for openai span, error: %s", str(ex))
+    if isinstance(prompt, list):
+        for i, p in enumerate(prompt):
+            _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.{i}.content", p)
+    else:
+        _set_span_attribute(
+            span,
+            f"{SpanAttributes.LLM_PROMPTS}.0.content",
+            prompt,
+        )

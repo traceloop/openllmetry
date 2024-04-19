@@ -10,6 +10,7 @@ from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
 from opentelemetry.semconv.ai import SpanAttributes, LLMRequestTypeValues
 from opentelemetry.instrumentation.llamaindex.utils import (
     _with_tracer_wrapper,
+    dont_throw,
     start_as_current_span_async,
     should_send_prompts,
 )
@@ -139,6 +140,7 @@ async def acomplete_wrapper(tracer, wrapped, instance: CustomLLM, args, kwargs):
         return response
 
 
+@dont_throw
 def _handle_request(span, llm_request_type, args, kwargs, instance: CustomLLM):
     _set_span_attribute(span, SpanAttributes.LLM_VENDOR, instance.__class__.__name__)
     _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TYPE, llm_request_type.value)
@@ -164,6 +166,7 @@ def _handle_request(span, llm_request_type, args, kwargs, instance: CustomLLM):
     return
 
 
+@dont_throw
 def _handle_response(span, llm_request_type, instance, response):
     _set_span_attribute(
         span, SpanAttributes.LLM_RESPONSE_MODEL, instance.metadata.model_name
