@@ -3,6 +3,7 @@
 import logging
 from typing import Collection
 
+from opentelemetry.instrumentation.llamaindex.config import Config
 from opentelemetry.trace import get_tracer
 
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
@@ -40,6 +41,10 @@ _instruments = ("llama-index >= 0.7.0",)
 
 class LlamaIndexInstrumentor(BaseInstrumentor):
     """An instrumentor for LlamaIndex SDK."""
+
+    def __init__(self, exception_logger=None):
+        super().__init__()
+        Config.exception_logger = exception_logger
 
     def instrumentation_dependencies(self) -> Collection[str]:
         return _instruments
