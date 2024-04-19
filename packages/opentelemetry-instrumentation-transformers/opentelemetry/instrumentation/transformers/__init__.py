@@ -1,6 +1,8 @@
 """OpenTelemetry transformers instrumentation"""
+
 import logging
 from typing import Collection
+from opentelemetry.instrumentation.transformers.config import Config
 from wrapt import wrap_function_wrapper
 
 from opentelemetry.trace import get_tracer
@@ -8,7 +10,9 @@ from opentelemetry.trace import get_tracer
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.instrumentation.utils import unwrap
 
-from opentelemetry.instrumentation.transformers.text_generation_pipeline_wrapper import text_generation_pipeline_wrapper
+from opentelemetry.instrumentation.transformers.text_generation_pipeline_wrapper import (
+    text_generation_pipeline_wrapper,
+)
 from opentelemetry.instrumentation.transformers.version import __version__
 
 logger = logging.getLogger(__name__)
@@ -21,13 +25,17 @@ WRAPPED_METHODS = [
         "object": "TextGenerationPipeline",
         "method": "__call__",
         "span_name": "transformers_text_generation_pipeline.call",
-        "wrapper": text_generation_pipeline_wrapper
+        "wrapper": text_generation_pipeline_wrapper,
     }
 ]
 
 
 class TransformersInstrumentor(BaseInstrumentor):
     """An instrumentor for transformers library."""
+
+    def __init__(self, exception_logger=None):
+        super().__init__()
+        Config.exception_logger = exception_logger
 
     def instrumentation_dependencies(self) -> Collection[str]:
         return _instruments

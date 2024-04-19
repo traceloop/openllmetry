@@ -15,7 +15,7 @@ def exporter():
     provider.add_span_processor(processor)
     trace.set_tracer_provider(provider)
 
-    OpenAIInstrumentor().instrument()
+    OpenAIInstrumentor(enrich_assistant=True, enrich_token_usage=True).instrument()
 
     return exporter
 
@@ -23,3 +23,11 @@ def exporter():
 @pytest.fixture(autouse=True)
 def clear_exporter(exporter):
     exporter.clear()
+
+
+@pytest.fixture(scope="module")
+def vcr_config():
+    return {
+        "filter_headers": ["authorization", "api-key"],
+        "ignore_hosts": ["openaipublic.blob.core.windows.net"],
+    }

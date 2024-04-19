@@ -1,9 +1,17 @@
 interactions:
 - request:
-    body: '{"model": "gpt-4", "max_tokens": 100, "temperature": 0.7, "top_p": 1, "n":
-      1, "stream": false, "stop": null, "presence_penalty": 0, "frequency_penalty":
-      0, "logit_bias": {}, "messages": [{"role": "user", "content": "Tell me a joke
-      about OpenTelemetry\n"}]}'
+    body: '{"batch": [{"properties": {"libraries.haystack": "2.0.0", "os.containerized":
+      false, "os.version": "23.2.0", "os.family": "Darwin", "os.machine": "arm64",
+      "python.version": "3.12.1", "hardware.cpus": 8, "hardware.gpus": 0, "libraries.transformers":
+      false, "libraries.torch": false, "libraries.cuda": false, "libraries.pytest":
+      "8.1.0", "libraries.ipython": false, "libraries.colab": false, "pipeline_id":
+      "4342043408", "runs": 1, "components": {"haystack.components.builders.dynamic_chat_prompt_builder.DynamicChatPromptBuilder":
+      [{"name": "prompt_builder"}], "haystack.components.generators.chat.openai.OpenAIChatGenerator":
+      [{"name": "llm", "model": "gpt-4"}]}, "$lib": "posthog-python", "$lib_version":
+      "3.5.0", "$geoip_disable": true}, "timestamp": "2024-04-01T18:55:44.280804+00:00",
+      "context": {}, "distinct_id": "38bf70b0-c13e-495a-ba7d-86d91682d7af", "event":
+      "Pipeline run (2.x)"}], "historical_migration": false, "sentAt": "2024-04-01T18:55:44.785326+00:00",
+      "api_key": "phc_C44vUK9R1J6HYVdfJarTEPqVAoRPJzMXzFcj8PIrJgP"}'
     headers:
       Accept:
       - '*/*'
@@ -12,28 +20,92 @@ interactions:
       Connection:
       - keep-alive
       Content-Length:
-      - '256'
+      - '1030'
       Content-Type:
       - application/json
       User-Agent:
-      - python-requests/2.31.0
+      - posthog-python/3.5.0
+    method: POST
+    uri: https://eu-api.i.posthog.com/batch/
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA6pWKi5JLCktVrJSMKwFAAAA//8DAM5z9poNAAAA
+    headers:
+      Connection:
+      - keep-alive
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 01 Apr 2024 18:55:45 GMT
+      Transfer-Encoding:
+      - chunked
+      content-encoding:
+      - gzip
+      cross-origin-opener-policy:
+      - same-origin
+      referrer-policy:
+      - same-origin
+      server:
+      - envoy
+      vary:
+      - Accept-Encoding
+      x-content-type-options:
+      - nosniff
+      x-envoy-upstream-service-time:
+      - '7'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"messages": [{"content": "Tell me a joke about OpenTelemetry", "role":
+      "user"}], "model": "gpt-4", "stream": false}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '116'
+      content-type:
+      - application/json
+      host:
+      - api.openai.com
+      user-agent:
+      - OpenAI/Python 1.14.3
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.14.3
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.12.1
     method: POST
     uri: https://api.openai.com/v1/chat/completions
   response:
     body:
-      string: "{\n  \"id\": \"chatcmpl-8rTfG7fyWGdA5DC58aQH6ji7Z3KvN\",\n  \"object\":
-        \"chat.completion\",\n  \"created\": 1707756106,\n  \"model\": \"gpt-4-0613\",\n
-        \ \"choices\": [\n    {\n      \"index\": 0,\n      \"message\": {\n        \"role\":
-        \"assistant\",\n        \"content\": \"Why don't developers trust OpenTelemetry
-        at parties?\\n\\nBecause it always traces their steps!\"\n      },\n      \"logprobs\":
-        null,\n      \"finish_reason\": \"stop\"\n    }\n  ],\n  \"usage\": {\n    \"prompt_tokens\":
-        16,\n    \"completion_tokens\": 18,\n    \"total_tokens\": 34\n  },\n  \"system_fingerprint\":
-        null\n}\n"
+      string: !!binary |
+        H4sIAAAAAAAAA1SRT08CMRDF7/spxl68gGEFRbiYePKg4sEEEzGkdIfdQnemaQd0Q/jupsu/eOnh
+        vXmT35vuMgBlCzUGZSotpvauOxo939fT1fT1c1JszfZFNL/pdzeZxm0/qk5K8GKFRk6pG8O1dyiW
+        6WCbgFowbc2HeT4aDYeDQWvUXKBLsdJLd9Dt3ef9Y6JiazCqMXxlAAC79k1sVOCvGkOvc1JqjFGX
+        qMbnIQAV2CVF6RhtFE2iOhfTMAlSizutGiiYrgUmHukDHdYooQGk0hJiiOCdbqCyBYKmAiLi+nFG
+        M3pCozcRO1AyF+A2Zp2GLJXwUyGBVNiA0QQStEHALYZGKkvllTpy7M8FHJc+8CKVpY1zZ31pycZq
+        HlBHpgQbhf0hvs8AvttDbf51Vz5w7WUuvEZKC/O7wzp1+ZKLeds/msKi3UXvP2RHPhWbKFjPl5ZK
+        DD7Y9mqJMttnfwAAAP//AwAKkPSILAIAAA==
     headers:
       CF-Cache-Status:
       - DYNAMIC
       CF-RAY:
-      - 854647f04dc709c9-HFA
+      - 86dacb8f9da40dc6-MXP
       Cache-Control:
       - no-cache, must-revalidate
       Connection:
@@ -43,14 +115,14 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Mon, 12 Feb 2024 16:41:50 GMT
+      - Mon, 01 Apr 2024 18:55:46 GMT
       Server:
       - cloudflare
       Set-Cookie:
-      - __cf_bm=OJ7JZIU_hZoGqAL4u89b05B_P_jwglnsPY2ZkG2a.OA-1707756110-1-AeYc525nPgbJkEMH3q0s/K4RfzfA/xSmOhJorKTEBDh4O/E3mcW98Z+l1IeRfKxdwAdEYuCJjohHFVFXP/Wn134=;
-        path=/; expires=Mon, 12-Feb-24 17:11:50 GMT; domain=.api.openai.com; HttpOnly;
+      - __cf_bm=uDO60g414See5qHrhOAyqsySmHx.Z8u153EfCzR.Oi4-1711997746-1.0.1.1-ZZ6W.TFhJhaGtIQgr8ZZpDRi_vnJ1OkTrunpFsrrtAiu2jEXgtq8irYidiLu8DUm2jS5jogVPIOsp3oXjYLFEA;
+        path=/; expires=Mon, 01-Apr-24 19:25:46 GMT; domain=.api.openai.com; HttpOnly;
         Secure; SameSite=None
-      - _cfuvid=LbK8sFt2isK3urO0cOoLz2tHccsQjAdr2im2TqO9PPw-1707756110192-0-604800000;
+      - _cfuvid=pbSFBgNPjDmt3qczd6YF4wqDhYR5e_pS8rQs7EcBpOw-1711997746569-0.0.1.1-604800000;
         path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
       Transfer-Encoding:
       - chunked
@@ -63,7 +135,7 @@ interactions:
       openai-organization:
       - traceloop
       openai-processing-ms:
-      - '3696'
+      - '1792'
       openai-version:
       - '2020-10-01'
       strict-transport-security:
@@ -75,13 +147,13 @@ interactions:
       x-ratelimit-remaining-requests:
       - '4999'
       x-ratelimit-remaining-tokens:
-      - '79890'
+      - '79974'
       x-ratelimit-reset-requests:
       - 12ms
       x-ratelimit-reset-tokens:
-      - 82ms
+      - 19ms
       x-request-id:
-      - req_c62ccb52b68a2f3d0f47e6332522c2ee
+      - req_4390347143dd748392610004b9e38a35
     status:
       code: 200
       message: OK

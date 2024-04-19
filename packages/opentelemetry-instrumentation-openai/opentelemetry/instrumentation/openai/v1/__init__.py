@@ -22,6 +22,14 @@ from opentelemetry.instrumentation.openai.shared.embeddings_wrappers import (
 from opentelemetry.instrumentation.openai.shared.image_gen_wrappers import (
     image_gen_metrics_wrapper,
 )
+from opentelemetry.instrumentation.openai.v1.assistant_wrappers import (
+    assistants_create_wrapper,
+    runs_create_wrapper,
+    runs_retrieve_wrapper,
+    runs_create_and_stream_wrapper,
+    messages_list_wrapper,
+)
+
 from opentelemetry.instrumentation.openai.utils import is_metrics_enabled
 from opentelemetry.instrumentation.openai.version import __version__
 
@@ -152,7 +160,15 @@ class OpenAIV1Instrumentor(BaseInstrumentor):
         wrap_function_wrapper(
             "openai.resources.chat.completions",
             "AsyncCompletions.create",
-            achat_wrapper(tracer),
+            achat_wrapper(
+                tracer,
+                chat_token_counter,
+                chat_choice_counter,
+                chat_duration_histogram,
+                chat_exception_counter,
+                streaming_time_to_first_token,
+                streaming_time_to_generate,
+            ),
         )
         wrap_function_wrapper(
             "openai.resources.completions",
@@ -162,7 +178,13 @@ class OpenAIV1Instrumentor(BaseInstrumentor):
         wrap_function_wrapper(
             "openai.resources.embeddings",
             "AsyncEmbeddings.create",
-            aembeddings_wrapper(tracer),
+            aembeddings_wrapper(
+                tracer,
+                embeddings_token_counter,
+                embeddings_vector_size_counter,
+                embeddings_duration_histogram,
+                embeddings_exception_counter,
+            ),
         )
 
         if is_metrics_enabled():
@@ -187,6 +209,36 @@ class OpenAIV1Instrumentor(BaseInstrumentor):
                 image_gen_duration_histogram, image_gen_exception_counter
             ),
         )
+
+        # Beta APIs may not be available consistently in all versions
+        try:
+            wrap_function_wrapper(
+                "openai.resources.beta.assistants",
+                "Assistants.create",
+                assistants_create_wrapper(tracer),
+            )
+            wrap_function_wrapper(
+                "openai.resources.beta.threads.runs",
+                "Runs.create",
+                runs_create_wrapper(tracer),
+            )
+            wrap_function_wrapper(
+                "openai.resources.beta.threads.runs",
+                "Runs.retrieve",
+                runs_retrieve_wrapper(tracer),
+            )
+            wrap_function_wrapper(
+                "openai.resources.beta.threads.runs",
+                "Runs.create_and_stream",
+                runs_create_and_stream_wrapper(tracer),
+            )
+            wrap_function_wrapper(
+                "openai.resources.beta.threads.messages",
+                "Messages.list",
+                messages_list_wrapper(tracer),
+            )
+        except AttributeError:
+            pass
 
     def _uninstrument(self, **kwargs):
         pass

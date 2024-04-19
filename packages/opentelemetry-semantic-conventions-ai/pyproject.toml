@@ -8,7 +8,7 @@ show_missing = true
 
 [tool.poetry]
 name = "opentelemetry-semantic-conventions-ai"
-version = "0.0.23"
+version = "0.1.1"
 description = "OpenTelemetry Semantic Conventions Extension for Large Language Models"
 authors = [
   "Gal Kleinman <gal@traceloop.com>",
@@ -22,7 +22,7 @@ readme = "README.md"
 include = "opentelemetry/semconv/ai"
 
 [tool.poetry.dependencies]
-python = ">=3.8.1,<4"
+python = ">=3.9,<4"
 
 [tool.poetry.group.dev.dependencies]
 autopep8 = "2.0.4"

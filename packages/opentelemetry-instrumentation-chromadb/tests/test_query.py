@@ -79,27 +79,20 @@ def test_chroma_query(exporter, collection):
     assert span.attributes.get("db.chroma.query.where") == "{'source': 'student info'}"
 
     events = span.events
-    assert len(events) > 0
-    for i, event in enumerate(events):
-        assert event.name == f"vector_db.query.result.{i}"
-        ids = event.attributes.get(f"{event.name}.ids")
-        distances = event.attributes.get(f"{event.name}.distances")
-        documents = event.attributes.get(f"{event.name}.documents")
+    assert len(events) == 1
+    for event in events:
+        assert event.name == "db.query.result"
+        ids_ = event.attributes.get(f"{event.name}.id")
+        distance = event.attributes.get(f"{event.name}.distance")
+        document = event.attributes.get(f"{event.name}.document")
 
-        # We have lists of same length as result
-        assert len(ids) > 0
-        assert len(ids) == len(distances)
-        assert len(distances) == len(documents)
+        assert len(ids_) > 0
+        assert isinstance(ids_, str)
 
-        for id_ in ids:
-            assert len(id_) > 0
+        assert distance >= 0
 
-        for distance in distances:
-            assert distance >= 0
-
-        for document in documents:
-            assert len(document) > 0
-            assert isinstance(document, str)
+        assert len(document) > 0
+        assert isinstance(document, str)
 
 
 def test_chroma_query_segment_query(exporter, collection):
@@ -111,8 +104,8 @@ def test_chroma_query_segment_query(exporter, collection):
     assert len(span.attributes.get("db.chroma.query.segment._query.collection_id")) > 0
     events = span.events
     assert len(events) > 0
-    for i, event in enumerate(events):
-        assert event.name == f"vector_db.query.embeddings.{i}"
+    for event in events:
+        assert event.name == "db.query.embeddings"
         embeddings = json.loads(event.attributes.get(f"{event.name}.vector"))
         assert len(embeddings) > 100
         for number in embeddings:

@@ -1,8 +1,11 @@
 """OpenTelemetry Vertex AI instrumentation"""
+
 import logging
 import os
 import types
 from typing import Collection
+from opentelemetry.instrumentation.vertexai.config import Config
+from opentelemetry.instrumentation.vertexai.utils import dont_throw
 from wrapt import wrap_function_wrapper
 
 from opentelemetry import context as context_api
@@ -142,6 +145,7 @@ def _set_input_attributes(span, args, kwargs):
     return
 
 
+@dont_throw
 def _set_response_attributes(span, response):
     _set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, llm_model)
 
@@ -214,28 +218,17 @@ async def _abuild_from_streaming_response(span, response):
     span.end()
 
 
+@dont_throw
 def _handle_request(span, args, kwargs):
-    try:
-        if span.is_recording():
-            _set_input_attributes(span, args, kwargs)
-
-    except Exception as ex:  # pylint: disable=broad-except
-        logger.warning(
-            "Failed to set input attributes for VertexAI span, error: %s", str(ex)
-        )
-
-
-def _handle_response(span, response):
-    try:
-        if span.is_recording():
-            _set_response_attributes(span, response)
-
-    except Exception as ex:  # pylint: disable=broad-except
-        logger.warning(
-            "Failed to set response attributes for VertexAI span, error: %s",
-            str(ex),
-        )
     if span.is_recording():
+        _set_input_attributes(span, args, kwargs)
+
+
+@dont_throw
+def _handle_response(span, response):
+    if span.is_recording():
+        _set_response_attributes(span, response)
+
         span.set_status(Status(StatusCode.OK))
 
 
@@ -344,6 +337,10 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
 class VertexAIInstrumentor(BaseInstrumentor):
     """An instrumentor for VertextAI's client library."""
 
+    def __init__(self, exception_logger=None):
+        super().__init__()
+        Config.exception_logger = exception_logger
+
     def instrumentation_dependencies(self) -> Collection[str]:
         return _instruments
 
@@ -358,7 +355,11 @@ class VertexAIInstrumentor(BaseInstrumentor):
             wrap_function_wrapper(
                 wrap_package,
                 f"{wrap_object}.{wrap_method}",
-                _awrap(tracer, wrapped_method) if wrap_method == 'predict_async' else _wrap(tracer, wrapped_method),
+                (
+                    _awrap(tracer, wrapped_method)
+                    if wrap_method == "predict_async"
+                    else _wrap(tracer, wrapped_method)
+                ),
             )
 
     def _uninstrument(self, **kwargs):

@@ -1,3 +1,168 @@
+## v0.16.5 (2024-04-17)
+
+### Fix
+
+- **sdk**: warn for reporting score when not using Traceloop (#829)
+- **openai**: fix aembeddings init error (#828)
+- **openai**: missing aembedding metrics
+
+## v0.16.4 (2024-04-15)
+
+### Fix
+
+- **anthropic**: fix issue with disabled metrics (#820)
+
+## v0.16.3 (2024-04-15)
+
+### Fix
+
+- **openai**: missing metrics for OpenAI v0 instrumentation (#818)
+
+## v0.16.2 (2024-04-14)
+
+### Fix
+
+- **bedrock**: enrich token usage for anthropic calls (#805)
+- **langchain**: use chain names if exist (#804)
+
+## v0.16.1 (2024-04-11)
+
+### Fix
+
+- **llamaindex**: proper support for custom LLMs (#776)
+- **anthropic**: prompt attribute name (#775)
+- **langchain**: BedrockChat model name should be model_id (#763)
+
+## v0.16.0 (2024-04-10)
+
+### Feat
+
+- **instrumentation-anthropic**: Support for OpenTelemetry metrics for Anthropic (#764)
+
+### Fix
+
+- **bedrock**: support anthropic v3 (#770)
+
+## v0.15.13 (2024-04-08)
+
+### Fix
+
+- **sdk**: custom instruments missing parameters (#769)
+- **sdk**: import of removed method
+- **sdk**: removed deprecated set_context
+
+## v0.15.12 (2024-04-08)
+
+### Fix
+
+- **anthropic**: do not fail for missing methods
+- **anthropic**: Async and streaming Anthropic (#750)
+
+## v0.15.11 (2024-04-04)
+
+### Fix
+
+- **openai**: async streaming metrics (#749)
+
+## v0.15.10 (2024-04-04)
+
+### Fix
+
+- **anthropic**: token usage (#747)
+
+## v0.15.9 (2024-04-03)
+
+### Fix
+
+- **openai**: switch to init flag for token usage enrichment (#745)
+- **anthropic**: support multi-modal (#746)
+- **langchain**: instrument chat models (#741)
+
+## v0.15.8 (2024-04-03)
+
+### Fix
+
+- bump otel -> 0.45.0 (#740)
+
+## v0.15.7 (2024-04-03)
+
+### Fix
+
+- enrich spans with related entity name + support entities nesting (#713)
+
+## v0.15.6 (2024-04-02)
+
+### Fix
+
+- **sdk**: stricter dependencies for instrumentations
+
+## v0.15.5 (2024-04-02)
+
+### Fix
+
+- **openai**: missing metric for v0 instrumentation (#735)
+
+## v0.15.4 (2024-03-31)
+
+### Fix
+
+- **traceloop-sdk**: default value for metrics endpoint (#711)
+
+## v0.15.3 (2024-03-28)
+
+### Fix
+
+- instrumentation deps without the SDK (#707)
+- **langchain**: support custom models (#706)
+
+## v0.15.2 (2024-03-27)
+
+### Fix
+
+- **openai**: enrich assistant data if not available (#705)
+
+## v0.15.1 (2024-03-27)
+
+### Fix
+
+- **openai**: support pre-created assistants (#701)
+
+## v0.15.0 (2024-03-26)
+
+### Feat
+
+- **openai**: assistants API (#673)
+- **pinecone**: instrument pinecone query embeddings (#368)
+
+### Fix
+
+- **traceloop-sdk**: custom span processor's on_start is honored (#695)
+- **openai**: do not import tiktoken if not used
+- **sdk**: exclude api.traceloop.com from requests
+- **openai**: Support report token usage in stream mode (#661)
+
+## v0.14.5 (2024-03-21)
+
+### Fix
+
+- **anthropic**: support messages API (#671)
+
+## v0.14.4 (2024-03-21)
+
+### Fix
+
+- auto-instrumentation support (#662)
+- **sample**: poetry issues; litellm sample
+- **sdk**: better logging for otel metrics
+- **sdk**: error for manually providing instrumentation list
+
+## v0.14.3 (2024-03-17)
+
+### Fix
+
+- support python 3.12 (#639)
+- **traceloop-sdk**: Log error message when providing wrong API key. (#638)
+
 ## v0.14.2 (2024-03-15)
 
 ### Fix

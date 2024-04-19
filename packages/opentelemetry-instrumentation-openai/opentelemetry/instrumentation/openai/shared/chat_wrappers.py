@@ -8,8 +8,8 @@ from opentelemetry.semconv.ai import SpanAttributes, LLMRequestTypeValues
 
 from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
 from opentelemetry.instrumentation.openai.utils import (
-    _with_tracer_wrapper,
     _with_chat_telemetry_wrapper,
+    dont_throw,
 )
 from opentelemetry.instrumentation.openai.shared import (
     _set_client_attributes,
@@ -23,6 +23,9 @@ from opentelemetry.instrumentation.openai.shared import (
     model_as_dict,
     _get_openai_base_url,
     OPENAI_LLM_USAGE_TOKEN_TYPES,
+    should_record_stream_token_usage,
+    get_token_count_from_string,
+    _set_span_stream_usage,
 )
 from opentelemetry.trace import SpanKind, Tracer
 from opentelemetry.trace.status import Status, StatusCode
@@ -92,6 +95,7 @@ def chat_wrapper(
             streaming_time_to_first_token,
             streaming_time_to_generate,
             start_time,
+            kwargs,
         )
 
     duration = end_time - start_time
@@ -110,8 +114,20 @@ def chat_wrapper(
     return response
 
 
-@_with_tracer_wrapper
-async def achat_wrapper(tracer, wrapped, instance, args, kwargs):
+@_with_chat_telemetry_wrapper
+async def achat_wrapper(
+    tracer: Tracer,
+    token_counter: Counter,
+    choice_counter: Counter,
+    duration_histogram: Histogram,
+    exception_counter: Counter,
+    streaming_time_to_first_token: Histogram,
+    streaming_time_to_generate: Histogram,
+    wrapped,
+    instance,
+    args,
+    kwargs,
+):
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
         return wrapped(*args, **kwargs)
 
@@ -121,18 +137,58 @@ async def achat_wrapper(tracer, wrapped, instance, args, kwargs):
         attributes={SpanAttributes.LLM_REQUEST_TYPE: LLM_REQUEST_TYPE.value},
     )
     _handle_request(span, kwargs, instance)
-    response = await wrapped(*args, **kwargs)
+
+    try:
+        start_time = time.time()
+        response = await wrapped(*args, **kwargs)
+        end_time = time.time()
+    except Exception as e:  # pylint: disable=broad-except
+        end_time = time.time()
+        duration = end_time - start_time if "start_time" in locals() else 0
+
+        attributes = {
+            "error.type": e.__class__.__name__,
+        }
+
+        if duration > 0 and duration_histogram:
+            duration_histogram.record(duration, attributes=attributes)
+        if exception_counter:
+            exception_counter.add(1, attributes=attributes)
+
+        raise e
 
     if is_streaming_response(response):
         # span will be closed after the generator is done
-        return _abuild_from_streaming_response(span, response)
+        return _abuild_from_streaming_response(
+            span,
+            response,
+            instance,
+            token_counter,
+            choice_counter,
+            duration_histogram,
+            streaming_time_to_first_token,
+            streaming_time_to_generate,
+            start_time,
+            kwargs,
+        )
 
-    _handle_response(response, span)
+    duration = end_time - start_time
+
+    _handle_response(
+        response,
+        span,
+        instance,
+        token_counter,
+        choice_counter,
+        duration_histogram,
+        duration,
+    )
     span.end()
 
     return response
 
 
+@dont_throw
 def _handle_request(span, kwargs, instance):
     _set_request_attributes(span, kwargs)
     _set_client_attributes(span, instance)
@@ -144,6 +200,7 @@ def _handle_request(span, kwargs, instance):
             set_tools_attributes(span, kwargs.get("tools"))
 
 
+@dont_throw
 def _handle_response(
     response,
     span,
@@ -224,18 +281,15 @@ def _set_prompts(span, messages):
     if not span.is_recording() or messages is None:
         return
 
-    try:
-        for i, msg in enumerate(messages):
-            prefix = f"{SpanAttributes.LLM_PROMPTS}.{i}"
-            if isinstance(msg.get("content"), str):
-                content = msg.get("content")
-            elif isinstance(msg.get("content"), list):
-                content = json.dumps(msg.get("content"))
+    for i, msg in enumerate(messages):
+        prefix = f"{SpanAttributes.LLM_PROMPTS}.{i}"
+        if isinstance(msg.get("content"), str):
+            content = msg.get("content")
+        elif isinstance(msg.get("content"), list):
+            content = json.dumps(msg.get("content"))
 
-            _set_span_attribute(span, f"{prefix}.role", msg.get("role"))
-            _set_span_attribute(span, f"{prefix}.content", content)
-    except Exception as ex:  # pylint: disable=broad-except
-        logger.warning("Failed to set prompts for openai span, error: %s", str(ex))
+        _set_span_attribute(span, f"{prefix}.role", msg.get("role"))
+        _set_span_attribute(span, f"{prefix}.content", content)
 
 
 def _set_completions(span, choices):
@@ -281,6 +335,62 @@ def _set_completions(span, choices):
             )
 
 
+def _set_streaming_token_metrics(
+    request_kwargs, complete_response, span, token_counter, shared_attributes
+):
+    # use tiktoken calculate token usage
+    if not should_record_stream_token_usage():
+        return
+
+    # kwargs={'model': 'gpt-3.5', 'messages': [{'role': 'user', 'content': '...'}], 'stream': True}
+    prompt_usage = -1
+    completion_usage = -1
+
+    # prompt_usage
+    if request_kwargs and request_kwargs.get("messages"):
+        prompt_content = ""
+        model_name = request_kwargs.get("model") or None
+        for msg in request_kwargs.get("messages"):
+            if msg.get("content"):
+                prompt_content += msg.get("content")
+        if model_name:
+            prompt_usage = get_token_count_from_string(prompt_content, model_name)
+
+    # completion_usage
+    if complete_response.get("choices"):
+        completion_content = ""
+        model_name = complete_response.get("model") or None
+
+        for choice in complete_response.get("choices"):
+            if choice.get("message") and choice.get("message").get("content"):
+                completion_content += choice["message"]["content"]
+
+        if model_name:
+            completion_usage = get_token_count_from_string(
+                completion_content, model_name
+            )
+
+    # span record
+    _set_span_stream_usage(span, prompt_usage, completion_usage)
+
+    # metrics record
+    if token_counter:
+        if type(prompt_usage) is int and prompt_usage >= 0:
+            attributes_with_token_type = {
+                **shared_attributes,
+                "llm.usage.token_type": "prompt",
+            }
+            token_counter.add(prompt_usage, attributes=attributes_with_token_type)
+
+        if type(completion_usage) is int and completion_usage >= 0:
+            attributes_with_token_type = {
+                **shared_attributes,
+                "llm.usage.token_type": "completion",
+            }
+            token_counter.add(completion_usage, attributes=attributes_with_token_type)
+
+
+@dont_throw
 def _build_from_streaming_response(
     span,
     response,
@@ -291,6 +401,7 @@ def _build_from_streaming_response(
     streaming_time_to_first_token=None,
     streaming_time_to_generate=None,
     start_time=None,
+    request_kwargs=None,
 ):
     complete_response = {"choices": [], "model": ""}
 
@@ -317,7 +428,10 @@ def _build_from_streaming_response(
         "stream": True,
     }
 
-    # can't get token usage in stream mode
+    _set_streaming_token_metrics(
+        request_kwargs, complete_response, span, token_counter, shared_attributes
+    )
+
     # choice metrics
     if choice_counter and complete_response.get("choices"):
         _set_choice_counter_metrics(
@@ -343,13 +457,63 @@ def _build_from_streaming_response(
     span.end()
 
 
-async def _abuild_from_streaming_response(span, response):
+@dont_throw
+async def _abuild_from_streaming_response(
+    span,
+    response,
+    instance=None,
+    token_counter=None,
+    choice_counter=None,
+    duration_histogram=None,
+    streaming_time_to_first_token=None,
+    streaming_time_to_generate=None,
+    start_time=None,
+    request_kwargs=None,
+):
     complete_response = {"choices": [], "model": ""}
+
+    first_token = True
+    time_of_first_token = start_time  # will be updated when first token is received
+
     async for item in response:
+        span.add_event(name="llm.content.completion.chunk")
+
         item_to_yield = item
+
+        if first_token and streaming_time_to_first_token:
+            time_of_first_token = time.time()
+            streaming_time_to_first_token.record(time_of_first_token - start_time)
+            first_token = False
+
         _accumulate_stream_items(item, complete_response)
 
         yield item_to_yield
+
+    shared_attributes = {
+        "llm.response.model": complete_response.get("model") or None,
+        "server.address": _get_openai_base_url(instance),
+        "stream": True,
+    }
+
+    _set_streaming_token_metrics(
+        request_kwargs, complete_response, span, token_counter, shared_attributes
+    )
+
+    # choice metrics
+    if choice_counter and complete_response.get("choices"):
+        _set_choice_counter_metrics(
+            choice_counter, complete_response.get("choices"), shared_attributes
+        )
+
+    # duration metrics
+    if start_time and isinstance(start_time, (float, int)):
+        duration = time.time() - start_time
+    else:
+        duration = None
+    if duration and isinstance(duration, (float, int)) and duration_histogram:
+        duration_histogram.record(duration, attributes=shared_attributes)
+    if streaming_time_to_generate and time_of_first_token:
+        streaming_time_to_generate.record(time.time() - time_of_first_token)
 
     _set_response_attributes(span, complete_response)
 
@@ -378,7 +542,10 @@ def _accumulate_stream_items(item, complete_response):
 
         delta = choice.get("delta")
 
-        if delta.get("content"):
+        if delta and delta.get("content"):
             complete_choice["message"]["content"] += delta.get("content")
-        if delta.get("role"):
+        if delta and delta.get("role"):
             complete_choice["message"]["role"] = delta.get("role")
+
+        if choice.get("content_filter_results"):
+            complete_choice["message"]["content"] = "FILTERED"

@@ -5,7 +5,7 @@ from opentelemetry import context as context_api
 from opentelemetry.semconv.ai import SpanAttributes, LLMRequestTypeValues
 
 from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
-from opentelemetry.instrumentation.openai.utils import _with_tracer_wrapper
+from opentelemetry.instrumentation.openai.utils import _with_tracer_wrapper, dont_throw
 from opentelemetry.instrumentation.openai.shared import (
     _set_client_attributes,
     _set_request_attributes,
@@ -15,6 +15,9 @@ from opentelemetry.instrumentation.openai.shared import (
     is_streaming_response,
     should_send_prompts,
     model_as_dict,
+    should_record_stream_token_usage,
+    get_token_count_from_string,
+    _set_span_stream_usage,
 )
 
 from opentelemetry.instrumentation.openai.utils import is_openai_v1
@@ -45,7 +48,7 @@ def completion_wrapper(tracer, wrapped, instance, args, kwargs):
 
     if is_streaming_response(response):
         # span will be closed after the generator is done
-        return _build_from_streaming_response(span, response)
+        return _build_from_streaming_response(span, kwargs, response)
     else:
         _handle_response(response, span)
 
@@ -69,7 +72,7 @@ async def acompletion_wrapper(tracer, wrapped, instance, args, kwargs):
 
     if is_streaming_response(response):
         # span will be closed after the generator is done
-        return _abuild_from_streaming_response(span, response)
+        return _abuild_from_streaming_response(span, kwargs, response)
     else:
         _handle_response(response, span)
 
@@ -77,6 +80,7 @@ async def acompletion_wrapper(tracer, wrapped, instance, args, kwargs):
     return response
 
 
+@dont_throw
 def _handle_request(span, kwargs, instance):
     _set_request_attributes(span, kwargs)
     if should_send_prompts():
@@ -85,6 +89,7 @@ def _handle_request(span, kwargs, instance):
     _set_client_attributes(span, instance)
 
 
+@dont_throw
 def _handle_response(response, span):
     if is_openai_v1():
         response_dict = model_as_dict(response)
@@ -101,53 +106,37 @@ def _set_prompts(span, prompt):
     if not span.is_recording() or not prompt:
         return
 
-    try:
-        _set_span_attribute(
-            span,
-            f"{SpanAttributes.LLM_PROMPTS}.0.user",
-            prompt[0] if isinstance(prompt, list) else prompt,
-        )
-    except Exception as ex:  # pylint: disable=broad-except
-        logger.warning("Failed to set prompts for openai span, error: %s", str(ex))
+    _set_span_attribute(
+        span,
+        f"{SpanAttributes.LLM_PROMPTS}.0.user",
+        prompt[0] if isinstance(prompt, list) else prompt,
+    )
 
 
+@dont_throw
 def _set_completions(span, choices):
     if not span.is_recording() or not choices:
         return
 
-    try:
-        for choice in choices:
-            index = choice.get("index")
-            prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{index}"
-            _set_span_attribute(
-                span, f"{prefix}.finish_reason", choice.get("finish_reason")
-            )
-            _set_span_attribute(span, f"{prefix}.content", choice.get("text"))
-    except Exception as e:
-        logger.warning("Failed to set completion attributes, error: %s", str(e))
+    for choice in choices:
+        index = choice.get("index")
+        prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{index}"
+        _set_span_attribute(
+            span, f"{prefix}.finish_reason", choice.get("finish_reason")
+        )
+        _set_span_attribute(span, f"{prefix}.content", choice.get("text"))
 
 
-def _build_from_streaming_response(span, response):
+@dont_throw
+def _build_from_streaming_response(span, request_kwargs, response):
     complete_response = {"choices": [], "model": ""}
     for item in response:
-        item_to_yield = item
-        if is_openai_v1():
-            item = model_as_dict(item)
-
-        for choice in item.get("choices"):
-            index = choice.get("index")
-            if len(complete_response.get("choices")) <= index:
-                complete_response["choices"].append({"index": index, "text": ""})
-            complete_choice = complete_response.get("choices")[index]
-            if choice.get("finish_reason"):
-                complete_choice["finish_reason"] = choice.get("finish_reason")
-
-            if choice.get("text"):
-                complete_choice["text"] += choice.get("text")
-
-        yield item_to_yield
+        yield item
+        _accumulate_streaming_response(complete_response, item)
 
     _set_response_attributes(span, complete_response)
+
+    _set_token_usage(span, request_kwargs, complete_response)
 
     if should_send_prompts():
         _set_completions(span, complete_response.get("choices"))
@@ -156,29 +145,73 @@ def _build_from_streaming_response(span, response):
     span.end()
 
 
-async def _abuild_from_streaming_response(span, response):
+@dont_throw
+async def _abuild_from_streaming_response(span, request_kwargs, response):
     complete_response = {"choices": [], "model": ""}
     async for item in response:
-        item_to_yield = item
-        if is_openai_v1():
-            item = model_as_dict(item)
-
-        for choice in item.get("choices"):
-            index = choice.get("index")
-            if len(complete_response.get("choices")) <= index:
-                complete_response["choices"].append({"index": index, "text": ""})
-            complete_choice = complete_response.get("choices")[index]
-            if choice.get("finish_reason"):
-                complete_choice["finish_reason"] = choice.get("finish_reason")
-
-            complete_choice["text"] += choice.get("text")
-
-        yield item_to_yield
+        yield item
+        _accumulate_streaming_response(complete_response, item)
 
     _set_response_attributes(span, complete_response)
+
+    _set_token_usage(span, request_kwargs, complete_response)
 
     if should_send_prompts():
         _set_completions(span, complete_response.get("choices"))
 
     span.set_status(Status(StatusCode.OK))
     span.end()
+
+
+@dont_throw
+def _set_token_usage(span, request_kwargs, complete_response):
+    # use tiktoken calculate token usage
+    if should_record_stream_token_usage():
+        prompt_usage = -1
+        completion_usage = -1
+
+        # prompt_usage
+        if request_kwargs and request_kwargs.get("prompt"):
+            prompt_content = request_kwargs.get("prompt")
+            model_name = request_kwargs.get("model") or None
+
+            if model_name:
+                prompt_usage = get_token_count_from_string(prompt_content, model_name)
+
+        # completion_usage
+        if complete_response.get("choices"):
+            completion_content = ""
+            model_name = complete_response.get("model") or None
+
+            for choice in complete_response.get("choices"):
+                if choice.get("text"):
+                    completion_content += choice.get("text")
+
+            if model_name:
+                completion_usage = get_token_count_from_string(
+                    completion_content, model_name
+                )
+
+        # span record
+        _set_span_stream_usage(span, prompt_usage, completion_usage)
+
+
+@dont_throw
+def _accumulate_streaming_response(complete_response, item):
+    if is_openai_v1():
+        item = model_as_dict(item)
+
+    complete_response["model"] = item.get("model")
+
+    for choice in item.get("choices"):
+        index = choice.get("index")
+        if len(complete_response.get("choices")) <= index:
+            complete_response["choices"].append({"index": index, "text": ""})
+        complete_choice = complete_response.get("choices")[index]
+        if choice.get("finish_reason"):
+            complete_choice["finish_reason"] = choice.get("finish_reason")
+
+        if choice.get("text"):
+            complete_choice["text"] += choice.get("text")
+
+    return complete_response

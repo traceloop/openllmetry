@@ -1,10 +1,11 @@
+from opentelemetry.instrumentation.chromadb.utils import dont_throw
 from opentelemetry.semconv.trace import SpanAttributes
-from opentelemetry.semconv.ai import Events, EventAttributes
 
 from opentelemetry import context as context_api
 from opentelemetry.instrumentation.utils import (
     _SUPPRESS_INSTRUMENTATION_KEY,
 )
+from opentelemetry.semconv.ai import EventAttributes, Events
 import itertools
 import json
 
@@ -97,87 +98,208 @@ def count_or_none(obj):
     return None
 
 
+@dont_throw
 def _set_add_attributes(span, kwargs):
-    _set_span_attribute(span, "db.chroma.add.ids_count", count_or_none(kwargs.get("ids")))
-    _set_span_attribute(span, "db.chroma.add.embeddings_count", count_or_none(kwargs.get("embeddings")))
-    _set_span_attribute(span, "db.chroma.add.metadatas_count", count_or_none(kwargs.get("metadatas")))
-    _set_span_attribute(span, "db.chroma.add.documents_count", count_or_none(kwargs.get("documents")))
+    _set_span_attribute(
+        span, "db.chroma.add.ids_count", count_or_none(kwargs.get("ids"))
+    )
+    _set_span_attribute(
+        span, "db.chroma.add.embeddings_count", count_or_none(kwargs.get("embeddings"))
+    )
+    _set_span_attribute(
+        span, "db.chroma.add.metadatas_count", count_or_none(kwargs.get("metadatas"))
+    )
+    _set_span_attribute(
+        span, "db.chroma.add.documents_count", count_or_none(kwargs.get("documents"))
+    )
 
 
+@dont_throw
 def _set_get_attributes(span, kwargs):
-    _set_span_attribute(span, "db.chroma.get.ids_count", count_or_none(kwargs.get("ids")))
+    _set_span_attribute(
+        span, "db.chroma.get.ids_count", count_or_none(kwargs.get("ids"))
+    )
     _set_span_attribute(span, "db.chroma.get.where", _encode_where(kwargs.get("where")))
     _set_span_attribute(span, "db.chroma.get.limit", kwargs.get("limit"))
     _set_span_attribute(span, "db.chroma.get.offset", kwargs.get("offset"))
-    _set_span_attribute(span, "db.chroma.get.where_document", _encode_where_document(kwargs.get("where_document")))
-    _set_span_attribute(span, "db.chroma.get.include", _encode_include(kwargs.get("include")))
+    _set_span_attribute(
+        span,
+        "db.chroma.get.where_document",
+        _encode_where_document(kwargs.get("where_document")),
+    )
+    _set_span_attribute(
+        span, "db.chroma.get.include", _encode_include(kwargs.get("include"))
+    )
 
 
+@dont_throw
 def _set_peek_attributes(span, kwargs):
     _set_span_attribute(span, "db.chroma.peek.limit", kwargs.get("limit"))
 
 
+@dont_throw
 def _set_query_attributes(span, kwargs):
-    _set_span_attribute(span, "db.chroma.query.query_embeddings_count", count_or_none(kwargs.get("query_embeddings")))
-    _set_span_attribute(span, "db.chroma.query.query_texts_count", count_or_none(kwargs.get("query_texts")))
+    _set_span_attribute(
+        span,
+        "db.chroma.query.query_embeddings_count",
+        count_or_none(kwargs.get("query_embeddings")),
+    )
+    _set_span_attribute(
+        span,
+        "db.chroma.query.query_texts_count",
+        count_or_none(kwargs.get("query_texts")),
+    )
     _set_span_attribute(span, "db.chroma.query.n_results", kwargs.get("n_results"))
-    _set_span_attribute(span, "db.chroma.query.where", _encode_where(kwargs.get("where")))
-    _set_span_attribute(span, "db.chroma.query.where_document", _encode_where_document(kwargs.get("where_document")))
-    _set_span_attribute(span, "db.chroma.query.include", _encode_include(kwargs.get("include")))
+    _set_span_attribute(
+        span, "db.chroma.query.where", _encode_where(kwargs.get("where"))
+    )
+    _set_span_attribute(
+        span,
+        "db.chroma.query.where_document",
+        _encode_where_document(kwargs.get("where_document")),
+    )
+    _set_span_attribute(
+        span, "db.chroma.query.include", _encode_include(kwargs.get("include"))
+    )
 
 
+@dont_throw
 def _set_segment_query_attributes(span, kwargs):
-    _set_span_attribute(span, "db.chroma.query.segment._query.collection_id", str(kwargs.get("collection_id")))
+    _set_span_attribute(
+        span,
+        "db.chroma.query.segment._query.collection_id",
+        str(kwargs.get("collection_id")),
+    )
 
 
+@dont_throw
 def _add_segment_query_embeddings_events(span, kwargs):
     for i, embeddings in enumerate(kwargs.get("query_embeddings", [])):
         span.add_event(
-            name=f"{Events.VECTOR_DB_QUERY_EMBEDDINGS.value}.{i}",
+            name=Events.DB_QUERY_EMBEDDINGS.value,
             attributes={
-                f"{Events.VECTOR_DB_QUERY_EMBEDDINGS.value}.{i}.vector": json.dumps(embeddings)
-            }
+                EventAttributes.DB_QUERY_EMBEDDINGS_VECTOR.value: json.dumps(embeddings)
+            },
         )
 
 
+@dont_throw
 def _add_query_result_events(span, kwargs):
+    """
+    There's a lot of logic here involved in converting the query result
+    format from ChromaDB into the canonical format (taken from Pinecone)
+
+    This is because Chroma query result looks like this:
+
+        {
+           ids: [1, 2, 3...],
+           distances: [0.3, 0.5, 0.6...],
+           metadata: ["some metadata text", "another metadata text",...],
+           documents: ["retrieved text", "retrieved text2", ...]
+        }
+
+    We'd like instead to log it like this:
+
+        [
+            {"id": 1, "distance": 0.3,  "document": "retrieved text", "metadata": "some metadata text",
+            {"id": 2, "distance" 0.5, , "document": "retrieved text2": "another metadata text",
+            {"id": 3, "distance": 0.6, "document": ..., "metadata": ...
+        ]
+
+    If you'd like to understand better why, please read the discussions on PR #370:
+    https://github.com/traceloop/openllmetry/pull/370
+
+    The goal is to set a canonical format which we call as a Semantic Convention.
+    """
     zipped = itertools.zip_longest(
         kwargs.get("ids", []),
         kwargs.get("distances", []),
-        kwargs.get("metadata", []),
-        kwargs.get("documents", [])
+        kwargs.get("metadatas", []),
+        kwargs.get("documents", []),
     )
-    for i, tuple_ in enumerate(zipped):
-        span.add_event(
-            name=f"{Events.VECTOR_DB_QUERY_RESULT.value}.{i}",
-            attributes={
-                f"{EventAttributes.VECTOR_DB_QUERY_RESULT_IDS.value.format(i=i)}": tuple_[0] or [],
-                f"{EventAttributes.VECTOR_DB_QUERY_RESULT_DISTANCES.value.format(i=i)}": tuple_[1] or [],
-                f"{EventAttributes.VECTOR_DB_QUERY_RESULT_METADATA.value.format(i=i)}": tuple_[2] or [],
-                f"{EventAttributes.VECTOR_DB_QUERY_RESULT_DOCUMENTS.value.format(i=i)}": tuple_[3] or [],
-            }
-        )
+    zipped = list(zipped)
+    for tuple_ in zipped:
+        attributes = {
+            EventAttributes.DB_QUERY_RESULT_ID.value: None,
+            EventAttributes.DB_QUERY_RESULT_DISTANCE.value: None,
+            EventAttributes.DB_QUERY_RESULT_METADATA.value: None,
+            EventAttributes.DB_QUERY_RESULT_DOCUMENT.value: None,
+        }
+
+        attributes_order = ["ids", "distances", "metadatas", "documents"]
+        attributes_mapping_to_canonical_format = {
+            "ids": EventAttributes.DB_QUERY_RESULT_ID.value,
+            "distances": EventAttributes.DB_QUERY_RESULT_DISTANCE.value,
+            "metadatas": EventAttributes.DB_QUERY_RESULT_METADATA.value,
+            "documents": EventAttributes.DB_QUERY_RESULT_DOCUMENT.value,
+        }
+        for j, attr in enumerate(tuple_):
+            original_attribute_name = attributes_order[j]
+            canonical_name = attributes_mapping_to_canonical_format[
+                original_attribute_name
+            ]
+            try:
+                value = attr[0]
+                if isinstance(value, dict):
+                    value = json.dumps(value)
+
+                attributes[canonical_name] = value
+            except (IndexError, TypeError):
+                # Don't send missing values as nulls, OpenTelemetry dislikes them!
+                del attributes[canonical_name]
+
+        span.add_event(name=Events.DB_QUERY_RESULT.value, attributes=attributes)
 
 
+@dont_throw
 def _set_modify_attributes(span, kwargs):
     _set_span_attribute(span, "db.chroma.modify.name", kwargs.get("name"))
     # TODO: Add metadata attribute
 
 
+@dont_throw
 def _set_update_attributes(span, kwargs):
-    _set_span_attribute(span, "db.chroma.update.ids_count", count_or_none(kwargs.get("ids")))
-    _set_span_attribute(span, "db.chroma.update.embeddings_count", count_or_none(kwargs.get("embeddings")))
-    _set_span_attribute(span, "db.chroma.update.metadatas_count", count_or_none(kwargs.get("metadatas")))
-    _set_span_attribute(span, "db.chroma.update.documents_count", count_or_none(kwargs.get("documents")))
+    _set_span_attribute(
+        span, "db.chroma.update.ids_count", count_or_none(kwargs.get("ids"))
+    )
+    _set_span_attribute(
+        span,
+        "db.chroma.update.embeddings_count",
+        count_or_none(kwargs.get("embeddings")),
+    )
+    _set_span_attribute(
+        span, "db.chroma.update.metadatas_count", count_or_none(kwargs.get("metadatas"))
+    )
+    _set_span_attribute(
+        span, "db.chroma.update.documents_count", count_or_none(kwargs.get("documents"))
+    )
 
 
+@dont_throw
 def _set_upsert_attributes(span, kwargs):
-    _set_span_attribute(span, "db.chroma.upsert.embeddings_count", count_or_none(kwargs.get("embeddings")))
-    _set_span_attribute(span, "db.chroma.upsert.metadatas_count", count_or_none(kwargs.get("metadatas")))
-    _set_span_attribute(span, "db.chroma.upsert.documents_count", count_or_none(kwargs.get("documents")))
+    _set_span_attribute(
+        span,
+        "db.chroma.upsert.embeddings_count",
+        count_or_none(kwargs.get("embeddings")),
+    )
+    _set_span_attribute(
+        span, "db.chroma.upsert.metadatas_count", count_or_none(kwargs.get("metadatas"))
+    )
+    _set_span_attribute(
+        span, "db.chroma.upsert.documents_count", count_or_none(kwargs.get("documents"))
+    )
 
 
+@dont_throw
 def _set_delete_attributes(span, kwargs):
-    _set_span_attribute(span, "db.chroma.delete.ids_count", count_or_none(kwargs.get("ids")))
-    _set_span_attribute(span, "db.chroma.delete.where", _encode_where(kwargs.get("where")))
-    _set_span_attribute(span, "db.chroma.delete.where_document", _encode_where_document(kwargs.get("where_document")))
+    _set_span_attribute(
+        span, "db.chroma.delete.ids_count", count_or_none(kwargs.get("ids"))
+    )
+    _set_span_attribute(
+        span, "db.chroma.delete.where", _encode_where(kwargs.get("where"))
+    )
+    _set_span_attribute(
+        span,
+        "db.chroma.delete.where_document",
+        _encode_where_document(kwargs.get("where_document")),
+    )

@@ -2,6 +2,7 @@
 
 import logging
 from typing import Collection
+from opentelemetry.instrumentation.langchain.config import Config
 from wrapt import wrap_function_wrapper
 
 from opentelemetry.trace import get_tracer
@@ -17,13 +18,21 @@ from opentelemetry.instrumentation.langchain.workflow_wrapper import (
     workflow_wrapper,
     aworkflow_wrapper,
 )
+from opentelemetry.instrumentation.langchain.custom_llm_wrapper import (
+    llm_wrapper,
+    allm_wrapper,
+)
+from opentelemetry.instrumentation.langchain.custom_chat_wrapper import (
+    chat_wrapper,
+    achat_wrapper,
+)
 from opentelemetry.instrumentation.langchain.version import __version__
 
 from opentelemetry.semconv.ai import TraceloopSpanKindValues
 
 logger = logging.getLogger(__name__)
 
-_instruments = ("langchain >= 0.0.346",)
+_instruments = ("langchain >= 0.0.346", "langchain-core > 0.1.0")
 
 WRAPPED_METHODS = [
     {
@@ -97,14 +106,14 @@ WRAPPED_METHODS = [
     {
         "package": "langchain.chat_models.base",
         "object": "BaseChatModel",
-        "method": "invoke",
-        "wrapper": task_wrapper,
+        "method": "generate",
+        "wrapper": chat_wrapper,
     },
     {
         "package": "langchain.chat_models.base",
         "object": "BaseChatModel",
-        "method": "ainvoke",
-        "wrapper": atask_wrapper,
+        "method": "agenerate",
+        "wrapper": achat_wrapper,
     },
     {
         "package": "langchain.schema",
@@ -132,11 +141,29 @@ WRAPPED_METHODS = [
         "span_name": "langchain.workflow",
         "wrapper": aworkflow_wrapper,
     },
+    {
+        "package": "langchain_core.language_models.llms",
+        "object": "LLM",
+        "method": "_generate",
+        "span_name": "llm.generate",
+        "wrapper": llm_wrapper,
+    },
+    {
+        "package": "langchain_core.language_models.llms",
+        "object": "LLM",
+        "method": "_agenerate",
+        "span_name": "llm.generate",
+        "wrapper": allm_wrapper,
+    },
 ]
 
 
 class LangchainInstrumentor(BaseInstrumentor):
     """An instrumentor for Langchain SDK."""
+
+    def __init__(self, exception_logger=None):
+        super().__init__()
+        Config.exception_logger = exception_logger
 
     def instrumentation_dependencies(self) -> Collection[str]:
         return _instruments

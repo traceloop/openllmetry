@@ -8,7 +8,7 @@ show_missing = true
 
 [tool.poetry]
 name = "opentelemetry-instrumentation-openai"
-version = "0.14.2"
+version = "0.16.5"
 description = "OpenTelemetry OpenAI instrumentation"
 authors = [
   "Gal Kleinman <gal@traceloop.com>",
@@ -23,27 +23,32 @@ readme = "README.md"
 include = "opentelemetry/instrumentation/openai"
 
 [tool.poetry.dependencies]
-python = ">=3.8.1,<4"
-opentelemetry-api = "^1.23.0"
-opentelemetry-instrumentation = "0.44b0"
-opentelemetry-semantic-conventions-ai = "^0.0.23"
+python = ">=3.9,<4"
+opentelemetry-api = "^1.24.0"
+opentelemetry-instrumentation = "^0.45b0"
+opentelemetry-semantic-conventions = "^0.45b0"
+opentelemetry-semantic-conventions-ai = "0.1.1"
 
 [tool.poetry.group.dev.dependencies]
-autopep8 = "2.0.4"
+autopep8 = "2.1.0"
 flake8 = "7.0.0"
 
 [tool.poetry.group.test.dependencies]
-pytest = "8.1.0"
+pytest = "8.1.1"
 pytest-sugar = "1.0.0"
 vcrpy = "^6.0.1"
 pytest-recording = "^0.13.1"
-openai = {extras = ["datalib"], version = "^1.12.0"}
+openai = {extras = ["datalib"], version = "^1.14.2"}
 opentelemetry-sdk = "^1.23.0"
 pytest-asyncio = "^0.23.5"
+tiktoken = "^0.6.0"
 
 [build-system]
 requires = [ "poetry-core" ]
 build-backend = "poetry.core.masonry.api"
 
-[project.entry-points.opentelemetry_instrumentor]
+[tool.poetry.extras]
+instruments = ["openai"]
+
+[tool.poetry.plugins."opentelemetry_instrumentor"]
 openai = "opentelemetry.instrumentation.openai:OpenAIInstrumentor"

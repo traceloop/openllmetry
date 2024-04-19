@@ -17,7 +17,7 @@ def retrieve(openai_client, index, query):
     xq = res.data[0].embedding
 
     # get relevant contexts
-    res = index.query(xq, top_k=3, include_metadata=True)
+    res = index.query(top_k=3, include_metadata=True, include_values=True, vector=xq)
     contexts = [x["metadata"]["text"] for x in res.matches]
 
     # build our prompt with the retrieved contexts included
@@ -52,7 +52,10 @@ def run_query(openai_client, index, query: str):
     complete(openai_client, query_with_contexts)
 
 
-def disabled_test_pinecone_grpc_retrieval(exporter, openai_client):
+@pytest.mark.skip(
+    "GRPC package of Pinecone is conflicting with google-cloud-aiplatform"
+)
+def test_pinecone_grpc_retrieval(exporter, openai_client):
     pinecone.init(
         api_key=os.getenv("PINECONE_API_KEY"),
         environment=os.getenv("PINECONE_ENVIRONMENT"),
@@ -93,3 +96,46 @@ def test_pinecone_retrieval(exporter, openai_client):
         "pinecone.query",
         "openai.completion",
     ]
+
+    span = next(span for span in spans if span.name == "pinecone.query")
+    assert span.attributes.get("pinecone.query.top_k") == 3
+    assert span.attributes.get("pinecone.query.include_values")
+    assert span.attributes.get("pinecone.query.include_metadata")
+
+    events = span.events
+    assert len(events) > 0
+
+    embeddings_events = [
+        event for event in span.events if "db.query.embeddings" in event.name
+    ]
+    for event in embeddings_events:
+        assert event.name == "db.query.embeddings"
+        vector = event.attributes.get(f"{event.name}.vector")
+        assert len(vector) > 100
+        for v in vector:
+            assert v >= -1 and v <= 1
+
+    usage_events = [
+        event for event in span.events if "pinecone.query.usage" in event.name
+    ]
+    assert len(usage_events) == 1
+    usage_event = usage_events[0]
+    assert usage_event.name == "pinecone.query.usage"
+    assert usage_event.attributes.get("readUnits") >= 0
+
+    query_result_events = [
+        event for event in span.events if "db.pinecone.query.result" in event.name
+    ]
+    for event in query_result_events:
+        assert event.name == "db.pinecone.query.result"
+
+        id = event.attributes.get(f"{event.name}.id")
+        score = event.attributes.get(f"{event.name}.score")
+        metadata = event.attributes.get(f"{event.name}.metadata")
+        vector = event.attributes.get(f"{event.name}.vector")
+        assert len(id) > 0
+        assert score > 0
+        assert len(metadata) > 0
+        assert len(vector) > 100
+        for v in vector:
+            assert v >= -1 and v <= 1
