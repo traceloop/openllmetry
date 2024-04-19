@@ -33,6 +33,7 @@ class Telemetry:
                 sentry_sdk.init(
                     dsn=SENTRY_INGESTION_ENDPOINT,
                     default_integrations=False,
+                    release=__version__,
                 )
                 obj._curr_anon_id = None
 
@@ -77,7 +78,7 @@ class Telemetry:
     def log_exception(self, exception: Exception):
         try:  # don't fail if telemetry fails
             if self._telemetry_enabled:
-                sentry_sdk.capture_exception(exception, {**self._context()})
+                sentry_sdk.capture_exception(exception)
         except Exception:
             pass
 
