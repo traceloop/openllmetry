@@ -9,6 +9,7 @@ from opentelemetry.instrumentation.bedrock.config import Config
 from opentelemetry.instrumentation.bedrock.reusable_streaming_body import (
     ReusableStreamingBody,
 )
+from opentelemetry.instrumentation.bedrock.utils import dont_throw
 from wrapt import wrap_function_wrapper
 import anthropic
 
@@ -82,37 +83,39 @@ def _instrumented_model_invoke(fn, tracer):
             "bedrock.completion", kind=SpanKind.CLIENT
         ) as span:
             response = fn(*args, **kwargs)
-            response["body"] = ReusableStreamingBody(
-                response["body"]._raw_stream, response["body"]._content_length
-            )
-            request_body = json.loads(kwargs.get("body"))
-            response_body = json.loads(response.get("body").read())
 
             if span.is_recording():
-                (vendor, model) = kwargs.get("modelId").split(".")
-
-                _set_span_attribute(span, SpanAttributes.LLM_VENDOR, vendor)
-                _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, model)
-
-                if vendor == "cohere":
-                    _set_cohere_span_attributes(span, request_body, response_body)
-                elif vendor == "anthropic":
-                    if "prompt" in request_body:
-                        _set_anthropic_completion_span_attributes(
-                            span, request_body, response_body
-                        )
-                    elif "messages" in request_body:
-                        _set_anthropic_messages_span_attributes(
-                            span, request_body, response_body
-                        )
-                elif vendor == "ai21":
-                    _set_ai21_span_attributes(span, request_body, response_body)
-                elif vendor == "meta":
-                    _set_llama_span_attributes(span, request_body, response_body)
+                _handle_call(span, kwargs, response)
 
             return response
 
     return with_instrumentation
+
+
+@dont_throw
+def _handle_call(span, kwargs, response):
+    response["body"] = ReusableStreamingBody(
+        response["body"]._raw_stream, response["body"]._content_length
+    )
+    request_body = json.loads(kwargs.get("body"))
+    response_body = json.loads(response.get("body").read())
+
+    (vendor, model) = kwargs.get("modelId").split(".")
+
+    _set_span_attribute(span, SpanAttributes.LLM_VENDOR, vendor)
+    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, model)
+
+    if vendor == "cohere":
+        _set_cohere_span_attributes(span, request_body, response_body)
+    elif vendor == "anthropic":
+        if "prompt" in request_body:
+            _set_anthropic_completion_span_attributes(span, request_body, response_body)
+        elif "messages" in request_body:
+            _set_anthropic_messages_span_attributes(span, request_body, response_body)
+    elif vendor == "ai21":
+        _set_ai21_span_attributes(span, request_body, response_body)
+    elif vendor == "meta":
+        _set_llama_span_attributes(span, request_body, response_body)
 
 
 def _set_cohere_span_attributes(span, request_body, response_body):
