@@ -52,15 +52,20 @@ def _handle_request(span, args, kwargs, instance):
     span.set_attribute(SpanAttributes.LLM_RESPONSE_MODEL, model)
 
     if should_send_prompts():
-        for idx, prompt in enumerate(args[0][0]):
+        messages = args[0] if len(args) > 0 else kwargs.get("messages", [])
+        for idx, prompt in enumerate(messages[0]):
+            span.set_attribute(
+                f"{SpanAttributes.LLM_PROMPTS}.{idx}.role",
+                "user" if prompt.type == "human" else prompt.type,
+            )
             if isinstance(prompt.content, list):
                 span.set_attribute(
-                    f"{SpanAttributes.LLM_PROMPTS}.{idx}.user",
+                    f"{SpanAttributes.LLM_PROMPTS}.{idx}.content",
                     json.dumps(prompt.content),
                 )
             else:
                 span.set_attribute(
-                    f"{SpanAttributes.LLM_PROMPTS}.{idx}.user", prompt.content
+                    f"{SpanAttributes.LLM_PROMPTS}.{idx}.content", prompt.content
                 )
 
 
