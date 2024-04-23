@@ -32,7 +32,7 @@ opentelemetry-exporter-otlp-proto-grpc = "^1.24.0"
 opentelemetry-instrumentation-requests = "^0.45b0"
 opentelemetry-instrumentation-sqlalchemy = "^0.45b0"
 opentelemetry-instrumentation-urllib3 = "^0.45b0"
-opentelemetry-semantic-conventions-ai = "0.1.1"
+opentelemetry-semantic-conventions-ai = "0.2.0"
 opentelemetry-instrumentation-openai = {path="../opentelemetry-instrumentation-openai", develop=true}
 opentelemetry-instrumentation-anthropic = {path="../opentelemetry-instrumentation-anthropic", develop=true}
 opentelemetry-instrumentation-cohere = {path="../opentelemetry-instrumentation-cohere", develop=true}
