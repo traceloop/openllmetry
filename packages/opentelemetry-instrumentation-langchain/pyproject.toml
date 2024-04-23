@@ -49,7 +49,7 @@ opentelemetry-sdk = "^1.23.0"
 opentelemetry-instrumentation-openai = {path="../opentelemetry-instrumentation-openai", develop=true}
 text-generation = "^0.7.0"
 anthropic = "^0.21.3"
-boto3 = "1.34.72"
+boto3 = "1.34.88"
 
 [build-system]
 requires = ["poetry-core"]
