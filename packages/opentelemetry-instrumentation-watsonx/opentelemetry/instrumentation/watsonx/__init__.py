@@ -26,29 +26,29 @@ from opentelemetry.instrumentation.watsonx.version import __version__
 
 logger = logging.getLogger(__name__)
 
-_instruments = ("ibm_watson_machine_learning >= 1.0.347",)
+_instruments = ("ibm-watson-machine-learning >= 1.0.347",)
 
 WRAPPED_METHODS_WATSON_ML_VERSION_1 = [
     {
-        "module": "ibm_watson_machine_learning.foundation_models.inference",
+        "module": "ibm-watson-machine-learning.foundation_models.inference",
         "object": "ModelInference",
         "method": "__init__",
         "span_name": "watsonx.model_init",
     },
     {
-        "module": "ibm_watson_machine_learning.foundation_models.inference",
+        "module": "ibm-watson-machine-learning.foundation_models.inference",
         "object": "ModelInference",
         "method": "generate",
         "span_name": "watsonx.generate",
     },
     {
-        "module": "ibm_watson_machine_learning.foundation_models.inference",
+        "module": "ibm-watson-machine-learning.foundation_models.inference",
         "object": "ModelInference",
         "method": "generate_text_stream",
         "span_name": "watsonx.generate_text_stream",
     },
     {
-        "module": "ibm_watson_machine_learning.foundation_models.inference",
+        "module": "ibm-watson-machine-learning.foundation_models.inference",
         "object": "ModelInference",
         "method": "get_details",
         "span_name": "watsonx.get_details",
