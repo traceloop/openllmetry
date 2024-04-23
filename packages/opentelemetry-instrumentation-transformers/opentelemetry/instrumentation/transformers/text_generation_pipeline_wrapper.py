@@ -45,13 +45,13 @@ def _set_input_attributes(span, instance, args, kwargs):
         span, SpanAttributes.LLM_REQUEST_MODEL, instance.model.config.name_or_path
     )
     _set_span_attribute(
-        span, SpanAttributes.LLM_VENDOR, instance.model.config.model_type
+        span, SpanAttributes.LLM_SYSTEM, instance.model.config.model_type
     )
     _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TYPE, "completion")
     _set_span_attribute(
-        span, SpanAttributes.LLM_TEMPERATURE, forward_params.get("temperature")
+        span, SpanAttributes.LLM_REQUEST_TEMPERATURE, forward_params.get("temperature")
     )
-    _set_span_attribute(span, SpanAttributes.LLM_TOP_P, forward_params.get("top_p"))
+    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TOP_P, forward_params.get("top_p"))
     _set_span_attribute(
         span, SpanAttributes.LLM_REQUEST_MAX_TOKENS, forward_params.get("max_length")
     )

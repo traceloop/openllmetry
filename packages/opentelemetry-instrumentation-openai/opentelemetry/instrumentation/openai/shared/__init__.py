@@ -107,13 +107,13 @@ def _set_request_attributes(span, kwargs):
         return
 
     _set_api_attributes(span)
-    _set_span_attribute(span, SpanAttributes.LLM_VENDOR, "OpenAI")
+    _set_span_attribute(span, SpanAttributes.LLM_SYSTEM, "OpenAI")
     _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, kwargs.get("model"))
     _set_span_attribute(
         span, SpanAttributes.LLM_REQUEST_MAX_TOKENS, kwargs.get("max_tokens")
     )
-    _set_span_attribute(span, SpanAttributes.LLM_TEMPERATURE, kwargs.get("temperature"))
-    _set_span_attribute(span, SpanAttributes.LLM_TOP_P, kwargs.get("top_p"))
+    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TEMPERATURE, kwargs.get("temperature"))
+    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TOP_P, kwargs.get("top_p"))
     _set_span_attribute(
         span, SpanAttributes.LLM_FREQUENCY_PENALTY, kwargs.get("frequency_penalty")
     )

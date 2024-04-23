@@ -11,10 +11,10 @@ def test_cohere_completion(exporter):
     spans = exporter.get_finished_spans()
     cohere_span = spans[0]
     assert cohere_span.name == "cohere.completion"
-    assert cohere_span.attributes.get("llm.vendor") == "Cohere"
+    assert cohere_span.attributes.get("gen_ai.system") == "Cohere"
     assert cohere_span.attributes.get("llm.request.type") == "completion"
-    assert cohere_span.attributes.get("llm.request.model") == "command"
+    assert cohere_span.attributes.get("gen_ai.request.model") == "command"
     assert (
-        cohere_span.attributes.get("llm.completions.0.content")
+        cohere_span.attributes.get("gen_ai.completion.0.content")
         == res.generations[0].text
     )

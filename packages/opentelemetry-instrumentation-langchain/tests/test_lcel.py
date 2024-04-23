@@ -159,14 +159,14 @@ def test_custom_llm(exporter):
 
     assert hugging_face_span.attributes["llm.request.type"] == "completion"
     assert (
-        hugging_face_span.attributes["llm.request.model"]
+        hugging_face_span.attributes["gen_ai.request.model"]
         == "HuggingFaceTextGenInference"
     )
     assert (
-        hugging_face_span.attributes["llm.prompts.0.user"]
+        hugging_face_span.attributes["gen_ai.prompt.0.user"]
         == "System: You are a helpful assistant\nHuman: tell me a short joke"
     )
-    assert hugging_face_span.attributes["llm.completions.0.content"] == response
+    assert hugging_face_span.attributes["gen_ai.completion.0.content"] == response
 
 
 @pytest.mark.vcr
@@ -194,18 +194,18 @@ def test_openai(exporter):
     )
 
     assert openai_span.attributes["llm.request.type"] == "chat"
-    assert openai_span.attributes["llm.request.model"] == "gpt-3.5-turbo"
+    assert openai_span.attributes["gen_ai.request.model"] == "gpt-3.5-turbo"
     assert (
-        openai_span.attributes["llm.prompts.0.content"] == "You are a helpful assistant"
+        openai_span.attributes["gen_ai.prompt.0.content"] == "You are a helpful assistant"
     )
-    assert openai_span.attributes["llm.prompts.0.role"] == "system"
+    assert openai_span.attributes["gen_ai.prompt.0.role"] == "system"
     assert (
-        openai_span.attributes["llm.prompts.1.content"]
+        openai_span.attributes["gen_ai.prompt.1.content"]
         == "Tell me a joke about OpenTelemetry"
     )
-    assert openai_span.attributes["llm.prompts.1.role"] == "user"
+    assert openai_span.attributes["gen_ai.prompt.1.role"] == "user"
     assert (
-        openai_span.attributes["llm.completions.0.content"]
+        openai_span.attributes["gen_ai.completion.0.content"]
         == response.generations[0][0].text
     )
 
@@ -233,12 +233,12 @@ def test_anthropic(exporter):
     )
 
     assert anthropic_span.attributes["llm.request.type"] == "chat"
-    assert anthropic_span.attributes["llm.request.model"] == "claude-2"
+    assert anthropic_span.attributes["gen_ai.request.model"] == "claude-2"
     assert (
-        anthropic_span.attributes["llm.prompts.0.content"]
+        anthropic_span.attributes["gen_ai.prompt.0.content"]
         == "You are a helpful assistant"
     )
-    assert anthropic_span.attributes["llm.completions.0.content"] == response.content
+    assert anthropic_span.attributes["gen_ai.completion.0.content"] == response.content
 
 
 @pytest.mark.vcr
@@ -274,11 +274,11 @@ def test_bedrock(exporter):
 
     assert bedrock_span.attributes["llm.request.type"] == "chat"
     assert (
-        bedrock_span.attributes["llm.request.model"]
+        bedrock_span.attributes["gen_ai.request.model"]
         == "anthropic.claude-3-haiku-20240307-v1:0"
     )
     assert (
-        bedrock_span.attributes["llm.prompts.0.content"]
+        bedrock_span.attributes["gen_ai.prompt.0.content"]
         == "You are a helpful assistant"
     )
-    assert bedrock_span.attributes["llm.completions.0.content"] == response.content
+    assert bedrock_span.attributes["gen_ai.completion.0.content"] == response.content

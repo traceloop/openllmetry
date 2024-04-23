@@ -122,7 +122,7 @@ def build_from_streaming_response(
         _process_response_item(item, complete_response)
 
     metric_attributes = {
-        "llm.response.model": complete_response.get("model"),
+        "gen_ai.response.model": complete_response.get("model"),
     }
 
     if duration_histogram:
@@ -205,7 +205,7 @@ async def abuild_from_streaming_response(
         _process_response_item(item, complete_response)
 
     metric_attributes = {
-        "llm.response.model": complete_response.get("model"),
+        "gen_ai.response.model": complete_response.get("model"),
     }
 
     if duration_histogram:

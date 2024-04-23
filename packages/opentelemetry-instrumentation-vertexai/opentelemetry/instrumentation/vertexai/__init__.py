@@ -129,11 +129,11 @@ def _set_input_attributes(span, args, kwargs):
     _set_span_attribute(
         span, f"{SpanAttributes.LLM_PROMPTS}.0.user", kwargs.get("prompt")
     )
-    _set_span_attribute(span, SpanAttributes.LLM_TEMPERATURE, kwargs.get("temperature"))
+    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TEMPERATURE, kwargs.get("temperature"))
     _set_span_attribute(
         span, SpanAttributes.LLM_REQUEST_MAX_TOKENS, kwargs.get("max_output_tokens")
     )
-    _set_span_attribute(span, SpanAttributes.LLM_TOP_P, kwargs.get("top_p"))
+    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TOP_P, kwargs.get("top_p"))
     _set_span_attribute(span, SpanAttributes.LLM_TOP_K, kwargs.get("top_k"))
     _set_span_attribute(
         span, SpanAttributes.LLM_PRESENCE_PENALTY, kwargs.get("presence_penalty")
@@ -268,7 +268,7 @@ async def _awrap(tracer, to_wrap, wrapped, instance, args, kwargs):
         name,
         kind=SpanKind.CLIENT,
         attributes={
-            SpanAttributes.LLM_VENDOR: "VertexAI",
+            SpanAttributes.LLM_SYSTEM: "VertexAI",
             SpanAttributes.LLM_REQUEST_TYPE: LLMRequestTypeValues.COMPLETION.value,
         },
     )
@@ -313,7 +313,7 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
         name,
         kind=SpanKind.CLIENT,
         attributes={
-            SpanAttributes.LLM_VENDOR: "VertexAI",
+            SpanAttributes.LLM_SYSTEM: "VertexAI",
             SpanAttributes.LLM_REQUEST_TYPE: LLMRequestTypeValues.COMPLETION.value,
         },
     )
