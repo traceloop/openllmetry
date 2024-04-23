@@ -212,12 +212,11 @@ def _add_query_result_events(span, kwargs):
     The goal is to set a canonical format which we call as a Semantic Convention.
     """
     zipped = itertools.zip_longest(
-        kwargs.get("ids", []),
-        kwargs.get("distances", []),
-        kwargs.get("metadatas", []),
-        kwargs.get("documents", []),
+        kwargs.get("ids", []) or [],
+        kwargs.get("distances", []) or [],
+        kwargs.get("metadatas", []) or [],
+        kwargs.get("documents", []) or [],
     )
-    zipped = list(zipped)
     for tuple_ in zipped:
         attributes = {
             EventAttributes.DB_QUERY_RESULT_ID.value: None,
