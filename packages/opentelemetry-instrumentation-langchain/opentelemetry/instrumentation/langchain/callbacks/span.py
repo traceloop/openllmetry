@@ -16,13 +16,27 @@ from opentelemetry.trace.propagation import _SPAN_KEY
 if TYPE_CHECKING:
     from langchain_core.agents import AgentAction, AgentFinish
 
+SPAN_MAPPING = {
+    "SequentialChain" : {
+        "span_name": "langchain.workflow",
+        "kind": TraceloopSpanKindValues.WORKFLOW.value,
+    },
+    "Agent": {
+        "span_name": "langchain.agent",
+        "kind": TraceloopSpanKindValues.AGENT.value,
+    },
+    "AgentExecutor": {
+        "span_name": "langchain.agent",
+        "kind": TraceloopSpanKindValues.AGENT.value,
+    },
+}
 
 class SpanCallbackHandler(BaseCallbackHandler):
     """Callback Handler that creates and destroys span."""
 
     def __init__(self, tracer: Tracer, span_name: Optional[str] = None, kind: Optional[str] = None,  color: Optional[str] = None) -> None:
         """Initialize callback handler."""
-        super().__init__()
+        # super().__init__()
         self.color = color
         self._span_dict: Dict[str, Span] = {}
         self._tracer = tracer
@@ -31,30 +45,32 @@ class SpanCallbackHandler(BaseCallbackHandler):
         self._kind = kind
 
     def _create_span(self, key, name, kind) -> None:
+
+        # Create a Span
         span = self._tracer.start_span(name)
         span.set_attribute(
             SpanAttributes.TRACELOOP_SPAN_KIND,
             kind,
         )
         span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, name)
+
+        # Create a context
         curr_context = context_api.set_value(_SPAN_KEY, span)
-        if kind == TraceloopSpanKindValues.WORKFLOW.value:
+        if kind in (TraceloopSpanKindValues.WORKFLOW.value, TraceloopSpanKindValues.AGENT.value):
             curr_context = context_api.set_value("workflow_name", name, context=curr_context)
-            # span.set_attribute("workflow_name", name)
         elif context_api.get_value("workflow_name"):
             curr_context = context_api.set_value("workflow_name", context_api.get_value("workflow_name"), context=curr_context)
-            # span.set_attribute("workflow_name", context_api.get_value("workflow_name"))
-        token = context_api.attach(curr_context)
-        self._span_dict[key] = {"span": span, "token": token}
-        print(name, kind, self._span_dict)
-        # if self._kind == TraceloopSpanKindValues.WORKFLOW.value:
-        #    context_api.attach(context_api.set_value("workflow_name", self._name))
-        # print(token)
         
-        # if parent.is_recording():
-        #   set_span_in_context(span)
+        print("Create span ", span)
+        # Attach context to its parent
+        token = context_api.attach(curr_context)
+
+        # Update span_dict
+        self._span_dict[key] = {"span": span, "token": token}
+
+        # Activate the Span
         use_span(span)
-        # activation.__enter__()
+
     def _error_span(self, error, key) -> None:
         span_dict_entry = self._span_dict.get(key, None)
         span = span_dict_entry.get("span", None)
@@ -65,6 +81,7 @@ class SpanCallbackHandler(BaseCallbackHandler):
             span.set_status(Status(StatusCode.ERROR))
             span.record_exception(error)
             span.end()
+
     def _end_span(self, key) -> None:
         span_dict_entry = self._span_dict.get(key, None)
         span = span_dict_entry.get("span", None)
@@ -80,32 +97,36 @@ class SpanCallbackHandler(BaseCallbackHandler):
         self, serialized: Dict[str, Any], inputs: Dict[str, Any], **kwargs: Any
     ) -> None:
         """Print out that we are entering a chain."""
-        print(f"\n\n\033[1m> Entering new {self._name} chain...\033[0m")  # noqa: T201
         class_name = serialized.get("name", serialized.get("id", ["unknown"])[-1])
-        if self._span_name == "langchain.workflow":
-           self._create_span(self._span_name, self._span_name, TraceloopSpanKindValues.WORKFLOW.value)
+        print('class name', class_name)
+        if class_name in SPAN_MAPPING:
+            self._span_name = SPAN_MAPPING[class_name]["span_name"]
+            self._create_span(self._span_name, self._span_name, SPAN_MAPPING[class_name]["kind"])
+        print(f"\n\n\033[1m> Entering new {class_name} chain...\033[0m")  # noqa: T201
+        # # We just spawn a AgentExecutor and
+        # if class_name not in ("AgentExecutor"):
         self._name = f"langchain.task.{class_name}"
         self._kind = TraceloopSpanKindValues.TASK.value
         self._create_span(kwargs.get('run_id', self._name), self._name, self._kind)
-        print(f"\n\n\033[1m> Done Entering new {self._name} chain...\033[0m")  # noqa: T201
+        print(f"\n\n\033[1m> Done Entering new {class_name} chain...\033[0m")  # noqa: T201
         
 
     def on_chain_error(
         self, error: Union[Exception, KeyboardInterrupt], **kwargs: Any
     ) -> Any:
         """Run when chain errors."""
-        print("\n\033[1m> Errored out chain.\033[0m")  # noqa: T201
-        if self._span_name == "langchain.workflow":
+        print(f"\n\033[1m> Errored out {self._name} chain.\033[0m")  # noqa: T201
+        if self._span_name:
             self._end_span(error, self._span_name)
         self._error_span(error, kwargs.get('run_id', self._name))
-        print("\n\033[1m> Done Errored out chain.\033[0m")  # noqa: T201
+        print(f"\n\033[1m> Done Errored out {self._name} chain.\033[0m")  # noqa: T201
         
 
     def on_chain_end(self, outputs: Dict[str, Any], **kwargs: Any) -> None:
         """Print out that we finished a chain."""
         print("\n\033[1m> Finished chain.\033[0m")  # noqa: T201
         self._end_span(kwargs.get('run_id', self._name))
-        if self._span_name == "langchain.workflow":
+        if self._span_name:
             self._end_span(self._span_name)
         print("\n\033[1m> Done Finished chain.\033[0m")  # noqa: T201
         
@@ -116,6 +137,19 @@ class SpanCallbackHandler(BaseCallbackHandler):
         """Run on agent action."""
         print("On agent action")
 
+    def on_tool_start(
+        self, serialized: Dict[str, Any], input_str: str, **kwargs: Any
+    ) -> Any:
+        """Run when tool starts running."""
+        class_name = serialized.get("name", serialized.get("id", ["unknown"])[-1])
+        print(f"\n\n\033[1m> Entering new {class_name} tool...\033[0m")  # noqa: T201
+        print('class name', class_name)
+        self._span_name = "langchain.tool"
+        self._name = f"{self._span_name}.{class_name}"
+        self._kind = TraceloopSpanKindValues.TOOL.value
+        self._create_span(kwargs.get('run_id', self._name), self._name, self._kind)
+        print(f"\n\n\033[1m> Done Entering new {class_name} tool...\033[0m")  # noqa: T201
+
     def on_tool_end(
         self,
         output: Any,
@@ -125,13 +159,17 @@ class SpanCallbackHandler(BaseCallbackHandler):
         **kwargs: Any,
     ) -> None:
         """If not the final action, print out observation."""
-        output = str(output)
-        if observation_prefix is not None:
-            print_text(f"\n{observation_prefix}")
-        print_text(output, color=color or self.color)
-        if llm_prefix is not None:
-            print_text(f"\n{llm_prefix}")
-        print("On tool end")
+        print("\n\033[1m> Finished tool.\033[0m")  # noqa: T201
+        self._end_span(kwargs.get('run_id', self._name))
+        print("\n\033[1m> Done Finished tool.\033[0m")  # noqa: T201
+
+    def on_tool_error(
+        self, error: Union[Exception, KeyboardInterrupt], **kwargs: Any
+    ) -> Any:
+        """Run when tool errors."""
+        print("\n\033[1m> Errored out tool.\033[0m")  # noqa: T201
+        self._error_span(error, kwargs.get('run_id', self._name))
+        print("\n\033[1m> Done Errored out tool.\033[0m")  # noqa: T201
 
     def on_text(
         self,

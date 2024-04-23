@@ -39,35 +39,33 @@ logger = logging.getLogger(__name__)
 _instruments = ("langchain >= 0.0.346", "langchain-core > 0.1.0")
 
 TO_INSTRUMENT = [
+    {
+        "package": "langchain.chains.base",
+        "class": "Chain",
+    },
     # {
-    #     "package": "langchain.chains.base",
-    #     "class": "Chain",
+    #     "package": "langchain.chains",
+    #     "class": "LLMChain",
     # },
-    {
-        "package": "langchain.chains",
-        "class": "LLMChain",
-    },
-    {
-        "package": "langchain.chains",
-        "class": "TransformChain",
-    },
-    {
-        "package": "langchain.chains",
-        "class": "SequentialChain",
-        "span_name": "langchain.workflow",
-    },
+    # {
+    #     "package": "langchain.chains",
+    #     "class": "TransformChain",
+    # },
+    # {
+    #     "package": "langchain.chains",
+    #     "class": "SequentialChain",
+    #     "span_name": "langchain.workflow",
+    # },
     {
         "package": "langchain.agents",
         "class": "Agent",
-        "span_name": "langchain.agent",
-        "kind": TraceloopSpanKindValues.AGENT.value,
     },
-    {
-        "package": "langchain.agents",
-        "class": "AgentExecutor",
-        "span_name": "langchain.agent",
-        "kind": TraceloopSpanKindValues.AGENT.value,
-    },
+    # {
+    #     "package": "langchain.agents",
+    #     "class": "AgentExecutor",
+    # #     "span_name": "langchain.agent",
+    # #     "kind": TraceloopSpanKindValues.AGENT.value,
+    # # },
     {
         "package": "langchain.tools",
         "class": "Tool",
