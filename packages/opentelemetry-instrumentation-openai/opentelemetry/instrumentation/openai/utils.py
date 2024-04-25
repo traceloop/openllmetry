@@ -3,11 +3,18 @@ from contextlib import asynccontextmanager
 import logging
 import os
 
+import openai
 from opentelemetry.instrumentation.openai.shared.config import Config
 
 
 def is_openai_v1():
     return version("openai") >= "1.0.0"
+
+
+def is_azure_openai(instance):
+    return is_openai_v1() and isinstance(
+        instance._client, (openai.AsyncAzureOpenAI, openai.AzureOpenAI)
+    )
 
 
 def is_metrics_enabled() -> bool:
