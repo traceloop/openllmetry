@@ -1,3 +1,10 @@
+## v0.16.8 (2024-04-25)
+
+### Fix
+
+- **langchain**: input/output reporting (#894)
+- **sdk**: reset the color of messages in the custom metrics exporter (#893)
+
 ## v0.16.7 (2024-04-25)
 
 ### Fix
