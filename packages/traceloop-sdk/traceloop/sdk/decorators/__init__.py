@@ -6,8 +6,13 @@ from typing import Optional
 from opentelemetry import context as context_api
 from opentelemetry.semconv.ai import SpanAttributes, TraceloopSpanKindValues
 
+from traceloop.sdk.telemetry import Telemetry
 from traceloop.sdk.tracing import get_tracer, set_workflow_name
-from traceloop.sdk.tracing.tracing import TracerWrapper, set_entity_name, get_chained_entity_name
+from traceloop.sdk.tracing.tracing import (
+    TracerWrapper,
+    set_entity_name,
+    get_chained_entity_name,
+)
 from traceloop.sdk.utils import camel_to_snake
 
 
@@ -45,7 +50,9 @@ def task_method(
                     span.set_attribute(
                         SpanAttributes.TRACELOOP_SPAN_KIND, tlp_span_kind.value
                     )
-                    span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, chained_entity_name)
+                    span.set_attribute(
+                        SpanAttributes.TRACELOOP_ENTITY_NAME, chained_entity_name
+                    )
 
                     try:
                         if _should_send_prompts():
@@ -53,8 +60,8 @@ def task_method(
                                 SpanAttributes.TRACELOOP_ENTITY_INPUT,
                                 json.dumps({"args": args, "kwargs": kwargs}),
                             )
-                    except TypeError:
-                        pass  # Some args might not be serializable
+                    except TypeError as e:
+                        Telemetry().log_exception(e)
 
                     res = fn(*args, **kwargs)
 
@@ -63,8 +70,8 @@ def task_method(
                             span.set_attribute(
                                 SpanAttributes.TRACELOOP_ENTITY_OUTPUT, json.dumps(res)
                             )
-                    except TypeError:
-                        pass  # Some outputs might not be serializable
+                    except TypeError as e:
+                        Telemetry().log_exception(e)
 
                     return res
 
@@ -129,8 +136,8 @@ def workflow_method(name: Optional[str] = None, correlation_id: Optional[str] = 
                                 SpanAttributes.TRACELOOP_ENTITY_INPUT,
                                 json.dumps({"args": args, "kwargs": kwargs}),
                             )
-                    except TypeError:
-                        pass  # Some args might not be serializable
+                    except TypeError as e:
+                        Telemetry().log_exception(e)
 
                     res = fn(*args, **kwargs)
 
@@ -139,8 +146,8 @@ def workflow_method(name: Optional[str] = None, correlation_id: Optional[str] = 
                             span.set_attribute(
                                 SpanAttributes.TRACELOOP_ENTITY_OUTPUT, json.dumps(res)
                             )
-                    except TypeError:
-                        pass  # Some outputs might not be serializable
+                    except TypeError as e:
+                        Telemetry().log_exception(e)
 
                     return res
 
@@ -219,8 +226,8 @@ def atask_method(
                                 SpanAttributes.TRACELOOP_ENTITY_INPUT,
                                 json.dumps({"args": args, "kwargs": kwargs}),
                             )
-                    except TypeError:
-                        pass  # Some args might not be serializable
+                    except TypeError as e:
+                        Telemetry().log_exception(e)
 
                     res = await fn(*args, **kwargs)
 
@@ -229,8 +236,8 @@ def atask_method(
                             span.set_attribute(
                                 SpanAttributes.TRACELOOP_ENTITY_OUTPUT, json.dumps(res)
                             )
-                    except TypeError:
-                        pass  # Some args might not be serializable
+                    except TypeError as e:
+                        Telemetry().log_exception(e)
 
                     return res
 
@@ -300,8 +307,8 @@ def aworkflow_method(name: Optional[str] = None, correlation_id: Optional[str] =
                                 SpanAttributes.TRACELOOP_ENTITY_INPUT,
                                 json.dumps({"args": args, "kwargs": kwargs}),
                             )
-                    except TypeError:
-                        pass  # Some args might not be serializable
+                    except TypeError as e:
+                        Telemetry().log_exception(e)
 
                     res = await fn(*args, **kwargs)
 
@@ -310,8 +317,8 @@ def aworkflow_method(name: Optional[str] = None, correlation_id: Optional[str] =
                             span.set_attribute(
                                 SpanAttributes.TRACELOOP_ENTITY_OUTPUT, json.dumps(res)
                             )
-                    except TypeError:
-                        pass  # Some args might not be serializable
+                    except TypeError as e:
+                        Telemetry().log_exception(e)
 
                     return res
 

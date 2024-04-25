@@ -3,7 +3,11 @@ from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
 
 from opentelemetry.semconv.ai import SpanAttributes, TraceloopSpanKindValues
 
-from opentelemetry.instrumentation.langchain.utils import _with_tracer_wrapper
+from opentelemetry.instrumentation.langchain.utils import (
+    _with_tracer_wrapper,
+    process_request,
+    process_response,
+)
 
 
 @_with_tracer_wrapper
@@ -25,7 +29,9 @@ def task_wrapper(tracer, to_wrap, wrapped, instance, args, kwargs):
         )
         span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, name)
 
+        process_request(span, args, kwargs)
         return_value = wrapped(*args, **kwargs)
+        process_response(span, return_value)
 
     return return_value
 
@@ -49,7 +55,9 @@ async def atask_wrapper(tracer, to_wrap, wrapped, instance, args, kwargs):
         )
         span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, name)
 
+        process_request(span, args, kwargs)
         return_value = await wrapped(*args, **kwargs)
+        process_response(span, return_value)
 
     return return_value
 
