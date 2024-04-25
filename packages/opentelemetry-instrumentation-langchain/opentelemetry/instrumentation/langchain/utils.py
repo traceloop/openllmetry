@@ -1,7 +1,9 @@
+import json
 import logging
 import os
 from opentelemetry import context as context_api
 from opentelemetry.instrumentation.langchain.config import Config
+from opentelemetry.semconv.ai import SpanAttributes
 
 
 def _with_tracer_wrapper(func):
@@ -41,3 +43,48 @@ def dont_throw(func):
                 Config.exception_logger(e)
 
     return wrapper
+
+
+@dont_throw
+def process_request(span, args, kwargs):
+    if should_send_prompts():
+        to_serialize = kwargs.copy()
+        for arg in args:
+            to_serialize.update(arg)
+
+        if "callbacks" in to_serialize:
+            to_serialize.pop("callbacks")
+
+        span.set_attribute(
+            SpanAttributes.TRACELOOP_ENTITY_INPUT,
+            json.dumps(
+                {
+                    "args": [],
+                    "kwargs": to_serialize,
+                }
+            ),
+        )
+
+
+@dont_throw
+def process_response(span, response):
+    if should_send_prompts():
+        span.set_attribute(
+            SpanAttributes.TRACELOOP_ENTITY_OUTPUT,
+            _convert_to_string(response),
+        )
+
+
+def _convert_to_string(value):
+    try:
+        if hasattr(value, "to_json"):
+            return json.dumps(value.to_json())
+        if hasattr(value, "to_string"):
+            return value.to_string()
+
+        if isinstance(value, str):
+            return value
+
+        return json.dumps(value)
+    except TypeError:
+        return str(value)
