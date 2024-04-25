@@ -1,3 +1,10 @@
+## v0.16.7 (2024-04-25)
+
+### Fix
+
+- **openai**: azure filtering masked all completions (#886)
+- **chromadb**: exception thrown when metadata isn't set (#882)
+
 ## v0.16.6 (2024-04-19)
 
 ### Fix
