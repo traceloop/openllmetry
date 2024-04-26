@@ -23,7 +23,7 @@ from opentelemetry.semconv.ai import SpanAttributes
 
 logger = logging.getLogger(__name__)
 
-_instruments = ("pinecone-client ~= 2.2.2",)
+_instruments = ("pinecone-client >= 2.2.2, <4",)
 
 
 WRAPPED_METHODS = [
@@ -123,8 +123,6 @@ def _set_query_input_attributes(span, kwargs):
 
 @dont_throw
 def _set_query_response(span, response):
-    span.add_event("pinecone.query.usage", response.get("usage"))
-
     matches = response.get("matches")
 
     for match in matches:
@@ -146,7 +144,13 @@ def _set_input_attributes(span, kwargs):
 
 
 def _set_response_attributes(span, response):
-    pass
+    if response.get("usage"):
+        span.set_attribute(
+            "pinecone.usage.read_units", response.get("usage").get("read_units") or 0
+        )
+        span.set_attribute(
+            "pinecone.usage.write_units", response.get("usage").get("write_units") or 0
+        )
 
 
 def _with_tracer_wrapper(func):
@@ -187,8 +191,8 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
             if span.is_recording():
                 if to_wrap.get("method") == "query":
                     _set_query_response(span, response)
-                else:
-                    _set_response_attributes(span, response)
+
+                _set_response_attributes(span, response)
 
                 span.set_status(Status(StatusCode.OK))
 

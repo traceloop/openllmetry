@@ -1,6 +1,6 @@
 import os
 import pytest
-import pinecone
+from pinecone import Pinecone
 from openai import OpenAI
 
 
@@ -56,11 +56,11 @@ def run_query(openai_client, index, query: str):
     "Can't record GRPC-based tests with VCR, as it doesn't support recording GRPC requests."
 )
 def test_pinecone_grpc_retrieval(exporter, openai_client):
-    pinecone.init(
+    pc = Pinecone(
         api_key=os.getenv("PINECONE_API_KEY"),
         environment=os.getenv("PINECONE_ENVIRONMENT"),
     )
-    index = pinecone.GRPCIndex("gen-qa-openai-fast")
+    index = pc.create_index("gen-qa-openai-fast")
 
     query = (
         "Which training method should I use for sentence transformers when "
@@ -78,11 +78,11 @@ def test_pinecone_grpc_retrieval(exporter, openai_client):
 
 @pytest.mark.vcr
 def test_pinecone_retrieval(exporter, openai_client):
-    pinecone.init(
+    pc = Pinecone(
         api_key=os.getenv("PINECONE_API_KEY"),
         environment=os.getenv("PINECONE_ENVIRONMENT"),
     )
-    index = pinecone.Index("gen-qa-openai-fast")
+    index = pc.Index("gen-qa-openai-fast")
 
     query = (
         "Which training method should I use for sentence transformers when "
@@ -99,6 +99,8 @@ def test_pinecone_retrieval(exporter, openai_client):
 
     span = next(span for span in spans if span.name == "pinecone.query")
     assert span.attributes.get("pinecone.query.top_k") == 3
+    assert span.attributes.get("pinecone.usage.read_units") == 6
+    assert span.attributes.get("pinecone.usage.write_units") == 0
     assert span.attributes.get("pinecone.query.include_values")
     assert span.attributes.get("pinecone.query.include_metadata")
 
@@ -114,14 +116,6 @@ def test_pinecone_retrieval(exporter, openai_client):
         assert len(vector) > 100
         for v in vector:
             assert v >= -1 and v <= 1
-
-    usage_events = [
-        event for event in span.events if "pinecone.query.usage" in event.name
-    ]
-    assert len(usage_events) == 1
-    usage_event = usage_events[0]
-    assert usage_event.name == "pinecone.query.usage"
-    assert usage_event.attributes.get("readUnits") >= 0
 
     query_result_events = [
         event for event in span.events if "db.pinecone.query.result" in event.name
