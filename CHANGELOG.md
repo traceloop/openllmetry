@@ -1,3 +1,12 @@
+## v0.16.9 (2024-04-26)
+
+### Fix
+
+- **openai**: missing await for Embedding.acreate (#900)
+- **cohere**: support v5 (#899)
+- **pinecone**: support v3 (#895)
+- **instrumentation**: the build problem for watsonx auto instrumentation (#885)
+
 ## v0.16.8 (2024-04-25)
 
 ### Fix
