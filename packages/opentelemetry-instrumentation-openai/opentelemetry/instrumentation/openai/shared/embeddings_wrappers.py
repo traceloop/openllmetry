@@ -114,7 +114,7 @@ async def aembeddings_wrapper(
         try:
             # record time for duration
             start_time = time.time()
-            response = wrapped(*args, **kwargs)
+            response = await wrapped(*args, **kwargs)
             end_time = time.time()
         except Exception as e:  # pylint: disable=broad-except
             end_time = time.time()
