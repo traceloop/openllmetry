@@ -2,7 +2,7 @@
 # https://colab.research.google.com/github/pinecone-io/examples/blob/master/docs/gen-qa-openai.ipynb
 from pinecone_datasets import load_dataset
 import os
-import pinecone
+from pinecone import Pinecone
 from openai import OpenAI
 
 from traceloop.sdk import Traceloop
@@ -12,7 +12,7 @@ client = OpenAI()
 
 Traceloop.init(app_name="pinecone_app")
 
-pinecone.init(
+pc = Pinecone(
     api_key=os.getenv("PINECONE_API_KEY"), environment=os.getenv("PINECONE_ENVIRONMENT")
 )
 index_name = "gen-qa-openai-fast"
@@ -22,30 +22,32 @@ open_ai_client = OpenAI()
 
 @workflow(name="create_index")
 def gen_index():
-    if index_name not in pinecone.list_indexes():
+    if index_name not in pc.list_indexes():
         print("Loading dataset...")
         dataset = load_dataset("youtube-transcripts-text-embedding-ada-002")
         dataset.documents.drop(["metadata"], axis=1, inplace=True)
         dataset.documents.rename(columns={"blob": "metadata"}, inplace=True)
 
         print("Creating index...")
-        pinecone.create_index(
+        pc.create_index(
             index_name,
             dimension=1536,  # dimensionality of text-embedding-ada-002
             metric="cosine",
         )
-        index = pinecone.Index(index_name)
+        index = pc.Index(index_name)
         for batch in dataset.iter_documents(batch_size=100):
             index.upsert(batch)
 
 
-index = pinecone.Index(index_name)
+index = pc.Index(index_name)
 
 
 @task("retrieve")
 def retrieve(query):
     context_limit = 3750
-    res = open_ai_client.embeddings.create(input=[query], model="text-embedding-ada-002")
+    res = open_ai_client.embeddings.create(
+        input=[query], model="text-embedding-ada-002"
+    )
 
     # retrieve from Pinecone
     xq = res.data[0].embedding
@@ -68,11 +70,11 @@ def retrieve(query):
     return prompt
 
 
-@task("complete")
-def complete(prompt):
-    res = open_ai_client.completions.create(
-        model="davinci-002",
-        prompt=prompt,
+@task("chat")
+def chat(prompt):
+    res = open_ai_client.chat.completions.create(
+        model="gpt-3.5-turbo",
+        messages=[{"role": "user", "content": prompt}],
         temperature=0,
         max_tokens=400,
         top_p=1,
@@ -80,17 +82,17 @@ def complete(prompt):
         presence_penalty=0,
         stop=None,
     )
-    return res.choices[0].text.strip()
+    return res.choices[0].message.content
 
 
 @workflow(name="query_with_retrieve")
 def run_query(query: str):
     query_with_contexts = retrieve(query)
     print(query_with_contexts)
-    print(complete(query_with_contexts))
+    print(chat(query_with_contexts))
 
 
-gen_index()
+# gen_index()
 query = (
     "Which training method should I use for sentence transformers when "
     + "I only have pairs of related sentences?"
