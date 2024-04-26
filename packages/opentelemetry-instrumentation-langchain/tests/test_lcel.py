@@ -1,3 +1,4 @@
+import json
 import pytest
 from langchain.prompts import PromptTemplate
 from langchain.prompts import ChatPromptTemplate
@@ -65,6 +66,33 @@ def test_simple_lcel(exporter):
     assert chat_openai_task_span.parent.span_id == workflow_span.context.span_id
     assert output_parser_task_span.parent.span_id == workflow_span.context.span_id
 
+    assert json.loads(workflow_span.attributes["traceloop.entity.input"]) == {
+        "args": [],
+        "kwargs": {
+            "input": "tell me a short joke",
+            "run_name": "ThisIsATestChain",
+            "tags": ["test_tag"],
+        },
+    }
+    assert json.loads(workflow_span.attributes["traceloop.entity.output"]) == {
+        "setup": "Why couldn't the bicycle stand up by itself?",
+        "punchline": "It was two tired!",
+    }
+    assert json.loads(prompt_task_span.attributes["traceloop.entity.input"]) == {
+        "args": [],
+        "kwargs": {
+            "input": "tell me a short joke",
+            "tags": ["test_tag"],
+            "metadata": {},
+            "recursion_limit": 25,
+            "configurable": {},
+        },
+    }
+    assert (
+        prompt_task_span.attributes["traceloop.entity.output"]
+        == "messages=[SystemMessage(content='You are helpful assistant'), HumanMessage(content='tell me a short joke')]"
+    )
+
 
 @pytest.mark.vcr
 @pytest.mark.asyncio
@@ -79,7 +107,7 @@ async def test_async_lcel(exporter):
         "write 10 lines of random text about ${product}"
     )
     runnable = prompt | chat | StrOutputParser()
-    await runnable.ainvoke({"product": "colorful socks"})
+    response = await runnable.ainvoke({"product": "colorful socks"})
 
     spans = exporter.get_finished_spans()
 
@@ -105,6 +133,14 @@ async def test_async_lcel(exporter):
 
     assert chat_openai_task_span.parent.span_id == workflow_span.context.span_id
     assert output_parser_task_span.parent.span_id == workflow_span.context.span_id
+
+    assert json.loads(workflow_span.attributes["traceloop.entity.input"]) == {
+        "args": [],
+        "kwargs": {
+            "product": "colorful socks",
+        },
+    }
+    assert workflow_span.attributes["traceloop.entity.output"] == response
 
 
 @pytest.mark.vcr

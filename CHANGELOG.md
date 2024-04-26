@@ -1,3 +1,26 @@
+## v0.16.9 (2024-04-26)
+
+### Fix
+
+- **openai**: missing await for Embedding.acreate (#900)
+- **cohere**: support v5 (#899)
+- **pinecone**: support v3 (#895)
+- **instrumentation**: the build problem for watsonx auto instrumentation (#885)
+
+## v0.16.8 (2024-04-25)
+
+### Fix
+
+- **langchain**: input/output reporting (#894)
+- **sdk**: reset the color of messages in the custom metrics exporter (#893)
+
+## v0.16.7 (2024-04-25)
+
+### Fix
+
+- **openai**: azure filtering masked all completions (#886)
+- **chromadb**: exception thrown when metadata isn't set (#882)
+
 ## v0.16.6 (2024-04-19)
 
 ### Fix

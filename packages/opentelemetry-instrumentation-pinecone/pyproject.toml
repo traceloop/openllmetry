@@ -8,7 +8,7 @@ show_missing = true
 
 [tool.poetry]
 name = "opentelemetry-instrumentation-pinecone"
-version = "0.16.6"
+version = "0.16.9"
 description = "OpenTelemetry Pinecone instrumentation"
 authors = [
   "Gal Kleinman <gal@traceloop.com>",
@@ -36,14 +36,14 @@ pytest = "8.1.1"
 pytest-sugar = "1.0.0"
 
 [tool.poetry.group.test.dependencies]
-openai = "^1.12.0"
+openai = {version="^1.12.0", extras=["datalib"]}
 pytest = "8.1.1"
 pytest-sugar = "1.0.0"
 vcrpy = "^6.0.1"
 pytest-recording = "^0.13.1"
 opentelemetry-sdk = "^1.23.0"
 opentelemetry-instrumentation-openai = {path="../opentelemetry-instrumentation-openai", develop=true}
-pinecone-client = "^2.2.4"
+pinecone-client = "^3.2.2"
 
 [build-system]
 requires = [ "poetry-core" ]

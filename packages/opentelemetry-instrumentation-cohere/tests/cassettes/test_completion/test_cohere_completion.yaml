@@ -1,65 +1,79 @@
 interactions:
 - request:
-    body: '{"model": "command", "prompt": "Tell me a joke, pirate style", "prompt_vars":
-      {}, "preset": null, "num_generations": null, "max_tokens": null, "temperature":
-      null, "k": null, "p": null, "frequency_penalty": null, "presence_penalty": null,
-      "end_sequences": null, "stop_sequences": null, "return_likelihoods": null, "truncate":
-      null, "logit_bias": {}, "stream": false}'
+    body: '{"prompt": "Tell me a joke, pirate style", "stream": false, "model": "command"}'
     headers:
-      Accept:
+      accept:
       - '*/*'
-      Accept-Encoding:
-      - gzip, deflate, br
-      Connection:
+      accept-encoding:
+      - gzip, deflate
+      connection:
       - keep-alive
-      Content-Length:
-      - '366'
-      Content-Type:
+      content-length:
+      - '79'
+      content-type:
       - application/json
-      Request-Source:
-      - python-sdk-4.46
-      User-Agent:
-      - python-requests/2.31.0
+      host:
+      - api.cohere.ai
+      user-agent:
+      - python-httpx/0.27.0
+      x-fern-language:
+      - Python
+      x-fern-sdk-name:
+      - cohere
+      x-fern-sdk-version:
+      - 5.3.3
     method: POST
     uri: https://api.cohere.ai/v1/generate
   response:
     body:
-      string: '{"id":"c31be0e7-2bdc-4ac4-9b57-63ad96d4bbb2","generations":[{"id":"ead5d18e-8649-494e-83cf-3d4553ec593a","text":"
-        Argh, matey! Shiver me timbers, here''s a pirate-style joke for ye:\n\nWhy
-        did the pirate captain lead his crew across the jungle? \n\nSaid captain had
-        a parrrrty at his X, and needed more arrrrrrrrs to attend it. \n\nArgh :)","finish_reason":"COMPLETE"}],"prompt":"Tell
-        me a joke, pirate style","meta":{"api_version":{"version":"1"},"billed_units":{"input_tokens":7,"output_tokens":69}}}'
+      string: '{"id":"63450068-b5ed-4dd1-80af-b1dea27b3fd4","generations":[{"id":"825ec8b3-d4c4-413e-9442-271fc8a13290","text":"
+        Arrrr, matey! Shiver me timbers, here''s a pirate-themed joke for ye:\n\nWhy
+        did the pirate want to go to the dentist?\n\nAnswer: Because he was feeling
+        a bit \"captainy\" about his teeth! \n\nArrrr, matey! Now ye be knowin'' why
+        pirates loved swashbuckling their way through a good joke. Ye can hoist this
+        joke on your deck and share it with yer scurvy crew! \n\nIf ye be wantin''
+        more pirate fun, I''ve got a treasure trove of pirate puns and one-liners
+        to keep the laughs aflowin''!","finish_reason":"COMPLETE"}],"prompt":"Tell
+        me a joke, pirate style","meta":{"api_version":{"version":"1"},"billed_units":{"input_tokens":7,"output_tokens":138}}}'
     headers:
       Alt-Svc:
       - h3=":443"; ma=2592000,h3-29=":443"; ma=2592000
-      Content-Length:
-      - '501'
       Via:
       - 1.1 google
       access-control-expose-headers:
       - X-Debug-Trace-ID
+      cache-control:
+      - no-cache, no-store, no-transform, must-revalidate, private, max-age=0
+      content-length:
+      - '758'
       content-type:
       - application/json
       date:
-      - Mon, 12 Feb 2024 15:03:51 GMT
+      - Fri, 26 Apr 2024 20:28:56 GMT
+      expires:
+      - Thu, 01 Jan 1970 00:00:00 UTC
       num_chars:
-      - '247'
+      - '499'
       num_tokens:
-      - '76'
+      - '145'
+      pragma:
+      - no-cache
       server:
       - envoy
       vary:
       - Origin
+      x-accel-expires:
+      - '0'
       x-debug-trace-id:
-      - 650d7187a681dbe0c0a429014e742b07
+      - 103237d3dfa4c5257dc14959c82e4bfe
       x-endpoint-monthly-call-limit:
-      - '500'
+      - '1000'
       x-envoy-upstream-service-time:
-      - '2086'
+      - '4240'
       x-trial-endpoint-call-limit:
-      - '10'
+      - '40'
       x-trial-endpoint-call-remaining:
-      - '8'
+      - '39'
     status:
       code: 200
       message: OK

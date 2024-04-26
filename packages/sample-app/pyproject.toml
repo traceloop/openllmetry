@@ -22,11 +22,11 @@ readme = "README.md"
 include = "sample_app"
 
 [tool.poetry.dependencies]
-python = ">=3.9,<4"
+python = ">=3.9,<3.13"
 openai = "^1.23.2"
 requests = "^2.31.0"
-# pinecone-datasets = "^0.6.2"
-pinecone-client = {extras = ["grpc"], version = "^2.2.4"}
+# pinecone-datasets = "^0.7.0"
+pinecone-client = "^3.2.2"
 llama-index = "^0.10.30"
 # workaround for: https://github.com/python-poetry/poetry-plugin-export/issues/183
 urllib3 = ">=1.25.4,<1.27"
@@ -38,7 +38,7 @@ tokenizers = "~0.19.0"
 boto3 = "^1.33.1"
 transformers = "^4.40.0"
 replicate = "^0.22.0"
-cohere = "^4.40"
+cohere = "^5.3.3"
 anthropic = "^0.25.1"
 google-cloud-aiplatform = "^1.44.0"
 python-dotenv = "^1.0.1"

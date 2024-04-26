@@ -30,7 +30,7 @@ from opentelemetry.instrumentation.openai.shared import (
 from opentelemetry.trace import SpanKind, Tracer
 from opentelemetry.trace.status import Status, StatusCode
 
-from opentelemetry.instrumentation.openai.utils import is_openai_v1
+from opentelemetry.instrumentation.openai.utils import is_openai_v1, is_azure_openai
 
 SPAN_NAME = "openai.chat"
 LLM_REQUEST_TYPE = LLMRequestTypeValues.CHAT
@@ -303,6 +303,11 @@ def _set_completions(span, choices):
             span, f"{prefix}.finish_reason", choice.get("finish_reason")
         )
 
+        if choice.get("finish_reason") == "content_filter":
+            _set_span_attribute(span, f"{prefix}.role", "assistant")
+            _set_span_attribute(span, f"{prefix}.content", "FILTERED")
+            return
+
         message = choice.get("message")
         if not message:
             return
@@ -428,9 +433,10 @@ def _build_from_streaming_response(
         "stream": True,
     }
 
-    _set_streaming_token_metrics(
-        request_kwargs, complete_response, span, token_counter, shared_attributes
-    )
+    if not is_azure_openai(instance):
+        _set_streaming_token_metrics(
+            request_kwargs, complete_response, span, token_counter, shared_attributes
+        )
 
     # choice metrics
     if choice_counter and complete_response.get("choices"):
@@ -495,9 +501,10 @@ async def _abuild_from_streaming_response(
         "stream": True,
     }
 
-    _set_streaming_token_metrics(
-        request_kwargs, complete_response, span, token_counter, shared_attributes
-    )
+    if not is_azure_openai(instance):
+        _set_streaming_token_metrics(
+            request_kwargs, complete_response, span, token_counter, shared_attributes
+        )
 
     # choice metrics
     if choice_counter and complete_response.get("choices"):
@@ -546,6 +553,3 @@ def _accumulate_stream_items(item, complete_response):
             complete_choice["message"]["content"] += delta.get("content")
         if delta and delta.get("role"):
             complete_choice["message"]["role"] = delta.get("role")
-
-        if choice.get("content_filter_results"):
-            complete_choice["message"]["content"] = "FILTERED"
