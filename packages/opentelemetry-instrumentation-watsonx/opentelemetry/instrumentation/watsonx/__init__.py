@@ -26,7 +26,7 @@ from opentelemetry.instrumentation.watsonx.version import __version__
 
 logger = logging.getLogger(__name__)
 
-_instruments = ("ibm-watson-machine-learning >= 1.0.347",)
+_instruments = ("ibm-watson-machine-learning >= 1.0.333",)
 
 WRAPPED_METHODS_WATSON_ML_VERSION_1 = [
     {
