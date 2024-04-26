@@ -51,5 +51,5 @@ def test_cohere_rerank(exporter):
         )
         assert (
             cohere_span.attributes.get(f"gen_ai.completion.{idx}.content")
-            == f"Doc {result.index}, Score: {result.relevance_score}\n{result.document['text']}"
+            == f"Doc {result.index}, Score: {result.relevance_score}"
         )
