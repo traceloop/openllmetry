@@ -1,6 +1,6 @@
 # Adaptation of Pinecone's sampleapp to use sentence transformer
 import os
-import pinecone
+from pinecone import Pinecone
 from opentelemetry.sdk.trace.export import ConsoleSpanExporter
 
 from traceloop.sdk import Traceloop
@@ -21,14 +21,14 @@ if log_to_stdout:
 Traceloop.init(**kwargs)
 
 # Init pinecone
-pinecone.init(
+pc = Pinecone(
     api_key=os.getenv("PINECONE_API_KEY"), environment=os.getenv("PINECONE_ENVIRONMENT")
 )
 
 
 index_name = "traceloop-dev"
 print("Loading model...")
-model = SentenceTransformer('intfloat/e5-small-v2')
+model = SentenceTransformer("intfloat/e5-small-v2")
 
 
 @workflow(name="create_index")
@@ -36,8 +36,8 @@ def insert_embeddings():
     # Encode using example from https://huggingface.co/intfloat/e5-small-v2
 
     input_texts = [
-        'query: how much protein should a female eat',
-        'query: summit define',
+        "query: how much protein should a female eat",
+        "query: summit define",
         "passage: As a general guideline, the CDC's average "
         "requirement of protein for women ages 19 to 70 is 46 "
         "grams per day. But, as you can see from this chart, "
@@ -48,21 +48,23 @@ def insert_embeddings():
         "Learners. : 1  the highest point of a mountain : "
         "the top of a mountain. : 2  the highest level. : 3"
         "  a meeting or series of meetings between the leaders"
-        " of two or more governments."
+        " of two or more governments.",
     ]
     print("Creating embeddings...")
     embeddings = model.encode(input_texts, normalize_embeddings=True)
 
-    index = pinecone.Index(index_name)
+    index = pc.Index(index_name)
 
     data_to_insert = []
     for i in range(len(embeddings)):
         vector = embeddings[i].tolist()
-        data_to_insert.append({
-            "id": f"id{i}",
-            "values": vector,
-            "metadata": {"description": f"This is for text of index {i}"}
-        })
+        data_to_insert.append(
+            {
+                "id": f"id{i}",
+                "values": vector,
+                "metadata": {"description": f"This is for text of index {i}"},
+            }
+        )
     print("Inserting into index...")
     index.upsert(data_to_insert)
 
@@ -74,7 +76,7 @@ def retrieve(query):
     vector = query_embeddings.tolist()
 
     # Retrieve created index
-    index = pinecone.Index(index_name)
+    index = pc.Index(index_name)
 
     # retrieve from Pinecone
     return index.query(
@@ -93,7 +95,5 @@ def run_query(query: str):
 if create_data:
     insert_embeddings()
 
-query = (
-    "passage: What is the definition of summit?"
-)
+query = "passage: What is the definition of summit?"
 run_query(query)

@@ -28,6 +28,10 @@ class SpanAttributes:
     VECTOR_DB_VENDOR = "db.system"
     VECTOR_DB_QUERY_TOP_K = "db.vector.query.top_k"
 
+    # Pinecone
+    PINECONE_USAGE_READ_UNITS = "pinecone.usage.read_units"
+    PINECONE_USAGE_WRITE_UNITS = "pinecone.usage.write_units"
+
     # LLM Workflows
     TRACELOOP_SPAN_KIND = "traceloop.span.kind"
     TRACELOOP_WORKFLOW_NAME = "traceloop.workflow.name"
