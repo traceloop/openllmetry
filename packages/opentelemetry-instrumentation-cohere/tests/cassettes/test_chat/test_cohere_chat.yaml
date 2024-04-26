@@ -1,65 +1,84 @@
 interactions:
 - request:
-    body: '{"message": "Tell me a joke, pirate style", "conversation_id": "", "model":
-      "command", "return_chat_history": false, "return_prompt": false, "return_preamble":
-      false, "chat_history": null, "preamble_override": null, "temperature": 0.8,
-      "max_tokens": null, "stream": false, "user_name": null, "p": null, "k": null,
-      "search_queries_only": null, "documents": null, "connectors": null}'
+    body: '{"message": "Tell me a joke, pirate style", "stream": false, "model": "command"}'
     headers:
-      Accept:
+      accept:
       - '*/*'
-      Accept-Encoding:
-      - gzip, deflate, br
-      Connection:
+      accept-encoding:
+      - gzip, deflate
+      connection:
       - keep-alive
-      Content-Length:
-      - '381'
-      Content-Type:
+      content-length:
+      - '80'
+      content-type:
       - application/json
-      Request-Source:
-      - python-sdk-4.46
-      User-Agent:
-      - python-requests/2.31.0
+      host:
+      - api.cohere.ai
+      user-agent:
+      - python-httpx/0.27.0
+      x-fern-language:
+      - Python
+      x-fern-sdk-name:
+      - cohere
+      x-fern-sdk-version:
+      - 5.3.3
     method: POST
     uri: https://api.cohere.ai/v1/chat
   response:
     body:
-      string: "{\"response_id\":\"598d0165-c0cd-4f1a-a678-bad8b99db660\",\"text\":\"Arrrr,
-        matey! Shiver me timbers, here's a pirate-style joke for ye:\\n\\nWhy did
-        the pirate want to join the YMCA? \\n\\nBecause he wanted to change his arrrrt!\\n\\nArrrr,
-        matey, ye scurvy dog, ye be laughin' like a regular deckhand now, ain't ye?
-        \\n\\n reclamation Bay argh hai ya'rrr \U0001F334\u26F5\uFE0F\u2693\uFE0F\",\"generation_id\":\"98e851d4-b4e7-4aec-91cf-79620537c58e\",\"token_count\":{\"prompt_tokens\":69,\"response_tokens\":100,\"total_tokens\":169,\"billed_tokens\":158},\"meta\":{\"api_version\":{\"version\":\"1\"},\"billed_units\":{\"input_tokens\":58,\"output_tokens\":100}},\"tool_inputs\":null}"
+      string: '{"response_id":"18ad0e19-ed56-4548-a36c-1ce091ab2a56","text":"Arrrr,
+        matey! Shiver me timbers, here''s a pirate-style joke for ye:\n\nWhy did the
+        pirate go to the dentist?\n\nA: Because he wanted to find some treasure! ARRRRR!!!
+        \n\nPirates tend to say \"ARRRR!!\" a lot. I hope you enjoyed this pirate-themed
+        joke! If you''d like to set sail toward laughter''s horizon and discover more
+        pirate jokes, shoot cannons with any additional requests! I be happy to entertain
+        ye.","generation_id":"5e57db13-5b08-4f43-a0c6-972714e98bfe","chat_history":[{"role":"USER","message":"Tell
+        me a joke, pirate style"},{"role":"CHATBOT","message":"Arrrr, matey! Shiver
+        me timbers, here''s a pirate-style joke for ye:\n\nWhy did the pirate go to
+        the dentist?\n\nA: Because he wanted to find some treasure! ARRRRR!!! \n\nPirates
+        tend to say \"ARRRR!!\" a lot. I hope you enjoyed this pirate-themed joke!
+        If you''d like to set sail toward laughter''s horizon and discover more pirate
+        jokes, shoot cannons with any additional requests! I be happy to entertain
+        ye."}],"finish_reason":"COMPLETE","meta":{"api_version":{"version":"1"},"billed_units":{"input_tokens":58,"output_tokens":106},"tokens":{"input_tokens":69,"output_tokens":106}}}'
     headers:
       Alt-Svc:
       - h3=":443"; ma=2592000,h3-29=":443"; ma=2592000
-      Content-Length:
-      - '624'
       Via:
       - 1.1 google
       access-control-expose-headers:
       - X-Debug-Trace-ID
+      cache-control:
+      - no-cache, no-store, no-transform, must-revalidate, private, max-age=0
+      content-length:
+      - '1211'
       content-type:
       - application/json
       date:
-      - Mon, 12 Feb 2024 15:03:48 GMT
+      - Fri, 26 Apr 2024 20:28:51 GMT
+      expires:
+      - Thu, 01 Jan 1970 00:00:00 UTC
       num_chars:
-      - '323'
+      - '320'
       num_tokens:
-      - '158'
+      - '164'
+      pragma:
+      - no-cache
       server:
       - envoy
       vary:
       - Origin
+      x-accel-expires:
+      - '0'
       x-debug-trace-id:
-      - 01b72c50faaee65ff02d0dd60523d411
+      - fab7aca4ca1227c67f3f4940232ece47
       x-endpoint-monthly-call-limit:
-      - '500'
+      - '1000'
       x-envoy-upstream-service-time:
-      - '3081'
+      - '3476'
       x-trial-endpoint-call-limit:
-      - '10'
+      - '40'
       x-trial-endpoint-call-remaining:
-      - '8'
+      - '39'
     status:
       code: 200
       message: OK

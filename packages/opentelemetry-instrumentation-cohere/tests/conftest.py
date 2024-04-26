@@ -32,7 +32,8 @@ def clear_exporter(exporter):
 
 @pytest.fixture(autouse=True)
 def environment():
-    os.environ["COHERE_API_KEY"] = "test_api_key"
+    if "COHERE_API_KEY" not in os.environ:
+        os.environ["COHERE_API_KEY"] = "test_api_key"
 
 
 @pytest.fixture(scope="module")
