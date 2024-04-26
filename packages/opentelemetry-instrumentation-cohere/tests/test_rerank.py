@@ -24,7 +24,7 @@ def test_cohere_rerank(exporter):
         + " in North Dakota in the year 2010. The capital and seat of government is Bismarck.",
     ]
 
-    results = co.rerank(
+    response = co.rerank(
         query=query, documents=documents, top_n=3, model="rerank-multilingual-v2.0"
     )
 
@@ -41,9 +41,9 @@ def test_cohere_rerank(exporter):
         assert cohere_span.attributes.get(f"llm.prompts.{i}.role") == "system"
         assert cohere_span.attributes.get(f"llm.prompts.{i}.content") == doc
 
-    for idx, result in enumerate(results):
+    for idx, result in enumerate(response.results):
         assert cohere_span.attributes.get(f"llm.completions.{idx}.role") == "assistant"
         assert (
             cohere_span.attributes.get(f"llm.completions.{idx}.content")
-            == f"Doc {result.index}, Score: {result.relevance_score}\n{result.document['text']}"
+            == f"Doc {result.index}, Score: {result.relevance_score}"
         )
