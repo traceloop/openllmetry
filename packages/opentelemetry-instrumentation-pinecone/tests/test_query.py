@@ -53,7 +53,7 @@ def run_query(openai_client, index, query: str):
 
 
 @pytest.mark.skip(
-    "GRPC package of Pinecone is conflicting with google-cloud-aiplatform"
+    "Can't record GRPC-based tests with VCR, as it doesn't support recording GRPC requests."
 )
 def test_pinecone_grpc_retrieval(exporter, openai_client):
     pinecone.init(

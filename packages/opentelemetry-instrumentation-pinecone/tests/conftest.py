@@ -34,9 +34,12 @@ def clear_exporter(exporter):
 
 @pytest.fixture(autouse=True)
 def environment():
-    os.environ["OPENAI_API_KEY"] = "test_api_key"
-    os.environ["PINECONE_API_KEY"] = "test_api_key"
-    os.environ["PINECONE_ENVIRONMENT"] = "gcp-starter"
+    if "OPENAI_API_KEY" not in os.environ:
+        os.environ["OPENAI_API_KEY"] = "test_api_key"
+    if "PINECONE_API_KEY" not in os.environ:
+        os.environ["PINECONE_API_KEY"] = "test_api_key"
+    if "PINECONE_ENVIRONMENT" not in os.environ:
+        os.environ["PINECONE_ENVIRONMENT"] = "gcp-starter"
 
 
 @pytest.fixture(scope="module")
