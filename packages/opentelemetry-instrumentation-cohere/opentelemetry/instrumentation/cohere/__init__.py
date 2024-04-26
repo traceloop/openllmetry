@@ -22,7 +22,7 @@ from opentelemetry.instrumentation.cohere.version import __version__
 
 logger = logging.getLogger(__name__)
 
-_instruments = ("cohere >= 4.2.7",)
+_instruments = ("cohere >=4.2.7, <6",)
 
 WRAPPED_METHODS = [
     {
@@ -110,7 +110,8 @@ def _set_span_chat_response(span, response):
     prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{index}"
     _set_span_attribute(span, f"{prefix}.content", response.text)
 
-    if response.token_count:
+    # Cohere v4
+    if hasattr(response, "token_count"):
         _set_span_attribute(
             span,
             SpanAttributes.LLM_USAGE_TOTAL_TOKENS,
@@ -127,8 +128,34 @@ def _set_span_chat_response(span, response):
             response.token_count.get("prompt_tokens"),
         )
 
+    # Cohere v5
+    if hasattr(response, "meta") and hasattr(response.meta, "tokens"):
+        input_tokens = response.meta.tokens.input_tokens
+        output_tokens = response.meta.tokens.output_tokens
 
-def _set_span_generations_response(span, generations):
+        _set_span_attribute(
+            span,
+            SpanAttributes.LLM_USAGE_TOTAL_TOKENS,
+            input_tokens + output_tokens,
+        )
+        _set_span_attribute(
+            span,
+            SpanAttributes.LLM_USAGE_COMPLETION_TOKENS,
+            output_tokens,
+        )
+        _set_span_attribute(
+            span,
+            SpanAttributes.LLM_USAGE_PROMPT_TOKENS,
+            input_tokens,
+        )
+
+
+def _set_span_generations_response(span, response):
+    if hasattr(response, "generations"):
+        generations = response.generations  # Cohere v5
+    else:
+        generations = response  # Cohere v4
+
     for index, generation in enumerate(generations):
         prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{index}"
         _set_span_attribute(span, f"{prefix}.content", generation.text)
@@ -136,12 +163,11 @@ def _set_span_generations_response(span, generations):
 
 def _set_span_rerank_response(span, response):
     for idx, doc in enumerate(response.results):
-        print(doc.index, doc.relevance_score, doc.document["text"])
         prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{idx}"
         _set_span_attribute(span, f"{prefix}.role", "assistant")
         content = f"Doc {doc.index}, Score: {doc.relevance_score}"
-        if doc.document["text"]:
-            content += f"\n{doc.document['text']}"
+        if doc.document:
+            content += f"\n{doc.document.get('text')}"
         _set_span_attribute(
             span,
             f"{prefix}.content",
