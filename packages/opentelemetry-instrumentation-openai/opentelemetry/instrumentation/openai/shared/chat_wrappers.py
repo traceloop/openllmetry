@@ -549,7 +549,11 @@ def _accumulate_stream_items(item, complete_response):
 
         delta = choice.get("delta")
 
-        if delta and delta.get("content"):
-            complete_choice["message"]["content"] += delta.get("content")
-        if delta and delta.get("role"):
-            complete_choice["message"]["role"] = delta.get("role")
+    try:
+        if delta:
+            if delta.get("content"):
+                complete_choice["message"]["content"] += delta.get("content")
+            if delta.get("role"):
+                complete_choice["message"]["role"] = delta.get("role")
+    except Exception as e:
+        logger.warning("Failed to get results, error: %s", str(e)")
