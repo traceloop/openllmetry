@@ -18,8 +18,9 @@ from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
 
 from opentelemetry.semconv.ai import TraceloopSpanKindValues
 
+from opentelemetry.instrumentation.langchain.init_wrapper import init_wrapper
+
 from opentelemetry.instrumentation.langchain.task_wrapper import (
-    init_wrapper,
     task_wrapper,
     atask_wrapper,
 )
@@ -62,37 +63,6 @@ TO_INSTRUMENT = [
         "package": "langchain.chains",
         "class": "RetrievalQA",
         "span_name": "retrieval_qa.workflow",
-        "callback_supported": True,
-    },
-    {
-        "package": "langchain.chat_models.base",
-        "object": "BaseChatModel",
-        "method": "generate",
-        "wrapper": chat_wrapper,
-    },
-    {
-        "package": "langchain.chat_models.base",
-        "object": "BaseChatModel",
-        "method": "agenerate",
-        "wrapper": achat_wrapper,
-    },
-    {
-        "package": "langchain.schema",
-        "object": "BaseOutputParser",
-        "method": "invoke",
-        "wrapper": task_wrapper,
-    },
-    {
-        "package": "langchain.schema",
-        "object": "BaseOutputParser",
-        "method": "ainvoke",
-        "wrapper": atask_wrapper,
-    },
-    {
-        "package": "langchain.schema.runnable",
-        "object": "RunnableSequence",
-        "method": "invoke",
-        "span_name": "langchain.workflow",
         "callback_supported": True,
     },
     {
@@ -159,6 +129,7 @@ TO_INSTRUMENT = [
         "method": "_generate",
         "span_name": "llm.generate",
         "wrapper": llm_wrapper,
+        "callback_supported": False,
     },
     {
         "package": "langchain_core.language_models.llms",
@@ -166,6 +137,7 @@ TO_INSTRUMENT = [
         "method": "_agenerate",
         "span_name": "llm.generate",
         "wrapper": allm_wrapper,
+        "callback_supported": False,
     },
 ]
 

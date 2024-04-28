@@ -35,9 +35,10 @@ def langchain_app():
 
     print(
         mrkl.run(
-            "What is the full name of the artist who recently released an album called "
-            + "'The Storm Before the Calm' and are they in the FooBar database? "
-            + "If so, what albums of theirs are in the FooBar database?"
+            "What is 5+3 equals to?"
+#            "What is the full name of the artist who recently released an album called "
+#            + "'The Storm Before the Calm' and are they in the FooBar database? "
+#            + "If so, what albums of theirs are in the FooBar database?"
         )
     )
 
