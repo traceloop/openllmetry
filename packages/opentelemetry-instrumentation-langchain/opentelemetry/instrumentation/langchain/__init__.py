@@ -161,7 +161,9 @@ class LangchainInstrumentor(BaseInstrumentor):
                 if module.get("callback_supported"):
                     wrap_class = module.get("class")
                     wrap_function_wrapper(
-                        wrap_package, f"{wrap_class}.__init__", init_wrapper(tracer, module)
+                        wrap_package,
+                        f"{wrap_class}.__init__",
+                        init_wrapper(tracer, module),
                     )
                 else:
                     wrap_object = module.get("object")
@@ -180,10 +182,7 @@ class LangchainInstrumentor(BaseInstrumentor):
         for module in TO_INSTRUMENT:
             if not module.get("callback_supported"):
                 wrap_class = module.get("class")
-                unwrap(
-                    wrap_package, 
-                    f"{wrap_class}.__init__"
-                )
+                unwrap(wrap_package, f"{wrap_class}.__init__")
             else:
                 wrap_package = module.get("package")
                 wrap_object = module.get("object")

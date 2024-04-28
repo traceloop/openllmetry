@@ -10,7 +10,7 @@ from opentelemetry.instrumentation.langchain.utils import (
 )
 from opentelemetry.instrumentation.langchain.callbacks.span import (
     SyncSpanCallbackHandler,
-    AsyncSpanCallbackHandler
+    AsyncSpanCallbackHandler,
 )
 
 

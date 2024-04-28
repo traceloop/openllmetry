@@ -12,7 +12,9 @@ def _with_tracer_wrapper(func):
     def _with_tracer(tracer, module):
         def wrapper(wrapped, instance, args, kwargs):
             return func(tracer, module, wrapped, instance, args, kwargs)
+
         return wrapper
+
     return _with_tracer
 
 
