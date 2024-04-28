@@ -12,7 +12,14 @@ from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.instrumentation.utils import unwrap
 from opentelemetry.instrumentation.langchain.utils import _with_tracer_wrapper
 
+from opentelemetry.instrumentation.langchain.version import __version__
+from opentelemetry import context as context_api
+from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
+
+from opentelemetry.semconv.ai import TraceloopSpanKindValues
+
 from opentelemetry.instrumentation.langchain.task_wrapper import (
+    init_wrapper,
     task_wrapper,
     atask_wrapper,
 )
@@ -28,11 +35,6 @@ from opentelemetry.instrumentation.langchain.custom_chat_wrapper import (
     chat_wrapper,
     achat_wrapper,
 )
-from opentelemetry.instrumentation.langchain.version import __version__
-from opentelemetry import context as context_api
-from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
-
-from opentelemetry.semconv.ai import TraceloopSpanKindValues
 
 logger = logging.getLogger(__name__)
 
@@ -42,40 +44,25 @@ TO_INSTRUMENT = [
     {
         "package": "langchain.chains.base",
         "class": "Chain",
+        "callback_supported": True,
     },
-    # {
-    #     "package": "langchain.chains",
-    #     "class": "LLMChain",
-    # },
-    # {
-    #     "package": "langchain.chains",
-    #     "class": "TransformChain",
-    # },
-    # {
-    #     "package": "langchain.chains",
-    #     "class": "SequentialChain",
-    #     "span_name": "langchain.workflow",
-    # },
     {
         "package": "langchain.agents",
         "class": "Agent",
+        "callback_supported": True,
     },
-    # {
-    #     "package": "langchain.agents",
-    #     "class": "AgentExecutor",
-    # #     "span_name": "langchain.agent",
-    # #     "kind": TraceloopSpanKindValues.AGENT.value,
-    # # },
     {
         "package": "langchain.tools",
         "class": "Tool",
         "span_name": "langchain.tool",
         "kind": TraceloopSpanKindValues.TOOL.value,
+        "callback_supported": True,
     },
     {
         "package": "langchain.chains",
         "class": "RetrievalQA",
         "span_name": "retrieval_qa.workflow",
+        "callback_supported": True,
     },
     {
         "package": "langchain.chat_models.base",
@@ -106,6 +93,65 @@ TO_INSTRUMENT = [
         "object": "RunnableSequence",
         "method": "invoke",
         "span_name": "langchain.workflow",
+        "callback_supported": True,
+    },
+    {
+        "package": "langchain.prompts.base",
+        "object": "BasePromptTemplate",
+        "method": "invoke",
+        "wrapper": task_wrapper,
+        "callback_supported": False,
+    },
+    {
+        "package": "langchain.prompts.base",
+        "object": "BasePromptTemplate",
+        "method": "ainvoke",
+        "wrapper": atask_wrapper,
+        "callback_supported": False,
+    },
+    {
+        "package": "langchain.chat_models.base",
+        "object": "BaseChatModel",
+        "method": "generate",
+        "wrapper": chat_wrapper,
+        "callback_supported": False,
+    },
+    {
+        "package": "langchain.chat_models.base",
+        "object": "BaseChatModel",
+        "method": "agenerate",
+        "wrapper": achat_wrapper,
+        "callback_supported": False,
+    },
+    {
+        "package": "langchain.schema",
+        "object": "BaseOutputParser",
+        "method": "invoke",
+        "wrapper": task_wrapper,
+        "callback_supported": False,
+    },
+    {
+        "package": "langchain.schema",
+        "object": "BaseOutputParser",
+        "method": "ainvoke",
+        "wrapper": atask_wrapper,
+        "callback_supported": False,
+    },
+    {
+        "package": "langchain.schema.runnable",
+        "object": "RunnableSequence",
+        "method": "invoke",
+        "span_name": "langchain.workflow",
+        "wrapper": workflow_wrapper,
+        "callback_supported": False,
+    },
+    {
+        "package": "langchain.schema.runnable",
+        "object": "RunnableSequence",
+        "method": "ainvoke",
+        "span_name": "langchain.workflow",
+        "wrapper": aworkflow_wrapper,
+        "callback_supported": False,
     },
     {
         "package": "langchain_core.language_models.llms",
@@ -123,13 +169,6 @@ TO_INSTRUMENT = [
     },
 ]
 
-@_with_tracer_wrapper
-def _init_wrapper(tracer, span_name, kind_name, wrapped, instance, args, kwargs):
-    if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
-        print("SUPPRESS_INSTRUMENTATION_KEY", _SUPPRESS_INSTRUMENTATION_KEY)
-        return wrapped(*args, **kwargs)
-    kwargs["callbacks"] = [SpanCallbackHandler(tracer, span_name, kind_name)]
-    return wrapped(*args, **kwargs)
 
 class LangchainInstrumentor(BaseInstrumentor):
     """An instrumentor for Langchain SDK."""
@@ -147,21 +186,37 @@ class LangchainInstrumentor(BaseInstrumentor):
         for module in TO_INSTRUMENT:
             try:
                 wrap_package = module.get("package")
-                wrap_class = module.get("class")
-                wrap_span_name = module.get("span_name", None)
-                wrap_kind_name = module.get("kind", None)
-                wrap_function_wrapper(
-                    wrap_package, f"{wrap_class}.__init__", _init_wrapper(tracer, wrap_span_name, wrap_kind_name)
-                )
+                if module.get("callback_supported"):
+                    wrap_class = module.get("class")
+                    wrap_function_wrapper(
+                        wrap_package, f"{wrap_class}.__init__", init_wrapper(tracer, module)
+                    )
+                else:
+                    wrap_object = module.get("object")
+                    wrap_method = module.get("method")
+                    wrapper = module.get("wrapper")
+                    wrap_function_wrapper(
+                        wrap_package,
+                        f"{wrap_object}.{wrap_method}" if wrap_object else wrap_method,
+                        wrapper(tracer, module),
+                    )
+
             except PackageNotFoundError:
                 pass
 
     def _uninstrument(self, **kwargs):
-        for wrapped_method in WRAPPED_METHODS:
-            wrap_package = wrapped_method.get("package")
-            wrap_object = wrapped_method.get("object")
-            wrap_method = wrapped_method.get("method")
-            unwrap(
-                f"{wrap_package}.{wrap_object}" if wrap_object else wrap_package,
-                wrap_method,
-            )
+        for module in TO_INSTRUMENT:
+            if not module.get("callback_supported"):
+                wrap_class = module.get("class")
+                unwrap(
+                    wrap_package, 
+                    f"{wrap_class}.__init__"
+                )
+            else:
+                wrap_package = module.get("package")
+                wrap_object = module.get("object")
+                wrap_method = module.get("method")
+                unwrap(
+                    f"{wrap_package}.{wrap_object}" if wrap_object else wrap_package,
+                    wrap_method,
+                )

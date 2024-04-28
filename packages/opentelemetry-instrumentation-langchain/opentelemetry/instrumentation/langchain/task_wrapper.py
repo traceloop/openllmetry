@@ -3,11 +3,17 @@ from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
 
 from opentelemetry.semconv.ai import SpanAttributes, TraceloopSpanKindValues
 
+<<<<<<< HEAD
 from opentelemetry.instrumentation.langchain.utils import (
     _with_tracer_wrapper,
     process_request,
     process_response,
 )
+=======
+from opentelemetry.instrumentation.langchain.utils import _with_tracer_wrapper
+from opentelemetry.instrumentation.langchain.callbacks.span import SyncSpanCallbackHandler
+from opentelemetry.instrumentation.langchain.callbacks.span import AsyncSpanCallbackHandler
+>>>>>>> Added back the original monkey patching for methods for classes that don't support callbacks
 
 
 @_with_tracer_wrapper
@@ -70,3 +76,13 @@ def _handle_request(instance, args, to_wrap):
     kind = to_wrap.get("kind") or TraceloopSpanKindValues.TASK.value
 
     return name, kind
+
+@_with_tracer_wrapper
+def init_wrapper(tracer, module, wrapped, instance, args, kwargs):
+    span_name = module.get("span_name", None)
+    kind_name = module.get("kind", None)
+    if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
+        print("SUPPRESS_INSTRUMENTATION_KEY", _SUPPRESS_INSTRUMENTATION_KEY)
+        return wrapped(*args, **kwargs)
+    kwargs["callbacks"] = [SyncSpanCallbackHandler(tracer, span_name, kind_name), AsyncSpanCallbackHandler(tracer, span_name, kind_name)]
+    return wrapped(*args, **kwargs)
