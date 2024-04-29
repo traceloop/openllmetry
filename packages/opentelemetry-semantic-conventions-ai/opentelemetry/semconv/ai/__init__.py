@@ -2,25 +2,34 @@ from enum import Enum
 
 
 class SpanAttributes:
+    # Semantic Conventions for LLM requests, this needs to be removed after
+    # OpenTelemetry Semantic Conventions support Gen AI.
+    # Issue at https://github.com/open-telemetry/opentelemetry-python/issues/3868
+    # Refer to https://github.com/open-telemetry/semantic-conventions/blob/main/docs/gen-ai/llm-spans.md
+    # for more detail for LLM spans from OpenTelemetry Community.
+    LLM_SYSTEM = "gen_ai.system"
+    LLM_REQUEST_MODEL = "gen_ai.request.model"
+    LLM_REQUEST_MAX_TOKENS = "gen_ai.request.max_tokens"
+    LLM_REQUEST_TEMPERATURE = "gen_ai.request.temperature"
+    LLM_REQUEST_TOP_P = "gen_ai.request.top_p"
+    LLM_PROMPTS = "gen_ai.prompt"
+    LLM_COMPLETIONS = "gen_ai.completion"
+    LLM_RESPONSE_MODEL = "gen_ai.response.model"
+    LLM_USAGE_COMPLETION_TOKENS = "gen_ai.usage.completion_tokens"
+    LLM_USAGE_PROMPT_TOKENS = "gen_ai.usage.prompt_tokens"
+    # To be added
+    # LLM_RESPONSE_FINISH_REASON = "gen_ai.response.finish_reasons"
+    # LLM_RESPONSE_ID = "gen_ai.response.id"
+
     # LLM
-    LLM_VENDOR = "llm.vendor"
     LLM_REQUEST_TYPE = "llm.request.type"
-    LLM_REQUEST_MODEL = "llm.request.model"
-    LLM_RESPONSE_MODEL = "llm.response.model"
-    LLM_REQUEST_MAX_TOKENS = "llm.request.max_tokens"
     LLM_USAGE_TOTAL_TOKENS = "llm.usage.total_tokens"
-    LLM_USAGE_COMPLETION_TOKENS = "llm.usage.completion_tokens"
-    LLM_USAGE_PROMPT_TOKENS = "llm.usage.prompt_tokens"
-    LLM_TEMPERATURE = "llm.temperature"
     LLM_USER = "llm.user"
     LLM_HEADERS = "llm.headers"
-    LLM_TOP_P = "llm.top_p"
     LLM_TOP_K = "llm.top_k"
     LLM_IS_STREAMING = "llm.is_streaming"
     LLM_FREQUENCY_PENALTY = "llm.frequency_penalty"
     LLM_PRESENCE_PENALTY = "llm.presence_penalty"
-    LLM_PROMPTS = "llm.prompts"
-    LLM_COMPLETIONS = "llm.completions"
     LLM_CHAT_STOP_SEQUENCES = "llm.chat.stop_sequences"
     LLM_REQUEST_FUNCTIONS = "llm.request.functions"
 

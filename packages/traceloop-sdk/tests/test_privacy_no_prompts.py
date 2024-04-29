@@ -41,6 +41,6 @@ def test_simple_workflow(exporter, openai_client):
         "pirate_joke_generator.workflow",
     ]
     open_ai_span = spans[0]
-    assert open_ai_span.attributes["llm.usage.prompt_tokens"] == 15
-    assert not open_ai_span.attributes.get("llm.prompts.0.content")
-    assert not open_ai_span.attributes.get("llm.prompts.0.completions")
+    assert open_ai_span.attributes["gen_ai.usage.prompt_tokens"] == 15
+    assert not open_ai_span.attributes.get("gen_ai.prompt.0.content")
+    assert not open_ai_span.attributes.get("gen_ai.prompt.0.completions")

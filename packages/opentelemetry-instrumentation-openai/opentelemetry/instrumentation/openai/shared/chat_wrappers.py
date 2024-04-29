@@ -238,7 +238,7 @@ def _set_chat_metrics(
     instance, token_counter, choice_counter, duration_histogram, response_dict, duration
 ):
     shared_attributes = {
-        "llm.response.model": response_dict.get("model") or None,
+        "gen_ai.response.model": response_dict.get("model") or None,
         "server.address": _get_openai_base_url(instance),
     }
 
@@ -428,7 +428,7 @@ def _build_from_streaming_response(
         yield item_to_yield
 
     shared_attributes = {
-        "llm.response.model": complete_response.get("model") or None,
+        "gen_ai.response.model": complete_response.get("model") or None,
         "server.address": _get_openai_base_url(instance),
         "stream": True,
     }
@@ -496,7 +496,7 @@ async def _abuild_from_streaming_response(
         yield item_to_yield
 
     shared_attributes = {
-        "llm.response.model": complete_response.get("model") or None,
+        "gen_ai.response.model": complete_response.get("model") or None,
         "server.address": _get_openai_base_url(instance),
         "stream": True,
     }

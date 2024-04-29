@@ -189,7 +189,7 @@ def _set_embeddings_metrics(
     duration,
 ):
     shared_attributes = {
-        "llm.response.model": response_dict.get("model") or None,
+        "gen_ai.response.model": response_dict.get("model") or None,
         "server.address": _get_openai_base_url(instance),
     }
 

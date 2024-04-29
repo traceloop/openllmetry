@@ -63,8 +63,8 @@ def _set_span_attribute(span, name, value):
 
 input_attribute_map = {
     "prompt": f"{SpanAttributes.LLM_PROMPTS}.0.user",
-    "temperature": SpanAttributes.LLM_TEMPERATURE,
-    "top_p": SpanAttributes.LLM_TOP_P,
+    "temperature": SpanAttributes.LLM_REQUEST_TEMPERATURE,
+    "top_p": SpanAttributes.LLM_REQUEST_TOP_P,
 }
 
 
@@ -156,7 +156,7 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
         name,
         kind=SpanKind.CLIENT,
         attributes={
-            SpanAttributes.LLM_VENDOR: "Replicate",
+            SpanAttributes.LLM_SYSTEM: "Replicate",
             SpanAttributes.LLM_REQUEST_TYPE: LLMRequestTypeValues.COMPLETION.value,
         },
     )

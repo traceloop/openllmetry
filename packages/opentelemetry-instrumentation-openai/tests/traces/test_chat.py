@@ -15,10 +15,10 @@ def test_chat(exporter, openai_client):
     ]
     open_ai_span = spans[0]
     assert (
-        open_ai_span.attributes["llm.prompts.0.content"]
+        open_ai_span.attributes["gen_ai.prompt.0.content"]
         == "Tell me a joke about opentelemetry"
     )
-    assert open_ai_span.attributes.get("llm.completions.0.content")
+    assert open_ai_span.attributes.get("gen_ai.completion.0.content")
     assert (
         open_ai_span.attributes.get("openai.api_base") == "https://api.openai.com/v1/"
     )
@@ -44,10 +44,10 @@ def test_chat_streaming(exporter, openai_client):
     ]
     open_ai_span = spans[0]
     assert (
-        open_ai_span.attributes["llm.prompts.0.content"]
+        open_ai_span.attributes["gen_ai.prompt.0.content"]
         == "Tell me a joke about opentelemetry"
     )
-    assert open_ai_span.attributes.get("llm.completions.0.content")
+    assert open_ai_span.attributes.get("gen_ai.completion.0.content")
     assert (
         open_ai_span.attributes.get("openai.api_base") == "https://api.openai.com/v1/"
     )
@@ -57,8 +57,8 @@ def test_chat_streaming(exporter, openai_client):
     assert len(events) == chunk_count
 
     # check token usage attributes for stream
-    completion_tokens = open_ai_span.attributes.get("llm.usage.completion_tokens")
-    prompt_tokens = open_ai_span.attributes.get("llm.usage.prompt_tokens")
+    completion_tokens = open_ai_span.attributes.get("gen_ai.usage.completion_tokens")
+    prompt_tokens = open_ai_span.attributes.get("gen_ai.usage.prompt_tokens")
     total_tokens = open_ai_span.attributes.get("llm.usage.total_tokens")
     assert completion_tokens and prompt_tokens and total_tokens
     assert completion_tokens + prompt_tokens == total_tokens
@@ -84,10 +84,10 @@ async def test_chat_async_streaming(exporter, async_openai_client):
     ]
     open_ai_span = spans[0]
     assert (
-        open_ai_span.attributes["llm.prompts.0.content"]
+        open_ai_span.attributes["gen_ai.prompt.0.content"]
         == "Tell me a joke about opentelemetry"
     )
-    assert open_ai_span.attributes.get("llm.completions.0.content")
+    assert open_ai_span.attributes.get("gen_ai.completion.0.content")
     assert (
         open_ai_span.attributes.get("openai.api_base") == "https://api.openai.com/v1/"
     )
@@ -97,8 +97,8 @@ async def test_chat_async_streaming(exporter, async_openai_client):
     assert len(events) == chunk_count
 
     # check token usage attributes for stream
-    completion_tokens = open_ai_span.attributes.get("llm.usage.completion_tokens")
-    prompt_tokens = open_ai_span.attributes.get("llm.usage.prompt_tokens")
+    completion_tokens = open_ai_span.attributes.get("gen_ai.usage.completion_tokens")
+    prompt_tokens = open_ai_span.attributes.get("gen_ai.usage.prompt_tokens")
     total_tokens = open_ai_span.attributes.get("llm.usage.total_tokens")
     assert completion_tokens and prompt_tokens and total_tokens
     assert completion_tokens + prompt_tokens == total_tokens

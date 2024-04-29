@@ -28,15 +28,15 @@ def test_vertexai_predict(exporter):
     ]
 
     vertexai_span = spans[0]
-    assert vertexai_span.attributes["llm.request.model"] == "text-bison@001"
+    assert vertexai_span.attributes["gen_ai.request.model"] == "text-bison@001"
     assert (
         "Give me ten interview questions for the role of program manager."
-        in vertexai_span.attributes["llm.prompts.0.user"]
+        in vertexai_span.attributes["gen_ai.prompt.0.user"]
     )
-    assert vertexai_span.attributes["llm.top_p"] == 0.8
-    assert vertexai_span.attributes["llm.request.max_tokens"] == 256
+    assert vertexai_span.attributes["gen_ai.request.top_p"] == 0.8
+    assert vertexai_span.attributes["gen_ai.request.max_tokens"] == 256
     assert vertexai_span.attributes["llm.top_k"] == 40
-    assert vertexai_span.attributes["llm.completions.0.content"] == response
+    assert vertexai_span.attributes["gen_ai.completion.0.content"] == response
 
 
 @pytest.mark.vcr
@@ -66,15 +66,15 @@ def test_vertexai_predict_async(exporter):
     ]
 
     vertexai_span = spans[0]
-    assert vertexai_span.attributes["llm.request.model"] == "text-bison@001"
+    assert vertexai_span.attributes["gen_ai.request.model"] == "text-bison@001"
     assert (
         "Give me ten interview questions for the role of program manager."
-        in vertexai_span.attributes["llm.prompts.0.user"]
+        in vertexai_span.attributes["gen_ai.prompt.0.user"]
     )
-    assert vertexai_span.attributes["llm.top_p"] == 0.8
-    assert vertexai_span.attributes["llm.request.max_tokens"] == 256
+    assert vertexai_span.attributes["gen_ai.request.top_p"] == 0.8
+    assert vertexai_span.attributes["gen_ai.request.max_tokens"] == 256
     assert vertexai_span.attributes["llm.top_k"] == 40
-    assert vertexai_span.attributes["llm.completions.0.content"] == response
+    assert vertexai_span.attributes["gen_ai.completion.0.content"] == response
 
 
 @pytest.mark.vcr
@@ -99,15 +99,15 @@ def test_vertexai_stream(exporter):
     ]
 
     vertexai_span = spans[0]
-    assert vertexai_span.attributes["llm.request.model"] == "text-bison"
+    assert vertexai_span.attributes["gen_ai.request.model"] == "text-bison"
     assert (
         "Give me ten interview questions for the role of program manager."
-        in vertexai_span.attributes["llm.prompts.0.user"]
+        in vertexai_span.attributes["gen_ai.prompt.0.user"]
     )
-    assert vertexai_span.attributes["llm.top_p"] == 0.8
-    assert vertexai_span.attributes["llm.request.max_tokens"] == 256
+    assert vertexai_span.attributes["gen_ai.request.top_p"] == 0.8
+    assert vertexai_span.attributes["gen_ai.request.max_tokens"] == 256
     assert vertexai_span.attributes["llm.top_k"] == 40
-    assert vertexai_span.attributes["llm.completions.0.content"] == "".join(response)
+    assert vertexai_span.attributes["gen_ai.completion.0.content"] == "".join(response)
 
 
 @pytest.mark.vcr
@@ -137,15 +137,15 @@ def test_vertexai_stream_async(exporter):
     ]
 
     vertexai_span = spans[0]
-    assert vertexai_span.attributes["llm.request.model"] == "text-bison"
+    assert vertexai_span.attributes["gen_ai.request.model"] == "text-bison"
     assert (
         "Give me ten interview questions for the role of program manager."
-        in vertexai_span.attributes["llm.prompts.0.user"]
+        in vertexai_span.attributes["gen_ai.prompt.0.user"]
     )
-    assert vertexai_span.attributes["llm.top_p"] == 0.8
-    assert vertexai_span.attributes["llm.request.max_tokens"] == 256
+    assert vertexai_span.attributes["gen_ai.request.top_p"] == 0.8
+    assert vertexai_span.attributes["gen_ai.request.max_tokens"] == 256
     assert vertexai_span.attributes["llm.top_k"] == 40
-    assert vertexai_span.attributes["llm.completions.0.content"] == "".join(response)
+    assert vertexai_span.attributes["gen_ai.completion.0.content"] == "".join(response)
 
 
 @pytest.mark.vcr
@@ -180,15 +180,15 @@ def test_vertexai_chat(exporter):
     ]
 
     vertexai_span = spans[0]
-    assert vertexai_span.attributes["llm.request.model"] == "chat-bison@001"
+    assert vertexai_span.attributes["gen_ai.request.model"] == "chat-bison@001"
     assert (
         "How many planets are there in the solar system?"
-        in vertexai_span.attributes["llm.prompts.0.user"]
+        in vertexai_span.attributes["gen_ai.prompt.0.user"]
     )
-    assert vertexai_span.attributes["llm.top_p"] == 0.95
-    assert vertexai_span.attributes["llm.request.max_tokens"] == 256
+    assert vertexai_span.attributes["gen_ai.request.top_p"] == 0.95
+    assert vertexai_span.attributes["gen_ai.request.max_tokens"] == 256
     assert vertexai_span.attributes["llm.top_k"] == 40
-    assert vertexai_span.attributes["llm.completions.0.content"] == response
+    assert vertexai_span.attributes["gen_ai.completion.0.content"] == response
 
 
 @pytest.mark.vcr
@@ -225,9 +225,9 @@ def test_vertexai_chat_stream(exporter):
     ]
 
     vertexai_span = spans[0]
-    assert vertexai_span.attributes["llm.request.model"] == "chat-bison@001"
-    assert vertexai_span.attributes["llm.top_p"] == 0.95
-    assert vertexai_span.attributes["llm.temperature"] == 0.8
-    assert vertexai_span.attributes["llm.request.max_tokens"] == 256
+    assert vertexai_span.attributes["gen_ai.request.model"] == "chat-bison@001"
+    assert vertexai_span.attributes["gen_ai.request.top_p"] == 0.95
+    assert vertexai_span.attributes["gen_ai.request.temperature"] == 0.8
+    assert vertexai_span.attributes["gen_ai.request.max_tokens"] == 256
     assert vertexai_span.attributes["llm.top_k"] == 40
-    assert vertexai_span.attributes["llm.completions.0.content"] == "".join(response)
+    assert vertexai_span.attributes["gen_ai.completion.0.content"] == "".join(response)

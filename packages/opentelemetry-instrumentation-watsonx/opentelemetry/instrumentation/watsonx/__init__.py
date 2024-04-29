@@ -168,11 +168,11 @@ def _set_input_attributes(span, instance, kwargs):
         )
         _set_span_attribute(
             span,
-            SpanAttributes.LLM_TEMPERATURE,
+            SpanAttributes.LLM_REQUEST_TEMPERATURE,
             modelParameters.get("temperature", None),
         )
         _set_span_attribute(
-            span, SpanAttributes.LLM_TOP_P, modelParameters.get("top_p", None)
+            span, SpanAttributes.LLM_REQUEST_TOP_P, modelParameters.get("top_p", None)
         )
 
     return
@@ -221,7 +221,7 @@ def _set_completion_content_attributes(span, response, index, response_counter) 
 
         if response_counter:
             attributes_with_reason = {
-                "llm.response.model": model_id,
+                "gen_ai.response.model": model_id,
                 "llm.response.stop_reason": results[0]["stop_reason"],
             }
             response_counter.add(1, attributes=attributes_with_reason)
@@ -289,7 +289,7 @@ def _set_response_attributes(
         )
 
         shared_attributes = {
-            "llm.response.model": model_id,
+            "gen_ai.response.model": model_id,
         }
         if token_counter:
             attributes_with_token_type = {
@@ -331,7 +331,7 @@ def _build_and_set_stream_response(
         else:
             yield item["results"][0]["generated_text"]
 
-    shared_attributes = {"llm.response.model": stream_model_id, "stream": True}
+    shared_attributes = {"gen_ai.response.model": stream_model_id, "stream": True}
 
     stream_response = {
         "model_id": stream_model_id,
@@ -430,7 +430,7 @@ def _wrap(
         name,
         kind=SpanKind.CLIENT,
         attributes={
-            SpanAttributes.LLM_VENDOR: "Watsonx",
+            SpanAttributes.LLM_SYSTEM: "Watsonx",
             SpanAttributes.LLM_REQUEST_TYPE: LLMRequestTypeValues.COMPLETION.value,
         },
     )

@@ -30,7 +30,7 @@ def test_vision(exporter, openai_client):
         "openai.chat",
     ]
     open_ai_span = spans[0]
-    assert json.loads(open_ai_span.attributes["llm.prompts.0.content"]) == [
+    assert json.loads(open_ai_span.attributes["gen_ai.prompt.0.content"]) == [
         {"type": "text", "text": "What is in this image?"},
         {
             "type": "image_url",
@@ -38,5 +38,5 @@ def test_vision(exporter, openai_client):
         },
     ]
 
-    assert open_ai_span.attributes.get("llm.completions.0.content")
+    assert open_ai_span.attributes.get("gen_ai.completion.0.content")
     assert open_ai_span.attributes["openai.api_base"] == "https://api.openai.com/v1/"

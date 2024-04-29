@@ -37,11 +37,11 @@ def _set_input_attributes(span, llm_request_type, kwargs):
             )
         if "temperature" in generation_kwargs:
             set_span_attribute(
-                span, SpanAttributes.LLM_TEMPERATURE, generation_kwargs["temperature"]
+                span, SpanAttributes.LLM_REQUEST_TEMPERATURE, generation_kwargs["temperature"]
             )
         if "top_p" in generation_kwargs:
             set_span_attribute(
-                span, SpanAttributes.LLM_TOP_P, generation_kwargs["top_p"]
+                span, SpanAttributes.LLM_REQUEST_TOP_P, generation_kwargs["top_p"]
             )
         if "frequency_penalty" in generation_kwargs:
             set_span_attribute(
@@ -102,7 +102,7 @@ def wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
         ),
         kind=SpanKind.CLIENT,
         attributes={
-            SpanAttributes.LLM_VENDOR: "OpenAI",
+            SpanAttributes.LLM_SYSTEM: "OpenAI",
             SpanAttributes.LLM_REQUEST_TYPE: llm_request_type.value,
         },
     ) as span:
