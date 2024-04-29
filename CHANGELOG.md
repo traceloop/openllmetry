@@ -1,3 +1,14 @@
+## v0.17.0 (2024-04-29)
+
+### Feat
+
+- **sdk**: otel metrics with traceloop (#883)
+- Updated semantic conventions based on otel community (#884)
+
+### Fix
+
+- **sdk**: do not instrument sentry requests (used internally by SDK) (#939)
+
 ## v0.16.9 (2024-04-26)
 
 ### Fix
