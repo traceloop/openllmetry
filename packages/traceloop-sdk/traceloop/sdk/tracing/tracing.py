@@ -43,6 +43,7 @@ EXCLUDED_URLS = """
     pinecone.io,
     traceloop.com,
     posthog.com,
+    sentry.io,
     bedrock-runtime,
     googleapis.com,
     githubusercontent.com"""
