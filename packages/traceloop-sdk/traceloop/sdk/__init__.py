@@ -46,7 +46,7 @@ class Traceloop:
         disable_batch=False,
         exporter: SpanExporter = None,
         metrics_exporter: MetricExporter = None,
-        metrics_headers: Dict[str, str] = {},
+        metrics_headers: Dict[str, str] = None,
         processor: SpanProcessor = None,
         propagator: TextMapPropagator = None,
         traceloop_sync_enabled: bool = True,
@@ -165,12 +165,6 @@ class Traceloop:
             instruments=instruments,
         )
 
-        # Metrics init: disabled for Traceloop as we don't have a metrics endpoint (yet)
-        if api_endpoint.find("traceloop.com") != -1 or not is_metrics_enabled():
-            if not is_metrics_enabled():
-                print(Fore.YELLOW + "OpenTelemetry metrics are disabled" + Fore.RESET)
-            return
-
         if metrics_exporter:
             print(
                 Fore.GREEN
@@ -179,7 +173,9 @@ class Traceloop:
             )
 
         metrics_endpoint = os.getenv("TRACELOOP_METRICS_ENDPOINT") or api_endpoint
-        metrics_headers = os.getenv("TRACELOOP_METRICS_HEADERS") or metrics_headers
+        metrics_headers = (
+            os.getenv("TRACELOOP_METRICS_HEADERS") or metrics_headers or headers
+        )
 
         MetricsWrapper.set_static_params(
             resource_attributes, metrics_endpoint, metrics_headers
