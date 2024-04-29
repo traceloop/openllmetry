@@ -54,7 +54,7 @@ def image_gen_metrics_wrapper(
 
     shared_attributes = {
         # not provide response.model in ImagesResponse response, use model in request kwargs
-        "llm.response.model": kwargs.get("model") or None,
+        "gen_ai.response.model": kwargs.get("model") or None,
         "server.address": _get_openai_base_url(instance),
     }
 

@@ -142,7 +142,7 @@ async def acomplete_wrapper(tracer, wrapped, instance: CustomLLM, args, kwargs):
 
 @dont_throw
 def _handle_request(span, llm_request_type, args, kwargs, instance: CustomLLM):
-    _set_span_attribute(span, SpanAttributes.LLM_VENDOR, instance.__class__.__name__)
+    _set_span_attribute(span, SpanAttributes.LLM_SYSTEM, instance.__class__.__name__)
     _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TYPE, llm_request_type.value)
     _set_span_attribute(
         span, SpanAttributes.LLM_REQUEST_MODEL, instance.metadata.model_name
@@ -150,7 +150,7 @@ def _handle_request(span, llm_request_type, args, kwargs, instance: CustomLLM):
     _set_span_attribute(
         span, SpanAttributes.LLM_REQUEST_MAX_TOKENS, instance.metadata.context_window
     )
-    _set_span_attribute(span, SpanAttributes.LLM_TOP_P, instance.metadata.num_output)
+    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TOP_P, instance.metadata.num_output)
 
     if should_send_prompts():
         # TODO: add support for chat

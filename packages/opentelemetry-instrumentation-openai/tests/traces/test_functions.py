@@ -32,7 +32,7 @@ def test_open_ai_function_calls(exporter, openai_client):
     spans = exporter.get_finished_spans()
     open_ai_span = spans[0]
     assert (
-        open_ai_span.attributes["llm.prompts.0.content"]
+        open_ai_span.attributes["gen_ai.prompt.0.content"]
         == "What's the weather like in Boston?"
     )
     assert (
@@ -43,7 +43,7 @@ def test_open_ai_function_calls(exporter, openai_client):
         == "Get the current weather in a given location"
     )
     assert (
-        open_ai_span.attributes["llm.completions.0.function_call.name"]
+        open_ai_span.attributes["gen_ai.completion.0.function_call.name"]
         == "get_current_weather"
     )
     assert open_ai_span.attributes["openai.api_base"] == "https://api.openai.com/v1/"
@@ -83,7 +83,7 @@ def test_open_ai_function_calls_tools(exporter, openai_client):
     spans = exporter.get_finished_spans()
     open_ai_span = spans[0]
     assert (
-        open_ai_span.attributes["llm.prompts.0.content"]
+        open_ai_span.attributes["gen_ai.prompt.0.content"]
         == "What's the weather like in Boston?"
     )
     assert (
@@ -94,7 +94,7 @@ def test_open_ai_function_calls_tools(exporter, openai_client):
         == "Get the current weather in a given location"
     )
     assert (
-        open_ai_span.attributes["llm.completions.0.function_call.name"]
+        open_ai_span.attributes["gen_ai.completion.0.function_call.name"]
         == "get_current_weather"
     )
     assert open_ai_span.attributes["openai.api_base"] == "https://api.openai.com/v1/"

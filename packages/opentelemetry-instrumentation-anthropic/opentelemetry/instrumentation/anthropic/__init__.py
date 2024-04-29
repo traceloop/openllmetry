@@ -110,8 +110,8 @@ def _set_input_attributes(span, kwargs):
     set_span_attribute(
         span, SpanAttributes.LLM_REQUEST_MAX_TOKENS, kwargs.get("max_tokens_to_sample")
     )
-    set_span_attribute(span, SpanAttributes.LLM_TEMPERATURE, kwargs.get("temperature"))
-    set_span_attribute(span, SpanAttributes.LLM_TOP_P, kwargs.get("top_p"))
+    set_span_attribute(span, SpanAttributes.LLM_REQUEST_TEMPERATURE, kwargs.get("temperature"))
+    set_span_attribute(span, SpanAttributes.LLM_REQUEST_TOP_P, kwargs.get("top_p"))
     set_span_attribute(
         span, SpanAttributes.LLM_FREQUENCY_PENALTY, kwargs.get("frequency_penalty")
     )
@@ -394,7 +394,7 @@ def _calculate_metrics_attributes(response):
     if not isinstance(response, dict):
         response = response.__dict__
     return {
-        "llm.response.model": response.get("model"),
+        "gen_ai.response.model": response.get("model"),
     }
 
 
@@ -420,7 +420,7 @@ def _wrap(
         name,
         kind=SpanKind.CLIENT,
         attributes={
-            SpanAttributes.LLM_VENDOR: "Anthropic",
+            SpanAttributes.LLM_SYSTEM: "Anthropic",
             SpanAttributes.LLM_REQUEST_TYPE: LLMRequestTypeValues.COMPLETION.value,
         },
     )
@@ -516,7 +516,7 @@ async def _awrap(
         name,
         kind=SpanKind.CLIENT,
         attributes={
-            SpanAttributes.LLM_VENDOR: "Anthropic",
+            SpanAttributes.LLM_SYSTEM: "Anthropic",
             SpanAttributes.LLM_REQUEST_TYPE: LLMRequestTypeValues.COMPLETION.value,
         },
     )

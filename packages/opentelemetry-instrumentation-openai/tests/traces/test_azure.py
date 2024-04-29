@@ -15,10 +15,10 @@ def test_chat(exporter, azure_openai_client):
     ]
     open_ai_span = spans[0]
     assert (
-        open_ai_span.attributes["llm.prompts.0.content"]
+        open_ai_span.attributes["gen_ai.prompt.0.content"]
         == "Tell me a joke about opentelemetry"
     )
-    assert open_ai_span.attributes.get("llm.completions.0.content")
+    assert open_ai_span.attributes.get("gen_ai.completion.0.content")
     assert (
         open_ai_span.attributes.get("openai.api_base")
         == "https://traceloop-stg.openai.azure.com//openai/"
@@ -40,10 +40,10 @@ def test_chat_content_filtering(exporter, azure_openai_client):
     ]
     open_ai_span = spans[0]
     assert (
-        open_ai_span.attributes["llm.prompts.0.content"]
+        open_ai_span.attributes["gen_ai.prompt.0.content"]
         == "Tell me a joke about opentelemetry"
     )
-    assert open_ai_span.attributes.get("llm.completions.0.content") == "FILTERED"
+    assert open_ai_span.attributes.get("gen_ai.completion.0.content") == "FILTERED"
     assert (
         open_ai_span.attributes.get("openai.api_base")
         == "https://traceloop-stg.openai.azure.com//openai/"
@@ -70,10 +70,10 @@ def test_chat_streaming(exporter, azure_openai_client):
     ]
     open_ai_span = spans[0]
     assert (
-        open_ai_span.attributes["llm.prompts.0.content"]
+        open_ai_span.attributes["gen_ai.prompt.0.content"]
         == "Tell me a joke about opentelemetry"
     )
-    assert open_ai_span.attributes.get("llm.completions.0.content")
+    assert open_ai_span.attributes.get("gen_ai.completion.0.content")
     assert (
         open_ai_span.attributes.get("openai.api_base")
         == "https://traceloop-stg.openai.azure.com//openai/"
@@ -103,11 +103,12 @@ async def test_chat_async_streaming(exporter, async_azure_openai_client):
         "openai.chat",
     ]
     open_ai_span = spans[0]
+    print("HEYY", open_ai_span.attributes)
     assert (
-        open_ai_span.attributes["llm.prompts.0.content"]
+        open_ai_span.attributes["gen_ai.prompt.0.content"]
         == "Tell me a joke about opentelemetry"
     )
-    assert open_ai_span.attributes.get("llm.completions.0.content")
+    assert open_ai_span.attributes.get("gen_ai.completion.0.content")
     assert (
         open_ai_span.attributes.get("openai.api_base")
         == "https://traceloop-stg.openai.azure.com//openai/"

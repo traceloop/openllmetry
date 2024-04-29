@@ -102,7 +102,7 @@ def _handle_call(span, kwargs, response):
 
     (vendor, model) = kwargs.get("modelId").split(".")
 
-    _set_span_attribute(span, SpanAttributes.LLM_VENDOR, vendor)
+    _set_span_attribute(span, SpanAttributes.LLM_SYSTEM, vendor)
     _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, model)
 
     if vendor == "cohere":
@@ -122,9 +122,9 @@ def _set_cohere_span_attributes(span, request_body, response_body):
     _set_span_attribute(
         span, SpanAttributes.LLM_REQUEST_TYPE, LLMRequestTypeValues.COMPLETION.value
     )
-    _set_span_attribute(span, SpanAttributes.LLM_TOP_P, request_body.get("p"))
+    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TOP_P, request_body.get("p"))
     _set_span_attribute(
-        span, SpanAttributes.LLM_TEMPERATURE, request_body.get("temperature")
+        span, SpanAttributes.LLM_REQUEST_TEMPERATURE, request_body.get("temperature")
     )
     _set_span_attribute(
         span, SpanAttributes.LLM_REQUEST_MAX_TOKENS, request_body.get("max_tokens")
@@ -147,9 +147,9 @@ def _set_anthropic_completion_span_attributes(span, request_body, response_body)
     _set_span_attribute(
         span, SpanAttributes.LLM_REQUEST_TYPE, LLMRequestTypeValues.COMPLETION.value
     )
-    _set_span_attribute(span, SpanAttributes.LLM_TOP_P, request_body.get("top_p"))
+    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TOP_P, request_body.get("top_p"))
     _set_span_attribute(
-        span, SpanAttributes.LLM_TEMPERATURE, request_body.get("temperature")
+        span, SpanAttributes.LLM_REQUEST_TEMPERATURE, request_body.get("temperature")
     )
     _set_span_attribute(
         span,
@@ -192,9 +192,9 @@ def _set_anthropic_messages_span_attributes(span, request_body, response_body):
     _set_span_attribute(
         span, SpanAttributes.LLM_REQUEST_TYPE, LLMRequestTypeValues.CHAT.value
     )
-    _set_span_attribute(span, SpanAttributes.LLM_TOP_P, request_body.get("top_p"))
+    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TOP_P, request_body.get("top_p"))
     _set_span_attribute(
-        span, SpanAttributes.LLM_TEMPERATURE, request_body.get("temperature")
+        span, SpanAttributes.LLM_REQUEST_TEMPERATURE, request_body.get("temperature")
     )
     _set_span_attribute(
         span,
@@ -264,9 +264,9 @@ def _set_ai21_span_attributes(span, request_body, response_body):
     _set_span_attribute(
         span, SpanAttributes.LLM_REQUEST_TYPE, LLMRequestTypeValues.COMPLETION.value
     )
-    _set_span_attribute(span, SpanAttributes.LLM_TOP_P, request_body.get("topP"))
+    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TOP_P, request_body.get("topP"))
     _set_span_attribute(
-        span, SpanAttributes.LLM_TEMPERATURE, request_body.get("temperature")
+        span, SpanAttributes.LLM_REQUEST_TEMPERATURE, request_body.get("temperature")
     )
     _set_span_attribute(
         span, SpanAttributes.LLM_REQUEST_MAX_TOKENS, request_body.get("maxTokens")
@@ -289,9 +289,9 @@ def _set_llama_span_attributes(span, request_body, response_body):
     _set_span_attribute(
         span, SpanAttributes.LLM_REQUEST_TYPE, LLMRequestTypeValues.COMPLETION.value
     )
-    _set_span_attribute(span, SpanAttributes.LLM_TOP_P, request_body.get("top_p"))
+    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TOP_P, request_body.get("top_p"))
     _set_span_attribute(
-        span, SpanAttributes.LLM_TEMPERATURE, request_body.get("temperature")
+        span, SpanAttributes.LLM_REQUEST_TEMPERATURE, request_body.get("temperature")
     )
     _set_span_attribute(
         span, SpanAttributes.LLM_REQUEST_MAX_TOKENS, request_body.get("max_gen_len")
