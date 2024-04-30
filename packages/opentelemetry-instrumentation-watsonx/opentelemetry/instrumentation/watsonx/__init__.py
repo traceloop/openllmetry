@@ -30,25 +30,25 @@ _instruments = ("ibm-watson-machine-learning >= 1.0.333",)
 
 WRAPPED_METHODS_WATSON_ML_VERSION_1 = [
     {
-        "module": "ibm-watson-machine-learning.foundation_models.inference",
+        "module": "ibm_watson_machine_learning.foundation_models.inference",
         "object": "ModelInference",
         "method": "__init__",
         "span_name": "watsonx.model_init",
     },
     {
-        "module": "ibm-watson-machine-learning.foundation_models.inference",
+        "module": "ibm_watson_machine_learning.foundation_models.inference",
         "object": "ModelInference",
         "method": "generate",
         "span_name": "watsonx.generate",
     },
     {
-        "module": "ibm-watson-machine-learning.foundation_models.inference",
+        "module": "ibm_watson_machine_learning.foundation_models.inference",
         "object": "ModelInference",
         "method": "generate_text_stream",
         "span_name": "watsonx.generate_text_stream",
     },
     {
-        "module": "ibm-watson-machine-learning.foundation_models.inference",
+        "module": "ibm_watson_machine_learning.foundation_models.inference",
         "object": "ModelInference",
         "method": "get_details",
         "span_name": "watsonx.get_details",
