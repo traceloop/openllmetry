@@ -1,3 +1,9 @@
+## v0.17.1 (2024-05-01)
+
+### Fix
+
+- **instrumentation**: correct the module declaration to match package filepath name (#940)
+
 ## v0.17.0 (2024-04-29)
 
 ### Feat
