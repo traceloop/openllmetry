@@ -16,9 +16,6 @@ Traceloop.init(app_name="chroma_app")
 
 embedding_function = OpenAIEmbeddingFunction(api_key=os.getenv("OPENAI_API_KEY"))
 
-#claim_df = pd.read_json("data/scifact/scifact_claims.jsonl", lines=True)
-#corpus_df = pd.read_json("data/scifact/scifact_corpus.jsonl", lines=True)
-
 with open("data/scifact/scifact_claims.jsonl", "r") as f:
     claim_df = pd.read_json(io.StringIO(f.read()), lines=True)
 
