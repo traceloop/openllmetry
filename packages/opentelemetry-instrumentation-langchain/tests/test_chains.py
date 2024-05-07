@@ -1,8 +1,7 @@
 import pytest
 from langchain.prompts import PromptTemplate
-from langchain_community.llms.openai import OpenAI
-from langchain import LLMChain
-from langchain.chains import SequentialChain
+from langchain.chains import SequentialChain, LLMChain
+from langchain_openai import OpenAI
 
 
 @pytest.mark.vcr
