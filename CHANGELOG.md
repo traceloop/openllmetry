@@ -1,3 +1,10 @@
+## v0.17.2 (2024-05-07)
+
+### Fix
+
+- **langchain**: support model-specific packages (#985)
+- **pinecone**: filter argument may be dict (#984)
+
 ## v0.17.1 (2024-05-01)
 
 ### Fix
