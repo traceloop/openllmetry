@@ -73,6 +73,7 @@ def _handle_request(span, args, kwargs, instance):
                 )
 
 
+@dont_throw
 def _handle_response(span, return_value):
     if should_send_prompts():
         for idx, generation in enumerate(return_value.generations):

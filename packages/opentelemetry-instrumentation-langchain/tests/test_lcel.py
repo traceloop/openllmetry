@@ -11,7 +11,9 @@ from langchain_community.utils.openai_functions import (
 from langchain_community.llms.huggingface_text_gen_inference import (
     HuggingFaceTextGenInference,
 )
-from langchain_community.chat_models import BedrockChat, ChatOpenAI, ChatAnthropic
+from langchain_community.chat_models import BedrockChat
+from langchain_openai import ChatOpenAI
+from langchain_anthropic import ChatAnthropic
 from langchain_core.pydantic_v1 import BaseModel, Field
 import boto3
 
@@ -232,7 +234,8 @@ def test_openai(exporter):
     assert openai_span.attributes["llm.request.type"] == "chat"
     assert openai_span.attributes["gen_ai.request.model"] == "gpt-3.5-turbo"
     assert (
-        openai_span.attributes["gen_ai.prompt.0.content"] == "You are a helpful assistant"
+        openai_span.attributes["gen_ai.prompt.0.content"]
+        == "You are a helpful assistant"
     )
     assert openai_span.attributes["gen_ai.prompt.0.role"] == "system"
     assert (
@@ -251,7 +254,7 @@ def test_anthropic(exporter):
     prompt = ChatPromptTemplate.from_messages(
         [("system", "You are a helpful assistant"), ("user", "{input}")]
     )
-    model = ChatAnthropic(model="claude-2")
+    model = ChatAnthropic(model="claude-2.1")
 
     chain = prompt | model
     response = chain.invoke({"input": "tell me a short joke"})
@@ -269,7 +272,7 @@ def test_anthropic(exporter):
     )
 
     assert anthropic_span.attributes["llm.request.type"] == "chat"
-    assert anthropic_span.attributes["gen_ai.request.model"] == "claude-2"
+    assert anthropic_span.attributes["gen_ai.request.model"] == "claude-2.1"
     assert (
         anthropic_span.attributes["gen_ai.prompt.0.content"]
         == "You are a helpful assistant"
