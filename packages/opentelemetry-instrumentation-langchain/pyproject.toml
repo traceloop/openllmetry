@@ -49,7 +49,7 @@ opentelemetry-sdk = "^1.23.0"
 opentelemetry-instrumentation-openai = {path="../opentelemetry-instrumentation-openai", develop=true}
 text-generation = "^0.7.0"
 anthropic = "^0.23.0"
-boto3 = "1.34.88"
+boto3 = "1.34.100"
 langchain-anthropic = "^0.1.11"
 langchain-openai = "^0.1.6"
 pydantic = "^2.7.1"
