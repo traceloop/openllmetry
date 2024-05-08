@@ -1,6 +1,7 @@
 """OpenTelemetry Pinecone instrumentation"""
 
 import logging
+import json
 from opentelemetry.instrumentation.pinecone.config import Config
 from opentelemetry.instrumentation.pinecone.utils import dont_throw
 import pinecone
@@ -85,7 +86,12 @@ def _set_query_input_attributes(span, kwargs):
     _set_span_attribute(span, "pinecone.query.queries", kwargs.get("queries"))
     _set_span_attribute(span, "pinecone.query.top_k", kwargs.get("top_k"))
     _set_span_attribute(span, "pinecone.query.namespace", kwargs.get("namespace"))
-    _set_span_attribute(span, "pinecone.query.filter", kwargs.get("filter"))
+    if isinstance(kwargs.get("filter"), dict):
+        _set_span_attribute(
+            span, "pinecone.query.filter", json.dumps(kwargs.get("filter"))
+        )
+    else:
+        _set_span_attribute(span, "pinecone.query.filter", kwargs.get("filter"))
     _set_span_attribute(
         span, "pinecone.query.include_values", kwargs.get("include_values")
     )
