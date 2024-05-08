@@ -160,13 +160,13 @@ files = [
 
 [[package]]
 name = "cohere"
-version = "5.3.3"
+version = "5.3.4"
 description = ""
 optional = false
 python-versions = "<4.0,>=3.8"
 files = [
-    {file = "cohere-5.3.3-py3-none-any.whl", hash = "sha256:686db9d7c0b858be8c1da173fbe77dfda377fd794e221e473b654440e81336cd"},
-    {file = "cohere-5.3.3.tar.gz", hash = "sha256:fbf59c0bab0ded4d28091fa0c193a116d8303c4c0b09a42721dd8a1230ea27c3"},
+    {file = "cohere-5.3.4-py3-none-any.whl", hash = "sha256:2d62306ed86c346d472e2355cf653b8fbd8722330e554355d576fb6061e204f2"},
+    {file = "cohere-5.3.4.tar.gz", hash = "sha256:b45a2c85b025dd15367d69bf92748de4a30ec82abb4b08fa5301b72e89051fe2"},
 ]
 
 [package.dependencies]
