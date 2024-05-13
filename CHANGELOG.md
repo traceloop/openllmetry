@@ -1,3 +1,9 @@
+## v0.17.6 (2024-05-13)
+
+### Fix
+
+- **sdk**: removed unneeded tiktoken dependency (#1038)
+
 ## v0.17.5 (2024-05-13)
 
 ### Fix
