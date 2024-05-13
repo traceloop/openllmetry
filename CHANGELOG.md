@@ -1,3 +1,9 @@
+## v0.17.5 (2024-05-13)
+
+### Fix
+
+- **openai**: relax tiktoken requirements (#1035)
+
 ## v0.17.4 (2024-05-13)
 
 ### Fix
