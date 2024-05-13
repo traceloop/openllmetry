@@ -29,19 +29,23 @@ class Telemetry:
             ).lower() == "true" and "pytest" not in sys.modules
 
             if obj._telemetry_enabled:
-                obj._posthog = Posthog(
-                    project_api_key=POSTHOG_API_KEY,
-                    host="https://app.posthog.com",
-                )
-                obj._sentry = sentry_sdk.Client(
-                    dsn=SENTRY_INGESTION_ENDPOINT,
-                    default_integrations=False,
-                    release=__version__,
-                )
-                obj._curr_anon_id = None
+                try:
+                    obj._posthog = Posthog(
+                        project_api_key=POSTHOG_API_KEY,
+                        host="https://app.posthog.com",
+                    )
+                    obj._sentry = sentry_sdk.Client(
+                        dsn=SENTRY_INGESTION_ENDPOINT,
+                        default_integrations=False,
+                        release=__version__,
+                    )
+                    obj._curr_anon_id = None
 
-                posthog_logger = logging.getLogger("posthog")
-                posthog_logger.disabled = True
+                    posthog_logger = logging.getLogger("posthog")
+                    posthog_logger.disabled = True
+                except Exception:
+                    # disable telemetry if it fails
+                    obj._telemetry_enabled = False
 
         return cls.instance
 
