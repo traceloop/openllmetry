@@ -1,3 +1,9 @@
+## v0.17.4 (2024-05-13)
+
+### Fix
+
+- **sdk**: loosen SDK requirements for Sentry + Posthog (#1027)
+
 ## v0.17.3 (2024-05-08)
 
 ### Fix
