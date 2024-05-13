@@ -1,3 +1,9 @@
+## v0.17.7 (2024-05-13)
+
+### Fix
+
+- remove all un-needed tiktoken deps (#1039)
+
 ## v0.17.6 (2024-05-13)
 
 ### Fix
