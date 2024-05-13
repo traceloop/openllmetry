@@ -2160,7 +2160,7 @@ instruments = ["asgiref (>=3.0,<4.0)"]
 
 [[package]]
 name = "opentelemetry-instrumentation-chromadb"
-version = "0.16.9"
+version = "0.17.6"
 description = "OpenTelemetry Chroma DB instrumentation"
 optional = false
 python-versions = ">=3.9,<4"
@@ -2182,7 +2182,7 @@ url = "../opentelemetry-instrumentation-chromadb"
 
 [[package]]
 name = "opentelemetry-instrumentation-cohere"
-version = "0.16.9"
+version = "0.17.6"
 description = "OpenTelemetry Cohere instrumentation"
 optional = false
 python-versions = ">=3.9,<4"
@@ -2225,7 +2225,7 @@ instruments = ["fastapi (>=0.58,<1.0)"]
 
 [[package]]
 name = "opentelemetry-instrumentation-openai"
-version = "0.16.9"
+version = "0.17.6"
 description = "OpenTelemetry OpenAI instrumentation"
 optional = false
 python-versions = ">=3.9,<4"
@@ -2237,6 +2237,7 @@ opentelemetry-api = "^1.24.0"
 opentelemetry-instrumentation = "^0.45b0"
 opentelemetry-semantic-conventions = "^0.45b0"
 opentelemetry-semantic-conventions-ai = "0.2.0"
+tiktoken = ">=0.6.0, <1"
 
 [package.extras]
 instruments = []
@@ -4207,4 +4208,4 @@ instruments = []
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<4"
-content-hash = "f48d0a4ffda87f7b02cb0c640270373f5c02674a7e495ea15a2455274141fa07"
+content-hash = "c0de2cd05c35e6193719381f644ffb8e562306ce089e9417192952b232fe8c5d"
