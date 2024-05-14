@@ -1,3 +1,21 @@
+## v0.17.7 (2024-05-13)
+
+### Fix
+
+- remove all un-needed tiktoken deps (#1039)
+
+## v0.17.6 (2024-05-13)
+
+### Fix
+
+- **sdk**: removed unneeded tiktoken dependency (#1038)
+
+## v0.17.5 (2024-05-13)
+
+### Fix
+
+- **openai**: relax tiktoken requirements (#1035)
+
 ## v0.17.4 (2024-05-13)
 
 ### Fix
