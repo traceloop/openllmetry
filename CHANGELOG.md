@@ -1,3 +1,14 @@
+## v0.18.0 (2024-05-14)
+
+### Feat
+
+- **pinecone**: metrics support (#1041)
+
+### Fix
+
+- **sdk**: handle workflow & tasks generators (#1045)
+- **cohere**: use billed units for token usage (#1040)
+
 ## v0.17.7 (2024-05-13)
 
 ### Fix
