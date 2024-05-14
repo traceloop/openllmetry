@@ -46,7 +46,8 @@ EXCLUDED_URLS = """
     sentry.io,
     bedrock-runtime,
     googleapis.com,
-    githubusercontent.com"""
+    githubusercontent.com,
+    openaipublic.blob.core.windows.net"""
 
 
 class TracerWrapper(object):
