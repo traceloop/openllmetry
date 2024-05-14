@@ -62,7 +62,9 @@ def _set_input_attributes(span, llm_request_type, kwargs):
     _set_span_attribute(
         span, SpanAttributes.LLM_REQUEST_MAX_TOKENS, kwargs.get("max_tokens_to_sample")
     )
-    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TEMPERATURE, kwargs.get("temperature"))
+    _set_span_attribute(
+        span, SpanAttributes.LLM_REQUEST_TEMPERATURE, kwargs.get("temperature")
+    )
     _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TOP_P, kwargs.get("top_p"))
     _set_span_attribute(
         span, SpanAttributes.LLM_FREQUENCY_PENALTY, kwargs.get("frequency_penalty")
@@ -129,9 +131,9 @@ def _set_span_chat_response(span, response):
         )
 
     # Cohere v5
-    if hasattr(response, "meta") and hasattr(response.meta, "tokens"):
-        input_tokens = response.meta.tokens.input_tokens
-        output_tokens = response.meta.tokens.output_tokens
+    if hasattr(response, "meta") and hasattr(response.meta, "billed_units"):
+        input_tokens = response.meta.billed_units.input_tokens
+        output_tokens = response.meta.billed_units.output_tokens
 
         _set_span_attribute(
             span,
