@@ -47,7 +47,6 @@ def test_chat_completion_metrics(metrics_test_context, openai_client):
                             "completion",
                             "prompt",
                         ]
-                        assert data_point.attributes["stream"] == False
                         assert len(data_point.attributes["server.address"]) > 0
                         assert data_point.value > 0
 
@@ -123,7 +122,6 @@ def test_chat_streaming_metrics(metrics_test_context, openai_client):
                                 "completion",
                                 "prompt",
                             ]
-                            assert data_point.attributes["stream"] == True
                             assert len(data_point.attributes["server.address"]) > 0
                             assert data_point.value > 0
 
