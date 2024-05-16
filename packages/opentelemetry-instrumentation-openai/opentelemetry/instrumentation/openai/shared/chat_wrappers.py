@@ -242,6 +242,7 @@ def _set_chat_metrics(
     shared_attributes = {
         "gen_ai.response.model": response_dict.get("model") or None,
         "server.address": _get_openai_base_url(instance),
+        "stream": False,
     }
 
     # token metrics
