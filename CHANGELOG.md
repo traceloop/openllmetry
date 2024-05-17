@@ -1,3 +1,11 @@
+## v0.18.2 (2024-05-17)
+
+### Fix
+
+- **openai**: old streaming handling for backward compatibility with OpenAI v0 (#1064)
+- **openai**: report fingerprint from response (#1066)
+- **sdk**: special handling for metrics with custom traces exporter (#1065)
+
 ## v0.18.1 (2024-05-17)
 
 ### Fix
