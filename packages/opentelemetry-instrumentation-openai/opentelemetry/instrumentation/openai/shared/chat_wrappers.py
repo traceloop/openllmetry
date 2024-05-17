@@ -357,7 +357,9 @@ def _set_streaming_token_metrics(
     # prompt_usage
     if request_kwargs and request_kwargs.get("messages"):
         prompt_content = ""
-        model_name = request_kwargs.get("model") or None
+        # setting the default model_name as gpt-4. As this uses the embedding "cl100k_base" that
+        # is used by most of the other model.
+        model_name = request_kwargs.get("model") or complete_response.get("model") or "gpt-4"
         for msg in request_kwargs.get("messages"):
             if msg.get("content"):
                 prompt_content += msg.get("content")
@@ -367,7 +369,9 @@ def _set_streaming_token_metrics(
     # completion_usage
     if complete_response.get("choices"):
         completion_content = ""
-        model_name = complete_response.get("model") or None
+        # setting the default model_name as gpt-4. As this uses the embedding "cl100k_base" that
+        # is used by most of the other model.
+        model_name = complete_response.get("model") or "gpt-4"
 
         for choice in complete_response.get("choices"):
             if choice.get("message") and choice.get("message").get("content"):
