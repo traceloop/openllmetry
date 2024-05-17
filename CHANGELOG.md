@@ -1,3 +1,10 @@
+## v0.18.1 (2024-05-17)
+
+### Fix
+
+- **openai**: fallback to response model if request model is not set when calculating token usage (#1054)
+- **openai**: add default value of stream as false in token usage metric (#1055)
+
 ## v0.18.0 (2024-05-14)
 
 ### Feat
