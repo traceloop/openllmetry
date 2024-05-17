@@ -59,7 +59,7 @@ def generate_signature(joke: str):
 @workflow(name="pirate_joke_generator")
 def joke_workflow():
     Traceloop.set_association_properties(
-        {"user_id": "user_12345", "chat_id": "chat_9871"}
+        {"user_id": "user_12345", "chat_id": "chat_1234"}
     )
 
     eng_joke = create_joke()
@@ -67,7 +67,7 @@ def joke_workflow():
     signature = generate_signature(pirate_joke)
     print(pirate_joke + "\n\n" + signature)
 
-    Traceloop.report_score("chat_id", "chat_9871", 1)
+    Traceloop.report_score("chat_id", "chat_1234", 1)
 
 
 joke_workflow()
