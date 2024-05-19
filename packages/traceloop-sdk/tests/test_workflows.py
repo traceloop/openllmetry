@@ -47,6 +47,41 @@ def test_simple_workflow(exporter, openai_client):
     assert json.loads(task_span.attributes.get("traceloop.entity.output")) == joke
 
 
+@pytest.mark.vcr
+def test_streaming_workflow(exporter, openai_client):
+
+    @workflow(name="pirate_joke_generator")
+    def joke_workflow():
+        response_stream = openai_client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "user", "content": "Tell me a joke about OpenTelemetry"}
+            ],
+            stream=True,
+        )
+        for chunk in response_stream:
+            yield chunk
+
+    joke_stream = joke_workflow()
+    for _ in joke_stream:
+        pass
+
+    spans = exporter.get_finished_spans()
+    assert set([span.name for span in spans]) == set(
+        [
+            "openai.chat",
+            "pirate_joke_generator.workflow",
+        ]
+    )
+    workflow_span = next(
+        span for span in spans if span.name == "pirate_joke_generator.workflow"
+    )
+    openai_span = next(span for span in spans if span.name == "openai.chat")
+
+    assert openai_span.parent.span_id == workflow_span.context.span_id
+    assert openai_span.end_time <= workflow_span.end_time
+
+
 def test_unserializable_workflow(exporter):
     @task(name="unserializable_task")
     def unserializable_task(obj: object):

@@ -1,5 +1,5 @@
 import logging
-
+import os
 from opentelemetry.instrumentation.pinecone.config import Config
 
 
@@ -22,3 +22,14 @@ def dont_throw(func):
                 Config.exception_logger(e)
 
     return wrapper
+
+
+def set_span_attribute(span, name, value):
+    if value is not None:
+        if value != "":
+            span.set_attribute(name, value)
+    return
+
+
+def is_metrics_enabled() -> bool:
+    return (os.getenv("TRACELOOP_METRICS_ENABLED") or "true").lower() == "true"

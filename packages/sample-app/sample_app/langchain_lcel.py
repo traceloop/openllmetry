@@ -4,7 +4,7 @@ from langchain.output_parsers.openai_functions import JsonOutputFunctionsParser
 from langchain_community.utils.openai_functions import (
     convert_pydantic_to_openai_function,
 )
-from langchain_community.chat_models import ChatOpenAI
+from langchain_openai import ChatOpenAI
 from langchain_core.pydantic_v1 import BaseModel, Field
 
 

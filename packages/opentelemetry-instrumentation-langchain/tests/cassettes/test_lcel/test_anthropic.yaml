@@ -1,7 +1,7 @@
 interactions:
 - request:
-    body: '{"max_tokens_to_sample": 256, "model": "claude-2", "prompt": "You are helpful
-      assistant\n\nHuman: tell me a short joke\n\nAssistant:"}'
+    body: '{"max_tokens": 1024, "messages": [{"role": "user", "content": "tell me
+      a short joke"}], "model": "claude-2.1", "system": "You are a helpful assistant"}'
     headers:
       accept:
       - application/json
@@ -12,13 +12,13 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '134'
+      - '151'
       content-type:
       - application/json
       host:
       - api.anthropic.com
       user-agent:
-      - Anthropic/Python 0.21.3
+      - Anthropic/Python 0.23.1
       x-stainless-arch:
       - arm64
       x-stainless-async:
@@ -28,25 +28,26 @@ interactions:
       x-stainless-os:
       - MacOS
       x-stainless-package-version:
-      - 0.21.3
+      - 0.23.1
       x-stainless-runtime:
       - CPython
       x-stainless-runtime-version:
       - 3.12.1
     method: POST
-    uri: https://api.anthropic.com/v1/complete
+    uri: https://api.anthropic.com/v1/messages
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAAA4yPsQoCMRBEf2XdxiaKdwriNYJYWImFehbCEZM9DeSSaDbKIf67KAqWljPwHjN3
-        5DYQFqh8Eyyx8Q4FGv1tqkG2zid5s1oMl7Gc16PruOTtZrVD8YsUCOWpBSVdl0HCwahWWYLI0mlI
-        AQ4tGI5k6ynMSMkUCQx3I/DN99hcSHdQYGQfqgvJ+Ba+U6RzIqcIBTZek33NsjJp6uX97INggXu3
-        d4vUSFegQOuP1T8HHk8AAAD//wMAyuHvxvwAAAA=
+        H4sIAAAAAAAAA0yOQUvDQBSE/8o6l162YnKR7kUoRQ+iBxU8iITN5rVd3L6NeW/REPLfJUXB08DH
+        MPNNiB0cTnJorqrr/cPd5vlpd/uyPYZdFVt9rPgeFjr2tLRIxB8IFkNOC/AiUdSzwuKUO0pwCMmX
+        jtb1ZQUL0dw3Qp+FOBAcl5QsynnETYjcF200fxALXLWxyEX/o7qeLUJmJVa4t+lPROl7uTyHw+tx
+        NMHzSo03bQxjSGQWq86U3rSjiSqU9jdmS8EXIRN1JUa/8lrjQN0F5vdf0YG8ZIYDcddoGRjzDwAA
+        AP//AwA2hEUeIAEAAA==
     headers:
       CF-Cache-Status:
       - DYNAMIC
       CF-RAY:
-      - 86ea44843f83a25f-FCO
+      - 87fa0a2f4b0aa262-FCO
       Connection:
       - keep-alive
       Content-Encoding:
@@ -54,17 +55,17 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Wed, 03 Apr 2024 15:59:46 GMT
+      - Mon, 06 May 2024 15:35:23 GMT
       Server:
       - cloudflare
       Transfer-Encoding:
       - chunked
       request-id:
-      - req_01DTh7TraXq8NmQxhiz1yaBU
+      - req_012wguUscCHQRvnAiUd8QZva
       via:
       - 1.1 google
       x-cloud-trace-context:
-      - 0d9db74e18924fe257bdf146f49bd918
+      - 96a20b8ab03b5b4d4f4ab009279e6fe8
     status:
       code: 200
       message: OK

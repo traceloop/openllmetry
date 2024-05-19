@@ -1,3 +1,66 @@
+## v0.18.2 (2024-05-17)
+
+### Fix
+
+- **openai**: old streaming handling for backward compatibility with OpenAI v0 (#1064)
+- **openai**: report fingerprint from response (#1066)
+- **sdk**: special handling for metrics with custom traces exporter (#1065)
+
+## v0.18.1 (2024-05-17)
+
+### Fix
+
+- **openai**: fallback to response model if request model is not set when calculating token usage (#1054)
+- **openai**: add default value of stream as false in token usage metric (#1055)
+
+## v0.18.0 (2024-05-14)
+
+### Feat
+
+- **pinecone**: metrics support (#1041)
+
+### Fix
+
+- **sdk**: handle workflow & tasks generators (#1045)
+- **cohere**: use billed units for token usage (#1040)
+
+## v0.17.7 (2024-05-13)
+
+### Fix
+
+- remove all un-needed tiktoken deps (#1039)
+
+## v0.17.6 (2024-05-13)
+
+### Fix
+
+- **sdk**: removed unneeded tiktoken dependency (#1038)
+
+## v0.17.5 (2024-05-13)
+
+### Fix
+
+- **openai**: relax tiktoken requirements (#1035)
+
+## v0.17.4 (2024-05-13)
+
+### Fix
+
+- **sdk**: loosen SDK requirements for Sentry + Posthog (#1027)
+
+## v0.17.3 (2024-05-08)
+
+### Fix
+
+- **sdk**: separate sentry SDK (#1004)
+
+## v0.17.2 (2024-05-07)
+
+### Fix
+
+- **langchain**: support model-specific packages (#985)
+- **pinecone**: filter argument may be dict (#984)
+
 ## v0.17.1 (2024-05-01)
 
 ### Fix

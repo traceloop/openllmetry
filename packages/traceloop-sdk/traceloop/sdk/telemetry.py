@@ -18,6 +18,9 @@ class Telemetry:
     ANON_ID_PATH = str(Path.home() / ".cache" / "traceloop" / "telemetry_anon_id")
     UNKNOWN_ANON_ID = "UNKNOWN"
 
+    _sentry: sentry_sdk.Client = None
+    _posthog: Posthog = None
+
     def __new__(cls) -> "Telemetry":
         if not hasattr(cls, "instance"):
             obj = cls.instance = super(Telemetry, cls).__new__(cls)
@@ -26,19 +29,23 @@ class Telemetry:
             ).lower() == "true" and "pytest" not in sys.modules
 
             if obj._telemetry_enabled:
-                obj._posthog = Posthog(
-                    project_api_key=POSTHOG_API_KEY,
-                    host="https://app.posthog.com",
-                )
-                sentry_sdk.init(
-                    dsn=SENTRY_INGESTION_ENDPOINT,
-                    default_integrations=False,
-                    release=__version__,
-                )
-                obj._curr_anon_id = None
+                try:
+                    obj._posthog = Posthog(
+                        project_api_key=POSTHOG_API_KEY,
+                        host="https://app.posthog.com",
+                    )
+                    obj._sentry = sentry_sdk.Client(
+                        dsn=SENTRY_INGESTION_ENDPOINT,
+                        default_integrations=False,
+                        release=__version__,
+                    )
+                    obj._curr_anon_id = None
 
-                posthog_logger = logging.getLogger("posthog")
-                posthog_logger.disabled = True
+                    posthog_logger = logging.getLogger("posthog")
+                    posthog_logger.disabled = True
+                except Exception:
+                    # disable telemetry if it fails
+                    obj._telemetry_enabled = False
 
         return cls.instance
 
@@ -77,8 +84,8 @@ class Telemetry:
 
     def log_exception(self, exception: Exception):
         try:  # don't fail if telemetry fails
-            if self._telemetry_enabled:
-                sentry_sdk.capture_exception(exception)
+            with sentry_sdk.Hub(self._sentry) as hub:
+                hub.capture_exception(exception)
         except Exception:
             pass
 
