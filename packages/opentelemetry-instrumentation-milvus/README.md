@@ -4,18 +4,18 @@
     <img src="https://badge.fury.io/py/opentelemetry-instrumentation-chromadb.svg">
 </a>
 
-This library allows tracing client-side calls to Chroma vector DB sent with the official [Chroma library](https://github.com/chroma-core/chroma).
+This library allows tracing client-side calls to Milvus vector DB sent with the official [Milvus library](https://github.com/milvus-io/milvus).
 
 ## Installation
 
 ```bash
-pip install opentelemetry-instrumentation-chromadb
+pip install opentelemetry-instrumentation-milvus
 ```
 
 ## Example usage
 
 ```python
-from opentelemetry.instrumentation.chromadb import ChromaInstrumentor
+from opentelemetry.instrumentation.milvus import MilvusInstrumentor
 
-ChromaInstrumentor().instrument()
+MilvusInstrumentor().instrument()
 ```
