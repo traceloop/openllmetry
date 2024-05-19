@@ -1,4 +1,4 @@
-# OpenTelemetry Chroma Instrumentation
+# OpenTelemetry Milvus Instrumentation
 
 <a href="https://pypi.org/project/opentelemetry-instrumentation-chromadb/">
     <img src="https://badge.fury.io/py/opentelemetry-instrumentation-chromadb.svg">
