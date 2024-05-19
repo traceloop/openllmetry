@@ -35,6 +35,7 @@ autopep8 = "2.1.0"
 flake8 = "7.0.0"
 pytest = "8.1.1"
 pytest-sugar = "1.0.0"
+pymilvus = "^2.4.1"
 
 [tool.poetry.group.test.dependencies]
 protobuf = "3.20.0"
