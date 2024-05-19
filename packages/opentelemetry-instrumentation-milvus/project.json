@@ -1,14 +1,14 @@
 {
-  "name": "opentelemetry-instrumentation-chromadb",
+  "name": "opentelemetry-instrumentation-milvus",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "projectType": "library",
-  "sourceRoot": "packages/opentelemetry-instrumentation-chromadb/opentelemetry/instrumentation/chromadb",
+  "sourceRoot": "packages/opentelemetry-instrumentation-milvus/opentelemetry/instrumentation/milvus",
   "targets": {
     "lock": {
       "executor": "@nxlv/python:run-commands",
       "options": {
         "command": "poetry lock --no-update",
-        "cwd": "packages/opentelemetry-instrumentation-chromadb"
+        "cwd": "packages/opentelemetry-instrumentation-milvus"
       }
     },
     "add": {
@@ -27,7 +27,7 @@
       "executor": "@nxlv/python:build",
       "outputs": ["{projectRoot}/dist"],
       "options": {
-        "outputPath": "packages/opentelemetry-instrumentation-chromadb/dist",
+        "outputPath": "packages/opentelemetry-instrumentation-milvus/dist",
         "publish": false,
         "lockedVersions": true,
         "bundleLocalDependencies": true
@@ -46,21 +46,21 @@
     "lint": {
       "executor": "@nxlv/python:flake8",
       "outputs": [
-        "{workspaceRoot}/reports/packages/opentelemetry-instrumentation-chromadb/pylint.txt"
+        "{workspaceRoot}/reports/packages/opentelemetry-instrumentation-milvus/pylint.txt"
       ],
       "options": {
-        "outputFile": "reports/packages/opentelemetry-instrumentation-chromadb/pylint.txt"
+        "outputFile": "reports/packages/opentelemetry-instrumentation-milvus/pylint.txt"
       }
     },
     "test": {
       "executor": "@nxlv/python:run-commands",
       "outputs": [
-        "{workspaceRoot}/reports/packages/opentelemetry-instrumentation-chromadb/unittests",
-        "{workspaceRoot}/coverage/packages/opentelemetry-instrumentation-chromadb"
+        "{workspaceRoot}/reports/packages/opentelemetry-instrumentation-milvus/unittests",
+        "{workspaceRoot}/coverage/packages/opentelemetry-instrumentation-milvus"
       ],
       "options": {
         "command": "poetry run pytest tests/",
-        "cwd": "packages/opentelemetry-instrumentation-chromadb"
+        "cwd": "packages/opentelemetry-instrumentation-milvus"
       }
     },
     "build-release": {
@@ -70,7 +70,7 @@
           "chmod +x ../../scripts/build-release.sh",
           "../../scripts/build-release.sh"
         ],
-        "cwd": "packages/opentelemetry-instrumentation-chromadb"
+        "cwd": "packages/opentelemetry-instrumentation-milvus"
       }
     }
   },

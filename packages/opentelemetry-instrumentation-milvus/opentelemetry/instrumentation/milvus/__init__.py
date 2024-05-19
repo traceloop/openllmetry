@@ -1,8 +1,7 @@
-"""OpenTelemetry Chroma DB instrumentation"""
+"""OpenTelemetry Milvus DB instrumentation"""
 
 import logging
 import pymilvus
-# import chromadb.api.segment
 
 from typing import Collection
 
