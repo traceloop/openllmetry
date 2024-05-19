@@ -1,6 +1,8 @@
 import json
 import logging
 import time
+from wrapt import ObjectProxy
+
 
 from opentelemetry import context as context_api
 from opentelemetry.metrics import Counter, Histogram
@@ -85,18 +87,32 @@ def chat_wrapper(
 
     if is_streaming_response(response):
         # span will be closed after the generator is done
-        return _build_from_streaming_response(
-            span,
-            response,
-            instance,
-            token_counter,
-            choice_counter,
-            duration_histogram,
-            streaming_time_to_first_token,
-            streaming_time_to_generate,
-            start_time,
-            kwargs,
-        )
+        if is_openai_v1():
+            return ChatStream(
+                span,
+                response,
+                instance,
+                token_counter,
+                choice_counter,
+                duration_histogram,
+                streaming_time_to_first_token,
+                streaming_time_to_generate,
+                start_time,
+                kwargs,
+            )
+        else:
+            return _build_from_streaming_response(
+                span,
+                response,
+                instance,
+                token_counter,
+                choice_counter,
+                duration_histogram,
+                streaming_time_to_first_token,
+                streaming_time_to_generate,
+                start_time,
+                kwargs,
+            )
 
     duration = end_time - start_time
 
@@ -159,18 +175,32 @@ async def achat_wrapper(
 
     if is_streaming_response(response):
         # span will be closed after the generator is done
-        return _abuild_from_streaming_response(
-            span,
-            response,
-            instance,
-            token_counter,
-            choice_counter,
-            duration_histogram,
-            streaming_time_to_first_token,
-            streaming_time_to_generate,
-            start_time,
-            kwargs,
-        )
+        if is_openai_v1():
+            return ChatStream(
+                span,
+                response,
+                instance,
+                token_counter,
+                choice_counter,
+                duration_histogram,
+                streaming_time_to_first_token,
+                streaming_time_to_generate,
+                start_time,
+                kwargs,
+            )
+        else:
+            return _abuild_from_streaming_response(
+                span,
+                response,
+                instance,
+                token_counter,
+                choice_counter,
+                duration_histogram,
+                streaming_time_to_first_token,
+                streaming_time_to_generate,
+                start_time,
+                kwargs,
+            )
 
     duration = end_time - start_time
 
@@ -240,6 +270,7 @@ def _set_chat_metrics(
     shared_attributes = {
         "gen_ai.response.model": response_dict.get("model") or None,
         "server.address": _get_openai_base_url(instance),
+        "stream": False,
     }
 
     # token metrics
@@ -354,7 +385,11 @@ def _set_streaming_token_metrics(
     # prompt_usage
     if request_kwargs and request_kwargs.get("messages"):
         prompt_content = ""
-        model_name = request_kwargs.get("model") or None
+        # setting the default model_name as gpt-4. As this uses the embedding "cl100k_base" that
+        # is used by most of the other model.
+        model_name = (
+            request_kwargs.get("model") or complete_response.get("model") or "gpt-4"
+        )
         for msg in request_kwargs.get("messages"):
             if msg.get("content"):
                 prompt_content += msg.get("content")
@@ -364,7 +399,9 @@ def _set_streaming_token_metrics(
     # completion_usage
     if complete_response.get("choices"):
         completion_content = ""
-        model_name = complete_response.get("model") or None
+        # setting the default model_name as gpt-4. As this uses the embedding "cl100k_base" that
+        # is used by most of the other model.
+        model_name = complete_response.get("model") or "gpt-4"
 
         for choice in complete_response.get("choices"):
             if choice.get("message") and choice.get("message").get("content"):
@@ -393,6 +430,158 @@ def _set_streaming_token_metrics(
                 "llm.usage.token_type": "completion",
             }
             token_counter.add(completion_usage, attributes=attributes_with_token_type)
+
+
+class ChatStream(ObjectProxy):
+    _span = None
+    _instance = None
+    _token_counter = None
+    _choice_counter = None
+    _duration_histogram = None
+    _streaming_time_to_first_token = None
+    _streaming_time_to_generate = None
+    _start_time = None
+    _request_kwargs = None
+
+    def __init__(
+        self,
+        span,
+        response,
+        instance=None,
+        token_counter=None,
+        choice_counter=None,
+        duration_histogram=None,
+        streaming_time_to_first_token=None,
+        streaming_time_to_generate=None,
+        start_time=None,
+        request_kwargs=None,
+    ):
+        super().__init__(response)
+
+        self._span = span
+        self._instance = instance
+        self._token_counter = token_counter
+        self._choice_counter = choice_counter
+        self._duration_histogram = duration_histogram
+        self._streaming_time_to_first_token = streaming_time_to_first_token
+        self._streaming_time_to_generate = streaming_time_to_generate
+        self._start_time = start_time
+        self._request_kwargs = request_kwargs
+
+        self._first_token = True
+        # will be updated when first token is received
+        self._time_of_first_token = self._start_time
+        self._complete_response = {"choices": [], "model": ""}
+
+    def __enter__(self):
+        return self
+
+    def __iter__(self):
+        return self
+
+    def __aiter__(self):
+        return self
+
+    def __next__(self):
+        try:
+            chunk = self.__wrapped__.__next__()
+        except Exception as e:
+            if isinstance(e, StopIteration):
+                self._close_span()
+            raise e
+        else:
+            self._process_item(chunk)
+            return chunk
+
+    async def __anext__(self):
+        try:
+            chunk = await self.__wrapped__.__anext__()
+        except Exception as e:
+            if isinstance(e, StopAsyncIteration):
+                self._close_span()
+            raise e
+        else:
+            self._process_item(chunk)
+            return chunk
+
+    def _process_item(self, item):
+        self._span.add_event(name="llm.content.completion.chunk")
+
+        if self._first_token and self._streaming_time_to_first_token:
+            self._time_of_first_token = time.time()
+            self._streaming_time_to_first_token.record(
+                self._time_of_first_token - self._start_time
+            )
+            self._first_token = False
+
+        if is_openai_v1():
+            item = model_as_dict(item)
+
+        self._complete_response["model"] = item.get("model")
+
+        for choice in item.get("choices"):
+            index = choice.get("index")
+            if len(self._complete_response.get("choices")) <= index:
+                self._complete_response["choices"].append(
+                    {"index": index, "message": {"content": "", "role": ""}}
+                )
+            complete_choice = self._complete_response.get("choices")[index]
+            if choice.get("finish_reason"):
+                complete_choice["finish_reason"] = choice.get("finish_reason")
+
+            delta = choice.get("delta")
+
+            if delta and delta.get("content"):
+                complete_choice["message"]["content"] += delta.get("content")
+            if delta and delta.get("role"):
+                complete_choice["message"]["role"] = delta.get("role")
+
+    def _close_span(self):
+        shared_attributes = {
+            "gen_ai.response.model": self._complete_response.get("model") or None,
+            "server.address": _get_openai_base_url(self._instance),
+            "stream": True,
+        }
+
+        if not is_azure_openai(self._instance):
+            _set_streaming_token_metrics(
+                self._request_kwargs,
+                self._complete_response,
+                self._span,
+                self._token_counter,
+                shared_attributes,
+            )
+
+        # choice metrics
+        if self._choice_counter and self._complete_response.get("choices"):
+            _set_choice_counter_metrics(
+                self._choice_counter,
+                self._complete_response.get("choices"),
+                shared_attributes,
+            )
+
+        # duration metrics
+        if self._start_time and isinstance(self._start_time, (float, int)):
+            duration = time.time() - self._start_time
+        else:
+            duration = None
+        if duration and isinstance(duration, (float, int)) and self._duration_histogram:
+            self._duration_histogram.record(duration, attributes=shared_attributes)
+        if self._streaming_time_to_generate and self._time_of_first_token:
+            self._streaming_time_to_generate.record(
+                time.time() - self._time_of_first_token
+            )
+
+        _set_response_attributes(self._span, self._complete_response)
+
+        if should_send_prompts():
+            _set_completions(self._span, self._complete_response.get("choices"))
+
+        self._span.set_status(Status(StatusCode.OK))
+        self._span.end()
+
+
+# Backward compatibility with OpenAI v0
 
 
 @dont_throw

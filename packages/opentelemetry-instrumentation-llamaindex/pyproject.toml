@@ -8,7 +8,7 @@ show_missing = true
 
 [tool.poetry]
 name = "opentelemetry-instrumentation-llamaindex"
-version = "0.17.1"
+version = "0.18.2"
 description = "OpenTelemetry LlamaIndex instrumentation"
 authors = [
   "Gal Kleinman <gal@traceloop.com>",
@@ -29,7 +29,6 @@ opentelemetry-instrumentation = "^0.45b0"
 opentelemetry-semantic-conventions = "^0.45b0"
 opentelemetry-semantic-conventions-ai = "0.2.0"
 inflection = "^0.5.1"
-tiktoken = "^0.6.0"
 
 [tool.poetry.group.dev.dependencies]
 autopep8 = "2.1.0"
