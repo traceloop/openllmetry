@@ -38,7 +38,7 @@ pytest-sugar = "1.0.0"
 [tool.poetry.group.test.dependencies]
 protobuf = "3.20.0"
 grpcio-tools = "^1.63.0"
-pymilvus = "^2.4.0"
+pymilvus = "^2.4.1"
 pytest = "8.1.1"
 pytest-sugar = "1.0.0"
 opentelemetry-sdk = "^1.23.0"

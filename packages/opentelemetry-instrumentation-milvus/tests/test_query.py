@@ -1,148 +1,136 @@
 import pytest
 import json
 import pymilvus
+import random
 
 milvus = pymilvus.MilvusClient(uri="http://localhost:19530")
 
 
 @pytest.fixture
 def collection():
-    yield milvus.create_collection(collection_name="Students")
-    milvus.drop_collection(collection_name="Students")
+    collection_name = "Colors"
+    milvus.create_collection(collection_name=collection_name, dimension=5)
+    yield collection_name
+    milvus.release_collection(collection_name=collection_name)
+    milvus.drop_collection(collection_name=collection_name)
 
 
-def add_documents(collection, with_metadata=False):
-    student_info = """
-    Alexandra Thompson, a 19-year-old computer science sophomore with a 3.7 GPA,
-    is a member of the programming and chess clubs who enjoys pizza, swimming, and hiking
-    in her free time in hopes of working at a tech company after graduating from the University of Washington.
-    """
+def insert_data(collection, create_partition=False):
+    colors = ["green", "blue", "yellow", "red", "black", "white", "purple", "pink", "orange", "grey"]
+    data = [{
+        "id": i,
+        "vector": [random.uniform(-1, 1) for _ in range(5)],
+        "color": random.choice(colors),
+        "tag": random.randint(1000, 9999)
+    } for i in range(1000)]
+    data += [
+        {
+            "id": 1000,
+            "vector": [random.uniform(-1, 1) for _ in range(5)],
+            "color": "brown",
+            "tag": 1234
+        },
+        {
+            "id": 1001,
+            "vector": [random.uniform(-1, 1) for _ in range(5)],
+            "color": "brown",
+            "tag": 5678
+        },
+        {
+            "id": 1002,
+            "vector": [random.uniform(-1, 1) for _ in range(5)],
+            "color": "brown",
+            "tag": 9101
+        }
+    ]
+    for i in data:
+        i["color_tag"] = "{}_{}".format(i["color"], i["tag"])
+    milvus.insert(collection_name=collection, data=data)
 
-    club_info = """
-    The university chess club provides an outlet for students to come together and enjoy playing
-    the classic strategy game of chess. Members of all skill levels are welcome, from beginners learning
-    the rules to experienced tournament players. The club typically meets a few times per week to play casual games,
-    participate in tournaments, analyze famous chess matches, and improve members' skills.
-    """
-
-    university_info = """
-    The University of Washington, founded in 1861 in Seattle, is a public research university
-    with over 45,000 students across three campuses in Seattle, Tacoma, and Bothell.
-    As the flagship institution of the six public universities in Washington state,
-    UW encompasses over 500 buildings and 20 million square feet of space,
-    including one of the largest library systems in the world."""
-
-    if with_metadata:
-        collection.add(
-            documents=[student_info, club_info, university_info],
-            metadatas=[
-                {"source": "student info"},
-                {"source": "club info"},
-                {"source": "university info"},
-            ],
-            ids=["id1", "id2", "id3"],
-        )
-    else:
-        collection.add(
-            documents=[student_info, club_info, university_info],
-            ids=["id1", "id2", "id3"],
-        )
+    if create_partition:
+        milvus.create_partition(collection_name=collection, partition_name="partitionA")
+        part_data = [
+            {
+                "id": 1003,
+                "vector": [random.uniform(-1, 1) for _ in range(5)],
+                "color": "crimson",
+                "tag": 3489
+            },
+            {
+                "id": 1004,
+                "vector": [random.uniform(-1, 1) for _ in range(5)],
+                "color": "crimson",
+                "tag": 6453
+            }
+        ]
+        milvus.insert(collection_name=collection,
+                      data=part_data,
+                      partition_name="partitionA"
+                      )
 
 
-def test_milvus_add(exporter, collection):
-    add_documents(collection, with_metadata=True)
+def test_milvus_insert(exporter, collection):
+    insert_data(collection)
 
     spans = exporter.get_finished_spans()
-    span = next(span for span in spans if span.name == "chroma.add")
+    span = next(span for span in spans if span.name == "milvus.insert")
 
-    assert span.attributes.get("db.system") == "chroma"
-    assert span.attributes.get("db.operation") == "add"
-    assert span.attributes.get("db.chroma.add.ids_count") == 3
-    assert span.attributes.get("db.chroma.add.metadatas_count") == 3
-    assert span.attributes.get("db.chroma.add.documents_count") == 3
+    assert span.attributes.get("db.system") == "milvus"
+    assert span.attributes.get("db.operation") == "insert"
+    assert span.attributes.get("db.milvus.insert.collection_name") == "Colors"
+    assert span.attributes.get("db.milvus.insert.data_count") == 1003
 
 
-def test_chroma_query(exporter, collection):
-    add_documents(collection)
-    collection.query(
-        query_texts=["What is the student name?"],
-        n_results=2,
+def test_milvus_query(exporter, collection):
+    insert_data(collection)
+    milvus.query(
+        collection_name=collection,
+        filter='color == "brown"',
+        output_fields=["color_tag"],
+        limit=3
     )
-
     spans = exporter.get_finished_spans()
-    span = next(span for span in spans if span.name == "chroma.query")
+    span = next(span for span in spans if span.name == "milvus.query")
 
-    assert span.attributes.get("db.system") == "chroma"
+    assert span.attributes.get("db.system") == "milvus"
     assert span.attributes.get("db.operation") == "query"
-    assert span.attributes.get("db.chroma.query.query_texts_count") == 1
-    assert span.attributes.get("db.chroma.query.n_results") == 2
+    assert span.attributes.get("db.milvus.query.collection_name") == collection
+    assert span.attributes.get("db.milvus.query.filter") == 'color == "brown"'
+    assert span.attributes.get("db.milvus.query.output_fields_count") == 1
+    assert span.attributes.get("db.milvus.query.limit") == 3
 
     events = span.events
-    assert len(events) == 1
     for event in events:
         assert event.name == "db.query.result"
-        ids_ = event.attributes.get(f"{event.name}.id")
-        distance = event.attributes.get(f"{event.name}.distance")
-        document = event.attributes.get(f"{event.name}.document")
-
-        assert len(ids_) > 0
-        assert isinstance(ids_, str)
-
-        assert distance >= 0
-
-        assert len(document) > 0
-        assert isinstance(document, str)
+        tag = event.attributes.get("color_tag")
+        _id = event.attributes.get("id")
+        assert isinstance(tag, str)
+        assert isinstance(_id, int)
 
 
-def test_chroma_query_with_metadata(exporter, collection):
-    add_documents(collection, with_metadata=True)
-    collection.query(
-        query_texts=["What is the student name?"],
-        n_results=2,
-        where={"source": "student info"},
+def test_milvus_query_partition(exporter, collection):
+    insert_data(collection, create_partition=True)
+    milvus.query(
+        collection_name=collection,
+        filter='color == "crimson"',
+        output_fields=["color_tag"],
+        partition_names=["partitionA"],
+        limit=2
     )
-
     spans = exporter.get_finished_spans()
-    span = next(span for span in spans if span.name == "chroma.query")
+    span = next(span for span in spans if span.name == "milvus.query")
 
-    assert span.attributes.get("db.system") == "chroma"
+    assert span.attributes.get("db.system") == "milvus"
     assert span.attributes.get("db.operation") == "query"
-    assert span.attributes.get("db.chroma.query.query_texts_count") == 1
-    assert span.attributes.get("db.chroma.query.n_results") == 2
-    assert span.attributes.get("db.chroma.query.where") == "{'source': 'student info'}"
-
+    assert span.attributes.get("db.milvus.query.collection_name") == collection
+    assert span.attributes.get("db.milvus.query.filter") == 'color == "crimson"'
+    assert span.attributes.get("db.milvus.query.output_fields_count") == 1
+    assert span.attributes.get("db.milvus.query.limit") == 2
+    assert span.attributes.get("db.milvus.query.partition_names_count") == 1
     events = span.events
-    assert len(events) == 1
     for event in events:
         assert event.name == "db.query.result"
-        ids_ = event.attributes.get(f"{event.name}.id")
-        distance = event.attributes.get(f"{event.name}.distance")
-        document = event.attributes.get(f"{event.name}.document")
-
-        assert len(ids_) > 0
-        assert isinstance(ids_, str)
-
-        assert distance >= 0
-
-        assert len(document) > 0
-        assert isinstance(document, str)
-
-
-def test_chroma_query_segment_query(exporter, collection):
-    add_documents(collection, with_metadata=True)
-    collection.query(
-        query_texts=["What is the student name?"],
-        n_results=2,
-    )
-
-    spans = exporter.get_finished_spans()
-    span = next(span for span in spans if span.name == "chroma.query.segment._query")
-    assert len(span.attributes.get("db.chroma.query.segment._query.collection_id")) > 0
-    events = span.events
-    assert len(events) > 0
-    for event in events:
-        assert event.name == "db.query.embeddings"
-        embeddings = json.loads(event.attributes.get(f"{event.name}.vector"))
-        assert len(embeddings) > 100
-        for number in embeddings:
-            assert number >= -1 and number <= 1
+        tag = event.attributes.get("color_tag")
+        _id = event.attributes.get("id")
+        assert isinstance(tag, str)
+        assert isinstance(_id, int)

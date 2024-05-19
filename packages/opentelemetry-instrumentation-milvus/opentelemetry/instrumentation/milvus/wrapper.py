@@ -5,9 +5,7 @@ from opentelemetry import context as context_api
 from opentelemetry.instrumentation.utils import (
     _SUPPRESS_INSTRUMENTATION_KEY,
 )
-from opentelemetry.semconv.ai import EventAttributes, Events
-import itertools
-import json
+from opentelemetry.semconv.ai import Events
 
 
 def _with_tracer_wrapper(func):
@@ -37,28 +35,21 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
 
     name = to_wrap.get("span_name")
     with tracer.start_as_current_span(name) as span:
-        span.set_attribute(SpanAttributes.DB_SYSTEM, "chroma")
+        span.set_attribute(SpanAttributes.DB_SYSTEM, "milvus")
         span.set_attribute(SpanAttributes.DB_OPERATION, to_wrap.get("method"))
 
-        if to_wrap.get("method") == "add":
-            _set_add_attributes(span, kwargs)
-        elif to_wrap.get("method") == "get":
-            _set_get_attributes(span, kwargs)
-        elif to_wrap.get("method") == "peek":
-            _set_peek_attributes(span, kwargs)
-        elif to_wrap.get("method") == "query":
-            _set_query_attributes(span, kwargs)
-        elif to_wrap.get("method") == "_query":
-            _set_segment_query_attributes(span, kwargs)
-            _add_segment_query_embeddings_events(span, kwargs)
-        elif to_wrap.get("method") == "modify":
-            _set_modify_attributes(span, kwargs)
-        elif to_wrap.get("method") == "update":
-            _set_update_attributes(span, kwargs)
+        if to_wrap.get("method") == "insert":
+            _set_insert_attributes(span, kwargs)
         elif to_wrap.get("method") == "upsert":
             _set_upsert_attributes(span, kwargs)
         elif to_wrap.get("method") == "delete":
             _set_delete_attributes(span, kwargs)
+        elif to_wrap.get("method") == "search":
+            _set_search_attributes(span, kwargs)
+        elif to_wrap.get("method") == "get":
+            _set_get_attributes(span, kwargs)
+        elif to_wrap.get("method") == "query":
+            _set_query_attributes(span, kwargs)
 
         return_value = wrapped(*args, **kwargs)
         if to_wrap.get("method") == "query":
@@ -67,20 +58,20 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
     return return_value
 
 
-def _encode_where(where):
-    where_str = None
-    if where:
-        where_str = str(where)
+def _encode_filter(_filter):
+    _filter_str = None
+    if _filter:
+        _filter_str = str(_filter)
 
-    return where_str
+    return _filter_str
 
 
-def _encode_where_document(where_document):
-    where_document_str = None
-    if where_document:
-        where_document_str = str(where_document)
+def _encode_partition_name(partition_name):
+    partition_name_str = None
+    if partition_name:
+        partition_name_str = str(partition_name)
 
-    return where_document_str
+    return partition_name_str
 
 
 def _encode_include(include):
@@ -99,206 +90,132 @@ def count_or_none(obj):
 
 
 @dont_throw
-def _set_add_attributes(span, kwargs):
+def _set_insert_attributes(span, kwargs):
     _set_span_attribute(
-        span, "db.chroma.add.ids_count", count_or_none(kwargs.get("ids"))
+        span, "db.milvus.insert.collection_name", kwargs.get("collection_name")
     )
     _set_span_attribute(
-        span, "db.chroma.add.embeddings_count", count_or_none(kwargs.get("embeddings"))
+        span, "db.milvus.insert.data_count", count_or_none(kwargs.get("data"))
     )
     _set_span_attribute(
-        span, "db.chroma.add.metadatas_count", count_or_none(kwargs.get("metadatas"))
+        span, "db.milvus.insert.timeout", kwargs.get("timeout")
     )
     _set_span_attribute(
-        span, "db.chroma.add.documents_count", count_or_none(kwargs.get("documents"))
+        span, "db.milvus.insert.partition_name", _encode_partition_name(kwargs.get("partition_name"))
     )
 
 
 @dont_throw
 def _set_get_attributes(span, kwargs):
     _set_span_attribute(
-        span, "db.chroma.get.ids_count", count_or_none(kwargs.get("ids"))
-    )
-    _set_span_attribute(span, "db.chroma.get.where", _encode_where(kwargs.get("where")))
-    _set_span_attribute(span, "db.chroma.get.limit", kwargs.get("limit"))
-    _set_span_attribute(span, "db.chroma.get.offset", kwargs.get("offset"))
-    _set_span_attribute(
-        span,
-        "db.chroma.get.where_document",
-        _encode_where_document(kwargs.get("where_document")),
+        span, "db.milvus.get.collection_name", kwargs.get("collection_name")
     )
     _set_span_attribute(
-        span, "db.chroma.get.include", _encode_include(kwargs.get("include"))
+        span, "db.milvus.query.ids_count", count_or_none(kwargs.get("ids"))
+    )
+    _set_span_attribute(
+        span, "db.milvus.search.output_fields_count", count_or_none(kwargs.get("output_fields"))
+    )
+    _set_span_attribute(
+        span, "db.milvus.insert.timeout", kwargs.get("timeout")
+    )
+    _set_span_attribute(
+        span, "db.milvus.get.partition_names_count", count_or_none(kwargs.get("partition_names"))
     )
 
 
 @dont_throw
-def _set_peek_attributes(span, kwargs):
-    _set_span_attribute(span, "db.chroma.peek.limit", kwargs.get("limit"))
+def _set_search_attributes(span, kwargs):
+    _set_span_attribute(
+        span, "db.milvus.search.collection_name", kwargs.get("collection_name")
+    )
+    _set_span_attribute(
+        span, "db.milvus.search.data_count", count_or_none(kwargs.get("data"))
+    )
+    _set_span_attribute(
+        span, "db.milvus.search.filter", kwargs.get("filter")
+    )
+    _set_span_attribute(
+        span, "db.milvus.search.limit", kwargs.get("limit")
+    )
+    _set_span_attribute(
+        span, "db.milvus.search.output_fields_count", count_or_none(kwargs.get("output_fields"))
+    )
+    _set_span_attribute(
+        span, "db.milvus.search.search_params", kwargs.get("search_params")
+    )
+    _set_span_attribute(
+        span, "db.milvus.search.timeout", kwargs.get("timeout")
+    )
+    _set_span_attribute(
+        span, "db.milvus.search.partition_names_count", kwargs.get("partition_name")
+    )
+    _set_span_attribute(
+        span, "db.milvus.search.anns_field", kwargs.get("anns_field")
+    )
 
 
 @dont_throw
 def _set_query_attributes(span, kwargs):
     _set_span_attribute(
-        span,
-        "db.chroma.query.query_embeddings_count",
-        count_or_none(kwargs.get("query_embeddings")),
+        span, "db.milvus.query.collection_name", kwargs.get("collection_name")
     )
     _set_span_attribute(
-        span,
-        "db.chroma.query.query_texts_count",
-        count_or_none(kwargs.get("query_texts")),
-    )
-    _set_span_attribute(span, "db.chroma.query.n_results", kwargs.get("n_results"))
-    _set_span_attribute(
-        span, "db.chroma.query.where", _encode_where(kwargs.get("where"))
+        span, "db.milvus.query.filter", _encode_filter(kwargs.get("filter"))
     )
     _set_span_attribute(
-        span,
-        "db.chroma.query.where_document",
-        _encode_where_document(kwargs.get("where_document")),
+        span, "db.milvus.query.output_fields_count", count_or_none(kwargs.get("output_fields"))
     )
     _set_span_attribute(
-        span, "db.chroma.query.include", _encode_include(kwargs.get("include"))
+        span, "db.milvus.query.timeout", kwargs.get("timeout")
     )
-
-
-@dont_throw
-def _set_segment_query_attributes(span, kwargs):
     _set_span_attribute(
-        span,
-        "db.chroma.query.segment._query.collection_id",
-        str(kwargs.get("collection_id")),
+        span, "db.milvus.query.ids_count", count_or_none(kwargs.get("ids"))
     )
-
-
-@dont_throw
-def _add_segment_query_embeddings_events(span, kwargs):
-    for i, embeddings in enumerate(kwargs.get("query_embeddings", [])):
-        span.add_event(
-            name=Events.DB_QUERY_EMBEDDINGS.value,
-            attributes={
-                EventAttributes.DB_QUERY_EMBEDDINGS_VECTOR.value: json.dumps(embeddings)
-            },
-        )
+    _set_span_attribute(
+        span, "db.milvus.query.partition_names_count", count_or_none(kwargs.get("partition_names"))
+    )
+    _set_span_attribute(
+        span, "db.milvus.query.limit", kwargs.get("limit")
+    )
 
 
 @dont_throw
 def _add_query_result_events(span, kwargs):
-    """
-    There's a lot of logic here involved in converting the query result
-    format from ChromaDB into the canonical format (taken from Pinecone)
-
-    This is because Chroma query result looks like this:
-
-        {
-           ids: [1, 2, 3...],
-           distances: [0.3, 0.5, 0.6...],
-           metadata: ["some metadata text", "another metadata text",...],
-           documents: ["retrieved text", "retrieved text2", ...]
-        }
-
-    We'd like instead to log it like this:
-
-        [
-            {"id": 1, "distance": 0.3,  "document": "retrieved text", "metadata": "some metadata text",
-            {"id": 2, "distance" 0.5, , "document": "retrieved text2": "another metadata text",
-            {"id": 3, "distance": 0.6, "document": ..., "metadata": ...
-        ]
-
-    If you'd like to understand better why, please read the discussions on PR #370:
-    https://github.com/traceloop/openllmetry/pull/370
-
-    The goal is to set a canonical format which we call as a Semantic Convention.
-    """
-    zipped = itertools.zip_longest(
-        kwargs.get("ids", []) or [],
-        kwargs.get("distances", []) or [],
-        kwargs.get("metadatas", []) or [],
-        kwargs.get("documents", []) or [],
-    )
-    for tuple_ in zipped:
-        attributes = {
-            EventAttributes.DB_QUERY_RESULT_ID.value: None,
-            EventAttributes.DB_QUERY_RESULT_DISTANCE.value: None,
-            EventAttributes.DB_QUERY_RESULT_METADATA.value: None,
-            EventAttributes.DB_QUERY_RESULT_DOCUMENT.value: None,
-        }
-
-        attributes_order = ["ids", "distances", "metadatas", "documents"]
-        attributes_mapping_to_canonical_format = {
-            "ids": EventAttributes.DB_QUERY_RESULT_ID.value,
-            "distances": EventAttributes.DB_QUERY_RESULT_DISTANCE.value,
-            "metadatas": EventAttributes.DB_QUERY_RESULT_METADATA.value,
-            "documents": EventAttributes.DB_QUERY_RESULT_DOCUMENT.value,
-        }
-        for j, attr in enumerate(tuple_):
-            original_attribute_name = attributes_order[j]
-            canonical_name = attributes_mapping_to_canonical_format[
-                original_attribute_name
-            ]
-            try:
-                value = attr[0]
-                if isinstance(value, dict):
-                    value = json.dumps(value)
-
-                attributes[canonical_name] = value
-            except (IndexError, TypeError):
-                # Don't send missing values as nulls, OpenTelemetry dislikes them!
-                del attributes[canonical_name]
-
-        span.add_event(name=Events.DB_QUERY_RESULT.value, attributes=attributes)
-
-
-@dont_throw
-def _set_modify_attributes(span, kwargs):
-    _set_span_attribute(span, "db.chroma.modify.name", kwargs.get("name"))
-    # TODO: Add metadata attribute
-
-
-@dont_throw
-def _set_update_attributes(span, kwargs):
-    _set_span_attribute(
-        span, "db.chroma.update.ids_count", count_or_none(kwargs.get("ids"))
-    )
-    _set_span_attribute(
-        span,
-        "db.chroma.update.embeddings_count",
-        count_or_none(kwargs.get("embeddings")),
-    )
-    _set_span_attribute(
-        span, "db.chroma.update.metadatas_count", count_or_none(kwargs.get("metadatas"))
-    )
-    _set_span_attribute(
-        span, "db.chroma.update.documents_count", count_or_none(kwargs.get("documents"))
-    )
+    for element in kwargs:
+        span.add_event(name=Events.DB_QUERY_RESULT.value, attributes=element)
 
 
 @dont_throw
 def _set_upsert_attributes(span, kwargs):
     _set_span_attribute(
-        span,
-        "db.chroma.upsert.embeddings_count",
-        count_or_none(kwargs.get("embeddings")),
+        span, "db.milvus.upsert.collection_name", kwargs.get("collection_name")
     )
     _set_span_attribute(
-        span, "db.chroma.upsert.metadatas_count", count_or_none(kwargs.get("metadatas"))
+        span, "db.milvus.upsert.data_count", count_or_none(kwargs.get("data"))
     )
     _set_span_attribute(
-        span, "db.chroma.upsert.documents_count", count_or_none(kwargs.get("documents"))
+        span, "db.milvus.upsert.timeout_count", count_or_none(kwargs.get("timeout"))
+    )
+    _set_span_attribute(
+        span, "db.milvus.upsert.partition_name", _encode_partition_name(kwargs.get("partition_name"))
     )
 
 
 @dont_throw
 def _set_delete_attributes(span, kwargs):
     _set_span_attribute(
-        span, "db.chroma.delete.ids_count", count_or_none(kwargs.get("ids"))
+        span, "db.milvus.delete.collection_name", kwargs.get("collection_name")
     )
     _set_span_attribute(
-        span, "db.chroma.delete.where", _encode_where(kwargs.get("where"))
+        span, "db.milvus.delete.timeout_count", count_or_none(kwargs.get("timeout"))
     )
     _set_span_attribute(
-        span,
-        "db.chroma.delete.where_document",
-        _encode_where_document(kwargs.get("where_document")),
+        span, "db.milvus.delete.partition_name", _encode_partition_name(kwargs.get("partition_name"))
+    )
+    _set_span_attribute(
+        span, "db.milvus.delete.ids_count", count_or_none(kwargs.get("ids"))
+    )
+    _set_span_attribute(
+        span, "db.milvus.delete.filter", _encode_filter(kwargs.get("filter"))
     )

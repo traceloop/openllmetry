@@ -18,38 +18,44 @@ from opentelemetry.instrumentation.milvus.version import __version__
 
 logger = logging.getLogger(__name__)
 
-_instruments = ("pymilvus >= 2.4",)
+_instruments = ("pymilvus >= 2.4.1",)
 
 WRAPPED_METHODS = [
     {
         "package": pymilvus,
-        "object": "Collection",
+        "object": "MilvusClient",
         "method": "insert",
         "span_name": "milvus.insert"
     },
     {
         "package": pymilvus,
-        "object": "Collection",
+        "object": "MilvusClient",
         "method": "upsert",
         "span_name": "milvus.upsert"
     },
     {
         "package": pymilvus,
-        "object": "Collection",
+        "object": "MilvusClient",
         "method": "delete",
         "span_name": "milvus.delete"
     },
     {
         "package": pymilvus,
-        "object": "Collection",
+        "object": "MilvusClient",
         "method": "search",
         "span_name": "milvus.search"
     },
     {
         "package": pymilvus,
-        "object": "Collection",
+        "object": "MilvusClient",
         "method": "get",
         "span_name": "milvus.get"
+    },
+    {
+        "package": pymilvus,
+        "object": "MilvusClient",
+        "method": "query",
+        "span_name": "milvus.query"
     },
 ]
 
