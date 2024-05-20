@@ -18,6 +18,8 @@ version_files = [
     "packages/opentelemetry-instrumentation-haystack/opentelemetry/instrumentation/haystack/version.py",
     "packages/opentelemetry-instrumentation-langchain/pyproject.toml:^version",
     "packages/opentelemetry-instrumentation-langchain/opentelemetry/instrumentation/langchain/version.py",
+    "packages/opentelemetry-instrumentation-milvus/pyproject.toml:^version",
+    "packages/opentelemetry-instrumentation-milvus/opentelemetry/instrumentation/langchain/version.py",
     "packages/opentelemetry-instrumentation-openai/pyproject.toml:^version",
     "packages/opentelemetry-instrumentation-openai/opentelemetry/instrumentation/openai/version.py",
     "packages/opentelemetry-instrumentation-pinecone/pyproject.toml:^version",
