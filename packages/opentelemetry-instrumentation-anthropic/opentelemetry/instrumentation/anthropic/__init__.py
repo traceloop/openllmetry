@@ -110,7 +110,9 @@ def _set_input_attributes(span, kwargs):
     set_span_attribute(
         span, SpanAttributes.LLM_REQUEST_MAX_TOKENS, kwargs.get("max_tokens_to_sample")
     )
-    set_span_attribute(span, SpanAttributes.LLM_REQUEST_TEMPERATURE, kwargs.get("temperature"))
+    set_span_attribute(
+        span, SpanAttributes.LLM_REQUEST_TEMPERATURE, kwargs.get("temperature")
+    )
     set_span_attribute(span, SpanAttributes.LLM_REQUEST_TOP_P, kwargs.get("top_p"))
     set_span_attribute(
         span, SpanAttributes.LLM_FREQUENCY_PENALTY, kwargs.get("frequency_penalty")
@@ -672,13 +674,16 @@ class AnthropicInstrumentor(BaseInstrumentor):
         for wrapped_method in WRAPPED_METHODS:
             wrap_package = wrapped_method.get("package")
             wrap_object = wrapped_method.get("object")
+            wrap_method = wrapped_method.get("method")
             unwrap(
                 f"{wrap_package}.{wrap_object}",
-                wrapped_method.get("method"),
+                wrap_method,
             )
         for wrapped_method in WRAPPED_AMETHODS:
+            wrap_package = wrapped_method.get("package")
             wrap_object = wrapped_method.get("object")
+            wrap_method = wrapped_method.get("method")
             unwrap(
-                f"anthropic.resources.completions.{wrap_object}",
-                wrapped_method.get("method"),
+                f"{wrap_package}.{wrap_object}",
+                wrap_method,
             )
