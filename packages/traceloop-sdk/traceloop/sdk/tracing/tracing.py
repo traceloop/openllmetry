@@ -452,240 +452,337 @@ def init_instrumentations(should_enrich_metrics: bool):
 
 
 def init_openai_instrumentor(should_enrich_metrics: bool):
-    if importlib.util.find_spec("openai") is not None:
-        Telemetry().capture("instrumentation:openai:init")
-        from opentelemetry.instrumentation.openai import OpenAIInstrumentor
+    try:
+        if importlib.util.find_spec("openai") is not None:
+            Telemetry().capture("instrumentation:openai:init")
+            from opentelemetry.instrumentation.openai import OpenAIInstrumentor
 
-        instrumentor = OpenAIInstrumentor(
-            exception_logger=lambda e: Telemetry().log_exception(e),
-            enrich_assistant=should_enrich_metrics,
-            enrich_token_usage=should_enrich_metrics,
-        )
-        if not instrumentor.is_instrumented_by_opentelemetry:
-            instrumentor.instrument()
-    return True
+            instrumentor = OpenAIInstrumentor(
+                exception_logger=lambda e: Telemetry().log_exception(e),
+                enrich_assistant=should_enrich_metrics,
+                enrich_token_usage=should_enrich_metrics,
+            )
+            if not instrumentor.is_instrumented_by_opentelemetry:
+                instrumentor.instrument()
+        return True
+    except Exception as e:
+        logging.error(f"Error initializing OpenAI instrumentor: {e}")
+        Telemetry().log_exception(e)
+        return False
 
 
 def init_anthropic_instrumentor(should_enrich_metrics: bool):
-    if importlib.util.find_spec("anthropic") is not None:
-        Telemetry().capture("instrumentation:anthropic:init")
-        from opentelemetry.instrumentation.anthropic import AnthropicInstrumentor
+    try:
+        if importlib.util.find_spec("anthropic") is not None:
+            Telemetry().capture("instrumentation:anthropic:init")
+            from opentelemetry.instrumentation.anthropic import AnthropicInstrumentor
 
-        instrumentor = AnthropicInstrumentor(
-            exception_logger=lambda e: Telemetry().log_exception(e),
-            enrich_token_usage=should_enrich_metrics,
-        )
-        if not instrumentor.is_instrumented_by_opentelemetry:
-            instrumentor.instrument()
-    return True
+            instrumentor = AnthropicInstrumentor(
+                exception_logger=lambda e: Telemetry().log_exception(e),
+                enrich_token_usage=should_enrich_metrics,
+            )
+            if not instrumentor.is_instrumented_by_opentelemetry:
+                instrumentor.instrument()
+        return True
+    except Exception as e:
+        logging.error(f"Error initializing Anthropic instrumentor: {e}")
+        Telemetry().log_exception(e)
+        return False
 
 
 def init_cohere_instrumentor():
-    if importlib.util.find_spec("cohere") is not None:
-        Telemetry().capture("instrumentation:cohere:init")
-        from opentelemetry.instrumentation.cohere import CohereInstrumentor
+    try:
+        if importlib.util.find_spec("cohere") is not None:
+            Telemetry().capture("instrumentation:cohere:init")
+            from opentelemetry.instrumentation.cohere import CohereInstrumentor
 
-        instrumentor = CohereInstrumentor(
-            exception_logger=lambda e: Telemetry().log_exception(e),
-        )
-        if not instrumentor.is_instrumented_by_opentelemetry:
-            instrumentor.instrument()
-    return True
+            instrumentor = CohereInstrumentor(
+                exception_logger=lambda e: Telemetry().log_exception(e),
+            )
+            if not instrumentor.is_instrumented_by_opentelemetry:
+                instrumentor.instrument()
+        return True
+    except Exception as e:
+        logging.error(f"Error initializing Cohere instrumentor: {e}")
+        Telemetry().log_exception(e)
+        return False
 
 
 def init_pinecone_instrumentor():
-    if importlib.util.find_spec("pinecone") is not None:
-        Telemetry().capture("instrumentation:pinecone:init")
-        from opentelemetry.instrumentation.pinecone import PineconeInstrumentor
+    try:
+        if importlib.util.find_spec("pinecone") is not None:
+            Telemetry().capture("instrumentation:pinecone:init")
+            from opentelemetry.instrumentation.pinecone import PineconeInstrumentor
 
-        instrumentor = PineconeInstrumentor(
-            exception_logger=lambda e: Telemetry().log_exception(e),
-        )
-        if not instrumentor.is_instrumented_by_opentelemetry:
-            instrumentor.instrument()
-    return True
+            instrumentor = PineconeInstrumentor(
+                exception_logger=lambda e: Telemetry().log_exception(e),
+            )
+            if not instrumentor.is_instrumented_by_opentelemetry:
+                instrumentor.instrument()
+        return True
+    except Exception as e:
+        logging.error(f"Error initializing Pinecone instrumentor: {e}")
+        Telemetry().log_exception(e)
+        return False
 
 
 def init_qdrant_instrumentor():
-    if importlib.util.find_spec("qdrant_client") is not None:
-        Telemetry().capture("instrumentation:qdrant:init")
-        from opentelemetry.instrumentation.qdrant import QdrantInstrumentor
+    try:
+        if importlib.util.find_spec("qdrant_client") is not None:
+            Telemetry().capture("instrumentation:qdrant:init")
+            from opentelemetry.instrumentation.qdrant import QdrantInstrumentor
 
-        instrumentor = QdrantInstrumentor(
-            exception_logger=lambda e: Telemetry().log_exception(e),
-        )
-        if not instrumentor.is_instrumented_by_opentelemetry:
-            instrumentor.instrument()
+            instrumentor = QdrantInstrumentor(
+                exception_logger=lambda e: Telemetry().log_exception(e),
+            )
+            if not instrumentor.is_instrumented_by_opentelemetry:
+                instrumentor.instrument()
+    except Exception as e:
+        logging.error(f"Error initializing Qdrant instrumentor: {e}")
+        Telemetry().log_exception(e)
+        return False
 
 
 def init_chroma_instrumentor():
-    if importlib.util.find_spec("chromadb") is not None:
-        Telemetry().capture("instrumentation:chromadb:init")
-        from opentelemetry.instrumentation.chromadb import ChromaInstrumentor
+    try:
+        if importlib.util.find_spec("chromadb") is not None:
+            Telemetry().capture("instrumentation:chromadb:init")
+            from opentelemetry.instrumentation.chromadb import ChromaInstrumentor
 
-        instrumentor = ChromaInstrumentor(
-            exception_logger=lambda e: Telemetry().log_exception(e),
-        )
-        if not instrumentor.is_instrumented_by_opentelemetry:
-            instrumentor.instrument()
-    return True
+            instrumentor = ChromaInstrumentor(
+                exception_logger=lambda e: Telemetry().log_exception(e),
+            )
+            if not instrumentor.is_instrumented_by_opentelemetry:
+                instrumentor.instrument()
+        return True
+    except Exception as e:
+        logging.error(f"Error initializing Chroma instrumentor: {e}")
+        Telemetry().log_exception(e)
+        return False
 
 
 def init_haystack_instrumentor():
-    if importlib.util.find_spec("haystack") is not None:
-        Telemetry().capture("instrumentation:haystack:init")
-        from opentelemetry.instrumentation.haystack import HaystackInstrumentor
+    try:
+        if importlib.util.find_spec("haystack") is not None:
+            Telemetry().capture("instrumentation:haystack:init")
+            from opentelemetry.instrumentation.haystack import HaystackInstrumentor
 
-        instrumentor = HaystackInstrumentor(
-            exception_logger=lambda e: Telemetry().log_exception(e),
-        )
-        if not instrumentor.is_instrumented_by_opentelemetry:
-            instrumentor.instrument()
-    return True
+            instrumentor = HaystackInstrumentor(
+                exception_logger=lambda e: Telemetry().log_exception(e),
+            )
+            if not instrumentor.is_instrumented_by_opentelemetry:
+                instrumentor.instrument()
+        return True
+    except Exception as e:
+        logging.error(f"Error initializing Haystack instrumentor: {e}")
+        Telemetry().log_exception(e)
+        return False
 
 
 def init_langchain_instrumentor():
-    if importlib.util.find_spec("langchain") is not None:
-        Telemetry().capture("instrumentation:langchain:init")
-        from opentelemetry.instrumentation.langchain import LangchainInstrumentor
+    try:
+        if importlib.util.find_spec("langchain") is not None:
+            Telemetry().capture("instrumentation:langchain:init")
+            from opentelemetry.instrumentation.langchain import LangchainInstrumentor
 
-        instrumentor = LangchainInstrumentor(
-            exception_logger=lambda e: Telemetry().log_exception(e),
-        )
-        if not instrumentor.is_instrumented_by_opentelemetry:
-            instrumentor.instrument()
-    return True
+            instrumentor = LangchainInstrumentor(
+                exception_logger=lambda e: Telemetry().log_exception(e),
+            )
+            if not instrumentor.is_instrumented_by_opentelemetry:
+                instrumentor.instrument()
+        return True
+    except Exception as e:
+        logging.error(f"Error initializing LangChain instrumentor: {e}")
+        Telemetry().log_exception(e)
+        return False
 
 
 def init_transformers_instrumentor():
-    if importlib.util.find_spec("transformers") is not None:
-        Telemetry().capture("instrumentation:transformers:init")
-        from opentelemetry.instrumentation.transformers import TransformersInstrumentor
+    try:
+        if importlib.util.find_spec("transformers") is not None:
+            Telemetry().capture("instrumentation:transformers:init")
+            from opentelemetry.instrumentation.transformers import (
+                TransformersInstrumentor,
+            )
 
-        instrumentor = TransformersInstrumentor(
-            exception_logger=lambda e: Telemetry().log_exception(e),
-        )
-        if not instrumentor.is_instrumented_by_opentelemetry:
-            instrumentor.instrument()
-    return True
+            instrumentor = TransformersInstrumentor(
+                exception_logger=lambda e: Telemetry().log_exception(e),
+            )
+            if not instrumentor.is_instrumented_by_opentelemetry:
+                instrumentor.instrument()
+        return True
+    except Exception as e:
+        logging.error(f"Error initializing Transformers instrumentor: {e}")
+        Telemetry().log_exception(e)
+        return False
 
 
 def init_llama_index_instrumentor():
-    if importlib.util.find_spec("llama_index") is not None:
-        Telemetry().capture("instrumentation:llamaindex:init")
-        from opentelemetry.instrumentation.llamaindex import LlamaIndexInstrumentor
+    try:
+        if importlib.util.find_spec("llama_index") is not None:
+            Telemetry().capture("instrumentation:llamaindex:init")
+            from opentelemetry.instrumentation.llamaindex import LlamaIndexInstrumentor
 
-        instrumentor = LlamaIndexInstrumentor(
-            exception_logger=lambda e: Telemetry().log_exception(e),
-        )
-        if not instrumentor.is_instrumented_by_opentelemetry:
-            instrumentor.instrument()
-    return True
+            instrumentor = LlamaIndexInstrumentor(
+                exception_logger=lambda e: Telemetry().log_exception(e),
+            )
+            if not instrumentor.is_instrumented_by_opentelemetry:
+                instrumentor.instrument()
+        return True
+    except Exception as e:
+        logging.error(f"Error initializing LlamaIndex instrumentor: {e}")
+        Telemetry().log_exception(e)
+        return False
 
 
 def init_milvus_instrumentor():
-    if importlib.util.find_spec("pymilvus") is not None:
-        Telemetry().capture("instrumentation:milvus:init")
-        from opentelemetry.instrumentation.milvus import MilvusInstrumentor
+    try:
+        if importlib.util.find_spec("pymilvus") is not None:
+            Telemetry().capture("instrumentation:milvus:init")
+            from opentelemetry.instrumentation.milvus import MilvusInstrumentor
 
-        instrumentor = MilvusInstrumentor(
-            exception_logger=lambda e: Telemetry().log_exception(e),
-        )
-        if not instrumentor.is_instrumented_by_opentelemetry:
-            instrumentor.instrument()
-    return True
+            instrumentor = MilvusInstrumentor(
+                exception_logger=lambda e: Telemetry().log_exception(e),
+            )
+            if not instrumentor.is_instrumented_by_opentelemetry:
+                instrumentor.instrument()
+        return True
+    except Exception as e:
+        logging.error(f"Error initializing Milvus instrumentor: {e}")
+        Telemetry().log_exception(e)
+        return False
 
 
 def init_requests_instrumentor():
-    if importlib.util.find_spec("requests") is not None:
-        from opentelemetry.instrumentation.requests import RequestsInstrumentor
+    try:
+        if importlib.util.find_spec("requests") is not None:
+            from opentelemetry.instrumentation.requests import RequestsInstrumentor
 
-        instrumentor = RequestsInstrumentor()
-        if not instrumentor.is_instrumented_by_opentelemetry:
-            instrumentor.instrument(excluded_urls=EXCLUDED_URLS)
-    return True
+            instrumentor = RequestsInstrumentor()
+            if not instrumentor.is_instrumented_by_opentelemetry:
+                instrumentor.instrument(excluded_urls=EXCLUDED_URLS)
+        return True
+    except Exception as e:
+        logging.error(f"Error initializing Requests instrumentor: {e}")
+        Telemetry().log_exception(e)
+        return False
 
 
 def init_urllib3_instrumentor():
-    if importlib.util.find_spec("urllib3") is not None:
-        from opentelemetry.instrumentation.urllib3 import URLLib3Instrumentor
+    try:
+        if importlib.util.find_spec("urllib3") is not None:
+            from opentelemetry.instrumentation.urllib3 import URLLib3Instrumentor
 
-        instrumentor = URLLib3Instrumentor()
-        if not instrumentor.is_instrumented_by_opentelemetry:
-            instrumentor.instrument(excluded_urls=EXCLUDED_URLS)
-    return True
+            instrumentor = URLLib3Instrumentor()
+            if not instrumentor.is_instrumented_by_opentelemetry:
+                instrumentor.instrument(excluded_urls=EXCLUDED_URLS)
+        return True
+    except Exception as e:
+        logging.error(f"Error initializing urllib3 instrumentor: {e}")
+        Telemetry().log_exception(e)
+        return False
 
 
 def init_pymysql_instrumentor():
-    if importlib.util.find_spec("sqlalchemy") is not None:
-        from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
+    try:
+        if importlib.util.find_spec("sqlalchemy") is not None:
+            from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
 
-        instrumentor = SQLAlchemyInstrumentor()
-        if not instrumentor.is_instrumented_by_opentelemetry:
-            instrumentor.instrument()
-    return True
+            instrumentor = SQLAlchemyInstrumentor()
+            if not instrumentor.is_instrumented_by_opentelemetry:
+                instrumentor.instrument()
+        return True
+    except Exception as e:
+        logging.error(f"Error initializing SQLAlchemy instrumentor: {e}")
+        Telemetry().log_exception(e)
+        return False
 
 
 def init_bedrock_instrumentor(should_enrich_metrics: bool):
-    if importlib.util.find_spec("boto3") is not None:
-        from opentelemetry.instrumentation.bedrock import BedrockInstrumentor
+    try:
+        if importlib.util.find_spec("boto3") is not None:
+            from opentelemetry.instrumentation.bedrock import BedrockInstrumentor
 
-        instrumentor = BedrockInstrumentor(
-            exception_logger=lambda e: Telemetry().log_exception(e),
-            enrich_token_usage=should_enrich_metrics,
-        )
-        if not instrumentor.is_instrumented_by_opentelemetry:
-            instrumentor.instrument()
-    return True
+            instrumentor = BedrockInstrumentor(
+                exception_logger=lambda e: Telemetry().log_exception(e),
+                enrich_token_usage=should_enrich_metrics,
+            )
+            if not instrumentor.is_instrumented_by_opentelemetry:
+                instrumentor.instrument()
+        return True
+    except Exception as e:
+        logging.error(f"Error initializing Bedrock instrumentor: {e}")
+        Telemetry().log_exception(e)
+        return False
 
 
 def init_replicate_instrumentor():
-    if importlib.util.find_spec("replicate") is not None:
-        Telemetry().capture("instrumentation:replicate:init")
-        from opentelemetry.instrumentation.replicate import ReplicateInstrumentor
+    try:
+        if importlib.util.find_spec("replicate") is not None:
+            Telemetry().capture("instrumentation:replicate:init")
+            from opentelemetry.instrumentation.replicate import ReplicateInstrumentor
 
-        instrumentor = ReplicateInstrumentor(
-            exception_logger=lambda e: Telemetry().log_exception(e),
-        )
-        if not instrumentor.is_instrumented_by_opentelemetry:
-            instrumentor.instrument()
-    return True
+            instrumentor = ReplicateInstrumentor(
+                exception_logger=lambda e: Telemetry().log_exception(e),
+            )
+            if not instrumentor.is_instrumented_by_opentelemetry:
+                instrumentor.instrument()
+        return True
+    except Exception as e:
+        logging.error(f"Error initializing Replicate instrumentor: {e}")
+        Telemetry().log_exception(e)
+        return False
 
 
 def init_vertexai_instrumentor():
-    if importlib.util.find_spec("vertexai") is not None:
-        Telemetry().capture("instrumentation:vertexai:init")
-        from opentelemetry.instrumentation.vertexai import VertexAIInstrumentor
+    try:
+        if importlib.util.find_spec("vertexai") is not None:
+            Telemetry().capture("instrumentation:vertexai:init")
+            from opentelemetry.instrumentation.vertexai import VertexAIInstrumentor
 
-        instrumentor = VertexAIInstrumentor(
-            exception_logger=lambda e: Telemetry().log_exception(e),
-        )
-        if not instrumentor.is_instrumented_by_opentelemetry:
-            instrumentor.instrument()
-    return True
+            instrumentor = VertexAIInstrumentor(
+                exception_logger=lambda e: Telemetry().log_exception(e),
+            )
+            if not instrumentor.is_instrumented_by_opentelemetry:
+                instrumentor.instrument()
+        return True
+    except Exception as e:
+        logging.warning(f"Error initializing Vertex AI instrumentor: {e}")
+        Telemetry().log_exception(e)
+        return False
 
 
 def init_watsonx_instrumentor():
-    if importlib.util.find_spec("ibm_watson_machine_learning") is not None:
-        Telemetry().capture("instrumentation:watsonx:init")
-        from opentelemetry.instrumentation.watsonx import WatsonxInstrumentor
+    try:
+        if importlib.util.find_spec("ibm_watson_machine_learning") is not None:
+            Telemetry().capture("instrumentation:watsonx:init")
+            from opentelemetry.instrumentation.watsonx import WatsonxInstrumentor
 
-        instrumentor = WatsonxInstrumentor(
-            exception_logger=lambda e: Telemetry().log_exception(e),
-        )
-        if not instrumentor.is_instrumented_by_opentelemetry:
-            instrumentor.instrument()
-    return True
+            instrumentor = WatsonxInstrumentor(
+                exception_logger=lambda e: Telemetry().log_exception(e),
+            )
+            if not instrumentor.is_instrumented_by_opentelemetry:
+                instrumentor.instrument()
+        return True
+    except Exception as e:
+        logging.warning(f"Error initializing Watsonx instrumentor: {e}")
+        Telemetry().log_exception(e)
+        return False
 
 
 def init_weaviate_instrumentor():
-    if importlib.util.find_spec("weaviate") is not None:
-        Telemetry().capture("instrumentation:weaviate:init")
-        from opentelemetry.instrumentation.weaviate import WeaviateInstrumentor
+    try:
+        if importlib.util.find_spec("weaviate") is not None:
+            Telemetry().capture("instrumentation:weaviate:init")
+            from opentelemetry.instrumentation.weaviate import WeaviateInstrumentor
 
-        instrumentor = WeaviateInstrumentor(
-            exception_logger=lambda e: Telemetry().log_exception(e),
-        )
-        if not instrumentor.is_instrumented_by_opentelemetry:
-            instrumentor.instrument()
-    return True
+            instrumentor = WeaviateInstrumentor(
+                exception_logger=lambda e: Telemetry().log_exception(e),
+            )
+            if not instrumentor.is_instrumented_by_opentelemetry:
+                instrumentor.instrument()
+        return True
+    except Exception as e:
+        logging.warning(f"Error initializing Weaviate instrumentor: {e}")
+        Telemetry().log_exception(e)
+        return False
