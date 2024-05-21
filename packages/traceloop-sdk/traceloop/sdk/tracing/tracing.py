@@ -175,6 +175,12 @@ class TracerWrapper(object):
                             print(Fore.RESET)
                         else:
                             instrument_set = True
+                    elif instrument == Instruments.MILVUS:
+                        if not init_milvus_instrumentor():
+                            print(Fore.RED + "Warning: Milvus library does not exist.")
+                            print(Fore.RESET)
+                        else:
+                            instrument_set = True
                     elif instrument == Instruments.TRANSFORMERS:
                         if not init_transformers_instrumentor():
                             print(
@@ -433,6 +439,7 @@ def init_instrumentations(should_enrich_metrics: bool):
     init_haystack_instrumentor()
     init_langchain_instrumentor()
     init_llama_index_instrumentor()
+    init_milvus_instrumentor()
     init_transformers_instrumentor()
     init_requests_instrumentor()
     init_urllib3_instrumentor()
@@ -569,6 +576,19 @@ def init_llama_index_instrumentor():
         from opentelemetry.instrumentation.llamaindex import LlamaIndexInstrumentor
 
         instrumentor = LlamaIndexInstrumentor(
+            exception_logger=lambda e: Telemetry().log_exception(e),
+        )
+        if not instrumentor.is_instrumented_by_opentelemetry:
+            instrumentor.instrument()
+    return True
+
+
+def init_milvus_instrumentor():
+    if importlib.util.find_spec("pymilvus") is not None:
+        Telemetry().capture("instrumentation:milvus:init")
+        from opentelemetry.instrumentation.milvus import MilvusInstrumentor
+
+        instrumentor = MilvusInstrumentor(
             exception_logger=lambda e: Telemetry().log_exception(e),
         )
         if not instrumentor.is_instrumented_by_opentelemetry:
