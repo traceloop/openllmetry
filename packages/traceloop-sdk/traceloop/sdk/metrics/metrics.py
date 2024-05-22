@@ -3,12 +3,15 @@ from opentelemetry.sdk.metrics.view import View, ExplicitBucketHistogramAggregat
 from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.metrics import MeterProvider
 
-from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader, MetricExporter
+from opentelemetry.sdk.metrics.export import (
+    PeriodicExportingMetricReader,
+    MetricExporter,
+)
 from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import (
-    OTLPMetricExporter as GRPCExporter
+    OTLPMetricExporter as GRPCExporter,
 )
 from opentelemetry.exporter.otlp.proto.http.metric_exporter import (
-    OTLPMetricExporter as HTTPExporter
+    OTLPMetricExporter as HTTPExporter,
 )
 from typing import Dict
 from collections.abc import Sequence
@@ -27,22 +30,24 @@ class MetricsWrapper(object):
                 return obj
 
             obj.__metrics_exporter: MetricExporter = (
-                exporter if exporter
+                exporter
+                if exporter
                 else init_metrics_exporter(
                     MetricsWrapper.endpoint, MetricsWrapper.headers
                 )
             )
 
-            obj.__metrics_provider: MeterProvider = init_metrics_provider(obj.__metrics_exporter,
-                                                                          MetricsWrapper.resource_attributes)
+            obj.__metrics_provider: MeterProvider = init_metrics_provider(
+                obj.__metrics_exporter, MetricsWrapper.resource_attributes
+            )
 
         return cls.instance
 
     @staticmethod
     def set_static_params(
-            resource_attributes: dict,
-            endpoint: str,
-            headers: Dict[str, str],
+        resource_attributes: dict,
+        endpoint: str,
+        headers: Dict[str, str],
     ) -> None:
         MetricsWrapper.resource_attributes = resource_attributes
         MetricsWrapper.endpoint = endpoint
@@ -56,9 +61,14 @@ def init_metrics_exporter(endpoint: str, headers: Dict[str, str]) -> MetricExpor
         return GRPCExporter(endpoint=endpoint, headers=headers)
 
 
-def init_metrics_provider(exporter: MetricExporter,
-                          resource_attributes: dict = None) -> MeterProvider:
-    resource = Resource.create(resource_attributes) if resource_attributes else Resource.create()
+def init_metrics_provider(
+    exporter: MetricExporter, resource_attributes: dict = None
+) -> MeterProvider:
+    resource = (
+        Resource.create(resource_attributes)
+        if resource_attributes
+        else Resource.create()
+    )
     reader = PeriodicExportingMetricReader(exporter)
     provider = MeterProvider(
         metric_readers=[reader],
@@ -75,25 +85,88 @@ def metric_views() -> Sequence[View]:
         View(
             instrument_name="gen_ai.client.operation.duration",
             aggregation=ExplicitBucketHistogramAggregation(
-                [0.01, 0.02, 0.04, 0.08, 0.16, 0.32, 0.64, 1.28, 2.56, 5.12, 10.24, 20.48, 40.96, 81.92]
+                [
+                    0.01,
+                    0.02,
+                    0.04,
+                    0.08,
+                    0.16,
+                    0.32,
+                    0.64,
+                    1.28,
+                    2.56,
+                    5.12,
+                    10.24,
+                    20.48,
+                    40.96,
+                    81.92,
+                ]
             ),
         ),
         View(
             instrument_name="gen_ai.client.token.usage",
             aggregation=ExplicitBucketHistogramAggregation(
-                [1, 4, 16, 64, 256, 1024, 4096, 16384, 65536, 262144, 1048576, 4194304, 16777216, 67108864]
+                [
+                    1,
+                    4,
+                    16,
+                    64,
+                    256,
+                    1024,
+                    4096,
+                    16384,
+                    65536,
+                    262144,
+                    1048576,
+                    4194304,
+                    16777216,
+                    67108864,
+                ]
             ),
         ),
         View(
             instrument_name="db.pinecone.query.duration",
             aggregation=ExplicitBucketHistogramAggregation(
-                [0.01, 0.02, 0.04, 0.08, 0.16, 0.32, 0.64, 1.28, 2.56, 5.12, 10.24, 20.48, 40.96, 81.92]
+                [
+                    0.01,
+                    0.02,
+                    0.04,
+                    0.08,
+                    0.16,
+                    0.32,
+                    0.64,
+                    1.28,
+                    2.56,
+                    5.12,
+                    10.24,
+                    20.48,
+                    40.96,
+                    81.92,
+                ]
             ),
         ),
         View(
             instrument_name="db.pinecone.query.scores",
             aggregation=ExplicitBucketHistogramAggregation(
-                [-1, -0.875, -0.75, -0.625, -0.5, -0.375, -0.25, -0.125, 0, 0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875, 1]
+                [
+                    -1,
+                    -0.875,
+                    -0.75,
+                    -0.625,
+                    -0.5,
+                    -0.375,
+                    -0.25,
+                    -0.125,
+                    0,
+                    0.125,
+                    0.25,
+                    0.375,
+                    0.5,
+                    0.625,
+                    0.75,
+                    0.875,
+                    1,
+                ]
             ),
         ),
     ]
