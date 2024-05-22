@@ -35,7 +35,7 @@ class OpenAIV0Instrumentor(BaseInstrumentor):
         meter = get_meter(__name__, __version__, meter_provider)
 
         if is_metrics_enabled():
-            chat_token_counter = meter.create_histogram(
+            tokens_histogram = meter.create_histogram(
                 name="gen_ai.client.token.usage",
                 unit="token",
                 description="Number of tokens used in prompt and completions",
@@ -71,7 +71,7 @@ class OpenAIV0Instrumentor(BaseInstrumentor):
             )
         else:
             (
-                chat_token_counter,
+                tokens_histogram,
                 chat_choice_counter,
                 chat_duration_histogram,
                 chat_exception_counter,
@@ -80,12 +80,6 @@ class OpenAIV0Instrumentor(BaseInstrumentor):
             ) = (None, None, None, None, None, None)
 
         if is_metrics_enabled():
-            embeddings_token_counter = meter.create_counter(
-                name="llm.openai.embeddings.tokens",
-                unit="token",
-                description="Number of tokens used in prompt and completions",
-            )
-
             embeddings_vector_size_counter = meter.create_counter(
                 name="llm.openai.embeddings.vector_size",
                 unit="element",
@@ -105,7 +99,7 @@ class OpenAIV0Instrumentor(BaseInstrumentor):
             )
         else:
             (
-                embeddings_token_counter,
+                tokens_histogram,
                 embeddings_vector_size_counter,
                 embeddings_duration_histogram,
                 embeddings_exception_counter,
@@ -120,7 +114,7 @@ class OpenAIV0Instrumentor(BaseInstrumentor):
             "ChatCompletion.create",
             chat_wrapper(
                 tracer,
-                chat_token_counter,
+                tokens_histogram,
                 chat_choice_counter,
                 chat_duration_histogram,
                 chat_exception_counter,
@@ -133,7 +127,7 @@ class OpenAIV0Instrumentor(BaseInstrumentor):
             "ChatCompletion.acreate",
             achat_wrapper(
                 tracer,
-                chat_token_counter,
+                tokens_histogram,
                 chat_choice_counter,
                 chat_duration_histogram,
                 chat_exception_counter,
@@ -146,7 +140,7 @@ class OpenAIV0Instrumentor(BaseInstrumentor):
             "Embedding.create",
             embeddings_wrapper(
                 tracer,
-                embeddings_token_counter,
+                tokens_histogram,
                 embeddings_vector_size_counter,
                 embeddings_duration_histogram,
                 embeddings_exception_counter,
@@ -157,7 +151,7 @@ class OpenAIV0Instrumentor(BaseInstrumentor):
             "Embedding.acreate",
             aembeddings_wrapper(
                 tracer,
-                embeddings_token_counter,
+                tokens_histogram,
                 embeddings_vector_size_counter,
                 embeddings_duration_histogram,
                 embeddings_exception_counter,
