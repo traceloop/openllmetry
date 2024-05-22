@@ -9,6 +9,7 @@ class Instruments(Enum):
     CHROMA = "chroma"
     LANGCHAIN = "langchain"
     LLAMA_INDEX = "llama_index"
+    MILVUS = "milvus"
     TRANSFORMERS = "transformers"
     REQUESTS = "requests"
     URLLIB3 = "urllib3"
