@@ -296,12 +296,12 @@ def _set_response_attributes(
                 **shared_attributes,
                 "llm.usage.token_type": "completion",
             }
-            token_counter.add(completion_token, attributes=attributes_with_token_type)
+            token_counter.record(completion_token, attributes=attributes_with_token_type)
             attributes_with_token_type = {
                 **shared_attributes,
                 "llm.usage.token_type": "prompt",
             }
-            token_counter.add(prompt_token, attributes=attributes_with_token_type)
+            token_counter.record(prompt_token, attributes=attributes_with_token_type)
 
     if duration and isinstance(duration, (float, int)) and duration_histogram:
         duration_histogram.record(duration, attributes=shared_attributes)
@@ -354,14 +354,14 @@ def _build_and_set_stream_response(
             **shared_attributes,
             "llm.usage.token_type": "completion",
         }
-        token_counter.add(
+        token_counter.record(
             stream_generated_token_count, attributes=attributes_with_token_type
         )
         attributes_with_token_type = {
             **shared_attributes,
             "llm.usage.token_type": "prompt",
         }
-        token_counter.add(
+        token_counter.record(
             stream_input_token_count, attributes=attributes_with_token_type
         )
 
