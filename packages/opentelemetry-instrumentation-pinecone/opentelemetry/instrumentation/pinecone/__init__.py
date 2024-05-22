@@ -149,9 +149,9 @@ def _wrap(
             if to_wrap.get("method") == "query":
                 set_query_input_attributes(span, kwargs)
 
-        shared_attributes = {
-            "server.address": instance._config.host,
-        }
+        shared_attributes = {}
+        if hasattr(instance, "_config"):
+            shared_attributes["server.address"] = instance._config.host
 
         start_time = time.time()
         response = wrapped(*args, **kwargs)
