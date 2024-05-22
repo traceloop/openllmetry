@@ -48,19 +48,24 @@ def dont_throw(func):
 @dont_throw
 def process_request(span, args, kwargs):
     if should_send_prompts():
-        to_serialize = kwargs.copy()
+        kwargs_to_serialize = kwargs.copy()
         for arg in args:
-            to_serialize.update(arg)
+            if arg and isinstance(arg, dict):
+                for key, value in arg.items():
+                    kwargs_to_serialize[key] = value
 
-        if "callbacks" in to_serialize:
-            to_serialize.pop("callbacks")
+        args = [arg for arg in args if not isinstance(arg, dict)]
 
         span.set_attribute(
             SpanAttributes.TRACELOOP_ENTITY_INPUT,
             json.dumps(
                 {
-                    "args": [],
-                    "kwargs": to_serialize,
+                    "args": [_convert_to_string(arg) for arg in args],
+                    "kwargs": {
+                        key: value.to_json() if hasattr(value, "to_json") else value
+                        for key, value in kwargs_to_serialize.items()
+                        if key != "callbacks"
+                    },
                 }
             ),
         )
