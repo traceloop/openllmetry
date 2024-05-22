@@ -49,7 +49,7 @@ class OpenAIV1Instrumentor(BaseInstrumentor):
         meter = get_meter(__name__, __version__, meter_provider)
 
         if is_metrics_enabled():
-            chat_token_counter = meter.create_counter(
+            chat_token_counter = meter.create_histogram(
                 name="gen_ai.client.token.usage",
                 unit="token",
                 description="Number of tokens used in prompt and completions",
