@@ -8,7 +8,7 @@ show_missing = true
 
 [tool.poetry]
 name = "traceloop-sdk"
-version = "0.18.0"
+version = "0.18.2"
 description = "Traceloop Software Development Kit (SDK) for Python"
 authors = [
   "Gal Kleinman <gal@traceloop.com>",
@@ -42,6 +42,7 @@ opentelemetry-instrumentation-langchain = {path="../opentelemetry-instrumentatio
 opentelemetry-instrumentation-chromadb = {path="../opentelemetry-instrumentation-chromadb", develop=true}
 opentelemetry-instrumentation-transformers = {path="../opentelemetry-instrumentation-transformers", develop=true}
 opentelemetry-instrumentation-llamaindex = {path="../opentelemetry-instrumentation-llamaindex", develop=true}
+opentelemetry-instrumentation-milvus = {path="../opentelemetry-instrumentation-milvus", develop=true}
 opentelemetry-instrumentation-haystack = {path="../opentelemetry-instrumentation-haystack", develop=true}
 opentelemetry-instrumentation-bedrock = {path="../opentelemetry-instrumentation-bedrock", develop=true}
 opentelemetry-instrumentation-replicate = {path="../opentelemetry-instrumentation-replicate", develop=true}
