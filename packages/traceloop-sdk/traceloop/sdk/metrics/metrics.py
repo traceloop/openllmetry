@@ -83,11 +83,5 @@ def metric_views() -> Sequence[View]:
             aggregation=ExplicitBucketHistogramAggregation(
                 [1, 4, 16, 64, 256, 1024, 4096, 16384, 65536, 262144, 1048576, 4194304, 16777216, 67108864]
             ),
-        ),
-        View(
-            instrument_name="gen_ai.client.generation.choices",
-            aggregation=ExplicitBucketHistogramAggregation(
-                [1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-            ),
-        ),
+        )
     ]

@@ -362,20 +362,20 @@ def _with_chat_telemetry_wrapper(func):
 
 
 def _create_metrics(meter: Meter, name: str):
-    token_counter = meter.create_counter(
-        name=f"llm.{name}.tokens",
+    token_counter = meter.create_histogram(
+        name=f"gen_ai.client.token.usage",
         unit="token",
         description="Number of tokens used in prompt and completions",
     )
 
     choice_counter = meter.create_counter(
-        name=f"llm.{name}.choices",
+        name=f"gen_ai.client.generation.choices",
         unit="choice",
         description="Number of choices returned by chat completions call",
     )
 
     duration_histogram = meter.create_histogram(
-        name=f"llm.{name}.duration",
+        name=f"gen_ai.client.operation.duration",
         unit="s",
         description="Duration of chat completion operation",
     )
