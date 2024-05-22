@@ -200,7 +200,7 @@ def test_embeddings_metrics(metrics_test_context, openai_client):
     for rm in resource_metrics:
         for sm in rm.scope_metrics:
             for metric in sm.metrics:
-                if metric.name == "llm.openai.embeddings.tokens":
+                if metric.name == "gen_ai.client.token.usage":
                     found_token_metric = True
                     for data_point in metric.data.data_points:
                         assert data_point.sum > 0
