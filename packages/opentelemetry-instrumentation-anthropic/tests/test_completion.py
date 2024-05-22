@@ -54,7 +54,7 @@ def test_anthropic_completion(exporter, reader):
                             data_point.attributes["gen_ai.response.model"]
                             == "claude-instant-1.2"
                         )
-                        assert data_point.value > 0
+                        assert data_point.sum > 0
 
                 if metric.name == "gen_ai.client.generation.choices":
                     found_choice_metric = True
@@ -155,7 +155,7 @@ def test_anthropic_message_create(exporter, reader):
                             data_point.attributes["gen_ai.response.model"]
                             == "claude-3-opus-20240229"
                         )
-                        assert data_point.value > 0
+                        assert data_point.sum > 0
 
                 if metric.name == "gen_ai.client.generation.choices":
                     found_choice_metric = True
@@ -314,7 +314,7 @@ def test_anthropic_message_streaming(exporter, reader):
                             data_point.attributes["gen_ai.response.model"]
                             == "claude-3-haiku-20240307"
                         )
-                        assert data_point.value > 0
+                        assert data_point.sum > 0
 
                 if metric.name == "gen_ai.client.generation.choices":
                     found_choice_metric = True
@@ -410,7 +410,7 @@ async def test_async_anthropic_message_create(exporter, reader):
                             data_point.attributes["gen_ai.response.model"]
                             == "claude-3-opus-20240229"
                         )
-                        assert data_point.value > 0
+                        assert data_point.sum > 0
 
                 if metric.name == "gen_ai.client.generation.choices":
                     found_choice_metric = True
@@ -511,7 +511,7 @@ async def test_async_anthropic_message_streaming(exporter, reader):
                             data_point.attributes["gen_ai.response.model"]
                             == "claude-3-haiku-20240307"
                         )
-                        assert data_point.value > 0
+                        assert data_point.sum > 0
 
                 if metric.name == "gen_ai.client.generation.choices":
                     found_choice_metric = True
