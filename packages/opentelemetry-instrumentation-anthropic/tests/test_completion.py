@@ -43,7 +43,7 @@ def test_anthropic_completion(exporter, reader):
     for rm in resource_metrics:
         for sm in rm.scope_metrics:
             for metric in sm.metrics:
-                if metric.name == "llm.anthropic.completion.tokens":
+                if metric.name == "gen_ai.client.token.usage":
                     found_token_metric = True
                     for data_point in metric.data.data_points:
                         assert data_point.attributes["llm.usage.token_type"] in [
@@ -56,7 +56,7 @@ def test_anthropic_completion(exporter, reader):
                         )
                         assert data_point.value > 0
 
-                if metric.name == "llm.anthropic.completion.choices":
+                if metric.name == "gen_ai.client.generation.choices":
                     found_choice_metric = True
                     for data_point in metric.data.data_points:
                         assert data_point.value >= 1
@@ -65,7 +65,7 @@ def test_anthropic_completion(exporter, reader):
                             == "claude-instant-1.2"
                         )
 
-                if metric.name == "llm.anthropic.completion.duration":
+                if metric.name == "gen_ai.client.operation.duration":
                     found_duration_metric = True
                     assert any(
                         data_point.count > 0 for data_point in metric.data.data_points
