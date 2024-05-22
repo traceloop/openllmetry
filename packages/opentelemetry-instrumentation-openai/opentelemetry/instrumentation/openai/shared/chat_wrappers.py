@@ -305,7 +305,7 @@ def _set_token_counter_metrics(token_counter, usage, shared_attributes):
                 **shared_attributes,
                 "llm.usage.token_type": name.split("_")[0],
             }
-            token_counter.add(val, attributes=attributes_with_token_type)
+            token_counter.record(val, attributes=attributes_with_token_type)
 
 
 def _set_prompts(span, messages):
@@ -422,14 +422,14 @@ def _set_streaming_token_metrics(
                 **shared_attributes,
                 "llm.usage.token_type": "prompt",
             }
-            token_counter.add(prompt_usage, attributes=attributes_with_token_type)
+            token_counter.record(prompt_usage, attributes=attributes_with_token_type)
 
         if type(completion_usage) is int and completion_usage >= 0:
             attributes_with_token_type = {
                 **shared_attributes,
                 "llm.usage.token_type": "completion",
             }
-            token_counter.add(completion_usage, attributes=attributes_with_token_type)
+            token_counter.record(completion_usage, attributes=attributes_with_token_type)
 
 
 class ChatStream(ObjectProxy):
