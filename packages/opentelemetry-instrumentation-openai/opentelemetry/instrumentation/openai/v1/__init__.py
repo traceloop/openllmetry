@@ -50,19 +50,19 @@ class OpenAIV1Instrumentor(BaseInstrumentor):
 
         if is_metrics_enabled():
             chat_token_counter = meter.create_counter(
-                name="llm.openai.chat_completions.tokens",
+                name="gen_ai.client.token.usage",
                 unit="token",
                 description="Number of tokens used in prompt and completions",
             )
 
             chat_choice_counter = meter.create_counter(
-                name="llm.openai.chat_completions.choices",
+                name="gen_ai.client.generation.choices",
                 unit="choice",
                 description="Number of choices returned by chat completions call",
             )
 
             chat_duration_histogram = meter.create_histogram(
-                name="llm.openai.chat_completions.duration",
+                name="gen_ai.client.operation.duration",
                 unit="s",
                 description="Duration of chat completion operation",
             )

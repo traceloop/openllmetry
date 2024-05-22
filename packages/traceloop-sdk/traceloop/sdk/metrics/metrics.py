@@ -1,8 +1,9 @@
 from opentelemetry import metrics
+from opentelemetry.sdk.metrics.view import View, ExplicitBucketHistogramAggregation
 from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.metrics import MeterProvider
 
-from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader, MetricExporter
+from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader, MetricExporter, ConsoleMetricExporter
 from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import (
     OTLPMetricExporter as GRPCExporter
 )
@@ -10,6 +11,7 @@ from opentelemetry.exporter.otlp.proto.http.metric_exporter import (
     OTLPMetricExporter as HTTPExporter
 )
 from typing import Dict
+from collections.abc import Sequence
 
 
 class MetricsWrapper(object):
@@ -57,7 +59,35 @@ def init_metrics_exporter(endpoint: str, headers: Dict[str, str]) -> MetricExpor
 def init_metrics_provider(exporter: MetricExporter,
                           resource_attributes: dict = None) -> MeterProvider:
     resource = Resource.create(resource_attributes) if resource_attributes else Resource.create()
-    reader = PeriodicExportingMetricReader(exporter)
-    provider = MeterProvider(metric_readers=[reader], resource=resource)
+    reader = PeriodicExportingMetricReader(ConsoleMetricExporter())
+    provider = MeterProvider(
+        metric_readers=[reader],
+        resource=resource,
+        views=metric_views(),
+    )
+
     metrics.set_meter_provider(provider)
     return provider
+
+
+def metric_views() -> Sequence[View]:
+    return [
+        View(
+            instrument_name="gen_ai.client.operation.duration",
+            aggregation=ExplicitBucketHistogramAggregation(
+                [0.01, 0.02, 0.04, 0.08, 0.16, 0.32, 0.64, 1.28, 2.56, 5.12,10.24, 20.48, 40.96, 81.92]
+            ),
+        ),
+        View(
+            instrument_name="gen_ai.client.token.usage",
+            aggregation=ExplicitBucketHistogramAggregation(
+                [1, 4, 16, 64, 256, 1024, 4096, 16384, 65536, 262144, 1048576, 4194304, 16777216, 67108864]
+            ),
+        ),
+        View(
+            instrument_name="gen_ai.client.generation.choices",
+            aggregation=ExplicitBucketHistogramAggregation(
+                [1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+            ),
+        ),
+    ]

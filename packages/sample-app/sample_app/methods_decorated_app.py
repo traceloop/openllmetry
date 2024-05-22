@@ -23,7 +23,7 @@ def create_joke():
 @agent(name="joke_translation")
 def translate_joke_to_pirate(joke: str):
     completion = client.chat.completions.create(
-        model="gpt-3.5-turbo",
+        model="gpt-4-turbo",
         messages=[
             {
                 "role": "user",
@@ -67,7 +67,7 @@ def joke_workflow():
     signature = generate_signature(pirate_joke)
     print(pirate_joke + "\n\n" + signature)
 
-    Traceloop.report_score("chat_id", "chat_9871", 1)
+    # Traceloop.report_score("chat_id", "chat_9871", 1)
 
 
 joke_workflow()
