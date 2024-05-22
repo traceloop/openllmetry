@@ -40,7 +40,7 @@ def test_chat_completion_metrics(metrics_test_context, openai_client):
         for sm in rm.scope_metrics:
             for metric in sm.metrics:
 
-                if metric.name == "llm.openai.chat_completions.tokens":
+                if metric.name == "gen_ai.client.token.usage":
                     found_token_metric = True
                     for data_point in metric.data.data_points:
                         assert data_point.attributes["llm.usage.token_type"] in [
@@ -48,15 +48,15 @@ def test_chat_completion_metrics(metrics_test_context, openai_client):
                             "prompt",
                         ]
                         assert len(data_point.attributes["server.address"]) > 0
-                        assert data_point.value > 0
+                        assert data_point.sum > 0
 
-                if metric.name == "llm.openai.chat_completions.choices":
+                if metric.name == "gen_ai.client.generation.choices":
                     found_choice_metric = True
                     for data_point in metric.data.data_points:
                         assert data_point.value >= 1
                         assert len(data_point.attributes["server.address"]) > 0
 
-                if metric.name == "llm.openai.chat_completions.duration":
+                if metric.name == "gen_ai.client.operation.duration":
                     found_duration_metric = True
                     assert any(
                         data_point.count > 0 for data_point in metric.data.data_points
@@ -115,7 +115,7 @@ def test_chat_streaming_metrics(metrics_test_context, openai_client):
             for sm in rm.scope_metrics:
                 for metric in sm.metrics:
 
-                    if metric.name == "llm.openai.chat_completions.tokens":
+                    if metric.name == "gen_ai.client.token.usage":
                         found_token_metric = True
                         for data_point in metric.data.data_points:
                             assert data_point.attributes["llm.usage.token_type"] in [
@@ -123,15 +123,15 @@ def test_chat_streaming_metrics(metrics_test_context, openai_client):
                                 "prompt",
                             ]
                             assert len(data_point.attributes["server.address"]) > 0
-                            assert data_point.value > 0
+                            assert data_point.sum > 0
 
-                    if metric.name == "llm.openai.chat_completions.choices":
+                    if metric.name == "gen_ai.client.generation.choices":
                         found_choice_metric = True
                         for data_point in metric.data.data_points:
                             assert data_point.value >= 1
                             assert len(data_point.attributes["server.address"]) > 0
 
-                    if metric.name == "llm.openai.chat_completions.duration":
+                    if metric.name == "gen_ai.client.operation.duration":
                         found_duration_metric = True
                         assert any(
                             data_point.count > 0 for data_point in metric.data.data_points
@@ -200,10 +200,10 @@ def test_embeddings_metrics(metrics_test_context, openai_client):
     for rm in resource_metrics:
         for sm in rm.scope_metrics:
             for metric in sm.metrics:
-                if metric.name == "llm.openai.embeddings.tokens":
+                if metric.name == "gen_ai.client.token.usage":
                     found_token_metric = True
                     for data_point in metric.data.data_points:
-                        assert data_point.value > 0
+                        assert data_point.sum > 0
                         assert len(data_point.attributes["server.address"]) > 0
 
                 if metric.name == "llm.openai.embeddings.vector_size":
