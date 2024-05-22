@@ -202,7 +202,7 @@ def _set_embeddings_metrics(
                     **shared_attributes,
                     "llm.usage.token_type": name.split("_")[0],
                 }
-                token_counter.add(val, attributes=attributes_with_token_type)
+                token_counter.record(val, attributes=attributes_with_token_type)
 
     # vec size metrics
     # should use counter for vector_size?
