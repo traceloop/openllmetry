@@ -1,3 +1,18 @@
+## v0.19.0 (2024-05-22)
+
+### Feat
+
+- **milvus**: add Milvus instrumentation (#1068)
+
+### Fix
+
+- add explicit buckets to pinecone histograms (#1129)
+- **pinecone**: backport to v2.2.2 (#1122)
+- llm metrics naming + views (#1121)
+- **langchain**: better serialization of inputs and outputs (#1120)
+- **sdk**: failsafe against instrumentation initialization errors (#1117)
+- **sdk**: instrument milvus (#1116)
+
 ## v0.18.2 (2024-05-17)
 
 ### Fix
