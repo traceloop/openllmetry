@@ -1,7 +1,9 @@
 import os
+
 import pytest
-from pinecone import Pinecone
 from openai import OpenAI
+from opentelemetry.semconv.ai import SpanAttributes
+from pinecone import Pinecone
 
 
 @pytest.fixture
@@ -104,8 +106,8 @@ def test_pinecone_retrieval(traces_exporter, metrics_reader, openai_client):
         == "https://gen-qa-openai-fast-90c5d9e.svc.gcp-starter.pinecone.io"
     )
     assert span.attributes.get("pinecone.query.top_k") == 3
-    assert span.attributes.get("pinecone.usage.read_units") == 6
-    assert span.attributes.get("pinecone.usage.write_units") == 0
+    assert span.attributes.get(SpanAttributes.PINECONE_USAGE_READ_UNITS) == 6
+    assert span.attributes.get(SpanAttributes.PINECONE_USAGE_WRITE_UNITS) == 0
     assert span.attributes.get("pinecone.query.include_values")
     assert span.attributes.get("pinecone.query.include_metadata")
 

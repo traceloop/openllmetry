@@ -641,7 +641,7 @@ def _build_from_streaming_response(
         yield item_to_yield
 
     shared_attributes = {
-        "gen_ai.response.model": complete_response.get("model") or None,
+        SpanAttributes.LLM_RESPONSE_MODEL: complete_response.get("model") or None,
         "server.address": _get_openai_base_url(instance),
         "stream": True,
     }
@@ -709,7 +709,7 @@ async def _abuild_from_streaming_response(
         yield item_to_yield
 
     shared_attributes = {
-        "gen_ai.response.model": complete_response.get("model") or None,
+        SpanAttributes.LLM_RESPONSE_MODEL: complete_response.get("model") or None,
         "server.address": _get_openai_base_url(instance),
         "stream": True,
     }

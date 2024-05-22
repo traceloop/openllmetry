@@ -1,21 +1,23 @@
 import json
+
+import boto3
 import pytest
-from langchain.prompts import PromptTemplate
-from langchain.prompts import ChatPromptTemplate
-from langchain.schema import StrOutputParser
-from langchain_core.messages import HumanMessage, SystemMessage
 from langchain.output_parsers.openai_functions import JsonOutputFunctionsParser
-from langchain_community.utils.openai_functions import (
-    convert_pydantic_to_openai_function,
-)
+from langchain.prompts import ChatPromptTemplate
+from langchain.prompts import PromptTemplate
+from langchain.schema import StrOutputParser
+from langchain_anthropic import ChatAnthropic
+from langchain_community.chat_models import BedrockChat
 from langchain_community.llms.huggingface_text_gen_inference import (
     HuggingFaceTextGenInference,
 )
-from langchain_community.chat_models import BedrockChat
-from langchain_openai import ChatOpenAI
-from langchain_anthropic import ChatAnthropic
+from langchain_community.utils.openai_functions import (
+    convert_pydantic_to_openai_function,
+)
+from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_core.pydantic_v1 import BaseModel, Field
-import boto3
+from langchain_openai import ChatOpenAI
+from opentelemetry.semconv.ai import SpanAttributes
 
 
 @pytest.mark.vcr
@@ -68,7 +70,7 @@ def test_simple_lcel(exporter):
     assert chat_openai_task_span.parent.span_id == workflow_span.context.span_id
     assert output_parser_task_span.parent.span_id == workflow_span.context.span_id
 
-    assert json.loads(workflow_span.attributes["traceloop.entity.input"]) == {
+    assert json.loads(workflow_span.attributes[SpanAttributes.TRACELOOP_ENTITY_INPUT]) == {
         "args": [],
         "kwargs": {
             "input": "tell me a short joke",
@@ -76,11 +78,11 @@ def test_simple_lcel(exporter):
             "tags": ["test_tag"],
         },
     }
-    assert json.loads(workflow_span.attributes["traceloop.entity.output"]) == {
+    assert json.loads(workflow_span.attributes[SpanAttributes.TRACELOOP_ENTITY_OUTPUT]) == {
         "setup": "Why couldn't the bicycle stand up by itself?",
         "punchline": "It was two tired!",
     }
-    assert json.loads(prompt_task_span.attributes["traceloop.entity.input"]) == {
+    assert json.loads(prompt_task_span.attributes[SpanAttributes.TRACELOOP_ENTITY_INPUT]) == {
         "args": [],
         "kwargs": {
             "input": "tell me a short joke",
@@ -91,7 +93,11 @@ def test_simple_lcel(exporter):
         },
     }
 
+<<<<<<< HEAD
     assert json.loads(prompt_task_span.attributes["traceloop.entity.output"]) == {
+=======
+    assert (json.loads(prompt_task_span.attributes[SpanAttributes.TRACELOOP_ENTITY_OUTPUT]) == {
+>>>>>>> 4ff61cc (Use constants)
         "lc": 1,
         "type": "constructor",
         "id": ["langchain", "prompts", "chat", "ChatPromptValue"],
@@ -157,13 +163,13 @@ async def test_async_lcel(exporter):
     assert chat_openai_task_span.parent.span_id == workflow_span.context.span_id
     assert output_parser_task_span.parent.span_id == workflow_span.context.span_id
 
-    assert json.loads(workflow_span.attributes["traceloop.entity.input"]) == {
+    assert json.loads(workflow_span.attributes[SpanAttributes.TRACELOOP_ENTITY_INPUT]) == {
         "args": [],
         "kwargs": {
             "product": "colorful socks",
         },
     }
-    assert workflow_span.attributes["traceloop.entity.output"] == response
+    assert workflow_span.attributes[SpanAttributes.TRACELOOP_ENTITY_OUTPUT] == response
 
 
 @pytest.mark.vcr
@@ -243,9 +249,9 @@ def test_custom_llm(exporter):
         span for span in spans if span.name == "HuggingFaceTextGenInference.chat"
     )
 
-    assert hugging_face_span.attributes["llm.request.type"] == "completion"
+    assert hugging_face_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "completion"
     assert (
-        hugging_face_span.attributes["gen_ai.request.model"]
+        hugging_face_span.attributes[SpanAttributes.LLM_REQUEST_MODEL]
         == "HuggingFaceTextGenInference"
     )
     assert (
@@ -279,8 +285,8 @@ def test_openai(exporter):
         span for span in spans if span.name == "ChatOpenAI.langchain.task"
     )
 
-    assert openai_span.attributes["llm.request.type"] == "chat"
-    assert openai_span.attributes["gen_ai.request.model"] == "gpt-3.5-turbo"
+    assert openai_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
+    assert openai_span.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "gpt-3.5-turbo"
     assert (
         openai_span.attributes["gen_ai.prompt.0.content"]
         == "You are a helpful assistant"
@@ -319,8 +325,8 @@ def test_anthropic(exporter):
         span for span in spans if span.name == "ChatAnthropic.langchain.task"
     )
 
-    assert anthropic_span.attributes["llm.request.type"] == "chat"
-    assert anthropic_span.attributes["gen_ai.request.model"] == "claude-2.1"
+    assert anthropic_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
+    assert anthropic_span.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "claude-2.1"
     assert (
         anthropic_span.attributes["gen_ai.prompt.0.content"]
         == "You are a helpful assistant"
@@ -360,9 +366,9 @@ def test_bedrock(exporter):
         span for span in spans if span.name == "BedrockChat.langchain.task"
     )
 
-    assert bedrock_span.attributes["llm.request.type"] == "chat"
+    assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
     assert (
-        bedrock_span.attributes["gen_ai.request.model"]
+        bedrock_span.attributes[SpanAttributes.LLM_REQUEST_MODEL]
         == "anthropic.claude-3-haiku-20240307-v1:0"
     )
     assert (

@@ -1,5 +1,7 @@
-import pytest
 import json
+
+import pytest
+from opentelemetry.semconv.ai import SpanAttributes
 
 
 @pytest.mark.vcr
@@ -32,13 +34,13 @@ def test_anthropic_2_completion(exporter, brt):
     )
     assert anthropic_span.attributes.get("gen_ai.completion.0.content") == completion
 
-    assert anthropic_span.attributes.get("gen_ai.usage.prompt_tokens") == 13
+    assert anthropic_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 13
     assert anthropic_span.attributes.get(
-        "gen_ai.usage.completion_tokens"
+        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
     ) + anthropic_span.attributes.get(
-        "gen_ai.usage.prompt_tokens"
+        SpanAttributes.LLM_USAGE_PROMPT_TOKENS
     ) == anthropic_span.attributes.get(
-        "llm.usage.total_tokens"
+        SpanAttributes.LLM_USAGE_TOTAL_TOKENS
     )
 
 
@@ -83,13 +85,13 @@ def test_anthropic_3_completion_complex_content(exporter, brt):
         == completion
     )
 
-    assert anthropic_span.attributes.get("gen_ai.usage.prompt_tokens") == 9
+    assert anthropic_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 9
     assert anthropic_span.attributes.get(
-        "gen_ai.usage.completion_tokens"
+        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
     ) + anthropic_span.attributes.get(
-        "gen_ai.usage.prompt_tokens"
+        SpanAttributes.LLM_USAGE_PROMPT_TOKENS
     ) == anthropic_span.attributes.get(
-        "llm.usage.total_tokens"
+        SpanAttributes.LLM_USAGE_TOTAL_TOKENS
     )
 
 

@@ -260,8 +260,8 @@ def _metric_shared_attributes(
     response_model: str, operation: str, server_address: str, is_streaming: bool = False
 ):
     return {
-        "gen_ai.system": "openai",
-        "gen_ai.response.model": response_model,
+        SpanAttributes.LLM_SYSTEM: "openai",
+        SpanAttributes.LLM_RESPONSE_MODEL: response_model,
         "gen_ai.operation.name": operation,
         "server.address": server_address,
         "stream": is_streaming,

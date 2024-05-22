@@ -1,6 +1,8 @@
-import pytest
 import json
+
+import pytest
 from openai import OpenAI
+from opentelemetry.semconv.ai import SpanAttributes
 from traceloop.sdk.decorators import workflow, task, aworkflow, atask
 
 
@@ -39,12 +41,12 @@ def test_simple_workflow(exporter, openai_client):
     assert open_ai_span.attributes.get("gen_ai.completion.0.content")
 
     task_span = spans[1]
-    assert json.loads(task_span.attributes["traceloop.entity.input"]) == {
+    assert json.loads(task_span.attributes[SpanAttributes.TRACELOOP_ENTITY_INPUT]) == {
         "args": ["joke"],
         "kwargs": {"subject": "OpenTelemetry"},
     }
 
-    assert json.loads(task_span.attributes.get("traceloop.entity.output")) == joke
+    assert json.loads(task_span.attributes.get(SpanAttributes.TRACELOOP_ENTITY_OUTPUT)) == joke
 
 
 @pytest.mark.vcr

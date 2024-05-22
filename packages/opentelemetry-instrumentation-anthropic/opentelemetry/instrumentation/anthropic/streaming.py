@@ -201,6 +201,7 @@ async def abuild_from_streaming_response(
         _process_response_item(item, complete_response)
 
     metric_attributes = shared_metrics_attributes(complete_response)
+
     if duration_histogram:
         duration = time.time() - start_time
         duration_histogram.record(

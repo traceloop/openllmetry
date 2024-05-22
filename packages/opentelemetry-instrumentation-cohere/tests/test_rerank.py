@@ -1,6 +1,8 @@
 import os
-import pytest
+
 import cohere
+import pytest
+from opentelemetry.semconv.ai import SpanAttributes
 
 
 @pytest.mark.vcr
@@ -31,10 +33,10 @@ def test_cohere_rerank(exporter):
     spans = exporter.get_finished_spans()
     cohere_span = spans[0]
     assert cohere_span.name == "cohere.rerank"
-    assert cohere_span.attributes.get("gen_ai.system") == "Cohere"
-    assert cohere_span.attributes.get("llm.request.type") == "rerank"
+    assert cohere_span.attributes.get(SpanAttributes.LLM_SYSTEM) == "Cohere"
+    assert cohere_span.attributes.get(SpanAttributes.LLM_REQUEST_TYPE) == "rerank"
     assert (
-        cohere_span.attributes.get("gen_ai.request.model") == "rerank-multilingual-v2.0"
+        cohere_span.attributes.get(SpanAttributes.LLM_REQUEST_MODEL) == "rerank-multilingual-v2.0"
     )
     assert cohere_span.attributes.get(f"gen_ai.prompt.{len(documents)}.role") == "user"
     assert (

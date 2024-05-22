@@ -1,10 +1,6 @@
 import time
 
 from opentelemetry import context as context_api
-from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
-
-from opentelemetry.metrics import Counter, Histogram
-
 from opentelemetry.instrumentation.openai import is_openai_v1
 from opentelemetry.instrumentation.openai.shared import (
     _get_openai_base_url,
@@ -14,6 +10,9 @@ from opentelemetry.instrumentation.openai.shared import (
 from opentelemetry.instrumentation.openai.utils import (
     _with_image_gen_metric_wrapper,
 )
+from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
+from opentelemetry.metrics import Counter, Histogram
+from opentelemetry.semconv.ai import SpanAttributes
 
 
 @_with_image_gen_metric_wrapper

@@ -1,5 +1,6 @@
 import openai
 import pytest
+from opentelemetry.semconv.ai import SpanAttributes
 
 
 @pytest.mark.vcr
@@ -18,8 +19,8 @@ def test_embeddings(exporter, openai_client):
         open_ai_span.attributes["gen_ai.prompt.0.content"]
         == "Tell me a joke about opentelemetry"
     )
-    assert open_ai_span.attributes["gen_ai.request.model"] == "text-embedding-ada-002"
-    assert open_ai_span.attributes["gen_ai.usage.prompt_tokens"] == 8
+    assert open_ai_span.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "text-embedding-ada-002"
+    assert open_ai_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 8
     assert open_ai_span.attributes["openai.api_base"] == "https://api.openai.com/v1/"
 
 
@@ -39,8 +40,8 @@ def test_embeddings_with_raw_response(exporter, openai_client):
         == "Tell me a joke about opentelemetry"
     )
 
-    assert open_ai_span.attributes["gen_ai.request.model"] == "text-embedding-ada-002"
-    assert open_ai_span.attributes["gen_ai.usage.prompt_tokens"] == 8
+    assert open_ai_span.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "text-embedding-ada-002"
+    assert open_ai_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 8
     assert open_ai_span.attributes["openai.api_base"] == "https://api.openai.com/v1/"
 
     parsed_response = response.parse()
@@ -73,8 +74,8 @@ def test_azure_openai_embeddings(exporter):
         open_ai_span.attributes["gen_ai.prompt.0.content"]
         == "Tell me a joke about opentelemetry"
     )
-    assert open_ai_span.attributes["gen_ai.request.model"] == "embedding"
-    assert open_ai_span.attributes["gen_ai.usage.prompt_tokens"] == 8
+    assert open_ai_span.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "embedding"
+    assert open_ai_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 8
     assert (
         open_ai_span.attributes["openai.api_base"]
         == f"https://{azure_resource}.openai.azure.com/openai/deployments/{azure_deployment}/"

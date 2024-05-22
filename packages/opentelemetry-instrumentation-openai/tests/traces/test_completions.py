@@ -1,6 +1,7 @@
 import os
 
 import pytest
+from opentelemetry.semconv.ai import SpanAttributes
 
 
 @pytest.mark.vcr
@@ -23,7 +24,7 @@ def test_completion(exporter, openai_client):
     assert (
         open_ai_span.attributes.get("openai.api_base") == "https://api.openai.com/v1/"
     )
-    assert open_ai_span.attributes.get("llm.is_streaming") is False
+    assert open_ai_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is False
 
 
 @pytest.mark.vcr
@@ -96,9 +97,9 @@ def test_completion_streaming(exporter, openai_client):
         )
 
         # check token usage attributes for stream
-        completion_tokens = open_ai_span.attributes.get("gen_ai.usage.completion_tokens")
-        prompt_tokens = open_ai_span.attributes.get("gen_ai.usage.prompt_tokens")
-        total_tokens = open_ai_span.attributes.get("llm.usage.total_tokens")
+        completion_tokens = open_ai_span.attributes.get(SpanAttributes.LLM_USAGE_COMPLETION_TOKENS)
+        prompt_tokens = open_ai_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS)
+        total_tokens = open_ai_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS)
         assert completion_tokens and prompt_tokens and total_tokens
         assert completion_tokens + prompt_tokens == total_tokens
     finally:

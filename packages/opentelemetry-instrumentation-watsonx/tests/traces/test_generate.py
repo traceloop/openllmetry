@@ -1,5 +1,7 @@
-import pytest
 import sys
+
+import pytest
+from opentelemetry.semconv.ai import SpanAttributes
 
 
 @pytest.mark.skipif(sys.version_info < (3, 10), reason="ibm-watson-ai requires python3.10")
@@ -12,9 +14,9 @@ def test_generate(exporter, watson_ai_model):
     spans = exporter.get_finished_spans()
     watsonx_ai_span = spans[1]
     assert watsonx_ai_span.attributes["gen_ai.prompt.0.user"] == "What is 1 + 1?"
-    assert watsonx_ai_span.attributes["gen_ai.system"] == "Watsonx"
+    assert watsonx_ai_span.attributes[SpanAttributes.LLM_SYSTEM] == "Watsonx"
     assert watsonx_ai_span.attributes.get("gen_ai.completion.0.content")
-    assert watsonx_ai_span.attributes.get("llm.usage.total_tokens")
+    assert watsonx_ai_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS)
 
 
 @pytest.mark.skipif(sys.version_info < (3, 10), reason="ibm-watson-ai requires python3.10")
@@ -30,6 +32,6 @@ def test_generate_text_stream(exporter, watson_ai_model):
     spans = exporter.get_finished_spans()
     watsonx_ai_span = spans[1]
     assert watsonx_ai_span.attributes["gen_ai.prompt.0.user"] == "Write an epigram about the sun"
-    assert watsonx_ai_span.attributes["gen_ai.system"] == "Watsonx"
+    assert watsonx_ai_span.attributes[SpanAttributes.LLM_SYSTEM] == "Watsonx"
     assert watsonx_ai_span.attributes["gen_ai.completion.0.content"] == generated_text
-    assert watsonx_ai_span.attributes.get("llm.usage.total_tokens")
+    assert watsonx_ai_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS)

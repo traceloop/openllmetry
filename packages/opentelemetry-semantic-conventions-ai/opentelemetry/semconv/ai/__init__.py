@@ -35,6 +35,7 @@ class SpanAttributes:
 
     # Vector DB
     VECTOR_DB_VENDOR = "db.system"
+    VECTOR_DB_OPERATION = "db.operation"
     VECTOR_DB_QUERY_TOP_K = "db.vector.query.top_k"
 
     # Pinecone

@@ -1,4 +1,5 @@
 import pytest
+from opentelemetry.semconv.ai import SpanAttributes
 
 
 @pytest.mark.vcr
@@ -23,7 +24,7 @@ def test_chat(exporter, azure_openai_client):
         open_ai_span.attributes.get("openai.api_base")
         == "https://traceloop-stg.openai.azure.com//openai/"
     )
-    assert open_ai_span.attributes.get("llm.is_streaming") is False
+    assert open_ai_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is False
 
 
 @pytest.mark.vcr
@@ -48,7 +49,7 @@ def test_chat_content_filtering(exporter, azure_openai_client):
         open_ai_span.attributes.get("openai.api_base")
         == "https://traceloop-stg.openai.azure.com//openai/"
     )
-    assert open_ai_span.attributes.get("llm.is_streaming") is False
+    assert open_ai_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is False
 
 
 @pytest.mark.vcr
@@ -78,7 +79,7 @@ def test_chat_streaming(exporter, azure_openai_client):
         open_ai_span.attributes.get("openai.api_base")
         == "https://traceloop-stg.openai.azure.com//openai/"
     )
-    assert open_ai_span.attributes.get("llm.is_streaming") is True
+    assert open_ai_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is True
 
     events = open_ai_span.events
     assert len(events) == chunk_count
@@ -113,7 +114,7 @@ async def test_chat_async_streaming(exporter, async_azure_openai_client):
         open_ai_span.attributes.get("openai.api_base")
         == "https://traceloop-stg.openai.azure.com//openai/"
     )
-    assert open_ai_span.attributes.get("llm.is_streaming") is True
+    assert open_ai_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is True
 
     events = open_ai_span.events
     assert len(events) == chunk_count

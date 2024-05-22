@@ -1,7 +1,9 @@
-import pytest
-import pymilvus
-import random
 import os
+import random
+
+import pymilvus
+import pytest
+from opentelemetry.semconv.ai import SpanAttributes
 
 path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "milvus.db")
 milvus = pymilvus.MilvusClient(uri=path)
@@ -54,8 +56,8 @@ def test_milvus_insert(exporter, collection):
     spans = exporter.get_finished_spans()
     span = next(span for span in spans if span.name == "milvus.insert")
 
-    assert span.attributes.get("db.system") == "milvus"
-    assert span.attributes.get("db.operation") == "insert"
+    assert span.attributes.get(SpanAttributes.VECTOR_DB_VENDOR) == "milvus"
+    assert span.attributes.get(SpanAttributes.VECTOR_DB_OPERATION) == "insert"
     assert span.attributes.get("db.milvus.insert.collection_name") == "Colors"
     assert span.attributes.get("db.milvus.insert.data_count") == 1003
 
@@ -71,8 +73,8 @@ def test_milvus_query_equal(exporter, collection):
     spans = exporter.get_finished_spans()
     span = next(span for span in spans if span.name == "milvus.query")
 
-    assert span.attributes.get("db.system") == "milvus"
-    assert span.attributes.get("db.operation") == "query"
+    assert span.attributes.get(SpanAttributes.VECTOR_DB_VENDOR) == "milvus"
+    assert span.attributes.get(SpanAttributes.VECTOR_DB_OPERATION) == "query"
     assert span.attributes.get("db.milvus.query.collection_name") == collection
     assert span.attributes.get("db.milvus.query.filter") == 'color == "brown"'
     assert span.attributes.get("db.milvus.query.output_fields_count") == 1
@@ -98,8 +100,8 @@ def test_milvus_query_like(exporter, collection):
     spans = exporter.get_finished_spans()
     span = next(span for span in spans if span.name == "milvus.query")
 
-    assert span.attributes.get("db.system") == "milvus"
-    assert span.attributes.get("db.operation") == "query"
+    assert span.attributes.get(SpanAttributes.VECTOR_DB_VENDOR) == "milvus"
+    assert span.attributes.get(SpanAttributes.VECTOR_DB_OPERATION) == "query"
     assert span.attributes.get("db.milvus.query.collection_name") == collection
     assert span.attributes.get("db.milvus.query.filter") == 'color_tag like "brown"'
     assert span.attributes.get("db.milvus.query.output_fields_count") == 1
@@ -124,8 +126,8 @@ def test_milvus_query_or(exporter, collection):
     spans = exporter.get_finished_spans()
     span = next(span for span in spans if span.name == "milvus.query")
 
-    assert span.attributes.get("db.system") == "milvus"
-    assert span.attributes.get("db.operation") == "query"
+    assert span.attributes.get(SpanAttributes.VECTOR_DB_VENDOR) == "milvus"
+    assert span.attributes.get(SpanAttributes.VECTOR_DB_OPERATION) == "query"
     assert span.attributes.get("db.milvus.query.collection_name") == collection
     assert span.attributes.get("db.milvus.query.filter") == 'color == "brown" or color == "red"'
     assert span.attributes.get("db.milvus.query.output_fields_count") == 1
@@ -150,8 +152,8 @@ def test_milvus_query_and(exporter, collection):
     spans = exporter.get_finished_spans()
     span = next(span for span in spans if span.name == "milvus.query")
 
-    assert span.attributes.get("db.system") == "milvus"
-    assert span.attributes.get("db.operation") == "query"
+    assert span.attributes.get(SpanAttributes.VECTOR_DB_VENDOR) == "milvus"
+    assert span.attributes.get(SpanAttributes.VECTOR_DB_OPERATION) == "query"
     assert span.attributes.get("db.milvus.query.collection_name") == collection
     assert span.attributes.get("db.milvus.query.filter") == 'color == "brown" and tag == 1234'
     assert span.attributes.get("db.milvus.query.output_fields_count") == 1

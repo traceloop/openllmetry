@@ -83,10 +83,10 @@ def _set_response_attributes(
         write_units = response.get("usage").get("write_units") or 0
 
         read_units_metric.add(read_units, shared_attributes)
-        span.set_attribute("pinecone.usage.read_units", read_units)
+        span.set_attribute(SpanAttributes.PINECONE_USAGE_READ_UNITS, read_units)
 
         write_units_metric.add(write_units, shared_attributes)
-        span.set_attribute("pinecone.usage.write_units", write_units)
+        span.set_attribute(SpanAttributes.PINECONE_USAGE_WRITE_UNITS, write_units)
 
 
 def _with_wrapper(func):

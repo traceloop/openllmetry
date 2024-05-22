@@ -221,7 +221,7 @@ def _set_completion_content_attributes(span, response, index, response_counter) 
 
         if response_counter:
             attributes_with_reason = {
-                "gen_ai.response.model": model_id,
+                SpanAttributes.LLM_RESPONSE_MODEL: model_id,
                 "llm.response.stop_reason": results[0]["stop_reason"],
             }
             response_counter.add(1, attributes=attributes_with_reason)
@@ -291,6 +291,7 @@ def _set_response_attributes(
         shared_attributes = _metric_shared_attributes(
             response_model=model_id
         )
+
         if token_histogram:
             attributes_with_token_type = {
                 **shared_attributes,
@@ -381,8 +382,8 @@ def _build_and_set_stream_response(
 
 def _metric_shared_attributes(response_model: str, is_streaming: bool = False):
     return {
-        "gen_ai.response.model": response_model,
-        "gen_ai.system": "watsonx",
+        SpanAttributes.LLM_RESPONSE_MODEL: response_model,
+        SpanAttributes.LLM_SYSTEM: "watsonx",
         "stream": is_streaming
     }
 
