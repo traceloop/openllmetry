@@ -48,7 +48,7 @@ def test_chat_completion_metrics(metrics_test_context, openai_client):
                             "prompt",
                         ]
                         assert len(data_point.attributes["server.address"]) > 0
-                        assert data_point.value > 0
+                        assert data_point.sum > 0
 
                 if metric.name == "gen_ai.client.generation.choices":
                     found_choice_metric = True
@@ -123,7 +123,7 @@ def test_chat_streaming_metrics(metrics_test_context, openai_client):
                                 "prompt",
                             ]
                             assert len(data_point.attributes["server.address"]) > 0
-                            assert data_point.value > 0
+                            assert data_point.sum > 0
 
                     if metric.name == "gen_ai.client.generation.choices":
                         found_choice_metric = True
@@ -203,7 +203,7 @@ def test_embeddings_metrics(metrics_test_context, openai_client):
                 if metric.name == "llm.openai.embeddings.tokens":
                     found_token_metric = True
                     for data_point in metric.data.data_points:
-                        assert data_point.value > 0
+                        assert data_point.sum > 0
                         assert len(data_point.attributes["server.address"]) > 0
 
                 if metric.name == "llm.openai.embeddings.vector_size":
