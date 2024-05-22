@@ -69,7 +69,7 @@ def set_query_response(span, scores_metric, shared_attributes, response):
 
     for match in matches:
         if scores_metric and match.get("score"):
-            scores_metric.record(match.get("score"), shared_attributes)
+            scores_metric.record(match.get("score"), shared_attributes, match.get("id"))
 
         span.add_event(
             name=Events.DB_QUERY_RESULT.value,

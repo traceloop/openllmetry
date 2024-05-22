@@ -59,7 +59,7 @@ def init_metrics_exporter(endpoint: str, headers: Dict[str, str]) -> MetricExpor
 def init_metrics_provider(exporter: MetricExporter,
                           resource_attributes: dict = None) -> MeterProvider:
     resource = Resource.create(resource_attributes) if resource_attributes else Resource.create()
-    reader = PeriodicExportingMetricReader(ConsoleMetricExporter())
+    reader = PeriodicExportingMetricReader(exporter)
     provider = MeterProvider(
         metric_readers=[reader],
         resource=resource,
