@@ -1,5 +1,6 @@
 import pytest
 from openai import OpenAI
+from opentelemetry.semconv.ai import SpanAttributes
 
 
 @pytest.fixture
@@ -123,6 +124,7 @@ def test_chat_streaming_metrics(metrics_test_context, openai_client):
                     found_choice_metric = True
                     for data_point in metric.data.data_points:
                         assert data_point.value >= 1
+                        assert len(data_point.attributes["server.address"]) > 0
 
                 if metric.name == "gen_ai.client.operation.duration":
                     found_duration_metric = True

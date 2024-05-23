@@ -17,6 +17,6 @@ def test_cohere_completion(exporter):
     assert cohere_span.attributes.get(SpanAttributes.LLM_REQUEST_TYPE) == "completion"
     assert cohere_span.attributes.get(SpanAttributes.LLM_REQUEST_MODEL) == "command"
     assert (
-        cohere_span.attributes.get("gen_ai.completion.0.content")
+        cohere_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
         == res.generations[0].text
     )

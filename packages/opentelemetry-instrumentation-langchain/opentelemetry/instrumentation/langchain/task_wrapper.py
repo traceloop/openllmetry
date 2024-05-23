@@ -17,7 +17,7 @@ def task_wrapper(tracer, to_wrap, wrapped, instance, args, kwargs):
         return wrapped(*args, **kwargs)
 
     # Some Langchain objects are wrapped elsewhere, so we ignore them here
-    if instance.__class__.__name__ in ("AgentExecutor"):
+    if instance.__class__.__name__ in ("AgentExecutor", ):
         return wrapped(*args, **kwargs)
 
     name, kind = _handle_request(instance, args, to_wrap)
@@ -43,7 +43,7 @@ async def atask_wrapper(tracer, to_wrap, wrapped, instance, args, kwargs):
         return wrapped(*args, **kwargs)
 
     # Some Langchain objects are wrapped elsewhere, so we ignore them here
-    if instance.__class__.__name__ in ("AgentExecutor"):
+    if instance.__class__.__name__ in ("AgentExecutor", ):
         return wrapped(*args, **kwargs)
 
     name, kind = _handle_request(instance, args, to_wrap)

@@ -1,5 +1,7 @@
-import pytest
 import sys
+
+import pytest
+from opentelemetry.semconv.ai import SpanAttributes
 
 
 @pytest.mark.skipif(sys.version_info < (3, 10), reason="ibm-watson-ai requires python3.10")

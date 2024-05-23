@@ -56,7 +56,7 @@ def _set_input_attributes(span, instance, args, kwargs):
         span, SpanAttributes.LLM_REQUEST_MAX_TOKENS, forward_params.get("max_length")
     )
     _set_span_attribute(
-        span, "llm.request.repetition_penalty", forward_params.get("repetition_penalty")
+        span, SpanAttributes.LLM_REQUEST_REPETITION_PENALTY, forward_params.get("repetition_penalty")
     )
 
 

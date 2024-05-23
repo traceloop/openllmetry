@@ -16,12 +16,12 @@ def test_chat(exporter, openai_client):
     ]
     open_ai_span = spans[0]
     assert (
-        open_ai_span.attributes["gen_ai.prompt.0.content"]
+        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
         == "Tell me a joke about opentelemetry"
     )
-    assert open_ai_span.attributes.get("gen_ai.completion.0.content")
+    assert open_ai_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
     assert (
-        open_ai_span.attributes.get("openai.api_base") == "https://api.openai.com/v1/"
+        open_ai_span.attributes.get(OPENAI_API_BASE) == "https://api.openai.com/v1/"
     )
     assert (
         open_ai_span.attributes.get("gen_ai.openai.system_fingerprint")
@@ -49,12 +49,12 @@ def test_chat_streaming(exporter, openai_client):
     ]
     open_ai_span = spans[0]
     assert (
-        open_ai_span.attributes["gen_ai.prompt.0.content"]
+        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
         == "Tell me a joke about opentelemetry"
     )
-    assert open_ai_span.attributes.get("gen_ai.completion.0.content")
+    assert open_ai_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
     assert (
-        open_ai_span.attributes.get("openai.api_base") == "https://api.openai.com/v1/"
+        open_ai_span.attributes.get(OPENAI_API_BASE) == "https://api.openai.com/v1/"
     )
     assert open_ai_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is True
 
@@ -89,12 +89,12 @@ async def test_chat_async_streaming(exporter, async_openai_client):
     ]
     open_ai_span = spans[0]
     assert (
-        open_ai_span.attributes["gen_ai.prompt.0.content"]
+        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
         == "Tell me a joke about opentelemetry"
     )
-    assert open_ai_span.attributes.get("gen_ai.completion.0.content")
+    assert open_ai_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
     assert (
-        open_ai_span.attributes.get("openai.api_base") == "https://api.openai.com/v1/"
+        open_ai_span.attributes.get(OPENAI_API_BASE) == "https://api.openai.com/v1/"
     )
     assert open_ai_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is True
 

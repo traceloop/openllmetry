@@ -77,7 +77,7 @@ def _set_token_usage(
                 1,
                 attributes={
                     **metric_attributes,
-                    "llm.response.finish_reason": event.get("finish_reason"),
+                    SpanAttributes.LLM_RESPONSE_FINISH_REASON: event.get("finish_reason"),
                 },
             )
 

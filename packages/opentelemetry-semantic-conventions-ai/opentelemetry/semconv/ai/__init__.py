@@ -14,6 +14,7 @@ class SpanAttributes:
     LLM_REQUEST_TOP_P = "gen_ai.request.top_p"
     LLM_PROMPTS = "gen_ai.prompt"
     LLM_COMPLETIONS = "gen_ai.completion"
+    LLM_CLIENTS = "gen_ai.client"
     LLM_RESPONSE_MODEL = "gen_ai.response.model"
     LLM_USAGE_COMPLETION_TOKENS = "gen_ai.usage.completion_tokens"
     LLM_USAGE_PROMPT_TOKENS = "gen_ai.usage.prompt_tokens"
@@ -24,6 +25,7 @@ class SpanAttributes:
     # LLM
     LLM_REQUEST_TYPE = "llm.request.type"
     LLM_USAGE_TOTAL_TOKENS = "llm.usage.total_tokens"
+    LLM_USAGE_TOKEN_TYPE = "llm.usage.token_type"
     LLM_USER = "llm.user"
     LLM_HEADERS = "llm.headers"
     LLM_TOP_K = "llm.top_k"
@@ -32,6 +34,8 @@ class SpanAttributes:
     LLM_PRESENCE_PENALTY = "llm.presence_penalty"
     LLM_CHAT_STOP_SEQUENCES = "llm.chat.stop_sequences"
     LLM_REQUEST_FUNCTIONS = "llm.request.functions"
+    LLM_REQUEST_REPETITION_PENALTY = "llm.request.repetition_penalty"
+    LLM_RESPONSE_FINISH_REASON = "llm.response.finish_reason"
 
     # Vector DB
     VECTOR_DB_VENDOR = "db.system"

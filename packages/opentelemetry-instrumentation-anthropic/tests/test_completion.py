@@ -6,6 +6,9 @@ from anthropic import AI_PROMPT, HUMAN_PROMPT, Anthropic, AsyncAnthropic
 from opentelemetry.semconv.ai import SpanAttributes
 
 
+LLM_ANTHROPIC_COMPLETION = "llm.anthropic.completion"
+
+
 @pytest.mark.vcr
 def test_anthropic_completion(exporter, reader):
     client = Anthropic()
@@ -27,10 +30,10 @@ def test_anthropic_completion(exporter, reader):
 
     anthropic_span = spans[0]
     assert (
-        anthropic_span.attributes["gen_ai.prompt.0.user"]
+        anthropic_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.user"]
         == f"{HUMAN_PROMPT}\nHello world\n{AI_PROMPT}"
     )
-    assert anthropic_span.attributes.get("gen_ai.completion.0.content")
+    assert anthropic_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
 
     metrics_data = reader.get_metrics_data()
     resource_metrics = metrics_data.resource_metrics
@@ -44,7 +47,7 @@ def test_anthropic_completion(exporter, reader):
     for rm in resource_metrics:
         for sm in rm.scope_metrics:
             for metric in sm.metrics:
-                if metric.name == "gen_ai.client.token.usage":
+                if metric.name == f"{SpanAttributes.LLM_CLIENTS}.token.usage":
                     found_token_metric = True
                     for data_point in metric.data.data_points:
                         assert data_point.attributes["gen_ai.token.type"] in [
@@ -57,7 +60,7 @@ def test_anthropic_completion(exporter, reader):
                         )
                         assert data_point.sum > 0
 
-                if metric.name == "gen_ai.client.generation.choices":
+                if metric.name == f"{SpanAttributes.LLM_CLIENTS}.generation.choices":
                     found_choice_metric = True
                     for data_point in metric.data.data_points:
                         assert data_point.value >= 1
@@ -66,7 +69,7 @@ def test_anthropic_completion(exporter, reader):
                             == "claude-instant-1.2"
                         )
 
-                if metric.name == "gen_ai.client.operation.duration":
+                if metric.name == f"{SpanAttributes.LLM_CLIENTS}.operation.duration":
                     found_duration_metric = True
                     assert any(
                         data_point.count > 0 for data_point in metric.data.data_points
@@ -81,7 +84,7 @@ def test_anthropic_completion(exporter, reader):
                         for data_point in metric.data.data_points
                     )
 
-                if metric.name == "llm.anthropic.completion.exceptions":
+                if metric.name == f"{LLM_ANTHROPIC_COMPLETION}.exceptions":
                     found_exception_metric = True
                     for data_point in metric.data.data_points:
                         assert data_point.value == 1
@@ -123,12 +126,12 @@ def test_anthropic_message_create(exporter, reader):
 
     anthropic_span = spans[0]
     assert (
-        anthropic_span.attributes["gen_ai.prompt.0.content"]
+        anthropic_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
         == "Tell me a joke about OpenTelemetry"
     )
-    assert (anthropic_span.attributes["gen_ai.prompt.0.role"]) == "user"
+    assert (anthropic_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"]) == "user"
     assert (
-        anthropic_span.attributes.get("gen_ai.completion.0.content")
+        anthropic_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
         == response.content[0].text
     )
     assert anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 8
@@ -150,7 +153,7 @@ def test_anthropic_message_create(exporter, reader):
     for rm in resource_metrics:
         for sm in rm.scope_metrics:
             for metric in sm.metrics:
-                if metric.name == "gen_ai.client.token.usage":
+                if metric.name == f"{SpanAttributes.LLM_CLIENTS}.token.usage":
                     found_token_metric = True
                     for data_point in metric.data.data_points:
                         assert data_point.attributes["gen_ai.token.type"] in [
@@ -163,7 +166,7 @@ def test_anthropic_message_create(exporter, reader):
                         )
                         assert data_point.sum > 0
 
-                if metric.name == "gen_ai.client.generation.choices":
+                if metric.name == f"{SpanAttributes.LLM_CLIENTS}.generation.choices":
                     found_choice_metric = True
                     for data_point in metric.data.data_points:
                         assert data_point.value >= 1
@@ -172,7 +175,7 @@ def test_anthropic_message_create(exporter, reader):
                             == "claude-3-opus-20240229"
                         )
 
-                if metric.name == "gen_ai.client.operation.duration":
+                if metric.name == f"{SpanAttributes.LLM_CLIENTS}.operation.duration":
                     found_duration_metric = True
                     assert any(
                         data_point.count > 0 for data_point in metric.data.data_points
@@ -187,7 +190,7 @@ def test_anthropic_message_create(exporter, reader):
                         for data_point in metric.data.data_points
                     )
 
-                if metric.name == "llm.anthropic.completion.exceptions":
+                if metric.name == f"{LLM_ANTHROPIC_COMPLETION}.exceptions":
                     found_exception_metric = True
                     for data_point in metric.data.data_points:
                         assert data_point.value == 1
@@ -236,7 +239,7 @@ def test_anthropic_multi_modal(exporter):
         "anthropic.completion",
     ]
     anthropic_span = spans[0]
-    assert anthropic_span.attributes["gen_ai.prompt.0.content"] == json.dumps(
+    assert anthropic_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"] == json.dumps(
         [
             {"type": "text", "text": "What do you see?"},
             {
@@ -249,9 +252,9 @@ def test_anthropic_multi_modal(exporter):
             },
         ]
     )
-    assert (anthropic_span.attributes["gen_ai.prompt.0.role"]) == "user"
+    assert (anthropic_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"]) == "user"
     assert (
-        anthropic_span.attributes.get("gen_ai.completion.0.content")
+        anthropic_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
         == response.content[0].text
     )
     assert anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 1381
@@ -288,12 +291,12 @@ def test_anthropic_message_streaming(exporter, reader):
     ]
     anthropic_span = spans[0]
     assert (
-        anthropic_span.attributes["gen_ai.prompt.0.content"]
+        anthropic_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
         == "Tell me a joke about OpenTelemetry"
     )
-    assert (anthropic_span.attributes["gen_ai.prompt.0.role"]) == "user"
+    assert (anthropic_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"]) == "user"
     assert (
-        anthropic_span.attributes.get("gen_ai.completion.0.content") == response_content
+        anthropic_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content") == response_content
     )
     assert anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 8
     assert (
@@ -314,7 +317,7 @@ def test_anthropic_message_streaming(exporter, reader):
     for rm in resource_metrics:
         for sm in rm.scope_metrics:
             for metric in sm.metrics:
-                if metric.name == "gen_ai.client.token.usage":
+                if metric.name == f"{SpanAttributes.LLM_CLIENTS}.token.usage":
                     found_token_metric = True
                     for data_point in metric.data.data_points:
                         assert data_point.attributes["gen_ai.token.type"] in [
@@ -327,7 +330,7 @@ def test_anthropic_message_streaming(exporter, reader):
                         )
                         assert data_point.sum > 0
 
-                if metric.name == "gen_ai.client.generation.choices":
+                if metric.name == f"{SpanAttributes.LLM_CLIENTS}.generation.choices":
                     found_choice_metric = True
                     for data_point in metric.data.data_points:
                         assert data_point.value >= 1
@@ -336,7 +339,7 @@ def test_anthropic_message_streaming(exporter, reader):
                             == "claude-3-haiku-20240307"
                         )
 
-                if metric.name == "gen_ai.client.operation.duration":
+                if metric.name == f"{SpanAttributes.LLM_CLIENTS}.operation.duration":
                     found_duration_metric = True
                     assert any(
                         data_point.count > 0 for data_point in metric.data.data_points
@@ -388,12 +391,12 @@ async def test_async_anthropic_message_create(exporter, reader):
     ]
     anthropic_span = spans[0]
     assert (
-        anthropic_span.attributes["gen_ai.prompt.0.content"]
+        anthropic_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
         == "Tell me a joke about OpenTelemetry"
     )
-    assert (anthropic_span.attributes["gen_ai.prompt.0.role"]) == "user"
+    assert (anthropic_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"]) == "user"
     assert (
-        anthropic_span.attributes.get("gen_ai.completion.0.content")
+        anthropic_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
         == response.content[0].text
     )
     assert anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 8
@@ -415,7 +418,7 @@ async def test_async_anthropic_message_create(exporter, reader):
     for rm in resource_metrics:
         for sm in rm.scope_metrics:
             for metric in sm.metrics:
-                if metric.name == "gen_ai.client.token.usage":
+                if metric.name == f"{SpanAttributes.LLM_CLIENTS}.token.usage":
                     found_token_metric = True
                     for data_point in metric.data.data_points:
                         assert data_point.attributes["gen_ai.token.type"] in [
@@ -428,7 +431,7 @@ async def test_async_anthropic_message_create(exporter, reader):
                         )
                         assert data_point.sum > 0
 
-                if metric.name == "gen_ai.client.generation.choices":
+                if metric.name == f"{SpanAttributes.LLM_CLIENTS}.generation.choices":
                     found_choice_metric = True
                     for data_point in metric.data.data_points:
                         assert data_point.value >= 1
@@ -437,7 +440,7 @@ async def test_async_anthropic_message_create(exporter, reader):
                             == "claude-3-opus-20240229"
                         )
 
-                if metric.name == "gen_ai.client.operation.duration":
+                if metric.name == f"{SpanAttributes.LLM_CLIENTS}.operation.duration":
                     found_duration_metric = True
                     assert any(
                         data_point.count > 0 for data_point in metric.data.data_points
@@ -452,7 +455,7 @@ async def test_async_anthropic_message_create(exporter, reader):
                         for data_point in metric.data.data_points
                     )
 
-                if metric.name == "llm.anthropic.completion.exceptions":
+                if metric.name == f"{LLM_ANTHROPIC_COMPLETION}.exceptions":
                     found_exception_metric = True
                     for data_point in metric.data.data_points:
                         assert data_point.value == 1
@@ -495,12 +498,12 @@ async def test_async_anthropic_message_streaming(exporter, reader):
     ]
     anthropic_span = spans[0]
     assert (
-        anthropic_span.attributes["gen_ai.prompt.0.content"]
+        anthropic_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
         == "Tell me a joke about OpenTelemetry"
     )
-    assert (anthropic_span.attributes["gen_ai.prompt.0.role"]) == "user"
+    assert (anthropic_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"]) == "user"
     assert (
-        anthropic_span.attributes.get("gen_ai.completion.0.content") == response_content
+        anthropic_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content") == response_content
     )
     assert anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 8
     assert (
@@ -521,7 +524,7 @@ async def test_async_anthropic_message_streaming(exporter, reader):
     for rm in resource_metrics:
         for sm in rm.scope_metrics:
             for metric in sm.metrics:
-                if metric.name == "gen_ai.client.token.usage":
+                if metric.name == f"{SpanAttributes.LLM_CLIENTS}.token.usage":
                     found_token_metric = True
                     for data_point in metric.data.data_points:
                         assert data_point.attributes["gen_ai.token.type"] in [
@@ -534,7 +537,7 @@ async def test_async_anthropic_message_streaming(exporter, reader):
                         )
                         assert data_point.sum > 0
 
-                if metric.name == "gen_ai.client.generation.choices":
+                if metric.name == f"{SpanAttributes.LLM_CLIENTS}.generation.choices":
                     found_choice_metric = True
                     for data_point in metric.data.data_points:
                         assert data_point.value >= 1
@@ -543,7 +546,7 @@ async def test_async_anthropic_message_streaming(exporter, reader):
                             == "claude-3-haiku-20240307"
                         )
 
-                if metric.name == "gen_ai.client.operation.duration":
+                if metric.name == f"{SpanAttributes.LLM_CLIENTS}.operation.duration":
                     found_duration_metric = True
                     assert any(
                         data_point.count > 0 for data_point in metric.data.data_points

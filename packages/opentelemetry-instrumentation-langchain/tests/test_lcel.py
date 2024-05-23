@@ -140,15 +140,13 @@ async def test_async_lcel(exporter):
 
     spans = exporter.get_finished_spans()
 
-    assert set(
-        [
-            "PromptTemplate.langchain.task",
-            "openai.chat",
-            "ChatOpenAI.langchain.task",
-            "StrOutputParser.langchain.task",
-            "RunnableSequence.langchain.workflow",
-        ]
-    ) == set([span.name for span in spans])
+    assert {
+        "PromptTemplate.langchain.task",
+        "openai.chat",
+        "ChatOpenAI.langchain.task",
+        "StrOutputParser.langchain.task",
+        "RunnableSequence.langchain.workflow",
+    } == set([span.name for span in spans])
 
     workflow_span = next(
         span for span in spans if span.name == "RunnableSequence.langchain.workflow"
@@ -255,10 +253,10 @@ def test_custom_llm(exporter):
         == "HuggingFaceTextGenInference"
     )
     assert (
-        hugging_face_span.attributes["gen_ai.prompt.0.user"]
+        hugging_face_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.user"]
         == "System: You are a helpful assistant\nHuman: tell me a short joke"
     )
-    assert hugging_face_span.attributes["gen_ai.completion.0.content"] == response
+    assert hugging_face_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"] == response
 
 
 @pytest.mark.vcr
@@ -288,17 +286,17 @@ def test_openai(exporter):
     assert openai_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
     assert openai_span.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "gpt-3.5-turbo"
     assert (
-        openai_span.attributes["gen_ai.prompt.0.content"]
+        openai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
         == "You are a helpful assistant"
     )
-    assert openai_span.attributes["gen_ai.prompt.0.role"] == "system"
+    assert openai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"] == "system"
     assert (
-        openai_span.attributes["gen_ai.prompt.1.content"]
+        openai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.content"]
         == "Tell me a joke about OpenTelemetry"
     )
-    assert openai_span.attributes["gen_ai.prompt.1.role"] == "user"
+    assert openai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.role"] == "user"
     assert (
-        openai_span.attributes["gen_ai.completion.0.content"]
+        openai_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"]
         == response.generations[0][0].text
     )
 
@@ -328,10 +326,10 @@ def test_anthropic(exporter):
     assert anthropic_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
     assert anthropic_span.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "claude-2.1"
     assert (
-        anthropic_span.attributes["gen_ai.prompt.0.content"]
+        anthropic_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
         == "You are a helpful assistant"
     )
-    assert anthropic_span.attributes["gen_ai.completion.0.content"] == response.content
+    assert anthropic_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"] == response.content
 
 
 @pytest.mark.vcr
@@ -372,7 +370,7 @@ def test_bedrock(exporter):
         == "anthropic.claude-3-haiku-20240307-v1:0"
     )
     assert (
-        bedrock_span.attributes["gen_ai.prompt.0.content"]
+        bedrock_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
         == "You are a helpful assistant"
     )
-    assert bedrock_span.attributes["gen_ai.completion.0.content"] == response.content
+    assert bedrock_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"] == response.content

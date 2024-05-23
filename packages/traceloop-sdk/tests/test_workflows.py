@@ -35,10 +35,10 @@ def test_simple_workflow(exporter, openai_client):
     ]
     open_ai_span = spans[0]
     assert (
-        open_ai_span.attributes["gen_ai.prompt.0.content"]
+        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
         == "Tell me a joke about OpenTelemetry"
     )
-    assert open_ai_span.attributes.get("gen_ai.completion.0.content")
+    assert open_ai_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
 
     task_span = spans[1]
     assert json.loads(task_span.attributes[SpanAttributes.TRACELOOP_ENTITY_INPUT]) == {

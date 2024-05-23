@@ -1,4 +1,6 @@
 import pytest
+from opentelemetry.instrumentation.openai.shared import OPENAI_API_BASE
+from opentelemetry.semconv.ai import SpanAttributes
 
 
 @pytest.mark.vcr
@@ -32,21 +34,21 @@ def test_open_ai_function_calls(exporter, openai_client):
     spans = exporter.get_finished_spans()
     open_ai_span = spans[0]
     assert (
-        open_ai_span.attributes["gen_ai.prompt.0.content"]
+        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
         == "What's the weather like in Boston?"
     )
     assert (
-        open_ai_span.attributes["llm.request.functions.0.name"] == "get_current_weather"
+        open_ai_span.attributes[f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.0.name"] == "get_current_weather"
     )
     assert (
-        open_ai_span.attributes["llm.request.functions.0.description"]
+        open_ai_span.attributes[f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.0.description"]
         == "Get the current weather in a given location"
     )
     assert (
-        open_ai_span.attributes["gen_ai.completion.0.function_call.name"]
+        open_ai_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.function_call.name"]
         == "get_current_weather"
     )
-    assert open_ai_span.attributes["openai.api_base"] == "https://api.openai.com/v1/"
+    assert open_ai_span.attributes[OPENAI_API_BASE] == "https://api.openai.com/v1/"
 
 
 @pytest.mark.vcr
@@ -83,18 +85,18 @@ def test_open_ai_function_calls_tools(exporter, openai_client):
     spans = exporter.get_finished_spans()
     open_ai_span = spans[0]
     assert (
-        open_ai_span.attributes["gen_ai.prompt.0.content"]
+        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
         == "What's the weather like in Boston?"
     )
     assert (
-        open_ai_span.attributes["llm.request.functions.0.name"] == "get_current_weather"
+        open_ai_span.attributes[f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.0.name"] == "get_current_weather"
     )
     assert (
-        open_ai_span.attributes["llm.request.functions.0.description"]
+        open_ai_span.attributes[f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.0.description"]
         == "Get the current weather in a given location"
     )
     assert (
-        open_ai_span.attributes["gen_ai.completion.0.function_call.name"]
+        open_ai_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.function_call.name"]
         == "get_current_weather"
     )
-    assert open_ai_span.attributes["openai.api_base"] == "https://api.openai.com/v1/"
+    assert open_ai_span.attributes[OPENAI_API_BASE] == "https://api.openai.com/v1/"

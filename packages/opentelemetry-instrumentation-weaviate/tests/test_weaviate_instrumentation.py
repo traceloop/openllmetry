@@ -208,7 +208,7 @@ def test_weaviate_delete_collection(client, exporter):
     span = next(span for span in spans if span.name == "db.weaviate.collections.delete")
 
     assert span.attributes.get(SpanAttributes.VECTOR_DB_VENDOR) == "weaviate"
-    assert span.attributes.get(SpanAttributes.VECTOR_DB_OPERATION) == "delete_class"
+    assert span.attributes.get(SpanAttributes.VECTOR_DB_OPERATION) == "delete"
     assert span.attributes.get("db.weaviate.collections.delete.name") == '"Article"'
 
 
@@ -223,7 +223,7 @@ def test_weaviate_insert_data(client, exporter):
     )
 
     assert span.attributes.get(SpanAttributes.VECTOR_DB_VENDOR) == "weaviate"
-    assert span.attributes.get(SpanAttributes.VECTOR_DB_OPERATION) == "create"
+    assert span.attributes.get(SpanAttributes.VECTOR_DB_OPERATION) == "insert"
     assert json.loads(
         span.attributes.get("weaviate.collections.data.insert.properties")
     ) == {
@@ -245,7 +245,7 @@ def test_weaviate_create_batch(client, exporter):
     )
 
     assert span.attributes.get(SpanAttributes.VECTOR_DB_VENDOR) == "weaviate"
-    assert span.attributes.get(SpanAttributes.VECTOR_DB_OPERATION) == "add_data_object"
+    assert span.attributes.get(SpanAttributes.VECTOR_DB_OPERATION) == "add_object"
     data_object = json.loads(
         span.attributes.get("db.weaviate.collections.batch.add_object.properties")
     )

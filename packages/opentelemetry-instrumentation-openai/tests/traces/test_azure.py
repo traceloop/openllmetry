@@ -1,5 +1,9 @@
 import pytest
+from opentelemetry.instrumentation.openai.shared import OPENAI_API_BASE
 from opentelemetry.semconv.ai import SpanAttributes
+
+
+OPENAI_API_BASE_TRACELOOP = "https://traceloop-stg.openai.azure.com//openai/"
 
 
 @pytest.mark.vcr
@@ -16,13 +20,13 @@ def test_chat(exporter, azure_openai_client):
     ]
     open_ai_span = spans[0]
     assert (
-        open_ai_span.attributes["gen_ai.prompt.0.content"]
+        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
         == "Tell me a joke about opentelemetry"
     )
-    assert open_ai_span.attributes.get("gen_ai.completion.0.content")
+    assert open_ai_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
     assert (
-        open_ai_span.attributes.get("openai.api_base")
-        == "https://traceloop-stg.openai.azure.com//openai/"
+        open_ai_span.attributes.get(OPENAI_API_BASE)
+        == OPENAI_API_BASE_TRACELOOP
     )
     assert open_ai_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is False
 
@@ -41,13 +45,13 @@ def test_chat_content_filtering(exporter, azure_openai_client):
     ]
     open_ai_span = spans[0]
     assert (
-        open_ai_span.attributes["gen_ai.prompt.0.content"]
+        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
         == "Tell me a joke about opentelemetry"
     )
-    assert open_ai_span.attributes.get("gen_ai.completion.0.content") == "FILTERED"
+    assert open_ai_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content") == "FILTERED"
     assert (
-        open_ai_span.attributes.get("openai.api_base")
-        == "https://traceloop-stg.openai.azure.com//openai/"
+        open_ai_span.attributes.get(OPENAI_API_BASE)
+        == OPENAI_API_BASE_TRACELOOP
     )
     assert open_ai_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is False
 
@@ -71,13 +75,13 @@ def test_chat_streaming(exporter, azure_openai_client):
     ]
     open_ai_span = spans[0]
     assert (
-        open_ai_span.attributes["gen_ai.prompt.0.content"]
+        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
         == "Tell me a joke about opentelemetry"
     )
-    assert open_ai_span.attributes.get("gen_ai.completion.0.content")
+    assert open_ai_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
     assert (
-        open_ai_span.attributes.get("openai.api_base")
-        == "https://traceloop-stg.openai.azure.com//openai/"
+        open_ai_span.attributes.get(OPENAI_API_BASE)
+        == OPENAI_API_BASE_TRACELOOP
     )
     assert open_ai_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is True
 
@@ -106,13 +110,13 @@ async def test_chat_async_streaming(exporter, async_azure_openai_client):
     open_ai_span = spans[0]
     print("HEYY", open_ai_span.attributes)
     assert (
-        open_ai_span.attributes["gen_ai.prompt.0.content"]
+        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
         == "Tell me a joke about opentelemetry"
     )
-    assert open_ai_span.attributes.get("gen_ai.completion.0.content")
+    assert open_ai_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
     assert (
-        open_ai_span.attributes.get("openai.api_base")
-        == "https://traceloop-stg.openai.azure.com//openai/"
+        open_ai_span.attributes.get(OPENAI_API_BASE)
+        == OPENAI_API_BASE_TRACELOOP
     )
     assert open_ai_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is True
 

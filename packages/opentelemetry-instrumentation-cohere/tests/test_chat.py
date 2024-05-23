@@ -17,10 +17,10 @@ def test_cohere_chat(exporter):
     assert cohere_span.attributes.get(SpanAttributes.LLM_REQUEST_TYPE) == "chat"
     assert cohere_span.attributes.get(SpanAttributes.LLM_REQUEST_MODEL) == "command"
     assert (
-        cohere_span.attributes.get("gen_ai.prompt.0.content")
+        cohere_span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.0.content")
         == "Tell me a joke, pirate style"
     )
-    assert cohere_span.attributes.get("gen_ai.completion.0.content") == res.text
+    assert cohere_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content") == res.text
     assert cohere_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 58
     assert cohere_span.attributes.get(
         SpanAttributes.LLM_USAGE_TOTAL_TOKENS

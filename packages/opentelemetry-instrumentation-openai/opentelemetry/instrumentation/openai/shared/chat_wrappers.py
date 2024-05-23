@@ -296,7 +296,7 @@ def _set_choice_counter_metrics(choice_counter, choices, shared_attributes):
     for choice in choices:
         attributes_with_reason = {
             **shared_attributes,
-            "llm.response.finish_reason": choice["finish_reason"],
+            SpanAttributes.LLM_RESPONSE_FINISH_REASON: choice["finish_reason"],
         }
         choice_counter.add(1, attributes=attributes_with_reason)
 
