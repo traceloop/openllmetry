@@ -7,6 +7,7 @@ from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
 from opentelemetry.sdk.trace.export import SimpleSpanProcessor
 from opentelemetry.instrumentation.openai import OpenAIInstrumentor
+from opentelemetry.instrumentation.bedrock import BedrockInstrumentor
 from opentelemetry.instrumentation.langchain import LangchainInstrumentor
 
 pytest_plugins = []
@@ -22,6 +23,7 @@ def exporter():
     trace.set_tracer_provider(provider)
 
     OpenAIInstrumentor().instrument()
+    BedrockInstrumentor().instrument()
     LangchainInstrumentor().instrument()
 
     return exporter
