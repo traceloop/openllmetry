@@ -731,13 +731,13 @@ files = [
 
 [[package]]
 name = "openai"
-version = "1.30.1"
+version = "1.30.3"
 description = "The official Python library for the openai API"
 optional = false
 python-versions = ">=3.7.1"
 files = [
-    {file = "openai-1.30.1-py3-none-any.whl", hash = "sha256:c9fb3c3545c118bbce8deb824397b9433a66d0d0ede6a96f7009c95b76de4a46"},
-    {file = "openai-1.30.1.tar.gz", hash = "sha256:4f85190e577cba0b066e1950b8eb9b11d25bc7ebcc43a86b326ce1bfa564ec74"},
+    {file = "openai-1.30.3-py3-none-any.whl", hash = "sha256:f88119c8a848998be533c71ab8aa832446fa72b7ddbc70917c3f5886dc132051"},
+    {file = "openai-1.30.3.tar.gz", hash = "sha256:8e1bcdca2b96fe3636ab522fa153d88efde1b702d12ec32f1c73e9553ff93f45"},
 ]
 
 [package.dependencies]
@@ -842,7 +842,7 @@ wrapt = ">=1.0.0,<2.0.0"
 
 [[package]]
 name = "opentelemetry-instrumentation-anthropic"
-version = "0.18.2"
+version = "0.19.0"
 description = "OpenTelemetry Anthropic instrumentation"
 optional = false
 python-versions = ">=3.9,<4"
@@ -864,7 +864,7 @@ url = "../opentelemetry-instrumentation-anthropic"
 
 [[package]]
 name = "opentelemetry-instrumentation-bedrock"
-version = "0.18.2"
+version = "0.19.0"
 description = "OpenTelemetry Bedrock instrumentation"
 optional = false
 python-versions = ">=3.9,<4"
@@ -884,7 +884,7 @@ url = "../opentelemetry-instrumentation-bedrock"
 
 [[package]]
 name = "opentelemetry-instrumentation-chromadb"
-version = "0.18.2"
+version = "0.19.0"
 description = "OpenTelemetry Chroma DB instrumentation"
 optional = false
 python-versions = ">=3.9,<4"
@@ -906,7 +906,7 @@ url = "../opentelemetry-instrumentation-chromadb"
 
 [[package]]
 name = "opentelemetry-instrumentation-cohere"
-version = "0.18.2"
+version = "0.19.0"
 description = "OpenTelemetry Cohere instrumentation"
 optional = false
 python-versions = ">=3.9,<4"
@@ -928,7 +928,7 @@ url = "../opentelemetry-instrumentation-cohere"
 
 [[package]]
 name = "opentelemetry-instrumentation-haystack"
-version = "0.18.2"
+version = "0.19.0"
 description = "OpenTelemetry Haystack instrumentation"
 optional = false
 python-versions = ">=3.9,<4"
@@ -950,7 +950,7 @@ url = "../opentelemetry-instrumentation-haystack"
 
 [[package]]
 name = "opentelemetry-instrumentation-langchain"
-version = "0.18.2"
+version = "0.19.0"
 description = "OpenTelemetry Langchain instrumentation"
 optional = false
 python-versions = ">=3.9,<4"
@@ -972,7 +972,7 @@ url = "../opentelemetry-instrumentation-langchain"
 
 [[package]]
 name = "opentelemetry-instrumentation-llamaindex"
-version = "0.18.2"
+version = "0.19.0"
 description = "OpenTelemetry LlamaIndex instrumentation"
 optional = false
 python-versions = ">=3.9,<4"
@@ -995,7 +995,7 @@ url = "../opentelemetry-instrumentation-llamaindex"
 
 [[package]]
 name = "opentelemetry-instrumentation-milvus"
-version = "0.18.2"
+version = "0.19.0"
 description = "OpenTelemetry Milvus instrumentation"
 optional = false
 python-versions = ">=3.9,<4"
@@ -1016,8 +1016,30 @@ type = "directory"
 url = "../opentelemetry-instrumentation-milvus"
 
 [[package]]
+name = "opentelemetry-instrumentation-ollama"
+version = "0.19.0"
+description = "OpenTelemetry Ollama instrumentation"
+optional = false
+python-versions = ">=3.9,<4"
+files = []
+develop = true
+
+[package.dependencies]
+opentelemetry-api = "^1.24.0"
+opentelemetry-instrumentation = "^0.45b0"
+opentelemetry-semantic-conventions = "^0.45b0"
+opentelemetry-semantic-conventions-ai = "0.2.0"
+
+[package.extras]
+instruments = ["ollama (>=0.2.0,<0.3.0)"]
+
+[package.source]
+type = "directory"
+url = "../opentelemetry-instrumentation-ollama"
+
+[[package]]
 name = "opentelemetry-instrumentation-openai"
-version = "0.18.2"
+version = "0.19.0"
 description = "OpenTelemetry OpenAI instrumentation"
 optional = false
 python-versions = ">=3.9,<4"
@@ -1040,7 +1062,7 @@ url = "../opentelemetry-instrumentation-openai"
 
 [[package]]
 name = "opentelemetry-instrumentation-pinecone"
-version = "0.18.2"
+version = "0.19.0"
 description = "OpenTelemetry Pinecone instrumentation"
 optional = false
 python-versions = ">=3.9,<4"
@@ -1062,7 +1084,7 @@ url = "../opentelemetry-instrumentation-pinecone"
 
 [[package]]
 name = "opentelemetry-instrumentation-qdrant"
-version = "0.18.2"
+version = "0.19.0"
 description = "OpenTelemetry Qdrant instrumentation"
 optional = false
 python-versions = ">=3.9,<4"
@@ -1084,7 +1106,7 @@ url = "../opentelemetry-instrumentation-qdrant"
 
 [[package]]
 name = "opentelemetry-instrumentation-replicate"
-version = "0.18.2"
+version = "0.19.0"
 description = "OpenTelemetry Replicate instrumentation"
 optional = false
 python-versions = ">=3.9,<4"
@@ -1147,7 +1169,7 @@ instruments = ["sqlalchemy"]
 
 [[package]]
 name = "opentelemetry-instrumentation-transformers"
-version = "0.18.2"
+version = "0.19.0"
 description = "OpenTelemetry transformers instrumentation"
 optional = false
 python-versions = ">=3.9,<4"
@@ -1187,7 +1209,7 @@ instruments = ["urllib3 (>=1.0.0,<3.0.0)"]
 
 [[package]]
 name = "opentelemetry-instrumentation-vertexai"
-version = "0.18.2"
+version = "0.19.0"
 description = "OpenTelemetry Vertex AI instrumentation"
 optional = false
 python-versions = ">=3.9,<4"
@@ -1209,7 +1231,7 @@ url = "../opentelemetry-instrumentation-vertexai"
 
 [[package]]
 name = "opentelemetry-instrumentation-watsonx"
-version = "0.18.2"
+version = "0.19.0"
 description = "OpenTelemetry IBM Watsonx Instrumentation"
 optional = false
 python-versions = ">=3.9,<4"
@@ -1231,7 +1253,7 @@ url = "../opentelemetry-instrumentation-watsonx"
 
 [[package]]
 name = "opentelemetry-instrumentation-weaviate"
-version = "0.18.2"
+version = "0.19.0"
 description = "OpenTelemetry Weaviate instrumentation"
 optional = false
 python-versions = ">=3.9,<4"
@@ -1720,13 +1742,13 @@ use-chardet-on-py3 = ["chardet (>=3.0.2,<6)"]
 
 [[package]]
 name = "sentry-sdk"
-version = "2.2.1"
+version = "2.3.1"
 description = "Python client for Sentry (https://sentry.io)"
 optional = false
 python-versions = ">=3.6"
 files = [
-    {file = "sentry_sdk-2.2.1-py2.py3-none-any.whl", hash = "sha256:7d617a1b30e80c41f3b542347651fcf90bb0a36f3a398be58b4f06b79c8d85bc"},
-    {file = "sentry_sdk-2.2.1.tar.gz", hash = "sha256:8aa2ec825724d8d9d645cab68e6034928b1a6a148503af3e361db3fa6401183f"},
+    {file = "sentry_sdk-2.3.1-py2.py3-none-any.whl", hash = "sha256:c5aeb095ba226391d337dd42a6f9470d86c9fc236ecc71cfc7cd1942b45010c6"},
+    {file = "sentry_sdk-2.3.1.tar.gz", hash = "sha256:139a71a19f5e9eb5d3623942491ce03cf8ebc14ea2e39ba3e6fe79560d8a5b1f"},
 ]
 
 [package.dependencies]
@@ -2036,13 +2058,13 @@ telegram = ["requests"]
 
 [[package]]
 name = "typing-extensions"
-version = "4.11.0"
+version = "4.12.0"
 description = "Backported and Experimental Type Hints for Python 3.8+"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "typing_extensions-4.11.0-py3-none-any.whl", hash = "sha256:c1f94d72897edaf4ce775bb7558d5b79d8126906a14ea5ed1635921406c0387a"},
-    {file = "typing_extensions-4.11.0.tar.gz", hash = "sha256:83f085bd5ca59c80295fc2a82ab5dac679cbe02b9f33f7d83af68e241bea51b0"},
+    {file = "typing_extensions-4.12.0-py3-none-any.whl", hash = "sha256:b349c66bea9016ac22978d800cfff206d5f9816951f12a7d0ec5578b0a819594"},
+    {file = "typing_extensions-4.12.0.tar.gz", hash = "sha256:8cbcdc8606ebcb0d95453ad7dc5065e6237b6aa230a31e81d0f440c30fed5fd8"},
 ]
 
 [[package]]
@@ -2297,4 +2319,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "jaraco.test", "more
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<4"
-content-hash = "78c37defce68d21ed94424b874f3bc3aeced860c1f296e8d8b6c6c4b609928ba"
+content-hash = "a34329684ae69f305fa4bfc807f6c62d0954f8c5848ad13d8a01c8c089c0590e"
