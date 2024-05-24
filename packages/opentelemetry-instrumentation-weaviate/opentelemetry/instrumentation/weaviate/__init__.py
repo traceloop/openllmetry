@@ -15,7 +15,7 @@ from wrapt import wrap_function_wrapper
 
 logger = logging.getLogger(__name__)
 
-_instruments = ("weaviate-client >= 3.26.0, <4",)
+_instruments = ("weaviate-client >= 3.26.0, <5",)
 
 
 WRAPPED_METHODS = [
