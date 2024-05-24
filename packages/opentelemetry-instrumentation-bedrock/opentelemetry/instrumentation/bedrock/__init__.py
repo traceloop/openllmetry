@@ -32,7 +32,12 @@ anthropic_client = anthropic.Anthropic()
 _instruments = ("boto3 >= 1.28.57",)
 
 WRAPPED_METHODS = [
-    {"package": "botocore.client", "object": "ClientCreator", "method": "create_client"}
+    {
+        "package": "botocore.client",
+        "object": "ClientCreator",
+        "method": "create_client",
+    },
+    {"package": "botocore.session", "object": "Session", "method": "create_client"},
 ]
 
 
@@ -147,7 +152,9 @@ def _set_anthropic_completion_span_attributes(span, request_body, response_body)
     _set_span_attribute(
         span, SpanAttributes.LLM_REQUEST_TYPE, LLMRequestTypeValues.COMPLETION.value
     )
-    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TOP_P, request_body.get("top_p"))
+    _set_span_attribute(
+        span, SpanAttributes.LLM_REQUEST_TOP_P, request_body.get("top_p")
+    )
     _set_span_attribute(
         span, SpanAttributes.LLM_REQUEST_TEMPERATURE, request_body.get("temperature")
     )
@@ -192,7 +199,9 @@ def _set_anthropic_messages_span_attributes(span, request_body, response_body):
     _set_span_attribute(
         span, SpanAttributes.LLM_REQUEST_TYPE, LLMRequestTypeValues.CHAT.value
     )
-    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TOP_P, request_body.get("top_p"))
+    _set_span_attribute(
+        span, SpanAttributes.LLM_REQUEST_TOP_P, request_body.get("top_p")
+    )
     _set_span_attribute(
         span, SpanAttributes.LLM_REQUEST_TEMPERATURE, request_body.get("temperature")
     )
@@ -264,7 +273,9 @@ def _set_ai21_span_attributes(span, request_body, response_body):
     _set_span_attribute(
         span, SpanAttributes.LLM_REQUEST_TYPE, LLMRequestTypeValues.COMPLETION.value
     )
-    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TOP_P, request_body.get("topP"))
+    _set_span_attribute(
+        span, SpanAttributes.LLM_REQUEST_TOP_P, request_body.get("topP")
+    )
     _set_span_attribute(
         span, SpanAttributes.LLM_REQUEST_TEMPERATURE, request_body.get("temperature")
     )
@@ -289,7 +300,9 @@ def _set_llama_span_attributes(span, request_body, response_body):
     _set_span_attribute(
         span, SpanAttributes.LLM_REQUEST_TYPE, LLMRequestTypeValues.COMPLETION.value
     )
-    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TOP_P, request_body.get("top_p"))
+    _set_span_attribute(
+        span, SpanAttributes.LLM_REQUEST_TOP_P, request_body.get("top_p")
+    )
     _set_span_attribute(
         span, SpanAttributes.LLM_REQUEST_TEMPERATURE, request_body.get("temperature")
     )
