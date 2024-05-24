@@ -8,6 +8,7 @@ class Instruments(Enum):
     PINECONE = "pinecone"
     CHROMA = "chroma"
     LANGCHAIN = "langchain"
+    OLLAMA = "ollama"
     LLAMA_INDEX = "llama_index"
     MILVUS = "milvus"
     TRANSFORMERS = "transformers"
