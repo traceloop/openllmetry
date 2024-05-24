@@ -303,6 +303,7 @@ def test_bedrock(exporter):
 
     assert [
         "ChatPromptTemplate.langchain.task",
+        "bedrock.completion",
         "BedrockChat.langchain.task",
         "RunnableSequence.langchain.workflow",
     ] == [span.name for span in spans]
