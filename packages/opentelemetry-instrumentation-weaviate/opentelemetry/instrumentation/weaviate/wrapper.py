@@ -101,102 +101,120 @@ class _Instrumentor:
             self.map_attributes(span, method_name, attributes, args, kwargs)
 
 
-class _SchemaInstrumentor(_Instrumentor):
-    namespace = "db.weaviate.schema"
+class _CollectionsInstrumentor(_Instrumentor):
+    namespace = "db.weaviate.collections"
     mapped_attributes = {
-        "get": ["class_name"],
-        "create_class": ["schema_class"],
-        "create": ["schema"],
-        "delete_class": ["class_name"],
+        "create": ["name"],
+        "create_from_dict": ["config"],
+        "get": ["name"],
+        "delete": ["name"],
     }
 
 
 class _DataObjectInstrumentor(_Instrumentor):
-    namespace = "weaviate.data.crud_data"
+    namespace = "weaviate.collections.data"
     mapped_attributes = {
-        "create": [
-            "data_object",
-            "class_name",
-            "uuid",
-            "vector",
-            "consistency_level",
-            "tenant",
-        ],
-        "validate": [
-            "data_object",
-            "class_name",
+        "insert": [
+            "properties",
+            "references",
             "uuid",
             "vector",
         ],
-        "get": [
+        "replace": [
             "uuid",
-            "additional_properties",
-            "with_vector",
-            "class_name",
-            "node_name",
-            "consistency_level",
-            "limit",
-            "after",
-            "offset",
-            "sort",
-            "tenant",
+            "properties",
+            "references",
+            "vector",
+        ],
+        "update": [
+            "uuid",
+            "properties",
+            "references",
+            "vector",
         ],
     }
 
 
 class _BatchInstrumentor(_Instrumentor):
-    namespace = "db.weaviate.batch"
+    namespace = "db.weaviate.collections.batch"
     mapped_attributes = {
-        "add_data_object": [
-            "data_object",
-            "class_name",
+        "add_object": [
+            "properties",
+            "references",
             "uuid",
             "vector",
-            "tenant",
         ],
-        "flush": [],
     }
 
 
 class _QueryInstrumentor(_Instrumentor):
-    namespace = "db.weaviate.query"
+    namespace = "db.weaviate.collections.query"
     mapped_attributes = {
-        "get": [
-            "class_name",
-            "properties",
+        "fetch_object_by_id": [
+            "uuid",
+            "include_vector",
+            "return_properties",
+            "return_references",
         ],
-        "aggregate": ["class_name"],
-        "raw": ["gql_query"],
+        "fetch_objects": [
+            "limit",
+            "offset",
+            "after",
+            "filters",
+            "sort",
+            "include_vector",
+            "return_metadata",
+            "return_properties",
+            "return_references",
+        ],
+    }
+
+
+class _AggregateBuilderInstrumentor(_Instrumentor):
+    namespace = "db.weaviate.gql.aggregate"
+    mapped_attributes = {
+        "do": [],
     }
 
 
 class _GetBuilderInstrumentor(_Instrumentor):
-    namespace = "db.weaviate.query.get"
+    namespace = "db.weaviate.gql.get"
     mapped_attributes = {
         "do": [],
     }
 
 
 class _GraphQLInstrumentor(_Instrumentor):
-    namespace = "db.weaviate.query.filter"
+    namespace = "db.weaviate.gql.filter"
     mapped_attributes = {
         "do": [],
+    }
+
+
+class _RawInstrumentor(_Instrumentor):
+    namespace = "db.weaviate.client"
+    mapped_attributes = {
+        "graphql_raw_query": ["gql_query", ],
     }
 
 
 class InstrumentorFactory:
     @classmethod
     def from_name(cls, name: str) -> Optional[_Instrumentor]:
-        if name == "Schema":
-            return _SchemaInstrumentor()
-        elif name == "DataObject":
+        if name == "_Collections":
+            return _CollectionsInstrumentor()
+        elif name == "_DataCollection":
             return _DataObjectInstrumentor()
-        elif name == "Batch":
+        elif name == "_BatchCollection":
             return _BatchInstrumentor()
-        elif name == "Query":
+        elif name in ("_FetchObjectByIDQuery", "_FetchObjectsQuery"):
             return _QueryInstrumentor()
+        elif name == "AggregateBuilder":
+            return _AggregateBuilderInstrumentor()
         elif name == "GetBuilder":
             return _GetBuilderInstrumentor()
         elif name == "GraphQL":
             return _GraphQLInstrumentor()
+        elif name == "WeaviateClient":
+            return _RawInstrumentor()
         return None
