@@ -62,7 +62,7 @@ def process_request(span, args, kwargs):
                 {
                     "args": [_convert_to_string(arg) for arg in args],
                     "kwargs": {
-                        key: value.to_json() if hasattr(value, "to_json") else value
+                        key: _convert_to_string(value)
                         for key, value in kwargs_to_serialize.items()
                         if key != "callbacks"
                     },
@@ -87,6 +87,11 @@ def _convert_to_string(value):
         if hasattr(value, "to_string"):
             return value.to_string()
 
+        if isinstance(value, list):
+            ret = []
+            for item in value:
+                ret.append(f"{_convert_to_string(item)}")
+            return f"[{','.join(ret)}]"
         if isinstance(value, str):
             return value
 
