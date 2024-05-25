@@ -167,6 +167,14 @@ class TracerWrapper(object):
                             print(Fore.RESET)
                         else:
                             instrument_set = True
+                    elif instrument == Instruments.MISTRAL:
+                        if not init_mistralai_instrumentor():
+                            print(
+                                Fore.RED + "Warning: MistralAI library does not exist."
+                            )
+                            print(Fore.RESET)
+                        else:
+                            instrument_set = True
                     elif instrument == Instruments.OLLAMA:
                         if not init_ollama_instrumentor():
                             print(Fore.RED + "Warning: Ollama library does not exist.")
@@ -444,6 +452,7 @@ def init_instrumentations(should_enrich_metrics: bool):
     init_chroma_instrumentor()
     init_haystack_instrumentor()
     init_langchain_instrumentor()
+    init_mistralai_instrumentor()
     init_ollama_instrumentor()
     init_llama_index_instrumentor()
     init_milvus_instrumentor()
@@ -600,6 +609,24 @@ def init_langchain_instrumentor():
         return True
     except Exception as e:
         logging.error(f"Error initializing LangChain instrumentor: {e}")
+        Telemetry().log_exception(e)
+        return False
+
+
+def init_mistralai_instrumentor():
+    try:
+        if importlib.util.find_spec("ollama") is not None:
+            Telemetry().capture("instrumentation:mistralai:init")
+            from opentelemetry.instrumentation.mistralai import MistralAiInstrumentor
+
+            instrumentor = MistralAiInstrumentor(
+                exception_logger=lambda e: Telemetry().log_exception(e),
+            )
+            if not instrumentor.is_instrumented_by_opentelemetry:
+                instrumentor.instrument()
+        return True
+    except Exception as e:
+        logging.error(f"Error initializing MistralAI instrumentor: {e}")
         Telemetry().log_exception(e)
         return False
 
