@@ -18,7 +18,99 @@ logger = logging.getLogger(__name__)
 _instruments = ("weaviate-client >= 3.26.0, <5",)
 
 
-WRAPPED_METHODS = [
+WRAPPED_METHODS_v3 = [
+    {
+        "module": "weaviate.schema",
+        "object": "Schema",
+        "method": "get",
+        "span_name": "db.weaviate.schema.get",
+    },
+    {
+        "module": "weaviate.schema",
+        "object": "Schema",
+        "method": "create_class",
+        "span_name": "db.weaviate.schema.create_class",
+    },
+    {
+        "module": "weaviate.schema",
+        "object": "Schema",
+        "method": "create",
+        "span_name": "db.weaviate.schema.create",
+    },
+    {
+        "module": "weaviate.schema",
+        "object": "Schema",
+        "method": "delete_class",
+        "span_name": "db.weaviate.schema.delete_class",
+    },
+    {
+        "module": "weaviate.schema",
+        "object": "Schema",
+        "method": "delete_all",
+        "span_name": "db.weaviate.schema.delete_all",
+    },
+    {
+        "module": "weaviate.data.crud_data",
+        "object": "DataObject",
+        "method": "create",
+        "span_name": "db.weaviate.data.crud_data.create",
+    },
+    {
+        "module": "weaviate.data.crud_data",
+        "object": "DataObject",
+        "method": "validate",
+        "span_name": "db.weaviate.data.crud_data.validate",
+    },
+    {
+        "module": "weaviate.data.crud_data",
+        "object": "DataObject",
+        "method": "get",
+        "span_name": "db.weaviate.data.crud_data.get",
+    },
+    {
+        "module": "weaviate.batch.crud_batch",
+        "object": "Batch",
+        "method": "add_data_object",
+        "span_name": "db.weaviate.batch.crud_batch.add_data_object",
+    },
+    {
+        "module": "weaviate.batch.crud_batch",
+        "object": "Batch",
+        "method": "flush",
+        "span_name": "db.weaviate.batch.crud_batch.flush",
+    },
+    {
+        "module": "weaviate.batch.crud_batch",
+        "object": "Batch",
+        "method": "flush",
+        "span_name": "db.weaviate.batch.crud_batch.flush",
+    },
+    {
+        "module": "weaviate.gql.query",
+        "object": "Query",
+        "method": "get",
+        "span_name": "db.weaviate.gql.query.get",
+    },
+    {
+        "module": "weaviate.gql.query",
+        "object": "Query",
+        "method": "aggregate",
+        "span_name": "db.weaviate.gql.query.aggregate",
+    },
+    {
+        "module": "weaviate.gql.query",
+        "object": "Query",
+        "method": "raw",
+        "span_name": "db.weaviate.gql.query.raw",
+    },
+    {
+        "module": "weaviate.gql.get",
+        "object": "GetBuilder",
+        "method": "do",
+        "span_name": "db.weaviate.gql.query.get.do",
+    },
+]
+WRAPPED_METHODS_v4 = [
     {
         "module": "weaviate.collections.collections",
         "object": "_Collections",
@@ -116,6 +208,7 @@ WRAPPED_METHODS = [
         "span_name": "db.weaviate.client.graphql_raw_query",
     },
 ]
+WRAPPED_METHODS = WRAPPED_METHODS_v3 + WRAPPED_METHODS_v4
 
 
 class WeaviateInstrumentor(BaseInstrumentor):
