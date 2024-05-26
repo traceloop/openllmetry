@@ -81,10 +81,13 @@ def delete_collection(client: weaviate.WeaviateClient):
 
 def insert_data(client: weaviate.WeaviateClient):
     collection = client.collections.get("Article")
-    return collection.data.insert({
+    return collection.data.insert(
+        {
             "author": "Robert",
             "text": "Once upon a time, someone wrote a book...",
-    })
+        },
+        uuid="0fa769e6-2f64-4717-97e3-f0297cf84138",
+    )
 
 
 def create_batch(client: weaviate.WeaviateClient):
