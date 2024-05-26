@@ -297,7 +297,7 @@ def test_weaviate_query_get(client, exporter):
     assert span.attributes.get("db.weaviate.query.get.properties") == '["author"]'
 
     span = next(
-        span for span in spans if span.name == "db.weaviate.gql.query.filter.do"
+        span for span in spans if span.name == "db.weaviate.gql.filter.do"
     )
     assert span.attributes.get("db.system") == "weaviate"
     assert span.attributes.get("db.operation") == "do"
@@ -316,7 +316,7 @@ def test_weaviate_query_aggregate(client, exporter):
     assert span.attributes.get("db.weaviate.query.aggregate.class_name") == '"Article"'
 
     span = next(
-        span for span in spans if span.name == "db.weaviate.gql.query.filter.do"
+        span for span in spans if span.name == "db.weaviate.gql.filter.do"
     )
     assert span.attributes.get("db.system") == "weaviate"
     assert span.attributes.get("db.operation") == "do"
