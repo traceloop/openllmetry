@@ -110,7 +110,9 @@ def _set_input_attributes(span, kwargs):
     set_span_attribute(
         span, SpanAttributes.LLM_REQUEST_MAX_TOKENS, kwargs.get("max_tokens_to_sample")
     )
-    set_span_attribute(span, SpanAttributes.LLM_REQUEST_TEMPERATURE, kwargs.get("temperature"))
+    set_span_attribute(
+        span, SpanAttributes.LLM_REQUEST_TEMPERATURE, kwargs.get("temperature")
+    )
     set_span_attribute(span, SpanAttributes.LLM_REQUEST_TOP_P, kwargs.get("top_p"))
     set_span_attribute(
         span, SpanAttributes.LLM_FREQUENCY_PENALTY, kwargs.get("frequency_penalty")
@@ -167,15 +169,16 @@ async def _aset_token_usage(
         response = response.__dict__
 
     prompt_tokens = 0
-    if request.get("prompt"):
-        prompt_tokens = await anthropic.count_tokens(request.get("prompt"))
-    elif request.get("messages"):
-        prompt_tokens = sum(
-            [
-                await anthropic.count_tokens(m.get("content"))
-                for m in request.get("messages")
-            ]
-        )
+    if hasattr(anthropic, "count_tokens"):
+        if request.get("prompt"):
+            prompt_tokens = await anthropic.count_tokens(request.get("prompt"))
+        elif request.get("messages"):
+            prompt_tokens = sum(
+                [
+                    await anthropic.count_tokens(m.get("content"))
+                    for m in request.get("messages")
+                ]
+            )
 
     if token_counter and type(prompt_tokens) is int and prompt_tokens >= 0:
         token_counter.record(
@@ -187,12 +190,13 @@ async def _aset_token_usage(
         )
 
     completion_tokens = 0
-    if response.get("completion"):
-        completion_tokens = await anthropic.count_tokens(response.get("completion"))
-    elif response.get("content"):
-        completion_tokens = await anthropic.count_tokens(
-            response.get("content")[0].text
-        )
+    if hasattr(anthropic, "count_tokens"):
+        if response.get("completion"):
+            completion_tokens = await anthropic.count_tokens(response.get("completion"))
+        elif response.get("content"):
+            completion_tokens = await anthropic.count_tokens(
+                response.get("content")[0].text
+            )
 
     if token_counter and type(completion_tokens) is int and completion_tokens >= 0:
         token_counter.record(
@@ -241,12 +245,16 @@ def _set_token_usage(
         response = response.__dict__
 
     prompt_tokens = 0
-    if request.get("prompt"):
-        prompt_tokens = anthropic.count_tokens(request.get("prompt"))
-    elif request.get("messages"):
-        prompt_tokens = sum(
-            [anthropic.count_tokens(m.get("content")) for m in request.get("messages")]
-        )
+    if hasattr(anthropic, "count_tokens"):
+        if request.get("prompt"):
+            prompt_tokens = anthropic.count_tokens(request.get("prompt"))
+        elif request.get("messages"):
+            prompt_tokens = sum(
+                [
+                    anthropic.count_tokens(m.get("content"))
+                    for m in request.get("messages")
+                ]
+            )
 
     if token_counter and type(prompt_tokens) is int and prompt_tokens >= 0:
         token_counter.record(
@@ -258,10 +266,11 @@ def _set_token_usage(
         )
 
     completion_tokens = 0
-    if response.get("completion"):
-        completion_tokens = anthropic.count_tokens(response.get("completion"))
-    elif response.get("content"):
-        completion_tokens = anthropic.count_tokens(response.get("content")[0].text)
+    if hasattr(anthropic, "count_tokens"):
+        if response.get("completion"):
+            completion_tokens = anthropic.count_tokens(response.get("completion"))
+        elif response.get("content"):
+            completion_tokens = anthropic.count_tokens(response.get("content")[0].text)
 
     if token_counter and type(completion_tokens) is int and completion_tokens >= 0:
         token_counter.record(
