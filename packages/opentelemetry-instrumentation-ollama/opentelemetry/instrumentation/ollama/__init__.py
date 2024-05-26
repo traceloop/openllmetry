@@ -22,7 +22,7 @@ from opentelemetry.instrumentation.ollama.version import __version__
 
 logger = logging.getLogger(__name__)
 
-_instruments = ("ollama >= 0.2.0",)
+_instruments = ("ollama >= 0.2.0, < 1",)
 
 WRAPPED_METHODS = [
     {
@@ -289,8 +289,15 @@ class OllamaInstrumentor(BaseInstrumentor):
 
     def _uninstrument(self, **kwargs):
         for wrapped_method in WRAPPED_METHODS:
-            wrap_object = wrapped_method.get("object")
             unwrap(
-                f"ollama._client.{wrap_object}",
+                "ollama._client.Client",
+                wrapped_method.get("method"),
+            )
+            unwrap(
+                "ollama._client.AsyncClient",
+                wrapped_method.get("method"),
+            )
+            unwrap(
+                "ollama",
                 wrapped_method.get("method"),
             )
