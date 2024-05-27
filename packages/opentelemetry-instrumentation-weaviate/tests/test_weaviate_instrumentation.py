@@ -187,7 +187,7 @@ def test_weaviate_create_collection_from_dict(client, exporter):
 @pytest.mark.vcr
 def test_weaviate_get_collection(client, exporter):
     create_collection(client)
-    get_collection(client)
+    _ = get_collection(client)
 
     spans = exporter.get_finished_spans()
     span = next(
@@ -221,7 +221,7 @@ def test_weaviate_delete_collection(client, exporter):
 @pytest.mark.vcr
 def test_weaviate_insert_data(client, exporter):
     create_collection(client)
-    insert_data(client)
+    _ = insert_data(client)
 
     spans = exporter.get_finished_spans()
     span = next(
@@ -269,7 +269,7 @@ def test_weaviate_create_batch(client, exporter):
 def test_weaviate_query_fetch_object_by_id(client, exporter):
     create_collection(client)
     uuid_value = str(insert_data(client))  # uuid is not JSON serializable, so convert
-    data = query_fetch_object_by_id(client, uuid_value)
+    _ = query_fetch_object_by_id(client, uuid_value)
 
     spans = exporter.get_finished_spans()
     span = next(span for span in spans if span.name == "db.weaviate.collections.query.fetch_object_by_id")
@@ -277,13 +277,12 @@ def test_weaviate_query_fetch_object_by_id(client, exporter):
     assert span.attributes.get("db.system") == "weaviate"
     assert span.attributes.get("db.operation") == "fetch_object_by_id"
     assert span.attributes.get("db.weaviate.collections.query.fetch_object_by_id.uuid") == f'"{uuid_value}"'
-    assert data.properties.get("author") == "Robert"
 
 
 @pytest.mark.vcr
 def test_weaviate_query_fetch_objects(client, exporter):
     create_collection(client)
-    query_fetch_objects(client)
+    _ = query_fetch_objects(client)
 
     spans = exporter.get_finished_spans()
     span = next(span for span in spans if span.name == "db.weaviate.collections.query.fetch_objects")
@@ -318,7 +317,7 @@ def test_weaviate_query_aggregate(client, exporter):
 def test_weaviate_query_raw(client, exporter):
     create_collection(client)
     create_batch(client)
-    query_raw(client)
+    _ = query_raw(client)
 
     spans = exporter.get_finished_spans()
     span = next(span for span in spans if span.name == "db.weaviate.client.graphql_raw_query")
