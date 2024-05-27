@@ -34,22 +34,25 @@ RAW_QUERY = """
  """
 
 
-@pytest.fixture
-def client(environment):
+@pytest.fixture(name="client")
+def fixture_client(environment):
     try:
         client = weaviate.connect_to_wcs(
             cluster_url=os.getenv("WEAVIATE_CLUSTER_URL"),
             auth_credentials=weaviate.auth.AuthApiKey(os.getenv("WEAVIATE_API_KEY")),
             headers={"X-OpenAI-Api-Key": os.environ["OPENAI_API_KEY"]},
         )
-    except (weaviate.exceptions.UnexpectedStatusCodeError, weaviate.exceptions.WeaviateStartUpError):
+    except (
+        weaviate.exceptions.UnexpectedStatusCodeError,
+        weaviate.exceptions.WeaviateStartUpError,
+    ):
         client = weaviate.connect_to_local()
     yield client
     client.collections.delete_all()
 
 
-def create_collection(client: weaviate.WeaviateClient):
-    client.collections.create(
+def create_collection(wclient: weaviate.WeaviateClient) -> None:
+    wclient.collections.create(
         name="Article",
         description="An Article class to store a text",
         properties=[
@@ -63,34 +66,37 @@ def create_collection(client: weaviate.WeaviateClient):
                 data_type=wvc.config.DataType.TEXT,
                 description="The text content",
             ),
-        ]
+        ],
     )
 
 
-def create_collection_from_dict(client: weaviate.WeaviateClient):
-    client.collections.create_from_dict(ARTICLE_SCHEMA)
+def create_collection_from_dict(wclient: weaviate.WeaviateClient) -> None:
+    wclient.collections.create_from_dict(ARTICLE_SCHEMA)
 
 
-def get_collection(client: weaviate.WeaviateClient):
-    return client.collections.get("Article")
+def get_collection(
+    wclient: weaviate.WeaviateClient,
+) -> weaviate.collections.collection.Collection:
+    return wclient.collections.get("Article")
 
 
-def delete_collection(client: weaviate.WeaviateClient):
-    client.collections.delete("Article")
+def delete_collection(wclient: weaviate.WeaviateClient) -> None:
+    wclient.collections.delete("Article")
 
 
-def insert_data(client: weaviate.WeaviateClient):
-    collection = client.collections.get("Article")
-    return collection.data.insert(
+def insert_data(wclient: weaviate.WeaviateClient) -> str:
+    collection = wclient.collections.get("Article")
+    result = collection.data.insert(
         {
             "author": "Robert",
             "text": "Once upon a time, someone wrote a book...",
         },
         uuid="0fa769e6-2f64-4717-97e3-f0297cf84138",
     )
+    return str(result)  # uuid is not JSON serializable, so convert
 
 
-def create_batch(client: weaviate.WeaviateClient):
+def create_batch(wclient: weaviate.WeaviateClient) -> None:
     objs = [
         {
             "author": "Robert",
@@ -113,33 +119,33 @@ def create_batch(client: weaviate.WeaviateClient):
             "text": "As king, he ruled...",
         },
     ]
-    collection = client.collections.get("Article")
+    collection = wclient.collections.get("Article")
     with collection.batch.dynamic() as batch:
         for obj in objs:
             batch.add_object(properties=obj)
 
 
-def query_fetch_object_by_id(client: weaviate.WeaviateClient, uuid_value: str):
-    collection = client.collections.get("Article")
+def query_fetch_object_by_id(wclient: weaviate.WeaviateClient, uuid_value: str):
+    collection = wclient.collections.get("Article")
     return collection.query.fetch_object_by_id(uuid_value, return_properties=None)
 
 
-def query_fetch_objects(client: weaviate.WeaviateClient):
-    collection = client.collections.get("Article")
+def query_fetch_objects(wclient: weaviate.WeaviateClient):
+    collection = wclient.collections.get("Article")
     return collection.query.fetch_objects(return_properties=["author"])
 
 
-def query_aggregate(client: weaviate.WeaviateClient):
-    collection = client.collections.get("Article")
+def query_aggregate(wclient: weaviate.WeaviateClient):
+    collection = wclient.collections.get("Article")
     return collection.aggregate.over_all(total_count=True)
 
 
-def query_raw(client):
-    return client.graphql_raw_query(RAW_QUERY)
+def query_raw(wclient):
+    return wclient.graphql_raw_query(RAW_QUERY)
 
 
-def delete_all(client: weaviate.WeaviateClient):
-    client.collections.delete_all()
+def delete_all(wclient: weaviate.WeaviateClient):
+    wclient.collections.delete_all()
 
 
 @pytest.mark.vcr
@@ -147,7 +153,9 @@ def test_weaviate_delete_all(client, exporter):
     delete_all(client)
 
     spans = exporter.get_finished_spans()
-    span = next(span for span in spans if span.name == "db.weaviate.collections.delete_all")
+    span = next(
+        span for span in spans if span.name == "db.weaviate.collections.delete_all"
+    )
 
     assert span.attributes.get("db.system") == "weaviate"
     assert span.attributes.get("db.operation") == "delete_all"
@@ -158,9 +166,7 @@ def test_weaviate_create_collection(client, exporter):
     create_collection(client)
 
     spans = exporter.get_finished_spans()
-    span = next(
-        span for span in spans if span.name == "db.weaviate.collections.create"
-    )
+    span = next(span for span in spans if span.name == "db.weaviate.collections.create")
 
     assert span.attributes.get("db.system") == "weaviate"
     assert span.attributes.get("db.operation") == "create"
@@ -173,14 +179,18 @@ def test_weaviate_create_collection_from_dict(client, exporter):
 
     spans = exporter.get_finished_spans()
     span = next(
-        span for span in spans if span.name == "db.weaviate.collections.create_from_dict"
+        span
+        for span in spans
+        if span.name == "db.weaviate.collections.create_from_dict"
     )
 
     assert span.attributes.get("db.system") == "weaviate"
     assert span.attributes.get("db.operation") == "create_from_dict"
     assert (
-            json.loads(span.attributes.get("db.weaviate.collections.create_from_dict.config"))
-            == ARTICLE_SCHEMA
+        json.loads(
+            span.attributes.get("db.weaviate.collections.create_from_dict.config")
+        )
+        == ARTICLE_SCHEMA
     )
 
 
@@ -190,11 +200,7 @@ def test_weaviate_get_collection(client, exporter):
     _ = get_collection(client)
 
     spans = exporter.get_finished_spans()
-    span = next(
-        span
-        for span in spans
-        if span.name == "db.weaviate.collections.get"
-    )
+    span = next(span for span in spans if span.name == "db.weaviate.collections.get")
 
     assert span.attributes.get("db.system") == "weaviate"
     assert span.attributes.get("db.operation") == "get"
@@ -207,15 +213,11 @@ def test_weaviate_delete_collection(client, exporter):
     delete_collection(client)
 
     spans = exporter.get_finished_spans()
-    span = next(
-        span for span in spans if span.name == "db.weaviate.collections.delete"
-    )
+    span = next(span for span in spans if span.name == "db.weaviate.collections.delete")
 
     assert span.attributes.get("db.system") == "weaviate"
     assert span.attributes.get("db.operation") == "delete"
-    assert (
-        span.attributes.get("db.weaviate.collections.delete.name") == '"Article"'
-    )
+    assert span.attributes.get("db.weaviate.collections.delete.name") == '"Article"'
 
 
 @pytest.mark.vcr
@@ -268,15 +270,22 @@ def test_weaviate_create_batch(client, exporter):
 @pytest.mark.vcr
 def test_weaviate_query_fetch_object_by_id(client, exporter):
     create_collection(client)
-    uuid_value = str(insert_data(client))  # uuid is not JSON serializable, so convert
+    uuid_value = insert_data(client)
     _ = query_fetch_object_by_id(client, uuid_value)
 
     spans = exporter.get_finished_spans()
-    span = next(span for span in spans if span.name == "db.weaviate.collections.query.fetch_object_by_id")
+    span = next(
+        span
+        for span in spans
+        if span.name == "db.weaviate.collections.query.fetch_object_by_id"
+    )
 
     assert span.attributes.get("db.system") == "weaviate"
     assert span.attributes.get("db.operation") == "fetch_object_by_id"
-    assert span.attributes.get("db.weaviate.collections.query.fetch_object_by_id.uuid") == f'"{uuid_value}"'
+    assert (
+        span.attributes.get("db.weaviate.collections.query.fetch_object_by_id.uuid")
+        == f'"{uuid_value}"'
+    )
 
 
 @pytest.mark.vcr
@@ -285,11 +294,20 @@ def test_weaviate_query_fetch_objects(client, exporter):
     _ = query_fetch_objects(client)
 
     spans = exporter.get_finished_spans()
-    span = next(span for span in spans if span.name == "db.weaviate.collections.query.fetch_objects")
+    span = next(
+        span
+        for span in spans
+        if span.name == "db.weaviate.collections.query.fetch_objects"
+    )
 
     assert span.attributes.get("db.system") == "weaviate"
     assert span.attributes.get("db.operation") == "fetch_objects"
-    assert span.attributes.get("db.weaviate.collections.query.fetch_objects.return_properties") == '["author"]'
+    assert (
+        span.attributes.get(
+            "db.weaviate.collections.query.fetch_objects.return_properties"
+        )
+        == '["author"]'
+    )
 
 
 @pytest.mark.vcr
@@ -320,8 +338,12 @@ def test_weaviate_query_raw(client, exporter):
     _ = query_raw(client)
 
     spans = exporter.get_finished_spans()
-    span = next(span for span in spans if span.name == "db.weaviate.client.graphql_raw_query")
-    traced_raw_query = span.attributes.get("db.weaviate.client.graphql_raw_query.gql_query")
+    span = next(
+        span for span in spans if span.name == "db.weaviate.client.graphql_raw_query"
+    )
+    traced_raw_query = span.attributes.get(
+        "db.weaviate.client.graphql_raw_query.gql_query"
+    )
 
     assert span.attributes.get("db.system") == "weaviate"
     assert span.attributes.get("db.operation") == "graphql_raw_query"
