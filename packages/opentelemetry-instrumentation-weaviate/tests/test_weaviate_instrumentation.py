@@ -35,20 +35,11 @@ RAW_QUERY = """
 
 
 @pytest.fixture(name="client")
-def fixture_client(environment):
-    try:
-        client = weaviate.connect_to_wcs(
-            cluster_url=os.getenv("WEAVIATE_CLUSTER_URL"),
-            auth_credentials=weaviate.auth.AuthApiKey(os.getenv("WEAVIATE_API_KEY")),
-            headers={"X-OpenAI-Api-Key": os.environ["OPENAI_API_KEY"]},
-        )
-    except (
-        weaviate.exceptions.UnexpectedStatusCodeError,
-        weaviate.exceptions.WeaviateStartUpError,
-    ):
-        client = weaviate.connect_to_local()
-    yield client
-    client.collections.delete_all()
+def fixture_client():
+    with weaviate.connect_to_local(skip_init_checks=True) as client:
+        client.collections.delete_all()
+        yield client
+        client.collections.delete_all()
 
 
 def create_collection(wclient: weaviate.WeaviateClient) -> None:
@@ -150,6 +141,7 @@ def delete_all(wclient: weaviate.WeaviateClient):
 
 @pytest.mark.vcr
 def test_weaviate_delete_all(client, exporter):
+    create_collection(client)
     delete_all(client)
 
     spans = exporter.get_finished_spans()
@@ -267,11 +259,10 @@ def test_weaviate_create_batch(client, exporter):
     assert "..." in data_object["text"]
 
 
-@pytest.mark.vcr
 def test_weaviate_query_fetch_object_by_id(client, exporter):
     create_collection(client)
     uuid_value = insert_data(client)
-    _ = query_fetch_object_by_id(client, uuid_value)
+    data = query_fetch_object_by_id(client, uuid_value)
 
     spans = exporter.get_finished_spans()
     span = next(
@@ -286,12 +277,13 @@ def test_weaviate_query_fetch_object_by_id(client, exporter):
         span.attributes.get("db.weaviate.collections.query.fetch_object_by_id.uuid")
         == f'"{uuid_value}"'
     )
+    assert data.properties.get("author") == "Robert"
 
 
-@pytest.mark.vcr
 def test_weaviate_query_fetch_objects(client, exporter):
     create_collection(client)
-    _ = query_fetch_objects(client)
+    create_batch(client)
+    result = query_fetch_objects(client)
 
     spans = exporter.get_finished_spans()
     span = next(
@@ -308,6 +300,7 @@ def test_weaviate_query_fetch_objects(client, exporter):
         )
         == '["author"]'
     )
+    assert len(result.objects) != 0
 
 
 @pytest.mark.vcr
@@ -335,7 +328,7 @@ def test_weaviate_query_aggregate(client, exporter):
 def test_weaviate_query_raw(client, exporter):
     create_collection(client)
     create_batch(client)
-    _ = query_raw(client)
+    result = query_raw(client)
 
     spans = exporter.get_finished_spans()
     span = next(
@@ -351,3 +344,4 @@ def test_weaviate_query_raw(client, exporter):
     assert "Article" in traced_raw_query
     assert "author" in traced_raw_query
     assert "text" in traced_raw_query
+    assert len(result.get["Article"]) == 2
