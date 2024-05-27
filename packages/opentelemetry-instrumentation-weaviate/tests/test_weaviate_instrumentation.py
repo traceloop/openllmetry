@@ -259,6 +259,7 @@ def test_weaviate_create_batch(client, exporter):
     assert "..." in data_object["text"]
 
 
+@pytest.mark.with_grpc
 def test_weaviate_query_fetch_object_by_id(client, exporter):
     create_collection(client)
     uuid_value = insert_data(client)
@@ -280,6 +281,7 @@ def test_weaviate_query_fetch_object_by_id(client, exporter):
     assert data.properties.get("author") == "Robert"
 
 
+@pytest.mark.with_grpc
 def test_weaviate_query_fetch_objects(client, exporter):
     create_collection(client)
     create_batch(client)
