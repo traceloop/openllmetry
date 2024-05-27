@@ -1016,6 +1016,28 @@ type = "directory"
 url = "../opentelemetry-instrumentation-milvus"
 
 [[package]]
+name = "opentelemetry-instrumentation-mistralai"
+version = "0.19.0"
+description = "OpenTelemetry Mistral AI instrumentation"
+optional = false
+python-versions = ">=3.9,<4"
+files = []
+develop = true
+
+[package.dependencies]
+opentelemetry-api = "^1.24.0"
+opentelemetry-instrumentation = "^0.45b0"
+opentelemetry-semantic-conventions = "^0.45b0"
+opentelemetry-semantic-conventions-ai = "0.2.0"
+
+[package.extras]
+instruments = []
+
+[package.source]
+type = "directory"
+url = "../opentelemetry-instrumentation-mistralai"
+
+[[package]]
 name = "opentelemetry-instrumentation-ollama"
 version = "0.19.0"
 description = "OpenTelemetry Ollama instrumentation"
@@ -2319,4 +2341,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "jaraco.test", "more
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<4"
-content-hash = "a34329684ae69f305fa4bfc807f6c62d0954f8c5848ad13d8a01c8c089c0590e"
+content-hash = "0d6b888d7db457873452947b9469bc254026c2c05ea7940c45f8d796583e8669"

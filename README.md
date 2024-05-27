@@ -110,6 +110,7 @@ OpenLLMetry can instrument everything that [OpenTelemetry already instruments](h
 - ✅ Anthropic
 - ✅ Cohere
 - ✅ Ollama
+- ✅ Mistral AI
 - ✅ HuggingFace
 - ✅ Bedrock (AWS)
 - ✅ Replicate

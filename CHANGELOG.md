@@ -1,3 +1,16 @@
+## v0.20.0 (2024-05-26)
+
+### Feat
+
+- **mistral**: implement instrumentation (#1139)
+- **ollama**: implement instrumentation (#1138)
+
+### Fix
+
+- **anthropic**: don't fail if can't count anthropic tokens (#1142)
+- **ollama**: proper unwrapping; limit instrumentations to versions <1
+- **bedrock**: instrument bedrock calls for Langchain (with session) (#1135)
+
 ## v0.19.0 (2024-05-22)
 
 ### Feat
