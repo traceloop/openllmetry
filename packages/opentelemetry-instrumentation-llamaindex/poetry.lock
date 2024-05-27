@@ -1587,17 +1587,17 @@ llama-parse = ">=0.3.3,<0.4.0"
 
 [[package]]
 name = "llama-index-vector-stores-chroma"
-version = "0.1.6"
+version = "0.1.8"
 description = "llama-index vector_stores chroma integration"
 optional = false
-python-versions = ">=3.8.1,<4.0"
+python-versions = "<4.0,>=3.8.1"
 files = [
-    {file = "llama_index_vector_stores_chroma-0.1.6-py3-none-any.whl", hash = "sha256:506b1cb9a7a552ecb3afa70ddf479c1c683fcbfe7313654e3543e62e3ec07eae"},
-    {file = "llama_index_vector_stores_chroma-0.1.6.tar.gz", hash = "sha256:6dff3dc9d79c4039fa46cd528e5e4b6ded6473e5ef632424134491007da4ebdb"},
+    {file = "llama_index_vector_stores_chroma-0.1.8-py3-none-any.whl", hash = "sha256:77f5081a08bcede4fafb3c47b15b3bd5cacaef8d038750207d1858f73bc2e255"},
+    {file = "llama_index_vector_stores_chroma-0.1.8.tar.gz", hash = "sha256:9c574baf370faf456bcb67b9d5ea273a6fa1f2b4fd205a59c47b68112364b9e7"},
 ]
 
 [package.dependencies]
-chromadb = ">=0.4.22,<0.5.0"
+chromadb = ">=0.4.0,<0.6.0"
 llama-index-core = ">=0.10.1,<0.11.0"
 
 [[package]]
