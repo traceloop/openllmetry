@@ -1,9 +1,25 @@
+import dataclasses
 import json
 import logging
 import os
 from opentelemetry import context as context_api
 from opentelemetry.instrumentation.langchain.config import Config
 from opentelemetry.semconv.ai import SpanAttributes
+
+
+class CallbackFilteredJSONEncoder(json.JSONEncoder):
+    def default(self, o):
+        if isinstance(o, dict):
+            if "callbacks" in o:
+                del o["callbacks"]
+                return o
+        if dataclasses.is_dataclass(o):
+            return dataclasses.asdict(o)
+
+        if hasattr(o, "to_json"):
+            return o.to_json()
+
+        return super().default(o)
 
 
 def _with_tracer_wrapper(func):
@@ -52,49 +68,28 @@ def process_request(span, args, kwargs):
         for arg in args:
             if arg and isinstance(arg, dict):
                 for key, value in arg.items():
+                    if key == "callbacks":
+                        continue
                     kwargs_to_serialize[key] = value
 
-        args = [arg for arg in args if not isinstance(arg, dict)]
+        args_to_serialize = [arg for arg in args if not isinstance(arg, dict)]
+
+        entity_input = {"args": args_to_serialize, "kwargs": kwargs_to_serialize}
 
         span.set_attribute(
             SpanAttributes.TRACELOOP_ENTITY_INPUT,
-            json.dumps(
-                {
-                    "args": [_convert_to_string(arg) for arg in args],
-                    "kwargs": {
-                        key: _convert_to_string(value)
-                        for key, value in kwargs_to_serialize.items()
-                        if key != "callbacks"
-                    },
-                }
-            ),
+            json.dumps(entity_input, cls=CallbackFilteredJSONEncoder)
         )
 
 
 @dont_throw
 def process_response(span, response):
     if should_send_prompts():
+        if isinstance(response, str):
+            output_entity = response
+        else:
+            output_entity = json.dumps(response, cls=CallbackFilteredJSONEncoder)
         span.set_attribute(
             SpanAttributes.TRACELOOP_ENTITY_OUTPUT,
-            _convert_to_string(response),
+            output_entity,
         )
-
-
-def _convert_to_string(value):
-    try:
-        if hasattr(value, "to_json"):
-            return json.dumps(value.to_json())
-        if hasattr(value, "to_string"):
-            return value.to_string()
-
-        if isinstance(value, list):
-            ret = []
-            for item in value:
-                ret.append(f"{_convert_to_string(item)}")
-            return f"[{','.join(ret)}]"
-        if isinstance(value, str):
-            return value
-
-        return json.dumps(value)
-    except TypeError:
-        return str(value)
