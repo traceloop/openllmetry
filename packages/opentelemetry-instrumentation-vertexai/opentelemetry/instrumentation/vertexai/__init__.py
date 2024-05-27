@@ -22,26 +22,24 @@ logger = logging.getLogger(__name__)
 
 _instruments = ("google-cloud-aiplatform >= 1.38.1",)
 
-llm_model = "unknown"
-
 WRAPPED_METHODS = [
     {
-        "package": "vertexai.preview.generative_models",
+        "package": "vertexai.generative_models",
         "object": "GenerativeModel",
-        "method": "__init__",
-        "span_name": "vertexai.__init__",
+        "method": "generate_content",
+        "span_name": "vertexai.generate_content",
+    },
+    {
+        "package": "vertexai.generative_models",
+        "object": "GenerativeModel",
+        "method": "generate_content_async",
+        "span_name": "vertexai.generate_content",
     },
     {
         "package": "vertexai.preview.generative_models",
         "object": "GenerativeModel",
         "method": "generate_content",
         "span_name": "vertexai.generate_content",
-    },
-    {
-        "package": "vertexai.language_models",
-        "object": "TextGenerationModel",
-        "method": "from_pretrained",
-        "span_name": "vertexai.from_pretrained",
     },
     {
         "package": "vertexai.language_models",
@@ -69,12 +67,6 @@ WRAPPED_METHODS = [
     },
     {
         "package": "vertexai.language_models",
-        "object": "ChatModel",
-        "method": "from_pretrained",
-        "span_name": "vertexai.from_pretrained",
-    },
-    {
-        "package": "vertexai.language_models",
         "object": "ChatSession",
         "method": "send_message",
         "span_name": "vertexai.send_message",
@@ -90,7 +82,7 @@ WRAPPED_METHODS = [
 
 def should_send_prompts():
     return (
-        os.getenv("TRACELOOP_TRACE_CONTENT") or "true"
+            os.getenv("TRACELOOP_TRACE_CONTENT") or "true"
     ).lower() == "true" or context_api.get_value("override_enable_content_tracing")
 
 
@@ -109,7 +101,7 @@ def _set_span_attribute(span, name, value):
     return
 
 
-def _set_input_attributes(span, args, kwargs):
+def _set_input_attributes(span, args, kwargs, llm_model):
     if should_send_prompts() and args is not None and len(args) > 0:
         prompt = ""
         for arg in args:
@@ -126,33 +118,25 @@ def _set_input_attributes(span, args, kwargs):
         )
 
     _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, llm_model)
-    _set_span_attribute(
-        span, f"{SpanAttributes.LLM_PROMPTS}.0.user", kwargs.get("prompt")
-    )
+    _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.0.user", kwargs.get("prompt"))
     _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TEMPERATURE, kwargs.get("temperature"))
     _set_span_attribute(
         span, SpanAttributes.LLM_REQUEST_MAX_TOKENS, kwargs.get("max_output_tokens")
     )
     _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TOP_P, kwargs.get("top_p"))
     _set_span_attribute(span, SpanAttributes.LLM_TOP_K, kwargs.get("top_k"))
-    _set_span_attribute(
-        span, SpanAttributes.LLM_PRESENCE_PENALTY, kwargs.get("presence_penalty")
-    )
-    _set_span_attribute(
-        span, SpanAttributes.LLM_FREQUENCY_PENALTY, kwargs.get("frequency_penalty")
-    )
+    _set_span_attribute(span, SpanAttributes.LLM_PRESENCE_PENALTY, kwargs.get("presence_penalty"))
+    _set_span_attribute(span, SpanAttributes.LLM_FREQUENCY_PENALTY, kwargs.get("frequency_penalty"))
 
     return
 
 
 @dont_throw
-def _set_response_attributes(span, response):
+def _set_response_attributes(span, response, llm_model):
     _set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, llm_model)
 
     if hasattr(response, "text"):
-        if hasattr(response, "_raw_response") and hasattr(
-            response._raw_response, "usage_metadata"
-        ):
+        if hasattr(response, "_raw_response") and hasattr(response._raw_response, "usage_metadata"):
             _set_span_attribute(
                 span,
                 SpanAttributes.LLM_USAGE_TOTAL_TOKENS,
@@ -174,23 +158,19 @@ def _set_response_attributes(span, response):
                 prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{index}"
                 _set_span_attribute(span, f"{prefix}.content", item.text)
         elif isinstance(response.text, str):
-            _set_span_attribute(
-                span, f"{SpanAttributes.LLM_COMPLETIONS}.0.content", response.text
-            )
+            _set_span_attribute(span, f"{SpanAttributes.LLM_COMPLETIONS}.0.content", response.text)
     else:
         if isinstance(response, list):
             for index, item in enumerate(response):
                 prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{index}"
                 _set_span_attribute(span, f"{prefix}.content", item)
         elif isinstance(response, str):
-            _set_span_attribute(
-                span, f"{SpanAttributes.LLM_COMPLETIONS}.0.content", response
-            )
+            _set_span_attribute(span, f"{SpanAttributes.LLM_COMPLETIONS}.0.content", response)
 
     return
 
 
-def _build_from_streaming_response(span, response):
+def _build_from_streaming_response(span, response, llm_model):
     complete_response = ""
     for item in response:
         item_to_yield = item
@@ -198,13 +178,13 @@ def _build_from_streaming_response(span, response):
 
         yield item_to_yield
 
-    _set_response_attributes(span, complete_response)
+    _set_response_attributes(span, complete_response, llm_model)
 
     span.set_status(Status(StatusCode.OK))
     span.end()
 
 
-async def _abuild_from_streaming_response(span, response):
+async def _abuild_from_streaming_response(span, response, llm_model):
     complete_response = ""
     async for item in response:
         item_to_yield = item
@@ -212,22 +192,22 @@ async def _abuild_from_streaming_response(span, response):
 
         yield item_to_yield
 
-    _set_response_attributes(span, complete_response)
+    _set_response_attributes(span, complete_response, llm_model)
 
     span.set_status(Status(StatusCode.OK))
     span.end()
 
 
 @dont_throw
-def _handle_request(span, args, kwargs):
+def _handle_request(span, args, kwargs, llm_model):
     if span.is_recording():
-        _set_input_attributes(span, args, kwargs)
+        _set_input_attributes(span, args, kwargs, llm_model)
 
 
 @dont_throw
-def _handle_response(span, response):
+def _handle_response(span, response, llm_model):
     if span.is_recording():
-        _set_response_attributes(span, response)
+        _set_response_attributes(span, response, llm_model)
 
         span.set_status(Status(StatusCode.OK))
 
@@ -250,18 +230,11 @@ async def _awrap(tracer, to_wrap, wrapped, instance, args, kwargs):
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
         return await wrapped(*args, **kwargs)
 
-    global llm_model
-
-    if (
-        (
-            to_wrap.get("method") == "from_pretrained"
-            or to_wrap.get("method") == "__init__"
-        )
-        and args is not None
-        and len(args) > 0
-    ):
-        llm_model = args[0]
-        return await wrapped(*args, **kwargs)
+    llm_model = "unknown"
+    if hasattr(instance, "_model_id"):
+        llm_model = instance._model_id
+    if hasattr(instance, "_model_name"):
+        llm_model = instance._model_name.replace("publishers/google/models/", "")
 
     name = to_wrap.get("span_name")
     span = tracer.start_span(
@@ -273,17 +246,17 @@ async def _awrap(tracer, to_wrap, wrapped, instance, args, kwargs):
         },
     )
 
-    _handle_request(span, args, kwargs)
+    _handle_request(span, args, kwargs, llm_model)
 
     response = await wrapped(*args, **kwargs)
 
     if response:
         if is_streaming_response(response):
-            return _build_from_streaming_response(span, response)
+            return _build_from_streaming_response(span, response, llm_model)
         elif is_async_streaming_response(response):
-            return _abuild_from_streaming_response(span, response)
+            return _abuild_from_streaming_response(span, response, llm_model)
         else:
-            _handle_response(span, response)
+            _handle_response(span, response, llm_model)
 
     span.end()
     return response
@@ -295,18 +268,11 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
         return wrapped(*args, **kwargs)
 
-    global llm_model
-
-    if (
-        (
-            to_wrap.get("method") == "from_pretrained"
-            or to_wrap.get("method") == "__init__"
-        )
-        and args is not None
-        and len(args) > 0
-    ):
-        llm_model = args[0]
-        return wrapped(*args, **kwargs)
+    llm_model = "unknown"
+    if hasattr(instance, "_model_id"):
+        llm_model = instance._model_id
+    if hasattr(instance, "_model_name"):
+        llm_model = instance._model_name.replace("publishers/google/models/", "")
 
     name = to_wrap.get("span_name")
     span = tracer.start_span(
@@ -318,17 +284,17 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
         },
     )
 
-    _handle_request(span, args, kwargs)
+    _handle_request(span, args, kwargs, llm_model)
 
     response = wrapped(*args, **kwargs)
 
     if response:
         if is_streaming_response(response):
-            return _build_from_streaming_response(span, response)
+            return _build_from_streaming_response(span, response, llm_model)
         elif is_async_streaming_response(response):
-            return _abuild_from_streaming_response(span, response)
+            return _abuild_from_streaming_response(span, response, llm_model)
         else:
-            _handle_response(span, response)
+            _handle_response(span, response, llm_model)
 
     span.end()
     return response
