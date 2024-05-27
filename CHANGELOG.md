@@ -1,3 +1,14 @@
+## v0.21.0 (2024-05-27)
+
+### Feat
+
+- **vertexai**: `vertexai.generative_models` / `llm_model` detection (#1141)
+
+### Fix
+
+- **bedrock**: support simple string in prompts (#1167)
+- **langchain**: stringification fails for lists of LangChain `Documents` (#1140)
+
 ## v0.20.0 (2024-05-26)
 
 ### Feat
