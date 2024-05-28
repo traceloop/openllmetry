@@ -615,7 +615,7 @@ def init_langchain_instrumentor():
 
 def init_mistralai_instrumentor():
     try:
-        if importlib.util.find_spec("ollama") is not None:
+        if importlib.util.find_spec("mistralai") is not None:
             Telemetry().capture("instrumentation:mistralai:init")
             from opentelemetry.instrumentation.mistralai import MistralAiInstrumentor
 
