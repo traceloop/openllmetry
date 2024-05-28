@@ -73,7 +73,9 @@ def test_simple_lcel(exporter):
         "kwargs": {
             "input": "tell me a short joke",
             "run_name": "ThisIsATestChain",
-            "tags": ["test_tag"],
+            "tags": [
+                "test_tag"
+            ],
         },
     }
     assert json.loads(workflow_span.attributes["traceloop.entity.output"]) == {
@@ -84,16 +86,57 @@ def test_simple_lcel(exporter):
         "args": [],
         "kwargs": {
             "input": "tell me a short joke",
-            "tags": ["test_tag"],
+            "tags": [
+                "test_tag"
+            ],
             "metadata": {},
             "recursion_limit": 25,
             "configurable": {},
         },
     }
-    assert (
-        prompt_task_span.attributes["traceloop.entity.output"]
-        == "messages=[SystemMessage(content='You are helpful assistant'), HumanMessage(content='tell me a short joke')]"
-    )
+
+    assert (json.loads(prompt_task_span.attributes["traceloop.entity.output"]) == {
+        "lc": 1,
+        "type": "constructor",
+        "id": [
+            "langchain",
+            "prompts",
+            "chat",
+            "ChatPromptValue"
+        ],
+        "kwargs": {
+            "messages": [
+                {
+                    "lc": 1,
+                    "type": "constructor",
+                    "id": [
+                        "langchain",
+                        "schema",
+                        "messages",
+                        "SystemMessage"
+                    ],
+                    "kwargs": {
+                        "content": "You are helpful assistant",
+                        "type": "system"
+                    }
+                },
+                {
+                    "lc": 1,
+                    "type": "constructor",
+                    "id": [
+                        "langchain",
+                        "schema",
+                        "messages",
+                        "HumanMessage"
+                    ],
+                    "kwargs": {
+                        "content": "tell me a short joke",
+                        "type": "human"
+                    }
+                }
+            ]
+        }
+    })
 
 
 @pytest.mark.vcr

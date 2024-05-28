@@ -213,14 +213,14 @@ def _set_anthropic_messages_span_attributes(span, request_body, response_body):
 
     if Config.enrich_token_usage:
         messages = [message.get("content") for message in request_body.get("messages")]
-        prompt_tokens = _count_anthropic_tokens(
-            [
-                content.get("text")
-                for message in messages
-                for content in message
-                if content.get("type") == "text"
-            ]
-        )
+
+        raw_messages = []
+        for message in messages:
+            if isinstance(message, str):
+                raw_messages.append(message)
+            else:
+                raw_messages.extend([content.get("text") for content in message])
+        prompt_tokens = _count_anthropic_tokens(raw_messages)
         completion_tokens = _count_anthropic_tokens(
             [content.get("text") for content in response_body.get("content")]
         )

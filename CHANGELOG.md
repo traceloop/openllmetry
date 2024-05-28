@@ -1,3 +1,27 @@
+## v0.21.0 (2024-05-27)
+
+### Feat
+
+- **vertexai**: `vertexai.generative_models` / `llm_model` detection (#1141)
+
+### Fix
+
+- **bedrock**: support simple string in prompts (#1167)
+- **langchain**: stringification fails for lists of LangChain `Documents` (#1140)
+
+## v0.20.0 (2024-05-26)
+
+### Feat
+
+- **mistral**: implement instrumentation (#1139)
+- **ollama**: implement instrumentation (#1138)
+
+### Fix
+
+- **anthropic**: don't fail if can't count anthropic tokens (#1142)
+- **ollama**: proper unwrapping; limit instrumentations to versions <1
+- **bedrock**: instrument bedrock calls for Langchain (with session) (#1135)
+
 ## v0.19.0 (2024-05-22)
 
 ### Feat

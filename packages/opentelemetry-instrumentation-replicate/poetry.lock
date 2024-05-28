@@ -35,13 +35,13 @@ trio = ["trio (>=0.23)"]
 
 [[package]]
 name = "autopep8"
-version = "2.1.0"
+version = "2.1.1"
 description = "A tool that automatically formats Python code to conform to the PEP 8 style guide"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "autopep8-2.1.0-py2.py3-none-any.whl", hash = "sha256:2bb76888c5edbcafe6aabab3c47ba534f5a2c2d245c2eddced4a30c4b4946357"},
-    {file = "autopep8-2.1.0.tar.gz", hash = "sha256:1fa8964e4618929488f4ec36795c7ff12924a68b8bf01366c094fc52f770b6e7"},
+    {file = "autopep8-2.1.1-py2.py3-none-any.whl", hash = "sha256:57c1026ee3ee40f57c5b93073b705f8e30aa52411fca33306d730274d2882bba"},
+    {file = "autopep8-2.1.1.tar.gz", hash = "sha256:bc9b267f14d358a9af574b95e95a661681c60a275ffce419ba5fb4eae9920bcc"},
 ]
 
 [package.dependencies]
@@ -673,13 +673,13 @@ files = [
 
 [[package]]
 name = "replicate"
-version = "0.25.1"
+version = "0.26.0"
 description = "Python client for Replicate"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "replicate-0.25.1-py3-none-any.whl", hash = "sha256:747cadb97ae9ef0dc9282b86a225e35883b44de001d101ab0d172b6808f62144"},
-    {file = "replicate-0.25.1.tar.gz", hash = "sha256:0c6e9396e571990fff1e7e7b36b4a50c1b6e9838ad7b77fbc2ddd1e1c31328b1"},
+    {file = "replicate-0.26.0-py3-none-any.whl", hash = "sha256:6c7067f3d343234adb0054387f2192d87bb6370bea69ca2f6c9e8da965c0d7e4"},
+    {file = "replicate-0.26.0.tar.gz", hash = "sha256:cebcadf9804852cbe079ab45b3b7f2ad8515fcede6ba677e475dc9adfce2d661"},
 ]
 
 [package.dependencies]
@@ -992,4 +992,4 @@ instruments = []
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<4"
-content-hash = "f7d0f80929feb3b7bd963cd614e72b94313d7418e73194c1b077cacc8de923b9"
+content-hash = "dc0679bd0dddda09da350290d622c636333a4b0df8b6703a52981f1d1b58c1bb"
