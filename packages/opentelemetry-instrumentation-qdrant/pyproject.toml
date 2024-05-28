@@ -30,7 +30,7 @@ opentelemetry-semantic-conventions = "^0.45b0"
 opentelemetry-semantic-conventions-ai = "0.2.0"
 
 [tool.poetry.group.dev.dependencies]
-autopep8 = "2.1.0"
+autopep8 = "2.1.1"
 flake8 = "7.0.0"
 
 [tool.poetry.group.test.dependencies]
