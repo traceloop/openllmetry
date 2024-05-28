@@ -24,17 +24,17 @@ trio = ["trio (>=0.23)"]
 
 [[package]]
 name = "autopep8"
-version = "2.0.4"
+version = "2.1.1"
 description = "A tool that automatically formats Python code to conform to the PEP 8 style guide"
 optional = false
-python-versions = ">=3.6"
+python-versions = ">=3.8"
 files = [
-    {file = "autopep8-2.0.4-py2.py3-none-any.whl", hash = "sha256:067959ca4a07b24dbd5345efa8325f5f58da4298dab0dde0443d5ed765de80cb"},
-    {file = "autopep8-2.0.4.tar.gz", hash = "sha256:2913064abd97b3419d1cc83ea71f042cb821f87e45b9c88cad5ad3c4ea87fe0c"},
+    {file = "autopep8-2.1.1-py2.py3-none-any.whl", hash = "sha256:57c1026ee3ee40f57c5b93073b705f8e30aa52411fca33306d730274d2882bba"},
+    {file = "autopep8-2.1.1.tar.gz", hash = "sha256:bc9b267f14d358a9af574b95e95a661681c60a275ffce419ba5fb4eae9920bcc"},
 ]
 
 [package.dependencies]
-pycodestyle = ">=2.10.0"
+pycodestyle = ">=2.11.0"
 tomli = {version = "*", markers = "python_version < \"3.11\""}
 
 [[package]]
@@ -251,13 +251,13 @@ files = [
 
 [[package]]
 name = "haystack-ai"
-version = "2.0.0"
+version = "2.1.2"
 description = "LLM framework to build customizable, production-ready LLM applications. Connect components (models, vector DBs, file converters) to pipelines or agents that can interact with your data."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "haystack_ai-2.0.0-py3-none-any.whl", hash = "sha256:c8aeaa07cd564121b5c5e44e20a54ec733a54daceb926cda858a90c713ac59ac"},
-    {file = "haystack_ai-2.0.0.tar.gz", hash = "sha256:5a955f9a2da490919d55db92db99f851e73cd48ec7971c15381e1bddfa242fec"},
+    {file = "haystack_ai-2.1.2-py3-none-any.whl", hash = "sha256:353db1a4fbc3558b122533211dc918acf80c7f8649e6c0d74129955b26f72f93"},
+    {file = "haystack_ai-2.1.2.tar.gz", hash = "sha256:0d67b924c60c34df37fc491453e715e60b577e5298b3161453251621b22d1619"},
 ]
 
 [package.dependencies]
@@ -1486,4 +1486,4 @@ instruments = []
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<4"
-content-hash = "9b025d4f06c979b221b48335ce459f75a69db3993972e18990bbda2d8a5f3fd0"
+content-hash = "480a12692f0494d2b8431c6638ccddcfeb94b13e618bce547ac57af9b49dce08"
