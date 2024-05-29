@@ -185,7 +185,7 @@ async def _aset_token_usage(
             prompt_tokens,
             attributes={
                 **metric_attributes,
-                "llm.usage.token_type": "prompt",
+                "gen_ai.token.type": "input",
             },
         )
 
@@ -203,7 +203,7 @@ async def _aset_token_usage(
             completion_tokens,
             attributes={
                 **metric_attributes,
-                "llm.usage.token_type": "completion",
+                "gen_ai.token.type": "output",
             },
         )
 
@@ -261,7 +261,7 @@ def _set_token_usage(
             prompt_tokens,
             attributes={
                 **metric_attributes,
-                "llm.usage.token_type": "prompt",
+                "gen_ai.token.type": "input",
             },
         )
 
@@ -277,7 +277,7 @@ def _set_token_usage(
             completion_tokens,
             attributes={
                 **metric_attributes,
-                "llm.usage.token_type": "completion",
+                "gen_ai.token.type": "output",
             },
         )
 
@@ -374,7 +374,7 @@ def _create_metrics(meter: Meter, name: str):
     token_counter = meter.create_histogram(
         name="gen_ai.client.token.usage",
         unit="token",
-        description="Number of tokens used in prompt and completions",
+        description="Measures number of input and output tokens used",
     )
 
     choice_counter = meter.create_counter(
@@ -386,7 +386,7 @@ def _create_metrics(meter: Meter, name: str):
     duration_histogram = meter.create_histogram(
         name="gen_ai.client.operation.duration",
         unit="s",
-        description="Duration of chat completion operation",
+        description="GenAI operation duration",
     )
 
     exception_counter = meter.create_counter(

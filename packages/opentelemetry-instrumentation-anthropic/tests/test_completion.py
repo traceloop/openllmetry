@@ -46,9 +46,9 @@ def test_anthropic_completion(exporter, reader):
                 if metric.name == "gen_ai.client.token.usage":
                     found_token_metric = True
                     for data_point in metric.data.data_points:
-                        assert data_point.attributes["llm.usage.token_type"] in [
-                            "completion",
-                            "prompt",
+                        assert data_point.attributes["gen_ai.token.type"] in [
+                            "output",
+                            "input",
                         ]
                         assert (
                             data_point.attributes["gen_ai.response.model"]
@@ -147,9 +147,9 @@ def test_anthropic_message_create(exporter, reader):
                 if metric.name == "gen_ai.client.token.usage":
                     found_token_metric = True
                     for data_point in metric.data.data_points:
-                        assert data_point.attributes["llm.usage.token_type"] in [
-                            "completion",
-                            "prompt",
+                        assert data_point.attributes["gen_ai.token.type"] in [
+                            "output",
+                            "input",
                         ]
                         assert (
                             data_point.attributes["gen_ai.response.model"]
@@ -306,9 +306,9 @@ def test_anthropic_message_streaming(exporter, reader):
                 if metric.name == "gen_ai.client.token.usage":
                     found_token_metric = True
                     for data_point in metric.data.data_points:
-                        assert data_point.attributes["llm.usage.token_type"] in [
-                            "completion",
-                            "prompt",
+                        assert data_point.attributes["gen_ai.token.type"] in [
+                            "output",
+                            "input",
                         ]
                         assert (
                             data_point.attributes["gen_ai.response.model"]
@@ -402,9 +402,9 @@ async def test_async_anthropic_message_create(exporter, reader):
                 if metric.name == "gen_ai.client.token.usage":
                     found_token_metric = True
                     for data_point in metric.data.data_points:
-                        assert data_point.attributes["llm.usage.token_type"] in [
-                            "completion",
-                            "prompt",
+                        assert data_point.attributes["gen_ai.token.type"] in [
+                            "output",
+                            "input",
                         ]
                         assert (
                             data_point.attributes["gen_ai.response.model"]
@@ -503,9 +503,9 @@ async def test_async_anthropic_message_streaming(exporter, reader):
                 if metric.name == "gen_ai.client.token.usage":
                     found_token_metric = True
                     for data_point in metric.data.data_points:
-                        assert data_point.attributes["llm.usage.token_type"] in [
-                            "completion",
-                            "prompt",
+                        assert data_point.attributes["gen_ai.token.type"] in [
+                            "output",
+                            "input",
                         ]
                         assert (
                             data_point.attributes["gen_ai.response.model"]

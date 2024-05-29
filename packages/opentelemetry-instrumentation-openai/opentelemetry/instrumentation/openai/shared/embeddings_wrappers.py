@@ -200,7 +200,7 @@ def _set_embeddings_metrics(
             if name in OPENAI_LLM_USAGE_TOKEN_TYPES:
                 attributes_with_token_type = {
                     **shared_attributes,
-                    "llm.usage.token_type": name.split("_")[0],
+                    "gen_ai.token.type": name.split("_")[0],
                 }
                 token_counter.record(val, attributes=attributes_with_token_type)
 

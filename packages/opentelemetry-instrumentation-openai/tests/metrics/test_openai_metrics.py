@@ -43,9 +43,9 @@ def test_chat_completion_metrics(metrics_test_context, openai_client):
                 if metric.name == "gen_ai.client.token.usage":
                     found_token_metric = True
                     for data_point in metric.data.data_points:
-                        assert data_point.attributes["llm.usage.token_type"] in [
-                            "completion",
-                            "prompt",
+                        assert data_point.attributes["gen_ai.token.type"] in [
+                            "output",
+                            "input",
                         ]
                         assert len(data_point.attributes["server.address"]) > 0
                         assert data_point.sum > 0
@@ -118,9 +118,9 @@ def test_chat_streaming_metrics(metrics_test_context, openai_client):
                     if metric.name == "gen_ai.client.token.usage":
                         found_token_metric = True
                         for data_point in metric.data.data_points:
-                            assert data_point.attributes["llm.usage.token_type"] in [
-                                "completion",
-                                "prompt",
+                            assert data_point.attributes["gen_ai.token.type"] in [
+                                "output",
+                                "input",
                             ]
                             assert len(data_point.attributes["server.address"]) > 0
                             assert data_point.sum > 0

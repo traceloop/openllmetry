@@ -56,7 +56,7 @@ def _set_token_usage(
             prompt_tokens,
             attributes={
                 **metric_attributes,
-                "llm.usage.token_type": "prompt",
+                "gen_ai.token.type": "input",
             },
         )
 
@@ -65,7 +65,7 @@ def _set_token_usage(
             completion_tokens,
             attributes={
                 **metric_attributes,
-                "llm.usage.token_type": "completion",
+                "gen_ai.token.type": "output",
             },
         )
 

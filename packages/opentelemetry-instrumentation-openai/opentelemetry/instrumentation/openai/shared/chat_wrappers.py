@@ -303,7 +303,7 @@ def _set_token_counter_metrics(token_counter, usage, shared_attributes):
         if name in OPENAI_LLM_USAGE_TOKEN_TYPES:
             attributes_with_token_type = {
                 **shared_attributes,
-                "llm.usage.token_type": name.split("_")[0],
+                "gen_ai.token.type": name.split("_")[0],
             }
             token_counter.record(val, attributes=attributes_with_token_type)
 
@@ -420,14 +420,14 @@ def _set_streaming_token_metrics(
         if type(prompt_usage) is int and prompt_usage >= 0:
             attributes_with_token_type = {
                 **shared_attributes,
-                "llm.usage.token_type": "prompt",
+                "gen_ai.token.type": "input",
             }
             token_counter.record(prompt_usage, attributes=attributes_with_token_type)
 
         if type(completion_usage) is int and completion_usage >= 0:
             attributes_with_token_type = {
                 **shared_attributes,
-                "llm.usage.token_type": "completion",
+                "gen_ai.token.type": "output",
             }
             token_counter.record(completion_usage, attributes=attributes_with_token_type)
 
