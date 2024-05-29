@@ -13,7 +13,7 @@ interactions:
       content-type:
       - application/json
       host:
-      - api.cohere.ai
+      - api.cohere.com
       user-agent:
       - python-httpx/0.27.0
       x-fern-language:
@@ -21,20 +21,19 @@ interactions:
       x-fern-sdk-name:
       - cohere
       x-fern-sdk-version:
-      - 5.3.3
+      - 5.5.3
     method: POST
-    uri: https://api.cohere.ai/v1/generate
+    uri: https://api.cohere.com/v1/generate
   response:
     body:
-      string: '{"id":"63450068-b5ed-4dd1-80af-b1dea27b3fd4","generations":[{"id":"825ec8b3-d4c4-413e-9442-271fc8a13290","text":"
+      string: '{"id":"64c671fc-c536-41fc-adbd-5f7c81177371","generations":[{"id":"13255d0a-eef8-47fc-91f7-d2607d228fbf","text":"
         Arrrr, matey! Shiver me timbers, here''s a pirate-themed joke for ye:\n\nWhy
-        did the pirate want to go to the dentist?\n\nAnswer: Because he was feeling
-        a bit \"captainy\" about his teeth! \n\nArrrr, matey! Now ye be knowin'' why
-        pirates loved swashbuckling their way through a good joke. Ye can hoist this
-        joke on your deck and share it with yer scurvy crew! \n\nIf ye be wantin''
-        more pirate fun, I''ve got a treasure trove of pirate puns and one-liners
-        to keep the laughs aflowin''!","finish_reason":"COMPLETE"}],"prompt":"Tell
-        me a joke, pirate style","meta":{"api_version":{"version":"1"},"billed_units":{"input_tokens":7,"output_tokens":138}}}'
+        did the pirate go to the dentist?\n\nA: To get a buccaneer bicuspid! \n\nArrrr,
+        matey! Now ye scurvy dog better fetch me some loot, or I''ll be making ye
+        walk the plank!'' \n\nRated ARRRR for pirate jokes. \n\nYe scurvy pirate humor
+        may be silly, but it be mighty appreciated by ye pirate-loving mates! \n\nSniffle,
+        snort, ''argh''!","finish_reason":"COMPLETE"}],"prompt":"Tell me a joke, pirate
+        style","meta":{"api_version":{"version":"1"},"billed_units":{"input_tokens":7,"output_tokens":129}}}'
     headers:
       Alt-Svc:
       - h3=":443"; ma=2592000,h3-29=":443"; ma=2592000
@@ -45,17 +44,17 @@ interactions:
       cache-control:
       - no-cache, no-store, no-transform, must-revalidate, private, max-age=0
       content-length:
-      - '758'
+      - '682'
       content-type:
       - application/json
       date:
-      - Fri, 26 Apr 2024 20:28:56 GMT
+      - Wed, 29 May 2024 08:41:31 GMT
       expires:
       - Thu, 01 Jan 1970 00:00:00 UTC
       num_chars:
-      - '499'
+      - '421'
       num_tokens:
-      - '145'
+      - '136'
       pragma:
       - no-cache
       server:
@@ -65,11 +64,11 @@ interactions:
       x-accel-expires:
       - '0'
       x-debug-trace-id:
-      - 103237d3dfa4c5257dc14959c82e4bfe
+      - 75c5f7ef8cfc3eb1a1704b53a7acf45c
       x-endpoint-monthly-call-limit:
       - '1000'
       x-envoy-upstream-service-time:
-      - '4240'
+      - '3953'
       x-trial-endpoint-call-limit:
       - '40'
       x-trial-endpoint-call-remaining:
