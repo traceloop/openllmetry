@@ -248,7 +248,7 @@ def _token_usage_count(responses):
 
 @dont_throw
 def _set_response_attributes(
-    span, responses, token_counter, response_counter, duration_histogram, duration
+    span, responses, token_histogram, response_counter, duration_histogram, duration
 ):
     if not isinstance(responses, (list, dict)):
         return
@@ -288,20 +288,18 @@ def _set_response_attributes(
             prompt_token + completion_token,
         )
 
-        shared_attributes = {
-            "gen_ai.response.model": model_id,
-        }
-        if token_counter:
+        shared_attributes = _metric_shared_attributes(model_id, model_id)
+        if token_histogram:
             attributes_with_token_type = {
                 **shared_attributes,
-                "llm.usage.token_type": "completion",
+                "gen_ai.token.type": "output",
             }
-            token_counter.record(completion_token, attributes=attributes_with_token_type)
+            token_histogram.record(completion_token, attributes=attributes_with_token_type)
             attributes_with_token_type = {
                 **shared_attributes,
-                "llm.usage.token_type": "prompt",
+                "gen_ai.token.type": "input",
             }
-            token_counter.record(prompt_token, attributes=attributes_with_token_type)
+            token_histogram.record(prompt_token, attributes=attributes_with_token_type)
 
     if duration and isinstance(duration, (float, int)) and duration_histogram:
         duration_histogram.record(duration, attributes=shared_attributes)
@@ -311,7 +309,7 @@ def _build_and_set_stream_response(
     span,
     response,
     raw_flag,
-    token_counter,
+    token_histogram,
     response_counter,
     duration_histogram,
     start_time,
@@ -331,8 +329,7 @@ def _build_and_set_stream_response(
         else:
             yield item["results"][0]["generated_text"]
 
-    shared_attributes = {"gen_ai.response.model": stream_model_id, "stream": True}
-
+    shared_attributes = _metric_shared_attributes(stream_model_id, stream_model_id, True)
     stream_response = {
         "model_id": stream_model_id,
         "generated_text": stream_generated_text,
@@ -348,20 +345,20 @@ def _build_and_set_stream_response(
         }
         response_counter.add(1, attributes=attributes_with_reason)
 
-    # token counter
-    if token_counter:
+    # token histogram
+    if token_histogram:
         attributes_with_token_type = {
             **shared_attributes,
-            "llm.usage.token_type": "completion",
+            "gen_ai.token.type": "output",
         }
-        token_counter.record(
+        token_histogram.record(
             stream_generated_token_count, attributes=attributes_with_token_type
         )
         attributes_with_token_type = {
             **shared_attributes,
-            "llm.usage.token_type": "prompt",
+            "gen_ai.token.type": "input",
         }
-        token_counter.record(
+        token_histogram.record(
             stream_input_token_count, attributes=attributes_with_token_type
         )
 
@@ -377,13 +374,22 @@ def _build_and_set_stream_response(
     span.end()
 
 
+def _metric_shared_attributes(request_model: str, response_model: str, is_streaming: bool = False):
+    return {
+        "gen_ai.request.model": request_model,
+        "gen_ai.response.model": response_model,
+        "gen_ai.system": "watsonx",
+        "stream": is_streaming
+    }
+
+
 def _with_tracer_wrapper(func):
     """Helper for providing tracer for wrapper functions."""
 
     def _with_tracer(
         tracer,
         to_wrap,
-        token_counter,
+        token_histogram,
         response_counter,
         duration_histogram,
         exception_counter,
@@ -392,7 +398,7 @@ def _with_tracer_wrapper(func):
             return func(
                 tracer,
                 to_wrap,
-                token_counter,
+                token_histogram,
                 response_counter,
                 duration_histogram,
                 exception_counter,
@@ -411,7 +417,7 @@ def _with_tracer_wrapper(func):
 def _wrap(
     tracer,
     to_wrap,
-    token_counter: Counter,
+    token_histogram: Counter,
     response_counter: Counter,
     duration_histogram: Histogram,
     exception_counter: Counter,
@@ -469,7 +475,7 @@ def _wrap(
                 span,
                 response,
                 raw_flag,
-                token_counter,
+                token_histogram,
                 response_counter,
                 duration_histogram,
                 start_time,
@@ -479,7 +485,7 @@ def _wrap(
             _set_response_attributes(
                 span,
                 response,
-                token_counter,
+                token_histogram,
                 response_counter,
                 duration_histogram,
                 duration,
@@ -513,10 +519,10 @@ class WatsonxInstrumentor(BaseInstrumentor):
         meter = get_meter(__name__, __version__, meter_provider)
 
         if is_metrics_enabled():
-            token_counter = meter.create_counter(
-                name="llm.watsonx.completions.tokens",
+            token_histogram = meter.create_histogram(
+                name="gen_ai.client.token.usage",
                 unit="token",
-                description="Number of tokens used in prompt and completions",
+                description="Measures number of input and output tokens used",
             )
 
             response_counter = meter.create_counter(
@@ -526,18 +532,18 @@ class WatsonxInstrumentor(BaseInstrumentor):
             )
 
             duration_histogram = meter.create_histogram(
-                name="llm.watsonx.completions.duration",
+                name="gen_ai.client.operation.duration",
                 unit="s",
-                description="Duration of completion operation",
+                description="GenAI operation duration",
             )
 
             exception_counter = meter.create_counter(
-                name="llm.watsonx.completionss.exceptions",
+                name="llm.watsonx.completions.exceptions",
                 unit="time",
                 description="Number of exceptions occurred during completions",
             )
         else:
-            (token_counter, response_counter, duration_histogram, exception_counter) = (
+            (token_histogram, response_counter, duration_histogram, exception_counter) = (
                 None,
                 None,
                 None,
@@ -555,7 +561,7 @@ class WatsonxInstrumentor(BaseInstrumentor):
                     _wrap(
                         tracer,
                         wrapped_method,
-                        token_counter,
+                        token_histogram,
                         response_counter,
                         duration_histogram,
                         exception_counter,
