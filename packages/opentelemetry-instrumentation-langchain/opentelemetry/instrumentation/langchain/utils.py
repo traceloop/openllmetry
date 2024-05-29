@@ -54,7 +54,9 @@ def dont_throw(func):
         try:
             return func(*args, **kwargs)
         except Exception as e:
-            logger.warning("Failed to execute %s, error: %s", func.__name__, str(e))
+            logger.debug(
+                "OpenLLMetry failed to trace in %s, error: %s", func.__name__, str(e)
+            )
             if Config.exception_logger:
                 Config.exception_logger(e)
 
@@ -78,7 +80,7 @@ def process_request(span, args, kwargs):
 
         span.set_attribute(
             SpanAttributes.TRACELOOP_ENTITY_INPUT,
-            json.dumps(entity_input, cls=CallbackFilteredJSONEncoder)
+            json.dumps(entity_input, cls=CallbackFilteredJSONEncoder),
         )
 
 
