@@ -13,7 +13,7 @@ interactions:
       content-type:
       - application/json
       host:
-      - api.cohere.ai
+      - api.cohere.com
       user-agent:
       - python-httpx/0.27.0
       x-fern-language:
@@ -21,46 +21,46 @@ interactions:
       x-fern-sdk-name:
       - cohere
       x-fern-sdk-version:
-      - 5.3.3
+      - 5.5.3
     method: POST
-    uri: https://api.cohere.ai/v1/chat
+    uri: https://api.cohere.com/v1/chat
   response:
     body:
-      string: '{"response_id":"18ad0e19-ed56-4548-a36c-1ce091ab2a56","text":"Arrrr,
+      string: '{"response_id":"440f51f4-3e47-44b6-a5d7-5ba33edcfc58","text":"Arrrr,
         matey! Shiver me timbers, here''s a pirate-style joke for ye:\n\nWhy did the
-        pirate go to the dentist?\n\nA: Because he wanted to find some treasure! ARRRRR!!!
-        \n\nPirates tend to say \"ARRRR!!\" a lot. I hope you enjoyed this pirate-themed
-        joke! If you''d like to set sail toward laughter''s horizon and discover more
-        pirate jokes, shoot cannons with any additional requests! I be happy to entertain
-        ye.","generation_id":"5e57db13-5b08-4f43-a0c6-972714e98bfe","chat_history":[{"role":"USER","message":"Tell
+        pirate want to join the circus? \n\nArrrr, because he wanted to be a trapeze
+        arrrrrrtist! \n\nYe scurvy dogs and seafaring scalawags better than that ye
+        hath seen the last! \n\nHonestly, I be tired of these pirate puns, I need
+        a pirate holiday on a nice quiet beach, with not enough rum to get too crazy
+        but just enough to forget all me worries.","generation_id":"4f73027b-5f1f-478c-9906-97d0ec74e19a","chat_history":[{"role":"USER","message":"Tell
         me a joke, pirate style"},{"role":"CHATBOT","message":"Arrrr, matey! Shiver
-        me timbers, here''s a pirate-style joke for ye:\n\nWhy did the pirate go to
-        the dentist?\n\nA: Because he wanted to find some treasure! ARRRRR!!! \n\nPirates
-        tend to say \"ARRRR!!\" a lot. I hope you enjoyed this pirate-themed joke!
-        If you''d like to set sail toward laughter''s horizon and discover more pirate
-        jokes, shoot cannons with any additional requests! I be happy to entertain
-        ye."}],"finish_reason":"COMPLETE","meta":{"api_version":{"version":"1"},"billed_units":{"input_tokens":58,"output_tokens":106},"tokens":{"input_tokens":69,"output_tokens":106}}}'
+        me timbers, here''s a pirate-style joke for ye:\n\nWhy did the pirate want
+        to join the circus? \n\nArrrr, because he wanted to be a trapeze arrrrrrtist!
+        \n\nYe scurvy dogs and seafaring scalawags better than that ye hath seen the
+        last! \n\nHonestly, I be tired of these pirate puns, I need a pirate holiday
+        on a nice quiet beach, with not enough rum to get too crazy but just enough
+        to forget all me worries."}],"finish_reason":"COMPLETE","meta":{"api_version":{"version":"1"},"billed_units":{"input_tokens":58,"output_tokens":119},"tokens":{"input_tokens":69,"output_tokens":119}}}'
     headers:
       Alt-Svc:
       - h3=":443"; ma=2592000,h3-29=":443"; ma=2592000
+      Content-Length:
+      - '1251'
       Via:
       - 1.1 google
       access-control-expose-headers:
       - X-Debug-Trace-ID
       cache-control:
       - no-cache, no-store, no-transform, must-revalidate, private, max-age=0
-      content-length:
-      - '1211'
       content-type:
       - application/json
       date:
-      - Fri, 26 Apr 2024 20:28:51 GMT
+      - Wed, 29 May 2024 08:41:26 GMT
       expires:
       - Thu, 01 Jan 1970 00:00:00 UTC
       num_chars:
-      - '320'
+      - '321'
       num_tokens:
-      - '164'
+      - '177'
       pragma:
       - no-cache
       server:
@@ -70,11 +70,11 @@ interactions:
       x-accel-expires:
       - '0'
       x-debug-trace-id:
-      - fab7aca4ca1227c67f3f4940232ece47
+      - ded13e833664521180c334614f2de562
       x-endpoint-monthly-call-limit:
       - '1000'
       x-envoy-upstream-service-time:
-      - '3476'
+      - '3858'
       x-trial-endpoint-call-limit:
       - '40'
       x-trial-endpoint-call-remaining:
