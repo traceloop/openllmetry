@@ -162,8 +162,6 @@ def test_chat_streaming_metrics(metrics_test_context, openai_client):
                             data_point.sum > 0 for data_point in metric.data.data_points
                         )
 
-                    print(metric.name)
-                    print(data_point.attributes)
                     assert data_point.attributes.get("gen_ai.system") == 'openai' 
                     assert str(data_point.attributes["gen_ai.response.model"]).startswith('gpt-3.5-turbo')
                     assert data_point.attributes["gen_ai.operation.name"] == 'chat'
