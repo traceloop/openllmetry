@@ -1,3 +1,12 @@
+## v0.21.1 (2024-05-30)
+
+### Fix
+
+- log tracing errors on debug level (#1180)
+- **bedrock**: support streaming API (#1179)
+- **weaviate**: support v4.6.3 (#1134)
+- **sdk**: wrong package check for mistral instrumentations (#1168)
+
 ## v0.21.0 (2024-05-27)
 
 ### Feat
