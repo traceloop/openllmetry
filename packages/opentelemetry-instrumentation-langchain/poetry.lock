@@ -199,13 +199,13 @@ tests-no-zope = ["attrs[tests-mypy]", "cloudpickle", "hypothesis", "pympler", "p
 
 [[package]]
 name = "autopep8"
-version = "2.1.0"
+version = "2.1.2"
 description = "A tool that automatically formats Python code to conform to the PEP 8 style guide"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "autopep8-2.1.0-py2.py3-none-any.whl", hash = "sha256:2bb76888c5edbcafe6aabab3c47ba534f5a2c2d245c2eddced4a30c4b4946357"},
-    {file = "autopep8-2.1.0.tar.gz", hash = "sha256:1fa8964e4618929488f4ec36795c7ff12924a68b8bf01366c094fc52f770b6e7"},
+    {file = "autopep8-2.1.2-py2.py3-none-any.whl", hash = "sha256:fead1b74ae69bf939b7eb371c83522a9262d9ac4b49f1c6f3d38ca1e31707f74"},
+    {file = "autopep8-2.1.2.tar.gz", hash = "sha256:77b07146bf127aa88de78efc270d395a54ebb8284fdbe6542c4aeb8d969f4d9a"},
 ]
 
 [package.dependencies]
@@ -2451,4 +2451,4 @@ instruments = []
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<4"
-content-hash = "319f93d6015369eada09c0d1ac48cea779d40bcb73da73d979a41f6d751db643"
+content-hash = "5c3143fc1a240b0062c1451bc66650a539e5ae319aa7ee45626b7e08db6b24aa"
