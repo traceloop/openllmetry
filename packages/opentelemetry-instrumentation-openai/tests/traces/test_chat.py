@@ -1,4 +1,5 @@
 import pytest
+from opentelemetry.instrumentation.openai.shared import OPENAI_API_BASE
 from opentelemetry.semconv.ai import SpanAttributes
 
 
