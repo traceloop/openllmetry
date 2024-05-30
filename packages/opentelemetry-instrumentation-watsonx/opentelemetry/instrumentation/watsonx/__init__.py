@@ -288,7 +288,9 @@ def _set_response_attributes(
             prompt_token + completion_token,
         )
 
-        shared_attributes = _metric_shared_attributes(model_id, model_id)
+        shared_attributes = _metric_shared_attributes(
+            response_model=model_id
+        )
         if token_histogram:
             attributes_with_token_type = {
                 **shared_attributes,
@@ -329,7 +331,10 @@ def _build_and_set_stream_response(
         else:
             yield item["results"][0]["generated_text"]
 
-    shared_attributes = _metric_shared_attributes(stream_model_id, stream_model_id, True)
+    shared_attributes = _metric_shared_attributes(
+        response_model=stream_model_id,
+        is_streaming=True
+    )
     stream_response = {
         "model_id": stream_model_id,
         "generated_text": stream_generated_text,
@@ -374,9 +379,8 @@ def _build_and_set_stream_response(
     span.end()
 
 
-def _metric_shared_attributes(request_model: str, response_model: str, is_streaming: bool = False):
+def _metric_shared_attributes(response_model: str, is_streaming: bool = False):
     return {
-        "gen_ai.request.model": request_model,
         "gen_ai.response.model": response_model,
         "gen_ai.system": "watsonx",
         "stream": is_streaming
@@ -417,7 +421,7 @@ def _with_tracer_wrapper(func):
 def _wrap(
     tracer,
     to_wrap,
-    token_histogram: Counter,
+    token_histogram: Histogram,
     response_counter: Counter,
     duration_histogram: Histogram,
     exception_counter: Counter,

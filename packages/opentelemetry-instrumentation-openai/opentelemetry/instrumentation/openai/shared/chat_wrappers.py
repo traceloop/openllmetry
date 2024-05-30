@@ -14,10 +14,12 @@ from opentelemetry.instrumentation.openai.utils import (
     dont_throw,
 )
 from opentelemetry.instrumentation.openai.shared import (
+    _metric_shared_attributes,
     _set_client_attributes,
     _set_request_attributes,
     _set_span_attribute,
     _set_functions_attributes,
+    _token_type,
     set_tools_attributes,
     _set_response_attributes,
     is_streaming_response,
@@ -267,11 +269,12 @@ def _handle_response(
 def _set_chat_metrics(
     instance, token_counter, choice_counter, duration_histogram, response_dict, duration
 ):
-    shared_attributes = {
-        "gen_ai.response.model": response_dict.get("model") or None,
-        "server.address": _get_openai_base_url(instance),
-        "stream": False,
-    }
+    shared_attributes = _metric_shared_attributes(
+        response_model=response_dict.get("model") or None,
+        operation="chat",
+        server_address=_get_openai_base_url(instance),
+        is_streaming=False
+    )
 
     # token metrics
     usage = response_dict.get("usage")  # type: dict
@@ -303,7 +306,7 @@ def _set_token_counter_metrics(token_counter, usage, shared_attributes):
         if name in OPENAI_LLM_USAGE_TOKEN_TYPES:
             attributes_with_token_type = {
                 **shared_attributes,
-                "gen_ai.token.type": name.split("_")[0],
+                "gen_ai.token.type": _token_type(name),
             }
             token_counter.record(val, attributes=attributes_with_token_type)
 
@@ -537,11 +540,12 @@ class ChatStream(ObjectProxy):
                 complete_choice["message"]["role"] = delta.get("role")
 
     def _close_span(self):
-        shared_attributes = {
-            "gen_ai.response.model": self._complete_response.get("model") or None,
-            "server.address": _get_openai_base_url(self._instance),
-            "stream": True,
-        }
+        shared_attributes = _metric_shared_attributes(
+            response_model=self._complete_response.get("model") or None,
+            operation="chat",
+            server_address=_get_openai_base_url(self._instance),
+            is_streaming=True
+        )
 
         if not is_azure_openai(self._instance):
             _set_streaming_token_metrics(

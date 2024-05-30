@@ -122,14 +122,12 @@ def test_chat_streaming_metrics(metrics_test_context, openai_client):
                                 "output",
                                 "input",
                             ]
-                            assert len(data_point.attributes["server.address"]) > 0
                             assert data_point.sum > 0
 
                     if metric.name == "gen_ai.client.generation.choices":
                         found_choice_metric = True
                         for data_point in metric.data.data_points:
                             assert data_point.value >= 1
-                            assert len(data_point.attributes["server.address"]) > 0
 
                     if metric.name == "gen_ai.client.operation.duration":
                         found_duration_metric = True
@@ -138,10 +136,6 @@ def test_chat_streaming_metrics(metrics_test_context, openai_client):
                         )
                         assert any(
                             data_point.sum > 0 for data_point in metric.data.data_points
-                        )
-                        assert all(
-                            len(data_point.attributes["server.address"]) > 0
-                            for data_point in metric.data.data_points
                         )
 
                     if (
@@ -167,6 +161,14 @@ def test_chat_streaming_metrics(metrics_test_context, openai_client):
                         assert any(
                             data_point.sum > 0 for data_point in metric.data.data_points
                         )
+
+                    print(metric.name)
+                    print(data_point.attributes)
+                    assert data_point.attributes.get("gen_ai.system") == 'openai' 
+                    assert str(data_point.attributes["gen_ai.response.model"]).startswith('gpt-3.5-turbo')
+                    assert data_point.attributes["gen_ai.operation.name"] == 'chat'
+                    assert data_point.attributes["stream"] == True
+                    assert data_point.attributes["server.address"] != ""
 
         assert found_token_metric is True
         assert found_choice_metric is True
