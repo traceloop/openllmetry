@@ -44,14 +44,14 @@ def set_query_input_attributes(span, kwargs):
     if vector:
         span.add_event(
             name=f"{Events.DB_QUERY_EMBEDDINGS.value}",
-            attributes={f"{EventAttributes.DB_QUERY_EMBEDDINGS_VECTOR}": vector},
+            attributes={f"{EventAttributes.DB_QUERY_EMBEDDINGS_VECTOR.value}": vector},
         )
 
     sparse_vector = kwargs.get("sparse_vector")
     if sparse_vector:
         span.add_event(
             name=f"{Events.DB_QUERY_EMBEDDINGS.value}",
-            attributes={f"{EventAttributes.DB_QUERY_EMBEDDINGS_VECTOR}": sparse_vector},
+            attributes={f"{EventAttributes.DB_QUERY_EMBEDDINGS_VECTOR.value}": sparse_vector},
         )
 
     queries = kwargs.get("queries")

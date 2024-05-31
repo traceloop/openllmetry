@@ -1,20 +1,22 @@
-from opentelemetry import metrics
-from opentelemetry.sdk.metrics.view import View, ExplicitBucketHistogramAggregation
-from opentelemetry.sdk.resources import Resource
-from opentelemetry.sdk.metrics import MeterProvider
+from collections.abc import Sequence
+from typing import Dict
 
-from opentelemetry.sdk.metrics.export import (
-    PeriodicExportingMetricReader,
-    MetricExporter,
-)
 from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import (
     OTLPMetricExporter as GRPCExporter,
 )
 from opentelemetry.exporter.otlp.proto.http.metric_exporter import (
     OTLPMetricExporter as HTTPExporter,
 )
-from typing import Dict
-from collections.abc import Sequence
+from opentelemetry.semconv.ai import SpanAttributes
+from opentelemetry.sdk.metrics import MeterProvider
+from opentelemetry.sdk.metrics.export import (
+    PeriodicExportingMetricReader,
+    MetricExporter,
+)
+from opentelemetry.sdk.metrics.view import View, ExplicitBucketHistogramAggregation
+from opentelemetry.sdk.resources import Resource
+
+from opentelemetry import metrics
 
 
 class MetricsWrapper(object):

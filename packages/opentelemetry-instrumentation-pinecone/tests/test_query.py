@@ -74,7 +74,7 @@ def test_pinecone_grpc_retrieval(traces_exporter, openai_client):
     spans = traces_exporter.get_finished_spans()
     assert [span.name for span in spans] == [
         "openai.embeddings",
-        f"{SpanAttributes.PINECONE_QUERY}",
+        "pinecone.query",
         "openai.completion",
     ]
 
@@ -96,11 +96,11 @@ def test_pinecone_retrieval(traces_exporter, metrics_reader, openai_client):
     spans = traces_exporter.get_finished_spans()
     assert [span.name for span in spans] == [
         "openai.embeddings",
-        f"{SpanAttributes.PINECONE_QUERY}",
+        "pinecone.query",
         "openai.completion",
     ]
 
-    span = next(span for span in spans if span.name == f"{SpanAttributes.PINECONE_QUERY}")
+    span = next(span for span in spans if span.name == SpanAttributes.PINECONE_QUERY)
     assert (
         span.attributes.get("server.address")
         == "https://gen-qa-openai-fast-90c5d9e.svc.gcp-starter.pinecone.io"
@@ -115,10 +115,10 @@ def test_pinecone_retrieval(traces_exporter, metrics_reader, openai_client):
     assert len(events) > 0
 
     embeddings_events = [
-        event for event in span.events if f"{Events.DB_QUERY_EMBEDDINGS.value}" in event.name
+        event for event in span.events if Events.DB_QUERY_EMBEDDINGS.value in event.name
     ]
     for event in embeddings_events:
-        assert event.name == f"{Events.DB_QUERY_EMBEDDINGS.value}"
+        assert event.name == Events.DB_QUERY_EMBEDDINGS.value
         vector = event.attributes.get(f"{event.name}.vector")
         assert len(vector) > 100
         for v in vector:

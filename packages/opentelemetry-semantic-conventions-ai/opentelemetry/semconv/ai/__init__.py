@@ -42,7 +42,7 @@ class SpanAttributes:
 
     # OpenAI
     LLM_OPENAI_CHAT_COMPLETIONS = "llm.openai.chat_completions"
-    LLM_OPENAI_EMBEDDING = "llm.openai.embeddings"
+    LLM_OPENAI_EMBEDDINGS = "llm.openai.embeddings"
     LLM_OPENAI_IMAGE_GENERATIONS = "llm.openai.image_generations"
     OPENAI_RESOURCES_BETA = "openai.resources.beta"
     OPENAI_RESOURCES_CHAT = "openai.resources.chat"
@@ -87,6 +87,7 @@ class SpanAttributes:
     CHROMADB_GET = "db.chroma.get"
     CHROMADB_INSERT = "db.chroma.insert"
     CHROMADB_PEEK = "db.chroma.peek"
+    CHROMADB_QUERY = "db.chroma.query"
     CHROMADB_UPDATE = "db.chroma.update"
     CHROMADB_UPSERT = "db.chroma.upsert"
 

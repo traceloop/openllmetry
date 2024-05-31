@@ -39,7 +39,7 @@ WRAPPED_METHODS = [
     {
         "object": "GRPCIndex",
         "method": "query",
-        "span_name": f"{SpanAttributes.PINECONE_QUERY}",
+        "span_name": "pinecone.query",
     },
     {
         "object": "GRPCIndex",
@@ -54,7 +54,7 @@ WRAPPED_METHODS = [
     {
         "object": "Index",
         "method": "query",
-        "span_name": f"{SpanAttributes.PINECONE_QUERY}",
+        "span_name": "pinecone.query",
     },
     {
         "object": "Index",
@@ -195,22 +195,22 @@ class PineconeInstrumentor(BaseInstrumentor):
             meter = get_meter(__name__, __version__, meter_provider)
 
             query_duration_metric = meter.create_histogram(
-                f"{SpanAttributes.PINECONE_DB_QUERY}.duration",
+                f"{AISpanAttributes.PINECONE_DB_QUERY}.duration",
                 "s",
                 "Duration of query operations to Pinecone",
             )
             read_units_metric = meter.create_counter(
-                f"{SpanAttributes.PINECONE_DB_USAGE}.read_units",
+                f"{AISpanAttributes.PINECONE_DB_USAGE}.read_units",
                 "unit",
                 "Number of read units consumed in serverless calls",
             )
             write_units_metric = meter.create_counter(
-                f"{SpanAttributes.PINECONE_DB_USAGE}.write_units",
+                f"{AISpanAttributes.PINECONE_DB_USAGE}.write_units",
                 "unit",
                 "Number of write units consumed in serverless calls",
             )
             scores_metric = meter.create_histogram(
-                f"{SpanAttributes.PINECONE_DB_QUERY}.scores",
+                f"{AISpanAttributes.PINECONE_DB_QUERY}.scores",
                 "score",
                 "Scores returned from Pinecone calls",
             )

@@ -9,6 +9,7 @@ from opentelemetry.instrumentation.utils import unwrap
 from opentelemetry.instrumentation.weaviate.config import Config
 from opentelemetry.instrumentation.weaviate.version import __version__
 from opentelemetry.instrumentation.weaviate.wrapper import _wrap
+from opentelemetry.semconv.ai import SpanAttributes
 from opentelemetry.trace import get_tracer
 from wrapt import wrap_function_wrapper
 

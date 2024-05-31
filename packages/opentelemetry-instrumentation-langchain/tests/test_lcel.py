@@ -25,7 +25,7 @@ CHAT_PROMPT_TEMPLATE_LANGCHAIN_TASK = "ChatPromptTemplate.langchain.task"
 JSON_OUTPUT_FUNCTIONS_PARSER_LANGCHAIN_TASK = "JsonOutputFunctionsParser.langchain.task"
 OPENAI_CHAT = "openai.chat"
 PROMPT_TEMPLATE_LANGCHAIN_TASK = "PromptTemplate.langchain.task"
-RUNNABLE_SEQUENCE_LANGCHAIN_WORKFLOW = "RunnableSequence.langchain.workflow",
+RUNNABLE_SEQUENCE_LANGCHAIN_WORKFLOW = "RunnableSequence.langchain.workflow"
 THIS_IS_A_TEST_CHAIN_LANGCHAIN_WORKFLOW = "ThisIsATestChain.langchain.workflow"
 
 
@@ -154,7 +154,7 @@ async def test_async_lcel(exporter):
         OPENAI_CHAT,
         CHAT_OPENAI_LANGCHAIN_TASK,
         "StrOutputParser.langchain.task",
-        RUNNABLE_SEQUENCE_LANGCHAIN_WORKFLOW
+        RUNNABLE_SEQUENCE_LANGCHAIN_WORKFLOW,
     } == set([span.name for span in spans])
 
     workflow_span = next(
@@ -201,7 +201,7 @@ def test_streaming(exporter):
         OPENAI_CHAT,
         CHAT_OPENAI_LANGCHAIN_TASK,
         "StrOutputParser.langchain.task",
-        RUNNABLE_SEQUENCE_LANGCHAIN_WORKFLOW
+        RUNNABLE_SEQUENCE_LANGCHAIN_WORKFLOW,
     ] == [span.name for span in spans]
 
 
@@ -249,7 +249,7 @@ def test_custom_llm(exporter):
     assert [
         CHAT_PROMPT_TEMPLATE_LANGCHAIN_TASK,
         "HuggingFaceTextGenInference.chat",
-        RUNNABLE_SEQUENCE_LANGCHAIN_WORKFLOW
+        RUNNABLE_SEQUENCE_LANGCHAIN_WORKFLOW,
     ] == [span.name for span in spans]
 
     hugging_face_span = next(
@@ -325,7 +325,7 @@ def test_anthropic(exporter):
     assert [
         CHAT_PROMPT_TEMPLATE_LANGCHAIN_TASK,
         "ChatAnthropic.langchain.task",
-        RUNNABLE_SEQUENCE_LANGCHAIN_WORKFLOW
+        RUNNABLE_SEQUENCE_LANGCHAIN_WORKFLOW,
     ] == [span.name for span in spans]
 
     anthropic_span = next(
@@ -366,7 +366,7 @@ def test_bedrock(exporter):
         CHAT_PROMPT_TEMPLATE_LANGCHAIN_TASK,
         "bedrock.completion",
         "BedrockChat.langchain.task",
-        RUNNABLE_SEQUENCE_LANGCHAIN_WORKFLOW
+        RUNNABLE_SEQUENCE_LANGCHAIN_WORKFLOW,
     ] == [span.name for span in spans]
 
     bedrock_span = next(
