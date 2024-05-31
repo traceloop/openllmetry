@@ -101,65 +101,65 @@ def count_or_none(obj):
 @dont_throw
 def _set_add_attributes(span, kwargs):
     _set_span_attribute(
-        span, "db.chroma.add.ids_count", count_or_none(kwargs.get("ids"))
+        span, f"{SpanAttributes.CHROMADB_ADD}.ids_count", count_or_none(kwargs.get("ids"))
     )
     _set_span_attribute(
-        span, "db.chroma.add.embeddings_count", count_or_none(kwargs.get("embeddings"))
+        span, f"{SpanAttributes.CHROMADB_ADD}.embeddings_count", count_or_none(kwargs.get("embeddings"))
     )
     _set_span_attribute(
-        span, "db.chroma.add.metadatas_count", count_or_none(kwargs.get("metadatas"))
+        span, f"{SpanAttributes.CHROMADB_ADD}.metadatas_count", count_or_none(kwargs.get("metadatas"))
     )
     _set_span_attribute(
-        span, "db.chroma.add.documents_count", count_or_none(kwargs.get("documents"))
+        span, f"{SpanAttributes.CHROMADB_ADD}.documents_count", count_or_none(kwargs.get("documents"))
     )
 
 
 @dont_throw
 def _set_get_attributes(span, kwargs):
     _set_span_attribute(
-        span, "db.chroma.get.ids_count", count_or_none(kwargs.get("ids"))
+        span, f"{SpanAttributes.CHROMADB_GET}.ids_count", count_or_none(kwargs.get("ids"))
     )
-    _set_span_attribute(span, "db.chroma.get.where", _encode_where(kwargs.get("where")))
-    _set_span_attribute(span, "db.chroma.get.limit", kwargs.get("limit"))
-    _set_span_attribute(span, "db.chroma.get.offset", kwargs.get("offset"))
+    _set_span_attribute(span, f"{SpanAttributes.CHROMADB_GET}.where", _encode_where(kwargs.get("where")))
+    _set_span_attribute(span, f"{SpanAttributes.CHROMADB_GET}.limit", kwargs.get("limit"))
+    _set_span_attribute(span, f"{SpanAttributes.CHROMADB_GET}.offset", kwargs.get("offset"))
     _set_span_attribute(
         span,
-        "db.chroma.get.where_document",
+        f"{SpanAttributes.CHROMADB_GET}.where_document",
         _encode_where_document(kwargs.get("where_document")),
     )
     _set_span_attribute(
-        span, "db.chroma.get.include", _encode_include(kwargs.get("include"))
+        span, f"{SpanAttributes.CHROMADB_GET}.include", _encode_include(kwargs.get("include"))
     )
 
 
 @dont_throw
 def _set_peek_attributes(span, kwargs):
-    _set_span_attribute(span, "db.chroma.peek.limit", kwargs.get("limit"))
+    _set_span_attribute(span, f"{SpanAttributes.CHROMADB_PEEK}.limit", kwargs.get("limit"))
 
 
 @dont_throw
 def _set_query_attributes(span, kwargs):
     _set_span_attribute(
         span,
-        "db.chroma.query.query_embeddings_count",
+        f"{SpanAttributes.CHROMADB_QUERY}.query_embeddings_count",
         count_or_none(kwargs.get("query_embeddings")),
     )
     _set_span_attribute(
         span,
-        "db.chroma.query.query_texts_count",
+        f"{SpanAttributes.CHROMADB_QUERY}.query_texts_count",
         count_or_none(kwargs.get("query_texts")),
     )
-    _set_span_attribute(span, "db.chroma.query.n_results", kwargs.get("n_results"))
+    _set_span_attribute(span, f"{SpanAttributes.CHROMADB_QUERY}.n_results", kwargs.get("n_results"))
     _set_span_attribute(
-        span, "db.chroma.query.where", _encode_where(kwargs.get("where"))
+        span, f"{SpanAttributes.CHROMADB_QUERY}.where", _encode_where(kwargs.get("where"))
     )
     _set_span_attribute(
         span,
-        "db.chroma.query.where_document",
+        f"{SpanAttributes.CHROMADB_QUERY}.where_document",
         _encode_where_document(kwargs.get("where_document")),
     )
     _set_span_attribute(
-        span, "db.chroma.query.include", _encode_include(kwargs.get("include"))
+        span, f"{SpanAttributes.CHROMADB_QUERY}.include", _encode_include(kwargs.get("include"))
     )
 
 
@@ -167,7 +167,7 @@ def _set_query_attributes(span, kwargs):
 def _set_segment_query_attributes(span, kwargs):
     _set_span_attribute(
         span,
-        "db.chroma.query.segment._query.collection_id",
+        f"{SpanAttributes.CHROMADB_QUERY}.segment._query.collection_id",
         str(kwargs.get("collection_id")),
     )
 
@@ -252,25 +252,25 @@ def _add_query_result_events(span, kwargs):
 
 @dont_throw
 def _set_modify_attributes(span, kwargs):
-    _set_span_attribute(span, "db.chroma.modify.name", kwargs.get("name"))
+    _set_span_attribute(span, f"{SpanAttributes.CHROMADB_MODIFY}.name", kwargs.get("name"))
     # TODO: Add metadata attribute
 
 
 @dont_throw
 def _set_update_attributes(span, kwargs):
     _set_span_attribute(
-        span, "db.chroma.update.ids_count", count_or_none(kwargs.get("ids"))
+        span, f"{SpanAttributes.CHROMADB_UPDATE}.ids_count", count_or_none(kwargs.get("ids"))
     )
     _set_span_attribute(
         span,
-        "db.chroma.update.embeddings_count",
+        f"{SpanAttributes.CHROMADB_UPDATE}.embeddings_count",
         count_or_none(kwargs.get("embeddings")),
     )
     _set_span_attribute(
-        span, "db.chroma.update.metadatas_count", count_or_none(kwargs.get("metadatas"))
+        span, f"{SpanAttributes.CHROMADB_UPDATE}.metadatas_count", count_or_none(kwargs.get("metadatas"))
     )
     _set_span_attribute(
-        span, "db.chroma.update.documents_count", count_or_none(kwargs.get("documents"))
+        span, f"{SpanAttributes.CHROMADB_UPDATE}.documents_count", count_or_none(kwargs.get("documents"))
     )
 
 
@@ -278,27 +278,27 @@ def _set_update_attributes(span, kwargs):
 def _set_upsert_attributes(span, kwargs):
     _set_span_attribute(
         span,
-        "db.chroma.upsert.embeddings_count",
+        f"{SpanAttributes.CHROMADB_UPSERT}.embeddings_count",
         count_or_none(kwargs.get("embeddings")),
     )
     _set_span_attribute(
-        span, "db.chroma.upsert.metadatas_count", count_or_none(kwargs.get("metadatas"))
+        span, f"{SpanAttributes.CHROMADB_UPSERT}.metadatas_count", count_or_none(kwargs.get("metadatas"))
     )
     _set_span_attribute(
-        span, "db.chroma.upsert.documents_count", count_or_none(kwargs.get("documents"))
+        span, f"{SpanAttributes.CHROMADB_UPSERT}.documents_count", count_or_none(kwargs.get("documents"))
     )
 
 
 @dont_throw
 def _set_delete_attributes(span, kwargs):
     _set_span_attribute(
-        span, "db.chroma.delete.ids_count", count_or_none(kwargs.get("ids"))
+        span, f"{SpanAttributes.CHROMADB_DELETE}.ids_count", count_or_none(kwargs.get("ids"))
     )
     _set_span_attribute(
-        span, "db.chroma.delete.where", _encode_where(kwargs.get("where"))
+        span, f"{SpanAttributes.CHROMADB_DELETE}.where", _encode_where(kwargs.get("where"))
     )
     _set_span_attribute(
         span,
-        "db.chroma.delete.where_document",
+        f"{SpanAttributes.CHROMADB_DELETE}.where_document",
         _encode_where_document(kwargs.get("where_document")),
     )

@@ -65,6 +65,15 @@ class SpanAttributes:
     LLM_MIN_NEW_TOKENS = "llm.watsonx.min_new_tokens"
     LLM_REPETITION_PENALTY = "llm.watsonx.repetition_penalty"
 
+    # Chroma db
+    CHROMADB_ADD = "db.chroma.add"
+    CHROMADB_DELETE = "db.chroma.delete"
+    CHROMADB_GET = "db.chroma.get"
+    CHROMADB_INSERT = "db.chroma.insert"
+    CHROMADB_PEEK = "db.chroma.peek"
+    CHROMADB_UPDATE = "db.chroma.update"
+    CHROMADB_UPSERT = "db.chroma.upsert"
+
 
 class Events(Enum):
     DB_QUERY_EMBEDDINGS = "db.query.embeddings"

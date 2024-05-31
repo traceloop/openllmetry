@@ -3,7 +3,7 @@ import random
 
 import pymilvus
 import pytest
-from opentelemetry.semconv.ai import SpanAttributes
+from opentelemetry.semconv.ai import Events, SpanAttributes
 
 path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "milvus.db")
 milvus = pymilvus.MilvusClient(uri=path)
@@ -82,7 +82,7 @@ def test_milvus_query_equal(exporter, collection):
 
     events = span.events
     for event in events:
-        assert event.name == "db.query.result"
+        assert event.name == Events.DB_QUERY_RESULT.value
         tag = event.attributes.get("color_tag")
         _id = event.attributes.get("id")
         assert isinstance(tag, str)
@@ -108,7 +108,7 @@ def test_milvus_query_like(exporter, collection):
     assert span.attributes.get("db.milvus.query.limit") == 2
     events = span.events
     for event in events:
-        assert event.name == "db.query.result"
+        assert event.name == Events.DB_QUERY_RESULT.value
         tag = event.attributes.get("color_tag")
         _id = event.attributes.get("id")
         assert isinstance(tag, str)
@@ -134,7 +134,7 @@ def test_milvus_query_or(exporter, collection):
     assert span.attributes.get("db.milvus.query.limit") == 3
     events = span.events
     for event in events:
-        assert event.name == "db.query.result"
+        assert event.name == Events.DB_QUERY_RESULT.value
         tag = event.attributes.get("color_tag")
         _id = event.attributes.get("id")
         assert isinstance(tag, str)
@@ -160,7 +160,7 @@ def test_milvus_query_and(exporter, collection):
     assert span.attributes.get("db.milvus.query.limit") == 1
     events = span.events
     for event in events:
-        assert event.name == "db.query.result"
+        assert event.name == Events.DB_QUERY_RESULT.value
         tag = event.attributes.get("color_tag")
         _id = event.attributes.get("id")
         assert isinstance(tag, str)
