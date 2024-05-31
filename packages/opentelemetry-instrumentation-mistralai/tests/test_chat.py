@@ -23,20 +23,20 @@ def test_mistralai_chat(exporter):
     assert not mistral_span.attributes.get("llm.is_streaming")
     assert mistral_span.attributes.get("gen_ai.request.model") == "mistral-tiny"
     assert (
-        mistral_span.attributes.get("gen_ai.prompt.0.content")
+        mistral_span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.0.content")
         == "Tell me a joke about OpenTelemetry"
     )
     assert (
-        mistral_span.attributes.get("gen_ai.completion.0.content")
+        mistral_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
         == response.choices[0].message.content
     )
-    assert mistral_span.attributes.get("gen_ai.usage.prompt_tokens") == 11
+    assert mistral_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 11
     assert mistral_span.attributes.get(
-        "llm.usage.total_tokens"
+        SpanAttributes.LLM_USAGE_TOTAL_TOKENS
     ) == mistral_span.attributes.get(
-        "gen_ai.usage.completion_tokens"
+        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
     ) + mistral_span.attributes.get(
-        "gen_ai.usage.prompt_tokens"
+        SpanAttributes.LLM_USAGE_PROMPT_TOKENS
     )
 
 
@@ -62,17 +62,17 @@ def test_mistralai_streaming_chat(exporter):
     assert mistral_span.attributes.get("llm.is_streaming")
     assert mistral_span.attributes.get("gen_ai.request.model") == "mistral-tiny"
     assert (
-        mistral_span.attributes.get("gen_ai.prompt.0.content")
+        mistral_span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.0.content")
         == "Tell me a joke about OpenTelemetry"
     )
-    assert mistral_span.attributes.get("gen_ai.completion.0.content") == response
-    assert mistral_span.attributes.get("gen_ai.usage.prompt_tokens") == 11
+    assert mistral_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content") == response
+    assert mistral_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 11
     assert mistral_span.attributes.get(
-        "llm.usage.total_tokens"
+        SpanAttributes.LLM_USAGE_TOTAL_TOKENS
     ) == mistral_span.attributes.get(
-        "gen_ai.usage.completion_tokens"
+        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
     ) + mistral_span.attributes.get(
-        "gen_ai.usage.prompt_tokens"
+        SpanAttributes.LLM_USAGE_PROMPT_TOKENS
     )
 
 
@@ -95,21 +95,21 @@ async def test_mistralai_async_chat(exporter):
     assert not mistral_span.attributes.get("llm.is_streaming")
     assert mistral_span.attributes.get("gen_ai.request.model") == "mistral-tiny"
     assert (
-        mistral_span.attributes.get("gen_ai.prompt.0.content")
+        mistral_span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.0.content")
         == "Tell me a joke about OpenTelemetry"
     )
     assert (
-        mistral_span.attributes.get("gen_ai.completion.0.content")
+        mistral_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
         == response.choices[0].message.content
     )
     # For some reason, async ollama chat doesn't report prompt token usage back
-    # assert mistral_span.attributes.get("gen_ai.usage.prompt_tokens") == 11
+    # assert mistral_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 11
     assert mistral_span.attributes.get(
-        "llm.usage.total_tokens"
+        SpanAttributes.LLM_USAGE_TOTAL_TOKENS
     ) == mistral_span.attributes.get(
-        "gen_ai.usage.completion_tokens"
+        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
     ) + mistral_span.attributes.get(
-        "gen_ai.usage.prompt_tokens"
+        SpanAttributes.LLM_USAGE_PROMPT_TOKENS
     )
 
 
@@ -136,15 +136,15 @@ async def test_mistralai_async_streaming_chat(exporter):
     assert mistral_span.attributes.get("llm.is_streaming")
     assert mistral_span.attributes.get("gen_ai.request.model") == "mistral-tiny"
     assert (
-        mistral_span.attributes.get("gen_ai.prompt.0.content")
+        mistral_span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.0.content")
         == "Tell me a joke about OpenTelemetry"
     )
-    assert mistral_span.attributes.get("gen_ai.completion.0.content") == response
-    assert mistral_span.attributes.get("gen_ai.usage.prompt_tokens") == 11
+    assert mistral_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content") == response
+    assert mistral_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 11
     assert mistral_span.attributes.get(
-        "llm.usage.total_tokens"
+        SpanAttributes.LLM_USAGE_TOTAL_TOKENS
     ) == mistral_span.attributes.get(
-        "gen_ai.usage.completion_tokens"
+        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
     ) + mistral_span.attributes.get(
-        "gen_ai.usage.prompt_tokens"
+        SpanAttributes.LLM_USAGE_PROMPT_TOKENS
     )

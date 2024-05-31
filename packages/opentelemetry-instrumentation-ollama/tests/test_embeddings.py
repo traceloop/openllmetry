@@ -14,6 +14,6 @@ def test_ollama_embeddings(exporter):
     assert not ollama_span.attributes.get("llm.is_streaming")
     assert ollama_span.attributes.get("gen_ai.request.model") == "llama3"
     assert (
-        ollama_span.attributes.get("gen_ai.prompt.0.content")
+        ollama_span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.0.content")
         == "Tell me a joke about OpenTelemetry"
     )

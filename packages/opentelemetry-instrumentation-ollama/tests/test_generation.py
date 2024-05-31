@@ -1,5 +1,6 @@
 import pytest
 import ollama
+from opentelemetry.semconv.ai import SpanAttributes
 
 
 @pytest.mark.vcr
@@ -16,20 +17,20 @@ def test_ollama_generation(exporter):
     assert not ollama_span.attributes.get("llm.is_streaming")
     assert ollama_span.attributes.get("gen_ai.request.model") == "llama3"
     assert (
-        ollama_span.attributes.get("gen_ai.prompt.0.content")
+        ollama_span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.0.content")
         == "Tell me a joke about OpenTelemetry"
     )
     assert (
-        ollama_span.attributes.get("gen_ai.completion.0.content")
+        ollama_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
         == response["response"]
     )
-    assert ollama_span.attributes.get("gen_ai.usage.prompt_tokens") == 17
+    assert ollama_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 17
     assert ollama_span.attributes.get(
-        "llm.usage.total_tokens"
+        SpanAttributes.LLM_USAGE_TOTAL_TOKENS
     ) == ollama_span.attributes.get(
-        "gen_ai.usage.completion_tokens"
+        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
     ) + ollama_span.attributes.get(
-        "gen_ai.usage.prompt_tokens"
+        SpanAttributes.LLM_USAGE_PROMPT_TOKENS
     )
 
 
@@ -51,17 +52,17 @@ def test_ollama_streaming_generation(exporter):
     assert ollama_span.attributes.get("llm.is_streaming")
     assert ollama_span.attributes.get("gen_ai.request.model") == "llama3"
     assert (
-        ollama_span.attributes.get("gen_ai.prompt.0.content")
+        ollama_span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.0.content")
         == "Tell me a joke about OpenTelemetry"
     )
-    assert ollama_span.attributes.get("gen_ai.completion.0.content") == response
-    assert ollama_span.attributes.get("gen_ai.usage.prompt_tokens") == 17
+    assert ollama_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content") == response
+    assert ollama_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 17
     assert ollama_span.attributes.get(
-        "llm.usage.total_tokens"
+        SpanAttributes.LLM_USAGE_TOTAL_TOKENS
     ) == ollama_span.attributes.get(
-        "gen_ai.usage.completion_tokens"
+        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
     ) + ollama_span.attributes.get(
-        "gen_ai.usage.prompt_tokens"
+        SpanAttributes.LLM_USAGE_PROMPT_TOKENS
     )
 
 
@@ -81,21 +82,21 @@ async def test_ollama_async_generation(exporter):
     assert not ollama_span.attributes.get("llm.is_streaming")
     assert ollama_span.attributes.get("gen_ai.request.model") == "llama3"
     assert (
-        ollama_span.attributes.get("gen_ai.prompt.0.content")
+        ollama_span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.0.content")
         == "Tell me a joke about OpenTelemetry"
     )
     assert (
-        ollama_span.attributes.get("gen_ai.completion.0.content")
+        ollama_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
         == response["response"]
     )
     # For some reason, async ollama chat doesn't report prompt token usage back
-    # assert ollama_span.attributes.get("gen_ai.usage.prompt_tokens") == 17
+    # assert ollama_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 17
     assert ollama_span.attributes.get(
-        "llm.usage.total_tokens"
+        SpanAttributes.LLM_USAGE_TOTAL_TOKENS
     ) == ollama_span.attributes.get(
-        "gen_ai.usage.completion_tokens"
+        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
     ) + ollama_span.attributes.get(
-        "gen_ai.usage.prompt_tokens"
+        SpanAttributes.LLM_USAGE_PROMPT_TOKENS
     )
 
 
@@ -119,16 +120,16 @@ async def test_ollama_async_streaming_generation(exporter):
     assert ollama_span.attributes.get("llm.is_streaming")
     assert ollama_span.attributes.get("gen_ai.request.model") == "llama3"
     assert (
-        ollama_span.attributes.get("gen_ai.prompt.0.content")
+        ollama_span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.0.content")
         == "Tell me a joke about OpenTelemetry"
     )
-    assert ollama_span.attributes.get("gen_ai.completion.0.content") == response
+    assert ollama_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content") == response
     # For some reason, async ollama chat doesn't report prompt token usage back
-    # assert ollama_span.attributes.get("gen_ai.usage.prompt_tokens") == 17
+    # assert ollama_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 17
     assert ollama_span.attributes.get(
-        "llm.usage.total_tokens"
+        SpanAttributes.LLM_USAGE_TOTAL_TOKENS
     ) == ollama_span.attributes.get(
-        "gen_ai.usage.completion_tokens"
+        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
     ) + ollama_span.attributes.get(
-        "gen_ai.usage.prompt_tokens"
+        SpanAttributes.LLM_USAGE_PROMPT_TOKENS
     )
