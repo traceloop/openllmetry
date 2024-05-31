@@ -36,19 +36,19 @@ class OpenAIV0Instrumentor(BaseInstrumentor):
 
         if is_metrics_enabled():
             tokens_histogram = meter.create_histogram(
-                name="gen_ai.client.token.usage",
+                name=f"{SpanAttributes.LLM_CLIENTS}.token.usage",
                 unit="token",
                 description="Measures number of input and output tokens used",
             )
 
             chat_choice_counter = meter.create_counter(
-                name="gen_ai.client.generation.choices",
+                name=f"{SpanAttributes.LLM_CLIENTS}.generation.choices",
                 unit="choice",
                 description="Number of choices returned by chat completions call",
             )
 
             chat_duration_histogram = meter.create_histogram(
-                name="gen_ai.client.operation.duration",
+                name=f"{SpanAttributes.LLM_CLIENTS}.operation.duration",
                 unit="s",
                 description="GenAI operation duration",
             )

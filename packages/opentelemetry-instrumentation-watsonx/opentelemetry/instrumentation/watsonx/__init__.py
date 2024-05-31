@@ -222,7 +222,7 @@ def _set_completion_content_attributes(span, response, index, response_counter) 
         if response_counter:
             attributes_with_reason = {
                 SpanAttributes.LLM_RESPONSE_MODEL: model_id,
-                "llm.response.stop_reason": results[0]["stop_reason"],
+                SpanAttributes.LLM_RESPONSE_STOP_REASON: results[0]["stop_reason"],
             }
             response_counter.add(1, attributes=attributes_with_reason)
 
@@ -347,7 +347,7 @@ def _build_and_set_stream_response(
     if response_counter:
         attributes_with_reason = {
             **shared_attributes,
-            "llm.response.stop_reason": stream_stop_reason,
+            SpanAttributes.LLM_RESPONSE_STOP_REASON: stream_stop_reason,
         }
         response_counter.add(1, attributes=attributes_with_reason)
 

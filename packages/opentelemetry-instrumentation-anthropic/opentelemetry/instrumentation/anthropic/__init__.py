@@ -222,7 +222,7 @@ async def _aset_token_usage(
             choices,
             attributes={
                 **metric_attributes,
-                "llm.response.stop_reason": response.get("stop_reason"),
+                SpanAttributes.LLM_RESPONSE_STOP_REASON: response.get("stop_reason"),
             },
         )
 
@@ -296,7 +296,7 @@ def _set_token_usage(
             choices,
             attributes={
                 **metric_attributes,
-                "llm.response.stop_reason": response.get("stop_reason"),
+                SpanAttributes.LLM_RESPONSE_STOP_REASON: response.get("stop_reason"),
             },
         )
 
@@ -380,13 +380,13 @@ def _create_metrics(meter: Meter, name: str):
     )
 
     choice_counter = meter.create_counter(
-        name="gen_ai.client.generation.choices",
+        name=f"{SpanAttributes.LLM_CLIENTS}.generation.choices",
         unit="choice",
         description="Number of choices returned by chat completions call",
     )
 
     duration_histogram = meter.create_histogram(
-        name="gen_ai.client.operation.duration",
+        name=f"{SpanAttributes.LLM_CLIENTS}.operation.duration",
         unit="s",
         description="GenAI operation duration",
     )

@@ -36,6 +36,7 @@ class SpanAttributes:
     LLM_REQUEST_FUNCTIONS = "llm.request.functions"
     LLM_REQUEST_REPETITION_PENALTY = "llm.request.repetition_penalty"
     LLM_RESPONSE_FINISH_REASON = "llm.response.finish_reason"
+    LLM_RESPONSE_STOP_REASON = "llm.response.stop_reason"
 
     # Vector DB
     VECTOR_DB_VENDOR = "db.system"

@@ -39,7 +39,7 @@ def test_chat_completion_metrics(metrics_test_context, openai_client):
         for sm in rm.scope_metrics:
             for metric in sm.metrics:
 
-                if metric.name == "gen_ai.client.token.usage":
+                if metric.name == f"{SpanAttributes.LLM_CLIENTS}.token.usage":
                     found_token_metric = True
                     for data_point in metric.data.data_points:
                         assert data_point.attributes["gen_ai.token.type"] in [
@@ -49,13 +49,13 @@ def test_chat_completion_metrics(metrics_test_context, openai_client):
                         assert len(data_point.attributes["server.address"]) > 0
                         assert data_point.sum > 0
 
-                if metric.name == "gen_ai.client.generation.choices":
+                if metric.name == f"{SpanAttributes.LLM_CLIENTS}.generation.choices":
                     found_choice_metric = True
                     for data_point in metric.data.data_points:
                         assert data_point.value >= 1
                         assert len(data_point.attributes["server.address"]) > 0
 
-                if metric.name == "gen_ai.client.operation.duration":
+                if metric.name == f"{SpanAttributes.LLM_CLIENTS}.operation.duration":
                     found_duration_metric = True
                     assert any(
                         data_point.count > 0 for data_point in metric.data.data_points
@@ -193,7 +193,7 @@ def test_embeddings_metrics(metrics_test_context, openai_client):
     for rm in resource_metrics:
         for sm in rm.scope_metrics:
             for metric in sm.metrics:
-                if metric.name == "gen_ai.client.token.usage":
+                if metric.name == f"{SpanAttributes.LLM_CLIENTS}.token.usage":
                     found_token_metric = True
                     for data_point in metric.data.data_points:
                         assert data_point.sum > 0

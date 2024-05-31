@@ -83,7 +83,7 @@ def init_metrics_provider(
 def metric_views() -> Sequence[View]:
     return [
         View(
-            instrument_name="gen_ai.client.operation.duration",
+            instrument_name=f"{SpanAttributes.LLM_CLIENTS}.operation.duration",
             aggregation=ExplicitBucketHistogramAggregation(
                 [
                     0.01,
@@ -104,7 +104,7 @@ def metric_views() -> Sequence[View]:
             ),
         ),
         View(
-            instrument_name="gen_ai.client.token.usage",
+            instrument_name=f"{SpanAttributes.LLM_CLIENTS}.token.usage",
             aggregation=ExplicitBucketHistogramAggregation(
                 [
                     1,
