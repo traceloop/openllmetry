@@ -58,8 +58,8 @@ def test_milvus_insert(exporter, collection):
 
     assert span.attributes.get(SpanAttributes.VECTOR_DB_VENDOR) == "milvus"
     assert span.attributes.get(SpanAttributes.VECTOR_DB_OPERATION) == "insert"
-    assert span.attributes.get("db.milvus.insert.collection_name") == "Colors"
-    assert span.attributes.get("db.milvus.insert.data_count") == 1003
+    assert span.attributes.get(f"{SpanAttributes.MILVUS_INSERT}.collection_name") == "Colors"
+    assert span.attributes.get(f"{SpanAttributes.MILVUS_INSERT}.data_count") == 1003
 
 
 def test_milvus_query_equal(exporter, collection):
@@ -75,10 +75,10 @@ def test_milvus_query_equal(exporter, collection):
 
     assert span.attributes.get(SpanAttributes.VECTOR_DB_VENDOR) == "milvus"
     assert span.attributes.get(SpanAttributes.VECTOR_DB_OPERATION) == "query"
-    assert span.attributes.get("db.milvus.query.collection_name") == collection
-    assert span.attributes.get("db.milvus.query.filter") == 'color == "brown"'
-    assert span.attributes.get("db.milvus.query.output_fields_count") == 1
-    assert span.attributes.get("db.milvus.query.limit") == 3
+    assert span.attributes.get(f"{SpanAttributes.MILVUS_QUERY}.collection_name") == collection
+    assert span.attributes.get(f"{SpanAttributes.MILVUS_QUERY}.filter") == 'color == "brown"'
+    assert span.attributes.get(f"{SpanAttributes.MILVUS_QUERY}.output_fields_count") == 1
+    assert span.attributes.get(f"{SpanAttributes.MILVUS_QUERY}.limit") == 3
 
     events = span.events
     for event in events:
@@ -102,10 +102,10 @@ def test_milvus_query_like(exporter, collection):
 
     assert span.attributes.get(SpanAttributes.VECTOR_DB_VENDOR) == "milvus"
     assert span.attributes.get(SpanAttributes.VECTOR_DB_OPERATION) == "query"
-    assert span.attributes.get("db.milvus.query.collection_name") == collection
-    assert span.attributes.get("db.milvus.query.filter") == 'color_tag like "brown"'
-    assert span.attributes.get("db.milvus.query.output_fields_count") == 1
-    assert span.attributes.get("db.milvus.query.limit") == 2
+    assert span.attributes.get(f"{SpanAttributes.MILVUS_QUERY}.collection_name") == collection
+    assert span.attributes.get(f"{SpanAttributes.MILVUS_QUERY}.filter") == 'color_tag like "brown"'
+    assert span.attributes.get(f"{SpanAttributes.MILVUS_QUERY}.output_fields_count") == 1
+    assert span.attributes.get(f"{SpanAttributes.MILVUS_QUERY}.limit") == 2
     events = span.events
     for event in events:
         assert event.name == Events.DB_QUERY_RESULT.value
@@ -128,10 +128,10 @@ def test_milvus_query_or(exporter, collection):
 
     assert span.attributes.get(SpanAttributes.VECTOR_DB_VENDOR) == "milvus"
     assert span.attributes.get(SpanAttributes.VECTOR_DB_OPERATION) == "query"
-    assert span.attributes.get("db.milvus.query.collection_name") == collection
-    assert span.attributes.get("db.milvus.query.filter") == 'color == "brown" or color == "red"'
-    assert span.attributes.get("db.milvus.query.output_fields_count") == 1
-    assert span.attributes.get("db.milvus.query.limit") == 3
+    assert span.attributes.get(f"{SpanAttributes.MILVUS_QUERY}.collection_name") == collection
+    assert span.attributes.get(f"{SpanAttributes.MILVUS_QUERY}.filter") == 'color == "brown" or color == "red"'
+    assert span.attributes.get(f"{SpanAttributes.MILVUS_QUERY}.output_fields_count") == 1
+    assert span.attributes.get(f"{SpanAttributes.MILVUS_QUERY}.limit") == 3
     events = span.events
     for event in events:
         assert event.name == Events.DB_QUERY_RESULT.value
@@ -154,10 +154,10 @@ def test_milvus_query_and(exporter, collection):
 
     assert span.attributes.get(SpanAttributes.VECTOR_DB_VENDOR) == "milvus"
     assert span.attributes.get(SpanAttributes.VECTOR_DB_OPERATION) == "query"
-    assert span.attributes.get("db.milvus.query.collection_name") == collection
-    assert span.attributes.get("db.milvus.query.filter") == 'color == "brown" and tag == 1234'
-    assert span.attributes.get("db.milvus.query.output_fields_count") == 1
-    assert span.attributes.get("db.milvus.query.limit") == 1
+    assert span.attributes.get(f"{SpanAttributes.MILVUS_QUERY}.collection_name") == collection
+    assert span.attributes.get(f"{SpanAttributes.MILVUS_QUERY}.filter") == 'color == "brown" and tag == 1234'
+    assert span.attributes.get(f"{SpanAttributes.MILVUS_QUERY}.output_fields_count") == 1
+    assert span.attributes.get(f"{SpanAttributes.MILVUS_QUERY}.limit") == 1
     events = span.events
     for event in events:
         assert event.name == Events.DB_QUERY_RESULT.value

@@ -1,5 +1,6 @@
 import pytest
 
+from opentelemetry.semconv.ai import SpanAttributes
 from wrapt import wrap_function_wrapper
 
 
@@ -13,7 +14,7 @@ def test_inner_exception_isnt_caught(openai_client):
             return wrapped(*args, **kwargs)
 
     wrap_function_wrapper(
-        "openai.resources.chat.completions",
+        f"{SpanAttributes.OPENAI_RESOURCES_CHAT}.completions",
         "Completions.create",
         just_throw,
     )
@@ -42,7 +43,7 @@ def test_exception_in_instrumentation_suppressed(openai_client):
             return wrapped(*args, **kwargs)
 
     wrap_function_wrapper(
-        "openai.resources.chat.completions",
+        f"{SpanAttributes.OPENAI_RESOURCES_CHAT}.completions",
         "Completions.create",
         scramble_response,
     )

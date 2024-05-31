@@ -92,91 +92,91 @@ def count_or_none(obj):
 @dont_throw
 def _set_insert_attributes(span, kwargs):
     _set_span_attribute(
-        span, "db.milvus.insert.collection_name", kwargs.get("collection_name")
+        span, f"{SpanAttributes.MILVUS_INSERT}.collection_name", kwargs.get("collection_name")
     )
     _set_span_attribute(
-        span, "db.milvus.insert.data_count", count_or_none(kwargs.get("data"))
+        span, f"{SpanAttributes.MILVUS_INSERT}.data_count", count_or_none(kwargs.get("data"))
     )
     _set_span_attribute(
-        span, "db.milvus.insert.timeout", kwargs.get("timeout")
+        span, f"{SpanAttributes.MILVUS_INSERT}.timeout", kwargs.get("timeout")
     )
     _set_span_attribute(
-        span, "db.milvus.insert.partition_name", _encode_partition_name(kwargs.get("partition_name"))
+        span, f"{SpanAttributes.MILVUS_INSERT}.partition_name", _encode_partition_name(kwargs.get("partition_name"))
     )
 
 
 @dont_throw
 def _set_get_attributes(span, kwargs):
     _set_span_attribute(
-        span, "db.milvus.get.collection_name", kwargs.get("collection_name")
+        span, f"{SpanAttributes.MILVUS_GET}.collection_name", kwargs.get("collection_name")
     )
     _set_span_attribute(
-        span, "db.milvus.query.ids_count", count_or_none(kwargs.get("ids"))
+        span, f"{SpanAttributes.MILVUS_QUERY}.ids_count", count_or_none(kwargs.get("ids"))
     )
     _set_span_attribute(
-        span, "db.milvus.search.output_fields_count", count_or_none(kwargs.get("output_fields"))
+        span, f"{SpanAttributes.MILVUS_SEARCH}.output_fields_count", count_or_none(kwargs.get("output_fields"))
     )
     _set_span_attribute(
-        span, "db.milvus.insert.timeout", kwargs.get("timeout")
+        span, f"{SpanAttributes.MILVUS_INSERT}.timeout", kwargs.get("timeout")
     )
     _set_span_attribute(
-        span, "db.milvus.get.partition_names_count", count_or_none(kwargs.get("partition_names"))
+        span, f"{SpanAttributes.MILVUS_GET}.partition_names_count", count_or_none(kwargs.get("partition_names"))
     )
 
 
 @dont_throw
 def _set_search_attributes(span, kwargs):
     _set_span_attribute(
-        span, "db.milvus.search.collection_name", kwargs.get("collection_name")
+        span, f"{SpanAttributes.MILVUS_SEARCH}.collection_name", kwargs.get("collection_name")
     )
     _set_span_attribute(
-        span, "db.milvus.search.data_count", count_or_none(kwargs.get("data"))
+        span, f"{SpanAttributes.MILVUS_SEARCH}.data_count", count_or_none(kwargs.get("data"))
     )
     _set_span_attribute(
-        span, "db.milvus.search.filter", kwargs.get("filter")
+        span, f"{SpanAttributes.MILVUS_SEARCH}.filter", kwargs.get("filter")
     )
     _set_span_attribute(
-        span, "db.milvus.search.limit", kwargs.get("limit")
+        span, f"{SpanAttributes.MILVUS_SEARCH}.limit", kwargs.get("limit")
     )
     _set_span_attribute(
-        span, "db.milvus.search.output_fields_count", count_or_none(kwargs.get("output_fields"))
+        span, f"{SpanAttributes.MILVUS_SEARCH}.output_fields_count", count_or_none(kwargs.get("output_fields"))
     )
     _set_span_attribute(
-        span, "db.milvus.search.search_params", kwargs.get("search_params")
+        span, f"{SpanAttributes.MILVUS_SEARCH}.search_params", kwargs.get("search_params")
     )
     _set_span_attribute(
-        span, "db.milvus.search.timeout", kwargs.get("timeout")
+        span, f"{SpanAttributes.MILVUS_SEARCH}.timeout", kwargs.get("timeout")
     )
     _set_span_attribute(
-        span, "db.milvus.search.partition_names_count", kwargs.get("partition_name")
+        span, f"{SpanAttributes.MILVUS_SEARCH}.partition_names_count", kwargs.get("partition_name")
     )
     _set_span_attribute(
-        span, "db.milvus.search.anns_field", kwargs.get("anns_field")
+        span, f"{SpanAttributes.MILVUS_SEARCH}.anns_field", kwargs.get("anns_field")
     )
 
 
 @dont_throw
 def _set_query_attributes(span, kwargs):
     _set_span_attribute(
-        span, "db.milvus.query.collection_name", kwargs.get("collection_name")
+        span, f"{SpanAttributes.MILVUS_QUERY}.collection_name", kwargs.get("collection_name")
     )
     _set_span_attribute(
-        span, "db.milvus.query.filter", _encode_filter(kwargs.get("filter"))
+        span, f"{SpanAttributes.MILVUS_QUERY}.filter", _encode_filter(kwargs.get("filter"))
     )
     _set_span_attribute(
-        span, "db.milvus.query.output_fields_count", count_or_none(kwargs.get("output_fields"))
+        span, f"{SpanAttributes.MILVUS_QUERY}.output_fields_count", count_or_none(kwargs.get("output_fields"))
     )
     _set_span_attribute(
-        span, "db.milvus.query.timeout", kwargs.get("timeout")
+        span, f"{SpanAttributes.MILVUS_QUERY}.timeout", kwargs.get("timeout")
     )
     _set_span_attribute(
-        span, "db.milvus.query.ids_count", count_or_none(kwargs.get("ids"))
+        span, f"{SpanAttributes.MILVUS_QUERY}.ids_count", count_or_none(kwargs.get("ids"))
     )
     _set_span_attribute(
-        span, "db.milvus.query.partition_names_count", count_or_none(kwargs.get("partition_names"))
+        span, f"{SpanAttributes.MILVUS_QUERY}.partition_names_count", count_or_none(kwargs.get("partition_names"))
     )
     _set_span_attribute(
-        span, "db.milvus.query.limit", kwargs.get("limit")
+        span, f"{SpanAttributes.MILVUS_QUERY}.limit", kwargs.get("limit")
     )
 
 
@@ -189,33 +189,33 @@ def _add_query_result_events(span, kwargs):
 @dont_throw
 def _set_upsert_attributes(span, kwargs):
     _set_span_attribute(
-        span, "db.milvus.upsert.collection_name", kwargs.get("collection_name")
+        span, f"{SpanAttributes.MILVUS_UPSERT}.collection_name", kwargs.get("collection_name")
     )
     _set_span_attribute(
-        span, "db.milvus.upsert.data_count", count_or_none(kwargs.get("data"))
+        span, f"{SpanAttributes.MILVUS_UPSERT}.data_count", count_or_none(kwargs.get("data"))
     )
     _set_span_attribute(
-        span, "db.milvus.upsert.timeout_count", count_or_none(kwargs.get("timeout"))
+        span, f"{SpanAttributes.MILVUS_UPSERT}.timeout_count", count_or_none(kwargs.get("timeout"))
     )
     _set_span_attribute(
-        span, "db.milvus.upsert.partition_name", _encode_partition_name(kwargs.get("partition_name"))
+        span, f"{SpanAttributes.MILVUS_UPSERT}.partition_name", _encode_partition_name(kwargs.get("partition_name"))
     )
 
 
 @dont_throw
 def _set_delete_attributes(span, kwargs):
     _set_span_attribute(
-        span, "db.milvus.delete.collection_name", kwargs.get("collection_name")
+        span, f"{SpanAttributes.MILVUS_DELETE}.collection_name", kwargs.get("collection_name")
     )
     _set_span_attribute(
-        span, "db.milvus.delete.timeout_count", count_or_none(kwargs.get("timeout"))
+        span, f"{SpanAttributes.MILVUS_DELETE}.timeout_count", count_or_none(kwargs.get("timeout"))
     )
     _set_span_attribute(
-        span, "db.milvus.delete.partition_name", _encode_partition_name(kwargs.get("partition_name"))
+        span, f"{SpanAttributes.MILVUS_DELETE}.partition_name", _encode_partition_name(kwargs.get("partition_name"))
     )
     _set_span_attribute(
-        span, "db.milvus.delete.ids_count", count_or_none(kwargs.get("ids"))
+        span, f"{SpanAttributes.MILVUS_DELETE}.ids_count", count_or_none(kwargs.get("ids"))
     )
     _set_span_attribute(
-        span, "db.milvus.delete.filter", _encode_filter(kwargs.get("filter"))
+        span, f"{SpanAttributes.MILVUS_DELETE}.filter", _encode_filter(kwargs.get("filter"))
     )

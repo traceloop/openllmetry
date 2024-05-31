@@ -25,7 +25,7 @@ def test_chat(exporter, openai_client):
         open_ai_span.attributes.get(OPENAI_API_BASE) == "https://api.openai.com/v1/"
     )
     assert (
-        open_ai_span.attributes.get("gen_ai.openai.system_fingerprint")
+        open_ai_span.attributes.get(f"{SpanAttributes.LLM_OPENAI}.system_fingerprint")
         == "fp_2b778c6b35"
     )
     assert open_ai_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is False

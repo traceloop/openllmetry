@@ -36,7 +36,7 @@ def test_generate_metrics(metrics_test_context, watson_ai_model):
                         ]
                         assert data_point.value > 0
 
-                if metric.name == "llm.watsonx.completions.responses":
+                if metric.name == f"{SpanAttributes.LLM_WATSONX_COMPLETIONS}.responses":
                     found_response_metric = True
                     for data_point in metric.data.data_points:
                         assert data_point.value >= 1
@@ -92,7 +92,7 @@ def test_generate_stream_metrics(metrics_test_context, watson_ai_model):
                         ]
                         assert data_point.value > 0
 
-                if metric.name == "llm.watsonx.completions.responses":
+                if metric.name == f"{SpanAttributes.LLM_WATSONX_COMPLETIONS}.responses":
                     found_response_metric = True
                     for data_point in metric.data.data_points:
                         assert data_point.value >= 1

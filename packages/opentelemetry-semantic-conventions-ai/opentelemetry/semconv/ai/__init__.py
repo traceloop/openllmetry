@@ -12,6 +12,7 @@ class SpanAttributes:
     LLM_REQUEST_MAX_TOKENS = "gen_ai.request.max_tokens"
     LLM_REQUEST_TEMPERATURE = "gen_ai.request.temperature"
     LLM_REQUEST_TOP_P = "gen_ai.request.top_p"
+    LLM_OPENAI = "gen_ai.openai"
     LLM_PROMPTS = "gen_ai.prompt"
     LLM_COMPLETIONS = "gen_ai.completion"
     LLM_CLIENTS = "gen_ai.client"
@@ -37,6 +38,17 @@ class SpanAttributes:
     LLM_REQUEST_REPETITION_PENALTY = "llm.request.repetition_penalty"
     LLM_RESPONSE_FINISH_REASON = "llm.response.finish_reason"
     LLM_RESPONSE_STOP_REASON = "llm.response.stop_reason"
+    LLM_CONTENT_COMPLETION_CHUNK = "llm.content.completion.chunk"
+
+    # OpenAI
+    LLM_OPENAI_CHAT_COMPLETIONS = "llm.openai.chat_completions"
+    LLM_OPENAI_EMBEDDING = "llm.openai.embeddings"
+    LLM_OPENAI_IMAGE_GENERATIONS = "llm.openai.image_generations"
+    OPENAI_RESOURCES_BETA = "openai.resources.beta"
+    OPENAI_RESOURCES_CHAT = "openai.resources.chat"
+    OPENAI_RESOURCES_COMPLETIONS = "openai.resources.completions"
+    OPENAI_RESOURCES_EMBEDDINGS = "openai.resources.embeddings"
+    OPENAI_RESOURCES_IMAGES = "openai.resources.images"
 
     # Vector DB
     VECTOR_DB_VENDOR = "db.system"
@@ -46,6 +58,9 @@ class SpanAttributes:
     # Pinecone
     PINECONE_USAGE_READ_UNITS = "pinecone.usage.read_units"
     PINECONE_USAGE_WRITE_UNITS = "pinecone.usage.write_units"
+    PINECONE_DB_QUERY = "db.pinecone.query"
+    PINECONE_DB_USAGE = "db.pinecone.usage"
+    PINECONE_QUERY = "pinecone.query"
 
     # LLM Workflows
     TRACELOOP_SPAN_KIND = "traceloop.span.kind"
@@ -64,6 +79,7 @@ class SpanAttributes:
     LLM_MAX_NEW_TOKENS = "llm.watsonx.max_new_tokens"
     LLM_MIN_NEW_TOKENS = "llm.watsonx.min_new_tokens"
     LLM_REPETITION_PENALTY = "llm.watsonx.repetition_penalty"
+    LLM_WATSONX_COMPLETIONS = "llm.watsonx.completions"
 
     # Chroma db
     CHROMADB_ADD = "db.chroma.add"
@@ -73,6 +89,20 @@ class SpanAttributes:
     CHROMADB_PEEK = "db.chroma.peek"
     CHROMADB_UPDATE = "db.chroma.update"
     CHROMADB_UPSERT = "db.chroma.upsert"
+
+    # Milvus
+    MILVUS_DELETE = "db.milvus.delete"
+    MILVUS_GET = "db.milvus.get"
+    MILVUS_INSERT = "db.milvus.insert"
+    MILVUS_QUERY = "db.milvus.query"
+    MILVUS_SEARCH = "db.milvus.search"
+    MILVUS_UPSERT = "db.milvus.upsert"
+
+    # Qdrant
+    QDRANT_SEARCH = "qdrant.search"
+    QDRANT_SEARCH_BATCH = "qdrant.search_batch"
+    QDRANT_UPLOAD_COLLECTION = "qdrant.upload_collection"
+    QDRANT_UPSERT = "qdrant.upsert"
 
 
 class Events(Enum):

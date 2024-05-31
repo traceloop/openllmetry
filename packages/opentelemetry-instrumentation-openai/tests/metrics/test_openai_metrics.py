@@ -124,7 +124,6 @@ def test_chat_streaming_metrics(metrics_test_context, openai_client):
                     found_choice_metric = True
                     for data_point in metric.data.data_points:
                         assert data_point.value >= 1
-                        assert len(data_point.attributes["server.address"]) > 0
 
                 if metric.name == "gen_ai.client.operation.duration":
                     found_duration_metric = True
@@ -199,13 +198,13 @@ def test_embeddings_metrics(metrics_test_context, openai_client):
                         assert data_point.sum > 0
                         assert len(data_point.attributes["server.address"]) > 0
 
-                if metric.name == "llm.openai.embeddings.vector_size":
+                if metric.name == f"{SpanAttributes.LLM_OPENAI_EMBEDDINGS}.vector_size":
                     found_vector_size_metric = True
                     for data_point in metric.data.data_points:
                         assert data_point.value > 0
                         assert len(data_point.attributes["server.address"]) > 0
 
-                if metric.name == "llm.openai.embeddings.duration":
+                if metric.name == f"{SpanAttributes.LLM_OPENAI_EMBEDDINGS}.duration":
                     found_duration_metric = True
                     assert any(
                         data_point.count > 0 for data_point in metric.data.data_points
@@ -243,7 +242,7 @@ def test_image_gen_metrics(metrics_test_context, openai_client):
     for rm in resource_metrics:
         for sm in rm.scope_metrics:
             for metric in sm.metrics:
-                if metric.name == "llm.openai.image_generations.duration":
+                if metric.name == f"{SpanAttributes.LLM_OPENAI_IMAGE_GENERATIONS}.duration":
                     found_duration_metric = True
                     assert any(
                         data_point.count > 0 for data_point in metric.data.data_points

@@ -524,26 +524,39 @@ class WatsonxInstrumentor(BaseInstrumentor):
         meter = get_meter(__name__, __version__, meter_provider)
 
         if is_metrics_enabled():
+<<<<<<< HEAD
             token_histogram = meter.create_histogram(
                 name="gen_ai.client.token.usage",
+=======
+            token_counter = meter.create_counter(
+                name=f"{SpanAttributes.LLM_WATSONX_COMPLETIONS}.tokens",
+>>>>>>> b7c1b13 (Add more constants)
                 unit="token",
                 description="Measures number of input and output tokens used",
             )
 
             response_counter = meter.create_counter(
-                name="llm.watsonx.completions.responses",
+                name=f"{SpanAttributes.LLM_WATSONX_COMPLETIONS}.responses",
                 unit="response",
                 description="Number of response returned by completions call",
             )
 
             duration_histogram = meter.create_histogram(
+<<<<<<< HEAD
                 name="gen_ai.client.operation.duration",
+=======
+                name=f"{SpanAttributes.LLM_WATSONX_COMPLETIONS}.duration",
+>>>>>>> b7c1b13 (Add more constants)
                 unit="s",
                 description="GenAI operation duration",
             )
 
             exception_counter = meter.create_counter(
+<<<<<<< HEAD
                 name="llm.watsonx.completions.exceptions",
+=======
+                name=f"{SpanAttributes.LLM_WATSONX_COMPLETIONS}.exceptions",
+>>>>>>> b7c1b13 (Add more constants)
                 unit="time",
                 description="Number of exceptions occurred during completions",
             )

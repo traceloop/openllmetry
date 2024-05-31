@@ -32,10 +32,10 @@ def test_qdrant_upsert(exporter, qdrant):
     upsert(qdrant)
 
     spans = exporter.get_finished_spans()
-    span = next(span for span in spans if span.name == "qdrant.upsert")
+    span = next(span for span in spans if span.name == f"{SpanAttributes.QDRANT_UPSERT}")
 
-    assert span.attributes.get("qdrant.upsert.collection_name") == COLLECTION_NAME
-    assert span.attributes.get("qdrant.upsert.points_count") == 2
+    assert span.attributes.get(f"{SpanAttributes.QDRANT_UPSERT}.collection_name") == COLLECTION_NAME
+    assert span.attributes.get(f"{SpanAttributes.QDRANT_UPSERT}.points_count") == 2
 
 
 def upload_collection(qdrant: QdrantClient):
@@ -56,13 +56,13 @@ def test_qdrant_upload_collection(exporter, qdrant):
     upload_collection(qdrant)
 
     spans = exporter.get_finished_spans()
-    span = next(span for span in spans if span.name == "qdrant.upload_collection")
+    span = next(span for span in spans if span.name == f"{SpanAttributes.QDRANT_UPLOAD_COLLECTION}")
 
     assert (
-        span.attributes.get("qdrant.upload_collection.collection_name")
+        span.attributes.get(f"{SpanAttributes.QDRANT_UPLOAD_COLLECTION}.collection_name")
         == COLLECTION_NAME
     )
-    assert span.attributes.get("qdrant.upload_collection.points_count") == 3
+    assert span.attributes.get(f"{SpanAttributes.QDRANT_UPLOAD_COLLECTION}.points_count") == 3
 
 
 def search(qdrant: QdrantClient):
@@ -74,9 +74,9 @@ def test_qdrant_searchs(exporter, qdrant):
     search(qdrant)
 
     spans = exporter.get_finished_spans()
-    span = next(span for span in spans if span.name == "qdrant.search")
+    span = next(span for span in spans if span.name == f"{SpanAttributes.QDRANT_SEARCH}")
 
-    assert span.attributes.get("qdrant.search.collection_name") == COLLECTION_NAME
+    assert span.attributes.get(f"{SpanAttributes.QDRANT_SEARCH}.collection_name") == COLLECTION_NAME
     assert span.attributes.get(SpanAttributes.VECTOR_DB_QUERY_TOP_K) == 1
 
 
@@ -94,7 +94,7 @@ def test_qdrant_search(exporter, qdrant):
     search_batch(qdrant)
 
     spans = exporter.get_finished_spans()
-    span = next(span for span in spans if span.name == "qdrant.search_batch")
+    span = next(span for span in spans if span.name == f"{SpanAttributes.QDRANT_SEARCH_BATCH}")
 
-    assert span.attributes.get("qdrant.search_batch.collection_name") == COLLECTION_NAME
-    assert span.attributes.get("qdrant.search_batch.requests_count") == 4
+    assert span.attributes.get(f"{SpanAttributes.QDRANT_SEARCH_BATCH}.collection_name") == COLLECTION_NAME
+    assert span.attributes.get(f"{SpanAttributes.QDRANT_SEARCH_BATCH}.requests_count") == 4
