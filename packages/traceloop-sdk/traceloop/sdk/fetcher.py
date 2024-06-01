@@ -17,7 +17,7 @@ from tenacity import (
 
 from traceloop.sdk.prompts.registry import PromptRegistry
 from traceloop.sdk.prompts.client import PromptRegistryClient
-from traceloop.sdk.tracing.content_allow_list import ContentAllowList
+from traceloop.sdk.tracing.content_allow_list import ContentAllowBlockList
 from traceloop.sdk.version import __version__
 
 MAX_RETRIES = os.getenv("TRACELOOP_PROMPT_MANAGER_MAX_RETRIES") or 3
@@ -34,7 +34,7 @@ class Fetcher:
         self._base_url = base_url
         self._api_key = api_key
         self._prompt_registry = PromptRegistryClient()._registry
-        self._content_allow_list = ContentAllowList()
+        self._content_allow_list = ContentAllowBlockList()
         self._stop_polling_event = Event()
         self._exit_monitor = Thread(
             target=monitor_exit, args=(self._stop_polling_event,), daemon=True
@@ -121,7 +121,7 @@ def post_url(url: str, api_key: str, body: Dict[str, str]):
 
 def thread_func(
     prompt_registry: PromptRegistry,
-    content_allow_list: ContentAllowList,
+    content_allow_list: ContentAllowBlockList,
     base_url: str,
     api_key: str,
     stop_polling_event: Event,
@@ -141,13 +141,20 @@ def refresh_data(
     base_url: str,
     api_key: str,
     prompt_registry: PromptRegistry,
-    content_allow_list: ContentAllowList,
+    content_allow_list: ContentAllowBlockList,
 ):
     response = fetch_url(f"{base_url}/v1/traceloop/prompts", api_key)
     prompt_registry.load(response)
 
-    response = fetch_url(f"{base_url}/v1/traceloop/pii/tracing-allow-list", api_key)
-    content_allow_list.load(response)
+    response_allow = fetch_url(
+        f"{base_url}/v1/traceloop/pii/tracing-allow-list", api_key
+    )
+    response_block = fetch_url(
+        f"{base_url}/v1/traceloop/pii/tracing-block-list", api_key
+    )
+    content_allow_list.load(
+        response_allow_json=response_allow, response_block_json=response_block
+    )
 
 
 def monitor_exit(exit_event: Event):

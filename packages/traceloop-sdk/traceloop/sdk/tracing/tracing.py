@@ -27,7 +27,7 @@ from opentelemetry.context import get_value, attach, set_value
 from opentelemetry.semconv.ai import SpanAttributes
 from traceloop.sdk import Telemetry
 from traceloop.sdk.instruments import Instruments
-from traceloop.sdk.tracing.content_allow_list import ContentAllowList
+from traceloop.sdk.tracing.content_allow_list import ContentAllowBlockList
 from traceloop.sdk.utils import is_notebook
 from typing import Dict, Optional, Set
 
@@ -282,7 +282,7 @@ class TracerWrapper(object):
                 )
                 print(Fore.RESET)
 
-            obj.__content_allow_list = ContentAllowList()
+            obj.__content_allow_list = ContentAllowBlockList()
 
             # Force flushes for debug environments (e.g. local development)
             atexit.register(obj.exit_handler)
@@ -312,11 +312,15 @@ class TracerWrapper(object):
                     f"{SpanAttributes.TRACELOOP_ASSOCIATION_PROPERTIES}.{key}", value
                 )
 
-            if not self.enable_content_tracing:
+            if self.__content_allow_list.is_blocked(association_properties):
+                attach(set_value("override_enable_content_tracing", False))
+            elif not self.enable_content_tracing:
                 if self.__content_allow_list.is_allowed(association_properties):
                     attach(set_value("override_enable_content_tracing", True))
                 else:
                     attach(set_value("override_enable_content_tracing", False))
+            else:
+                attach(set_value("override_enable_content_tracing", True))
 
         if is_llm_span(span):
             prompt_key = get_value("prompt_key")

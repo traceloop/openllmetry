@@ -195,6 +195,7 @@ async def _ahandle_generator(span, fn, args, kwargs):
 
 
 def _should_send_prompts():
-    return (
-        os.getenv("TRACELOOP_TRACE_CONTENT") or "true"
-    ).lower() == "true" or context_api.get_value("override_enable_content_tracing")
+    override = context_api.get_value("override_enable_content_tracing")
+    if override is not None:
+        return override
+    return (os.getenv("TRACELOOP_TRACE_CONTENT") or "true").lower() == "true"
