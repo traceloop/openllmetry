@@ -198,13 +198,13 @@ def test_embeddings_metrics(metrics_test_context, openai_client):
                         assert data_point.sum > 0
                         assert len(data_point.attributes["server.address"]) > 0
 
-                if metric.name == f"{SpanAttributes.LLM_OPENAI_EMBEDDINGS}.vector_size":
+                if metric.name == Meters.LLM_EMBEDDINGS_VECTOR_SIZE:
                     found_vector_size_metric = True
                     for data_point in metric.data.data_points:
                         assert data_point.value > 0
                         assert len(data_point.attributes["server.address"]) > 0
 
-                if metric.name == f"{SpanAttributes.LLM_OPENAI_EMBEDDINGS}.duration":
+                if metric.name == Meters.LLM_EMBEDDINGS_DURATION:
                     found_duration_metric = True
                     assert any(
                         data_point.count > 0 for data_point in metric.data.data_points

@@ -19,7 +19,7 @@ from opentelemetry.instrumentation.openai.shared.embeddings_wrappers import (
 )
 from opentelemetry.instrumentation.openai.utils import is_metrics_enabled
 from opentelemetry.instrumentation.openai.version import __version__
-from opentelemetry.semconv.ai import SpanAttributes, Meters
+from opentelemetry.semconv.ai import Meters
 
 _instruments = ("openai >= 0.27.0", "openai < 1.0.0")
 
@@ -55,18 +55,18 @@ class OpenAIV0Instrumentor(BaseInstrumentor):
             )
 
             chat_exception_counter = meter.create_counter(
-                name=f"{SpanAttributes.LLM_OPENAI_CHAT_COMPLETIONS}.exceptions",
+                name=Meters.LLM_COMPLETIONS_EXCEPTIONS,
                 unit="time",
                 description="Number of exceptions occurred during chat completions",
             )
 
             streaming_time_to_first_token = meter.create_histogram(
-                name=f"{SpanAttributes.LLM_OPENAI_CHAT_COMPLETIONS}.streaming_time_to_first_token",
+                name=Meters.LLM_STREAMING_TIME_TO_FIRST_TOKEN,
                 unit="s",
                 description="Time to first token in streaming chat completions",
             )
             streaming_time_to_generate = meter.create_histogram(
-                name=f"{SpanAttributes.LLM_OPENAI_CHAT_COMPLETIONS}.streaming_time_to_generate",
+                name=Meters.LLM_STREAMING_TIME_TO_GENERATE,
                 unit="s",
                 description="Time between first token and completion in streaming chat completions",
             )
@@ -82,13 +82,17 @@ class OpenAIV0Instrumentor(BaseInstrumentor):
 
         if is_metrics_enabled():
             embeddings_vector_size_counter = meter.create_counter(
-                name=f"{SpanAttributes.LLM_OPENAI_EMBEDDINGS}.vector_size",
+                name=Meters.LLM_EMBEDDINGS_VECTOR_SIZE,
                 unit="element",
                 description="he size of returned vector",
             )
-
+            embeddings_duration_histogram = meter.create_histogram(
+                name=Meters.LLM_EMBEDDINGS_DURATION,
+                unit="s",
+                description="Duration of embeddings operation",
+            )
             embeddings_exception_counter = meter.create_counter(
-                name=f"{SpanAttributes.LLM_OPENAI_EMBEDDINGS}.exceptions",
+                name=Meters.LLM_EMBEDDINGS_EXCEPTIONS,
                 unit="time",
                 description="Number of exceptions occurred during embeddings operation",
             )
@@ -96,6 +100,7 @@ class OpenAIV0Instrumentor(BaseInstrumentor):
             (
                 tokens_histogram,
                 embeddings_vector_size_counter,
+                embeddings_duration_histogram,
                 embeddings_exception_counter,
             ) = (None, None, None, None)
 
@@ -136,7 +141,7 @@ class OpenAIV0Instrumentor(BaseInstrumentor):
                 tracer,
                 tokens_histogram,
                 embeddings_vector_size_counter,
-                duration_histogram,
+                embeddings_duration_histogram,
                 embeddings_exception_counter,
             ),
         )
@@ -147,7 +152,7 @@ class OpenAIV0Instrumentor(BaseInstrumentor):
                 tracer,
                 tokens_histogram,
                 embeddings_vector_size_counter,
-                duration_histogram,
+                embeddings_duration_histogram,
                 embeddings_exception_counter,
             ),
         )
