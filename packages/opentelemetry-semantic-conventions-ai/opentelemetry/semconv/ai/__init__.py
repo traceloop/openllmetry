@@ -50,6 +50,10 @@ class SpanAttributes:
     LLM_OPENAI_IMAGE_GENERATIONS = "llm.openai.image_generations"
     LLM_OPENAI_RESPONSE_SYSTEM_FINGERPRINT = "gen_ai.openai.system_fingerprint"
 
+    # Haystack
+    HAYSTACK_OPENAI_CHAT = "haystack.openai.chat"
+    HAYSTACK_OPENAI_COMPLETION = "haystack.openai.completion"
+
     # Vector DB
     VECTOR_DB_VENDOR = "db.system"
     VECTOR_DB_OPERATION = "db.operation"
