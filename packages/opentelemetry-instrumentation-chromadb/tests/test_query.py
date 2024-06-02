@@ -60,9 +60,9 @@ def test_chroma_add(exporter, collection):
 
     assert span.attributes.get(SpanAttributes.VECTOR_DB_VENDOR) == "chroma"
     assert span.attributes.get(SpanAttributes.VECTOR_DB_OPERATION) == "add"
-    assert span.attributes.get(f"{SpanAttributes.CHROMADB_ADD}.ids_count") == 3
-    assert span.attributes.get(f"{SpanAttributes.CHROMADB_ADD}.metadatas_count") == 3
-    assert span.attributes.get(f"{SpanAttributes.CHROMADB_ADD}.documents_count") == 3
+    assert span.attributes.get(SpanAttributes.CHROMADB_ADD_IDS_COUNT) == 3
+    assert span.attributes.get(SpanAttributes.CHROMADB_ADD_METADATAS_COUNT) == 3
+    assert span.attributes.get(SpanAttributes.CHROMADB_ADD_DOCUMENTS_COUNT) == 3
 
 
 def test_chroma_query(exporter, collection):
@@ -77,8 +77,8 @@ def test_chroma_query(exporter, collection):
 
     assert span.attributes.get(SpanAttributes.VECTOR_DB_VENDOR) == "chroma"
     assert span.attributes.get(SpanAttributes.VECTOR_DB_OPERATION) == "query"
-    assert span.attributes.get(f"{SpanAttributes.CHROMADB_QUERY}.query_texts_count") == 1
-    assert span.attributes.get(f"{SpanAttributes.CHROMADB_QUERY}.n_results") == 2
+    assert span.attributes.get(SpanAttributes.CHROMADB_QUERY_TEXTS_COUNT) == 1
+    assert span.attributes.get(SpanAttributes.CHROMADB_QUERY_N_RESULTS) == 2
 
     events = span.events
     assert len(events) == 1
@@ -110,9 +110,9 @@ def test_chroma_query_with_metadata(exporter, collection):
 
     assert span.attributes.get(SpanAttributes.VECTOR_DB_VENDOR) == "chroma"
     assert span.attributes.get(SpanAttributes.VECTOR_DB_OPERATION) == "query"
-    assert span.attributes.get(f"{SpanAttributes.CHROMADB_QUERY}.query_texts_count") == 1
-    assert span.attributes.get(f"{SpanAttributes.CHROMADB_QUERY}.n_results") == 2
-    assert span.attributes.get(f"{SpanAttributes.CHROMADB_QUERY}.where") == "{'source': 'student info'}"
+    assert span.attributes.get(SpanAttributes.CHROMADB_QUERY_TEXTS_COUNT) == 1
+    assert span.attributes.get(SpanAttributes.CHROMADB_QUERY_N_RESULTS) == 2
+    assert span.attributes.get(SpanAttributes.CHROMADB_QUERY_WHERE) == "{'source': 'student info'}"
 
     events = span.events
     assert len(events) == 1
@@ -140,7 +140,7 @@ def test_chroma_query_segment_query(exporter, collection):
 
     spans = exporter.get_finished_spans()
     span = next(span for span in spans if span.name == "chroma.query.segment._query")
-    assert len(span.attributes.get(f"{SpanAttributes.CHROMADB_QUERY}.segment._query.collection_id")) > 0
+    assert len(span.attributes.get(SpanAttributes.CHROMADB_QUERY_SEGMENT_QUERY_COLLECTION_ID)) > 0
     events = span.events
     assert len(events) > 0
     for event in events:
