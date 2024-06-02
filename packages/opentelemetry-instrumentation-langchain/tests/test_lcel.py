@@ -26,6 +26,7 @@ JSON_OUTPUT_FUNCTIONS_PARSER_LANGCHAIN_TASK = "JsonOutputFunctionsParser.langcha
 OPENAI_CHAT = "openai.chat"
 PROMPT_TEMPLATE_LANGCHAIN_TASK = "PromptTemplate.langchain.task"
 RUNNABLE_SEQUENCE_LANGCHAIN_WORKFLOW = "RunnableSequence.langchain.workflow"
+STR_OUTPUT_PARSER_LANGCHAIN_TASK = "StrOutputParser.langchain.task"
 THIS_IS_A_TEST_CHAIN_LANGCHAIN_WORKFLOW = "ThisIsATestChain.langchain.workflow"
 
 
@@ -153,18 +154,18 @@ async def test_async_lcel(exporter):
         PROMPT_TEMPLATE_LANGCHAIN_TASK,
         OPENAI_CHAT,
         CHAT_OPENAI_LANGCHAIN_TASK,
-        "StrOutputParser.langchain.task",
+        STR_OUTPUT_PARSER_LANGCHAIN_TASK,
         RUNNABLE_SEQUENCE_LANGCHAIN_WORKFLOW,
     } == set([span.name for span in spans])
 
     workflow_span = next(
-        span for span in spans if span.name == "RunnableSequence.langchain.workflow"
+        span for span in spans if span.name == RUNNABLE_SEQUENCE_LANGCHAIN_WORKFLOW
     )
     chat_openai_task_span = next(
         span for span in spans if span.name == CHAT_OPENAI_LANGCHAIN_TASK
     )
     output_parser_task_span = next(
-        span for span in spans if span.name == "StrOutputParser.langchain.task"
+        span for span in spans if span.name == STR_OUTPUT_PARSER_LANGCHAIN_TASK
     )
 
     assert chat_openai_task_span.parent.span_id == workflow_span.context.span_id
@@ -200,7 +201,7 @@ def test_streaming(exporter):
         PROMPT_TEMPLATE_LANGCHAIN_TASK,
         OPENAI_CHAT,
         CHAT_OPENAI_LANGCHAIN_TASK,
-        "StrOutputParser.langchain.task",
+        STR_OUTPUT_PARSER_LANGCHAIN_TASK,
         RUNNABLE_SEQUENCE_LANGCHAIN_WORKFLOW,
     ] == [span.name for span in spans]
 
