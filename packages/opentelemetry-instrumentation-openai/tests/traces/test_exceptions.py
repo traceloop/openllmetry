@@ -14,7 +14,7 @@ def test_inner_exception_isnt_caught(openai_client):
             return wrapped(*args, **kwargs)
 
     wrap_function_wrapper(
-        f"{SpanAttributes.OPENAI_RESOURCES_CHAT}.completions",
+        "openai.resources.chat.completions",
         "Completions.create",
         just_throw,
     )
@@ -43,7 +43,7 @@ def test_exception_in_instrumentation_suppressed(openai_client):
             return wrapped(*args, **kwargs)
 
     wrap_function_wrapper(
-        f"{SpanAttributes.OPENAI_RESOURCES_CHAT}.completions",
+        "openai.resources.chat.completions",
         "Completions.create",
         scramble_response,
     )

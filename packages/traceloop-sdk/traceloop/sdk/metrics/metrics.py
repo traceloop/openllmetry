@@ -7,7 +7,7 @@ from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import (
 from opentelemetry.exporter.otlp.proto.http.metric_exporter import (
     OTLPMetricExporter as HTTPExporter,
 )
-from opentelemetry.semconv.ai import SpanAttributes
+from opentelemetry.semconv.ai import SpanAttributes, Meters
 from opentelemetry.sdk.metrics import MeterProvider
 from opentelemetry.sdk.metrics.export import (
     PeriodicExportingMetricReader,
@@ -85,7 +85,7 @@ def init_metrics_provider(
 def metric_views() -> Sequence[View]:
     return [
         View(
-            instrument_name=f"{SpanAttributes.LLM_CLIENTS}.operation.duration",
+            instrument_name=Meters.LLM_TOKEN_USAGE,
             aggregation=ExplicitBucketHistogramAggregation(
                 [
                     0.01,
@@ -106,7 +106,7 @@ def metric_views() -> Sequence[View]:
             ),
         ),
         View(
-            instrument_name=f"{SpanAttributes.LLM_CLIENTS}.token.usage",
+            instrument_name=Meters.LLM_OPERATION_DURATION,
             aggregation=ExplicitBucketHistogramAggregation(
                 [
                     1,

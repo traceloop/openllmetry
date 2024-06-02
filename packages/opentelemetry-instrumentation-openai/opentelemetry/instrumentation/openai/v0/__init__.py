@@ -19,7 +19,7 @@ from opentelemetry.instrumentation.openai.shared.embeddings_wrappers import (
 )
 from opentelemetry.instrumentation.openai.utils import is_metrics_enabled
 from opentelemetry.instrumentation.openai.version import __version__
-from opentelemetry.semconv.ai import SpanAttributes
+from opentelemetry.semconv.ai import SpanAttributes, Meters
 
 _instruments = ("openai >= 0.27.0", "openai < 1.0.0")
 
@@ -37,19 +37,19 @@ class OpenAIV0Instrumentor(BaseInstrumentor):
 
         if is_metrics_enabled():
             tokens_histogram = meter.create_histogram(
-                name=f"{SpanAttributes.LLM_CLIENTS}.token.usage",
+                name=Meters.LLM_TOKEN_USAGE,
                 unit="token",
                 description="Measures number of input and output tokens used",
             )
 
             chat_choice_counter = meter.create_counter(
-                name=f"{SpanAttributes.LLM_CLIENTS}.generation.choices",
+                name=Meters.LLM_GENERATION_CHOICES,
                 unit="choice",
                 description="Number of choices returned by chat completions call",
             )
 
-            chat_duration_histogram = meter.create_histogram(
-                name=f"{SpanAttributes.LLM_CLIENTS}.operation.duration",
+            duration_histogram = meter.create_histogram(
+                name=Meters.LLM_OPERATION_DURATION,
                 unit="s",
                 description="GenAI operation duration",
             )
@@ -74,7 +74,7 @@ class OpenAIV0Instrumentor(BaseInstrumentor):
             (
                 tokens_histogram,
                 chat_choice_counter,
-                chat_duration_histogram,
+                duration_histogram,
                 chat_exception_counter,
                 streaming_time_to_first_token,
                 streaming_time_to_generate,
@@ -87,12 +87,6 @@ class OpenAIV0Instrumentor(BaseInstrumentor):
                 description="he size of returned vector",
             )
 
-            embeddings_duration_histogram = meter.create_histogram(
-                name=f"{SpanAttributes.LLM_OPENAI_EMBEDDINGS}.duration",
-                unit="s",
-                description="Duration of embeddings operation",
-            )
-
             embeddings_exception_counter = meter.create_counter(
                 name=f"{SpanAttributes.LLM_OPENAI_EMBEDDINGS}.exceptions",
                 unit="time",
@@ -102,7 +96,6 @@ class OpenAIV0Instrumentor(BaseInstrumentor):
             (
                 tokens_histogram,
                 embeddings_vector_size_counter,
-                embeddings_duration_histogram,
                 embeddings_exception_counter,
             ) = (None, None, None, None)
 
@@ -117,7 +110,7 @@ class OpenAIV0Instrumentor(BaseInstrumentor):
                 tracer,
                 tokens_histogram,
                 chat_choice_counter,
-                chat_duration_histogram,
+                duration_histogram,
                 chat_exception_counter,
                 streaming_time_to_first_token,
                 streaming_time_to_generate,
@@ -130,7 +123,7 @@ class OpenAIV0Instrumentor(BaseInstrumentor):
                 tracer,
                 tokens_histogram,
                 chat_choice_counter,
-                chat_duration_histogram,
+                duration_histogram,
                 chat_exception_counter,
                 streaming_time_to_first_token,
                 streaming_time_to_generate,
@@ -143,7 +136,7 @@ class OpenAIV0Instrumentor(BaseInstrumentor):
                 tracer,
                 tokens_histogram,
                 embeddings_vector_size_counter,
-                embeddings_duration_histogram,
+                duration_histogram,
                 embeddings_exception_counter,
             ),
         )
@@ -154,7 +147,7 @@ class OpenAIV0Instrumentor(BaseInstrumentor):
                 tracer,
                 tokens_histogram,
                 embeddings_vector_size_counter,
-                embeddings_duration_histogram,
+                duration_histogram,
                 embeddings_exception_counter,
             ),
         )

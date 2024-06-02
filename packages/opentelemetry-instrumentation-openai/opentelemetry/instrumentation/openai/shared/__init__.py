@@ -142,7 +142,9 @@ def _set_response_attributes(span, response):
     _set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, response.get("model"))
 
     _set_span_attribute(
-        span, f"{SpanAttributes.LLM_OPENAI}.system_fingerprint", response.get("system_fingerprint")
+        span,
+        SpanAttributes.LLM_OPENAI_RESPONSE_SYSTEM_FINGERPRINT,
+        response.get("system_fingerprint"),
     )
 
     usage = response.get("usage")

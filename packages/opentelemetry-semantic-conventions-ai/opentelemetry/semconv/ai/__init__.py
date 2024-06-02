@@ -1,6 +1,12 @@
 from enum import Enum
 
 
+class Meters:
+    LLM_GENERATION_CHOICES = "gen_ai.client.generation.choices"
+    LLM_TOKEN_USAGE = "gen_ai.client.token.usage"
+    LLM_OPERATION_DURATION = "gen_ai.client.operation.duration"
+
+
 class SpanAttributes:
     # Semantic Conventions for LLM requests, this needs to be removed after
     # OpenTelemetry Semantic Conventions support Gen AI.
@@ -12,10 +18,8 @@ class SpanAttributes:
     LLM_REQUEST_MAX_TOKENS = "gen_ai.request.max_tokens"
     LLM_REQUEST_TEMPERATURE = "gen_ai.request.temperature"
     LLM_REQUEST_TOP_P = "gen_ai.request.top_p"
-    LLM_OPENAI = "gen_ai.openai"
     LLM_PROMPTS = "gen_ai.prompt"
     LLM_COMPLETIONS = "gen_ai.completion"
-    LLM_CLIENTS = "gen_ai.client"
     LLM_RESPONSE_MODEL = "gen_ai.response.model"
     LLM_USAGE_COMPLETION_TOKENS = "gen_ai.usage.completion_tokens"
     LLM_USAGE_PROMPT_TOKENS = "gen_ai.usage.prompt_tokens"
@@ -44,11 +48,7 @@ class SpanAttributes:
     LLM_OPENAI_CHAT_COMPLETIONS = "llm.openai.chat_completions"
     LLM_OPENAI_EMBEDDINGS = "llm.openai.embeddings"
     LLM_OPENAI_IMAGE_GENERATIONS = "llm.openai.image_generations"
-    OPENAI_RESOURCES_BETA = "openai.resources.beta"
-    OPENAI_RESOURCES_CHAT = "openai.resources.chat"
-    OPENAI_RESOURCES_COMPLETIONS = "openai.resources.completions"
-    OPENAI_RESOURCES_EMBEDDINGS = "openai.resources.embeddings"
-    OPENAI_RESOURCES_IMAGES = "openai.resources.images"
+    LLM_OPENAI_RESPONSE_SYSTEM_FINGERPRINT = "gen_ai.openai.system_fingerprint"
 
     # Vector DB
     VECTOR_DB_VENDOR = "db.system"

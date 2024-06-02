@@ -24,7 +24,7 @@ from opentelemetry.instrumentation.anthropic.version import __version__
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY, unwrap
 from opentelemetry.metrics import Counter, Histogram, Meter, get_meter
-from opentelemetry.semconv.ai import LLMRequestTypeValues, SpanAttributes
+from opentelemetry.semconv.ai import LLMRequestTypeValues, SpanAttributes, Meters
 from opentelemetry.trace import SpanKind, Tracer, get_tracer
 from opentelemetry.trace.status import Status, StatusCode
 from wrapt import wrap_function_wrapper
@@ -374,19 +374,19 @@ def _with_chat_telemetry_wrapper(func):
 
 def _create_metrics(meter: Meter, name: str):
     token_histogram = meter.create_histogram(
-        name="gen_ai.client.token.usage",
+        name=Meters.LLM_TOKEN_USAGE,
         unit="token",
         description="Measures number of input and output tokens used",
     )
 
     choice_counter = meter.create_counter(
-        name=f"{SpanAttributes.LLM_CLIENTS}.generation.choices",
+        name=Meters.LLM_GENERATION_CHOICES,
         unit="choice",
         description="Number of choices returned by chat completions call",
     )
 
     duration_histogram = meter.create_histogram(
-        name=f"{SpanAttributes.LLM_CLIENTS}.operation.duration",
+        name=Meters.LLM_OPERATION_DURATION,
         unit="s",
         description="GenAI operation duration",
     )

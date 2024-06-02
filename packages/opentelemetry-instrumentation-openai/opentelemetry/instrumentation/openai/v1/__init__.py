@@ -33,7 +33,7 @@ from opentelemetry.instrumentation.openai.v1.assistant_wrappers import (
 from opentelemetry.instrumentation.openai.utils import is_metrics_enabled
 from opentelemetry.instrumentation.openai.version import __version__
 
-from opentelemetry.semconv.ai import SpanAttributes
+from opentelemetry.semconv.ai import SpanAttributes, Meters
 
 _instruments = ("openai >= 1.0.0",)
 
@@ -52,19 +52,19 @@ class OpenAIV1Instrumentor(BaseInstrumentor):
 
         if is_metrics_enabled():
             tokens_histogram = meter.create_histogram(
-                name=f"{SpanAttributes.LLM_CLIENTS}.token.usage",
+                name=Meters.LLM_TOKEN_USAGE,
                 unit="token",
                 description="Measures number of input and output tokens used",
             )
 
             chat_choice_counter = meter.create_counter(
-                name=f"{SpanAttributes.LLM_CLIENTS}.generation.choices",
+                name=Meters.LLM_GENERATION_CHOICES,
                 unit="choice",
                 description="Number of choices returned by chat completions call",
             )
 
-            chat_duration_histogram = meter.create_histogram(
-                name=f"{SpanAttributes.LLM_CLIENTS}.operation.duration",
+            duration_histogram = meter.create_histogram(
+                name=Meters.LLM_OPERATION_DURATION,
                 unit="s",
                 description="GenAI operation duration",
             )
@@ -89,20 +89,20 @@ class OpenAIV1Instrumentor(BaseInstrumentor):
             (
                 tokens_histogram,
                 chat_choice_counter,
-                chat_duration_histogram,
+                duration_histogram,
                 chat_exception_counter,
                 streaming_time_to_first_token,
                 streaming_time_to_generate,
             ) = (None, None, None, None, None, None)
 
         wrap_function_wrapper(
-            f"{SpanAttributes.OPENAI_RESOURCES_CHAT}.completions",
+            "openai.resources.chat.completions",
             "Completions.create",
             chat_wrapper(
                 tracer,
                 tokens_histogram,
                 chat_choice_counter,
-                chat_duration_histogram,
+                duration_histogram,
                 chat_exception_counter,
                 streaming_time_to_first_token,
                 streaming_time_to_generate,
@@ -110,7 +110,7 @@ class OpenAIV1Instrumentor(BaseInstrumentor):
         )
 
         wrap_function_wrapper(
-            f"{SpanAttributes.OPENAI_RESOURCES_COMPLETIONS}",
+            "openai.resources.completions",
             "Completions.create",
             completion_wrapper(tracer),
         )
@@ -122,12 +122,6 @@ class OpenAIV1Instrumentor(BaseInstrumentor):
                 description="he size of returned vector",
             )
 
-            embeddings_duration_histogram = meter.create_histogram(
-                name=f"{SpanAttributes.LLM_OPENAI_EMBEDDINGS}.duration",
-                unit="s",
-                description="Duration of embeddings operation",
-            )
-
             embeddings_exception_counter = meter.create_counter(
                 name=f"{SpanAttributes.LLM_OPENAI_EMBEDDINGS}.exceptions",
                 unit="time",
@@ -137,99 +131,90 @@ class OpenAIV1Instrumentor(BaseInstrumentor):
             (
                 tokens_histogram,
                 embeddings_vector_size_counter,
-                embeddings_duration_histogram,
                 embeddings_exception_counter,
             ) = (None, None, None, None)
 
         wrap_function_wrapper(
-            f"{SpanAttributes.OPENAI_RESOURCES_EMBEDDINGS}",
+            "openai.resources.embeddings",
             "Embeddings.create",
             embeddings_wrapper(
                 tracer,
                 tokens_histogram,
                 embeddings_vector_size_counter,
-                embeddings_duration_histogram,
+                duration_histogram,
                 embeddings_exception_counter,
             ),
         )
 
         wrap_function_wrapper(
-            f"{SpanAttributes.OPENAI_RESOURCES_CHAT}.completions",
+            "openai.resources.chat.completions",
             "AsyncCompletions.create",
             achat_wrapper(
                 tracer,
                 tokens_histogram,
                 chat_choice_counter,
-                chat_duration_histogram,
+                duration_histogram,
                 chat_exception_counter,
                 streaming_time_to_first_token,
                 streaming_time_to_generate,
             ),
         )
         wrap_function_wrapper(
-            f"{SpanAttributes.OPENAI_RESOURCES_COMPLETIONS}",
+            "openai.resources.completions",
             "AsyncCompletions.create",
             acompletion_wrapper(tracer),
         )
         wrap_function_wrapper(
-            f"{SpanAttributes.OPENAI_RESOURCES_EMBEDDINGS}",
+            "openai.resources.embeddings",
             "AsyncEmbeddings.create",
             aembeddings_wrapper(
                 tracer,
                 tokens_histogram,
                 embeddings_vector_size_counter,
-                embeddings_duration_histogram,
+                duration_histogram,
                 embeddings_exception_counter,
             ),
         )
 
         if is_metrics_enabled():
-            image_gen_duration_histogram = meter.create_histogram(
-                name=f"{SpanAttributes.LLM_OPENAI_IMAGE_GENERATIONS}.duration",
-                unit="s",
-                description="Duration of image generations operation",
-            )
-
             image_gen_exception_counter = meter.create_counter(
                 name=f"{SpanAttributes.LLM_OPENAI_IMAGE_GENERATIONS}.exceptions",
                 unit="time",
                 description="Number of exceptions occurred during image generations operation",
             )
         else:
-            image_gen_duration_histogram, image_gen_exception_counter = None, None
+            image_gen_exception_counter = None, None
 
         wrap_function_wrapper(
-            f"{SpanAttributes.OPENAI_RESOURCES_IMAGES}",
+            "openai.resources.images",
             "Images.generate",
-            image_gen_metrics_wrapper(
-                image_gen_duration_histogram, image_gen_exception_counter
-            ),
+            image_gen_metrics_wrapper(duration_histogram, image_gen_exception_counter),
         )
 
         # Beta APIs may not be available consistently in all versions
         try:
             wrap_function_wrapper(
-                f"{SpanAttributes.OPENAI_RESOURCES_BETA}.assistants",
+                "openai.resources.beta.assistants",
                 "Assistants.create",
                 assistants_create_wrapper(tracer),
             )
             wrap_function_wrapper(
-                f"{SpanAttributes.OPENAI_RESOURCES_BETA}.threads.runs",
+                "openai.resources.beta.threads.runs",
                 "Runs.create",
                 runs_create_wrapper(tracer),
             )
             wrap_function_wrapper(
-                f"{SpanAttributes.OPENAI_RESOURCES_BETA}.threads.runs",
+                "openai.resources.beta.threads.runs",
                 "Runs.retrieve",
                 runs_retrieve_wrapper(tracer),
             )
             wrap_function_wrapper(
-                f"{SpanAttributes.OPENAI_RESOURCES_BETA}.threads.runs",
+                "openai.resources.beta.threads.runs",
                 "Runs.create_and_stream",
                 runs_create_and_stream_wrapper(tracer),
             )
             wrap_function_wrapper(
-                f"{SpanAttributes.OPENAI_RESOURCES_BETA}.threads.messages",
+                "openai.resources.beta.threads.messages",
                 "Messages.list",
                 messages_list_wrapper(tracer),
             )
