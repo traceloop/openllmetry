@@ -163,10 +163,13 @@ class SpanAttributes:
     MILVUS_UPSERT_TIMEOUT_COUNT = "db.milvus.upsert.timeout_count"
 
     # Qdrant
-    QDRANT_SEARCH = "qdrant.search"
-    QDRANT_SEARCH_BATCH = "qdrant.search_batch"
-    QDRANT_UPLOAD_COLLECTION = "qdrant.upload_collection"
-    QDRANT_UPSERT = "qdrant.upsert"
+    QDRANT_SEARCH_COLLECTION_NAME = "qdrant.search.collection_name"
+    QDRANT_SEARCH_BATCH_COLLECTION_NAME = "qdrant.search_batch.collection_name"
+    QDRANT_SEARCH_BATCH_REQUESTS_COUNT = "qdrant.search_batch.requests_count"
+    QDRANT_UPLOAD_COLLECTION_NAME = "qdrant.upload_collection.collection_name"
+    QDRANT_UPLOAD_POINTS_COUNT = "qdrant.upload_collection.points_count"
+    QDRANT_UPSERT_COLLECTION_NAME = "qdrant.upsert.collection_name"
+    QDRANT_UPSERT_POINTS_COUNT = "qdrant.upsert.points_count"
 
     # Weaviate
     WEAVIATE_BATCH = "db.weaviate.batch"
