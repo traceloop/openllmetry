@@ -33,4 +33,4 @@ def test_haystack(exporter):
     assert {
         "haystack.openai.chat",
         "haystack_pipeline.workflow",
-    }.issubset([span.name for span in spans])
+    } == {span.name for span in spans}
