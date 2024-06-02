@@ -6,9 +6,6 @@ from anthropic import AI_PROMPT, HUMAN_PROMPT, Anthropic, AsyncAnthropic
 from opentelemetry.semconv.ai import SpanAttributes, Meters
 
 
-LLM_ANTHROPIC_COMPLETION = "llm.anthropic.completion"
-
-
 @pytest.mark.vcr
 def test_anthropic_completion(exporter, reader):
     client = Anthropic()
@@ -84,7 +81,7 @@ def test_anthropic_completion(exporter, reader):
                         for data_point in metric.data.data_points
                     )
 
-                if metric.name == f"{LLM_ANTHROPIC_COMPLETION}.exceptions":
+                if metric.name == Meters.LLM_ANTHROPIC_COMPLETION_EXCEPTIONS:
                     found_exception_metric = True
                     for data_point in metric.data.data_points:
                         assert data_point.value == 1
@@ -190,7 +187,7 @@ def test_anthropic_message_create(exporter, reader):
                         for data_point in metric.data.data_points
                     )
 
-                if metric.name == f"{LLM_ANTHROPIC_COMPLETION}.exceptions":
+                if metric.name == Meters.LLM_ANTHROPIC_COMPLETION_EXCEPTIONS:
                     found_exception_metric = True
                     for data_point in metric.data.data_points:
                         assert data_point.value == 1
@@ -458,7 +455,7 @@ async def test_async_anthropic_message_create(exporter, reader):
                         for data_point in metric.data.data_points
                     )
 
-                if metric.name == f"{LLM_ANTHROPIC_COMPLETION}.exceptions":
+                if metric.name == Meters.LLM_ANTHROPIC_COMPLETION_EXCEPTIONS:
                     found_exception_metric = True
                     for data_point in metric.data.data_points:
                         assert data_point.value == 1
@@ -550,7 +547,7 @@ async def test_async_anthropic_message_streaming(exporter, reader):
                             == "claude-3-haiku-20240307"
                         )
 
-                if metric.name == Meters.LLM_OPERATION_DURATIONURATION:
+                if metric.name == Meters.LLM_OPERATION_DURATION:
                     found_duration_metric = True
                     assert any(
                         data_point.count > 0 for data_point in metric.data.data_points

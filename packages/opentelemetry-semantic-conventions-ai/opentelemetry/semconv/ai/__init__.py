@@ -12,6 +12,7 @@ class Meters:
     LLM_EMBEDDINGS_EXCEPTIONS = "llm.openai.embeddings.exceptions"
     LLM_EMBEDDINGS_VECTOR_SIZE = "llm.openai.embeddings.vector_size"
     LLM_IMAGE_GENERATIONS_EXCEPTIONS = "llm.openai.image_generations.exceptions"
+    LLM_ANTHROPIC_COMPLETION_EXCEPTIONS = "llm.anthropic.completion.exceptions"
 
     PINECONE_DB_QUERY_DURATION = "db.pinecone.query.duration"
     PINECONE_DB_QUERY_SCORES = "db.pinecone.query.scores"
