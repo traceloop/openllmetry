@@ -15,7 +15,9 @@ from opentelemetry.instrumentation.anthropic.streaming import (
 )
 from opentelemetry.instrumentation.anthropic.utils import (
     dont_throw,
+    error_metrics_attributes,
     set_span_attribute,
+    shared_metrics_attributes,
     should_send_prompts,
 )
 from opentelemetry.instrumentation.anthropic.version import __version__
@@ -398,16 +400,6 @@ def _create_metrics(meter: Meter, name: str):
     return token_histogram, choice_counter, duration_histogram, exception_counter
 
 
-@dont_throw
-def _calculate_metrics_attributes(response):
-    if not isinstance(response, dict):
-        response = response.__dict__
-    return {
-        "gen_ai.system": "anthropic",
-        "gen_ai.response.model": response.get("model"),
-    }
-
-
 @_with_chat_telemetry_wrapper
 def _wrap(
     tracer: Tracer,
@@ -443,9 +435,7 @@ def _wrap(
         response = wrapped(*args, **kwargs)
     except Exception as e:  # pylint: disable=broad-except
         end_time = time.time()
-        attributes = {
-            "error.type": e.__class__.__name__,
-        }
+        attributes = error_metrics_attributes(e)
 
         if duration_histogram:
             duration = end_time - start_time
@@ -472,7 +462,7 @@ def _wrap(
         )
     elif response:
         try:
-            metric_attributes = _calculate_metrics_attributes(response)
+            metric_attributes = shared_metrics_attributes(response)
 
             if duration_histogram:
                 duration = time.time() - start_time
@@ -544,9 +534,7 @@ async def _awrap(
         response = await wrapped(*args, **kwargs)
     except Exception as e:  # pylint: disable=broad-except
         end_time = time.time()
-        attributes = {
-            "error.type": e.__class__.__name__,
-        }
+        attributes = error_metrics_attributes(e)
 
         if duration_histogram:
             duration = end_time - start_time
@@ -570,7 +558,7 @@ async def _awrap(
             kwargs,
         )
     elif response:
-        metric_attributes = _calculate_metrics_attributes(response)
+        metric_attributes = shared_metrics_attributes(response)
 
         if duration_histogram:
             duration = time.time() - start_time

@@ -3,8 +3,12 @@ import time
 
 from opentelemetry.instrumentation.anthropic.config import Config
 from opentelemetry.instrumentation.anthropic.utils import (
+    GEN_AI_SYSTEM,
+    GEN_AI_SYSTEM_ANTHROPIC,
     dont_throw,
+    error_metrics_attributes,
     set_span_attribute,
+    shared_metrics_attributes,
     should_send_prompts,
 )
 from opentelemetry.metrics import Counter, Histogram
@@ -113,18 +117,13 @@ def build_from_streaming_response(
         try:
             yield item
         except Exception as e:
-            attributes = {
-                "error.type": e.__class__.__name__,
-            }
+            attributes = error_metrics_attributes(e)
             if exception_counter:
                 exception_counter.add(1, attributes=attributes)
             raise e
         _process_response_item(item, complete_response)
 
-    metric_attributes = {
-        "gen_ai.system": "anthropic",
-        "gen_ai.response.model": complete_response.get("model"),
-    }
+    metric_attributes = shared_metrics_attributes(complete_response)
 
     if duration_histogram:
         duration = time.time() - start_time
@@ -197,18 +196,13 @@ async def abuild_from_streaming_response(
         try:
             yield item
         except Exception as e:
-            attributes = {
-                "error.type": e.__class__.__name__,
-            }
+            attributes = error_metrics_attributes(e)
             if exception_counter:
                 exception_counter.add(1, attributes=attributes)
             raise e
         _process_response_item(item, complete_response)
 
-    metric_attributes = {
-        "gen_ai.response.model": complete_response.get("model"),
-    }
-
+    metric_attributes = shared_metrics_attributes(complete_response)
     if duration_histogram:
         duration = time.time() - start_time
         duration_histogram.record(
