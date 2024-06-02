@@ -127,7 +127,7 @@ def metric_views() -> Sequence[View]:
             ),
         ),
         View(
-            instrument_name=f"{SpanAttributes.PINECONE_DB_QUERY}.duration",
+            instrument_name=Meters.PINECONE_DB_QUERY_DURATION,
             aggregation=ExplicitBucketHistogramAggregation(
                 [
                     0.01,
@@ -148,7 +148,7 @@ def metric_views() -> Sequence[View]:
             ),
         ),
         View(
-            instrument_name=f"{SpanAttributes.PINECONE_DB_QUERY}.scores",
+            instrument_name=Meters.PINECONE_DB_QUERY_SCORES,
             aggregation=ExplicitBucketHistogramAggregation(
                 [
                     -1,
