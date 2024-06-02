@@ -1,7 +1,7 @@
 import sys
 
 import pytest
-from opentelemetry.semconv.ai import SpanAttributes
+from opentelemetry.semconv.ai import Meters, SpanAttributes
 
 
 @pytest.mark.skipif(sys.version_info < (3, 10), reason="ibm-watson-ai requires python3.10")
@@ -27,7 +27,11 @@ def test_generate_metrics(metrics_test_context, watson_ai_model):
         for sm in rm.scope_metrics:
             for metric in sm.metrics:
 
+<<<<<<< HEAD
                 if metric.name == "gen_ai.client.token.usage":
+=======
+                if metric.name == Meters.LLM_WATSONX_COMPLETIONS_TOKENS:
+>>>>>>> 2856702 (Fix watsonx)
                     found_token_metric = True
                     for data_point in metric.data.data_points:
                         assert data_point.attributes["gen_ai.token.type"] in [
@@ -36,12 +40,16 @@ def test_generate_metrics(metrics_test_context, watson_ai_model):
                         ]
                         assert data_point.value > 0
 
-                if metric.name == f"{SpanAttributes.LLM_WATSONX_COMPLETIONS}.responses":
+                if metric.name == Meters.LLM_WATSONX_COMPLETIONS_RESPONSES:
                     found_response_metric = True
                     for data_point in metric.data.data_points:
                         assert data_point.value >= 1
 
+<<<<<<< HEAD
                 if metric.name == "gen_ai.client.operation.duration":
+=======
+                if metric.name == Meters.LLM_WATSONX_COMPLETIONS_DURATION:
+>>>>>>> 2856702 (Fix watsonx)
                     found_duration_metric = True
                     assert any(
                         data_point.count > 0 for data_point in metric.data.data_points
@@ -83,7 +91,11 @@ def test_generate_stream_metrics(metrics_test_context, watson_ai_model):
         for sm in rm.scope_metrics:
             for metric in sm.metrics:
 
+<<<<<<< HEAD
                 if metric.name == "gen_ai.client.token.usage":
+=======
+                if metric.name == Meters.LLM_WATSONX_COMPLETIONS_TOKENS:
+>>>>>>> 2856702 (Fix watsonx)
                     found_token_metric = True
                     for data_point in metric.data.data_points:
                         assert data_point.attributes["gen_ai.token.type"] in [
@@ -92,12 +104,16 @@ def test_generate_stream_metrics(metrics_test_context, watson_ai_model):
                         ]
                         assert data_point.value > 0
 
-                if metric.name == f"{SpanAttributes.LLM_WATSONX_COMPLETIONS}.responses":
+                if metric.name == Meters.LLM_WATSONX_COMPLETIONS_RESPONSES:
                     found_response_metric = True
                     for data_point in metric.data.data_points:
                         assert data_point.value >= 1
 
+<<<<<<< HEAD
                 if metric.name == "gen_ai.client.operation.duration":
+=======
+                if metric.name == Meters.LLM_WATSONX_COMPLETIONS_DURATION:
+>>>>>>> 2856702 (Fix watsonx)
                     found_duration_metric = True
                     assert any(
                         data_point.count > 0 for data_point in metric.data.data_points

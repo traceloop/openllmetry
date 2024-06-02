@@ -18,6 +18,11 @@ class Meters:
     PINECONE_DB_USAGE_READ_UNITS = "db.pinecone.usage.read_units"
     PINECONE_DB_USAGE_WRITE_UNITS = "db.pinecone.usage_write_units"
 
+    LLM_WATSONX_COMPLETIONS_DURATION = "llm.watsonx.completions.duration"
+    LLM_WATSONX_COMPLETIONS_EXCEPTIONS = "llm.watsonx.completions.exceptions"
+    LLM_WATSONX_COMPLETIONS_RESPONSES = "llm.watsonx.completions.responses"
+    LLM_WATSONX_COMPLETIONS_TOKENS = "llm.watsonx.completions.tokens"
+
 
 class SpanAttributes:
     # Semantic Conventions for LLM requests, this needs to be removed after
@@ -96,7 +101,6 @@ class SpanAttributes:
     LLM_MAX_NEW_TOKENS = "llm.watsonx.max_new_tokens"
     LLM_MIN_NEW_TOKENS = "llm.watsonx.min_new_tokens"
     LLM_REPETITION_PENALTY = "llm.watsonx.repetition_penalty"
-    LLM_WATSONX_COMPLETIONS = "llm.watsonx.completions"
 
     # Chroma db
     CHROMADB_ADD_IDS_COUNT = "db.chroma.add.ids_count"
