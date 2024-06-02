@@ -2,7 +2,7 @@ import os
 
 import pytest
 from openai import OpenAI
-from opentelemetry.semconv.ai import Events, SpanAttributes
+from opentelemetry.semconv.ai import Events, Meters, SpanAttributes
 from pinecone import Pinecone
 
 
@@ -100,16 +100,16 @@ def test_pinecone_retrieval(traces_exporter, metrics_reader, openai_client):
         "openai.completion",
     ]
 
-    span = next(span for span in spans if span.name == SpanAttributes.PINECONE_QUERY)
+    span = next(span for span in spans if span.name == "pinecone.query")
     assert (
         span.attributes.get("server.address")
         == "https://gen-qa-openai-fast-90c5d9e.svc.gcp-starter.pinecone.io"
     )
-    assert span.attributes.get(f"{SpanAttributes.PINECONE_QUERY}.top_k") == 3
+    assert span.attributes.get(SpanAttributes.PINECONE_QUERY_TOP_K) == 3
     assert span.attributes.get(SpanAttributes.PINECONE_USAGE_READ_UNITS) == 6
     assert span.attributes.get(SpanAttributes.PINECONE_USAGE_WRITE_UNITS) == 0
-    assert span.attributes.get(f"{SpanAttributes.PINECONE_QUERY}.include_values")
-    assert span.attributes.get(f"{SpanAttributes.PINECONE_QUERY}.include_metadata")
+    assert span.attributes.get(SpanAttributes.PINECONE_QUERY_INCLUDE_VALUES)
+    assert span.attributes.get(SpanAttributes.PINECONE_QUERY_INCLUDE_METADATA)
 
     events = span.events
     assert len(events) > 0
@@ -125,10 +125,10 @@ def test_pinecone_retrieval(traces_exporter, metrics_reader, openai_client):
             assert v >= -1 and v <= 1
 
     query_result_events = [
-        event for event in span.events if f"{SpanAttributes.PINECONE_DB_QUERY}.result" in event.name
+        event for event in span.events if "db.pinecone.query.result" in event.name
     ]
     for event in query_result_events:
-        assert event.name == f"{SpanAttributes.PINECONE_DB_QUERY}.result"
+        assert event.name == "db.pinecone.query.result"
 
         id = event.attributes.get(f"{event.name}.id")
         score = event.attributes.get(f"{event.name}.score")
@@ -154,12 +154,12 @@ def test_pinecone_retrieval(traces_exporter, metrics_reader, openai_client):
         for sm in rm.scope_metrics:
             for metric in sm.metrics:
 
-                if metric.name == f"{SpanAttributes.PINECONE_DB_QUERY}.duration":
+                if metric.name == Meters.PINECONE_DB_QUERY_DURATION:
                     found_query_duration_metric = True
                     for data_point in metric.data.data_points:
                         assert data_point.sum > 0
 
-                if metric.name == f"{SpanAttributes.PINECONE_DB_QUERY}.scores":
+                if metric.name == Meters.PINECONE_DB_QUERY_SCORES:
                     found_scores_metric = True
                     for data_point in metric.data.data_points:
                         assert data_point.sum == sum(
@@ -170,7 +170,7 @@ def test_pinecone_retrieval(traces_exporter, metrics_reader, openai_client):
                             == "https://gen-qa-openai-fast-90c5d9e.svc.gcp-starter.pinecone.io"
                         )
 
-                if metric.name == f"{SpanAttributes.PINECONE_DB_USAGE}.read_units":
+                if metric.name == Meters.PINECONE_DB_USAGE_READ_UNITS:
                     found_read_units_metric = True
                     for data_point in metric.data.data_points:
                         assert data_point.value == 6
@@ -179,7 +179,7 @@ def test_pinecone_retrieval(traces_exporter, metrics_reader, openai_client):
                             == "https://gen-qa-openai-fast-90c5d9e.svc.gcp-starter.pinecone.io"
                         )
 
-                if metric.name == f"{SpanAttributes.PINECONE_DB_USAGE}.write_units":
+                if metric.name == Meters.PINECONE_DB_USAGE_WRITE_UNITS:
                     found_write_units_metric = True
                     for data_point in metric.data.data_points:
                         assert data_point.value == 0

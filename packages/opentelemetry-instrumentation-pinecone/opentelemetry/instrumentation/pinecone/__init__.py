@@ -28,7 +28,7 @@ from opentelemetry.instrumentation.pinecone.query_handlers import (
     set_query_response,
 )
 from opentelemetry.semconv.trace import SpanAttributes
-from opentelemetry.semconv.ai import SpanAttributes as AISpanAttributes
+from opentelemetry.semconv.ai import Meters, SpanAttributes as AISpanAttributes
 
 logger = logging.getLogger(__name__)
 
@@ -195,22 +195,22 @@ class PineconeInstrumentor(BaseInstrumentor):
             meter = get_meter(__name__, __version__, meter_provider)
 
             query_duration_metric = meter.create_histogram(
-                f"{AISpanAttributes.PINECONE_DB_QUERY}.duration",
+                Meters.PINECONE_DB_QUERY_DURATION,
                 "s",
                 "Duration of query operations to Pinecone",
             )
             read_units_metric = meter.create_counter(
-                f"{AISpanAttributes.PINECONE_DB_USAGE}.read_units",
+                Meters.PINECONE_DB_USAGE_READ_UNITS,
                 "unit",
                 "Number of read units consumed in serverless calls",
             )
             write_units_metric = meter.create_counter(
-                f"{AISpanAttributes.PINECONE_DB_USAGE}.write_units",
+                Meters.PINECONE_DB_USAGE_WRITE_UNITS,
                 "unit",
                 "Number of write units consumed in serverless calls",
             )
             scores_metric = meter.create_histogram(
-                f"{AISpanAttributes.PINECONE_DB_QUERY}.scores",
+                Meters.PINECONE_DB_QUERY_SCORES,
                 "score",
                 "Scores returned from Pinecone calls",
             )

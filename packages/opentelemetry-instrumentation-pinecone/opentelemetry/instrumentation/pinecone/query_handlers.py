@@ -18,21 +18,21 @@ def set_query_input_attributes(span, kwargs):
     # sparse_vector: Optional[Union[SparseValues, Dict[str, Union[List[float], List[int]]]]] = None,
     # **kwargs) -> QueryResponse:
 
-    set_span_attribute(span, f"{SpanAttributes.PINECONE_QUERY}.id", kwargs.get("id"))
-    set_span_attribute(span, f"{SpanAttributes.PINECONE_QUERY}.queries", kwargs.get("queries"))
-    set_span_attribute(span, f"{SpanAttributes.PINECONE_QUERY}.top_k", kwargs.get("top_k"))
-    set_span_attribute(span, f"{SpanAttributes.PINECONE_QUERY}.namespace", kwargs.get("namespace"))
+    set_span_attribute(span, SpanAttributes.PINECONE_QUERY_ID, kwargs.get("id"))
+    set_span_attribute(span, SpanAttributes.PINECONE_QUERY_QUERIES, kwargs.get("queries"))
+    set_span_attribute(span, SpanAttributes.PINECONE_QUERY_TOP_K, kwargs.get("top_k"))
+    set_span_attribute(span, SpanAttributes.PINECONE_QUERY_NAMESPACE, kwargs.get("namespace"))
     if isinstance(kwargs.get("filter"), dict):
         set_span_attribute(
-            span, f"{SpanAttributes.PINECONE_QUERY}.filter", json.dumps(kwargs.get("filter"))
+            span, SpanAttributes.PINECONE_QUERY_FILTER, json.dumps(kwargs.get("filter"))
         )
     else:
-        set_span_attribute(span, f"{SpanAttributes.PINECONE_QUERY}.filter", kwargs.get("filter"))
+        set_span_attribute(span, SpanAttributes.PINECONE_QUERY_FILTER, kwargs.get("filter"))
     set_span_attribute(
-        span, f"{SpanAttributes.PINECONE_QUERY}.include_values", kwargs.get("include_values")
+        span, SpanAttributes.PINECONE_QUERY_INCLUDE_VALUES, kwargs.get("include_values")
     )
     set_span_attribute(
-        span, f"{SpanAttributes.PINECONE_QUERY}.include_metadata", kwargs.get("include_metadata")
+        span, SpanAttributes.PINECONE_QUERY_INCLUDE_METADATA, kwargs.get("include_metadata")
     )
 
     # Log query embeddings

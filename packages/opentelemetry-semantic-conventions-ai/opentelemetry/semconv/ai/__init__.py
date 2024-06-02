@@ -13,6 +13,11 @@ class Meters:
     LLM_EMBEDDINGS_VECTOR_SIZE = "llm.openai.embeddings.vector_size"
     LLM_IMAGE_GENERATIONS_EXCEPTIONS = "llm.openai.image_generations.exceptions"
 
+    PINECONE_DB_QUERY_DURATION = "db.pinecone.query.duration"
+    PINECONE_DB_QUERY_SCORES = "db.pinecone.query.scores"
+    PINECONE_DB_USAGE_READ_UNITS = "db.pinecone.usage.read_units"
+    PINECONE_DB_USAGE_WRITE_UNITS = "db.pinecone.usage_write_units"
+
 
 class SpanAttributes:
     # Semantic Conventions for LLM requests, this needs to be removed after
@@ -66,9 +71,13 @@ class SpanAttributes:
     # Pinecone
     PINECONE_USAGE_READ_UNITS = "pinecone.usage.read_units"
     PINECONE_USAGE_WRITE_UNITS = "pinecone.usage.write_units"
-    PINECONE_DB_QUERY = "db.pinecone.query"
-    PINECONE_DB_USAGE = "db.pinecone.usage"
-    PINECONE_QUERY = "pinecone.query"
+    PINECONE_QUERY_FILTER = "pinecone.query.filter"
+    PINECONE_QUERY_ID = "pinecone.query.id"
+    PINECONE_QUERY_INCLUDE_METADATA = "pinecone.query.include_metadata"
+    PINECONE_QUERY_INCLUDE_VALUES = "pinecone.query.include_values"
+    PINECONE_QUERY_NAMESPACE = "pinecone.query.namespace"
+    PINECONE_QUERY_QUERIES = "pinecone.query.queries"
+    PINECONE_QUERY_TOP_K = "pinecone.query.top_k"
 
     # LLM Workflows
     TRACELOOP_SPAN_KIND = "traceloop.span.kind"
