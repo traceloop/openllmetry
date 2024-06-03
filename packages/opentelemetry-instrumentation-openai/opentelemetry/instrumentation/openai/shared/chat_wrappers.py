@@ -429,7 +429,9 @@ def _set_streaming_token_metrics(
                 **shared_attributes,
                 "llm.usage.token_type": "completion",
             }
-            token_counter.record(completion_usage, attributes=attributes_with_token_type)
+            token_counter.record(
+                completion_usage, attributes=attributes_with_token_type
+            )
 
 
 class ChatStream(ObjectProxy):
@@ -458,6 +460,8 @@ class ChatStream(ObjectProxy):
     ):
         super().__init__(response)
 
+        print("HEYY", response.__class__.__name__)
+
         self._span = span
         self._instance = instance
         self._token_counter = token_counter
@@ -475,6 +479,15 @@ class ChatStream(ObjectProxy):
 
     def __enter__(self):
         return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.__wrapped__.__exit__(exc_type, exc_val, exc_tb)
+
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        await self.__wrapped__.__aexit__(exc_type, exc_val, exc_tb)
 
     def __iter__(self):
         return self
