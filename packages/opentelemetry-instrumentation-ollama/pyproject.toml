@@ -8,7 +8,7 @@ show_missing = true
 
 [tool.poetry]
 name = "opentelemetry-instrumentation-ollama"
-version = "0.21.0"
+version = "0.21.3"
 description = "OpenTelemetry Ollama instrumentation"
 authors = [
   "Gal Kleinman <gal@traceloop.com>",
@@ -23,9 +23,9 @@ include = "opentelemetry/instrumentation/ollama"
 
 [tool.poetry.dependencies]
 python = ">=3.9,<4"
-opentelemetry-api = "^1.24.0"
-opentelemetry-instrumentation = "^0.45b0"
-opentelemetry-semantic-conventions = "^0.45b0"
+opentelemetry-api = "^1.25.0"
+opentelemetry-instrumentation = "^0.46b0"
+opentelemetry-semantic-conventions = "^0.46b0"
 opentelemetry-semantic-conventions-ai = "0.2.0"
 
 ollama = "^0.2.0"

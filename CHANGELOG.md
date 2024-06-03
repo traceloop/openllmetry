@@ -1,3 +1,25 @@
+## v0.21.3 (2024-06-03)
+
+### Fix
+
+- **openai**: async streaming responses (#1229)
+- **sdk**: temporarily (?) remove sentry (#1228)
+
+## v0.21.2 (2024-05-31)
+
+### Fix
+
+- **all packages**: Bump opentelemetry-api to 1.25.0 and opentelemetry-instrumentation to 0.46b0 (#1189)
+
+## v0.21.1 (2024-05-30)
+
+### Fix
+
+- log tracing errors on debug level (#1180)
+- **bedrock**: support streaming API (#1179)
+- **weaviate**: support v4.6.3 (#1134)
+- **sdk**: wrong package check for mistral instrumentations (#1168)
+
 ## v0.21.0 (2024-05-27)
 
 ### Feat
