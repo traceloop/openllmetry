@@ -4,21 +4,15 @@ from pathlib import Path
 import logging
 import sys
 from posthog import Posthog
-import sentry_sdk
 from traceloop.sdk.version import __version__
 
 POSTHOG_API_KEY = "phc_JMTeAfG8OpaPsyHzSBtqquMvko1fmOHcW0gyqLCrF3t"
-SENTRY_INGESTION_ENDPOINT = (
-    "https://b4f74304f2541ee6781edd8c81b0773c@o4505278734663680.ingest.us.sentry.io/"
-    + "4507109322260480"
-)
 
 
 class Telemetry:
     ANON_ID_PATH = str(Path.home() / ".cache" / "traceloop" / "telemetry_anon_id")
     UNKNOWN_ANON_ID = "UNKNOWN"
 
-    _sentry: sentry_sdk.Client = None
     _posthog: Posthog = None
 
     def __new__(cls) -> "Telemetry":
@@ -33,11 +27,6 @@ class Telemetry:
                     obj._posthog = Posthog(
                         project_api_key=POSTHOG_API_KEY,
                         host="https://app.posthog.com",
-                    )
-                    obj._sentry = sentry_sdk.Client(
-                        dsn=SENTRY_INGESTION_ENDPOINT,
-                        default_integrations=False,
-                        release=__version__,
                     )
                     obj._curr_anon_id = None
 
@@ -84,8 +73,14 @@ class Telemetry:
 
     def log_exception(self, exception: Exception):
         try:  # don't fail if telemetry fails
-            with sentry_sdk.Hub(self._sentry) as hub:
-                hub.capture_exception(exception)
+            return self._posthog.capture(
+                self._anon_id(),
+                "exception",
+                {
+                    **self._context(),
+                    "exception": str(exception),
+                },
+            )
         except Exception:
             pass
 

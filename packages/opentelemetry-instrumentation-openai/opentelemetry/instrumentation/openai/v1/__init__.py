@@ -52,7 +52,7 @@ class OpenAIV1Instrumentor(BaseInstrumentor):
             tokens_histogram = meter.create_histogram(
                 name="gen_ai.client.token.usage",
                 unit="token",
-                description="Number of tokens used in prompt and completions",
+                description="Measures number of input and output tokens used",
             )
 
             chat_choice_counter = meter.create_counter(
@@ -64,7 +64,7 @@ class OpenAIV1Instrumentor(BaseInstrumentor):
             chat_duration_histogram = meter.create_histogram(
                 name="gen_ai.client.operation.duration",
                 unit="s",
-                description="Duration of chat completion operation",
+                description="GenAI operation duration",
             )
 
             chat_exception_counter = meter.create_counter(

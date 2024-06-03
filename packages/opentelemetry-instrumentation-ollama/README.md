@@ -4,7 +4,7 @@
     <img src="https://badge.fury.io/py/opentelemetry-instrumentation-ollama.svg">
 </a>
 
-This library allows tracing calls to any of Cohere's endpoints sent with the official [Ollama Python Library](https://github.com/ollama/ollama-python).
+This library allows tracing calls to any of Ollama's endpoints sent with the official [Ollama Python Library](https://github.com/ollama/ollama-python).
 
 ## Installation
 
