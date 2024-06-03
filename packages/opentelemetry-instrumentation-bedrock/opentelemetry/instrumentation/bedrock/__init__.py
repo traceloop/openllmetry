@@ -9,6 +9,7 @@ from opentelemetry.instrumentation.bedrock.config import Config
 from opentelemetry.instrumentation.bedrock.reusable_streaming_body import (
     ReusableStreamingBody,
 )
+from opentelemetry.instrumentation.bedrock.streaming_wrapper import StreamingWrapper
 from opentelemetry.instrumentation.bedrock.utils import dont_throw
 from wrapt import wrap_function_wrapper
 import anthropic
@@ -32,7 +33,12 @@ anthropic_client = anthropic.Anthropic()
 _instruments = ("boto3 >= 1.28.57",)
 
 WRAPPED_METHODS = [
-    {"package": "botocore.client", "object": "ClientCreator", "method": "create_client"}
+    {
+        "package": "botocore.client",
+        "object": "ClientCreator",
+        "method": "create_client",
+    },
+    {"package": "botocore.session", "object": "Session", "method": "create_client"},
 ]
 
 
@@ -70,6 +76,11 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
     if kwargs.get("service_name") == "bedrock-runtime":
         client = wrapped(*args, **kwargs)
         client.invoke_model = _instrumented_model_invoke(client.invoke_model, tracer)
+        client.invoke_model_with_response_stream = (
+            _instrumented_model_invoke_with_response_stream(
+                client.invoke_model_with_response_stream, tracer
+            )
+        )
 
         return client
 
@@ -90,6 +101,51 @@ def _instrumented_model_invoke(fn, tracer):
             return response
 
     return with_instrumentation
+
+
+def _instrumented_model_invoke_with_response_stream(fn, tracer):
+    @wraps(fn)
+    def with_instrumentation(*args, **kwargs):
+        span = tracer.start_span("bedrock.completion", kind=SpanKind.CLIENT)
+        response = fn(*args, **kwargs)
+
+        if span.is_recording():
+            _handle_stream_call(span, kwargs, response)
+
+        return response
+
+    return with_instrumentation
+
+
+@dont_throw
+def _handle_stream_call(span, kwargs, response):
+    def stream_done(response_body):
+        request_body = json.loads(kwargs.get("body"))
+
+        (vendor, model) = kwargs.get("modelId").split(".")
+
+        _set_span_attribute(span, SpanAttributes.LLM_SYSTEM, vendor)
+        _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, model)
+
+        if vendor == "cohere":
+            _set_cohere_span_attributes(span, request_body, response_body)
+        elif vendor == "anthropic":
+            if "prompt" in request_body:
+                _set_anthropic_completion_span_attributes(
+                    span, request_body, response_body
+                )
+            elif "messages" in request_body:
+                _set_anthropic_messages_span_attributes(
+                    span, request_body, response_body
+                )
+        elif vendor == "ai21":
+            _set_ai21_span_attributes(span, request_body, response_body)
+        elif vendor == "meta":
+            _set_llama_span_attributes(span, request_body, response_body)
+
+        span.end()
+
+    response["body"] = StreamingWrapper(response["body"], stream_done)
 
 
 @dont_throw
@@ -147,7 +203,9 @@ def _set_anthropic_completion_span_attributes(span, request_body, response_body)
     _set_span_attribute(
         span, SpanAttributes.LLM_REQUEST_TYPE, LLMRequestTypeValues.COMPLETION.value
     )
-    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TOP_P, request_body.get("top_p"))
+    _set_span_attribute(
+        span, SpanAttributes.LLM_REQUEST_TOP_P, request_body.get("top_p")
+    )
     _set_span_attribute(
         span, SpanAttributes.LLM_REQUEST_TEMPERATURE, request_body.get("temperature")
     )
@@ -192,7 +250,9 @@ def _set_anthropic_messages_span_attributes(span, request_body, response_body):
     _set_span_attribute(
         span, SpanAttributes.LLM_REQUEST_TYPE, LLMRequestTypeValues.CHAT.value
     )
-    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TOP_P, request_body.get("top_p"))
+    _set_span_attribute(
+        span, SpanAttributes.LLM_REQUEST_TOP_P, request_body.get("top_p")
+    )
     _set_span_attribute(
         span, SpanAttributes.LLM_REQUEST_TEMPERATURE, request_body.get("temperature")
     )
@@ -204,14 +264,14 @@ def _set_anthropic_messages_span_attributes(span, request_body, response_body):
 
     if Config.enrich_token_usage:
         messages = [message.get("content") for message in request_body.get("messages")]
-        prompt_tokens = _count_anthropic_tokens(
-            [
-                content.get("text")
-                for message in messages
-                for content in message
-                if content.get("type") == "text"
-            ]
-        )
+
+        raw_messages = []
+        for message in messages:
+            if isinstance(message, str):
+                raw_messages.append(message)
+            else:
+                raw_messages.extend([content.get("text") for content in message])
+        prompt_tokens = _count_anthropic_tokens(raw_messages)
         completion_tokens = _count_anthropic_tokens(
             [content.get("text") for content in response_body.get("content")]
         )
@@ -264,7 +324,9 @@ def _set_ai21_span_attributes(span, request_body, response_body):
     _set_span_attribute(
         span, SpanAttributes.LLM_REQUEST_TYPE, LLMRequestTypeValues.COMPLETION.value
     )
-    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TOP_P, request_body.get("topP"))
+    _set_span_attribute(
+        span, SpanAttributes.LLM_REQUEST_TOP_P, request_body.get("topP")
+    )
     _set_span_attribute(
         span, SpanAttributes.LLM_REQUEST_TEMPERATURE, request_body.get("temperature")
     )
@@ -289,7 +351,9 @@ def _set_llama_span_attributes(span, request_body, response_body):
     _set_span_attribute(
         span, SpanAttributes.LLM_REQUEST_TYPE, LLMRequestTypeValues.COMPLETION.value
     )
-    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TOP_P, request_body.get("top_p"))
+    _set_span_attribute(
+        span, SpanAttributes.LLM_REQUEST_TOP_P, request_body.get("top_p")
+    )
     _set_span_attribute(
         span, SpanAttributes.LLM_REQUEST_TEMPERATURE, request_body.get("temperature")
     )

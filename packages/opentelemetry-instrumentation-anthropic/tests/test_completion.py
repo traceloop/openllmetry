@@ -43,20 +43,20 @@ def test_anthropic_completion(exporter, reader):
     for rm in resource_metrics:
         for sm in rm.scope_metrics:
             for metric in sm.metrics:
-                if metric.name == "llm.anthropic.completion.tokens":
+                if metric.name == "gen_ai.client.token.usage":
                     found_token_metric = True
                     for data_point in metric.data.data_points:
-                        assert data_point.attributes["llm.usage.token_type"] in [
-                            "completion",
-                            "prompt",
+                        assert data_point.attributes["gen_ai.token.type"] in [
+                            "output",
+                            "input",
                         ]
                         assert (
                             data_point.attributes["gen_ai.response.model"]
                             == "claude-instant-1.2"
                         )
-                        assert data_point.value > 0
+                        assert data_point.sum > 0
 
-                if metric.name == "llm.anthropic.completion.choices":
+                if metric.name == "gen_ai.client.generation.choices":
                     found_choice_metric = True
                     for data_point in metric.data.data_points:
                         assert data_point.value >= 1
@@ -65,7 +65,7 @@ def test_anthropic_completion(exporter, reader):
                             == "claude-instant-1.2"
                         )
 
-                if metric.name == "llm.anthropic.completion.duration":
+                if metric.name == "gen_ai.client.operation.duration":
                     found_duration_metric = True
                     assert any(
                         data_point.count > 0 for data_point in metric.data.data_points
@@ -85,6 +85,11 @@ def test_anthropic_completion(exporter, reader):
                     for data_point in metric.data.data_points:
                         assert data_point.value == 1
                         assert data_point.attributes["error.type"] == "TypeError"
+
+                assert all(
+                    data_point.attributes.get("gen_ai.system") == "anthropic"
+                    for data_point in metric.data.data_points
+                )
 
     assert found_token_metric is True
     assert found_choice_metric is True
@@ -144,20 +149,20 @@ def test_anthropic_message_create(exporter, reader):
     for rm in resource_metrics:
         for sm in rm.scope_metrics:
             for metric in sm.metrics:
-                if metric.name == "llm.anthropic.completion.tokens":
+                if metric.name == "gen_ai.client.token.usage":
                     found_token_metric = True
                     for data_point in metric.data.data_points:
-                        assert data_point.attributes["llm.usage.token_type"] in [
-                            "completion",
-                            "prompt",
+                        assert data_point.attributes["gen_ai.token.type"] in [
+                            "output",
+                            "input",
                         ]
                         assert (
                             data_point.attributes["gen_ai.response.model"]
                             == "claude-3-opus-20240229"
                         )
-                        assert data_point.value > 0
+                        assert data_point.sum > 0
 
-                if metric.name == "llm.anthropic.completion.choices":
+                if metric.name == "gen_ai.client.generation.choices":
                     found_choice_metric = True
                     for data_point in metric.data.data_points:
                         assert data_point.value >= 1
@@ -166,7 +171,7 @@ def test_anthropic_message_create(exporter, reader):
                             == "claude-3-opus-20240229"
                         )
 
-                if metric.name == "llm.anthropic.completion.duration":
+                if metric.name == "gen_ai.client.operation.duration":
                     found_duration_metric = True
                     assert any(
                         data_point.count > 0 for data_point in metric.data.data_points
@@ -186,6 +191,11 @@ def test_anthropic_message_create(exporter, reader):
                     for data_point in metric.data.data_points:
                         assert data_point.value == 1
                         assert data_point.attributes["error.type"] == "TypeError"
+
+                assert all(
+                    data_point.attributes.get("gen_ai.system") == "anthropic"
+                    for data_point in metric.data.data_points
+                )
 
     assert found_token_metric is True
     assert found_choice_metric is True
@@ -303,20 +313,20 @@ def test_anthropic_message_streaming(exporter, reader):
     for rm in resource_metrics:
         for sm in rm.scope_metrics:
             for metric in sm.metrics:
-                if metric.name == "llm.anthropic.completion.tokens":
+                if metric.name == "gen_ai.client.token.usage":
                     found_token_metric = True
                     for data_point in metric.data.data_points:
-                        assert data_point.attributes["llm.usage.token_type"] in [
-                            "completion",
-                            "prompt",
+                        assert data_point.attributes["gen_ai.token.type"] in [
+                            "output",
+                            "input",
                         ]
                         assert (
                             data_point.attributes["gen_ai.response.model"]
                             == "claude-3-haiku-20240307"
                         )
-                        assert data_point.value > 0
+                        assert data_point.sum > 0
 
-                if metric.name == "llm.anthropic.completion.choices":
+                if metric.name == "gen_ai.client.generation.choices":
                     found_choice_metric = True
                     for data_point in metric.data.data_points:
                         assert data_point.value >= 1
@@ -325,7 +335,7 @@ def test_anthropic_message_streaming(exporter, reader):
                             == "claude-3-haiku-20240307"
                         )
 
-                if metric.name == "llm.anthropic.completion.duration":
+                if metric.name == "gen_ai.client.operation.duration":
                     found_duration_metric = True
                     assert any(
                         data_point.count > 0 for data_point in metric.data.data_points
@@ -339,6 +349,11 @@ def test_anthropic_message_streaming(exporter, reader):
                         or data_point.attributes.get("error.type") == "TypeError"
                         for data_point in metric.data.data_points
                     )
+
+                assert all(
+                    data_point.attributes.get("gen_ai.system") == "anthropic"
+                    for data_point in metric.data.data_points
+                )
 
     assert found_token_metric is True
     assert found_choice_metric is True
@@ -399,20 +414,20 @@ async def test_async_anthropic_message_create(exporter, reader):
     for rm in resource_metrics:
         for sm in rm.scope_metrics:
             for metric in sm.metrics:
-                if metric.name == "llm.anthropic.completion.tokens":
+                if metric.name == "gen_ai.client.token.usage":
                     found_token_metric = True
                     for data_point in metric.data.data_points:
-                        assert data_point.attributes["llm.usage.token_type"] in [
-                            "completion",
-                            "prompt",
+                        assert data_point.attributes["gen_ai.token.type"] in [
+                            "output",
+                            "input",
                         ]
                         assert (
                             data_point.attributes["gen_ai.response.model"]
                             == "claude-3-opus-20240229"
                         )
-                        assert data_point.value > 0
+                        assert data_point.sum > 0
 
-                if metric.name == "llm.anthropic.completion.choices":
+                if metric.name == "gen_ai.client.generation.choices":
                     found_choice_metric = True
                     for data_point in metric.data.data_points:
                         assert data_point.value >= 1
@@ -421,7 +436,7 @@ async def test_async_anthropic_message_create(exporter, reader):
                             == "claude-3-opus-20240229"
                         )
 
-                if metric.name == "llm.anthropic.completion.duration":
+                if metric.name == "gen_ai.client.operation.duration":
                     found_duration_metric = True
                     assert any(
                         data_point.count > 0 for data_point in metric.data.data_points
@@ -441,6 +456,11 @@ async def test_async_anthropic_message_create(exporter, reader):
                     for data_point in metric.data.data_points:
                         assert data_point.value == 1
                         assert data_point.attributes["error.type"] == "TypeError"
+
+                assert all(
+                    data_point.attributes.get("gen_ai.system") == "anthropic"
+                    for data_point in metric.data.data_points
+                )
 
     assert found_token_metric is True
     assert found_choice_metric is True
@@ -500,20 +520,20 @@ async def test_async_anthropic_message_streaming(exporter, reader):
     for rm in resource_metrics:
         for sm in rm.scope_metrics:
             for metric in sm.metrics:
-                if metric.name == "llm.anthropic.completion.tokens":
+                if metric.name == "gen_ai.client.token.usage":
                     found_token_metric = True
                     for data_point in metric.data.data_points:
-                        assert data_point.attributes["llm.usage.token_type"] in [
-                            "completion",
-                            "prompt",
+                        assert data_point.attributes["gen_ai.token.type"] in [
+                            "output",
+                            "input",
                         ]
                         assert (
                             data_point.attributes["gen_ai.response.model"]
                             == "claude-3-haiku-20240307"
                         )
-                        assert data_point.value > 0
+                        assert data_point.sum > 0
 
-                if metric.name == "llm.anthropic.completion.choices":
+                if metric.name == "gen_ai.client.generation.choices":
                     found_choice_metric = True
                     for data_point in metric.data.data_points:
                         assert data_point.value >= 1
@@ -522,7 +542,7 @@ async def test_async_anthropic_message_streaming(exporter, reader):
                             == "claude-3-haiku-20240307"
                         )
 
-                if metric.name == "llm.anthropic.completion.duration":
+                if metric.name == "gen_ai.client.operation.duration":
                     found_duration_metric = True
                     assert any(
                         data_point.count > 0 for data_point in metric.data.data_points
@@ -536,6 +556,11 @@ async def test_async_anthropic_message_streaming(exporter, reader):
                         or data_point.attributes.get("error.type") == "TypeError"
                         for data_point in metric.data.data_points
                     )
+
+                assert all(
+                    data_point.attributes.get("gen_ai.system") == "anthropic"
+                    for data_point in metric.data.data_points
+                )
 
     assert found_token_metric is True
     assert found_choice_metric is True

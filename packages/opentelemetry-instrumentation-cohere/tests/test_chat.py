@@ -19,7 +19,7 @@ def test_cohere_chat(exporter):
         == "Tell me a joke, pirate style"
     )
     assert cohere_span.attributes.get("gen_ai.completion.0.content") == res.text
-    assert cohere_span.attributes.get("gen_ai.usage.prompt_tokens") == 69
+    assert cohere_span.attributes.get("gen_ai.usage.prompt_tokens") == 58
     assert cohere_span.attributes.get(
         "llm.usage.total_tokens"
     ) == cohere_span.attributes.get(

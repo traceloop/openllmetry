@@ -12,6 +12,23 @@ from opentelemetry.instrumentation.weaviate import WeaviateInstrumentor
 pytest_plugins = []
 
 
+def pytest_addoption(parser):
+    parser.addoption(
+        "--with_grpc",
+        action="store_true",
+        default=False,
+        help=(
+            "Run the tests only in case --with_grpc is specified on the command line."
+            "For such tests a running weaviate instance is required."
+        ),
+    )
+
+
+def pytest_runtest_setup(item):
+    if "with_grpc" in item.keywords and not item.config.getoption("--with_grpc"):
+        pytest.skip("need --with_grpc option to run this test")
+
+
 @pytest.fixture(scope="session")
 def exporter():
     exporter = InMemorySpanExporter()

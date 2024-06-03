@@ -14,10 +14,12 @@ from opentelemetry.instrumentation.openai.utils import (
     dont_throw,
 )
 from opentelemetry.instrumentation.openai.shared import (
+    _metric_shared_attributes,
     _set_client_attributes,
     _set_request_attributes,
     _set_span_attribute,
     _set_functions_attributes,
+    _token_type,
     set_tools_attributes,
     _set_response_attributes,
     is_streaming_response,
@@ -87,18 +89,32 @@ def chat_wrapper(
 
     if is_streaming_response(response):
         # span will be closed after the generator is done
-        return ChatStream(
-            span,
-            response,
-            instance,
-            token_counter,
-            choice_counter,
-            duration_histogram,
-            streaming_time_to_first_token,
-            streaming_time_to_generate,
-            start_time,
-            kwargs,
-        )
+        if is_openai_v1():
+            return ChatStream(
+                span,
+                response,
+                instance,
+                token_counter,
+                choice_counter,
+                duration_histogram,
+                streaming_time_to_first_token,
+                streaming_time_to_generate,
+                start_time,
+                kwargs,
+            )
+        else:
+            return _build_from_streaming_response(
+                span,
+                response,
+                instance,
+                token_counter,
+                choice_counter,
+                duration_histogram,
+                streaming_time_to_first_token,
+                streaming_time_to_generate,
+                start_time,
+                kwargs,
+            )
 
     duration = end_time - start_time
 
@@ -161,18 +177,32 @@ async def achat_wrapper(
 
     if is_streaming_response(response):
         # span will be closed after the generator is done
-        return ChatStream(
-            span,
-            response,
-            instance,
-            token_counter,
-            choice_counter,
-            duration_histogram,
-            streaming_time_to_first_token,
-            streaming_time_to_generate,
-            start_time,
-            kwargs,
-        )
+        if is_openai_v1():
+            return ChatStream(
+                span,
+                response,
+                instance,
+                token_counter,
+                choice_counter,
+                duration_histogram,
+                streaming_time_to_first_token,
+                streaming_time_to_generate,
+                start_time,
+                kwargs,
+            )
+        else:
+            return _abuild_from_streaming_response(
+                span,
+                response,
+                instance,
+                token_counter,
+                choice_counter,
+                duration_histogram,
+                streaming_time_to_first_token,
+                streaming_time_to_generate,
+                start_time,
+                kwargs,
+            )
 
     duration = end_time - start_time
 
@@ -239,10 +269,12 @@ def _handle_response(
 def _set_chat_metrics(
     instance, token_counter, choice_counter, duration_histogram, response_dict, duration
 ):
-    shared_attributes = {
-        "gen_ai.response.model": response_dict.get("model") or None,
-        "server.address": _get_openai_base_url(instance),
-    }
+    shared_attributes = _metric_shared_attributes(
+        response_model=response_dict.get("model") or None,
+        operation="chat",
+        server_address=_get_openai_base_url(instance),
+        is_streaming=False,
+    )
 
     # token metrics
     usage = response_dict.get("usage")  # type: dict
@@ -274,9 +306,9 @@ def _set_token_counter_metrics(token_counter, usage, shared_attributes):
         if name in OPENAI_LLM_USAGE_TOKEN_TYPES:
             attributes_with_token_type = {
                 **shared_attributes,
-                "llm.usage.token_type": name.split("_")[0],
+                "gen_ai.token.type": _token_type(name),
             }
-            token_counter.add(val, attributes=attributes_with_token_type)
+            token_counter.record(val, attributes=attributes_with_token_type)
 
 
 def _set_prompts(span, messages):
@@ -356,7 +388,11 @@ def _set_streaming_token_metrics(
     # prompt_usage
     if request_kwargs and request_kwargs.get("messages"):
         prompt_content = ""
-        model_name = request_kwargs.get("model") or None
+        # setting the default model_name as gpt-4. As this uses the embedding "cl100k_base" that
+        # is used by most of the other model.
+        model_name = (
+            request_kwargs.get("model") or complete_response.get("model") or "gpt-4"
+        )
         for msg in request_kwargs.get("messages"):
             if msg.get("content"):
                 prompt_content += msg.get("content")
@@ -366,7 +402,9 @@ def _set_streaming_token_metrics(
     # completion_usage
     if complete_response.get("choices"):
         completion_content = ""
-        model_name = complete_response.get("model") or None
+        # setting the default model_name as gpt-4. As this uses the embedding "cl100k_base" that
+        # is used by most of the other model.
+        model_name = complete_response.get("model") or "gpt-4"
 
         for choice in complete_response.get("choices"):
             if choice.get("message") and choice.get("message").get("content"):
@@ -385,19 +423,31 @@ def _set_streaming_token_metrics(
         if type(prompt_usage) is int and prompt_usage >= 0:
             attributes_with_token_type = {
                 **shared_attributes,
-                "llm.usage.token_type": "prompt",
+                "gen_ai.token.type": "input",
             }
-            token_counter.add(prompt_usage, attributes=attributes_with_token_type)
+            token_counter.record(prompt_usage, attributes=attributes_with_token_type)
 
         if type(completion_usage) is int and completion_usage >= 0:
             attributes_with_token_type = {
                 **shared_attributes,
-                "llm.usage.token_type": "completion",
+                "gen_ai.token.type": "output",
             }
-            token_counter.add(completion_usage, attributes=attributes_with_token_type)
+            token_counter.record(
+                completion_usage, attributes=attributes_with_token_type
+            )
 
 
 class ChatStream(ObjectProxy):
+    _span = None
+    _instance = None
+    _token_counter = None
+    _choice_counter = None
+    _duration_histogram = None
+    _streaming_time_to_first_token = None
+    _streaming_time_to_generate = None
+    _start_time = None
+    _request_kwargs = None
+
     def __init__(
         self,
         span,
@@ -412,6 +462,8 @@ class ChatStream(ObjectProxy):
         request_kwargs=None,
     ):
         super().__init__(response)
+
+        print("HEYY", response.__class__.__name__)
 
         self._span = span
         self._instance = instance
@@ -430,6 +482,15 @@ class ChatStream(ObjectProxy):
 
     def __enter__(self):
         return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.__wrapped__.__exit__(exc_type, exc_val, exc_tb)
+
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        await self.__wrapped__.__aexit__(exc_type, exc_val, exc_tb)
 
     def __iter__(self):
         return self
@@ -465,7 +526,8 @@ class ChatStream(ObjectProxy):
         if self._first_token and self._streaming_time_to_first_token:
             self._time_of_first_token = time.time()
             self._streaming_time_to_first_token.record(
-                self._time_of_first_token - self._start_time
+                self._time_of_first_token - self._start_time,
+                attributes=self._shared_attributes(),
             )
             self._first_token = False
 
@@ -491,20 +553,24 @@ class ChatStream(ObjectProxy):
             if delta and delta.get("role"):
                 complete_choice["message"]["role"] = delta.get("role")
 
-    def _close_span(self):
-        shared_attributes = {
-            "gen_ai.response.model": self._complete_response.get("model") or None,
-            "server.address": _get_openai_base_url(self._instance),
-            "stream": True,
-        }
+    def _shared_attributes(self):
+        return _metric_shared_attributes(
+            response_model=self._complete_response.get("model")
+            or self._request_kwargs.get("model")
+            or None,
+            operation="chat",
+            server_address=_get_openai_base_url(self._instance),
+            is_streaming=True,
+        )
 
+    def _close_span(self):
         if not is_azure_openai(self._instance):
             _set_streaming_token_metrics(
                 self._request_kwargs,
                 self._complete_response,
                 self._span,
                 self._token_counter,
-                shared_attributes,
+                self._shared_attributes(),
             )
 
         # choice metrics
@@ -512,7 +578,7 @@ class ChatStream(ObjectProxy):
             _set_choice_counter_metrics(
                 self._choice_counter,
                 self._complete_response.get("choices"),
-                shared_attributes,
+                self._shared_attributes(),
             )
 
         # duration metrics
@@ -521,10 +587,13 @@ class ChatStream(ObjectProxy):
         else:
             duration = None
         if duration and isinstance(duration, (float, int)) and self._duration_histogram:
-            self._duration_histogram.record(duration, attributes=shared_attributes)
+            self._duration_histogram.record(
+                duration, attributes=self._shared_attributes()
+            )
         if self._streaming_time_to_generate and self._time_of_first_token:
             self._streaming_time_to_generate.record(
-                time.time() - self._time_of_first_token
+                time.time() - self._time_of_first_token,
+                attributes=self._shared_attributes(),
             )
 
         _set_response_attributes(self._span, self._complete_response)
@@ -534,3 +603,166 @@ class ChatStream(ObjectProxy):
 
         self._span.set_status(Status(StatusCode.OK))
         self._span.end()
+
+
+# Backward compatibility with OpenAI v0
+
+
+@dont_throw
+def _build_from_streaming_response(
+    span,
+    response,
+    instance=None,
+    token_counter=None,
+    choice_counter=None,
+    duration_histogram=None,
+    streaming_time_to_first_token=None,
+    streaming_time_to_generate=None,
+    start_time=None,
+    request_kwargs=None,
+):
+    complete_response = {"choices": [], "model": ""}
+
+    first_token = True
+    time_of_first_token = start_time  # will be updated when first token is received
+
+    for item in response:
+        span.add_event(name="llm.content.completion.chunk")
+
+        item_to_yield = item
+
+        if first_token and streaming_time_to_first_token:
+            time_of_first_token = time.time()
+            streaming_time_to_first_token.record(time_of_first_token - start_time)
+            first_token = False
+
+        _accumulate_stream_items(item, complete_response)
+
+        yield item_to_yield
+
+    shared_attributes = {
+        "gen_ai.response.model": complete_response.get("model") or None,
+        "server.address": _get_openai_base_url(instance),
+        "stream": True,
+    }
+
+    if not is_azure_openai(instance):
+        _set_streaming_token_metrics(
+            request_kwargs, complete_response, span, token_counter, shared_attributes
+        )
+
+    # choice metrics
+    if choice_counter and complete_response.get("choices"):
+        _set_choice_counter_metrics(
+            choice_counter, complete_response.get("choices"), shared_attributes
+        )
+
+    # duration metrics
+    if start_time and isinstance(start_time, (float, int)):
+        duration = time.time() - start_time
+    else:
+        duration = None
+    if duration and isinstance(duration, (float, int)) and duration_histogram:
+        duration_histogram.record(duration, attributes=shared_attributes)
+    if streaming_time_to_generate and time_of_first_token:
+        streaming_time_to_generate.record(time.time() - time_of_first_token)
+
+    _set_response_attributes(span, complete_response)
+
+    if should_send_prompts():
+        _set_completions(span, complete_response.get("choices"))
+
+    span.set_status(Status(StatusCode.OK))
+    span.end()
+
+
+@dont_throw
+async def _abuild_from_streaming_response(
+    span,
+    response,
+    instance=None,
+    token_counter=None,
+    choice_counter=None,
+    duration_histogram=None,
+    streaming_time_to_first_token=None,
+    streaming_time_to_generate=None,
+    start_time=None,
+    request_kwargs=None,
+):
+    complete_response = {"choices": [], "model": ""}
+
+    first_token = True
+    time_of_first_token = start_time  # will be updated when first token is received
+
+    async for item in response:
+        span.add_event(name="llm.content.completion.chunk")
+
+        item_to_yield = item
+
+        if first_token and streaming_time_to_first_token:
+            time_of_first_token = time.time()
+            streaming_time_to_first_token.record(time_of_first_token - start_time)
+            first_token = False
+
+        _accumulate_stream_items(item, complete_response)
+
+        yield item_to_yield
+
+    shared_attributes = {
+        "gen_ai.response.model": complete_response.get("model") or None,
+        "server.address": _get_openai_base_url(instance),
+        "stream": True,
+    }
+
+    if not is_azure_openai(instance):
+        _set_streaming_token_metrics(
+            request_kwargs, complete_response, span, token_counter, shared_attributes
+        )
+
+    # choice metrics
+    if choice_counter and complete_response.get("choices"):
+        _set_choice_counter_metrics(
+            choice_counter, complete_response.get("choices"), shared_attributes
+        )
+
+    # duration metrics
+    if start_time and isinstance(start_time, (float, int)):
+        duration = time.time() - start_time
+    else:
+        duration = None
+    if duration and isinstance(duration, (float, int)) and duration_histogram:
+        duration_histogram.record(duration, attributes=shared_attributes)
+    if streaming_time_to_generate and time_of_first_token:
+        streaming_time_to_generate.record(time.time() - time_of_first_token)
+
+    _set_response_attributes(span, complete_response)
+
+    if should_send_prompts():
+        _set_completions(span, complete_response.get("choices"))
+
+    span.set_status(Status(StatusCode.OK))
+    span.end()
+
+
+def _accumulate_stream_items(item, complete_response):
+    if is_openai_v1():
+        item = model_as_dict(item)
+
+    complete_response["model"] = item.get("model")
+
+    for choice in item.get("choices"):
+        index = choice.get("index")
+        if len(complete_response.get("choices")) <= index:
+            complete_response["choices"].append(
+                {"index": index, "message": {"content": "", "role": ""}}
+            )
+        complete_choice = complete_response.get("choices")[index]
+        if choice.get("finish_reason"):
+            complete_choice["finish_reason"] = choice.get("finish_reason")
+
+        delta = choice.get("delta")
+
+        if delta and delta.get("content"):
+            complete_choice["message"]["content"] += delta.get("content")
+        if delta and delta.get("role"):
+            complete_choice["message"]["role"] = delta.get("role")

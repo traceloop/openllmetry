@@ -8,7 +8,7 @@ show_missing = true
 
 [tool.poetry]
 name = "traceloop-sdk"
-version = "0.17.3"
+version = "0.21.3"
 description = "Traceloop Software Development Kit (SDK) for Python"
 authors = [
   "Gal Kleinman <gal@traceloop.com>",
@@ -25,15 +25,17 @@ include = "traceloop/sdk"
 
 [tool.poetry.dependencies]
 python = ">=3.9,<4"
-opentelemetry-api = "^1.24.0"
-opentelemetry-sdk = "^1.24.0"
-opentelemetry-exporter-otlp-proto-http = "^1.24.0"
-opentelemetry-exporter-otlp-proto-grpc = "^1.24.0"
-opentelemetry-instrumentation-requests = "^0.45b0"
-opentelemetry-instrumentation-sqlalchemy = "^0.45b0"
-opentelemetry-instrumentation-urllib3 = "^0.45b0"
+opentelemetry-api = "^1.25.0"
+opentelemetry-sdk = "^1.25.0"
+opentelemetry-exporter-otlp-proto-http = "^1.25.0"
+opentelemetry-exporter-otlp-proto-grpc = "^1.25.0"
+opentelemetry-instrumentation-requests = "^0.46b0"
+opentelemetry-instrumentation-sqlalchemy = "^0.46b0"
+opentelemetry-instrumentation-urllib3 = "^0.46b0"
 opentelemetry-semantic-conventions-ai = "0.2.0"
+opentelemetry-instrumentation-mistralai = {path="../opentelemetry-instrumentation-mistralai", develop=true}
 opentelemetry-instrumentation-openai = {path="../opentelemetry-instrumentation-openai", develop=true}
+opentelemetry-instrumentation-ollama = {path="../opentelemetry-instrumentation-ollama", develop=true}
 opentelemetry-instrumentation-anthropic = {path="../opentelemetry-instrumentation-anthropic", develop=true}
 opentelemetry-instrumentation-cohere = {path="../opentelemetry-instrumentation-cohere", develop=true}
 opentelemetry-instrumentation-pinecone = {path="../opentelemetry-instrumentation-pinecone", develop=true}
@@ -42,6 +44,7 @@ opentelemetry-instrumentation-langchain = {path="../opentelemetry-instrumentatio
 opentelemetry-instrumentation-chromadb = {path="../opentelemetry-instrumentation-chromadb", develop=true}
 opentelemetry-instrumentation-transformers = {path="../opentelemetry-instrumentation-transformers", develop=true}
 opentelemetry-instrumentation-llamaindex = {path="../opentelemetry-instrumentation-llamaindex", develop=true}
+opentelemetry-instrumentation-milvus = {path="../opentelemetry-instrumentation-milvus", develop=true}
 opentelemetry-instrumentation-haystack = {path="../opentelemetry-instrumentation-haystack", develop=true}
 opentelemetry-instrumentation-bedrock = {path="../opentelemetry-instrumentation-bedrock", develop=true}
 opentelemetry-instrumentation-replicate = {path="../opentelemetry-instrumentation-replicate", develop=true}
@@ -53,12 +56,10 @@ tenacity = "^8.2.3"
 pydantic = ">=1"
 jinja2 = "^3.1.2"
 deprecated = "^1.2.14"
-posthog = "^3.0.2"
-tiktoken = "^0.6.0"
-sentry-sdk = "^1.45.0"
+posthog = ">3.0.2, <4"
 
 [tool.poetry.group.dev.dependencies]
-autopep8 = "2.1.0"
+autopep8 = "2.1.1"
 flake8 = "7.0.0"
 pytest = "8.1.1"
 pytest-sugar = "1.0.0"

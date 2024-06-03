@@ -165,21 +165,22 @@ class Traceloop:
             instruments=instruments,
         )
 
-        if metrics_exporter:
-            print(
-                Fore.GREEN
-                + "Traceloop exporting metrics to a custom exporter"
-                + Fore.RESET
-            )
+        if not metrics_exporter and exporter:
+            return
 
         metrics_endpoint = os.getenv("TRACELOOP_METRICS_ENDPOINT") or api_endpoint
         metrics_headers = (
             os.getenv("TRACELOOP_METRICS_HEADERS") or metrics_headers or headers
         )
 
+        if not is_metrics_enabled() or not metrics_exporter and exporter:
+            print(Fore.YELLOW + "Metrics are disabled" + Fore.RESET)
+            return
+
         MetricsWrapper.set_static_params(
             resource_attributes, metrics_endpoint, metrics_headers
         )
+
         Traceloop.__metrics_wrapper = MetricsWrapper(exporter=metrics_exporter)
 
     def set_association_properties(properties: dict) -> None:
