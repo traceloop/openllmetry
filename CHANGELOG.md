@@ -1,3 +1,10 @@
+## v0.21.3 (2024-06-03)
+
+### Fix
+
+- **openai**: async streaming responses (#1229)
+- **sdk**: temporarily (?) remove sentry (#1228)
+
 ## v0.21.2 (2024-05-31)
 
 ### Fix
