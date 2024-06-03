@@ -4,7 +4,9 @@ import time
 from opentelemetry.instrumentation.anthropic.config import Config
 from opentelemetry.instrumentation.anthropic.utils import (
     dont_throw,
+    error_metrics_attributes,
     set_span_attribute,
+    shared_metrics_attributes,
     should_send_prompts,
 )
 from opentelemetry.metrics import Counter, Histogram
@@ -37,7 +39,7 @@ def _set_token_usage(
     prompt_tokens,
     completion_tokens,
     metric_attributes: dict = {},
-    token_counter: Counter = None,
+    token_histogram: Histogram = None,
     choice_counter: Counter = None,
 ):
     total_tokens = prompt_tokens + completion_tokens
@@ -51,21 +53,21 @@ def _set_token_usage(
         span, SpanAttributes.LLM_RESPONSE_MODEL, complete_response.get("model")
     )
 
-    if token_counter and type(prompt_tokens) is int and prompt_tokens >= 0:
-        token_counter.record(
+    if token_histogram and type(prompt_tokens) is int and prompt_tokens >= 0:
+        token_histogram.record(
             prompt_tokens,
             attributes={
                 **metric_attributes,
-                "llm.usage.token_type": "prompt",
+                "gen_ai.token.type": "input",
             },
         )
 
-    if token_counter and type(completion_tokens) is int and completion_tokens >= 0:
-        token_counter.record(
+    if token_histogram and type(completion_tokens) is int and completion_tokens >= 0:
+        token_histogram.record(
             completion_tokens,
             attributes={
                 **metric_attributes,
-                "llm.usage.token_type": "completion",
+                "gen_ai.token.type": "output",
             },
         )
 
@@ -102,7 +104,7 @@ def build_from_streaming_response(
     response,
     instance,
     start_time,
-    token_counter: Counter = None,
+    token_histogram: Histogram = None,
     choice_counter: Counter = None,
     duration_histogram: Histogram = None,
     exception_counter: Counter = None,
@@ -113,17 +115,13 @@ def build_from_streaming_response(
         try:
             yield item
         except Exception as e:
-            attributes = {
-                "error.type": e.__class__.__name__,
-            }
+            attributes = error_metrics_attributes(e)
             if exception_counter:
                 exception_counter.add(1, attributes=attributes)
             raise e
         _process_response_item(item, complete_response)
 
-    metric_attributes = {
-        "gen_ai.response.model": complete_response.get("model"),
-    }
+    metric_attributes = shared_metrics_attributes(complete_response)
 
     if duration_histogram:
         duration = time.time() - start_time
@@ -166,7 +164,7 @@ def build_from_streaming_response(
                 prompt_tokens,
                 completion_tokens,
                 metric_attributes,
-                token_counter,
+                token_histogram,
                 choice_counter,
             )
         except Exception as e:
@@ -185,7 +183,7 @@ async def abuild_from_streaming_response(
     response,
     instance,
     start_time,
-    token_counter: Counter = None,
+    token_histogram: Histogram = None,
     choice_counter: Counter = None,
     duration_histogram: Histogram = None,
     exception_counter: Counter = None,
@@ -196,18 +194,13 @@ async def abuild_from_streaming_response(
         try:
             yield item
         except Exception as e:
-            attributes = {
-                "error.type": e.__class__.__name__,
-            }
+            attributes = error_metrics_attributes(e)
             if exception_counter:
                 exception_counter.add(1, attributes=attributes)
             raise e
         _process_response_item(item, complete_response)
 
-    metric_attributes = {
-        "gen_ai.response.model": complete_response.get("model"),
-    }
-
+    metric_attributes = shared_metrics_attributes(complete_response)
     if duration_histogram:
         duration = time.time() - start_time
         duration_histogram.record(
@@ -249,7 +242,7 @@ async def abuild_from_streaming_response(
                 prompt_tokens,
                 completion_tokens,
                 metric_attributes,
-                token_counter,
+                token_histogram,
                 choice_counter,
             )
         except Exception as e:

@@ -15,7 +15,9 @@ from opentelemetry.instrumentation.anthropic.streaming import (
 )
 from opentelemetry.instrumentation.anthropic.utils import (
     dont_throw,
+    error_metrics_attributes,
     set_span_attribute,
+    shared_metrics_attributes,
     should_send_prompts,
 )
 from opentelemetry.instrumentation.anthropic.version import __version__
@@ -162,7 +164,7 @@ async def _aset_token_usage(
     request,
     response,
     metric_attributes: dict = {},
-    token_counter: Counter = None,
+    token_histogram: Histogram = None,
     choice_counter: Counter = None,
 ):
     if not isinstance(response, dict):
@@ -180,12 +182,12 @@ async def _aset_token_usage(
                 ]
             )
 
-    if token_counter and type(prompt_tokens) is int and prompt_tokens >= 0:
-        token_counter.record(
+    if token_histogram and type(prompt_tokens) is int and prompt_tokens >= 0:
+        token_histogram.record(
             prompt_tokens,
             attributes={
                 **metric_attributes,
-                "llm.usage.token_type": "prompt",
+                "gen_ai.token.type": "input",
             },
         )
 
@@ -198,12 +200,12 @@ async def _aset_token_usage(
                 response.get("content")[0].text
             )
 
-    if token_counter and type(completion_tokens) is int and completion_tokens >= 0:
-        token_counter.record(
+    if token_histogram and type(completion_tokens) is int and completion_tokens >= 0:
+        token_histogram.record(
             completion_tokens,
             attributes={
                 **metric_attributes,
-                "llm.usage.token_type": "completion",
+                "gen_ai.token.type": "output",
             },
         )
 
@@ -238,7 +240,7 @@ def _set_token_usage(
     request,
     response,
     metric_attributes: dict = {},
-    token_counter: Counter = None,
+    token_histogram: Histogram = None,
     choice_counter: Counter = None,
 ):
     if not isinstance(response, dict):
@@ -256,12 +258,12 @@ def _set_token_usage(
                 ]
             )
 
-    if token_counter and type(prompt_tokens) is int and prompt_tokens >= 0:
-        token_counter.record(
+    if token_histogram and type(prompt_tokens) is int and prompt_tokens >= 0:
+        token_histogram.record(
             prompt_tokens,
             attributes={
                 **metric_attributes,
-                "llm.usage.token_type": "prompt",
+                "gen_ai.token.type": "input",
             },
         )
 
@@ -272,12 +274,12 @@ def _set_token_usage(
         elif response.get("content"):
             completion_tokens = anthropic.count_tokens(response.get("content")[0].text)
 
-    if token_counter and type(completion_tokens) is int and completion_tokens >= 0:
-        token_counter.record(
+    if token_histogram and type(completion_tokens) is int and completion_tokens >= 0:
+        token_histogram.record(
             completion_tokens,
             attributes={
                 **metric_attributes,
-                "llm.usage.token_type": "completion",
+                "gen_ai.token.type": "output",
             },
         )
 
@@ -345,7 +347,7 @@ def _with_chat_telemetry_wrapper(func):
 
     def _with_chat_telemetry(
         tracer,
-        token_counter,
+        token_histogram,
         choice_counter,
         duration_histogram,
         exception_counter,
@@ -354,7 +356,7 @@ def _with_chat_telemetry_wrapper(func):
         def wrapper(wrapped, instance, args, kwargs):
             return func(
                 tracer,
-                token_counter,
+                token_histogram,
                 choice_counter,
                 duration_histogram,
                 exception_counter,
@@ -371,10 +373,10 @@ def _with_chat_telemetry_wrapper(func):
 
 
 def _create_metrics(meter: Meter, name: str):
-    token_counter = meter.create_histogram(
+    token_histogram = meter.create_histogram(
         name="gen_ai.client.token.usage",
         unit="token",
-        description="Number of tokens used in prompt and completions",
+        description="Measures number of input and output tokens used",
     )
 
     choice_counter = meter.create_counter(
@@ -386,7 +388,7 @@ def _create_metrics(meter: Meter, name: str):
     duration_histogram = meter.create_histogram(
         name="gen_ai.client.operation.duration",
         unit="s",
-        description="Duration of chat completion operation",
+        description="GenAI operation duration",
     )
 
     exception_counter = meter.create_counter(
@@ -395,22 +397,13 @@ def _create_metrics(meter: Meter, name: str):
         description="Number of exceptions occurred during chat completions",
     )
 
-    return token_counter, choice_counter, duration_histogram, exception_counter
-
-
-@dont_throw
-def _calculate_metrics_attributes(response):
-    if not isinstance(response, dict):
-        response = response.__dict__
-    return {
-        "gen_ai.response.model": response.get("model"),
-    }
+    return token_histogram, choice_counter, duration_histogram, exception_counter
 
 
 @_with_chat_telemetry_wrapper
 def _wrap(
     tracer: Tracer,
-    token_counter: Counter,
+    token_histogram: Histogram,
     choice_counter: Counter,
     duration_histogram: Histogram,
     exception_counter: Counter,
@@ -442,9 +435,7 @@ def _wrap(
         response = wrapped(*args, **kwargs)
     except Exception as e:  # pylint: disable=broad-except
         end_time = time.time()
-        attributes = {
-            "error.type": e.__class__.__name__,
-        }
+        attributes = error_metrics_attributes(e)
 
         if duration_histogram:
             duration = end_time - start_time
@@ -463,7 +454,7 @@ def _wrap(
             response,
             instance._client,
             start_time,
-            token_counter,
+            token_histogram,
             choice_counter,
             duration_histogram,
             exception_counter,
@@ -471,7 +462,7 @@ def _wrap(
         )
     elif response:
         try:
-            metric_attributes = _calculate_metrics_attributes(response)
+            metric_attributes = shared_metrics_attributes(response)
 
             if duration_histogram:
                 duration = time.time() - start_time
@@ -488,7 +479,7 @@ def _wrap(
                     kwargs,
                     response,
                     metric_attributes,
-                    token_counter,
+                    token_histogram,
                     choice_counter,
                 )
 
@@ -506,7 +497,7 @@ def _wrap(
 @_with_chat_telemetry_wrapper
 async def _awrap(
     tracer,
-    token_counter: Counter,
+    token_histogram: Histogram,
     choice_counter: Counter,
     duration_histogram: Histogram,
     exception_counter: Counter,
@@ -543,9 +534,7 @@ async def _awrap(
         response = await wrapped(*args, **kwargs)
     except Exception as e:  # pylint: disable=broad-except
         end_time = time.time()
-        attributes = {
-            "error.type": e.__class__.__name__,
-        }
+        attributes = error_metrics_attributes(e)
 
         if duration_histogram:
             duration = end_time - start_time
@@ -562,14 +551,14 @@ async def _awrap(
             response,
             instance._client,
             start_time,
-            token_counter,
+            token_histogram,
             choice_counter,
             duration_histogram,
             exception_counter,
             kwargs,
         )
     elif response:
-        metric_attributes = _calculate_metrics_attributes(response)
+        metric_attributes = shared_metrics_attributes(response)
 
         if duration_histogram:
             duration = time.time() - start_time
@@ -586,7 +575,7 @@ async def _awrap(
                 kwargs,
                 response,
                 metric_attributes,
-                token_counter,
+                token_histogram,
                 choice_counter,
             )
 
@@ -629,14 +618,14 @@ class AnthropicInstrumentor(BaseInstrumentor):
                 if created_metrics.get(metric_name) is None:
                     created_metrics[metric_name] = _create_metrics(meter, metric_name)
                 (
-                    token_counter,
+                    token_histogram,
                     choice_counter,
                     duration_histogram,
                     exception_counter,
                 ) = created_metrics[metric_name]
             else:
                 (
-                    token_counter,
+                    token_histogram,
                     choice_counter,
                     duration_histogram,
                     exception_counter,
@@ -647,7 +636,7 @@ class AnthropicInstrumentor(BaseInstrumentor):
                     f"{wrap_object}.{wrap_method}",
                     _wrap(
                         tracer,
-                        token_counter,
+                        token_histogram,
                         choice_counter,
                         duration_histogram,
                         exception_counter,
@@ -667,7 +656,7 @@ class AnthropicInstrumentor(BaseInstrumentor):
                     f"{wrap_object}.{wrap_method}",
                     _awrap(
                         tracer,
-                        token_counter,
+                        token_histogram,
                         choice_counter,
                         duration_histogram,
                         exception_counter,
