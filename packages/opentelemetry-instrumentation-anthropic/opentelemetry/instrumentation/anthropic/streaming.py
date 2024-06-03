@@ -3,8 +3,6 @@ import time
 
 from opentelemetry.instrumentation.anthropic.config import Config
 from opentelemetry.instrumentation.anthropic.utils import (
-    GEN_AI_SYSTEM,
-    GEN_AI_SYSTEM_ANTHROPIC,
     dont_throw,
     error_metrics_attributes,
     set_span_attribute,

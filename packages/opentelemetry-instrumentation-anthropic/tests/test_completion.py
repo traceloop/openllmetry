@@ -456,7 +456,7 @@ async def test_async_anthropic_message_create(exporter, reader):
                     for data_point in metric.data.data_points:
                         assert data_point.value == 1
                         assert data_point.attributes["error.type"] == "TypeError"
-                
+
                 assert all(
                     data_point.attributes.get("gen_ai.system") == "anthropic"
                     for data_point in metric.data.data_points

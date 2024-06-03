@@ -6,6 +6,7 @@ from opentelemetry.instrumentation.anthropic.config import Config
 GEN_AI_SYSTEM = "gen_ai.system"
 GEN_AI_SYSTEM_ANTHROPIC = "anthropic"
 
+
 def set_span_attribute(span, name, value):
     if value is not None:
         if value != "":
