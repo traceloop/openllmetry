@@ -57,9 +57,8 @@ def image_gen_metrics_wrapper(
     shared_attributes = _metric_shared_attributes(
         response_model=kwargs.get("model") or None,
         operation="image_gen",
-        server_address=_get_openai_base_url(instance)
+        server_address=_get_openai_base_url(instance),
     )
-
 
     duration = end_time - start_time
     if duration_histogram:

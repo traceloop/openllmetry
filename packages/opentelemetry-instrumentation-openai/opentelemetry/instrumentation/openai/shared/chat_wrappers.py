@@ -273,7 +273,7 @@ def _set_chat_metrics(
         response_model=response_dict.get("model") or None,
         operation="chat",
         server_address=_get_openai_base_url(instance),
-        is_streaming=False
+        is_streaming=False,
     )
 
     # token metrics
@@ -432,7 +432,9 @@ def _set_streaming_token_metrics(
                 **shared_attributes,
                 "gen_ai.token.type": "output",
             }
-            token_counter.record(completion_usage, attributes=attributes_with_token_type)
+            token_counter.record(
+                completion_usage, attributes=attributes_with_token_type
+            )
 
 
 class ChatStream(ObjectProxy):
@@ -513,7 +515,8 @@ class ChatStream(ObjectProxy):
         if self._first_token and self._streaming_time_to_first_token:
             self._time_of_first_token = time.time()
             self._streaming_time_to_first_token.record(
-                self._time_of_first_token - self._start_time
+                self._time_of_first_token - self._start_time,
+                attributes=self._shared_attributes(),
             )
             self._first_token = False
 
@@ -539,21 +542,24 @@ class ChatStream(ObjectProxy):
             if delta and delta.get("role"):
                 complete_choice["message"]["role"] = delta.get("role")
 
-    def _close_span(self):
-        shared_attributes = _metric_shared_attributes(
-            response_model=self._complete_response.get("model") or None,
+    def _shared_attributes(self):
+        return _metric_shared_attributes(
+            response_model=self._complete_response.get("model")
+            or self._request_kwargs.get("model")
+            or None,
             operation="chat",
             server_address=_get_openai_base_url(self._instance),
-            is_streaming=True
+            is_streaming=True,
         )
 
+    def _close_span(self):
         if not is_azure_openai(self._instance):
             _set_streaming_token_metrics(
                 self._request_kwargs,
                 self._complete_response,
                 self._span,
                 self._token_counter,
-                shared_attributes,
+                self._shared_attributes(),
             )
 
         # choice metrics
@@ -561,7 +567,7 @@ class ChatStream(ObjectProxy):
             _set_choice_counter_metrics(
                 self._choice_counter,
                 self._complete_response.get("choices"),
-                shared_attributes,
+                self._shared_attributes(),
             )
 
         # duration metrics
@@ -570,10 +576,13 @@ class ChatStream(ObjectProxy):
         else:
             duration = None
         if duration and isinstance(duration, (float, int)) and self._duration_histogram:
-            self._duration_histogram.record(duration, attributes=shared_attributes)
+            self._duration_histogram.record(
+                duration, attributes=self._shared_attributes()
+            )
         if self._streaming_time_to_generate and self._time_of_first_token:
             self._streaming_time_to_generate.record(
-                time.time() - self._time_of_first_token
+                time.time() - self._time_of_first_token,
+                attributes=self._shared_attributes(),
             )
 
         _set_response_attributes(self._span, self._complete_response)

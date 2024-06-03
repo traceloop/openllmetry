@@ -246,19 +246,18 @@ def get_token_count_from_string(string: str, model_name: str):
     token_count = len(encoding.encode(string))
     return token_count
 
+
 def _token_type(token_type: str):
     if token_type == "prompt_tokens":
         return "input"
     elif token_type == "completion_tokens":
         return "output"
-    
+
     return None
 
+
 def _metric_shared_attributes(
-    response_model: str,
-    operation: str,
-    server_address: str,
-    is_streaming: bool = False
+    response_model: str, operation: str, server_address: str, is_streaming: bool = False
 ):
     return {
         "gen_ai.system": "openai",
