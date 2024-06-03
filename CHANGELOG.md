@@ -1,3 +1,9 @@
+## v0.21.4 (2024-06-03)
+
+### Fix
+
+- **openai+anthropic+watsonx**: align duration and token.usage metrics attributes with conventions (#1182)
+
 ## v0.21.3 (2024-06-03)
 
 ### Fix

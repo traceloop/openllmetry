@@ -8,7 +8,7 @@ show_missing = true
 
 [tool.poetry]
 name = "opentelemetry-instrumentation-milvus"
-version = "0.21.3"
+version = "0.21.4"
 description = "OpenTelemetry Milvus instrumentation"
 authors = [
   "Gal Kleinman <gal@traceloop.com>",
