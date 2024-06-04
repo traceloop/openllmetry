@@ -38,22 +38,22 @@ WRAPPED_METHODS = [
         "package": "anthropic.resources.completions",
         "object": "Completions",
         "method": "create",
-        "span_name": "anthropic.completion",
-        "metric_name": "anthropic.completion",
+        "span_name": "anthropic.chat",
+        "metric_name": "anthropic.chat",
     },
     {
         "package": "anthropic.resources.messages",
         "object": "Messages",
         "method": "create",
-        "span_name": "anthropic.completion",
-        "metric_name": "anthropic.completion",
+        "span_name": "anthropic.chat",
+        "metric_name": "anthropic.chat",
     },
     {
         "package": "anthropic.resources.messages",
         "object": "Messages",
         "method": "stream",
-        "span_name": "anthropic.completion",
-        "metric_name": "anthropic.completion",
+        "span_name": "anthropic.chat",
+        "metric_name": "anthropic.chat",
     },
 ]
 WRAPPED_AMETHODS = [
@@ -61,22 +61,22 @@ WRAPPED_AMETHODS = [
         "package": "anthropic.resources.completions",
         "object": "AsyncCompletions",
         "method": "create",
-        "span_name": "anthropic.completion",
-        "metric_name": "anthropic.completion",
+        "span_name": "anthropic.chat",
+        "metric_name": "anthropic.chat",
     },
     {
         "package": "anthropic.resources.messages",
         "object": "AsyncMessages",
         "method": "create",
-        "span_name": "anthropic.completion",
-        "metric_name": "anthropic.completion",
+        "span_name": "anthropic.chat",
+        "metric_name": "anthropic.chat",
     },
     {
         "package": "anthropic.resources.messages",
         "object": "AsyncMessages",
         "method": "stream",
-        "span_name": "anthropic.completion",
-        "metric_name": "anthropic.completion",
+        "span_name": "anthropic.chat",
+        "metric_name": "anthropic.chat",
     },
 ]
 
@@ -187,7 +187,7 @@ async def _aset_token_usage(
             prompt_tokens,
             attributes={
                 **metric_attributes,
-                "gen_ai.token.type": "input",
+                SpanAttributes.LLM_TOKEN_TYPE: "input",
             },
         )
 
@@ -205,7 +205,7 @@ async def _aset_token_usage(
             completion_tokens,
             attributes={
                 **metric_attributes,
-                "gen_ai.token.type": "output",
+                SpanAttributes.LLM_TOKEN_TYPE: "output",
             },
         )
 
@@ -263,7 +263,7 @@ def _set_token_usage(
             prompt_tokens,
             attributes={
                 **metric_attributes,
-                "gen_ai.token.type": "input",
+                SpanAttributes.LLM_TOKEN_TYPE: "input",
             },
         )
 
@@ -279,7 +279,7 @@ def _set_token_usage(
             completion_tokens,
             attributes={
                 **metric_attributes,
-                "gen_ai.token.type": "output",
+                SpanAttributes.LLM_TOKEN_TYPE: "output",
             },
         )
 

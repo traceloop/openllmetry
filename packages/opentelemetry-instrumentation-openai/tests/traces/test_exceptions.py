@@ -1,6 +1,5 @@
 import pytest
 
-from opentelemetry.semconv.ai import SpanAttributes
 from wrapt import wrap_function_wrapper
 
 

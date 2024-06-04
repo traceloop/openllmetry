@@ -47,7 +47,7 @@ def test_anthropic_completion(exporter, reader):
                 if metric.name == Meters.LLM_TOKEN_USAGE:
                     found_token_metric = True
                     for data_point in metric.data.data_points:
-                        assert data_point.attributes["gen_ai.token.type"] in [
+                        assert data_point.attributes[SpanAttributes.LLM_TOKEN_TYPE] in [
                             "output",
                             "input",
                         ]
@@ -153,7 +153,7 @@ def test_anthropic_message_create(exporter, reader):
                 if metric.name == Meters.LLM_TOKEN_USAGE:
                     found_token_metric = True
                     for data_point in metric.data.data_points:
-                        assert data_point.attributes["gen_ai.token.type"] in [
+                        assert data_point.attributes[SpanAttributes.LLM_TOKEN_TYPE] in [
                             "output",
                             "input",
                         ]
@@ -320,7 +320,7 @@ def test_anthropic_message_streaming(exporter, reader):
                 if metric.name == Meters.LLM_TOKEN_USAGE:
                     found_token_metric = True
                     for data_point in metric.data.data_points:
-                        assert data_point.attributes["gen_ai.token.type"] in [
+                        assert data_point.attributes[SpanAttributes.LLM_TOKEN_TYPE] in [
                             "output",
                             "input",
                         ]
@@ -421,7 +421,7 @@ async def test_async_anthropic_message_create(exporter, reader):
                 if metric.name == Meters.LLM_TOKEN_USAGE:
                     found_token_metric = True
                     for data_point in metric.data.data_points:
-                        assert data_point.attributes["gen_ai.token.type"] in [
+                        assert data_point.attributes[SpanAttributes.LLM_TOKEN_TYPE] in [
                             "output",
                             "input",
                         ]
@@ -528,7 +528,7 @@ async def test_async_anthropic_message_streaming(exporter, reader):
                 if metric.name == Meters.LLM_TOKEN_USAGE:
                     found_token_metric = True
                     for data_point in metric.data.data_points:
-                        assert data_point.attributes["gen_ai.token.type"] in [
+                        assert data_point.attributes[SpanAttributes.LLM_TOKEN_TYPE] in [
                             "output",
                             "input",
                         ]

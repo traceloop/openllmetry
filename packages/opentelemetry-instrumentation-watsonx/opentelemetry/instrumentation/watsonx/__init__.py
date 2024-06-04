@@ -4,7 +4,7 @@ import logging
 import os
 import types
 import time
-from typing import Collection
+from typing import Collection, Optional
 from opentelemetry.instrumentation.watsonx.config import Config
 from opentelemetry.instrumentation.watsonx.utils import dont_throw
 from wrapt import wrap_function_wrapper
@@ -207,7 +207,7 @@ def _set_stream_response_attributes(span, stream_response):
     )
 
 
-def _set_completion_content_attributes(span, response, index, response_counter) -> str:
+def _set_completion_content_attributes(span, response, index, response_counter) -> Optional[str]:
     if not isinstance(response, dict):
         return None
 
@@ -295,12 +295,12 @@ def _set_response_attributes(
         if token_histogram:
             attributes_with_token_type = {
                 **shared_attributes,
-                "gen_ai.token.type": "output",
+                SpanAttributes.LLM_TOKEN_TYPE: "output",
             }
             token_histogram.record(completion_token, attributes=attributes_with_token_type)
             attributes_with_token_type = {
                 **shared_attributes,
-                "gen_ai.token.type": "input",
+                SpanAttributes.LLM_TOKEN_TYPE: "input",
             }
             token_histogram.record(prompt_token, attributes=attributes_with_token_type)
 
@@ -355,14 +355,14 @@ def _build_and_set_stream_response(
     if token_histogram:
         attributes_with_token_type = {
             **shared_attributes,
-            "gen_ai.token.type": "output",
+            SpanAttributes.LLM_TOKEN_TYPE: "output",
         }
         token_histogram.record(
             stream_generated_token_count, attributes=attributes_with_token_type
         )
         attributes_with_token_type = {
             **shared_attributes,
-            "gen_ai.token.type": "input",
+            SpanAttributes.LLM_TOKEN_TYPE: "input",
         }
         token_histogram.record(
             stream_input_token_count, attributes=attributes_with_token_type
@@ -525,7 +525,7 @@ class WatsonxInstrumentor(BaseInstrumentor):
 
         if is_metrics_enabled():
             token_histogram = meter.create_histogram(
-                name="gen_ai.client.token.usage",
+                name=Meters.LLM_TOKEN_USAGE,
                 unit="token",
                 description="Measures number of input and output tokens used",
             )
@@ -537,13 +537,13 @@ class WatsonxInstrumentor(BaseInstrumentor):
             )
 
             duration_histogram = meter.create_histogram(
-                name="gen_ai.client.operation.duration",
+                name=Meters.LLM_OPERATION_DURATION,
                 unit="s",
                 description="GenAI operation duration",
             )
 
             exception_counter = meter.create_counter(
-                name="llm.watsonx.completions.exceptions",
+                name=Meters.LLM_WATSONX_COMPLETIONS_EXCEPTIONS,
                 unit="time",
                 description="Number of exceptions occurred during completions",
             )

@@ -7,7 +7,7 @@ from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import (
 from opentelemetry.exporter.otlp.proto.http.metric_exporter import (
     OTLPMetricExporter as HTTPExporter,
 )
-from opentelemetry.semconv.ai import SpanAttributes, Meters
+from opentelemetry.semconv.ai import Meters
 from opentelemetry.sdk.metrics import MeterProvider
 from opentelemetry.sdk.metrics.export import (
     PeriodicExportingMetricReader,

@@ -103,11 +103,7 @@ def test_simple_lcel(exporter):
         },
     }
 
-<<<<<<< HEAD
-    assert json.loads(prompt_task_span.attributes["traceloop.entity.output"]) == {
-=======
-    assert (json.loads(prompt_task_span.attributes[SpanAttributes.TRACELOOP_ENTITY_OUTPUT]) == {
->>>>>>> 4ff61cc (Use constants)
+    assert json.loads(prompt_task_span.attributes[SpanAttributes.TRACELOOP_ENTITY_OUTPUT]) == {
         "lc": 1,
         "type": "constructor",
         "id": ["langchain", "prompts", "chat", "ChatPromptValue"],

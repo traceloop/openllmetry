@@ -42,7 +42,7 @@ def test_chat_completion_metrics(metrics_test_context, openai_client):
                 if metric.name == Meters.LLM_TOKEN_USAGE:
                     found_token_metric = True
                     for data_point in metric.data.data_points:
-                        assert data_point.attributes["gen_ai.token.type"] in [
+                        assert data_point.attributes[SpanAttributes.LLM_TOKEN_TYPE] in [
                             "output",
                             "input",
                         ]
@@ -111,21 +111,21 @@ def test_chat_streaming_metrics(metrics_test_context, openai_client):
         for sm in rm.scope_metrics:
             for metric in sm.metrics:
 
-                if metric.name == "gen_ai.client.token.usage":
+                if metric.name == Meters.LLM_TOKEN_USAGE:
                     found_token_metric = True
                     for data_point in metric.data.data_points:
-                        assert data_point.attributes["gen_ai.token.type"] in [
+                        assert data_point.attributes[SpanAttributes.LLM_TOKEN_TYPE] in [
                             "output",
                             "input",
                         ]
                         assert data_point.sum > 0
 
-                if metric.name == "gen_ai.client.generation.choices":
+                if metric.name == Meters.LLM_GENERATION_CHOICES:
                     found_choice_metric = True
                     for data_point in metric.data.data_points:
                         assert data_point.value >= 1
 
-                if metric.name == "gen_ai.client.operation.duration":
+                if metric.name == Meters.LLM_OPERATION_DURATION:
                     found_duration_metric = True
                     assert any(
                         data_point.count > 0 for data_point in metric.data.data_points
@@ -136,7 +136,7 @@ def test_chat_streaming_metrics(metrics_test_context, openai_client):
 
                 if (
                     metric.name
-                    == "llm.openai.chat_completions.streaming_time_to_first_token"
+                    == Meters.LLM_STREAMING_TIME_TO_FIRST_TOKEN
                 ):
                     found_time_to_first_token_metric = True
                     assert any(
@@ -148,7 +148,7 @@ def test_chat_streaming_metrics(metrics_test_context, openai_client):
 
                 if (
                     metric.name
-                    == "llm.openai.chat_completions.streaming_time_to_generate"
+                    == Meters.LLM_STREAMING_TIME_TO_GENERATE
                 ):
                     found_time_to_generate_metric = True
                     assert any(
@@ -159,9 +159,9 @@ def test_chat_streaming_metrics(metrics_test_context, openai_client):
                     )
 
                 for data_point in metric.data.data_points:
-                    assert data_point.attributes.get("gen_ai.system") == "openai"
+                    assert data_point.attributes.get(SpanAttributes.LLM_SYSTEM) == "openai"
                     assert str(
-                        data_point.attributes["gen_ai.response.model"]
+                        data_point.attributes[SpanAttributes.LLM_RESPONSE_MODEL]
                     ).startswith("gpt-3.5-turbo")
                     assert data_point.attributes["gen_ai.operation.name"] == "chat"
                     assert data_point.attributes["server.address"] != ""
@@ -204,7 +204,7 @@ def test_embeddings_metrics(metrics_test_context, openai_client):
                         assert data_point.value > 0
                         assert len(data_point.attributes["server.address"]) > 0
 
-                if metric.name == Meters.LLM_EMBEDDINGS_DURATION:
+                if metric.name == Meters.LLM_OPERATION_DURATION:
                     found_duration_metric = True
                     assert any(
                         data_point.count > 0 for data_point in metric.data.data_points

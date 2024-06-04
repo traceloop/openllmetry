@@ -12,7 +12,6 @@ from opentelemetry.instrumentation.openai.utils import (
 )
 from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
 from opentelemetry.metrics import Counter, Histogram
-from opentelemetry.semconv.ai import SpanAttributes
 
 
 @_with_image_gen_metric_wrapper

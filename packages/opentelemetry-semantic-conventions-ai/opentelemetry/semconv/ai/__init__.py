@@ -41,6 +41,7 @@ class SpanAttributes:
     LLM_RESPONSE_MODEL = "gen_ai.response.model"
     LLM_USAGE_COMPLETION_TOKENS = "gen_ai.usage.completion_tokens"
     LLM_USAGE_PROMPT_TOKENS = "gen_ai.usage.prompt_tokens"
+    LLM_TOKEN_TYPE = "gen_ai.token.type"
     # To be added
     # LLM_RESPONSE_FINISH_REASON = "gen_ai.response.finish_reasons"
     # LLM_RESPONSE_ID = "gen_ai.response.id"

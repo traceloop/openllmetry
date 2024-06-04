@@ -121,11 +121,6 @@ class OpenAIV1Instrumentor(BaseInstrumentor):
                 unit="element",
                 description="he size of returned vector",
             )
-            embeddings_duration_histogram = meter.create_histogram(
-                name=Meters.LLM_EMBEDDINGS_DURATION,
-                unit="s",
-                description="Duration of embeddings operation",
-            )
             embeddings_exception_counter = meter.create_counter(
                 name=Meters.LLM_EMBEDDINGS_EXCEPTIONS,
                 unit="time",
@@ -135,9 +130,8 @@ class OpenAIV1Instrumentor(BaseInstrumentor):
             (
                 tokens_histogram,
                 embeddings_vector_size_counter,
-                embeddings_duration_histogram,
                 embeddings_exception_counter,
-            ) = (None, None, None, None)
+            ) = (None, None, None)
 
         wrap_function_wrapper(
             "openai.resources.embeddings",
@@ -146,7 +140,7 @@ class OpenAIV1Instrumentor(BaseInstrumentor):
                 tracer,
                 tokens_histogram,
                 embeddings_vector_size_counter,
-                embeddings_duration_histogram,
+                duration_histogram,
                 embeddings_exception_counter,
             ),
         )
@@ -176,7 +170,7 @@ class OpenAIV1Instrumentor(BaseInstrumentor):
                 tracer,
                 tokens_histogram,
                 embeddings_vector_size_counter,
-                embeddings_duration_histogram,
+                duration_histogram,
                 embeddings_exception_counter,
             ),
         )
@@ -188,7 +182,7 @@ class OpenAIV1Instrumentor(BaseInstrumentor):
                 description="Number of exceptions occurred during image generations operation",
             )
         else:
-            image_gen_exception_counter = None, None
+            image_gen_exception_counter = None
 
         wrap_function_wrapper(
             "openai.resources.images",
