@@ -79,7 +79,7 @@ def test_new_assistant_with_polling(exporter, openai_client, assistant):
         content="I need to solve the equation `3x + 11 = 14`. Can you help me?",
     )
 
-    run = client.beta.threads.runs.create_and_poll(
+    run = openai_client.beta.threads.runs.create_and_poll(
       thread_id=thread.id,
       assistant_id=assistant.id,
       instructions="Please address the user as Jane Doe. The user has a premium account."
