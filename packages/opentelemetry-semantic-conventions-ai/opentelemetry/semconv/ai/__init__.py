@@ -177,14 +177,6 @@ class SpanAttributes:
     QDRANT_UPSERT_COLLECTION_NAME = "qdrant.upsert.collection_name"
     QDRANT_UPSERT_POINTS_COUNT = "qdrant.upsert.points_count"
 
-    # Weaviate
-    WEAVIATE_BATCH = "db.weaviate.batch"
-    WEAVIATE_CLIENT = "db.weaviate.client"
-    WEAVIATE_COLLECTIONS = "db.weaviate.collections"
-    WEAVIATE_DATA = "db.weaviate.data"
-    WEAVIATE_GQL = "db.weaviate.gql"
-    WEAVIATE_SCHEMA = "db.weaviate.schema"
-
 
 class Events(Enum):
     DB_QUERY_EMBEDDINGS = "db.query.embeddings"

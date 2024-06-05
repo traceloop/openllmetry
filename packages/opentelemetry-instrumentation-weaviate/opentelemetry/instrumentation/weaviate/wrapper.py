@@ -6,7 +6,6 @@ from opentelemetry import context as context_api
 from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
 from opentelemetry.instrumentation.weaviate.utils import dont_throw
 from opentelemetry.semconv.trace import SpanAttributes
-from opentelemetry.semconv.ai import SpanAttributes as AISpanAttributes
 
 
 logger = logging.getLogger(__name__)
@@ -104,7 +103,7 @@ class _Instrumentor:
 
 class _SchemaInstrumentorV3(_Instrumentor):
     """v3, replaced in v4 by _CollectionsInstrumentor"""
-    namespace = f"{AISpanAttributes.WEAVIATE_SCHEMA}"
+    namespace = "db.weaviate.schema"
     mapped_attributes = {
         "get": ["class_name"],
         "create_class": ["schema_class"],
@@ -114,7 +113,7 @@ class _SchemaInstrumentorV3(_Instrumentor):
 
 
 class _CollectionsInstrumentor(_Instrumentor):
-    namespace = f"{AISpanAttributes.WEAVIATE_COLLECTIONS}"
+    namespace = "db.weaviate.collections"
     mapped_attributes = {
         "create": ["name"],
         "create_from_dict": ["config"],
@@ -183,7 +182,7 @@ class _DataObjectInstrumentor(_Instrumentor):
 
 class _BatchInstrumentorV3(_Instrumentor):
     """v3, replaced in v4 by _BatchInstrumentor"""
-    namespace = f"{AISpanAttributes.WEAVIATE_BATCH}"
+    namespace = "db.weaviate.batch"
     mapped_attributes = {
         "add_data_object": [
             "data_object",
@@ -197,7 +196,7 @@ class _BatchInstrumentorV3(_Instrumentor):
 
 
 class _BatchInstrumentor(_Instrumentor):
-    namespace = f"{AISpanAttributes.WEAVIATE_COLLECTIONS}.batch"
+    namespace = "db.weaviate.collections.batch"
     mapped_attributes = {
         "add_object": [
             "properties",
@@ -222,7 +221,7 @@ class _QueryInstrumentorV3(_Instrumentor):
 
 
 class _QueryInstrumentor(_Instrumentor):
-    namespace = f"{AISpanAttributes.WEAVIATE_COLLECTIONS}.query"
+    namespace = "db.weaviate.collections.query"
     mapped_attributes = {
         "fetch_object_by_id": [
             "uuid",
@@ -245,7 +244,7 @@ class _QueryInstrumentor(_Instrumentor):
 
 
 class _AggregateBuilderInstrumentor(_Instrumentor):
-    namespace = f"{AISpanAttributes.WEAVIATE_GQL}.aggregate"
+    namespace = "db.weaviate.gql.aggregate"
     mapped_attributes = {
         "do": [],
     }
@@ -260,21 +259,21 @@ class _GetBuilderInstrumentorV3(_Instrumentor):
 
 
 class _GetBuilderInstrumentor(_Instrumentor):
-    namespace = f"{AISpanAttributes.WEAVIATE_GQL}.get"
+    namespace = "db.weaviate.gql.get"
     mapped_attributes = {
         "do": [],
     }
 
 
 class _GraphQLInstrumentor(_Instrumentor):
-    namespace = f"{AISpanAttributes.WEAVIATE_GQL}.filter"
+    namespace = "db.weaviate.gql.filter"
     mapped_attributes = {
         "do": [],
     }
 
 
 class _RawInstrumentor(_Instrumentor):
-    namespace = f"{AISpanAttributes.WEAVIATE_CLIENT}"
+    namespace = "db.weaviate.client"
     mapped_attributes = {
         "graphql_raw_query": ["gql_query", ],
     }
