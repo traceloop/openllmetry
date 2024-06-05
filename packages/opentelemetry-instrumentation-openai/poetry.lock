@@ -1514,9 +1514,9 @@ doc = ["furo", "jaraco.packaging (>=9.3)", "jaraco.tidelift (>=1.4)", "rst.linke
 test = ["big-O", "importlib-resources", "jaraco.functools", "jaraco.itertools", "jaraco.test", "more-itertools", "pytest (>=6,!=8.1.*)", "pytest-checkdocs (>=2.4)", "pytest-cov", "pytest-enabler (>=2.2)", "pytest-ignore-flaky", "pytest-mypy", "pytest-ruff (>=0.2.1)"]
 
 [extras]
-instruments = ["openai"]
+instruments = []
 
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<4"
-content-hash = "135a5f51c980dfbeade01a3aef1c1b90fd8352b78ae566f705267debb53939e5"
+content-hash = "d5857c3405ea7ebb8c7f25a807f762e9135fb4a7feadfc84a1bfe0fa05ae4121"
