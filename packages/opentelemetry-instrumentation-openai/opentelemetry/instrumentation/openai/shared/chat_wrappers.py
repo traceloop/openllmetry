@@ -463,8 +463,6 @@ class ChatStream(ObjectProxy):
     ):
         super().__init__(response)
 
-        print("HEYY", response.__class__.__name__)
-
         self._span = span
         self._instance = instance
         self._token_counter = token_counter
