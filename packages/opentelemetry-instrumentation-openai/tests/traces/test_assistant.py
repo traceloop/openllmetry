@@ -117,6 +117,7 @@ def test_new_assistant_with_polling(exporter, openai_client, assistant):
         )
         assert open_ai_span.attributes[f"gen_ai.completion.{idx}.role"] == message.role
 
+
 @pytest.mark.vcr
 def test_existing_assistant(exporter, openai_client):
     thread = openai_client.beta.threads.create()
