@@ -14,6 +14,7 @@ from opentelemetry.instrumentation.openai.utils import _with_tracer_wrapper
 from opentelemetry.instrumentation.openai.shared.config import Config
 
 from openai._legacy_response import LegacyAPIResponse
+from openai.types.beta.threads.run import Run
 
 logger = logging.getLogger(__name__)
 
@@ -61,12 +62,15 @@ def runs_retrieve_wrapper(tracer, wrapped, instance, args, kwargs):
         return wrapped(*args, **kwargs)
 
     thread_id = kwargs.get("thread_id")
+
     response = wrapped(*args, **kwargs)
 
-    if type(response) == LegacyAPIResponse:
+    if type(response) is LegacyAPIResponse:
         parsed_response = response.parse()
     else:
         parsed_response = response
+
+    assert type(parsed_response) is Run
 
     if parsed_response.id in runs:
         runs[thread_id]["end_time"] = time.time_ns()
