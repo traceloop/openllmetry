@@ -2,6 +2,7 @@ import dataclasses
 import json
 import logging
 import os
+import traceback
 from opentelemetry import context as context_api
 from opentelemetry.instrumentation.langchain.config import Config
 from opentelemetry.semconv.ai import SpanAttributes
@@ -55,7 +56,9 @@ def dont_throw(func):
             return func(*args, **kwargs)
         except Exception as e:
             logger.debug(
-                "OpenLLMetry failed to trace in %s, error: %s", func.__name__, str(e)
+                "OpenLLMetry failed to trace in %s, error: %s",
+                func.__name__,
+                traceback.format_exc(),
             )
             if Config.exception_logger:
                 Config.exception_logger(e)

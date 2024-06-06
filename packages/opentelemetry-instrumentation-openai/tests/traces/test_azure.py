@@ -108,7 +108,7 @@ async def test_chat_async_streaming(exporter, async_azure_openai_client):
         "openai.chat",
     ]
     open_ai_span = spans[0]
-    print("HEYY", open_ai_span.attributes)
+
     assert (
         open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
         == "Tell me a joke about opentelemetry"

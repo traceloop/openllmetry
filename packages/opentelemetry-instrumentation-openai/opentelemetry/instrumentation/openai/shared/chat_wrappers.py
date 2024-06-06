@@ -294,10 +294,11 @@ def _set_chat_metrics(
 def _set_choice_counter_metrics(choice_counter, choices, shared_attributes):
     choice_counter.add(len(choices), attributes=shared_attributes)
     for choice in choices:
-        attributes_with_reason = {
-            **shared_attributes,
-            SpanAttributes.LLM_RESPONSE_FINISH_REASON: choice["finish_reason"],
-        }
+        attributes_with_reason = {**shared_attributes}
+        if choice.get("finish_reason"):
+            attributes_with_reason[SpanAttributes.LLM_RESPONSE_FINISH_REASON] = (
+                choice.get("finish_reason")
+            )
         choice_counter.add(1, attributes=attributes_with_reason)
 
 
@@ -463,8 +464,6 @@ class ChatStream(ObjectProxy):
     ):
         super().__init__(response)
 
-        print("HEYY", response.__class__.__name__)
-
         self._span = span
         self._instance = instance
         self._token_counter = token_counter
@@ -563,6 +562,7 @@ class ChatStream(ObjectProxy):
             is_streaming=True,
         )
 
+    @dont_throw
     def _close_span(self):
         if not is_azure_openai(self._instance):
             _set_streaming_token_metrics(

@@ -1,3 +1,11 @@
+## v0.21.5 (2024-06-05)
+
+### Fix
+
+- **openai**: handle empty finish_reason (#1236)
+- removed debug prints from instrumentations
+- **vertexai**: change the span names to match method calls (#1234)
+
 ## v0.21.4 (2024-06-03)
 
 ### Fix
