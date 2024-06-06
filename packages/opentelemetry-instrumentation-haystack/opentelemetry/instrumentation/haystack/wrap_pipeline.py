@@ -1,4 +1,3 @@
-import json
 import logging
 from opentelemetry import context as context_api
 from opentelemetry.context import attach, set_value
