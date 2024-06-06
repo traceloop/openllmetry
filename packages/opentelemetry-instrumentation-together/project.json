@@ -55,7 +55,7 @@
     "test": {
       "executor": "@nxlv/python:run-commands",
       "outputs": [
-        "{workspaceRoot}/reports/packages/opentelemetry-instrumentation-togeterai/unittests",
+        "{workspaceRoot}/reports/packages/opentelemetry-instrumentation-together/unittests",
         "{workspaceRoot}/coverage/packages/opentelemetry-instrumentation-together"
       ],
       "options": {
