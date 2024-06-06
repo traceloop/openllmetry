@@ -116,6 +116,7 @@ OpenLLMetry can instrument everything that [OpenTelemetry already instruments](h
 - ✅ Replicate
 - ✅ Vertex AI (GCP)
 - ✅ IBM Watsonx AI
+- ✅ Together AI
 
 ### Vector DBs
 
