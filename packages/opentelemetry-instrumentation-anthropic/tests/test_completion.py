@@ -46,9 +46,9 @@ def test_anthropic_completion(exporter, reader):
                 if metric.name == "gen_ai.client.token.usage":
                     found_token_metric = True
                     for data_point in metric.data.data_points:
-                        assert data_point.attributes["llm.usage.token_type"] in [
-                            "completion",
-                            "prompt",
+                        assert data_point.attributes["gen_ai.token.type"] in [
+                            "output",
+                            "input",
                         ]
                         assert (
                             data_point.attributes["gen_ai.response.model"]
@@ -85,6 +85,11 @@ def test_anthropic_completion(exporter, reader):
                     for data_point in metric.data.data_points:
                         assert data_point.value == 1
                         assert data_point.attributes["error.type"] == "TypeError"
+
+                assert all(
+                    data_point.attributes.get("gen_ai.system") == "anthropic"
+                    for data_point in metric.data.data_points
+                )
 
     assert found_token_metric is True
     assert found_choice_metric is True
@@ -147,9 +152,9 @@ def test_anthropic_message_create(exporter, reader):
                 if metric.name == "gen_ai.client.token.usage":
                     found_token_metric = True
                     for data_point in metric.data.data_points:
-                        assert data_point.attributes["llm.usage.token_type"] in [
-                            "completion",
-                            "prompt",
+                        assert data_point.attributes["gen_ai.token.type"] in [
+                            "output",
+                            "input",
                         ]
                         assert (
                             data_point.attributes["gen_ai.response.model"]
@@ -186,6 +191,11 @@ def test_anthropic_message_create(exporter, reader):
                     for data_point in metric.data.data_points:
                         assert data_point.value == 1
                         assert data_point.attributes["error.type"] == "TypeError"
+
+                assert all(
+                    data_point.attributes.get("gen_ai.system") == "anthropic"
+                    for data_point in metric.data.data_points
+                )
 
     assert found_token_metric is True
     assert found_choice_metric is True
@@ -306,9 +316,9 @@ def test_anthropic_message_streaming(exporter, reader):
                 if metric.name == "gen_ai.client.token.usage":
                     found_token_metric = True
                     for data_point in metric.data.data_points:
-                        assert data_point.attributes["llm.usage.token_type"] in [
-                            "completion",
-                            "prompt",
+                        assert data_point.attributes["gen_ai.token.type"] in [
+                            "output",
+                            "input",
                         ]
                         assert (
                             data_point.attributes["gen_ai.response.model"]
@@ -339,6 +349,11 @@ def test_anthropic_message_streaming(exporter, reader):
                         or data_point.attributes.get("error.type") == "TypeError"
                         for data_point in metric.data.data_points
                     )
+
+                assert all(
+                    data_point.attributes.get("gen_ai.system") == "anthropic"
+                    for data_point in metric.data.data_points
+                )
 
     assert found_token_metric is True
     assert found_choice_metric is True
@@ -402,9 +417,9 @@ async def test_async_anthropic_message_create(exporter, reader):
                 if metric.name == "gen_ai.client.token.usage":
                     found_token_metric = True
                     for data_point in metric.data.data_points:
-                        assert data_point.attributes["llm.usage.token_type"] in [
-                            "completion",
-                            "prompt",
+                        assert data_point.attributes["gen_ai.token.type"] in [
+                            "output",
+                            "input",
                         ]
                         assert (
                             data_point.attributes["gen_ai.response.model"]
@@ -441,6 +456,11 @@ async def test_async_anthropic_message_create(exporter, reader):
                     for data_point in metric.data.data_points:
                         assert data_point.value == 1
                         assert data_point.attributes["error.type"] == "TypeError"
+
+                assert all(
+                    data_point.attributes.get("gen_ai.system") == "anthropic"
+                    for data_point in metric.data.data_points
+                )
 
     assert found_token_metric is True
     assert found_choice_metric is True
@@ -503,9 +523,9 @@ async def test_async_anthropic_message_streaming(exporter, reader):
                 if metric.name == "gen_ai.client.token.usage":
                     found_token_metric = True
                     for data_point in metric.data.data_points:
-                        assert data_point.attributes["llm.usage.token_type"] in [
-                            "completion",
-                            "prompt",
+                        assert data_point.attributes["gen_ai.token.type"] in [
+                            "output",
+                            "input",
                         ]
                         assert (
                             data_point.attributes["gen_ai.response.model"]
@@ -536,6 +556,11 @@ async def test_async_anthropic_message_streaming(exporter, reader):
                         or data_point.attributes.get("error.type") == "TypeError"
                         for data_point in metric.data.data_points
                     )
+
+                assert all(
+                    data_point.attributes.get("gen_ai.system") == "anthropic"
+                    for data_point in metric.data.data_points
+                )
 
     assert found_token_metric is True
     assert found_choice_metric is True

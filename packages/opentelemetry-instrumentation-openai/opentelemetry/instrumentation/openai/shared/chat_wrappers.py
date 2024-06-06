@@ -14,10 +14,12 @@ from opentelemetry.instrumentation.openai.utils import (
     dont_throw,
 )
 from opentelemetry.instrumentation.openai.shared import (
+    _metric_shared_attributes,
     _set_client_attributes,
     _set_request_attributes,
     _set_span_attribute,
     _set_functions_attributes,
+    _token_type,
     set_tools_attributes,
     _set_response_attributes,
     is_streaming_response,
@@ -267,11 +269,12 @@ def _handle_response(
 def _set_chat_metrics(
     instance, token_counter, choice_counter, duration_histogram, response_dict, duration
 ):
-    shared_attributes = {
-        "gen_ai.response.model": response_dict.get("model") or None,
-        "server.address": _get_openai_base_url(instance),
-        "stream": False,
-    }
+    shared_attributes = _metric_shared_attributes(
+        response_model=response_dict.get("model") or None,
+        operation="chat",
+        server_address=_get_openai_base_url(instance),
+        is_streaming=False,
+    )
 
     # token metrics
     usage = response_dict.get("usage")  # type: dict
@@ -291,10 +294,11 @@ def _set_chat_metrics(
 def _set_choice_counter_metrics(choice_counter, choices, shared_attributes):
     choice_counter.add(len(choices), attributes=shared_attributes)
     for choice in choices:
-        attributes_with_reason = {
-            **shared_attributes,
-            "llm.response.finish_reason": choice["finish_reason"],
-        }
+        attributes_with_reason = {**shared_attributes}
+        if choice.get("finish_reason"):
+            attributes_with_reason["llm.response.finish_reason"] = choice.get(
+                "finish_reason"
+            )
         choice_counter.add(1, attributes=attributes_with_reason)
 
 
@@ -303,7 +307,7 @@ def _set_token_counter_metrics(token_counter, usage, shared_attributes):
         if name in OPENAI_LLM_USAGE_TOKEN_TYPES:
             attributes_with_token_type = {
                 **shared_attributes,
-                "llm.usage.token_type": name.split("_")[0],
+                "gen_ai.token.type": _token_type(name),
             }
             token_counter.record(val, attributes=attributes_with_token_type)
 
@@ -420,16 +424,18 @@ def _set_streaming_token_metrics(
         if type(prompt_usage) is int and prompt_usage >= 0:
             attributes_with_token_type = {
                 **shared_attributes,
-                "llm.usage.token_type": "prompt",
+                "gen_ai.token.type": "input",
             }
             token_counter.record(prompt_usage, attributes=attributes_with_token_type)
 
         if type(completion_usage) is int and completion_usage >= 0:
             attributes_with_token_type = {
                 **shared_attributes,
-                "llm.usage.token_type": "completion",
+                "gen_ai.token.type": "output",
             }
-            token_counter.record(completion_usage, attributes=attributes_with_token_type)
+            token_counter.record(
+                completion_usage, attributes=attributes_with_token_type
+            )
 
 
 class ChatStream(ObjectProxy):
@@ -476,6 +482,15 @@ class ChatStream(ObjectProxy):
     def __enter__(self):
         return self
 
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.__wrapped__.__exit__(exc_type, exc_val, exc_tb)
+
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        await self.__wrapped__.__aexit__(exc_type, exc_val, exc_tb)
+
     def __iter__(self):
         return self
 
@@ -510,7 +525,8 @@ class ChatStream(ObjectProxy):
         if self._first_token and self._streaming_time_to_first_token:
             self._time_of_first_token = time.time()
             self._streaming_time_to_first_token.record(
-                self._time_of_first_token - self._start_time
+                self._time_of_first_token - self._start_time,
+                attributes=self._shared_attributes(),
             )
             self._first_token = False
 
@@ -536,20 +552,25 @@ class ChatStream(ObjectProxy):
             if delta and delta.get("role"):
                 complete_choice["message"]["role"] = delta.get("role")
 
-    def _close_span(self):
-        shared_attributes = {
-            "gen_ai.response.model": self._complete_response.get("model") or None,
-            "server.address": _get_openai_base_url(self._instance),
-            "stream": True,
-        }
+    def _shared_attributes(self):
+        return _metric_shared_attributes(
+            response_model=self._complete_response.get("model")
+            or self._request_kwargs.get("model")
+            or None,
+            operation="chat",
+            server_address=_get_openai_base_url(self._instance),
+            is_streaming=True,
+        )
 
+    @dont_throw
+    def _close_span(self):
         if not is_azure_openai(self._instance):
             _set_streaming_token_metrics(
                 self._request_kwargs,
                 self._complete_response,
                 self._span,
                 self._token_counter,
-                shared_attributes,
+                self._shared_attributes(),
             )
 
         # choice metrics
@@ -557,7 +578,7 @@ class ChatStream(ObjectProxy):
             _set_choice_counter_metrics(
                 self._choice_counter,
                 self._complete_response.get("choices"),
-                shared_attributes,
+                self._shared_attributes(),
             )
 
         # duration metrics
@@ -566,10 +587,13 @@ class ChatStream(ObjectProxy):
         else:
             duration = None
         if duration and isinstance(duration, (float, int)) and self._duration_histogram:
-            self._duration_histogram.record(duration, attributes=shared_attributes)
+            self._duration_histogram.record(
+                duration, attributes=self._shared_attributes()
+            )
         if self._streaming_time_to_generate and self._time_of_first_token:
             self._streaming_time_to_generate.record(
-                time.time() - self._time_of_first_token
+                time.time() - self._time_of_first_token,
+                attributes=self._shared_attributes(),
             )
 
         _set_response_attributes(self._span, self._complete_response)

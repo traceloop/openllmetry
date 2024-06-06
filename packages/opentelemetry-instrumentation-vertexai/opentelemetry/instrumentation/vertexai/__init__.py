@@ -33,13 +33,19 @@ WRAPPED_METHODS = [
         "package": "vertexai.generative_models",
         "object": "GenerativeModel",
         "method": "generate_content_async",
-        "span_name": "vertexai.generate_content",
+        "span_name": "vertexai.generate_content_async",
     },
     {
         "package": "vertexai.preview.generative_models",
         "object": "GenerativeModel",
         "method": "generate_content",
         "span_name": "vertexai.generate_content",
+    },
+    {
+        "package": "vertexai.preview.generative_models",
+        "object": "GenerativeModel",
+        "method": "generate_content_async",
+        "span_name": "vertexai.generate_content_async",
     },
     {
         "package": "vertexai.language_models",
@@ -51,19 +57,19 @@ WRAPPED_METHODS = [
         "package": "vertexai.language_models",
         "object": "TextGenerationModel",
         "method": "predict_async",
-        "span_name": "vertexai.predict",
+        "span_name": "vertexai.predict_async",
     },
     {
         "package": "vertexai.language_models",
         "object": "TextGenerationModel",
         "method": "predict_streaming",
-        "span_name": "vertexai.predict",
+        "span_name": "vertexai.predict_streaming",
     },
     {
         "package": "vertexai.language_models",
         "object": "TextGenerationModel",
         "method": "predict_streaming_async",
-        "span_name": "vertexai.predict",
+        "span_name": "vertexai.predict_streaming_async",
     },
     {
         "package": "vertexai.language_models",
@@ -75,7 +81,7 @@ WRAPPED_METHODS = [
         "package": "vertexai.language_models",
         "object": "ChatSession",
         "method": "send_message_streaming",
-        "span_name": "vertexai.send_message",
+        "span_name": "vertexai.send_message_streaming",
     },
 ]
 

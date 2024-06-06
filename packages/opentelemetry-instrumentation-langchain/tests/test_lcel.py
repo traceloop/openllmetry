@@ -73,9 +73,7 @@ def test_simple_lcel(exporter):
         "kwargs": {
             "input": "tell me a short joke",
             "run_name": "ThisIsATestChain",
-            "tags": [
-                "test_tag"
-            ],
+            "tags": ["test_tag"],
         },
     }
     assert json.loads(workflow_span.attributes["traceloop.entity.output"]) == {
@@ -86,57 +84,37 @@ def test_simple_lcel(exporter):
         "args": [],
         "kwargs": {
             "input": "tell me a short joke",
-            "tags": [
-                "test_tag"
-            ],
+            "tags": ["test_tag"],
             "metadata": {},
             "recursion_limit": 25,
             "configurable": {},
         },
     }
 
-    assert (json.loads(prompt_task_span.attributes["traceloop.entity.output"]) == {
+    assert json.loads(prompt_task_span.attributes["traceloop.entity.output"]) == {
         "lc": 1,
         "type": "constructor",
-        "id": [
-            "langchain",
-            "prompts",
-            "chat",
-            "ChatPromptValue"
-        ],
+        "id": ["langchain", "prompts", "chat", "ChatPromptValue"],
         "kwargs": {
             "messages": [
                 {
                     "lc": 1,
                     "type": "constructor",
-                    "id": [
-                        "langchain",
-                        "schema",
-                        "messages",
-                        "SystemMessage"
-                    ],
+                    "id": ["langchain", "schema", "messages", "SystemMessage"],
                     "kwargs": {
                         "content": "You are helpful assistant",
-                        "type": "system"
-                    }
+                        "type": "system",
+                    },
                 },
                 {
                     "lc": 1,
                     "type": "constructor",
-                    "id": [
-                        "langchain",
-                        "schema",
-                        "messages",
-                        "HumanMessage"
-                    ],
-                    "kwargs": {
-                        "content": "tell me a short joke",
-                        "type": "human"
-                    }
-                }
+                    "id": ["langchain", "schema", "messages", "HumanMessage"],
+                    "kwargs": {"content": "tell me a short joke", "type": "human"},
+                },
             ]
-        }
-    })
+        },
+    }
 
 
 @pytest.mark.vcr
@@ -202,6 +180,33 @@ def test_streaming(exporter):
     )
     runnable = prompt | chat | StrOutputParser()
     runnable.invoke({"product": "colorful socks"})
+
+    spans = exporter.get_finished_spans()
+
+    assert [
+        "PromptTemplate.langchain.task",
+        "openai.chat",
+        "ChatOpenAI.langchain.task",
+        "StrOutputParser.langchain.task",
+        "RunnableSequence.langchain.workflow",
+    ] == [span.name for span in spans]
+
+
+@pytest.mark.vcr
+@pytest.mark.asyncio
+async def test_async_streaming(exporter):
+
+    chat = ChatOpenAI(
+        model="gpt-4",
+        temperature=0,
+        streaming=True,
+    )
+
+    prompt = PromptTemplate.from_template(
+        "write 10 lines of random text about ${product}"
+    )
+    runnable = prompt | chat | StrOutputParser()
+    await runnable.ainvoke({"product": "colorful socks"})
 
     spans = exporter.get_finished_spans()
 
