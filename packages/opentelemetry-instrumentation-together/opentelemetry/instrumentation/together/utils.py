@@ -1,5 +1,6 @@
 import logging
-from opentelemetry.instrumentation.togetherai.config import Config
+from opentelemetry.instrumentation.together.config import Config
+import traceback
 
 
 def dont_throw(func):
@@ -17,7 +18,9 @@ def dont_throw(func):
             return func(*args, **kwargs)
         except Exception as e:
             logger.debug(
-                "OpenLLMetry failed to trace in %s, error: %s", func.__name__, str(e)
+                "OpenLLMetry failed to trace in %s, error: %s",
+                func.__name__,
+                traceback.format_exc(),
             )
             if Config.exception_logger:
                 Config.exception_logger(e)

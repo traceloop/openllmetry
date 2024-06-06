@@ -1,7 +1,7 @@
 # OpenTelemetry Together AI Instrumentation
 
-<a href="https://pypi.org/project/opentelemetry-instrumentation-togetherai/">
-    <img src="https://badge.fury.io/py/opentelemetry-instrumentation-togetherai.svg">
+<a href="https://pypi.org/project/opentelemetry-instrumentation-together/">
+    <img src="https://badge.fury.io/py/opentelemetry-instrumentation-together.svg">
 </a>
 
 This library allows tracing calls to any of Together AI's endpoints sent with the official [Together AI Library](https://github.com/togethercomputer/together-python).
@@ -9,13 +9,13 @@ This library allows tracing calls to any of Together AI's endpoints sent with th
 ## Installation
 
 ```bash
-pip install opentelemetry-instrumentation-togetherai
+pip install opentelemetry-instrumentation-together
 ```
 
 ## Example usage
 
 ```python
-from opentelemetry.instrumentation.togetherai import TogetherAiInstrumentor
+from opentelemetry.instrumentation.together import TogetherAiInstrumentor
 
 TogetherAiInstrumentor().instrument()
 ```

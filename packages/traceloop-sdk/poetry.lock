@@ -1188,7 +1188,7 @@ wrapt = ">=1.11.2"
 instruments = ["sqlalchemy"]
 
 [[package]]
-name = "opentelemetry-instrumentation-togetherai"
+name = "opentelemetry-instrumentation-together"
 version = "0.21.2"
 description = "OpenTelemetry Together AI instrumentation"
 optional = false
@@ -1207,7 +1207,7 @@ instruments = []
 
 [package.source]
 type = "directory"
-url = "../opentelemetry-instrumentation-togetherai"
+url = "../opentelemetry-instrumentation-together"
 
 [[package]]
 name = "opentelemetry-instrumentation-transformers"
@@ -2364,4 +2364,4 @@ test = ["big-O", "importlib-resources", "jaraco.functools", "jaraco.itertools", 
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<4"
-content-hash = "a6e4770d027bb5d1103566c99beb16cd64fc1bdf05237dc44c7d0ab93fedbde5"
+content-hash = "04badad36145dbdada39b158878cfe682bb264f43147d375dd84b92faa1b285d"

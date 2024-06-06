@@ -1,13 +1,13 @@
 [tool.coverage.run]
 branch = true
-source = [ "opentelemetry/instrumentation/togetherai" ]
+source = [ "opentelemetry/instrumentation/together" ]
 
 [tool.coverage.report]
 exclude_lines = ['if TYPE_CHECKING:']
 show_missing = true
 
 [tool.poetry]
-name = "opentelemetry-instrumentation-togetherai"
+name = "opentelemetry-instrumentation-together"
 version = "0.21.2"
 description = "OpenTelemetry Together AI instrumentation"
 authors = [
@@ -15,12 +15,12 @@ authors = [
   "Nir Gazit <nir@traceloop.com>",
   "Benedikt Wolf <bene25@web.de>",
 ]
-repository = "https://github.com/traceloop/openllmetry/tree/main/packages/opentelemetry-instrumentation-togetherai"
+repository = "https://github.com/traceloop/openllmetry/tree/main/packages/opentelemetry-instrumentation-together"
 license = "Apache-2.0"
 readme = "README.md"
 
 [[tool.poetry.packages]]
-include = "opentelemetry/instrumentation/togetherai"
+include = "opentelemetry/instrumentation/together"
 
 [tool.poetry.dependencies]
 python = ">=3.9,<4"
@@ -52,4 +52,4 @@ build-backend = "poetry.core.masonry.api"
 instruments = ["together"] 
 
 [tool.poetry.plugins."opentelemetry_instrumentor"]
-together = "opentelemetry.instrumentation.togetherai:TogetherAiInstrumentor"
+together = "opentelemetry.instrumentation.together:TogetherAiInstrumentor"

@@ -1,14 +1,14 @@
 {
-  "name": "opentelemetry-instrumentation-togetherai",
+  "name": "opentelemetry-instrumentation-together",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "projectType": "library",
-  "sourceRoot": "packages/opentelemetry-instrumentation-togetherai/opentelemetry/instrumentation/togetherai",
+  "sourceRoot": "packages/opentelemetry-instrumentation-together/opentelemetry/instrumentation/together",
   "targets": {
     "lock": {
       "executor": "@nxlv/python:run-commands",
       "options": {
         "command": "poetry lock --no-update",
-        "cwd": "packages/opentelemetry-instrumentation-togetherai"
+        "cwd": "packages/opentelemetry-instrumentation-together"
       }
     },
     "add": {
@@ -27,7 +27,7 @@
       "executor": "@nxlv/python:build",
       "outputs": ["{projectRoot}/dist"],
       "options": {
-        "outputPath": "packages/opentelemetry-instrumentation-togetherai/dist",
+        "outputPath": "packages/opentelemetry-instrumentation-together/dist",
         "publish": false,
         "lockedVersions": true,
         "bundleLocalDependencies": true
@@ -46,21 +46,21 @@
     "lint": {
       "executor": "@nxlv/python:flake8",
       "outputs": [
-        "{workspaceRoot}/reports/packages/opentelemetry-instrumentation-togetherai/pylint.txt"
+        "{workspaceRoot}/reports/packages/opentelemetry-instrumentation-together/pylint.txt"
       ],
       "options": {
-        "outputFile": "reports/packages/opentelemetry-instrumentation-togetherai/pylint.txt"
+        "outputFile": "reports/packages/opentelemetry-instrumentation-together/pylint.txt"
       }
     },
     "test": {
       "executor": "@nxlv/python:run-commands",
       "outputs": [
         "{workspaceRoot}/reports/packages/opentelemetry-instrumentation-togeterai/unittests",
-        "{workspaceRoot}/coverage/packages/opentelemetry-instrumentation-togetherai"
+        "{workspaceRoot}/coverage/packages/opentelemetry-instrumentation-together"
       ],
       "options": {
         "command": "poetry run pytest tests/",
-        "cwd": "packages/opentelemetry-instrumentation-togetherai"
+        "cwd": "packages/opentelemetry-instrumentation-together"
       }
     },
     "build-release": {
@@ -70,7 +70,7 @@
           "chmod +x ../../scripts/build-release.sh",
           "../../scripts/build-release.sh"
         ],
-        "cwd": "packages/opentelemetry-instrumentation-togetherai"
+        "cwd": "packages/opentelemetry-instrumentation-together"
       }
     }
   },

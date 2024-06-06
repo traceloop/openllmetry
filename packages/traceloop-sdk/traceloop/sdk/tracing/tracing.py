@@ -681,8 +681,8 @@ def init_transformers_instrumentor():
 def init_together_instrumentor():
     try:
         if importlib.util.find_spec("together") is not None:
-            Telemetry().capture("instrumentation:togetherai:init")
-            from opentelemetry.instrumentation.togetherai import TogetherAiInstrumentor
+            Telemetry().capture("instrumentation:together:init")
+            from opentelemetry.instrumentation.together import TogetherAiInstrumentor
 
             instrumentor = TogetherAiInstrumentor(
                 exception_logger=lambda e: Telemetry().log_exception(e),

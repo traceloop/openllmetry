@@ -6,7 +6,7 @@ from opentelemetry import trace
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
 from opentelemetry.sdk.trace.export import SimpleSpanProcessor
-from opentelemetry.instrumentation.togetherai import TogetherAiInstrumentor
+from opentelemetry.instrumentation.together import TogetherAiInstrumentor
 
 pytest_plugins = []
 

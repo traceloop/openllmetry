@@ -3,8 +3,8 @@
 import logging
 import os
 from typing import Collection
-from opentelemetry.instrumentation.togetherai.config import Config
-from opentelemetry.instrumentation.togetherai.utils import dont_throw
+from opentelemetry.instrumentation.together.config import Config
+from opentelemetry.instrumentation.together.utils import dont_throw
 from wrapt import wrap_function_wrapper
 
 from opentelemetry import context as context_api
@@ -18,7 +18,7 @@ from opentelemetry.instrumentation.utils import (
 )
 
 from opentelemetry.semconv.ai import SpanAttributes, LLMRequestTypeValues
-from opentelemetry.instrumentation.togetherai.version import __version__
+from opentelemetry.instrumentation.together.version import __version__
 
 from together import Together
 
