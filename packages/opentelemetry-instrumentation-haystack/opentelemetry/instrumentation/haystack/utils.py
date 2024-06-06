@@ -48,14 +48,15 @@ def dont_throw(func):
 
 @dont_throw
 def process_request(args, kwargs):
-    kwargs_to_serialize = kwargs.copy()
-    for arg in args:
-        if arg and isinstance(arg, dict):
-            for key, value in arg.items():
-                kwargs_to_serialize[key] = value
-    args_to_serialize = [arg for arg in args if not isinstance(arg, dict)]
-    input_entity = {"args": args_to_serialize, "kwargs": kwargs_to_serialize}
-    return json.dumps(input_entity, cls=EnhancedJSONEncoder)
+    if should_send_prompts():
+        kwargs_to_serialize = kwargs.copy()
+        for arg in args:
+            if arg and isinstance(arg, dict):
+                for key, value in arg.items():
+                    kwargs_to_serialize[key] = value
+        args_to_serialize = [arg for arg in args if not isinstance(arg, dict)]
+        input_entity = {"args": args_to_serialize, "kwargs": kwargs_to_serialize}
+        return json.dumps(input_entity, cls=EnhancedJSONEncoder)
 
 
 @dont_throw
