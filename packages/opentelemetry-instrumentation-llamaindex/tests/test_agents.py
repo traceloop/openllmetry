@@ -22,13 +22,11 @@ def test_agents_and_tools(exporter):
 
     spans = exporter.get_finished_spans()
 
-    assert set(
-        [
-            "ReActAgent.agent",
-            "FunctionTool.tool",
-            "openai.chat",
-        ]
-    ) == set([span.name for span in spans])
+    assert {
+        "ReActAgent.agent",
+        "FunctionTool.tool",
+        "openai.chat",
+    } == set([span.name for span in spans])
 
     agent_span = next(span for span in spans if span.name == "ReActAgent.agent")
     function_tool = next(span for span in spans if span.name == "FunctionTool.tool")
@@ -91,14 +89,12 @@ def test_agent_with_query_tool(exporter):
 
     spans = exporter.get_finished_spans()
 
-    assert set(
-        [
-            "OpenAIAssistantAgent.agent",
-            "QueryEngineTool.tool",
-            "synthesize.task",
-            "openai.chat",
-        ]
-    ) == set([span.name for span in spans])
+    assert {
+        "OpenAIAssistantAgent.agent",
+        "QueryEngineTool.tool",
+        "synthesize.task",
+        "openai.chat",
+    } == set([span.name for span in spans])
 
     agent_span = next(
         span for span in spans if span.name == "OpenAIAssistantAgent.agent"

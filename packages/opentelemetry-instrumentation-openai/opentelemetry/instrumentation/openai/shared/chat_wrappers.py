@@ -296,8 +296,8 @@ def _set_choice_counter_metrics(choice_counter, choices, shared_attributes):
     for choice in choices:
         attributes_with_reason = {**shared_attributes}
         if choice.get("finish_reason"):
-            attributes_with_reason["llm.response.finish_reason"] = choice.get(
-                "finish_reason"
+            attributes_with_reason[SpanAttributes.LLM_RESPONSE_FINISH_REASON] = (
+                choice.get("finish_reason")
             )
         choice_counter.add(1, attributes=attributes_with_reason)
 
@@ -307,7 +307,7 @@ def _set_token_counter_metrics(token_counter, usage, shared_attributes):
         if name in OPENAI_LLM_USAGE_TOKEN_TYPES:
             attributes_with_token_type = {
                 **shared_attributes,
-                "gen_ai.token.type": _token_type(name),
+                SpanAttributes.LLM_TOKEN_TYPE: _token_type(name),
             }
             token_counter.record(val, attributes=attributes_with_token_type)
 
@@ -424,14 +424,14 @@ def _set_streaming_token_metrics(
         if type(prompt_usage) is int and prompt_usage >= 0:
             attributes_with_token_type = {
                 **shared_attributes,
-                "gen_ai.token.type": "input",
+                SpanAttributes.LLM_TOKEN_TYPE: "input",
             }
             token_counter.record(prompt_usage, attributes=attributes_with_token_type)
 
         if type(completion_usage) is int and completion_usage >= 0:
             attributes_with_token_type = {
                 **shared_attributes,
-                "gen_ai.token.type": "output",
+                SpanAttributes.LLM_TOKEN_TYPE: "output",
             }
             token_counter.record(
                 completion_usage, attributes=attributes_with_token_type
@@ -520,7 +520,7 @@ class ChatStream(ObjectProxy):
             return chunk
 
     def _process_item(self, item):
-        self._span.add_event(name="llm.content.completion.chunk")
+        self._span.add_event(name=f"{SpanAttributes.LLM_CONTENT_COMPLETION_CHUNK}")
 
         if self._first_token and self._streaming_time_to_first_token:
             self._time_of_first_token = time.time()
@@ -627,7 +627,7 @@ def _build_from_streaming_response(
     time_of_first_token = start_time  # will be updated when first token is received
 
     for item in response:
-        span.add_event(name="llm.content.completion.chunk")
+        span.add_event(name=f"{SpanAttributes.LLM_CONTENT_COMPLETION_CHUNK}")
 
         item_to_yield = item
 
@@ -641,7 +641,7 @@ def _build_from_streaming_response(
         yield item_to_yield
 
     shared_attributes = {
-        "gen_ai.response.model": complete_response.get("model") or None,
+        SpanAttributes.LLM_RESPONSE_MODEL: complete_response.get("model") or None,
         "server.address": _get_openai_base_url(instance),
         "stream": True,
     }
@@ -695,7 +695,7 @@ async def _abuild_from_streaming_response(
     time_of_first_token = start_time  # will be updated when first token is received
 
     async for item in response:
-        span.add_event(name="llm.content.completion.chunk")
+        span.add_event(name=f"{SpanAttributes.LLM_CONTENT_COMPLETION_CHUNK}")
 
         item_to_yield = item
 
@@ -709,7 +709,7 @@ async def _abuild_from_streaming_response(
         yield item_to_yield
 
     shared_attributes = {
-        "gen_ai.response.model": complete_response.get("model") or None,
+        SpanAttributes.LLM_RESPONSE_MODEL: complete_response.get("model") or None,
         "server.address": _get_openai_base_url(instance),
         "stream": True,
     }

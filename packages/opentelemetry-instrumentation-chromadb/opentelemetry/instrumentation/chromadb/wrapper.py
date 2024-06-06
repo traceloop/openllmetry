@@ -6,6 +6,7 @@ from opentelemetry.instrumentation.utils import (
     _SUPPRESS_INSTRUMENTATION_KEY,
 )
 from opentelemetry.semconv.ai import EventAttributes, Events
+from opentelemetry.semconv.ai import SpanAttributes as AISpanAttributes
 import itertools
 import json
 
@@ -101,65 +102,81 @@ def count_or_none(obj):
 @dont_throw
 def _set_add_attributes(span, kwargs):
     _set_span_attribute(
-        span, "db.chroma.add.ids_count", count_or_none(kwargs.get("ids"))
+        span, AISpanAttributes.CHROMADB_ADD_IDS_COUNT, count_or_none(kwargs.get("ids"))
     )
     _set_span_attribute(
-        span, "db.chroma.add.embeddings_count", count_or_none(kwargs.get("embeddings"))
+        span,
+        AISpanAttributes.CHROMADB_ADD_EMBEDDINGS_COUNT,
+        count_or_none(kwargs.get("embeddings")),
     )
     _set_span_attribute(
-        span, "db.chroma.add.metadatas_count", count_or_none(kwargs.get("metadatas"))
+        span,
+        AISpanAttributes.CHROMADB_ADD_METADATAS_COUNT,
+        count_or_none(kwargs.get("metadatas")),
     )
     _set_span_attribute(
-        span, "db.chroma.add.documents_count", count_or_none(kwargs.get("documents"))
+        span,
+        AISpanAttributes.CHROMADB_ADD_DOCUMENTS_COUNT,
+        count_or_none(kwargs.get("documents")),
     )
 
 
 @dont_throw
 def _set_get_attributes(span, kwargs):
     _set_span_attribute(
-        span, "db.chroma.get.ids_count", count_or_none(kwargs.get("ids"))
+        span, AISpanAttributes.CHROMADB_GET_IDS_COUNT, count_or_none(kwargs.get("ids"))
     )
-    _set_span_attribute(span, "db.chroma.get.where", _encode_where(kwargs.get("where")))
-    _set_span_attribute(span, "db.chroma.get.limit", kwargs.get("limit"))
-    _set_span_attribute(span, "db.chroma.get.offset", kwargs.get("offset"))
+    _set_span_attribute(
+        span, AISpanAttributes.CHROMADB_GET_WHERE, _encode_where(kwargs.get("where"))
+    )
+    _set_span_attribute(span, AISpanAttributes.CHROMADB_GET_LIMIT, kwargs.get("limit"))
+    _set_span_attribute(
+        span, AISpanAttributes.CHROMADB_GET_OFFSET, kwargs.get("offset")
+    )
     _set_span_attribute(
         span,
-        "db.chroma.get.where_document",
+        AISpanAttributes.CHROMADB_GET_WHERE_DOCUMENT,
         _encode_where_document(kwargs.get("where_document")),
     )
     _set_span_attribute(
-        span, "db.chroma.get.include", _encode_include(kwargs.get("include"))
+        span,
+        AISpanAttributes.CHROMADB_GET_INCLUDE,
+        _encode_include(kwargs.get("include")),
     )
 
 
 @dont_throw
 def _set_peek_attributes(span, kwargs):
-    _set_span_attribute(span, "db.chroma.peek.limit", kwargs.get("limit"))
+    _set_span_attribute(span, AISpanAttributes.CHROMADB_PEEK_LIMIT, kwargs.get("limit"))
 
 
 @dont_throw
 def _set_query_attributes(span, kwargs):
     _set_span_attribute(
         span,
-        "db.chroma.query.query_embeddings_count",
+        AISpanAttributes.CHROMADB_QUERY_EMBEDDINGS_COUNT,
         count_or_none(kwargs.get("query_embeddings")),
     )
     _set_span_attribute(
         span,
-        "db.chroma.query.query_texts_count",
+        AISpanAttributes.CHROMADB_QUERY_TEXTS_COUNT,
         count_or_none(kwargs.get("query_texts")),
     )
-    _set_span_attribute(span, "db.chroma.query.n_results", kwargs.get("n_results"))
     _set_span_attribute(
-        span, "db.chroma.query.where", _encode_where(kwargs.get("where"))
+        span, AISpanAttributes.CHROMADB_QUERY_N_RESULTS, kwargs.get("n_results")
+    )
+    _set_span_attribute(
+        span, AISpanAttributes.CHROMADB_QUERY_WHERE, _encode_where(kwargs.get("where"))
     )
     _set_span_attribute(
         span,
-        "db.chroma.query.where_document",
+        AISpanAttributes.CHROMADB_QUERY_WHERE_DOCUMENT,
         _encode_where_document(kwargs.get("where_document")),
     )
     _set_span_attribute(
-        span, "db.chroma.query.include", _encode_include(kwargs.get("include"))
+        span,
+        AISpanAttributes.CHROMADB_QUERY_INCLUDE,
+        _encode_include(kwargs.get("include")),
     )
 
 
@@ -167,7 +184,7 @@ def _set_query_attributes(span, kwargs):
 def _set_segment_query_attributes(span, kwargs):
     _set_span_attribute(
         span,
-        "db.chroma.query.segment._query.collection_id",
+        AISpanAttributes.CHROMADB_QUERY_SEGMENT_QUERY_COLLECTION_ID,
         str(kwargs.get("collection_id")),
     )
 
@@ -252,25 +269,31 @@ def _add_query_result_events(span, kwargs):
 
 @dont_throw
 def _set_modify_attributes(span, kwargs):
-    _set_span_attribute(span, "db.chroma.modify.name", kwargs.get("name"))
+    _set_span_attribute(span, AISpanAttributes.CHROMADB_MODIFY_NAME, kwargs.get("name"))
     # TODO: Add metadata attribute
 
 
 @dont_throw
 def _set_update_attributes(span, kwargs):
     _set_span_attribute(
-        span, "db.chroma.update.ids_count", count_or_none(kwargs.get("ids"))
+        span,
+        AISpanAttributes.CHROMADB_UPDATE_IDS_COUNT,
+        count_or_none(kwargs.get("ids")),
     )
     _set_span_attribute(
         span,
-        "db.chroma.update.embeddings_count",
+        AISpanAttributes.CHROMADB_UPDATE_EMBEDDINGS_COUNT,
         count_or_none(kwargs.get("embeddings")),
     )
     _set_span_attribute(
-        span, "db.chroma.update.metadatas_count", count_or_none(kwargs.get("metadatas"))
+        span,
+        AISpanAttributes.CHROMADB_UPDATE_METADATAS_COUNT,
+        count_or_none(kwargs.get("metadatas")),
     )
     _set_span_attribute(
-        span, "db.chroma.update.documents_count", count_or_none(kwargs.get("documents"))
+        span,
+        AISpanAttributes.CHROMADB_UPDATE_DOCUMENTS_COUNT,
+        count_or_none(kwargs.get("documents")),
     )
 
 
@@ -278,27 +301,33 @@ def _set_update_attributes(span, kwargs):
 def _set_upsert_attributes(span, kwargs):
     _set_span_attribute(
         span,
-        "db.chroma.upsert.embeddings_count",
+        AISpanAttributes.CHROMADB_UPSERT_EMBEDDINGS_COUNT,
         count_or_none(kwargs.get("embeddings")),
     )
     _set_span_attribute(
-        span, "db.chroma.upsert.metadatas_count", count_or_none(kwargs.get("metadatas"))
+        span,
+        AISpanAttributes.CHROMADB_UPSERT_METADATAS_COUNT,
+        count_or_none(kwargs.get("metadatas")),
     )
     _set_span_attribute(
-        span, "db.chroma.upsert.documents_count", count_or_none(kwargs.get("documents"))
+        span,
+        AISpanAttributes.CHROMADB_UPSERT_DOCUMENTS_COUNT,
+        count_or_none(kwargs.get("documents")),
     )
 
 
 @dont_throw
 def _set_delete_attributes(span, kwargs):
     _set_span_attribute(
-        span, "db.chroma.delete.ids_count", count_or_none(kwargs.get("ids"))
+        span,
+        AISpanAttributes.CHROMADB_DELETE_IDS_COUNT,
+        count_or_none(kwargs.get("ids")),
     )
     _set_span_attribute(
-        span, "db.chroma.delete.where", _encode_where(kwargs.get("where"))
+        span, AISpanAttributes.CHROMADB_DELETE_WHERE, _encode_where(kwargs.get("where"))
     )
     _set_span_attribute(
         span,
-        "db.chroma.delete.where_document",
+        AISpanAttributes.CHROMADB_DELETE_WHERE_DOCUMENT,
         _encode_where_document(kwargs.get("where_document")),
     )

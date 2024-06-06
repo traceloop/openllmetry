@@ -1,6 +1,6 @@
 import json
 
-from opentelemetry.semconv.ai import EventAttributes, Events
+from opentelemetry.semconv.ai import EventAttributes, Events, SpanAttributes
 from opentelemetry.instrumentation.pinecone.utils import dont_throw, set_span_attribute
 
 
@@ -18,21 +18,21 @@ def set_query_input_attributes(span, kwargs):
     # sparse_vector: Optional[Union[SparseValues, Dict[str, Union[List[float], List[int]]]]] = None,
     # **kwargs) -> QueryResponse:
 
-    set_span_attribute(span, "pinecone.query.id", kwargs.get("id"))
-    set_span_attribute(span, "pinecone.query.queries", kwargs.get("queries"))
-    set_span_attribute(span, "pinecone.query.top_k", kwargs.get("top_k"))
-    set_span_attribute(span, "pinecone.query.namespace", kwargs.get("namespace"))
+    set_span_attribute(span, SpanAttributes.PINECONE_QUERY_ID, kwargs.get("id"))
+    set_span_attribute(span, SpanAttributes.PINECONE_QUERY_QUERIES, kwargs.get("queries"))
+    set_span_attribute(span, SpanAttributes.PINECONE_QUERY_TOP_K, kwargs.get("top_k"))
+    set_span_attribute(span, SpanAttributes.PINECONE_QUERY_NAMESPACE, kwargs.get("namespace"))
     if isinstance(kwargs.get("filter"), dict):
         set_span_attribute(
-            span, "pinecone.query.filter", json.dumps(kwargs.get("filter"))
+            span, SpanAttributes.PINECONE_QUERY_FILTER, json.dumps(kwargs.get("filter"))
         )
     else:
-        set_span_attribute(span, "pinecone.query.filter", kwargs.get("filter"))
+        set_span_attribute(span, SpanAttributes.PINECONE_QUERY_FILTER, kwargs.get("filter"))
     set_span_attribute(
-        span, "pinecone.query.include_values", kwargs.get("include_values")
+        span, SpanAttributes.PINECONE_QUERY_INCLUDE_VALUES, kwargs.get("include_values")
     )
     set_span_attribute(
-        span, "pinecone.query.include_metadata", kwargs.get("include_metadata")
+        span, SpanAttributes.PINECONE_QUERY_INCLUDE_METADATA, kwargs.get("include_metadata")
     )
 
     # Log query embeddings
@@ -43,15 +43,15 @@ def set_query_input_attributes(span, kwargs):
     vector = kwargs.get("vector")
     if vector:
         span.add_event(
-            name="db.query.embeddings",
-            attributes={"db.query.embeddings.vector": vector},
+            name=f"{Events.DB_QUERY_EMBEDDINGS.value}",
+            attributes={f"{EventAttributes.DB_QUERY_EMBEDDINGS_VECTOR.value}": vector},
         )
 
     sparse_vector = kwargs.get("sparse_vector")
     if sparse_vector:
         span.add_event(
-            name="db.query.embeddings",
-            attributes={"db.query.embeddings.vector": sparse_vector},
+            name=f"{Events.DB_QUERY_EMBEDDINGS.value}",
+            attributes={f"{EventAttributes.DB_QUERY_EMBEDDINGS_VECTOR.value}": sparse_vector},
         )
 
     queries = kwargs.get("queries")

@@ -19,6 +19,7 @@ from opentelemetry.instrumentation.openai.shared.embeddings_wrappers import (
 )
 from opentelemetry.instrumentation.openai.utils import is_metrics_enabled
 from opentelemetry.instrumentation.openai.version import __version__
+from opentelemetry.semconv.ai import Meters
 
 _instruments = ("openai >= 0.27.0", "openai < 1.0.0")
 
@@ -36,36 +37,36 @@ class OpenAIV0Instrumentor(BaseInstrumentor):
 
         if is_metrics_enabled():
             tokens_histogram = meter.create_histogram(
-                name="gen_ai.client.token.usage",
+                name=Meters.LLM_TOKEN_USAGE,
                 unit="token",
                 description="Measures number of input and output tokens used",
             )
 
             chat_choice_counter = meter.create_counter(
-                name="gen_ai.client.generation.choices",
+                name=Meters.LLM_GENERATION_CHOICES,
                 unit="choice",
                 description="Number of choices returned by chat completions call",
             )
 
-            chat_duration_histogram = meter.create_histogram(
-                name="gen_ai.client.operation.duration",
+            duration_histogram = meter.create_histogram(
+                name=Meters.LLM_OPERATION_DURATION,
                 unit="s",
                 description="GenAI operation duration",
             )
 
             chat_exception_counter = meter.create_counter(
-                name="llm.openai.chat_completions.exceptions",
+                name=Meters.LLM_COMPLETIONS_EXCEPTIONS,
                 unit="time",
                 description="Number of exceptions occurred during chat completions",
             )
 
             streaming_time_to_first_token = meter.create_histogram(
-                name="llm.openai.chat_completions.streaming_time_to_first_token",
+                name=Meters.LLM_STREAMING_TIME_TO_FIRST_TOKEN,
                 unit="s",
                 description="Time to first token in streaming chat completions",
             )
             streaming_time_to_generate = meter.create_histogram(
-                name="llm.openai.chat_completions.streaming_time_to_generate",
+                name=Meters.LLM_STREAMING_TIME_TO_GENERATE,
                 unit="s",
                 description="Time between first token and completion in streaming chat completions",
             )
@@ -73,7 +74,7 @@ class OpenAIV0Instrumentor(BaseInstrumentor):
             (
                 tokens_histogram,
                 chat_choice_counter,
-                chat_duration_histogram,
+                duration_histogram,
                 chat_exception_counter,
                 streaming_time_to_first_token,
                 streaming_time_to_generate,
@@ -81,19 +82,12 @@ class OpenAIV0Instrumentor(BaseInstrumentor):
 
         if is_metrics_enabled():
             embeddings_vector_size_counter = meter.create_counter(
-                name="llm.openai.embeddings.vector_size",
+                name=Meters.LLM_EMBEDDINGS_VECTOR_SIZE,
                 unit="element",
                 description="he size of returned vector",
             )
-
-            embeddings_duration_histogram = meter.create_histogram(
-                name="llm.openai.embeddings.duration",
-                unit="s",
-                description="Duration of embeddings operation",
-            )
-
             embeddings_exception_counter = meter.create_counter(
-                name="llm.openai.embeddings.exceptions",
+                name=Meters.LLM_EMBEDDINGS_EXCEPTIONS,
                 unit="time",
                 description="Number of exceptions occurred during embeddings operation",
             )
@@ -101,9 +95,8 @@ class OpenAIV0Instrumentor(BaseInstrumentor):
             (
                 tokens_histogram,
                 embeddings_vector_size_counter,
-                embeddings_duration_histogram,
                 embeddings_exception_counter,
-            ) = (None, None, None, None)
+            ) = (None, None, None)
 
         wrap_function_wrapper("openai", "Completion.create", completion_wrapper(tracer))
         wrap_function_wrapper(
@@ -116,7 +109,7 @@ class OpenAIV0Instrumentor(BaseInstrumentor):
                 tracer,
                 tokens_histogram,
                 chat_choice_counter,
-                chat_duration_histogram,
+                duration_histogram,
                 chat_exception_counter,
                 streaming_time_to_first_token,
                 streaming_time_to_generate,
@@ -129,7 +122,7 @@ class OpenAIV0Instrumentor(BaseInstrumentor):
                 tracer,
                 tokens_histogram,
                 chat_choice_counter,
-                chat_duration_histogram,
+                duration_histogram,
                 chat_exception_counter,
                 streaming_time_to_first_token,
                 streaming_time_to_generate,
@@ -142,7 +135,7 @@ class OpenAIV0Instrumentor(BaseInstrumentor):
                 tracer,
                 tokens_histogram,
                 embeddings_vector_size_counter,
-                embeddings_duration_histogram,
+                duration_histogram,
                 embeddings_exception_counter,
             ),
         )
@@ -153,7 +146,7 @@ class OpenAIV0Instrumentor(BaseInstrumentor):
                 tracer,
                 tokens_histogram,
                 embeddings_vector_size_counter,
-                embeddings_duration_histogram,
+                duration_histogram,
                 embeddings_exception_counter,
             ),
         )

@@ -33,10 +33,8 @@ def test_rag_with_chroma(exporter):
     engine.query("What did the author do growing up?")
 
     spans = exporter.get_finished_spans()
-    assert set(
-        [
-            "llama_index_retriever_query.workflow",
-            "retrieve.task",
-            "synthesize.task",
-        ]
-    ).issubset([span.name for span in spans])
+    assert {
+        "llama_index_retriever_query.workflow",
+        "retrieve.task",
+        "synthesize.task",
+    }.issubset([span.name for span in spans])
