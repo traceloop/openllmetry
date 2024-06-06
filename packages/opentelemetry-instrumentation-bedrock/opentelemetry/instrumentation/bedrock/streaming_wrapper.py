@@ -40,6 +40,3 @@ class StreamingWrapper(ObjectProxy):
             ).get("text")
         elif type == "message_stop" and self._stream_done_callback:
             self._stream_done_callback(self._accumulating_body)
-
-        print(decoded_chunk)
-        # print(self._accumulating_body)

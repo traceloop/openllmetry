@@ -96,9 +96,9 @@ def wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
     llm_request_type = _llm_request_type_by_object(to_wrap.get("object"))
     with tracer.start_as_current_span(
         (
-            "haystack.openai.chat"
+            SpanAttributes.HAYSTACK_OPENAI_CHAT
             if llm_request_type == LLMRequestTypeValues.CHAT
-            else "haystack.openai.completion"
+            else SpanAttributes.HAYSTACK_OPENAI_COMPLETION
         ),
         kind=SpanKind.CLIENT,
         attributes={

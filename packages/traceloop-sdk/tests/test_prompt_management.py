@@ -1,6 +1,8 @@
 import json
+
 import pytest
 from openai import OpenAI
+from opentelemetry.semconv.ai import SpanAttributes
 from traceloop.sdk.prompts import get_prompt
 from traceloop.sdk.prompts.client import PromptRegistryClient
 
@@ -80,8 +82,8 @@ def test_prompt_management(exporter, openai_client):
     ]
     open_ai_span = spans[0]
     assert (
-        open_ai_span.attributes["gen_ai.prompt.0.content"]
+        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
         == "Tell me a joke about OpenTelemetry, pirate style"
     )
-    assert open_ai_span.attributes.get("gen_ai.completion.0.content")
+    assert open_ai_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
     assert open_ai_span.attributes.get("traceloop.prompt.key") == "joke_generator"

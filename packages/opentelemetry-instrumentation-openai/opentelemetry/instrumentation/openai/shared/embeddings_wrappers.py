@@ -12,10 +12,12 @@ from opentelemetry.instrumentation.openai.utils import (
     _with_embeddings_telemetry_wrapper,
 )
 from opentelemetry.instrumentation.openai.shared import (
+    _metric_shared_attributes,
     _set_client_attributes,
     _set_request_attributes,
     _set_span_attribute,
     _set_response_attributes,
+    _token_type,
     should_send_prompts,
     model_as_dict,
     _get_openai_base_url,
@@ -188,10 +190,11 @@ def _set_embeddings_metrics(
     response_dict,
     duration,
 ):
-    shared_attributes = {
-        "gen_ai.response.model": response_dict.get("model") or None,
-        "server.address": _get_openai_base_url(instance),
-    }
+    shared_attributes = _metric_shared_attributes(
+        response_model=response_dict.get("model") or None,
+        operation="embeddings",
+        server_address=_get_openai_base_url(instance),
+    )
 
     # token count metrics
     usage = response_dict.get("usage")
@@ -200,7 +203,7 @@ def _set_embeddings_metrics(
             if name in OPENAI_LLM_USAGE_TOKEN_TYPES:
                 attributes_with_token_type = {
                     **shared_attributes,
-                    "llm.usage.token_type": name.split("_")[0],
+                    SpanAttributes.LLM_TOKEN_TYPE: _token_type(name),
                 }
                 token_counter.record(val, attributes=attributes_with_token_type)
 

@@ -93,7 +93,7 @@ def _set_upsert_attributes(span, args, kwargs):
         length = len(
             points.ids
         )  # If using models.Batch instead of list[models.PointStruct]
-    _set_span_attribute(span, "qdrant.upsert.points_count", length)
+    _set_span_attribute(span, SpanAttributes.QDRANT_UPSERT_POINTS_COUNT, length)
 
 
 @dont_throw

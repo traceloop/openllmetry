@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "opentelemetry-instrumentation-watsonx"
-version = "0.21.2"
+version = "0.21.5"
 description = "OpenTelemetry IBM Watsonx Instrumentation"
 authors = ["Guangya Liu <gyliu@ibm.com>"]
 repository = "https://github.com/traceloop/openllmetry/tree/main/packages/opentelemetry-instrumentation-watsonx"
@@ -15,7 +15,7 @@ python = ">=3.9,<4"
 opentelemetry-api = "^1.25.0"
 opentelemetry-instrumentation = "^0.46b0"
 opentelemetry-semantic-conventions = "^0.46b0"
-opentelemetry-semantic-conventions-ai = "0.2.0"
+opentelemetry-semantic-conventions-ai = "0.3.1"
 
 [tool.poetry.group.dev.dependencies]
 autopep8 = "2.1.1"

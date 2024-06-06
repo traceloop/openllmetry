@@ -1,18 +1,17 @@
 import time
 
 from opentelemetry import context as context_api
-from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
-
-from opentelemetry.metrics import Counter, Histogram
-
 from opentelemetry.instrumentation.openai import is_openai_v1
 from opentelemetry.instrumentation.openai.shared import (
     _get_openai_base_url,
+    _metric_shared_attributes,
     model_as_dict,
 )
 from opentelemetry.instrumentation.openai.utils import (
     _with_image_gen_metric_wrapper,
 )
+from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
+from opentelemetry.metrics import Counter, Histogram
 
 
 @_with_image_gen_metric_wrapper
@@ -52,11 +51,12 @@ def image_gen_metrics_wrapper(
     else:
         response_dict = response
 
-    shared_attributes = {
-        # not provide response.model in ImagesResponse response, use model in request kwargs
-        "gen_ai.response.model": kwargs.get("model") or None,
-        "server.address": _get_openai_base_url(instance),
-    }
+    # not provide response.model in ImagesResponse response, use model in request kwargs
+    shared_attributes = _metric_shared_attributes(
+        response_model=kwargs.get("model") or None,
+        operation="image_gen",
+        server_address=_get_openai_base_url(instance),
+    )
 
     duration = end_time - start_time
     if duration_histogram:

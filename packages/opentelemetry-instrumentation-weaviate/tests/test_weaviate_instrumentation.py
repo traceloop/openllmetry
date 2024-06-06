@@ -4,6 +4,8 @@ import pytest
 import weaviate
 import weaviate.classes as wvc
 
+from opentelemetry.semconv.ai import SpanAttributes
+
 
 ARTICLE_SCHEMA = {
     "class": "Article",
@@ -148,8 +150,8 @@ def test_weaviate_delete_all(client, exporter):
         span for span in spans if span.name == "db.weaviate.collections.delete_all"
     )
 
-    assert span.attributes.get("db.system") == "weaviate"
-    assert span.attributes.get("db.operation") == "delete_all"
+    assert span.attributes.get(SpanAttributes.VECTOR_DB_VENDOR) == "weaviate"
+    assert span.attributes.get(SpanAttributes.VECTOR_DB_OPERATION) == "delete_all"
 
 
 @pytest.mark.vcr
@@ -159,8 +161,8 @@ def test_weaviate_create_collection(client, exporter):
     spans = exporter.get_finished_spans()
     span = next(span for span in spans if span.name == "db.weaviate.collections.create")
 
-    assert span.attributes.get("db.system") == "weaviate"
-    assert span.attributes.get("db.operation") == "create"
+    assert span.attributes.get(SpanAttributes.VECTOR_DB_VENDOR) == "weaviate"
+    assert span.attributes.get(SpanAttributes.VECTOR_DB_OPERATION) == "create"
     assert span.attributes.get("db.weaviate.collections.create.name") == '"Article"'
 
 
@@ -175,8 +177,11 @@ def test_weaviate_create_collection_from_dict(client, exporter):
         if span.name == "db.weaviate.collections.create_from_dict"
     )
 
-    assert span.attributes.get("db.system") == "weaviate"
-    assert span.attributes.get("db.operation") == "create_from_dict"
+    assert span.attributes.get(f"{SpanAttributes.VECTOR_DB_VENDOR}") == "weaviate"
+    assert (
+        span.attributes.get(f"{SpanAttributes.VECTOR_DB_OPERATION}")
+        == "create_from_dict"
+    )
     assert (
         json.loads(
             span.attributes.get("db.weaviate.collections.create_from_dict.config")
@@ -193,8 +198,8 @@ def test_weaviate_get_collection(client, exporter):
     spans = exporter.get_finished_spans()
     span = next(span for span in spans if span.name == "db.weaviate.collections.get")
 
-    assert span.attributes.get("db.system") == "weaviate"
-    assert span.attributes.get("db.operation") == "get"
+    assert span.attributes.get(SpanAttributes.VECTOR_DB_VENDOR) == "weaviate"
+    assert span.attributes.get(SpanAttributes.VECTOR_DB_OPERATION) == "get"
     assert span.attributes.get("db.weaviate.collections.get.name") == '"Article"'
 
 
@@ -206,8 +211,8 @@ def test_weaviate_delete_collection(client, exporter):
     spans = exporter.get_finished_spans()
     span = next(span for span in spans if span.name == "db.weaviate.collections.delete")
 
-    assert span.attributes.get("db.system") == "weaviate"
-    assert span.attributes.get("db.operation") == "delete"
+    assert span.attributes.get(SpanAttributes.VECTOR_DB_VENDOR) == "weaviate"
+    assert span.attributes.get(SpanAttributes.VECTOR_DB_OPERATION) == "delete"
     assert span.attributes.get("db.weaviate.collections.delete.name") == '"Article"'
 
 
@@ -221,8 +226,8 @@ def test_weaviate_insert_data(client, exporter):
         span for span in spans if span.name == "db.weaviate.collections.data.insert"
     )
 
-    assert span.attributes.get("db.system") == "weaviate"
-    assert span.attributes.get("db.operation") == "insert"
+    assert span.attributes.get(SpanAttributes.VECTOR_DB_VENDOR) == "weaviate"
+    assert span.attributes.get(SpanAttributes.VECTOR_DB_OPERATION) == "insert"
     assert json.loads(
         span.attributes.get("weaviate.collections.data.insert.properties")
     ) == {
@@ -243,8 +248,8 @@ def test_weaviate_create_batch(client, exporter):
         if span.name == "db.weaviate.collections.batch.add_object"
     )
 
-    assert span.attributes.get("db.system") == "weaviate"
-    assert span.attributes.get("db.operation") == "add_object"
+    assert span.attributes.get(SpanAttributes.VECTOR_DB_VENDOR) == "weaviate"
+    assert span.attributes.get(SpanAttributes.VECTOR_DB_OPERATION) == "add_object"
     data_object = json.loads(
         span.attributes.get("db.weaviate.collections.batch.add_object.properties")
     )
@@ -271,8 +276,10 @@ def test_weaviate_query_fetch_object_by_id(client, exporter):
         if span.name == "db.weaviate.collections.query.fetch_object_by_id"
     )
 
-    assert span.attributes.get("db.system") == "weaviate"
-    assert span.attributes.get("db.operation") == "fetch_object_by_id"
+    assert span.attributes.get(SpanAttributes.VECTOR_DB_VENDOR) == "weaviate"
+    assert (
+        span.attributes.get(SpanAttributes.VECTOR_DB_OPERATION) == "fetch_object_by_id"
+    )
     assert (
         span.attributes.get("db.weaviate.collections.query.fetch_object_by_id.uuid")
         == f'"{uuid_value}"'
@@ -293,8 +300,8 @@ def test_weaviate_query_fetch_objects(client, exporter):
         if span.name == "db.weaviate.collections.query.fetch_objects"
     )
 
-    assert span.attributes.get("db.system") == "weaviate"
-    assert span.attributes.get("db.operation") == "fetch_objects"
+    assert span.attributes.get(SpanAttributes.VECTOR_DB_VENDOR) == "weaviate"
+    assert span.attributes.get(SpanAttributes.VECTOR_DB_OPERATION) == "fetch_objects"
     assert (
         span.attributes.get(
             "db.weaviate.collections.query.fetch_objects.return_properties"
@@ -318,11 +325,11 @@ def test_weaviate_query_aggregate(client, exporter):
         span for span in spans if span.name == "db.weaviate.gql.filter.do"
     )
 
-    assert span_aggregate.attributes.get("db.system") == "weaviate"
-    assert span_aggregate.attributes.get("db.operation") == "do"
+    assert span_aggregate.attributes.get(SpanAttributes.VECTOR_DB_VENDOR) == "weaviate"
+    assert span_aggregate.attributes.get(SpanAttributes.VECTOR_DB_OPERATION) == "do"
     assert result.total_count == 5
-    assert span_filter.attributes.get("db.system") == "weaviate"
-    assert span_filter.attributes.get("db.operation") == "do"
+    assert span_filter.attributes.get(SpanAttributes.VECTOR_DB_VENDOR) == "weaviate"
+    assert span_filter.attributes.get(SpanAttributes.VECTOR_DB_OPERATION) == "do"
 
 
 @pytest.mark.vcr
@@ -339,8 +346,10 @@ def test_weaviate_query_raw(client, exporter):
         "db.weaviate.client.graphql_raw_query.gql_query"
     )
 
-    assert span.attributes.get("db.system") == "weaviate"
-    assert span.attributes.get("db.operation") == "graphql_raw_query"
+    assert span.attributes.get(SpanAttributes.VECTOR_DB_VENDOR) == "weaviate"
+    assert (
+        span.attributes.get(SpanAttributes.VECTOR_DB_OPERATION) == "graphql_raw_query"
+    )
     assert "Get" in traced_raw_query
     assert "Article" in traced_raw_query
     assert "author" in traced_raw_query

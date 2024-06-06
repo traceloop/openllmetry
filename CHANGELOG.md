@@ -1,3 +1,24 @@
+## v0.21.5 (2024-06-05)
+
+### Fix
+
+- **openai**: handle empty finish_reason (#1236)
+- removed debug prints from instrumentations
+- **vertexai**: change the span names to match method calls (#1234)
+
+## v0.21.4 (2024-06-03)
+
+### Fix
+
+- **openai+anthropic+watsonx**: align duration and token.usage metrics attributes with conventions (#1182)
+
+## v0.21.3 (2024-06-03)
+
+### Fix
+
+- **openai**: async streaming responses (#1229)
+- **sdk**: temporarily (?) remove sentry (#1228)
+
 ## v0.21.2 (2024-05-31)
 
 ### Fix

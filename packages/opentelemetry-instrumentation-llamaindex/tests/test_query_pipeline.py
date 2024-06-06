@@ -43,15 +43,13 @@ def test_query_pipeline(exporter):
 
     spans = exporter.get_finished_spans()
 
-    assert set(
-        [
-            "llama_index_query_pipeline.workflow",
-            "retrieve.task",
-            "synthesize.task",
-            "openai.chat",
-            "cohere.rerank",
-        ]
-    ).issubset([span.name for span in spans])
+    assert {
+        "llama_index_query_pipeline.workflow",
+        "retrieve.task",
+        "synthesize.task",
+        "openai.chat",
+        "cohere.rerank",
+    }.issubset([span.name for span in spans])
 
     query_pipeline_span = next(
         span for span in spans if span.name == "llama_index_query_pipeline.workflow"
