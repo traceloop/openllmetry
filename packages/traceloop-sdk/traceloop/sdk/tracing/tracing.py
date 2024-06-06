@@ -204,6 +204,14 @@ class TracerWrapper(object):
                             print(Fore.RESET)
                         else:
                             instrument_set = True
+                    elif instrument == Instruments.TOGETHER:
+                        if not init_together_instrumentor():
+                            print(
+                                Fore.RED + "Warning: TogetherAI library does not exist."
+                            )
+                            print(Fore.RESET)
+                        else:
+                            instrument_set = True
                     elif instrument == Instruments.REQUESTS:
                         if not init_requests_instrumentor():
                             print(
@@ -457,6 +465,7 @@ def init_instrumentations(should_enrich_metrics: bool):
     init_llama_index_instrumentor()
     init_milvus_instrumentor()
     init_transformers_instrumentor()
+    init_together_instrumentor()
     init_requests_instrumentor()
     init_urllib3_instrumentor()
     init_pymysql_instrumentor()
@@ -665,6 +674,24 @@ def init_transformers_instrumentor():
         return True
     except Exception as e:
         logging.error(f"Error initializing Transformers instrumentor: {e}")
+        Telemetry().log_exception(e)
+        return False
+
+
+def init_together_instrumentor():
+    try:
+        if importlib.util.find_spec("together") is not None:
+            Telemetry().capture("instrumentation:together:init")
+            from opentelemetry.instrumentation.together import TogetherAiInstrumentor
+
+            instrumentor = TogetherAiInstrumentor(
+                exception_logger=lambda e: Telemetry().log_exception(e),
+            )
+            if not instrumentor.is_instrumented_by_opentelemetry:
+                instrumentor.instrument()
+        return True
+    except Exception as e:
+        logging.error(f"Error initializing TogetherAI instrumentor: {e}")
         Telemetry().log_exception(e)
         return False
 
