@@ -1,7 +1,9 @@
-from os import getcwd
-import pytest
 import json
+from os import getcwd
+
 import chromadb
+import pytest
+from opentelemetry.semconv.ai import Events, SpanAttributes
 
 chroma = chromadb.PersistentClient(path=getcwd())
 
@@ -56,11 +58,11 @@ def test_chroma_add(exporter, collection):
     spans = exporter.get_finished_spans()
     span = next(span for span in spans if span.name == "chroma.add")
 
-    assert span.attributes.get("db.system") == "chroma"
-    assert span.attributes.get("db.operation") == "add"
-    assert span.attributes.get("db.chroma.add.ids_count") == 3
-    assert span.attributes.get("db.chroma.add.metadatas_count") == 3
-    assert span.attributes.get("db.chroma.add.documents_count") == 3
+    assert span.attributes.get(SpanAttributes.VECTOR_DB_VENDOR) == "chroma"
+    assert span.attributes.get(SpanAttributes.VECTOR_DB_OPERATION) == "add"
+    assert span.attributes.get(SpanAttributes.CHROMADB_ADD_IDS_COUNT) == 3
+    assert span.attributes.get(SpanAttributes.CHROMADB_ADD_METADATAS_COUNT) == 3
+    assert span.attributes.get(SpanAttributes.CHROMADB_ADD_DOCUMENTS_COUNT) == 3
 
 
 def test_chroma_query(exporter, collection):
@@ -73,15 +75,15 @@ def test_chroma_query(exporter, collection):
     spans = exporter.get_finished_spans()
     span = next(span for span in spans if span.name == "chroma.query")
 
-    assert span.attributes.get("db.system") == "chroma"
-    assert span.attributes.get("db.operation") == "query"
-    assert span.attributes.get("db.chroma.query.query_texts_count") == 1
-    assert span.attributes.get("db.chroma.query.n_results") == 2
+    assert span.attributes.get(SpanAttributes.VECTOR_DB_VENDOR) == "chroma"
+    assert span.attributes.get(SpanAttributes.VECTOR_DB_OPERATION) == "query"
+    assert span.attributes.get(SpanAttributes.CHROMADB_QUERY_TEXTS_COUNT) == 1
+    assert span.attributes.get(SpanAttributes.CHROMADB_QUERY_N_RESULTS) == 2
 
     events = span.events
     assert len(events) == 1
     for event in events:
-        assert event.name == "db.query.result"
+        assert event.name == Events.DB_QUERY_RESULT.value
         ids_ = event.attributes.get(f"{event.name}.id")
         distance = event.attributes.get(f"{event.name}.distance")
         document = event.attributes.get(f"{event.name}.document")
@@ -106,16 +108,19 @@ def test_chroma_query_with_metadata(exporter, collection):
     spans = exporter.get_finished_spans()
     span = next(span for span in spans if span.name == "chroma.query")
 
-    assert span.attributes.get("db.system") == "chroma"
-    assert span.attributes.get("db.operation") == "query"
-    assert span.attributes.get("db.chroma.query.query_texts_count") == 1
-    assert span.attributes.get("db.chroma.query.n_results") == 2
-    assert span.attributes.get("db.chroma.query.where") == "{'source': 'student info'}"
+    assert span.attributes.get(SpanAttributes.VECTOR_DB_VENDOR) == "chroma"
+    assert span.attributes.get(SpanAttributes.VECTOR_DB_OPERATION) == "query"
+    assert span.attributes.get(SpanAttributes.CHROMADB_QUERY_TEXTS_COUNT) == 1
+    assert span.attributes.get(SpanAttributes.CHROMADB_QUERY_N_RESULTS) == 2
+    assert (
+        span.attributes.get(SpanAttributes.CHROMADB_QUERY_WHERE)
+        == "{'source': 'student info'}"
+    )
 
     events = span.events
     assert len(events) == 1
     for event in events:
-        assert event.name == "db.query.result"
+        assert event.name == Events.DB_QUERY_RESULT.value
         ids_ = event.attributes.get(f"{event.name}.id")
         distance = event.attributes.get(f"{event.name}.distance")
         document = event.attributes.get(f"{event.name}.document")
@@ -138,12 +143,19 @@ def test_chroma_query_segment_query(exporter, collection):
 
     spans = exporter.get_finished_spans()
     span = next(span for span in spans if span.name == "chroma.query.segment._query")
-    assert len(span.attributes.get("db.chroma.query.segment._query.collection_id")) > 0
+    assert (
+        len(
+            span.attributes.get(
+                SpanAttributes.CHROMADB_QUERY_SEGMENT_QUERY_COLLECTION_ID
+            )
+        )
+        > 0
+    )
     events = span.events
     assert len(events) > 0
     for event in events:
-        assert event.name == "db.query.embeddings"
+        assert event.name == Events.DB_QUERY_EMBEDDINGS.value
         embeddings = json.loads(event.attributes.get(f"{event.name}.vector"))
         assert len(embeddings) > 100
         for number in embeddings:
-            assert number >= -1 and number <= 1
+            assert -1 <= number <= 1

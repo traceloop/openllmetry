@@ -24,7 +24,7 @@ from opentelemetry.instrumentation.anthropic.version import __version__
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY, unwrap
 from opentelemetry.metrics import Counter, Histogram, Meter, get_meter
-from opentelemetry.semconv.ai import LLMRequestTypeValues, SpanAttributes
+from opentelemetry.semconv.ai import LLMRequestTypeValues, SpanAttributes, Meters
 from opentelemetry.trace import SpanKind, Tracer, get_tracer
 from opentelemetry.trace.status import Status, StatusCode
 from wrapt import wrap_function_wrapper
@@ -45,15 +45,15 @@ WRAPPED_METHODS = [
         "package": "anthropic.resources.messages",
         "object": "Messages",
         "method": "create",
-        "span_name": "anthropic.completion",
-        "metric_name": "anthropic.completion",
+        "span_name": "anthropic.chat",
+        "metric_name": "anthropic.chat",
     },
     {
         "package": "anthropic.resources.messages",
         "object": "Messages",
         "method": "stream",
-        "span_name": "anthropic.completion",
-        "metric_name": "anthropic.completion",
+        "span_name": "anthropic.chat",
+        "metric_name": "anthropic.chat",
     },
 ]
 WRAPPED_AMETHODS = [
@@ -68,15 +68,15 @@ WRAPPED_AMETHODS = [
         "package": "anthropic.resources.messages",
         "object": "AsyncMessages",
         "method": "create",
-        "span_name": "anthropic.completion",
-        "metric_name": "anthropic.completion",
+        "span_name": "anthropic.chat",
+        "metric_name": "anthropic.chat",
     },
     {
         "package": "anthropic.resources.messages",
         "object": "AsyncMessages",
         "method": "stream",
-        "span_name": "anthropic.completion",
-        "metric_name": "anthropic.completion",
+        "span_name": "anthropic.chat",
+        "metric_name": "anthropic.chat",
     },
 ]
 
@@ -187,7 +187,7 @@ async def _aset_token_usage(
             prompt_tokens,
             attributes={
                 **metric_attributes,
-                "gen_ai.token.type": "input",
+                SpanAttributes.LLM_TOKEN_TYPE: "input",
             },
         )
 
@@ -205,7 +205,7 @@ async def _aset_token_usage(
             completion_tokens,
             attributes={
                 **metric_attributes,
-                "gen_ai.token.type": "output",
+                SpanAttributes.LLM_TOKEN_TYPE: "output",
             },
         )
 
@@ -222,7 +222,7 @@ async def _aset_token_usage(
             choices,
             attributes={
                 **metric_attributes,
-                "llm.response.stop_reason": response.get("stop_reason"),
+                SpanAttributes.LLM_RESPONSE_STOP_REASON: response.get("stop_reason"),
             },
         )
 
@@ -263,7 +263,7 @@ def _set_token_usage(
             prompt_tokens,
             attributes={
                 **metric_attributes,
-                "gen_ai.token.type": "input",
+                SpanAttributes.LLM_TOKEN_TYPE: "input",
             },
         )
 
@@ -279,7 +279,7 @@ def _set_token_usage(
             completion_tokens,
             attributes={
                 **metric_attributes,
-                "gen_ai.token.type": "output",
+                SpanAttributes.LLM_TOKEN_TYPE: "output",
             },
         )
 
@@ -296,7 +296,7 @@ def _set_token_usage(
             choices,
             attributes={
                 **metric_attributes,
-                "llm.response.stop_reason": response.get("stop_reason"),
+                SpanAttributes.LLM_RESPONSE_STOP_REASON: response.get("stop_reason"),
             },
         )
 
@@ -374,25 +374,25 @@ def _with_chat_telemetry_wrapper(func):
 
 def _create_metrics(meter: Meter, name: str):
     token_histogram = meter.create_histogram(
-        name="gen_ai.client.token.usage",
+        name=Meters.LLM_TOKEN_USAGE,
         unit="token",
         description="Measures number of input and output tokens used",
     )
 
     choice_counter = meter.create_counter(
-        name="gen_ai.client.generation.choices",
+        name=Meters.LLM_GENERATION_CHOICES,
         unit="choice",
         description="Number of choices returned by chat completions call",
     )
 
     duration_histogram = meter.create_histogram(
-        name="gen_ai.client.operation.duration",
+        name=Meters.LLM_OPERATION_DURATION,
         unit="s",
         description="GenAI operation duration",
     )
 
     exception_counter = meter.create_counter(
-        name=f"llm.{name}.exceptions",
+        name=Meters.LLM_ANTHROPIC_COMPLETION_EXCEPTIONS,
         unit="time",
         description="Number of exceptions occurred during chat completions",
     )

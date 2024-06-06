@@ -3,6 +3,7 @@ import logging
 import traceback
 from opentelemetry import context as context_api
 from opentelemetry.instrumentation.anthropic.config import Config
+from opentelemetry.semconv.ai import SpanAttributes
 
 GEN_AI_SYSTEM = "gen_ai.system"
 GEN_AI_SYSTEM_ANTHROPIC = "anthropic"
@@ -53,7 +54,7 @@ def shared_metrics_attributes(response):
 
     return {
         GEN_AI_SYSTEM: GEN_AI_SYSTEM_ANTHROPIC,
-        "gen_ai.response.model": response.get("model"),
+        SpanAttributes.LLM_RESPONSE_MODEL: response.get("model"),
     }
 
 

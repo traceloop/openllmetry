@@ -1,6 +1,8 @@
 import os
-import pytest
+
 import cohere
+import pytest
+from opentelemetry.semconv.ai import SpanAttributes
 
 
 @pytest.mark.vcr
@@ -11,19 +13,19 @@ def test_cohere_chat(exporter):
     spans = exporter.get_finished_spans()
     cohere_span = spans[0]
     assert cohere_span.name == "cohere.chat"
-    assert cohere_span.attributes.get("gen_ai.system") == "Cohere"
-    assert cohere_span.attributes.get("llm.request.type") == "chat"
-    assert cohere_span.attributes.get("gen_ai.request.model") == "command"
+    assert cohere_span.attributes.get(SpanAttributes.LLM_SYSTEM) == "Cohere"
+    assert cohere_span.attributes.get(SpanAttributes.LLM_REQUEST_TYPE) == "chat"
+    assert cohere_span.attributes.get(SpanAttributes.LLM_REQUEST_MODEL) == "command"
     assert (
-        cohere_span.attributes.get("gen_ai.prompt.0.content")
+        cohere_span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.0.content")
         == "Tell me a joke, pirate style"
     )
-    assert cohere_span.attributes.get("gen_ai.completion.0.content") == res.text
-    assert cohere_span.attributes.get("gen_ai.usage.prompt_tokens") == 58
+    assert cohere_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content") == res.text
+    assert cohere_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 58
     assert cohere_span.attributes.get(
-        "llm.usage.total_tokens"
+        SpanAttributes.LLM_USAGE_TOTAL_TOKENS
     ) == cohere_span.attributes.get(
-        "gen_ai.usage.completion_tokens"
+        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
     ) + cohere_span.attributes.get(
-        "gen_ai.usage.prompt_tokens"
+        SpanAttributes.LLM_USAGE_PROMPT_TOKENS
     )

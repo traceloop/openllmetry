@@ -1,5 +1,7 @@
-import pytest
 import json
+
+import pytest
+from opentelemetry.semconv.ai import SpanAttributes
 
 
 @pytest.mark.vcr
@@ -27,18 +29,18 @@ def test_anthropic_2_completion(exporter, brt):
 
     anthropic_span = spans[0]
     assert (
-        anthropic_span.attributes["gen_ai.prompt.0.user"]
+        anthropic_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.user"]
         == "Human: Tell me a joke about opentelemetry Assistant:"
     )
-    assert anthropic_span.attributes.get("gen_ai.completion.0.content") == completion
+    assert anthropic_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content") == completion
 
-    assert anthropic_span.attributes.get("gen_ai.usage.prompt_tokens") == 13
+    assert anthropic_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 13
     assert anthropic_span.attributes.get(
-        "gen_ai.usage.completion_tokens"
+        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
     ) + anthropic_span.attributes.get(
-        "gen_ai.usage.prompt_tokens"
+        SpanAttributes.LLM_USAGE_PROMPT_TOKENS
     ) == anthropic_span.attributes.get(
-        "llm.usage.total_tokens"
+        SpanAttributes.LLM_USAGE_TOTAL_TOKENS
     )
 
 
@@ -74,22 +76,22 @@ def test_anthropic_3_completion_complex_content(exporter, brt):
     assert all(span.name == "bedrock.completion" for span in spans)
 
     anthropic_span = spans[0]
-    assert json.loads(anthropic_span.attributes["gen_ai.prompt.0.content"]) == [
+    assert json.loads(anthropic_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]) == [
         {"type": "text", "text": "Tell me a joke about opentelemetry"},
     ]
 
     assert (
-        json.loads(anthropic_span.attributes.get("gen_ai.completion.0.content"))
+        json.loads(anthropic_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content"))
         == completion
     )
 
-    assert anthropic_span.attributes.get("gen_ai.usage.prompt_tokens") == 9
+    assert anthropic_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 9
     assert anthropic_span.attributes.get(
-        "gen_ai.usage.completion_tokens"
+        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
     ) + anthropic_span.attributes.get(
-        "gen_ai.usage.prompt_tokens"
+        SpanAttributes.LLM_USAGE_PROMPT_TOKENS
     ) == anthropic_span.attributes.get(
-        "llm.usage.total_tokens"
+        SpanAttributes.LLM_USAGE_TOTAL_TOKENS
     )
 
 
@@ -130,24 +132,24 @@ def test_anthropic_3_completion_streaming(exporter, brt):
     assert all(span.name == "bedrock.completion" for span in spans)
 
     anthropic_span = spans[0]
-    assert json.loads(anthropic_span.attributes["gen_ai.prompt.0.content"]) == [
+    assert json.loads(anthropic_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]) == [
         {"type": "text", "text": "Tell me a joke about opentelemetry"},
     ]
 
-    assert json.loads(anthropic_span.attributes.get("gen_ai.completion.0.content")) == [
+    assert json.loads(anthropic_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")) == [
         {
             "type": "text",
             "text": completion,
         }
     ]
 
-    assert anthropic_span.attributes.get("gen_ai.usage.prompt_tokens") == 9
+    assert anthropic_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 9
     assert anthropic_span.attributes.get(
-        "gen_ai.usage.completion_tokens"
+        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
     ) + anthropic_span.attributes.get(
-        "gen_ai.usage.prompt_tokens"
+        SpanAttributes.LLM_USAGE_PROMPT_TOKENS
     ) == anthropic_span.attributes.get(
-        "llm.usage.total_tokens"
+        SpanAttributes.LLM_USAGE_TOTAL_TOKENS
     )
 
 
@@ -182,20 +184,20 @@ def test_anthropic_3_completion_string_content(exporter, brt):
 
     anthropic_span = spans[0]
     assert (
-        json.loads(anthropic_span.attributes["gen_ai.prompt.0.content"])
+        json.loads(anthropic_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"])
         == "Tell me a joke about opentelemetry"
     )
 
     assert (
-        json.loads(anthropic_span.attributes.get("gen_ai.completion.0.content"))
+        json.loads(anthropic_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content"))
         == completion
     )
 
-    assert anthropic_span.attributes.get("gen_ai.usage.prompt_tokens") == 9
+    assert anthropic_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 9
     assert anthropic_span.attributes.get(
-        "gen_ai.usage.completion_tokens"
+        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
     ) + anthropic_span.attributes.get(
-        "gen_ai.usage.prompt_tokens"
+        SpanAttributes.LLM_USAGE_PROMPT_TOKENS
     ) == anthropic_span.attributes.get(
-        "llm.usage.total_tokens"
+        SpanAttributes.LLM_USAGE_TOTAL_TOKENS
     )
