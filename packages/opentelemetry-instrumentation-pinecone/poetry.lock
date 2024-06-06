@@ -35,13 +35,13 @@ trio = ["trio (>=0.23)"]
 
 [[package]]
 name = "autopep8"
-version = "2.1.2"
+version = "2.2.0"
 description = "A tool that automatically formats Python code to conform to the PEP 8 style guide"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "autopep8-2.1.2-py2.py3-none-any.whl", hash = "sha256:fead1b74ae69bf939b7eb371c83522a9262d9ac4b49f1c6f3d38ca1e31707f74"},
-    {file = "autopep8-2.1.2.tar.gz", hash = "sha256:77b07146bf127aa88de78efc270d395a54ebb8284fdbe6542c4aeb8d969f4d9a"},
+    {file = "autopep8-2.2.0-py2.py3-none-any.whl", hash = "sha256:05418a981f038969d8bdcd5636bf15948db7555ae944b9f79b5a34b35f1370d4"},
+    {file = "autopep8-2.2.0.tar.gz", hash = "sha256:d306a0581163ac29908280ad557773a95a9bede072c0fafed6f141f5311f43c1"},
 ]
 
 [package.dependencies]
@@ -1546,4 +1546,4 @@ instruments = []
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<4"
-content-hash = "add17c919d952b9d33120a2896500cf198d1b951c75dae0af956ee2f01cc863a"
+content-hash = "04daac267c3c68c2bb03126e2982529c5151d1f3a31616d1354d7017b8bd1a6c"
