@@ -43,6 +43,7 @@ opentelemetry-instrumentation-qdrant = {path="../opentelemetry-instrumentation-q
 opentelemetry-instrumentation-langchain = {path="../opentelemetry-instrumentation-langchain", develop=true}
 opentelemetry-instrumentation-chromadb = {path="../opentelemetry-instrumentation-chromadb", develop=true}
 opentelemetry-instrumentation-transformers = {path="../opentelemetry-instrumentation-transformers", develop=true}
+opentelemetry-instrumentation-together = {path="../opentelemetry-instrumentation-together", develop=true}
 opentelemetry-instrumentation-llamaindex = {path="../opentelemetry-instrumentation-llamaindex", develop=true}
 opentelemetry-instrumentation-milvus = {path="../opentelemetry-instrumentation-milvus", develop=true}
 opentelemetry-instrumentation-haystack = {path="../opentelemetry-instrumentation-haystack", develop=true}

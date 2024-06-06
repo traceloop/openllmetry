@@ -13,6 +13,7 @@ class Instruments(Enum):
     LLAMA_INDEX = "llama_index"
     MILVUS = "milvus"
     TRANSFORMERS = "transformers"
+    TOGETHER = "together"
     REQUESTS = "requests"
     URLLIB3 = "urllib3"
     PYMYSQL = "pymysql"

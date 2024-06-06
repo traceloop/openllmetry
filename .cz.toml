@@ -32,6 +32,8 @@ version_files = [
     "packages/opentelemetry-instrumentation-qdrant/opentelemetry/instrumentation/qdrant/version.py",
     "packages/opentelemetry-instrumentation-replicate/pyproject.toml:^version",
     "packages/opentelemetry-instrumentation-replicate/opentelemetry/instrumentation/replicate/version.py",
+    "packages/opentelemetry-instrumentation-together/pyproject.toml:^version",
+    "packages/opentelemetry-instrumentation-together/opentelemetry/instrumentation/together/version.py",
     "packages/opentelemetry-instrumentation-transformers/pyproject.toml:^version",
     "packages/opentelemetry-instrumentation-transformers/opentelemetry/instrumentation/transformers/version.py",
     "packages/opentelemetry-instrumentation-vertexai/pyproject.toml:^version",
