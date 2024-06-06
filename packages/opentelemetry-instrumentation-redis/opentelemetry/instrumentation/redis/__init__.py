@@ -17,7 +17,7 @@ from wrapt import wrap_function_wrapper
 
 logger = logging.getLogger(__name__)
 
-_instruments = ("redis >= 4.6.0",)
+_instruments = ("redis >= 4.3.4",)
 
 # The ping and create_index methods are not shown on the Web UI due to filtering
 WRAPPED_METHODS = [
