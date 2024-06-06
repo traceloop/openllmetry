@@ -15,10 +15,6 @@ from opentelemetry.instrumentation.openai.utils import (
     should_record_stream_token_usage,
 )
 
-OPENAI_API_VERSION = "openai.api_version"
-OPENAI_API_BASE = "openai.api_base"
-OPENAI_API_TYPE = "openai.api_type"
-
 OPENAI_LLM_USAGE_TOKEN_TYPES = ["prompt_tokens", "completion_tokens"]
 
 # tiktoken encodings map for different model, key is model_name, value is tiktoken encoding
@@ -49,10 +45,12 @@ def _set_client_attributes(span, instance):
 
     client = instance._client  # pylint: disable=protected-access
     if isinstance(client, (openai.AsyncOpenAI, openai.OpenAI)):
-        _set_span_attribute(span, OPENAI_API_BASE, str(client.base_url))
+        _set_span_attribute(
+            span, SpanAttributes.LLM_OPENAI_API_BASE, str(client.base_url)
+        )
     if isinstance(client, (openai.AsyncAzureOpenAI, openai.AzureOpenAI)):
         _set_span_attribute(
-            span, OPENAI_API_VERSION, client._api_version
+            span, SpanAttributes.LLM_OPENAI_API_VERSION, client._api_version
         )  # pylint: disable=protected-access
 
 
@@ -65,9 +63,9 @@ def _set_api_attributes(span):
 
     base_url = openai.base_url if hasattr(openai, "base_url") else openai.api_base
 
-    _set_span_attribute(span, OPENAI_API_BASE, base_url)
-    _set_span_attribute(span, OPENAI_API_TYPE, openai.api_type)
-    _set_span_attribute(span, OPENAI_API_VERSION, openai.api_version)
+    _set_span_attribute(span, SpanAttributes.LLM_OPENAI_API_BASE, base_url)
+    _set_span_attribute(span, SpanAttributes.LLM_OPENAI_API_TYPE, openai.api_type)
+    _set_span_attribute(span, SpanAttributes.LLM_OPENAI_API_VERSION, openai.api_version)
 
     return
 

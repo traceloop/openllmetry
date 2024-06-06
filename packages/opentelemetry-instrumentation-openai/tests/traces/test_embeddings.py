@@ -1,6 +1,5 @@
 import openai
 import pytest
-from opentelemetry.instrumentation.openai.shared import OPENAI_API_BASE, OPENAI_API_VERSION
 from opentelemetry.semconv.ai import SpanAttributes
 
 
@@ -20,9 +19,15 @@ def test_embeddings(exporter, openai_client):
         open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
         == "Tell me a joke about opentelemetry"
     )
-    assert open_ai_span.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "text-embedding-ada-002"
+    assert (
+        open_ai_span.attributes[SpanAttributes.LLM_REQUEST_MODEL]
+        == "text-embedding-ada-002"
+    )
     assert open_ai_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 8
-    assert open_ai_span.attributes[OPENAI_API_BASE] == "https://api.openai.com/v1/"
+    assert (
+        open_ai_span.attributes[SpanAttributes.LLM_SpanAttributes.LLM_OPENAI_API_BASE]
+        == "https://api.openai.com/v1/"
+    )
 
 
 @pytest.mark.vcr
@@ -41,9 +46,15 @@ def test_embeddings_with_raw_response(exporter, openai_client):
         == "Tell me a joke about opentelemetry"
     )
 
-    assert open_ai_span.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "text-embedding-ada-002"
+    assert (
+        open_ai_span.attributes[SpanAttributes.LLM_REQUEST_MODEL]
+        == "text-embedding-ada-002"
+    )
     assert open_ai_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 8
-    assert open_ai_span.attributes[OPENAI_API_BASE] == "https://api.openai.com/v1/"
+    assert (
+        open_ai_span.attributes[SpanAttributes.LLM_SpanAttributes.LLM_OPENAI_API_BASE]
+        == "https://api.openai.com/v1/"
+    )
 
     parsed_response = response.parse()
     assert parsed_response.data[0]
@@ -78,7 +89,10 @@ def test_azure_openai_embeddings(exporter):
     assert open_ai_span.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "embedding"
     assert open_ai_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 8
     assert (
-        open_ai_span.attributes[OPENAI_API_BASE]
+        open_ai_span.attributes[SpanAttributes.LLM_OPENAI_API_BASE]
         == f"https://{azure_resource}.openai.azure.com/openai/deployments/{azure_deployment}/"
     )
-    assert open_ai_span.attributes[OPENAI_API_VERSION] == "2023-07-01-preview"
+    assert (
+        open_ai_span.attributes[SpanAttributes.LLM_OPENAI_API_VERSION]
+        == "2023-07-01-preview"
+    )

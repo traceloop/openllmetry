@@ -6,9 +6,12 @@ class Meters:
     LLM_TOKEN_USAGE = "gen_ai.client.token.usage"
     LLM_OPERATION_DURATION = "gen_ai.client.operation.duration"
     LLM_COMPLETIONS_EXCEPTIONS = "llm.openai.chat_completions.exceptions"
-    LLM_STREAMING_TIME_TO_FIRST_TOKEN = "llm.openai.chat_completions.streaming_time_to_first_token"
-    LLM_STREAMING_TIME_TO_GENERATE = "llm.openai.chat_completions.streaming_time_to_generate"
-    LLM_EMBEDDINGS_DURATION = "llm.openai.embeddings.duration"
+    LLM_STREAMING_TIME_TO_FIRST_TOKEN = (
+        "llm.openai.chat_completions.streaming_time_to_first_token"
+    )
+    LLM_STREAMING_TIME_TO_GENERATE = (
+        "llm.openai.chat_completions.streaming_time_to_generate"
+    )
     LLM_EMBEDDINGS_EXCEPTIONS = "llm.openai.embeddings.exceptions"
     LLM_EMBEDDINGS_VECTOR_SIZE = "llm.openai.embeddings.vector_size"
     LLM_IMAGE_GENERATIONS_EXCEPTIONS = "llm.openai.image_generations.exceptions"
@@ -65,6 +68,9 @@ class SpanAttributes:
 
     # OpenAI
     LLM_OPENAI_RESPONSE_SYSTEM_FINGERPRINT = "gen_ai.openai.system_fingerprint"
+    LLM_OPENAI_API_BASE = "gen_ai.openai.api_base"
+    LLM_OPENAI_API_VERSION = "gen_ai.openai.api_version"
+    LLM_OPENAI_API_TYPE = "gen_ai.openai.api_type"
 
     # Haystack
     HAYSTACK_OPENAI_CHAT = "haystack.openai.chat"
@@ -124,7 +130,9 @@ class SpanAttributes:
     CHROMADB_QUERY_QUERY_TEXTS_COUNT = "db.chroma.query.query_texts_count"
     CHROMADB_QUERY_N_RESULTS = "db.chroma.query.n_results"
     CHROMADB_QUERY_INCLUDE = "db.chroma.query.include"
-    CHROMADB_QUERY_SEGMENT_QUERY_COLLECTION_ID = "db.chroma.query.segment._query.collection_id"
+    CHROMADB_QUERY_SEGMENT_QUERY_COLLECTION_ID = (
+        "db.chroma.query.segment._query.collection_id"
+    )
     CHROMADB_QUERY_WHERE = "db.chroma.query.where"
     CHROMADB_QUERY_WHERE_DOCUMENT = "db.chroma.query.where_document"
     CHROMADB_UPDATE_DOCUMENTS_COUNT = "db.chroma.update.documents_count"

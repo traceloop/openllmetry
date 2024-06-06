@@ -3,12 +3,7 @@ import os
 
 import pytest
 import weaviate
-from opentelemetry.instrumentation.weaviate import (
-    WEAVIATE_BATCH,
-    WEAVIATE_DATA,
-    WEAVIATE_GQL,
-    WEAVIATE_SCHEMA,
-)
+
 from opentelemetry.semconv.ai import SpanAttributes
 
 
@@ -172,7 +167,7 @@ def test_weaviate_delete_all(client, exporter):
     delete_all(client)
 
     spans = exporter.get_finished_spans()
-    span = next(span for span in spans if span.name == f"{WEAVIATE_SCHEMA}.delete_all")
+    span = next(span for span in spans if span.name == "db.weaviate.schema.delete_all")
 
     assert span.attributes.get(f"{SpanAttributes.VECTOR_DB_VENDOR}") == "weaviate"
     assert span.attributes.get(f"{SpanAttributes.VECTOR_DB_OPERATION}") == "delete_all"
@@ -183,11 +178,11 @@ def test_weaviate_create_schemas(client, exporter):
     create_schemas(client)
 
     spans = exporter.get_finished_spans()
-    span = next(span for span in spans if span.name == f"{WEAVIATE_SCHEMA}.create")
+    span = next(span for span in spans if span.name == "db.weaviate.schema.create")
     assert span.attributes.get(f"{SpanAttributes.VECTOR_DB_VENDOR}") == "weaviate"
     assert span.attributes.get(f"{SpanAttributes.VECTOR_DB_OPERATION}") == "create"
     assert (
-        json.loads(span.attributes.get(f"{WEAVIATE_SCHEMA}.create.schema")) == schemas
+        json.loads(span.attributes.get("db.weaviate.schema.create.schema")) == schemas
     )
 
 
@@ -197,12 +192,14 @@ def test_weaviate_create_schema(client, exporter):
 
     spans = exporter.get_finished_spans()
     span = next(
-        span for span in spans if span.name == f"{WEAVIATE_SCHEMA}.create_class"
+        span for span in spans if span.name == "db.weaviate.schema.create_class"
     )
     assert span.attributes.get(f"{SpanAttributes.VECTOR_DB_VENDOR}") == "weaviate"
-    assert span.attributes.get(f"{SpanAttributes.VECTOR_DB_OPERATION}") == "create_class"
     assert (
-        json.loads(span.attributes.get(f"{WEAVIATE_SCHEMA}.create_class.schema_class"))
+        span.attributes.get(f"{SpanAttributes.VECTOR_DB_OPERATION}") == "create_class"
+    )
+    assert (
+        json.loads(span.attributes.get("db.weaviate.schema.create_class.schema_class"))
         == article_schema
     )
 
@@ -218,12 +215,12 @@ def test_weaviate_get_schema(client, exporter):
     span = next(
         span
         for span in spans
-        if span.name == f"{WEAVIATE_SCHEMA}.get"
-        and span.attributes.get(f"{WEAVIATE_SCHEMA}.get.class_name")
+        if span.name == "db.weaviate.schema.get"
+        and span.attributes.get("db.weaviate.schema.get.class_name")
     )
     assert span.attributes.get(f"{SpanAttributes.VECTOR_DB_VENDOR}") == "weaviate"
     assert span.attributes.get(f"{SpanAttributes.VECTOR_DB_OPERATION}") == "get"
-    assert span.attributes.get(f"{WEAVIATE_SCHEMA}.get.class_name") == '"Article"'
+    assert span.attributes.get("db.weaviate.schema.get.class_name") == '"Article"'
 
 
 @pytest.mark.vcr
@@ -232,12 +229,14 @@ def test_weaviate_delete_schema(client, exporter):
 
     spans = exporter.get_finished_spans()
     span = next(
-        span for span in spans if span.name == f"{WEAVIATE_SCHEMA}.delete_class"
+        span for span in spans if span.name == "db.weaviate.schema.delete_class"
     )
     assert span.attributes.get(f"{SpanAttributes.VECTOR_DB_VENDOR}") == "weaviate"
-    assert span.attributes.get(f"{SpanAttributes.VECTOR_DB_OPERATION}") == "delete_class"
     assert (
-        span.attributes.get(f"{WEAVIATE_SCHEMA}.delete_class.class_name") == '"Article"'
+        span.attributes.get(f"{SpanAttributes.VECTOR_DB_OPERATION}") == "delete_class"
+    )
+    assert (
+        span.attributes.get("db.weaviate.schema.delete_class.class_name") == '"Article"'
     )
 
 
@@ -247,7 +246,7 @@ def test_weaviate_create_data_object(client, exporter):
 
     spans = exporter.get_finished_spans()
     span = next(
-        span for span in spans if span.name == f"{WEAVIATE_DATA}.crud_data.create"
+        span for span in spans if span.name == "db.weaviate.data.crud_data.create"
     )
     assert span.attributes.get(f"{SpanAttributes.VECTOR_DB_VENDOR}") == "weaviate"
     assert span.attributes.get(f"{SpanAttributes.VECTOR_DB_OPERATION}") == "create"
@@ -271,12 +270,15 @@ def test_weaviate_create_batch(client, exporter):
     span = next(
         span
         for span in spans
-        if span.name == f"{WEAVIATE_BATCH}.crud_batch.add_data_object"
+        if span.name == "db.weaviate.batch.crud_batch.add_data_object"
     )
     assert span.attributes.get(f"{SpanAttributes.VECTOR_DB_VENDOR}") == "weaviate"
-    assert span.attributes.get(f"{SpanAttributes.VECTOR_DB_OPERATION}") == "add_data_object"
+    assert (
+        span.attributes.get(f"{SpanAttributes.VECTOR_DB_OPERATION}")
+        == "add_data_object"
+    )
     data_object = json.loads(
-        span.attributes.get(f"{WEAVIATE_BATCH}.add_data_object.data_object")
+        span.attributes.get("db.weaviate.batch.add_data_object.data_object")
     )
     assert data_object["author"] in [
         "Robert",
@@ -287,7 +289,7 @@ def test_weaviate_create_batch(client, exporter):
     ]
     assert "..." in data_object["text"]
     assert (
-        span.attributes.get(f"{WEAVIATE_BATCH}.add_data_object.class_name")
+        span.attributes.get("db.weaviate.batch.add_data_object.class_name")
         == '"Article"'
     )
 
@@ -297,15 +299,13 @@ def test_weaviate_query_get(client, exporter):
     query_get(client)
 
     spans = exporter.get_finished_spans()
-    span = next(span for span in spans if span.name == f"{WEAVIATE_GQL}.query.get")
+    span = next(span for span in spans if span.name == "db.weaviate.gql.query.get")
     assert span.attributes.get(f"{SpanAttributes.VECTOR_DB_VENDOR}") == "weaviate"
     assert span.attributes.get(f"{SpanAttributes.VECTOR_DB_OPERATION}") == "get"
     assert span.attributes.get("db.weaviate.query.get.class_name") == '"Article"'
     assert span.attributes.get("db.weaviate.query.get.properties") == '["author"]'
 
-    span = next(
-        span for span in spans if span.name == f"{WEAVIATE_GQL}.filter.do"
-    )
+    span = next(span for span in spans if span.name == "db.weaviate.gql.filter.do")
     assert span.attributes.get(f"{SpanAttributes.VECTOR_DB_VENDOR}") == "weaviate"
     assert span.attributes.get(f"{SpanAttributes.VECTOR_DB_OPERATION}") == "do"
 
@@ -316,15 +316,13 @@ def test_weaviate_query_aggregate(client, exporter):
 
     spans = exporter.get_finished_spans()
     span = next(
-        span for span in spans if span.name == f"{WEAVIATE_GQL}.query.aggregate"
+        span for span in spans if span.name == "db.weaviate.gql.query.aggregate"
     )
     assert span.attributes.get(f"{SpanAttributes.VECTOR_DB_VENDOR}") == "weaviate"
     assert span.attributes.get(f"{SpanAttributes.VECTOR_DB_OPERATION}") == "aggregate"
     assert span.attributes.get("db.weaviate.query.aggregate.class_name") == '"Article"'
 
-    span = next(
-        span for span in spans if span.name == f"{WEAVIATE_GQL}.filter.do"
-    )
+    span = next(span for span in spans if span.name == "db.weaviate.gql.filter.do")
     assert span.attributes.get(f"{SpanAttributes.VECTOR_DB_VENDOR}") == "weaviate"
     assert span.attributes.get(f"{SpanAttributes.VECTOR_DB_OPERATION}") == "do"
 
@@ -334,7 +332,7 @@ def test_weaviate_query_raw(client, exporter):
     query_raw(client)
 
     spans = exporter.get_finished_spans()
-    span = next(span for span in spans if span.name == f"{WEAVIATE_GQL}.query.raw")
+    span = next(span for span in spans if span.name == "db.weaviate.gql.query.raw")
     assert span.attributes.get(f"{SpanAttributes.VECTOR_DB_VENDOR}") == "weaviate"
     assert span.attributes.get(f"{SpanAttributes.VECTOR_DB_OPERATION}") == "raw"
     traced_raw_query = span.attributes.get("db.weaviate.query.raw.gql_query")
