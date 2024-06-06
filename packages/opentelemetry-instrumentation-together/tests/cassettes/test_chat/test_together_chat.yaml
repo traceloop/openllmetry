@@ -28,17 +28,17 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAAAzyQwWobQRAFf6XzLkpg1tFGkVeei4kPAR9CIARyMMaMZlveiWenl+leWULo34MI
-        9u1Rp6p3QurhsdnsvtzEVejidrkK66/N91/f4CDbvxwNHnEIdhVlnDJbkgKHWDkY9/Bt13bX7XXb
-        rR1G6TnDY0xqNeSQPv9Ih8tqNofurrkvanWO1uyXVy0cpirjZPAPjw5xkBRZ4R9O2KWSdHiqHFQK
-        PFgUDlmepypbhS9zzg6p9HyAXzqMrBqeGf6EKpnhEVSTWih2MZViXC4V9Gc4Ui9lYfTKxHuuNHCo
-        pBwrm1IwCvRz4vKbM49s9UhRyp7LpfmW7jiGWZmSLZRCIT40Oh1pyiHyB/p4v8iZdJBXGo/KeUcy
-        2yecz48O85ve/+InkxcuCt9uLnpvr77j1drBxEJ+J+vV+fwPAAD//wMAVI3UiqsBAAA=
+        H4sIAAAAAAAAAzyQwWobQRAFf6XzLkpg1tFGViTNJcSHgA8hEAI5GGPGsy3v2LPTy3SvLCH072EJ
+        9u1Rp6p3Rurgsd3ud/svmzbE691ueR2bH7+/w0EenzkaPGIf7CrKMGa2JAUOsXIw7uDbTbv5ulu1
+        y7XDIB1neAxJrYYc0uef6TivZnvc3DS3Ra1O0ZrD8qqFw1hlGA3+7t4h9pIiK/zdGftUkvYPlYNK
+        gQeLwiHL01jlUeHLlLNDKh0f4ZcOA6uGJ4Y/o0pmeATVpBaKzaZSjMtcQX/7E3VSFkavTHzgSj2H
+        SsqxsikFo0C/Ri5/OPPAVk8UpRy4zM3f6IZjmJQp2UIpFOJjo+OJxhwif6CPt4ucSXt5peGknPck
+        k33C5XLvML3p/S9+MHnhovDtdtZ7e/Udr9YOJhbyO1mvLpd/AAAA//8DAEfgCwmrAQAA
     headers:
       CF-Cache-Status:
       - DYNAMIC
       CF-RAY:
-      - 88f29c3a7cb03a54-FRA
+      - 88f9f271ac49904c-FRA
       Connection:
       - keep-alive
       Content-Encoding:
@@ -46,7 +46,7 @@ interactions:
       Content-Type:
       - application/json; charset=utf-8
       Date:
-      - Wed, 05 Jun 2024 19:36:15 GMT
+      - Thu, 06 Jun 2024 16:58:25 GMT
       Server:
       - cloudflare
       Strict-Transport-Security:
@@ -58,27 +58,27 @@ interactions:
       alt-svc:
       - h3=":443"; ma=86400
       etag:
-      - W/"kqu4ogly8ubv"
+      - W/"aj0bafkvagbv"
       vary:
       - Accept-Encoding
       x-api-call-end:
-      - '2024-06-05T19:36:15.111Z'
+      - '2024-06-06T16:58:25.666Z'
       x-api-call-start:
-      - '2024-06-05T19:36:13.810Z'
+      - '2024-06-06T16:58:25.033Z'
       x-api-received:
-      - '2024-06-05T19:36:13.805Z'
+      - '2024-06-06T16:58:25.008Z'
       x-compute-characters:
       - '53'
       x-compute-time:
-      - '983'
+      - '389'
       x-hostname:
-      - mistralai-mixtral-8x7b-instruct-v0-1-6c8b95dd9b-q54qc
+      - mistralai-mixtral-8x7b-instruct-v0-1-776c5b5559-jxc8k
       x-inference-time:
-      - '969'
+      - '389'
       x-inference-version:
       - v2
       x-queue-time:
-      - '14'
+      - '0'
       x-ratelimit-limit:
       - '200'
       x-ratelimit-remaining:
@@ -86,9 +86,9 @@ interactions:
       x-ratelimit-reset:
       - '2'
       x-time-per-token:
-      - '27'
+      - '11'
       x-total-time:
-      - '983'
+      - '389'
       x-validation-time:
       - '0'
     status:

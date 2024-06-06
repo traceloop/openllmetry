@@ -27,28 +27,28 @@ interactions:
   response:
     body:
       string: !!binary |
-        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
+        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
+        Nz2IBBNL/Sw6OHh6+h8RAw0VWgcAAA==
     headers:
       CF-Cache-Status:
       - DYNAMIC
       CF-RAY:
-      - 88f29c482dc82ba8-FRA
+      - 88f9f2776ad6a5f4-FRA
       Connection:
       - keep-alive
       Content-Encoding:
@@ -56,7 +56,7 @@ interactions:
       Content-Type:
       - application/json; charset=utf-8
       Date:
-      - Wed, 05 Jun 2024 19:36:20 GMT
+      - Thu, 06 Jun 2024 16:58:30 GMT
       Server:
       - cloudflare
       Strict-Transport-Security:
@@ -68,37 +68,37 @@ interactions:
       alt-svc:
       - h3=":443"; ma=86400
       etag:
-      - '"mu7a739nn41hc"'
+      - '"dtfs61j3fa1ga"'
       vary:
       - Accept-Encoding
       x-api-call-end:
-      - '2024-06-05T19:36:20.649Z'
+      - '2024-06-06T16:58:30.579Z'
       x-api-call-start:
-      - '2024-06-05T19:36:15.505Z'
+      - '2024-06-06T16:58:26.435Z'
       x-api-received:
-      - '2024-06-05T19:36:15.500Z'
+      - '2024-06-06T16:58:26.429Z'
       x-compute-characters:
       - '35'
       x-compute-time:
-      - '5018'
+      - '3833'
       x-hostname:
-      - mistralai-mixtral-8x7b-instruct-v0-1-5649f775ff-swrnq
+      - mistralai-mixtral-8x7b-instruct-v0-1-776c5b5559-6jk7z
       x-inference-time:
-      - '5007'
+      - '3833'
       x-inference-version:
       - v2
       x-queue-time:
-      - '10'
+      - '0'
       x-ratelimit-limit:
       - '200'
       x-ratelimit-remaining:
       - '198'
       x-ratelimit-reset:
-      - '0'
+      - '1'
       x-time-per-token:
-      - '9'
+      - '7'
       x-total-time:
-      - '5018'
+      - '3833'
       x-validation-time:
       - '0'
     status:
