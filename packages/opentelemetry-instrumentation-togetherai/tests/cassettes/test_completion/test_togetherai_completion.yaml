@@ -1,0 +1,107 @@
+interactions:
+- request:
+    body: '{"prompt": "Tell me a joke about OpenTelemetry.", "model": "mistralai/Mixtral-8x7B-Instruct-v0.1",
+      "max_tokens": 512, "stop": null, "temperature": null, "top_p": null, "top_k":
+      null, "repetition_penalty": null, "presence_penalty": null, "frequency_penalty":
+      null, "min_p": null, "logit_bias": null, "stream": false, "logprobs": null,
+      "echo": null, "n": null, "safety_model": null}'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '380'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - Together/v1 PythonBindings/1.2.0
+      X-Together-Client-User-Agent:
+      - '{"bindings_version": "1.2.0", "httplib": "requests", "lang": "python", "lang_version":
+        "3.9.5", "platform": "Windows-10-10.0.22631-SP0", "publisher": "together",
+        "uname": "Windows 10 10.0.22631 AMD64"}'
+    method: POST
+    uri: https://api.together.xyz/v1/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA41V+2/bNhD+V64shsiALNle1rgCiiEJ0K3omhVJgwCrioamzhJnikeQlB8z/L8P
+        1CNxizaIfzLvvnt899KeyYJlbD5fzl6L0/msEPPZgs/Hb6/PWcxo8S8KzzLmcesTQbVR6CVpFjNh
+        kXssWDY9m569mr6azicxq6lAxTJWS+ctV1ymH+Q2/BvPt2cX43faedsIP15PkimLmbFUG8+yz19i
+        JiqSAh3LPu/baCxjcOvQZnBX7aCQBfgK4W+D+hMqrNHbHRS4RkUGLZQEC0sr/L23uUDBG4dQITQO
+        C2gMcKWgkg4+WS5wzBdSSb97ketcv3wJ59pt0EI0GQXBu5MaNHlwjUWQS/DBTjrYVNzDjpoTi6CI
+        VlKXsCQbw6Jp5SC4DvHaVO/Jo0pwa8h6tIkPYZP/pFlJfQ+DGDyBQ12AM1y78PqnRSQhjT/R4okD
+        rgG3PJQeaAkVbQIsRJEepIY/KAvg+/v7XBsuVrxEqLnUQSjrEAaiXAMA5EyQDrXN2SBQVIbH8Cwp
+        IYPaDxVOJKWBxqPBzxDpwMilLdO0Y/oMQ2PJ8JKHsXoG2hWr1KKjxgp8JrzNZ8A6rAXp9ZM2HSRd
+        T5PTZBIM26FYNlq0hY1GsO+cpSlctmvQNrzr3ENrO8jwigGthewNdHVJrnAT5azy3mRpqkhwVZHz
+        2evT6TTlRqbrWdqORM5GnSO5bD28eANaqiGB8FNUJm+552oZ5WzJpcIiDEi3n324hzQy+GWdszaZ
+        3u9h6P63ZL5dtLaEFoyltSwGat4EPt1cX+Gm3Sv7sYdEjwmmKZyrDd85WGC3Up5gwb2owvgaS0Uj
+        QveTR5PO6Z301UXAoY0GAqN4yLd3fY2CbAFSL8nW7RQBX1Dju6XlxigpOrHUYZWu++H5YbRBGQ0j
+        FogFxbn3Vi4aj+6I2NE8JTeiwprfXv8V/0SPdi0FXvEa3+MuufFW6jLKWb0bu06Vs9GR7Wh4jI76
+        c4O+bU6paMHVj7vSXp0b9N+1w5snHA0rSO09WmDnuT8WEAXk3a+X4DzXBbfF6LtIuPUfuPn44CQ6
+        WulQwEuqDTnp8Wlkm/FlF3R/iOFYd8HLkpe4P4yOadz2p7YvhNThCNvjpvddFn4bZrVnlFxwsSot
+        NbqIRixmS6mlq75a5I40y5hCXfqKxeE6GksLxzLdKBUzqQvcsmxy+BKzxvESWbbvP2JfPa1QO5ZN
+        JzF7/FA+iH+bzmLmyXP1KJrNDof/AYbtuRuABwAA
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 88f29c482dc82ba8-FRA
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json; charset=utf-8
+      Date:
+      - Wed, 05 Jun 2024 19:36:20 GMT
+      Server:
+      - cloudflare
+      Strict-Transport-Security:
+      - max-age=2592000; includeSubDomains
+      Transfer-Encoding:
+      - chunked
+      access-control-allow-origin:
+      - '*'
+      alt-svc:
+      - h3=":443"; ma=86400
+      etag:
+      - '"mu7a739nn41hc"'
+      vary:
+      - Accept-Encoding
+      x-api-call-end:
+      - '2024-06-05T19:36:20.649Z'
+      x-api-call-start:
+      - '2024-06-05T19:36:15.505Z'
+      x-api-received:
+      - '2024-06-05T19:36:15.500Z'
+      x-compute-characters:
+      - '35'
+      x-compute-time:
+      - '5018'
+      x-hostname:
+      - mistralai-mixtral-8x7b-instruct-v0-1-5649f775ff-swrnq
+      x-inference-time:
+      - '5007'
+      x-inference-version:
+      - v2
+      x-queue-time:
+      - '10'
+      x-ratelimit-limit:
+      - '200'
+      x-ratelimit-remaining:
+      - '198'
+      x-ratelimit-reset:
+      - '0'
+      x-time-per-token:
+      - '9'
+      x-total-time:
+      - '5018'
+      x-validation-time:
+      - '0'
+    status:
+      code: 200
+      message: OK
+version: 1
