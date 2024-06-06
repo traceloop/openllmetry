@@ -25,7 +25,7 @@ def test_embeddings(exporter, openai_client):
     )
     assert open_ai_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 8
     assert (
-        open_ai_span.attributes[SpanAttributes.LLM_SpanAttributes.LLM_OPENAI_API_BASE]
+        open_ai_span.attributes[SpanAttributes.LLM_OPENAI_API_BASE]
         == "https://api.openai.com/v1/"
     )
 
@@ -52,7 +52,7 @@ def test_embeddings_with_raw_response(exporter, openai_client):
     )
     assert open_ai_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 8
     assert (
-        open_ai_span.attributes[SpanAttributes.LLM_SpanAttributes.LLM_OPENAI_API_BASE]
+        open_ai_span.attributes[SpanAttributes.LLM_OPENAI_API_BASE]
         == "https://api.openai.com/v1/"
     )
 

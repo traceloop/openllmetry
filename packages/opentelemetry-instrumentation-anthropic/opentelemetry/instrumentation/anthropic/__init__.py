@@ -38,8 +38,8 @@ WRAPPED_METHODS = [
         "package": "anthropic.resources.completions",
         "object": "Completions",
         "method": "create",
-        "span_name": "anthropic.chat",
-        "metric_name": "anthropic.chat",
+        "span_name": "anthropic.completion",
+        "metric_name": "anthropic.completion",
     },
     {
         "package": "anthropic.resources.messages",
@@ -61,8 +61,8 @@ WRAPPED_AMETHODS = [
         "package": "anthropic.resources.completions",
         "object": "AsyncCompletions",
         "method": "create",
-        "span_name": "anthropic.chat",
-        "metric_name": "anthropic.chat",
+        "span_name": "anthropic.completion",
+        "metric_name": "anthropic.completion",
     },
     {
         "package": "anthropic.resources.messages",
@@ -392,7 +392,7 @@ def _create_metrics(meter: Meter, name: str):
     )
 
     exception_counter = meter.create_counter(
-        name=f"llm.{name}.exceptions",
+        name=Meters.LLM_ANTHROPIC_COMPLETION_EXCEPTIONS,
         unit="time",
         description="Number of exceptions occurred during chat completions",
     )

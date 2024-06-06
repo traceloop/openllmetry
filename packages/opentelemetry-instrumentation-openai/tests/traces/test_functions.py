@@ -1,5 +1,4 @@
 import pytest
-from opentelemetry.instrumentation.openai.shared import OPENAI_API_BASE
 from opentelemetry.semconv.ai import SpanAttributes
 
 
@@ -38,17 +37,23 @@ def test_open_ai_function_calls(exporter, openai_client):
         == "What's the weather like in Boston?"
     )
     assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.0.name"] == "get_current_weather"
+        open_ai_span.attributes[f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.0.name"]
+        == "get_current_weather"
     )
     assert (
         open_ai_span.attributes[f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.0.description"]
         == "Get the current weather in a given location"
     )
     assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.function_call.name"]
+        open_ai_span.attributes[
+            f"{SpanAttributes.LLM_COMPLETIONS}.0.function_call.name"
+        ]
         == "get_current_weather"
     )
-    assert open_ai_span.attributes[OPENAI_API_BASE] == "https://api.openai.com/v1/"
+    assert (
+        open_ai_span.attributes[SpanAttributes.LLM_OPENAI_API_BASE]
+        == "https://api.openai.com/v1/"
+    )
 
 
 @pytest.mark.vcr
@@ -89,14 +94,20 @@ def test_open_ai_function_calls_tools(exporter, openai_client):
         == "What's the weather like in Boston?"
     )
     assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.0.name"] == "get_current_weather"
+        open_ai_span.attributes[f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.0.name"]
+        == "get_current_weather"
     )
     assert (
         open_ai_span.attributes[f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.0.description"]
         == "Get the current weather in a given location"
     )
     assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.function_call.name"]
+        open_ai_span.attributes[
+            f"{SpanAttributes.LLM_COMPLETIONS}.0.function_call.name"
+        ]
         == "get_current_weather"
     )
-    assert open_ai_span.attributes[OPENAI_API_BASE] == "https://api.openai.com/v1/"
+    assert (
+        open_ai_span.attributes[SpanAttributes.LLM_OPENAI_API_BASE]
+        == "https://api.openai.com/v1/"
+    )

@@ -119,7 +119,7 @@ def test_anthropic_message_create(exporter, reader):
         pass
 
     spans = exporter.get_finished_spans()
-    assert all(span.name == "anthropic.completion" for span in spans)
+    assert all(span.name == "anthropic.chat" for span in spans)
 
     anthropic_span = spans[0]
     assert (
@@ -233,7 +233,7 @@ def test_anthropic_multi_modal(exporter):
 
     spans = exporter.get_finished_spans()
     assert [span.name for span in spans] == [
-        "anthropic.completion",
+        "anthropic.chat",
     ]
     anthropic_span = spans[0]
     assert anthropic_span.attributes[
@@ -286,7 +286,7 @@ def test_anthropic_message_streaming(exporter, reader):
 
     spans = exporter.get_finished_spans()
     assert [span.name for span in spans] == [
-        "anthropic.completion",
+        "anthropic.chat",
     ]
     anthropic_span = spans[0]
     assert (
@@ -387,7 +387,7 @@ async def test_async_anthropic_message_create(exporter, reader):
 
     spans = exporter.get_finished_spans()
     assert [span.name for span in spans] == [
-        "anthropic.completion",
+        "anthropic.chat",
     ]
     anthropic_span = spans[0]
     assert (
@@ -494,7 +494,7 @@ async def test_async_anthropic_message_streaming(exporter, reader):
 
     spans = exporter.get_finished_spans()
     assert [span.name for span in spans] == [
-        "anthropic.completion",
+        "anthropic.chat",
     ]
     anthropic_span = spans[0]
     assert (

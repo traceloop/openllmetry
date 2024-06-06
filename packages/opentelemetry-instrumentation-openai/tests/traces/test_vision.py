@@ -1,7 +1,6 @@
 import json
 
 import pytest
-from opentelemetry.instrumentation.openai.shared import OPENAI_API_BASE
 from opentelemetry.semconv.ai import SpanAttributes
 
 
@@ -33,7 +32,9 @@ def test_vision(exporter, openai_client):
         "openai.chat",
     ]
     open_ai_span = spans[0]
-    assert json.loads(open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]) == [
+    assert json.loads(
+        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
+    ) == [
         {"type": "text", "text": "What is in this image?"},
         {
             "type": "image_url",
@@ -42,4 +43,7 @@ def test_vision(exporter, openai_client):
     ]
 
     assert open_ai_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
-    assert open_ai_span.attributes[OPENAI_API_BASE] == "https://api.openai.com/v1/"
+    assert (
+        open_ai_span.attributes[SpanAttributes.LLM_OPENAI_API_BASE]
+        == "https://api.openai.com/v1/"
+    )

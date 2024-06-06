@@ -1,5 +1,4 @@
 import pytest
-from opentelemetry.instrumentation.openai.shared import OPENAI_API_BASE
 from opentelemetry.semconv.ai import SpanAttributes
 
 
@@ -22,10 +21,13 @@ def test_chat(exporter, openai_client):
     )
     assert open_ai_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
     assert (
-        open_ai_span.attributes.get(OPENAI_API_BASE) == "https://api.openai.com/v1/"
+        open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)
+        == "https://api.openai.com/v1/"
     )
     assert (
-        open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_RESPONSE_SYSTEM_FINGERPRINT)
+        open_ai_span.attributes.get(
+            SpanAttributes.LLM_OPENAI_RESPONSE_SYSTEM_FINGERPRINT
+        )
         == "fp_2b778c6b35"
     )
     assert open_ai_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is False
@@ -55,7 +57,8 @@ def test_chat_streaming(exporter, openai_client):
     )
     assert open_ai_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
     assert (
-        open_ai_span.attributes.get(OPENAI_API_BASE) == "https://api.openai.com/v1/"
+        open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)
+        == "https://api.openai.com/v1/"
     )
     assert open_ai_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is True
 
@@ -63,7 +66,9 @@ def test_chat_streaming(exporter, openai_client):
     assert len(events) == chunk_count
 
     # check token usage attributes for stream
-    completion_tokens = open_ai_span.attributes.get(SpanAttributes.LLM_USAGE_COMPLETION_TOKENS)
+    completion_tokens = open_ai_span.attributes.get(
+        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
+    )
     prompt_tokens = open_ai_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS)
     total_tokens = open_ai_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS)
     assert completion_tokens and prompt_tokens and total_tokens
@@ -95,7 +100,8 @@ async def test_chat_async_streaming(exporter, async_openai_client):
     )
     assert open_ai_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
     assert (
-        open_ai_span.attributes.get(OPENAI_API_BASE) == "https://api.openai.com/v1/"
+        open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)
+        == "https://api.openai.com/v1/"
     )
     assert open_ai_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is True
 
@@ -103,7 +109,9 @@ async def test_chat_async_streaming(exporter, async_openai_client):
     assert len(events) == chunk_count
 
     # check token usage attributes for stream
-    completion_tokens = open_ai_span.attributes.get(SpanAttributes.LLM_USAGE_COMPLETION_TOKENS)
+    completion_tokens = open_ai_span.attributes.get(
+        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
+    )
     prompt_tokens = open_ai_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS)
     total_tokens = open_ai_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS)
     assert completion_tokens and prompt_tokens and total_tokens

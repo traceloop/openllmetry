@@ -112,7 +112,10 @@ def test_chroma_query_with_metadata(exporter, collection):
     assert span.attributes.get(SpanAttributes.VECTOR_DB_OPERATION) == "query"
     assert span.attributes.get(SpanAttributes.CHROMADB_QUERY_TEXTS_COUNT) == 1
     assert span.attributes.get(SpanAttributes.CHROMADB_QUERY_N_RESULTS) == 2
-    assert span.attributes.get(SpanAttributes.CHROMADB_QUERY_WHERE) == "{'source': 'student info'}"
+    assert (
+        span.attributes.get(SpanAttributes.CHROMADB_QUERY_WHERE)
+        == "{'source': 'student info'}"
+    )
 
     events = span.events
     assert len(events) == 1
@@ -140,7 +143,14 @@ def test_chroma_query_segment_query(exporter, collection):
 
     spans = exporter.get_finished_spans()
     span = next(span for span in spans if span.name == "chroma.query.segment._query")
-    assert len(span.attributes.get(SpanAttributes.CHROMADB_QUERY_SEGMENT_QUERY_COLLECTION_ID)) > 0
+    assert (
+        len(
+            span.attributes.get(
+                SpanAttributes.CHROMADB_QUERY_SEGMENT_QUERY_COLLECTION_ID
+            )
+        )
+        > 0
+    )
     events = span.events
     assert len(events) > 0
     for event in events:

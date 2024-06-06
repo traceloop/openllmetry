@@ -126,8 +126,8 @@ class SpanAttributes:
     CHROMADB_GET_WHERE_DOCUMENT = "db.chroma.get.where_document"
     CHROMADB_MODIFY_NAME = "db.chroma.modify.name"
     CHROMADB_PEEK_LIMIT = "db.chroma.peek.limit"
-    CHROMADB_QUERY_QUERY_EMBEDDINGS_COUNT = "db.chroma.query.query_embeddings_count"
-    CHROMADB_QUERY_QUERY_TEXTS_COUNT = "db.chroma.query.query_texts_count"
+    CHROMADB_QUERY_EMBEDDINGS_COUNT = "db.chroma.query.embeddings_count"
+    CHROMADB_QUERY_TEXTS_COUNT = "db.chroma.query.texts_count"
     CHROMADB_QUERY_N_RESULTS = "db.chroma.query.n_results"
     CHROMADB_QUERY_INCLUDE = "db.chroma.query.include"
     CHROMADB_QUERY_SEGMENT_QUERY_COLLECTION_ID = (
