@@ -21,32 +21,27 @@ interactions:
       - Together/v1 PythonBindings/1.2.0
       X-Together-Client-User-Agent:
       - '{"bindings_version": "1.2.0", "httplib": "requests", "lang": "python", "lang_version":
-        "3.9.5", "platform": "Windows-10-10.0.22631-SP0", "publisher": "together",
-        "uname": "Windows 10 10.0.22631 AMD64"}'
+        "3.9.5", "platform": "macOS-14.4.1-arm64-arm-64bit", "publisher": "together",
+        "uname": "Darwin 23.4.0 Darwin Kernel Version 23.4.0: Fri Mar 15 00:10:42
+        PDT 2024; root:xnu-10063.101.17~1/RELEASE_ARM64_T6000 arm64"}'
     method: POST
     uri: https://api.together.xyz/v1/chat/completions
   response:
     body:
-      string: !!binary |
-        H4sIAAAAAAAAAzyQwWobQRAFf6XzLkpg1tFGViTNJcSHgA8hEAI5GGPGsy3v2LPTy3SvLCH072EJ
-        9u1Rp6p3Rurgsd3ud/svmzbE691ueR2bH7+/w0EenzkaPGIf7CrKMGa2JAUOsXIw7uDbTbv5ulu1
-        y7XDIB1neAxJrYYc0uef6TivZnvc3DS3Ra1O0ZrD8qqFw1hlGA3+7t4h9pIiK/zdGftUkvYPlYNK
-        gQeLwiHL01jlUeHLlLNDKh0f4ZcOA6uGJ4Y/o0pmeATVpBaKzaZSjMtcQX/7E3VSFkavTHzgSj2H
-        SsqxsikFo0C/Ri5/OPPAVk8UpRy4zM3f6IZjmJQp2UIpFOJjo+OJxhwif6CPt4ucSXt5peGknPck
-        k33C5XLvML3p/S9+MHnhovDtdtZ7e/Udr9YOJhbyO1mvLpd/AAAA//8DAEfgCwmrAQAA
+      string: '{"id":"88fa668fac30bb19-MXP","object":"chat.completion","created":1717697862,"model":"mistralai/Mixtral-8x7B-Instruct-v0.1","prompt":[],"choices":[{"finish_reason":"eos","logprobs":null,"index":0,"message":{"role":"assistant","content":"
+        Why don''t we ever hear secrets at a OpenTelemetry convention? Because it''s
+        an ex-spy place! (I''ll show myself out)"}}],"usage":{"prompt_tokens":18,"completion_tokens":35,"total_tokens":53}}'
     headers:
       CF-Cache-Status:
       - DYNAMIC
       CF-RAY:
-      - 88f9f271ac49904c-FRA
+      - 88fa668fac30bb19-MXP
       Connection:
       - keep-alive
-      Content-Encoding:
-      - gzip
       Content-Type:
       - application/json; charset=utf-8
       Date:
-      - Thu, 06 Jun 2024 16:58:25 GMT
+      - Thu, 06 Jun 2024 18:17:42 GMT
       Server:
       - cloudflare
       Strict-Transport-Security:
@@ -57,38 +52,40 @@ interactions:
       - '*'
       alt-svc:
       - h3=":443"; ma=86400
+      content-length:
+      - '427'
       etag:
-      - W/"aj0bafkvagbv"
+      - W/"gjpltr7c8obv"
       vary:
       - Accept-Encoding
       x-api-call-end:
-      - '2024-06-06T16:58:25.666Z'
+      - '2024-06-06T18:17:42.258Z'
       x-api-call-start:
-      - '2024-06-06T16:58:25.033Z'
+      - '2024-06-06T18:17:41.736Z'
       x-api-received:
-      - '2024-06-06T16:58:25.008Z'
+      - '2024-06-06T18:17:41.732Z'
       x-compute-characters:
       - '53'
       x-compute-time:
-      - '389'
+      - '384'
       x-hostname:
-      - mistralai-mixtral-8x7b-instruct-v0-1-776c5b5559-jxc8k
+      - mistralai-mixtral-8x7b-instruct-v0-1-776c5b5559-wrrj9
       x-inference-time:
-      - '389'
+      - '384'
       x-inference-version:
       - v2
       x-queue-time:
       - '0'
       x-ratelimit-limit:
-      - '200'
+      - '2'
       x-ratelimit-remaining:
-      - '199'
+      - '1'
       x-ratelimit-reset:
       - '2'
       x-time-per-token:
-      - '11'
+      - '10'
       x-total-time:
-      - '389'
+      - '384'
       x-validation-time:
       - '0'
     status:

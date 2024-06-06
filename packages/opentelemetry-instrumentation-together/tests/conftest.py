@@ -38,4 +38,4 @@ def environment():
 
 @pytest.fixture(scope="module")
 def vcr_config():
-    return {"filter_headers": ["authorization"]}
+    return {"filter_headers": ["authorization"], "decode_compressed_response": True}

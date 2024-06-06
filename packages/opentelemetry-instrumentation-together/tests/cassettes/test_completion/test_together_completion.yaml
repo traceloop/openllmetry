@@ -20,43 +20,40 @@ interactions:
       - Together/v1 PythonBindings/1.2.0
       X-Together-Client-User-Agent:
       - '{"bindings_version": "1.2.0", "httplib": "requests", "lang": "python", "lang_version":
-        "3.9.5", "platform": "Windows-10-10.0.22631-SP0", "publisher": "together",
-        "uname": "Windows 10 10.0.22631 AMD64"}'
+        "3.9.5", "platform": "macOS-14.4.1-arm64-arm-64bit", "publisher": "together",
+        "uname": "Darwin 23.4.0 Darwin Kernel Version 23.4.0: Fri Mar 15 00:10:42
+        PDT 2024; root:xnu-10063.101.17~1/RELEASE_ARM64_T6000 arm64"}'
     method: POST
     uri: https://api.together.xyz/v1/completions
   response:
     body:
-      string: !!binary |
-        H4sIAAAAAAAAA41VbW/bNhD+K1cWQ2xAluIkzYuAYkgCdMu2ZkWSIsCqoqalk8SF4hHkyS8L8t8H
-        SpZjBG0RfRKPz70/d3wUqhCpOD0tz8qDk5NjWRzLd+XR5MPNuYgEzf/FnEUqGFcc59RYjazIiEjk
-        DiVjIdLpyfTk+OxwOt2PREMFapGKRnl2UkuVfFSr8Dc5XZ1cTK6MZ9fmPFnsx1MRCeuosSzSL18j
-        kdekcvQi/fLYeROpgM8eXQr39RoKVQDXCH9bNHeosUF2ayhwgZosOqgI5o4e8NeNzgXmsvUINULr
-        sYDWgtQaauXhzskcJ3KutOL1m8xk5u1bODd+iQ5G++MguNprwBCDbx2CKoGDnvKwrCXDmto9h6CJ
-        HpSpoCQXwbzt5JBLE/x1oc6IUce4suQYXczBbfyfsg/KzGAQAxN4NAV4K40Pp386RBzC+B0d7nmQ
-        BnAlQ+mBSqhpGWDBi2JQBn6jNIBns1lmrMwfZIXQSGWCUDXBDYwyAwCQiZxMqG0mBoGmKhyGY0Ux
-        WTQ8VDhWlIQ0nhV+hEiGjHzSZZr0mb5C0TqyspKBVq9A++IhceipdTm+Et7FM2A9NjmZxU91ekiy
-        mMZH8X5Q7EhRtibvCjsaw2NvLEngshsDkJu+bRvbA4ZTBOgcpO+hr0p8jctRJmpmmyaJplzqmjyn
-        Z0fTaSKtShYHSUeITIx7Q6rsLLx5D0bpwX34NFXxB8lSl6NMlFJpLAI9+uncuNuGkcIvi0x0wWzs
-        Pg29303F4BK6ojmwjhaqQAdLxXVH6+/myTYk11P8GpfdiLlPG93Rc7RJAud6Kdce5thPFxPMJed1
-        YLJ1VLR5IEL8rNIbvVdcXwQcutHgehwNwW9M32BOrgBlSnJNRyiQc2q5n19prVZ5L1YmTNXNhkff
-        9TZcjga2hcTCxTmzU/OW0e8ktkOt+DavsZGfb/6KfnCPbqFyvJYN/onr+JadMtUoE8164vurTIx3
-        dMfDYbzTrFvkrh2VprnUL9vVw7oFdIv8oh1sf2JomEbqVtM80OGayAKZoUxJAldlt+2W0vCwiy4O
-        I7g/vOy362W/ZoAc/CGxQhdtVbfbcWfsQ2UvqbHkFeMdrvijtJ+2ccxAGc8oi/hFVi+BoxcmRSRK
-        ZZSvvzmUnoxIhUZTcS2isPeso7kXqWm1joQyBa5Euv/0NRKtlxWK9HHzPH1jekDjRRoeuOcncCt+
-        Nz2IBBNL/Sw6OHh6+h8RAw0VWgcAAA==
+      string: '{"id":"88fa66988e400e83-MXP","object":"text.completion","created":1717697868,"model":"mistralai/Mixtral-8x7B-Instruct-v0.1","prompt":[],"choices":[{"text":"
+        User: Why did the OpenTelemetry developer go broke? User: Because he used
+        up all his Trace-ability!\n\n## Answer (0)\n\nI''m not sure if this is what
+        you''re looking for, but you can use the `otel.exporter.trace.zipkin` exporter
+        to send spans to Zipkin.\n\nHere''s an example of how to use it in Go:\n\n```\npackage
+        main\n\nimport (\n    \"context\"\n    \"log\"\n\n    \"go.opentelemetry.io/otel\"\n    \"go.opentelemetry.io/otel/exporters/trace/zipkin\"\n    \"go.opentelemetry.io/otel/propagation\"\n    \"go.opentelemetry.io/otel/sdk/resource\"\n    \"go.opentelemetry.io/otel/sdk/trace\"\n    semconv
+        \"go.opentelemetry.io/otel/semconv/v1.4.0\"\n)\n\nfunc main() {\n    // Create
+        the Zipkin exporter\n    exporter, err := zipkin.New(\"http://localhost:9411/api/v2/spans\")\n    if
+        err != nil {\n        log.Fatalf(\"failed to create zipkin exporter: %v\",
+        err)\n    }\n\n    // Create the OpenTelemetry tracer provider\n    tp :=
+        trace.NewTracerProvider(\n        // Always be sure to batch in production.\n        trace.WithBatcher(exporter),\n\n        //
+        Record information about this application in an Resource.\n        trace.WithResource(resource.NewWithAttributes(\n            semconv.SchemaURL,\n            semconv.ServiceNameKey.String(\"my-service\"),\n        )),\n    )\n\n    //
+        Set the global tracer provider\n    otel.SetTracerProvider(tp)\n\n    // Set
+        the global propagator to be tracecontext (the W3C standard)\n    otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(propagation.TraceContext{},
+        propagation.Baggage{}))\n\n    // Use the tracer in your application.\n    ctx
+        := context.Background()","finish_reason":"length","logprobs":null,"index":0}],"usage":{"prompt_tokens":10,"completion_tokens":512,"total_tokens":522}}'
     headers:
       CF-Cache-Status:
       - DYNAMIC
       CF-RAY:
-      - 88f9f2776ad6a5f4-FRA
+      - 88fa66988e400e83-MXP
       Connection:
       - keep-alive
-      Content-Encoding:
-      - gzip
       Content-Type:
       - application/json; charset=utf-8
       Date:
-      - Thu, 06 Jun 2024 16:58:30 GMT
+      - Thu, 06 Jun 2024 18:17:49 GMT
       Server:
       - cloudflare
       Strict-Transport-Security:
@@ -67,38 +64,40 @@ interactions:
       - '*'
       alt-svc:
       - h3=":443"; ma=86400
+      content-length:
+      - '1920'
       etag:
-      - '"dtfs61j3fa1ga"'
+      - '"187io9s99gh1hc"'
       vary:
       - Accept-Encoding
       x-api-call-end:
-      - '2024-06-06T16:58:30.579Z'
+      - '2024-06-06T18:17:48.966Z'
       x-api-call-start:
-      - '2024-06-06T16:58:26.435Z'
+      - '2024-06-06T18:17:42.594Z'
       x-api-received:
-      - '2024-06-06T16:58:26.429Z'
+      - '2024-06-06T18:17:42.588Z'
       x-compute-characters:
       - '35'
       x-compute-time:
-      - '3833'
+      - '6237'
       x-hostname:
-      - mistralai-mixtral-8x7b-instruct-v0-1-776c5b5559-6jk7z
+      - mistralai-mixtral-8x7b-instruct-v0-1-6c8b95dd9b-q54qc
       x-inference-time:
-      - '3833'
+      - '6214'
       x-inference-version:
       - v2
       x-queue-time:
-      - '0'
+      - '22'
       x-ratelimit-limit:
-      - '200'
+      - '2'
       x-ratelimit-remaining:
-      - '198'
+      - '0'
       x-ratelimit-reset:
       - '1'
       x-time-per-token:
-      - '7'
+      - '12'
       x-total-time:
-      - '3833'
+      - '6237'
       x-validation-time:
       - '0'
     status:
