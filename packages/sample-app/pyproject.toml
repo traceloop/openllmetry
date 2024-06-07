@@ -77,9 +77,9 @@ path = "../traceloop-sdk"
 develop = true
 
 [tool.poetry.group.dev.dependencies]
-autopep8 = "2.0.4"
+autopep8 = "2.2.0"
 flake8 = "7.0.0"
-pytest = "8.0.2"
+pytest = "8.2.2"
 pytest-sugar = "1.0.0"
 pytest-cov = "4.1.0"
 pytest-html = "4.1.1"
