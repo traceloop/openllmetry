@@ -28,6 +28,7 @@ def exporter():
 @pytest.fixture(autouse=True)
 def environment():
     os.environ["OPENAI_API_KEY"] = "test_api_key"
+    os.environ["TRACELOOP_TRACE_CONTENT"] = "true"
 
 
 @pytest.fixture(autouse=True)
