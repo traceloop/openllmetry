@@ -26,16 +26,8 @@ def wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
             TraceloopSpanKindValues.WORKFLOW.value,
         )
         span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, name)
-        span.set_attribute(
-            SpanAttributes.TRACELOOP_ENTITY_INPUT,
-            process_request(args, kwargs),
-        )
-
+        process_request(span, args, kwargs)
         response = wrapped(*args, **kwargs)
-
-        span.set_attribute(
-            SpanAttributes.TRACELOOP_ENTITY_OUTPUT,
-            process_response(response),
-        )
+        process_response(span, response)
 
     return response
