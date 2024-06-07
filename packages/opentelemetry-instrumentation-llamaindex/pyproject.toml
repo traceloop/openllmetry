@@ -31,18 +31,18 @@ opentelemetry-semantic-conventions-ai = "0.3.1"
 inflection = "^0.5.1"
 
 [tool.poetry.group.dev.dependencies]
-autopep8 = "2.2.0"
+autopep8 = "^2.2.0"
 flake8 = "7.0.0"
 
 [tool.poetry.group.test.dependencies]
 vcrpy = "^6.0.1"
 pytest-recording = "^0.13.1"
-pytest-asyncio = "0.23.7"
+pytest-asyncio = "^0.23.7"
 chromadb = ">=0.4.22,<0.6.0"
-openai = "=1.12.0"
+openai = "=1.31.1"
 opentelemetry-sdk = "^1.23.0"
-llama-index = "^0.10.10"
-llama-index-postprocessor-cohere-rerank = "^0.1.2"
+llama-index = "^0.10.43"
+llama-index-postprocessor-cohere-rerank = "^0.1.7"
 opentelemetry-instrumentation-openai = {path="../opentelemetry-instrumentation-openai", develop=true}
 opentelemetry-instrumentation-cohere = {path="../opentelemetry-instrumentation-cohere", develop=true}
 opentelemetry-instrumentation-chromadb = {path="../opentelemetry-instrumentation-chromadb", develop=true}

@@ -1282,19 +1282,19 @@ adal = ["adal (>=1.0.2)"]
 
 [[package]]
 name = "llama-index"
-version = "0.10.30"
+version = "0.10.43"
 description = "Interface between LLMs and your data"
 optional = false
 python-versions = "<4.0,>=3.8.1"
 files = [
-    {file = "llama_index-0.10.30-py3-none-any.whl", hash = "sha256:7083014be8f74c6037cc33d629985a7505ee3c89b972503f8dd7d4ac7c45a4f4"},
-    {file = "llama_index-0.10.30.tar.gz", hash = "sha256:58fab1047c75e39803e8c394fab7d5e81ce97f27281bf7cba6bea40a7328562e"},
+    {file = "llama_index-0.10.43-py3-none-any.whl", hash = "sha256:a79041a93570e10b21f370d04895fdc9a62e25159d7f2fc0d34feba927db501c"},
+    {file = "llama_index-0.10.43.tar.gz", hash = "sha256:8f87ef3e7234688bc6e15f952a44d2034af7e8dd4ac71aeb441c25503a4dac7f"},
 ]
 
 [package.dependencies]
 llama-index-agent-openai = ">=0.1.4,<0.3.0"
 llama-index-cli = ">=0.1.2,<0.2.0"
-llama-index-core = ">=0.10.30,<0.11.0"
+llama-index-core = "0.10.43"
 llama-index-embeddings-openai = ">=0.1.5,<0.2.0"
 llama-index-indices-managed-llama-cloud = ">=0.1.2,<0.2.0"
 llama-index-legacy = ">=0.9.48,<0.10.0"
@@ -1338,13 +1338,13 @@ llama-index-llms-openai = ">=0.1.1,<0.2.0"
 
 [[package]]
 name = "llama-index-core"
-version = "0.10.39.post1"
+version = "0.10.43"
 description = "Interface between LLMs and your data"
 optional = false
 python-versions = "<4.0,>=3.8.1"
 files = [
-    {file = "llama_index_core-0.10.39.post1-py3-none-any.whl", hash = "sha256:d6aef2ff952cbd2c04f1a10ab865af8618b489a64bfbda925855881f3bfddbf3"},
-    {file = "llama_index_core-0.10.39.post1.tar.gz", hash = "sha256:abc9d18107d8d2017d6e693bdab8ed8c1a8b8093dc9a0093127f83778ecff10f"},
+    {file = "llama_index_core-0.10.43-py3-none-any.whl", hash = "sha256:355a5f7808dfa09dc27b6bd564926fa697e0279344b829732a9f91b8000157ac"},
+    {file = "llama_index_core-0.10.43.tar.gz", hash = "sha256:c7dce5158e112d3cbc8d331c303e830b2eabcae55c9636e8050dc85320522c1b"},
 ]
 
 [package.dependencies]
@@ -1471,18 +1471,18 @@ llama-index-llms-openai = ">=0.1.1,<0.2.0"
 
 [[package]]
 name = "llama-index-postprocessor-cohere-rerank"
-version = "0.1.6"
+version = "0.1.7"
 description = "llama-index postprocessor cohere rerank integration"
 optional = false
 python-versions = "<4.0,>=3.8.1"
 files = [
-    {file = "llama_index_postprocessor_cohere_rerank-0.1.6-py3-none-any.whl", hash = "sha256:8d1b46df26a80cf1c345d4282ba267bf774d88a57720c6aca6fa19a1a105266a"},
-    {file = "llama_index_postprocessor_cohere_rerank-0.1.6.tar.gz", hash = "sha256:29177efcba238b203b03046f95d927b91c8462f5f227bcbff8f1c73fee5cd6c4"},
+    {file = "llama_index_postprocessor_cohere_rerank-0.1.7-py3-none-any.whl", hash = "sha256:2d332d5127b66e6c0ef4c1f80acabd7961a1bb9ac1824f6d8c3ddcf3b3e3895f"},
+    {file = "llama_index_postprocessor_cohere_rerank-0.1.7.tar.gz", hash = "sha256:f7d39e0754a2dcd67283ac629f183304a7edaf3552114dc44ea823bccc4e59e3"},
 ]
 
 [package.dependencies]
 cohere = ">=5.1.1,<6.0.0"
-llama-index-core = ">=0.10.35,<0.11.0"
+llama-index-core = ">=0.10.41,<0.11.0"
 
 [[package]]
 name = "llama-index-program-openai"
@@ -2013,13 +2013,13 @@ sympy = "*"
 
 [[package]]
 name = "openai"
-version = "1.12.0"
+version = "1.31.1"
 description = "The official Python library for the openai API"
 optional = false
 python-versions = ">=3.7.1"
 files = [
-    {file = "openai-1.12.0-py3-none-any.whl", hash = "sha256:a54002c814e05222e413664f651b5916714e4700d041d5cf5724d3ae1a3e3481"},
-    {file = "openai-1.12.0.tar.gz", hash = "sha256:99c5d257d09ea6533d689d1cc77caa0ac679fa21efef8893d8b0832a86877f1b"},
+    {file = "openai-1.31.1-py3-none-any.whl", hash = "sha256:a746cf070798a4048cfea00b0fc7cb9760ee7ead5a08c48115b914d1afbd1b53"},
+    {file = "openai-1.31.1.tar.gz", hash = "sha256:a15266827de20f407d4bf9837030b168074b5b29acd54f10bb38d5f53e95f083"},
 ]
 
 [package.dependencies]
@@ -4164,4 +4164,4 @@ instruments = []
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<4"
-content-hash = "90172e8def4a4c7999201e67d06a30afc3dc3630f8717c4b406614d0a6477a6c"
+content-hash = "cb3a75f533d280bb131bcb370eef578f706183792881a30803deeda3c06841df"
