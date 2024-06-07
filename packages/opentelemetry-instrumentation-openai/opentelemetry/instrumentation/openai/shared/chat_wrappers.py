@@ -564,14 +564,13 @@ class ChatStream(ObjectProxy):
 
     @dont_throw
     def _close_span(self):
-        if not is_azure_openai(self._instance):
-            _set_streaming_token_metrics(
-                self._request_kwargs,
-                self._complete_response,
-                self._span,
-                self._token_counter,
-                self._shared_attributes(),
-            )
+        _set_streaming_token_metrics(
+            self._request_kwargs,
+            self._complete_response,
+            self._span,
+            self._token_counter,
+            self._shared_attributes(),
+        )
 
         # choice metrics
         if self._choice_counter and self._complete_response.get("choices"):
@@ -646,10 +645,9 @@ def _build_from_streaming_response(
         "stream": True,
     }
 
-    if not is_azure_openai(instance):
-        _set_streaming_token_metrics(
-            request_kwargs, complete_response, span, token_counter, shared_attributes
-        )
+    _set_streaming_token_metrics(
+        request_kwargs, complete_response, span, token_counter, shared_attributes
+    )
 
     # choice metrics
     if choice_counter and complete_response.get("choices"):
