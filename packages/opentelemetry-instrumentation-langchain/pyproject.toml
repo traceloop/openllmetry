@@ -30,9 +30,9 @@ opentelemetry-semantic-conventions = "^0.46b0"
 opentelemetry-semantic-conventions-ai = "0.3.1"
 
 [tool.poetry.group.dev.dependencies]
-autopep8 = "2.1.0"
+autopep8 = "2.2.0"
 flake8 = "7.0.0"
-pytest = "8.1.1"
+pytest = "8.2.2"
 pytest-sugar = "1.0.0"
 
 
@@ -40,11 +40,11 @@ pytest-sugar = "1.0.0"
 langchain = "^0.1.6"
 langchain-community = ">=0.0.19,<0.0.30"
 openai = "^1.26.0"
-pytest = "8.1.1"
+pytest = "8.2.2"
 pytest-sugar = "1.0.0"
 vcrpy = "^6.0.1"
 pytest-recording = "^0.13.1"
-pytest-asyncio = "^0.23.5"
+pytest-asyncio = "0.23.7"
 opentelemetry-sdk = "^1.23.0"
 opentelemetry-instrumentation-openai = {path="../opentelemetry-instrumentation-openai", develop=true}
 opentelemetry-instrumentation-bedrock = {path="../opentelemetry-instrumentation-bedrock", develop=true}
