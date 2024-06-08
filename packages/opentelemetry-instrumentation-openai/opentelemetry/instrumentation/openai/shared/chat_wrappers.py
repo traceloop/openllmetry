@@ -551,6 +551,18 @@ class ChatStream(ObjectProxy):
                 complete_choice["message"]["content"] += delta.get("content")
             if delta and delta.get("role"):
                 complete_choice["message"]["role"] = delta.get("role")
+            if delta and delta.get("tool_calls"):
+                tool_call = delta.get("tool_calls")[0]
+                if "tool_calls" not in complete_choice["message"]:
+                    complete_choice["message"]["tool_calls"] = [
+                        {"function": {"name": "", "arguments": ""}}
+                    ]
+
+                function = complete_choice["message"]["tool_calls"][0]["function"]
+                if tool_call["function"] and tool_call["function"]["name"]:
+                    function["name"] += tool_call["function"]["name"]
+                if tool_call["function"] and tool_call["function"]["arguments"]:
+                    function["arguments"] += tool_call["function"]["arguments"]
 
     def _shared_attributes(self):
         return _metric_shared_attributes(
