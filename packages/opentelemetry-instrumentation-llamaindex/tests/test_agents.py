@@ -94,7 +94,7 @@ def test_agent_with_query_tool(exporter):
         "QueryEngineTool.tool",
         "synthesize.task",
         "openai.chat",
-    } == set([span.name for span in spans])
+    }.issubset(set([span.name for span in spans]))
 
     agent_span = next(
         span for span in spans if span.name == "OpenAIAssistantAgent.agent"

@@ -31,17 +31,17 @@ opentelemetry-semantic-conventions-ai = "0.3.1"
 tiktoken = ">=0.6.0, <1"
 
 [tool.poetry.group.dev.dependencies]
-autopep8 = "2.2.0"
+autopep8 = "^2.2.0"
 flake8 = "7.0.0"
 
 [tool.poetry.group.test.dependencies]
-pytest = "8.2.2"
+pytest = "^8.2.2"
 pytest-sugar = "1.0.0"
 vcrpy = "^6.0.1"
 pytest-recording = "^0.13.1"
-openai = {extras = ["datalib"], version = "^1.14.2"}
+openai = {extras = ["datalib"], version = "^1.31.1"}
 opentelemetry-sdk = "^1.23.0"
-pytest-asyncio = "0.23.7"
+pytest-asyncio = "^0.23.7"
 
 [build-system]
 requires = [ "poetry-core" ]
