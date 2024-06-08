@@ -47,8 +47,8 @@ opentelemetry-instrumentation-openai = {path="../opentelemetry-instrumentation-o
 opentelemetry-instrumentation-cohere = {path="../opentelemetry-instrumentation-cohere", develop=true}
 opentelemetry-instrumentation-chromadb = {path="../opentelemetry-instrumentation-chromadb", develop=true}
 sqlalchemy = "^2.0.27"
-llama-index-agent-openai = ">=0.1.5,<0.3.0"
-llama-index-vector-stores-chroma = "^0.1.5"
+llama-index-agent-openai = ">=0.2.7,<0.3.0"
+llama-index-vector-stores-chroma = "^0.1.8"
 
 [build-system]
 requires = ["poetry-core"]
