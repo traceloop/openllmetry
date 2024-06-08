@@ -30,14 +30,14 @@ opentelemetry-semantic-conventions = "^0.46b0"
 opentelemetry-semantic-conventions-ai = "0.3.1"
 
 [tool.poetry.group.dev.dependencies]
-autopep8 = "2.2.0"
+autopep8 = "^2.2.0"
 flake8 = "7.0.0"
-pytest = "8.2.2"
+pytest = "^8.2.2"
 pytest-sugar = "1.0.0"
 
 [tool.poetry.group.test.dependencies]
 haystack-ai = ">=2.0,<2.2"
-pytest = "8.2.2"
+pytest = "^8.2.2"
 pytest-sugar = "1.0.0"
 vcrpy = "^6.0.1"
 pytest-recording = "^0.13.1"
