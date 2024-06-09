@@ -878,7 +878,7 @@ def init_weaviate_instrumentor():
 
 def init_alephalpha_instrumentor():
     try:
-        if importlib.util.find_spec("alephalpha") is not None:
+        if importlib.util.find_spec("aleph_alpha_client") is not None:
             Telemetry().capture("instrumentation:alephalpha:init")
             from opentelemetry.instrumentation.alephalpha import AlephAlphaInstrumentor
 
@@ -889,6 +889,6 @@ def init_alephalpha_instrumentor():
                 instrumentor.instrument()
         return True
     except Exception as e:
-        logging.error(f"Error initializing TogetherAI instrumentor: {e}")
+        logging.error(f"Error initializing Aleph Alpha instrumentor: {e}")
         Telemetry().log_exception(e)
         return False
