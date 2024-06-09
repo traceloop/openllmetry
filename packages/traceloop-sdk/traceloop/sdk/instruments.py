@@ -22,3 +22,4 @@ class Instruments(Enum):
     VERTEXAI = "vertexai"
     WATSONX = "watsonx"
     WEAVIATE = "weaviate"
+    ALEPHALPHA = "alephalpha"
