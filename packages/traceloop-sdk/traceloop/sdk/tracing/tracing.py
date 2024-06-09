@@ -268,6 +268,14 @@ class TracerWrapper(object):
                             print(Fore.RESET)
                         else:
                             instrument_set = True
+                    elif instrument == Instruments.ALEPHALPHA:
+                        if not init_alephalpha_instrumentor():
+                            print(
+                                Fore.RED + "Warning: Aleph Alpha library does not exist."
+                            )
+                            print(Fore.RESET)
+                        else:
+                            instrument_set = True
 
                     else:
                         print(
@@ -474,6 +482,7 @@ def init_instrumentations(should_enrich_metrics: bool):
     init_vertexai_instrumentor()
     init_watsonx_instrumentor()
     init_weaviate_instrumentor()
+    init_alephalpha_instrumentor()
 
 
 def init_openai_instrumentor(should_enrich_metrics: bool):
@@ -863,5 +872,23 @@ def init_weaviate_instrumentor():
         return True
     except Exception as e:
         logging.warning(f"Error initializing Weaviate instrumentor: {e}")
+        Telemetry().log_exception(e)
+        return False
+
+
+def init_alephalpha_instrumentor():
+    try:
+        if importlib.util.find_spec("alephalpha") is not None:
+            Telemetry().capture("instrumentation:alephalpha:init")
+            from opentelemetry.instrumentation.alephalpha import AlephAlphaInstrumentor
+
+            instrumentor = AlephAlphaInstrumentor(
+                exception_logger=lambda e: Telemetry().log_exception(e),
+            )
+            if not instrumentor.is_instrumented_by_opentelemetry:
+                instrumentor.instrument()
+        return True
+    except Exception as e:
+        logging.error(f"Error initializing TogetherAI instrumentor: {e}")
         Telemetry().log_exception(e)
         return False
