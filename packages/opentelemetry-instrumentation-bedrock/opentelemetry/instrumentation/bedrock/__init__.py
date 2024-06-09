@@ -216,8 +216,18 @@ def _set_anthropic_completion_span_attributes(span, request_body, response_body)
     )
 
     if Config.enrich_token_usage:
-        prompt_tokens = _count_anthropic_tokens([request_body.get("prompt")])
-        completion_tokens = _count_anthropic_tokens([response_body.get("completion")])
+        prompt_tokens = 0
+        completion_tokens = 0
+
+        if response_body.get("usage") is not None and response_body.get("usage").get("input_tokens") is not None and response_body.get("usage").get("output_tokens") is not None:
+            prompt_tokens = response_body.get("usage").get("input_tokens")
+            completion_tokens = response_body.get("usage").get("output_tokens")
+        elif response_body.get("invocation_metrics") is not None:
+            prompt_tokens = response_body.get("invocation_metrics").get("inputTokenCount")
+            completion_tokens = response_body.get("invocation_metrics").get("outputTokenCount")
+        else:
+            prompt_tokens = _count_anthropic_tokens([request_body.get("prompt")])
+            completion_tokens = _count_anthropic_tokens([response_body.get("completion")])
 
         _set_span_attribute(
             span,
@@ -263,18 +273,27 @@ def _set_anthropic_messages_span_attributes(span, request_body, response_body):
     )
 
     if Config.enrich_token_usage:
-        messages = [message.get("content") for message in request_body.get("messages")]
+        prompt_tokens = 0
+        completion_tokens = 0
+        if response_body.get("usage") is not None and response_body.get("usage").get("input_tokens") is not None and response_body.get("usage").get("output_tokens") is not None:
+            prompt_tokens = response_body.get("usage").get("input_tokens")
+            completion_tokens = response_body.get("usage").get("output_tokens")
+        elif response_body.get("invocation_metrics") is not None:
+            prompt_tokens = response_body.get("invocation_metrics").get("inputTokenCount")
+            completion_tokens = response_body.get("invocation_metrics").get("outputTokenCount")
+        else:
+            messages = [message.get("content") for message in request_body.get("messages")]
 
-        raw_messages = []
-        for message in messages:
-            if isinstance(message, str):
-                raw_messages.append(message)
-            else:
-                raw_messages.extend([content.get("text") for content in message])
-        prompt_tokens = _count_anthropic_tokens(raw_messages)
-        completion_tokens = _count_anthropic_tokens(
-            [content.get("text") for content in response_body.get("content")]
-        )
+            raw_messages = []
+            for message in messages:
+                if isinstance(message, str):
+                    raw_messages.append(message)
+                else:
+                    raw_messages.extend([content.get("text") for content in message])
+            prompt_tokens = _count_anthropic_tokens(raw_messages)
+            completion_tokens = _count_anthropic_tokens(
+                [content.get("text") for content in response_body.get("content")]
+            )
 
         _set_span_attribute(
             span,
@@ -360,6 +379,17 @@ def _set_llama_span_attributes(span, request_body, response_body):
     _set_span_attribute(
         span, SpanAttributes.LLM_REQUEST_MAX_TOKENS, request_body.get("max_gen_len")
     )
+
+    if Config.enrich_token_usage and response_body.get("prompt_token_count") is not None and response_body.get("generation_token_count") is not None:
+        _set_span_attribute(
+            span, SpanAttributes.LLM_USAGE_PROMPT_TOKENS, response_body.get("prompt_token_count")
+        )
+        _set_span_attribute(
+            span, SpanAttributes.LLM_USAGE_COMPLETION_TOKENS, response_body.get("generation_token_count")
+        )
+        _set_span_attribute(
+            span, SpanAttributes.LLM_USAGE_TOTAL_TOKENS, response_body.get("prompt_token_count") + response_body.get("generation_token_count")
+        )
 
     if should_send_prompts():
         _set_span_attribute(

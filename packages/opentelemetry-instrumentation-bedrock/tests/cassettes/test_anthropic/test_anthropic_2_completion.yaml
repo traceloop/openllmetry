@@ -13,15 +13,15 @@ interactions:
         YXBwbGljYXRpb24vanNvbg==
       User-Agent:
       - !!binary |
-        Qm90bzMvMS4zNC44MCBtZC9Cb3RvY29yZSMxLjM0LjgwIHVhLzIuMCBvcy9tYWNvcyMyMy4yLjAg
-        bWQvYXJjaCNhcm02NCBsYW5nL3B5dGhvbiMzLjExLjEgbWQvcHlpbXBsI0NQeXRob24gY2ZnL3Jl
-        dHJ5LW1vZGUjbGVnYWN5IEJvdG9jb3JlLzEuMzQuODA=
+        Qm90bzMvMS4zNC4xMjEgbWQvQm90b2NvcmUjMS4zNC4xMjEgdWEvMi4wIG9zL3dpbmRvd3MjMTAg
+        bWQvYXJjaCNhbWQ2NCBsYW5nL3B5dGhvbiMzLjExLjUgbWQvcHlpbXBsI0NQeXRob24gY2ZnL3Jl
+        dHJ5LW1vZGUjbGVnYWN5IEJvdG9jb3JlLzEuMzQuMTIx
       X-Amz-Date:
       - !!binary |
-        MjAyNDA0MTBUMDIxNjU4Wg==
+        MjAyNDA2MDlUMTUxODM0Wg==
       amz-sdk-invocation-id:
       - !!binary |
-        Y2NmZWY4ZGQtZGQxMS00MjEyLWI3MzAtNGMzY2JhMDUyMjc4
+        MmNlMGRhNjgtMTEyZS00OThmLTk5NGMtOTU0MTUzNzI1Mjlh
       amz-sdk-request:
       - !!binary |
         YXR0ZW1wdD0x
@@ -29,26 +29,25 @@ interactions:
     uri: https://bedrock-runtime.us-east-1.amazonaws.com/model/anthropic.claude-v2%3A1/invoke
   response:
     body:
-      string: '{"completion":" Here''s a silly joke about opentelemetry:\n\nWhat do
-        you call an open source monitoring framework that tracks distributed traces?
-        \nOpenTele-metry!","stop_reason":"stop_sequence","stop":"\n\nHuman:"}'
+      string: '{"type":"completion","completion":" Here''s a silly attempt at an opentelemetry
+        joke:\n\nWhy can''t the traces see each other? \nBecause they''re in span-siloed!","stop_reason":"stop_sequence","stop":"\n\nHuman:"}'
     headers:
       Connection:
       - keep-alive
       Content-Length:
-      - '214'
+      - '210'
       Content-Type:
       - application/json
       Date:
-      - Wed, 10 Apr 2024 02:17:00 GMT
+      - Sun, 09 Jun 2024 15:18:38 GMT
       X-Amzn-Bedrock-Input-Token-Count:
       - '18'
       X-Amzn-Bedrock-Invocation-Latency:
-      - '1641'
+      - '1643'
       X-Amzn-Bedrock-Output-Token-Count:
-      - '38'
+      - '40'
       x-amzn-RequestId:
-      - 19740e07-510e-4cdb-b461-4bfa0d670f6c
+      - 89cd170e-c386-434b-a30a-0cc6dae8553b
     status:
       code: 200
       message: OK

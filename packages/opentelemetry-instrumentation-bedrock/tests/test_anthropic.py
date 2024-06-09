@@ -85,7 +85,7 @@ def test_anthropic_3_completion_complex_content(exporter, brt):
         == completion
     )
 
-    assert anthropic_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 9
+    assert anthropic_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 16
     assert anthropic_span.attributes.get(
         SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
     ) + anthropic_span.attributes.get(
@@ -143,7 +143,7 @@ def test_anthropic_3_completion_streaming(exporter, brt):
         }
     ]
 
-    assert anthropic_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 9
+    assert anthropic_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 16
     assert anthropic_span.attributes.get(
         SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
     ) + anthropic_span.attributes.get(
@@ -193,7 +193,7 @@ def test_anthropic_3_completion_string_content(exporter, brt):
         == completion
     )
 
-    assert anthropic_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 9
+    assert anthropic_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 16
     assert anthropic_span.attributes.get(
         SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
     ) + anthropic_span.attributes.get(
@@ -201,3 +201,5 @@ def test_anthropic_3_completion_string_content(exporter, brt):
     ) == anthropic_span.attributes.get(
         SpanAttributes.LLM_USAGE_TOTAL_TOKENS
     )
+
+    

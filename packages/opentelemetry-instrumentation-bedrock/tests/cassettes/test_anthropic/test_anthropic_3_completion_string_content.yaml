@@ -13,15 +13,15 @@ interactions:
         YXBwbGljYXRpb24vanNvbg==
       User-Agent:
       - !!binary |
-        Qm90bzMvMS4zNC44OCBtZC9Cb3RvY29yZSMxLjM0Ljg4IHVhLzIuMCBvcy9tYWNvcyMyMy40LjAg
-        bWQvYXJjaCNhcm02NCBsYW5nL3B5dGhvbiMzLjEyLjEgbWQvcHlpbXBsI0NQeXRob24gY2ZnL3Jl
-        dHJ5LW1vZGUjbGVnYWN5IEJvdG9jb3JlLzEuMzQuODg=
+        Qm90bzMvMS4zNC4xMjEgbWQvQm90b2NvcmUjMS4zNC4xMjEgdWEvMi4wIG9zL3dpbmRvd3MjMTAg
+        bWQvYXJjaCNhbWQ2NCBsYW5nL3B5dGhvbiMzLjExLjUgbWQvcHlpbXBsI0NQeXRob24gY2ZnL3Jl
+        dHJ5LW1vZGUjbGVnYWN5IEJvdG9jb3JlLzEuMzQuMTIx
       X-Amz-Date:
       - !!binary |
-        MjAyNDA1MjdUMTUyNzM5Wg==
+        MjAyNDA2MDlUMTUxODQwWg==
       amz-sdk-invocation-id:
       - !!binary |
-        N2Q1NGUwMGQtNjk3MS00YzY5LTkyMDMtOTQwNDFmNzBkMWVj
+        MmY1MmUyYTItYzgyNC00M2U5LWJkNGUtZTk4MjNlMDZhZWMx
       amz-sdk-request:
       - !!binary |
         YXR0ZW1wdD0x
@@ -29,25 +29,25 @@ interactions:
     uri: https://bedrock-runtime.us-east-1.amazonaws.com/model/anthropic.claude-3-sonnet-20240229-v1%3A0/invoke
   response:
     body:
-      string: '{"id":"msg_01CF7sJcFfW9rcqaE2ZXzBdh","type":"message","role":"assistant","content":[{"type":"text","text":"Why
-        did the data packet cross the road? To get to the other endpoint with OpenTelemetry!"}],"model":"claude-3-sonnet-28k-20240229","stop_reason":"end_turn","stop_sequence":null,"usage":{"input_tokens":16,"output_tokens":25}}'
+      string: '{"id":"msg_bdrk_01JRrqyHyF4efqiRmFBLNZVe","type":"message","role":"assistant","model":"claude-3-sonnet-20240229","content":[{"type":"text","text":"Why
+        did the distributed tracing span cross the road? To get to the other service!"}],"stop_reason":"end_turn","stop_sequence":null,"usage":{"input_tokens":16,"output_tokens":21}}'
     headers:
       Connection:
       - keep-alive
       Content-Length:
-      - '331'
+      - '325'
       Content-Type:
       - application/json
       Date:
-      - Mon, 27 May 2024 15:27:40 GMT
+      - Sun, 09 Jun 2024 15:18:43 GMT
       X-Amzn-Bedrock-Input-Token-Count:
       - '16'
       X-Amzn-Bedrock-Invocation-Latency:
-      - '908'
+      - '627'
       X-Amzn-Bedrock-Output-Token-Count:
-      - '25'
+      - '21'
       x-amzn-RequestId:
-      - 226a4eca-33e8-4e85-85b9-63c166c014e8
+      - 3afd38b9-381d-4fa7-afaf-b314d1d24713
     status:
       code: 200
       message: OK

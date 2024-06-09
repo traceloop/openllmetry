@@ -1,0 +1,60 @@
+interactions:
+- request:
+    body: '{"prompt": "<s>[INST] <<SYS>>\nYou are a helpful, respectful and honest
+      assistant. Always answer as helpfully as possible, while being safe.  Your answers
+      should not include any harmful, unethical, racist, sexist, toxic, dangerous,
+      or illegal content. Please ensure that your responses are socially unbiased
+      and positive in nature.\n\nIf a question does not make any sense, or is not
+      factually coherent, explain why instead of answering something not correct.
+      If you don''t know the answer to a question, please don''t share false information.\n<</SYS>>\n\nThere''s
+      a llama in my garden  What should I do? [/INST]", "max_gen_len": 128, "temperature":
+      0.1, "top_p": 0.9}'
+    headers:
+      Content-Length:
+      - '666'
+      User-Agent:
+      - !!binary |
+        Qm90bzMvMS4zNC4xMjEgbWQvQm90b2NvcmUjMS4zNC4xMjEgdWEvMi4wIG9zL3dpbmRvd3MjMTAg
+        bWQvYXJjaCNhbWQ2NCBsYW5nL3B5dGhvbiMzLjExLjUgbWQvcHlpbXBsI0NQeXRob24gY2ZnL3Jl
+        dHJ5LW1vZGUjbGVnYWN5IEJvdG9jb3JlLzEuMzQuMTIx
+      X-Amz-Date:
+      - !!binary |
+        MjAyNDA2MDlUMTUxODQxWg==
+      amz-sdk-invocation-id:
+      - !!binary |
+        ZGQyZmUwMjEtNjhjZC00NmM0LWEyZDItMTIzOTJiMzNhZjQ0
+      amz-sdk-request:
+      - !!binary |
+        YXR0ZW1wdD0x
+    method: POST
+    uri: https://bedrock-runtime.us-east-1.amazonaws.com/model/meta.llama2-13b-chat-v1/invoke
+  response:
+    body:
+      string: "{\"generation\":\"  Oh my gosh, a llama in your garden? That's quite
+        a surprise! \U0001F631 Before we get started on what to do, let me just make
+        sure that you're safe. Are you feeling okay, and is there anything around
+        you that could be a danger to you or the llama? \U0001F914\\n\\nIf you're
+        sure you're safe, and you'd like to know what to do with the llama, I'd suggest
+        contacting a local animal control service or a nearby farm or zoo. They will
+        have the proper equipment and expertise to\",\"prompt_token_count\":154,\"generation_token_count\":128,\"stop_reason\":\"length\"}"
+    headers:
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '555'
+      Content-Type:
+      - application/json
+      Date:
+      - Sun, 09 Jun 2024 15:18:46 GMT
+      X-Amzn-Bedrock-Input-Token-Count:
+      - '154'
+      X-Amzn-Bedrock-Invocation-Latency:
+      - '2333'
+      X-Amzn-Bedrock-Output-Token-Count:
+      - '128'
+      x-amzn-RequestId:
+      - 37a4b3db-09ed-471d-95e3-7e7e0d1f3f14
+    status:
+      code: 200
+      message: OK
+version: 1
