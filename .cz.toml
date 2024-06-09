@@ -6,6 +6,8 @@ major_version_zero = true
 update_changelog_on_bump = true
 version = "0.21.5"
 version_files = [
+    "packages/opentelemetry-instrumentation-alephalpha/pyproject.toml:^version",
+    "packages/opentelemetry-instrumentation-alephalpha/opentelemetry/instrumentation/alephalpha/version.py",
     "packages/opentelemetry-instrumentation-anthropic/pyproject.toml:^version",
     "packages/opentelemetry-instrumentation-anthropic/opentelemetry/instrumentation/anthropic/version.py",
     "packages/opentelemetry-instrumentation-bedrock/pyproject.toml:^version",
