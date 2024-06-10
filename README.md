@@ -115,10 +115,10 @@ OpenLLMetry can instrument everything that [OpenTelemetry already instruments](h
 - ✅ Bedrock (AWS)
 - ✅ Replicate
 - ✅ Vertex AI (GCP)
+- ✅ Google Generative AI (Gemini)
 - ✅ IBM Watsonx AI
 - ✅ Together AI
 - ✅ Aleph Alpha
-
 
 ### Vector DBs
 
