@@ -16,6 +16,8 @@ version_files = [
     "packages/opentelemetry-instrumentation-chromadb/opentelemetry/instrumentation/chromadb/version.py",
     "packages/opentelemetry-instrumentation-cohere/pyproject.toml:^version",
     "packages/opentelemetry-instrumentation-cohere/opentelemetry/instrumentation/cohere/version.py",
+    "packages/opentelemetry-instrumentation-google-generativeai/pyproject.toml:^version",
+    "packages/opentelemetry-instrumentation-google-generativeai/opentelemetry/instrumentation/google-generativeai/version.py",
     "packages/opentelemetry-instrumentation-haystack/pyproject.toml:^version",
     "packages/opentelemetry-instrumentation-haystack/opentelemetry/instrumentation/haystack/version.py",
     "packages/opentelemetry-instrumentation-langchain/pyproject.toml:^version",
