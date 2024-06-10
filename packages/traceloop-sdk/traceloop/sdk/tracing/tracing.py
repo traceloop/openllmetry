@@ -159,6 +159,15 @@ class TracerWrapper(object):
                             print(Fore.RESET)
                         else:
                             instrument_set = True
+                    elif instrument == Instruments.GOOGLE_GENERATIVEAI:
+                        if not init_google_generativeai_instrumentor():
+                            print(
+                                Fore.RED
+                                + "Warning: Google Generative AI library does not exist."
+                            )
+                            print(Fore.RESET)
+                        else:
+                            instrument_set = True
                     elif instrument == Instruments.LANGCHAIN:
                         if not init_langchain_instrumentor():
                             print(
@@ -271,7 +280,8 @@ class TracerWrapper(object):
                     elif instrument == Instruments.ALEPHALPHA:
                         if not init_alephalpha_instrumentor():
                             print(
-                                Fore.RED + "Warning: Aleph Alpha library does not exist."
+                                Fore.RED
+                                + "Warning: Aleph Alpha library does not exist."
                             )
                             print(Fore.RESET)
                         else:
@@ -466,6 +476,7 @@ def init_instrumentations(should_enrich_metrics: bool):
     init_pinecone_instrumentor()
     init_qdrant_instrumentor()
     init_chroma_instrumentor()
+    init_google_generativeai_instrumentor()
     init_haystack_instrumentor()
     init_langchain_instrumentor()
     init_mistralai_instrumentor()
@@ -591,6 +602,26 @@ def init_chroma_instrumentor():
         return True
     except Exception as e:
         logging.error(f"Error initializing Chroma instrumentor: {e}")
+        Telemetry().log_exception(e)
+        return False
+
+
+def init_google_generativeai_instrumentor():
+    try:
+        if importlib.util.find_spec("google.generativeai") is not None:
+            Telemetry().capture("instrumentation:gemini:init")
+            from opentelemetry.instrumentation.google_generativeai import (
+                GoogleGenerativeAiInstrumentor,
+            )
+
+            instrumentor = GoogleGenerativeAiInstrumentor(
+                exception_logger=lambda e: Telemetry().log_exception(e),
+            )
+            if not instrumentor.is_instrumented_by_opentelemetry:
+                instrumentor.instrument()
+        return True
+    except Exception as e:
+        logging.error(f"Error initializing Gemini instrumentor: {e}")
         Telemetry().log_exception(e)
         return False
 

@@ -7,6 +7,7 @@ class Instruments(Enum):
     COHERE = "cohere"
     PINECONE = "pinecone"
     CHROMA = "chroma"
+    GOOGLE_GENERATIVEAI = "google_generativeai"
     LANGCHAIN = "langchain"
     MISTRAL = "mistral"
     OLLAMA = "ollama"
