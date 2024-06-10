@@ -39,21 +39,18 @@ WRAPPED_METHODS = [
         "object": "Completions",
         "method": "create",
         "span_name": "anthropic.completion",
-        "metric_name": "anthropic.completion",
     },
     {
         "package": "anthropic.resources.messages",
         "object": "Messages",
         "method": "create",
         "span_name": "anthropic.chat",
-        "metric_name": "anthropic.chat",
     },
     {
         "package": "anthropic.resources.messages",
         "object": "Messages",
         "method": "stream",
         "span_name": "anthropic.chat",
-        "metric_name": "anthropic.chat",
     },
 ]
 WRAPPED_AMETHODS = [
@@ -62,21 +59,18 @@ WRAPPED_AMETHODS = [
         "object": "AsyncCompletions",
         "method": "create",
         "span_name": "anthropic.completion",
-        "metric_name": "anthropic.completion",
     },
     {
         "package": "anthropic.resources.messages",
         "object": "AsyncMessages",
         "method": "create",
         "span_name": "anthropic.chat",
-        "metric_name": "anthropic.chat",
     },
     {
         "package": "anthropic.resources.messages",
         "object": "AsyncMessages",
         "method": "stream",
         "span_name": "anthropic.chat",
-        "metric_name": "anthropic.chat",
     },
 ]
 
@@ -372,7 +366,7 @@ def _with_chat_telemetry_wrapper(func):
     return _with_chat_telemetry
 
 
-def _create_metrics(meter: Meter, name: str):
+def _create_metrics(meter: Meter):
     token_histogram = meter.create_histogram(
         name=Meters.LLM_TOKEN_USAGE,
         unit="token",
@@ -608,28 +602,26 @@ class AnthropicInstrumentor(BaseInstrumentor):
         meter_provider = kwargs.get("meter_provider")
         meter = get_meter(__name__, __version__, meter_provider)
 
-        created_metrics = {}
+        if is_metrics_enabled():
+            (
+                token_histogram,
+                choice_counter,
+                duration_histogram,
+                exception_counter,
+            ) = _create_metrics(meter)
+        else:
+            (
+                token_histogram,
+                choice_counter,
+                duration_histogram,
+                exception_counter,
+            ) = (None, None, None, None)
+
         for wrapped_method in WRAPPED_METHODS:
             wrap_package = wrapped_method.get("package")
             wrap_object = wrapped_method.get("object")
             wrap_method = wrapped_method.get("method")
-            metric_name = wrapped_method.get("metric_name")
-            if is_metrics_enabled():
-                if created_metrics.get(metric_name) is None:
-                    created_metrics[metric_name] = _create_metrics(meter, metric_name)
-                (
-                    token_histogram,
-                    choice_counter,
-                    duration_histogram,
-                    exception_counter,
-                ) = created_metrics[metric_name]
-            else:
-                (
-                    token_histogram,
-                    choice_counter,
-                    duration_histogram,
-                    exception_counter,
-                ) = (None, None, None, None)
+
             try:
                 wrap_function_wrapper(
                     wrap_package,
