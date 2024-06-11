@@ -32,16 +32,17 @@ def test_anthropic_2_completion(exporter, brt):
         anthropic_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.user"]
         == "Human: Tell me a joke about opentelemetry Assistant:"
     )
-    assert anthropic_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content") == completion
+    assert (
+        anthropic_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
+        == completion
+    )
 
     assert anthropic_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 13
     assert anthropic_span.attributes.get(
         SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
     ) + anthropic_span.attributes.get(
         SpanAttributes.LLM_USAGE_PROMPT_TOKENS
-    ) == anthropic_span.attributes.get(
-        SpanAttributes.LLM_USAGE_TOTAL_TOKENS
-    )
+    ) == anthropic_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS)
 
 
 @pytest.mark.vcr
@@ -76,12 +77,16 @@ def test_anthropic_3_completion_complex_content(exporter, brt):
     assert all(span.name == "bedrock.completion" for span in spans)
 
     anthropic_span = spans[0]
-    assert json.loads(anthropic_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]) == [
+    assert json.loads(
+        anthropic_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
+    ) == [
         {"type": "text", "text": "Tell me a joke about opentelemetry"},
     ]
 
     assert (
-        json.loads(anthropic_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content"))
+        json.loads(
+            anthropic_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
+        )
         == completion
     )
 
@@ -90,9 +95,7 @@ def test_anthropic_3_completion_complex_content(exporter, brt):
         SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
     ) + anthropic_span.attributes.get(
         SpanAttributes.LLM_USAGE_PROMPT_TOKENS
-    ) == anthropic_span.attributes.get(
-        SpanAttributes.LLM_USAGE_TOTAL_TOKENS
-    )
+    ) == anthropic_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS)
 
 
 @pytest.mark.vcr
@@ -132,11 +135,15 @@ def test_anthropic_3_completion_streaming(exporter, brt):
     assert all(span.name == "bedrock.completion" for span in spans)
 
     anthropic_span = spans[0]
-    assert json.loads(anthropic_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]) == [
+    assert json.loads(
+        anthropic_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
+    ) == [
         {"type": "text", "text": "Tell me a joke about opentelemetry"},
     ]
 
-    assert json.loads(anthropic_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")) == [
+    assert json.loads(
+        anthropic_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
+    ) == [
         {
             "type": "text",
             "text": completion,
@@ -148,9 +155,7 @@ def test_anthropic_3_completion_streaming(exporter, brt):
         SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
     ) + anthropic_span.attributes.get(
         SpanAttributes.LLM_USAGE_PROMPT_TOKENS
-    ) == anthropic_span.attributes.get(
-        SpanAttributes.LLM_USAGE_TOTAL_TOKENS
-    )
+    ) == anthropic_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS)
 
 
 @pytest.mark.vcr
@@ -189,7 +194,9 @@ def test_anthropic_3_completion_string_content(exporter, brt):
     )
 
     assert (
-        json.loads(anthropic_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content"))
+        json.loads(
+            anthropic_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
+        )
         == completion
     )
 
@@ -198,8 +205,4 @@ def test_anthropic_3_completion_string_content(exporter, brt):
         SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
     ) + anthropic_span.attributes.get(
         SpanAttributes.LLM_USAGE_PROMPT_TOKENS
-    ) == anthropic_span.attributes.get(
-        SpanAttributes.LLM_USAGE_TOTAL_TOKENS
-    )
-
-    
+    ) == anthropic_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS)

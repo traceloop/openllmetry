@@ -18,10 +18,10 @@ interactions:
         dHJ5LW1vZGUjbGVnYWN5IEJvdG9jb3JlLzEuMzQuMTIx
       X-Amz-Date:
       - !!binary |
-        MjAyNDA2MDlUMTUxODQwWg==
+        MjAyNDA2MTFUMDAzNDQxWg==
       amz-sdk-invocation-id:
       - !!binary |
-        MmY1MmUyYTItYzgyNC00M2U5LWJkNGUtZTk4MjNlMDZhZWMx
+        OWFiOTk5NzEtNzI5OC00NjdkLTk5MDMtZDdmMDc1YjBhNjM2
       amz-sdk-request:
       - !!binary |
         YXR0ZW1wdD0x
@@ -29,25 +29,25 @@ interactions:
     uri: https://bedrock-runtime.us-east-1.amazonaws.com/model/anthropic.claude-3-sonnet-20240229-v1%3A0/invoke
   response:
     body:
-      string: '{"id":"msg_bdrk_01JRrqyHyF4efqiRmFBLNZVe","type":"message","role":"assistant","model":"claude-3-sonnet-20240229","content":[{"type":"text","text":"Why
-        did the distributed tracing span cross the road? To get to the other service!"}],"stop_reason":"end_turn","stop_sequence":null,"usage":{"input_tokens":16,"output_tokens":21}}'
+      string: '{"id":"msg_bdrk_01WR9VHqpyBzBhzgwCDapaQD","type":"message","role":"assistant","model":"claude-3-sonnet-20240229","content":[{"type":"text","text":"Why
+        did the distributed trace cross the road? To get to the other service!"}],"stop_reason":"end_turn","stop_sequence":null,"usage":{"input_tokens":16,"output_tokens":19}}'
     headers:
       Connection:
       - keep-alive
       Content-Length:
-      - '325'
+      - '318'
       Content-Type:
       - application/json
       Date:
-      - Sun, 09 Jun 2024 15:18:43 GMT
+      - Tue, 11 Jun 2024 00:34:45 GMT
       X-Amzn-Bedrock-Input-Token-Count:
       - '16'
       X-Amzn-Bedrock-Invocation-Latency:
-      - '627'
+      - '711'
       X-Amzn-Bedrock-Output-Token-Count:
-      - '21'
+      - '19'
       x-amzn-RequestId:
-      - 3afd38b9-381d-4fa7-afaf-b314d1d24713
+      - 09a671a8-16d6-4bfc-9564-8e0ced06fb12
     status:
       code: 200
       message: OK
