@@ -117,8 +117,8 @@ def _instrumented_model_invoke_with_response_stream(fn, tracer):
     return with_instrumentation
 
 
-@dont_throw
 def _handle_stream_call(span, kwargs, response):
+    @dont_throw
     def stream_done(response_body):
         request_body = json.loads(kwargs.get("body"))
 
@@ -174,6 +174,24 @@ def _handle_call(span, kwargs, response):
         _set_llama_span_attributes(span, request_body, response_body)
 
 
+def _record_usage_to_span(span, prompt_tokens, completion_tokens):
+    _set_span_attribute(
+        span,
+        SpanAttributes.LLM_USAGE_PROMPT_TOKENS,
+        prompt_tokens,
+    )
+    _set_span_attribute(
+        span,
+        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS,
+        completion_tokens,
+    )
+    _set_span_attribute(
+        span,
+        SpanAttributes.LLM_USAGE_TOTAL_TOKENS,
+        prompt_tokens + completion_tokens,
+    )
+
+
 def _set_cohere_span_attributes(span, request_body, response_body):
     _set_span_attribute(
         span, SpanAttributes.LLM_REQUEST_TYPE, LLMRequestTypeValues.COMPLETION.value
@@ -184,6 +202,14 @@ def _set_cohere_span_attributes(span, request_body, response_body):
     )
     _set_span_attribute(
         span, SpanAttributes.LLM_REQUEST_MAX_TOKENS, request_body.get("max_tokens")
+    )
+
+    # based on contract at
+    # https://docs.aws.amazon.com/bedrock/latest/userguide/model-parameters-cohere-command-r-plus.html
+    _record_usage_to_span(
+        span,
+        response_body.get("token_count").get("prompt_tokens"),
+        response_body.get("token_count").get("response_tokens"),
     )
 
     if should_send_prompts():
@@ -215,24 +241,27 @@ def _set_anthropic_completion_span_attributes(span, request_body, response_body)
         request_body.get("max_tokens_to_sample"),
     )
 
-    if Config.enrich_token_usage:
-        prompt_tokens = _count_anthropic_tokens([request_body.get("prompt")])
-        completion_tokens = _count_anthropic_tokens([response_body.get("completion")])
-
-        _set_span_attribute(
+    if (
+        response_body.get("usage") is not None
+        and response_body.get("usage").get("input_tokens") is not None
+        and response_body.get("usage").get("output_tokens") is not None
+    ):
+        _record_usage_to_span(
             span,
-            SpanAttributes.LLM_USAGE_PROMPT_TOKENS,
-            prompt_tokens,
+            response_body.get("usage").get("input_tokens"),
+            response_body.get("usage").get("output_tokens"),
         )
-        _set_span_attribute(
+    elif response_body.get("invocation_metrics") is not None:
+        _record_usage_to_span(
             span,
-            SpanAttributes.LLM_USAGE_COMPLETION_TOKENS,
-            completion_tokens,
+            response_body.get("invocation_metrics").get("inputTokenCount"),
+            response_body.get("invocation_metrics").get("outputTokenCount"),
         )
-        _set_span_attribute(
+    elif Config.enrich_token_usage:
+        _record_usage_to_span(
             span,
-            SpanAttributes.LLM_USAGE_TOTAL_TOKENS,
-            prompt_tokens + completion_tokens,
+            _count_anthropic_tokens([request_body.get("prompt")]),
+            _count_anthropic_tokens([response_body.get("completion")]),
         )
 
     if should_send_prompts():
@@ -262,7 +291,23 @@ def _set_anthropic_messages_span_attributes(span, request_body, response_body):
         request_body.get("max_tokens"),
     )
 
-    if Config.enrich_token_usage:
+    prompt_tokens = 0
+    completion_tokens = 0
+    if (
+        response_body.get("usage") is not None
+        and response_body.get("usage").get("input_tokens") is not None
+        and response_body.get("usage").get("output_tokens") is not None
+    ):
+        prompt_tokens = response_body.get("usage").get("input_tokens")
+        completion_tokens = response_body.get("usage").get("output_tokens")
+        _record_usage_to_span(span, prompt_tokens, completion_tokens)
+    elif response_body.get("invocation_metrics") is not None:
+        prompt_tokens = response_body.get("invocation_metrics").get("inputTokenCount")
+        completion_tokens = response_body.get("invocation_metrics").get(
+            "outputTokenCount"
+        )
+        _record_usage_to_span(span, prompt_tokens, completion_tokens)
+    elif Config.enrich_token_usage:
         messages = [message.get("content") for message in request_body.get("messages")]
 
         raw_messages = []
@@ -275,22 +320,7 @@ def _set_anthropic_messages_span_attributes(span, request_body, response_body):
         completion_tokens = _count_anthropic_tokens(
             [content.get("text") for content in response_body.get("content")]
         )
-
-        _set_span_attribute(
-            span,
-            SpanAttributes.LLM_USAGE_PROMPT_TOKENS,
-            prompt_tokens,
-        )
-        _set_span_attribute(
-            span,
-            SpanAttributes.LLM_USAGE_COMPLETION_TOKENS,
-            completion_tokens,
-        )
-        _set_span_attribute(
-            span,
-            SpanAttributes.LLM_USAGE_TOTAL_TOKENS,
-            prompt_tokens + completion_tokens,
-        )
+        _record_usage_to_span(span, prompt_tokens, completion_tokens)
 
     if should_send_prompts():
         for idx, message in enumerate(request_body.get("messages")):
@@ -334,6 +364,12 @@ def _set_ai21_span_attributes(span, request_body, response_body):
         span, SpanAttributes.LLM_REQUEST_MAX_TOKENS, request_body.get("maxTokens")
     )
 
+    _record_usage_to_span(
+        span,
+        len(response_body.get("prompt").get("tokens")),
+        len(response_body.get("completions")[0].get("data").get("tokens")),
+    )
+
     if should_send_prompts():
         _set_span_attribute(
             span, f"{SpanAttributes.LLM_PROMPTS}.0.user", request_body.get("prompt")
@@ -359,6 +395,12 @@ def _set_llama_span_attributes(span, request_body, response_body):
     )
     _set_span_attribute(
         span, SpanAttributes.LLM_REQUEST_MAX_TOKENS, request_body.get("max_gen_len")
+    )
+
+    _record_usage_to_span(
+        span,
+        response_body.get("prompt_token_count"),
+        response_body.get("generation_token_count"),
     )
 
     if should_send_prompts():
