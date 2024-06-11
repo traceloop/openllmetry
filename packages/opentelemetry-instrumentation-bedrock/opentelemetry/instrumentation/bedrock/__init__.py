@@ -117,8 +117,8 @@ def _instrumented_model_invoke_with_response_stream(fn, tracer):
     return with_instrumentation
 
 
-@dont_throw
 def _handle_stream_call(span, kwargs, response):
+    @dont_throw
     def stream_done(response_body):
         request_body = json.loads(kwargs.get("body"))
 
@@ -204,16 +204,13 @@ def _set_cohere_span_attributes(span, request_body, response_body):
         span, SpanAttributes.LLM_REQUEST_MAX_TOKENS, request_body.get("max_tokens")
     )
 
-    try:
-        # based on contract at
-        # https://docs.aws.amazon.com/bedrock/latest/userguide/model-parameters-cohere-command-r-plus.html
-        _record_usage_to_span(
-            span,
-            response_body.get("token_count").get("prompt_tokens"),
-            response_body.get("token_count").get("response_tokens"),
-        )
-    except Exception as e:
-        logger.error(f"Failed to record usage to span: {e}")
+    # based on contract at
+    # https://docs.aws.amazon.com/bedrock/latest/userguide/model-parameters-cohere-command-r-plus.html
+    _record_usage_to_span(
+        span,
+        response_body.get("token_count").get("prompt_tokens"),
+        response_body.get("token_count").get("response_tokens"),
+    )
 
     if should_send_prompts():
         _set_span_attribute(
@@ -367,14 +364,11 @@ def _set_ai21_span_attributes(span, request_body, response_body):
         span, SpanAttributes.LLM_REQUEST_MAX_TOKENS, request_body.get("maxTokens")
     )
 
-    try:
-        _record_usage_to_span(
-            span,
-            len(response_body.get("prompt").get("tokens")),
-            len(response_body.get("completions")[0].get("data").get("tokens")),
-        )
-    except Exception as e:
-        logger.error(f"Failed to record usage to span: {e}")
+    _record_usage_to_span(
+        span,
+        len(response_body.get("prompt").get("tokens")),
+        len(response_body.get("completions")[0].get("data").get("tokens")),
+    )
 
     if should_send_prompts():
         _set_span_attribute(
@@ -403,14 +397,11 @@ def _set_llama_span_attributes(span, request_body, response_body):
         span, SpanAttributes.LLM_REQUEST_MAX_TOKENS, request_body.get("max_gen_len")
     )
 
-    try:
-        _record_usage_to_span(
-            span,
-            response_body.get("prompt_token_count"),
-            response_body.get("generation_token_count"),
-        )
-    except Exception as e:
-        logger.error(f"Failed to record usage to span: {e}")
+    _record_usage_to_span(
+        span,
+        response_body.get("prompt_token_count"),
+        response_body.get("generation_token_count"),
+    )
 
     if should_send_prompts():
         _set_span_attribute(
