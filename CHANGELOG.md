@@ -1,3 +1,20 @@
+## v0.22.0 (2024-06-10)
+
+### Feat
+
+- **gemini**: basic support in generate_content API (#1293)
+- **alephalpha**: Add AlephAlpha instrumentation (#1285)
+- **instrumentation**: add streamed OpenAI function tracing (#1284)
+- **togetherai**: Add together ai instrumentation (#1264)
+
+### Fix
+
+- **anthropic**: duplicate creation of metrics (#1294)
+- **haystack**: add input and output (#1202)
+- **openai**: calculate token usage for azure (#1274)
+- use constants (#1131)
+- **instrumentation**: Handle OpenAI run polling (#1256)
+
 ## v0.21.5 (2024-06-05)
 
 ### Fix

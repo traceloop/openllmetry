@@ -51,6 +51,7 @@ litellm = "^1.40.0"
 text-generation = "^0.7.0"
 llama-index-vector-stores-chroma = "^0.1.6"
 langchain-openai = "^0.1.6"
+google-generativeai = "^0.6.0"
 
 [tool.poetry.dependencies.opentelemetry-instrumentation-openai]
 path = "../opentelemetry-instrumentation-openai"
@@ -70,6 +71,10 @@ develop = true
 
 [tool.poetry.dependencies.opentelemetry-instrumentation-vertexai]
 path = "../opentelemetry-instrumentation-vertexai"
+develop = true
+
+[tool.poetry.dependencies.opentelemetry-instrumentation-google-generativeai]
+path = "../opentelemetry-instrumentation-google-generativeai"
 develop = true
 
 [tool.poetry.dependencies.traceloop-sdk]
