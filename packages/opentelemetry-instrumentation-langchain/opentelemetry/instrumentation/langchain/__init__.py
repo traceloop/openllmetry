@@ -38,16 +38,10 @@ _instruments = ("langchain >= 0.0.346", "langchain-core > 0.1.0")
 
 WRAPPED_METHODS = [
     {
-        "package": "langchain.schema.runnable",
-        "class": "RunnableSequence",
-        "is_callback": True,
-        "kind": TraceloopSpanKindValues.TOOL.value,
-    },
-    {
         "package": "langchain.chains.llm",
         "class": "LLMChain",
         "is_callback": True,
-        "kind": TraceloopSpanKindValues.TOOL.value,
+        "kind": TraceloopSpanKindValues.TASK.value,
     },
     {
         "package": "langchain.chains.base",
@@ -59,7 +53,7 @@ WRAPPED_METHODS = [
         "package": "langchain.chains",
         "class": "SequentialChain",
         "is_callback": True,
-        "kind": TraceloopSpanKindValues.TOOL.value,
+        "kind": TraceloopSpanKindValues.WORKFLOW.value,
     },
     {
         "package": "langchain.agents",
@@ -126,6 +120,20 @@ WRAPPED_METHODS = [
         "object": "BaseOutputParser",
         "method": "ainvoke",
         "wrapper": atask_wrapper,
+    },
+    {
+        "package": "langchain.schema.runnable",
+        "object": "RunnableSequence",
+        "method": "invoke",
+        "span_name": "langchain.workflow",
+        "wrapper": workflow_wrapper,
+    },
+    {
+        "package": "langchain.schema.runnable",
+        "object": "RunnableSequence",
+        "method": "ainvoke",
+        "span_name": "langchain.workflow",
+        "wrapper": aworkflow_wrapper,
     },
     {
         "package": "langchain_core.language_models.llms",

@@ -45,6 +45,5 @@ def test_sequential_chain(exporter):
         "LLMChain.langchain.task",
         "openai.completion",
         "LLMChain.langchain.task",
-        "SequentialChain.langchain.task",
         "SequentialChain.langchain.workflow",
     ] == [span.name for span in spans]
