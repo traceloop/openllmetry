@@ -39,4 +39,5 @@ class StreamingWrapper(ObjectProxy):
                 "delta"
             ).get("text")
         elif type == "message_stop" and self._stream_done_callback:
+            self._accumulating_body["invocation_metrics"] = decoded_chunk.get("amazon-bedrock-invocationMetrics")
             self._stream_done_callback(self._accumulating_body)
