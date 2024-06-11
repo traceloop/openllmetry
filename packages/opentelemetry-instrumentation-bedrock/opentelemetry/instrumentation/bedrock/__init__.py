@@ -255,15 +255,17 @@ def _set_anthropic_completion_span_attributes(span, request_body, response_body)
             response_body.get("usage").get("output_tokens"),
         )
     elif response_body.get("invocation_metrics") is not None:
-        prompt_tokens = response_body.get("invocation_metrics").get("inputTokenCount")
-        completion_tokens = response_body.get("invocation_metrics").get(
-            "outputTokenCount"
+        _record_usage_to_span(
+            span,
+            response_body.get("invocation_metrics").get("inputTokenCount"),
+            response_body.get("invocation_metrics").get("outputTokenCount"),
         )
-        _record_usage_to_span(span, prompt_tokens, completion_tokens)
     elif Config.enrich_token_usage:
-        prompt_tokens = _count_anthropic_tokens([request_body.get("prompt")])
-        completion_tokens = _count_anthropic_tokens([response_body.get("completion")])
-        _record_usage_to_span(span, prompt_tokens, completion_tokens)
+        _record_usage_to_span(
+            span,
+            _count_anthropic_tokens([request_body.get("prompt")]),
+            _count_anthropic_tokens([response_body.get("completion")]),
+        )
 
     if should_send_prompts():
         _set_span_attribute(
