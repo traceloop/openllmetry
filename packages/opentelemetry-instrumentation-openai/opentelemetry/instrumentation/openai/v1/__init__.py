@@ -49,12 +49,13 @@ class OpenAIV1Instrumentor(BaseInstrumentor):
         meter = get_meter(__name__, __version__, meter_provider)
 
         if is_metrics_enabled():
+            
             chat_token_counter = meter.create_counter(
                 name="llm.openai.chat_completions.tokens",
                 unit="token",
                 description="Number of tokens used in prompt and completions",
-            )
-
+            ) 
+            
             chat_choice_counter = meter.create_counter(
                 name="llm.openai.chat_completions.choices",
                 unit="choice",
@@ -66,7 +67,14 @@ class OpenAIV1Instrumentor(BaseInstrumentor):
                 unit="s",
                 description="Duration of chat completion operation",
             )
-
+            
+            # Adding Price Metric
+            chat_price_counter = meter.create_counter(
+                name="llm.open.ai.chat_completions.price",
+                unit="cost", # dollar?
+                description="Total cost of chat completions",
+            )
+            
             chat_exception_counter = meter.create_counter(
                 name="llm.openai.chat_completions.exceptions",
                 unit="time",
@@ -83,6 +91,8 @@ class OpenAIV1Instrumentor(BaseInstrumentor):
                 unit="s",
                 description="Time between first token and completion in streaming chat completions",
             )
+            
+            
         else:
             (
                 chat_token_counter,
@@ -91,7 +101,8 @@ class OpenAIV1Instrumentor(BaseInstrumentor):
                 chat_exception_counter,
                 streaming_time_to_first_token,
                 streaming_time_to_generate,
-            ) = (None, None, None, None, None, None)
+                chat_price_counter,
+            ) = (None, None, None, None, None, None, None)
 
         wrap_function_wrapper(
             "openai.resources.chat.completions",
@@ -100,6 +111,7 @@ class OpenAIV1Instrumentor(BaseInstrumentor):
                 tracer,
                 chat_token_counter,
                 chat_choice_counter,
+                chat_price_counter,
                 chat_duration_histogram,
                 chat_exception_counter,
                 streaming_time_to_first_token,

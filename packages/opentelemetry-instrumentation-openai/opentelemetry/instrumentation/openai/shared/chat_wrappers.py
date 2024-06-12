@@ -43,6 +43,7 @@ def chat_wrapper(
     tracer: Tracer,
     token_counter: Counter,
     choice_counter: Counter,
+    cost_counter: Counter,
     duration_histogram: Histogram,
     exception_counter: Counter,
     streaming_time_to_first_token: Histogram,
@@ -90,6 +91,7 @@ def chat_wrapper(
             response,
             instance,
             token_counter,
+            cost_counter,
             choice_counter,
             duration_histogram,
             streaming_time_to_first_token,
@@ -119,6 +121,7 @@ async def achat_wrapper(
     tracer: Tracer,
     token_counter: Counter,
     choice_counter: Counter,
+    cost_counter: Counter,
     duration_histogram: Histogram,
     exception_counter: Counter,
     streaming_time_to_first_token: Histogram,
@@ -165,6 +168,7 @@ async def achat_wrapper(
             instance,
             token_counter,
             choice_counter,
+            cost_counter,
             duration_histogram,
             streaming_time_to_first_token,
             streaming_time_to_generate,
@@ -180,6 +184,7 @@ async def achat_wrapper(
         instance,
         token_counter,
         choice_counter,
+        cost_counter,
         duration_histogram,
         duration,
     )
@@ -207,6 +212,7 @@ def _handle_response(
     instance=None,
     token_counter=None,
     choice_counter=None,
+    cost_counter=None,
     duration_histogram=None,
     duration=None,
 ):
@@ -220,6 +226,7 @@ def _handle_response(
         instance,
         token_counter,
         choice_counter,
+        cost_counter,
         duration_histogram,
         response_dict,
         duration,
@@ -235,8 +242,9 @@ def _handle_response(
 
 
 def _set_chat_metrics(
-    instance, token_counter, choice_counter, duration_histogram, response_dict, duration
+    instance, token_counter, choice_counter, cost_counter, duration_histogram, response_dict, duration
 ):
+    
     shared_attributes = {
         "gen_ai.response.model": response_dict.get("model") or None,
         "server.address": _get_openai_base_url(instance),
@@ -244,6 +252,7 @@ def _set_chat_metrics(
 
     # token metrics
     usage = response_dict.get("usage")  # type: dict
+    
     if usage and token_counter:
         _set_token_counter_metrics(token_counter, usage, shared_attributes)
 
@@ -252,6 +261,10 @@ def _set_chat_metrics(
     if choices and choice_counter:
         _set_choice_counter_metrics(choice_counter, choices, shared_attributes)
 
+    #cost metrics
+    if usage and cost_counter:
+        _set_cost_counter_metrics(cost_counter, usage, shared_attributes)
+        
     # duration metrics
     if duration and isinstance(duration, (float, int)) and duration_histogram:
         duration_histogram.record(duration, attributes=shared_attributes)
@@ -276,6 +289,36 @@ def _set_token_counter_metrics(token_counter, usage, shared_attributes):
             }
             token_counter.add(val, attributes=attributes_with_token_type)
 
+#CHANGES
+# constants per thousand tokens
+INPUT_COST_PER_MODEL = {
+    "gpt-4o": 0.005,
+    "gpt-4-turbo": 0.01,
+    "gpt-4": 0.03,
+    "gpt-3.5-turbo-0125": 0.0005,
+    
+}
+
+OUTPUT_COST_PER_MODEL = {
+    "gpt-4o": 0.015,
+    "gpt-4-turbo": 0.03,
+    "gpt-4": 0.06,
+    "gpt-3.5-turbo-0125": 0.0015,
+    
+}
+
+
+def _set_cost_counter_metrics(cost_counter, usage, shared_attributes):
+    for name, val in usage.items():
+        model_name = shared_attributes["gen_ai.response.model"]
+        attributes_with_cost_model = {
+                **shared_attributes,
+                "llm.usage.model": model_name,
+        }
+        
+        cost_val = INPUT_COST_PER_MODEL[model_name] * (val / 1000.0)
+        
+        cost_counter.add(cost_val, attributes=attributes_with_cost_model)
 
 def _set_prompts(span, messages):
     if not span.is_recording() or messages is None:
@@ -339,9 +382,8 @@ def _set_completions(span, choices):
                 tool_calls[0].get("function").get("arguments"),
             )
 
-
 def _set_streaming_token_metrics(
-    request_kwargs, complete_response, span, token_counter, shared_attributes
+    request_kwargs, complete_response, span, token_counter, cost_counter, shared_attributes
 ):
     # use tiktoken calculate token usage
     if not should_record_stream_token_usage():
@@ -380,12 +422,14 @@ def _set_streaming_token_metrics(
 
     # metrics record
     if token_counter:
+        cost_val = 0.0
         if type(prompt_usage) is int and prompt_usage >= 0:
             attributes_with_token_type = {
                 **shared_attributes,
                 "llm.usage.token_type": "prompt",
             }
             token_counter.add(prompt_usage, attributes=attributes_with_token_type)
+            cost_val += (prompt_usage/1000.0) * INPUT_COST_PER_MODEL[model_name]
 
         if type(completion_usage) is int and completion_usage >= 0:
             attributes_with_token_type = {
@@ -393,7 +437,16 @@ def _set_streaming_token_metrics(
                 "llm.usage.token_type": "completion",
             }
             token_counter.add(completion_usage, attributes=attributes_with_token_type)
-
+            cost_val += (completion_usage/1000.0) * OUTPUT_COST_PER_MODEL[model_name]
+        
+        attributes_with_cost_model = {
+                **shared_attributes,
+                "llm.usage.model": model_name,
+            }
+        
+        # adding cost CHANGES
+        cost_counter.add(cost_val, attributes=attributes_with_cost_model)
+    
 
 @dont_throw
 def _build_from_streaming_response(

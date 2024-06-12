@@ -157,7 +157,8 @@ def _set_response_attributes(span, response):
     _set_span_attribute(
         span, SpanAttributes.LLM_USAGE_PROMPT_TOKENS, usage.get("prompt_tokens")
     )
-
+    
+    
     return
 
 

@@ -5,7 +5,6 @@ from traceloop.sdk.decorators import workflow
 
 Traceloop.init()
 
-
 @workflow(name="pirate_joke_streaming_generator")
 def joke_workflow():
     anthropic = Anthropic()
