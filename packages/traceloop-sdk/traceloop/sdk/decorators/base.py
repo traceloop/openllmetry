@@ -39,7 +39,7 @@ def entity_method(
             with get_tracer() as tracer:
                 span = tracer.start_span(span_name)
                 ctx = trace.set_span_in_context(span)
-                context_api.attach(ctx)
+                ctx_token = context_api.attach(ctx)
 
                 if tlp_span_kind in [
                     TraceloopSpanKindValues.TASK,
@@ -70,7 +70,7 @@ def entity_method(
 
                 # span will be ended in the generator
                 if isinstance(res, types.GeneratorType):
-                    return _handle_generator(span, fn, args, kwargs)
+                    return _handle_generator(span, ctx_token, fn, args, kwargs)
 
                 try:
                     if _should_send_prompts():
@@ -81,6 +81,7 @@ def entity_method(
                     Telemetry().log_exception(e)
 
                 span.end()
+                context_api.detach(ctx_token)
 
                 return res
 
@@ -126,36 +127,41 @@ def aentity_method(
                 else f"{fn.__name__}.{tlp_span_kind.value}"
             )
             with get_tracer() as tracer:
-                with tracer.start_as_current_span(span_name) as span:
-                    span.set_attribute(
-                        SpanAttributes.TRACELOOP_SPAN_KIND, tlp_span_kind.value
-                    )
-                    span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, name)
+                span = tracer.start_span(span_name)
+                ctx = trace.set_span_in_context(span)
+                ctx_token = context_api.attach(ctx)
+                span.set_attribute(
+                    SpanAttributes.TRACELOOP_SPAN_KIND, tlp_span_kind.value
+                )
+                span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, name)
 
-                    try:
-                        if _should_send_prompts():
-                            span.set_attribute(
-                                SpanAttributes.TRACELOOP_ENTITY_INPUT,
-                                json.dumps({"args": args, "kwargs": kwargs}),
-                            )
-                    except TypeError as e:
-                        Telemetry().log_exception(e)
+                try:
+                    if _should_send_prompts():
+                        span.set_attribute(
+                            SpanAttributes.TRACELOOP_ENTITY_INPUT,
+                            json.dumps({"args": args, "kwargs": kwargs}),
+                        )
+                except TypeError as e:
+                    Telemetry().log_exception(e)
 
-                    res = await fn(*args, **kwargs)
+                res = await fn(*args, **kwargs)
 
-                    # span will be ended in the generator
-                    if isinstance(res, types.AsyncGeneratorType):
-                        return await _ahandle_generator(span, fn, args, kwargs)
+                # span will be ended in the generator
+                if isinstance(res, types.AsyncGeneratorType):
+                    return await _ahandle_generator(span, ctx_token, fn, args, kwargs)
 
-                    try:
-                        if _should_send_prompts():
-                            span.set_attribute(
-                                SpanAttributes.TRACELOOP_ENTITY_OUTPUT, json.dumps(res)
-                            )
-                    except TypeError as e:
-                        Telemetry().log_exception(e)
+                try:
+                    if _should_send_prompts():
+                        span.set_attribute(
+                            SpanAttributes.TRACELOOP_ENTITY_OUTPUT, json.dumps(res)
+                        )
+                except TypeError as e:
+                    Telemetry().log_exception(e)
 
-                    return res
+                span.end()
+                context_api.detach(ctx_token)
+
+                return res
 
         return wrap
 
@@ -180,18 +186,20 @@ def aentity_class(
     return decorator
 
 
-def _handle_generator(span, fn, args, kwargs):
+def _handle_generator(span, ctx_token, fn, args, kwargs):
     for part in fn(*args, **kwargs):
         yield part
 
     span.end()
+    context_api.detach(ctx_token)
 
 
-async def _ahandle_generator(span, fn, args, kwargs):
+async def _ahandle_generator(span, ctx_token, fn, args, kwargs):
     async for part in fn(*args, **kwargs):
         yield part
 
     span.end()
+    context_api.detach(ctx_token)
 
 
 def _should_send_prompts():
