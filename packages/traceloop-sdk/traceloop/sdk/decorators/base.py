@@ -70,7 +70,7 @@ def entity_method(
 
                 # span will be ended in the generator
                 if isinstance(res, types.GeneratorType):
-                    return _handle_generator(span, ctx_token, fn, args, kwargs)
+                    return _handle_generator(span, ctx_token, res)
 
                 try:
                     if _should_send_prompts():
@@ -148,7 +148,7 @@ def aentity_method(
 
                 # span will be ended in the generator
                 if isinstance(res, types.AsyncGeneratorType):
-                    return await _ahandle_generator(span, ctx_token, fn, args, kwargs)
+                    return await _ahandle_generator(span, ctx_token, res)
 
                 try:
                     if _should_send_prompts():
@@ -186,16 +186,16 @@ def aentity_class(
     return decorator
 
 
-def _handle_generator(span, ctx_token, fn, args, kwargs):
-    for part in fn(*args, **kwargs):
+def _handle_generator(span, ctx_token, res):
+    for part in res:
         yield part
 
     span.end()
     context_api.detach(ctx_token)
 
 
-async def _ahandle_generator(span, ctx_token, fn, args, kwargs):
-    async for part in fn(*args, **kwargs):
+async def _ahandle_generator(span, ctx_token, res):
+    async for part in res:
         yield part
 
     span.end()
