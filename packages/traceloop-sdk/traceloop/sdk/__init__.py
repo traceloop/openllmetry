@@ -1,6 +1,5 @@
 import os
 import sys
-import requests
 from pathlib import Path
 
 from typing import Optional, Set
