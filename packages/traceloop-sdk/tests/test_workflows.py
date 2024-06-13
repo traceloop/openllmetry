@@ -55,8 +55,8 @@ def test_simple_workflow(exporter, openai_client):
 @pytest.mark.vcr
 def test_streaming_workflow(exporter, openai_client):
 
-    @workflow(name="pirate_joke_generator")
-    def joke_workflow():
+    @task(name="pirate_joke_generator")
+    def joke_task():
         response_stream = openai_client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[
@@ -67,24 +67,39 @@ def test_streaming_workflow(exporter, openai_client):
         for chunk in response_stream:
             yield chunk
 
-    joke_stream = joke_workflow()
-    for _ in joke_stream:
-        pass
+    @task(name="joke_runner")
+    def joke_runner():
+        res = joke_task()
+        return res
+
+    @workflow(name="joke_manager")
+    def joke_workflow():
+        res = joke_runner()
+        for chunk in res:
+            pass
+
+    joke_workflow()
 
     spans = exporter.get_finished_spans()
     assert set([span.name for span in spans]) == set(
         [
             "openai.chat",
-            "pirate_joke_generator.workflow",
+            "pirate_joke_generator.task",
+            "joke_runner.task",
+            "joke_manager.workflow",
         ]
     )
-    workflow_span = next(
-        span for span in spans if span.name == "pirate_joke_generator.workflow"
+    generator_span = next(
+        span for span in spans if span.name == "pirate_joke_generator.task"
     )
+    runner_span = next(span for span in spans if span.name == "joke_runner.task")
+    manager_span = next(span for span in spans if span.name == "joke_manager.workflow")
     openai_span = next(span for span in spans if span.name == "openai.chat")
 
-    assert openai_span.parent.span_id == workflow_span.context.span_id
-    assert openai_span.end_time <= workflow_span.end_time
+    assert openai_span.parent.span_id == generator_span.context.span_id
+    assert generator_span.parent.span_id == runner_span.context.span_id
+    assert runner_span.parent.span_id == manager_span.context.span_id
+    assert openai_span.end_time <= manager_span.end_time
 
 
 def test_unrelated_entities(exporter):
