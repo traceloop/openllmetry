@@ -327,16 +327,9 @@ class TracerWrapper(object):
         if entity_name is not None:
             span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, entity_name)
 
-        correlation_id = get_value("correlation_id")
-        if correlation_id is not None:
-            span.set_attribute(SpanAttributes.TRACELOOP_CORRELATION_ID, correlation_id)
-
         association_properties = get_value("association_properties")
         if association_properties is not None:
-            for key, value in association_properties.items():
-                span.set_attribute(
-                    f"{SpanAttributes.TRACELOOP_ASSOCIATION_PROPERTIES}.{key}", value
-                )
+            _set_association_properties_attributes(span, association_properties)
 
             if not self.enable_content_tracing:
                 if self.__content_allow_list.is_allowed(association_properties):
@@ -408,6 +401,18 @@ class TracerWrapper(object):
 
 def set_association_properties(properties: dict) -> None:
     attach(set_value("association_properties", properties))
+
+    # Attach association properties to the current span, if it's a workflow or a task
+    span = trace.get_current_span()
+    if get_value("workflow_name") is not None or get_value("entity_name") is not None:
+        _set_association_properties_attributes(span, properties)
+
+
+def _set_association_properties_attributes(span, properties: dict) -> None:
+    for key, value in properties.items():
+        span.set_attribute(
+            f"{SpanAttributes.TRACELOOP_ASSOCIATION_PROPERTIES}.{key}", value
+        )
 
 
 def set_workflow_name(workflow_name: str) -> None:
