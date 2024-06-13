@@ -1,3 +1,11 @@
+## v0.22.1 (2024-06-13)
+
+### Fix
+
+- **sdk**: backpropagate association property to nearest workflow/task (#1300)
+- **sdk**: clear context when @workflow or @task is ending (#1301)
+- **bedrock**: utilize invocation metrics from response body for AI21, Anthropic, Meta models when available to record usage on spans (#1286)
+
 ## v0.22.0 (2024-06-10)
 
 ### Feat
