@@ -1,9 +1,7 @@
-import pytest
 from opentelemetry.semconv.ai import SpanAttributes
 from traceloop.sdk.decorators import task, workflow
 
 
-@pytest.mark.vcr
 def test_nested_tasks(exporter):
     @workflow(name="some_workflow")
     def some_workflow():
