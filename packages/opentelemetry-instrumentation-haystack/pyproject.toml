@@ -36,7 +36,7 @@ pytest = "^8.2.2"
 pytest-sugar = "1.0.0"
 
 [tool.poetry.group.test.dependencies]
-haystack-ai = ">=2.0,<2.2"
+haystack-ai = ">=2.0,<2.3"
 pytest = "^8.2.2"
 pytest-sugar = "1.0.0"
 vcrpy = "^6.0.1"
