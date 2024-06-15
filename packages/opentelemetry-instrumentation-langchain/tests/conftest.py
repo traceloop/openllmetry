@@ -40,6 +40,8 @@ def environment():
         os.environ["OPENAI_API_KEY"] = "test_api_key"
     if not os.environ.get("ANTHROPIC_API_KEY"):
         os.environ["ANTHROPIC_API_KEY"] = "test"
+    if not os.environ.get("COHERE_API_KEY"):
+        os.environ["COHERE_API_KEY"] = "test"
 
 
 @pytest.fixture(scope="module")

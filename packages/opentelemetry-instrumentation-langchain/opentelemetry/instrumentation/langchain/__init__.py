@@ -38,14 +38,20 @@ _instruments = ("langchain >= 0.0.346", "langchain-core > 0.1.0")
 
 WRAPPED_METHODS = [
     {
+        "package": "langchain.chains.base",
+        "class": "Chain",
+        "is_callback": True,
+        "kind": TraceloopSpanKindValues.TASK.value,
+    },
+    {
         "package": "langchain.chains.llm",
         "class": "LLMChain",
         "is_callback": True,
         "kind": TraceloopSpanKindValues.TASK.value,
     },
     {
-        "package": "langchain.chains.base",
-        "class": "Chain",
+        "package": "langchain.chains.combine_documents.stuff",
+        "class": "StuffDocumentsChain",
         "is_callback": True,
         "kind": TraceloopSpanKindValues.TASK.value,
     },
