@@ -1,7 +1,10 @@
+import json
+
 import pytest
-from langchain.prompts import PromptTemplate
 from langchain.chains import SequentialChain, LLMChain
+from langchain.prompts import PromptTemplate
 from langchain_openai import OpenAI
+from opentelemetry.semconv.ai import SpanAttributes
 
 
 @pytest.mark.vcr
@@ -48,6 +51,27 @@ def test_sequential_chain(exporter):
         "SequentialChain.langchain.workflow",
     ] == [span.name for span in spans]
 
+    synopsis_span, review_span = [span for span in spans if span.name == "LLMChain.langchain.task"]
+
+    data = json.loads(synopsis_span.attributes[SpanAttributes.TRACELOOP_ENTITY_INPUT])
+    assert data["inputs"] == {'title': 'Tragedy at sunset on the beach', 'era': 'Victorian England'}
+    assert data["kwargs"]["name"] == "LLMChain"
+    data = json.loads(synopsis_span.attributes[SpanAttributes.TRACELOOP_ENTITY_OUTPUT])
+    assert data["outputs"].keys() == {"synopsis", }
+
+    data = json.loads(review_span.attributes[SpanAttributes.TRACELOOP_ENTITY_INPUT])
+    assert data["inputs"].keys() == {"title", "era", "synopsis"}
+    assert data["kwargs"]["name"] == "LLMChain"
+    data = json.loads(review_span.attributes[SpanAttributes.TRACELOOP_ENTITY_OUTPUT])
+    assert data["outputs"].keys() == {"review", }
+
+    overall_span = next(span for span in spans if span.name == "SequentialChain.langchain.workflow")
+    data = json.loads(overall_span.attributes[SpanAttributes.TRACELOOP_ENTITY_INPUT])
+    assert data["inputs"] == {'title': 'Tragedy at sunset on the beach', 'era': 'Victorian England'}
+    assert data["kwargs"]["name"] == "SequentialChain"
+    data = json.loads(overall_span.attributes[SpanAttributes.TRACELOOP_ENTITY_OUTPUT])
+    assert data["outputs"].keys() == {"synopsis", "review"}
+
 
 @pytest.mark.vcr
 @pytest.mark.asyncio
@@ -93,3 +117,24 @@ async def test_asequential_chain(exporter):
         "LLMChain.langchain.task",
         "SequentialChain.langchain.workflow",
     ] == [span.name for span in spans]
+
+    synopsis_span, review_span = [span for span in spans if span.name == "LLMChain.langchain.task"]
+
+    data = json.loads(synopsis_span.attributes[SpanAttributes.TRACELOOP_ENTITY_INPUT])
+    assert data["inputs"] == {'title': 'Tragedy at sunset on the beach', 'era': 'Victorian England'}
+    assert data["kwargs"]["name"] == "LLMChain"
+    data = json.loads(synopsis_span.attributes[SpanAttributes.TRACELOOP_ENTITY_OUTPUT])
+    assert data["outputs"].keys() == {"synopsis", }
+
+    data = json.loads(review_span.attributes[SpanAttributes.TRACELOOP_ENTITY_INPUT])
+    assert data["inputs"].keys() == {"title", "era", "synopsis"}
+    assert data["kwargs"]["name"] == "LLMChain"
+    data = json.loads(review_span.attributes[SpanAttributes.TRACELOOP_ENTITY_OUTPUT])
+    assert data["outputs"].keys() == {"review", }
+
+    overall_span = next(span for span in spans if span.name == "SequentialChain.langchain.workflow")
+    data = json.loads(overall_span.attributes[SpanAttributes.TRACELOOP_ENTITY_INPUT])
+    assert data["inputs"] == {'title': 'Tragedy at sunset on the beach', 'era': 'Victorian England'}
+    assert data["kwargs"]["name"] == "SequentialChain"
+    data = json.loads(overall_span.attributes[SpanAttributes.TRACELOOP_ENTITY_OUTPUT])
+    assert data["outputs"].keys() == {"synopsis", "review"}
