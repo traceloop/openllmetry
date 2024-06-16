@@ -36,7 +36,7 @@ def test_sequential_chain(exporter):
     small_docs = CharacterTextSplitter().create_documents(texts=[INPUT_TEXT, ])
     llm = ChatCohere(model="command", temperature=0.75)
     chain = load_summarize_chain(llm, chain_type="stuff")
-    chain.run(small_docs)
+    chain.invoke(small_docs)
 
     spans = exporter.get_finished_spans()
 

@@ -44,18 +44,6 @@ WRAPPED_METHODS = [
         "kind": TraceloopSpanKindValues.TASK.value,
     },
     {
-        "package": "langchain.chains.llm",
-        "class": "LLMChain",
-        "is_callback": True,
-        "kind": TraceloopSpanKindValues.TASK.value,
-    },
-    {
-        "package": "langchain.chains.combine_documents.stuff",
-        "class": "StuffDocumentsChain",
-        "is_callback": True,
-        "kind": TraceloopSpanKindValues.TASK.value,
-    },
-    {
         "package": "langchain.chains",
         "class": "SequentialChain",
         "is_callback": True,
@@ -177,7 +165,7 @@ class LangchainInstrumentor(BaseInstrumentor):
                 wrap_class = wrapped_method.get("class")
                 wrap_function_wrapper(
                     wrap_package,
-                    f"{wrap_class}.__init__",
+                    f"{wrap_class}.invoke",
                     callback_wrapper(tracer, wrapped_method),
                 )
             else:
