@@ -30,6 +30,8 @@ from opentelemetry.instrumentation.langchain.version import __version__
 
 from opentelemetry.semconv.ai import TraceloopSpanKindValues
 
+from opentelemetry.instrumentation.langchain.callback_wrapper import callback_wrapper
+
 logger = logging.getLogger(__name__)
 
 _instruments = ("langchain >= 0.0.346", "langchain-core > 0.1.0")
@@ -37,29 +39,27 @@ _instruments = ("langchain >= 0.0.346", "langchain-core > 0.1.0")
 WRAPPED_METHODS = [
     {
         "package": "langchain.chains.base",
-        "object": "Chain",
-        "method": "__call__",
-        "wrapper": task_wrapper,
+        "class": "Chain",
+        "is_callback": True,
+        "kind": TraceloopSpanKindValues.TASK.value,
     },
     {
-        "package": "langchain.chains.base",
-        "object": "Chain",
-        "method": "acall",
-        "wrapper": atask_wrapper,
+        "package": "langchain.chains.llm",
+        "class": "LLMChain",
+        "is_callback": True,
+        "kind": TraceloopSpanKindValues.TASK.value,
+    },
+    {
+        "package": "langchain.chains.combine_documents.stuff",
+        "class": "StuffDocumentsChain",
+        "is_callback": True,
+        "kind": TraceloopSpanKindValues.TASK.value,
     },
     {
         "package": "langchain.chains",
-        "object": "SequentialChain",
-        "method": "__call__",
-        "span_name": "langchain.workflow",
-        "wrapper": workflow_wrapper,
-    },
-    {
-        "package": "langchain.chains",
-        "object": "SequentialChain",
-        "method": "acall",
-        "span_name": "langchain.workflow",
-        "wrapper": aworkflow_wrapper,
+        "class": "SequentialChain",
+        "is_callback": True,
+        "kind": TraceloopSpanKindValues.WORKFLOW.value,
     },
     {
         "package": "langchain.agents",
@@ -173,21 +173,33 @@ class LangchainInstrumentor(BaseInstrumentor):
         tracer = get_tracer(__name__, __version__, tracer_provider)
         for wrapped_method in WRAPPED_METHODS:
             wrap_package = wrapped_method.get("package")
-            wrap_object = wrapped_method.get("object")
-            wrap_method = wrapped_method.get("method")
-            wrapper = wrapped_method.get("wrapper")
-            wrap_function_wrapper(
-                wrap_package,
-                f"{wrap_object}.{wrap_method}" if wrap_object else wrap_method,
-                wrapper(tracer, wrapped_method),
-            )
+            if wrapped_method.get("is_callback"):
+                wrap_class = wrapped_method.get("class")
+                wrap_function_wrapper(
+                    wrap_package,
+                    f"{wrap_class}.__init__",
+                    callback_wrapper(tracer, wrapped_method),
+                )
+            else:
+                wrap_object = wrapped_method.get("object")
+                wrap_method = wrapped_method.get("method")
+                wrapper = wrapped_method.get("wrapper")
+                wrap_function_wrapper(
+                    wrap_package,
+                    f"{wrap_object}.{wrap_method}" if wrap_object else wrap_method,
+                    wrapper(tracer, wrapped_method),
+                )
 
     def _uninstrument(self, **kwargs):
         for wrapped_method in WRAPPED_METHODS:
             wrap_package = wrapped_method.get("package")
-            wrap_object = wrapped_method.get("object")
-            wrap_method = wrapped_method.get("method")
-            unwrap(
-                f"{wrap_package}.{wrap_object}" if wrap_object else wrap_package,
-                wrap_method,
-            )
+            if wrapped_method.get("is_callback"):
+                wrap_class = wrapped_method.get("class")
+                unwrap(wrap_package, f"{wrap_class}.__init__")
+            else:
+                wrap_object = wrapped_method.get("object")
+                wrap_method = wrapped_method.get("method")
+                unwrap(
+                    f"{wrap_package}.{wrap_object}" if wrap_object else wrap_package,
+                    wrap_method,
+                )
