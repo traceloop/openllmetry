@@ -67,7 +67,5 @@ def joke_workflow():
     signature = generate_signature(pirate_joke)
     print(pirate_joke + "\n\n" + signature)
 
-    # Traceloop.report_score("chat_id", "chat_1234", 1)
-
 
 joke_workflow()
