@@ -19,8 +19,8 @@ def test_task_io_serialization_with_langchain(exporter, openai_client):
         chat = ChatOpenAI(temperature=0)
 
         return chat.invoke("Is Berlin the capital of Germany? Answer with yes or no")
-    
-    result = answer_question()
+
+    answer_question()
 
     spans = exporter.get_finished_spans()
 
@@ -32,4 +32,3 @@ def test_task_io_serialization_with_langchain(exporter, openai_client):
 
     task_span = next(span for span in spans if span.name == 'answer_question.task')
     assert (json.loads(task_span.attributes.get(SpanAttributes.TRACELOOP_ENTITY_OUTPUT))["kwargs"]["content"] == "Yes")
-
