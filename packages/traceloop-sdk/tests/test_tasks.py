@@ -2,18 +2,12 @@ import json
 import pytest
 
 from langchain_openai import ChatOpenAI
-from openai import OpenAI
 from traceloop.sdk.decorators import task
 from opentelemetry.semconv.ai import SpanAttributes
 
 
-@pytest.fixture
-def openai_client():
-    return OpenAI()
-
-
 @pytest.mark.vcr
-def test_task_io_serialization_with_langchain(exporter, openai_client):
+def test_task_io_serialization_with_langchain(exporter):
     @task(name="answer_question")
     def answer_question():
         chat = ChatOpenAI(temperature=0)
