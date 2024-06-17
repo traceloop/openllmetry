@@ -1,3 +1,14 @@
+## v0.23.0 (2024-06-17)
+
+### Feat
+
+- **langchain**: use callbacks (#1170)
+
+### Fix
+
+- input/output serialization issue for langchain (#1341)
+- **sdk**: remove auto-create dashboard option (#1315)
+
 ## v0.22.1 (2024-06-13)
 
 ### Fix
