@@ -18,12 +18,11 @@ def test_task_io_serialization_with_langchain(exporter):
 
     spans = exporter.get_finished_spans()
 
-    # assert that [span.name for span in spans] and ['openai.chat', 'ChatOpenAI.langchain.task', 'answer_question.task'] has the same elements
-    assert set([
+    assert [span.name for span in spans] == [
         'openai.chat',
         'ChatOpenAI.langchain.task',
         'answer_question.task',
-    ]).issubset(set([span.name for span in spans])) 
+    ]
 
     task_span = next(span for span in spans if span.name == 'answer_question.task')
     assert (json.loads(task_span.attributes.get(SpanAttributes.TRACELOOP_ENTITY_OUTPUT))["kwargs"]["content"] == "Yes")
