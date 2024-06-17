@@ -1,0 +1,96 @@
+interactions:
+- request:
+    body: '{"messages": [{"content": "Is Berlin the capital of Germany? Answer with
+      yes or no", "role": "user"}], "model": "gpt-3.5-turbo", "n": 1, "stream": false,
+      "temperature": 0.0}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '173'
+      content-type:
+      - application/json
+      host:
+      - api.openai.com
+      user-agent:
+      - OpenAI/Python 1.34.0
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.34.0
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.11.8
+    method: POST
+    uri: https://api.openai.com/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA1SQwU7DMBBE7/kKa89NlbQUSM4cEBIHkBBCCFWOs03c2l7L3kKrqv+OnKYtXHyY
+        yRs/55AJAbqFWoDqJSvrTV41lVxsXu2+/3l/WnPXPM7c88Pu++3FFB4miaBmjYrP1FSR9QZZkzvV
+        KqBkTKvlXXl/e1NW1XwoLLVoEtZ5zufTRc7b0FBelLPFSPakFUaoxWcmhBCH4UyOrsUd1KKYnBOL
+        McoOob58JAQEMikBGaOOLB3D5Foqcoxu0P7ACGNxvCwa6nygJt3utsZc8pV2OvbLgDKSS3Rk8if8
+        mAnxNZhv/8mAD2Q9L5k26NJgWZ3m4Pqv/pRjx8TSXONZkY16EPeR0S5X2nUYfNDDK5Jkdsx+AQAA
+        //8DADUcug7EAQAA
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 895470a76dd909c7-HFA
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 17 Jun 2024 16:33:13 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=_WUNHNJOWGm.dBi41lPSJK2ObJiMKL4HEdwzqDJ_esw-1718641993-1.0.1.1-y4ao_ZUSDjNP.gbGCjNuj8Nzy0kdXWW4bFgPR5ZLrffCaRiTM4nZJW6DikTeLRW3zecQVmGAXpvYmT3tJraFCg;
+        path=/; expires=Mon, 17-Jun-24 17:03:13 GMT; domain=.api.openai.com; HttpOnly;
+        Secure; SameSite=None
+      - _cfuvid=ypN3pq5b0gb4Nhr3OBPoB2h1Fh2X0zPUz8MIKdYfL1I-1718641993367-0.0.1.1-604800000;
+        path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
+      Transfer-Encoding:
+      - chunked
+      alt-svc:
+      - h3=":443"; ma=86400
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '106'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=15724800; includeSubDomains
+      x-ratelimit-limit-requests:
+      - '5000'
+      x-ratelimit-limit-tokens:
+      - '160000'
+      x-ratelimit-remaining-requests:
+      - '4999'
+      x-ratelimit-remaining-tokens:
+      - '159969'
+      x-ratelimit-reset-requests:
+      - 12ms
+      x-ratelimit-reset-tokens:
+      - 11ms
+      x-request-id:
+      - req_1fc1e3da4392055bcf966644e321869d
+    status:
+      code: 200
+      message: OK
+version: 1
