@@ -16,6 +16,7 @@ from traceloop.sdk.tracing.tracing import (
     get_chained_entity_name,
 )
 from traceloop.sdk.utils import camel_to_snake
+from traceloop.sdk.utils.json_encoder import JSONEncoder
 
 
 def entity_method(
@@ -61,7 +62,7 @@ def entity_method(
                     if _should_send_prompts():
                         span.set_attribute(
                             SpanAttributes.TRACELOOP_ENTITY_INPUT,
-                            json.dumps({"args": args, "kwargs": kwargs}),
+                            json.dumps({"args": args, "kwargs": kwargs}, cls=JSONEncoder),
                         )
                 except TypeError as e:
                     Telemetry().log_exception(e)
@@ -75,7 +76,7 @@ def entity_method(
                 try:
                     if _should_send_prompts():
                         span.set_attribute(
-                            SpanAttributes.TRACELOOP_ENTITY_OUTPUT, json.dumps(res)
+                            SpanAttributes.TRACELOOP_ENTITY_OUTPUT, json.dumps(res, cls=JSONEncoder)
                         )
                 except TypeError as e:
                     Telemetry().log_exception(e)
