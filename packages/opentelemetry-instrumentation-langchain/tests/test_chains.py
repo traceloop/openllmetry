@@ -37,7 +37,7 @@ def test_sequential_chain(exporter):
         output_variables=["synopsis", "review"],
         verbose=True,
     )
-    overall_chain(
+    overall_chain.invoke(
         {"title": "Tragedy at sunset on the beach", "era": "Victorian England"}
     )
 

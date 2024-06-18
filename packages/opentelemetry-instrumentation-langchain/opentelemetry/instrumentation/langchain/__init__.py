@@ -168,6 +168,11 @@ class LangchainInstrumentor(BaseInstrumentor):
                     f"{wrap_class}.invoke",
                     callback_wrapper(tracer, wrapped_method),
                 )
+                wrap_function_wrapper(
+                    wrap_package,
+                    f"{wrap_class}.ainvoke",
+                    callback_wrapper(tracer, wrapped_method),
+                )
             else:
                 wrap_object = wrapped_method.get("object")
                 wrap_method = wrapped_method.get("method")
