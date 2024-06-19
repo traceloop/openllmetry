@@ -20,7 +20,7 @@ from opentelemetry.instrumentation.google_generativeai.version import __version_
 
 logger = logging.getLogger(__name__)
 
-_instruments = ("google-generativeai >= 0.6.0",)
+_instruments = ("google-generativeai >= 0.5.0",)
 
 WRAPPED_METHODS = [
     {
