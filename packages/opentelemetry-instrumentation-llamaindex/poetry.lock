@@ -1436,19 +1436,19 @@ adal = ["adal (>=1.0.2)"]
 
 [[package]]
 name = "llama-index"
-version = "0.10.43"
+version = "0.10.46"
 description = "Interface between LLMs and your data"
 optional = false
 python-versions = "<4.0,>=3.8.1"
 files = [
-    {file = "llama_index-0.10.43-py3-none-any.whl", hash = "sha256:a79041a93570e10b21f370d04895fdc9a62e25159d7f2fc0d34feba927db501c"},
-    {file = "llama_index-0.10.43.tar.gz", hash = "sha256:8f87ef3e7234688bc6e15f952a44d2034af7e8dd4ac71aeb441c25503a4dac7f"},
+    {file = "llama_index-0.10.46-py3-none-any.whl", hash = "sha256:2adb116a8c67b1d8688277dff1559390a3e070ad684d5d0912bd475ab0df6bb6"},
+    {file = "llama_index-0.10.46.tar.gz", hash = "sha256:a02957143158d09e6f8bb128a5362578c925161fcf3dffcb226d485f2f529209"},
 ]
 
 [package.dependencies]
 llama-index-agent-openai = ">=0.1.4,<0.3.0"
 llama-index-cli = ">=0.1.2,<0.2.0"
-llama-index-core = "0.10.43"
+llama-index-core = "0.10.46"
 llama-index-embeddings-openai = ">=0.1.5,<0.2.0"
 llama-index-indices-managed-llama-cloud = ">=0.1.2,<0.2.0"
 llama-index-legacy = ">=0.9.48,<0.10.0"
@@ -1493,13 +1493,13 @@ llama-index-llms-openai = ">=0.1.1,<0.2.0"
 
 [[package]]
 name = "llama-index-core"
-version = "0.10.43"
+version = "0.10.46"
 description = "Interface between LLMs and your data"
 optional = false
 python-versions = "<4.0,>=3.8.1"
 files = [
-    {file = "llama_index_core-0.10.43-py3-none-any.whl", hash = "sha256:355a5f7808dfa09dc27b6bd564926fa697e0279344b829732a9f91b8000157ac"},
-    {file = "llama_index_core-0.10.43.tar.gz", hash = "sha256:c7dce5158e112d3cbc8d331c303e830b2eabcae55c9636e8050dc85320522c1b"},
+    {file = "llama_index_core-0.10.46-py3-none-any.whl", hash = "sha256:403acc4a6139a8228b686a3a5051bdc09699243c1689668a5755e2be7affda5c"},
+    {file = "llama_index_core-0.10.46.tar.gz", hash = "sha256:6c38467fc6974d316a22afa4214e610636cbec16fcb7b065e3f011fef35bb75f"},
 ]
 
 [package.dependencies]
@@ -1513,14 +1513,14 @@ llamaindex-py-client = ">=0.1.18,<0.2.0"
 nest-asyncio = ">=1.5.8,<2.0.0"
 networkx = ">=3.0"
 nltk = ">=3.8.1,<4.0.0"
-numpy = "*"
+numpy = "<2.0.0"
 openai = ">=1.1.0"
 pandas = "*"
 pillow = ">=9.0.0"
 PyYAML = ">=6.0.1"
 requests = ">=2.31.0"
 SQLAlchemy = {version = ">=1.4.49", extras = ["asyncio"]}
-tenacity = ">=8.2.0,<9.0.0"
+tenacity = ">=8.2.0,<8.4.0"
 tiktoken = ">=0.3.3"
 tqdm = ">=4.66.1,<5.0.0"
 typing-extensions = ">=4.5.0"
