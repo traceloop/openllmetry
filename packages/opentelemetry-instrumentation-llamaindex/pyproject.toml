@@ -39,16 +39,16 @@ vcrpy = "^6.0.1"
 pytest-recording = "^0.13.1"
 pytest-asyncio = "^0.23.7"
 chromadb = ">=0.4.22,<0.6.0"
-openai = "=1.31.1"
+openai = "^1.35.0"
 opentelemetry-sdk = "^1.23.0"
-llama-index = "^0.10.43"
+llama-index = "^0.10.46"
 llama-index-postprocessor-cohere-rerank = "^0.1.7"
 opentelemetry-instrumentation-openai = {path="../opentelemetry-instrumentation-openai", develop=true}
 opentelemetry-instrumentation-cohere = {path="../opentelemetry-instrumentation-cohere", develop=true}
 opentelemetry-instrumentation-chromadb = {path="../opentelemetry-instrumentation-chromadb", develop=true}
-sqlalchemy = "^2.0.27"
+sqlalchemy = "^2.0.31"
 llama-index-agent-openai = ">=0.2.7,<0.3.0"
-llama-index-vector-stores-chroma = "^0.1.8"
+llama-index-vector-stores-chroma = "^0.1.9"
 
 [build-system]
 requires = ["poetry-core"]
