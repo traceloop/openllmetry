@@ -185,6 +185,13 @@ class SpanAttributes:
     QDRANT_UPSERT_COLLECTION_NAME = "qdrant.upsert.collection_name"
     QDRANT_UPSERT_POINTS_COUNT = "qdrant.upsert.points_count"
 
+    # Marqo
+    MARQO_ADD_DOCUMENTS_COUNT = "db.marqo.add_documents.count"
+    MARQO_SEARCH_QUERY = "db.marqo.search.query"
+    MARQO_SEARCH_PROCESSING_TIME = "db.marqo.search.processing_time"
+    MARQO_DELETE_DOCUMENTS_IDS_COUNT = "db.marqo.delete_documents.ids_count"
+    MARQO_DELETE_DOCUMENTS_STATUS = "db.marqo.delete_documents.status"
+
 
 class Events(Enum):
     DB_QUERY_EMBEDDINGS = "db.query.embeddings"

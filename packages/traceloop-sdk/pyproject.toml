@@ -54,6 +54,7 @@ opentelemetry-instrumentation-vertexai = {path="../opentelemetry-instrumentation
 opentelemetry-instrumentation-watsonx = {path="../opentelemetry-instrumentation-watsonx", develop=true}
 opentelemetry-instrumentation-weaviate = {path="../opentelemetry-instrumentation-weaviate", develop=true}
 opentelemetry-instrumentation-alephalpha = {path="../opentelemetry-instrumentation-alephalpha", develop=true}
+opentelemetry-instrumentation-marqo = {path="../opentelemetry-instrumentation-marqo", develop=true}
 colorama = "^0.4.6"
 tenacity = "^8.2.3"
 pydantic = ">=1"
