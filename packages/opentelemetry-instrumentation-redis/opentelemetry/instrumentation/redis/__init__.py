@@ -27,12 +27,6 @@ WRAPPED_METHODS = [
         "method": "ping",
         "span_name": "redis.ping",
     },
-    # {
-    #     "package": redis,
-    #     "object": "Redis",
-    #     "method": "hset",
-    #     "span_name": "redis.hset",
-    # },
     {
         "package": redis.commands.search,
         "object": "Search",
@@ -51,13 +45,6 @@ WRAPPED_METHODS = [
         "method": "aggregate",
         "span_name": "redis.aggregate",
     },
-    # {
-    #     "package": redis.commands.json,
-    #     "object": "JSON",
-    #     "method": "set",
-    #     "span_name": "redis.json.set",
-    # },
-
 ]
 
 class RedisInstrumentor(BaseInstrumentor):

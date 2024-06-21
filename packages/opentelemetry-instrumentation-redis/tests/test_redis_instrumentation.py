@@ -49,44 +49,6 @@ def create_index(redis_client):
     assert "OK" in res
 
 
-# def test_redis_hset(redis_client, exporter):
-#     hash_name = "test"
-#     hash_key = "key1"
-#     hash_value = "value1"
-#     redis_client.hset(name=hash_name, key=hash_key, value=hash_value)
-#     spans = exporter.get_finished_spans()
-#     span = next(span for span in spans if span.name == "redis.hset")
-#     assert span.attributes.get("redis.hash.name") == hash_name
-#     assert span.attributes.get("redis.hash.key") == hash_key
-#     assert span.attributes.get("redis.hash.value") == hash_value
-
-
-# def test_redis_hset_mapping(redis_client, exporter):
-#     hash_name = "test"
-#     mapping = {
-#         "key1": "value1",
-#         "key2": "value2",
-#     }
-#     redis_client.hset(hash_name, mapping=mapping)
-#     spans = exporter.get_finished_spans()
-#     span = next(span for span in spans if span.name == "redis.hset")
-#     assert span.attributes.get("redis.hash.name") == hash_name
-#     assert span.attributes.get("redis.hash.mapping") == str(mapping)
-
-
-# def test_redis_json_set(redis_client, exporter):
-#     name = "test:001"
-#     path = "$"
-#     item = {"name": "test_name",
-#             "value": "test_value"}
-#     redis_client.json().set(name, path, item)
-#     spans = exporter.get_finished_spans()
-#     span = next(span for span in spans if span.name == "redis.json.set")
-#     assert span.attributes.get("redis.json.set.name") == name
-#     assert span.attributes.get("redis.json.set.path") == path
-#     assert span.attributes.get("redis.json.set.object") == str(item)
-
-
 def test_redis_aggregate(redis_client, exporter):
     name = "test:001"
     path = "$"

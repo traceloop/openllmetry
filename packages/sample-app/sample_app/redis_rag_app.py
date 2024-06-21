@@ -107,10 +107,11 @@ def main():
     embeddings = prepare_embeddings(data)
     upload_data_to_redis(data, embeddings)
     create_index()
-    #query = "In what year and which university did doctor Watson graduate?"
     query = "Who introduced Sherlock Holmes to doctor Watson?"
+    print(query)
     query_emb = prepare_embeddings(query)[0]
     relevant_content = query_redis(query_emb)
     get_response_from_openai(query, relevant_content)
+
 
 main()
