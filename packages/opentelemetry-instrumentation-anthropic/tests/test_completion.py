@@ -570,3 +570,155 @@ async def test_async_anthropic_message_streaming(exporter, reader):
     assert found_token_metric is True
     assert found_choice_metric is True
     assert found_duration_metric is True
+
+
+@pytest.mark.vcr
+def test_anthropic_tools(exporter, reader):
+    client = Anthropic()
+    response = client.messages.create(
+        model="claude-3-opus-20240229",
+        max_tokens=1024,
+        tools=[
+            {
+                "name": "get_weather",
+                "description": "Get the current weather in a given location",
+                "input_schema": {
+                    "type": "object",
+                    "properties": {
+                        "location": {
+                            "type": "string",
+                            "description": "The city and state, e.g. San Francisco, CA"
+                        },
+                        "unit": {
+                            "type": "string",
+                            "enum": ["celsius", "fahrenheit"],
+                            "description": "The unit of temperature, either 'celsius' or 'fahrenheit'"
+                        }
+                    },
+                    "required": ["location"]
+                }
+            },
+            {
+                "name": "get_time",
+                "description": "Get the current time in a given time zone",
+                "input_schema": {
+                    "type": "object",
+                    "properties": {
+                        "timezone": {
+                            "type": "string",
+                            "description": "The IANA time zone name, e.g. America/Los_Angeles"
+                        }
+                    },
+                    "required": ["timezone"]
+                }
+            }
+        ],
+        messages=[
+            {
+                "role": "user",
+                "content": "What is the weather like right now in New York? Also what time is it there?"
+            }
+        ]
+    )
+    try:
+        client.messages.create(
+            unknown_parameter="unknown",
+        )
+    except Exception:
+        pass
+
+    spans = exporter.get_finished_spans()
+    assert all(span.name == "anthropic.chat" for span in spans)
+
+    anthropic_span = spans[0]
+
+    assert (
+        anthropic_span.attributes["gen_ai.prompt.0.content"] ==
+        "What is the weather like right now in New York? Also what time is it there?"
+    )
+
+    assert (anthropic_span.attributes["gen_ai.prompt.0.role"]) == "user"
+    assert (anthropic_span.attributes.get("gen_ai.completion.0.content") == response.content[0].text)
+
+    assert anthropic_span.attributes["gen_ai.usage.prompt_tokens"] == 18
+    assert (
+        anthropic_span.attributes["gen_ai.usage.completion_tokens"]
+        + anthropic_span.attributes["gen_ai.usage.prompt_tokens"]
+        == anthropic_span.attributes["llm.usage.total_tokens"]
+    )
+
+    assert (
+        anthropic_span.attributes["llm.request.functions.0.name"] == "get_weather"
+        )
+    assert (
+        anthropic_span.attributes["llm.request.functions.0.description"]
+        == "Get the current weather in a given location"
+    )
+
+    assert (anthropic_span.attributes["llm.request.functions.1.name"]) == "get_time"
+    assert (
+        anthropic_span.attributes["llm.request.functions.1.description"]
+        == "Get the current time in a given time zone"
+    )
+
+    assert (anthropic_span.attributes["gen_ai.completion.0.finish_reason"]) == "tool_use"
+
+    metrics_data = reader.get_metrics_data()
+    resource_metrics = metrics_data.resource_metrics
+    assert len(resource_metrics) > 0
+
+    found_token_metric = False
+    found_choice_metric = False
+    found_duration_metric = False
+    found_exception_metric = False
+
+    for rm in resource_metrics:
+        for sm in rm.scope_metrics:
+            for metric in sm.metrics:
+                if metric.name == "gen_ai.client.token.usage":
+                    found_token_metric = True
+                    for data_point in metric.data.data_points:
+                        assert data_point.attributes["gen_ai.token.type"] in [
+                            "input",
+                            "output",
+                        ]
+                        assert (
+                            data_point.attributes["gen_ai.response.model"]
+                            == "claude-3-opus-20240229"
+                        )
+                        assert data_point.sum > 0
+
+                if metric.name == "gen_ai.client.generation.choices":
+                    found_choice_metric = True
+                    for data_point in metric.data.data_points:
+                        assert data_point.value >= 1
+                        assert (
+                            data_point.attributes["gen_ai.response.model"]
+                            == "claude-3-opus-20240229"
+                        )
+
+                if metric.name == "gen_ai.client.operation.duration":
+                    found_duration_metric = True
+                    assert any(
+                        data_point.count > 0 for data_point in metric.data.data_points
+                    )
+                    assert any(
+                        data_point.sum > 0 for data_point in metric.data.data_points
+                    )
+                    assert all(
+                        data_point.attributes.get("gen_ai.response.model")
+                        == "claude-3-opus-20240229"
+                        or data_point.attributes.get("error.type") == "TypeError"
+                        for data_point in metric.data.data_points
+                    )
+
+                if metric.name == "llm.anthropic.completion.exceptions":
+                    found_exception_metric = True
+                    for data_point in metric.data.data_points:
+                        assert data_point.value == 1
+                        assert data_point.attributes["error.type"] == "TypeError"
+
+    assert found_token_metric is True
+    assert found_choice_metric is True
+    assert found_duration_metric is True
+    assert found_exception_metric is True

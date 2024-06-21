@@ -134,6 +134,23 @@ def _set_input_attributes(span, kwargs):
                 set_span_attribute(
                     span, f"{SpanAttributes.LLM_PROMPTS}.{i}.role", message.get("role")
                 )
+        if kwargs.get("tools"):
+            for i, tool in enumerate(kwargs.get("tools")):
+                set_span_attribute(
+                    span,
+                    f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.{i}.name",
+                    tool.get("name")
+                )
+                set_span_attribute(
+                    span,
+                    f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.{i}.description",
+                    tool.get("description")
+                )
+                set_span_attribute(
+                    span,
+                    f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.{i}.input_schema",
+                    json.dumps(tool.get("input_schema"))
+                )
 
 
 def _set_span_completions(span, response):
