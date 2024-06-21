@@ -6,7 +6,7 @@ from opentelemetry.instrumentation.utils import (
     _SUPPRESS_INSTRUMENTATION_KEY,
 )
 from opentelemetry.semconv.ai import Events
-from opentelemetry.semconv.ai import SpanAttributes as AISpanAttributes
+from opentelemetry.semconv.ai import SpanAttributes
 
 
 def _with_tracer_wrapper(func):
@@ -64,7 +64,8 @@ def count_or_none(obj):
 
 @dont_throw
 def _set_add_documents_attributes(span, kwargs):
-    # In contrast to the example in Marqo's docs, this requires the declaration of the documents array with the label "documents = ..." (https://docs.marqo.ai/2.8/API-Reference/Documents/add_or_replace_documents/)
+    # In contrast to the example in Marqo's docs, this requires the declaration of the documents array with the label "documents = ..."
+    # (https://docs.marqo.ai/2.8/API-Reference/Documents/add_or_replace_documents/)
     # Otherwise we cannot retrieve the documents
     _set_span_attribute(
         span, "db.marqo.add_documents.count", count_or_none(kwargs.get("documents"))
@@ -94,6 +95,6 @@ def _set_search_result_attributes(span, kwargs):
         span.add_event(name=Events.DB_QUERY_RESULT.value, attributes=event)
 
 
-@dont_throw       
+@dont_throw
 def _set_delete_documents_response_attributes(span, kwargs):
     _set_span_attribute(span, "db.marqo.delete_documents.status", kwargs.get("status"))

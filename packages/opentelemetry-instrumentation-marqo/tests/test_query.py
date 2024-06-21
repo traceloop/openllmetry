@@ -1,5 +1,3 @@
-import json
-
 import marqo
 import pytest
 from opentelemetry.semconv.ai import Events, SpanAttributes
@@ -17,7 +15,7 @@ def collection():
 @pytest.mark.vcr
 def add_documents(collection):
     mq.index("TestIndex").add_documents(
-        documents = [
+        documents=[
             {
                 "Title": "The Travels of Marco Polo",
                 "Description": "A 13th-century travelogue describing Polo's travels",
@@ -30,7 +28,7 @@ def add_documents(collection):
             },
         ],
         tensor_fields=["Description"],
-    ) 
+    )
 
 
 @pytest.mark.vcr
@@ -69,7 +67,6 @@ def test_marqo_search(exporter, collection):
     assert len(events) == 2
     for event in events:
         assert event.name == Events.DB_QUERY_RESULT.value
-
         id = event.attributes.get("_id")
         score = event.attributes.get("_score")
         title = event.attributes.get("Title")
