@@ -63,9 +63,12 @@ def count_or_none(obj):
 
 @dont_throw
 def _set_add_documents_attributes(span, kwargs):
-    # In contrast to the example in Marqo's docs, this requires the declaration of the documents array with the label "documents = ..."
-    # (https://docs.marqo.ai/2.8/API-Reference/Documents/add_or_replace_documents/)
-    # Otherwise we cannot retrieve the documents
+    """
+    In contrast to the example in Marqo's docs,
+    this requires the declaration of the documents array with the label "documents = ..."
+    (https://docs.marqo.ai/2.8/API-Reference/Documents/add_or_replace_documents/)
+    Otherwise we cannot retrieve the documents
+    """
     _set_span_attribute(
         span, "db.marqo.add_documents.count", count_or_none(kwargs.get("documents"))
     )
