@@ -6,7 +6,6 @@ from opentelemetry.instrumentation.utils import (
     _SUPPRESS_INSTRUMENTATION_KEY,
 )
 from opentelemetry.semconv.ai import Events
-from opentelemetry.semconv.ai import SpanAttributes
 
 
 def _with_tracer_wrapper(func):
