@@ -62,7 +62,6 @@ def test_marqo_search(exporter, collection):
     )
     assert span.attributes.get("db.marqo.search.processing_time") >= 0
 
-
     events = span.events
     assert len(events) == 2
     for event in events:
