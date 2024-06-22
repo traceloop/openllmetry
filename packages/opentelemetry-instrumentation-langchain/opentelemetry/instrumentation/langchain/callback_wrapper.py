@@ -11,6 +11,7 @@ from opentelemetry.trace.span import Span
 from opentelemetry import context as context_api
 from opentelemetry.instrumentation.langchain.utils import (
     _with_tracer_wrapper,
+    dont_throw,
 )
 
 
@@ -22,15 +23,8 @@ class CustomJsonEncode(json.JSONEncoder):
             return str(o)
 
 
-@_with_tracer_wrapper
-def callback_wrapper(tracer, to_wrap, wrapped, instance, args, kwargs):
-    """Hook into the invoke function, config is part of args, 2nd place.
-    sources:
-    https://python.langchain.com/v0.2/docs/how_to/callbacks_attach/
-    https://python.langchain.com/v0.2/docs/how_to/callbacks_runtime/
-    """
-    if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
-        return wrapped(*args, **kwargs)
+@dont_throw
+def _add_callback(tracer, to_wrap, instance, args):
     kind = to_wrap.get("kind")
     class_name = instance.get_name()
     cb = SyncSpanCallbackHandler(tracer)
@@ -53,11 +47,23 @@ def callback_wrapper(tracer, to_wrap, wrapped, instance, args, kwargs):
                         args[1]["callbacks"].append(cb)
         else:
             args[1].update({"callbacks": [cb, ]})
-        cb.add_kind(class_name, kind)
+    cb.add_kind(class_name, kind)
+    return cb
+
+
+@_with_tracer_wrapper
+def callback_wrapper(tracer, to_wrap, wrapped, instance, args, kwargs):
+    """Hook into the invoke function, config is part of args, 2nd place.
+    sources:
+    https://python.langchain.com/v0.2/docs/how_to/callbacks_attach/
+    https://python.langchain.com/v0.2/docs/how_to/callbacks_runtime/
+    """
+    if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
         return wrapped(*args, **kwargs)
-    else:
-        cb.add_kind(class_name, kind)
-        return wrapped(*args, {"callbacks": [cb, ]}, **kwargs)
+    cb = _add_callback(tracer, to_wrap, instance, args)
+    if len(args) > 1:
+        return wrapped(*args, **kwargs)
+    return wrapped(*args, {"callbacks": [cb, ]}, **kwargs)
 
 
 class SyncSpanCallbackHandler(BaseCallbackHandler):
