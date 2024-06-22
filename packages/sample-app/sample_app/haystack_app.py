@@ -11,11 +11,23 @@ from haystack.components.embedders import SentenceTransformersTextEmbedder
 from haystack.components.retrievers.in_memory import InMemoryEmbeddingRetriever
 
 from traceloop.sdk import Traceloop
+from traceloop.sdk.decorators import trace
 
 Traceloop.init(app_name="haystack_example", disable_batch=True)
 
+def trace_component(component_name):
+    def decorator(func):
+        @trace(name=component_name)
+        async def wrapper(*args, **kwargs):
+            Traceloop.set_attribute("traceloop.entity.input", str(args) + str(kwargs))
+            result = await func(*args, **kwargs)
+            Traceloop.set_attribute("traceloop.entity.output", str(result))
+            return result
+        return wrapper
+    return decorator
 
-def haystack_app():
+@trace_component("haystack_app")
+async def haystack_app():
 
     # initialize
     api_key = os.getenv("OPENAI_API_KEY")
@@ -72,11 +84,12 @@ def haystack_app():
 
     question = "What does Rhodes Statue look like?"
 
-    response = basic_rag_pipeline.run(
+    response = await basic_rag_pipeline.run(
         {"text_embedder": {"text": question}, "prompt_builder": {"question": question}}
     )
 
     print(response["llm"]["replies"][0])
 
-
-haystack_app()
+if __name__ == "__main__":
+    import asyncio
+    asyncio.run(haystack_app())
