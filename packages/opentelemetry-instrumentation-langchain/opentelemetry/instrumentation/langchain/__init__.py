@@ -10,10 +10,7 @@ from opentelemetry.trace import get_tracer
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.instrumentation.utils import unwrap
 
-from opentelemetry.instrumentation.langchain.task_wrapper import (
-    task_wrapper,
-    atask_wrapper,
-)
+from opentelemetry.instrumentation.langchain.task_wrapper import task_wrapper
 from opentelemetry.instrumentation.langchain.workflow_wrapper import (
     workflow_wrapper,
     aworkflow_wrapper,
@@ -21,10 +18,6 @@ from opentelemetry.instrumentation.langchain.workflow_wrapper import (
 from opentelemetry.instrumentation.langchain.custom_llm_wrapper import (
     llm_wrapper,
     allm_wrapper,
-)
-from opentelemetry.instrumentation.langchain.custom_chat_wrapper import (
-    chat_wrapper,
-    achat_wrapper,
 )
 from opentelemetry.instrumentation.langchain.version import __version__
 
@@ -41,13 +34,31 @@ WRAPPED_METHODS = [
         "package": "langchain.chains.base",
         "class": "Chain",
         "is_callback": True,
+        "kind": TraceloopSpanKindValues.WORKFLOW.value,
+    },
+    {
+        "package": "langchain.schema.runnable",
+        "class": "RunnableSequence",
+        "is_callback": True,
+        "kind": TraceloopSpanKindValues.WORKFLOW.value,
+    },
+    {
+        "package": "langchain.prompts.base",
+        "class": "BasePromptTemplate",
+        "is_callback": True,
         "kind": TraceloopSpanKindValues.TASK.value,
     },
     {
-        "package": "langchain.chains",
-        "class": "SequentialChain",
+        "package": "langchain.chat_models.base",
+        "class": "BaseChatModel",
         "is_callback": True,
-        "kind": TraceloopSpanKindValues.WORKFLOW.value,
+        "kind": TraceloopSpanKindValues.TASK.value,
+    },
+    {
+        "package": "langchain.schema",
+        "class": "BaseOutputParser",
+        "is_callback": True,
+        "kind": TraceloopSpanKindValues.TASK.value,
     },
     {
         "package": "langchain.agents",
@@ -77,56 +88,6 @@ WRAPPED_METHODS = [
         "object": "BaseRetrievalQA",
         "method": "ainvoke",
         "span_name": "retrieval_qa.workflow",
-        "wrapper": aworkflow_wrapper,
-    },
-    {
-        "package": "langchain.prompts.base",
-        "object": "BasePromptTemplate",
-        "method": "invoke",
-        "wrapper": task_wrapper,
-    },
-    {
-        "package": "langchain.prompts.base",
-        "object": "BasePromptTemplate",
-        "method": "ainvoke",
-        "wrapper": atask_wrapper,
-    },
-    {
-        "package": "langchain.chat_models.base",
-        "object": "BaseChatModel",
-        "method": "generate",
-        "wrapper": chat_wrapper,
-    },
-    {
-        "package": "langchain.chat_models.base",
-        "object": "BaseChatModel",
-        "method": "agenerate",
-        "wrapper": achat_wrapper,
-    },
-    {
-        "package": "langchain.schema",
-        "object": "BaseOutputParser",
-        "method": "invoke",
-        "wrapper": task_wrapper,
-    },
-    {
-        "package": "langchain.schema",
-        "object": "BaseOutputParser",
-        "method": "ainvoke",
-        "wrapper": atask_wrapper,
-    },
-    {
-        "package": "langchain.schema.runnable",
-        "object": "RunnableSequence",
-        "method": "invoke",
-        "span_name": "langchain.workflow",
-        "wrapper": workflow_wrapper,
-    },
-    {
-        "package": "langchain.schema.runnable",
-        "object": "RunnableSequence",
-        "method": "ainvoke",
-        "span_name": "langchain.workflow",
         "wrapper": aworkflow_wrapper,
     },
     {

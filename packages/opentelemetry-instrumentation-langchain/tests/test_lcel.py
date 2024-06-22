@@ -1,4 +1,5 @@
 import json
+import re
 
 import boto3
 import pytest
@@ -14,7 +15,6 @@ from langchain_community.llms.huggingface_text_gen_inference import (
 from langchain_community.utils.openai_functions import (
     convert_pydantic_to_openai_function,
 )
-from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_core.pydantic_v1 import BaseModel, Field
 from langchain_openai import ChatOpenAI
 from opentelemetry.semconv.ai import SpanAttributes
@@ -46,8 +46,8 @@ def test_simple_lcel(exporter):
     assert [
         "ChatPromptTemplate.langchain.task",
         "openai.chat",
-        "ChatOpenAI.langchain.task",
         "JsonOutputFunctionsParser.langchain.task",
+        "ChatOpenAI.langchain.task",
         "ThisIsATestChain.langchain.workflow",
     ] == [span.name for span in spans]
 
@@ -73,57 +73,37 @@ def test_simple_lcel(exporter):
     assert json.loads(
         workflow_span.attributes[SpanAttributes.TRACELOOP_ENTITY_INPUT]
     ) == {
-        "args": [],
-        "kwargs": {
-            "input": "tell me a short joke",
-            "run_name": "ThisIsATestChain",
-            "tags": ["test_tag"],
-        },
+        'inputs': {'input': 'tell me a short joke'},
+        'tags': ['test_tag'],
+        'metadata': {},
+        'kwargs': {'name': 'ThisIsATestChain'},
     }
     assert json.loads(
         workflow_span.attributes[SpanAttributes.TRACELOOP_ENTITY_OUTPUT]
     ) == {
-        "setup": "Why couldn't the bicycle stand up by itself?",
-        "punchline": "It was two tired!",
+        'outputs': {
+            'setup': "Why couldn't the bicycle stand up by itself?",
+            'punchline': 'It was two tired!'
+        },
+        'kwargs': {'tags': ['test_tag']},
     }
     assert json.loads(
         prompt_task_span.attributes[SpanAttributes.TRACELOOP_ENTITY_INPUT]
     ) == {
-        "args": [],
-        "kwargs": {
-            "input": "tell me a short joke",
-            "tags": ["test_tag"],
-            "metadata": {},
-            "recursion_limit": 25,
-            "configurable": {},
+        'inputs': {'input': 'tell me a short joke'},
+        'tags': ['seq:step:1', 'test_tag'],
+        'metadata': {},
+        'kwargs': {
+            'run_type': 'prompt',
+            'name': 'ChatPromptTemplate',
         },
     }
-
     assert json.loads(
         prompt_task_span.attributes[SpanAttributes.TRACELOOP_ENTITY_OUTPUT]
     ) == {
-        "lc": 1,
-        "type": "constructor",
-        "id": ["langchain", "prompts", "chat", "ChatPromptValue"],
-        "kwargs": {
-            "messages": [
-                {
-                    "lc": 1,
-                    "type": "constructor",
-                    "id": ["langchain", "schema", "messages", "SystemMessage"],
-                    "kwargs": {
-                        "content": "You are helpful assistant",
-                        "type": "system",
-                    },
-                },
-                {
-                    "lc": 1,
-                    "type": "constructor",
-                    "id": ["langchain", "schema", "messages", "HumanMessage"],
-                    "kwargs": {"content": "tell me a short joke", "type": "human"},
-                },
-            ]
-        },
+        'outputs': "messages=[SystemMessage(content='You are helpful assistant'), "
+                   "HumanMessage(content='tell me a short joke')]",
+        'kwargs': {'tags': ['seq:step:1', 'test_tag']},
     }
 
 
@@ -168,12 +148,17 @@ async def test_async_lcel(exporter):
     assert json.loads(
         workflow_span.attributes[SpanAttributes.TRACELOOP_ENTITY_INPUT]
     ) == {
-        "args": [],
-        "kwargs": {
-            "product": "colorful socks",
-        },
+        'inputs': {'product': 'colorful socks'},
+        'tags': [],
+        'metadata': {},
+        'kwargs': {'name': 'RunnableSequence'},
     }
-    assert workflow_span.attributes[SpanAttributes.TRACELOOP_ENTITY_OUTPUT] == response
+    assert json.loads(
+        workflow_span.attributes[SpanAttributes.TRACELOOP_ENTITY_OUTPUT]
+    ) == {
+        "outputs": response,
+        "kwargs": {"tags": []},
+    }
 
 
 @pytest.mark.vcr
@@ -196,8 +181,8 @@ def test_streaming(exporter):
     assert [
         "PromptTemplate.langchain.task",
         "openai.chat",
-        "ChatOpenAI.langchain.task",
         "StrOutputParser.langchain.task",
+        "ChatOpenAI.langchain.task",
         "RunnableSequence.langchain.workflow",
     ] == [span.name for span in spans]
 
@@ -223,8 +208,8 @@ async def test_async_streaming(exporter):
     assert [
         "PromptTemplate.langchain.task",
         "openai.chat",
-        "ChatOpenAI.langchain.task",
         "StrOutputParser.langchain.task",
+        "ChatOpenAI.langchain.task",
         "RunnableSequence.langchain.workflow",
     ] == [span.name for span in spans]
 
@@ -270,44 +255,37 @@ def test_custom_llm(exporter):
 
 @pytest.mark.vcr
 def test_openai(exporter):
-    model = ChatOpenAI(model="gpt-3.5-turbo")
-
-    response = model.generate(
-        messages=[
-            [
-                SystemMessage(content="You are a helpful assistant"),
-                HumanMessage(content="Tell me a joke about OpenTelemetry"),
-            ]
-        ]
+    prompt = ChatPromptTemplate.from_messages(
+        [("system", "You are a helpful assistant"), ("human", "{input}")]
     )
+    model = ChatOpenAI(model="gpt-3.5-turbo")
+    chain = prompt | model
+
+    response = chain.invoke({"input": "Tell me a joke about OpenTelemetry"})
 
     spans = exporter.get_finished_spans()
 
     assert [
+        "ChatPromptTemplate.langchain.task",
         "openai.chat",
         "ChatOpenAI.langchain.task",
+        "RunnableSequence.langchain.workflow",
     ] == [span.name for span in spans]
 
     openai_span = next(
         span for span in spans if span.name == "ChatOpenAI.langchain.task"
     )
+    workflow_span = next(
+        span for span in spans if span.name == "RunnableSequence.langchain.workflow"
+    )
 
     assert openai_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
     assert openai_span.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "gpt-3.5-turbo"
-    assert (
-        openai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
-        == "You are a helpful assistant"
-    )
-    assert openai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"] == "system"
-    assert (
-        openai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.content"]
-        == "Tell me a joke about OpenTelemetry"
-    )
-    assert openai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.role"] == "user"
-    assert (
-        openai_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"]
-        == response.generations[0][0].text
-    )
+    assert json.loads(
+        openai_span.attributes[SpanAttributes.TRACELOOP_ENTITY_INPUT]
+    )["messages"] == [["content='You are a helpful assistant'", "content='Tell me a joke about OpenTelemetry'"]]
+    outputs = json.loads(workflow_span.attributes[SpanAttributes.TRACELOOP_ENTITY_OUTPUT])["outputs"]
+    assert dict(re.findall(r'(\S+)=(".*?"|\S+)', outputs))["content"] == f'"{response.content}"'
 
 
 @pytest.mark.vcr
@@ -331,17 +309,17 @@ def test_anthropic(exporter):
     anthropic_span = next(
         span for span in spans if span.name == "ChatAnthropic.langchain.task"
     )
+    workflow_span = next(
+        span for span in spans if span.name == "RunnableSequence.langchain.workflow"
+    )
 
     assert anthropic_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
     assert anthropic_span.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "claude-2.1"
-    assert (
-        anthropic_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
-        == "You are a helpful assistant"
-    )
-    assert (
-        anthropic_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"]
-        == response.content
-    )
+    assert json.loads(
+        anthropic_span.attributes[SpanAttributes.TRACELOOP_ENTITY_INPUT]
+    )["messages"] == [["content='You are a helpful assistant'", "content='tell me a short joke'"]]
+    outputs = json.loads(workflow_span.attributes[SpanAttributes.TRACELOOP_ENTITY_OUTPUT])["outputs"]
+    assert dict(re.findall(r'(\S+)=(".*?"|\S+)', outputs))["content"] == f'"{response.content}"'
 
 
 @pytest.mark.vcr
@@ -375,17 +353,14 @@ def test_bedrock(exporter):
     bedrock_span = next(
         span for span in spans if span.name == "BedrockChat.langchain.task"
     )
+    workflow_span = next(
+        span for span in spans if span.name == "RunnableSequence.langchain.workflow"
+    )
 
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
-    assert (
-        bedrock_span.attributes[SpanAttributes.LLM_REQUEST_MODEL]
-        == "anthropic.claude-3-haiku-20240307-v1:0"
-    )
-    assert (
-        bedrock_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
-        == "You are a helpful assistant"
-    )
-    assert (
-        bedrock_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"]
-        == response.content
-    )
+    assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "anthropic.claude-3-haiku-20240307-v1:0"
+    assert json.loads(
+        bedrock_span.attributes[SpanAttributes.TRACELOOP_ENTITY_INPUT]
+    )["messages"] == [["content='You are a helpful assistant'", "content='tell me a short joke'"]]
+    outputs = json.loads(workflow_span.attributes[SpanAttributes.TRACELOOP_ENTITY_OUTPUT])["outputs"]
+    assert dict(re.findall(r'(\S+)=(".*?"|\S+)', outputs))["content"].replace("\\n", "\n") == f'"{response.content}"'

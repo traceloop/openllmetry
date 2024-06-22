@@ -45,13 +45,13 @@ def test_sequential_chain(exporter):
 
     assert [
         "openai.completion",
-        "LLMChain.langchain.task",
+        "LLMChain.langchain.workflow",
         "openai.completion",
-        "LLMChain.langchain.task",
+        "LLMChain.langchain.workflow",
         "SequentialChain.langchain.workflow",
     ] == [span.name for span in spans]
 
-    synopsis_span, review_span = [span for span in spans if span.name == "LLMChain.langchain.task"]
+    synopsis_span, review_span = [span for span in spans if span.name == "LLMChain.langchain.workflow"]
 
     data = json.loads(synopsis_span.attributes[SpanAttributes.TRACELOOP_ENTITY_INPUT])
     assert data["inputs"] == {'title': 'Tragedy at sunset on the beach', 'era': 'Victorian England'}
@@ -112,13 +112,13 @@ async def test_asequential_chain(exporter):
 
     assert [
         "openai.completion",
-        "LLMChain.langchain.task",
+        "LLMChain.langchain.workflow",
         "openai.completion",
-        "LLMChain.langchain.task",
+        "LLMChain.langchain.workflow",
         "SequentialChain.langchain.workflow",
     ] == [span.name for span in spans]
 
-    synopsis_span, review_span = [span for span in spans if span.name == "LLMChain.langchain.task"]
+    synopsis_span, review_span = [span for span in spans if span.name == "LLMChain.langchain.workflow"]
 
     data = json.loads(synopsis_span.attributes[SpanAttributes.TRACELOOP_ENTITY_INPUT])
     assert data["inputs"] == {'title': 'Tragedy at sunset on the beach', 'era': 'Victorian England'}
