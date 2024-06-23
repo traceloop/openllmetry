@@ -1,0 +1,99 @@
+interactions:
+- request:
+    body: '{"max_tokens": 1024, "messages": [{"role": "user", "content": "What is
+      the weather like right now in New York? Also what time is it there?"}], "model":
+      "claude-3-opus-20240229", "tools": [{"name": "get_weather", "description": "Get
+      the current weather in a given location", "input_schema": {"type": "object",
+      "properties": {"location": {"type": "string", "description": "The city and state,
+      e.g. San Francisco, CA"}, "unit": {"type": "string", "enum": ["celsius", "fahrenheit"],
+      "description": "The unit of temperature, either ''celsius'' or ''fahrenheit''"}},
+      "required": ["location"]}}, {"name": "get_time", "description": "Get the current
+      time in a given time zone", "input_schema": {"type": "object", "properties":
+      {"timezone": {"type": "string", "description": "The IANA time zone name, e.g.
+      America/Los_Angeles"}}, "required": ["timezone"]}}]}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      anthropic-version:
+      - '2023-06-01'
+      connection:
+      - keep-alive
+      content-length:
+      - '845'
+      content-type:
+      - application/json
+      host:
+      - api.anthropic.com
+      user-agent:
+      - Anthropic/Python 0.29.0
+      x-stainless-arch:
+      - x64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - Linux
+      x-stainless-package-version:
+      - 0.29.0
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.10.14
+    method: POST
+    uri: https://api.anthropic.com/v1/messages
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA4RTYW/TMBD9K6f7wpe0awPbWDQhVTAQaKoQVJsGQZGb3BrT5JzZ54Wu6n9HdklX
+        ISQ+xbk7v3vv6XmLusIMW7cqJtN3sujO3OPVslf3b282Z0+fp1/mS0xQNh2FKXJOrQgTtKYJBeWc
+        dqJYMMHWVNRghmWjfEWjlyPTeTdKJ+mrSZpeYIKlYSEWzL5vB0ChX+Fq/GR4KbXmtebVm5wXBhS7
+        nixIrR08eLKbBHqCXjcNMFEFYsA7AukNiDGNy3LOeTqGFUnRk5KaLIxgYUIBpCYovbXEAkNTM8yp
+        hztj12NYhDWWHry25OJ4jo0plWjDOUKnrGpJyCbQ17qs44R3ZKFWDjprHnVFFSgHOQ6gOQbYAORZ
+        yzEIaAemC9CqGQfa6Z626Jb+zTl2/ks4TD0ZpuNdew6RaqUrYCNQaUulNJuBd/Q4gaUP3kCpGDTf
+        B5YCS+WoAsNxweDHXxqHc1Cl95NXyglZhkWg/c0wDbYFt8LAx9l8thcV+AKrNvCftWR1qU7m1Bd/
+        0IM7X03gVatHineZyhBEu3kW6UIaWrUmWBqpYx6gVE0T64cg7W14EePkghA3zvny5BA73CXP0TSm
+        KbwLYY8vJPz7YjL9cHF+a+zPm0/96+v3d9e3s2mVnoUQBwmY4VH6wlXuvGC2PUQJs4N1uNv9SNCJ
+        6QpLysXe0dbYcPTgiUvCjH3TJOjj+8u2e+BCzJrYYXZ+miZovBzX0snpbvcbAAD//wMAiN3y7N8D
+        AAA=
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 89712d1918f04631-SIN
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Fri, 21 Jun 2024 04:15:22 GMT
+      Server:
+      - cloudflare
+      Transfer-Encoding:
+      - chunked
+      anthropic-ratelimit-requests-limit:
+      - '50'
+      anthropic-ratelimit-requests-remaining:
+      - '50'
+      anthropic-ratelimit-requests-reset:
+      - '2024-06-21T04:16:18Z'
+      anthropic-ratelimit-tokens-limit:
+      - '20000'
+      anthropic-ratelimit-tokens-remaining:
+      - '20000'
+      anthropic-ratelimit-tokens-reset:
+      - '2024-06-21T04:16:18Z'
+      request-id:
+      - req_01X7p5rhys5xac6P9AmQiGs4
+      via:
+      - 1.1 google
+      x-cloud-trace-context:
+      - 791e086e0002047f61d7da1c157754d9
+    status:
+      code: 200
+      message: OK
+version: 1

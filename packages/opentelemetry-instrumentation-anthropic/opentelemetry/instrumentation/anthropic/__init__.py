@@ -134,6 +134,23 @@ def _set_input_attributes(span, kwargs):
                 set_span_attribute(
                     span, f"{SpanAttributes.LLM_PROMPTS}.{i}.role", message.get("role")
                 )
+        if kwargs.get("tools"):
+            for i, tool in enumerate(kwargs.get("tools")):
+                set_span_attribute(
+                    span,
+                    f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.{i}.name",
+                    tool.get("name")
+                )
+                set_span_attribute(
+                    span,
+                    f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.{i}.description",
+                    tool.get("description")
+                )
+                set_span_attribute(
+                    span,
+                    f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.{i}.input_schema",
+                    json.dumps(tool.get("input_schema"))
+                )
 
 
 def _set_span_completions(span, response):
@@ -319,6 +336,39 @@ def _set_response_attributes(span, response):
             SpanAttributes.LLM_USAGE_TOTAL_TOKENS,
             prompt_tokens + completion_tokens,
         )
+
+    if response.get("role"):
+        set_span_attribute(span, f"{SpanAttributes.LLM_COMPLETIONS}.role", response.get("role"))
+
+    if response.get("stop_reason"):
+        set_span_attribute(span, f"{SpanAttributes.LLM_COMPLETIONS}.stop_reason", response.get("stop_reason"))
+
+    if response.get("content"):
+        for i, content in enumerate(response.get("content")):
+            if dict(content).get('id') is not None:
+                set_span_attribute(
+                    span,
+                    f"{SpanAttributes.LLM_COMPLETIONS}.{i}.id",
+                    dict(content).get('id'),
+                )
+            if dict(content).get('type') is not None:
+                set_span_attribute(
+                    span,
+                    f"{SpanAttributes.LLM_COMPLETIONS}.{i}.type",
+                    dict(content).get('type'),
+                )
+            if dict(content).get('input') is not None:
+                set_span_attribute(
+                    span,
+                    f"{SpanAttributes.LLM_COMPLETIONS}.{i}.input",
+                    json.dumps(dict(content).get('input')),
+                )
+            if dict(content).get('name') is not None:
+                set_span_attribute(
+                    span,
+                    f"{SpanAttributes.LLM_COMPLETIONS}.{i}.name",
+                    dict(content).get('name'),
+                )
 
     if should_send_prompts():
         _set_span_completions(span, response)
