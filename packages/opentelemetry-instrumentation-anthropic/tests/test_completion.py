@@ -663,6 +663,13 @@ def test_anthropic_tools(exporter, reader):
 
     assert (anthropic_span.attributes["gen_ai.completion.0.finish_reason"]) == "tool_use"
 
+    assert (anthropic_span.attributes["gen_ai.completion.role"]) == "assistant"
+    assert (anthropic_span.attributes["gen_ai.completion.0.type"]) == "text"
+    assert (anthropic_span.attributes["gen_ai.completion.1.type"]) == "tool_use"
+    assert (anthropic_span.attributes["gen_ai.completion.1.id"]) == "toolu_01G97WorjVJw8LFYLWA1d26t"
+    assert (anthropic_span.attributes["gen_ai.completion.1.name"]) == "get_weather"
+    assert (anthropic_span.attributes["gen_ai.completion.1.input"]) == json.dumps({"location": "New York"})
+
     metrics_data = reader.get_metrics_data()
     resource_metrics = metrics_data.resource_metrics
     assert len(resource_metrics) > 0
