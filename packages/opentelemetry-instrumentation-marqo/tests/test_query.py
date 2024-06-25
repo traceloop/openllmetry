@@ -40,7 +40,7 @@ def test_marqo_add_documents(exporter, collection):
 
     assert span.attributes.get(SpanAttributes.VECTOR_DB_VENDOR) == "marqo"
     assert span.attributes.get(SpanAttributes.VECTOR_DB_OPERATION) == "add_documents"
-    assert span.attributes.get("db.marqo.add_documents.count") == 2
+    assert span.attributes.get("db.chroma.add.documents_count") == 2
 
 
 @pytest.mark.vcr
@@ -90,5 +90,5 @@ def test_marqo_delete_documents(exporter, collection):
     assert span.attributes.get(SpanAttributes.VECTOR_DB_VENDOR) == "marqo"
     assert span.attributes.get(SpanAttributes.VECTOR_DB_OPERATION) == "delete_documents"
 
-    assert span.attributes.get("db.marqo.delete_documents.ids_count") == 1
+    assert span.attributes.get("db.milvus.delete.ids_count") == 1
     assert span.attributes.get("db.marqo.delete_documents.status") == "succeeded"
