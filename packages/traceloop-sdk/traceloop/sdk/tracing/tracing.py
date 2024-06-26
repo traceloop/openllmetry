@@ -940,7 +940,7 @@ def init_alephalpha_instrumentor():
 
 def init_marqo_instrumentor():
     try:
-        if importlib.util.find_spec("marqo") is not None:
+        if is_package_installed("marqo"):
             Telemetry().capture("instrumentation:marqo:init")
             from opentelemetry.instrumentation.marqo import MarqoInstrumentor
 

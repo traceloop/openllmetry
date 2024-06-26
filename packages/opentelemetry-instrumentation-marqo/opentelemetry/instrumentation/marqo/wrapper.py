@@ -69,6 +69,7 @@ def _set_add_documents_attributes(span, kwargs):
     this requires the declaration of the documents array with the label "documents = ..."
     (https://docs.marqo.ai/2.8/API-Reference/Documents/add_or_replace_documents/)
     Otherwise we cannot retrieve the documents
+    see also: https://github.com/traceloop/openllmetry/issues/539
     """
     _set_span_attribute(
         span, AISpanAttributes.CHROMADB_ADD_DOCUMENTS_COUNT, count_or_none(kwargs.get("documents"))
