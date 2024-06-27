@@ -3832,7 +3832,7 @@ develop = true
 opentelemetry-api = "^1.25.0"
 opentelemetry-instrumentation = "^0.46b0"
 opentelemetry-semantic-conventions = "^0.46b0"
-opentelemetry-semantic-conventions-ai = "0.3.1"
+opentelemetry-semantic-conventions-ai = "0.3.2"
 
 [package.extras]
 instruments = []
@@ -3854,7 +3854,7 @@ develop = true
 opentelemetry-api = "^1.25.0"
 opentelemetry-instrumentation = "^0.46b0"
 opentelemetry-semantic-conventions = "^0.46b0"
-opentelemetry-semantic-conventions-ai = "0.3.1"
+opentelemetry-semantic-conventions-ai = "0.3.2"
 
 [package.extras]
 instruments = []
@@ -3898,7 +3898,7 @@ anthropic = ">=0.17.0"
 opentelemetry-api = "^1.25.0"
 opentelemetry-instrumentation = "^0.46b0"
 opentelemetry-semantic-conventions = "^0.46b0"
-opentelemetry-semantic-conventions-ai = "0.3.1"
+opentelemetry-semantic-conventions-ai = "0.3.2"
 
 [package.source]
 type = "directory"
@@ -3917,7 +3917,7 @@ develop = true
 opentelemetry-api = "^1.25.0"
 opentelemetry-instrumentation = "^0.46b0"
 opentelemetry-semantic-conventions = "^0.46b0"
-opentelemetry-semantic-conventions-ai = "0.3.1"
+opentelemetry-semantic-conventions-ai = "0.3.2"
 
 [package.extras]
 instruments = []
@@ -3939,7 +3939,7 @@ develop = true
 opentelemetry-api = "^1.25.0"
 opentelemetry-instrumentation = "^0.46b0"
 opentelemetry-semantic-conventions = "^0.46b0"
-opentelemetry-semantic-conventions-ai = "0.3.1"
+opentelemetry-semantic-conventions-ai = "0.3.2"
 
 [package.extras]
 instruments = []
@@ -3982,7 +3982,7 @@ develop = true
 opentelemetry-api = "^1.25.0"
 opentelemetry-instrumentation = "^0.46b0"
 opentelemetry-semantic-conventions = "^0.46b0"
-opentelemetry-semantic-conventions-ai = "0.3.1"
+opentelemetry-semantic-conventions-ai = "0.3.2"
 
 [package.extras]
 instruments = []
@@ -4004,7 +4004,7 @@ develop = true
 opentelemetry-api = "^1.25.0"
 opentelemetry-instrumentation = "^0.46b0"
 opentelemetry-semantic-conventions = "^0.46b0"
-opentelemetry-semantic-conventions-ai = "0.3.1"
+opentelemetry-semantic-conventions-ai = "0.3.2"
 
 [package.extras]
 instruments = []
@@ -4026,7 +4026,7 @@ develop = true
 opentelemetry-api = "^1.25.0"
 opentelemetry-instrumentation = "^0.46b0"
 opentelemetry-semantic-conventions = "^0.46b0"
-opentelemetry-semantic-conventions-ai = "0.3.1"
+opentelemetry-semantic-conventions-ai = "0.3.2"
 
 [package.extras]
 instruments = []
@@ -4049,7 +4049,7 @@ inflection = "^0.5.1"
 opentelemetry-api = "^1.25.0"
 opentelemetry-instrumentation = "^0.46b0"
 opentelemetry-semantic-conventions = "^0.46b0"
-opentelemetry-semantic-conventions-ai = "0.3.1"
+opentelemetry-semantic-conventions-ai = "0.3.2"
 
 [package.extras]
 instruments = []
@@ -4057,6 +4057,28 @@ instruments = []
 [package.source]
 type = "directory"
 url = "../opentelemetry-instrumentation-llamaindex"
+
+[[package]]
+name = "opentelemetry-instrumentation-marqo"
+version = "0.21.5"
+description = "OpenTelemetry Marqo instrumentation"
+optional = false
+python-versions = ">=3.9,<4"
+files = []
+develop = true
+
+[package.dependencies]
+opentelemetry-api = "^1.25.0"
+opentelemetry-instrumentation = "^0.46b0"
+opentelemetry-semantic-conventions = "^0.46b0"
+opentelemetry-semantic-conventions-ai = "0.3.2"
+
+[package.extras]
+instruments = []
+
+[package.source]
+type = "directory"
+url = "../opentelemetry-instrumentation-marqo"
 
 [[package]]
 name = "opentelemetry-instrumentation-milvus"
@@ -4071,7 +4093,7 @@ develop = true
 opentelemetry-api = "^1.25.0"
 opentelemetry-instrumentation = "^0.46b0"
 opentelemetry-semantic-conventions = "^0.46b0"
-opentelemetry-semantic-conventions-ai = "0.3.1"
+opentelemetry-semantic-conventions-ai = "0.3.2"
 
 [package.extras]
 instruments = []
@@ -4093,7 +4115,7 @@ develop = true
 opentelemetry-api = "^1.25.0"
 opentelemetry-instrumentation = "^0.46b0"
 opentelemetry-semantic-conventions = "^0.46b0"
-opentelemetry-semantic-conventions-ai = "0.3.1"
+opentelemetry-semantic-conventions-ai = "0.3.2"
 
 [package.extras]
 instruments = []
@@ -4115,7 +4137,7 @@ develop = true
 opentelemetry-api = "^1.25.0"
 opentelemetry-instrumentation = "^0.46b0"
 opentelemetry-semantic-conventions = "^0.46b0"
-opentelemetry-semantic-conventions-ai = "0.3.1"
+opentelemetry-semantic-conventions-ai = "0.3.2"
 
 [package.extras]
 instruments = ["ollama (>=0.2.0,<0.3.0)"]
@@ -4137,7 +4159,7 @@ develop = true
 opentelemetry-api = "^1.25.0"
 opentelemetry-instrumentation = "^0.46b0"
 opentelemetry-semantic-conventions = "^0.46b0"
-opentelemetry-semantic-conventions-ai = "0.3.1"
+opentelemetry-semantic-conventions-ai = "0.3.2"
 tiktoken = ">=0.6.0, <1"
 
 [package.extras]
@@ -4160,7 +4182,7 @@ develop = true
 opentelemetry-api = "^1.25.0"
 opentelemetry-instrumentation = "^0.46b0"
 opentelemetry-semantic-conventions = "^0.46b0"
-opentelemetry-semantic-conventions-ai = "0.3.1"
+opentelemetry-semantic-conventions-ai = "0.3.2"
 
 [package.extras]
 instruments = []
@@ -4182,7 +4204,7 @@ develop = true
 opentelemetry-api = "^1.25.0"
 opentelemetry-instrumentation = "^0.46b0"
 opentelemetry-semantic-conventions = "^0.46b0"
-opentelemetry-semantic-conventions-ai = "0.3.1"
+opentelemetry-semantic-conventions-ai = "0.3.2"
 
 [package.extras]
 instruments = []
@@ -4204,7 +4226,7 @@ develop = true
 opentelemetry-api = "^1.25.0"
 opentelemetry-instrumentation = "^0.46b0"
 opentelemetry-semantic-conventions = "^0.46b0"
-opentelemetry-semantic-conventions-ai = "0.3.1"
+opentelemetry-semantic-conventions-ai = "0.3.2"
 
 [package.extras]
 instruments = []
@@ -4267,7 +4289,7 @@ develop = true
 opentelemetry-api = "^1.25.0"
 opentelemetry-instrumentation = "^0.46b0"
 opentelemetry-semantic-conventions = "^0.46b0"
-opentelemetry-semantic-conventions-ai = "0.3.1"
+opentelemetry-semantic-conventions-ai = "0.3.2"
 
 [package.extras]
 instruments = []
@@ -4289,7 +4311,7 @@ develop = true
 opentelemetry-api = "^1.25.0"
 opentelemetry-instrumentation = "^0.46b0"
 opentelemetry-semantic-conventions = "^0.46b0"
-opentelemetry-semantic-conventions-ai = "0.3.1"
+opentelemetry-semantic-conventions-ai = "0.3.2"
 
 [package.source]
 type = "directory"
@@ -4329,7 +4351,7 @@ develop = true
 opentelemetry-api = "^1.25.0"
 opentelemetry-instrumentation = "^0.46b0"
 opentelemetry-semantic-conventions = "^0.46b0"
-opentelemetry-semantic-conventions-ai = "0.3.1"
+opentelemetry-semantic-conventions-ai = "0.3.2"
 
 [package.extras]
 instruments = []
@@ -4351,7 +4373,7 @@ develop = true
 opentelemetry-api = "^1.25.0"
 opentelemetry-instrumentation = "^0.46b0"
 opentelemetry-semantic-conventions = "^0.46b0"
-opentelemetry-semantic-conventions-ai = "0.3.1"
+opentelemetry-semantic-conventions-ai = "0.3.2"
 
 [package.extras]
 instruments = []
@@ -4373,7 +4395,7 @@ develop = true
 opentelemetry-api = "^1.25.0"
 opentelemetry-instrumentation = "^0.46b0"
 opentelemetry-semantic-conventions = "^0.46b0"
-opentelemetry-semantic-conventions-ai = "0.3.1"
+opentelemetry-semantic-conventions-ai = "0.3.2"
 
 [package.extras]
 instruments = []
@@ -4428,13 +4450,13 @@ opentelemetry-api = "1.25.0"
 
 [[package]]
 name = "opentelemetry-semantic-conventions-ai"
-version = "0.3.1"
+version = "0.3.2"
 description = "OpenTelemetry Semantic Conventions Extension for Large Language Models"
 optional = false
 python-versions = "<4,>=3.9"
 files = [
-    {file = "opentelemetry_semantic_conventions_ai-0.3.1-py3-none-any.whl", hash = "sha256:14af6daefa46e15d12e5ca192a4f9ca4400698bc267326da53f3cde6d4978031"},
-    {file = "opentelemetry_semantic_conventions_ai-0.3.1.tar.gz", hash = "sha256:02c6418719b423f4add17b7d65408b21977e4d3abcd736fffb961245403e7dc6"},
+    {file = "opentelemetry_semantic_conventions_ai-0.3.2-py3-none-any.whl", hash = "sha256:7165d9b26fdaa9c26cd89a9e99ad821788b495ba3ecc07a04881a12bf2209baf"},
+    {file = "opentelemetry_semantic_conventions_ai-0.3.2.tar.gz", hash = "sha256:ab5746cd291917c534fc2030ceb323fde441a91d6161176ddc27d4ef2a951975"},
 ]
 
 [[package]]
@@ -6333,6 +6355,7 @@ opentelemetry-instrumentation-google-generativeai = {path = "../opentelemetry-in
 opentelemetry-instrumentation-haystack = {path = "../opentelemetry-instrumentation-haystack", develop = true}
 opentelemetry-instrumentation-langchain = {path = "../opentelemetry-instrumentation-langchain", develop = true}
 opentelemetry-instrumentation-llamaindex = {path = "../opentelemetry-instrumentation-llamaindex", develop = true}
+opentelemetry-instrumentation-marqo = {path = "../opentelemetry-instrumentation-marqo", develop = true}
 opentelemetry-instrumentation-milvus = {path = "../opentelemetry-instrumentation-milvus", develop = true}
 opentelemetry-instrumentation-mistralai = {path = "../opentelemetry-instrumentation-mistralai", develop = true}
 opentelemetry-instrumentation-ollama = {path = "../opentelemetry-instrumentation-ollama", develop = true}
@@ -6349,7 +6372,7 @@ opentelemetry-instrumentation-vertexai = {path = "../opentelemetry-instrumentati
 opentelemetry-instrumentation-watsonx = {path = "../opentelemetry-instrumentation-watsonx", develop = true}
 opentelemetry-instrumentation-weaviate = {path = "../opentelemetry-instrumentation-weaviate", develop = true}
 opentelemetry-sdk = "^1.25.0"
-opentelemetry-semantic-conventions-ai = "0.3.1"
+opentelemetry-semantic-conventions-ai = "0.3.2"
 posthog = ">3.0.2, <4"
 pydantic = ">=1"
 tenacity = "^8.2.3"

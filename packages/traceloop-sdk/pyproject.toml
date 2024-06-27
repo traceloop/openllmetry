@@ -32,7 +32,7 @@ opentelemetry-exporter-otlp-proto-grpc = "^1.25.0"
 opentelemetry-instrumentation-requests = "^0.46b0"
 opentelemetry-instrumentation-sqlalchemy = "^0.46b0"
 opentelemetry-instrumentation-urllib3 = "^0.46b0"
-opentelemetry-semantic-conventions-ai = "0.3.1"
+opentelemetry-semantic-conventions-ai = "0.3.2"
 opentelemetry-instrumentation-mistralai = {path="../opentelemetry-instrumentation-mistralai", develop=true}
 opentelemetry-instrumentation-openai = {path="../opentelemetry-instrumentation-openai", develop=true}
 opentelemetry-instrumentation-ollama = {path="../opentelemetry-instrumentation-ollama", develop=true}
@@ -54,6 +54,7 @@ opentelemetry-instrumentation-vertexai = {path="../opentelemetry-instrumentation
 opentelemetry-instrumentation-watsonx = {path="../opentelemetry-instrumentation-watsonx", develop=true}
 opentelemetry-instrumentation-weaviate = {path="../opentelemetry-instrumentation-weaviate", develop=true}
 opentelemetry-instrumentation-alephalpha = {path="../opentelemetry-instrumentation-alephalpha", develop=true}
+opentelemetry-instrumentation-marqo = {path="../opentelemetry-instrumentation-marqo", develop=true}
 colorama = "^0.4.6"
 tenacity = "^8.2.3"
 pydantic = ">=1"
