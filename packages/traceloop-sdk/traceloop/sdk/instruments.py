@@ -24,3 +24,4 @@ class Instruments(Enum):
     WATSONX = "watsonx"
     WEAVIATE = "weaviate"
     ALEPHALPHA = "alephalpha"
+    MARQO = "marqo"
