@@ -41,7 +41,7 @@ def test_sequential_chain(exporter):
     spans = exporter.get_finished_spans()
 
     assert [
-        "LLMChain.langchain.workflow",
+        "LLMChain.langchain.task",
         "StuffDocumentsChain.langchain.workflow",
     ] == [span.name for span in spans]
 

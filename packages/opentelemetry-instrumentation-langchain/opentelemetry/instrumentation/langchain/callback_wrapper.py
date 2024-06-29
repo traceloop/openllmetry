@@ -6,7 +6,7 @@ from uuid import UUID
 from langchain_core.callbacks import BaseCallbackHandler, BaseCallbackManager
 from langchain_core.messages import BaseMessage
 from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
-from opentelemetry.semconv.ai import LLMRequestTypeValues, SpanAttributes
+from opentelemetry.semconv.ai import LLMRequestTypeValues, SpanAttributes, TraceloopSpanKindValues
 from opentelemetry.context.context import Context
 from opentelemetry.trace import set_span_in_context, Tracer
 from opentelemetry.trace.span import Span
@@ -40,11 +40,11 @@ class Instance:
             run_name = None
         return cls(kind, instance_name, run_name)
 
-    def get_kind(self) -> str:
-        return self.kind
-
-    def get_name(self) -> str:
-        return f"{self.run_name if self.run_name is not None else self.class_name}.langchain.{self.kind}"
+    def get_name(self, kind: Optional[str] = None) -> str:
+        return (
+            f"{self.run_name if self.run_name is not None else self.class_name}"
+            f".langchain.{self.kind if kind is None else kind}"
+        )
 
 
 @dataclass
@@ -133,14 +133,14 @@ class SyncSpanCallbackHandler(BaseCallbackHandler):
 
     def _create_span(self, run_id: UUID, parent_run_id: Optional[UUID], class_name: str) -> Span:
         instance = self.instances[class_name]
-        kind = instance.get_kind()
-        name = instance.get_name()
+        kind = instance.kind if parent_run_id is None else TraceloopSpanKindValues.TASK.value
+        name = instance.get_name(kind)
         if parent_run_id is not None:
             span = self.tracer.start_span(name, context=self.spans[parent_run_id].context)
         else:
             span = self.tracer.start_span(name)
         span.set_attribute(SpanAttributes.TRACELOOP_SPAN_KIND, kind)
-        span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, f"{name}.langchain.{kind}")
+        span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, name)
         current_context = set_span_in_context(span)
         token = context_api.attach(current_context)
         self.spans[run_id] = SpanHolder(span, token, current_context, [])
