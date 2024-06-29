@@ -34,31 +34,26 @@ WRAPPED_METHODS = [
         "package": "langchain.chains.base",
         "class": "Chain",
         "is_callback": True,
-        "kind": TraceloopSpanKindValues.WORKFLOW.value,
     },
     {
         "package": "langchain.schema.runnable",
         "class": "RunnableSequence",
         "is_callback": True,
-        "kind": TraceloopSpanKindValues.WORKFLOW.value,
     },
     {
         "package": "langchain.prompts.base",
         "class": "BasePromptTemplate",
         "is_callback": True,
-        "kind": TraceloopSpanKindValues.TASK.value,
     },
     {
         "package": "langchain.chat_models.base",
         "class": "BaseChatModel",
         "is_callback": True,
-        "kind": TraceloopSpanKindValues.TASK.value,
     },
     {
         "package": "langchain.schema",
         "class": "BaseOutputParser",
         "is_callback": True,
-        "kind": TraceloopSpanKindValues.TASK.value,
     },
     {
         "package": "langchain.agents",

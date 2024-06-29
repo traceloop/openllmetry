@@ -28,22 +28,20 @@ class CustomJsonEncode(json.JSONEncoder):
 
 @dataclass
 class Instance:
-    kind: str
     class_name: str
     run_name: Optional[str]
 
     @classmethod
-    def from_args(cls, kind: str, instance_name: str, args: Any) -> "Instance":
+    def from_args(cls, instance_name: str, args: Any) -> "Instance":
         if len(args) > 1 and "run_name" in args[1]:
             run_name = args[1]["run_name"]
         else:
             run_name = None
-        return cls(kind, instance_name, run_name)
+        return cls(instance_name, run_name)
 
-    def get_name(self, kind: Optional[str] = None) -> str:
+    def get_name(self, kind: str) -> str:
         return (
-            f"{self.run_name if self.run_name is not None else self.class_name}"
-            f".langchain.{self.kind if kind is None else kind}"
+            f"{self.run_name if self.run_name is not None else self.class_name}.langchain.{kind}"
         )
 
 
@@ -78,7 +76,7 @@ def _add_callback(tracer, to_wrap, instance, args):
         else:
             args[1].update({"callbacks": [cb, ]})
     cb.add_instance(
-        Instance.from_args(to_wrap.get("kind"), instance.get_name(), args)
+        Instance.from_args(instance.get_name(), args)
     )
     return cb
 
@@ -133,7 +131,7 @@ class SyncSpanCallbackHandler(BaseCallbackHandler):
 
     def _create_span(self, run_id: UUID, parent_run_id: Optional[UUID], class_name: str) -> Span:
         instance = self.instances[class_name]
-        kind = instance.kind if parent_run_id is None else TraceloopSpanKindValues.TASK.value
+        kind = TraceloopSpanKindValues.WORKFLOW.value if parent_run_id is None else TraceloopSpanKindValues.TASK.value
         name = instance.get_name(kind)
         if parent_run_id is not None:
             span = self.tracer.start_span(name, context=self.spans[parent_run_id].context)
