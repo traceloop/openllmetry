@@ -29,6 +29,8 @@ logger = logging.getLogger(__name__)
 
 _instruments = ("langchain >= 0.0.346", "langchain-core > 0.1.0")
 
+ASYNC_CALLBACK_FUNCTIONS = ("ainvoke", "astream", "atransform")
+SYNC_CALLBACK_FUNCTIONS = ("invoke", "stream", "transform")
 WRAPPED_METHODS = [
     {
         "package": "langchain.chains.base",
@@ -36,7 +38,7 @@ WRAPPED_METHODS = [
         "is_callback": True,
     },
     {
-        "package": "langchain.schema.runnable",
+        "package": "langchain_core.runnables.base",
         "class": "RunnableSequence",
         "is_callback": True,
     },
@@ -119,16 +121,12 @@ class LangchainInstrumentor(BaseInstrumentor):
             wrap_package = wrapped_method.get("package")
             if wrapped_method.get("is_callback"):
                 wrap_class = wrapped_method.get("class")
-                wrap_function_wrapper(
-                    wrap_package,
-                    f"{wrap_class}.invoke",
-                    callback_wrapper(tracer, wrapped_method),
-                )
-                wrap_function_wrapper(
-                    wrap_package,
-                    f"{wrap_class}.ainvoke",
-                    callback_wrapper(tracer, wrapped_method),
-                )
+                for func_name in SYNC_CALLBACK_FUNCTIONS + ASYNC_CALLBACK_FUNCTIONS:
+                    wrap_function_wrapper(
+                        wrap_package,
+                        f"{wrap_class}.{func_name}",
+                        callback_wrapper(tracer, wrapped_method),
+                    )
             else:
                 wrap_object = wrapped_method.get("object")
                 wrap_method = wrapped_method.get("method")
@@ -144,7 +142,8 @@ class LangchainInstrumentor(BaseInstrumentor):
             wrap_package = wrapped_method.get("package")
             if wrapped_method.get("is_callback"):
                 wrap_class = wrapped_method.get("class")
-                unwrap(wrap_package, f"{wrap_class}.__init__")
+                for func_name in SYNC_CALLBACK_FUNCTIONS + ASYNC_CALLBACK_FUNCTIONS:
+                    unwrap(wrap_package, f"{wrap_class}.{func_name}")
             else:
                 wrap_object = wrapped_method.get("object")
                 wrap_method = wrapped_method.get("method")
