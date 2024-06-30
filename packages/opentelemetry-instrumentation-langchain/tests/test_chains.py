@@ -19,7 +19,7 @@ def test_sequential_chain(exporter):
         input_variables=["title", "era"], template=synopsis_template
     )
     synopsis_chain = LLMChain(
-        llm=llm, prompt=synopsis_prompt_template, output_key="synopsis"
+        llm=llm, prompt=synopsis_prompt_template, output_key="synopsis", name="synopsis"
     )
 
     template = """You are a play critic from the New York Times. Given the synopsis of play, it is your job to write a review for that play.
@@ -45,17 +45,18 @@ def test_sequential_chain(exporter):
 
     assert [
         "openai.completion",
-        "LLMChain.langchain.task",
+        "synopsis.langchain.task",
         "openai.completion",
         "LLMChain.langchain.task",
         "SequentialChain.langchain.workflow",
     ] == [span.name for span in spans]
 
-    synopsis_span, review_span = [span for span in spans if span.name == "LLMChain.langchain.task"]
+    synopsis_span = next(span for span in spans if span.name == "synopsis.langchain.task")
+    review_span = next(span for span in spans if span.name == "LLMChain.langchain.task")
 
     data = json.loads(synopsis_span.attributes[SpanAttributes.TRACELOOP_ENTITY_INPUT])
     assert data["inputs"] == {'title': 'Tragedy at sunset on the beach', 'era': 'Victorian England'}
-    assert data["kwargs"]["name"] == "LLMChain"
+    assert data["kwargs"]["name"] == "synopsis"
     data = json.loads(synopsis_span.attributes[SpanAttributes.TRACELOOP_ENTITY_OUTPUT])
     assert data["outputs"].keys() == {"synopsis", }
 

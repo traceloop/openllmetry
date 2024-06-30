@@ -35,20 +35,20 @@ INPUT_TEXT = """
 def test_sequential_chain(exporter):
     small_docs = CharacterTextSplitter().create_documents(texts=[INPUT_TEXT, ])
     llm = ChatCohere(model="command", temperature=0.75)
-    chain = load_summarize_chain(llm, chain_type="stuff")
+    chain = load_summarize_chain(llm, chain_type="stuff").with_config(run_name="stuff_chain")
     chain.invoke(small_docs)
 
     spans = exporter.get_finished_spans()
 
     assert [
         "LLMChain.langchain.task",
-        "StuffDocumentsChain.langchain.workflow",
+        "stuff_chain.langchain.workflow",
     ] == [span.name for span in spans]
 
-    stuff_span = next(span for span in spans if span.name == "StuffDocumentsChain.langchain.workflow")
+    stuff_span = next(span for span in spans if span.name == "stuff_chain.langchain.workflow")
 
     data = json.loads(stuff_span.attributes[SpanAttributes.TRACELOOP_ENTITY_INPUT])
     assert data["inputs"].keys() == {"input_documents"}
-    assert data["kwargs"]["name"] == "StuffDocumentsChain"
+    assert data["kwargs"]["name"] == "stuff_chain"
     data = json.loads(stuff_span.attributes[SpanAttributes.TRACELOOP_ENTITY_OUTPUT])
     assert data["outputs"].keys() == {"output_text"}
