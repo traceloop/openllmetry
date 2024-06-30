@@ -27,26 +27,6 @@ class CustomJsonEncode(json.JSONEncoder):
 
 
 @dataclass
-class Instance:
-    class_name: str
-    run_name: Optional[str]
-
-    @classmethod
-    def from_args(cls, instance_name: str, args: Any) -> "Instance":
-        if len(args) > 1 and "run_name" in args[1]:
-            run_name = args[1]["run_name"]
-        else:
-            run_name = None
-        return cls(instance_name, run_name)
-
-    def get_instance_name(self) -> str:
-        return self.run_name if self.run_name is not None else self.class_name
-
-    def get_name(self, kind: str) -> str:
-        return f"{self.get_instance_name()}.langchain.{kind}"
-
-
-@dataclass
 class SpanHolder:
     span: Span
     token: Any
@@ -76,9 +56,6 @@ def _add_callback(tracer, to_wrap, instance, args):
                         args[1]["callbacks"].append(cb)
         else:
             args[1].update({"callbacks": [cb, ]})
-    cb.add_instance(
-        Instance.from_args(instance.get_name(), args)
-    )
     return cb
 
 
@@ -114,14 +91,10 @@ def _set_chat_request(span: Span, serialized: Any) -> None:
 class SyncSpanCallbackHandler(BaseCallbackHandler):
     def __init__(self, tracer: Tracer) -> None:
         self.tracer = tracer
-        self.instances = {}
         self.spans: dict[UUID, SpanHolder] = {}
 
-    def add_instance(self, instance: Instance) -> None:
-        self.instances[instance.get_instance_name()] = instance
-
     @staticmethod
-    def _get_instance_name_from_callback(
+    def _get_name_from_callback(
         serialized: dict[str, Any],
         _tags: Optional[list[str]] = None,
         _metadata: Optional[dict[str, Any]] = None,
@@ -147,16 +120,15 @@ class SyncSpanCallbackHandler(BaseCallbackHandler):
                 child_span.end()
         span.end()
 
-    def _create_span(self, run_id: UUID, parent_run_id: Optional[UUID], instance_name: str) -> Span:
-        instance = self.instances[instance_name]
+    def _create_span(self, run_id: UUID, parent_run_id: Optional[UUID], name: str) -> Span:
         kind = TraceloopSpanKindValues.WORKFLOW.value if parent_run_id is None else TraceloopSpanKindValues.TASK.value
-        name = instance.get_name(kind)
+        span_name = f"{name}.langchain.{kind}"
         if parent_run_id is not None:
-            span = self.tracer.start_span(name, context=self.spans[parent_run_id].context)
+            span = self.tracer.start_span(span_name, context=self.spans[parent_run_id].context)
         else:
-            span = self.tracer.start_span(name)
+            span = self.tracer.start_span(span_name)
         span.set_attribute(SpanAttributes.TRACELOOP_SPAN_KIND, kind)
-        span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, name)
+        span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, span_name)
         current_context = set_span_in_context(span)
         token = context_api.attach(current_context)
         self.spans[run_id] = SpanHolder(span, token, current_context, [])
@@ -176,8 +148,8 @@ class SyncSpanCallbackHandler(BaseCallbackHandler):
         **kwargs: Any,
     ) -> None:
         """Run when chain starts running."""
-        instance_name = self._get_instance_name_from_callback(serialized, **kwargs)
-        span = self._create_span(run_id, parent_run_id, instance_name)
+        name = self._get_name_from_callback(serialized, **kwargs)
+        span = self._create_span(run_id, parent_run_id, name)
         span.set_attribute(
             SpanAttributes.TRACELOOP_ENTITY_INPUT,
             json.dumps(
@@ -220,8 +192,8 @@ class SyncSpanCallbackHandler(BaseCallbackHandler):
         **kwargs: Any,
     ) -> Any:
         """Run when Chat Model starts running."""
-        instance_name = self._get_instance_name_from_callback(serialized, kwargs=kwargs)
-        span = self._create_span(run_id, parent_run_id, instance_name)
+        name = self._get_name_from_callback(serialized, kwargs=kwargs)
+        span = self._create_span(run_id, parent_run_id, name)
         span.set_attribute(
             SpanAttributes.TRACELOOP_ENTITY_INPUT,
             json.dumps(
@@ -249,8 +221,8 @@ class SyncSpanCallbackHandler(BaseCallbackHandler):
         **kwargs: Any,
     ) -> None:
         """Run when tool starts running."""
-        instance_name = self._get_instance_name_from_callback(serialized, kwargs=kwargs)
-        span = self._create_span(run_id, parent_run_id, instance_name)
+        name = self._get_name_from_callback(serialized, kwargs=kwargs)
+        span = self._create_span(run_id, parent_run_id, name)
         span.set_attribute(
             SpanAttributes.TRACELOOP_ENTITY_INPUT,
             json.dumps(

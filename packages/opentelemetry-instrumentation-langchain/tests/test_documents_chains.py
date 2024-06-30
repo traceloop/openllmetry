@@ -41,6 +41,7 @@ def test_sequential_chain(exporter):
     spans = exporter.get_finished_spans()
 
     assert [
+        "ChatCohere.langchain.task",
         "LLMChain.langchain.task",
         "stuff_chain.langchain.workflow",
     ] == [span.name for span in spans]
