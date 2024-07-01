@@ -318,13 +318,19 @@ def _set_prompts(span, messages):
 
     for i, msg in enumerate(messages):
         prefix = f"{SpanAttributes.LLM_PROMPTS}.{i}"
-        if isinstance(msg.get("content"), str):
-            content = msg.get("content")
-        elif isinstance(msg.get("content"), list):
-            content = json.dumps(msg.get("content"))
 
         _set_span_attribute(span, f"{prefix}.role", msg.get("role"))
-        _set_span_attribute(span, f"{prefix}.content", content)
+        if msg.get("content"):
+            content = msg.get("content")
+            if isinstance(content, list):
+                content = json.dumps(content)
+            _set_span_attribute(span, f"{prefix}.content", content)
+        if msg.get("tool_calls"):
+            _set_span_attribute(
+                span, f"{prefix}.tool_calls", json.dumps(msg.get("tool_calls"))
+            )
+        if msg.get("tool_call_id"):
+            _set_span_attribute(span, f"{prefix}.tool_call_id", msg.get("tool_call_id"))
 
 
 def _set_completions(span, choices):
