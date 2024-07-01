@@ -121,8 +121,11 @@ def test_open_ai_function_calls_tools(exporter, openai_client, openai_tools):
 
 
 @pytest.mark.vcr
-def test_open_ai_function_calls_tools_streaming(exporter, openai_client, openai_tools):
-    response = openai_client.chat.completions.create(
+@pytest.mark.asyncio
+async def test_open_ai_function_calls_tools_streaming(
+    exporter, async_openai_client, openai_tools
+):
+    response = await async_openai_client.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=[
             {"role": "user", "content": "What's the weather like in San Francisco?"}
@@ -131,7 +134,7 @@ def test_open_ai_function_calls_tools_streaming(exporter, openai_client, openai_
         stream=True,
     )
 
-    for _ in response:
+    async for _ in response:
         pass
 
     spans = exporter.get_finished_spans()
@@ -233,10 +236,11 @@ def test_open_ai_function_calls_tools_parallel(exporter, openai_client, openai_t
 
 
 @pytest.mark.vcr
-def test_open_ai_function_calls_tools_streaming_parallel(
-    exporter, openai_client, openai_tools
+@pytest.mark.asyncio
+async def test_open_ai_function_calls_tools_streaming_parallel(
+    exporter, async_openai_client, openai_tools
 ):
-    response = openai_client.chat.completions.create(
+    response = await async_openai_client.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=[
             {
@@ -248,7 +252,7 @@ def test_open_ai_function_calls_tools_streaming_parallel(
         stream=True,
     )
 
-    for _ in response:
+    async for _ in response:
         pass
 
     spans = exporter.get_finished_spans()
