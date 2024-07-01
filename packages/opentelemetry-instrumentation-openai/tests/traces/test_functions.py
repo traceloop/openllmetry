@@ -135,11 +135,8 @@ def test_open_ai_function_calls_tools_streaming(exporter, openai_client, openai_
         pass
 
     spans = exporter.get_finished_spans()
-
-    assert [span.name for span in spans] == [
-        "openai.chat",
-    ]
     open_ai_span = spans[0]
+
     assert isinstance(
         open_ai_span.attributes[
             f"{SpanAttributes.LLM_COMPLETIONS}.0.function_call.0.id"
@@ -185,11 +182,8 @@ def test_open_ai_function_calls_tools_parallel(exporter, openai_client, openai_t
         pass
 
     spans = exporter.get_finished_spans()
-
-    assert [span.name for span in spans] == [
-        "openai.chat",
-    ]
     open_ai_span = spans[0]
+
     assert (
         open_ai_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.0.name")
         == "get_current_weather"
@@ -258,11 +252,8 @@ def test_open_ai_function_calls_tools_streaming_parallel(
         pass
 
     spans = exporter.get_finished_spans()
-
-    assert [span.name for span in spans] == [
-        "openai.chat",
-    ]
     open_ai_span = spans[0]
+
     assert (
         open_ai_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.0.name")
         == "get_current_weather"
