@@ -21,6 +21,7 @@ from traceloop.sdk.utils.json_encoder import JSONEncoder
 
 def entity_method(
     name: Optional[str] = None,
+    version: Optional[str] = None,
     tlp_span_kind: Optional[TraceloopSpanKindValues] = TraceloopSpanKindValues.TASK,
 ):
     def decorate(fn):
@@ -57,12 +58,16 @@ def entity_method(
                 span.set_attribute(
                     SpanAttributes.TRACELOOP_ENTITY_NAME, chained_entity_name
                 )
+                if version:
+                    span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_VERSION, version)
 
                 try:
                     if _should_send_prompts():
                         span.set_attribute(
                             SpanAttributes.TRACELOOP_ENTITY_INPUT,
-                            json.dumps({"args": args, "kwargs": kwargs}, cls=JSONEncoder),
+                            json.dumps(
+                                {"args": args, "kwargs": kwargs}, cls=JSONEncoder
+                            ),
                         )
                 except TypeError as e:
                     Telemetry().log_exception(e)
@@ -76,7 +81,8 @@ def entity_method(
                 try:
                     if _should_send_prompts():
                         span.set_attribute(
-                            SpanAttributes.TRACELOOP_ENTITY_OUTPUT, json.dumps(res, cls=JSONEncoder)
+                            SpanAttributes.TRACELOOP_ENTITY_OUTPUT,
+                            json.dumps(res, cls=JSONEncoder),
                         )
                 except TypeError as e:
                     Telemetry().log_exception(e)
@@ -93,6 +99,7 @@ def entity_method(
 
 def entity_class(
     name: Optional[str],
+    version: Optional[str],
     method_name: str,
     tlp_span_kind: Optional[TraceloopSpanKindValues] = TraceloopSpanKindValues.TASK,
 ):
@@ -102,7 +109,9 @@ def entity_class(
         setattr(
             cls,
             method_name,
-            entity_method(name=task_name, tlp_span_kind=tlp_span_kind)(method),
+            entity_method(name=task_name, version=version, tlp_span_kind=tlp_span_kind)(
+                method
+            ),
         )
         return cls
 
