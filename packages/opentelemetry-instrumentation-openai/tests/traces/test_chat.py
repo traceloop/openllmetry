@@ -1,3 +1,4 @@
+import json
 import pytest
 from opentelemetry.semconv.ai import SpanAttributes
 
@@ -34,6 +35,63 @@ def test_chat(exporter, openai_client):
 
 
 @pytest.mark.vcr
+def test_chat_tool_calls(exporter, openai_client):
+    openai_client.chat.completions.create(
+        model="gpt-3.5-turbo",
+        messages=[
+            {
+                "role": "assistant",
+                "tool_calls": [
+                    {
+                        "id": "1",
+                        "type": "function",
+                        "function": {
+                            "name": "get_current_weather",
+                            "arguments": '{"location": "San Francisco"}',
+                        },
+                    }
+                ],
+            },
+            {
+                "role": "tool",
+                "tool_call_id": "1",
+                "content": "The weather in San Francisco is 70 degrees and sunny.",
+            },
+        ],
+    )
+
+    spans = exporter.get_finished_spans()
+
+    assert [span.name for span in spans] == [
+        "openai.chat",
+    ]
+    open_ai_span = spans[0]
+
+    assert f"{SpanAttributes.LLM_PROMPTS}.0.content" not in open_ai_span.attributes
+    assert open_ai_span.attributes[
+        f"{SpanAttributes.LLM_PROMPTS}.0.tool_calls"
+    ] == json.dumps(
+        [
+            {
+                "id": "1",
+                "type": "function",
+                "function": {
+                    "name": "get_current_weather",
+                    "arguments": '{"location": "San Francisco"}',
+                },
+            }
+        ]
+    )
+
+    assert (
+        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.content"]
+        == "The weather in San Francisco is 70 degrees and sunny."
+    )
+    assert (
+        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.tool_call_id"] == "1"
+    )
+
+
 def test_chat_streaming(exporter, openai_client):
     response = openai_client.chat.completions.create(
         model="gpt-3.5-turbo",
