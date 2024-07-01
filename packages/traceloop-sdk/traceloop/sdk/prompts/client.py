@@ -3,7 +3,7 @@ from jinja2 import Environment, meta
 from traceloop.sdk import Telemetry
 from traceloop.sdk.prompts.model import Prompt, PromptVersion, TemplateEngine
 from traceloop.sdk.prompts.registry import PromptRegistry
-from traceloop.sdk.tracing.tracing import set_prompt_tracing_context
+from traceloop.sdk.tracing.tracing import set_managed_prompt_tracing_context
 
 
 def get_effective_version(prompt: Prompt) -> PromptVersion:
@@ -81,7 +81,7 @@ class PromptRegistryClient:
         )
         params_dict.pop("mode")
 
-        set_prompt_tracing_context(
+        set_managed_prompt_tracing_context(
             prompt.key,
             prompt_version.version,
             prompt_version.name,
