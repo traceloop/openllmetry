@@ -321,7 +321,10 @@ def _set_prompts(span, messages):
 
         _set_span_attribute(span, f"{prefix}.role", msg.get("role"))
         if msg.get("content"):
-            _set_span_attribute(span, f"{prefix}.content", msg.get("content"))
+            content = msg.get("content")
+            if isinstance(content, list):
+                content = json.dumps(content)
+            _set_span_attribute(span, f"{prefix}.content", content)
         if msg.get("tool_calls"):
             _set_span_attribute(
                 span, f"{prefix}.tool_calls", json.dumps(msg.get("tool_calls"))
