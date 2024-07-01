@@ -3,6 +3,8 @@ import json
 import pytest
 from langchain.chains import SequentialChain, LLMChain
 from langchain.prompts import PromptTemplate
+from langchain.schema import StrOutputParser
+from langchain_cohere import ChatCohere
 from langchain_openai import OpenAI
 from opentelemetry.semconv.ai import SpanAttributes
 
@@ -19,7 +21,7 @@ def test_sequential_chain(exporter):
         input_variables=["title", "era"], template=synopsis_template
     )
     synopsis_chain = LLMChain(
-        llm=llm, prompt=synopsis_prompt_template, output_key="synopsis"
+        llm=llm, prompt=synopsis_prompt_template, output_key="synopsis", name="synopsis"
     )
 
     template = """You are a play critic from the New York Times. Given the synopsis of play, it is your job to write a review for that play.
@@ -37,7 +39,7 @@ def test_sequential_chain(exporter):
         output_variables=["synopsis", "review"],
         verbose=True,
     )
-    overall_chain(
+    overall_chain.invoke(
         {"title": "Tragedy at sunset on the beach", "era": "Victorian England"}
     )
 
@@ -45,17 +47,18 @@ def test_sequential_chain(exporter):
 
     assert [
         "openai.completion",
-        "LLMChain.langchain.task",
+        "synopsis.langchain.task",
         "openai.completion",
         "LLMChain.langchain.task",
         "SequentialChain.langchain.workflow",
     ] == [span.name for span in spans]
 
-    synopsis_span, review_span = [span for span in spans if span.name == "LLMChain.langchain.task"]
+    synopsis_span = next(span for span in spans if span.name == "synopsis.langchain.task")
+    review_span = next(span for span in spans if span.name == "LLMChain.langchain.task")
 
     data = json.loads(synopsis_span.attributes[SpanAttributes.TRACELOOP_ENTITY_INPUT])
     assert data["inputs"] == {'title': 'Tragedy at sunset on the beach', 'era': 'Victorian England'}
-    assert data["kwargs"]["name"] == "LLMChain"
+    assert data["kwargs"]["name"] == "synopsis"
     data = json.loads(synopsis_span.attributes[SpanAttributes.TRACELOOP_ENTITY_OUTPUT])
     assert data["outputs"].keys() == {"synopsis", }
 
@@ -138,3 +141,46 @@ async def test_asequential_chain(exporter):
     assert data["kwargs"]["name"] == "SequentialChain"
     data = json.loads(overall_span.attributes[SpanAttributes.TRACELOOP_ENTITY_OUTPUT])
     assert data["outputs"].keys() == {"synopsis", "review"}
+
+
+@pytest.mark.vcr
+def test_stream(exporter):
+    chat = ChatCohere(model="command", temperature=0.75)
+    prompt = PromptTemplate.from_template(
+        "write 2 lines of random text about ${product}"
+    )
+    runnable = prompt | chat | StrOutputParser()
+
+    chunks = list(runnable.stream({"product": "colorful socks"}))
+    spans = exporter.get_finished_spans()
+
+    assert [
+        "PromptTemplate.langchain.task",
+        "StrOutputParser.langchain.task",
+        "ChatCohere.langchain.task",
+        "RunnableSequence.langchain.workflow",
+    ] == [span.name for span in spans]
+    assert len(chunks) == 62
+
+
+@pytest.mark.vcr
+@pytest.mark.asyncio
+async def test_astream(exporter):
+    chat = ChatCohere(model="command", temperature=0.75)
+    prompt = PromptTemplate.from_template(
+        "write 2 lines of random text about ${product}"
+    )
+    runnable = prompt | chat | StrOutputParser()
+
+    chunks = []
+    async for chunk in runnable.astream({"product": "colorful socks"}):
+        chunks.append(chunk)
+    spans = exporter.get_finished_spans()
+
+    assert [
+        "PromptTemplate.langchain.task",
+        "StrOutputParser.langchain.task",
+        "ChatCohere.langchain.task",
+        "RunnableSequence.langchain.workflow",
+    ] == [span.name for span in spans]
+    assert len(chunks) == 144
