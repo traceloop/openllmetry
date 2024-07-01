@@ -3,6 +3,8 @@ import json
 import pytest
 from langchain.chains import SequentialChain, LLMChain
 from langchain.prompts import PromptTemplate
+from langchain.schema import StrOutputParser
+from langchain_cohere import ChatCohere
 from langchain_openai import OpenAI
 from opentelemetry.semconv.ai import SpanAttributes
 
@@ -139,3 +141,46 @@ async def test_asequential_chain(exporter):
     assert data["kwargs"]["name"] == "SequentialChain"
     data = json.loads(overall_span.attributes[SpanAttributes.TRACELOOP_ENTITY_OUTPUT])
     assert data["outputs"].keys() == {"synopsis", "review"}
+
+
+@pytest.mark.vcr
+def test_stream(exporter):
+    chat = ChatCohere(model="command", temperature=0.75)
+    prompt = PromptTemplate.from_template(
+        "write 2 lines of random text about ${product}"
+    )
+    runnable = prompt | chat | StrOutputParser()
+
+    chunks = list(runnable.stream({"product": "colorful socks"}))
+    spans = exporter.get_finished_spans()
+
+    assert [
+        "PromptTemplate.langchain.task",
+        "StrOutputParser.langchain.task",
+        "ChatCohere.langchain.task",
+        "RunnableSequence.langchain.workflow",
+    ] == [span.name for span in spans]
+    assert len(chunks) == 62
+
+
+@pytest.mark.vcr
+@pytest.mark.asyncio
+async def test_astream(exporter):
+    chat = ChatCohere(model="command", temperature=0.75)
+    prompt = PromptTemplate.from_template(
+        "write 2 lines of random text about ${product}"
+    )
+    runnable = prompt | chat | StrOutputParser()
+
+    chunks = []
+    async for chunk in runnable.astream({"product": "colorful socks"}):
+        chunks.append(chunk)
+    spans = exporter.get_finished_spans()
+
+    assert [
+        "PromptTemplate.langchain.task",
+        "StrOutputParser.langchain.task",
+        "ChatCohere.langchain.task",
+        "RunnableSequence.langchain.workflow",
+    ] == [span.name for span in spans]
+    assert len(chunks) == 144

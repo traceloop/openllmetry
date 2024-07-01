@@ -162,8 +162,7 @@ async def test_async_lcel(exporter):
 
 
 @pytest.mark.vcr
-def test_streaming(exporter):
-
+def test_invoke(exporter):
     chat = ChatOpenAI(
         model="gpt-4",
         temperature=0,
@@ -189,8 +188,7 @@ def test_streaming(exporter):
 
 @pytest.mark.vcr
 @pytest.mark.asyncio
-async def test_async_streaming(exporter):
-
+async def test_async_invoke(exporter):
     chat = ChatOpenAI(
         model="gpt-4",
         temperature=0,
