@@ -20,7 +20,6 @@ def test_task_io_serialization_with_langchain(exporter):
 
     assert [span.name for span in spans] == [
         'openai.chat',
-        'ChatOpenAI.langchain.task',
         'answer_question.task',
     ]
 
