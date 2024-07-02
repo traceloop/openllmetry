@@ -359,11 +359,11 @@ def _set_completions(span, choices):
         function_call = message.get("function_call")
         if function_call:
             _set_span_attribute(
-                span, f"{prefix}.function_call.0.name", function_call.get("name")
+                span, f"{prefix}.tool_calls.0.name", function_call.get("name")
             )
             _set_span_attribute(
                 span,
-                f"{prefix}.function_call.0.arguments",
+                f"{prefix}.tool_calls.0.arguments",
                 function_call.get("arguments"),
             )
 
@@ -373,17 +373,17 @@ def _set_completions(span, choices):
                 function = tool_call.get("function")
                 _set_span_attribute(
                     span,
-                    f"{prefix}.function_call.{i}.id",
+                    f"{prefix}.tool_calls.{i}.id",
                     tool_call.get("id"),
                 )
                 _set_span_attribute(
                     span,
-                    f"{prefix}.function_call.{i}.name",
+                    f"{prefix}.tool_calls.{i}.name",
                     function.get("name"),
                 )
                 _set_span_attribute(
                     span,
-                    f"{prefix}.function_call.{i}.arguments",
+                    f"{prefix}.tool_calls.{i}.arguments",
                     function.get("arguments"),
                 )
 
