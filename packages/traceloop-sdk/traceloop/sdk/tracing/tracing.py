@@ -56,6 +56,7 @@ class TracerWrapper(object):
     enable_content_tracing: bool = True
     endpoint: str = None
     headers: Dict[str, str] = {}
+    __tracer_provider: TracerProvider = None
 
     def __new__(
         cls,
@@ -72,9 +73,7 @@ class TracerWrapper(object):
                 return obj
 
             obj.__resource = Resource(attributes=TracerWrapper.resource_attributes)
-            obj.__tracer_provider: TracerProvider = init_tracer_provider(
-                resource=obj.__resource
-            )
+            obj.__tracer_provider = init_tracer_provider(resource=obj.__resource)
             if processor:
                 Telemetry().capture("tracer:init", {"processor": "custom"})
                 obj.__spans_processor: SpanProcessor = processor
