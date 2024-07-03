@@ -346,7 +346,9 @@ class TracerWrapper(object):
         if is_llm_span(span):
             managed_prompt = get_value("managed_prompt")
             if managed_prompt is not None:
-                span.set_attribute(SpanAttributes.TRACELOOP_PROMPT_MANAGED, managed_prompt)
+                span.set_attribute(
+                    SpanAttributes.TRACELOOP_PROMPT_MANAGED, managed_prompt
+                )
 
             prompt_key = get_value("prompt_key")
             if prompt_key is not None:
@@ -354,25 +356,34 @@ class TracerWrapper(object):
 
             prompt_version = get_value("prompt_version")
             if prompt_version is not None:
-                span.set_attribute(SpanAttributes.TRACELOOP_PROMPT_VERSION, prompt_version)
+                span.set_attribute(
+                    SpanAttributes.TRACELOOP_PROMPT_VERSION, prompt_version
+                )
 
             prompt_version_name = get_value("prompt_version_name")
             if prompt_version_name is not None:
-                span.set_attribute(SpanAttributes.TRACELOOP_PROMPT_VERSION_NAME, prompt_version_name)
+                span.set_attribute(
+                    SpanAttributes.TRACELOOP_PROMPT_VERSION_NAME, prompt_version_name
+                )
 
             prompt_version_hash = get_value("prompt_version_hash")
             if prompt_version_hash is not None:
-                span.set_attribute(SpanAttributes.TRACELOOP_PROMPT_VERSION_HASH, prompt_version_hash)
+                span.set_attribute(
+                    SpanAttributes.TRACELOOP_PROMPT_VERSION_HASH, prompt_version_hash
+                )
 
             prompt_template = get_value("prompt_template")
             if prompt_template is not None:
-                span.set_attribute(SpanAttributes.TRACELOOP_PROMPT_TEMPLATE, prompt_template)
+                span.set_attribute(
+                    SpanAttributes.TRACELOOP_PROMPT_TEMPLATE, prompt_template
+                )
 
             prompt_template_variables = get_value("prompt_template_variables")
-            if prompt_version_hash is not None:
+            if prompt_template_variables is not None:
                 for key, value in prompt_template_variables.items():
                     span.set_attribute(
-                        f"{SpanAttributes.TRACELOOP_PROMPT_TEMPLATE_VARIABLES}.{key}", value
+                        f"{SpanAttributes.TRACELOOP_PROMPT_TEMPLATE_VARIABLES}.{key}",
+                        value,
                     )
 
         # Call original on_start method if it exists in custom processor
