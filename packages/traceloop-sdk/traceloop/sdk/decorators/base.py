@@ -62,7 +62,9 @@ def entity_method(
                     if _should_send_prompts():
                         span.set_attribute(
                             SpanAttributes.TRACELOOP_ENTITY_INPUT,
-                            json.dumps({"args": args, "kwargs": kwargs}, cls=JSONEncoder),
+                            json.dumps(
+                                {"args": args, "kwargs": kwargs}, cls=JSONEncoder
+                            ),
                         )
                 except TypeError as e:
                     Telemetry().log_exception(e)
@@ -71,12 +73,13 @@ def entity_method(
 
                 # span will be ended in the generator
                 if isinstance(res, types.GeneratorType):
-                    return _handle_generator(span, ctx_token, res)
+                    return _handle_generator(span, res)
 
                 try:
                     if _should_send_prompts():
                         span.set_attribute(
-                            SpanAttributes.TRACELOOP_ENTITY_OUTPUT, json.dumps(res, cls=JSONEncoder)
+                            SpanAttributes.TRACELOOP_ENTITY_OUTPUT,
+                            json.dumps(res, cls=JSONEncoder),
                         )
                 except TypeError as e:
                     Telemetry().log_exception(e)
@@ -187,12 +190,16 @@ def aentity_class(
     return decorator
 
 
-def _handle_generator(span, ctx_token, res):
-    for part in res:
-        yield part
+def _handle_generator(span, res):
+    # for some reason the SPAN_KEY is not being set in the context of the generator, so we re-set it
+    context_api.attach(trace.set_span_in_context(span))
+    yield from res
 
     span.end()
-    context_api.detach(ctx_token)
+
+    # Note: we don't detach the context here as this fails in some situations
+    # https://github.com/open-telemetry/opentelemetry-python/issues/2606
+    # This is not a problem since the context will be detached automatically during garbage collection
 
 
 async def _ahandle_generator(span, ctx_token, res):
