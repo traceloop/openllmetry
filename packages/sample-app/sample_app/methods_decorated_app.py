@@ -10,8 +10,11 @@ client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 Traceloop.init(app_name="joke_generation_service")
 
 
-@task(name="joke_creation")
+@task(name="joke_creation", version=1)
 def create_joke():
+    Traceloop.set_prompt(
+        "Tell me a joke about {subject}", {"subject": "opentelemetry"}, 1
+    )
     completion = client.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=[{"role": "user", "content": "Tell me a joke about opentelemetry"}],

@@ -21,6 +21,7 @@ from traceloop.sdk.utils.json_encoder import JSONEncoder
 
 def entity_method(
     name: Optional[str] = None,
+    version: Optional[int] = None,
     tlp_span_kind: Optional[TraceloopSpanKindValues] = TraceloopSpanKindValues.TASK,
 ):
     def decorate(fn):
@@ -57,6 +58,8 @@ def entity_method(
                 span.set_attribute(
                     SpanAttributes.TRACELOOP_ENTITY_NAME, chained_entity_name
                 )
+                if version:
+                    span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_VERSION, version)
 
                 try:
                     if _should_send_prompts():
@@ -96,6 +99,7 @@ def entity_method(
 
 def entity_class(
     name: Optional[str],
+    version: Optional[int],
     method_name: str,
     tlp_span_kind: Optional[TraceloopSpanKindValues] = TraceloopSpanKindValues.TASK,
 ):
@@ -105,7 +109,9 @@ def entity_class(
         setattr(
             cls,
             method_name,
-            entity_method(name=task_name, tlp_span_kind=tlp_span_kind)(method),
+            entity_method(name=task_name, version=version, tlp_span_kind=tlp_span_kind)(
+                method
+            ),
         )
         return cls
 
@@ -117,6 +123,7 @@ def entity_class(
 
 def aentity_method(
     name: Optional[str] = None,
+    version: Optional[int] = None,
     tlp_span_kind: Optional[TraceloopSpanKindValues] = TraceloopSpanKindValues.TASK,
 ):
     def decorate(fn):
@@ -138,6 +145,8 @@ def aentity_method(
                     SpanAttributes.TRACELOOP_SPAN_KIND, tlp_span_kind.value
                 )
                 span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, name)
+                if version:
+                    span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_VERSION, version)
 
                 try:
                     if _should_send_prompts():
@@ -174,6 +183,7 @@ def aentity_method(
 
 def aentity_class(
     name: Optional[str],
+    version: Optional[int],
     method_name: str,
     tlp_span_kind: Optional[TraceloopSpanKindValues] = TraceloopSpanKindValues.TASK,
 ):
@@ -183,7 +193,9 @@ def aentity_class(
         setattr(
             cls,
             method_name,
-            aentity_method(name=task_name, tlp_span_kind=tlp_span_kind)(method),
+            aentity_method(
+                name=task_name, version=version, tlp_span_kind=tlp_span_kind
+            )(method),
         )
         return cls
 
