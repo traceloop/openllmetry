@@ -21,7 +21,7 @@ from traceloop.sdk.utils.json_encoder import JSONEncoder
 
 def entity_method(
     name: Optional[str] = None,
-    version: Optional[str] = None,
+    version: Optional[int] = None,
     tlp_span_kind: Optional[TraceloopSpanKindValues] = TraceloopSpanKindValues.TASK,
 ):
     def decorate(fn):
@@ -99,7 +99,7 @@ def entity_method(
 
 def entity_class(
     name: Optional[str],
-    version: Optional[str],
+    version: Optional[int],
     method_name: str,
     tlp_span_kind: Optional[TraceloopSpanKindValues] = TraceloopSpanKindValues.TASK,
 ):
@@ -123,7 +123,7 @@ def entity_class(
 
 def aentity_method(
     name: Optional[str] = None,
-    version: Optional[str] = None,
+    version: Optional[int] = None,
     tlp_span_kind: Optional[TraceloopSpanKindValues] = TraceloopSpanKindValues.TASK,
 ):
     def decorate(fn):
@@ -183,7 +183,7 @@ def aentity_method(
 
 def aentity_class(
     name: Optional[str],
-    version: Optional[str],
+    version: Optional[int],
     method_name: str,
     tlp_span_kind: Optional[TraceloopSpanKindValues] = TraceloopSpanKindValues.TASK,
 ):

@@ -21,7 +21,7 @@ def test_simple_workflow(exporter, openai_client):
         )
         return completion.choices[0].message.content
 
-    @workflow(name="pirate_joke_generator")
+    @workflow(name="pirate_joke_generator", version=1)
     def joke_workflow():
         return create_something("joke", subject="OpenTelemetry")
 

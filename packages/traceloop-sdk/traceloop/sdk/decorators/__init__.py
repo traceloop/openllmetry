@@ -12,7 +12,7 @@ from traceloop.sdk.decorators.base import (
 
 def task(
     name: Optional[str] = None,
-    version: Optional[str] = None,
+    version: Optional[int] = None,
     method_name: Optional[str] = None,
     tlp_span_kind: Optional[TraceloopSpanKindValues] = TraceloopSpanKindValues.TASK,
 ):
@@ -29,7 +29,7 @@ def task(
 
 def workflow(
     name: Optional[str] = None,
-    version: Optional[str] = None,
+    version: Optional[int] = None,
     method_name: Optional[str] = None,
     tlp_span_kind: Optional[TraceloopSpanKindValues] = TraceloopSpanKindValues.WORKFLOW,
 ):
@@ -46,7 +46,7 @@ def workflow(
 
 def agent(
     name: Optional[str] = None,
-    version: Optional[str] = None,
+    version: Optional[int] = None,
     method_name: Optional[str] = None,
 ):
     return workflow(
@@ -59,7 +59,7 @@ def agent(
 
 def tool(
     name: Optional[str] = None,
-    version: Optional[str] = None,
+    version: Optional[int] = None,
     method_name: Optional[str] = None,
 ):
     return task(
@@ -73,7 +73,7 @@ def tool(
 # Async Decorators
 def atask(
     name: Optional[str] = None,
-    version: Optional[str] = None,
+    version: Optional[int] = None,
     method_name: Optional[str] = None,
     tlp_span_kind: Optional[TraceloopSpanKindValues] = TraceloopSpanKindValues.TASK,
 ):
@@ -87,7 +87,7 @@ def atask(
 
 def aworkflow(
     name: Optional[str] = None,
-    version: Optional[str] = None,
+    version: Optional[int] = None,
     method_name: Optional[str] = None,
     tlp_span_kind: Optional[TraceloopSpanKindValues] = TraceloopSpanKindValues.WORKFLOW,
 ):
@@ -104,7 +104,7 @@ def aworkflow(
 
 def aagent(
     name: Optional[str] = None,
-    version: Optional[str] = None,
+    version: Optional[int] = None,
     method_name: Optional[str] = None,
 ):
     return atask(
@@ -117,7 +117,7 @@ def aagent(
 
 def atool(
     name: Optional[str] = None,
-    version: Optional[str] = None,
+    version: Optional[int] = None,
     method_name: Optional[str] = None,
 ):
     return atask(
