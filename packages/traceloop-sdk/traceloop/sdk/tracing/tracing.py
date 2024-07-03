@@ -344,27 +344,46 @@ class TracerWrapper(object):
                     attach(set_value("override_enable_content_tracing", False))
 
         if is_llm_span(span):
+            managed_prompt = get_value("managed_prompt")
+            if managed_prompt is not None:
+                span.set_attribute(
+                    SpanAttributes.TRACELOOP_PROMPT_MANAGED, managed_prompt
+                )
+
             prompt_key = get_value("prompt_key")
             if prompt_key is not None:
-                span.set_attribute("traceloop.prompt.key", prompt_key)
+                span.set_attribute(SpanAttributes.TRACELOOP_PROMPT_KEY, prompt_key)
 
             prompt_version = get_value("prompt_version")
             if prompt_version is not None:
-                span.set_attribute("traceloop.prompt.version", prompt_version)
+                span.set_attribute(
+                    SpanAttributes.TRACELOOP_PROMPT_VERSION, prompt_version
+                )
 
             prompt_version_name = get_value("prompt_version_name")
             if prompt_version_name is not None:
-                span.set_attribute("traceloop.prompt.version_name", prompt_version_name)
+                span.set_attribute(
+                    SpanAttributes.TRACELOOP_PROMPT_VERSION_NAME, prompt_version_name
+                )
 
             prompt_version_hash = get_value("prompt_version_hash")
             if prompt_version_hash is not None:
-                span.set_attribute("traceloop.prompt.version_hash", prompt_version_hash)
+                span.set_attribute(
+                    SpanAttributes.TRACELOOP_PROMPT_VERSION_HASH, prompt_version_hash
+                )
+
+            prompt_template = get_value("prompt_template")
+            if prompt_template is not None:
+                span.set_attribute(
+                    SpanAttributes.TRACELOOP_PROMPT_TEMPLATE, prompt_template
+                )
 
             prompt_template_variables = get_value("prompt_template_variables")
-            if prompt_version_hash is not None:
+            if prompt_template_variables is not None:
                 for key, value in prompt_template_variables.items():
                     span.set_attribute(
-                        f"traceloop.prompt.template_variables.{key}", value
+                        f"{SpanAttributes.TRACELOOP_PROMPT_TEMPLATE_VARIABLES}.{key}",
+                        value,
                     )
 
         # Call original on_start method if it exists in custom processor
@@ -437,18 +456,28 @@ def get_chained_entity_name(entity_name: str) -> str:
         return f"{parent}.{entity_name}"
 
 
-def set_prompt_tracing_context(
+def set_managed_prompt_tracing_context(
     key: str,
     version: int,
     version_name: str,
     version_hash: str,
     template_variables: dict,
 ) -> None:
+    attach(set_value("managed_prompt", True))
     attach(set_value("prompt_key", key))
     attach(set_value("prompt_version", version))
     attach(set_value("prompt_version_name", version_name))
     attach(set_value("prompt_version_hash", version_hash))
     attach(set_value("prompt_template_variables", template_variables))
+
+
+def set_external_prompt_tracing_context(
+    template: str, variables: dict, version: int
+) -> None:
+    attach(set_value("managed_prompt", False))
+    attach(set_value("prompt_version", version))
+    attach(set_value("prompt_template", template))
+    attach(set_value("prompt_template_variables", variables))
 
 
 def is_llm_span(span) -> bool:

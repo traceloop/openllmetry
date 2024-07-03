@@ -96,9 +96,19 @@ class SpanAttributes:
     TRACELOOP_SPAN_KIND = "traceloop.span.kind"
     TRACELOOP_WORKFLOW_NAME = "traceloop.workflow.name"
     TRACELOOP_ENTITY_NAME = "traceloop.entity.name"
+    TRACELOOP_ENTITY_VERSION = "traceloop.entity.version"
     TRACELOOP_ENTITY_INPUT = "traceloop.entity.input"
     TRACELOOP_ENTITY_OUTPUT = "traceloop.entity.output"
     TRACELOOP_ASSOCIATION_PROPERTIES = "traceloop.association.properties"
+
+    # Prompts
+    TRACELOOP_PROMPT_MANAGED = "traceloop.prompt.managed"
+    TRACELOOP_PROMPT_KEY = "traceloop.prompt.key"
+    TRACELOOP_PROMPT_VERSION = "traceloop.prompt.version"
+    TRACELOOP_PROMPT_VERSION_NAME = "traceloop.prompt.version_name"
+    TRACELOOP_PROMPT_VERSION_HASH = "traceloop.prompt.version_hash"
+    TRACELOOP_PROMPT_TEMPLATE = "traceloop.prompt.template"
+    TRACELOOP_PROMPT_TEMPLATE_VARIABLES = "traceloop.prompt.template_variables"
 
     # Deprecated
     TRACELOOP_CORRELATION_ID = "traceloop.correlation.id"
