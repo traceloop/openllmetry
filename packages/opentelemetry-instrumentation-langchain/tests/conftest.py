@@ -9,6 +9,7 @@ from opentelemetry.sdk.trace.export import SimpleSpanProcessor
 from opentelemetry.instrumentation.openai import OpenAIInstrumentor
 from opentelemetry.instrumentation.bedrock import BedrockInstrumentor
 from opentelemetry.instrumentation.langchain import LangchainInstrumentor
+from opentelemetry.instrumentation.cohere import CohereInstrumentor
 
 pytest_plugins = []
 
@@ -25,6 +26,7 @@ def exporter():
     OpenAIInstrumentor().instrument()
     BedrockInstrumentor().instrument()
     LangchainInstrumentor().instrument()
+    CohereInstrumentor().instrument()
 
     return exporter
 

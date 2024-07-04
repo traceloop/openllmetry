@@ -57,6 +57,13 @@ def test_sequential_chain(exporter):
         span for span in spans if span.name == "synopsis.langchain.task"
     )
     review_span = next(span for span in spans if span.name == "LLMChain.langchain.task")
+    openai_completion_span_1, openai_completion_span_2 = [span for span in spans if span.name == "openai.completion"]
+    sequential_chain_span = next(span for span in spans if span.name == "SequentialChain.langchain.workflow")
+
+    assert synopsis_span.parent.span_id == sequential_chain_span.context.span_id
+    assert review_span.parent.span_id == sequential_chain_span.context.span_id
+    assert openai_completion_span_1.parent.span_id == synopsis_span.context.span_id
+    assert openai_completion_span_2.parent.span_id == review_span.context.span_id
 
     data = json.loads(synopsis_span.attributes[SpanAttributes.TRACELOOP_ENTITY_INPUT])
     assert data["inputs"] == {
@@ -148,6 +155,13 @@ async def test_asequential_chain(exporter):
     synopsis_span, review_span = [
         span for span in spans if span.name == "LLMChain.langchain.task"
     ]
+    openai_completion_span_1, openai_completion_span_2 = [span for span in spans if span.name == "openai.completion"]
+    sequential_chain_span = next(span for span in spans if span.name == "SequentialChain.langchain.workflow")
+
+    assert synopsis_span.parent.span_id == sequential_chain_span.context.span_id
+    assert review_span.parent.span_id == sequential_chain_span.context.span_id
+    assert openai_completion_span_1.parent.span_id == synopsis_span.context.span_id
+    assert openai_completion_span_2.parent.span_id == review_span.context.span_id
 
     data = json.loads(synopsis_span.attributes[SpanAttributes.TRACELOOP_ENTITY_INPUT])
     assert data["inputs"] == {
@@ -200,6 +214,15 @@ def test_stream(exporter):
     ] == [span.name for span in spans]
     assert len(chunks) == 62
 
+    prompt_span = next(span for span in spans if span.name == "PromptTemplate.langchain.task")
+    parser_span = next(span for span in spans if span.name == "StrOutputParser.langchain.task")
+    chat_span = next(span for span in spans if span.name == "ChatCohere.langchain.task")
+    runnable_span = next(span for span in spans if span.name == "RunnableSequence.langchain.workflow")
+
+    assert prompt_span.parent.span_id == runnable_span.context.span_id
+    assert parser_span.parent.span_id == runnable_span.context.span_id
+    assert chat_span.parent.span_id == runnable_span.context.span_id
+
 
 @pytest.mark.vcr
 @pytest.mark.asyncio
@@ -222,3 +245,12 @@ async def test_astream(exporter):
         "RunnableSequence.langchain.workflow",
     ] == [span.name for span in spans]
     assert len(chunks) == 144
+
+    prompt_span = next(span for span in spans if span.name == "PromptTemplate.langchain.task")
+    parser_span = next(span for span in spans if span.name == "StrOutputParser.langchain.task")
+    chat_span = next(span for span in spans if span.name == "ChatCohere.langchain.task")
+    runnable_span = next(span for span in spans if span.name == "RunnableSequence.langchain.workflow")
+
+    assert prompt_span.parent.span_id == runnable_span.context.span_id
+    assert parser_span.parent.span_id == runnable_span.context.span_id
+    assert chat_span.parent.span_id == runnable_span.context.span_id
