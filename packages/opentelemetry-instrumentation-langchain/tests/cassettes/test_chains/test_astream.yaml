@@ -1,0 +1,380 @@
+interactions:
+- request:
+    body: '{"message": "write 2 lines of random text about $colorful socks", "model":
+      "command", "chat_history": [], "temperature": 0.75, "stream": true}'
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '142'
+      content-type:
+      - application/json
+      host:
+      - api.cohere.com
+      user-agent:
+      - python-httpx/0.27.0
+      x-client-name:
+      - langchain:partner
+      x-fern-language:
+      - Python
+      x-fern-sdk-name:
+      - cohere
+      x-fern-sdk-version:
+      - 5.5.8
+    method: POST
+    uri: https://api.cohere.com/v1/chat
+  response:
+    body:
+      string: '{"is_finished":false,"event_type":"stream-start","generation_id":"74c2464b-0dc4-4f1c-bd65-2e745729624e"}
+
+        {"is_finished":false,"event_type":"text-generation","text":"Here"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" is"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" some"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" random"}
+
+        {"is_finished":false,"event_type":"text-generation","text":","}
+
+        {"is_finished":false,"event_type":"text-generation","text":" poetic"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" text"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" about"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" colorful"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" socks"}
+
+        {"is_finished":false,"event_type":"text-generation","text":":"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" \n\n\""}
+
+        {"is_finished":false,"event_type":"text-generation","text":"Be"}
+
+        {"is_finished":false,"event_type":"text-generation","text":"hold"}
+
+        {"is_finished":false,"event_type":"text-generation","text":","}
+
+        {"is_finished":false,"event_type":"text-generation","text":" a"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" symphony"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" of"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" hues"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" on"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" your"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" feet"}
+
+        {"is_finished":false,"event_type":"text-generation","text":"."}
+
+        {"is_finished":false,"event_type":"text-generation","text":" A"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" party"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" of"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" pink"}
+
+        {"is_finished":false,"event_type":"text-generation","text":"s"}
+
+        {"is_finished":false,"event_type":"text-generation","text":","}
+
+        {"is_finished":false,"event_type":"text-generation","text":" a"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" parade"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" of"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" pur"}
+
+        {"is_finished":false,"event_type":"text-generation","text":"ples"}
+
+        {"is_finished":false,"event_type":"text-generation","text":","}
+
+        {"is_finished":false,"event_type":"text-generation","text":" a"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" symphony"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" of"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" blues"}
+
+        {"is_finished":false,"event_type":"text-generation","text":","}
+
+        {"is_finished":false,"event_type":"text-generation","text":" and"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" a"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" kale"}
+
+        {"is_finished":false,"event_type":"text-generation","text":"idoscope"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" of"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" colors"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" dance"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" before"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" you"}
+
+        {"is_finished":false,"event_type":"text-generation","text":","}
+
+        {"is_finished":false,"event_type":"text-generation","text":" ev"}
+
+        {"is_finished":false,"event_type":"text-generation","text":"oking"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" feelings"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" of"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" joy"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" and"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" invoking"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" thoughts"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" of"}
+
+        {"is_finished":false,"event_type":"text-generation","text":"Tie"}
+
+        {"is_finished":false,"event_type":"text-generation","text":"-"}
+
+        {"is_finished":false,"event_type":"text-generation","text":"d"}
+
+        {"is_finished":false,"event_type":"text-generation","text":"ye"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" and"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" rainbow"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" socks"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" bring"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" a"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" burst"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" of"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" energy"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" and"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" a"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" playful"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" vibe"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" to"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" your"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" wardrobe"}
+
+        {"is_finished":false,"event_type":"text-generation","text":"."}
+
+        {"is_finished":false,"event_type":"text-generation","text":" They"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" are"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" a"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" bold"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" fashion"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" statement"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" and"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" a"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" fun"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" way"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" to"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" express"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" your"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" unique"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" style"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" and"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" personality"}
+
+        {"is_finished":false,"event_type":"text-generation","text":"!\""}
+
+        {"is_finished":false,"event_type":"text-generation","text":" \n\nI"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" hope"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" these"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" two"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" lines"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" brighten"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" your"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" day"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" and"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" inspire"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" you"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" to"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" don"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" some"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" colorful"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" socks"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" with"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" joy"}
+
+        {"is_finished":false,"event_type":"text-generation","text":"!"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" Let"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" me"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" know"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" if"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" you"}
+
+        {"is_finished":false,"event_type":"text-generation","text":"''d"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" like"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" more"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" generated"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" content"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" about"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" clothing"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" accessories"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" or"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" have"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" something"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" specific"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" in"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" mind"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" you"}
+
+        {"is_finished":false,"event_type":"text-generation","text":"''d"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" like"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" me"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" to"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" write"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" about"}
+
+        {"is_finished":false,"event_type":"text-generation","text":"."}
+
+        {"is_finished":true,"event_type":"stream-end","response":{"response_id":"193a948e-609e-49ce-b44e-b045401bfec8","text":"Here
+        is some random, poetic text about colorful socks: \n\n\"Behold, a symphony
+        of hues on your feet. A party of pinks, a parade of purples, a symphony of
+        blues, and a kaleidoscope of colors dance before you, evoking feelings of
+        joy and invoking thoughts ofTie-dye and rainbow socks bring a burst of energy
+        and a playful vibe to your wardrobe. They are a bold fashion statement and
+        a fun way to express your unique style and personality!\" \n\nI hope these
+        two lines brighten your day and inspire you to don some colorful socks with
+        joy! Let me know if you''d like more generated content about clothing accessories
+        or have something specific in mind you''d like me to write about.","generation_id":"74c2464b-0dc4-4f1c-bd65-2e745729624e","chat_history":[{"role":"USER","message":"write
+        2 lines of random text about $colorful socks"},{"role":"CHATBOT","message":"Here
+        is some random, poetic text about colorful socks: \n\n\"Behold, a symphony
+        of hues on your feet. A party of pinks, a parade of purples, a symphony of
+        blues, and a kaleidoscope of colors dance before you, evoking feelings of
+        joy and invoking thoughts ofTie-dye and rainbow socks bring a burst of energy
+        and a playful vibe to your wardrobe. They are a bold fashion statement and
+        a fun way to express your unique style and personality!\" \n\nI hope these
+        two lines brighten your day and inspire you to don some colorful socks with
+        joy! Let me know if you''d like more generated content about clothing accessories
+        or have something specific in mind you''d like me to write about."}],"finish_reason":"COMPLETE","meta":{"api_version":{"version":"1"},"billed_units":{"input_tokens":11,"output_tokens":147},"tokens":{"input_tokens":73,"output_tokens":148}}},"finish_reason":"COMPLETE"}
+
+        '
+    headers:
+      Alt-Svc:
+      - h3=":443"; ma=2592000,h3-29=":443"; ma=2592000
+      Transfer-Encoding:
+      - chunked
+      Via:
+      - 1.1 google
+      access-control-expose-headers:
+      - X-Debug-Trace-ID
+      cache-control:
+      - no-cache, no-store, no-transform, must-revalidate, private, max-age=0
+      content-type:
+      - application/stream+json
+      date:
+      - Mon, 01 Jul 2024 18:20:48 GMT
+      expires:
+      - Thu, 01 Jan 1970 00:00:00 UTC
+      pragma:
+      - no-cache
+      server:
+      - envoy
+      vary:
+      - Origin
+      x-accel-expires:
+      - '0'
+      x-debug-trace-id:
+      - 3e99cb6a16ac1aff1f7f998113e6ef71
+      x-endpoint-monthly-call-limit:
+      - '1000'
+      x-envoy-upstream-service-time:
+      - '117'
+      x-trial-endpoint-call-limit:
+      - '10'
+      x-trial-endpoint-call-remaining:
+      - '8'
+    status:
+      code: 200
+      message: OK
+version: 1
