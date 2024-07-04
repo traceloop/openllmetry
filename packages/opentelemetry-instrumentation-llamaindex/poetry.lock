@@ -2383,7 +2383,7 @@ instruments = ["asgiref (>=3.0,<4.0)"]
 
 [[package]]
 name = "opentelemetry-instrumentation-chromadb"
-version = "0.23.0"
+version = "0.24.0"
 description = "OpenTelemetry Chroma DB instrumentation"
 optional = false
 python-versions = ">=3.9,<4"
@@ -2394,7 +2394,7 @@ develop = true
 opentelemetry-api = "^1.25.0"
 opentelemetry-instrumentation = "^0.46b0"
 opentelemetry-semantic-conventions = "^0.46b0"
-opentelemetry-semantic-conventions-ai = "0.3.3"
+opentelemetry-semantic-conventions-ai = "0.3.4"
 
 [package.extras]
 instruments = []
@@ -2405,7 +2405,7 @@ url = "../opentelemetry-instrumentation-chromadb"
 
 [[package]]
 name = "opentelemetry-instrumentation-cohere"
-version = "0.23.0"
+version = "0.24.0"
 description = "OpenTelemetry Cohere instrumentation"
 optional = false
 python-versions = ">=3.9,<4"
@@ -2416,7 +2416,7 @@ develop = true
 opentelemetry-api = "^1.25.0"
 opentelemetry-instrumentation = "^0.46b0"
 opentelemetry-semantic-conventions = "^0.46b0"
-opentelemetry-semantic-conventions-ai = "0.3.3"
+opentelemetry-semantic-conventions-ai = "0.3.4"
 
 [package.extras]
 instruments = []
@@ -2448,7 +2448,7 @@ instruments = ["fastapi (>=0.58,<1.0)"]
 
 [[package]]
 name = "opentelemetry-instrumentation-openai"
-version = "0.23.0"
+version = "0.24.0"
 description = "OpenTelemetry OpenAI instrumentation"
 optional = false
 python-versions = ">=3.9,<4"
@@ -2459,7 +2459,7 @@ develop = true
 opentelemetry-api = "^1.25.0"
 opentelemetry-instrumentation = "^0.46b0"
 opentelemetry-semantic-conventions = "^0.46b0"
-opentelemetry-semantic-conventions-ai = "0.3.3"
+opentelemetry-semantic-conventions-ai = "0.3.4"
 tiktoken = ">=0.6.0, <1"
 
 [package.extras]
@@ -2515,13 +2515,13 @@ opentelemetry-api = "1.25.0"
 
 [[package]]
 name = "opentelemetry-semantic-conventions-ai"
-version = "0.3.3"
+version = "0.3.4"
 description = "OpenTelemetry Semantic Conventions Extension for Large Language Models"
 optional = false
 python-versions = "<4,>=3.9"
 files = [
-    {file = "opentelemetry_semantic_conventions_ai-0.3.3-py3-none-any.whl", hash = "sha256:76c7dfa432ae037ab3ce9e66d208eaf5f367dd32c9f9985b91ffb2dd2a58c1c6"},
-    {file = "opentelemetry_semantic_conventions_ai-0.3.3.tar.gz", hash = "sha256:1afdff265a6636c0f9f5046b87580a9c8de3c296f82e412b21e4558c4b70008c"},
+    {file = "opentelemetry_semantic_conventions_ai-0.3.4-py3-none-any.whl", hash = "sha256:e4b274671fbad410760a940950bd96471e0ae230c31e4cda68ebb3db9a308eac"},
+    {file = "opentelemetry_semantic_conventions_ai-0.3.4.tar.gz", hash = "sha256:657d54e2ce51e561cfc3337d8318fc9da316b3c091ea58e824d887360ffc0243"},
 ]
 
 [[package]]
@@ -4508,4 +4508,4 @@ instruments = []
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<4"
-content-hash = "67fa441b19d744171754e4ef2575b0f5e042e4127d0a2f951f6868e698cc2fae"
+content-hash = "5b4dc2c37346698dacd8d92b609dc3e7d682d9579d7e5a235fbea57a7e298a0e"

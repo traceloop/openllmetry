@@ -27,7 +27,7 @@ python = ">=3.9,<4"
 opentelemetry-api = "^1.25.0"
 opentelemetry-instrumentation = "^0.46b0"
 opentelemetry-semantic-conventions = "^0.46b0"
-opentelemetry-semantic-conventions-ai = "0.3.3"
+opentelemetry-semantic-conventions-ai = "0.3.4"
 tiktoken = ">=0.6.0, <1"
 
 [tool.poetry.group.dev.dependencies]
