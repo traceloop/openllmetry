@@ -318,13 +318,19 @@ def _set_prompts(span, messages):
 
     for i, msg in enumerate(messages):
         prefix = f"{SpanAttributes.LLM_PROMPTS}.{i}"
-        if isinstance(msg.get("content"), str):
-            content = msg.get("content")
-        elif isinstance(msg.get("content"), list):
-            content = json.dumps(msg.get("content"))
 
         _set_span_attribute(span, f"{prefix}.role", msg.get("role"))
-        _set_span_attribute(span, f"{prefix}.content", content)
+        if msg.get("content"):
+            content = msg.get("content")
+            if isinstance(content, list):
+                content = json.dumps(content)
+            _set_span_attribute(span, f"{prefix}.content", content)
+        if msg.get("tool_calls"):
+            _set_span_attribute(
+                span, f"{prefix}.tool_calls", json.dumps(msg.get("tool_calls"))
+            )
+        if msg.get("tool_call_id"):
+            _set_span_attribute(span, f"{prefix}.tool_call_id", msg.get("tool_call_id"))
 
 
 def _set_completions(span, choices):
@@ -353,26 +359,33 @@ def _set_completions(span, choices):
         function_call = message.get("function_call")
         if function_call:
             _set_span_attribute(
-                span, f"{prefix}.function_call.name", function_call.get("name")
+                span, f"{prefix}.tool_calls.0.name", function_call.get("name")
             )
             _set_span_attribute(
                 span,
-                f"{prefix}.function_call.arguments",
+                f"{prefix}.tool_calls.0.arguments",
                 function_call.get("arguments"),
             )
 
         tool_calls = message.get("tool_calls")
         if tool_calls:
-            _set_span_attribute(
-                span,
-                f"{prefix}.function_call.name",
-                tool_calls[0].get("function").get("name"),
-            )
-            _set_span_attribute(
-                span,
-                f"{prefix}.function_call.arguments",
-                tool_calls[0].get("function").get("arguments"),
-            )
+            for i, tool_call in enumerate(tool_calls):
+                function = tool_call.get("function")
+                _set_span_attribute(
+                    span,
+                    f"{prefix}.tool_calls.{i}.id",
+                    tool_call.get("id"),
+                )
+                _set_span_attribute(
+                    span,
+                    f"{prefix}.tool_calls.{i}.name",
+                    function.get("name"),
+                )
+                _set_span_attribute(
+                    span,
+                    f"{prefix}.tool_calls.{i}.arguments",
+                    function.get("arguments"),
+                )
 
 
 def _set_streaming_token_metrics(
@@ -530,44 +543,7 @@ class ChatStream(ObjectProxy):
             )
             self._first_token = False
 
-        if is_openai_v1():
-            item = model_as_dict(item)
-
-        self._complete_response["model"] = item.get("model")
-
-        for choice in item.get("choices"):
-            index = choice.get("index")
-            if len(self._complete_response.get("choices")) <= index:
-                self._complete_response["choices"].append(
-                    {"index": index, "message": {"content": "", "role": ""}}
-                )
-            complete_choice = self._complete_response.get("choices")[index]
-            if choice.get("finish_reason"):
-                complete_choice["finish_reason"] = choice.get("finish_reason")
-
-            delta = choice.get("delta")
-
-            if delta and delta.get("content"):
-                complete_choice["message"]["content"] += delta.get("content")
-            if delta and delta.get("role"):
-                complete_choice["message"]["role"] = delta.get("role")
-            if delta and delta.get("tool_calls"):
-                tool_calls = delta.get("tool_calls")
-                if not isinstance(tool_calls, list) or len(tool_calls) == 0:
-                    continue
-
-                if not complete_choice["message"].get("tool_calls"):
-                    complete_choice["message"]["tool_calls"] = [
-                        {"function": {"name": "", "arguments": ""}}
-                    ]
-
-                tool_call = tool_calls[0]
-                function = complete_choice["message"]["tool_calls"][0]["function"]
-
-                if tool_call.get("function") and tool_call["function"].get("name"):
-                    function["name"] += tool_call["function"]["name"]
-                if tool_call.get("function") and tool_call["function"].get("arguments"):
-                    function["arguments"] += tool_call["function"]["arguments"]
+        _accumulate_stream_items(item, self._complete_response)
 
     def _shared_attributes(self):
         return _metric_shared_attributes(
@@ -781,3 +757,28 @@ def _accumulate_stream_items(item, complete_response):
             complete_choice["message"]["content"] += delta.get("content")
         if delta and delta.get("role"):
             complete_choice["message"]["role"] = delta.get("role")
+        if delta and delta.get("tool_calls"):
+            tool_calls = delta.get("tool_calls")
+            if not isinstance(tool_calls, list) or len(tool_calls) == 0:
+                continue
+
+            if not complete_choice["message"].get("tool_calls"):
+                complete_choice["message"]["tool_calls"] = []
+
+            for tool_call in tool_calls:
+                i = int(tool_call["index"])
+                if len(complete_choice["message"]["tool_calls"]) <= i:
+                    complete_choice["message"]["tool_calls"].append(
+                        {"id": "", "function": {"name": "", "arguments": ""}}
+                    )
+
+                span_tool_call = complete_choice["message"]["tool_calls"][i]
+                span_function = span_tool_call["function"]
+                tool_call_function = tool_call.get("function")
+
+                if tool_call.get("id"):
+                    span_tool_call["id"] = tool_call.get("id")
+                if tool_call_function and tool_call_function.get("name"):
+                    span_function["name"] = tool_call_function.get("name")
+                if tool_call_function and tool_call_function.get("arguments"):
+                    span_function["arguments"] += tool_call_function.get("arguments")

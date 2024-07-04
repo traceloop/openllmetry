@@ -1,28 +1,6 @@
+import json
 import pytest
 from opentelemetry.semconv.ai import SpanAttributes
-
-
-@pytest.fixture
-def openai_tools():
-    return [
-        {
-            "type": "function",
-            "function": {
-                "name": "get_current_weather",
-                "description": "Get the current weather",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "location": {
-                            "type": "string",
-                            "description": "The city and state, e.g. San Francisco, CA",
-                        },
-                    },
-                    "required": ["location"],
-                },
-            },
-        },
-    ]
 
 
 @pytest.mark.vcr
@@ -57,13 +35,29 @@ def test_chat(exporter, openai_client):
 
 
 @pytest.mark.vcr
-def test_chat_tools(exporter, openai_client, openai_tools):
+def test_chat_tool_calls(exporter, openai_client):
     openai_client.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=[
-            {"role": "user", "content": "What's the weather like in San Francisco?"}
+            {
+                "role": "assistant",
+                "tool_calls": [
+                    {
+                        "id": "1",
+                        "type": "function",
+                        "function": {
+                            "name": "get_current_weather",
+                            "arguments": '{"location": "San Francisco"}',
+                        },
+                    }
+                ],
+            },
+            {
+                "role": "tool",
+                "tool_call_id": "1",
+                "content": "The weather in San Francisco is 70 degrees and sunny.",
+            },
         ],
-        tools=openai_tools,
     )
 
     spans = exporter.get_finished_spans()
@@ -72,25 +66,29 @@ def test_chat_tools(exporter, openai_client, openai_tools):
         "openai.chat",
     ]
     open_ai_span = spans[0]
+
+    assert f"{SpanAttributes.LLM_PROMPTS}.0.content" not in open_ai_span.attributes
+    assert open_ai_span.attributes[
+        f"{SpanAttributes.LLM_PROMPTS}.0.tool_calls"
+    ] == json.dumps(
+        [
+            {
+                "id": "1",
+                "type": "function",
+                "function": {
+                    "name": "get_current_weather",
+                    "arguments": '{"location": "San Francisco"}',
+                },
+            }
+        ]
+    )
+
     assert (
-        open_ai_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.0.name")
-        == "get_current_weather"
+        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.content"]
+        == "The weather in San Francisco is 70 degrees and sunny."
     )
     assert (
-        open_ai_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.finish_reason")
-        == "tool_calls"
-    )
-    assert (
-        open_ai_span.attributes.get(
-            f"{SpanAttributes.LLM_COMPLETIONS}.0.function_call.name"
-        )
-        == "get_current_weather"
-    )
-    assert (
-        open_ai_span.attributes.get(
-            f"{SpanAttributes.LLM_COMPLETIONS}.0.function_call.arguments"
-        )
-        == '{"location":"San Francisco"}'
+        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.tool_call_id"] == "1"
     )
 
 
@@ -137,48 +135,6 @@ def test_chat_streaming(exporter, openai_client):
 
 
 @pytest.mark.vcr
-def test_chat_tools_streaming(exporter, openai_client, openai_tools):
-    response = openai_client.chat.completions.create(
-        model="gpt-3.5-turbo",
-        messages=[
-            {"role": "user", "content": "What's the weather like in San Francisco?"}
-        ],
-        tools=openai_tools,
-        stream=True,
-    )
-
-    for _ in response:
-        pass
-
-    spans = exporter.get_finished_spans()
-
-    assert [span.name for span in spans] == [
-        "openai.chat",
-    ]
-    open_ai_span = spans[0]
-    assert (
-        open_ai_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.0.name")
-        == "get_current_weather"
-    )
-    assert (
-        open_ai_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.finish_reason")
-        == "tool_calls"
-    )
-    assert (
-        open_ai_span.attributes.get(
-            f"{SpanAttributes.LLM_COMPLETIONS}.0.function_call.name"
-        )
-        == "get_current_weather"
-    )
-    assert (
-        open_ai_span.attributes.get(
-            f"{SpanAttributes.LLM_COMPLETIONS}.0.function_call.arguments"
-        )
-        == '{"location":"San Francisco"}'
-    )
-
-
-@pytest.mark.vcr
 @pytest.mark.asyncio
 async def test_chat_async_streaming(exporter, async_openai_client):
     response = await async_openai_client.chat.completions.create(
@@ -219,46 +175,3 @@ async def test_chat_async_streaming(exporter, async_openai_client):
     total_tokens = open_ai_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS)
     assert completion_tokens and prompt_tokens and total_tokens
     assert completion_tokens + prompt_tokens == total_tokens
-
-
-@pytest.mark.vcr
-@pytest.mark.asyncio
-async def test_chat_tools_async_streaming(exporter, async_openai_client, openai_tools):
-    response = await async_openai_client.chat.completions.create(
-        model="gpt-3.5-turbo",
-        messages=[
-            {"role": "user", "content": "What's the weather like in San Francisco?"}
-        ],
-        tools=openai_tools,
-        stream=True,
-    )
-
-    async for _ in response:
-        pass
-
-    spans = exporter.get_finished_spans()
-
-    assert [span.name for span in spans] == [
-        "openai.chat",
-    ]
-    open_ai_span = spans[0]
-    assert (
-        open_ai_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.0.name")
-        == "get_current_weather"
-    )
-    assert (
-        open_ai_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.finish_reason")
-        == "tool_calls"
-    )
-    assert (
-        open_ai_span.attributes.get(
-            f"{SpanAttributes.LLM_COMPLETIONS}.0.function_call.name"
-        )
-        == "get_current_weather"
-    )
-    assert (
-        open_ai_span.attributes.get(
-            f"{SpanAttributes.LLM_COMPLETIONS}.0.function_call.arguments"
-        )
-        == '{"location":"San Francisco"}'
-    )

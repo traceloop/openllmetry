@@ -21,6 +21,7 @@ from traceloop.sdk.utils.json_encoder import JSONEncoder
 
 def entity_method(
     name: Optional[str] = None,
+    version: Optional[int] = None,
     tlp_span_kind: Optional[TraceloopSpanKindValues] = TraceloopSpanKindValues.TASK,
 ):
     def decorate(fn):
@@ -57,12 +58,16 @@ def entity_method(
                 span.set_attribute(
                     SpanAttributes.TRACELOOP_ENTITY_NAME, chained_entity_name
                 )
+                if version:
+                    span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_VERSION, version)
 
                 try:
                     if _should_send_prompts():
                         span.set_attribute(
                             SpanAttributes.TRACELOOP_ENTITY_INPUT,
-                            json.dumps({"args": args, "kwargs": kwargs}, cls=JSONEncoder),
+                            json.dumps(
+                                {"args": args, "kwargs": kwargs}, cls=JSONEncoder
+                            ),
                         )
                 except TypeError as e:
                     Telemetry().log_exception(e)
@@ -71,12 +76,13 @@ def entity_method(
 
                 # span will be ended in the generator
                 if isinstance(res, types.GeneratorType):
-                    return _handle_generator(span, ctx_token, res)
+                    return _handle_generator(span, res)
 
                 try:
                     if _should_send_prompts():
                         span.set_attribute(
-                            SpanAttributes.TRACELOOP_ENTITY_OUTPUT, json.dumps(res, cls=JSONEncoder)
+                            SpanAttributes.TRACELOOP_ENTITY_OUTPUT,
+                            json.dumps(res, cls=JSONEncoder),
                         )
                 except TypeError as e:
                     Telemetry().log_exception(e)
@@ -93,6 +99,7 @@ def entity_method(
 
 def entity_class(
     name: Optional[str],
+    version: Optional[int],
     method_name: str,
     tlp_span_kind: Optional[TraceloopSpanKindValues] = TraceloopSpanKindValues.TASK,
 ):
@@ -102,7 +109,9 @@ def entity_class(
         setattr(
             cls,
             method_name,
-            entity_method(name=task_name, tlp_span_kind=tlp_span_kind)(method),
+            entity_method(name=task_name, version=version, tlp_span_kind=tlp_span_kind)(
+                method
+            ),
         )
         return cls
 
@@ -114,6 +123,7 @@ def entity_class(
 
 def aentity_method(
     name: Optional[str] = None,
+    version: Optional[int] = None,
     tlp_span_kind: Optional[TraceloopSpanKindValues] = TraceloopSpanKindValues.TASK,
 ):
     def decorate(fn):
@@ -135,6 +145,8 @@ def aentity_method(
                     SpanAttributes.TRACELOOP_SPAN_KIND, tlp_span_kind.value
                 )
                 span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, name)
+                if version:
+                    span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_VERSION, version)
 
                 try:
                     if _should_send_prompts():
@@ -171,6 +183,7 @@ def aentity_method(
 
 def aentity_class(
     name: Optional[str],
+    version: Optional[int],
     method_name: str,
     tlp_span_kind: Optional[TraceloopSpanKindValues] = TraceloopSpanKindValues.TASK,
 ):
@@ -180,19 +193,25 @@ def aentity_class(
         setattr(
             cls,
             method_name,
-            aentity_method(name=task_name, tlp_span_kind=tlp_span_kind)(method),
+            aentity_method(
+                name=task_name, version=version, tlp_span_kind=tlp_span_kind
+            )(method),
         )
         return cls
 
     return decorator
 
 
-def _handle_generator(span, ctx_token, res):
-    for part in res:
-        yield part
+def _handle_generator(span, res):
+    # for some reason the SPAN_KEY is not being set in the context of the generator, so we re-set it
+    context_api.attach(trace.set_span_in_context(span))
+    yield from res
 
     span.end()
-    context_api.detach(ctx_token)
+
+    # Note: we don't detach the context here as this fails in some situations
+    # https://github.com/open-telemetry/opentelemetry-python/issues/2606
+    # This is not a problem since the context will be detached automatically during garbage collection
 
 
 async def _ahandle_generator(span, ctx_token, res):

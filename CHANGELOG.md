@@ -1,3 +1,22 @@
+## v0.24.0 (2024-07-03)
+
+### Feat
+
+- **sdk**: prompt versions and workflow versions (#1425)
+- **openai**: add support for parallel function calls (#1424)
+- **marqo**: Add marqo instrumentation (#1373)
+
+### Fix
+
+- **sdk**: context detach issues on fastapi (#1432)
+- **openai**: Handle `tool_calls` assistant messages (#1429)
+- **sdk**: speedup SDK initialization (#1374)
+- **gemini**: relax version requirements (#1367)
+
+### Refactor
+
+- **openai**: rename `function_call` to `tool_calls` (#1431)
+
 ## v0.23.0 (2024-06-17)
 
 ### Feat
