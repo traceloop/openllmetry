@@ -72,6 +72,7 @@ def chat_wrapper(
         kind=SpanKind.CLIENT,
         attributes={SpanAttributes.LLM_REQUEST_TYPE: LLM_REQUEST_TYPE.value},
     )
+    context_api.attach(trace.set_span_in_context(span))
 
     _handle_request(span, kwargs, instance)
 
