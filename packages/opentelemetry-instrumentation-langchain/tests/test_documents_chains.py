@@ -56,7 +56,7 @@ def test_sequential_chain(exporter):
         span for span in spans if span.name == "stuff_chain.langchain.workflow"
     )
     chat_span_1 = next(span for span in spans if span.name == "cohere.chat")
-    chat_span_2 = next(span for span in spans if span.name == "ChatCohere.langchain.task")
+    chat_span_2 = next(span for span in spans if span.name == "ChatCohere.langchain")
     llm_chain_span = next(span for span in spans if span.name == "LLMChain.langchain.task")
 
     assert chat_span_1.parent.span_id == chat_span_2.context.span_id

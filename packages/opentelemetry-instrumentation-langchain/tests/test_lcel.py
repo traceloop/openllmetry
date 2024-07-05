@@ -1,5 +1,4 @@
 import json
-import re
 
 import boto3
 import pytest
@@ -224,12 +223,10 @@ def test_stream(exporter):
         span for span in spans if span.name == "PromptTemplate.langchain.task"
     )
     chat_openai_task_span = next(
-        span for span in spans if span.name == "ChatOpenAI.langchain.task"
+        span for span in spans if span.name == "ChatOpenAI.langchain"
     )
     output_parser_task_span = next(
-        span
-        for span in spans
-        if span.name == "StrOutputParser.langchain.task"
+        span for span in spans if span.name == "StrOutputParser.langchain.task"
     )
     openai_span = next(span for span in spans if span.name == "openai.chat")
 
@@ -270,12 +267,10 @@ async def test_async_invoke(exporter):
         span for span in spans if span.name == "PromptTemplate.langchain.task"
     )
     chat_openai_task_span = next(
-        span for span in spans if span.name == "ChatOpenAI.langchain.task"
+        span for span in spans if span.name == "ChatOpenAI.langchain"
     )
     output_parser_task_span = next(
-        span
-        for span in spans
-        if span.name == "StrOutputParser.langchain.task"
+        span for span in spans if span.name == "StrOutputParser.langchain.task"
     )
     openai_span = next(span for span in spans if span.name == "openai.chat")
 
@@ -356,7 +351,7 @@ def test_openai(exporter):
         span for span in spans if span.name == "ChatPromptTemplate.langchain.task"
     )
     chat_openai_task_span = next(
-        span for span in spans if span.name == "ChatOpenAI.langchain.task"
+        span for span in spans if span.name == "ChatOpenAI.langchain"
     )
 
     assert openai_span.parent.span_id == chat_openai_task_span.context.span_id

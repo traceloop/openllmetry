@@ -216,7 +216,7 @@ def test_stream(exporter):
 
     prompt_span = next(span for span in spans if span.name == "PromptTemplate.langchain.task")
     parser_span = next(span for span in spans if span.name == "StrOutputParser.langchain.task")
-    chat_span = next(span for span in spans if span.name == "ChatCohere.langchain.task")
+    chat_span = next(span for span in spans if span.name == "ChatCohere.langchain")
     runnable_span = next(span for span in spans if span.name == "RunnableSequence.langchain.workflow")
 
     assert prompt_span.parent.span_id == runnable_span.context.span_id
@@ -248,7 +248,7 @@ async def test_astream(exporter):
 
     prompt_span = next(span for span in spans if span.name == "PromptTemplate.langchain.task")
     parser_span = next(span for span in spans if span.name == "StrOutputParser.langchain.task")
-    chat_span = next(span for span in spans if span.name == "ChatCohere.langchain.task")
+    chat_span = next(span for span in spans if span.name == "ChatCohere.langchain")
     runnable_span = next(span for span in spans if span.name == "RunnableSequence.langchain.workflow")
 
     assert prompt_span.parent.span_id == runnable_span.context.span_id
