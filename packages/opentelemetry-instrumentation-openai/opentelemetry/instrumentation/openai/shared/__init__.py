@@ -15,6 +15,9 @@ from opentelemetry.instrumentation.openai.utils import (
     should_record_stream_token_usage,
 )
 
+# TODO: Remove
+SpanAttributes.LLM_REQUEST_TOOLS = "llm.request.tools"
+
 OPENAI_LLM_USAGE_TOKEN_TYPES = ["prompt_tokens", "completion_tokens"]
 
 # tiktoken encodings map for different model, key is model_name, value is tiktoken encoding
@@ -75,11 +78,16 @@ def _set_functions_attributes(span, functions):
         return
 
     for i, function in enumerate(functions):
-        prefix = f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.{i}"
-        _set_span_attribute(span, f"{prefix}.name", function.get("name"))
-        _set_span_attribute(span, f"{prefix}.description", function.get("description"))
+        prefix = f"{SpanAttributes.LLM_REQUEST_TOOLS}.{i}"
+        _set_span_attribute(span, f"{prefix}.type", "function")
+        _set_span_attribute(span, f"{prefix}.function.name", function.get("name"))
         _set_span_attribute(
-            span, f"{prefix}.parameters", json.dumps(function.get("parameters"))
+            span, f"{prefix}.function.description", function.get("description")
+        )
+        _set_span_attribute(
+            span,
+            f"{prefix}.function.parameters",
+            json.dumps(function.get("parameters")),
         )
 
 
@@ -92,11 +100,16 @@ def set_tools_attributes(span, tools):
         if not function:
             continue
 
-        prefix = f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.{i}"
-        _set_span_attribute(span, f"{prefix}.name", function.get("name"))
-        _set_span_attribute(span, f"{prefix}.description", function.get("description"))
+        prefix = f"{SpanAttributes.LLM_REQUEST_TOOLS}.{i}"
+        _set_span_attribute(span, f"{prefix}.type", "function")
+        _set_span_attribute(span, f"{prefix}.function.name", function.get("name"))
         _set_span_attribute(
-            span, f"{prefix}.parameters", json.dumps(function.get("parameters"))
+            span, f"{prefix}.function.description", function.get("description")
+        )
+        _set_span_attribute(
+            span,
+            f"{prefix}.function.parameters",
+            json.dumps(function.get("parameters")),
         )
 
 

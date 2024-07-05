@@ -60,7 +60,7 @@ class SpanAttributes:
     LLM_FREQUENCY_PENALTY = "llm.frequency_penalty"
     LLM_PRESENCE_PENALTY = "llm.presence_penalty"
     LLM_CHAT_STOP_SEQUENCES = "llm.chat.stop_sequences"
-    LLM_REQUEST_FUNCTIONS = "llm.request.functions"
+    LLM_REQUEST_TOOLS = "llm.request.tools"
     LLM_REQUEST_REPETITION_PENALTY = "llm.request.repetition_penalty"
     LLM_RESPONSE_FINISH_REASON = "llm.response.finish_reason"
     LLM_RESPONSE_STOP_REASON = "llm.response.stop_reason"
