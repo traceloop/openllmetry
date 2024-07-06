@@ -1,9 +1,6 @@
 import pytest
 from opentelemetry.semconv.ai import SpanAttributes
 
-# TODO: Remove
-SpanAttributes.LLM_REQUEST_TOOLS = "llm.request.tools"
-
 
 @pytest.fixture
 def openai_tools():
