@@ -16,9 +16,6 @@ from opentelemetry.instrumentation.openai.utils import (
     should_record_stream_token_usage,
 )
 
-# TODO: Remove
-SpanAttributes.LLM_REQUEST_TOOLS = "llm.request.tools"
-
 OPENAI_LLM_USAGE_TOKEN_TYPES = ["prompt_tokens", "completion_tokens"]
 
 # tiktoken encodings map for different model, key is model_name, value is tiktoken encoding
