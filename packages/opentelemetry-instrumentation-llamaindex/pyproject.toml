@@ -41,7 +41,7 @@ pytest-asyncio = "^0.23.7"
 chromadb = ">=0.4.22,<0.6.0"
 openai = "^1.35.0"
 opentelemetry-sdk = "^1.23.0"
-llama-index = "^0.10.46"
+llama-index = "^0.10.52"
 llama-index-postprocessor-cohere-rerank = "^0.1.7"
 opentelemetry-instrumentation-openai = {path="../opentelemetry-instrumentation-openai", develop=true}
 opentelemetry-instrumentation-cohere = {path="../opentelemetry-instrumentation-cohere", develop=true}

@@ -34,7 +34,33 @@ def test_rag_with_chroma(exporter):
 
     spans = exporter.get_finished_spans()
     assert {
-        "llama_index_retriever_query.workflow",
-        "retrieve.task",
-        "synthesize.task",
-    }.issubset([span.name for span in spans])
+        "SentenceSplitter.llamaindex.task",
+        "NodeParser.llamaindex.workflow",
+        "openai.embeddings",
+        "Embedding.llamaindex.workflow",
+        "chroma.add",
+        "openai.embeddings",
+        "Embedding.llamaindex.task",
+        "chroma.query.segment._query",
+        "chroma.query",
+        "Retriever.llamaindex.task",
+        "TokenTextSplitter.llamaindex.task",
+        "openai.chat",
+        "LLM.llamaindex.task",
+        "Refine.llamaindex.task",
+        "Synthesizer.llamaindex.task",
+        "QueryEngine.llamaindex.workflow",
+    } == set([span.name for span in spans])
+
+    query_engine_span = next(
+        span for span in spans if span.name == "QueryEngine.llamaindex.workflow"
+    )
+    retriever_span = next(
+        span for span in spans if span.name == "Retriever.llamaindex.task"
+    )
+    synthesizer_span = next(
+        span for span in spans if span.name == "Synthesizer.llamaindex.task"
+    )
+
+    assert retriever_span.parent.span_id == query_engine_span.context.span_id
+    assert synthesizer_span.parent.span_id == query_engine_span.context.span_id
