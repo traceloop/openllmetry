@@ -779,7 +779,7 @@ def init_together_instrumentor():
 
 def init_llama_index_instrumentor():
     try:
-        if is_package_installed("llama_index"):
+        if is_package_installed("llama-index") or is_package_installed("llama_index"):
             Telemetry().capture("instrumentation:llamaindex:init")
             from opentelemetry.instrumentation.llamaindex import LlamaIndexInstrumentor
 
