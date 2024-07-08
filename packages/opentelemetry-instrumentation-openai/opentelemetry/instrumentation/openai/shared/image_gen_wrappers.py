@@ -12,6 +12,7 @@ from opentelemetry.instrumentation.openai.utils import (
 )
 from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
 from opentelemetry.metrics import Counter, Histogram
+from opentelemetry.semconv.ai import SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY
 
 
 @_with_image_gen_metric_wrapper
@@ -23,7 +24,9 @@ def image_gen_metrics_wrapper(
     args,
     kwargs,
 ):
-    if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
+    if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY) or context_api.get_value(
+        SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY
+    ):
         return wrapped(*args, **kwargs)
 
     try:

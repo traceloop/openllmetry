@@ -2,7 +2,11 @@ import logging
 
 from opentelemetry import context as context_api
 
-from opentelemetry.semconv.ai import SpanAttributes, LLMRequestTypeValues
+from opentelemetry.semconv.ai import (
+    SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
+    SpanAttributes,
+    LLMRequestTypeValues,
+)
 
 from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
 from opentelemetry.instrumentation.openai.utils import _with_tracer_wrapper, dont_throw
@@ -33,7 +37,9 @@ logger = logging.getLogger(__name__)
 
 @_with_tracer_wrapper
 def completion_wrapper(tracer, wrapped, instance, args, kwargs):
-    if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
+    if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY) or context_api.get_value(
+        SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY
+    ):
         return wrapped(*args, **kwargs)
 
     # span needs to be opened and closed manually because the response is a generator
@@ -58,7 +64,9 @@ def completion_wrapper(tracer, wrapped, instance, args, kwargs):
 
 @_with_tracer_wrapper
 async def acompletion_wrapper(tracer, wrapped, instance, args, kwargs):
-    if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
+    if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY) or context_api.get_value(
+        SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY
+    ):
         return wrapped(*args, **kwargs)
 
     span = tracer.start_span(

@@ -17,7 +17,11 @@ from opentelemetry.instrumentation.utils import (
     unwrap,
 )
 
-from opentelemetry.semconv.ai import SpanAttributes, LLMRequestTypeValues
+from opentelemetry.semconv.ai import (
+    SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
+    SpanAttributes,
+    LLMRequestTypeValues,
+)
 from opentelemetry.instrumentation.together.version import __version__
 
 
@@ -151,7 +155,9 @@ def _llm_request_type_by_method(method_name):
 @_with_tracer_wrapper
 def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
     """Instruments and calls every function defined in TO_WRAP."""
-    if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
+    if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY) or context_api.get_value(
+        SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY
+    ):
         return wrapped(*args, **kwargs)
 
     name = to_wrap.get("span_name")
