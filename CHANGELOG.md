@@ -1,3 +1,14 @@
+## v0.25.0 (2024-07-08)
+
+### Feat
+
+- suppress LLM instrumentations through context (#1453)
+- **langchain**: improve callbacks (#1426)
+
+### Fix
+
+- **sdk**: llamaindex instrumentation was never initialized (#1490)
+
 ## v0.24.0 (2024-07-03)
 
 ### Feat
