@@ -1,3 +1,4 @@
+import json
 import pytest
 from opentelemetry.semconv.ai import SpanAttributes
 
@@ -67,6 +68,24 @@ def test_open_ai_function_calls(exporter, openai_client):
         open_ai_span.attributes[f"{SpanAttributes.LLM_REQUEST_TOOLS}.0.function.name"]
         == "get_current_weather"
     )
+    assert open_ai_span.attributes[
+        f"{SpanAttributes.LLM_REQUEST_TOOLS}.0.function.parameters"
+    ] == json.dumps(
+        {
+            "type": "object",
+            "properties": {
+                "location": {
+                    "type": "string",
+                    "description": "The city and state, e.g. San Francisco, CA",
+                },
+                "unit": {
+                    "type": "string",
+                    "enum": ["celsius", "fahrenheit"],
+                },
+            },
+            "required": ["location"],
+        }
+    )
     assert (
         open_ai_span.attributes[
             f"{SpanAttributes.LLM_REQUEST_TOOLS}.0.function.description"
@@ -101,6 +120,20 @@ def test_open_ai_function_calls_tools(exporter, openai_client, openai_tools):
     assert (
         open_ai_span.attributes[f"{SpanAttributes.LLM_REQUEST_TOOLS}.0.type"]
         == "function"
+    )
+    assert open_ai_span.attributes[
+        f"{SpanAttributes.LLM_REQUEST_TOOLS}.0.function.parameters"
+    ] == json.dumps(
+        {
+            "type": "object",
+            "properties": {
+                "location": {
+                    "type": "string",
+                    "description": "The city and state, e.g. San Francisco, CA",
+                },
+            },
+            "required": ["location"],
+        }
     )
     assert (
         open_ai_span.attributes[f"{SpanAttributes.LLM_REQUEST_TOOLS}.0.function.name"]
@@ -151,16 +184,6 @@ async def test_open_ai_function_calls_tools_streaming(
         str,
     )
     assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_REQUEST_TOOLS}.0.type"]
-        == "function"
-    )
-    assert (
-        open_ai_span.attributes.get(
-            f"{SpanAttributes.LLM_REQUEST_TOOLS}.0.function.name"
-        )
-        == "get_current_weather"
-    )
-    assert (
         open_ai_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.finish_reason")
         == "tool_calls"
     )
@@ -197,16 +220,6 @@ def test_open_ai_function_calls_tools_parallel(exporter, openai_client, openai_t
     spans = exporter.get_finished_spans()
     open_ai_span = spans[0]
 
-    assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_REQUEST_TOOLS}.0.type"]
-        == "function"
-    )
-    assert (
-        open_ai_span.attributes.get(
-            f"{SpanAttributes.LLM_REQUEST_TOOLS}.0.function.name"
-        )
-        == "get_current_weather"
-    )
     assert (
         open_ai_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.finish_reason")
         == "tool_calls"
@@ -270,16 +283,6 @@ async def test_open_ai_function_calls_tools_streaming_parallel(
     spans = exporter.get_finished_spans()
     open_ai_span = spans[0]
 
-    assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_REQUEST_TOOLS}.0.type"]
-        == "function"
-    )
-    assert (
-        open_ai_span.attributes.get(
-            f"{SpanAttributes.LLM_REQUEST_TOOLS}.0.function.name"
-        )
-        == "get_current_weather"
-    )
     assert (
         open_ai_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.finish_reason")
         == "tool_calls"
