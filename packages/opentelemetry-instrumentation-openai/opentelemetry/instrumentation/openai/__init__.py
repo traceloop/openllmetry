@@ -1,4 +1,4 @@
-from typing import Collection
+from typing import Callable, Collection
 
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 
@@ -18,11 +18,13 @@ class OpenAIInstrumentor(BaseInstrumentor):
         enrich_assistant: bool = False,
         enrich_token_usage: bool = False,
         exception_logger=None,
+        get_common_metrics_attributes: Callable[[], dict] = lambda: {},
     ):
         super().__init__()
         Config.enrich_assistant = enrich_assistant
         Config.enrich_token_usage = enrich_token_usage
         Config.exception_logger = exception_logger
+        Config.get_common_metrics_attributes = get_common_metrics_attributes
 
     def instrumentation_dependencies(self) -> Collection[str]:
         return _instruments

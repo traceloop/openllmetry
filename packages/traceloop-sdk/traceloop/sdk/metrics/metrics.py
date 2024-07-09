@@ -24,6 +24,8 @@ class MetricsWrapper(object):
     endpoint: str = None
     # if it needs headers?
     headers: Dict[str, str] = {}
+    __metrics_exporter: MetricExporter = None
+    __metrics_provider: MeterProvider = None
 
     def __new__(cls, exporter: MetricExporter = None) -> "MetricsWrapper":
         if not hasattr(cls, "instance"):
@@ -31,7 +33,7 @@ class MetricsWrapper(object):
             if not MetricsWrapper.endpoint:
                 return obj
 
-            obj.__metrics_exporter: MetricExporter = (
+            obj.__metrics_exporter = (
                 exporter
                 if exporter
                 else init_metrics_exporter(
@@ -39,7 +41,7 @@ class MetricsWrapper(object):
                 )
             )
 
-            obj.__metrics_provider: MeterProvider = init_metrics_provider(
+            obj.__metrics_provider = init_metrics_provider(
                 obj.__metrics_exporter, MetricsWrapper.resource_attributes
             )
 

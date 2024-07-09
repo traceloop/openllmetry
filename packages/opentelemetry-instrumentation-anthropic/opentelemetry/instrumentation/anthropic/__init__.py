@@ -4,7 +4,7 @@ import json
 import logging
 import os
 import time
-from typing import Collection
+from typing import Callable, Collection
 
 from anthropic._streaming import AsyncStream, Stream
 from opentelemetry import context as context_api
@@ -595,10 +595,16 @@ def is_metrics_enabled() -> bool:
 class AnthropicInstrumentor(BaseInstrumentor):
     """An instrumentor for Anthropic's client library."""
 
-    def __init__(self, enrich_token_usage: bool = False, exception_logger=None):
+    def __init__(
+        self,
+        enrich_token_usage: bool = False,
+        exception_logger=None,
+        get_common_metrics_attributes: Callable[[], dict] = lambda: {},
+    ):
         super().__init__()
         Config.exception_logger = exception_logger
         Config.enrich_token_usage = enrich_token_usage
+        Config.get_common_metrics_attributes = get_common_metrics_attributes
 
     def instrumentation_dependencies(self) -> Collection[str]:
         return _instruments
