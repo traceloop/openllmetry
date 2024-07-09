@@ -1,6 +1,7 @@
 import json
 import logging
 import time
+from opentelemetry.instrumentation.openai.shared.config import Config
 from wrapt import ObjectProxy
 
 
@@ -18,7 +19,7 @@ from opentelemetry.instrumentation.openai.utils import (
     dont_throw,
 )
 from opentelemetry.instrumentation.openai.shared import (
-    _metric_shared_attributes,
+    metric_shared_attributes,
     _set_client_attributes,
     _set_request_attributes,
     _set_span_attribute,
@@ -172,7 +173,9 @@ async def achat_wrapper(
         end_time = time.time()
         duration = end_time - start_time if "start_time" in locals() else 0
 
+        common_attributes = Config.get_common_metrics_attributes()
         attributes = {
+            **common_attributes,
             "error.type": e.__class__.__name__,
         }
 
@@ -277,7 +280,7 @@ def _handle_response(
 def _set_chat_metrics(
     instance, token_counter, choice_counter, duration_histogram, response_dict, duration
 ):
-    shared_attributes = _metric_shared_attributes(
+    shared_attributes = metric_shared_attributes(
         response_model=response_dict.get("model") or None,
         operation="chat",
         server_address=_get_openai_base_url(instance),
@@ -554,7 +557,7 @@ class ChatStream(ObjectProxy):
         _accumulate_stream_items(item, self._complete_response)
 
     def _shared_attributes(self):
-        return _metric_shared_attributes(
+        return metric_shared_attributes(
             response_model=self._complete_response.get("model")
             or self._request_kwargs.get("model")
             or None,

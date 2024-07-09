@@ -547,10 +547,12 @@ def init_openai_instrumentor(should_enrich_metrics: bool):
                 exception_logger=lambda e: Telemetry().log_exception(e),
                 enrich_assistant=should_enrich_metrics,
                 enrich_token_usage=should_enrich_metrics,
+                get_common_metrics_attributes=metrics_common_attributes,
             )
             if not instrumentor.is_instrumented_by_opentelemetry:
                 instrumentor.instrument()
         return True
+
     except Exception as e:
         logging.error(f"Error initializing OpenAI instrumentor: {e}")
         Telemetry().log_exception(e)
@@ -566,6 +568,7 @@ def init_anthropic_instrumentor(should_enrich_metrics: bool):
             instrumentor = AnthropicInstrumentor(
                 exception_logger=lambda e: Telemetry().log_exception(e),
                 enrich_token_usage=should_enrich_metrics,
+                get_common_metrics_attributes=metrics_common_attributes,
             )
             if not instrumentor.is_instrumented_by_opentelemetry:
                 instrumentor.instrument()
@@ -982,3 +985,23 @@ def init_marqo_instrumentor():
         logging.error(f"Error initializing marqo instrumentor: {e}")
         Telemetry().log_exception(e)
         return False
+
+
+def metrics_common_attributes():
+    common_attributes = {}
+    workflow_name = get_value("workflow_name")
+    if workflow_name is not None:
+        common_attributes[SpanAttributes.TRACELOOP_WORKFLOW_NAME] = workflow_name
+
+    entity_name = get_value("entity_name")
+    if entity_name is not None:
+        common_attributes[SpanAttributes.TRACELOOP_ENTITY_NAME] = entity_name
+
+    association_properties = get_value("association_properties")
+    if association_properties is not None:
+        for key, value in association_properties.items():
+            common_attributes[
+                f"{SpanAttributes.TRACELOOP_ASSOCIATION_PROPERTIES}.{key}"
+            ] = value
+
+    return common_attributes

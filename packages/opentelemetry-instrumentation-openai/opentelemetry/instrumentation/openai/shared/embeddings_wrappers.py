@@ -16,7 +16,7 @@ from opentelemetry.instrumentation.openai.utils import (
     _with_embeddings_telemetry_wrapper,
 )
 from opentelemetry.instrumentation.openai.shared import (
-    _metric_shared_attributes,
+    metric_shared_attributes,
     _set_client_attributes,
     _set_request_attributes,
     _set_span_attribute,
@@ -198,7 +198,7 @@ def _set_embeddings_metrics(
     response_dict,
     duration,
 ):
-    shared_attributes = _metric_shared_attributes(
+    shared_attributes = metric_shared_attributes(
         response_model=response_dict.get("model") or None,
         operation="embeddings",
         server_address=_get_openai_base_url(instance),
