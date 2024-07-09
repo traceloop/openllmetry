@@ -1381,7 +1381,7 @@ wrapt = ">=1.0.0,<2.0.0"
 
 [[package]]
 name = "opentelemetry-instrumentation-bedrock"
-version = "0.24.0"
+version = "0.25.0"
 description = "OpenTelemetry Bedrock instrumentation"
 optional = false
 python-versions = ">=3.9,<4"
@@ -1393,7 +1393,7 @@ anthropic = ">=0.17.0"
 opentelemetry-api = "^1.25.0"
 opentelemetry-instrumentation = "^0.46b0"
 opentelemetry-semantic-conventions = "^0.46b0"
-opentelemetry-semantic-conventions-ai = "0.3.4"
+opentelemetry-semantic-conventions-ai = "0.3.5"
 
 [package.source]
 type = "directory"
@@ -1401,7 +1401,7 @@ url = "../opentelemetry-instrumentation-bedrock"
 
 [[package]]
 name = "opentelemetry-instrumentation-openai"
-version = "0.24.0"
+version = "0.25.0"
 description = "OpenTelemetry OpenAI instrumentation"
 optional = false
 python-versions = ">=3.9,<4"
@@ -1412,7 +1412,7 @@ develop = true
 opentelemetry-api = "^1.25.0"
 opentelemetry-instrumentation = "^0.46b0"
 opentelemetry-semantic-conventions = "^0.46b0"
-opentelemetry-semantic-conventions-ai = "0.3.4"
+opentelemetry-semantic-conventions-ai = "0.3.5"
 tiktoken = ">=0.6.0, <1"
 
 [package.extras]
@@ -1454,13 +1454,13 @@ opentelemetry-api = "1.25.0"
 
 [[package]]
 name = "opentelemetry-semantic-conventions-ai"
-version = "0.3.4"
+version = "0.3.5"
 description = "OpenTelemetry Semantic Conventions Extension for Large Language Models"
 optional = false
 python-versions = "<4,>=3.9"
 files = [
-    {file = "opentelemetry_semantic_conventions_ai-0.3.4-py3-none-any.whl", hash = "sha256:e4b274671fbad410760a940950bd96471e0ae230c31e4cda68ebb3db9a308eac"},
-    {file = "opentelemetry_semantic_conventions_ai-0.3.4.tar.gz", hash = "sha256:657d54e2ce51e561cfc3337d8318fc9da316b3c091ea58e824d887360ffc0243"},
+    {file = "opentelemetry_semantic_conventions_ai-0.3.5-py3-none-any.whl", hash = "sha256:cecdaf2f6c67f85f13ddad87f409d90644581a130429c55baa268105697c3b09"},
+    {file = "opentelemetry_semantic_conventions_ai-0.3.5.tar.gz", hash = "sha256:f99c07ce207e91fce4843496cbf71c158cfeb214f5fe5d1c29dff95f0e731348"},
 ]
 
 [[package]]
@@ -2657,4 +2657,4 @@ instruments = []
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<4"
-content-hash = "ae092f18640c05aed18412ac9d9d22c55a78633f46a190dbbff495e04f03209c"
+content-hash = "a8fd0e32f16e0978602d9f7b008a9b2a0556b0afc45dec746a94bd4afc316713"
