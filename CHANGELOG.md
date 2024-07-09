@@ -1,3 +1,10 @@
+## v0.25.1 (2024-07-09)
+
+### Fix
+
+- association properties and workflow / task on metrics (#1494)
+- **llamaindex**: report inputs+outputs on entities (#1495)
+
 ## v0.25.0 (2024-07-08)
 
 ### Feat
