@@ -3,7 +3,11 @@ import time
 
 from opentelemetry import context as context_api
 from opentelemetry.metrics import Counter, Histogram
-from opentelemetry.semconv.ai import SpanAttributes, LLMRequestTypeValues
+from opentelemetry.semconv.ai import (
+    SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
+    SpanAttributes,
+    LLMRequestTypeValues,
+)
 
 from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
 from opentelemetry.instrumentation.openai.utils import (
@@ -12,7 +16,7 @@ from opentelemetry.instrumentation.openai.utils import (
     _with_embeddings_telemetry_wrapper,
 )
 from opentelemetry.instrumentation.openai.shared import (
-    _metric_shared_attributes,
+    metric_shared_attributes,
     _set_client_attributes,
     _set_request_attributes,
     _set_span_attribute,
@@ -46,7 +50,9 @@ def embeddings_wrapper(
     args,
     kwargs,
 ):
-    if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
+    if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY) or context_api.get_value(
+        SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY
+    ):
         return wrapped(*args, **kwargs)
 
     with tracer.start_as_current_span(
@@ -103,7 +109,9 @@ async def aembeddings_wrapper(
     args,
     kwargs,
 ):
-    if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
+    if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY) or context_api.get_value(
+        SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY
+    ):
         return wrapped(*args, **kwargs)
 
     async with start_as_current_span_async(
@@ -190,7 +198,7 @@ def _set_embeddings_metrics(
     response_dict,
     duration,
 ):
-    shared_attributes = _metric_shared_attributes(
+    shared_attributes = metric_shared_attributes(
         response_model=response_dict.get("model") or None,
         operation="embeddings",
         server_address=_get_openai_base_url(instance),

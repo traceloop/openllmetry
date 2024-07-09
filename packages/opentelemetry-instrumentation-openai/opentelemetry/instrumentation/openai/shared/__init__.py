@@ -8,6 +8,7 @@ from importlib.metadata import version
 
 from opentelemetry import context as context_api
 
+from opentelemetry.instrumentation.openai.shared.config import Config
 from opentelemetry.semconv.ai import SpanAttributes
 from opentelemetry.instrumentation.openai.utils import (
     dont_throw,
@@ -266,10 +267,13 @@ def _token_type(token_type: str):
     return None
 
 
-def _metric_shared_attributes(
+def metric_shared_attributes(
     response_model: str, operation: str, server_address: str, is_streaming: bool = False
 ):
+    attributes = Config.get_common_metrics_attributes()
+
     return {
+        **attributes,
         SpanAttributes.LLM_SYSTEM: "openai",
         SpanAttributes.LLM_RESPONSE_MODEL: response_model,
         "gen_ai.operation.name": operation,

@@ -1,5 +1,7 @@
 from enum import Enum
 
+SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY = "suppress_language_model_instrumentation"
+
 
 class Meters:
     LLM_GENERATION_CHOICES = "gen_ai.client.generation.choices"

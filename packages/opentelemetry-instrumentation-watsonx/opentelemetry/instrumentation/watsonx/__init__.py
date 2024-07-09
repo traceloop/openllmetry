@@ -21,7 +21,12 @@ from opentelemetry.instrumentation.utils import (
     unwrap,
 )
 
-from opentelemetry.semconv.ai import Meters, SpanAttributes, LLMRequestTypeValues
+from opentelemetry.semconv.ai import (
+    SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
+    Meters,
+    SpanAttributes,
+    LLMRequestTypeValues,
+)
 from opentelemetry.instrumentation.watsonx.version import __version__
 
 logger = logging.getLogger(__name__)
@@ -207,7 +212,9 @@ def _set_stream_response_attributes(span, stream_response):
     )
 
 
-def _set_completion_content_attributes(span, response, index, response_counter) -> Optional[str]:
+def _set_completion_content_attributes(
+    span, response, index, response_counter
+) -> Optional[str]:
     if not isinstance(response, dict):
         return None
 
@@ -288,16 +295,16 @@ def _set_response_attributes(
             prompt_token + completion_token,
         )
 
-        shared_attributes = _metric_shared_attributes(
-            response_model=model_id
-        )
+        shared_attributes = _metric_shared_attributes(response_model=model_id)
 
         if token_histogram:
             attributes_with_token_type = {
                 **shared_attributes,
                 SpanAttributes.LLM_TOKEN_TYPE: "output",
             }
-            token_histogram.record(completion_token, attributes=attributes_with_token_type)
+            token_histogram.record(
+                completion_token, attributes=attributes_with_token_type
+            )
             attributes_with_token_type = {
                 **shared_attributes,
                 SpanAttributes.LLM_TOKEN_TYPE: "input",
@@ -333,8 +340,7 @@ def _build_and_set_stream_response(
             yield item["results"][0]["generated_text"]
 
     shared_attributes = _metric_shared_attributes(
-        response_model=stream_model_id,
-        is_streaming=True
+        response_model=stream_model_id, is_streaming=True
     )
     stream_response = {
         "model_id": stream_model_id,
@@ -384,7 +390,7 @@ def _metric_shared_attributes(response_model: str, is_streaming: bool = False):
     return {
         SpanAttributes.LLM_RESPONSE_MODEL: response_model,
         SpanAttributes.LLM_SYSTEM: "watsonx",
-        "stream": is_streaming
+        "stream": is_streaming,
     }
 
 
@@ -432,7 +438,9 @@ def _wrap(
     kwargs,
 ):
     """Instruments and calls every function defined in TO_WRAP."""
-    if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
+    if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY) or context_api.get_value(
+        SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY
+    ):
         return wrapped(*args, **kwargs)
 
     name = to_wrap.get("span_name")
@@ -548,7 +556,12 @@ class WatsonxInstrumentor(BaseInstrumentor):
                 description="Number of exceptions occurred during completions",
             )
         else:
-            (token_histogram, response_counter, duration_histogram, exception_counter) = (
+            (
+                token_histogram,
+                response_counter,
+                duration_histogram,
+                exception_counter,
+            ) = (
                 None,
                 None,
                 None,

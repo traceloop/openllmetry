@@ -3927,7 +3927,7 @@ wrapt = ">=1.0.0,<2.0.0"
 
 [[package]]
 name = "opentelemetry-instrumentation-alephalpha"
-version = "0.23.0"
+version = "0.24.0"
 description = "OpenTelemetry Aleph Alpha instrumentation"
 optional = false
 python-versions = ">=3.9,<4"
@@ -3938,7 +3938,7 @@ develop = true
 opentelemetry-api = "^1.25.0"
 opentelemetry-instrumentation = "^0.46b0"
 opentelemetry-semantic-conventions = "^0.46b0"
-opentelemetry-semantic-conventions-ai = "0.3.3"
+opentelemetry-semantic-conventions-ai = "0.3.4"
 
 [package.extras]
 instruments = []
@@ -3949,7 +3949,7 @@ url = "../opentelemetry-instrumentation-alephalpha"
 
 [[package]]
 name = "opentelemetry-instrumentation-anthropic"
-version = "0.23.0"
+version = "0.24.0"
 description = "OpenTelemetry Anthropic instrumentation"
 optional = false
 python-versions = ">=3.9,<4"
@@ -3960,7 +3960,7 @@ develop = true
 opentelemetry-api = "^1.25.0"
 opentelemetry-instrumentation = "^0.46b0"
 opentelemetry-semantic-conventions = "^0.46b0"
-opentelemetry-semantic-conventions-ai = "0.3.3"
+opentelemetry-semantic-conventions-ai = "0.3.4"
 
 [package.extras]
 instruments = []
@@ -3992,7 +3992,7 @@ instruments = ["asgiref (>=3.0,<4.0)"]
 
 [[package]]
 name = "opentelemetry-instrumentation-bedrock"
-version = "0.23.0"
+version = "0.24.0"
 description = "OpenTelemetry Bedrock instrumentation"
 optional = false
 python-versions = ">=3.9,<4"
@@ -4004,7 +4004,7 @@ anthropic = ">=0.17.0"
 opentelemetry-api = "^1.25.0"
 opentelemetry-instrumentation = "^0.46b0"
 opentelemetry-semantic-conventions = "^0.46b0"
-opentelemetry-semantic-conventions-ai = "0.3.3"
+opentelemetry-semantic-conventions-ai = "0.3.4"
 
 [package.source]
 type = "directory"
@@ -4012,7 +4012,7 @@ url = "../opentelemetry-instrumentation-bedrock"
 
 [[package]]
 name = "opentelemetry-instrumentation-chromadb"
-version = "0.23.0"
+version = "0.24.0"
 description = "OpenTelemetry Chroma DB instrumentation"
 optional = false
 python-versions = ">=3.9,<4"
@@ -4023,7 +4023,7 @@ develop = true
 opentelemetry-api = "^1.25.0"
 opentelemetry-instrumentation = "^0.46b0"
 opentelemetry-semantic-conventions = "^0.46b0"
-opentelemetry-semantic-conventions-ai = "0.3.3"
+opentelemetry-semantic-conventions-ai = "0.3.4"
 
 [package.extras]
 instruments = []
@@ -4034,7 +4034,7 @@ url = "../opentelemetry-instrumentation-chromadb"
 
 [[package]]
 name = "opentelemetry-instrumentation-cohere"
-version = "0.23.0"
+version = "0.24.0"
 description = "OpenTelemetry Cohere instrumentation"
 optional = false
 python-versions = ">=3.9,<4"
@@ -4045,7 +4045,7 @@ develop = true
 opentelemetry-api = "^1.25.0"
 opentelemetry-instrumentation = "^0.46b0"
 opentelemetry-semantic-conventions = "^0.46b0"
-opentelemetry-semantic-conventions-ai = "0.3.3"
+opentelemetry-semantic-conventions-ai = "0.3.4"
 
 [package.extras]
 instruments = []
@@ -4077,7 +4077,7 @@ instruments = ["fastapi (>=0.58,<1.0)"]
 
 [[package]]
 name = "opentelemetry-instrumentation-google-generativeai"
-version = "0.23.0"
+version = "0.24.0"
 description = "OpenTelemetry Google Generative AI instrumentation"
 optional = false
 python-versions = ">=3.9,<4"
@@ -4088,7 +4088,7 @@ develop = true
 opentelemetry-api = "^1.25.0"
 opentelemetry-instrumentation = "^0.46b0"
 opentelemetry-semantic-conventions = "^0.46b0"
-opentelemetry-semantic-conventions-ai = "0.3.3"
+opentelemetry-semantic-conventions-ai = "0.3.4"
 
 [package.extras]
 instruments = []
@@ -4099,7 +4099,7 @@ url = "../opentelemetry-instrumentation-google-generativeai"
 
 [[package]]
 name = "opentelemetry-instrumentation-haystack"
-version = "0.23.0"
+version = "0.24.0"
 description = "OpenTelemetry Haystack instrumentation"
 optional = false
 python-versions = ">=3.9,<4"
@@ -4110,7 +4110,7 @@ develop = true
 opentelemetry-api = "^1.25.0"
 opentelemetry-instrumentation = "^0.46b0"
 opentelemetry-semantic-conventions = "^0.46b0"
-opentelemetry-semantic-conventions-ai = "0.3.3"
+opentelemetry-semantic-conventions-ai = "0.3.4"
 
 [package.extras]
 instruments = []
@@ -4121,7 +4121,7 @@ url = "../opentelemetry-instrumentation-haystack"
 
 [[package]]
 name = "opentelemetry-instrumentation-langchain"
-version = "0.23.0"
+version = "0.24.0"
 description = "OpenTelemetry Langchain instrumentation"
 optional = false
 python-versions = ">=3.9,<4"
@@ -4132,7 +4132,7 @@ develop = true
 opentelemetry-api = "^1.25.0"
 opentelemetry-instrumentation = "^0.46b0"
 opentelemetry-semantic-conventions = "^0.46b0"
-opentelemetry-semantic-conventions-ai = "0.3.3"
+opentelemetry-semantic-conventions-ai = "0.3.4"
 
 [package.extras]
 instruments = []
@@ -4143,7 +4143,7 @@ url = "../opentelemetry-instrumentation-langchain"
 
 [[package]]
 name = "opentelemetry-instrumentation-llamaindex"
-version = "0.23.0"
+version = "0.24.0"
 description = "OpenTelemetry LlamaIndex instrumentation"
 optional = false
 python-versions = ">=3.9,<4"
@@ -4155,7 +4155,7 @@ inflection = "^0.5.1"
 opentelemetry-api = "^1.25.0"
 opentelemetry-instrumentation = "^0.46b0"
 opentelemetry-semantic-conventions = "^0.46b0"
-opentelemetry-semantic-conventions-ai = "0.3.3"
+opentelemetry-semantic-conventions-ai = "0.3.4"
 
 [package.extras]
 instruments = []
@@ -4166,7 +4166,7 @@ url = "../opentelemetry-instrumentation-llamaindex"
 
 [[package]]
 name = "opentelemetry-instrumentation-marqo"
-version = "0.23.0"
+version = "0.24.0"
 description = "OpenTelemetry Marqo instrumentation"
 optional = false
 python-versions = ">=3.9,<4"
@@ -4177,7 +4177,7 @@ develop = true
 opentelemetry-api = "^1.25.0"
 opentelemetry-instrumentation = "^0.46b0"
 opentelemetry-semantic-conventions = "^0.46b0"
-opentelemetry-semantic-conventions-ai = "0.3.3"
+opentelemetry-semantic-conventions-ai = "0.3.4"
 
 [package.extras]
 instruments = []
@@ -4188,7 +4188,7 @@ url = "../opentelemetry-instrumentation-marqo"
 
 [[package]]
 name = "opentelemetry-instrumentation-milvus"
-version = "0.23.0"
+version = "0.24.0"
 description = "OpenTelemetry Milvus instrumentation"
 optional = false
 python-versions = ">=3.9,<4"
@@ -4199,7 +4199,7 @@ develop = true
 opentelemetry-api = "^1.25.0"
 opentelemetry-instrumentation = "^0.46b0"
 opentelemetry-semantic-conventions = "^0.46b0"
-opentelemetry-semantic-conventions-ai = "0.3.3"
+opentelemetry-semantic-conventions-ai = "0.3.4"
 
 [package.extras]
 instruments = []
@@ -4210,7 +4210,7 @@ url = "../opentelemetry-instrumentation-milvus"
 
 [[package]]
 name = "opentelemetry-instrumentation-mistralai"
-version = "0.23.0"
+version = "0.24.0"
 description = "OpenTelemetry Mistral AI instrumentation"
 optional = false
 python-versions = ">=3.9,<4"
@@ -4221,7 +4221,7 @@ develop = true
 opentelemetry-api = "^1.25.0"
 opentelemetry-instrumentation = "^0.46b0"
 opentelemetry-semantic-conventions = "^0.46b0"
-opentelemetry-semantic-conventions-ai = "0.3.3"
+opentelemetry-semantic-conventions-ai = "0.3.4"
 
 [package.extras]
 instruments = []
@@ -4232,7 +4232,7 @@ url = "../opentelemetry-instrumentation-mistralai"
 
 [[package]]
 name = "opentelemetry-instrumentation-ollama"
-version = "0.23.0"
+version = "0.24.0"
 description = "OpenTelemetry Ollama instrumentation"
 optional = false
 python-versions = ">=3.9,<4"
@@ -4243,7 +4243,7 @@ develop = true
 opentelemetry-api = "^1.25.0"
 opentelemetry-instrumentation = "^0.46b0"
 opentelemetry-semantic-conventions = "^0.46b0"
-opentelemetry-semantic-conventions-ai = "0.3.3"
+opentelemetry-semantic-conventions-ai = "0.3.4"
 
 [package.extras]
 instruments = ["ollama (>=0.2.0,<0.3.0)"]
@@ -4254,7 +4254,7 @@ url = "../opentelemetry-instrumentation-ollama"
 
 [[package]]
 name = "opentelemetry-instrumentation-openai"
-version = "0.23.0"
+version = "0.24.0"
 description = "OpenTelemetry OpenAI instrumentation"
 optional = false
 python-versions = ">=3.9,<4"
@@ -4265,7 +4265,7 @@ develop = true
 opentelemetry-api = "^1.25.0"
 opentelemetry-instrumentation = "^0.46b0"
 opentelemetry-semantic-conventions = "^0.46b0"
-opentelemetry-semantic-conventions-ai = "0.3.3"
+opentelemetry-semantic-conventions-ai = "0.3.4"
 tiktoken = ">=0.6.0, <1"
 
 [package.extras]
@@ -4277,7 +4277,7 @@ url = "../opentelemetry-instrumentation-openai"
 
 [[package]]
 name = "opentelemetry-instrumentation-pinecone"
-version = "0.23.0"
+version = "0.24.0"
 description = "OpenTelemetry Pinecone instrumentation"
 optional = false
 python-versions = ">=3.9,<4"
@@ -4288,7 +4288,7 @@ develop = true
 opentelemetry-api = "^1.25.0"
 opentelemetry-instrumentation = "^0.46b0"
 opentelemetry-semantic-conventions = "^0.46b0"
-opentelemetry-semantic-conventions-ai = "0.3.3"
+opentelemetry-semantic-conventions-ai = "0.3.4"
 
 [package.extras]
 instruments = []
@@ -4299,7 +4299,7 @@ url = "../opentelemetry-instrumentation-pinecone"
 
 [[package]]
 name = "opentelemetry-instrumentation-qdrant"
-version = "0.23.0"
+version = "0.24.0"
 description = "OpenTelemetry Qdrant instrumentation"
 optional = false
 python-versions = ">=3.9,<4"
@@ -4310,7 +4310,7 @@ develop = true
 opentelemetry-api = "^1.25.0"
 opentelemetry-instrumentation = "^0.46b0"
 opentelemetry-semantic-conventions = "^0.46b0"
-opentelemetry-semantic-conventions-ai = "0.3.3"
+opentelemetry-semantic-conventions-ai = "0.3.4"
 
 [package.extras]
 instruments = []
@@ -4321,7 +4321,7 @@ url = "../opentelemetry-instrumentation-qdrant"
 
 [[package]]
 name = "opentelemetry-instrumentation-replicate"
-version = "0.23.0"
+version = "0.24.0"
 description = "OpenTelemetry Replicate instrumentation"
 optional = false
 python-versions = ">=3.9,<4"
@@ -4332,7 +4332,7 @@ develop = true
 opentelemetry-api = "^1.25.0"
 opentelemetry-instrumentation = "^0.46b0"
 opentelemetry-semantic-conventions = "^0.46b0"
-opentelemetry-semantic-conventions-ai = "0.3.3"
+opentelemetry-semantic-conventions-ai = "0.3.4"
 
 [package.extras]
 instruments = []
@@ -4384,7 +4384,7 @@ instruments = ["sqlalchemy"]
 
 [[package]]
 name = "opentelemetry-instrumentation-together"
-version = "0.23.0"
+version = "0.24.0"
 description = "OpenTelemetry Together AI instrumentation"
 optional = false
 python-versions = ">=3.9,<4"
@@ -4395,7 +4395,7 @@ develop = true
 opentelemetry-api = "^1.25.0"
 opentelemetry-instrumentation = "^0.46b0"
 opentelemetry-semantic-conventions = "^0.46b0"
-opentelemetry-semantic-conventions-ai = "0.3.3"
+opentelemetry-semantic-conventions-ai = "0.3.4"
 
 [package.extras]
 instruments = []
@@ -4406,7 +4406,7 @@ url = "../opentelemetry-instrumentation-together"
 
 [[package]]
 name = "opentelemetry-instrumentation-transformers"
-version = "0.23.0"
+version = "0.24.0"
 description = "OpenTelemetry transformers instrumentation"
 optional = false
 python-versions = ">=3.9,<4"
@@ -4417,7 +4417,7 @@ develop = true
 opentelemetry-api = "^1.25.0"
 opentelemetry-instrumentation = "^0.46b0"
 opentelemetry-semantic-conventions = "^0.46b0"
-opentelemetry-semantic-conventions-ai = "0.3.3"
+opentelemetry-semantic-conventions-ai = "0.3.4"
 
 [package.source]
 type = "directory"
@@ -4446,7 +4446,7 @@ instruments = ["urllib3 (>=1.0.0,<3.0.0)"]
 
 [[package]]
 name = "opentelemetry-instrumentation-vertexai"
-version = "0.23.0"
+version = "0.24.0"
 description = "OpenTelemetry Vertex AI instrumentation"
 optional = false
 python-versions = ">=3.9,<4"
@@ -4457,7 +4457,7 @@ develop = true
 opentelemetry-api = "^1.25.0"
 opentelemetry-instrumentation = "^0.46b0"
 opentelemetry-semantic-conventions = "^0.46b0"
-opentelemetry-semantic-conventions-ai = "0.3.3"
+opentelemetry-semantic-conventions-ai = "0.3.4"
 
 [package.extras]
 instruments = []
@@ -4468,7 +4468,7 @@ url = "../opentelemetry-instrumentation-vertexai"
 
 [[package]]
 name = "opentelemetry-instrumentation-watsonx"
-version = "0.23.0"
+version = "0.24.0"
 description = "OpenTelemetry IBM Watsonx Instrumentation"
 optional = false
 python-versions = ">=3.9,<4"
@@ -4479,7 +4479,7 @@ develop = true
 opentelemetry-api = "^1.25.0"
 opentelemetry-instrumentation = "^0.46b0"
 opentelemetry-semantic-conventions = "^0.46b0"
-opentelemetry-semantic-conventions-ai = "0.3.3"
+opentelemetry-semantic-conventions-ai = "0.3.4"
 
 [package.extras]
 instruments = []
@@ -4490,7 +4490,7 @@ url = "../opentelemetry-instrumentation-watsonx"
 
 [[package]]
 name = "opentelemetry-instrumentation-weaviate"
-version = "0.23.0"
+version = "0.24.0"
 description = "OpenTelemetry Weaviate instrumentation"
 optional = false
 python-versions = ">=3.9,<4"
@@ -4501,7 +4501,7 @@ develop = true
 opentelemetry-api = "^1.25.0"
 opentelemetry-instrumentation = "^0.46b0"
 opentelemetry-semantic-conventions = "^0.46b0"
-opentelemetry-semantic-conventions-ai = "0.3.3"
+opentelemetry-semantic-conventions-ai = "0.3.4"
 
 [package.extras]
 instruments = []
@@ -4556,13 +4556,13 @@ opentelemetry-api = "1.25.0"
 
 [[package]]
 name = "opentelemetry-semantic-conventions-ai"
-version = "0.3.3"
+version = "0.3.4"
 description = "OpenTelemetry Semantic Conventions Extension for Large Language Models"
 optional = false
 python-versions = "<4,>=3.9"
 files = [
-    {file = "opentelemetry_semantic_conventions_ai-0.3.3-py3-none-any.whl", hash = "sha256:76c7dfa432ae037ab3ce9e66d208eaf5f367dd32c9f9985b91ffb2dd2a58c1c6"},
-    {file = "opentelemetry_semantic_conventions_ai-0.3.3.tar.gz", hash = "sha256:1afdff265a6636c0f9f5046b87580a9c8de3c296f82e412b21e4558c4b70008c"},
+    {file = "opentelemetry_semantic_conventions_ai-0.3.4-py3-none-any.whl", hash = "sha256:e4b274671fbad410760a940950bd96471e0ae230c31e4cda68ebb3db9a308eac"},
+    {file = "opentelemetry_semantic_conventions_ai-0.3.4.tar.gz", hash = "sha256:657d54e2ce51e561cfc3337d8318fc9da316b3c091ea58e824d887360ffc0243"},
 ]
 
 [[package]]
@@ -6438,7 +6438,7 @@ telegram = ["requests"]
 
 [[package]]
 name = "traceloop-sdk"
-version = "0.23.0"
+version = "0.24.0"
 description = "Traceloop Software Development Kit (SDK) for Python"
 optional = false
 python-versions = ">=3.9,<4"
@@ -6478,7 +6478,7 @@ opentelemetry-instrumentation-vertexai = {path = "../opentelemetry-instrumentati
 opentelemetry-instrumentation-watsonx = {path = "../opentelemetry-instrumentation-watsonx", develop = true}
 opentelemetry-instrumentation-weaviate = {path = "../opentelemetry-instrumentation-weaviate", develop = true}
 opentelemetry-sdk = "^1.25.0"
-opentelemetry-semantic-conventions-ai = "0.3.3"
+opentelemetry-semantic-conventions-ai = "0.3.4"
 posthog = ">3.0.2, <4"
 pydantic = ">=1"
 tenacity = "^8.2.3"
