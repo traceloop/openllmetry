@@ -99,7 +99,7 @@ def set_tools_attributes(span, tools):
             continue
 
         prefix = f"{SpanAttributes.LLM_REQUEST_TOOLS}.{i}"
-        _set_span_attribute(span, f"{prefix}.type", "function")
+        _set_span_attribute(span, f"{prefix}.type", tool.get("type"))
         _set_span_attribute(span, f"{prefix}.function.name", function.get("name"))
         _set_span_attribute(
             span, f"{prefix}.function.description", function.get("description")
