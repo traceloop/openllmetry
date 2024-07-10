@@ -385,12 +385,13 @@ def _set_completions(span, choices):
 
         function_call = message.get("function_call")
         if function_call:
+            _set_span_attribute(span, f"{prefix}.tool_calls.0.type", "function")
             _set_span_attribute(
-                span, f"{prefix}.tool_calls.0.name", function_call.get("name")
+                span, f"{prefix}.tool_calls.0.function.name", function_call.get("name")
             )
             _set_span_attribute(
                 span,
-                f"{prefix}.tool_calls.0.arguments",
+                f"{prefix}.tool_calls.0.function.arguments",
                 function_call.get("arguments"),
             )
 
@@ -399,18 +400,19 @@ def _set_completions(span, choices):
             for i, tool_call in enumerate(tool_calls):
                 function = tool_call.get("function")
                 _set_span_attribute(
-                    span,
-                    f"{prefix}.tool_calls.{i}.id",
-                    tool_call.get("id"),
+                    span, f"{prefix}.tool_calls.{i}.id", tool_call.get("id")
+                )
+                _set_span_attribute(
+                    span, f"{prefix}.tool_calls.{i}.type", tool_call.get("type")
                 )
                 _set_span_attribute(
                     span,
-                    f"{prefix}.tool_calls.{i}.name",
+                    f"{prefix}.tool_calls.{i}.function.name",
                     function.get("name"),
                 )
                 _set_span_attribute(
                     span,
-                    f"{prefix}.tool_calls.{i}.arguments",
+                    f"{prefix}.tool_calls.{i}.function.arguments",
                     function.get("arguments"),
                 )
 
@@ -796,7 +798,11 @@ def _accumulate_stream_items(item, complete_response):
                 i = int(tool_call["index"])
                 if len(complete_choice["message"]["tool_calls"]) <= i:
                     complete_choice["message"]["tool_calls"].append(
-                        {"id": "", "function": {"name": "", "arguments": ""}}
+                        {
+                            "id": "",
+                            "type": "",
+                            "function": {"name": "", "arguments": ""},
+                        }
                     )
 
                 span_tool_call = complete_choice["message"]["tool_calls"][i]
@@ -805,6 +811,8 @@ def _accumulate_stream_items(item, complete_response):
 
                 if tool_call.get("id"):
                     span_tool_call["id"] = tool_call.get("id")
+                if tool_call.get("type"):
+                    span_tool_call["type"] = tool_call.get("type")
                 if tool_call_function and tool_call_function.get("name"):
                     span_function["name"] = tool_call_function.get("name")
                 if tool_call_function and tool_call_function.get("arguments"):
