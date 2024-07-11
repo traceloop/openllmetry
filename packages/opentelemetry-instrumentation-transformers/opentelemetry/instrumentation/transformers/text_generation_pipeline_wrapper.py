@@ -1,6 +1,9 @@
 import logging
 
-from opentelemetry.semconv.ai import SpanAttributes
+from opentelemetry.semconv.ai import (
+    SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
+    SpanAttributes,
+)
 from opentelemetry.trace import Status, StatusCode
 from opentelemetry import context as context_api
 from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
@@ -51,12 +54,16 @@ def _set_input_attributes(span, instance, args, kwargs):
     _set_span_attribute(
         span, SpanAttributes.LLM_REQUEST_TEMPERATURE, forward_params.get("temperature")
     )
-    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TOP_P, forward_params.get("top_p"))
+    _set_span_attribute(
+        span, SpanAttributes.LLM_REQUEST_TOP_P, forward_params.get("top_p")
+    )
     _set_span_attribute(
         span, SpanAttributes.LLM_REQUEST_MAX_TOKENS, forward_params.get("max_length")
     )
     _set_span_attribute(
-        span, SpanAttributes.LLM_REQUEST_REPETITION_PENALTY, forward_params.get("repetition_penalty")
+        span,
+        SpanAttributes.LLM_REQUEST_REPETITION_PENALTY,
+        forward_params.get("repetition_penalty"),
     )
 
 
@@ -83,7 +90,9 @@ def text_generation_pipeline_wrapper(tracer, to_wrap, wrapped, instance, args, k
     ):
         return wrapped(*args, **kwargs)
 
-    if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
+    if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY) or context_api.get_value(
+        SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY
+    ):
         return wrapped(*args, **kwargs)
 
     name = to_wrap.get("span_name")

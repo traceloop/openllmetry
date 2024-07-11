@@ -19,9 +19,14 @@ def test_task_io_serialization_with_langchain(exporter):
     spans = exporter.get_finished_spans()
 
     assert [span.name for span in spans] == [
-        'openai.chat',
-        'answer_question.task',
+        "ChatOpenAI.langchain",
+        "answer_question.task",
     ]
 
-    task_span = next(span for span in spans if span.name == 'answer_question.task')
-    assert (json.loads(task_span.attributes.get(SpanAttributes.TRACELOOP_ENTITY_OUTPUT))["kwargs"]["content"] == "Yes")
+    task_span = next(span for span in spans if span.name == "answer_question.task")
+    assert (
+        json.loads(task_span.attributes.get(SpanAttributes.TRACELOOP_ENTITY_OUTPUT))[
+            "kwargs"
+        ]["content"]
+        == "Yes"
+    )

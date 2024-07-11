@@ -67,7 +67,7 @@ async def acompletion_wrapper(tracer, wrapped, instance, args, kwargs):
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY) or context_api.get_value(
         SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY
     ):
-        return wrapped(*args, **kwargs)
+        return await wrapped(*args, **kwargs)
 
     span = tracer.start_span(
         name=SPAN_NAME,

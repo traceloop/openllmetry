@@ -15,10 +15,6 @@ from opentelemetry.instrumentation.langchain.workflow_wrapper import (
     workflow_wrapper,
     aworkflow_wrapper,
 )
-from opentelemetry.instrumentation.langchain.custom_llm_wrapper import (
-    llm_wrapper,
-    allm_wrapper,
-)
 from opentelemetry.instrumentation.langchain.version import __version__
 
 from opentelemetry.semconv.ai import TraceloopSpanKindValues
@@ -86,20 +82,6 @@ WRAPPED_METHODS = [
         "method": "ainvoke",
         "span_name": "retrieval_qa.workflow",
         "wrapper": aworkflow_wrapper,
-    },
-    {
-        "package": "langchain_core.language_models.llms",
-        "object": "LLM",
-        "method": "_generate",
-        "span_name": "llm.generate",
-        "wrapper": llm_wrapper,
-    },
-    {
-        "package": "langchain_core.language_models.llms",
-        "object": "LLM",
-        "method": "_agenerate",
-        "span_name": "llm.generate",
-        "wrapper": allm_wrapper,
     },
 ]
 

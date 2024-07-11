@@ -33,20 +33,28 @@ INPUT_TEXT = """
 
 @pytest.mark.vcr
 def test_sequential_chain(exporter):
-    small_docs = CharacterTextSplitter().create_documents(texts=[INPUT_TEXT, ])
+    small_docs = CharacterTextSplitter().create_documents(
+        texts=[
+            INPUT_TEXT,
+        ]
+    )
     llm = ChatCohere(model="command", temperature=0.75)
-    chain = load_summarize_chain(llm, chain_type="stuff").with_config(run_name="stuff_chain")
+    chain = load_summarize_chain(llm, chain_type="stuff").with_config(
+        run_name="stuff_chain"
+    )
     chain.invoke(small_docs)
 
     spans = exporter.get_finished_spans()
 
     assert [
-        "ChatCohere.langchain.task",
+        "ChatCohere.langchain",
         "LLMChain.langchain.task",
         "stuff_chain.langchain.workflow",
     ] == [span.name for span in spans]
 
-    stuff_span = next(span for span in spans if span.name == "stuff_chain.langchain.workflow")
+    stuff_span = next(
+        span for span in spans if span.name == "stuff_chain.langchain.workflow"
+    )
 
     data = json.loads(stuff_span.attributes[SpanAttributes.TRACELOOP_ENTITY_INPUT])
     assert data["inputs"].keys() == {"input_documents"}

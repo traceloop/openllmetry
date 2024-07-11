@@ -45,9 +45,8 @@ def test_simple_lcel(exporter):
 
     assert [
         "ChatPromptTemplate.langchain.task",
-        "openai.chat",
+        "ChatOpenAI.langchain",
         "JsonOutputFunctionsParser.langchain.task",
-        "ChatOpenAI.langchain.task",
         "ThisIsATestChain.langchain.workflow",
     ] == [span.name for span in spans]
 
@@ -58,7 +57,7 @@ def test_simple_lcel(exporter):
         span for span in spans if span.name == "ChatPromptTemplate.langchain.task"
     )
     chat_openai_task_span = next(
-        span for span in spans if span.name == "ChatOpenAI.langchain.task"
+        span for span in spans if span.name == "ChatOpenAI.langchain"
     )
     output_parser_task_span = next(
         span
@@ -73,37 +72,37 @@ def test_simple_lcel(exporter):
     assert json.loads(
         workflow_span.attributes[SpanAttributes.TRACELOOP_ENTITY_INPUT]
     ) == {
-        'inputs': {'input': 'tell me a short joke'},
-        'tags': ['test_tag'],
-        'metadata': {},
-        'kwargs': {'name': 'ThisIsATestChain'},
+        "inputs": {"input": "tell me a short joke"},
+        "tags": ["test_tag"],
+        "metadata": {},
+        "kwargs": {"name": "ThisIsATestChain"},
     }
     assert json.loads(
         workflow_span.attributes[SpanAttributes.TRACELOOP_ENTITY_OUTPUT]
     ) == {
-        'outputs': {
-            'setup': "Why couldn't the bicycle stand up by itself?",
-            'punchline': 'It was two tired!'
+        "outputs": {
+            "setup": "Why couldn't the bicycle stand up by itself?",
+            "punchline": "It was two tired!",
         },
-        'kwargs': {'tags': ['test_tag']},
+        "kwargs": {"tags": ["test_tag"]},
     }
     assert json.loads(
         prompt_task_span.attributes[SpanAttributes.TRACELOOP_ENTITY_INPUT]
     ) == {
-        'inputs': {'input': 'tell me a short joke'},
-        'tags': ['seq:step:1', 'test_tag'],
-        'metadata': {},
-        'kwargs': {
-            'run_type': 'prompt',
-            'name': 'ChatPromptTemplate',
+        "inputs": {"input": "tell me a short joke"},
+        "tags": ["seq:step:1", "test_tag"],
+        "metadata": {},
+        "kwargs": {
+            "run_type": "prompt",
+            "name": "ChatPromptTemplate",
         },
     }
     assert json.loads(
         prompt_task_span.attributes[SpanAttributes.TRACELOOP_ENTITY_OUTPUT]
     ) == {
-        'outputs': "messages=[SystemMessage(content='You are helpful assistant'), "
-                   "HumanMessage(content='tell me a short joke')]",
-        'kwargs': {'tags': ['seq:step:1', 'test_tag']},
+        "outputs": "messages=[SystemMessage(content='You are helpful assistant'), "
+        "HumanMessage(content='tell me a short joke')]",
+        "kwargs": {"tags": ["seq:step:1", "test_tag"]},
     }
 
 
@@ -126,8 +125,7 @@ async def test_async_lcel(exporter):
 
     assert {
         "PromptTemplate.langchain.task",
-        "openai.chat",
-        "ChatOpenAI.langchain.task",
+        "ChatOpenAI.langchain",
         "StrOutputParser.langchain.task",
         "RunnableSequence.langchain.workflow",
     } == set([span.name for span in spans])
@@ -136,7 +134,7 @@ async def test_async_lcel(exporter):
         span for span in spans if span.name == "RunnableSequence.langchain.workflow"
     )
     chat_openai_task_span = next(
-        span for span in spans if span.name == "ChatOpenAI.langchain.task"
+        span for span in spans if span.name == "ChatOpenAI.langchain"
     )
     output_parser_task_span = next(
         span for span in spans if span.name == "StrOutputParser.langchain.task"
@@ -148,10 +146,10 @@ async def test_async_lcel(exporter):
     assert json.loads(
         workflow_span.attributes[SpanAttributes.TRACELOOP_ENTITY_INPUT]
     ) == {
-        'inputs': {'product': 'colorful socks'},
-        'tags': [],
-        'metadata': {},
-        'kwargs': {'name': 'RunnableSequence'},
+        "inputs": {"product": "colorful socks"},
+        "tags": [],
+        "metadata": {},
+        "kwargs": {"name": "RunnableSequence"},
     }
     assert json.loads(
         workflow_span.attributes[SpanAttributes.TRACELOOP_ENTITY_OUTPUT]
@@ -179,9 +177,8 @@ def test_invoke(exporter):
 
     assert [
         "PromptTemplate.langchain.task",
-        "openai.chat",
+        "ChatOpenAI.langchain",
         "StrOutputParser.langchain.task",
-        "ChatOpenAI.langchain.task",
         "RunnableSequence.langchain.workflow",
     ] == [span.name for span in spans]
 
@@ -205,9 +202,8 @@ async def test_async_invoke(exporter):
 
     assert [
         "PromptTemplate.langchain.task",
-        "openai.chat",
+        "ChatOpenAI.langchain",
         "StrOutputParser.langchain.task",
-        "ChatOpenAI.langchain.task",
         "RunnableSequence.langchain.workflow",
     ] == [span.name for span in spans]
 
@@ -228,21 +224,18 @@ def test_custom_llm(exporter):
 
     assert [
         "ChatPromptTemplate.langchain.task",
-        "HuggingFaceTextGenInference.chat",
+        "HuggingFaceTextGenInference.langchain",
         "RunnableSequence.langchain.workflow",
     ] == [span.name for span in spans]
 
     hugging_face_span = next(
-        span for span in spans if span.name == "HuggingFaceTextGenInference.chat"
+        span for span in spans if span.name == "HuggingFaceTextGenInference.langchain"
     )
 
     assert hugging_face_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "completion"
+    assert hugging_face_span.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "unknown"
     assert (
-        hugging_face_span.attributes[SpanAttributes.LLM_REQUEST_MODEL]
-        == "HuggingFaceTextGenInference"
-    )
-    assert (
-        hugging_face_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.user"]
+        hugging_face_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
         == "System: You are a helpful assistant\nHuman: tell me a short joke"
     )
     assert (
@@ -265,25 +258,29 @@ def test_openai(exporter):
 
     assert [
         "ChatPromptTemplate.langchain.task",
-        "openai.chat",
-        "ChatOpenAI.langchain.task",
+        "ChatOpenAI.langchain",
         "RunnableSequence.langchain.workflow",
     ] == [span.name for span in spans]
 
-    openai_span = next(
-        span for span in spans if span.name == "ChatOpenAI.langchain.task"
-    )
-    workflow_span = next(
-        span for span in spans if span.name == "RunnableSequence.langchain.workflow"
-    )
+    openai_span = next(span for span in spans if span.name == "ChatOpenAI.langchain")
 
     assert openai_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
     assert openai_span.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "gpt-3.5-turbo"
-    assert json.loads(
-        openai_span.attributes[SpanAttributes.TRACELOOP_ENTITY_INPUT]
-    )["messages"] == [["content='You are a helpful assistant'", "content='Tell me a joke about OpenTelemetry'"]]
-    outputs = json.loads(workflow_span.attributes[SpanAttributes.TRACELOOP_ENTITY_OUTPUT])["outputs"]
-    assert dict(re.findall(r'(\S+)=(".*?"|\S+)', outputs))["content"] == f'"{response.content}"'
+    assert (
+        openai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
+    ) == "You are a helpful assistant"
+    assert (openai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"]) == "system"
+    assert (
+        openai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.content"]
+    ) == "Tell me a joke about OpenTelemetry"
+    assert (openai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.role"]) == "user"
+    assert (
+        openai_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"]
+        == response.content
+    )
+    assert (
+        openai_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.role"]
+    ) == "assistant"
 
 
 @pytest.mark.vcr
@@ -300,12 +297,12 @@ def test_anthropic(exporter):
 
     assert [
         "ChatPromptTemplate.langchain.task",
-        "ChatAnthropic.langchain.task",
+        "ChatAnthropic.langchain",
         "RunnableSequence.langchain.workflow",
     ] == [span.name for span in spans]
 
     anthropic_span = next(
-        span for span in spans if span.name == "ChatAnthropic.langchain.task"
+        span for span in spans if span.name == "ChatAnthropic.langchain"
     )
     workflow_span = next(
         span for span in spans if span.name == "RunnableSequence.langchain.workflow"
@@ -313,11 +310,30 @@ def test_anthropic(exporter):
 
     assert anthropic_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
     assert anthropic_span.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "claude-2.1"
-    assert json.loads(
-        anthropic_span.attributes[SpanAttributes.TRACELOOP_ENTITY_INPUT]
-    )["messages"] == [["content='You are a helpful assistant'", "content='tell me a short joke'"]]
-    outputs = json.loads(workflow_span.attributes[SpanAttributes.TRACELOOP_ENTITY_OUTPUT])["outputs"]
-    assert dict(re.findall(r'(\S+)=(".*?"|\S+)', outputs))["content"] == f'"{response.content}"'
+    assert (
+        anthropic_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
+    ) == "You are a helpful assistant"
+    assert (
+        anthropic_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"]
+    ) == "system"
+    assert (
+        anthropic_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.content"]
+    ) == "tell me a short joke"
+    assert (anthropic_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.role"]) == "user"
+    assert (
+        anthropic_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"]
+        == response.content
+    )
+    assert (
+        anthropic_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.role"]
+    ) == "assistant"
+    outputs = json.loads(
+        workflow_span.attributes[SpanAttributes.TRACELOOP_ENTITY_OUTPUT]
+    )["outputs"]
+    assert (
+        dict(re.findall(r'(\S+)=(".*?"|\S+)', outputs))["content"]
+        == f'"{response.content}"'
+    )
 
 
 @pytest.mark.vcr
@@ -343,22 +359,39 @@ def test_bedrock(exporter):
 
     assert [
         "ChatPromptTemplate.langchain.task",
-        "bedrock.completion",
-        "BedrockChat.langchain.task",
+        "BedrockChat.langchain",
         "RunnableSequence.langchain.workflow",
     ] == [span.name for span in spans]
 
-    bedrock_span = next(
-        span for span in spans if span.name == "BedrockChat.langchain.task"
-    )
+    bedrock_span = next(span for span in spans if span.name == "BedrockChat.langchain")
     workflow_span = next(
         span for span in spans if span.name == "RunnableSequence.langchain.workflow"
     )
 
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
-    assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "anthropic.claude-3-haiku-20240307-v1:0"
-    assert json.loads(
-        bedrock_span.attributes[SpanAttributes.TRACELOOP_ENTITY_INPUT]
-    )["messages"] == [["content='You are a helpful assistant'", "content='tell me a short joke'"]]
-    outputs = json.loads(workflow_span.attributes[SpanAttributes.TRACELOOP_ENTITY_OUTPUT])["outputs"]
-    assert dict(re.findall(r'(\S+)=(".*?"|\S+)', outputs))["content"].replace("\\n", "\n") == f'"{response.content}"'
+    assert (
+        bedrock_span.attributes[SpanAttributes.LLM_REQUEST_MODEL]
+        == "anthropic.claude-3-haiku-20240307-v1:0"
+    )
+    assert (
+        bedrock_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
+    ) == "You are a helpful assistant"
+    assert (bedrock_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"]) == "system"
+    assert (
+        bedrock_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.content"]
+    ) == "tell me a short joke"
+    assert (bedrock_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.role"]) == "user"
+    assert (
+        bedrock_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"]
+        == response.content
+    )
+    assert (
+        bedrock_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.role"]
+    ) == "assistant"
+    outputs = json.loads(
+        workflow_span.attributes[SpanAttributes.TRACELOOP_ENTITY_OUTPUT]
+    )["outputs"]
+    assert (
+        dict(re.findall(r'(\S+)=(".*?"|\S+)', outputs))["content"].replace("\\n", "\n")
+        == f'"{response.content}"'
+    )
