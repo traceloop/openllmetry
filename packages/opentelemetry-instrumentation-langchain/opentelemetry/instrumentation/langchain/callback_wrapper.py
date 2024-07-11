@@ -42,34 +42,24 @@ class SpanHolder:
 
 
 @dont_throw
-def _add_callback(tracer, to_wrap, instance, args):
+def _add_callback(
+    tracer, callbacks: Union[List[BaseCallbackHandler], BaseCallbackManager]
+):
     cb = SyncSpanCallbackHandler(tracer)
-    if len(args) > 1:
-        if "callbacks" in args[1]:
-            temp_list = args[1]["callbacks"]
-            if isinstance(temp_list, BaseCallbackManager):
-                for c in temp_list.handlers:
-                    if isinstance(c, SyncSpanCallbackHandler):
-                        cb = c
-                        break
-                else:
-                    args[1]["callbacks"].add_handler(cb)
-            elif isinstance(temp_list, list):
-                for c in temp_list:
-                    if isinstance(c, SyncSpanCallbackHandler):
-                        cb = c
-                        break
-                    else:
-                        args[1]["callbacks"].append(cb)
+    if isinstance(callbacks, BaseCallbackManager):
+        for c in callbacks.handlers:
+            if isinstance(c, SyncSpanCallbackHandler):
+                cb = c
+                break
         else:
-            args[1].update(
-                {
-                    "callbacks": [
-                        cb,
-                    ]
-                }
-            )
-    return cb
+            callbacks.add_handler(cb)
+    elif isinstance(callbacks, list):
+        for c in callbacks:
+            if isinstance(c, SyncSpanCallbackHandler):
+                cb = c
+                break
+        else:
+            callbacks.append(cb)
 
 
 @_with_tracer_wrapper
@@ -81,18 +71,28 @@ def callback_wrapper(tracer, to_wrap, wrapped, instance, args, kwargs):
     """
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
         return wrapped(*args, **kwargs)
-    cb = _add_callback(tracer, to_wrap, instance, args)
+
     if len(args) > 1:
-        return wrapped(*args, **kwargs)
-    return wrapped(
-        *args,
-        {
-            "callbacks": [
-                cb,
-            ]
-        },
-        **kwargs,
-    )
+        # args[1] is config which (may) contain the callbacks setting
+        callbacks = args[1].get("callbacks", [])
+    elif kwargs.get("config"):
+        callbacks = kwargs.get("config", {}).get("callbacks", [])
+    else:
+        callbacks = []
+
+    _add_callback(tracer, callbacks)
+
+    if len(args) > 1:
+        args[1]["callbacks"] = callbacks
+    elif kwargs.get("config"):
+        kwargs["config"]["callbacks"] = callbacks
+    else:
+        kwargs["config"] = {"callbacks": callbacks}
+
+    print("args", args)
+    print("kwargs", kwargs)
+
+    return wrapped(*args, **kwargs)
 
 
 def _message_type_to_role(message_type: str) -> str:

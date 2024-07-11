@@ -184,6 +184,34 @@ def test_invoke(exporter):
 
 
 @pytest.mark.vcr
+def test_stream(exporter):
+    chat = ChatOpenAI(
+        model="gpt-4",
+        temperature=0,
+    )
+
+    prompt = PromptTemplate.from_template(
+        "write 10 lines of random text about ${product}"
+    )
+    runnable = prompt | chat | StrOutputParser()
+    res = runnable.stream(
+        input={"product": "colorful socks"},
+        config={"configurable": {"session_id": 1234}},
+    )
+    for _ in res:
+        pass
+
+    spans = exporter.get_finished_spans()
+
+    assert [
+        "PromptTemplate.langchain.task",
+        "ChatOpenAI.langchain",
+        "StrOutputParser.langchain.task",
+        "RunnableSequence.langchain.workflow",
+    ] == [span.name for span in spans]
+
+
+@pytest.mark.vcr
 @pytest.mark.asyncio
 async def test_async_invoke(exporter):
     chat = ChatOpenAI(
