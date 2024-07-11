@@ -112,7 +112,7 @@ async def aembeddings_wrapper(
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY) or context_api.get_value(
         SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY
     ):
-        return wrapped(*args, **kwargs)
+        return await wrapped(*args, **kwargs)
 
     async with start_as_current_span_async(
         tracer=tracer,
