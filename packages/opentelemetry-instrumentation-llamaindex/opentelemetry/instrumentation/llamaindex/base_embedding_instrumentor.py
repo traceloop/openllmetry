@@ -49,6 +49,7 @@ def get_query_embedding_wrapper(tracer, wrapped, instance, args, kwargs):
             SpanAttributes.TRACELOOP_SPAN_KIND,
             TraceloopSpanKindValues.TASK.value,
         )
+        span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, TASK_NAME)
 
         return wrapped(*args, **kwargs)
 
@@ -62,5 +63,6 @@ async def aget_query_embedding_wrapper(tracer, wrapped, instance, args, kwargs):
             SpanAttributes.TRACELOOP_SPAN_KIND,
             TraceloopSpanKindValues.TASK.value,
         )
+        span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, TASK_NAME)
 
         return await wrapped(*args, **kwargs)
