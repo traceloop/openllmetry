@@ -1,3 +1,9 @@
+## v0.25.3 (2024-07-11)
+
+### Fix
+
+- **langchain**: input/output values weren't respecting user config (#1540)
+
 ## v0.25.2 (2024-07-11)
 
 ### Fix
