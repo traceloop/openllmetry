@@ -323,18 +323,19 @@ class SyncSpanCallbackHandler(BaseCallbackHandler):
         """Run when chain starts running."""
         name = self._get_name_from_callback(serialized, **kwargs)
         span = self._create_task_span(run_id, parent_run_id, name)
-        span.set_attribute(
-            SpanAttributes.TRACELOOP_ENTITY_INPUT,
-            json.dumps(
-                {
-                    "inputs": inputs,
-                    "tags": tags,
-                    "metadata": metadata,
-                    "kwargs": kwargs,
-                },
-                cls=CustomJsonEncode,
-            ),
-        )
+        if should_send_prompts():
+            span.set_attribute(
+                SpanAttributes.TRACELOOP_ENTITY_INPUT,
+                json.dumps(
+                    {
+                        "inputs": inputs,
+                        "tags": tags,
+                        "metadata": metadata,
+                        "kwargs": kwargs,
+                    },
+                    cls=CustomJsonEncode,
+                ),
+            )
 
     @dont_throw
     def on_chain_end(
@@ -347,10 +348,13 @@ class SyncSpanCallbackHandler(BaseCallbackHandler):
     ) -> None:
         """Run when chain ends running."""
         span = self._get_span(run_id)
-        span.set_attribute(
-            SpanAttributes.TRACELOOP_ENTITY_OUTPUT,
-            json.dumps({"outputs": outputs, "kwargs": kwargs}, cls=CustomJsonEncode),
-        )
+        if should_send_prompts():
+            span.set_attribute(
+                SpanAttributes.TRACELOOP_ENTITY_OUTPUT,
+                json.dumps(
+                    {"outputs": outputs, "kwargs": kwargs}, cls=CustomJsonEncode
+                ),
+            )
         self._end_span(span, run_id)
         if parent_run_id is None:
             context_api.attach(
@@ -445,19 +449,20 @@ class SyncSpanCallbackHandler(BaseCallbackHandler):
         """Run when tool starts running."""
         name = self._get_name_from_callback(serialized, kwargs=kwargs)
         span = self._create_task_span(run_id, parent_run_id, name)
-        span.set_attribute(
-            SpanAttributes.TRACELOOP_ENTITY_INPUT,
-            json.dumps(
-                {
-                    "input_str": input_str,
-                    "tags": tags,
-                    "metadata": metadata,
-                    "inputs": inputs,
-                    "kwargs": kwargs,
-                },
-                cls=CustomJsonEncode,
-            ),
-        )
+        if should_send_prompts():
+            span.set_attribute(
+                SpanAttributes.TRACELOOP_ENTITY_INPUT,
+                json.dumps(
+                    {
+                        "input_str": input_str,
+                        "tags": tags,
+                        "metadata": metadata,
+                        "inputs": inputs,
+                        "kwargs": kwargs,
+                    },
+                    cls=CustomJsonEncode,
+                ),
+            )
 
     @dont_throw
     def on_tool_end(
@@ -470,8 +475,9 @@ class SyncSpanCallbackHandler(BaseCallbackHandler):
     ) -> None:
         """Run when tool ends running."""
         span = self._get_span(run_id)
-        span.set_attribute(
-            SpanAttributes.TRACELOOP_ENTITY_OUTPUT,
-            json.dumps({"output": output, "kwargs": kwargs}, cls=CustomJsonEncode),
-        )
+        if should_send_prompts():
+            span.set_attribute(
+                SpanAttributes.TRACELOOP_ENTITY_OUTPUT,
+                json.dumps({"output": output, "kwargs": kwargs}, cls=CustomJsonEncode),
+            )
         self._end_span(span, run_id)
