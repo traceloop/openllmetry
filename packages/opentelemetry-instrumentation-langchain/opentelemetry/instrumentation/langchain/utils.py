@@ -5,7 +5,6 @@ import os
 import traceback
 from opentelemetry import context as context_api
 from opentelemetry.instrumentation.langchain.config import Config
-from opentelemetry.semconv.ai import SpanAttributes
 
 
 class CallbackFilteredJSONEncoder(json.JSONEncoder):
@@ -64,37 +63,3 @@ def dont_throw(func):
                 Config.exception_logger(e)
 
     return wrapper
-
-
-@dont_throw
-def process_request(span, args, kwargs):
-    if should_send_prompts():
-        kwargs_to_serialize = kwargs.copy()
-        for arg in args:
-            if arg and isinstance(arg, dict):
-                for key, value in arg.items():
-                    if key == "callbacks":
-                        continue
-                    kwargs_to_serialize[key] = value
-
-        args_to_serialize = [arg for arg in args if not isinstance(arg, dict)]
-
-        entity_input = {"args": args_to_serialize, "kwargs": kwargs_to_serialize}
-
-        span.set_attribute(
-            SpanAttributes.TRACELOOP_ENTITY_INPUT,
-            json.dumps(entity_input, cls=CallbackFilteredJSONEncoder),
-        )
-
-
-@dont_throw
-def process_response(span, response):
-    if should_send_prompts():
-        if isinstance(response, str):
-            output_entity = response
-        else:
-            output_entity = json.dumps(response, cls=CallbackFilteredJSONEncoder)
-        span.set_attribute(
-            SpanAttributes.TRACELOOP_ENTITY_OUTPUT,
-            output_entity,
-        )
