@@ -54,6 +54,7 @@ def query_wrapper(tracer, wrapped, instance, args, kwargs):
             SpanAttributes.TRACELOOP_SPAN_KIND,
             TraceloopSpanKindValues.WORKFLOW.value,
         )
+        span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, WORKFLOW_NAME)
 
         process_request(span, args, kwargs)
         res = wrapped(*args, **kwargs)
@@ -72,6 +73,7 @@ async def aquery_wrapper(tracer, wrapped, instance, args, kwargs):
             SpanAttributes.TRACELOOP_SPAN_KIND,
             TraceloopSpanKindValues.WORKFLOW.value,
         )
+        span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, WORKFLOW_NAME)
 
         process_request(span, args, kwargs)
         res = await wrapped(*args, **kwargs)
