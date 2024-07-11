@@ -89,9 +89,6 @@ def callback_wrapper(tracer, to_wrap, wrapped, instance, args, kwargs):
     else:
         kwargs["config"] = {"callbacks": callbacks}
 
-    print("args", args)
-    print("kwargs", kwargs)
-
     return wrapped(*args, **kwargs)
 
 
