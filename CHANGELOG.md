@@ -1,3 +1,12 @@
+## v0.25.2 (2024-07-11)
+
+### Fix
+
+- **llamaindex**: report entity name (#1525)
+- **langchain**: remove leftover print
+- **langchain**: cleanups, and fix streaming issue (#1522)
+- **langchain**: report llm spans (instead of normal instrumentations) (#1452)
+
 ## v0.25.1 (2024-07-09)
 
 ### Fix
