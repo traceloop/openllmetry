@@ -57,7 +57,7 @@ def test_sequential_chain(exporter):
         span for span in spans if span.name == "synopsis.langchain.task"
     )
     review_span = next(span for span in spans if span.name == "LLMChain.langchain.task")
-    openai_completion_span_1, openai_completion_span_2 = [span for span in spans if span.name == "openai.completion"]
+    openai_completion_span_1, openai_completion_span_2 = [span for span in spans if span.name == "OpenAI.langchain"]
     sequential_chain_span = next(span for span in spans if span.name == "SequentialChain.langchain.workflow")
 
     assert synopsis_span.parent.span_id == sequential_chain_span.context.span_id
@@ -155,7 +155,7 @@ async def test_asequential_chain(exporter):
     synopsis_span, review_span = [
         span for span in spans if span.name == "LLMChain.langchain.task"
     ]
-    openai_completion_span_1, openai_completion_span_2 = [span for span in spans if span.name == "openai.completion"]
+    openai_completion_span_1, openai_completion_span_2 = [span for span in spans if span.name == "OpenAI.langchain"]
     sequential_chain_span = next(span for span in spans if span.name == "SequentialChain.langchain.workflow")
 
     assert synopsis_span.parent.span_id == sequential_chain_span.context.span_id

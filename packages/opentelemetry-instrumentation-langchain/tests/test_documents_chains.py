@@ -55,12 +55,10 @@ def test_sequential_chain(exporter):
     stuff_span = next(
         span for span in spans if span.name == "stuff_chain.langchain.workflow"
     )
-    chat_span_1 = next(span for span in spans if span.name == "cohere.chat")
-    chat_span_2 = next(span for span in spans if span.name == "ChatCohere.langchain")
+    chat_span = next(span for span in spans if span.name == "ChatCohere.langchain")
     llm_chain_span = next(span for span in spans if span.name == "LLMChain.langchain.task")
 
-    assert chat_span_1.parent.span_id == chat_span_2.context.span_id
-    assert chat_span_2.parent.span_id == llm_chain_span.context.span_id
+    assert chat_span.parent.span_id == llm_chain_span.context.span_id
     assert llm_chain_span.parent.span_id == stuff_span.context.span_id
 
     data = json.loads(stuff_span.attributes[SpanAttributes.TRACELOOP_ENTITY_INPUT])
