@@ -8,7 +8,7 @@ show_missing = true
 
 [tool.poetry]
 name = "opentelemetry-instrumentation-bedrock"
-version = "0.24.0"
+version = "0.25.1"
 description = "OpenTelemetry Bedrock instrumentation"
 authors = [
   "Gal Kleinman <gal@traceloop.com>",
@@ -27,7 +27,7 @@ python = ">=3.9,<4"
 opentelemetry-api = "^1.25.0"
 opentelemetry-instrumentation = "^0.46b0"
 opentelemetry-semantic-conventions = "^0.46b0"
-opentelemetry-semantic-conventions-ai = "0.3.3"
+opentelemetry-semantic-conventions-ai = "0.3.4"
 anthropic = ">=0.17.0"
 
 [tool.poetry.group.dev.dependencies]

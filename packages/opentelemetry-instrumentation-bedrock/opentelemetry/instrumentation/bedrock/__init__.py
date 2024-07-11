@@ -23,7 +23,11 @@ from opentelemetry.instrumentation.utils import (
     unwrap,
 )
 
-from opentelemetry.semconv.ai import SpanAttributes, LLMRequestTypeValues
+from opentelemetry.semconv.ai import (
+    SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
+    SpanAttributes,
+    LLMRequestTypeValues,
+)
 from opentelemetry.instrumentation.bedrock.version import __version__
 
 logger = logging.getLogger(__name__)
@@ -90,6 +94,9 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
 def _instrumented_model_invoke(fn, tracer):
     @wraps(fn)
     def with_instrumentation(*args, **kwargs):
+        if context_api.get_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY):
+            return fn(*args, **kwargs)
+
         with tracer.start_as_current_span(
             "bedrock.completion", kind=SpanKind.CLIENT
         ) as span:
@@ -106,6 +113,9 @@ def _instrumented_model_invoke(fn, tracer):
 def _instrumented_model_invoke_with_response_stream(fn, tracer):
     @wraps(fn)
     def with_instrumentation(*args, **kwargs):
+        if context_api.get_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY):
+            return fn(*args, **kwargs)
+
         span = tracer.start_span("bedrock.completion", kind=SpanKind.CLIENT)
         response = fn(*args, **kwargs)
 

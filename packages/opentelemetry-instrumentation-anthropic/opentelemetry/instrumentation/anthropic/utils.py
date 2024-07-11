@@ -52,7 +52,10 @@ def shared_metrics_attributes(response):
     if not isinstance(response, dict):
         response = response.__dict__
 
+    common_attributes = Config.get_common_metrics_attributes()
+
     return {
+        **common_attributes,
         GEN_AI_SYSTEM: GEN_AI_SYSTEM_ANTHROPIC,
         SpanAttributes.LLM_RESPONSE_MODEL: response.get("model"),
     }

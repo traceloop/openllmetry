@@ -5,7 +5,7 @@ from opentelemetry import context as context_api
 from opentelemetry.instrumentation.utils import (
     _SUPPRESS_INSTRUMENTATION_KEY,
 )
-from opentelemetry.semconv.ai import Events
+from opentelemetry.semconv.ai import SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY, Events
 from opentelemetry.semconv.ai import SpanAttributes as AISpanAttributes
 
 
@@ -31,7 +31,9 @@ def _set_span_attribute(span, name, value):
 @_with_tracer_wrapper
 def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
     """Instruments and calls every function defined in TO_WRAP."""
-    if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
+    if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY) or context_api.get_value(
+        SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY
+    ):
         return wrapped(*args, **kwargs)
 
     name = to_wrap.get("span_name")
@@ -72,7 +74,9 @@ def _set_add_documents_attributes(span, kwargs):
     see also: https://github.com/traceloop/openllmetry/issues/539
     """
     _set_span_attribute(
-        span, AISpanAttributes.CHROMADB_ADD_DOCUMENTS_COUNT, count_or_none(kwargs.get("documents"))
+        span,
+        AISpanAttributes.CHROMADB_ADD_DOCUMENTS_COUNT,
+        count_or_none(kwargs.get("documents")),
     )
 
 

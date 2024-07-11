@@ -1,3 +1,21 @@
+## v0.25.1 (2024-07-09)
+
+### Fix
+
+- association properties and workflow / task on metrics (#1494)
+- **llamaindex**: report inputs+outputs on entities (#1495)
+
+## v0.25.0 (2024-07-08)
+
+### Feat
+
+- suppress LLM instrumentations through context (#1453)
+- **langchain**: improve callbacks (#1426)
+
+### Fix
+
+- **sdk**: llamaindex instrumentation was never initialized (#1490)
+
 ## v0.24.0 (2024-07-03)
 
 ### Feat
