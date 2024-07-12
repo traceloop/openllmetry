@@ -48,7 +48,7 @@ model = Model(
     project_id=project_id
     )
 
-prompt_input = "What is the the captical of China"
+prompt_input = "What is the captical of China"
 print(prompt_input)
 
 generated_response = model.generate(prompt=prompt_input)
