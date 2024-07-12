@@ -48,6 +48,7 @@ pytest-asyncio = "^0.23.7"
 opentelemetry-sdk = "^1.23.0"
 opentelemetry-instrumentation-openai = {path="../opentelemetry-instrumentation-openai", develop=true}
 opentelemetry-instrumentation-bedrock = {path="../opentelemetry-instrumentation-bedrock", develop=true}
+opentelemetry-instrumentation-cohere = {path="../opentelemetry-instrumentation-cohere", develop=true}
 text-generation = "^0.7.0"
 anthropic = ">=0.23,<0.29"
 boto3 = "^1.34.120"
