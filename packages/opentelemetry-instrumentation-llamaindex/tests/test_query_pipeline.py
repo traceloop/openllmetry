@@ -44,18 +44,23 @@ def test_query_pipeline(exporter):
     spans = exporter.get_finished_spans()
 
     assert {
-        "llama_index_query_pipeline.workflow",
-        "retrieve.task",
-        "synthesize.task",
-        "openai.chat",
-        "cohere.rerank",
-    }.issubset([span.name for span in spans])
+        "query.llama_index.workflow",
+        "chunking.llama_index.task",
+        "embedding.llama_index.task",
+        "llm.llama_index.task",
+        "reranking.llama_index.task",
+        "retrieve.llama_index.task",
+        "synthesize.llama_index.task",
+        "templating.llama_index.task",
+    }.issubset({span.name for span in spans})
 
     query_pipeline_span = next(
-        span for span in spans if span.name == "llama_index_query_pipeline.workflow"
+        span for span in spans if span.name == "query.llama_index.workflow"
     )
-    retriever_span = next(span for span in spans if span.name == "retrieve.task")
-    reranker_span = next(span for span in spans if span.name == "cohere.rerank")
+    llm_span = next(span for span in spans if span.name == "llm.llama_index.task")
+    reranker_span = next(span for span in spans if span.name == "reranking.llama_index.task")
+    retriever_span = next(span for span in spans if span.name == "retrieve.llama_index.task")
 
-    assert retriever_span.parent.span_id == query_pipeline_span.context.span_id
+    assert llm_span.parent.span_id == query_pipeline_span.context.span_id
     assert reranker_span.parent.span_id == query_pipeline_span.context.span_id
+    assert retriever_span.parent.span_id == query_pipeline_span.context.span_id

@@ -34,7 +34,18 @@ def test_rag_with_chroma(exporter):
 
     spans = exporter.get_finished_spans()
     assert {
-        "llama_index_retriever_query.workflow",
-        "retrieve.task",
-        "synthesize.task",
-    }.issubset([span.name for span in spans])
+        "query.llama_index.workflow",
+        "chunking.llama_index.task",
+        "llm.llama_index.task",
+        "synthesize.llama_index.task",
+        "templating.llama_index.task",
+    }.issubset({span.name for span in spans})
+
+    query_pipeline_span = next(
+        span for span in spans if span.name == "query.llama_index.workflow"
+    )
+    synthesize_span = next(span for span in spans if span.name == "synthesize.llama_index.task")
+    llm_span = next(span for span in spans if span.name == "llm.llama_index.task")
+
+    assert synthesize_span.parent.span_id == query_pipeline_span.context.span_id
+    assert llm_span.parent.span_id == synthesize_span.context.span_id

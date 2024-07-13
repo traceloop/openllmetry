@@ -45,7 +45,8 @@ def callback_wrapper(tracer, wrapped, instance, args, kwargs):
         return wrapped(*args, **kwargs)
 
     callback_manager = kwargs.get("callback_manager") or instance.callback_manager
-    callback_manager.add_handler(SyncSpanCallbackHandler(tracer))
+    if not any(isinstance(h, SyncSpanCallbackHandler) for h in callback_manager.handlers):
+        callback_manager.add_handler(SyncSpanCallbackHandler(tracer))
     return wrapped(*args, **kwargs)
 
 

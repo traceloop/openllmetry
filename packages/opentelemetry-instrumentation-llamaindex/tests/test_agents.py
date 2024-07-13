@@ -23,17 +23,17 @@ def test_agents_and_tools(exporter):
     spans = exporter.get_finished_spans()
 
     assert {
-        "ReActAgent.agent",
-        "FunctionTool.tool",
-        "openai.chat",
-    } == set([span.name for span in spans])
+        "agent_step.llama_index.workflow",
+        "llm.llama_index.task",
+        "function_call.llama_index.task",
+    } == {span.name for span in spans}
 
-    agent_span = next(span for span in spans if span.name == "ReActAgent.agent")
-    function_tool = next(span for span in spans if span.name == "FunctionTool.tool")
-    openai_span = next(span for span in spans if span.name == "openai.chat")
+    agent_span = next(span for span in spans if span.name == "agent_step.llama_index.workflow")
+    function_tool_span = next(span for span in spans if span.name == "function_call.llama_index.task")
+    llm_span = next(span for span in spans if span.name == "llm.llama_index.task")
 
-    assert function_tool.parent.span_id == agent_span.context.span_id
-    assert openai_span.parent.span_id == agent_span.context.span_id
+    assert function_tool_span.parent.span_id == agent_span.context.span_id
+    assert llm_span.parent.span_id == agent_span.context.span_id
 
 
 @pytest.mark.vcr
@@ -90,19 +90,18 @@ def test_agent_with_query_tool(exporter):
     spans = exporter.get_finished_spans()
 
     assert {
-        "OpenAIAssistantAgent.agent",
-        "QueryEngineTool.tool",
-        "synthesize.task",
-        "openai.chat",
-    }.issubset(set([span.name for span in spans]))
+        "agent_step.llama_index.workflow",
+        "chunking.llama_index.task",
+        "llm.llama_index.task",
+        "synthesize.llama_index.task",
+        "templating.llama_index.task",
+    }.issubset({span.name for span in spans})
 
     agent_span = next(
-        span for span in spans if span.name == "OpenAIAssistantAgent.agent"
+        span for span in spans if span.name == "agent_step.llama_index.workflow"
     )
-    query_engine_tool = next(
-        span for span in spans if span.name == "QueryEngineTool.tool"
-    )
-    synthesize_task = next(span for span in spans if span.name == "synthesize.task")
+    llm_span = next(span for span in spans if span.name == "llm.llama_index.task")
+    synthesize_span = next(span for span in spans if span.name == "synthesize.llama_index.task")
 
-    assert query_engine_tool.parent.span_id == agent_span.context.span_id
-    assert synthesize_task.parent.span_id == query_engine_tool.context.span_id
+    assert synthesize_span.parent.span_id == agent_span.context.span_id
+    assert llm_span.parent.span_id == agent_span.context.span_id
