@@ -9,6 +9,7 @@ from llama_index.core import (
 )
 from llama_index.vector_stores.chroma import ChromaVectorStore
 from llama_index.embeddings.openai import OpenAIEmbedding
+from opentelemetry.semconv.ai import SpanAttributes
 
 
 @pytest.mark.vcr
@@ -49,3 +50,12 @@ def test_rag_with_chroma(exporter):
 
     assert synthesize_span.parent.span_id == query_pipeline_span.context.span_id
     assert llm_span.parent.span_id == synthesize_span.context.span_id
+
+    assert llm_span.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "gpt-3.5-turbo"
+    assert llm_span.attributes[SpanAttributes.LLM_RESPONSE_MODEL] == "gpt-3.5-turbo-0125"
+    assert llm_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"].startswith(
+        "You are an expert Q&A system that is trusted around the world."
+    )
+    assert llm_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.content"] == (
+        "The author worked on writing and programming before college."
+    )

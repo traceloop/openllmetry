@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 
 from llama_index.core.callbacks.base_handler import BaseCallbackHandler
-from llama_index.core.callbacks.schema import CBEventType
+from llama_index.core.callbacks.schema import CBEventType, EventPayload
 from opentelemetry import context as context_api
 from opentelemetry.instrumentation.llamaindex.utils import (
     _with_tracer_wrapper,
@@ -48,6 +48,42 @@ def callback_wrapper(tracer, wrapped, instance, args, kwargs):
     if not any(isinstance(h, SyncSpanCallbackHandler) for h in callback_manager.handlers):
         callback_manager.add_handler(SyncSpanCallbackHandler(tracer))
     return wrapped(*args, **kwargs)
+
+
+def _set_llm_request(span, payload) -> None:
+    serialized = payload.get(EventPayload.SERIALIZED)
+    span.set_attribute(SpanAttributes.LLM_REQUEST_MODEL, serialized.get("model"))
+    span.set_attribute(SpanAttributes.LLM_REQUEST_TEMPERATURE, serialized.get("temperature"))
+    if should_send_prompts():
+        messages = payload.get(EventPayload.MESSAGES)
+        for idx, message in enumerate(messages):
+            span.set_attribute(f"{SpanAttributes.LLM_PROMPTS}.{idx}.role", message.role)
+            span.set_attribute(f"{SpanAttributes.LLM_PROMPTS}.{idx}.content", message.content)
+
+
+def _set_llm_response(span, payload) -> None:
+    if should_send_prompts():
+        messages = payload.get(EventPayload.MESSAGES)
+        for idx, message in enumerate(messages):
+            span.set_attribute(f"{SpanAttributes.LLM_PROMPTS}.{idx}.role", message.role.value)
+            span.set_attribute(f"{SpanAttributes.LLM_PROMPTS}.{idx}.content", message.content)
+
+        response = payload.get(EventPayload.RESPONSE)
+        span.set_attribute(
+            f"{SpanAttributes.LLM_COMPLETIONS}.role",
+            response.message.role.value,
+        )
+        span.set_attribute(
+            f"{SpanAttributes.LLM_COMPLETIONS}.content",
+            response.message.content,
+        )
+        if not (raw := response.raw):
+            return
+        span.set_attribute(SpanAttributes.LLM_RESPONSE_MODEL, raw.get("model"))
+        if usage := response.raw.get("usage"):
+            span.set_attribute(SpanAttributes.LLM_USAGE_COMPLETION_TOKENS, usage.completion_tokens)
+            span.set_attribute(SpanAttributes.LLM_USAGE_PROMPT_TOKENS, usage.prompt_tokens)
+            span.set_attribute(SpanAttributes.LLM_USAGE_TOTAL_TOKENS, usage.total_tokens)
 
 
 class SyncSpanCallbackHandler(BaseCallbackHandler):
@@ -125,7 +161,9 @@ class SyncSpanCallbackHandler(BaseCallbackHandler):
     ) -> str:
         """Run when an event starts and return id of event."""
         span = self._create_span(event_type, event_id, parent_id)
-        if should_send_prompts():
+        if event_type == CBEventType.LLM:
+            _set_llm_request(span, payload)
+        elif should_send_prompts():
             span.set_attribute(
                 SpanAttributes.TRACELOOP_ENTITY_INPUT,
                 json.dumps(payload, cls=CustomJsonEncode),
@@ -142,7 +180,9 @@ class SyncSpanCallbackHandler(BaseCallbackHandler):
     ) -> None:
         """Run when an event ends."""
         span = self._get_span(event_id)
-        if should_send_prompts():
+        if event_type == CBEventType.LLM:
+            _set_llm_response(span, payload)
+        elif should_send_prompts():
             span.set_attribute(
                 SpanAttributes.TRACELOOP_ENTITY_OUTPUT,
                 json.dumps(payload, cls=CustomJsonEncode),
