@@ -6,6 +6,8 @@ import traceback
 from opentelemetry import context as context_api
 from opentelemetry.instrumentation.langchain.config import Config
 
+logger = logging.getLogger(__name__)
+
 
 class CallbackFilteredJSONEncoder(json.JSONEncoder):
     def default(self, o):
@@ -63,3 +65,31 @@ def dont_throw(func):
                 Config.exception_logger(e)
 
     return wrapper
+
+
+# tiktoken encodings map for different model, key is model_name, value is tiktoken encoding
+tiktoken_encodings = {}
+
+
+def get_token_count_from_string(string: str, model_name: str):
+    if Config.enrich_token_usage:
+        return None
+
+    import tiktoken
+
+    if tiktoken_encodings.get(model_name) is None:
+        try:
+            encoding = tiktoken.encoding_for_model(model_name)
+        except KeyError as ex:
+            # no such model_name in tiktoken
+            logger.warning(
+                f"Failed to get tiktoken encoding for model_name {model_name}, error: {str(ex)}"
+            )
+            return None
+
+        tiktoken_encodings[model_name] = encoding
+    else:
+        encoding = tiktoken_encodings.get(model_name)
+
+    token_count = len(encoding.encode(string))
+    return token_count

@@ -6,6 +6,7 @@ from uuid import UUID
 from langchain_core.callbacks import BaseCallbackHandler, BaseCallbackManager
 from langchain_core.messages import BaseMessage
 from langchain_core.outputs import LLMResult
+from opentelemetry.instrumentation.langchain.config import Config
 from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
 from opentelemetry.semconv.ai import (
     SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
@@ -21,6 +22,7 @@ from opentelemetry import context as context_api
 from opentelemetry.instrumentation.langchain.utils import (
     _with_tracer_wrapper,
     dont_throw,
+    get_token_count_from_string,
     should_send_prompts,
 )
 
@@ -166,6 +168,26 @@ def _set_chat_request(
                     )
                 i += 1
 
+    span.set_attribute(
+        f"{SpanAttributes.LLM_USAGE_PROMPT_TOKENS}",
+        _calculate_request_token_usage(model, messages),
+    )
+
+
+def _calculate_request_token_usage(model: str, messages: list[list[BaseMessage]]):
+    if not Config.enrich_token_usage or "gpt" not in model.lower():
+        return 0
+
+    prompt = ""
+    for message in messages:
+        for msg in message:
+            if isinstance(msg.content, str):
+                prompt += msg.content
+            else:
+                prompt += json.dumps(msg.content, cls=CustomJsonEncode)
+
+    return get_token_count_from_string(prompt, model)
+
 
 def _set_chat_response(span: Span, response: LLMResult) -> None:
     if not should_send_prompts():
@@ -216,6 +238,23 @@ def _set_chat_response(span: Span, response: LLMResult) -> None:
                         ),
                     )
             i += 1
+
+
+def _calculate_response_token_usage(model: str, response: LLMResult) -> None:
+    if not Config.enrich_token_usage or "gpt" not in model.lower():
+        return 0
+
+    prompt = ""
+    for generations in response.generations:
+        for generation in generations:
+            if hasattr(generation, "text"):
+                prompt += generation.text
+            elif generation.message.content is str:
+                prompt += generation.message.content
+            else:
+                prompt += json.dumps(generation.message.content, cls=CustomJsonEncode)
+
+    return get_token_count_from_string(prompt, model)
 
 
 class SyncSpanCallbackHandler(BaseCallbackHandler):
@@ -413,7 +452,7 @@ class SyncSpanCallbackHandler(BaseCallbackHandler):
         **kwargs: Any,
     ):
         span = self._get_span(run_id)
-
+        model_name = (response.llm_output or {}).get("model_name")
         token_usage = (response.llm_output or {}).get("token_usage")
         if token_usage is not None:
             prompt_tokens = token_usage.get("prompt_tokens")
@@ -425,8 +464,12 @@ class SyncSpanCallbackHandler(BaseCallbackHandler):
                 SpanAttributes.LLM_USAGE_COMPLETION_TOKENS, completion_tokens
             )
             span.set_attribute(SpanAttributes.LLM_USAGE_TOTAL_TOKENS, total_tokens)
+        else:
+            span.set_attribute(
+                f"{SpanAttributes.LLM_USAGE_COMPLETION_TOKENS}",
+                _calculate_response_token_usage(model_name, response),
+            )
 
-        model_name = (response.llm_output or {}).get("model_name")
         if model_name is not None:
             span.set_attribute(SpanAttributes.LLM_RESPONSE_MODEL, model_name)
 
