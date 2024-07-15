@@ -1,3 +1,9 @@
+## v0.25.4 (2024-07-15)
+
+### Fix
+
+- **sdk**: manual reporting of llm spans (#1555)
+
 ## v0.25.3 (2024-07-11)
 
 ### Fix
