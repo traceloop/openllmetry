@@ -33,10 +33,13 @@ def test_agents_and_tools(exporter):
     agent_span = next(span for span in spans if span.name == "agent_step.llama_index.workflow")
     function_tool_span = next(span for span in spans if span.name == "function_call.llama_index.task")
     llm_span_1, llm_span_2 = [span for span in spans if span.name == "llm.llama_index.task"]
+    openai_span_1, openai_span_2 = [span for span in spans if span.name == "openai.chat"]
 
     assert function_tool_span.parent.span_id == agent_span.context.span_id
     assert llm_span_1.parent.span_id == agent_span.context.span_id
     assert llm_span_2.parent.span_id == agent_span.context.span_id
+    assert openai_span_1.parent.span_id == llm_span_1.context.span_id
+    assert openai_span_2.parent.span_id == llm_span_2.context.span_id
 
     assert llm_span_1.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "gpt-3.5-turbo-0613"
     assert llm_span_1.attributes[SpanAttributes.LLM_RESPONSE_MODEL] == "gpt-3.5-turbo-0613"
@@ -136,10 +139,13 @@ def test_agent_with_query_tool(exporter):
     )
     llm_span_1, llm_span_2 = [span for span in spans if span.name == "llm.llama_index.task"]
     synthesize_span = next(span for span in spans if span.name == "synthesize.llama_index.task")
+    openai_span_1, openai_span_2 = [span for span in spans if span.name == "openai.chat"]
 
     assert synthesize_span.parent.span_id == agent_span.context.span_id
     assert llm_span_1.parent.span_id == agent_span.context.span_id
     assert llm_span_2.parent.span_id == synthesize_span.context.span_id
+    assert openai_span_1.parent.span_id == llm_span_1.context.span_id
+    assert openai_span_2.parent.span_id == llm_span_2.context.span_id
 
     assert llm_span_1.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "gpt-3.5-turbo"
     assert llm_span_1.attributes[SpanAttributes.LLM_RESPONSE_MODEL] == "gpt-3.5-turbo-0125"

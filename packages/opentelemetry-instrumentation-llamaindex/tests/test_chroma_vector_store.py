@@ -40,6 +40,11 @@ def test_rag_with_chroma(exporter):
         "llm.llama_index.task",
         "synthesize.llama_index.task",
         "templating.llama_index.task",
+        "openai.chat",
+        "openai.embeddings",
+        "chroma.add",
+        "chroma.query",
+        "chroma.query.segment._query",
     }.issubset({span.name for span in spans})
 
     query_pipeline_span = next(
@@ -47,9 +52,11 @@ def test_rag_with_chroma(exporter):
     )
     synthesize_span = next(span for span in spans if span.name == "synthesize.llama_index.task")
     llm_span = next(span for span in spans if span.name == "llm.llama_index.task")
+    openai_chat_span = next(span for span in spans if span.name == "openai.chat")
 
     assert synthesize_span.parent.span_id == query_pipeline_span.context.span_id
     assert llm_span.parent.span_id == synthesize_span.context.span_id
+    assert openai_chat_span.parent.span_id == llm_span.context.span_id
 
     assert llm_span.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "gpt-3.5-turbo"
     assert llm_span.attributes[SpanAttributes.LLM_RESPONSE_MODEL] == "gpt-3.5-turbo-0125"

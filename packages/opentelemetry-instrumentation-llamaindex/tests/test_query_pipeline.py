@@ -53,6 +53,9 @@ def test_query_pipeline(exporter):
         "retrieve.llama_index.task",
         "synthesize.llama_index.task",
         "templating.llama_index.task",
+        "openai.chat",
+        "openai.embeddings",
+        "cohere.rerank",
     }.issubset({span.name for span in spans})
 
     query_pipeline_span = next(
