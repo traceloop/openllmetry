@@ -128,9 +128,7 @@ class SyncSpanCallbackHandler(BaseCallbackHandler):
             self.spans[parent_id].children.append(event_id)
 
         current_context = set_span_in_context(span)
-        token = context_api.attach(
-            context_api.set_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY, True)
-        )
+        token = context_api.attach(current_context)
         self.spans[event_id] = SpanHolder(span, token, current_context, [])
 
         span.set_attribute(SpanAttributes.TRACELOOP_SPAN_KIND, kind)

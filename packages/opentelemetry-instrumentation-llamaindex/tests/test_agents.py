@@ -27,6 +27,7 @@ def test_agents_and_tools(exporter):
         "agent_step.llama_index.workflow",
         "llm.llama_index.task",
         "function_call.llama_index.task",
+        "openai.chat",
     } == {span.name for span in spans}
 
     agent_span = next(span for span in spans if span.name == "agent_step.llama_index.workflow")
