@@ -1,5 +1,6 @@
 """OpenTelemetry LlamaIndex instrumentation"""
 
+from importlib.metadata import version as import_version
 import logging
 from typing import Collection
 
@@ -53,14 +54,26 @@ class LlamaIndexInstrumentor(BaseInstrumentor):
         tracer_provider = kwargs.get("tracer_provider")
         tracer = get_tracer(__name__, __version__, tracer_provider)
 
-        RetrieverQueryEngineInstrumentor(tracer).instrument()
-        BaseRetrieverInstrumentor(tracer).instrument()
-        BaseSynthesizerInstrumentor(tracer).instrument()
-        BaseEmbeddingInstrumentor(tracer).instrument()
-        CustomLLMInstrumentor(tracer).instrument()
-        QueryPipelineInstrumentor(tracer).instrument()
-        BaseAgentInstrumentor(tracer).instrument()
-        BaseToolInstrumentor(tracer).instrument()
+        if import_version("llama-index") >= "0.10.20":
+            from opentelemetry.instrumentation.llamaindex.handlers import (
+                EventHandler,
+                SpanHandler,
+            )
+            import llama_index.core.instrumentation as instrument
+
+            span_handler = SpanHandler(tracer)
+            event_hander = EventHandler(span_handler)
+            instrument.get_dispatcher().add_event_handler(event_hander)
+            instrument.get_dispatcher().add_span_handler(span_handler)
+        else:
+            RetrieverQueryEngineInstrumentor(tracer).instrument()
+            BaseRetrieverInstrumentor(tracer).instrument()
+            BaseSynthesizerInstrumentor(tracer).instrument()
+            BaseEmbeddingInstrumentor(tracer).instrument()
+            CustomLLMInstrumentor(tracer).instrument()
+            QueryPipelineInstrumentor(tracer).instrument()
+            BaseAgentInstrumentor(tracer).instrument()
+            BaseToolInstrumentor(tracer).instrument()
 
     def _uninstrument(self, **kwargs):
         pass
