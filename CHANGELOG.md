@@ -1,3 +1,30 @@
+## v0.25.5 (2024-07-17)
+
+### Fix
+
+- **openai**: pydantic tool calls in prompt weren't serialized correctly (#1572)
+
+## v0.25.4 (2024-07-15)
+
+### Fix
+
+- **sdk**: manual reporting of llm spans (#1555)
+
+## v0.25.3 (2024-07-11)
+
+### Fix
+
+- **langchain**: input/output values weren't respecting user config (#1540)
+
+## v0.25.2 (2024-07-11)
+
+### Fix
+
+- **llamaindex**: report entity name (#1525)
+- **langchain**: remove leftover print
+- **langchain**: cleanups, and fix streaming issue (#1522)
+- **langchain**: report llm spans (instead of normal instrumentations) (#1452)
+
 ## v0.25.1 (2024-07-09)
 
 ### Fix

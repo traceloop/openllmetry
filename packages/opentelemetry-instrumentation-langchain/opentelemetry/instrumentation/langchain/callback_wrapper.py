@@ -42,34 +42,24 @@ class SpanHolder:
 
 
 @dont_throw
-def _add_callback(tracer, to_wrap, instance, args):
+def _add_callback(
+    tracer, callbacks: Union[List[BaseCallbackHandler], BaseCallbackManager]
+):
     cb = SyncSpanCallbackHandler(tracer)
-    if len(args) > 1:
-        if "callbacks" in args[1]:
-            temp_list = args[1]["callbacks"]
-            if isinstance(temp_list, BaseCallbackManager):
-                for c in temp_list.handlers:
-                    if isinstance(c, SyncSpanCallbackHandler):
-                        cb = c
-                        break
-                else:
-                    args[1]["callbacks"].add_handler(cb)
-            elif isinstance(temp_list, list):
-                for c in temp_list:
-                    if isinstance(c, SyncSpanCallbackHandler):
-                        cb = c
-                        break
-                    else:
-                        args[1]["callbacks"].append(cb)
+    if isinstance(callbacks, BaseCallbackManager):
+        for c in callbacks.handlers:
+            if isinstance(c, SyncSpanCallbackHandler):
+                cb = c
+                break
         else:
-            args[1].update(
-                {
-                    "callbacks": [
-                        cb,
-                    ]
-                }
-            )
-    return cb
+            callbacks.add_handler(cb)
+    elif isinstance(callbacks, list):
+        for c in callbacks:
+            if isinstance(c, SyncSpanCallbackHandler):
+                cb = c
+                break
+        else:
+            callbacks.append(cb)
 
 
 @_with_tracer_wrapper
@@ -81,18 +71,25 @@ def callback_wrapper(tracer, to_wrap, wrapped, instance, args, kwargs):
     """
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
         return wrapped(*args, **kwargs)
-    cb = _add_callback(tracer, to_wrap, instance, args)
+
     if len(args) > 1:
-        return wrapped(*args, **kwargs)
-    return wrapped(
-        *args,
-        {
-            "callbacks": [
-                cb,
-            ]
-        },
-        **kwargs,
-    )
+        # args[1] is config which (may) contain the callbacks setting
+        callbacks = args[1].get("callbacks", [])
+    elif kwargs.get("config"):
+        callbacks = kwargs.get("config", {}).get("callbacks", [])
+    else:
+        callbacks = []
+
+    _add_callback(tracer, callbacks)
+
+    if len(args) > 1:
+        args[1]["callbacks"] = callbacks
+    elif kwargs.get("config"):
+        kwargs["config"]["callbacks"] = callbacks
+    else:
+        kwargs["config"] = {"callbacks": callbacks}
+
+    return wrapped(*args, **kwargs)
 
 
 def _message_type_to_role(message_type: str) -> str:
@@ -326,18 +323,19 @@ class SyncSpanCallbackHandler(BaseCallbackHandler):
         """Run when chain starts running."""
         name = self._get_name_from_callback(serialized, **kwargs)
         span = self._create_task_span(run_id, parent_run_id, name)
-        span.set_attribute(
-            SpanAttributes.TRACELOOP_ENTITY_INPUT,
-            json.dumps(
-                {
-                    "inputs": inputs,
-                    "tags": tags,
-                    "metadata": metadata,
-                    "kwargs": kwargs,
-                },
-                cls=CustomJsonEncode,
-            ),
-        )
+        if should_send_prompts():
+            span.set_attribute(
+                SpanAttributes.TRACELOOP_ENTITY_INPUT,
+                json.dumps(
+                    {
+                        "inputs": inputs,
+                        "tags": tags,
+                        "metadata": metadata,
+                        "kwargs": kwargs,
+                    },
+                    cls=CustomJsonEncode,
+                ),
+            )
 
     @dont_throw
     def on_chain_end(
@@ -350,10 +348,13 @@ class SyncSpanCallbackHandler(BaseCallbackHandler):
     ) -> None:
         """Run when chain ends running."""
         span = self._get_span(run_id)
-        span.set_attribute(
-            SpanAttributes.TRACELOOP_ENTITY_OUTPUT,
-            json.dumps({"outputs": outputs, "kwargs": kwargs}, cls=CustomJsonEncode),
-        )
+        if should_send_prompts():
+            span.set_attribute(
+                SpanAttributes.TRACELOOP_ENTITY_OUTPUT,
+                json.dumps(
+                    {"outputs": outputs, "kwargs": kwargs}, cls=CustomJsonEncode
+                ),
+            )
         self._end_span(span, run_id)
         if parent_run_id is None:
             context_api.attach(
@@ -448,19 +449,20 @@ class SyncSpanCallbackHandler(BaseCallbackHandler):
         """Run when tool starts running."""
         name = self._get_name_from_callback(serialized, kwargs=kwargs)
         span = self._create_task_span(run_id, parent_run_id, name)
-        span.set_attribute(
-            SpanAttributes.TRACELOOP_ENTITY_INPUT,
-            json.dumps(
-                {
-                    "input_str": input_str,
-                    "tags": tags,
-                    "metadata": metadata,
-                    "inputs": inputs,
-                    "kwargs": kwargs,
-                },
-                cls=CustomJsonEncode,
-            ),
-        )
+        if should_send_prompts():
+            span.set_attribute(
+                SpanAttributes.TRACELOOP_ENTITY_INPUT,
+                json.dumps(
+                    {
+                        "input_str": input_str,
+                        "tags": tags,
+                        "metadata": metadata,
+                        "inputs": inputs,
+                        "kwargs": kwargs,
+                    },
+                    cls=CustomJsonEncode,
+                ),
+            )
 
     @dont_throw
     def on_tool_end(
@@ -473,8 +475,9 @@ class SyncSpanCallbackHandler(BaseCallbackHandler):
     ) -> None:
         """Run when tool ends running."""
         span = self._get_span(run_id)
-        span.set_attribute(
-            SpanAttributes.TRACELOOP_ENTITY_OUTPUT,
-            json.dumps({"output": output, "kwargs": kwargs}, cls=CustomJsonEncode),
-        )
+        if should_send_prompts():
+            span.set_attribute(
+                SpanAttributes.TRACELOOP_ENTITY_OUTPUT,
+                json.dumps({"output": output, "kwargs": kwargs}, cls=CustomJsonEncode),
+            )
         self._end_span(span, run_id)

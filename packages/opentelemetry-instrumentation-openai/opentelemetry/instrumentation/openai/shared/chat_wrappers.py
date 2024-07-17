@@ -336,12 +336,28 @@ def _set_prompts(span, messages):
             if isinstance(content, list):
                 content = json.dumps(content)
             _set_span_attribute(span, f"{prefix}.content", content)
-        if msg.get("tool_calls"):
-            _set_span_attribute(
-                span, f"{prefix}.tool_calls", json.dumps(msg.get("tool_calls"))
-            )
-        if msg.get("tool_call_id"):
-            _set_span_attribute(span, f"{prefix}.tool_call_id", msg.get("tool_call_id"))
+        tool_calls = msg.get("tool_calls")
+        if tool_calls:
+            for i, tool_call in enumerate(tool_calls):
+                if is_openai_v1():
+                    tool_call = model_as_dict(tool_call)
+
+                function = tool_call.get("function")
+                _set_span_attribute(
+                    span,
+                    f"{prefix}.tool_calls.{i}.id",
+                    tool_call.get("id"),
+                )
+                _set_span_attribute(
+                    span,
+                    f"{prefix}.tool_calls.{i}.name",
+                    function.get("name"),
+                )
+                _set_span_attribute(
+                    span,
+                    f"{prefix}.tool_calls.{i}.arguments",
+                    function.get("arguments"),
+                )
 
 
 def _set_completions(span, choices):
