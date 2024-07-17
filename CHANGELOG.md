@@ -1,3 +1,9 @@
+## v0.25.5 (2024-07-17)
+
+### Fix
+
+- **openai**: pydantic tool calls in prompt weren't serialized correctly (#1572)
+
 ## v0.25.4 (2024-07-15)
 
 ### Fix
