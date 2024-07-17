@@ -767,7 +767,10 @@ def _accumulate_stream_items(item, complete_response):
         delta = choice.get("delta")
 
         if delta and delta.get("content"):
-            complete_choice["message"]["content"] += delta.get("content") if not ( choice.get("finish_reason") and complete_choice["finish_reason"] == "content_filter") else "FILTERED"
+            if not (choice.get("finish_reason") and complete_choice["finish_reason"] == "content_filter"):
+                complete_choice["message"]["content"] += delta.get("content")
+            else:
+                complete_choice["message"]["content"] += "FILTERED"
         if delta and delta.get("role"):
             complete_choice["message"]["role"] = delta.get("role")
         if delta and delta.get("tool_calls"):
