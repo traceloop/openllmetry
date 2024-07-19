@@ -5,104 +5,234 @@ updates:
     schedule:
       interval: "weekly"
   - package-ecosystem: "pip"
+    directory: "/packages/opentelemetry-instrumentation-alephalpha"
+    schedule:
+      interval: "weekly"
+    groups:
+      gha:
+        patterns:
+          - "*"
+  - package-ecosystem: "pip"
     directory: "/packages/opentelemetry-instrumentation-anthropic"
     schedule:
       interval: "weekly"
-    labels:
-      - "opentelemetry-instrumentation-anthropic"
+    groups:
+      gha:
+        patterns:
+          - "*"
   - package-ecosystem: "pip"
     directory: "/packages/opentelemetry-instrumentation-bedrock"
     schedule:
       interval: "weekly"
-    labels:
-      - "opentelemetry-instrumentation-bedrock"
+    groups:
+      gha:
+        patterns:
+          - "*"
   - package-ecosystem: "pip"
     directory: "/packages/opentelemetry-instrumentation-chromadb"
     schedule:
       interval: "weekly"
-    labels:
-      - "opentelemetry-instrumentation-chromadb"
+    groups:
+      gha:
+        patterns:
+          - "*"
   - package-ecosystem: "pip"
     directory: "/packages/opentelemetry-instrumentation-cohere"
     schedule:
       interval: "weekly"
+    groups:
+      gha:
+        patterns:
+          - "*"
     labels:
-      - "opentelemetry-instrumentation-cohere"
+      - "dependencies"
+  - package-ecosystem: "pip"
+    directory: "/packages/opentelemetry-instrumentation-google-generativeai"
+    schedule:
+      interval: "weekly"
+    groups:
+      gha:
+        patterns:
+          - "*"
+    labels:
+      - "dependencies"
   - package-ecosystem: "pip"
     directory: "/packages/opentelemetry-instrumentation-haystack"
     schedule:
       interval: "weekly"
+    groups:
+      gha:
+        patterns:
+          - "*"
     labels:
-      - "opentelemetry-instrumentation-haystack"
+      - "dependencies"
   - package-ecosystem: "pip"
     directory: "/packages/opentelemetry-instrumentation-langchain"
     schedule:
       interval: "weekly"
+    groups:
+      gha:
+        patterns:
+          - "*"
     labels:
-      - "opentelemetry-instrumentation-langchain"
+      - "dependencies"
   - package-ecosystem: "pip"
     directory: "/packages/opentelemetry-instrumentation-llamaindex"
     schedule:
       interval: "weekly"
+    groups:
+      gha:
+        patterns:
+          - "*"
     labels:
-      - "opentelemetry-instrumentation-llamaindex"
+      - "dependencies"
+  - package-ecosystem: "pip"
+    directory: "/packages/opentelemetry-instrumentation-marqo"
+    schedule:
+      interval: "weekly"
+    groups:
+      gha:
+        patterns:
+          - "*"
+    labels:
+      - "dependencies"
+  - package-ecosystem: "pip"
+    directory: "/packages/opentelemetry-instrumentation-milvus"
+    schedule:
+      interval: "weekly"
+    groups:
+      gha:
+        patterns:
+          - "*"
+    labels:
+      - "dependencies"
+  - package-ecosystem: "pip"
+    directory: "/packages/opentelemetry-instrumentation-mistralai"
+    schedule:
+      interval: "weekly"
+    groups:
+      gha:
+        patterns:
+          - "*"
+    labels:
+      - "dependencies"
+  - package-ecosystem: "pip"
+    directory: "/packages/opentelemetry-instrumentation-ollama"
+    schedule:
+      interval: "weekly"
+    groups:
+      gha:
+        patterns:
+          - "*"
+    labels:
+      - "dependencies"
   - package-ecosystem: "pip"
     directory: "/packages/opentelemetry-instrumentation-openai"
     schedule:
       interval: "weekly"
+    groups:
+      gha:
+        patterns:
+          - "*"
     labels:
-      - "opentelemetry-instrumentation-openai"
+      - "dependencies"
   - package-ecosystem: "pip"
     directory: "/packages/opentelemetry-instrumentation-pinecone"
     schedule:
       interval: "weekly"
+    groups:
+      gha:
+        patterns:
+          - "*"
     labels:
-      - "opentelemetry-instrumentation-pinecone"
+      - "dependencies"
   - package-ecosystem: "pip"
     directory: "/packages/opentelemetry-instrumentation-qdrant"
     schedule:
       interval: "weekly"
+    groups:
+      gha:
+        patterns:
+          - "*"
     labels:
-      - "opentelemetry-instrumentation-qdrant"
+      - "dependencies"
   - package-ecosystem: "pip"
     directory: "/packages/opentelemetry-instrumentation-replicate"
     schedule:
       interval: "weekly"
+    groups:
+      gha:
+        patterns:
+          - "*"
     labels:
-      - "opentelemetry-instrumentation-replicate"
+      - "dependencies"
+  - package-ecosystem: "pip"
+    directory: "/packages/opentelemetry-instrumentation-together"
+    schedule:
+      interval: "weekly"
+    groups:
+      gha:
+        patterns:
+          - "*"
+    labels:
+      - "dependencies"
   - package-ecosystem: "pip"
     directory: "/packages/opentelemetry-instrumentation-transformers"
     schedule:
       interval: "weekly"
+    groups:
+      gha:
+        patterns:
+          - "*"
     labels:
-      - "opentelemetry-instrumentation-transformers"
+      - "dependencies"
   - package-ecosystem: "pip"
     directory: "/packages/opentelemetry-instrumentation-vertexai"
     schedule:
       interval: "weekly"
+    groups:
+      gha:
+        patterns:
+          - "*"
     labels:
-      - "opentelemetry-instrumentation-vertexai"
+      - "dependencies"
   - package-ecosystem: "pip"
     directory: "/packages/opentelemetry-instrumentation-watsonx"
     schedule:
       interval: "weekly"
+    groups:
+      gha:
+        patterns:
+          - "*"
     labels:
-      - "opentelemetry-instrumentation-watsonx"
+      - "dependencies"
   - package-ecosystem: "pip"
     directory: "/packages/opentelemetry-instrumentation-weaviate"
     schedule:
       interval: "weekly"
+    groups:
+      gha:
+        patterns:
+          - "*"
     labels:
-      - "opentelemetry-instrumentation-weaviate"
+      - "dependencies"
   - package-ecosystem: "pip"
-    directory: "/packages/opentelemetry-semantic-conventions-llm"
+    directory: "/packages/opentelemetry-semantic-conventions-ai"
     schedule:
       interval: "weekly"
+    groups:
+      gha:
+        patterns:
+          - "*"
     labels:
-      - "opentelemetry-semantic-conventions-llm"
+      - "dependencies"
   - package-ecosystem: "pip"
     directory: "/packages/traceloop-sdk"
     schedule:
       interval: "weekly"
+    groups:
+      gha:
+        patterns:
+          - "*"
     labels:
-      - "traceloop-sdk"
+      - "dependencies"
