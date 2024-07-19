@@ -16,7 +16,7 @@ from langchain_community.utils.openai_functions import (
     convert_pydantic_to_openai_function,
 )
 from langchain_core.pydantic_v1 import BaseModel, Field
-from langchain_openai import ChatOpenAI
+from langchain_openai import ChatOpenAI, AzureChatOpenAI
 from opentelemetry.semconv.ai import SpanAttributes
 
 
@@ -181,6 +181,37 @@ def test_invoke(exporter):
         "StrOutputParser.langchain.task",
         "RunnableSequence.langchain.workflow",
     ] == [span.name for span in spans]
+
+
+@pytest.mark.vcr
+def test_azure(exporter):
+    chat = AzureChatOpenAI(
+        model="openllmetry-testing",
+        temperature=0,
+        streaming=True,
+    )
+
+    prompt = PromptTemplate.from_template(
+        "write 10 lines of random text about ${product}"
+    )
+    runnable = prompt | chat | StrOutputParser()
+    runnable.invoke({"product": "colorful socks"})
+
+    spans = exporter.get_finished_spans()
+
+    assert [
+        "PromptTemplate.langchain.task",
+        "AzureChatOpenAI.langchain",
+        "StrOutputParser.langchain.task",
+        "RunnableSequence.langchain.workflow",
+    ] == [span.name for span in spans]
+
+    azure_span = next(
+        span for span in spans if span.name == "AzureChatOpenAI.langchain"
+    )
+
+    assert azure_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 35
+    assert azure_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS] == 23
 
 
 @pytest.mark.vcr

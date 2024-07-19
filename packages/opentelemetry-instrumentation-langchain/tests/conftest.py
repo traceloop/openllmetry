@@ -42,6 +42,10 @@ def environment():
         os.environ["ANTHROPIC_API_KEY"] = "test"
     if not os.environ.get("COHERE_API_KEY"):
         os.environ["COHERE_API_KEY"] = "test"
+    if not os.environ.get("AZURE_OPENAI_ENDPOINT"):
+        os.environ["AZURE_OPENAI_ENDPOINT"] = "https://traceloop-stg.openai.azure.com/"
+    if not os.environ.get("OPENAI_API_VERSION"):
+        os.environ["OPENAI_API_VERSION"] = "2023-12-01-preview"
 
 
 @pytest.fixture(scope="module")
