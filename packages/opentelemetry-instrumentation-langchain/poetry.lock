@@ -1125,6 +1125,22 @@ files = [
 langchain-core = ">=0.2.10,<0.3.0"
 
 [[package]]
+name = "langchainhub"
+version = "0.1.20"
+description = "The LangChain Hub API client"
+optional = false
+python-versions = "<4.0,>=3.8.1"
+files = [
+    {file = "langchainhub-0.1.20-py3-none-any.whl", hash = "sha256:b3cbb5b2d7d6f9c3f89748bcc74424d8030ed4ebca58b5f44e0b6d9f111e33eb"},
+    {file = "langchainhub-0.1.20.tar.gz", hash = "sha256:499fa8958233071f35750987f325005d16241bebd455163955b607c195c37f25"},
+]
+
+[package.dependencies]
+packaging = ">=23.2,<25"
+requests = ">=2,<3"
+types-requests = ">=2.31.0.2,<3.0.0.0"
+
+[[package]]
 name = "langsmith"
 version = "0.1.92"
 description = "Client library to connect to the LangSmith LLM Tracing and Evaluation Platform."
@@ -2679,4 +2695,4 @@ instruments = []
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<4"
-content-hash = "e7afd8498a820315e5a97cf39df5afb1dd3fec9e204e1790c40b1fc9d48b5d05"
+content-hash = "fde6763948cadc8f76d3fd6d8782a5cbb88ca5eb8dad60f0cfc718b459376098"
