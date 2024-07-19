@@ -375,14 +375,14 @@ def _set_completions(span, choices):
 
             def _cast_into_span(span, prefix, object):
                 for key, item in object.items():
-			if isinstance(item, dict):
-                            _cast_into_span(span, prefix + f".{key}", item)
-                        else:
-                            _set_span_attribute(span, f"{prefix}.{key}", str(item))
+                    if isinstance(item, dict):
+                        _cast_into_span(span, prefix + f".{key}", item)
+                    else:
+                        _set_span_attribute(span, f"{prefix}.{key}", str(item))
 
             for category in choice.get("content_filter_results"):
                 # This handels known possible outcomes including filtering errors
-                _cast_into_span(span, f"{prefix}.content_filter_results", categoty)
+                _cast_into_span(span, f"{prefix}.content_filter_results", category)
 
         if choice.get("finish_reason") == "content_filter":
             _set_span_attribute(span, f"{prefix}.role", "assistant")
@@ -797,7 +797,7 @@ def _accumulate_stream_items(item, complete_response):
         delta = choice.get("delta")
 
         if delta and delta.get("content"):
-                complete_choice["message"]["content"] += delta.get("content")
+            complete_choice["message"]["content"] += delta.get("content")
 
         if delta and delta.get("role"):
             complete_choice["message"]["role"] = delta.get("role")
