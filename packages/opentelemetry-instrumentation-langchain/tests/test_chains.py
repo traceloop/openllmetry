@@ -46,17 +46,15 @@ def test_sequential_chain(exporter):
     spans = exporter.get_finished_spans()
 
     assert [
-        "OpenAI.langchain",
-        "synopsis.langchain.task",
-        "OpenAI.langchain",
-        "LLMChain.langchain.task",
-        "SequentialChain.langchain.workflow",
+        "OpenAI.completion",
+        "synopsis.task",
+        "OpenAI.completion",
+        "LLMChain.task",
+        "SequentialChain.workflow",
     ] == [span.name for span in spans]
 
-    synopsis_span = next(
-        span for span in spans if span.name == "synopsis.langchain.task"
-    )
-    review_span = next(span for span in spans if span.name == "LLMChain.langchain.task")
+    synopsis_span = next(span for span in spans if span.name == "synopsis.task")
+    review_span = next(span for span in spans if span.name == "LLMChain.task")
 
     data = json.loads(synopsis_span.attributes[SpanAttributes.TRACELOOP_ENTITY_INPUT])
     assert data["inputs"] == {
@@ -78,7 +76,7 @@ def test_sequential_chain(exporter):
     }
 
     overall_span = next(
-        span for span in spans if span.name == "SequentialChain.langchain.workflow"
+        span for span in spans if span.name == "SequentialChain.workflow"
     )
     data = json.loads(overall_span.attributes[SpanAttributes.TRACELOOP_ENTITY_INPUT])
     assert data["inputs"] == {
@@ -89,7 +87,7 @@ def test_sequential_chain(exporter):
     data = json.loads(overall_span.attributes[SpanAttributes.TRACELOOP_ENTITY_OUTPUT])
     assert data["outputs"].keys() == {"synopsis", "review"}
 
-    openai_span = next(span for span in spans if span.name == "OpenAI.langchain")
+    openai_span = next(span for span in spans if span.name == "OpenAI.completion")
     assert (
         openai_span.attributes[SpanAttributes.LLM_REQUEST_MODEL]
         == "gpt-3.5-turbo-instruct"
@@ -138,15 +136,15 @@ async def test_asequential_chain(exporter):
     spans = exporter.get_finished_spans()
 
     assert [
-        "OpenAI.langchain",
-        "LLMChain.langchain.task",
-        "OpenAI.langchain",
-        "LLMChain.langchain.task",
-        "SequentialChain.langchain.workflow",
+        "OpenAI.completion",
+        "LLMChain.task",
+        "OpenAI.completion",
+        "LLMChain.task",
+        "SequentialChain.workflow",
     ] == [span.name for span in spans]
 
     synopsis_span, review_span = [
-        span for span in spans if span.name == "LLMChain.langchain.task"
+        span for span in spans if span.name == "LLMChain.task"
     ]
 
     data = json.loads(synopsis_span.attributes[SpanAttributes.TRACELOOP_ENTITY_INPUT])
@@ -169,7 +167,7 @@ async def test_asequential_chain(exporter):
     }
 
     overall_span = next(
-        span for span in spans if span.name == "SequentialChain.langchain.workflow"
+        span for span in spans if span.name == "SequentialChain.workflow"
     )
     data = json.loads(overall_span.attributes[SpanAttributes.TRACELOOP_ENTITY_INPUT])
     assert data["inputs"] == {
@@ -193,10 +191,10 @@ def test_stream(exporter):
     spans = exporter.get_finished_spans()
 
     assert [
-        "PromptTemplate.langchain.task",
-        "ChatCohere.langchain",
-        "StrOutputParser.langchain.task",
-        "RunnableSequence.langchain.workflow",
+        "PromptTemplate.task",
+        "ChatCohere.chat",
+        "StrOutputParser.task",
+        "RunnableSequence.workflow",
     ] == [span.name for span in spans]
     assert len(chunks) == 62
 
@@ -216,9 +214,9 @@ async def test_astream(exporter):
     spans = exporter.get_finished_spans()
 
     assert [
-        "PromptTemplate.langchain.task",
-        "ChatCohere.langchain",
-        "StrOutputParser.langchain.task",
-        "RunnableSequence.langchain.workflow",
+        "PromptTemplate.task",
+        "ChatCohere.chat",
+        "StrOutputParser.task",
+        "RunnableSequence.workflow",
     ] == [span.name for span in spans]
     assert len(chunks) == 144
