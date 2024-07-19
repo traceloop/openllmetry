@@ -19,7 +19,7 @@ def test_task_io_serialization_with_langchain(exporter):
     spans = exporter.get_finished_spans()
 
     assert [span.name for span in spans] == [
-        "ChatOpenAI.langchain",
+        "ChatOpenAI.chat",
         "answer_question.task",
     ]
 

@@ -44,25 +44,23 @@ def test_simple_lcel(exporter):
     spans = exporter.get_finished_spans()
 
     assert [
-        "ChatPromptTemplate.langchain.task",
-        "ChatOpenAI.langchain",
-        "JsonOutputFunctionsParser.langchain.task",
-        "ThisIsATestChain.langchain.workflow",
+        "ChatPromptTemplate.task",
+        "ChatOpenAI.chat",
+        "JsonOutputFunctionsParser.task",
+        "ThisIsATestChain.workflow",
     ] == [span.name for span in spans]
 
     workflow_span = next(
-        span for span in spans if span.name == "ThisIsATestChain.langchain.workflow"
+        span for span in spans if span.name == "ThisIsATestChain.workflow"
     )
     prompt_task_span = next(
-        span for span in spans if span.name == "ChatPromptTemplate.langchain.task"
+        span for span in spans if span.name == "ChatPromptTemplate.task"
     )
     chat_openai_task_span = next(
-        span for span in spans if span.name == "ChatOpenAI.langchain"
+        span for span in spans if span.name == "ChatOpenAI.chat"
     )
     output_parser_task_span = next(
-        span
-        for span in spans
-        if span.name == "JsonOutputFunctionsParser.langchain.task"
+        span for span in spans if span.name == "JsonOutputFunctionsParser.task"
     )
 
     assert prompt_task_span.parent.span_id == workflow_span.context.span_id
@@ -124,20 +122,20 @@ async def test_async_lcel(exporter):
     spans = exporter.get_finished_spans()
 
     assert {
-        "PromptTemplate.langchain.task",
-        "ChatOpenAI.langchain",
-        "StrOutputParser.langchain.task",
-        "RunnableSequence.langchain.workflow",
+        "PromptTemplate.task",
+        "ChatOpenAI.chat",
+        "StrOutputParser.task",
+        "RunnableSequence.workflow",
     } == set([span.name for span in spans])
 
     workflow_span = next(
-        span for span in spans if span.name == "RunnableSequence.langchain.workflow"
+        span for span in spans if span.name == "RunnableSequence.workflow"
     )
     chat_openai_task_span = next(
-        span for span in spans if span.name == "ChatOpenAI.langchain"
+        span for span in spans if span.name == "ChatOpenAI.chat"
     )
     output_parser_task_span = next(
-        span for span in spans if span.name == "StrOutputParser.langchain.task"
+        span for span in spans if span.name == "StrOutputParser.task"
     )
 
     assert chat_openai_task_span.parent.span_id == workflow_span.context.span_id
@@ -176,10 +174,10 @@ def test_invoke(exporter):
     spans = exporter.get_finished_spans()
 
     assert [
-        "PromptTemplate.langchain.task",
-        "ChatOpenAI.langchain",
-        "StrOutputParser.langchain.task",
-        "RunnableSequence.langchain.workflow",
+        "PromptTemplate.task",
+        "ChatOpenAI.chat",
+        "StrOutputParser.task",
+        "RunnableSequence.workflow",
     ] == [span.name for span in spans]
 
 
@@ -204,10 +202,10 @@ def test_stream(exporter):
     spans = exporter.get_finished_spans()
 
     assert [
-        "PromptTemplate.langchain.task",
-        "ChatOpenAI.langchain",
-        "StrOutputParser.langchain.task",
-        "RunnableSequence.langchain.workflow",
+        "PromptTemplate.task",
+        "ChatOpenAI.chat",
+        "StrOutputParser.task",
+        "RunnableSequence.workflow",
     ] == [span.name for span in spans]
 
 
@@ -229,10 +227,10 @@ async def test_async_invoke(exporter):
     spans = exporter.get_finished_spans()
 
     assert [
-        "PromptTemplate.langchain.task",
-        "ChatOpenAI.langchain",
-        "StrOutputParser.langchain.task",
-        "RunnableSequence.langchain.workflow",
+        "PromptTemplate.task",
+        "ChatOpenAI.chat",
+        "StrOutputParser.task",
+        "RunnableSequence.workflow",
     ] == [span.name for span in spans]
 
 
@@ -251,13 +249,13 @@ def test_custom_llm(exporter):
     spans = exporter.get_finished_spans()
 
     assert [
-        "ChatPromptTemplate.langchain.task",
-        "HuggingFaceTextGenInference.langchain",
-        "RunnableSequence.langchain.workflow",
+        "ChatPromptTemplate.task",
+        "HuggingFaceTextGenInference.completion",
+        "RunnableSequence.workflow",
     ] == [span.name for span in spans]
 
     hugging_face_span = next(
-        span for span in spans if span.name == "HuggingFaceTextGenInference.langchain"
+        span for span in spans if span.name == "HuggingFaceTextGenInference.completion"
     )
 
     assert hugging_face_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "completion"
@@ -285,12 +283,12 @@ def test_openai(exporter):
     spans = exporter.get_finished_spans()
 
     assert [
-        "ChatPromptTemplate.langchain.task",
-        "ChatOpenAI.langchain",
-        "RunnableSequence.langchain.workflow",
+        "ChatPromptTemplate.task",
+        "ChatOpenAI.chat",
+        "RunnableSequence.workflow",
     ] == [span.name for span in spans]
 
-    openai_span = next(span for span in spans if span.name == "ChatOpenAI.langchain")
+    openai_span = next(span for span in spans if span.name == "ChatOpenAI.chat")
 
     assert openai_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
     assert openai_span.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "gpt-3.5-turbo"
@@ -324,16 +322,14 @@ def test_anthropic(exporter):
     spans = exporter.get_finished_spans()
 
     assert [
-        "ChatPromptTemplate.langchain.task",
-        "ChatAnthropic.langchain",
-        "RunnableSequence.langchain.workflow",
+        "ChatPromptTemplate.task",
+        "ChatAnthropic.chat",
+        "RunnableSequence.workflow",
     ] == [span.name for span in spans]
 
-    anthropic_span = next(
-        span for span in spans if span.name == "ChatAnthropic.langchain"
-    )
+    anthropic_span = next(span for span in spans if span.name == "ChatAnthropic.chat")
     workflow_span = next(
-        span for span in spans if span.name == "RunnableSequence.langchain.workflow"
+        span for span in spans if span.name == "RunnableSequence.workflow"
     )
 
     assert anthropic_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
@@ -386,14 +382,14 @@ def test_bedrock(exporter):
     spans = exporter.get_finished_spans()
 
     assert [
-        "ChatPromptTemplate.langchain.task",
-        "BedrockChat.langchain",
-        "RunnableSequence.langchain.workflow",
+        "ChatPromptTemplate.task",
+        "BedrockChat.chat",
+        "RunnableSequence.workflow",
     ] == [span.name for span in spans]
 
-    bedrock_span = next(span for span in spans if span.name == "BedrockChat.langchain")
+    bedrock_span = next(span for span in spans if span.name == "BedrockChat.chat")
     workflow_span = next(
-        span for span in spans if span.name == "RunnableSequence.langchain.workflow"
+        span for span in spans if span.name == "RunnableSequence.workflow"
     )
 
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
