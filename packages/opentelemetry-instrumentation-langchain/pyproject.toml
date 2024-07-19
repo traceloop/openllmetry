@@ -27,7 +27,7 @@ python = ">=3.9,<4"
 opentelemetry-api = "^1.25.0"
 opentelemetry-instrumentation = "^0.46b0"
 opentelemetry-semantic-conventions = "^0.46b0"
-opentelemetry-semantic-conventions-ai = "0.3.4"
+opentelemetry-semantic-conventions-ai = "0.3.6"
 
 [tool.poetry.group.dev.dependencies]
 autopep8 = "^2.2.0"
@@ -56,6 +56,7 @@ langchain-openai = "^0.1.8"
 langchain-cohere = "0.1.8"
 pydantic = "^2.7.1"
 
+langchainhub = "^0.1.20"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"

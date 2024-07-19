@@ -42,8 +42,13 @@ def environment():
         os.environ["ANTHROPIC_API_KEY"] = "test"
     if not os.environ.get("COHERE_API_KEY"):
         os.environ["COHERE_API_KEY"] = "test"
+    if not os.environ.get("TAVILY_API_KEY"):
+        os.environ["TAVILY_API_KEY"] = "test"
 
 
 @pytest.fixture(scope="module")
 def vcr_config():
-    return {"filter_headers": ["authorization", "x-api-key"]}
+    return {
+        "filter_headers": ["authorization", "x-api-key"],
+        "filter_body": ["api_key"],
+    }

@@ -22,6 +22,7 @@ _instruments = ("langchain >= 0.0.346", "langchain-core > 0.1.0")
 ASYNC_CALLBACK_FUNCTIONS = ("ainvoke", "astream", "atransform")
 SYNC_CALLBACK_FUNCTIONS = ("invoke", "stream", "transform")
 WRAPPED_METHODS = [
+    {"package": "langchain.agents", "class": "AgentExecutor"},
     {
         "package": "langchain.chains.base",
         "class": "Chain",
