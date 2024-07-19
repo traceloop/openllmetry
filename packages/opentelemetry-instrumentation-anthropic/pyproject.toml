@@ -36,7 +36,7 @@ pytest = "^8.2.2"
 pytest-sugar = "1.0.0"
 
 [tool.poetry.group.test.dependencies]
-anthropic = ">=0.21.3,<0.29.0"
+anthropic = ">=0.21.3,<0.32.0"
 pytest = "^8.2.2"
 pytest-sugar = "1.0.0"
 vcrpy = "^6.0.1"
