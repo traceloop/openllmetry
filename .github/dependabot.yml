@@ -20,6 +20,8 @@ updates:
       gha:
         patterns:
           - "*"
+    labels:
+      - "dependencies"
   - package-ecosystem: "pip"
     directory: "/packages/opentelemetry-instrumentation-bedrock"
     schedule:
@@ -28,6 +30,8 @@ updates:
       gha:
         patterns:
           - "*"
+    labels:
+      - "dependencies"
   - package-ecosystem: "pip"
     directory: "/packages/opentelemetry-instrumentation-chromadb"
     schedule:
@@ -36,6 +40,8 @@ updates:
       gha:
         patterns:
           - "*"
+    labels:
+      - "dependencies"
   - package-ecosystem: "pip"
     directory: "/packages/opentelemetry-instrumentation-cohere"
     schedule:
