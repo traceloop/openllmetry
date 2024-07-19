@@ -57,6 +57,8 @@ langchain-cohere = "0.1.8"
 pydantic = "^2.7.1"
 
 langchainhub = "^0.1.20"
+langchain-postgres = "^0.0.9"
+opentelemetry-instrumentation-sqlalchemy = "^0.46b0"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
