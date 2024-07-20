@@ -54,6 +54,23 @@ def test_chat_content_filtering(exporter, azure_openai_client):
     )
     assert open_ai_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is False
 
+    assert (
+        open_ai_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content_filter_results.hate.filtered")
+        is True
+    )
+    assert (
+        open_ai_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content_filter_results.hate.severity")
+        == "high"
+    )
+    assert (
+        open_ai_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content_filter_results.self_harm.filtered")
+        is False
+    )
+    assert (
+        open_ai_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content_filter_results.self_harm.severity")
+        == "safe"
+    )
+
 
 @pytest.mark.vcr
 def test_chat_streaming(exporter, azure_openai_client):
