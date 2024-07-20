@@ -6,6 +6,7 @@ from typing import Optional
 
 from opentelemetry import trace
 from opentelemetry import context as context_api
+from opentelemetry.trace import Status, StatusCode
 from opentelemetry.semconv.ai import SpanAttributes, TraceloopSpanKindValues
 
 from traceloop.sdk.telemetry import Telemetry
@@ -72,7 +73,13 @@ def entity_method(
                 except TypeError as e:
                     Telemetry().log_exception(e)
 
-                res = fn(*args, **kwargs)
+                res = None
+                try:
+                    res = fn(*args, **kwargs)
+
+                except Exception as e:
+                    span.set_status(Status(StatusCode.ERROR))
+                    span.record_exception(e)
 
                 # span will be ended in the generator
                 if isinstance(res, types.GeneratorType):
