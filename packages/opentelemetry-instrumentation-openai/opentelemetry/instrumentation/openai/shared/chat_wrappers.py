@@ -372,20 +372,10 @@ def _set_completions(span, choices):
         )
 
         if choice.get("content_filter_results"):
-
-            def _cast_into_span(span, prefix, object):
-                print("caster run")
-                print(prefix)
-                print(object)
-                for key, item in object.items():
-                    if isinstance(item, dict):
-                        _cast_into_span(span, prefix + f".{key}", item)
-                    else:
-                        _set_span_attribute(span, f"{prefix}.{key}", item)
-
-            for category, item in choice.get("content_filter_results").items():
-                # This handels known possible outcomes including filtering errors
-                _cast_into_span(span, f"{prefix}.content_filter_results.{category}", item)
+            _set_span_attribute(
+                span, f"{prefix}.content_filter_results",
+                json.dumps(choice.get("content_filter_results"))
+            )
 
         if choice.get("finish_reason") == "content_filter":
             _set_span_attribute(span, f"{prefix}.role", "assistant")

@@ -1,5 +1,6 @@
 import pytest
 from opentelemetry.semconv.ai import SpanAttributes
+import json
 
 
 @pytest.mark.vcr
@@ -54,20 +55,28 @@ def test_chat_content_filtering(exporter, azure_openai_client):
     )
     assert open_ai_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is False
 
+    content_filter_json = open_ai_span.attributes.get(
+        f"{SpanAttributes.LLM_COMPLETIONS}.0.content_filter_results"
+    )
+
+    assert len(content_filter_json) > 0
+
+    content_filter_results = json.loads(content_filter_json)
+
     assert (
-        open_ai_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content_filter_results.hate.filtered")
+        content_filter_results["hate"]["filtered"]
         is True
     )
     assert (
-        open_ai_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content_filter_results.hate.severity")
+        content_filter_results["hate"]["severity"]
         == "high"
     )
     assert (
-        open_ai_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content_filter_results.self_harm.filtered")
+        content_filter_results["self_harm"]["filtered"]
         is False
     )
     assert (
-        open_ai_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content_filter_results.self_harm.severity")
+        content_filter_results["self_harm"]["severity"]
         == "safe"
     )
 
