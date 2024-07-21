@@ -53,6 +53,7 @@ class Traceloop:
         should_enrich_metrics: bool = True,
         resource_attributes: dict = {},
         instruments: Optional[Set[Instruments]] = None,
+        trace_content:bool = True # trace_content controls whether instrumentations are sending sensitive content
     ) -> None:
         Telemetry()
 
@@ -76,7 +77,9 @@ class Traceloop:
             print(Fore.YELLOW + "Tracing is disabled" + Fore.RESET)
             return
 
-        enable_content_tracing = is_content_tracing_enabled()
+        # if trace content is false, disable sensitive content in instruments
+        if trace_content is False:
+            os.environ["TRACELOOP_TRACE_CONTENT"] = "false"
 
         if exporter or processor:
             print(Fore.GREEN + "Traceloop exporting traces to a custom exporter")
