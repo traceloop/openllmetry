@@ -2,6 +2,8 @@ import pytest
 from opentelemetry.semconv.ai import SpanAttributes
 import json
 
+PROMPT_FILTER_KEY = "prompt_filter_results"
+
 
 @pytest.mark.vcr
 def test_chat(exporter, azure_openai_client):
@@ -112,6 +114,14 @@ def test_chat_streaming(exporter, azure_openai_client):
 
     events = open_ai_span.events
     assert len(events) == chunk_count
+
+    # prompt filter results
+    prompt_filter_results = json.loads(
+        open_ai_span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.{PROMPT_FILTER_KEY}")
+    )
+    assert prompt_filter_results[0]["prompt_index"] == 0
+    assert prompt_filter_results[0]["content_filter_results"]["hate"]["severity"] == "safe"
+    assert prompt_filter_results[0]["content_filter_results"]["self_harm"]["filtered"] is False
 
 
 @pytest.mark.vcr
