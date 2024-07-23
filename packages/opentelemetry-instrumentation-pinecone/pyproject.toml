@@ -31,7 +31,7 @@ opentelemetry-semantic-conventions-ai = "0.3.6"
 
 [tool.poetry.group.dev.dependencies]
 autopep8 = "^2.2.0"
-flake8 = "7.0.0"
+flake8 = "7.1.0"
 pytest = "^8.2.2"
 pytest-sugar = "1.0.0"
 
@@ -43,7 +43,7 @@ vcrpy = "^6.0.1"
 pytest-recording = "^0.13.1"
 opentelemetry-sdk = "^1.23.0"
 opentelemetry-instrumentation-openai = {path="../opentelemetry-instrumentation-openai", develop=true}
-pinecone-client = "^4.1.0"
+pinecone-client = ">=4.1,<6.0"
 
 [build-system]
 requires = [ "poetry-core" ]
