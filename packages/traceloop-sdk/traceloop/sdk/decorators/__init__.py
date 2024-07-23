@@ -78,7 +78,7 @@ def atask(
     tlp_span_kind: Optional[TraceloopSpanKindValues] = TraceloopSpanKindValues.TASK,
 ):
     if method_name is None:
-        return aentity_method(name=name, tlp_span_kind=tlp_span_kind)
+        return aentity_method(name=name, version=version, tlp_span_kind=tlp_span_kind)
     else:
         return aentity_class(
             name=name, method_name=method_name, tlp_span_kind=tlp_span_kind
