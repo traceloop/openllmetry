@@ -47,14 +47,12 @@ def test_sequential_chain(exporter):
     spans = exporter.get_finished_spans()
 
     assert [
-        "ChatCohere.langchain",
-        "LLMChain.langchain.task",
-        "stuff_chain.langchain.workflow",
+        "ChatCohere.chat",
+        "LLMChain.task",
+        "stuff_chain.workflow",
     ] == [span.name for span in spans]
 
-    stuff_span = next(
-        span for span in spans if span.name == "stuff_chain.langchain.workflow"
-    )
+    stuff_span = next(span for span in spans if span.name == "stuff_chain.workflow")
 
     data = json.loads(stuff_span.attributes[SpanAttributes.TRACELOOP_ENTITY_INPUT])
     assert data["inputs"].keys() == {"input_documents"}

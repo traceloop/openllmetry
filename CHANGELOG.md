@@ -1,3 +1,22 @@
+## v0.25.6 (2024-07-23)
+
+### Fix
+
+- **sdk**: aworkflow wasn't propagating workflow_name attribute (#1648)
+- **langchain**: agent executor weren't producing traces (#1616)
+
+## v0.25.5 (2024-07-17)
+
+### Fix
+
+- **openai**: pydantic tool calls in prompt weren't serialized correctly (#1572)
+
+## v0.25.4 (2024-07-15)
+
+### Fix
+
+- **sdk**: manual reporting of llm spans (#1555)
+
 ## v0.25.3 (2024-07-11)
 
 ### Fix

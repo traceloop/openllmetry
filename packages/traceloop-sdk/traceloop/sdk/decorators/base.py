@@ -132,19 +132,34 @@ def aentity_method(
             if not TracerWrapper.verify_initialized():
                 return await fn(*args, **kwargs)
 
-            span_name = (
-                f"{name}.{tlp_span_kind.value}"
-                if name
-                else f"{fn.__name__}.{tlp_span_kind.value}"
-            )
+            entity_name = name or fn.__name__
+            if tlp_span_kind in [
+                TraceloopSpanKindValues.WORKFLOW,
+                TraceloopSpanKindValues.AGENT,
+            ]:
+                set_workflow_name(entity_name)
+            span_name = f"{entity_name}.{tlp_span_kind.value}"
+
             with get_tracer() as tracer:
                 span = tracer.start_span(span_name)
                 ctx = trace.set_span_in_context(span)
                 ctx_token = context_api.attach(ctx)
+
+                if tlp_span_kind in [
+                    TraceloopSpanKindValues.TASK,
+                    TraceloopSpanKindValues.TOOL,
+                ]:
+                    chained_entity_name = get_chained_entity_name(entity_name)
+                    set_entity_name(chained_entity_name)
+                else:
+                    chained_entity_name = entity_name
+
                 span.set_attribute(
                     SpanAttributes.TRACELOOP_SPAN_KIND, tlp_span_kind.value
                 )
-                span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, name)
+                span.set_attribute(
+                    SpanAttributes.TRACELOOP_ENTITY_NAME, chained_entity_name
+                )
                 if version:
                     span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_VERSION, version)
 
