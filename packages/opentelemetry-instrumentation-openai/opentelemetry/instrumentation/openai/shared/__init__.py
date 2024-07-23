@@ -140,10 +140,10 @@ def _set_response_attributes(span, response):
     if not span.is_recording():
         return
 
-    if (len(response.keys()) == 1 and "error" in response):
+    if "error" in response:
         _set_span_attribute(
             span,
-            f"{SpanAttributes}.{PROMPT_ERROR}",
+            f"{SpanAttributes.LLM_PROMPTS}.{PROMPT_ERROR}",
             json.dumps(response.get("error"))
         )
         return
