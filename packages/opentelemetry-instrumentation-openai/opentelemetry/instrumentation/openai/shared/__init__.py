@@ -144,7 +144,7 @@ def _set_response_attributes(span, response):
         _set_span_attribute(
             span,
             f"{SpanAttributes}.{PROMPT_ERROR}",
-            response.get("error")
+            json.dumps(response.get("error"))
         )
         return
 
