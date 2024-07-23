@@ -1,3 +1,10 @@
+## v0.25.6 (2024-07-23)
+
+### Fix
+
+- **sdk**: aworkflow wasn't propagating workflow_name attribute (#1648)
+- **langchain**: agent executor weren't producing traces (#1616)
+
 ## v0.25.5 (2024-07-17)
 
 ### Fix
