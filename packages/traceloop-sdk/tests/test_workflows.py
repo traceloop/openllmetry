@@ -1,7 +1,7 @@
 import json
 
 import pytest
-from openai import OpenAI
+from openai import OpenAI, AsyncOpenAI
 from opentelemetry.semconv.ai import SpanAttributes
 from traceloop.sdk import Traceloop
 from traceloop.sdk.decorators import workflow, task, aworkflow, atask
@@ -10,6 +10,11 @@ from traceloop.sdk.decorators import workflow, task, aworkflow, atask
 @pytest.fixture
 def openai_client():
     return OpenAI()
+
+
+@pytest.fixture
+def async_openai_client():
+    return AsyncOpenAI()
 
 
 @pytest.mark.vcr
@@ -30,6 +35,74 @@ def test_simple_workflow(exporter, openai_client):
         return create_something("joke", subject="OpenTelemetry")
 
     joke = joke_workflow()
+
+    spans = exporter.get_finished_spans()
+    assert [span.name for span in spans] == [
+        "openai.chat",
+        "something_creator.task",
+        "pirate_joke_generator.workflow",
+    ]
+    open_ai_span = next(span for span in spans if span.name == "openai.chat")
+    assert (
+        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
+        == "Tell me a joke about OpenTelemetry"
+    )
+    assert open_ai_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
+    assert (
+        open_ai_span.attributes.get("traceloop.prompt.template")
+        == "Tell me a {what} about {subject}"
+    )
+    assert (
+        open_ai_span.attributes.get("traceloop.prompt.template_variables.what")
+        == "joke"
+    )
+    assert (
+        open_ai_span.attributes.get("traceloop.prompt.template_variables.subject")
+        == "OpenTelemetry"
+    )
+    assert open_ai_span.attributes.get("traceloop.prompt.version") == 5
+
+    workflow_span = next(
+        span for span in spans if span.name == "pirate_joke_generator.workflow"
+    )
+    task_span = next(span for span in spans if span.name == "something_creator.task")
+    assert json.loads(task_span.attributes[SpanAttributes.TRACELOOP_ENTITY_INPUT]) == {
+        "args": ["joke"],
+        "kwargs": {"subject": "OpenTelemetry"},
+    }
+
+    assert (
+        json.loads(task_span.attributes.get(SpanAttributes.TRACELOOP_ENTITY_OUTPUT))
+        == joke
+    )
+    assert task_span.parent.span_id == workflow_span.context.span_id
+    assert (
+        workflow_span.attributes[SpanAttributes.TRACELOOP_ENTITY_NAME]
+        == "pirate_joke_generator"
+    )
+    assert workflow_span.attributes[SpanAttributes.TRACELOOP_ENTITY_VERSION] == 1
+    assert task_span.attributes[SpanAttributes.TRACELOOP_ENTITY_VERSION] == 2
+
+
+@pytest.mark.vcr
+@pytest.mark.asyncio
+async def test_simple_aworkflow(exporter, async_openai_client):
+    @atask(name="something_creator", version=2)
+    async def create_something(what: str, subject: str):
+        Traceloop.set_prompt(
+            "Tell me a {what} about {subject}", {"what": what, "subject": subject}, 5
+        )
+        completion = await async_openai_client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[{"role": "user", "content": f"Tell me a {what} about {subject}"}],
+        )
+        return completion.choices[0].message.content
+
+    @aworkflow(name="pirate_joke_generator", version=1)
+    async def joke_workflow():
+        return await create_something("joke", subject="OpenTelemetry")
+
+    joke = await joke_workflow()
 
     spans = exporter.get_finished_spans()
     assert [span.name for span in spans] == [
