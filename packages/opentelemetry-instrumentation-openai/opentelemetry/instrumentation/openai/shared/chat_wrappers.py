@@ -272,8 +272,6 @@ def _handle_response(
 
     # span attributes
     _set_response_attributes(span, response_dict)
-    # prompt_filter_results
-    _log_prompt_filter(span, response_dict)
 
     if should_send_prompts():
         _set_completions(span, response_dict.get("choices"))
@@ -628,9 +626,6 @@ class ChatStream(ObjectProxy):
 
         _set_response_attributes(self._span, self._complete_response)
 
-        # prompt_filter_results
-        _log_prompt_filter(self._span, self._complete_response)
-
         if should_send_prompts():
             _set_completions(self._span, self._complete_response.get("choices"))
 
@@ -701,9 +696,6 @@ def _build_from_streaming_response(
 
     _set_response_attributes(span, complete_response)
 
-    # wprompt_filter_results
-    _log_prompt_filter(span, complete_response)
-
     if should_send_prompts():
         _set_completions(span, complete_response.get("choices"))
 
@@ -772,9 +764,6 @@ async def _abuild_from_streaming_response(
 
     _set_response_attributes(span, complete_response)
 
-    # prompt_filter_results
-    _log_prompt_filter(span, complete_response)
-
     if should_send_prompts():
         _set_completions(span, complete_response.get("choices"))
 
@@ -836,12 +825,3 @@ def _accumulate_stream_items(item, complete_response):
                     span_function["name"] = tool_call_function.get("name")
                 if tool_call_function and tool_call_function.get("arguments"):
                     span_function["arguments"] += tool_call_function.get("arguments")
-
-
-def _log_prompt_filter(span, response_dict):
-    if response_dict.get("prompt_filter_results"):
-        _set_span_attribute(
-            span,
-            f"{SpanAttributes.LLM_PROMPTS}.{PROMPT_FILTER_KEY}",
-            json.dumps(response_dict.get("prompt_filter_results"))
-        )
