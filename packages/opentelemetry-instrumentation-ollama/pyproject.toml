@@ -28,10 +28,10 @@ opentelemetry-instrumentation = "^0.46b0"
 opentelemetry-semantic-conventions = "^0.46b0"
 opentelemetry-semantic-conventions-ai = "0.3.6"
 
-ollama = "^0.2.0"
+ollama = ">=0.2,<0.4"
 [tool.poetry.group.dev.dependencies]
 autopep8 = "^2.2.0"
-flake8 = "7.0.0"
+flake8 = "7.1.0"
 pytest = "^8.2.2"
 pytest-sugar = "1.0.0"
 
