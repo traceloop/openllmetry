@@ -43,6 +43,7 @@ from opentelemetry.instrumentation.openai.utils import is_openai_v1, is_azure_op
 
 SPAN_NAME = "openai.chat"
 PROMPT_FILTER_KEY = "prompt_filter_results"
+CONTENT_FILTER_KEY = "content_filter_results"
 
 LLM_REQUEST_TYPE = LLMRequestTypeValues.CHAT
 
@@ -375,7 +376,7 @@ def _set_completions(span, choices):
 
         if choice.get("content_filter_results"):
             _set_span_attribute(
-                span, f"{prefix}.content_filter_results",
+                span, f"{prefix}.{CONTENT_FILTER_KEY}",
                 json.dumps(choice.get("content_filter_results"))
             )
 

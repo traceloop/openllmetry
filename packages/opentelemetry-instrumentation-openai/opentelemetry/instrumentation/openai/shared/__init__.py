@@ -18,6 +18,7 @@ from opentelemetry.instrumentation.openai.utils import (
 
 OPENAI_LLM_USAGE_TOKEN_TYPES = ["prompt_tokens", "completion_tokens"]
 PROMPT_FILTER_KEY = "prompt_filter_results"
+PROMPT_ERROR = "prompt_error"
 
 # tiktoken encodings map for different model, key is model_name, value is tiktoken encoding
 tiktoken_encodings = {}
@@ -137,6 +138,14 @@ def _set_request_attributes(span, kwargs):
 @dont_throw
 def _set_response_attributes(span, response):
     if not span.is_recording():
+        return
+
+    if (len(response.keys()) == 1 and "error" in response):
+        _set_span_attribute(
+            span,
+            f"{SpanAttributes}.{PROMPT_ERROR}",
+            response.get("error")
+        )
         return
 
     _set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, response.get("model"))
