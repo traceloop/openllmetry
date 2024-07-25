@@ -189,6 +189,14 @@ def _handle_response(
     # span attributes
     _set_response_attributes(span, response_dict)
 
+    data = response_dict.get("data")
+    if len(data) != 0 and data[0].get("embedding"):
+        _set_span_attribute(
+            span,
+            f"{SpanAttributes.LLM_EMBEDDINGS}.data",
+            data[0].get("embedding"),
+        )
+
 
 def _set_embeddings_metrics(
     instance,
