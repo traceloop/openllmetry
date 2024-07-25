@@ -2,7 +2,6 @@
 
 import logging
 from typing import Collection
-from wrapt import wrap_function_wrapper
 
 from opentelemetry.instrumentation.llamaindex.config import Config
 from opentelemetry.trace import get_tracer
@@ -34,7 +33,6 @@ from opentelemetry.instrumentation.llamaindex.query_pipeline_instrumentor import
     QueryPipelineInstrumentor,
 )
 from opentelemetry.instrumentation.llamaindex.version import __version__
-from opentelemetry.instrumentation.llamaindex.callback_wrapper import callback_wrapper
 
 logger = logging.getLogger(__name__)
 
@@ -42,26 +40,7 @@ _instruments = ("llama-index >= 0.7.0",)
 
 
 WRAPPED_METHODS = [
-    {
-        "package": "llama_index.core.query_pipeline.query",
-        "class": "QueryPipeline",
-        "method": "run",
-    },
-    {
-        "package": "llama_index.core.agent.runner.base",
-        "class": "AgentRunner",
-        "method": "chat",
-    },
-    {
-        "package": "llama_index.agent.openai.openai_assistant_agent",
-        "class": "OpenAIAssistantAgent",
-        "method": "chat",
-    },
-    {
-        "package": "llama_index.core.base.base_query_engine",
-        "class": "BaseQueryEngine",
-        "method": "query",
-    },
+
 ]
 
 '''
@@ -92,17 +71,6 @@ class LlamaIndexInstrumentor(BaseInstrumentor):
         tracer_provider = kwargs.get("tracer_provider")
         tracer = get_tracer(__name__, __version__, tracer_provider)
 
-        for wrapped_method in WRAPPED_METHODS:
-            wrap_package = wrapped_method.get("package")
-            wrap_class = wrapped_method.get("class")
-            wrap_method = wrapped_method.get("method")
-            wrap_function_wrapper(
-                wrap_package,
-                f"{wrap_class}.{wrap_method}",
-                callback_wrapper(tracer),
-            )
-
-        '''
         RetrieverQueryEngineInstrumentor(tracer).instrument()
         BaseRetrieverInstrumentor(tracer).instrument()
         BaseSynthesizerInstrumentor(tracer).instrument()
@@ -111,7 +79,6 @@ class LlamaIndexInstrumentor(BaseInstrumentor):
         QueryPipelineInstrumentor(tracer).instrument()
         BaseAgentInstrumentor(tracer).instrument()
         BaseToolInstrumentor(tracer).instrument()
-        '''
 
     def _uninstrument(self, **kwargs):
         pass

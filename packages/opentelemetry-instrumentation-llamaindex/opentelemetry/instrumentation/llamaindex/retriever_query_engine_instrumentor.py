@@ -9,13 +9,16 @@ from opentelemetry.instrumentation.llamaindex.utils import (
     process_response,
     start_as_current_span_async,
 )
+from opentelemetry.instrumentation.llamaindex.callback_wrapper import callback_wrapper
 from opentelemetry.semconv.ai import SpanAttributes, TraceloopSpanKindValues
 
 V9_MODULE_NAME = "llama_index.query_engine.retriever_query_engine"
 V10_MODULE_NAME = "llama_index.core.query_engine.retriever_query_engine"
+V10_MODULE_NAME_CALLBACK = "llama_index.core.base.base_query_engine"
 V10_LEGACY_MODULE_NAME = "llama_index.legacy.query_engine.retriever_query_engine"
 
 CLASS_NAME = "RetrieverQueryEngine"
+CLASS_NAME_CALLBACK = "BaseQueryEngine"
 WORKFLOW_NAME = "llama_index_retriever_query"
 
 
@@ -26,19 +29,31 @@ class RetrieverQueryEngineInstrumentor:
     def instrument(self):
         try:
             package_version("llama-index-core")
-            self._instrument_module(V10_MODULE_NAME)
+            self._instrument_module(V10_MODULE_NAME, is_callback=True)
             self._instrument_module(V10_LEGACY_MODULE_NAME)
 
         except PackageNotFoundError:
             self._instrument_module(V9_MODULE_NAME)
 
-    def _instrument_module(self, module_name):
-        wrap_function_wrapper(
-            module_name, f"{CLASS_NAME}.query", query_wrapper(self._tracer)
-        )
-        wrap_function_wrapper(
-            module_name, f"{CLASS_NAME}.aquery", aquery_wrapper(self._tracer)
-        )
+    def _instrument_module(self, module_name, is_callback=True):
+        if is_callback:
+            wrap_function_wrapper(
+                module_name,
+                f"{CLASS_NAME_CALLBACK}.query",
+                callback_wrapper(self._tracer),
+            )
+            wrap_function_wrapper(
+                module_name,
+                f"{CLASS_NAME_CALLBACK}.aquery",
+                callback_wrapper(self._tracer),
+            )
+        else:
+            wrap_function_wrapper(
+                module_name, f"{CLASS_NAME}.query", query_wrapper(self._tracer)
+            )
+            wrap_function_wrapper(
+                module_name, f"{CLASS_NAME}.aquery", aquery_wrapper(self._tracer)
+            )
 
 
 def set_workflow_context():

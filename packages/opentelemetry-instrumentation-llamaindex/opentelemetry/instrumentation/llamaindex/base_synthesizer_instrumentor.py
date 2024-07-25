@@ -8,10 +8,11 @@ from opentelemetry.instrumentation.llamaindex.utils import (
     process_response,
     start_as_current_span_async,
 )
+from opentelemetry.instrumentation.llamaindex.callback_wrapper import callback_wrapper
 from opentelemetry.semconv.ai import SpanAttributes, TraceloopSpanKindValues
 
 V9_MODULE_NAME = "llama_index.response_synthesizers"
-V10_MODULE_NAME = "llama_index.core.response_synthesizers"
+V10_MODULE_NAME = "llama_index.core.response_synthesizers.base"
 V10_LEGACY_MODULE_NAME = "llama_index.legacy.response_synthesizers.base"
 
 CLASS_NAME = "BaseSynthesizer"
@@ -25,19 +26,31 @@ class BaseSynthesizerInstrumentor:
     def instrument(self):
         try:
             package_version("llama-index-core")
-            self._instrument_module(V10_MODULE_NAME)
+            self._instrument_module(V10_MODULE_NAME, is_callback=True)
             self._instrument_module(V10_LEGACY_MODULE_NAME)
 
         except PackageNotFoundError:
             self._instrument_module(V9_MODULE_NAME)
 
-    def _instrument_module(self, module_name):
-        wrap_function_wrapper(
-            module_name, f"{CLASS_NAME}.synthesize", synthesize_wrapper(self._tracer)
-        )
-        wrap_function_wrapper(
-            module_name, f"{CLASS_NAME}.asynthesize", asynthesize_wrapper(self._tracer)
-        )
+    def _instrument_module(self, module_name, is_callback=False):
+        if is_callback:
+            wrap_function_wrapper(
+                module_name,
+                f"{CLASS_NAME}.synthesize",
+                callback_wrapper(self._tracer),
+            )
+            wrap_function_wrapper(
+                module_name,
+                f"{CLASS_NAME}.asynthesize",
+                callback_wrapper(self._tracer),
+            )
+        else:
+            wrap_function_wrapper(
+                module_name, f"{CLASS_NAME}.synthesize", synthesize_wrapper(self._tracer)
+            )
+            wrap_function_wrapper(
+                module_name, f"{CLASS_NAME}.asynthesize", asynthesize_wrapper(self._tracer)
+            )
 
 
 @_with_tracer_wrapper
