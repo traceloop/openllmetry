@@ -336,6 +336,8 @@ def _set_prompts(span, messages):
             if isinstance(content, list):
                 content = json.dumps(content)
             _set_span_attribute(span, f"{prefix}.content", content)
+        if msg.get("tool_call_id"):
+            _set_span_attribute(span, f"{prefix}.tool_call_id", msg.get("tool_call_id"))
         tool_calls = msg.get("tool_calls")
         if tool_calls:
             for i, tool_call in enumerate(tool_calls):
