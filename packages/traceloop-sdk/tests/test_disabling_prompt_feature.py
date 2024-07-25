@@ -12,14 +12,8 @@ def traceloop_client():
     return Traceloop(trace_content=False)
 
 @pytest.fixture
-def test_environment_variable(traceloop_client):
-    traceloop_client.init()
-    yield
-    os.environ["TRACELOOP_TRACE_CONTENT"] = "true"
-
-@pytest.fixture
-def test_trace_content_environment_variable():
-    assert os.getenv("TRACELOOP_TRACE_CONTENT") == "false"
+def openai_client():
+    return OpenAI()
     
 @pytest.mark.vcr
 def test_simple_workflow(exporter, openai_client):

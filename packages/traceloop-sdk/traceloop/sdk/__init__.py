@@ -1,5 +1,6 @@
 import os
 import sys
+import logging
 from pathlib import Path
 
 from typing import Optional, Set
@@ -81,7 +82,311 @@ class Traceloop:
         
         # if trace content is false, disable sensitive content in instruments
         if enable_content_tracing is False:
-            os.environ["TRACELOOP_TRACE_CONTENT"] = "false"
+            # pass configuration through all instruments
+            if instruments is not None:
+                for instrument in instruments:
+                    if instrument == Instruments.OPENAI:
+                        # set instrumentation
+                        try:
+                            from opentelemetry.instrumentation.openai import OpenAIInstrumentor
+                            
+                            # set sensitive data off
+                            instrumentor = OpenAIInstrumentor(
+                                enrich_assistant = False,
+                                enrich_token_usage = False,
+                            )
+                            
+                            if not instrumentor.is_instrumented_by_opentelemetry:
+                                instrumentor.instrument()
+                            
+                        except Exception as e:
+                            logging.error(f"Error initializing OpenAI instrumentor: {e}")
+                            Telemetry().log_exception(e)
+                            
+                    elif instrument == Instruments.ANTHROPIC:
+                        try:
+                            from opentelemetry.instrumentation.anthropic import AnthropicInstrumentor
+
+                            instrumentor = AnthropicInstrumentor(
+                                enrich_token_usage = False,
+                            )
+                            
+                            if not instrumentor.is_instrumented_by_opentelemetry:
+                                instrumentor.instrument()
+                        except Exception as e:
+                            logging.error(f"Error initializing Anthropic instrumentor: {e}")
+                            Telemetry().log_exception(e)
+                    elif instrument == Instruments.COHERE:
+                        try:
+                            from opentelemetry.instrumentation.cohere import CohereInstrumentor
+                            
+                            instrumentor = CohereInstrumentor(
+                                
+                            )
+                            if not instrumentor.is_instrumented_by_opentelemetry:
+                                instrumentor.instrument()
+                        except Exception as e:
+                            logging.error(f"Error initializing Cohere instrumentor: {e}")
+                            Telemetry().log_exception(e)
+                            
+                    elif instrument == Instruments.PINECONE:
+                        try:
+                            from opentelemetry.instrumentation.pinecone import PineconeInstrumentor
+
+                            instrumentor = PineconeInstrumentor(
+                                
+                            )
+                            if not instrumentor.is_instrumented_by_opentelemetry:
+                                instrumentor.instrument()
+                        except Exception as e:
+                            logging.error(f"Error initializing Pinecone instrumentor: {e}")
+                            Telemetry().log_exception(e)
+
+                    elif instrument == Instruments.CHROMA:
+                        try:
+                            from opentelemetry.instrumentation.chromadb import ChromaInstrumentor
+
+                            instrumentor = ChromaInstrumentor(
+                                
+                            )
+                            if not instrumentor.is_instrumented_by_opentelemetry:
+                                instrumentor.instrument()
+                        except Exception as e:
+                            logging.error(f"Error initializing Chroma instrumentor: {e}")
+                            Telemetry().log_exception(e)
+                    elif instrument == Instruments.GOOGLE_GENERATIVEAI:
+                        try:
+                            from opentelemetry.instrumentation.google_generativeai import (
+                                GoogleGenerativeAiInstrumentor,
+                            )
+
+                            instrumentor = GoogleGenerativeAiInstrumentor(
+                                
+                            )
+                            if not instrumentor.is_instrumented_by_opentelemetry:
+                                instrumentor.instrument()
+                        except Exception as e:
+                            logging.error(f"Error initializing Google Generative AI instrumentor: {e}")
+                            Telemetry().log_exception(e)
+                    elif instrument == Instruments.LANGCHAIN:
+                        try:
+                            from opentelemetry.instrumentation.langchain import LangchainInstrumentor
+
+                            instrumentor = LangchainInstrumentor(
+                                
+                            )
+                            if not instrumentor.is_instrumented_by_opentelemetry:
+                                instrumentor.instrument()
+                        except Exception as e:
+                            logging.error(f"Error initializing Langchain instrumentor: {e}")
+                            Telemetry().log_exception(e)
+                    elif instrument == Instruments.MISTRAL:
+                        try:
+                            from opentelemetry.instrumentation.MISTRAL import MistralAiInstrumentor
+
+                            instrumentor = MistralAiInstrumentor(
+                                
+                            )
+                            if not instrumentor.is_instrumented_by_opentelemetry:
+                                instrumentor.instrument()
+                        except Exception as e:
+                            logging.error(f"Error initializing Mistral instrumentor: {e}")
+                            Telemetry().log_exception(e)
+                    elif instrument == Instruments.OLLAMA:
+                        try:
+                            from opentelemetry.instrumentation.pinecone import OllamaInstrumentor
+
+                            instrumentor = OllamaInstrumentor(
+                                
+                            )
+                            if not instrumentor.is_instrumented_by_opentelemetry:
+                                instrumentor.instrument()
+                        except Exception as e:
+                            logging.error(f"Error initializing Ollama instrumentor: {e}")
+                            Telemetry().log_exception(e)
+                    elif instrument == Instruments.LLAMA_INDEX:
+                        try:
+                            from opentelemetry.instrumentation.llamaindex import LlamaIndexInstrumentor
+
+                            instrumentor = LlamaIndexInstrumentor(
+                                
+                            )
+                            if not instrumentor.is_instrumented_by_opentelemetry:
+                                instrumentor.instrument()
+                        except Exception as e:
+                            logging.error(f"Error initializing Llama Index instrumentor: {e}")
+                            Telemetry().log_exception(e)
+                    elif instrument == Instruments.MILVUS:
+                        try:
+                            from opentelemetry.instrumentation.milvus import MilvusInstrumentor
+
+                            instrumentor = MilvusInstrumentor(
+                                
+                            )
+                            if not instrumentor.is_instrumented_by_opentelemetry:
+                                instrumentor.instrument()
+                        except Exception as e:
+                            logging.error(f"Error initializing Milvus instrumentor: {e}")
+                            Telemetry().log_exception(e)
+                    elif instrument == Instruments.TRANSFORMERS:
+                        try:
+                            from opentelemetry.instrumentation.transformers import (
+                                TransformersInstrumentor,
+                            )
+
+                            instrumentor = TransformersInstrumentor(
+                                
+                            )
+                            if not instrumentor.is_instrumented_by_opentelemetry:
+                                instrumentor.instrument()
+                        except Exception as e:
+                            logging.error(f"Error initializing Transformers instrumentor: {e}")
+                            Telemetry().log_exception(e)
+                    elif instrument == Instruments.TOGETHER:
+                        try:
+                            from opentelemetry.instrumentation.together import TogetherAiInstrumentor
+
+                            instrumentor = TogetherAiInstrumentor(
+                                
+                            )
+                            if not instrumentor.is_instrumented_by_opentelemetry:
+                                instrumentor.instrument()
+                        except Exception as e:
+                            logging.error(f"Error initializing Together instrumentor: {e}")
+                            Telemetry().log_exception(e)
+                    elif instrument == Instruments.REQUESTS:
+                        try:
+                            from opentelemetry.instrumentation.requests import RequestsInstrumentor
+
+                            instrumentor = RequestsInstrumentor(
+                                
+                            )
+                            if not instrumentor.is_instrumented_by_opentelemetry:
+                                instrumentor.instrument()
+                        except Exception as e:
+                            logging.error(f"Error initializing Requests instrumentor: {e}")
+                            Telemetry().log_exception(e)
+                    elif instrument == Instruments.URLLIB3:
+                        try:
+                            from opentelemetry.instrumentation.urllib3 import URLLib3Instrumentor
+
+                            instrumentor = URLLib3Instrumentor(
+                                
+                            )
+                            if not instrumentor.is_instrumented_by_opentelemetry:
+                                instrumentor.instrument()
+                        except Exception as e:
+                            logging.error(f"Error initializing urllib3 instrumentor: {e}")
+                            Telemetry().log_exception(e)
+                    elif instrument == Instruments.PYMYSQL:
+                        try:
+                            from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
+
+                            instrumentor = SQLAlchemyInstrumentor(
+                                
+                            )
+                            if not instrumentor.is_instrumented_by_opentelemetry:
+                                instrumentor.instrument()
+                        except Exception as e:
+                            logging.error(f"Error initializing SQLAlchemy instrumentor: {e}")
+                            Telemetry().log_exception(e)
+                    elif instrument == Instruments.BEDROCK:
+                        try:
+                            from opentelemetry.instrumentation.bedrock import BedrockInstrumentor
+
+                            instrumentor = BedrockInstrumentor(
+                                
+                            )
+                            if not instrumentor.is_instrumented_by_opentelemetry:
+                                instrumentor.instrument()
+                        except Exception as e:
+                            logging.error(f"Error initializing Bedrock instrumentor: {e}")
+                            Telemetry().log_exception(e)
+                    elif instrument == Instruments.REPLICATE:
+                        try:
+                            from opentelemetry.instrumentation.replicate import ReplicateInstrumentor
+
+                            instrumentor = ReplicateInstrumentor(
+                                
+                            )
+                            if not instrumentor.is_instrumented_by_opentelemetry:
+                                instrumentor.instrument()
+                        except Exception as e:
+                            logging.error(f"Error initializing Replicate instrumentor: {e}")
+                            Telemetry().log_exception(e)
+                    elif instrument == Instruments.VERTEXAI:
+                        try:
+                            from opentelemetry.instrumentation.vertexai import VertexAiInstrumentor
+
+                            instrumentor = VertexAiInstrumentor(
+                                
+                            )
+                            if not instrumentor.is_instrumented_by_opentelemetry:
+                                instrumentor.instrument()
+                        except Exception as e:
+                            logging.error(f"Error initializing Vertex AI instrumentor: {e}")
+                            Telemetry().log_exception(e)
+                    elif instrument == Instruments.WATSONX:
+                        try:
+                            from opentelemetry.instrumentation.watsonx import WatsonxInstrumentor
+
+                            instrumentor = WatsonxInstrumentor(
+                                
+                            )
+                            if not instrumentor.is_instrumented_by_opentelemetry:
+                                instrumentor.instrument()
+                        except Exception as e:
+                            logging.error(f"Error initializing WatsonX instrumentor: {e}")
+                            Telemetry().log_exception(e)
+                    elif instrument == Instruments.WEAVIATE:
+                        try:
+                            from opentelemetry.instrumentation.weaviate import WeaviateInstrumentor
+
+                            instrumentor = WeaviateInstrumentor(
+                                
+                            )
+                            if not instrumentor.is_instrumented_by_opentelemetry:
+                                instrumentor.instrument()
+                        except Exception as e:
+                            logging.error(f"Error initializing Weaviate instrumentor: {e}")
+                            Telemetry().log_exception(e)
+                    elif instrument == Instruments.ALEPHALPHA:
+                        try:
+                            from opentelemetry.instrumentation.alephalpha import AlephAlphaInstrumentor
+
+                            instrumentor = AlephAlphaInstrumentor(
+                                
+                            )
+                            if not instrumentor.is_instrumented_by_opentelemetry:
+                                instrumentor.instrument()
+                        except Exception as e:
+                            logging.error(f"Error initializing AlephAlpha instrumentor: {e}")
+                            Telemetry().log_exception(e)
+                    elif instrument == Instruments.MARQO:
+                        try:
+                            from opentelemetry.instrumentation.marqo import MarqoInstrumentor
+
+                            instrumentor = MarqoInstrumentor(
+                                
+                            )
+                            if not instrumentor.is_instrumented_by_opentelemetry:
+                                instrumentor.instrument()
+                        except Exception as e:
+                            logging.error(f"Error initializing Marqo instrumentor: {e}")
+                            Telemetry().log_exception(e)
+                    else:
+                        print(
+                            Fore.RED
+                            + "Warning: "
+                            + instrument
+                            + " instrumentation does not exist."
+                        )
+                        print(
+                            # good error message
+                            "Usage:\n"
+                            + "from traceloop.sdk.instruments import Instruments\n"
+                        )
+                        print(Fore.RESET)
 
         if exporter or processor:
             print(Fore.GREEN + "Traceloop exporting traces to a custom exporter")
