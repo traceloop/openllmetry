@@ -86,6 +86,9 @@ def test_chat_tool_calls(exporter, openai_client):
         open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.content"]
         == "The weather in San Francisco is 70 degrees and sunny."
     )
+    assert (
+        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.tool_call_id"] == "1"
+    )
 
 
 @pytest.mark.vcr
@@ -136,6 +139,9 @@ def test_chat_pydantic_based_tool_calls(exporter, openai_client):
     assert (
         open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.content"]
         == "The weather in San Francisco is 70 degrees and sunny."
+    )
+    assert (
+        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.tool_call_id"] == "1"
     )
 
 
