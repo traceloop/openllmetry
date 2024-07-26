@@ -31,7 +31,7 @@ opentelemetry-semantic-conventions-ai = "0.3.6"
 
 [tool.poetry.group.dev.dependencies]
 autopep8 = "^2.2.0"
-flake8 = "7.0.0"
+flake8 = "7.1.0"
 pytest = "^8.2.2"
 pytest-sugar = "1.0.0"
 
@@ -49,11 +49,11 @@ opentelemetry-sdk = "^1.23.0"
 opentelemetry-instrumentation-openai = {path="../opentelemetry-instrumentation-openai", develop=true}
 opentelemetry-instrumentation-bedrock = {path="../opentelemetry-instrumentation-bedrock", develop=true}
 text-generation = "^0.7.0"
-anthropic = ">=0.23,<0.29"
+anthropic = ">=0.23,<0.32"
 boto3 = "^1.34.120"
 langchain-anthropic = "^0.1.15"
 langchain-openai = "^0.1.8"
-langchain-cohere = "0.1.8"
+langchain-cohere = "0.1.9"
 pydantic = "^2.7.1"
 
 langchainhub = "^0.1.20"
