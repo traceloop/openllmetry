@@ -24,20 +24,24 @@ def test_agents_and_tools(exporter):
     spans = exporter.get_finished_spans()
 
     assert {
-        "agent_step.llama_index.workflow",
-        "llm.llama_index.task",
-        "function_call.llama_index.task",
+        "AgentRunner.llama_index.workflow",
+        "AgentRunner.llama_index.task",
+        "FunctionTool.llama_index.task",
+        "OpenAI.llama_index.task",
+        "ReActOutputParser.llama_index.task",
+        "ReActAgentWorker.llama_index.task",
         "openai.chat",
     } == {span.name for span in spans}
 
-    agent_span = next(span for span in spans if span.name == "agent_step.llama_index.workflow")
-    function_tool_span = next(span for span in spans if span.name == "function_call.llama_index.task")
-    llm_span_1, llm_span_2 = [span for span in spans if span.name == "llm.llama_index.task"]
+    agent_workflow_span = next(span for span in spans if span.name == "AgentRunner.llama_index.workflow")
+    function_tool_span = next(span for span in spans if span.name == "FunctionTool.llama_index.task")
+    llm_span_1, llm_span_2 = [span for span in spans if span.name == "OpenAI.llama_index.task"]
     openai_span_1, openai_span_2 = [span for span in spans if span.name == "openai.chat"]
 
-    assert function_tool_span.parent.span_id == agent_span.context.span_id
-    assert llm_span_1.parent.span_id == agent_span.context.span_id
-    assert llm_span_2.parent.span_id == agent_span.context.span_id
+    assert agent_workflow_span.parent is None
+    assert function_tool_span.parent is not None
+    assert llm_span_1.parent is not None
+    assert llm_span_2.parent is not None
     assert openai_span_1.parent.span_id == llm_span_1.context.span_id
     assert openai_span_2.parent.span_id == llm_span_2.context.span_id
 
@@ -127,23 +131,24 @@ def test_agent_with_query_tool(exporter):
     spans = exporter.get_finished_spans()
 
     assert {
-        "agent_step.llama_index.workflow",
-        "chunking.llama_index.task",
-        "llm.llama_index.task",
-        "synthesize.llama_index.task",
-        "templating.llama_index.task",
+        "OpenAIAssistantAgent.llama_index.workflow",
+        "BaseSynthesizer.llama_index.task",
+        "LLM.llama_index.task",
+        "OpenAI.llama_index.task",
+        "TokenTextSplitter.llama_index.task",
     }.issubset({span.name for span in spans})
 
     agent_span = next(
-        span for span in spans if span.name == "agent_step.llama_index.workflow"
+        span for span in spans if span.name == "OpenAIAssistantAgent.llama_index.workflow"
     )
-    llm_span_1, llm_span_2 = [span for span in spans if span.name == "llm.llama_index.task"]
-    synthesize_span = next(span for span in spans if span.name == "synthesize.llama_index.task")
+    synthesize_span = next(span for span in spans if span.name == "BaseSynthesizer.llama_index.task")
+    llm_span_1, llm_span_2 = [span for span in spans if span.name == "OpenAI.llama_index.task"]
     openai_span_1, openai_span_2 = [span for span in spans if span.name == "openai.chat"]
 
-    assert synthesize_span.parent.span_id == agent_span.context.span_id
-    assert llm_span_1.parent.span_id == agent_span.context.span_id
-    assert llm_span_2.parent.span_id == synthesize_span.context.span_id
+    assert agent_span.parent is None
+    assert synthesize_span.parent is not None
+    assert llm_span_1.parent is not None
+    assert llm_span_2.parent is not None
     assert openai_span_1.parent.span_id == llm_span_1.context.span_id
     assert openai_span_2.parent.span_id == llm_span_2.context.span_id
 

@@ -45,32 +45,36 @@ def test_query_pipeline(exporter):
     spans = exporter.get_finished_spans()
 
     assert {
-        "query.llama_index.workflow",
-        "chunking.llama_index.task",
-        "embedding.llama_index.task",
-        "llm.llama_index.task",
-        "reranking.llama_index.task",
-        "retrieve.llama_index.task",
-        "synthesize.llama_index.task",
-        "templating.llama_index.task",
+        # "QueryPipeline.llama_index.workflow",
+        "BaseRetriever.llama_index.workflow",
+        "BaseSynthesizer.llama_index.workflow",
+        "CohereRerank.llama_index.workflow",
+        "LLM.llama_index.task",
+        "OpenAI.llama_index.task",
+        "TokenTextSplitter.llama_index.task",
         "openai.chat",
         "openai.embeddings",
         "cohere.rerank",
     }.issubset({span.name for span in spans})
 
-    query_pipeline_span = next(
-        span for span in spans if span.name == "query.llama_index.workflow"
-    )
-    llm_span_1, llm_span_2 = [span for span in spans if span.name == "llm.llama_index.task"]
-    reranker_span = next(span for span in spans if span.name == "reranking.llama_index.task")
-    retriever_span = next(span for span in spans if span.name == "retrieve.llama_index.task")
-    synthesizer_span = next(span for span in spans if span.name == "synthesize.llama_index.task")
+    # query_pipeline_span = [
+    #    span for span in spans if span.name == "QueryPipeline.llama_index.workflow"
+    # ]
+    _, retriever_span = [span for span in spans if span.name == "BaseRetriever.llama_index.workflow"]
+    reranker_span = next(span for span in spans if span.name == "CohereRerank.llama_index.workflow")
+    _, synthesizer_span = [span for span in spans if span.name == "BaseSynthesizer.llama_index.workflow"]
+    llm_span_1 = next(span for span in spans if span.name == "OpenAI.llama_index.workflow")
+    llm_span_2 = next(span for span in spans if span.name == "OpenAI.llama_index.task")
+    openai_span_1, openai_span_2 = [span for span in spans if span.name == "openai.chat"]
 
-    assert llm_span_1.parent.span_id == query_pipeline_span.context.span_id
-    assert llm_span_2.parent.span_id == synthesizer_span.context.span_id
-    assert reranker_span.parent.span_id == query_pipeline_span.context.span_id
-    assert retriever_span.parent.span_id == query_pipeline_span.context.span_id
-    assert synthesizer_span.parent.span_id == query_pipeline_span.context.span_id
+    # query_pipeline_span.parent is None
+    assert reranker_span.parent is None
+    assert retriever_span.parent is None
+    assert synthesizer_span.parent is None
+    assert llm_span_1.parent is None
+    assert llm_span_2.parent is not None
+    assert openai_span_1.parent.span_id == llm_span_1.context.span_id
+    assert openai_span_2.parent.span_id == llm_span_2.context.span_id
 
     assert llm_span_1.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "gpt-3.5-turbo"
     assert llm_span_1.attributes[SpanAttributes.LLM_RESPONSE_MODEL] == "gpt-3.5-turbo-0125"

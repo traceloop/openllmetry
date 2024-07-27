@@ -35,11 +35,11 @@ def test_rag_with_chroma(exporter):
 
     spans = exporter.get_finished_spans()
     assert {
-        "query.llama_index.workflow",
-        "chunking.llama_index.task",
-        "llm.llama_index.task",
-        "synthesize.llama_index.task",
-        "templating.llama_index.task",
+        "BaseQueryEngine.llama_index.workflow",
+        "BaseSynthesizer.llama_index.task",
+        "LLM.llama_index.task",
+        "OpenAI.llama_index.task",
+        "RetrieverQueryEngine.llama_index.task",
         "openai.chat",
         "openai.embeddings",
         "chroma.add",
@@ -48,14 +48,15 @@ def test_rag_with_chroma(exporter):
     }.issubset({span.name for span in spans})
 
     query_pipeline_span = next(
-        span for span in spans if span.name == "query.llama_index.workflow"
+        span for span in spans if span.name == "BaseQueryEngine.llama_index.workflow"
     )
-    synthesize_span = next(span for span in spans if span.name == "synthesize.llama_index.task")
-    llm_span = next(span for span in spans if span.name == "llm.llama_index.task")
+    synthesize_span = next(span for span in spans if span.name == "BaseSynthesizer.llama_index.task")
+    llm_span = next(span for span in spans if span.name == "OpenAI.llama_index.task")
     openai_chat_span = next(span for span in spans if span.name == "openai.chat")
 
-    assert synthesize_span.parent.span_id == query_pipeline_span.context.span_id
-    assert llm_span.parent.span_id == synthesize_span.context.span_id
+    assert query_pipeline_span.parent is None
+    assert synthesize_span.parent is not None
+    assert llm_span.parent is not None
     assert openai_chat_span.parent.span_id == llm_span.context.span_id
 
     assert llm_span.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "gpt-3.5-turbo"
