@@ -41,24 +41,6 @@ logger = logging.getLogger(__name__)
 _instruments = ("llama-index >= 0.7.0",)
 
 
-WRAPPED_METHODS = [
-
-]
-
-'''
-{
-        "package": "llama_index.core.tools.function_tool",
-        "class": "FunctionTool",
-        "method": "call",
-    },
-    {
-        "package": "llama_index.core.tools.query_engine",
-        "class": "QueryEngineTool",
-        "method": "call",
-    },
-'''
-
-
 class LlamaIndexInstrumentor(BaseInstrumentor):
     """An instrumentor for LlamaIndex SDK."""
 

@@ -8,7 +8,6 @@ from opentelemetry.instrumentation.llamaindex.utils import (
     process_response,
     start_as_current_span_async,
 )
-from opentelemetry.instrumentation.llamaindex.callback_wrapper import callback_wrapper
 from opentelemetry.semconv.ai import SpanAttributes, TraceloopSpanKindValues
 
 
@@ -34,31 +33,19 @@ class BaseAgentInstrumentor:
         for module in TO_INSTRUMENT:
             try:
                 package_version("llama-index-core")
-                self._instrument_module(module["v10_module"], module["class"], is_callback=True)
+                self._instrument_module(module["v10_module"], module["class"])
                 self._instrument_module(module["v10_legacy_module"], module["class"])
 
             except PackageNotFoundError:
                 pass  # not supported before v10
 
-    def _instrument_module(self, module_name, class_name, is_callback=False):
-        if is_callback:
-            wrap_function_wrapper(
-                module_name,
-                f"{class_name}.chat",
-                callback_wrapper(self._tracer),
-            )
-            wrap_function_wrapper(
-                module_name,
-                f"{class_name}.achat",
-                callback_wrapper(self._tracer),
-            )
-        else:
-            wrap_function_wrapper(
-                module_name, f"{class_name}.chat", query_wrapper(self._tracer)
-            )
-            wrap_function_wrapper(
-                module_name, f"{class_name}.achat", aquery_wrapper(self._tracer)
-            )
+    def _instrument_module(self, module_name, class_name):
+        wrap_function_wrapper(
+            module_name, f"{class_name}.chat", query_wrapper(self._tracer)
+        )
+        wrap_function_wrapper(
+            module_name, f"{class_name}.achat", aquery_wrapper(self._tracer)
+        )
 
 
 @_with_tracer_wrapper

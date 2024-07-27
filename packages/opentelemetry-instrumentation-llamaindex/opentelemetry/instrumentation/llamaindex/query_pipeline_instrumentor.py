@@ -9,7 +9,6 @@ from opentelemetry.instrumentation.llamaindex.utils import (
     process_response,
     start_as_current_span_async,
 )
-from opentelemetry.instrumentation.llamaindex.callback_wrapper import callback_wrapper
 from opentelemetry.semconv.ai import SpanAttributes, TraceloopSpanKindValues
 
 V10_MODULE_NAME = "llama_index.core.query_pipeline.query"
@@ -26,31 +25,19 @@ class QueryPipelineInstrumentor:
     def instrument(self):
         try:
             package_version("llama-index-core")
-            self._instrument_module(V10_MODULE_NAME, is_callback=True)
+            self._instrument_module(V10_MODULE_NAME)
             self._instrument_module(V10_LEGACY_MODULE_NAME)
 
         except PackageNotFoundError:
             pass  # not supported before v10
 
-    def _instrument_module(self, module_name, is_callback=False):
-        if is_callback:
-            wrap_function_wrapper(
-                module_name,
-                f"{CLASS_NAME}.run",
-                callback_wrapper(self._tracer),
-            )
-            wrap_function_wrapper(
-                module_name,
-                f"{CLASS_NAME}.arun",
-                callback_wrapper(self._tracer),
-            )
-        else:
-            wrap_function_wrapper(
-                module_name, f"{CLASS_NAME}.run", run_wrapper(self._tracer)
-            )
-            wrap_function_wrapper(
-                module_name, f"{CLASS_NAME}.arun", arun_wrapper(self._tracer)
-            )
+    def _instrument_module(self, module_name):
+        wrap_function_wrapper(
+            module_name, f"{CLASS_NAME}.run", run_wrapper(self._tracer)
+        )
+        wrap_function_wrapper(
+            module_name, f"{CLASS_NAME}.arun", arun_wrapper(self._tracer)
+        )
 
 
 def set_workflow_context():
