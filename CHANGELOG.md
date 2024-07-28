@@ -1,3 +1,13 @@
+## v0.26.0 (2024-07-26)
+
+### Feat
+
+- **openai**: add tool call id (#1664)
+
+### Fix
+
+- **pinecone**: support v5 (#1665)
+
 ## v0.25.6 (2024-07-23)
 
 ### Fix

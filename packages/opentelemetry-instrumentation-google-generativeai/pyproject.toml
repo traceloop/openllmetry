@@ -8,7 +8,7 @@ show_missing = true
 
 [tool.poetry]
 name = "opentelemetry-instrumentation-google-generativeai"
-version = "0.25.6"
+version = "0.26.0"
 description = "OpenTelemetry Google Generative AI instrumentation"
 authors = [
   "Gal Kleinman <gal@traceloop.com>",
