@@ -42,6 +42,9 @@ from opentelemetry.trace.status import Status, StatusCode
 from opentelemetry.instrumentation.openai.utils import is_openai_v1, is_azure_openai
 
 SPAN_NAME = "openai.chat"
+PROMPT_FILTER_KEY = "prompt_filter_results"
+CONTENT_FILTER_KEY = "content_filter_results"
+
 LLM_REQUEST_TYPE = LLMRequestTypeValues.CHAT
 
 logger = logging.getLogger(__name__)
@@ -373,9 +376,16 @@ def _set_completions(span, choices):
             span, f"{prefix}.finish_reason", choice.get("finish_reason")
         )
 
+        if choice.get("content_filter_results"):
+            _set_span_attribute(
+                span, f"{prefix}.{CONTENT_FILTER_KEY}",
+                json.dumps(choice.get("content_filter_results"))
+            )
+
         if choice.get("finish_reason") == "content_filter":
             _set_span_attribute(span, f"{prefix}.role", "assistant")
             _set_span_attribute(span, f"{prefix}.content", "FILTERED")
+
             return
 
         message = choice.get("message")
@@ -770,6 +780,10 @@ def _accumulate_stream_items(item, complete_response):
 
     complete_response["model"] = item.get("model")
 
+    # prompt filter results
+    if item.get("prompt_filter_results"):
+        complete_response["prompt_filter_results"] = item.get("prompt_filter_results")
+
     for choice in item.get("choices"):
         index = choice.get("index")
         if len(complete_response.get("choices")) <= index:
@@ -779,11 +793,14 @@ def _accumulate_stream_items(item, complete_response):
         complete_choice = complete_response.get("choices")[index]
         if choice.get("finish_reason"):
             complete_choice["finish_reason"] = choice.get("finish_reason")
+        if choice.get("content_filter_results"):
+            complete_choice["content_filter_results"] = choice.get("content_filter_results")
 
         delta = choice.get("delta")
 
         if delta and delta.get("content"):
             complete_choice["message"]["content"] += delta.get("content")
+
         if delta and delta.get("role"):
             complete_choice["message"]["role"] = delta.get("role")
         if delta and delta.get("tool_calls"):
