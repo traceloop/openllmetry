@@ -147,6 +147,7 @@ def test_chat_pydantic_based_tool_calls(exporter, openai_client):
 
 @pytest.mark.vcr
 def test_chat_streaming(exporter, openai_client):
+
     response = openai_client.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=[{"role": "user", "content": "Tell me a joke about opentelemetry"}],

@@ -17,6 +17,8 @@ from opentelemetry.instrumentation.openai.utils import (
 )
 
 OPENAI_LLM_USAGE_TOKEN_TYPES = ["prompt_tokens", "completion_tokens"]
+PROMPT_FILTER_KEY = "prompt_filter_results"
+PROMPT_ERROR = "prompt_error"
 
 # tiktoken encodings map for different model, key is model_name, value is tiktoken encoding
 tiktoken_encodings = {}
@@ -138,6 +140,14 @@ def _set_response_attributes(span, response):
     if not span.is_recording():
         return
 
+    if "error" in response:
+        _set_span_attribute(
+            span,
+            f"{SpanAttributes.LLM_PROMPTS}.{PROMPT_ERROR}",
+            json.dumps(response.get("error"))
+        )
+        return
+
     _set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, response.get("model"))
 
     _set_span_attribute(
@@ -145,6 +155,7 @@ def _set_response_attributes(span, response):
         SpanAttributes.LLM_OPENAI_RESPONSE_SYSTEM_FINGERPRINT,
         response.get("system_fingerprint"),
     )
+    _log_prompt_filter(span, response)
 
     usage = response.get("usage")
     if not usage:
@@ -164,8 +175,16 @@ def _set_response_attributes(span, response):
     _set_span_attribute(
         span, SpanAttributes.LLM_USAGE_PROMPT_TOKENS, usage.get("prompt_tokens")
     )
-
     return
+
+
+def _log_prompt_filter(span, response_dict):
+    if response_dict.get("prompt_filter_results"):
+        _set_span_attribute(
+            span,
+            f"{SpanAttributes.LLM_PROMPTS}.{PROMPT_FILTER_KEY}",
+            json.dumps(response_dict.get("prompt_filter_results"))
+        )
 
 
 @dont_throw
