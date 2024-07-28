@@ -90,6 +90,8 @@ class OpenLLSpanHandler(BaseSpanHandler[SpanHolder]):
             if parent
             else TraceloopSpanKindValues.WORKFLOW.value
         )
+        # Take the class name from id_ where id_ is e.g.
+        # 'SentenceSplitter.split_text_metadata_aware-a2f2a780-2fa6-4682-a88e-80dc1f1ebe6a'
         class_name = LLAMA_INDEX_REGEX.match(id_).groups()[0]
         span_name = f"{class_name}.llama_index.{kind}"
         span = self._tracer.start_span(

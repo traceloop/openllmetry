@@ -11,6 +11,7 @@ from llama_index.postprocessor.cohere_rerank import CohereRerank
 from opentelemetry.semconv.ai import SpanAttributes
 
 
+@pytest.mark.skip("Needs https://github.com/run-llama/llama_index/pull/14997")
 @pytest.mark.vcr
 def test_query_pipeline(exporter):
     docs = SimpleDirectoryReader("./data/paul_graham/").load_data()
@@ -45,10 +46,10 @@ def test_query_pipeline(exporter):
     spans = exporter.get_finished_spans()
 
     assert {
-        # "QueryPipeline.llama_index.workflow",
-        "BaseRetriever.llama_index.workflow",
-        "BaseSynthesizer.llama_index.workflow",
-        "CohereRerank.llama_index.workflow",
+        "QueryPipeline.llama_index.workflow",
+        "BaseRetriever.llama_index.task",
+        "BaseSynthesizer.llama_index.task",
+        "CohereRerank.llama_index.task",
         "LLM.llama_index.task",
         "OpenAI.llama_index.task",
         "TokenTextSplitter.llama_index.task",
@@ -57,21 +58,20 @@ def test_query_pipeline(exporter):
         "cohere.rerank",
     }.issubset({span.name for span in spans})
 
-    # query_pipeline_span = [
-    #    span for span in spans if span.name == "QueryPipeline.llama_index.workflow"
-    # ]
-    _, retriever_span = [span for span in spans if span.name == "BaseRetriever.llama_index.workflow"]
-    reranker_span = next(span for span in spans if span.name == "CohereRerank.llama_index.workflow")
-    _, synthesizer_span = [span for span in spans if span.name == "BaseSynthesizer.llama_index.workflow"]
-    llm_span_1 = next(span for span in spans if span.name == "OpenAI.llama_index.workflow")
-    llm_span_2 = next(span for span in spans if span.name == "OpenAI.llama_index.task")
+    query_pipeline_span = next(
+        span for span in spans if span.name == "QueryPipeline.llama_index.workflow"
+    )
+    retriever_span = next(span for span in spans if span.name == "BaseRetriever.llama_index.task")
+    reranker_span = next(span for span in spans if span.name == "CohereRerank.llama_index.task")
+    synthesizer_span = next(span for span in spans if span.name == "BaseSynthesizer.llama_index.task")
+    llm_span_1, llm_span_2 = [span for span in spans if span.name == "OpenAI.llama_index.task"]
     openai_span_1, openai_span_2 = [span for span in spans if span.name == "openai.chat"]
 
-    # query_pipeline_span.parent is None
-    assert reranker_span.parent is None
-    assert retriever_span.parent is None
-    assert synthesizer_span.parent is None
-    assert llm_span_1.parent is None
+    assert query_pipeline_span.parent is None
+    assert reranker_span.parent is not None
+    assert retriever_span.parent is not None
+    assert synthesizer_span.parent is not None
+    assert llm_span_1.parent is not None
     assert llm_span_2.parent is not None
     assert openai_span_1.parent.span_id == llm_span_1.context.span_id
     assert openai_span_2.parent.span_id == llm_span_2.context.span_id
