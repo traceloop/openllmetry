@@ -1111,6 +1111,25 @@ openai = ">=1.32.0,<2.0.0"
 tiktoken = ">=0.7,<1"
 
 [[package]]
+name = "langchain-postgres"
+version = "0.0.9"
+description = "An integration package connecting Postgres and LangChain"
+optional = false
+python-versions = "<4.0.0,>=3.8.1"
+files = [
+    {file = "langchain_postgres-0.0.9-py3-none-any.whl", hash = "sha256:efbd8afbb7cc810fa6dfa87dd269e466c70d9af9f74aececcf47893e4b51535e"},
+    {file = "langchain_postgres-0.0.9.tar.gz", hash = "sha256:f68e1981e79f2130ae34053683b90eea63335d7ef451db3f870a36b48d5675ab"},
+]
+
+[package.dependencies]
+langchain-core = ">=0.1.50,<0.3"
+numpy = ">=1,<2"
+pgvector = ">=0.2.5,<0.3.0"
+psycopg = ">=3,<4"
+psycopg-pool = ">=3.2.1,<4.0.0"
+sqlalchemy = ">=2,<3"
+
+[[package]]
 name = "langchain-text-splitters"
 version = "0.2.2"
 description = "LangChain text splitting utilities"
@@ -1442,6 +1461,27 @@ type = "directory"
 url = "../opentelemetry-instrumentation-openai"
 
 [[package]]
+name = "opentelemetry-instrumentation-sqlalchemy"
+version = "0.46b0"
+description = "OpenTelemetry SQLAlchemy instrumentation"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "opentelemetry_instrumentation_sqlalchemy-0.46b0-py3-none-any.whl", hash = "sha256:9f04bb512023689841d9c19d99ccb101995af5dd7241bebca3829a919d045fb4"},
+    {file = "opentelemetry_instrumentation_sqlalchemy-0.46b0.tar.gz", hash = "sha256:067d7be297c590912e9e2a4cc39b68891230ed3c0646eb5375b493608205c176"},
+]
+
+[package.dependencies]
+opentelemetry-api = ">=1.12,<2.0"
+opentelemetry-instrumentation = "0.46b0"
+opentelemetry-semantic-conventions = "0.46b0"
+packaging = ">=21.0"
+wrapt = ">=1.11.2"
+
+[package.extras]
+instruments = ["sqlalchemy"]
+
+[[package]]
 name = "opentelemetry-sdk"
 version = "1.25.0"
 description = "OpenTelemetry Python SDK"
@@ -1568,6 +1608,19 @@ files = [
 dev = ["jinja2"]
 
 [[package]]
+name = "pgvector"
+version = "0.2.5"
+description = "pgvector support for Python"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "pgvector-0.2.5-py2.py3-none-any.whl", hash = "sha256:5e5e93ec4d3c45ab1fa388729d56c602f6966296e19deee8878928c6d567e41b"},
+]
+
+[package.dependencies]
+numpy = "*"
+
+[[package]]
 name = "pluggy"
 version = "1.5.0"
 description = "plugin and hook calling mechanisms for python"
@@ -1581,6 +1634,43 @@ files = [
 [package.extras]
 dev = ["pre-commit", "tox"]
 testing = ["pytest", "pytest-benchmark"]
+
+[[package]]
+name = "psycopg"
+version = "3.2.1"
+description = "PostgreSQL database adapter for Python"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "psycopg-3.2.1-py3-none-any.whl", hash = "sha256:ece385fb413a37db332f97c49208b36cf030ff02b199d7635ed2fbd378724175"},
+    {file = "psycopg-3.2.1.tar.gz", hash = "sha256:dc8da6dc8729dacacda3cc2f17d2c9397a70a66cf0d2b69c91065d60d5f00cb7"},
+]
+
+[package.dependencies]
+typing-extensions = ">=4.4"
+tzdata = {version = "*", markers = "sys_platform == \"win32\""}
+
+[package.extras]
+binary = ["psycopg-binary (==3.2.1)"]
+c = ["psycopg-c (==3.2.1)"]
+dev = ["ast-comments (>=1.1.2)", "black (>=24.1.0)", "codespell (>=2.2)", "dnspython (>=2.1)", "flake8 (>=4.0)", "mypy (>=1.6)", "types-setuptools (>=57.4)", "wheel (>=0.37)"]
+docs = ["Sphinx (>=5.0)", "furo (==2022.6.21)", "sphinx-autobuild (>=2021.3.14)", "sphinx-autodoc-typehints (>=1.12)"]
+pool = ["psycopg-pool"]
+test = ["anyio (>=4.0)", "mypy (>=1.6)", "pproxy (>=2.7)", "pytest (>=6.2.5)", "pytest-cov (>=3.0)", "pytest-randomly (>=3.5)"]
+
+[[package]]
+name = "psycopg-pool"
+version = "3.2.2"
+description = "Connection Pool for Psycopg"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "psycopg_pool-3.2.2-py3-none-any.whl", hash = "sha256:273081d0fbfaced4f35e69200c89cb8fbddfe277c38cc86c235b90a2ec2c8153"},
+    {file = "psycopg_pool-3.2.2.tar.gz", hash = "sha256:9e22c370045f6d7f2666a5ad1b0caf345f9f1912195b0b25d0d3bcc4f3a7389c"},
+]
+
+[package.dependencies]
+typing-extensions = ">=4.4"
 
 [[package]]
 name = "pycodestyle"
@@ -2441,6 +2531,17 @@ mypy-extensions = ">=0.3.0"
 typing-extensions = ">=3.7.4"
 
 [[package]]
+name = "tzdata"
+version = "2024.1"
+description = "Provider of IANA time zone data"
+optional = false
+python-versions = ">=2"
+files = [
+    {file = "tzdata-2024.1-py2.py3-none-any.whl", hash = "sha256:9068bc196136463f5245e51efda838afa15aaeca9903f49050dfa2679db4d252"},
+    {file = "tzdata-2024.1.tar.gz", hash = "sha256:2674120f8d891909751c38abcdfd386ac0a5a1127954fbc332af6b5ceae07efd"},
+]
+
+[[package]]
 name = "urllib3"
 version = "1.26.19"
 description = "HTTP library with thread-safe connection pooling, file post, and more."
@@ -2695,4 +2796,4 @@ instruments = []
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<4"
-content-hash = "fde6763948cadc8f76d3fd6d8782a5cbb88ca5eb8dad60f0cfc718b459376098"
+content-hash = "906d04992362e6a583ea743dfa950ee257057858b58153b3d69facad95ea0bca"

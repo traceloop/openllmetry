@@ -6,6 +6,7 @@ from opentelemetry import trace
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
 from opentelemetry.sdk.trace.export import SimpleSpanProcessor
+from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
 from opentelemetry.instrumentation.openai import OpenAIInstrumentor
 from opentelemetry.instrumentation.bedrock import BedrockInstrumentor
 from opentelemetry.instrumentation.langchain import LangchainInstrumentor
@@ -22,6 +23,7 @@ def exporter():
     provider.add_span_processor(processor)
     trace.set_tracer_provider(provider)
 
+    SQLAlchemyInstrumentor().instrument()
     OpenAIInstrumentor().instrument()
     BedrockInstrumentor().instrument()
     LangchainInstrumentor().instrument()
