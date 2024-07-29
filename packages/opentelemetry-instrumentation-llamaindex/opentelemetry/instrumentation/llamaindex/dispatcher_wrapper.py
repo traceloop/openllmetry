@@ -97,7 +97,6 @@ class OpenLLSpanHandler(BaseSpanHandler[SpanHolder]):
         span = self._tracer.start_span(
             span_name,
             context=parent.context if parent else None,
-            kind=kind,
         )
         current_context = set_span_in_context(span, context=parent.context if parent else None)
         token = context_api.attach(current_context)
