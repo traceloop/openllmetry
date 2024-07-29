@@ -21,13 +21,13 @@ include = "opentelemetry/instrumentation/replicate"
 [tool.poetry.dependencies]
 python = ">=3.9,<4"
 opentelemetry-api = "^1.25.0"
-opentelemetry-instrumentation = "^0.46b0"
+opentelemetry-instrumentation = ">=0.46,<0.48"
 opentelemetry-semantic-conventions = "^0.46b0"
 opentelemetry-semantic-conventions-ai = "0.3.6"
 
 [tool.poetry.group.dev.dependencies]
 autopep8 = "^2.2.0"
-flake8 = "7.0.0"
+flake8 = "7.1.0"
 pytest = "^8.2.2"
 pytest-sugar = "1.0.0"
 
@@ -37,7 +37,7 @@ pytest-sugar = "1.0.0"
 vcrpy = "^6.0.1"
 pytest-recording = "^0.13.1"
 opentelemetry-sdk = "^1.23.0"
-replicate = ">=0.23.1,<0.27.0"
+replicate = ">=0.23.1,<0.31.0"
 
 [build-system]
 requires = ["poetry-core"]
