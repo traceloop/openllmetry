@@ -25,14 +25,14 @@ include = "opentelemetry/instrumentation/bedrock"
 [tool.poetry.dependencies]
 python = ">=3.9,<4"
 opentelemetry-api = "^1.25.0"
-opentelemetry-instrumentation = "^0.46b0"
+opentelemetry-instrumentation = ">=0.46,<0.48"
 opentelemetry-semantic-conventions = "^0.46b0"
 opentelemetry-semantic-conventions-ai = "0.3.6"
 anthropic = ">=0.17.0"
 
 [tool.poetry.group.dev.dependencies]
 autopep8 = "^2.2.0"
-flake8 = "7.0.0"
+flake8 = "7.1.0"
 
 [tool.poetry.group.test.dependencies]
 boto3 = "^1.34.120"
