@@ -1,4 +1,4 @@
-from opentelemetry.semconv.ai import SpanAttributes
+from opentelemetry.semconv_ai import SpanAttributes
 from traceloop.sdk.decorators import task, workflow
 
 

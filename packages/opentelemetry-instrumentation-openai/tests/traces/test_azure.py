@@ -1,5 +1,5 @@
 import pytest
-from opentelemetry.semconv.ai import SpanAttributes
+from opentelemetry.semconv_ai import SpanAttributes
 import json
 
 PROMPT_FILTER_KEY = "prompt_filter_results"
@@ -66,22 +66,10 @@ def test_chat_content_filtering(exporter, azure_openai_client):
 
     content_filter_results = json.loads(content_filter_json)
 
-    assert (
-        content_filter_results["hate"]["filtered"]
-        is True
-    )
-    assert (
-        content_filter_results["hate"]["severity"]
-        == "high"
-    )
-    assert (
-        content_filter_results["self_harm"]["filtered"]
-        is False
-    )
-    assert (
-        content_filter_results["self_harm"]["severity"]
-        == "safe"
-    )
+    assert content_filter_results["hate"]["filtered"] is True
+    assert content_filter_results["hate"]["severity"] == "high"
+    assert content_filter_results["self_harm"]["filtered"] is False
+    assert content_filter_results["self_harm"]["severity"] == "safe"
 
 
 @pytest.mark.vcr
@@ -98,9 +86,13 @@ def test_prompt_content_filtering(exporter, azure_openai_client):
     ]
     open_ai_span = spans[0]
 
-    assert isinstance(open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.{PROMPT_ERROR}"], str)
+    assert isinstance(
+        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.{PROMPT_ERROR}"], str
+    )
 
-    error = json.loads(open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.{PROMPT_ERROR}"])
+    error = json.loads(
+        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.{PROMPT_ERROR}"]
+    )
 
     assert "innererror" in error
 
@@ -154,8 +146,13 @@ def test_chat_streaming(exporter, azure_openai_client):
         open_ai_span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.{PROMPT_FILTER_KEY}")
     )
     assert prompt_filter_results[0]["prompt_index"] == 0
-    assert prompt_filter_results[0]["content_filter_results"]["hate"]["severity"] == "safe"
-    assert prompt_filter_results[0]["content_filter_results"]["self_harm"]["filtered"] is False
+    assert (
+        prompt_filter_results[0]["content_filter_results"]["hate"]["severity"] == "safe"
+    )
+    assert (
+        prompt_filter_results[0]["content_filter_results"]["self_harm"]["filtered"]
+        is False
+    )
 
 
 @pytest.mark.vcr

@@ -7,7 +7,7 @@ from wrapt import ObjectProxy
 
 from opentelemetry import context as context_api
 from opentelemetry.metrics import Counter, Histogram
-from opentelemetry.semconv.ai import (
+from opentelemetry.semconv_ai import (
     SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
     SpanAttributes,
     LLMRequestTypeValues,
@@ -378,8 +378,9 @@ def _set_completions(span, choices):
 
         if choice.get("content_filter_results"):
             _set_span_attribute(
-                span, f"{prefix}.{CONTENT_FILTER_KEY}",
-                json.dumps(choice.get("content_filter_results"))
+                span,
+                f"{prefix}.{CONTENT_FILTER_KEY}",
+                json.dumps(choice.get("content_filter_results")),
             )
 
         if choice.get("finish_reason") == "content_filter":
@@ -794,7 +795,9 @@ def _accumulate_stream_items(item, complete_response):
         if choice.get("finish_reason"):
             complete_choice["finish_reason"] = choice.get("finish_reason")
         if choice.get("content_filter_results"):
-            complete_choice["content_filter_results"] = choice.get("content_filter_results")
+            complete_choice["content_filter_results"] = choice.get(
+                "content_filter_results"
+            )
 
         delta = choice.get("delta")
 

@@ -4,7 +4,7 @@ import os
 import pytest
 import weaviate
 
-from opentelemetry.semconv.ai import SpanAttributes
+from opentelemetry.semconv_ai import SpanAttributes
 
 
 @pytest.fixture

@@ -1,5 +1,5 @@
 from contextlib import contextmanager
-from opentelemetry.semconv.ai import SpanAttributes
+from opentelemetry.semconv_ai import SpanAttributes
 from opentelemetry.trace import Span
 from pydantic import BaseModel
 from traceloop.sdk.tracing.context_manager import get_tracer

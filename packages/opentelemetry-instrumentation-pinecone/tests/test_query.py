@@ -2,7 +2,7 @@ import os
 
 import pytest
 from openai import OpenAI
-from opentelemetry.semconv.ai import Events, Meters, SpanAttributes
+from opentelemetry.semconv_ai import Events, Meters, SpanAttributes
 from pinecone import Pinecone
 
 
