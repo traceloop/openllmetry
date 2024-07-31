@@ -3,7 +3,7 @@ from typing_extensions import override
 
 import pytest
 from openai import AssistantEventHandler
-from opentelemetry.semconv.ai import SpanAttributes
+from opentelemetry.semconv_ai import SpanAttributes
 
 
 @pytest.fixture
@@ -50,8 +50,14 @@ def test_new_assistant(exporter, openai_client, assistant):
     ]
     open_ai_span = spans[0]
     assert open_ai_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
-    assert open_ai_span.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "gpt-4-turbo-preview"
-    assert open_ai_span.attributes[SpanAttributes.LLM_RESPONSE_MODEL] == "gpt-4-turbo-preview"
+    assert (
+        open_ai_span.attributes[SpanAttributes.LLM_REQUEST_MODEL]
+        == "gpt-4-turbo-preview"
+    )
+    assert (
+        open_ai_span.attributes[SpanAttributes.LLM_RESPONSE_MODEL]
+        == "gpt-4-turbo-preview"
+    )
     assert (
         open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
         == "You are a personal math tutor. Write and run code to answer math questions."
@@ -68,7 +74,10 @@ def test_new_assistant(exporter, openai_client, assistant):
             open_ai_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.{idx}.content"]
             == message.content[0].text.value
         )
-        assert open_ai_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.{idx}.role"] == message.role
+        assert (
+            open_ai_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.{idx}.role"]
+            == message.role
+        )
 
 
 @pytest.mark.vcr
@@ -82,9 +91,9 @@ def test_new_assistant_with_polling(exporter, openai_client, assistant):
     )
 
     run = openai_client.beta.threads.runs.create_and_poll(
-      thread_id=thread.id,
-      assistant_id=assistant.id,
-      instructions="Please address the user as Jane Doe. The user has a premium account."
+        thread_id=thread.id,
+        assistant_id=assistant.id,
+        instructions="Please address the user as Jane Doe. The user has a premium account.",
     )
 
     messages = openai_client.beta.threads.messages.list(
@@ -153,8 +162,14 @@ def test_existing_assistant(exporter, openai_client):
         "openai.assistant.run",
     ]
     open_ai_span = spans[0]
-    assert open_ai_span.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "gpt-4-turbo-preview"
-    assert open_ai_span.attributes[SpanAttributes.LLM_RESPONSE_MODEL] == "gpt-4-turbo-preview"
+    assert (
+        open_ai_span.attributes[SpanAttributes.LLM_REQUEST_MODEL]
+        == "gpt-4-turbo-preview"
+    )
+    assert (
+        open_ai_span.attributes[SpanAttributes.LLM_RESPONSE_MODEL]
+        == "gpt-4-turbo-preview"
+    )
     assert (
         open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
         == "You are a personal math tutor. Write and run code to answer math questions."
@@ -171,7 +186,10 @@ def test_existing_assistant(exporter, openai_client):
             open_ai_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.{idx}.content"]
             == message.content[0].text.value
         )
-        assert open_ai_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.{idx}.role"] == message.role
+        assert (
+            open_ai_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.{idx}.role"]
+            == message.role
+        )
 
 
 @pytest.mark.vcr
@@ -210,8 +228,14 @@ def test_streaming_new_assistant(exporter, openai_client, assistant):
     ]
     open_ai_span = spans[0]
     assert open_ai_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
-    assert open_ai_span.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "gpt-4-turbo-preview"
-    assert open_ai_span.attributes[SpanAttributes.LLM_RESPONSE_MODEL] == "gpt-4-turbo-preview"
+    assert (
+        open_ai_span.attributes[SpanAttributes.LLM_REQUEST_MODEL]
+        == "gpt-4-turbo-preview"
+    )
+    assert (
+        open_ai_span.attributes[SpanAttributes.LLM_RESPONSE_MODEL]
+        == "gpt-4-turbo-preview"
+    )
     assert (
         open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
         == "You are a personal math tutor. Write and run code to answer math questions."
@@ -224,8 +248,14 @@ def test_streaming_new_assistant(exporter, openai_client, assistant):
     assert open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.role"] == "system"
 
     for idx, message in enumerate(assistant_messages):
-        assert open_ai_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.{idx}.content"] == message
-        assert open_ai_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.{idx}.role"] == "assistant"
+        assert (
+            open_ai_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.{idx}.content"]
+            == message
+        )
+        assert (
+            open_ai_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.{idx}.role"]
+            == "assistant"
+        )
 
 
 @pytest.mark.vcr
@@ -264,8 +294,14 @@ def test_streaming_existing_assistant(exporter, openai_client):
     ]
     open_ai_span = spans[0]
     assert open_ai_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
-    assert open_ai_span.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "gpt-4-turbo-preview"
-    assert open_ai_span.attributes[SpanAttributes.LLM_RESPONSE_MODEL] == "gpt-4-turbo-preview"
+    assert (
+        open_ai_span.attributes[SpanAttributes.LLM_REQUEST_MODEL]
+        == "gpt-4-turbo-preview"
+    )
+    assert (
+        open_ai_span.attributes[SpanAttributes.LLM_RESPONSE_MODEL]
+        == "gpt-4-turbo-preview"
+    )
     assert (
         open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
         == "You are a personal math tutor. Write and run code to answer math questions."
@@ -278,5 +314,11 @@ def test_streaming_existing_assistant(exporter, openai_client):
     assert open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.role"] == "system"
 
     for idx, message in enumerate(assistant_messages):
-        assert open_ai_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.{idx}.content"] == message
-        assert open_ai_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.{idx}.role"] == "assistant"
+        assert (
+            open_ai_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.{idx}.content"]
+            == message
+        )
+        assert (
+            open_ai_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.{idx}.role"]
+            == "assistant"
+        )

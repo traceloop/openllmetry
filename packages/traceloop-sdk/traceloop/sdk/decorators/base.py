@@ -6,7 +6,7 @@ from typing import Optional
 
 from opentelemetry import trace
 from opentelemetry import context as context_api
-from opentelemetry.semconv.ai import SpanAttributes, TraceloopSpanKindValues
+from opentelemetry.semconv_ai import SpanAttributes, TraceloopSpanKindValues
 
 from traceloop.sdk.telemetry import Telemetry
 from traceloop.sdk.tracing import get_tracer, set_workflow_name

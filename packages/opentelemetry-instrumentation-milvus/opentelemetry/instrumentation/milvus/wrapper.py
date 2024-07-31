@@ -5,8 +5,8 @@ from opentelemetry import context as context_api
 from opentelemetry.instrumentation.utils import (
     _SUPPRESS_INSTRUMENTATION_KEY,
 )
-from opentelemetry.semconv.ai import Events
-from opentelemetry.semconv.ai import SpanAttributes as AISpanAttributes
+from opentelemetry.semconv_ai import Events
+from opentelemetry.semconv_ai import SpanAttributes as AISpanAttributes
 
 
 def _with_tracer_wrapper(func):
@@ -93,16 +93,22 @@ def count_or_none(obj):
 @dont_throw
 def _set_insert_attributes(span, kwargs):
     _set_span_attribute(
-        span, AISpanAttributes.MILVUS_INSERT_COLLECTION_NAME, kwargs.get("collection_name")
+        span,
+        AISpanAttributes.MILVUS_INSERT_COLLECTION_NAME,
+        kwargs.get("collection_name"),
     )
     _set_span_attribute(
-        span, AISpanAttributes.MILVUS_INSERT_DATA_COUNT, count_or_none(kwargs.get("data"))
+        span,
+        AISpanAttributes.MILVUS_INSERT_DATA_COUNT,
+        count_or_none(kwargs.get("data")),
     )
     _set_span_attribute(
         span, AISpanAttributes.MILVUS_INSERT_TIMEOUT, kwargs.get("timeout")
     )
     _set_span_attribute(
-        span, AISpanAttributes.MILVUS_INSERT_PARTITION_NAME, _encode_partition_name(kwargs.get("partition_name"))
+        span,
+        AISpanAttributes.MILVUS_INSERT_PARTITION_NAME,
+        _encode_partition_name(kwargs.get("partition_name")),
     )
 
 
@@ -115,32 +121,40 @@ def _set_get_attributes(span, kwargs):
         span, AISpanAttributes.MILVUS_QUERY_IDS_COUNT, count_or_none(kwargs.get("ids"))
     )
     _set_span_attribute(
-        span, AISpanAttributes.MILVUS_SEARCH_OUTPUT_FIELDS_COUNT, count_or_none(kwargs.get("output_fields"))
+        span,
+        AISpanAttributes.MILVUS_SEARCH_OUTPUT_FIELDS_COUNT,
+        count_or_none(kwargs.get("output_fields")),
     )
     _set_span_attribute(
         span, AISpanAttributes.MILVUS_INSERT_TIMEOUT, kwargs.get("timeout")
     )
     _set_span_attribute(
-        span, AISpanAttributes.MILVUS_GET_PARTITION_NAMES_COUNT, count_or_none(kwargs.get("partition_names"))
+        span,
+        AISpanAttributes.MILVUS_GET_PARTITION_NAMES_COUNT,
+        count_or_none(kwargs.get("partition_names")),
     )
 
 
 @dont_throw
 def _set_search_attributes(span, kwargs):
     _set_span_attribute(
-        span, AISpanAttributes.MILVUS_SEARCH_COLLECTION_NAME, kwargs.get("collection_name")
+        span,
+        AISpanAttributes.MILVUS_SEARCH_COLLECTION_NAME,
+        kwargs.get("collection_name"),
     )
     _set_span_attribute(
-        span, AISpanAttributes.MILVUS_SEARCH_DATA_COUNT, count_or_none(kwargs.get("data"))
+        span,
+        AISpanAttributes.MILVUS_SEARCH_DATA_COUNT,
+        count_or_none(kwargs.get("data")),
     )
     _set_span_attribute(
         span, AISpanAttributes.MILVUS_SEARCH_FILTER, kwargs.get("filter")
     )
+    _set_span_attribute(span, AISpanAttributes.MILVUS_SEARCH_LIMIT, kwargs.get("limit"))
     _set_span_attribute(
-        span, AISpanAttributes.MILVUS_SEARCH_LIMIT, kwargs.get("limit")
-    )
-    _set_span_attribute(
-        span, AISpanAttributes.MILVUS_SEARCH_OUTPUT_FIELDS_COUNT, count_or_none(kwargs.get("output_fields"))
+        span,
+        AISpanAttributes.MILVUS_SEARCH_OUTPUT_FIELDS_COUNT,
+        count_or_none(kwargs.get("output_fields")),
     )
     _set_span_attribute(
         span, AISpanAttributes.MILVUS_SEARCH_SEARCH_PARAMS, kwargs.get("search_params")
@@ -149,7 +163,9 @@ def _set_search_attributes(span, kwargs):
         span, AISpanAttributes.MILVUS_SEARCH_TIMEOUT, kwargs.get("timeout")
     )
     _set_span_attribute(
-        span, AISpanAttributes.MILVUS_SEARCH_PARTITION_NAMES_COUNT, kwargs.get("partition_name")
+        span,
+        AISpanAttributes.MILVUS_SEARCH_PARTITION_NAMES_COUNT,
+        kwargs.get("partition_name"),
     )
     _set_span_attribute(
         span, AISpanAttributes.MILVUS_SEARCH_ANNS_FIELD, kwargs.get("anns_field")
@@ -159,13 +175,17 @@ def _set_search_attributes(span, kwargs):
 @dont_throw
 def _set_query_attributes(span, kwargs):
     _set_span_attribute(
-        span, AISpanAttributes.MILVUS_QUERY_COLLECTION_NAME, kwargs.get("collection_name")
+        span,
+        AISpanAttributes.MILVUS_QUERY_COLLECTION_NAME,
+        kwargs.get("collection_name"),
     )
     _set_span_attribute(
         span, AISpanAttributes.MILVUS_QUERY_FILTER, _encode_filter(kwargs.get("filter"))
     )
     _set_span_attribute(
-        span, AISpanAttributes.MILVUS_QUERY_OUTPUT_FIELDS_COUNT, count_or_none(kwargs.get("output_fields"))
+        span,
+        AISpanAttributes.MILVUS_QUERY_OUTPUT_FIELDS_COUNT,
+        count_or_none(kwargs.get("output_fields")),
     )
     _set_span_attribute(
         span, AISpanAttributes.MILVUS_QUERY_TIMEOUT, kwargs.get("timeout")
@@ -174,11 +194,11 @@ def _set_query_attributes(span, kwargs):
         span, AISpanAttributes.MILVUS_QUERY_IDS_COUNT, count_or_none(kwargs.get("ids"))
     )
     _set_span_attribute(
-        span, AISpanAttributes.MILVUS_QUERY_PARTITION_NAMES_COUNT, count_or_none(kwargs.get("partition_names"))
+        span,
+        AISpanAttributes.MILVUS_QUERY_PARTITION_NAMES_COUNT,
+        count_or_none(kwargs.get("partition_names")),
     )
-    _set_span_attribute(
-        span, AISpanAttributes.MILVUS_QUERY_LIMIT, kwargs.get("limit")
-    )
+    _set_span_attribute(span, AISpanAttributes.MILVUS_QUERY_LIMIT, kwargs.get("limit"))
 
 
 @dont_throw
@@ -190,33 +210,49 @@ def _add_query_result_events(span, kwargs):
 @dont_throw
 def _set_upsert_attributes(span, kwargs):
     _set_span_attribute(
-        span, AISpanAttributes.MILVUS_UPSERT_COLLECTION_NAME, kwargs.get("collection_name")
+        span,
+        AISpanAttributes.MILVUS_UPSERT_COLLECTION_NAME,
+        kwargs.get("collection_name"),
     )
     _set_span_attribute(
-        span, AISpanAttributes.MILVUS_UPSERT_DATA_COUNT, count_or_none(kwargs.get("data"))
+        span,
+        AISpanAttributes.MILVUS_UPSERT_DATA_COUNT,
+        count_or_none(kwargs.get("data")),
     )
     _set_span_attribute(
-        span, AISpanAttributes.MILVUS_UPSERT_TIMEOUT_COUNT, count_or_none(kwargs.get("timeout"))
+        span,
+        AISpanAttributes.MILVUS_UPSERT_TIMEOUT_COUNT,
+        count_or_none(kwargs.get("timeout")),
     )
     _set_span_attribute(
-        span, AISpanAttributes.MILVUS_UPSERT_PARTITION_NAME, _encode_partition_name(kwargs.get("partition_name"))
+        span,
+        AISpanAttributes.MILVUS_UPSERT_PARTITION_NAME,
+        _encode_partition_name(kwargs.get("partition_name")),
     )
 
 
 @dont_throw
 def _set_delete_attributes(span, kwargs):
     _set_span_attribute(
-        span, AISpanAttributes.MILVUS_DELETE_COLLECTION_NAME, kwargs.get("collection_name")
+        span,
+        AISpanAttributes.MILVUS_DELETE_COLLECTION_NAME,
+        kwargs.get("collection_name"),
     )
     _set_span_attribute(
-        span, AISpanAttributes.MILVUS_DELETE_TIMEOUT_COUNT, count_or_none(kwargs.get("timeout"))
+        span,
+        AISpanAttributes.MILVUS_DELETE_TIMEOUT_COUNT,
+        count_or_none(kwargs.get("timeout")),
     )
     _set_span_attribute(
-        span, AISpanAttributes.MILVUS_DELETE_PARTITION_NAME, _encode_partition_name(kwargs.get("partition_name"))
+        span,
+        AISpanAttributes.MILVUS_DELETE_PARTITION_NAME,
+        _encode_partition_name(kwargs.get("partition_name")),
     )
     _set_span_attribute(
         span, AISpanAttributes.MILVUS_DELETE_IDS_COUNT, count_or_none(kwargs.get("ids"))
     )
     _set_span_attribute(
-        span, AISpanAttributes.MILVUS_DELETE_FILTER, _encode_filter(kwargs.get("filter"))
+        span,
+        AISpanAttributes.MILVUS_DELETE_FILTER,
+        _encode_filter(kwargs.get("filter")),
     )

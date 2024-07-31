@@ -1,10 +1,12 @@
 import sys
 
 import pytest
-from opentelemetry.semconv.ai import Meters, SpanAttributes
+from opentelemetry.semconv_ai import Meters, SpanAttributes
 
 
-@pytest.mark.skipif(sys.version_info < (3, 10), reason="ibm-watson-ai requires python3.10")
+@pytest.mark.skipif(
+    sys.version_info < (3, 10), reason="ibm-watson-ai requires python3.10"
+)
 @pytest.mark.vcr
 def test_generate_metrics(metrics_test_context, watson_ai_model):
     if watson_ai_model is None:
@@ -50,14 +52,19 @@ def test_generate_metrics(metrics_test_context, watson_ai_model):
                         data_point.sum > 0 for data_point in metric.data.data_points
                     )
 
-                assert metric.data.data_points[0].attributes[SpanAttributes.LLM_SYSTEM] == "watsonx"
+                assert (
+                    metric.data.data_points[0].attributes[SpanAttributes.LLM_SYSTEM]
+                    == "watsonx"
+                )
 
     assert found_token_metric is True
     assert found_response_metric is True
     assert found_duration_metric is True
 
 
-@pytest.mark.skipif(sys.version_info < (3, 10), reason="ibm-watson-ai requires python3.10")
+@pytest.mark.skipif(
+    sys.version_info < (3, 10), reason="ibm-watson-ai requires python3.10"
+)
 @pytest.mark.vcr
 def test_generate_stream_metrics(metrics_test_context, watson_ai_model):
     if watson_ai_model is None:
@@ -66,7 +73,9 @@ def test_generate_stream_metrics(metrics_test_context, watson_ai_model):
 
     provider, reader = metrics_test_context
 
-    response = watson_ai_model.generate_text_stream(prompt="Write an epigram about the sun")
+    response = watson_ai_model.generate_text_stream(
+        prompt="Write an epigram about the sun"
+    )
     generated_text = ""
     for chunk in response:
         generated_text += chunk
@@ -106,7 +115,10 @@ def test_generate_stream_metrics(metrics_test_context, watson_ai_model):
                         data_point.sum > 0 for data_point in metric.data.data_points
                     )
 
-                assert metric.data.data_points[0].attributes[SpanAttributes.LLM_SYSTEM] == "watsonx"
+                assert (
+                    metric.data.data_points[0].attributes[SpanAttributes.LLM_SYSTEM]
+                    == "watsonx"
+                )
 
     assert found_token_metric is True
     assert found_response_metric is True

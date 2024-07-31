@@ -9,7 +9,7 @@ from opentelemetry.instrumentation.haystack.utils import (
     process_request,
     process_response,
 )
-from opentelemetry.semconv.ai import SpanAttributes, TraceloopSpanKindValues
+from opentelemetry.semconv_ai import SpanAttributes, TraceloopSpanKindValues
 
 logger = logging.getLogger(__name__)
 

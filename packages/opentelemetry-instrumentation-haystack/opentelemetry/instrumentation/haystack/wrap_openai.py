@@ -5,7 +5,7 @@ from opentelemetry.trace import SpanKind
 from opentelemetry.trace.status import Status, StatusCode
 
 from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
-from opentelemetry.semconv.ai import SpanAttributes, LLMRequestTypeValues
+from opentelemetry.semconv_ai import SpanAttributes, LLMRequestTypeValues
 from opentelemetry.instrumentation.haystack.utils import (
     dont_throw,
     with_tracer_wrapper,
@@ -37,7 +37,9 @@ def _set_input_attributes(span, llm_request_type, kwargs):
             )
         if "temperature" in generation_kwargs:
             set_span_attribute(
-                span, SpanAttributes.LLM_REQUEST_TEMPERATURE, generation_kwargs["temperature"]
+                span,
+                SpanAttributes.LLM_REQUEST_TEMPERATURE,
+                generation_kwargs["temperature"],
             )
         if "top_p" in generation_kwargs:
             set_span_attribute(

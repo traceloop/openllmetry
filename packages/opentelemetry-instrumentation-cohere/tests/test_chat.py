@@ -2,7 +2,7 @@ import os
 
 import cohere
 import pytest
-from opentelemetry.semconv.ai import SpanAttributes
+from opentelemetry.semconv_ai import SpanAttributes
 
 
 @pytest.mark.vcr
@@ -20,7 +20,10 @@ def test_cohere_chat(exporter):
         cohere_span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.0.content")
         == "Tell me a joke, pirate style"
     )
-    assert cohere_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content") == res.text
+    assert (
+        cohere_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
+        == res.text
+    )
     assert cohere_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 58
     assert cohere_span.attributes.get(
         SpanAttributes.LLM_USAGE_TOTAL_TOKENS

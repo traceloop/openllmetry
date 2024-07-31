@@ -28,7 +28,7 @@ python = ">=3.9,<4"
 opentelemetry-api = "^1.26.0"
 opentelemetry-instrumentation = "^0.47b0"
 opentelemetry-semantic-conventions = "^0.47b0"
-opentelemetry-semantic-conventions-ai = "0.3.6"
+opentelemetry-semantic-conventions-ai = "0.4.0"
 
 [tool.poetry.group.dev.dependencies]
 autopep8 = "^2.2.0"

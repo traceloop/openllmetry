@@ -8,7 +8,7 @@ from opentelemetry.instrumentation.llamaindex.utils import (
     process_response,
     start_as_current_span_async,
 )
-from opentelemetry.semconv.ai import SpanAttributes, TraceloopSpanKindValues
+from opentelemetry.semconv_ai import SpanAttributes, TraceloopSpanKindValues
 
 V9_MODULE_NAME = "llama_index.response_synthesizers"
 V10_MODULE_NAME = "llama_index.core.response_synthesizers"

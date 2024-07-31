@@ -1,6 +1,6 @@
 import pytest
 import ollama
-from opentelemetry.semconv.ai import SpanAttributes
+from opentelemetry.semconv_ai import SpanAttributes
 
 
 @pytest.mark.vcr
@@ -68,7 +68,10 @@ def test_ollama_streaming_chat(exporter):
         ollama_span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.0.content")
         == "Tell me a joke about OpenTelemetry"
     )
-    assert ollama_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content") == response
+    assert (
+        ollama_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
+        == response
+    )
     assert ollama_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 17
     assert ollama_span.attributes.get(
         SpanAttributes.LLM_USAGE_TOTAL_TOKENS
@@ -149,7 +152,10 @@ async def test_ollama_async_streaming_chat(exporter):
         ollama_span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.0.content")
         == "Tell me a joke about OpenTelemetry"
     )
-    assert ollama_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content") == response
+    assert (
+        ollama_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
+        == response
+    )
     assert ollama_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 17
     assert ollama_span.attributes.get(
         SpanAttributes.LLM_USAGE_TOTAL_TOKENS

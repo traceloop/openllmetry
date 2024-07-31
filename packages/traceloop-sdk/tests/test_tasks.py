@@ -3,7 +3,7 @@ import pytest
 
 from langchain_openai import ChatOpenAI
 from traceloop.sdk.decorators import task
-from opentelemetry.semconv.ai import SpanAttributes
+from opentelemetry.semconv_ai import SpanAttributes
 
 
 @pytest.mark.vcr

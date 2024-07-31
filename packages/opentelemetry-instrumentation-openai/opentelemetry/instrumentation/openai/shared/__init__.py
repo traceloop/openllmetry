@@ -9,7 +9,7 @@ from importlib.metadata import version
 from opentelemetry import context as context_api
 
 from opentelemetry.instrumentation.openai.shared.config import Config
-from opentelemetry.semconv.ai import SpanAttributes
+from opentelemetry.semconv_ai import SpanAttributes
 from opentelemetry.instrumentation.openai.utils import (
     dont_throw,
     is_openai_v1,
@@ -144,7 +144,7 @@ def _set_response_attributes(span, response):
         _set_span_attribute(
             span,
             f"{SpanAttributes.LLM_PROMPTS}.{PROMPT_ERROR}",
-            json.dumps(response.get("error"))
+            json.dumps(response.get("error")),
         )
         return
 
@@ -183,7 +183,7 @@ def _log_prompt_filter(span, response_dict):
         _set_span_attribute(
             span,
             f"{SpanAttributes.LLM_PROMPTS}.{PROMPT_FILTER_KEY}",
-            json.dumps(response_dict.get("prompt_filter_results"))
+            json.dumps(response_dict.get("prompt_filter_results")),
         )
 
 

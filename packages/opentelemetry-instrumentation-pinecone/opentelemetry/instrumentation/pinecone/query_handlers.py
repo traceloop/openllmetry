@@ -1,6 +1,6 @@
 import json
 
-from opentelemetry.semconv.ai import EventAttributes, Events, SpanAttributes
+from opentelemetry.semconv_ai import EventAttributes, Events, SpanAttributes
 from opentelemetry.instrumentation.pinecone.utils import dont_throw, set_span_attribute
 
 
@@ -19,20 +19,28 @@ def set_query_input_attributes(span, kwargs):
     # **kwargs) -> QueryResponse:
 
     set_span_attribute(span, SpanAttributes.PINECONE_QUERY_ID, kwargs.get("id"))
-    set_span_attribute(span, SpanAttributes.PINECONE_QUERY_QUERIES, kwargs.get("queries"))
+    set_span_attribute(
+        span, SpanAttributes.PINECONE_QUERY_QUERIES, kwargs.get("queries")
+    )
     set_span_attribute(span, SpanAttributes.PINECONE_QUERY_TOP_K, kwargs.get("top_k"))
-    set_span_attribute(span, SpanAttributes.PINECONE_QUERY_NAMESPACE, kwargs.get("namespace"))
+    set_span_attribute(
+        span, SpanAttributes.PINECONE_QUERY_NAMESPACE, kwargs.get("namespace")
+    )
     if isinstance(kwargs.get("filter"), dict):
         set_span_attribute(
             span, SpanAttributes.PINECONE_QUERY_FILTER, json.dumps(kwargs.get("filter"))
         )
     else:
-        set_span_attribute(span, SpanAttributes.PINECONE_QUERY_FILTER, kwargs.get("filter"))
+        set_span_attribute(
+            span, SpanAttributes.PINECONE_QUERY_FILTER, kwargs.get("filter")
+        )
     set_span_attribute(
         span, SpanAttributes.PINECONE_QUERY_INCLUDE_VALUES, kwargs.get("include_values")
     )
     set_span_attribute(
-        span, SpanAttributes.PINECONE_QUERY_INCLUDE_METADATA, kwargs.get("include_metadata")
+        span,
+        SpanAttributes.PINECONE_QUERY_INCLUDE_METADATA,
+        kwargs.get("include_metadata"),
     )
 
     # Log query embeddings
@@ -51,7 +59,9 @@ def set_query_input_attributes(span, kwargs):
     if sparse_vector:
         span.add_event(
             name=f"{Events.DB_QUERY_EMBEDDINGS.value}",
-            attributes={f"{EventAttributes.DB_QUERY_EMBEDDINGS_VECTOR.value}": sparse_vector},
+            attributes={
+                f"{EventAttributes.DB_QUERY_EMBEDDINGS_VECTOR.value}": sparse_vector
+            },
         )
 
     queries = kwargs.get("queries")

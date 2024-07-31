@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 from anthropic import AI_PROMPT, HUMAN_PROMPT, Anthropic, AsyncAnthropic
-from opentelemetry.semconv.ai import SpanAttributes, Meters
+from opentelemetry.semconv_ai import SpanAttributes, Meters
 
 
 @pytest.mark.vcr

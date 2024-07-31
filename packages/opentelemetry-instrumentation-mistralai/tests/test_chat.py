@@ -3,7 +3,7 @@ import pytest
 from mistralai.client import MistralClient
 from mistralai.async_client import MistralAsyncClient
 from mistralai.models.chat_completion import ChatMessage
-from opentelemetry.semconv.ai import SpanAttributes
+from opentelemetry.semconv_ai import SpanAttributes
 
 
 @pytest.mark.vcr
@@ -22,7 +22,10 @@ def test_mistralai_chat(exporter):
     assert mistral_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "MistralAI"
     assert mistral_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
     assert not mistral_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
-    assert mistral_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_MODEL}") == "mistral-tiny"
+    assert (
+        mistral_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_MODEL}")
+        == "mistral-tiny"
+    )
     assert (
         mistral_span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.0.content")
         == "Tell me a joke about OpenTelemetry"
@@ -61,12 +64,18 @@ def test_mistralai_streaming_chat(exporter):
     assert mistral_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "MistralAI"
     assert mistral_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
     assert mistral_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
-    assert mistral_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_MODEL}") == "mistral-tiny"
+    assert (
+        mistral_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_MODEL}")
+        == "mistral-tiny"
+    )
     assert (
         mistral_span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.0.content")
         == "Tell me a joke about OpenTelemetry"
     )
-    assert mistral_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content") == response
+    assert (
+        mistral_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
+        == response
+    )
     assert mistral_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 11
     assert mistral_span.attributes.get(
         SpanAttributes.LLM_USAGE_TOTAL_TOKENS
@@ -94,7 +103,10 @@ async def test_mistralai_async_chat(exporter):
     assert mistral_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "MistralAI"
     assert mistral_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
     assert not mistral_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
-    assert mistral_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_MODEL}") == "mistral-tiny"
+    assert (
+        mistral_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_MODEL}")
+        == "mistral-tiny"
+    )
     assert (
         mistral_span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.0.content")
         == "Tell me a joke about OpenTelemetry"
@@ -140,7 +152,10 @@ async def test_mistralai_async_streaming_chat(exporter):
         mistral_span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.0.content")
         == "Tell me a joke about OpenTelemetry"
     )
-    assert mistral_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content") == response
+    assert (
+        mistral_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
+        == response
+    )
     assert mistral_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 11
     assert mistral_span.attributes.get(
         SpanAttributes.LLM_USAGE_TOTAL_TOKENS
