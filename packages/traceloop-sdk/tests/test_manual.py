@@ -1,4 +1,4 @@
-from opentelemetry.semconv.ai import SpanAttributes
+from opentelemetry.semconv_ai import SpanAttributes
 import pytest
 from openai import OpenAI
 from traceloop.sdk.tracing.manual import LLMMessage, track_llm_call

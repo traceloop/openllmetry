@@ -18,7 +18,7 @@ from opentelemetry.instrumentation.utils import (
     unwrap,
 )
 
-from opentelemetry.semconv.ai import SpanAttributes, LLMRequestTypeValues
+from opentelemetry.semconv_ai import SpanAttributes, LLMRequestTypeValues
 from opentelemetry.instrumentation.replicate.version import __version__
 
 logger = logging.getLogger(__name__)

@@ -5,8 +5,8 @@ from opentelemetry import context as context_api
 from opentelemetry.instrumentation.utils import (
     _SUPPRESS_INSTRUMENTATION_KEY,
 )
-from opentelemetry.semconv.ai import EventAttributes, Events
-from opentelemetry.semconv.ai import SpanAttributes as AISpanAttributes
+from opentelemetry.semconv_ai import EventAttributes, Events
+from opentelemetry.semconv_ai import SpanAttributes as AISpanAttributes
 import itertools
 import json
 

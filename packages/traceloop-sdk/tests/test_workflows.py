@@ -2,7 +2,7 @@ import json
 
 import pytest
 from openai import OpenAI, AsyncOpenAI
-from opentelemetry.semconv.ai import SpanAttributes
+from opentelemetry.semconv_ai import SpanAttributes
 from traceloop.sdk import Traceloop
 from traceloop.sdk.decorators import workflow, task, aworkflow, atask
 

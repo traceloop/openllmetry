@@ -2,7 +2,7 @@ import os
 
 import cohere
 import pytest
-from opentelemetry.semconv.ai import SpanAttributes
+from opentelemetry.semconv_ai import SpanAttributes
 
 
 @pytest.mark.vcr
@@ -36,22 +36,40 @@ def test_cohere_rerank(exporter):
     assert cohere_span.attributes.get(SpanAttributes.LLM_SYSTEM) == "Cohere"
     assert cohere_span.attributes.get(SpanAttributes.LLM_REQUEST_TYPE) == "rerank"
     assert (
-        cohere_span.attributes.get(SpanAttributes.LLM_REQUEST_MODEL) == "rerank-multilingual-v2.0"
+        cohere_span.attributes.get(SpanAttributes.LLM_REQUEST_MODEL)
+        == "rerank-multilingual-v2.0"
     )
-    assert cohere_span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.{len(documents)}.role") == "user"
     assert (
-        cohere_span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.{len(documents)}.content") == query
+        cohere_span.attributes.get(
+            f"{SpanAttributes.LLM_PROMPTS}.{len(documents)}.role"
+        )
+        == "user"
+    )
+    assert (
+        cohere_span.attributes.get(
+            f"{SpanAttributes.LLM_PROMPTS}.{len(documents)}.content"
+        )
+        == query
     )
 
     for i, doc in enumerate(documents):
-        assert cohere_span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.{i}.role") == "system"
-        assert cohere_span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.{i}.content") == doc
+        assert (
+            cohere_span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.{i}.role")
+            == "system"
+        )
+        assert (
+            cohere_span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.{i}.content")
+            == doc
+        )
 
     for idx, result in enumerate(response.results):
         assert (
-            cohere_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.{idx}.role") == "assistant"
+            cohere_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.{idx}.role")
+            == "assistant"
         )
         assert (
-            cohere_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.{idx}.content")
+            cohere_span.attributes.get(
+                f"{SpanAttributes.LLM_COMPLETIONS}.{idx}.content"
+            )
             == f"Doc {result.index}, Score: {result.relevance_score}"
         )

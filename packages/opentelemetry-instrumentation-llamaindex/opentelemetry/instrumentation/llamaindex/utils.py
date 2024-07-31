@@ -7,7 +7,7 @@ from contextlib import asynccontextmanager
 
 from opentelemetry import context as context_api
 from opentelemetry.instrumentation.llamaindex.config import Config
-from opentelemetry.semconv.ai import SpanAttributes
+from opentelemetry.semconv_ai import SpanAttributes
 
 
 def _with_tracer_wrapper(func):

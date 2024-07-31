@@ -1,6 +1,6 @@
 import logging
 
-from opentelemetry.semconv.ai import (
+from opentelemetry.semconv_ai import (
     SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
     SpanAttributes,
 )

@@ -1,7 +1,7 @@
 import json
 
 import pytest
-from opentelemetry.semconv.ai import SpanAttributes
+from opentelemetry.semconv_ai import SpanAttributes
 
 
 @pytest.mark.vcr
@@ -42,7 +42,9 @@ def test_anthropic_2_completion(exporter, brt):
         SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
     ) + anthropic_span.attributes.get(
         SpanAttributes.LLM_USAGE_PROMPT_TOKENS
-    ) == anthropic_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS)
+    ) == anthropic_span.attributes.get(
+        SpanAttributes.LLM_USAGE_TOTAL_TOKENS
+    )
 
 
 @pytest.mark.vcr
@@ -95,7 +97,9 @@ def test_anthropic_3_completion_complex_content(exporter, brt):
         SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
     ) + anthropic_span.attributes.get(
         SpanAttributes.LLM_USAGE_PROMPT_TOKENS
-    ) == anthropic_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS)
+    ) == anthropic_span.attributes.get(
+        SpanAttributes.LLM_USAGE_TOTAL_TOKENS
+    )
 
 
 @pytest.mark.vcr
@@ -155,7 +159,9 @@ def test_anthropic_3_completion_streaming(exporter, brt):
         SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
     ) + anthropic_span.attributes.get(
         SpanAttributes.LLM_USAGE_PROMPT_TOKENS
-    ) == anthropic_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS)
+    ) == anthropic_span.attributes.get(
+        SpanAttributes.LLM_USAGE_TOTAL_TOKENS
+    )
 
 
 @pytest.mark.vcr
@@ -205,4 +211,6 @@ def test_anthropic_3_completion_string_content(exporter, brt):
         SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
     ) + anthropic_span.attributes.get(
         SpanAttributes.LLM_USAGE_PROMPT_TOKENS
-    ) == anthropic_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS)
+    ) == anthropic_span.attributes.get(
+        SpanAttributes.LLM_USAGE_TOTAL_TOKENS
+    )

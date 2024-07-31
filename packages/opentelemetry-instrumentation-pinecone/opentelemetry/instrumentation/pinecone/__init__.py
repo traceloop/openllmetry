@@ -28,7 +28,7 @@ from opentelemetry.instrumentation.pinecone.query_handlers import (
     set_query_response,
 )
 from opentelemetry.semconv.trace import SpanAttributes
-from opentelemetry.semconv.ai import Meters, SpanAttributes as AISpanAttributes
+from opentelemetry.semconv_ai import Meters, SpanAttributes as AISpanAttributes
 
 logger = logging.getLogger(__name__)
 

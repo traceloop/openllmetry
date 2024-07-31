@@ -7,7 +7,7 @@ from inflection import underscore
 from opentelemetry import context as context_api
 
 from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
-from opentelemetry.semconv.ai import SpanAttributes, LLMRequestTypeValues
+from opentelemetry.semconv_ai import SpanAttributes, LLMRequestTypeValues
 from opentelemetry.instrumentation.llamaindex.utils import (
     _with_tracer_wrapper,
     dont_throw,
@@ -150,7 +150,9 @@ def _handle_request(span, llm_request_type, args, kwargs, instance: CustomLLM):
     _set_span_attribute(
         span, SpanAttributes.LLM_REQUEST_MAX_TOKENS, instance.metadata.context_window
     )
-    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TOP_P, instance.metadata.num_output)
+    _set_span_attribute(
+        span, SpanAttributes.LLM_REQUEST_TOP_P, instance.metadata.num_output
+    )
 
     if should_send_prompts():
         # TODO: add support for chat

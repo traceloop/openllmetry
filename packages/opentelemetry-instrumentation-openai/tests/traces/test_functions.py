@@ -1,5 +1,5 @@
 import pytest
-from opentelemetry.semconv.ai import SpanAttributes
+from opentelemetry.semconv_ai import SpanAttributes
 
 
 @pytest.fixture
