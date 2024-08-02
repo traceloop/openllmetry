@@ -152,6 +152,8 @@ def _handle_stream_call(span, kwargs, response):
             _set_ai21_span_attributes(span, request_body, response_body)
         elif vendor == "meta":
             _set_llama_span_attributes(span, request_body, response_body)
+        elif vendor == "amazon":
+            _set_amazon_span_attributes(span, request_body, response_body)
 
         span.end()
 
@@ -182,6 +184,8 @@ def _handle_call(span, kwargs, response):
         _set_ai21_span_attributes(span, request_body, response_body)
     elif vendor == "meta":
         _set_llama_span_attributes(span, request_body, response_body)
+    elif vendor == "amazon":
+        _set_amazon_span_attributes(span, request_body, response_body)
 
 
 def _record_usage_to_span(span, prompt_tokens, completion_tokens):
@@ -420,7 +424,39 @@ def _set_llama_span_attributes(span, request_body, response_body):
 
         for i, generation in enumerate(response_body.get("generations")):
             _set_span_attribute(
-                span, f"{SpanAttributes.LLM_COMPLETIONS}.{i}.content", response_body
+                span, f"{SpanAttributes.LLM_COMPLETIONS}.{i}.content", generation
+            )
+
+
+def _set_amazon_span_attributes(span, request_body, response_body):
+    _set_span_attribute(
+        span, SpanAttributes.LLM_REQUEST_TYPE, LLMRequestTypeValues.COMPLETION.value
+    )
+    config = request_body.get("textGenerationConfig", {})
+    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TOP_P, config.get("topP"))
+    _set_span_attribute(
+        span, SpanAttributes.LLM_REQUEST_TEMPERATURE, config.get("temperature")
+    )
+    _set_span_attribute(
+        span, SpanAttributes.LLM_REQUEST_MAX_TOKENS, config.get("maxTokenCount")
+    )
+
+    _record_usage_to_span(
+        span,
+        response_body.get("inputTextTokenCount"),
+        sum(int(result.get("tokenCount")) for result in response_body.get("results")),
+    )
+
+    if should_send_prompts():
+        _set_span_attribute(
+            span, f"{SpanAttributes.LLM_PROMPTS}.0.user", request_body.get("inputText")
+        )
+
+        for i, result in enumerate(response_body.get("results")):
+            _set_span_attribute(
+                span,
+                f"{SpanAttributes.LLM_COMPLETIONS}.{i}.content",
+                result.get("outputText"),
             )
 
 
