@@ -112,9 +112,12 @@ def _set_llm_request(
     prompts: list[str],
     kwargs: Any,
 ) -> None:
-    kwargs = serialized.get("kwargs", {})
     for model_tag in ("model", "model_id", "model_name"):
         if (model := kwargs.get(model_tag)) is not None:
+            break
+        elif (
+            model := (kwargs.get("invocation_params") or {}).get(model_tag)
+        ) is not None:
             break
     else:
         model = "unknown"
@@ -170,6 +173,7 @@ def _set_chat_request(
                 i += 1
 
 
+@dont_throw
 def _set_chat_response(span: Span, response: LLMResult) -> None:
     if not should_send_prompts():
         return
@@ -429,9 +433,15 @@ class SyncSpanCallbackHandler(BaseCallbackHandler):
 
         token_usage = (response.llm_output or {}).get("token_usage")
         if token_usage is not None:
-            prompt_tokens = token_usage.get("prompt_tokens")
-            completion_tokens = token_usage.get("completion_tokens")
-            total_tokens = token_usage.get("total_tokens")
+            prompt_tokens = token_usage.get("prompt_tokens") or token_usage.get(
+                "input_token_count"
+            )
+            completion_tokens = token_usage.get("completion_tokens") or token_usage.get(
+                "generated_token_count"
+            )
+            total_tokens = token_usage.get("total_tokens") or (
+                prompt_tokens + completion_tokens
+            )
 
             span.set_attribute(SpanAttributes.LLM_USAGE_PROMPT_TOKENS, prompt_tokens)
             span.set_attribute(
@@ -439,14 +449,16 @@ class SyncSpanCallbackHandler(BaseCallbackHandler):
             )
             span.set_attribute(SpanAttributes.LLM_USAGE_TOTAL_TOKENS, total_tokens)
 
-        model_name = (response.llm_output or {}).get("model_name")
-        if model_name is not None:
-            span.set_attribute(SpanAttributes.LLM_RESPONSE_MODEL, model_name)
+        if response.llm_output is not None:
+            model_name = response.llm_output.get(
+                "model_name"
+            ) or response.llm_output.get("model_id")
+            if model_name is not None:
+                span.set_attribute(SpanAttributes.LLM_RESPONSE_MODEL, model_name)
 
         _set_chat_response(span, response)
         span.end()
 
-    @dont_throw
     def on_tool_start(
         self,
         serialized: dict[str, Any],
