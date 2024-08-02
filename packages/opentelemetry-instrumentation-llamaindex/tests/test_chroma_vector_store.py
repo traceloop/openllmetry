@@ -9,7 +9,7 @@ from llama_index.core import (
 )
 from llama_index.vector_stores.chroma import ChromaVectorStore
 from llama_index.embeddings.openai import OpenAIEmbedding
-from opentelemetry.semconv.ai import SpanAttributes
+from opentelemetry.semconv_ai import SpanAttributes
 
 
 @pytest.mark.vcr
@@ -35,11 +35,11 @@ def test_rag_with_chroma(exporter):
 
     spans = exporter.get_finished_spans()
     assert {
-        "BaseQueryEngine.llama_index.workflow",
-        "BaseSynthesizer.llama_index.task",
-        "LLM.llama_index.task",
-        "OpenAI.llama_index.task",
-        "RetrieverQueryEngine.llama_index.task",
+        "BaseQueryEngine.workflow",
+        "BaseSynthesizer.task",
+        "LLM.task",
+        "OpenAI.task",
+        "RetrieverQueryEngine.task",
         "openai.chat",
         "openai.embeddings",
         "chroma.add",
@@ -48,10 +48,12 @@ def test_rag_with_chroma(exporter):
     }.issubset({span.name for span in spans})
 
     query_pipeline_span = next(
-        span for span in spans if span.name == "BaseQueryEngine.llama_index.workflow"
+        span for span in spans if span.name == "BaseQueryEngine.workflow"
     )
-    synthesize_span = next(span for span in spans if span.name == "BaseSynthesizer.llama_index.task")
-    llm_span = next(span for span in spans if span.name == "OpenAI.llama_index.task")
+    synthesize_span = next(
+        span for span in spans if span.name == "BaseSynthesizer.task"
+    )
+    llm_span = next(span for span in spans if span.name == "OpenAI.task")
     openai_chat_span = next(span for span in spans if span.name == "openai.chat")
 
     assert query_pipeline_span.parent is None
@@ -60,7 +62,9 @@ def test_rag_with_chroma(exporter):
     assert openai_chat_span.parent.span_id == llm_span.context.span_id
 
     assert llm_span.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "gpt-3.5-turbo"
-    assert llm_span.attributes[SpanAttributes.LLM_RESPONSE_MODEL] == "gpt-3.5-turbo-0125"
+    assert (
+        llm_span.attributes[SpanAttributes.LLM_RESPONSE_MODEL] == "gpt-3.5-turbo-0125"
+    )
     assert llm_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"].startswith(
         "You are an expert Q&A system that is trusted around the world."
     )

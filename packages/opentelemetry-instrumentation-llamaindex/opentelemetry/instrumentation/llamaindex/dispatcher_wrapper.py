@@ -5,7 +5,10 @@ from typing import Any, Optional
 from llama_index.core.bridge.pydantic import PrivateAttr
 from llama_index.core.instrumentation import get_dispatcher
 from llama_index.core.instrumentation.events import BaseEvent
-from llama_index.core.instrumentation.events.llm import LLMChatEndEvent, LLMChatStartEvent
+from llama_index.core.instrumentation.events.llm import (
+    LLMChatEndEvent,
+    LLMChatStartEvent,
+)
 from llama_index.core.instrumentation.event_handlers import BaseEventHandler
 from llama_index.core.instrumentation.span_handlers import BaseSpanHandler
 from opentelemetry import context as context_api
@@ -13,7 +16,7 @@ from opentelemetry.instrumentation.llamaindex.utils import (
     dont_throw,
     should_send_prompts,
 )
-from opentelemetry.semconv.ai import (
+from opentelemetry.semconv_ai import (
     SpanAttributes,
     TraceloopSpanKindValues,
 )
@@ -35,19 +38,29 @@ def instrument_with_dispatcher(tracer: Tracer):
 def _set_llm_request(event, span) -> None:
     model_dict = event.model_dict
     span.set_attribute(SpanAttributes.LLM_REQUEST_MODEL, model_dict.get("model"))
-    span.set_attribute(SpanAttributes.LLM_REQUEST_TEMPERATURE, model_dict.get("temperature"))
+    span.set_attribute(
+        SpanAttributes.LLM_REQUEST_TEMPERATURE, model_dict.get("temperature")
+    )
     if should_send_prompts():
         for idx, message in enumerate(event.messages):
-            span.set_attribute(f"{SpanAttributes.LLM_PROMPTS}.{idx}.role", message.role.value)
-            span.set_attribute(f"{SpanAttributes.LLM_PROMPTS}.{idx}.content", message.content)
+            span.set_attribute(
+                f"{SpanAttributes.LLM_PROMPTS}.{idx}.role", message.role.value
+            )
+            span.set_attribute(
+                f"{SpanAttributes.LLM_PROMPTS}.{idx}.content", message.content
+            )
 
 
 @dont_throw
 def _set_llm_response(event, span) -> None:
     if should_send_prompts():
         for idx, message in enumerate(event.messages):
-            span.set_attribute(f"{SpanAttributes.LLM_PROMPTS}.{idx}.role", message.role.value)
-            span.set_attribute(f"{SpanAttributes.LLM_PROMPTS}.{idx}.content", message.content)
+            span.set_attribute(
+                f"{SpanAttributes.LLM_PROMPTS}.{idx}.role", message.role.value
+            )
+            span.set_attribute(
+                f"{SpanAttributes.LLM_PROMPTS}.{idx}.content", message.content
+            )
         response = event.response
         span.set_attribute(
             f"{SpanAttributes.LLM_COMPLETIONS}.role",
@@ -61,9 +74,15 @@ def _set_llm_response(event, span) -> None:
             return
         span.set_attribute(SpanAttributes.LLM_RESPONSE_MODEL, raw.get("model"))
         if usage := response.raw.get("usage"):
-            span.set_attribute(SpanAttributes.LLM_USAGE_COMPLETION_TOKENS, usage.completion_tokens)
-            span.set_attribute(SpanAttributes.LLM_USAGE_PROMPT_TOKENS, usage.prompt_tokens)
-            span.set_attribute(SpanAttributes.LLM_USAGE_TOTAL_TOKENS, usage.total_tokens)
+            span.set_attribute(
+                SpanAttributes.LLM_USAGE_COMPLETION_TOKENS, usage.completion_tokens
+            )
+            span.set_attribute(
+                SpanAttributes.LLM_USAGE_PROMPT_TOKENS, usage.prompt_tokens
+            )
+            span.set_attribute(
+                SpanAttributes.LLM_USAGE_TOTAL_TOKENS, usage.total_tokens
+            )
 
 
 @dataclass
@@ -93,12 +112,14 @@ class OpenLLSpanHandler(BaseSpanHandler[SpanHolder]):
         # Take the class name from id_ where id_ is e.g.
         # 'SentenceSplitter.split_text_metadata_aware-a2f2a780-2fa6-4682-a88e-80dc1f1ebe6a'
         class_name = LLAMA_INDEX_REGEX.match(id_).groups()[0]
-        span_name = f"{class_name}.llama_index.{kind}"
+        span_name = f"{class_name}.{kind}"
         span = self._tracer.start_span(
             span_name,
             context=parent.context if parent else None,
         )
-        current_context = set_span_in_context(span, context=parent.context if parent else None)
+        current_context = set_span_in_context(
+            span, context=parent.context if parent else None
+        )
         token = context_api.attach(current_context)
         span.set_attribute(SpanAttributes.TRACELOOP_SPAN_KIND, kind)
         span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, span_name)

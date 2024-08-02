@@ -8,7 +8,7 @@ from llama_index.core.query_pipeline import QueryPipeline
 from llama_index.core.response_synthesizers import TreeSummarize
 from llama_index.llms.openai import OpenAI
 from llama_index.postprocessor.cohere_rerank import CohereRerank
-from opentelemetry.semconv.ai import SpanAttributes
+from opentelemetry.semconv_ai import SpanAttributes
 
 
 @pytest.mark.skip("Needs https://github.com/run-llama/llama_index/pull/14997")
@@ -46,26 +46,30 @@ def test_query_pipeline(exporter):
     spans = exporter.get_finished_spans()
 
     assert {
-        "QueryPipeline.llama_index.workflow",
-        "BaseRetriever.llama_index.task",
-        "BaseSynthesizer.llama_index.task",
-        "CohereRerank.llama_index.task",
-        "LLM.llama_index.task",
-        "OpenAI.llama_index.task",
-        "TokenTextSplitter.llama_index.task",
+        "QueryPipeline.workflow",
+        "BaseRetriever.task",
+        "BaseSynthesizer.task",
+        "CohereRerank.task",
+        "LLM.task",
+        "OpenAI.task",
+        "TokenTextSplitter.task",
         "openai.chat",
         "openai.embeddings",
         "cohere.rerank",
     }.issubset({span.name for span in spans})
 
     query_pipeline_span = next(
-        span for span in spans if span.name == "QueryPipeline.llama_index.workflow"
+        span for span in spans if span.name == "QueryPipeline.workflow"
     )
-    retriever_span = next(span for span in spans if span.name == "BaseRetriever.llama_index.task")
-    reranker_span = next(span for span in spans if span.name == "CohereRerank.llama_index.task")
-    synthesizer_span = next(span for span in spans if span.name == "BaseSynthesizer.llama_index.task")
-    llm_span_1, llm_span_2 = [span for span in spans if span.name == "OpenAI.llama_index.task"]
-    openai_span_1, openai_span_2 = [span for span in spans if span.name == "openai.chat"]
+    retriever_span = next(span for span in spans if span.name == "BaseRetriever.task")
+    reranker_span = next(span for span in spans if span.name == "CohereRerank.task")
+    synthesizer_span = next(
+        span for span in spans if span.name == "BaseSynthesizer.task"
+    )
+    llm_span_1, llm_span_2 = [span for span in spans if span.name == "OpenAI.task"]
+    openai_span_1, openai_span_2 = [
+        span for span in spans if span.name == "openai.chat"
+    ]
 
     assert query_pipeline_span.parent is None
     assert reranker_span.parent is not None
@@ -77,7 +81,9 @@ def test_query_pipeline(exporter):
     assert openai_span_2.parent.span_id == llm_span_2.context.span_id
 
     assert llm_span_1.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "gpt-3.5-turbo"
-    assert llm_span_1.attributes[SpanAttributes.LLM_RESPONSE_MODEL] == "gpt-3.5-turbo-0125"
+    assert (
+        llm_span_1.attributes[SpanAttributes.LLM_RESPONSE_MODEL] == "gpt-3.5-turbo-0125"
+    )
     assert llm_span_1.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"] == (
         "Please generate a question about Paul Graham's life regarding the following topic YCombinator"
     )
@@ -87,10 +93,14 @@ def test_query_pipeline(exporter):
     )
 
     assert llm_span_2.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "gpt-3.5-turbo"
-    assert llm_span_2.attributes[SpanAttributes.LLM_RESPONSE_MODEL] == "gpt-3.5-turbo-0125"
+    assert (
+        llm_span_2.attributes[SpanAttributes.LLM_RESPONSE_MODEL] == "gpt-3.5-turbo-0125"
+    )
     assert llm_span_2.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"].startswith(
         "You are an expert Q&A system that is trusted around the world."
     )
-    assert llm_span_2.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.content"].startswith(
+    assert llm_span_2.attributes[
+        f"{SpanAttributes.LLM_COMPLETIONS}.content"
+    ].startswith(
         "Paul Graham played a pivotal role in the founding and development of Y Combinator."
     )
