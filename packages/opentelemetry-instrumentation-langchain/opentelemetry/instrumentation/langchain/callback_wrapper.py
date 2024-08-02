@@ -106,12 +106,12 @@ def _message_type_to_role(message_type: str) -> str:
         return "unknown"
 
 
-def _set_llm_request(
-    span: Span,
-    serialized: dict[str, Any],
-    prompts: list[str],
-    kwargs: Any,
-) -> None:
+def _set_span_attribute(span, name, value):
+    if value is not None:
+        span.set_attribute(name, value)
+
+
+def _set_request_params(span, kwargs):
     for model_tag in ("model", "model_id", "model_name"):
         if (model := kwargs.get(model_tag)) is not None:
             break
@@ -124,6 +124,32 @@ def _set_llm_request(
     span.set_attribute(SpanAttributes.LLM_REQUEST_MODEL, model)
     # response is not available for LLM requests (as opposed to chat)
     span.set_attribute(SpanAttributes.LLM_RESPONSE_MODEL, model)
+
+    if "invocation_params" in kwargs:
+        params = (
+            kwargs["invocation_params"].get("params") or kwargs["invocation_params"]
+        )
+    else:
+        params = kwargs
+
+    _set_span_attribute(
+        span,
+        SpanAttributes.LLM_REQUEST_MAX_TOKENS,
+        params.get("max_tokens") or params.get("max_new_tokens"),
+    )
+    _set_span_attribute(
+        span, SpanAttributes.LLM_REQUEST_TEMPERATURE, params.get("temperature")
+    )
+    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TOP_P, params.get("top_p"))
+
+
+def _set_llm_request(
+    span: Span,
+    serialized: dict[str, Any],
+    prompts: list[str],
+    kwargs: Any,
+) -> None:
+    _set_request_params(span, kwargs)
 
     if should_send_prompts():
         for i, msg in enumerate(prompts):
@@ -143,15 +169,22 @@ def _set_chat_request(
     messages: list[list[BaseMessage]],
     kwargs: Any,
 ) -> None:
-    kwargs = serialized["kwargs"]
-    for model_tag in ("model", "model_id", "model_name"):
-        if (model := kwargs.get(model_tag)) is not None:
-            break
-    else:
-        model = "unknown"
-    span.set_attribute(SpanAttributes.LLM_REQUEST_MODEL, model)
+    _set_request_params(span, serialized.get("kwargs", {}))
 
     if should_send_prompts():
+        for i, function in enumerate(
+            kwargs.get("invocation_params", {}).get("functions", [])
+        ):
+            prefix = f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.{i}"
+
+            _set_span_attribute(span, f"{prefix}.name", function.get("name"))
+            _set_span_attribute(
+                span, f"{prefix}.description", function.get("description")
+            )
+            _set_span_attribute(
+                span, f"{prefix}.parameters", json.dumps(function.get("parameters"))
+            )
+
         i = 0
         for message in messages:
             for msg in message:
@@ -173,7 +206,6 @@ def _set_chat_request(
                 i += 1
 
 
-@dont_throw
 def _set_chat_response(span: Span, response: LLMResult) -> None:
     if not should_send_prompts():
         return
@@ -182,7 +214,7 @@ def _set_chat_response(span: Span, response: LLMResult) -> None:
     for generations in response.generations:
         for generation in generations:
             prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{i}"
-            if hasattr(generation, "text"):
+            if hasattr(generation, "text") and generation.text != "":
                 span.set_attribute(
                     f"{prefix}.content",
                     generation.text,
@@ -443,11 +475,15 @@ class SyncSpanCallbackHandler(BaseCallbackHandler):
                 prompt_tokens + completion_tokens
             )
 
-            span.set_attribute(SpanAttributes.LLM_USAGE_PROMPT_TOKENS, prompt_tokens)
-            span.set_attribute(
-                SpanAttributes.LLM_USAGE_COMPLETION_TOKENS, completion_tokens
+            _set_span_attribute(
+                span, SpanAttributes.LLM_USAGE_PROMPT_TOKENS, prompt_tokens
             )
-            span.set_attribute(SpanAttributes.LLM_USAGE_TOTAL_TOKENS, total_tokens)
+            _set_span_attribute(
+                span, SpanAttributes.LLM_USAGE_COMPLETION_TOKENS, completion_tokens
+            )
+            _set_span_attribute(
+                span, SpanAttributes.LLM_USAGE_TOTAL_TOKENS, total_tokens
+            )
 
         if response.llm_output is not None:
             model_name = response.llm_output.get(
