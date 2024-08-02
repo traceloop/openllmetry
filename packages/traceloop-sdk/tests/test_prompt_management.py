@@ -2,7 +2,7 @@ import json
 
 import pytest
 from openai import OpenAI
-from opentelemetry.semconv.ai import SpanAttributes
+from opentelemetry.semconv_ai import SpanAttributes
 from traceloop.sdk.prompts import get_prompt
 from traceloop.sdk.prompts.client import PromptRegistryClient
 

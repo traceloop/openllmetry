@@ -1,3 +1,16 @@
+## v0.26.2 (2024-07-31)
+
+### Fix
+
+- separate semconv-ai module to avoid conflicts (#1716)
+
+## v0.26.1 (2024-07-30)
+
+### Fix
+
+- bump to otel 0.47b0 (#1695)
+- **openai**: log content filter results in proper attributes (#1539)
+
 ## v0.26.0 (2024-07-26)
 
 ### Feat

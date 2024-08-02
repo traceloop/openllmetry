@@ -22,8 +22,8 @@
   <a href="https://github.com/traceloop/openllmetry/releases">
     <img src="https://img.shields.io/github/release/traceloop/openllmetry">
   </a>
-  <a href="https://pepy.tech/project/traceloop-sdk">
-  <img src="https://static.pepy.tech/badge/traceloop-sdk/month">
+  <a href="https://pepy.tech/project/opentelemetry-instrumentation-openai">
+  <img src="https://static.pepy.tech/badge/opentelemetry-instrumentation-openai/month">
   </a>
    <a href="https://github.com/traceloop/openllmetry/blob/main/LICENSE">
     <img src="https://img.shields.io/badge/license-Apache 2.0-blue.svg" alt="OpenLLMetry is released under the Apache-2.0 License">

@@ -4,7 +4,7 @@ import pytest
 from langchain.chains.summarize import load_summarize_chain
 from langchain.text_splitter import CharacterTextSplitter
 from langchain_cohere import ChatCohere
-from opentelemetry.semconv.ai import SpanAttributes
+from opentelemetry.semconv_ai import SpanAttributes
 
 
 # source: wikipedia

@@ -8,7 +8,7 @@ show_missing = true
 
 [tool.poetry]
 name = "opentelemetry-instrumentation-alephalpha"
-version = "0.26.0"
+version = "0.26.2"
 description = "OpenTelemetry Aleph Alpha instrumentation"
 authors = [
   "Gal Kleinman <gal@traceloop.com>",
@@ -24,10 +24,10 @@ include = "opentelemetry/instrumentation/alephalpha"
 
 [tool.poetry.dependencies]
 python = ">=3.9,<4"
-opentelemetry-api = "^1.25.0"
-opentelemetry-instrumentation = "^0.46b0"
-opentelemetry-semantic-conventions = "^0.46b0"
-opentelemetry-semantic-conventions-ai = "0.3.6"
+opentelemetry-api = "^1.26.0"
+opentelemetry-instrumentation = "^0.47b0"
+opentelemetry-semantic-conventions = "^0.47b0"
+opentelemetry-semantic-conventions-ai = "0.4.0"
 
 [tool.poetry.group.dev.dependencies]
 autopep8 = "^2.2.0"

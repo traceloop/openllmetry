@@ -6,7 +6,7 @@ import traceback
 
 from opentelemetry import context as context_api
 from opentelemetry.instrumentation.haystack.config import Config
-from opentelemetry.semconv.ai import SpanAttributes
+from opentelemetry.semconv_ai import SpanAttributes
 
 
 class EnhancedJSONEncoder(json.JSONEncoder):

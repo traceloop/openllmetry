@@ -2,7 +2,7 @@ import logging
 
 from opentelemetry import context as context_api
 
-from opentelemetry.semconv.ai import (
+from opentelemetry.semconv_ai import (
     SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
     SpanAttributes,
     LLMRequestTypeValues,

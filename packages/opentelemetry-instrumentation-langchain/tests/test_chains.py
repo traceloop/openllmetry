@@ -6,7 +6,7 @@ from langchain.prompts import PromptTemplate
 from langchain.schema import StrOutputParser
 from langchain_cohere import ChatCohere
 from langchain_openai import OpenAI
-from opentelemetry.semconv.ai import SpanAttributes
+from opentelemetry.semconv_ai import SpanAttributes
 
 
 @pytest.mark.vcr

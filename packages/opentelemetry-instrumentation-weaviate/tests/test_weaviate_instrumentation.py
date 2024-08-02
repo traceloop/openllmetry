@@ -4,7 +4,7 @@ import pytest
 import weaviate
 import weaviate.classes as wvc
 
-from opentelemetry.semconv.ai import SpanAttributes
+from opentelemetry.semconv_ai import SpanAttributes
 
 
 ARTICLE_SCHEMA = {

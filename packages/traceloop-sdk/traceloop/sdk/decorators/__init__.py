@@ -1,6 +1,6 @@
 from typing import Optional
 
-from opentelemetry.semconv.ai import TraceloopSpanKindValues
+from opentelemetry.semconv_ai import TraceloopSpanKindValues
 
 from traceloop.sdk.decorators.base import (
     aentity_class,

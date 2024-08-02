@@ -9,7 +9,7 @@ from opentelemetry.instrumentation.llamaindex.utils import (
     process_response,
     start_as_current_span_async,
 )
-from opentelemetry.semconv.ai import SpanAttributes, TraceloopSpanKindValues
+from opentelemetry.semconv_ai import SpanAttributes, TraceloopSpanKindValues
 
 V9_MODULE_NAME = "llama_index.query_engine.retriever_query_engine"
 V10_MODULE_NAME = "llama_index.core.query_engine.retriever_query_engine"

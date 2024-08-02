@@ -10,7 +10,7 @@ from opentelemetry.instrumentation.anthropic.utils import (
     should_send_prompts,
 )
 from opentelemetry.metrics import Counter, Histogram
-from opentelemetry.semconv.ai import SpanAttributes
+from opentelemetry.semconv_ai import SpanAttributes
 from opentelemetry.trace.status import Status, StatusCode
 
 logger = logging.getLogger(__name__)
@@ -77,7 +77,9 @@ def _set_token_usage(
                 1,
                 attributes={
                     **metric_attributes,
-                    SpanAttributes.LLM_RESPONSE_FINISH_REASON: event.get("finish_reason"),
+                    SpanAttributes.LLM_RESPONSE_FINISH_REASON: event.get(
+                        "finish_reason"
+                    ),
                 },
             )
 
