@@ -3,11 +3,14 @@ from dataclasses import dataclass
 from typing import Any, Optional
 
 from llama_index.core.bridge.pydantic import PrivateAttr
+from llama_index.core.base.llms.types import MessageRole
 from llama_index.core.instrumentation import get_dispatcher
 from llama_index.core.instrumentation.events import BaseEvent
 from llama_index.core.instrumentation.events.llm import (
     LLMChatEndEvent,
     LLMChatStartEvent,
+    LLMPredictEndEvent,
+    LLMPredictStartEvent,
 )
 from llama_index.core.instrumentation.event_handlers import BaseEventHandler
 from llama_index.core.instrumentation.span_handlers import BaseSpanHandler
@@ -35,7 +38,7 @@ def instrument_with_dispatcher(tracer: Tracer):
 
 
 @dont_throw
-def _set_llm_request(event, span) -> None:
+def _set_llm_chat_request(event, span) -> None:
     model_dict = event.model_dict
     span.set_attribute(SpanAttributes.LLM_REQUEST_MODEL, model_dict.get("model"))
     span.set_attribute(
@@ -52,7 +55,7 @@ def _set_llm_request(event, span) -> None:
 
 
 @dont_throw
-def _set_llm_response(event, span) -> None:
+def _set_llm_chat_response(event, span) -> None:
     if should_send_prompts():
         for idx, message in enumerate(event.messages):
             span.set_attribute(
@@ -83,6 +86,19 @@ def _set_llm_response(event, span) -> None:
             span.set_attribute(
                 SpanAttributes.LLM_USAGE_TOTAL_TOKENS, usage.total_tokens
             )
+
+
+@dont_throw
+def _set_llm_predict_response(event, span) -> None:
+    if should_send_prompts():
+        span.set_attribute(
+            f"{SpanAttributes.LLM_COMPLETIONS}.role",
+            MessageRole.ASSISTANT.value,
+        )
+        span.set_attribute(
+            f"{SpanAttributes.LLM_COMPLETIONS}.content",
+            event.output,
+        )
 
 
 @dataclass
@@ -156,9 +172,11 @@ class OpenLLEventHandler(BaseEventHandler):
         self._span_handler = span_handler
 
     def handle(self, event: BaseEvent, **kwargs) -> Any:
+        span = get_current_span()
+        # use case with class_pattern if support for 3.9 is dropped
         if isinstance(event, LLMChatStartEvent):
-            span = get_current_span()
-            _set_llm_request(event, span)
+            _set_llm_chat_request(event, span)
         elif isinstance(event, LLMChatEndEvent):
-            span = get_current_span()
-            _set_llm_response(event, span)
+            _set_llm_chat_response(event, span)
+        elif isinstance(event, LLMPredictEndEvent):
+            _set_llm_predict_response(event, span)
