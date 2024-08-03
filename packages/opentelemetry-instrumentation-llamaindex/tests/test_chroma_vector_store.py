@@ -71,3 +71,6 @@ def test_rag_with_chroma(exporter):
     assert llm_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.content"] == (
         "The author worked on writing and programming before college."
     )
+    assert llm_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS] == 10
+    assert llm_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 2070
+    assert llm_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 2080

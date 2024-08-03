@@ -72,8 +72,8 @@ def _set_llm_response(event, span) -> None:
         )
         if not (raw := response.raw):
             return
-        span.set_attribute(SpanAttributes.LLM_RESPONSE_MODEL, raw.get("model"))
-        if usage := response.raw.get("usage"):
+        span.set_attribute(SpanAttributes.LLM_RESPONSE_MODEL, raw.model)
+        if usage := raw.usage:
             span.set_attribute(
                 SpanAttributes.LLM_USAGE_COMPLETION_TOKENS, usage.completion_tokens
             )

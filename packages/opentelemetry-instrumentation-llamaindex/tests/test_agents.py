@@ -68,6 +68,9 @@ def test_agents_and_tools(exporter):
     ].startswith(
         "Thought: The current language of the user is English. I need to use a tool"
     )
+    assert llm_span_1.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS] == 43
+    assert llm_span_1.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 479
+    assert llm_span_1.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 522
 
     assert (
         llm_span_2.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "gpt-3.5-turbo-0613"
@@ -91,6 +94,9 @@ def test_agents_and_tools(exporter):
         "Thought: I can answer without using any more tools. I'll use the user's "
         "language to answer.\nAnswer: 2 times 3 is 6."
     )
+    assert llm_span_2.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS] == 32
+    assert llm_span_2.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 535
+    assert llm_span_2.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 567
 
 
 @pytest.mark.vcr
@@ -179,9 +185,9 @@ def test_agent_with_query_tool(exporter):
     assert llm_span_1.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"].startswith(
         "Given an input question, first create a syntactically correct sqlite"
     )
-    assert llm_span_1.attributes[
-        f"{SpanAttributes.LLM_COMPLETIONS}.content"
-    ].startswith("SELECT city_name, MAX(population) FROM city_stats")
+    assert llm_span_1.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS] == 68
+    assert llm_span_1.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 224
+    assert llm_span_1.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 292
 
     assert llm_span_2.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "gpt-3.5-turbo"
     assert (
@@ -194,3 +200,6 @@ def test_agent_with_query_tool(exporter):
         "The city with the highest population in the city_stats table is Tokyo, "
         "with a population of 13,960,000."
     )
+    assert llm_span_2.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS] == 25
+    assert llm_span_2.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 63
+    assert llm_span_2.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 88
