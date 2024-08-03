@@ -53,8 +53,6 @@ def test_query_pipeline(exporter):
         "LLM.task",
         "OpenAI.task",
         "TokenTextSplitter.task",
-        "openai.chat",
-        "openai.embeddings",
         "cohere.rerank",
     }.issubset({span.name for span in spans})
 
@@ -67,9 +65,6 @@ def test_query_pipeline(exporter):
         span for span in spans if span.name == "BaseSynthesizer.task"
     )
     llm_span_1, llm_span_2 = [span for span in spans if span.name == "OpenAI.task"]
-    openai_span_1, openai_span_2 = [
-        span for span in spans if span.name == "openai.chat"
-    ]
 
     assert query_pipeline_span.parent is None
     assert reranker_span.parent is not None
@@ -77,8 +72,6 @@ def test_query_pipeline(exporter):
     assert synthesizer_span.parent is not None
     assert llm_span_1.parent is not None
     assert llm_span_2.parent is not None
-    assert openai_span_1.parent.span_id == llm_span_1.context.span_id
-    assert openai_span_2.parent.span_id == llm_span_2.context.span_id
 
     assert llm_span_1.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "gpt-3.5-turbo"
     assert (

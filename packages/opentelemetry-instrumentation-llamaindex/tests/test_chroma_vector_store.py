@@ -40,8 +40,6 @@ def test_rag_with_chroma(exporter):
         "LLM.task",
         "OpenAI.task",
         "RetrieverQueryEngine.task",
-        "openai.chat",
-        "openai.embeddings",
         "chroma.add",
         "chroma.query",
         "chroma.query.segment._query",
@@ -54,12 +52,10 @@ def test_rag_with_chroma(exporter):
         span for span in spans if span.name == "BaseSynthesizer.task"
     )
     llm_span = next(span for span in spans if span.name == "OpenAI.task")
-    openai_chat_span = next(span for span in spans if span.name == "openai.chat")
 
     assert query_pipeline_span.parent is None
     assert synthesize_span.parent is not None
     assert llm_span.parent is not None
-    assert openai_chat_span.parent.span_id == llm_span.context.span_id
 
     assert llm_span.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "gpt-3.5-turbo"
     assert (

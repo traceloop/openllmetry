@@ -30,7 +30,6 @@ def test_agents_and_tools(exporter):
         "OpenAI.task",
         "ReActOutputParser.task",
         "ReActAgentWorker.task",
-        "openai.chat",
     } == {span.name for span in spans}
 
     agent_workflow_span = next(
@@ -40,16 +39,11 @@ def test_agents_and_tools(exporter):
         span for span in spans if span.name == "FunctionTool.task"
     )
     llm_span_1, llm_span_2 = [span for span in spans if span.name == "OpenAI.task"]
-    openai_span_1, openai_span_2 = [
-        span for span in spans if span.name == "openai.chat"
-    ]
 
     assert agent_workflow_span.parent is None
     assert function_tool_span.parent is not None
     assert llm_span_1.parent is not None
     assert llm_span_2.parent is not None
-    assert openai_span_1.parent.span_id == llm_span_1.context.span_id
-    assert openai_span_2.parent.span_id == llm_span_2.context.span_id
 
     assert (
         llm_span_1.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "gpt-3.5-turbo-0613"
@@ -167,16 +161,11 @@ def test_agent_with_query_tool(exporter):
         span for span in spans if span.name == "BaseSynthesizer.task"
     )
     llm_span_1, llm_span_2 = [span for span in spans if span.name == "OpenAI.task"]
-    openai_span_1, openai_span_2 = [
-        span for span in spans if span.name == "openai.chat"
-    ]
 
     assert agent_span.parent is None
     assert synthesize_span.parent is not None
     assert llm_span_1.parent is not None
     assert llm_span_2.parent is not None
-    assert openai_span_1.parent.span_id == llm_span_1.context.span_id
-    assert openai_span_2.parent.span_id == llm_span_2.context.span_id
 
     assert llm_span_1.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "gpt-3.5-turbo"
     assert (

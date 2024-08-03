@@ -10,7 +10,6 @@ from llama_index.core.instrumentation.events.llm import (
     LLMChatEndEvent,
     LLMChatStartEvent,
     LLMPredictEndEvent,
-    LLMPredictStartEvent,
 )
 from llama_index.core.instrumentation.event_handlers import BaseEventHandler
 from llama_index.core.instrumentation.span_handlers import BaseSpanHandler
@@ -20,6 +19,7 @@ from opentelemetry.instrumentation.llamaindex.utils import (
     should_send_prompts,
 )
 from opentelemetry.semconv_ai import (
+    SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
     SpanAttributes,
     TraceloopSpanKindValues,
 )
@@ -135,6 +135,11 @@ class OpenLLSpanHandler(BaseSpanHandler[SpanHolder]):
         )
         current_context = set_span_in_context(
             span, context=parent.context if parent else None
+        )
+        current_context = context_api.set_value(
+            SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
+            True,
+            current_context,
         )
         token = context_api.attach(current_context)
         span.set_attribute(SpanAttributes.TRACELOOP_SPAN_KIND, kind)
