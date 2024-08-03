@@ -75,8 +75,12 @@ def _set_llm_chat_response(event, span) -> None:
         )
         if not (raw := response.raw):
             return
-        span.set_attribute(SpanAttributes.LLM_RESPONSE_MODEL, raw.model)
-        if usage := raw.usage:
+        # raw can be Any, not just ChatCompletion
+        span.set_attribute(
+            SpanAttributes.LLM_RESPONSE_MODEL,
+            raw.get("model") if "model" in raw else raw.model,
+        )
+        if usage := raw.get("usage") if "usage" in raw else raw.usage:
             span.set_attribute(
                 SpanAttributes.LLM_USAGE_COMPLETION_TOKENS, usage.completion_tokens
             )
