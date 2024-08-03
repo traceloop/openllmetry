@@ -1316,7 +1316,7 @@ wrapt = ">=1.0.0,<2.0.0"
 
 [[package]]
 name = "opentelemetry-instrumentation-alephalpha"
-version = "0.26.1"
+version = "0.26.3"
 description = "OpenTelemetry Aleph Alpha instrumentation"
 optional = false
 python-versions = ">=3.9,<4"
@@ -1338,7 +1338,7 @@ url = "../opentelemetry-instrumentation-alephalpha"
 
 [[package]]
 name = "opentelemetry-instrumentation-anthropic"
-version = "0.26.1"
+version = "0.26.3"
 description = "OpenTelemetry Anthropic instrumentation"
 optional = false
 python-versions = ">=3.9,<4"
@@ -1360,7 +1360,7 @@ url = "../opentelemetry-instrumentation-anthropic"
 
 [[package]]
 name = "opentelemetry-instrumentation-bedrock"
-version = "0.26.1"
+version = "0.26.3"
 description = "OpenTelemetry Bedrock instrumentation"
 optional = false
 python-versions = ">=3.9,<4"
@@ -1380,7 +1380,7 @@ url = "../opentelemetry-instrumentation-bedrock"
 
 [[package]]
 name = "opentelemetry-instrumentation-chromadb"
-version = "0.26.1"
+version = "0.26.3"
 description = "OpenTelemetry Chroma DB instrumentation"
 optional = false
 python-versions = ">=3.9,<4"
@@ -1402,7 +1402,7 @@ url = "../opentelemetry-instrumentation-chromadb"
 
 [[package]]
 name = "opentelemetry-instrumentation-cohere"
-version = "0.26.1"
+version = "0.26.3"
 description = "OpenTelemetry Cohere instrumentation"
 optional = false
 python-versions = ">=3.9,<4"
@@ -1424,7 +1424,7 @@ url = "../opentelemetry-instrumentation-cohere"
 
 [[package]]
 name = "opentelemetry-instrumentation-google-generativeai"
-version = "0.26.1"
+version = "0.26.3"
 description = "OpenTelemetry Google Generative AI instrumentation"
 optional = false
 python-versions = ">=3.9,<4"
@@ -1446,7 +1446,7 @@ url = "../opentelemetry-instrumentation-google-generativeai"
 
 [[package]]
 name = "opentelemetry-instrumentation-haystack"
-version = "0.26.1"
+version = "0.26.3"
 description = "OpenTelemetry Haystack instrumentation"
 optional = false
 python-versions = ">=3.9,<4"
@@ -1467,8 +1467,30 @@ type = "directory"
 url = "../opentelemetry-instrumentation-haystack"
 
 [[package]]
+name = "opentelemetry-instrumentation-lancedb"
+version = "0.26.3"
+description = "OpenTelemetry Lancedb instrumentation"
+optional = false
+python-versions = ">=3.9,<4"
+files = []
+develop = true
+
+[package.dependencies]
+opentelemetry-api = "^1.26.0"
+opentelemetry-instrumentation = "^0.47b0"
+opentelemetry-semantic-conventions = "^0.47b0"
+opentelemetry-semantic-conventions-ai = "0.4.0"
+
+[package.extras]
+instruments = []
+
+[package.source]
+type = "directory"
+url = "../opentelemetry-instrumentation-lancedb"
+
+[[package]]
 name = "opentelemetry-instrumentation-langchain"
-version = "0.26.1"
+version = "0.26.3"
 description = "OpenTelemetry Langchain instrumentation"
 optional = false
 python-versions = ">=3.9,<4"
@@ -1490,7 +1512,7 @@ url = "../opentelemetry-instrumentation-langchain"
 
 [[package]]
 name = "opentelemetry-instrumentation-llamaindex"
-version = "0.26.1"
+version = "0.26.3"
 description = "OpenTelemetry LlamaIndex instrumentation"
 optional = false
 python-versions = ">=3.9,<4"
@@ -1513,7 +1535,7 @@ url = "../opentelemetry-instrumentation-llamaindex"
 
 [[package]]
 name = "opentelemetry-instrumentation-marqo"
-version = "0.26.1"
+version = "0.26.3"
 description = "OpenTelemetry Marqo instrumentation"
 optional = false
 python-versions = ">=3.9,<4"
@@ -1535,7 +1557,7 @@ url = "../opentelemetry-instrumentation-marqo"
 
 [[package]]
 name = "opentelemetry-instrumentation-milvus"
-version = "0.26.1"
+version = "0.26.3"
 description = "OpenTelemetry Milvus instrumentation"
 optional = false
 python-versions = ">=3.9,<4"
@@ -1557,7 +1579,7 @@ url = "../opentelemetry-instrumentation-milvus"
 
 [[package]]
 name = "opentelemetry-instrumentation-mistralai"
-version = "0.26.1"
+version = "0.26.3"
 description = "OpenTelemetry Mistral AI instrumentation"
 optional = false
 python-versions = ">=3.9,<4"
@@ -1579,7 +1601,7 @@ url = "../opentelemetry-instrumentation-mistralai"
 
 [[package]]
 name = "opentelemetry-instrumentation-ollama"
-version = "0.26.1"
+version = "0.26.3"
 description = "OpenTelemetry Ollama instrumentation"
 optional = false
 python-versions = ">=3.9,<4"
@@ -1601,7 +1623,7 @@ url = "../opentelemetry-instrumentation-ollama"
 
 [[package]]
 name = "opentelemetry-instrumentation-openai"
-version = "0.26.1"
+version = "0.26.3"
 description = "OpenTelemetry OpenAI instrumentation"
 optional = false
 python-versions = ">=3.9,<4"
@@ -1624,7 +1646,7 @@ url = "../opentelemetry-instrumentation-openai"
 
 [[package]]
 name = "opentelemetry-instrumentation-pinecone"
-version = "0.26.1"
+version = "0.26.3"
 description = "OpenTelemetry Pinecone instrumentation"
 optional = false
 python-versions = ">=3.9,<4"
@@ -1646,7 +1668,7 @@ url = "../opentelemetry-instrumentation-pinecone"
 
 [[package]]
 name = "opentelemetry-instrumentation-qdrant"
-version = "0.26.1"
+version = "0.26.3"
 description = "OpenTelemetry Qdrant instrumentation"
 optional = false
 python-versions = ">=3.9,<4"
@@ -1668,7 +1690,7 @@ url = "../opentelemetry-instrumentation-qdrant"
 
 [[package]]
 name = "opentelemetry-instrumentation-replicate"
-version = "0.26.1"
+version = "0.26.3"
 description = "OpenTelemetry Replicate instrumentation"
 optional = false
 python-versions = ">=3.9,<4"
@@ -1731,7 +1753,7 @@ instruments = ["sqlalchemy"]
 
 [[package]]
 name = "opentelemetry-instrumentation-together"
-version = "0.26.1"
+version = "0.26.3"
 description = "OpenTelemetry Together AI instrumentation"
 optional = false
 python-versions = ">=3.9,<4"
@@ -1753,7 +1775,7 @@ url = "../opentelemetry-instrumentation-together"
 
 [[package]]
 name = "opentelemetry-instrumentation-transformers"
-version = "0.26.1"
+version = "0.26.3"
 description = "OpenTelemetry transformers instrumentation"
 optional = false
 python-versions = ">=3.9,<4"
@@ -1793,7 +1815,7 @@ instruments = ["urllib3 (>=1.0.0,<3.0.0)"]
 
 [[package]]
 name = "opentelemetry-instrumentation-vertexai"
-version = "0.26.1"
+version = "0.26.3"
 description = "OpenTelemetry Vertex AI instrumentation"
 optional = false
 python-versions = ">=3.9,<4"
@@ -1815,7 +1837,7 @@ url = "../opentelemetry-instrumentation-vertexai"
 
 [[package]]
 name = "opentelemetry-instrumentation-watsonx"
-version = "0.26.1"
+version = "0.26.3"
 description = "OpenTelemetry IBM Watsonx Instrumentation"
 optional = false
 python-versions = ">=3.9,<4"
@@ -1837,7 +1859,7 @@ url = "../opentelemetry-instrumentation-watsonx"
 
 [[package]]
 name = "opentelemetry-instrumentation-weaviate"
-version = "0.26.1"
+version = "0.26.3"
 description = "OpenTelemetry Weaviate instrumentation"
 optional = false
 python-versions = ">=3.9,<4"
@@ -3076,4 +3098,4 @@ test = ["big-O", "importlib-resources", "jaraco.functools", "jaraco.itertools", 
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<4"
-content-hash = "f8935e1ee1d169fd7a34d154c0bf4b9fddd7c4d6c4b98e0137a58918564be26c"
+content-hash = "6810010484cde14a16501435626d25b4b9633ef319d653c524b76439a5af26bf"
