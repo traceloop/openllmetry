@@ -1,5 +1,7 @@
+import dataclasses
+import json
 import re
-from dataclasses import dataclass
+from inspect import BoundArguments
 from typing import Any, Optional
 
 from llama_index.core.bridge.pydantic import PrivateAttr
@@ -28,6 +30,22 @@ from opentelemetry.trace.span import Span
 
 
 LLAMA_INDEX_REGEX = re.compile(r"^([a-zA-Z]+)\.")
+
+
+class JSONEncoder(json.JSONEncoder):
+    def default(self, o):
+        try:
+            if dataclasses.is_dataclass(o):
+                return dataclasses.asdict(o)
+            elif hasattr(o, "json"):
+                return o.json()
+            elif hasattr(o, "to_json"):
+                return o.to_json()
+            elif isinstance(o, BoundArguments):
+                return o.arguments
+            return None
+        except TypeError:
+            return None
 
 
 def instrument_with_dispatcher(tracer: Tracer):
@@ -105,7 +123,7 @@ def _set_llm_predict_response(event, span) -> None:
         )
 
 
-@dataclass
+@dataclasses.dataclass
 class SpanHolder:
     span: Span
     token: Any
@@ -148,6 +166,12 @@ class OpenLLSpanHandler(BaseSpanHandler[SpanHolder]):
         token = context_api.attach(current_context)
         span.set_attribute(SpanAttributes.TRACELOOP_SPAN_KIND, kind)
         span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, span_name)
+        span.set_attribute(
+            SpanAttributes.TRACELOOP_ENTITY_INPUT,
+            json.dumps({
+                "kwargs": kwargs["bound_args"] if "bound_args" in kwargs else kwargs
+            }, cls=JSONEncoder),
+        )
         return SpanHolder(span, token, current_context)
 
     def prepare_to_exit_span(
@@ -155,6 +179,13 @@ class OpenLLSpanHandler(BaseSpanHandler[SpanHolder]):
     ) -> SpanHolder:
         """Logic for preparing to drop a span."""
         span_holder = self.open_spans[id_]
+        span_holder.span.set_attribute(
+            SpanAttributes.TRACELOOP_ENTITY_OUTPUT,
+            json.dumps({
+                "result": result,
+                "kwargs": kwargs["bound_args"] if "bound_args" in kwargs else kwargs
+            }, cls=JSONEncoder),
+        )
         span_holder.span.end()
         context_api.detach(span_holder.token)
         with self.lock:
