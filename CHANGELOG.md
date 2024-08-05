@@ -1,3 +1,15 @@
+## v0.26.4 (2024-08-03)
+
+### Fix
+
+- **bedrock**: token count for titan (#1748)
+
+## v0.26.3 (2024-08-02)
+
+### Fix
+
+- **langchain**: various cases where not all parameters were logged properly (#1725)
+
 ## v0.26.2 (2024-07-31)
 
 ### Fix
