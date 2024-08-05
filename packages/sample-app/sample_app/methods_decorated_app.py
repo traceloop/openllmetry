@@ -19,7 +19,7 @@ def extract_pirate_name():
             "content": """
             Instructions: What is the name of the pirate name in the text below?
 
-            Text: Bill the pirate walks into a bar with a steering wheel in his pants. The bartender asks, 
+            Text: Bill the pirate walks into a bar with a steering wheel in his pants. The bartender asks,
             "Hey, what's with the steering wheel in your pants?" The pirate says, "Arrr, it's driving me nuts!"
             """
         }],
