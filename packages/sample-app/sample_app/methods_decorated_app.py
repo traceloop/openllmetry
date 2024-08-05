@@ -33,7 +33,7 @@ def extract_pirate_name_wrapper():
     return extract_pirate_name()
 
 
-@workflow(name="pirate_joke_generator")
+@workflow(name="pirate_name_extraction")
 def joke_workflow():
     extract_pirate_name_wrapper()
 
