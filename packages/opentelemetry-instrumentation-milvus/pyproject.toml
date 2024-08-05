@@ -27,11 +27,11 @@ python = ">=3.9,<4"
 opentelemetry-api = "^1.26.0"
 opentelemetry-semantic-conventions = "^0.47b0"
 opentelemetry-instrumentation = "^0.47b0"
-opentelemetry-semantic-conventions-ai = "0.4.0"
+opentelemetry-semantic-conventions-ai = "0.4.1"
 
 [tool.poetry.group.dev.dependencies]
 autopep8 = "^2.2.0"
-flake8 = "7.0.0"
+flake8 = "7.1.1"
 pytest = "^8.2.2"
 pytest-sugar = "1.0.0"
 pymilvus = "^2.4.1"
