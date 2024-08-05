@@ -1,7 +1,7 @@
 import os
 
 from traceloop.sdk import Traceloop
-from traceloop.sdk.decorators import task, agent, workflow, tool
+from traceloop.sdk.decorators import task, workflow
 
 from openai import OpenAI
 
@@ -18,13 +18,15 @@ def extract_pirate_name():
             "role": "user",
             "content": """
             Instructions: What is the name of the pirate name in the text below?
-            
-            Text: Bill the pirate walks into a bar with a steering wheel in his pants. The bartender asks, "Hey, what's with the steering wheel in your pants?" The pirate says, "Arrr, it's driving me nuts!"
+
+            Text: Bill the pirate walks into a bar with a steering wheel in his pants. The bartender asks, 
+            "Hey, what's with the steering wheel in your pants?" The pirate says, "Arrr, it's driving me nuts!"
             """
         }],
     )
 
     return completion.choices[0].message.content
+
 
 @task(name="pirate_name_extraction_wrapper", version=1)
 def extract_pirate_name_wrapper():
