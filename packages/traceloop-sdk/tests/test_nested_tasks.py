@@ -33,13 +33,11 @@ def test_nested_tasks(exporter):
     inner_task_span = spans[1]
     outer_task_span = spans[2]
     assert (
-        inner_inner_task_span.attributes[SpanAttributes.TRACELOOP_ENTITY_NAME]
-        == "outer_task.inner_task.inner_inner_task"
+        inner_inner_task_span.attributes[SpanAttributes.TRACELOOP_ENTITY_PATH] == "outer_task.inner_task"
     )
     assert (
-        inner_task_span.attributes[SpanAttributes.TRACELOOP_ENTITY_NAME]
-        == "outer_task.inner_task"
+        inner_task_span.attributes[SpanAttributes.TRACELOOP_ENTITY_PATH] == "outer_task"
     )
     assert (
-        outer_task_span.attributes[SpanAttributes.TRACELOOP_ENTITY_NAME] == "outer_task"
+        outer_task_span.attributes[SpanAttributes.TRACELOOP_ENTITY_PATH] == ""
     )
