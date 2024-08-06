@@ -30,7 +30,9 @@ async def chain():
     output_parser = JsonOutputFunctionsParser()
 
     chain = prompt | model.bind(functions=openai_functions) | output_parser
-    return await chain.ainvoke({"input": "tell me a short joke"})
+    return await chain.ainvoke(
+        {"input": "tell me a short joke"}, {"metadata": {"user_id": "1234"}}
+    )
 
 
 print(asyncio.run(chain()))

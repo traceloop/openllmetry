@@ -1,3 +1,10 @@
+## v0.26.5 (2024-08-06)
+
+### Fix
+
+- **langchain**: export metadata as association properties (#1805)
+- **bedrock**: add model name for amazon bedrock response (#1757)
+
 ## v0.26.4 (2024-08-03)
 
 ### Fix
