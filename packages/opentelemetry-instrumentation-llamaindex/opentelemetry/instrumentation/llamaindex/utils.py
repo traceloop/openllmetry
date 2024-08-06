@@ -59,6 +59,7 @@ def dont_throw(func):
 
 class JSONEncoder(json.JSONEncoder):
     def default(self, o):
+        print("type(o):", type(o))
         if dataclasses.is_dataclass(o):
             return dataclasses.asdict(o)
         elif hasattr(o, "json"):

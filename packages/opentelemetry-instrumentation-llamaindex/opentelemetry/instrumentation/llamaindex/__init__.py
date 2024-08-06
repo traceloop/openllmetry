@@ -1,6 +1,7 @@
 """OpenTelemetry LlamaIndex instrumentation"""
 
 import logging
+from importlib.metadata import version as import_version
 from typing import Collection
 
 from opentelemetry.instrumentation.llamaindex.config import Config
@@ -33,6 +34,7 @@ from opentelemetry.instrumentation.llamaindex.query_pipeline_instrumentor import
     QueryPipelineInstrumentor,
 )
 from opentelemetry.instrumentation.llamaindex.version import __version__
+from opentelemetry.instrumentation.llamaindex.dispatcher_wrapper import instrument_with_dispatcher
 
 logger = logging.getLogger(__name__)
 
@@ -53,14 +55,17 @@ class LlamaIndexInstrumentor(BaseInstrumentor):
         tracer_provider = kwargs.get("tracer_provider")
         tracer = get_tracer(__name__, __version__, tracer_provider)
 
-        RetrieverQueryEngineInstrumentor(tracer).instrument()
-        BaseRetrieverInstrumentor(tracer).instrument()
-        BaseSynthesizerInstrumentor(tracer).instrument()
-        BaseEmbeddingInstrumentor(tracer).instrument()
-        CustomLLMInstrumentor(tracer).instrument()
-        QueryPipelineInstrumentor(tracer).instrument()
-        BaseAgentInstrumentor(tracer).instrument()
-        BaseToolInstrumentor(tracer).instrument()
+        if import_version("llama-index") >= "0.10.20":
+            instrument_with_dispatcher(tracer)
+        else:
+            RetrieverQueryEngineInstrumentor(tracer).instrument()
+            BaseRetrieverInstrumentor(tracer).instrument()
+            BaseSynthesizerInstrumentor(tracer).instrument()
+            BaseEmbeddingInstrumentor(tracer).instrument()
+            CustomLLMInstrumentor(tracer).instrument()
+            QueryPipelineInstrumentor(tracer).instrument()
+            BaseAgentInstrumentor(tracer).instrument()
+            BaseToolInstrumentor(tracer).instrument()
 
     def _uninstrument(self, **kwargs):
         pass
