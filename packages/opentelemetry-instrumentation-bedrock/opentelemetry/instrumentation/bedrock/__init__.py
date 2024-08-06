@@ -136,6 +136,7 @@ def _handle_stream_call(span, kwargs, response):
 
         _set_span_attribute(span, SpanAttributes.LLM_SYSTEM, vendor)
         _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, model)
+        _set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, model)
 
         if vendor == "cohere":
             _set_cohere_span_attributes(span, request_body, response_body)
@@ -172,6 +173,7 @@ def _handle_call(span, kwargs, response):
 
     _set_span_attribute(span, SpanAttributes.LLM_SYSTEM, vendor)
     _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, model)
+    _set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, model)
 
     if vendor == "cohere":
         _set_cohere_span_attributes(span, request_body, response_body)
