@@ -49,7 +49,6 @@ def entity_method(
                 ]:
                     entity_path = get_chained_entity_path(entity_name)
                     set_entity_path(entity_path)
-                    span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_PATH, entity_path)
 
                 span.set_attribute(
                     SpanAttributes.TRACELOOP_SPAN_KIND, tlp_span_kind.value
@@ -150,7 +149,6 @@ def aentity_method(
                 ]:
                     entity_path = get_chained_entity_path(entity_name)
                     set_entity_path(entity_path)
-                    span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_PATH, entity_path)
 
                 span.set_attribute(
                     SpanAttributes.TRACELOOP_SPAN_KIND, tlp_span_kind.value
