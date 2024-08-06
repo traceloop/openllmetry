@@ -299,7 +299,13 @@ class SyncSpanCallbackHandler(BaseCallbackHandler):
         parent_run_id: Optional[UUID],
         span_name: str,
         kind: SpanKind = SpanKind.INTERNAL,
+        metadata: Optional[dict[str, Any]] = None,
     ) -> Span:
+        if metadata is not None:
+            context_api.attach(
+                context_api.set_value("association_properties", metadata)
+            )
+
         if parent_run_id is not None and parent_run_id in self.spans:
             span = self.tracer.start_span(
                 span_name, context=self.spans[parent_run_id].context, kind=kind
@@ -308,9 +314,11 @@ class SyncSpanCallbackHandler(BaseCallbackHandler):
             span = self.tracer.start_span(span_name)
 
         current_context = set_span_in_context(span)
+
         token = context_api.attach(
             context_api.set_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY, True)
         )
+
         self.spans[run_id] = SpanHolder(span, token, current_context, [])
 
         if parent_run_id is not None and parent_run_id in self.spans:
@@ -324,10 +332,11 @@ class SyncSpanCallbackHandler(BaseCallbackHandler):
         parent_run_id: Optional[UUID],
         name: str,
         kind: TraceloopSpanKindValues,
+        metadata: Optional[dict[str, Any]] = None,
     ) -> Span:
         span_name = f"{name}.{kind.value}"
 
-        span = self._create_span(run_id, parent_run_id, span_name)
+        span = self._create_span(run_id, parent_run_id, span_name, metadata=metadata)
 
         span.set_attribute(SpanAttributes.TRACELOOP_SPAN_KIND, kind.value)
         span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, span_name)
@@ -340,10 +349,15 @@ class SyncSpanCallbackHandler(BaseCallbackHandler):
         parent_run_id: Optional[UUID],
         name: str,
         request_type: LLMRequestTypeValues,
+        metadata: Optional[dict[str, Any]] = None,
     ) -> Span:
 
         span = self._create_span(
-            run_id, parent_run_id, f"{name}.{request_type.value}", kind=SpanKind.CLIENT
+            run_id,
+            parent_run_id,
+            f"{name}.{request_type.value}",
+            kind=SpanKind.CLIENT,
+            metadata=metadata,
         )
         span.set_attribute(SpanAttributes.LLM_SYSTEM, "Langchain")
         span.set_attribute(SpanAttributes.LLM_REQUEST_TYPE, request_type.value)
@@ -373,6 +387,7 @@ class SyncSpanCallbackHandler(BaseCallbackHandler):
                 if parent_run_id is None or parent_run_id not in self.spans
                 else TraceloopSpanKindValues.TASK
             ),
+            metadata,
         )
         if should_send_prompts():
             span.set_attribute(
@@ -429,7 +444,7 @@ class SyncSpanCallbackHandler(BaseCallbackHandler):
         """Run when Chat Model starts running."""
         name = self._get_name_from_callback(serialized, kwargs=kwargs)
         span = self._create_llm_span(
-            run_id, parent_run_id, name, LLMRequestTypeValues.CHAT
+            run_id, parent_run_id, name, LLMRequestTypeValues.CHAT, metadata=metadata
         )
         _set_chat_request(span, serialized, messages, kwargs)
 
