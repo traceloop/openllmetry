@@ -329,9 +329,9 @@ class TracerWrapper(object):
         if workflow_name is not None:
             span.set_attribute(SpanAttributes.TRACELOOP_WORKFLOW_NAME, workflow_name)
 
-        entity_name = get_value("entity_name")
-        if entity_name is not None:
-            span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, entity_name)
+        entity_path = get_value("entity_path")
+        if entity_path is not None:
+            span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_PATH, entity_path)
 
         association_properties = get_value("association_properties")
         if association_properties is not None:
@@ -444,12 +444,12 @@ def set_workflow_name(workflow_name: str) -> None:
     attach(set_value("workflow_name", workflow_name))
 
 
-def set_entity_name(entity_name: str) -> None:
-    attach(set_value("entity_name", entity_name))
+def set_entity_path(entity_path: str) -> None:
+    attach(set_value("entity_path", entity_path))
 
 
-def get_chained_entity_name(entity_name: str) -> str:
-    parent = get_value("entity_name")
+def get_chained_entity_path(entity_name: str) -> str:
+    parent = get_value("entity_path")
     if parent is None:
         return entity_name
     else:
