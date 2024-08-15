@@ -379,7 +379,7 @@ class SyncSpanCallbackHandler(BaseCallbackHandler):
 
         return span
 
-    # @dont_throw
+    @dont_throw
     def on_chain_start(
         self,
         serialized: dict[str, Any],
