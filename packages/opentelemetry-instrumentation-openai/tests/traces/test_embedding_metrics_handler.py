@@ -45,4 +45,3 @@ def test_set_embeddings_metrics_handles_none_values():
         # Ensure token_counter.record was called with the correct attributes
         token_counter.record.assert_called_once_with(10, attributes=expected_attributes)
 
-
