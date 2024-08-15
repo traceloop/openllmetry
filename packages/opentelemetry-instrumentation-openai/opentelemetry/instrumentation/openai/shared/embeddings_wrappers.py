@@ -209,6 +209,9 @@ def _set_embeddings_metrics(
     if usage and token_counter:
         for name, val in usage.items():
             if name in OPENAI_LLM_USAGE_TOKEN_TYPES:
+                if val is None:
+                    logging.error(f"Received None value for {name} in usage")
+                    continue
                 attributes_with_token_type = {
                     **shared_attributes,
                     SpanAttributes.LLM_TOKEN_TYPE: _token_type(name),
