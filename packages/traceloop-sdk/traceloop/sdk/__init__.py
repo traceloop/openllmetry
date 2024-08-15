@@ -49,7 +49,7 @@ class Traceloop:
         metrics_headers: Dict[str, str] = None,
         processor: SpanProcessor = None,
         propagator: TextMapPropagator = None,
-        traceloop_sync_enabled: bool = True,
+        traceloop_sync_enabled: bool = False,
         should_enrich_metrics: bool = True,
         resource_attributes: dict = {},
         instruments: Optional[Set[Instruments]] = None,

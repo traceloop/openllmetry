@@ -12,8 +12,8 @@ from traceloop.sdk.telemetry import Telemetry
 from traceloop.sdk.tracing import get_tracer, set_workflow_name
 from traceloop.sdk.tracing.tracing import (
     TracerWrapper,
-    set_entity_name,
-    get_chained_entity_name,
+    set_entity_path,
+    get_chained_entity_path,
 )
 from traceloop.sdk.utils import camel_to_snake
 from traceloop.sdk.utils.json_encoder import JSONEncoder
@@ -47,16 +47,14 @@ def entity_method(
                     TraceloopSpanKindValues.TASK,
                     TraceloopSpanKindValues.TOOL,
                 ]:
-                    chained_entity_name = get_chained_entity_name(entity_name)
-                    set_entity_name(chained_entity_name)
-                else:
-                    chained_entity_name = entity_name
+                    entity_path = get_chained_entity_path(entity_name)
+                    set_entity_path(entity_path)
 
                 span.set_attribute(
                     SpanAttributes.TRACELOOP_SPAN_KIND, tlp_span_kind.value
                 )
                 span.set_attribute(
-                    SpanAttributes.TRACELOOP_ENTITY_NAME, chained_entity_name
+                    SpanAttributes.TRACELOOP_ENTITY_NAME, entity_name
                 )
                 if version:
                     span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_VERSION, version)
@@ -149,16 +147,14 @@ def aentity_method(
                     TraceloopSpanKindValues.TASK,
                     TraceloopSpanKindValues.TOOL,
                 ]:
-                    chained_entity_name = get_chained_entity_name(entity_name)
-                    set_entity_name(chained_entity_name)
-                else:
-                    chained_entity_name = entity_name
+                    entity_path = get_chained_entity_path(entity_name)
+                    set_entity_path(entity_path)
 
                 span.set_attribute(
                     SpanAttributes.TRACELOOP_SPAN_KIND, tlp_span_kind.value
                 )
                 span.set_attribute(
-                    SpanAttributes.TRACELOOP_ENTITY_NAME, chained_entity_name
+                    SpanAttributes.TRACELOOP_ENTITY_NAME, entity_name
                 )
                 if version:
                     span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_VERSION, version)
