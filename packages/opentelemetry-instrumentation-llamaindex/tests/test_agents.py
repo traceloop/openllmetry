@@ -6,6 +6,7 @@ from llama_index.agent.openai import OpenAIAssistantAgent
 from llama_index.core.tools import FunctionTool, QueryEngineTool
 from llama_index.core.query_engine import NLSQLTableQueryEngine
 from llama_index.llms.openai import OpenAI
+from opentelemetry.semconv_ai import SpanAttributes
 
 
 @pytest.mark.vcr
@@ -23,17 +24,73 @@ def test_agents_and_tools(exporter):
     spans = exporter.get_finished_spans()
 
     assert {
-        "ReActAgent.agent",
-        "FunctionTool.tool",
-        "openai.chat",
-    } == set([span.name for span in spans])
+        "AgentRunner.workflow",
+        "AgentRunner.task",
+        "FunctionTool.task",
+        "OpenAI.task",
+        "ReActOutputParser.task",
+        "ReActAgentWorker.task",
+    } == {span.name for span in spans}
 
-    agent_span = next(span for span in spans if span.name == "ReActAgent.agent")
-    function_tool = next(span for span in spans if span.name == "FunctionTool.tool")
-    openai_span = next(span for span in spans if span.name == "openai.chat")
+    agent_workflow_span = next(
+        span for span in spans if span.name == "AgentRunner.workflow"
+    )
+    function_tool_span = next(
+        span for span in spans if span.name == "FunctionTool.task"
+    )
+    llm_span_1, llm_span_2 = [span for span in spans if span.name == "OpenAI.task"]
 
-    assert function_tool.parent.span_id == agent_span.context.span_id
-    assert openai_span.parent.span_id == agent_span.context.span_id
+    assert agent_workflow_span.parent is None
+    assert function_tool_span.parent is not None
+    assert llm_span_1.parent is not None
+    assert llm_span_2.parent is not None
+
+    assert (
+        llm_span_1.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "gpt-3.5-turbo-0613"
+    )
+    assert (
+        llm_span_1.attributes[SpanAttributes.LLM_RESPONSE_MODEL] == "gpt-3.5-turbo-0613"
+    )
+    assert llm_span_1.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"].startswith(
+        "You are designed to help with a variety of tasks,"
+    )
+    assert llm_span_1.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.content"] == (
+        "What is 2 times 3?"
+    )
+    assert llm_span_1.attributes[
+        f"{SpanAttributes.LLM_COMPLETIONS}.0.content"
+    ].startswith(
+        "Thought: The current language of the user is English. I need to use a tool"
+    )
+    assert llm_span_1.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS] == 43
+    assert llm_span_1.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 479
+    assert llm_span_1.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 522
+
+    assert (
+        llm_span_2.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "gpt-3.5-turbo-0613"
+    )
+    assert (
+        llm_span_2.attributes[SpanAttributes.LLM_RESPONSE_MODEL] == "gpt-3.5-turbo-0613"
+    )
+    assert llm_span_2.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"].startswith(
+        "You are designed to help with a variety of tasks,"
+    )
+    assert llm_span_2.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.content"] == (
+        "What is 2 times 3?"
+    )
+    assert llm_span_2.attributes[f"{SpanAttributes.LLM_PROMPTS}.2.content"].startswith(
+        "Thought: The current language of the user is English. I need to use a tool"
+    )
+    assert llm_span_2.attributes[f"{SpanAttributes.LLM_PROMPTS}.3.content"] == (
+        "Observation: 6"
+    )
+    assert llm_span_2.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"] == (
+        "Thought: I can answer without using any more tools. I'll use the user's "
+        "language to answer.\nAnswer: 2 times 3 is 6."
+    )
+    assert llm_span_2.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS] == 32
+    assert llm_span_2.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 535
+    assert llm_span_2.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 567
 
 
 @pytest.mark.vcr
@@ -90,19 +147,48 @@ def test_agent_with_query_tool(exporter):
     spans = exporter.get_finished_spans()
 
     assert {
-        "OpenAIAssistantAgent.agent",
-        "QueryEngineTool.tool",
-        "synthesize.task",
-        "openai.chat",
-    }.issubset(set([span.name for span in spans]))
+        "OpenAIAssistantAgent.workflow",
+        "BaseSynthesizer.task",
+        "LLM.task",
+        "OpenAI.task",
+        "TokenTextSplitter.task",
+    }.issubset({span.name for span in spans})
 
     agent_span = next(
-        span for span in spans if span.name == "OpenAIAssistantAgent.agent"
+        span for span in spans if span.name == "OpenAIAssistantAgent.workflow"
     )
-    query_engine_tool = next(
-        span for span in spans if span.name == "QueryEngineTool.tool"
+    synthesize_span = next(
+        span for span in spans if span.name == "BaseSynthesizer.task"
     )
-    synthesize_task = next(span for span in spans if span.name == "synthesize.task")
+    llm_span_1, llm_span_2 = [span for span in spans if span.name == "OpenAI.task"]
 
-    assert query_engine_tool.parent.span_id == agent_span.context.span_id
-    assert synthesize_task.parent.span_id == query_engine_tool.context.span_id
+    assert agent_span.parent is None
+    assert synthesize_span.parent is not None
+    assert llm_span_1.parent is not None
+    assert llm_span_2.parent is not None
+
+    assert llm_span_1.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "gpt-3.5-turbo"
+    assert (
+        llm_span_1.attributes[SpanAttributes.LLM_RESPONSE_MODEL] == "gpt-3.5-turbo-0125"
+    )
+    assert llm_span_1.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"].startswith(
+        "Given an input question, first create a syntactically correct sqlite"
+    )
+    assert llm_span_1.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS] == 68
+    assert llm_span_1.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 224
+    assert llm_span_1.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 292
+
+    assert llm_span_2.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "gpt-3.5-turbo"
+    assert (
+        llm_span_2.attributes[SpanAttributes.LLM_RESPONSE_MODEL] == "gpt-3.5-turbo-0125"
+    )
+    assert llm_span_2.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"].startswith(
+        "Given an input question, synthesize a response from the query results."
+    )
+    assert llm_span_2.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"] == (
+        "The city with the highest population in the city_stats table is Tokyo, "
+        "with a population of 13,960,000."
+    )
+    assert llm_span_2.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS] == 25
+    assert llm_span_2.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 63
+    assert llm_span_2.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 88

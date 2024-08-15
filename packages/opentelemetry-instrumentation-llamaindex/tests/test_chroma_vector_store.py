@@ -9,6 +9,7 @@ from llama_index.core import (
 )
 from llama_index.vector_stores.chroma import ChromaVectorStore
 from llama_index.embeddings.openai import OpenAIEmbedding
+from opentelemetry.semconv_ai import SpanAttributes
 
 
 @pytest.mark.vcr
@@ -34,7 +35,38 @@ def test_rag_with_chroma(exporter):
 
     spans = exporter.get_finished_spans()
     assert {
-        "llama_index_retriever_query.workflow",
-        "retrieve.task",
-        "synthesize.task",
-    }.issubset([span.name for span in spans])
+        "BaseQueryEngine.workflow",
+        "BaseSynthesizer.task",
+        "LLM.task",
+        "OpenAI.task",
+        "RetrieverQueryEngine.task",
+        "chroma.add",
+        "chroma.query",
+        "chroma.query.segment._query",
+    }.issubset({span.name for span in spans})
+
+    query_pipeline_span = next(
+        span for span in spans if span.name == "BaseQueryEngine.workflow"
+    )
+    synthesize_span = next(
+        span for span in spans if span.name == "BaseSynthesizer.task"
+    )
+    llm_span = next(span for span in spans if span.name == "OpenAI.task")
+
+    assert query_pipeline_span.parent is None
+    assert synthesize_span.parent is not None
+    assert llm_span.parent is not None
+
+    assert llm_span.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "gpt-3.5-turbo"
+    assert (
+        llm_span.attributes[SpanAttributes.LLM_RESPONSE_MODEL] == "gpt-3.5-turbo-0125"
+    )
+    assert llm_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"].startswith(
+        "You are an expert Q&A system that is trusted around the world."
+    )
+    assert llm_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"] == (
+        "The author worked on writing and programming before college."
+    )
+    assert llm_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS] == 10
+    assert llm_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 2070
+    assert llm_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 2080
