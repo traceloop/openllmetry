@@ -25,3 +25,4 @@ class Instruments(Enum):
     WEAVIATE = "weaviate"
     ALEPHALPHA = "alephalpha"
     MARQO = "marqo"
+    LANCEDB = "lancedb"
