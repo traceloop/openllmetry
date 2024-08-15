@@ -42,6 +42,8 @@ class SpanHolder:
     token: Any
     context: Context
     children: list[UUID]
+    workflow_name: str
+    path: str
 
 
 @dont_throw
@@ -300,6 +302,8 @@ class SyncSpanCallbackHandler(BaseCallbackHandler):
         span_name: str,
         kind: SpanKind = SpanKind.INTERNAL,
         metadata: Optional[dict[str, Any]] = None,
+        workflow_name: str = None,
+        path: str = None,
     ) -> Span:
         if metadata is not None:
             context_api.attach(
@@ -319,7 +323,7 @@ class SyncSpanCallbackHandler(BaseCallbackHandler):
             context_api.set_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY, True)
         )
 
-        self.spans[run_id] = SpanHolder(span, token, current_context, [])
+        self.spans[run_id] = SpanHolder(span, token, current_context, [], workflow_name, path)
 
         if parent_run_id is not None and parent_run_id in self.spans:
             self.spans[parent_run_id].children.append(run_id)
@@ -377,17 +381,26 @@ class SyncSpanCallbackHandler(BaseCallbackHandler):
         **kwargs: Any,
     ) -> None:
         """Run when chain starts running."""
+        workflow_name = ""
+        path = ""
+
         name = self._get_name_from_callback(serialized, **kwargs)
+        kind = TraceloopSpanKindValues.WORKFLOW if parent_run_id is None or parent_run_id not in self.spans else TraceloopSpanKindValues.TASK
+
+        if kind == TraceloopSpanKindValues.WORKFLOW:
+            workflow_name = name
+        else:
+            workflow_name = self.spans[parent_run_id].workflow_name
+            path = self.spans[parent_run_id].path + f".{name}"
+
         span = self._create_task_span(
             run_id,
             parent_run_id,
             name,
-            (
-                TraceloopSpanKindValues.WORKFLOW
-                if parent_run_id is None or parent_run_id not in self.spans
-                else TraceloopSpanKindValues.TASK
-            ),
+            kind,
             metadata,
+            workflow_name,
+            path
         )
         if should_send_prompts():
             span.set_attribute(
