@@ -1,6 +1,4 @@
-import logging
 import pytest
-from opentelemetry.semconv_ai import SpanAttributes
 from unittest.mock import MagicMock, patch
 from opentelemetry.instrumentation.openai.shared.embeddings_wrappers import _set_embeddings_metrics
 
@@ -21,6 +19,15 @@ def test_set_embeddings_metrics_handles_none_values():
     }
     duration = 1.23
 
+    expected_attributes = {
+        'gen_ai.system': 'openai',
+        'gen_ai.response.model': 'text-embedding-ada-002',
+        'gen_ai.operation.name': 'embeddings',
+        'server.address': '',
+        'stream': False,
+        'gen_ai.token.type': 'output'
+    }
+
     with patch("logging.error") as mock_logging_error:
         _set_embeddings_metrics(
             instance,
@@ -35,4 +42,4 @@ def test_set_embeddings_metrics_handles_none_values():
         mock_logging_error.assert_called_with("Received None value for prompt_tokens in usage")
 
         # Ensure token_counter.record was not called for the None value
-        token_counter.record.assert_called_once_with(10, attributes=MagicMock())
+        token_counter.record.assert_called_once_with(10, attributes=expected_attributes)
