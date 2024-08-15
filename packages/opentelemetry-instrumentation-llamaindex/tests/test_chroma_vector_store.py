@@ -64,7 +64,7 @@ def test_rag_with_chroma(exporter):
     assert llm_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"].startswith(
         "You are an expert Q&A system that is trusted around the world."
     )
-    assert llm_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.content"] == (
+    assert llm_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"] == (
         "The author worked on writing and programming before college."
     )
     assert llm_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS] == 10

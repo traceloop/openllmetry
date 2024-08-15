@@ -80,7 +80,7 @@ def test_query_pipeline(exporter):
     assert llm_span_1.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"] == (
         "Please generate a question about Paul Graham's life regarding the following topic YCombinator"
     )
-    assert llm_span_1.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.content"] == (
+    assert llm_span_1.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"] == (
         "What role did Paul Graham play in the founding and development of YCombinator, and "
         "how has his involvement shaped the trajectory of the company?"
     )
@@ -93,7 +93,7 @@ def test_query_pipeline(exporter):
         "You are an expert Q&A system that is trusted around the world."
     )
     assert llm_span_2.attributes[
-        f"{SpanAttributes.LLM_COMPLETIONS}.content"
+        f"{SpanAttributes.LLM_COMPLETIONS}.0.content"
     ].startswith(
         "Paul Graham played a pivotal role in the founding and development of Y Combinator."
     )

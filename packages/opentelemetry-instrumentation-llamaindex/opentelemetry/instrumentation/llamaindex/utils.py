@@ -59,12 +59,12 @@ def dont_throw(func):
 
 class JSONEncoder(json.JSONEncoder):
     def default(self, o):
-        if hasattr(o, "model_dump_json"):
-            return o.model_dump_json(exclude_unset=True)
+        if dataclasses.is_dataclass(o):
+            return dataclasses.asdict(o)
+        elif hasattr(o, "json"):
+            return o.json()
         elif hasattr(o, "to_json"):
             return o.to_json()
-        elif dataclasses.is_dataclass(o):
-            return dataclasses.asdict(o)
         return super().default(o)
 
 

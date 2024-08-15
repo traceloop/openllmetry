@@ -58,7 +58,7 @@ def test_agents_and_tools(exporter):
         "What is 2 times 3?"
     )
     assert llm_span_1.attributes[
-        f"{SpanAttributes.LLM_COMPLETIONS}.content"
+        f"{SpanAttributes.LLM_COMPLETIONS}.0.content"
     ].startswith(
         "Thought: The current language of the user is English. I need to use a tool"
     )
@@ -84,7 +84,7 @@ def test_agents_and_tools(exporter):
     assert llm_span_2.attributes[f"{SpanAttributes.LLM_PROMPTS}.3.content"] == (
         "Observation: 6"
     )
-    assert llm_span_2.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.content"] == (
+    assert llm_span_2.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"] == (
         "Thought: I can answer without using any more tools. I'll use the user's "
         "language to answer.\nAnswer: 2 times 3 is 6."
     )
@@ -185,7 +185,7 @@ def test_agent_with_query_tool(exporter):
     assert llm_span_2.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"].startswith(
         "Given an input question, synthesize a response from the query results."
     )
-    assert llm_span_2.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.content"] == (
+    assert llm_span_2.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"] == (
         "The city with the highest population in the city_stats table is Tokyo, "
         "with a population of 13,960,000."
     )

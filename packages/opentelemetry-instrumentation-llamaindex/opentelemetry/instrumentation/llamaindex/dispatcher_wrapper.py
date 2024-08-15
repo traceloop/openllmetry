@@ -1,8 +1,8 @@
 import inspect
 import json
 import re
-from dataclasses import dataclass
 from typing import Any, Optional
+from dataclasses import dataclass
 
 from llama_index.core.bridge.pydantic import PrivateAttr
 from llama_index.core.base.llms.types import MessageRole
@@ -31,22 +31,6 @@ from opentelemetry.trace.span import Span
 
 
 LLAMA_INDEX_REGEX = re.compile(r"^([a-zA-Z]+)\.")
-
-
-class JSONEncoder(json.JSONEncoder):
-    def default(self, o):
-        try:
-            if dataclasses.is_dataclass(o):
-                return dataclasses.asdict(o)
-            elif hasattr(o, "json"):
-                return o.json()
-            elif hasattr(o, "to_json"):
-                return o.to_json()
-            elif isinstance(o, BoundArguments):
-                return o.arguments
-            return None
-        except TypeError:
-            return None
 
 
 def instrument_with_dispatcher(tracer: Tracer):
@@ -85,30 +69,30 @@ def _set_llm_chat_response(event, span) -> None:
             )
         response = event.response
         span.set_attribute(
-            f"{SpanAttributes.LLM_COMPLETIONS}.role",
+            f"{SpanAttributes.LLM_COMPLETIONS}.0.role",
             response.message.role.value,
         )
         span.set_attribute(
-            f"{SpanAttributes.LLM_COMPLETIONS}.content",
+            f"{SpanAttributes.LLM_COMPLETIONS}.0.content",
             response.message.content,
         )
         if not (raw := response.raw):
             return
         # raw can be Any, not just ChatCompletion
+    span.set_attribute(
+        SpanAttributes.LLM_RESPONSE_MODEL,
+        raw.get("model") if "model" in raw else raw.model,
+    )
+    if usage := raw.get("usage") if "usage" in raw else raw.usage:
         span.set_attribute(
-            SpanAttributes.LLM_RESPONSE_MODEL,
-            raw.get("model") if "model" in raw else raw.model,
+            SpanAttributes.LLM_USAGE_COMPLETION_TOKENS, usage.completion_tokens
         )
-        if usage := raw.get("usage") if "usage" in raw else raw.usage:
-            span.set_attribute(
-                SpanAttributes.LLM_USAGE_COMPLETION_TOKENS, usage.completion_tokens
-            )
-            span.set_attribute(
-                SpanAttributes.LLM_USAGE_PROMPT_TOKENS, usage.prompt_tokens
-            )
-            span.set_attribute(
-                SpanAttributes.LLM_USAGE_TOTAL_TOKENS, usage.total_tokens
-            )
+        span.set_attribute(
+            SpanAttributes.LLM_USAGE_PROMPT_TOKENS, usage.prompt_tokens
+        )
+        span.set_attribute(
+            SpanAttributes.LLM_USAGE_TOTAL_TOKENS, usage.total_tokens
+        )
 
 
 @dont_throw
@@ -183,9 +167,9 @@ class OpenLLSpanHandler(BaseSpanHandler[SpanHolder]):
     ) -> SpanHolder:
         """Logic for preparing to drop a span."""
         span_holder = self.open_spans[id_]
-        # I know it's messy, but the typing of result is messy and couldn't find a better way 
+        # I know it's messy, but the typing of result is messy and couldn't find a better way
         # to get a dictionary I can then use to remove keys
-        try: 
+        try:
             serialized_output = json.dumps(result, cls=JSONEncoder)
             # we need to remove some keys like source_nodes as they can be very large
             output = json.loads(serialized_output)
@@ -198,7 +182,7 @@ class OpenLLSpanHandler(BaseSpanHandler[SpanHolder]):
                 )
         except Exception:
             pass
-        
+
         span_holder.span.end()
         context_api.detach(span_holder.token)
         with self.lock:
