@@ -41,5 +41,5 @@ def test_set_embeddings_metrics_handles_none_values():
         # Check that logging.error was called for the None value
         mock_logging_error.assert_called_with("Received None value for prompt_tokens in usage")
 
-        # Ensure token_counter.record was not called for the None value
+        # Ensure token_counter.record was called with the correct attributes
         token_counter.record.assert_called_once_with(10, attributes=expected_attributes)
