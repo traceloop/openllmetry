@@ -1,7 +1,7 @@
-import dataclasses
+import inspect
 import json
 import re
-from inspect import BoundArguments
+from dataclasses import dataclass
 from typing import Any, Optional
 
 from llama_index.core.bridge.pydantic import PrivateAttr
@@ -17,6 +17,7 @@ from llama_index.core.instrumentation.event_handlers import BaseEventHandler
 from llama_index.core.instrumentation.span_handlers import BaseSpanHandler
 from opentelemetry import context as context_api
 from opentelemetry.instrumentation.llamaindex.utils import (
+    JSONEncoder,
     dont_throw,
     should_send_prompts,
 )
@@ -123,7 +124,7 @@ def _set_llm_predict_response(event, span) -> None:
         )
 
 
-@dataclasses.dataclass
+@dataclass
 class SpanHolder:
     span: Span
     token: Any
@@ -138,7 +139,7 @@ class OpenLLSpanHandler(BaseSpanHandler[SpanHolder]):
         self._tracer = tracer
 
     def new_span(
-        self, id_: str, parent_span_id: Optional[str], **kwargs
+        self, id_: str, bound_args: inspect.BoundArguments, parent_span_id: Optional[str], **kwargs
     ) -> Optional[SpanHolder]:
         """Create a span."""
         parent = self.open_spans.get(parent_span_id)
@@ -166,12 +167,15 @@ class OpenLLSpanHandler(BaseSpanHandler[SpanHolder]):
         token = context_api.attach(current_context)
         span.set_attribute(SpanAttributes.TRACELOOP_SPAN_KIND, kind)
         span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, span_name)
-        span.set_attribute(
-            SpanAttributes.TRACELOOP_ENTITY_INPUT,
-            json.dumps({
-                "kwargs": kwargs["bound_args"] if "bound_args" in kwargs else kwargs
-            }, cls=JSONEncoder),
-        )
+        try:
+            if should_send_prompts():
+                span.set_attribute(
+                    SpanAttributes.TRACELOOP_ENTITY_INPUT,
+                    json.dumps(bound_args.arguments, cls=JSONEncoder)
+                )
+        except Exception:
+            pass
+
         return SpanHolder(span, token, current_context)
 
     def prepare_to_exit_span(
@@ -179,13 +183,22 @@ class OpenLLSpanHandler(BaseSpanHandler[SpanHolder]):
     ) -> SpanHolder:
         """Logic for preparing to drop a span."""
         span_holder = self.open_spans[id_]
-        span_holder.span.set_attribute(
-            SpanAttributes.TRACELOOP_ENTITY_OUTPUT,
-            json.dumps({
-                "result": result,
-                "kwargs": kwargs["bound_args"] if "bound_args" in kwargs else kwargs
-            }, cls=JSONEncoder),
-        )
+        # I know it's messy, but the typing of result is messy and couldn't find a better way 
+        # to get a dictionary I can then use to remove keys
+        try: 
+            serialized_output = json.dumps(result, cls=JSONEncoder)
+            # we need to remove some keys like source_nodes as they can be very large
+            output = json.loads(serialized_output)
+            if "source_nodes" in output:
+                del output["source_nodes"]
+            if should_send_prompts():
+                span_holder.span.set_attribute(
+                    SpanAttributes.TRACELOOP_ENTITY_OUTPUT,
+                    json.dumps(output, cls=JSONEncoder),
+                )
+        except Exception:
+            pass
+        
         span_holder.span.end()
         context_api.detach(span_holder.token)
         with self.lock:
