@@ -347,7 +347,15 @@ class SyncSpanCallbackHandler(BaseCallbackHandler):
         metadata: Optional[dict[str, Any]] = None,
     ) -> Span:
         span_name = f"{name}.{kind.value}"
-        span = self._create_span(run_id, parent_run_id, span_name, workflow_name=workflow_name, entity_name=entity_name, entity_path=entity_path, metadata=metadata)
+        span = self._create_span(
+            run_id,
+            parent_run_id,
+            span_name,
+            workflow_name=workflow_name,
+            entity_name=entity_name,
+            entity_path=entity_path,
+            metadata=metadata
+        )
 
         span.set_attribute(SpanAttributes.TRACELOOP_SPAN_KIND, kind.value)
         span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, entity_name)
@@ -396,7 +404,11 @@ class SyncSpanCallbackHandler(BaseCallbackHandler):
         entity_path = ""
 
         name = self._get_name_from_callback(serialized, **kwargs)
-        kind = TraceloopSpanKindValues.WORKFLOW if parent_run_id is None or parent_run_id not in self.spans else TraceloopSpanKindValues.TASK
+        kind = (
+            TraceloopSpanKindValues.WORKFLOW
+            if parent_run_id is None or parent_run_id not in self.spans
+            else TraceloopSpanKindValues.TASK
+        )
 
         if kind == TraceloopSpanKindValues.WORKFLOW:
             workflow_name = name
@@ -427,7 +439,6 @@ class SyncSpanCallbackHandler(BaseCallbackHandler):
                     cls=CustomJsonEncode,
                 ),
             )
-
 
     @dont_throw
     def on_chain_end(
@@ -589,22 +600,19 @@ class SyncSpanCallbackHandler(BaseCallbackHandler):
             )
         self._end_span(span, run_id)
 
-
     def get_parent_span(self, parent_run_id: Optional[str] = None):
         if parent_run_id is None:
             return None
         return self.spans[parent_run_id]
 
-    
     def get_workflow_name(self, parent_run_id: str):
         parent_span = self.get_parent_span(parent_run_id)
-        
+
         if parent_span is None:
             return ""
-        
+
         return parent_span.workflow_name
 
-    
     def get_entity_path(self, parent_run_id: str):
         parent_span = self.get_parent_span(parent_run_id)
 
