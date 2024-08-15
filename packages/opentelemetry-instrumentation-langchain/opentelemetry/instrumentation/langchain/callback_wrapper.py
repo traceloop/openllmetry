@@ -550,8 +550,11 @@ class SyncSpanCallbackHandler(BaseCallbackHandler):
     ) -> None:
         """Run when tool starts running."""
         name = self._get_name_from_callback(serialized, kwargs=kwargs)
+        workflow_name = self.get_workflow_name(parent_run_id)
+        entity_path = self.get_entity_path(parent_run_id)
+
         span = self._create_task_span(
-            run_id, parent_run_id, name, TraceloopSpanKindValues.TOOL
+            run_id, parent_run_id, name, TraceloopSpanKindValues.TOOL, workflow_name, name, entity_path
         )
         if should_send_prompts():
             span.set_attribute(
