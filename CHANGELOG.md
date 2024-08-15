@@ -1,3 +1,16 @@
+## v0.27.0 (2024-08-15)
+
+### Feat
+
+- **llama-index**: Use callbacks (#1546)
+- LanceDB Integration (#1749)
+- **sdk**: chained entity path on nested tasks (#1782)
+
+### Fix
+
+- workflow_name and entity_path support for langchain + fix entity_name (#1844)
+- **sdk**: disable traceloop sync by default (#1835)
+
 ## v0.26.5 (2024-08-06)
 
 ### Fix

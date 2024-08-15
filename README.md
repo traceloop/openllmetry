@@ -128,6 +128,8 @@ OpenLLMetry can instrument everything that [OpenTelemetry already instruments](h
 - ✅ Weaviate
 - ✅ Milvus
 - ✅ Marqo
+- ✅ LanceDB
+
 
 ### Frameworks
 
