@@ -55,7 +55,6 @@ def _set_token_usage(
     set_span_attribute(
         span, SpanAttributes.LLM_RESPONSE_MODEL, complete_response.get("model")
     )
-    
     set_span_attribute(
         span, "llm.cache_creation_input_tokens", cache_creation_tokens
     )
