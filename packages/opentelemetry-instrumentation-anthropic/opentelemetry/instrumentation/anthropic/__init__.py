@@ -170,6 +170,8 @@ async def _aset_token_usage(
         response = response.__dict__
 
     prompt_tokens = 0
+    cache_creation_tokens = response.get("cache_creation_input_tokens", 0)
+    cache_read_tokens = response.get("cache_read_input_tokens", 0)
     if hasattr(anthropic, "count_tokens"):
         if request.get("prompt"):
             prompt_tokens = await anthropic.count_tokens(request.get("prompt"))
@@ -230,6 +232,12 @@ async def _aset_token_usage(
         span, SpanAttributes.LLM_USAGE_COMPLETION_TOKENS, completion_tokens
     )
     set_span_attribute(span, SpanAttributes.LLM_USAGE_TOTAL_TOKENS, total_tokens)
+    set_span_attribute(
+        span, "llm.cache_creation_input_tokens", cache_creation_tokens
+    )
+    set_span_attribute(
+        span, "llm.cache_read_input_tokens", cache_read_tokens
+    )
 
 
 @dont_throw
@@ -246,6 +254,9 @@ def _set_token_usage(
         response = response.__dict__
 
     prompt_tokens = 0
+    cache_creation_tokens = response.get("cache_creation_input_tokens", 0)
+    cache_read_tokens = response.get("cache_read_input_tokens", 0)
+
     if hasattr(anthropic, "count_tokens"):
         if request.get("prompt"):
             prompt_tokens = anthropic.count_tokens(request.get("prompt"))
@@ -304,6 +315,12 @@ def _set_token_usage(
         span, SpanAttributes.LLM_USAGE_COMPLETION_TOKENS, completion_tokens
     )
     set_span_attribute(span, SpanAttributes.LLM_USAGE_TOTAL_TOKENS, total_tokens)
+    set_span_attribute(
+        span, "llm.cache_creation_input_tokens", cache_creation_tokens
+    )
+    set_span_attribute(
+        span, "llm.cache_read_input_tokens", cache_read_tokens
+    )
 
 
 @dont_throw
