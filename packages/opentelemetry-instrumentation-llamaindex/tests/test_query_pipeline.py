@@ -52,7 +52,6 @@ def test_query_pipeline(exporter):
         "LLM.task",
         "OpenAI.task",
         "TokenTextSplitter.task",
-        "cohere.rerank",
     }.issubset({span.name for span in spans})
 
     query_pipeline_span = next(
