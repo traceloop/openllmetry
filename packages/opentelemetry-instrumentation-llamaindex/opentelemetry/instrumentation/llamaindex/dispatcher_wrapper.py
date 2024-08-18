@@ -8,11 +8,13 @@ from llama_index.core.bridge.pydantic import PrivateAttr
 from llama_index.core.base.llms.types import MessageRole
 from llama_index.core.instrumentation import get_dispatcher
 from llama_index.core.instrumentation.events import BaseEvent
+from llama_index.core.instrumentation.events.embedding import EmbeddingStartEvent
 from llama_index.core.instrumentation.events.llm import (
     LLMChatEndEvent,
     LLMChatStartEvent,
     LLMPredictEndEvent,
 )
+from llama_index.core.instrumentation.events.rerank import ReRankStartEvent
 from llama_index.core.instrumentation.event_handlers import BaseEventHandler
 from llama_index.core.instrumentation.span_handlers import BaseSpanHandler
 from opentelemetry import context as context_api
@@ -23,6 +25,7 @@ from opentelemetry.instrumentation.llamaindex.utils import (
 )
 from opentelemetry.semconv_ai import (
     SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
+    LLMRequestTypeValues,
     SpanAttributes,
     TraceloopSpanKindValues,
 )
@@ -108,6 +111,32 @@ def _set_llm_predict_response(event, span) -> None:
         span.set_attribute(
             f"{SpanAttributes.LLM_COMPLETIONS}.content",
             event.output,
+        )
+
+
+@dont_throw
+def _set_embedding(event, span) -> None:
+    model_dict = event.model_dict
+    span.set_attribute(
+        f"{LLMRequestTypeValues.EMBEDDING.value}.model_name",
+        model_dict.get("model_name"),
+    )
+
+
+@dont_throw
+def _set_rerank(event, span) -> None:
+    span.set_attribute(
+        f"{LLMRequestTypeValues.RERANK.value}.model_name",
+        event.model_name,
+    )
+    span.set_attribute(
+        f"{LLMRequestTypeValues.RERANK.value}.top_n",
+        event.top_n,
+    )
+    if should_send_prompts():
+        span.set_attribute(
+            f"{LLMRequestTypeValues.RERANK.value}.query",
+            event.query.query_str,
         )
 
 
@@ -226,3 +255,7 @@ class OpenLLEventHandler(BaseEventHandler):
             _set_llm_chat_response(event, span)
         elif isinstance(event, LLMPredictEndEvent):
             _set_llm_predict_response(event, span)
+        elif isinstance(event, EmbeddingStartEvent):
+            _set_embedding(event, span)
+        elif isinstance(event, ReRankStartEvent):
+            _set_rerank(event, span)
