@@ -1613,6 +1613,21 @@ postgres = ["asyncpg (>=0.28.0,<0.29.0)", "pgvector (>=0.1.0,<0.2.0)", "psycopg2
 query-tools = ["guidance (>=0.0.64,<0.0.65)", "jsonpath-ng (>=1.6.0,<2.0.0)", "lm-format-enforcer (>=0.4.3,<0.5.0)", "rank-bm25 (>=0.2.2,<0.3.0)", "scikit-learn", "spacy (>=3.7.1,<4.0.0)"]
 
 [[package]]
+name = "llama-index-llms-cohere"
+version = "0.2.1"
+description = "llama-index llms cohere integration"
+optional = false
+python-versions = "<4.0,>=3.8.1"
+files = [
+    {file = "llama_index_llms_cohere-0.2.1-py3-none-any.whl", hash = "sha256:039983c6bdcac19b6692f4b2b6b8f9d89c0cc908bca7347186dcd8be77c7191e"},
+    {file = "llama_index_llms_cohere-0.2.1.tar.gz", hash = "sha256:07faa88b1d7460df9879812f6b03b863e4316a4e46636c806921e422dd3db573"},
+]
+
+[package.dependencies]
+cohere = ">=5.1.1,<6.0.0"
+llama-index-core = ">=0.10.36,<0.11.0"
+
+[[package]]
 name = "llama-index-llms-openai"
 version = "0.1.27"
 description = "llama-index llms openai integration"
@@ -4456,4 +4471,4 @@ instruments = []
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<4"
-content-hash = "335f612f60425b66d0dd143d65c9097144d092325b4b454bc198a7a7f25d7fad"
+content-hash = "c17aed92204efc46a1e39ccd97d7d9725569e94860b428b15e1b7d94678086c8"
