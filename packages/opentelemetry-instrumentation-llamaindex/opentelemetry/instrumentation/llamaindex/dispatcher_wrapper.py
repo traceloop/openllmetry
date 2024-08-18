@@ -8,6 +8,7 @@ from llama_index.core.bridge.pydantic import PrivateAttr
 from llama_index.core.base.llms.types import MessageRole
 from llama_index.core.instrumentation import get_dispatcher
 from llama_index.core.instrumentation.events import BaseEvent
+from llama_index.core.instrumentation.events.agent import AgentToolCallEvent
 from llama_index.core.instrumentation.events.embedding import EmbeddingStartEvent
 from llama_index.core.instrumentation.events.llm import (
     LLMChatEndEvent,
@@ -140,6 +141,13 @@ def _set_rerank(event, span) -> None:
         )
 
 
+@dont_throw
+def _set_tool(event, span) -> None:
+    span.set_attribute("tool.name", event.tool.name)
+    span.set_attribute("tool.description", event.tool.description)
+    span.set_attribute("tool.arguments", event.arguments)
+
+
 @dataclass
 class SpanHolder:
     span: Span
@@ -259,3 +267,5 @@ class OpenLLEventHandler(BaseEventHandler):
             _set_embedding(event, span)
         elif isinstance(event, ReRankStartEvent):
             _set_rerank(event, span)
+        elif isinstance(event, AgentToolCallEvent):
+            _set_tool(event, span)
