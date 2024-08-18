@@ -1,7 +1,7 @@
 import inspect
 import json
 import re
-from typing import Any, Optional
+from typing import Any, Dict, Optional
 from dataclasses import dataclass
 
 from llama_index.core.bridge.pydantic import PrivateAttr
@@ -59,6 +59,7 @@ def _set_llm_chat_request(event, span) -> None:
 
 @dont_throw
 def _set_llm_chat_response(event, span) -> None:
+    response = event.response
     if should_send_prompts():
         for idx, message in enumerate(event.messages):
             span.set_attribute(
@@ -67,7 +68,6 @@ def _set_llm_chat_response(event, span) -> None:
             span.set_attribute(
                 f"{SpanAttributes.LLM_PROMPTS}.{idx}.content", message.content
             )
-        response = event.response
         span.set_attribute(
             f"{SpanAttributes.LLM_COMPLETIONS}.0.role",
             response.message.role.value,
@@ -76,12 +76,11 @@ def _set_llm_chat_response(event, span) -> None:
             f"{SpanAttributes.LLM_COMPLETIONS}.0.content",
             response.message.content,
         )
-        if not (raw := response.raw):
-            return
-        # raw can be Any, not just ChatCompletion
+    if not (raw := response.raw):
+        return
     span.set_attribute(
         SpanAttributes.LLM_RESPONSE_MODEL,
-        raw.get("model") if "model" in raw else raw.model,
+        raw.get("model") if "model" in raw else raw.model,  # raw can be Any, not just ChatCompletion
     )
     if usage := raw.get("usage") if "usage" in raw else raw.usage:
         span.set_attribute(
@@ -92,6 +91,10 @@ def _set_llm_chat_response(event, span) -> None:
         )
         span.set_attribute(
             SpanAttributes.LLM_USAGE_TOTAL_TOKENS, usage.total_tokens
+        )
+    if choices := raw.choices:
+        span.set_attribute(
+            SpanAttributes.LLM_RESPONSE_FINISH_REASON, choices[0].finish_reason
         )
 
 
@@ -123,7 +126,13 @@ class OpenLLSpanHandler(BaseSpanHandler[SpanHolder]):
         self._tracer = tracer
 
     def new_span(
-        self, id_: str, bound_args: inspect.BoundArguments, parent_span_id: Optional[str], **kwargs
+        self,
+        id_: str,
+        bound_args: inspect.BoundArguments,
+        instance: Optional[Any] = None,
+        parent_span_id: Optional[str] = None,
+        tags: Optional[Dict[str, Any]] = None,
+        **kwargs: Any,
     ) -> Optional[SpanHolder]:
         """Create a span."""
         parent = self.open_spans.get(parent_span_id)
