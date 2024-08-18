@@ -11,7 +11,6 @@ from llama_index.postprocessor.cohere_rerank import CohereRerank
 from opentelemetry.semconv_ai import SpanAttributes
 
 
-@pytest.mark.skip("Needs https://github.com/run-llama/llama_index/pull/14997")
 @pytest.mark.vcr
 def test_query_pipeline(exporter):
     docs = SimpleDirectoryReader("./data/paul_graham/").load_data()
