@@ -1711,47 +1711,6 @@ type = "directory"
 url = "../opentelemetry-instrumentation-replicate"
 
 [[package]]
-name = "opentelemetry-instrumentation-requests"
-version = "0.47b0"
-description = "OpenTelemetry requests instrumentation"
-optional = false
-python-versions = ">=3.8"
-files = [
-    {file = "opentelemetry_instrumentation_requests-0.47b0-py3-none-any.whl", hash = "sha256:77fdd13f64fef2cb44665fe6975eadb993d78f96612e55a502e79b34ef7fee47"},
-    {file = "opentelemetry_instrumentation_requests-0.47b0.tar.gz", hash = "sha256:f85ed52cbca21bff226e0e7f1888e5b9bc386657ecf4b0440f328e5b3aba8436"},
-]
-
-[package.dependencies]
-opentelemetry-api = ">=1.12,<2.0"
-opentelemetry-instrumentation = "0.47b0"
-opentelemetry-semantic-conventions = "0.47b0"
-opentelemetry-util-http = "0.47b0"
-
-[package.extras]
-instruments = ["requests (>=2.0,<3.0)"]
-
-[[package]]
-name = "opentelemetry-instrumentation-sqlalchemy"
-version = "0.47b0"
-description = "OpenTelemetry SQLAlchemy instrumentation"
-optional = false
-python-versions = ">=3.8"
-files = [
-    {file = "opentelemetry_instrumentation_sqlalchemy-0.47b0-py3-none-any.whl", hash = "sha256:997b2c4a624ebcba45b9bda27882622d0ab3028d66a5fb50cdcf3581af04b3d1"},
-    {file = "opentelemetry_instrumentation_sqlalchemy-0.47b0.tar.gz", hash = "sha256:bbeab06fc421ddae16bb69ca287abb81a131d3dff97de60b02c092887794103d"},
-]
-
-[package.dependencies]
-opentelemetry-api = ">=1.12,<2.0"
-opentelemetry-instrumentation = "0.47b0"
-opentelemetry-semantic-conventions = "0.47b0"
-packaging = ">=21.0"
-wrapt = ">=1.11.2"
-
-[package.extras]
-instruments = ["sqlalchemy"]
-
-[[package]]
 name = "opentelemetry-instrumentation-threading"
 version = "0.47b0"
 description = "Thread context propagation support for OpenTelemetry"
@@ -1807,27 +1766,6 @@ opentelemetry-semantic-conventions-ai = "0.4.1"
 [package.source]
 type = "directory"
 url = "../opentelemetry-instrumentation-transformers"
-
-[[package]]
-name = "opentelemetry-instrumentation-urllib3"
-version = "0.47b0"
-description = "OpenTelemetry urllib3 instrumentation"
-optional = false
-python-versions = ">=3.8"
-files = [
-    {file = "opentelemetry_instrumentation_urllib3-0.47b0-py3-none-any.whl", hash = "sha256:6218b8383aa7e5c7ded56ceb7c64f1a12eefe6a4c2bf5e957c67b1bfaed621f7"},
-    {file = "opentelemetry_instrumentation_urllib3-0.47b0.tar.gz", hash = "sha256:8aa3342cea629dab6fde59303501ff826df5f12b3e29fdcb73ddee0a809f7fec"},
-]
-
-[package.dependencies]
-opentelemetry-api = ">=1.12,<2.0"
-opentelemetry-instrumentation = "0.47b0"
-opentelemetry-semantic-conventions = "0.47b0"
-opentelemetry-util-http = "0.47b0"
-wrapt = ">=1.0.0,<2.0.0"
-
-[package.extras]
-instruments = ["urllib3 (>=1.0.0,<3.0.0)"]
 
 [[package]]
 name = "opentelemetry-instrumentation-vertexai"
@@ -1949,17 +1887,6 @@ python-versions = "<4,>=3.9"
 files = [
     {file = "opentelemetry_semantic_conventions_ai-0.4.1-py3-none-any.whl", hash = "sha256:b6c6e3976a5ea31058faeaf0450a6a56d4576a9734c94c1a4cb82332ee635fe3"},
     {file = "opentelemetry_semantic_conventions_ai-0.4.1.tar.gz", hash = "sha256:aaf59b2f24d745692170b96d86d7c5560f42443dcf88ced49ae9d4542db1902f"},
-]
-
-[[package]]
-name = "opentelemetry-util-http"
-version = "0.47b0"
-description = "Web util for OpenTelemetry"
-optional = false
-python-versions = ">=3.8"
-files = [
-    {file = "opentelemetry_util_http-0.47b0-py3-none-any.whl", hash = "sha256:3d3215e09c4a723b12da6d0233a31395aeb2bb33a64d7b15a1500690ba250f19"},
-    {file = "opentelemetry_util_http-0.47b0.tar.gz", hash = "sha256:352a07664c18eef827eb8ddcbd64c64a7284a39dd1655e2f16f577eb046ccb32"},
 ]
 
 [[package]]
@@ -3114,4 +3041,4 @@ test = ["big-O", "importlib-resources", "jaraco.functools", "jaraco.itertools", 
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<4"
-content-hash = "affbe3f9823d10b4ef761d81dcfcce0db06f1b4505dbb6869cab4c60d2d59497"
+content-hash = "a4d06dc34ec3da1039a4b294a35544235231dd0daa57c57841195a829bd2d765"
