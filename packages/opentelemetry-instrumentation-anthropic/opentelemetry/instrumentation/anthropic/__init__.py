@@ -170,8 +170,8 @@ async def _aset_token_usage(
         response = response.__dict__
 
     prompt_tokens = 0
-    cache_creation_tokens = response.get("cache_creation_input_tokens", 0)
-    cache_read_tokens = response.get("cache_read_input_tokens", 0)
+    cache_creation_tokens = response.get("gen_ai.anthropic.usage.cache_creation_input_tokens", 0)
+    cache_read_tokens = response.get("gen_ai.anthropic.usage.cache_read_input_tokens", 0)
     if hasattr(anthropic, "count_tokens"):
         if request.get("prompt"):
             prompt_tokens = await anthropic.count_tokens(request.get("prompt"))
@@ -250,8 +250,8 @@ def _set_token_usage(
         response = response.__dict__
 
     prompt_tokens = 0
-    cache_creation_tokens = response.get("cache_creation_input_tokens", 0)
-    cache_read_tokens = response.get("cache_read_input_tokens", 0)
+    cache_creation_tokens = response.get("gen_ai.anthropic.usage.cache_creation_input_tokens", 0)
+    cache_read_tokens = response.get("gen_ai.anthropic.usage.cache_read_input_tokens", 0)
 
     if hasattr(anthropic, "count_tokens"):
         if request.get("prompt"):
