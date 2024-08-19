@@ -22,6 +22,7 @@ from opentelemetry.sdk.trace.export import (
 )
 from opentelemetry.trace import get_tracer_provider, ProxyTracerProvider
 from opentelemetry.context import get_value, attach, set_value
+from opentelemetry.instrumentation.threading import ThreadingInstrumentor
 
 from opentelemetry.semconv_ai import SpanAttributes
 from traceloop.sdk import Telemetry
@@ -118,6 +119,9 @@ class TracerWrapper(object):
 
             if propagator:
                 set_global_textmap(propagator)
+
+            # this makes sure otel context is propagated so we always want it
+            ThreadingInstrumentor().instrument()
 
             instrument_set = False
             if instruments is None:
