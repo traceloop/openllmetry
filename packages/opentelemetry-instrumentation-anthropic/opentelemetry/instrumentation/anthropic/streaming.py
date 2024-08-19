@@ -55,12 +55,8 @@ def _set_token_usage(
     set_span_attribute(
         span, SpanAttributes.LLM_RESPONSE_MODEL, complete_response.get("model")
     )
-    set_span_attribute(
-        span, "llm.cache_creation_input_tokens", cache_creation_tokens
-    )
-    set_span_attribute(
-        span, "llm.cache_read_input_tokens", cache_read_tokens
-    )
+    set_span_attribute(span, SpanAttributes.GEN_AI_ANTHROPIC_USAGE_CACHE_CREATION_INPUT_TOKENS, cache_creation_tokens)
+    set_span_attribute(span, SpanAttributes.GEN_AI_ANTHROPIC_USAGE_CACHE_READ_INPUT_TOKENS, cache_read_tokens)
 
     if token_histogram and type(prompt_tokens) is int and prompt_tokens >= 0:
         token_histogram.record(
