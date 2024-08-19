@@ -43,8 +43,8 @@ def _set_token_usage(
     choice_counter: Counter = None,
 ):
     total_tokens = prompt_tokens + completion_tokens
-    cache_creation_tokens = complete_response.get("gen_ai.anthropic.usage.cache_creation_input_tokens", 0)
-    cache_read_tokens = complete_response.get("gen_ai.anthropic.usage.cache_read_input_tokens", 0)
+    cache_creation_tokens = complete_response.get(SpanAttributes.GEN_AI_ANTHROPIC_USAGE_CACHE_CREATION_INPUT_TOKENS, 0)
+    cache_read_tokens = complete_response.get(SpanAttributes.GEN_AI_ANTHROPIC_USAGE_CACHE_READ_INPUT_TOKENS, 0)
 
     set_span_attribute(span, SpanAttributes.LLM_USAGE_PROMPT_TOKENS, prompt_tokens)
     set_span_attribute(
