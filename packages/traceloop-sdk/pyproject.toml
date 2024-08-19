@@ -66,7 +66,7 @@ posthog = ">3.0.2, <4"
 
 [tool.poetry.group.dev.dependencies]
 autopep8 = "^2.2.0"
-flake8 = "7.0.0"
+flake8 = "7.1.1"
 pytest = "^8.2.2"
 pytest-sugar = "1.0.0"
 
@@ -76,7 +76,7 @@ vcrpy = "^6.0.1"
 pytest-recording = "^0.13.1"
 pydantic = "<3"
 pytest-asyncio = "^0.23.7"
-anthropic = "^0.25.2"
+anthropic = ">=0.25.2,<0.35.0"
 langchain = "^0.2.5"
 langchain-openai = "^0.1.15"
 
