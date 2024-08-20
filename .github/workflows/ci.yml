@@ -9,6 +9,18 @@ on:
       - "main"
 
 jobs:
+  lint-pr:
+    name: Lint PR
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    permissions:
+      pull-requests: read
+    steps:
+      - name: Validate PR title
+        uses: amannn/action-semantic-pull-request@v5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   lint:
     name: Lint
     runs-on: ubuntu-latest
