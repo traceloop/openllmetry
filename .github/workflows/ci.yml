@@ -12,7 +12,7 @@ jobs:
   lint-pr:
     name: Lint PR
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request' && contains('["opened", "edited", "synchronize"]', github.event.action)
+    if: github.event_name == 'pull_request_target' && contains('["opened", "edited", "synchronize"]', github.event.action)
     permissions:
       pull-requests: read
     steps:
