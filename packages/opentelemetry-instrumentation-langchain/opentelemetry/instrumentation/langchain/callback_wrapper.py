@@ -42,6 +42,9 @@ class SpanHolder:
     token: Any
     context: Context
     children: list[UUID]
+    workflow_name: str
+    entity_name: str
+    entity_path: str
 
 
 @dont_throw
@@ -299,6 +302,9 @@ class SyncSpanCallbackHandler(BaseCallbackHandler):
         parent_run_id: Optional[UUID],
         span_name: str,
         kind: SpanKind = SpanKind.INTERNAL,
+        workflow_name: str = "",
+        entity_name: str = "",
+        entity_path: str = "",
         metadata: Optional[dict[str, Any]] = None,
     ) -> Span:
         if metadata is not None:
@@ -313,13 +319,16 @@ class SyncSpanCallbackHandler(BaseCallbackHandler):
         else:
             span = self.tracer.start_span(span_name)
 
+        span.set_attribute(SpanAttributes.TRACELOOP_WORKFLOW_NAME, workflow_name)
+        span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_PATH, entity_path)
+
         current_context = set_span_in_context(span)
 
         token = context_api.attach(
             context_api.set_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY, True)
         )
 
-        self.spans[run_id] = SpanHolder(span, token, current_context, [])
+        self.spans[run_id] = SpanHolder(span, token, current_context, [], workflow_name, entity_name, entity_path)
 
         if parent_run_id is not None and parent_run_id in self.spans:
             self.spans[parent_run_id].children.append(run_id)
@@ -332,14 +341,24 @@ class SyncSpanCallbackHandler(BaseCallbackHandler):
         parent_run_id: Optional[UUID],
         name: str,
         kind: TraceloopSpanKindValues,
+        workflow_name: str,
+        entity_name: str = "",
+        entity_path: str = "",
         metadata: Optional[dict[str, Any]] = None,
     ) -> Span:
         span_name = f"{name}.{kind.value}"
-
-        span = self._create_span(run_id, parent_run_id, span_name, metadata=metadata)
+        span = self._create_span(
+            run_id,
+            parent_run_id,
+            span_name,
+            workflow_name=workflow_name,
+            entity_name=entity_name,
+            entity_path=entity_path,
+            metadata=metadata
+        )
 
         span.set_attribute(SpanAttributes.TRACELOOP_SPAN_KIND, kind.value)
-        span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, span_name)
+        span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, entity_name)
 
         return span
 
@@ -351,12 +370,16 @@ class SyncSpanCallbackHandler(BaseCallbackHandler):
         request_type: LLMRequestTypeValues,
         metadata: Optional[dict[str, Any]] = None,
     ) -> Span:
+        workflow_name = self.get_workflow_name(parent_run_id)
+        entity_path = self.get_entity_path(parent_run_id)
 
         span = self._create_span(
             run_id,
             parent_run_id,
             f"{name}.{request_type.value}",
             kind=SpanKind.CLIENT,
+            workflow_name=workflow_name,
+            entity_path=entity_path,
             metadata=metadata,
         )
         span.set_attribute(SpanAttributes.LLM_SYSTEM, "Langchain")
@@ -377,17 +400,31 @@ class SyncSpanCallbackHandler(BaseCallbackHandler):
         **kwargs: Any,
     ) -> None:
         """Run when chain starts running."""
+        workflow_name = ""
+        entity_path = ""
+
         name = self._get_name_from_callback(serialized, **kwargs)
+        kind = (
+            TraceloopSpanKindValues.WORKFLOW
+            if parent_run_id is None or parent_run_id not in self.spans
+            else TraceloopSpanKindValues.TASK
+        )
+
+        if kind == TraceloopSpanKindValues.WORKFLOW:
+            workflow_name = name
+        else:
+            workflow_name = self.get_workflow_name(parent_run_id)
+            entity_path = self.get_entity_path(parent_run_id)
+
         span = self._create_task_span(
             run_id,
             parent_run_id,
             name,
-            (
-                TraceloopSpanKindValues.WORKFLOW
-                if parent_run_id is None or parent_run_id not in self.spans
-                else TraceloopSpanKindValues.TASK
-            ),
-            metadata,
+            kind,
+            workflow_name,
+            name,
+            entity_path,
+            metadata
         )
         if should_send_prompts():
             span.set_attribute(
@@ -524,8 +561,11 @@ class SyncSpanCallbackHandler(BaseCallbackHandler):
     ) -> None:
         """Run when tool starts running."""
         name = self._get_name_from_callback(serialized, kwargs=kwargs)
+        workflow_name = self.get_workflow_name(parent_run_id)
+        entity_path = self.get_entity_path(parent_run_id)
+
         span = self._create_task_span(
-            run_id, parent_run_id, name, TraceloopSpanKindValues.TOOL
+            run_id, parent_run_id, name, TraceloopSpanKindValues.TOOL, workflow_name, name, entity_path
         )
         if should_send_prompts():
             span.set_attribute(
@@ -559,3 +599,28 @@ class SyncSpanCallbackHandler(BaseCallbackHandler):
                 json.dumps({"output": output, "kwargs": kwargs}, cls=CustomJsonEncode),
             )
         self._end_span(span, run_id)
+
+    def get_parent_span(self, parent_run_id: Optional[str] = None):
+        if parent_run_id is None:
+            return None
+        return self.spans[parent_run_id]
+
+    def get_workflow_name(self, parent_run_id: str):
+        parent_span = self.get_parent_span(parent_run_id)
+
+        if parent_span is None:
+            return ""
+
+        return parent_span.workflow_name
+
+    def get_entity_path(self, parent_run_id: str):
+        parent_span = self.get_parent_span(parent_run_id)
+
+        if parent_span is None:
+            return ""
+        elif parent_span.entity_path == "" and parent_span.entity_name == parent_span.workflow_name:
+            return ""
+        elif parent_span.entity_path == "":
+            return f"{parent_span.entity_name}"
+        else:
+            return f"{parent_span.entity_path}.{parent_span.entity_name}"

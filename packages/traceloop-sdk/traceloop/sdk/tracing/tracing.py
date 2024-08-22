@@ -22,6 +22,7 @@ from opentelemetry.sdk.trace.export import (
 )
 from opentelemetry.trace import get_tracer_provider, ProxyTracerProvider
 from opentelemetry.context import get_value, attach, set_value
+from opentelemetry.instrumentation.threading import ThreadingInstrumentor
 
 from opentelemetry.semconv_ai import SpanAttributes
 from traceloop.sdk import Telemetry
@@ -118,6 +119,9 @@ class TracerWrapper(object):
 
             if propagator:
                 set_global_textmap(propagator)
+
+            # this makes sure otel context is propagated so we always want it
+            ThreadingInstrumentor().instrument()
 
             instrument_set = False
             if instruments is None:
@@ -289,6 +293,12 @@ class TracerWrapper(object):
                     elif instrument == Instruments.MARQO:
                         if not init_marqo_instrumentor():
                             print(Fore.RED + "Warning: marqo library does not exist.")
+                            print(Fore.RESET)
+                        else:
+                            instrument_set = True
+                    elif instrument == Instruments.LANCEDB:
+                        if not init_lancedb_instrumentor():
+                            print(Fore.RED + "Warning: LanceDB library does not exist.")
                             print(Fore.RESET)
                         else:
                             instrument_set = True
@@ -535,6 +545,7 @@ def init_instrumentations(should_enrich_metrics: bool):
     init_weaviate_instrumentor()
     init_alephalpha_instrumentor()
     init_marqo_instrumentor()
+    init_lancedb_instrumentor()
 
 
 def init_openai_instrumentor(should_enrich_metrics: bool):
@@ -983,6 +994,24 @@ def init_marqo_instrumentor():
         return True
     except Exception as e:
         logging.error(f"Error initializing marqo instrumentor: {e}")
+        Telemetry().log_exception(e)
+        return False
+
+
+def init_lancedb_instrumentor():
+    try:
+        if is_package_installed("lancedb"):
+            Telemetry().capture("instrumentation:lancedb:init")
+            from opentelemetry.instrumentation.lancedb import LanceInstrumentor
+
+            instrumentor = LanceInstrumentor(
+                exception_logger=lambda e: Telemetry().log_exception(e),
+            )
+            if not instrumentor.is_instrumented_by_opentelemetry:
+                instrumentor.instrument()
+        return True
+    except Exception as e:
+        logging.error(f"Error initializing LanceDB instrumentor: {e}")
         Telemetry().log_exception(e)
         return False
 
