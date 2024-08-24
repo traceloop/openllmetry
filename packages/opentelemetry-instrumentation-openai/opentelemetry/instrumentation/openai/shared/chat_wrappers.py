@@ -39,7 +39,7 @@ from opentelemetry.instrumentation.openai.shared import (
 from opentelemetry.trace import SpanKind, Tracer
 from opentelemetry.trace.status import Status, StatusCode
 
-from opentelemetry.instrumentation.openai.utils import is_openai_v1, is_azure_openai
+from opentelemetry.instrumentation.openai.utils import is_openai_v1
 
 SPAN_NAME = "openai.chat"
 PROMPT_FILTER_KEY = "prompt_filter_results"
@@ -428,6 +428,7 @@ def _set_completions(span, choices):
                 )
 
 
+@dont_throw
 def _set_streaming_token_metrics(
     request_kwargs, complete_response, span, token_counter, shared_attributes
 ):
@@ -745,10 +746,9 @@ async def _abuild_from_streaming_response(
         "stream": True,
     }
 
-    if not is_azure_openai(instance):
-        _set_streaming_token_metrics(
-            request_kwargs, complete_response, span, token_counter, shared_attributes
-        )
+    _set_streaming_token_metrics(
+        request_kwargs, complete_response, span, token_counter, shared_attributes
+    )
 
     # choice metrics
     if choice_counter and complete_response.get("choices"):

@@ -13,7 +13,7 @@ Traceloop.init(app_name="story_service")
 @workflow(name="streaming_story")
 def joke_workflow():
     stream = client.chat.completions.create(
-        model="gpt-3.5-turbo",
+        model="gpt-4o-2024-05-13",
         messages=[{"role": "user", "content": "Tell me a story about opentelemetry"}],
         stream=True,
     )
