@@ -8,7 +8,6 @@ from langgraph.graph import END, StateGraph, MessagesState
 from langgraph.prebuilt import ToolNode
 
 from traceloop.sdk import Traceloop
-from traceloop.sdk.decorators import workflow as traceloop_workflow
 
 Traceloop.init(app_name="langgraph_example")
 
@@ -83,15 +82,10 @@ checkpointer = MemorySaver()
 app = workflow.compile(checkpointer=checkpointer)
 
 
-@traceloop_workflow()
-def run_app():
-    # Use the Runnable
-    final_state = app.invoke(
-        {"messages": [HumanMessage(content="what is the weather in sf in Celsius")]},
-        config={"configurable": {"thread_id": 42}},
-    )
+# Use the Runnable
+final_state = app.invoke(
+    {"messages": [HumanMessage(content="what is the weather in sf in Celsius")]},
+    config={"configurable": {"thread_id": 42}},
+)
 
-    print(final_state["messages"][-1].content)
-
-
-run_app()
+print(final_state["messages"][-1].content)
