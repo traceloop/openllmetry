@@ -5,7 +5,6 @@ from uuid import UUID
 
 from langchain_core.callbacks import (
     BaseCallbackHandler,
-    BaseCallbackManager,
 )
 from langchain_core.messages import BaseMessage
 from langchain_core.outputs import LLMResult
@@ -22,7 +21,6 @@ from opentelemetry.trace.span import Span
 
 from opentelemetry import context as context_api
 from opentelemetry.instrumentation.langchain.utils import (
-    _with_tracer_wrapper,
     dont_throw,
     should_send_prompts,
 )
@@ -45,57 +43,6 @@ class SpanHolder:
     workflow_name: str
     entity_name: str
     entity_path: str
-
-
-@dont_throw
-def _add_callback(
-    tracer, callbacks: Union[List[BaseCallbackHandler], BaseCallbackManager]
-):
-    cb = SyncSpanCallbackHandler(tracer)
-    if isinstance(callbacks, BaseCallbackManager):
-        for c in callbacks.handlers:
-            if isinstance(c, SyncSpanCallbackHandler):
-                cb = c
-                break
-        else:
-            callbacks.add_handler(cb)
-    elif isinstance(callbacks, list):
-        for c in callbacks:
-            if isinstance(c, SyncSpanCallbackHandler):
-                cb = c
-                break
-        else:
-            callbacks.append(cb)
-
-
-@_with_tracer_wrapper
-def callback_wrapper(tracer, to_wrap, wrapped, instance, args, kwargs):
-    """Hook into the invoke function, config is part of args, 2nd place.
-    sources:
-    https://python.langchain.com/v0.2/docs/how_to/callbacks_attach/
-    https://python.langchain.com/v0.2/docs/how_to/callbacks_runtime/
-    """
-    if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
-        return wrapped(*args, **kwargs)
-
-    if len(args) > 1:
-        # args[1] is config which (may) contain the callbacks setting
-        callbacks = args[1].get("callbacks", [])
-    elif kwargs.get("config"):
-        callbacks = kwargs.get("config", {}).get("callbacks", [])
-    else:
-        callbacks = []
-
-    _add_callback(tracer, callbacks)
-
-    if len(args) > 1:
-        args[1]["callbacks"] = callbacks
-    elif kwargs.get("config"):
-        kwargs["config"]["callbacks"] = callbacks
-    else:
-        kwargs["config"] = {"callbacks": callbacks}
-
-    return wrapped(*args, **kwargs)
 
 
 def _message_type_to_role(message_type: str) -> str:
@@ -260,7 +207,7 @@ def _set_chat_response(span: Span, response: LLMResult) -> None:
             i += 1
 
 
-class SyncSpanCallbackHandler(BaseCallbackHandler):
+class TraceloopCallbackHandler(BaseCallbackHandler):
     def __init__(self, tracer: Tracer) -> None:
         super().__init__()
         self.tracer = tracer
@@ -314,7 +261,9 @@ class SyncSpanCallbackHandler(BaseCallbackHandler):
 
         if parent_run_id is not None and parent_run_id in self.spans:
             span = self.tracer.start_span(
-                span_name, context=self.spans[parent_run_id].context, kind=kind
+                span_name,
+                context=set_span_in_context(self.spans[parent_run_id].span),
+                kind=kind,
             )
         else:
             span = self.tracer.start_span(span_name)
@@ -322,13 +271,13 @@ class SyncSpanCallbackHandler(BaseCallbackHandler):
         span.set_attribute(SpanAttributes.TRACELOOP_WORKFLOW_NAME, workflow_name)
         span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_PATH, entity_path)
 
-        current_context = set_span_in_context(span)
-
         token = context_api.attach(
             context_api.set_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY, True)
         )
 
-        self.spans[run_id] = SpanHolder(span, token, current_context, [], workflow_name, entity_name, entity_path)
+        self.spans[run_id] = SpanHolder(
+            span, token, None, [], workflow_name, entity_name, entity_path
+        )
 
         if parent_run_id is not None and parent_run_id in self.spans:
             self.spans[parent_run_id].children.append(run_id)
@@ -354,7 +303,7 @@ class SyncSpanCallbackHandler(BaseCallbackHandler):
             workflow_name=workflow_name,
             entity_name=entity_name,
             entity_path=entity_path,
-            metadata=metadata
+            metadata=metadata,
         )
 
         span.set_attribute(SpanAttributes.TRACELOOP_SPAN_KIND, kind.value)
@@ -400,6 +349,9 @@ class SyncSpanCallbackHandler(BaseCallbackHandler):
         **kwargs: Any,
     ) -> None:
         """Run when chain starts running."""
+        if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
+            return
+
         workflow_name = ""
         entity_path = ""
 
@@ -424,7 +376,7 @@ class SyncSpanCallbackHandler(BaseCallbackHandler):
             workflow_name,
             name,
             entity_path,
-            metadata
+            metadata,
         )
         if should_send_prompts():
             span.set_attribute(
@@ -450,6 +402,9 @@ class SyncSpanCallbackHandler(BaseCallbackHandler):
         **kwargs: Any,
     ) -> None:
         """Run when chain ends running."""
+        if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
+            return
+
         span = self._get_span(run_id)
         if should_send_prompts():
             span.set_attribute(
@@ -479,6 +434,9 @@ class SyncSpanCallbackHandler(BaseCallbackHandler):
         **kwargs: Any,
     ) -> Any:
         """Run when Chat Model starts running."""
+        if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
+            return
+
         name = self._get_name_from_callback(serialized, kwargs=kwargs)
         span = self._create_llm_span(
             run_id, parent_run_id, name, LLMRequestTypeValues.CHAT, metadata=metadata
@@ -498,6 +456,9 @@ class SyncSpanCallbackHandler(BaseCallbackHandler):
         **kwargs: Any,
     ) -> Any:
         """Run when Chat Model starts running."""
+        if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
+            return
+
         name = self._get_name_from_callback(serialized, kwargs=kwargs)
         span = self._create_llm_span(
             run_id, parent_run_id, name, LLMRequestTypeValues.COMPLETION
@@ -513,6 +474,9 @@ class SyncSpanCallbackHandler(BaseCallbackHandler):
         parent_run_id: Union[UUID, None] = None,
         **kwargs: Any,
     ):
+        if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
+            return
+
         span = self._get_span(run_id)
 
         token_usage = (response.llm_output or {}).get("token_usage")
@@ -560,12 +524,21 @@ class SyncSpanCallbackHandler(BaseCallbackHandler):
         **kwargs: Any,
     ) -> None:
         """Run when tool starts running."""
+        if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
+            return
+
         name = self._get_name_from_callback(serialized, kwargs=kwargs)
         workflow_name = self.get_workflow_name(parent_run_id)
         entity_path = self.get_entity_path(parent_run_id)
 
         span = self._create_task_span(
-            run_id, parent_run_id, name, TraceloopSpanKindValues.TOOL, workflow_name, name, entity_path
+            run_id,
+            parent_run_id,
+            name,
+            TraceloopSpanKindValues.TOOL,
+            workflow_name,
+            name,
+            entity_path,
         )
         if should_send_prompts():
             span.set_attribute(
@@ -592,6 +565,9 @@ class SyncSpanCallbackHandler(BaseCallbackHandler):
         **kwargs: Any,
     ) -> None:
         """Run when tool ends running."""
+        if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
+            return
+
         span = self._get_span(run_id)
         if should_send_prompts():
             span.set_attribute(
@@ -618,7 +594,10 @@ class SyncSpanCallbackHandler(BaseCallbackHandler):
 
         if parent_span is None:
             return ""
-        elif parent_span.entity_path == "" and parent_span.entity_name == parent_span.workflow_name:
+        elif (
+            parent_span.entity_path == ""
+            and parent_span.entity_name == parent_span.workflow_name
+        ):
             return ""
         elif parent_span.entity_path == "":
             return f"{parent_span.entity_name}"
