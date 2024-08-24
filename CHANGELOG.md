@@ -1,3 +1,9 @@
+## v0.28.1 (2024-08-24)
+
+### Fix
+
+- **langchain**: langgraph traces were broken (#1895)
+
 ## v0.28.0 (2024-08-24)
 
 ### Feat
