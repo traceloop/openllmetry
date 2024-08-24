@@ -33,10 +33,8 @@ def should_send_prompts():
 
 
 def _set_span_attribute(span, name, value):
-    if value is not None:
-        if value != "":
-            span.set_attribute(name, value)
-    return
+    if value is not None and value != "" and value != openai.NOT_GIVEN:
+        span.set_attribute(name, value)
 
 
 def _set_client_attributes(span, instance):
