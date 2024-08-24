@@ -14,4 +14,7 @@ class JSONEncoder(json.JSONEncoder):
         if hasattr(o, "to_json"):
             return o.to_json()
 
+        if hasattr(o, "json"):
+            return o.json()
+
         return super().default(o)
