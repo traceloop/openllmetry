@@ -1,3 +1,17 @@
+## v0.28.0 (2024-08-24)
+
+### Feat
+
+- **llama-index**: callback improvements (#1859)
+
+### Fix
+
+- **openai**: re-enabled token count for azure instances (#1877)
+- **openai**: not given values thrown errors (#1876)
+- **sdk**: `aentity_class` was missing a positional argument (#1816)
+- **sdk**: instrument threading for propagating otel context (#1868)
+- **openai**: TypeError: '<' not supported between instances of 'NoneType' and 'int' in embeddings_wrappers.py (#1836)
+
 ## v0.27.0 (2024-08-15)
 
 ### Feat
