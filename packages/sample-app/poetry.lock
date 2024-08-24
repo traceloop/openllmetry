@@ -2190,21 +2190,6 @@ ibm-cos-sdk-s3transfer = "2.13.5"
 jmespath = ">=0.10.0,<=1.0.1"
 
 [[package]]
-name = "ibm-cos-sdk"
-version = "2.13.6"
-description = "IBM SDK for Python"
-optional = false
-python-versions = ">=3.8"
-files = [
-    {file = "ibm-cos-sdk-2.13.6.tar.gz", hash = "sha256:171cf2ae4ab662a4b8ab58dcf4ac994b0577d6c92d78490295fd7704a83978f6"},
-]
-
-[package.dependencies]
-ibm-cos-sdk-core = "2.13.6"
-ibm-cos-sdk-s3transfer = "2.13.6"
-jmespath = ">=0.10.0,<=1.0.1"
-
-[[package]]
 name = "ibm-cos-sdk-core"
 version = "2.13.5"
 description = "Low-level, data-driven core of IBM SDK for Python"
@@ -2221,22 +2206,6 @@ requests = ">=2.32.3,<3.0"
 urllib3 = {version = ">=1.26.18,<2.2", markers = "python_version >= \"3.10\""}
 
 [[package]]
-name = "ibm-cos-sdk-core"
-version = "2.13.6"
-description = "Low-level, data-driven core of IBM SDK for Python"
-optional = false
-python-versions = ">=3.6"
-files = [
-    {file = "ibm-cos-sdk-core-2.13.6.tar.gz", hash = "sha256:dd41fb789eeb65546501afabcd50e78846ab4513b6ad4042e410b6a14ff88413"},
-]
-
-[package.dependencies]
-jmespath = ">=0.10.0,<=1.0.1"
-python-dateutil = ">=2.9.0,<3.0.0"
-requests = ">=2.32.0,<2.32.3"
-urllib3 = ">=1.26.18,<3"
-
-[[package]]
 name = "ibm-cos-sdk-s3transfer"
 version = "2.13.5"
 description = "IBM S3 Transfer Manager"
@@ -2248,19 +2217,6 @@ files = [
 
 [package.dependencies]
 ibm-cos-sdk-core = "2.13.5"
-
-[[package]]
-name = "ibm-cos-sdk-s3transfer"
-version = "2.13.6"
-description = "IBM S3 Transfer Manager"
-optional = false
-python-versions = ">=3.8"
-files = [
-    {file = "ibm-cos-sdk-s3transfer-2.13.6.tar.gz", hash = "sha256:e0acce6f380c47d11e07c6765b684b4ababbf5c66cc0503bc246469a1e2b9790"},
-]
-
-[package.dependencies]
-ibm-cos-sdk-core = "2.13.6"
 
 [[package]]
 name = "ibm-watsonx-ai"
@@ -2678,6 +2634,35 @@ files = [
 
 [package.dependencies]
 langchain-core = ">=0.2.10,<0.3.0"
+
+[[package]]
+name = "langgraph"
+version = "0.2.14"
+description = "Building stateful, multi-actor applications with LLMs"
+optional = false
+python-versions = "<4.0,>=3.9.0"
+files = [
+    {file = "langgraph-0.2.14-py3-none-any.whl", hash = "sha256:c2e37a273d207dc2e2428b68e094466066288b9b803c6a6b70be9e9c9bf20779"},
+    {file = "langgraph-0.2.14.tar.gz", hash = "sha256:a430151d7a67011923d8b0d175fa8a59eca4584e2e8d72dd85616ebdd39ddd77"},
+]
+
+[package.dependencies]
+langchain-core = ">=0.2.27,<0.3"
+langgraph-checkpoint = ">=1.0.2,<2.0.0"
+
+[[package]]
+name = "langgraph-checkpoint"
+version = "1.0.6"
+description = "Library with base interfaces for LangGraph checkpoint savers."
+optional = false
+python-versions = "<4.0.0,>=3.9.0"
+files = [
+    {file = "langgraph_checkpoint-1.0.6-py3-none-any.whl", hash = "sha256:b2435e1e42b11cfc8f3ce06d114c75cd04846e83a0214f75e9b4f512e3d5fa4e"},
+    {file = "langgraph_checkpoint-1.0.6.tar.gz", hash = "sha256:6ce541cbfb5d73cbceebac27e1214a3b07270a7f571de659d6e2215e3070c23e"},
+]
+
+[package.dependencies]
+langchain-core = ">=0.2.22,<0.3"
 
 [[package]]
 name = "langsmith"
@@ -5738,27 +5723,6 @@ dev = ["pylint", "pyright", "pytest", "pytest-asyncio", "pytest-recording", "res
 
 [[package]]
 name = "requests"
-version = "2.32.2"
-description = "Python HTTP for Humans."
-optional = false
-python-versions = ">=3.8"
-files = [
-    {file = "requests-2.32.2-py3-none-any.whl", hash = "sha256:fc06670dd0ed212426dfeb94fc1b983d917c4f9847c863f313c9dfaaffb7c23c"},
-    {file = "requests-2.32.2.tar.gz", hash = "sha256:dd951ff5ecf3e3b3aa26b40703ba77495dab41da839ae72ef3c8e5d8e2433289"},
-]
-
-[package.dependencies]
-certifi = ">=2017.4.17"
-charset-normalizer = ">=2,<4"
-idna = ">=2.5,<4"
-urllib3 = ">=1.21.1,<3"
-
-[package.extras]
-socks = ["PySocks (>=1.5.6,!=1.5.7)"]
-use-chardet-on-py3 = ["chardet (>=3.0.2,<6)"]
-
-[[package]]
-name = "requests"
 version = "2.32.3"
 description = "Python HTTP for Humans."
 optional = false
@@ -7659,4 +7623,4 @@ test = ["big-O", "importlib-resources", "jaraco.functools", "jaraco.itertools", 
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.13"
-content-hash = "508b916151f5f4b190f9250ed147e34623d557a4d05e09fb5b126d5becd81e01"
+content-hash = "8213f1629c59946d03a152fd23da2f132f544de32336be319a856000b3496a8e"
