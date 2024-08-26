@@ -181,7 +181,7 @@ def _set_token_usage(span, request_kwargs, complete_response):
         # prompt_usage
         if request_kwargs and request_kwargs.get("prompt"):
             prompt_content = request_kwargs.get("prompt")
-            model_name = request_kwargs.get("model") or None
+            model_name = complete_response.get("model") or None
 
             if model_name:
                 prompt_usage = get_token_count_from_string(prompt_content, model_name)
