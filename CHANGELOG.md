@@ -1,3 +1,9 @@
+## v0.28.2 (2024-08-26)
+
+### Fix
+
+- **openai**: calculating streaming usage didnt work on azure models
+
 ## v0.28.1 (2024-08-24)
 
 ### Fix
