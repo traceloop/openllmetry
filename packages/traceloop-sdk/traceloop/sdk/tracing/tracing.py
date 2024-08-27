@@ -34,22 +34,6 @@ from typing import Dict, Optional, Set
 
 
 TRACER_NAME = "traceloop.tracer"
-EXCLUDED_URLS = """
-    iam.cloud.ibm.com,
-    dataplatform.cloud.ibm.com,
-    ml.cloud.ibm.com,
-    api.openai.com,
-    openai.azure.com,
-    api.anthropic.com,
-    api.cohere.ai,
-    pinecone.io,
-    traceloop.com,
-    posthog.com,
-    sentry.io,
-    bedrock-runtime,
-    googleapis.com,
-    githubusercontent.com,
-    openaipublic.blob.core.windows.net"""
 
 
 class TracerWrapper(object):
@@ -535,9 +519,6 @@ def init_instrumentations(should_enrich_metrics: bool):
     init_milvus_instrumentor()
     init_transformers_instrumentor()
     init_together_instrumentor()
-    init_requests_instrumentor()
-    init_urllib3_instrumentor()
-    init_pymysql_instrumentor()
     init_bedrock_instrumentor(should_enrich_metrics)
     init_replicate_instrumentor()
     init_vertexai_instrumentor()
@@ -823,51 +804,6 @@ def init_milvus_instrumentor():
         return True
     except Exception as e:
         logging.error(f"Error initializing Milvus instrumentor: {e}")
-        Telemetry().log_exception(e)
-        return False
-
-
-def init_requests_instrumentor():
-    try:
-        if is_package_installed("requests"):
-            from opentelemetry.instrumentation.requests import RequestsInstrumentor
-
-            instrumentor = RequestsInstrumentor()
-            if not instrumentor.is_instrumented_by_opentelemetry:
-                instrumentor.instrument(excluded_urls=EXCLUDED_URLS)
-        return True
-    except Exception as e:
-        logging.error(f"Error initializing Requests instrumentor: {e}")
-        Telemetry().log_exception(e)
-        return False
-
-
-def init_urllib3_instrumentor():
-    try:
-        if is_package_installed("urllib3"):
-            from opentelemetry.instrumentation.urllib3 import URLLib3Instrumentor
-
-            instrumentor = URLLib3Instrumentor()
-            if not instrumentor.is_instrumented_by_opentelemetry:
-                instrumentor.instrument(excluded_urls=EXCLUDED_URLS)
-        return True
-    except Exception as e:
-        logging.error(f"Error initializing urllib3 instrumentor: {e}")
-        Telemetry().log_exception(e)
-        return False
-
-
-def init_pymysql_instrumentor():
-    try:
-        if is_package_installed("sqlalchemy"):
-            from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
-
-            instrumentor = SQLAlchemyInstrumentor()
-            if not instrumentor.is_instrumented_by_opentelemetry:
-                instrumentor.instrument()
-        return True
-    except Exception as e:
-        logging.error(f"Error initializing SQLAlchemy instrumentor: {e}")
         Telemetry().log_exception(e)
         return False
 
