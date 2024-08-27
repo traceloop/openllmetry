@@ -266,7 +266,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
                 kind=kind,
             )
         else:
-            span = self.tracer.start_span(span_name)
+            span = self.tracer.start_span(span_name, kind=kind)
 
         span.set_attribute(SpanAttributes.TRACELOOP_WORKFLOW_NAME, workflow_name)
         span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_PATH, entity_path)
