@@ -302,6 +302,12 @@ class TracerWrapper(object):
                             print(Fore.RESET)
                         else:
                             instrument_set = True
+                    elif instrument == Instruments.REDIS:
+                        if not init_redis_instrumentor():
+                            print(Fore.RED + "Warning: redis library does not exist.")
+                            print(Fore.RESET)
+                        else:
+                            instrument_set = True
 
                     else:
                         print(
@@ -535,6 +541,7 @@ def init_instrumentations(should_enrich_metrics: bool):
     init_milvus_instrumentor()
     init_transformers_instrumentor()
     init_together_instrumentor()
+    init_redis_instrumentor()
     init_requests_instrumentor()
     init_urllib3_instrumentor()
     init_pymysql_instrumentor()
@@ -1012,6 +1019,18 @@ def init_lancedb_instrumentor():
         return True
     except Exception as e:
         logging.error(f"Error initializing LanceDB instrumentor: {e}")
+
+
+def init_redis_instrumentor():
+    try:
+        if is_package_installed("redis"):
+            from opentelemetry.instrumentation.redis import RedisInstrumentor
+            instrumentor = RedisInstrumentor()
+            if not instrumentor.is_instrumented_by_opentelemetry:
+                instrumentor.instrument(excluded_urls=EXCLUDED_URLS)
+        return True
+    except Exception as e:
+        logging.error(f"Error initializing redis instrumentor: {e}")
         Telemetry().log_exception(e)
         return False
 
