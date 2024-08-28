@@ -15,8 +15,7 @@ INDEX_NAME = "index"
 DOC_PREFIX = "doc:"
 EMBEDDINGS_DIM = 1536
 
-Traceloop.init(exporter=ConsoleSpanExporter())
-# Traceloop.init(app_name="redis_rag_app")
+Traceloop.init(app_name="redis_rag_app")
 
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 rc = Redis(host="localhost", port=6379, decode_responses=True)
