@@ -4,7 +4,7 @@ from langchain.output_parsers.openai_functions import JsonOutputFunctionsParser
 from langchain_community.utils.openai_functions import (
     convert_pydantic_to_openai_function,
 )
-from langchain_openai import ChatOpenAI
+from langchain_aws import ChatBedrock
 from langchain_core.pydantic_v1 import BaseModel, Field
 
 
@@ -26,13 +26,14 @@ async def chain():
     prompt = ChatPromptTemplate.from_messages(
         [("system", "You are helpful assistant"), ("user", "{input}")]
     )
-    model = ChatOpenAI(model="gpt-3.5-turbo")
+    model = ChatBedrock(model_id="anthropic.claude-3-sonnet-20240229-v1:0")
     output_parser = JsonOutputFunctionsParser()
 
-    chain = prompt | model.bind(functions=openai_functions) | output_parser
-    return await chain.ainvoke(
+    chain = prompt | model | output_parser
+    async for chunk in chain.astream(
         {"input": "tell me a short joke"}, {"metadata": {"user_id": "1234"}}
-    )
+    ):
+        print(chunk)
 
 
-print(asyncio.run(chain()))
+asyncio.run(chain())

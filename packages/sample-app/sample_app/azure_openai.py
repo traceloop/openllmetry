@@ -16,5 +16,7 @@ response = client.chat.completions.create(
     model=deployment_name,
     messages=[{"role": "user", "content": "Tell me a joke about OpenTelemetry"}],
     max_tokens=50,
+    stream=True,
 )
-print(response.choices[0].message.content)
+for chunk in response:
+    print(chunk)

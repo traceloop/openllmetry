@@ -66,7 +66,13 @@ class Telemetry:
         try:  # don't fail if telemetry fails
             if self._telemetry_enabled:
                 self._posthog.capture(
-                    self._anon_id(), event, {**self._context(), **event_properties}
+                    self._anon_id(),
+                    event,
+                    {
+                        **self._context(),
+                        **event_properties,
+                        "$process_person_profile": False,
+                    },
                 )
         except Exception:
             pass
@@ -79,6 +85,7 @@ class Telemetry:
                 {
                     **self._context(),
                     "exception": str(exception),
+                    "$process_person_profile": False,
                 },
             )
         except Exception:
