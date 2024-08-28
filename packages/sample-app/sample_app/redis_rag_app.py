@@ -9,7 +9,6 @@ from redis.commands.search.query import Query
 from openai import OpenAI
 from traceloop.sdk import Traceloop
 from traceloop.sdk.decorators import workflow
-from opentelemetry.sdk.trace.export import ConsoleSpanExporter
 
 INDEX_NAME = "index"
 DOC_PREFIX = "doc:"
