@@ -30,18 +30,23 @@ def load_data():
 
 def prepare_embeddings(data):
     response = client.embeddings.create(input=data, model="text-embedding-3-small")
-    embeddings = np.array([r["embedding"] for r in response.to_dict()["data"]], dtype=np.float32)
+    embeddings = np.array(
+        [r["embedding"] for r in response.to_dict()["data"]], dtype=np.float32
+    )
     return embeddings
 
 
 def upload_data_to_redis(data, embeddings):
     pipe = rc.pipeline()
     for i, embedding in enumerate(embeddings):
-        pipe.hset(f"{DOC_PREFIX}{i}", mapping = {
-            "vector": embedding.tobytes(),
-            "content": data[i],
-            "tag": "openai"
-        })
+        pipe.hset(
+            f"{DOC_PREFIX}{i}",
+            mapping={
+                "vector": embedding.tobytes(),
+                "content": data[i],
+                "tag": "openai",
+            },
+        )
     pipe.execute()
 
 
@@ -53,11 +58,14 @@ def create_index():
         schema = (
             TagField("tag"),
             TextField("content"),
-            VectorField("vector", "FLAT", {
-                                        "TYPE": "FLOAT32",
-                                        "DIM": EMBEDDINGS_DIM,
-                                        "DISTANCE_METRIC": "COSINE",
-                                        }
+            VectorField(
+                "vector",
+                "FLAT",
+                {
+                    "TYPE": "FLOAT32",
+                    "DIM": EMBEDDINGS_DIM,
+                    "DISTANCE_METRIC": "COSINE",
+                },
             ),
         )
         definition = IndexDefinition(prefix=[DOC_PREFIX], index_type=IndexType.HASH)
@@ -67,10 +75,10 @@ def create_index():
 def query_redis(query_embeddings):
     query = (
         Query("(@tag:{ openai })=>[KNN 2 @vector $vec as score]")
-         .sort_by("score")
-         .return_fields("content", "tag", "score")
-         .paging(0, 2)
-         .dialect(2)
+        .sort_by("score")
+        .return_fields("content", "tag", "score")
+        .paging(0, 2)
+        .dialect(2)
     )
     query_params = {"vec": query_embeddings.tobytes()}
     response = rc.ft(INDEX_NAME).search(query, query_params).docs
@@ -88,8 +96,8 @@ Narrator in the book is doctor Watson. User will provide you a relevant content 
         {
             "role": "user",
             "content": f"Based on that content: {relevant_content} - Answer my question: {query}",
-        }
-    ] 
+        },
+    ]
     stream = client.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=messages,
