@@ -2,12 +2,13 @@ import os
 import numpy as np
 
 from redis import Redis
+from redis.exceptions import ResponseError
 from redis.commands.search.field import TagField, VectorField, TextField
 from redis.commands.search.indexDefinition import IndexDefinition, IndexType
 from redis.commands.search.query import Query
 from openai import OpenAI
 from traceloop.sdk import Traceloop
-from traceloop.sdk.decorators import workflow, task
+from traceloop.sdk.decorators import workflow
 from opentelemetry.sdk.trace.export import ConsoleSpanExporter
 
 INDEX_NAME = "index"
@@ -19,7 +20,7 @@ Traceloop.init(exporter=ConsoleSpanExporter())
 
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 rc = Redis(host="localhost", port=6379, decode_responses=True)
-assert rc.ping() == True, "Cannot connect to Redis"
+assert rc.ping() is True, "Cannot connect to Redis"
 
 
 def load_data():
@@ -54,7 +55,7 @@ def create_index():
     try:
         rc.ft(INDEX_NAME).info()
         print("Index already exists")
-    except:
+    except ResponseError:
         schema = (
             TagField("tag"),
             TextField("content"),
