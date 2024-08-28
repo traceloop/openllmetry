@@ -15,6 +15,7 @@ class Instruments(Enum):
     MILVUS = "milvus"
     TRANSFORMERS = "transformers"
     TOGETHER = "together"
+    REDIS = "redis"
     REQUESTS = "requests"
     URLLIB3 = "urllib3"
     PYMYSQL = "pymysql"
