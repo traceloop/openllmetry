@@ -38,6 +38,9 @@
   <a href="https://github.com/traceloop/openllmetry/blob/main/CONTRIBUTING.md">
     <img src="https://img.shields.io/badge/PRs-Welcome-brightgreen" alt="PRs welcome!" />
   </a>
+  <a href="https://wiki.mutable.ai/traceloop/openllmetry">
+    <img src="https://img.shields.io/badge/Auto_Wiki-Mutable.ai-blue" />
+  </a>
   <a href="https://traceloop.com/slack">
     <img src="https://img.shields.io/badge/chat-on%20Slack-blueviolet" alt="Slack community channel" />
   </a>
