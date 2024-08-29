@@ -22,6 +22,9 @@ class Telemetry:
                 os.getenv("TRACELOOP_TELEMETRY") or "true"
             ).lower() == "true" and "pytest" not in sys.modules
 
+            if not telemetry_enabled:
+                obj._telemetry_enabled = False
+
             if obj._telemetry_enabled:
                 try:
                     obj._posthog = Posthog(
