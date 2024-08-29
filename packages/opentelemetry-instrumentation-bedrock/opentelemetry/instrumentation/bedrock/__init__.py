@@ -421,13 +421,27 @@ def _set_llama_span_attributes(span, request_body, response_body):
 
     if should_send_prompts():
         _set_span_attribute(
-            span, f"{SpanAttributes.LLM_PROMPTS}.0.user", request_body.get("prompt")
+            span, f"{SpanAttributes.LLM_PROMPTS}.0.content", request_body.get("prompt")
         )
+        _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.0.role", "user")
 
-        for i, generation in enumerate(response_body.get("generations")):
+        if response_body.get("generation"):
             _set_span_attribute(
-                span, f"{SpanAttributes.LLM_COMPLETIONS}.{i}.content", generation
+                span, f"{SpanAttributes.LLM_COMPLETIONS}.0.role", "assistant"
             )
+            _set_span_attribute(
+                span,
+                f"{SpanAttributes.LLM_COMPLETIONS}.0.content",
+                response_body.get("generation"),
+            )
+        else:
+            for i, generation in enumerate(response_body.get("generations")):
+                _set_span_attribute(
+                    span, f"{SpanAttributes.LLM_COMPLETIONS}.{i}.role", "assistant"
+                )
+                _set_span_attribute(
+                    span, f"{SpanAttributes.LLM_COMPLETIONS}.{i}.content", generation
+                )
 
 
 def _set_amazon_span_attributes(span, request_body, response_body):
