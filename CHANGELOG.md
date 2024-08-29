@@ -1,3 +1,13 @@
+## v0.29.0 (2024-08-29)
+
+### Feat
+
+- **instrumentation**: Import redis from OpenTelemetry, add redis sample rag application (#1837)
+
+### Fix
+
+- **langchain**: add missing kind property (#1901)
+
 ## v0.28.2 (2024-08-26)
 
 ### Fix
