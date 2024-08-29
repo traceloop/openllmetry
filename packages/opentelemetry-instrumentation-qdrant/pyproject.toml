@@ -24,9 +24,9 @@ include = "opentelemetry/instrumentation/qdrant"
 
 [tool.poetry.dependencies]
 python = ">=3.9,<4"
-opentelemetry-api = "^1.26.0"
-opentelemetry-instrumentation = "^0.47b0"
-opentelemetry-semantic-conventions = "^0.47b0"
+opentelemetry-api = "^1.27.0"
+opentelemetry-instrumentation = "^0.48b0"
+opentelemetry-semantic-conventions = "^0.48b0"
 opentelemetry-semantic-conventions-ai = "0.4.1"
 
 [tool.poetry.group.dev.dependencies]
@@ -37,7 +37,7 @@ flake8 = "7.0.0"
 qdrant-client = "^1.9.1"
 pytest = "^8.2.2"
 pytest-sugar = "1.0.0"
-opentelemetry-sdk = "^1.23.0"
+opentelemetry-sdk = "^1.27.0"
 
 [build-system]
 requires = [ "poetry-core" ]
