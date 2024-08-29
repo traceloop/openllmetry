@@ -1,3 +1,9 @@
+## v0.29.1 (2024-08-29)
+
+### Fix
+
+- **bedrock**: llama3 completion wasnt logged (#1914)
+
 ## v0.29.0 (2024-08-29)
 
 ### Feat
