@@ -6814,7 +6814,7 @@ opentelemetry-instrumentation-urllib3 = "^0.48b0"
 opentelemetry-instrumentation-vertexai = {path = "../opentelemetry-instrumentation-vertexai", develop = true}
 opentelemetry-instrumentation-watsonx = {path = "../opentelemetry-instrumentation-watsonx", develop = true}
 opentelemetry-instrumentation-weaviate = {path = "../opentelemetry-instrumentation-weaviate", develop = true}
-opentelemetry-sdk = "^1.26.0"
+opentelemetry-sdk = "^1.27.0"
 opentelemetry-semantic-conventions-ai = "0.4.1"
 posthog = ">3.0.2, <4"
 pydantic = ">=1"

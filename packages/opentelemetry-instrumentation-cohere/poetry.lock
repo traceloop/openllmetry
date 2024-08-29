@@ -1580,4 +1580,4 @@ instruments = []
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<4"
-content-hash = "c2bf3542ee1e70ec3d3e2853c98d1eac403b46322db1c6af9ca237afc73ed25b"
+content-hash = "84fda4c0d5f07596f74fb2fec50ae192b22fd0304eed8709114c62ef1a432653"

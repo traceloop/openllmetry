@@ -882,4 +882,4 @@ instruments = []
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<4"
-content-hash = "edf60523fffa44785f7fe1f0b4108674960462643d10e1b29993f35c7e60defa"
+content-hash = "f8b25528ab8767c825971285e275bf0abb47621438d9196763f9f40da00ae43b"

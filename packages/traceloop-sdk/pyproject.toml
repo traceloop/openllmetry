@@ -26,7 +26,7 @@ include = "traceloop/sdk"
 [tool.poetry.dependencies]
 python = ">=3.9,<4"
 opentelemetry-api = "^1.27.0"
-opentelemetry-sdk = "^1.26.0"
+opentelemetry-sdk = "^1.27.0"
 opentelemetry-exporter-otlp-proto-http = "^1.26.0"
 opentelemetry-exporter-otlp-proto-grpc = "^1.26.0"
 opentelemetry-instrumentation-requests = "^0.48b0"

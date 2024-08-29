@@ -888,4 +888,4 @@ instruments = ["ollama"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<4"
-content-hash = "35ef756c0352585990417b40c0021e33211b135cda8d03a00a626de390651a17"
+content-hash = "737a987a8eb508735c09ee64acc31544c6b4ff02ede10f575ee4598dd9c44d31"

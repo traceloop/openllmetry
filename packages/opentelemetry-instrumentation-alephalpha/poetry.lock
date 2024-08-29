@@ -1732,4 +1732,4 @@ instruments = []
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<4"
-content-hash = "e2f1f8ed45b902f86793ba37a6cf8a8e24436261df0c32337dc82144127ef348"
+content-hash = "432724668b04a7ea6c42da308d6f0ba5035ec6415364ab4d54abe71aa28e53dc"

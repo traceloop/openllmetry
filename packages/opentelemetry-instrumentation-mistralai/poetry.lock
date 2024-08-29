@@ -1084,4 +1084,4 @@ instruments = []
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<4"
-content-hash = "d1f11c285a9e364c40f3a781bfef3d100fc3362c3f5f86ee2b391ef5aebcd33d"
+content-hash = "428d3a4850c25ed112b83525aad32bf24d1bde0d92cbc9cf5aa12d7f40eb5bbe"

@@ -45,7 +45,7 @@ pytest-sugar = "1.0.0"
 vcrpy = "^6.0.1"
 pytest-recording = "^0.13.1"
 pytest-asyncio = "^0.23.7"
-opentelemetry-sdk = "^1.23.0"
+opentelemetry-sdk = "^1.27.0"
 opentelemetry-instrumentation-openai = {path="../opentelemetry-instrumentation-openai", develop=true}
 opentelemetry-instrumentation-bedrock = {path="../opentelemetry-instrumentation-bedrock", develop=true}
 text-generation = "^0.7.0"
