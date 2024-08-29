@@ -340,17 +340,6 @@ html5lib = ["html5lib"]
 lxml = ["lxml"]
 
 [[package]]
-name = "boilerpy3"
-version = "1.0.7"
-description = "Python port of Boilerpipe, for HTML boilerplate removal and text extraction"
-optional = false
-python-versions = ">=3.6"
-files = [
-    {file = "boilerpy3-1.0.7-py3-none-any.whl", hash = "sha256:fbfba91745606965400204d26852283ddf90235ab30afe9904de20051556a523"},
-    {file = "boilerpy3-1.0.7.tar.gz", hash = "sha256:a9fede212f80a36dbc7d4f93e35d8636911cb6b37085a3230557d16ad0f076c8"},
-]
-
-[[package]]
 name = "boto3"
 version = "1.35.5"
 description = "The AWS SDK for Python"
@@ -1939,46 +1928,45 @@ hyperframe = ">=6.0,<7"
 
 [[package]]
 name = "haystack-ai"
-version = "2.0.1"
+version = "2.3.1"
 description = "LLM framework to build customizable, production-ready LLM applications. Connect components (models, vector DBs, file converters) to pipelines or agents that can interact with your data."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "haystack_ai-2.0.1-py3-none-any.whl", hash = "sha256:9df1d5ed4106ffb5b2da1a5add9ef239d80c4cbe7945ae8a454f854db64d24a4"},
-    {file = "haystack_ai-2.0.1.tar.gz", hash = "sha256:18030c59d985ff769a63ae742c5524fadc66fa7cd1de9a1cae34b054e688f9dd"},
+    {file = "haystack_ai-2.3.1-py3-none-any.whl", hash = "sha256:578414a2e2bf28d9fb94f743ca6b1a3e70e18dbfca091e3658eaaefaab8c46e5"},
+    {file = "haystack_ai-2.3.1.tar.gz", hash = "sha256:058f61afc7671d4c336ee25dd5ffcc80acffa09ba9c4283a939e971d49b99785"},
 ]
 
 [package.dependencies]
-boilerpy3 = "*"
-haystack-bm25 = "*"
+haystack-experimental = "*"
 jinja2 = "*"
 lazy-imports = "*"
 more-itertools = "*"
 networkx = "*"
-numpy = "*"
+numpy = "<2"
 openai = ">=1.1.0"
 pandas = "*"
 posthog = "*"
 python-dateutil = "*"
 pyyaml = "*"
 requests = "*"
-tenacity = "*"
+tenacity = "!=8.4.0"
 tqdm = "*"
 typing-extensions = ">=4.7"
 
 [[package]]
-name = "haystack-bm25"
-version = "1.0.2"
-description = "Various BM25 algorithms for document ranking"
+name = "haystack-experimental"
+version = "0.1.1"
+description = "Experimental components and features for the Haystack LLM framework."
 optional = false
-python-versions = "*"
+python-versions = ">=3.8"
 files = [
-    {file = "haystack_bm25-1.0.2-py2.py3-none-any.whl", hash = "sha256:64c159a87133351cd73715297fda73b9f88bdcfdaaad668e020d3c6b5582827a"},
-    {file = "haystack_bm25-1.0.2.tar.gz", hash = "sha256:57741c85203739d05e14de1a2c7657a675000a22dc7bd25f009eb9e0875ace2a"},
+    {file = "haystack_experimental-0.1.1-py3-none-any.whl", hash = "sha256:c11fa89c0754dafd3ec25220c02e459d784acda7a9c047e3297e1b11f35ebb06"},
+    {file = "haystack_experimental-0.1.1.tar.gz", hash = "sha256:64cc58d54b9cf9a2957616e4cb44a10c12e36ab640ebe0c38e7cc70300cb6726"},
 ]
 
 [package.dependencies]
-numpy = "*"
+haystack-ai = "*"
 
 [[package]]
 name = "hpack"
@@ -6904,11 +6892,6 @@ files = [
     {file = "triton-3.0.0-1-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:34e509deb77f1c067d8640725ef00c5cbfcb2052a1a3cb6a6d343841f92624eb"},
     {file = "triton-3.0.0-1-cp38-cp38-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:bcbf3b1c48af6a28011a5c40a5b3b9b5330530c3827716b5fbf6d7adcc1e53e9"},
     {file = "triton-3.0.0-1-cp39-cp39-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:6e5727202f7078c56f91ff13ad0c1abab14a0e7f2c87e91b12b6f64f3e8ae609"},
-    {file = "triton-3.0.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:39b052da883351fdf6be3d93cedae6db3b8e3988d3b09ed221bccecfa9612230"},
-    {file = "triton-3.0.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:cd34f19a8582af96e6291d4afce25dac08cb2a5d218c599163761e8e0827208e"},
-    {file = "triton-3.0.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:0d5e10de8c011adeb7c878c6ce0dd6073b14367749e34467f1cff2bde1b78253"},
-    {file = "triton-3.0.0-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:e8903767951bf86ec960b4fe4e21bc970055afc65e9d57e916d79ae3c93665e3"},
-    {file = "triton-3.0.0-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:41004fb1ae9a53fcb3e970745feb87f0e3c94c6ce1ba86e95fa3b8537894bef7"},
 ]
 
 [package.dependencies]
@@ -7637,4 +7620,4 @@ test = ["big-O", "importlib-resources", "jaraco.functools", "jaraco.itertools", 
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.13"
-content-hash = "8213f1629c59946d03a152fd23da2f132f544de32336be319a856000b3496a8e"
+content-hash = "58395975e2ef42dd32f9c8a2d1a60a62b605c7eaa3d97d03935e3cba4736b8d5"
