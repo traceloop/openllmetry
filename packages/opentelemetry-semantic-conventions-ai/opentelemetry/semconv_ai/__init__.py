@@ -49,9 +49,8 @@ class SpanAttributes:
     LLM_TOKEN_TYPE = "gen_ai.token.type"
     GEN_AI_ANTHROPIC_USAGE_CACHE_CREATION_INPUT_TOKENS = "gen_ai.anthropic.usage.cache_creation_input_tokens"
     GEN_AI_ANTHROPIC_USAGE_CACHE_READ_INPUT_TOKENS = "gen_ai.anthropic.usage.cache_read_input_tokens"
-    # To be added
-    # LLM_RESPONSE_FINISH_REASON = "gen_ai.response.finish_reasons"
-    # LLM_RESPONSE_ID = "gen_ai.response.id"
+    LLM_RESPONSE_FINISH_REASON = "gen_ai.response.finish_reasons"
+    LLM_RESPONSE_ID = "gen_ai.response.id"
 
     # LLM
     LLM_REQUEST_TYPE = "llm.request.type"
