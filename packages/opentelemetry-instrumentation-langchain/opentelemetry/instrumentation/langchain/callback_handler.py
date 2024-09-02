@@ -18,10 +18,11 @@ from opentelemetry.semconv_ai import (
 from opentelemetry.context.context import Context
 from opentelemetry.trace import SpanKind, set_span_in_context, Tracer
 from opentelemetry.trace.span import Span
-
+from opentelemetry.metrics import Counter, Histogram
 from opentelemetry import context as context_api
 from opentelemetry.instrumentation.langchain.utils import (
     dont_throw,
+    is_metrics_enabled,
     should_send_prompts,
 )
 
@@ -208,11 +209,26 @@ def _set_chat_response(span: Span, response: LLMResult) -> None:
 
 
 class TraceloopCallbackHandler(BaseCallbackHandler):
-    def __init__(self, tracer: Tracer) -> None:
+    def __init__(
+        self,
+        tracer: Tracer, 
+        token_counter: Counter,
+        choice_counter: Counter,
+        duration_histogram: Histogram,
+        exception_counter: Counter,
+        streaming_time_to_first_token: Histogram,
+        streaming_time_to_generate: Histogram,
+    ) -> None:
         super().__init__()
         self.tracer = tracer
         self.spans: dict[UUID, SpanHolder] = {}
         self.run_inline = True
+        self.token_counter = token_counter
+        self.choice_counter = choice_counter
+        self.duration_histogram = duration_histogram
+        self.exception_counter = exception_counter
+        self.streaming_time_to_first_token = streaming_time_to_first_token
+        self.streaming_time_to_generate = streaming_time_to_generate
 
     @staticmethod
     def _get_name_from_callback(
@@ -485,6 +501,9 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
 
         span = self._get_span(run_id)
 
+        if is_metrics_enabled():
+            self.duration_histogram.record(, attributes={"model": model_name})
+
         token_usage = (response.llm_output or {}).get("token_usage")
         if token_usage is not None:
             prompt_tokens = token_usage.get("prompt_tokens") or token_usage.get(
@@ -506,6 +525,9 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             _set_span_attribute(
                 span, SpanAttributes.LLM_USAGE_TOTAL_TOKENS, total_tokens
             )
+
+            self.token_counter.add(total_tokens, attributes={"model": model_name})
+            self.choice_counter.add(len(response.generations), attributes={"model": model_name})
 
         if response.llm_output is not None:
             model_name = response.llm_output.get(
