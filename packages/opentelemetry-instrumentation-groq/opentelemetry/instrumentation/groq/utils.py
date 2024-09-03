@@ -6,7 +6,7 @@ from opentelemetry.instrumentation.groq.config import Config
 from opentelemetry.semconv_ai import SpanAttributes
 
 GEN_AI_SYSTEM = "gen_ai.system"
-GEN_AI_SYSTEM_ANTHROPIC = "anthropic"
+GEN_AI_SYSTEM_GROQ = "groq"
 
 
 def set_span_attribute(span, name, value):
@@ -56,7 +56,7 @@ def shared_metrics_attributes(response):
 
     return {
         **common_attributes,
-        GEN_AI_SYSTEM: GEN_AI_SYSTEM_ANTHROPIC,
+        GEN_AI_SYSTEM: GEN_AI_SYSTEM_GROQ,
         SpanAttributes.LLM_RESPONSE_MODEL: response.get("model"),
     }
 
@@ -64,6 +64,6 @@ def shared_metrics_attributes(response):
 @dont_throw
 def error_metrics_attributes(exception):
     return {
-        GEN_AI_SYSTEM: GEN_AI_SYSTEM_ANTHROPIC,
+        GEN_AI_SYSTEM: GEN_AI_SYSTEM_GROQ,
         "error.type": exception.__class__.__name__,
     }

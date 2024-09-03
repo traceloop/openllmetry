@@ -2,13 +2,13 @@ import json
 from pathlib import Path
 
 import pytest
-from anthropic import AI_PROMPT, HUMAN_PROMPT, Anthropic, AsyncAnthropic
+from groq import Groq, AsyncGroq
 from opentelemetry.semconv_ai import SpanAttributes, Meters
 
 
 @pytest.mark.vcr
-def test_anthropic_completion(exporter, reader):
-    client = Anthropic()
+def test_groq_completion(exporter, reader):
+    client = Groq()
     client.completions.create(
         prompt=f"{HUMAN_PROMPT}\nHello world\n{AI_PROMPT}",
         model="claude-instant-1.2",
@@ -23,14 +23,14 @@ def test_anthropic_completion(exporter, reader):
         pass
 
     spans = exporter.get_finished_spans()
-    assert all(span.name == "anthropic.completion" for span in spans)
+    assert all(span.name == "groq.completion" for span in spans)
 
-    anthropic_span = spans[0]
+    groq_span = spans[0]
     assert (
-        anthropic_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.user"]
+        groq_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.user"]
         == f"{HUMAN_PROMPT}\nHello world\n{AI_PROMPT}"
     )
-    assert anthropic_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
+    assert groq_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
 
     metrics_data = reader.get_metrics_data()
     resource_metrics = metrics_data.resource_metrics
@@ -81,14 +81,14 @@ def test_anthropic_completion(exporter, reader):
                         for data_point in metric.data.data_points
                     )
 
-                if metric.name == Meters.LLM_ANTHROPIC_COMPLETION_EXCEPTIONS:
+                if metric.name == Meters.LLM_GROQ_COMPLETION_EXCEPTIONS:
                     found_exception_metric = True
                     for data_point in metric.data.data_points:
                         assert data_point.value == 1
                         assert data_point.attributes["error.type"] == "TypeError"
 
                 assert all(
-                    data_point.attributes.get("gen_ai.system") == "anthropic"
+                    data_point.attributes.get("gen_ai.system") == "groq"
                     for data_point in metric.data.data_points
                 )
 
@@ -99,8 +99,8 @@ def test_anthropic_completion(exporter, reader):
 
 
 @pytest.mark.vcr
-def test_anthropic_message_create(exporter, reader):
-    client = Anthropic()
+def test_groq_message_create(exporter, reader):
+    client = Groq()
     response = client.messages.create(
         max_tokens=1024,
         messages=[
@@ -119,23 +119,23 @@ def test_anthropic_message_create(exporter, reader):
         pass
 
     spans = exporter.get_finished_spans()
-    assert all(span.name == "anthropic.chat" for span in spans)
+    assert all(span.name == "groq.chat" for span in spans)
 
-    anthropic_span = spans[0]
+    groq_span = spans[0]
     assert (
-        anthropic_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
+        groq_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
         == "Tell me a joke about OpenTelemetry"
     )
-    assert (anthropic_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"]) == "user"
+    assert (groq_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"]) == "user"
     assert (
-        anthropic_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
+        groq_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
         == response.content[0].text
     )
-    assert anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 8
+    assert groq_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 8
     assert (
-        anthropic_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS]
-        + anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS]
-        == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
+        groq_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS]
+        + groq_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS]
+        == groq_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
     )
 
     metrics_data = reader.get_metrics_data()
@@ -187,14 +187,14 @@ def test_anthropic_message_create(exporter, reader):
                         for data_point in metric.data.data_points
                     )
 
-                if metric.name == Meters.LLM_ANTHROPIC_COMPLETION_EXCEPTIONS:
+                if metric.name == Meters.LLM_GROQ_COMPLETION_EXCEPTIONS:
                     found_exception_metric = True
                     for data_point in metric.data.data_points:
                         assert data_point.value == 1
                         assert data_point.attributes["error.type"] == "TypeError"
 
                 assert all(
-                    data_point.attributes.get("gen_ai.system") == "anthropic"
+                    data_point.attributes.get("gen_ai.system") == "groq"
                     for data_point in metric.data.data_points
                 )
 
@@ -205,8 +205,8 @@ def test_anthropic_message_create(exporter, reader):
 
 
 @pytest.mark.vcr
-def test_anthropic_multi_modal(exporter):
-    client = Anthropic()
+def test_groq_multi_modal(exporter):
+    client = Groq()
     response = client.messages.create(
         max_tokens=1024,
         messages=[
@@ -233,10 +233,10 @@ def test_anthropic_multi_modal(exporter):
 
     spans = exporter.get_finished_spans()
     assert [span.name for span in spans] == [
-        "anthropic.chat",
+        "groq.chat",
     ]
-    anthropic_span = spans[0]
-    assert anthropic_span.attributes[
+    groq_span = spans[0]
+    assert groq_span.attributes[
         f"{SpanAttributes.LLM_PROMPTS}.0.content"
     ] == json.dumps(
         [
@@ -251,22 +251,22 @@ def test_anthropic_multi_modal(exporter):
             },
         ]
     )
-    assert (anthropic_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"]) == "user"
+    assert (groq_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"]) == "user"
     assert (
-        anthropic_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
+        groq_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
         == response.content[0].text
     )
-    assert anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 1381
+    assert groq_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 1381
     assert (
-        anthropic_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS]
-        + anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS]
-        == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
+        groq_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS]
+        + groq_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS]
+        == groq_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
     )
 
 
 @pytest.mark.vcr
-def test_anthropic_message_streaming(exporter, reader):
-    client = Anthropic()
+def test_groq_message_streaming(exporter, reader):
+    client = Groq()
     response = client.messages.create(
         max_tokens=1024,
         messages=[
@@ -286,23 +286,23 @@ def test_anthropic_message_streaming(exporter, reader):
 
     spans = exporter.get_finished_spans()
     assert [span.name for span in spans] == [
-        "anthropic.chat",
+        "groq.chat",
     ]
-    anthropic_span = spans[0]
+    groq_span = spans[0]
     assert (
-        anthropic_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
+        groq_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
         == "Tell me a joke about OpenTelemetry"
     )
-    assert (anthropic_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"]) == "user"
+    assert (groq_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"]) == "user"
     assert (
-        anthropic_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
+        groq_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
         == response_content
     )
-    assert anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 8
+    assert groq_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 8
     assert (
-        anthropic_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS]
-        + anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS]
-        == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
+        groq_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS]
+        + groq_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS]
+        == groq_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
     )
 
     metrics_data = reader.get_metrics_data()
@@ -355,7 +355,7 @@ def test_anthropic_message_streaming(exporter, reader):
                     )
 
                 assert all(
-                    data_point.attributes.get("gen_ai.system") == "anthropic"
+                    data_point.attributes.get("gen_ai.system") == "groq"
                     for data_point in metric.data.data_points
                 )
 
@@ -366,8 +366,8 @@ def test_anthropic_message_streaming(exporter, reader):
 
 @pytest.mark.vcr
 @pytest.mark.asyncio
-async def test_async_anthropic_message_create(exporter, reader):
-    client = AsyncAnthropic()
+async def test_async_groq_message_create(exporter, reader):
+    client = AsyncGroq()
     response = await client.messages.create(
         max_tokens=1024,
         messages=[
@@ -387,23 +387,23 @@ async def test_async_anthropic_message_create(exporter, reader):
 
     spans = exporter.get_finished_spans()
     assert [span.name for span in spans] == [
-        "anthropic.chat",
+        "groq.chat",
     ]
-    anthropic_span = spans[0]
+    groq_span = spans[0]
     assert (
-        anthropic_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
+        groq_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
         == "Tell me a joke about OpenTelemetry"
     )
-    assert (anthropic_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"]) == "user"
+    assert (groq_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"]) == "user"
     assert (
-        anthropic_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
+        groq_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
         == response.content[0].text
     )
-    assert anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 8
+    assert groq_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 8
     assert (
-        anthropic_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS]
-        + anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS]
-        == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
+        groq_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS]
+        + groq_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS]
+        == groq_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
     )
 
     metrics_data = reader.get_metrics_data()
@@ -455,14 +455,14 @@ async def test_async_anthropic_message_create(exporter, reader):
                         for data_point in metric.data.data_points
                     )
 
-                if metric.name == Meters.LLM_ANTHROPIC_COMPLETION_EXCEPTIONS:
+                if metric.name == Meters.LLM_GROQ_COMPLETION_EXCEPTIONS:
                     found_exception_metric = True
                     for data_point in metric.data.data_points:
                         assert data_point.value == 1
                         assert data_point.attributes["error.type"] == "TypeError"
 
                 assert all(
-                    data_point.attributes.get("gen_ai.system") == "anthropic"
+                    data_point.attributes.get("gen_ai.system") == "groq"
                     for data_point in metric.data.data_points
                 )
 
@@ -474,8 +474,8 @@ async def test_async_anthropic_message_create(exporter, reader):
 
 @pytest.mark.vcr
 @pytest.mark.asyncio
-async def test_async_anthropic_message_streaming(exporter, reader):
-    client = AsyncAnthropic()
+async def test_async_groq_message_streaming(exporter, reader):
+    client = AsyncGroq()
     response = await client.messages.create(
         max_tokens=1024,
         messages=[
@@ -494,23 +494,23 @@ async def test_async_anthropic_message_streaming(exporter, reader):
 
     spans = exporter.get_finished_spans()
     assert [span.name for span in spans] == [
-        "anthropic.chat",
+        "groq.chat",
     ]
-    anthropic_span = spans[0]
+    groq_span = spans[0]
     assert (
-        anthropic_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
+        groq_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
         == "Tell me a joke about OpenTelemetry"
     )
-    assert (anthropic_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"]) == "user"
+    assert (groq_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"]) == "user"
     assert (
-        anthropic_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
+        groq_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
         == response_content
     )
-    assert anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 8
+    assert groq_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 8
     assert (
-        anthropic_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS]
-        + anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS]
-        == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
+        groq_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS]
+        + groq_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS]
+        == groq_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
     )
 
     metrics_data = reader.get_metrics_data()
@@ -563,7 +563,7 @@ async def test_async_anthropic_message_streaming(exporter, reader):
                     )
 
                 assert all(
-                    data_point.attributes.get("gen_ai.system") == "anthropic"
+                    data_point.attributes.get("gen_ai.system") == "groq"
                     for data_point in metric.data.data_points
                 )
 

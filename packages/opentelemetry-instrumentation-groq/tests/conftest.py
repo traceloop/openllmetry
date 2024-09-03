@@ -4,7 +4,7 @@ import os
 
 import pytest
 from opentelemetry import metrics, trace
-from opentelemetry.instrumentation.groq import AnthropicInstrumentor
+from opentelemetry.instrumentation.groq import GroqInstrumentor
 from opentelemetry.sdk.metrics import Counter, Histogram, MeterProvider
 from opentelemetry.sdk.metrics.export import (
     AggregationTemporality,
@@ -49,7 +49,7 @@ def meter_provider(reader):
 
 @pytest.fixture(scope="session", autouse=True)
 def instrument(exporter, reader, meter_provider):
-    AnthropicInstrumentor(enrich_token_usage=True).instrument()
+    GroqInstrumentor(enrich_token_usage=True).instrument()
 
     yield
 
@@ -66,7 +66,7 @@ def clear_exporter_reader(exporter, reader):
 
 @pytest.fixture(autouse=True)
 def environment():
-    os.environ["ANTHROPIC_API_KEY"] = "test_api_key"
+    os.environ["GROQ_API_KEY"] = "test_api_key"
 
 
 @pytest.fixture(scope="module")

@@ -1,4 +1,4 @@
-"""OpenTelemetry Anthropic instrumentation"""
+"""OpenTelemetry Groq instrumentation"""
 
 import json
 import logging
@@ -6,7 +6,6 @@ import os
 import time
 from typing import Callable, Collection
 
-from anthropic._streaming import AsyncStream, Stream
 from opentelemetry import context as context_api
 from opentelemetry.instrumentation.groq.config import Config
 from opentelemetry.instrumentation.groq.streaming import (
@@ -40,43 +39,43 @@ _instruments = ("groq >= 0.9.0",)
 
 WRAPPED_METHODS = [
     {
-        "package": "anthropic.resources.completions",
+        "package": "groq.resources.chat.completions",
         "object": "Completions",
         "method": "create",
-        "span_name": "anthropic.completion",
+        "span_name": "groq.chat",
     },
-    {
-        "package": "anthropic.resources.messages",
-        "object": "Messages",
-        "method": "create",
-        "span_name": "anthropic.chat",
-    },
-    {
-        "package": "anthropic.resources.messages",
-        "object": "Messages",
-        "method": "stream",
-        "span_name": "anthropic.chat",
-    },
+    # {
+    #     "package": "groq.resources.messages",
+    #     "object": "Messages",
+    #     "method": "create",
+    #     "span_name": "groq.chat",
+    # },
+    # {
+    #     "package": "groq.resources.messages",
+    #     "object": "Messages",
+    #     "method": "stream",
+    #     "span_name": "groq.chat",
+    # },
 ]
 WRAPPED_AMETHODS = [
-    {
-        "package": "anthropic.resources.completions",
-        "object": "AsyncCompletions",
-        "method": "create",
-        "span_name": "anthropic.completion",
-    },
-    {
-        "package": "anthropic.resources.messages",
-        "object": "AsyncMessages",
-        "method": "create",
-        "span_name": "anthropic.chat",
-    },
-    {
-        "package": "anthropic.resources.messages",
-        "object": "AsyncMessages",
-        "method": "stream",
-        "span_name": "anthropic.chat",
-    },
+    # {
+    #     "package": "groq.resources.completions",
+    #     "object": "AsyncCompletions",
+    #     "method": "create",
+    #     "span_name": "groq.completion",
+    # },
+    # {
+    #     "package": "groq.resources.messages",
+    #     "object": "AsyncMessages",
+    #     "method": "create",
+    #     "span_name": "groq.chat",
+    # },
+    # {
+    #     "package": "groq.resources.messages",
+    #     "object": "AsyncMessages",
+    #     "method": "stream",
+    #     "span_name": "groq.chat",
+    # },
 ]
 
 
@@ -159,7 +158,7 @@ def _set_span_completions(span, response):
 @dont_throw
 async def _aset_token_usage(
     span,
-    anthropic,
+    groq,
     request,
     response,
     metric_attributes: dict = {},
@@ -170,13 +169,13 @@ async def _aset_token_usage(
         response = response.__dict__
 
     prompt_tokens = 0
-    if hasattr(anthropic, "count_tokens"):
+    if hasattr(groq, "count_tokens"):
         if request.get("prompt"):
-            prompt_tokens = await anthropic.count_tokens(request.get("prompt"))
+            prompt_tokens = await groq.count_tokens(request.get("prompt"))
         elif request.get("messages"):
             prompt_tokens = sum(
                 [
-                    await anthropic.count_tokens(m.get("content"))
+                    await groq.count_tokens(m.get("content"))
                     for m in request.get("messages")
                 ]
             )
@@ -191,11 +190,11 @@ async def _aset_token_usage(
         )
 
     completion_tokens = 0
-    if hasattr(anthropic, "count_tokens"):
+    if hasattr(groq, "count_tokens"):
         if response.get("completion"):
-            completion_tokens = await anthropic.count_tokens(response.get("completion"))
+            completion_tokens = await groq.count_tokens(response.get("completion"))
         elif response.get("content"):
-            completion_tokens = await anthropic.count_tokens(
+            completion_tokens = await groq.count_tokens(
                 response.get("content")[0].text
             )
 
@@ -235,7 +234,7 @@ async def _aset_token_usage(
 @dont_throw
 def _set_token_usage(
     span,
-    anthropic,
+    groq,
     request,
     response,
     metric_attributes: dict = {},
@@ -246,13 +245,13 @@ def _set_token_usage(
         response = response.__dict__
 
     prompt_tokens = 0
-    if hasattr(anthropic, "count_tokens"):
+    if hasattr(groq, "count_tokens"):
         if request.get("prompt"):
-            prompt_tokens = anthropic.count_tokens(request.get("prompt"))
+            prompt_tokens = groq.count_tokens(request.get("prompt"))
         elif request.get("messages"):
             prompt_tokens = sum(
                 [
-                    anthropic.count_tokens(m.get("content"))
+                    groq.count_tokens(m.get("content"))
                     for m in request.get("messages")
                 ]
             )
@@ -267,11 +266,11 @@ def _set_token_usage(
         )
 
     completion_tokens = 0
-    if hasattr(anthropic, "count_tokens"):
+    if hasattr(groq, "count_tokens"):
         if response.get("completion"):
-            completion_tokens = anthropic.count_tokens(response.get("completion"))
+            completion_tokens = groq.count_tokens(response.get("completion"))
         elif response.get("content"):
-            completion_tokens = anthropic.count_tokens(response.get("content")[0].text)
+            completion_tokens = groq.count_tokens(response.get("content")[0].text)
 
     if token_histogram and type(completion_tokens) is int and completion_tokens >= 0:
         token_histogram.record(
@@ -391,7 +390,7 @@ def _create_metrics(meter: Meter):
     )
 
     exception_counter = meter.create_counter(
-        name=Meters.LLM_ANTHROPIC_COMPLETION_EXCEPTIONS,
+        name=Meters.LLM_GROQ_COMPLETION_EXCEPTIONS,
         unit="time",
         description="Number of exceptions occurred during chat completions",
     )
@@ -423,7 +422,7 @@ def _wrap(
         name,
         kind=SpanKind.CLIENT,
         attributes={
-            SpanAttributes.LLM_SYSTEM: "Anthropic",
+            SpanAttributes.LLM_SYSTEM: "Groq",
             SpanAttributes.LLM_REQUEST_TYPE: LLMRequestTypeValues.COMPLETION.value,
         },
     )
@@ -486,7 +485,7 @@ def _wrap(
 
         except Exception as ex:  # pylint: disable=broad-except
             logger.warning(
-                "Failed to set response attributes for anthropic span, error: %s",
+                "Failed to set response attributes for groq span, error: %s",
                 str(ex),
             )
         if span.is_recording():
@@ -519,7 +518,7 @@ async def _awrap(
         name,
         kind=SpanKind.CLIENT,
         attributes={
-            SpanAttributes.LLM_SYSTEM: "Anthropic",
+            SpanAttributes.LLM_SYSTEM: "Groq",
             SpanAttributes.LLM_REQUEST_TYPE: LLMRequestTypeValues.COMPLETION.value,
         },
     )
@@ -529,7 +528,7 @@ async def _awrap(
 
     except Exception as ex:  # pylint: disable=broad-except
         logger.warning(
-            "Failed to set input attributes for anthropic span, error: %s", str(ex)
+            "Failed to set input attributes for groq span, error: %s", str(ex)
         )
 
     start_time = time.time()
@@ -592,8 +591,8 @@ def is_metrics_enabled() -> bool:
     return (os.getenv("TRACELOOP_METRICS_ENABLED") or "true").lower() == "true"
 
 
-class AnthropicInstrumentor(BaseInstrumentor):
-    """An instrumentor for Anthropic's client library."""
+class GroqInstrumentor(BaseInstrumentor):
+    """An instrumentor for Groq's client library."""
 
     def __init__(
         self,
@@ -684,6 +683,6 @@ class AnthropicInstrumentor(BaseInstrumentor):
         for wrapped_method in WRAPPED_AMETHODS:
             wrap_object = wrapped_method.get("object")
             unwrap(
-                f"anthropic.resources.completions.{wrap_object}",
+                f"groq.resources.completions.{wrap_object}",
                 wrapped_method.get("method"),
             )

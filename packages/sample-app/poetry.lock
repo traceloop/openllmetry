@@ -2284,13 +2284,13 @@ ibm-cos-sdk-core = "2.13.6"
 
 [[package]]
 name = "ibm-watsonx-ai"
-version = "1.1.7"
+version = "1.1.8"
 description = "IBM watsonx.ai API Client"
 optional = false
 python-versions = ">=3.10"
 files = [
-    {file = "ibm_watsonx_ai-1.1.7-py3-none-any.whl", hash = "sha256:b1174d4304912e2aa1c9c95baaa6862495052c976df6bc8520ba5b66d83f9210"},
-    {file = "ibm_watsonx_ai-1.1.7.tar.gz", hash = "sha256:77206f1654e9fdacfd29232d39d97f9436415cfaf0bba5e29e91f373ed5b3e8f"},
+    {file = "ibm_watsonx_ai-1.1.8-py3-none-any.whl", hash = "sha256:f3583ec887537e792871d0d2f47556125928c888af149cbd8f69b4e541dcad33"},
+    {file = "ibm_watsonx_ai-1.1.8.tar.gz", hash = "sha256:e50a5ecd652fc927fa54d5433e44e0320c5b3faf22699e5b9e013aa19745a5e7"},
 ]
 
 [package.dependencies]
@@ -4276,6 +4276,28 @@ type = "directory"
 url = "../opentelemetry-instrumentation-google-generativeai"
 
 [[package]]
+name = "opentelemetry-instrumentation-groq"
+version = "0.29.2"
+description = "OpenTelemetry Groq instrumentation"
+optional = false
+python-versions = ">=3.9,<4"
+files = []
+develop = true
+
+[package.dependencies]
+opentelemetry-api = "^1.27.0"
+opentelemetry-instrumentation = "^0.48b0"
+opentelemetry-semantic-conventions = "^0.48b0"
+opentelemetry-semantic-conventions-ai = "0.4.1"
+
+[package.extras]
+instruments = []
+
+[package.source]
+type = "directory"
+url = "../opentelemetry-instrumentation-groq"
+
+[[package]]
 name = "opentelemetry-instrumentation-haystack"
 version = "0.29.2"
 description = "OpenTelemetry Haystack instrumentation"
@@ -5100,13 +5122,13 @@ testing = ["pytest", "pytest-benchmark"]
 
 [[package]]
 name = "posthog"
-version = "3.6.0"
+version = "3.6.3"
 description = "Integrate PostHog into any python application."
 optional = false
 python-versions = "*"
 files = [
-    {file = "posthog-3.6.0-py2.py3-none-any.whl", hash = "sha256:6f8dacc6d14d80734b1d15bd4ab08b049629c5f0fc420cafcf1ce0667c76c83c"},
-    {file = "posthog-3.6.0.tar.gz", hash = "sha256:27dbf537241a69fb5f6a3e9561caa2d555d5891d95fa65c27ffa6b52d1fb63b6"},
+    {file = "posthog-3.6.3-py2.py3-none-any.whl", hash = "sha256:cdd6c5d8919fd6158bbc4103bccc7129c712d8104dc33828be02bada7b6320a4"},
+    {file = "posthog-3.6.3.tar.gz", hash = "sha256:6e1104a20638eab2b5d9cde6b6202a2900d67436237b3ac3521614ec17686701"},
 ]
 
 [package.dependencies]
@@ -5119,7 +5141,7 @@ six = ">=1.5"
 [package.extras]
 dev = ["black", "flake8", "flake8-print", "isort", "pre-commit"]
 sentry = ["django", "sentry-sdk"]
-test = ["coverage", "flake8", "freezegun (==0.3.15)", "mock (>=2.0.0)", "pylint", "pytest", "pytest-timeout"]
+test = ["coverage", "django", "flake8", "freezegun (==0.3.15)", "mock (>=2.0.0)", "pylint", "pytest", "pytest-timeout"]
 
 [[package]]
 name = "proto-plus"
@@ -6274,13 +6296,13 @@ train = ["accelerate (>=0.20.3)", "datasets"]
 
 [[package]]
 name = "setuptools"
-version = "74.0.0"
+version = "74.1.0"
 description = "Easily download, build, install, upgrade, and uninstall Python packages"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "setuptools-74.0.0-py3-none-any.whl", hash = "sha256:0274581a0037b638b9fc1c6883cc71c0210865aaa76073f7882376b641b84e8f"},
-    {file = "setuptools-74.0.0.tar.gz", hash = "sha256:a85e96b8be2b906f3e3e789adec6a9323abf79758ecfa3065bd740d81158b11e"},
+    {file = "setuptools-74.1.0-py3-none-any.whl", hash = "sha256:cee604bd76cc092355a4e43ec17aee5369095974f41f088676724dc6bc2c9ef8"},
+    {file = "setuptools-74.1.0.tar.gz", hash = "sha256:bea195a800f510ba3a2bc65645c88b7e016fe36709fefc58a880c4ae8a0138d7"},
 ]
 
 [package.extras]
@@ -6882,6 +6904,7 @@ opentelemetry-instrumentation-bedrock = {path = "../opentelemetry-instrumentatio
 opentelemetry-instrumentation-chromadb = {path = "../opentelemetry-instrumentation-chromadb", develop = true}
 opentelemetry-instrumentation-cohere = {path = "../opentelemetry-instrumentation-cohere", develop = true}
 opentelemetry-instrumentation-google-generativeai = {path = "../opentelemetry-instrumentation-google-generativeai", develop = true}
+opentelemetry-instrumentation-groq = {path = "../opentelemetry-instrumentation-groq", develop = true}
 opentelemetry-instrumentation-haystack = {path = "../opentelemetry-instrumentation-haystack", develop = true}
 opentelemetry-instrumentation-lancedb = {path = "../opentelemetry-instrumentation-lancedb", develop = true}
 opentelemetry-instrumentation-langchain = {path = "../opentelemetry-instrumentation-langchain", develop = true}
