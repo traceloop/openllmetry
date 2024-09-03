@@ -36,7 +36,7 @@ from wrapt import wrap_function_wrapper
 
 logger = logging.getLogger(__name__)
 
-_instruments = ("anthropic >= 0.3.11",)
+_instruments = ("groq >= 0.9.0",)
 
 WRAPPED_METHODS = [
     {
