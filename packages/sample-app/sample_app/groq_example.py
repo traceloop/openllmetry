@@ -5,7 +5,7 @@ from traceloop.sdk.decorators import task, workflow
 from groq import Groq
 from traceloop.sdk import Traceloop
 
-Traceloop.init(app_name="langchain_example")
+Traceloop.init(app_name="groq_example")
 
 client = Groq(
     api_key=os.environ.get("GROQ_API_KEY"),
