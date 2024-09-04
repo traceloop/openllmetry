@@ -1034,7 +1034,7 @@ def init_redis_instrumentor():
         logging.error(f"Error initializing redis instrumentor: {e}")
         Telemetry().log_exception(e)
         return False
-    
+
 
 def init_groq_instrumentor():
     try:
@@ -1052,7 +1052,6 @@ def init_groq_instrumentor():
         logging.error(f"Error initializing Groq instrumentor: {e}")
         Telemetry().log_exception(e)
         return False
-
 
 
 def metrics_common_attributes():

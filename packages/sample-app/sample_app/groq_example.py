@@ -11,6 +11,7 @@ client = Groq(
     api_key=os.environ.get("GROQ_API_KEY"),
 )
 
+
 @task(name="generate_joke")
 def generate_joke():
     completion = client.chat.completions.create(

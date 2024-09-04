@@ -182,7 +182,7 @@ def _set_completions(span, choices):
 @dont_throw
 def _set_response_attributes(span, response):
     response = model_as_dict(response)
-    
+
     set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, response.get("model"))
 
     usage = response.get("usage")
