@@ -6,15 +6,13 @@ import os
 import time
 from typing import Callable, Collection
 
+from groq._streaming import AsyncStream, Stream
 from opentelemetry import context as context_api
 from opentelemetry.instrumentation.groq.config import Config
-from opentelemetry.instrumentation.groq.streaming import (
-    abuild_from_streaming_response,
-    build_from_streaming_response,
-)
 from opentelemetry.instrumentation.groq.utils import (
     dont_throw,
     error_metrics_attributes,
+    model_as_dict,
     set_span_attribute,
     shared_metrics_attributes,
     should_send_prompts,
@@ -37,6 +35,8 @@ logger = logging.getLogger(__name__)
 
 _instruments = ("groq >= 0.9.0",)
 
+CONTENT_FILTER_KEY = "content_filter_results"
+
 WRAPPED_METHODS = [
     {
         "package": "groq.resources.chat.completions",
@@ -44,38 +44,14 @@ WRAPPED_METHODS = [
         "method": "create",
         "span_name": "groq.chat",
     },
-    # {
-    #     "package": "groq.resources.messages",
-    #     "object": "Messages",
-    #     "method": "create",
-    #     "span_name": "groq.chat",
-    # },
-    # {
-    #     "package": "groq.resources.messages",
-    #     "object": "Messages",
-    #     "method": "stream",
-    #     "span_name": "groq.chat",
-    # },
 ]
 WRAPPED_AMETHODS = [
-    # {
-    #     "package": "groq.resources.completions",
-    #     "object": "AsyncCompletions",
-    #     "method": "create",
-    #     "span_name": "groq.completion",
-    # },
-    # {
-    #     "package": "groq.resources.messages",
-    #     "object": "AsyncMessages",
-    #     "method": "create",
-    #     "span_name": "groq.chat",
-    # },
-    # {
-    #     "package": "groq.resources.messages",
-    #     "object": "AsyncMessages",
-    #     "method": "stream",
-    #     "span_name": "groq.chat",
-    # },
+    {
+        "package": "groq.resources.chat.completions",
+        "object": "AsyncCompletions",
+        "method": "create",
+        "span_name": "groq.chat",
+    },
 ]
 
 
@@ -120,7 +96,7 @@ def _set_input_attributes(span, kwargs):
     set_span_attribute(
         span, SpanAttributes.LLM_PRESENCE_PENALTY, kwargs.get("presence_penalty")
     )
-    set_span_attribute(span, SpanAttributes.LLM_IS_STREAMING, kwargs.get("stream"))
+    set_span_attribute(span, SpanAttributes.LLM_IS_STREAMING, kwargs.get("stream") or False)
 
     if should_send_prompts():
         if kwargs.get("prompt") is not None:
@@ -140,192 +116,92 @@ def _set_input_attributes(span, kwargs):
                 )
 
 
-def _set_span_completions(span, response):
-    index = 0
-    prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{index}"
-    set_span_attribute(span, f"{prefix}.finish_reason", response.get("stop_reason"))
-    if response.get("completion"):
-        set_span_attribute(span, f"{prefix}.content", response.get("completion"))
-    elif response.get("content"):
-        for i, content in enumerate(response.get("content")):
+def _set_completions(span, choices):
+    if choices is None:
+        return
+
+    for choice in choices:
+        index = choice.get("index")
+        prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{index}"
+        set_span_attribute(
+            span, f"{prefix}.finish_reason", choice.get("finish_reason")
+        )
+
+        if choice.get("content_filter_results"):
             set_span_attribute(
                 span,
-                f"{SpanAttributes.LLM_COMPLETIONS}.{i}.content",
-                content.text,
+                f"{prefix}.{CONTENT_FILTER_KEY}",
+                json.dumps(choice.get("content_filter_results")),
             )
 
+        if choice.get("finish_reason") == "content_filter":
+            set_span_attribute(span, f"{prefix}.role", "assistant")
+            set_span_attribute(span, f"{prefix}.content", "FILTERED")
 
-@dont_throw
-async def _aset_token_usage(
-    span,
-    groq,
-    request,
-    response,
-    metric_attributes: dict = {},
-    token_histogram: Histogram = None,
-    choice_counter: Counter = None,
-):
-    if not isinstance(response, dict):
-        response = response.__dict__
+            return
 
-    prompt_tokens = 0
-    if hasattr(groq, "count_tokens"):
-        if request.get("prompt"):
-            prompt_tokens = await groq.count_tokens(request.get("prompt"))
-        elif request.get("messages"):
-            prompt_tokens = sum(
-                [
-                    await groq.count_tokens(m.get("content"))
-                    for m in request.get("messages")
-                ]
+        message = choice.get("message")
+        if not message:
+            return
+
+        set_span_attribute(span, f"{prefix}.role", message.get("role"))
+        set_span_attribute(span, f"{prefix}.content", message.get("content"))
+
+        function_call = message.get("function_call")
+        if function_call:
+            set_span_attribute(
+                span, f"{prefix}.tool_calls.0.name", function_call.get("name")
+            )
+            set_span_attribute(
+                span,
+                f"{prefix}.tool_calls.0.arguments",
+                function_call.get("arguments"),
             )
 
-    if token_histogram and type(prompt_tokens) is int and prompt_tokens >= 0:
-        token_histogram.record(
-            prompt_tokens,
-            attributes={
-                **metric_attributes,
-                SpanAttributes.LLM_TOKEN_TYPE: "input",
-            },
-        )
-
-    completion_tokens = 0
-    if hasattr(groq, "count_tokens"):
-        if response.get("completion"):
-            completion_tokens = await groq.count_tokens(response.get("completion"))
-        elif response.get("content"):
-            completion_tokens = await groq.count_tokens(
-                response.get("content")[0].text
-            )
-
-    if token_histogram and type(completion_tokens) is int and completion_tokens >= 0:
-        token_histogram.record(
-            completion_tokens,
-            attributes={
-                **metric_attributes,
-                SpanAttributes.LLM_TOKEN_TYPE: "output",
-            },
-        )
-
-    total_tokens = prompt_tokens + completion_tokens
-
-    choices = 0
-    if type(response.get("content")) is list:
-        choices = len(response.get("content"))
-    elif response.get("completion"):
-        choices = 1
-
-    if choices > 0 and choice_counter:
-        choice_counter.add(
-            choices,
-            attributes={
-                **metric_attributes,
-                SpanAttributes.LLM_RESPONSE_STOP_REASON: response.get("stop_reason"),
-            },
-        )
-
-    set_span_attribute(span, SpanAttributes.LLM_USAGE_PROMPT_TOKENS, prompt_tokens)
-    set_span_attribute(
-        span, SpanAttributes.LLM_USAGE_COMPLETION_TOKENS, completion_tokens
-    )
-    set_span_attribute(span, SpanAttributes.LLM_USAGE_TOTAL_TOKENS, total_tokens)
-
-
-@dont_throw
-def _set_token_usage(
-    span,
-    groq,
-    request,
-    response,
-    metric_attributes: dict = {},
-    token_histogram: Histogram = None,
-    choice_counter: Counter = None,
-):
-    if not isinstance(response, dict):
-        response = response.__dict__
-
-    prompt_tokens = 0
-    if hasattr(groq, "count_tokens"):
-        if request.get("prompt"):
-            prompt_tokens = groq.count_tokens(request.get("prompt"))
-        elif request.get("messages"):
-            prompt_tokens = sum(
-                [
-                    groq.count_tokens(m.get("content"))
-                    for m in request.get("messages")
-                ]
-            )
-
-    if token_histogram and type(prompt_tokens) is int and prompt_tokens >= 0:
-        token_histogram.record(
-            prompt_tokens,
-            attributes={
-                **metric_attributes,
-                SpanAttributes.LLM_TOKEN_TYPE: "input",
-            },
-        )
-
-    completion_tokens = 0
-    if hasattr(groq, "count_tokens"):
-        if response.get("completion"):
-            completion_tokens = groq.count_tokens(response.get("completion"))
-        elif response.get("content"):
-            completion_tokens = groq.count_tokens(response.get("content")[0].text)
-
-    if token_histogram and type(completion_tokens) is int and completion_tokens >= 0:
-        token_histogram.record(
-            completion_tokens,
-            attributes={
-                **metric_attributes,
-                SpanAttributes.LLM_TOKEN_TYPE: "output",
-            },
-        )
-
-    total_tokens = prompt_tokens + completion_tokens
-
-    choices = 0
-    if type(response.get("content")) is list:
-        choices = len(response.get("content"))
-    elif response.get("completion"):
-        choices = 1
-
-    if choices > 0 and choice_counter:
-        choice_counter.add(
-            choices,
-            attributes={
-                **metric_attributes,
-                SpanAttributes.LLM_RESPONSE_STOP_REASON: response.get("stop_reason"),
-            },
-        )
-
-    set_span_attribute(span, SpanAttributes.LLM_USAGE_PROMPT_TOKENS, prompt_tokens)
-    set_span_attribute(
-        span, SpanAttributes.LLM_USAGE_COMPLETION_TOKENS, completion_tokens
-    )
-    set_span_attribute(span, SpanAttributes.LLM_USAGE_TOTAL_TOKENS, total_tokens)
+        tool_calls = message.get("tool_calls")
+        if tool_calls:
+            for i, tool_call in enumerate(tool_calls):
+                function = tool_call.get("function")
+                set_span_attribute(
+                    span,
+                    f"{prefix}.tool_calls.{i}.id",
+                    tool_call.get("id"),
+                )
+                set_span_attribute(
+                    span,
+                    f"{prefix}.tool_calls.{i}.name",
+                    function.get("name"),
+                )
+                set_span_attribute(
+                    span,
+                    f"{prefix}.tool_calls.{i}.arguments",
+                    function.get("arguments"),
+                )
 
 
 @dont_throw
 def _set_response_attributes(span, response):
-    if not isinstance(response, dict):
-        response = response.__dict__
+    response = model_as_dict(response)
+    
     set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, response.get("model"))
 
-    if response.get("usage"):
-        prompt_tokens = response.get("usage").input_tokens
-        completion_tokens = response.get("usage").output_tokens
-        set_span_attribute(span, SpanAttributes.LLM_USAGE_PROMPT_TOKENS, prompt_tokens)
+    usage = response.get("usage")
+    if usage:
         set_span_attribute(
-            span, SpanAttributes.LLM_USAGE_COMPLETION_TOKENS, completion_tokens
+            span, SpanAttributes.LLM_USAGE_TOTAL_TOKENS, usage.get("total_tokens")
         )
         set_span_attribute(
             span,
-            SpanAttributes.LLM_USAGE_TOTAL_TOKENS,
-            prompt_tokens + completion_tokens,
+            SpanAttributes.LLM_USAGE_COMPLETION_TOKENS,
+            usage.get("completion_tokens"),
+        )
+        set_span_attribute(
+            span, SpanAttributes.LLM_USAGE_PROMPT_TOKENS, usage.get("prompt_tokens")
         )
 
-    if should_send_prompts():
-        _set_span_completions(span, response)
+    choices = response.get("choices")
+    if should_send_prompts() and choices:
+        _set_completions(span, choices)
 
 
 def _with_tracer_wrapper(func):
@@ -348,7 +224,6 @@ def _with_chat_telemetry_wrapper(func):
         token_histogram,
         choice_counter,
         duration_histogram,
-        exception_counter,
         to_wrap,
     ):
         def wrapper(wrapped, instance, args, kwargs):
@@ -357,7 +232,6 @@ def _with_chat_telemetry_wrapper(func):
                 token_histogram,
                 choice_counter,
                 duration_histogram,
-                exception_counter,
                 to_wrap,
                 wrapped,
                 instance,
@@ -389,13 +263,7 @@ def _create_metrics(meter: Meter):
         description="GenAI operation duration",
     )
 
-    exception_counter = meter.create_counter(
-        name=Meters.LLM_GROQ_COMPLETION_EXCEPTIONS,
-        unit="time",
-        description="Number of exceptions occurred during chat completions",
-    )
-
-    return token_histogram, choice_counter, duration_histogram, exception_counter
+    return token_histogram, choice_counter, duration_histogram
 
 
 @_with_chat_telemetry_wrapper
@@ -404,7 +272,6 @@ def _wrap(
     token_histogram: Histogram,
     choice_counter: Counter,
     duration_histogram: Histogram,
-    exception_counter: Counter,
     to_wrap,
     wrapped,
     instance,
@@ -441,25 +308,13 @@ def _wrap(
             duration = end_time - start_time
             duration_histogram.record(duration, attributes=attributes)
 
-        if exception_counter:
-            exception_counter.add(1, attributes=attributes)
-
         raise e
 
     end_time = time.time()
 
     if is_streaming_response(response):
-        return build_from_streaming_response(
-            span,
-            response,
-            instance._client,
-            start_time,
-            token_histogram,
-            choice_counter,
-            duration_histogram,
-            exception_counter,
-            kwargs,
-        )
+        # TODO: implement streaming
+        pass
     elif response:
         try:
             metric_attributes = shared_metrics_attributes(response)
@@ -473,15 +328,6 @@ def _wrap(
 
             if span.is_recording():
                 _set_response_attributes(span, response)
-                _set_token_usage(
-                    span,
-                    instance._client,
-                    kwargs,
-                    response,
-                    metric_attributes,
-                    token_histogram,
-                    choice_counter,
-                )
 
         except Exception as ex:  # pylint: disable=broad-except
             logger.warning(
@@ -500,7 +346,6 @@ async def _awrap(
     token_histogram: Histogram,
     choice_counter: Counter,
     duration_histogram: Histogram,
-    exception_counter: Counter,
     to_wrap,
     wrapped,
     instance,
@@ -542,23 +387,11 @@ async def _awrap(
             duration = end_time - start_time
             duration_histogram.record(duration, attributes=attributes)
 
-        if exception_counter:
-            exception_counter.add(1, attributes=attributes)
-
         raise e
 
     if is_streaming_response(response):
-        return abuild_from_streaming_response(
-            span,
-            response,
-            instance._client,
-            start_time,
-            token_histogram,
-            choice_counter,
-            duration_histogram,
-            exception_counter,
-            kwargs,
-        )
+        # TODO: implement streaming
+        pass
     elif response:
         metric_attributes = shared_metrics_attributes(response)
 
@@ -571,15 +404,6 @@ async def _awrap(
 
         if span.is_recording():
             _set_response_attributes(span, response)
-            await _aset_token_usage(
-                span,
-                instance._client,
-                kwargs,
-                response,
-                metric_attributes,
-                token_histogram,
-                choice_counter,
-            )
 
         if span.is_recording():
             span.set_status(Status(StatusCode.OK))
@@ -621,14 +445,12 @@ class GroqInstrumentor(BaseInstrumentor):
                 token_histogram,
                 choice_counter,
                 duration_histogram,
-                exception_counter,
             ) = _create_metrics(meter)
         else:
             (
                 token_histogram,
                 choice_counter,
                 duration_histogram,
-                exception_counter,
             ) = (None, None, None, None)
 
         for wrapped_method in WRAPPED_METHODS:
@@ -645,7 +467,6 @@ class GroqInstrumentor(BaseInstrumentor):
                         token_histogram,
                         choice_counter,
                         duration_histogram,
-                        exception_counter,
                         wrapped_method,
                     ),
                 )
@@ -665,7 +486,6 @@ class GroqInstrumentor(BaseInstrumentor):
                         token_histogram,
                         choice_counter,
                         duration_histogram,
-                        exception_counter,
                         wrapped_method,
                     ),
                 )

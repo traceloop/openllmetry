@@ -1,3 +1,4 @@
+from importlib.metadata import version
 import os
 import logging
 import traceback
@@ -10,10 +11,8 @@ GEN_AI_SYSTEM_GROQ = "groq"
 
 
 def set_span_attribute(span, name, value):
-    if value is not None:
-        if value != "":
-            span.set_attribute(name, value)
-    return
+    if value is not None and value != "":
+        span.set_attribute(name, value)
 
 
 def should_send_prompts():
@@ -49,15 +48,14 @@ def dont_throw(func):
 
 @dont_throw
 def shared_metrics_attributes(response):
-    if not isinstance(response, dict):
-        response = response.__dict__
+    response_dict = model_as_dict(response)
 
     common_attributes = Config.get_common_metrics_attributes()
 
     return {
         **common_attributes,
         GEN_AI_SYSTEM: GEN_AI_SYSTEM_GROQ,
-        SpanAttributes.LLM_RESPONSE_MODEL: response.get("model"),
+        SpanAttributes.LLM_RESPONSE_MODEL: response_dict.get("model"),
     }
 
 
@@ -67,3 +65,14 @@ def error_metrics_attributes(exception):
         GEN_AI_SYSTEM: GEN_AI_SYSTEM_GROQ,
         "error.type": exception.__class__.__name__,
     }
+
+
+def model_as_dict(model):
+    if version("pydantic") < "2.0.0":
+        return model.dict()
+    if hasattr(model, "model_dump"):
+        return model.model_dump()
+    elif hasattr(model, "parse"):  # Raw API response
+        return model_as_dict(model.parse())
+    else:
+        return model
