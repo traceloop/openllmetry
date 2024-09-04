@@ -553,6 +553,7 @@ def init_instrumentations(should_enrich_metrics: bool):
     init_alephalpha_instrumentor()
     init_marqo_instrumentor()
     init_lancedb_instrumentor()
+    init_groq_instrumentor()
 
 
 def init_openai_instrumentor(should_enrich_metrics: bool):
@@ -1031,6 +1032,24 @@ def init_redis_instrumentor():
         return True
     except Exception as e:
         logging.error(f"Error initializing redis instrumentor: {e}")
+        Telemetry().log_exception(e)
+        return False
+
+
+def init_groq_instrumentor():
+    try:
+        if is_package_installed("groq"):
+            Telemetry().capture("instrumentation:groq:init")
+            from opentelemetry.instrumentation.groq import GroqInstrumentor
+
+            instrumentor = GroqInstrumentor(
+                exception_logger=lambda e: Telemetry().log_exception(e),
+            )
+            if not instrumentor.is_instrumented_by_opentelemetry:
+                instrumentor.instrument()
+        return True
+    except Exception as e:
+        logging.error(f"Error initializing Groq instrumentor: {e}")
         Telemetry().log_exception(e)
         return False
 

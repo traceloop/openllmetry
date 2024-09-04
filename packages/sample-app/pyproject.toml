@@ -53,6 +53,7 @@ langchain-openai ="^0.1.8"
 google-generativeai = "^0.6.0"
 langchain-ibm = "^0.1.11"
 langgraph = "^0.2.14"
+groq = "^0.10.0"
 
 [tool.poetry.dependencies.opentelemetry-instrumentation-openai]
 path = "../opentelemetry-instrumentation-openai"
@@ -76,6 +77,10 @@ develop = true
 
 [tool.poetry.dependencies.opentelemetry-instrumentation-google-generativeai]
 path = "../opentelemetry-instrumentation-google-generativeai"
+develop = true
+
+[tool.poetry.dependencies.opentelemetry-instrumentation-groq]
+path = "../opentelemetry-instrumentation-groq"
 develop = true
 
 [tool.poetry.dependencies.traceloop-sdk]
