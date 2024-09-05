@@ -37,13 +37,15 @@ def clear_exporter(exporter):
 @pytest.fixture(autouse=True)
 def environment():
     if not os.environ.get("OPENAI_API_KEY"):
-        os.environ["OPENAI_API_KEY"] = "test_api_key"
+        os.environ["OPENAI_API_KEY"] = "test"
     if not os.environ.get("ANTHROPIC_API_KEY"):
         os.environ["ANTHROPIC_API_KEY"] = "test"
     if not os.environ.get("COHERE_API_KEY"):
         os.environ["COHERE_API_KEY"] = "test"
     if not os.environ.get("TAVILY_API_KEY"):
         os.environ["TAVILY_API_KEY"] = "test"
+    if not os.environ.get("LANGSMITH_API_KEY"):
+        os.environ["LANGSMITH_API_KEY"] = "test"
 
 
 @pytest.fixture(scope="module")
