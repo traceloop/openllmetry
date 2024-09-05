@@ -122,6 +122,7 @@ OpenLLMetry can instrument everything that [OpenTelemetry already instruments](h
 - ✅ IBM Watsonx AI
 - ✅ Together AI
 - ✅ Aleph Alpha
+- ✅ Groq
 
 ### Vector DBs
 
@@ -132,7 +133,6 @@ OpenLLMetry can instrument everything that [OpenTelemetry already instruments](h
 - ✅ Milvus
 - ✅ Marqo
 - ✅ LanceDB
-
 
 ### Frameworks
 

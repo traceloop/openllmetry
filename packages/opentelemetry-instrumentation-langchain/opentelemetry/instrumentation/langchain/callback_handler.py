@@ -255,8 +255,14 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         metadata: Optional[dict[str, Any]] = None,
     ) -> Span:
         if metadata is not None:
+            current_association_properties = (
+                context_api.get_value("association_properties") or {}
+            )
             context_api.attach(
-                context_api.set_value("association_properties", metadata)
+                context_api.set_value(
+                    "association_properties",
+                    {**current_association_properties, **metadata},
+                )
             )
 
         if parent_run_id is not None and parent_run_id in self.spans:

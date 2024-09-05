@@ -1,3 +1,15 @@
+## v0.30.0 (2024-09-04)
+
+### Feat
+
+- add groq instrumentation (#1928)
+
+## v0.29.2 (2024-08-31)
+
+### Fix
+
+- **langchain**: allow external and langchain metadata (#1922)
+
 ## v0.29.1 (2024-08-29)
 
 ### Fix
