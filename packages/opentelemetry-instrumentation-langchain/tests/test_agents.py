@@ -1,3 +1,4 @@
+import os
 import pytest
 from langchain import hub
 from langchain.agents import create_tool_calling_agent
@@ -13,7 +14,10 @@ def test_agents(exporter):
 
     model = ChatOpenAI(model="gpt-3.5-turbo")
 
-    prompt = hub.pull("hwchase17/openai-functions-agent")
+    prompt = hub.pull(
+        "hwchase17/openai-functions-agent",
+        api_key=os.environ["LANGSMITH_API_KEY"],
+    )
 
     agent = create_tool_calling_agent(model, tools, prompt)
     agent_executor = AgentExecutor(agent=agent, tools=tools)
