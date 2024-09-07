@@ -66,6 +66,16 @@ WRAPPED_METHODS = [
         "method": "delete",
         "span_name": "pinecone.delete",
     },
+    {
+        "object": "Index",
+        "method": "infer",
+        "span_name": "pinecone.infer"
+    },
+    {
+        "object": "Index",
+        "method": "assistant",
+        "span_name": "pinecone.assistant"
+    }
 ]
 
 
