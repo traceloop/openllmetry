@@ -44,6 +44,7 @@ class Traceloop:
         api_key: str = None,
         headers: Dict[str, str] = {},
         disable_batch=False,
+        disable_requests_instrumentation: bool = True,
         exporter: SpanExporter = None,
         metrics_exporter: MetricExporter = None,
         metrics_headers: Dict[str, str] = None,
@@ -125,6 +126,7 @@ class Traceloop:
         )
         Traceloop.__tracer_wrapper = TracerWrapper(
             disable_batch=disable_batch,
+            disable_requests_instrumentation=disable_requests_instrumentation,
             processor=processor,
             propagator=propagator,
             exporter=exporter,

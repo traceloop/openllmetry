@@ -62,6 +62,7 @@ class TracerWrapper(object):
     def __new__(
         cls,
         disable_batch=False,
+        disable_requests_instrumentation=True,
         processor: SpanProcessor = None,
         propagator: TextMapPropagator = None,
         exporter: SpanExporter = None,
@@ -125,7 +126,7 @@ class TracerWrapper(object):
 
             instrument_set = False
             if instruments is None:
-                init_instrumentations(should_enrich_metrics)
+                init_instrumentations(should_enrich_metrics, disable_requests_instrumentation)
                 instrument_set = True
             else:
                 for instrument in instruments:
@@ -525,7 +526,7 @@ def init_tracer_provider(resource: Resource) -> TracerProvider:
     return provider
 
 
-def init_instrumentations(should_enrich_metrics: bool):
+def init_instrumentations(should_enrich_metrics: bool, disable_requests_instrumentation: bool):
     init_openai_instrumentor(should_enrich_metrics)
     init_anthropic_instrumentor(should_enrich_metrics)
     init_cohere_instrumentor()
@@ -542,7 +543,6 @@ def init_instrumentations(should_enrich_metrics: bool):
     init_transformers_instrumentor()
     init_together_instrumentor()
     init_redis_instrumentor()
-    init_requests_instrumentor()
     init_urllib3_instrumentor()
     init_pymysql_instrumentor()
     init_bedrock_instrumentor(should_enrich_metrics)
@@ -554,6 +554,9 @@ def init_instrumentations(should_enrich_metrics: bool):
     init_marqo_instrumentor()
     init_lancedb_instrumentor()
     init_groq_instrumentor()
+
+    if not disable_requests_instrumentation:
+        init_requests_instrumentor()
 
 
 def init_openai_instrumentor(should_enrich_metrics: bool):
