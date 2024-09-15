@@ -160,9 +160,7 @@ class TracerWrapper(object):
                             instrument_set = True
                     elif instrument == Instruments.REDIS:
                         if not init_redis_instrumentor():
-                            print(
-                                Fore.RED + "Warning: Redis library does not exist."
-                            )
+                            print(Fore.RED + "Warning: Redis library does not exist.")
                             print(Fore.RESET)
                         else:
                             instrument_set = True
@@ -643,6 +641,7 @@ def init_pinecone_instrumentor():
         Telemetry().log_exception(e)
         return False
 
+
 def init_redis_instrumentor():
     if importlib.util.find_spec("redis") is not None:
         Telemetry().capture("instrumentation:redis:init")
@@ -654,6 +653,7 @@ def init_redis_instrumentor():
         if not instrumentor.is_instrumented_by_opentelemetry:
             instrumentor.instrument()
     return True
+
 
 def init_qdrant_instrumentor():
     try:
@@ -957,7 +957,9 @@ def init_vertexai_instrumentor():
 
 def init_watsonx_instrumentor():
     try:
-        if is_package_installed("ibm-watsonx-ai") or is_package_installed("ibm-watson-machine-learning"):
+        if is_package_installed("ibm-watsonx-ai") or is_package_installed(
+            "ibm-watson-machine-learning"
+        ):
             Telemetry().capture("instrumentation:watsonx:init")
             from opentelemetry.instrumentation.watsonx import WatsonxInstrumentor
 
@@ -1047,6 +1049,7 @@ def init_redis_instrumentor():
     try:
         if is_package_installed("redis"):
             from opentelemetry.instrumentation.redis import RedisInstrumentor
+
             instrumentor = RedisInstrumentor()
             if not instrumentor.is_instrumented_by_opentelemetry:
                 instrumentor.instrument(excluded_urls=EXCLUDED_URLS)

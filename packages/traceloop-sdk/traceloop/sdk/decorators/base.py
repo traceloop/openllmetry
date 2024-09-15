@@ -53,9 +53,7 @@ def entity_method(
                 span.set_attribute(
                     SpanAttributes.TRACELOOP_SPAN_KIND, tlp_span_kind.value
                 )
-                span.set_attribute(
-                    SpanAttributes.TRACELOOP_ENTITY_NAME, entity_name
-                )
+                span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, entity_name)
                 if version:
                     span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_VERSION, version)
 
@@ -153,9 +151,7 @@ def aentity_method(
                 span.set_attribute(
                     SpanAttributes.TRACELOOP_SPAN_KIND, tlp_span_kind.value
                 )
-                span.set_attribute(
-                    SpanAttributes.TRACELOOP_ENTITY_NAME, entity_name
-                )
+                span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, entity_name)
                 if version:
                     span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_VERSION, version)
 

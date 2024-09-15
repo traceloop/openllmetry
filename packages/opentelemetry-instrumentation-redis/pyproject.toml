@@ -25,10 +25,10 @@ include = "opentelemetry/instrumentation/redis"
 [tool.poetry.dependencies]
 python = ">=3.9,<4"
 opentelemetry-api = "^1.25.0"
-opentelemetry-instrumentation = "^0.46b0"
-opentelemetry-semantic-conventions = "^0.46b0"
-opentelemetry-semantic-conventions-ai = "0.2.0"
-redis = "^4.3.4"
+opentelemetry-instrumentation = "^0.48b0"
+opentelemetry-semantic-conventions = "^0.48b0"
+opentelemetry-semantic-conventions-ai = "^0.4.1"
+redis = "^5.0.0"
 
 [tool.poetry.group.dev.dependencies]
 autopep8 = "2.1.0"
