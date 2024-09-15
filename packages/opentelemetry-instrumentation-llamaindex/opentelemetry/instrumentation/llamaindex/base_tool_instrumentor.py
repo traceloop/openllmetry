@@ -4,9 +4,11 @@ from wrapt import wrap_function_wrapper
 
 from opentelemetry.instrumentation.llamaindex.utils import (
     _with_tracer_wrapper,
+    process_request,
+    process_response,
     start_as_current_span_async,
 )
-from opentelemetry.semconv.ai import SpanAttributes, TraceloopSpanKindValues
+from opentelemetry.semconv_ai import SpanAttributes, TraceloopSpanKindValues
 
 
 TO_INSTRUMENT = [
@@ -50,23 +52,31 @@ class BaseToolInstrumentor:
 
 @_with_tracer_wrapper
 def query_wrapper(tracer, wrapped, instance, args, kwargs):
-    with tracer.start_as_current_span(f"{instance.__class__.__name__}.tool") as span:
+    name = instance.__class__.__name__
+    with tracer.start_as_current_span(f"{name}.tool") as span:
         span.set_attribute(
             SpanAttributes.TRACELOOP_SPAN_KIND,
             TraceloopSpanKindValues.TOOL.value,
         )
+        span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, name)
 
-        return wrapped(*args, **kwargs)
+        process_request(span, args, kwargs)
+        res = wrapped(*args, **kwargs)
+        process_response(span, res)
+        return res
 
 
 @_with_tracer_wrapper
 async def aquery_wrapper(tracer, wrapped, instance, args, kwargs):
-    async with start_as_current_span_async(
-        tracer=tracer, name=f"{instance.__class__.__name__}.tool"
-    ) as span:
+    name = instance.__class__.__name__
+    async with start_as_current_span_async(tracer=tracer, name=f"{name}.tool") as span:
         span.set_attribute(
             SpanAttributes.TRACELOOP_SPAN_KIND,
             TraceloopSpanKindValues.TOOL.value,
         )
+        span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, name)
 
-        return await wrapped(*args, **kwargs)
+        process_request(span, args, kwargs)
+        res = await wrapped(*args, **kwargs)
+        process_response(span, res)
+        return res

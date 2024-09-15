@@ -4,7 +4,7 @@ import logging
 import os
 import types
 import time
-from typing import Collection
+from typing import Collection, Optional
 from opentelemetry.instrumentation.watsonx.config import Config
 from opentelemetry.instrumentation.watsonx.utils import dont_throw
 from wrapt import wrap_function_wrapper
@@ -21,7 +21,12 @@ from opentelemetry.instrumentation.utils import (
     unwrap,
 )
 
-from opentelemetry.semconv.ai import SpanAttributes, LLMRequestTypeValues
+from opentelemetry.semconv_ai import (
+    SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
+    Meters,
+    SpanAttributes,
+    LLMRequestTypeValues,
+)
 from opentelemetry.instrumentation.watsonx.version import __version__
 
 logger = logging.getLogger(__name__)
@@ -207,7 +212,9 @@ def _set_stream_response_attributes(span, stream_response):
     )
 
 
-def _set_completion_content_attributes(span, response, index, response_counter) -> str:
+def _set_completion_content_attributes(
+    span, response, index, response_counter
+) -> Optional[str]:
     if not isinstance(response, dict):
         return None
 
@@ -221,8 +228,8 @@ def _set_completion_content_attributes(span, response, index, response_counter) 
 
         if response_counter:
             attributes_with_reason = {
-                "gen_ai.response.model": model_id,
-                "llm.response.stop_reason": results[0]["stop_reason"],
+                SpanAttributes.LLM_RESPONSE_MODEL: model_id,
+                SpanAttributes.LLM_RESPONSE_STOP_REASON: results[0]["stop_reason"],
             }
             response_counter.add(1, attributes=attributes_with_reason)
 
@@ -288,18 +295,19 @@ def _set_response_attributes(
             prompt_token + completion_token,
         )
 
-        shared_attributes = _metric_shared_attributes(
-            response_model=model_id
-        )
+        shared_attributes = _metric_shared_attributes(response_model=model_id)
+
         if token_histogram:
             attributes_with_token_type = {
                 **shared_attributes,
-                "gen_ai.token.type": "output",
+                SpanAttributes.LLM_TOKEN_TYPE: "output",
             }
-            token_histogram.record(completion_token, attributes=attributes_with_token_type)
+            token_histogram.record(
+                completion_token, attributes=attributes_with_token_type
+            )
             attributes_with_token_type = {
                 **shared_attributes,
-                "gen_ai.token.type": "input",
+                SpanAttributes.LLM_TOKEN_TYPE: "input",
             }
             token_histogram.record(prompt_token, attributes=attributes_with_token_type)
 
@@ -332,8 +340,7 @@ def _build_and_set_stream_response(
             yield item["results"][0]["generated_text"]
 
     shared_attributes = _metric_shared_attributes(
-        response_model=stream_model_id,
-        is_streaming=True
+        response_model=stream_model_id, is_streaming=True
     )
     stream_response = {
         "model_id": stream_model_id,
@@ -346,7 +353,7 @@ def _build_and_set_stream_response(
     if response_counter:
         attributes_with_reason = {
             **shared_attributes,
-            "llm.response.stop_reason": stream_stop_reason,
+            SpanAttributes.LLM_RESPONSE_STOP_REASON: stream_stop_reason,
         }
         response_counter.add(1, attributes=attributes_with_reason)
 
@@ -354,14 +361,14 @@ def _build_and_set_stream_response(
     if token_histogram:
         attributes_with_token_type = {
             **shared_attributes,
-            "gen_ai.token.type": "output",
+            SpanAttributes.LLM_TOKEN_TYPE: "output",
         }
         token_histogram.record(
             stream_generated_token_count, attributes=attributes_with_token_type
         )
         attributes_with_token_type = {
             **shared_attributes,
-            "gen_ai.token.type": "input",
+            SpanAttributes.LLM_TOKEN_TYPE: "input",
         }
         token_histogram.record(
             stream_input_token_count, attributes=attributes_with_token_type
@@ -381,9 +388,9 @@ def _build_and_set_stream_response(
 
 def _metric_shared_attributes(response_model: str, is_streaming: bool = False):
     return {
-        "gen_ai.response.model": response_model,
-        "gen_ai.system": "watsonx",
-        "stream": is_streaming
+        SpanAttributes.LLM_RESPONSE_MODEL: response_model,
+        SpanAttributes.LLM_SYSTEM: "watsonx",
+        "stream": is_streaming,
     }
 
 
@@ -431,7 +438,9 @@ def _wrap(
     kwargs,
 ):
     """Instruments and calls every function defined in TO_WRAP."""
-    if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
+    if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY) or context_api.get_value(
+        SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY
+    ):
         return wrapped(*args, **kwargs)
 
     name = to_wrap.get("span_name")
@@ -524,30 +533,35 @@ class WatsonxInstrumentor(BaseInstrumentor):
 
         if is_metrics_enabled():
             token_histogram = meter.create_histogram(
-                name="gen_ai.client.token.usage",
+                name=Meters.LLM_TOKEN_USAGE,
                 unit="token",
                 description="Measures number of input and output tokens used",
             )
 
             response_counter = meter.create_counter(
-                name="llm.watsonx.completions.responses",
+                name=Meters.LLM_WATSONX_COMPLETIONS_RESPONSES,
                 unit="response",
                 description="Number of response returned by completions call",
             )
 
             duration_histogram = meter.create_histogram(
-                name="gen_ai.client.operation.duration",
+                name=Meters.LLM_OPERATION_DURATION,
                 unit="s",
                 description="GenAI operation duration",
             )
 
             exception_counter = meter.create_counter(
-                name="llm.watsonx.completions.exceptions",
+                name=Meters.LLM_WATSONX_COMPLETIONS_EXCEPTIONS,
                 unit="time",
                 description="Number of exceptions occurred during completions",
             )
         else:
-            (token_histogram, response_counter, duration_histogram, exception_counter) = (
+            (
+                token_histogram,
+                response_counter,
+                duration_histogram,
+                exception_counter,
+            ) = (
                 None,
                 None,
                 None,

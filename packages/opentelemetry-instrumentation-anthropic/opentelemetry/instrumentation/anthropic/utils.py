@@ -1,7 +1,9 @@
 import os
 import logging
+import traceback
 from opentelemetry import context as context_api
 from opentelemetry.instrumentation.anthropic.config import Config
+from opentelemetry.semconv_ai import SpanAttributes
 
 GEN_AI_SYSTEM = "gen_ai.system"
 GEN_AI_SYSTEM_ANTHROPIC = "anthropic"
@@ -35,7 +37,9 @@ def dont_throw(func):
             return func(*args, **kwargs)
         except Exception as e:
             logger.debug(
-                "OpenLLMetry failed to trace in %s, error: %s", func.__name__, str(e)
+                "OpenLLMetry failed to trace in %s, error: %s",
+                func.__name__,
+                traceback.format_exc(),
             )
             if Config.exception_logger:
                 Config.exception_logger(e)
@@ -48,9 +52,12 @@ def shared_metrics_attributes(response):
     if not isinstance(response, dict):
         response = response.__dict__
 
+    common_attributes = Config.get_common_metrics_attributes()
+
     return {
+        **common_attributes,
         GEN_AI_SYSTEM: GEN_AI_SYSTEM_ANTHROPIC,
-        "gen_ai.response.model": response.get("model"),
+        SpanAttributes.LLM_RESPONSE_MODEL: response.get("model"),
     }
 
 

@@ -8,7 +8,7 @@ show_missing = true
 
 [tool.poetry]
 name = "opentelemetry-instrumentation-vertexai"
-version = "0.21.5"
+version = "0.30.0"
 description = "OpenTelemetry Vertex AI instrumentation"
 authors = [
   "Gal Kleinman <gal@traceloop.com>",
@@ -25,24 +25,24 @@ include = "opentelemetry/instrumentation/vertexai"
 
 [tool.poetry.dependencies]
 python = ">=3.9,<4"
-opentelemetry-api = "^1.25.0"
-opentelemetry-instrumentation = "^0.46b0"
-opentelemetry-semantic-conventions = "^0.46b0"
-opentelemetry-semantic-conventions-ai = "0.2.0"
+opentelemetry-api = "^1.27.0"
+opentelemetry-instrumentation = "^0.48b0"
+opentelemetry-semantic-conventions = "^0.48b0"
+opentelemetry-semantic-conventions-ai = "0.4.1"
 
 [tool.poetry.group.dev.dependencies]
-autopep8 = "2.1.1"
+autopep8 = "^2.2.0"
 flake8 = "7.0.0"
-pytest = "8.1.1"
+pytest = "^8.2.2"
 pytest-sugar = "1.0.0"
 
 [tool.poetry.group.test.dependencies]
-pytest = "8.1.1"
+pytest = "^8.2.2"
 pytest-sugar = "1.0.0"
 vcrpy = "^6.0.1"
 pytest-recording = "^0.13.1"
-opentelemetry-sdk = "^1.23.0"
-google-cloud-aiplatform = "^1.39.0"
+opentelemetry-sdk = "^1.27.0"
+google-cloud-aiplatform = "^1.54.0"
 
 [build-system]
 requires = ["poetry-core"]

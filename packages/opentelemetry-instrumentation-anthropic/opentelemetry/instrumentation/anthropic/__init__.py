@@ -4,7 +4,7 @@ import json
 import logging
 import os
 import time
-from typing import Collection
+from typing import Callable, Collection
 
 from anthropic._streaming import AsyncStream, Stream
 from opentelemetry import context as context_api
@@ -24,7 +24,12 @@ from opentelemetry.instrumentation.anthropic.version import __version__
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY, unwrap
 from opentelemetry.metrics import Counter, Histogram, Meter, get_meter
-from opentelemetry.semconv.ai import LLMRequestTypeValues, SpanAttributes
+from opentelemetry.semconv_ai import (
+    SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
+    LLMRequestTypeValues,
+    SpanAttributes,
+    Meters,
+)
 from opentelemetry.trace import SpanKind, Tracer, get_tracer
 from opentelemetry.trace.status import Status, StatusCode
 from wrapt import wrap_function_wrapper
@@ -39,21 +44,18 @@ WRAPPED_METHODS = [
         "object": "Completions",
         "method": "create",
         "span_name": "anthropic.completion",
-        "metric_name": "anthropic.completion",
     },
     {
         "package": "anthropic.resources.messages",
         "object": "Messages",
         "method": "create",
-        "span_name": "anthropic.completion",
-        "metric_name": "anthropic.completion",
+        "span_name": "anthropic.chat",
     },
     {
         "package": "anthropic.resources.messages",
         "object": "Messages",
         "method": "stream",
-        "span_name": "anthropic.completion",
-        "metric_name": "anthropic.completion",
+        "span_name": "anthropic.chat",
     },
 ]
 WRAPPED_AMETHODS = [
@@ -62,21 +64,18 @@ WRAPPED_AMETHODS = [
         "object": "AsyncCompletions",
         "method": "create",
         "span_name": "anthropic.completion",
-        "metric_name": "anthropic.completion",
     },
     {
         "package": "anthropic.resources.messages",
         "object": "AsyncMessages",
         "method": "create",
-        "span_name": "anthropic.completion",
-        "metric_name": "anthropic.completion",
+        "span_name": "anthropic.chat",
     },
     {
         "package": "anthropic.resources.messages",
         "object": "AsyncMessages",
         "method": "stream",
-        "span_name": "anthropic.completion",
-        "metric_name": "anthropic.completion",
+        "span_name": "anthropic.chat",
     },
 ]
 
@@ -187,7 +186,7 @@ async def _aset_token_usage(
             prompt_tokens,
             attributes={
                 **metric_attributes,
-                "gen_ai.token.type": "input",
+                SpanAttributes.LLM_TOKEN_TYPE: "input",
             },
         )
 
@@ -205,7 +204,7 @@ async def _aset_token_usage(
             completion_tokens,
             attributes={
                 **metric_attributes,
-                "gen_ai.token.type": "output",
+                SpanAttributes.LLM_TOKEN_TYPE: "output",
             },
         )
 
@@ -222,7 +221,7 @@ async def _aset_token_usage(
             choices,
             attributes={
                 **metric_attributes,
-                "llm.response.stop_reason": response.get("stop_reason"),
+                SpanAttributes.LLM_RESPONSE_STOP_REASON: response.get("stop_reason"),
             },
         )
 
@@ -263,7 +262,7 @@ def _set_token_usage(
             prompt_tokens,
             attributes={
                 **metric_attributes,
-                "gen_ai.token.type": "input",
+                SpanAttributes.LLM_TOKEN_TYPE: "input",
             },
         )
 
@@ -279,7 +278,7 @@ def _set_token_usage(
             completion_tokens,
             attributes={
                 **metric_attributes,
-                "gen_ai.token.type": "output",
+                SpanAttributes.LLM_TOKEN_TYPE: "output",
             },
         )
 
@@ -296,7 +295,7 @@ def _set_token_usage(
             choices,
             attributes={
                 **metric_attributes,
-                "llm.response.stop_reason": response.get("stop_reason"),
+                SpanAttributes.LLM_RESPONSE_STOP_REASON: response.get("stop_reason"),
             },
         )
 
@@ -372,27 +371,27 @@ def _with_chat_telemetry_wrapper(func):
     return _with_chat_telemetry
 
 
-def _create_metrics(meter: Meter, name: str):
+def _create_metrics(meter: Meter):
     token_histogram = meter.create_histogram(
-        name="gen_ai.client.token.usage",
+        name=Meters.LLM_TOKEN_USAGE,
         unit="token",
         description="Measures number of input and output tokens used",
     )
 
     choice_counter = meter.create_counter(
-        name="gen_ai.client.generation.choices",
+        name=Meters.LLM_GENERATION_CHOICES,
         unit="choice",
         description="Number of choices returned by chat completions call",
     )
 
     duration_histogram = meter.create_histogram(
-        name="gen_ai.client.operation.duration",
+        name=Meters.LLM_OPERATION_DURATION,
         unit="s",
         description="GenAI operation duration",
     )
 
     exception_counter = meter.create_counter(
-        name=f"llm.{name}.exceptions",
+        name=Meters.LLM_ANTHROPIC_COMPLETION_EXCEPTIONS,
         unit="time",
         description="Number of exceptions occurred during chat completions",
     )
@@ -414,7 +413,9 @@ def _wrap(
     kwargs,
 ):
     """Instruments and calls every function defined in TO_WRAP."""
-    if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
+    if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY) or context_api.get_value(
+        SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY
+    ):
         return wrapped(*args, **kwargs)
 
     name = to_wrap.get("span_name")
@@ -508,8 +509,10 @@ async def _awrap(
     kwargs,
 ):
     """Instruments and calls every function defined in TO_WRAP."""
-    if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
-        return wrapped(*args, **kwargs)
+    if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY) or context_api.get_value(
+        SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY
+    ):
+        return await wrapped(*args, **kwargs)
 
     name = to_wrap.get("span_name")
     span = tracer.start_span(
@@ -592,10 +595,16 @@ def is_metrics_enabled() -> bool:
 class AnthropicInstrumentor(BaseInstrumentor):
     """An instrumentor for Anthropic's client library."""
 
-    def __init__(self, enrich_token_usage: bool = False, exception_logger=None):
+    def __init__(
+        self,
+        enrich_token_usage: bool = False,
+        exception_logger=None,
+        get_common_metrics_attributes: Callable[[], dict] = lambda: {},
+    ):
         super().__init__()
         Config.exception_logger = exception_logger
         Config.enrich_token_usage = enrich_token_usage
+        Config.get_common_metrics_attributes = get_common_metrics_attributes
 
     def instrumentation_dependencies(self) -> Collection[str]:
         return _instruments
@@ -608,28 +617,26 @@ class AnthropicInstrumentor(BaseInstrumentor):
         meter_provider = kwargs.get("meter_provider")
         meter = get_meter(__name__, __version__, meter_provider)
 
-        created_metrics = {}
+        if is_metrics_enabled():
+            (
+                token_histogram,
+                choice_counter,
+                duration_histogram,
+                exception_counter,
+            ) = _create_metrics(meter)
+        else:
+            (
+                token_histogram,
+                choice_counter,
+                duration_histogram,
+                exception_counter,
+            ) = (None, None, None, None)
+
         for wrapped_method in WRAPPED_METHODS:
             wrap_package = wrapped_method.get("package")
             wrap_object = wrapped_method.get("object")
             wrap_method = wrapped_method.get("method")
-            metric_name = wrapped_method.get("metric_name")
-            if is_metrics_enabled():
-                if created_metrics.get(metric_name) is None:
-                    created_metrics[metric_name] = _create_metrics(meter, metric_name)
-                (
-                    token_histogram,
-                    choice_counter,
-                    duration_histogram,
-                    exception_counter,
-                ) = created_metrics[metric_name]
-            else:
-                (
-                    token_histogram,
-                    choice_counter,
-                    duration_histogram,
-                    exception_counter,
-                ) = (None, None, None, None)
+
             try:
                 wrap_function_wrapper(
                     wrap_package,

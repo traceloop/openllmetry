@@ -22,8 +22,8 @@
   <a href="https://github.com/traceloop/openllmetry/releases">
     <img src="https://img.shields.io/github/release/traceloop/openllmetry">
   </a>
-  <a href="https://pepy.tech/project/traceloop-sdk">
-  <img src="https://static.pepy.tech/badge/traceloop-sdk/month">
+  <a href="https://pepy.tech/project/opentelemetry-instrumentation-openai">
+  <img src="https://static.pepy.tech/badge/opentelemetry-instrumentation-openai/month">
   </a>
    <a href="https://github.com/traceloop/openllmetry/blob/main/LICENSE">
     <img src="https://img.shields.io/badge/license-Apache 2.0-blue.svg" alt="OpenLLMetry is released under the Apache-2.0 License">
@@ -37,6 +37,9 @@
   <a href="https://www.ycombinator.com/companies/traceloop"><img src="https://img.shields.io/website?color=%23f26522&down_message=Y%20Combinator&label=Backed&logo=ycombinator&style=flat-square&up_message=Y%20Combinator&url=https%3A%2F%2Fwww.ycombinator.com"></a>
   <a href="https://github.com/traceloop/openllmetry/blob/main/CONTRIBUTING.md">
     <img src="https://img.shields.io/badge/PRs-Welcome-brightgreen" alt="PRs welcome!" />
+  </a>
+  <a href="https://wiki.mutable.ai/traceloop/openllmetry">
+    <img src="https://img.shields.io/badge/Auto_Wiki-Mutable.ai-blue" />
   </a>
   <a href="https://traceloop.com/slack">
     <img src="https://img.shields.io/badge/chat-on%20Slack-blueviolet" alt="Slack community channel" />
@@ -115,7 +118,11 @@ OpenLLMetry can instrument everything that [OpenTelemetry already instruments](h
 - ✅ Bedrock (AWS)
 - ✅ Replicate
 - ✅ Vertex AI (GCP)
+- ✅ Google Generative AI (Gemini)
 - ✅ IBM Watsonx AI
+- ✅ Together AI
+- ✅ Aleph Alpha
+- ✅ Groq
 
 ### Vector DBs
 
@@ -124,6 +131,8 @@ OpenLLMetry can instrument everything that [OpenTelemetry already instruments](h
 - ✅ Qdrant
 - ✅ Weaviate
 - ✅ Milvus
+- ✅ Marqo
+- ✅ LanceDB
 
 ### Frameworks
 

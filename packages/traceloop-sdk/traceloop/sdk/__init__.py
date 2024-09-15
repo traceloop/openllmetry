@@ -1,6 +1,5 @@
 import os
 import sys
-import requests
 from pathlib import Path
 
 from typing import Optional, Set
@@ -24,6 +23,7 @@ from traceloop.sdk.fetcher import Fetcher
 from traceloop.sdk.tracing.tracing import (
     TracerWrapper,
     set_association_properties,
+    set_external_prompt_tracing_context,
 )
 from typing import Dict
 
@@ -49,7 +49,7 @@ class Traceloop:
         metrics_headers: Dict[str, str] = None,
         processor: SpanProcessor = None,
         propagator: TextMapPropagator = None,
-        traceloop_sync_enabled: bool = True,
+        traceloop_sync_enabled: bool = False,
         should_enrich_metrics: bool = True,
         resource_attributes: dict = {},
         instruments: Optional[Set[Instruments]] = None,
@@ -86,53 +86,20 @@ class Traceloop:
         if isinstance(headers, str):
             headers = parse_env_headers(headers)
 
-        # auto-create a dashboard on Traceloop if no export endpoint is provided
         if (
             not exporter
             and not processor
             and api_endpoint == "https://api.traceloop.com"
             and not api_key
         ):
-            if not Telemetry().feature_enabled("auto_create_dashboard"):
-                print(
-                    Fore.RED
-                    + "Error: Missing Traceloop API key,"
-                    + " go to https://app.traceloop.com/settings/api-keys to create one"
-                )
-                print("Set the TRACELOOP_API_KEY environment variable to the key")
-                print(Fore.RESET)
-                return
-
-            headers = None  # disable headers if we're auto-creating a dashboard
-            if not os.path.exists(
-                Traceloop.AUTO_CREATED_KEY_PATH
-            ) or not os.path.exists(Traceloop.AUTO_CREATED_URL):
-                os.makedirs(
-                    os.path.dirname(Traceloop.AUTO_CREATED_KEY_PATH), exist_ok=True
-                )
-                os.makedirs(os.path.dirname(Traceloop.AUTO_CREATED_URL), exist_ok=True)
-
-                print(
-                    Fore.YELLOW
-                    + "No Traceloop API key provided, auto-creating a dashboard on Traceloop",
-                )
-                res = requests.post(
-                    "https://app.traceloop.com/api/registration/auto-create"
-                ).json()
-                access_url = f"https://app.traceloop.com/trace?skt={res['uiAccessKey']}"
-                api_key = res["apiKey"]
-
-                print(Fore.YELLOW + "TRACELOOP_API_KEY=", api_key)
-
-                open(Traceloop.AUTO_CREATED_KEY_PATH, "w").write(api_key)
-                open(Traceloop.AUTO_CREATED_URL, "w").write(access_url)
-            else:
-                api_key = open("/tmp/traceloop_key.txt").read()
-                access_url = open("/tmp/traceloop_url.txt").read()
-
             print(
-                Fore.GREEN + f"\nGo to {access_url} to see a live dashboard\n",
+                Fore.RED
+                + "Error: Missing Traceloop API key,"
+                + " go to https://app.traceloop.com/settings/api-keys to create one"
             )
+            print("Set the TRACELOOP_API_KEY environment variable to the key")
+            print(Fore.RESET)
+            return
 
         if not exporter and not processor and headers:
             print(
@@ -185,6 +152,9 @@ class Traceloop:
 
     def set_association_properties(properties: dict) -> None:
         set_association_properties(properties)
+
+    def set_prompt(template: str, variables: dict, version: int):
+        set_external_prompt_tracing_context(template, variables, version)
 
     def report_score(
         association_property_name: str,

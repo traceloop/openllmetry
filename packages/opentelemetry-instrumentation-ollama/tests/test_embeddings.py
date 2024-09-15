@@ -1,5 +1,6 @@
 import pytest
 import ollama
+from opentelemetry.semconv_ai import SpanAttributes
 
 
 @pytest.mark.vcr
@@ -9,11 +10,13 @@ def test_ollama_embeddings(exporter):
     spans = exporter.get_finished_spans()
     ollama_span = spans[0]
     assert ollama_span.name == "ollama.embeddings"
-    assert ollama_span.attributes.get("gen_ai.system") == "Ollama"
-    assert ollama_span.attributes.get("llm.request.type") == "embedding"
-    assert not ollama_span.attributes.get("llm.is_streaming")
-    assert ollama_span.attributes.get("gen_ai.request.model") == "llama3"
+    assert ollama_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Ollama"
     assert (
-        ollama_span.attributes.get("gen_ai.prompt.0.content")
+        ollama_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "embedding"
+    )
+    assert not ollama_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
+    assert ollama_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_MODEL}") == "llama3"
+    assert (
+        ollama_span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.0.content")
         == "Tell me a joke about OpenTelemetry"
     )

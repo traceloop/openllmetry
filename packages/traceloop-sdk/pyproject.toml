@@ -8,7 +8,7 @@ show_missing = true
 
 [tool.poetry]
 name = "traceloop-sdk"
-version = "0.21.5"
+version = "0.30.0"
 description = "Traceloop Software Development Kit (SDK) for Python"
 authors = [
   "Gal Kleinman <gal@traceloop.com>",
@@ -25,25 +25,29 @@ include = "traceloop/sdk"
 
 [tool.poetry.dependencies]
 python = ">=3.9,<4"
-opentelemetry-api = "^1.25.0"
-opentelemetry-sdk = "^1.25.0"
-opentelemetry-exporter-otlp-proto-http = "^1.25.0"
-opentelemetry-exporter-otlp-proto-grpc = "^1.25.0"
-opentelemetry-instrumentation-requests = "^0.46b0"
-opentelemetry-instrumentation-sqlalchemy = "^0.46b0"
-opentelemetry-instrumentation-urllib3 = "^0.46b0"
-opentelemetry-semantic-conventions-ai = "0.2.0"
+opentelemetry-api = "^1.27.0"
+opentelemetry-sdk = "^1.27.0"
+opentelemetry-exporter-otlp-proto-http = "^1.26.0"
+opentelemetry-exporter-otlp-proto-grpc = "^1.26.0"
+opentelemetry-instrumentation-requests = "^0.48b0"
+opentelemetry-instrumentation-sqlalchemy = "^0.48b0"
+opentelemetry-instrumentation-urllib3 = "^0.48b0"
+opentelemetry-instrumentation-threading = "^0.48b0"
+opentelemetry-semantic-conventions-ai = "0.4.1"
 opentelemetry-instrumentation-mistralai = {path="../opentelemetry-instrumentation-mistralai", develop=true}
 opentelemetry-instrumentation-openai = {path="../opentelemetry-instrumentation-openai", develop=true}
 opentelemetry-instrumentation-ollama = {path="../opentelemetry-instrumentation-ollama", develop=true}
 opentelemetry-instrumentation-anthropic = {path="../opentelemetry-instrumentation-anthropic", develop=true}
 opentelemetry-instrumentation-cohere = {path="../opentelemetry-instrumentation-cohere", develop=true}
+opentelemetry-instrumentation-google-generativeai = {path="../opentelemetry-instrumentation-google-generativeai", develop=true}
 opentelemetry-instrumentation-pinecone = {path="../opentelemetry-instrumentation-pinecone", develop=true}
 opentelemetry-instrumentation-redis = {path="../opentelemetry-instrumentation-redis", develop=true}
 opentelemetry-instrumentation-qdrant = {path="../opentelemetry-instrumentation-qdrant", develop=true}
 opentelemetry-instrumentation-langchain = {path="../opentelemetry-instrumentation-langchain", develop=true}
+opentelemetry-instrumentation-lancedb = {path="../opentelemetry-instrumentation-lancedb", develop=true}
 opentelemetry-instrumentation-chromadb = {path="../opentelemetry-instrumentation-chromadb", develop=true}
 opentelemetry-instrumentation-transformers = {path="../opentelemetry-instrumentation-transformers", develop=true}
+opentelemetry-instrumentation-together = {path="../opentelemetry-instrumentation-together", develop=true}
 opentelemetry-instrumentation-llamaindex = {path="../opentelemetry-instrumentation-llamaindex", develop=true}
 opentelemetry-instrumentation-milvus = {path="../opentelemetry-instrumentation-milvus", develop=true}
 opentelemetry-instrumentation-haystack = {path="../opentelemetry-instrumentation-haystack", develop=true}
@@ -52,6 +56,9 @@ opentelemetry-instrumentation-replicate = {path="../opentelemetry-instrumentatio
 opentelemetry-instrumentation-vertexai = {path="../opentelemetry-instrumentation-vertexai", develop=true}
 opentelemetry-instrumentation-watsonx = {path="../opentelemetry-instrumentation-watsonx", develop=true}
 opentelemetry-instrumentation-weaviate = {path="../opentelemetry-instrumentation-weaviate", develop=true}
+opentelemetry-instrumentation-alephalpha = {path="../opentelemetry-instrumentation-alephalpha", develop=true}
+opentelemetry-instrumentation-marqo = {path="../opentelemetry-instrumentation-marqo", develop=true}
+opentelemetry-instrumentation-groq = {path="../opentelemetry-instrumentation-groq", develop=true}
 colorama = "^0.4.6"
 tenacity = "^8.2.3"
 pydantic = ">=1"
@@ -60,18 +67,20 @@ deprecated = "^1.2.14"
 posthog = ">3.0.2, <4"
 
 [tool.poetry.group.dev.dependencies]
-autopep8 = "2.1.1"
+autopep8 = "^2.2.0"
 flake8 = "7.0.0"
-pytest = "8.1.1"
+pytest = "^8.2.2"
 pytest-sugar = "1.0.0"
 
 [tool.poetry.group.test.dependencies]
-openai = "^1.7.1"
+openai = "^1.31.1"
 vcrpy = "^6.0.1"
 pytest-recording = "^0.13.1"
-pydantic = "<2"
-pytest-asyncio = "^0.23.5"
+pydantic = "<3"
+pytest-asyncio = "^0.23.7"
 anthropic = "^0.25.2"
+langchain = "^0.2.5"
+langchain-openai = "^0.1.15"
 
 [build-system]
 requires = [ "poetry-core" ]

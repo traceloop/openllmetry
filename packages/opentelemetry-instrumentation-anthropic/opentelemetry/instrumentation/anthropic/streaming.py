@@ -10,7 +10,7 @@ from opentelemetry.instrumentation.anthropic.utils import (
     should_send_prompts,
 )
 from opentelemetry.metrics import Counter, Histogram
-from opentelemetry.semconv.ai import SpanAttributes
+from opentelemetry.semconv_ai import SpanAttributes
 from opentelemetry.trace.status import Status, StatusCode
 
 logger = logging.getLogger(__name__)
@@ -58,7 +58,7 @@ def _set_token_usage(
             prompt_tokens,
             attributes={
                 **metric_attributes,
-                "gen_ai.token.type": "input",
+                SpanAttributes.LLM_TOKEN_TYPE: "input",
             },
         )
 
@@ -67,7 +67,7 @@ def _set_token_usage(
             completion_tokens,
             attributes={
                 **metric_attributes,
-                "gen_ai.token.type": "output",
+                SpanAttributes.LLM_TOKEN_TYPE: "output",
             },
         )
 
@@ -77,7 +77,9 @@ def _set_token_usage(
                 1,
                 attributes={
                     **metric_attributes,
-                    "llm.response.finish_reason": event.get("finish_reason"),
+                    SpanAttributes.LLM_RESPONSE_FINISH_REASON: event.get(
+                        "finish_reason"
+                    ),
                 },
             )
 
@@ -201,6 +203,7 @@ async def abuild_from_streaming_response(
         _process_response_item(item, complete_response)
 
     metric_attributes = shared_metrics_attributes(complete_response)
+
     if duration_histogram:
         duration = time.time() - start_time
         duration_histogram.record(

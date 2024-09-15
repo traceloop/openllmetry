@@ -8,10 +8,13 @@ from opentelemetry.instrumentation.openai.shared import (
 from opentelemetry.trace import SpanKind
 from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
 
-from opentelemetry.semconv.ai import SpanAttributes, LLMRequestTypeValues
+from opentelemetry.semconv_ai import SpanAttributes, LLMRequestTypeValues
 
-from opentelemetry.instrumentation.openai.utils import _with_tracer_wrapper
+from opentelemetry.instrumentation.openai.utils import _with_tracer_wrapper, dont_throw
 from opentelemetry.instrumentation.openai.shared.config import Config
+
+from openai._legacy_response import LegacyAPIResponse
+from openai.types.beta.threads.run import Run
 
 logger = logging.getLogger(__name__)
 
@@ -55,15 +58,23 @@ def runs_create_wrapper(tracer, wrapped, instance, args, kwargs):
 
 @_with_tracer_wrapper
 def runs_retrieve_wrapper(tracer, wrapped, instance, args, kwargs):
+    @dont_throw
+    def process_response(response):
+        if type(response) is LegacyAPIResponse:
+            parsed_response = response.parse()
+        else:
+            parsed_response = response
+        assert type(parsed_response) is Run
+
+        if parsed_response.id in runs:
+            runs[thread_id]["end_time"] = time.time_ns()
+
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
         return wrapped(*args, **kwargs)
 
     thread_id = kwargs.get("thread_id")
-
     response = wrapped(*args, **kwargs)
-
-    if response.id in runs:
-        runs[thread_id]["end_time"] = time.time_ns()
+    process_response(response)
 
     return response
 

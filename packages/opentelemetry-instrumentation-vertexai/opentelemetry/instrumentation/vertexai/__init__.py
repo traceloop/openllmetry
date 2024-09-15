@@ -15,7 +15,11 @@ from opentelemetry.trace.status import Status, StatusCode
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY, unwrap
 
-from opentelemetry.semconv.ai import SpanAttributes, LLMRequestTypeValues
+from opentelemetry.semconv_ai import (
+    SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
+    SpanAttributes,
+    LLMRequestTypeValues,
+)
 from opentelemetry.instrumentation.vertexai.version import __version__
 
 logger = logging.getLogger(__name__)
@@ -88,7 +92,7 @@ WRAPPED_METHODS = [
 
 def should_send_prompts():
     return (
-            os.getenv("TRACELOOP_TRACE_CONTENT") or "true"
+        os.getenv("TRACELOOP_TRACE_CONTENT") or "true"
     ).lower() == "true" or context_api.get_value("override_enable_content_tracing")
 
 
@@ -124,15 +128,23 @@ def _set_input_attributes(span, args, kwargs, llm_model):
         )
 
     _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, llm_model)
-    _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.0.user", kwargs.get("prompt"))
-    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TEMPERATURE, kwargs.get("temperature"))
+    _set_span_attribute(
+        span, f"{SpanAttributes.LLM_PROMPTS}.0.user", kwargs.get("prompt")
+    )
+    _set_span_attribute(
+        span, SpanAttributes.LLM_REQUEST_TEMPERATURE, kwargs.get("temperature")
+    )
     _set_span_attribute(
         span, SpanAttributes.LLM_REQUEST_MAX_TOKENS, kwargs.get("max_output_tokens")
     )
     _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TOP_P, kwargs.get("top_p"))
     _set_span_attribute(span, SpanAttributes.LLM_TOP_K, kwargs.get("top_k"))
-    _set_span_attribute(span, SpanAttributes.LLM_PRESENCE_PENALTY, kwargs.get("presence_penalty"))
-    _set_span_attribute(span, SpanAttributes.LLM_FREQUENCY_PENALTY, kwargs.get("frequency_penalty"))
+    _set_span_attribute(
+        span, SpanAttributes.LLM_PRESENCE_PENALTY, kwargs.get("presence_penalty")
+    )
+    _set_span_attribute(
+        span, SpanAttributes.LLM_FREQUENCY_PENALTY, kwargs.get("frequency_penalty")
+    )
 
     return
 
@@ -142,7 +154,9 @@ def _set_response_attributes(span, response, llm_model):
     _set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, llm_model)
 
     if hasattr(response, "text"):
-        if hasattr(response, "_raw_response") and hasattr(response._raw_response, "usage_metadata"):
+        if hasattr(response, "_raw_response") and hasattr(
+            response._raw_response, "usage_metadata"
+        ):
             _set_span_attribute(
                 span,
                 SpanAttributes.LLM_USAGE_TOTAL_TOKENS,
@@ -164,14 +178,18 @@ def _set_response_attributes(span, response, llm_model):
                 prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{index}"
                 _set_span_attribute(span, f"{prefix}.content", item.text)
         elif isinstance(response.text, str):
-            _set_span_attribute(span, f"{SpanAttributes.LLM_COMPLETIONS}.0.content", response.text)
+            _set_span_attribute(
+                span, f"{SpanAttributes.LLM_COMPLETIONS}.0.content", response.text
+            )
     else:
         if isinstance(response, list):
             for index, item in enumerate(response):
                 prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{index}"
                 _set_span_attribute(span, f"{prefix}.content", item)
         elif isinstance(response, str):
-            _set_span_attribute(span, f"{SpanAttributes.LLM_COMPLETIONS}.0.content", response)
+            _set_span_attribute(
+                span, f"{SpanAttributes.LLM_COMPLETIONS}.0.content", response
+            )
 
     return
 
@@ -233,7 +251,9 @@ def _with_tracer_wrapper(func):
 @_with_tracer_wrapper
 async def _awrap(tracer, to_wrap, wrapped, instance, args, kwargs):
     """Instruments and calls every function defined in TO_WRAP."""
-    if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
+    if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY) or context_api.get_value(
+        SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY
+    ):
         return await wrapped(*args, **kwargs)
 
     llm_model = "unknown"
@@ -271,7 +291,9 @@ async def _awrap(tracer, to_wrap, wrapped, instance, args, kwargs):
 @_with_tracer_wrapper
 def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
     """Instruments and calls every function defined in TO_WRAP."""
-    if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
+    if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY) or context_api.get_value(
+        SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY
+    ):
         return wrapped(*args, **kwargs)
 
     llm_model = "unknown"

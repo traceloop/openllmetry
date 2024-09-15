@@ -2,13 +2,13 @@ import os
 import numpy as np
 
 from redis import Redis
+from redis.exceptions import ResponseError
 from redis.commands.search.field import TagField, VectorField, TextField
 from redis.commands.search.indexDefinition import IndexDefinition, IndexType
 from redis.commands.search.query import Query
 from openai import OpenAI
 from traceloop.sdk import Traceloop
-from traceloop.sdk.decorators import workflow, task
-
+from traceloop.sdk.decorators import workflow
 
 INDEX_NAME = "index"
 DOC_PREFIX = "doc:"
@@ -18,7 +18,7 @@ Traceloop.init(app_name="redis_rag_app")
 
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 rc = Redis(host="localhost", port=6379, decode_responses=True)
-assert rc.ping() == True, "Cannot connect to Redis"
+assert rc.ping() is True, "Cannot connect to Redis"
 
 
 def load_data():
@@ -29,18 +29,23 @@ def load_data():
 
 def prepare_embeddings(data):
     response = client.embeddings.create(input=data, model="text-embedding-3-small")
-    embeddings = np.array([r["embedding"] for r in response.to_dict()["data"]], dtype=np.float32)
+    embeddings = np.array(
+        [r["embedding"] for r in response.to_dict()["data"]], dtype=np.float32
+    )
     return embeddings
 
 
 def upload_data_to_redis(data, embeddings):
     pipe = rc.pipeline()
     for i, embedding in enumerate(embeddings):
-        pipe.hset(f"{DOC_PREFIX}{i}", mapping = {
-            "vector": embedding.tobytes(),
-            "content": data[i],
-            "tag": "openai"
-        })
+        pipe.hset(
+            f"{DOC_PREFIX}{i}",
+            mapping={
+                "vector": embedding.tobytes(),
+                "content": data[i],
+                "tag": "openai",
+            },
+        )
     pipe.execute()
 
 
@@ -48,15 +53,18 @@ def create_index():
     try:
         rc.ft(INDEX_NAME).info()
         print("Index already exists")
-    except:
+    except ResponseError:
         schema = (
             TagField("tag"),
             TextField("content"),
-            VectorField("vector", "FLAT", {
-                                        "TYPE": "FLOAT32",
-                                        "DIM": EMBEDDINGS_DIM,
-                                        "DISTANCE_METRIC": "COSINE",
-                                        }
+            VectorField(
+                "vector",
+                "FLAT",
+                {
+                    "TYPE": "FLOAT32",
+                    "DIM": EMBEDDINGS_DIM,
+                    "DISTANCE_METRIC": "COSINE",
+                },
             ),
         )
         definition = IndexDefinition(prefix=[DOC_PREFIX], index_type=IndexType.HASH)
@@ -66,10 +74,10 @@ def create_index():
 def query_redis(query_embeddings):
     query = (
         Query("(@tag:{ openai })=>[KNN 2 @vector $vec as score]")
-         .sort_by("score")
-         .return_fields("content", "tag", "score")
-         .paging(0, 2)
-         .dialect(2)
+        .sort_by("score")
+        .return_fields("content", "tag", "score")
+        .paging(0, 2)
+        .dialect(2)
     )
     query_params = {"vec": query_embeddings.tobytes()}
     response = rc.ft(INDEX_NAME).search(query, query_params).docs
@@ -87,8 +95,8 @@ Narrator in the book is doctor Watson. User will provide you a relevant content 
         {
             "role": "user",
             "content": f"Based on that content: {relevant_content} - Answer my question: {query}",
-        }
-    ] 
+        },
+    ]
     stream = client.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=messages,

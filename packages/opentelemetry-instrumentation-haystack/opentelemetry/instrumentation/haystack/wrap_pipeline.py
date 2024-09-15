@@ -4,8 +4,12 @@ from opentelemetry.context import attach, set_value
 from opentelemetry.instrumentation.utils import (
     _SUPPRESS_INSTRUMENTATION_KEY,
 )
-from opentelemetry.instrumentation.haystack.utils import with_tracer_wrapper
-from opentelemetry.semconv.ai import SpanAttributes, TraceloopSpanKindValues
+from opentelemetry.instrumentation.haystack.utils import (
+    with_tracer_wrapper,
+    process_request,
+    process_response,
+)
+from opentelemetry.semconv_ai import SpanAttributes, TraceloopSpanKindValues
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +26,8 @@ def wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
             TraceloopSpanKindValues.WORKFLOW.value,
         )
         span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, name)
-
+        process_request(span, args, kwargs)
         response = wrapped(*args, **kwargs)
+        process_response(span, response)
 
     return response

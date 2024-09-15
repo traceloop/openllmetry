@@ -1,9 +1,13 @@
+import dataclasses
+import json
 import os
 import logging
+import traceback
 from contextlib import asynccontextmanager
 
 from opentelemetry import context as context_api
 from opentelemetry.instrumentation.llamaindex.config import Config
+from opentelemetry.semconv_ai import SpanAttributes
 
 
 def _with_tracer_wrapper(func):
@@ -43,9 +47,40 @@ def dont_throw(func):
             return func(*args, **kwargs)
         except Exception as e:
             logger.debug(
-                "OpenLLMetry failed to trace in %s, error: %s", func.__name__, str(e)
+                "OpenLLMetry failed to trace in %s, error: %s",
+                func.__name__,
+                traceback.format_exc(),
             )
             if Config.exception_logger:
                 Config.exception_logger(e)
 
     return wrapper
+
+
+class JSONEncoder(json.JSONEncoder):
+    def default(self, o):
+        if dataclasses.is_dataclass(o):
+            return dataclasses.asdict(o)
+        elif hasattr(o, "json"):
+            return o.json()
+        elif hasattr(o, "to_json"):
+            return o.to_json()
+        return super().default(o)
+
+
+@dont_throw
+def process_request(span, args, kwargs):
+    if should_send_prompts():
+        span.set_attribute(
+            SpanAttributes.TRACELOOP_ENTITY_INPUT,
+            json.dumps({"args": args, "kwargs": kwargs}, cls=JSONEncoder),
+        )
+
+
+@dont_throw
+def process_response(span, res):
+    if should_send_prompts():
+        span.set_attribute(
+            SpanAttributes.TRACELOOP_ENTITY_OUTPUT,
+            json.dumps(res, cls=JSONEncoder),
+        )

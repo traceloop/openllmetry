@@ -28,11 +28,11 @@ from opentelemetry.instrumentation.pinecone.query_handlers import (
     set_query_response,
 )
 from opentelemetry.semconv.trace import SpanAttributes
-from opentelemetry.semconv.ai import SpanAttributes as AISpanAttributes
+from opentelemetry.semconv_ai import Meters, SpanAttributes as AISpanAttributes
 
 logger = logging.getLogger(__name__)
 
-_instruments = ("pinecone-client >= 2.2.2, <5",)
+_instruments = ("pinecone-client >= 2.2.2, <6",)
 
 
 WRAPPED_METHODS = [
@@ -83,10 +83,10 @@ def _set_response_attributes(
         write_units = response.get("usage").get("write_units") or 0
 
         read_units_metric.add(read_units, shared_attributes)
-        span.set_attribute("pinecone.usage.read_units", read_units)
+        span.set_attribute(AISpanAttributes.PINECONE_USAGE_READ_UNITS, read_units)
 
         write_units_metric.add(write_units, shared_attributes)
-        span.set_attribute("pinecone.usage.write_units", write_units)
+        span.set_attribute(AISpanAttributes.PINECONE_USAGE_WRITE_UNITS, write_units)
 
 
 def _with_wrapper(func):
@@ -195,22 +195,22 @@ class PineconeInstrumentor(BaseInstrumentor):
             meter = get_meter(__name__, __version__, meter_provider)
 
             query_duration_metric = meter.create_histogram(
-                "db.pinecone.query.duration",
+                Meters.PINECONE_DB_QUERY_DURATION,
                 "s",
                 "Duration of query operations to Pinecone",
             )
             read_units_metric = meter.create_counter(
-                "db.pinecone.usage.read_units",
+                Meters.PINECONE_DB_USAGE_READ_UNITS,
                 "unit",
                 "Number of read units consumed in serverless calls",
             )
             write_units_metric = meter.create_counter(
-                "db.pinecone.usage.write_units",
+                Meters.PINECONE_DB_USAGE_WRITE_UNITS,
                 "unit",
                 "Number of write units consumed in serverless calls",
             )
             scores_metric = meter.create_histogram(
-                "db.pinecone.query.scores",
+                Meters.PINECONE_DB_QUERY_SCORES,
                 "score",
                 "Scores returned from Pinecone calls",
             )

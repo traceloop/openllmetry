@@ -1,7 +1,7 @@
 from opentelemetry.instrumentation.openai.shared import (
     _set_span_attribute,
 )
-from opentelemetry.semconv.ai import SpanAttributes
+from opentelemetry.semconv_ai import SpanAttributes
 from openai import AssistantEventHandler
 from typing_extensions import override
 

@@ -6,7 +6,7 @@ from opentelemetry.instrumentation.llamaindex.utils import (
     _with_tracer_wrapper,
     start_as_current_span_async,
 )
-from opentelemetry.semconv.ai import SpanAttributes, TraceloopSpanKindValues
+from opentelemetry.semconv_ai import SpanAttributes, TraceloopSpanKindValues
 
 V9_MODULE_NAME = "llama_index.embeddings.base"
 V10_MODULE_NAME = "llama_index.core.embeddings"
@@ -49,6 +49,7 @@ def get_query_embedding_wrapper(tracer, wrapped, instance, args, kwargs):
             SpanAttributes.TRACELOOP_SPAN_KIND,
             TraceloopSpanKindValues.TASK.value,
         )
+        span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, TASK_NAME)
 
         return wrapped(*args, **kwargs)
 
@@ -62,5 +63,6 @@ async def aget_query_embedding_wrapper(tracer, wrapped, instance, args, kwargs):
             SpanAttributes.TRACELOOP_SPAN_KIND,
             TraceloopSpanKindValues.TASK.value,
         )
+        span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, TASK_NAME)
 
         return await wrapped(*args, **kwargs)

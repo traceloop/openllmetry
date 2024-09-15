@@ -1,3 +1,219 @@
+## v0.30.0 (2024-09-04)
+
+### Feat
+
+- add groq instrumentation (#1928)
+
+## v0.29.2 (2024-08-31)
+
+### Fix
+
+- **langchain**: allow external and langchain metadata (#1922)
+
+## v0.29.1 (2024-08-29)
+
+### Fix
+
+- **bedrock**: llama3 completion wasnt logged (#1914)
+
+## v0.29.0 (2024-08-29)
+
+### Feat
+
+- **instrumentation**: Import redis from OpenTelemetry, add redis sample rag application (#1837)
+
+### Fix
+
+- **langchain**: add missing kind property (#1901)
+
+## v0.28.2 (2024-08-26)
+
+### Fix
+
+- **openai**: calculating streaming usage didnt work on azure models
+
+## v0.28.1 (2024-08-24)
+
+### Fix
+
+- **langchain**: langgraph traces were broken (#1895)
+
+## v0.28.0 (2024-08-24)
+
+### Feat
+
+- **llama-index**: callback improvements (#1859)
+
+### Fix
+
+- **openai**: re-enabled token count for azure instances (#1877)
+- **openai**: not given values thrown errors (#1876)
+- **sdk**: `aentity_class` was missing a positional argument (#1816)
+- **sdk**: instrument threading for propagating otel context (#1868)
+- **openai**: TypeError: '<' not supported between instances of 'NoneType' and 'int' in embeddings_wrappers.py (#1836)
+
+## v0.27.0 (2024-08-15)
+
+### Feat
+
+- **llama-index**: Use callbacks (#1546)
+- LanceDB Integration (#1749)
+- **sdk**: chained entity path on nested tasks (#1782)
+
+### Fix
+
+- workflow_name and entity_path support for langchain + fix entity_name (#1844)
+- **sdk**: disable traceloop sync by default (#1835)
+
+## v0.26.5 (2024-08-06)
+
+### Fix
+
+- **langchain**: export metadata as association properties (#1805)
+- **bedrock**: add model name for amazon bedrock response (#1757)
+
+## v0.26.4 (2024-08-03)
+
+### Fix
+
+- **bedrock**: token count for titan (#1748)
+
+## v0.26.3 (2024-08-02)
+
+### Fix
+
+- **langchain**: various cases where not all parameters were logged properly (#1725)
+
+## v0.26.2 (2024-07-31)
+
+### Fix
+
+- separate semconv-ai module to avoid conflicts (#1716)
+
+## v0.26.1 (2024-07-30)
+
+### Fix
+
+- bump to otel 0.47b0 (#1695)
+- **openai**: log content filter results in proper attributes (#1539)
+
+## v0.26.0 (2024-07-26)
+
+### Feat
+
+- **openai**: add tool call id (#1664)
+
+### Fix
+
+- **pinecone**: support v5 (#1665)
+
+## v0.25.6 (2024-07-23)
+
+### Fix
+
+- **sdk**: aworkflow wasn't propagating workflow_name attribute (#1648)
+- **langchain**: agent executor weren't producing traces (#1616)
+
+## v0.25.5 (2024-07-17)
+
+### Fix
+
+- **openai**: pydantic tool calls in prompt weren't serialized correctly (#1572)
+
+## v0.25.4 (2024-07-15)
+
+### Fix
+
+- **sdk**: manual reporting of llm spans (#1555)
+
+## v0.25.3 (2024-07-11)
+
+### Fix
+
+- **langchain**: input/output values weren't respecting user config (#1540)
+
+## v0.25.2 (2024-07-11)
+
+### Fix
+
+- **llamaindex**: report entity name (#1525)
+- **langchain**: remove leftover print
+- **langchain**: cleanups, and fix streaming issue (#1522)
+- **langchain**: report llm spans (instead of normal instrumentations) (#1452)
+
+## v0.25.1 (2024-07-09)
+
+### Fix
+
+- association properties and workflow / task on metrics (#1494)
+- **llamaindex**: report inputs+outputs on entities (#1495)
+
+## v0.25.0 (2024-07-08)
+
+### Feat
+
+- suppress LLM instrumentations through context (#1453)
+- **langchain**: improve callbacks (#1426)
+
+### Fix
+
+- **sdk**: llamaindex instrumentation was never initialized (#1490)
+
+## v0.24.0 (2024-07-03)
+
+### Feat
+
+- **sdk**: prompt versions and workflow versions (#1425)
+- **openai**: add support for parallel function calls (#1424)
+- **marqo**: Add marqo instrumentation (#1373)
+
+### Fix
+
+- **sdk**: context detach issues on fastapi (#1432)
+- **openai**: Handle `tool_calls` assistant messages (#1429)
+- **sdk**: speedup SDK initialization (#1374)
+- **gemini**: relax version requirements (#1367)
+
+### Refactor
+
+- **openai**: rename `function_call` to `tool_calls` (#1431)
+
+## v0.23.0 (2024-06-17)
+
+### Feat
+
+- **langchain**: use callbacks (#1170)
+
+### Fix
+
+- input/output serialization issue for langchain (#1341)
+- **sdk**: remove auto-create dashboard option (#1315)
+
+## v0.22.1 (2024-06-13)
+
+### Fix
+
+- **sdk**: backpropagate association property to nearest workflow/task (#1300)
+- **sdk**: clear context when @workflow or @task is ending (#1301)
+- **bedrock**: utilize invocation metrics from response body for AI21, Anthropic, Meta models when available to record usage on spans (#1286)
+
+## v0.22.0 (2024-06-10)
+
+### Feat
+
+- **gemini**: basic support in generate_content API (#1293)
+- **alephalpha**: Add AlephAlpha instrumentation (#1285)
+- **instrumentation**: add streamed OpenAI function tracing (#1284)
+- **togetherai**: Add together ai instrumentation (#1264)
+
+### Fix
+
+- **anthropic**: duplicate creation of metrics (#1294)
+- **haystack**: add input and output (#1202)
+- **openai**: calculate token usage for azure (#1274)
+- use constants (#1131)
+- **instrumentation**: Handle OpenAI run polling (#1256)
+
 ## v0.21.5 (2024-06-05)
 
 ### Fix

@@ -5,6 +5,7 @@ from haystack.components.generators.chat import OpenAIChatGenerator
 from haystack.components.builders import DynamicChatPromptBuilder
 from haystack.dataclasses import ChatMessage
 from haystack.utils import Secret
+from opentelemetry.semconv_ai import SpanAttributes
 
 
 @pytest.mark.vcr
@@ -30,9 +31,12 @@ def test_haystack(exporter):
     )
 
     spans = exporter.get_finished_spans()
-    assert set(
-        [
-            "openai.chat",
-            "haystack_pipeline.workflow",
-        ]
-    ).issubset([span.name for span in spans])
+    assert {
+        "haystack.openai.chat",
+        "haystack_pipeline.workflow",
+    } == {span.name for span in spans}
+    span_workflow = next(
+        span for span in spans if span.name == "haystack_pipeline.workflow"
+    )
+    assert SpanAttributes.TRACELOOP_ENTITY_INPUT in span_workflow.attributes
+    assert SpanAttributes.TRACELOOP_ENTITY_OUTPUT in span_workflow.attributes

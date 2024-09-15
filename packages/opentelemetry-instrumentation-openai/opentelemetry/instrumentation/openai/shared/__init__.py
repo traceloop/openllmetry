@@ -8,18 +8,17 @@ from importlib.metadata import version
 
 from opentelemetry import context as context_api
 
-from opentelemetry.semconv.ai import SpanAttributes
+from opentelemetry.instrumentation.openai.shared.config import Config
+from opentelemetry.semconv_ai import SpanAttributes
 from opentelemetry.instrumentation.openai.utils import (
     dont_throw,
     is_openai_v1,
     should_record_stream_token_usage,
 )
 
-OPENAI_API_VERSION = "openai.api_version"
-OPENAI_API_BASE = "openai.api_base"
-OPENAI_API_TYPE = "openai.api_type"
-
 OPENAI_LLM_USAGE_TOKEN_TYPES = ["prompt_tokens", "completion_tokens"]
+PROMPT_FILTER_KEY = "prompt_filter_results"
+PROMPT_ERROR = "prompt_error"
 
 # tiktoken encodings map for different model, key is model_name, value is tiktoken encoding
 tiktoken_encodings = {}
@@ -34,10 +33,8 @@ def should_send_prompts():
 
 
 def _set_span_attribute(span, name, value):
-    if value is not None:
-        if value != "":
-            span.set_attribute(name, value)
-    return
+    if value is not None and value != "" and value != openai.NOT_GIVEN:
+        span.set_attribute(name, value)
 
 
 def _set_client_attributes(span, instance):
@@ -49,10 +46,12 @@ def _set_client_attributes(span, instance):
 
     client = instance._client  # pylint: disable=protected-access
     if isinstance(client, (openai.AsyncOpenAI, openai.OpenAI)):
-        _set_span_attribute(span, OPENAI_API_BASE, str(client.base_url))
+        _set_span_attribute(
+            span, SpanAttributes.LLM_OPENAI_API_BASE, str(client.base_url)
+        )
     if isinstance(client, (openai.AsyncAzureOpenAI, openai.AzureOpenAI)):
         _set_span_attribute(
-            span, OPENAI_API_VERSION, client._api_version
+            span, SpanAttributes.LLM_OPENAI_API_VERSION, client._api_version
         )  # pylint: disable=protected-access
 
 
@@ -65,9 +64,9 @@ def _set_api_attributes(span):
 
     base_url = openai.base_url if hasattr(openai, "base_url") else openai.api_base
 
-    _set_span_attribute(span, OPENAI_API_BASE, base_url)
-    _set_span_attribute(span, OPENAI_API_TYPE, openai.api_type)
-    _set_span_attribute(span, OPENAI_API_VERSION, openai.api_version)
+    _set_span_attribute(span, SpanAttributes.LLM_OPENAI_API_BASE, base_url)
+    _set_span_attribute(span, SpanAttributes.LLM_OPENAI_API_TYPE, openai.api_type)
+    _set_span_attribute(span, SpanAttributes.LLM_OPENAI_API_VERSION, openai.api_version)
 
     return
 
@@ -139,11 +138,22 @@ def _set_response_attributes(span, response):
     if not span.is_recording():
         return
 
+    if "error" in response:
+        _set_span_attribute(
+            span,
+            f"{SpanAttributes.LLM_PROMPTS}.{PROMPT_ERROR}",
+            json.dumps(response.get("error")),
+        )
+        return
+
     _set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, response.get("model"))
 
     _set_span_attribute(
-        span, "gen_ai.openai.system_fingerprint", response.get("system_fingerprint")
+        span,
+        SpanAttributes.LLM_OPENAI_RESPONSE_SYSTEM_FINGERPRINT,
+        response.get("system_fingerprint"),
     )
+    _log_prompt_filter(span, response)
 
     usage = response.get("usage")
     if not usage:
@@ -163,8 +173,16 @@ def _set_response_attributes(span, response):
     _set_span_attribute(
         span, SpanAttributes.LLM_USAGE_PROMPT_TOKENS, usage.get("prompt_tokens")
     )
-
     return
+
+
+def _log_prompt_filter(span, response_dict):
+    if response_dict.get("prompt_filter_results"):
+        _set_span_attribute(
+            span,
+            f"{SpanAttributes.LLM_PROMPTS}.{PROMPT_FILTER_KEY}",
+            json.dumps(response_dict.get("prompt_filter_results")),
+        )
 
 
 @dont_throw
@@ -256,12 +274,15 @@ def _token_type(token_type: str):
     return None
 
 
-def _metric_shared_attributes(
+def metric_shared_attributes(
     response_model: str, operation: str, server_address: str, is_streaming: bool = False
 ):
+    attributes = Config.get_common_metrics_attributes()
+
     return {
-        "gen_ai.system": "openai",
-        "gen_ai.response.model": response_model,
+        **attributes,
+        SpanAttributes.LLM_SYSTEM: "openai",
+        SpanAttributes.LLM_RESPONSE_MODEL: response_model,
         "gen_ai.operation.name": operation,
         "server.address": server_address,
         "stream": is_streaming,

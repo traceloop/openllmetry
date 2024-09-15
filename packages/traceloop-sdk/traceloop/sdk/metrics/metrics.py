@@ -1,20 +1,22 @@
-from opentelemetry import metrics
-from opentelemetry.sdk.metrics.view import View, ExplicitBucketHistogramAggregation
-from opentelemetry.sdk.resources import Resource
-from opentelemetry.sdk.metrics import MeterProvider
+from collections.abc import Sequence
+from typing import Dict
 
-from opentelemetry.sdk.metrics.export import (
-    PeriodicExportingMetricReader,
-    MetricExporter,
-)
 from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import (
     OTLPMetricExporter as GRPCExporter,
 )
 from opentelemetry.exporter.otlp.proto.http.metric_exporter import (
     OTLPMetricExporter as HTTPExporter,
 )
-from typing import Dict
-from collections.abc import Sequence
+from opentelemetry.semconv_ai import Meters
+from opentelemetry.sdk.metrics import MeterProvider
+from opentelemetry.sdk.metrics.export import (
+    PeriodicExportingMetricReader,
+    MetricExporter,
+)
+from opentelemetry.sdk.metrics.view import View, ExplicitBucketHistogramAggregation
+from opentelemetry.sdk.resources import Resource
+
+from opentelemetry import metrics
 
 
 class MetricsWrapper(object):
@@ -22,6 +24,8 @@ class MetricsWrapper(object):
     endpoint: str = None
     # if it needs headers?
     headers: Dict[str, str] = {}
+    __metrics_exporter: MetricExporter = None
+    __metrics_provider: MeterProvider = None
 
     def __new__(cls, exporter: MetricExporter = None) -> "MetricsWrapper":
         if not hasattr(cls, "instance"):
@@ -29,7 +33,7 @@ class MetricsWrapper(object):
             if not MetricsWrapper.endpoint:
                 return obj
 
-            obj.__metrics_exporter: MetricExporter = (
+            obj.__metrics_exporter = (
                 exporter
                 if exporter
                 else init_metrics_exporter(
@@ -37,7 +41,7 @@ class MetricsWrapper(object):
                 )
             )
 
-            obj.__metrics_provider: MeterProvider = init_metrics_provider(
+            obj.__metrics_provider = init_metrics_provider(
                 obj.__metrics_exporter, MetricsWrapper.resource_attributes
             )
 
@@ -83,7 +87,7 @@ def init_metrics_provider(
 def metric_views() -> Sequence[View]:
     return [
         View(
-            instrument_name="gen_ai.client.operation.duration",
+            instrument_name=Meters.LLM_TOKEN_USAGE,
             aggregation=ExplicitBucketHistogramAggregation(
                 [
                     0.01,
@@ -104,7 +108,7 @@ def metric_views() -> Sequence[View]:
             ),
         ),
         View(
-            instrument_name="gen_ai.client.token.usage",
+            instrument_name=Meters.LLM_OPERATION_DURATION,
             aggregation=ExplicitBucketHistogramAggregation(
                 [
                     1,
@@ -125,7 +129,7 @@ def metric_views() -> Sequence[View]:
             ),
         ),
         View(
-            instrument_name="db.pinecone.query.duration",
+            instrument_name=Meters.PINECONE_DB_QUERY_DURATION,
             aggregation=ExplicitBucketHistogramAggregation(
                 [
                     0.01,
@@ -146,7 +150,7 @@ def metric_views() -> Sequence[View]:
             ),
         ),
         View(
-            instrument_name="db.pinecone.query.scores",
+            instrument_name=Meters.PINECONE_DB_QUERY_SCORES,
             aggregation=ExplicitBucketHistogramAggregation(
                 [
                     -1,

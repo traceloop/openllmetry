@@ -5,9 +5,11 @@ from opentelemetry.context import attach, set_value
 
 from opentelemetry.instrumentation.llamaindex.utils import (
     _with_tracer_wrapper,
+    process_request,
+    process_response,
     start_as_current_span_async,
 )
-from opentelemetry.semconv.ai import SpanAttributes, TraceloopSpanKindValues
+from opentelemetry.semconv_ai import SpanAttributes, TraceloopSpanKindValues
 
 V10_MODULE_NAME = "llama_index.core.query_pipeline.query"
 V10_LEGACY_MODULE_NAME = "llama_index.legacy.query_pipeline.query"
@@ -51,8 +53,12 @@ def run_wrapper(tracer, wrapped, instance, args, kwargs):
             SpanAttributes.TRACELOOP_SPAN_KIND,
             TraceloopSpanKindValues.WORKFLOW.value,
         )
+        span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, WORKFLOW_NAME)
 
-        return wrapped(*args, **kwargs)
+        process_request(span, args, kwargs)
+        res = wrapped(*args, **kwargs)
+        process_response(span, res)
+        return res
 
 
 @_with_tracer_wrapper
@@ -66,5 +72,9 @@ async def arun_wrapper(tracer, wrapped, instance, args, kwargs):
             SpanAttributes.TRACELOOP_SPAN_KIND,
             TraceloopSpanKindValues.WORKFLOW.value,
         )
+        span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, WORKFLOW_NAME)
 
-        return await wrapped(*args, **kwargs)
+        process_request(span, args, kwargs)
+        res = await wrapped(*args, **kwargs)
+        process_response(span, res)
+        return res

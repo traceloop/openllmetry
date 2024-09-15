@@ -1,8 +1,8 @@
-import pytest
+from opentelemetry.semconv_ai import SpanAttributes
 from traceloop.sdk.decorators import task, workflow
+from pytest import raises
 
 
-@pytest.mark.vcr
 def test_nested_tasks(exporter):
     @workflow(name="some_workflow")
     def some_workflow():
@@ -33,6 +33,15 @@ def test_nested_tasks(exporter):
     inner_inner_task_span = spans[0]
     inner_task_span = spans[1]
     outer_task_span = spans[2]
-    assert inner_inner_task_span.attributes["traceloop.entity.name"] == "outer_task.inner_task.inner_inner_task"
-    assert inner_task_span.attributes["traceloop.entity.name"] == "outer_task.inner_task"
-    assert outer_task_span.attributes["traceloop.entity.name"] == "outer_task"
+    some_workflow_span = spans[3]
+
+    assert (
+        inner_inner_task_span.attributes[SpanAttributes.TRACELOOP_ENTITY_PATH] ==
+        "outer_task.inner_task"
+    )
+    assert (
+        inner_task_span.attributes[SpanAttributes.TRACELOOP_ENTITY_PATH] == "outer_task"
+    )
+    with raises(KeyError):
+        _ = outer_task_span.attributes[SpanAttributes.TRACELOOP_ENTITY_PATH]
+        _ = some_workflow_span.attributes[SpanAttributes.TRACELOOP_ENTITY_PATH]

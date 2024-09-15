@@ -1,0 +1,49 @@
+interactions:
+- request:
+    body: '{"prompt": "Tell me a joke about opentelemetry", "max_gen_len": 128, "temperature":
+      0.1, "top_p": 0.9}'
+    headers:
+      Content-Length:
+      - '102'
+      User-Agent:
+      - !!binary |
+        Qm90bzMvMS4zNC4xNDUgbWQvQm90b2NvcmUjMS4zNC4xNDUgdWEvMi4wIG9zL21hY29zIzIzLjYu
+        MCBtZC9hcmNoI2FybTY0IGxhbmcvcHl0aG9uIzMuMTIuMSBtZC9weWltcGwjQ1B5dGhvbiBjZmcv
+        cmV0cnktbW9kZSNsZWdhY3kgQm90b2NvcmUvMS4zNC4xNDU=
+      X-Amz-Date:
+      - !!binary |
+        MjAyNDA4MjlUMTg0OTAyWg==
+      amz-sdk-invocation-id:
+      - !!binary |
+        YWUxN2YyYzgtNzkxOC00ZmI5LWJkYTktZmVhYzUyNzc1MGRm
+      amz-sdk-request:
+      - !!binary |
+        YXR0ZW1wdD0x
+    method: POST
+    uri: https://bedrock-runtime.us-east-1.amazonaws.com/model/meta.llama3-70b-instruct-v1%3A0/invoke
+  response:
+    body:
+      string: '{"generation":"\nWhy did the opentelemetry span go to therapy?\nBecause
+        it was feeling a little \"distributed\" and wanted to get to the \"root\"
+        of its problems!","prompt_token_count":8,"generation_token_count":35,"stop_reason":"stop"}'
+    headers:
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '236'
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 29 Aug 2024 18:49:03 GMT
+      X-Amzn-Bedrock-Input-Token-Count:
+      - '8'
+      X-Amzn-Bedrock-Invocation-Latency:
+      - '715'
+      X-Amzn-Bedrock-Output-Token-Count:
+      - '35'
+      x-amzn-RequestId:
+      - 49f48fb6-28ab-4471-95e3-57e5579f3a52
+    status:
+      code: 200
+      message: OK
+version: 1

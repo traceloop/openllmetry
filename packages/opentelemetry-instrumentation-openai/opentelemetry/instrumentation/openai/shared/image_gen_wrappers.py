@@ -1,19 +1,18 @@
 import time
 
 from opentelemetry import context as context_api
-from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
-
-from opentelemetry.metrics import Counter, Histogram
-
 from opentelemetry.instrumentation.openai import is_openai_v1
 from opentelemetry.instrumentation.openai.shared import (
     _get_openai_base_url,
-    _metric_shared_attributes,
+    metric_shared_attributes,
     model_as_dict,
 )
 from opentelemetry.instrumentation.openai.utils import (
     _with_image_gen_metric_wrapper,
 )
+from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
+from opentelemetry.metrics import Counter, Histogram
+from opentelemetry.semconv_ai import SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY
 
 
 @_with_image_gen_metric_wrapper
@@ -25,7 +24,9 @@ def image_gen_metrics_wrapper(
     args,
     kwargs,
 ):
-    if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
+    if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY) or context_api.get_value(
+        SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY
+    ):
         return wrapped(*args, **kwargs)
 
     try:
@@ -54,7 +55,7 @@ def image_gen_metrics_wrapper(
         response_dict = response
 
     # not provide response.model in ImagesResponse response, use model in request kwargs
-    shared_attributes = _metric_shared_attributes(
+    shared_attributes = metric_shared_attributes(
         response_model=kwargs.get("model") or None,
         operation="image_gen",
         server_address=_get_openai_base_url(instance),

@@ -1,0 +1,57 @@
+[tool.coverage.run]
+branch = true
+source = [ "opentelemetry/instrumentation/lancedb" ]
+
+[tool.coverage.report]
+exclude_lines = [ "if TYPE_CHECKING:" ]
+show_missing = true
+
+[tool.poetry]
+name = "opentelemetry-instrumentation-lancedb"
+version = "0.30.0"
+description = "OpenTelemetry Lancedb instrumentation"
+authors = [
+  "Gal Kleinman <gal@traceloop.com>",
+  "Nir Gazit <nir@traceloop.com>",
+  "Tomer Friedman <tomer@traceloop.com>"
+]
+repository = "https://github.com/traceloop/openllmetry/tree/main/packages/opentelemetry-instrumentation-lancedb"
+license = "Apache-2.0"
+readme = "README.md"
+
+[[tool.poetry.packages]]
+include = "opentelemetry/instrumentation/lancedb"
+
+[tool.poetry.dependencies]
+python = ">=3.9,<4"
+opentelemetry-api = "^1.27.0"
+opentelemetry-instrumentation = "^0.48b0"
+opentelemetry-semantic-conventions = "^0.48b0"
+opentelemetry-semantic-conventions-ai = "0.4.1"
+
+[tool.poetry.group.dev.dependencies]
+autopep8 = "^2.2.0"
+flake8 = "7.0.0"
+pytest = "^8.2.2"
+pytest-sugar = "1.0.0"
+
+[tool.poetry.group.test.dependencies]
+pytest = "^8.2.2"
+pytest-sugar = "1.0.0"
+vcrpy = "^6.0.1"
+pytest-recording = "^0.13.1"
+pytest-asyncio = "^0.23.7"
+opentelemetry-sdk = "^1.27.0"
+lancedb = "^0.9.0"
+numpy = "^1.26.4"
+pandas = "^2.2.2"
+
+[build-system]
+requires = [ "poetry-core" ]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.extras]
+instruments = ["lancedb"]
+
+[tool.poetry.plugins."opentelemetry_instrumentor"]
+lancedb = "opentelemetry.instrumentation.lancedb:LanceInstrumentor"
