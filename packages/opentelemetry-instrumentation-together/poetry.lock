@@ -391,18 +391,18 @@ typing = ["typing-extensions (>=4.8)"]
 
 [[package]]
 name = "flake8"
-version = "7.0.0"
+version = "7.1.1"
 description = "the modular source code checker: pep8 pyflakes and co"
 optional = false
 python-versions = ">=3.8.1"
 files = [
-    {file = "flake8-7.0.0-py2.py3-none-any.whl", hash = "sha256:a6dfbb75e03252917f2473ea9653f7cd799c3064e54d4c8140044c5c065f53c3"},
-    {file = "flake8-7.0.0.tar.gz", hash = "sha256:33f96621059e65eec474169085dc92bf26e7b2d47366b70be2f67ab80dc25132"},
+    {file = "flake8-7.1.1-py2.py3-none-any.whl", hash = "sha256:597477df7860daa5aa0fdd84bf5208a043ab96b8e96ab708770ae0364dd03213"},
+    {file = "flake8-7.1.1.tar.gz", hash = "sha256:049d058491e228e03e67b390f311bbf88fce2dbaa8fa673e7aea87b7198b8d38"},
 ]
 
 [package.dependencies]
 mccabe = ">=0.7.0,<0.8.0"
-pycodestyle = ">=2.11.0,<2.12.0"
+pycodestyle = ">=2.12.0,<2.13.0"
 pyflakes = ">=3.2.0,<3.3.0"
 
 [[package]]
@@ -957,13 +957,13 @@ numpy = ">=1.16.6"
 
 [[package]]
 name = "pycodestyle"
-version = "2.11.1"
+version = "2.12.1"
 description = "Python style guide checker"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "pycodestyle-2.11.1-py2.py3-none-any.whl", hash = "sha256:44fe31000b2d866f2e41841b18528a505fbd7fef9017b04eff4e2648a0fadc67"},
-    {file = "pycodestyle-2.11.1.tar.gz", hash = "sha256:41ba0e7afc9752dfb53ced5489e89f8186be00e599e712660695b7a75ff2663f"},
+    {file = "pycodestyle-2.12.1-py2.py3-none-any.whl", hash = "sha256:46f0fb92069a7c28ab7bb558f05bfc0110dac69a0cd23c61ea0040283a9d78b3"},
+    {file = "pycodestyle-2.12.1.tar.gz", hash = "sha256:6838eae08bbce4f6accd5d5572075c63626a15ee3e6f842df996bf62f6d73521"},
 ]
 
 [[package]]
@@ -1103,13 +1103,13 @@ windows-terminal = ["colorama (>=0.4.6)"]
 
 [[package]]
 name = "pytest"
-version = "8.2.2"
+version = "8.3.3"
 description = "pytest: simple powerful testing with Python"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "pytest-8.2.2-py3-none-any.whl", hash = "sha256:c434598117762e2bd304e526244f67bf66bbd7b5d6cf22138be51ff661980343"},
-    {file = "pytest-8.2.2.tar.gz", hash = "sha256:de4bb8104e201939ccdc688b27a89a7be2079b22e2bd2b07f806b6ba71117977"},
+    {file = "pytest-8.3.3-py3-none-any.whl", hash = "sha256:a6853c7375b2663155079443d2e45de913a911a11d669df02a50814944db57b2"},
+    {file = "pytest-8.3.3.tar.gz", hash = "sha256:70b98107bd648308a7952b06e6ca9a50bc660be218d53c257cc1fc94fda10181"},
 ]
 
 [package.dependencies]
@@ -1117,7 +1117,7 @@ colorama = {version = "*", markers = "sys_platform == \"win32\""}
 exceptiongroup = {version = ">=1.0.0rc8", markers = "python_version < \"3.11\""}
 iniconfig = "*"
 packaging = "*"
-pluggy = ">=1.5,<2.0"
+pluggy = ">=1.5,<2"
 tomli = {version = ">=1", markers = "python_version < \"3.11\""}
 
 [package.extras]
@@ -1125,17 +1125,17 @@ dev = ["argcomplete", "attrs (>=19.2)", "hypothesis (>=3.56)", "mock", "pygments
 
 [[package]]
 name = "pytest-asyncio"
-version = "0.23.7"
+version = "0.24.0"
 description = "Pytest support for asyncio"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "pytest_asyncio-0.23.7-py3-none-any.whl", hash = "sha256:009b48127fbe44518a547bddd25611551b0e43ccdbf1e67d12479f569832c20b"},
-    {file = "pytest_asyncio-0.23.7.tar.gz", hash = "sha256:5f5c72948f4c49e7db4f29f2521d4031f1c27f86e57b046126654083d4770268"},
+    {file = "pytest_asyncio-0.24.0-py3-none-any.whl", hash = "sha256:a811296ed596b69bf0b6f3dc40f83bcaf341b155a269052d82efa2b25ac7037b"},
+    {file = "pytest_asyncio-0.24.0.tar.gz", hash = "sha256:d081d828e576d85f875399194281e92bf8a68d60d72d1a2faf2feddb6c46b276"},
 ]
 
 [package.dependencies]
-pytest = ">=7.0.0,<9"
+pytest = ">=8.2,<9"
 
 [package.extras]
 docs = ["sphinx (>=5.3)", "sphinx-rtd-theme (>=1.0)"]
@@ -1143,13 +1143,13 @@ testing = ["coverage (>=6.2)", "hypothesis (>=5.7.1)"]
 
 [[package]]
 name = "pytest-recording"
-version = "0.13.1"
+version = "0.13.2"
 description = "A pytest plugin that allows you recording of network interactions via VCR.py"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "pytest_recording-0.13.1-py3-none-any.whl", hash = "sha256:e5c75feb2593eb4ed9362182c6640bfe19004204bf9a6082d62c91b5fdb50a3e"},
-    {file = "pytest_recording-0.13.1.tar.gz", hash = "sha256:1265d679f39263f115968ec01c2a3bfed250170fd1b0d9e288970b2e4a13737a"},
+    {file = "pytest_recording-0.13.2-py3-none-any.whl", hash = "sha256:3820fe5743d1ac46e807989e11d073cb776a60bdc544cf43ebca454051b22d13"},
+    {file = "pytest_recording-0.13.2.tar.gz", hash = "sha256:000c3babbb466681457fd65b723427c1779a0c6c17d9e381c3142a701e124877"},
 ]
 
 [package.dependencies]
@@ -1157,8 +1157,8 @@ pytest = ">=3.5.0"
 vcrpy = ">=2.0.1"
 
 [package.extras]
-dev = ["pytest-recording[tests]"]
-tests = ["pytest-httpbin", "pytest-mock", "requests", "werkzeug (==3.0.1)"]
+dev = ["pytest-httpbin", "pytest-mock", "requests", "werkzeug (==3.0.3)"]
+tests = ["pytest-httpbin", "pytest-mock", "requests", "werkzeug (==3.0.3)"]
 
 [[package]]
 name = "pytest-sugar"
@@ -1334,13 +1334,13 @@ tests = ["pytest", "pytest-cov"]
 
 [[package]]
 name = "together"
-version = "1.2.0"
+version = "1.2.12"
 description = "Python client for Together's Cloud Platform!"
 optional = false
 python-versions = "<4.0,>=3.8"
 files = [
-    {file = "together-1.2.0-py3-none-any.whl", hash = "sha256:f37ea1b9c89048105e0037c7a27e99e082fd61d693a0bb6e9d4455c74e59e4fc"},
-    {file = "together-1.2.0.tar.gz", hash = "sha256:fbc502a6bc4a5eb16f71e7278a5ff45bf7245f9339843edb4c5d1c2b8ad75dc5"},
+    {file = "together-1.2.12-py3-none-any.whl", hash = "sha256:4d0a04f4ea41d63330a499657bef6678f11cb4fce20998396bcc67736281e050"},
+    {file = "together-1.2.12.tar.gz", hash = "sha256:c343e91edb398bdf1ad409a80f079db43c6b3cd38a8657fe9ae0900ceb430ca9"},
 ]
 
 [package.dependencies]
@@ -1658,4 +1658,4 @@ instruments = []
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<4"
-content-hash = "9082b396374acbf5f88fe09beb114f409a8aba145a4ef43a1d06f5566842c824"
+content-hash = "9373c514b4efae816a0d7ac784ce19a6359952b8e0bd5019d283e63ecd160083"
