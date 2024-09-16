@@ -88,13 +88,12 @@ def test_simple_lcel(exporter):
             "name": "ChatPromptTemplate",
         },
     }
-    assert json.loads(
-        prompt_task_span.attributes[SpanAttributes.TRACELOOP_ENTITY_OUTPUT]
-    ) == {
-        "outputs": "messages=[SystemMessage(content='You are helpful assistant'), "
-        "HumanMessage(content='tell me a short joke')]",
-        "kwargs": {"tags": ["seq:step:1", "test_tag"]},
-    }
+    assert prompt_task_span.attributes[SpanAttributes.TRACELOOP_ENTITY_OUTPUT] == (
+        '{"outputs": "messages=['
+        "SystemMessage(content='You are helpful assistant', additional_kwargs={}, response_metadata={}),"
+        " HumanMessage(content='tell me a short joke', additional_kwargs={}, response_metadata={})]\","
+        ' "kwargs": {"tags": ["seq:step:1", "test_tag"]}}'
+    )
 
 
 @pytest.mark.vcr
