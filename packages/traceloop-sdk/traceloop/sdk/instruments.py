@@ -27,3 +27,4 @@ class Instruments(Enum):
     ALEPHALPHA = "alephalpha"
     MARQO = "marqo"
     LANCEDB = "lancedb"
+    SAGEMAKER = "sagemaker"

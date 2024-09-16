@@ -8,7 +8,7 @@ show_missing = true
 
 [tool.poetry]
 name = "traceloop-sdk"
-version = "0.30.1"
+version = "0.31.0"
 description = "Traceloop Software Development Kit (SDK) for Python"
 authors = [
   "Gal Kleinman <gal@traceloop.com>",
@@ -33,7 +33,7 @@ opentelemetry-instrumentation-requests = "^0.48b0"
 opentelemetry-instrumentation-sqlalchemy = "^0.48b0"
 opentelemetry-instrumentation-urllib3 = "^0.48b0"
 opentelemetry-instrumentation-threading = "^0.48b0"
-opentelemetry-semantic-conventions-ai = "0.4.1"
+opentelemetry-semantic-conventions-ai = "0.4.2"
 opentelemetry-instrumentation-mistralai = {path="../opentelemetry-instrumentation-mistralai", develop=true}
 opentelemetry-instrumentation-openai = {path="../opentelemetry-instrumentation-openai", develop=true}
 opentelemetry-instrumentation-ollama = {path="../opentelemetry-instrumentation-ollama", develop=true}
@@ -51,6 +51,7 @@ opentelemetry-instrumentation-llamaindex = {path="../opentelemetry-instrumentati
 opentelemetry-instrumentation-milvus = {path="../opentelemetry-instrumentation-milvus", develop=true}
 opentelemetry-instrumentation-haystack = {path="../opentelemetry-instrumentation-haystack", develop=true}
 opentelemetry-instrumentation-bedrock = {path="../opentelemetry-instrumentation-bedrock", develop=true}
+# opentelemetry-instrumentation-sagemaker = {path="../opentelemetry-instrumentation-sagemaker", develop=true}
 opentelemetry-instrumentation-replicate = {path="../opentelemetry-instrumentation-replicate", develop=true}
 opentelemetry-instrumentation-vertexai = {path="../opentelemetry-instrumentation-vertexai", develop=true}
 opentelemetry-instrumentation-watsonx = {path="../opentelemetry-instrumentation-watsonx", develop=true}
