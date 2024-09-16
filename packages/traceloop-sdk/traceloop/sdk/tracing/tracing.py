@@ -62,12 +62,12 @@ class TracerWrapper(object):
     def __new__(
         cls,
         disable_batch=False,
-        disable_requests_instrumentation=True,
         processor: SpanProcessor = None,
         propagator: TextMapPropagator = None,
         exporter: SpanExporter = None,
         should_enrich_metrics: bool = True,
         instruments: Optional[Set[Instruments]] = None,
+        block_instruments: Optional[Set[Instruments]] = None,
     ) -> "TracerWrapper":
         if not hasattr(cls, "instance"):
             obj = cls.instance = super(TracerWrapper, cls).__new__(cls)
@@ -126,9 +126,16 @@ class TracerWrapper(object):
 
             instrument_set = False
             if instruments is None:
-                init_instrumentations(should_enrich_metrics, disable_requests_instrumentation)
+                init_instrumentations(should_enrich_metrics, block_instruments)
                 instrument_set = True
             else:
+                # Remove any instruments that were explicitly blocked
+                if block_instruments:
+                    # Create a copy of instruments to avoid modification during iteration
+                    for instrument in list(instruments):
+                        if instrument in block_instruments:
+                            instruments.remove(instrument)
+                
                 for instrument in instruments:
                     if instrument == Instruments.OPENAI:
                         if not init_openai_instrumentor(should_enrich_metrics):
@@ -526,36 +533,64 @@ def init_tracer_provider(resource: Resource) -> TracerProvider:
     return provider
 
 
-def init_instrumentations(should_enrich_metrics: bool, disable_requests_instrumentation: bool):
-    init_openai_instrumentor(should_enrich_metrics)
-    init_anthropic_instrumentor(should_enrich_metrics)
-    init_cohere_instrumentor()
-    init_pinecone_instrumentor()
-    init_qdrant_instrumentor()
-    init_chroma_instrumentor()
-    init_google_generativeai_instrumentor()
-    init_haystack_instrumentor()
-    init_langchain_instrumentor()
-    init_mistralai_instrumentor()
-    init_ollama_instrumentor()
-    init_llama_index_instrumentor()
-    init_milvus_instrumentor()
-    init_transformers_instrumentor()
-    init_together_instrumentor()
-    init_redis_instrumentor()
-    init_urllib3_instrumentor()
-    init_pymysql_instrumentor()
-    init_bedrock_instrumentor(should_enrich_metrics)
-    init_replicate_instrumentor()
-    init_vertexai_instrumentor()
-    init_watsonx_instrumentor()
-    init_weaviate_instrumentor()
-    init_alephalpha_instrumentor()
-    init_marqo_instrumentor()
-    init_lancedb_instrumentor()
-    init_groq_instrumentor()
+def init_instrumentations(should_enrich_metrics: bool, block_instruments: Optional[Set[Instruments]] = None):
+    block_instruments = block_instruments or set()
 
-    if not disable_requests_instrumentation:
+    if Instruments.OPENAI not in block_instruments:
+        init_openai_instrumentor(should_enrich_metrics)
+    if Instruments.ANTHROPIC not in block_instruments:
+        init_anthropic_instrumentor(should_enrich_metrics)
+    if Instruments.COHERE not in block_instruments:
+        init_cohere_instrumentor()
+    if Instruments.PINECONE not in block_instruments:
+        init_pinecone_instrumentor()
+    if Instruments.QDRANT not in block_instruments:
+        init_qdrant_instrumentor()
+    if Instruments.CHROMA not in block_instruments:
+        init_chroma_instrumentor()
+    if Instruments.GOOGLE_GENERATIVEAI not in block_instruments:
+        init_google_generativeai_instrumentor()
+    if Instruments.HAYSTACK not in block_instruments:
+        init_haystack_instrumentor()
+    if Instruments.LANGCHAIN not in block_instruments:
+        init_langchain_instrumentor()
+    if Instruments.MISTRAL not in block_instruments:
+        init_mistralai_instrumentor()
+    if Instruments.OLLAMA not in block_instruments:
+        init_ollama_instrumentor()
+    if Instruments.LLAMA_INDEX not in block_instruments:
+        init_llama_index_instrumentor()
+    if Instruments.MILVUS not in block_instruments:
+        init_milvus_instrumentor()
+    if Instruments.TRANSFORMERS not in block_instruments:
+        init_transformers_instrumentor()
+    if Instruments.TOGETHER not in block_instruments:
+        init_together_instrumentor()
+    if Instruments.REDIS not in block_instruments:
+        init_redis_instrumentor()
+    if Instruments.URLLIB3 not in block_instruments:
+        init_urllib3_instrumentor()
+    if Instruments.PYMYSQL not in block_instruments:
+        init_pymysql_instrumentor()
+    if Instruments.BEDROCK not in block_instruments:
+        init_bedrock_instrumentor(should_enrich_metrics)
+    if Instruments.REPLICATE not in block_instruments:
+        init_replicate_instrumentor()
+    if Instruments.VERTEXAI not in block_instruments:
+        init_vertexai_instrumentor()
+    if Instruments.WATSONX not in block_instruments:
+        init_watsonx_instrumentor()
+    if Instruments.WEAVIATE not in block_instruments:
+        init_weaviate_instrumentor()
+    if Instruments.ALEPHALPHA not in block_instruments:
+        init_alephalpha_instrumentor()
+    if Instruments.MARQO not in block_instruments:
+        init_marqo_instrumentor()
+    if Instruments.LANCEDB not in block_instruments:
+        init_lancedb_instrumentor()
+    if Instruments.GROQ not in block_instruments:
+        init_groq_instrumentor()
+    if Instruments.REQUESTS not in block_instruments:
         init_requests_instrumentor()
 
 
