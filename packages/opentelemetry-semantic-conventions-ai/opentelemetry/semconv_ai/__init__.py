@@ -29,6 +29,8 @@ class Meters:
     LLM_WATSONX_COMPLETIONS_RESPONSES = "llm.watsonx.completions.responses"
     LLM_WATSONX_COMPLETIONS_TOKENS = "llm.watsonx.completions.tokens"
 
+    LLM_BEDROCK_COMPLETIONS_EXCEPTIONS = "llm.bedrock.completions.exceptions"
+
 
 class SpanAttributes:
     # Semantic Conventions for LLM requests, this needs to be removed after

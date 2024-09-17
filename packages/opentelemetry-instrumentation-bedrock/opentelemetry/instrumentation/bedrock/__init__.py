@@ -34,8 +34,15 @@ from opentelemetry.semconv_ai import (
 
 from opentelemetry.instrumentation.bedrock.version import __version__
 
+
 class MetricParams:
-    def __init__(self, token_histogram, choice_counter, duration_histogram, exception_counter):
+    def __init__(
+        self,
+        token_histogram: Histogram,
+        choice_counter: Counter,
+        duration_histogram: Histogram,
+        exception_counter: Counter,
+    ):
         self.vendor = ""
         self.model = ""
         self.isStream = False
@@ -67,8 +74,10 @@ def should_send_prompts():
         os.getenv("TRACELOOP_TRACE_CONTENT") or "true"
     ).lower() == "true" or context_api.get_value("override_enable_content_tracing")
 
+
 def is_metrics_enabled() -> bool:
     return (os.getenv("TRACELOOP_METRICS_ENABLED") or "true").lower() == "true"
+
 
 def _set_span_attribute(span, name, value):
     if value is not None:
@@ -82,20 +91,14 @@ def _with_tracer_wrapper(func):
 
     def _with_tracer(
         tracer,
+        metricParams,
         to_wrap,
-        token_histogram,
-        response_counter,
-        duration_histogram,
-        exception_counter,
     ):
         def wrapper(wrapped, instance, args, kwargs):
             return func(
                 tracer,
+                metricParams,
                 to_wrap,
-                token_histogram,
-                response_counter,
-                duration_histogram,
-                exception_counter,
                 wrapped,
                 instance,
                 args,
@@ -109,13 +112,13 @@ def _with_tracer_wrapper(func):
 
 @_with_tracer_wrapper
 def _wrap(
-    tracer: Tracer,
-    metricParams,   
+    tracer,
+    metricParams,
     to_wrap,
     wrapped,
     instance,
     args,
-    kwargs,  
+    kwargs,
 ):
     """Instruments and calls every function defined in TO_WRAP."""
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
@@ -278,14 +281,14 @@ def _record_usage_to_span(span, prompt_tokens, completion_tokens, metricParams):
     metric_attributes = _metric_shared_attributes(metricParams.vendor, metricParams.model, metricParams.isStream)
 
     if metricParams.duration_histogram:
-                duration = time.time() - metricParams.start_time
-                metricParams.duration_histogram.record(
-                    duration,
-                    attributes=metric_attributes,
-                )
+        duration = time.time() - metricParams.start_time
+        metricParams.duration_histogram.record(
+            duration,
+            attributes=metric_attributes,
+        )
 
     if metricParams.token_histogram and type(prompt_tokens) is int and prompt_tokens >= 0:
-            metricParams.token_histogram.record(
+        metricParams.token_histogram.record(
             prompt_tokens,
             attributes={
                 **metric_attributes,
@@ -293,14 +296,14 @@ def _record_usage_to_span(span, prompt_tokens, completion_tokens, metricParams):
             },
         )
     if metricParams.token_histogram and type(completion_tokens) is int and completion_tokens >= 0:
-            metricParams.token_histogram.record(
+        metricParams.token_histogram.record(
             completion_tokens,
             attributes={
                 **metric_attributes,
                 SpanAttributes.LLM_TOKEN_TYPE: "output",
             },
         )
-    
+
 
 def _metric_shared_attributes(response_vendor: str, response_model: str, is_streaming: bool = False):
     return {
@@ -309,6 +312,7 @@ def _metric_shared_attributes(response_vendor: str, response_model: str, is_stre
         SpanAttributes.LLM_SYSTEM: "bedrock",
         "stream": is_streaming,
     }
+
 
 def _set_cohere_span_attributes(span, request_body, response_body, metricParams):
     _set_span_attribute(
@@ -584,6 +588,7 @@ def _set_amazon_span_attributes(span, request_body, response_body, metricParams)
                 result.get("outputText"),
             )
 
+
 def _create_metrics(meter: Meter):
     token_histogram = meter.create_histogram(
         name=Meters.LLM_TOKEN_USAGE,
@@ -611,6 +616,7 @@ def _create_metrics(meter: Meter):
 
     return token_histogram, choice_counter, duration_histogram, exception_counter
 
+
 class BedrockInstrumentor(BaseInstrumentor):
     """An instrumentor for Bedrock's client library."""
 
@@ -625,7 +631,7 @@ class BedrockInstrumentor(BaseInstrumentor):
     def _instrument(self, **kwargs):
         tracer_provider = kwargs.get("tracer_provider")
         tracer = get_tracer(__name__, __version__, tracer_provider)
-    
+
         # meter and counters are inited here
         meter_provider = kwargs.get("meter_provider")
         meter = get_meter(__name__, __version__, meter_provider)
@@ -646,7 +652,7 @@ class BedrockInstrumentor(BaseInstrumentor):
             ) = (None, None, None, None)
 
         metricParams = MetricParams(token_histogram, choice_counter, duration_histogram, exception_counter)
-    
+
         for wrapped_method in WRAPPED_METHODS:
             wrap_package = wrapped_method.get("package")
             wrap_object = wrapped_method.get("object")
@@ -657,7 +663,7 @@ class BedrockInstrumentor(BaseInstrumentor):
                 _wrap(
                     tracer,
                     metricParams,
-                    wrapped_method,                   
+                    wrapped_method,
                 ),
             )
 
