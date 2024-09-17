@@ -4,7 +4,7 @@ from opentelemetry.semconv_ai import SpanAttributes
 import json
 
 
-@pytest.mark.vcr()
+@pytest.mark.vcr
 def test_meta_llama2_completion_string_content(exporter, brt):
     model_id = "meta.llama2-13b-chat-v1"
     prompt = """<s>[INST] <<SYS>>
@@ -44,7 +44,7 @@ There's a llama in my garden  What should I do? [/INST]"""
     )
 
 
-@pytest.mark.vcr()
+@pytest.mark.vcr
 def test_meta_llama3_completion(exporter, brt):
     model_id = "meta.llama3-70b-instruct-v1:0"
     prompt = "Tell me a joke about opentelemetry"

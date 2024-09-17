@@ -4,7 +4,7 @@ from opentelemetry.semconv_ai import SpanAttributes
 import json
 
 
-@pytest.mark.vcr()
+@pytest.mark.vcr
 def test_ai21_j2_completion_string_content(exporter, brt):
     body = json.dumps(
         {
