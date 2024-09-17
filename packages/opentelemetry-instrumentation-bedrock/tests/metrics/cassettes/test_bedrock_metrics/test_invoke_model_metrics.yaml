@@ -1,0 +1,50 @@
+interactions:
+- request:
+    body: '{"inputText": "Tell me a joke about opentelemetry", "textGenerationConfig":
+      {"maxTokenCount": 200, "temperature": 0.5, "topP": 0.5}}'
+    headers:
+      Accept:
+      - !!binary |
+        YXBwbGljYXRpb24vanNvbg==
+      Content-Length:
+      - '132'
+      Content-Type:
+      - !!binary |
+        YXBwbGljYXRpb24vanNvbg==
+      User-Agent:
+      - !!binary |
+        Qm90bzMvMS4zNS4yMSBtZC9Cb3RvY29yZSMxLjM1LjIxIHVhLzIuMCBvcy9tYWNvcyMyMy42LjAg
+        bWQvYXJjaCNhcm02NCBsYW5nL3B5dGhvbiMzLjkuNiBtZC9weWltcGwjQ1B5dGhvbiBjZmcvcmV0
+        cnktbW9kZSNsZWdhY3kgQm90b2NvcmUvMS4zNS4yMQ==
+      X-Amz-Date:
+      - !!binary |
+        MjAyNDA5MTdUMjMyOTQzWg==
+      amz-sdk-invocation-id:
+      - !!binary |
+        NTE5ZWJlYzUtNDMzYy00YzIzLWJmNmItYWZhMGMyNjBmMzQx
+      amz-sdk-request:
+      - !!binary |
+        YXR0ZW1wdD0x
+    method: POST
+    uri: https://bedrock-runtime.us-east-1.amazonaws.com/model/amazon.titan-text-express-v1/invoke
+  response:
+    body:
+      string: '{"message":"You don''t have access to the model with the specified
+        model ID."}'
+    headers:
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '77'
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 17 Sep 2024 23:29:43 GMT
+      x-amzn-ErrorType:
+      - AccessDeniedException:http://internal.amazon.com/coral/com.amazon.bedrock/
+      x-amzn-RequestId:
+      - 4caffe59-bb3e-4e98-abe9-f761237b02db
+    status:
+      code: 403
+      message: Forbidden
+version: 1

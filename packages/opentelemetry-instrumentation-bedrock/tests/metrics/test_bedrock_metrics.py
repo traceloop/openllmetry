@@ -12,16 +12,20 @@ def test_invoke_model_metrics(metrics_test_context, brt):
 
     provider, reader = metrics_test_context
 
-    body = json.dumps({
-        "prompt": "Tell me a joke about opentelemetry",
-        "max_tokens": 200,
-        "temperature": 0.5,
-        "p": 0.5,
-    })
+    body = json.dumps(
+        {
+            "inputText": "Tell me a joke about opentelemetry",
+            "textGenerationConfig": {
+                "maxTokenCount": 200,
+                "temperature": 0.5,
+                "topP": 0.5,
+            },
+        }
+    )
 
     brt.invoke_model(
         body=body,
-        modelId='cohere.command-text-v14',
+        modelId='amazon.titan-text-express-v1',
         accept='application/json',
         contentType='application/json'
     )
