@@ -4,6 +4,8 @@ import os
 import pytest
 import boto3
 
+pytest_plugins = []
+
 
 @pytest.fixture(autouse=True)
 def environment():
