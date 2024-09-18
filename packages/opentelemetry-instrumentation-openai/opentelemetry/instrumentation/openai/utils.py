@@ -88,6 +88,10 @@ def _with_chat_telemetry_wrapper(func):
                 args,
                 kwargs,
             )
+            span = tracer.start_span(name="openai.response")
+            handle_structured_output(span, response)
+            
+            return response
 
         return wrapper
 
@@ -133,3 +137,23 @@ def dont_throw(func):
                 Config.exception_logger(e)
 
     return wrapper
+
+def handle_structured_output(span, response):
+    """
+    Extracts structured output from the OpenAI API response and logs it to the telemetry span.
+    Specifically logs refusal responses and other structured data.
+    """
+    if "choices" in response:
+        for choice in response["choices"]:
+            if "finish_reason" in choice and choice["finish_reason"] == "refusal":
+                span.set_attribute("openai.response_type", "refusal")
+                span.set_attribute("openai.refusal_reason", choice.get("reason", "unknown"))
+                logging.info("Logged refusal response to span: %s", choice.get("reason", "unknown"))
+
+            # Log other structured outputs (e.g., content filter, actions)
+            if "structured_output" in choice:
+                structured_output = choice["structured_output"]
+                for key, value in structured_output.items():
+                    span.set_attribute(f"openai.{key}", value)
+                logging.info(f"Logged structured output: {structured_output}")
+
