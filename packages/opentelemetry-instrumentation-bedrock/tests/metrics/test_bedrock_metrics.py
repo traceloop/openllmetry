@@ -5,12 +5,12 @@ from opentelemetry.semconv_ai import Meters, SpanAttributes
 
 
 @pytest.mark.vcr
-def test_invoke_model_metrics(metrics_test_context, brt2):
-    if brt2 is None:
+def test_invoke_model_metrics(test_context, brt):
+    if brt is None:
         print("test_invoke_model_metrics test skipped.")
         return
 
-    _, reader = metrics_test_context
+    _, _, reader = test_context
 
     body = json.dumps(
         {
@@ -23,7 +23,7 @@ def test_invoke_model_metrics(metrics_test_context, brt2):
         }
     )
 
-    brt2.invoke_model(
+    brt.invoke_model(
         body=body,
         modelId='amazon.titan-text-express-v1',
         accept='application/json',

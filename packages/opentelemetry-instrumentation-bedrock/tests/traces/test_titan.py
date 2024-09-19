@@ -5,7 +5,7 @@ import json
 
 
 @pytest.mark.vcr
-def test_titan_completion(exporter, brt):
+def test_titan_completion(test_context, brt):
     body = json.dumps(
         {
             "inputText": "Translate to spanish: 'Amazon Bedrock is the easiest way to build and"
@@ -28,6 +28,7 @@ def test_titan_completion(exporter, brt):
 
     response_body = json.loads(response.get("body").read())
 
+    exporter, _, _ = test_context
     spans = exporter.get_finished_spans()
     assert all(span.name == "bedrock.completion" for span in spans)
 

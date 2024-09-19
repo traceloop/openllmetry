@@ -5,7 +5,7 @@ import json
 
 
 @pytest.mark.vcr
-def test_meta_llama2_completion_string_content(exporter, brt):
+def test_meta_llama2_completion_string_content(test_context, brt):
     model_id = "meta.llama2-13b-chat-v1"
     prompt = """<s>[INST] <<SYS>>
 You are a helpful, respectful and honest assistant. Always answer as helpfully as possible, while being safe.  Your
@@ -26,6 +26,7 @@ There's a llama in my garden  What should I do? [/INST]"""
 
     response_body = json.loads(response.get("body").read())
 
+    exporter, _, _ = test_context
     spans = exporter.get_finished_spans()
     assert all(span.name == "bedrock.completion" for span in spans)
 
@@ -45,7 +46,7 @@ There's a llama in my garden  What should I do? [/INST]"""
 
 
 @pytest.mark.vcr
-def test_meta_llama3_completion(exporter, brt):
+def test_meta_llama3_completion(test_context, brt):
     model_id = "meta.llama3-70b-instruct-v1:0"
     prompt = "Tell me a joke about opentelemetry"
     # Create request body.
@@ -57,6 +58,7 @@ def test_meta_llama3_completion(exporter, brt):
 
     response_body = json.loads(response.get("body").read())
 
+    exporter, _, _ = test_context
     spans = exporter.get_finished_spans()
     assert all(span.name == "bedrock.completion" for span in spans)
 

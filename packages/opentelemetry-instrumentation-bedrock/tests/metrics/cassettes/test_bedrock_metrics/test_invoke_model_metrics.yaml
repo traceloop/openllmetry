@@ -18,15 +18,15 @@ interactions:
         cmV0cnktbW9kZSNsZWdhY3kgQm90b2NvcmUvMS4zNC4xNjI=
       X-Amz-Date:
       - !!binary |
-        MjAyNDA5MTlUMDgxNTMyWg==
+        MjAyNDA5MTlUMjE0NjE5Wg==
       amz-sdk-invocation-id:
       - !!binary |
-        YmNjNTcxNjYtYjRmOC00MzQzLTg4YmYtNWE4YzBhODBmZTM5
+        MGVmMmNlZWUtNzA1OS00M2Y2LTk4OTUtZWUzMDdjNDFmNWI2
       amz-sdk-request:
       - !!binary |
         YXR0ZW1wdD0x
     method: POST
-    uri: https://bedrock-runtime.us-west-2.amazonaws.com/model/amazon.titan-text-express-v1/invoke
+    uri: https://bedrock-runtime.us-east-1.amazonaws.com/model/amazon.titan-text-express-v1/invoke
   response:
     body:
       string: '{"inputTextTokenCount":9,"results":[{"tokenCount":17,"outputText":"\nWhat
@@ -39,15 +39,15 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Thu, 19 Sep 2024 08:15:34 GMT
+      - Thu, 19 Sep 2024 21:46:20 GMT
       X-Amzn-Bedrock-Input-Token-Count:
       - '9'
       X-Amzn-Bedrock-Invocation-Latency:
-      - '1229'
+      - '1155'
       X-Amzn-Bedrock-Output-Token-Count:
       - '17'
       x-amzn-RequestId:
-      - 6278b8bf-c1a7-46d7-822b-9f85ee7805b6
+      - 58c863f2-7a84-4bf8-8b93-1d51ca8aa150
     status:
       code: 200
       message: OK
