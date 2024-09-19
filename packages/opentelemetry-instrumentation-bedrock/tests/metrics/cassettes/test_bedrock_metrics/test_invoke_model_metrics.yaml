@@ -13,38 +13,42 @@ interactions:
         YXBwbGljYXRpb24vanNvbg==
       User-Agent:
       - !!binary |
-        Qm90bzMvMS4zNS4yMSBtZC9Cb3RvY29yZSMxLjM1LjIxIHVhLzIuMCBvcy9tYWNvcyMyMy42LjAg
-        bWQvYXJjaCNhcm02NCBsYW5nL3B5dGhvbiMzLjkuNiBtZC9weWltcGwjQ1B5dGhvbiBjZmcvcmV0
-        cnktbW9kZSNsZWdhY3kgQm90b2NvcmUvMS4zNS4yMQ==
+        Qm90bzMvMS4zNC4xNjIgbWQvQm90b2NvcmUjMS4zNC4xNjIgdWEvMi4wIG9zL21hY29zIzIzLjYu
+        MCBtZC9hcmNoI2FybTY0IGxhbmcvcHl0aG9uIzMuMTEuNSBtZC9weWltcGwjQ1B5dGhvbiBjZmcv
+        cmV0cnktbW9kZSNsZWdhY3kgQm90b2NvcmUvMS4zNC4xNjI=
       X-Amz-Date:
       - !!binary |
-        MjAyNDA5MTdUMjMyOTQzWg==
+        MjAyNDA5MTlUMDgxNTMyWg==
       amz-sdk-invocation-id:
       - !!binary |
-        NTE5ZWJlYzUtNDMzYy00YzIzLWJmNmItYWZhMGMyNjBmMzQx
+        YmNjNTcxNjYtYjRmOC00MzQzLTg4YmYtNWE4YzBhODBmZTM5
       amz-sdk-request:
       - !!binary |
         YXR0ZW1wdD0x
     method: POST
-    uri: https://bedrock-runtime.us-east-1.amazonaws.com/model/amazon.titan-text-express-v1/invoke
+    uri: https://bedrock-runtime.us-west-2.amazonaws.com/model/amazon.titan-text-express-v1/invoke
   response:
     body:
-      string: '{"message":"You don''t have access to the model with the specified
-        model ID."}'
+      string: '{"inputTextTokenCount":9,"results":[{"tokenCount":17,"outputText":"\nWhat
+        do you call a bear with no teeth?\nA gummy bear.","completionReason":"FINISH"}]}'
     headers:
       Connection:
       - keep-alive
       Content-Length:
-      - '77'
+      - '154'
       Content-Type:
       - application/json
       Date:
-      - Tue, 17 Sep 2024 23:29:43 GMT
-      x-amzn-ErrorType:
-      - AccessDeniedException:http://internal.amazon.com/coral/com.amazon.bedrock/
+      - Thu, 19 Sep 2024 08:15:34 GMT
+      X-Amzn-Bedrock-Input-Token-Count:
+      - '9'
+      X-Amzn-Bedrock-Invocation-Latency:
+      - '1229'
+      X-Amzn-Bedrock-Output-Token-Count:
+      - '17'
       x-amzn-RequestId:
-      - 4caffe59-bb3e-4e98-abe9-f761237b02db
+      - 6278b8bf-c1a7-46d7-822b-9f85ee7805b6
     status:
-      code: 403
-      message: Forbidden
+      code: 200
+      message: OK
 version: 1

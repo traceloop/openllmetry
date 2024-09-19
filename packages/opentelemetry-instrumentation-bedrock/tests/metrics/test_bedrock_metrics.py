@@ -5,12 +5,12 @@ from opentelemetry.semconv_ai import Meters, SpanAttributes
 
 
 @pytest.mark.vcr
-def test_invoke_model_metrics(metrics_test_context, brt):
-    if brt is None:
+def test_invoke_model_metrics(metrics_test_context, brt2):
+    if brt2 is None:
         print("test_invoke_model_metrics test skipped.")
         return
 
-    provider, reader = metrics_test_context
+    _, reader = metrics_test_context
 
     body = json.dumps(
         {
@@ -23,7 +23,7 @@ def test_invoke_model_metrics(metrics_test_context, brt):
         }
     )
 
-    brt.invoke_model(
+    brt2.invoke_model(
         body=body,
         modelId='amazon.titan-text-express-v1',
         accept='application/json',
@@ -48,7 +48,7 @@ def test_invoke_model_metrics(metrics_test_context, brt):
                             "output",
                             "input",
                         ]
-                        assert data_point.value > 0
+                        assert data_point.sum > 0
 
                 if metric.name == Meters.LLM_OPERATION_DURATION:
                     found_duration_metric = True

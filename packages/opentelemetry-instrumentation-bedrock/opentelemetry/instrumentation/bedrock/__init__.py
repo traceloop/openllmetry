@@ -240,7 +240,7 @@ def _handle_call(span, kwargs, response, metricParams):
 
     metricParams.vendor = vendor
     metricParams.model = model
-    metricParams.isStream = True
+    metricParams.isStream = False
 
     _set_span_attribute(span, SpanAttributes.LLM_SYSTEM, vendor)
     _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, model)
