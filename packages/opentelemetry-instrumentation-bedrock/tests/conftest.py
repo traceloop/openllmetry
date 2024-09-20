@@ -57,7 +57,7 @@ def instrument(test_context):
     BedrockInstrumentor(enrich_token_usage=True).instrument()
 
     yield
-  
+
     exporter, provider, reader = test_context
     exporter.shutdown()
     reader.shutdown()
