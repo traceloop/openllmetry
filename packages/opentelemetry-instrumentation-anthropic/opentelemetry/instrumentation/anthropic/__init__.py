@@ -29,6 +29,7 @@ from opentelemetry.semconv_ai import (
     LLMRequestTypeValues,
     SpanAttributes,
     Meters,
+    MetricUtils,
 )
 from opentelemetry.trace import SpanKind, Tracer, get_tracer
 from opentelemetry.trace.status import Status, StatusCode
@@ -372,24 +373,8 @@ def _with_chat_telemetry_wrapper(func):
 
 
 def _create_metrics(meter: Meter):
-    token_histogram = meter.create_histogram(
-        name=Meters.LLM_TOKEN_USAGE,
-        unit="token",
-        description="Measures number of input and output tokens used",
-    )
-
-    choice_counter = meter.create_counter(
-        name=Meters.LLM_GENERATION_CHOICES,
-        unit="choice",
-        description="Number of choices returned by chat completions call",
-    )
-
-    duration_histogram = meter.create_histogram(
-        name=Meters.LLM_OPERATION_DURATION,
-        unit="s",
-        description="GenAI operation duration",
-    )
-
+    token_histogram, choice_counter, duration_histogram = MetricUtils.basic_metrics(meter)
+    
     exception_counter = meter.create_counter(
         name=Meters.LLM_ANTHROPIC_COMPLETION_EXCEPTIONS,
         unit="time",
