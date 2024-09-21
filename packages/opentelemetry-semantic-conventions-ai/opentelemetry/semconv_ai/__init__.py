@@ -239,7 +239,7 @@ class TraceloopSpanKindValues(Enum):
 
 class MetricUtils:
 
-    def basic_metrics(meter):
+    def basic_metrics(meter: Meter):
         token_histogram = meter.create_histogram(
         name=Meters.LLM_TOKEN_USAGE,
         unit="token",
