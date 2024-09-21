@@ -236,3 +236,26 @@ class TraceloopSpanKindValues(Enum):
     AGENT = "agent"
     TOOL = "tool"
     UNKNOWN = "unknown"
+
+class MetricUtils:
+
+    def basic_metrics(meter):
+        token_histogram = meter.create_histogram(
+        name=Meters.LLM_TOKEN_USAGE,
+        unit="token",
+        description="Measures number of input and output tokens used",
+        )
+
+        choice_counter = meter.create_counter(
+            name=Meters.LLM_GENERATION_CHOICES,
+            unit="choice",
+            description="Number of choices returned by chat completions call",
+        )
+
+        duration_histogram = meter.create_histogram(
+            name=Meters.LLM_OPERATION_DURATION,
+            unit="s",
+            description="GenAI operation duration",
+        )
+        
+        return token_histogram, choice_counter, duration_histogram
