@@ -609,7 +609,7 @@ def _create_metrics(meter: Meter):
     )
 
     exception_counter = meter.create_counter(
-        name=Meters.LLM_ANTHROPIC_COMPLETION_EXCEPTIONS,
+        name=Meters.LLM_BEDROCK_COMPLETIONS_EXCEPTIONS,
         unit="time",
         description="Number of exceptions occurred during chat completions",
     )
