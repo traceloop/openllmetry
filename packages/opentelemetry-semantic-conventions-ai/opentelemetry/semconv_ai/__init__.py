@@ -1,4 +1,5 @@
 from enum import Enum
+from opentelemetry.metrics import Histogram, Counter
 
 SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY = "suppress_language_model_instrumentation"
 
@@ -239,7 +240,7 @@ class TraceloopSpanKindValues(Enum):
 
 class MetricUtils:
 
-    def basic_metrics(meter: Meter):
+    def basic_metrics(meter: Meter) -> tuple[Histogram, Counter, Histogram]:
         token_histogram = meter.create_histogram(
         name=Meters.LLM_TOKEN_USAGE,
         unit="token",
