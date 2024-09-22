@@ -361,8 +361,6 @@ def _set_prompts(span, messages):
 
         _set_span_attribute(span, f"{prefix}.role", msg.get("role"))
         if msg.get("content"):
-            print("trace_id", span.context.trace_id)
-            print("span_id", span.context.span_id)
             content = copy.deepcopy(msg.get("content"))
             if isinstance(content, list):
                 content = [
@@ -373,7 +371,6 @@ def _set_prompts(span, messages):
                 ]
 
                 content = json.dumps(content)
-                print("content", content)
             _set_span_attribute(span, f"{prefix}.content", content)
         if msg.get("tool_call_id"):
             _set_span_attribute(span, f"{prefix}.tool_call_id", msg.get("tool_call_id"))
