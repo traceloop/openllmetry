@@ -1,4 +1,5 @@
 import base64
+import os
 import requests
 
 def upload_base64_image(image_path, message_index, message_content_index, image_format, trace_id, span_id, api_key):

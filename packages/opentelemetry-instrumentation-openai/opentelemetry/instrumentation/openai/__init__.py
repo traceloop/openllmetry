@@ -20,7 +20,7 @@ class OpenAIInstrumentor(BaseInstrumentor):
         enrich_token_usage: bool = False,
         exception_logger=None,
         get_common_metrics_attributes: Callable[[], dict] = lambda: {},
-        upload_base64_image: Callable[[str, str, str, str], str] = lambda trace_id, span_id, image_name, base64_image_url: str,
+        upload_base64_image: Callable[[str, str, str, str], str] = lambda *args: "",
     ):
         super().__init__()
         Config.enrich_assistant = enrich_assistant
@@ -30,17 +30,14 @@ class OpenAIInstrumentor(BaseInstrumentor):
         Config.upload_base64_image = upload_base64_image
         self._requests_instrumentor = RequestsInstrumentor()
 
-
     def instrumentation_dependencies(self) -> Collection[str]:
         return _instruments
-    
 
     def _instrument(self, **kwargs):
         if is_openai_v1():
             OpenAIV1Instrumentor().instrument(**kwargs)
         else:
             OpenAIV0Instrumentor().instrument(**kwargs)
-        
 
     def _uninstrument(self, **kwargs):
         if is_openai_v1():

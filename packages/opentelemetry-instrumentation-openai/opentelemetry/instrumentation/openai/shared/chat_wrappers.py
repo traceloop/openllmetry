@@ -330,14 +330,15 @@ def _set_token_counter_metrics(token_counter, usage, shared_attributes):
 def _is_base64_image(item):
     if not isinstance(item, dict):
         return False
-    
+
     if not isinstance(item.get('image_url'), dict):
         return False
-    
-    if not 'data:image/' in item.get('image_url', {}).get('url', ''):
+
+    if 'data:image/' not in item.get('image_url', {}).get('url', ''):
         return False
-    
+
     return True
+
 
 def _process_image_item(item, trace_id, span_id, message_index, content_index):
     image_format = item["image_url"]["url"].split(";")[0].split("/")[1]
@@ -351,6 +352,7 @@ def _process_image_item(item, trace_id, span_id, message_index, content_index):
             'url': url
         }
     }
+
 
 def _set_prompts(span, messages):
     if not span.is_recording() or messages is None:
