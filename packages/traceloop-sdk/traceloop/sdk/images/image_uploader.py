@@ -28,7 +28,7 @@ class ImageUploader:
         return url
 
     async def _async_upload(self, trace_id, span_id, image_name, base64_image):
-        url = f"{self.base_url}/traces/{trace_id}/spans/{span_id}/images/"
+        url = f"{self.base_url}/v2/traces/{trace_id}/spans/{span_id}/images/"
 
         headers = {
             "Authorization": f"Bearer {self.api_key}",
