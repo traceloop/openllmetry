@@ -60,7 +60,7 @@ if __name__ == "__main__":
     image_name = "itamar.jpeg"
     trace_id = "tid_156"
     span_id = "sid_156"
-    api_key = "4bd33e6f69763ab39300b5ea1857503f49c26eefc85010d54495ffabe3384f167ff544bf5c7cc7e1d52b503151ba4a0d"
+    api_key = os.environ.get("TRACELOOP_API_KEY")
 
     image_url = get_image_urls(trace_id, span_id, api_key)
     if image_url:
