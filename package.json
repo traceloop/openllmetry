@@ -1,0 +1,15 @@
+{
+  "name": "openllmetry",
+  "version": "0.0.0",
+  "license": "MIT",
+  "scripts": {},
+  "private": true,
+  "devDependencies": {
+    "@nxlv/python": "^17.0.0",
+    "nx": "^17.3.2",
+    "nx-cloud": "latest"
+  },
+  "workspaces": [
+    "packages/*"
+  ]
+}

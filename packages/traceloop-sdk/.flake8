@@ -1,0 +1,12 @@
+[flake8]
+exclude =
+	.git,
+	__pycache__,
+	build,
+	dist,
+	.tox,
+	venv,
+	.venv,
+	.pytest_cache
+max-line-length = 120
+per-file-ignores = __init__.py:F401

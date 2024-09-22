@@ -1,0 +1,100 @@
+[tool.coverage.run]
+branch = true
+source = [ "sample_app" ]
+
+[tool.coverage.report]
+exclude_lines = [ "if TYPE_CHECKING:" ]
+show_missing = true
+
+[tool.poetry]
+name = "sample-app"
+version = "0.0.1"
+description = "Sample Application using Traceloop SDK"
+authors = [
+  "Gal Kleinman <gal@traceloop.com>",
+  "Nir Gazit <nir@traceloop.com>",
+  "Tomer Friedman <tomer@traceloop.com>"
+]
+license = "Apache-2.0"
+readme = "README.md"
+
+[[tool.poetry.packages]]
+include = "sample_app"
+
+[tool.poetry.dependencies]
+python = ">=3.10,<3.13"
+openai = "^1.42.0"
+requests = "^2.32.0"
+# pinecone-datasets = "^0.7.0"
+pinecone-client = "^3.2.2"
+llama-index = "^0.10.43"
+# workaround for: https://github.com/python-poetry/poetry-plugin-export/issues/183
+urllib3 = ">=1.25.4,<1.27"
+duckduckgo-search = "^3.9.3"
+torch = "^2.1.0"
+chromadb = "^0.5.0"
+tokenizers = "~0.19.0"
+boto3 = "^1.34.120"
+transformers = "^4.40.0"
+replicate = "^0.22.0"
+cohere = "^5.3.3"
+anthropic = "^0.25.1"
+google-cloud-aiplatform = "^1.54.0"
+python-dotenv = "^1.0.1"
+langchain = "^0.2.5"
+langchain-community = "^0.2.5"
+haystack-ai = "~2.3.1"
+datasets="~2.18.0"
+llama-index-embeddings-huggingface = "^0.2.0"
+litellm = "^1.40.16"
+text-generation = "^0.7.0"
+llama-index-vector-stores-chroma = "^0.1.6"
+langchain-openai ="^0.1.8"
+google-generativeai = "^0.6.0"
+langchain-ibm = "^0.1.11"
+langgraph = "^0.2.14"
+groq = "^0.10.0"
+
+[tool.poetry.dependencies.opentelemetry-instrumentation-openai]
+path = "../opentelemetry-instrumentation-openai"
+develop = true
+
+[tool.poetry.dependencies.opentelemetry-instrumentation-haystack]
+path = "../opentelemetry-instrumentation-haystack"
+develop = true
+
+[tool.poetry.dependencies.opentelemetry-instrumentation-pinecone]
+path = "../opentelemetry-instrumentation-pinecone"
+develop = true
+
+[tool.poetry.dependencies.opentelemetry-instrumentation-replicate]
+path = "../opentelemetry-instrumentation-replicate"
+develop = true
+
+[tool.poetry.dependencies.opentelemetry-instrumentation-vertexai]
+path = "../opentelemetry-instrumentation-vertexai"
+develop = true
+
+[tool.poetry.dependencies.opentelemetry-instrumentation-google-generativeai]
+path = "../opentelemetry-instrumentation-google-generativeai"
+develop = true
+
+[tool.poetry.dependencies.opentelemetry-instrumentation-groq]
+path = "../opentelemetry-instrumentation-groq"
+develop = true
+
+[tool.poetry.dependencies.traceloop-sdk]
+path = "../traceloop-sdk"
+develop = true
+
+[tool.poetry.group.dev.dependencies]
+autopep8 = "^2.2.0"
+flake8 = "7.0.0"
+pytest = "^8.2.2"
+pytest-sugar = "1.0.0"
+pytest-cov = "4.1.0"
+pytest-html = "4.1.1"
+
+[build-system]
+requires = [ "poetry-core" ]
+build-backend = "poetry.core.masonry.api"

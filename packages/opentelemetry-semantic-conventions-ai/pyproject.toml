@@ -1,0 +1,35 @@
+[tool.coverage.run]
+branch = true
+source = [ "opentelemetry/semconv/ai" ]
+
+[tool.coverage.report]
+exclude_lines = ['if TYPE_CHECKING:']
+show_missing = true
+
+[tool.poetry]
+name = "opentelemetry-semantic-conventions-ai"
+version = "0.4.1"
+description = "OpenTelemetry Semantic Conventions Extension for Large Language Models"
+authors = [
+  "Gal Kleinman <gal@traceloop.com>",
+  "Nir Gazit <nir@traceloop.com>",
+  "Tomer Friedman <tomer@traceloop.com>"
+]
+license = "Apache-2.0"
+readme = "README.md"
+
+[[tool.poetry.packages]]
+include = "opentelemetry/semconv_ai"
+
+[tool.poetry.dependencies]
+python = ">=3.9,<4"
+
+[tool.poetry.group.dev.dependencies]
+autopep8 = "^2.2.0"
+flake8 = "7.0.0"
+pytest = "^8.2.2"
+pytest-sugar = "1.0.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
