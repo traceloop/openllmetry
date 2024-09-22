@@ -222,7 +222,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         **kwargs: Any,
     ) -> str:
         """Get the name to be used for the span. Based on heuristic. Can be extended."""
-        if "kwargs" in serialized and serialized["kwargs"].get("name"):
+        if serialized and "kwargs" in serialized and serialized["kwargs"].get("name"):
             return serialized["kwargs"]["name"]
         if kwargs.get("name"):
             return kwargs["name"]
