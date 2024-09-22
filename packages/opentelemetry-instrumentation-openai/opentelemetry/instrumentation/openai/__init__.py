@@ -6,7 +6,6 @@ from opentelemetry.instrumentation.openai.shared.config import Config
 from opentelemetry.instrumentation.openai.utils import is_openai_v1
 from opentelemetry.instrumentation.openai.v0 import OpenAIV0Instrumentor
 from opentelemetry.instrumentation.openai.v1 import OpenAIV1Instrumentor
-from opentelemetry.instrumentation.requests import RequestsInstrumentor
 
 _instruments = ("openai >= 0.27.0",)
 
@@ -28,7 +27,6 @@ class OpenAIInstrumentor(BaseInstrumentor):
         Config.exception_logger = exception_logger
         Config.get_common_metrics_attributes = get_common_metrics_attributes
         Config.upload_base64_image = upload_base64_image
-        self._requests_instrumentor = RequestsInstrumentor()
 
     def instrumentation_dependencies(self) -> Collection[str]:
         return _instruments
