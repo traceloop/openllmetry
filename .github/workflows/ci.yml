@@ -1,0 +1,121 @@
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - "main"
+  push:
+    branches:
+      - "main"
+
+jobs:
+  lint-pr:
+    name: Lint PR
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request_target' && contains('["opened", "edited", "synchronize"]', github.event.action)
+    permissions:
+      pull-requests: read
+    steps:
+      - name: Validate PR title
+        uses: amannn/action-semantic-pull-request@v5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{  github.event.pull_request.head.sha }}
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.11
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - uses: nrwl/nx-set-shas@v4
+      - run: npm ci
+      - run: npx nx affected -t install --with dev
+      - run: npx nx affected -t lint --parallel=3
+
+  build-packages:
+    name: Build Packages
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11"]
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - uses: nrwl/nx-set-shas@v4
+
+      - run: npm ci
+
+      - name: Install
+        run: npx nx affected -t install --with dev --parallel=3
+
+      - name: Build
+        run: npx nx affected -t build-release --parallel=3
+
+  test-packages:
+    name: Test Packages
+    runs-on: ubuntu-latest
+    permissions:
+      contents: "read"
+      id-token: "write"
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{  github.event.pull_request.head.sha }}
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - uses: nrwl/nx-set-shas@v4
+
+      - run: npm ci
+
+      - name: Install
+        run: npx nx affected -t install --exclude='sample-app' --with dev --parallel=3
+
+      - name: Test
+        env:
+          HAYSTACK_TELEMETRY_ENABLED: False
+        run: npx nx affected -t test --exclude='sample-app' --exclude='opentelemetry-instrumentation-haystack' --parallel=3

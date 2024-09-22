@@ -1,0 +1,244 @@
+interactions:
+- request:
+    body: '{"messages": [{"role": "system", "content": "You are designed to help with
+      a variety of tasks, from answering questions to providing summaries to other
+      types of analyses.\n\n## Tools\n\nYou have access to a wide variety of tools.
+      You are responsible for using the tools in any sequence you deem appropriate
+      to complete the task at hand.\nThis may require breaking the task into subtasks
+      and using different tools to complete each subtask.\n\nYou have access to the
+      following tools:\n> Tool Name: multiply\nTool Description: multiply(a: int,
+      b: int) -> int\nMultiply two integers and returns the result integer\nTool Args:
+      {\"type\": \"object\", \"properties\": {\"a\": {\"title\": \"A\", \"type\":
+      \"integer\"}, \"b\": {\"title\": \"B\", \"type\": \"integer\"}}, \"required\":
+      [\"a\", \"b\"]}\n\n\n\n## Output Format\n\nPlease answer in the same language
+      as the question and use the following format:\n\n```\nThought: The current language
+      of the user is: (user''s language). I need to use a tool to help me answer the
+      question.\nAction: tool name (one of multiply) if using a tool.\nAction Input:
+      the input to the tool, in a JSON format representing the kwargs (e.g. {\"input\":
+      \"hello world\", \"num_beams\": 5})\n```\n\nPlease ALWAYS start with a Thought.\n\nPlease
+      use a valid JSON format for the Action Input. Do NOT do this {''input'': ''hello
+      world'', ''num_beams'': 5}.\n\nIf this format is used, the user will respond
+      in the following format:\n\n```\nObservation: tool response\n```\n\nYou should
+      keep repeating the above format till you have enough information to answer the
+      question without using any more tools. At that point, you MUST respond in the
+      one of the following two formats:\n\n```\nThought: I can answer without using
+      any more tools. I''ll use the user''s language to answer\nAnswer: [your answer
+      here (In the same language as the user''s question)]\n```\n\n```\nThought: I
+      cannot answer the question with the provided tools.\nAnswer: [your answer here
+      (In the same language as the user''s question)]\n```\n\n## Current Conversation\n\nBelow
+      is the current conversation consisting of interleaving human and assistant messages.\n"},
+      {"role": "user", "content": "What is 2 times 3?"}], "model": "gpt-3.5-turbo-0613",
+      "stream": false, "temperature": 0.1}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '2263'
+      content-type:
+      - application/json
+      host:
+      - api.openai.com
+      user-agent:
+      - OpenAI/Python 1.31.1
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.31.1
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.9.6
+    method: POST
+    uri: https://api.openai.com/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA1RRy44TMRC8z1e0fE6iTGZDyNw4cFgJicuCFhEUeWY6thdPt7HbYpco/448ecHF
+        ale5StXlYwWg3KBaUL3V0o/Bz7fP9OllW2//2KZ+3Sy7z8PXbMl8+xJX3bOaFQV3L9jLVbXoeQwe
+        xTGd6T6iFiyu9abevH+o1+t6IkYe0BeZCTJvFuu55NjxfPmubi5Ky67HpFr4XgEAHKezZKQBX1UL
+        y9kVGTElbVC1t0cAKrIviNIpuSSaRM3uZM8kSFPsJ8vZWGnhySL0OUYkAa/JZG0Q+ABiEXLCCC7B
+        RzLeJbuARyDEAYQLBRqE2ZebRR9gRNCUfmOctL8yplLIYkcf+jK0MGYvLvi3KwKPFLK0cNwpvVMt
+        rGawU12ZmpO6pD7d1vVsQuSuVEPZ+xt+cOSS3UfUiamsloTDWX6qAH5Mteb/mlIh8hhkL/wTqRg+
+        bLZnP3X/yX/Y5kIKi/Z3fL1aVZeEKr0lwXF/cGQwhuimlkvO6lT9BQAA//8DAMf7L39kAgAA
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 89081aa0be14ad88-ATL
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Sat, 08 Jun 2024 10:12:32 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=rFGBQydo_yMqEBELvSqz97ukprFYy0X1qRvpxOhHhBQ-1717841552-1.0.1.1-yfFCp.R3kQMw4JSnCXEleby8oMAPFTlcR8wQWGWvyEqGjnZhKLfvmFUJUJpLJmNJZBKP01DqB0DNe2T7UImw1g;
+        path=/; expires=Sat, 08-Jun-24 10:42:32 GMT; domain=.api.openai.com; HttpOnly;
+        Secure; SameSite=None
+      - _cfuvid=0ANl3qJPDgnwCjOq6X1WwlIIVJZZF28CxFA5Wm0O6SI-1717841552534-0.0.1.1-604800000;
+        path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
+      Transfer-Encoding:
+      - chunked
+      alt-svc:
+      - h3=":443"; ma=86400
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '830'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=15724800; includeSubDomains
+      x-ratelimit-limit-requests:
+      - '5000'
+      x-ratelimit-limit-tokens:
+      - '160000'
+      x-ratelimit-remaining-requests:
+      - '4999'
+      x-ratelimit-remaining-tokens:
+      - '159475'
+      x-ratelimit-reset-requests:
+      - 12ms
+      x-ratelimit-reset-tokens:
+      - 196ms
+      x-request-id:
+      - req_75e76456306565267e8057b7ce428a48
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"messages": [{"role": "system", "content": "You are designed to help with
+      a variety of tasks, from answering questions to providing summaries to other
+      types of analyses.\n\n## Tools\n\nYou have access to a wide variety of tools.
+      You are responsible for using the tools in any sequence you deem appropriate
+      to complete the task at hand.\nThis may require breaking the task into subtasks
+      and using different tools to complete each subtask.\n\nYou have access to the
+      following tools:\n> Tool Name: multiply\nTool Description: multiply(a: int,
+      b: int) -> int\nMultiply two integers and returns the result integer\nTool Args:
+      {\"type\": \"object\", \"properties\": {\"a\": {\"title\": \"A\", \"type\":
+      \"integer\"}, \"b\": {\"title\": \"B\", \"type\": \"integer\"}}, \"required\":
+      [\"a\", \"b\"]}\n\n\n\n## Output Format\n\nPlease answer in the same language
+      as the question and use the following format:\n\n```\nThought: The current language
+      of the user is: (user''s language). I need to use a tool to help me answer the
+      question.\nAction: tool name (one of multiply) if using a tool.\nAction Input:
+      the input to the tool, in a JSON format representing the kwargs (e.g. {\"input\":
+      \"hello world\", \"num_beams\": 5})\n```\n\nPlease ALWAYS start with a Thought.\n\nPlease
+      use a valid JSON format for the Action Input. Do NOT do this {''input'': ''hello
+      world'', ''num_beams'': 5}.\n\nIf this format is used, the user will respond
+      in the following format:\n\n```\nObservation: tool response\n```\n\nYou should
+      keep repeating the above format till you have enough information to answer the
+      question without using any more tools. At that point, you MUST respond in the
+      one of the following two formats:\n\n```\nThought: I can answer without using
+      any more tools. I''ll use the user''s language to answer\nAnswer: [your answer
+      here (In the same language as the user''s question)]\n```\n\n```\nThought: I
+      cannot answer the question with the provided tools.\nAnswer: [your answer here
+      (In the same language as the user''s question)]\n```\n\n## Current Conversation\n\nBelow
+      is the current conversation consisting of interleaving human and assistant messages.\n"},
+      {"role": "user", "content": "What is 2 times 3?"}, {"role": "assistant", "content":
+      "Thought: The current language of the user is English. I need to use a tool
+      to help me answer the question.\nAction: multiply\nAction Input: {''a'': 2,
+      ''b'': 3}"}, {"role": "user", "content": "Observation: 6"}], "model": "gpt-3.5-turbo-0613",
+      "stream": false, "temperature": 0.1}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '2504'
+      content-type:
+      - application/json
+      cookie:
+      - __cf_bm=rFGBQydo_yMqEBELvSqz97ukprFYy0X1qRvpxOhHhBQ-1717841552-1.0.1.1-yfFCp.R3kQMw4JSnCXEleby8oMAPFTlcR8wQWGWvyEqGjnZhKLfvmFUJUJpLJmNJZBKP01DqB0DNe2T7UImw1g;
+        _cfuvid=0ANl3qJPDgnwCjOq6X1WwlIIVJZZF28CxFA5Wm0O6SI-1717841552534-0.0.1.1-604800000
+      host:
+      - api.openai.com
+      user-agent:
+      - OpenAI/Python 1.31.1
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.31.1
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.9.6
+    method: POST
+    uri: https://api.openai.com/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA1RRQW7bMBC86xULXnKxhTiq7Fa3oqcACVK3KVCgLQya3khsyF2Zu4IbBP57QVmx
+        2wtJzOwMZpavBYDxO9OAcZ1VF/sw//Cd7sKnwzrGL/tv++T26wexX/f3n8PjemtmWcHb3+j0TVU6
+        jn1A9Uwn2iW0itl1sVqs3r9b1HU1EpF3GLKs7XVelfVch7Tl+fVyUU3Kjr1DMQ38KAAAXsczZ6Qd
+        /jENXM/ekIgitkXTnIcATOKQEWNFvKglNbML6ZgUaYz92PHQdtrALThLYEkOmODgteNBYRBPLVh6
+        gcgJQZmDlHB7FQIMgqAd5jtdCQRL7WDbPDOZlD/p4/ho4AbURxSowAssSzMlOZ4rBG77xNtcl4YQ
+        zviTJy/dJqEVphxXlPuT/FgA/BpXNfzX3vSJY68b5WekbFhX9cnPXH7nwlY3E6msNvyjWq6KKaGR
+        F1GMmydPLaY++XFzOWdxLP4CAAD//wMAuG5ipzgCAAA=
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 89081aa8aa0cad88-ATL
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Sat, 08 Jun 2024 10:12:34 GMT
+      Server:
+      - cloudflare
+      Transfer-Encoding:
+      - chunked
+      alt-svc:
+      - h3=":443"; ma=86400
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '843'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=15724800; includeSubDomains
+      x-ratelimit-limit-requests:
+      - '5000'
+      x-ratelimit-limit-tokens:
+      - '160000'
+      x-ratelimit-remaining-requests:
+      - '4999'
+      x-ratelimit-remaining-tokens:
+      - '159431'
+      x-ratelimit-reset-requests:
+      - 12ms
+      x-ratelimit-reset-tokens:
+      - 213ms
+      x-request-id:
+      - req_b2a9b906a450ff730d7c2cce58e3df6c
+    status:
+      code: 200
+      message: OK
+version: 1

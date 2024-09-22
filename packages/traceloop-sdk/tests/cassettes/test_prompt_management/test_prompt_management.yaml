@@ -1,0 +1,202 @@
+interactions:
+- request:
+    body: '{"messages": [{"role": "user", "content": "Tell me a joke about OpenTelemetry,
+      pirate style"}], "model": "gpt-3.5-turbo", "frequency_penalty": 0.0, "presence_penalty":
+      0.0, "temperature": 1.0, "top_p": 1.0}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '206'
+      content-type:
+      - application/json
+      host:
+      - api.openai.com
+      user-agent:
+      - OpenAI/Python 1.12.0
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.12.0
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.9.5
+    method: POST
+    uri: https://api.openai.com/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA1SRMW/bMBCFd/2Kyy1d7ECyrNTxEsRjO7QFiqZAVRg0dZaYkjyWPLUxAv/3grJj
+        owuH9/E9vju+FgBoOlwD6kGJdsHOV39/f/nw7U/ln5cfx9Vh82IWy8/qe0n0lDY4yw7ePZOWN9et
+        ZhcsiWF/wjqSEsqp1fvyvqybRV1NwHFHNtv6IPP6tpnLGHc8L6tFc3YObDQlXMOPAgDgdTpzR9/R
+        C66hnL0pjlJSPeH6cgkAI9usoErJJFFecHaFmr2Qn2o/DQfoTAcyEAQTlRCMieBTIP+VLDmSeHiA
+        1rd+Q1plNBB4oo46EIYWnQotAo8yRUgklcZIoAdK8i5Bi8GOvqO45+iU19Qi5FCj0w08xhj74QbP
+        zY6XkSz3IfIuj+9Hay/63niThm1+hH2un4TDyX4sAH5Oqxv/2waGyC7IVvgX+RxYrU5xeP2sK6zr
+        MxQWZa96UxXnfpgOScht98b3FEM0pz3uw3Z1VzV36n6pSiyOxT8AAAD//wMALyBo+lECAAA=
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 85c04495087659e9-MXP
+      Cache-Control:
+      - no-cache, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 27 Feb 2024 12:00:32 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=LoJ2ZkCANwIqvi6X3zsB_pSZBAQV8b8_h6miKLqayFA-1709035232-1.0-AXd2vlSgAt1d5qFXyzZa1shIzwyXYdM4w3Q/BIEZg6/X+kjSX9gtdZ1JqATyO5wgV/Y3qvZkVEyORfaQrvAaufY=;
+        path=/; expires=Tue, 27-Feb-24 12:30:32 GMT; domain=.api.openai.com; HttpOnly;
+        Secure; SameSite=None
+      - _cfuvid=O7d.J_kaKidtjrPfjEuOEWuKBIYColpIz74xLCFIKSE-1709035232387-0.0-604800000;
+        path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
+      Transfer-Encoding:
+      - chunked
+      access-control-allow-origin:
+      - '*'
+      alt-svc:
+      - h3=":443"; ma=86400
+      openai-model:
+      - gpt-3.5-turbo-0125
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '670'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=15724800; includeSubDomains
+      x-ratelimit-limit-requests:
+      - '5000'
+      x-ratelimit-limit-tokens:
+      - '160000'
+      x-ratelimit-remaining-requests:
+      - '4999'
+      x-ratelimit-remaining-tokens:
+      - '159971'
+      x-ratelimit-reset-requests:
+      - 12ms
+      x-ratelimit-reset-tokens:
+      - 10ms
+      x-request-id:
+      - req_47026d43d59fb48f5b82610faec6dc0f
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"messages": [{"role": "user", "content": "Tell me a joke about OpenTelemetry,
+      pirate style"}], "model": "gpt-3.5-turbo", "frequency_penalty": 0.0, "presence_penalty":
+      0.0, "temperature": 1.0, "top_p": 1.0}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '206'
+      content-type:
+      - application/json
+      cookie:
+      - __cf_bm=LoJ2ZkCANwIqvi6X3zsB_pSZBAQV8b8_h6miKLqayFA-1709035232-1.0-AXd2vlSgAt1d5qFXyzZa1shIzwyXYdM4w3Q/BIEZg6/X+kjSX9gtdZ1JqATyO5wgV/Y3qvZkVEyORfaQrvAaufY=;
+        _cfuvid=O7d.J_kaKidtjrPfjEuOEWuKBIYColpIz74xLCFIKSE-1709035232387-0.0-604800000
+      host:
+      - api.openai.com
+      user-agent:
+      - OpenAI/Python 1.12.0
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.12.0
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.9.5
+    method: POST
+    uri: https://api.openai.com/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA1SRT28TMRTE7/spHj4n1W7SLUkuCA60AqQCQq0ERdGL/Xbt1v+w3zZEVb47crJN
+        xMWH+XlG4/FLBSCMEisQUiNLF+10sf3z7bP8dF1/f1J3z1/e//wY8evtdX/TtTMvJsURNo8k+dV1
+        IYOLltiEEctEyFRSm7f1sp63s/nsAFxQZIutjzydX7RTHtImTOtm1o5OHYykLFbwqwIAeDmcpaNX
+        9FesoJ68Ko5yxp7E6nQJQKRgiyIwZ5MZPYvJGcrgmfyh9r3egTIKWBNEk5AJhkxwG8n/IEuOOO3e
+        wYN/8B9IYkGGQZONpEAbBx6fTV9cJYATodSUwpBhi0wpQ+hAmczJbAYmBZxQGt/D1rAGwkwTwJQS
+        OGTavRFjxf3pbTb0MYVN2cEP1p70zniT9ToR5uDLOzKHeLTvK4Dfhw2H/2YRMQUXec3hiXwJbBbH
+        OHH+tTOcNyPkwGjP+uWyGvuJvMtMbt0Z31OKyRwH7eJ6cdW0V7i8xFpU++ofAAAA//8DALH1FP5a
+        AgAA
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 85c0449a999e59e9-MXP
+      Cache-Control:
+      - no-cache, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 27 Feb 2024 12:00:33 GMT
+      Server:
+      - cloudflare
+      Transfer-Encoding:
+      - chunked
+      access-control-allow-origin:
+      - '*'
+      alt-svc:
+      - h3=":443"; ma=86400
+      openai-model:
+      - gpt-3.5-turbo-0125
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '905'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=15724800; includeSubDomains
+      x-ratelimit-limit-requests:
+      - '5000'
+      x-ratelimit-limit-tokens:
+      - '160000'
+      x-ratelimit-remaining-requests:
+      - '4999'
+      x-ratelimit-remaining-tokens:
+      - '159971'
+      x-ratelimit-reset-requests:
+      - 12ms
+      x-ratelimit-reset-tokens:
+      - 10ms
+      x-request-id:
+      - req_f362faa68fe4f881612cbf58af4e0a73
+    status:
+      code: 200
+      message: OK
+version: 1

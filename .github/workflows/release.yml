@@ -1,0 +1,134 @@
+name: Release - Traceloop SDK & Standalone Instrumentations
+
+on:
+    workflow_dispatch:
+
+jobs:
+  bump-version:
+    runs-on: ubuntu-latest
+
+    outputs:
+      new_version: ${{ steps.cz.outputs.version }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.11
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+
+      - id: cz
+        name: Bump Version, Create Tag and Changelog
+        uses: commitizen-tools/commitizen-action@master
+        with:
+          github_token: ${{ secrets.GH_ACCESS_TOKEN }}
+          changelog_increment_filename: body.md
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          body_path: "body.md"
+          tag_name: ${{ env.REVISION }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_ACCESS_TOKEN }}
+
+      - name: Print Version
+        run: echo "Bumped to version ${{ steps.cz.outputs.version }}"
+
+
+  release-instrumentations:
+    runs-on: ubuntu-latest
+    needs:
+      - bump-version
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+          ref: ${{ github.ref }}
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.11
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+    
+      - run: npm ci
+      
+      - name: Build Instrumentations
+        run: npx nx run-many -t build-release --projects=tag:instrumentation
+      
+      - run: mkdir instrumentations-dist
+      - run: cp packages/opentelemetry-instrumentation-*/dist/* instrumentations-dist
+
+      - name: Publish release distributions to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: instrumentations-dist/
+    
+  
+  release-sdk:
+    runs-on: ubuntu-latest
+    needs:
+      - release-instrumentations
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+          ref: ${{ github.ref }}
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.11
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+    
+      - run: npm ci
+      
+      - name: Build Traceloop SDK
+        run: npx nx run traceloop-sdk:build-release
+
+      - name: Publish release distributions to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: packages/traceloop-sdk/dist/
+
+  test-sdk-installation:
+    runs-on: ubuntu-latest
+    needs:
+      - bump-version
+      - release-sdk
+    permissions:
+      id-token: write
+    steps:
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.11
+
+      - name: Install Traceloop SDK
+        run: pip install traceloop-sdk==${{ needs.bump-version.outputs.new_version }}
