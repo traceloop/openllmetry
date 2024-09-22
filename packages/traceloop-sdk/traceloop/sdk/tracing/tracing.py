@@ -60,7 +60,7 @@ class TracerWrapper(object):
     headers: Dict[str, str] = {}
     __tracer_provider: TracerProvider = None
     __image_uploader: ImageUploader = None
-    
+
     def __new__(
         cls,
         disable_batch=False,
@@ -1079,4 +1079,4 @@ def metrics_common_attributes():
                 f"{SpanAttributes.TRACELOOP_ASSOCIATION_PROPERTIES}.{key}"
             ] = value
 
-    return common_attributes 
+    return common_attributes

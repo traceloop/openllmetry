@@ -118,7 +118,7 @@ class Traceloop:
             }
 
         print(Fore.RESET)
-    
+
         # Tracer init
         resource_attributes.update({SERVICE_NAME: app_name})
         TracerWrapper.set_static_params(
