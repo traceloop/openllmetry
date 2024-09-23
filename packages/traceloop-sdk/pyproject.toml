@@ -51,7 +51,7 @@ opentelemetry-instrumentation-llamaindex = {path="../opentelemetry-instrumentati
 opentelemetry-instrumentation-milvus = {path="../opentelemetry-instrumentation-milvus", develop=true}
 opentelemetry-instrumentation-haystack = {path="../opentelemetry-instrumentation-haystack", develop=true}
 opentelemetry-instrumentation-bedrock = {path="../opentelemetry-instrumentation-bedrock", develop=true}
-# opentelemetry-instrumentation-sagemaker = {path="../opentelemetry-instrumentation-sagemaker", develop=true}
+opentelemetry-instrumentation-sagemaker = {path="../opentelemetry-instrumentation-sagemaker", develop=true}
 opentelemetry-instrumentation-replicate = {path="../opentelemetry-instrumentation-replicate", develop=true}
 opentelemetry-instrumentation-vertexai = {path="../opentelemetry-instrumentation-vertexai", develop=true}
 opentelemetry-instrumentation-watsonx = {path="../opentelemetry-instrumentation-watsonx", develop=true}
