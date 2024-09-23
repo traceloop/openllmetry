@@ -609,7 +609,8 @@ def _create_metrics(meter: Meter):
     )
 
     exception_counter = meter.create_counter(
-        name=Meters.LLM_BEDROCK_COMPLETIONS_EXCEPTIONS,
+        # TODO: will fix this in future as a consolidation for semantic convention
+        name="llm.bedrock.completions.exceptions",
         unit="time",
         description="Number of exceptions occurred during chat completions",
     )
