@@ -1,9 +1,8 @@
 import nest_asyncio
-nest_asyncio.apply()
-
+import pytest
 from unittest.mock import AsyncMock, patch
 
-import pytest
+nest_asyncio.apply()
 
 
 @pytest.mark.asyncio
@@ -13,7 +12,11 @@ async def test_upload_base64_image(image_uploader):
     image_name = "test_image.jpeg"
     base64_image = "dGVzdF9pbWFnZV9kYXRh"
 
-    with patch.object(image_uploader, '_get_image_url', return_value="https://example.com/uploaded_image.jpg") as mock_get_image_url:
+    with patch.object(
+        image_uploader,
+        '_get_image_url',
+        return_value="https://example.com/uploaded_image.jpg"
+    ) as mock_get_image_url:
         with patch.object(image_uploader, '_async_upload', new_callable=AsyncMock) as mock_async_upload:
             url = await image_uploader.upload_base64_image(trace_id, span_id, image_name, base64_image)
 

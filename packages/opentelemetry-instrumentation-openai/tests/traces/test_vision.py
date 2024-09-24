@@ -1,7 +1,6 @@
 import json
 import pytest
 import base64
-import random
 from opentelemetry.semconv_ai import SpanAttributes
 from opentelemetry.instrumentation.openai.shared.chat_wrappers import _process_image_item, Config
 
@@ -68,13 +67,14 @@ def test_process_image_item_with_base64_upload(mock_upload_base64_image):
     result = _process_image_item(item, trace_id, span_id, message_index, content_index)
     assert result["type"] == "image_url"
     assert result["image_url"]["url"] == "https://example.com/uploaded_image.jpg"
-    
+
     mock_upload_base64_image.assert_called_once_with(
         trace_id,
         span_id,
         "message_0_content_1.jpeg",
         base64_image
     )
+
 
 def test_process_image_item_without_base64_upload():
     trace_id = "test_trace_id"
@@ -91,7 +91,8 @@ def test_process_image_item_without_base64_upload():
 
     Config.upload_base64_image = None
     result = _process_image_item(item, trace_id, span_id, message_index, content_index)
-    assert result == item  
+    assert result == item
+
 
 def test_process_image_item_non_base64():
     trace_id = "test_trace_id"
@@ -107,4 +108,3 @@ def test_process_image_item_non_base64():
 
     result = _process_image_item(item, trace_id, span_id, message_index, content_index)
     assert result == item
-    

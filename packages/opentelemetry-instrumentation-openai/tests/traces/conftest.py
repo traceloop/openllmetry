@@ -33,6 +33,7 @@ def vcr_config():
         "ignore_hosts": ["openaipublic.blob.core.windows.net"],
     }
 
+
 @pytest.fixture
 def mock_upload_base64_image():
     with patch('opentelemetry.instrumentation.openai.shared.chat_wrappers.Config.upload_base64_image') as mock:
