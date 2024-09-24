@@ -11,6 +11,7 @@ from opentelemetry.sdk.resources import SERVICE_NAME
 from opentelemetry.propagators.textmap import TextMapPropagator
 from opentelemetry.util.re import parse_env_headers
 
+from traceloop.sdk.images.image_uploader import ImageUploader
 from traceloop.sdk.metrics.metrics import MetricsWrapper
 from traceloop.sdk.telemetry import Telemetry
 from traceloop.sdk.instruments import Instruments
@@ -129,6 +130,7 @@ class Traceloop:
             propagator=propagator,
             exporter=exporter,
             should_enrich_metrics=should_enrich_metrics,
+            image_uploader=ImageUploader(api_endpoint, api_key),
             instruments=instruments,
         )
 

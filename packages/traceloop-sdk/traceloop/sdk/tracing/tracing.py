@@ -26,11 +26,12 @@ from opentelemetry.instrumentation.threading import ThreadingInstrumentor
 
 from opentelemetry.semconv_ai import SpanAttributes
 from traceloop.sdk import Telemetry
+from traceloop.sdk.images.image_uploader import ImageUploader
 from traceloop.sdk.instruments import Instruments
 from traceloop.sdk.tracing.content_allow_list import ContentAllowList
 from traceloop.sdk.utils import is_notebook
 from traceloop.sdk.utils.package_check import is_package_installed
-from typing import Dict, Optional, Set
+from typing import Callable, Dict, Optional, Set
 
 
 TRACER_NAME = "traceloop.tracer"
@@ -58,6 +59,7 @@ class TracerWrapper(object):
     endpoint: str = None
     headers: Dict[str, str] = {}
     __tracer_provider: TracerProvider = None
+    __image_uploader: ImageUploader = None
 
     def __new__(
         cls,
@@ -67,12 +69,14 @@ class TracerWrapper(object):
         exporter: SpanExporter = None,
         should_enrich_metrics: bool = True,
         instruments: Optional[Set[Instruments]] = None,
+        image_uploader: ImageUploader = None,
     ) -> "TracerWrapper":
         if not hasattr(cls, "instance"):
             obj = cls.instance = super(TracerWrapper, cls).__new__(cls)
             if not TracerWrapper.endpoint:
                 return obj
 
+            obj.__image_uploader = image_uploader
             obj.__resource = Resource(attributes=TracerWrapper.resource_attributes)
             obj.__tracer_provider = init_tracer_provider(resource=obj.__resource)
             if processor:
@@ -125,12 +129,15 @@ class TracerWrapper(object):
 
             instrument_set = False
             if instruments is None:
-                init_instrumentations(should_enrich_metrics)
+                init_instrumentations(should_enrich_metrics, obj.__image_uploader.upload_base64_image)
                 instrument_set = True
             else:
                 for instrument in instruments:
                     if instrument == Instruments.OPENAI:
-                        if not init_openai_instrumentor(should_enrich_metrics):
+                        if not init_openai_instrumentor(
+                            should_enrich_metrics,
+                            obj.__image_uploader.upload_base64_image
+                        ):
                             print(Fore.RED + "Warning: OpenAI library does not exist.")
                             print(Fore.RESET)
                         else:
@@ -525,8 +532,8 @@ def init_tracer_provider(resource: Resource) -> TracerProvider:
     return provider
 
 
-def init_instrumentations(should_enrich_metrics: bool):
-    init_openai_instrumentor(should_enrich_metrics)
+def init_instrumentations(should_enrich_metrics: bool, base64_image_uploader: Callable[[str, str, str], str]):
+    init_openai_instrumentor(should_enrich_metrics, base64_image_uploader)
     init_anthropic_instrumentor(should_enrich_metrics)
     init_cohere_instrumentor()
     init_pinecone_instrumentor()
@@ -556,7 +563,7 @@ def init_instrumentations(should_enrich_metrics: bool):
     init_groq_instrumentor()
 
 
-def init_openai_instrumentor(should_enrich_metrics: bool):
+def init_openai_instrumentor(should_enrich_metrics: bool, base64_image_uploader: Callable[[str, str, str], str]):
     try:
         if is_package_installed("openai"):
             Telemetry().capture("instrumentation:openai:init")
@@ -567,6 +574,7 @@ def init_openai_instrumentor(should_enrich_metrics: bool):
                 enrich_assistant=should_enrich_metrics,
                 enrich_token_usage=should_enrich_metrics,
                 get_common_metrics_attributes=metrics_common_attributes,
+                upload_base64_image=base64_image_uploader,
             )
             if not instrumentor.is_instrumented_by_opentelemetry:
                 instrumentor.instrument()

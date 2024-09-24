@@ -19,12 +19,14 @@ class OpenAIInstrumentor(BaseInstrumentor):
         enrich_token_usage: bool = False,
         exception_logger=None,
         get_common_metrics_attributes: Callable[[], dict] = lambda: {},
+        upload_base64_image: Callable[[str, str, str, str], str] = lambda *args: "",
     ):
         super().__init__()
         Config.enrich_assistant = enrich_assistant
         Config.enrich_token_usage = enrich_token_usage
         Config.exception_logger = exception_logger
         Config.get_common_metrics_attributes = get_common_metrics_attributes
+        Config.upload_base64_image = upload_base64_image
 
     def instrumentation_dependencies(self) -> Collection[str]:
         return _instruments
