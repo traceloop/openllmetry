@@ -341,6 +341,9 @@ def _is_base64_image(item):
 
 
 def _process_image_item(item, trace_id, span_id, message_index, content_index):
+    if not Config.upload_base64_image:
+        return item
+
     image_format = item["image_url"]["url"].split(";")[0].split("/")[1]
     image_name = f"message_{message_index}_content_{content_index}.{image_format}"
     base64_string = item["image_url"]["url"].split(",")[1]
