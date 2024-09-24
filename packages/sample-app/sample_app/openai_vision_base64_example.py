@@ -12,9 +12,11 @@ def encode_image(image_path):
     with open(image_path, "rb") as image_file:
         return base64.b64encode(image_file.read()).decode('utf-8')
 
+current_dir = os.path.dirname(os.path.abspath(__file__))
+image_path = os.path.join(current_dir, "..", "data", "vision", "elephant.jpeg")
 
-image_path = "/Users/galklm/Downloads/elephant.jpeg"
-
+if not os.path.exists(image_path):
+    raise FileNotFoundError(f"The image file does not exist at: {image_path}")
 
 base64_image = encode_image(image_path)
 
