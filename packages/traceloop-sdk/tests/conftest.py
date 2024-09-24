@@ -3,7 +3,6 @@
 import os
 import pytest
 from traceloop.sdk import Traceloop
-from traceloop.sdk.images.image_uploader import ImageUploader
 from traceloop.sdk.instruments import Instruments
 from traceloop.sdk.tracing.tracing import TracerWrapper
 from opentelemetry.sdk.trace.export import SimpleSpanProcessor
