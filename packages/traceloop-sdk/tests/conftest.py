@@ -110,8 +110,3 @@ def exporter_with_no_metrics():
     if _trace_wrapper_instance:
         TracerWrapper.instance = _trace_wrapper_instance
         os.environ["TRACELOOP_METRICS_ENABLED"] = "true"
-
-
-@pytest.fixture
-def image_uploader():
-    return ImageUploader(base_url="https://example.com", api_key="test_api_key")
