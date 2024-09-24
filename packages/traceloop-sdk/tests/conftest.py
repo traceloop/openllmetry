@@ -3,6 +3,7 @@
 import os
 import pytest
 from traceloop.sdk import Traceloop
+from traceloop.sdk.images.image_uploader import ImageUploader
 from traceloop.sdk.instruments import Instruments
 from traceloop.sdk.tracing.tracing import TracerWrapper
 from opentelemetry.sdk.trace.export import SimpleSpanProcessor
@@ -109,3 +110,8 @@ def exporter_with_no_metrics():
     if _trace_wrapper_instance:
         TracerWrapper.instance = _trace_wrapper_instance
         os.environ["TRACELOOP_METRICS_ENABLED"] = "true"
+
+
+@pytest.fixture
+def image_uploader():
+    return ImageUploader(base_url="https://example.com", api_key="test_api_key")
