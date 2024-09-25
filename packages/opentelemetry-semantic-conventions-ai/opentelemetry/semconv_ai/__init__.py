@@ -75,8 +75,8 @@ class SpanAttributes:
     LLM_OPENAI_API_TYPE = "gen_ai.openai.api_type"
 
     # SageMaker
-    LLM_SAGEMAKER_REQUEST = "llm.request"
-    LLM_SAGEMAKER_RESPONSE = "llm.response"
+    LLM_SAGEMAKER_REQUEST = "llm.sagemaker.request"
+    LLM_SAGEMAKER_RESPONSE = "llm.sagemaker.response"
 
     # Haystack
     HAYSTACK_OPENAI_CHAT = "haystack.openai.chat"
