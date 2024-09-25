@@ -1,3 +1,4 @@
+import copy
 import json
 import logging
 import time
@@ -326,6 +327,36 @@ def _set_token_counter_metrics(token_counter, usage, shared_attributes):
             token_counter.record(val, attributes=attributes_with_token_type)
 
 
+def _is_base64_image(item):
+    if not isinstance(item, dict):
+        return False
+
+    if not isinstance(item.get('image_url'), dict):
+        return False
+
+    if 'data:image/' not in item.get('image_url', {}).get('url', ''):
+        return False
+
+    return True
+
+
+def _process_image_item(item, trace_id, span_id, message_index, content_index):
+    if not Config.upload_base64_image:
+        return item
+
+    image_format = item["image_url"]["url"].split(";")[0].split("/")[1]
+    image_name = f"message_{message_index}_content_{content_index}.{image_format}"
+    base64_string = item["image_url"]["url"].split(",")[1]
+    url = Config.upload_base64_image(trace_id, span_id, image_name, base64_string)
+
+    return {
+        'type': 'image_url',
+        'image_url': {
+            'url': url
+        }
+    }
+
+
 def _set_prompts(span, messages):
     if not span.is_recording() or messages is None:
         return
@@ -335,8 +366,15 @@ def _set_prompts(span, messages):
 
         _set_span_attribute(span, f"{prefix}.role", msg.get("role"))
         if msg.get("content"):
-            content = msg.get("content")
+            content = copy.deepcopy(msg.get("content"))
             if isinstance(content, list):
+                content = [
+                    _process_image_item(item, span.context.trace_id, span.context.span_id, i, j)
+                    if _is_base64_image(item)
+                    else item
+                    for j, item in enumerate(content)
+                ]
+
                 content = json.dumps(content)
             _set_span_attribute(span, f"{prefix}.content", content)
         if msg.get("tool_call_id"):
