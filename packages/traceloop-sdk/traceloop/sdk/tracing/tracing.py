@@ -129,14 +129,16 @@ class TracerWrapper(object):
 
             instrument_set = False
             if instruments is None:
-                init_instrumentations(should_enrich_metrics, obj.__image_uploader.upload_base64_image)
+                init_instrumentations(
+                    should_enrich_metrics, obj.__image_uploader.upload_base64_image
+                )
                 instrument_set = True
             else:
                 for instrument in instruments:
                     if instrument == Instruments.OPENAI:
                         if not init_openai_instrumentor(
                             should_enrich_metrics,
-                            obj.__image_uploader.upload_base64_image
+                            obj.__image_uploader.upload_base64_image,
                         ):
                             print(Fore.RED + "Warning: OpenAI library does not exist.")
                             print(Fore.RESET)
@@ -532,7 +534,9 @@ def init_tracer_provider(resource: Resource) -> TracerProvider:
     return provider
 
 
-def init_instrumentations(should_enrich_metrics: bool, base64_image_uploader: Callable[[str, str, str], str]):
+def init_instrumentations(
+    should_enrich_metrics: bool, base64_image_uploader: Callable[[str, str, str], str]
+):
     init_openai_instrumentor(should_enrich_metrics, base64_image_uploader)
     init_anthropic_instrumentor(should_enrich_metrics)
     init_cohere_instrumentor()
@@ -563,7 +567,9 @@ def init_instrumentations(should_enrich_metrics: bool, base64_image_uploader: Ca
     init_groq_instrumentor()
 
 
-def init_openai_instrumentor(should_enrich_metrics: bool, base64_image_uploader: Callable[[str, str, str], str]):
+def init_openai_instrumentor(
+    should_enrich_metrics: bool, base64_image_uploader: Callable[[str, str, str], str]
+):
     try:
         if is_package_installed("openai"):
             Telemetry().capture("instrumentation:openai:init")
@@ -926,7 +932,7 @@ def init_replicate_instrumentor():
 
 def init_vertexai_instrumentor():
     try:
-        if is_package_installed("vertexai"):
+        if is_package_installed("google-cloud-aiplatform"):
             Telemetry().capture("instrumentation:vertexai:init")
             from opentelemetry.instrumentation.vertexai import VertexAIInstrumentor
 
@@ -944,7 +950,9 @@ def init_vertexai_instrumentor():
 
 def init_watsonx_instrumentor():
     try:
-        if is_package_installed("ibm-watsonx-ai") or is_package_installed("ibm-watson-machine-learning"):
+        if is_package_installed("ibm-watsonx-ai") or is_package_installed(
+            "ibm-watson-machine-learning"
+        ):
             Telemetry().capture("instrumentation:watsonx:init")
             from opentelemetry.instrumentation.watsonx import WatsonxInstrumentor
 
@@ -1034,6 +1042,7 @@ def init_redis_instrumentor():
     try:
         if is_package_installed("redis"):
             from opentelemetry.instrumentation.redis import RedisInstrumentor
+
             instrumentor = RedisInstrumentor()
             if not instrumentor.is_instrumented_by_opentelemetry:
                 instrumentor.instrument(excluded_urls=EXCLUDED_URLS)
