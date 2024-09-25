@@ -12,7 +12,6 @@ from opentelemetry.instrumentation.sagemaker.reusable_streaming_body import (
 from opentelemetry.instrumentation.sagemaker.streaming_wrapper import StreamingWrapper
 from opentelemetry.instrumentation.sagemaker.utils import dont_throw
 from wrapt import wrap_function_wrapper
-import anthropic
 
 from opentelemetry import context as context_api
 from opentelemetry.trace import get_tracer, SpanKind
@@ -26,13 +25,10 @@ from opentelemetry.instrumentation.utils import (
 from opentelemetry.semconv_ai import (
     SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
     SpanAttributes,
-    LLMRequestTypeValues,
 )
 from opentelemetry.instrumentation.sagemaker.version import __version__
 
 logger = logging.getLogger(__name__)
-
-anthropic_client = anthropic.Anthropic()
 
 _instruments = ("boto3 >= 1.28.57",)
 
@@ -138,10 +134,10 @@ def _handle_stream_call(span, kwargs, response):
 
         _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, endpoint_name)
         _set_span_attribute(
-            span, SpanAttributes.LLM_SAGEMAKER_REQUEST, json.dumps(request_body)
+            span, SpanAttributes.TRACELOOP_ENTITY_INPUT, json.dumps(request_body)
         )
         _set_span_attribute(
-            span, SpanAttributes.LLM_SAGEMAKER_RESPONSE, json.dumps(response_body)
+            span, SpanAttributes.TRACELOOP_ENTITY_OUTPUT, json.dumps(response_body)
         )
 
         span.end()
@@ -161,10 +157,10 @@ def _handle_call(span, kwargs, response):
 
     _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, endpoint_name)
     _set_span_attribute(
-        span, SpanAttributes.LLM_SAGEMAKER_REQUEST, json.dumps(request_body)
+        span, SpanAttributes.TRACELOOP_ENTITY_INPUT, json.dumps(request_body)
     )
     _set_span_attribute(
-        span, SpanAttributes.LLM_SAGEMAKER_RESPONSE, json.dumps(response_body)
+        span, SpanAttributes.TRACELOOP_ENTITY_OUTPUT, json.dumps(response_body)
     )
 
 

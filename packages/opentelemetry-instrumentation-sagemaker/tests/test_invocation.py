@@ -35,4 +35,4 @@ There's a llama in my garden  What should I do? [/INST]"""
 
     meta_span = spans[0]
     assert meta_span.attributes[SpanAttributes.LLM_REQUEST_MODEL] == endpoint_name
-    assert meta_span.attributes[SpanAttributes.LLM_SAGEMAKER_REQUEST] == body
+    assert meta_span.attributes[SpanAttributes.TRACELOOP_ENTITY_INPUT] == body

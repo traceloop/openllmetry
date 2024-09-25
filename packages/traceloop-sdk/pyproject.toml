@@ -33,7 +33,7 @@ opentelemetry-instrumentation-requests = "^0.48b0"
 opentelemetry-instrumentation-sqlalchemy = "^0.48b0"
 opentelemetry-instrumentation-urllib3 = "^0.48b0"
 opentelemetry-instrumentation-threading = "^0.48b0"
-opentelemetry-semantic-conventions-ai = "0.4.2"
+opentelemetry-semantic-conventions-ai = "0.4.1"
 opentelemetry-instrumentation-mistralai = {path="../opentelemetry-instrumentation-mistralai", develop=true}
 opentelemetry-instrumentation-openai = {path="../opentelemetry-instrumentation-openai", develop=true}
 opentelemetry-instrumentation-ollama = {path="../opentelemetry-instrumentation-ollama", develop=true}
