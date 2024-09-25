@@ -1,3 +1,13 @@
+## v0.31.0 (2024-09-25)
+
+### Feat
+
+- **sdk+openai**: support base64 images upload (#2000)
+
+### Fix
+
+- **sdk**: wrong package check for Vertex AI (#2015)
+
 ## v0.30.1 (2024-09-16)
 
 ### Fix
