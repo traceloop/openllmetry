@@ -181,7 +181,9 @@ async def _aset_token_usage(
                     prompt_tokens += await anthropic.count_tokens(content)
                 elif isinstance(content, list):
                     for item in content:
-                        prompt_tokens += await anthropic.count_tokens(item)
+                        # TODO: handle image tokens
+                        if isinstance(item, dict) and item.get("type") == "text":
+                            prompt_tokens += await anthropic.count_tokens(item.get("text", ""))
 
     if token_histogram and type(prompt_tokens) is int and prompt_tokens >= 0:
         token_histogram.record(
@@ -247,8 +249,6 @@ def _set_token_usage(
     if not isinstance(response, dict):
         response = response.__dict__
 
-    print("usage", response.get("usage"))
-
     prompt_tokens = 0
     if hasattr(anthropic, "count_tokens"):
         if request.get("prompt"):
@@ -257,13 +257,13 @@ def _set_token_usage(
             prompt_tokens = 0
             for m in request.get("messages"):
                 content = m.get("content")
-                print("content", content)
                 if isinstance(content, str):
-                    print("content str", content)
                     prompt_tokens += anthropic.count_tokens(content)
                 elif isinstance(content, list):
                     for item in content:
-                        prompt_tokens += anthropic.count_tokens(item)
+                        # TODO: handle image tokens
+                        if isinstance(item, dict) and item.get("type") == "text":
+                            prompt_tokens += anthropic.count_tokens(item.get("text", ""))
 
     if token_histogram and type(prompt_tokens) is int and prompt_tokens >= 0:
         token_histogram.record(
