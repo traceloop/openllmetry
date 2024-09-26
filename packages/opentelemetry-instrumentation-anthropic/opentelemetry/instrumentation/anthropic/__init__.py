@@ -92,16 +92,30 @@ def _dump_content(content):
         if item.get("type") == "text":
             json_serializable.append({"type": "text", "text": item.get("text")})
         elif item.get("type") == "image":
-            json_serializable.append(
-                {
-                    "type": "image",
-                    "source": {
-                        "type": item.get("source").get("type"),
-                        "media_type": item.get("source").get("media_type"),
-                        "data": str(item.get("source").get("data")),
-                    },
-                }
-            )
+            print("this is an image")
+            if Config.upload_base64_image and _is_base64_image(item):
+                print("a base64 with uploader config")
+                url = Config.upload_base64_image(item.get("source").get("data"))
+                json_serializable.append(
+                    {
+                        'type': 'image_url',
+                        'image_url': {
+                            'url': url
+                        }
+                    }
+                )
+            else:
+                json_serializable.append(
+                    {
+                        "type": "image",
+                        "source": {
+                            "type": item.get("source").get("type"),
+                            "media_type": item.get("source").get("media_type"),
+                            "data": str(item.get("source").get("data")),
+                        },
+                    }
+                )
+                
     return json.dumps(json_serializable)
 
 
@@ -400,6 +414,7 @@ def _create_metrics(meter: Meter):
 
 
 def _is_base64_image(item: Dict[str, Any]) -> bool:
+    print("is base64 called")
     if not isinstance(item, dict):
         return False
 
@@ -409,25 +424,8 @@ def _is_base64_image(item: Dict[str, Any]) -> bool:
     if item.get('type') != 'image' or item['source'].get('type') != 'base64':
         return False
 
+    print("it is base64")
     return True
-
-
-def _process_image_item(item: Dict[str, Any], trace_id: str, span_id: str, message_index: int, content_index: int) -> Dict[str, Any]:
-    if not Config.upload_base64_image:
-        return item
-
-    image_format = item['source'].get('media_type', 'image/jpeg').split('/')[-1]
-    image_name = f"message_{message_index}_content_{content_index}.{image_format}"
-    base64_string = item['source']['data']
-    url = Config.upload_base64_image(trace_id, span_id, image_name, base64_string)
-
-    return {
-        'type': 'image',
-        'source': {
-            'type': 'url',
-            'url': url
-        }
-    }
 
 
 @_with_chat_telemetry_wrapper
@@ -631,11 +629,13 @@ class AnthropicInstrumentor(BaseInstrumentor):
         enrich_token_usage: bool = False,
         exception_logger=None,
         get_common_metrics_attributes: Callable[[], dict] = lambda: {},
+        upload_base64_image: Callable[[str, str, str, str], str] = lambda *args: ""
     ):
         super().__init__()
         Config.exception_logger = exception_logger
         Config.enrich_token_usage = enrich_token_usage
         Config.get_common_metrics_attributes = get_common_metrics_attributes
+        Config.upload_base64_image = upload_base64_image
 
     def instrumentation_dependencies(self) -> Collection[str]:
         return _instruments

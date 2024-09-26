@@ -538,7 +538,7 @@ def init_instrumentations(
     should_enrich_metrics: bool, base64_image_uploader: Callable[[str, str, str], str]
 ):
     init_openai_instrumentor(should_enrich_metrics, base64_image_uploader)
-    init_anthropic_instrumentor(should_enrich_metrics)
+    init_anthropic_instrumentor(should_enrich_metrics, base64_image_uploader)
     init_cohere_instrumentor()
     init_pinecone_instrumentor()
     init_qdrant_instrumentor()
@@ -592,7 +592,10 @@ def init_openai_instrumentor(
         return False
 
 
-def init_anthropic_instrumentor(should_enrich_metrics: bool):
+def init_anthropic_instrumentor(
+        should_enrich_metrics: bool,
+        base64_image_uploader: Callable[[str, str, str], str]
+):
     try:
         if is_package_installed("anthropic"):
             Telemetry().capture("instrumentation:anthropic:init")
@@ -602,6 +605,7 @@ def init_anthropic_instrumentor(should_enrich_metrics: bool):
                 exception_logger=lambda e: Telemetry().log_exception(e),
                 enrich_token_usage=should_enrich_metrics,
                 get_common_metrics_attributes=metrics_common_attributes,
+                upload_base64_image=base64_image_uploader
             )
             if not instrumentor.is_instrumented_by_opentelemetry:
                 instrumentor.instrument()
