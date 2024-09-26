@@ -1,3 +1,9 @@
+## v0.31.1 (2024-09-26)
+
+### Fix
+
+- **anthropic**: token counting exception when prompt contains images (#2030)
+
 ## v0.31.0 (2024-09-25)
 
 ### Feat
