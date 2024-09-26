@@ -256,7 +256,7 @@ def test_anthropic_multi_modal(exporter):
         anthropic_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
         == response.content[0].text
     )
-    assert anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 1381
+    assert anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 5
     assert (
         anthropic_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS]
         + anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS]

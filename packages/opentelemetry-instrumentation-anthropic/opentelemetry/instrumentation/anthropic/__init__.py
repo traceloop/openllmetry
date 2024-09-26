@@ -174,12 +174,16 @@ async def _aset_token_usage(
         if request.get("prompt"):
             prompt_tokens = await anthropic.count_tokens(request.get("prompt"))
         elif request.get("messages"):
-            prompt_tokens = sum(
-                [
-                    await anthropic.count_tokens(m.get("content"))
-                    for m in request.get("messages")
-                ]
-            )
+            prompt_tokens = 0
+            for m in request.get("messages"):
+                content = m.get("content")
+                if isinstance(content, str):
+                    prompt_tokens += await anthropic.count_tokens(content)
+                elif isinstance(content, list):
+                    for item in content:
+                        # TODO: handle image tokens
+                        if isinstance(item, dict) and item.get("type") == "text":
+                            prompt_tokens += await anthropic.count_tokens(item.get("text", ""))
 
     if token_histogram and type(prompt_tokens) is int and prompt_tokens >= 0:
         token_histogram.record(
@@ -250,12 +254,16 @@ def _set_token_usage(
         if request.get("prompt"):
             prompt_tokens = anthropic.count_tokens(request.get("prompt"))
         elif request.get("messages"):
-            prompt_tokens = sum(
-                [
-                    anthropic.count_tokens(m.get("content"))
-                    for m in request.get("messages")
-                ]
-            )
+            prompt_tokens = 0
+            for m in request.get("messages"):
+                content = m.get("content")
+                if isinstance(content, str):
+                    prompt_tokens += anthropic.count_tokens(content)
+                elif isinstance(content, list):
+                    for item in content:
+                        # TODO: handle image tokens
+                        if isinstance(item, dict) and item.get("type") == "text":
+                            prompt_tokens += anthropic.count_tokens(item.get("text", ""))
 
     if token_histogram and type(prompt_tokens) is int and prompt_tokens >= 0:
         token_histogram.record(
