@@ -145,8 +145,8 @@ def _set_input_attributes(span, kwargs):
                     span,
                     f"{SpanAttributes.LLM_PROMPTS}.{i}.content",
                     _dump_content(
-                        message_index=i, 
-                        span=span, 
+                        message_index=i,
+                        span=span,
                         content=message.get("content")
                     ),
                 )

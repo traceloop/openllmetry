@@ -23,7 +23,7 @@ def task():
     image_path = os.path.join(current_dir, "..", "data", "vision", "elephant.jpeg")
 
     if not os.path.exists(image_path):
-      raise FileNotFoundError(f"The image file does not exist at: {image_path}")
+        raise FileNotFoundError(f"The image file does not exist at: {image_path}")
 
     base64_image = encode_image(image_path)
     client = OpenAI(api_key=api_key)
