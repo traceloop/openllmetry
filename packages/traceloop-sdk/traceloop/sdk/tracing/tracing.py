@@ -145,7 +145,10 @@ class TracerWrapper(object):
                         else:
                             instrument_set = True
                     elif instrument == Instruments.ANTHROPIC:
-                        if not init_anthropic_instrumentor(should_enrich_metrics):
+                        if not init_anthropic_instrumentor(
+                            should_enrich_metrics,
+                            obj.__image_uploader.upload_base64_image,
+                        ):
                             print(
                                 Fore.RED + "Warning: Anthropic library does not exist."
                             )
