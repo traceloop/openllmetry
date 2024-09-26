@@ -84,39 +84,35 @@ def is_streaming_response(response):
     return isinstance(response, Stream) or isinstance(response, AsyncStream)
 
 
-def _dump_content(content):
+def _process_image_item(item, trace_id, span_id, message_index, content_index):
+    if not Config.upload_base64_image:
+        return item
+
+    image_format = item.get("source").get("media_type").split("/")[1]
+    image_name = f"message_{message_index}_content_{content_index}.{image_format}"
+    base64_string = item.get("source").get("data")
+    url = Config.upload_base64_image(trace_id, span_id, image_name, base64_string)
+
+    return {
+        'type': 'image_url',
+        'image_url': {
+            'url': url
+        }
+    }
+
+
+def _dump_content(message_index, content, span):
     if isinstance(content, str):
         return content
-    json_serializable = []
-    for item in content:
-        if item.get("type") == "text":
-            json_serializable.append({"type": "text", "text": item.get("text")})
-        elif item.get("type") == "image":
-            print("this is an image")
-            if Config.upload_base64_image and _is_base64_image(item):
-                print("a base64 with uploader config")
-                url = Config.upload_base64_image(item.get("source").get("data"))
-                json_serializable.append(
-                    {
-                        'type': 'image_url',
-                        'image_url': {
-                            'url': url
-                        }
-                    }
-                )
-            else:
-                json_serializable.append(
-                    {
-                        "type": "image",
-                        "source": {
-                            "type": item.get("source").get("type"),
-                            "media_type": item.get("source").get("media_type"),
-                            "data": str(item.get("source").get("data")),
-                        },
-                    }
-                )
-                
-    return json.dumps(json_serializable)
+    elif isinstance(content, list):
+        content = [
+            _process_image_item(item, span.context.trace_id, span.context.span_id, message_index, j)
+            if _is_base64_image(item)
+            else item
+            for j, item in enumerate(content)
+        ]
+
+        return json.dumps(content)
 
 
 @dont_throw
@@ -148,7 +144,11 @@ def _set_input_attributes(span, kwargs):
                 set_span_attribute(
                     span,
                     f"{SpanAttributes.LLM_PROMPTS}.{i}.content",
-                    _dump_content(message.get("content")),
+                    _dump_content(
+                        message_index=i, 
+                        span=span, 
+                        content=message.get("content")
+                    ),
                 )
                 set_span_attribute(
                     span, f"{SpanAttributes.LLM_PROMPTS}.{i}.role", message.get("role")
@@ -422,7 +422,6 @@ def _create_metrics(meter: Meter):
 
 
 def _is_base64_image(item: Dict[str, Any]) -> bool:
-    print("is base64 called")
     if not isinstance(item, dict):
         return False
 
@@ -432,7 +431,6 @@ def _is_base64_image(item: Dict[str, Any]) -> bool:
     if item.get('type') != 'image' or item['source'].get('type') != 'base64':
         return False
 
-    print("it is base64")
     return True
 
 
