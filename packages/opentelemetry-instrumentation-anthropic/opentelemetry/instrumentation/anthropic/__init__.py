@@ -4,7 +4,7 @@ import json
 import logging
 import os
 import time
-from typing import Callable, Collection
+from typing import Callable, Collection, Dict, Any
 
 from anthropic._streaming import AsyncStream, Stream
 from opentelemetry import context as context_api
@@ -397,6 +397,37 @@ def _create_metrics(meter: Meter):
     )
 
     return token_histogram, choice_counter, duration_histogram, exception_counter
+
+
+def _is_base64_image(item: Dict[str, Any]) -> bool:
+    if not isinstance(item, dict):
+        return False
+
+    if not isinstance(item.get('source'), dict):
+        return False
+
+    if item.get('type') != 'image' or item['source'].get('type') != 'base64':
+        return False
+
+    return True
+
+
+def _process_image_item(item: Dict[str, Any], trace_id: str, span_id: str, message_index: int, content_index: int) -> Dict[str, Any]:
+    if not Config.upload_base64_image:
+        return item
+
+    image_format = item['source'].get('media_type', 'image/jpeg').split('/')[-1]
+    image_name = f"message_{message_index}_content_{content_index}.{image_format}"
+    base64_string = item['source']['data']
+    url = Config.upload_base64_image(trace_id, span_id, image_name, base64_string)
+
+    return {
+        'type': 'image',
+        'source': {
+            'type': 'url',
+            'url': url
+        }
+    }
 
 
 @_with_chat_telemetry_wrapper
