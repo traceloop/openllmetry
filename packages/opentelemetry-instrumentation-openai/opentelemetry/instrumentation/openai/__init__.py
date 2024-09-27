@@ -1,4 +1,5 @@
-from typing import Callable, Collection
+from typing import Callable, Collection, Optional
+from typing_extensions import Coroutine
 
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 
@@ -19,7 +20,9 @@ class OpenAIInstrumentor(BaseInstrumentor):
         enrich_token_usage: bool = False,
         exception_logger=None,
         get_common_metrics_attributes: Callable[[], dict] = lambda: {},
-        upload_base64_image: Callable[[str, str, str, str], str] = lambda *args: "",
+        upload_base64_image: Optional[
+            Callable[[str, str, str, str], Coroutine[None, None, str]]
+        ] = lambda *args: "",
     ):
         super().__init__()
         Config.enrich_assistant = enrich_assistant
