@@ -714,13 +714,16 @@ class AnthropicInstrumentor(BaseInstrumentor):
         for wrapped_method in WRAPPED_METHODS:
             wrap_package = wrapped_method.get("package")
             wrap_object = wrapped_method.get("object")
+            wrap_method = wrapped_method.get("method")
             unwrap(
                 f"{wrap_package}.{wrap_object}",
-                wrapped_method.get("method"),
+                wrap_method,
             )
         for wrapped_method in WRAPPED_AMETHODS:
+            wrap_package = wrapped_method.get("package")
             wrap_object = wrapped_method.get("object")
+            wrap_method = wrapped_method.get("method")
             unwrap(
-                f"anthropic.resources.completions.{wrap_object}",
-                wrapped_method.get("method"),
+                f"{wrap_package}.{wrap_object}",
+                wrap_method,
             )
