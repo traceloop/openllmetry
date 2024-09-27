@@ -70,7 +70,6 @@ def chat_wrapper(
     ):
         return wrapped(*args, **kwargs)
 
-    # span needs to be opened and closed manually because the response is a generator
     span = tracer.start_span(
         SPAN_NAME,
         kind=SpanKind.CLIENT,
@@ -78,6 +77,9 @@ def chat_wrapper(
     )
 
     _handle_request(span, kwargs, instance)
+
+    # Run the async _set_prompts function synchronously
+    asyncio.run(_set_prompts(span, kwargs.get("messages")))
 
     try:
         start_time = time.time()
@@ -331,10 +333,10 @@ def _is_base64_image(item):
     if not isinstance(item, dict):
         return False
 
-    if not isinstance(item.get('image_url'), dict):
+    if not isinstance(item.get("image_url"), dict):
         return False
 
-    if 'data:image/' not in item.get('image_url', {}).get('url', ''):
+    if "data:image/" not in item.get("image_url", {}).get("url", ""):
         return False
 
     return True
@@ -349,12 +351,7 @@ def _process_image_item(item, trace_id, span_id, message_index, content_index):
     base64_string = item["image_url"]["url"].split(",")[1]
     url = Config.upload_base64_image(trace_id, span_id, image_name, base64_string)
 
-    return {
-        'type': 'image_url',
-        'image_url': {
-            'url': url
-        }
-    }
+    return {"type": "image_url", "image_url": {"url": url}}
 
 
 def _set_prompts(span, messages):
@@ -369,9 +366,13 @@ def _set_prompts(span, messages):
             content = copy.deepcopy(msg.get("content"))
             if isinstance(content, list):
                 content = [
-                    _process_image_item(item, span.context.trace_id, span.context.span_id, i, j)
-                    if _is_base64_image(item)
-                    else item
+                    (
+                        _process_image_item(
+                            item, span.context.trace_id, span.context.span_id, i, j
+                        )
+                        if _is_base64_image(item)
+                        else item
+                    )
                     for j, item in enumerate(content)
                 ]
 
