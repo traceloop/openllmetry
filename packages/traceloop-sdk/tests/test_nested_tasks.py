@@ -36,8 +36,8 @@ def test_nested_tasks(exporter):
     some_workflow_span = spans[3]
 
     assert (
-        inner_inner_task_span.attributes[SpanAttributes.TRACELOOP_ENTITY_PATH] ==
-        "outer_task.inner_task"
+        inner_inner_task_span.attributes[SpanAttributes.TRACELOOP_ENTITY_PATH]
+        == "outer_task.inner_task"
     )
     assert (
         inner_task_span.attributes[SpanAttributes.TRACELOOP_ENTITY_PATH] == "outer_task"

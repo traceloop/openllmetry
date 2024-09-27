@@ -6,7 +6,7 @@ import sys
 from posthog import Posthog
 from traceloop.sdk.version import __version__
 
-POSTHOG_API_KEY = "phc_JMTeAfG8OpaPsyHzSBtqquMvko1fmOHcW0gyqLCrF3t"
+POSTHOG_API_KEY = os.getenv("POSTHOG_API_KEY", None)
 
 
 class Telemetry:

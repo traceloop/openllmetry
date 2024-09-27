@@ -1812,6 +1812,29 @@ type = "directory"
 url = "../opentelemetry-instrumentation-qdrant"
 
 [[package]]
+name = "opentelemetry-instrumentation-redis"
+version = "0.21.5"
+description = "OpenTelemetry Redis instrumentation"
+optional = false
+python-versions = ">=3.9,<4"
+files = []
+develop = true
+
+[package.dependencies]
+opentelemetry-api = "^1.25.0"
+opentelemetry-instrumentation = "^0.46b0"
+opentelemetry-semantic-conventions = "^0.46b0"
+opentelemetry-semantic-conventions-ai = "0.2.0"
+redis = "^4.3.4"
+
+[package.extras]
+instruments = []
+
+[package.source]
+type = "directory"
+url = "../opentelemetry-instrumentation-redis"
+
+[[package]]
 name = "opentelemetry-instrumentation-replicate"
 version = "0.29.2"
 description = "OpenTelemetry Replicate instrumentation"
@@ -2518,6 +2541,24 @@ files = [
     {file = "PyYAML-6.0.2-cp39-cp39-win_amd64.whl", hash = "sha256:39693e1f8320ae4f43943590b49779ffb98acb81f788220ea932a6b6c51004d8"},
     {file = "pyyaml-6.0.2.tar.gz", hash = "sha256:d584d9ec91ad65861cc08d42e834324ef890a082e591037abe114850ff7bbc3e"},
 ]
+
+[[package]]
+name = "redis"
+version = "4.6.0"
+description = "Python client for Redis database and key-value store"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "redis-4.6.0-py3-none-any.whl", hash = "sha256:e2b03db868160ee4591de3cb90d40ebb50a90dd302138775937f6a42b7ed183c"},
+    {file = "redis-4.6.0.tar.gz", hash = "sha256:585dc516b9eb042a619ef0a39c3d7d55fe81bdb4df09a52c9cdde0d07bf1aa7d"},
+]
+
+[package.dependencies]
+async-timeout = {version = ">=4.0.2", markers = "python_full_version <= \"3.11.2\""}
+
+[package.extras]
+hiredis = ["hiredis (>=1.0.0)"]
+ocsp = ["cryptography (>=36.0.1)", "pyopenssl (==20.0.1)", "requests (>=2.26.0)"]
 
 [[package]]
 name = "regex"
