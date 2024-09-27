@@ -1,3 +1,4 @@
+import base64
 import json
 from pathlib import Path
 
@@ -222,7 +223,12 @@ def test_anthropic_multi_modal(exporter):
                         "source": {
                             "type": "base64",
                             "media_type": "image/jpeg",
-                            "data": Path(__file__).parent.joinpath("data/logo.jpg"),
+                            "data": base64.b64encode(
+                                open(
+                                    Path(__file__).parent.joinpath("data/logo.jpg"),
+                                    "rb",
+                                ).read()
+                            ).decode("utf-8"),
                         },
                     },
                 ],
@@ -241,14 +247,7 @@ def test_anthropic_multi_modal(exporter):
     ] == json.dumps(
         [
             {"type": "text", "text": "What do you see?"},
-            {
-                "type": "image",
-                "source": {
-                    "type": "base64",
-                    "media_type": "image/jpeg",
-                    "data": str(Path(__file__).parent.joinpath("data/logo.jpg")),
-                },
-            },
+            {"type": "image_url", "image_url": {"url": "/some/url"}},
         ]
     )
     assert (anthropic_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"]) == "user"
