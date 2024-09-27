@@ -264,6 +264,65 @@ def test_anthropic_multi_modal(exporter):
 
 
 @pytest.mark.vcr
+@pytest.mark.asyncio
+async def test_anthropic_async_multi_modal(exporter):
+    client = AsyncAnthropic()
+    response = await client.messages.create(
+        max_tokens=1024,
+        messages=[
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "text",
+                        "text": "What do you see?",
+                    },
+                    {
+                        "type": "image",
+                        "source": {
+                            "type": "base64",
+                            "media_type": "image/jpeg",
+                            "data": base64.b64encode(
+                                open(
+                                    Path(__file__).parent.joinpath("data/logo.jpg"),
+                                    "rb",
+                                ).read()
+                            ).decode("utf-8"),
+                        },
+                    },
+                ],
+            },
+        ],
+        model="claude-3-opus-20240229",
+    )
+
+    spans = exporter.get_finished_spans()
+    assert [span.name for span in spans] == [
+        "anthropic.chat",
+    ]
+    anthropic_span = spans[0]
+    assert anthropic_span.attributes[
+        f"{SpanAttributes.LLM_PROMPTS}.0.content"
+    ] == json.dumps(
+        [
+            {"type": "text", "text": "What do you see?"},
+            {"type": "image_url", "image_url": {"url": "/some/url"}},
+        ]
+    )
+    assert (anthropic_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"]) == "user"
+    assert (
+        anthropic_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
+        == response.content[0].text
+    )
+    assert anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 5
+    assert (
+        anthropic_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS]
+        + anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS]
+        == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
+    )
+
+
+@pytest.mark.vcr
 def test_anthropic_message_streaming(exporter, reader):
     client = Anthropic()
     response = client.messages.create(

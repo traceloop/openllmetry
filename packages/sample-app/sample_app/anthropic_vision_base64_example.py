@@ -1,3 +1,4 @@
+import asyncio
 import base64
 import os
 import anthropic
@@ -14,11 +15,11 @@ api_key = os.environ.get("ANTHROPIC_API_KEY")
 
 def encode_image(image_path):
     with open(image_path, "rb") as image_file:
-        return base64.b64encode(image_file.read()).decode('utf-8')
+        return base64.b64encode(image_file.read()).decode("utf-8")
 
 
 @task(name="generate_description")
-def task():
+async def task():
     current_dir = os.path.dirname(os.path.abspath(__file__))
     image_path = os.path.join(current_dir, "..", "data", "vision", "elephant.jpeg")
 
@@ -27,14 +28,17 @@ def task():
 
     base64_image = encode_image(image_path)
 
-    client = anthropic.Anthropic(api_key=api_key)
-    message = client.messages.create(
+    client = anthropic.AsyncAnthropic(api_key=api_key)
+    message = await client.messages.create(
         model="claude-3-5-sonnet-20240620",
         max_tokens=1024,
         messages=[
+            {"role": "user", "content": "You are a sub-system ..."},
+            {"role": "assistant", "content": "I understand the context!"},
             {
                 "role": "user",
                 "content": [
+                    {"type": "text", "text": "Describe this image."},
                     {
                         "type": "image",
                         "source": {
@@ -43,12 +47,8 @@ def task():
                             "data": base64_image,
                         },
                     },
-                    {
-                        "type": "text",
-                        "text": "Describe this image."
-                    }
                 ],
-            }
+            },
         ],
     )
 
@@ -57,7 +57,7 @@ def task():
 
 @workflow(name="image_description_generation")
 def workflow():
-    task()
+    asyncio.run(task())
 
 
 if __name__ == "__main__":
