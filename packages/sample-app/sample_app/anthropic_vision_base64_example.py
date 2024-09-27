@@ -1,6 +1,6 @@
 import base64
 import os
-from openai import OpenAI
+import anthropic
 from traceloop.sdk import Traceloop
 from traceloop.sdk.decorators import workflow, task
 
@@ -9,7 +9,7 @@ Traceloop.init(
     api_key=os.environ.get("TRACELOOP_API_KEY"),
 )
 
-api_key = os.environ.get("OPENAI_API_KEY")
+api_key = os.environ.get("ANTHROPIC_API_KEY")
 
 
 def encode_image(image_path):
@@ -26,29 +26,33 @@ def task():
         raise FileNotFoundError(f"The image file does not exist at: {image_path}")
 
     base64_image = encode_image(image_path)
-    client = OpenAI(api_key=api_key)
-    completion = client.chat.completions.create(
-      model="gpt-4o-mini",
-      messages=[
-        {
-          "role": "user",
-          "content": [
+
+    client = anthropic.Anthropic(api_key=api_key)
+    message = client.messages.create(
+        model="claude-3-5-sonnet-20240620",
+        max_tokens=1024,
+        messages=[
             {
-              "type": "text",
-              "text": "What’s in this image?"
-            },
-            {
-              "type": "image_url",
-              "image_url": {
-                "url": f"data:image/jpeg;base64,{base64_image}"
-              }
+                "role": "user",
+                "content": [
+                    {
+                        "type": "image",
+                        "source": {
+                            "type": "base64",
+                            "media_type": "image/jpeg",
+                            "data": base64_image,
+                        },
+                    },
+                    {
+                        "type": "text",
+                        "text": "Describe this image."
+                    }
+                ],
             }
-          ]
-        }
-      ],
+        ],
     )
 
-    print(completion)
+    print(message)
 
 
 @workflow(name="image_description_generation")
