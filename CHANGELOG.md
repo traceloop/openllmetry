@@ -1,3 +1,9 @@
+## v0.31.2 (2024-09-27)
+
+### Fix
+
+- **anthropic**: add support for base64 images upload for anthropic (#2029)
+
 ## v0.31.1 (2024-09-26)
 
 ### Fix
