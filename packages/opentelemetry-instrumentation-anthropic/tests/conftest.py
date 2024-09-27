@@ -49,7 +49,9 @@ def meter_provider(reader):
 
 @pytest.fixture(scope="session", autouse=True)
 def instrument(exporter, reader, meter_provider):
-    AnthropicInstrumentor(enrich_token_usage=True).instrument()
+    AnthropicInstrumentor(
+        enrich_token_usage=True, upload_base64_image=lambda *args: "/some/url"
+    ).instrument()
 
     yield
 
