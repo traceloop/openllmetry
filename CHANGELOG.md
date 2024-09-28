@@ -1,3 +1,9 @@
+## v0.31.3 (2024-09-28)
+
+### Fix
+
+- support async image upload flows (#2051)
+
 ## v0.31.2 (2024-09-27)
 
 ### Fix
