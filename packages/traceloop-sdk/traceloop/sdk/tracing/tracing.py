@@ -131,7 +131,7 @@ class TracerWrapper(object):
             instrument_set = False
             if instruments is None:
                 init_instrumentations(
-                    should_enrich_metrics, obj.__image_uploader.upload_base64_image
+                    should_enrich_metrics, obj.__image_uploader.aupload_base64_image
                 )
                 instrument_set = True
             else:
@@ -139,7 +139,7 @@ class TracerWrapper(object):
                     if instrument == Instruments.OPENAI:
                         if not init_openai_instrumentor(
                             should_enrich_metrics,
-                            obj.__image_uploader.upload_base64_image,
+                            obj.__image_uploader.aupload_base64_image,
                         ):
                             print(Fore.RED + "Warning: OpenAI library does not exist.")
                             print(Fore.RESET)
@@ -148,7 +148,7 @@ class TracerWrapper(object):
                     elif instrument == Instruments.ANTHROPIC:
                         if not init_anthropic_instrumentor(
                             should_enrich_metrics,
-                            obj.__image_uploader.upload_base64_image,
+                            obj.__image_uploader.aupload_base64_image,
                         ):
                             print(
                                 Fore.RED + "Warning: Anthropic library does not exist."
@@ -604,8 +604,7 @@ def init_openai_instrumentor(
 
 
 def init_anthropic_instrumentor(
-        should_enrich_metrics: bool,
-        base64_image_uploader: Callable[[str, str, str], str]
+    should_enrich_metrics: bool, base64_image_uploader: Callable[[str, str, str], str]
 ):
     try:
         if is_package_installed("anthropic"):
@@ -616,7 +615,7 @@ def init_anthropic_instrumentor(
                 exception_logger=lambda e: Telemetry().log_exception(e),
                 enrich_token_usage=should_enrich_metrics,
                 get_common_metrics_attributes=metrics_common_attributes,
-                upload_base64_image=base64_image_uploader
+                upload_base64_image=base64_image_uploader,
             )
             if not instrumentor.is_instrumented_by_opentelemetry:
                 instrumentor.instrument()

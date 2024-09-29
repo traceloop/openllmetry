@@ -4,7 +4,6 @@ from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
 from opentelemetry.sdk.trace.export import SimpleSpanProcessor
 from opentelemetry.instrumentation.openai import OpenAIInstrumentor
-from unittest.mock import patch
 
 
 @pytest.fixture(scope="session")
@@ -16,7 +15,14 @@ def exporter():
     provider.add_span_processor(processor)
     trace.set_tracer_provider(provider)
 
-    OpenAIInstrumentor(enrich_assistant=True, enrich_token_usage=True).instrument()
+    async def upload_base64_image(*args):
+        return "/some/url"
+
+    OpenAIInstrumentor(
+        enrich_assistant=True,
+        enrich_token_usage=True,
+        upload_base64_image=upload_base64_image,
+    ).instrument()
 
     return exporter
 
@@ -32,10 +38,3 @@ def vcr_config():
         "filter_headers": ["authorization", "api-key"],
         "ignore_hosts": ["openaipublic.blob.core.windows.net"],
     }
-
-
-@pytest.fixture
-def mock_upload_base64_image():
-    with patch('opentelemetry.instrumentation.openai.shared.chat_wrappers.Config.upload_base64_image') as mock:
-        mock.return_value = "https://example.com/uploaded_image.jpg"
-        yield mock

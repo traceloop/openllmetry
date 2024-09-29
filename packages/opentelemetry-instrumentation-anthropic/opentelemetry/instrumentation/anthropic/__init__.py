@@ -1,10 +1,12 @@
 """OpenTelemetry Anthropic instrumentation"""
 
+import asyncio
 import json
 import logging
 import os
 import time
-from typing import Callable, Collection, Dict, Any
+from typing import Callable, Collection, Dict, Any, Optional
+from typing_extensions import Coroutine
 
 from anthropic._streaming import AsyncStream, Stream
 from opentelemetry import context as context_api
@@ -84,31 +86,30 @@ def is_streaming_response(response):
     return isinstance(response, Stream) or isinstance(response, AsyncStream)
 
 
-def _process_image_item(item, trace_id, span_id, message_index, content_index):
+async def _process_image_item(item, trace_id, span_id, message_index, content_index):
     if not Config.upload_base64_image:
         return item
 
     image_format = item.get("source").get("media_type").split("/")[1]
     image_name = f"message_{message_index}_content_{content_index}.{image_format}"
     base64_string = item.get("source").get("data")
-    url = Config.upload_base64_image(trace_id, span_id, image_name, base64_string)
+    url = await Config.upload_base64_image(trace_id, span_id, image_name, base64_string)
 
-    return {
-        'type': 'image_url',
-        'image_url': {
-            'url': url
-        }
-    }
+    return {"type": "image_url", "image_url": {"url": url}}
 
 
-def _dump_content(message_index, content, span):
+async def _dump_content(message_index, content, span):
     if isinstance(content, str):
         return content
     elif isinstance(content, list):
         content = [
-            _process_image_item(item, span.context.trace_id, span.context.span_id, message_index, j)
-            if _is_base64_image(item)
-            else item
+            (
+                await _process_image_item(
+                    item, span.context.trace_id, span.context.span_id, message_index, j
+                )
+                if _is_base64_image(item)
+                else item
+            )
             for j, item in enumerate(content)
         ]
 
@@ -116,7 +117,7 @@ def _dump_content(message_index, content, span):
 
 
 @dont_throw
-def _set_input_attributes(span, kwargs):
+async def _aset_input_attributes(span, kwargs):
     set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, kwargs.get("model"))
     set_span_attribute(
         span, SpanAttributes.LLM_REQUEST_MAX_TOKENS, kwargs.get("max_tokens_to_sample")
@@ -144,10 +145,8 @@ def _set_input_attributes(span, kwargs):
                 set_span_attribute(
                     span,
                     f"{SpanAttributes.LLM_PROMPTS}.{i}.content",
-                    _dump_content(
-                        message_index=i,
-                        span=span,
-                        content=message.get("content")
+                    await _dump_content(
+                        message_index=i, span=span, content=message.get("content")
                     ),
                 )
                 set_span_attribute(
@@ -197,7 +196,9 @@ async def _aset_token_usage(
                     for item in content:
                         # TODO: handle image tokens
                         if isinstance(item, dict) and item.get("type") == "text":
-                            prompt_tokens += await anthropic.count_tokens(item.get("text", ""))
+                            prompt_tokens += await anthropic.count_tokens(
+                                item.get("text", "")
+                            )
 
     if token_histogram and type(prompt_tokens) is int and prompt_tokens >= 0:
         token_histogram.record(
@@ -277,7 +278,9 @@ def _set_token_usage(
                     for item in content:
                         # TODO: handle image tokens
                         if isinstance(item, dict) and item.get("type") == "text":
-                            prompt_tokens += anthropic.count_tokens(item.get("text", ""))
+                            prompt_tokens += anthropic.count_tokens(
+                                item.get("text", "")
+                            )
 
     if token_histogram and type(prompt_tokens) is int and prompt_tokens >= 0:
         token_histogram.record(
@@ -425,10 +428,10 @@ def _is_base64_image(item: Dict[str, Any]) -> bool:
     if not isinstance(item, dict):
         return False
 
-    if not isinstance(item.get('source'), dict):
+    if not isinstance(item.get("source"), dict):
         return False
 
-    if item.get('type') != 'image' or item['source'].get('type') != 'base64':
+    if item.get("type") != "image" or item["source"].get("type") != "base64":
         return False
 
     return True
@@ -464,7 +467,7 @@ def _wrap(
     )
 
     if span.is_recording():
-        _set_input_attributes(span, kwargs)
+        asyncio.run(_aset_input_attributes(span, kwargs))
 
     start_time = time.time()
     try:
@@ -560,7 +563,7 @@ async def _awrap(
     )
     try:
         if span.is_recording():
-            _set_input_attributes(span, kwargs)
+            await _aset_input_attributes(span, kwargs)
 
     except Exception as ex:  # pylint: disable=broad-except
         logger.warning(
@@ -635,7 +638,9 @@ class AnthropicInstrumentor(BaseInstrumentor):
         enrich_token_usage: bool = False,
         exception_logger=None,
         get_common_metrics_attributes: Callable[[], dict] = lambda: {},
-        upload_base64_image: Callable[[str, str, str, str], str] = lambda *args: ""
+        upload_base64_image: Optional[
+            Callable[[str, str, str, str], Coroutine[None, None, str]]
+        ] = lambda *args: "",
     ):
         super().__init__()
         Config.exception_logger = exception_logger
