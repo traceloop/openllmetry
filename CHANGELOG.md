@@ -1,3 +1,44 @@
+## v0.31.4 (2024-10-01)
+
+### Fix
+
+- **langchain**: serialize inputs and outputs with pydantic (#2065)
+- **sdk**: custom image uploader (#2064)
+
+## v0.31.3 (2024-09-28)
+
+### Fix
+
+- support async image upload flows (#2051)
+
+## v0.31.2 (2024-09-27)
+
+### Fix
+
+- **anthropic**: add support for base64 images upload for anthropic (#2029)
+
+## v0.31.1 (2024-09-26)
+
+### Fix
+
+- **anthropic**: token counting exception when prompt contains images (#2030)
+
+## v0.31.0 (2024-09-25)
+
+### Feat
+
+- **sdk+openai**: support base64 images upload (#2000)
+
+### Fix
+
+- **sdk**: wrong package check for Vertex AI (#2015)
+
+## v0.30.1 (2024-09-16)
+
+### Fix
+
+- **langchain**: support v0.3.0 (#1985)
+
 ## v0.30.0 (2024-09-04)
 
 ### Feat

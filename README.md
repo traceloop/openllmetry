@@ -116,6 +116,7 @@ OpenLLMetry can instrument everything that [OpenTelemetry already instruments](h
 - ✅ Mistral AI
 - ✅ HuggingFace
 - ✅ Bedrock (AWS)
+- ✅ SageMaker (AWS)
 - ✅ Replicate
 - ✅ Vertex AI (GCP)
 - ✅ Google Generative AI (Gemini)
