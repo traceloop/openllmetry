@@ -88,12 +88,38 @@ def test_simple_lcel(exporter):
             "name": "ChatPromptTemplate",
         },
     }
-    assert prompt_task_span.attributes[SpanAttributes.TRACELOOP_ENTITY_OUTPUT] == (
-        '{"outputs": "messages=['
-        "SystemMessage(content='You are helpful assistant', additional_kwargs={}, response_metadata={}),"
-        " HumanMessage(content='tell me a short joke', additional_kwargs={}, response_metadata={})]\","
-        ' "kwargs": {"tags": ["seq:step:1", "test_tag"]}}'
-    )
+    assert json.loads(
+        prompt_task_span.attributes[SpanAttributes.TRACELOOP_ENTITY_OUTPUT]
+    ) == {
+        "kwargs": {"tags": ["seq:step:1", "test_tag"]},
+        "outputs": {
+            "id": ["langchain", "prompts", "chat", "ChatPromptValue"],
+            "kwargs": {
+                "messages": [
+                    {
+                        "id": ["langchain", "schema", "messages", "SystemMessage"],
+                        "kwargs": {
+                            "content": "You are helpful " "assistant",
+                            "type": "system",
+                        },
+                        "lc": 1,
+                        "type": "constructor",
+                    },
+                    {
+                        "id": ["langchain", "schema", "messages", "HumanMessage"],
+                        "kwargs": {
+                            "content": "tell me a short " "joke",
+                            "type": "human",
+                        },
+                        "lc": 1,
+                        "type": "constructor",
+                    },
+                ]
+            },
+            "lc": 1,
+            "type": "constructor",
+        },
+    }
 
 
 @pytest.mark.vcr

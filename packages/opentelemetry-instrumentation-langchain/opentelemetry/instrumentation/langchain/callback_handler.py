@@ -21,17 +21,10 @@ from opentelemetry.trace.span import Span
 
 from opentelemetry import context as context_api
 from opentelemetry.instrumentation.langchain.utils import (
+    CallbackFilteredJSONEncoder,
     dont_throw,
     should_send_prompts,
 )
-
-
-class CustomJsonEncode(json.JSONEncoder):
-    def default(self, o: Any) -> str:
-        try:
-            return super().default(o)
-        except TypeError:
-            return str(o)
 
 
 @dataclass
@@ -151,7 +144,7 @@ def _set_chat_request(
                 else:
                     span.set_attribute(
                         f"{SpanAttributes.LLM_PROMPTS}.{i}.content",
-                        json.dumps(msg.content, cls=CustomJsonEncode),
+                        json.dumps(msg.content, cls=CallbackFilteredJSONEncoder),
                     )
                 i += 1
 
@@ -183,7 +176,9 @@ def _set_chat_response(span: Span, response: LLMResult) -> None:
                 else:
                     span.set_attribute(
                         f"{prefix}.content",
-                        json.dumps(generation.message.content, cls=CustomJsonEncode),
+                        json.dumps(
+                            generation.message.content, cls=CallbackFilteredJSONEncoder
+                        ),
                     )
                 if generation.generation_info.get("finish_reason"):
                     span.set_attribute(
@@ -394,7 +389,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
                         "metadata": metadata,
                         "kwargs": kwargs,
                     },
-                    cls=CustomJsonEncode,
+                    cls=CallbackFilteredJSONEncoder,
                 ),
             )
 
@@ -416,7 +411,8 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             span.set_attribute(
                 SpanAttributes.TRACELOOP_ENTITY_OUTPUT,
                 json.dumps(
-                    {"outputs": outputs, "kwargs": kwargs}, cls=CustomJsonEncode
+                    {"outputs": outputs, "kwargs": kwargs},
+                    cls=CallbackFilteredJSONEncoder,
                 ),
             )
         self._end_span(span, run_id)
@@ -557,7 +553,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
                         "inputs": inputs,
                         "kwargs": kwargs,
                     },
-                    cls=CustomJsonEncode,
+                    cls=CallbackFilteredJSONEncoder,
                 ),
             )
 
@@ -578,7 +574,10 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         if should_send_prompts():
             span.set_attribute(
                 SpanAttributes.TRACELOOP_ENTITY_OUTPUT,
-                json.dumps({"output": output, "kwargs": kwargs}, cls=CustomJsonEncode),
+                json.dumps(
+                    {"output": output, "kwargs": kwargs},
+                    cls=CallbackFilteredJSONEncoder,
+                ),
             )
         self._end_span(span, run_id)
 
