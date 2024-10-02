@@ -6,7 +6,6 @@ import pytest
 from anthropic import AI_PROMPT, HUMAN_PROMPT, Anthropic, AsyncAnthropic
 from opentelemetry.semconv_ai import SpanAttributes, Meters
 
-
 @pytest.mark.vcr
 def test_anthropic_completion(exporter, reader):
     client = Anthropic()
@@ -97,7 +96,6 @@ def test_anthropic_completion(exporter, reader):
     assert found_choice_metric is True
     assert found_duration_metric is True
     assert found_exception_metric is True
-
 
 @pytest.mark.vcr
 def test_anthropic_message_create(exporter, reader):
@@ -203,7 +201,6 @@ def test_anthropic_message_create(exporter, reader):
     assert found_choice_metric is True
     assert found_duration_metric is True
     assert found_exception_metric is True
-
 
 @pytest.mark.vcr
 def test_anthropic_multi_modal(exporter):
@@ -321,7 +318,6 @@ async def test_anthropic_async_multi_modal(exporter):
         == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
     )
 
-
 @pytest.mark.vcr
 def test_anthropic_message_streaming(exporter, reader):
     client = Anthropic()
@@ -420,7 +416,6 @@ def test_anthropic_message_streaming(exporter, reader):
     assert found_token_metric is True
     assert found_choice_metric is True
     assert found_duration_metric is True
-
 
 @pytest.mark.vcr
 @pytest.mark.asyncio
@@ -528,7 +523,6 @@ async def test_async_anthropic_message_create(exporter, reader):
     assert found_choice_metric is True
     assert found_duration_metric is True
     assert found_exception_metric is True
-
 
 @pytest.mark.vcr
 @pytest.mark.asyncio

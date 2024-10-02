@@ -43,6 +43,9 @@ def _set_token_usage(
     choice_counter: Counter = None,
 ):
     total_tokens = prompt_tokens + completion_tokens
+    cache_creation_tokens = complete_response.get(SpanAttributes.GEN_AI_ANTHROPIC_USAGE_CACHE_CREATION_INPUT_TOKENS, 0)
+    cache_read_tokens = complete_response.get(SpanAttributes.GEN_AI_ANTHROPIC_USAGE_CACHE_READ_INPUT_TOKENS, 0)
+
     set_span_attribute(span, SpanAttributes.LLM_USAGE_PROMPT_TOKENS, prompt_tokens)
     set_span_attribute(
         span, SpanAttributes.LLM_USAGE_COMPLETION_TOKENS, completion_tokens
@@ -52,6 +55,8 @@ def _set_token_usage(
     set_span_attribute(
         span, SpanAttributes.LLM_RESPONSE_MODEL, complete_response.get("model")
     )
+    set_span_attribute(span, SpanAttributes.GEN_AI_ANTHROPIC_USAGE_CACHE_CREATION_INPUT_TOKENS, cache_creation_tokens)
+    set_span_attribute(span, SpanAttributes.GEN_AI_ANTHROPIC_USAGE_CACHE_READ_INPUT_TOKENS, cache_read_tokens)
 
     if token_histogram and type(prompt_tokens) is int and prompt_tokens >= 0:
         token_histogram.record(
