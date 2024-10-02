@@ -48,6 +48,7 @@ EXCLUDED_URLS = """
     posthog.com,
     sentry.io,
     bedrock-runtime,
+    sagemaker-runtime,
     googleapis.com,
     githubusercontent.com,
     openaipublic.blob.core.windows.net"""
@@ -260,6 +261,12 @@ class TracerWrapper(object):
                     elif instrument == Instruments.BEDROCK:
                         if not init_bedrock_instrumentor(should_enrich_metrics):
                             print(Fore.RED + "Warning: Bedrock library does not exist.")
+                            print(Fore.RESET)
+                        else:
+                            instrument_set = True
+                    elif instrument == Instruments.SAGEMAKER:
+                        if not init_sagemaker_instrumentor(should_enrich_metrics):
+                            print(Fore.RED + "Warning: SageMaker library does not exist.")
                             print(Fore.RESET)
                         else:
                             instrument_set = True
@@ -560,6 +567,7 @@ def init_instrumentations(
     init_urllib3_instrumentor()
     init_pymysql_instrumentor()
     init_bedrock_instrumentor(should_enrich_metrics)
+    init_sagemaker_instrumentor(should_enrich_metrics)
     init_replicate_instrumentor()
     init_vertexai_instrumentor()
     init_watsonx_instrumentor()
@@ -914,6 +922,24 @@ def init_bedrock_instrumentor(should_enrich_metrics: bool):
         return True
     except Exception as e:
         logging.error(f"Error initializing Bedrock instrumentor: {e}")
+        Telemetry().log_exception(e)
+        return False
+
+
+def init_sagemaker_instrumentor(should_enrich_metrics: bool):
+    try:
+        if is_package_installed("boto3"):
+            from opentelemetry.instrumentation.sagemaker import SageMakerInstrumentor
+
+            instrumentor = SageMakerInstrumentor(
+                exception_logger=lambda e: Telemetry().log_exception(e),
+                enrich_token_usage=should_enrich_metrics,
+            )
+            if not instrumentor.is_instrumented_by_opentelemetry:
+                instrumentor.instrument()
+        return True
+    except Exception as e:
+        logging.error(f"Error initializing SageMaker instrumentor: {e}")
         Telemetry().log_exception(e)
         return False
 
