@@ -4,6 +4,7 @@ from functools import wraps
 import json
 import logging
 import os
+import time
 from typing import Collection
 from opentelemetry.instrumentation.bedrock.config import Config
 from opentelemetry.instrumentation.bedrock.reusable_streaming_body import (
@@ -11,6 +12,7 @@ from opentelemetry.instrumentation.bedrock.reusable_streaming_body import (
 )
 from opentelemetry.instrumentation.bedrock.streaming_wrapper import StreamingWrapper
 from opentelemetry.instrumentation.bedrock.utils import dont_throw
+from opentelemetry.metrics import Counter, Histogram, Meter, get_meter
 from wrapt import wrap_function_wrapper
 import anthropic
 
@@ -27,8 +29,29 @@ from opentelemetry.semconv_ai import (
     SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
     SpanAttributes,
     LLMRequestTypeValues,
+    Meters,
 )
+
 from opentelemetry.instrumentation.bedrock.version import __version__
+
+
+class MetricParams:
+    def __init__(
+        self,
+        token_histogram: Histogram,
+        choice_counter: Counter,
+        duration_histogram: Histogram,
+        exception_counter: Counter,
+    ):
+        self.vendor = ""
+        self.model = ""
+        self.is_stream = False
+        self.token_histogram = token_histogram
+        self.choice_counter = choice_counter
+        self.duration_histogram = duration_histogram
+        self.exception_counter = exception_counter
+        self.start_time = time.time()
+
 
 logger = logging.getLogger(__name__)
 
@@ -52,6 +75,10 @@ def should_send_prompts():
     ).lower() == "true" or context_api.get_value("override_enable_content_tracing")
 
 
+def is_metrics_enabled() -> bool:
+    return (os.getenv("TRACELOOP_METRICS_ENABLED") or "true").lower() == "true"
+
+
 def _set_span_attribute(span, name, value):
     if value is not None:
         if value != "":
@@ -62,9 +89,21 @@ def _set_span_attribute(span, name, value):
 def _with_tracer_wrapper(func):
     """Helper for providing tracer for wrapper functions."""
 
-    def _with_tracer(tracer, to_wrap):
+    def _with_tracer(
+        tracer,
+        metric_params,
+        to_wrap,
+    ):
         def wrapper(wrapped, instance, args, kwargs):
-            return func(tracer, to_wrap, wrapped, instance, args, kwargs)
+            return func(
+                tracer,
+                metric_params,
+                to_wrap,
+                wrapped,
+                instance,
+                args,
+                kwargs,
+            )
 
         return wrapper
 
@@ -72,26 +111,50 @@ def _with_tracer_wrapper(func):
 
 
 @_with_tracer_wrapper
-def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
+def _wrap(
+    tracer,
+    metric_params,
+    to_wrap,
+    wrapped,
+    instance,
+    args,
+    kwargs,
+):
     """Instruments and calls every function defined in TO_WRAP."""
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
         return wrapped(*args, **kwargs)
 
     if kwargs.get("service_name") == "bedrock-runtime":
-        client = wrapped(*args, **kwargs)
-        client.invoke_model = _instrumented_model_invoke(client.invoke_model, tracer)
-        client.invoke_model_with_response_stream = (
-            _instrumented_model_invoke_with_response_stream(
-                client.invoke_model_with_response_stream, tracer
+        try:
+            start_time = time.time()
+            metric_params.start_time = time.time()
+            client = wrapped(*args, **kwargs)
+            client.invoke_model = _instrumented_model_invoke(client.invoke_model, tracer, metric_params)
+            client.invoke_model_with_response_stream = (
+                _instrumented_model_invoke_with_response_stream(
+                    client.invoke_model_with_response_stream, tracer, metric_params
+                )
             )
-        )
+            return client
+        except Exception as e:
+            end_time = time.time()
+            duration = end_time - start_time if "start_time" in locals() else 0
 
-        return client
+            attributes = {
+                "error.type": e.__class__.__name__,
+            }
+
+            if duration > 0 and metric_params.duration_histogram:
+                metric_params.duration_histogram.record(duration, attributes=attributes)
+            if metric_params.exception_counter:
+                metric_params.exception_counter.add(1, attributes=attributes)
+
+            raise e
 
     return wrapped(*args, **kwargs)
 
 
-def _instrumented_model_invoke(fn, tracer):
+def _instrumented_model_invoke(fn, tracer, metric_params):
     @wraps(fn)
     def with_instrumentation(*args, **kwargs):
         if context_api.get_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY):
@@ -103,14 +166,14 @@ def _instrumented_model_invoke(fn, tracer):
             response = fn(*args, **kwargs)
 
             if span.is_recording():
-                _handle_call(span, kwargs, response)
+                _handle_call(span, kwargs, response, metric_params)
 
             return response
 
     return with_instrumentation
 
 
-def _instrumented_model_invoke_with_response_stream(fn, tracer):
+def _instrumented_model_invoke_with_response_stream(fn, tracer, metric_params):
     @wraps(fn)
     def with_instrumentation(*args, **kwargs):
         if context_api.get_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY):
@@ -120,41 +183,45 @@ def _instrumented_model_invoke_with_response_stream(fn, tracer):
         response = fn(*args, **kwargs)
 
         if span.is_recording():
-            _handle_stream_call(span, kwargs, response)
+            _handle_stream_call(span, kwargs, response, metric_params)
 
         return response
 
     return with_instrumentation
 
 
-def _handle_stream_call(span, kwargs, response):
+def _handle_stream_call(span, kwargs, response, metric_params):
     @dont_throw
     def stream_done(response_body):
         request_body = json.loads(kwargs.get("body"))
 
         (vendor, model) = kwargs.get("modelId").split(".")
 
+        metric_params.vendor = vendor
+        metric_params.model = model
+        metric_params.is_stream = True
+
         _set_span_attribute(span, SpanAttributes.LLM_SYSTEM, vendor)
         _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, model)
         _set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, model)
 
         if vendor == "cohere":
-            _set_cohere_span_attributes(span, request_body, response_body)
+            _set_cohere_span_attributes(span, request_body, response_body, metric_params)
         elif vendor == "anthropic":
             if "prompt" in request_body:
                 _set_anthropic_completion_span_attributes(
-                    span, request_body, response_body
+                    span, request_body, response_body, metric_params
                 )
             elif "messages" in request_body:
                 _set_anthropic_messages_span_attributes(
-                    span, request_body, response_body
+                    span, request_body, response_body, metric_params
                 )
         elif vendor == "ai21":
-            _set_ai21_span_attributes(span, request_body, response_body)
+            _set_ai21_span_attributes(span, request_body, response_body, metric_params)
         elif vendor == "meta":
-            _set_llama_span_attributes(span, request_body, response_body)
+            _set_llama_span_attributes(span, request_body, response_body, metric_params)
         elif vendor == "amazon":
-            _set_amazon_span_attributes(span, request_body, response_body)
+            _set_amazon_span_attributes(span, request_body, response_body, metric_params)
 
         span.end()
 
@@ -162,7 +229,7 @@ def _handle_stream_call(span, kwargs, response):
 
 
 @dont_throw
-def _handle_call(span, kwargs, response):
+def _handle_call(span, kwargs, response, metric_params):
     response["body"] = ReusableStreamingBody(
         response["body"]._raw_stream, response["body"]._content_length
     )
@@ -171,26 +238,30 @@ def _handle_call(span, kwargs, response):
 
     (vendor, model) = kwargs.get("modelId").split(".")
 
+    metric_params.vendor = vendor
+    metric_params.model = model
+    metric_params.is_stream = False
+
     _set_span_attribute(span, SpanAttributes.LLM_SYSTEM, vendor)
     _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, model)
     _set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, model)
 
     if vendor == "cohere":
-        _set_cohere_span_attributes(span, request_body, response_body)
+        _set_cohere_span_attributes(span, request_body, response_body, metric_params)
     elif vendor == "anthropic":
         if "prompt" in request_body:
-            _set_anthropic_completion_span_attributes(span, request_body, response_body)
+            _set_anthropic_completion_span_attributes(span, request_body, response_body, metric_params)
         elif "messages" in request_body:
-            _set_anthropic_messages_span_attributes(span, request_body, response_body)
+            _set_anthropic_messages_span_attributes(span, request_body, response_body, metric_params)
     elif vendor == "ai21":
-        _set_ai21_span_attributes(span, request_body, response_body)
+        _set_ai21_span_attributes(span, request_body, response_body, metric_params)
     elif vendor == "meta":
-        _set_llama_span_attributes(span, request_body, response_body)
+        _set_llama_span_attributes(span, request_body, response_body, metric_params)
     elif vendor == "amazon":
-        _set_amazon_span_attributes(span, request_body, response_body)
+        _set_amazon_span_attributes(span, request_body, response_body, metric_params)
 
 
-def _record_usage_to_span(span, prompt_tokens, completion_tokens):
+def _record_usage_to_span(span, prompt_tokens, completion_tokens, metric_params):
     _set_span_attribute(
         span,
         SpanAttributes.LLM_USAGE_PROMPT_TOKENS,
@@ -207,8 +278,43 @@ def _record_usage_to_span(span, prompt_tokens, completion_tokens):
         prompt_tokens + completion_tokens,
     )
 
+    metric_attributes = _metric_shared_attributes(metric_params.vendor, metric_params.model, metric_params.is_stream)
 
-def _set_cohere_span_attributes(span, request_body, response_body):
+    if metric_params.duration_histogram:
+        duration = time.time() - metric_params.start_time
+        metric_params.duration_histogram.record(
+            duration,
+            attributes=metric_attributes,
+        )
+
+    if metric_params.token_histogram and type(prompt_tokens) is int and prompt_tokens >= 0:
+        metric_params.token_histogram.record(
+            prompt_tokens,
+            attributes={
+                **metric_attributes,
+                SpanAttributes.LLM_TOKEN_TYPE: "input",
+            },
+        )
+    if metric_params.token_histogram and type(completion_tokens) is int and completion_tokens >= 0:
+        metric_params.token_histogram.record(
+            completion_tokens,
+            attributes={
+                **metric_attributes,
+                SpanAttributes.LLM_TOKEN_TYPE: "output",
+            },
+        )
+
+
+def _metric_shared_attributes(response_vendor: str, response_model: str, is_streaming: bool = False):
+    return {
+        "vendor": response_vendor,
+        SpanAttributes.LLM_RESPONSE_MODEL: response_model,
+        SpanAttributes.LLM_SYSTEM: "bedrock",
+        "stream": is_streaming,
+    }
+
+
+def _set_cohere_span_attributes(span, request_body, response_body, metric_params):
     _set_span_attribute(
         span, SpanAttributes.LLM_REQUEST_TYPE, LLMRequestTypeValues.COMPLETION.value
     )
@@ -226,6 +332,7 @@ def _set_cohere_span_attributes(span, request_body, response_body):
         span,
         response_body.get("token_count").get("prompt_tokens"),
         response_body.get("token_count").get("response_tokens"),
+        metric_params,
     )
 
     if should_send_prompts():
@@ -241,7 +348,7 @@ def _set_cohere_span_attributes(span, request_body, response_body):
             )
 
 
-def _set_anthropic_completion_span_attributes(span, request_body, response_body):
+def _set_anthropic_completion_span_attributes(span, request_body, response_body, metric_params):
     _set_span_attribute(
         span, SpanAttributes.LLM_REQUEST_TYPE, LLMRequestTypeValues.COMPLETION.value
     )
@@ -266,18 +373,21 @@ def _set_anthropic_completion_span_attributes(span, request_body, response_body)
             span,
             response_body.get("usage").get("input_tokens"),
             response_body.get("usage").get("output_tokens"),
+            metric_params,
         )
     elif response_body.get("invocation_metrics") is not None:
         _record_usage_to_span(
             span,
             response_body.get("invocation_metrics").get("inputTokenCount"),
             response_body.get("invocation_metrics").get("outputTokenCount"),
+            metric_params,
         )
     elif Config.enrich_token_usage:
         _record_usage_to_span(
             span,
             _count_anthropic_tokens([request_body.get("prompt")]),
             _count_anthropic_tokens([response_body.get("completion")]),
+            metric_params,
         )
 
     if should_send_prompts():
@@ -291,7 +401,7 @@ def _set_anthropic_completion_span_attributes(span, request_body, response_body)
         )
 
 
-def _set_anthropic_messages_span_attributes(span, request_body, response_body):
+def _set_anthropic_messages_span_attributes(span, request_body, response_body, metric_params):
     _set_span_attribute(
         span, SpanAttributes.LLM_REQUEST_TYPE, LLMRequestTypeValues.CHAT.value
     )
@@ -316,13 +426,13 @@ def _set_anthropic_messages_span_attributes(span, request_body, response_body):
     ):
         prompt_tokens = response_body.get("usage").get("input_tokens")
         completion_tokens = response_body.get("usage").get("output_tokens")
-        _record_usage_to_span(span, prompt_tokens, completion_tokens)
+        _record_usage_to_span(span, prompt_tokens, completion_tokens, metric_params)
     elif response_body.get("invocation_metrics") is not None:
         prompt_tokens = response_body.get("invocation_metrics").get("inputTokenCount")
         completion_tokens = response_body.get("invocation_metrics").get(
             "outputTokenCount"
         )
-        _record_usage_to_span(span, prompt_tokens, completion_tokens)
+        _record_usage_to_span(span, prompt_tokens, completion_tokens, metric_params)
     elif Config.enrich_token_usage:
         messages = [message.get("content") for message in request_body.get("messages")]
 
@@ -336,7 +446,7 @@ def _set_anthropic_messages_span_attributes(span, request_body, response_body):
         completion_tokens = _count_anthropic_tokens(
             [content.get("text") for content in response_body.get("content")]
         )
-        _record_usage_to_span(span, prompt_tokens, completion_tokens)
+        _record_usage_to_span(span, prompt_tokens, completion_tokens, metric_params)
 
     if should_send_prompts():
         for idx, message in enumerate(request_body.get("messages")):
@@ -366,7 +476,7 @@ def _count_anthropic_tokens(messages: list[str]):
     return count
 
 
-def _set_ai21_span_attributes(span, request_body, response_body):
+def _set_ai21_span_attributes(span, request_body, response_body, metric_params):
     _set_span_attribute(
         span, SpanAttributes.LLM_REQUEST_TYPE, LLMRequestTypeValues.COMPLETION.value
     )
@@ -384,6 +494,7 @@ def _set_ai21_span_attributes(span, request_body, response_body):
         span,
         len(response_body.get("prompt").get("tokens")),
         len(response_body.get("completions")[0].get("data").get("tokens")),
+        metric_params,
     )
 
     if should_send_prompts():
@@ -399,7 +510,7 @@ def _set_ai21_span_attributes(span, request_body, response_body):
             )
 
 
-def _set_llama_span_attributes(span, request_body, response_body):
+def _set_llama_span_attributes(span, request_body, response_body, metric_params):
     _set_span_attribute(
         span, SpanAttributes.LLM_REQUEST_TYPE, LLMRequestTypeValues.COMPLETION.value
     )
@@ -417,6 +528,7 @@ def _set_llama_span_attributes(span, request_body, response_body):
         span,
         response_body.get("prompt_token_count"),
         response_body.get("generation_token_count"),
+        metric_params,
     )
 
     if should_send_prompts():
@@ -444,7 +556,7 @@ def _set_llama_span_attributes(span, request_body, response_body):
                 )
 
 
-def _set_amazon_span_attributes(span, request_body, response_body):
+def _set_amazon_span_attributes(span, request_body, response_body, metric_params):
     _set_span_attribute(
         span, SpanAttributes.LLM_REQUEST_TYPE, LLMRequestTypeValues.COMPLETION.value
     )
@@ -461,6 +573,7 @@ def _set_amazon_span_attributes(span, request_body, response_body):
         span,
         response_body.get("inputTextTokenCount"),
         sum(int(result.get("tokenCount")) for result in response_body.get("results")),
+        metric_params,
     )
 
     if should_send_prompts():
@@ -474,6 +587,35 @@ def _set_amazon_span_attributes(span, request_body, response_body):
                 f"{SpanAttributes.LLM_COMPLETIONS}.{i}.content",
                 result.get("outputText"),
             )
+
+
+def _create_metrics(meter: Meter):
+    token_histogram = meter.create_histogram(
+        name=Meters.LLM_TOKEN_USAGE,
+        unit="token",
+        description="Measures number of input and output tokens used",
+    )
+
+    choice_counter = meter.create_counter(
+        name=Meters.LLM_GENERATION_CHOICES,
+        unit="choice",
+        description="Number of choices returned by chat completions call",
+    )
+
+    duration_histogram = meter.create_histogram(
+        name=Meters.LLM_OPERATION_DURATION,
+        unit="s",
+        description="GenAI operation duration",
+    )
+
+    exception_counter = meter.create_counter(
+        # TODO: will fix this in future as a consolidation for semantic convention
+        name="llm.bedrock.completions.exceptions",
+        unit="time",
+        description="Number of exceptions occurred during chat completions",
+    )
+
+    return token_histogram, choice_counter, duration_histogram, exception_counter
 
 
 class BedrockInstrumentor(BaseInstrumentor):
@@ -490,6 +632,28 @@ class BedrockInstrumentor(BaseInstrumentor):
     def _instrument(self, **kwargs):
         tracer_provider = kwargs.get("tracer_provider")
         tracer = get_tracer(__name__, __version__, tracer_provider)
+
+        # meter and counters are inited here
+        meter_provider = kwargs.get("meter_provider")
+        meter = get_meter(__name__, __version__, meter_provider)
+
+        if is_metrics_enabled():
+            (
+                token_histogram,
+                choice_counter,
+                duration_histogram,
+                exception_counter,
+            ) = _create_metrics(meter)
+        else:
+            (
+                token_histogram,
+                choice_counter,
+                duration_histogram,
+                exception_counter,
+            ) = (None, None, None, None)
+
+        metric_params = MetricParams(token_histogram, choice_counter, duration_histogram, exception_counter)
+
         for wrapped_method in WRAPPED_METHODS:
             wrap_package = wrapped_method.get("package")
             wrap_object = wrapped_method.get("object")
@@ -497,7 +661,11 @@ class BedrockInstrumentor(BaseInstrumentor):
             wrap_function_wrapper(
                 wrap_package,
                 f"{wrap_object}.{wrap_method}",
-                _wrap(tracer, wrapped_method),
+                _wrap(
+                    tracer,
+                    metric_params,
+                    wrapped_method,
+                ),
             )
 
     def _uninstrument(self, **kwargs):
