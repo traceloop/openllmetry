@@ -1,12 +1,12 @@
 # Security
 
-Contact: security@traceloop.com
+Email: security@traceloop.com
 
-Based on [https://supabase.com/.well-known/security.txt](https://supabase.com/.well-known/security.txt)
+From [https://supabase.com/.well-known/security.txt](https://supabase.com/.well-known/security.txt)
 
-We place a high priority on the security of our systems at Traceloop. However, no matter how hard we try to make our systems secure, vulnerabilities can still exist.
+At Traceloop, we take the security of our systems very seriously. We know that despite our best efforts to make our systems secure, there is always some level of vulnerability involved.
 
-In the event that you discover a vulnerability, please let us know so we can address it as soon as possible. We would like to ask you to help us better protect our clients and our systems.
+If you happen to find any kind of vulnerability, please inform us so we can get it addressed as soon as possible. We'd like to request your assistance to improve the security posture of our clients and systems.
 
 ## Out of scope vulnerabilities:
 
@@ -26,32 +26,31 @@ In the event that you discover a vulnerability, please let us know so we can add
 
 - Lack of Secure or HTTP only flag on non-sensitive cookies
 
-- Deadlinks
+Deadlinks
 
-## Please do the following:
+## Do this:
+ 
+- E-mail your results to security@traceloop.dev.
+ 
+- We do not permit automated scanners on our infrastructure or dashboard. If you wish to do so please contact us and we can get set up with an instance of our sandbox environment for you.
+ 
+- Do not exploit the vulnerability or bug you have found-for example, do not download more data than you need to prove a vulnerability, delete or modify other peoples data
 
-- E-mail your findings to [security@traceloop.dev](mailto:security@traceloop.dev).
+- Don't reveal the problem until it is resolved,
+- Do not use physical security attacks, social engineering, distributed denial of service, spam, or third party applications.
 
-- Do not run automated scanners on our infrastructure or dashboard. If you wish to do this, contact us and we will set up a sandbox for you.
+- Provide as much information as possible to let us reproduce the problem so we can solve it as fast as possible. Usually, giving the IP address or URL of the affected system, along with a description of the vulnerability, is enough, but sometimes you need to explain a little bit more.
 
-- Do not take advantage of the vulnerability or problem you have discovered, for example by downloading more data than necessary to demonstrate the vulnerability or deleting or modifying other people's data,
+## What do we promise:
 
-- Do not reveal the problem to others until it has been resolved,
+- Within 3 business days from the date of receiving your report, we will get back to you with an evaluation of the report and the date for resolution expected,
 
-- Do not use attacks on physical security, social engineering, distributed denial of service, spam or applications of third parties,
+- If you have adhered to the instruction above, we shall not bring any legal action against you concerning the report,
 
-- Do provide sufficient information to reproduce the problem, so we will be able to resolve it as quickly as possible. Usually, the IP address or the URL of the affected system and a description of the vulnerability will be sufficient, but complex vulnerabilities may require further explanation.
+- Our approach to dealing with your report will be strictly confidential, and we will not pass on any of your details to third parties without your consent.
 
-## What we promise:
-
-- We will respond to your report within 3 business days with our evaluation of the report and an expected resolution date,
-
-- If you have followed the instructions above, we will not take any legal action against you in regard to the report,
-
-- We will handle your report with strict confidentiality, and not pass on your personal details to third parties without your permission,
-
-- We will keep you informed of the progress towards resolving the problem,
-
-- In the public information concerning the problem reported, we will give your name as the discoverer of the problem (unless you desire otherwise), and
-
-- We strive to resolve all problems as quickly as possible, and we would like to play an active role in the ultimate publication on the problem after it is resolved.
+- We will let you know about the situation regarding the resolution of the problem,
+ 
+In public information on the problem that is known to be reported, we will provide your name as the discoverer of the problem (unless you wish otherwise), and
+McGrory
+- We like to solve all problems as quickly as possible and would like to play an active role in the final appearance on the problem when solved.
