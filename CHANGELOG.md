@@ -1,3 +1,10 @@
+## v0.31.4 (2024-10-01)
+
+### Fix
+
+- **langchain**: serialize inputs and outputs with pydantic (#2065)
+- **sdk**: custom image uploader (#2064)
+
 ## v0.31.3 (2024-09-28)
 
 ### Fix

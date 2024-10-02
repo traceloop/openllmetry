@@ -1,5 +1,4 @@
 import json
-import re
 
 import boto3
 import pytest
@@ -215,13 +214,24 @@ def test_anthropic(exporter):
     assert (
         anthropic_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.role"]
     ) == "assistant"
-    outputs = json.loads(
+    output = json.loads(
         workflow_span.attributes[SpanAttributes.TRACELOOP_ENTITY_OUTPUT]
-    )["outputs"]
-    assert (
-        dict(re.findall(r'(\S+)=(".*?"|\S+)', outputs))["content"]
-        == f'"{response.content}"'
     )
+    # We need to remove the id from the output because it is random
+    assert {k: v for k, v in output["outputs"]["kwargs"].items() if k != "id"} == {
+        "content": "Why can't a bicycle stand up by itself? Because it's two-tired!",
+        "invalid_tool_calls": [],
+        "response_metadata": {
+            "id": "msg_017fMG9SRDFTBhcD1ibtN1nK",
+            "model": "claude-2.1",
+            "stop_reason": "end_turn",
+            "stop_sequence": None,
+            "usage": {"input_tokens": 19, "output_tokens": 22},
+        },
+        "tool_calls": [],
+        "type": "ai",
+        "usage_metadata": {"input_tokens": 19, "output_tokens": 22, "total_tokens": 41},
+    }
 
 
 @pytest.mark.vcr
@@ -276,10 +286,17 @@ def test_bedrock(exporter):
     assert (
         bedrock_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.role"]
     ) == "assistant"
-    outputs = json.loads(
+    output = json.loads(
         workflow_span.attributes[SpanAttributes.TRACELOOP_ENTITY_OUTPUT]
-    )["outputs"]
-    assert (
-        dict(re.findall(r'(\S+)=(".*?"|\S+)', outputs))["content"].replace("\\n", "\n")
-        == f'"{response.content}"'
     )
+    # We need to remove the id from the output because it is random
+    assert {k: v for k, v in output["outputs"]["kwargs"].items() if k != "id"} == {
+        "content": "Here's a short joke for you:\n\nWhat do you call a bear with no teeth? A gummy bear!",
+        "response_metadata": {
+            "model_id": "anthropic.claude-3-haiku-20240307-v1:0",
+            "usage": {"prompt_tokens": 16, "completion_tokens": 27, "total_tokens": 43},
+        },
+        "type": "ai",
+        "tool_calls": [],
+        "invalid_tool_calls": [],
+    }
