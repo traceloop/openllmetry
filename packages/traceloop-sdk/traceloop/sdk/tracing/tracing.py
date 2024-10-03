@@ -1,7 +1,8 @@
 import atexit
 import logging
 import os
-
+import contextvars
+import uuid
 
 from colorama import Fore
 from opentelemetry import trace
@@ -33,7 +34,6 @@ from traceloop.sdk.utils import is_notebook
 from traceloop.sdk.utils.package_check import is_package_installed
 from typing import Callable, Dict, Optional, Set
 
-
 TRACER_NAME = "traceloop.tracer"
 EXCLUDED_URLS = """
     iam.cloud.ibm.com,
@@ -59,8 +59,10 @@ class TracerWrapper(object):
     enable_content_tracing: bool = True
     endpoint: str = None
     headers: Dict[str, str] = {}
+    association_properties_var: ContextVar = None
     __tracer_provider: TracerProvider = None
     __image_uploader: ImageUploader = None
+    
 
     def __new__(
         cls,
@@ -462,6 +464,12 @@ class TracerWrapper(object):
 def set_association_properties(properties: dict) -> None:
     attach(set_value("association_properties", properties))
 
+    # Generate a unique UUID for the task
+    wrapper_uuid = str(uuid.uuid4())
+
+    # Set a wrapper-specific value using the generated UUID
+    token = TracerWrapper.association_properties_var.set({'wrapper_uuid': wrapper_uuid})
+    
     # Attach association properties to the current span, if it's a workflow or a task
     span = trace.get_current_span()
     if get_value("workflow_name") is not None or get_value("entity_name") is not None:
