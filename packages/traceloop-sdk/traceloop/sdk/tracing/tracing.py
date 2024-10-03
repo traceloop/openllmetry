@@ -4,6 +4,7 @@ import os
 import contextvars
 import uuid
 
+
 from colorama import Fore
 from opentelemetry import trace
 from opentelemetry.exporter.otlp.proto.http.trace_exporter import (
@@ -33,6 +34,7 @@ from traceloop.sdk.tracing.content_allow_list import ContentAllowList
 from traceloop.sdk.utils import is_notebook
 from traceloop.sdk.utils.package_check import is_package_installed
 from typing import Callable, Dict, Optional, Set
+
 
 TRACER_NAME = "traceloop.tracer"
 EXCLUDED_URLS = """
