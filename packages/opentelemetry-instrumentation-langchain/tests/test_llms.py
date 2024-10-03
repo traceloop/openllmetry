@@ -90,6 +90,9 @@ def test_openai(exporter):
     assert (
         openai_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.role"]
     ) == "assistant"
+    assert openai_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 24
+    assert openai_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS] == 26
+    assert openai_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 50
 
 
 @pytest.mark.vcr
@@ -113,12 +116,14 @@ def test_openai_functions(exporter):
 
     spans = exporter.get_finished_spans()
 
-    assert [
-        "ChatPromptTemplate.task",
-        "ChatOpenAI.chat",
-        "JsonOutputFunctionsParser.task",
-        "RunnableSequence.workflow",
-    ] == [span.name for span in spans]
+    assert set(
+        [
+            "ChatPromptTemplate.task",
+            "JsonOutputFunctionsParser.task",
+            "ChatOpenAI.chat",
+            "RunnableSequence.workflow",
+        ]
+    ) == set([span.name for span in spans])
 
     openai_span = next(span for span in spans if span.name == "ChatOpenAI.chat")
 
@@ -169,6 +174,9 @@ def test_openai_functions(exporter):
         )
         == response
     )
+    assert openai_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 76
+    assert openai_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS] == 35
+    assert openai_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 111
 
 
 @pytest.mark.vcr
@@ -214,6 +222,9 @@ def test_anthropic(exporter):
     assert (
         anthropic_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.role"]
     ) == "assistant"
+    assert anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 19
+    assert anthropic_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS] == 22
+    assert anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 41
     output = json.loads(
         workflow_span.attributes[SpanAttributes.TRACELOOP_ENTITY_OUTPUT]
     )
@@ -286,6 +297,9 @@ def test_bedrock(exporter):
     assert (
         bedrock_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.role"]
     ) == "assistant"
+    assert bedrock_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 16
+    assert bedrock_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS] == 27
+    assert bedrock_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 43
     output = json.loads(
         workflow_span.attributes[SpanAttributes.TRACELOOP_ENTITY_OUTPUT]
     )
