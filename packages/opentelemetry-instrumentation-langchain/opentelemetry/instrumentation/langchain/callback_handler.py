@@ -153,9 +153,30 @@ def _set_chat_response(span: Span, response: LLMResult) -> None:
     if not should_send_prompts():
         return
 
+    input_tokens = 0
+    output_tokens = 0
+    total_tokens = 0
+
     i = 0
     for generations in response.generations:
         for generation in generations:
+            if (
+                hasattr(generation, "message")
+                and hasattr(generation.message, "usage_metadata")
+                and generation.message.usage_metadata is not None
+            ):
+                input_tokens += (
+                    generation.message.usage_metadata.get("input_tokens")
+                    or generation.message.usage_metadata.get("prompt_tokens")
+                    or 0
+                )
+                output_tokens += (
+                    generation.message.usage_metadata.get("output_tokens")
+                    or generation.message.usage_metadata.get("completion_tokens")
+                    or 0
+                )
+                total_tokens = input_tokens + output_tokens
+
             prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{i}"
             if hasattr(generation, "text") and generation.text != "":
                 span.set_attribute(
@@ -200,6 +221,20 @@ def _set_chat_response(span: Span, response: LLMResult) -> None:
                         ),
                     )
             i += 1
+
+    if input_tokens > 0 or output_tokens > 0 or total_tokens > 0:
+        span.set_attribute(
+            SpanAttributes.LLM_USAGE_PROMPT_TOKENS,
+            input_tokens,
+        )
+        span.set_attribute(
+            SpanAttributes.LLM_USAGE_COMPLETION_TOKENS,
+            output_tokens,
+        )
+        span.set_attribute(
+            SpanAttributes.LLM_USAGE_TOTAL_TOKENS,
+            total_tokens,
+        )
 
 
 class TraceloopCallbackHandler(BaseCallbackHandler):
@@ -481,13 +516,19 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
 
         span = self._get_span(run_id)
 
-        token_usage = (response.llm_output or {}).get("token_usage")
+        token_usage = (response.llm_output or {}).get("token_usage") or (
+            response.llm_output or {}
+        ).get("usage")
         if token_usage is not None:
-            prompt_tokens = token_usage.get("prompt_tokens") or token_usage.get(
-                "input_token_count"
+            prompt_tokens = (
+                token_usage.get("prompt_tokens")
+                or token_usage.get("input_token_count")
+                or token_usage.get("input_tokens")
             )
-            completion_tokens = token_usage.get("completion_tokens") or token_usage.get(
-                "generated_token_count"
+            completion_tokens = (
+                token_usage.get("completion_tokens")
+                or token_usage.get("generated_token_count")
+                or token_usage.get("output_tokens")
             )
             total_tokens = token_usage.get("total_tokens") or (
                 prompt_tokens + completion_tokens

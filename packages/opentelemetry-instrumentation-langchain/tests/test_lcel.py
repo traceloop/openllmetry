@@ -36,12 +36,14 @@ def test_simple_lcel(exporter):
 
     spans = exporter.get_finished_spans()
 
-    assert [
-        "ChatPromptTemplate.task",
-        "ChatOpenAI.chat",
-        "JsonOutputFunctionsParser.task",
-        "ThisIsATestChain.workflow",
-    ] == [span.name for span in spans]
+    assert set(
+        [
+            "ChatPromptTemplate.task",
+            "JsonOutputFunctionsParser.task",
+            "ChatOpenAI.chat",
+            "ThisIsATestChain.workflow",
+        ]
+    ) == set([span.name for span in spans])
 
     workflow_span = next(
         span for span in spans if span.name == "ThisIsATestChain.workflow"

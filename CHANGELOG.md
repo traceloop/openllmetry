@@ -1,3 +1,14 @@
+## v0.32.0 (2024-10-03)
+
+### Feat
+
+- **bedrock**: support metrics for bedrock (#1957)
+- **SageMaker**: Add SageMaker instrumentation (#2028)
+
+### Fix
+
+- **langchain**: token usage reporting (#2074)
+
 ## v0.31.4 (2024-10-01)
 
 ### Fix
