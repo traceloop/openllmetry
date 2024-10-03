@@ -182,23 +182,26 @@ async def _aset_token_usage(
     if not isinstance(response, dict):
         response = response.__dict__
 
-    prompt_tokens = 0
-    if hasattr(anthropic, "count_tokens"):
-        if request.get("prompt"):
-            prompt_tokens = await anthropic.count_tokens(request.get("prompt"))
-        elif request.get("messages"):
-            prompt_tokens = 0
-            for m in request.get("messages"):
-                content = m.get("content")
-                if isinstance(content, str):
-                    prompt_tokens += await anthropic.count_tokens(content)
-                elif isinstance(content, list):
-                    for item in content:
-                        # TODO: handle image tokens
-                        if isinstance(item, dict) and item.get("type") == "text":
-                            prompt_tokens += await anthropic.count_tokens(
-                                item.get("text", "")
-                            )
+    if usage := response.get("usage"):
+        prompt_tokens = usage.input_tokens
+    else:
+        prompt_tokens = 0
+        if hasattr(anthropic, "count_tokens"):
+            if request.get("prompt"):
+                prompt_tokens = await anthropic.count_tokens(request.get("prompt"))
+            elif request.get("messages"):
+                prompt_tokens = 0
+                for m in request.get("messages"):
+                    content = m.get("content")
+                    if isinstance(content, str):
+                        prompt_tokens += await anthropic.count_tokens(content)
+                    elif isinstance(content, list):
+                        for item in content:
+                            # TODO: handle image tokens
+                            if isinstance(item, dict) and item.get("type") == "text":
+                                prompt_tokens += await anthropic.count_tokens(
+                                    item.get("text", "")
+                                )
 
     if token_histogram and type(prompt_tokens) is int and prompt_tokens >= 0:
         token_histogram.record(
@@ -209,14 +212,17 @@ async def _aset_token_usage(
             },
         )
 
-    completion_tokens = 0
-    if hasattr(anthropic, "count_tokens"):
-        if response.get("completion"):
-            completion_tokens = await anthropic.count_tokens(response.get("completion"))
-        elif response.get("content"):
-            completion_tokens = await anthropic.count_tokens(
-                response.get("content")[0].text
-            )
+    if usage := response.get("usage"):
+        completion_tokens = usage.output_tokens
+    else:
+        completion_tokens = 0
+        if hasattr(anthropic, "count_tokens"):
+            if response.get("completion"):
+                completion_tokens = await anthropic.count_tokens(response.get("completion"))
+            elif response.get("content"):
+                completion_tokens = await anthropic.count_tokens(
+                    response.get("content")[0].text
+                )
 
     if token_histogram and type(completion_tokens) is int and completion_tokens >= 0:
         token_histogram.record(
@@ -264,23 +270,26 @@ def _set_token_usage(
     if not isinstance(response, dict):
         response = response.__dict__
 
-    prompt_tokens = 0
-    if hasattr(anthropic, "count_tokens"):
-        if request.get("prompt"):
-            prompt_tokens = anthropic.count_tokens(request.get("prompt"))
-        elif request.get("messages"):
-            prompt_tokens = 0
-            for m in request.get("messages"):
-                content = m.get("content")
-                if isinstance(content, str):
-                    prompt_tokens += anthropic.count_tokens(content)
-                elif isinstance(content, list):
-                    for item in content:
-                        # TODO: handle image tokens
-                        if isinstance(item, dict) and item.get("type") == "text":
-                            prompt_tokens += anthropic.count_tokens(
-                                item.get("text", "")
-                            )
+    if usage := response.get("usage"):
+        prompt_tokens = usage.input_tokens
+    else:
+        prompt_tokens = 0
+        if hasattr(anthropic, "count_tokens"):
+            if request.get("prompt"):
+                prompt_tokens = anthropic.count_tokens(request.get("prompt"))
+            elif request.get("messages"):
+                prompt_tokens = 0
+                for m in request.get("messages"):
+                    content = m.get("content")
+                    if isinstance(content, str):
+                        prompt_tokens += anthropic.count_tokens(content)
+                    elif isinstance(content, list):
+                        for item in content:
+                            # TODO: handle image tokens
+                            if isinstance(item, dict) and item.get("type") == "text":
+                                prompt_tokens += anthropic.count_tokens(
+                                    item.get("text", "")
+                                )
 
     if token_histogram and type(prompt_tokens) is int and prompt_tokens >= 0:
         token_histogram.record(
@@ -291,12 +300,15 @@ def _set_token_usage(
             },
         )
 
-    completion_tokens = 0
-    if hasattr(anthropic, "count_tokens"):
-        if response.get("completion"):
-            completion_tokens = anthropic.count_tokens(response.get("completion"))
-        elif response.get("content"):
-            completion_tokens = anthropic.count_tokens(response.get("content")[0].text)
+    if usage := response.get("usage"):
+        completion_tokens = usage.output_tokens
+    else:
+        completion_tokens = 0
+        if hasattr(anthropic, "count_tokens"):
+            if response.get("completion"):
+                completion_tokens = anthropic.count_tokens(response.get("completion"))
+            elif response.get("content"):
+                completion_tokens = anthropic.count_tokens(response.get("content")[0].text)
 
     if token_histogram and type(completion_tokens) is int and completion_tokens >= 0:
         token_histogram.record(
