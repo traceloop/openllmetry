@@ -64,7 +64,6 @@ class TracerWrapper(object):
     association_properties_var: ContextVar = None
     __tracer_provider: TracerProvider = None
     __image_uploader: ImageUploader = None
-    
 
     def __new__(
         cls,
