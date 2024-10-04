@@ -54,7 +54,7 @@
 
 ### Fix
 
-- **langchain**: support v0.3.0 (#1985)
+- **langchain**: support v0.3.0.1 (#1985)
 
 ## v0.30.0 (2024-09-04)
 

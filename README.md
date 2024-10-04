@@ -120,7 +120,7 @@ OpenLLMetry can instrument everything that [OpenTelemetry already instruments](h
 - ✅ Replicate
 - ✅ Vertex AI (GCP)
 - ✅ Google Generative AI (Gemini)
-- ✅ IBM Watsonx AI
+- ✅ IBM Watsonx Ai
 - ✅ Together AI
 - ✅ Aleph Alpha
 - ✅ Groq

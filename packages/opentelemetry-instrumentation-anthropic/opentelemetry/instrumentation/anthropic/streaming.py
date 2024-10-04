@@ -86,7 +86,7 @@ def _set_token_usage(
 
 def _set_completions(span, events):
     if not span.is_recording() or not events:
-        return
+        return False
 
     try:
         for event in events:
