@@ -1,0 +1,28 @@
+import pandas as pd
+from sklearn.metrics import confusion_matrix
+
+# Simulated model predictions and actual labels with gender information
+data = pd.DataFrame({
+    'gender': ['male', 'female', 'male', 'female', 'male', 'female'],
+    'actual_label': [1, 0, 1, 1, 0, 0],  # Ground truth
+    'predicted_label': [1, 0, 1, 0, 1, 0]  # Model predictions
+})
+
+# Check the prediction rate for each gender
+male_predictions = data[data['gender'] == 'male']['predicted_label']
+female_predictions = data[data['gender'] == 'female']['predicted_label']
+
+print(f"Male Prediction Mean: {male_predictions.mean()}")
+print(f"Female Prediction Mean: {female_predictions.mean()}")
+
+# Calculate and compare confusion matrices for each gender
+cm_male = confusion_matrix(data[data['gender'] == 'male']['actual_label'], male_predictions)
+cm_female = confusion_matrix(data[data['gender'] == 'female']['actual_label'], female_predictions)
+
+print(f"Confusion Matrix for males: \n{cm_male}")
+print(f"Confusion Matrix for females: \n{cm_female}")
+
+# Calculate demographic parity
+parity = abs(male_predictions.mean() - female_predictions.mean())
+
+print(f"Demographic Parity (Difference in Positive Prediction Rates): {parity}")
