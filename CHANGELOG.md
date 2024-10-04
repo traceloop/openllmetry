@@ -1,3 +1,9 @@
+## v0.32.2 (2024-10-04)
+
+### Fix
+
+- **traceloop-sdk**: add aiohttp as dependency (#2094)
+
 ## v0.32.1 (2024-10-03)
 
 ### Fix
