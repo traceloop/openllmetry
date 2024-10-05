@@ -44,7 +44,7 @@
 
 ### Fix
 
-- **anthropic**: token counting exception when prompt contains images (#2030)
+- **anthropic**: token counting exception when the prompt contains images (#2030)
 
 ## v0.31.0 (2024-09-25)
 
@@ -84,7 +84,7 @@
 
 ### Feat
 
-- **instrumentation**: Import redis from OpenTelemetry, add redis sample rag application (#1837)
+- **instrumentation**: Import Redis from OpenTelemetry, add Redis sample rag application (#1837)
 
 ### Fix
 
@@ -94,7 +94,7 @@
 
 ### Fix
 
-- **openai**: calculating streaming usage didnt work on azure models
+- **openai**: calculating streaming usage didn't work on Azure models
 
 ## v0.28.1 (2024-08-24)
 
@@ -112,8 +112,8 @@
 
 - **openai**: re-enabled token count for azure instances (#1877)
 - **openai**: not given values thrown errors (#1876)
-- **sdk**: `aentity_class` was missing a positional argument (#1816)
-- **sdk**: instrument threading for propagating otel context (#1868)
+- **SDK**: `aentity_class` was missing a positional argument (#1816)
+- **SDK**: instrument threading for propagating otel context (#1868)
 - **openai**: TypeError: '<' not supported between instances of 'NoneType' and 'int' in embeddings_wrappers.py (#1836)
 
 ## v0.27.0 (2024-08-15)
@@ -122,7 +122,7 @@
 
 - **llama-index**: Use callbacks (#1546)
 - LanceDB Integration (#1749)
-- **sdk**: chained entity path on nested tasks (#1782)
+- **SDK**: chained entity path on nested tasks (#1782)
 
 ### Fix
 
@@ -134,7 +134,7 @@
 ### Fix
 
 - **langchain**: export metadata as association properties (#1805)
-- **bedrock**: add model name for amazon bedrock response (#1757)
+- **bedrock**: add a model name for Amazon bedrock response (#1757)
 
 ## v0.26.4 (2024-08-03)
 
@@ -209,7 +209,7 @@
 
 ### Fix
 
-- association properties and workflow / task on metrics (#1494)
+- association properties and workflow/task on metrics (#1494)
 - **llamaindex**: report inputs+outputs on entities (#1495)
 
 ## v0.25.0 (2024-07-08)
@@ -251,15 +251,15 @@
 ### Fix
 
 - input/output serialization issue for langchain (#1341)
-- **sdk**: remove auto-create dashboard option (#1315)
+- **SDK**: remove auto-create dashboard option (#1315)
 
 ## v0.22.1 (2024-06-13)
 
 ### Fix
 
-- **sdk**: backpropagate association property to nearest workflow/task (#1300)
-- **sdk**: clear context when @workflow or @task is ending (#1301)
-- **bedrock**: utilize invocation metrics from response body for AI21, Anthropic, Meta models when available to record usage on spans (#1286)
+- **SDK**: backpropagate association property to nearest workflow/task (#1300)
+- **SDK**: clear context when @workflow or @task is ending (#1301)
+- **bedrock**: utilize invocation metrics from the response body for AI21, Anthropic, and Meta models when available to record usage on spans (#1286)
 
 ## v0.22.0 (2024-06-10)
 
@@ -312,7 +312,7 @@
 - log tracing errors on debug level (#1180)
 - **bedrock**: support streaming API (#1179)
 - **weaviate**: support v4.6.3 (#1134)
-- **sdk**: wrong package check for mistral instrumentations (#1168)
+- **SDK**: wrong package check for mistral instrumentations (#1168)
 
 ## v0.21.0 (2024-05-27)
 
@@ -350,8 +350,8 @@
 - **pinecone**: backport to v2.2.2 (#1122)
 - llm metrics naming + views (#1121)
 - **langchain**: better serialization of inputs and outputs (#1120)
-- **sdk**: failsafe against instrumentation initialization errors (#1117)
-- **sdk**: instrument milvus (#1116)
+- **SDK**: failsafe against instrumentation initialization errors (#1117)
+- **SDK**: instrument Milvus (#1116)
 
 ## v0.18.2 (2024-05-17)
 
@@ -359,14 +359,14 @@
 
 - **openai**: old streaming handling for backward compatibility with OpenAI v0 (#1064)
 - **openai**: report fingerprint from response (#1066)
-- **sdk**: special handling for metrics with custom traces exporter (#1065)
+- **SDK**: special handling for metrics with custom traces exporter (#1065)
 
 ## v0.18.1 (2024-05-17)
 
 ### Fix
 
 - **openai**: fallback to response model if request model is not set when calculating token usage (#1054)
-- **openai**: add default value of stream as false in token usage metric (#1055)
+- **openai**: add a default value of stream as false in token usage metric (#1055)
 
 ## v0.18.0 (2024-05-14)
 
@@ -420,18 +420,18 @@
 
 ### Fix
 
-- **instrumentation**: correct the module declaration to match package filepath name (#940)
+- **instrumentation**: correct the module declaration to match the package file path name (#940)
 
 ## v0.17.0 (2024-04-29)
 
 ### Feat
 
-- **sdk**: otel metrics with traceloop (#883)
-- Updated semantic conventions based on otel community (#884)
+- **SDK**: otel metrics with trace loop (#883)
+- Updated semantic conventions based on Otel community (#884)
 
 ### Fix
 
-- **sdk**: do not instrument sentry requests (used internally by SDK) (#939)
+- **SDK**: do not instrument sentry requests (used internally by SDK) (#939)
 
 ## v0.16.9 (2024-04-26)
 
@@ -447,7 +447,7 @@
 ### Fix
 
 - **langchain**: input/output reporting (#894)
-- **sdk**: reset the color of messages in the custom metrics exporter (#893)
+- **SDK**: reset the color of messages in the custom metrics exporter (#893)
 
 ## v0.16.7 (2024-04-25)
 
@@ -470,7 +470,7 @@
 
 ### Fix
 
-- **sdk**: warn for reporting score when not using Traceloop (#829)
+- **SDK**: warn for reporting score when not using Traceloop (#829)
 - **openai**: fix aembeddings init error (#828)
 - **openai**: missing aembedding metrics
 
@@ -606,7 +606,7 @@
 
 - **traceloop-sdk**: custom span processor's on_start is honored (#695)
 - **openai**: do not import tiktoken if not used
-- **sdk**: exclude api.traceloop.com from requests
+- **SDK**: exclude api.traceloop.com from requests
 - **openai**: Support report token usage in stream mode (#661)
 
 ## v0.14.5 (2024-03-21)
@@ -621,14 +621,14 @@
 
 - auto-instrumentation support (#662)
 - **sample**: poetry issues; litellm sample
-- **sdk**: better logging for otel metrics
-- **sdk**: error for manually providing instrumentation list
+- **SDK**: better logging for Otel metrics
+- **SDK**: error for manually providing instrumentation list
 
 ## v0.14.3 (2024-03-17)
 
 ### Fix
 
-- support python 3.12 (#639)
+- Support Python 3.12 (#639)
 - **traceloop-sdk**: Log error message when providing wrong API key. (#638)
 
 ## v0.14.2 (2024-03-15)
@@ -728,7 +728,7 @@
 ### Fix
 
 - **langchain**: support LCEL (#473)
-- **sdk**: fail gracefully in case input/output serialization failure (#472)
+- **sdk**: fail gracefully in case of input/output serialization failure (#472)
 
 ## 0.11.3 (2024-02-19)
 
@@ -792,7 +792,7 @@
 
 ### Feat
 
-- watsonx support for traceloop (#341)
+- watsonx support for trace loop (#341)
 
 ### Fix
 
@@ -1015,8 +1015,8 @@
 
 ### Fix
 
-- **sdk**: allow overriding processor & propagator (#139)
-- proper propagation of api key to fetcher (#138)
+- **SDK**: allow overriding processor & propagator (#139)
+- proper propagation of API key to fetcher (#138)
 
 ## 0.1.5 (2023-10-31)
 
@@ -1078,20 +1078,20 @@
 - Pinecone Instrumentation (#3)
 - basic testing framework (#70)
 - haystack instrumentations (#55)
-- auto-create link to traceloop dashboard
+- auto-create link to trace loop dashboard
 - setting headers for exporting traces
 - sdk code + openai instrumentation (#4)
 
 ### Fix
 
-- **sdk**: disable sync when using external exporter
+- **sdk**: disable sync when using an external exporter
 - disable content tracing when not overridden (#121)
 - **langchain**: add retrieval_qa workflow span (#112)
 - **traceloop-sdk**: logging of service name in traces (#99)
-- do not trigger dashboard auto-creation if exporter is set (#96)
+- do not trigger dashboard auto-creation if the exporter is set (#96)
 - **docs**: clarification on getting API key
 - **chore**: spaces and nits on README
-- **docs**: bad link for python SDK
+- **docs**: bad link for Python SDK
 - **docs**: updated TRACELOOP_BASE_URL (#81)
 - add openai function call data to telemetry (#80)
 - **sdk**: disabled prompt registry by default (#78)
@@ -1107,8 +1107,8 @@
 - warn if Traceloop wasn't initialized properly (#11)
 - match new dashboard API
 - **traceloop-sdk**: duplicate spans reporting (#10)
-- moved api key to /tmp
-- /v1/traces is always appended to endpoint
+- moved API key to /tmp
+- /v1/traces is always appended to the endpoint
 - parse headers correctly
 - **traceloop-sdk**:  replace context variables with otel context + refactor (#8)
 - traceloop sdk initialization and initial versions release for instrumentations (#7)
