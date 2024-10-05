@@ -52,14 +52,14 @@
 **🎉 New**:
 Our semantic conventions are now part of OpenTelemetry! Join the [discussion](https://github.com/open-telemetry/community/blob/1c71595874e5d125ca92ec3b0e948c4325161c8a/projects/llm-semconv.md) and help us shape the future of LLM observability.
 
-Looking for the JS/TS version? Check out [OpenLLMetry-JS](https://github.com/traceloop/openllmetry-js).
+Are you looking for the JS/TS version? Check out [OpenLLMetry-JS](https://github.com/traceloop/openllmetry-js).
 
 OpenLLMetry is a set of extensions built on top of [OpenTelemetry](https://opentelemetry.io/) that gives you complete observability over your LLM application. Because it uses OpenTelemetry under the hood, [it can be connected to your existing observability solutions](https://www.traceloop.com/docs/openllmetry/integrations/introduction) - Datadog, Honeycomb, and others.
 
 It's built and maintained by Traceloop under the Apache 2.0 license.
 
 The repo contains standard OpenTelemetry instrumentations for LLM providers and Vector DBs, as well as a Traceloop SDK that makes it easy to get started with OpenLLMetry, while still outputting standard OpenTelemetry data that can be connected to your observability stack.
-If you already have OpenTelemetry instrumented, you can just add any of our instrumentations directly.
+If you already have OpenTelemetry instrumented, you can add any of our instrumentations directly.
 
 ## 🚀 Getting Started
 
@@ -107,44 +107,42 @@ See [our docs](https://traceloop.com/docs/openllmetry/integrations/exporting) fo
 
 OpenLLMetry can instrument everything that [OpenTelemetry already instruments](https://github.com/open-telemetry/opentelemetry-python-contrib/tree/main/instrumentation) - so things like your DB, API calls, and more. On top of that, we built a set of custom extensions that instrument things like your calls to OpenAI or Anthropic, or your Vector DB like Chroma, Pinecone, Qdrant or Weaviate.
 
-### LLM Providers
-
-- ✅ OpenAI / Azure OpenAI
-- ✅ Anthropic
-- ✅ Cohere
-- ✅ Ollama
-- ✅ Mistral AI
-- ✅ HuggingFace
-- ✅ Bedrock (AWS)
-- ✅ SageMaker (AWS)
-- ✅ Replicate
-- ✅ Vertex AI (GCP)
-- ✅ Google Generative AI (Gemini)
-- ✅ IBM Watsonx AI
-- ✅ Together AI
-- ✅ Aleph Alpha
-- ✅ Groq
+- ✅ [OpenAI / Azure OpenAI](https://openai.com/)
+- ✅ [Anthropic](https://www.anthropic.com/)
+- ✅ [Cohere](https://cohere.com/)
+- ✅ [Ollama](https://ollama.com/)
+- ✅ [Mistral AI](https://mistral.ai/)
+- ✅ [HuggingFace](https://huggingface.co/)
+- ✅ [Bedrock (AWS)](https://aws.amazon.com/bedrock/)
+- ✅ [SageMaker (AWS)](https://aws.amazon.com/sagemaker/)
+- ✅ [Replicate](https://replicate.com/)
+- ✅ [Vertex AI (GCP)](https://cloud.google.com/vertex-ai)
+- ✅ [Google Generative AI (Gemini)](https://ai.google/)
+- ✅ [IBM Watsonx AI](https://www.ibm.com/watsonx)
+- ✅ [Together AI](https://together.xyz/)
+- ✅ [Aleph Alpha](https://www.aleph-alpha.com/)
+- ✅ [Groq](https://groq.com/)
 
 ### Vector DBs
 
-- ✅ Chroma
-- ✅ Pinecone
-- ✅ Qdrant
-- ✅ Weaviate
-- ✅ Milvus
-- ✅ Marqo
-- ✅ LanceDB
+- ✅ [Chroma](https://www.trychroma.com/)
+- ✅ [Pinecone](https://www.pinecone.io/)
+- ✅ [Qdrant](https://qdrant.tech/)
+- ✅ [Weaviate](https://weaviate.io/)
+- ✅ [Milvus](https://milvus.io/)
+- ✅ [Marqo](https://marqo.ai/)
+- ✅ [LanceDB](https://lancedb.com/)
 
 ### Frameworks
 
-- ✅ LangChain
+- ✅ [LangChain](https://python.langchain.com/docs/introduction/)
 - ✅ [LlamaIndex](https://docs.llamaindex.ai/en/stable/module_guides/observability/observability.html#openllmetry)
 - ✅ [Haystack](https://haystack.deepset.ai/integrations/traceloop)
 - ✅ [LiteLLM](https://docs.litellm.ai/docs/observability/traceloop_integration)
 
 ## 🌱 Contributing
 
-Whether it's big or small, we love contributions ❤️ Check out our guide to see how to [get started](https://traceloop.com/docs/openllmetry/contributing/overview).
+Whether big or small, we love contributions ❤️ Check out our guide to see how to [get started](https://traceloop.com/docs/openllmetry/contributing/overview).
 
 Not sure where to get started? You can:
 
