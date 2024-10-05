@@ -15,9 +15,9 @@ merged into the project is the prerogative of the maintainers.
 
 ## Maintainers
 
-Maintainers are responsible for the overall security, quality and integrity of
-the project. They propose, manage, review, approve/reject major change and
-enhancement requests. They also have the ability to merge code into the project.
+Maintainers are responsible for the overall security, quality, and integrity of
+the project. They propose, manage, review, and approve/reject major change and
+enhancement requests. They also can merge code into the project.
 See the [MAINTAINERS.md](MAINTAINERS.md) document for the full list of
 maintainer responsibilities.
 
@@ -47,4 +47,4 @@ decide whether to grant maintainer status.
 This governance is a living document and its policies will need to be updated
 over time to meet the community's needs. Until the steering committee is set
 up, the maintainers will have full ownership of this governance. Changes can be
-proposed at any time, but a super majority is required to approve any updates.
+proposed at any time, but a super-majority is required to approve any updates.
