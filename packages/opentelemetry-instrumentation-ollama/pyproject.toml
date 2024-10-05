@@ -28,7 +28,7 @@ opentelemetry-instrumentation = "^0.48b0"
 opentelemetry-semantic-conventions = "^0.48b0"
 opentelemetry-semantic-conventions-ai = "0.4.1"
 
-ollama = "^0.2.0"
+ollama = "^0.3.2"
 [tool.poetry.group.dev.dependencies]
 autopep8 = "^2.2.0"
 flake8 = "7.0.0"
