@@ -159,3 +159,10 @@ Not sure where to get started? You can:
 ## 🙏 Special Thanks
 
 To @patrickdebois, who [suggested the great name](https://x.com/patrickdebois/status/1695518950715473991?s=46&t=zn2SOuJcSVq-Pe2Ysevzkg) we're now using for this repo!
+
+## 💫 Contributors
+
+<a href="https://github.com/traceloop/openllmetry/graphs/contributors">
+  <img alt="contributors" src="https://contrib.rocks/image?repo=traceloop/openllmetry"/>
+</a>
+
