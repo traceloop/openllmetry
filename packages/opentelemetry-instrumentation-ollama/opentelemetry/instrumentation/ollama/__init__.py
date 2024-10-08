@@ -2,6 +2,7 @@
 
 import logging
 import os
+import json
 from typing import Collection
 from opentelemetry.instrumentation.ollama.config import Config
 from opentelemetry.instrumentation.ollama.utils import dont_throw
@@ -57,6 +58,61 @@ def _set_span_attribute(span, name, value):
     return
 
 
+def _set_prompts(span, messages):
+    if not span.is_recording() or messages is None:
+        return
+    for i, msg in enumerate(messages):
+        prefix = f"{SpanAttributes.LLM_PROMPTS}.{i}"
+
+        _set_span_attribute(span, f"{prefix}.role", msg.get("role"))
+        if msg.get("content"):
+            content = msg.get("content")
+            if isinstance(content, list):
+                content = json.dumps(content)
+            _set_span_attribute(span, f"{prefix}.content", content)
+        if msg.get("tool_call_id"):
+            _set_span_attribute(span, f"{prefix}.tool_call_id", msg.get("tool_call_id"))
+        tool_calls = msg.get("tool_calls")
+        if tool_calls:
+            for i, tool_call in enumerate(tool_calls):
+                function = tool_call.get("function")
+                _set_span_attribute(
+                    span,
+                    f"{prefix}.tool_calls.{i}.id",
+                    tool_call.get("id"),
+                )
+                _set_span_attribute(
+                    span,
+                    f"{prefix}.tool_calls.{i}.name",
+                    function.get("name"),
+                )
+                _set_span_attribute(
+                    span,
+                    f"{prefix}.tool_calls.{i}.arguments",
+                    function.get("arguments"),
+                )
+
+                if function.get("arguments"):
+                    function["arguments"] = json.loads(function.get("arguments"))
+
+
+def set_tools_attributes(span, tools):
+    if not tools:
+        return
+
+    for i, tool in enumerate(tools):
+        function = tool.get("function")
+        if not function:
+            continue
+
+        prefix = f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.{i}"
+        _set_span_attribute(span, f"{prefix}.name", function.get("name"))
+        _set_span_attribute(span, f"{prefix}.description", function.get("description"))
+        _set_span_attribute(
+            span, f"{prefix}.parameters", json.dumps(function.get("parameters"))
+        )
+
+
 @dont_throw
 def _set_input_attributes(span, llm_request_type, kwargs):
     _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, kwargs.get("model"))
@@ -78,6 +134,9 @@ def _set_input_attributes(span, llm_request_type, kwargs):
                     f"{SpanAttributes.LLM_PROMPTS}.{index}.role",
                     message.get("role"),
                 )
+            _set_prompts(span, kwargs.get("messages"))
+            if kwargs.get("tools"):
+                set_tools_attributes(span, kwargs.get("tools"))
         else:
             _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.0.role", "user")
             _set_span_attribute(
