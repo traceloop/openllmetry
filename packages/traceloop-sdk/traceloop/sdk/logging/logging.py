@@ -12,6 +12,7 @@ from opentelemetry.sdk._logs import LoggerProvider, LoggingHandler
 
 from opentelemetry.instrumentation.logging import LoggingInstrumentor
 
+
 class LoggerWrapper(object):
     resource_attributes: dict = {}
     endpoint: str = None
@@ -37,7 +38,6 @@ class LoggerWrapper(object):
 
         return cls.instance
 
-
     @staticmethod
     def set_static_params(
         resource_attributes: dict,
@@ -55,7 +55,8 @@ def init_logging_exporter(endpoint: str) -> LogExporter:
 
 
 def init_logging_provider(
-    exporter: LogExporter, resource_attributes: dict = None) -> LoggerProvider:
+    exporter: LogExporter, resource_attributes: dict = None
+) -> LoggerProvider:
     resource = (
         Resource.create(resource_attributes)
         if resource_attributes
@@ -69,4 +70,3 @@ def init_logging_provider(
     logging.basicConfig(level=logging.INFO, handlers=[logging_handler])
 
     return logger_provider
-

@@ -154,19 +154,17 @@ class Traceloop:
             )
             Traceloop.__metrics_wrapper = MetricsWrapper(exporter=metrics_exporter)
 
-
         if not is_logging_enabled() or not logging_exporter and exporter:
             print(Fore.YELLOW + "Logging are disabled" + Fore.RESET)
-        else:        
+        else:
             logging_endpoint = os.getenv("TRACELOOP_LOGGING_ENDPOINT") or api_endpoint
             if logging_exporter or processor:
                 print(Fore.GREEN + "Traceloop exporting logs to a custom exporter")
 
             LoggerWrapper.set_static_params(
                 resource_attributes, logging_endpoint
-            )                
+            )
             Traceloop.__logger_wrapper = LoggerWrapper(exporter=logging_exporter)
-
 
     def set_association_properties(properties: dict) -> None:
         set_association_properties(properties)
