@@ -1,6 +1,7 @@
 import pytest
 from openai import OpenAI
 from opentelemetry.semconv_ai import SpanAttributes, Meters
+from pydantic import BaseModel
 
 
 @pytest.fixture
@@ -71,6 +72,55 @@ def test_chat_completion_metrics(metrics_test_context, openai_client):
     assert found_token_metric is True
     assert found_choice_metric is True
     assert found_duration_metric is True
+
+
+@pytest.mark.vcr
+def test_chat_parsed_completion_metrics(metrics_test_context, openai_client):
+    _, reader = metrics_test_context
+
+    class StructuredAnswer(BaseModel):
+        poem: str
+        style: str
+
+    openai_client.beta.chat.completions.parse(
+        model="gpt-4o",
+        messages=[
+            {
+                "role": "system",
+                "content": "You are a poetic assistant, skilled in explaining complex programming concepts with "
+                "creative flair.",
+            },
+            {
+                "role": "user",
+                "content": "Compose a poem that explains the concept of recursion in programming.",
+            },
+        ],
+        response_format=StructuredAnswer,
+    )
+
+    metrics_data = reader.get_metrics_data()
+    resource_metrics = metrics_data.resource_metrics
+    assert len(resource_metrics) > 0
+
+    found_token_metric = False
+    found_choice_metric = False
+    found_duration_metric = False
+
+    for rm in resource_metrics:
+        for sm in rm.scope_metrics:
+            for metric in sm.metrics:
+                for data_point in metric.data.data_points:
+                    model = data_point.attributes.get(SpanAttributes.LLM_RESPONSE_MODEL)
+                    if metric.name == Meters.LLM_TOKEN_USAGE and model == 'gpt-4o-2024-08-06':
+                        found_token_metric = True
+                    elif metric.name == Meters.LLM_GENERATION_CHOICES and model == 'gpt-4o-2024-08-06':
+                        found_choice_metric = True
+                    elif metric.name == Meters.LLM_OPERATION_DURATION and model == 'gpt-4o-2024-08-06':
+                        found_duration_metric = True
+
+    assert found_token_metric
+    assert found_choice_metric
+    assert found_duration_metric
 
 
 @pytest.mark.vcr
@@ -158,7 +208,7 @@ def test_chat_streaming_metrics(metrics_test_context, openai_client):
                     )
                     assert str(
                         data_point.attributes[SpanAttributes.LLM_RESPONSE_MODEL]
-                    ).startswith("gpt-3.5-turbo")
+                    ) in ("gpt-3.5-turbo", "gpt-3.5-turbo-0125", "gpt-4o-2024-08-06")
                     assert data_point.attributes["gen_ai.operation.name"] == "chat"
                     assert data_point.attributes["server.address"] != ""
 
