@@ -7,18 +7,21 @@ from colorama import Fore
 from opentelemetry.sdk.trace import SpanProcessor
 from opentelemetry.sdk.trace.export import SpanExporter
 from opentelemetry.sdk.metrics.export import MetricExporter
+from opentelemetry.sdk._logs.export import LogExporter
 from opentelemetry.sdk.resources import SERVICE_NAME
 from opentelemetry.propagators.textmap import TextMapPropagator
 from opentelemetry.util.re import parse_env_headers
 
 from traceloop.sdk.images.image_uploader import ImageUploader
 from traceloop.sdk.metrics.metrics import MetricsWrapper
+from traceloop.sdk.logging.logging import LoggerWrapper
 from traceloop.sdk.telemetry import Telemetry
 from traceloop.sdk.instruments import Instruments
 from traceloop.sdk.config import (
     is_content_tracing_enabled,
     is_tracing_enabled,
     is_metrics_enabled,
+    is_logging_enabled,
 )
 from traceloop.sdk.fetcher import Fetcher
 from traceloop.sdk.tracing.tracing import (
@@ -48,6 +51,7 @@ class Traceloop:
         exporter: SpanExporter = None,
         metrics_exporter: MetricExporter = None,
         metrics_headers: Dict[str, str] = None,
+        logging_exporter: LogExporter = None,
         processor: SpanProcessor = None,
         propagator: TextMapPropagator = None,
         traceloop_sync_enabled: bool = False,
@@ -135,23 +139,34 @@ class Traceloop:
             instruments=instruments,
         )
 
-        if not metrics_exporter and exporter:
-            return
-
-        metrics_endpoint = os.getenv("TRACELOOP_METRICS_ENDPOINT") or api_endpoint
-        metrics_headers = (
-            os.getenv("TRACELOOP_METRICS_HEADERS") or metrics_headers or headers
-        )
-
         if not is_metrics_enabled() or not metrics_exporter and exporter:
             print(Fore.YELLOW + "Metrics are disabled" + Fore.RESET)
-            return
+        else:
+            metrics_endpoint = os.getenv("TRACELOOP_METRICS_ENDPOINT") or api_endpoint
+            metrics_headers = (
+                os.getenv("TRACELOOP_METRICS_HEADERS") or metrics_headers or headers
+            )
+            if metrics_exporter or processor:
+                print(Fore.GREEN + "Traceloop exporting metrics to a custom exporter")
 
-        MetricsWrapper.set_static_params(
-            resource_attributes, metrics_endpoint, metrics_headers
-        )
+            MetricsWrapper.set_static_params(
+                resource_attributes, metrics_endpoint, metrics_headers
+            )
+            Traceloop.__metrics_wrapper = MetricsWrapper(exporter=metrics_exporter)
 
-        Traceloop.__metrics_wrapper = MetricsWrapper(exporter=metrics_exporter)
+
+        if not is_logging_enabled() or not logging_exporter and exporter:
+            print(Fore.YELLOW + "Logging are disabled" + Fore.RESET)
+        else:        
+            logging_endpoint = os.getenv("TRACELOOP_LOGGING_ENDPOINT") or api_endpoint
+            if logging_exporter or processor:
+                print(Fore.GREEN + "Traceloop exporting logs to a custom exporter")
+
+            LoggerWrapper.set_static_params(
+                resource_attributes, logging_endpoint
+            )                
+            Traceloop.__logger_wrapper = LoggerWrapper(exporter=logging_exporter)
+
 
     def set_association_properties(properties: dict) -> None:
         set_association_properties(properties)
