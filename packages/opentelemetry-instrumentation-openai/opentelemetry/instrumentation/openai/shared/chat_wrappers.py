@@ -432,7 +432,11 @@ def _set_completions(span, choices):
             return
 
         _set_span_attribute(span, f"{prefix}.role", message.get("role"))
-        _set_span_attribute(span, f"{prefix}.content", message.get("content"))
+
+        if message.get("refusal"):
+            _set_span_attribute(span, f"{prefix}.refusal", message.get("refusal"))
+        else:
+            _set_span_attribute(span, f"{prefix}.content", message.get("content"))
 
         function_call = message.get("function_call")
         if function_call:
