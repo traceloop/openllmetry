@@ -198,6 +198,32 @@ class OpenAIV1Instrumentor(BaseInstrumentor):
                 assistants_create_wrapper(tracer),
             )
             wrap_function_wrapper(
+                "openai.resources.beta.chat.completions",
+                "Completions.parse",
+                chat_wrapper(
+                    tracer,
+                    tokens_histogram,
+                    chat_choice_counter,
+                    duration_histogram,
+                    chat_exception_counter,
+                    streaming_time_to_first_token,
+                    streaming_time_to_generate,
+                ),
+            )
+            wrap_function_wrapper(
+                "openai.resources.beta.chat.completions",
+                "AsyncCompletions.parse",
+                achat_wrapper(
+                    tracer,
+                    tokens_histogram,
+                    chat_choice_counter,
+                    duration_histogram,
+                    chat_exception_counter,
+                    streaming_time_to_first_token,
+                    streaming_time_to_generate,
+                ),
+            )
+            wrap_function_wrapper(
                 "openai.resources.beta.threads.runs",
                 "Runs.create",
                 runs_create_wrapper(tracer),
