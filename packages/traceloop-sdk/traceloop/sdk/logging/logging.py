@@ -23,7 +23,6 @@ class LoggerWrapper(object):
         if not hasattr(cls, "instance"):
             obj = cls.instance = super(LoggerWrapper, cls).__new__(cls)
             if not LoggerWrapper.endpoint:
-                print("return obj")
                 return obj
 
             obj.__logging_exporter = (
