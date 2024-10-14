@@ -110,6 +110,20 @@ class OpenAIV1Instrumentor(BaseInstrumentor):
         )
 
         wrap_function_wrapper(
+            "openai.resources.beta.chat.completions",
+            "Completions.parse",
+            chat_wrapper(
+                tracer,
+                tokens_histogram,
+                chat_choice_counter,
+                duration_histogram,
+                chat_exception_counter,
+                streaming_time_to_first_token,
+                streaming_time_to_generate,
+            ),
+        )
+
+        wrap_function_wrapper(
             "openai.resources.completions",
             "Completions.create",
             completion_wrapper(tracer),
@@ -158,6 +172,21 @@ class OpenAIV1Instrumentor(BaseInstrumentor):
                 streaming_time_to_generate,
             ),
         )
+
+        wrap_function_wrapper(
+            "openai.resources.beta.chat.completions",
+            "AsyncCompletions.parse",
+            achat_wrapper(
+                tracer,
+                tokens_histogram,
+                chat_choice_counter,
+                duration_histogram,
+                chat_exception_counter,
+                streaming_time_to_first_token,
+                streaming_time_to_generate,
+            ),
+        )
+
         wrap_function_wrapper(
             "openai.resources.completions",
             "AsyncCompletions.create",

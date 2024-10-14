@@ -146,6 +146,32 @@ def test_chat_pydantic_based_tool_calls(exporter, openai_client):
 
 
 @pytest.mark.vcr
+@pytest.mark.asyncio
+async def test_async_chat_beta_sdk(exporter, async_openai_client):
+    await async_openai_client.beta.chat.completions.parse(
+        model="gpt-3.5-turbo",
+        messages=[
+            {
+                "role": "user",
+                "content": "Tell me a joke about opentelemetry",
+            }
+        ],
+    )
+
+    spans = exporter.get_finished_spans()
+
+    assert [span.name for span in spans] == [
+        "openai.chat",
+    ]
+    open_ai_span = spans[0]
+    assert (
+        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
+        == "Tell me a joke about opentelemetry"
+    )
+    assert open_ai_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
+
+
+@pytest.mark.vcr
 def test_chat_streaming(exporter, openai_client):
 
     response = openai_client.chat.completions.create(
