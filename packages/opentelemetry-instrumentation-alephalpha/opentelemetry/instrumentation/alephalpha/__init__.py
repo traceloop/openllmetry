@@ -36,17 +36,18 @@ WRAPPED_METHODS = [
 ]
 
 
+TRACELOOP_ENV_KEY = "TRACELOOP_TRACE_CONTENT"
+
 def should_send_prompts():
     return (
-        os.getenv("TRACELOOP_TRACE_CONTENT") or "true"
-    ).lower() == "true" or context_api.get_value("override_enable_content_tracing")
+        os.getenv(TRACELOOP_ENV_KEY, "true").lower() == "true" or 
+        context_api.get_value("override_enable_content_tracing")
+    )
 
 
 def _set_span_attribute(span, name, value):
-    if value is not None:
-        if value != "":
-            span.set_attribute(name, value)
-    return
+    if value:
+        span.set_attribute(name, value)
 
 
 @dont_throw
@@ -109,10 +110,10 @@ def _with_tracer_wrapper(func):
 
 
 def _llm_request_type_by_method(method_name):
-    if method_name == "complete":
-        return LLMRequestTypeValues.COMPLETION
-    else:
-        return LLMRequestTypeValues.UNKNOWN
+    method_map = {
+        "complete": LLMRequestTypeValues.COMPLETION,
+    }
+    return method_map.get(method_name, LLMRequestTypeValues.UNKNOWN)
 
 
 @_with_tracer_wrapper
@@ -136,15 +137,18 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
     if span.is_recording():
         _set_input_attributes(span, llm_request_type, args, kwargs)
 
-    response = wrapped(*args, **kwargs)
-
-    if response:
-        if span.is_recording():
-
+    try:
+        response = wrapped(*args, **kwargs)
+        if response and span.is_recording():
             _set_response_attributes(span, llm_request_type, response)
             span.set_status(Status(StatusCode.OK))
+    except Exception as e:
+        logger.error(f"Error in wrapped function {name}: {e}")
+        span.set_status(Status(StatusCode.ERROR, str(e)))
+        raise
+    finally:
+        span.end()
 
-    span.end()
     return response
 
 
