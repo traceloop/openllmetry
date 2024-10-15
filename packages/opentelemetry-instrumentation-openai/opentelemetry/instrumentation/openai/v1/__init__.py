@@ -109,19 +109,36 @@ class OpenAIV1Instrumentor(BaseInstrumentor):
             ),
         )
 
-        wrap_function_wrapper(
-            "openai.resources.beta.chat.completions",
-            "Completions.parse",
-            chat_wrapper(
-                tracer,
-                tokens_histogram,
-                chat_choice_counter,
-                duration_histogram,
-                chat_exception_counter,
-                streaming_time_to_first_token,
-                streaming_time_to_generate,
-            ),
-        )
+        try:
+            wrap_function_wrapper(
+                "openai.resources.beta.chat.completions",
+                "Completions.parse",
+                chat_wrapper(
+                    tracer,
+                    tokens_histogram,
+                    chat_choice_counter,
+                    duration_histogram,
+                    chat_exception_counter,
+                    streaming_time_to_first_token,
+                    streaming_time_to_generate,
+                ),
+            )
+
+            wrap_function_wrapper(
+                "openai.resources.beta.chat.completions",
+                "AsyncCompletions.parse",
+                achat_wrapper(
+                    tracer,
+                    tokens_histogram,
+                    chat_choice_counter,
+                    duration_histogram,
+                    chat_exception_counter,
+                    streaming_time_to_first_token,
+                    streaming_time_to_generate,
+                ),
+            )
+        except (AttributeError, ModuleNotFoundError) as e:
+            pass
 
         wrap_function_wrapper(
             "openai.resources.completions",
@@ -162,20 +179,6 @@ class OpenAIV1Instrumentor(BaseInstrumentor):
         wrap_function_wrapper(
             "openai.resources.chat.completions",
             "AsyncCompletions.create",
-            achat_wrapper(
-                tracer,
-                tokens_histogram,
-                chat_choice_counter,
-                duration_histogram,
-                chat_exception_counter,
-                streaming_time_to_first_token,
-                streaming_time_to_generate,
-            ),
-        )
-
-        wrap_function_wrapper(
-            "openai.resources.beta.chat.completions",
-            "AsyncCompletions.parse",
             achat_wrapper(
                 tracer,
                 tokens_histogram,
