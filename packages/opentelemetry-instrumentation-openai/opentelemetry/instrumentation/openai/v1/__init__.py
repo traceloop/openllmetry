@@ -243,7 +243,7 @@ class OpenAIV1Instrumentor(BaseInstrumentor):
                 "Messages.list",
                 messages_list_wrapper(tracer),
             )
-        except AttributeError:
+        except (AttributeError, ModuleNotFoundError):
             pass
 
     def _uninstrument(self, **kwargs):
