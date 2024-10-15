@@ -1,3 +1,14 @@
+## v0.33.0 (2024-10-15)
+
+### Feat
+
+- **sdk**: add OpenTelemetry logging support (#2112)
+- **ollama**: tool calling (#2059)
+
+### Fix
+
+- **llama-index**: add attribute to span for llm request type in dispatcher wrapper (#2141)
+
 ## v0.32.2 (2024-10-04)
 
 ### Fix
