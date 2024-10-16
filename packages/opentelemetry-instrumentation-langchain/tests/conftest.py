@@ -53,4 +53,5 @@ def vcr_config():
     return {
         "filter_headers": ["authorization", "x-api-key"],
         "filter_body": ["api_key"],
+        "ignore_hosts": ["api.hub.langchain.com"],
     }
