@@ -1,0 +1,103 @@
+interactions:
+- request:
+    body: '{"messages": [{"content": "What is a good name for a company that makes
+      colorful socks?", "role": "user"}], "model": "gpt-3.5-turbo", "n": 1, "stream":
+      false, "temperature": 0.0}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '178'
+      content-type:
+      - application/json
+      host:
+      - api.openai.com
+      traceparent:
+      - 00-780bf7b8adf50375dfb698357110b138-e344c2502b71a095-01
+      user-agent:
+      - OpenAI/Python 1.45.1
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.45.1
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.12.1
+    method: POST
+    uri: https://api.openai.com/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA2xQsU7DMBTc8xWW56ZKU1Wl2ZDoUGBCCCEhFDnOS+Ji+xnbKYWq/44c0iZVWTzc
+        +e7d3SEihIqSZoTyhnmujIxvNz+7BbxWuDN36726361fHtXmgX9u7YbRSVBgsQXuT6opR2UkeIH6
+        j+YWmIfgOlumq2Q1S2+WHaGwBBlktfHxfLqIfWsLjJNZuuiVDQoOjmbkLSKEkEP3hoy6hD3NSDI5
+        IQqcYzXQ7PyJEGpRBoQy54TzTHs6GUiO2oPuYj8xoQv8Is+NBVa68S8LVetYSKlbKXv8eD4rsTYW
+        C9fzZ7wSWrgmt8Ac6nDCeTS0Y48RIe9dvfYiMTUWlfG5xw/QwTDt29Fh0IGc95xHz+RIc8IvzPIS
+        PBPSjdahnPEGykGZRKNm1yf/s/hrJ3R95RL1TtR9Ow8qr4SuwRorur27JY/RLwAAAP//AwA+YAj2
+        bgIAAA==
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 8d38f6628a49b03e-ATL
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Wed, 16 Oct 2024 15:08:07 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=Oe8ws45CxMTQsGqAKYABKxN4_vV34.LYmD4lzUhrh0w-1729091287-1.0.1.1-le1U_ppBKxDDaf8dR7oNKECpe4bnO2tuSChZFUFo9tMGcRNZIo2cGNxH3mYXJKK0PsHIxU3EavGXvtis3Q0Hkg;
+        path=/; expires=Wed, 16-Oct-24 15:38:07 GMT; domain=.api.openai.com; HttpOnly;
+        Secure; SameSite=None
+      - _cfuvid=ckNxIwtGQ4RyQjdMM.tNSm5UhqZwOVpFQHJDCVbbrwU-1729091287739-0.0.1.1-604800000;
+        path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      access-control-expose-headers:
+      - X-Request-ID
+      alt-svc:
+      - h3=":443"; ma=86400
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '245'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-ratelimit-limit-requests:
+      - '5000'
+      x-ratelimit-limit-tokens:
+      - '4000000'
+      x-ratelimit-remaining-requests:
+      - '4999'
+      x-ratelimit-remaining-tokens:
+      - '3999968'
+      x-ratelimit-reset-requests:
+      - 12ms
+      x-ratelimit-reset-tokens:
+      - 0s
+      x-request-id:
+      - req_396482112dcffa225fd8313481e30ad3
+    status:
+      code: 200
+      message: OK
+version: 1

@@ -21,6 +21,9 @@ from opentelemetry.instrumentation.langchain.callback_handler import (
     TraceloopCallbackHandler,
 )
 
+from opentelemetry.metrics import get_meter
+from opentelemetry.semconv_ai import Meters
+
 logger = logging.getLogger(__name__)
 
 _instruments = ("langchain >= 0.0.346", "langchain-core > 0.1.0")
@@ -41,7 +44,27 @@ class LangchainInstrumentor(BaseInstrumentor):
         tracer_provider = kwargs.get("tracer_provider")
         tracer = get_tracer(__name__, __version__, tracer_provider)
 
-        traceloopCallbackHandler = TraceloopCallbackHandler(tracer)
+        # Add meter creation
+        meter_provider = kwargs.get("meter_provider")
+        meter = get_meter(__name__, __version__, meter_provider)
+
+        # Create duration histogram
+        duration_histogram = meter.create_histogram(
+            name=Meters.LLM_OPERATION_DURATION,
+            unit="s",
+            description="GenAI operation duration",
+        )
+
+        # Create token histogram
+        token_histogram = meter.create_histogram(
+            name=Meters.LLM_TOKEN_USAGE,
+            unit="token",
+            description="Measures number of input and output tokens used",
+        )
+
+        traceloopCallbackHandler = TraceloopCallbackHandler(
+            tracer, duration_histogram, token_histogram
+        )
         wrap_function_wrapper(
             module="langchain_core.callbacks",
             name="BaseCallbackManager.__init__",
