@@ -1,7 +1,10 @@
 import json
+from unittest.mock import MagicMock, patch
 
 import boto3
+import httpx
 import pytest
+
 from langchain.output_parsers.openai_functions import JsonOutputFunctionsParser
 from langchain.prompts import ChatPromptTemplate
 from langchain_anthropic import ChatAnthropic
@@ -9,12 +12,20 @@ from langchain_community.chat_models import BedrockChat
 from langchain_community.llms.huggingface_text_gen_inference import (
     HuggingFaceTextGenInference,
 )
+from langchain_community.llms.vllm import VLLMOpenAI
 from langchain_community.utils.openai_functions import (
     convert_pydantic_to_openai_function,
 )
 from langchain_core.pydantic_v1 import BaseModel, Field
-from langchain_openai import ChatOpenAI
+from langchain_openai import ChatOpenAI, OpenAI
+from opentelemetry.sdk.trace import Span
 from opentelemetry.semconv_ai import SpanAttributes
+from opentelemetry.trace.propagation.tracecontext import (
+    TraceContextTextMapPropagator,
+)
+from opentelemetry.trace.propagation import (
+    get_current_span,
+)
 
 
 @pytest.mark.vcr
@@ -314,3 +325,135 @@ def test_bedrock(exporter):
         "tool_calls": [],
         "invalid_tool_calls": [],
     }
+
+
+# from: https://stackoverflow.com/a/41599695/2749989
+def spy_decorator(method_to_decorate):
+    mock = MagicMock()
+
+    def wrapper(self, *args, **kwargs):
+        mock(*args, **kwargs)
+        return method_to_decorate(self, *args, **kwargs)
+
+    wrapper.mock = mock
+    return wrapper
+
+
+def assert_request_contains_tracecontext(request: httpx.Request, expected_span: Span):
+    assert TraceContextTextMapPropagator._TRACEPARENT_HEADER_NAME in request.headers
+    ctx = TraceContextTextMapPropagator().extract(request.headers)
+    request_span_context = get_current_span(ctx).get_span_context()
+    expected_span_context = expected_span.get_span_context()
+
+    assert request_span_context.trace_id == expected_span_context.trace_id
+    assert request_span_context.span_id == expected_span_context.span_id
+
+
+@pytest.mark.vcr
+@pytest.mark.parametrize("LLM", [OpenAI, VLLMOpenAI, ChatOpenAI])
+def test_trace_propagation(exporter, LLM):
+    prompt = ChatPromptTemplate.from_messages(
+        [("system", "You are a helpful assistant "), ("human", "{input}")]
+    )
+    model = LLM(
+        model="facebook/opt-125m", base_url="http://localhost:8000/v1", max_tokens=20
+    )
+    chain = prompt | model
+
+    send_spy = spy_decorator(httpx.Client.send)
+    with patch.object(httpx.Client, "send", send_spy):
+        _ = chain.invoke({"input": "Tell me a joke about OpenTelemetry"})
+    send_spy.mock.assert_called_once()
+
+    spans = exporter.get_finished_spans()
+    openai_span = next(span for span in spans if "OpenAI" in span.name)
+
+    args, kwargs = send_spy.mock.call_args
+    request = args[0]
+
+    assert_request_contains_tracecontext(request, openai_span)
+
+
+@pytest.mark.vcr
+@pytest.mark.parametrize(
+    "LLM", [OpenAI, VLLMOpenAI, pytest.param(ChatOpenAI, marks=pytest.mark.xfail)]
+)
+def test_trace_propagation_stream(exporter, LLM):
+    prompt = ChatPromptTemplate.from_messages(
+        [("system", "You are a helpful assistant "), ("human", "{input}")]
+    )
+    model = LLM(
+        model="facebook/opt-125m", base_url="http://localhost:8000/v1", max_tokens=20
+    )
+    chain = prompt | model
+
+    send_spy = spy_decorator(httpx.Client.send)
+    with patch.object(httpx.Client, "send", send_spy):
+        stream = chain.stream({"input": "Tell me a joke about OpenTelemetry"})
+        for _ in stream:
+            pass
+    send_spy.mock.assert_called_once()
+
+    spans = exporter.get_finished_spans()
+    openai_span = next(span for span in spans if "OpenAI" in span.name)
+
+    args, kwargs = send_spy.mock.call_args
+    request = args[0]
+
+    assert_request_contains_tracecontext(request, openai_span)
+
+
+@pytest.mark.asyncio
+@pytest.mark.vcr
+@pytest.mark.parametrize("LLM", [OpenAI, VLLMOpenAI, ChatOpenAI])
+async def test_trace_propagation_async(exporter, LLM):
+    prompt = ChatPromptTemplate.from_messages(
+        [("system", "You are a helpful assistant "), ("human", "{input}")]
+    )
+    model = LLM(
+        model="facebook/opt-125m", base_url="http://localhost:8000/v1", max_tokens=20
+    )
+    chain = prompt | model
+
+    send_spy = spy_decorator(httpx.AsyncClient.send)
+    with patch.object(httpx.AsyncClient, "send", send_spy):
+        _ = await chain.ainvoke({"input": "Tell me a joke about OpenTelemetry"})
+    send_spy.mock.assert_called_once()
+
+    spans = exporter.get_finished_spans()
+    openai_span = next(span for span in spans if "OpenAI" in span.name)
+
+    args, kwargs = send_spy.mock.call_args
+    request = args[0]
+
+    assert_request_contains_tracecontext(request, openai_span)
+
+
+@pytest.mark.asyncio
+@pytest.mark.vcr
+@pytest.mark.parametrize(
+    "LLM", [OpenAI, VLLMOpenAI, pytest.param(ChatOpenAI, marks=pytest.mark.xfail)]
+)
+async def test_trace_propagation_stream_async(exporter, LLM):
+    prompt = ChatPromptTemplate.from_messages(
+        [("system", "You are a helpful assistant "), ("human", "{input}")]
+    )
+    model = LLM(
+        model="facebook/opt-125m", base_url="http://localhost:8000/v1", max_tokens=20
+    )
+    chain = prompt | model
+
+    send_spy = spy_decorator(httpx.AsyncClient.send)
+    with patch.object(httpx.AsyncClient, "send", send_spy):
+        stream = chain.astream({"input": "Tell me a joke about OpenTelemetry"})
+        async for _ in stream:
+            pass
+    send_spy.mock.assert_called_once()
+
+    spans = exporter.get_finished_spans()
+    openai_span = next(span for span in spans if "OpenAI" in span.name)
+
+    args, kwargs = send_spy.mock.call_args
+    request = args[0]
+
+    assert_request_contains_tracecontext(request, openai_span)
