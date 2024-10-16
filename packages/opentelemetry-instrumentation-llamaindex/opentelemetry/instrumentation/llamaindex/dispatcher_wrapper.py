@@ -47,6 +47,7 @@ def instrument_with_dispatcher(tracer: Tracer):
 @dont_throw
 def _set_llm_chat_request(event, span) -> None:
     model_dict = event.model_dict
+    span.set_attribute(SpanAttributes.LLM_REQUEST_TYPE, LLMRequestTypeValues.CHAT.value)
     span.set_attribute(SpanAttributes.LLM_REQUEST_MODEL, model_dict.get("model"))
     span.set_attribute(
         SpanAttributes.LLM_REQUEST_TEMPERATURE, model_dict.get("temperature")
