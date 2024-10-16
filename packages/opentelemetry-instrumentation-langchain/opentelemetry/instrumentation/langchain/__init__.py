@@ -194,7 +194,6 @@ class _OpenAITracingWrapper:
             # Inject tracing context into the extra headers
             ctx = set_span_in_context(span_holder.span)
             TraceContextTextMapPropagator().inject(extra_headers, context=ctx)
-            # TraceContextTextMapPropagator().inject(extra_headers, context=span_holder.context)
 
             # Update kwargs to include the modified headers
             kwargs["extra_headers"] = extra_headers
