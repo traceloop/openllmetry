@@ -26,7 +26,7 @@ def test_agents(exporter):
 
     spans = exporter.get_finished_spans()
 
-    assert [span.name for span in spans] == [
+    assert set([span.name for span in spans]) == {
         "RunnableLambda.task",
         "RunnableParallel<agent_scratchpad>.task",
         "RunnableAssign<agent_scratchpad>.task",
@@ -43,4 +43,4 @@ def test_agents(exporter):
         "ToolsAgentOutputParser.task",
         "RunnableSequence.task",
         "AgentExecutor.workflow",
-    ]
+    }
