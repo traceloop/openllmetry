@@ -757,15 +757,13 @@ def test_anthropic_tools(exporter, reader):
 
     assert (anthropic_span.attributes["gen_ai.completion.0.tool_calls.0.id"]) == response.content[1].id
     assert (anthropic_span.attributes["gen_ai.completion.0.tool_calls.0.name"]) == response.content[1].name
-    assert (anthropic_span.attributes["gen_ai.completion.0.tool_calls.0.arguments"]
-            == json.dumps(response.content[1].input)
-           )
+    response_content = json.dumps(response.content[1].input)
+    assert (anthropic_span.attributes["gen_ai.completion.0.tool_calls.0.arguments"] == response_content)
 
     assert (anthropic_span.attributes["gen_ai.completion.0.tool_calls.1.id"]) == response.content[2].id
     assert (anthropic_span.attributes["gen_ai.completion.0.tool_calls.1.name"]) == response.content[2].name
-    assert (anthropic_span.attributes["gen_ai.completion.0.tool_calls.1.arguments"]
-            == json.dumps(response.content[2].input)
-           )
+    response_content = json.dumps(response.content[2].input)
+    assert (anthropic_span.attributes["gen_ai.completion.0.tool_calls.1.arguments"] == response_content)
 
     # verify metrics
     metrics_data = reader.get_metrics_data()
