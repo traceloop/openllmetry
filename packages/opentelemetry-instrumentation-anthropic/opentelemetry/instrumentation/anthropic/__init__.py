@@ -152,7 +152,7 @@ async def _aset_input_attributes(span, kwargs):
                 set_span_attribute(
                     span, f"{SpanAttributes.LLM_PROMPTS}.{i}.role", message.get("role")
                 )
-        
+
         if kwargs.get("tools") is not None:
             for i, tool in enumerate(kwargs.get("tools")):
                 prefix = f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.{i}"
