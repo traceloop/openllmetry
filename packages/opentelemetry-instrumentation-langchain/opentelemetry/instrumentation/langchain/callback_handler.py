@@ -1,5 +1,6 @@
 import json
-from dataclasses import dataclass
+import time
+from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Union
 from uuid import UUID
 
@@ -25,6 +26,7 @@ from opentelemetry.instrumentation.langchain.utils import (
     dont_throw,
     should_send_prompts,
 )
+from opentelemetry.metrics import Histogram
 
 
 @dataclass
@@ -36,6 +38,7 @@ class SpanHolder:
     workflow_name: str
     entity_name: str
     entity_path: str
+    start_time: float = field(default_factory=time.time)
 
 
 def _message_type_to_role(message_type: str) -> str:
@@ -238,9 +241,13 @@ def _set_chat_response(span: Span, response: LLMResult) -> None:
 
 
 class TraceloopCallbackHandler(BaseCallbackHandler):
-    def __init__(self, tracer: Tracer) -> None:
+    def __init__(
+        self, tracer: Tracer, duration_histogram: Histogram, token_histogram: Histogram
+    ) -> None:
         super().__init__()
         self.tracer = tracer
+        self.duration_histogram = duration_histogram
+        self.token_histogram = token_histogram
         self.spans: dict[UUID, SpanHolder] = {}
         self.run_inline = True
 
@@ -428,6 +435,8 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
                 ),
             )
 
+        # The start_time is now automatically set when creating the SpanHolder
+
     @dont_throw
     def on_chain_end(
         self,
@@ -441,7 +450,8 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
             return
 
-        span = self._get_span(run_id)
+        span_holder = self.spans[run_id]
+        span = span_holder.span
         if should_send_prompts():
             span.set_attribute(
                 SpanAttributes.TRACELOOP_ENTITY_OUTPUT,
@@ -450,6 +460,22 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
                     cls=CallbackFilteredJSONEncoder,
                 ),
             )
+
+        # Record duration
+        duration = time.time() - span_holder.start_time
+        self.duration_histogram.record(
+            duration,
+            attributes={
+                SpanAttributes.LLM_SYSTEM: "Langchain",
+                SpanAttributes.TRACELOOP_SPAN_KIND: span.attributes.get(
+                    SpanAttributes.TRACELOOP_SPAN_KIND
+                ),
+                SpanAttributes.TRACELOOP_ENTITY_NAME: span.attributes.get(
+                    SpanAttributes.TRACELOOP_ENTITY_NAME
+                ),
+            },
+        )
+
         self._end_span(span, run_id)
         if parent_run_id is None:
             context_api.attach(
@@ -516,6 +542,14 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
 
         span = self._get_span(run_id)
 
+        model_name = None
+        if response.llm_output is not None:
+            model_name = response.llm_output.get(
+                "model_name"
+            ) or response.llm_output.get("model_id")
+            if model_name is not None:
+                span.set_attribute(SpanAttributes.LLM_RESPONSE_MODEL, model_name)
+
         token_usage = (response.llm_output or {}).get("token_usage") or (
             response.llm_output or {}
         ).get("usage")
@@ -544,15 +578,39 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
                 span, SpanAttributes.LLM_USAGE_TOTAL_TOKENS, total_tokens
             )
 
-        if response.llm_output is not None:
-            model_name = response.llm_output.get(
-                "model_name"
-            ) or response.llm_output.get("model_id")
-            if model_name is not None:
-                span.set_attribute(SpanAttributes.LLM_RESPONSE_MODEL, model_name)
+            # Record token usage metrics
+            if prompt_tokens > 0:
+                self.token_histogram.record(
+                    prompt_tokens,
+                    attributes={
+                        SpanAttributes.LLM_SYSTEM: "Langchain",
+                        SpanAttributes.LLM_TOKEN_TYPE: "input",
+                        SpanAttributes.LLM_RESPONSE_MODEL: model_name,
+                    },
+                )
+
+            if completion_tokens > 0:
+                self.token_histogram.record(
+                    completion_tokens,
+                    attributes={
+                        SpanAttributes.LLM_SYSTEM: "Langchain",
+                        SpanAttributes.LLM_TOKEN_TYPE: "output",
+                        SpanAttributes.LLM_RESPONSE_MODEL: model_name,
+                    },
+                )
 
         _set_chat_response(span, response)
         span.end()
+
+        # Record duration
+        duration = time.time() - self.spans[run_id].start_time
+        self.duration_histogram.record(
+            duration,
+            attributes={
+                SpanAttributes.LLM_SYSTEM: "Langchain",
+                SpanAttributes.LLM_RESPONSE_MODEL: model_name,
+            },
+        )
 
     def on_tool_start(
         self,
