@@ -1,4 +1,5 @@
 import logging
+from typing import Dict
 
 from opentelemetry.exporter.otlp.proto.grpc._log_exporter import (
     OTLPLogExporter as GRPCExporter,
@@ -16,6 +17,7 @@ from opentelemetry.instrumentation.logging import LoggingInstrumentor
 class LoggerWrapper(object):
     resource_attributes: dict = {}
     endpoint: str = None
+    headers: Dict[str, str] = {}
     __logging_exporter: LogExporter = None
     __logging_provider: LoggerProvider = None
 
@@ -28,7 +30,7 @@ class LoggerWrapper(object):
             obj.__logging_exporter = (
                 exporter
                 if exporter
-                else init_logging_exporter(LoggerWrapper.endpoint)
+                else init_logging_exporter(LoggerWrapper.endpoint, LoggerWrapper.headers)
             )
             obj.__logging_provider = init_logging_provider(
                 obj.__logging_exporter, LoggerWrapper.resource_attributes
@@ -41,16 +43,18 @@ class LoggerWrapper(object):
     def set_static_params(
         resource_attributes: dict,
         endpoint: str,
+        headers: Dict[str, str],
     ) -> None:
         LoggerWrapper.resource_attributes = resource_attributes
         LoggerWrapper.endpoint = endpoint
+        LoggerWrapper.headers = headers
 
 
-def init_logging_exporter(endpoint: str) -> LogExporter:
+def init_logging_exporter(endpoint: str, headers: Dict[str, str]) -> LogExporter:
     if "http" in endpoint.lower() or "https" in endpoint.lower():
-        return HTTPExporter(endpoint=f"{endpoint}/v1/logs")
+        return HTTPExporter(endpoint=f"{endpoint}/v1/logs", headers=headers)
     else:
-        return GRPCExporter(endpoint=endpoint)
+        return GRPCExporter(endpoint=endpoint, headers=headers)
 
 
 def init_logging_provider(
