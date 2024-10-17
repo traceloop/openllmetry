@@ -104,7 +104,7 @@ def _set_api_attributes(span):
     _set_span_attribute(
         span,
         WatsonxSpanAttributes.WATSONX_API_BASE,
-        "https://us-south.ml.cloud.ibm.com",
+        os.getenv("API_BASE_URL"),
     )
     _set_span_attribute(span, WatsonxSpanAttributes.WATSONX_API_TYPE, "watsonx.ai")
     _set_span_attribute(span, WatsonxSpanAttributes.WATSONX_API_VERSION, "1.0")
