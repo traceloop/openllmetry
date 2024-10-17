@@ -461,21 +461,6 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
                 ),
             )
 
-        # Record duration
-        duration = time.time() - span_holder.start_time
-        self.duration_histogram.record(
-            duration,
-            attributes={
-                SpanAttributes.LLM_SYSTEM: "Langchain",
-                SpanAttributes.TRACELOOP_SPAN_KIND: span.attributes.get(
-                    SpanAttributes.TRACELOOP_SPAN_KIND
-                ),
-                SpanAttributes.TRACELOOP_ENTITY_NAME: span.attributes.get(
-                    SpanAttributes.TRACELOOP_ENTITY_NAME
-                ),
-            },
-        )
-
         self._end_span(span, run_id)
         if parent_run_id is None:
             context_api.attach(
@@ -585,7 +570,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
                     attributes={
                         SpanAttributes.LLM_SYSTEM: "Langchain",
                         SpanAttributes.LLM_TOKEN_TYPE: "input",
-                        SpanAttributes.LLM_RESPONSE_MODEL: model_name,
+                        SpanAttributes.LLM_RESPONSE_MODEL: model_name or "unknown",
                     },
                 )
 
@@ -595,7 +580,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
                     attributes={
                         SpanAttributes.LLM_SYSTEM: "Langchain",
                         SpanAttributes.LLM_TOKEN_TYPE: "output",
-                        SpanAttributes.LLM_RESPONSE_MODEL: model_name,
+                        SpanAttributes.LLM_RESPONSE_MODEL: model_name or "unknown",
                     },
                 )
 
@@ -608,7 +593,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             duration,
             attributes={
                 SpanAttributes.LLM_SYSTEM: "Langchain",
-                SpanAttributes.LLM_RESPONSE_MODEL: model_name,
+                SpanAttributes.LLM_RESPONSE_MODEL: model_name or "unknown",
             },
         )
 
