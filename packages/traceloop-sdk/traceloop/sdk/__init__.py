@@ -52,6 +52,7 @@ class Traceloop:
         metrics_exporter: MetricExporter = None,
         metrics_headers: Dict[str, str] = None,
         logging_exporter: LogExporter = None,
+        logging_headers: Dict[str, str] = None,
         processor: SpanProcessor = None,
         propagator: TextMapPropagator = None,
         traceloop_sync_enabled: bool = False,
@@ -158,11 +159,14 @@ class Traceloop:
             print(Fore.YELLOW + "Logging are disabled" + Fore.RESET)
         else:
             logging_endpoint = os.getenv("TRACELOOP_LOGGING_ENDPOINT") or api_endpoint
+            logging_headers = (
+                os.getenv("TRACELOOP_LOGGING_HEADERS") or logging_headers or headers
+            )
             if logging_exporter or processor:
                 print(Fore.GREEN + "Traceloop exporting logs to a custom exporter")
 
             LoggerWrapper.set_static_params(
-                resource_attributes, logging_endpoint
+                resource_attributes, logging_endpoint, logging_headers
             )
             Traceloop.__logger_wrapper = LoggerWrapper(exporter=logging_exporter)
 
