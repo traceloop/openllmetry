@@ -28,7 +28,7 @@ def watsonx_llm_init() -> ModelInference:
 
     watsonx_llm = WatsonxLLM(
         model_id="ibm/granite-13b-instruct-v2",
-        url=os.getenv("API_BASE_URL", "https://us-south.ml.cloud.ibm.com"),
+        url="https://us-south.ml.cloud.ibm.com",
         apikey=os.getenv("IAM_API_KEY"),
         project_id=os.getenv("PROJECT_ID"),
         params=watsonx_llm_parameters,
