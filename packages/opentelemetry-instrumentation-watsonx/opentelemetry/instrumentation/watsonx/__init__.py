@@ -14,6 +14,7 @@ from opentelemetry.trace import get_tracer, SpanKind
 from opentelemetry.trace.status import Status, StatusCode
 from opentelemetry.metrics import get_meter
 from opentelemetry.metrics import Counter, Histogram
+from sample-app.sample_app.watsonx-langchain import watsonx_llm_init
 
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.instrumentation.utils import (
@@ -100,9 +101,10 @@ def _set_span_attribute(span, name, value):
     return
 
 
-def _set_api_attributes(span, instance):
-    if hasattr(instance, "url"):
-        api_base_url = instance.url
+def _set_api_attributes(span):
+    watsonx_llm = watsonx_llm_init()
+    if hasattr(watsonx_llm, "url"):
+        api_base_url = watsonx_llm.url
     else:
         api_base_url = "https://us-south.ml.cloud.ibm.com"
     _set_span_attribute(
