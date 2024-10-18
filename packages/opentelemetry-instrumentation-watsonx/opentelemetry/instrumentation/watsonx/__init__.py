@@ -100,11 +100,15 @@ def _set_span_attribute(span, name, value):
     return
 
 
-def _set_api_attributes(span):
+def _set_api_attributes(span, instance):
+    if hasattr(instance, "url"):
+        api_base_url = instance.url
+    else:
+        api_base_url = "https://us-south.ml.cloud.ibm.com"
     _set_span_attribute(
         span,
         WatsonxSpanAttributes.WATSONX_API_BASE,
-        "https://us-south.ml.cloud.ibm.com",
+        api_base_url,
     )
     _set_span_attribute(span, WatsonxSpanAttributes.WATSONX_API_TYPE, "watsonx.ai")
     _set_span_attribute(span, WatsonxSpanAttributes.WATSONX_API_VERSION, "1.0")
