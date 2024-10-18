@@ -267,16 +267,19 @@ def _record_usage_to_span(span, prompt_tokens, completion_tokens, metric_params)
         SpanAttributes.LLM_USAGE_PROMPT_TOKENS,
         prompt_tokens,
     )
-    _set_span_attribute(
-        span,
-        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS,
-        completion_tokens,
-    )
+    if completion_tokens:
+        _set_span_attribute(
+            span,
+            SpanAttributes.LLM_USAGE_COMPLETION_TOKENS,
+            completion_tokens,
+        )
+
     _set_span_attribute(
         span,
         SpanAttributes.LLM_USAGE_TOTAL_TOKENS,
-        prompt_tokens + completion_tokens,
+        prompt_tokens + completion_tokens if completion_tokens else prompt_tokens,
     )
+
 
     metric_attributes = _metric_shared_attributes(metric_params.vendor, metric_params.model, metric_params.is_stream)
 
@@ -572,7 +575,8 @@ def _set_amazon_span_attributes(span, request_body, response_body, metric_params
     _record_usage_to_span(
         span,
         response_body.get("inputTextTokenCount"),
-        sum(int(result.get("tokenCount")) for result in response_body.get("results")),
+        sum(int(result.get("tokenCount")) for result in response_body.get("results")) if response_body.get("results")
+        else None,
         metric_params,
     )
 
