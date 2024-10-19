@@ -34,7 +34,7 @@ class SpanAttributes:
     # Semantic Conventions for LLM requests, this needs to be removed after
     # OpenTelemetry Semantic Conventions support Gen AI.
     # Issue at https://github.com/open-telemetry/opentelemetry-python/issues/3868
-    # Refer to https://github.com/open-telemetry/semantic-conventions/blob/main/docs/gen-ai/llm-spans.md
+    # Refer to https://github.com/open-telemetry/semantic-conventions/blob/main/docs/gen-ai/gen-ai-spans.md
     # for more detail for LLM spans from OpenTelemetry Community.
     LLM_SYSTEM = "gen_ai.system"
     LLM_REQUEST_MODEL = "gen_ai.request.model"
@@ -73,6 +73,11 @@ class SpanAttributes:
     LLM_OPENAI_API_BASE = "gen_ai.openai.api_base"
     LLM_OPENAI_API_VERSION = "gen_ai.openai.api_version"
     LLM_OPENAI_API_TYPE = "gen_ai.openai.api_type"
+
+    # Anthropic
+    LLM_ANTHROPIC_CACHE_CREATION_INPUT_TOKENS = "llm.anthropic.usage.cache_creation_input_tokens"
+    LLM_ANTHROPIC_CACHE_READ_INPUT_TOKENS = "llm.anthropic.usage.cache_read_input_tokens"
+    LLM_ANTHROPIC_TOTAL_INPUT_TOKENS = "llm.anthropic.usage.total_input_tokens"
 
     # Haystack
     HAYSTACK_OPENAI_CHAT = "haystack.openai.chat"

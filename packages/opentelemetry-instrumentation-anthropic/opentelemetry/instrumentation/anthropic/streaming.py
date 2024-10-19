@@ -5,6 +5,7 @@ from opentelemetry.instrumentation.anthropic.config import Config
 from opentelemetry.instrumentation.anthropic.utils import (
     dont_throw,
     error_metrics_attributes,
+    count_prompt_tokens_from_request,
     set_span_attribute,
     shared_metrics_attributes,
     should_send_prompts,
@@ -20,7 +21,7 @@ logger = logging.getLogger(__name__)
 def _process_response_item(item, complete_response):
     if item.type == "message_start":
         complete_response["model"] = item.message.model
-        complete_response["usage"] = item.message.usage
+        complete_response["usage"] = dict(item.message.usage)
     elif item.type == "content_block_start":
         index = item.index
         if len(complete_response.get("events")) <= index:
@@ -31,6 +32,13 @@ def _process_response_item(item, complete_response):
     elif item.type == "message_delta":
         for event in complete_response.get("events", []):
             event["finish_reason"] = item.delta.stop_reason
+        if item.usage:
+            if "usage" in complete_response:
+                item_output_tokens = dict(item.usage).get("output_tokens", 0)
+                existing_output_tokens = complete_response["usage"].get("output_tokens", 0)
+                complete_response["usage"]["output_tokens"] = item_output_tokens + existing_output_tokens
+            else:
+                complete_response["usage"] = dict(item.usage)
 
 
 def _set_token_usage(
@@ -42,7 +50,12 @@ def _set_token_usage(
     token_histogram: Histogram = None,
     choice_counter: Counter = None,
 ):
-    total_tokens = prompt_tokens + completion_tokens
+    cache_read_tokens = complete_response.get("usage", {}).get("cache_read_input_tokens", 0)
+    cache_creation_tokens = complete_response.get("usage", {}).get("cache_creation_input_tokens", 0)
+
+    input_tokens = prompt_tokens + cache_read_tokens + cache_creation_tokens
+    total_tokens = input_tokens + completion_tokens
+
     set_span_attribute(span, SpanAttributes.LLM_USAGE_PROMPT_TOKENS, prompt_tokens)
     set_span_attribute(
         span, SpanAttributes.LLM_USAGE_COMPLETION_TOKENS, completion_tokens
@@ -52,10 +65,19 @@ def _set_token_usage(
     set_span_attribute(
         span, SpanAttributes.LLM_RESPONSE_MODEL, complete_response.get("model")
     )
+    set_span_attribute(
+        span, SpanAttributes.LLM_ANTHROPIC_CACHE_READ_INPUT_TOKENS, cache_read_tokens
+    )
+    set_span_attribute(
+        span, SpanAttributes.LLM_ANTHROPIC_CACHE_CREATION_INPUT_TOKENS, cache_creation_tokens
+    )
+    set_span_attribute(
+        span, SpanAttributes.LLM_ANTHROPIC_TOTAL_INPUT_TOKENS, input_tokens
+    )
 
-    if token_histogram and type(prompt_tokens) is int and prompt_tokens >= 0:
+    if token_histogram and type(input_tokens) is int and input_tokens >= 0:
         token_histogram.record(
-            prompt_tokens,
+            input_tokens,
             attributes={
                 **metric_attributes,
                 SpanAttributes.LLM_TOKEN_TYPE: "input",
@@ -135,30 +157,26 @@ def build_from_streaming_response(
     # calculate token usage
     if Config.enrich_token_usage:
         try:
-            prompt_tokens = -1
             completion_tokens = -1
-
             # prompt_usage
-            if kwargs.get("prompt"):
-                prompt_tokens = instance.count_tokens(kwargs.get("prompt"))
-            elif kwargs.get("messages"):
-                prompt_tokens = sum(
-                    [
-                        instance.count_tokens(m.get("content"))
-                        for m in kwargs.get("messages")
-                    ]
-                )
+            if usage := complete_response.get("usage"):
+                prompt_tokens = usage.get("input_tokens", 0)
+            else:
+                prompt_tokens = count_prompt_tokens_from_request(instance, kwargs)
 
             # completion_usage
-            completion_content = ""
-            if complete_response.get("events"):
-                model_name = complete_response.get("model") or None
-                for event in complete_response.get("events"):  # type: dict
-                    if event.get("text"):
-                        completion_content += event.get("text")
+            if usage := complete_response.get("usage"):
+                completion_tokens = usage.get("output_tokens", 0)
+            else:
+                completion_content = ""
+                if complete_response.get("events"):
+                    model_name = complete_response.get("model") or None
+                    for event in complete_response.get("events"):  # type: dict
+                        if event.get("text"):
+                            completion_content += event.get("text")
 
-                if model_name:
-                    completion_tokens = instance.count_tokens(completion_content)
+                    if model_name:
+                        completion_tokens = instance.count_tokens(completion_content)
 
             _set_token_usage(
                 span,
@@ -170,7 +188,7 @@ def build_from_streaming_response(
                 choice_counter,
             )
         except Exception as e:
-            logger.warning("Failed to set token usage, error: %s", str(e))
+            logger.warning("Failed to set token usage, error: %s", e)
 
     if should_send_prompts():
         _set_completions(span, complete_response.get("events"))
@@ -191,7 +209,7 @@ async def abuild_from_streaming_response(
     exception_counter: Counter = None,
     kwargs: dict = {},
 ):
-    complete_response = {"events": [], "model": ""}
+    complete_response = {"events": [], "model": "", "usage": {}}
     async for item in response:
         try:
             yield item
@@ -214,30 +232,25 @@ async def abuild_from_streaming_response(
     # calculate token usage
     if Config.enrich_token_usage:
         try:
-            prompt_tokens = -1
-            completion_tokens = -1
-
             # prompt_usage
-            if kwargs.get("prompt"):
-                prompt_tokens = await instance.count_tokens(kwargs.get("prompt"))
-            elif kwargs.get("messages"):
-                prompt_tokens = sum(
-                    [
-                        await instance.count_tokens(m.get("content"))
-                        for m in kwargs.get("messages")
-                    ]
-                )
+            if usage := complete_response.get("usage"):
+                prompt_tokens = usage.get("input_tokens", 0)
+            else:
+                prompt_tokens = count_prompt_tokens_from_request(instance, kwargs)
 
             # completion_usage
-            completion_content = ""
-            if complete_response.get("events"):
-                model_name = complete_response.get("model") or None
-                for event in complete_response.get("events"):  # type: dict
-                    if event.get("text"):
-                        completion_content += event.get("text")
+            if usage := complete_response.get("usage"):
+                completion_tokens = usage.get("output_tokens", 0)
+            else:
+                completion_content = ""
+                if complete_response.get("events"):
+                    model_name = complete_response.get("model") or None
+                    for event in complete_response.get("events"):  # type: dict
+                        if event.get("text"):
+                            completion_content += event.get("text")
 
-                if model_name:
-                    completion_tokens = await instance.count_tokens(completion_content)
+                    if model_name:
+                        completion_tokens = instance.count_tokens(completion_content)
 
             _set_token_usage(
                 span,

@@ -67,3 +67,47 @@ def error_metrics_attributes(exception):
         GEN_AI_SYSTEM: GEN_AI_SYSTEM_ANTHROPIC,
         "error.type": exception.__class__.__name__,
     }
+
+
+@dont_throw
+def count_prompt_tokens_from_request(anthropic, request):
+    prompt_tokens = 0
+    if hasattr(anthropic, "count_tokens"):
+        if request.get("prompt"):
+            prompt_tokens = anthropic.count_tokens(request.get("prompt"))
+        elif messages := request.get("messages"):
+            prompt_tokens = 0
+            for m in messages:
+                content = m.get("content")
+                if isinstance(content, str):
+                    prompt_tokens += anthropic.count_tokens(content)
+                elif isinstance(content, list):
+                    for item in content:
+                        # TODO: handle image and tool tokens
+                        if isinstance(item, dict) and item.get("type") == "text":
+                            prompt_tokens += anthropic.count_tokens(
+                                item.get("text", "")
+                            )
+    return prompt_tokens
+
+
+@dont_throw
+async def acount_prompt_tokens_from_request(anthropic, request):
+    prompt_tokens = 0
+    if hasattr(anthropic, "count_tokens"):
+        if request.get("prompt"):
+            prompt_tokens = await anthropic.count_tokens(request.get("prompt"))
+        elif messages := request.get("messages"):
+            prompt_tokens = 0
+            for m in messages:
+                content = m.get("content")
+                if isinstance(content, str):
+                    prompt_tokens += await anthropic.count_tokens(content)
+                elif isinstance(content, list):
+                    for item in content:
+                        # TODO: handle image and tool tokens
+                        if isinstance(item, dict) and item.get("type") == "text":
+                            prompt_tokens += await anthropic.count_tokens(
+                                item.get("text", "")
+                            )
+    return prompt_tokens
