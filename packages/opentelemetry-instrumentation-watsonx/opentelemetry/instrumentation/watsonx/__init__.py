@@ -2,6 +2,7 @@
 
 import logging
 import os
+import sys
 import types
 import time
 from typing import Collection, Optional
@@ -445,66 +446,70 @@ def _wrap(
 
     name = to_wrap.get("span_name")
 
-    with tracer.start_span(
+    span = tracer.start_span(
         name,
         kind=SpanKind.CLIENT,
         attributes={
             SpanAttributes.LLM_SYSTEM: "Watsonx",
             SpanAttributes.LLM_REQUEST_TYPE: LLMRequestTypeValues.COMPLETION.value,
         },
-    ) as span:
+    )
 
-        _set_api_attributes(span)
-        if "generate" in name:
-            _set_input_attributes(span, instance, kwargs)
-            if to_wrap.get("method") == "generate_text_stream":
-                if (raw_flag := kwargs.get("raw_response", None)) is None:
-                    kwargs = {**kwargs, "raw_response": True}
-                elif raw_flag is False:
-                    kwargs["raw_response"] = True
+    _set_api_attributes(span)
+    if "generate" in name:
+        _set_input_attributes(span, instance, kwargs)
+        if to_wrap.get("method") == "generate_text_stream":
+            if (raw_flag := kwargs.get("raw_response", None)) is None:
+                kwargs = {**kwargs, "raw_response": True}
+            elif raw_flag is False:
+                kwargs["raw_response"] = True
 
-        try:
-            start_time = time.time()
-            response = wrapped(*args, **kwargs)
-            end_time = time.time()
-        except Exception as e:
-            end_time = time.time()
-            duration = end_time - start_time if "start_time" in locals() else 0
+    try:
+        start_time = time.time()
+        response = wrapped(*args, **kwargs)
+        end_time = time.time()
+    except Exception as e:
+        end_time = time.time()
+        duration = end_time - start_time if "start_time" in locals() else 0
 
-            attributes = {
-                "error.type": e.__class__.__name__,
-            }
+        attributes = {
+            "error.type": e.__class__.__name__,
+        }
 
-            if duration > 0 and duration_histogram:
-                duration_histogram.record(duration, attributes=attributes)
-            if exception_counter:
-                exception_counter.add(1, attributes=attributes)
+        if duration > 0 and duration_histogram:
+            duration_histogram.record(duration, attributes=attributes)
+        if exception_counter:
+            exception_counter.add(1, attributes=attributes)
 
-            raise e
+        exc_type, exc_val, exc_tb = sys.exc_info()
+        span.__exit__(exc_type, exc_val, exc_tb)
 
-        if "generate" in name:
-            if isinstance(response, types.GeneratorType):
-                return _build_and_set_stream_response(
-                    span,
-                    response,
-                    raw_flag,
-                    token_histogram,
-                    response_counter,
-                    duration_histogram,
-                    start_time,
-                )
-            else:
-                duration = end_time - start_time
-                _set_response_attributes(
-                    span,
-                    response,
-                    token_histogram,
-                    response_counter,
-                    duration_histogram,
-                    duration,
-                )
+        raise e
 
-        return response
+    if "generate" in name:
+        if isinstance(response, types.GeneratorType):
+            return _build_and_set_stream_response(
+                span,
+                response,
+                raw_flag,
+                token_histogram,
+                response_counter,
+                duration_histogram,
+                start_time,
+            )
+        else:
+            duration = end_time - start_time
+            _set_response_attributes(
+                span,
+                response,
+                token_histogram,
+                response_counter,
+                duration_histogram,
+                duration,
+            )
+
+    span.end()
+    return response
 
 
 class WatsonxSpanAttributes:
