@@ -9,6 +9,9 @@
 <p align="center">
   <p align="center">Open-source observability for your LLM application</p>
 </p>
+<h2 align="center">
+  <a href="https://www.traceloop.com/devfest-ai-2024">Hacktoberfest 2024 - Join us and win some swag!</a>
+</h2>
 <h4 align="center">
     <a href="https://traceloop.com/docs/openllmetry/getting-started-python"><strong>Get started »</strong></a>
     <br />
