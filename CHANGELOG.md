@@ -1,3 +1,19 @@
+## v0.33.2 (2024-10-17)
+
+### Fix
+
+- **langchain**: various bugs and edge cases in metric exporting (#2167)
+- **sdk**: add header for logging exporter (#2164)
+
+## v0.33.1 (2024-10-16)
+
+### Fix
+
+- **langchain**: metrics support (#2154)
+- **langchain**: Add trace context to client requests (#2152)
+- **anthropic**: add instrumentation for Anthropic tool calling (alternative to #1372) (#2150)
+- **openai**: add structured output instrumentation (#2111)
+
 ## v0.33.0 (2024-10-15)
 
 ### Feat
