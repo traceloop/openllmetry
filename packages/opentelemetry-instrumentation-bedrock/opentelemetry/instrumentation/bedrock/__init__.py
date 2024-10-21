@@ -455,7 +455,7 @@ def _set_anthropic_messages_span_attributes(span, request_body, response_body, m
             )
             _set_span_attribute(
                 span,
-                f"{SpanAttributes.LLM_PROMPTS}.0.content",
+                f"{SpanAttributes.LLM_PROMPTS}.{idx}.content",
                 json.dumps(message.get("content")),
             )
 
