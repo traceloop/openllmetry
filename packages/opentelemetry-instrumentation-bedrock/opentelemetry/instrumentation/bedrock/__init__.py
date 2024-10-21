@@ -460,7 +460,7 @@ def _set_anthropic_messages_span_attributes(span, request_body, response_body, m
             )
 
         _set_span_attribute(
-            span, f"{SpanAttributes.LLM_COMPLETIONS}.0.content", "assistant"
+            span, f"{SpanAttributes.LLM_COMPLETIONS}.0.role", "assistant"
         )
         _set_span_attribute(
             span,
