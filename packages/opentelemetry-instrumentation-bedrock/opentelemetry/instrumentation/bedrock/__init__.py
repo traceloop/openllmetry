@@ -463,10 +463,15 @@ def _set_anthropic_messages_span_attributes(span, request_body, response_body, m
             _set_span_attribute(
                 span, f"{SpanAttributes.LLM_PROMPTS}.{idx}.role", message.get("role")
             )
+            content = message.get("content")
+            if isinstance(content, str):
+                text = content
+            else:
+                text = content[0].get("text")
             _set_span_attribute(
                 span,
                 f"{SpanAttributes.LLM_PROMPTS}.{idx}.content",
-                message.get("content"),
+                text,
             )
 
         for idx, content in enumerate(response_body.get("content")):
