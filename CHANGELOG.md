@@ -1,3 +1,9 @@
+## v0.33.3 (2024-10-22)
+
+### Fix
+
+- **sdk**: capture posthog events as anonymous; roll ingestion key (#2194)
+
 ## v0.33.2 (2024-10-17)
 
 ### Fix
