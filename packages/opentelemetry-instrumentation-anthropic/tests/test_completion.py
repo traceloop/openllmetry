@@ -609,38 +609,27 @@ def test_anthropic_prompt_caching(exporter, reader):
     assert text == cache_creation_span.attributes["gen_ai.prompt.0.content"]
     assert cache_read_span.attributes["gen_ai.prompt.0.role"] == "user"
     assert text == cache_read_span.attributes["gen_ai.prompt.0.content"]
+    assert (
+        cache_creation_span.attributes["gen_ai.usage.cache_creation_input_tokens"]
+        == cache_read_span.attributes["gen_ai.usage.cache_read_input_tokens"]
+    )
 
     # first check that cache_creation_span only wrote to cache, but not read from it,
-    # and that total_input_tokens is cache_write + cache_read + prompt_tokens
-    assert cache_creation_span.attributes["llm.anthropic.usage.cache_read_input_tokens"] == 0
-    assert cache_creation_span.attributes["llm.anthropic.usage.cache_creation_input_tokens"] != 0
-    assert (
-        cache_creation_span.attributes["llm.anthropic.usage.cache_read_input_tokens"] +
-        cache_creation_span.attributes["llm.anthropic.usage.cache_creation_input_tokens"] +
-        cache_creation_span.attributes["gen_ai.usage.prompt_tokens"]
-        == cache_creation_span.attributes["llm.anthropic.usage.total_input_tokens"]
-    )
+    assert cache_creation_span.attributes["gen_ai.usage.cache_read_input_tokens"] == 0
+    assert cache_creation_span.attributes["gen_ai.usage.cache_creation_input_tokens"] != 0
+
     # then check for exact figures for the fixture/cassete
-    assert cache_creation_span.attributes["llm.anthropic.usage.cache_creation_input_tokens"] == 1163
-    assert cache_creation_span.attributes["gen_ai.usage.prompt_tokens"] == 4
-    assert cache_creation_span.attributes["llm.anthropic.usage.total_input_tokens"] == 1167
+    assert cache_creation_span.attributes["gen_ai.usage.cache_creation_input_tokens"] == 1163
+    assert cache_creation_span.attributes["gen_ai.usage.prompt_tokens"] == 1167
     assert cache_creation_span.attributes["gen_ai.usage.completion_tokens"] == 224
 
     # first check that cache_read_span only read from cache, but not wrote to it,
-    # and that total_input_tokens is cache_write + cache_read + prompt_tokens
-    assert cache_read_span.attributes["llm.anthropic.usage.cache_read_input_tokens"] != 0
-    assert cache_read_span.attributes["llm.anthropic.usage.cache_creation_input_tokens"] == 0
-    assert (
-        cache_read_span.attributes["llm.anthropic.usage.cache_read_input_tokens"] +
-        cache_read_span.attributes["llm.anthropic.usage.cache_creation_input_tokens"] +
-        cache_read_span.attributes["gen_ai.usage.prompt_tokens"]
-        == cache_read_span.attributes["llm.anthropic.usage.total_input_tokens"]
-    )
+    assert cache_read_span.attributes["gen_ai.usage.cache_read_input_tokens"] != 0
+    assert cache_read_span.attributes["gen_ai.usage.cache_creation_input_tokens"] == 0
 
     # then check for exact figures for the fixture/cassete
-    assert cache_read_span.attributes["llm.anthropic.usage.cache_read_input_tokens"] == 1163
-    assert cache_read_span.attributes["gen_ai.usage.prompt_tokens"] == 4
-    assert cache_read_span.attributes["llm.anthropic.usage.total_input_tokens"] == 1167
+    assert cache_read_span.attributes["gen_ai.usage.cache_read_input_tokens"] == 1163
+    assert cache_read_span.attributes["gen_ai.usage.prompt_tokens"] == 1167
     assert cache_read_span.attributes["gen_ai.usage.completion_tokens"] == 230
 
     # verify metrics
@@ -701,41 +690,26 @@ async def test_anthropic_prompt_caching_async(exporter, reader):
     assert cache_read_span.attributes["gen_ai.prompt.0.role"] == "user"
     assert text == cache_read_span.attributes["gen_ai.prompt.0.content"]
     assert (
-        cache_creation_span.attributes["llm.anthropic.usage.cache_creation_input_tokens"]
-        == cache_read_span.attributes["llm.anthropic.usage.cache_read_input_tokens"]
+        cache_creation_span.attributes["gen_ai.usage.cache_creation_input_tokens"]
+        == cache_read_span.attributes["gen_ai.usage.cache_read_input_tokens"]
     )
 
-    # first check that cache_creation_span only wrote to cache, but not read from it,
-    # and that total_input_tokens is cache_write + cache_read + prompt_tokens
-    assert cache_creation_span.attributes["llm.anthropic.usage.cache_read_input_tokens"] == 0
-    assert cache_creation_span.attributes["llm.anthropic.usage.cache_creation_input_tokens"] != 0
-    assert (
-        cache_creation_span.attributes["llm.anthropic.usage.cache_read_input_tokens"] +
-        cache_creation_span.attributes["llm.anthropic.usage.cache_creation_input_tokens"] +
-        cache_creation_span.attributes["gen_ai.usage.prompt_tokens"]
-        == cache_creation_span.attributes["llm.anthropic.usage.total_input_tokens"]
-    )
+       # first check that cache_creation_span only wrote to cache, but not read from it,
+    assert cache_creation_span.attributes["gen_ai.usage.cache_read_input_tokens"] == 0
+    assert cache_creation_span.attributes["gen_ai.usage.cache_creation_input_tokens"] != 0
+
     # then check for exact figures for the fixture/cassete
-    assert cache_creation_span.attributes["llm.anthropic.usage.cache_creation_input_tokens"] == 1165
-    assert cache_creation_span.attributes["gen_ai.usage.prompt_tokens"] == 4
-    assert cache_creation_span.attributes["llm.anthropic.usage.total_input_tokens"] == 1169
+    assert cache_creation_span.attributes["gen_ai.usage.cache_creation_input_tokens"] == 1165
+    assert cache_creation_span.attributes["gen_ai.usage.prompt_tokens"] == 1169
     assert cache_creation_span.attributes["gen_ai.usage.completion_tokens"] == 249
 
     # first check that cache_read_span only read from cache, but not wrote to it,
-    # and that total_input_tokens is cache_write + cache_read + prompt_tokens
-    assert cache_read_span.attributes["llm.anthropic.usage.cache_read_input_tokens"] != 0
-    assert cache_read_span.attributes["llm.anthropic.usage.cache_creation_input_tokens"] == 0
-    assert (
-        cache_read_span.attributes["llm.anthropic.usage.cache_read_input_tokens"] +
-        cache_read_span.attributes["llm.anthropic.usage.cache_creation_input_tokens"] +
-        cache_read_span.attributes["gen_ai.usage.prompt_tokens"]
-        == cache_read_span.attributes["llm.anthropic.usage.total_input_tokens"]
-    )
+    assert cache_read_span.attributes["gen_ai.usage.cache_read_input_tokens"] != 0
+    assert cache_read_span.attributes["gen_ai.usage.cache_creation_input_tokens"] == 0
 
     # then check for exact figures for the fixture/cassete
-    assert cache_read_span.attributes["llm.anthropic.usage.cache_read_input_tokens"] == 1165
-    assert cache_read_span.attributes["gen_ai.usage.prompt_tokens"] == 4
-    assert cache_read_span.attributes["llm.anthropic.usage.total_input_tokens"] == 1169
+    assert cache_read_span.attributes["gen_ai.usage.cache_read_input_tokens"] == 1165
+    assert cache_read_span.attributes["gen_ai.usage.prompt_tokens"] == 1169
     assert cache_read_span.attributes["gen_ai.usage.completion_tokens"] == 229
 
     # verify metrics
@@ -798,41 +772,26 @@ def test_anthropic_prompt_caching_stream(exporter, reader):
     assert cache_read_span.attributes["gen_ai.prompt.0.role"] == "user"
     assert text == cache_read_span.attributes["gen_ai.prompt.0.content"]
     assert (
-        cache_creation_span.attributes["llm.anthropic.usage.cache_creation_input_tokens"]
-        == cache_read_span.attributes["llm.anthropic.usage.cache_read_input_tokens"]
+        cache_creation_span.attributes["gen_ai.usage.cache_creation_input_tokens"]
+        == cache_read_span.attributes["gen_ai.usage.cache_read_input_tokens"]
     )
 
     # first check that cache_creation_span only wrote to cache, but not read from it,
-    # and that total_input_tokens is cache_write + cache_read + prompt_tokens
-    assert cache_creation_span.attributes["llm.anthropic.usage.cache_read_input_tokens"] == 0
-    assert cache_creation_span.attributes["llm.anthropic.usage.cache_creation_input_tokens"] != 0
-    assert (
-        cache_creation_span.attributes["llm.anthropic.usage.cache_read_input_tokens"] +
-        cache_creation_span.attributes["llm.anthropic.usage.cache_creation_input_tokens"] +
-        cache_creation_span.attributes["gen_ai.usage.prompt_tokens"]
-        == cache_creation_span.attributes["llm.anthropic.usage.total_input_tokens"]
-    )
+    assert cache_creation_span.attributes["gen_ai.usage.cache_read_input_tokens"] == 0
+    assert cache_creation_span.attributes["gen_ai.usage.cache_creation_input_tokens"] != 0
+
     # then check for exact figures for the fixture/cassete
-    assert cache_creation_span.attributes["llm.anthropic.usage.cache_creation_input_tokens"] == 1165
-    assert cache_creation_span.attributes["gen_ai.usage.prompt_tokens"] == 4
-    assert cache_creation_span.attributes["llm.anthropic.usage.total_input_tokens"] == 1169
+    assert cache_creation_span.attributes["gen_ai.usage.cache_creation_input_tokens"] == 1165
+    assert cache_creation_span.attributes["gen_ai.usage.prompt_tokens"] == 1169
     assert cache_creation_span.attributes["gen_ai.usage.completion_tokens"] == 238
 
     # first check that cache_read_span only read from cache, but not wrote to it,
-    # and that total_input_tokens is cache_write + cache_read + prompt_tokens
-    assert cache_read_span.attributes["llm.anthropic.usage.cache_read_input_tokens"] != 0
-    assert cache_read_span.attributes["llm.anthropic.usage.cache_creation_input_tokens"] == 0
-    assert (
-        cache_read_span.attributes["llm.anthropic.usage.cache_read_input_tokens"] +
-        cache_read_span.attributes["llm.anthropic.usage.cache_creation_input_tokens"] +
-        cache_read_span.attributes["gen_ai.usage.prompt_tokens"]
-        == cache_read_span.attributes["llm.anthropic.usage.total_input_tokens"]
-    )
+    assert cache_read_span.attributes["gen_ai.usage.cache_read_input_tokens"] != 0
+    assert cache_read_span.attributes["gen_ai.usage.cache_creation_input_tokens"] == 0
 
     # then check for exact figures for the fixture/cassete
-    assert cache_read_span.attributes["llm.anthropic.usage.cache_read_input_tokens"] == 1165
-    assert cache_read_span.attributes["gen_ai.usage.prompt_tokens"] == 4
-    assert cache_read_span.attributes["llm.anthropic.usage.total_input_tokens"] == 1169
+    assert cache_read_span.attributes["gen_ai.usage.cache_read_input_tokens"] == 1165
+    assert cache_read_span.attributes["gen_ai.usage.prompt_tokens"] == 1169
     assert cache_read_span.attributes["gen_ai.usage.completion_tokens"] == 227
 
     # verify metrics
@@ -896,41 +855,26 @@ async def test_anthropic_prompt_caching_async_stream(exporter, reader):
     assert cache_read_span.attributes["gen_ai.prompt.0.role"] == "user"
     assert text == cache_read_span.attributes["gen_ai.prompt.0.content"]
     assert (
-        cache_creation_span.attributes["llm.anthropic.usage.cache_creation_input_tokens"]
-        == cache_read_span.attributes["llm.anthropic.usage.cache_read_input_tokens"]
+        cache_creation_span.attributes["gen_ai.usage.cache_creation_input_tokens"]
+        == cache_read_span.attributes["gen_ai.usage.cache_read_input_tokens"]
     )
 
-    # first check that cache_creation_span only wrote to cache, but not read from it,
-    # and that total_input_tokens is cache_write + cache_read + prompt_tokens
-    assert cache_creation_span.attributes["llm.anthropic.usage.cache_read_input_tokens"] == 0
-    assert cache_creation_span.attributes["llm.anthropic.usage.cache_creation_input_tokens"] != 0
-    assert (
-        cache_creation_span.attributes["llm.anthropic.usage.cache_read_input_tokens"] +
-        cache_creation_span.attributes["llm.anthropic.usage.cache_creation_input_tokens"] +
-        cache_creation_span.attributes["gen_ai.usage.prompt_tokens"]
-        == cache_creation_span.attributes["llm.anthropic.usage.total_input_tokens"]
-    )
+        # first check that cache_creation_span only wrote to cache, but not read from it,
+    assert cache_creation_span.attributes["gen_ai.usage.cache_read_input_tokens"] == 0
+    assert cache_creation_span.attributes["gen_ai.usage.cache_creation_input_tokens"] != 0
+
     # then check for exact figures for the fixture/cassete
-    assert cache_creation_span.attributes["llm.anthropic.usage.cache_creation_input_tokens"] == 1167
-    assert cache_creation_span.attributes["gen_ai.usage.prompt_tokens"] == 4
-    assert cache_creation_span.attributes["llm.anthropic.usage.total_input_tokens"] == 1171
+    assert cache_creation_span.attributes["gen_ai.usage.cache_creation_input_tokens"] == 1167
+    assert cache_creation_span.attributes["gen_ai.usage.prompt_tokens"] == 1171
     assert cache_creation_span.attributes["gen_ai.usage.completion_tokens"] == 225
 
     # first check that cache_read_span only read from cache, but not wrote to it,
-    # and that total_input_tokens is cache_write + cache_read + prompt_tokens
-    assert cache_read_span.attributes["llm.anthropic.usage.cache_read_input_tokens"] != 0
-    assert cache_read_span.attributes["llm.anthropic.usage.cache_creation_input_tokens"] == 0
-    assert (
-        cache_read_span.attributes["llm.anthropic.usage.cache_read_input_tokens"] +
-        cache_read_span.attributes["llm.anthropic.usage.cache_creation_input_tokens"] +
-        cache_read_span.attributes["gen_ai.usage.prompt_tokens"]
-        == cache_read_span.attributes["llm.anthropic.usage.total_input_tokens"]
-    )
+    assert cache_read_span.attributes["gen_ai.usage.cache_read_input_tokens"] != 0
+    assert cache_read_span.attributes["gen_ai.usage.cache_creation_input_tokens"] == 0
 
     # then check for exact figures for the fixture/cassete
-    assert cache_read_span.attributes["llm.anthropic.usage.cache_read_input_tokens"] == 1167
-    assert cache_read_span.attributes["gen_ai.usage.prompt_tokens"] == 4
-    assert cache_read_span.attributes["llm.anthropic.usage.total_input_tokens"] == 1171
+    assert cache_read_span.attributes["gen_ai.usage.cache_read_input_tokens"] == 1167
+    assert cache_read_span.attributes["gen_ai.usage.prompt_tokens"] == 1171
     assert cache_read_span.attributes["gen_ai.usage.completion_tokens"] == 187
 
     # verify metrics

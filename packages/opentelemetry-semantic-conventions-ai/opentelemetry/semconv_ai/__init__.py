@@ -46,9 +46,10 @@ class SpanAttributes:
     LLM_RESPONSE_MODEL = "gen_ai.response.model"
     LLM_USAGE_COMPLETION_TOKENS = "gen_ai.usage.completion_tokens"
     LLM_USAGE_PROMPT_TOKENS = "gen_ai.usage.prompt_tokens"
+    LLM_USAGE_CACHE_CREATION_INPUT_TOKENS = "gen_ai.usage.cache_creation_input_tokens"
+    LLM_USAGE_CACHE_READ_INPUT_TOKENS = "gen_ai.usage.cache_read_input_tokens"
     LLM_TOKEN_TYPE = "gen_ai.token.type"
     # To be added
-    # LLM_RESPONSE_FINISH_REASON = "gen_ai.response.finish_reasons"
     # LLM_RESPONSE_ID = "gen_ai.response.id"
 
     # LLM
@@ -73,11 +74,6 @@ class SpanAttributes:
     LLM_OPENAI_API_BASE = "gen_ai.openai.api_base"
     LLM_OPENAI_API_VERSION = "gen_ai.openai.api_version"
     LLM_OPENAI_API_TYPE = "gen_ai.openai.api_type"
-
-    # Anthropic
-    LLM_ANTHROPIC_CACHE_CREATION_INPUT_TOKENS = "llm.anthropic.usage.cache_creation_input_tokens"
-    LLM_ANTHROPIC_CACHE_READ_INPUT_TOKENS = "llm.anthropic.usage.cache_read_input_tokens"
-    LLM_ANTHROPIC_TOTAL_INPUT_TOKENS = "llm.anthropic.usage.total_input_tokens"
 
     # Haystack
     HAYSTACK_OPENAI_CHAT = "haystack.openai.chat"

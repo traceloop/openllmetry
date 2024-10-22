@@ -295,7 +295,7 @@ async def _aset_token_usage(
             },
         )
 
-    total_tokens = prompt_tokens + completion_tokens
+    total_tokens = input_tokens + completion_tokens
 
     choices = 0
     if type(response.get("content")) is list:
@@ -312,20 +312,17 @@ async def _aset_token_usage(
             },
         )
 
-    set_span_attribute(span, SpanAttributes.LLM_USAGE_PROMPT_TOKENS, prompt_tokens)
+    set_span_attribute(span, SpanAttributes.LLM_USAGE_PROMPT_TOKENS, input_tokens)
     set_span_attribute(
         span, SpanAttributes.LLM_USAGE_COMPLETION_TOKENS, completion_tokens
     )
     set_span_attribute(span, SpanAttributes.LLM_USAGE_TOTAL_TOKENS, total_tokens)
 
     set_span_attribute(
-        span, SpanAttributes.LLM_ANTHROPIC_CACHE_READ_INPUT_TOKENS, cache_read_tokens
+        span, SpanAttributes.LLM_USAGE_CACHE_READ_INPUT_TOKENS, cache_read_tokens
     )
     set_span_attribute(
-        span, SpanAttributes.LLM_ANTHROPIC_CACHE_CREATION_INPUT_TOKENS, cache_creation_tokens
-    )
-    set_span_attribute(
-        span, SpanAttributes.LLM_ANTHROPIC_TOTAL_INPUT_TOKENS, input_tokens
+        span, SpanAttributes.LLM_USAGE_CACHE_CREATION_INPUT_TOKENS, cache_creation_tokens
     )
 
 
@@ -404,19 +401,17 @@ def _set_token_usage(
             },
         )
 
-    set_span_attribute(span, SpanAttributes.LLM_USAGE_PROMPT_TOKENS, prompt_tokens)
+    set_span_attribute(span, SpanAttributes.LLM_USAGE_PROMPT_TOKENS, input_tokens)
     set_span_attribute(
         span, SpanAttributes.LLM_USAGE_COMPLETION_TOKENS, completion_tokens
     )
     set_span_attribute(span, SpanAttributes.LLM_USAGE_TOTAL_TOKENS, total_tokens)
+
     set_span_attribute(
-        span, SpanAttributes.LLM_ANTHROPIC_CACHE_READ_INPUT_TOKENS, cache_read_tokens
+        span, SpanAttributes.LLM_USAGE_CACHE_READ_INPUT_TOKENS, cache_read_tokens
     )
     set_span_attribute(
-        span, SpanAttributes.LLM_ANTHROPIC_CACHE_CREATION_INPUT_TOKENS, cache_creation_tokens
-    )
-    set_span_attribute(
-        span, SpanAttributes.LLM_ANTHROPIC_TOTAL_INPUT_TOKENS, input_tokens
+        span, SpanAttributes.LLM_USAGE_CACHE_CREATION_INPUT_TOKENS, cache_creation_tokens
     )
 
 
