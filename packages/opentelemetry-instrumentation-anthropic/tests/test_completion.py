@@ -694,7 +694,7 @@ async def test_anthropic_prompt_caching_async(exporter, reader):
         == cache_read_span.attributes["gen_ai.usage.cache_read_input_tokens"]
     )
 
-       # first check that cache_creation_span only wrote to cache, but not read from it,
+    # first check that cache_creation_span only wrote to cache, but not read from it,
     assert cache_creation_span.attributes["gen_ai.usage.cache_read_input_tokens"] == 0
     assert cache_creation_span.attributes["gen_ai.usage.cache_creation_input_tokens"] != 0
 
@@ -859,7 +859,7 @@ async def test_anthropic_prompt_caching_async_stream(exporter, reader):
         == cache_read_span.attributes["gen_ai.usage.cache_read_input_tokens"]
     )
 
-        # first check that cache_creation_span only wrote to cache, but not read from it,
+    # first check that cache_creation_span only wrote to cache, but not read from it,
     assert cache_creation_span.attributes["gen_ai.usage.cache_read_input_tokens"] == 0
     assert cache_creation_span.attributes["gen_ai.usage.cache_creation_input_tokens"] != 0
 
