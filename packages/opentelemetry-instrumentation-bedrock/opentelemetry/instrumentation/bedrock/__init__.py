@@ -129,7 +129,9 @@ def _wrap(
             start_time = time.time()
             metric_params.start_time = time.time()
             client = wrapped(*args, **kwargs)
-            client.invoke_model = _instrumented_model_invoke(client.invoke_model, tracer, metric_params)
+            client.invoke_model = _instrumented_model_invoke(
+                client.invoke_model, tracer, metric_params
+            )
             client.invoke_model_with_response_stream = (
                 _instrumented_model_invoke_with_response_stream(
                     client.invoke_model_with_response_stream, tracer, metric_params
@@ -206,7 +208,9 @@ def _handle_stream_call(span, kwargs, response, metric_params):
         _set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, model)
 
         if vendor == "cohere":
-            _set_cohere_span_attributes(span, request_body, response_body, metric_params)
+            _set_cohere_span_attributes(
+                span, request_body, response_body, metric_params
+            )
         elif vendor == "anthropic":
             if "prompt" in request_body:
                 _set_anthropic_completion_span_attributes(
@@ -221,7 +225,9 @@ def _handle_stream_call(span, kwargs, response, metric_params):
         elif vendor == "meta":
             _set_llama_span_attributes(span, request_body, response_body, metric_params)
         elif vendor == "amazon":
-            _set_amazon_span_attributes(span, request_body, response_body, metric_params)
+            _set_amazon_span_attributes(
+                span, request_body, response_body, metric_params
+            )
 
         span.end()
 
@@ -250,9 +256,13 @@ def _handle_call(span, kwargs, response, metric_params):
         _set_cohere_span_attributes(span, request_body, response_body, metric_params)
     elif vendor == "anthropic":
         if "prompt" in request_body:
-            _set_anthropic_completion_span_attributes(span, request_body, response_body, metric_params)
+            _set_anthropic_completion_span_attributes(
+                span, request_body, response_body, metric_params
+            )
         elif "messages" in request_body:
-            _set_anthropic_messages_span_attributes(span, request_body, response_body, metric_params)
+            _set_anthropic_messages_span_attributes(
+                span, request_body, response_body, metric_params
+            )
     elif vendor == "ai21":
         _set_ai21_span_attributes(span, request_body, response_body, metric_params)
     elif vendor == "meta":
@@ -278,7 +288,9 @@ def _record_usage_to_span(span, prompt_tokens, completion_tokens, metric_params)
         prompt_tokens + completion_tokens,
     )
 
-    metric_attributes = _metric_shared_attributes(metric_params.vendor, metric_params.model, metric_params.is_stream)
+    metric_attributes = _metric_shared_attributes(
+        metric_params.vendor, metric_params.model, metric_params.is_stream
+    )
 
     if metric_params.duration_histogram:
         duration = time.time() - metric_params.start_time
@@ -287,7 +299,11 @@ def _record_usage_to_span(span, prompt_tokens, completion_tokens, metric_params)
             attributes=metric_attributes,
         )
 
-    if metric_params.token_histogram and type(prompt_tokens) is int and prompt_tokens >= 0:
+    if (
+        metric_params.token_histogram
+        and type(prompt_tokens) is int
+        and prompt_tokens >= 0
+    ):
         metric_params.token_histogram.record(
             prompt_tokens,
             attributes={
@@ -295,7 +311,11 @@ def _record_usage_to_span(span, prompt_tokens, completion_tokens, metric_params)
                 SpanAttributes.LLM_TOKEN_TYPE: "input",
             },
         )
-    if metric_params.token_histogram and type(completion_tokens) is int and completion_tokens >= 0:
+    if (
+        metric_params.token_histogram
+        and type(completion_tokens) is int
+        and completion_tokens >= 0
+    ):
         metric_params.token_histogram.record(
             completion_tokens,
             attributes={
@@ -305,7 +325,9 @@ def _record_usage_to_span(span, prompt_tokens, completion_tokens, metric_params)
         )
 
 
-def _metric_shared_attributes(response_vendor: str, response_model: str, is_streaming: bool = False):
+def _metric_shared_attributes(
+    response_vendor: str, response_model: str, is_streaming: bool = False
+):
     return {
         "vendor": response_vendor,
         SpanAttributes.LLM_RESPONSE_MODEL: response_model,
@@ -328,12 +350,24 @@ def _set_cohere_span_attributes(span, request_body, response_body, metric_params
 
     # based on contract at
     # https://docs.aws.amazon.com/bedrock/latest/userguide/model-parameters-cohere-command-r-plus.html
-    _record_usage_to_span(
-        span,
-        response_body.get("token_count").get("prompt_tokens"),
-        response_body.get("token_count").get("response_tokens"),
-        metric_params,
-    )
+    input_tokens = response_body.get("token_count", {}).get("prompt_tokens")
+    output_tokens = response_body.get("token_count", {}).get("response_tokens")
+
+    print("response_body", response_body)
+
+    if input_tokens is None or output_tokens is None:
+        meta = response_body.get("meta", {})
+        billed_units = meta.get("billed_units", {})
+        input_tokens = input_tokens or billed_units.get("input_tokens")
+        output_tokens = output_tokens or billed_units.get("output_tokens")
+
+    if input_tokens is not None and output_tokens is not None:
+        _record_usage_to_span(
+            span,
+            input_tokens,
+            output_tokens,
+            metric_params,
+        )
 
     if should_send_prompts():
         _set_span_attribute(
@@ -348,7 +382,9 @@ def _set_cohere_span_attributes(span, request_body, response_body, metric_params
             )
 
 
-def _set_anthropic_completion_span_attributes(span, request_body, response_body, metric_params):
+def _set_anthropic_completion_span_attributes(
+    span, request_body, response_body, metric_params
+):
     _set_span_attribute(
         span, SpanAttributes.LLM_REQUEST_TYPE, LLMRequestTypeValues.COMPLETION.value
     )
@@ -401,7 +437,9 @@ def _set_anthropic_completion_span_attributes(span, request_body, response_body,
         )
 
 
-def _set_anthropic_messages_span_attributes(span, request_body, response_body, metric_params):
+def _set_anthropic_messages_span_attributes(
+    span, request_body, response_body, metric_params
+):
     _set_span_attribute(
         span, SpanAttributes.LLM_REQUEST_TYPE, LLMRequestTypeValues.CHAT.value
     )
@@ -652,7 +690,9 @@ class BedrockInstrumentor(BaseInstrumentor):
                 exception_counter,
             ) = (None, None, None, None)
 
-        metric_params = MetricParams(token_histogram, choice_counter, duration_histogram, exception_counter)
+        metric_params = MetricParams(
+            token_histogram, choice_counter, duration_histogram, exception_counter
+        )
 
         for wrapped_method in WRAPPED_METHODS:
             wrap_package = wrapped_method.get("package")
