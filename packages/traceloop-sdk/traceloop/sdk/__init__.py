@@ -155,9 +155,7 @@ class Traceloop:
             )
             Traceloop.__metrics_wrapper = MetricsWrapper(exporter=metrics_exporter)
 
-        if not is_logging_enabled() or not logging_exporter and exporter:
-            print(Fore.YELLOW + "Logging are disabled" + Fore.RESET)
-        else:
+        if is_logging_enabled() and (logging_exporter or not exporter):
             logging_endpoint = os.getenv("TRACELOOP_LOGGING_ENDPOINT") or api_endpoint
             logging_headers = (
                 os.getenv("TRACELOOP_LOGGING_HEADERS") or logging_headers or headers
