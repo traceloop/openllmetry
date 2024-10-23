@@ -528,6 +528,39 @@ async def test_async_anthropic_message_create(exporter, reader):
     assert found_choice_metric is True
     assert found_duration_metric is True
     assert found_exception_metric is True
+    
+# Place the new tests here
+@pytest.mark.vcr
+def test_capture_system_message(exporter):
+    client = Anthropic()
+    system_message = "This is a test system message."
+    
+    # Simulate capturing a system message
+    client.capture_system_message(system_message)
+    
+    spans = exporter.get_finished_spans()
+    assert len(spans) > 0
+    anthropic_span = spans[0]
+    
+    # Check if the system message is recorded in span attributes
+    assert "system_message" in anthropic_span.attributes
+    assert anthropic_span.attributes["system_message"] == system_message
+
+@pytest.mark.vcr
+def test_edge_case_empty_message(exporter):
+    client = Anthropic()
+    system_message = ""
+    
+    # Simulate capturing an empty system message
+    client.capture_system_message(system_message)
+    
+    spans = exporter.get_finished_spans()
+    assert len(spans) > 0
+    anthropic_span = spans[0]
+    
+    # Check if the empty message is handled correctly
+    assert "system_message" in anthropic_span.attributes
+    assert anthropic_span.attributes["system_message"] == system_message
 
 
 @pytest.mark.vcr
