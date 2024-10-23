@@ -16,8 +16,10 @@ from opentelemetry.instrumentation.anthropic.streaming import (
     build_from_streaming_response,
 )
 from opentelemetry.instrumentation.anthropic.utils import (
+    acount_prompt_tokens_from_request,
     dont_throw,
     error_metrics_attributes,
+    count_prompt_tokens_from_request,
     set_span_attribute,
     shared_metrics_attributes,
     should_send_prompts,
@@ -59,6 +61,18 @@ WRAPPED_METHODS = [
         "method": "stream",
         "span_name": "anthropic.chat",
     },
+    {
+        "package": "anthropic.resources.beta.prompt_caching.messages",
+        "object": "Messages",
+        "method": "create",
+        "span_name": "anthropic.chat",
+    },
+    {
+        "package": "anthropic.resources.beta.prompt_caching.messages",
+        "object": "Messages",
+        "method": "stream",
+        "span_name": "anthropic.chat",
+    },
 ]
 WRAPPED_AMETHODS = [
     {
@@ -75,6 +89,18 @@ WRAPPED_AMETHODS = [
     },
     {
         "package": "anthropic.resources.messages",
+        "object": "AsyncMessages",
+        "method": "stream",
+        "span_name": "anthropic.chat",
+    },
+    {
+        "package": "anthropic.resources.beta.prompt_caching.messages",
+        "object": "AsyncMessages",
+        "method": "create",
+        "span_name": "anthropic.chat",
+    },
+    {
+        "package": "anthropic.resources.beta.prompt_caching.messages",
         "object": "AsyncMessages",
         "method": "stream",
         "span_name": "anthropic.chat",
@@ -102,6 +128,11 @@ async def _dump_content(message_index, content, span):
     if isinstance(content, str):
         return content
     elif isinstance(content, list):
+        # If the content is a list of text blocks, concatenate them.
+        # This is more commonly used in prompt caching.
+        if all([item.get("type") == "text" for item in content]):
+            return "".join([item.get("text") for item in content])
+
         content = [
             (
                 await _process_image_item(
@@ -220,27 +251,23 @@ async def _aset_token_usage(
     if usage := response.get("usage"):
         prompt_tokens = usage.input_tokens
     else:
-        prompt_tokens = 0
-        if hasattr(anthropic, "count_tokens"):
-            if request.get("prompt"):
-                prompt_tokens = await anthropic.count_tokens(request.get("prompt"))
-            elif request.get("messages"):
-                prompt_tokens = 0
-                for m in request.get("messages"):
-                    content = m.get("content")
-                    if isinstance(content, str):
-                        prompt_tokens += await anthropic.count_tokens(content)
-                    elif isinstance(content, list):
-                        for item in content:
-                            # TODO: handle image tokens
-                            if isinstance(item, dict) and item.get("type") == "text":
-                                prompt_tokens += await anthropic.count_tokens(
-                                    item.get("text", "")
-                                )
+        prompt_tokens = await acount_prompt_tokens_from_request(anthropic, request)
 
-    if token_histogram and type(prompt_tokens) is int and prompt_tokens >= 0:
+    if usage := response.get("usage"):
+        cache_read_tokens = dict(usage).get("cache_read_input_tokens", 0)
+    else:
+        cache_read_tokens = 0
+
+    if usage := response.get("usage"):
+        cache_creation_tokens = dict(usage).get("cache_creation_input_tokens", 0)
+    else:
+        cache_creation_tokens = 0
+
+    input_tokens = prompt_tokens + cache_read_tokens + cache_creation_tokens
+
+    if token_histogram and type(input_tokens) is int and input_tokens >= 0:
         token_histogram.record(
-            prompt_tokens,
+            input_tokens,
             attributes={
                 **metric_attributes,
                 SpanAttributes.LLM_TOKEN_TYPE: "input",
@@ -268,7 +295,7 @@ async def _aset_token_usage(
             },
         )
 
-    total_tokens = prompt_tokens + completion_tokens
+    total_tokens = input_tokens + completion_tokens
 
     choices = 0
     if type(response.get("content")) is list:
@@ -285,11 +312,18 @@ async def _aset_token_usage(
             },
         )
 
-    set_span_attribute(span, SpanAttributes.LLM_USAGE_PROMPT_TOKENS, prompt_tokens)
+    set_span_attribute(span, SpanAttributes.LLM_USAGE_PROMPT_TOKENS, input_tokens)
     set_span_attribute(
         span, SpanAttributes.LLM_USAGE_COMPLETION_TOKENS, completion_tokens
     )
     set_span_attribute(span, SpanAttributes.LLM_USAGE_TOTAL_TOKENS, total_tokens)
+
+    set_span_attribute(
+        span, SpanAttributes.LLM_USAGE_CACHE_READ_INPUT_TOKENS, cache_read_tokens
+    )
+    set_span_attribute(
+        span, SpanAttributes.LLM_USAGE_CACHE_CREATION_INPUT_TOKENS, cache_creation_tokens
+    )
 
 
 @dont_throw
@@ -308,27 +342,23 @@ def _set_token_usage(
     if usage := response.get("usage"):
         prompt_tokens = usage.input_tokens
     else:
-        prompt_tokens = 0
-        if hasattr(anthropic, "count_tokens"):
-            if request.get("prompt"):
-                prompt_tokens = anthropic.count_tokens(request.get("prompt"))
-            elif request.get("messages"):
-                prompt_tokens = 0
-                for m in request.get("messages"):
-                    content = m.get("content")
-                    if isinstance(content, str):
-                        prompt_tokens += anthropic.count_tokens(content)
-                    elif isinstance(content, list):
-                        for item in content:
-                            # TODO: handle image tokens
-                            if isinstance(item, dict) and item.get("type") == "text":
-                                prompt_tokens += anthropic.count_tokens(
-                                    item.get("text", "")
-                                )
+        prompt_tokens = count_prompt_tokens_from_request(anthropic, request)
 
-    if token_histogram and type(prompt_tokens) is int and prompt_tokens >= 0:
+    if usage := response.get("usage"):
+        cache_read_tokens = dict(usage).get("cache_read_input_tokens", 0)
+    else:
+        cache_read_tokens = 0
+
+    if usage := response.get("usage"):
+        cache_creation_tokens = dict(usage).get("cache_creation_input_tokens", 0)
+    else:
+        cache_creation_tokens = 0
+
+    input_tokens = prompt_tokens + cache_read_tokens + cache_creation_tokens
+
+    if token_histogram and type(input_tokens) is int and input_tokens >= 0:
         token_histogram.record(
-            prompt_tokens,
+            input_tokens,
             attributes={
                 **metric_attributes,
                 SpanAttributes.LLM_TOKEN_TYPE: "input",
@@ -354,7 +384,7 @@ def _set_token_usage(
             },
         )
 
-    total_tokens = prompt_tokens + completion_tokens
+    total_tokens = input_tokens + completion_tokens
 
     choices = 0
     if type(response.get("content")) is list:
@@ -371,11 +401,18 @@ def _set_token_usage(
             },
         )
 
-    set_span_attribute(span, SpanAttributes.LLM_USAGE_PROMPT_TOKENS, prompt_tokens)
+    set_span_attribute(span, SpanAttributes.LLM_USAGE_PROMPT_TOKENS, input_tokens)
     set_span_attribute(
         span, SpanAttributes.LLM_USAGE_COMPLETION_TOKENS, completion_tokens
     )
     set_span_attribute(span, SpanAttributes.LLM_USAGE_TOTAL_TOKENS, total_tokens)
+
+    set_span_attribute(
+        span, SpanAttributes.LLM_USAGE_CACHE_READ_INPUT_TOKENS, cache_read_tokens
+    )
+    set_span_attribute(
+        span, SpanAttributes.LLM_USAGE_CACHE_CREATION_INPUT_TOKENS, cache_creation_tokens
+    )
 
 
 @dont_throw
@@ -687,7 +724,7 @@ class AnthropicInstrumentor(BaseInstrumentor):
         get_common_metrics_attributes: Callable[[], dict] = lambda: {},
         upload_base64_image: Optional[
             Callable[[str, str, str, str], Coroutine[None, None, str]]
-        ] = lambda *args: "",
+        ] = None,
     ):
         super().__init__()
         Config.exception_logger = exception_logger
@@ -771,8 +808,9 @@ class AnthropicInstrumentor(BaseInstrumentor):
                 wrapped_method.get("method"),
             )
         for wrapped_method in WRAPPED_AMETHODS:
+            wrap_package = wrapped_method.get("package")
             wrap_object = wrapped_method.get("object")
             unwrap(
-                f"anthropic.resources.completions.{wrap_object}",
+                f"{wrap_package}.{wrap_object}",
                 wrapped_method.get("method"),
             )
