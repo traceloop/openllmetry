@@ -1,24 +1,21 @@
 import pytest
-from opentelemetry.semconv_ai import SpanAttributes
-
 import json
+from opentelemetry.semconv_ai import SpanAttributes
 
 
 @pytest.mark.vcr
-def test_titan_completion(test_context, brt):
+def test_cohere_completion(test_context, brt):
+    prompt = "Tell me a joke about opentelemetry"
     body = json.dumps(
         {
-            "inputText": "Translate to spanish: 'Amazon Bedrock is the easiest way to build and"
-            + "scale generative AI applications with base models (FMs)'.",
-            "textGenerationConfig": {
-                "maxTokenCount": 200,
-                "temperature": 0.5,
-                "topP": 0.5,
-            },
+            "prompt": prompt,
+            "max_tokens": 200,
+            "temperature": 0.5,
+            "p": 0.5,
         }
     )
 
-    modelId = "amazon.titan-text-express-v1"
+    modelId = "cohere.command-text-v14"
     accept = "application/json"
     contentType = "application/json"
 
@@ -37,28 +34,20 @@ def test_titan_completion(test_context, brt):
 
     # Assert on model name
     assert (
-        bedrock_span.attributes[SpanAttributes.LLM_REQUEST_MODEL]
-        == "titan-text-express-v1"
+        bedrock_span.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "command-text-v14"
     )
 
     # Assert on vendor
-    assert bedrock_span.attributes[SpanAttributes.LLM_SYSTEM] == "amazon"
+    assert bedrock_span.attributes[SpanAttributes.LLM_SYSTEM] == "cohere"
 
     # Assert on request type
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "completion"
 
     # Assert on prompt
-    expected_prompt = (
-        "Translate to spanish: 'Amazon Bedrock is the easiest way to build and"
-        "scale generative AI applications with base models (FMs)'."
-    )
-    assert (
-        bedrock_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.user"]
-        == expected_prompt
-    )
+    assert bedrock_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.user"] == prompt
 
     # Assert on response
-    generated_text = response_body["results"][0]["outputText"]
+    generated_text = response_body["generations"][0]["text"]
     assert (
         bedrock_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"]
         == generated_text

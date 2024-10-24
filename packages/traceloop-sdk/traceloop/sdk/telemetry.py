@@ -6,7 +6,7 @@ import sys
 from posthog import Posthog
 from traceloop.sdk.version import __version__
 
-POSTHOG_API_KEY = "phc_JMTeAfG8OpaPsyHzSBtqquMvko1fmOHcW0gyqLCrF3t"
+POSTHOG_API_KEY = "phc_6AT2D3sP5u4fkUZtSqgtmoKmcx8rEX8f86lpISOpAhx"
 
 
 class Telemetry:
@@ -60,6 +60,7 @@ class Telemetry:
         return {
             "sdk": "python",
             "sdk_version": __version__,
+            "$process_person_profile": False,
         }
 
     def capture(self, event: str, event_properties: dict = {}) -> None:
