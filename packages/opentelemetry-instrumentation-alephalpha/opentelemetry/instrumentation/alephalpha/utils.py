@@ -1,28 +1,29 @@
 import logging
-from opentelemetry.instrumentation.alephalpha.config import Config
 import traceback
-
+from opentelemetry.instrumentation.alephalpha.config import Config
 
 def dont_throw(func):
     """
-    A decorator that wraps the passed in function and logs exceptions instead of throwing them.
+    A decorator that wraps the given function and logs any exceptions instead of raising them.
+    This helps maintain function execution without errors disrupting the application flow.
 
     @param func: The function to wrap
-    @return: The wrapper function
+    @return: The wrapper function that logs any caught exceptions
     """
     # Obtain a logger specific to the function's module
     logger = logging.getLogger(func.__module__)
+    logger.setLevel(logging.DEBUG)  # Set to desired level (e.g., DEBUG, INFO)
 
     def wrapper(*args, **kwargs):
         try:
             return func(*args, **kwargs)
         except Exception as e:
-            logger.debug(
-                "OpenLLMetry failed to trace in %s, error: %s",
-                func.__name__,
-                traceback.format_exc(),
+            error_message = (
+                f"OpenLLMetry failed to trace in {func.__name__}, error: {traceback.format_exc()}"
             )
+            logger.debug(error_message)
             if Config.exception_logger:
-                Config.exception_logger(e)
+                # Log the error using the custom exception logger if available
+                Config.exception_logger.error(error_message)
 
     return wrapper
