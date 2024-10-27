@@ -13,11 +13,16 @@ class CallbackFilteredJSONEncoder(json.JSONEncoder):
             if "callbacks" in o:
                 del o["callbacks"]
                 return o
+            
         if dataclasses.is_dataclass(o):
             return dataclasses.asdict(o)
 
         if hasattr(o, "to_json"):
             return o.to_json()
+        
+        # check if o is a pydantic model
+        if hasattr(o, "__dict__"):
+            return o.__dict__
 
         return super().default(o)
 

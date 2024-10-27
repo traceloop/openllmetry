@@ -223,6 +223,14 @@ def _set_chat_response(span: Span, response: LLMResult) -> None:
                             "arguments"
                         ),
                     )
+
+                if generation.message.additional_kwargs.get("tool_calls"):
+                    for idx, tool_call in enumerate(generation.message.additional_kwargs.get("tool_calls")):
+                        tool_call_prefix = f"{prefix}.tool_calls.{idx}"
+
+                        span.set_attribute(f"{tool_call_prefix}.id", tool_call.get("id"))
+                        span.set_attribute(f"{tool_call_prefix}.name", tool_call.get("function").get("name"))
+                        span.set_attribute(f"{tool_call_prefix}.arguments", json.dumps(tool_call.get("function").get("arguments")))
             i += 1
 
     if input_tokens > 0 or output_tokens > 0 or total_tokens > 0:
@@ -585,7 +593,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
                 )
 
         _set_chat_response(span, response)
-        span.end()
+        self._end_span(span, run_id)
 
         # Record duration
         duration = time.time() - self.spans[run_id].start_time
@@ -597,6 +605,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             },
         )
 
+    @dont_throw
     def on_tool_start(
         self,
         serialized: dict[str, Any],
