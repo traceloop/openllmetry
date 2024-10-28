@@ -230,7 +230,7 @@ def _set_chat_response(span: Span, response: LLMResult) -> None:
 
                         span.set_attribute(f"{tool_call_prefix}.id", tool_call.get("id"))
                         span.set_attribute(f"{tool_call_prefix}.name", tool_call.get("function").get("name"))
-                        span.set_attribute(f"{tool_call_prefix}.arguments", json.dumps(tool_call.get("function").get("arguments")))
+                        span.set_attribute(f"{tool_call_prefix}.arguments", tool_call.get("function").get("arguments"))
             i += 1
 
     if input_tokens > 0 or output_tokens > 0 or total_tokens > 0:

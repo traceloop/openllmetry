@@ -55,8 +55,8 @@ langchain-anthropic = "^0.2.0"
 langchain-openai = "^0.2.0"
 langchain-cohere = "0.3.0"
 pydantic = "^2.7.1"
-
 langchainhub = "^0.1.20"
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
