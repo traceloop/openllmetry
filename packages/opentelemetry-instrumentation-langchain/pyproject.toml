@@ -30,33 +30,33 @@ opentelemetry-semantic-conventions = "^0.48b0"
 opentelemetry-semantic-conventions-ai = "0.4.2"
 
 [tool.poetry.group.dev.dependencies]
-autopep8 = "^2.2.0"
-flake8 = "7.0.0"
-pytest = "^8.2.2"
+autopep8 = "^2.3.1"
+flake8 = "7.1.1"
+pytest = "^8.3.3"
 pytest-sugar = "1.0.0"
 
 
 [tool.poetry.group.test.dependencies]
-langchain = "^0.3.0"
-langchain-community = "^0.3.0"
-openai = "^1.31.1"
-pytest = "^8.2.2"
+langchain = "^0.3.4"
+langchain-community = "^0.3.3"
+openai = "^1.52.2"
+pytest = "^8.3.3"
 pytest-sugar = "1.0.0"
-vcrpy = "^6.0.1"
-pytest-recording = "^0.13.1"
-pytest-asyncio = "^0.23.7"
+vcrpy = "^6.0.2"
+pytest-recording = "^0.13.2"
+pytest-asyncio = "^0.24.0"
 opentelemetry-sdk = "^1.27.0"
 opentelemetry-instrumentation-openai = {path="../opentelemetry-instrumentation-openai", develop=true}
 opentelemetry-instrumentation-bedrock = {path="../opentelemetry-instrumentation-bedrock", develop=true}
 text-generation = "^0.7.0"
-anthropic = "^0.34.2"
-boto3 = "^1.34.120"
-langchain-anthropic = "^0.2.0"
-langchain-openai = "^0.2.0"
-langchain-cohere = "0.3.0"
-pydantic = "^2.7.1"
+anthropic = "^0.37.1"
+boto3 = "^1.35.49"
+langchain-anthropic = "=0.2.0"
+langchain-openai = "^0.2.3"
+langchain-cohere = "0.3.1"
+pydantic = "^2.9.2"
+langchainhub = "^0.1.21"
 
-langchainhub = "^0.1.20"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"

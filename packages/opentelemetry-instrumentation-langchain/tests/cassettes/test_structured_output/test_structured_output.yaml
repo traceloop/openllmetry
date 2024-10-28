@@ -1,0 +1,4292 @@
+interactions:
+- request:
+    body: '{"messages": [{"content": "Analyze the following food item: avocado", "role":
+      "user"}], "model": "gpt-3.5-turbo", "n": 1, "parallel_tool_calls": false, "stream":
+      false, "temperature": 0.0, "tool_choice": {"type": "function", "function": {"name":
+      "FoodAnalysis"}}, "tools": [{"type": "function", "function": {"name": "FoodAnalysis",
+      "description": "", "parameters": {"properties": {"name": {"description": "The
+      name of the food item", "type": "string"}, "healthy": {"description": "Whether
+      the food is good for you", "type": "boolean"}, "calories": {"description": "Estimated
+      calories per serving", "type": "integer"}, "taste_profile": {"description":
+      "List of taste characteristics", "items": {"type": "string"}, "type": "array"}},
+      "required": ["name", "healthy", "calories", "taste_profile"], "type": "object"}}}]}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '815'
+      content-type:
+      - application/json
+      host:
+      - api.openai.com
+      traceparent:
+      - 00-78223f5965564353b1e6f56de4ef53e2-546c19107ebb82c2-01
+      user-agent:
+      - OpenAI/Python 1.45.1
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.45.1
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.11.8
+    method: POST
+    uri: https://api.openai.com/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA2xSXW+bQBB851ec9hlHxk4cm7dUaqJGSaWqjVQ1ROg4FrjmuEN3S21q+b9HYALY
+        CQ+n1Q4zs197jzGQKYQMRMFJlJWa3Xy/v3Ov1+kueNg+BcHy8cfvIkuq/+Jy8/UL+C3DJH9R0Dvr
+        QpiyUkjS6CMsLHLCVjW4Xs6DYL1ZrzqgNCmqlpZXNFteXM2otomZzYPFVc8sjBToIGTPHmOM7bu3
+        rVGnuIOQzf33TInO8RwhHH5iDKxRbQa4c9IR1wT+CAqjCXVbtq6VmgBkjIoFV2o0Pn77STwOiisV
+        /9k+6q3Eh+TX/c/gbrV7cuJ2Hay+TfyO0k3VFZTVWgwDmuBDPjwzYww0LzvurTHpjeaqcdKd8RkD
+        bvO6RE1t7bCPOlYEYQT8nxE8NRH4ERTIFRVNBCHZGv2obcJYiS6CcLG89CMg7gjjyppMqpb/HHVr
+        LJuOn9REaI+xromaCF4OcFLKwfssfpmM2WJWO676+ff5w7BQZfLKmsSd7QcyqaUrYovcdXMCR6Y6
+        erc+nQPUJ7cAlTVlRTGZV9StYDDvDwfGWx3RxaYHyRBXE9YAnOjFKRKX3bEM9ym4KDAdqXNv0txH
+        088kjg1KnX9Q8XolcI0jLONM6hxtZeVwzN7BewMAAP//AwDL8jEUywMAAA==
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 8d9af8ab190609c9-HFA
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 28 Oct 2024 12:36:26 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=o_suhrY9Tm7e.vGxLbsdLPij6CuxGFVdOGkbw1b3KHk-1730118986-1.0.1.1-s0UbqvAwU8AV0t3KPBHUAa5kIz0.CPwnwEUYJMPia1zgRZ70leJdaZ9RW8AZreJnc0hsu_SD2uVq2OXhoS5UHw;
+        path=/; expires=Mon, 28-Oct-24 13:06:26 GMT; domain=.api.openai.com; HttpOnly;
+        Secure; SameSite=None
+      - _cfuvid=aZ8tliybeumbnEFBZE3yKYQdnNd03wz5NlYQTWseynM-1730118986582-0.0.1.1-604800000;
+        path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      access-control-expose-headers:
+      - X-Request-ID
+      alt-svc:
+      - h3=":443"; ma=86400
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '878'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-ratelimit-limit-requests:
+      - '5000'
+      x-ratelimit-limit-tokens:
+      - '4000000'
+      x-ratelimit-remaining-requests:
+      - '4999'
+      x-ratelimit-remaining-tokens:
+      - '3999972'
+      x-ratelimit-reset-requests:
+      - 12ms
+      x-ratelimit-reset-tokens:
+      - 0s
+      x-request-id:
+      - req_2add17333d3cbcf227ecf5b4974da1b8
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"messages": [{"content": "Analyze the following food item: avocado", "role":
+      "user"}], "model": "gpt-3.5-turbo", "n": 1, "parallel_tool_calls": false, "stream":
+      false, "temperature": 0.0, "tool_choice": {"type": "function", "function": {"name":
+      "FoodAnalysis"}}, "tools": [{"type": "function", "function": {"name": "FoodAnalysis",
+      "description": "", "parameters": {"properties": {"name": {"description": "The
+      name of the food item", "type": "string"}, "healthy": {"description": "Whether
+      the food is good for you", "type": "boolean"}, "calories": {"description": "Estimated
+      calories per serving", "type": "integer"}, "taste_profile": {"description":
+      "List of taste characteristics", "items": {"type": "string"}, "type": "array"}},
+      "required": ["name", "healthy", "calories", "taste_profile"], "type": "object"}}}]}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '815'
+      content-type:
+      - application/json
+      host:
+      - api.openai.com
+      traceparent:
+      - 00-59028803ecbfc7446b7559ae643af0fc-8cd2ddc9dd440c62-01
+      user-agent:
+      - OpenAI/Python 1.45.1
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.45.1
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.11.8
+    method: POST
+    uri: https://api.openai.com/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA2xSy27bMBC86yuIPcuB/GytW1qgLuw2CNpDgUSBQFNriTZFquSqqWD43wM9IilO
+        dCAWO5qZfZ09xkAmEDIQGSeRF2pye7f9fr97+HNMdn93P6rN+v5LVtmvi+X+dPcZ/Jph9kcU9Mq6
+        ESYvFJI0uoWFRU5Yq04/zYPpdB1M1w2QmwRVTUsLmsxvlhMq7d5Mguls2TEzIwU6CNmjxxhj5+at
+        a9QJ/oeQBf5rJkfneIoQ9j8xBtaoOgPcOemIawJ/AIXRhLouW5dKjQAyRsWCKzUYt995FA+D4krF
+        v/TmYRVsn4/b2XqT/Fyp1e/F6nlzGvm10lXRFHQotegHNML7fHhlxhhonjfcb8Ykt5qrykl3xWcM
+        uE3LHDXVtcM5algRhBHwf0bwxETgR5AhV5RVEYRkS/SjugljJboIwtl84UdA3BHGhTUHqWr+Y9Ss
+        Ma8a/r4kQtvGuiSqIni6wJtSLt5H8dNozBYPpeOqm3+Xv/QLVSYtrNm7q/3AQWrpstgid82cwJEp
+        Wu/ap3GA8s0tQGFNXlBM5oS6FpwG3eHAcKsDOlt3IBniasTqgTd6cYLEZXMs/X0KLjJMBmrgjZp7
+        b/qRRNug1Ok7Fa9TAlc5wjw+SJ2iLazsj9m7eC8AAAD//wMA+ThpV8sDAAA=
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 8d9af9800fe909cd-HFA
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 28 Oct 2024 12:37:00 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=lHEuPHhH8nZTr1RPMUAEpFeKnK5gHu0cJL.tO9XNBds-1730119020-1.0.1.1-11gaR6m3noSjIfY8im2bra4oAnjiaLODSawdlUPdVh2W50KkSwaAsd8qHUdZJMTVhfdG5rhx_pedICDlM0MW8w;
+        path=/; expires=Mon, 28-Oct-24 13:07:00 GMT; domain=.api.openai.com; HttpOnly;
+        Secure; SameSite=None
+      - _cfuvid=PF144kUUJEIJ9_8G6a75UZWw6j4U7GUiy9YEY5u4J44-1730119020390-0.0.1.1-604800000;
+        path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      access-control-expose-headers:
+      - X-Request-ID
+      alt-svc:
+      - h3=":443"; ma=86400
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '598'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-ratelimit-limit-requests:
+      - '5000'
+      x-ratelimit-limit-tokens:
+      - '4000000'
+      x-ratelimit-remaining-requests:
+      - '4999'
+      x-ratelimit-remaining-tokens:
+      - '3999972'
+      x-ratelimit-reset-requests:
+      - 12ms
+      x-ratelimit-reset-tokens:
+      - 0s
+      x-request-id:
+      - req_8697b2d3fd39b434ba0b033751e5ac0f
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"messages": [{"content": "Analyze the following food item: avocado", "role":
+      "user"}], "model": "gpt-3.5-turbo", "n": 1, "parallel_tool_calls": false, "stream":
+      false, "temperature": 0.0, "tool_choice": {"type": "function", "function": {"name":
+      "FoodAnalysis"}}, "tools": [{"type": "function", "function": {"name": "FoodAnalysis",
+      "description": "", "parameters": {"properties": {"name": {"description": "The
+      name of the food item", "type": "string"}, "healthy": {"description": "Whether
+      the food is good for you", "type": "boolean"}, "calories": {"description": "Estimated
+      calories per serving", "type": "integer"}, "taste_profile": {"description":
+      "List of taste characteristics", "items": {"type": "string"}, "type": "array"}},
+      "required": ["name", "healthy", "calories", "taste_profile"], "type": "object"}}}]}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '815'
+      content-type:
+      - application/json
+      host:
+      - api.openai.com
+      traceparent:
+      - 00-ceb9cc3b2324a5e7adfe21e34568bb31-1165cb935f34e496-01
+      user-agent:
+      - OpenAI/Python 1.45.1
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.45.1
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.11.8
+    method: POST
+    uri: https://api.openai.com/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA2xSTW+bQBC98ytWc7YjMLascPPFbSq1ObRSrIQIrZcxbLvs0N0hKrL83yswwdgJ
+        h9VoHu+9+ToGQoDOIRGgSsmqqs188+Pbw7b92u52q+foDZ/Wj7+e683jJt7Rk4VZx6D9b1T8zrpT
+        VNUGWdMAK4eSsVON1nEYRffhOuqBinI0Ha2oeR7frebcuD3Nw2ixGpglaYUeEvESCCHEsX+7Gm2O
+        /yAR4ew9U6H3skBIxp+EAEemy4D0XnuWlmF2ARVZRtuVbRtjJgATmUxJYy7G5+84iS+DksZku2i7
+        /LKRD5X5GSqz+htT8T1eRquJ31m6rfuCDo1V44Am+JhPbsyEACurnrslyjdWmtZrf8MXAqQrmgot
+        d7XDMe1ZKSQpyDdSMqcUZimUKA2XbQoJuwZnadcEOY0+hWQRL2cpsPSMWe3ooE3Hf0n7NVZtz983
+        zOjOsW2Y2xReT3BVyin4LH6djNnhofHSDPMf8qdxoYaK2tHe3+wHDtpqX2YOpe/nBJ6pPnt3Pr0D
+        NFe3ALWjquaM6Q/aTjAKh8OBy61e0MX9ADKxNBPWCFzpZTmy1P2xjPeppCoxv1DDYNLcR9PPJM4N
+        alt8UAkGJfCtZ6yyg7YFutrp8ZiDU/AfAAD//wMA8UmcY8sDAAA=
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 8d9afac0ede209b9-HFA
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 28 Oct 2024 12:37:51 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=SztC16aGAlQmIrsrA0XGtkP0a8cWwQCp1Mt49XzK.ws-1730119071-1.0.1.1-C5lf2SNbfINtMirS1aA83G1urR22nCFdsgXmacWB8yBPQnuT1cNmL4e7FjBgE_dxHY0q9SXW3q74abv67RFIdw;
+        path=/; expires=Mon, 28-Oct-24 13:07:51 GMT; domain=.api.openai.com; HttpOnly;
+        Secure; SameSite=None
+      - _cfuvid=YmqfPFdVLrouIinnAUfeVR.AAzuZm72zxdKWNB2VJdM-1730119071910-0.0.1.1-604800000;
+        path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      access-control-expose-headers:
+      - X-Request-ID
+      alt-svc:
+      - h3=":443"; ma=86400
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '796'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-ratelimit-limit-requests:
+      - '5000'
+      x-ratelimit-limit-tokens:
+      - '4000000'
+      x-ratelimit-remaining-requests:
+      - '4999'
+      x-ratelimit-remaining-tokens:
+      - '3999972'
+      x-ratelimit-reset-requests:
+      - 12ms
+      x-ratelimit-reset-tokens:
+      - 0s
+      x-request-id:
+      - req_c57e2f8c0bf0c7a1e55f6c576403c613
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"messages": [{"content": "Analyze the following food item: avocado", "role":
+      "user"}], "model": "gpt-3.5-turbo", "n": 1, "parallel_tool_calls": false, "stream":
+      false, "temperature": 0.0, "tool_choice": {"type": "function", "function": {"name":
+      "FoodAnalysis"}}, "tools": [{"type": "function", "function": {"name": "FoodAnalysis",
+      "description": "", "parameters": {"properties": {"name": {"description": "The
+      name of the food item", "type": "string"}, "healthy": {"description": "Whether
+      the food is good for you", "type": "boolean"}, "calories": {"description": "Estimated
+      calories per serving", "type": "integer"}, "taste_profile": {"description":
+      "List of taste characteristics", "items": {"type": "string"}, "type": "array"}},
+      "required": ["name", "healthy", "calories", "taste_profile"], "type": "object"}}}]}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '815'
+      content-type:
+      - application/json
+      host:
+      - api.openai.com
+      traceparent:
+      - 00-143a51e24307f067ba32ae97c340aafa-fba1a64cccd42f1a-01
+      user-agent:
+      - OpenAI/Python 1.45.1
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.45.1
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.11.8
+    method: POST
+    uri: https://api.openai.com/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA2xS226bQBB95ytW84wjYzdNzVsqtXUd9aJKSdOGCK2XAbZZdtHuEIdY/veKSwA7
+        4WE1msM5Z257jzGQCYQMRM5JFKWaXX7fbL7+WeM22S0+ffxAm2q9u3ouHp5+3978AL9hmO0/FPTC
+        OhOmKBWSNLqDhUVO2KgGF8t5EKyC5fsWKEyCqqFlJc2WZ+czquzWzObB4rxn5kYKdBCyO48xxvbt
+        29SoE3yCkM39l0yBzvEMIRx+YgysUU0GuHPSEdcE/ggKowl1U7aulJoAZIyKBVdqNO6+/SQeB8WV
+        in+t9OZn9iW90M/X6c03k/xd3149pruJXyddl21BaaXFMKAJPuTDEzPGQPOi5X42JrnUXNVOuhM+
+        Y8BtVhWoqakd9lHLiiCMgD8awRMTgR9BjlxRXkcQkq3Qj5omjJXoIggXy3d+BMQdYVxak0rV8O+i
+        do1F3fK3FRHaLtYVUR3B/QGOSjl4b8X3kzFbTCvHVT//Pn8YFqpMVlqzdSf7gVRq6fLYInftnMCR
+        KTvvxqd1gOroFqC0pigpJvOAuhEM5v3hwHirI7pY9SAZ4mrCGoAjvThB4rI9luE+BRc5JiN17k2a
+        e236lkTXoNTZKxWvVwJXO8IiTqXO0JZWDsfsHbz/AAAA//8DAKyaM3DLAwAA
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 8d9afc5b699909cd-HFA
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 28 Oct 2024 12:38:57 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=5ONxbacAoJu.wjPKs7bLxhEEs7AXdVJiaPP05Ymns3M-1730119137-1.0.1.1-K_nbnW_qXqta1xkJ.VyXz9GLfmZmJSv4KJQh0.5R8K3C35eqGpMn1AqqM7MV.PD7PlizfB0H1XWLFXNICSW21g;
+        path=/; expires=Mon, 28-Oct-24 13:08:57 GMT; domain=.api.openai.com; HttpOnly;
+        Secure; SameSite=None
+      - _cfuvid=rkXm6KIehIlbxIvPyixre6SSVW.0NXlbk1XAFT8Pk4o-1730119137371-0.0.1.1-604800000;
+        path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      access-control-expose-headers:
+      - X-Request-ID
+      alt-svc:
+      - h3=":443"; ma=86400
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '584'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-ratelimit-limit-requests:
+      - '5000'
+      x-ratelimit-limit-tokens:
+      - '4000000'
+      x-ratelimit-remaining-requests:
+      - '4999'
+      x-ratelimit-remaining-tokens:
+      - '3999972'
+      x-ratelimit-reset-requests:
+      - 12ms
+      x-ratelimit-reset-tokens:
+      - 0s
+      x-request-id:
+      - req_7c8df8dd186856f671c559cf967a7ba8
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"messages": [{"content": "Analyze the following food item: avocado", "role":
+      "user"}], "model": "gpt-3.5-turbo", "n": 1, "parallel_tool_calls": false, "stream":
+      false, "temperature": 0.0, "tool_choice": {"type": "function", "function": {"name":
+      "FoodAnalysis"}}, "tools": [{"type": "function", "function": {"name": "FoodAnalysis",
+      "description": "", "parameters": {"properties": {"name": {"description": "The
+      name of the food item", "type": "string"}, "healthy": {"description": "Whether
+      the food is good for you", "type": "boolean"}, "calories": {"description": "Estimated
+      calories per serving", "type": "integer"}, "taste_profile": {"description":
+      "List of taste characteristics", "items": {"type": "string"}, "type": "array"}},
+      "required": ["name", "healthy", "calories", "taste_profile"], "type": "object"}}}]}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '815'
+      content-type:
+      - application/json
+      host:
+      - api.openai.com
+      traceparent:
+      - 00-8bd57d9f996e8853be84ff181fd91f43-081500b1aff52788-01
+      user-agent:
+      - OpenAI/Python 1.45.1
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.45.1
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.11.8
+    method: POST
+    uri: https://api.openai.com/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA2xS226bQBB95ytW84wjYze1wlvSq6I2VVtXbRUitF7GZpNlB+0OVpHlf6+4BLAT
+        HlajOZxz5nYIhACdQSxA5ZJVUZrZ9d3trX2Sn+sf+uf+y593jzeLxdrt1arwXxHChkGbR1T8zLpQ
+        VJQGWZPtYOVQMjaq0Wo5j6Kr6O2qBQrK0DS0Xcmz5cXljCu3odk8Wlz2zJy0Qg+xuA+EEOLQvk2N
+        NsN/EIt5+Jwp0Hu5Q4iHn4QAR6bJgPRee5aWIRxBRZbRNmXbypgJwEQmVdKY0bj7DpN4HJQ0Jr2r
+        uayXRfb90816/ev9t7+Z95T//jDx66Trsi1oW1k1DGiCD/n4zEwIsLJouR+JsmsrTe21P+MLAdLt
+        qgItN7XDIWlZCcQJyD0pmVECYQI5SsN5nUDMrsIwaZogp9EnEC+Wb8IEWHrGtHS01abh3yftGou6
+        5W8qZnRdbCvmOoGHI5yUcgxeix8mY3a4rbw0/fz7/HFYqKFd6Wjjz/YDW221z1OH0rdzAs9Udt6N
+        T+sA1cktQOmoKDllekLbCEbz/nBgvNURXVz1IBNLM2ENwIlemiFL3R7LcJ9KqhyzkToPJs29NH1N
+        omtQ290LlaBXAl97xiLdartDVzo9HHNwDP4DAAD//wMAfHRajssDAAA=
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 8d9afd1c0f8309b9-HFA
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 28 Oct 2024 12:39:28 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=JwaN5Bxs8kHiwf5JmA4uWBbZ74vH.Alm5Bzk4rX6NJk-1730119168-1.0.1.1-KwWlhupctdbP3kOAHfgR9SCNLVNXzmPzsbBLYu6ZmoBJZ89yjA9eeSj0e.FoLMvc7ZRaUPZIJ73QxviAks2loQ;
+        path=/; expires=Mon, 28-Oct-24 13:09:28 GMT; domain=.api.openai.com; HttpOnly;
+        Secure; SameSite=None
+      - _cfuvid=ZaV0mIyCwZ1xMlKyIJdWw1j4tSqP.TJoHin92Vu1N2I-1730119168238-0.0.1.1-604800000;
+        path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      access-control-expose-headers:
+      - X-Request-ID
+      alt-svc:
+      - h3=":443"; ma=86400
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '618'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-ratelimit-limit-requests:
+      - '5000'
+      x-ratelimit-limit-tokens:
+      - '4000000'
+      x-ratelimit-remaining-requests:
+      - '4999'
+      x-ratelimit-remaining-tokens:
+      - '3999972'
+      x-ratelimit-reset-requests:
+      - 12ms
+      x-ratelimit-reset-tokens:
+      - 0s
+      x-request-id:
+      - req_f5fad93e525ef6db7d1d0f84d762dfef
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"messages": [{"content": "Analyze the following food item: avocado", "role":
+      "user"}], "model": "gpt-3.5-turbo", "n": 1, "parallel_tool_calls": false, "stream":
+      false, "temperature": 0.0, "tool_choice": {"type": "function", "function": {"name":
+      "FoodAnalysis"}}, "tools": [{"type": "function", "function": {"name": "FoodAnalysis",
+      "description": "", "parameters": {"properties": {"name": {"description": "The
+      name of the food item", "type": "string"}, "healthy": {"description": "Whether
+      the food is good for you", "type": "boolean"}, "calories": {"description": "Estimated
+      calories per serving", "type": "integer"}, "taste_profile": {"description":
+      "List of taste characteristics", "items": {"type": "string"}, "type": "array"}},
+      "required": ["name", "healthy", "calories", "taste_profile"], "type": "object"}}}]}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '815'
+      content-type:
+      - application/json
+      host:
+      - api.openai.com
+      traceparent:
+      - 00-8c85c24633228534a3a37549d0e0c760-e4f6b6a337885cc3-01
+      user-agent:
+      - OpenAI/Python 1.45.1
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.45.1
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.11.8
+    method: POST
+    uri: https://api.openai.com/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA2xSXW+bQBB851ec9tmOjB3ShLdIrVW1aZSqShUlROh8LHDNcYvulqrU8n+PwA5g
+        JzycVjvMzH5tAyFAZxALUKVkVdVmfn377XsU/aBH8/Xi8Sb6kq3U3Z1RD8v1+e09zDoGbf6g4jfW
+        maKqNsia7B5WDiVjpxp+Wi3C8Cq8jHqgogxNRytqnq/Oojk3bkPzRbiMDsyStEIPsXgKhBBi279d
+        jTbDfxCLxewtU6H3skCIh5+EAEemy4D0XnuWlmE2gooso+3Kto0xE4CJTKqkMaPx/ttO4nFQ0pj0
+        54v5TyX/eri8yH+v9aYtb2r8fI8Tv710W/cF5Y1Vw4Am+JCPT8yEACurnrsmyq6tNK3X/oQvBEhX
+        NBVa7mqHbdKzEogTkH9JyYwSmCVQojRctgnE7BqcJV0T5DT6BOLl6nyWAEvPmNaOcm06/lPSr7Fq
+        e/6mYUa3j23D3CbwvIOjUnbBR/HzZMwO88ZLc5j/Ib8bFmqoqB1t/Ml+INdW+zJ1KH0/J/BM9d67
+        8+kdoDm6BagdVTWnTC9oO8FwcTgcGG91RJdXB5CJpZmwBuBIL82Qpe6PZbhPJVWJ2UhdBJPm3pt+
+        JLFvUNvinUpwUALfesYqzbUt0NVOD8cc7IJXAAAA//8DALxwhNnLAwAA
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 8d9afd8edb1e09c7-HFA
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 28 Oct 2024 12:39:46 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=zBc.QZOcYADZuyuOZD.fmMcuv7kaR5.DDP93Z1Qya6o-1730119186-1.0.1.1-rb2VHFr.kEfp__jeUrrISAoeJgVveGtaPuiRv9ERRPmGHiBumZ9nMNTqu7.Qe25MTftqq0YiumuckjPGAiRmew;
+        path=/; expires=Mon, 28-Oct-24 13:09:46 GMT; domain=.api.openai.com; HttpOnly;
+        Secure; SameSite=None
+      - _cfuvid=NUDBIIIgAGobbY1ueV.mGqjoEclhc1ysLm1tLiEOwYw-1730119186581-0.0.1.1-604800000;
+        path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      access-control-expose-headers:
+      - X-Request-ID
+      alt-svc:
+      - h3=":443"; ma=86400
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '609'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-ratelimit-limit-requests:
+      - '5000'
+      x-ratelimit-limit-tokens:
+      - '4000000'
+      x-ratelimit-remaining-requests:
+      - '4999'
+      x-ratelimit-remaining-tokens:
+      - '3999972'
+      x-ratelimit-reset-requests:
+      - 12ms
+      x-ratelimit-reset-tokens:
+      - 0s
+      x-request-id:
+      - req_b8d961842a7a43054a9f66107c35a1df
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"messages": [{"content": "Analyze the following food item: avocado", "role":
+      "user"}], "model": "gpt-3.5-turbo", "n": 1, "parallel_tool_calls": false, "stream":
+      false, "temperature": 0.0, "tool_choice": {"type": "function", "function": {"name":
+      "FoodAnalysis"}}, "tools": [{"type": "function", "function": {"name": "FoodAnalysis",
+      "description": "", "parameters": {"properties": {"name": {"description": "The
+      name of the food item", "type": "string"}, "healthy": {"description": "Whether
+      the food is good for you", "type": "boolean"}, "calories": {"description": "Estimated
+      calories per serving", "type": "integer"}, "taste_profile": {"description":
+      "List of taste characteristics", "items": {"type": "string"}, "type": "array"}},
+      "required": ["name", "healthy", "calories", "taste_profile"], "type": "object"}}}]}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '815'
+      content-type:
+      - application/json
+      host:
+      - api.openai.com
+      traceparent:
+      - 00-b2706359329ff442aa49c4d9853ce2d2-60ce0f861665417b-01
+      user-agent:
+      - OpenAI/Python 1.45.1
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.45.1
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.11.8
+    method: POST
+    uri: https://api.openai.com/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA2xS226bQBB95ytW84wjbCdtwpvTi9WordombdWECC3LAJsuu2R3sEIt/3vFJRg7
+        4WE1msM5Z25bjzGQKYQMRMFJlJWarb5eff6+/rf+df3tdL26KYvg/PH2Q3bzXjy8y8FvGSZ5QEHP
+        rBNhykohSaN7WFjkhK3q/O0ymM8vFm/OO6A0KaqWllc0W56czai2iZkF88XZwCyMFOggZHceY4xt
+        u7etUaf4BCEL/OdMic7xHCEcf2IMrFFtBrhz0hHXBP4eFEYT6rZsXSs1AcgYFQuu1N64/7aTeD8o
+        rlTskqvrzaefXzKsLzf1j8vH5Db7/fQnmPj10k3VFZTVWowDmuBjPjwyYww0LzvuR2PSleaqcdId
+        8RkDbvO6RE1t7bCNOlYEYQR8YwRPTQR+BAVyRUUTQUi2Rj9qmzBWoosgXCxP/QiIO8K4siaTquXf
+        Rd0ay6bjJzUR2j7WNVETwf0ODkrZea/F95MxW8xqx9Uw/yG/GxeqTF5Zk7ij/UAmtXRFbJG7bk7g
+        yFS9d+vTOUB9cAtQWVNWFJP5i7oVnAfD4cD+Vvfo4mIAyRBXE9YIHOjFKRKX3bGM9ym4KDDdUwNv
+        0txL09ck+galzl+oeIMSuMYRlnEmdY62snI8Zm/n/QcAAP//AwC/xZnEywMAAA==
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 8d9aff91ce5509c9-HFA
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 28 Oct 2024 12:41:09 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=6SxOfoO0urP714k2yyeJLPxH7genLd21PjrIB5vEEIc-1730119269-1.0.1.1-.Jdg7WETeiZ9b8HIha1EV_yc.UgQ8h59pJ6msk2QiLywV2sWip68H4nP4ytul4MbD80sDXL2My1354ZL6NVVHQ;
+        path=/; expires=Mon, 28-Oct-24 13:11:09 GMT; domain=.api.openai.com; HttpOnly;
+        Secure; SameSite=None
+      - _cfuvid=BeZ7vftjRSlfJ.k1mcnf1cBnqhP.HUyIKixEXHYmr_E-1730119269424-0.0.1.1-604800000;
+        path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      access-control-expose-headers:
+      - X-Request-ID
+      alt-svc:
+      - h3=":443"; ma=86400
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '632'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-ratelimit-limit-requests:
+      - '5000'
+      x-ratelimit-limit-tokens:
+      - '4000000'
+      x-ratelimit-remaining-requests:
+      - '4999'
+      x-ratelimit-remaining-tokens:
+      - '3999972'
+      x-ratelimit-reset-requests:
+      - 12ms
+      x-ratelimit-reset-tokens:
+      - 0s
+      x-request-id:
+      - req_ab472c4e6cf82f37006baa7b187f3b40
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"messages": [{"content": "Analyze the following food item: avocado", "role":
+      "user"}], "model": "gpt-3.5-turbo", "n": 1, "parallel_tool_calls": false, "stream":
+      false, "temperature": 0.0, "tool_choice": {"type": "function", "function": {"name":
+      "FoodAnalysis"}}, "tools": [{"type": "function", "function": {"name": "FoodAnalysis",
+      "description": "", "parameters": {"properties": {"name": {"description": "The
+      name of the food item", "type": "string"}, "healthy": {"description": "Whether
+      the food is good for you", "type": "boolean"}, "calories": {"description": "Estimated
+      calories per serving", "type": "integer"}, "taste_profile": {"description":
+      "List of taste characteristics", "items": {"type": "string"}, "type": "array"}},
+      "required": ["name", "healthy", "calories", "taste_profile"], "type": "object"}}}]}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '815'
+      content-type:
+      - application/json
+      host:
+      - api.openai.com
+      traceparent:
+      - 00-fe0a2e2145fa0bb7166d1d7b6792beea-67bfd81c503a9ae6-01
+      user-agent:
+      - OpenAI/Python 1.45.1
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.45.1
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.11.8
+    method: POST
+    uri: https://api.openai.com/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA2xS226bQBB95ytW84wjX+qk5s0PTStHtayqTdqECC3LAJsuu2R3qIIs/3vFJYCT
+        8LAazeGcM7ejxxjIBAIGIuckilLNtvvdfmO+/8DLn/Ftsr3Z//71+VLHyy9fq7sd+A3DxE8o6JV1
+        IUxRKiRpdAcLi5ywUV1creaLxWZ1tW6BwiSoGlpW0mx1sZ5RZWMzmy+W656ZGynQQcAePMYYO7Zv
+        U6NO8AUCNvdfMwU6xzOEYPiJMbBGNRngzklHXBP4IyiMJtRN2bpSagKQMSoSXKnRuPuOk3gcFFcq
+        uv92e7i5x5c/MtnFz9ebJ0wPz3fqMPHrpOuyLSittBgGNMGHfPDGjDHQvGi518YkW81V7aR7w2cM
+        uM2qAjU1tcMxbFkhBCHwf0bwxITgh5AjV5TXIQRkK/TDpgljJboQguXqkx8CcUcYldakUjX8h7Bd
+        Y1G3/LgiQtvFuiKqQ3g8wVkpJ++j+HEyZotp5bjq59/nT8NClclKa2L3Zj+QSi1dHlnkrp0TODJl
+        5934tA5Qnd0ClNYUJUVk/qJuBBfz/nBgvNURXW56kAxxNWENwJlelCBx2R7LcJ+CixyTkTr3Js29
+        N/1IomtQ6uyditcrgasdYRGlUmdoSyuHY/ZO3n8AAAD//wMAKRwKZcsDAAA=
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 8d9b022dc96d09cb-HFA
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 28 Oct 2024 12:42:56 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=vxyt0mwI.fvX6ua3UpMRSC9hy8ErPoG5j43CF9hGRPo-1730119376-1.0.1.1-y_iLtSHS5EnXFx4SgH3voL9nAxNlw8kZd9k1BaWhuCOQtkXyt0TCtGhrbUIcvve1ThQlJ7vaoebOJNQahf4yoA;
+        path=/; expires=Mon, 28-Oct-24 13:12:56 GMT; domain=.api.openai.com; HttpOnly;
+        Secure; SameSite=None
+      - _cfuvid=I1hUUEE1ogMKw3H1vK.NwR3Jw0qTXuWJfhay4AoVQhQ-1730119376249-0.0.1.1-604800000;
+        path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      access-control-expose-headers:
+      - X-Request-ID
+      alt-svc:
+      - h3=":443"; ma=86400
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '593'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-ratelimit-limit-requests:
+      - '5000'
+      x-ratelimit-limit-tokens:
+      - '4000000'
+      x-ratelimit-remaining-requests:
+      - '4999'
+      x-ratelimit-remaining-tokens:
+      - '3999972'
+      x-ratelimit-reset-requests:
+      - 12ms
+      x-ratelimit-reset-tokens:
+      - 0s
+      x-request-id:
+      - req_c8e3593c952ef663cec5d09ba5429d9d
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"messages": [{"content": "Analyze the following food item: avocado", "role":
+      "user"}], "model": "gpt-3.5-turbo", "n": 1, "parallel_tool_calls": false, "stream":
+      false, "temperature": 0.0, "tool_choice": {"type": "function", "function": {"name":
+      "FoodAnalysis"}}, "tools": [{"type": "function", "function": {"name": "FoodAnalysis",
+      "description": "", "parameters": {"properties": {"name": {"description": "The
+      name of the food item", "type": "string"}, "healthy": {"description": "Whether
+      the food is good for you", "type": "boolean"}, "calories": {"description": "Estimated
+      calories per serving", "type": "integer"}, "taste_profile": {"description":
+      "List of taste characteristics", "items": {"type": "string"}, "type": "array"}},
+      "required": ["name", "healthy", "calories", "taste_profile"], "type": "object"}}}]}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '815'
+      content-type:
+      - application/json
+      host:
+      - api.openai.com
+      traceparent:
+      - 00-2af25f092c0416845f88f02a6ed71004-2a9dc1826a932a85-01
+      user-agent:
+      - OpenAI/Python 1.45.1
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.45.1
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.11.8
+    method: POST
+    uri: https://api.openai.com/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA2xSXW+bMBR951dY95lUkDSrwltesqqblkpdpk6lQo4x4M7Yln3JRqL894mPAknL
+        g3V1D+ec+3XyCAGRQkSAFRRZaeRs/eNhu7pXB/llY8wiC37v748PB7p82/z9+Q38hqH3b5zhO+uG
+        6dJIjkKrDmaWU+SNani3CMJwdbu4a4FSp1w2tNzgbHGznGFl93oWhPNlzyy0YNxBRF48Qgg5tW9T
+        o0r5P4hI4L9nSu4czTlEw0+EgNWyyQB1TjikCsEfQaYVctWUrSopJwBqLRNGpRyNu+80icdBUSmT
+        75vd9tf68ev2+PT8HDzunrKsPFY7M/HrpGvTFpRVig0DmuBDProyIwQULVvuRut0raisnXBXfEKA
+        2rwqucKmdjjFLSuGKAZ60IymOgY/hoJTiUUdQ4S24n7cNKGt4C6GaL649WNA6pAnxupMyIb/Erdr
+        LOuWv68Que1iVSHWMbye4aKUs/dZ/DoZs+VZ5ajs59/nz8NCpc6N1Xt3tR/IhBKuSCynrp0TONSm
+        8258WgeoLm4BjNWlwQT1H64awTDoDwfGWx3R+aoHUSOVE9YAXOglKUcq2mMZ7pNRVvB0pAbepLmP
+        pp9JdA0KlX9Q8XolcLVDXiaZUDm3xorhmL2z9x8AAP//AwAvOIxKywMAAA==
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 8d9b03b0398609c9-HFA
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 28 Oct 2024 12:43:58 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=Hq_RecpahzvVOCQD80sfnr6PkSIO8VkL4SOkmCWKNtU-1730119438-1.0.1.1-cP4s41DKY.qGI85FqqnwTFPF7aHtVHL67rZkAg_hcdipadqcXPR70tf9tGUX9ydfz4wYJ4blW6Hhha96WxXR5A;
+        path=/; expires=Mon, 28-Oct-24 13:13:58 GMT; domain=.api.openai.com; HttpOnly;
+        Secure; SameSite=None
+      - _cfuvid=vkjskdBe5gETZZFUwVYDQK_V0WlcCPbSH_YoWclCL7s-1730119438084-0.0.1.1-604800000;
+        path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      access-control-expose-headers:
+      - X-Request-ID
+      alt-svc:
+      - h3=":443"; ma=86400
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '987'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-ratelimit-limit-requests:
+      - '5000'
+      x-ratelimit-limit-tokens:
+      - '4000000'
+      x-ratelimit-remaining-requests:
+      - '4999'
+      x-ratelimit-remaining-tokens:
+      - '3999972'
+      x-ratelimit-reset-requests:
+      - 12ms
+      x-ratelimit-reset-tokens:
+      - 0s
+      x-request-id:
+      - req_4e9db5d1d57f7b6fdcaf365d767b2d97
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"messages": [{"content": "Analyze the following food item: avocado", "role":
+      "user"}], "model": "gpt-3.5-turbo", "n": 1, "parallel_tool_calls": false, "stream":
+      false, "temperature": 0.0, "tool_choice": {"type": "function", "function": {"name":
+      "FoodAnalysis"}}, "tools": [{"type": "function", "function": {"name": "FoodAnalysis",
+      "description": "", "parameters": {"properties": {"name": {"description": "The
+      name of the food item", "type": "string"}, "healthy": {"description": "Whether
+      the food is good for you", "type": "boolean"}, "calories": {"description": "Estimated
+      calories per serving", "type": "integer"}, "taste_profile": {"description":
+      "List of taste characteristics", "items": {"type": "string"}, "type": "array"}},
+      "required": ["name", "healthy", "calories", "taste_profile"], "type": "object"}}}]}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '815'
+      content-type:
+      - application/json
+      host:
+      - api.openai.com
+      traceparent:
+      - 00-bf76f3351e53f987f09f69d24c4310c4-7b58ff5811fac9bc-01
+      user-agent:
+      - OpenAI/Python 1.45.1
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.45.1
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.11.8
+    method: POST
+    uri: https://api.openai.com/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA2xSTU/jMBC951dYc25RP2ALuRWhXWkFXURPK4Ii15kmBseO7Am0W/W/r+yEJC3k
+        EI3m+b03X4eIMZAZxAxEwUmUlRovV/fzt3v1uLjb8V9PyzX/K3CdPa5vX3dzASPPMJtXFPTJuhCm
+        rBSSNLqBhUVO6FWni/lkOru6/jEJQGkyVJ6WVzSeX1yNqbYbM/ZPWmZhpEAHMXuOGGPsEP6+Rp3h
+        DmIWdEKmROd4jhB3jxgDa5TPAHdOOuKaYNSDwmhC7cvWtVIDgIxRqeBK9cbNdxjE/aC4UulTff2h
+        3/Wfy0zd/l48zG4eVh//7lblwK+R3lehoG2tRTegAd7l4zMzxkDzMnB/GpMtNVd7J90ZnzHgNq9L
+        1ORrh0MSWAnECfB3I3hmEhglUCBXVOwTiMnWOEp8E8ZKdAnEs/nlKAHijjCtrNlK5fnPSVhjuQ/8
+        TU2Etol1TbRP4OUIJ6Uco+/il8GYLW5rx1U7/zZ/7BaqTF5Zs3Fn+4Gt1NIVqUXuwpzAkakab+8T
+        HKA+uQWorCkrSsm8ofaC00l7ONDfao/OblqQDHE1YHXAiV6aIXEZjqW7T8FFgVlPnUSD5r6afifR
+        NCh1/kUlapXA7R1hmW6lztFWVnbHHB2j/wAAAP//AwAl+za5ywMAAA==
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 8d9ba083998c09c3-HFA
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 28 Oct 2024 14:31:01 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=h9bZjdTpaBJPofA2Dh_C2V.LyhxOC85E_GWPQbO0aM4-1730125861-1.0.1.1-SwmHr4Hf8Pn2l2DO2FXlB8NxO8G8dhiyfd5EGkhTIt.Sxr8CTBdKhcp.vRgM.jv1nJT5ADvtXtLA4GQvDIieXg;
+        path=/; expires=Mon, 28-Oct-24 15:01:01 GMT; domain=.api.openai.com; HttpOnly;
+        Secure; SameSite=None
+      - _cfuvid=yIf6LGUh_T8BrKdHIGWnJYCyynJ9TIGtsYQKWprcnvI-1730125861213-0.0.1.1-604800000;
+        path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      access-control-expose-headers:
+      - X-Request-ID
+      alt-svc:
+      - h3=":443"; ma=86400
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '550'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-ratelimit-limit-requests:
+      - '5000'
+      x-ratelimit-limit-tokens:
+      - '4000000'
+      x-ratelimit-remaining-requests:
+      - '4999'
+      x-ratelimit-remaining-tokens:
+      - '3999972'
+      x-ratelimit-reset-requests:
+      - 12ms
+      x-ratelimit-reset-tokens:
+      - 0s
+      x-request-id:
+      - req_ef878a382af1a7875ea5e82a97081ad8
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"messages": [{"content": "Analyze the following food item: avocado", "role":
+      "user"}], "model": "gpt-3.5-turbo", "n": 1, "parallel_tool_calls": false, "stream":
+      false, "temperature": 0.0, "tool_choice": {"type": "function", "function": {"name":
+      "FoodAnalysis"}}, "tools": [{"type": "function", "function": {"name": "FoodAnalysis",
+      "description": "", "parameters": {"properties": {"name": {"description": "The
+      name of the food item", "type": "string"}, "healthy": {"description": "Whether
+      the food is good for you", "type": "boolean"}, "calories": {"description": "Estimated
+      calories per serving", "type": "integer"}, "taste_profile": {"description":
+      "List of taste characteristics", "items": {"type": "string"}, "type": "array"}},
+      "required": ["name", "healthy", "calories", "taste_profile"], "type": "object"}}}]}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '815'
+      content-type:
+      - application/json
+      host:
+      - api.openai.com
+      traceparent:
+      - 00-47b7e7c9b97b4542b42e8ef7d8079ec2-2c47c05455cf9089-01
+      user-agent:
+      - OpenAI/Python 1.45.1
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.45.1
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.11.8
+    method: POST
+    uri: https://api.openai.com/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA2xSyW7bMBC96yuIOcuBV7TRLS7QInXaAumGNgoEShpJbCmSJYdGDMP/XmiJJDvR
+        QRjM43tvtmPAGIgcIgZZxSmrjZzdfL7brH9sP+xoZ97t9Hr5Fv23L+buuri/dRA2DJ3+wYyeWVeZ
+        ro1EElp1cGaREzaqizer+WK5uV4vW6DWOcqGVhqara42M/I21bPmSc+stMjQQcQeAsYYO7b/pkaV
+        4xNEbB4+Z2p0jpcI0fCIMbBaNhngzglHXBGEI5hpRaiaspWXcgKQ1jLJuJSjcfcdJ/E4KC5l4tKP
+        X/e33z8V6Ld7f7/9l/4ufj79mk/8OumDaQsqvMqGAU3wIR9dmDEGitct973W+Y3i8uCEu+AzBtyW
+        vkZFTe1wjFtWDFEMfK8znusYwhgq5JKqQwwRWY9h3DShrUAXQ7RcrcMYiDvCxFhdCNnwH+J2jfWh
+        5aeeCG0XK090iOHxBGelnILX4sfJmC0W3nHZz7/Pn4aFSl0aq1N3sR8ohBKuSixy184JHGnTeTc+
+        rQP4s1sAY3VtKCH9F1UjuJj3hwPjrY7o8roHSROXE9YAnOklORIX7bEM95nxrMJ8pM6DSXMvTV+T
+        6BoUqnyhEvRK4A6OsE4KoUq0xorhmINT8B8AAP//AwC8ORwzywMAAA==
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 8d9ba280c8ba09c3-HFA
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 28 Oct 2024 14:32:22 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=EVnvZio5eE9i8RwprvofC2WbxN.v7SR_cbJSmrnoxDQ-1730125942-1.0.1.1-8CNR5HiYaycEeiC5B9wUMpdpNSyklSVve3a8_M7yGxs5tDZe5MEfaB2mwjktsWJ7iP1sKNfGPCy38do6X4Y0Yw;
+        path=/; expires=Mon, 28-Oct-24 15:02:22 GMT; domain=.api.openai.com; HttpOnly;
+        Secure; SameSite=None
+      - _cfuvid=4Bv9Y1kHIU0zPuPSFYrzFJgs.13tbpLDarIv77iMtLs-1730125942860-0.0.1.1-604800000;
+        path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      access-control-expose-headers:
+      - X-Request-ID
+      alt-svc:
+      - h3=":443"; ma=86400
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '723'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-ratelimit-limit-requests:
+      - '5000'
+      x-ratelimit-limit-tokens:
+      - '4000000'
+      x-ratelimit-remaining-requests:
+      - '4999'
+      x-ratelimit-remaining-tokens:
+      - '3999972'
+      x-ratelimit-reset-requests:
+      - 12ms
+      x-ratelimit-reset-tokens:
+      - 0s
+      x-request-id:
+      - req_9457135a9ca74f58eecd5729fd07d0ef
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"messages": [{"content": "Analyze the following food item: avocado", "role":
+      "user"}], "model": "gpt-3.5-turbo", "n": 1, "parallel_tool_calls": false, "stream":
+      false, "temperature": 0.0, "tool_choice": {"type": "function", "function": {"name":
+      "FoodAnalysis"}}, "tools": [{"type": "function", "function": {"name": "FoodAnalysis",
+      "description": "", "parameters": {"properties": {"name": {"description": "The
+      name of the food item", "type": "string"}, "healthy": {"description": "Whether
+      the food is good for you", "type": "boolean"}, "calories": {"description": "Estimated
+      calories per serving", "type": "integer"}, "taste_profile": {"description":
+      "List of taste characteristics", "items": {"type": "string"}, "type": "array"}},
+      "required": ["name", "healthy", "calories", "taste_profile"], "type": "object"}}}]}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '815'
+      content-type:
+      - application/json
+      host:
+      - api.openai.com
+      traceparent:
+      - 00-47995519983f74e485cf432874f6b59a-fd033cde42e4496f-01
+      user-agent:
+      - OpenAI/Python 1.45.1
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.45.1
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.11.8
+    method: POST
+    uri: https://api.openai.com/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA2xSXU/bMBR9z6+w7nOK0hbGyFs3tAqNTRNsgo2gyHXcxMP2jeybjazqf5/yQZIW
+        8mBd3ZNzzv3aBYyByiBmIApOwpR6tvp6fWvXnxX+XYvvFF3/+Hn14X1uni7t3c0thA0DN7+loBfW
+        iUBTakkKbQcLJznJRnV+vozmi/PT+bIFDGZSN7S8pNny5GxGldvgLJovznpmgUpIDzF7CBhjbNe+
+        TY02k88Qsyh8yRjpPc8lxMNPjIFD3WSAe688cUsQjqBAS9I2ZdtK6wlAiDoVXOvRuPt2k3gcFNc6
+        vXe+rFbf1r/e6eqfNhfq49XljdFfJn6ddF22BW0rK4YBTfAhHx+ZMQaWm5b7CTFbWa5rr/wRnzHg
+        Lq+MtNTUDrukZSUQJ8D/oOAZJhAmUEiuqagTiMlVMkyaJtAp6ROIF8vTMAHinmRaOtwq3fAfknaN
+        pm75m4pIui62FVGdwOMeDkrZB2/Fj5MxO7mtPNf9/Pv8flioxrx0uPFH+4GtssoXqZPct3MCT1h2
+        3o1P6wDVwS1A6dCUlBI+SdsIzqP+cGC81RFdXPQgIXE9YQ3AgV6aSeKqPZbhPgUXhcxGahRMmntt
+        +pZE16Cy+SuVoFcCX3uSJt0qm0tXOjUcc7AP/gMAAP//AwAqpcnHywMAAA==
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 8d9bc66d395109b9-HFA
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 28 Oct 2024 14:56:54 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=MQZA5E.lOhI82fjB_RKSr8txXXhdfJHg0B4MCZlqHGU-1730127414-1.0.1.1-VUWXRfTAwlEbJgjwlKl1x0CZDeDkAvH6zBDcaLxsuMito0f9wnRzaT0BTi5eyZiIAiuWGEoaXxbCHYeqqQ_3Tg;
+        path=/; expires=Mon, 28-Oct-24 15:26:54 GMT; domain=.api.openai.com; HttpOnly;
+        Secure; SameSite=None
+      - _cfuvid=UXspDB6z3Eq935NanKqv0HrFtkxJqnODbXDvPLfFQEg-1730127414584-0.0.1.1-604800000;
+        path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      access-control-expose-headers:
+      - X-Request-ID
+      alt-svc:
+      - h3=":443"; ma=86400
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '625'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-ratelimit-limit-requests:
+      - '5000'
+      x-ratelimit-limit-tokens:
+      - '4000000'
+      x-ratelimit-remaining-requests:
+      - '4999'
+      x-ratelimit-remaining-tokens:
+      - '3999972'
+      x-ratelimit-reset-requests:
+      - 12ms
+      x-ratelimit-reset-tokens:
+      - 0s
+      x-request-id:
+      - req_5a498728eac50bd5f70cbfe6dbff635b
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"messages": [{"content": "Analyze the following food item: avocado", "role":
+      "user"}], "model": "gpt-3.5-turbo", "n": 1, "parallel_tool_calls": false, "stream":
+      false, "temperature": 0.0, "tool_choice": {"type": "function", "function": {"name":
+      "FoodAnalysis"}}, "tools": [{"type": "function", "function": {"name": "FoodAnalysis",
+      "description": "", "parameters": {"properties": {"name": {"description": "The
+      name of the food item", "type": "string"}, "healthy": {"description": "Whether
+      the food is good for you", "type": "boolean"}, "calories": {"description": "Estimated
+      calories per serving", "type": "integer"}, "taste_profile": {"description":
+      "List of taste characteristics", "items": {"type": "string"}, "type": "array"}},
+      "required": ["name", "healthy", "calories", "taste_profile"], "type": "object"}}}]}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '815'
+      content-type:
+      - application/json
+      host:
+      - api.openai.com
+      traceparent:
+      - 00-78f8033cf651f37c5218d35ec4ac5878-58d894ca0e1743cd-01
+      user-agent:
+      - OpenAI/Python 1.45.1
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.45.1
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.11.8
+    method: POST
+    uri: https://api.openai.com/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA2xSXWucQBR991cM99kNuh9s4tsWsqUQAiWlpY1BxnHUSca5MnMtlWX/e/Ej6m7i
+        w3C5x3PO/Tp5jIHKIGIgSk6iqvXq8Pjw41jc7R4P5a8id8XvB3X7J/x52HPzbQN+x8D0VQp6Z90I
+        rGotSaEZYGElJ9mphvtNEK73223YAxVmUne0oqbV5ma3osamuArC9W5klqiEdBCxZ48xxk7929Vo
+        MvkPIhb475lKOscLCdH0E2NgUXcZ4M4pR9wQ+DMo0JA0Xdmm0XoBEKJOBNd6Nh6+0yKeB8W1Tu6P
+        +7dj8/3p6719atsdulds0tvgy8JvkG7rvqC8MWIa0AKf8tGVGWNgeNVzj4jZwXDdOuWu+IwBt0VT
+        SUNd7XCKe1YMUQz8LwqeYQx+DKXkmso2hohsI/24awKtki6GaL3Z+jEQdyST2mKudMd/jvs1Vm3P
+        TxsiaYfYNERtDC9nuCjl7H0WvyzGbGXeOK7H+Y/587RQjUVtMXVX+4FcGeXKxEru+jmBI6wH786n
+        d4Dm4hagtljVlBC+SdMJhsF4ODDf6oyu70aQkLhesCbgQi/JJHHVH8t0n4KLUmYzNfAWzX00/Uxi
+        aFCZ4oOKNyqBax3JKsmVKaStrZqO2Tt7/wEAAP//AwBndkmwywMAAA==
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 8d9bc7169fc209c7-HFA
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 28 Oct 2024 14:57:21 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=4IAlpHmczOzKxSiabfMGhbVXlUIuH3cJePrProjW0xw-1730127441-1.0.1.1-_6RmyAGdGFyCtwauTPBZ0Z7LyT37iWSqRGlujpj.9_16TuIxtnb0MgLUpFe8v09FIMTdU4ITLhBhW1O_9XHEYg;
+        path=/; expires=Mon, 28-Oct-24 15:27:21 GMT; domain=.api.openai.com; HttpOnly;
+        Secure; SameSite=None
+      - _cfuvid=iQgM.554_DpJmmq3niurRkL2ga2JjEh0AplKVG_FnBE-1730127441773-0.0.1.1-604800000;
+        path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      access-control-expose-headers:
+      - X-Request-ID
+      alt-svc:
+      - h3=":443"; ma=86400
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '679'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-ratelimit-limit-requests:
+      - '5000'
+      x-ratelimit-limit-tokens:
+      - '4000000'
+      x-ratelimit-remaining-requests:
+      - '4999'
+      x-ratelimit-remaining-tokens:
+      - '3999972'
+      x-ratelimit-reset-requests:
+      - 12ms
+      x-ratelimit-reset-tokens:
+      - 0s
+      x-request-id:
+      - req_1450d43dfc195c2a0e2c48492baf31da
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"messages": [{"content": "Analyze the following food item: avocado", "role":
+      "user"}], "model": "gpt-3.5-turbo", "n": 1, "parallel_tool_calls": false, "stream":
+      false, "temperature": 0.0, "tool_choice": {"type": "function", "function": {"name":
+      "FoodAnalysis"}}, "tools": [{"type": "function", "function": {"name": "FoodAnalysis",
+      "description": "", "parameters": {"properties": {"name": {"description": "The
+      name of the food item", "type": "string"}, "healthy": {"description": "Whether
+      the food is good for you", "type": "boolean"}, "calories": {"description": "Estimated
+      calories per serving", "type": "integer"}, "taste_profile": {"description":
+      "List of taste characteristics", "items": {"type": "string"}, "type": "array"}},
+      "required": ["name", "healthy", "calories", "taste_profile"], "type": "object"}}}]}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '815'
+      content-type:
+      - application/json
+      host:
+      - api.openai.com
+      traceparent:
+      - 00-65523a5b3e4c6328e205d2d8ec65446f-bc9eff4591b3c1ed-01
+      user-agent:
+      - OpenAI/Python 1.45.1
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.45.1
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.11.8
+    method: POST
+    uri: https://api.openai.com/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA2xSYW+bMBD9zq+w7jOpErKoG9+6aas0TdsUtcq0ukKOOcCbsV372Iai/PcJSIGk
+        5YNl3eO9d3d+h4gxUDmkDGQlSNZOL26+frkv1ne5+7F7v1NPb4tv3+9E+ODu3ab8CHHHsPtfKOmZ
+        dSVt7TSSsmaApUdB2KmurtfLVXK9Sd71QG1z1B2tdLRYX20W1Pi9XSxXyebErKySGCBlDxFjjB36
+        s+vR5PgPUraMnys1hiBKhHT8iTHwVncVECGoQMIQxBMorSE0Xdum0XoGkLU6k0LryXj4DrP7tCih
+        dbYVK/ybJMWOnmqByfa2bG8/Fz+3M79BunV9Q0Vj5LigGT7W0wszxsCIuud+sja/MUK3QYULPmMg
+        fNnUaKjrHQ68Z3FIOYg/Vorccog5VCg0VS2HlHyDMe+GsF5h4JAm6zcxBxKBMHPeFkp3/AfeP2Pd
+        9vx9Q4R+uJuGqOXweISzVo7Ra/fH2Zo9Fk0Q+rT/U/04Pqi2pfN2Hy7eBwplVKgyjyL0e4JA1g3e
+        nU/vAM1ZFsB5WzvKyP5G0wmulqfgwJTVCR3S2QeBhJ6xRuBML8uRhOrDMuZTCllhPlGX0Wy4l6av
+        SQwDKlO+UIlOShDaQFhnhTIleufVGOboGP0HAAD//wMAWgz0fssDAAA=
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 8d9bc93f3a6009c3-HFA
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 28 Oct 2024 14:58:50 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=KOM03dCkcXfT5ZRhMV6Qe5jHeFGrLXmae2rqcfeN2pA-1730127530-1.0.1.1-lTR5P538hDdTZswsySpjGVkUnjB3EZbqFahPqVfNIoI.ewYShE0T6xbj33467kEap7wECRtYl1J7mDsMAVMxrQ;
+        path=/; expires=Mon, 28-Oct-24 15:28:50 GMT; domain=.api.openai.com; HttpOnly;
+        Secure; SameSite=None
+      - _cfuvid=lPqu4KJXSkGjwJS2CKhwenyDVh3M_qMHgpeNWAC3NLE-1730127530104-0.0.1.1-604800000;
+        path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      access-control-expose-headers:
+      - X-Request-ID
+      alt-svc:
+      - h3=":443"; ma=86400
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '620'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-ratelimit-limit-requests:
+      - '5000'
+      x-ratelimit-limit-tokens:
+      - '4000000'
+      x-ratelimit-remaining-requests:
+      - '4999'
+      x-ratelimit-remaining-tokens:
+      - '3999972'
+      x-ratelimit-reset-requests:
+      - 12ms
+      x-ratelimit-reset-tokens:
+      - 0s
+      x-request-id:
+      - req_67752c86ecb6ecdc14ff353c61ea93d1
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"messages": [{"content": "Analyze the following food item: avocado", "role":
+      "user"}], "model": "gpt-3.5-turbo", "n": 1, "parallel_tool_calls": false, "stream":
+      false, "temperature": 0.0, "tool_choice": {"type": "function", "function": {"name":
+      "FoodAnalysis"}}, "tools": [{"type": "function", "function": {"name": "FoodAnalysis",
+      "description": "", "parameters": {"properties": {"name": {"description": "The
+      name of the food item", "type": "string"}, "healthy": {"description": "Whether
+      the food is good for you", "type": "boolean"}, "calories": {"description": "Estimated
+      calories per serving", "type": "integer"}, "taste_profile": {"description":
+      "List of taste characteristics", "items": {"type": "string"}, "type": "array"}},
+      "required": ["name", "healthy", "calories", "taste_profile"], "type": "object"}}}]}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '815'
+      content-type:
+      - application/json
+      host:
+      - api.openai.com
+      traceparent:
+      - 00-3e09566f51122ce5f39b90541a74b806-69215272af966098-01
+      user-agent:
+      - OpenAI/Python 1.45.1
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.45.1
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.11.8
+    method: POST
+    uri: https://api.openai.com/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA2xS226bQBB95ytW84wjsOta4c19iNKblaZqpSZEaL0MsO2yi3YHp8jyv0dcAtgJ
+        D6vRHM45czt6jIFMIWIgCk6irNRiu/v2O2yK3Wf9zL9/DDbrTw+Hu+vnm6/b7M8t+C3D7P+ioFfW
+        lTBlpZCk0T0sLHLCVjXcrIJwuVmvww4oTYqqpeUVLVZX6wXVdm8WQbhcD8zCSIEOIvboMcbYsXvb
+        GnWK/yFigf+aKdE5niNE40+MgTWqzQB3TjrimsCfQGE0oW7L1rVSM4CMUYngSk3G/XecxdOguFLJ
+        vf6Z3tq0uv7xZffw6/6w2unNKgzuZn69dFN1BWW1FuOAZviYjy7MGAPNy457Y0y61Vw1TroLPmPA
+        bV6XqKmtHY5xx4ohioEfjOCpicGPoUCuqGhiiMjW6MdtE8ZKdDFEy9UHPwbijjCprMmkavmPcbfG
+        sun4+5oIbR/rmqiJ4ekEZ6WcvPfip9mYLWa142qY/5A/jQtVJq+s2buL/UAmtXRFYpG7bk7gyFS9
+        d+vTOUB9dgtQWVNWlJD5h7oVDIPhcGC61QldXg8gGeJqxhqBM70kReKyO5bxPgUXBaYTNfBmzb01
+        fU+ib1Dq/I2KNyiBaxxhmWRS52grK8dj9k7eCwAAAP//AwBpCKgEywMAAA==
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 8d9bc9c8ed3b09cb-HFA
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 28 Oct 2024 14:59:12 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=GfYE0Nh3lAd0kKydEe951jw0uujz6IaUd_xNDCzaPUI-1730127552-1.0.1.1-q5dPTa6zv8TTKhAieqLrj6LBaXXGQR0Yt8nMJsHvGMSHQLWvghSOxdGMj5mch5bvMCyz.xDzugItso2a9jtwvQ;
+        path=/; expires=Mon, 28-Oct-24 15:29:12 GMT; domain=.api.openai.com; HttpOnly;
+        Secure; SameSite=None
+      - _cfuvid=KylApd0H8_TsiDVpgkbstneoKPoUruZQqOyzn3AdUqk-1730127552154-0.0.1.1-604800000;
+        path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      access-control-expose-headers:
+      - X-Request-ID
+      alt-svc:
+      - h3=":443"; ma=86400
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '649'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-ratelimit-limit-requests:
+      - '5000'
+      x-ratelimit-limit-tokens:
+      - '4000000'
+      x-ratelimit-remaining-requests:
+      - '4999'
+      x-ratelimit-remaining-tokens:
+      - '3999972'
+      x-ratelimit-reset-requests:
+      - 12ms
+      x-ratelimit-reset-tokens:
+      - 0s
+      x-request-id:
+      - req_93624d0eddbb76d571053ae739621c59
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"messages": [{"content": "Analyze the following food item: avocado", "role":
+      "user"}], "model": "gpt-3.5-turbo", "n": 1, "parallel_tool_calls": false, "stream":
+      false, "temperature": 0.0, "tool_choice": {"type": "function", "function": {"name":
+      "FoodAnalysis"}}, "tools": [{"type": "function", "function": {"name": "FoodAnalysis",
+      "description": "", "parameters": {"properties": {"name": {"description": "The
+      name of the food item", "type": "string"}, "healthy": {"description": "Whether
+      the food is good for you", "type": "boolean"}, "calories": {"description": "Estimated
+      calories per serving", "type": "integer"}, "taste_profile": {"description":
+      "List of taste characteristics", "items": {"type": "string"}, "type": "array"}},
+      "required": ["name", "healthy", "calories", "taste_profile"], "type": "object"}}}]}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '815'
+      content-type:
+      - application/json
+      host:
+      - api.openai.com
+      traceparent:
+      - 00-42f5807fd6cfd62db6627fcced8dffca-c90533f042aede91-01
+      user-agent:
+      - OpenAI/Python 1.45.1
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.45.1
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.11.8
+    method: POST
+    uri: https://api.openai.com/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA2xSTW/aQBC9+1es5mwiG0oIvhGpNEWox0htHFnLejAb1jvu7rgKQvz3ysYxhsSH
+        1Wie33vzdQyEAJ1DIkDtJKuyMqPFr/WzoXW8XP0tv0ta/l6452Lv4p+rulhD2DBo84aKP1h3isrK
+        IGuyZ1g5lIyNajybRPF4Np3PWqCkHE1DKyoeTe6mI67dhkZRPJ52zB1phR4S8RIIIcSxfZsabY7v
+        kIgo/MiU6L0sEJL+JyHAkWkyIL3XnqVlCC+gIstom7JtbcwAYCKTKWnMxfj8HQfxZVDSmGz29of2
+        9+P501P8Y/XwGK1sjO94/zDwO0sfqragbW1VP6AB3ueTGzMhwMqy5S6J8oWV5uC1v+ELAdIVdYmW
+        m9rhmLasFJIU5D9SMqcUwhR2KA3vDikk7GoM06YJchp9Csl48i1MgaVnzCpHW20a/kvarrE8tPxN
+        zYzuHNua+ZDC6wmuSjkFX8WvgzE73NZemm7+Xf7UL9RQUTna+Jv9wFZb7XeZQ+nbOYFnqs7ejU/r
+        APXVLUDlqKw4Y9qjbQTjqDscuNzqBR3PO5CJpRmweuBKL8uRpW6Ppb9PJdUO8ws1CgbNfTb9SuLc
+        oLbFJ5WgUwJ/8IxlttW2QFc53R9zcAr+AwAA//8DAK25IHjLAwAA
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 8d9bcaed5f6c09c3-HFA
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 28 Oct 2024 14:59:58 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=IE_EtJ7SyHSv2UbpIfWA4FmbiqNUGh1x1P8Y5yaCBGE-1730127598-1.0.1.1-8gQYfhMOmsFR7NsZ.s0C66XVqWeLqovNzaois7xhHXB1Dfnq8gJ2f4Ewq2YPC18BKhB6zC_apPfxGNY90ayJmw;
+        path=/; expires=Mon, 28-Oct-24 15:29:58 GMT; domain=.api.openai.com; HttpOnly;
+        Secure; SameSite=None
+      - _cfuvid=RcnVilBAdQgmdgEaR6f2s3oP_Z4xIa2QwQzBg9cogOA-1730127598459-0.0.1.1-604800000;
+        path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      access-control-expose-headers:
+      - X-Request-ID
+      alt-svc:
+      - h3=":443"; ma=86400
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '561'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-ratelimit-limit-requests:
+      - '5000'
+      x-ratelimit-limit-tokens:
+      - '4000000'
+      x-ratelimit-remaining-requests:
+      - '4999'
+      x-ratelimit-remaining-tokens:
+      - '3999972'
+      x-ratelimit-reset-requests:
+      - 12ms
+      x-ratelimit-reset-tokens:
+      - 0s
+      x-request-id:
+      - req_2e3dde6610b6c995656c610fe7181e8c
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"messages": [{"content": "Analyze the following food item: avocado", "role":
+      "user"}], "model": "gpt-3.5-turbo", "n": 1, "parallel_tool_calls": false, "stream":
+      false, "temperature": 0.0, "tool_choice": {"type": "function", "function": {"name":
+      "FoodAnalysis"}}, "tools": [{"type": "function", "function": {"name": "FoodAnalysis",
+      "description": "", "parameters": {"properties": {"name": {"description": "The
+      name of the food item", "type": "string"}, "healthy": {"description": "Whether
+      the food is good for you", "type": "boolean"}, "calories": {"description": "Estimated
+      calories per serving", "type": "integer"}, "taste_profile": {"description":
+      "List of taste characteristics", "items": {"type": "string"}, "type": "array"}},
+      "required": ["name", "healthy", "calories", "taste_profile"], "type": "object"}}}]}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '815'
+      content-type:
+      - application/json
+      host:
+      - api.openai.com
+      traceparent:
+      - 00-4f2305d3a868161797e0f6fcc200281f-20967b581bd09d14-01
+      user-agent:
+      - OpenAI/Python 1.45.1
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.45.1
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.11.8
+    method: POST
+    uri: https://api.openai.com/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA2xS226bQBB95ytW84wjjO1Y5c2qGil1GzWVqlYKEVovA2yy7KLdoQ21/O8RlwB2
+        wsNqNIdzztyOHmMgU4gYiIKTKCu12N19+5OV1v66dvl/2n253xe0//Fv97Vpqp/gtwxzeEJBb6wr
+        YcpKIUmje1hY5ISt6nK7CpbhdrvcdEBpUlQtLa9osbraLKi2B7MIluFmYBZGCnQQsQePMcaO3dvW
+        qFN8gYgF/lumROd4jhCNPzEG1qg2A9w56YhrAn8ChdGEui1b10rNADJGJYIrNRn333EWT4PiSiW/
+        n/Yv+5v1yzb8vP5+H6xub0O6Vs93M79euqm6grJai3FAM3zMRxdmjIHmZce9MSbdaa4aJ90FnzHg
+        Nq9L1NTWDse4Y8UQxcD/GsFTE4MfQ4FcUdHEEJGt0Y/bJoyV6GKIwtXaj4G4I0wqazKpWv5D3K2x
+        bDr+oSZC28e6JmpieDzBWSkn76P4cTZmi1ntuBrmP+RP40KVyStrDu5iP5BJLV2RWOSumxM4MlXv
+        3fp0DlCf3QJU1pQVJWSeUbeCy2A4HJhudULDTwNIhriasUbgTC9JkbjsjmW8T8FFgelEDbxZc+9N
+        P5LoG5Q6f6fiDUrgGkdYJpnUOdrKyvGYvZP3CgAA//8DAI6eI1nLAwAA
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 8d9bcdca2c6009cb-HFA
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 28 Oct 2024 15:01:56 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=Wn.DnkXBHObqNBRHToBmuSdm.BclKRLcoV.L.PsqNZs-1730127716-1.0.1.1-dmt_bzgxdA3xTLnvFz2vyEozoES_wIfFuOzc818aLwgvT9XWHervAXMKX_6exmu7Uh6xOkhrpipbVlfymjPNYw;
+        path=/; expires=Mon, 28-Oct-24 15:31:56 GMT; domain=.api.openai.com; HttpOnly;
+        Secure; SameSite=None
+      - _cfuvid=zKdEs.T11pr5iRPDyNOMGRo39OwW2TrTPVAWlwP0g3E-1730127716885-0.0.1.1-604800000;
+        path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      access-control-expose-headers:
+      - X-Request-ID
+      alt-svc:
+      - h3=":443"; ma=86400
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '1304'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-ratelimit-limit-requests:
+      - '5000'
+      x-ratelimit-limit-tokens:
+      - '4000000'
+      x-ratelimit-remaining-requests:
+      - '4999'
+      x-ratelimit-remaining-tokens:
+      - '3999972'
+      x-ratelimit-reset-requests:
+      - 12ms
+      x-ratelimit-reset-tokens:
+      - 0s
+      x-request-id:
+      - req_808650f171fa4c3100dbcb672ba2fb28
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"messages": [{"content": "Analyze the following food item: avocado", "role":
+      "user"}], "model": "gpt-3.5-turbo", "n": 1, "parallel_tool_calls": false, "stream":
+      false, "temperature": 0.0, "tool_choice": {"type": "function", "function": {"name":
+      "FoodAnalysis"}}, "tools": [{"type": "function", "function": {"name": "FoodAnalysis",
+      "description": "", "parameters": {"properties": {"name": {"description": "The
+      name of the food item", "type": "string"}, "healthy": {"description": "Whether
+      the food is good for you", "type": "boolean"}, "calories": {"description": "Estimated
+      calories per serving", "type": "integer"}, "taste_profile": {"description":
+      "List of taste characteristics", "items": {"type": "string"}, "type": "array"}},
+      "required": ["name", "healthy", "calories", "taste_profile"], "type": "object"}}}]}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '815'
+      content-type:
+      - application/json
+      host:
+      - api.openai.com
+      traceparent:
+      - 00-40a585419efc36c2734a77adedcb148b-557968e6b528d98c-01
+      user-agent:
+      - OpenAI/Python 1.45.1
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.45.1
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.11.8
+    method: POST
+    uri: https://api.openai.com/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA2xS226bQBB95ytW84wjbDdJzVvSiyu1TdWLGjUhQutlgI2XXbo7RMWW/73iEsBO
+        eFiN5nDOmdveYwxkAiEDkXMSRalmVzdf7q5/Xaw//NH1fP0zeY+3q53G+lO+3inwG4bZPKKgZ9aZ
+        MEWpkKTRHSwscsJGdX65DOaLy7fBqgUKk6BqaFlJs+XZ+YwquzGzYL4475m5kQIdhOzeY4yxffs2
+        NeoE/0HIAv85U6BzPEMIh58YA2tUkwHunHTENYE/gsJoQt2UrSulJgAZo2LBlRqNu28/icdBcaXi
+        z+mP39vLm8e79Ht18e52e/1197cg/Dbx66Trsi0orbQYBjTBh3x4YsYYaF603I/GJFeaq9pJd8Jn
+        DLjNqgI1NbXDPmpZEYQR8CcjeGIi8CPIkSvK6whCshX6UdOEsRJdBOFi+caPgLgjjEtrUqka/n3U
+        rrGoW/6mIkLbxboiqiN4OMBRKQfvtfhhMmaLaeW46uff5w/DQpXJSms27mQ/kEotXR5b5K6dEzgy
+        Zefd+LQOUB3dApTWFCXFZLaoG8F50B8OjLc6ootVD5IhriasATjSixMkLttjGe5TcJFjMlIDb9Lc
+        S9PXJLoGpc5eqHi9ErjaERZxKnWGtrRyOGbv4P0HAAD//wMA+gU56csDAAA=
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 8d9bd014f9be09b9-HFA
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 28 Oct 2024 15:03:30 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=0WMTn.Qi5kIwOFNBb6r4MFehKLeqllelcIKVMzZYRIU-1730127810-1.0.1.1-kaYdFS6M_gH08GEbI7A5CoEbjl82NPf11NIZYEZUAvB.PFDNvDTOoGH2srN9pCN1kdtcH_9g9Q92aE7s9KBEhQ;
+        path=/; expires=Mon, 28-Oct-24 15:33:30 GMT; domain=.api.openai.com; HttpOnly;
+        Secure; SameSite=None
+      - _cfuvid=myQFjA.SyhAUcsaWyBxO1BcE.sS79_Rgd8RSeyWQLI8-1730127810243-0.0.1.1-604800000;
+        path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      access-control-expose-headers:
+      - X-Request-ID
+      alt-svc:
+      - h3=":443"; ma=86400
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '663'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-ratelimit-limit-requests:
+      - '5000'
+      x-ratelimit-limit-tokens:
+      - '4000000'
+      x-ratelimit-remaining-requests:
+      - '4999'
+      x-ratelimit-remaining-tokens:
+      - '3999972'
+      x-ratelimit-reset-requests:
+      - 12ms
+      x-ratelimit-reset-tokens:
+      - 0s
+      x-request-id:
+      - req_943cbdd6ad814997e01fa79d36a61a1a
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"messages": [{"content": "Analyze the following food item: avocado", "role":
+      "user"}], "model": "gpt-3.5-turbo", "n": 1, "parallel_tool_calls": false, "stream":
+      false, "temperature": 0.0, "tool_choice": {"type": "function", "function": {"name":
+      "FoodAnalysis"}}, "tools": [{"type": "function", "function": {"name": "FoodAnalysis",
+      "description": "", "parameters": {"properties": {"name": {"description": "The
+      name of the food item", "type": "string"}, "healthy": {"description": "Whether
+      the food is good for you", "type": "boolean"}, "calories": {"description": "Estimated
+      calories per serving", "type": "integer"}, "taste_profile": {"description":
+      "List of taste characteristics", "items": {"type": "string"}, "type": "array"}},
+      "required": ["name", "healthy", "calories", "taste_profile"], "type": "object"}}}]}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '815'
+      content-type:
+      - application/json
+      host:
+      - api.openai.com
+      traceparent:
+      - 00-9d4c4f9ae43ee11a2ff2bb7ef5001893-79423f0cdf5070ce-01
+      user-agent:
+      - OpenAI/Python 1.45.1
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.45.1
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.11.8
+    method: POST
+    uri: https://api.openai.com/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA2xS22rbQBB911cs8ywHyW4w1pshDi2EmBaStImCWK/G0tarXbE7aiKM/73oEkl2
+        oodlmKNzztyOHmMgU4gYiJyTKEo1W9/fcXv4+RBsD8+/5dPDKpfrzVP2XGy3P+7Bbxhm9xcFfbCu
+        hClKhSSN7mBhkRM2quFyEYTz5SpctEBhUlQNLStptri6nlFld2YWhPPrnpkbKdBBxF48xhg7tm9T
+        o07xHSIW+B+ZAp3jGUI0/MQYWKOaDHDnpCOuCfwRFEYT6qZsXSk1AcgYlQiu1GjcfcdJPA6KK5U8
+        rnZ/NvQYfk/f3rO7m82vx7ebleLLiV8nXZdtQftKi2FAE3zIRxdmjIHmRcu9NSZda65qJ90FnzHg
+        NqsK1NTUDse4ZcUQxcD/GcFTE4MfQ45cUV7HEJGt0I+bJoyV6GKI5otvfgzEHWFSWrOXquG/xO0a
+        i7rl7yoitF2sK6I6htcTnJVy8r6KXydjtrivHFf9/Pv8aVioMllpzc5d7Af2UkuXJxa5a+cEjkzZ
+        eTc+rQNUZ7cApTVFSQmZA+pGMAz6w4HxVkd0vupBMsTVhDUAZ3pJisRleyzDfQouckxHauBNmvts
+        +pVE16DU2ScVr1cCVzvCItlLnaEtrRyO2Tt5/wEAAP//AwDdXp0KywMAAA==
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 8d9bd29c2a5209c7-HFA
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 28 Oct 2024 15:05:13 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=fDu9fWW9WBNPbYDVNZa4G9FgTmDxOyUFMEFKcTAnevw-1730127913-1.0.1.1-EPoYdRGpv6nv3indtezpk_HCRjAtzygCHyyIvE_qd7bfHf2kS9gsiIRicuxAQKXDmIGYYMujsLnZ_q.MyLg9KA;
+        path=/; expires=Mon, 28-Oct-24 15:35:13 GMT; domain=.api.openai.com; HttpOnly;
+        Secure; SameSite=None
+      - _cfuvid=ncayKONA88yTAuq5R5hqV4F1.mRF8C1w97eilUgOoA8-1730127913586-0.0.1.1-604800000;
+        path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      access-control-expose-headers:
+      - X-Request-ID
+      alt-svc:
+      - h3=":443"; ma=86400
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '606'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-ratelimit-limit-requests:
+      - '5000'
+      x-ratelimit-limit-tokens:
+      - '4000000'
+      x-ratelimit-remaining-requests:
+      - '4999'
+      x-ratelimit-remaining-tokens:
+      - '3999972'
+      x-ratelimit-reset-requests:
+      - 12ms
+      x-ratelimit-reset-tokens:
+      - 0s
+      x-request-id:
+      - req_6b971360c949d1aeaffd1f733a1a1262
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"messages": [{"content": "Analyze the following food item: avocado", "role":
+      "user"}], "model": "gpt-3.5-turbo", "n": 1, "parallel_tool_calls": false, "stream":
+      false, "temperature": 0.0, "tool_choice": {"type": "function", "function": {"name":
+      "FoodAnalysis"}}, "tools": [{"type": "function", "function": {"name": "FoodAnalysis",
+      "description": "", "parameters": {"properties": {"name": {"description": "The
+      name of the food item", "type": "string"}, "healthy": {"description": "Whether
+      the food is good for you", "type": "boolean"}, "calories": {"description": "Estimated
+      calories per serving", "type": "integer"}, "taste_profile": {"description":
+      "List of taste characteristics", "items": {"type": "string"}, "type": "array"}},
+      "required": ["name", "healthy", "calories", "taste_profile"], "type": "object"}}}]}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '815'
+      content-type:
+      - application/json
+      host:
+      - api.openai.com
+      traceparent:
+      - 00-d4aa3be9fc623ab018d478aa51545e14-1e93266cb13fae03-01
+      user-agent:
+      - OpenAI/Python 1.45.1
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.45.1
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.11.8
+    method: POST
+    uri: https://api.openai.com/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA2xSyW7bMBC96yuIOcuBl7iudTMadAGKFjk0QBsGAkWNJCYUKZCjtIrhfy+0RJKd
+        6EAM5um9N9sxYAxUChEDWQiSZaUXhx/fk+pmv2u+PR/E3e+n8svNS/FTNoVuvh4gbBk2eURJr6wr
+        actKIylrelg6FISt6mq3Wa7Wu/1u0wGlTVG3tLyixeZqu6DaJXaxXK23A7OwSqKHiN0HjDF27N62
+        RpPiP4jYMnzNlOi9yBGi8SfGwFndZkB4rzwJQxBOoLSG0LRlm1rrGUDW6lgKrSfj/jvO4mlQQuv4
+        1ryoj3+SbO9u7/5++PTr2j8W9X67mvn10k3VFZTVRo4DmuFjProwYwyMKDvuZ2vTgxG68cpf8BkD
+        4fK6RENt7XDkHYtDxEE8WylSyyHkUKDQVDQcInI1hrxtwjqFnkO03lyHHEh4wrhyNlO65d/zbo1l
+        0/GTmghdH5uaqOHwcIKzUk7Be/HDbMwOs9oLPcx/yJ/GhWqbV84m/mI/kCmjfBE7FL6bE3iyVe/d
+        +nQOUJ/dAlTOlhXFZJ/QtIKr5XA4MN3qhK73A0iWhJ6xRuBML06RhOqOZbxPKWSB6URdBrPm3pq+
+        J9E3qEz+RiUYlMA3nrCMM2VydJVT4zEHp+A/AAAA//8DAFJAA63LAwAA
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 8d9bd417a82c09c9-HFA
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 28 Oct 2024 15:06:14 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=UFZlJ9eDW1s4RWoXV_6Z60515FZbMNFpsQOb8LSxvzo-1730127974-1.0.1.1-B4zrHUm1MpT.6dYZLrRewr8umyfDR7aaPUyOZ2qX4FsXL8oYqh6ATF0ZLK7iP_dN6142wxCxS8i29i0wVUF1Pg;
+        path=/; expires=Mon, 28-Oct-24 15:36:14 GMT; domain=.api.openai.com; HttpOnly;
+        Secure; SameSite=None
+      - _cfuvid=2nsWIIEXZpexAKMeOvTgheoFVVeZJRNKS7RlivRuuOY-1730127974020-0.0.1.1-604800000;
+        path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      access-control-expose-headers:
+      - X-Request-ID
+      alt-svc:
+      - h3=":443"; ma=86400
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '673'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-ratelimit-limit-requests:
+      - '5000'
+      x-ratelimit-limit-tokens:
+      - '4000000'
+      x-ratelimit-remaining-requests:
+      - '4999'
+      x-ratelimit-remaining-tokens:
+      - '3999972'
+      x-ratelimit-reset-requests:
+      - 12ms
+      x-ratelimit-reset-tokens:
+      - 0s
+      x-request-id:
+      - req_127584df7bb930eeb681153a7b923d7a
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"messages": [{"content": "Analyze the following food item: avocado", "role":
+      "user"}], "model": "gpt-3.5-turbo", "n": 1, "parallel_tool_calls": false, "stream":
+      false, "temperature": 0.0, "tool_choice": {"type": "function", "function": {"name":
+      "FoodAnalysis"}}, "tools": [{"type": "function", "function": {"name": "FoodAnalysis",
+      "description": "", "parameters": {"properties": {"name": {"description": "The
+      name of the food item", "type": "string"}, "healthy": {"description": "Whether
+      the food is good for you", "type": "boolean"}, "calories": {"description": "Estimated
+      calories per serving", "type": "integer"}, "taste_profile": {"description":
+      "List of taste characteristics", "items": {"type": "string"}, "type": "array"}},
+      "required": ["name", "healthy", "calories", "taste_profile"], "type": "object"}}}]}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '815'
+      content-type:
+      - application/json
+      host:
+      - api.openai.com
+      traceparent:
+      - 00-0d9c3f18e38232099dc8db8b4143a31d-bf1e1034c365c660-01
+      user-agent:
+      - OpenAI/Python 1.45.1
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.45.1
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.11.8
+    method: POST
+    uri: https://api.openai.com/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA2xSTW+bQBC98ytWc8YRtut+cEtb5dBGVdMmvYQIrZcB1l52ye6sE2r5v0dgAtgJ
+        h9VoHu+9+doHjIHMIGYgSk6iqtXs8td19lHh7mm7vdr51c2Nv/73WP/8tvr7pH5D2DLMeoOCXlkX
+        wlS1QpJGH2FhkRO2qvNPy2i++BytFh1QmQxVSytqmi0vVjPydm1m0Xyx6pmlkQIdxOw+YIyxffe2
+        NeoMnyFmUfiaqdA5XiDEw0+MgTWqzQB3TjrimiAcQWE0oW7L1l6pCUDGqFRwpUbj47efxOOguFLp
+        7e2d3eTfn63nd+uvyx9//m8eN9vN1O8o3dRdQbnXYhjQBB/y8ZkZY6B51XGvjMkuNVeNk+6Mzxhw
+        W/gKNbW1wz7pWAnECfCdETwzCYQJlMgVlU0CMVmPYdI2YaxEl0C8WH4IEyDuCNPamlyqln+fdGus
+        mo6/9kRoj7H2RE0CDwc4KeUQvBc/TMZsMfeOq37+ff4wLFSZorZm7c72A7nU0pWpRe66OYEjUx+9
+        W5/OAfzJLUBtTVVTSmaLuhWcR/3hwHirI7r40oNkiKsJawBO9NIMicvuWIb7FFyUmI3UKJg099b0
+        PYljg1IXb1SCXglc4wirNJe6QFtbORxzcAheAAAA//8DAKxVWj3LAwAA
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 8d9bd6049df909c9-HFA
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 28 Oct 2024 15:07:32 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=1F_3Ph7FnjYIrafkwbgpi8xvazW2e_NnPL.v.zbbU3w-1730128052-1.0.1.1-6H_GqrNWEkGGv77TG21bIAgqqD6hjT0Z8Enu3PRUUj6JWOQ9Ms4CFSaceAHVaQko0RF6MXeq4YNqH1BdalFAAg;
+        path=/; expires=Mon, 28-Oct-24 15:37:32 GMT; domain=.api.openai.com; HttpOnly;
+        Secure; SameSite=None
+      - _cfuvid=bRyRWvljMYJfvQw.OXTdivb9UlhcJbSXS74l.2tweXE-1730128052889-0.0.1.1-604800000;
+        path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      access-control-expose-headers:
+      - X-Request-ID
+      alt-svc:
+      - h3=":443"; ma=86400
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '687'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-ratelimit-limit-requests:
+      - '5000'
+      x-ratelimit-limit-tokens:
+      - '4000000'
+      x-ratelimit-remaining-requests:
+      - '4999'
+      x-ratelimit-remaining-tokens:
+      - '3999972'
+      x-ratelimit-reset-requests:
+      - 12ms
+      x-ratelimit-reset-tokens:
+      - 0s
+      x-request-id:
+      - req_eb3faf6f232802f3a486b6844e6ca1f8
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"messages": [{"content": "Analyze the following food item: avocado", "role":
+      "user"}], "model": "gpt-3.5-turbo", "n": 1, "parallel_tool_calls": false, "stream":
+      false, "temperature": 0.0, "tool_choice": {"type": "function", "function": {"name":
+      "FoodAnalysis"}}, "tools": [{"type": "function", "function": {"name": "FoodAnalysis",
+      "description": "", "parameters": {"properties": {"name": {"description": "The
+      name of the food item", "type": "string"}, "healthy": {"description": "Whether
+      the food is good for you", "type": "boolean"}, "calories": {"description": "Estimated
+      calories per serving", "type": "integer"}, "taste_profile": {"description":
+      "List of taste characteristics", "items": {"type": "string"}, "type": "array"}},
+      "required": ["name", "healthy", "calories", "taste_profile"], "type": "object"}}}]}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '815'
+      content-type:
+      - application/json
+      host:
+      - api.openai.com
+      traceparent:
+      - 00-f2bdbf2599aceaead6c02d6359f3c218-4797a7684ca268c7-01
+      user-agent:
+      - OpenAI/Python 1.45.1
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.45.1
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.11.8
+    method: POST
+    uri: https://api.openai.com/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA2xS22rbQBB911cs8ywHyxec6s1NSUsoaSgUClEQ69VI2nov6u6oVDX+96JLJNmJ
+        HpZhjs45czsFjIHMIGYgSk5CV2qxf/ya3+kf23/Huqzuvlv18cvuafMzQ3143EHYMuzhFwp6Zd0I
+        qyuFJK3pYeGQE7aq0W69jFa30e2qA7TNULW0oqLF+ma7oNod7GIZrbYDs7RSoIeYPQeMMXbq3rZG
+        k+FfiNkyfM1o9J4XCPH4E2PgrGozwL2XnrghCCdQWENo2rJNrdQMIGtVKrhSk3H/nWbxNCiuVPrp
+        mzo+ZJ+fovX6/uHJ7wuNxUar3zO/XrqpuoLy2ohxQDN8zMdXZoyB4brj3lub7Q1XjZf+is8YcFfU
+        Gg21tcMp6VgJxAnwP1bwzCYQJlAiV1Q2CcTkagyTtgnrJPoE4tV6EyZA3BOmlbO5VC3/OenWqJuO
+        f6iJ0PWxqYmaBF7OcFHKOXgvfpmN2WFee66G+Q/587hQZYvK2YO/2g/k0khfpg657+YEnmzVe7c+
+        nQPUF7cAlbO6opTsEU0rGC2Hw4HpVid09WEAyRJXM9YIXOilGRKX3bGM9ym4KDGbqMtg1txb0/ck
+        +galKd6oBIMS+MYT6jSXpkBXOTkec3AO/gMAAP//AwAgfsU3ywMAAA==
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 8d9bd93209b509c7-HFA
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 28 Oct 2024 15:09:42 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=CVCsbdoad3e4dYqUZ9SxnHHoJmZmAjEjtVsaEiI2oHo-1730128182-1.0.1.1-zIQBtnKdPIH_fY0nVrkMhbEPDUkvm9qYsP7YysPvpzBIrIcugPzDQYQHxnE.Bb3YQO.rRxcQfFmFoAZ8wGuOyg;
+        path=/; expires=Mon, 28-Oct-24 15:39:42 GMT; domain=.api.openai.com; HttpOnly;
+        Secure; SameSite=None
+      - _cfuvid=XFW5vwdM0zCLxmNsW2FdSPgQXdqf1FnmBet6AMwCwA8-1730128182938-0.0.1.1-604800000;
+        path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      access-control-expose-headers:
+      - X-Request-ID
+      alt-svc:
+      - h3=":443"; ma=86400
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '582'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-ratelimit-limit-requests:
+      - '5000'
+      x-ratelimit-limit-tokens:
+      - '4000000'
+      x-ratelimit-remaining-requests:
+      - '4999'
+      x-ratelimit-remaining-tokens:
+      - '3999972'
+      x-ratelimit-reset-requests:
+      - 12ms
+      x-ratelimit-reset-tokens:
+      - 0s
+      x-request-id:
+      - req_fe6eaacc02a2c68e65df468260718efe
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"messages": [{"content": "Analyze the following food item: avocado", "role":
+      "user"}], "model": "gpt-3.5-turbo", "n": 1, "parallel_tool_calls": false, "stream":
+      false, "temperature": 0.0, "tool_choice": {"type": "function", "function": {"name":
+      "FoodAnalysis"}}, "tools": [{"type": "function", "function": {"name": "FoodAnalysis",
+      "description": "", "parameters": {"properties": {"name": {"description": "The
+      name of the food item", "type": "string"}, "healthy": {"description": "Whether
+      the food is good for you", "type": "boolean"}, "calories": {"description": "Estimated
+      calories per serving", "type": "integer"}, "taste_profile": {"description":
+      "List of taste characteristics", "items": {"type": "string"}, "type": "array"}},
+      "required": ["name", "healthy", "calories", "taste_profile"], "type": "object"}}}]}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '815'
+      content-type:
+      - application/json
+      host:
+      - api.openai.com
+      traceparent:
+      - 00-8ca0086b0246e3ba89e2c7d965a34db3-7efb30013ee0041c-01
+      user-agent:
+      - OpenAI/Python 1.45.1
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.45.1
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.11.8
+    method: POST
+    uri: https://api.openai.com/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA2xS226bQBB95ytW84wjGzdyzZt7iVWptSO1lqKECK2XATZedunuEBVZ/vcKcAA7
+        4WE1msM5Z25HjzGQCYQMRM5JFKWarDY/0z+rrdssHn8Fm8P2UchDeX+33u5I7sBvGGb/goLeWDfC
+        FKVCkkZ3sLDICRvV2WI+nQWfZ8tlCxQmQdXQspIm85vbCVV2bybTWXB7ZuZGCnQQsiePMcaO7dvU
+        qBP8ByGb+m+ZAp3jGULY/8QYWKOaDHDnpCOuCfwBFEYT6qZsXSk1AsgYFQuu1GDcfcdRPAyKKxX/
+        Dn6ki+TLBqff13+r15fd14eHe/FtPfLrpOuyLSittOgHNML7fHhlxhhoXrTcO2OSleaqdtJd8RkD
+        brOqQE1N7XCMWlYEYQT81QiemAj8CHLkivI6gpBshX7UNGGsRBdBGMw/+REQd4RxaU0qVcN/ito1
+        FnXL31dEaLtYV0R1BM8nuCjl5H0UP4/GbDGtHFfn+Z/zp36hymSlNXt3tR9IpZYujy1y184JHJmy
+        8258WgeoLm4BSmuKkmIyB9SN4Gx6PhwYbnVAg+UZJENcjVg9cKEXJ0hctsfS36fgIsdkoE69UXPv
+        TT+S6BqUOnun4p2VwNWOsIhTqTO0pZX9MXsn7z8AAAD//wMAEAbpN8sDAAA=
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 8d9bd99e7a8309cd-HFA
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 28 Oct 2024 15:10:00 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=xR.Y9bWReL2t7WnrMMcewBwT4AaNZyHYGyLOVjQPvbU-1730128200-1.0.1.1-IDihErlK6hWONPv2CWfppM4Fsf536st1gRn7CvdTSWYo5KMRm5ANqG3tN3.x0Y4g8yP.ucx9ArV4n.poai0Abg;
+        path=/; expires=Mon, 28-Oct-24 15:40:00 GMT; domain=.api.openai.com; HttpOnly;
+        Secure; SameSite=None
+      - _cfuvid=xpJmtXJlWCD3x.W18BEKy17gxJ.9mgnqXsIneXyBz4g-1730128200298-0.0.1.1-604800000;
+        path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      access-control-expose-headers:
+      - X-Request-ID
+      alt-svc:
+      - h3=":443"; ma=86400
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '603'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-ratelimit-limit-requests:
+      - '5000'
+      x-ratelimit-limit-tokens:
+      - '4000000'
+      x-ratelimit-remaining-requests:
+      - '4999'
+      x-ratelimit-remaining-tokens:
+      - '3999972'
+      x-ratelimit-reset-requests:
+      - 12ms
+      x-ratelimit-reset-tokens:
+      - 0s
+      x-request-id:
+      - req_2b77d7adf58d65b3b2d316eb11e938d0
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"messages": [{"content": "Analyze the following food item: avocado", "role":
+      "user"}], "model": "gpt-3.5-turbo", "n": 1, "parallel_tool_calls": false, "stream":
+      false, "temperature": 0.0, "tool_choice": {"type": "function", "function": {"name":
+      "FoodAnalysis"}}, "tools": [{"type": "function", "function": {"name": "FoodAnalysis",
+      "description": "", "parameters": {"properties": {"name": {"description": "The
+      name of the food item", "type": "string"}, "healthy": {"description": "Whether
+      the food is good for you", "type": "boolean"}, "calories": {"description": "Estimated
+      calories per serving", "type": "integer"}, "taste_profile": {"description":
+      "List of taste characteristics", "items": {"type": "string"}, "type": "array"}},
+      "required": ["name", "healthy", "calories", "taste_profile"], "type": "object"}}}]}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '815'
+      content-type:
+      - application/json
+      host:
+      - api.openai.com
+      traceparent:
+      - 00-8e739601218a5e238f45c1862267408d-6cd1de584bf265c0-01
+      user-agent:
+      - OpenAI/Python 1.45.1
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.45.1
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.11.8
+    method: POST
+    uri: https://api.openai.com/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA2xSXWvbMBR9968Q99kpiZNsq9/KYKNrGXQUBquKkeUbW6ksudJ1WxPy34c/ajtp
+        /SAu9/icc78OAWOgMogZyEKQLCu9uPp9m3/3/+63T8X9zV4866h43d9d/9Hp358vELYMm+5R0jvr
+        Qtqy0kjKmh6WDgVhq7r6ul6uom/RZtMBpc1Qt7S8osX6Yrug2qV2sVxF24FZWCXRQ8weAsYYO3Rv
+        W6PJ8A1itgzfMyV6L3KEePyJMXBWtxkQ3itPwhCEEyitITRt2abWegaQtTqRQuvJuP8Os3galNA6
+        aejLjV9dq9c7Sp9zfZu+/bp8K0o/8+ulm6oraFcbOQ5oho/5+MyMMTCi7Lg/rM2ujNCNV+f6jIFw
+        eV2iobZ2OPCOxSHmIF6sFJnlEHIoUGgqGg4xuRpD3jZhnULPIY7Wm5ADCU+YVM7ulG75D7xbY9l0
+        /LQmQtfHpiZqODwe4aSUY/BZ/Dgbs8Nd7YUe5j/kj+NCtc0rZ1N/th/YKaN8kTgUvpsTeLJV7936
+        dA5Qn9wCVM6WFSVkn9C0gqvlcDgw3eqERpcDSJaEnrFG4EQvyZCE6o5lvE8pZIHZRF0Gs+Y+mn4m
+        0TeoTP5BJRiUwDeesEx2yuToKqfGYw6OwX8AAAD//wMAUqQiHMsDAAA=
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 8d9bdab63e9b09c3-HFA
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 28 Oct 2024 15:10:45 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=04o1spTymYPynetVm_TfpV3PD4Ty.Vmd.ZcQ_DwGyZQ-1730128245-1.0.1.1-pG7Aae0io4FZG77XzcKiGojs9E1X.P6sfqCqWDJ0Tz5eY5FEzLheqMXPREXNlaLNPph471PCDMptB9HmOi8l2g;
+        path=/; expires=Mon, 28-Oct-24 15:40:45 GMT; domain=.api.openai.com; HttpOnly;
+        Secure; SameSite=None
+      - _cfuvid=L9D7BMmrGnimlquPMY6VbQn3BRS2ksnMCDGO8JASz1I-1730128245189-0.0.1.1-604800000;
+        path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      access-control-expose-headers:
+      - X-Request-ID
+      alt-svc:
+      - h3=":443"; ma=86400
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '622'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-ratelimit-limit-requests:
+      - '5000'
+      x-ratelimit-limit-tokens:
+      - '4000000'
+      x-ratelimit-remaining-requests:
+      - '4999'
+      x-ratelimit-remaining-tokens:
+      - '3999972'
+      x-ratelimit-reset-requests:
+      - 12ms
+      x-ratelimit-reset-tokens:
+      - 0s
+      x-request-id:
+      - req_e9201833f6bd50aede01fe758d1cb502
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"messages": [{"content": "Analyze the following food item: avocado", "role":
+      "user"}], "model": "gpt-3.5-turbo", "n": 1, "parallel_tool_calls": false, "stream":
+      false, "temperature": 0.0, "tool_choice": {"type": "function", "function": {"name":
+      "FoodAnalysis"}}, "tools": [{"type": "function", "function": {"name": "FoodAnalysis",
+      "description": "", "parameters": {"properties": {"name": {"description": "The
+      name of the food item", "type": "string"}, "healthy": {"description": "Whether
+      the food is good for you", "type": "boolean"}, "calories": {"description": "Estimated
+      calories per serving", "type": "integer"}, "taste_profile": {"description":
+      "List of taste characteristics", "items": {"type": "string"}, "type": "array"}},
+      "required": ["name", "healthy", "calories", "taste_profile"], "type": "object"}}}]}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '815'
+      content-type:
+      - application/json
+      host:
+      - api.openai.com
+      traceparent:
+      - 00-9d731d0b37abcc2b08151bf0559dc3bc-33e334f38568044c-01
+      user-agent:
+      - OpenAI/Python 1.45.1
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.45.1
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.11.8
+    method: POST
+    uri: https://api.openai.com/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA2xSTW+bQBC98ytWc8YRtuO45ZZW6qVpouTQqAkRWpYBNl526e6QlFj+7xUfAeyE
+        w2o0j/fefO09xkCmEDIQBSdRVmpxeX1VvC5vePJmH/htQn+C8+TuRW7vq4urV/BbhkmeUdA760yY
+        slJI0ugeFhY5Yau63K6D5erLerPqgNKkqFpaXtFifbZZUG0TswiWq83ALIwU6CBkjx5jjO27t61R
+        p/gPQhb475kSneM5Qjj+xBhYo9oMcOekI64J/AkURhPqtmxdKzUDyBgVC67UZNx/+1k8DYorFf/M
+        7n7vttfPD9ltffH9fvft19vfkvBm5tdLN1VXUFZrMQ5oho/58MSMMdC87Lg/jEkvNVeNk+6Ezxhw
+        m9clamprh33UsSIII+AvRvDUROBHUCBXVDQRhGRr9KO2CWMlugjC1frcj4C4I4wrazKpWv5j1K2x
+        bDp+UhOh7WNdEzURPB3gqJSD91n8NBuzxax2XA3zH/KHcaHK5JU1iTvZD2RSS1fEFrnr5gSOTNV7
+        tz6dA9RHtwCVNWVFMZkd6lZwGQyHA9OtTujq6wCSIa5mrBE40otTJC67YxnvU3BRYDpRA2/W3EfT
+        zyT6BqXOP6h4gxK4xhGWcSZ1jraycjxm7+D9BwAA//8DAJWV2HbLAwAA
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 8d9bdd544a9209c3-HFA
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 28 Oct 2024 15:12:32 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=rPcWxarH1ZyY5UE7FgLJ5ezu4FIv5KgH8dbAqUv6oOo-1730128352-1.0.1.1-WWic0w0efblruH__Qu5zUXINCe6nUNJCUESIgx2CEC_Zy3wr5T.m8zHL.qnqocRrJsBmROUAuyXzCi5elJvJGw;
+        path=/; expires=Mon, 28-Oct-24 15:42:32 GMT; domain=.api.openai.com; HttpOnly;
+        Secure; SameSite=None
+      - _cfuvid=kGF_uus_oPiRUNSirc98RiGhSrgaD0PShmEWsMYtU0o-1730128352599-0.0.1.1-604800000;
+        path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      access-control-expose-headers:
+      - X-Request-ID
+      alt-svc:
+      - h3=":443"; ma=86400
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '540'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-ratelimit-limit-requests:
+      - '5000'
+      x-ratelimit-limit-tokens:
+      - '4000000'
+      x-ratelimit-remaining-requests:
+      - '4999'
+      x-ratelimit-remaining-tokens:
+      - '3999972'
+      x-ratelimit-reset-requests:
+      - 12ms
+      x-ratelimit-reset-tokens:
+      - 0s
+      x-request-id:
+      - req_8e6d1e90272811c2d8f5a20886ed97e6
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"messages": [{"content": "Analyze the following food item: avocado", "role":
+      "user"}], "model": "gpt-3.5-turbo", "n": 1, "parallel_tool_calls": false, "stream":
+      false, "temperature": 0.0, "tool_choice": {"type": "function", "function": {"name":
+      "FoodAnalysis"}}, "tools": [{"type": "function", "function": {"name": "FoodAnalysis",
+      "description": "", "parameters": {"properties": {"name": {"description": "The
+      name of the food item", "type": "string"}, "healthy": {"description": "Whether
+      the food is good for you", "type": "boolean"}, "calories": {"description": "Estimated
+      calories per serving", "type": "integer"}, "taste_profile": {"description":
+      "List of taste characteristics", "items": {"type": "string"}, "type": "array"}},
+      "required": ["name", "healthy", "calories", "taste_profile"], "type": "object"}}}]}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '815'
+      content-type:
+      - application/json
+      host:
+      - api.openai.com
+      traceparent:
+      - 00-4b27f13200ec1464838f6890834f9409-eaadbbe878c9ad2f-01
+      user-agent:
+      - OpenAI/Python 1.45.1
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.45.1
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.11.8
+    method: POST
+    uri: https://api.openai.com/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA2xS226bQBB95ytW84wjbMdqwltaqZWaNI2a1kkVIrSGMWyz7KDdIS2x/O8VlwB2
+        wsNqNIdzztx2nhCgUggFJLnkpCj17OL6Sj3RbbX+tLQ3a/pxv8Tnr3RxW6/1VQF+w6DNH0z4lXWS
+        UFFqZEWmgxOLkrFRnX9YBvPF2WmwaIGCUtQNLSt5tjxZzbiyG5oF88WqZ+akEnQQigdPCCF27dvU
+        aFL8B6EI/NdMgc7JDCEcfhICLOkmA9I55VgaBn8EEzKMpinbVFpPACbScSK1Ho27bzeJx0FJreOf
+        l9+UPfv1/ePfu5ffN6vV3eWXzfl9eT3x66Trsi1oW5lkGNAEH/LhkZkQYGTRcj8TpRdG6topd8QX
+        AqTNqgINN7XDLmpZEYQRyGdKZEoR+BHkKDXndQQh2wr9qGmCrEIXQbhYnvoRsHSMcWlpq3TDf4ja
+        NRZ1y99UzGi72FTMdQSPezgoZe+9Fz9OxmxxWzmp+/n3+f2wUE1ZaWnjjvYDW2WUy2OL0rVzAsdU
+        dt6NT+sA1cEtQGmpKDlmekLTCM6D/nBgvNURXZz3IBNLPWENwIFenCJL1R7LcJ+JTHJMR2rgTZp7
+        a/qeRNegMtkbFa9XAlc7xiLeKpOhLa0ajtnbe/8BAAD//wMA3GWoVcsDAAA=
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 8d9bde8d1af209bd-HFA
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 28 Oct 2024 15:13:22 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=tgPFKFKRyQ85UNMp2Rkm7XnlWvHLEeSGb8jYJhJGF.w-1730128402-1.0.1.1-85WrSOwEMxZNcEDe54asTWNbhriQCLAnSb20CE2gq2uh9Zpj6.uKN6gWzNU8Tm_Aaa5w4pwD4J.Vw.q1BaXWdw;
+        path=/; expires=Mon, 28-Oct-24 15:43:22 GMT; domain=.api.openai.com; HttpOnly;
+        Secure; SameSite=None
+      - _cfuvid=Ysml3YcUNmFOU2bzLb9Ss72aY3K2Rsf9s3bh4ugwr4M-1730128402697-0.0.1.1-604800000;
+        path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      access-control-expose-headers:
+      - X-Request-ID
+      alt-svc:
+      - h3=":443"; ma=86400
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '596'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-ratelimit-limit-requests:
+      - '5000'
+      x-ratelimit-limit-tokens:
+      - '4000000'
+      x-ratelimit-remaining-requests:
+      - '4999'
+      x-ratelimit-remaining-tokens:
+      - '3999972'
+      x-ratelimit-reset-requests:
+      - 12ms
+      x-ratelimit-reset-tokens:
+      - 0s
+      x-request-id:
+      - req_1cafcc091c56cff4ba3fbf9fbd54a38d
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"messages": [{"content": "Analyze the following food item: avocado", "role":
+      "user"}], "model": "gpt-3.5-turbo", "n": 1, "parallel_tool_calls": false, "stream":
+      false, "temperature": 0.0, "tool_choice": {"type": "function", "function": {"name":
+      "FoodAnalysis"}}, "tools": [{"type": "function", "function": {"name": "FoodAnalysis",
+      "description": "", "parameters": {"properties": {"name": {"description": "The
+      name of the food item", "type": "string"}, "healthy": {"description": "Whether
+      the food is good for you", "type": "boolean"}, "calories": {"description": "Estimated
+      calories per serving", "type": "integer"}, "taste_profile": {"description":
+      "List of taste characteristics", "items": {"type": "string"}, "type": "array"}},
+      "required": ["name", "healthy", "calories", "taste_profile"], "type": "object"}}}]}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '815'
+      content-type:
+      - application/json
+      host:
+      - api.openai.com
+      traceparent:
+      - 00-131e6bcf939e9ccfbce70a9318ae617b-8cfbfa88fa9d9fe7-01
+      user-agent:
+      - OpenAI/Python 1.45.1
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.45.1
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.11.8
+    method: POST
+    uri: https://api.openai.com/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA2xSTW+bQBC98ytWc7YjwLHTcosqu2pk9RJVShoitF7GsPayi3YHq8jyf6/4CGAn
+        HFajebz35uvsMQYyhYiByDmJolTzx99bLdfPT/7BvsgDbR9O2zBfP/0IN+vtL5g1DLM7oKAP1p0w
+        RamQpNEdLCxywkY1eFj4QfjtIfBboDApqoaWlTRf3C3nVNmdmftBuOyZuZECHUTszWOMsXP7NjXq
+        FP9BxFqdNlOgczxDiIafGANrVJMB7px0xDXBbASF0YS6KVtXSk0AMkYlgis1GnffeRKPg+JKJS/1
+        8wJXGx6sjsfi7/1p9efwuvypXid+nXRdtgXtKy2GAU3wIR/dmDEGmhctd2NM+qi5qp10N3zGgNus
+        KlBTUzuc45YVQxQDPxnBUxPDLIYcuaK8jiEiW+EsbpowVqKLIQoX97MYiDvCpLRmL1XDf4vbNRZ1
+        y99VRGi7WFdEdQzvF7gq5eJ9Fb9PxmxxXzmu+vn3+cuwUGWy0pqdu9kP7KWWLk8sctfOCRyZsvNu
+        fFoHqK5uAUpripISMkfUjWDg94cD462OaPi9B8kQVxPWAFzpJSkSl+2xDPcpuMgxHam+N2nus+lX
+        El2DUmefVLxeCVztCItkL3WGtrRyOGbv4v0HAAD//wMA0qjnPMsDAAA=
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 8d9be6167e7609bd-HFA
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 28 Oct 2024 15:18:31 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=1ja6qARE11yQxbhdZNyG0KMzpX_0AuXWPLJFPM4R0HE-1730128711-1.0.1.1-.H_qusyYw_ZeMIT0SbDiOsf2AnSpiOscamfI0RsuYmT7cF_RnaP8KRmI1cqbO65_iKP.z7fanBnAz1eCaS6EJA;
+        path=/; expires=Mon, 28-Oct-24 15:48:31 GMT; domain=.api.openai.com; HttpOnly;
+        Secure; SameSite=None
+      - _cfuvid=t4MFx0rPCKw8tmZ7hq32XQ61vhC4BlmJmuDUA2eSwoA-1730128711374-0.0.1.1-604800000;
+        path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      access-control-expose-headers:
+      - X-Request-ID
+      alt-svc:
+      - h3=":443"; ma=86400
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '568'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-ratelimit-limit-requests:
+      - '5000'
+      x-ratelimit-limit-tokens:
+      - '4000000'
+      x-ratelimit-remaining-requests:
+      - '4999'
+      x-ratelimit-remaining-tokens:
+      - '3999972'
+      x-ratelimit-reset-requests:
+      - 12ms
+      x-ratelimit-reset-tokens:
+      - 0s
+      x-request-id:
+      - req_f783226728f5016d5fbd4fc3032f0b67
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"messages": [{"content": "Analyze the following food item: avocado", "role":
+      "user"}], "model": "gpt-3.5-turbo", "n": 1, "parallel_tool_calls": false, "stream":
+      false, "temperature": 0.0, "tool_choice": {"type": "function", "function": {"name":
+      "FoodAnalysis"}}, "tools": [{"type": "function", "function": {"name": "FoodAnalysis",
+      "description": "", "parameters": {"properties": {"name": {"description": "The
+      name of the food item", "type": "string"}, "healthy": {"description": "Whether
+      the food is good for you", "type": "boolean"}, "calories": {"description": "Estimated
+      calories per serving", "type": "integer"}, "taste_profile": {"description":
+      "List of taste characteristics", "items": {"type": "string"}, "type": "array"}},
+      "required": ["name", "healthy", "calories", "taste_profile"], "type": "object"}}}]}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '815'
+      content-type:
+      - application/json
+      host:
+      - api.openai.com
+      traceparent:
+      - 00-8e7c9f91a983b85b415465a19a4eee7e-892e96435ba6994e-01
+      user-agent:
+      - OpenAI/Python 1.45.1
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.45.1
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.11.8
+    method: POST
+    uri: https://api.openai.com/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA2xSy27bMBC86yuIPcuBZTtJq1uC1kFbtygSNEAbBQJN0RJTkquSq6Cq4X8v9Igk
+        O9GBWOxoZva1DxgDlUHMQBSchCn17OrbBj9Vm2vzVUT61z/1+c9zfmcu7tYfV9/vIWwYuH2Sgl5Y
+        ZwJNqSUptB0snOQkG9XocjmPFu8uVxctYDCTuqHlJc2WZ+czqtwWZ/Nocd4zC1RCeojZQ8AYY/v2
+        bWq0mfwLMZuHLxkjvee5hHj4iTFwqJsMcO+VJ24JwhEUaEnapmxbaT0BCFGngms9GnfffhKPg+Ja
+        pz8ys46e7/kHceOfIrO5uf1i9c/b64lfJ12XbUG7yophQBN8yMcnZoyB5ablrhGzK8t17ZU/4TMG
+        3OWVkZaa2mGftKwE4gT4MwqeYQJhAoXkmoo6gZhcJcOkaQKdkj6BeLFchQkQ9yTT0uFO6Yb/kLRr
+        NHXL31ZE0nWxrYjqBB4PcFTKIXgrfpyM2cld5bnu59/nD8NCNealw60/2Q/slFW+SJ3kvp0TeMKy
+        8258Wgeojm4BSoempJTwt7SNYDTvDwfGWx3RxfseJCSuJ6wBONJLM0lctccy3KfgopDZSJ0Hk+Ze
+        m74l0TWobP5KJeiVwNeepEl3yubSlU4Nxxwcgv8AAAD//wMAg5DfvMsDAAA=
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 8d9be6f65c2309c9-HFA
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 28 Oct 2024 15:19:06 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=VaRkzP_Me0OCqAsHj3erJS_iejg8YI6lu8E8H1KWEGg-1730128746-1.0.1.1-wyyzi1.zgICIsNzyjsO3PenA97wsfsccJ_pxIKyeCvfKTLc9gWnvQdRl41Mh1M7K1vVcmbsUek4GoZMOWnsr7w;
+        path=/; expires=Mon, 28-Oct-24 15:49:06 GMT; domain=.api.openai.com; HttpOnly;
+        Secure; SameSite=None
+      - _cfuvid=FLXaRJYHZO9_5lETdQylP5aKZK4fe4iVTMQl3vxf6sM-1730128746788-0.0.1.1-604800000;
+        path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      access-control-expose-headers:
+      - X-Request-ID
+      alt-svc:
+      - h3=":443"; ma=86400
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '556'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-ratelimit-limit-requests:
+      - '5000'
+      x-ratelimit-limit-tokens:
+      - '4000000'
+      x-ratelimit-remaining-requests:
+      - '4999'
+      x-ratelimit-remaining-tokens:
+      - '3999972'
+      x-ratelimit-reset-requests:
+      - 12ms
+      x-ratelimit-reset-tokens:
+      - 0s
+      x-request-id:
+      - req_c7ae850e2f1eaff8638d5960377df7ea
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"messages": [{"content": "Analyze the following food item: avocado", "role":
+      "user"}], "model": "gpt-3.5-turbo", "n": 1, "parallel_tool_calls": false, "stream":
+      false, "temperature": 0.0, "tool_choice": {"type": "function", "function": {"name":
+      "FoodAnalysis"}}, "tools": [{"type": "function", "function": {"name": "FoodAnalysis",
+      "description": "", "parameters": {"properties": {"name": {"description": "The
+      name of the food item", "type": "string"}, "healthy": {"description": "Whether
+      the food is good for you", "type": "boolean"}, "calories": {"description": "Estimated
+      calories per serving", "type": "integer"}, "taste_profile": {"description":
+      "List of taste characteristics", "items": {"type": "string"}, "type": "array"}},
+      "required": ["name", "healthy", "calories", "taste_profile"], "type": "object"}}}]}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '815'
+      content-type:
+      - application/json
+      host:
+      - api.openai.com
+      traceparent:
+      - 00-8e2ea4ebd26d11ce9946f9abc771c3f2-625ce5f2a82165a1-01
+      user-agent:
+      - OpenAI/Python 1.45.1
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.45.1
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.11.8
+    method: POST
+    uri: https://api.openai.com/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA2xSTW+bQBC98ytWc7YjbNdyyi2KkkMUpY3aypVChNbLAGsvO3R3qEos//cKcDB2
+        wmE1msd7b772gRCgU4gEqEKyKiszvXl6pK2/R31bbdc/vWwev89/l9n1+ln92sGkZdBmi4rfWVeK
+        ysoga7I9rBxKxlZ1tlqEs/n1arXogJJSNC0tr3i6uFpOuXYbmoaz+fLILEgr9BCJl0AIIfbd29Zo
+        U/wHkQgn75kSvZc5QjT8JAQ4Mm0GpPfas7QMkxOoyDLatmxbGzMCmMgkShpzMu6//Sg+DUoak8gd
+        /fizdg9v4VtKyzS7e3r4Vprb55FfL91UXUFZbdUwoBE+5KMLMyHAyrLj3hOlN1aaxmt/wRcCpMvr
+        Ei23tcM+7lgxRDHIv6RkSjFMYihQGi6aGCJ2NU7itglyGn0M0XzxZRIDS8+YVI4ybVr+S9ytsWw6
+        /qZmRtfHtmZuYng9wFkph+Cz+HU0ZodZ7aU5zv+YPwwLNZRXjjb+Yj+Qaat9kTiUvpsTeKaq9259
+        Ogeoz24BKkdlxQnTDm0rOAuPhwOnWz2h869HkImlGbEG4EwvSZGl7o5luE8lVYHpiRoGo+Y+mn4m
+        0Teobf5BJTgqgW88Y5lk2uboKqeHYw4OwX8AAAD//wMAmcj4iMsDAAA=
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 8d9be79e6a2009c3-HFA
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 28 Oct 2024 15:19:33 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=SoE9plQrsOWEK3L4hMPkOhKWdeSQH4exw10Oa6El2mo-1730128773-1.0.1.1-c0qODnPNYYS_QwtzCNirpnrIPb_82Kv.teVu5r883kyypemJxfGm5i4tEXwdmk0HjHGlpuBcfOhvJ9BSSA3ZmQ;
+        path=/; expires=Mon, 28-Oct-24 15:49:33 GMT; domain=.api.openai.com; HttpOnly;
+        Secure; SameSite=None
+      - _cfuvid=zuYNEzXgtsSVKcTdqMj9LRkSRHEZIesSG722.KsIulI-1730128773699-0.0.1.1-604800000;
+        path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      access-control-expose-headers:
+      - X-Request-ID
+      alt-svc:
+      - h3=":443"; ma=86400
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '590'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-ratelimit-limit-requests:
+      - '5000'
+      x-ratelimit-limit-tokens:
+      - '4000000'
+      x-ratelimit-remaining-requests:
+      - '4999'
+      x-ratelimit-remaining-tokens:
+      - '3999972'
+      x-ratelimit-reset-requests:
+      - 12ms
+      x-ratelimit-reset-tokens:
+      - 0s
+      x-request-id:
+      - req_e572007b05c823cc645cc36d1869d771
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"messages": [{"content": "Analyze the following food item: avocado", "role":
+      "user"}], "model": "gpt-3.5-turbo", "n": 1, "parallel_tool_calls": false, "stream":
+      false, "temperature": 0.0, "tool_choice": {"type": "function", "function": {"name":
+      "FoodAnalysis"}}, "tools": [{"type": "function", "function": {"name": "FoodAnalysis",
+      "description": "", "parameters": {"properties": {"name": {"description": "The
+      name of the food item", "type": "string"}, "healthy": {"description": "Whether
+      the food is good for you", "type": "boolean"}, "calories": {"description": "Estimated
+      calories per serving", "type": "integer"}, "taste_profile": {"description":
+      "List of taste characteristics", "items": {"type": "string"}, "type": "array"}},
+      "required": ["name", "healthy", "calories", "taste_profile"], "type": "object"}}}]}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '815'
+      content-type:
+      - application/json
+      host:
+      - api.openai.com
+      traceparent:
+      - 00-138f67c0003888f125c384961a6c42a5-0ba0fe416b04778b-01
+      user-agent:
+      - OpenAI/Python 1.45.1
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.45.1
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.11.8
+    method: POST
+    uri: https://api.openai.com/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA2xSy27bMBC86yuIPcuB/Kpj3YI2RdEmzSFpijYKBJpaS3QpUiBXSRTD/17oEUl2
+        ogOx2NHM7GvvMQYygZCByDiJvFCTi59XxeKH/CXu7ovy8uW6uvl+s7tePbs/z5f34NcMs9mhoDfW
+        mTB5oZCk0S0sLHLCWnW6mgfT2flqvWiA3CSoalpa0GR+tpxQaTdmEkxny46ZGSnQQcgePMYY2zdv
+        XaNO8AVCFvhvmRyd4ylC2P/EGFij6gxw56Qjrgn8ARRGE+q6bF0qNQLIGBULrtRg3H77UTwMiisV
+        b5afv/zdrc9Xv/HT4vbb61X2VN2tb4ORXytdFU1B21KLfkAjvM+HJ2aMgeZ5w/1qTHKhuaqcdCd8
+        xoDbtMxRU1077KOGFUEYAX8ygicmAj+CDLmirIogJFuiH9VNGCvRRRDO5gs/AuKOMC6s2UpV8x+i
+        Zo151fA3JRHaNtYlURXB4wGOSjl4H8WPozFb3JaOq27+Xf7QL1SZtLBm4072A1uppctii9w1cwJH
+        pmi9a5/GAcqjW4DCmrygmMw/1LXgNOgOB4ZbHdDZugPJEFcjVg8c6cUJEpfNsfT3KbjIMBmogTdq
+        7r3pRxJtg1Kn71S8Tglc5QjzeCt1irawsj9m7+D9BwAA//8DAC+mp7DLAwAA
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 8d9be8222d5309c7-HFA
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 28 Oct 2024 15:19:55 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=4TXf1aum5e86if0SjWiGPLw91K1kfuQbxgJiIk.qUP4-1730128795-1.0.1.1-I76foJnIORCALJBC9iK8m82N1HGqWl8ZwBcUMniW8PV6D6PqFgcvxVaRTGdP4dYpwdWaIDLeg4tHKiZZJd1jDA;
+        path=/; expires=Mon, 28-Oct-24 15:49:55 GMT; domain=.api.openai.com; HttpOnly;
+        Secure; SameSite=None
+      - _cfuvid=u..TV7R81grRTpc1snDvTPGhxMq797zOUoqrbenpR2E-1730128795383-0.0.1.1-604800000;
+        path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      access-control-expose-headers:
+      - X-Request-ID
+      alt-svc:
+      - h3=":443"; ma=86400
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '1180'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-ratelimit-limit-requests:
+      - '5000'
+      x-ratelimit-limit-tokens:
+      - '4000000'
+      x-ratelimit-remaining-requests:
+      - '4999'
+      x-ratelimit-remaining-tokens:
+      - '3999972'
+      x-ratelimit-reset-requests:
+      - 12ms
+      x-ratelimit-reset-tokens:
+      - 0s
+      x-request-id:
+      - req_630208ef0fa25e6e33c28aa639ea272a
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"messages": [{"content": "Analyze the following food item: avocado", "role":
+      "user"}], "model": "gpt-3.5-turbo", "n": 1, "parallel_tool_calls": false, "stream":
+      false, "temperature": 0.0, "tool_choice": {"type": "function", "function": {"name":
+      "FoodAnalysis"}}, "tools": [{"type": "function", "function": {"name": "FoodAnalysis",
+      "description": "", "parameters": {"properties": {"name": {"description": "The
+      name of the food item", "type": "string"}, "healthy": {"description": "Whether
+      the food is good for you", "type": "boolean"}, "calories": {"description": "Estimated
+      calories per serving", "type": "integer"}, "taste_profile": {"description":
+      "List of taste characteristics", "items": {"type": "string"}, "type": "array"}},
+      "required": ["name", "healthy", "calories", "taste_profile"], "type": "object"}}}]}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '815'
+      content-type:
+      - application/json
+      host:
+      - api.openai.com
+      traceparent:
+      - 00-a072a20962ae49a8651b34bede3bd6d6-f7843e6a8e2d1800-01
+      user-agent:
+      - OpenAI/Python 1.45.1
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.45.1
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.11.8
+    method: POST
+    uri: https://api.openai.com/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA2xSTW+bQBC98ytWc8aRbRrZ4RZZivqRRunFVRsitF7GsMmyQ3aHKsTyf6/ABGMn
+        HFajebz35msXCAE6g1iAKiSrsjKT67vbl/X937vVn+KFfq+W9z/LxbelK/T3N7yEsGXQ5gkVv7Mu
+        FJWVQdZkD7ByKBlb1dkims7my+Uy6oCSMjQtLa94El1cTrh2G5pMZ/NeWBWkFXqIxUMghBC77m1r
+        tBm+Qiym4XumRO9ljhAPPwkBjkybAem99iwtQ3gEFVlG25Zta2NGABOZVEljjsaHbzeKj4OSxqS/
+        zPamXqypWa+unmevb9HT1+iHv5Ujv4N0U3UFbWurhgGN8CEfn5kJAVaWHfeGKLu20jRe+zO+ECBd
+        Xpdoua0ddknHSiBOQP4jJTNKIEygQGm4aBKI2dUYJm0T5DT6BOJ59CVMgKVnTCtHW21a/kPSrbFs
+        Ov6mZkZ3iEttsgQe93BSyT74LH4cTdnhtvbS9OPv8/thn4byytHGn60HttpqX6QOpe/GBJ6pOni3
+        Pp0D1CenAJWjsuKU6RltKzib9ncDx1M9ovOrHmRiaUasATjRSzNkqbtbGc5TSVVgdqROg1FzH00/
+        kzg0qG3+QSXolcA3nrFMt9rm6Cqnh1sO9sF/AAAA//8DADd/D2PKAwAA
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 8d9bea50bfeb09c7-HFA
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 28 Oct 2024 15:21:24 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=04mEjIoexwt3wrpZNgl4ORxDb2YtIxB6SsqBSGw7jqw-1730128884-1.0.1.1-tv9m7c0.kHdKA7kZNiXpBRRnw2wzEcl1_LtRNg3OiE.bc0xTDFRdjZ5mSjbEO..pW9XwdcYrh0prPeX4c8jkfg;
+        path=/; expires=Mon, 28-Oct-24 15:51:24 GMT; domain=.api.openai.com; HttpOnly;
+        Secure; SameSite=None
+      - _cfuvid=M4_EYj0E_zl2oVkNlpLN2.i2h5n4htqTAl._SADUbnI-1730128884124-0.0.1.1-604800000;
+        path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      access-control-expose-headers:
+      - X-Request-ID
+      alt-svc:
+      - h3=":443"; ma=86400
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '559'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-ratelimit-limit-requests:
+      - '5000'
+      x-ratelimit-limit-tokens:
+      - '4000000'
+      x-ratelimit-remaining-requests:
+      - '4999'
+      x-ratelimit-remaining-tokens:
+      - '3999972'
+      x-ratelimit-reset-requests:
+      - 12ms
+      x-ratelimit-reset-tokens:
+      - 0s
+      x-request-id:
+      - req_fd8083dd723af0d0badb78b9602b47d6
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"messages": [{"content": "Analyze the following food item: avocado", "role":
+      "user"}], "model": "gpt-3.5-turbo", "n": 1, "parallel_tool_calls": false, "stream":
+      false, "temperature": 0.0, "tool_choice": {"type": "function", "function": {"name":
+      "FoodAnalysis"}}, "tools": [{"type": "function", "function": {"name": "FoodAnalysis",
+      "description": "", "parameters": {"properties": {"name": {"description": "The
+      name of the food item", "type": "string"}, "healthy": {"description": "Whether
+      the food is good for you", "type": "boolean"}, "calories": {"description": "Estimated
+      calories per serving", "type": "integer"}, "taste_profile": {"description":
+      "List of taste characteristics", "items": {"type": "string"}, "type": "array"}},
+      "required": ["name", "healthy", "calories", "taste_profile"], "type": "object"}}}]}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '815'
+      content-type:
+      - application/json
+      host:
+      - api.openai.com
+      traceparent:
+      - 00-2a8b9a5ef368529bc97df71a5203c9ea-50b58c2286de708e-01
+      user-agent:
+      - OpenAI/Python 1.45.1
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.45.1
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.11.8
+    method: POST
+    uri: https://api.openai.com/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA2xS226bQBB95ytW84wjG9tyzVukNKrayFVbyaoSIrRexrDOskt3h9TU8r9XXALY
+        CQ+r0RzOOXM7eYyBTCBkIDJOIi/U5Hbz8Mf8eny42yy+pKv54+Hvvf0mtvJf+vlQgl8zzO6Agt5Y
+        N8LkhUKSRrewsMgJa9XZaj6dBZ/W06ABcpOgqmlpQZP5zXJCpd2ZyXQWLDtmZqRAByF78hhj7NS8
+        dY06wSOEbOq/ZXJ0jqcIYf8TY2CNqjPAnZOOuCbwB1AYTajrsnWp1AggY1QsuFKDcfudRvEwKK5U
+        vNyo8i74Ptdf17PX7c/tj98vx9VxoUZ+rXRVNAXtSy36AY3wPh9emTEGmucN996Y5FZzVTnprviM
+        AbdpmaOmunY4RQ0rgjAC/moET0wEfgQZckVZFUFItkQ/qpswVqKLIAzmCz8C4o4wLqzZS1Xzn6Jm
+        jXnV8HclEdo21iVRFcHzGS5KOXsfxc+jMVvcl46rbv5d/twvVJm0sGbnrvYDe6mly2KL3DVzAkem
+        aL1rn8YByotbgMKavKCYzAvqWnA27Q4Hhlsd0GDdgWSIqxGrBy704gSJy+ZY+vsUXGSYDNSpN2ru
+        velHEm2DUqfvVLxOCVzlCPN4L3WKtrCyP2bv7P0HAAD//wMAr3aIr8sDAAA=
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 8d9beac49d4209cb-HFA
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 28 Oct 2024 15:21:42 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=SFAV3bYLpdQ1QA4B22dghY6EMnL5mpxOaX0eH5hWJTE-1730128902-1.0.1.1-C34bRbQ8JdalhQOAuFv1LXILxmom6ug0J6o4qqGUXk0cPhxtRoBGOZrd5X6inp2Iw3pZbGZxtkq71kuZIaDrwQ;
+        path=/; expires=Mon, 28-Oct-24 15:51:42 GMT; domain=.api.openai.com; HttpOnly;
+        Secure; SameSite=None
+      - _cfuvid=yDeP.4d9CnQSaMa1MkXT_vupIE_yb2EfX6Xsuvw77Ys-1730128902800-0.0.1.1-604800000;
+        path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      access-control-expose-headers:
+      - X-Request-ID
+      alt-svc:
+      - h3=":443"; ma=86400
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '663'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-ratelimit-limit-requests:
+      - '5000'
+      x-ratelimit-limit-tokens:
+      - '4000000'
+      x-ratelimit-remaining-requests:
+      - '4999'
+      x-ratelimit-remaining-tokens:
+      - '3999972'
+      x-ratelimit-reset-requests:
+      - 12ms
+      x-ratelimit-reset-tokens:
+      - 0s
+      x-request-id:
+      - req_a4c6a7fd079b1fba93b09ffc8b0cf6a9
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"messages": [{"content": "Analyze the following food item: avocado", "role":
+      "user"}], "model": "gpt-3.5-turbo", "n": 1, "parallel_tool_calls": false, "stream":
+      false, "temperature": 0.0, "tool_choice": {"type": "function", "function": {"name":
+      "FoodAnalysis"}}, "tools": [{"type": "function", "function": {"name": "FoodAnalysis",
+      "description": "", "parameters": {"properties": {"name": {"description": "The
+      name of the food item", "type": "string"}, "healthy": {"description": "Whether
+      the food is good for you", "type": "boolean"}, "calories": {"description": "Estimated
+      calories per serving", "type": "integer"}, "taste_profile": {"description":
+      "List of taste characteristics", "items": {"type": "string"}, "type": "array"}},
+      "required": ["name", "healthy", "calories", "taste_profile"], "type": "object"}}}]}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '815'
+      content-type:
+      - application/json
+      host:
+      - api.openai.com
+      traceparent:
+      - 00-16e26a5d34796cebbbf4f35c85b9e629-0d6d4f44a1f3ffe6-01
+      user-agent:
+      - OpenAI/Python 1.45.1
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.45.1
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.11.8
+    method: POST
+    uri: https://api.openai.com/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA2xS22rbQBB911cs8ywHy25IrDeX3KBpoYEWShTEejWSNt2L2B2lVYz/PegSSXai
+        h2WYo3PO3PYBYyAziBmIkpPQlVpsf9y7zeYu16+vNa53pdr+5NeX3//dcXURQdgy7O4ZBb2zzoTV
+        lUKS1vSwcMgJW9XoYr2MVpeb1boDtM1QtbSiosX67HxBtdvZxTJanQ/M0kqBHmL2GDDG2L572xpN
+        hv8hZsvwPaPRe14gxONPjIGzqs0A91564oYgnEBhDaFpyza1UjOArFWp4EpNxv23n8XToLhS6a9M
+        30Qvv/mVuPXPkb6/ffhm1J+HrzO/XrqpuoLy2ohxQDN8zMcnZoyB4brj3libbQ1XjZf+hM8YcFfU
+        Gg21tcM+6VgJxAnwFyt4ZhMIEyiRKyqbBGJyNYZJ24R1En0C8Wr9JUyAuCdMK2dzqVr+Y9KtUTcd
+        f1cToetjUxM1CTwd4KiUQ/BZ/DQbs8O89lwN8x/yh3GhyhaVszt/sh/IpZG+TB1y380JPNmq9259
+        Ogeoj24BKmd1RSnZv2hawWg5HA5Mtzqhq80AkiWuZqwRONJLMyQuu2MZ71NwUWI2UZfBrLmPpp9J
+        9A1KU3xQCQYl8I0n1GkuTYGucnI85uAQvAEAAP//AwB7yOAzywMAAA==
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 8d9beb4b987309c9-HFA
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 28 Oct 2024 15:22:04 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=NPrmjhsRWAbLXJ2KyuPND9BlAe0dI5Iv6N13PQVk9N4-1730128924-1.0.1.1-eZ2qKyTXIKm02Tv_6r_tIVLbXNkeBkRyyTkLkj.nZeJCpo3l1ImnACenx597hToLPAvIwsuRixN4hpDgnecdVw;
+        path=/; expires=Mon, 28-Oct-24 15:52:04 GMT; domain=.api.openai.com; HttpOnly;
+        Secure; SameSite=None
+      - _cfuvid=6NmnOaww3lK6Fuqs4CkIv0y9YYQPMzr5zZMpXa7mAuw-1730128924393-0.0.1.1-604800000;
+        path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      access-control-expose-headers:
+      - X-Request-ID
+      alt-svc:
+      - h3=":443"; ma=86400
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '691'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-ratelimit-limit-requests:
+      - '5000'
+      x-ratelimit-limit-tokens:
+      - '4000000'
+      x-ratelimit-remaining-requests:
+      - '4999'
+      x-ratelimit-remaining-tokens:
+      - '3999972'
+      x-ratelimit-reset-requests:
+      - 12ms
+      x-ratelimit-reset-tokens:
+      - 0s
+      x-request-id:
+      - req_3fe88b7fb85ffd37e8cd8092dc5b2d87
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"messages": [{"content": "Analyze the following food item: avocado", "role":
+      "user"}], "model": "gpt-3.5-turbo", "n": 1, "parallel_tool_calls": false, "stream":
+      false, "temperature": 0.0, "tool_choice": {"type": "function", "function": {"name":
+      "FoodAnalysis"}}, "tools": [{"type": "function", "function": {"name": "FoodAnalysis",
+      "description": "", "parameters": {"properties": {"name": {"description": "The
+      name of the food item", "type": "string"}, "healthy": {"description": "Whether
+      the food is good for you", "type": "boolean"}, "calories": {"description": "Estimated
+      calories per serving", "type": "integer"}, "taste_profile": {"description":
+      "List of taste characteristics", "items": {"type": "string"}, "type": "array"}},
+      "required": ["name", "healthy", "calories", "taste_profile"], "type": "object"}}}]}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '815'
+      content-type:
+      - application/json
+      host:
+      - api.openai.com
+      traceparent:
+      - 00-ee40069b95fac4de5be3a21e465ebcf6-3ea2b327b34b80b6-01
+      user-agent:
+      - OpenAI/Python 1.45.1
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.45.1
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.11.8
+    method: POST
+    uri: https://api.openai.com/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA2xS226bQBB95ytW84wjsGM15s2p1MhqUqkPrSqFCK2XMWy9F7o7VKGW/73iEsBO
+        eFiN5nDOmdspYAxkDgkDUXISulKL7bdHv37YfV3j7l7r40rVP9z2++tWxlJ8hrBl2P1vFPTGuhFW
+        VwpJWtPDwiEnbFXjT6soXt5t7uIO0DZH1dKKiharm/WCare3iyhergdmaaVADwl7Dhhj7NS9bY0m
+        x1dIWBS+ZTR6zwuEZPyJMXBWtRng3ktP3BCEEyisITRt2aZWagaQtSoTXKnJuP9Os3gaFFcq+7PW
+        Uvy7fcWnY7R52G1+/awfy9VTOfPrpZuqK+hQGzEOaIaP+eTKjDEwXHfcL9bmW8NV46W/4jMG3BW1
+        RkNt7XBKO1YKSQr8rxU8tymEKZTIFZVNCgm5GsO0bcI6iT6FZLm6DVMg7gmzytmDVC3/Oe3WqJuO
+        v6+J0PWxqYmaFF7OcFHKOfgofpmN2eGh9lwN8x/y53GhyhaVs3t/tR84SCN9mTnkvpsTeLJV7936
+        dA5QX9wCVM7qijKyRzStYBwNhwPTrU7ocjOAZImrGWsELvSyHInL7ljG+xRclJhP1CiYNffe9COJ
+        vkFpincqwaAEvvGEOjtIU6CrnByPOTgH/wEAAP//AwDIj6nQywMAAA==
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 8d9becb45fe509cb-HFA
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 28 Oct 2024 15:23:02 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=sKRS6NHY.jv8Gx7Ik1rg42Pko_T3_ydD5OKyH2sbppw-1730128982-1.0.1.1-mFtkRgpkwbizE9LIRnvurqMmfBen1xk9pm2VkWWOBseQSyLYI0KuL244l1ZAmCz1pFNa07V6f0iFYFYJnV4vXg;
+        path=/; expires=Mon, 28-Oct-24 15:53:02 GMT; domain=.api.openai.com; HttpOnly;
+        Secure; SameSite=None
+      - _cfuvid=wbYOdCwA_hpdZHfFBE2BGyAXhq9k0Odxlv8fiZylvIM-1730128982086-0.0.1.1-604800000;
+        path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      access-control-expose-headers:
+      - X-Request-ID
+      alt-svc:
+      - h3=":443"; ma=86400
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '664'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-ratelimit-limit-requests:
+      - '5000'
+      x-ratelimit-limit-tokens:
+      - '4000000'
+      x-ratelimit-remaining-requests:
+      - '4999'
+      x-ratelimit-remaining-tokens:
+      - '3999972'
+      x-ratelimit-reset-requests:
+      - 12ms
+      x-ratelimit-reset-tokens:
+      - 0s
+      x-request-id:
+      - req_513f8b9665c182ce1bb252aca4c360b4
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"messages": [{"content": "Analyze the following food item: avocado", "role":
+      "user"}], "model": "gpt-3.5-turbo", "n": 1, "parallel_tool_calls": false, "stream":
+      false, "temperature": 0.0, "tool_choice": {"type": "function", "function": {"name":
+      "FoodAnalysis"}}, "tools": [{"type": "function", "function": {"name": "FoodAnalysis",
+      "description": "", "parameters": {"properties": {"name": {"description": "The
+      name of the food item", "type": "string"}, "healthy": {"description": "Whether
+      the food is good for you", "type": "boolean"}, "calories": {"description": "Estimated
+      calories per serving", "type": "integer"}, "taste_profile": {"description":
+      "List of taste characteristics", "items": {"type": "string"}, "type": "array"}},
+      "required": ["name", "healthy", "calories", "taste_profile"], "type": "object"}}}]}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '815'
+      content-type:
+      - application/json
+      host:
+      - api.openai.com
+      traceparent:
+      - 00-5f9501cac0e95bd30b1bd93264e6ae75-d7352b56a46369ae-01
+      user-agent:
+      - OpenAI/Python 1.45.1
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.45.1
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.11.8
+    method: POST
+    uri: https://api.openai.com/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA2xSTW+jMBC98yusOZMK8lWVW6SqvXR72bbabqmQYybgxtjIHtJFUf77io8CScvB
+        Gs3jvTdfR48xkClEDETOSRSlmm0eH9zn46+NpXp/e8DbhyepX663q8/nF/EEfsMw2w8U9MW6EqYo
+        FZI0uoOFRU7YqIbXiyCc3wSLZQsUJkXV0LKSZour1YwquzWzIJyvemZupEAHEXvzGGPs2L5NjTrF
+        fxCxwP/KFOgczxCi4SfGwBrVZIA7Jx1xTeCPoDCaUDdl60qpCUDGqERwpUbj7jtO4nFQXKnkT/17
+        ges7Hq73++Lv8rB+/nhd3avXiV8nXZdtQbtKi2FAE3zIRxdmjIHmRcu9MybdaK5qJ90FnzHgNqsK
+        1NTUDse4ZcUQxcAPRvDUxODHkCNXlNcxRGQr9OOmCWMluhii+WLpx0DcESalNTupGv5b3K6xqFv+
+        tiJC28W6IqpjeD/BWSkn76f4fTJmi7vKcdXPv8+fhoUqk5XWbN3FfmAntXR5YpG7dk7gyJSdd+PT
+        OkB1dgtQWlOUlJDZo24Ew6A/HBhvdUTnNz1IhriasAbgTC9Jkbhsj2W4T8FFjulIDbxJc99Nf5Lo
+        GpQ6+6bi9UrgakdYJDupM7SllcMxeyfvPwAAAP//AwCtsfkdywMAAA==
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 8d9bedff3d7009bf-HFA
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 28 Oct 2024 15:23:54 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=wPIZwe1E33GqlxLoj.WW5v4pp6imrKtvfslWnypS9Jw-1730129034-1.0.1.1-Qi5keuGous_.oR5vzFEit4TSdI5p7zMk.SWjEu0srejeOpG8n4yMLMHZ5KjaT9q.2sD18X_M7kM0uBhdwtjkug;
+        path=/; expires=Mon, 28-Oct-24 15:53:54 GMT; domain=.api.openai.com; HttpOnly;
+        Secure; SameSite=None
+      - _cfuvid=62EuEpDtqNr9TO6.7zc06395Wwr7emj9pKP5ZWsGnZA-1730129034994-0.0.1.1-604800000;
+        path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      access-control-expose-headers:
+      - X-Request-ID
+      alt-svc:
+      - h3=":443"; ma=86400
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '625'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-ratelimit-limit-requests:
+      - '5000'
+      x-ratelimit-limit-tokens:
+      - '4000000'
+      x-ratelimit-remaining-requests:
+      - '4999'
+      x-ratelimit-remaining-tokens:
+      - '3999972'
+      x-ratelimit-reset-requests:
+      - 12ms
+      x-ratelimit-reset-tokens:
+      - 0s
+      x-request-id:
+      - req_6c6dc1fdf2c9336eae7538173353dbf3
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"messages": [{"content": "Analyze the following food item: avocado", "role":
+      "user"}], "model": "gpt-3.5-turbo", "n": 1, "parallel_tool_calls": false, "stream":
+      false, "temperature": 0.0, "tool_choice": {"type": "function", "function": {"name":
+      "FoodAnalysis"}}, "tools": [{"type": "function", "function": {"name": "FoodAnalysis",
+      "description": "", "parameters": {"properties": {"name": {"description": "The
+      name of the food item", "type": "string"}, "healthy": {"description": "Whether
+      the food is good for you", "type": "boolean"}, "calories": {"description": "Estimated
+      calories per serving", "type": "integer"}, "taste_profile": {"description":
+      "List of taste characteristics", "items": {"type": "string"}, "type": "array"}},
+      "required": ["name", "healthy", "calories", "taste_profile"], "type": "object"}}}]}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '815'
+      content-type:
+      - application/json
+      host:
+      - api.openai.com
+      traceparent:
+      - 00-d15bec3e849ec4e71cb1044b22850291-f3992fe166a6645b-01
+      user-agent:
+      - OpenAI/Python 1.45.1
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.45.1
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.11.8
+    method: POST
+    uri: https://api.openai.com/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA2xSXW+bMBR951dY95lUISmqyls07UPd1GmatE4rFXLMBdwZm9mXaCzKf58MFEha
+        Hqyrezjn3K9jwBjIHBIGouIk6katdvdf2h/fds8V5/hHrG8ORfz56+Hfz/u7XF5D6Blm/4yCXlhX
+        wtSNQpJGD7CwyAm9anSzXUeb22gb9UBtclSeVja02l7FK2rt3qzW0SYemZWRAh0k7DFgjLFj//oa
+        dY5/IWHr8CVTo3O8REimnxgDa5TPAHdOOuKaIJxBYTSh9mXrVqkFQMaoTHClZuPhOy7ieVBcqezh
+        EGt8KN17+8sV7l35Pf5o3V38aeE3SHdNX1DRajENaIFP+eTCjDHQvO65H4zJd5qrzkl3wWcMuC3b
+        GjX52uGY9qwUkhT4wQiemxTCFCrkiqouhYRsi2HqmzBWoksh2WyvwxSIO8KssaaQyvMf036Nddfz
+        9y0R2iHWLVGXwtMJzko5BW/FT4sxWyxax9U4/zF/mhaqTNlYs3cX+4FCaumqzCJ3/ZzAkWkGb+/T
+        O0B7dgvQWFM3lJH5jdoLRuvxcGC+1Rnd3I4gGeJqwZqAM70sR+KyP5bpPgUXFeYzdR0smntt+pbE
+        0KDU5SuVYFQC1znCOiukLtE2Vk7HHJyC/wAAAP//AwD91V/8ywMAAA==
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 8d9bf0611f9409c7-HFA
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 28 Oct 2024 15:25:32 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=jayZwZ0v8KOwgjjRgWWs7g0EU8sPK0ekRlweHkz_AwI-1730129132-1.0.1.1-CBWpZurrHCsUZfAhzBuv.IitjoHb9DS1tdKJYV1Ndv9ZYLNTQ1W_9rWSzxx2c.1rw2JOMuUoa1gdsAFeNgeYcA;
+        path=/; expires=Mon, 28-Oct-24 15:55:32 GMT; domain=.api.openai.com; HttpOnly;
+        Secure; SameSite=None
+      - _cfuvid=HjSTy14HELaBH2c3aHPQPGLrg44U8avmO44BI1zWkfk-1730129132593-0.0.1.1-604800000;
+        path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      access-control-expose-headers:
+      - X-Request-ID
+      alt-svc:
+      - h3=":443"; ma=86400
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '648'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-ratelimit-limit-requests:
+      - '5000'
+      x-ratelimit-limit-tokens:
+      - '4000000'
+      x-ratelimit-remaining-requests:
+      - '4999'
+      x-ratelimit-remaining-tokens:
+      - '3999972'
+      x-ratelimit-reset-requests:
+      - 12ms
+      x-ratelimit-reset-tokens:
+      - 0s
+      x-request-id:
+      - req_94a85e94745f5bdb60a2d628c92df74d
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"messages": [{"content": "Analyze the following food item: avocado", "role":
+      "user"}], "model": "gpt-3.5-turbo", "n": 1, "parallel_tool_calls": false, "stream":
+      false, "temperature": 0.0, "tool_choice": {"type": "function", "function": {"name":
+      "FoodAnalysis"}}, "tools": [{"type": "function", "function": {"name": "FoodAnalysis",
+      "description": "", "parameters": {"properties": {"name": {"description": "The
+      name of the food item", "type": "string"}, "healthy": {"description": "Whether
+      the food is good for you", "type": "boolean"}, "calories": {"description": "Estimated
+      calories per serving", "type": "integer"}, "taste_profile": {"description":
+      "List of taste characteristics", "items": {"type": "string"}, "type": "array"}},
+      "required": ["name", "healthy", "calories", "taste_profile"], "type": "object"}}}]}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '815'
+      content-type:
+      - application/json
+      host:
+      - api.openai.com
+      traceparent:
+      - 00-28ba88a386d65efb28e5e0df6e491df4-5d3de05da76dad8d-01
+      user-agent:
+      - OpenAI/Python 1.45.1
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.45.1
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.11.8
+    method: POST
+    uri: https://api.openai.com/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA2xSXW+bMBR951dY95lUQJIu5a2RGk37iLSnbSoVMsYBN8b27Es0FuW/T3wUSFoe
+        rKt7OOfcr7NHCIgcYgKspMgqIxeP+2+nP9WR5l/v79c/fh230Rezcj/Zv43YFuC3DJ29coZvrDum
+        KyM5Cq16mFlOkbeq4adlEEYPUbjqgErnXLa0wuBiebdeYG0zvQjCaD0wSy0YdxCTZ48QQs7d29ao
+        cv4XYhL4b5mKO0cLDvH4EyFgtWwzQJ0TDqlC8CeQaYVctWWrWsoZgFrLlFEpJ+P+O8/iaVBUyvTz
+        983vTfS0z3dZRHdBFZ5ej1uV7Wd+vXRjuoIOtWLjgGb4mI9vzAgBRauOu9M6f1RUNk64Gz4hQG1R
+        V1xhWzuck46VQJwAPWlGc52An0DJqcSySSBGW3M/aZvQVnCXQBwtV34CSB3y1Fh9ELLlPyfdGqum
+        42c1Ird9rGrEJoGXC1yVcvE+il9mY7b8UDsqh/kP+cu4UKkLY3XmbvYDB6GEK1PLqevmBA616b1b
+        n84B6qtbAGN1ZTBFfeSqFQyD4XBgutUJjR4GEDVSOWONwJVemnOkojuW8T4ZZSXPJ2rgzZp7b/qR
+        RN+gUMU7FW9QAtc45FV6EKrg1lgxHrN38f4DAAD//wMAXefte8sDAAA=
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 8d9bf2623cc409c7-HFA
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 28 Oct 2024 15:26:54 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=m5KKhwkGpL4YRQlvhnldOdCMq90YO2MenjnoA6w1Y2g-1730129214-1.0.1.1-IvARdDG.3vdMCANcV_fF69VyMEWSqkTs48QyUvF85SeMLTM8m4AJny8.rQ4dHs9ppjboPA1JYb6JSxeNiXSOpA;
+        path=/; expires=Mon, 28-Oct-24 15:56:54 GMT; domain=.api.openai.com; HttpOnly;
+        Secure; SameSite=None
+      - _cfuvid=X5fEqP9tjbiij79D0cKyU3bTAKQNQ_WVetTkAltAW7U-1730129214564-0.0.1.1-604800000;
+        path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      access-control-expose-headers:
+      - X-Request-ID
+      alt-svc:
+      - h3=":443"; ma=86400
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '532'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-ratelimit-limit-requests:
+      - '5000'
+      x-ratelimit-limit-tokens:
+      - '4000000'
+      x-ratelimit-remaining-requests:
+      - '4999'
+      x-ratelimit-remaining-tokens:
+      - '3999972'
+      x-ratelimit-reset-requests:
+      - 12ms
+      x-ratelimit-reset-tokens:
+      - 0s
+      x-request-id:
+      - req_1a30ea702d5492b56641c0f2f7173f15
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"messages": [{"content": "Analyze the following food item: avocado", "role":
+      "user"}], "model": "gpt-3.5-turbo", "n": 1, "parallel_tool_calls": false, "stream":
+      false, "temperature": 0.0, "tool_choice": {"type": "function", "function": {"name":
+      "FoodAnalysis"}}, "tools": [{"type": "function", "function": {"name": "FoodAnalysis",
+      "description": "", "parameters": {"properties": {"name": {"description": "The
+      name of the food item", "type": "string"}, "healthy": {"description": "Whether
+      the food is good for you", "type": "boolean"}, "calories": {"description": "Estimated
+      calories per serving", "type": "integer"}, "taste_profile": {"description":
+      "List of taste characteristics", "items": {"type": "string"}, "type": "array"}},
+      "required": ["name", "healthy", "calories", "taste_profile"], "type": "object"}}}]}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '815'
+      content-type:
+      - application/json
+      host:
+      - api.openai.com
+      traceparent:
+      - 00-afe470777a21d73a3cd57efbc34fe2fe-38bd7afc0ebbdb81-01
+      user-agent:
+      - OpenAI/Python 1.45.1
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.45.1
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.11.8
+    method: POST
+    uri: https://api.openai.com/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA2xSXWvbMBR9968Q9zkpttM2xG+lrJRttGWwDFoXo8g3tlZZEtL1NhPy34c/ajtp
+        /SAu9/icc78OAWMgc0gYiJKTqKxa3jx8/6u+WaJye3+3ftw85PHtW3G/veTh8wYWLcPsfqOgd9aF
+        MJVVSNLoHhYOOWGrGq1XYRRv4nXUAZXJUbW0wtJydXG1pNrtzDKM4quBWRop0EPCXgLGGDt0b1uj
+        zvEfJCxcvGcq9J4XCMn4E2PgjGozwL2XnrgmWEygMJpQt2XrWqkZQMaoTHClJuP+O8ziaVBcqSz6
+        WvwMH5EX9kv16ynaPV0/82vzYzvz66Ub2xW0r7UYBzTDx3xyZsYYaF513Dtj8hvNVeOlP+MzBtwV
+        dYWa2trhkHasFJIU+B8jeG5SWKRQIldUNikk5GpcpG0Txkn0KSTx6nKRAnFPmFln9lK1/Je0W2PV
+        dPxdTYSuj3VN1KTweoSTUo7BZ/HrbMwO97Xnapj/kD+OC1WmsM7s/Nl+YC+19GXmkPtuTuDJ2N67
+        9ekcoD65BbDOVJYyMm+oW8EoHA4Hplud0HgzgGSIqxlrBE70shyJy+5YxvsUXJSYT9QwmDX30fQz
+        ib5BqYsPKsGgBL7xhFW2l7pAZ50cjzk4Bv8BAAD//wMA9MF358sDAAA=
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 8d9bf3cb39d909c3-HFA
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 28 Oct 2024 15:27:52 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=LnK716ettReUIN9B0_o4w2.6d.9rufLpFIadAPJ3hC8-1730129272-1.0.1.1-0SE1ZpMdjWHQ89U5CfXVgRRyx8vhZn2j5JwjeYtmdHVqDM5B9ToyLnJ1S4wz6dPOmOvMC8CyexQllcQ91a6mcw;
+        path=/; expires=Mon, 28-Oct-24 15:57:52 GMT; domain=.api.openai.com; HttpOnly;
+        Secure; SameSite=None
+      - _cfuvid=gPEZFrPdv5Ms97cEWKl9SdPiLFjMunJXbJZZH_gbkUM-1730129272485-0.0.1.1-604800000;
+        path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      access-control-expose-headers:
+      - X-Request-ID
+      alt-svc:
+      - h3=":443"; ma=86400
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '691'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-ratelimit-limit-requests:
+      - '5000'
+      x-ratelimit-limit-tokens:
+      - '4000000'
+      x-ratelimit-remaining-requests:
+      - '4999'
+      x-ratelimit-remaining-tokens:
+      - '3999972'
+      x-ratelimit-reset-requests:
+      - 12ms
+      x-ratelimit-reset-tokens:
+      - 0s
+      x-request-id:
+      - req_a74221aa88c981927e56cefddf80dab7
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"messages": [{"content": "Analyze the following food item: avocado", "role":
+      "user"}], "model": "gpt-3.5-turbo", "n": 1, "parallel_tool_calls": false, "stream":
+      false, "temperature": 0.0, "tool_choice": {"type": "function", "function": {"name":
+      "FoodAnalysis"}}, "tools": [{"type": "function", "function": {"name": "FoodAnalysis",
+      "description": "", "parameters": {"properties": {"name": {"description": "The
+      name of the food item", "type": "string"}, "healthy": {"description": "Whether
+      the food is good for you", "type": "boolean"}, "calories": {"description": "Estimated
+      calories per serving", "type": "integer"}, "taste_profile": {"description":
+      "List of taste characteristics", "items": {"type": "string"}, "type": "array"}},
+      "required": ["name", "healthy", "calories", "taste_profile"], "type": "object"}}}]}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '815'
+      content-type:
+      - application/json
+      host:
+      - api.openai.com
+      traceparent:
+      - 00-dadff776ed370c5ffb2cd2f3f3714333-863986a0cb983266-01
+      user-agent:
+      - OpenAI/Python 1.45.1
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.45.1
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.11.8
+    method: POST
+    uri: https://api.openai.com/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA2xS22rbQBB911cs8ywH2Y5bW2/pFQoNNBRaEwWxXq2kbVY7y+4ojTD+96BLJNmJ
+        HpZhjs45czsGjIHKIGYgSk6isnpxc/tz9VxfP9En3H6mv8+Pdrl1PLe329/WQtgy8PBPCnplXQms
+        rJak0PSwcJKTbFWXH9fRcrX7sNl0QIWZ1C2tsLRYX20WVLsDLqLlajMwS1RCeojZfcAYY8fubWs0
+        mXyGmEXha6aS3vNCQjz+xBg41G0GuPfKEzcE4QQKNCRNW7aptZ4BhKhTwbWejPvvOIunQXGt0+3d
+        r68//u93f/bf91+icqftndg2eTbz66Ub2xWU10aMA5rhYz6+MGMMDK867jfE7MZw3XjlL/iMAXdF
+        XUlDbe1wTDpWAnEC/AkFzzCBMIFSck1lk0BMrpZh0jaBTkmfQLxaX4cJEPckU+swV7rl3yfdGqum
+        4x9qIun62NRETQIPJzgr5RS8Fz/MxuxkXnuuh/kP+dO4UI2FdXjwF/uBXBnly9RJ7rs5gSe0vXfr
+        0zlAfXYLYB1WllLCR2lawWU0HA5Mtzqhq90AEhLXM9YInOmlmSSuumMZ71NwUcpsokbBrLm3pu9J
+        9A0qU7xRCQYl8I0nWaW5MoV01qnxmINT8AIAAP//AwD0oWk3ywMAAA==
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 8d9bfd2c3c6409cb-HFA
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 28 Oct 2024 15:34:16 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=uXYJwmrty5_ef3QhOs9AlTQT26BLwdGqS3pKedAYzLw-1730129656-1.0.1.1-w_8j8wPN1GOAZR9dHgHmNWb3zIzwxX6MowtiX3FNffa0GVnZOKX9XpVecHSOAYk7aQoKkmynUwkDixUo4i0fqQ;
+        path=/; expires=Mon, 28-Oct-24 16:04:16 GMT; domain=.api.openai.com; HttpOnly;
+        Secure; SameSite=None
+      - _cfuvid=.mq8Q.b8DwOeALb8P02BU0bvkFn7Y5rDi0hGiv5yiZk-1730129656596-0.0.1.1-604800000;
+        path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      access-control-expose-headers:
+      - X-Request-ID
+      alt-svc:
+      - h3=":443"; ma=86400
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '646'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-ratelimit-limit-requests:
+      - '5000'
+      x-ratelimit-limit-tokens:
+      - '4000000'
+      x-ratelimit-remaining-requests:
+      - '4999'
+      x-ratelimit-remaining-tokens:
+      - '3999972'
+      x-ratelimit-reset-requests:
+      - 12ms
+      x-ratelimit-reset-tokens:
+      - 0s
+      x-request-id:
+      - req_3302f913f5e0fa43c42d9bf4b3a6a69c
+    status:
+      code: 200
+      message: OK
+version: 1
