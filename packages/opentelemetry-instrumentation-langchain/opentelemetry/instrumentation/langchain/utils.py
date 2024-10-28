@@ -14,7 +14,7 @@ class CallbackFilteredJSONEncoder(json.JSONEncoder):
             if "callbacks" in o:
                 del o["callbacks"]
                 return o
-            
+
         if dataclasses.is_dataclass(o):
             return dataclasses.asdict(o)
 
@@ -23,7 +23,7 @@ class CallbackFilteredJSONEncoder(json.JSONEncoder):
 
         if isinstance(o, BaseModel) and hasattr(o, "model_dump_json"):
             return o.model_dump_json()
-        
+
         return super().default(o)
 
 
