@@ -1,3 +1,11 @@
+## v0.33.4 (2024-10-28)
+
+### Fix
+
+- **langchain**: structured output response parsing (#2214)
+- **anthropic**: add instrumentation for Anthropic prompt caching (#2175)
+- **bedrock**: cohere models failed to report prompts (#2204)
+
 ## v0.33.3 (2024-10-22)
 
 ### Fix
