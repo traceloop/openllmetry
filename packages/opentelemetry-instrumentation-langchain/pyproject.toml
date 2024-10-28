@@ -51,7 +51,7 @@ opentelemetry-instrumentation-bedrock = {path="../opentelemetry-instrumentation-
 text-generation = "^0.7.0"
 anthropic = "^0.37.1"
 boto3 = "^1.35.49"
-langchain-anthropic = "^0.2.3"
+langchain-anthropic = "=0.2.0"
 langchain-openai = "^0.2.3"
 langchain-cohere = "0.3.1"
 pydantic = "^2.9.2"
