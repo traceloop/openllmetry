@@ -5,6 +5,7 @@ import os
 import traceback
 from opentelemetry import context as context_api
 from opentelemetry.instrumentation.langchain.config import Config
+from pydantic import BaseModel
 
 
 class CallbackFilteredJSONEncoder(json.JSONEncoder):
@@ -13,11 +14,15 @@ class CallbackFilteredJSONEncoder(json.JSONEncoder):
             if "callbacks" in o:
                 del o["callbacks"]
                 return o
+
         if dataclasses.is_dataclass(o):
             return dataclasses.asdict(o)
 
         if hasattr(o, "to_json"):
             return o.to_json()
+
+        if isinstance(o, BaseModel) and hasattr(o, "model_dump_json"):
+            return o.model_dump_json()
 
         return super().default(o)
 
