@@ -1,4 +1,3 @@
-import asyncio
 import copy
 import json
 import logging
@@ -19,6 +18,7 @@ from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
 from opentelemetry.instrumentation.openai.utils import (
     _with_chat_telemetry_wrapper,
     dont_throw,
+    run_async,
 )
 from opentelemetry.instrumentation.openai.shared import (
     metric_shared_attributes,
@@ -78,7 +78,7 @@ def chat_wrapper(
         attributes={SpanAttributes.LLM_REQUEST_TYPE: LLM_REQUEST_TYPE.value},
     )
 
-    asyncio.run(_handle_request(span, kwargs, instance))
+    run_async(_handle_request(span, kwargs, instance))
 
     try:
         start_time = time.time()

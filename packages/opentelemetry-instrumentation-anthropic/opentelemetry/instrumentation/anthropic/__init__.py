@@ -1,6 +1,5 @@
 """OpenTelemetry Anthropic instrumentation"""
 
-import asyncio
 import json
 import logging
 import os
@@ -20,6 +19,7 @@ from opentelemetry.instrumentation.anthropic.utils import (
     dont_throw,
     error_metrics_attributes,
     count_prompt_tokens_from_request,
+    run_async,
     set_span_attribute,
     shared_metrics_attributes,
     should_send_prompts,
@@ -551,7 +551,7 @@ def _wrap(
     )
 
     if span.is_recording():
-        asyncio.run(_aset_input_attributes(span, kwargs))
+        run_async(_aset_input_attributes(span, kwargs))
 
     start_time = time.time()
     try:
