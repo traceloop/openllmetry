@@ -242,17 +242,17 @@ tomli = {version = "*", markers = "python_version < \"3.11\""}
 
 [[package]]
 name = "boto3"
-version = "1.35.49"
+version = "1.35.51"
 description = "The AWS SDK for Python"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "boto3-1.35.49-py3-none-any.whl", hash = "sha256:b660c649a27a6b47a34f6f858f5bd7c3b0a798a16dec8dda7cbebeee80fd1f60"},
-    {file = "boto3-1.35.49.tar.gz", hash = "sha256:ddecb27f5699ca9f97711c52b6c0652c2e63bf6c2bfbc13b819b4f523b4d30ff"},
+    {file = "boto3-1.35.51-py3-none-any.whl", hash = "sha256:c922f6a18958af9d8af0489d6d8503b517029d8159b26aa4859a8294561c72e9"},
+    {file = "boto3-1.35.51.tar.gz", hash = "sha256:a57c6c7012ecb40c43e565a6f7a891f39efa990ff933eab63cd456f7501c2731"},
 ]
 
 [package.dependencies]
-botocore = ">=1.35.49,<1.36.0"
+botocore = ">=1.35.51,<1.36.0"
 jmespath = ">=0.7.1,<2.0.0"
 s3transfer = ">=0.10.0,<0.11.0"
 
@@ -261,13 +261,13 @@ crt = ["botocore[crt] (>=1.21.0,<2.0a0)"]
 
 [[package]]
 name = "botocore"
-version = "1.35.49"
+version = "1.35.51"
 description = "Low-level, data-driven core of boto 3."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "botocore-1.35.49-py3-none-any.whl", hash = "sha256:aed4d3643afd702920792b68fbe712a8c3847993820d1048cd238a6469354da1"},
-    {file = "botocore-1.35.49.tar.gz", hash = "sha256:07d0c1325fdbfa49a4a054413dbdeab0a6030449b2aa66099241af2dac48afd8"},
+    {file = "botocore-1.35.51-py3-none-any.whl", hash = "sha256:4d65b00111bd12b98e9f920ecab602cf619cc6a6d0be6e5dd53f517e4b92901c"},
+    {file = "botocore-1.35.51.tar.gz", hash = "sha256:a9b3d1da76b3e896ad74605c01d88f596324a3337393d4bfbfa0d6c35822ca9c"},
 ]
 
 [package.dependencies]
@@ -1108,19 +1108,19 @@ tenacity = ">=8.1.0,<8.4.0 || >8.4.0,<10"
 
 [[package]]
 name = "langchain-anthropic"
-version = "0.2.0"
+version = "0.2.3"
 description = "An integration package connecting AnthropicMessages and LangChain"
 optional = false
 python-versions = "<4.0,>=3.9"
 files = [
-    {file = "langchain_anthropic-0.2.0-py3-none-any.whl", hash = "sha256:f3cb92e6c215bab7e83fc07629ee8dee4e8dc2d4dd0301e4bd6530ac3caa3d31"},
-    {file = "langchain_anthropic-0.2.0.tar.gz", hash = "sha256:98ee94350677ed4cba82f1c551b72a134b475172b955a37926c26c65bcae01c4"},
+    {file = "langchain_anthropic-0.2.3-py3-none-any.whl", hash = "sha256:d555901865074b1481a0fbd40505eedaa3b414af25f6b227c39f2a6529ce1800"},
+    {file = "langchain_anthropic-0.2.3.tar.gz", hash = "sha256:29d3464bf276ff6444543be94a9ba555a8f8ef858df3ace82ce8dfc7fedb0bec"},
 ]
 
 [package.dependencies]
 anthropic = ">=0.30.0,<1"
 defusedxml = ">=0.7.1,<0.8.0"
-langchain-core = ">=0.3.0,<0.4.0"
+langchain-core = ">=0.3.9,<0.4.0"
 pydantic = ">=2.7.4,<3.0.0"
 
 [[package]]
@@ -1212,17 +1212,17 @@ langchain-core = ">=0.3.6,<0.4.0"
 
 [[package]]
 name = "langchain-openai"
-version = "0.2.3"
+version = "0.2.4"
 description = "An integration package connecting OpenAI and LangChain"
 optional = false
 python-versions = "<4.0,>=3.9"
 files = [
-    {file = "langchain_openai-0.2.3-py3-none-any.whl", hash = "sha256:f498c94817c980cb302439b95d3f3275cdf2743e022ee674692c75898523cf57"},
-    {file = "langchain_openai-0.2.3.tar.gz", hash = "sha256:e142031704de1104735f503f76352c53b27ac0a2806466392993c4508c42bf0c"},
+    {file = "langchain_openai-0.2.4-py3-none-any.whl", hash = "sha256:7e78adde0f97bf28440b0e08be27bc3b45ff88e41c12a859b30959d9504506a4"},
+    {file = "langchain_openai-0.2.4.tar.gz", hash = "sha256:8fe494ea0b61241fe213bede8234e41e6927b348eaa8f6ce60f547676b0f2e14"},
 ]
 
 [package.dependencies]
-langchain-core = ">=0.3.12,<0.4.0"
+langchain-core = ">=0.3.13,<0.4.0"
 openai = ">=1.52.0,<2.0.0"
 tiktoken = ">=0.7,<1"
 
@@ -3130,4 +3130,4 @@ instruments = []
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<4"
-content-hash = "768c9d841bb5be9210c088edca8a6939510149b6d10e47091e3d57a3183d81d9"
+content-hash = "9da56ad87a8c64c58af3ad825d1910e65e9f6150aed7f5e1d22a82515080f92b"
