@@ -1,3 +1,4 @@
+import asyncio
 import pytest
 from opentelemetry.semconv_ai import SpanAttributes
 from openai.types.chat.chat_completion_message_tool_call import (
@@ -229,3 +230,19 @@ async def test_chat_async_streaming(exporter, async_openai_client):
     total_tokens = open_ai_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS)
     assert completion_tokens and prompt_tokens and total_tokens
     assert completion_tokens + prompt_tokens == total_tokens
+
+
+@pytest.mark.vcr
+@pytest.mark.asyncio
+def test_with_asyncio_run(exporter, async_openai_client):
+    asyncio.run(
+        async_openai_client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[{"role": "user", "content": "Tell me a joke about opentelemetry"}],
+        )
+    )
+
+    spans = exporter.get_finished_spans()
+    assert [span.name for span in spans] == [
+        "openai.chat",
+    ]

@@ -1,7 +1,5 @@
-import asyncio
 import os
 import logging
-import threading
 import traceback
 from opentelemetry import context as context_api
 from opentelemetry.instrumentation.anthropic.config import Config
@@ -113,17 +111,3 @@ async def acount_prompt_tokens_from_request(anthropic, request):
                                 item.get("text", "")
                             )
     return prompt_tokens
-
-
-def run_async(method):
-    try:
-        loop = asyncio.get_running_loop()
-    except RuntimeError:
-        loop = None
-
-    if loop and loop.is_running():
-        thread = threading.Thread(target=lambda: asyncio.run(method))
-        thread.start()
-        thread.join()
-    else:
-        asyncio.run(method)
