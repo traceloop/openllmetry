@@ -883,6 +883,7 @@ async def test_anthropic_prompt_caching_async_stream(exporter, reader):
     resource_metrics = metrics_data.resource_metrics
     verify_metrics(resource_metrics, "claude-3-5-sonnet-20240620")
 
+
 @pytest.mark.vcr
 @pytest.mark.asyncio
 def test_with_asyncio_run(exporter):
