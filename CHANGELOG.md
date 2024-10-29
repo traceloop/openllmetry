@@ -1,3 +1,9 @@
+## v0.33.5 (2024-10-29)
+
+### Fix
+
+- **openai+anthropic**: async call crashing the app when already in a running asyncio loop (#2226)
+
 ## v0.33.4 (2024-10-28)
 
 ### Fix
