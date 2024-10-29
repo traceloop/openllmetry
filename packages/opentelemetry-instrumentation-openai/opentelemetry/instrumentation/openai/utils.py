@@ -136,12 +136,13 @@ def dont_throw(func):
 
     return wrapper
 
+
 def run_async(method):
     try:
         loop = asyncio.get_running_loop()
     except RuntimeError:
         loop = None
-        
+
     if loop and loop.is_running():
         thread = threading.Thread(target=lambda: asyncio.run(method))
         thread.start()
