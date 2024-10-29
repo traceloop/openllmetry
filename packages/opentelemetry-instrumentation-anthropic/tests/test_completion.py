@@ -1,3 +1,4 @@
+import asyncio
 import base64
 import json
 from pathlib import Path
@@ -881,3 +882,33 @@ async def test_anthropic_prompt_caching_async_stream(exporter, reader):
     metrics_data = reader.get_metrics_data()
     resource_metrics = metrics_data.resource_metrics
     verify_metrics(resource_metrics, "claude-3-5-sonnet-20240620")
+
+
+@pytest.mark.vcr
+@pytest.mark.asyncio
+def test_with_asyncio_run(exporter):
+    async_anthropic_client = AsyncAnthropic()
+
+    asyncio.run(
+        async_anthropic_client.messages.create(
+            model="claude-3-5-sonnet-20240620",
+            max_tokens=1024,
+            system=[
+                {
+                    "type": "text",
+                    "text": "You help generate concise summaries of news articles and blog posts that user sends you.",
+                },
+            ],
+            messages=[
+                {
+                    "role": "user",
+                    "content": "What is the weather in San Francisco?",
+                },
+            ],
+        )
+    )
+
+    spans = exporter.get_finished_spans()
+    assert [span.name for span in spans] == [
+        "anthropic.chat",
+    ]
