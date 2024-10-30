@@ -1,7 +1,9 @@
+import asyncio
 from importlib.metadata import version
 from contextlib import asynccontextmanager
 import logging
 import os
+import threading
 import traceback
 
 import openai
@@ -133,3 +135,17 @@ def dont_throw(func):
                 Config.exception_logger(e)
 
     return wrapper
+
+
+def run_async(method):
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        loop = None
+
+    if loop and loop.is_running():
+        thread = threading.Thread(target=lambda: asyncio.run(method))
+        thread.start()
+        thread.join()
+    else:
+        asyncio.run(method)
