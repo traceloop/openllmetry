@@ -9,6 +9,9 @@
 <p align="center">
   <p align="center">Open-source observability for your LLM application</p>
 </p>
+<h2 align="center">
+  <a href="https://www.traceloop.com/devfest-ai-2024">Hacktoberfest 2024 - Join us and win some swag!</a>
+</h2>
 <h4 align="center">
     <a href="https://traceloop.com/docs/openllmetry/getting-started-python"><strong>Get started »</strong></a>
     <br />
@@ -107,43 +110,42 @@ See [our docs](https://traceloop.com/docs/openllmetry/integrations/exporting) fo
 
 OpenLLMetry can instrument everything that [OpenTelemetry already instruments](https://github.com/open-telemetry/opentelemetry-python-contrib/tree/main/instrumentation) - so things like your DB, API calls, and more. On top of that, we built a set of custom extensions that instrument things like your calls to OpenAI or Anthropic, or your Vector DB like Chroma, Pinecone, Qdrant or Weaviate.
 
-### LLM Providers
-
-- ✅ OpenAI / Azure OpenAI
-- ✅ Anthropic
-- ✅ Cohere
-- ✅ Ollama
-- ✅ Mistral AI
-- ✅ HuggingFace
-- ✅ Bedrock (AWS)
-- ✅ Replicate
-- ✅ Vertex AI (GCP)
-- ✅ Google Generative AI (Gemini)
-- ✅ IBM Watsonx AI
-- ✅ Together AI
-- ✅ Aleph Alpha
-- ✅ Groq
+- ✅ [OpenAI / Azure OpenAI](https://openai.com/)
+- ✅ [Anthropic](https://www.anthropic.com/)
+- ✅ [Cohere](https://cohere.com/)
+- ✅ [Ollama](https://ollama.com/)
+- ✅ [Mistral AI](https://mistral.ai/)
+- ✅ [HuggingFace](https://huggingface.co/)
+- ✅ [Bedrock (AWS)](https://aws.amazon.com/bedrock/)
+- ✅ [SageMaker (AWS)](https://aws.amazon.com/sagemaker/)
+- ✅ [Replicate](https://replicate.com/)
+- ✅ [Vertex AI (GCP)](https://cloud.google.com/vertex-ai)
+- ✅ [Google Generative AI (Gemini)](https://ai.google/)
+- ✅ [IBM Watsonx AI](https://www.ibm.com/watsonx)
+- ✅ [Together AI](https://together.xyz/)
+- ✅ [Aleph Alpha](https://www.aleph-alpha.com/)
+- ✅ [Groq](https://groq.com/)
 
 ### Vector DBs
 
-- ✅ Chroma
-- ✅ Pinecone
-- ✅ Qdrant
-- ✅ Weaviate
-- ✅ Milvus
-- ✅ Marqo
-- ✅ LanceDB
+- ✅ [Chroma](https://www.trychroma.com/)
+- ✅ [Pinecone](https://www.pinecone.io/)
+- ✅ [Qdrant](https://qdrant.tech/)
+- ✅ [Weaviate](https://weaviate.io/)
+- ✅ [Milvus](https://milvus.io/)
+- ✅ [Marqo](https://marqo.ai/)
+- ✅ [LanceDB](https://lancedb.com/)
 
 ### Frameworks
 
-- ✅ LangChain
+- ✅ [LangChain](https://python.langchain.com/docs/introduction/)
 - ✅ [LlamaIndex](https://docs.llamaindex.ai/en/stable/module_guides/observability/observability.html#openllmetry)
 - ✅ [Haystack](https://haystack.deepset.ai/integrations/traceloop)
-- ✅ [LiteLLM](https://docs.litellm.ai/docs/observability/traceloop_integration)
+- ✅ [LiteLLM](https://docs.litellm.ai/docs/observability/opentelemetry_integration)
 
 ## 🌱 Contributing
 
-Whether it's big or small, we love contributions ❤️ Check out our guide to see how to [get started](https://traceloop.com/docs/openllmetry/contributing/overview).
+Whether big or small, we love contributions ❤️ Check out our guide to see how to [get started](https://traceloop.com/docs/openllmetry/contributing/overview).
 
 Not sure where to get started? You can:
 
@@ -160,3 +162,10 @@ Not sure where to get started? You can:
 ## 🙏 Special Thanks
 
 To @patrickdebois, who [suggested the great name](https://x.com/patrickdebois/status/1695518950715473991?s=46&t=zn2SOuJcSVq-Pe2Ysevzkg) we're now using for this repo!
+
+## 💫 Contributors
+
+<a href="https://github.com/traceloop/openllmetry/graphs/contributors">
+  <img alt="contributors" src="https://contrib.rocks/image?repo=traceloop/openllmetry"/>
+</a>
+

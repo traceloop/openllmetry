@@ -49,7 +49,13 @@ def meter_provider(reader):
 
 @pytest.fixture(scope="session", autouse=True)
 def instrument(exporter, reader, meter_provider):
-    AnthropicInstrumentor(enrich_token_usage=True).instrument()
+    async def upload_base64_image(*args):
+        return "/some/url"
+
+    AnthropicInstrumentor(
+        enrich_token_usage=True,
+        upload_base64_image=upload_base64_image,
+    ).instrument()
 
     yield
 
@@ -66,7 +72,8 @@ def clear_exporter_reader(exporter, reader):
 
 @pytest.fixture(autouse=True)
 def environment():
-    os.environ["ANTHROPIC_API_KEY"] = "test_api_key"
+    if "ANTHROPIC_API_KEY" not in os.environ:
+        os.environ["ANTHROPIC_API_KEY"] = "test_api_key"
 
 
 @pytest.fixture(scope="module")

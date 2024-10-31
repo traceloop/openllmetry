@@ -1,3 +1,114 @@
+## v0.33.5 (2024-10-29)
+
+### Fix
+
+- **openai+anthropic**: async call crashing the app when already in a running asyncio loop (#2226)
+
+## v0.33.4 (2024-10-28)
+
+### Fix
+
+- **langchain**: structured output response parsing (#2214)
+- **anthropic**: add instrumentation for Anthropic prompt caching (#2175)
+- **bedrock**: cohere models failed to report prompts (#2204)
+
+## v0.33.3 (2024-10-22)
+
+### Fix
+
+- **sdk**: capture posthog events as anonymous; roll ingestion key (#2194)
+
+## v0.33.2 (2024-10-17)
+
+### Fix
+
+- **langchain**: various bugs and edge cases in metric exporting (#2167)
+- **sdk**: add header for logging exporter (#2164)
+
+## v0.33.1 (2024-10-16)
+
+### Fix
+
+- **langchain**: metrics support (#2154)
+- **langchain**: Add trace context to client requests (#2152)
+- **anthropic**: add instrumentation for Anthropic tool calling (alternative to #1372) (#2150)
+- **openai**: add structured output instrumentation (#2111)
+
+## v0.33.0 (2024-10-15)
+
+### Feat
+
+- **sdk**: add OpenTelemetry logging support (#2112)
+- **ollama**: tool calling (#2059)
+
+### Fix
+
+- **llama-index**: add attribute to span for llm request type in dispatcher wrapper (#2141)
+
+## v0.32.2 (2024-10-04)
+
+### Fix
+
+- **traceloop-sdk**: add aiohttp as dependency (#2094)
+
+## v0.32.1 (2024-10-03)
+
+### Fix
+
+- **anthropic**: Replace count_tokens with usage for newer models (#2086)
+
+## v0.32.0 (2024-10-03)
+
+### Feat
+
+- **bedrock**: support metrics for bedrock (#1957)
+- **SageMaker**: Add SageMaker instrumentation (#2028)
+
+### Fix
+
+- **langchain**: token usage reporting (#2074)
+
+## v0.31.4 (2024-10-01)
+
+### Fix
+
+- **langchain**: serialize inputs and outputs with pydantic (#2065)
+- **sdk**: custom image uploader (#2064)
+
+## v0.31.3 (2024-09-28)
+
+### Fix
+
+- support async image upload flows (#2051)
+
+## v0.31.2 (2024-09-27)
+
+### Fix
+
+- **anthropic**: add support for base64 images upload for anthropic (#2029)
+
+## v0.31.1 (2024-09-26)
+
+### Fix
+
+- **anthropic**: token counting exception when prompt contains images (#2030)
+
+## v0.31.0 (2024-09-25)
+
+### Feat
+
+- **sdk+openai**: support base64 images upload (#2000)
+
+### Fix
+
+- **sdk**: wrong package check for Vertex AI (#2015)
+
+## v0.30.1 (2024-09-16)
+
+### Fix
+
+- **langchain**: support v0.3.0 (#1985)
+
 ## v0.30.0 (2024-09-04)
 
 ### Feat

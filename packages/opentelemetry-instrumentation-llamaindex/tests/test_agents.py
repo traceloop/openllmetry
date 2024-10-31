@@ -72,6 +72,7 @@ def test_agents_and_tools(exporter):
     assert llm_span_1.parent is not None
     assert llm_span_2.parent is not None
 
+    assert llm_span_1.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
     assert (
         llm_span_1.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "gpt-3.5-turbo-0613"
     )
@@ -93,6 +94,7 @@ def test_agents_and_tools(exporter):
     assert llm_span_1.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 479
     assert llm_span_1.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 522
 
+    assert llm_span_2.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
     assert (
         llm_span_2.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "gpt-3.5-turbo-0613"
     )

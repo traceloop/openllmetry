@@ -34,7 +34,7 @@ class SpanAttributes:
     # Semantic Conventions for LLM requests, this needs to be removed after
     # OpenTelemetry Semantic Conventions support Gen AI.
     # Issue at https://github.com/open-telemetry/opentelemetry-python/issues/3868
-    # Refer to https://github.com/open-telemetry/semantic-conventions/blob/main/docs/gen-ai/llm-spans.md
+    # Refer to https://github.com/open-telemetry/semantic-conventions/blob/main/docs/gen-ai/gen-ai-spans.md
     # for more detail for LLM spans from OpenTelemetry Community.
     LLM_SYSTEM = "gen_ai.system"
     LLM_REQUEST_MODEL = "gen_ai.request.model"
@@ -46,9 +46,10 @@ class SpanAttributes:
     LLM_RESPONSE_MODEL = "gen_ai.response.model"
     LLM_USAGE_COMPLETION_TOKENS = "gen_ai.usage.completion_tokens"
     LLM_USAGE_PROMPT_TOKENS = "gen_ai.usage.prompt_tokens"
+    LLM_USAGE_CACHE_CREATION_INPUT_TOKENS = "gen_ai.usage.cache_creation_input_tokens"
+    LLM_USAGE_CACHE_READ_INPUT_TOKENS = "gen_ai.usage.cache_read_input_tokens"
     LLM_TOKEN_TYPE = "gen_ai.token.type"
     # To be added
-    # LLM_RESPONSE_FINISH_REASON = "gen_ai.response.finish_reasons"
     # LLM_RESPONSE_ID = "gen_ai.response.id"
 
     # LLM

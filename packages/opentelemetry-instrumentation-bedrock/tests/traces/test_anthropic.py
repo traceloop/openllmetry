@@ -5,7 +5,7 @@ from opentelemetry.semconv_ai import SpanAttributes
 
 
 @pytest.mark.vcr
-def test_anthropic_2_completion(exporter, brt):
+def test_anthropic_2_completion(test_context, brt):
     body = json.dumps(
         {
             "prompt": "Human: Tell me a joke about opentelemetry Assistant:",
@@ -24,6 +24,7 @@ def test_anthropic_2_completion(exporter, brt):
     response_body = json.loads(response.get("body").read())
     completion = response_body.get("completion")
 
+    exporter, _, _ = test_context
     spans = exporter.get_finished_spans()
     assert all(span.name == "bedrock.completion" for span in spans)
 
@@ -48,7 +49,7 @@ def test_anthropic_2_completion(exporter, brt):
 
 
 @pytest.mark.vcr
-def test_anthropic_3_completion_complex_content(exporter, brt):
+def test_anthropic_3_completion_complex_content(test_context, brt):
     body = json.dumps(
         {
             "messages": [
@@ -75,6 +76,7 @@ def test_anthropic_3_completion_complex_content(exporter, brt):
     response_body = json.loads(response.get("body").read())
     completion = response_body.get("content")
 
+    exporter, _, _ = test_context
     spans = exporter.get_finished_spans()
     assert all(span.name == "bedrock.completion" for span in spans)
 
@@ -103,7 +105,7 @@ def test_anthropic_3_completion_complex_content(exporter, brt):
 
 
 @pytest.mark.vcr
-def test_anthropic_3_completion_streaming(exporter, brt):
+def test_anthropic_3_completion_streaming(test_context, brt):
     body = json.dumps(
         {
             "messages": [
@@ -135,6 +137,7 @@ def test_anthropic_3_completion_streaming(exporter, brt):
             if "delta" in decoded_chunk:
                 completion += decoded_chunk.get("delta").get("text") or ""
 
+    exporter, _, _ = test_context
     spans = exporter.get_finished_spans()
     assert all(span.name == "bedrock.completion" for span in spans)
 
@@ -165,7 +168,7 @@ def test_anthropic_3_completion_streaming(exporter, brt):
 
 
 @pytest.mark.vcr
-def test_anthropic_3_completion_string_content(exporter, brt):
+def test_anthropic_3_completion_string_content(test_context, brt):
     body = json.dumps(
         {
             "messages": [
@@ -190,6 +193,7 @@ def test_anthropic_3_completion_string_content(exporter, brt):
     response_body = json.loads(response.get("body").read())
     completion = response_body.get("content")
 
+    exporter, _, _ = test_context
     spans = exporter.get_finished_spans()
     assert all(span.name == "bedrock.completion" for span in spans)
 

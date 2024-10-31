@@ -1,0 +1,44 @@
+[tool.coverage.run]
+branch = true
+source = [ "opentelemetry/instrumentation/sagemaker" ]
+
+[tool.coverage.report]
+exclude_lines = ['if TYPE_CHECKING:']
+show_missing = true
+
+[tool.poetry]
+name = "opentelemetry-instrumentation-sagemaker"
+version = "0.33.5"
+description = "OpenTelemetry SageMaker instrumentation"
+authors = [
+  "Bobby Lindsey <bwlind@amazon.com>"
+]
+repository = "https://github.com/traceloop/openllmetry/tree/main/packages/opentelemetry-instrumentation-sagemaker"
+license = "Apache-2.0"
+readme = "README.md"
+
+[[tool.poetry.packages]]
+include = "opentelemetry/instrumentation/sagemaker"
+
+[tool.poetry.dependencies]
+python = ">=3.9,<4"
+opentelemetry-api = "^1.26.0"
+opentelemetry-instrumentation = "^0.48b0"
+opentelemetry-semantic-conventions = "^0.48b0"
+opentelemetry-semantic-conventions-ai = "0.4.2"
+
+[tool.poetry.group.dev.dependencies]
+autopep8 = "^2.2.0"
+flake8 = "7.0.0"
+
+[tool.poetry.group.test.dependencies]
+boto3 = "^1.34.120"
+vcrpy = "^6.0.1"
+pytest = "^8.2.2"
+pytest-sugar = "1.0.0"
+pytest-recording = "^0.13.1"
+opentelemetry-sdk = "^1.23.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

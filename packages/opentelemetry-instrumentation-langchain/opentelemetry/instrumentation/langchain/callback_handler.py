@@ -1,5 +1,6 @@
 import json
-from dataclasses import dataclass
+import time
+from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Union
 from uuid import UUID
 
@@ -21,17 +22,11 @@ from opentelemetry.trace.span import Span
 
 from opentelemetry import context as context_api
 from opentelemetry.instrumentation.langchain.utils import (
+    CallbackFilteredJSONEncoder,
     dont_throw,
     should_send_prompts,
 )
-
-
-class CustomJsonEncode(json.JSONEncoder):
-    def default(self, o: Any) -> str:
-        try:
-            return super().default(o)
-        except TypeError:
-            return str(o)
+from opentelemetry.metrics import Histogram
 
 
 @dataclass
@@ -43,6 +38,7 @@ class SpanHolder:
     workflow_name: str
     entity_name: str
     entity_path: str
+    start_time: float = field(default_factory=time.time)
 
 
 def _message_type_to_role(message_type: str) -> str:
@@ -151,7 +147,7 @@ def _set_chat_request(
                 else:
                     span.set_attribute(
                         f"{SpanAttributes.LLM_PROMPTS}.{i}.content",
-                        json.dumps(msg.content, cls=CustomJsonEncode),
+                        json.dumps(msg.content, cls=CallbackFilteredJSONEncoder),
                     )
                 i += 1
 
@@ -160,9 +156,30 @@ def _set_chat_response(span: Span, response: LLMResult) -> None:
     if not should_send_prompts():
         return
 
+    input_tokens = 0
+    output_tokens = 0
+    total_tokens = 0
+
     i = 0
     for generations in response.generations:
         for generation in generations:
+            if (
+                hasattr(generation, "message")
+                and hasattr(generation.message, "usage_metadata")
+                and generation.message.usage_metadata is not None
+            ):
+                input_tokens += (
+                    generation.message.usage_metadata.get("input_tokens")
+                    or generation.message.usage_metadata.get("prompt_tokens")
+                    or 0
+                )
+                output_tokens += (
+                    generation.message.usage_metadata.get("output_tokens")
+                    or generation.message.usage_metadata.get("completion_tokens")
+                    or 0
+                )
+                total_tokens = input_tokens + output_tokens
+
             prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{i}"
             if hasattr(generation, "text") and generation.text != "":
                 span.set_attribute(
@@ -183,7 +200,9 @@ def _set_chat_response(span: Span, response: LLMResult) -> None:
                 else:
                     span.set_attribute(
                         f"{prefix}.content",
-                        json.dumps(generation.message.content, cls=CustomJsonEncode),
+                        json.dumps(
+                            generation.message.content, cls=CallbackFilteredJSONEncoder
+                        ),
                     )
                 if generation.generation_info.get("finish_reason"):
                     span.set_attribute(
@@ -204,13 +223,39 @@ def _set_chat_response(span: Span, response: LLMResult) -> None:
                             "arguments"
                         ),
                     )
+
+                if generation.message.additional_kwargs.get("tool_calls"):
+                    for idx, tool_call in enumerate(generation.message.additional_kwargs.get("tool_calls")):
+                        tool_call_prefix = f"{prefix}.tool_calls.{idx}"
+
+                        span.set_attribute(f"{tool_call_prefix}.id", tool_call.get("id"))
+                        span.set_attribute(f"{tool_call_prefix}.name", tool_call.get("function").get("name"))
+                        span.set_attribute(f"{tool_call_prefix}.arguments", tool_call.get("function").get("arguments"))
             i += 1
+
+    if input_tokens > 0 or output_tokens > 0 or total_tokens > 0:
+        span.set_attribute(
+            SpanAttributes.LLM_USAGE_PROMPT_TOKENS,
+            input_tokens,
+        )
+        span.set_attribute(
+            SpanAttributes.LLM_USAGE_COMPLETION_TOKENS,
+            output_tokens,
+        )
+        span.set_attribute(
+            SpanAttributes.LLM_USAGE_TOTAL_TOKENS,
+            total_tokens,
+        )
 
 
 class TraceloopCallbackHandler(BaseCallbackHandler):
-    def __init__(self, tracer: Tracer) -> None:
+    def __init__(
+        self, tracer: Tracer, duration_histogram: Histogram, token_histogram: Histogram
+    ) -> None:
         super().__init__()
         self.tracer = tracer
+        self.duration_histogram = duration_histogram
+        self.token_histogram = token_histogram
         self.spans: dict[UUID, SpanHolder] = {}
         self.run_inline = True
 
@@ -222,7 +267,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         **kwargs: Any,
     ) -> str:
         """Get the name to be used for the span. Based on heuristic. Can be extended."""
-        if "kwargs" in serialized and serialized["kwargs"].get("name"):
+        if serialized and "kwargs" in serialized and serialized["kwargs"].get("name"):
             return serialized["kwargs"]["name"]
         if kwargs.get("name"):
             return kwargs["name"]
@@ -394,9 +439,11 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
                         "metadata": metadata,
                         "kwargs": kwargs,
                     },
-                    cls=CustomJsonEncode,
+                    cls=CallbackFilteredJSONEncoder,
                 ),
             )
+
+        # The start_time is now automatically set when creating the SpanHolder
 
     @dont_throw
     def on_chain_end(
@@ -411,14 +458,17 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
             return
 
-        span = self._get_span(run_id)
+        span_holder = self.spans[run_id]
+        span = span_holder.span
         if should_send_prompts():
             span.set_attribute(
                 SpanAttributes.TRACELOOP_ENTITY_OUTPUT,
                 json.dumps(
-                    {"outputs": outputs, "kwargs": kwargs}, cls=CustomJsonEncode
+                    {"outputs": outputs, "kwargs": kwargs},
+                    cls=CallbackFilteredJSONEncoder,
                 ),
             )
+
         self._end_span(span, run_id)
         if parent_run_id is None:
             context_api.attach(
@@ -485,13 +535,27 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
 
         span = self._get_span(run_id)
 
-        token_usage = (response.llm_output or {}).get("token_usage")
+        model_name = None
+        if response.llm_output is not None:
+            model_name = response.llm_output.get(
+                "model_name"
+            ) or response.llm_output.get("model_id")
+            if model_name is not None:
+                span.set_attribute(SpanAttributes.LLM_RESPONSE_MODEL, model_name)
+
+        token_usage = (response.llm_output or {}).get("token_usage") or (
+            response.llm_output or {}
+        ).get("usage")
         if token_usage is not None:
-            prompt_tokens = token_usage.get("prompt_tokens") or token_usage.get(
-                "input_token_count"
+            prompt_tokens = (
+                token_usage.get("prompt_tokens")
+                or token_usage.get("input_token_count")
+                or token_usage.get("input_tokens")
             )
-            completion_tokens = token_usage.get("completion_tokens") or token_usage.get(
-                "generated_token_count"
+            completion_tokens = (
+                token_usage.get("completion_tokens")
+                or token_usage.get("generated_token_count")
+                or token_usage.get("output_tokens")
             )
             total_tokens = token_usage.get("total_tokens") or (
                 prompt_tokens + completion_tokens
@@ -507,16 +571,41 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
                 span, SpanAttributes.LLM_USAGE_TOTAL_TOKENS, total_tokens
             )
 
-        if response.llm_output is not None:
-            model_name = response.llm_output.get(
-                "model_name"
-            ) or response.llm_output.get("model_id")
-            if model_name is not None:
-                span.set_attribute(SpanAttributes.LLM_RESPONSE_MODEL, model_name)
+            # Record token usage metrics
+            if prompt_tokens > 0:
+                self.token_histogram.record(
+                    prompt_tokens,
+                    attributes={
+                        SpanAttributes.LLM_SYSTEM: "Langchain",
+                        SpanAttributes.LLM_TOKEN_TYPE: "input",
+                        SpanAttributes.LLM_RESPONSE_MODEL: model_name or "unknown",
+                    },
+                )
+
+            if completion_tokens > 0:
+                self.token_histogram.record(
+                    completion_tokens,
+                    attributes={
+                        SpanAttributes.LLM_SYSTEM: "Langchain",
+                        SpanAttributes.LLM_TOKEN_TYPE: "output",
+                        SpanAttributes.LLM_RESPONSE_MODEL: model_name or "unknown",
+                    },
+                )
 
         _set_chat_response(span, response)
-        span.end()
+        self._end_span(span, run_id)
 
+        # Record duration
+        duration = time.time() - self.spans[run_id].start_time
+        self.duration_histogram.record(
+            duration,
+            attributes={
+                SpanAttributes.LLM_SYSTEM: "Langchain",
+                SpanAttributes.LLM_RESPONSE_MODEL: model_name or "unknown",
+            },
+        )
+
+    @dont_throw
     def on_tool_start(
         self,
         serialized: dict[str, Any],
@@ -557,7 +646,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
                         "inputs": inputs,
                         "kwargs": kwargs,
                     },
-                    cls=CustomJsonEncode,
+                    cls=CallbackFilteredJSONEncoder,
                 ),
             )
 
@@ -578,7 +667,10 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         if should_send_prompts():
             span.set_attribute(
                 SpanAttributes.TRACELOOP_ENTITY_OUTPUT,
-                json.dumps({"output": output, "kwargs": kwargs}, cls=CustomJsonEncode),
+                json.dumps(
+                    {"output": output, "kwargs": kwargs},
+                    cls=CallbackFilteredJSONEncoder,
+                ),
             )
         self._end_span(span, run_id)
 

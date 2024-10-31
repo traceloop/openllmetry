@@ -15,7 +15,14 @@ def exporter():
     provider.add_span_processor(processor)
     trace.set_tracer_provider(provider)
 
-    OpenAIInstrumentor(enrich_assistant=True, enrich_token_usage=True).instrument()
+    async def upload_base64_image(*args):
+        return "/some/url"
+
+    OpenAIInstrumentor(
+        enrich_assistant=True,
+        enrich_token_usage=True,
+        upload_base64_image=upload_base64_image,
+    ).instrument()
 
     return exporter
 

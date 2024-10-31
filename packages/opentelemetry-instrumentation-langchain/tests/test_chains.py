@@ -53,15 +53,32 @@ def test_sequential_chain(exporter):
         "SequentialChain.workflow",
     ] == [span.name for span in spans]
 
-    workflow_span = next(span for span in spans if span.name == "SequentialChain.workflow")
-    task_spans = [span for span in spans if span.name in ["synopsis.task", "LLMChain.task"]]
+    workflow_span = next(
+        span for span in spans if span.name == "SequentialChain.workflow"
+    )
+    task_spans = [
+        span for span in spans if span.name in ["synopsis.task", "LLMChain.task"]
+    ]
     llm_spans = [span for span in spans if span.name == "OpenAI.completion"]
 
     assert workflow_span.attributes[SpanAttributes.TRACELOOP_SPAN_KIND] == "workflow"
-    assert workflow_span.attributes[SpanAttributes.TRACELOOP_ENTITY_NAME] == "SequentialChain"
-    assert all(span.attributes[SpanAttributes.TRACELOOP_SPAN_KIND] == "task" for span in task_spans)
-    assert all(span.attributes[SpanAttributes.TRACELOOP_WORKFLOW_NAME] == "SequentialChain" for span in spans)
-    assert all(span.attributes[SpanAttributes.TRACELOOP_ENTITY_PATH] in ["synopsis", "LLMChain"] for span in llm_spans)
+    assert (
+        workflow_span.attributes[SpanAttributes.TRACELOOP_ENTITY_NAME]
+        == "SequentialChain"
+    )
+    assert all(
+        span.attributes[SpanAttributes.TRACELOOP_SPAN_KIND] == "task"
+        for span in task_spans
+    )
+    assert all(
+        span.attributes[SpanAttributes.TRACELOOP_WORKFLOW_NAME] == "SequentialChain"
+        for span in spans
+    )
+    assert all(
+        span.attributes[SpanAttributes.TRACELOOP_ENTITY_PATH]
+        in ["synopsis", "LLMChain"]
+        for span in llm_spans
+    )
 
     synopsis_span = next(span for span in spans if span.name == "synopsis.task")
     review_span = next(span for span in spans if span.name == "LLMChain.task")
@@ -200,12 +217,14 @@ def test_stream(exporter):
     chunks = list(runnable.stream({"product": "colorful socks"}))
     spans = exporter.get_finished_spans()
 
-    assert [
-        "PromptTemplate.task",
-        "ChatCohere.chat",
-        "StrOutputParser.task",
-        "RunnableSequence.workflow",
-    ] == [span.name for span in spans]
+    assert set(
+        [
+            "PromptTemplate.task",
+            "StrOutputParser.task",
+            "ChatCohere.chat",
+            "RunnableSequence.workflow",
+        ]
+    ) == set([span.name for span in spans])
     assert len(chunks) == 62
 
 
@@ -223,10 +242,12 @@ async def test_astream(exporter):
         chunks.append(chunk)
     spans = exporter.get_finished_spans()
 
-    assert [
-        "PromptTemplate.task",
-        "ChatCohere.chat",
-        "StrOutputParser.task",
-        "RunnableSequence.workflow",
-    ] == [span.name for span in spans]
+    assert set(
+        [
+            "PromptTemplate.task",
+            "ChatCohere.chat",
+            "StrOutputParser.task",
+            "RunnableSequence.workflow",
+        ]
+    ) == set([span.name for span in spans])
     assert len(chunks) == 144

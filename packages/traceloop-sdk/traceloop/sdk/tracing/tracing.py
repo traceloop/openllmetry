@@ -26,11 +26,12 @@ from opentelemetry.instrumentation.threading import ThreadingInstrumentor
 
 from opentelemetry.semconv_ai import SpanAttributes
 from traceloop.sdk import Telemetry
+from traceloop.sdk.images.image_uploader import ImageUploader
 from traceloop.sdk.instruments import Instruments
 from traceloop.sdk.tracing.content_allow_list import ContentAllowList
 from traceloop.sdk.utils import is_notebook
 from traceloop.sdk.utils.package_check import is_package_installed
-from typing import Dict, Optional, Set
+from typing import Callable, Dict, Optional, Set
 
 
 TRACER_NAME = "traceloop.tracer"
@@ -47,6 +48,7 @@ EXCLUDED_URLS = """
     posthog.com,
     sentry.io,
     bedrock-runtime,
+    sagemaker-runtime,
     googleapis.com,
     githubusercontent.com,
     openaipublic.blob.core.windows.net"""
@@ -58,6 +60,7 @@ class TracerWrapper(object):
     endpoint: str = None
     headers: Dict[str, str] = {}
     __tracer_provider: TracerProvider = None
+    __image_uploader: ImageUploader = None
 
     def __new__(
         cls,
@@ -68,12 +71,14 @@ class TracerWrapper(object):
         should_enrich_metrics: bool = True,
         instruments: Optional[Set[Instruments]] = None,
         block_instruments: Optional[Set[Instruments]] = None,
+        image_uploader: ImageUploader = None,
     ) -> "TracerWrapper":
         if not hasattr(cls, "instance"):
             obj = cls.instance = super(TracerWrapper, cls).__new__(cls)
             if not TracerWrapper.endpoint:
                 return obj
 
+            obj.__image_uploader = image_uploader
             obj.__resource = Resource(attributes=TracerWrapper.resource_attributes)
             obj.__tracer_provider = init_tracer_provider(resource=obj.__resource)
             if processor:
@@ -124,7 +129,12 @@ class TracerWrapper(object):
             # this makes sure otel context is propagated so we always want it
             ThreadingInstrumentor().instrument()
 
-            instrument_set = init_instrumentations(should_enrich_metrics, instruments, block_instruments)
+            instrument_set = init_instrumentations(
+                should_enrich_metrics,
+                image_uploader.aupload_base64_image,
+                instruments,
+                block_instruments,
+            )
 
             if not instrument_set:
                 print(
@@ -328,9 +338,16 @@ def init_tracer_provider(resource: Resource) -> TracerProvider:
     return provider
 
 
-def init_instrumentations(should_enrich_metrics: bool, instruments: Optional[Set[Instruments]] = None, block_instruments: Optional[Set[Instruments]] = None):
+def init_instrumentations(
+    should_enrich_metrics: bool,
+    base64_image_uploader: Callable[[str, str, str], str],
+    instruments: Optional[Set[Instruments]] = None,
+    block_instruments: Optional[Set[Instruments]] = None,
+):
     block_instruments = block_instruments or set()
-    instruments = instruments or set(Instruments)  # Use all instruments if none specified
+    instruments = instruments or set(
+        Instruments
+    )  # Use all instruments if none specified
 
     # Remove any instruments that were explicitly blocked
     instruments = instruments - block_instruments
@@ -507,17 +524,24 @@ def init_instrumentations(should_enrich_metrics: bool, instruments: Optional[Set
                 print(Fore.RESET)
         else:
             print(Fore.RED + f"Warning: {instrument} instrumentation does not exist.")
-            print("Usage:\nfrom traceloop.sdk.instruments import Instruments\nTraceloop.init(app_name='...', instruments=set([Instruments.OPENAI]))")
+            print(
+                "Usage:\nfrom traceloop.sdk.instruments import Instruments\nTraceloop.init(app_name='...', instruments=set([Instruments.OPENAI]))"
+            )
             print(Fore.RESET)
 
     if not instrument_set:
-        print(Fore.RED + "Warning: No valid instruments set. Specify instruments or remove 'instruments' argument to use all instruments.")
+        print(
+            Fore.RED
+            + "Warning: No valid instruments set. Specify instruments or remove 'instruments' argument to use all instruments."
+        )
         print(Fore.RESET)
 
     return instrument_set
 
 
-def init_openai_instrumentor(should_enrich_metrics: bool):
+def init_openai_instrumentor(
+    should_enrich_metrics: bool, base64_image_uploader: Callable[[str, str, str], str]
+):
     try:
         if is_package_installed("openai"):
             Telemetry().capture("instrumentation:openai:init")
@@ -528,6 +552,7 @@ def init_openai_instrumentor(should_enrich_metrics: bool):
                 enrich_assistant=should_enrich_metrics,
                 enrich_token_usage=should_enrich_metrics,
                 get_common_metrics_attributes=metrics_common_attributes,
+                upload_base64_image=base64_image_uploader,
             )
             if not instrumentor.is_instrumented_by_opentelemetry:
                 instrumentor.instrument()
@@ -539,7 +564,9 @@ def init_openai_instrumentor(should_enrich_metrics: bool):
         return False
 
 
-def init_anthropic_instrumentor(should_enrich_metrics: bool):
+def init_anthropic_instrumentor(
+    should_enrich_metrics: bool, base64_image_uploader: Callable[[str, str, str], str]
+):
     try:
         if is_package_installed("anthropic"):
             Telemetry().capture("instrumentation:anthropic:init")
@@ -549,6 +576,7 @@ def init_anthropic_instrumentor(should_enrich_metrics: bool):
                 exception_logger=lambda e: Telemetry().log_exception(e),
                 enrich_token_usage=should_enrich_metrics,
                 get_common_metrics_attributes=metrics_common_attributes,
+                upload_base64_image=base64_image_uploader,
             )
             if not instrumentor.is_instrumented_by_opentelemetry:
                 instrumentor.instrument()
@@ -859,6 +887,24 @@ def init_bedrock_instrumentor(should_enrich_metrics: bool):
         return False
 
 
+def init_sagemaker_instrumentor(should_enrich_metrics: bool):
+    try:
+        if is_package_installed("boto3"):
+            from opentelemetry.instrumentation.sagemaker import SageMakerInstrumentor
+
+            instrumentor = SageMakerInstrumentor(
+                exception_logger=lambda e: Telemetry().log_exception(e),
+                enrich_token_usage=should_enrich_metrics,
+            )
+            if not instrumentor.is_instrumented_by_opentelemetry:
+                instrumentor.instrument()
+        return True
+    except Exception as e:
+        logging.error(f"Error initializing SageMaker instrumentor: {e}")
+        Telemetry().log_exception(e)
+        return False
+
+
 def init_replicate_instrumentor():
     try:
         if is_package_installed("replicate"):
@@ -879,7 +925,7 @@ def init_replicate_instrumentor():
 
 def init_vertexai_instrumentor():
     try:
-        if is_package_installed("vertexai"):
+        if is_package_installed("google-cloud-aiplatform"):
             Telemetry().capture("instrumentation:vertexai:init")
             from opentelemetry.instrumentation.vertexai import VertexAIInstrumentor
 
@@ -897,7 +943,9 @@ def init_vertexai_instrumentor():
 
 def init_watsonx_instrumentor():
     try:
-        if is_package_installed("ibm-watsonx-ai") or is_package_installed("ibm-watson-machine-learning"):
+        if is_package_installed("ibm-watsonx-ai") or is_package_installed(
+            "ibm-watson-machine-learning"
+        ):
             Telemetry().capture("instrumentation:watsonx:init")
             from opentelemetry.instrumentation.watsonx import WatsonxInstrumentor
 
@@ -987,6 +1035,7 @@ def init_redis_instrumentor():
     try:
         if is_package_installed("redis"):
             from opentelemetry.instrumentation.redis import RedisInstrumentor
+
             instrumentor = RedisInstrumentor()
             if not instrumentor.is_instrumented_by_opentelemetry:
                 instrumentor.instrument(excluded_urls=EXCLUDED_URLS)
