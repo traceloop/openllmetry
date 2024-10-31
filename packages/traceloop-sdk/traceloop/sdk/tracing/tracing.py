@@ -355,13 +355,15 @@ def init_instrumentations(
     instrument_set = False
     for instrument in instruments:
         if instrument == Instruments.OPENAI:
-            if init_openai_instrumentor(should_enrich_metrics):
+            if init_openai_instrumentor(should_enrich_metrics, base64_image_uploader):
                 instrument_set = True
             else:
                 print(Fore.RED + "Warning: OpenAI library does not exist.")
                 print(Fore.RESET)
         elif instrument == Instruments.ANTHROPIC:
-            if init_anthropic_instrumentor(should_enrich_metrics):
+            if init_anthropic_instrumentor(
+                should_enrich_metrics, base64_image_uploader
+            ):
                 instrument_set = True
             else:
                 print(Fore.RED + "Warning: Anthropic library does not exist.")
@@ -525,14 +527,17 @@ def init_instrumentations(
         else:
             print(Fore.RED + f"Warning: {instrument} instrumentation does not exist.")
             print(
-                "Usage:\nfrom traceloop.sdk.instruments import Instruments\nTraceloop.init(app_name='...', instruments=set([Instruments.OPENAI]))"
+                "Usage:\n"
+                "from traceloop.sdk.instruments import Instruments\n"
+                "Traceloop.init(app_name='...', instruments=set([Instruments.OPENAI]))"
             )
             print(Fore.RESET)
 
     if not instrument_set:
         print(
             Fore.RED
-            + "Warning: No valid instruments set. Specify instruments or remove 'instruments' argument to use all instruments."
+            + "Warning: No valid instruments set. "
+            + "Specify instruments or remove 'instruments' argument to use all instruments."
         )
         print(Fore.RESET)
 

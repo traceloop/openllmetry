@@ -77,7 +77,8 @@ def exporter_with_custom_instrumentations():
     Traceloop.init(
         exporter=exporter,
         disable_batch=True,
-        instruments=[i for i in Instruments],
+        instruments={i for i in Instruments},
+        block_instruments={Instruments.ANTHROPIC},
     )
 
     yield exporter
