@@ -59,6 +59,7 @@ class Traceloop:
         should_enrich_metrics: bool = True,
         resource_attributes: dict = {},
         instruments: Optional[Set[Instruments]] = None,
+        block_instruments: Optional[Set[Instruments]] = None,
         image_uploader: Optional[ImageUploader] = None,
     ) -> None:
         Telemetry()
@@ -138,6 +139,7 @@ class Traceloop:
             should_enrich_metrics=should_enrich_metrics,
             image_uploader=image_uploader or ImageUploader(api_endpoint, api_key),
             instruments=instruments,
+            block_instruments=block_instruments,
         )
 
         if not is_metrics_enabled() or not metrics_exporter and exporter:

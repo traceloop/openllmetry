@@ -70,6 +70,7 @@ class TracerWrapper(object):
         exporter: SpanExporter = None,
         should_enrich_metrics: bool = True,
         instruments: Optional[Set[Instruments]] = None,
+        block_instruments: Optional[Set[Instruments]] = None,
         image_uploader: ImageUploader = None,
     ) -> "TracerWrapper":
         if not hasattr(cls, "instance"):
@@ -128,219 +129,12 @@ class TracerWrapper(object):
             # this makes sure otel context is propagated so we always want it
             ThreadingInstrumentor().instrument()
 
-            instrument_set = False
-            if instruments is None:
-                init_instrumentations(
-                    should_enrich_metrics, obj.__image_uploader.aupload_base64_image
-                )
-                instrument_set = True
-            else:
-                for instrument in instruments:
-                    if instrument == Instruments.OPENAI:
-                        if not init_openai_instrumentor(
-                            should_enrich_metrics,
-                            obj.__image_uploader.aupload_base64_image,
-                        ):
-                            print(Fore.RED + "Warning: OpenAI library does not exist.")
-                            print(Fore.RESET)
-                        else:
-                            instrument_set = True
-                    elif instrument == Instruments.ANTHROPIC:
-                        if not init_anthropic_instrumentor(
-                            should_enrich_metrics,
-                            obj.__image_uploader.aupload_base64_image,
-                        ):
-                            print(
-                                Fore.RED + "Warning: Anthropic library does not exist."
-                            )
-                            print(Fore.RESET)
-                        else:
-                            instrument_set = True
-                    elif instrument == Instruments.COHERE:
-                        if not init_cohere_instrumentor():
-                            print(Fore.RED + "Warning: Cohere library does not exist.")
-                            print(Fore.RESET)
-                        else:
-                            instrument_set = True
-                    elif instrument == Instruments.PINECONE:
-                        if not init_pinecone_instrumentor():
-                            print(
-                                Fore.RED + "Warning: Pinecone library does not exist."
-                            )
-                            print(Fore.RESET)
-                        else:
-                            instrument_set = True
-                    elif instrument == Instruments.CHROMA:
-                        if not init_chroma_instrumentor():
-                            print(Fore.RED + "Warning: Chroma library does not exist.")
-                            print(Fore.RESET)
-                        else:
-                            instrument_set = True
-                    elif instrument == Instruments.GOOGLE_GENERATIVEAI:
-                        if not init_google_generativeai_instrumentor():
-                            print(
-                                Fore.RED
-                                + "Warning: Google Generative AI library does not exist."
-                            )
-                            print(Fore.RESET)
-                        else:
-                            instrument_set = True
-                    elif instrument == Instruments.LANGCHAIN:
-                        if not init_langchain_instrumentor():
-                            print(
-                                Fore.RED + "Warning: LangChain library does not exist."
-                            )
-                            print(Fore.RESET)
-                        else:
-                            instrument_set = True
-                    elif instrument == Instruments.MISTRAL:
-                        if not init_mistralai_instrumentor():
-                            print(
-                                Fore.RED + "Warning: MistralAI library does not exist."
-                            )
-                            print(Fore.RESET)
-                        else:
-                            instrument_set = True
-                    elif instrument == Instruments.OLLAMA:
-                        if not init_ollama_instrumentor():
-                            print(Fore.RED + "Warning: Ollama library does not exist.")
-                            print(Fore.RESET)
-                        else:
-                            instrument_set = True
-                    elif instrument == Instruments.LLAMA_INDEX:
-                        if not init_llama_index_instrumentor():
-                            print(
-                                Fore.RED + "Warning: LlamaIndex library does not exist."
-                            )
-                            print(Fore.RESET)
-                        else:
-                            instrument_set = True
-                    elif instrument == Instruments.MILVUS:
-                        if not init_milvus_instrumentor():
-                            print(Fore.RED + "Warning: Milvus library does not exist.")
-                            print(Fore.RESET)
-                        else:
-                            instrument_set = True
-                    elif instrument == Instruments.TRANSFORMERS:
-                        if not init_transformers_instrumentor():
-                            print(
-                                Fore.RED
-                                + "Warning: Transformers library does not exist."
-                            )
-                            print(Fore.RESET)
-                        else:
-                            instrument_set = True
-                    elif instrument == Instruments.TOGETHER:
-                        if not init_together_instrumentor():
-                            print(
-                                Fore.RED + "Warning: TogetherAI library does not exist."
-                            )
-                            print(Fore.RESET)
-                        else:
-                            instrument_set = True
-                    elif instrument == Instruments.REQUESTS:
-                        if not init_requests_instrumentor():
-                            print(
-                                Fore.RED + "Warning: Requests library does not exist."
-                            )
-                            print(Fore.RESET)
-                        else:
-                            instrument_set = True
-                    elif instrument == Instruments.URLLIB3:
-                        if not init_urllib3_instrumentor():
-                            print(Fore.RED + "Warning: urllib3 library does not exist.")
-                            print(Fore.RESET)
-                        else:
-                            instrument_set = True
-                    elif instrument == Instruments.PYMYSQL:
-                        if not init_pymysql_instrumentor():
-                            print(Fore.RED + "Warning: PyMySQL library does not exist.")
-                            print(Fore.RESET)
-                        else:
-                            instrument_set = True
-                    elif instrument == Instruments.BEDROCK:
-                        if not init_bedrock_instrumentor(should_enrich_metrics):
-                            print(Fore.RED + "Warning: Bedrock library does not exist.")
-                            print(Fore.RESET)
-                        else:
-                            instrument_set = True
-                    elif instrument == Instruments.SAGEMAKER:
-                        if not init_sagemaker_instrumentor(should_enrich_metrics):
-                            print(Fore.RED + "Warning: SageMaker library does not exist.")
-                            print(Fore.RESET)
-                        else:
-                            instrument_set = True
-                    elif instrument == Instruments.REPLICATE:
-                        if not init_replicate_instrumentor():
-                            print(
-                                Fore.RED + "Warning: Replicate library does not exist."
-                            )
-                            print(Fore.RESET)
-                        else:
-                            instrument_set = True
-                    elif instrument == Instruments.VERTEXAI:
-                        if not init_vertexai_instrumentor():
-                            print(
-                                Fore.RED + "Warning: Vertex AI library does not exist."
-                            )
-                            print(Fore.RESET)
-                        else:
-                            instrument_set = True
-                    elif instrument == Instruments.WATSONX:
-                        if not init_watsonx_instrumentor():
-                            print(Fore.RED + "Warning: Watsonx library does not exist.")
-                            print(Fore.RESET)
-                        else:
-                            instrument_set = True
-                    elif instrument == Instruments.WEAVIATE:
-                        if not init_weaviate_instrumentor():
-                            print(
-                                Fore.RED + "Warning: Weaviate library does not exist."
-                            )
-                            print(Fore.RESET)
-                        else:
-                            instrument_set = True
-                    elif instrument == Instruments.ALEPHALPHA:
-                        if not init_alephalpha_instrumentor():
-                            print(
-                                Fore.RED
-                                + "Warning: Aleph Alpha library does not exist."
-                            )
-                            print(Fore.RESET)
-                        else:
-                            instrument_set = True
-                    elif instrument == Instruments.MARQO:
-                        if not init_marqo_instrumentor():
-                            print(Fore.RED + "Warning: marqo library does not exist.")
-                            print(Fore.RESET)
-                        else:
-                            instrument_set = True
-                    elif instrument == Instruments.LANCEDB:
-                        if not init_lancedb_instrumentor():
-                            print(Fore.RED + "Warning: LanceDB library does not exist.")
-                            print(Fore.RESET)
-                        else:
-                            instrument_set = True
-                    elif instrument == Instruments.REDIS:
-                        if not init_redis_instrumentor():
-                            print(Fore.RED + "Warning: redis library does not exist.")
-                            print(Fore.RESET)
-                        else:
-                            instrument_set = True
-
-                    else:
-                        print(
-                            Fore.RED
-                            + "Warning: "
-                            + instrument
-                            + " instrumentation does not exist."
-                        )
-                        print(
-                            "Usage:\n"
-                            + "from traceloop.sdk.instruments import Instruments\n"
-                            + 'Traceloop.init(app_name="...", instruments=set([Instruments.OPENAI]))'
-                        )
-                        print(Fore.RESET)
+            instrument_set = init_instrumentations(
+                should_enrich_metrics,
+                image_uploader.aupload_base64_image,
+                instruments,
+                block_instruments,
+            )
 
             if not instrument_set:
                 print(
@@ -545,37 +339,209 @@ def init_tracer_provider(resource: Resource) -> TracerProvider:
 
 
 def init_instrumentations(
-    should_enrich_metrics: bool, base64_image_uploader: Callable[[str, str, str], str]
+    should_enrich_metrics: bool,
+    base64_image_uploader: Callable[[str, str, str], str],
+    instruments: Optional[Set[Instruments]] = None,
+    block_instruments: Optional[Set[Instruments]] = None,
 ):
-    init_openai_instrumentor(should_enrich_metrics, base64_image_uploader)
-    init_anthropic_instrumentor(should_enrich_metrics, base64_image_uploader)
-    init_cohere_instrumentor()
-    init_pinecone_instrumentor()
-    init_qdrant_instrumentor()
-    init_chroma_instrumentor()
-    init_google_generativeai_instrumentor()
-    init_haystack_instrumentor()
-    init_langchain_instrumentor()
-    init_mistralai_instrumentor()
-    init_ollama_instrumentor()
-    init_llama_index_instrumentor()
-    init_milvus_instrumentor()
-    init_transformers_instrumentor()
-    init_together_instrumentor()
-    init_redis_instrumentor()
-    init_requests_instrumentor()
-    init_urllib3_instrumentor()
-    init_pymysql_instrumentor()
-    init_bedrock_instrumentor(should_enrich_metrics)
-    init_sagemaker_instrumentor(should_enrich_metrics)
-    init_replicate_instrumentor()
-    init_vertexai_instrumentor()
-    init_watsonx_instrumentor()
-    init_weaviate_instrumentor()
-    init_alephalpha_instrumentor()
-    init_marqo_instrumentor()
-    init_lancedb_instrumentor()
-    init_groq_instrumentor()
+    block_instruments = block_instruments or set()
+    instruments = instruments or set(
+        Instruments
+    )  # Use all instruments if none specified
+
+    # Remove any instruments that were explicitly blocked
+    instruments = instruments - block_instruments
+
+    instrument_set = False
+    for instrument in instruments:
+        if instrument == Instruments.OPENAI:
+            if init_openai_instrumentor(should_enrich_metrics, base64_image_uploader):
+                instrument_set = True
+            else:
+                print(Fore.RED + "Warning: OpenAI library does not exist.")
+                print(Fore.RESET)
+        elif instrument == Instruments.ANTHROPIC:
+            if init_anthropic_instrumentor(
+                should_enrich_metrics, base64_image_uploader
+            ):
+                instrument_set = True
+            else:
+                print(Fore.RED + "Warning: Anthropic library does not exist.")
+                print(Fore.RESET)
+        elif instrument == Instruments.COHERE:
+            if init_cohere_instrumentor():
+                instrument_set = True
+            else:
+                print(Fore.RED + "Warning: Cohere library does not exist.")
+                print(Fore.RESET)
+        elif instrument == Instruments.PINECONE:
+            if init_pinecone_instrumentor():
+                instrument_set = True
+            else:
+                print(Fore.RED + "Warning: Pinecone library does not exist.")
+                print(Fore.RESET)
+        elif instrument == Instruments.QDRANT:
+            if init_qdrant_instrumentor():
+                instrument_set = True
+            else:
+                print(Fore.RED + "Warning: Qdrant library does not exist.")
+                print(Fore.RESET)
+        elif instrument == Instruments.CHROMA:
+            if init_chroma_instrumentor():
+                instrument_set = True
+            else:
+                print(Fore.RED + "Warning: Chroma library does not exist.")
+                print(Fore.RESET)
+        elif instrument == Instruments.GOOGLE_GENERATIVEAI:
+            if init_google_generativeai_instrumentor():
+                instrument_set = True
+            else:
+                print(Fore.RED + "Warning: Google GenerativeAI library does not exist.")
+                print(Fore.RESET)
+        elif instrument == Instruments.HAYSTACK:
+            if init_haystack_instrumentor():
+                instrument_set = True
+            else:
+                print(Fore.RED + "Warning: Haystack library does not exist.")
+                print(Fore.RESET)
+        elif instrument == Instruments.LANGCHAIN:
+            if init_langchain_instrumentor():
+                instrument_set = True
+            else:
+                print(Fore.RED + "Warning: LangChain library does not exist.")
+                print(Fore.RESET)
+        elif instrument == Instruments.MISTRAL:
+            if init_mistralai_instrumentor():
+                instrument_set = True
+            else:
+                print(Fore.RED + "Warning: MistralAI library does not exist.")
+                print(Fore.RESET)
+        elif instrument == Instruments.OLLAMA:
+            if init_ollama_instrumentor():
+                instrument_set = True
+            else:
+                print(Fore.RED + "Warning: Ollama library does not exist.")
+                print(Fore.RESET)
+        elif instrument == Instruments.LLAMA_INDEX:
+            if init_llama_index_instrumentor():
+                instrument_set = True
+            else:
+                print(Fore.RED + "Warning: LlamaIndex library does not exist.")
+                print(Fore.RESET)
+        elif instrument == Instruments.MILVUS:
+            if init_milvus_instrumentor():
+                instrument_set = True
+            else:
+                print(Fore.RED + "Warning: Milvus library does not exist.")
+                print(Fore.RESET)
+        elif instrument == Instruments.TRANSFORMERS:
+            if init_transformers_instrumentor():
+                instrument_set = True
+            else:
+                print(Fore.RED + "Warning: Transformers library does not exist.")
+                print(Fore.RESET)
+        elif instrument == Instruments.TOGETHER:
+            if init_together_instrumentor():
+                instrument_set = True
+            else:
+                print(Fore.RED + "Warning: Together library does not exist.")
+                print(Fore.RESET)
+        elif instrument == Instruments.REDIS:
+            if init_redis_instrumentor():
+                instrument_set = True
+            else:
+                print(Fore.RED + "Warning: Redis library does not exist.")
+                print(Fore.RESET)
+        elif instrument == Instruments.URLLIB3:
+            if init_urllib3_instrumentor():
+                instrument_set = True
+            else:
+                print(Fore.RED + "Warning: Urllib3 library does not exist.")
+                print(Fore.RESET)
+        elif instrument == Instruments.PYMYSQL:
+            if init_pymysql_instrumentor():
+                instrument_set = True
+            else:
+                print(Fore.RED + "Warning: PyMySQL library does not exist.")
+                print(Fore.RESET)
+        elif instrument == Instruments.BEDROCK:
+            if init_bedrock_instrumentor(should_enrich_metrics):
+                instrument_set = True
+            else:
+                print(Fore.RED + "Warning: Bedrock library does not exist.")
+                print(Fore.RESET)
+        elif instrument == Instruments.REPLICATE:
+            if init_replicate_instrumentor():
+                instrument_set = True
+            else:
+                print(Fore.RED + "Warning: Replicate library does not exist.")
+                print(Fore.RESET)
+        elif instrument == Instruments.VERTEXAI:
+            if init_vertexai_instrumentor():
+                instrument_set = True
+            else:
+                print(Fore.RED + "Warning: VertexAI library does not exist.")
+                print(Fore.RESET)
+        elif instrument == Instruments.WATSONX:
+            if init_watsonx_instrumentor():
+                instrument_set = True
+            else:
+                print(Fore.RED + "Warning: WatsonX library does not exist.")
+                print(Fore.RESET)
+        elif instrument == Instruments.WEAVIATE:
+            if init_weaviate_instrumentor():
+                instrument_set = True
+            else:
+                print(Fore.RED + "Warning: Weaviate library does not exist.")
+                print(Fore.RESET)
+        elif instrument == Instruments.ALEPHALPHA:
+            if init_alephalpha_instrumentor():
+                instrument_set = True
+            else:
+                print(Fore.RED + "Warning: AlephAlpha library does not exist.")
+                print(Fore.RESET)
+        elif instrument == Instruments.MARQO:
+            if init_marqo_instrumentor():
+                instrument_set = True
+            else:
+                print(Fore.RED + "Warning: Marqo library does not exist.")
+                print(Fore.RESET)
+        elif instrument == Instruments.LANCEDB:
+            if init_lancedb_instrumentor():
+                instrument_set = True
+            else:
+                print(Fore.RED + "Warning: LanceDB library does not exist.")
+                print(Fore.RESET)
+        elif instrument == Instruments.GROQ:
+            if init_groq_instrumentor():
+                instrument_set = True
+            else:
+                print(Fore.RED + "Warning: Groq library does not exist.")
+                print(Fore.RESET)
+        elif instrument == Instruments.REQUESTS:
+            if init_requests_instrumentor():
+                instrument_set = True
+            else:
+                print(Fore.RED + "Warning: Requests library does not exist.")
+                print(Fore.RESET)
+        else:
+            print(Fore.RED + f"Warning: {instrument} instrumentation does not exist.")
+            print(
+                "Usage:\n"
+                "from traceloop.sdk.instruments import Instruments\n"
+                "Traceloop.init(app_name='...', instruments=set([Instruments.OPENAI]))"
+            )
+            print(Fore.RESET)
+
+    if not instrument_set:
+        print(
+            Fore.RED
+            + "Warning: No valid instruments set. "
+            + "Specify instruments or remove 'instruments' argument to use all instruments."
+        )
+        print(Fore.RESET)
+
+    return instrument_set
 
 
 def init_openai_instrumentor(
