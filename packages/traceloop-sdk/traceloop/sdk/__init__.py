@@ -44,7 +44,6 @@ class Traceloop:
         api_key: str = None,
         headers: Dict[str, str] = {},
         disable_batch=False,
-        disable_requests_instrumentation: bool = True,
         exporter: SpanExporter = None,
         metrics_exporter: MetricExporter = None,
         metrics_headers: Dict[str, str] = None,
@@ -54,6 +53,7 @@ class Traceloop:
         should_enrich_metrics: bool = True,
         resource_attributes: dict = {},
         instruments: Optional[Set[Instruments]] = None,
+        block_instruments: Optional[Set[Instruments]] = None,
     ) -> None:
         Telemetry()
 
@@ -126,12 +126,12 @@ class Traceloop:
         )
         Traceloop.__tracer_wrapper = TracerWrapper(
             disable_batch=disable_batch,
-            disable_requests_instrumentation=disable_requests_instrumentation,
             processor=processor,
             propagator=propagator,
             exporter=exporter,
             should_enrich_metrics=should_enrich_metrics,
             instruments=instruments,
+            block_instruments=block_instruments,
         )
 
         if not metrics_exporter and exporter:
