@@ -1,18 +1,24 @@
+from functools import singledispatchmethod
 import inspect
 import json
 import re
-from typing import Any, Dict, Optional
-from dataclasses import dataclass
+from typing import Any, AsyncGenerator, Dict, Generator, List, Optional
+from dataclasses import dataclass, field
 
 from llama_index.core.bridge.pydantic import PrivateAttr
 from llama_index.core.base.llms.types import MessageRole
+from llama_index.core.base.response.schema import StreamingResponse
 from llama_index.core.instrumentation import get_dispatcher
 from llama_index.core.instrumentation.events import BaseEvent
 from llama_index.core.instrumentation.events.agent import AgentToolCallEvent
 from llama_index.core.instrumentation.events.embedding import EmbeddingStartEvent
+from llama_index.core.instrumentation.events.chat_engine import (
+    StreamChatEndEvent,
+)
 from llama_index.core.instrumentation.events.llm import (
     LLMChatEndEvent,
     LLMChatStartEvent,
+    LLMCompletionEndEvent,
     LLMPredictEndEvent,
 )
 from llama_index.core.instrumentation.events.rerank import ReRankStartEvent
@@ -30,18 +36,27 @@ from opentelemetry.semconv_ai import (
     SpanAttributes,
     TraceloopSpanKindValues,
 )
-from opentelemetry.trace import get_current_span, set_span_in_context, Tracer
+from opentelemetry.trace import set_span_in_context, Tracer
 from opentelemetry.trace.span import Span
 
 
-LLAMA_INDEX_REGEX = re.compile(r"^([a-zA-Z]+)\.")
+# For these spans, instead of creating a span using data from LlamaIndex,
+# we use the regular OpenLLMetry instrumentations
+AVAILABLE_OPENLLMETRY_INSTRUMENTATIONS = ["OpenAI"]
+
+CLASS_NAME_FROM_ID_REGEX = re.compile(r"^([a-zA-Z]+)\.")
+STREAMING_END_EVENTS = (
+    LLMChatEndEvent,
+    LLMCompletionEndEvent,
+    StreamChatEndEvent,
+)
 
 
 def instrument_with_dispatcher(tracer: Tracer):
     dispatcher = get_dispatcher()
-    openll_span_handler = OpenLLSpanHandler(tracer)
-    dispatcher.add_span_handler(openll_span_handler)
-    dispatcher.add_event_handler(OpenLLEventHandler(openll_span_handler))
+    openllmetry_span_handler = OpenLLMetrySpanHandler(tracer)
+    dispatcher.add_span_handler(openllmetry_span_handler)
+    dispatcher.add_event_handler(OpenLLMetryEventHandler(openllmetry_span_handler))
 
 
 @dont_throw
@@ -85,18 +100,16 @@ def _set_llm_chat_response(event, span) -> None:
         return
     span.set_attribute(
         SpanAttributes.LLM_RESPONSE_MODEL,
-        raw.get("model") if "model" in raw else raw.model,  # raw can be Any, not just ChatCompletion
+        (
+            raw.get("model") if "model" in raw else raw.model
+        ),  # raw can be Any, not just ChatCompletion
     )
     if usage := raw.get("usage") if "usage" in raw else raw.usage:
         span.set_attribute(
             SpanAttributes.LLM_USAGE_COMPLETION_TOKENS, usage.completion_tokens
         )
-        span.set_attribute(
-            SpanAttributes.LLM_USAGE_PROMPT_TOKENS, usage.prompt_tokens
-        )
-        span.set_attribute(
-            SpanAttributes.LLM_USAGE_TOTAL_TOKENS, usage.total_tokens
-        )
+        span.set_attribute(SpanAttributes.LLM_USAGE_PROMPT_TOKENS, usage.prompt_tokens)
+        span.set_attribute(SpanAttributes.LLM_USAGE_TOTAL_TOKENS, usage.total_tokens)
     if choices := raw.choices:
         span.set_attribute(
             SpanAttributes.LLM_RESPONSE_FINISH_REASON, choices[0].finish_reason
@@ -151,12 +164,71 @@ def _set_tool(event, span) -> None:
 
 @dataclass
 class SpanHolder:
-    span: Span
-    token: Any
-    context: context_api.context.Context
+    span_id: str
+    parent: Optional["SpanHolder"] = None
+    otel_span: Optional[Span] = None
+    token: Optional[Any] = None
+    context: Optional[context_api.context.Context] = None
+    waiting_for_streaming: bool = field(init=False, default=False)
+
+    _active: bool = field(init=False, default=True)
+
+    def process_event(self, event: BaseEvent) -> List["SpanHolder"]:
+        self.update_span_for_event(event)
+
+        if self.waiting_for_streaming and isinstance(event, STREAMING_END_EVENTS):
+            self.end()
+            return [self] + self.notify_parent()
+
+        return []
+
+    def notify_parent(self) -> List["SpanHolder"]:
+        if self.parent:
+            self.parent.end()
+            return [self.parent] + self.parent.notify_parent()
+        return []
+
+    def end(self):
+        if not self._active:
+            return
+
+        self._active = False
+        if self.otel_span:
+            self.otel_span.end()
+        if self.token:
+            context_api.detach(self.token)
+
+    @singledispatchmethod
+    def update_span_for_event(self, event: BaseEvent):
+        pass
+
+    @update_span_for_event.register
+    def _(self, event: LLMChatStartEvent):
+        _set_llm_chat_request(event, self.otel_span)
+
+    @update_span_for_event.register
+    def _(self, event: LLMChatEndEvent):
+        _set_llm_chat_response(event, self.otel_span)
+
+    @update_span_for_event.register
+    def _(self, event: LLMPredictEndEvent):
+        _set_llm_predict_response(event, self.otel_span)
+
+    @update_span_for_event.register
+    def _(self, event: EmbeddingStartEvent):
+        _set_embedding(event, self.otel_span)
+
+    @update_span_for_event.register
+    def _(self, event: ReRankStartEvent):
+        _set_rerank(event, self.otel_span)
+
+    @update_span_for_event.register
+    def _(self, event: AgentToolCallEvent):
+        _set_tool(event, self.otel_span)
 
 
-class OpenLLSpanHandler(BaseSpanHandler[SpanHolder]):
+class OpenLLMetrySpanHandler(BaseSpanHandler[SpanHolder]):
+    waiting_for_streaming_spans: Dict[str, SpanHolder] = {}
     _tracer: Tracer = PrivateAttr()
 
     def __init__(self, tracer: Tracer):
@@ -181,7 +253,15 @@ class OpenLLSpanHandler(BaseSpanHandler[SpanHolder]):
         )
         # Take the class name from id_ where id_ is e.g.
         # 'SentenceSplitter.split_text_metadata_aware-a2f2a780-2fa6-4682-a88e-80dc1f1ebe6a'
-        class_name = LLAMA_INDEX_REGEX.match(id_).groups()[0]
+        class_name = CLASS_NAME_FROM_ID_REGEX.match(id_).groups()[0]
+        if class_name in AVAILABLE_OPENLLMETRY_INSTRUMENTATIONS:
+            context_api.attach(
+                context_api.set_value(
+                    SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY, False
+                )
+            )
+            return SpanHolder(id_, parent)
+
         span_name = f"{class_name}.{kind}"
         span = self._tracer.start_span(
             span_name,
@@ -196,21 +276,26 @@ class OpenLLSpanHandler(BaseSpanHandler[SpanHolder]):
             current_context,
         )
         token = context_api.attach(current_context)
+
         span.set_attribute(SpanAttributes.TRACELOOP_SPAN_KIND, kind)
         span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, span_name)
         try:
             if should_send_prompts():
                 span.set_attribute(
                     SpanAttributes.TRACELOOP_ENTITY_INPUT,
-                    json.dumps(bound_args.arguments, cls=JSONEncoder)
+                    json.dumps(bound_args.arguments, cls=JSONEncoder),
                 )
         except Exception:
             pass
 
-        return SpanHolder(span, token, current_context)
+        return SpanHolder(id_, parent, span, token, current_context)
 
     def prepare_to_exit_span(
-        self, id_: str, result: Optional[Any] = None, **kwargs
+        self,
+        id_: str,
+        instance: Optional[Any] = None,
+        result: Optional[Any] = None,
+        **kwargs,
     ) -> SpanHolder:
         """Logic for preparing to drop a span."""
         span_holder = self.open_spans[id_]
@@ -223,18 +308,22 @@ class OpenLLSpanHandler(BaseSpanHandler[SpanHolder]):
             if "source_nodes" in output:
                 del output["source_nodes"]
             if should_send_prompts():
-                span_holder.span.set_attribute(
+                span_holder.otel_span.set_attribute(
                     SpanAttributes.TRACELOOP_ENTITY_OUTPUT,
                     json.dumps(output, cls=JSONEncoder),
                 )
         except Exception:
             pass
 
-        span_holder.span.end()
-        context_api.detach(span_holder.token)
-        with self.lock:
-            self.completed_spans += [span_holder]
-        return span_holder
+        if isinstance(result, (Generator, AsyncGenerator, StreamingResponse)):
+            # This is a streaming response, we want to wait for the streaming end event before ending the span
+            span_holder.waiting_for_streaming = True
+            with self.lock:
+                self.waiting_for_streaming_spans[id_] = span_holder
+            return span_holder
+        else:
+            span_holder.end()
+            return span_holder
 
     def prepare_to_drop_span(
         self, id_: str, err: Optional[Exception], **kwargs
@@ -243,30 +332,27 @@ class OpenLLSpanHandler(BaseSpanHandler[SpanHolder]):
         if id_ in self.open_spans:
             with self.lock:
                 span_holder = self.open_spans[id_]
-                self.dropped_spans += [span_holder]
             return span_holder
         return None
 
 
-class OpenLLEventHandler(BaseEventHandler):
-    _span_handler: OpenLLSpanHandler = PrivateAttr()
+class OpenLLMetryEventHandler(BaseEventHandler):
+    _span_handler: OpenLLMetrySpanHandler = PrivateAttr()
 
-    def __init__(self, span_handler: OpenLLSpanHandler):
+    def __init__(self, span_handler: OpenLLMetrySpanHandler):
         super().__init__()
         self._span_handler = span_handler
 
     def handle(self, event: BaseEvent, **kwargs) -> Any:
-        span = get_current_span()
-        # use case with class_pattern if support for 3.9 is dropped
-        if isinstance(event, LLMChatStartEvent):
-            _set_llm_chat_request(event, span)
-        elif isinstance(event, LLMChatEndEvent):
-            _set_llm_chat_response(event, span)
-        elif isinstance(event, LLMPredictEndEvent):
-            _set_llm_predict_response(event, span)
-        elif isinstance(event, EmbeddingStartEvent):
-            _set_embedding(event, span)
-        elif isinstance(event, ReRankStartEvent):
-            _set_rerank(event, span)
-        elif isinstance(event, AgentToolCallEvent):
-            _set_tool(event, span)
+        span = self._span_handler.open_spans.get(event.span_id)
+        if not span:
+            span = self._span_handler.waiting_for_streaming_spans.get(event.span_id)
+        if not span:
+            print(f"No span found for event {event}")
+            return
+
+        finished_spans = span.process_event(event)
+
+        with self._span_handler.lock:
+            for span in finished_spans:
+                self._span_handler.waiting_for_streaming_spans.pop(span.span_id)

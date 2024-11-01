@@ -39,8 +39,10 @@ def clear_exporter(exporter):
 @pytest.fixture(autouse=True)
 def environment():
     os.environ["TOKENIZERS_PARALLELISM"] = "false"
-    os.environ["OPENAI_API_KEY"] = "test_api_key"
-    os.environ["COHERE_API_KEY"] = "test_api_key"
+    if "OPENAI_API_KEY" not in os.environ:
+        os.environ["OPENAI_API_KEY"] = "test_api_key"
+    if "COHERE_API_KEY" not in os.environ:
+        os.environ["COHERE_API_KEY"] = "test_api_key"
 
 
 @pytest.fixture(scope="module")
