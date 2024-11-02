@@ -575,6 +575,8 @@ def test_anthropic_prompt_caching(exporter, reader):
     except Exception:
         pass
 
+    system_message = "You help generate concise summaries of news articles and blog posts that user sends you."
+
     for _ in range(2):
         client.beta.prompt_caching.messages.create(
             model="claude-3-5-sonnet-20240620",
@@ -582,7 +584,7 @@ def test_anthropic_prompt_caching(exporter, reader):
             system=[
                 {
                     "type": "text",
-                    "text": "You help generate concise summaries of news articles and blog posts that user sends you.",
+                    "text": system_message,
                 },
             ],
             messages=[
@@ -606,10 +608,15 @@ def test_anthropic_prompt_caching(exporter, reader):
     cache_creation_span = spans[0]
     cache_read_span = spans[1]
 
-    assert cache_creation_span.attributes["gen_ai.prompt.0.role"] == "user"
-    assert text == cache_creation_span.attributes["gen_ai.prompt.0.content"]
-    assert cache_read_span.attributes["gen_ai.prompt.0.role"] == "user"
-    assert text == cache_read_span.attributes["gen_ai.prompt.0.content"]
+    assert cache_creation_span.attributes["gen_ai.prompt.0.role"] == "system"
+    assert system_message == cache_creation_span.attributes["gen_ai.prompt.0.content"]
+    assert cache_read_span.attributes["gen_ai.prompt.0.role"] == "system"
+    assert system_message == cache_read_span.attributes["gen_ai.prompt.0.content"]
+
+    assert cache_creation_span.attributes["gen_ai.prompt.1.role"] == "user"
+    assert text == cache_creation_span.attributes["gen_ai.prompt.1.content"]
+    assert cache_read_span.attributes["gen_ai.prompt.1.role"] == "user"
+    assert text == cache_read_span.attributes["gen_ai.prompt.1.content"]
     assert (
         cache_creation_span.attributes["gen_ai.usage.cache_creation_input_tokens"]
         == cache_read_span.attributes["gen_ai.usage.cache_read_input_tokens"]
@@ -642,7 +649,6 @@ def test_anthropic_prompt_caching(exporter, reader):
 @pytest.mark.vcr
 @pytest.mark.asyncio
 async def test_anthropic_prompt_caching_async(exporter, reader):
-
     with open(Path(__file__).parent.joinpath("data/1024+tokens.txt"), "r") as f:
         # add the unique test name to the prompt to avoid caching leaking to other tests
         text = "test_anthropic_prompt_caching_async <- IGNORE THIS. ARTICLES START ON THE NEXT LINE\n" + f.read()
@@ -655,6 +661,8 @@ async def test_anthropic_prompt_caching_async(exporter, reader):
     except Exception:
         pass
 
+    system_message = "You help generate concise summaries of news articles and blog posts that user sends you."
+
     for _ in range(2):
         await client.beta.prompt_caching.messages.create(
             model="claude-3-5-sonnet-20240620",
@@ -662,7 +670,7 @@ async def test_anthropic_prompt_caching_async(exporter, reader):
             system=[
                 {
                     "type": "text",
-                    "text": "You help generate concise summaries of news articles and blog posts that user sends you.",
+                    "text": system_message,
                 },
             ],
             messages=[
@@ -686,10 +694,15 @@ async def test_anthropic_prompt_caching_async(exporter, reader):
     cache_creation_span = spans[0]
     cache_read_span = spans[1]
 
-    assert cache_creation_span.attributes["gen_ai.prompt.0.role"] == "user"
-    assert text == cache_creation_span.attributes["gen_ai.prompt.0.content"]
-    assert cache_read_span.attributes["gen_ai.prompt.0.role"] == "user"
-    assert text == cache_read_span.attributes["gen_ai.prompt.0.content"]
+    assert cache_creation_span.attributes["gen_ai.prompt.0.role"] == "system"
+    assert system_message == cache_creation_span.attributes["gen_ai.prompt.0.content"]
+    assert cache_read_span.attributes["gen_ai.prompt.0.role"] == "system"
+    assert system_message == cache_read_span.attributes["gen_ai.prompt.0.content"]
+
+    assert cache_creation_span.attributes["gen_ai.prompt.1.role"] == "user"
+    assert text == cache_creation_span.attributes["gen_ai.prompt.1.content"]
+    assert cache_read_span.attributes["gen_ai.prompt.1.role"] == "user"
+    assert text == cache_read_span.attributes["gen_ai.prompt.1.content"]
     assert (
         cache_creation_span.attributes["gen_ai.usage.cache_creation_input_tokens"]
         == cache_read_span.attributes["gen_ai.usage.cache_read_input_tokens"]
@@ -732,6 +745,8 @@ def test_anthropic_prompt_caching_stream(exporter, reader):
     except Exception:
         pass
 
+    system_message = "You help generate concise summaries of news articles and blog posts that user sends you."
+
     for _ in range(2):
         response = client.beta.prompt_caching.messages.create(
             model="claude-3-5-sonnet-20240620",
@@ -740,7 +755,7 @@ def test_anthropic_prompt_caching_stream(exporter, reader):
             system=[
                 {
                     "type": "text",
-                    "text": "You help generate concise summaries of news articles and blog posts that user sends you.",
+                    "text": system_message,
                 },
             ],
             messages=[
@@ -768,10 +783,15 @@ def test_anthropic_prompt_caching_stream(exporter, reader):
     cache_creation_span = spans[0]
     cache_read_span = spans[1]
 
-    assert cache_creation_span.attributes["gen_ai.prompt.0.role"] == "user"
-    assert text == cache_creation_span.attributes["gen_ai.prompt.0.content"]
-    assert cache_read_span.attributes["gen_ai.prompt.0.role"] == "user"
-    assert text == cache_read_span.attributes["gen_ai.prompt.0.content"]
+    assert cache_creation_span.attributes["gen_ai.prompt.0.role"] == "system"
+    assert system_message == cache_creation_span.attributes["gen_ai.prompt.0.content"]
+    assert cache_read_span.attributes["gen_ai.prompt.0.role"] == "system"
+    assert system_message == cache_read_span.attributes["gen_ai.prompt.0.content"]
+
+    assert cache_creation_span.attributes["gen_ai.prompt.1.role"] == "user"
+    assert text == cache_creation_span.attributes["gen_ai.prompt.1.content"]
+    assert cache_read_span.attributes["gen_ai.prompt.1.role"] == "user"
+    assert text == cache_read_span.attributes["gen_ai.prompt.1.content"]
     assert (
         cache_creation_span.attributes["gen_ai.usage.cache_creation_input_tokens"]
         == cache_read_span.attributes["gen_ai.usage.cache_read_input_tokens"]
@@ -815,6 +835,8 @@ async def test_anthropic_prompt_caching_async_stream(exporter, reader):
     except Exception:
         pass
 
+    system_message = "You help generate concise summaries of news articles and blog posts that user sends you."
+
     for _ in range(2):
         response = await client.beta.prompt_caching.messages.create(
             model="claude-3-5-sonnet-20240620",
@@ -823,7 +845,7 @@ async def test_anthropic_prompt_caching_async_stream(exporter, reader):
             system=[
                 {
                     "type": "text",
-                    "text": "You help generate concise summaries of news articles and blog posts that user sends you.",
+                    "text": system_message,
                 },
             ],
             messages=[
@@ -851,10 +873,15 @@ async def test_anthropic_prompt_caching_async_stream(exporter, reader):
     cache_creation_span = spans[0]
     cache_read_span = spans[1]
 
-    assert cache_creation_span.attributes["gen_ai.prompt.0.role"] == "user"
-    assert text == cache_creation_span.attributes["gen_ai.prompt.0.content"]
-    assert cache_read_span.attributes["gen_ai.prompt.0.role"] == "user"
-    assert text == cache_read_span.attributes["gen_ai.prompt.0.content"]
+    assert cache_creation_span.attributes["gen_ai.prompt.0.role"] == "system"
+    assert system_message == cache_creation_span.attributes["gen_ai.prompt.0.content"]
+    assert cache_read_span.attributes["gen_ai.prompt.0.role"] == "system"
+    assert system_message == cache_read_span.attributes["gen_ai.prompt.0.content"]
+
+    assert cache_creation_span.attributes["gen_ai.prompt.1.role"] == "user"
+    assert text == cache_creation_span.attributes["gen_ai.prompt.1.content"]
+    assert cache_read_span.attributes["gen_ai.prompt.1.role"] == "user"
+    assert text == cache_read_span.attributes["gen_ai.prompt.1.content"]
     assert (
         cache_creation_span.attributes["gen_ai.usage.cache_creation_input_tokens"]
         == cache_read_span.attributes["gen_ai.usage.cache_read_input_tokens"]

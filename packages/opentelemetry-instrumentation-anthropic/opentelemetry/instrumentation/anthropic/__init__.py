@@ -172,16 +172,34 @@ async def _aset_input_attributes(span, kwargs):
             )
 
         elif kwargs.get("messages") is not None:
-            for i, message in enumerate(kwargs.get("messages")):
+            has_system_message = False
+            if kwargs.get("system"):
+                has_system_message = True
                 set_span_attribute(
                     span,
-                    f"{SpanAttributes.LLM_PROMPTS}.{i}.content",
+                    f"{SpanAttributes.LLM_PROMPTS}.0.content",
+                    await _dump_content(
+                        message_index=0, span=span, content=kwargs.get("system")
+                    ),
+                )
+                set_span_attribute(
+                    span,
+                    f"{SpanAttributes.LLM_PROMPTS}.0.role",
+                    "system",
+                )
+            for i, message in enumerate(kwargs.get("messages")):
+                prompt_index = i + (1 if has_system_message else 0)
+                set_span_attribute(
+                    span,
+                    f"{SpanAttributes.LLM_PROMPTS}.{prompt_index}.content",
                     await _dump_content(
                         message_index=i, span=span, content=message.get("content")
                     ),
                 )
                 set_span_attribute(
-                    span, f"{SpanAttributes.LLM_PROMPTS}.{i}.role", message.get("role")
+                    span,
+                    f"{SpanAttributes.LLM_PROMPTS}.{prompt_index}.role",
+                    message.get("role"),
                 )
 
         if kwargs.get("tools") is not None:
