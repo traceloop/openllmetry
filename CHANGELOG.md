@@ -1,3 +1,9 @@
+## v0.33.7 (2024-11-04)
+
+### Fix
+
+- **sdk**: don't serialize large jsons as inputs/outputs (#2252)
+
 ## v0.33.6 (2024-11-04)
 
 ### Fix
