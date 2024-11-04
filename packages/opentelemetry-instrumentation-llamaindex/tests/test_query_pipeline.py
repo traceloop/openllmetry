@@ -50,7 +50,7 @@ def test_query_pipeline(exporter):
         "BaseSynthesizer.task",
         "CohereRerank.task",
         "LLM.task",
-        "OpenAI.task",
+        "openai.chat",
         "TokenTextSplitter.task",
     }.issubset({span.name for span in spans})
 
@@ -62,7 +62,7 @@ def test_query_pipeline(exporter):
     synthesizer_span = next(
         span for span in spans if span.name == "BaseSynthesizer.task"
     )
-    llm_span_1, llm_span_2 = [span for span in spans if span.name == "OpenAI.task"]
+    llm_span_1, llm_span_2 = [span for span in spans if span.name == "openai.chat"]
 
     assert query_pipeline_span.parent is None
     assert reranker_span.parent is not None
