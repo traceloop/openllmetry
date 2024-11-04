@@ -19,6 +19,11 @@ from traceloop.sdk.utils import camel_to_snake
 from traceloop.sdk.utils.json_encoder import JSONEncoder
 
 
+def _is_json_size_valid(json_str: str) -> bool:
+    """Check if JSON string size is less than 1MB"""
+    return len(json_str) < 1_000_000
+
+
 def entity_method(
     name: Optional[str] = None,
     version: Optional[int] = None,
@@ -53,20 +58,20 @@ def entity_method(
                 span.set_attribute(
                     SpanAttributes.TRACELOOP_SPAN_KIND, tlp_span_kind.value
                 )
-                span.set_attribute(
-                    SpanAttributes.TRACELOOP_ENTITY_NAME, entity_name
-                )
+                span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, entity_name)
                 if version:
                     span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_VERSION, version)
 
                 try:
                     if _should_send_prompts():
-                        span.set_attribute(
-                            SpanAttributes.TRACELOOP_ENTITY_INPUT,
-                            json.dumps(
-                                {"args": args, "kwargs": kwargs}, cls=JSONEncoder
-                            ),
+                        json_input = json.dumps(
+                            {"args": args, "kwargs": kwargs}, cls=JSONEncoder
                         )
+                        if _is_json_size_valid(json_input):
+                            span.set_attribute(
+                                SpanAttributes.TRACELOOP_ENTITY_INPUT,
+                                json_input,
+                            )
                 except TypeError as e:
                     Telemetry().log_exception(e)
 
@@ -78,10 +83,12 @@ def entity_method(
 
                 try:
                     if _should_send_prompts():
-                        span.set_attribute(
-                            SpanAttributes.TRACELOOP_ENTITY_OUTPUT,
-                            json.dumps(res, cls=JSONEncoder),
-                        )
+                        json_output = json.dumps(res, cls=JSONEncoder)
+                        if _is_json_size_valid(json_output):
+                            span.set_attribute(
+                                SpanAttributes.TRACELOOP_ENTITY_OUTPUT,
+                                json_output,
+                            )
                 except TypeError as e:
                     Telemetry().log_exception(e)
 
@@ -153,18 +160,18 @@ def aentity_method(
                 span.set_attribute(
                     SpanAttributes.TRACELOOP_SPAN_KIND, tlp_span_kind.value
                 )
-                span.set_attribute(
-                    SpanAttributes.TRACELOOP_ENTITY_NAME, entity_name
-                )
+                span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, entity_name)
                 if version:
                     span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_VERSION, version)
 
                 try:
                     if _should_send_prompts():
-                        span.set_attribute(
-                            SpanAttributes.TRACELOOP_ENTITY_INPUT,
-                            json.dumps({"args": args, "kwargs": kwargs}),
-                        )
+                        json_input = json.dumps({"args": args, "kwargs": kwargs})
+                        if _is_json_size_valid(json_input):
+                            span.set_attribute(
+                                SpanAttributes.TRACELOOP_ENTITY_INPUT,
+                                json_input,
+                            )
                 except TypeError as e:
                     Telemetry().log_exception(e)
 
@@ -176,9 +183,12 @@ def aentity_method(
 
                 try:
                     if _should_send_prompts():
-                        span.set_attribute(
-                            SpanAttributes.TRACELOOP_ENTITY_OUTPUT, json.dumps(res)
-                        )
+                        json_output = json.dumps(res)
+                        if _is_json_size_valid(json_output):
+                            span.set_attribute(
+                                SpanAttributes.TRACELOOP_ENTITY_OUTPUT,
+                                json_output,
+                            )
                 except TypeError as e:
                     Telemetry().log_exception(e)
 
