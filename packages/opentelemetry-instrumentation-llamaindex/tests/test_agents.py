@@ -54,7 +54,7 @@ def test_agents_and_tools(exporter):
         "AgentRunner.workflow",
         "AgentRunner.task",
         "FunctionTool.task",
-        "OpenAI.task",
+        "openai.chat",
         "ReActOutputParser.task",
         "ReActAgentWorker.task",
     } == {span.name for span in spans}
@@ -65,7 +65,7 @@ def test_agents_and_tools(exporter):
     function_tool_span = next(
         span for span in spans if span.name == "FunctionTool.task"
     )
-    llm_span_1, llm_span_2 = [span for span in spans if span.name == "OpenAI.task"]
+    llm_span_1, llm_span_2 = [span for span in spans if span.name == "openai.chat"]
 
     assert agent_workflow_span.parent is None
     assert function_tool_span.parent is not None
@@ -156,7 +156,7 @@ def test_agent_with_query_tool(exporter):
         "OpenAIAssistantAgent.workflow",
         "BaseSynthesizer.task",
         "LLM.task",
-        "OpenAI.task",
+        "openai.chat",
         "TokenTextSplitter.task",
     }.issubset({span.name for span in spans})
 
@@ -166,7 +166,7 @@ def test_agent_with_query_tool(exporter):
     synthesize_span = next(
         span for span in spans if span.name == "BaseSynthesizer.task"
     )
-    llm_span_1, llm_span_2 = [span for span in spans if span.name == "OpenAI.task"]
+    llm_span_1, llm_span_2 = [span for span in spans if span.name == "openai.chat"]
 
     assert agent_span.parent is None
     assert synthesize_span.parent is not None
@@ -262,9 +262,7 @@ def test_agent_with_multiple_tools(exporter):
         "TokenTextSplitter.task",
     } == {span.name for span in spans}
 
-    agent_span = next(
-        span for span in spans if span.name == "AgentRunner.workflow"
-    )
+    agent_span = next(span for span in spans if span.name == "AgentRunner.workflow")
     _, sql_tool_span, calc_tool_span, _, _ = [
         span for span in spans if span.name == "ReActAgentWorker.task"
     ]

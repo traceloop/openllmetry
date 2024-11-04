@@ -4,7 +4,6 @@ import chromadb
 from llama_index.core import (
     VectorStoreIndex,
     SimpleDirectoryReader,
-    ServiceContext,
     StorageContext,
 )
 from llama_index.vector_stores.chroma import ChromaVectorStore
@@ -26,9 +25,8 @@ def test_rag_with_chroma(exporter):
     # set up ChromaVectorStore and load in data
     vector_store = ChromaVectorStore(chroma_collection=chroma_collection)
     storage_context = StorageContext.from_defaults(vector_store=vector_store)
-    service_context = ServiceContext.from_defaults(embed_model=embed_model)
     index = VectorStoreIndex.from_documents(
-        documents, storage_context=storage_context, service_context=service_context
+        documents, storage_context=storage_context, embed_model=embed_model
     )
     engine = index.as_query_engine()
     engine.query("What did the author do growing up?")
@@ -38,7 +36,7 @@ def test_rag_with_chroma(exporter):
         "BaseQueryEngine.workflow",
         "BaseSynthesizer.task",
         "LLM.task",
-        "OpenAI.task",
+        "openai.chat",
         "RetrieverQueryEngine.task",
         "chroma.add",
         "chroma.query",
@@ -51,7 +49,7 @@ def test_rag_with_chroma(exporter):
     synthesize_span = next(
         span for span in spans if span.name == "BaseSynthesizer.task"
     )
-    llm_span = next(span for span in spans if span.name == "OpenAI.task")
+    llm_span = next(span for span in spans if span.name == "openai.chat")
 
     assert query_pipeline_span.parent is None
     assert synthesize_span.parent is not None
