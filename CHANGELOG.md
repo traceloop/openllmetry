@@ -1,3 +1,12 @@
+## v0.33.6 (2024-11-04)
+
+### Fix
+
+- **anthropic**: instrument anthropics system message as gen_ai.prompt.0 (#2238)
+- **llamaindex**: streaming LLMs caused detached spans (#2237)
+- **sdk**: missing sagemaker initialization (#2235)
+- **sdk**: support a "block-list" of things to not instrument (#1958)
+
 ## v0.33.5 (2024-10-29)
 
 ### Fix
