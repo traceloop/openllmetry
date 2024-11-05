@@ -353,6 +353,7 @@ async def _process_image_item(item, trace_id, span_id, message_index, content_in
     return {"type": "image_url", "image_url": {"url": url}}
 
 
+@dont_throw
 async def _set_prompts(span, messages):
     if not span.is_recording() or messages is None:
         return

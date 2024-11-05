@@ -231,6 +231,8 @@ def is_streaming_response(response):
 
 
 def model_as_dict(model):
+    if isinstance(model, dict):
+        return model
     if version("pydantic") < "2.0.0":
         return model.dict()
     if hasattr(model, "model_dump"):
