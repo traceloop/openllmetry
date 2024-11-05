@@ -1,3 +1,9 @@
+## v0.33.8 (2024-11-05)
+
+### Fix
+
+- **vertex**: async / streaming was missing output fields (#2253)
+
 ## v0.33.7 (2024-11-04)
 
 ### Fix
