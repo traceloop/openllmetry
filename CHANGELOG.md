@@ -1,3 +1,9 @@
+## v0.33.9 (2024-11-05)
+
+### Fix
+
+- **openai**: exception throw with pydantic v1 (#2262)
+
 ## v0.33.8 (2024-11-05)
 
 ### Fix

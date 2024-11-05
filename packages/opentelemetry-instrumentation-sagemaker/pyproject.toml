@@ -8,7 +8,7 @@ show_missing = true
 
 [tool.poetry]
 name = "opentelemetry-instrumentation-sagemaker"
-version = "0.33.8"
+version = "0.33.9"
 description = "OpenTelemetry SageMaker instrumentation"
 authors = [
   "Bobby Lindsey <bwlind@amazon.com>"
