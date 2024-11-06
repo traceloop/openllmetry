@@ -93,16 +93,22 @@ Traceloop.init(disable_batch=True)
 ## ⏫ Supported (and tested) destinations
 
 - ✅ [Traceloop](https://www.traceloop.com/docs/openllmetry/integrations/traceloop)
-- ✅ [Dynatrace](https://www.traceloop.com/docs/openllmetry/integrations/dynatrace)
+- ✅ [Axiom](https://www.traceloop.com/docs/openllmetry/integrations/axiom)
+- ✅ [Azure Application Insights](https://www.traceloop.com/docs/openllmetry/integrations/azure)
 - ✅ [Datadog](https://www.traceloop.com/docs/openllmetry/integrations/datadog)
-- ✅ [New Relic](https://www.traceloop.com/docs/openllmetry/integrations/newrelic)
+- ✅ [Dynatrace](https://www.traceloop.com/docs/openllmetry/integrations/dynatrace)
+- ✅ [Grafana](https://www.traceloop.com/docs/openllmetry/integrations/grafana)
+- ✅ [Highlight](https://www.traceloop.com/docs/openllmetry/integrations/highlight)
 - ✅ [Honeycomb](https://www.traceloop.com/docs/openllmetry/integrations/honeycomb)
-- ✅ [Grafana Tempo](https://www.traceloop.com/docs/openllmetry/integrations/grafana)
 - ✅ [HyperDX](https://www.traceloop.com/docs/openllmetry/integrations/hyperdx)
-- ✅ [SigNoz](https://www.traceloop.com/docs/openllmetry/integrations/signoz)
-- ✅ [Splunk](https://www.traceloop.com/docs/openllmetry/integrations/splunk)
-- ✅ [OpenTelemetry Collector](https://www.traceloop.com/docs/openllmetry/integrations/otel-collector)
 - ✅ [IBM Instana](https://www.traceloop.com/docs/openllmetry/integrations/instana)
+- ✅ [KloudMate](https://www.traceloop.com/docs/openllmetry/integrations/kloudmate)
+- ✅ [New Relic](https://www.traceloop.com/docs/openllmetry/integrations/newrelic)
+- ✅ [OpenTelemetry Collector](https://www.traceloop.com/docs/openllmetry/integrations/otel-collector)
+- ✅ [Service Now Cloud Observability](https://www.traceloop.com/docs/openllmetry/integrations/service-now)
+- ✅ [SigNoz](https://www.traceloop.com/docs/openllmetry/integrations/signoz)
+- ✅ [Sentry](https://www.traceloop.com/docs/openllmetry/integrations/sentry)
+- ✅ [Splunk](https://www.traceloop.com/docs/openllmetry/integrations/splunk)
 
 See [our docs](https://traceloop.com/docs/openllmetry/integrations/exporting) for instructions on connecting to each one.
 
