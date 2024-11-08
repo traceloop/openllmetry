@@ -1,6 +1,6 @@
 [tool.coverage.run]
 branch = true
-source = [ "opentelemetry/instrumentation/langchain" ]
+source = ["opentelemetry/instrumentation/langchain"]
 
 [tool.coverage.report]
 exclude_lines = ['if TYPE_CHECKING:']
@@ -13,7 +13,7 @@ description = "OpenTelemetry Langchain instrumentation"
 authors = [
   "Gal Kleinman <gal@traceloop.com>",
   "Nir Gazit <nir@traceloop.com>",
-  "Tomer Friedman <tomer@traceloop.com>"
+  "Tomer Friedman <tomer@traceloop.com>",
 ]
 repository = "https://github.com/traceloop/openllmetry/tree/main/packages/opentelemetry-instrumentation-langchain"
 license = "Apache-2.0"
@@ -24,9 +24,9 @@ include = "opentelemetry/instrumentation/langchain"
 
 [tool.poetry.dependencies]
 python = ">=3.9,<4"
-opentelemetry-api = "^1.27.0"
-opentelemetry-instrumentation = "^0.48b0"
-opentelemetry-semantic-conventions = "^0.48b0"
+opentelemetry-api = "^1.28.0"
+opentelemetry-instrumentation = "^0.49b0"
+opentelemetry-semantic-conventions = "^0.49b0"
 opentelemetry-semantic-conventions-ai = "0.4.2"
 
 [tool.poetry.group.dev.dependencies]
@@ -46,8 +46,8 @@ vcrpy = "^6.0.2"
 pytest-recording = "^0.13.2"
 pytest-asyncio = "^0.24.0"
 opentelemetry-sdk = "^1.27.0"
-opentelemetry-instrumentation-openai = {path="../opentelemetry-instrumentation-openai", develop=true}
-opentelemetry-instrumentation-bedrock = {path="../opentelemetry-instrumentation-bedrock", develop=true}
+opentelemetry-instrumentation-openai = { path = "../opentelemetry-instrumentation-openai", develop = true }
+opentelemetry-instrumentation-bedrock = { path = "../opentelemetry-instrumentation-bedrock", develop = true }
 text-generation = "^0.7.0"
 anthropic = "^0.37.1"
 boto3 = "^1.35.49"
