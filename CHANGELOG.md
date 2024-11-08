@@ -1,3 +1,9 @@
+## v0.33.10 (2024-11-08)
+
+### Fix
+
+- general bump of otel dependencies (#2274)
+
 ## v0.33.9 (2024-11-05)
 
 ### Fix
