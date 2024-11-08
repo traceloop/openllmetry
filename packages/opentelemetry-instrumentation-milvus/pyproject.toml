@@ -1,6 +1,6 @@
 [tool.coverage.run]
 branch = true
-source = [ "opentelemetry/instrumentation/milvus" ]
+source = ["opentelemetry/instrumentation/milvus"]
 
 [tool.coverage.report]
 exclude_lines = ['if TYPE_CHECKING:']
@@ -13,7 +13,7 @@ description = "OpenTelemetry Milvus instrumentation"
 authors = [
   "Gal Kleinman <gal@traceloop.com>",
   "Nir Gazit <nir@traceloop.com>",
-  "Tomer Friedman <tomer@traceloop.com>"
+  "Tomer Friedman <tomer@traceloop.com>",
 ]
 repository = "https://github.com/traceloop/openllmetry/tree/main/packages/opentelemetry-instrumentation-milvus"
 license = "Apache-2.0"
@@ -24,9 +24,9 @@ include = "opentelemetry/instrumentation/milvus"
 
 [tool.poetry.dependencies]
 python = ">=3.9,<4"
-opentelemetry-api = "^1.27.0"
-opentelemetry-semantic-conventions = "^0.48b0"
-opentelemetry-instrumentation = "^0.48b0"
+opentelemetry-api = "^1.28.0"
+opentelemetry-semantic-conventions = "^0.49b0"
+opentelemetry-instrumentation = "^0.49b0"
 opentelemetry-semantic-conventions-ai = "0.4.2"
 
 [tool.poetry.group.dev.dependencies]
