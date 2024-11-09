@@ -584,7 +584,7 @@ def init_chroma_instrumentor():
 
 def init_google_generativeai_instrumentor():
     try:
-        if is_package_installed("google.generativeai"):
+        if is_package_installed("google-generativeai"):
             Telemetry().capture("instrumentation:gemini:init")
             from opentelemetry.instrumentation.google_generativeai import (
                 GoogleGenerativeAiInstrumentor,
