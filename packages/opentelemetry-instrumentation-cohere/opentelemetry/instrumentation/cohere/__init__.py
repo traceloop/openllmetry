@@ -173,7 +173,10 @@ def _set_span_rerank_response(span, response):
         _set_span_attribute(span, f"{prefix}.role", "assistant")
         content = f"Doc {doc.index}, Score: {doc.relevance_score}"
         if doc.document:
-            content += f"\n{doc.document.get('text')}"
+            if hasattr(doc.document, "text"):
+                content += f"\n{doc.document.text}"
+            else:
+                content += f"\n{doc.document.get('text')}"
         _set_span_attribute(
             span,
             f"{prefix}.content",
