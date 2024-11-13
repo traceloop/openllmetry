@@ -180,7 +180,7 @@ def aentity_method(
                 # If it's an async generator, return a new async generator that handles the span
                 if isinstance(res, types.AsyncGeneratorType):
                     return _ahandle_generator(span, ctx_token, res)
-                
+
                 # Await here for non-generator async functions
                 res = await res
 

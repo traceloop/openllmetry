@@ -278,5 +278,5 @@ async def test_async_generator_workflow(exporter):
 
     spans = exporter.get_finished_spans()
 
-    assert results == [0,1,2]
+    assert results == [0, 1, 2]
     assert [span.name for span in spans] == ['async generator.workflow']
