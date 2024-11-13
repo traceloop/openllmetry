@@ -175,11 +175,14 @@ def aentity_method(
                 except TypeError as e:
                     Telemetry().log_exception(e)
 
-                res = await fn(*args, **kwargs)
+                res = fn(*args, **kwargs)
 
-                # span will be ended in the generator
+                # If it's an async generator, return a new async generator that handles the span
                 if isinstance(res, types.AsyncGeneratorType):
-                    return await _ahandle_generator(span, ctx_token, res)
+                    return _ahandle_generator(span, ctx_token, res)
+
+                # Await here for non-generator async functions
+                res = await res
 
                 try:
                     if _should_send_prompts():

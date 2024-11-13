@@ -1,3 +1,4 @@
+import asyncio
 import json
 
 import pytest
@@ -259,3 +260,23 @@ async def test_unserializable_async_workflow(exporter):
 
     spans = exporter.get_finished_spans()
     assert [span.name for span in spans] == ["unserializable_task.task"]
+
+
+@pytest.mark.asyncio
+async def test_async_generator_workflow(exporter):
+
+    @aworkflow(name="async generator")
+    async def stream_numbers():
+        for i in range(3):
+            yield i
+            await asyncio.sleep(0.1)
+
+    results = []
+
+    async for num in await stream_numbers():
+        results.append(num)
+
+    spans = exporter.get_finished_spans()
+
+    assert results == [0, 1, 2]
+    assert [span.name for span in spans] == ['async generator.workflow']
