@@ -8,7 +8,7 @@ show_missing = true
 
 [tool.poetry]
 name = "opentelemetry-instrumentation-transformers"
-version = "0.33.11"
+version = "0.33.12"
 description = "OpenTelemetry transformers instrumentation"
 authors = [
   "Gal Kleinman <gal@traceloop.com>",
