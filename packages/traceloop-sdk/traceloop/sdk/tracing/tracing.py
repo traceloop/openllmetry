@@ -380,6 +380,9 @@ def init_instrumentations(
         elif instrument == Instruments.HAYSTACK:
             if init_haystack_instrumentor():
                 instrument_set = True
+        elif instrument == Instruments.HTTPX:
+            if init_httpx_instrumentor():
+                instrument_set = True
         elif instrument == Instruments.LANCEDB:
             if init_lancedb_instrumentor():
                 instrument_set = True
@@ -774,6 +777,21 @@ def init_urllib3_instrumentor():
         return True
     except Exception as e:
         logging.error(f"Error initializing urllib3 instrumentor: {e}")
+        Telemetry().log_exception(e)
+        return False
+
+
+def init_httpx_instrumentor():
+    try:
+        if is_package_installed("httpx"):
+            from opentelemetry.instrumentation.httpx import HTTPXClientInstrumentor
+
+            instrumentor = HTTPXClientInstrumentor()
+            if not instrumentor.is_instrumented_by_opentelemetry:
+                instrumentor.instrument()
+        return True
+    except Exception as e:
+        logging.error(f"Error initializing HTTPX instrumentor: {e}")
         Telemetry().log_exception(e)
         return False
 
