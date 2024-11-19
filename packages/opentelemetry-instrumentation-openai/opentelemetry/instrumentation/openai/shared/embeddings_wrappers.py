@@ -26,7 +26,10 @@ from opentelemetry.instrumentation.openai.shared import (
     model_as_dict,
     _get_openai_base_url,
     OPENAI_LLM_USAGE_TOKEN_TYPES,
+    propagate_trace_context,
 )
+
+from opentelemetry.instrumentation.openai.shared.config import Config
 
 from opentelemetry.instrumentation.openai.utils import is_openai_v1
 
@@ -161,6 +164,8 @@ def _handle_request(span, kwargs, instance):
     if should_send_prompts():
         _set_prompts(span, kwargs.get("input"))
     _set_client_attributes(span, instance)
+    if not Config.disable_trace_context_propagation:
+        propagate_trace_context(span, kwargs)
 
 
 @dont_throw
