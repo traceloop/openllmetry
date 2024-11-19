@@ -1,0 +1,44 @@
+[tool.poetry]
+name = "opentelemetry-instrumentation-azureai"
+version = "0.1.0"
+description = "OpenTelemetry Azure AI Search Instrumentation"
+authors = ["Your Name <you@example.com>"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.8"
+opentelemetry-api = ">=1.12.0"
+opentelemetry-sdk = ">=1.12.0"
+opentelemetry-instrumentation = ">=0.35b0"
+azure-search-documents = ">=11.4.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.3.1"
+pytest-cov = "^4.0.0"
+pytest-asyncio = "^0.21.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.extras]
+test = ["pytest", "pytest-cov", "pytest-asyncio"]
+
+[tool.poetry.plugins."opentelemetry_instrumentor"]
+azureai = "opentelemetry.instrumentation.azureai:AzureAIInstrumentor"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+line-length = 120
+target-version = ['py38']
+
+[tool.mypy]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+addopts = "-v --cov=opentelemetry/instrumentation/azureai"
+testpaths = ["tests"]

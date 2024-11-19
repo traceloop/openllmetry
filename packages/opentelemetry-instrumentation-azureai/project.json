@@ -1,0 +1,24 @@
+{
+    "name": "openllmetry-azure-search",
+    "version": "0.1.0",
+    "description": "Azure AI Search integration for OpenLLMetry",
+    "keywords": [
+        "openllmetry", 
+        "azure", 
+        "search", 
+        "observability", 
+        "tracing"
+    ],
+    "homepage": "https://github.com/traceloop/openllmetry",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/traceloop/openllmetry.git"
+    },
+    "authors": [
+        {
+            "name": "Traceloop Team",
+            "email": "opensource@traceloop.com"
+        }
+    ],
+    "license": "MIT"
+}
