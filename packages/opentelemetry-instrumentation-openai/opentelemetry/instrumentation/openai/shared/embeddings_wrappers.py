@@ -164,7 +164,7 @@ def _handle_request(span, kwargs, instance):
     if should_send_prompts():
         _set_prompts(span, kwargs.get("input"))
     _set_client_attributes(span, instance)
-    if not Config.disable_trace_context_propagation:
+    if Config.enable_trace_context_propagation:
         propagate_trace_context(span, kwargs)
 
 

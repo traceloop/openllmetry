@@ -23,7 +23,7 @@ class OpenAIInstrumentor(BaseInstrumentor):
         upload_base64_image: Optional[
             Callable[[str, str, str, str], Coroutine[None, None, str]]
         ] = lambda *args: "",
-        disable_trace_context_propagation: bool = False,
+        enable_trace_context_propagation: bool = True,
     ):
         super().__init__()
         Config.enrich_assistant = enrich_assistant
@@ -31,7 +31,7 @@ class OpenAIInstrumentor(BaseInstrumentor):
         Config.exception_logger = exception_logger
         Config.get_common_metrics_attributes = get_common_metrics_attributes
         Config.upload_base64_image = upload_base64_image
-        Config.disable_trace_context_propagation = disable_trace_context_propagation
+        Config.enable_trace_context_propagation = enable_trace_context_propagation
 
     def instrumentation_dependencies(self) -> Collection[str]:
         return _instruments
