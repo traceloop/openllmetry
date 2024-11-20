@@ -28,10 +28,6 @@ test = ["pytest", "pytest-cov", "pytest-asyncio"]
 [tool.poetry.plugins."opentelemetry_instrumentor"]
 azureai = "opentelemetry.instrumentation.azureai:AzureAIInstrumentor"
 
-[build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
-
 [tool.black]
 line-length = 120
 target-version = ['py38']
@@ -39,6 +35,3 @@ target-version = ['py38']
 [tool.mypy]
 ignore_missing_imports = true
 
-[tool.pytest.ini_options]
-addopts = "-v --cov=opentelemetry/instrumentation/azureai"
-testpaths = ["tests"]
