@@ -46,11 +46,13 @@ def runs_create_wrapper(tracer, wrapped, instance, args, kwargs):
     instructions = kwargs.get("instructions")
 
     response = wrapped(*args, **kwargs)
+    response_dict = model_as_dict(response)
 
     runs[thread_id] = {
         "start_time": time.time_ns(),
         "assistant_id": kwargs.get("assistant_id"),
         "instructions": instructions,
+        "run_id": response_dict.get("id"),
     }
 
     return response
@@ -66,13 +68,15 @@ def runs_retrieve_wrapper(tracer, wrapped, instance, args, kwargs):
             parsed_response = response
         assert type(parsed_response) is Run
 
-        if parsed_response.id in runs:
+        if parsed_response.thread_id in runs:
+            thread_id = parsed_response.thread_id
             runs[thread_id]["end_time"] = time.time_ns()
+            if parsed_response.usage:
+                runs[thread_id]["usage"] = parsed_response.usage
 
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
         return wrapped(*args, **kwargs)
 
-    thread_id = kwargs.get("thread_id")
     response = wrapped(*args, **kwargs)
     process_response(response)
 
@@ -114,6 +118,11 @@ def messages_list_wrapper(tracer, wrapped, instance, args, kwargs):
 
         _set_span_attribute(
             span,
+            SpanAttributes.LLM_SYSTEM,
+            "openai",
+        )
+        _set_span_attribute(
+            span,
             SpanAttributes.LLM_REQUEST_MODEL,
             assistant["model"],
         )
@@ -141,6 +150,19 @@ def messages_list_wrapper(tracer, wrapped, instance, args, kwargs):
         _set_span_attribute(span, f"{prefix}.role", msg.get("role"))
         _set_span_attribute(
             span, f"{prefix}.content", content[0].get("text").get("value")
+        )
+
+    if run.get("usage"):
+        usage_dict = model_as_dict(run.get("usage"))
+        _set_span_attribute(
+            span,
+            SpanAttributes.LLM_USAGE_COMPLETION_TOKENS,
+            usage_dict.get("completion_tokens"),
+        )
+        _set_span_attribute(
+            span,
+            SpanAttributes.LLM_USAGE_PROMPT_TOKENS,
+            usage_dict.get("prompt_tokens"),
         )
 
     span.end(run.get("end_time"))
@@ -174,6 +196,11 @@ def runs_create_and_stream_wrapper(tracer, wrapped, instance, args, kwargs):
 
         _set_span_attribute(
             span, SpanAttributes.LLM_REQUEST_MODEL, assistants[assistant_id]["model"]
+        )
+        _set_span_attribute(
+            span,
+            SpanAttributes.LLM_SYSTEM,
+            "openai",
         )
         _set_span_attribute(
             span,
