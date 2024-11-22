@@ -1,10 +1,13 @@
 import asyncio
+import httpx
 import pytest
+from unittest.mock import patch
 from opentelemetry.semconv_ai import SpanAttributes
 from openai.types.chat.chat_completion_message_tool_call import (
     ChatCompletionMessageToolCall,
     Function,
 )
+from .utils import spy_decorator, assert_request_contains_tracecontext
 
 
 @pytest.mark.vcr
@@ -246,3 +249,48 @@ def test_with_asyncio_run(exporter, async_openai_client):
     assert [span.name for span in spans] == [
         "openai.chat",
     ]
+
+
+@pytest.mark.vcr
+def test_chat_context_propagation(exporter, vllm_openai_client):
+    send_spy = spy_decorator(httpx.Client.send)
+    with patch.object(httpx.Client, "send", send_spy):
+        vllm_openai_client.chat.completions.create(
+            model="meta-llama/Llama-3.2-1B-Instruct",
+            messages=[{"role": "user", "content": "Tell me a joke about opentelemetry"}],
+        )
+    send_spy.mock.assert_called_once()
+
+    spans = exporter.get_finished_spans()
+    assert [span.name for span in spans] == [
+        "openai.chat",
+    ]
+    open_ai_span = spans[0]
+
+    args, kwargs = send_spy.mock.call_args
+    request = args[0]
+
+    assert_request_contains_tracecontext(request, open_ai_span)
+
+
+@pytest.mark.vcr
+@pytest.mark.asyncio
+async def test_chat_async_context_propagation(exporter, async_vllm_openai_client):
+    send_spy = spy_decorator(httpx.AsyncClient.send)
+    with patch.object(httpx.AsyncClient, "send", send_spy):
+        await async_vllm_openai_client.chat.completions.create(
+            model="meta-llama/Llama-3.2-1B-Instruct",
+            messages=[{"role": "user", "content": "Tell me a joke about opentelemetry"}],
+        )
+    send_spy.mock.assert_called_once()
+
+    spans = exporter.get_finished_spans()
+    assert [span.name for span in spans] == [
+        "openai.chat",
+    ]
+    open_ai_span = spans[0]
+
+    args, kwargs = send_spy.mock.call_args
+    request = args[0]
+
+    assert_request_contains_tracecontext(request, open_ai_span)

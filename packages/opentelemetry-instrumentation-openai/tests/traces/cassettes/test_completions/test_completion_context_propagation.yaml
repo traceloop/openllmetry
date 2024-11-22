@@ -1,0 +1,56 @@
+interactions:
+- request:
+    body: '{"model": "meta-llama/Llama-3.2-1B-Instruct", "prompt": "Tell me a joke
+      about opentelemetry"}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '93'
+      content-type:
+      - application/json
+      host:
+      - localhost:8000
+      traceparent:
+      - 00-b7362c76f7461e8f92ed8bbaf6a3fc42-d4fa2ada978b45ce-01
+      user-agent:
+      - OpenAI/Python 1.51.2
+      x-stainless-arch:
+      - x64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - Linux
+      x-stainless-package-version:
+      - 1.51.2
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.10.12
+    method: POST
+    uri: http://localhost:8000/v1/completions
+  response:
+    body:
+      string: '{"id":"cmpl-2996bf68f7f142fa817bdd32af678df9","object":"text_completion","created":1732108316,"model":"meta-llama/Llama-3.2-1B-Instruct","choices":[{"index":0,"text":"\n\nI
+        want to share an interesting story about opentelemetry. I''d like","logprobs":null,"finish_reason":"length","stop_reason":null}],"usage":{"prompt_tokens":9,"total_tokens":25,"completion_tokens":16}}'
+    headers:
+      content-length:
+      - '370'
+      content-type:
+      - application/json
+      date:
+      - Wed, 20 Nov 2024 13:11:55 GMT
+      server:
+      - uvicorn
+    status:
+      code: 200
+      message: OK
+version: 1

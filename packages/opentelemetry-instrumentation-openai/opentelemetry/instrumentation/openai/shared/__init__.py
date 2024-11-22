@@ -7,6 +7,8 @@ import logging
 from importlib.metadata import version
 
 from opentelemetry import context as context_api
+from opentelemetry.trace.propagation import set_span_in_context
+from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
 
 from opentelemetry.instrumentation.openai.shared.config import Config
 from opentelemetry.semconv_ai import SpanAttributes
@@ -289,3 +291,10 @@ def metric_shared_attributes(
         "server.address": server_address,
         "stream": is_streaming,
     }
+
+
+def propagate_trace_context(span, kwargs):
+    extra_headers = kwargs.get("extra_headers", {})
+    ctx = set_span_in_context(span)
+    TraceContextTextMapPropagator().inject(extra_headers, context=ctx)
+    kwargs["extra_headers"] = extra_headers

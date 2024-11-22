@@ -23,6 +23,11 @@ def openai_client():
 
 
 @pytest.fixture
+def vllm_openai_client():
+    return OpenAI(base_url="http://localhost:8000/v1")
+
+
+@pytest.fixture
 def azure_openai_client():
     return AzureOpenAI(
         api_version="2024-02-01",
@@ -39,6 +44,11 @@ def async_azure_openai_client():
 @pytest.fixture
 def async_openai_client():
     return AsyncOpenAI()
+
+
+@pytest.fixture
+def async_vllm_openai_client():
+    return AsyncOpenAI(base_url="http://localhost:8000/v1")
 
 
 @pytest.fixture(scope="module")
