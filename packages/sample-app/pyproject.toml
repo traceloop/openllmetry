@@ -29,7 +29,7 @@ requests = "^2.32.3"
 pinecone-client = "^3.2.2"
 llama-index = "^0.11.20"
 # workaround for: https://github.com/python-poetry/poetry-plugin-export/issues/183
-urllib3 = ">=1.25.4,<1.27"
+urllib3 = "^2.2.3"
 duckduckgo-search = "^3.9.11"
 torch = "^2.5.0"
 chromadb = "^0.5.15"
@@ -49,11 +49,11 @@ llama-index-embeddings-huggingface = "^0.3.1"
 litellm = "^1.51.0"
 text-generation = "^0.7.0"
 llama-index-vector-stores-chroma = "^0.2.1"
-langchain-openai ="^0.2.3"
+langchain-openai ="^0.2.9"
 google-generativeai = "^0.8.3"
-langchain-ibm = "^0.3.1"
 langgraph = "^0.2.39"
 groq = "^0.11.0"
+crewai = "^0.80.0"
 
 [tool.poetry.dependencies.opentelemetry-instrumentation-openai]
 path = "../opentelemetry-instrumentation-openai"
@@ -85,6 +85,10 @@ develop = true
 
 [tool.poetry.dependencies.traceloop-sdk]
 path = "../traceloop-sdk"
+develop = true
+
+[tool.poetry.dependencies.opentelemetry-instrumentation-crewai]
+path = "../opentelemetry-instrumentation-crewai"
 develop = true
 
 [tool.poetry.group.dev.dependencies]
