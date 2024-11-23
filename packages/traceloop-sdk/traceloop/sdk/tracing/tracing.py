@@ -379,6 +379,9 @@ def init_instrumentations(
         elif instrument == Instruments.COHERE:
             if init_cohere_instrumentor():
                 instrument_set = True
+        elif instrument == Instruments.CREW:
+            if init_crewai_instrumentor():
+                instrument_set = True
         elif instrument == Instruments.GOOGLE_GENERATIVEAI:
             if init_google_generativeai_instrumentor():
                 instrument_set = True
@@ -992,6 +995,24 @@ def init_groq_instrumentor():
         return True
     except Exception as e:
         logging.error(f"Error initializing Groq instrumentor: {e}")
+        Telemetry().log_exception(e)
+        return False
+    
+
+def init_crewai_instrumentor():
+    try:
+        if is_package_installed("crewai"):
+            Telemetry().capture("instrumentation:crewai:init")
+            from opentelemetry.instrumentation.crewai import CrewAIInstrumentor
+
+            instrumentor = CrewAIInstrumentor(
+                exception_logger=lambda e: Telemetry().log_exception(e),
+            )
+            if not instrumentor.is_instrumented_by_opentelemetry:
+                instrumentor.instrument()
+        return True
+    except Exception as e:
+        logging.error(f"Error initializing CrewAI instrumentor: {e}")
         Telemetry().log_exception(e)
         return False
 

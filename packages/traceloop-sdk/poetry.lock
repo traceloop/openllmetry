@@ -1584,6 +1584,28 @@ type = "directory"
 url = "../opentelemetry-instrumentation-cohere"
 
 [[package]]
+name = "opentelemetry-instrumentation-crewai"
+version = "0.33.12"
+description = "OpenTelemetry crewAI instrumentation"
+optional = false
+python-versions = ">=3.10,<3.13"
+files = []
+develop = true
+
+[package.dependencies]
+opentelemetry-api = "^1.28.0"
+opentelemetry-instrumentation = "^0.49b0"
+opentelemetry-semantic-conventions = "^0.49b0"
+opentelemetry-semantic-conventions-ai = "0.4.2"
+
+[package.extras]
+instruments = []
+
+[package.source]
+type = "directory"
+url = "../opentelemetry-instrumentation-crewai"
+
+[[package]]
 name = "opentelemetry-instrumentation-google-generativeai"
 version = "0.34.1"
 description = "OpenTelemetry Google Generative AI instrumentation"
@@ -3215,7 +3237,7 @@ files = [
 PyYAML = "*"
 urllib3 = [
     {version = "*", markers = "platform_python_implementation != \"PyPy\" and python_version >= \"3.10\""},
-    {version = "<2", markers = "platform_python_implementation == \"PyPy\" or python_version < \"3.10\""},
+    {version = "<2", markers = "platform_python_implementation == \"PyPy\""},
 ]
 wrapt = "*"
 yarl = "*"
