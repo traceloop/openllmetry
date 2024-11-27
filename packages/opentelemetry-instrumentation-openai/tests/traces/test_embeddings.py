@@ -27,6 +27,9 @@ def test_embeddings(exporter, openai_client):
         == "text-embedding-ada-002"
     )
     assert open_ai_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 8
+    assert isinstance(
+        open_ai_span.attributes[f"{SpanAttributes.LLM_EMBEDDINGS}.data"], tuple
+    )
     assert (
         open_ai_span.attributes[SpanAttributes.LLM_OPENAI_API_BASE]
         == "https://api.openai.com/v1/"
@@ -54,6 +57,9 @@ def test_embeddings_with_raw_response(exporter, openai_client):
         == "text-embedding-ada-002"
     )
     assert open_ai_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 8
+    assert isinstance(
+        open_ai_span.attributes[f"{SpanAttributes.LLM_EMBEDDINGS}.data"], tuple
+    )
     assert (
         open_ai_span.attributes[SpanAttributes.LLM_OPENAI_API_BASE]
         == "https://api.openai.com/v1/"
@@ -94,6 +100,9 @@ def test_azure_openai_embeddings(exporter):
     assert (
         open_ai_span.attributes[SpanAttributes.LLM_OPENAI_API_BASE]
         == f"https://{azure_resource}.openai.azure.com/openai/deployments/{azure_deployment}/"
+    )
+    assert isinstance(
+        open_ai_span.attributes[f"{SpanAttributes.LLM_EMBEDDINGS}.data"], tuple
     )
     assert (
         open_ai_span.attributes[SpanAttributes.LLM_OPENAI_API_VERSION]
