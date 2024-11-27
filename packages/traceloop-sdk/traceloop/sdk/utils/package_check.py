@@ -1,8 +1,7 @@
-import pkg_resources
+from importlib.metadata import distributions
 
-installed_packages = {p.key for p in pkg_resources.working_set}
+installed_packages = {dist.metadata["Name"].lower() for dist in distributions()}
 
 
 def is_package_installed(package_name: str) -> bool:
-    # return importlib.util.find_spec(package_name) is not None
-    return package_name in installed_packages
+    return package_name.lower() in installed_packages

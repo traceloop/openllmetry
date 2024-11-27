@@ -1,6 +1,6 @@
 [tool.coverage.run]
 branch = true
-source = [ "opentelemetry/instrumentation/together" ]
+source = ["opentelemetry/instrumentation/together"]
 
 [tool.coverage.report]
 exclude_lines = ['if TYPE_CHECKING:']
@@ -8,7 +8,7 @@ show_missing = true
 
 [tool.poetry]
 name = "opentelemetry-instrumentation-together"
-version = "0.33.9"
+version = "0.33.12"
 description = "OpenTelemetry Together AI instrumentation"
 authors = [
   "Gal Kleinman <gal@traceloop.com>",
@@ -24,9 +24,9 @@ include = "opentelemetry/instrumentation/together"
 
 [tool.poetry.dependencies]
 python = ">=3.9,<4"
-opentelemetry-api = "^1.27.0"
-opentelemetry-instrumentation = "^0.48b0"
-opentelemetry-semantic-conventions = "^0.48b0"
+opentelemetry-api = "^1.28.0"
+opentelemetry-instrumentation = "^0.49b0"
+opentelemetry-semantic-conventions = "^0.49b0"
 opentelemetry-semantic-conventions-ai = "0.4.2"
 
 [tool.poetry.group.dev.dependencies]
@@ -49,7 +49,7 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.extras]
-instruments = ["together"] 
+instruments = ["together"]
 
 [tool.poetry.plugins."opentelemetry_instrumentor"]
 together = "opentelemetry.instrumentation.together:TogetherAiInstrumentor"

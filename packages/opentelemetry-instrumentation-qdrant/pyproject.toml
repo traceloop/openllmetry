@@ -1,19 +1,19 @@
 [tool.coverage.run]
 branch = true
-source = [ "opentelemetry/instrumentation/qdrant" ]
+source = ["opentelemetry/instrumentation/qdrant"]
 
 [tool.coverage.report]
-exclude_lines = [ "if TYPE_CHECKING:" ]
+exclude_lines = ["if TYPE_CHECKING:"]
 show_missing = true
 
 [tool.poetry]
 name = "opentelemetry-instrumentation-qdrant"
-version = "0.33.9"
+version = "0.33.12"
 description = "OpenTelemetry Qdrant instrumentation"
 authors = [
   "Gal Kleinman <gal@traceloop.com>",
   "Nir Gazit <nir@traceloop.com>",
-  "Tomer Friedman <tomer@traceloop.com>"
+  "Tomer Friedman <tomer@traceloop.com>",
 ]
 repository = "https://github.com/traceloop/openllmetry/tree/main/packages/opentelemetry-instrumentation-qdrant"
 license = "Apache-2.0"
@@ -24,9 +24,9 @@ include = "opentelemetry/instrumentation/qdrant"
 
 [tool.poetry.dependencies]
 python = ">=3.9,<4"
-opentelemetry-api = "^1.27.0"
-opentelemetry-instrumentation = "^0.48b0"
-opentelemetry-semantic-conventions = "^0.48b0"
+opentelemetry-api = "^1.28.0"
+opentelemetry-instrumentation = "^0.49b0"
+opentelemetry-semantic-conventions = "^0.49b0"
 opentelemetry-semantic-conventions-ai = "0.4.2"
 
 [tool.poetry.group.dev.dependencies]
@@ -40,7 +40,7 @@ pytest-sugar = "1.0.0"
 opentelemetry-sdk = "^1.27.0"
 
 [build-system]
-requires = [ "poetry-core" ]
+requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.extras]

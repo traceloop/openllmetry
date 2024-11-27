@@ -9,6 +9,8 @@ from typing_extensions import override
 class EventHandleWrapper(AssistantEventHandler):
 
     _current_text_index = 0
+    _prompt_tokens = 0
+    _completion_tokens = 0
 
     def __init__(self, original_handler, span):
         super().__init__()
@@ -17,6 +19,16 @@ class EventHandleWrapper(AssistantEventHandler):
 
     @override
     def on_end(self):
+        _set_span_attribute(
+            self._span,
+            SpanAttributes.LLM_USAGE_PROMPT_TOKENS,
+            self._prompt_tokens,
+        )
+        _set_span_attribute(
+            self._span,
+            SpanAttributes.LLM_USAGE_COMPLETION_TOKENS,
+            self._completion_tokens,
+        )
         self._original_handler.on_end()
         self._span.end()
 
@@ -34,6 +46,9 @@ class EventHandleWrapper(AssistantEventHandler):
 
     @override
     def on_run_step_done(self, run_step):
+        if run_step.usage:
+            self._prompt_tokens += run_step.usage.prompt_tokens
+            self._completion_tokens += run_step.usage.completion_tokens
         self._original_handler.on_run_step_done(run_step)
 
     @override

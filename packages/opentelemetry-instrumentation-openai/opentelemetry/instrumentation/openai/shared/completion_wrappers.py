@@ -22,12 +22,15 @@ from opentelemetry.instrumentation.openai.shared import (
     should_record_stream_token_usage,
     get_token_count_from_string,
     _set_span_stream_usage,
+    propagate_trace_context,
 )
 
 from opentelemetry.instrumentation.openai.utils import is_openai_v1
 
 from opentelemetry.trace import SpanKind
 from opentelemetry.trace.status import Status, StatusCode
+
+from opentelemetry.instrumentation.openai.shared.config import Config
 
 SPAN_NAME = "openai.completion"
 LLM_REQUEST_TYPE = LLMRequestTypeValues.COMPLETION
@@ -95,6 +98,8 @@ def _handle_request(span, kwargs, instance):
         _set_prompts(span, kwargs.get("prompt"))
         _set_functions_attributes(span, kwargs.get("functions"))
     _set_client_attributes(span, instance)
+    if Config.enable_trace_context_propagation:
+        propagate_trace_context(span, kwargs)
 
 
 @dont_throw

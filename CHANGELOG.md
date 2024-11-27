@@ -1,3 +1,23 @@
+## v0.33.12 (2024-11-13)
+
+### Fix
+
+- **sdk**: aworkflow decorator for async generators (#2292)
+- **cohere**: rerank exception on saving response when return_documents=True (#2289)
+- **sdk**: gemini instrumentation was never installed due to package name error (#2288)
+
+## v0.33.11 (2024-11-09)
+
+### Fix
+
+- **sdk**: remove print (#2285)
+
+## v0.33.10 (2024-11-08)
+
+### Fix
+
+- general bump of otel dependencies (#2274)
+
 ## v0.33.9 (2024-11-05)
 
 ### Fix
