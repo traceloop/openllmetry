@@ -1,6 +1,9 @@
+import httpx
 import openai
 import pytest
+from unittest.mock import patch
 from opentelemetry.semconv_ai import SpanAttributes
+from .utils import spy_decorator, assert_request_contains_tracecontext
 
 
 @pytest.mark.vcr
@@ -96,3 +99,44 @@ def test_azure_openai_embeddings(exporter):
         open_ai_span.attributes[SpanAttributes.LLM_OPENAI_API_VERSION]
         == "2023-07-01-preview"
     )
+
+
+@pytest.mark.vcr
+def test_embeddings_context_propagation(exporter, vllm_openai_client):
+    send_spy = spy_decorator(httpx.Client.send)
+    with patch.object(httpx.Client, "send", send_spy):
+        vllm_openai_client.embeddings.create(
+            input="Tell me a joke about opentelemetry",
+            model="intfloat/e5-mistral-7b-instruct",
+        )
+
+    spans = exporter.get_finished_spans()
+    assert [span.name for span in spans] == [
+        "openai.embeddings",
+    ]
+    open_ai_span = spans[0]
+    args, kwargs = send_spy.mock.call_args
+    request = args[0]
+
+    assert_request_contains_tracecontext(request, open_ai_span)
+
+
+@pytest.mark.vcr
+@pytest.mark.asyncio
+async def test_async_embeddings_context_propagation(exporter, async_vllm_openai_client):
+    send_spy = spy_decorator(httpx.AsyncClient.send)
+    with patch.object(httpx.AsyncClient, "send", send_spy):
+        await async_vllm_openai_client.embeddings.create(
+            input="Tell me a joke about opentelemetry",
+            model="intfloat/e5-mistral-7b-instruct",
+        )
+
+    spans = exporter.get_finished_spans()
+    assert [span.name for span in spans] == [
+        "openai.embeddings",
+    ]
+    open_ai_span = spans[0]
+    args, kwargs = send_spy.mock.call_args
+    request = args[0]
+
+    assert_request_contains_tracecontext(request, open_ai_span)

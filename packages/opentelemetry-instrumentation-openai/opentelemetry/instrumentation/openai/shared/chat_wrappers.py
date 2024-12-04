@@ -37,6 +37,7 @@ from opentelemetry.instrumentation.openai.shared import (
     should_record_stream_token_usage,
     get_token_count_from_string,
     _set_span_stream_usage,
+    propagate_trace_context,
 )
 from opentelemetry.trace import SpanKind, Tracer
 from opentelemetry.trace.status import Status, StatusCode
@@ -246,6 +247,8 @@ async def _handle_request(span, kwargs, instance):
             _set_functions_attributes(span, kwargs.get("functions"))
         elif kwargs.get("tools"):
             set_tools_attributes(span, kwargs.get("tools"))
+    if Config.enable_trace_context_propagation:
+        propagate_trace_context(span, kwargs)
 
 
 @dont_throw
