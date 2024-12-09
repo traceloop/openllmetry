@@ -15,7 +15,7 @@ pip install opentelemetry-instrumentation-google-generativeai
 ## Example usage
 
 ```python
-from opentelemetry.instrumentation.google-generativeai import GoogleGenerativeAiInstrumentor
+from opentelemetry.instrumentation.google_generativeai import GoogleGenerativeAiInstrumentor
 
 GoogleGenerativeAiInstrumentor().instrument()
 ```
