@@ -1,4 +1,3 @@
-import time
 from typing_extensions import override
 
 import pytest
@@ -33,7 +32,9 @@ def test_new_assistant(exporter, openai_client, assistant):
     )
 
     while run.status in ["queued", "in_progress", "cancelling"]:
-        time.sleep(1)  # Wait for 1 second
+        # in the original run, it waits for 1 second
+        # Now that we have VCR cassetes recorded, we don't need to wait
+        # time.sleep(1)
         run = openai_client.beta.threads.runs.retrieve(
             thread_id=thread.id, run_id=run.id
         )
@@ -68,6 +69,9 @@ def test_new_assistant(exporter, openai_client, assistant):
         == "Please address the user as Jane Doe. The user has a premium account."
     )
     assert open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.role"] == "system"
+    assert open_ai_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 145
+    assert open_ai_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS] == 155
+    assert open_ai_span.attributes[SpanAttributes.LLM_SYSTEM] == "openai"
 
     for idx, message in enumerate(messages.data):
         assert (
@@ -120,6 +124,9 @@ def test_new_assistant_with_polling(exporter, openai_client, assistant):
         == "Please address the user as Jane Doe. The user has a premium account."
     )
     assert open_ai_span.attributes["gen_ai.prompt.1.role"] == "system"
+    assert open_ai_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 374
+    assert open_ai_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS] == 86
+    assert open_ai_span.attributes[SpanAttributes.LLM_SYSTEM] == "openai"
 
     for idx, message in enumerate(messages.data):
         assert (
@@ -146,7 +153,9 @@ def test_existing_assistant(exporter, openai_client):
     )
 
     while run.status in ["queued", "in_progress", "cancelling"]:
-        time.sleep(1)  # Wait for 1 second
+        # in the original run, it waits for 1 second
+        # Now that we have VCR cassetes recorded, we don't need to wait
+        # time.sleep(1)
         run = openai_client.beta.threads.runs.retrieve(
             thread_id=thread.id, run_id=run.id
         )
@@ -180,6 +189,9 @@ def test_existing_assistant(exporter, openai_client):
         == "Please address the user as Jane Doe. The user has a premium account."
     )
     assert open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.role"] == "system"
+    assert open_ai_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 639
+    assert open_ai_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS] == 170
+    assert open_ai_span.attributes[SpanAttributes.LLM_SYSTEM] == "openai"
 
     for idx, message in enumerate(messages.data):
         assert (
@@ -247,6 +259,10 @@ def test_streaming_new_assistant(exporter, openai_client, assistant):
     )
     assert open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.role"] == "system"
 
+    assert open_ai_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 790
+    assert open_ai_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS] == 225
+    assert open_ai_span.attributes[SpanAttributes.LLM_SYSTEM] == "openai"
+
     for idx, message in enumerate(assistant_messages):
         assert (
             open_ai_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.{idx}.content"]
@@ -312,6 +328,9 @@ def test_streaming_existing_assistant(exporter, openai_client):
         == "Please address the user as Jane Doe. The user has a premium account."
     )
     assert open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.role"] == "system"
+    assert open_ai_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 364
+    assert open_ai_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS] == 88
+    assert open_ai_span.attributes[SpanAttributes.LLM_SYSTEM] == "openai"
 
     for idx, message in enumerate(assistant_messages):
         assert (
