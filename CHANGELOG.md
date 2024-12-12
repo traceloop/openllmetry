@@ -1,3 +1,17 @@
+## v0.34.0 (2024-12-12)
+
+### Feat
+
+- **docs**: Update README.md to add link to recently-added GCP integration document. (#2384)
+
+### Fix
+
+- bump otel >0.50b0 (#2386)
+- update google generative AI import (#2382)
+- **sdk**: Update JSONEncoder to allow class instance methods to be serializable (#2383)
+- **openai**: Add token count and system to assistants (#2323)
+- **openai**: Add trace context to client requests (#2321)
+
 ## v0.33.12 (2024-11-13)
 
 ### Fix
