@@ -29,6 +29,9 @@ from opentelemetry.instrumentation.langchain.utils import (
 from opentelemetry.metrics import Histogram
 
 
+REQUEST_MODEL_NOT_FOUND_KEY = "request_model_not_found"
+
+
 @dataclass
 class SpanHolder:
     span: Span
@@ -67,6 +70,14 @@ def _set_request_params(span, kwargs):
             break
     else:
         model = "unknown"
+        context_api.attach(
+            context_api.set_value(
+                REQUEST_MODEL_NOT_FOUND_KEY,
+                True,
+                context_api.get_current()
+            )
+        )
+
     span.set_attribute(SpanAttributes.LLM_REQUEST_MODEL, model)
     # response is not available for LLM requests (as opposed to chat)
     span.set_attribute(SpanAttributes.LLM_RESPONSE_MODEL, model)
@@ -542,6 +553,9 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             ) or response.llm_output.get("model_id")
             if model_name is not None:
                 span.set_attribute(SpanAttributes.LLM_RESPONSE_MODEL, model_name)
+
+                if context_api.get_value(REQUEST_MODEL_NOT_FOUND_KEY):
+                    span.set_attribute(SpanAttributes.LLM_REQUEST_MODEL, model_name)
 
         token_usage = (response.llm_output or {}).get("token_usage") or (
             response.llm_output or {}
