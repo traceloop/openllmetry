@@ -2,7 +2,7 @@ import os
 import sys
 from pathlib import Path
 
-from typing import Optional, Set
+from typing import Any, Optional, Set
 from colorama import Fore
 from opentelemetry.sdk.trace import SpanProcessor
 from opentelemetry.sdk.trace.export import SpanExporter
@@ -45,19 +45,19 @@ class Traceloop:
     def init(
         app_name: Optional[str] = sys.argv[0],
         api_endpoint: str = "https://api.traceloop.com",
-        api_key: str = None,
+        api_key: Optional[str] = None,
         headers: Dict[str, str] = {},
-        disable_batch=False,
-        exporter: SpanExporter = None,
-        metrics_exporter: MetricExporter = None,
-        metrics_headers: Dict[str, str] = None,
-        logging_exporter: LogExporter = None,
-        logging_headers: Dict[str, str] = None,
-        processor: SpanProcessor = None,
-        propagator: TextMapPropagator = None,
+        disable_batch: bool = False,
+        exporter: Optional[SpanExporter] = None,
+        metrics_exporter: Optional[MetricExporter] = None,
+        metrics_headers: Optional[Dict[str, str]] = None,
+        logging_exporter: Optional[LogExporter] = None,
+        logging_headers: Optional[Dict[str, str]] = None,
+        processor: Optional[SpanProcessor] = None,
+        propagator: Optional[TextMapPropagator] = None,
         traceloop_sync_enabled: bool = False,
         should_enrich_metrics: bool = True,
-        resource_attributes: dict = {},
+        resource_attributes: dict[str, Any] = {},
         instruments: Optional[Set[Instruments]] = None,
         block_instruments: Optional[Set[Instruments]] = None,
         image_uploader: Optional[ImageUploader] = None,
