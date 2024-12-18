@@ -39,7 +39,7 @@ class SpanHolder:
     entity_name: str
     entity_path: str
     start_time: float = field(default_factory=time.time)
-    request_model: str | None = None
+    request_model: Optional[str] = None
 
 
 def _message_type_to_role(message_type: str) -> str:
