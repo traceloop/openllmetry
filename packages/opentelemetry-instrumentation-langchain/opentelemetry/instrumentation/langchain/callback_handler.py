@@ -39,6 +39,7 @@ class SpanHolder:
     entity_name: str
     entity_path: str
     start_time: float = field(default_factory=time.time)
+    request_model: Optional[str] = None
 
 
 def _message_type_to_role(message_type: str) -> str:
@@ -57,16 +58,19 @@ def _set_span_attribute(span, name, value):
         span.set_attribute(name, value)
 
 
-def _set_request_params(span, kwargs):
+def _set_request_params(span, kwargs, span_holder: SpanHolder):
     for model_tag in ("model", "model_id", "model_name"):
         if (model := kwargs.get(model_tag)) is not None:
+            span_holder.request_model = model
             break
         elif (
             model := (kwargs.get("invocation_params") or {}).get(model_tag)
         ) is not None:
+            span_holder.request_model = model
             break
     else:
         model = "unknown"
+
     span.set_attribute(SpanAttributes.LLM_REQUEST_MODEL, model)
     # response is not available for LLM requests (as opposed to chat)
     span.set_attribute(SpanAttributes.LLM_RESPONSE_MODEL, model)
@@ -94,8 +98,9 @@ def _set_llm_request(
     serialized: dict[str, Any],
     prompts: list[str],
     kwargs: Any,
+    span_holder: SpanHolder,
 ) -> None:
-    _set_request_params(span, kwargs)
+    _set_request_params(span, kwargs, span_holder)
 
     if should_send_prompts():
         for i, msg in enumerate(prompts):
@@ -114,8 +119,9 @@ def _set_chat_request(
     serialized: dict[str, Any],
     messages: list[list[BaseMessage]],
     kwargs: Any,
+    span_holder: SpanHolder,
 ) -> None:
-    _set_request_params(span, serialized.get("kwargs", {}))
+    _set_request_params(span, serialized.get("kwargs", {}), span_holder)
 
     if should_send_prompts():
         for i, function in enumerate(
@@ -497,7 +503,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         span = self._create_llm_span(
             run_id, parent_run_id, name, LLMRequestTypeValues.CHAT, metadata=metadata
         )
-        _set_chat_request(span, serialized, messages, kwargs)
+        _set_chat_request(span, serialized, messages, kwargs, self.spans[run_id])
 
     @dont_throw
     def on_llm_start(
@@ -519,7 +525,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         span = self._create_llm_span(
             run_id, parent_run_id, name, LLMRequestTypeValues.COMPLETION
         )
-        _set_llm_request(span, serialized, prompts, kwargs)
+        _set_llm_request(span, serialized, prompts, kwargs, self.spans[run_id])
 
     @dont_throw
     def on_llm_end(
@@ -542,6 +548,9 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             ) or response.llm_output.get("model_id")
             if model_name is not None:
                 span.set_attribute(SpanAttributes.LLM_RESPONSE_MODEL, model_name)
+
+                if self.spans[run_id].request_model is None:
+                    span.set_attribute(SpanAttributes.LLM_REQUEST_MODEL, model_name)
 
         token_usage = (response.llm_output or {}).get("token_usage") or (
             response.llm_output or {}
