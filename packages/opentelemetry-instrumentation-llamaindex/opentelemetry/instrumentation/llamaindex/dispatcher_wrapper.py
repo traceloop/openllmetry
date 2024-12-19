@@ -269,7 +269,7 @@ class OpenLLMetrySpanHandler(BaseSpanHandler[SpanHolder]):
         if isinstance(instance, Workflow):
             span_name = f"{instance.__class__.__name__}.{kind}" if not parent_span_id else f"{method_name}.{kind}"
         else:
-            span_name = f"{class_name}.{method_name}.{kind}"
+            span_name = f"{class_name}.{kind}"
 
         span = self._tracer.start_span(
             span_name,

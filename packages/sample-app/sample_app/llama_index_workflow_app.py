@@ -8,6 +8,7 @@ from llama_index.core.workflow import (
 from llama_index.llms.openai import OpenAI
 from traceloop.sdk import Traceloop
 
+
 class JokeEvent(Event):
     joke: str
 
