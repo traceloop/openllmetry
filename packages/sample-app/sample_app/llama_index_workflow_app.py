@@ -5,8 +5,6 @@ from llama_index.core.workflow import (
     Workflow,
     step,
 )
-
-# `pip install llama-index-llms-openai` if you don't already have it
 from llama_index.llms.openai import OpenAI
 from traceloop.sdk import Traceloop
 
@@ -36,7 +34,7 @@ class JokeFlow(Workflow):
 
 async def main():
     Traceloop.init(app_name="llama_index_workflow_app")
-    
+
     w = JokeFlow(timeout=60, verbose=False)
     result = await w.run(topic="pirates")
     print(str(result))
