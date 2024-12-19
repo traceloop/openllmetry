@@ -251,7 +251,7 @@ class OpenLLMetrySpanHandler(BaseSpanHandler[SpanHolder]):
         method_name = matches.groups()[1]
 
         parent = self.open_spans.get(parent_span_id)
-        
+
         if class_name in AVAILABLE_OPENLLMETRY_INSTRUMENTATIONS:
             token = context_api.attach(
                 context_api.set_value(
@@ -259,13 +259,13 @@ class OpenLLMetrySpanHandler(BaseSpanHandler[SpanHolder]):
                 )
             )
             return SpanHolder(id_, parent, token=token)
-        
+
         kind = (
             TraceloopSpanKindValues.TASK.value
             if parent
             else TraceloopSpanKindValues.WORKFLOW.value
         )
-        
+
         if isinstance(instance, Workflow):
             span_name = f"{instance.__class__.__name__}.{kind}" if not parent_span_id else f"{method_name}.{kind}"
         else:
