@@ -1,3 +1,10 @@
+## v0.34.1 (2024-12-22)
+
+### Fix
+
+- **llamaindex**: workflow context detach exception and span names (#2421)
+- **langchain**: azure openai missing request model  (#2416)
+
 ## v0.34.0 (2024-12-12)
 
 ### Feat
