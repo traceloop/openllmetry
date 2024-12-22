@@ -24,6 +24,7 @@ from llama_index.core.instrumentation.events.llm import (
 from llama_index.core.instrumentation.events.rerank import ReRankStartEvent
 from llama_index.core.instrumentation.event_handlers import BaseEventHandler
 from llama_index.core.instrumentation.span_handlers import BaseSpanHandler
+from llama_index.core.workflow import Workflow
 from opentelemetry import context as context_api
 from opentelemetry.instrumentation.llamaindex.utils import (
     JSONEncoder,
@@ -44,7 +45,7 @@ from opentelemetry.trace.span import Span
 # we use the regular OpenLLMetry instrumentations
 AVAILABLE_OPENLLMETRY_INSTRUMENTATIONS = ["OpenAI"]
 
-CLASS_NAME_FROM_ID_REGEX = re.compile(r"^([a-zA-Z]+)\.")
+CLASS_ANDMETHOD_NAME_FROM_ID_REGEX = re.compile(r"([a-zA-Z]+)\.([a-zA-Z_]+)-")
 STREAMING_END_EVENTS = (
     LLMChatEndEvent,
     LLMCompletionEndEvent,
@@ -188,14 +189,14 @@ class SpanHolder:
             return [self.parent] + self.parent.notify_parent()
         return []
 
-    def end(self):
+    def end(self, should_detach_context: bool = True):
         if not self._active:
             return
 
         self._active = False
         if self.otel_span:
             self.otel_span.end()
-        if self.token:
+        if self.token and should_detach_context:
             context_api.detach(self.token)
 
     @singledispatchmethod
@@ -245,24 +246,33 @@ class OpenLLMetrySpanHandler(BaseSpanHandler[SpanHolder]):
         **kwargs: Any,
     ) -> Optional[SpanHolder]:
         """Create a span."""
+        # Take the class name and method name from id_ where id_ is e.g.
+        # 'SentenceSplitter.split_text_metadata_aware-a2f2a780-2fa6-4682-a88e-80dc1f1ebe6a'
+        matches = CLASS_ANDMETHOD_NAME_FROM_ID_REGEX.match(id_)
+        class_name = matches.groups()[0]
+        method_name = matches.groups()[1]
+
         parent = self.open_spans.get(parent_span_id)
+
+        if class_name in AVAILABLE_OPENLLMETRY_INSTRUMENTATIONS:
+            token = context_api.attach(
+                context_api.set_value(
+                    SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY, False
+                )
+            )
+            return SpanHolder(id_, parent, token=token)
+
         kind = (
             TraceloopSpanKindValues.TASK.value
             if parent
             else TraceloopSpanKindValues.WORKFLOW.value
         )
-        # Take the class name from id_ where id_ is e.g.
-        # 'SentenceSplitter.split_text_metadata_aware-a2f2a780-2fa6-4682-a88e-80dc1f1ebe6a'
-        class_name = CLASS_NAME_FROM_ID_REGEX.match(id_).groups()[0]
-        if class_name in AVAILABLE_OPENLLMETRY_INSTRUMENTATIONS:
-            context_api.attach(
-                context_api.set_value(
-                    SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY, False
-                )
-            )
-            return SpanHolder(id_, parent)
 
-        span_name = f"{class_name}.{kind}"
+        if isinstance(instance, Workflow):
+            span_name = f"{instance.__class__.__name__}.{kind}" if not parent_span_id else f"{method_name}.{kind}"
+        else:
+            span_name = f"{class_name}.{kind}"
+
         span = self._tracer.start_span(
             span_name,
             context=parent.context if parent else None,
@@ -322,7 +332,8 @@ class OpenLLMetrySpanHandler(BaseSpanHandler[SpanHolder]):
                 self.waiting_for_streaming_spans[id_] = span_holder
             return span_holder
         else:
-            span_holder.end()
+            should_detach_context = not isinstance(instance, Workflow)
+            span_holder.end(should_detach_context)
             return span_holder
 
     def prepare_to_drop_span(
