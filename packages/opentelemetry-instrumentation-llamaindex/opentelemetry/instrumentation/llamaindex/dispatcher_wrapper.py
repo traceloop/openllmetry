@@ -189,13 +189,15 @@ class SpanHolder:
             return [self.parent] + self.parent.notify_parent()
         return []
 
-    def end(self):
+    def end(self, should_detach_context: bool = True):
         if not self._active:
             return
 
         self._active = False
         if self.otel_span:
             self.otel_span.end()
+        if self.token and should_detach_context:
+            context_api.detach(self.token)
 
     @singledispatchmethod
     def update_span_for_event(self, event: BaseEvent):
@@ -330,7 +332,8 @@ class OpenLLMetrySpanHandler(BaseSpanHandler[SpanHolder]):
                 self.waiting_for_streaming_spans[id_] = span_holder
             return span_holder
         else:
-            span_holder.end()
+            should_detach_context = not isinstance(instance, Workflow)
+            span_holder.end(should_detach_context)
             return span_holder
 
     def prepare_to_drop_span(
