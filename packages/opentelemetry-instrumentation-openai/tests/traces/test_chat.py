@@ -75,24 +75,24 @@ def test_chat_tool_calls(exporter, openai_client):
     ]
     open_ai_span = spans[0]
 
-    assert f"{SpanAttributes.LLM_PROMPTS}.0.content" not in open_ai_span.attributes
+    assert f"{GenAIAttributes.GEN_AI_PROMPT}.0.content" not in open_ai_span.attributes
     assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.tool_calls.0.name"]
+        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.tool_calls.0.name"]
         == "get_current_weather"
     )
     assert (
         open_ai_span.attributes[
-            f"{SpanAttributes.LLM_PROMPTS}.0.tool_calls.0.arguments"
+            f"{GenAIAttributes.GEN_AI_PROMPT}.0.tool_calls.0.arguments"
         ]
         == '{"location": "San Francisco"}'
     )
 
     assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.content"]
+        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.1.content"]
         == "The weather in San Francisco is 70 degrees and sunny."
     )
     assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.tool_call_id"] == "1"
+        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.1.tool_call_id"] == "1"
     )
 
 
@@ -129,24 +129,24 @@ def test_chat_pydantic_based_tool_calls(exporter, openai_client):
     ]
     open_ai_span = spans[0]
 
-    assert f"{SpanAttributes.LLM_PROMPTS}.0.content" not in open_ai_span.attributes
+    assert f"{GenAIAttributes.GEN_AI_PROMPT}.0.content" not in open_ai_span.attributes
     assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.tool_calls.0.name"]
+        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.tool_calls.0.name"]
         == "get_current_weather"
     )
     assert (
         open_ai_span.attributes[
-            f"{SpanAttributes.LLM_PROMPTS}.0.tool_calls.0.arguments"
+            f"{GenAIAttributes.GEN_AI_PROMPT}.0.tool_calls.0.arguments"
         ]
         == '{"location": "San Francisco"}'
     )
 
     assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.content"]
+        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.1.content"]
         == "The weather in San Francisco is 70 degrees and sunny."
     )
     assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.tool_call_id"] == "1"
+        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.1.tool_call_id"] == "1"
     )
 
 

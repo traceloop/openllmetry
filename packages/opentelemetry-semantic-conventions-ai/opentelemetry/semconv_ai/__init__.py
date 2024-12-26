@@ -20,7 +20,11 @@ class Meters:
 
 class SpanAttributes:
     # These attributes have been replaced by official OpenTelemetry GenAIAttributes
-    # from opentelemetry.semconv._incubating.attributes
+    # from opentelemetry.semconv._incubating.attributes, except for custom attributes
+    # that are not part of the official spec
+
+    # Custom attributes not in official spec
+    GEN_AI_API_BASE = "gen_ai.api_base"
 
     # LLM
     LLM_REQUEST_TYPE = "llm.request.type"
