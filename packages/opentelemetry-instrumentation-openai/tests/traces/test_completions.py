@@ -3,7 +3,8 @@ import os
 import httpx
 import pytest
 from unittest.mock import patch
-from opentelemetry.semconv_ai import SpanAttributes
+from opentelemetry.semconv._incubating.attributes import gen_ai_attributes as GenAIAttributes
+from opentelemetry.semconv.trace import SpanAttributes
 from .utils import spy_decorator, assert_request_contains_tracecontext
 
 
@@ -20,15 +21,15 @@ def test_completion(exporter, openai_client):
     ]
     open_ai_span = spans[0]
     assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.user"]
+        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.user"]
         == "Tell me a joke about opentelemetry"
     )
-    assert open_ai_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
+    assert open_ai_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content")
     assert (
-        open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)
-        == "https://api.openai.com/v1/"
+        open_ai_span.attributes.get(GenAIAttributes.GEN_AI_SYSTEM)
+        == "OpenAI"
     )
-    assert open_ai_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is False
+    assert open_ai_span.attributes.get(GenAIAttributes.GEN_AI_IS_STREAMING) is False
 
 
 @pytest.mark.vcr
@@ -92,26 +93,26 @@ def test_completion_streaming(exporter, openai_client):
         ]
         open_ai_span = spans[0]
         assert (
-            open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.user"]
+            open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.user"]
             == "Tell me a joke about opentelemetry"
         )
         assert open_ai_span.attributes.get(
-            f"{SpanAttributes.LLM_COMPLETIONS}.0.content"
+            f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content"
         )
         assert (
-            open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)
+            open_ai_span.attributes.get(GenAIAttributes.GEN_AI_API_BASE)
             == "https://api.openai.com/v1/"
         )
 
         # check token usage attributes for stream
         completion_tokens = open_ai_span.attributes.get(
-            SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
+            GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
         )
         prompt_tokens = open_ai_span.attributes.get(
-            SpanAttributes.LLM_USAGE_PROMPT_TOKENS
+            GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS
         )
         total_tokens = open_ai_span.attributes.get(
-            SpanAttributes.LLM_USAGE_TOTAL_TOKENS
+            GenAIAttributes.GEN_AI_USAGE_TOTAL_TOKENS
         )
         assert completion_tokens and prompt_tokens and total_tokens
         assert completion_tokens + prompt_tokens == total_tokens
@@ -141,12 +142,12 @@ async def test_async_completion_streaming(exporter, async_openai_client):
     ]
     open_ai_span = spans[0]
     assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.user"]
+        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.user"]
         == "Tell me a joke about opentelemetry"
     )
-    assert open_ai_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
+    assert open_ai_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content")
     assert (
-        open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)
+        open_ai_span.attributes.get(GenAIAttributes.GEN_AI_API_BASE)
         == "https://api.openai.com/v1/"
     )
 
