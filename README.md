@@ -5,6 +5,7 @@
 <a href="https://www.traceloop.com/openllmetry#gh-dark-mode-only">
 <img width="600" src="https://raw.githubusercontent.com/traceloop/openllmetry/main/img/logo-dark.png">
 </a>
+<a href="https://app.fossa.com/projects/git%2Bgithub.com%2Ftraceloop%2Fopenllmetry?ref=badge_shield" alt="FOSSA Status"><img src="https://app.fossa.com/api/projects/git%2Bgithub.com%2Ftraceloop%2Fopenllmetry.svg?type=shield"/></a>
 </p>
 <p align="center">
   <p align="center">Open-source observability for your LLM application</p>
@@ -57,6 +58,9 @@ It's built and maintained by Traceloop under the Apache 2.0 license.
 
 The repo contains standard OpenTelemetry instrumentations for LLM providers and Vector DBs, as well as a Traceloop SDK that makes it easy to get started with OpenLLMetry, while still outputting standard OpenTelemetry data that can be connected to your observability stack.
 If you already have OpenTelemetry instrumented, you can just add any of our instrumentations directly.
+
+
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Ftraceloop%2Fopenllmetry.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Ftraceloop%2Fopenllmetry?ref=badge_large)
 
 ## 🚀 Getting Started
 
@@ -171,4 +175,3 @@ To @patrickdebois, who [suggested the great name](https://x.com/patrickdebois/st
 <a href="https://github.com/traceloop/openllmetry/graphs/contributors">
   <img alt="contributors" src="https://contrib.rocks/image?repo=traceloop/openllmetry"/>
 </a>
-
