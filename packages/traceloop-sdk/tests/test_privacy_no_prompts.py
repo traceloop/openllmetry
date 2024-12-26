@@ -47,7 +47,7 @@ def test_simple_workflow(exporter, openai_client):
     ]
     open_ai_span = spans[0]
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 15
-    assert not open_ai_span.attributes.get(f"{GenAIAttributes.GEN_AI_PROMPTS}.0.content")
+    assert not open_ai_span.attributes.get(f"{GenAIAttributes.GEN_AI_PROMPT}.0.content")
     assert not open_ai_span.attributes.get(
-        f"{GenAIAttributes.GEN_AI_COMPLETIONS}.0.content"
+        f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content"
     )
