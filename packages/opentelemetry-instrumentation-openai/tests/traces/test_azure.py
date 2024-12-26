@@ -1,6 +1,6 @@
 import pytest
 from opentelemetry.semconv._incubating.attributes import gen_ai_attributes as GenAIAttributes
-from opentelemetry.semconv.trace import SpanAttributes
+from opentelemetry.semconv_ai import SpanAttributes
 import json
 
 PROMPT_FILTER_KEY = "prompt_filter_results"

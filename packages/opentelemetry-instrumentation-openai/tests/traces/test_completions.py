@@ -4,7 +4,7 @@ import httpx
 import pytest
 from unittest.mock import patch
 from opentelemetry.semconv._incubating.attributes import gen_ai_attributes as GenAIAttributes
-from opentelemetry.semconv.trace import SpanAttributes
+from opentelemetry.semconv_ai import SpanAttributes
 from .utils import spy_decorator, assert_request_contains_tracecontext
 
 
@@ -46,10 +46,10 @@ async def test_async_completion(exporter, async_openai_client):
     ]
     open_ai_span = spans[0]
     assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.user"]
+        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.user"]
         == "Tell me a joke about opentelemetry"
     )
-    assert open_ai_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
+    assert open_ai_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content")
 
 
 @pytest.mark.vcr
@@ -65,10 +65,10 @@ def test_completion_langchain_style(exporter, openai_client):
     ]
     open_ai_span = spans[0]
     assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.user"]
+        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.user"]
         == "Tell me a joke about opentelemetry"
     )
-    assert open_ai_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
+    assert open_ai_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content")
 
 
 @pytest.mark.vcr

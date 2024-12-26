@@ -3,6 +3,7 @@ import httpx
 import pytest
 from unittest.mock import patch
 from opentelemetry.semconv._incubating.attributes import gen_ai_attributes as GenAIAttributes
+from opentelemetry.semconv_ai import SpanAttributes
 from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import GEN_AI_OPENAI_RESPONSE_SYSTEM_FINGERPRINT
 from openai.types.chat.chat_completion_message_tool_call import (
     ChatCompletionMessageToolCall,
