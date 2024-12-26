@@ -4,8 +4,8 @@ import pytest
 from openai import OpenAI
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
-    SpanAttributes,
 )
+from opentelemetry.semconv.trace import SpanAttributes
 from traceloop.sdk.decorators import workflow, task
 
 
