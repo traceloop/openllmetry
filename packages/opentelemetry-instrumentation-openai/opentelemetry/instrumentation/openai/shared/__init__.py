@@ -23,7 +23,6 @@ from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
     GEN_AI_RESPONSE_MODEL,
     GEN_AI_USAGE_INPUT_TOKENS,
     GEN_AI_USAGE_OUTPUT_TOKENS,
-    GEN_AI_USAGE_COMPLETION_TOKENS,
     GEN_AI_OPENAI_RESPONSE_SYSTEM_FINGERPRINT,
 )
 from opentelemetry.instrumentation.openai.utils import (

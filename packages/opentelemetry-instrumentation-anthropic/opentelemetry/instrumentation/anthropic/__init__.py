@@ -36,15 +36,11 @@ from opentelemetry.semconv_ai import (
 )
 from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
     GEN_AI_REQUEST_MODEL,
-    GEN_AI_SYSTEM,
     GEN_AI_REQUEST_MAX_TOKENS,
     GEN_AI_REQUEST_TEMPERATURE,
     GEN_AI_REQUEST_TOP_P,
     GEN_AI_REQUEST_FREQUENCY_PENALTY,
     GEN_AI_REQUEST_PRESENCE_PENALTY,
-    GEN_AI_RESPONSE_MODEL,
-    GEN_AI_USAGE_INPUT_TOKENS,
-    GEN_AI_USAGE_OUTPUT_TOKENS,
 )
 from opentelemetry.trace import SpanKind, Tracer, get_tracer
 from opentelemetry.trace.status import Status, StatusCode

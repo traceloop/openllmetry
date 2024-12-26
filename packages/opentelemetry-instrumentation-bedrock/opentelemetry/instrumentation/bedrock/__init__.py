@@ -35,8 +35,6 @@ from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
     GEN_AI_REQUEST_MODEL,
     GEN_AI_SYSTEM,
     GEN_AI_RESPONSE_MODEL,
-    GEN_AI_USAGE_INPUT_TOKENS,
-    GEN_AI_USAGE_OUTPUT_TOKENS,
 )
 
 from opentelemetry.instrumentation.bedrock.version import __version__
