@@ -26,8 +26,8 @@ class LLMSpan:
         print(f"LLMSpan initialized with span: {span}")
 
     def report_request(self, model: str, messages: list[LLMMessage]):
-        if not self._span:
-            raise ValueError("Span not initialized")
+        if not self._span or not self._span.is_recording():
+            raise ValueError("Span not initialized or not recording")
         
         # Set model attribute
         self._span.set_attribute("gen_ai.request.model", model)
@@ -46,8 +46,8 @@ class LLMSpan:
             print(f"Current attributes: {self._span.attributes}")
 
     def report_response(self, model: str, completions: list[str]):
-        if not self._span:
-            raise ValueError("Span not initialized")
+        if not self._span or not self._span.is_recording():
+            raise ValueError("Span not initialized or not recording")
         
         # Set model attribute
         self._span.set_attribute("gen_ai.response.model", model)
@@ -67,17 +67,24 @@ class LLMSpan:
 @contextmanager
 def track_llm_call(vendor: str, type: str):
     with get_tracer() as tracer:
-        # Use start_as_current_span to automatically manage context
-        with tracer.start_as_current_span(name=f"{vendor}.{type}") as span:
-            # Set base attributes
-            span.set_attribute("gen_ai.system", vendor)
-            span.set_attribute("gen_ai.operation.name", type)
-            span.set_attribute("llm.request.type", type)  # Add this as it appears in test output
-            
-            # Create LLMSpan and yield it
-            llm_span = LLMSpan(span)
-            try:
-                yield llm_span
-            except Exception as e:
-                span.set_status(Status(StatusCode.ERROR, str(e)))
-                raise
+        # Create a new span
+        span = tracer.start_span(name=f"{vendor}.{type}")
+        
+        # Set base attributes
+        span.set_attribute("gen_ai.system", vendor)
+        span.set_attribute("gen_ai.operation.name", type)
+        span.set_attribute("llm.request.type", type)
+        
+        # Attach context and create LLMSpan
+        token = attach(set_span_in_context(span))
+        llm_span = LLMSpan(span)
+        
+        try:
+            yield llm_span
+        except Exception as e:
+            span.set_status(Status(StatusCode.ERROR, str(e)))
+            raise
+        finally:
+            # Always detach context and end span
+            detach(token)
+            span.end()
