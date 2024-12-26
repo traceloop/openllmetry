@@ -23,6 +23,13 @@ from opentelemetry.semconv_ai import (
     SpanAttributes,
     LLMRequestTypeValues,
 )
+from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
+    GEN_AI_REQUEST_MODEL,
+    GEN_AI_SYSTEM,
+    GEN_AI_RESPONSE_MODEL,
+    GEN_AI_USAGE_INPUT_TOKENS,
+    GEN_AI_USAGE_OUTPUT_TOKENS,
+)
 from opentelemetry.instrumentation.ollama.version import __version__
 
 logger = logging.getLogger(__name__)
@@ -115,7 +122,7 @@ def set_tools_attributes(span, tools):
 
 @dont_throw
 def _set_input_attributes(span, llm_request_type, kwargs):
-    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, kwargs.get("model"))
+    _set_span_attribute(span, GEN_AI_REQUEST_MODEL, kwargs.get("model"))
     _set_span_attribute(
         span, SpanAttributes.LLM_IS_STREAMING, kwargs.get("stream") or False
     )
@@ -169,7 +176,7 @@ def _set_response_attributes(span, llm_request_type, response):
     if llm_request_type == LLMRequestTypeValues.EMBEDDING:
         return
 
-    _set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, response.get("model"))
+    _set_span_attribute(span, GEN_AI_RESPONSE_MODEL, response.get("model"))
 
     input_tokens = response.get("prompt_eval_count") or 0
     output_tokens = response.get("eval_count") or 0
@@ -181,12 +188,12 @@ def _set_response_attributes(span, llm_request_type, response):
     )
     _set_span_attribute(
         span,
-        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS,
+        GEN_AI_USAGE_OUTPUT_TOKENS,
         output_tokens,
     )
     _set_span_attribute(
         span,
-        SpanAttributes.LLM_USAGE_PROMPT_TOKENS,
+        GEN_AI_USAGE_INPUT_TOKENS,
         input_tokens,
     )
 
@@ -266,7 +273,7 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
         name,
         kind=SpanKind.CLIENT,
         attributes={
-            SpanAttributes.LLM_SYSTEM: "Ollama",
+            GEN_AI_SYSTEM: "Ollama",
             SpanAttributes.LLM_REQUEST_TYPE: llm_request_type.value,
         },
     )
@@ -301,7 +308,7 @@ async def _awrap(tracer, to_wrap, wrapped, instance, args, kwargs):
         name,
         kind=SpanKind.CLIENT,
         attributes={
-            SpanAttributes.LLM_SYSTEM: "Ollama",
+            GEN_AI_SYSTEM: "Ollama",
             SpanAttributes.LLM_REQUEST_TYPE: llm_request_type.value,
         },
     )

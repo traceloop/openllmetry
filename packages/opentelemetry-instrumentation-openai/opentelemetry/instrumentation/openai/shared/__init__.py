@@ -12,6 +12,20 @@ from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapProp
 
 from opentelemetry.instrumentation.openai.shared.config import Config
 from opentelemetry.semconv_ai import SpanAttributes
+from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
+    GEN_AI_REQUEST_MODEL,
+    GEN_AI_SYSTEM,
+    GEN_AI_REQUEST_MAX_TOKENS,
+    GEN_AI_REQUEST_TEMPERATURE,
+    GEN_AI_REQUEST_TOP_P,
+    GEN_AI_REQUEST_FREQUENCY_PENALTY,
+    GEN_AI_REQUEST_PRESENCE_PENALTY,
+    GEN_AI_RESPONSE_MODEL,
+    GEN_AI_USAGE_INPUT_TOKENS,
+    GEN_AI_USAGE_OUTPUT_TOKENS,
+    GEN_AI_USAGE_COMPLETION_TOKENS,
+    GEN_AI_OPENAI_RESPONSE_SYSTEM_FINGERPRINT,
+)
 from opentelemetry.instrumentation.openai.utils import (
     dont_throw,
     is_openai_v1,
@@ -108,20 +122,20 @@ def _set_request_attributes(span, kwargs):
         return
 
     _set_api_attributes(span)
-    _set_span_attribute(span, SpanAttributes.LLM_SYSTEM, "OpenAI")
-    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, kwargs.get("model"))
+    _set_span_attribute(span, GEN_AI_SYSTEM, "OpenAI")
+    _set_span_attribute(span, GEN_AI_REQUEST_MODEL, kwargs.get("model"))
     _set_span_attribute(
-        span, SpanAttributes.LLM_REQUEST_MAX_TOKENS, kwargs.get("max_tokens")
+        span, GEN_AI_REQUEST_MAX_TOKENS, kwargs.get("max_tokens")
     )
     _set_span_attribute(
-        span, SpanAttributes.LLM_REQUEST_TEMPERATURE, kwargs.get("temperature")
+        span, GEN_AI_REQUEST_TEMPERATURE, kwargs.get("temperature")
     )
-    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TOP_P, kwargs.get("top_p"))
+    _set_span_attribute(span, GEN_AI_REQUEST_TOP_P, kwargs.get("top_p"))
     _set_span_attribute(
-        span, SpanAttributes.LLM_FREQUENCY_PENALTY, kwargs.get("frequency_penalty")
+        span, GEN_AI_REQUEST_FREQUENCY_PENALTY, kwargs.get("frequency_penalty")
     )
     _set_span_attribute(
-        span, SpanAttributes.LLM_PRESENCE_PENALTY, kwargs.get("presence_penalty")
+        span, GEN_AI_REQUEST_PRESENCE_PENALTY, kwargs.get("presence_penalty")
     )
     _set_span_attribute(span, SpanAttributes.LLM_USER, kwargs.get("user"))
     _set_span_attribute(span, SpanAttributes.LLM_HEADERS, str(kwargs.get("headers")))
@@ -148,11 +162,11 @@ def _set_response_attributes(span, response):
         )
         return
 
-    _set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, response.get("model"))
+    _set_span_attribute(span, GEN_AI_RESPONSE_MODEL, response.get("model"))
 
     _set_span_attribute(
         span,
-        SpanAttributes.LLM_OPENAI_RESPONSE_SYSTEM_FINGERPRINT,
+        GEN_AI_OPENAI_RESPONSE_SYSTEM_FINGERPRINT,
         response.get("system_fingerprint"),
     )
     _log_prompt_filter(span, response)
@@ -169,11 +183,11 @@ def _set_response_attributes(span, response):
     )
     _set_span_attribute(
         span,
-        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS,
+        GEN_AI_USAGE_OUTPUT_TOKENS,
         usage.get("completion_tokens"),
     )
     _set_span_attribute(
-        span, SpanAttributes.LLM_USAGE_PROMPT_TOKENS, usage.get("prompt_tokens")
+        span, GEN_AI_USAGE_INPUT_TOKENS, usage.get("prompt_tokens")
     )
     return
 

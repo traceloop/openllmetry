@@ -31,6 +31,13 @@ from opentelemetry.semconv_ai import (
     LLMRequestTypeValues,
     Meters,
 )
+from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
+    GEN_AI_REQUEST_MODEL,
+    GEN_AI_SYSTEM,
+    GEN_AI_RESPONSE_MODEL,
+    GEN_AI_USAGE_INPUT_TOKENS,
+    GEN_AI_USAGE_OUTPUT_TOKENS,
+)
 
 from opentelemetry.instrumentation.bedrock.version import __version__
 
@@ -203,9 +210,9 @@ def _handle_stream_call(span, kwargs, response, metric_params):
         metric_params.model = model
         metric_params.is_stream = True
 
-        _set_span_attribute(span, SpanAttributes.LLM_SYSTEM, vendor)
-        _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, model)
-        _set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, model)
+        _set_span_attribute(span, GEN_AI_SYSTEM, vendor)
+        _set_span_attribute(span, GEN_AI_REQUEST_MODEL, model)
+        _set_span_attribute(span, GEN_AI_RESPONSE_MODEL, model)
 
         if vendor == "cohere":
             _set_cohere_span_attributes(

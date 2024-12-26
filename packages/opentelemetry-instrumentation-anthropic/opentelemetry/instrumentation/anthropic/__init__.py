@@ -34,6 +34,18 @@ from opentelemetry.semconv_ai import (
     SpanAttributes,
     Meters,
 )
+from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
+    GEN_AI_REQUEST_MODEL,
+    GEN_AI_SYSTEM,
+    GEN_AI_REQUEST_MAX_TOKENS,
+    GEN_AI_REQUEST_TEMPERATURE,
+    GEN_AI_REQUEST_TOP_P,
+    GEN_AI_REQUEST_FREQUENCY_PENALTY,
+    GEN_AI_REQUEST_PRESENCE_PENALTY,
+    GEN_AI_RESPONSE_MODEL,
+    GEN_AI_USAGE_INPUT_TOKENS,
+    GEN_AI_USAGE_OUTPUT_TOKENS,
+)
 from opentelemetry.trace import SpanKind, Tracer, get_tracer
 from opentelemetry.trace.status import Status, StatusCode
 from wrapt import wrap_function_wrapper
@@ -149,19 +161,19 @@ async def _dump_content(message_index, content, span):
 
 @dont_throw
 async def _aset_input_attributes(span, kwargs):
-    set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, kwargs.get("model"))
+    set_span_attribute(span, GEN_AI_REQUEST_MODEL, kwargs.get("model"))
     set_span_attribute(
-        span, SpanAttributes.LLM_REQUEST_MAX_TOKENS, kwargs.get("max_tokens_to_sample")
+        span, GEN_AI_REQUEST_MAX_TOKENS, kwargs.get("max_tokens_to_sample")
     )
     set_span_attribute(
-        span, SpanAttributes.LLM_REQUEST_TEMPERATURE, kwargs.get("temperature")
+        span, GEN_AI_REQUEST_TEMPERATURE, kwargs.get("temperature")
     )
-    set_span_attribute(span, SpanAttributes.LLM_REQUEST_TOP_P, kwargs.get("top_p"))
+    set_span_attribute(span, GEN_AI_REQUEST_TOP_P, kwargs.get("top_p"))
     set_span_attribute(
-        span, SpanAttributes.LLM_FREQUENCY_PENALTY, kwargs.get("frequency_penalty")
+        span, GEN_AI_REQUEST_FREQUENCY_PENALTY, kwargs.get("frequency_penalty")
     )
     set_span_attribute(
-        span, SpanAttributes.LLM_PRESENCE_PENALTY, kwargs.get("presence_penalty")
+        span, GEN_AI_REQUEST_PRESENCE_PENALTY, kwargs.get("presence_penalty")
     )
     set_span_attribute(span, SpanAttributes.LLM_IS_STREAMING, kwargs.get("stream"))
 
