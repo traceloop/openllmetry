@@ -29,7 +29,7 @@ def test_chat(exporter, azure_openai_client):
         open_ai_span.attributes.get(GenAIAttributes.GEN_AI_SYSTEM)
         == "OpenAI"
     )
-    assert open_ai_span.attributes.get(GenAIAttributes.GEN_AI_IS_STREAMING) is False
+    assert open_ai_span.attributes.get("stream") is False
 
 
 @pytest.mark.vcr
@@ -137,7 +137,7 @@ def test_chat_streaming(exporter, azure_openai_client):
         open_ai_span.attributes.get(GenAIAttributes.GEN_AI_SYSTEM)
         == "OpenAI"
     )
-    assert open_ai_span.attributes.get(GenAIAttributes.GEN_AI_IS_STREAMING) is True
+    assert open_ai_span.attributes.get("stream") is True
 
     events = open_ai_span.events
     assert len(events) == chunk_count

@@ -1,4 +1,5 @@
 from opentelemetry.semconv_ai import SpanAttributes
+from opentelemetry.semconv._incubating.attributes import gen_ai_attributes as GenAIAttributes
 import pytest
 from openai import OpenAI
 from traceloop.sdk.tracing.manual import LLMMessage, track_llm_call
@@ -30,18 +31,18 @@ def test_manual_report(exporter, openai_client):
 
     spans = exporter.get_finished_spans()
     open_ai_span = spans[0]
-    assert open_ai_span.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "gpt-3.5-turbo"
-    assert open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"] == "user"
+    assert open_ai_span.attributes["gen_ai.request.model"] == "gpt-3.5-turbo"
+    assert open_ai_span.attributes["gen_ai.prompt.0.role"] == "user"
     assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
+        open_ai_span.attributes["gen_ai.prompt.0.content"]
         == "Tell me a joke about opentelemetry"
     )
     assert (
-        open_ai_span.attributes[SpanAttributes.LLM_RESPONSE_MODEL]
+        open_ai_span.attributes["gen_ai.response.model"]
         == "gpt-3.5-turbo-0125"
     )
     assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"]
+        open_ai_span.attributes["gen_ai.completion.0.content"]
         == "Why did the opentelemetry developer break up with their partner? Because they were tired"
         + " of constantly tracing their every move!"
     )

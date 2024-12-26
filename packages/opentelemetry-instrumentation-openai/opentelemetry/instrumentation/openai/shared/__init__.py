@@ -12,6 +12,7 @@ from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapProp
 
 from opentelemetry.instrumentation.openai.shared.config import Config
 from opentelemetry.semconv_ai import SpanAttributes
+from opentelemetry.semconv._incubating.attributes import gen_ai_attributes as GenAIAttributes
 from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
     GEN_AI_REQUEST_MODEL,
     GEN_AI_SYSTEM,
@@ -62,7 +63,7 @@ def _set_client_attributes(span, instance):
     client = instance._client  # pylint: disable=protected-access
     if isinstance(client, (openai.AsyncOpenAI, openai.OpenAI)):
         _set_span_attribute(
-            span, SpanAttributes.LLM_OPENAI_API_BASE, str(client.base_url)
+            span, SpanAttributes.GEN_AI_API_BASE, str(client.base_url)
         )
     if isinstance(client, (openai.AsyncAzureOpenAI, openai.AzureOpenAI)):
         _set_span_attribute(
@@ -79,7 +80,7 @@ def _set_api_attributes(span):
 
     base_url = openai.base_url if hasattr(openai, "base_url") else openai.api_base
 
-    _set_span_attribute(span, SpanAttributes.LLM_OPENAI_API_BASE, base_url)
+    _set_span_attribute(span, SpanAttributes.GEN_AI_API_BASE, base_url)
     _set_span_attribute(span, SpanAttributes.LLM_OPENAI_API_TYPE, openai.api_type)
     _set_span_attribute(span, SpanAttributes.LLM_OPENAI_API_VERSION, openai.api_version)
 
@@ -144,7 +145,10 @@ def _set_request_attributes(span, kwargs):
             span, SpanAttributes.LLM_HEADERS, str(kwargs.get("extra_headers"))
         )
     _set_span_attribute(
-        span, SpanAttributes.LLM_IS_STREAMING, kwargs.get("stream") or False
+        span, "stream", kwargs.get("stream") or False
+    )
+    _set_span_attribute(
+        span, GenAIAttributes.GEN_AI_IS_STREAMING, kwargs.get("stream") or False
     )
 
 

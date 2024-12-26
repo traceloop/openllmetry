@@ -4,6 +4,7 @@ import json
 import pytest
 from openai import OpenAI, AsyncOpenAI
 from opentelemetry.semconv_ai import SpanAttributes
+from opentelemetry.semconv._incubating.attributes import gen_ai_attributes as GenAIAttributes
 from traceloop.sdk import Traceloop
 from traceloop.sdk.decorators import workflow, task, aworkflow, atask
 
@@ -45,10 +46,10 @@ def test_simple_workflow(exporter, openai_client):
     ]
     open_ai_span = next(span for span in spans if span.name == "openai.chat")
     assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
+        open_ai_span.attributes["gen_ai.prompt.0.content"]
         == "Tell me a joke about OpenTelemetry"
     )
-    assert open_ai_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
+    assert open_ai_span.attributes.get("gen_ai.completion.0.content")
     assert (
         open_ai_span.attributes.get("traceloop.prompt.template")
         == "Tell me a {what} about {subject}"
@@ -113,10 +114,10 @@ async def test_simple_aworkflow(exporter, async_openai_client):
     ]
     open_ai_span = next(span for span in spans if span.name == "openai.chat")
     assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
+        open_ai_span.attributes["gen_ai.prompt.0.content"]
         == "Tell me a joke about OpenTelemetry"
     )
-    assert open_ai_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
+    assert open_ai_span.attributes.get("gen_ai.completion.0.content")
     assert (
         open_ai_span.attributes.get("traceloop.prompt.template")
         == "Tell me a {what} about {subject}"

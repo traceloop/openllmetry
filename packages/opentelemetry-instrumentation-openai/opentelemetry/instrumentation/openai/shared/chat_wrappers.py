@@ -315,9 +315,7 @@ def _set_choice_counter_metrics(choice_counter, choices, shared_attributes):
     for choice in choices:
         attributes_with_reason = {**shared_attributes}
         if choice.get("finish_reason"):
-            attributes_with_reason[SpanAttributes.LLM_RESPONSE_FINISH_REASON] = (
-                choice.get("finish_reason")
-            )
+            attributes_with_reason["gen_ai.response.finish_reason"] = choice.get("finish_reason")
         choice_counter.add(1, attributes=attributes_with_reason)
 
 
@@ -326,7 +324,7 @@ def _set_token_counter_metrics(token_counter, usage, shared_attributes):
         if name in OPENAI_LLM_USAGE_TOKEN_TYPES:
             attributes_with_token_type = {
                 **shared_attributes,
-                SpanAttributes.LLM_TOKEN_TYPE: _token_type(name),
+                "gen_ai.token.type": _token_type(name),
             }
             token_counter.record(val, attributes=attributes_with_token_type)
 
@@ -362,7 +360,7 @@ async def _set_prompts(span, messages):
         return
 
     for i, msg in enumerate(messages):
-        prefix = f"{SpanAttributes.LLM_PROMPTS}.{i}"
+        prefix = f"gen_ai.prompt.{i}"
 
         _set_span_attribute(span, f"{prefix}.role", msg.get("role"))
         if msg.get("content"):
@@ -413,7 +411,7 @@ def _set_completions(span, choices):
 
     for choice in choices:
         index = choice.get("index")
-        prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{index}"
+        prefix = f"gen_ai.completion.{index}"
         _set_span_attribute(
             span, f"{prefix}.finish_reason", choice.get("finish_reason")
         )
@@ -524,14 +522,14 @@ def _set_streaming_token_metrics(
         if type(prompt_usage) is int and prompt_usage >= 0:
             attributes_with_token_type = {
                 **shared_attributes,
-                SpanAttributes.LLM_TOKEN_TYPE: "input",
+                "gen_ai.token.type": "input",
             }
             token_counter.record(prompt_usage, attributes=attributes_with_token_type)
 
         if type(completion_usage) is int and completion_usage >= 0:
             attributes_with_token_type = {
                 **shared_attributes,
-                SpanAttributes.LLM_TOKEN_TYPE: "output",
+                "gen_ai.token.type": "output",
             }
             token_counter.record(
                 completion_usage, attributes=attributes_with_token_type

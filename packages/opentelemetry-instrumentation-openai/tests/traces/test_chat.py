@@ -31,7 +31,7 @@ def test_chat(exporter, openai_client):
     )
     assert open_ai_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content")
     assert (
-        open_ai_span.attributes.get(GenAIAttributes.GEN_AI_API_BASE)
+        open_ai_span.attributes.get(SpanAttributes.GEN_AI_API_BASE)
         == "https://api.openai.com/v1/"
     )
     assert (
@@ -40,7 +40,7 @@ def test_chat(exporter, openai_client):
         )
         == "fp_2b778c6b35"
     )
-    assert open_ai_span.attributes.get(GenAIAttributes.GEN_AI_IS_STREAMING) is False
+    assert open_ai_span.attributes.get("stream") is False
 
 
 @pytest.mark.vcr
@@ -176,10 +176,10 @@ def test_chat_streaming(exporter, openai_client):
     )
     assert open_ai_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content")
     assert (
-        open_ai_span.attributes.get(GenAIAttributes.GEN_AI_API_BASE)
+        open_ai_span.attributes.get(SpanAttributes.GEN_AI_API_BASE)
         == "https://api.openai.com/v1/"
     )
-    assert open_ai_span.attributes.get(GenAIAttributes.GEN_AI_IS_STREAMING) is True
+    assert open_ai_span.attributes.get("stream") is True
 
     events = open_ai_span.events
     assert len(events) == chunk_count

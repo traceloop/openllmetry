@@ -25,6 +25,7 @@ class SpanAttributes:
 
     # Custom attributes not in official spec
     GEN_AI_API_BASE = "gen_ai.api_base"
+    GEN_AI_IS_STREAMING = "gen_ai.is_streaming"
 
     # LLM
     LLM_REQUEST_TYPE = "llm.request.type"
