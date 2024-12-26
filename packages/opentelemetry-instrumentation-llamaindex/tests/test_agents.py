@@ -9,7 +9,7 @@ from llama_index.core.tools import FunctionTool, QueryEngineTool
 from llama_index.core.query_engine import NLSQLTableQueryEngine
 from llama_index.llms.openai import OpenAI
 from llama_index.llms.cohere import Cohere
-from opentelemetry.semconv_ai import SpanAttributes
+from opentelemetry.semconv._incubating.attributes import GenAIAttributes
 
 
 def make_sql_table():
@@ -72,54 +72,54 @@ def test_agents_and_tools(exporter):
     assert llm_span_1.parent is not None
     assert llm_span_2.parent is not None
 
-    assert llm_span_1.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
+    assert llm_span_1.attributes[GenAIAttributes.GEN_AI_REQUEST_TYPE] == "chat"
     assert (
-        llm_span_1.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "gpt-3.5-turbo-0613"
+        llm_span_1.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL] == "gpt-3.5-turbo-0613"
     )
     assert (
-        llm_span_1.attributes[SpanAttributes.LLM_RESPONSE_MODEL] == "gpt-3.5-turbo-0613"
+        llm_span_1.attributes[GenAIAttributes.GEN_AI_RESPONSE_MODEL] == "gpt-3.5-turbo-0613"
     )
-    assert llm_span_1.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"].startswith(
+    assert llm_span_1.attributes[f"{GenAIAttributes.GEN_AI_PROMPTS}.0.content"].startswith(
         "You are designed to help with a variety of tasks,"
     )
-    assert llm_span_1.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.content"] == (
+    assert llm_span_1.attributes[f"{GenAIAttributes.GEN_AI_PROMPTS}.1.content"] == (
         "What is 2 times 3?"
     )
     assert llm_span_1.attributes[
-        f"{SpanAttributes.LLM_COMPLETIONS}.0.content"
+        f"{GenAIAttributes.GEN_AI_COMPLETIONS}.0.content"
     ].startswith(
         "Thought: The current language of the user is English. I need to use a tool"
     )
-    assert llm_span_1.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS] == 43
-    assert llm_span_1.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 479
-    assert llm_span_1.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 522
+    assert llm_span_1.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 43
+    assert llm_span_1.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 479
+    assert llm_span_1.attributes[GenAIAttributes.GEN_AI_USAGE_TOTAL_TOKENS] == 522
 
-    assert llm_span_2.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
+    assert llm_span_2.attributes[GenAIAttributes.GEN_AI_REQUEST_TYPE] == "chat"
     assert (
-        llm_span_2.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "gpt-3.5-turbo-0613"
+        llm_span_2.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL] == "gpt-3.5-turbo-0613"
     )
     assert (
-        llm_span_2.attributes[SpanAttributes.LLM_RESPONSE_MODEL] == "gpt-3.5-turbo-0613"
+        llm_span_2.attributes[GenAIAttributes.GEN_AI_RESPONSE_MODEL] == "gpt-3.5-turbo-0613"
     )
-    assert llm_span_2.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"].startswith(
+    assert llm_span_2.attributes[f"{GenAIAttributes.GEN_AI_PROMPTS}.0.content"].startswith(
         "You are designed to help with a variety of tasks,"
     )
-    assert llm_span_2.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.content"] == (
+    assert llm_span_2.attributes[f"{GenAIAttributes.GEN_AI_PROMPTS}.1.content"] == (
         "What is 2 times 3?"
     )
-    assert llm_span_2.attributes[f"{SpanAttributes.LLM_PROMPTS}.2.content"].startswith(
+    assert llm_span_2.attributes[f"{GenAIAttributes.GEN_AI_PROMPTS}.2.content"].startswith(
         "Thought: The current language of the user is English. I need to use a tool"
     )
-    assert llm_span_2.attributes[f"{SpanAttributes.LLM_PROMPTS}.3.content"] == (
+    assert llm_span_2.attributes[f"{GenAIAttributes.GEN_AI_PROMPTS}.3.content"] == (
         "Observation: 6"
     )
-    assert llm_span_2.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"] == (
+    assert llm_span_2.attributes[f"{GenAIAttributes.GEN_AI_COMPLETIONS}.0.content"] == (
         "Thought: I can answer without using any more tools. I'll use the user's "
         "language to answer.\nAnswer: 2 times 3 is 6."
     )
-    assert llm_span_2.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS] == 32
-    assert llm_span_2.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 535
-    assert llm_span_2.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 567
+    assert llm_span_2.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 32
+    assert llm_span_2.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 535
+    assert llm_span_2.attributes[GenAIAttributes.GEN_AI_USAGE_TOTAL_TOKENS] == 567
 
 
 @pytest.mark.vcr
@@ -173,31 +173,31 @@ def test_agent_with_query_tool(exporter):
     assert llm_span_1.parent is not None
     assert llm_span_2.parent is not None
 
-    assert llm_span_1.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "gpt-3.5-turbo"
+    assert llm_span_1.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL] == "gpt-3.5-turbo"
     assert (
-        llm_span_1.attributes[SpanAttributes.LLM_RESPONSE_MODEL] == "gpt-3.5-turbo-0125"
+        llm_span_1.attributes[GenAIAttributes.GEN_AI_RESPONSE_MODEL] == "gpt-3.5-turbo-0125"
     )
-    assert llm_span_1.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"].startswith(
+    assert llm_span_1.attributes[f"{GenAIAttributes.GEN_AI_PROMPTS}.0.content"].startswith(
         "Given an input question, first create a syntactically correct sqlite"
     )
-    assert llm_span_1.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS] == 68
-    assert llm_span_1.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 224
-    assert llm_span_1.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 292
+    assert llm_span_1.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 68
+    assert llm_span_1.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 224
+    assert llm_span_1.attributes[GenAIAttributes.GEN_AI_USAGE_TOTAL_TOKENS] == 292
 
-    assert llm_span_2.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "gpt-3.5-turbo"
+    assert llm_span_2.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL] == "gpt-3.5-turbo"
     assert (
-        llm_span_2.attributes[SpanAttributes.LLM_RESPONSE_MODEL] == "gpt-3.5-turbo-0125"
+        llm_span_2.attributes[GenAIAttributes.GEN_AI_RESPONSE_MODEL] == "gpt-3.5-turbo-0125"
     )
-    assert llm_span_2.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"].startswith(
+    assert llm_span_2.attributes[f"{GenAIAttributes.GEN_AI_PROMPTS}.0.content"].startswith(
         "Given an input question, synthesize a response from the query results."
     )
-    assert llm_span_2.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"] == (
+    assert llm_span_2.attributes[f"{GenAIAttributes.GEN_AI_COMPLETIONS}.0.content"] == (
         "The city with the highest population in the city_stats table is Tokyo, "
         "with a population of 13,960,000."
     )
-    assert llm_span_2.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS] == 25
-    assert llm_span_2.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 63
-    assert llm_span_2.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 88
+    assert llm_span_2.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 25
+    assert llm_span_2.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 63
+    assert llm_span_2.attributes[GenAIAttributes.GEN_AI_USAGE_TOTAL_TOKENS] == 88
 
 
 @pytest.mark.vcr

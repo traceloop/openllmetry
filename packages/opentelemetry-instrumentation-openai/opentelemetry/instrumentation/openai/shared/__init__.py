@@ -207,11 +207,11 @@ def _set_span_stream_usage(span, prompt_tokens, completion_tokens):
 
     if type(completion_tokens) is int and completion_tokens >= 0:
         _set_span_attribute(
-            span, SpanAttributes.LLM_USAGE_COMPLETION_TOKENS, completion_tokens
+            span, GEN_AI_USAGE_OUTPUT_TOKENS, completion_tokens
         )
 
     if type(prompt_tokens) is int and prompt_tokens >= 0:
-        _set_span_attribute(span, SpanAttributes.LLM_USAGE_PROMPT_TOKENS, prompt_tokens)
+        _set_span_attribute(span, GEN_AI_USAGE_INPUT_TOKENS, prompt_tokens)
 
     if (
         type(prompt_tokens) is int

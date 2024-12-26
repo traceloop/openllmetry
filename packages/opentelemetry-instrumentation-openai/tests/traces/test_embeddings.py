@@ -3,6 +3,7 @@ import openai
 import pytest
 from unittest.mock import patch
 from opentelemetry.semconv_ai import SpanAttributes
+from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import GEN_AI_USAGE_INPUT_TOKENS
 from .utils import spy_decorator, assert_request_contains_tracecontext
 
 
@@ -26,7 +27,7 @@ def test_embeddings(exporter, openai_client):
         open_ai_span.attributes[SpanAttributes.LLM_REQUEST_MODEL]
         == "text-embedding-ada-002"
     )
-    assert open_ai_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 8
+    assert open_ai_span.attributes[GEN_AI_USAGE_INPUT_TOKENS] == 8
     assert (
         open_ai_span.attributes[SpanAttributes.LLM_OPENAI_API_BASE]
         == "https://api.openai.com/v1/"
@@ -53,7 +54,7 @@ def test_embeddings_with_raw_response(exporter, openai_client):
         open_ai_span.attributes[SpanAttributes.LLM_REQUEST_MODEL]
         == "text-embedding-ada-002"
     )
-    assert open_ai_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 8
+    assert open_ai_span.attributes[GEN_AI_USAGE_INPUT_TOKENS] == 8
     assert (
         open_ai_span.attributes[SpanAttributes.LLM_OPENAI_API_BASE]
         == "https://api.openai.com/v1/"
@@ -90,7 +91,7 @@ def test_azure_openai_embeddings(exporter):
         == "Tell me a joke about opentelemetry"
     )
     assert open_ai_span.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "embedding"
-    assert open_ai_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 8
+    assert open_ai_span.attributes[GEN_AI_USAGE_INPUT_TOKENS] == 8
     assert (
         open_ai_span.attributes[SpanAttributes.LLM_OPENAI_API_BASE]
         == f"https://{azure_resource}.openai.azure.com/openai/deployments/{azure_deployment}/"

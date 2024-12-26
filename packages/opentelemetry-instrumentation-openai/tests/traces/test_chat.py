@@ -3,6 +3,7 @@ import httpx
 import pytest
 from unittest.mock import patch
 from opentelemetry.semconv_ai import SpanAttributes
+from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import GEN_AI_OPENAI_RESPONSE_SYSTEM_FINGERPRINT
 from openai.types.chat.chat_completion_message_tool_call import (
     ChatCompletionMessageToolCall,
     Function,
@@ -34,7 +35,7 @@ def test_chat(exporter, openai_client):
     )
     assert (
         open_ai_span.attributes.get(
-            SpanAttributes.LLM_OPENAI_RESPONSE_SYSTEM_FINGERPRINT
+            GEN_AI_OPENAI_RESPONSE_SYSTEM_FINGERPRINT
         )
         == "fp_2b778c6b35"
     )
