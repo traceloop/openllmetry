@@ -3,6 +3,7 @@ from functools import wraps
 import os
 import types
 from typing import Optional
+import inspect
 
 from opentelemetry import trace
 from opentelemetry import context as context_api
@@ -29,6 +30,7 @@ def entity_method(
     version: Optional[int] = None,
     tlp_span_kind: Optional[TraceloopSpanKindValues] = TraceloopSpanKindValues.TASK,
 ):
+
     def decorate(fn):
         @wraps(fn)
         def wrap(*args, **kwargs):
@@ -250,3 +252,149 @@ def _should_send_prompts():
     return (
         os.getenv("TRACELOOP_TRACE_CONTENT") or "true"
     ).lower() == "true" or context_api.get_value("override_enable_content_tracing")
+
+
+# Unified Decorators : handles both sync and async operations
+
+
+def _is_async_method(fn):
+    # check if co-routine function or async generator( example : using async & yield)
+    return inspect.iscoroutinefunction(fn) or inspect.isasyncgenfunction(fn)
+
+
+def _setup_span(entity_name, tlp_span_kind, version):
+    """Sets up the OpenTelemetry span and context"""
+    if tlp_span_kind in [
+        TraceloopSpanKindValues.WORKFLOW,
+        TraceloopSpanKindValues.AGENT,
+    ]:
+        set_workflow_name(entity_name)
+    span_name = f"{entity_name}.{tlp_span_kind.value}"
+
+    with get_tracer() as tracer:
+        span = tracer.start_span(span_name)
+        ctx = trace.set_span_in_context(span)
+        ctx_token = context_api.attach(ctx)
+
+        if tlp_span_kind in [
+            TraceloopSpanKindValues.TASK,
+            TraceloopSpanKindValues.TOOL,
+        ]:
+            entity_path = get_chained_entity_path(entity_name)
+            set_entity_path(entity_path)
+
+        span.set_attribute(
+            SpanAttributes.TRACELOOP_SPAN_KIND, tlp_span_kind.value
+        )
+        span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, entity_name)
+        if version:
+            span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_VERSION, version)
+
+    return span, ctx, ctx_token
+
+
+def _handle_span_input(span, args, kwargs, cls=None):
+    """Handles entity input logging in JSON for both sync and async functions"""
+    try:
+        if _should_send_prompts():
+            json_input = json.dumps({"args": args, "kwargs": kwargs},  **({'cls': cls} if cls else {}))
+            if _is_json_size_valid(json_input):
+                span.set_attribute(
+                    SpanAttributes.TRACELOOP_ENTITY_INPUT,
+                    json_input,
+                )
+    except TypeError as e:
+        Telemetry().log_exception(e)
+
+
+def _handle_span_output(span, res, cls=None):
+    """Handles entity output logging in JSON for both sync and async functions"""
+    try:
+        if _should_send_prompts():
+            json_output = json.dumps(res,  **({'cls': cls} if cls else {}))
+            if _is_json_size_valid(json_output):
+                span.set_attribute(
+                    SpanAttributes.TRACELOOP_ENTITY_OUTPUT,
+                    json_output,
+                )
+    except TypeError as e:
+        Telemetry().log_exception(e)
+
+
+def _cleanup_span(span, ctx_token):
+    """End the span process and detach the context token"""
+    span.end()
+    context_api.detach(ctx_token)
+
+
+def unified_entity_method(
+    name: Optional[str] = None,
+    version: Optional[int] = None,
+    tlp_span_kind: Optional[TraceloopSpanKindValues] = TraceloopSpanKindValues.TASK,
+):
+    def decorate(fn):
+        is_async = _is_async_method(fn)
+        entity_name = name or fn.__name__
+        if is_async:
+            @wraps(fn)
+            async def async_wrap(*args, **kwargs):
+                if not TracerWrapper.verify_initialized():
+                    return await fn(*args, **kwargs)
+
+                span, ctx, ctx_token = _setup_span(entity_name, tlp_span_kind, version)
+
+                _handle_span_input(span, args, kwargs)
+                res = fn(*args, **kwargs)
+
+                # If it's an async generator, return a new async generator that handles the span
+                if isinstance(res, types.AsyncGeneratorType):
+                    return _ahandle_generator(span, ctx_token, res)
+
+                res = await res
+                _handle_span_output(span, res)
+                _cleanup_span(span, ctx_token)
+                return res
+            return async_wrap
+
+        else:
+            @wraps(fn)
+            def sync_wrap(*args, **kwargs):
+                if not TracerWrapper.verify_initialized():
+                    return fn(*args, **kwargs)
+
+                span, ctx, ctx_token = _setup_span(entity_name, tlp_span_kind, version)
+
+                _handle_span_input(span, args, kwargs, cls=JSONEncoder)
+                res = fn(*args, **kwargs)
+
+                # span will be ended in the generator
+                if isinstance(res, types.GeneratorType):
+                    return _handle_generator(span, res)
+
+                _handle_span_output(span, res, cls=JSONEncoder)
+                _cleanup_span(span, ctx_token)
+                return res
+            return sync_wrap
+
+    return decorate
+
+
+def unified_entity_class(
+    name: Optional[str],
+    version: Optional[int],
+    method_name: str,
+    tlp_span_kind: Optional[TraceloopSpanKindValues] = TraceloopSpanKindValues.TASK,
+):
+    def decorator(cls):
+        task_name = name if name else camel_to_snake(cls.__name__)
+        method = getattr(cls, method_name)
+        setattr(
+            cls,
+            method_name,
+            unified_entity_method(name=task_name, version=version, tlp_span_kind=tlp_span_kind)(
+                method
+            ),
+        )
+        return cls
+
+    return decorator
