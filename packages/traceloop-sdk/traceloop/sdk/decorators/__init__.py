@@ -4,8 +4,8 @@ import warnings
 from opentelemetry.semconv_ai import TraceloopSpanKindValues
 
 from traceloop.sdk.decorators.base import (
-    unified_entity_class,
-    unified_entity_method,
+    entity_class,
+    entity_method,
 )
 
 
@@ -16,9 +16,9 @@ def task(
     tlp_span_kind: Optional[TraceloopSpanKindValues] = TraceloopSpanKindValues.TASK,
 ):
     if method_name is None:
-        return unified_entity_method(name=name, version=version, tlp_span_kind=tlp_span_kind)
+        return entity_method(name=name, version=version, tlp_span_kind=tlp_span_kind)
     else:
-        return unified_entity_class(
+        return entity_class(
             name=name,
             version=version,
             method_name=method_name,
@@ -33,9 +33,9 @@ def workflow(
     tlp_span_kind: Optional[TraceloopSpanKindValues] = TraceloopSpanKindValues.WORKFLOW,
 ):
     if method_name is None:
-        return unified_entity_method(name=name, version=version, tlp_span_kind=tlp_span_kind)
+        return entity_method(name=name, version=version, tlp_span_kind=tlp_span_kind)
     else:
-        return unified_entity_class(
+        return entity_class(
             name=name,
             version=version,
             method_name=method_name,
@@ -83,9 +83,9 @@ def atask(
         stacklevel=2
     )
     if method_name is None:
-        return unified_entity_method(name=name, version=version, tlp_span_kind=tlp_span_kind)
+        return entity_method(name=name, version=version, tlp_span_kind=tlp_span_kind)
     else:
-        return unified_entity_class(name=name, version=version, method_name=method_name, tlp_span_kind=tlp_span_kind)
+        return entity_class(name=name, version=version, method_name=method_name, tlp_span_kind=tlp_span_kind)
 
 
 def aworkflow(
@@ -101,9 +101,9 @@ def aworkflow(
         stacklevel=2
     )
     if method_name is None:
-        return unified_entity_method(name=name, version=version, tlp_span_kind=tlp_span_kind)
+        return entity_method(name=name, version=version, tlp_span_kind=tlp_span_kind)
     else:
-        return unified_entity_class(
+        return entity_class(
             name=name,
             version=version,
             method_name=method_name,

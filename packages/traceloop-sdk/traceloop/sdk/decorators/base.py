@@ -4,6 +4,7 @@ import os
 import types
 from typing import Optional
 import inspect
+import warnings
 
 from opentelemetry import trace
 from opentelemetry import context as context_api
@@ -24,108 +25,7 @@ def _is_json_size_valid(json_str: str) -> bool:
     """Check if JSON string size is less than 1MB"""
     return len(json_str) < 1_000_000
 
-
-def entity_method(
-    name: Optional[str] = None,
-    version: Optional[int] = None,
-    tlp_span_kind: Optional[TraceloopSpanKindValues] = TraceloopSpanKindValues.TASK,
-):
-
-    def decorate(fn):
-        @wraps(fn)
-        def wrap(*args, **kwargs):
-            if not TracerWrapper.verify_initialized():
-                return fn(*args, **kwargs)
-
-            entity_name = name or fn.__name__
-            if tlp_span_kind in [
-                TraceloopSpanKindValues.WORKFLOW,
-                TraceloopSpanKindValues.AGENT,
-            ]:
-                set_workflow_name(entity_name)
-            span_name = f"{entity_name}.{tlp_span_kind.value}"
-
-            with get_tracer() as tracer:
-                span = tracer.start_span(span_name)
-                ctx = trace.set_span_in_context(span)
-                ctx_token = context_api.attach(ctx)
-
-                if tlp_span_kind in [
-                    TraceloopSpanKindValues.TASK,
-                    TraceloopSpanKindValues.TOOL,
-                ]:
-                    entity_path = get_chained_entity_path(entity_name)
-                    set_entity_path(entity_path)
-
-                span.set_attribute(
-                    SpanAttributes.TRACELOOP_SPAN_KIND, tlp_span_kind.value
-                )
-                span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, entity_name)
-                if version:
-                    span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_VERSION, version)
-
-                try:
-                    if _should_send_prompts():
-                        json_input = json.dumps(
-                            {"args": args, "kwargs": kwargs}, cls=JSONEncoder
-                        )
-                        if _is_json_size_valid(json_input):
-                            span.set_attribute(
-                                SpanAttributes.TRACELOOP_ENTITY_INPUT,
-                                json_input,
-                            )
-                except TypeError as e:
-                    Telemetry().log_exception(e)
-
-                res = fn(*args, **kwargs)
-
-                # span will be ended in the generator
-                if isinstance(res, types.GeneratorType):
-                    return _handle_generator(span, res)
-
-                try:
-                    if _should_send_prompts():
-                        json_output = json.dumps(res, cls=JSONEncoder)
-                        if _is_json_size_valid(json_output):
-                            span.set_attribute(
-                                SpanAttributes.TRACELOOP_ENTITY_OUTPUT,
-                                json_output,
-                            )
-                except TypeError as e:
-                    Telemetry().log_exception(e)
-
-                span.end()
-                context_api.detach(ctx_token)
-
-                return res
-
-        return wrap
-
-    return decorate
-
-
-def entity_class(
-    name: Optional[str],
-    version: Optional[int],
-    method_name: str,
-    tlp_span_kind: Optional[TraceloopSpanKindValues] = TraceloopSpanKindValues.TASK,
-):
-    def decorator(cls):
-        task_name = name if name else camel_to_snake(cls.__name__)
-        method = getattr(cls, method_name)
-        setattr(
-            cls,
-            method_name,
-            entity_method(name=task_name, version=version, tlp_span_kind=tlp_span_kind)(
-                method
-            ),
-        )
-        return cls
-
-    return decorator
-
-
-# Async Decorators
+# Async Decorators - Deprecated
 
 
 def aentity_method(
@@ -133,78 +33,18 @@ def aentity_method(
     version: Optional[int] = None,
     tlp_span_kind: Optional[TraceloopSpanKindValues] = TraceloopSpanKindValues.TASK,
 ):
-    def decorate(fn):
-        @wraps(fn)
-        async def wrap(*args, **kwargs):
-            if not TracerWrapper.verify_initialized():
-                return await fn(*args, **kwargs)
+    warnings.warn(
+        "DeprecationWarning: The @aentity_method function will be removed in a future version. "
+        "Please migrate to @entity_method for both sync and async operations.",
+        DeprecationWarning,
+        stacklevel=2
+    )
 
-            entity_name = name or fn.__name__
-            if tlp_span_kind in [
-                TraceloopSpanKindValues.WORKFLOW,
-                TraceloopSpanKindValues.AGENT,
-            ]:
-                set_workflow_name(entity_name)
-            span_name = f"{entity_name}.{tlp_span_kind.value}"
-
-            with get_tracer() as tracer:
-                span = tracer.start_span(span_name)
-                ctx = trace.set_span_in_context(span)
-                ctx_token = context_api.attach(ctx)
-
-                if tlp_span_kind in [
-                    TraceloopSpanKindValues.TASK,
-                    TraceloopSpanKindValues.TOOL,
-                ]:
-                    entity_path = get_chained_entity_path(entity_name)
-                    set_entity_path(entity_path)
-
-                span.set_attribute(
-                    SpanAttributes.TRACELOOP_SPAN_KIND, tlp_span_kind.value
-                )
-                span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, entity_name)
-                if version:
-                    span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_VERSION, version)
-
-                try:
-                    if _should_send_prompts():
-                        json_input = json.dumps({"args": args, "kwargs": kwargs})
-                        if _is_json_size_valid(json_input):
-                            span.set_attribute(
-                                SpanAttributes.TRACELOOP_ENTITY_INPUT,
-                                json_input,
-                            )
-                except TypeError as e:
-                    Telemetry().log_exception(e)
-
-                res = fn(*args, **kwargs)
-
-                # If it's an async generator, return a new async generator that handles the span
-                if isinstance(res, types.AsyncGeneratorType):
-                    return _ahandle_generator(span, ctx_token, res)
-
-                # Await here for non-generator async functions
-                res = await res
-
-                try:
-                    if _should_send_prompts():
-                        json_output = json.dumps(res)
-                        if _is_json_size_valid(json_output):
-                            span.set_attribute(
-                                SpanAttributes.TRACELOOP_ENTITY_OUTPUT,
-                                json_output,
-                            )
-                except TypeError as e:
-                    Telemetry().log_exception(e)
-
-                span.end()
-                context_api.detach(ctx_token)
-
-                return res
-
-        return wrap
-
-    return decorate
+    return entity_method(
+        name=name,
+        version=version,
+        tlp_span_kind=tlp_span_kind,
+    )
 
 
 def aentity_class(
@@ -213,19 +53,19 @@ def aentity_class(
     method_name: str,
     tlp_span_kind: Optional[TraceloopSpanKindValues] = TraceloopSpanKindValues.TASK,
 ):
-    def decorator(cls):
-        task_name = name if name else camel_to_snake(cls.__name__)
-        method = getattr(cls, method_name)
-        setattr(
-            cls,
-            method_name,
-            aentity_method(
-                name=task_name, version=version, tlp_span_kind=tlp_span_kind
-            )(method),
-        )
-        return cls
+    warnings.warn(
+        "DeprecationWarning: The @aentity_class function will be removed in a future version. "
+        "Please migrate to @entity_class for both sync and async operations.",
+        DeprecationWarning,
+        stacklevel=2
+    )
 
-    return decorator
+    return entity_class(
+        name=name,
+        version=version,
+        method_name=method_name,
+        tlp_span_kind=tlp_span_kind,
+    )
 
 
 def _handle_generator(span, res):
@@ -327,7 +167,7 @@ def _cleanup_span(span, ctx_token):
     context_api.detach(ctx_token)
 
 
-def unified_entity_method(
+def entity_method(
     name: Optional[str] = None,
     version: Optional[int] = None,
     tlp_span_kind: Optional[TraceloopSpanKindValues] = TraceloopSpanKindValues.TASK,
@@ -379,7 +219,7 @@ def unified_entity_method(
     return decorate
 
 
-def unified_entity_class(
+def entity_class(
     name: Optional[str],
     version: Optional[int],
     method_name: str,
@@ -391,7 +231,7 @@ def unified_entity_class(
         setattr(
             cls,
             method_name,
-            unified_entity_method(name=task_name, version=version, tlp_span_kind=tlp_span_kind)(
+            entity_method(name=task_name, version=version, tlp_span_kind=tlp_span_kind)(
                 method
             ),
         )
