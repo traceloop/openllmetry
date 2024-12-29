@@ -1,7 +1,7 @@
 import asyncio
 import vertexai
 from traceloop.sdk import Traceloop
-from traceloop.sdk.decorators import aworkflow
+from traceloop.sdk.decorators import workflow
 from vertexai.generative_models import GenerativeModel
 
 Traceloop.init(app_name="stream_prediction_service")
@@ -9,7 +9,7 @@ Traceloop.init(app_name="stream_prediction_service")
 vertexai.init()
 
 
-@aworkflow("stream_prediction")
+@workflow("stream_prediction")
 async def streaming_prediction() -> str:
     """Streaming Text Example with a Large Language Model"""
 
