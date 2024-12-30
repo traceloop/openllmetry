@@ -3,6 +3,7 @@ import sys
 from pathlib import Path
 
 from typing import Optional, Set, Literal
+from typing_extensions import deprecated
 from colorama import Fore
 from opentelemetry.sdk.trace import SpanProcessor
 from opentelemetry.sdk.trace.export import SpanExporter
@@ -170,6 +171,7 @@ class Traceloop:
     def set_prompt(template: str, variables: dict, version: int):
         set_external_prompt_tracing_context(template, variables, version)
 
+    @deprecated("This method is deprecated. Use `report_labeling` instead.")
     def report_score(
         association_property_name: str,
         association_property_id: str,
