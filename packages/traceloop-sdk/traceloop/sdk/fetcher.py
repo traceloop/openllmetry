@@ -3,11 +3,10 @@ import os
 import threading
 import time
 import typing
-from typing_extensions import deprecated
 import requests
 
 from threading import Thread, Event
-from typing import Dict, Optional
+from typing import Dict
 from tenacity import (
     RetryError,
     retry,

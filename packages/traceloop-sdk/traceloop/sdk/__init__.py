@@ -1,7 +1,6 @@
 import os
 import sys
 from pathlib import Path
-import json
 
 from typing import Optional, Set, Literal
 from colorama import Fore
@@ -196,11 +195,17 @@ class Traceloop:
         )
 
     @staticmethod
-    def report_labeling(labeling_collection_id: str, entity_instance_id: str, tags: dict, flow: Literal["user_feedback", "llm_feedback"] = "user_feedback"):
+    def report_labeling(
+        labeling_collection_id: str,
+        entity_instance_id: str,
+        tags: dict,
+        flow: Literal["user_feedback", "llm_feedback"] = "user_feedback",
+    ):
         """Report labeling data to Traceloop.
 
         Args:
-            labeling_collection_id (str): The ID of the labeling collection to report to, should be taken from app.traceloop.com/labeling/:labeling_collection_id
+            labeling_collection_id (str): The ID of the labeling collection to report to,
+            should be taken from app.traceloop.com/labeling/:labeling_collection_id
             entity_instance_id (str): The ID of the specific entity instance being labeled
             tags (dict): Dictionary containing the tags to be reported
             flow (str): The flow of the labeling, should be either "user_feedback" or "llm_feedback"
@@ -209,7 +214,7 @@ class Traceloop:
             ```python
             Traceloop.report_labeling(
                 "collection_123",
-                "instance_456", 
+                "instance_456",
                 {"sentiment": "positive", "relevance": 0.95, "tones": ["happy", "nice"]},
                 "user_feedback"
             )
