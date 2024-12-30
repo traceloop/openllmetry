@@ -3,6 +3,7 @@ import os
 import threading
 import time
 import typing
+from typing_extensions import deprecated
 import requests
 
 from threading import Thread, Event
@@ -20,8 +21,8 @@ from traceloop.sdk.prompts.client import PromptRegistryClient
 from traceloop.sdk.tracing.content_allow_list import ContentAllowList
 from traceloop.sdk.version import __version__
 
-MAX_RETRIES = os.getenv("TRACELOOP_PROMPT_MANAGER_MAX_RETRIES") or 3
-POLLING_INTERVAL = os.getenv("TRACELOOP_PROMPT_MANAGER_POLLING_INTERVAL") or 5
+MAX_RETRIES: int = int(os.getenv("TRACELOOP_PROMPT_MANAGER_MAX_RETRIES") or 3)
+POLLING_INTERVAL: int = int(os.getenv("TRACELOOP_PROMPT_MANAGER_POLLING_INTERVAL") or 5)
 
 
 class Fetcher:
@@ -63,6 +64,12 @@ class Fetcher:
 
     def post(self, api: str, body: Dict[str, str]):
         post_url(f"{self._base_url}/v1/traceloop/{api}", self._api_key, body)
+
+    def api_post(self, api: str, body: Dict[str, typing.Any]):
+        try:
+            post_url(f"{self._base_url}/v2/{api}", self._api_key, body)
+        except Exception as e:
+            print(e)
 
 
 class RetryIfServerError(retry_if_exception):
@@ -108,7 +115,7 @@ def fetch_url(url: str, api_key: str):
         return response.json()
 
 
-def post_url(url: str, api_key: str, body: Dict[str, str]):
+def post_url(url: str, api_key: str, body: Dict[str, typing.Any]):
     response = requests.post(
         url,
         headers={
@@ -128,7 +135,7 @@ def thread_func(
     base_url: str,
     api_key: str,
     stop_polling_event: Event,
-    seconds_interval: Optional[int] = 5,
+    seconds_interval: float = 5.0,
 ):
     while not stop_polling_event.is_set():
         try:

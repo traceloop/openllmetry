@@ -1,8 +1,9 @@
 import os
 import sys
 from pathlib import Path
+import json
 
-from typing import Optional, Set
+from typing import Optional, Set, Literal
 from colorama import Fore
 from opentelemetry.sdk.trace import SpanProcessor
 from opentelemetry.sdk.trace.export import SpanExporter
@@ -36,24 +37,25 @@ class Traceloop:
     AUTO_CREATED_KEY_PATH = str(
         Path.home() / ".cache" / "traceloop" / "auto_created_key"
     )
-    AUTO_CREATED_URL = str(Path.home() / ".cache" / "traceloop" / "auto_created_url")
+    AUTO_CREATED_URL = str(Path.home() / ".cache" /
+                           "traceloop" / "auto_created_url")
 
     __tracer_wrapper: TracerWrapper
-    __fetcher: Fetcher = None
-
+    __fetcher: Optional[Fetcher] = None
+    __app_name: Optional[str] = None
     @staticmethod
     def init(
         app_name: Optional[str] = sys.argv[0],
         api_endpoint: str = "https://api.traceloop.com",
-        api_key: str = None,
+        api_key: Optional[str] = None,
         headers: Dict[str, str] = {},
         disable_batch=False,
-        exporter: SpanExporter = None,
+        exporter: Optional[SpanExporter] = None,
         metrics_exporter: MetricExporter = None,
         metrics_headers: Dict[str, str] = None,
         logging_exporter: LogExporter = None,
         logging_headers: Dict[str, str] = None,
-        processor: SpanProcessor = None,
+        processor: Optional[SpanProcessor] = None,
         propagator: TextMapPropagator = None,
         traceloop_sync_enabled: bool = False,
         should_enrich_metrics: bool = True,
@@ -66,13 +68,13 @@ class Traceloop:
 
         api_endpoint = os.getenv("TRACELOOP_BASE_URL") or api_endpoint
         api_key = os.getenv("TRACELOOP_API_KEY") or api_key
-
+        Traceloop.__app_name = app_name
         if (
             traceloop_sync_enabled
             and api_endpoint.find("traceloop.com") != -1
             and api_key
-            and not exporter
-            and not processor
+            and (exporter is None)
+            and (processor is None)
         ):
             Traceloop.__fetcher = Fetcher(base_url=api_endpoint, api_key=api_key)
             Traceloop.__fetcher.run()
@@ -155,12 +157,15 @@ class Traceloop:
             MetricsWrapper.set_static_params(
                 resource_attributes, metrics_endpoint, metrics_headers
             )
-            Traceloop.__metrics_wrapper = MetricsWrapper(exporter=metrics_exporter)
+            Traceloop.__metrics_wrapper = MetricsWrapper(
+                exporter=metrics_exporter)
 
         if is_logging_enabled() and (logging_exporter or not exporter):
-            logging_endpoint = os.getenv("TRACELOOP_LOGGING_ENDPOINT") or api_endpoint
+            logging_endpoint = os.getenv(
+                "TRACELOOP_LOGGING_ENDPOINT") or api_endpoint
             logging_headers = (
-                os.getenv("TRACELOOP_LOGGING_HEADERS") or logging_headers or headers
+                os.getenv(
+                    "TRACELOOP_LOGGING_HEADERS") or logging_headers or headers
             )
             if logging_exporter or processor:
                 print(Fore.GREEN + "Traceloop exporting logs to a custom exporter")
@@ -168,7 +173,8 @@ class Traceloop:
             LoggerWrapper.set_static_params(
                 resource_attributes, logging_endpoint, logging_headers
             )
-            Traceloop.__logger_wrapper = LoggerWrapper(exporter=logging_exporter)
+            Traceloop.__logger_wrapper = LoggerWrapper(
+                exporter=logging_exporter)
 
     def set_association_properties(properties: dict) -> None:
         set_association_properties(properties)
@@ -199,3 +205,61 @@ class Traceloop:
                 "score": score,
             },
         )
+
+    @staticmethod
+    def report_labeling(labeling_collection_id: str, entity_instance_id: str, tags: dict, flow: Literal["user_feedback", "llm_feedback"] = "user_feedback"):
+        """Report labeling data to Traceloop.
+
+        Args:
+            labeling_collection_id (str): The ID of the labeling collection to report to, should be taken from app.traceloop.com/labeling/:labeling_collection_id
+            entity_instance_id (str): The ID of the specific entity instance being labeled
+            tags (dict): Dictionary containing the tags to be reported
+            flow (str): The flow of the labeling, should be either "user_feedback" or "llm_feedback"
+
+        Example:
+            ```python
+            Traceloop.report_labeling(
+                "collection_123",
+                "instance_456", 
+                {"sentiment": "positive", "relevance": 0.95, "tones": ["happy", "nice"]},
+                "user_feedback"
+            )
+            ```
+        """
+        payload = {
+            "labeling_collection_id": labeling_collection_id,
+            "entity_instance_id": entity_instance_id,
+            "tags": tags,
+            "source": "sdk",
+            "flow": flow,
+            "actor": {
+                "type": "service",
+                "id": Traceloop.__app_name,
+            },
+        }
+        
+        if not Traceloop.__fetcher:
+            print(
+                Fore.RED
+                + "Error: Cannot report labeling. Missing Traceloop API key,"
+                + " go to https://app.traceloop.com/settings/api-keys to create one"
+            )
+            print("Set the TRACELOOP_API_KEY environment variable to the key")
+            print(Fore.RESET)
+            return
+
+        Traceloop.__fetcher.api_post(
+            f"labeling-collections/{labeling_collection_id}/labelings",
+            {
+                "labeling_collection_id": labeling_collection_id,
+                "entity_instance_id": entity_instance_id,
+                "tags": tags,
+                "source": "sdk",
+                "flow": flow,
+                "actor": {
+                    "type": "service",
+                    "id": Traceloop.__app_name,
+                },
+            },
+        )
+
