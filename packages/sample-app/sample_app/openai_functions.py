@@ -9,7 +9,7 @@ Traceloop.init()
 
 
 response = client.chat.completions.create(
-    model="gpt-3.5-turbo-0613",
+    model="gpt-4o-mini",
     messages=[
         {"role": "system", "content": "You are a helpful assistant."},
         {

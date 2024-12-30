@@ -2,7 +2,7 @@ import os
 import asyncio
 import google.generativeai as genai
 from traceloop.sdk import Traceloop
-from traceloop.sdk.decorators import workflow, aworkflow
+from traceloop.sdk.decorators import workflow
 
 Traceloop.init(app_name="gemini_example")
 
@@ -21,7 +21,7 @@ def predict_text() -> str:
     return response.text
 
 
-@aworkflow("predict_async")
+@workflow("predict_async")
 async def async_predict_text() -> str:
     """Async Ideation example with a Large Language Model"""
 
