@@ -5,7 +5,7 @@ import pytest
 from openai import OpenAI, AsyncOpenAI
 from opentelemetry.semconv_ai import SpanAttributes
 from traceloop.sdk import Traceloop
-from traceloop.sdk.decorators import workflow, task, aworkflow, atask
+from traceloop.sdk.decorators import workflow, task
 
 
 @pytest.fixture
@@ -88,7 +88,7 @@ def test_simple_workflow(exporter, openai_client):
 @pytest.mark.vcr
 @pytest.mark.asyncio
 async def test_simple_aworkflow(exporter, async_openai_client):
-    @atask(name="something_creator", version=2)
+    @task(name="something_creator", version=2)
     async def create_something(what: str, subject: str):
         Traceloop.set_prompt(
             "Tell me a {what} about {subject}", {"what": what, "subject": subject}, 5
@@ -99,7 +99,7 @@ async def test_simple_aworkflow(exporter, async_openai_client):
         )
         return completion.choices[0].message.content
 
-    @aworkflow(name="pirate_joke_generator", version=1)
+    @workflow(name="pirate_joke_generator", version=1)
     async def joke_workflow():
         return await create_something("joke", subject="OpenTelemetry")
 
@@ -248,11 +248,11 @@ def test_unserializable_workflow(exporter):
 
 @pytest.mark.asyncio
 async def test_unserializable_async_workflow(exporter):
-    @atask(name="unserializable_task")
+    @task(name="unserializable_task")
     async def unserializable_task(obj: object):
         return object()
 
-    @aworkflow(name="unserializable_workflow")
+    @workflow(name="unserializable_workflow")
     async def unserializable_workflow(obj: object):
         return await unserializable_task(obj)
 
@@ -265,7 +265,7 @@ async def test_unserializable_async_workflow(exporter):
 @pytest.mark.asyncio
 async def test_async_generator_workflow(exporter):
 
-    @aworkflow(name="async generator")
+    @workflow(name="async generator")
     async def stream_numbers():
         for i in range(3):
             yield i
