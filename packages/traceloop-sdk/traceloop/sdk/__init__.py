@@ -34,15 +34,13 @@ from typing import Dict
 
 
 class Traceloop:
-    AUTO_CREATED_KEY_PATH = str(
-        Path.home() / ".cache" / "traceloop" / "auto_created_key"
-    )
-    AUTO_CREATED_URL = str(Path.home() / ".cache" /
-                           "traceloop" / "auto_created_url")
+    AUTO_CREATED_KEY_PATH = str(Path.home() / ".cache" / "traceloop" / "auto_created_key")
+    AUTO_CREATED_URL = str(Path.home() / ".cache" / "traceloop" / "auto_created_url")
 
     __tracer_wrapper: TracerWrapper
     __fetcher: Optional[Fetcher] = None
     __app_name: Optional[str] = None
+
     @staticmethod
     def init(
         app_name: Optional[str] = sys.argv[0],
@@ -154,27 +152,18 @@ class Traceloop:
             if metrics_exporter or processor:
                 print(Fore.GREEN + "Traceloop exporting metrics to a custom exporter")
 
-            MetricsWrapper.set_static_params(
-                resource_attributes, metrics_endpoint, metrics_headers
-            )
+            MetricsWrapper.set_static_params(resource_attributes, metrics_endpoint, metrics_headers)
             Traceloop.__metrics_wrapper = MetricsWrapper(
                 exporter=metrics_exporter)
 
         if is_logging_enabled() and (logging_exporter or not exporter):
-            logging_endpoint = os.getenv(
-                "TRACELOOP_LOGGING_ENDPOINT") or api_endpoint
-            logging_headers = (
-                os.getenv(
-                    "TRACELOOP_LOGGING_HEADERS") or logging_headers or headers
-            )
+            logging_endpoint = os.getenv("TRACELOOP_LOGGING_ENDPOINT") or api_endpoint
+            logging_headers = (os.getenv("TRACELOOP_LOGGING_HEADERS") or logging_headers or headers)
             if logging_exporter or processor:
                 print(Fore.GREEN + "Traceloop exporting logs to a custom exporter")
 
-            LoggerWrapper.set_static_params(
-                resource_attributes, logging_endpoint, logging_headers
-            )
-            Traceloop.__logger_wrapper = LoggerWrapper(
-                exporter=logging_exporter)
+            LoggerWrapper.set_static_params(resource_attributes, logging_endpoint, logging_headers)
+            Traceloop.__logger_wrapper = LoggerWrapper(exporter=logging_exporter)
 
     def set_association_properties(properties: dict) -> None:
         set_association_properties(properties)
@@ -226,18 +215,6 @@ class Traceloop:
             )
             ```
         """
-        payload = {
-            "labeling_collection_id": labeling_collection_id,
-            "entity_instance_id": entity_instance_id,
-            "tags": tags,
-            "source": "sdk",
-            "flow": flow,
-            "actor": {
-                "type": "service",
-                "id": Traceloop.__app_name,
-            },
-        }
-        
         if not Traceloop.__fetcher:
             print(
                 Fore.RED
@@ -262,4 +239,3 @@ class Traceloop:
                 },
             },
         )
-
