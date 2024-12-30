@@ -4,7 +4,7 @@ import requests
 from openai import OpenAI
 
 from traceloop.sdk import Traceloop
-from traceloop.sdk.decorators import aagent, aworkflow
+from traceloop.sdk.decorators import agent, workflow
 
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
@@ -12,7 +12,7 @@ client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 Traceloop.init(app_name="joke_generation_service")
 
 
-@aagent(name="base_joke_generator", method_name="generate_joke")
+@agent(name="base_joke_generator", method_name="generate_joke")
 class JokeAgent:
     async def generate_joke(self):
         completion = client.chat.completions.create(
@@ -23,7 +23,7 @@ class JokeAgent:
         return completion.choices[0].message.content
 
 
-@aagent(method_name="generate_joke")
+@agent(method_name="generate_joke")
 class PirateJokeAgent(JokeAgent):
     async def generate_joke(self):
         return await self.generation_helper()
@@ -40,7 +40,7 @@ class PirateJokeAgent(JokeAgent):
         return completion.choices[0].message.content
 
 
-@aworkflow(name="jokes_generation")
+@workflow(name="jokes_generation")
 async def joke_generator():
     Traceloop.set_association_properties({"user_id": "user_12345"})
 
