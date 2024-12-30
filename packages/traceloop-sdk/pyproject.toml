@@ -64,10 +64,10 @@ opentelemetry-instrumentation-crewai = { path = "../opentelemetry-instrumentatio
 colorama = "^0.4.6"
 tenacity = "^8.2.3"
 pydantic = ">=1"
-jinja2 = "^3.1.2"
+jinja2 = "^3.1.5"
 deprecated = "^1.2.14"
 posthog = ">3.0.2, <4"
-aiohttp = "^3.10.9"
+aiohttp = "^3.11.11"
 
 [tool.poetry.group.dev.dependencies]
 autopep8 = "^2.2.0"
