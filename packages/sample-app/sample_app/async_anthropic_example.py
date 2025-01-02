@@ -3,14 +3,14 @@ import requests
 from anthropic import AsyncAnthropic
 
 from traceloop.sdk import Traceloop
-from traceloop.sdk.decorators import aagent, aworkflow
+from traceloop.sdk.decorators import agent, workflow
 
 anthropic = AsyncAnthropic()
 
 Traceloop.init(app_name="joke_generation_service")
 
 
-@aagent(name="base_joke_generator", method_name="generate_joke")
+@agent(name="base_joke_generator", method_name="generate_joke")
 class JokeAgent:
     async def generate_joke(self):
         response = await anthropic.messages.create(
@@ -21,7 +21,7 @@ class JokeAgent:
         return response.content[0].text
 
 
-@aagent(method_name="generate_joke")
+@agent(method_name="generate_joke")
 class PirateJokeAgent(JokeAgent):
     async def generate_joke(self):
         return await self.generation_helper()
@@ -39,7 +39,7 @@ class PirateJokeAgent(JokeAgent):
         return response.content[0].text
 
 
-@aworkflow(name="jokes_generation")
+@workflow(name="jokes_generation")
 async def joke_generator():
     Traceloop.set_association_properties({"user_id": "user_12345"})
     requests.get("https://www.google.com")
