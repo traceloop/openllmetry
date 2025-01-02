@@ -48,6 +48,7 @@ class Traceloop:
         api_key: str = None,
         headers: Dict[str, str] = {},
         disable_batch=False,
+        telemetry_enabled: bool = True,
         exporter: SpanExporter = None,
         metrics_exporter: MetricExporter = None,
         metrics_headers: Dict[str, str] = None,
@@ -62,7 +63,12 @@ class Traceloop:
         block_instruments: Optional[Set[Instruments]] = None,
         image_uploader: Optional[ImageUploader] = None,
     ) -> None:
-        Telemetry()
+        telemetry_enabled = (
+            telemetry_enabled
+            and (os.getenv("TRACELOOP_TELEMETRY") or "true").lower() == "true"
+        )
+        if telemetry_enabled:
+            Telemetry()
 
         api_endpoint = os.getenv("TRACELOOP_BASE_URL") or api_endpoint
         api_key = os.getenv("TRACELOOP_API_KEY") or api_key
