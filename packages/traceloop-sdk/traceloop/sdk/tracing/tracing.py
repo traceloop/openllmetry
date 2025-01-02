@@ -61,6 +61,7 @@ class TracerWrapper(object):
     headers: Dict[str, str] = {}
     __tracer_provider: TracerProvider = None
     __image_uploader: ImageUploader = None
+    __disabled: bool = False
 
     def __new__(
         cls,
@@ -233,6 +234,9 @@ class TracerWrapper(object):
 
     @classmethod
     def verify_initialized(cls) -> bool:
+        if cls.__disabled:
+            return False
+
         if hasattr(cls, "instance"):
             return True
 
@@ -245,6 +249,10 @@ class TracerWrapper(object):
         )
         print(Fore.RESET)
         return False
+
+    @classmethod
+    def set_disabled(cls, disabled: bool) -> None:
+        cls.__disabled = disabled
 
     def flush(self):
         self.__spans_processor.force_flush()

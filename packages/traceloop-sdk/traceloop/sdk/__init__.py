@@ -46,6 +46,7 @@ class Traceloop:
         app_name: Optional[str] = sys.argv[0],
         api_endpoint: str = "https://api.traceloop.com",
         api_key: str = None,
+        enabled: bool = True,
         headers: Dict[str, str] = {},
         disable_batch=False,
         telemetry_enabled: bool = True,
@@ -63,6 +64,15 @@ class Traceloop:
         block_instruments: Optional[Set[Instruments]] = None,
         image_uploader: Optional[ImageUploader] = None,
     ) -> None:
+        if not enabled:
+            TracerWrapper.set_disabled(True)
+            print(
+                Fore.YELLOW
+                + "Traceloop instrumentation is disabled via init flag"
+                + Fore.RESET
+            )
+            return
+
         telemetry_enabled = (
             telemetry_enabled
             and (os.getenv("TRACELOOP_TELEMETRY") or "true").lower() == "true"
