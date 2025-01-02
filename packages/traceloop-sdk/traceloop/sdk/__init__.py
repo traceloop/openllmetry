@@ -31,6 +31,7 @@ from traceloop.sdk.tracing.tracing import (
     set_external_prompt_tracing_context,
 )
 from typing import Dict
+from .client import Client
 
 
 class Traceloop:
@@ -40,10 +41,11 @@ class Traceloop:
     __tracer_wrapper: TracerWrapper
     __fetcher: Optional[Fetcher] = None
     __app_name: Optional[str] = None
+    __client: Optional[Client] = None
 
     @staticmethod
     def init(
-        app_name: Optional[str] = sys.argv[0],
+        app_name: str = sys.argv[0],
         api_endpoint: str = "https://api.traceloop.com",
         api_key: Optional[str] = None,
         headers: Dict[str, str] = {},
@@ -61,7 +63,7 @@ class Traceloop:
         instruments: Optional[Set[Instruments]] = None,
         block_instruments: Optional[Set[Instruments]] = None,
         image_uploader: Optional[ImageUploader] = None,
-    ) -> None:
+    ) -> Optional[Client]:
         Telemetry()
 
         api_endpoint = os.getenv("TRACELOOP_BASE_URL") or api_endpoint
@@ -165,6 +167,11 @@ class Traceloop:
             LoggerWrapper.set_static_params(resource_attributes, logging_endpoint, logging_headers)
             Traceloop.__logger_wrapper = LoggerWrapper(exporter=logging_exporter)
 
+        if not api_key:
+            return
+        Traceloop.__client = Client(api_key=api_key, app_name=app_name, api_endpoint=api_endpoint)
+        return Traceloop.__client
+
     def set_association_properties(properties: dict) -> None:
         set_association_properties(properties)
 
@@ -197,52 +204,20 @@ class Traceloop:
         )
 
     @staticmethod
-    def report_labeling(
-        labeling_collection_id: str,
-        entity_instance_id: str,
-        tags: dict,
-        flow: Literal["user_feedback", "llm_feedback"] = "user_feedback",
-    ):
-        """Report labeling data to Traceloop.
-
-        Args:
-            labeling_collection_id (str): The ID of the labeling collection to report to,
-            should be taken from app.traceloop.com/labeling/:labeling_collection_id
-            entity_instance_id (str): The ID of the specific entity instance being labeled
-            tags (dict): Dictionary containing the tags to be reported
-            flow (str): The flow of the labeling, should be either "user_feedback" or "llm_feedback"
-
-        Example:
-            ```python
-            Traceloop.report_labeling(
-                "collection_123",
-                "instance_456",
-                {"sentiment": "positive", "relevance": 0.95, "tones": ["happy", "nice"]},
-                "user_feedback"
-            )
-            ```
+    def get():
         """
-        if not Traceloop.__fetcher:
-            print(
-                Fore.RED
-                + "Error: Cannot report labeling. Missing Traceloop API key,"
-                + " go to https://app.traceloop.com/settings/api-keys to create one"
-            )
-            print("Set the TRACELOOP_API_KEY environment variable to the key")
-            print(Fore.RESET)
-            return
+        Returns the shared SDK client instance, using the current global configuration.
 
-        Traceloop.__fetcher.api_post(
-            f"labeling-collections/{labeling_collection_id}/labelings",
-            {
-                "labeling_collection_id": labeling_collection_id,
-                "entity_instance_id": entity_instance_id,
-                "tags": tags,
-                "source": "sdk",
-                "flow": flow,
-                "actor": {
-                    "type": "service",
-                    "id": Traceloop.__app_name,
-                },
-            },
-        )
+        To use the SDK as a singleton, first make sure you have called :func:`Traceloop.init()`
+        at startup time. Then ``get()`` will return the same shared :class:`Traceloop.client.Client`
+        instance each time. The client will be initialized if it has not been already.
+
+        If you need to create multiple client instances with different configurations, instead of this
+        singleton approach you can call the :class:`Traceloop.client.Client` constructor directly instead.
+        """
+        if not Traceloop.__client:
+            raise Exception(
+                "Client not initialized, you should call Traceloop.init() first. "
+                "If you are still getting this error - you are missing the api key"
+            )
+        return Traceloop.__client
