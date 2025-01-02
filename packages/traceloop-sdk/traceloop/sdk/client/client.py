@@ -4,7 +4,7 @@ from traceloop.sdk.annotation import Annotation
 from traceloop.sdk.version import __version__
 
 
-class Client():
+class Client:
     """
     Traceloop Client for interacting with the Traceloop API.
 
@@ -31,7 +31,7 @@ class Client():
         """
         if not api_key or not api_key.strip():
             raise ValueError("API key is required")
-        
+
         self.app_name = app_name
         self.api_endpoint = api_endpoint or "https://api.traceloop.com"
         self.api_key = api_key

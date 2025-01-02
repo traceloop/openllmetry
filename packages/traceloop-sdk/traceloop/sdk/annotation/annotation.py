@@ -3,10 +3,10 @@ from typing import Literal, Dict, Any
 from ..client.http import HTTPClient
 
 
-class Annotation():
+class Annotation:
     """
     Annotation class for creating annotations in Traceloop.
-    
+
     This class provides functionality to create annotations for specific tasks,
     supporting both user feedback and LLM feedback flows.
     """
@@ -31,7 +31,7 @@ class Annotation():
         Args:
             annotation_task_id (str): The ID of the annotation task to report to.
                 Can be found at app.traceloop.com/annotation_tasks/:annotation_task_id
-            entity_instance_id (str): The ID of the specific entity instance being labeled
+            entity_instance_id (str): The ID of the specific entity instance being annotated
             tags (Dict[str, Any]): Dictionary containing the tags to be reported.
                 Should match the tags defined in the annotation task
             flow (str, optional): The flow type of the annotation.
@@ -72,4 +72,3 @@ class Annotation():
                 },
             },
         )
-

@@ -7,7 +7,7 @@ from traceloop.sdk.annotation import Annotation
 def test_client_initialization():
     """Test basic client initialization"""
     client = Client(api_key="test-key", app_name="test-app")
-    
+
     assert client.app_name == "test-app"
     assert client.api_key == "test-key"
     assert client.api_endpoint == "https://api.traceloop.com"
@@ -16,12 +16,8 @@ def test_client_initialization():
 
 def test_client_custom_endpoint():
     """Test client initialization with custom endpoint"""
-    client = Client(
-        api_key="test-key",
-        app_name="test-app",
-        api_endpoint="https://custom.endpoint.com"
-    )
-    
+    client = Client(api_key="test-key", app_name="test-app", api_endpoint="https://custom.endpoint.com")
+
     assert client.api_endpoint == "https://custom.endpoint.com"
     assert client._http.base_url == "https://custom.endpoint.com"
 
@@ -29,16 +25,17 @@ def test_client_custom_endpoint():
 def test_client_default_app_name():
     """Test client initialization with default app_name"""
     client = Client(api_key="test-key")
-    
+
     # Default app_name should be sys.argv[0]
     import sys
+
     assert client.app_name == sys.argv[0]
 
 
 def test_annotation_initialization():
     """Test annotation is properly initialized"""
     client = Client(api_key="test-key", app_name="test-app")
-    
+
     assert isinstance(client.annotation, Annotation)
     assert client.annotation._http == client._http
     assert client.annotation._app_name == client.app_name

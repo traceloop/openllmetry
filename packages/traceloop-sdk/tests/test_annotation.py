@@ -21,7 +21,7 @@ def annotation(mock_http):
 def test_annotation_initialization(mock_http):
     """Test annotation is properly initialized"""
     annotation = Annotation(mock_http, "test-app")
-    
+
     assert annotation._http == mock_http
     assert annotation._app_name == "test-app"
 
@@ -32,9 +32,9 @@ def test_create_annotation_basic(annotation, mock_http):
         annotation_task_id="task_123",
         entity_instance_id="instance_456",
         tags={"sentiment": "positive"},
-        flow="user_feedback"
+        flow="user_feedback",
     )
-    
+
     mock_http.post.assert_called_once_with(
         "annotation-tasks/task_123/annotations",
         {
@@ -54,12 +54,9 @@ def test_create_annotation_basic(annotation, mock_http):
 def test_create_annotation_llm_feedback(annotation, mock_http):
     """Test creating an annotation with llm_feedback flow"""
     annotation.create(
-        annotation_task_id="task_123",
-        entity_instance_id="instance_456",
-        tags={"relevance": 0.95},
-        flow="llm_feedback"
+        annotation_task_id="task_123", entity_instance_id="instance_456", tags={"relevance": 0.95}, flow="llm_feedback"
     )
-    
+
     mock_http.post.assert_called_once_with(
         "annotation-tasks/task_123/annotations",
         {
@@ -78,19 +75,10 @@ def test_create_annotation_llm_feedback(annotation, mock_http):
 
 def test_create_annotation_complex_tags(annotation, mock_http):
     """Test creating an annotation with complex tags"""
-    tags = {
-        "sentiment": "positive",
-        "relevance": 0.95,
-        "tones": ["happy", "nice"]
-    }
-    
-    annotation.create(
-        annotation_task_id="task_123",
-        entity_instance_id="instance_456",
-        tags=tags,
-        flow="user_feedback"
-    )
-    
+    tags = {"sentiment": "positive", "relevance": 0.95, "tones": ["happy", "nice"]}
+
+    annotation.create(annotation_task_id="task_123", entity_instance_id="instance_456", tags=tags, flow="user_feedback")
+
     mock_http.post.assert_called_once_with(
         "annotation-tasks/task_123/annotations",
         {
@@ -114,5 +102,5 @@ def test_create_annotation_invalid_flow(annotation):
             annotation_task_id="task_123",
             entity_instance_id="instance_456",
             tags={"sentiment": "positive"},
-            flow="invalid_flow"
-        ) 
+            flow="invalid_flow",
+        )
