@@ -2,7 +2,8 @@ import os
 import sys
 from pathlib import Path
 
-from typing import Optional, Set
+from typing import Optional, Set, Literal
+from typing_extensions import deprecated
 from colorama import Fore
 from opentelemetry.sdk.trace import SpanProcessor
 from opentelemetry.sdk.trace.export import SpanExporter
@@ -30,30 +31,31 @@ from traceloop.sdk.tracing.tracing import (
     set_external_prompt_tracing_context,
 )
 from typing import Dict
+from .client import Client
 
 
 class Traceloop:
-    AUTO_CREATED_KEY_PATH = str(
-        Path.home() / ".cache" / "traceloop" / "auto_created_key"
-    )
+    AUTO_CREATED_KEY_PATH = str(Path.home() / ".cache" / "traceloop" / "auto_created_key")
     AUTO_CREATED_URL = str(Path.home() / ".cache" / "traceloop" / "auto_created_url")
 
     __tracer_wrapper: TracerWrapper
-    __fetcher: Fetcher = None
+    __fetcher: Optional[Fetcher] = None
+    __app_name: Optional[str] = None
+    __client: Optional[Client] = None
 
     @staticmethod
     def init(
-        app_name: Optional[str] = sys.argv[0],
+        app_name: str = sys.argv[0],
         api_endpoint: str = "https://api.traceloop.com",
-        api_key: str = None,
+        api_key: Optional[str] = None,
         headers: Dict[str, str] = {},
         disable_batch=False,
-        exporter: SpanExporter = None,
+        exporter: Optional[SpanExporter] = None,
         metrics_exporter: MetricExporter = None,
         metrics_headers: Dict[str, str] = None,
         logging_exporter: LogExporter = None,
         logging_headers: Dict[str, str] = None,
-        processor: SpanProcessor = None,
+        processor: Optional[SpanProcessor] = None,
         propagator: TextMapPropagator = None,
         traceloop_sync_enabled: bool = False,
         should_enrich_metrics: bool = True,
@@ -61,18 +63,18 @@ class Traceloop:
         instruments: Optional[Set[Instruments]] = None,
         block_instruments: Optional[Set[Instruments]] = None,
         image_uploader: Optional[ImageUploader] = None,
-    ) -> None:
+    ) -> Optional[Client]:
         Telemetry()
 
         api_endpoint = os.getenv("TRACELOOP_BASE_URL") or api_endpoint
         api_key = os.getenv("TRACELOOP_API_KEY") or api_key
-
+        Traceloop.__app_name = app_name
         if (
             traceloop_sync_enabled
             and api_endpoint.find("traceloop.com") != -1
             and api_key
-            and not exporter
-            and not processor
+            and (exporter is None)
+            and (processor is None)
         ):
             Traceloop.__fetcher = Fetcher(base_url=api_endpoint, api_key=api_key)
             Traceloop.__fetcher.run()
@@ -152,23 +154,23 @@ class Traceloop:
             if metrics_exporter or processor:
                 print(Fore.GREEN + "Traceloop exporting metrics to a custom exporter")
 
-            MetricsWrapper.set_static_params(
-                resource_attributes, metrics_endpoint, metrics_headers
-            )
-            Traceloop.__metrics_wrapper = MetricsWrapper(exporter=metrics_exporter)
+            MetricsWrapper.set_static_params(resource_attributes, metrics_endpoint, metrics_headers)
+            Traceloop.__metrics_wrapper = MetricsWrapper(
+                exporter=metrics_exporter)
 
         if is_logging_enabled() and (logging_exporter or not exporter):
             logging_endpoint = os.getenv("TRACELOOP_LOGGING_ENDPOINT") or api_endpoint
-            logging_headers = (
-                os.getenv("TRACELOOP_LOGGING_HEADERS") or logging_headers or headers
-            )
+            logging_headers = (os.getenv("TRACELOOP_LOGGING_HEADERS") or logging_headers or headers)
             if logging_exporter or processor:
                 print(Fore.GREEN + "Traceloop exporting logs to a custom exporter")
 
-            LoggerWrapper.set_static_params(
-                resource_attributes, logging_endpoint, logging_headers
-            )
+            LoggerWrapper.set_static_params(resource_attributes, logging_endpoint, logging_headers)
             Traceloop.__logger_wrapper = LoggerWrapper(exporter=logging_exporter)
+
+        if not api_key:
+            return
+        Traceloop.__client = Client(api_key=api_key, app_name=app_name, api_endpoint=api_endpoint)
+        return Traceloop.__client
 
     def set_association_properties(properties: dict) -> None:
         set_association_properties(properties)
@@ -176,6 +178,7 @@ class Traceloop:
     def set_prompt(template: str, variables: dict, version: int):
         set_external_prompt_tracing_context(template, variables, version)
 
+    @deprecated("This method is deprecated. Use `report_labeling` instead.")
     def report_score(
         association_property_name: str,
         association_property_id: str,
@@ -199,3 +202,22 @@ class Traceloop:
                 "score": score,
             },
         )
+
+    @staticmethod
+    def get():
+        """
+        Returns the shared SDK client instance, using the current global configuration.
+
+        To use the SDK as a singleton, first make sure you have called :func:`Traceloop.init()`
+        at startup time. Then ``get()`` will return the same shared :class:`Traceloop.client.Client`
+        instance each time. The client will be initialized if it has not been already.
+
+        If you need to create multiple client instances with different configurations, instead of this
+        singleton approach you can call the :class:`Traceloop.client.Client` constructor directly instead.
+        """
+        if not Traceloop.__client:
+            raise Exception(
+                "Client not initialized, you should call Traceloop.init() first. "
+                "If you are still getting this error - you are missing the api key"
+            )
+        return Traceloop.__client
