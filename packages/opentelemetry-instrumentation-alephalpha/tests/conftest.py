@@ -8,7 +8,7 @@ from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanE
 from opentelemetry.sdk.trace.export import SimpleSpanProcessor
 from opentelemetry.instrumentation.alephalpha import AlephAlphaInstrumentor
 
-pytest_plugins = []
+pytest_plugins = ["pytest_recording"]
 
 
 @pytest.fixture(scope="session")
@@ -38,4 +38,10 @@ def environment():
 
 @pytest.fixture(scope="module")
 def vcr_config():
-    return {"filter_headers": ["authorization"], "decode_compressed_response": True}
+    return {
+        "filter_headers": ["authorization", "Authorization"],
+        "decode_compressed_response": True,
+        "record_mode": os.getenv("VCR_RECORD_MODE", "none"),
+        "filter_post_data_parameters": ["token"],
+        "match_on": ["method", "scheme", "host", "port", "path", "query"],
+    }
