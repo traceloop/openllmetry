@@ -2,8 +2,7 @@ import logging
 from typing import Optional, Dict, Any
 from opentelemetry.instrumentation.alephalpha.config import Config
 import traceback
-from opentelemetry._events import Event
-from opentelemetry.trace import get_current_span, Status, StatusCode
+from opentelemetry.trace import Status, StatusCode
 from opentelemetry.semconv_ai import (
     SpanAttributes,
     LLMRequestTypeValues,
@@ -40,58 +39,6 @@ def get_llm_request_attributes(kwargs: Dict[str, Any], instance: Any = None) -> 
         attributes[SpanAttributes.GEN_AI_REQUEST_MODEL] = kwargs["model"]
     
     return attributes
-
-def message_to_event(prompt_text: str, capture_content: bool = True) -> Event:
-    """Convert a prompt message to an event."""
-    attributes = {
-        SpanAttributes.LLM_SYSTEM: "AlephAlpha",
-    }
-    
-    body = {
-        "role": "user",
-    }
-    
-    if capture_content:
-        body["content"] = prompt_text
-        
-    # Get current span context for trace propagation
-    span = get_current_span()
-    span_context = span.get_span_context()
-    
-    return Event(
-        name="gen_ai.prompt",
-        attributes=attributes,
-        body=body,
-        trace_id=span_context.trace_id,
-        span_id=span_context.span_id,
-        trace_flags=span_context.trace_flags,
-    )
-
-def completion_to_event(completion_text: str, capture_content: bool = True) -> Event:
-    """Convert a completion to an event."""
-    attributes = {
-        SpanAttributes.LLM_SYSTEM: "AlephAlpha",
-    }
-    
-    body = {
-        "role": "assistant",
-    }
-    
-    if capture_content:
-        body["content"] = completion_text
-        
-    # Get current span context for trace propagation
-    span = get_current_span()
-    span_context = span.get_span_context()
-    
-    return Event(
-        name="gen_ai.completion",
-        attributes=attributes,
-        body=body,
-        trace_id=span_context.trace_id,
-        span_id=span_context.span_id,
-        trace_flags=span_context.trace_flags,
-    )
 
 def set_span_attribute(span, name: str, value: Any):
     """Set span attribute if value is not None and not empty."""

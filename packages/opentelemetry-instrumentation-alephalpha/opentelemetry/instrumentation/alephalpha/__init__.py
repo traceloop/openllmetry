@@ -7,11 +7,13 @@ from opentelemetry.instrumentation.alephalpha.config import Config
 from opentelemetry.instrumentation.alephalpha.utils import (
     dont_throw,
     get_llm_request_attributes,
-    message_to_event,
-    completion_to_event,
     set_span_attribute,
     handle_span_exception,
     CompletionBuffer,
+)
+from opentelemetry.instrumentation.ai_providers.utils import (
+    create_prompt_event,
+    create_completion_event,
 )
 from wrapt import wrap_function_wrapper
 
@@ -27,7 +29,7 @@ from opentelemetry.instrumentation.utils import (
 
 from opentelemetry.semconv_ai import (
     SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
-    GenAIAttributes,
+    SpanAttributes,
     LLMRequestTypeValues,
 )
 from opentelemetry.instrumentation.alephalpha.version import __version__
@@ -68,9 +70,10 @@ class StreamWrapper:
             if self.completion_buffer.text_content:
                 # Emit completion event with buffered content
                 self.event_logger.emit(
-                    completion_to_event(
-                        self.completion_buffer.get_content(),
-                        self.capture_content
+                    create_completion_event(
+                        {"content": self.completion_buffer.get_content()},
+                        system="AlephAlpha",
+                        capture_content=self.capture_content
                     )
                 )
             self.span.end()
@@ -113,7 +116,11 @@ def _wrap(tracer, event_logger: EventLogger, capture_content: bool):
                     if should_send_prompts():
                         prompt_text = args[0].prompt.items[0].text
                         event_logger.emit(
-                            message_to_event(prompt_text, capture_content)
+                            create_prompt_event(
+                                {"content": prompt_text},
+                                system="AlephAlpha",
+                                capture_content=capture_content
+                            )
                         )
 
                 result = wrapped(*args, **kwargs)
@@ -126,7 +133,11 @@ def _wrap(tracer, event_logger: EventLogger, capture_content: bool):
                     # Emit completion event
                     completion_text = result.completions[0].completion
                     event_logger.emit(
-                        completion_to_event(completion_text, capture_content)
+                        create_completion_event(
+                            {"content": completion_text},
+                            system="AlephAlpha",
+                            capture_content=capture_content
+                        )
                     )
 
                     # Set usage attributes
@@ -134,17 +145,17 @@ def _wrap(tracer, event_logger: EventLogger, capture_content: bool):
                     output_tokens = getattr(result, "num_tokens_generated", 0)
                     set_span_attribute(
                         span,
-                        GenAIAttributes.GEN_AI_USAGE_TOTAL_TOKENS,
+                        SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS,
                         input_tokens + output_tokens,
                     )
                     set_span_attribute(
                         span,
-                        GenAIAttributes.GEN_AI_USAGE_COMPLETION_TOKENS,
+                        SpanAttributes.GEN_AI_USAGE_COMPLETION_TOKENS,
                         output_tokens,
                     )
                     set_span_attribute(
                         span,
-                        GenAIAttributes.GEN_AI_USAGE_PROMPT_TOKENS,
+                        SpanAttributes.GEN_AI_USAGE_PROMPT_TOKENS,
                         input_tokens,
                     )
 
