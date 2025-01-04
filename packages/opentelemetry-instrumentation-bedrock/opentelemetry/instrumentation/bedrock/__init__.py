@@ -7,6 +7,10 @@ import os
 import time
 from typing import Collection
 from opentelemetry.instrumentation.bedrock.config import Config
+from opentelemetry.instrumentation.bedrock.events import (
+    emit_prompt_event,
+    emit_completion_event,
+)
 from opentelemetry.instrumentation.bedrock.reusable_streaming_body import (
     ReusableStreamingBody,
 )
@@ -353,8 +357,6 @@ def _set_cohere_span_attributes(span, request_body, response_body, metric_params
     input_tokens = response_body.get("token_count", {}).get("prompt_tokens")
     output_tokens = response_body.get("token_count", {}).get("response_tokens")
 
-    print("response_body", response_body)
-
     if input_tokens is None or output_tokens is None:
         meta = response_body.get("meta", {})
         billed_units = meta.get("billed_units", {})
@@ -370,16 +372,30 @@ def _set_cohere_span_attributes(span, request_body, response_body, metric_params
         )
 
     if should_send_prompts():
-        _set_span_attribute(
-            span, f"{SpanAttributes.LLM_PROMPTS}.0.user", request_body.get("prompt")
-        )
-
-        for i, generation in enumerate(response_body.get("generations")):
+        if Config.use_legacy_attributes:
             _set_span_attribute(
-                span,
-                f"{SpanAttributes.LLM_COMPLETIONS}.{i}.content",
-                generation.get("text"),
+                span, f"{SpanAttributes.LLM_PROMPTS}.0.user", request_body.get("prompt")
             )
+
+            for i, generation in enumerate(response_body.get("generations")):
+                _set_span_attribute(
+                    span,
+                    f"{SpanAttributes.LLM_COMPLETIONS}.{i}.content",
+                    generation.get("text"),
+                )
+        else:
+            # Event-based instrumentation
+            emit_prompt_event(span, prompt=request_body.get("prompt"))
+            for i, generation in enumerate(response_body.get("generations")):
+                emit_completion_event(
+                    span,
+                    {
+                        "content": generation.get("text"),
+                        "model": metric_params.model,
+                    },
+                    index=i,
+                    is_streaming=metric_params.is_stream,
+                )
 
 
 def _set_anthropic_completion_span_attributes(
@@ -427,14 +443,27 @@ def _set_anthropic_completion_span_attributes(
         )
 
     if should_send_prompts():
-        _set_span_attribute(
-            span, f"{SpanAttributes.LLM_PROMPTS}.0.user", request_body.get("prompt")
-        )
-        _set_span_attribute(
-            span,
-            f"{SpanAttributes.LLM_COMPLETIONS}.0.content",
-            response_body.get("completion"),
-        )
+        if Config.use_legacy_attributes:
+            _set_span_attribute(
+                span, f"{SpanAttributes.LLM_PROMPTS}.0.user", request_body.get("prompt")
+            )
+            _set_span_attribute(
+                span,
+                f"{SpanAttributes.LLM_COMPLETIONS}.0.content",
+                response_body.get("completion"),
+            )
+        else:
+            # Event-based instrumentation
+            emit_prompt_event(span, prompt=request_body.get("prompt"))
+            emit_completion_event(
+                span,
+                {
+                    "content": response_body.get("completion"),
+                    "model": metric_params.model,
+                    "stop_reason": response_body.get("stop_reason"),
+                },
+                is_streaming=metric_params.is_stream,
+            )
 
 
 def _set_anthropic_messages_span_attributes(
@@ -487,24 +516,40 @@ def _set_anthropic_messages_span_attributes(
         _record_usage_to_span(span, prompt_tokens, completion_tokens, metric_params)
 
     if should_send_prompts():
-        for idx, message in enumerate(request_body.get("messages")):
+        if Config.use_legacy_attributes:
+            for idx, message in enumerate(request_body.get("messages")):
+                _set_span_attribute(
+                    span,
+                    f"{SpanAttributes.LLM_PROMPTS}.{idx}.role",
+                    message.get("role"),
+                )
+                _set_span_attribute(
+                    span,
+                    f"{SpanAttributes.LLM_PROMPTS}.0.content",
+                    json.dumps(message.get("content")),
+                )
+
             _set_span_attribute(
-                span, f"{SpanAttributes.LLM_PROMPTS}.{idx}.role", message.get("role")
+                span, f"{SpanAttributes.LLM_COMPLETIONS}.0.content", "assistant"
             )
             _set_span_attribute(
                 span,
-                f"{SpanAttributes.LLM_PROMPTS}.0.content",
-                json.dumps(message.get("content")),
+                f"{SpanAttributes.LLM_COMPLETIONS}.0.content",
+                json.dumps(response_body.get("content")),
             )
-
-        _set_span_attribute(
-            span, f"{SpanAttributes.LLM_COMPLETIONS}.0.content", "assistant"
-        )
-        _set_span_attribute(
-            span,
-            f"{SpanAttributes.LLM_COMPLETIONS}.0.content",
-            json.dumps(response_body.get("content")),
-        )
+        else:
+            # Event-based instrumentation
+            emit_prompt_event(span, messages=request_body.get("messages"))
+            emit_completion_event(
+                span,
+                {
+                    "content": response_body.get("content"),
+                    "model": metric_params.model,
+                    "role": "assistant",
+                    "stop_reason": response_body.get("stop_reason"),
+                },
+                is_streaming=metric_params.is_stream,
+            )
 
 
 def _count_anthropic_tokens(messages: list[str]):
@@ -536,16 +581,30 @@ def _set_ai21_span_attributes(span, request_body, response_body, metric_params):
     )
 
     if should_send_prompts():
-        _set_span_attribute(
-            span, f"{SpanAttributes.LLM_PROMPTS}.0.user", request_body.get("prompt")
-        )
-
-        for i, completion in enumerate(response_body.get("completions")):
+        if Config.use_legacy_attributes:
             _set_span_attribute(
-                span,
-                f"{SpanAttributes.LLM_COMPLETIONS}.{i}.content",
-                completion.get("data").get("text"),
+                span, f"{SpanAttributes.LLM_PROMPTS}.0.user", request_body.get("prompt")
             )
+
+            for i, completion in enumerate(response_body.get("completions")):
+                _set_span_attribute(
+                    span,
+                    f"{SpanAttributes.LLM_COMPLETIONS}.{i}.content",
+                    completion.get("data").get("text"),
+                )
+        else:
+            # Event-based instrumentation
+            emit_prompt_event(span, prompt=request_body.get("prompt"))
+            for i, completion in enumerate(response_body.get("completions")):
+                emit_completion_event(
+                    span,
+                    {
+                        "content": completion.get("data").get("text"),
+                        "model": metric_params.model,
+                    },
+                    index=i,
+                    is_streaming=metric_params.is_stream,
+                )
 
 
 def _set_llama_span_attributes(span, request_body, response_body, metric_params):
@@ -570,28 +629,58 @@ def _set_llama_span_attributes(span, request_body, response_body, metric_params)
     )
 
     if should_send_prompts():
-        _set_span_attribute(
-            span, f"{SpanAttributes.LLM_PROMPTS}.0.content", request_body.get("prompt")
-        )
-        _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.0.role", "user")
-
-        if response_body.get("generation"):
-            _set_span_attribute(
-                span, f"{SpanAttributes.LLM_COMPLETIONS}.0.role", "assistant"
-            )
+        if Config.use_legacy_attributes:
             _set_span_attribute(
                 span,
-                f"{SpanAttributes.LLM_COMPLETIONS}.0.content",
-                response_body.get("generation"),
+                f"{SpanAttributes.LLM_PROMPTS}.0.content",
+                request_body.get("prompt"),
             )
+            _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.0.role", "user")
+
+            if response_body.get("generation"):
+                _set_span_attribute(
+                    span, f"{SpanAttributes.LLM_COMPLETIONS}.0.role", "assistant"
+                )
+                _set_span_attribute(
+                    span,
+                    f"{SpanAttributes.LLM_COMPLETIONS}.0.content",
+                    response_body.get("generation"),
+                )
+            else:
+                for i, generation in enumerate(response_body.get("generations")):
+                    _set_span_attribute(
+                        span, f"{SpanAttributes.LLM_COMPLETIONS}.{i}.role", "assistant"
+                    )
+                    _set_span_attribute(
+                        span,
+                        f"{SpanAttributes.LLM_COMPLETIONS}.{i}.content",
+                        generation,
+                    )
         else:
-            for i, generation in enumerate(response_body.get("generations")):
-                _set_span_attribute(
-                    span, f"{SpanAttributes.LLM_COMPLETIONS}.{i}.role", "assistant"
+            # Event-based instrumentation
+            emit_prompt_event(span, prompt=request_body.get("prompt"))
+            if response_body.get("generation"):
+                emit_completion_event(
+                    span,
+                    {
+                        "content": response_body.get("generation"),
+                        "model": metric_params.model,
+                        "role": "assistant",
+                    },
+                    is_streaming=metric_params.is_stream,
                 )
-                _set_span_attribute(
-                    span, f"{SpanAttributes.LLM_COMPLETIONS}.{i}.content", generation
-                )
+            else:
+                for i, generation in enumerate(response_body.get("generations")):
+                    emit_completion_event(
+                        span,
+                        {
+                            "content": generation,
+                            "model": metric_params.model,
+                            "role": "assistant",
+                        },
+                        index=i,
+                        is_streaming=metric_params.is_stream,
+                    )
 
 
 def _set_amazon_span_attributes(span, request_body, response_body, metric_params):
@@ -615,16 +704,32 @@ def _set_amazon_span_attributes(span, request_body, response_body, metric_params
     )
 
     if should_send_prompts():
-        _set_span_attribute(
-            span, f"{SpanAttributes.LLM_PROMPTS}.0.user", request_body.get("inputText")
-        )
-
-        for i, result in enumerate(response_body.get("results")):
+        if Config.use_legacy_attributes:
             _set_span_attribute(
                 span,
-                f"{SpanAttributes.LLM_COMPLETIONS}.{i}.content",
-                result.get("outputText"),
+                f"{SpanAttributes.LLM_PROMPTS}.0.user",
+                request_body.get("inputText"),
             )
+
+            for i, result in enumerate(response_body.get("results")):
+                _set_span_attribute(
+                    span,
+                    f"{SpanAttributes.LLM_COMPLETIONS}.{i}.content",
+                    result.get("outputText"),
+                )
+        else:
+            # Event-based instrumentation
+            emit_prompt_event(span, prompt=request_body.get("inputText"))
+            for i, result in enumerate(response_body.get("results")):
+                emit_completion_event(
+                    span,
+                    {
+                        "content": result.get("outputText"),
+                        "model": metric_params.model,
+                    },
+                    index=i,
+                    is_streaming=metric_params.is_stream,
+                )
 
 
 def _create_metrics(meter: Meter):
