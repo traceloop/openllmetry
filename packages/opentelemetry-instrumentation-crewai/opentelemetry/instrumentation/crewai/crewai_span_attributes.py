@@ -17,7 +17,6 @@ def set_event_prompt(span: Span, prompt):
     if os.environ.get("TRACE_PROMPT_COMPLETION_DATA", "true").lower() == "false":
         return
     span.add_event(
-        #name=SpanAttributes.LLM_CONTENT_PROMPT,
         attributes={SpanAttributes.LLM_PROMPTS: prompt},
     )
 
