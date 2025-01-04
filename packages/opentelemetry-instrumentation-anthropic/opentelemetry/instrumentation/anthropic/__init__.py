@@ -23,6 +23,7 @@ from opentelemetry.instrumentation.anthropic.utils import (
     set_span_attribute,
     shared_metrics_attributes,
     should_send_prompts,
+    MessageRoleValues,
 )
 from opentelemetry.instrumentation.anthropic.version import __version__
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
@@ -37,6 +38,8 @@ from opentelemetry.semconv_ai import (
 from opentelemetry.trace import SpanKind, Tracer, get_tracer
 from opentelemetry.trace.status import Status, StatusCode
 from wrapt import wrap_function_wrapper
+from opentelemetry.trace.span import Span  
+from opentelemetry.util.types import Attributes 
 
 logger = logging.getLogger(__name__)
 
@@ -146,7 +149,25 @@ async def _dump_content(message_index, content, span):
 
         return json.dumps(content)
 
+def _emit_prompt_event(span: Span, role: str, content: str, index: int):
+    """Emit a prompt event following the new semantic conventions."""
+    attributes: Attributes = {
+        "messaging.role": role,
+        "messaging.content": content,
+        "messaging.index": index,
+    }
+    span.add_event("prompt", attributes=attributes)
 
+def _emit_completion_event(span: Span, content: str, index: int, finish_reason: Optional[str] = None):
+    """Emit a completion event following the new semantic conventions."""
+    attributes: Attributes = {
+        "messaging.content": content,
+        "messaging.index": index,
+    }
+    if finish_reason:
+        attributes["llm.response.finish_reason"] = finish_reason
+    span.add_event("completion", attributes=attributes)
+    
 @dont_throw
 async def _aset_input_attributes(span, kwargs):
     set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, kwargs.get("model"))
@@ -166,91 +187,127 @@ async def _aset_input_attributes(span, kwargs):
     set_span_attribute(span, SpanAttributes.LLM_IS_STREAMING, kwargs.get("stream"))
 
     if should_send_prompts():
-        if kwargs.get("prompt") is not None:
-            set_span_attribute(
-                span, f"{SpanAttributes.LLM_PROMPTS}.0.user", kwargs.get("prompt")
-            )
-
-        elif kwargs.get("messages") is not None:
-            has_system_message = False
-            if kwargs.get("system"):
-                has_system_message = True
+        if Config.use_legacy_attributes:
+            if kwargs.get("prompt") is not None:
                 set_span_attribute(
-                    span,
-                    f"{SpanAttributes.LLM_PROMPTS}.0.content",
-                    await _dump_content(
-                        message_index=0, span=span, content=kwargs.get("system")
-                    ),
-                )
-                set_span_attribute(
-                    span,
-                    f"{SpanAttributes.LLM_PROMPTS}.0.role",
-                    "system",
-                )
-            for i, message in enumerate(kwargs.get("messages")):
-                prompt_index = i + (1 if has_system_message else 0)
-                set_span_attribute(
-                    span,
-                    f"{SpanAttributes.LLM_PROMPTS}.{prompt_index}.content",
-                    await _dump_content(
-                        message_index=i, span=span, content=message.get("content")
-                    ),
-                )
-                set_span_attribute(
-                    span,
-                    f"{SpanAttributes.LLM_PROMPTS}.{prompt_index}.role",
-                    message.get("role"),
+                    span, f"{SpanAttributes.LLM_PROMPTS}.0.content", kwargs.get("prompt")
                 )
 
-        if kwargs.get("tools") is not None:
-            for i, tool in enumerate(kwargs.get("tools")):
-                prefix = f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.{i}"
-                set_span_attribute(span, f"{prefix}.name", tool.get("name"))
-                set_span_attribute(span, f"{prefix}.description", tool.get("description"))
-                input_schema = tool.get("input_schema")
-                if input_schema is not None:
-                    set_span_attribute(span, f"{prefix}.input_schema", json.dumps(input_schema))
-
-
-def _set_span_completions(span, response):
-    index = 0
-    prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{index}"
-    set_span_attribute(span, f"{prefix}.finish_reason", response.get("stop_reason"))
-    if response.get("role"):
-        set_span_attribute(span, f"{prefix}.role", response.get("role"))
-
-    if response.get("completion"):
-        set_span_attribute(span, f"{prefix}.content", response.get("completion"))
-    elif response.get("content"):
-        tool_call_index = 0
-        text = ""
-        for content in response.get("content"):
-            content_block_type = content.type
-            # usually, Antrhopic responds with just one text block,
-            # but the API allows for multiple text blocks, so concatenate them
-            if content_block_type == "text":
-                text += content.text
-            elif content_block_type == "tool_use":
-                content = dict(content)
-                set_span_attribute(
-                    span,
-                    f"{prefix}.tool_calls.{tool_call_index}.id",
-                    content.get("id"),
-                )
-                set_span_attribute(
-                    span,
-                    f"{prefix}.tool_calls.{tool_call_index}.name",
-                    content.get("name"),
-                )
-                tool_arguments = content.get("input")
-                if tool_arguments is not None:
+            elif kwargs.get("messages") is not None:
+                has_system_message = False
+                if kwargs.get("system"):
+                    has_system_message = True
                     set_span_attribute(
                         span,
-                        f"{prefix}.tool_calls.{tool_call_index}.arguments",
-                        json.dumps(tool_arguments),
+                        f"{SpanAttributes.LLM_PROMPTS}.0.content",
+                        await _dump_content(
+                            message_index=0, span=span, content=kwargs.get("system")
+                        ),
                     )
-                tool_call_index += 1
-        set_span_attribute(span, f"{prefix}.content", text)
+                    set_span_attribute(
+                        span,
+                        f"{SpanAttributes.LLM_PROMPTS}.0.role",
+                        "system",
+                    )
+                for i, message in enumerate(kwargs.get("messages")):
+                    prompt_index = i + (1 if has_system_message else 0)
+                    set_span_attribute(
+                        span,
+                        f"{SpanAttributes.LLM_PROMPTS}.{prompt_index}.content",
+                        await _dump_content(
+                            message_index=i, span=span, content=message.get("content")
+                        ),
+                    )
+                    set_span_attribute(
+                        span,
+                        f"{SpanAttributes.LLM_PROMPTS}.{prompt_index}.role",
+                        message.get("role"),
+                    )
+
+            if kwargs.get("tools") is not None:
+                for i, tool in enumerate(kwargs.get("tools")):
+                    prefix = f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.{i}"
+                    set_span_attribute(span, f"{prefix}.name", tool.get("name"))
+                    set_span_attribute(span, f"{prefix}.description", tool.get("description"))
+                    input_schema = tool.get("input_schema")
+                    if input_schema is not None:
+                        set_span_attribute(span, f"{prefix}.input_schema", json.dumps(input_schema))
+
+    else:
+            # Added: Emit prompt as events when use_legacy_attributes is False
+            if kwargs.get("messages"):
+                has_system_message = False
+                if kwargs.get("system"):
+                    has_system_message = True
+                    _emit_prompt_event(
+                        span,
+                        MessageRoleValues.SYSTEM,
+                        await _dump_content(message_index=0, span=span, content=kwargs.get("system")),
+                        0,
+                    )
+                for i, message in enumerate(kwargs.get("messages")):
+                    prompt_index = i + (1 if has_system_message else 0)
+                    _emit_prompt_event(
+                        span,
+                        message.get("role"),
+                        await _dump_content(message_index=i, span=span, content=message.get("content")),
+                        prompt_index,
+                    )
+                    
+def _set_span_completions(span, response):
+    if not should_send_prompts():
+        return
+
+    if Config.use_legacy_attributes:
+        index = 0
+        prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{index}"
+        set_span_attribute(span, f"{prefix}.finish_reason", response.get("stop_reason"))
+        if response.get("role"):
+            set_span_attribute(span, f"{prefix}.role", response.get("role"))
+
+        if response.get("completion"):
+            set_span_attribute(span, f"{prefix}.content", response.get("completion"))
+        elif response.get("content"):
+            tool_call_index = 0
+            text = ""
+            for content in response.get("content"):
+                content_block_type = content.type
+                # usually, Antrhopic responds with just one text block,
+                # but the API allows for multiple text blocks, so concatenate them
+                if content_block_type == "text":
+                    text += content.text
+                elif content_block_type == "tool_use":
+                    content = dict(content)
+                    set_span_attribute(
+                        span,
+                        f"{prefix}.tool_calls.{tool_call_index}.id",
+                        content.get("id"),
+                    )
+                    set_span_attribute(
+                        span,
+                        f"{prefix}.tool_calls.{tool_call_index}.name",
+                        content.get("name"),
+                    )
+                    tool_arguments = content.get("input")
+                    if tool_arguments is not None:
+                        set_span_attribute(
+                            span,
+                            f"{prefix}.tool_calls.{tool_call_index}.arguments",
+                            json.dumps(tool_arguments),
+                        )
+                    tool_call_index += 1
+            set_span_attribute(span, f"{prefix}.content", text)
+    else:
+        # Added: Emit completion as event when use_legacy_attributes is False
+        if response.get("completion"):
+            _emit_completion_event(span, response.get("completion"), 0, response.get("stop_reason"))
+        elif response.get("content"):
+            text = ""
+            for content in response.get("content"):
+                if content.type == "text":
+                    text += content.text
+            _emit_completion_event(span, text, 0, response.get("stop_reason"))
+
 
 
 @dont_throw
@@ -435,24 +492,32 @@ def _set_token_usage(
 
 @dont_throw
 def _set_response_attributes(span, response):
-    if not isinstance(response, dict):
-        response = response.__dict__
-    set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, response.get("model"))
+    if not should_send_prompts():
+        return
 
-    if response.get("usage"):
-        prompt_tokens = response.get("usage").input_tokens
-        completion_tokens = response.get("usage").output_tokens
-        set_span_attribute(span, SpanAttributes.LLM_USAGE_PROMPT_TOKENS, prompt_tokens)
-        set_span_attribute(
-            span, SpanAttributes.LLM_USAGE_COMPLETION_TOKENS, completion_tokens
-        )
-        set_span_attribute(
-            span,
-            SpanAttributes.LLM_USAGE_TOTAL_TOKENS,
-            prompt_tokens + completion_tokens,
-        )
+    if Config.use_legacy_attributes:
+        if not isinstance(response, dict):
+            response = response.__dict__
+        set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, response.get("model"))
 
-    if should_send_prompts():
+        if response.get("usage"):
+            prompt_tokens = response.get("usage").input_tokens
+            completion_tokens = response.get("usage").output_tokens
+            set_span_attribute(span, SpanAttributes.LLM_USAGE_PROMPT_TOKENS, prompt_tokens)
+            set_span_attribute(
+                span, SpanAttributes.LLM_USAGE_COMPLETION_TOKENS, completion_tokens
+            )
+            set_span_attribute(
+                span,
+                SpanAttributes.LLM_USAGE_TOTAL_TOKENS,
+                prompt_tokens + completion_tokens,
+            )
+        _set_span_completions(span, response)
+    else:
+        # Added: Handle response attributes for event-based approach
+        if not isinstance(response, dict):
+            response = response.__dict__
+        set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, response.get("model"))
         _set_span_completions(span, response)
 
 
@@ -743,12 +808,14 @@ class AnthropicInstrumentor(BaseInstrumentor):
         upload_base64_image: Optional[
             Callable[[str, str, str, str], Coroutine[None, None, str]]
         ] = None,
+        use_legacy_attributes: bool = True
     ):
         super().__init__()
         Config.exception_logger = exception_logger
         Config.enrich_token_usage = enrich_token_usage
         Config.get_common_metrics_attributes = get_common_metrics_attributes
         Config.upload_base64_image = upload_base64_image
+        Config.use_legacy_attributes = use_legacy_attributes
 
     def instrumentation_dependencies(self) -> Collection[str]:
         return _instruments

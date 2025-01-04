@@ -6,7 +6,7 @@ from typing import Collection
 from opentelemetry.instrumentation.alephalpha.config import Config
 from opentelemetry.instrumentation.alephalpha.utils import dont_throw
 from wrapt import wrap_function_wrapper
-
+from opentelemetry.sdk.trace import Event 
 from opentelemetry import context as context_api
 from opentelemetry.trace import get_tracer, SpanKind
 from opentelemetry.trace.status import Status, StatusCode
@@ -35,6 +35,11 @@ WRAPPED_METHODS = [
     },
 ]
 
+def _set_span_attribute_with_config(span, name, value):
+    if value is not None:
+        if value != "":
+            span.set_attribute(name, value)
+    return
 
 def should_send_prompts():
     return (
@@ -55,26 +60,49 @@ def _set_input_attributes(span, llm_request_type, args, kwargs):
 
     if should_send_prompts():
         if llm_request_type == LLMRequestTypeValues.COMPLETION:
-            _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.0.role", "user")
-            _set_span_attribute(
-                span,
-                f"{SpanAttributes.LLM_PROMPTS}.0.content",
-                args[0].prompt.items[0].text,
-            )
+            if Config.use_legacy_attributes:
+                _set_span_attribute_with_config(span, f"{SpanAttributes.LLM_PROMPTS}.0.role", "user")
+                _set_span_attribute_with_config(
+                    span,
+                    f"{SpanAttributes.LLM_PROMPTS}.0.content",
+                    args[0].prompt.items[0].text,
+                )
+            # Emit events if not using legacy attributes
+            else:
+                span.add_event(
+                    "prompt",
+                    {
+                        "messaging.role": "user",
+                        "messaging.content": args[0].prompt.items[0].text,
+                        "messaging.index": 0,
+                    },
+                )
 
 
 @dont_throw
 def _set_response_attributes(span, llm_request_type, response):
     if should_send_prompts():
         if llm_request_type == LLMRequestTypeValues.COMPLETION:
-            _set_span_attribute(
-                span,
-                f"{SpanAttributes.LLM_COMPLETIONS}.0.content",
-                response.completions[0].completion,
-            )
-            _set_span_attribute(
-                span, f"{SpanAttributes.LLM_COMPLETIONS}.0.role", "assistant"
-            )
+            # Use legacy attributes if configured
+            if Config.use_legacy_attributes:
+                _set_span_attribute_with_config(
+                    span,
+                    f"{SpanAttributes.LLM_COMPLETIONS}.0.content",
+                    response.completions[0].completion,
+                )
+                _set_span_attribute_with_config(
+                    span, f"{SpanAttributes.LLM_COMPLETIONS}.0.role", "assistant"
+                )
+            # Emit events if not using legacy attributes
+            else:
+                span.add_event(
+                    "completion",
+                    {
+                        "messaging.content": response.completions[0].completion,
+                        "messaging.role": "assistant",
+                        "messaging.index": 0,
+                    },
+                )
 
     input_tokens = getattr(response, "num_tokens_prompt_total", 0)
     output_tokens = getattr(response, "num_tokens_generated", 0)
@@ -161,6 +189,11 @@ class AlephAlphaInstrumentor(BaseInstrumentor):
     def _instrument(self, **kwargs):
         tracer_provider = kwargs.get("tracer_provider")
         tracer = get_tracer(__name__, __version__, tracer_provider)
+        config = kwargs.get("config", Config())
+        if config is None:
+            config = Config()
+        # Set the global configuration for legacy attribute usage
+        Config.use_legacy_attributes = config.use_legacy_attributes
         for wrapped_method in WRAPPED_METHODS:
             wrap_method = wrapped_method.get("method")
             wrap_function_wrapper(

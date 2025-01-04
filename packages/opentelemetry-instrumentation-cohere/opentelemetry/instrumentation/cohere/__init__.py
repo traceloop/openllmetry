@@ -23,6 +23,9 @@ from opentelemetry.semconv_ai import (
     LLMRequestTypeValues,
 )
 from opentelemetry.instrumentation.cohere.version import __version__
+from opentelemetry.trace.span import Span
+from opentelemetry.util.types import Attributes
+
 
 logger = logging.getLogger(__name__)
 
@@ -59,56 +62,65 @@ def _set_span_attribute(span, name, value):
             span.set_attribute(name, value)
     return
 
+def _emit_prompt_event(span: Span, role: str, content: str, index: int):
+    """Emit a prompt event following the new semantic conventions."""
+    attributes: Attributes = {
+        "messaging.role": role,
+        "messaging.content": content,
+        "messaging.index": index,
+    }
+    span.add_event("prompt", attributes=attributes)
+
+def _emit_completion_event(span: Span, content: str, index: int, token_usage: dict = None):
+    """Emit a completion event following the new semantic conventions."""
+    attributes: Attributes = {
+        "messaging.content": content,
+        "messaging.index": index,
+    }
+    if token_usage:
+        attributes.update({
+            "llm.usage.total_tokens": token_usage.get("total_tokens"),
+            "llm.usage.prompt_tokens": token_usage.get("prompt_tokens"),
+            "llm.usage.completion_tokens": token_usage.get("completion_tokens"),
+        })
+    span.add_event("completion", attributes=attributes)
+
 
 @dont_throw
 def _set_input_attributes(span, llm_request_type, kwargs):
+    # Always set these basic attributes regardless of configuration
     _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, kwargs.get("model"))
-    _set_span_attribute(
-        span, SpanAttributes.LLM_REQUEST_MAX_TOKENS, kwargs.get("max_tokens_to_sample")
-    )
-    _set_span_attribute(
-        span, SpanAttributes.LLM_REQUEST_TEMPERATURE, kwargs.get("temperature")
-    )
+    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MAX_TOKENS, kwargs.get("max_tokens_to_sample"))
+    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TEMPERATURE, kwargs.get("temperature"))
     _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TOP_P, kwargs.get("top_p"))
-    _set_span_attribute(
-        span, SpanAttributes.LLM_FREQUENCY_PENALTY, kwargs.get("frequency_penalty")
-    )
-    _set_span_attribute(
-        span, SpanAttributes.LLM_PRESENCE_PENALTY, kwargs.get("presence_penalty")
-    )
+    _set_span_attribute(span, SpanAttributes.LLM_FREQUENCY_PENALTY, kwargs.get("frequency_penalty"))
+    _set_span_attribute(span, SpanAttributes.LLM_PRESENCE_PENALTY, kwargs.get("presence_penalty"))
 
     if should_send_prompts():
-        if llm_request_type == LLMRequestTypeValues.COMPLETION:
-            _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.0.role", "user")
-            _set_span_attribute(
-                span, f"{SpanAttributes.LLM_PROMPTS}.0.content", kwargs.get("prompt")
-            )
-        elif llm_request_type == LLMRequestTypeValues.CHAT:
-            _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.0.role", "user")
-            _set_span_attribute(
-                span, f"{SpanAttributes.LLM_PROMPTS}.0.content", kwargs.get("message")
-            )
-        elif llm_request_type == LLMRequestTypeValues.RERANK:
-            for index, document in enumerate(kwargs.get("documents")):
-                _set_span_attribute(
-                    span, f"{SpanAttributes.LLM_PROMPTS}.{index}.role", "system"
-                )
-                _set_span_attribute(
-                    span, f"{SpanAttributes.LLM_PROMPTS}.{index}.content", document
-                )
-
-            _set_span_attribute(
-                span,
-                f"{SpanAttributes.LLM_PROMPTS}.{len(kwargs.get('documents'))}.role",
-                "user",
-            )
-            _set_span_attribute(
-                span,
-                f"{SpanAttributes.LLM_PROMPTS}.{len(kwargs.get('documents'))}.content",
-                kwargs.get("query"),
-            )
-
-    return
+        if Config.use_legacy_attributes:
+            # Legacy attribute-based approach
+            if llm_request_type == LLMRequestTypeValues.COMPLETION:
+                _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.0.role", "user")
+                _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.0.content", kwargs.get("prompt"))
+            elif llm_request_type == LLMRequestTypeValues.CHAT:
+                _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.0.role", "user")
+                _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.0.content", kwargs.get("message"))
+            elif llm_request_type == LLMRequestTypeValues.RERANK:
+                for index, document in enumerate(kwargs.get("documents", [])):
+                    _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.{index}.role", "system")
+                    _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.{index}.content", document)
+                _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.{len(kwargs.get('documents'))}.role", "user")
+                _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.{len(kwargs.get('documents'))}.content", kwargs.get("query"))
+        else:
+            # New event-based approach
+            if llm_request_type == LLMRequestTypeValues.COMPLETION:
+                _emit_prompt_event(span, "user", kwargs.get("prompt"), 0)
+            elif llm_request_type == LLMRequestTypeValues.CHAT:
+                _emit_prompt_event(span, "user", kwargs.get("message"), 0)
+            elif llm_request_type == LLMRequestTypeValues.RERANK:
+                for index, document in enumerate(kwargs.get("documents", [])):
+                    _emit_prompt_event(span, "system", document, index)
+                _emit_prompt_event(span, "user", kwargs.get("query"), len(kwargs.get("documents", [])))
 
 
 def _set_span_chat_response(span, response):
@@ -186,7 +198,11 @@ def _set_span_rerank_response(span, response):
 
 @dont_throw
 def _set_response_attributes(span, llm_request_type, response):
-    if should_send_prompts():
+    """Set response attributes using either legacy or new event-based approach."""
+    if not should_send_prompts():
+        return
+    
+    if Config.use_legacy_attributes:
         if llm_request_type == LLMRequestTypeValues.CHAT:
             _set_span_chat_response(span, response)
         elif llm_request_type == LLMRequestTypeValues.COMPLETION:
@@ -194,6 +210,22 @@ def _set_response_attributes(span, llm_request_type, response):
         elif llm_request_type == LLMRequestTypeValues.RERANK:
             _set_span_rerank_response(span, response)
 
+    else:
+        if llm_request_type == LLMRequestTypeValues.CHAT:
+            token_usage = None
+            if hasattr(response, "token_count"):
+                token_usage = {
+                    "total_tokens": response.token_count.get("total_tokens"),
+                    "prompt_tokens": response.token_count.get("prompt_tokens"),
+                    "completion_tokens": response.token_count.get("response_tokens")
+                }
+            elif hasattr(response, "meta") and hasattr(response.meta, "billed_units"):
+                token_usage = {
+                    "total_tokens": response.meta.billed_units.input_tokens + response.meta.billed_units.output_tokens,
+                    "prompt_tokens": response.meta.billed_units.input_tokens,
+                    "completion_tokens": response.meta.billed_units.output_tokens
+                }
+            _emit_completion_event(span, response.text, 0, token_usage)
 
 def _with_tracer_wrapper(func):
     """Helper for providing tracer for wrapper functions."""
@@ -252,9 +284,10 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
 class CohereInstrumentor(BaseInstrumentor):
     """An instrumentor for Cohere's client library."""
 
-    def __init__(self, exception_logger=None):
+    def __init__(self, exception_logger=None, use_legacy_attributes=True): 
         super().__init__()
         Config.exception_logger = exception_logger
+        Config.use_legacy_attributes = use_legacy_attributes 
 
     def instrumentation_dependencies(self) -> Collection[str]:
         return _instruments

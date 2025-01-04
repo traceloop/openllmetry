@@ -9,3 +9,4 @@ class Config:
     upload_base64_image: Optional[
         Callable[[str, str, str, str], Coroutine[None, None, str]]
     ] = None
+    use_legacy_attributes = True

@@ -13,6 +13,8 @@ from opentelemetry.instrumentation.anthropic.utils import (
 from opentelemetry.metrics import Counter, Histogram
 from opentelemetry.semconv_ai import SpanAttributes
 from opentelemetry.trace.status import Status, StatusCode
+from opentelemetry.trace.span import Span  
+from opentelemetry.util.types import Attributes 
 
 logger = logging.getLogger(__name__)
 
@@ -102,22 +104,39 @@ def _set_token_usage(
                 },
             )
 
+def _emit_completion_event(span: Span, content: str, index: int, finish_reason: Optional[str] = None):
+    """Emit a completion event following the new semantic conventions."""
+    attributes: Attributes = {
+        "messaging.content": content,
+        "messaging.index": index,
+    }
+    if finish_reason:
+        attributes["llm.response.finish_reason"] = finish_reason
+    span.add_event("completion", attributes=attributes)
+
 
 def _set_completions(span, events):
     if not span.is_recording() or not events:
         return
 
-    try:
-        for event in events:
-            index = event.get("index")
-            prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{index}"
-            set_span_attribute(
-                span, f"{prefix}.finish_reason", event.get("finish_reason")
-            )
-            set_span_attribute(span, f"{prefix}.content", event.get("text"))
-    except Exception as e:
-        logger.warning("Failed to set completion attributes, error: %s", str(e))
-
+    if Config.use_legacy_attributes:
+            try:
+                for event in events:
+                    index = event.get("index")
+                    prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{index}"
+                    set_span_attribute(
+                        span, f"{prefix}.finish_reason", event.get("finish_reason")
+                    )
+                    set_span_attribute(span, f"{prefix}.content", event.get("text"))
+            except Exception as e:
+                logger.warning("Failed to set completion attributes, error: %s", str(e))
+    else:
+        # Added: Emit completion events for streaming responses when not using legacy attributes
+        try:
+            for i, event in enumerate(events):
+                _emit_completion_event(span, event.get("text"), i, event.get("finish_reason"))
+        except Exception as e:
+            logger.warning("Failed to emit completion event, error: %s", str(e))
 
 @dont_throw
 def build_from_streaming_response(
