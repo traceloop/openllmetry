@@ -178,31 +178,6 @@ class Traceloop:
     def set_prompt(template: str, variables: dict, version: int):
         set_external_prompt_tracing_context(template, variables, version)
 
-    @deprecated("This method is deprecated. Use `report_labeling` instead.")
-    def report_score(
-        association_property_name: str,
-        association_property_id: str,
-        score: float,
-    ):
-        if not Traceloop.__fetcher:
-            print(
-                Fore.RED
-                + "Error: Cannot report score. Missing Traceloop API key,"
-                + " go to https://app.traceloop.com/settings/api-keys to create one"
-            )
-            print("Set the TRACELOOP_API_KEY environment variable to the key")
-            print(Fore.RESET)
-            return
-
-        Traceloop.__fetcher.post(
-            "score",
-            {
-                "entity_name": f"traceloop.association.properties.{association_property_name}",
-                "entity_id": association_property_id,
-                "score": score,
-            },
-        )
-
     @staticmethod
     def get():
         """
