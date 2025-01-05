@@ -4,7 +4,7 @@ import requests
 from colorama import Fore
 
 
-class HTTPClient():
+class HTTPClient:
     base_url: str
     api_key: str
     version: str
