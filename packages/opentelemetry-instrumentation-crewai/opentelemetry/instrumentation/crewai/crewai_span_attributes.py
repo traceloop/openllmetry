@@ -1,9 +1,7 @@
-    
 from opentelemetry.trace import Span
 import json
 import os
 from opentelemetry.semconv_ai import SpanAttributes
-
 
 def set_span_attribute(span: Span, name, value):
     if value not in (None, ""):
@@ -15,17 +13,15 @@ def set_span_attribute(span: Span, name, value):
 
 def set_event_prompt(span: Span, prompt):
     if os.environ.get("TRACE_PROMPT_COMPLETION_DATA", "true").lower() == "false":
-        return
-    span.add_event(
-        attributes={SpanAttributes.LLM_PROMPTS: prompt},
-    )
-
-
+        return span.add_event(
+        name=SpanAttributes.LLM_CONTENT_PROMPT,
+        attributes={SpanAttributes.LLM_PROMPTS: prompt},)
+    
 class CrewAISpanAttributes:
     def __init__(self, span: Span, instance) -> None:
         self.span = span
         self.instance = instance
-        self.crew = {"tasks": [], "agents": []}
+        self.crew = {"tasks": [], "agents": [], "llms": []}
         self.process_instance()
 
     def process_instance(self):
@@ -34,6 +30,7 @@ class CrewAISpanAttributes:
             "Crew": self._process_crew,
             "Agent": self._process_agent,
             "Task": self._process_task,
+            "LLM": self._process_llm,
         }
         method = method_mapping.get(instance_type)
         if method:
@@ -53,6 +50,11 @@ class CrewAISpanAttributes:
         task_data = self._populate_task_attributes()
         for key, value in task_data.items():
             self._set_attribute(f"crewai.task.{key}", value)
+            
+    def _process_llm(self):
+        llm_data = self._populate_llm_attributes()
+        for key, value in llm_data.items():
+            self._set_attribute(f"crewai.llm.{key}", value)
 
     def _populate_crew_attributes(self):
         for key, value in self.instance.__dict__.items():
@@ -62,6 +64,8 @@ class CrewAISpanAttributes:
                 self._parse_tasks(value)
             elif key == "agents":
                 self._parse_agents(value)
+            elif key == "llms":
+                self._parse_llms(value)
             else:
                 self.crew[key] = str(value)
 
@@ -74,6 +78,9 @@ class CrewAISpanAttributes:
             task_data["agent"] = self.instance.agent.role if self.instance.agent else None
         return task_data
 
+    def _populate_llm_attributes(self):
+        return self._extract_attributes(self.instance)
+    
     def _parse_agents(self, agents):
         self.crew["agents"] = [
             self._extract_agent_data(agent) for agent in agents if agent is not None
@@ -93,12 +100,29 @@ class CrewAISpanAttributes:
             for task in tasks
         ]
 
+    def _parse_llms(self, llms):
+        self.crew["tasks"] = [
+            {
+                "temperature": llm.temperature,
+                "max_tokens": llm.max_tokens,
+                "max_completion_tokens": llm.max_completion_tokens,
+                "top_p": llm.top_p,
+                "n": llm.n,
+                "seed": llm.seed,
+                "base_url": llm.base_url,
+                "api_version": llm.api_version,
+                
+            }
+            for llm in llms
+        ]
+    
     def _extract_agent_data(self, agent):
         model = (
             getattr(agent.llm, "model", None)
             or getattr(agent.llm, "model_name", None)
             or ""
         )
+        
         return {
             "id": str(agent.id),
             "role": agent.role,
@@ -111,6 +135,7 @@ class CrewAISpanAttributes:
             "tools": agent.tools,
             "max_iter": agent.max_iter,
             "llm": str(model),
+                
         }
 
     def _extract_attributes(self, obj):
