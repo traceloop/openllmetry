@@ -34,7 +34,9 @@ from .client import Client
 
 
 class Traceloop:
-    AUTO_CREATED_KEY_PATH = str(Path.home() / ".cache" / "traceloop" / "auto_created_key")
+    AUTO_CREATED_KEY_PATH = str(
+        Path.home() / ".cache" / "traceloop" / "auto_created_key"
+    )
     AUTO_CREATED_URL = str(Path.home() / ".cache" / "traceloop" / "auto_created_url")
 
     __tracer_wrapper: TracerWrapper
@@ -67,16 +69,24 @@ class Traceloop:
     ) -> Optional[Client]:
         if not enabled:
             TracerWrapper.set_disabled(True)
-            print(Fore.YELLOW + "Traceloop instrumentation is disabled via init flag" + Fore.RESET)
+            print(
+                Fore.YELLOW
+                + "Traceloop instrumentation is disabled via init flag"
+                + Fore.RESET
+            )
             return
 
-        telemetry_enabled = telemetry_enabled and (os.getenv("TRACELOOP_TELEMETRY") or "true").lower() == "true"
+        telemetry_enabled = (
+            telemetry_enabled
+            and (os.getenv("TRACELOOP_TELEMETRY") or "true").lower() == "true"
+        )
         if telemetry_enabled:
             Telemetry()
 
         api_endpoint = os.getenv("TRACELOOP_BASE_URL") or api_endpoint
         api_key = os.getenv("TRACELOOP_API_KEY") or api_key
         Traceloop.__app_name = app_name
+
         if (
             traceloop_sync_enabled
             and api_endpoint.find("traceloop.com") != -1
@@ -86,7 +96,9 @@ class Traceloop:
         ):
             Traceloop.__fetcher = Fetcher(base_url=api_endpoint, api_key=api_key)
             Traceloop.__fetcher.run()
-            print(Fore.GREEN + "Traceloop syncing configuration and prompts" + Fore.RESET)
+            print(
+                Fore.GREEN + "Traceloop syncing configuration and prompts" + Fore.RESET
+            )
 
         if not is_tracing_enabled():
             print(Fore.YELLOW + "Tracing is disabled" + Fore.RESET)
@@ -102,7 +114,12 @@ class Traceloop:
         if isinstance(headers, str):
             headers = parse_env_headers(headers)
 
-        if not exporter and not processor and api_endpoint == "https://api.traceloop.com" and not api_key:
+        if (
+            not exporter
+            and not processor
+            and api_endpoint == "https://api.traceloop.com"
+            and not api_key
+        ):
             print(
                 Fore.RED
                 + "Error: Missing Traceloop API key,"
@@ -113,10 +130,16 @@ class Traceloop:
             return
 
         if not exporter and not processor and headers:
-            print(Fore.GREEN + f"Traceloop exporting traces to {api_endpoint}, authenticating with custom headers")
+            print(
+                Fore.GREEN
+                + f"Traceloop exporting traces to {api_endpoint}, authenticating with custom headers"
+            )
 
         if api_key and not exporter and not processor and not headers:
-            print(Fore.GREEN + f"Traceloop exporting traces to {api_endpoint} authenticating with bearer token")
+            print(
+                Fore.GREEN
+                + f"Traceloop exporting traces to {api_endpoint} authenticating with bearer token"
+            )
             headers = {
                 "Authorization": f"Bearer {api_key}",
             }
@@ -125,7 +148,9 @@ class Traceloop:
 
         # Tracer init
         resource_attributes.update({SERVICE_NAME: app_name})
-        TracerWrapper.set_static_params(resource_attributes, enable_content_tracing, api_endpoint, headers)
+        TracerWrapper.set_static_params(
+            resource_attributes, enable_content_tracing, api_endpoint, headers
+        )
         Traceloop.__tracer_wrapper = TracerWrapper(
             disable_batch=disable_batch,
             processor=processor,
@@ -141,20 +166,28 @@ class Traceloop:
             print(Fore.YELLOW + "Metrics are disabled" + Fore.RESET)
         else:
             metrics_endpoint = os.getenv("TRACELOOP_METRICS_ENDPOINT") or api_endpoint
-            metrics_headers = os.getenv("TRACELOOP_METRICS_HEADERS") or metrics_headers or headers
+            metrics_headers = (
+                os.getenv("TRACELOOP_METRICS_HEADERS") or metrics_headers or headers
+            )
             if metrics_exporter or processor:
                 print(Fore.GREEN + "Traceloop exporting metrics to a custom exporter")
 
-            MetricsWrapper.set_static_params(resource_attributes, metrics_endpoint, metrics_headers)
+            MetricsWrapper.set_static_params(
+                resource_attributes, metrics_endpoint, metrics_headers
+            )
             Traceloop.__metrics_wrapper = MetricsWrapper(exporter=metrics_exporter)
 
         if is_logging_enabled() and (logging_exporter or not exporter):
             logging_endpoint = os.getenv("TRACELOOP_LOGGING_ENDPOINT") or api_endpoint
-            logging_headers = os.getenv("TRACELOOP_LOGGING_HEADERS") or logging_headers or headers
+            logging_headers = (
+                os.getenv("TRACELOOP_LOGGING_HEADERS") or logging_headers or headers
+            )
             if logging_exporter or processor:
                 print(Fore.GREEN + "Traceloop exporting logs to a custom exporter")
 
-            LoggerWrapper.set_static_params(resource_attributes, logging_endpoint, logging_headers)
+            LoggerWrapper.set_static_params(
+                resource_attributes, logging_endpoint, logging_headers
+            )
             Traceloop.__logger_wrapper = LoggerWrapper(exporter=logging_exporter)
 
         if not api_key:
