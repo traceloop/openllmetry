@@ -146,6 +146,18 @@ OpenLLMetry can instrument everything that [OpenTelemetry already instruments](h
 - ✅ [Haystack](https://haystack.deepset.ai/integrations/traceloop)
 - ✅ [LiteLLM](https://docs.litellm.ai/docs/observability/opentelemetry_integration)
 
+## 🔎 Telemetry
+
+The SDK provided with OpenLLMetry (not the instrumentations) contains a telemetry feature that collects **anonymous** usage information.
+
+You can opt out of telemetry by setting the `TRACELOOP_TELEMETRY` environment variable to `FALSE`, or passing `telemetry_enabled=False` to the `Traceloop.init()` function.
+
+### Why we collect telemetry
+
+- The primary purpose is to detect exceptions within instrumentations. Since LLM providers frequently update their APIs, this helps us quickly identify and fix any breaking changes.
+- We only collect anonymous data, with no personally identifiable information. You can view exactly what data we collect in our [Privacy documentation](https://www.traceloop.com/docs/openllmetry/privacy/telemetry).
+- Telemetry is only collected in the SDK. If you use the instrumentations directly without the SDK, no telemetry is collected.
+
 ## 🌱 Contributing
 
 Whether big or small, we love contributions ❤️ Check out our guide to see how to [get started](https://traceloop.com/docs/openllmetry/contributing/overview).
@@ -171,4 +183,3 @@ To @patrickdebois, who [suggested the great name](https://x.com/patrickdebois/st
 <a href="https://github.com/traceloop/openllmetry/graphs/contributors">
   <img alt="contributors" src="https://contrib.rocks/image?repo=traceloop/openllmetry"/>
 </a>
-

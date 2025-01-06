@@ -1,3 +1,13 @@
+## v0.35.0 (2025-01-03)
+
+### Feat
+
+- **sdk**: combine async/sync decorators & annotations (#2442)
+
+### Fix
+
+- **sdk**: option to disable SDK (#2454)
+
 ## v0.34.1 (2024-12-22)
 
 ### Fix
