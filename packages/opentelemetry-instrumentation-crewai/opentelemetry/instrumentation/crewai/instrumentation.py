@@ -90,7 +90,7 @@ def wrap_task_execute(tracer, wrapped, instance, args, kwargs):
     task_name = instance.description if hasattr(instance, "description") else "task"
 
     with tracer.start_as_current_span(
-        f"Task.execute.{task_name}",
+        f"{task_name}.task",
         kind=SpanKind.CLIENT,
         attributes={
             SpanAttributes.TRACELOOP_SPAN_KIND: TraceloopSpanKindValues.TASK.value,
