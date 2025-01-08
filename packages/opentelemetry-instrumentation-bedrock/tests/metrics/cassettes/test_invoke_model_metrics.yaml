@@ -1,0 +1,54 @@
+interactions:
+- request:
+    body: '{"inputText": "Tell me a joke about opentelemetry", "textGenerationConfig":
+      {"maxTokenCount": 200, "temperature": 0.5, "topP": 0.5}}'
+    headers:
+      Accept:
+      - !!binary |
+        YXBwbGljYXRpb24vanNvbg==
+      Content-Length:
+      - '132'
+      Content-Type:
+      - !!binary |
+        YXBwbGljYXRpb24vanNvbg==
+      User-Agent:
+      - !!binary |
+        Qm90bzMvMS4zNS45MiBtZC9Cb3RvY29yZSMxLjM1LjkyIHVhLzIuMCBvcy9saW51eCM2LjguMC01
+        MC1nZW5lcmljIG1kL2FyY2gjeDg2XzY0IGxhbmcvcHl0aG9uIzMuMTAuMTIgbWQvcHlpbXBsI0NQ
+        eXRob24gY2ZnL3JldHJ5LW1vZGUjbGVnYWN5IEJvdG9jb3JlLzEuMzUuOTI=
+      X-Amz-Date:
+      - !!binary |
+        MjAyNTAxMDZUMTkyMzU5Wg==
+      amz-sdk-invocation-id:
+      - !!binary |
+        NzFjOTAwNDEtOTJkMS00ZGM3LWFkMWYtYWE3YzVkMGMxMThj
+      amz-sdk-request:
+      - !!binary |
+        YXR0ZW1wdD0x
+    method: POST
+    uri: https://bedrock-runtime.ap-south-1.amazonaws.com/model/amazon.titan-text-express-v1/invoke
+  response:
+    body:
+      string: '{"inputTextTokenCount":9,"results":[{"tokenCount":17,"outputText":"\nWhat
+        do you call a bear with no teeth?\nA gummy bear.","completionReason":"FINISH"}]}'
+    headers:
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '154'
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 06 Jan 2025 19:24:01 GMT
+      X-Amzn-Bedrock-Input-Token-Count:
+      - '9'
+      X-Amzn-Bedrock-Invocation-Latency:
+      - '1110'
+      X-Amzn-Bedrock-Output-Token-Count:
+      - '17'
+      x-amzn-RequestId:
+      - f9bd31ca-5442-4aea-822b-25ee6c26673d
+    status:
+      code: 200
+      message: OK
+version: 1

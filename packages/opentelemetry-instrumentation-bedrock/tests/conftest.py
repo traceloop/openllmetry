@@ -18,13 +18,11 @@ from opentelemetry.instrumentation.bedrock import BedrockInstrumentor
 
 pytest_plugins = []
 
-
-@pytest.fixture(autouse=True)
-def environment():
-    if os.getenv("AWS_SECRET_ACCESS_KEY") is None:
-        os.environ["AWS_ACCESS_KEY_ID"] = "test"
-        os.environ["AWS_SECRET_ACCESS_KEY"] = "test"
-
+#@pytest.fixture(autouse=True)
+#def environment():
+ #   if os.getenv("AWS_SECRET_ACCESS_KEY") is None:
+  #      os.environ["AWS_ACCESS_KEY_ID"] = "test"
+   #     os.environ["AWS_SECRET_ACCESS_KEY"] = "test"
 
 @pytest.fixture
 def brt():
@@ -32,9 +30,9 @@ def brt():
         service_name="bedrock-runtime",
         aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
         aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
-        region_name="us-east-1",
+        #region_name="us-east-1",
+        region_name="ap-south-1",
     )
-
 
 @pytest.fixture(scope="session")
 def test_context():
@@ -51,10 +49,13 @@ def test_context():
 
     return spanExporter, metricProvider, reader
 
+@pytest.fixture(scope="session")
+def use_legacy_attributes_fixture(request):
+    return request.config.getoption("--use-legacy-attributes")
 
 @pytest.fixture(scope="session", autouse=True)
-def instrument(test_context):
-    BedrockInstrumentor(enrich_token_usage=True).instrument()
+def instrument(test_context, use_legacy_attributes_fixture):
+    BedrockInstrumentor(enrich_token_usage=True, use_legacy_attributes=use_legacy_attributes_fixture).instrument()
 
     yield
 
@@ -63,13 +64,14 @@ def instrument(test_context):
     reader.shutdown()
     provider.shutdown()
 
-
 @pytest.fixture(autouse=True)
 def clear_test_context(test_context):
     exporter, _, _ = test_context
     exporter.clear()
 
-
 @pytest.fixture(scope="module")
 def vcr_config():
     return {"filter_headers": ["authorization"]}
+
+def pytest_addoption(parser):
+    parser.addoption("--use-legacy-attributes", action="store_true", help="Run tests with legacy attributes enabled")

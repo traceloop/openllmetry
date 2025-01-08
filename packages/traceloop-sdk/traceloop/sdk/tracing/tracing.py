@@ -2,7 +2,7 @@ import atexit
 import logging
 import os
 
-
+from traceloop.sdk.config import Config
 from colorama import Fore
 from opentelemetry import trace
 from opentelemetry.exporter.otlp.proto.http.trace_exporter import (
@@ -73,6 +73,7 @@ class TracerWrapper(object):
         instruments: Optional[Set[Instruments]] = None,
         block_instruments: Optional[Set[Instruments]] = None,
         image_uploader: ImageUploader = None,
+        use_legacy_attributes: bool = Config.use_legacy_attributes, 
     ) -> "TracerWrapper":
         if not hasattr(cls, "instance"):
             obj = cls.instance = super(TracerWrapper, cls).__new__(cls)
@@ -81,6 +82,7 @@ class TracerWrapper(object):
 
             obj.__image_uploader = image_uploader
             obj.__resource = Resource(attributes=TracerWrapper.resource_attributes)
+            obj._use_legacy_attributes = use_legacy_attributes
             obj.__tracer_provider = init_tracer_provider(resource=obj.__resource)
             if processor:
                 Telemetry().capture("tracer:init", {"processor": "custom"})
@@ -134,6 +136,7 @@ class TracerWrapper(object):
                 should_enrich_metrics,
                 image_uploader.aupload_base64_image,
                 instruments,
+                obj._use_legacy_attributes,
                 block_instruments,
             )
 
@@ -350,8 +353,11 @@ def init_instrumentations(
     should_enrich_metrics: bool,
     base64_image_uploader: Callable[[str, str, str], str],
     instruments: Optional[Set[Instruments]] = None,
+    use_legacy_attributes: bool = Config.use_legacy_attributes,
     block_instruments: Optional[Set[Instruments]] = None,
+    
 ):
+    print(f"init_instrumentations called with instruments: {instruments}") 
     block_instruments = block_instruments or set()
     instruments = instruments or set(
         Instruments
@@ -377,7 +383,9 @@ def init_instrumentations(
             if init_chroma_instrumentor():
                 instrument_set = True
         elif instrument == Instruments.COHERE:
-            if init_cohere_instrumentor():
+            print("Entering COHERE instrumentation block") # ADD THIS
+            if init_cohere_instrumentor(use_legacy_attributes=use_legacy_attributes):
+                print("cohere package is installed") # ADD THIS
                 instrument_set = True
         elif instrument == Instruments.GOOGLE_GENERATIVEAI:
             if init_google_generativeai_instrumentor():
@@ -519,7 +527,7 @@ def init_anthropic_instrumentor(
         return False
 
 
-def init_cohere_instrumentor():
+def init_cohere_instrumentor(use_legacy_attributes: bool = False):
     try:
         if is_package_installed("cohere"):
             Telemetry().capture("instrumentation:cohere:init")
@@ -527,6 +535,7 @@ def init_cohere_instrumentor():
 
             instrumentor = CohereInstrumentor(
                 exception_logger=lambda e: Telemetry().log_exception(e),
+                use_legacy_attributes=use_legacy_attributes,
             )
             if not instrumentor.is_instrumented_by_opentelemetry:
                 instrumentor.instrument()

@@ -1,0 +1,49 @@
+interactions:
+- request:
+    body: '{"prompt": "Human: Tell me a joke about opentelemetry Assistant:", "max_tokens_to_sample":
+      200, "temperature": 0.5}'
+    headers:
+      Accept:
+      - !!binary |
+        YXBwbGljYXRpb24vanNvbg==
+      Content-Length:
+      - '115'
+      Content-Type:
+      - !!binary |
+        YXBwbGljYXRpb24vanNvbg==
+      User-Agent:
+      - !!binary |
+        Qm90bzMvMS4zNS45MiBtZC9Cb3RvY29yZSMxLjM1LjkyIHVhLzIuMCBvcy9saW51eCM2LjguMC01
+        MC1nZW5lcmljIG1kL2FyY2gjeDg2XzY0IGxhbmcvcHl0aG9uIzMuMTAuMTIgbWQvcHlpbXBsI0NQ
+        eXRob24gY2ZnL3JldHJ5LW1vZGUjbGVnYWN5IEJvdG9jb3JlLzEuMzUuOTI=
+      X-Amz-Date:
+      - !!binary |
+        MjAyNTAxMDZUMTkyNjAwWg==
+      amz-sdk-invocation-id:
+      - !!binary |
+        MzdlZmIzNjEtZTVlMy00MTFhLTllN2EtNWVjNmM5ZDNmN2Nh
+      amz-sdk-request:
+      - !!binary |
+        YXR0ZW1wdD0x
+    method: POST
+    uri: https://bedrock-runtime.ap-south-1.amazonaws.com/model/anthropic.claude-v2%3A1/invoke
+  response:
+    body:
+      string: '{"message":"The provided model identifier is invalid."}'
+    headers:
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '55'
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 06 Jan 2025 19:26:00 GMT
+      x-amzn-ErrorType:
+      - ValidationException:http://internal.amazon.com/coral/com.amazon.bedrock/
+      x-amzn-RequestId:
+      - 69981ed9-7b06-44bf-bfdc-59a2dd8920c6
+    status:
+      code: 400
+      message: Bad Request
+version: 1

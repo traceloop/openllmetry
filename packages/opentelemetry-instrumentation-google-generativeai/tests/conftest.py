@@ -11,9 +11,19 @@ from opentelemetry.instrumentation.google_generativeai import (
 
 pytest_plugins = []
 
+def pytest_sessionstart(session):
+    """
+    Pytest hook that runs at the start of the test session.
+    Instruments the Google Generative AI library.
+    """
+    GoogleGenerativeAiInstrumentor().instrument()
 
 @pytest.fixture(scope="session")
 def exporter():
+    """
+    Fixture that creates an InMemorySpanExporter and a TracerProvider
+    configured to use it. It sets the global TracerProvider.
+    """
     exporter = InMemorySpanExporter()
     processor = SimpleSpanProcessor(exporter)
 
@@ -21,16 +31,19 @@ def exporter():
     provider.add_span_processor(processor)
     trace.set_tracer_provider(provider)
 
-    GoogleGenerativeAiInstrumentor().instrument()
-
     return exporter
-
 
 @pytest.fixture(autouse=True)
 def clear_exporter(exporter):
+    """
+    Fixture that automatically clears the spans from the exporter
+    before each test.
+    """
     exporter.clear()
-
 
 @pytest.fixture(scope="module")
 def vcr_config():
+    """
+    VCR configuration fixture.
+    """
     return {"filter_headers": ["authorization"]}

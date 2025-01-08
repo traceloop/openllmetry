@@ -1,0 +1,50 @@
+interactions:
+- request:
+    body: '{"prompt": "<s>[INST] <<SYS>>\nYou are a helpful, respectful and honest
+      assistant. Always answer as helpfully as possible, while being safe.  Your\nanswers
+      should not include any harmful, unethical, racist, sexist, toxic, dangerous,
+      or illegal content. Please ensure\nthat your responses are socially unbiased
+      and positive in nature.\n\nIf a question does not make any sense, or is not
+      factually coherent, explain why instead of answering something not\ncorrect.
+      If you don''t know the answer to a question, please don''t share false information.\n<</SYS>>\n\nThere''s
+      a llama in my garden  What should I do? [/INST]", "max_gen_len": 128, "temperature":
+      0.1, "top_p": 0.9}'
+    headers:
+      Content-Length:
+      - '669'
+      User-Agent:
+      - !!binary |
+        Qm90bzMvMS4zNS45MiBtZC9Cb3RvY29yZSMxLjM1LjkyIHVhLzIuMCBvcy9saW51eCM2LjguMC01
+        MC1nZW5lcmljIG1kL2FyY2gjeDg2XzY0IGxhbmcvcHl0aG9uIzMuMTAuMTIgbWQvcHlpbXBsI0NQ
+        eXRob24gY2ZnL3JldHJ5LW1vZGUjbGVnYWN5IEJvdG9jb3JlLzEuMzUuOTI=
+      X-Amz-Date:
+      - !!binary |
+        MjAyNTAxMDZUMTkyNjAxWg==
+      amz-sdk-invocation-id:
+      - !!binary |
+        MjEzZWRkYzgtYzZkMC00YjZiLWIwY2UtMmFiMTQwMzFlOTk5
+      amz-sdk-request:
+      - !!binary |
+        YXR0ZW1wdD0x
+    method: POST
+    uri: https://bedrock-runtime.ap-south-1.amazonaws.com/model/meta.llama2-13b-chat-v1/invoke
+  response:
+    body:
+      string: '{"message":"The provided model identifier is invalid."}'
+    headers:
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '55'
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 06 Jan 2025 19:26:02 GMT
+      x-amzn-ErrorType:
+      - ValidationException:http://internal.amazon.com/coral/com.amazon.bedrock/
+      x-amzn-RequestId:
+      - 26e79d38-fdc3-4215-9ca4-d6540ab4ebd6
+    status:
+      code: 400
+      message: Bad Request
+version: 1

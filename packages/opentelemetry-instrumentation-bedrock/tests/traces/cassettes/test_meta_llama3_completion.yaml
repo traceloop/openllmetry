@@ -1,0 +1,44 @@
+interactions:
+- request:
+    body: '{"prompt": "Tell me a joke about opentelemetry", "max_gen_len": 128, "temperature":
+      0.1, "top_p": 0.9}'
+    headers:
+      Content-Length:
+      - '102'
+      User-Agent:
+      - !!binary |
+        Qm90bzMvMS4zNS45MiBtZC9Cb3RvY29yZSMxLjM1LjkyIHVhLzIuMCBvcy9saW51eCM2LjguMC01
+        MC1nZW5lcmljIG1kL2FyY2gjeDg2XzY0IGxhbmcvcHl0aG9uIzMuMTAuMTIgbWQvcHlpbXBsI0NQ
+        eXRob24gY2ZnL3JldHJ5LW1vZGUjbGVnYWN5IEJvdG9jb3JlLzEuMzUuOTI=
+      X-Amz-Date:
+      - !!binary |
+        MjAyNTAxMDZUMTkyNjAyWg==
+      amz-sdk-invocation-id:
+      - !!binary |
+        MGJmNTI5MzYtZWYwNi00NGY1LThmZDEtMzI1YjcyODM4ZDQ1
+      amz-sdk-request:
+      - !!binary |
+        YXR0ZW1wdD0x
+    method: POST
+    uri: https://bedrock-runtime.ap-south-1.amazonaws.com/model/meta.llama3-70b-instruct-v1%3A0/invoke
+  response:
+    body:
+      string: '{"message":"You don''t have access to the model with the specified
+        model ID."}'
+    headers:
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '77'
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 06 Jan 2025 19:26:02 GMT
+      x-amzn-ErrorType:
+      - AccessDeniedException:http://internal.amazon.com/coral/com.amazon.bedrock/
+      x-amzn-RequestId:
+      - 734fb11e-3c24-484a-bdeb-c8367b09976c
+    status:
+      code: 403
+      message: Forbidden
+version: 1

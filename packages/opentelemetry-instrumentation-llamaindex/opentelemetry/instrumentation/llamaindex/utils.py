@@ -8,7 +8,8 @@ from contextlib import asynccontextmanager
 from opentelemetry import context as context_api
 from opentelemetry.instrumentation.llamaindex.config import Config
 from opentelemetry.semconv_ai import SpanAttributes
-
+from opentelemetry.instrumentation.llamaindex.config import Config
+from opentelemetry.trace import get_current_span,Span
 
 def _with_tracer_wrapper(func):
     def _with_tracer(tracer):
@@ -31,6 +32,23 @@ def should_send_prompts():
         os.getenv("TRACELOOP_TRACE_CONTENT") or "true"
     ).lower() == "true" or context_api.get_value("override_enable_content_tracing")
 
+
+def _emit_prompt_event(span: Span, role: str, content: str, index: int):
+    """Emit a prompt event following the new semantic conventions."""
+    attributes = {
+        "messaging.role": role,
+        "messaging.content": content,
+        "messaging.index": index,
+    }
+    span.add_event("prompt", attributes=attributes)
+
+def _emit_completion_event(span: Span, content: str, index: int):
+    """Emit a completion event following the new semantic conventions."""
+    attributes = {
+        "messaging.content": content,
+        "messaging.index": index,
+    }
+    span.add_event("completion", attributes=attributes)
 
 def dont_throw(func):
     """
@@ -84,3 +102,4 @@ def process_response(span, res):
             SpanAttributes.TRACELOOP_ENTITY_OUTPUT,
             json.dumps(res, cls=JSONEncoder),
         )
+

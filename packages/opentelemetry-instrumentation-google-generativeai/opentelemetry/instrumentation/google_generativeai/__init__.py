@@ -12,6 +12,7 @@ from opentelemetry import context as context_api
 from opentelemetry.trace import get_tracer, SpanKind
 from opentelemetry.trace.status import Status, StatusCode
 
+from opentelemetry.trace import Span  # Ensure Span is imported
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY, unwrap
 
@@ -69,26 +70,66 @@ def _set_span_attribute(span, name, value):
     return
 
 
+
+def _emit_prompt_event(span: 'Span', content: str, index: int):
+    """Emit a prompt event following the new semantic conventions."""
+    attributes = {
+        "messaging.role": "user",
+        "messaging.content": content,
+        "messaging.index": index,
+    }
+    span.add_event("prompt", attributes=attributes)
+
+def _emit_completion_event(span: Span, content: str, index: int, token_usage: dict = None):
+    """Emit a completion event following the new semantic conventions."""
+    attributes = {
+        "messaging.role": "assistant",
+        "messaging.content": content,
+        "messaging.index": index,
+    }
+    if token_usage:
+        attributes.update({
+            "llm.usage.total_tokens": token_usage.get("total_tokens"),
+            "llm.usage.prompt_tokens": token_usage.get("prompt_tokens"),
+            "llm.usage.completion_tokens": token_usage.get("completion_tokens"),
+        })
+    span.add_event("completion", attributes=attributes)
+
+
 def _set_input_attributes(span, args, kwargs, llm_model):
-    if should_send_prompts() and args is not None and len(args) > 0:
-        prompt = ""
+    prompt_content = ""
+    if args is not None and len(args) > 0:
         for arg in args:
             if isinstance(arg, str):
-                prompt = f"{prompt}{arg}\n"
+                prompt_content = f"{prompt_content}{arg}\n"
             elif isinstance(arg, list):
                 for subarg in arg:
-                    prompt = f"{prompt}{subarg}\n"
+                    prompt_content = f"{prompt_content}{subarg}\n"
 
-        _set_span_attribute(
-            span,
-            f"{SpanAttributes.LLM_PROMPTS}.0.user",
-            prompt,
-        )
+    if should_send_prompts():
+        if Config.use_legacy_attributes:
+            # Set legacy prompt attributes if the flag is true
+            _set_span_attribute(
+                span,
+                f"{SpanAttributes.LLM_PROMPTS}.0.content",
+                prompt_content.strip(),
+            )
+            _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.0.role", "user")
+        else:
+            # Emit prompt event if the flag is false
+            _emit_prompt_event(span, prompt_content.strip(), 0)
 
     _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, llm_model)
-    _set_span_attribute(
-        span, f"{SpanAttributes.LLM_PROMPTS}.0.user", kwargs.get("prompt")
-    )
+    if 'prompt' in kwargs and should_send_prompts():
+        if Config.use_legacy_attributes:
+            # Set legacy prompt attributes if the flag is true
+            _set_span_attribute(
+                span, f"{SpanAttributes.LLM_PROMPTS}.0.content", kwargs.get("prompt")
+            )
+            _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.0.role", "user")
+        else:
+            # Emit prompt event if the flag is false
+            _emit_prompt_event(span, kwargs.get("prompt"), 0)
     _set_span_attribute(
         span, SpanAttributes.LLM_REQUEST_TEMPERATURE, kwargs.get("temperature")
     )
@@ -111,67 +152,116 @@ def _set_input_attributes(span, args, kwargs, llm_model):
 def _set_response_attributes(span, response, llm_model):
     _set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, llm_model)
 
+    total_tokens = None
+    completion_tokens = None
+    prompt_tokens = None
+
+    completions = []
+
     if hasattr(response, "usage_metadata"):
+        total_tokens = response.usage_metadata.total_token_count
+        completion_tokens = response.usage_metadata.candidates_token_count
+        prompt_tokens = response.usage_metadata.prompt_token_count
+
+        if hasattr(response, 'candidates'):
+            for candidate in response.candidates:
+                if hasattr(candidate, 'content') and hasattr(candidate.content, 'parts'):
+                    for part in candidate.content.parts:
+                        if hasattr(part, 'text'):
+                            completions.append(part.text)
+        elif hasattr(response, 'text'):
+            completions.append(response.text)
+
+    else:
+        if isinstance(response, list):
+            for item in response:
+                completions.append(item)
+        elif isinstance(response, str):
+            completions.append(response)
+
+    if should_send_prompts():
+        for index, completion in enumerate(completions):
+            if Config.use_legacy_attributes:
+                # Set legacy completion attributes if the flag is true
+                _set_span_attribute(
+                    span, f"{SpanAttributes.LLM_COMPLETIONS}.{index}.content", completion
+                )
+            else:
+                # Emit completion event if the flag is false
+                _emit_completion_event(span, completion, index, {
+                    "total_tokens": total_tokens,
+                    "completion_tokens": completion_tokens,
+                    "prompt_tokens": prompt_tokens
+                })
+    else:
+        # Neither set legacy attributes nor emit events, only set completion content
+        for index, completion in enumerate(completions):
+             _set_span_attribute(
+                    span, f"{SpanAttributes.LLM_COMPLETIONS}.{index}.content", completion
+                )
+
+    if total_tokens is not None:
         _set_span_attribute(
             span,
             SpanAttributes.LLM_USAGE_TOTAL_TOKENS,
-            response.usage_metadata.total_token_count,
+            total_tokens,
         )
+    if completion_tokens is not None:
         _set_span_attribute(
             span,
             SpanAttributes.LLM_USAGE_COMPLETION_TOKENS,
-            response.usage_metadata.candidates_token_count,
+            completion_tokens,
         )
+    if prompt_tokens is not None:
         _set_span_attribute(
             span,
             SpanAttributes.LLM_USAGE_PROMPT_TOKENS,
-            response.usage_metadata.prompt_token_count,
+            prompt_tokens,
         )
-
-        if isinstance(response.text, list):
-            for index, item in enumerate(response):
-                prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{index}"
-                _set_span_attribute(span, f"{prefix}.content", item.text)
-        elif isinstance(response.text, str):
-            _set_span_attribute(
-                span, f"{SpanAttributes.LLM_COMPLETIONS}.0.content", response.text
-            )
-    else:
-        if isinstance(response, list):
-            for index, item in enumerate(response):
-                prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{index}"
-                _set_span_attribute(span, f"{prefix}.content", item)
-        elif isinstance(response, str):
-            _set_span_attribute(
-                span, f"{SpanAttributes.LLM_COMPLETIONS}.0.content", response
-            )
 
     return
 
 
 def _build_from_streaming_response(span, response, llm_model):
     complete_response = ""
+    index = 0
     for item in response:
         item_to_yield = item
-        complete_response += str(item.text)
+        if hasattr(item, 'text'):
+            complete_response += str(item.text)
+            if not Config.use_legacy_attributes and should_send_prompts():
+                # Emit completion event for each chunk in stream if not using legacy attributes
+                _emit_completion_event(span, item.text, index)
+                index += 1
 
         yield item_to_yield
 
-    _set_response_attributes(span, complete_response, llm_model)
+    if Config.use_legacy_attributes and should_send_prompts():
+        # Set response attributes after streaming is finished if using legacy attributes
+        _set_response_attributes(span, complete_response, llm_model)
 
     span.set_status(Status(StatusCode.OK))
     span.end()
 
 
+
 async def _abuild_from_streaming_response(span, response, llm_model):
     complete_response = ""
+    index = 0
     async for item in response:
         item_to_yield = item
-        complete_response += str(item.text)
+        if hasattr(item, 'text'):
+            complete_response += str(item.text)
+            if not Config.use_legacy_attributes and should_send_prompts():
+                # Emit completion event for each chunk in stream if not using legacy attributes
+                _emit_completion_event(span, item.text, index)
+                index += 1
 
         yield item_to_yield
 
-    _set_response_attributes(span, complete_response, llm_model)
+    if Config.use_legacy_attributes and should_send_prompts():
+        # Set response attributes after streaming is finished if using legacy attributes
+        _set_response_attributes(span, complete_response, llm_model)
 
     span.set_status(Status(StatusCode.OK))
     span.end()
@@ -286,9 +376,10 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
 class GoogleGenerativeAiInstrumentor(BaseInstrumentor):
     """An instrumentor for Google Generative AI's client library."""
 
-    def __init__(self, exception_logger=None):
+    def __init__(self, exception_logger=None,use_legacy_attributes=True):
         super().__init__()
         Config.exception_logger = exception_logger
+        Config.use_legacy_attributes = use_legacy_attributes
 
     def instrumentation_dependencies(self) -> Collection[str]:
         return _instruments

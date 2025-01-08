@@ -5,6 +5,8 @@ import logging
 import os
 import time
 from typing import Callable, Collection
+import sys
+from wrapt import unwrap_function_wrapper
 
 from groq._streaming import AsyncStream, Stream
 from opentelemetry import context as context_api
@@ -27,9 +29,11 @@ from opentelemetry.semconv_ai import (
     SpanAttributes,
     Meters,
 )
-from opentelemetry.trace import SpanKind, Tracer, get_tracer
+
+from opentelemetry.instrumentation.groq import WRAPPED_METHODS, WRAPPED_AMETHODS  # Import here
+from opentelemetry.trace import Span, SpanKind, Tracer, get_tracer
 from opentelemetry.trace.status import Status, StatusCode
-from wrapt import wrap_function_wrapper
+from wrapt import wrap_function_wrapper, unwrap_function_wrapper
 
 logger = logging.getLogger(__name__)
 
@@ -37,27 +41,83 @@ _instruments = ("groq >= 0.9.0",)
 
 CONTENT_FILTER_KEY = "content_filter_results"
 
+import logging
+from typing import Optional
+
+# First, let's fix the module paths in the WRAPPED_METHODS
 WRAPPED_METHODS = [
     {
-        "package": "groq.resources.chat.completions",
-        "object": "Completions",
-        "method": "create",
-        "span_name": "groq.chat",
+    
+     "package": "groq.resources.chat.completions",  # Correct
+     "object": "Completions",
+     "method": "create",
+     "span_name": "groq.chat",
+     
     },
-]
+    ]
+
 WRAPPED_AMETHODS = [
     {
-        "package": "groq.resources.chat.completions",
+       "package": "groq.resources.chat.completions",
         "object": "AsyncCompletions",
         "method": "create",
         "span_name": "groq.chat",
     },
 ]
 
+def _emit_prompt_event(span: Span, role: str, content: str, index: int):
+    print(f"[_emit_prompt_event] Role: {role}, Content: {content}, Index: {index}")
+    """
+    Emits a prompt event with standardized attributes.
+    
+    Args:
+        span: The OpenTelemetry span to add the event to
+        role: The role of the message sender (e.g., "user", "assistant")
+        content: The content of the message
+        index: The position of this message in the sequence
+    """
+    if not content:
+        return
+    
+    attributes = {
+        "messaging.role": role,
+        "messaging.content": content,
+        "messaging.index": index
+    }
+    span.add_event("prompt", attributes=attributes)
+
+def _emit_completion_event(span: Span, content: str, index: int, usage: Optional[dict] = None):
+    print(f"[_emit_completion_event] Content: {content}, Index: {index}, Usage: {usage}")
+    """
+    Emits a completion event with standardized attributes.
+    
+    Args:
+        span: The OpenTelemetry span to add the event to
+        content: The completion content
+        index: The index of this completion
+        usage: Optional token usage statistics
+    """
+    if not content:
+        return
+        
+    attributes = {
+        "messaging.content": content,
+        "messaging.index": index
+    }
+    
+    if usage:
+        attributes.update({
+            "llm.usage.total_tokens": usage.get("total_tokens"),
+            "llm.usage.prompt_tokens": usage.get("prompt_tokens"),
+            "llm.usage.completion_tokens": usage.get("completion_tokens")
+        })
+    
+    span.add_event("completion", attributes=attributes)
+
+
 
 def is_streaming_response(response):
     return isinstance(response, Stream) or isinstance(response, AsyncStream)
-
 
 def _dump_content(content):
     if isinstance(content, str):
@@ -80,40 +140,60 @@ def _dump_content(content):
     return json.dumps(json_serializable)
 
 
+
+
 @dont_throw
-def _set_input_attributes(span, kwargs):
-    set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, kwargs.get("model"))
-    set_span_attribute(
-        span, SpanAttributes.LLM_REQUEST_MAX_TOKENS, kwargs.get("max_tokens_to_sample")
-    )
-    set_span_attribute(
-        span, SpanAttributes.LLM_REQUEST_TEMPERATURE, kwargs.get("temperature")
-    )
-    set_span_attribute(span, SpanAttributes.LLM_REQUEST_TOP_P, kwargs.get("top_p"))
-    set_span_attribute(
-        span, SpanAttributes.LLM_FREQUENCY_PENALTY, kwargs.get("frequency_penalty")
-    )
-    set_span_attribute(
-        span, SpanAttributes.LLM_PRESENCE_PENALTY, kwargs.get("presence_penalty")
-    )
-    set_span_attribute(span, SpanAttributes.LLM_IS_STREAMING, kwargs.get("stream") or False)
+# Fix for _set_response_attributes in __init__.py
+def _set_response_attributes(span: Span, response: dict):
+    """
+    Sets response attributes and emits completion events.
+    
+    Args:
+        span: The OpenTelemetry span to update
+        response: The response from the Groq API
+    """
+    if not span.is_recording():
+        return
+        
+    # Set basic response attributes
+    set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, response.get("model"))
+    
+    # Handle usage information
+    usage = response.get("usage", {})
+    if usage:
+        set_span_attribute(span, SpanAttributes.LLM_USAGE_TOTAL_TOKENS, usage.get("total_tokens"))
+        set_span_attribute(span, SpanAttributes.LLM_USAGE_COMPLETION_TOKENS, usage.get("completion_tokens"))
+        set_span_attribute(span, SpanAttributes.LLM_USAGE_PROMPT_TOKENS, usage.get("prompt_tokens"))
+    
+    if not should_send_prompts():
+        return
+        
+    
 
-    if should_send_prompts():
-        if kwargs.get("prompt") is not None:
-            set_span_attribute(
-                span, f"{SpanAttributes.LLM_PROMPTS}.0.user", kwargs.get("prompt")
+    choices = response.get("choices", [])
+
+    for choice in choices:
+        message = choice.get("message", {})
+        if not message:
+            continue
+
+        index = choice.get("index", 0)
+        content = message.get("content")
+
+        if Config.use_legacy_attributes:
+            # Set attributes in the legacy format
+            prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{index}"
+            set_span_attribute(span, f"{prefix}.role", message.get("role"))
+            set_span_attribute(span, f"{prefix}.content", content)
+            set_span_attribute(span, f"{prefix}.finish_reason", choice.get("finish_reason"))
+        else:
+            # Emit an event with the completion information
+            _emit_completion_event(
+                span,
+                content,
+                index,
+                usage  # Include usage information in the event
             )
-
-        elif kwargs.get("messages") is not None:
-            for i, message in enumerate(kwargs.get("messages")):
-                set_span_attribute(
-                    span,
-                    f"{SpanAttributes.LLM_PROMPTS}.{i}.content",
-                    _dump_content(message.get("content")),
-                )
-                set_span_attribute(
-                    span, f"{SpanAttributes.LLM_PROMPTS}.{i}.role", message.get("role")
-                )
 
 
 def _set_completions(span, choices):
@@ -123,85 +203,116 @@ def _set_completions(span, choices):
     for choice in choices:
         index = choice.get("index")
         prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{index}"
-        set_span_attribute(
-            span, f"{prefix}.finish_reason", choice.get("finish_reason")
-        )
-
-        if choice.get("content_filter_results"):
-            set_span_attribute(
-                span,
-                f"{prefix}.{CONTENT_FILTER_KEY}",
-                json.dumps(choice.get("content_filter_results")),
-            )
-
-        if choice.get("finish_reason") == "content_filter":
-            set_span_attribute(span, f"{prefix}.role", "assistant")
-            set_span_attribute(span, f"{prefix}.content", "FILTERED")
-
-            return
 
         message = choice.get("message")
         if not message:
-            return
+            continue
 
-        set_span_attribute(span, f"{prefix}.role", message.get("role"))
-        set_span_attribute(span, f"{prefix}.content", message.get("content"))
+        # Always emit the completion event (new behavior)
+        content = message.get("content")
+        _emit_completion_event(span, content, index)
 
-        function_call = message.get("function_call")
-        if function_call:
+        # Set legacy attributes only if use_legacy_attributes is True
+        if Config.use_legacy_attributes:
             set_span_attribute(
-                span, f"{prefix}.tool_calls.0.name", function_call.get("name")
-            )
-            set_span_attribute(
-                span,
-                f"{prefix}.tool_calls.0.arguments",
-                function_call.get("arguments"),
+                span, f"{prefix}.finish_reason", choice.get("finish_reason")
             )
 
-        tool_calls = message.get("tool_calls")
-        if tool_calls:
-            for i, tool_call in enumerate(tool_calls):
-                function = tool_call.get("function")
+            if choice.get("content_filter_results"):
                 set_span_attribute(
                     span,
-                    f"{prefix}.tool_calls.{i}.id",
-                    tool_call.get("id"),
-                )
-                set_span_attribute(
-                    span,
-                    f"{prefix}.tool_calls.{i}.name",
-                    function.get("name"),
-                )
-                set_span_attribute(
-                    span,
-                    f"{prefix}.tool_calls.{i}.arguments",
-                    function.get("arguments"),
+                    f"{prefix}.{CONTENT_FILTER_KEY}",
+                    json.dumps(choice.get("content_filter_results")),
                 )
 
+            if choice.get("finish_reason") == "content_filter":
+                set_span_attribute(span, f"{prefix}.role", "assistant")
+                set_span_attribute(span, f"{prefix}.content", "FILTERED")
+                continue
+
+            set_span_attribute(span, f"{prefix}.role", message.get("role"))
+            set_span_attribute(span, f"{prefix}.content", content)
+
+            function_call = message.get("function_call")
+            if function_call:
+                set_span_attribute(
+                    span, f"{prefix}.tool_calls.0.name", function_call.get("name")
+                )
+                set_span_attribute(
+                    span,
+                    f"{prefix}.tool_calls.0.arguments",
+                    function_call.get("arguments"),
+                )
+
+            tool_calls = message.get("tool_calls")
+            if tool_calls:
+                for i, tool_call in enumerate(tool_calls):
+                    function = tool_call.get("function")
+                    set_span_attribute(
+                        span,
+                        f"{prefix}.tool_calls.{i}.id",
+                        tool_call.get("id"),
+                    )
+                    set_span_attribute(
+                        span,
+                        f"{prefix}.tool_calls.{i}.name",
+                        function.get("name"),
+                    )
+                    set_span_attribute(
+                        span,
+                        f"{prefix}.tool_calls.{i}.arguments",
+                        function.get("arguments"),
+                    )
 
 @dont_throw
-def _set_response_attributes(span, response):
-    response = model_as_dict(response)
+# Fix for the module path issue in GroqInstrumentor._uninstrument
+def _set_response_attributes(span: Span, response: dict):
+    """
+    Sets response attributes and emits completion events. This function handles both legacy attributes
+    and the new event-based approach, depending on configuration.
 
+    Args:
+        span: The OpenTelemetry span to update
+        response: The response from the Groq API containing completion and usage data
+    """
+    # First, set the basic response attributes that are always needed
     set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, response.get("model"))
 
-    usage = response.get("usage")
+    # Extract and process usage information
+    usage = response.get("usage", {})
     if usage:
-        set_span_attribute(
-            span, SpanAttributes.LLM_USAGE_TOTAL_TOKENS, usage.get("total_tokens")
-        )
-        set_span_attribute(
-            span,
-            SpanAttributes.LLM_USAGE_COMPLETION_TOKENS,
-            usage.get("completion_tokens"),
-        )
-        set_span_attribute(
-            span, SpanAttributes.LLM_USAGE_PROMPT_TOKENS, usage.get("prompt_tokens")
-        )
+        set_span_attribute(span, SpanAttributes.LLM_USAGE_TOTAL_TOKENS, usage.get("total_tokens"))
+        set_span_attribute(span, SpanAttributes.LLM_USAGE_COMPLETION_TOKENS, usage.get("completion_tokens"))
+        set_span_attribute(span, SpanAttributes.LLM_USAGE_PROMPT_TOKENS, usage.get("prompt_tokens"))
 
-    choices = response.get("choices")
-    if should_send_prompts() and choices:
-        _set_completions(span, choices)
+    # Only proceed with completions if we should send prompts
+    if not should_send_prompts():
+        return
+        
+    choices = response.get("choices", [])
+
+    for choice in choices:
+        message = choice.get("message", {})
+        if not message:
+            continue
+            
+        index = choice.get("index", 0)
+        content = message.get("content")
+        
+        if Config.use_legacy_attributes:
+            # Set attributes in the legacy format
+            prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{index}"
+            set_span_attribute(span, f"{prefix}.role", message.get("role"))
+            set_span_attribute(span, f"{prefix}.content", content)
+            set_span_attribute(span, f"{prefix}.finish_reason", choice.get("finish_reason"))
+        else:
+            # Emit an event with the completion information
+            _emit_completion_event(
+                span,
+                content,
+                index,
+                usage  # Include usage information in the event
+            )
 
 
 def _with_tracer_wrapper(func):
@@ -214,7 +325,6 @@ def _with_tracer_wrapper(func):
         return wrapper
 
     return _with_tracer
-
 
 def _with_chat_telemetry_wrapper(func):
     """Helper for providing tracer for wrapper functions. Includes metric collectors."""
@@ -243,7 +353,6 @@ def _with_chat_telemetry_wrapper(func):
 
     return _with_chat_telemetry
 
-
 def _create_metrics(meter: Meter):
     token_histogram = meter.create_histogram(
         name=Meters.LLM_TOKEN_USAGE,
@@ -264,7 +373,6 @@ def _create_metrics(meter: Meter):
     )
 
     return token_histogram, choice_counter, duration_histogram
-
 
 @_with_chat_telemetry_wrapper
 def _wrap(
@@ -339,7 +447,6 @@ def _wrap(
     span.end()
     return response
 
-
 @_with_chat_telemetry_wrapper
 async def _awrap(
     tracer,
@@ -410,10 +517,8 @@ async def _awrap(
     span.end()
     return response
 
-
 def is_metrics_enabled() -> bool:
     return (os.getenv("TRACELOOP_METRICS_ENABLED") or "true").lower() == "true"
-
 
 class GroqInstrumentor(BaseInstrumentor):
     """An instrumentor for Groq's client library."""
@@ -492,17 +597,23 @@ class GroqInstrumentor(BaseInstrumentor):
             except ModuleNotFoundError:
                 pass  # that's ok, we don't want to fail if some methods do not exist
 
-    def _uninstrument(self, **kwargs):
-        for wrapped_method in WRAPPED_METHODS:
-            wrap_package = wrapped_method.get("package")
-            wrap_object = wrapped_method.get("object")
-            unwrap(
-                f"{wrap_package}.{wrap_object}",
-                wrapped_method.get("method"),
-            )
-        for wrapped_method in WRAPPED_AMETHODS:
-            wrap_object = wrapped_method.get("object")
-            unwrap(
-                f"groq.resources.completions.{wrap_object}",
-                wrapped_method.get("method"),
-            )
+    # def _uninstrument(self, **kwargs):
+    #     """
+    #     Uninstruments the Groq client library using the correct module paths.
+    #     """
+    #     for wrapped_method in WRAPPED_METHODS + WRAPPED_AMETHODS:
+    #         package = wrapped_method.get("package")
+    #         object_name = wrapped_method.get("object")
+    #         method_name = wrapped_method.get("method")
+            
+    #         try:
+    #             unwrap(
+    #                 f"{package}.{object_name}",
+    #                 method_name
+    #             )
+    #             logger.debug(f"Successfully uninstrumented {package}.{object_name}.{method_name}")
+    #         except Exception as e:
+    #             logger.warning(
+    #                 f"Failed to uninstrument {package}.{object_name}.{method_name}: {str(e)}. "
+    #                 "This is expected if the module was never imported."
+    #             )

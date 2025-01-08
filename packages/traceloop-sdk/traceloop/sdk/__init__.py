@@ -17,12 +17,7 @@ from traceloop.sdk.metrics.metrics import MetricsWrapper
 from traceloop.sdk.logging.logging import LoggerWrapper
 from traceloop.sdk.telemetry import Telemetry
 from traceloop.sdk.instruments import Instruments
-from traceloop.sdk.config import (
-    is_content_tracing_enabled,
-    is_tracing_enabled,
-    is_metrics_enabled,
-    is_logging_enabled,
-)
+from traceloop.sdk.config import Config
 from traceloop.sdk.fetcher import Fetcher
 from traceloop.sdk.tracing.tracing import (
     TracerWrapper,
@@ -63,7 +58,9 @@ class Traceloop:
         instruments: Optional[Set[Instruments]] = None,
         block_instruments: Optional[Set[Instruments]] = None,
         image_uploader: Optional[ImageUploader] = None,
+        use_legacy_attributes: bool = Config.use_legacy_attributes,
     ) -> None:
+        #print(f"Traceloop.init called with kwargs: {kwargs}")
         if not enabled:
             TracerWrapper.set_disabled(True)
             print(
@@ -96,11 +93,11 @@ class Traceloop:
                 Fore.GREEN + "Traceloop syncing configuration and prompts" + Fore.RESET
             )
 
-        if not is_tracing_enabled():
+        if not Config.is_tracing_enabled():
             print(Fore.YELLOW + "Tracing is disabled" + Fore.RESET)
             return
 
-        enable_content_tracing = is_content_tracing_enabled()
+        enable_content_tracing = Config.is_content_tracing_enabled()
 
         if exporter or processor:
             print(Fore.GREEN + "Traceloop exporting traces to a custom exporter")
@@ -156,9 +153,10 @@ class Traceloop:
             image_uploader=image_uploader or ImageUploader(api_endpoint, api_key),
             instruments=instruments,
             block_instruments=block_instruments,
+            use_legacy_attributes=use_legacy_attributes,
         )
 
-        if not is_metrics_enabled() or not metrics_exporter and exporter:
+        if not Config.is_metrics_enabled() or not metrics_exporter and exporter:
             print(Fore.YELLOW + "Metrics are disabled" + Fore.RESET)
         else:
             metrics_endpoint = os.getenv("TRACELOOP_METRICS_ENDPOINT") or api_endpoint
@@ -173,7 +171,7 @@ class Traceloop:
             )
             Traceloop.__metrics_wrapper = MetricsWrapper(exporter=metrics_exporter)
 
-        if is_logging_enabled() and (logging_exporter or not exporter):
+        if Config.is_logging_enabled() and (logging_exporter or not exporter):
             logging_endpoint = os.getenv("TRACELOOP_LOGGING_ENDPOINT") or api_endpoint
             logging_headers = (
                 os.getenv("TRACELOOP_LOGGING_HEADERS") or logging_headers or headers
