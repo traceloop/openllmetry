@@ -1,7 +1,7 @@
 import pytest
 from traceloop.sdk.client import Client
 from traceloop.sdk.client.http import HTTPClient
-from traceloop.sdk.annotation import Annotation
+from traceloop.sdk.annotation.user_feedback import UserFeedback
 
 
 def test_client_initialization():
@@ -32,17 +32,17 @@ def test_client_default_app_name():
     assert client.app_name == sys.argv[0]
 
 
-def test_annotation_initialization():
-    """Test annotation is properly initialized"""
-    client = Client(api_key="test-key", app_name="test-app")
-
-    assert isinstance(client.annotation, Annotation)
-    assert client.annotation._http == client._http
-    assert client.annotation._app_name == client.app_name
-
-
 @pytest.mark.parametrize("api_key", [None, "", " "])
 def test_client_requires_api_key(api_key):
     """Test that client requires a valid API key"""
     with pytest.raises(ValueError, match="API key is required"):
         Client(api_key=api_key)
+
+
+def test_user_feedback_initialization():
+    """Test user_feedback is properly initialized"""
+    client = Client(api_key="test-key", app_name="test-app")
+
+    assert isinstance(client.user_feedback, UserFeedback)
+    assert client.user_feedback._http == client._http
+    assert client.user_feedback._app_name == client.app_name

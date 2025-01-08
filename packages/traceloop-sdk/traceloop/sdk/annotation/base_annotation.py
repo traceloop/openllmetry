@@ -49,6 +49,13 @@ class BaseAnnotation:
             ```
         """
 
+        if not annotation_task:
+            raise ValueError("annotation_task is required")
+        if not entity_id:
+            raise ValueError("entity_id is required")
+        if not tags:
+            raise ValueError("tags cannot be empty")
+
         self._http.post(
             f"annotation-tasks/{annotation_task}/annotations",
             {
