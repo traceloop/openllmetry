@@ -4,18 +4,10 @@ import os
 from opentelemetry.semconv_ai import SpanAttributes
 
 def set_span_attribute(span: Span, name, value):
-    if value not in (None, ""):
-        if name == SpanAttributes.LLM_PROMPTS:
-            set_event_prompt(span, value)
-        else:
+    if value is not None:
+        if value != "":
             span.set_attribute(name, value)
-
-
-def set_event_prompt(span: Span, prompt):
-    if os.environ.get("TRACE_PROMPT_COMPLETION_DATA", "true").lower() == "false":
-        return span.add_event(
-        name=SpanAttributes.LLM_CONTENT_PROMPT,
-        attributes={SpanAttributes.LLM_PROMPTS: prompt},)
+    return
     
 class CrewAISpanAttributes:
     def __init__(self, span: Span, instance) -> None:
