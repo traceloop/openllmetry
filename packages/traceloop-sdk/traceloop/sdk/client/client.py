@@ -1,6 +1,7 @@
 import sys
+
+from traceloop.sdk.annotation.user_feedback import UserFeedback
 from .http import HTTPClient
-from traceloop.sdk.annotation import Annotation
 from traceloop.sdk.version import __version__
 
 
@@ -17,7 +18,7 @@ class Client:
     app_name: str
     api_endpoint: str
     api_key: str
-    annotation: Annotation
+    user_feedback: UserFeedback
     _http: HTTPClient
 
     def __init__(self, api_key: str, app_name: str = sys.argv[0], api_endpoint: str = "https://api.traceloop.com"):
@@ -36,4 +37,4 @@ class Client:
         self.api_endpoint = api_endpoint or "https://api.traceloop.com"
         self.api_key = api_key
         self._http = HTTPClient(base_url=self.api_endpoint, api_key=self.api_key, version=__version__)
-        self.annotation = Annotation(self._http, self.app_name)
+        self.user_feedback = UserFeedback(self._http, self.app_name)
