@@ -30,10 +30,14 @@ from opentelemetry.semconv_ai import (
     SpanAttributes,
     LLMRequestTypeValues,
     Meters,
+ 
 )
+import logging
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 from opentelemetry.instrumentation.bedrock.version import __version__
-
+from opentelemetry.trace import Span
 
 class MetricParams:
     def __init__(
@@ -59,6 +63,13 @@ anthropic_client = anthropic.Anthropic()
 
 _instruments = ("boto3 >= 1.28.57",)
 
+class MessageRoleValues:
+    """Recommended message role values."""
+
+    SYSTEM = "system"
+    USER = "user"
+    ASSISTANT = "assistant"  # Added assistant role for completeness
+
 WRAPPED_METHODS = [
     {
         "package": "botocore.client",
@@ -80,10 +91,36 @@ def is_metrics_enabled() -> bool:
 
 
 def _set_span_attribute(span, name, value):
+    print(f"Setting attribute: {name} = {value}") # Added logging
     if value is not None:
         if value != "":
             span.set_attribute(name, value)
     return
+
+def _emit_prompt_event(span: Span, role: str, content: str, index: int):
+    """Emit a prompt event following the new semantic conventions."""
+    print(f"*** Emitting prompt event with role: {role}, content: {content}, index: {index}") # Added logging
+    attributes = {
+        "messaging.role": role,
+        "messaging.content": content,
+        "messaging.index": index,
+    }
+    span.add_event("prompt", attributes=attributes)
+
+def _emit_completion_event(span: Span, content: str, index: int, token_usage: dict = None):
+    """Emit a completion event following the new semantic conventions."""
+    print(f"*** Emitting completion event with content: {content}, index: {index}, token_usage: {token_usage}")
+    attributes = {
+        "messaging.content": content,
+        "messaging.index": index,
+    }
+    if token_usage:
+        attributes.update({
+            "llm.usage.total_tokens": token_usage.get("total_tokens"),
+            "llm.usage.prompt_tokens": token_usage.get("prompt_tokens"),
+            "llm.usage.completion_tokens": token_usage.get("completion_tokens"),
+        })
+    span.add_event("completion", attributes=attributes)
 
 
 def _with_tracer_wrapper(func):
@@ -168,12 +205,11 @@ def _instrumented_model_invoke(fn, tracer, metric_params):
             response = fn(*args, **kwargs)
 
             if span.is_recording():
-                _handle_call(span, kwargs, response, metric_params)
+                _handle_call(span, kwargs, response, metric_params, span)
 
             return response
 
     return with_instrumentation
-
 
 def _instrumented_model_invoke_with_response_stream(fn, tracer, metric_params):
     @wraps(fn)
@@ -181,20 +217,52 @@ def _instrumented_model_invoke_with_response_stream(fn, tracer, metric_params):
         if context_api.get_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY):
             return fn(*args, **kwargs)
 
-        span = tracer.start_span("bedrock.completion", kind=SpanKind.CLIENT)
-        response = fn(*args, **kwargs)
+        with tracer.start_as_current_span(
+            "bedrock.completion", kind=SpanKind.CLIENT
+        ) as span:
+            response = fn(*args, **kwargs)
 
-        if span.is_recording():
-            _handle_stream_call(span, kwargs, response, metric_params)
+            if span.is_recording():
+                wrapped_response = _get_response_wrapper(
+                    response, metric_params, span, kwargs.get("modelId")
+                )
+                _handle_stream_call(span, kwargs, wrapped_response, metric_params, span)
 
-        return response
+            return wrapped_response
 
     return with_instrumentation
 
+def _get_response_wrapper(response, metric_params, span, model_id):
+    (vendor, model) = model_id.split(".")
+    if vendor == "anthropic":
+        return StreamingWrapper(response["body"], span=span)
+    return response
 
-def _handle_stream_call(span, kwargs, response, metric_params):
+def _emit_amazon_streaming_request_event(span: Span, request_body):
+    """Emit a prompt event for amazon streaming request."""
+    print(
+        f"*** Emitting amazon streaming request event with content: {request_body.get('inputText')}"
+    )  # Added logging
+    attributes = {
+        "messaging.role": "user",
+        "messaging.content": request_body.get("inputText"),
+        "messaging.index": 0,
+    }
+    span.add_event("prompt", attributes=attributes)
+
+def _handle_stream_call(span, kwargs, response, metric_params, current_span):
+    logger.debug("Entering _handle_stream_call")
+    
+    request_body = json.loads(kwargs.get("body"))
+    (vendor, model) = kwargs.get("modelId").split(".")
+
+    if not Config.use_legacy_attributes and vendor == "amazon" and should_send_prompts():
+        logger.debug("Calling _emit_amazon_streaming_request_event for emitting prompt event at the start of stream")
+        _emit_amazon_streaming_request_event(span, request_body)
+
     @dont_throw
     def stream_done(response_body):
+        logger.debug("Entering stream_done callback")
         request_body = json.loads(kwargs.get("body"))
 
         (vendor, model) = kwargs.get("modelId").split(".")
@@ -206,36 +274,30 @@ def _handle_stream_call(span, kwargs, response, metric_params):
         _set_span_attribute(span, SpanAttributes.LLM_SYSTEM, vendor)
         _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, model)
         _set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, model)
+        logger.debug(f"Set LLM_RESPONSE_MODEL: {model}")
 
-        if vendor == "cohere":
-            _set_cohere_span_attributes(
-                span, request_body, response_body, metric_params
-            )
-        elif vendor == "anthropic":
-            if "prompt" in request_body:
-                _set_anthropic_completion_span_attributes(
-                    span, request_body, response_body, metric_params
-                )
-            elif "messages" in request_body:
-                _set_anthropic_messages_span_attributes(
-                    span, request_body, response_body, metric_params
-                )
-        elif vendor == "ai21":
-            _set_ai21_span_attributes(span, request_body, response_body, metric_params)
-        elif vendor == "meta":
-            _set_llama_span_attributes(span, request_body, response_body, metric_params)
-        elif vendor == "amazon":
-            _set_amazon_span_attributes(
-                span, request_body, response_body, metric_params
-            )
+        # Move metric recording and attribute setting here, but DON'T end the span
 
-        span.end()
+    wrapper = StreamingWrapper(
+        response["body"], 
+        stream_done,
+        span=current_span
+    )
+    response["body"] = wrapper
+    
+    # Create an iterator to process all events
+    for event in wrapper:
+        pass
+        
+    # End the span after all events have been processed
+    span.end()
 
-    response["body"] = StreamingWrapper(response["body"], stream_done)
+
 
 
 @dont_throw
-def _handle_call(span, kwargs, response, metric_params):
+def _handle_call(span, kwargs, response, metric_params, current_span):
+    logger.debug("Entering _handle_call")
     response["body"] = ReusableStreamingBody(
         response["body"]._raw_stream, response["body"]._content_length
     )
@@ -251,25 +313,74 @@ def _handle_call(span, kwargs, response, metric_params):
     _set_span_attribute(span, SpanAttributes.LLM_SYSTEM, vendor)
     _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, model)
     _set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, model)
+    logger.debug(f"Set LLM_RESPONSE_MODEL: {model}")
 
-    if vendor == "cohere":
-        _set_cohere_span_attributes(span, request_body, response_body, metric_params)
-    elif vendor == "anthropic":
-        if "prompt" in request_body:
-            _set_anthropic_completion_span_attributes(
-                span, request_body, response_body, metric_params
-            )
-        elif "messages" in request_body:
-            _set_anthropic_messages_span_attributes(
-                span, request_body, response_body, metric_params
-            )
-    elif vendor == "ai21":
-        _set_ai21_span_attributes(span, request_body, response_body, metric_params)
-    elif vendor == "meta":
-        _set_llama_span_attributes(span, request_body, response_body, metric_params)
-    elif vendor == "amazon":
-        _set_amazon_span_attributes(span, request_body, response_body, metric_params)
-
+    if should_send_prompts():
+        if Config.use_legacy_attributes:
+            # Set legacy attributes based on vendor
+            if vendor == "cohere":
+                _set_cohere_span_attributes(span, request_body, response_body, metric_params)
+                logger.debug("Calling _set_cohere_span_attributes")
+            elif vendor == "anthropic":
+                logger.debug("Calling _set_anthropic_completion_span_attributes or _set_anthropic_messages_span_attributes")
+                if "prompt" in request_body:
+                    _set_anthropic_completion_span_attributes(
+                        span, request_body, response_body, metric_params
+                    )
+                elif "messages" in request_body:
+                    _set_anthropic_messages_span_attributes(
+                        span, request_body, response_body, metric_params
+                    )
+            elif vendor == "ai21":
+                _set_ai21_span_attributes(span, request_body, response_body, metric_params)
+            elif vendor == "meta":
+                _set_llama_span_attributes(span, request_body, response_body, metric_params)
+            elif vendor == "amazon":
+                _set_amazon_span_attributes(span, request_body, response_body, metric_params)
+        else:
+            # Emit new events based on vendor.
+            # The vendor specific functions will themselves emit events.
+            if vendor == "cohere":
+                _set_cohere_span_attributes(span, request_body, response_body, metric_params)
+                logger.debug("Calling _set_cohere_span_attributes")
+            elif vendor == "anthropic":
+                logger.debug("Calling _set_anthropic_completion_span_attributes or _set_anthropic_messages_span_attributes")
+                if "prompt" in request_body:
+                    _set_anthropic_completion_span_attributes(
+                        span, request_body, response_body, metric_params
+                    )
+                elif "messages" in request_body:
+                    _set_anthropic_messages_span_attributes(
+                        span, request_body, response_body, metric_params
+                    )
+            elif vendor == "ai21":
+                _set_ai21_span_attributes(span, request_body, response_body, metric_params)
+            elif vendor == "meta":
+                _set_llama_span_attributes(span, request_body, response_body, metric_params)
+            elif vendor == "amazon":
+                _set_amazon_span_attributes(span, request_body, response_body, metric_params)
+    else:
+        # Neither set legacy attributes nor emit events
+        if vendor == "cohere":
+            _set_cohere_span_attributes(span, request_body, response_body, metric_params)
+            logger.debug("Calling _set_cohere_span_attributes")
+        elif vendor == "anthropic":
+            logger.debug("Calling _set_anthropic_completion_span_attributes or _set_anthropic_messages_span_attributes")
+            if "prompt" in request_body:
+                _set_anthropic_completion_span_attributes(
+                    span, request_body, response_body, metric_params
+                )
+            elif "messages" in request_body:
+                _set_anthropic_messages_span_attributes(
+                    span, request_body, response_body, metric_params
+                )
+        elif vendor == "ai21":
+            _set_ai21_span_attributes(span, request_body, response_body, metric_params)
+        elif vendor == "meta":
+            _set_llama_span_attributes(span, request_body, response_body, metric_params)
+        elif vendor == "amazon":
+            _set_amazon_span_attributes(span, request_body, response_body, metric_params)
+    span.end()
 
 def _record_usage_to_span(span, prompt_tokens, completion_tokens, metric_params):
     _set_span_attribute(
@@ -370,21 +481,28 @@ def _set_cohere_span_attributes(span, request_body, response_body, metric_params
         )
 
     if should_send_prompts():
-        _set_span_attribute(
-            span, f"{SpanAttributes.LLM_PROMPTS}.0.user", request_body.get("prompt")
-        )
-
-        for i, generation in enumerate(response_body.get("generations")):
+        if Config.use_legacy_attributes:
             _set_span_attribute(
-                span,
-                f"{SpanAttributes.LLM_COMPLETIONS}.{i}.content",
-                generation.get("text"),
+                span, f"{SpanAttributes.LLM_PROMPTS}.0.content", request_body.get("prompt")
             )
+            _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.0.role", MessageRoleValues.USER)
 
+            for i, generation in enumerate(response_body.get("generations")):
+                _set_span_attribute(
+                    span,
+                    f"{SpanAttributes.LLM_COMPLETIONS}.{i}.content",
+                    generation.get("text"),
+                )
+        else:
+            _emit_prompt_event(span, MessageRoleValues.USER, request_body.get("prompt"), 0) # Emit prompt event
+            for i, generation in enumerate(response_body.get("generations")):
+                _emit_completion_event(span, generation.get("text"), i) # Emit completion event
+    
 
 def _set_anthropic_completion_span_attributes(
     span, request_body, response_body, metric_params
 ):
+    logger.debug("Entering _set_anthropic_completion_span_attributes")
     _set_span_attribute(
         span, SpanAttributes.LLM_REQUEST_TYPE, LLMRequestTypeValues.COMPLETION.value
     )
@@ -427,19 +545,29 @@ def _set_anthropic_completion_span_attributes(
         )
 
     if should_send_prompts():
-        _set_span_attribute(
-            span, f"{SpanAttributes.LLM_PROMPTS}.0.user", request_body.get("prompt")
-        )
-        _set_span_attribute(
-            span,
-            f"{SpanAttributes.LLM_COMPLETIONS}.0.content",
-            response_body.get("completion"),
-        )
+        logger.debug(f"Should send prompts: {Config.use_legacy_attributes}")
+        if Config.use_legacy_attributes: # Check if legacy attributes should be used
+            logger.debug("Setting legacy prompt attributes")
+            _set_span_attribute(
+                span, f"{SpanAttributes.LLM_PROMPTS}.0.content", request_body.get("prompt")
+            )
+            _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.0.role", MessageRoleValues.USER)
+            _set_span_attribute(
+                span,
+                f"{SpanAttributes.LLM_COMPLETIONS}.0.content",
+                response_body.get("completion"),
+            )
+        else: # Emit events if not using legacy attributes
+            logger.debug("Emitting prompt and completion events")
+            _emit_prompt_event(span, MessageRoleValues.USER, request_body.get("prompt"), 0) # Emit prompt event
+            _emit_completion_event(span, response_body.get("completion"), 0) # Emit completion event
+
 
 
 def _set_anthropic_messages_span_attributes(
     span, request_body, response_body, metric_params
 ):
+    logger.debug("Entering _set_anthropic_messages_span_attributes")
     _set_span_attribute(
         span, SpanAttributes.LLM_REQUEST_TYPE, LLMRequestTypeValues.CHAT.value
     )
@@ -487,24 +615,33 @@ def _set_anthropic_messages_span_attributes(
         _record_usage_to_span(span, prompt_tokens, completion_tokens, metric_params)
 
     if should_send_prompts():
-        for idx, message in enumerate(request_body.get("messages")):
+        logger.debug(f"Should send prompts: {Config.use_legacy_attributes}")
+        if Config.use_legacy_attributes: # Check if legacy attributes should be used
+            logger.debug("Setting legacy prompt and completion attributes for chat")
+            for idx, message in enumerate(request_body.get("messages")):
+                _set_span_attribute(
+                    span, f"{SpanAttributes.LLM_PROMPTS}.{idx}.role", message.get("role")
+                )
+                _set_span_attribute(
+                    span,
+                    f"{SpanAttributes.LLM_PROMPTS}.{idx}.content",
+                    json.dumps(message.get("content")),
+                )
+
             _set_span_attribute(
-                span, f"{SpanAttributes.LLM_PROMPTS}.{idx}.role", message.get("role")
+                span, f"{SpanAttributes.LLM_COMPLETIONS}.0.role", MessageRoleValues.ASSISTANT
             )
             _set_span_attribute(
                 span,
-                f"{SpanAttributes.LLM_PROMPTS}.0.content",
-                json.dumps(message.get("content")),
+                f"{SpanAttributes.LLM_COMPLETIONS}.0.content",
+                json.dumps(response_body.get("content")),
             )
+        else: # Emit events if not using legacy attributes
+            logger.debug("Emitting prompt and completion events for chat")
+            for idx, message in enumerate(request_body.get("messages")):
+                _emit_prompt_event(span, message.get("role"), json.dumps(message.get("content")), idx) # Emit prompt event
 
-        _set_span_attribute(
-            span, f"{SpanAttributes.LLM_COMPLETIONS}.0.content", "assistant"
-        )
-        _set_span_attribute(
-            span,
-            f"{SpanAttributes.LLM_COMPLETIONS}.0.content",
-            json.dumps(response_body.get("content")),
-        )
+            _emit_completion_event(span, json.dumps(response_body.get("content")), 0) # Emit completion event
 
 
 def _count_anthropic_tokens(messages: list[str]):
@@ -536,16 +673,22 @@ def _set_ai21_span_attributes(span, request_body, response_body, metric_params):
     )
 
     if should_send_prompts():
-        _set_span_attribute(
-            span, f"{SpanAttributes.LLM_PROMPTS}.0.user", request_body.get("prompt")
-        )
-
-        for i, completion in enumerate(response_body.get("completions")):
+        if Config.use_legacy_attributes: # Check if legacy attributes should be used
             _set_span_attribute(
-                span,
-                f"{SpanAttributes.LLM_COMPLETIONS}.{i}.content",
-                completion.get("data").get("text"),
+                span, f"{SpanAttributes.LLM_PROMPTS}.0.content", request_body.get("prompt")
             )
+            _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.0.role", MessageRoleValues.USER)
+            for i, completion in enumerate(response_body.get("completions")):
+                _set_span_attribute(
+                    span,
+                    f"{SpanAttributes.LLM_COMPLETIONS}.{i}.content",
+                    completion.get("data").get("text"),
+                )
+        else: # Emit events if not using legacy attributes
+            _emit_prompt_event(span, MessageRoleValues.USER, request_body.get("prompt"), 0) # Emit prompt event
+            for i, completion in enumerate(response_body.get("completions")):
+                _emit_completion_event(span, completion.get("data").get("text"), i) # Emit completion event
+
 
 
 def _set_llama_span_attributes(span, request_body, response_body, metric_params):
@@ -570,42 +713,54 @@ def _set_llama_span_attributes(span, request_body, response_body, metric_params)
     )
 
     if should_send_prompts():
-        _set_span_attribute(
-            span, f"{SpanAttributes.LLM_PROMPTS}.0.content", request_body.get("prompt")
-        )
-        _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.0.role", "user")
-
-        if response_body.get("generation"):
+        if Config.use_legacy_attributes: # Check if legacy attributes should be used
             _set_span_attribute(
-                span, f"{SpanAttributes.LLM_COMPLETIONS}.0.role", "assistant"
+                span, f"{SpanAttributes.LLM_PROMPTS}.0.content", request_body.get("prompt")
             )
-            _set_span_attribute(
-                span,
-                f"{SpanAttributes.LLM_COMPLETIONS}.0.content",
-                response_body.get("generation"),
-            )
-        else:
-            for i, generation in enumerate(response_body.get("generations")):
+            _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.0.role", MessageRoleValues.USER)
+            if response_body.get("generation"):
                 _set_span_attribute(
-                    span, f"{SpanAttributes.LLM_COMPLETIONS}.{i}.role", "assistant"
+                    span, f"{SpanAttributes.LLM_COMPLETIONS}.0.role", MessageRoleValues.ASSISTANT.value
                 )
                 _set_span_attribute(
-                    span, f"{SpanAttributes.LLM_COMPLETIONS}.{i}.content", generation
+                    span,
+                    f"{SpanAttributes.LLM_COMPLETIONS}.0.content",
+                    response_body.get("generation"),
                 )
+            else:
+                for i, generation in enumerate(response_body.get("generations")):
+                    _set_span_attribute(
+                        span, f"{SpanAttributes.LLM_COMPLETIONS}.{i}.role", MessageRoleValues.ASSISTANT.value
+                    )
+                    _set_span_attribute(
+                        span, f"{SpanAttributes.LLM_COMPLETIONS}.{i}.content", generation
+                    )
+        else: # Emit events if not using legacy attributes
+            _emit_prompt_event(span, MessageRoleValues.USER, request_body.get("prompt"), 0) # Emit prompt event
+            if response_body.get("generation"):
+                _emit_completion_event(span, response_body.get("generation"), 0) # Emit completion event
+            else:
+                for i, generation in enumerate(response_body.get("generations")):
+                    _emit_completion_event(span, generation, i) # Emit completion event
 
 
 def _set_amazon_span_attributes(span, request_body, response_body, metric_params):
+    print(f"Entering _set_amazon_span_attributes with request body: {request_body}")
     _set_span_attribute(
         span, SpanAttributes.LLM_REQUEST_TYPE, LLMRequestTypeValues.COMPLETION.value
     )
+    print(f"LLM_REQUEST_TYPE set to {LLMRequestTypeValues.COMPLETION.value}")
     config = request_body.get("textGenerationConfig", {})
     _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TOP_P, config.get("topP"))
+    print(f"LLM_REQUEST_TOP_P set to {config.get('topP')}")
     _set_span_attribute(
         span, SpanAttributes.LLM_REQUEST_TEMPERATURE, config.get("temperature")
     )
+    print(f"LLM_REQUEST_TEMPERATURE set to {config.get('temperature')}")
     _set_span_attribute(
         span, SpanAttributes.LLM_REQUEST_MAX_TOKENS, config.get("maxTokenCount")
     )
+    print(f"LLM_REQUEST_MAX_TOKENS set to {config.get('maxTokenCount')}")
 
     _record_usage_to_span(
         span,
@@ -615,16 +770,24 @@ def _set_amazon_span_attributes(span, request_body, response_body, metric_params
     )
 
     if should_send_prompts():
-        _set_span_attribute(
-            span, f"{SpanAttributes.LLM_PROMPTS}.0.user", request_body.get("inputText")
-        )
-
-        for i, result in enumerate(response_body.get("results")):
+        print(f"should_send_prompts: {should_send_prompts}")
+        if Config.use_legacy_attributes: # Check if legacy attributes should be used
+            print(f"Setting legacy attributes for amazon, {Config.use_legacy_attributes}")
             _set_span_attribute(
-                span,
-                f"{SpanAttributes.LLM_COMPLETIONS}.{i}.content",
-                result.get("outputText"),
+                span, f"{SpanAttributes.LLM_PROMPTS}.0.content", request_body.get("inputText")
             )
+            _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.0.role", MessageRoleValues.USER)
+            for i, result in enumerate(response_body.get("results")):
+                _set_span_attribute(
+                    span,
+                    f"{SpanAttributes.LLM_COMPLETIONS}.{i}.content",
+                    result.get("outputText"),
+                )
+        else: # Emit events if not using legacy attributes
+            print("Emitting prompt and completion events for amazon")
+            _emit_prompt_event(span, MessageRoleValues.USER, request_body.get("inputText"), 0) # Emit prompt event
+            for i, result in enumerate(response_body.get("results")):
+                _emit_completion_event(span, result.get("outputText"), i, None) # Emit completion event
 
 
 def _create_metrics(meter: Meter):
@@ -659,11 +822,12 @@ def _create_metrics(meter: Meter):
 class BedrockInstrumentor(BaseInstrumentor):
     """An instrumentor for Bedrock's client library."""
 
-    def __init__(self, enrich_token_usage: bool = False, exception_logger=None):
+    def __init__(self, enrich_token_usage: bool = False, exception_logger=None,use_legacy_attributes=True):
         super().__init__()
         Config.enrich_token_usage = enrich_token_usage
         Config.exception_logger = exception_logger
-
+        Config.use_legacy_attributes = use_legacy_attributes 
+        
     def instrumentation_dependencies(self) -> Collection[str]:
         return _instruments
 

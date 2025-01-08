@@ -10,10 +10,13 @@ from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
 from opentelemetry.semconv_ai import SpanAttributes, LLMRequestTypeValues
 from opentelemetry.instrumentation.llamaindex.utils import (
     _with_tracer_wrapper,
+    _emit_prompt_event,
+    _emit_completion_event,
     dont_throw,
     start_as_current_span_async,
     should_send_prompts,
 )
+from opentelemetry.instrumentation.llamaindex.config import Config
 
 import llama_index.llms
 
@@ -25,7 +28,6 @@ except ModuleNotFoundError:
     from llama_index.llms import CustomLLM
 
     MODULE_NAME = "llama_index.llms"
-
 
 class CustomLLMInstrumentor:
     def __init__(self, tracer):
@@ -64,13 +66,11 @@ class CustomLLMInstrumentor:
     def unistrument(self):
         pass
 
-
 def _set_span_attribute(span, name, value):
     if value is not None:
         if value != "":
             span.set_attribute(name, value)
     return
-
 
 @_with_tracer_wrapper
 def chat_wrapper(tracer, wrapped, instance: CustomLLM, args, kwargs):
@@ -88,7 +88,6 @@ def chat_wrapper(tracer, wrapped, instance: CustomLLM, args, kwargs):
 
         return response
 
-
 @_with_tracer_wrapper
 async def achat_wrapper(tracer, wrapped, instance: CustomLLM, args, kwargs):
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
@@ -104,7 +103,6 @@ async def achat_wrapper(tracer, wrapped, instance: CustomLLM, args, kwargs):
         _handle_response(span, llm_request_type, instance, response)
 
         return response
-
 
 @_with_tracer_wrapper
 def complete_wrapper(tracer, wrapped, instance: CustomLLM, args, kwargs):
@@ -122,7 +120,6 @@ def complete_wrapper(tracer, wrapped, instance: CustomLLM, args, kwargs):
 
         return response
 
-
 @_with_tracer_wrapper
 async def acomplete_wrapper(tracer, wrapped, instance: CustomLLM, args, kwargs):
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
@@ -139,7 +136,6 @@ async def acomplete_wrapper(tracer, wrapped, instance: CustomLLM, args, kwargs):
 
         return response
 
-
 @dont_throw
 def _handle_request(span, llm_request_type, args, kwargs, instance: CustomLLM):
     _set_span_attribute(span, SpanAttributes.LLM_SYSTEM, instance.__class__.__name__)
@@ -155,18 +151,38 @@ def _handle_request(span, llm_request_type, args, kwargs, instance: CustomLLM):
     )
 
     if should_send_prompts():
-        # TODO: add support for chat
         if llm_request_type == LLMRequestTypeValues.COMPLETION:
-            if len(args) > 0:
-                prompt = args[0]
-                _set_span_attribute(
-                    span,
-                    f"{SpanAttributes.LLM_PROMPTS}.0.user",
-                    prompt[0] if isinstance(prompt, list) else prompt,
-                )
-
-    return
-
+            if Config.use_legacy_attributes:
+                if len(args) > 0:
+                    prompt = args[0]
+                    _set_span_attribute(
+                        span,
+                        f"{SpanAttributes.LLM_PROMPTS}.0.user",
+                        prompt[0] if isinstance(prompt, list) else prompt,
+                    )
+            else:
+                if len(args) > 0:
+                    prompt = args[0]
+                    content = prompt[0] if isinstance(prompt, list) else prompt
+                    _emit_prompt_event(span, "user", content, 0)
+        elif llm_request_type == LLMRequestTypeValues.CHAT:
+            if Config.use_legacy_attributes:
+                messages = kwargs["messages"]
+                for idx, message in enumerate(messages):
+                    _set_span_attribute(
+                        span, f"{SpanAttributes.LLM_PROMPTS}.{idx}.role", message.role.value
+                    )
+                    _set_span_attribute(
+                        span,
+                        f"{SpanAttributes.LLM_PROMPTS}.{idx}.content",
+                        message.content,
+                    )
+            else:
+                messages = kwargs["messages"]
+                for idx, message in enumerate(messages):
+                    _emit_prompt_event(
+                        span, message.role.value, message.content, idx
+                    )
 
 @dont_throw
 def _handle_response(span, llm_request_type, instance, response):
@@ -176,12 +192,26 @@ def _handle_response(span, llm_request_type, instance, response):
 
     if should_send_prompts():
         if llm_request_type == LLMRequestTypeValues.COMPLETION:
-            _set_span_attribute(
-                span, f"{SpanAttributes.LLM_COMPLETIONS}.0.content", response.text
-            )
-
-    return
-
+            if Config.use_legacy_attributes:
+                _set_span_attribute(
+                    span, f"{SpanAttributes.LLM_COMPLETIONS}.0.content", response.text
+                )
+            else:
+                _emit_completion_event(span, response.text, 0)
+        elif llm_request_type == LLMRequestTypeValues.CHAT:
+            if Config.use_legacy_attributes:
+                _set_span_attribute(
+                    span,
+                    f"{SpanAttributes.LLM_COMPLETIONS}.0.role",
+                    response.message.role.value,
+                )
+                _set_span_attribute(
+                    span,
+                    f"{SpanAttributes.LLM_COMPLETIONS}.0.content",
+                    response.message.content,
+                )
+            else:
+                _emit_completion_event(span, response.message.content, 0)
 
 def snake_case_class_name(instance):
     return underscore(instance.__class__.__name__)

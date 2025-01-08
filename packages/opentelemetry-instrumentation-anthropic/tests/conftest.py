@@ -1,7 +1,7 @@
 """Unit tests configuration module."""
 
 import os
-
+import anthropic
 import pytest
 from opentelemetry import metrics, trace
 from opentelemetry.instrumentation.anthropic import AnthropicInstrumentor
@@ -79,3 +79,16 @@ def environment():
 @pytest.fixture(scope="module")
 def vcr_config():
     return {"filter_headers": ["x-api-key"]}
+
+@pytest.fixture(scope="session")
+def anthropic_exporter(exporter):
+    return exporter
+
+
+@pytest.fixture(scope="session")
+def anthropic_client():
+   
+    api_key = os.environ.get("ANTHROPIC_API_KEY")
+    if not api_key:
+        raise ValueError("ANTHROPIC_API_KEY environment variable not set for tests.")
+    return anthropic.Anthropic()

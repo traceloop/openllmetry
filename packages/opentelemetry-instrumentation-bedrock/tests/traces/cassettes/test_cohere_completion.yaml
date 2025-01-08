@@ -1,0 +1,49 @@
+interactions:
+- request:
+    body: '{"prompt": "Tell me a joke about opentelemetry", "max_tokens": 200, "temperature":
+      0.5, "p": 0.5}'
+    headers:
+      Accept:
+      - !!binary |
+        YXBwbGljYXRpb24vanNvbg==
+      Content-Length:
+      - '97'
+      Content-Type:
+      - !!binary |
+        YXBwbGljYXRpb24vanNvbg==
+      User-Agent:
+      - !!binary |
+        Qm90bzMvMS4zNS45MiBtZC9Cb3RvY29yZSMxLjM1LjkyIHVhLzIuMCBvcy9saW51eCM2LjguMC01
+        MC1nZW5lcmljIG1kL2FyY2gjeDg2XzY0IGxhbmcvcHl0aG9uIzMuMTAuMTIgbWQvcHlpbXBsI0NQ
+        eXRob24gY2ZnL3JldHJ5LW1vZGUjbGVnYWN5IEJvdG9jb3JlLzEuMzUuOTI=
+      X-Amz-Date:
+      - !!binary |
+        MjAyNTAxMDZUMTkyNjAxWg==
+      amz-sdk-invocation-id:
+      - !!binary |
+        MDdkMTliNmItYzNjYi00MmMxLWE4YjYtYTg3ODQ4ZTEwNjNm
+      amz-sdk-request:
+      - !!binary |
+        YXR0ZW1wdD0x
+    method: POST
+    uri: https://bedrock-runtime.ap-south-1.amazonaws.com/model/cohere.command-text-v14/invoke
+  response:
+    body:
+      string: '{"message":"The provided model identifier is invalid."}'
+    headers:
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '55'
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 06 Jan 2025 19:26:01 GMT
+      x-amzn-ErrorType:
+      - ValidationException:http://internal.amazon.com/coral/com.amazon.bedrock/
+      x-amzn-RequestId:
+      - 4421ad36-3413-4d50-bd82-0501fef5e5e0
+    status:
+      code: 400
+      message: Bad Request
+version: 1

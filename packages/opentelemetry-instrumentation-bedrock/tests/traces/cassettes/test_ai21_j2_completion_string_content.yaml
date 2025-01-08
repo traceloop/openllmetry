@@ -1,0 +1,50 @@
+interactions:
+- request:
+    body: '{"prompt": "Translate to spanish: ''Amazon Bedrock is the easiest way to
+      build andscale generative AI applications with base models (FMs)''.", "maxTokens":
+      200, "temperature": 0.5, "topP": 0.5}'
+    headers:
+      Accept:
+      - !!binary |
+        YXBwbGljYXRpb24vanNvbg==
+      Content-Length:
+      - '191'
+      Content-Type:
+      - !!binary |
+        YXBwbGljYXRpb24vanNvbg==
+      User-Agent:
+      - !!binary |
+        Qm90bzMvMS4zNS45MiBtZC9Cb3RvY29yZSMxLjM1LjkyIHVhLzIuMCBvcy9saW51eCM2LjguMC01
+        MC1nZW5lcmljIG1kL2FyY2gjeDg2XzY0IGxhbmcvcHl0aG9uIzMuMTAuMTIgbWQvcHlpbXBsI0NQ
+        eXRob24gY2ZnL3JldHJ5LW1vZGUjbGVnYWN5IEJvdG9jb3JlLzEuMzUuOTI=
+      X-Amz-Date:
+      - !!binary |
+        MjAyNTAxMDZUMTkyNjAwWg==
+      amz-sdk-invocation-id:
+      - !!binary |
+        ZDg2YWJlMzctODJhNC00NjhmLWIzYTctYzY0YjgxZDY4MTA1
+      amz-sdk-request:
+      - !!binary |
+        YXR0ZW1wdD0x
+    method: POST
+    uri: https://bedrock-runtime.ap-south-1.amazonaws.com/model/ai21.j2-mid-v1/invoke
+  response:
+    body:
+      string: '{"message":"The provided model identifier is invalid."}'
+    headers:
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '55'
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 06 Jan 2025 19:26:00 GMT
+      x-amzn-ErrorType:
+      - ValidationException:http://internal.amazon.com/coral/com.amazon.bedrock/
+      x-amzn-RequestId:
+      - d7db24fd-fea8-4f6f-a627-80c72d81418d
+    status:
+      code: 400
+      message: Bad Request
+version: 1

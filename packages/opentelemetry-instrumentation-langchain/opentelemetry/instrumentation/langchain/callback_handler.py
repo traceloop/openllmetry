@@ -21,8 +21,11 @@ from opentelemetry.trace import SpanKind, set_span_in_context, Tracer
 from opentelemetry.trace.span import Span
 
 from opentelemetry import context as context_api
+# Add new imports:
+from opentelemetry.instrumentation.langchain.config import Config
 from opentelemetry.instrumentation.langchain.utils import (
     CallbackFilteredJSONEncoder,
+   
     dont_throw,
     should_send_prompts,
 )
@@ -51,7 +54,25 @@ def _message_type_to_role(message_type: str) -> str:
         return "assistant"
     else:
         return "unknown"
+    
 
+# Add new function:
+def _emit_prompt_event(span: Span, role: str, content: str, index: int):
+    """Emit a prompt event following the new semantic conventions."""
+    attributes = {
+        "messaging.role": role,
+        "messaging.content": content,
+        "messaging.index": index,
+    }
+    span.add_event("llm.prompt", attributes=attributes)
+    
+def emit_completion_event(span: Span, content: str, index: int):
+    """Emit a completion event following the new semantic conventions."""
+    attributes = {
+        "messaging.content": content,
+        "messaging.index": index,
+    }
+    span.add_event("llm.completion", attributes=attributes)
 
 def _set_span_attribute(span, name, value):
     if value is not None:
@@ -93,6 +114,7 @@ def _set_request_params(span, kwargs, span_holder: SpanHolder):
     _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TOP_P, params.get("top_p"))
 
 
+# Modify _set_llm_request function:
 def _set_llm_request(
     span: Span,
     serialized: dict[str, Any],
@@ -103,17 +125,21 @@ def _set_llm_request(
     _set_request_params(span, kwargs, span_holder)
 
     if should_send_prompts():
-        for i, msg in enumerate(prompts):
-            span.set_attribute(
-                f"{SpanAttributes.LLM_PROMPTS}.{i}.role",
-                "user",
-            )
-            span.set_attribute(
-                f"{SpanAttributes.LLM_PROMPTS}.{i}.content",
-                msg,
-            )
+        if Config.use_legacy_attributes:
+            for i, msg in enumerate(prompts):
+                span.set_attribute(
+                    f"{SpanAttributes.LLM_PROMPTS}.{i}.role",
+                    "user",
+                )
+                span.set_attribute(
+                    f"{SpanAttributes.LLM_PROMPTS}.{i}.content",
+                    msg,
+                )
+        else:
+            for i, msg in enumerate(prompts):
+                _emit_prompt_event(span, "user", msg.replace("\n", "\\n"), i)
 
-
+# Modify _set_chat_request function:
 def _set_chat_request(
     span: Span,
     serialized: dict[str, Any],
@@ -124,43 +150,73 @@ def _set_chat_request(
     _set_request_params(span, serialized.get("kwargs", {}), span_holder)
 
     if should_send_prompts():
-        for i, function in enumerate(
-            kwargs.get("invocation_params", {}).get("functions", [])
-        ):
-            prefix = f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.{i}"
+        if Config.use_legacy_attributes:
+            for i, function in enumerate(
+                kwargs.get("invocation_params", {}).get("functions", [])
+            ):
+                prefix = f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.{i}"
 
-            _set_span_attribute(span, f"{prefix}.name", function.get("name"))
-            _set_span_attribute(
-                span, f"{prefix}.description", function.get("description")
-            )
-            _set_span_attribute(
-                span, f"{prefix}.parameters", json.dumps(function.get("parameters"))
-            )
-
-        i = 0
-        for message in messages:
-            for msg in message:
-                span.set_attribute(
-                    f"{SpanAttributes.LLM_PROMPTS}.{i}.role",
-                    _message_type_to_role(msg.type),
+                _set_span_attribute(span, f"{prefix}.name", function.get("name"))
+                _set_span_attribute(
+                    span, f"{prefix}.description", function.get("description")
                 )
-                # if msg.content is string
-                if isinstance(msg.content, str):
-                    span.set_attribute(
-                        f"{SpanAttributes.LLM_PROMPTS}.{i}.content",
-                        msg.content,
-                    )
-                else:
-                    span.set_attribute(
-                        f"{SpanAttributes.LLM_PROMPTS}.{i}.content",
-                        json.dumps(msg.content, cls=CallbackFilteredJSONEncoder),
-                    )
-                i += 1
+                _set_span_attribute(
+                    span, f"{prefix}.parameters", json.dumps(function.get("parameters"))
+                )
 
-
+            i = 0
+            for message in messages:
+                for msg in message:
+                    span.set_attribute(
+                        f"{SpanAttributes.LLM_PROMPTS}.{i}.role",
+                        _message_type_to_role(msg.type),
+                    )
+                    # if msg.content is string
+                    if isinstance(msg.content, str):
+                        span.set_attribute(
+                            f"{SpanAttributes.LLM_PROMPTS}.{i}.content",
+                            msg.content,
+                        )
+                    else:
+                        span.set_attribute(
+                            f"{SpanAttributes.LLM_PROMPTS}.{i}.content",
+                            json.dumps(msg.content, cls=CallbackFilteredJSONEncoder),
+                        )
+                    i += 1
+        else:
+            i = 0
+            for message in messages:
+                for msg in message:
+                    _emit_prompt_event(
+                        span, _message_type_to_role(msg.type), msg.content, i
+                    )
+                    i += 1
+                    
+                    
+# Modify _set_chat_response function:
 def _set_chat_response(span: Span, response: LLMResult) -> None:
     if not should_send_prompts():
         return
+
+    if Config.use_legacy_attributes:
+        i = 0
+        for generations in response.generations:
+            for generation in generations:
+                prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{i}"
+                if hasattr(generation, "text") and generation.text != "":
+                    span.set_attribute(
+                        f"{prefix}.content",
+                        generation.text,
+                    )
+                    span.set_attribute(f"{prefix}.role", "assistant")
+                i += 1
+    else:
+        i = 0
+        for generations in response.generations:
+            for generation in generations:
+                if hasattr(generation, "text") and generation.text != "":
+                    emit_completion_event(span, generation.text.replace("\n", "\\n"), i)
+                i += 1
 
     input_tokens = 0
     output_tokens = 0
@@ -187,18 +243,12 @@ def _set_chat_response(span: Span, response: LLMResult) -> None:
                 total_tokens = input_tokens + output_tokens
 
             prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{i}"
-            if hasattr(generation, "text") and generation.text != "":
-                span.set_attribute(
-                    f"{prefix}.content",
-                    generation.text,
-                )
-                span.set_attribute(f"{prefix}.role", "assistant")
-            else:
+            if Config.use_legacy_attributes:
                 span.set_attribute(
                     f"{prefix}.role",
-                    _message_type_to_role(generation.type),
+                    _message_type_to_role(generation.message.type),
                 )
-                if generation.message.content is str:
+                if isinstance(generation.message.content, str):
                     span.set_attribute(
                         f"{prefix}.content",
                         generation.message.content,
@@ -210,7 +260,10 @@ def _set_chat_response(span: Span, response: LLMResult) -> None:
                             generation.message.content, cls=CallbackFilteredJSONEncoder
                         ),
                     )
-                if generation.generation_info.get("finish_reason"):
+
+                if generation.generation_info is not None and generation.generation_info.get(
+                    "finish_reason"
+                ):
                     span.set_attribute(
                         f"{prefix}.finish_reason",
                         generation.generation_info.get("finish_reason"),
@@ -231,29 +284,35 @@ def _set_chat_response(span: Span, response: LLMResult) -> None:
                     )
 
                 if generation.message.additional_kwargs.get("tool_calls"):
-                    for idx, tool_call in enumerate(generation.message.additional_kwargs.get("tool_calls")):
+                    for idx, tool_call in enumerate(
+                        generation.message.additional_kwargs.get("tool_calls")
+                    ):
                         tool_call_prefix = f"{prefix}.tool_calls.{idx}"
+                        span.set_attribute(
+                            f"{tool_call_prefix}.id", tool_call.get("id")
+                        )
+                        span.set_attribute(
+                            f"{tool_call_prefix}.type", tool_call.get("type")
+                        )
+                        span.set_attribute(
+                            f"{tool_call_prefix}.name", tool_call.get("function").get("name")
+                        )
+                        span.set_attribute(
+                            f"{tool_call_prefix}.arguments",
+                            tool_call.get("function").get("arguments"),
+                        )
+                i += 1
 
-                        span.set_attribute(f"{tool_call_prefix}.id", tool_call.get("id"))
-                        span.set_attribute(f"{tool_call_prefix}.name", tool_call.get("function").get("name"))
-                        span.set_attribute(f"{tool_call_prefix}.arguments", tool_call.get("function").get("arguments"))
-            i += 1
-
-    if input_tokens > 0 or output_tokens > 0 or total_tokens > 0:
-        span.set_attribute(
-            SpanAttributes.LLM_USAGE_PROMPT_TOKENS,
-            input_tokens,
-        )
-        span.set_attribute(
-            SpanAttributes.LLM_USAGE_COMPLETION_TOKENS,
-            output_tokens,
-        )
-        span.set_attribute(
-            SpanAttributes.LLM_USAGE_TOTAL_TOKENS,
-            total_tokens,
-        )
-
-
+            else:
+                if hasattr(generation, "text") and generation.text != "":
+                    # Redundant span attribute, kept for consistency but should be reviewed
+                    span.set_attribute(
+                        f"{prefix}.content",
+                        generation.text,
+                    )
+                    emit_completion_event(span, generation.text.replace("\n", "\\n"), i)
+                i += 1
+                
 class TraceloopCallbackHandler(BaseCallbackHandler):
     def __init__(
         self, tracer: Tracer, duration_histogram: Histogram, token_histogram: Histogram
@@ -600,6 +659,19 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
                         SpanAttributes.LLM_RESPONSE_MODEL: model_name or "unknown",
                     },
                 )
+        # Only set the response if it's a chat model, for LLMs the "completion" event is used
+        _set_chat_response(span, response)
+        self._end_span(span, run_id)
+
+        # Record duration
+        duration = time.time() - self.spans[run_id].start_time
+        self.duration_histogram.record(
+            duration,
+            attributes={
+                SpanAttributes.LLM_SYSTEM: "Langchain",
+                SpanAttributes.LLM_RESPONSE_MODEL: model_name or "unknown",
+            },
+        )
 
         _set_chat_response(span, response)
         self._end_span(span, run_id)

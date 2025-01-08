@@ -1,6 +1,6 @@
 import logging
 import time
-
+from typing import Optional
 from opentelemetry.instrumentation.anthropic.config import Config
 from opentelemetry.instrumentation.anthropic.utils import (
     dont_throw,

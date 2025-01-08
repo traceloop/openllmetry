@@ -32,9 +32,15 @@ _instruments = ("langchain >= 0.0.346", "langchain-core > 0.1.0")
 class LangchainInstrumentor(BaseInstrumentor):
     """An instrumentor for Langchain SDK."""
 
-    def __init__(self, exception_logger=None, disable_trace_context_propagation=False):
+    def __init__(
+         self,
+         exception_logger=None,
+         disable_trace_context_propagation=False,
+         use_legacy_attributes=True,
+     ):
         super().__init__()
         Config.exception_logger = exception_logger
+        Config.use_legacy_attributes = use_legacy_attributes
         self.disable_trace_context_propagation = disable_trace_context_propagation
 
     def instrumentation_dependencies(self) -> Collection[str]:

@@ -23,7 +23,7 @@ from opentelemetry.instrumentation.anthropic.utils import (
     set_span_attribute,
     shared_metrics_attributes,
     should_send_prompts,
-    MessageRoleValues,
+  
 )
 from opentelemetry.instrumentation.anthropic.version import __version__
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
@@ -44,6 +44,12 @@ from opentelemetry.util.types import Attributes
 logger = logging.getLogger(__name__)
 
 _instruments = ("anthropic >= 0.3.11",)
+
+class MessageRoleValues:
+    """Recommended message role values."""
+
+    SYSTEM = "system"
+    USER = "user"
 
 WRAPPED_METHODS = [
     {

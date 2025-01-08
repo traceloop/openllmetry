@@ -44,9 +44,11 @@ _instruments = ("llama-index >= 0.7.0",)
 class LlamaIndexInstrumentor(BaseInstrumentor):
     """An instrumentor for LlamaIndex SDK."""
 
-    def __init__(self, exception_logger=None):
+    
+    def __init__(self, exception_logger=None, use_legacy_attributes=True):
         super().__init__()
         Config.exception_logger = exception_logger
+        Config.use_legacy_attributes = use_legacy_attributes
 
     def instrumentation_dependencies(self) -> Collection[str]:
         return _instruments
