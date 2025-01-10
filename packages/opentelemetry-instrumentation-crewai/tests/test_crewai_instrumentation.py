@@ -1,10 +1,10 @@
 import pytest
 from opentelemetry.instrumentation.crewai import CrewAIInstrumentor
-from opentelemetry.test_utils import InstrumentationTest
 from crewai import Agent, Task, Crew
 from unittest.mock import MagicMock
+from opentelemetry.trace.status import StatusCode
 
-class TestCrewAIInstrumentation(InstrumentationTest):
+class TestCrewAIInstrumentation():
     def setUp(self):
         super().setUp()
         self.instrumentation = CrewAIInstrumentor()
