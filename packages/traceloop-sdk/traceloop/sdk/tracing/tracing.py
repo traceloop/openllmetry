@@ -997,7 +997,7 @@ def init_groq_instrumentor():
         logging.error(f"Error initializing Groq instrumentor: {e}")
         Telemetry().log_exception(e)
         return False
-    
+
 
 def init_crewai_instrumentor():
     try:
