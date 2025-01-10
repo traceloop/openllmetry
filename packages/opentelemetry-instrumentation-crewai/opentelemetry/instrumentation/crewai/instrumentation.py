@@ -5,16 +5,15 @@ from opentelemetry.trace import SpanKind, get_tracer
 from opentelemetry.trace.status import Status, StatusCode
 from opentelemetry.instrumentation.crewai.version import __version__
 from opentelemetry.semconv_ai import SpanAttributes, TraceloopSpanKindValues
-from .crewai_span_attributes import CrewAISpanAttributes,set_span_attribute
+from .crewai_span_attributes import CrewAISpanAttributes, set_span_attribute
 
 _instruments = ("crewai >= 0.70.0",)
 
-class CrewAIInstrumentor(BaseInstrumentor):
 
+class CrewAIInstrumentor(BaseInstrumentor):
 
     def instrumentation_dependencies(self) -> Collection[str]:
         return _instruments
-
 
     def _instrument(self, **kwargs):
         tracer_provider = kwargs.get("tracer_provider")
@@ -24,9 +23,10 @@ class CrewAIInstrumentor(BaseInstrumentor):
         wrap_function_wrapper("crewai.agent", "Agent.execute_task", wrap_agent_execute_task(tracer))
         wrap_function_wrapper("crewai.task", "Task.execute_sync", wrap_task_execute(tracer))
         wrap_function_wrapper("crewai.llm", "LLM.call", wrap_llm_call(tracer))
-    
+
     def _uninstrument(self, **kwargs):
         pass
+
 
 def with_tracer_wrapper(func):
     """Helper for providing tracer for wrapper functions."""
@@ -56,7 +56,7 @@ def wrap_kickoff(tracer, wrapped, instance, args, kwargs):
                 if class_name == "Crew":
                     for attr in ["tasks_output", "token_usage", "usage_metrics"]:
                         if hasattr(result, attr):
-                            span.set_attribute(f"crewai.crew.{attr}", str(getattr(result, attr))) 
+                            span.set_attribute(f"crewai.crew.{attr}", str(getattr(result, attr)))
             return result
         except Exception as ex:
             span.set_status(Status(StatusCode.ERROR, str(ex)))
@@ -76,14 +76,14 @@ def wrap_agent_execute_task(tracer, wrapped, instance, args, kwargs):
         try:
             CrewAISpanAttributes(span=span, instance=instance)
             result = wrapped(*args, **kwargs)
-            set_span_attribute(span,SpanAttributes.LLM_REQUEST_MODEL, str(instance.llm.model))
+            set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, str(instance.llm.model))
             span.set_status(Status(StatusCode.OK))
             return result
         except Exception as ex:
             span.set_status(Status(StatusCode.ERROR, str(ex)))
-            raise 
-      
-        
+            raise
+
+
 @with_tracer_wrapper
 def wrap_task_execute(tracer, wrapped, instance, args, kwargs):
     task_name = instance.description if hasattr(instance, "description") else "task"
@@ -98,12 +98,12 @@ def wrap_task_execute(tracer, wrapped, instance, args, kwargs):
         try:
             CrewAISpanAttributes(span=span, instance=instance)
             result = wrapped(*args, **kwargs)
-            set_span_attribute(span,SpanAttributes.TRACELOOP_ENTITY_OUTPUT, str(result))
+            set_span_attribute(span, SpanAttributes.TRACELOOP_ENTITY_OUTPUT, str(result))
             span.set_status(Status(StatusCode.OK))
             return result
         except Exception as ex:
             span.set_status(Status(StatusCode.ERROR, str(ex)))
-            raise 
+            raise
 
 
 @with_tracer_wrapper
@@ -118,11 +118,10 @@ def wrap_llm_call(tracer, wrapped, instance, args, kwargs):
         try:
             CrewAISpanAttributes(span=span, instance=instance)
             result = wrapped(*args, **kwargs)
-            set_span_attribute(span,SpanAttributes.LLM_SYSTEM, "crewai")
-            set_span_attribute(span,SpanAttributes.LLM_REQUEST_MODEL, str(instance.model))
+            set_span_attribute(span, SpanAttributes.LLM_SYSTEM, "crewai")
+            set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, str(instance.model))
             span.set_status(Status(StatusCode.OK))
             return result
         except Exception as ex:
             span.set_status(Status(StatusCode.ERROR, str(ex)))
             raise
-        

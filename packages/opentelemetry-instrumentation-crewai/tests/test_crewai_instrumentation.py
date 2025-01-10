@@ -4,6 +4,7 @@ from crewai import Agent, Task, Crew
 from unittest.mock import MagicMock
 from opentelemetry.trace.status import StatusCode
 
+
 class TestCrewAIInstrumentation():
     def setUp(self):
         super().setUp()
@@ -78,4 +79,4 @@ class TestCrewAIInstrumentation():
             crew.kickoff()
 
         spans = self.memory_exporter.get_finished_spans()
-        assert spans[-1].status.status_code == StatusCode.ERROR 
+        assert spans[-1].status.status_code == StatusCode.ERROR

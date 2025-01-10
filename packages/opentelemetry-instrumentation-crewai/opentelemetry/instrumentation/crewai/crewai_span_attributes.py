@@ -1,14 +1,14 @@
 from opentelemetry.trace import Span
 import json
-import os
-from opentelemetry.semconv_ai import SpanAttributes
+
 
 def set_span_attribute(span: Span, name, value):
     if value is not None:
         if value != "":
             span.set_attribute(name, value)
     return
-    
+
+
 class CrewAISpanAttributes:
     def __init__(self, span: Span, instance) -> None:
         self.span = span
@@ -42,7 +42,7 @@ class CrewAISpanAttributes:
         task_data = self._populate_task_attributes()
         for key, value in task_data.items():
             self._set_attribute(f"crewai.task.{key}", value)
-            
+
     def _process_llm(self):
         llm_data = self._populate_llm_attributes()
         for key, value in llm_data.items():
@@ -72,7 +72,7 @@ class CrewAISpanAttributes:
 
     def _populate_llm_attributes(self):
         return self._extract_attributes(self.instance)
-    
+
     def _parse_agents(self, agents):
         self.crew["agents"] = [
             self._extract_agent_data(agent) for agent in agents if agent is not None
@@ -102,19 +102,17 @@ class CrewAISpanAttributes:
                 "n": llm.n,
                 "seed": llm.seed,
                 "base_url": llm.base_url,
-                "api_version": llm.api_version,
-                
-            }
+                "api_version": llm.api_version, }
             for llm in llms
         ]
-    
+
     def _extract_agent_data(self, agent):
         model = (
             getattr(agent.llm, "model", None)
             or getattr(agent.llm, "model_name", None)
             or ""
         )
-        
+
         return {
             "id": str(agent.id),
             "role": agent.role,
@@ -126,9 +124,7 @@ class CrewAISpanAttributes:
             "allow_delegation": agent.allow_delegation,
             "tools": agent.tools,
             "max_iter": agent.max_iter,
-            "llm": str(model),
-                
-        }
+            "llm": str(model), }
 
     def _extract_attributes(self, obj):
         attributes = {}
@@ -152,4 +148,3 @@ class CrewAISpanAttributes:
     def _set_attribute(self, key, value):
         if value:
             set_span_attribute(self.span, key, str(value) if isinstance(value, list) else value)
-   
