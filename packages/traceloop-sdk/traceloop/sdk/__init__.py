@@ -63,6 +63,7 @@ class Traceloop:
         instruments: Optional[Set[Instruments]] = None,
         block_instruments: Optional[Set[Instruments]] = None,
         image_uploader: Optional[ImageUploader] = None,
+        use_legacy_attributes: bool = True,
     ) -> None:
         if not enabled:
             TracerWrapper.set_disabled(True)
@@ -145,7 +146,7 @@ class Traceloop:
         # Tracer init
         resource_attributes.update({SERVICE_NAME: app_name})
         TracerWrapper.set_static_params(
-            resource_attributes, enable_content_tracing, api_endpoint, headers
+            resource_attributes, enable_content_tracing, api_endpoint, headers, use_legacy_attributes=use_legacy_attributes
         )
         Traceloop.__tracer_wrapper = TracerWrapper(
             disable_batch=disable_batch,
@@ -169,7 +170,7 @@ class Traceloop:
                 print(Fore.GREEN + "Traceloop exporting metrics to a custom exporter")
 
             MetricsWrapper.set_static_params(
-                resource_attributes, metrics_endpoint, metrics_headers
+                resource_attributes, metrics_endpoint, metrics_headers, use_legacy_attributes=use_legacy_attributes
             )
             Traceloop.__metrics_wrapper = MetricsWrapper(exporter=metrics_exporter)
 
@@ -182,7 +183,7 @@ class Traceloop:
                 print(Fore.GREEN + "Traceloop exporting logs to a custom exporter")
 
             LoggerWrapper.set_static_params(
-                resource_attributes, logging_endpoint, logging_headers
+                resource_attributes, logging_endpoint, logging_headers,use_legacy_attributes=use_legacy_attributes
             )
             Traceloop.__logger_wrapper = LoggerWrapper(exporter=logging_exporter)
 

@@ -1,5 +1,3 @@
-"""OpenTelemetry Aleph Alpha instrumentation"""
-
 import logging
 import os
 from typing import Collection
@@ -42,38 +40,43 @@ def should_send_prompts():
     ).lower() == "true" or context_api.get_value("override_enable_content_tracing")
 
 
-def _set_span_attribute(span, name, value):
-    if value is not None:
-        if value != "":
+def _set_span_attribute(span, name, value, use_legacy_attributes):
+    if value is not None and value != "":
+        if use_legacy_attributes:
             span.set_attribute(name, value)
+        else:
+            # Emit event instead of attributes for non-legacy behavior
+            span.add_event(name, {"value": value})
     return
 
 
 @dont_throw
-def _set_input_attributes(span, llm_request_type, args, kwargs):
-    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, kwargs.get("model"))
+def _set_input_attributes(span, llm_request_type, args, kwargs, use_legacy_attributes):
+    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, kwargs.get("model"), use_legacy_attributes)
 
     if should_send_prompts():
         if llm_request_type == LLMRequestTypeValues.COMPLETION:
-            _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.0.role", "user")
+            _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.0.role", "user", use_legacy_attributes)
             _set_span_attribute(
                 span,
                 f"{SpanAttributes.LLM_PROMPTS}.0.content",
                 args[0].prompt.items[0].text,
+                use_legacy_attributes,
             )
 
 
 @dont_throw
-def _set_response_attributes(span, llm_request_type, response):
+def _set_response_attributes(span, llm_request_type, response, use_legacy_attributes):
     if should_send_prompts():
         if llm_request_type == LLMRequestTypeValues.COMPLETION:
             _set_span_attribute(
                 span,
                 f"{SpanAttributes.LLM_COMPLETIONS}.0.content",
                 response.completions[0].completion,
+                use_legacy_attributes,
             )
             _set_span_attribute(
-                span, f"{SpanAttributes.LLM_COMPLETIONS}.0.role", "assistant"
+                span, f"{SpanAttributes.LLM_COMPLETIONS}.0.role", "assistant", use_legacy_attributes
             )
 
     input_tokens = getattr(response, "num_tokens_prompt_total", 0)
@@ -83,16 +86,19 @@ def _set_response_attributes(span, llm_request_type, response):
         span,
         SpanAttributes.LLM_USAGE_TOTAL_TOKENS,
         input_tokens + output_tokens,
+        use_legacy_attributes,
     )
     _set_span_attribute(
         span,
         SpanAttributes.LLM_USAGE_COMPLETION_TOKENS,
         output_tokens,
+        use_legacy_attributes,
     )
     _set_span_attribute(
         span,
         SpanAttributes.LLM_USAGE_PROMPT_TOKENS,
         input_tokens,
+        use_legacy_attributes,
     )
 
 
@@ -116,7 +122,7 @@ def _llm_request_type_by_method(method_name):
 
 
 @_with_tracer_wrapper
-def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
+def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs, use_legacy_attributes):
     """Instruments and calls every function defined in TO_WRAP."""
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY) or context_api.get_value(
         SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY
@@ -134,14 +140,13 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
         },
     )
     if span.is_recording():
-        _set_input_attributes(span, llm_request_type, args, kwargs)
+        _set_input_attributes(span, llm_request_type, args, kwargs, use_legacy_attributes)
 
     response = wrapped(*args, **kwargs)
 
     if response:
         if span.is_recording():
-
-            _set_response_attributes(span, llm_request_type, response)
+            _set_response_attributes(span, llm_request_type, response, use_legacy_attributes)
             span.set_status(Status(StatusCode.OK))
 
     span.end()
@@ -151,9 +156,10 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
 class AlephAlphaInstrumentor(BaseInstrumentor):
     """An instrumentor for Aleph Alpha's client library."""
 
-    def __init__(self, exception_logger=None):
+    def __init__(self, exception_logger=None, use_legacy_attributes=True):
         super().__init__()
         Config.exception_logger = exception_logger
+        self.use_legacy_attributes = use_legacy_attributes
 
     def instrumentation_dependencies(self) -> Collection[str]:
         return _instruments
@@ -166,7 +172,7 @@ class AlephAlphaInstrumentor(BaseInstrumentor):
             wrap_function_wrapper(
                 "aleph_alpha_client",
                 f"Client.{wrap_method}",
-                _wrap(tracer, wrapped_method),
+                _wrap(tracer, wrapped_method, use_legacy_attributes=self.use_legacy_attributes),
             )
 
     def _uninstrument(self, **kwargs):
