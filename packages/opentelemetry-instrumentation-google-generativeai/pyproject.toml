@@ -37,7 +37,7 @@ pytest-sugar = "1.0.0"
 vcrpy = "^6.0.1"
 pytest-recording = "^0.13.1"
 opentelemetry-sdk = "^1.27.0"
-google-generativeai = "^0.6.0"
+google-generativeai = "^0.8.3"
 
 [build-system]
 requires = ["poetry-core"]
