@@ -68,7 +68,17 @@ def joke_workflow():
     eng_joke = create_joke()
     pirate_joke = translate_joke_to_pirate(eng_joke)
     signature = generate_signature(pirate_joke)
-    print(pirate_joke + "\n\n" + signature)
+
+    traceloop_client = Traceloop.get()
+    traceloop_client.user_feedback.create(
+        "sample-annotation-task",
+        "user_12345",
+        {"sentiment": "positive", "score": 0.95, "tones": ["happy", "surprised"]},
+    )
+
+    result = pirate_joke + "\n\n" + signature
+    print(result)
+    return result
 
 
 joke_workflow()
