@@ -1,5 +1,6 @@
 """Unit tests configuration module."""
 
+import os
 import pytest
 from opentelemetry import trace
 from opentelemetry.sdk.trace import TracerProvider
@@ -34,3 +35,9 @@ def clear_exporter(exporter):
 @pytest.fixture(scope="module")
 def vcr_config():
     return {"filter_headers": ["authorization"]}
+
+
+@pytest.fixture(autouse=True)
+def environment():
+    if "GOOGLE_API_KEY" not in os.environ:
+        os.environ["GOOGLE_API_KEY"] = "test_api_key"
