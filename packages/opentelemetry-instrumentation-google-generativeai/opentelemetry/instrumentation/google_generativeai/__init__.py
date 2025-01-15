@@ -81,14 +81,24 @@ def _set_input_attributes(span, args, kwargs, llm_model):
 
         _set_span_attribute(
             span,
-            f"{SpanAttributes.LLM_PROMPTS}.0.user",
+            f"{SpanAttributes.LLM_PROMPTS}.0.content",
             prompt,
+        )
+        _set_span_attribute(
+            span,
+            f"{SpanAttributes.LLM_PROMPTS}.0.role",
+            "user",
+        )
+
+    if should_send_prompts():
+        _set_span_attribute(
+            span, f"{SpanAttributes.LLM_PROMPTS}.0.content", kwargs.get("prompt")
+        )
+        _set_span_attribute(
+            span, f"{SpanAttributes.LLM_PROMPTS}.0.role", "user"
         )
 
     _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, llm_model)
-    _set_span_attribute(
-        span, f"{SpanAttributes.LLM_PROMPTS}.0.user", kwargs.get("prompt")
-    )
     _set_span_attribute(
         span, SpanAttributes.LLM_REQUEST_TEMPERATURE, kwargs.get("temperature")
     )
@@ -132,19 +142,23 @@ def _set_response_attributes(span, response, llm_model):
             for index, item in enumerate(response):
                 prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{index}"
                 _set_span_attribute(span, f"{prefix}.content", item.text)
+                _set_span_attribute(span, f"{prefix}.role", "assistant")
         elif isinstance(response.text, str):
             _set_span_attribute(
                 span, f"{SpanAttributes.LLM_COMPLETIONS}.0.content", response.text
             )
+            _set_span_attribute(span, f"{SpanAttributes.LLM_COMPLETIONS}.0.role", "assistant")
     else:
         if isinstance(response, list):
             for index, item in enumerate(response):
                 prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{index}"
                 _set_span_attribute(span, f"{prefix}.content", item)
+                _set_span_attribute(span, f"{prefix}.role", "assistant")
         elif isinstance(response, str):
             _set_span_attribute(
                 span, f"{SpanAttributes.LLM_COMPLETIONS}.0.content", response
             )
+            _set_span_attribute(span, f"{SpanAttributes.LLM_COMPLETIONS}.0.role", "assistant")
 
     return
 
