@@ -17,14 +17,22 @@ def mock_instrumentor():
 def mock_crew():
     mock_llm = MagicMock()
     mock_llm.predict.return_value = "Mocked response"
-    agent = Agent(role='Data Collector',
-                  goal='Collect accurate and up-to-date financial data',
-                  backstory='You are an expert in gathering financial data from various sources.',
-                  llm=mock_llm,)
+    agent = Agent(
+        role="Data Collector",
+        goal="Collect accurate and up-to-date financial data",
+        backstory="You are an expert in gathering financial data from various sources.",
+        llm=mock_llm,
+    )
 
-    task = Task(description='Collect stock data for AAPL for the past month',
-                expected_output='A comprehensive dataset containing daily stock prices, trading volumes, and any significant news or events affecting these stocks over the past month.',
-                agent=agent,)
+    task = Task(
+        description="Collect stock data for AAPL for the past month",
+        expected_output=(
+            "A comprehensive dataset containing daily stock prices, "
+            "trading volumes, and any significant news or events "
+            "affecting these stocks over the past month."
+        ),
+        agent=agent,
+    )
 
     crew = Crew(agents=[agent], tasks=[task])
 
@@ -38,9 +46,12 @@ def test_crewai_instrumentation(mock_crew, mock_instrumentor):
     mock_instrumentor.instrument.assert_called_once()
 
     assert len(mock_crew.agents) == 1
-    assert mock_crew.agents[0].role == 'Data Collector'
+    assert mock_crew.agents[0].role == "Data Collector"
     assert len(mock_crew.tasks) == 1
-    assert mock_crew.tasks[0].description == 'Collect stock data for AAPL for the past month'
+    assert (
+        mock_crew.tasks[0].description
+        == "Collect stock data for AAPL for the past month"
+    )
 
 
 def test_trace_status(mock_crew, mock_instrumentor):
@@ -54,7 +65,9 @@ def test_trace_status(mock_crew, mock_instrumentor):
     mock_span.set_status.assert_called_with(StatusCode.ERROR)
 
     memory_exporter = MagicMock()
-    memory_exporter.get_finished_spans.return_value = [MagicMock(status=MagicMock(status_code=StatusCode.ERROR))]
+    memory_exporter.get_finished_spans.return_value = [
+        MagicMock(status=MagicMock(status_code=StatusCode.ERROR))
+    ]
 
     spans = memory_exporter.get_finished_spans()
     assert spans[-1].status.status_code == StatusCode.ERROR

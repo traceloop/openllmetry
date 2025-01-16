@@ -1,4 +1,4 @@
-# OpenTelemetry Cohere Instrumentation
+# OpenTelemetry CrewAI Instrumentation
 
 <a href="https://pypi.org/project/opentelemetry-instrumentation-crewai/">
     <img src="https://badge.fury.io/py/opentelemetry-instrumentation-crewai.svg">
