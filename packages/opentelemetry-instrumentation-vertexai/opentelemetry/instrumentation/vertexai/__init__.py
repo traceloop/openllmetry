@@ -141,7 +141,6 @@ def _set_input_attributes(span, args, kwargs, llm_model):
                         part.text if hasattr(part, 'text') else str(part)
                         for part in content.parts
                     )
-                    
                     _set_span_attribute(
                         span,
                         f"{SpanAttributes.LLM_PROMPTS}.{msg_index}.role",
