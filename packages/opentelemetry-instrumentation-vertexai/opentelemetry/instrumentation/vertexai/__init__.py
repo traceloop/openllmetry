@@ -122,14 +122,12 @@ def _set_span_attribute(span, name, value):
 
 
 def _set_input_attributes(span, args, kwargs, llm_model):
-    if not should_send_prompts() or args is None or len(args) == 0:
+    if not should_send_prompts() or not args or not len(args):
         return
 
     msg_index = 0
-    
     for arg in args:
         if isinstance(arg, str):
-            # Handle plain string prompts
             _set_span_attribute(
                 span,
                 f"{SpanAttributes.LLM_PROMPTS}.{msg_index}.user",
@@ -137,12 +135,10 @@ def _set_input_attributes(span, args, kwargs, llm_model):
             )
             msg_index += 1
         elif isinstance(arg, list):
-            # Handle list of Content objects
             for content in arg:
                 if hasattr(content, 'role') and hasattr(content, 'parts'):
-                    # Extract text from parts
                     text = "\n".join(
-                        part.text if hasattr(part, 'text') else str(part) 
+                        part.text if hasattr(part, 'text') else str(part)
                         for part in content.parts
                     )
                     
@@ -158,7 +154,6 @@ def _set_input_attributes(span, args, kwargs, llm_model):
                     )
                     msg_index += 1
                 else:
-                    # Handle plain string lists
                     _set_span_attribute(
                         span,
                         f"{SpanAttributes.LLM_PROMPTS}.{msg_index}.user",
