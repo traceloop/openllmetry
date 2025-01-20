@@ -30,7 +30,7 @@ from traceloop.sdk.tracing.tracing import (
     set_external_prompt_tracing_context,
 )
 from typing import Dict
-from .client import Client
+from traceloop.sdk.client.client import Client
 
 
 class Traceloop:
