@@ -90,6 +90,17 @@ def _set_input_attributes(span, args, kwargs, llm_model, event_logger=None, use_
                 f"{SpanAttributes.LLM_PROMPTS}.0.user",
                 prompt,
             )
+            _set_span_attribute(
+                span,
+                f"{SpanAttributes.LLM_PROMPTS}.0.content",
+                prompt,
+            )
+            _set_span_attribute(
+                span,
+                f"{SpanAttributes.LLM_PROMPTS}.0.role",
+                "user",
+            )
+
         if event_logger:
             event_logger.emit_event(create_prompt_event(
                 content=prompt,
@@ -98,33 +109,21 @@ def _set_input_attributes(span, args, kwargs, llm_model, event_logger=None, use_
                 model=llm_model,
             ))
 
-    if use_legacy_attributes:
-        _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, llm_model)
-        _set_span_attribute(
-            span, f"{SpanAttributes.LLM_PROMPTS}.0.user", kwargs.get("prompt")
-        )
-        _set_span_attribute(
-            span, SpanAttributes.LLM_REQUEST_TEMPERATURE, kwargs.get("temperature")
-        )
-        _set_span_attribute(
-            span, SpanAttributes.LLM_REQUEST_MAX_TOKENS, kwargs.get("max_output_tokens")
-        )
-        _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TOP_P, kwargs.get("top_p"))
-        _set_span_attribute(span, SpanAttributes.LLM_TOP_K, kwargs.get("top_k"))
-        _set_span_attribute(
-            span, SpanAttributes.LLM_PRESENCE_PENALTY, kwargs.get("presence_penalty")
-        )
-        _set_span_attribute(
-            span, SpanAttributes.LLM_FREQUENCY_PENALTY, kwargs.get("frequency_penalty")
-        )
-
-    if event_logger and kwargs.get("prompt"):
-        event_logger.emit_event(create_prompt_event(
-            content=kwargs.get("prompt"),
-            role="user",
-            content_type="text",
-            model=llm_model,
-        ))
+    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, llm_model)
+    _set_span_attribute(
+        span, SpanAttributes.LLM_REQUEST_TEMPERATURE, kwargs.get("temperature")
+    )
+    _set_span_attribute(
+        span, SpanAttributes.LLM_REQUEST_MAX_TOKENS, kwargs.get("max_output_tokens")
+    )
+    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TOP_P, kwargs.get("top_p"))
+    _set_span_attribute(span, SpanAttributes.LLM_TOP_K, kwargs.get("top_k"))
+    _set_span_attribute(
+        span, SpanAttributes.LLM_PRESENCE_PENALTY, kwargs.get("presence_penalty")
+    )
+    _set_span_attribute(
+        span, SpanAttributes.LLM_FREQUENCY_PENALTY, kwargs.get("frequency_penalty")
+    )
 
     return
 
@@ -163,6 +162,7 @@ def _set_response_attributes(span, response, llm_model, event_logger=None, use_l
                 if use_legacy_attributes:
                     prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{index}"
                     _set_span_attribute(span, f"{prefix}.content", item.text)
+                    _set_span_attribute(span, f"{prefix}.role", "assistant")
                 if event_logger:
                     event_logger.emit_event(create_completion_event(
                         completion=item.text,
@@ -177,6 +177,7 @@ def _set_response_attributes(span, response, llm_model, event_logger=None, use_l
                 _set_span_attribute(
                     span, f"{SpanAttributes.LLM_COMPLETIONS}.0.content", response.text
                 )
+                _set_span_attribute(span, f"{SpanAttributes.LLM_COMPLETIONS}.0.role", "assistant")
             if event_logger:
                 event_logger.emit_event(create_completion_event(
                     completion=response.text,
@@ -213,6 +214,7 @@ def _set_response_attributes(span, response, llm_model, event_logger=None, use_l
                 if use_legacy_attributes:
                     prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{index}"
                     _set_span_attribute(span, f"{prefix}.content", item)
+                    _set_span_attribute(span, f"{prefix}.role", "assistant")
                 if event_logger:
                     event_logger.emit_event(create_completion_event(
                         completion=item,
@@ -225,6 +227,7 @@ def _set_response_attributes(span, response, llm_model, event_logger=None, use_l
                 _set_span_attribute(
                     span, f"{SpanAttributes.LLM_COMPLETIONS}.0.content", response
                 )
+                _set_span_attribute(span, f"{SpanAttributes.LLM_COMPLETIONS}.0.role", "assistant")
             if event_logger:
                 event_logger.emit_event(create_completion_event(
                     completion=response,

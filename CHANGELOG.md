@@ -1,3 +1,26 @@
+## v0.36.1 (2025-01-20)
+
+### Fix
+
+- **sdk**: remove use of `__all__` (#2536)
+- **gemini**: set prompt attributes for role and content (#2511)
+
+## v0.36.0 (2025-01-13)
+
+### Feat
+
+- **sdk**: client, annotations (#2452)
+
+## v0.35.0 (2025-01-03)
+
+### Feat
+
+- **sdk**: combine async/sync decorators & annotations (#2442)
+
+### Fix
+
+- **sdk**: option to disable SDK (#2454)
+
 ## v0.34.1 (2024-12-22)
 
 ### Fix

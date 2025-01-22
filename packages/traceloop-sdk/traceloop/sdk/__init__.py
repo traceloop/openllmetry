@@ -30,6 +30,7 @@ from traceloop.sdk.tracing.tracing import (
     set_external_prompt_tracing_context,
 )
 from typing import Dict
+from traceloop.sdk.client.client import Client
 
 
 class Traceloop:
@@ -39,23 +40,25 @@ class Traceloop:
     AUTO_CREATED_URL = str(Path.home() / ".cache" / "traceloop" / "auto_created_url")
 
     __tracer_wrapper: TracerWrapper
-    __fetcher: Fetcher = None
+    __fetcher: Optional[Fetcher] = None
+    __app_name: Optional[str] = None
+    __client: Optional[Client] = None
 
     @staticmethod
     def init(
-        app_name: Optional[str] = sys.argv[0],
+        app_name: str = sys.argv[0],
         api_endpoint: str = "https://api.traceloop.com",
-        api_key: str = None,
+        api_key: Optional[str] = None,
         enabled: bool = True,
         headers: Dict[str, str] = {},
         disable_batch=False,
         telemetry_enabled: bool = True,
-        exporter: SpanExporter = None,
+        exporter: Optional[SpanExporter] = None,
         metrics_exporter: MetricExporter = None,
         metrics_headers: Dict[str, str] = None,
         logging_exporter: LogExporter = None,
         logging_headers: Dict[str, str] = None,
-        processor: SpanProcessor = None,
+        processor: Optional[SpanProcessor] = None,
         propagator: TextMapPropagator = None,
         traceloop_sync_enabled: bool = False,
         should_enrich_metrics: bool = True,
@@ -63,7 +66,7 @@ class Traceloop:
         instruments: Optional[Set[Instruments]] = None,
         block_instruments: Optional[Set[Instruments]] = None,
         image_uploader: Optional[ImageUploader] = None,
-    ) -> None:
+    ) -> Optional[Client]:
         if not enabled:
             TracerWrapper.set_disabled(True)
             print(
@@ -82,13 +85,14 @@ class Traceloop:
 
         api_endpoint = os.getenv("TRACELOOP_BASE_URL") or api_endpoint
         api_key = os.getenv("TRACELOOP_API_KEY") or api_key
+        Traceloop.__app_name = app_name
 
         if (
             traceloop_sync_enabled
             and api_endpoint.find("traceloop.com") != -1
             and api_key
-            and not exporter
-            and not processor
+            and (exporter is None)
+            and (processor is None)
         ):
             Traceloop.__fetcher = Fetcher(base_url=api_endpoint, api_key=api_key)
             Traceloop.__fetcher.run()
@@ -186,32 +190,32 @@ class Traceloop:
             )
             Traceloop.__logger_wrapper = LoggerWrapper(exporter=logging_exporter)
 
+        if not api_key:
+            return
+        Traceloop.__client = Client(api_key=api_key, app_name=app_name, api_endpoint=api_endpoint)
+        return Traceloop.__client
+
     def set_association_properties(properties: dict) -> None:
         set_association_properties(properties)
 
     def set_prompt(template: str, variables: dict, version: int):
         set_external_prompt_tracing_context(template, variables, version)
 
-    def report_score(
-        association_property_name: str,
-        association_property_id: str,
-        score: float,
-    ):
-        if not Traceloop.__fetcher:
-            print(
-                Fore.RED
-                + "Error: Cannot report score. Missing Traceloop API key,"
-                + " go to https://app.traceloop.com/settings/api-keys to create one"
-            )
-            print("Set the TRACELOOP_API_KEY environment variable to the key")
-            print(Fore.RESET)
-            return
+    @staticmethod
+    def get():
+        """
+        Returns the shared SDK client instance, using the current global configuration.
 
-        Traceloop.__fetcher.post(
-            "score",
-            {
-                "entity_name": f"traceloop.association.properties.{association_property_name}",
-                "entity_id": association_property_id,
-                "score": score,
-            },
-        )
+        To use the SDK as a singleton, first make sure you have called :func:`Traceloop.init()`
+        at startup time. Then ``get()`` will return the same shared :class:`Traceloop.client.Client`
+        instance each time. The client will be initialized if it has not been already.
+
+        If you need to create multiple client instances with different configurations, instead of this
+        singleton approach you can call the :class:`Traceloop.client.Client` constructor directly instead.
+        """
+        if not Traceloop.__client:
+            raise Exception(
+                "Client not initialized, you should call Traceloop.init() first. "
+                "If you are still getting this error - you are missing the api key"
+            )
+        return Traceloop.__client

@@ -571,10 +571,11 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             current_association_properties = (
                 context_api.get_value("association_properties") or {}
             )
+            nonnull_metadata = dict([k, v] for k, v in metadata.items() if v is not None)
             context_api.attach(
                 context_api.set_value(
                     "association_properties",
-                    {**current_association_properties, **metadata},
+                    {**current_association_properties, **nonnull_metadata},
                 )
             )
 
