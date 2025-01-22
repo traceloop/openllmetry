@@ -2,7 +2,9 @@ import logging
 import time
 
 from opentelemetry.instrumentation.anthropic.config import Config
+from opentelemetry.instrumentation.anthropic.events import create_completion_event
 from opentelemetry.instrumentation.anthropic.utils import (
+    acount_prompt_tokens_from_request,
     dont_throw,
     error_metrics_attributes,
     count_prompt_tokens_from_request,
@@ -103,33 +105,44 @@ def _set_token_usage(
             )
 
 
-def _set_completions(span, events):
-    if not span.is_recording() or not events:
+def _set_completions(span, events, event_logger=None):
+    if not events:
         return
 
     try:
         for event in events:
             index = event.get("index")
-            prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{index}"
-            set_span_attribute(
-                span, f"{prefix}.finish_reason", event.get("finish_reason")
-            )
-            set_span_attribute(span, f"{prefix}.content", event.get("text"))
+            
+            # Legacy attribute-based approach
+            if Config.use_legacy_attributes and span.is_recording():
+                prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{index}"
+                set_span_attribute(
+                    span, f"{prefix}.finish_reason", event.get("finish_reason")
+                )
+                set_span_attribute(span, f"{prefix}.content", event.get("text"))
+            
+            # Event-based approach
+            if event_logger and not Config.use_legacy_attributes:
+                event_logger.emit(
+                    create_completion_event(
+                        content=event.get("text", ""),
+                        role="assistant",
+                        finish_reason=event.get("finish_reason"),
+                        span_ctx=span.get_span_context(),
+                        index=index,
+                    )
+                )
     except Exception as e:
         logger.warning("Failed to set completion attributes, error: %s", str(e))
 
 
 @dont_throw
 def build_from_streaming_response(
-    span,
     response,
-    instance,
-    start_time,
+    span,
+    event_logger=None,
     token_histogram: Histogram = None,
     choice_counter: Counter = None,
-    duration_histogram: Histogram = None,
-    exception_counter: Counter = None,
-    kwargs: dict = {},
 ):
     complete_response = {"events": [], "model": "", "usage": {}}
     for item in response:
@@ -137,19 +150,10 @@ def build_from_streaming_response(
             yield item
         except Exception as e:
             attributes = error_metrics_attributes(e)
-            if exception_counter:
-                exception_counter.add(1, attributes=attributes)
             raise e
         _process_response_item(item, complete_response)
 
     metric_attributes = shared_metrics_attributes(complete_response)
-
-    if duration_histogram:
-        duration = time.time() - start_time
-        duration_histogram.record(
-            duration,
-            attributes=metric_attributes,
-        )
 
     # calculate token usage
     if Config.enrich_token_usage:
@@ -159,7 +163,7 @@ def build_from_streaming_response(
             if usage := complete_response.get("usage"):
                 prompt_tokens = usage.get("input_tokens", 0)
             else:
-                prompt_tokens = count_prompt_tokens_from_request(instance, kwargs)
+                prompt_tokens = count_prompt_tokens_from_request(kwargs)
 
             # completion_usage
             if usage := complete_response.get("usage"):
@@ -171,9 +175,6 @@ def build_from_streaming_response(
                     for event in complete_response.get("events"):  # type: dict
                         if event.get("text"):
                             completion_content += event.get("text")
-
-                    if model_name:
-                        completion_tokens = instance.count_tokens(completion_content)
 
             _set_token_usage(
                 span,
@@ -188,7 +189,7 @@ def build_from_streaming_response(
             logger.warning("Failed to set token usage, error: %s", e)
 
     if should_send_prompts():
-        _set_completions(span, complete_response.get("events"))
+        _set_completions(span, complete_response.get("events"), event_logger)
 
     span.set_status(Status(StatusCode.OK))
     span.end()
@@ -196,15 +197,11 @@ def build_from_streaming_response(
 
 @dont_throw
 async def abuild_from_streaming_response(
-    span,
     response,
-    instance,
-    start_time,
+    span,
+    event_logger=None,
     token_histogram: Histogram = None,
     choice_counter: Counter = None,
-    duration_histogram: Histogram = None,
-    exception_counter: Counter = None,
-    kwargs: dict = {},
 ):
     complete_response = {"events": [], "model": "", "usage": {}}
     async for item in response:
@@ -212,19 +209,10 @@ async def abuild_from_streaming_response(
             yield item
         except Exception as e:
             attributes = error_metrics_attributes(e)
-            if exception_counter:
-                exception_counter.add(1, attributes=attributes)
             raise e
         _process_response_item(item, complete_response)
 
     metric_attributes = shared_metrics_attributes(complete_response)
-
-    if duration_histogram:
-        duration = time.time() - start_time
-        duration_histogram.record(
-            duration,
-            attributes=metric_attributes,
-        )
 
     # calculate token usage
     if Config.enrich_token_usage:
@@ -233,7 +221,7 @@ async def abuild_from_streaming_response(
             if usage := complete_response.get("usage"):
                 prompt_tokens = usage.get("input_tokens", 0)
             else:
-                prompt_tokens = count_prompt_tokens_from_request(instance, kwargs)
+                prompt_tokens = await acount_prompt_tokens_from_request(kwargs)
 
             # completion_usage
             if usage := complete_response.get("usage"):
@@ -246,9 +234,6 @@ async def abuild_from_streaming_response(
                         if event.get("text"):
                             completion_content += event.get("text")
 
-                    if model_name:
-                        completion_tokens = instance.count_tokens(completion_content)
-
             _set_token_usage(
                 span,
                 complete_response,
@@ -259,10 +244,10 @@ async def abuild_from_streaming_response(
                 choice_counter,
             )
         except Exception as e:
-            logger.warning("Failed to set token usage, error: %s", str(e))
+            logger.warning("Failed to set token usage, error: %s", e)
 
     if should_send_prompts():
-        _set_completions(span, complete_response.get("events"))
+        _set_completions(span, complete_response.get("events"), event_logger)
 
     span.set_status(Status(StatusCode.OK))
     span.end()

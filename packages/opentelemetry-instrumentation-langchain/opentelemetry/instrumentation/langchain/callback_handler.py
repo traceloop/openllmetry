@@ -1,3 +1,5 @@
+"""Callback handler for Langchain instrumentation."""
+
 import json
 import time
 from dataclasses import dataclass, field
@@ -19,6 +21,7 @@ from opentelemetry.semconv_ai import (
 from opentelemetry.context.context import Context
 from opentelemetry.trace import SpanKind, set_span_in_context, Tracer
 from opentelemetry.trace.span import Span
+from opentelemetry._events import EventLogger
 
 from opentelemetry import context as context_api
 from opentelemetry.instrumentation.langchain.utils import (
@@ -27,6 +30,14 @@ from opentelemetry.instrumentation.langchain.utils import (
     should_send_prompts,
 )
 from opentelemetry.metrics import Histogram
+from opentelemetry.instrumentation.langchain.config import Config
+from opentelemetry.instrumentation.langchain.events import (
+    create_prompt_event,
+    create_completion_event,
+    create_chain_event,
+    create_tool_event,
+    _message_type_to_role,
+)
 
 
 @dataclass
@@ -40,48 +51,43 @@ class SpanHolder:
     entity_path: str
     start_time: float = field(default_factory=time.time)
     request_model: Optional[str] = None
-
-
-def _message_type_to_role(message_type: str) -> str:
-    if message_type == "human":
-        return "user"
-    elif message_type == "system":
-        return "system"
-    elif message_type == "ai":
-        return "assistant"
-    else:
-        return "unknown"
-
-
-def _set_span_attribute(span, name, value):
+def _set_span_attribute(span: Span, name: str, value: Any) -> None:
+    """Set a span attribute if the value is not None.
+    
+    Args:
+        span: The span to set the attribute on
+        name: The name of the attribute
+        value: The value to set
+    """
     if value is not None:
         span.set_attribute(name, value)
 
 
-def _set_request_params(span, kwargs, span_holder: SpanHolder):
+def _set_request_params(span: Span, kwargs: Dict[str, Any], span_holder: SpanHolder) -> None:
+    """Set common request parameters on the span and update span holder model.
+    
+    Args:
+        span: The span to set attributes on
+        kwargs: The keyword arguments containing model and parameter information
+        span_holder: The span holder to update with model information
+    """
     for model_tag in ("model", "model_id", "model_name"):
         if (model := kwargs.get(model_tag)) is not None:
             span_holder.request_model = model
             break
-        elif (
-            model := (kwargs.get("invocation_params") or {}).get(model_tag)
-        ) is not None:
+        elif (model := (kwargs.get("invocation_params") or {}).get(model_tag)) is not None:
             span_holder.request_model = model
             break
     else:
         model = "unknown"
-
     span.set_attribute(SpanAttributes.LLM_REQUEST_MODEL, model)
     # response is not available for LLM requests (as opposed to chat)
     span.set_attribute(SpanAttributes.LLM_RESPONSE_MODEL, model)
 
     if "invocation_params" in kwargs:
-        params = (
-            kwargs["invocation_params"].get("params") or kwargs["invocation_params"]
-        )
+        params = kwargs["invocation_params"].get("params") or kwargs["invocation_params"]
     else:
         params = kwargs
-
     _set_span_attribute(
         span,
         SpanAttributes.LLM_REQUEST_MAX_TOKENS,
@@ -95,11 +101,20 @@ def _set_request_params(span, kwargs, span_holder: SpanHolder):
 
 def _set_llm_request(
     span: Span,
-    serialized: dict[str, Any],
-    prompts: list[str],
+    serialized: Dict[str, Any],
+    prompts: List[str],
     kwargs: Any,
     span_holder: SpanHolder,
 ) -> None:
+    """Set LLM request attributes on the span.
+    
+    Args:
+        span: The span to set attributes on
+        serialized: The serialized request data
+        prompts: List of prompt strings
+        kwargs: Additional keyword arguments
+        span_holder: The span holder instance
+    """
     _set_request_params(span, kwargs, span_holder)
 
     if should_send_prompts():
@@ -116,14 +131,24 @@ def _set_llm_request(
 
 def _set_chat_request(
     span: Span,
-    serialized: dict[str, Any],
-    messages: list[list[BaseMessage]],
+    serialized: Dict[str, Any],
+    messages: List[List[BaseMessage]],
     kwargs: Any,
     span_holder: SpanHolder,
 ) -> None:
+    """Set chat request attributes on the span.
+    
+    Args:
+        span: The span to set attributes on
+        serialized: The serialized request data
+        messages: List of message lists, where each message is a BaseMessage
+        kwargs: Additional keyword arguments
+        span_holder: The span holder instance
+    """
     _set_request_params(span, serialized.get("kwargs", {}), span_holder)
 
     if should_send_prompts():
+        # Handle function definitions if present
         for i, function in enumerate(
             kwargs.get("invocation_params", {}).get("functions", [])
         ):
@@ -137,6 +162,7 @@ def _set_chat_request(
                 span, f"{prefix}.parameters", json.dumps(function.get("parameters"))
             )
 
+        # Handle messages with proper role mapping and content serialization
         i = 0
         for message in messages:
             for msg in message:
@@ -144,7 +170,7 @@ def _set_chat_request(
                     f"{SpanAttributes.LLM_PROMPTS}.{i}.role",
                     _message_type_to_role(msg.type),
                 )
-                # if msg.content is string
+                # Handle both string and structured content
                 if isinstance(msg.content, str):
                     span.set_attribute(
                         f"{SpanAttributes.LLM_PROMPTS}.{i}.content",
@@ -158,118 +184,49 @@ def _set_chat_request(
                 i += 1
 
 
-def _set_chat_response(span: Span, response: LLMResult) -> None:
-    if not should_send_prompts():
-        return
-
-    input_tokens = 0
-    output_tokens = 0
-    total_tokens = 0
-
-    i = 0
-    for generations in response.generations:
-        for generation in generations:
-            if (
-                hasattr(generation, "message")
-                and hasattr(generation.message, "usage_metadata")
-                and generation.message.usage_metadata is not None
-            ):
-                input_tokens += (
-                    generation.message.usage_metadata.get("input_tokens")
-                    or generation.message.usage_metadata.get("prompt_tokens")
-                    or 0
-                )
-                output_tokens += (
-                    generation.message.usage_metadata.get("output_tokens")
-                    or generation.message.usage_metadata.get("completion_tokens")
-                    or 0
-                )
-                total_tokens = input_tokens + output_tokens
-
-            prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{i}"
-            if hasattr(generation, "text") and generation.text != "":
-                span.set_attribute(
-                    f"{prefix}.content",
-                    generation.text,
-                )
-                span.set_attribute(f"{prefix}.role", "assistant")
-            else:
-                span.set_attribute(
-                    f"{prefix}.role",
-                    _message_type_to_role(generation.type),
-                )
-                if generation.message.content is str:
-                    span.set_attribute(
-                        f"{prefix}.content",
-                        generation.message.content,
-                    )
-                else:
-                    span.set_attribute(
-                        f"{prefix}.content",
-                        json.dumps(
-                            generation.message.content, cls=CallbackFilteredJSONEncoder
-                        ),
-                    )
-                if generation.generation_info.get("finish_reason"):
-                    span.set_attribute(
-                        f"{prefix}.finish_reason",
-                        generation.generation_info.get("finish_reason"),
-                    )
-
-                if generation.message.additional_kwargs.get("function_call"):
-                    span.set_attribute(
-                        f"{prefix}.tool_calls.0.name",
-                        generation.message.additional_kwargs.get("function_call").get(
-                            "name"
-                        ),
-                    )
-                    span.set_attribute(
-                        f"{prefix}.tool_calls.0.arguments",
-                        generation.message.additional_kwargs.get("function_call").get(
-                            "arguments"
-                        ),
-                    )
-
-                if generation.message.additional_kwargs.get("tool_calls"):
-                    for idx, tool_call in enumerate(generation.message.additional_kwargs.get("tool_calls")):
-                        tool_call_prefix = f"{prefix}.tool_calls.{idx}"
-
-                        span.set_attribute(f"{tool_call_prefix}.id", tool_call.get("id"))
-                        span.set_attribute(f"{tool_call_prefix}.name", tool_call.get("function").get("name"))
-                        span.set_attribute(f"{tool_call_prefix}.arguments", tool_call.get("function").get("arguments"))
-            i += 1
-
-    if input_tokens > 0 or output_tokens > 0 or total_tokens > 0:
-        span.set_attribute(
-            SpanAttributes.LLM_USAGE_PROMPT_TOKENS,
-            input_tokens,
-        )
-        span.set_attribute(
-            SpanAttributes.LLM_USAGE_COMPLETION_TOKENS,
-            output_tokens,
-        )
-        span.set_attribute(
-            SpanAttributes.LLM_USAGE_TOTAL_TOKENS,
-            total_tokens,
-        )
-
-
 class TraceloopCallbackHandler(BaseCallbackHandler):
+    """Callback handler for Langchain that emits OpenTelemetry traces and events."""
+
     def __init__(
-        self, tracer: Tracer, duration_histogram: Histogram, token_histogram: Histogram
+        self,
+        tracer: Tracer,
+        event_logger: Optional[EventLogger] = None,
+        duration_histogram: Optional[Histogram] = None,
+        token_histogram: Optional[Histogram] = None,
+        config: Optional[Config] = None,
     ) -> None:
+        """Initialize the callback handler.
+        
+        Args:
+            tracer: The OpenTelemetry tracer
+            event_logger: Optional event logger for emitting events
+            duration_histogram: Optional histogram for duration metrics
+            token_histogram: Optional histogram for token usage metrics
+            config: Optional configuration
+        """
         super().__init__()
         self.tracer = tracer
+        self.event_logger = event_logger
         self.duration_histogram = duration_histogram
         self.token_histogram = token_histogram
-        self.spans: dict[UUID, SpanHolder] = {}
-        self.run_inline = True
+        self.config = config or Config()
+        self._spans: Dict[UUID, SpanHolder] = {}
+
+    def _emit_event(self, event: Dict[str, Any], span: Optional[Span] = None) -> None:
+        """Emit an event if event logger is configured."""
+        if self.event_logger and (self.config.capture_content or not event.get("attributes", {}).get(SpanAttributes.LLM_COMPLETION)):
+            if span:
+                span_ctx = span.get_span_context()
+                event["trace_id"] = span_ctx.trace_id
+                event["span_id"] = span_ctx.span_id
+                event["trace_flags"] = span_ctx.trace_flags
+            self.event_logger.emit(event)
 
     @staticmethod
     def _get_name_from_callback(
-        serialized: dict[str, Any],
-        _tags: Optional[list[str]] = None,
-        _metadata: Optional[dict[str, Any]] = None,
+        serialized: Dict[str, Any],
+        _tags: Optional[List[str]] = None,
+        _metadata: Optional[Dict[str, Any]] = None,
         **kwargs: Any,
     ) -> str:
         """Get the name to be used for the span. Based on heuristic. Can be extended."""
@@ -281,15 +238,319 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             return serialized["name"]
         if "id" in serialized:
             return serialized["id"][-1]
-
         return "unknown"
 
+    @dont_throw
+    def on_chain_start(
+        self,
+        serialized: Dict[str, Any],
+        inputs: Dict[str, Any],
+        *,
+        run_id: UUID,
+        parent_run_id: Optional[UUID] = None,
+        tags: Optional[List[str]] = None,
+        metadata: Optional[Dict[str, Any]] = None,
+        **kwargs: Any,
+    ) -> None:
+        """Run when chain starts running."""
+        if not self._should_handle_event():
+            return
+
+        name = self._get_name_from_callback(serialized, tags, metadata, **kwargs)
+        kind = (
+            TraceloopSpanKindValues.WORKFLOW
+            if parent_run_id is None or parent_run_id not in self._spans
+            else TraceloopSpanKindValues.CHAIN
+        )
+
+        workflow_name = ""
+        entity_path = ""
+        if kind == TraceloopSpanKindValues.WORKFLOW:
+            workflow_name = name
+        else:
+            workflow_name = self.get_workflow_name(str(parent_run_id)) if parent_run_id else ""
+            entity_path = self.get_entity_path(str(parent_run_id)) if parent_run_id else ""
+
+        span = self._create_span(
+            run_id=run_id,
+            parent_run_id=parent_run_id,
+            span_name=name,
+            kind=kind,
+            workflow_name=workflow_name,
+            entity_name=serialized.get("id", [""])[0],
+            entity_path=entity_path,
+            metadata=metadata,
+        )
+
+        if should_send_prompts():
+            span.set_attribute(
+                SpanAttributes.TRACELOOP_ENTITY_INPUT,
+                json.dumps(
+                    {
+                        "inputs": inputs,
+                        "tags": tags,
+                        "metadata": metadata,
+                        "kwargs": kwargs,
+                    },
+                    cls=CallbackFilteredJSONEncoder,
+                ),
+            )
+
+        if self.event_logger:
+            self._emit_event(
+                create_chain_event(
+                    chain_type=serialized.get("id", [""])[0],
+                    inputs=inputs,
+                    model=self._spans[run_id].request_model if run_id in self._spans else None,
+                ),
+                span,
+            )
+
+    @dont_throw
+    def on_chain_end(
+        self,
+        outputs: Dict[str, Any],
+        *,
+        run_id: UUID,
+        parent_run_id: Optional[UUID] = None,
+        **kwargs: Any,
+    ) -> None:
+        """Run when chain ends running."""
+        if not self._should_handle_event():
+            return
+
+        span_holder = self._spans[run_id]
+        span = span_holder.span
+
+        if should_send_prompts():
+            span.set_attribute(
+                SpanAttributes.TRACELOOP_ENTITY_OUTPUT,
+                json.dumps(
+                    {"outputs": outputs, "kwargs": kwargs},
+                    cls=CallbackFilteredJSONEncoder,
+                ),
+            )
+
+        if parent_run_id is None:
+            context_api.attach(
+                context_api.set_value(
+                    SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY, False
+                )
+            )
+
+        if self.duration_histogram:
+            self.duration_histogram.record(
+                time.time() - span_holder.start_time,
+                {"workflow_name": span_holder.workflow_name},
+            )
+
+        self._end_span(span, run_id)
+
+    @dont_throw
+    def on_chat_model_start(
+        self,
+        serialized: Dict[str, Any],
+        messages: List[List[BaseMessage]],
+        *,
+        run_id: UUID,
+        tags: Optional[List[str]] = None,
+        parent_run_id: Optional[UUID] = None,
+        metadata: Optional[Dict[str, Any]] = None,
+        **kwargs: Any,
+    ) -> None:
+        """Run when Chat Model starts running."""
+        if not self._should_handle_event():
+            return
+
+        name = self._get_name_from_callback(serialized, tags, metadata, **kwargs)
+        span = self._create_span(
+            run_id=run_id,
+            parent_run_id=parent_run_id,
+            span_name=name,
+            kind=LLMRequestTypeValues.CHAT,
+            metadata=metadata,
+        )
+
+        _set_chat_request(span, serialized, messages, kwargs, self._spans[run_id])
+
+        if self.event_logger:
+            for message_list in messages:
+                for message in message_list:
+                    self._emit_event(
+                        create_prompt_event(
+                            content=message,
+                            model=self._spans[run_id].request_model if run_id in self._spans else None,
+                        ),
+                        span,
+                    )
+
+    @dont_throw
+    def on_llm_start(
+        self,
+        serialized: Dict[str, Any],
+        prompts: List[str],
+        *,
+        run_id: UUID,
+        tags: Optional[List[str]] = None,
+        parent_run_id: Optional[UUID] = None,
+        metadata: Optional[Dict[str, Any]] = None,
+        **kwargs: Any,
+    ) -> None:
+        """Run when LLM starts running."""
+        if not self._should_handle_event():
+            return
+
+        name = self._get_name_from_callback(serialized, tags, metadata, **kwargs)
+        span = self._create_span(
+            run_id=run_id,
+            parent_run_id=parent_run_id,
+            span_name=name,
+            kind=LLMRequestTypeValues.COMPLETION,
+            metadata=metadata,
+        )
+
+        _set_llm_request(span, serialized, prompts, kwargs, self._spans[run_id])
+
+        if self.event_logger:
+            for prompt in prompts:
+                self._emit_event(
+                    create_prompt_event(
+                        content=prompt,
+                        role="user",
+                        model=self._spans[run_id].request_model if run_id in self._spans else None,
+                    ),
+                    span,
+                )
+
+    @dont_throw
+    def on_llm_end(
+        self,
+        response: LLMResult,
+        *,
+        run_id: UUID,
+        parent_run_id: Union[UUID, None] = None,
+        **kwargs: Any,
+    ):
+        """Handle LLM end event."""
+        if not self._should_handle_event():
+            return
+
+        span = self._get_span(run_id)
+        if span:
+            if hasattr(response, "generations"):
+                for i, generation in enumerate(response.generations):
+                    for j, gen in enumerate(generation):
+                        if self.config.use_legacy_attributes:
+                            span.set_attribute(
+                                f"{SpanAttributes.LLM_COMPLETIONS}.{i}.{j}.content",
+                                gen.text,
+                            )
+                        
+                        if self.event_logger:
+                            self._emit_event(
+                                create_completion_event(
+                                    completion=gen.text,
+                                    model=self._spans[run_id].request_model if run_id in self._spans else None,
+                                    role="assistant",
+                                    finish_reason=getattr(gen, "finish_reason", None),
+                                ),
+                                span,
+                            )
+
+            if hasattr(response, "llm_output") and response.llm_output:
+                if "token_usage" in response.llm_output:
+                    token_usage = response.llm_output["token_usage"]
+                    if self.token_histogram:
+                        self.token_histogram.record(
+                            token_usage.get("total_tokens", 0),
+                            {
+                                "type": "total",
+                                "model": self._spans[run_id].request_model if run_id in self._spans else "unknown",
+                            },
+                        )
+
+            self._end_span(span, run_id)
+
+    @dont_throw
+    def on_tool_start(
+        self,
+        serialized: dict[str, Any],
+        input_str: str,
+        *,
+        run_id: UUID,
+        parent_run_id: Optional[UUID] = None,
+        tags: Optional[list[str]] = None,
+        metadata: Optional[dict[str, Any]] = None,
+        inputs: Optional[dict[str, Any]] = None,
+        **kwargs: Any,
+    ) -> None:
+        """Handle tool start event."""
+        if not self._should_handle_event():
+            return
+
+        span = self._create_task_span(
+            run_id=run_id,
+            parent_run_id=parent_run_id,
+            name=self._get_name_from_callback(serialized, tags, metadata, **kwargs),
+            kind=TraceloopSpanKindValues.TOOL,
+            workflow_name=self.get_workflow_name(str(parent_run_id)) if parent_run_id else "",
+            entity_name=serialized.get("name", ""),
+            entity_path=self.get_entity_path(str(parent_run_id)) if parent_run_id else "",
+            metadata=metadata,
+        )
+
+        if self.event_logger:
+            self._emit_event(
+                create_tool_event(
+                    tool_name=serialized.get("name", ""),
+                    tool_input={"input": input_str} if input_str else inputs or {},
+                    model=self._spans[run_id].request_model if run_id in self._spans else None,
+                ),
+                span,
+            )
+
+    @dont_throw
+    def on_tool_end(
+        self,
+        output: Any,
+        *,
+        run_id: UUID,
+        parent_run_id: Optional[UUID] = None,
+        **kwargs: Any,
+    ) -> None:
+        """Handle tool end event."""
+        if not self._should_handle_event():
+            return
+
+        span = self._get_span(run_id)
+        if span and self.event_logger:
+            self._emit_event(
+                create_tool_event(
+                    tool_name=span.get_attribute(SpanAttributes.LLM_TOOL_NAME),
+                    tool_input={},  # Already captured in start event
+                    tool_output={"output": output} if output else {},
+                    model=self._spans[run_id].request_model if run_id in self._spans else None,
+                ),
+                span,
+            )
+
+        self._end_span(span, run_id)
+
+    def _should_handle_event(self) -> bool:
+        """Check if the event should be handled."""
+        return not (
+            context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY)
+            or context_api.get_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY)
+        )
+
     def _get_span(self, run_id: UUID) -> Span:
-        return self.spans[run_id].span
+        """Get a span by its run ID."""
+        return self._spans[run_id].span
 
     def _end_span(self, span: Span, run_id: UUID) -> None:
-        for child_id in self.spans[run_id].children:
-            child_span = self.spans[child_id].span
+        """End a span and all its children."""
+        for child_id in self._spans[run_id].children:
+            child_span = self._spans[child_id].span
             if child_span.end_time is None:  # avoid warning on ended spans
                 child_span.end()
         span.end()
@@ -303,8 +564,9 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         workflow_name: str = "",
         entity_name: str = "",
         entity_path: str = "",
-        metadata: Optional[dict[str, Any]] = None,
+        metadata: Optional[Dict[str, Any]] = None,
     ) -> Span:
+        """Create a new span with optional parent and metadata."""
         if metadata is not None:
             current_association_properties = (
                 context_api.get_value("association_properties") or {}
@@ -316,10 +578,10 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
                 )
             )
 
-        if parent_run_id is not None and parent_run_id in self.spans:
+        if parent_run_id is not None and parent_run_id in self._spans:
             span = self.tracer.start_span(
                 span_name,
-                context=set_span_in_context(self.spans[parent_run_id].span),
+                context=set_span_in_context(self._spans[parent_run_id].span),
                 kind=kind,
             )
         else:
@@ -332,12 +594,12 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             context_api.set_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY, True)
         )
 
-        self.spans[run_id] = SpanHolder(
+        self._spans[run_id] = SpanHolder(
             span, token, None, [], workflow_name, entity_name, entity_path
         )
 
-        if parent_run_id is not None and parent_run_id in self.spans:
-            self.spans[parent_run_id].children.append(run_id)
+        if parent_run_id is not None and parent_run_id in self._spans:
+            self._spans[parent_run_id].children.append(run_id)
 
         return span
 
@@ -393,320 +655,15 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
 
         return span
 
-    @dont_throw
-    def on_chain_start(
-        self,
-        serialized: dict[str, Any],
-        inputs: dict[str, Any],
-        *,
-        run_id: UUID,
-        parent_run_id: Optional[UUID] = None,
-        tags: Optional[list[str]] = None,
-        metadata: Optional[dict[str, Any]] = None,
-        **kwargs: Any,
-    ) -> None:
-        """Run when chain starts running."""
-        if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
-            return
-
-        workflow_name = ""
-        entity_path = ""
-
-        name = self._get_name_from_callback(serialized, **kwargs)
-        kind = (
-            TraceloopSpanKindValues.WORKFLOW
-            if parent_run_id is None or parent_run_id not in self.spans
-            else TraceloopSpanKindValues.TASK
-        )
-
-        if kind == TraceloopSpanKindValues.WORKFLOW:
-            workflow_name = name
-        else:
-            workflow_name = self.get_workflow_name(parent_run_id)
-            entity_path = self.get_entity_path(parent_run_id)
-
-        span = self._create_task_span(
-            run_id,
-            parent_run_id,
-            name,
-            kind,
-            workflow_name,
-            name,
-            entity_path,
-            metadata,
-        )
-        if should_send_prompts():
-            span.set_attribute(
-                SpanAttributes.TRACELOOP_ENTITY_INPUT,
-                json.dumps(
-                    {
-                        "inputs": inputs,
-                        "tags": tags,
-                        "metadata": metadata,
-                        "kwargs": kwargs,
-                    },
-                    cls=CallbackFilteredJSONEncoder,
-                ),
-            )
-
-        # The start_time is now automatically set when creating the SpanHolder
-
-    @dont_throw
-    def on_chain_end(
-        self,
-        outputs: dict[str, Any],
-        *,
-        run_id: UUID,
-        parent_run_id: Optional[UUID] = None,
-        **kwargs: Any,
-    ) -> None:
-        """Run when chain ends running."""
-        if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
-            return
-
-        span_holder = self.spans[run_id]
-        span = span_holder.span
-        if should_send_prompts():
-            span.set_attribute(
-                SpanAttributes.TRACELOOP_ENTITY_OUTPUT,
-                json.dumps(
-                    {"outputs": outputs, "kwargs": kwargs},
-                    cls=CallbackFilteredJSONEncoder,
-                ),
-            )
-
-        self._end_span(span, run_id)
-        if parent_run_id is None:
-            context_api.attach(
-                context_api.set_value(
-                    SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY, False
-                )
-            )
-
-    @dont_throw
-    def on_chat_model_start(
-        self,
-        serialized: dict[str, Any],
-        messages: list[list[BaseMessage]],
-        *,
-        run_id: UUID,
-        tags: Optional[list[str]] = None,
-        parent_run_id: Optional[UUID] = None,
-        metadata: Optional[dict[str, Any]] = None,
-        **kwargs: Any,
-    ) -> Any:
-        """Run when Chat Model starts running."""
-        if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
-            return
-
-        name = self._get_name_from_callback(serialized, kwargs=kwargs)
-        span = self._create_llm_span(
-            run_id, parent_run_id, name, LLMRequestTypeValues.CHAT, metadata=metadata
-        )
-        _set_chat_request(span, serialized, messages, kwargs, self.spans[run_id])
-
-    @dont_throw
-    def on_llm_start(
-        self,
-        serialized: Dict[str, Any],
-        prompts: List[str],
-        *,
-        run_id: UUID,
-        tags: Optional[list[str]] = None,
-        parent_run_id: Optional[UUID] = None,
-        metadata: Optional[dict[str, Any]] = None,
-        **kwargs: Any,
-    ) -> Any:
-        """Run when Chat Model starts running."""
-        if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
-            return
-
-        name = self._get_name_from_callback(serialized, kwargs=kwargs)
-        span = self._create_llm_span(
-            run_id, parent_run_id, name, LLMRequestTypeValues.COMPLETION
-        )
-        _set_llm_request(span, serialized, prompts, kwargs, self.spans[run_id])
-
-    @dont_throw
-    def on_llm_end(
-        self,
-        response: LLMResult,
-        *,
-        run_id: UUID,
-        parent_run_id: Union[UUID, None] = None,
-        **kwargs: Any,
-    ):
-        if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
-            return
-
-        span = self._get_span(run_id)
-
-        model_name = None
-        if response.llm_output is not None:
-            model_name = response.llm_output.get(
-                "model_name"
-            ) or response.llm_output.get("model_id")
-            if model_name is not None:
-                span.set_attribute(SpanAttributes.LLM_RESPONSE_MODEL, model_name)
-
-                if self.spans[run_id].request_model is None:
-                    span.set_attribute(SpanAttributes.LLM_REQUEST_MODEL, model_name)
-
-        token_usage = (response.llm_output or {}).get("token_usage") or (
-            response.llm_output or {}
-        ).get("usage")
-        if token_usage is not None:
-            prompt_tokens = (
-                token_usage.get("prompt_tokens")
-                or token_usage.get("input_token_count")
-                or token_usage.get("input_tokens")
-            )
-            completion_tokens = (
-                token_usage.get("completion_tokens")
-                or token_usage.get("generated_token_count")
-                or token_usage.get("output_tokens")
-            )
-            total_tokens = token_usage.get("total_tokens") or (
-                prompt_tokens + completion_tokens
-            )
-
-            _set_span_attribute(
-                span, SpanAttributes.LLM_USAGE_PROMPT_TOKENS, prompt_tokens
-            )
-            _set_span_attribute(
-                span, SpanAttributes.LLM_USAGE_COMPLETION_TOKENS, completion_tokens
-            )
-            _set_span_attribute(
-                span, SpanAttributes.LLM_USAGE_TOTAL_TOKENS, total_tokens
-            )
-
-            # Record token usage metrics
-            if prompt_tokens > 0:
-                self.token_histogram.record(
-                    prompt_tokens,
-                    attributes={
-                        SpanAttributes.LLM_SYSTEM: "Langchain",
-                        SpanAttributes.LLM_TOKEN_TYPE: "input",
-                        SpanAttributes.LLM_RESPONSE_MODEL: model_name or "unknown",
-                    },
-                )
-
-            if completion_tokens > 0:
-                self.token_histogram.record(
-                    completion_tokens,
-                    attributes={
-                        SpanAttributes.LLM_SYSTEM: "Langchain",
-                        SpanAttributes.LLM_TOKEN_TYPE: "output",
-                        SpanAttributes.LLM_RESPONSE_MODEL: model_name or "unknown",
-                    },
-                )
-
-        _set_chat_response(span, response)
-        self._end_span(span, run_id)
-
-        # Record duration
-        duration = time.time() - self.spans[run_id].start_time
-        self.duration_histogram.record(
-            duration,
-            attributes={
-                SpanAttributes.LLM_SYSTEM: "Langchain",
-                SpanAttributes.LLM_RESPONSE_MODEL: model_name or "unknown",
-            },
-        )
-
-    @dont_throw
-    def on_tool_start(
-        self,
-        serialized: dict[str, Any],
-        input_str: str,
-        *,
-        run_id: UUID,
-        parent_run_id: Optional[UUID] = None,
-        tags: Optional[list[str]] = None,
-        metadata: Optional[dict[str, Any]] = None,
-        inputs: Optional[dict[str, Any]] = None,
-        **kwargs: Any,
-    ) -> None:
-        """Run when tool starts running."""
-        if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
-            return
-
-        name = self._get_name_from_callback(serialized, kwargs=kwargs)
-        workflow_name = self.get_workflow_name(parent_run_id)
-        entity_path = self.get_entity_path(parent_run_id)
-
-        span = self._create_task_span(
-            run_id,
-            parent_run_id,
-            name,
-            TraceloopSpanKindValues.TOOL,
-            workflow_name,
-            name,
-            entity_path,
-        )
-        if should_send_prompts():
-            span.set_attribute(
-                SpanAttributes.TRACELOOP_ENTITY_INPUT,
-                json.dumps(
-                    {
-                        "input_str": input_str,
-                        "tags": tags,
-                        "metadata": metadata,
-                        "inputs": inputs,
-                        "kwargs": kwargs,
-                    },
-                    cls=CallbackFilteredJSONEncoder,
-                ),
-            )
-
-    @dont_throw
-    def on_tool_end(
-        self,
-        output: Any,
-        *,
-        run_id: UUID,
-        parent_run_id: Optional[UUID] = None,
-        **kwargs: Any,
-    ) -> None:
-        """Run when tool ends running."""
-        if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
-            return
-
-        span = self._get_span(run_id)
-        if should_send_prompts():
-            span.set_attribute(
-                SpanAttributes.TRACELOOP_ENTITY_OUTPUT,
-                json.dumps(
-                    {"output": output, "kwargs": kwargs},
-                    cls=CallbackFilteredJSONEncoder,
-                ),
-            )
-        self._end_span(span, run_id)
-
     def get_parent_span(self, parent_run_id: Optional[str] = None):
         if parent_run_id is None:
             return None
-        return self.spans[parent_run_id]
+        return self._spans[parent_run_id]
 
-    def get_workflow_name(self, parent_run_id: str):
-        parent_span = self.get_parent_span(parent_run_id)
+    def get_workflow_name(self, run_id: str) -> str:
+        """Get the workflow name for a given run ID."""
+        return self._spans[UUID(run_id)].workflow_name if UUID(run_id) in self._spans else ""
 
-        if parent_span is None:
-            return ""
-
-        return parent_span.workflow_name
-
-    def get_entity_path(self, parent_run_id: str):
-        parent_span = self.get_parent_span(parent_run_id)
-
-        if parent_span is None:
-            return ""
-        elif (
-            parent_span.entity_path == ""
-            and parent_span.entity_name == parent_span.workflow_name
-        ):
-            return ""
-        elif parent_span.entity_path == "":
-            return f"{parent_span.entity_name}"
-        else:
-            return f"{parent_span.entity_path}.{parent_span.entity_name}"
+    def get_entity_path(self, run_id: str) -> str:
+        """Get the entity path for a given run ID."""
+        return self._spans[UUID(run_id)].entity_path if UUID(run_id) in self._spans else ""

@@ -1,11 +1,12 @@
 import importlib
 import pkgutil
+from typing import Optional
 
 from wrapt import wrap_function_wrapper
 from inflection import underscore
 
 from opentelemetry import context as context_api
-
+from opentelemetry._events import EventLogger
 from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
 from opentelemetry.semconv_ai import SpanAttributes, LLMRequestTypeValues
 from opentelemetry.instrumentation.llamaindex.utils import (
@@ -14,22 +15,27 @@ from opentelemetry.instrumentation.llamaindex.utils import (
     start_as_current_span_async,
     should_send_prompts,
 )
+from opentelemetry.instrumentation.llamaindex.events import (
+    create_prompt_event,
+    create_completion_event,
+)
+from opentelemetry.instrumentation.llamaindex.config import Config
 
 import llama_index.llms
 
 try:
     from llama_index.core.llms.custom import CustomLLM
-
     MODULE_NAME = "llama_index.llms"
 except ModuleNotFoundError:
     from llama_index.llms import CustomLLM
-
     MODULE_NAME = "llama_index.llms"
 
 
 class CustomLLMInstrumentor:
-    def __init__(self, tracer):
+    def __init__(self, tracer, event_logger: Optional[EventLogger] = None):
         self._tracer = tracer
+        self._event_logger = event_logger
+        self.config = Config()
 
     def instrument(self):
         packages = pkgutil.iter_modules(llama_index.llms.__path__)
@@ -47,141 +53,127 @@ class CustomLLMInstrumentor:
             wrap_function_wrapper(
                 cls.__module__,
                 f"{cls.__name__}.complete",
-                complete_wrapper(self._tracer),
+                complete_wrapper(self._tracer, self._event_logger, self.config),
             )
             wrap_function_wrapper(
                 cls.__module__,
                 f"{cls.__name__}.acomplete",
-                acomplete_wrapper(self._tracer),
+                acomplete_wrapper(self._tracer, self._event_logger, self.config),
             )
             wrap_function_wrapper(
-                cls.__module__, f"{cls.__name__}.chat", chat_wrapper(self._tracer)
+                cls.__module__,
+                f"{cls.__name__}.chat",
+                chat_wrapper(self._tracer, self._event_logger, self.config),
             )
             wrap_function_wrapper(
-                cls.__module__, f"{cls.__name__}.achat", achat_wrapper(self._tracer)
+                cls.__module__,
+                f"{cls.__name__}.achat",
+                achat_wrapper(self._tracer, self._event_logger, self.config),
             )
 
-    def unistrument(self):
+    def uninstrument(self):
         pass
-
 
 def _set_span_attribute(span, name, value):
     if value is not None:
-        if value != "":
-            span.set_attribute(name, value)
-    return
-
+        span.set_attribute(name, value)
 
 @_with_tracer_wrapper
-def chat_wrapper(tracer, wrapped, instance: CustomLLM, args, kwargs):
+def chat_wrapper(tracer, event_logger, config, wrapped, instance: CustomLLM, args, kwargs):
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
         return wrapped(*args, **kwargs)
-
-    llm_request_type = LLMRequestTypeValues.CHAT
 
     with tracer.start_as_current_span(
-        f"{snake_case_class_name(instance)}.chat"
+        name=f"{snake_case_class_name(instance)}.chat",
+        kind=SpanKind.CLIENT,
     ) as span:
-        _handle_request(span, llm_request_type, args, kwargs, instance)
+        _handle_request(span, event_logger, config, LLMRequestTypeValues.CHAT, args, kwargs, instance)
         response = wrapped(*args, **kwargs)
-        _handle_response(span, llm_request_type, instance, response)
-
+        _handle_response(span, event_logger, config, LLMRequestTypeValues.CHAT, instance, response)
         return response
 
-
 @_with_tracer_wrapper
-async def achat_wrapper(tracer, wrapped, instance: CustomLLM, args, kwargs):
+async def achat_wrapper(tracer, event_logger, config, wrapped, instance: CustomLLM, args, kwargs):
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
-        return wrapped(*args, **kwargs)
-
-    llm_request_type = LLMRequestTypeValues.CHAT
+        return await wrapped(*args, **kwargs)
 
     async with start_as_current_span_async(
-        tracer=tracer, name=f"{snake_case_class_name(instance)}.chat"
+        tracer,
+        name=f"{snake_case_class_name(instance)}.chat",
+        kind=SpanKind.CLIENT,
     ) as span:
-        _handle_request(span, llm_request_type, args, kwargs, instance)
+        _handle_request(span, event_logger, config, LLMRequestTypeValues.CHAT, args, kwargs, instance)
         response = await wrapped(*args, **kwargs)
-        _handle_response(span, llm_request_type, instance, response)
-
+        _handle_response(span, event_logger, config, LLMRequestTypeValues.CHAT, instance, response)
         return response
 
-
 @_with_tracer_wrapper
-def complete_wrapper(tracer, wrapped, instance: CustomLLM, args, kwargs):
+def complete_wrapper(tracer, event_logger, config, wrapped, instance: CustomLLM, args, kwargs):
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
         return wrapped(*args, **kwargs)
-
-    llm_request_type = LLMRequestTypeValues.COMPLETION
 
     with tracer.start_as_current_span(
-        f"{snake_case_class_name(instance)}.completion"
+        name=f"{snake_case_class_name(instance)}.complete",
+        kind=SpanKind.CLIENT,
     ) as span:
-        _handle_request(span, llm_request_type, args, kwargs, instance)
+        _handle_request(span, event_logger, config, LLMRequestTypeValues.COMPLETION, args, kwargs, instance)
         response = wrapped(*args, **kwargs)
-        _handle_response(span, llm_request_type, instance, response)
-
+        _handle_response(span, event_logger, config, LLMRequestTypeValues.COMPLETION, instance, response)
         return response
-
 
 @_with_tracer_wrapper
-async def acomplete_wrapper(tracer, wrapped, instance: CustomLLM, args, kwargs):
+async def acomplete_wrapper(tracer, event_logger, config, wrapped, instance: CustomLLM, args, kwargs):
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
-        return wrapped(*args, **kwargs)
-
-    llm_request_type = LLMRequestTypeValues.COMPLETION
+        return await wrapped(*args, **kwargs)
 
     async with start_as_current_span_async(
-        tracer=tracer, name=f"{snake_case_class_name(instance)}.completion"
+        tracer,
+        name=f"{snake_case_class_name(instance)}.complete",
+        kind=SpanKind.CLIENT,
     ) as span:
-        _handle_request(span, llm_request_type, args, kwargs, instance)
+        _handle_request(span, event_logger, config, LLMRequestTypeValues.COMPLETION, args, kwargs, instance)
         response = await wrapped(*args, **kwargs)
-        _handle_response(span, llm_request_type, instance, response)
-
+        _handle_response(span, event_logger, config, LLMRequestTypeValues.COMPLETION, instance, response)
         return response
-
 
 @dont_throw
-def _handle_request(span, llm_request_type, args, kwargs, instance: CustomLLM):
-    _set_span_attribute(span, SpanAttributes.LLM_SYSTEM, instance.__class__.__name__)
-    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TYPE, llm_request_type.value)
-    _set_span_attribute(
-        span, SpanAttributes.LLM_REQUEST_MODEL, instance.metadata.model_name
-    )
-    _set_span_attribute(
-        span, SpanAttributes.LLM_REQUEST_MAX_TOKENS, instance.metadata.context_window
-    )
-    _set_span_attribute(
-        span, SpanAttributes.LLM_REQUEST_TOP_P, instance.metadata.num_output
-    )
+def _handle_request(span, event_logger, config, llm_request_type, args, kwargs, instance: CustomLLM):
+    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TYPE, llm_request_type)
+    _set_span_attribute(span, SpanAttributes.LLM_VENDOR, instance.metadata.get("vendor"))
+    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, instance.metadata.get("model"))
 
     if should_send_prompts():
-        # TODO: add support for chat
-        if llm_request_type == LLMRequestTypeValues.COMPLETION:
-            if len(args) > 0:
-                prompt = args[0]
-                _set_span_attribute(
-                    span,
-                    f"{SpanAttributes.LLM_PROMPTS}.0.user",
-                    prompt[0] if isinstance(prompt, list) else prompt,
+        prompt = kwargs.get("prompt") or (args[0] if args else None)
+        if config.use_legacy_attributes:
+            _set_span_attribute(span, SpanAttributes.LLM_PROMPTS, [prompt] if prompt else None)
+        
+        if event_logger and prompt:
+            span_context = span.get_span_context()
+            event_logger.emit(
+                create_prompt_event(
+                    {"prompt": prompt},
+                    trace_id=span_context.trace_id,
+                    span_id=span_context.span_id,
+                    trace_flags=span_context.trace_flags,
                 )
-
-    return
-
-
-@dont_throw
-def _handle_response(span, llm_request_type, instance, response):
-    _set_span_attribute(
-        span, SpanAttributes.LLM_RESPONSE_MODEL, instance.metadata.model_name
-    )
-
-    if should_send_prompts():
-        if llm_request_type == LLMRequestTypeValues.COMPLETION:
-            _set_span_attribute(
-                span, f"{SpanAttributes.LLM_COMPLETIONS}.0.content", response.text
             )
 
-    return
+@dont_throw
+def _handle_response(span, event_logger, config, llm_request_type, instance, response):
+    if config.use_legacy_attributes:
+        _set_span_attribute(span, SpanAttributes.LLM_COMPLETIONS, [response] if response else None)
+        _set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, instance.metadata.get("model"))
 
+    if event_logger and response:
+        span_context = span.get_span_context()
+        event_logger.emit(
+            create_completion_event(
+                {"completion": response},
+                trace_id=span_context.trace_id,
+                span_id=span_context.span_id,
+                trace_flags=span_context.trace_flags,
+            )
+        )
 
 def snake_case_class_name(instance):
     return underscore(instance.__class__.__name__)
