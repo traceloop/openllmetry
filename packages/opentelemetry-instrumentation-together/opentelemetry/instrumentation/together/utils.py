@@ -1,28 +1,57 @@
-import logging
-from opentelemetry.instrumentation.together.config import Config
-import traceback
+"""Utility functions for Together AI instrumentation."""
 
+from functools import wraps
+from typing import Any, Callable, Dict, Optional, TypeVar
 
-def dont_throw(func):
+from opentelemetry.trace import Status, StatusCode
+
+T = TypeVar('T')
+
+def dont_throw(func: Callable[..., T]) -> Callable[..., Optional[T]]:
+    """Decorator that prevents functions from throwing exceptions.
+    
+    Instead of throwing, it logs the error and returns None.
     """
-    A decorator that wraps the passed in function and logs exceptions instead of throwing them.
-
-    @param func: The function to wrap
-    @return: The wrapper function
-    """
-    # Obtain a logger specific to the function's module
-    logger = logging.getLogger(func.__module__)
-
-    def wrapper(*args, **kwargs):
+    @wraps(func)
+    def wrapper(*args: Any, **kwargs: Any) -> Optional[T]:
         try:
             return func(*args, **kwargs)
-        except Exception as e:
-            logger.debug(
-                "OpenLLMetry failed to trace in %s, error: %s",
-                func.__name__,
-                traceback.format_exc(),
-            )
-            if Config.exception_logger:
-                Config.exception_logger(e)
-
+        except Exception as exc:  # pylint: disable=broad-except
+            if 'span' in kwargs:
+                span = kwargs['span']
+                span.set_status(Status(StatusCode.ERROR))
+                span.record_exception(exc)
+            return None
     return wrapper
+
+def extract_model_name(response: Dict[str, Any]) -> Optional[str]:
+    """Extract model name from Together AI response.
+    
+    Args:
+        response: The response from Together AI API
+        
+    Returns:
+        The model name if found, None otherwise
+    """
+    try:
+        if isinstance(response, dict):
+            return response.get('model', None)
+        return None
+    except (AttributeError, KeyError):
+        return None
+
+def extract_completion_tokens(response: Dict[str, Any]) -> Optional[int]:
+    """Extract completion tokens from Together AI response.
+    
+    Args:
+        response: The response from Together AI API
+        
+    Returns:
+        The number of completion tokens if found, None otherwise
+    """
+    try:
+        if isinstance(response, dict) and 'usage' in response:
+            return response['usage'].get('completion_tokens', None)
+        return None
+    except (AttributeError, KeyError):
+        return None

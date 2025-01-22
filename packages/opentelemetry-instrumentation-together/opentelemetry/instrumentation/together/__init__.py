@@ -3,11 +3,14 @@
 import logging
 import os
 from typing import Collection
+
 from opentelemetry.instrumentation.together.config import Config
+from opentelemetry.instrumentation.together.events import message_to_event, choice_to_event
 from opentelemetry.instrumentation.together.utils import dont_throw
 from wrapt import wrap_function_wrapper
 
 from opentelemetry import context as context_api
+from opentelemetry._events import EventLogger
 from opentelemetry.trace import get_tracer, SpanKind
 from opentelemetry.trace.status import Status, StatusCode
 
@@ -23,7 +26,6 @@ from opentelemetry.semconv_ai import (
     LLMRequestTypeValues,
 )
 from opentelemetry.instrumentation.together.version import __version__
-
 
 logger = logging.getLogger(__name__)
 
@@ -134,12 +136,10 @@ def _set_response_attributes(span, llm_request_type, response):
 def _with_tracer_wrapper(func):
     """Helper for providing tracer for wrapper functions."""
 
-    def _with_tracer(tracer, to_wrap):
+    def _with_tracer(tracer, event_logger, to_wrap, config):
         def wrapper(wrapped, instance, args, kwargs):
-            return func(tracer, to_wrap, wrapped, instance, args, kwargs)
-
+            return func(tracer, event_logger, to_wrap, config, wrapped, instance, args, kwargs)
         return wrapper
-
     return _with_tracer
 
 
@@ -153,7 +153,7 @@ def _llm_request_type_by_method(method_name):
 
 
 @_with_tracer_wrapper
-def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
+def _wrap(tracer, event_logger, to_wrap, config, wrapped, instance, args, kwargs):
     """Instruments and calls every function defined in TO_WRAP."""
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY) or context_api.get_value(
         SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY
@@ -170,19 +170,49 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
             SpanAttributes.LLM_REQUEST_TYPE: llm_request_type.value,
         },
     )
+
     if span.is_recording():
-        _set_input_attributes(span, llm_request_type, kwargs)
+        if config.use_legacy_attributes:
+            _set_input_attributes(span, llm_request_type, kwargs)
+        else:
+            if llm_request_type == LLMRequestTypeValues.CHAT:
+                for message in kwargs.get("messages", []):
+                    event_logger.emit(
+                        message_to_event(message, config.capture_content)
+                    )
+            elif llm_request_type == LLMRequestTypeValues.COMPLETION:
+                event_logger.emit(
+                    message_to_event(
+                        {"role": "user", "content": kwargs.get("prompt")},
+                        config.capture_content
+                    )
+                )
 
-    response = wrapped(*args, **kwargs)
+    try:
+        response = wrapped(*args, **kwargs)
 
-    if response:
-        if span.is_recording():
+        if response and span.is_recording():
+            if config.use_legacy_attributes:
+                _set_response_attributes(span, llm_request_type, response)
+            else:
+                for choice in response.choices:
+                    event_logger.emit(
+                        choice_to_event(choice, config.capture_content)
+                    )
 
-            _set_response_attributes(span, llm_request_type, response)
             span.set_status(Status(StatusCode.OK))
 
-    span.end()
-    return response
+        return response
+
+    except Exception as ex:
+        if span.is_recording():
+            span.set_status(Status(StatusCode.ERROR))
+            span.record_exception(ex)
+            if config.exception_logger:
+                config.exception_logger(ex)
+        raise
+    finally:
+        span.end()
 
 
 class TogetherAiInstrumentor(BaseInstrumentor):
@@ -190,27 +220,36 @@ class TogetherAiInstrumentor(BaseInstrumentor):
 
     def __init__(self, exception_logger=None):
         super().__init__()
-        Config.exception_logger = exception_logger
+        self._exception_logger = exception_logger
 
     def instrumentation_dependencies(self) -> Collection[str]:
         return _instruments
 
     def _instrument(self, **kwargs):
+        self._config = Config(
+            use_legacy_attributes=kwargs.get("use_legacy_attributes", True),
+            capture_content=kwargs.get("capture_content", True),
+            exception_logger=self._exception_logger,
+        )
+
         tracer_provider = kwargs.get("tracer_provider")
         tracer = get_tracer(__name__, __version__, tracer_provider)
+        event_logger = EventLogger(__name__, tracer_provider)
+
         for wrapped_method in WRAPPED_METHODS:
             wrap_object = wrapped_method.get("object")
             wrap_method = wrapped_method.get("method")
             wrap_function_wrapper(
                 "together",
                 f"{wrap_object}.{wrap_method}",
-                _wrap(tracer, wrapped_method),
+                _wrap(tracer, event_logger, wrapped_method, self._config),
             )
 
     def _uninstrument(self, **kwargs):
         for wrapped_method in WRAPPED_METHODS:
             wrap_object = wrapped_method.get("object")
+            wrap_method = wrapped_method.get("method")
             unwrap(
                 f"together.{wrap_object}",
-                wrapped_method.get("method"),
+                wrap_method.split(".")[-1],
             )
