@@ -37,7 +37,7 @@ pytest-sugar = "1.0.0"
 
 
 [tool.poetry.group.test.dependencies]
-langchain = "^0.3.4"
+langchain = "^0.3.15"
 langchain-community = "^0.3.3"
 openai = "^1.52.2"
 pytest = "^8.3.3"
@@ -52,9 +52,11 @@ text-generation = "^0.7.0"
 anthropic = "^0.37.1"
 boto3 = "^1.35.49"
 langchain-anthropic = "=0.2.0"
-langchain-openai = "^0.2.3"
+langchain-aws = "^0.2.11"
+langchain-openai = "^0.3.1"
 langchain-cohere = "0.3.1"
-pydantic = "^2.9.2"
+langchain-huggingface = "^0.1.2"
+pydantic = "^2.10.5"
 langchainhub = "^0.1.21"
 
 [build-system]

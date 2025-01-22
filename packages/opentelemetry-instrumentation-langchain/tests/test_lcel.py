@@ -1,13 +1,13 @@
 import json
 
 import pytest
+from langchain_core.utils.function_calling import (
+    convert_pydantic_to_openai_function,
+)
 from langchain.output_parsers.openai_functions import JsonOutputFunctionsParser
 from langchain.prompts import ChatPromptTemplate
 from langchain.prompts import PromptTemplate
 from langchain.schema import StrOutputParser
-from langchain_community.utils.openai_functions import (
-    convert_pydantic_to_openai_function,
-)
 from pydantic import BaseModel, Field
 from langchain_openai import ChatOpenAI
 from opentelemetry.semconv_ai import SpanAttributes
