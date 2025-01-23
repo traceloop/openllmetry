@@ -24,6 +24,7 @@ def test_chat(exporter, groq_client):
     assert groq_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) > 0
     assert groq_span.attributes.get(SpanAttributes.LLM_USAGE_COMPLETION_TOKENS) > 0
     assert groq_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS) > 0
+    assert groq_span.attributes.get("gen_ai.response.id") == "chatcmpl-645691ff-34af-4d0f-a1c1-fe888f8685cc"
 
 
 @pytest.mark.vcr
@@ -49,3 +50,4 @@ async def test_async_chat(exporter, async_groq_client):
     assert groq_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) > 0
     assert groq_span.attributes.get(SpanAttributes.LLM_USAGE_COMPLETION_TOKENS) > 0
     assert groq_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS) > 0
+    assert groq_span.attributes.get("gen_ai.response.id") == "chatcmpl-ec0a74e9-df7f-4e91-aa09-e9618451f5c9"
