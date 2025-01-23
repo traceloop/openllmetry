@@ -11,6 +11,7 @@ from opentelemetry.instrumentation.anthropic.utils import (
     should_send_prompts,
 )
 from opentelemetry.metrics import Counter, Histogram
+from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import GEN_AI_RESPONSE_ID
 from opentelemetry.semconv_ai import SpanAttributes
 from opentelemetry.trace.status import Status, StatusCode
 
@@ -22,6 +23,7 @@ def _process_response_item(item, complete_response):
     if item.type == "message_start":
         complete_response["model"] = item.message.model
         complete_response["usage"] = dict(item.message.usage)
+        complete_response["id"] = item.message.id
     elif item.type == "content_block_start":
         index = item.index
         if len(complete_response.get("events")) <= index:
@@ -131,7 +133,7 @@ def build_from_streaming_response(
     exception_counter: Counter = None,
     kwargs: dict = {},
 ):
-    complete_response = {"events": [], "model": "", "usage": {}}
+    complete_response = {"events": [], "model": "", "usage": {}, "id": ""}
     for item in response:
         try:
             yield item
@@ -143,7 +145,7 @@ def build_from_streaming_response(
         _process_response_item(item, complete_response)
 
     metric_attributes = shared_metrics_attributes(complete_response)
-
+    set_span_attribute(span, GEN_AI_RESPONSE_ID, complete_response.get("id"))
     if duration_histogram:
         duration = time.time() - start_time
         duration_histogram.record(
@@ -206,7 +208,7 @@ async def abuild_from_streaming_response(
     exception_counter: Counter = None,
     kwargs: dict = {},
 ):
-    complete_response = {"events": [], "model": "", "usage": {}}
+    complete_response = {"events": [], "model": "", "usage": {}, "id": ""}
     async for item in response:
         try:
             yield item
@@ -216,6 +218,8 @@ async def abuild_from_streaming_response(
                 exception_counter.add(1, attributes=attributes)
             raise e
         _process_response_item(item, complete_response)
+
+    set_span_attribute(span, GEN_AI_RESPONSE_ID, complete_response.get("id"))
 
     metric_attributes = shared_metrics_attributes(complete_response)
 
