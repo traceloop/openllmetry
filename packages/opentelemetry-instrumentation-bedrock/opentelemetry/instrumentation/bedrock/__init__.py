@@ -25,6 +25,7 @@ from opentelemetry.instrumentation.utils import (
     unwrap,
 )
 
+from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import GEN_AI_RESPONSE_ID
 from opentelemetry.semconv_ai import (
     SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
     SpanAttributes,
@@ -203,9 +204,13 @@ def _handle_stream_call(span, kwargs, response, metric_params):
         metric_params.model = model
         metric_params.is_stream = True
 
+        response_model = response_body.get("model")
+        response_id = response_body.get("id")
+
         _set_span_attribute(span, SpanAttributes.LLM_SYSTEM, vendor)
         _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, model)
-        _set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, model)
+        _set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, response_model)
+        _set_span_attribute(span, GEN_AI_RESPONSE_ID, response_id)
 
         if vendor == "cohere":
             _set_cohere_span_attributes(
@@ -248,9 +253,13 @@ def _handle_call(span, kwargs, response, metric_params):
     metric_params.model = model
     metric_params.is_stream = False
 
+    response_model = response_body.get("model")
+    response_id = response_body.get("id")
+
     _set_span_attribute(span, SpanAttributes.LLM_SYSTEM, vendor)
     _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, model)
-    _set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, model)
+    _set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, response_model)
+    _set_span_attribute(span, GEN_AI_RESPONSE_ID, response_id)
 
     if vendor == "cohere":
         _set_cohere_span_attributes(span, request_body, response_body, metric_params)
