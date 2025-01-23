@@ -43,6 +43,7 @@ There's a llama in my garden  What should I do? [/INST]"""
         meta_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
         == response_body["generation_token_count"] + response_body["prompt_token_count"]
     )
+    assert meta_span.attributes.get("gen_ai.response.id") is None
 
 
 @pytest.mark.vcr
@@ -80,3 +81,4 @@ def test_meta_llama3_completion(test_context, brt):
         meta_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"]
         == response_body["generation"]
     )
+    assert meta_span.attributes.get("gen_ai.response.id") is None

@@ -21,6 +21,7 @@ from opentelemetry.instrumentation.groq.version import __version__
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY, unwrap
 from opentelemetry.metrics import Counter, Histogram, Meter, get_meter
+from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import GEN_AI_RESPONSE_ID
 from opentelemetry.semconv_ai import (
     SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
     LLMRequestTypeValues,
@@ -184,6 +185,7 @@ def _set_response_attributes(span, response):
     response = model_as_dict(response)
 
     set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, response.get("model"))
+    set_span_attribute(span, GEN_AI_RESPONSE_ID, response.get("id"))
 
     usage = response.get("usage")
     if usage:

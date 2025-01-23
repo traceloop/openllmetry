@@ -97,6 +97,7 @@ def test_anthropic_completion(exporter, reader):
         == f"{HUMAN_PROMPT}\nHello world\n{AI_PROMPT}"
     )
     assert anthropic_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
+    assert anthropic_span.attributes.get("gen_ai.response.id") == "compl_01EjfrPvPEsRDRUKD6VoBxtK"
 
     metrics_data = reader.get_metrics_data()
     resource_metrics = metrics_data.resource_metrics
@@ -143,6 +144,7 @@ def test_anthropic_message_create(exporter, reader):
         + anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS]
         == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
     )
+    assert anthropic_span.attributes.get("gen_ai.response.id") == "msg_01TPXhkPo8jy6yQMrMhjpiAE"
 
     metrics_data = reader.get_metrics_data()
     resource_metrics = metrics_data.resource_metrics
@@ -205,6 +207,7 @@ def test_anthropic_multi_modal(exporter):
         + anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS]
         == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
     )
+    assert anthropic_span.attributes.get("gen_ai.response.id") == "msg_01B37ySLPzYj8KY6uZmiPoxd"
 
 
 @pytest.mark.vcr
@@ -264,6 +267,7 @@ async def test_anthropic_async_multi_modal(exporter):
         + anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS]
         == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
     )
+    assert anthropic_span.attributes.get("gen_ai.response.id") == "msg_01DWnmUo9hWk4Fk7V7Ddfa2w"
 
 
 @pytest.mark.vcr
@@ -312,6 +316,7 @@ def test_anthropic_message_streaming(exporter, reader):
         + anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS]
         == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
     )
+    assert anthropic_span.attributes.get("gen_ai.response.id") == "msg_01MXWxhWoPSgrYhjTuMDM6F1"
 
     metrics_data = reader.get_metrics_data()
     resource_metrics = metrics_data.resource_metrics
@@ -360,6 +365,7 @@ async def test_async_anthropic_message_create(exporter, reader):
         + anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS]
         == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
     )
+    assert anthropic_span.attributes.get("gen_ai.response.id") == "msg_01UFDDjsFn5BPQnfNwmsMnAY"
 
     metrics_data = reader.get_metrics_data()
     resource_metrics = metrics_data.resource_metrics
@@ -414,6 +420,7 @@ async def test_async_anthropic_message_streaming(exporter, reader):
         + anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS]
         == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
     )
+    assert anthropic_span.attributes.get("gen_ai.response.id") == "msg_016o6A7zDmgjucf5mWv1rrPD"
 
     metrics_data = reader.get_metrics_data()
     resource_metrics = metrics_data.resource_metrics
@@ -554,6 +561,7 @@ def test_anthropic_tools(exporter, reader):
     assert (anthropic_span.attributes["gen_ai.completion.0.tool_calls.1.name"]) == response.content[2].name
     response_input = json.dumps(response.content[2].input)
     assert (anthropic_span.attributes["gen_ai.completion.0.tool_calls.1.arguments"] == response_input)
+    assert anthropic_span.attributes.get("gen_ai.response.id") == "msg_01RBkXFe9TmDNNWThMz2HmGt"
 
     # verify metrics
     metrics_data = reader.get_metrics_data()
@@ -621,6 +629,8 @@ def test_anthropic_prompt_caching(exporter, reader):
         cache_creation_span.attributes["gen_ai.usage.cache_creation_input_tokens"]
         == cache_read_span.attributes["gen_ai.usage.cache_read_input_tokens"]
     )
+    assert cache_creation_span.attributes.get("gen_ai.response.id") == "msg_01BQdyey3QZM7KW1nM7xXdjR"
+    assert cache_read_span.attributes.get("gen_ai.response.id") == "msg_013eHbX6hmAnH7kp6NNp2qyL"
 
     # first check that cache_creation_span only wrote to cache, but not read from it,
     assert cache_creation_span.attributes["gen_ai.usage.cache_read_input_tokens"] == 0
@@ -707,6 +717,8 @@ async def test_anthropic_prompt_caching_async(exporter, reader):
         cache_creation_span.attributes["gen_ai.usage.cache_creation_input_tokens"]
         == cache_read_span.attributes["gen_ai.usage.cache_read_input_tokens"]
     )
+    assert cache_creation_span.attributes.get("gen_ai.response.id") == "msg_018V6UftrxrM1Z5Rt8govzD1"
+    assert cache_read_span.attributes.get("gen_ai.response.id") == "msg_01MsbM1E6LPe7pz1NrkZEGev"
 
     # first check that cache_creation_span only wrote to cache, but not read from it,
     assert cache_creation_span.attributes["gen_ai.usage.cache_read_input_tokens"] == 0
@@ -796,6 +808,8 @@ def test_anthropic_prompt_caching_stream(exporter, reader):
         cache_creation_span.attributes["gen_ai.usage.cache_creation_input_tokens"]
         == cache_read_span.attributes["gen_ai.usage.cache_read_input_tokens"]
     )
+    assert cache_creation_span.attributes.get("gen_ai.response.id") == "msg_015AgAJmgFQdYXgvvgbuKqPY"
+    assert cache_read_span.attributes.get("gen_ai.response.id") == "msg_01HSJ2wYvBf4DbFbwCaiGreG"
 
     # first check that cache_creation_span only wrote to cache, but not read from it,
     assert cache_creation_span.attributes["gen_ai.usage.cache_read_input_tokens"] == 0
@@ -877,6 +891,8 @@ async def test_anthropic_prompt_caching_async_stream(exporter, reader):
     assert system_message == cache_creation_span.attributes["gen_ai.prompt.0.content"]
     assert cache_read_span.attributes["gen_ai.prompt.0.role"] == "system"
     assert system_message == cache_read_span.attributes["gen_ai.prompt.0.content"]
+    assert cache_creation_span.attributes.get("gen_ai.response.id") == "msg_01VBrTFKAYvujMd593dtpRHF"
+    assert cache_read_span.attributes.get("gen_ai.response.id") == "msg_01BqqtrPfxepxW2xPuZz1m6h"
 
     assert cache_creation_span.attributes["gen_ai.prompt.1.role"] == "user"
     assert text == cache_creation_span.attributes["gen_ai.prompt.1.content"]
