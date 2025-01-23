@@ -6,9 +6,15 @@ import json
 from typing import Collection
 from opentelemetry.instrumentation.ollama.config import Config
 from opentelemetry.instrumentation.ollama.utils import dont_throw
+from opentelemetry.instrumentation.ollama.events import (
+    message_to_event,
+    completion_to_event,
+    embedding_to_event,
+)
 from wrapt import wrap_function_wrapper
 
 from opentelemetry import context as context_api
+from opentelemetry._events import EventLogger
 from opentelemetry.trace import get_tracer, SpanKind
 from opentelemetry.trace.status import Status, StatusCode
 
@@ -33,14 +39,17 @@ WRAPPED_METHODS = [
     {
         "method": "generate",
         "span_name": "ollama.completion",
+        "streaming": False,
     },
     {
         "method": "chat",
         "span_name": "ollama.chat",
+        "streaming": False,
     },
     {
         "method": "embeddings",
         "span_name": "ollama.embeddings",
+        "streaming": False,
     },
 ]
 
@@ -191,7 +200,8 @@ def _set_response_attributes(span, llm_request_type, response):
     )
 
 
-def _accumulate_streaming_response(span, llm_request_type, response):
+def _accumulate_streaming_response(span, event_logger, llm_request_type, response, config):
+    """Accumulate streaming response and set attributes."""
     if llm_request_type == LLMRequestTypeValues.CHAT:
         accumulated_response = {"message": {"content": "", "role": ""}}
     elif llm_request_type == LLMRequestTypeValues.COMPLETION:
@@ -203,14 +213,29 @@ def _accumulate_streaming_response(span, llm_request_type, response):
         if llm_request_type == LLMRequestTypeValues.CHAT:
             accumulated_response["message"]["content"] += res["message"]["content"]
             accumulated_response["message"]["role"] = res["message"]["role"]
+            
+            if not config.use_legacy_attributes:
+                event_logger.emit(
+                    completion_to_event(
+                        {"response": res["message"]["content"], "model": res.get("model")},
+                        config.capture_content
+                    )
+                )
         elif llm_request_type == LLMRequestTypeValues.COMPLETION:
             accumulated_response["response"] += res["response"]
+            
+            if not config.use_legacy_attributes:
+                event_logger.emit(
+                    completion_to_event(res, config.capture_content)
+                )
 
-    _set_response_attributes(span, llm_request_type, res | accumulated_response)
+    if config.use_legacy_attributes:
+        _set_response_attributes(span, llm_request_type, res | accumulated_response)
     span.end()
 
 
-async def _aaccumulate_streaming_response(span, llm_request_type, response):
+async def _aaccumulate_streaming_response(span, event_logger, llm_request_type, response, config):
+    """Accumulate streaming response and set attributes."""
     if llm_request_type == LLMRequestTypeValues.CHAT:
         accumulated_response = {"message": {"content": "", "role": ""}}
     elif llm_request_type == LLMRequestTypeValues.COMPLETION:
@@ -222,22 +247,34 @@ async def _aaccumulate_streaming_response(span, llm_request_type, response):
         if llm_request_type == LLMRequestTypeValues.CHAT:
             accumulated_response["message"]["content"] += res["message"]["content"]
             accumulated_response["message"]["role"] = res["message"]["role"]
+            
+            if not config.use_legacy_attributes:
+                event_logger.emit(
+                    completion_to_event(
+                        {"response": res["message"]["content"], "model": res.get("model")},
+                        config.capture_content
+                    )
+                )
         elif llm_request_type == LLMRequestTypeValues.COMPLETION:
             accumulated_response["response"] += res["response"]
+            
+            if not config.use_legacy_attributes:
+                event_logger.emit(
+                    completion_to_event(res, config.capture_content)
+                )
 
-    _set_response_attributes(span, llm_request_type, res | accumulated_response)
+    if config.use_legacy_attributes:
+        _set_response_attributes(span, llm_request_type, res | accumulated_response)
     span.end()
 
 
 def _with_tracer_wrapper(func):
     """Helper for providing tracer for wrapper functions."""
 
-    def _with_tracer(tracer, to_wrap):
+    def _with_tracer(tracer, event_logger, to_wrap, config):
         def wrapper(wrapped, instance, args, kwargs):
-            return func(tracer, to_wrap, wrapped, instance, args, kwargs)
-
+            return func(tracer, event_logger, to_wrap, config, wrapped, instance, args, kwargs)
         return wrapper
-
     return _with_tracer
 
 
@@ -253,118 +290,187 @@ def _llm_request_type_by_method(method_name):
 
 
 @_with_tracer_wrapper
-def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
-    """Instruments and calls every function defined in TO_WRAP."""
-    if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY) or context_api.get_value(
-        SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY
-    ):
+def _wrap(tracer, event_logger, to_wrap, config, wrapped, instance, args, kwargs):
+    """Wrap a synchronous Ollama method with tracing."""
+    if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
         return wrapped(*args, **kwargs)
 
-    name = to_wrap.get("span_name")
-    llm_request_type = _llm_request_type_by_method(to_wrap.get("method"))
-    span = tracer.start_span(
-        name,
+    if context_api.get_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY):
+        return wrapped(*args, **kwargs)
+
+    llm_request_type = _llm_request_type_by_method(to_wrap["method"])
+
+    with tracer.start_as_current_span(
+        to_wrap["span_name"],
         kind=SpanKind.CLIENT,
-        attributes={
-            SpanAttributes.LLM_SYSTEM: "Ollama",
-            SpanAttributes.LLM_REQUEST_TYPE: llm_request_type.value,
-        },
-    )
-    if span.is_recording():
-        _set_input_attributes(span, llm_request_type, kwargs)
-
-    response = wrapped(*args, **kwargs)
-
-    if response:
+        end_on_exit=not kwargs.get("stream", False),
+    ) as span:
         if span.is_recording():
-            if kwargs.get("stream"):
-                return _accumulate_streaming_response(span, llm_request_type, response)
+            if config.use_legacy_attributes:
+                _set_input_attributes(span, llm_request_type, kwargs)
+            else:
+                if llm_request_type == LLMRequestTypeValues.CHAT:
+                    for message in kwargs.get("messages", []):
+                        event_logger.emit(
+                            message_to_event(message, config.capture_content)
+                        )
+                elif llm_request_type == LLMRequestTypeValues.COMPLETION:
+                    event_logger.emit(
+                        message_to_event(
+                            {"role": "user", "content": kwargs.get("prompt")},
+                            config.capture_content
+                        )
+                    )
 
-            _set_response_attributes(span, llm_request_type, response)
-            span.set_status(Status(StatusCode.OK))
+        try:
+            response = wrapped(*args, **kwargs)
 
-    span.end()
-    return response
+            if span.is_recording():
+                if kwargs.get("stream", False):
+                    return _accumulate_streaming_response(
+                        span, event_logger, llm_request_type, response, config
+                    )
+
+                if config.use_legacy_attributes:
+                    _set_response_attributes(span, llm_request_type, response)
+                else:
+                    if llm_request_type == LLMRequestTypeValues.CHAT:
+                        event_logger.emit(
+                            completion_to_event(response, config.capture_content)
+                        )
+                    elif llm_request_type == LLMRequestTypeValues.COMPLETION:
+                        event_logger.emit(
+                            completion_to_event(response, config.capture_content)
+                        )
+                    elif llm_request_type == LLMRequestTypeValues.EMBEDDING:
+                        event_logger.emit(
+                            embedding_to_event(
+                                response,
+                                kwargs.get("prompt"),
+                                config.capture_content
+                            )
+                        )
+
+            return response
+
+        except Exception as ex:
+            if span.is_recording():
+                span.set_status(Status(StatusCode.ERROR))
+                span.record_exception(ex)
+            raise
 
 
 @_with_tracer_wrapper
-async def _awrap(tracer, to_wrap, wrapped, instance, args, kwargs):
-    """Instruments and calls every function defined in TO_WRAP."""
-    if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY) or context_api.get_value(
-        SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY
-    ):
+async def _awrap(tracer, event_logger, to_wrap, config, wrapped, instance, args, kwargs):
+    """Wrap an asynchronous Ollama method with tracing."""
+    if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
         return await wrapped(*args, **kwargs)
 
-    name = to_wrap.get("span_name")
-    llm_request_type = _llm_request_type_by_method(to_wrap.get("method"))
-    span = tracer.start_span(
-        name,
+    if context_api.get_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY):
+        return await wrapped(*args, **kwargs)
+
+    llm_request_type = _llm_request_type_by_method(to_wrap["method"])
+
+    with tracer.start_as_current_span(
+        to_wrap["span_name"],
         kind=SpanKind.CLIENT,
-        attributes={
-            SpanAttributes.LLM_SYSTEM: "Ollama",
-            SpanAttributes.LLM_REQUEST_TYPE: llm_request_type.value,
-        },
-    )
-
-    if span.is_recording():
-        _set_input_attributes(span, llm_request_type, kwargs)
-
-    response = await wrapped(*args, **kwargs)
-
-    if response:
+        end_on_exit=not kwargs.get("stream", False),
+    ) as span:
         if span.is_recording():
-            if kwargs.get("stream"):
-                return _aaccumulate_streaming_response(span, llm_request_type, response)
+            if config.use_legacy_attributes:
+                _set_input_attributes(span, llm_request_type, kwargs)
+            else:
+                if llm_request_type == LLMRequestTypeValues.CHAT:
+                    for message in kwargs.get("messages", []):
+                        event_logger.emit(
+                            message_to_event(message, config.capture_content)
+                        )
+                elif llm_request_type == LLMRequestTypeValues.COMPLETION:
+                    event_logger.emit(
+                        message_to_event(
+                            {"role": "user", "content": kwargs.get("prompt")},
+                            config.capture_content
+                        )
+                    )
 
-            _set_response_attributes(span, llm_request_type, response)
-            span.set_status(Status(StatusCode.OK))
+        try:
+            response = await wrapped(*args, **kwargs)
 
-    span.end()
-    return response
+            if span.is_recording():
+                if kwargs.get("stream", False):
+                    return _aaccumulate_streaming_response(
+                        span, event_logger, llm_request_type, response, config
+                    )
+
+                if config.use_legacy_attributes:
+                    _set_response_attributes(span, llm_request_type, response)
+                else:
+                    if llm_request_type == LLMRequestTypeValues.CHAT:
+                        event_logger.emit(
+                            completion_to_event(response, config.capture_content)
+                        )
+                    elif llm_request_type == LLMRequestTypeValues.COMPLETION:
+                        event_logger.emit(
+                            completion_to_event(response, config.capture_content)
+                        )
+                    elif llm_request_type == LLMRequestTypeValues.EMBEDDING:
+                        event_logger.emit(
+                            embedding_to_event(
+                                response,
+                                kwargs.get("prompt"),
+                                config.capture_content
+                            )
+                        )
+
+            return response
+
+        except Exception as ex:
+            if span.is_recording():
+                span.set_status(Status(StatusCode.ERROR))
+                span.record_exception(ex)
+            raise
 
 
 class OllamaInstrumentor(BaseInstrumentor):
     """An instrumentor for Ollama's client library."""
 
     def __init__(self, exception_logger=None):
+        self._exception_logger = exception_logger
         super().__init__()
-        Config.exception_logger = exception_logger
 
     def instrumentation_dependencies(self) -> Collection[str]:
         return _instruments
 
     def _instrument(self, **kwargs):
+        self._config = Config(
+            use_legacy_attributes=kwargs.get("use_legacy_attributes", True),
+            capture_content=kwargs.get("capture_content", True),
+            exception_logger=self._exception_logger,
+        )
+
         tracer_provider = kwargs.get("tracer_provider")
         tracer = get_tracer(__name__, __version__, tracer_provider)
+        event_logger = EventLogger(__name__, tracer_provider)
+
         for wrapped_method in WRAPPED_METHODS:
-            wrap_method = wrapped_method.get("method")
             wrap_function_wrapper(
-                "ollama._client",
-                f"Client.{wrap_method}",
-                _wrap(tracer, wrapped_method),
-            )
-            wrap_function_wrapper(
-                "ollama._client",
-                f"AsyncClient.{wrap_method}",
-                _awrap(tracer, wrapped_method),
+                "ollama",
+                f"Client.{wrapped_method['method']}",
+                _wrap(tracer, event_logger, wrapped_method, self._config),
             )
             wrap_function_wrapper(
                 "ollama",
-                f"{wrap_method}",
-                _wrap(tracer, wrapped_method),
+                f"AsyncClient.{wrapped_method['method']}",
+                _awrap(tracer, event_logger, wrapped_method, self._config),
             )
 
     def _uninstrument(self, **kwargs):
         for wrapped_method in WRAPPED_METHODS:
             unwrap(
-                "ollama._client.Client",
-                wrapped_method.get("method"),
-            )
-            unwrap(
-                "ollama._client.AsyncClient",
-                wrapped_method.get("method"),
+                "ollama",
+                f"Client.{wrapped_method['method']}",
             )
             unwrap(
                 "ollama",
-                wrapped_method.get("method"),
+                f"AsyncClient.{wrapped_method['method']}",
             )

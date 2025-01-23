@@ -6,6 +6,11 @@ import types
 from typing import Collection
 from opentelemetry.instrumentation.vertexai.config import Config
 from opentelemetry.instrumentation.vertexai.utils import dont_throw
+from opentelemetry.instrumentation.vertexai.events import (
+    prompt_to_event,
+    completion_to_event,
+    message_to_event,
+)
 from wrapt import wrap_function_wrapper
 
 from opentelemetry import context as context_api
@@ -223,17 +228,56 @@ async def _abuild_from_streaming_response(span, response, llm_model):
 
 
 @dont_throw
-def _handle_request(span, args, kwargs, llm_model):
+def _handle_request(span, args, kwargs, llm_model, event_logger=None, capture_content=True):
     if span.is_recording():
         _set_input_attributes(span, args, kwargs, llm_model)
+        
+        # Add event-based tracking for prompts
+        if event_logger is not None:
+            if args and len(args) > 0:
+                prompt = args[0] if isinstance(args[0], str) else str(args[0])
+                event_logger.emit(
+                    prompt_to_event(
+                        prompt=prompt,
+                        model_name=llm_model,
+                        capture_content=capture_content,
+                        trace_id=span.get_span_context().trace_id,
+                        span_id=span.get_span_context().span_id,
+                        trace_flags=span.get_span_context().trace_flags,
+                    )
+                )
+            elif "prompt" in kwargs:
+                event_logger.emit(
+                    prompt_to_event(
+                        prompt=kwargs["prompt"],
+                        model_name=llm_model,
+                        capture_content=capture_content,
+                        trace_id=span.get_span_context().trace_id,
+                        span_id=span.get_span_context().span_id,
+                        trace_flags=span.get_span_context().trace_flags,
+                    )
+                )
 
 
 @dont_throw
-def _handle_response(span, response, llm_model):
+def _handle_response(span, response, llm_model, event_logger=None, capture_content=True):
     if span.is_recording():
         _set_response_attributes(
             span, llm_model, response.candidates[0].text, response.usage_metadata
         )
+        
+        # Add event-based tracking for completions
+        if event_logger is not None:
+            event_logger.emit(
+                completion_to_event(
+                    completion={"text": response.candidates[0].text},
+                    model_name=llm_model,
+                    capture_content=capture_content,
+                    trace_id=span.get_span_context().trace_id,
+                    span_id=span.get_span_context().span_id,
+                    trace_flags=span.get_span_context().trace_flags,
+                )
+            )
 
         span.set_status(Status(StatusCode.OK))
 
@@ -274,7 +318,9 @@ async def _awrap(tracer, to_wrap, wrapped, instance, args, kwargs):
         },
     )
 
-    _handle_request(span, args, kwargs, llm_model)
+    event_logger = getattr(Config, "event_logger", None)
+    capture_content = getattr(Config, "capture_content", True)
+    _handle_request(span, args, kwargs, llm_model, event_logger, capture_content)
 
     response = await wrapped(*args, **kwargs)
 
@@ -284,7 +330,7 @@ async def _awrap(tracer, to_wrap, wrapped, instance, args, kwargs):
         elif is_async_streaming_response(response):
             return _abuild_from_streaming_response(span, response, llm_model)
         else:
-            _handle_response(span, response, llm_model)
+            _handle_response(span, response, llm_model, event_logger, capture_content)
 
     span.end()
     return response
@@ -314,7 +360,9 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
         },
     )
 
-    _handle_request(span, args, kwargs, llm_model)
+    event_logger = getattr(Config, "event_logger", None)
+    capture_content = getattr(Config, "capture_content", True)
+    _handle_request(span, args, kwargs, llm_model, event_logger, capture_content)
 
     response = wrapped(*args, **kwargs)
 
@@ -324,7 +372,7 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
         elif is_async_streaming_response(response):
             return _abuild_from_streaming_response(span, response, llm_model)
         else:
-            _handle_response(span, response, llm_model)
+            _handle_response(span, response, llm_model, event_logger, capture_content)
 
     span.end()
     return response
@@ -343,6 +391,11 @@ class VertexAIInstrumentor(BaseInstrumentor):
     def _instrument(self, **kwargs):
         tracer_provider = kwargs.get("tracer_provider")
         tracer = get_tracer(__name__, __version__, tracer_provider)
+        
+        # Store event logger and capture_content in Config
+        Config.event_logger = kwargs.get("event_logger")
+        Config.capture_content = kwargs.get("capture_content", True)
+        
         for wrapped_method in WRAPPED_METHODS:
             wrap_package = wrapped_method.get("package")
             wrap_object = wrapped_method.get("object")
@@ -359,6 +412,10 @@ class VertexAIInstrumentor(BaseInstrumentor):
             )
 
     def _uninstrument(self, **kwargs):
+        # Clean up Config
+        Config.event_logger = None
+        Config.capture_content = True
+        
         for wrapped_method in WRAPPED_METHODS:
             wrap_package = wrapped_method.get("package")
             wrap_object = wrapped_method.get("object")

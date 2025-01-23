@@ -11,6 +11,10 @@ from opentelemetry.instrumentation.transformers.utils import (
     _with_tracer_wrapper,
     dont_throw,
 )
+from opentelemetry.instrumentation.transformers.events import (
+    prompt_to_event,
+    completion_to_event,
+)
 import transformers
 
 logger = logging.getLogger(__name__)
@@ -84,27 +88,75 @@ def _set_response_attributes(span, response):
 
 
 @_with_tracer_wrapper
-def text_generation_pipeline_wrapper(tracer, to_wrap, wrapped, instance, args, kwargs):
-    if "TextGenerationPipeline" not in dir(transformers) or not isinstance(
-        instance, transformers.TextGenerationPipeline
-    ):
-        return wrapped(*args, **kwargs)
+def text_generation_pipeline_wrapper(tracer, event_logger, config, to_wrap):
+    """Wrap the text generation pipeline to add instrumentation."""
 
-    if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY) or context_api.get_value(
-        SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY
-    ):
-        return wrapped(*args, **kwargs)
+    def wrapper(wrapped, instance, args, kwargs):
+        if "TextGenerationPipeline" not in dir(transformers) or not isinstance(
+            instance, transformers.TextGenerationPipeline
+        ):
+            return wrapped(*args, **kwargs)
 
-    name = to_wrap.get("span_name")
-    with tracer.start_as_current_span(name) as span:
-        if span.is_recording():
-            _set_input_attributes(span, instance, args, kwargs)
+        if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY) or context_api.get_value(
+            SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY
+        ):
+            return wrapped(*args, **kwargs)
 
-        response = wrapped(*args, **kwargs)
+        name = to_wrap.get("span_name")
+        with tracer.start_as_current_span(name) as span:
+            # Get prompt from args or kwargs
+            if args and len(args) > 0:
+                prompt = args[0]
+            else:
+                prompt = kwargs.get("args")
 
-        if response:
+            model_name = instance.model.config.name_or_path
+            
+            # Always set basic model info on span
             if span.is_recording():
-                _set_response_attributes(span, response)
-                span.set_status(Status(StatusCode.OK))
+                _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, model_name)
+                _set_span_attribute(span, SpanAttributes.LLM_SYSTEM, instance.model.config.model_type)
+                _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TYPE, "completion")
 
-        return response
+            if config.use_legacy_attributes:
+                if span.is_recording():
+                    _set_input_attributes(span, instance, args, kwargs)
+            else:
+                # Emit prompt event
+                event_logger.emit(
+                    prompt_to_event(
+                        prompt=prompt,
+                        model_name=model_name,
+                        capture_content=config.capture_content,
+                    )
+                )
+
+            try:
+                response = wrapped(*args, **kwargs)
+
+                if response:
+                    if span.is_recording():
+                        if config.use_legacy_attributes:
+                            _set_response_attributes(span, response)
+                        else:
+                            # Emit completion event
+                            event_logger.emit(
+                                completion_to_event(
+                                    completion=response[0] if response else {},
+                                    model_name=model_name,
+                                    capture_content=config.capture_content,
+                                )
+                            )
+                        span.set_status(Status(StatusCode.OK))
+
+                return response
+
+            except Exception as error:
+                if config.exception_logger:
+                    config.exception_logger(error)
+                if span.is_recording():
+                    span.set_status(Status(StatusCode.ERROR))
+                    span.record_exception(error)
+                raise
+
+    return wrapper

@@ -7,6 +7,11 @@ import os
 import time
 from typing import Collection
 from opentelemetry.instrumentation.bedrock.config import Config
+from opentelemetry.instrumentation.bedrock.events import (
+    create_prompt_event,
+    create_completion_event,
+    create_tool_call_event,
+)
 from opentelemetry.instrumentation.bedrock.reusable_streaming_body import (
     ReusableStreamingBody,
 )
@@ -42,6 +47,8 @@ class MetricParams:
         choice_counter: Counter,
         duration_histogram: Histogram,
         exception_counter: Counter,
+        event_logger=None,
+        use_legacy_attributes: bool = True,
     ):
         self.vendor = ""
         self.model = ""
@@ -50,6 +57,8 @@ class MetricParams:
         self.choice_counter = choice_counter
         self.duration_histogram = duration_histogram
         self.exception_counter = exception_counter
+        self.event_logger = event_logger
+        self.use_legacy_attributes = use_legacy_attributes
         self.start_time = time.time()
 
 
@@ -203,31 +212,84 @@ def _handle_stream_call(span, kwargs, response, metric_params):
         metric_params.model = model
         metric_params.is_stream = True
 
-        _set_span_attribute(span, SpanAttributes.LLM_SYSTEM, vendor)
-        _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, model)
-        _set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, model)
+        if not metric_params.use_legacy_attributes:
+            if metric_params.event_logger:
+                # Log prompt event
+                if vendor == "cohere":
+                    _log_cohere_events(
+                        metric_params.event_logger,
+                        request_body,
+                        response_body,
+                        vendor,
+                        model,
+                    )
+                elif vendor == "anthropic":
+                    if "prompt" in request_body:
+                        _log_anthropic_completion_events(
+                            metric_params.event_logger,
+                            request_body,
+                            response_body,
+                            vendor,
+                            model,
+                        )
+                    elif "messages" in request_body:
+                        _log_anthropic_messages_events(
+                            metric_params.event_logger,
+                            request_body,
+                            response_body,
+                            vendor,
+                            model,
+                        )
+                elif vendor == "ai21":
+                    _log_ai21_events(
+                        metric_params.event_logger,
+                        request_body,
+                        response_body,
+                        vendor,
+                        model,
+                    )
+                elif vendor == "meta":
+                    _log_llama_events(
+                        metric_params.event_logger,
+                        request_body,
+                        response_body,
+                        vendor,
+                        model,
+                    )
+                elif vendor == "amazon":
+                    _log_amazon_events(
+                        metric_params.event_logger,
+                        request_body,
+                        response_body,
+                        vendor,
+                        model,
+                    )
+        else:
+            _set_span_attribute(span, SpanAttributes.LLM_SYSTEM, vendor)
+            _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, model)
+            _set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, model)
 
-        if vendor == "cohere":
-            _set_cohere_span_attributes(
-                span, request_body, response_body, metric_params
-            )
-        elif vendor == "anthropic":
-            if "prompt" in request_body:
-                _set_anthropic_completion_span_attributes(
+            if vendor == "cohere":
+                _set_cohere_span_attributes(
                     span, request_body, response_body, metric_params
                 )
-            elif "messages" in request_body:
-                _set_anthropic_messages_span_attributes(
+            elif vendor == "anthropic":
+                if "prompt" in request_body:
+                    _set_anthropic_completion_span_attributes(
+                        span, request_body, response_body, metric_params
+                    )
+                elif "messages" in request_body:
+                    _set_anthropic_messages_span_attributes(
+                        span, request_body, response_body, metric_params
+                    )
+            elif vendor == "ai21":
+                _set_ai21_span_attributes(span, request_body, response_body, metric_params)
+            elif vendor == "meta":
+                _set_llama_span_attributes(span, request_body, response_body, metric_params)
+            elif vendor == "amazon":
+                _set_amazon_span_attributes(
                     span, request_body, response_body, metric_params
                 )
-        elif vendor == "ai21":
-            _set_ai21_span_attributes(span, request_body, response_body, metric_params)
-        elif vendor == "meta":
-            _set_llama_span_attributes(span, request_body, response_body, metric_params)
-        elif vendor == "amazon":
-            _set_amazon_span_attributes(
-                span, request_body, response_body, metric_params
-            )
 
         span.end()
 
@@ -656,13 +718,187 @@ def _create_metrics(meter: Meter):
     return token_histogram, choice_counter, duration_histogram, exception_counter
 
 
+def _log_cohere_events(event_logger, request_body, response_body, vendor, model):
+    """Log events for Cohere model."""
+    prompt = request_body.get("prompt", "")
+    prompt_tokens = request_body.get("prompt_tokens", None)
+    event_logger.add_event(
+        create_prompt_event(
+            prompt=prompt,
+            prompt_tokens=prompt_tokens,
+            vendor=vendor,
+            model=model,
+        )
+    )
+
+    completion = response_body.get("text", "")
+    completion_tokens = response_body.get("completion_tokens", None)
+    finish_reason = response_body.get("finish_reason", None)
+    event_logger.add_event(
+        create_completion_event(
+            completion=completion,
+            completion_tokens=completion_tokens,
+            vendor=vendor,
+            model=model,
+            finish_reason=finish_reason,
+        )
+    )
+
+
+def _log_anthropic_completion_events(event_logger, request_body, response_body, vendor, model):
+    """Log events for Anthropic completion model."""
+    prompt = request_body.get("prompt", "")
+    prompt_tokens = None  # Anthropic doesn't provide token counts in request
+    event_logger.add_event(
+        create_prompt_event(
+            prompt=prompt,
+            prompt_tokens=prompt_tokens,
+            vendor=vendor,
+            model=model,
+        )
+    )
+
+    completion = response_body.get("completion", "")
+    completion_tokens = None  # Anthropic doesn't provide token counts in response
+    finish_reason = response_body.get("stop_reason", None)
+    event_logger.add_event(
+        create_completion_event(
+            completion=completion,
+            completion_tokens=completion_tokens,
+            vendor=vendor,
+            model=model,
+            finish_reason=finish_reason,
+        )
+    )
+
+
+def _log_anthropic_messages_events(event_logger, request_body, response_body, vendor, model):
+    """Log events for Anthropic messages model."""
+    messages = request_body.get("messages", [])
+    for message in messages:
+        role = message.get("role", "")
+        content = message.get("content", "")
+        event_logger.add_event(
+            create_prompt_event(
+                prompt=content,
+                role=role,
+                vendor=vendor,
+                model=model,
+            )
+        )
+
+    completion = response_body.get("content", [])
+    if isinstance(completion, list):
+        for content in completion:
+            role = content.get("role", "")
+            text = content.get("text", "")
+            event_logger.add_event(
+                create_completion_event(
+                    completion=text,
+                    role=role,
+                    vendor=vendor,
+                    model=model,
+                )
+            )
+    else:
+        event_logger.add_event(
+            create_completion_event(
+                completion=completion,
+                vendor=vendor,
+                model=model,
+            )
+        )
+
+
+def _log_ai21_events(event_logger, request_body, response_body, vendor, model):
+    """Log events for AI21 model."""
+    prompt = request_body.get("prompt", "")
+    prompt_tokens = None  # AI21 doesn't provide token counts in request
+    event_logger.add_event(
+        create_prompt_event(
+            prompt=prompt,
+            prompt_tokens=prompt_tokens,
+            vendor=vendor,
+            model=model,
+        )
+    )
+
+    completion = response_body.get("completions", [{}])[0].get("data", {}).get("text", "")
+    completion_tokens = None  # AI21 doesn't provide token counts in response
+    finish_reason = response_body.get("completions", [{}])[0].get("finishReason", {}).get("reason", None)
+    event_logger.add_event(
+        create_completion_event(
+            completion=completion,
+            completion_tokens=completion_tokens,
+            vendor=vendor,
+            model=model,
+            finish_reason=finish_reason,
+        )
+    )
+
+
+def _log_llama_events(event_logger, request_body, response_body, vendor, model):
+    """Log events for Llama model."""
+    prompt = request_body.get("prompt", "")
+    prompt_tokens = None  # Llama doesn't provide token counts in request
+    event_logger.add_event(
+        create_prompt_event(
+            prompt=prompt,
+            prompt_tokens=prompt_tokens,
+            vendor=vendor,
+            model=model,
+        )
+    )
+
+    completion = response_body.get("generation", "")
+    completion_tokens = None  # Llama doesn't provide token counts in response
+    finish_reason = response_body.get("stop_reason", None)
+    event_logger.add_event(
+        create_completion_event(
+            completion=completion,
+            completion_tokens=completion_tokens,
+            vendor=vendor,
+            model=model,
+            finish_reason=finish_reason,
+        )
+    )
+
+
+def _log_amazon_events(event_logger, request_body, response_body, vendor, model):
+    """Log events for Amazon model."""
+    prompt = request_body.get("inputText", "")
+    prompt_tokens = None  # Amazon doesn't provide token counts in request
+    event_logger.add_event(
+        create_prompt_event(
+            prompt=prompt,
+            prompt_tokens=prompt_tokens,
+            vendor=vendor,
+            model=model,
+        )
+    )
+
+    completion = response_body.get("results", [{}])[0].get("outputText", "")
+    completion_tokens = None  # Amazon doesn't provide token counts in response
+    finish_reason = response_body.get("results", [{}])[0].get("completionReason", None)
+    event_logger.add_event(
+        create_completion_event(
+            completion=completion,
+            completion_tokens=completion_tokens,
+            vendor=vendor,
+            model=model,
+            finish_reason=finish_reason,
+        )
+    )
+
+
 class BedrockInstrumentor(BaseInstrumentor):
     """An instrumentor for Bedrock's client library."""
 
-    def __init__(self, enrich_token_usage: bool = False, exception_logger=None):
+    def __init__(self, enrich_token_usage: bool = False, exception_logger=None, use_legacy_attributes: bool = True):
         super().__init__()
-        Config.enrich_token_usage = enrich_token_usage
-        Config.exception_logger = exception_logger
+        self.enrich_token_usage = enrich_token_usage
+        self.exception_logger = exception_logger
+        self.use_legacy_attributes = use_legacy_attributes
 
     def instrumentation_dependencies(self) -> Collection[str]:
         return _instruments
@@ -671,41 +907,27 @@ class BedrockInstrumentor(BaseInstrumentor):
         tracer_provider = kwargs.get("tracer_provider")
         tracer = get_tracer(__name__, __version__, tracer_provider)
 
-        # meter and counters are inited here
         meter_provider = kwargs.get("meter_provider")
         meter = get_meter(__name__, __version__, meter_provider)
 
-        if is_metrics_enabled():
-            (
-                token_histogram,
-                choice_counter,
-                duration_histogram,
-                exception_counter,
-            ) = _create_metrics(meter)
-        else:
-            (
-                token_histogram,
-                choice_counter,
-                duration_histogram,
-                exception_counter,
-            ) = (None, None, None, None)
+        event_logger = kwargs.get("event_logger")
+
+        token_histogram, choice_counter, duration_histogram, exception_counter = _create_metrics(meter)
 
         metric_params = MetricParams(
-            token_histogram, choice_counter, duration_histogram, exception_counter
+            token_histogram=token_histogram,
+            choice_counter=choice_counter,
+            duration_histogram=duration_histogram,
+            exception_counter=exception_counter,
+            event_logger=event_logger,
+            use_legacy_attributes=self.use_legacy_attributes,
         )
 
         for wrapped_method in WRAPPED_METHODS:
-            wrap_package = wrapped_method.get("package")
-            wrap_object = wrapped_method.get("object")
-            wrap_method = wrapped_method.get("method")
             wrap_function_wrapper(
-                wrap_package,
-                f"{wrap_object}.{wrap_method}",
-                _wrap(
-                    tracer,
-                    metric_params,
-                    wrapped_method,
-                ),
+                wrapped_method["package"],
+                wrapped_method["object"] + "." + wrapped_method["method"],
+                _wrap(tracer, metric_params, wrapped_method),
             )
 
     def _uninstrument(self, **kwargs):

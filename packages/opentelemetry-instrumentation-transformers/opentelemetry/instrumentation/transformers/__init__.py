@@ -6,6 +6,7 @@ from opentelemetry.instrumentation.transformers.config import Config
 from wrapt import wrap_function_wrapper
 
 from opentelemetry.trace import get_tracer
+from opentelemetry._events import EventLogger
 
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.instrumentation.utils import unwrap
@@ -34,15 +35,23 @@ class TransformersInstrumentor(BaseInstrumentor):
     """An instrumentor for transformers library."""
 
     def __init__(self, exception_logger=None):
+        self._exception_logger = exception_logger
         super().__init__()
-        Config.exception_logger = exception_logger
 
     def instrumentation_dependencies(self) -> Collection[str]:
         return _instruments
 
     def _instrument(self, **kwargs):
+        self._config = Config(
+            use_legacy_attributes=kwargs.get("use_legacy_attributes", True),
+            capture_content=kwargs.get("capture_content", True),
+            exception_logger=self._exception_logger,
+        )
+
         tracer_provider = kwargs.get("tracer_provider")
         tracer = get_tracer(__name__, __version__, tracer_provider)
+        event_logger = EventLogger(__name__, tracer_provider)
+
         for wrapped_method in WRAPPED_METHODS:
             wrap_package = wrapped_method.get("package")
             wrap_object = wrapped_method.get("object")
@@ -51,7 +60,7 @@ class TransformersInstrumentor(BaseInstrumentor):
             wrap_function_wrapper(
                 wrap_package,
                 f"{wrap_object}.{wrap_method}" if wrap_object else wrap_method,
-                wrapper(tracer, wrapped_method),
+                wrapper(tracer, event_logger, self._config, wrapped_method),
             )
 
     def _uninstrument(self, **kwargs):

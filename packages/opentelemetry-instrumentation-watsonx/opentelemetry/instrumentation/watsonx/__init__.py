@@ -4,9 +4,13 @@ import logging
 import os
 import types
 import time
-from typing import Collection, Optional
+from typing import Collection, Dict, Any, Optional, Union
 from opentelemetry.instrumentation.watsonx.config import Config
 from opentelemetry.instrumentation.watsonx.utils import dont_throw
+from opentelemetry.instrumentation.watsonx.events import (
+    prompt_to_event,
+    completion_to_event,
+)
 from wrapt import wrap_function_wrapper
 
 from opentelemetry import context as context_api
@@ -315,6 +319,94 @@ def _set_response_attributes(
         duration_histogram.record(duration, attributes=shared_attributes)
 
 
+def _extract_completion_data(response: Any) -> Dict[str, Any]:
+    """Extract completion data from various response types."""
+    if isinstance(response, dict):
+        if "results" in response:
+            result = response["results"][0]
+            return {
+                "generated_text": result.get("generated_text", ""),
+                "token_usage": {
+                    "prompt_tokens": result.get("input_token_count", 0),
+                    "generated_tokens": result.get("generated_token_count", 0),
+                },
+            }
+        return response
+    elif hasattr(response, "generated_text"):
+        return {
+            "generated_text": response.generated_text,
+            "token_usage": response.token_usage if hasattr(response, "token_usage") else None,
+        }
+    else:
+        return {"generated_text": str(response)}
+
+
+def _extract_prompt_data(args: tuple, kwargs: dict) -> Optional[str]:
+    """Extract prompt data from args or kwargs."""
+    if args and len(args) > 0:
+        prompt = args[0]
+        if isinstance(prompt, list):
+            return "\n".join(str(p) for p in prompt)
+        return str(prompt)
+    elif "prompt" in kwargs:
+        prompt = kwargs["prompt"]
+        if isinstance(prompt, list):
+            return "\n".join(str(p) for p in prompt)
+        return str(prompt)
+    return None
+
+
+@dont_throw
+def _handle_request(span, args, kwargs, llm_model, event_logger=None, capture_content=True):
+    """Handle request by setting attributes and emitting prompt event."""
+    if span.is_recording():
+        _set_api_attributes(span)
+        
+        # Add event-based tracking for prompts
+        if event_logger is not None:
+            prompt = _extract_prompt_data(args, kwargs)
+            if prompt is not None:
+                event_logger.emit(
+                    prompt_to_event(
+                        prompt=prompt,
+                        model_name=llm_model,
+                        capture_content=capture_content,
+                        trace_id=span.get_span_context().trace_id,
+                        span_id=span.get_span_context().span_id,
+                        trace_flags=span.get_span_context().trace_flags,
+                    )
+                )
+
+
+@dont_throw
+def _handle_response(span, response, llm_model, event_logger=None, capture_content=True):
+    """Handle response by setting attributes and emitting completion event."""
+    if not span.is_recording():
+        return
+
+    try:
+        completion_data = _extract_completion_data(response)
+        
+        # Add event-based tracking for completions
+        if event_logger is not None:
+            event_logger.emit(
+                completion_to_event(
+                    completion=completion_data,
+                    model_name=llm_model,
+                    capture_content=capture_content,
+                    trace_id=span.get_span_context().trace_id,
+                    span_id=span.get_span_context().span_id,
+                    trace_flags=span.get_span_context().trace_flags,
+                )
+            )
+
+        span.set_status(Status(StatusCode.OK))
+    except Exception as e:
+        span.set_status(Status(StatusCode.ERROR, str(e)))
+        if Config.exception_logger:
+            Config.exception_logger(e)
+
+
 def _build_and_set_stream_response(
     span,
     response,
@@ -323,67 +415,89 @@ def _build_and_set_stream_response(
     response_counter,
     duration_histogram,
     start_time,
+    event_logger=None,
+    capture_content=True,
 ):
+    """Build and set stream response while handling events."""
     stream_generated_text = ""
     stream_generated_token_count = 0
     stream_input_token_count = 0
-    for item in response:
-        stream_model_id = item["model_id"]
-        stream_generated_text += item["results"][0]["generated_text"]
-        stream_input_token_count += item["results"][0]["input_token_count"]
-        stream_generated_token_count = item["results"][0]["generated_token_count"]
-        stream_stop_reason = item["results"][0]["stop_reason"]
+    stream_model_id = None
+    
+    try:
+        for item in response:
+            if not isinstance(item, dict) or "results" not in item:
+                if raw_flag:
+                    yield item
+                else:
+                    yield str(item)
+                continue
 
-        if raw_flag:
-            yield item
-        else:
-            yield item["results"][0]["generated_text"]
+            stream_model_id = item.get("model_id")
+            result = item["results"][0]
+            stream_generated_text += result.get("generated_text", "")
+            stream_input_token_count += result.get("input_token_count", 0)
+            stream_generated_token_count = result.get("generated_token_count", 0)
+            stream_stop_reason = result.get("stop_reason")
 
-    shared_attributes = _metric_shared_attributes(
-        response_model=stream_model_id, is_streaming=True
-    )
-    stream_response = {
-        "model_id": stream_model_id,
-        "generated_text": stream_generated_text,
-        "generated_token_count": stream_generated_token_count,
-        "input_token_count": stream_input_token_count,
-    }
-    _set_stream_response_attributes(span, stream_response)
-    # response counter
-    if response_counter:
-        attributes_with_reason = {
-            **shared_attributes,
-            SpanAttributes.LLM_RESPONSE_STOP_REASON: stream_stop_reason,
-        }
-        response_counter.add(1, attributes=attributes_with_reason)
+            if raw_flag:
+                yield item
+            else:
+                yield result.get("generated_text", "")
 
-    # token histogram
-    if token_histogram:
-        attributes_with_token_type = {
-            **shared_attributes,
-            SpanAttributes.LLM_TOKEN_TYPE: "output",
-        }
-        token_histogram.record(
-            stream_generated_token_count, attributes=attributes_with_token_type
+        # Emit completion event after collecting all streaming data
+        if event_logger is not None and stream_model_id:
+            completion_data = {
+                "generated_text": stream_generated_text,
+                "token_usage": {
+                    "prompt_tokens": stream_input_token_count,
+                    "generated_tokens": stream_generated_token_count,
+                },
+            }
+            event_logger.emit(
+                completion_to_event(
+                    completion=completion_data,
+                    model_name=stream_model_id,
+                    capture_content=capture_content,
+                    trace_id=span.get_span_context().trace_id,
+                    span_id=span.get_span_context().span_id,
+                    trace_flags=span.get_span_context().trace_flags,
+                )
+            )
+
+        # Update metrics
+        shared_attributes = _metric_shared_attributes(
+            response_model=stream_model_id, is_streaming=True
         )
-        attributes_with_token_type = {
-            **shared_attributes,
-            SpanAttributes.LLM_TOKEN_TYPE: "input",
-        }
-        token_histogram.record(
-            stream_input_token_count, attributes=attributes_with_token_type
-        )
+        
+        if response_counter and stream_model_id:
+            attributes_with_reason = {
+                **shared_attributes,
+                SpanAttributes.LLM_RESPONSE_STOP_REASON: stream_stop_reason,
+            }
+            response_counter.add(1, attributes=attributes_with_reason)
 
-    # duration histogram
-    if start_time and isinstance(start_time, (float, int)):
-        duration = time.time() - start_time
-    else:
-        duration = None
-    if duration and isinstance(duration, (float, int)) and duration_histogram:
-        duration_histogram.record(duration, attributes=shared_attributes)
+        if token_histogram and stream_model_id:
+            token_histogram.record(
+                stream_generated_token_count,
+                attributes={**shared_attributes, SpanAttributes.LLM_TOKEN_TYPE: "output"},
+            )
+            token_histogram.record(
+                stream_input_token_count,
+                attributes={**shared_attributes, SpanAttributes.LLM_TOKEN_TYPE: "input"},
+            )
 
-    span.set_status(Status(StatusCode.OK))
-    span.end()
+        if duration_histogram and start_time and stream_model_id:
+            duration = time.time() - start_time
+            duration_histogram.record(duration, attributes=shared_attributes)
+
+        span.set_status(Status(StatusCode.OK))
+    except Exception as e:
+        span.set_status(Status(StatusCode.ERROR, str(e)))
+        if Config.exception_logger:
+            Config.exception_logger(e)
+    finally:
+        span.end()
 
 
 def _metric_shared_attributes(response_model: str, is_streaming: bool = False):
@@ -454,14 +568,9 @@ def _wrap(
         },
     )
 
-    _set_api_attributes(span)
-    if "generate" in name:
-        _set_input_attributes(span, instance, kwargs)
-        if to_wrap.get("method") == "generate_text_stream":
-            if (raw_flag := kwargs.get("raw_response", None)) is None:
-                kwargs = {**kwargs, "raw_response": True}
-            elif raw_flag is False:
-                kwargs["raw_response"] = True
+    event_logger = getattr(Config, "event_logger", None)
+    capture_content = getattr(Config, "capture_content", True)
+    _handle_request(span, args, kwargs, instance.model_id, event_logger, capture_content)
 
     try:
         start_time = time.time()
@@ -492,17 +601,14 @@ def _wrap(
                 response_counter,
                 duration_histogram,
                 start_time,
+                event_logger,
+                capture_content,
             )
         else:
             duration = end_time - start_time
-            _set_response_attributes(
-                span,
-                response,
-                token_histogram,
-                response_counter,
-                duration_histogram,
-                duration,
-            )
+            _handle_response(span, response, instance.model_id, event_logger, capture_content)
+
+    _handle_response(span, response, instance.model_id, event_logger, capture_content)
 
     span.end()
     return response
@@ -530,6 +636,10 @@ class WatsonxInstrumentor(BaseInstrumentor):
 
         meter_provider = kwargs.get("meter_provider")
         meter = get_meter(__name__, __version__, meter_provider)
+
+        # Store event logger and capture_content in Config
+        Config.event_logger = kwargs.get("event_logger")
+        Config.capture_content = kwargs.get("capture_content", True)
 
         if is_metrics_enabled():
             token_histogram = meter.create_histogram(
@@ -587,8 +697,15 @@ class WatsonxInstrumentor(BaseInstrumentor):
                 )
 
     def _uninstrument(self, **kwargs):
+        # Clean up Config
+        Config.event_logger = None
+        Config.capture_content = True
+        
         for wrapped_methods in WATSON_MODULES:
             for wrapped_method in wrapped_methods:
                 wrap_module = wrapped_method.get("module")
                 wrap_object = wrapped_method.get("object")
-                unwrap(f"{wrap_module}.{wrap_object}", wrapped_method.get("method"))
+                unwrap(
+                    f"{wrap_module}.{wrap_object}",
+                    wrapped_method.get("method", ""),
+                )

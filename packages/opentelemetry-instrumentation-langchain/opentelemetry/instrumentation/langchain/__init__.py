@@ -6,6 +6,7 @@ from opentelemetry.instrumentation.langchain.config import Config
 from wrapt import wrap_function_wrapper
 
 from opentelemetry.trace import get_tracer
+from opentelemetry._events import EventLogger
 
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.instrumentation.utils import unwrap
@@ -32,17 +33,21 @@ _instruments = ("langchain >= 0.0.346", "langchain-core > 0.1.0")
 class LangchainInstrumentor(BaseInstrumentor):
     """An instrumentor for Langchain SDK."""
 
-    def __init__(self, exception_logger=None, disable_trace_context_propagation=False):
+    def __init__(self, config: Config = None):
         super().__init__()
-        Config.exception_logger = exception_logger
-        self.disable_trace_context_propagation = disable_trace_context_propagation
+        self.config = config or Config()
+        self._tracer = None
+        self._event_logger = None
 
     def instrumentation_dependencies(self) -> Collection[str]:
         return _instruments
 
     def _instrument(self, **kwargs):
-        tracer_provider = kwargs.get("tracer_provider")
-        tracer = get_tracer(__name__, __version__, tracer_provider)
+        """Instrument the Langchain library."""
+        self._tracer = get_tracer(__name__, __version__, tracer_provider=kwargs.get("tracer_provider"))
+        
+        # Get event logger from kwargs or create new one
+        self._event_logger = kwargs.get("event_logger", None)
 
         # Add meter creation
         meter_provider = kwargs.get("meter_provider")
@@ -63,18 +68,24 @@ class LangchainInstrumentor(BaseInstrumentor):
         )
 
         traceloopCallbackHandler = TraceloopCallbackHandler(
-            tracer, duration_histogram, token_histogram
+            tracer=self._tracer,
+            event_logger=self._event_logger,
+            duration_histogram=duration_histogram,
+            token_histogram=token_histogram,
+            config=self.config,
         )
+
         wrap_function_wrapper(
             module="langchain_core.callbacks",
             name="BaseCallbackManager.__init__",
             wrapper=_BaseCallbackManagerInitWrapper(traceloopCallbackHandler),
         )
 
-        if not self.disable_trace_context_propagation:
+        if not self.config.disable_trace_context_propagation:
             self._wrap_openai_functions_for_tracing(traceloopCallbackHandler)
 
     def _wrap_openai_functions_for_tracing(self, traceloopCallbackHandler):
+        """Wrap OpenAI functions for trace context propagation."""
         openai_tracing_wrapper = _OpenAITracingWrapper(traceloopCallbackHandler)
 
         # Wrap langchain_community.llms.openai.BaseOpenAI
@@ -153,20 +164,33 @@ class LangchainInstrumentor(BaseInstrumentor):
         # )
 
     def _uninstrument(self, **kwargs):
+        """Remove instrumentation from Langchain."""
+        # Always unwrap core callback manager
         unwrap("langchain_core.callbacks", "BaseCallbackManager.__init__")
-        if not self.disable_trace_context_propagation:
+
+        # Only unwrap OpenAI functions if trace context propagation was enabled
+        if not self.config.disable_trace_context_propagation:
+            # Unwrap community OpenAI functions
             unwrap("langchain_community.llms.openai", "BaseOpenAI._generate")
             unwrap("langchain_community.llms.openai", "BaseOpenAI._agenerate")
             unwrap("langchain_community.llms.openai", "BaseOpenAI._stream")
             unwrap("langchain_community.llms.openai", "BaseOpenAI._astream")
+
+            # Unwrap langchain-openai base functions
             unwrap("langchain_openai.llms.base", "BaseOpenAI._generate")
             unwrap("langchain_openai.llms.base", "BaseOpenAI._agenerate")
             unwrap("langchain_openai.llms.base", "BaseOpenAI._stream")
             unwrap("langchain_openai.llms.base", "BaseOpenAI._astream")
-            unwrap("langchain_openai.chat_models.base", "BaseOpenAI._generate")
-            unwrap("langchain_openai.chat_models.base", "BaseOpenAI._agenerate")
-            # unwrap("langchain_openai.chat_models.base", "BaseOpenAI._stream")
-            # unwrap("langchain_openai.chat_models.base", "BaseOpenAI._astream")
+
+            # Unwrap langchain-openai chat functions
+            unwrap("langchain_openai.chat_models.base", "BaseChatOpenAI._generate")
+            unwrap("langchain_openai.chat_models.base", "BaseChatOpenAI._agenerate")
+            # These are commented out as they were not wrapped
+            # unwrap("langchain_openai.chat_models.base", "BaseChatOpenAI._stream")
+            # unwrap("langchain_openai.chat_models.base", "BaseChatOpenAI._astream")
+
+        self._tracer = None
+        self._event_logger = None
 
 
 class _BaseCallbackManagerInitWrapper:
