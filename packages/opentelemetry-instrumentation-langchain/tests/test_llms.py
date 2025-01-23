@@ -8,7 +8,7 @@ import pytest
 from langchain.output_parsers.openai_functions import JsonOutputFunctionsParser
 from langchain.prompts import ChatPromptTemplate
 from langchain_anthropic import ChatAnthropic
-from langchain_community.chat_models import BedrockChat
+from langchain_aws import ChatBedrock
 from langchain_community.llms.huggingface_text_gen_inference import (
     HuggingFaceTextGenInference,
 )
@@ -261,7 +261,7 @@ def test_bedrock(exporter):
     prompt = ChatPromptTemplate.from_messages(
         [("system", "You are a helpful assistant"), ("user", "{input}")]
     )
-    model = BedrockChat(
+    model = ChatBedrock(
         model_id="anthropic.claude-3-haiku-20240307-v1:0",
         client=boto3.client(
             "bedrock-runtime",
@@ -279,11 +279,11 @@ def test_bedrock(exporter):
 
     assert [
         "ChatPromptTemplate.task",
-        "BedrockChat.chat",
+        "ChatBedrock.chat",
         "RunnableSequence.workflow",
     ] == [span.name for span in spans]
 
-    bedrock_span = next(span for span in spans if span.name == "BedrockChat.chat")
+    bedrock_span = next(span for span in spans if span.name == "ChatBedrock.chat")
     workflow_span = next(
         span for span in spans if span.name == "RunnableSequence.workflow"
     )
@@ -317,9 +317,20 @@ def test_bedrock(exporter):
     # We need to remove the id from the output because it is random
     assert {k: v for k, v in output["outputs"]["kwargs"].items() if k != "id"} == {
         "content": "Here's a short joke for you:\n\nWhat do you call a bear with no teeth? A gummy bear!",
+        "additional_kwargs": {
+            "model_id": "anthropic.claude-3-haiku-20240307-v1:0",
+            "stop_reason": "end_turn",
+            "usage": {"prompt_tokens": 16, "completion_tokens": 27, "total_tokens": 43},
+        },
         "response_metadata": {
             "model_id": "anthropic.claude-3-haiku-20240307-v1:0",
+            "stop_reason": "end_turn",
             "usage": {"prompt_tokens": 16, "completion_tokens": 27, "total_tokens": 43},
+        },
+        "usage_metadata": {
+            "input_tokens": 16,
+            "output_tokens": 27,
+            "total_tokens": 43,
         },
         "type": "ai",
         "tool_calls": [],
