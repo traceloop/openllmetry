@@ -73,3 +73,4 @@ def test_cohere_rerank(exporter):
             )
             == f"Doc {result.index}, Score: {result.relevance_score}"
         )
+    assert cohere_span.attributes.get("gen_ai.response.id") == "c995b490-c717-411c-8fd0-8bf993cd8382"
