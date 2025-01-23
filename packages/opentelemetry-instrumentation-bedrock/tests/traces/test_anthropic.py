@@ -223,4 +223,3 @@ def test_anthropic_3_completion_string_content(test_context, brt):
         SpanAttributes.LLM_USAGE_TOTAL_TOKENS
     )
     assert anthropic_span.attributes.get("gen_ai.response.id") == "msg_bdrk_01WR9VHqpyBzBhzgwCDapaQD"
-
