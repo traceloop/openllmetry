@@ -236,6 +236,7 @@ def test_anthropic(exporter):
     assert anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 19
     assert anthropic_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS] == 22
     assert anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 41
+    assert anthropic_span.attributes["gen_ai.response.id"] == "msg_017fMG9SRDFTBhcD1ibtN1nK"
     output = json.loads(
         workflow_span.attributes[SpanAttributes.TRACELOOP_ENTITY_OUTPUT]
     )
