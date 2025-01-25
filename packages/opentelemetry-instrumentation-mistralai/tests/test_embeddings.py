@@ -6,7 +6,7 @@ from opentelemetry.semconv_ai import SpanAttributes
 
 
 @pytest.mark.vcr
-def test_ollama_embeddings(exporter):
+def test_mistral_embeddings(exporter):
     client = MistralClient(api_key=os.environ["MISTRAL_API_KEY"])
     client.embeddings(
         model="mistral-embed",
@@ -14,21 +14,22 @@ def test_ollama_embeddings(exporter):
     )
 
     spans = exporter.get_finished_spans()
-    ollama_span = spans[0]
-    assert ollama_span.name == "mistralai.embeddings"
-    assert ollama_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "MistralAI"
+    mistral_span = spans[0]
+    assert mistral_span.name == "mistralai.embeddings"
+    assert mistral_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "MistralAI"
     assert (
-        ollama_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "embedding"
+        mistral_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "embedding"
     )
-    assert not ollama_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
+    assert not mistral_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert (
-        ollama_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_MODEL}")
+        mistral_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_MODEL}")
         == "mistral-embed"
     )
     assert (
-        ollama_span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.0.content")
+        mistral_span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.0.content")
         == "Tell me a joke about OpenTelemetry"
     )
+    assert mistral_span.attributes.get("gen_ai.response.id") == "3fe947e29a95441a94086e11de21bff1"
 
 
 @pytest.mark.vcr
@@ -41,18 +42,19 @@ async def test_mistral_async_embeddings(exporter):
     )
 
     spans = exporter.get_finished_spans()
-    ollama_span = spans[0]
-    assert ollama_span.name == "mistralai.embeddings"
-    assert ollama_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "MistralAI"
+    mistral_span = spans[0]
+    assert mistral_span.name == "mistralai.embeddings"
+    assert mistral_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "MistralAI"
     assert (
-        ollama_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "embedding"
+        mistral_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "embedding"
     )
-    assert not ollama_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
+    assert not mistral_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert (
-        ollama_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_MODEL}")
+        mistral_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_MODEL}")
         == "mistral-embed"
     )
     assert (
-        ollama_span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.0.content")
+        mistral_span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.0.content")
         == "Tell me a joke about OpenTelemetry"
     )
+    assert mistral_span.attributes.get("gen_ai.response.id") == "220426da5cd84a8391a0d65738c90dc8"

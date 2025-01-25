@@ -18,6 +18,7 @@ from opentelemetry.instrumentation.utils import (
     unwrap,
 )
 
+from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import GEN_AI_RESPONSE_ID
 from opentelemetry.semconv_ai import (
     SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
     SpanAttributes,
@@ -117,6 +118,7 @@ def _set_input_attributes(span, llm_request_type, to_wrap, kwargs):
 
 @dont_throw
 def _set_response_attributes(span, llm_request_type, response):
+    _set_span_attribute(span, GEN_AI_RESPONSE_ID, response.id)
     if llm_request_type == LLMRequestTypeValues.EMBEDDING:
         return
 
@@ -186,6 +188,9 @@ def _accumulate_streaming_response(span, llm_request_type, response):
             accumulated_response.model = res.model
         if res.usage:
             accumulated_response.usage = res.usage
+        # Id is the same for all chunks, so it's safe to overwrite it every time
+        if res.id:
+            accumulated_response.id = res.id
 
         for idx, choice in enumerate(res.choices):
             if len(accumulated_response.choices) <= idx:
@@ -222,6 +227,9 @@ async def _aaccumulate_streaming_response(span, llm_request_type, response):
             accumulated_response.model = res.model
         if res.usage:
             accumulated_response.usage = res.usage
+        # Id is the same for all chunks, so it's safe to overwrite it every time
+        if res.id:
+            accumulated_response.id = res.id
 
         for idx, choice in enumerate(res.choices):
             if len(accumulated_response.choices) <= idx:
