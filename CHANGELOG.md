@@ -1,3 +1,18 @@
+## v0.37.0 (2025-01-25)
+
+### Feat
+
+- **crewai**: initial instrumentation; collect agent and task traces (#2489)
+
+### Fix
+
+- add crewai to supported frameworks in readme (#2559)
+- **cohere**: add response id attribute (#2545)
+- **bedrock**: add response id attribute (#2544)
+- **anthropic**: add response id attribute (#2543)
+- **groq**: add response id attribute (#2546)
+- **langchain**: address warning for NoneType attibute; update some test deps (#2539)
+
 ## v0.36.1 (2025-01-20)
 
 ### Fix
