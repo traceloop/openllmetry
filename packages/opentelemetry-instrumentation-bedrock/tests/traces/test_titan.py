@@ -68,3 +68,6 @@ def test_titan_completion(test_context, brt):
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_MAX_TOKENS] == 200
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TEMPERATURE] == 0.5
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TOP_P] == 0.5
+    # There is no response id for Amazon Titan models in the response body,
+    # only request id in the response.
+    assert bedrock_span.attributes.get("gen_ai.response.id") is None

@@ -17,6 +17,7 @@ from opentelemetry.instrumentation.utils import (
     unwrap,
 )
 
+from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import GEN_AI_RESPONSE_ID
 from opentelemetry.semconv_ai import (
     SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
     SpanAttributes,
@@ -115,6 +116,7 @@ def _set_span_chat_response(span, response):
     index = 0
     prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{index}"
     _set_span_attribute(span, f"{prefix}.content", response.text)
+    _set_span_attribute(span, GEN_AI_RESPONSE_ID, response.response_id)
 
     # Cohere v4
     if hasattr(response, "token_count"):
@@ -157,6 +159,7 @@ def _set_span_chat_response(span, response):
 
 
 def _set_span_generations_response(span, response):
+    _set_span_attribute(span, GEN_AI_RESPONSE_ID, response.id)
     if hasattr(response, "generations"):
         generations = response.generations  # Cohere v5
     else:
@@ -165,9 +168,11 @@ def _set_span_generations_response(span, response):
     for index, generation in enumerate(generations):
         prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{index}"
         _set_span_attribute(span, f"{prefix}.content", generation.text)
+        _set_span_attribute(span, f"gen_ai.response.{index}.id", generation.id)
 
 
 def _set_span_rerank_response(span, response):
+    _set_span_attribute(span, GEN_AI_RESPONSE_ID, response.id)
     for idx, doc in enumerate(response.results):
         prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{idx}"
         _set_span_attribute(span, f"{prefix}.role", "assistant")

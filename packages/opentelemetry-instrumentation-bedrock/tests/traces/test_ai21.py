@@ -42,3 +42,6 @@ def test_ai21_j2_completion_string_content(test_context, brt):
         == meta_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS]
         + meta_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS]
     )
+    # It is apparently always 1234, but for the sake of consistency,
+    # we should not assert on it.
+    assert meta_span.attributes.get("gen_ai.response.id") == 1234

@@ -20,3 +20,5 @@ def test_cohere_completion(exporter):
         cohere_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
         == res.generations[0].text
     )
+    assert cohere_span.attributes.get("gen_ai.response.id") == "64c671fc-c536-41fc-adbd-5f7c81177371"
+    assert cohere_span.attributes.get("gen_ai.response.0.id") == "13255d0a-eef8-47fc-91f7-d2607d228fbf"
