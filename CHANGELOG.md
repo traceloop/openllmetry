@@ -1,3 +1,9 @@
+## v0.37.1 (2025-01-25)
+
+### Fix
+
+- **crewai**: instrumentation package version (#2570)
+
 ## v0.37.0 (2025-01-25)
 
 ### Feat
