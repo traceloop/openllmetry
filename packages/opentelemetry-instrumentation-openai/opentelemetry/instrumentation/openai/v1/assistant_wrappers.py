@@ -151,6 +151,7 @@ def messages_list_wrapper(tracer, wrapped, instance, args, kwargs):
         _set_span_attribute(
             span, f"{prefix}.content", content[0].get("text").get("value")
         )
+        _set_span_attribute(span, f"gen_ai.response.{i}.id", msg.get("id"))
 
     if run.get("usage"):
         usage_dict = model_as_dict(run.get("usage"))

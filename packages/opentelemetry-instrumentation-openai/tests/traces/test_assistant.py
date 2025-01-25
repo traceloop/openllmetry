@@ -82,6 +82,10 @@ def test_new_assistant(exporter, openai_client, assistant):
             open_ai_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.{idx}.role"]
             == message.role
         )
+        assert (
+            open_ai_span.attributes[f"gen_ai.response.{idx}.id"]
+            == message.id
+        )
 
 
 @pytest.mark.vcr
@@ -134,6 +138,10 @@ def test_new_assistant_with_polling(exporter, openai_client, assistant):
             == message.content[0].text.value
         )
         assert open_ai_span.attributes[f"gen_ai.completion.{idx}.role"] == message.role
+        assert (
+            open_ai_span.attributes[f"gen_ai.response.{idx}.id"]
+            == message.id
+        )
 
 
 @pytest.mark.vcr
@@ -201,6 +209,10 @@ def test_existing_assistant(exporter, openai_client):
         assert (
             open_ai_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.{idx}.role"]
             == message.role
+        )
+        assert (
+            open_ai_span.attributes[f"gen_ai.response.{idx}.id"]
+            == message.id
         )
 
 
@@ -272,6 +284,9 @@ def test_streaming_new_assistant(exporter, openai_client, assistant):
             open_ai_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.{idx}.role"]
             == "assistant"
         )
+        assert (
+            open_ai_span.attributes[f"gen_ai.response.{idx}.id"].startswith("msg")
+        )
 
 
 @pytest.mark.vcr
@@ -340,4 +355,7 @@ def test_streaming_existing_assistant(exporter, openai_client):
         assert (
             open_ai_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.{idx}.role"]
             == "assistant"
+        )
+        assert (
+            open_ai_span.attributes[f"gen_ai.response.{idx}.id"].startswith("msg_")
         )

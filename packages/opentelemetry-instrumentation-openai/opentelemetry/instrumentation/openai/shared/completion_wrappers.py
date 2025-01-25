@@ -142,7 +142,7 @@ def _set_completions(span, choices):
 
 @dont_throw
 def _build_from_streaming_response(span, request_kwargs, response):
-    complete_response = {"choices": [], "model": ""}
+    complete_response = {"choices": [], "model": "", "id": ""}
     for item in response:
         yield item
         _accumulate_streaming_response(complete_response, item)
@@ -160,7 +160,7 @@ def _build_from_streaming_response(span, request_kwargs, response):
 
 @dont_throw
 async def _abuild_from_streaming_response(span, request_kwargs, response):
-    complete_response = {"choices": [], "model": ""}
+    complete_response = {"choices": [], "model": "", "id": ""}
     async for item in response:
         yield item
         _accumulate_streaming_response(complete_response, item)
@@ -215,7 +215,7 @@ def _accumulate_streaming_response(complete_response, item):
         item = model_as_dict(item)
 
     complete_response["model"] = item.get("model")
-
+    complete_response["id"] = item.get("id")
     for choice in item.get("choices"):
         index = choice.get("index")
         if len(complete_response.get("choices")) <= index:

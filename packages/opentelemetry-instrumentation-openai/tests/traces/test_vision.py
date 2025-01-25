@@ -48,6 +48,7 @@ def test_vision(exporter, openai_client):
         open_ai_span.attributes[SpanAttributes.LLM_OPENAI_API_BASE]
         == "https://api.openai.com/v1/"
     )
+    assert open_ai_span.attributes.get("gen_ai.response.id") == "chatcmpl-8wq4EsSXTQC0JbGzob3SBHg6pS7Tt"
 
 
 @pytest.mark.vcr
@@ -103,3 +104,4 @@ def test_vision_base64(exporter, openai_client):
         open_ai_span.attributes[SpanAttributes.LLM_OPENAI_API_BASE]
         == "https://api.openai.com/v1/"
     )
+    assert open_ai_span.attributes.get("gen_ai.response.id") == "chatcmpl-AC7YAG2uy8c4VfbqJp4QkdHc5PDZ4"

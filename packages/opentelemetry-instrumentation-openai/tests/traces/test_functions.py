@@ -75,6 +75,7 @@ def test_open_ai_function_calls(exporter, openai_client):
         open_ai_span.attributes[SpanAttributes.LLM_OPENAI_API_BASE]
         == "https://api.openai.com/v1/"
     )
+    assert open_ai_span.attributes.get("gen_ai.response.id") == "chatcmpl-8wq4AUDD36geK9Za8cccowhObkV9H"
 
 
 @pytest.mark.vcr
@@ -112,6 +113,7 @@ def test_open_ai_function_calls_tools(exporter, openai_client, openai_tools):
         open_ai_span.attributes[SpanAttributes.LLM_OPENAI_API_BASE]
         == "https://api.openai.com/v1/"
     )
+    assert open_ai_span.attributes.get("gen_ai.response.id") == "chatcmpl-934OqhoorTmk1VnovIRXQCPk8PUTd"
 
 
 @pytest.mark.vcr
@@ -158,6 +160,7 @@ async def test_open_ai_function_calls_tools_streaming(
         )
         == '{"location":"San Francisco, CA"}'
     )
+    assert open_ai_span.attributes.get("gen_ai.response.id") == "chatcmpl-9g4TmLd49mPoD6c0EnGlhNAp8b0on"
 
 
 @pytest.mark.vcr
@@ -221,6 +224,7 @@ def test_open_ai_function_calls_tools_parallel(exporter, openai_client, openai_t
         )
         == '{"location": "Boston"}'
     )
+    assert open_ai_span.attributes.get("gen_ai.response.id") == "chatcmpl-9g4cZhrW9CsqihSvXslk0EUtjASsO"
 
 
 @pytest.mark.vcr
@@ -288,3 +292,4 @@ async def test_open_ai_function_calls_tools_streaming_parallel(
         )
         == '{"location": "Boston"}'
     )
+    assert open_ai_span.attributes.get("gen_ai.response.id") == "chatcmpl-9g58noIjRkOeNNxfFsFfcNjhXlul7"
