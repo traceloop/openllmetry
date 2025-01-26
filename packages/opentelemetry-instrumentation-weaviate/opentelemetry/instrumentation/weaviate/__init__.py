@@ -228,19 +228,26 @@ class WeaviateInstrumentor(BaseInstrumentor):
             wrap_module = wrapped_method.get("module")
             wrap_object = wrapped_method.get("object")
             wrap_method = wrapped_method.get("method")
-            module = importlib.import_module(wrap_module)
-            if getattr(module, wrap_object, None):
-                wrap_function_wrapper(
-                    wrap_module,
-                    f"{wrap_object}.{wrap_method}",
-                    _wrap(tracer, wrapped_method),
-                )
+            # Check if the module can be imported
+            try:
+                module = importlib.import_module(wrap_module)
+                if getattr(module, wrap_object, None):
+                    wrap_function_wrapper(
+                        wrap_module,
+                        f"{wrap_object}.{wrap_method}",
+                        _wrap(tracer, wrapped_method),
+                    )
+            except ImportError as e:
+                logger.error(f"Error importing module {wrap_module}: {e}")
 
     def _uninstrument(self, **kwargs):
         for wrapped_method in WRAPPED_METHODS:
             wrap_module = wrapped_method.get("module")
             wrap_object = wrapped_method.get("object")
-            module = importlib.import_module(wrap_module)
-            wrapped = getattr(module, wrap_object, None)
-            if wrapped:
-                unwrap(wrapped, wrapped_method.get("method"))
+            try:
+                module = importlib.import_module(wrap_module)
+                wrapped = getattr(module, wrap_object, None)
+                if wrapped:
+                    unwrap(wrapped, wrapped_method.get("method"))
+            except ImportError as e:
+                logger.error(f"Error importing module {wrap_module}: {e}")
