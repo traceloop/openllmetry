@@ -145,6 +145,7 @@ OpenLLMetry can instrument everything that [OpenTelemetry already instruments](h
 - ✅ [LlamaIndex](https://docs.llamaindex.ai/en/stable/module_guides/observability/observability.html#openllmetry)
 - ✅ [Haystack](https://haystack.deepset.ai/integrations/traceloop)
 - ✅ [LiteLLM](https://docs.litellm.ai/docs/observability/opentelemetry_integration)
+- ✅ [CrewAI](https://docs.crewai.com/introduction)
 
 ## 🔎 Telemetry
 
