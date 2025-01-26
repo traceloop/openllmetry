@@ -36,3 +36,4 @@ def test_together_completion(exporter):
     ) + together_span.attributes.get(
         "gen_ai.usage.prompt_tokens"
     )
+    assert together_span.attributes.get("gen_ai.response.id") == "88fa66988e400e83-MXP"

@@ -10,6 +10,7 @@ from langchain_core.callbacks import (
 from langchain_core.messages import BaseMessage
 from langchain_core.outputs import LLMResult
 from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
+from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import GEN_AI_RESPONSE_ID
 from opentelemetry.semconv_ai import (
     SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
     LLMRequestTypeValues,
@@ -552,6 +553,9 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
 
                 if self.spans[run_id].request_model is None:
                     span.set_attribute(SpanAttributes.LLM_REQUEST_MODEL, model_name)
+            id = response.llm_output.get("id")
+            if id is not None and id != "":
+                span.set_attribute(GEN_AI_RESPONSE_ID, id)
 
         token_usage = (response.llm_output or {}).get("token_usage") or (
             response.llm_output or {}
