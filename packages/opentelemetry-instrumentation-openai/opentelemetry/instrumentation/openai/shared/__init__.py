@@ -11,6 +11,7 @@ from opentelemetry.trace.propagation import set_span_in_context
 from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
 
 from opentelemetry.instrumentation.openai.shared.config import Config
+from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import GEN_AI_RESPONSE_ID
 from opentelemetry.semconv_ai import SpanAttributes
 from opentelemetry.instrumentation.openai.utils import (
     dont_throw,
@@ -149,6 +150,7 @@ def _set_response_attributes(span, response):
         return
 
     _set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, response.get("model"))
+    _set_span_attribute(span, GEN_AI_RESPONSE_ID, response.get("id"))
 
     _set_span_attribute(
         span,
@@ -156,7 +158,6 @@ def _set_response_attributes(span, response):
         response.get("system_fingerprint"),
     )
     _log_prompt_filter(span, response)
-
     usage = response.get("usage")
     if not usage:
         return

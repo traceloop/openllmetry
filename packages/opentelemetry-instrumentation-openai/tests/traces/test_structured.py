@@ -31,6 +31,7 @@ def test_parsed_completion(exporter, openai_client):
             open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
             == "Tell me a joke about opentelemetry"
     )
+    assert open_ai_span.attributes.get("gen_ai.response.id") == "chatcmpl-AGC1gNoe1Zyq9yZicdhLc85lmt2Ep"
 
 
 @pytest.mark.vcr
@@ -52,6 +53,7 @@ def test_parsed_refused_completion(exporter, openai_client):
             open_ai_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.refusal"]
             == "I'm very sorry, but I can't assist with that request."
     )
+    assert open_ai_span.attributes.get("gen_ai.response.id") == "chatcmpl-AGky8KFDbg6f5fF4qLtsBredIjZZh"
 
 
 @pytest.mark.vcr
@@ -78,6 +80,7 @@ async def test_async_parsed_completion(exporter, async_openai_client):
             open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
             == "Tell me a joke about opentelemetry"
     )
+    assert open_ai_span.attributes.get("gen_ai.response.id") == "chatcmpl-AGC1iysV7rZ0qZ510vbeKVTNxSOHB"
 
 
 @pytest.mark.vcr
@@ -100,3 +103,4 @@ async def test_async_parsed_refused_completion(exporter, async_openai_client):
             open_ai_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.refusal"]
             == "I'm very sorry, but I can't assist with that request."
     )
+    assert open_ai_span.attributes.get("gen_ai.response.id") == "chatcmpl-AGkyFJGzZPUGAAEDJJuOS3idKvD3G"
