@@ -29,6 +29,7 @@ def test_completion(exporter, openai_client):
         == "https://api.openai.com/v1/"
     )
     assert open_ai_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is False
+    assert open_ai_span.attributes.get("gen_ai.response.id") == "cmpl-8wq42D1Socatcl1rCmgYZOFX7dFZw"
 
 
 @pytest.mark.vcr
@@ -49,6 +50,7 @@ async def test_async_completion(exporter, async_openai_client):
         == "Tell me a joke about opentelemetry"
     )
     assert open_ai_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
+    assert open_ai_span.attributes.get("gen_ai.response.id") == "cmpl-8wq43c8U5ZZCQBX5lrSpsANwcd3OF"
 
 
 @pytest.mark.vcr
@@ -68,6 +70,7 @@ def test_completion_langchain_style(exporter, openai_client):
         == "Tell me a joke about opentelemetry"
     )
     assert open_ai_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
+    assert open_ai_span.attributes.get("gen_ai.response.id") == "cmpl-8wq43QD6R2WqfxXLpYsRvSAIn9LB9"
 
 
 @pytest.mark.vcr
@@ -115,6 +118,7 @@ def test_completion_streaming(exporter, openai_client):
         )
         assert completion_tokens and prompt_tokens and total_tokens
         assert completion_tokens + prompt_tokens == total_tokens
+        assert open_ai_span.attributes.get("gen_ai.response.id") == "cmpl-8wq44ev1DvyhsBfm1hNwxfv6Dltco"
     finally:
         # unset env
         if original_value is None:
@@ -149,6 +153,7 @@ async def test_async_completion_streaming(exporter, async_openai_client):
         open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)
         == "https://api.openai.com/v1/"
     )
+    assert open_ai_span.attributes.get("gen_ai.response.id") == "cmpl-8wq44uFYuGm6kNe44ntRwluggKZFY"
 
 
 @pytest.mark.vcr
@@ -172,6 +177,7 @@ def test_completion_context_propagation(exporter, vllm_openai_client):
     request = args[0]
 
     assert_request_contains_tracecontext(request, openai_span)
+    assert openai_span.attributes.get("gen_ai.response.id") == "cmpl-2996bf68f7f142fa817bdd32af678df9"
 
 
 @pytest.mark.vcr
@@ -195,3 +201,4 @@ async def test_async_completion_context_propagation(exporter, async_vllm_openai_
     request = args[0]
 
     assert_request_contains_tracecontext(request, openai_span)
+    assert openai_span.attributes.get("gen_ai.response.id") == "cmpl-4acc6171f6c34008af07ca8490da3b95"
