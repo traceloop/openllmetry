@@ -42,6 +42,7 @@ def test_mistralai_chat(exporter):
     ) + mistral_span.attributes.get(
         SpanAttributes.LLM_USAGE_PROMPT_TOKENS
     )
+    assert mistral_span.attributes.get("gen_ai.response.id") == "d5f25c4c1e29441db526ce7db3400010"
 
 
 @pytest.mark.vcr
@@ -84,6 +85,7 @@ def test_mistralai_streaming_chat(exporter):
     ) + mistral_span.attributes.get(
         SpanAttributes.LLM_USAGE_PROMPT_TOKENS
     )
+    assert mistral_span.attributes.get("gen_ai.response.id") == "937738cd542a461da86a967ad7c2c8db"
 
 
 @pytest.mark.vcr
@@ -124,6 +126,7 @@ async def test_mistralai_async_chat(exporter):
     ) + mistral_span.attributes.get(
         SpanAttributes.LLM_USAGE_PROMPT_TOKENS
     )
+    assert mistral_span.attributes.get("gen_ai.response.id") == "84e3f907fd2045eba99a91a50a6c5a53"
 
 
 @pytest.mark.vcr
@@ -164,3 +167,4 @@ async def test_mistralai_async_streaming_chat(exporter):
     ) + mistral_span.attributes.get(
         SpanAttributes.LLM_USAGE_PROMPT_TOKENS
     )
+    assert mistral_span.attributes.get("gen_ai.response.id") == "8b811019d651417b913b5c16b32732e2"
