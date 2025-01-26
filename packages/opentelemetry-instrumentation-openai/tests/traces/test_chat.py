@@ -39,6 +39,7 @@ def test_chat(exporter, openai_client):
         == "fp_2b778c6b35"
     )
     assert open_ai_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is False
+    assert open_ai_span.attributes.get("gen_ai.response.id") == "chatcmpl-908MD9ivBBLb6EaIjlqwFokntayQK"
 
 
 @pytest.mark.vcr
@@ -93,6 +94,7 @@ def test_chat_tool_calls(exporter, openai_client):
     assert (
         open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.tool_call_id"] == "1"
     )
+    assert open_ai_span.attributes.get("gen_ai.response.id") == "chatcmpl-9gKNZbUWSC4s2Uh2QfVV7PYiqWIuH"
 
 
 @pytest.mark.vcr
@@ -147,6 +149,7 @@ def test_chat_pydantic_based_tool_calls(exporter, openai_client):
     assert (
         open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.tool_call_id"] == "1"
     )
+    assert open_ai_span.attributes.get("gen_ai.response.id") == "chatcmpl-9lvGJKrBUPeJjHi3KKSEbGfcfomOP"
 
 
 @pytest.mark.vcr
@@ -190,6 +193,7 @@ def test_chat_streaming(exporter, openai_client):
     total_tokens = open_ai_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS)
     assert completion_tokens and prompt_tokens and total_tokens
     assert completion_tokens + prompt_tokens == total_tokens
+    assert open_ai_span.attributes.get("gen_ai.response.id") == "chatcmpl-908MECg5dMyTTbJEltubwQXeeWlBA"
 
 
 @pytest.mark.vcr
@@ -233,6 +237,7 @@ async def test_chat_async_streaming(exporter, async_openai_client):
     total_tokens = open_ai_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS)
     assert completion_tokens and prompt_tokens and total_tokens
     assert completion_tokens + prompt_tokens == total_tokens
+    assert open_ai_span.attributes.get("gen_ai.response.id") == "chatcmpl-9AGW3t9akkLW9f5f93B7mOhiqhNMC"
 
 
 @pytest.mark.vcr
@@ -249,6 +254,8 @@ def test_with_asyncio_run(exporter, async_openai_client):
     assert [span.name for span in spans] == [
         "openai.chat",
     ]
+    open_ai_span = spans[0]
+    assert open_ai_span.attributes.get("gen_ai.response.id") == "chatcmpl-ANnyEsyt6uxfIIA7lcPLH95lKcEeK"
 
 
 @pytest.mark.vcr
@@ -266,7 +273,7 @@ def test_chat_context_propagation(exporter, vllm_openai_client):
         "openai.chat",
     ]
     open_ai_span = spans[0]
-
+    assert open_ai_span.attributes.get("gen_ai.response.id") == "chat-43f4347c3299481e9704ab77439fbdb8"
     args, kwargs = send_spy.mock.call_args
     request = args[0]
 
@@ -289,7 +296,7 @@ async def test_chat_async_context_propagation(exporter, async_vllm_openai_client
         "openai.chat",
     ]
     open_ai_span = spans[0]
-
+    assert open_ai_span.attributes.get("gen_ai.response.id") == "chat-4db07f02ecae49cbafe1d359db1650df"
     args, kwargs = send_spy.mock.call_args
     request = args[0]
 

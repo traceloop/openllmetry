@@ -81,7 +81,13 @@ class EventHandleWrapper(AssistantEventHandler):
 
     @override
     def on_message_done(self, message):
+        _set_span_attribute(
+            self._span,
+            f"gen_ai.response.{self._current_text_index}.id",
+            message.id,
+        )
         self._original_handler.on_message_done(message)
+        self._current_text_index += 1
 
     @override
     def on_text_created(self, text):
@@ -104,8 +110,6 @@ class EventHandleWrapper(AssistantEventHandler):
             f"{SpanAttributes.LLM_COMPLETIONS}.{self._current_text_index}.content",
             text.value,
         )
-
-        self._current_text_index += 1
 
     @override
     def on_image_file_done(self, image_file):

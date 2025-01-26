@@ -700,7 +700,7 @@ def _build_from_streaming_response(
     start_time=None,
     request_kwargs=None,
 ):
-    complete_response = {"choices": [], "model": ""}
+    complete_response = {"choices": [], "model": "", "id": ""}
 
     first_token = True
     time_of_first_token = start_time  # will be updated when first token is received
@@ -767,7 +767,7 @@ async def _abuild_from_streaming_response(
     start_time=None,
     request_kwargs=None,
 ):
-    complete_response = {"choices": [], "model": ""}
+    complete_response = {"choices": [], "model": "", "id": ""}
 
     first_token = True
     time_of_first_token = start_time  # will be updated when first token is received
@@ -826,6 +826,7 @@ def _accumulate_stream_items(item, complete_response):
         item = model_as_dict(item)
 
     complete_response["model"] = item.get("model")
+    complete_response["id"] = item.get("id")
 
     # prompt filter results
     if item.get("prompt_filter_results"):

@@ -29,6 +29,7 @@ def test_chat(exporter, azure_openai_client):
         == "https://traceloop-stg.openai.azure.com//openai/"
     )
     assert open_ai_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is False
+    assert open_ai_span.attributes.get("gen_ai.response.id") == "chatcmpl-9HpbZPf84KZFiQG6fdY0KVtIwHyIa"
 
 
 @pytest.mark.vcr
@@ -57,6 +58,7 @@ def test_chat_content_filtering(exporter, azure_openai_client):
         == "https://traceloop-stg.openai.azure.com//openai/"
     )
     assert open_ai_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is False
+    assert open_ai_span.attributes.get("gen_ai.response.id") == "chatcmpl-9HpyGSWv1hoKdGaUaiFhfxzTEVlZo"
 
     content_filter_json = open_ai_span.attributes.get(
         f"{SpanAttributes.LLM_COMPLETIONS}.0.content_filter_results"
@@ -153,6 +155,7 @@ def test_chat_streaming(exporter, azure_openai_client):
         prompt_filter_results[0]["content_filter_results"]["self_harm"]["filtered"]
         is False
     )
+    assert open_ai_span.attributes.get("gen_ai.response.id") == "chatcmpl-9HpbaAXyt0cAnlWvI8kUAFpZt5jyQ"
 
 
 @pytest.mark.vcr
@@ -192,3 +195,4 @@ async def test_chat_async_streaming(exporter, async_azure_openai_client):
 
     events = open_ai_span.events
     assert len(events) == chunk_count
+    assert open_ai_span.attributes.get("gen_ai.response.id") == "chatcmpl-9HpbbsSaH8U6amSDAwdA2WzMeDdLB"
