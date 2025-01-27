@@ -26,17 +26,17 @@ opentelemetry-semantic-conventions = ">=0.50b0"
 opentelemetry-semantic-conventions-ai = "0.4.2"
 
 [tool.poetry.group.dev.dependencies]
-autopep8 = "^2.2.0"
-flake8 = "7.0.0"
+autopep8 = "^2.3.2"
+flake8 = "^7.1.1"
 
 [tool.poetry.group.test.dependencies]
-boto3 = "^1.34.120"
-vcrpy = "^6.0.1"
-pytest = "^8.2.2"
+boto3 = "^1.36.6"
+vcrpy = "^7.0.0"
+pytest = "^8.3.4"
 pytest-sugar = "1.0.0"
 pytest-recording = "^0.13.1"
 opentelemetry-sdk = "^1.23.0"
 
 [build-system]
-requires = ["poetry-core"]
+requires = ["poetry-core>=2.0.0"]
 build-backend = "poetry.core.masonry.api"

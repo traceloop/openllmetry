@@ -31,24 +31,24 @@ opentelemetry-semantic-conventions-ai = "0.4.2"
 tiktoken = ">=0.6.0, <1"
 
 [tool.poetry.group.dev.dependencies]
-autopep8 = "^2.2.0"
-flake8 = "7.0.0"
+autopep8 = "^2.3.2"
+flake8 = "^7.1.1"
 
 [tool.poetry.group.test.dependencies]
-pytest = "^8.2.2"
+pytest = "^8.3.4"
 pytest-sugar = "1.0.0"
-vcrpy = "^6.0.1"
+vcrpy = "^7.0.0"
 pytest-recording = "^0.13.1"
 openai = { extras = ["datalib"], version = ">=1.50.0" }
 opentelemetry-sdk = "^1.27.0"
-pytest-asyncio = "^0.23.7"
+pytest-asyncio = "^0.25.2"
 
 [build-system]
-requires = ["poetry-core"]
+requires = ["poetry-core>=2.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.extras]
 instruments = ["openai"]
 
 [tool.poetry.plugins."opentelemetry_instrumentor"]
-openai = "opentelemetry.instrumentation.openai:OpenAIInstrumentor"
+openai = "^1.60.1"

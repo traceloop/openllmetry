@@ -31,30 +31,30 @@ opentelemetry-semantic-conventions-ai = "0.4.2"
 inflection = "^0.5.1"
 
 [tool.poetry.group.dev.dependencies]
-autopep8 = "^2.2.0"
-flake8 = "7.0.0"
+autopep8 = "^2.3.2"
+flake8 = "^7.1.1"
 
 [tool.poetry.group.test.dependencies]
-vcrpy = "^6.0.1"
+vcrpy = "^7.0.0"
 pytest-recording = "^0.13.1"
-pytest-asyncio = "^0.23.7"
-chromadb = "^0.5.23"
-openai = "^1.52.2"
+pytest-asyncio = "^0.25.2"
+chromadb = "^0.6.3"
+openai = "^1.60.1"
 opentelemetry-sdk = "^1.27.0"
 llama-index = "^0.12.6"
 llama-index-postprocessor-cohere-rerank = "^0.3.0"
 opentelemetry-instrumentation-openai = { path = "../opentelemetry-instrumentation-openai", develop = true }
 opentelemetry-instrumentation-cohere = { path = "../opentelemetry-instrumentation-cohere", develop = true }
 opentelemetry-instrumentation-chromadb = { path = "../opentelemetry-instrumentation-chromadb", develop = true }
-sqlalchemy = "^2.0.31"
-llama-index-agent-openai = "^0.4.1"
+sqlalchemy = "^2.0.37"
+llama-index-agent-openai = "^0.4.2"
 llama-index-vector-stores-chroma = "^0.4.1"
 llama-index-llms-cohere = "^0.4.0"
 llama-index-embeddings-openai = "^0.3.1"
 onnxruntime = "<1.20.0"
 
 [build-system]
-requires = ["poetry-core"]
+requires = ["poetry-core>=2.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.extras]
