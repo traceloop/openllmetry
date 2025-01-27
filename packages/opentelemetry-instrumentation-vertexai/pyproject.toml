@@ -31,21 +31,21 @@ opentelemetry-semantic-conventions = ">=0.50b0"
 opentelemetry-semantic-conventions-ai = "0.4.2"
 
 [tool.poetry.group.dev.dependencies]
-autopep8 = "^2.2.0"
-flake8 = "7.0.0"
-pytest = "^8.2.2"
+autopep8 = "^2.3.2"
+flake8 = "^7.1.1"
+pytest = "^8.3.4"
 pytest-sugar = "1.0.0"
 
 [tool.poetry.group.test.dependencies]
-pytest = "^8.2.2"
+pytest = "^8.3.4"
 pytest-sugar = "1.0.0"
-vcrpy = "^6.0.1"
-pytest-recording = "^0.13.1"
+vcrpy = "^7.0.0"
+pytest-recording = "^0.13.2"
 opentelemetry-sdk = "^1.27.0"
-google-cloud-aiplatform = "^1.54.0"
+google-cloud-aiplatform = "^1.78.0"
 
 [build-system]
-requires = ["poetry-core"]
+requires = ["poetry-core>=2.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.extras]

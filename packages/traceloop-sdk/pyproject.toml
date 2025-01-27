@@ -63,28 +63,28 @@ opentelemetry-instrumentation-marqo = { path = "../opentelemetry-instrumentation
 opentelemetry-instrumentation-groq = { path = "../opentelemetry-instrumentation-groq", develop = true }
 colorama = "^0.4.6"
 tenacity = "^8.2.3"
-pydantic = ">=1"
+pydantic = "^2.10.6"
 jinja2 = "^3.1.5"
 deprecated = "^1.2.14"
 posthog = ">3.0.2, <4"
 aiohttp = "^3.11.11"
 
 [tool.poetry.group.dev.dependencies]
-autopep8 = "^2.2.0"
-flake8 = "7.0.0"
-pytest = "^8.2.2"
+autopep8 = "^2.3.2"
+flake8 = "^7.1.1"
+pytest = "^8.3.4"
 pytest-sugar = "1.0.0"
 
 [tool.poetry.group.test.dependencies]
-openai = "^1.31.1"
-vcrpy = "^6.0.1"
-pytest-recording = "^0.13.1"
-pydantic = "<3"
-pytest-asyncio = "^0.23.7"
-anthropic = "^0.25.2"
-langchain = "^0.2.5"
-langchain-openai = "^0.1.15"
+openai = "^1.60.1"
+vcrpy = "^7.0.0"
+pytest-recording = "^0.13.2"
+pydantic = "^2.10.6"
+pytest-asyncio = "^0.25.2"
+anthropic = "^0.45.0"
+langchain = "^0.3.15"
+langchain-openai = "^0.3.2"
 
 [build-system]
-requires = ["poetry-core"]
+requires = ["poetry-core>=2.0.0"]
 build-backend = "poetry.core.masonry.api"
