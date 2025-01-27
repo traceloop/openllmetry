@@ -9,9 +9,11 @@ import traceback
 import openai
 from opentelemetry.instrumentation.openai.shared.config import Config
 
+_OPENAI_VERSION = version("openai")
+
 
 def is_openai_v1():
-    return version("openai") >= "1.0.0"
+    return _OPENAI_VERSION >= "1.0.0"
 
 
 def is_azure_openai(instance):
