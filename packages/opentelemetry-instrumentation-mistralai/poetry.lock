@@ -244,20 +244,20 @@ files = [
 
 [[package]]
 name = "mistralai"
-version = "0.2.0"
+version = "0.4.2"
 description = ""
 optional = false
 python-versions = "<4.0,>=3.9"
 groups = ["test"]
 files = [
-    {file = "mistralai-0.2.0-py3-none-any.whl", hash = "sha256:756c373ac77f36a4a65092e72ccfbeddb50771d18f490013c7877e4e7efd46a1"},
-    {file = "mistralai-0.2.0.tar.gz", hash = "sha256:dba8c8ec142f0a9612d0d3787f8b05e321089d1b8563280c7a5f2b46964e69e5"},
+    {file = "mistralai-0.4.2-py3-none-any.whl", hash = "sha256:63c98eea139585f0a3b2c4c6c09c453738bac3958055e6f2362d3866e96b0168"},
+    {file = "mistralai-0.4.2.tar.gz", hash = "sha256:5eb656710517168ae053f9847b0bb7f617eda07f1f93f946ad6c91a4d407fd93"},
 ]
 
 [package.dependencies]
-httpx = ">=0.25.2,<1"
-orjson = ">=3.9.10,<4.0.0"
-pydantic = ">=2.5.2,<3.0.0"
+httpx = ">=0.25,<1"
+orjson = ">=3.9.10,<3.11"
+pydantic = ">=2.5.2,<3"
 
 [[package]]
 name = "multidict"
@@ -1118,4 +1118,4 @@ instruments = []
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.9,<4"
-content-hash = "25a4d107a603f6deecb120795cf1e9365f95107899272b30bcf16d43f21af5a8"
+content-hash = "dca9b9523d4b90e0655874e3b64ae03d7b8eb748b034974ff7a39959fe9ad58b"

@@ -944,4 +944,4 @@ instruments = ["ollama"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.9,<4"
-content-hash = "fdfc715c0b37f6cd662ddf904961ec239e7ac89d68704827da4a0c5d8c607aac"
+content-hash = "d45d62d8ee4c5a203097ff9f6f0200670c4bd836487e11d8286cba47a74acbb9"

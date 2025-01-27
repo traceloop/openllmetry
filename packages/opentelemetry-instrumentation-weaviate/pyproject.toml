@@ -40,7 +40,7 @@ openai = "^1.60.1"
 pytest = "^8.3.4"
 pytest-sugar = "1.0.0"
 vcrpy = "^7.0.0"
-pytest-recording = "^0.13.1"
+pytest-recording = "^0.13.2"
 opentelemetry-sdk = "^1.27.0"
 opentelemetry-instrumentation-openai = { path = "../opentelemetry-instrumentation-openai", develop = true }
 weaviate-client = ">=3.26,<5.0"

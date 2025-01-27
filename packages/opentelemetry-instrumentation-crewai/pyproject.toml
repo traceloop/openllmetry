@@ -35,7 +35,7 @@ pytest-sugar = "1.0.0"
 crewai = "^0.80.0"
 pytest = "^8.3.4"
 pytest-sugar = "1.0.0"
-pytest-recording = "^0.13.1"
+pytest-recording = "^0.13.2"
 opentelemetry-sdk = "^1.27.0"
 
 [build-system]

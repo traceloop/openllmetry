@@ -39,10 +39,10 @@ pytest-sugar = "1.0.0"
 pytest = "^8.3.4"
 pytest-sugar = "1.0.0"
 vcrpy = "^7.0.0"
-pytest-recording = "^0.13.1"
+pytest-recording = "^0.13.2"
 pytest-asyncio = "^0.25.2"
 opentelemetry-sdk = "^1.27.0"
-marqo = "^3.5.1"
+marqo = "^3.10.0"
 
 [build-system]
 requires = ["poetry-core>=2.0.0"]

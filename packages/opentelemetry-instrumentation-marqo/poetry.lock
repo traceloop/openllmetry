@@ -250,22 +250,21 @@ files = [
 
 [[package]]
 name = "marqo"
-version = "3.7.0"
+version = "3.10.0"
 description = "Tensor search for humans"
 optional = false
 python-versions = ">=3"
 groups = ["test"]
 files = [
-    {file = "marqo-3.7.0-py3-none-any.whl", hash = "sha256:6f1ff86c3faadb31415bd1adf3e805b2927588c1a5756eeea8fb63097bf94c8a"},
-    {file = "marqo-3.7.0.tar.gz", hash = "sha256:d144cf69a41932fc664f04fc994b8c050998bd730b988e1d3fbe6bd20d9c820e"},
+    {file = "marqo-3.10.0-py3-none-any.whl", hash = "sha256:24f136f72e255526c11483dae387d1251d659a94a8a75b6fcd33523edcb7aee2"},
+    {file = "marqo-3.10.0.tar.gz", hash = "sha256:f18832337596530094cf9e704e89b6249865690c92c3b00cedd50ff154769b0e"},
 ]
 
 [package.dependencies]
 packaging = "*"
 pydantic = ">=2.0.0"
 requests = "*"
-typing-extensions = ">=4.5.0"
-urllib3 = ">=1.26.0,<2.0.0"
+urllib3 = ">=1.26.0"
 
 [[package]]
 name = "mccabe"
@@ -1087,4 +1086,4 @@ instruments = []
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.9,<4"
-content-hash = "43a3f1b89c04ca93da2b97e8f2e5e06b111fbb655ddfef299c028eeb58b62b45"
+content-hash = "2ca6d14afd6c4a27eff9d658e9d97fef44db2e01a86aef33fff8b3ee7df388fa"

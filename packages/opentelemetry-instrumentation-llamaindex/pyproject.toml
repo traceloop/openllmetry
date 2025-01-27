@@ -36,12 +36,12 @@ flake8 = "^7.1.1"
 
 [tool.poetry.group.test.dependencies]
 vcrpy = "^7.0.0"
-pytest-recording = "^0.13.1"
+pytest-recording = "^0.13.2"
 pytest-asyncio = "^0.25.2"
 chromadb = "^0.6.3"
 openai = "^1.60.1"
 opentelemetry-sdk = "^1.27.0"
-llama-index = "^0.12.6"
+llama-index = "^0.12.14"
 llama-index-postprocessor-cohere-rerank = "^0.3.0"
 opentelemetry-instrumentation-openai = { path = "../opentelemetry-instrumentation-openai", develop = true }
 opentelemetry-instrumentation-cohere = { path = "../opentelemetry-instrumentation-cohere", develop = true }
@@ -51,7 +51,7 @@ llama-index-agent-openai = "^0.4.2"
 llama-index-vector-stores-chroma = "^0.4.1"
 llama-index-llms-cohere = "^0.4.0"
 llama-index-embeddings-openai = "^0.3.1"
-onnxruntime = "<1.20.0"
+onnxruntime = "^1.20.1"
 
 [build-system]
 requires = ["poetry-core>=2.0.0"]

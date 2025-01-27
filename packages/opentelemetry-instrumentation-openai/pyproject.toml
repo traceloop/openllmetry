@@ -38,7 +38,7 @@ flake8 = "^7.1.1"
 pytest = "^8.3.4"
 pytest-sugar = "1.0.0"
 vcrpy = "^7.0.0"
-pytest-recording = "^0.13.1"
+pytest-recording = "^0.13.2"
 openai = { extras = ["datalib"], version = ">=1.50.0" }
 opentelemetry-sdk = "^1.27.0"
 pytest-asyncio = "^0.25.2"

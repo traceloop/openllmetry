@@ -773,20 +773,20 @@ types-pytz = ">=2022.1.1"
 
 [[package]]
 name = "pinecone-client"
-version = "5.0.0"
+version = "5.0.1"
 description = "Pinecone client and SDK"
 optional = false
 python-versions = "<4.0,>=3.8"
 groups = ["test"]
 markers = "python_version <= \"3.11\" or python_version >= \"3.12\""
 files = [
-    {file = "pinecone_client-5.0.0-py3-none-any.whl", hash = "sha256:243a58b761835a05629fe5bfc863ffa49c89d58e700b869e7b57ed7822c14311"},
-    {file = "pinecone_client-5.0.0.tar.gz", hash = "sha256:da2c10214a72b452e88a861a6db469ba6bf7caec22a0324467018d54188fffcd"},
+    {file = "pinecone_client-5.0.1-py3-none-any.whl", hash = "sha256:c8f7835e1045ba84e295f217a8e85573ffb80b41501bbc1af6d92c9631c567a7"},
+    {file = "pinecone_client-5.0.1.tar.gz", hash = "sha256:11c33ff5d1c38a6ce69e69fe532c0f22f312fb28d761bb30b3767816d3181d64"},
 ]
 
 [package.dependencies]
 certifi = ">=2019.11.17"
-pinecone-plugin-inference = "1.0.2"
+pinecone-plugin-inference = ">=1.0.3,<2.0.0"
 pinecone-plugin-interface = ">=0.0.7,<0.0.8"
 tqdm = ">=4.64.1"
 typing-extensions = ">=3.7.4"
@@ -800,19 +800,18 @@ grpc = ["googleapis-common-protos (>=1.53.0)", "grpcio (>=1.44.0)", "grpcio (>=1
 
 [[package]]
 name = "pinecone-plugin-inference"
-version = "1.0.2"
+version = "1.1.0"
 description = "Embeddings plugin for Pinecone SDK"
 optional = false
 python-versions = "<4.0,>=3.8"
 groups = ["test"]
 markers = "python_version <= \"3.11\" or python_version >= \"3.12\""
 files = [
-    {file = "pinecone_plugin_inference-1.0.2-py3-none-any.whl", hash = "sha256:ef94e7f51554e780408cf1507888b120bb0d185b8485a903cbeb9d0176ee03f1"},
-    {file = "pinecone_plugin_inference-1.0.2.tar.gz", hash = "sha256:dda62d9ff44dbbf191b11e6e884235f329cf0ec22edc616fe7efcb1e479e6a9a"},
+    {file = "pinecone_plugin_inference-1.1.0-py3-none-any.whl", hash = "sha256:32c61aba21c9a28fdcd0e782204c1ca641aeb3fd6e42764fbf0de8186eb657ec"},
+    {file = "pinecone_plugin_inference-1.1.0.tar.gz", hash = "sha256:283e5ae4590b901bf2179beb56fc3d1b715e63582f37ec7abb0708cf70912d1f"},
 ]
 
 [package.dependencies]
-pinecone-client = ">=4.1.1,<6.0.0"
 pinecone-plugin-interface = ">=0.0.7,<0.0.8"
 
 [[package]]
@@ -1709,4 +1708,4 @@ instruments = []
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.9,<4"
-content-hash = "84d71b2242a31566cba629db541ab22c180c10fd0c32bb63cc14449094129eb6"
+content-hash = "1a3fd0a6b67f93030eff294f7d3f002127fd858a59a9baede2be18891de47cf6"
