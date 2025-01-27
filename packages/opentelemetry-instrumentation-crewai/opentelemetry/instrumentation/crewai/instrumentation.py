@@ -38,10 +38,14 @@ class CrewAIInstrumentor(BaseInstrumentor):
                 duration_histogram,
             ) = (None, None, None, None)
 
-        wrap_function_wrapper("crewai.crew", "Crew.kickoff", wrap_kickoff(tracer, duration_histogram, token_histogram))
-        wrap_function_wrapper("crewai.agent", "Agent.execute_task", wrap_agent_execute_task(tracer, duration_histogram, token_histogram))
-        wrap_function_wrapper("crewai.task", "Task.execute_sync", wrap_task_execute(tracer, duration_histogram, token_histogram))
-        wrap_function_wrapper("crewai.llm", "LLM.call", wrap_llm_call(tracer, duration_histogram, token_histogram))
+        wrap_function_wrapper("crewai.crew", "Crew.kickoff",
+                              wrap_kickoff(tracer, duration_histogram, token_histogram))
+        wrap_function_wrapper("crewai.agent", "Agent.execute_task",
+                              wrap_agent_execute_task(tracer, duration_histogram, token_histogram))
+        wrap_function_wrapper("crewai.task", "Task.execute_sync",
+                              wrap_task_execute(tracer, duration_histogram, token_histogram))
+        wrap_function_wrapper("crewai.llm", "LLM.call",
+                              wrap_llm_call(tracer, duration_histogram, token_histogram))
 
     def _uninstrument(self, **kwargs):
         unwrap("crewai.crew.Crew", "kickoff")
@@ -61,7 +65,8 @@ def with_tracer_wrapper(func):
 
 
 @with_tracer_wrapper
-def wrap_kickoff(tracer: Tracer, duration_histogram: Histogram, token_histogram: Histogram, wrapped, instance, args, kwargs):
+def wrap_kickoff(tracer: Tracer, duration_histogram: Histogram, token_histogram: Histogram,
+                 wrapped, instance, args, kwargs):
     with tracer.start_as_current_span(
         "crewai.workflow",
         kind=SpanKind.INTERNAL,
