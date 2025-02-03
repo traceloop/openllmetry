@@ -2,7 +2,9 @@
   "name": "openllmetry",
   "version": "0.0.0",
   "license": "MIT",
-  "scripts": {},
+  "scripts": {
+    "test:early": "nx run-many --target=test:early"
+  },
   "private": true,
   "devDependencies": {
     "@nxlv/python": "^20.2.0",

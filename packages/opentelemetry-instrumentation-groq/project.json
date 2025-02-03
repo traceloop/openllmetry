@@ -63,6 +63,17 @@
         "cwd": "packages/opentelemetry-instrumentation-groq"
       }
     },
+    "test:early": {
+      "executor": "@nxlv/python:run-commands",
+      "outputs": [
+        "{workspaceRoot}/reports/packages/opentelemetry-instrumentation-groq/unittests/early",
+        "{workspaceRoot}/coverage/packages/opentelemetry-instrumentation-groq/early"
+      ],
+      "options": {
+        "command": "poetry run pytest opentelemetry/instrumentation/groq/test_early_utils/",
+        "cwd": "packages/opentelemetry-instrumentation-groq"
+      }
+    },
     "build-release": {
       "executor": "@nxlv/python:run-commands",
       "options": {
