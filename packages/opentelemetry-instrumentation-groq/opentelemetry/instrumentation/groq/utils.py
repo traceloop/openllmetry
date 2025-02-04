@@ -10,6 +10,8 @@ from opentelemetry.semconv_ai import SpanAttributes
 GEN_AI_SYSTEM = "gen_ai.system"
 GEN_AI_SYSTEM_GROQ = "groq"
 
+_PYDANTIC_VERSION = version("pydantic")
+
 
 def set_span_attribute(span, name, value):
     if value is not None and value != "":
@@ -69,7 +71,7 @@ def error_metrics_attributes(exception):
 
 
 def model_as_dict(model):
-    if version("pydantic") < "2.0.0":
+    if _PYDANTIC_VERSION < "2.0.0":
         return model.dict()
     if hasattr(model, "model_dump"):
         return model.model_dump()
