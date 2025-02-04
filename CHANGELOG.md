@@ -1,3 +1,10 @@
+## v0.38.1 (2025-02-04)
+
+### Fix
+
+- **openai**: don't eagerly import types from openai as they may not be available (#2601)
+- **sdk**: watsonx package name was wrong preventing instrumentation (#2600)
+
 ## v0.38.0 (2025-02-04)
 
 ### Feat
