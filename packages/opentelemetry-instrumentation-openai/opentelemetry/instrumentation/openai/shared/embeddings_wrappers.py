@@ -34,6 +34,7 @@ from opentelemetry.instrumentation.openai.shared.config import Config
 from opentelemetry.instrumentation.openai.utils import is_openai_v1
 
 from opentelemetry.trace import SpanKind
+from opentelemetry.trace import Status, StatusCode
 
 SPAN_NAME = "openai.embeddings"
 LLM_REQUEST_TYPE = LLMRequestTypeValues.EMBEDDING
@@ -82,6 +83,9 @@ def embeddings_wrapper(
                 duration_histogram.record(duration, attributes=attributes)
             if exception_counter:
                 exception_counter.add(1, attributes=attributes)
+
+            span.set_status(Status(StatusCode.ERROR, str(e)))
+            span.end()
 
             raise e
 
@@ -141,6 +145,9 @@ async def aembeddings_wrapper(
                 duration_histogram.record(duration, attributes=attributes)
             if exception_counter:
                 exception_counter.add(1, attributes=attributes)
+
+            span.set_status(Status(StatusCode.ERROR, str(e)))
+            span.end()
 
             raise e
 
