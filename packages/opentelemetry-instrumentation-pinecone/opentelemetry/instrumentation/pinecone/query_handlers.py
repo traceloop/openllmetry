@@ -1,7 +1,8 @@
 import json
 
+from opentelemetry.instrumentation.pinecone.utils import (dont_throw,
+                                                          set_span_attribute)
 from opentelemetry.semconv_ai import EventAttributes, Events, SpanAttributes
-from opentelemetry.instrumentation.pinecone.utils import dont_throw, set_span_attribute
 
 
 @dont_throw

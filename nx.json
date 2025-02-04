@@ -1,5 +1,19 @@
 {
   "extends": "nx/presets/npm.json",
   "$schema": "./node_modules/nx/schemas/nx-schema.json",
-  "plugins": ["@nxlv/python"]
+  "plugins": ["@nxlv/python"],
+  "projects": {
+    "default": {
+      "root": ".",
+      "targets": {
+        "test:early": {
+          "executor": "@nxlv/python:run-commands",
+          "options": {
+            "command": ". .venv/Scripts/activate && poetry run pytest source/test_early_utils/",
+            "cwd": "{projectRoot}"
+          }
+        }
+      }
+    }
+  }
 }

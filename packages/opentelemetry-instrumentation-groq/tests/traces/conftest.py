@@ -3,18 +3,17 @@
 import os
 
 import pytest
+from groq import AsyncGroq, Groq
 from opentelemetry import metrics, trace
 from opentelemetry.instrumentation.groq import GroqInstrumentor
 from opentelemetry.sdk.metrics import Counter, Histogram, MeterProvider
-from opentelemetry.sdk.metrics.export import (
-    AggregationTemporality,
-    InMemoryMetricReader,
-)
+from opentelemetry.sdk.metrics.export import (AggregationTemporality,
+                                              InMemoryMetricReader)
 from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import SimpleSpanProcessor
-from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
-from groq import Groq, AsyncGroq
+from opentelemetry.sdk.trace.export.in_memory_span_exporter import \
+    InMemorySpanExporter
 
 
 @pytest.fixture(scope="session")

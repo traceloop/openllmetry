@@ -1,18 +1,16 @@
 import logging
 from typing import Collection
-from opentelemetry.instrumentation.haystack.config import Config
-from wrapt import wrap_function_wrapper
 
-from opentelemetry.trace import get_tracer
-from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
-from opentelemetry.instrumentation.utils import (
-    unwrap,
-)
-from opentelemetry.instrumentation.haystack.wrap_openai import wrap as openai_wrapper
-from opentelemetry.instrumentation.haystack.wrap_pipeline import (
-    wrap as pipeline_wrapper,
-)
+from opentelemetry.instrumentation.haystack.config import Config
 from opentelemetry.instrumentation.haystack.version import __version__
+from opentelemetry.instrumentation.haystack.wrap_openai import \
+    wrap as openai_wrapper
+from opentelemetry.instrumentation.haystack.wrap_pipeline import \
+    wrap as pipeline_wrapper
+from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
+from opentelemetry.instrumentation.utils import unwrap
+from opentelemetry.trace import get_tracer
+from wrapt import wrap_function_wrapper
 
 logger = logging.getLogger(__name__)
 

@@ -63,6 +63,17 @@
         "cwd": "packages/opentelemetry-instrumentation-anthropic"
       }
     },
+    "test:early": {
+      "executor": "@nxlv/python:run-commands",
+      "outputs": [
+        "{workspaceRoot}/reports/packages/opentelemetry-instrumentation-anthropic/unittests/early",
+        "{workspaceRoot}/coverage/packages/opentelemetry-instrumentation-anthropic/early"
+      ],
+      "options": {
+        "command": "poetry run pytest opentelemetry/instrumentation/anthropic/test_early_utils/",
+        "cwd": "packages/opentelemetry-instrumentation-anthropic"
+      }
+    },
     "build-release": {
       "executor": "@nxlv/python:run-commands",
       "options": {

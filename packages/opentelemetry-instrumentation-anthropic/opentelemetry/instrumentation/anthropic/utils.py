@@ -1,8 +1,9 @@
 import asyncio
-import os
 import logging
+import os
 import threading
 import traceback
+
 from opentelemetry import context as context_api
 from opentelemetry.instrumentation.anthropic.config import Config
 from opentelemetry.semconv_ai import SpanAttributes

@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 from anthropic import AI_PROMPT, HUMAN_PROMPT, Anthropic, AsyncAnthropic
-from opentelemetry.semconv_ai import SpanAttributes, Meters
+from opentelemetry.semconv_ai import Meters, SpanAttributes
 
 
 def verify_metrics(resource_metrics, model_name: str, ignore_exception_metric: bool = False):

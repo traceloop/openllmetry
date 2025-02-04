@@ -63,6 +63,17 @@
         "cwd": "packages/opentelemetry-instrumentation-haystack"
       }
     },
+    "test:early": {
+      "executor": "@nxlv/python:run-commands",
+      "outputs": [
+        "{workspaceRoot}/reports/packages/opentelemetry-instrumentation-haystack/unittests/early",
+        "{workspaceRoot}/coverage/packages/opentelemetry-instrumentation-haystack/early"
+      ],
+      "options": {
+        "command": "poetry run pytest opentelemetry/instrumentation/haystack/test_early_utils/",
+        "cwd": "packages/opentelemetry-instrumentation-haystack"
+      }
+    },
     "build-release": {
       "executor": "@nxlv/python:run-commands",
       "options": {

@@ -1,14 +1,11 @@
 import logging
+
 from opentelemetry import context as context_api
 from opentelemetry.context import attach, set_value
-from opentelemetry.instrumentation.utils import (
-    _SUPPRESS_INSTRUMENTATION_KEY,
-)
-from opentelemetry.instrumentation.haystack.utils import (
-    with_tracer_wrapper,
-    process_request,
-    process_response,
-)
+from opentelemetry.instrumentation.haystack.utils import (process_request,
+                                                          process_response,
+                                                          with_tracer_wrapper)
+from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
 from opentelemetry.semconv_ai import SpanAttributes, TraceloopSpanKindValues
 
 logger = logging.getLogger(__name__)

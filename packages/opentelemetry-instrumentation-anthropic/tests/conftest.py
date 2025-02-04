@@ -6,14 +6,13 @@ import pytest
 from opentelemetry import metrics, trace
 from opentelemetry.instrumentation.anthropic import AnthropicInstrumentor
 from opentelemetry.sdk.metrics import Counter, Histogram, MeterProvider
-from opentelemetry.sdk.metrics.export import (
-    AggregationTemporality,
-    InMemoryMetricReader,
-)
+from opentelemetry.sdk.metrics.export import (AggregationTemporality,
+                                              InMemoryMetricReader)
 from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import SimpleSpanProcessor
-from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
+from opentelemetry.sdk.trace.export.in_memory_span_exporter import \
+    InMemorySpanExporter
 
 pytest_plugins = []
 
