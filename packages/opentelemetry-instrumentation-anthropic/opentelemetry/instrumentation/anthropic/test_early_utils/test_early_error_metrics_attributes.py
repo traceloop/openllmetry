@@ -1,7 +1,10 @@
 import pytest
-from opentelemetry.instrumentation.anthropic.utils import error_metrics_attributes
+from opentelemetry.instrumentation.anthropic.utils import \
+    error_metrics_attributes
 
 # Describe block for all tests related to error_metrics_attributes
+
+
 @pytest.mark.describe("Tests for error_metrics_attributes function")
 class TestErrorMetricsAttributes:
 

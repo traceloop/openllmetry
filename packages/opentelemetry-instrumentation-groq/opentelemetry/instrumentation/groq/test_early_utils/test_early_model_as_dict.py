@@ -1,9 +1,12 @@
-import pytest
-from unittest.mock import MagicMock, patch
 from importlib.metadata import version
+from unittest.mock import MagicMock, patch
+
+import pytest
 from opentelemetry.instrumentation.groq.utils import model_as_dict
 
 # Describe block for all tests related to model_as_dict
+
+
 @pytest.mark.describe("model_as_dict function")
 class TestModelAsDict:
 
@@ -34,7 +37,6 @@ class TestModelAsDict:
 
         assert result == {"model": "test_model"}
         mock_model.model_dump.assert_called_once()
-
 
     @pytest.mark.edge_case
     def test_model_as_dict_with_non_pydantic_object(self):

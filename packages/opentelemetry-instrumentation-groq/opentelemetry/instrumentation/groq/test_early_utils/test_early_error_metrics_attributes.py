@@ -2,6 +2,8 @@ import pytest
 from opentelemetry.instrumentation.groq.utils import error_metrics_attributes
 
 # Describe block for all tests related to error_metrics_attributes
+
+
 @pytest.mark.describe("Tests for error_metrics_attributes function")
 class TestErrorMetricsAttributes:
 
@@ -62,6 +64,7 @@ class TestErrorMetricsAttributes:
             "gen_ai.system": "groq",
             "error.type": "NonStandardException",
         }
+
 
 # Run the tests
 if __name__ == "__main__":

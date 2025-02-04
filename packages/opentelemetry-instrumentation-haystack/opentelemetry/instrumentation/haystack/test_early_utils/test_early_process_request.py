@@ -1,15 +1,19 @@
-import pytest
-from unittest.mock import Mock, patch
 import json
+from unittest.mock import Mock, patch
+
+import pytest
 from opentelemetry.instrumentation.haystack.utils import process_request
 from opentelemetry.semconv_ai import SpanAttributes
 
 # Mocking the context API and Config for testing
+
+
 @pytest.fixture(autouse=True)
 def mock_context_api(monkeypatch):
     mock_context = Mock()
     monkeypatch.setattr("opentelemetry.instrumentation.haystack.utils.context_api", mock_context)
     return mock_context
+
 
 @pytest.fixture(autouse=True)
 def mock_config(monkeypatch):
@@ -17,13 +21,14 @@ def mock_config(monkeypatch):
     monkeypatch.setattr("opentelemetry.instrumentation.haystack.utils.Config", mock_config)
     return mock_config
 
+
 @pytest.fixture
 def mock_span():
     return Mock()
 
+
 @pytest.mark.describe("process_request function")
 class TestProcessRequest:
-
 
     @pytest.mark.happy_path
     def test_process_request_with_empty_args_and_kwargs(self, mock_span):

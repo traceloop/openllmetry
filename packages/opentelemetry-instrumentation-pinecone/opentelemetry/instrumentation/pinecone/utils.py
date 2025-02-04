@@ -1,6 +1,7 @@
 import logging
 import os
 import traceback
+
 from opentelemetry.instrumentation.pinecone.config import Config
 
 

@@ -1,7 +1,9 @@
 import os
-import pytest
 from unittest.mock import patch
+
+import pytest
 from opentelemetry.instrumentation.anthropic.utils import should_send_prompts
+
 
 @pytest.mark.describe("Tests for should_send_prompts function")
 class TestShouldSendPrompts:
@@ -23,7 +25,6 @@ class TestShouldSendPrompts:
         """
         with patch.dict(os.environ, {"TRACELOOP_TRACE_CONTENT": "TRUE"}):
             assert should_send_prompts() is True
-
 
     @pytest.mark.happy_path
     def test_should_send_prompts_env_var_not_set(self):

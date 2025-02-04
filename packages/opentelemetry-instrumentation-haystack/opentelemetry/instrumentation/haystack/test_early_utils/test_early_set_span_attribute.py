@@ -1,12 +1,13 @@
-import pytest
 from unittest.mock import Mock
 
+import pytest
 # Assuming the set_span_attribute function is imported from the correct module
 from opentelemetry.instrumentation.haystack.utils import set_span_attribute
 
+
 @pytest.mark.describe("set_span_attribute")
 class TestSetSpanAttribute:
-    
+
     @pytest.mark.happy_path
     def test_set_span_attribute_with_valid_value(self):
         """
@@ -15,9 +16,9 @@ class TestSetSpanAttribute:
         span = Mock()
         name = "test.attribute"
         value = "test_value"
-        
+
         set_span_attribute(span, name, value)
-        
+
         span.set_attribute.assert_called_once_with(name, value)
 
     @pytest.mark.happy_path
@@ -28,9 +29,9 @@ class TestSetSpanAttribute:
         span = Mock()
         name = "test.attribute"
         value = ""
-        
+
         set_span_attribute(span, name, value)
-        
+
         span.set_attribute.assert_not_called()
 
     @pytest.mark.happy_path
@@ -41,9 +42,9 @@ class TestSetSpanAttribute:
         span = Mock()
         name = "test.attribute"
         value = None
-        
+
         set_span_attribute(span, name, value)
-        
+
         span.set_attribute.assert_not_called()
 
     @pytest.mark.edge_case
@@ -54,9 +55,9 @@ class TestSetSpanAttribute:
         span = Mock()
         name = "test.attribute"
         value = 123
-        
+
         set_span_attribute(span, name, value)
-        
+
         span.set_attribute.assert_called_once_with(name, value)
 
     @pytest.mark.edge_case
@@ -67,9 +68,9 @@ class TestSetSpanAttribute:
         span = Mock()
         name = "test.attribute"
         value = True
-        
+
         set_span_attribute(span, name, value)
-        
+
         span.set_attribute.assert_called_once_with(name, value)
 
     @pytest.mark.edge_case
@@ -80,9 +81,9 @@ class TestSetSpanAttribute:
         span = Mock()
         name = "test.attribute"
         value = "!@#$%^&*()_+"
-        
+
         set_span_attribute(span, name, value)
-        
+
         span.set_attribute.assert_called_once_with(name, value)
 
     @pytest.mark.edge_case
@@ -93,9 +94,9 @@ class TestSetSpanAttribute:
         span = Mock()
         name = "test.attribute"
         value = "a" * 10000  # Large string
-        
+
         set_span_attribute(span, name, value)
-        
+
         span.set_attribute.assert_called_once_with(name, value)
 
 # To run the tests, use the command: pytest -v

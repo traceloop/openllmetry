@@ -1,20 +1,26 @@
-import pytest
 from unittest.mock import MagicMock, patch
-from opentelemetry.instrumentation.groq.utils import shared_metrics_attributes
+
+import pytest
 from opentelemetry.instrumentation.groq.config import Config
+from opentelemetry.instrumentation.groq.utils import shared_metrics_attributes
 from opentelemetry.semconv_ai import SpanAttributes
 
 # Mocking the Config class to control the behavior of get_common_metrics_attributes
+
+
 @pytest.fixture
 def mock_config():
     with patch('opentelemetry.instrumentation.groq.config.Config.get_common_metrics_attributes') as mock:
         yield mock
 
 # Mocking the model_as_dict function
+
+
 @pytest.fixture
 def mock_model_as_dict():
     with patch('opentelemetry.instrumentation.groq.utils.model_as_dict') as mock:
         yield mock
+
 
 @pytest.mark.describe("shared_metrics_attributes")
 class TestSharedMetricsAttributes:

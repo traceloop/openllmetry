@@ -1,9 +1,12 @@
 import os
-import pytest
 from unittest import mock
+
+import pytest
 from opentelemetry.instrumentation.groq.utils import should_send_prompts
 
 # Describe block for should_send_prompts tests
+
+
 @pytest.mark.describe("Tests for should_send_prompts function")
 class TestShouldSendPrompts:
 
@@ -40,7 +43,6 @@ class TestShouldSendPrompts:
         with mock.patch.dict(os.environ, {"TRACELOOP_TRACE_CONTENT": "false"}):
             with mock.patch('opentelemetry.context.get_value', return_value=True):
                 assert should_send_prompts() is True
-
 
 
 # Run the tests

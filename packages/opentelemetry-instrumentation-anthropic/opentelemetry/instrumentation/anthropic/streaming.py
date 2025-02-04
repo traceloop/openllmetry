@@ -3,15 +3,11 @@ import time
 
 from opentelemetry.instrumentation.anthropic.config import Config
 from opentelemetry.instrumentation.anthropic.utils import (
-    dont_throw,
-    error_metrics_attributes,
-    count_prompt_tokens_from_request,
-    set_span_attribute,
-    shared_metrics_attributes,
-    should_send_prompts,
-)
+    count_prompt_tokens_from_request, dont_throw, error_metrics_attributes,
+    set_span_attribute, shared_metrics_attributes, should_send_prompts)
 from opentelemetry.metrics import Counter, Histogram
-from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import GEN_AI_RESPONSE_ID
+from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import \
+    GEN_AI_RESPONSE_ID
 from opentelemetry.semconv_ai import SpanAttributes
 from opentelemetry.trace.status import Status, StatusCode
 

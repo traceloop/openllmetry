@@ -1,8 +1,9 @@
-import pytest
 from unittest.mock import Mock
 
+import pytest
 # Assuming the set_span_attribute function is imported from the correct module
 from opentelemetry.instrumentation.groq.utils import set_span_attribute
+
 
 @pytest.mark.describe("Tests for set_span_attribute function")
 class TestSetSpanAttribute:

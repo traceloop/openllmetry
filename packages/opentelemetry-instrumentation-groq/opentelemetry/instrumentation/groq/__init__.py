@@ -10,24 +10,18 @@ from groq._streaming import AsyncStream, Stream
 from opentelemetry import context as context_api
 from opentelemetry.instrumentation.groq.config import Config
 from opentelemetry.instrumentation.groq.utils import (
-    dont_throw,
-    error_metrics_attributes,
-    model_as_dict,
-    set_span_attribute,
-    shared_metrics_attributes,
-    should_send_prompts,
-)
+    dont_throw, error_metrics_attributes, model_as_dict, set_span_attribute,
+    shared_metrics_attributes, should_send_prompts)
 from opentelemetry.instrumentation.groq.version import __version__
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
-from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY, unwrap
+from opentelemetry.instrumentation.utils import (_SUPPRESS_INSTRUMENTATION_KEY,
+                                                 unwrap)
 from opentelemetry.metrics import Counter, Histogram, Meter, get_meter
-from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import GEN_AI_RESPONSE_ID
+from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import \
+    GEN_AI_RESPONSE_ID
 from opentelemetry.semconv_ai import (
-    SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
-    LLMRequestTypeValues,
-    SpanAttributes,
-    Meters,
-)
+    SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY, LLMRequestTypeValues, Meters,
+    SpanAttributes)
 from opentelemetry.trace import SpanKind, Tracer, get_tracer
 from opentelemetry.trace.status import Status, StatusCode
 from wrapt import wrap_function_wrapper

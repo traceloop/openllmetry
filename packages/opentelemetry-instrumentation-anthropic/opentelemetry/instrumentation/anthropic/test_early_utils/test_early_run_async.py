@@ -1,10 +1,10 @@
-import pytest
 import asyncio
 import unittest
 
-
+import pytest
 # Import the run_async function from the specified path
 from opentelemetry.instrumentation.anthropic.utils import run_async
+
 
 @pytest.mark.describe("run_async function tests")
 class TestRunAsync:
@@ -34,7 +34,6 @@ class TestRunAsync:
         with unittest.mock.patch('asyncio.get_running_loop', side_effect=RuntimeError):
             result = run_async(sample_coroutine())
             assert result is None  # Since the function doesn't return anything
-
 
     @pytest.mark.edge_case
     def test_run_async_with_exception_in_coroutine(self):

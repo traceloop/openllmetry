@@ -1,8 +1,10 @@
-import pytest
 from unittest.mock import Mock
 
+import pytest
 # Assuming the function is imported from the correct module
-from opentelemetry.instrumentation.anthropic.utils import count_prompt_tokens_from_request
+from opentelemetry.instrumentation.anthropic.utils import \
+    count_prompt_tokens_from_request
+
 
 @pytest.mark.describe("Tests for count_prompt_tokens_from_request")
 class TestCountPromptTokensFromRequest:
@@ -15,9 +17,9 @@ class TestCountPromptTokensFromRequest:
         anthropic = Mock()
         anthropic.count_tokens = Mock(return_value=5)
         request = {"prompt": "Hello, world!"}
-        
+
         result = count_prompt_tokens_from_request(anthropic, request)
-        
+
         assert result == 5
         anthropic.count_tokens.assert_called_once_with("Hello, world!")
 
@@ -34,9 +36,9 @@ class TestCountPromptTokensFromRequest:
                 {"content": "How are you?"}
             ]
         }
-        
+
         result = count_prompt_tokens_from_request(anthropic, request)
-        
+
         assert result == 7
         anthropic.count_tokens.assert_any_call("Hi")
         anthropic.count_tokens.assert_any_call("How are you?")
@@ -53,9 +55,9 @@ class TestCountPromptTokensFromRequest:
                 {"content": [{"type": "text", "text": "Hello"}, {"type": "text", "text": "World"}]}
             ]
         }
-        
+
         result = count_prompt_tokens_from_request(anthropic, request)
-        
+
         assert result == 5
         anthropic.count_tokens.assert_any_call("Hello")
         anthropic.count_tokens.assert_any_call("World")
@@ -67,9 +69,9 @@ class TestCountPromptTokensFromRequest:
         """
         anthropic = Mock()
         request = {}
-        
+
         result = count_prompt_tokens_from_request(anthropic, request)
-        
+
         assert result == 0
         anthropic.count_tokens.assert_not_called()
 
@@ -81,9 +83,9 @@ class TestCountPromptTokensFromRequest:
         anthropic = Mock()
         del anthropic.count_tokens
         request = {"prompt": "Hello, world!"}
-        
+
         result = count_prompt_tokens_from_request(anthropic, request)
-        
+
         assert result == 0
 
     @pytest.mark.edge_case
@@ -99,9 +101,9 @@ class TestCountPromptTokensFromRequest:
                 {"content": {"type": "image", "url": "http://example.com/image.png"}}
             ]
         }
-        
+
         result = count_prompt_tokens_from_request(anthropic, request)
-        
+
         assert result == 0
         anthropic.count_tokens.assert_not_called()
 
@@ -112,13 +114,10 @@ class TestCountPromptTokensFromRequest:
         """
         anthropic = Mock()
         anthropic.count_tokens = Mock(return_value=3)
-        request = {
-            "messages": [
-                {"content": [{"type": "text", "text": "Hello"}, {"type": "image", "url": "http://example.com/image.png"}]}
-            ]
-        }
-        
+        request = {"messages": [{"content": [{"type": "text", "text": "Hello"},
+                                             {"type": "image", "url": "http://example.com/image.png"}]}]}
+
         result = count_prompt_tokens_from_request(anthropic, request)
-        
+
         assert result == 3
         anthropic.count_tokens.assert_called_once_with("Hello")

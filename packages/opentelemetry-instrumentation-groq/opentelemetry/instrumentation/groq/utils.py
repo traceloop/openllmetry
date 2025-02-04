@@ -1,7 +1,8 @@
-from importlib.metadata import version
-import os
 import logging
+import os
 import traceback
+from importlib.metadata import version
+
 from opentelemetry import context as context_api
 from opentelemetry.instrumentation.groq.config import Config
 from opentelemetry.semconv_ai import SpanAttributes

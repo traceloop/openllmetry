@@ -1,8 +1,9 @@
 import os
+
 import pytest
 from haystack import Pipeline
-from haystack.components.generators.chat import OpenAIChatGenerator
 from haystack.components.builders import DynamicChatPromptBuilder
+from haystack.components.generators.chat import OpenAIChatGenerator
 from haystack.dataclasses import ChatMessage
 from haystack.utils import Secret
 from opentelemetry.semconv_ai import SpanAttributes

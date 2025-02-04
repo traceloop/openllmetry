@@ -1,13 +1,18 @@
-import pytest
 from unittest.mock import MagicMock
-from opentelemetry.instrumentation.anthropic.utils import shared_metrics_attributes
+
+import pytest
 from opentelemetry.instrumentation.anthropic.config import Config
+from opentelemetry.instrumentation.anthropic.utils import \
+    shared_metrics_attributes
 from opentelemetry.semconv_ai import SpanAttributes
 
 # Mock configuration for common metrics attributes
+
+
 @pytest.fixture(autouse=True)
 def mock_config():
     Config.get_common_metrics_attributes = MagicMock(return_value={"common_attr": "value"})
+
 
 @pytest.mark.describe("shared_metrics_attributes")
 class TestSharedMetricsAttributes:

@@ -1,23 +1,31 @@
-import pytest
 import logging
 from unittest.mock import Mock, patch
+
+import pytest
 from opentelemetry.instrumentation.anthropic.utils import dont_throw
 
 # Mock Config to avoid side effects during testing
+
+
 class MockConfig:
     exception_logger = Mock()
 
 # Sample function to be wrapped
+
+
 def sample_function(x, y):
     return x + y
 
 # Sample function to raise an exception
+
+
 def exception_function(x, y):
     raise ValueError("An error occurred")
 
+
 @pytest.mark.describe("sync_wrapper")
 class TestSyncWrapper:
-    
+
     @pytest.mark.happy_path
     def test_sync_wrapper_happy_path(self):
         """

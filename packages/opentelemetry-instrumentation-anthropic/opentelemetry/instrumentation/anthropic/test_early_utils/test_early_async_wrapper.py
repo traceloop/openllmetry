@@ -1,17 +1,22 @@
-import pytest
 import asyncio
 import logging
 from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 from opentelemetry.instrumentation.anthropic.utils import dont_throw
 
 # Mock Config to avoid side effects during testing
+
+
 class MockConfig:
     exception_logger = None
+
 
 @pytest.fixture(autouse=True)
 def mock_config():
     with patch('opentelemetry.instrumentation.anthropic.utils.Config', new=MockConfig):
         yield
+
 
 @pytest.mark.describe("Tests for async_wrapper")
 class TestAsyncWrapper:
@@ -51,7 +56,6 @@ class TestAsyncWrapper:
             result = await wrapped_func()
             assert result is None
             assert "OpenLLMetry failed to trace in failing_coroutine" in caplog.text
-
 
     @pytest.mark.edge_case
     @pytest.mark.asyncio

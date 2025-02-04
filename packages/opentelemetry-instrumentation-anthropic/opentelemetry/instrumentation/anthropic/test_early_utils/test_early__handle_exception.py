@@ -1,19 +1,26 @@
-import pytest
 import logging
 from unittest.mock import Mock, patch
+
+import pytest
 from opentelemetry.instrumentation.anthropic.utils import dont_throw
 
 # Mock Config to control the behavior of exception_logger
+
+
 class MockConfig:
     exception_logger = None
 
 # Patch the Config used in the module with our MockConfig
+
+
 @pytest.fixture(autouse=True)
 def patch_config():
     with patch('opentelemetry.instrumentation.anthropic.utils.Config', MockConfig):
         yield
 
 # Describe block for _handle_exception related tests
+
+
 @pytest.mark.describe("_handle_exception")
 class TestHandleException:
 

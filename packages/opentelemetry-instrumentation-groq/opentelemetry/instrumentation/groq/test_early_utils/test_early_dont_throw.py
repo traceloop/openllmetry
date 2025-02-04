@@ -1,6 +1,7 @@
-import pytest
 import logging
 from unittest.mock import Mock, patch
+
+import pytest
 from opentelemetry.instrumentation.groq.utils import dont_throw
 
 # Configure logging to capture log messages for assertions
@@ -8,6 +9,8 @@ logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 # Describe block for dont_throw tests
+
+
 @pytest.mark.describe("dont_throw")
 class TestDontThrow:
 
@@ -42,7 +45,7 @@ class TestDontThrow:
         Test that a custom exception logger is called when an exception occurs.
         """
         custom_logger = Mock()
-        
+
         @dont_throw
         def sample_function(x, y):
             return x / y
@@ -74,6 +77,7 @@ class TestDontThrow:
 
         result = sample_function(5, y=15)
         assert result == 20, "The function should correctly handle keyword arguments."
+
 
 # Run the tests
 if __name__ == "__main__":

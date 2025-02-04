@@ -1,16 +1,13 @@
 import logging
 
 from opentelemetry import context as context_api
+from opentelemetry.instrumentation.haystack.utils import (dont_throw,
+                                                          set_span_attribute,
+                                                          with_tracer_wrapper)
+from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
+from opentelemetry.semconv_ai import LLMRequestTypeValues, SpanAttributes
 from opentelemetry.trace import SpanKind
 from opentelemetry.trace.status import Status, StatusCode
-
-from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
-from opentelemetry.semconv_ai import SpanAttributes, LLMRequestTypeValues
-from opentelemetry.instrumentation.haystack.utils import (
-    dont_throw,
-    with_tracer_wrapper,
-    set_span_attribute,
-)
 
 logger = logging.getLogger(__name__)
 

@@ -1,10 +1,12 @@
-import pytest
 from unittest.mock import Mock
 
+import pytest
 # Import the function to be tested
 from opentelemetry.instrumentation.anthropic.utils import set_span_attribute
 
 # Describe block for set_span_attribute tests
+
+
 @pytest.mark.describe("set_span_attribute function")
 class TestSetSpanAttribute:
 
@@ -73,6 +75,7 @@ class TestSetSpanAttribute:
         boolean_value = True
         set_span_attribute(span, "test.attribute", boolean_value)
         span.set_attribute.assert_called_once_with("test.attribute", boolean_value)
+
 
 # Run the tests
 if __name__ == "__main__":

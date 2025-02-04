@@ -1,16 +1,21 @@
-import pytest
-from unittest.mock import Mock, patch
 import json
+from unittest.mock import Mock, patch
+
+import pytest
 from opentelemetry.instrumentation.haystack.utils import process_response
 from opentelemetry.semconv_ai import SpanAttributes
 
 # Mocking the should_send_prompts function to control its behavior during tests
+
+
 @pytest.fixture
 def mock_should_send_prompts():
     with patch('opentelemetry.instrumentation.haystack.utils.should_send_prompts') as mock:
         yield mock
 
 # Describe block for process_response tests
+
+
 @pytest.mark.describe("process_response function")
 class TestProcessResponse:
 
@@ -92,6 +97,7 @@ class TestProcessResponse:
             SpanAttributes.TRACELOOP_ENTITY_OUTPUT,
             json.dumps(response)
         )
+
 
 # Run the tests
 if __name__ == "__main__":

@@ -4,39 +4,30 @@ import json
 import logging
 import os
 import time
-from typing import Callable, Collection, Dict, Any, Optional
-from typing_extensions import Coroutine
+from typing import Any, Callable, Collection, Dict, Optional
 
 from anthropic._streaming import AsyncStream, Stream
 from opentelemetry import context as context_api
 from opentelemetry.instrumentation.anthropic.config import Config
 from opentelemetry.instrumentation.anthropic.streaming import (
-    abuild_from_streaming_response,
-    build_from_streaming_response,
-)
+    abuild_from_streaming_response, build_from_streaming_response)
 from opentelemetry.instrumentation.anthropic.utils import (
-    acount_prompt_tokens_from_request,
-    dont_throw,
-    error_metrics_attributes,
-    count_prompt_tokens_from_request,
-    run_async,
-    set_span_attribute,
-    shared_metrics_attributes,
-    should_send_prompts,
-)
+    acount_prompt_tokens_from_request, count_prompt_tokens_from_request,
+    dont_throw, error_metrics_attributes, run_async, set_span_attribute,
+    shared_metrics_attributes, should_send_prompts)
 from opentelemetry.instrumentation.anthropic.version import __version__
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
-from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY, unwrap
+from opentelemetry.instrumentation.utils import (_SUPPRESS_INSTRUMENTATION_KEY,
+                                                 unwrap)
 from opentelemetry.metrics import Counter, Histogram, Meter, get_meter
-from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import GEN_AI_RESPONSE_ID
+from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import \
+    GEN_AI_RESPONSE_ID
 from opentelemetry.semconv_ai import (
-    SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
-    LLMRequestTypeValues,
-    SpanAttributes,
-    Meters,
-)
+    SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY, LLMRequestTypeValues, Meters,
+    SpanAttributes)
 from opentelemetry.trace import SpanKind, Tracer, get_tracer
 from opentelemetry.trace.status import Status, StatusCode
+from typing_extensions import Coroutine
 from wrapt import wrap_function_wrapper
 
 logger = logging.getLogger(__name__)

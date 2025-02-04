@@ -1,6 +1,8 @@
 import os
+
 import pytest
 from opentelemetry.instrumentation.pinecone.utils import is_metrics_enabled
+
 
 @pytest.mark.describe("is_metrics_enabled function")
 class TestIsMetricsEnabled:
@@ -71,6 +73,8 @@ class TestIsMetricsEnabled:
         assert is_metrics_enabled() is False
 
 # Clean up environment variable after tests
+
+
 @pytest.fixture(autouse=True)
 def cleanup_env():
     yield
