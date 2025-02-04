@@ -23,6 +23,8 @@ OPENAI_LLM_USAGE_TOKEN_TYPES = ["prompt_tokens", "completion_tokens"]
 PROMPT_FILTER_KEY = "prompt_filter_results"
 PROMPT_ERROR = "prompt_error"
 
+_PYDANTIC_VERSION = version("pydantic")
+
 # tiktoken encodings map for different model, key is model_name, value is tiktoken encoding
 tiktoken_encodings = {}
 
@@ -236,7 +238,7 @@ def is_streaming_response(response):
 def model_as_dict(model):
     if isinstance(model, dict):
         return model
-    if version("pydantic") < "2.0.0":
+    if _PYDANTIC_VERSION < "2.0.0":
         return model.dict()
     if hasattr(model, "model_dump"):
         return model.model_dump()
