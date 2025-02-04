@@ -11,7 +11,9 @@ from opentelemetry.trace.propagation import set_span_in_context
 from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
 
 from opentelemetry.instrumentation.openai.shared.config import Config
-from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import GEN_AI_RESPONSE_ID
+from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
+    GEN_AI_RESPONSE_ID,
+)
 from opentelemetry.semconv_ai import SpanAttributes
 from opentelemetry.instrumentation.openai.utils import (
     dont_throw,
@@ -38,8 +40,13 @@ def should_send_prompts():
 
 
 def _set_span_attribute(span, name, value):
-    if value is not None and value != "" and value != openai.NOT_GIVEN:
-        span.set_attribute(name, value)
+    if value is None or value == "":
+        return
+
+    if hasattr(openai, "NOT_GIVEN") and value == openai.NOT_GIVEN:
+        return
+
+    span.set_attribute(name, value)
 
 
 def _set_client_attributes(span, instance):
