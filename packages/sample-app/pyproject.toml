@@ -1,9 +1,9 @@
 [tool.coverage.run]
 branch = true
-source = [ "sample_app" ]
+source = ["sample_app"]
 
 [tool.coverage.report]
-exclude_lines = [ "if TYPE_CHECKING:" ]
+exclude_lines = ["if TYPE_CHECKING:"]
 show_missing = true
 
 [tool.poetry]
@@ -13,7 +13,7 @@ description = "Sample Application using Traceloop SDK"
 authors = [
   "Gal Kleinman <gal@traceloop.com>",
   "Nir Gazit <nir@traceloop.com>",
-  "Tomer Friedman <tomer@traceloop.com>"
+  "Tomer Friedman <tomer@traceloop.com>",
 ]
 license = "Apache-2.0"
 readme = "README.md"
@@ -28,8 +28,6 @@ requests = "^2.32.3"
 # pinecone-datasets = "^0.7.0"
 pinecone-client = "^3.2.2"
 llama-index = "^0.12.6"
-# workaround for: https://github.com/python-poetry/poetry-plugin-export/issues/183
-urllib3 = "^2.2.3"
 duckduckgo-search = "^3.9.11"
 torch = "^2.5.0"
 chromadb = "^0.5.15"
@@ -44,16 +42,18 @@ python-dotenv = "^1.0.1"
 langchain = "^0.3.4"
 langchain-community = "^0.3.3"
 haystack-ai = "~2.6.1"
-datasets="~2.21.0"
+datasets = "~2.21.0"
 llama-index-embeddings-huggingface = "^0.4.0"
 litellm = "^1.51.0"
 text-generation = "^0.7.0"
 llama-index-vector-stores-chroma = "^0.4.1"
-langchain-openai ="^0.2.3"
+langchain-openai = "^0.2.3"
 google-generativeai = "^0.8.3"
 langgraph = "^0.2.39"
 groq = "^0.11.0"
 llama-index-llms-openai = "^0.3.12"
+ibm-watson-machine-learning = "^1.0.367"
+
 
 [tool.poetry.dependencies.opentelemetry-instrumentation-openai]
 path = "../opentelemetry-instrumentation-openai"
@@ -100,5 +100,5 @@ pytest-cov = "4.1.0"
 pytest-html = "4.1.1"
 
 [build-system]
-requires = [ "poetry-core" ]
+requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
