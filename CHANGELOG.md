@@ -1,3 +1,16 @@
+## v0.38.0 (2025-02-04)
+
+### Feat
+
+- **crewai**: Implemented histogram for crewai instrumentation (#2576)
+
+### Fix
+
+- **mistral**: add response id attribute (#2549)
+- **openai**: add response id attribute (#2550)
+- **together**: add response id attribute (#2551)
+- **langchain**: add response id (anthropic only) (#2548)
+
 ## v0.37.1 (2025-01-25)
 
 ### Fix
