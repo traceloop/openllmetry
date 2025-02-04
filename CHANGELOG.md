@@ -1,3 +1,10 @@
+## v0.38.2 (2025-02-04)
+
+### Fix
+
+- dependency issue for python 3.13 (#2603)
+- **openai**: compatibility issue with openai attribute not available (#2602)
+
 ## v0.38.1 (2025-02-04)
 
 ### Fix
