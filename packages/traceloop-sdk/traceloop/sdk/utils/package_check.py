@@ -3,12 +3,14 @@ from importlib.metadata import distributions
 
 def _get_package_name(dist):
     # Try both 'Name' and 'name' keys to handle different metadata formats
-    for key in ('Name', 'name'):
-        try:
-            return dist.metadata[key].lower()
-        except KeyError:
-            continue
-    # If neither key exists, use the distribution name directly
+    if hasattr(dist, 'metadata') and dist.metadata is not None:
+        for key in ('Name', 'name'):
+            try:
+                return dist.metadata[key].lower()
+            except (KeyError, AttributeError):
+                continue
+    
+    # If metadata is missing or neither key exists, use the distribution name directly
     return dist.name.lower()
 
 
