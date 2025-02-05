@@ -1,3 +1,12 @@
+## v0.38.3 (2025-02-05)
+
+### Fix
+
+- **langchain**: sanitize metadata (#2608)
+- **sdk**: improve package name detection for metadata (#2607)
+- **openai**: support context propagation for OpenAI v0 and v1 (#2606)
+- **openai**: report exceptions on spans (#2604)
+
 ## v0.38.2 (2025-02-04)
 
 ### Fix
