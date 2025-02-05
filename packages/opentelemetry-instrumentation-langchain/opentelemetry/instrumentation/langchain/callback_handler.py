@@ -10,7 +10,9 @@ from langchain_core.callbacks import (
 from langchain_core.messages import BaseMessage
 from langchain_core.outputs import LLMResult
 from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
-from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import GEN_AI_RESPONSE_ID
+from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
+    GEN_AI_RESPONSE_ID,
+)
 from opentelemetry.semconv_ai import (
     SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
     LLMRequestTypeValues,
@@ -232,12 +234,22 @@ def _set_chat_response(span: Span, response: LLMResult) -> None:
                     )
 
                 if generation.message.additional_kwargs.get("tool_calls"):
-                    for idx, tool_call in enumerate(generation.message.additional_kwargs.get("tool_calls")):
+                    for idx, tool_call in enumerate(
+                        generation.message.additional_kwargs.get("tool_calls")
+                    ):
                         tool_call_prefix = f"{prefix}.tool_calls.{idx}"
 
-                        span.set_attribute(f"{tool_call_prefix}.id", tool_call.get("id"))
-                        span.set_attribute(f"{tool_call_prefix}.name", tool_call.get("function").get("name"))
-                        span.set_attribute(f"{tool_call_prefix}.arguments", tool_call.get("function").get("arguments"))
+                        span.set_attribute(
+                            f"{tool_call_prefix}.id", tool_call.get("id")
+                        )
+                        span.set_attribute(
+                            f"{tool_call_prefix}.name",
+                            tool_call.get("function").get("name"),
+                        )
+                        span.set_attribute(
+                            f"{tool_call_prefix}.arguments",
+                            tool_call.get("function").get("arguments"),
+                        )
             i += 1
 
     if input_tokens > 0 or output_tokens > 0 or total_tokens > 0:
@@ -253,6 +265,18 @@ def _set_chat_response(span: Span, response: LLMResult) -> None:
             SpanAttributes.LLM_USAGE_TOTAL_TOKENS,
             total_tokens,
         )
+
+
+def _sanitize_metadata_value(value: Any) -> Any:
+    """Convert metadata values to OpenTelemetry-compatible types."""
+    if value is None:
+        return None
+    if isinstance(value, (bool, str, bytes, int, float)):
+        return value
+    if isinstance(value, (list, tuple)):
+        return [_sanitize_metadata_value(v) for v in value]
+    # Convert other types to strings
+    return str(value)
 
 
 class TraceloopCallbackHandler(BaseCallbackHandler):
@@ -310,11 +334,16 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             current_association_properties = (
                 context_api.get_value("association_properties") or {}
             )
-            nonnull_metadata = dict([k, v] for k, v in metadata.items() if v is not None)
+            # Sanitize metadata values to ensure they're compatible with OpenTelemetry
+            sanitized_metadata = {
+                k: _sanitize_metadata_value(v)
+                for k, v in metadata.items()
+                if v is not None
+            }
             context_api.attach(
                 context_api.set_value(
                     "association_properties",
-                    {**current_association_properties, **nonnull_metadata},
+                    {**current_association_properties, **sanitized_metadata},
                 )
             )
 
