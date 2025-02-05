@@ -304,7 +304,13 @@ def metric_shared_attributes(
 
 
 def propagate_trace_context(span, kwargs):
-    extra_headers = kwargs.get("extra_headers", {})
-    ctx = set_span_in_context(span)
-    TraceContextTextMapPropagator().inject(extra_headers, context=ctx)
-    kwargs["extra_headers"] = extra_headers
+    if is_openai_v1():
+        extra_headers = kwargs.get("extra_headers", {})
+        ctx = set_span_in_context(span)
+        TraceContextTextMapPropagator().inject(extra_headers, context=ctx)
+        kwargs["extra_headers"] = extra_headers
+    else:
+        headers = kwargs.get("headers", {})
+        ctx = set_span_in_context(span)
+        TraceContextTextMapPropagator().inject(headers, context=ctx)
+        kwargs["headers"] = headers
