@@ -9,7 +9,7 @@ def _get_package_name(dist):
                 return dist.metadata[key].lower()
             except (KeyError, AttributeError):
                 continue
-    
+
     # If metadata is missing or neither key exists, use the distribution name directly
     return dist.name.lower()
 
