@@ -53,7 +53,12 @@ def completion_wrapper(tracer, wrapped, instance, args, kwargs):
     )
 
     _handle_request(span, kwargs, instance)
-    response = wrapped(*args, **kwargs)
+    try:
+        response = wrapped(*args, **kwargs)
+    except Exception as e:
+        span.set_status(Status(StatusCode.ERROR, str(e)))
+        span.end()
+        raise e
 
     if is_streaming_response(response):
         # span will be closed after the generator is done
@@ -79,7 +84,12 @@ async def acompletion_wrapper(tracer, wrapped, instance, args, kwargs):
     )
 
     _handle_request(span, kwargs, instance)
-    response = await wrapped(*args, **kwargs)
+    try:
+        response = await wrapped(*args, **kwargs)
+    except Exception as e:
+        span.set_status(Status(StatusCode.ERROR, str(e)))
+        span.end()
+        raise e
 
     if is_streaming_response(response):
         # span will be closed after the generator is done
