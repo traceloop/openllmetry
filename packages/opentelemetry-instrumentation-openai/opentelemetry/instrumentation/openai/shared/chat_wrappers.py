@@ -98,6 +98,9 @@ def chat_wrapper(
         if exception_counter:
             exception_counter.add(1, attributes=attributes)
 
+        span.set_status(Status(StatusCode.ERROR, str(e)))
+        span.end()
+
         raise e
 
     if is_streaming_response(response):
@@ -189,6 +192,9 @@ async def achat_wrapper(
             duration_histogram.record(duration, attributes=attributes)
         if exception_counter:
             exception_counter.add(1, attributes=attributes)
+
+        span.set_status(Status(StatusCode.ERROR, str(e)))
+        span.end()
 
         raise e
 
