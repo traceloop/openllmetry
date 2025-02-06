@@ -1,3 +1,9 @@
+## v0.38.4 (2025-02-06)
+
+### Fix
+
+- **sdk**: improve package name detection with type hints and null safety (#2618)
+
 ## v0.38.3 (2025-02-05)
 
 ### Fix
