@@ -1,7 +1,7 @@
-from importlib.metadata import distributions
+from importlib.metadata import Distribution, distributions
 
 
-def _get_package_name(dist):
+def _get_package_name(dist: Distribution) -> str | None:
     # Try both 'Name' and 'name' keys to handle different metadata formats
     if hasattr(dist, 'metadata') and dist.metadata is not None:
         for key in ('Name', 'name'):
@@ -10,11 +10,8 @@ def _get_package_name(dist):
             except (KeyError, AttributeError):
                 continue
 
-    # If metadata is missing or neither key exists, use the distribution name directly
-    return dist.name.lower()
 
-
-installed_packages = {_get_package_name(dist) for dist in distributions()}
+installed_packages = {name for dist in distributions() if (name := _get_package_name(dist)) is not None}
 
 
 def is_package_installed(package_name: str) -> bool:
