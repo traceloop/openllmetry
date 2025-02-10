@@ -1,3 +1,9 @@
+## v0.38.5 (2025-02-10)
+
+### Fix
+
+- **sdk**: Fix async decorator input & output json encoder (#2629)
+
 ## v0.38.4 (2025-02-06)
 
 ### Fix
