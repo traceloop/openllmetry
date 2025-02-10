@@ -184,4 +184,3 @@ To @patrickdebois, who [suggested the great name](https://x.com/patrickdebois/st
 <a href="https://github.com/traceloop/openllmetry/graphs/contributors">
   <img alt="contributors" src="https://contrib.rocks/image?repo=traceloop/openllmetry"/>
 </a>
-
