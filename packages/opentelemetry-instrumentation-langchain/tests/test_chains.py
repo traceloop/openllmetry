@@ -76,7 +76,7 @@ def test_sequential_chain(exporter):
     )
     assert all(
         span.attributes[SpanAttributes.TRACELOOP_ENTITY_PATH]
-        in ["synopsis", "LLMChain"]
+        in ["SequentialChain.synopsis", "SequentialChain.LLMChain"]
         for span in llm_spans
     )
 
