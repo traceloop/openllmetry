@@ -74,6 +74,14 @@ def test_sequential_chain(exporter):
         span.attributes[SpanAttributes.TRACELOOP_WORKFLOW_NAME] == "SequentialChain"
         for span in spans
     )
+    assert (
+        workflow_span.attributes[SpanAttributes.TRACELOOP_ENTITY_PATH] == ""
+    )
+    assert all(
+        span.attributes[SpanAttributes.TRACELOOP_ENTITY_PATH]
+        in ["SequentialChain", "SequentialChain"]
+        for span in task_spans
+    )
     assert all(
         span.attributes[SpanAttributes.TRACELOOP_ENTITY_PATH]
         in ["SequentialChain.synopsis", "SequentialChain.LLMChain"]
