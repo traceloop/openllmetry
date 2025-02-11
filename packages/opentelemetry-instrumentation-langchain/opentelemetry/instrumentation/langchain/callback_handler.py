@@ -441,7 +441,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             return
 
         workflow_name = ""
-        entity_path = ""
+        entity_path = self.get_entity_path(parent_run_id)
 
         name = self._get_name_from_callback(serialized, **kwargs)
         kind = (
@@ -454,7 +454,6 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             workflow_name = name
         else:
             workflow_name = self.get_workflow_name(parent_run_id)
-            entity_path = self.get_entity_path(parent_run_id)
 
         span = self._create_task_span(
             run_id,
@@ -734,11 +733,6 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         parent_span = self.get_parent_span(parent_run_id)
 
         if parent_span is None:
-            return ""
-        elif (
-            parent_span.entity_path == ""
-            and parent_span.entity_name == parent_span.workflow_name
-        ):
             return ""
         elif parent_span.entity_path == "":
             return f"{parent_span.entity_name}"
