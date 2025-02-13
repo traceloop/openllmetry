@@ -47,6 +47,8 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
             _set_delete_attributes(span, kwargs)
         elif to_wrap.get("method") == "search":
             _set_search_attributes(span, kwargs)
+        elif to_wrap.get("method") == "similarity_search":
+            _set_search_attributes(span, kwargs)
         elif to_wrap.get("method") == "get":
             _set_get_attributes(span, kwargs)
         elif to_wrap.get("method") == "query":
@@ -110,6 +112,11 @@ def _set_insert_attributes(span, kwargs):
         AISpanAttributes.MILVUS_INSERT_PARTITION_NAME,
         _encode_partition_name(kwargs.get("partition_name")),
     )
+    _set_span_attribute(
+        span,
+        AISpanAttributes.MILVUS_INSERT_EMBEDDINGS_COUNT,
+        count_or_none(kwargs.get("data")),
+    )
 
 
 @dont_throw
@@ -170,6 +177,11 @@ def _set_search_attributes(span, kwargs):
     _set_span_attribute(
         span, AISpanAttributes.MILVUS_SEARCH_ANNS_FIELD, kwargs.get("anns_field")
     )
+    _set_span_attribute(
+        span,
+        AISpanAttributes.MILVUS_SEARCH_EMBEDDINGS_COUNT,
+        count_or_none(kwargs.get("data")),
+    )
 
 
 @dont_throw
@@ -228,6 +240,11 @@ def _set_upsert_attributes(span, kwargs):
         span,
         AISpanAttributes.MILVUS_UPSERT_PARTITION_NAME,
         _encode_partition_name(kwargs.get("partition_name")),
+    )
+    _set_span_attribute(
+        span,
+        AISpanAttributes.MILVUS_UPSERT_EMBEDDINGS_COUNT,
+        count_or_none(kwargs.get("data")),
     )
 
 

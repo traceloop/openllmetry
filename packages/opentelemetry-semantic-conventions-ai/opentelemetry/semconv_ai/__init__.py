@@ -189,6 +189,9 @@ class SpanAttributes:
     MILVUS_UPSERT_DATA_COUNT = "db.milvus.upsert.data_count"
     MILVUS_UPSERT_PARTITION_NAME = "db.milvus.upsert.partition_name"
     MILVUS_UPSERT_TIMEOUT_COUNT = "db.milvus.upsert.timeout_count"
+    MILVUS_INSERT_EMBEDDINGS_COUNT = "db.milvus.insert.embeddings_count"
+    MILVUS_SEARCH_EMBEDDINGS_COUNT = "db.milvus.search.embeddings_count"
+    MILVUS_UPSERT_EMBEDDINGS_COUNT = "db.milvus.upsert.embeddings_count"
 
     # Qdrant
     QDRANT_SEARCH_COLLECTION_NAME = "qdrant.search.collection_name"

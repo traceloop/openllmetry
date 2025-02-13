@@ -2,6 +2,7 @@
 
 import logging
 import pymilvus
+import langchain_milvus
 
 from typing import Collection
 
@@ -55,6 +56,18 @@ WRAPPED_METHODS = [
         "object": "MilvusClient",
         "method": "query",
         "span_name": "milvus.query"
+    },
+    {
+        "package": langchain_milvus,
+        "object": "Milvus",
+        "method": "delete",
+        "span_name": "milvus.delete"
+    },
+    {
+        "package": langchain_milvus,
+        "object": "Milvus",
+        "method": "similarity_search",
+        "span_name": "milvus.similarity_search"
     },
 ]
 
