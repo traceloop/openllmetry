@@ -81,7 +81,6 @@ def _handle_generator(span, res):
 
 
 async def _ahandle_generator(span, ctx_token, res):
-    # context_api.attach(trace.set_span_in_context(span))
     async for part in res:
         yield part
 
