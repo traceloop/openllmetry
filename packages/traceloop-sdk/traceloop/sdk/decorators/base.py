@@ -215,8 +215,10 @@ def entity_method(
                     return fn(*args, **kwargs)
 
                 span, ctx, ctx_token = _setup_span(entity_name, tlp_span_kind, version)
+
                 _handle_span_input(span, args, kwargs, cls=JSONEncoder)
                 res = fn(*args, **kwargs)
+
                 # span will be ended in the generator
                 if isinstance(res, types.GeneratorType):
                     return _handle_generator(span, res)
