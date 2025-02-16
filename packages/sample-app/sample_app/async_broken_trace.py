@@ -6,16 +6,18 @@ from traceloop.sdk.decorators import workflow, task
 from openai import AsyncOpenAI
 import os
 
+from traceloop.sdk.instruments import Instruments
+
 
 # Initialize Traceloop
-Traceloop.init(app_name="server1", disable_batch=True)
+Traceloop.init(app_name="server1", disable_batch=False, block_instruments={Instruments.WATSONX})
 
 app = FastAPI()
 client = httpx.AsyncClient()
 openai_client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 
-# @task(name="generate_response")
+@task(name="generate_response")
 async def generate_response(prompt: str):
     stream = await openai_client.chat.completions.create(
         model="gpt-3.5-turbo",
@@ -29,8 +31,8 @@ async def generate_response(prompt: str):
 
 
 @app.get("/stream")
-@workflow(name="stream_data")
-async def stream_data():
+@workflow(name="test_openai_stream")
+async def test_openai_stream():
     # Get references from server2
     # response = await client.get("http://localhost:8001/data")
     # references = response.json()
@@ -50,7 +52,8 @@ async def stream_data():
         prompt += f"- {ref}\n"
     prompt += "\nExplain how to create a basic Python server using FastAPI and Uvicorn."
 
-    return StreamingResponse(generate_response(prompt), media_type="text/plain")
+    response = generate_response(prompt)
+    return StreamingResponse(response, media_type="text/plain")
 
 
 @app.on_event("shutdown")
