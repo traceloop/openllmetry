@@ -81,6 +81,7 @@ def _handle_generator(span, res):
 
 
 async def _ahandle_generator(span, ctx_token, res):
+    # context_api.attach(trace.set_span_in_context(span))
     async for part in res:
         yield part
 
@@ -187,11 +188,8 @@ def entity_method(
                     span, ctx, ctx_token = _setup_span(entity_name, tlp_span_kind, version)
                     _handle_span_input(span, args, kwargs, cls=JSONEncoder)
 
-                    try:
-                        async for item in fn(*args, **kwargs):
-                            yield item
-                    finally:
-                        _cleanup_span(span, ctx_token)
+                    async for item in _ahandle_generator(span, ctx_token, fn(*args, **kwargs)):
+                        yield item
                 return async_gen_wrap
             else:
                 @wraps(fn)
@@ -200,18 +198,14 @@ def entity_method(
                         return await fn(*args, **kwargs)
 
                     span, ctx, ctx_token = _setup_span(entity_name, tlp_span_kind, version)
-
                     _handle_span_input(span, args, kwargs, cls=JSONEncoder)
-                    res = fn(*args, **kwargs)
 
-                    # If it's an async generator, return a new async generator that handles the span
-                    if isinstance(res, types.AsyncGeneratorType):
-                        return _ahandle_generator(span, ctx_token, res)
-
-                    res = await res
-                    _handle_span_output(span, res, cls=JSONEncoder)
-                    _cleanup_span(span, ctx_token)
-                    return res
+                    try:
+                        res = await fn(*args, **kwargs)
+                        _handle_span_output(span, res, cls=JSONEncoder)
+                        return res
+                    finally:
+                        _cleanup_span(span, ctx_token)
                 return async_wrap
 
         else:
