@@ -1,3 +1,10 @@
+## v0.38.6 (2025-02-17)
+
+### Fix
+
+- **sdk**: async generator wrapping (#2635)
+- **instrumentation**: watsonx initialize parameters (#2633)
+
 ## v0.38.5 (2025-02-10)
 
 ### Fix
