@@ -52,7 +52,10 @@ def test_cohere_completion(test_context, brt):
         bedrock_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"]
         == generated_text
     )
-    assert bedrock_span.attributes.get("gen_ai.response.id") == "3266ca30-473c-4491-b6ef-5b1f033798d2"
+    assert (
+        bedrock_span.attributes.get("gen_ai.response.id")
+        == "3266ca30-473c-4491-b6ef-5b1f033798d2"
+    )
 
     # Assert on other request parameters
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_MAX_TOKENS] == 200
