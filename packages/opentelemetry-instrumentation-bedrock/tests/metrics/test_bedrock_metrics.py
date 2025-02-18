@@ -25,9 +25,9 @@ def test_invoke_model_metrics(test_context, brt):
 
     brt.invoke_model(
         body=body,
-        modelId='amazon.titan-text-express-v1',
-        accept='application/json',
-        contentType='application/json'
+        modelId="amazon.titan-text-express-v1",
+        accept="application/json",
+        contentType="application/json",
     )
 
     metrics_data = reader.get_metrics_data()

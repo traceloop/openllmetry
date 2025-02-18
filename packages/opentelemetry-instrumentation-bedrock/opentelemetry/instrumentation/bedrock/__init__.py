@@ -7,6 +7,7 @@ import os
 import time
 from typing import Collection
 from opentelemetry.instrumentation.bedrock.config import Config
+from opentelemetry.instrumentation.bedrock.guardrail import guardrail_handling, guardrail_converse
 from opentelemetry.instrumentation.bedrock.reusable_streaming_body import (
     ReusableStreamingBody,
 )
@@ -25,7 +26,9 @@ from opentelemetry.instrumentation.utils import (
     unwrap,
 )
 
-from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import GEN_AI_RESPONSE_ID
+from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
+    GEN_AI_RESPONSE_ID,
+)
 from opentelemetry.semconv_ai import (
     SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
     SpanAttributes,
@@ -138,6 +141,8 @@ def _wrap(
                     client.invoke_model_with_response_stream, tracer, metric_params
                 )
             )
+            client.converse = _instrumented_converse(client.converse, tracer, metric_params)
+            client.converse_stream = _instrumented_converse_stream(client.converse_stream, tracer, metric_params)
             return client
         except Exception as e:
             end_time = time.time()
@@ -192,6 +197,37 @@ def _instrumented_model_invoke_with_response_stream(fn, tracer, metric_params):
 
     return with_instrumentation
 
+def _instrumented_converse(fn, tracer, metric_params):
+    @wraps(fn)
+    def with_instrumentation(*args, **kwargs):
+        if context_api.get_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY):
+            return fn(*args, **kwargs)
+
+        with tracer.start_as_current_span(
+                "bedrock.converse", kind=SpanKind.CLIENT
+        ) as span:
+            response = fn(*args, **kwargs)
+            _handle_converse(span, kwargs, response, metric_params)
+
+            return response
+
+    return with_instrumentation
+
+def _instrumented_converse_stream(fn, tracer, metric_params):
+    @wraps(fn)
+    def with_instrumentation(*args, **kwargs):
+        if context_api.get_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY):
+            return fn(*args, **kwargs)
+
+        with tracer.start_as_current_span(
+                "bedrock.converse", kind=SpanKind.CLIENT
+        ) as span:
+            response = fn(*args, **kwargs)
+            _handle_converse_stream(span, kwargs, response, metric_params)
+
+            return response
+
+    return with_instrumentation
 
 def _handle_stream_call(span, kwargs, response, metric_params):
     @dont_throw
@@ -204,35 +240,9 @@ def _handle_stream_call(span, kwargs, response, metric_params):
         metric_params.model = model
         metric_params.is_stream = True
 
-        response_model = response_body.get("model")
-        response_id = response_body.get("id")
+        guardrail_handling(response_body, vendor, model, metric_params)
 
-        _set_span_attribute(span, SpanAttributes.LLM_SYSTEM, vendor)
-        _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, model)
-        _set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, response_model)
-        _set_span_attribute(span, GEN_AI_RESPONSE_ID, response_id)
-
-        if vendor == "cohere":
-            _set_cohere_span_attributes(
-                span, request_body, response_body, metric_params
-            )
-        elif vendor == "anthropic":
-            if "prompt" in request_body:
-                _set_anthropic_completion_span_attributes(
-                    span, request_body, response_body, metric_params
-                )
-            elif "messages" in request_body:
-                _set_anthropic_messages_span_attributes(
-                    span, request_body, response_body, metric_params
-                )
-        elif vendor == "ai21":
-            _set_ai21_span_attributes(span, request_body, response_body, metric_params)
-        elif vendor == "meta":
-            _set_llama_span_attributes(span, request_body, response_body, metric_params)
-        elif vendor == "amazon":
-            _set_amazon_span_attributes(
-                span, request_body, response_body, metric_params
-            )
+        _set_model_span_attributes(vendor, model, span, request_body, response_body, metric_params)
 
         span.end()
 
@@ -253,31 +263,29 @@ def _handle_call(span, kwargs, response, metric_params):
     metric_params.model = model
     metric_params.is_stream = False
 
-    response_model = response_body.get("model")
-    response_id = response_body.get("id")
+    guardrail_handling(response_body, vendor, model, metric_params)
 
-    _set_span_attribute(span, SpanAttributes.LLM_SYSTEM, vendor)
-    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, model)
-    _set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, response_model)
-    _set_span_attribute(span, GEN_AI_RESPONSE_ID, response_id)
+    _set_model_span_attributes(vendor, model, span, request_body, response_body, metric_params)
 
-    if vendor == "cohere":
-        _set_cohere_span_attributes(span, request_body, response_body, metric_params)
-    elif vendor == "anthropic":
-        if "prompt" in request_body:
-            _set_anthropic_completion_span_attributes(
-                span, request_body, response_body, metric_params
-            )
-        elif "messages" in request_body:
-            _set_anthropic_messages_span_attributes(
-                span, request_body, response_body, metric_params
-            )
-    elif vendor == "ai21":
-        _set_ai21_span_attributes(span, request_body, response_body, metric_params)
-    elif vendor == "meta":
-        _set_llama_span_attributes(span, request_body, response_body, metric_params)
-    elif vendor == "amazon":
-        _set_amazon_span_attributes(span, request_body, response_body, metric_params)
+
+@dont_throw
+def _handle_converse(span, kwargs, response, metric_params):
+    (vendor, model) = kwargs.get("modelId").split(".")
+    guardrail_converse(response, vendor, model, metric_params)
+
+@dont_throw
+def _handle_converse_stream(span, kwargs, response, metric_params):
+    (vendor, model) = kwargs.get("modelId").split(".")
+    stream = response.get('stream')
+    if stream:
+        def handler(func):
+            def wrap(*args, **kwargs):
+                e = func(*args, **kwargs)
+                if 'metadata' in e:
+                    guardrail_converse(e['metadata'], vendor, model, metric_params)
+                return e
+            return wrap
+        stream._parse_event = handler(stream._parse_event)
 
 
 def _record_usage_to_span(span, prompt_tokens, completion_tokens, metric_params):
@@ -344,6 +352,33 @@ def _metric_shared_attributes(
         "stream": is_streaming,
     }
 
+def _set_model_span_attributes(vendor, model, span, request_body, response_body, metric_params):
+
+    response_model = response_body.get("model")
+    response_id = response_body.get("id")
+
+    _set_span_attribute(span, SpanAttributes.LLM_SYSTEM, vendor)
+    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, model)
+    _set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, response_model)
+    _set_span_attribute(span, GEN_AI_RESPONSE_ID, response_id)
+
+    if vendor == "cohere":
+        _set_cohere_span_attributes(span, request_body, response_body, metric_params)
+    elif vendor == "anthropic":
+        if "prompt" in request_body:
+            _set_anthropic_completion_span_attributes(
+                span, request_body, response_body, metric_params
+            )
+        elif "messages" in request_body:
+            _set_anthropic_messages_span_attributes(
+                span, request_body, response_body, metric_params
+            )
+    elif vendor == "ai21":
+        _set_ai21_span_attributes(span, request_body, response_body, metric_params)
+    elif vendor == "meta":
+        _set_llama_span_attributes(span, request_body, response_body, metric_params)
+    elif vendor == "amazon":
+        _set_amazon_span_attributes(span, request_body, response_body, metric_params)
 
 def _set_cohere_span_attributes(span, request_body, response_body, metric_params):
     _set_span_attribute(
@@ -662,7 +697,62 @@ def _create_metrics(meter: Meter):
         description="Number of exceptions occurred during chat completions",
     )
 
-    return token_histogram, choice_counter, duration_histogram, exception_counter
+    # Guardrail metrics
+    guardrail_activation = meter.create_counter(
+        name=Meters.LLM_BEDROCK_GUARDRAIL_ACTIVATION,
+        unit="",
+        description="Number of guardrail activation",
+    )
+
+    guardrail_latency_histogram = meter.create_histogram(
+        name=Meters.LLM_BEDROCK_GUARDRAIL_LATENCY,
+        unit="ms",
+        description="GenAI guardrail latency",
+    )
+
+    guardrail_coverage = meter.create_counter(
+        name=Meters.LLM_BEDROCK_GUARDRAIL_COVERAGE,
+        unit="char",
+        description="GenAI guardrail coverage",
+    )
+
+    guardrail_sensitive_info = meter.create_counter(
+        name=Meters.LLM_BEDROCK_GUARDRAIL_SENSITIVE,
+        unit="",
+        description="GenAI guardrail sensitive information protection",
+    )
+
+    guardrail_topic = meter.create_counter(
+        name=Meters.LLM_BEDROCK_GUARDRAIL_TOPICS,
+        unit="",
+        description="GenAI guardrail topics protection",
+    )
+
+    guardrail_content = meter.create_counter(
+        name=Meters.LLM_BEDROCK_GUARDRAIL_CONTENT,
+        unit="",
+        description="GenAI guardrail content filter protection",
+    )
+
+    guardrail_words = meter.create_counter(
+        name=Meters.LLM_BEDROCK_GUARDRAIL_WORDS,
+        unit="",
+        description="GenAI guardrail words filter protection",
+    )
+
+    return (
+        token_histogram,
+        choice_counter,
+        duration_histogram,
+        exception_counter,
+        guardrail_activation,
+        guardrail_latency_histogram,
+        guardrail_coverage,
+        guardrail_sensitive_info,
+        guardrail_topic,
+        guardrail_content,
+        guardrail_words,
+    )
 
 
 class BedrockInstrumentor(BaseInstrumentor):
@@ -690,6 +780,13 @@ class BedrockInstrumentor(BaseInstrumentor):
                 choice_counter,
                 duration_histogram,
                 exception_counter,
+                guardrail_activation,
+                guardrail_latency_histogram,
+                guardrail_coverage,
+                guardrail_sensitive_info,
+                guardrail_topic,
+                guardrail_content,
+                guardrail_words,
             ) = _create_metrics(meter)
         else:
             (
@@ -697,10 +794,27 @@ class BedrockInstrumentor(BaseInstrumentor):
                 choice_counter,
                 duration_histogram,
                 exception_counter,
-            ) = (None, None, None, None)
+                guardrail_activation,
+                guardrail_latency_histogram,
+                guardrail_coverage,
+                guardrail_sensitive_info,
+                guardrail_topic,
+                guardrail_content,
+                guardrail_words,
+            ) = (None, None, None, None, None, None, None, None, None, None, None)
 
         metric_params = MetricParams(
-            token_histogram, choice_counter, duration_histogram, exception_counter
+            token_histogram,
+            choice_counter,
+            duration_histogram,
+            exception_counter,
+            guardrail_activation,
+            guardrail_latency_histogram,
+            guardrail_coverage,
+            guardrail_sensitive_info,
+            guardrail_topic,
+            guardrail_content,
+            guardrail_words,
         )
 
         for wrapped_method in WRAPPED_METHODS:

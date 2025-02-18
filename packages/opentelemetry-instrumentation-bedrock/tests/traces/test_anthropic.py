@@ -104,7 +104,10 @@ def test_anthropic_3_completion_complex_content(test_context, brt):
     ) == anthropic_span.attributes.get(
         SpanAttributes.LLM_USAGE_TOTAL_TOKENS
     )
-    assert anthropic_span.attributes.get("gen_ai.response.id") == "msg_bdrk_01Q6Z4xmUkMigo9K4qd1fshW"
+    assert (
+        anthropic_span.attributes.get("gen_ai.response.id")
+        == "msg_bdrk_01Q6Z4xmUkMigo9K4qd1fshW"
+    )
 
 
 @pytest.mark.vcr
@@ -168,7 +171,10 @@ def test_anthropic_3_completion_streaming(test_context, brt):
     ) == anthropic_span.attributes.get(
         SpanAttributes.LLM_USAGE_TOTAL_TOKENS
     )
-    assert anthropic_span.attributes.get("gen_ai.response.id") == "msg_bdrk_014eJfxWXNnxFKhmuiT8FYf7"
+    assert (
+        anthropic_span.attributes.get("gen_ai.response.id")
+        == "msg_bdrk_014eJfxWXNnxFKhmuiT8FYf7"
+    )
 
 
 @pytest.mark.vcr
@@ -222,4 +228,7 @@ def test_anthropic_3_completion_string_content(test_context, brt):
     ) == anthropic_span.attributes.get(
         SpanAttributes.LLM_USAGE_TOTAL_TOKENS
     )
-    assert anthropic_span.attributes.get("gen_ai.response.id") == "msg_bdrk_01WR9VHqpyBzBhzgwCDapaQD"
+    assert (
+        anthropic_span.attributes.get("gen_ai.response.id")
+        == "msg_bdrk_01WR9VHqpyBzBhzgwCDapaQD"
+    )
