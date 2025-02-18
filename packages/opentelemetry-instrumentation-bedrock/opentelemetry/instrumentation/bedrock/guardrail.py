@@ -108,7 +108,7 @@ def guardrail_converse(response, vendor, model, metric_params):
             for guardrail_info in guardrail_infos:
                 _handle(Type.OUTPUT, guardrail_info, attrs, metric_params)
     if is_guardrail_activated(response):
-        metric_params.guardrail_counter.add(1, attrs)
+        metric_params.guardrail_activation.add(1, attrs)
 
 def guardrail_handling(response_body, vendor, model, metric_params):
     if 'amazon-bedrock-guardrailAction' in response_body:
@@ -134,7 +134,7 @@ def guardrail_handling(response_body, vendor, model, metric_params):
                     _handle(Type.OUTPUT, guardrail_info, attrs, metric_params)
 
         if is_guardrail_activated(response_body):
-            metric_params.guardrail_counter.add(1, attrs)
+            metric_params.guardrail_activation.add(1, attrs)
 
 def _handle(t: Type, guardrail_info, attrs, metric_params):
     handle_invoke_metrics(t, guardrail_info, attrs, metric_params)

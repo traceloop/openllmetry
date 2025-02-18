@@ -46,6 +46,13 @@ class MetricParams:
         choice_counter: Counter,
         duration_histogram: Histogram,
         exception_counter: Counter,
+        guardrail_activation: Counter,
+        guardrail_latency_histogram: Histogram,
+        guardrail_coverage: Counter,
+        guardrail_sensitive_info: Counter,
+        guardrail_topic: Counter,
+        guardrail_content: Counter,
+        guardrail_words: Counter,
     ):
         self.vendor = ""
         self.model = ""
@@ -54,6 +61,13 @@ class MetricParams:
         self.choice_counter = choice_counter
         self.duration_histogram = duration_histogram
         self.exception_counter = exception_counter
+        self.guardrail_activation = guardrail_activation
+        self.guardrail_latency_histogram = guardrail_latency_histogram
+        self.guardrail_coverage = guardrail_coverage
+        self.guardrail_sensitive_info = guardrail_sensitive_info
+        self.guardrail_topic = guardrail_topic
+        self.guardrail_content = guardrail_content
+        self.guardrail_words = guardrail_words
         self.start_time = time.time()
 
 
@@ -230,11 +244,12 @@ def _instrumented_converse_stream(fn, tracer, metric_params):
     return with_instrumentation
 
 def _handle_stream_call(span, kwargs, response, metric_params):
+
+    (vendor, model) = kwargs.get("modelId").split(".")
+
     @dont_throw
     def stream_done(response_body):
         request_body = json.loads(kwargs.get("body"))
-
-        (vendor, model) = kwargs.get("modelId").split(".")
 
         metric_params.vendor = vendor
         metric_params.model = model
@@ -246,7 +261,16 @@ def _handle_stream_call(span, kwargs, response, metric_params):
 
         span.end()
 
-    response["body"] = StreamingWrapper(response["body"], stream_done)
+    @dont_throw
+    def stream_event(event_body):
+        #TODO: implement event handling
+        pass
+
+    handle_event = None
+    if vendor == "amazon":
+        handle_event = stream_event
+
+    response["body"] = StreamingWrapper(response["body"], event_callback=handle_event, stream_done_callback=stream_done)
 
 
 @dont_throw
@@ -651,10 +675,15 @@ def _set_amazon_span_attributes(span, request_body, response_body, metric_params
         span, SpanAttributes.LLM_REQUEST_MAX_TOKENS, config.get("maxTokenCount")
     )
 
+
+    total_complition_tokens = 0
+    if "results" in response_body:
+        total_complition_tokens = sum(int(result.get("tokenCount")) for result in response_body.get("results"))
+
     _record_usage_to_span(
         span,
         response_body.get("inputTextTokenCount"),
-        sum(int(result.get("tokenCount")) for result in response_body.get("results")),
+        total_complition_tokens,
         metric_params,
     )
 
@@ -662,13 +691,13 @@ def _set_amazon_span_attributes(span, request_body, response_body, metric_params
         _set_span_attribute(
             span, f"{SpanAttributes.LLM_PROMPTS}.0.user", request_body.get("inputText")
         )
-
-        for i, result in enumerate(response_body.get("results")):
-            _set_span_attribute(
-                span,
-                f"{SpanAttributes.LLM_COMPLETIONS}.{i}.content",
-                result.get("outputText"),
-            )
+        if "results" in response_body:
+            for i, result in enumerate(response_body.get("results")):
+                _set_span_attribute(
+                    span,
+                    f"{SpanAttributes.LLM_COMPLETIONS}.{i}.content",
+                    result.get("outputText"),
+                )
 
 
 def _create_metrics(meter: Meter):
