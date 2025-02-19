@@ -125,15 +125,15 @@ def _set_get_attributes(span, kwargs):
         span, AISpanAttributes.MILVUS_GET_COLLECTION_NAME, kwargs.get("collection_name")
     )
     _set_span_attribute(
-        span, AISpanAttributes.MILVUS_QUERY_IDS_COUNT, count_or_none(kwargs.get("ids"))
+        span, AISpanAttributes.MILVUS_GET_IDS_COUNT, count_or_none(kwargs.get("ids"))
     )
     _set_span_attribute(
         span,
-        AISpanAttributes.MILVUS_SEARCH_OUTPUT_FIELDS_COUNT,
+        AISpanAttributes.MILVUS_GET_OUTPUT_FIELDS_COUNT,
         count_or_none(kwargs.get("output_fields")),
     )
     _set_span_attribute(
-        span, AISpanAttributes.MILVUS_INSERT_TIMEOUT, kwargs.get("timeout")
+        span, AISpanAttributes.MILVUS_GET_TIMEOUT, kwargs.get("timeout")
     )
     _set_span_attribute(
         span,
@@ -172,7 +172,7 @@ def _set_search_attributes(span, kwargs):
     _set_span_attribute(
         span,
         AISpanAttributes.MILVUS_SEARCH_PARTITION_NAMES_COUNT,
-        kwargs.get("partition_name"),
+        count_or_none(kwargs.get("partition_names")),
     )
     _set_span_attribute(
         span, AISpanAttributes.MILVUS_SEARCH_ANNS_FIELD, kwargs.get("anns_field")
