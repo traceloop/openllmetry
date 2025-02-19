@@ -7,12 +7,10 @@ class StreamingWrapper(ObjectProxy):
     def __init__(
         self,
         response,
-        event_callback=None,
         stream_done_callback=None,
     ):
         super().__init__(response)
 
-        self._event_callback = event_callback
         self._stream_done_callback = stream_done_callback
         self._accumulating_body = {}
 
@@ -44,6 +42,5 @@ class StreamingWrapper(ObjectProxy):
             self._accumulating_body["invocation_metrics"] = decoded_chunk.get(
                 "amazon-bedrock-invocationMetrics"
             )
-            self._stream_done_callback(self._accumulating_body)
-        if self._event_callback:
-            self._event_callback(decoded_chunk)
+            if self._stream_done_callback:
+                self._stream_done_callback(self._accumulating_body)

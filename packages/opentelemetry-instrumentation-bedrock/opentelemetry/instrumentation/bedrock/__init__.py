@@ -243,13 +243,14 @@ def _instrumented_converse_stream(fn, tracer, metric_params):
 
     return with_instrumentation
 
+@dont_throw
 def _handle_stream_call(span, kwargs, response, metric_params):
 
     (vendor, model) = kwargs.get("modelId").split(".")
+    request_body = json.loads(kwargs.get("body"))
 
     @dont_throw
     def stream_done(response_body):
-        request_body = json.loads(kwargs.get("body"))
 
         metric_params.vendor = vendor
         metric_params.model = model
@@ -261,16 +262,22 @@ def _handle_stream_call(span, kwargs, response, metric_params):
 
         span.end()
 
-    @dont_throw
-    def stream_event(event_body):
-        #TODO: implement event handling
-        pass
-
-    handle_event = None
     if vendor == "amazon":
-        handle_event = stream_event
+        from itertools import tee
+        original_event_stream, copy_event_stream = tee(response["body"], 2)
+        response["body"] = original_event_stream
+        response_body = _uniform_amazon_event_stream(response, copy_event_stream, span)
 
-    response["body"] = StreamingWrapper(response["body"], event_callback=handle_event, stream_done_callback=stream_done)
+        metric_params.vendor = vendor
+        metric_params.model = model
+        metric_params.is_stream = True
+
+        guardrail_handling(response_body, vendor, model, metric_params)
+        _set_model_span_attributes(vendor, model, span, request_body, response_body, metric_params)
+
+        span.end()
+    else:
+        response["body"] = StreamingWrapper(response["body"], stream_done_callback=stream_done)
 
 
 @dont_throw
@@ -311,6 +318,22 @@ def _handle_converse_stream(span, kwargs, response, metric_params):
             return wrap
         stream._parse_event = handler(stream._parse_event)
 
+def _uniform_amazon_event_stream(response, event_stream, span):
+    results = []
+    inputTokenCount = 0
+    for event in event_stream:
+        if 'chunk' in event:
+            data = json.loads(event['chunk'].get('bytes').decode())
+            for key in data:
+                if key == 'inputTextTokenCount':
+                    inputTokenCount = data[key]
+            if 'inputTextTokenCount' in data:
+                del data['inputTextTokenCount']
+            results.append(data)
+    return {
+        "inputTextTokenCount": inputTokenCount,
+        "results": results,
+    }
 
 def _record_usage_to_span(span, prompt_tokens, completion_tokens, metric_params):
     _set_span_attribute(
@@ -678,7 +701,11 @@ def _set_amazon_span_attributes(span, request_body, response_body, metric_params
 
     total_complition_tokens = 0
     if "results" in response_body:
-        total_complition_tokens = sum(int(result.get("tokenCount")) for result in response_body.get("results"))
+        for result in response_body.get("results"):
+            if "tokenCount" in result:
+                total_complition_tokens += int(result.get("tokenCount"))
+            elif "totalOutputTextTokenCount" in result:
+                total_complition_tokens += int(result.get("totalOutputTextTokenCount"))
 
     _record_usage_to_span(
         span,

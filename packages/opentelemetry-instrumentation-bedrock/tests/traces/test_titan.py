@@ -96,12 +96,15 @@ def test_titan_invoke_stream(test_context, brt):
 
     stream = response.get('body')
     response_body = None
+    generated_text = []
     if stream:
         for event in stream:
             if 'chunk' in event:
                 response_body = json.loads(event['chunk'].get('bytes').decode())
+                assert response_body != None
+                generated_text.append(response_body['outputText'])
 
-    assert response_body != None
+    assert len(generated_text) > 0
     #response_body = json.loads(response.get("body").read())
 
     exporter, _, _ = test_context
@@ -134,11 +137,11 @@ def test_titan_invoke_stream(test_context, brt):
     )
 
     # Assert on response
-    generated_text = response_body["results"][0]["outputText"]
-    assert (
-            bedrock_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"]
-            == generated_text
-    )
+    for i in range(0, len(generated_text)):
+        assert (
+                bedrock_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.{i}.content"]
+                == generated_text[i]
+        )
 
     # Assert on other request parameters
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_MAX_TOKENS] == 200
