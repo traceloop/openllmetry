@@ -21,7 +21,9 @@ from opentelemetry.instrumentation.groq.version import __version__
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY, unwrap
 from opentelemetry.metrics import Counter, Histogram, Meter, get_meter
-from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import GEN_AI_RESPONSE_ID
+from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
+    GEN_AI_RESPONSE_ID,
+)
 from opentelemetry.semconv_ai import (
     SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
     LLMRequestTypeValues,
@@ -97,7 +99,9 @@ def _set_input_attributes(span, kwargs):
     set_span_attribute(
         span, SpanAttributes.LLM_PRESENCE_PENALTY, kwargs.get("presence_penalty")
     )
-    set_span_attribute(span, SpanAttributes.LLM_IS_STREAMING, kwargs.get("stream") or False)
+    set_span_attribute(
+        span, SpanAttributes.LLM_IS_STREAMING, kwargs.get("stream") or False
+    )
 
     if should_send_prompts():
         if kwargs.get("prompt") is not None:
@@ -124,9 +128,7 @@ def _set_completions(span, choices):
     for choice in choices:
         index = choice.get("index")
         prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{index}"
-        set_span_attribute(
-            span, f"{prefix}.finish_reason", choice.get("finish_reason")
-        )
+        set_span_attribute(span, f"{prefix}.finish_reason", choice.get("finish_reason"))
 
         if choice.get("content_filter_results"):
             set_span_attribute(
@@ -268,6 +270,96 @@ def _create_metrics(meter: Meter):
     return token_histogram, choice_counter, duration_histogram
 
 
+def _process_streaming_chunk(chunk):
+    """Extract content, finish_reason and usage from a streaming chunk."""
+    if not chunk.choices:
+        return None, None, None
+
+    delta = chunk.choices[0].delta
+    content = delta.content if hasattr(delta, "content") else None
+    finish_reason = chunk.choices[0].finish_reason
+
+    # Extract usage from x_groq if present in the final chunk
+    usage = None
+    if hasattr(chunk, "x_groq") and chunk.x_groq and chunk.x_groq.usage:
+        usage = chunk.x_groq.usage
+
+    return content, finish_reason, usage
+
+
+def _set_streaming_response_attributes(
+    span, accumulated_content, finish_reason=None, usage=None
+):
+    """Set span attributes for accumulated streaming response."""
+    if not span.is_recording():
+        return
+
+    prefix = f"{SpanAttributes.LLM_COMPLETIONS}.0"
+    set_span_attribute(span, f"{prefix}.role", "assistant")
+    set_span_attribute(span, f"{prefix}.content", accumulated_content)
+    if finish_reason:
+        set_span_attribute(span, f"{prefix}.finish_reason", finish_reason)
+
+    if usage:
+        set_span_attribute(
+            span, SpanAttributes.LLM_USAGE_COMPLETION_TOKENS, usage.completion_tokens
+        )
+        set_span_attribute(
+            span, SpanAttributes.LLM_USAGE_PROMPT_TOKENS, usage.prompt_tokens
+        )
+        set_span_attribute(
+            span, SpanAttributes.LLM_USAGE_TOTAL_TOKENS, usage.total_tokens
+        )
+
+
+def _create_stream_processor(response, span):
+    """Create a generator that processes a stream while collecting telemetry."""
+    accumulated_content = ""
+    finish_reason = None
+    usage = None
+
+    for chunk in response:
+        content, chunk_finish_reason, chunk_usage = _process_streaming_chunk(chunk)
+        if content:
+            accumulated_content += content
+        if chunk_finish_reason:
+            finish_reason = chunk_finish_reason
+        if chunk_usage:
+            usage = chunk_usage
+        yield chunk
+
+    if span.is_recording():
+        _set_streaming_response_attributes(
+            span, accumulated_content, finish_reason, usage
+        )
+        span.set_status(Status(StatusCode.OK))
+    span.end()
+
+
+async def _create_async_stream_processor(response, span):
+    """Create an async generator that processes a stream while collecting telemetry."""
+    accumulated_content = ""
+    finish_reason = None
+    usage = None
+
+    async for chunk in response:
+        content, chunk_finish_reason, chunk_usage = _process_streaming_chunk(chunk)
+        if content:
+            accumulated_content += content
+        if chunk_finish_reason:
+            finish_reason = chunk_finish_reason
+        if chunk_usage:
+            usage = chunk_usage
+        yield chunk
+
+    if span.is_recording():
+        _set_streaming_response_attributes(
+            span, accumulated_content, finish_reason, usage
+        )
+        span.set_status(Status(StatusCode.OK))
+    span.end()
+
+
 @_with_chat_telemetry_wrapper
 def _wrap(
     tracer: Tracer,
@@ -315,8 +407,16 @@ def _wrap(
     end_time = time.time()
 
     if is_streaming_response(response):
-        # TODO: implement streaming
-        pass
+        try:
+            return _create_stream_processor(response, span)
+        except Exception as ex:
+            logger.warning(
+                "Failed to process streaming response for groq span, error: %s",
+                str(ex),
+            )
+            span.set_status(Status(StatusCode.ERROR))
+            span.end()
+            raise
     elif response:
         try:
             metric_attributes = shared_metrics_attributes(response)
@@ -391,9 +491,19 @@ async def _awrap(
 
         raise e
 
+    end_time = time.time()
+
     if is_streaming_response(response):
-        # TODO: implement streaming
-        pass
+        try:
+            return await _create_async_stream_processor(response, span)
+        except Exception as ex:
+            logger.warning(
+                "Failed to process streaming response for groq span, error: %s",
+                str(ex),
+            )
+            span.set_status(Status(StatusCode.ERROR))
+            span.end()
+            raise
     elif response:
         metric_attributes = shared_metrics_attributes(response)
 
