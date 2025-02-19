@@ -1,3 +1,11 @@
+## v0.38.7 (2025-02-19)
+
+### Fix
+
+- **langchain**: warning with mixed metadata value types (#2665)
+- **langchain**: handle errors (#2664)
+- **groq**: streaming support (#2663)
+
 ## v0.38.6 (2025-02-17)
 
 ### Fix
