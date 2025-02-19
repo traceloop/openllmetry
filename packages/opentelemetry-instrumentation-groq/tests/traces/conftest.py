@@ -65,7 +65,8 @@ def clear_exporter_reader(exporter, reader):
 
 @pytest.fixture(autouse=True)
 def environment():
-    os.environ["GROQ_API_KEY"] = "api-key"
+    if not os.environ.get("GROQ_API_KEY"):
+        os.environ["GROQ_API_KEY"] = "api-key"
 
 
 @pytest.fixture
