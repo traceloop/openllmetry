@@ -275,7 +275,7 @@ def _sanitize_metadata_value(value: Any) -> Any:
     if isinstance(value, (bool, str, bytes, int, float)):
         return value
     if isinstance(value, (list, tuple)):
-        return [_sanitize_metadata_value(v) for v in value]
+        return [str(_sanitize_metadata_value(v)) for v in value]
     # Convert other types to strings
     return str(value)
 
