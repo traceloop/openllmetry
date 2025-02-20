@@ -47,12 +47,12 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
             _set_delete_attributes(span, kwargs)
         elif to_wrap.get("method") == "search":
             _set_search_attributes(span, kwargs)
-        elif to_wrap.get("method") == "similarity_search":
-            _set_search_attributes(span, kwargs)
         elif to_wrap.get("method") == "get":
             _set_get_attributes(span, kwargs)
         elif to_wrap.get("method") == "query":
             _set_query_attributes(span, kwargs)
+        elif to_wrap.get("method") == "create_collection":
+            _set_create_collection_attributes(span, kwargs)
 
         return_value = wrapped(*args, **kwargs)
         if to_wrap.get("method") == "query":
@@ -91,7 +91,45 @@ def count_or_none(obj):
 
     return None
 
-
+@dont_throw
+def  _set_create_collection_attributes(span, kwargs):
+    _set_span_attribute(
+        span,
+        AISpanAttributes.MILVUS_CREATE_COLLECTION_NAME,
+        kwargs.get("collection_name"),
+    )
+    _set_span_attribute(
+        span,
+        AISpanAttributes.MILVUS_CREATE_COLLECTION_DIMENSION,
+        kwargs.get("dimension"),
+    )
+    _set_span_attribute(
+        span,
+        AISpanAttributes.MILVUS_CREATE_COLLECTION_PRIMARY_FIELD,
+        kwargs.get("primary_field_name"),
+    )
+    _set_span_attribute(
+        span,
+        AISpanAttributes.MILVUS_CREATE_COLLECTION_METRIC_TYPE,
+        kwargs.get("metric_type"),
+    )
+    _set_span_attribute(
+        span,
+        AISpanAttributes.MILVUS_CREATE_COLLECTION_TIMEOUT,
+        kwargs.get("timeout"),
+    )
+    _set_span_attribute(
+        span,
+        AISpanAttributes.MILVUS_CREATE_COLLECTION_ID_TYPE,
+        kwargs.get("id_type"),
+    )
+    _set_span_attribute(
+        span,
+        AISpanAttributes.MILVUS_CREATE_COLLECTION_VECTOR_FIELD,
+        kwargs.get("vector_field_name"),
+    )
+    
+    
 @dont_throw
 def _set_insert_attributes(span, kwargs):
     _set_span_attribute(
@@ -233,8 +271,8 @@ def _set_upsert_attributes(span, kwargs):
     )
     _set_span_attribute(
         span,
-        AISpanAttributes.MILVUS_UPSERT_TIMEOUT_COUNT,
-        count_or_none(kwargs.get("timeout")),
+        AISpanAttributes.MILVUS_UPSERT_TIMEOUT,
+        kwargs.get("timeout"),
     )
     _set_span_attribute(
         span,
