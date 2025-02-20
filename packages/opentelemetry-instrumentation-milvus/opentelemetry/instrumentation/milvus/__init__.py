@@ -2,7 +2,6 @@
 
 import logging
 import pymilvus
-import langchain_milvus
 
 from typing import Collection
 
