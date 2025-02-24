@@ -248,7 +248,6 @@ def _set_query_attributes(span, kwargs):
         AISpanAttributes.MILVUS_QUERY_PARTITION_NAMES_COUNT,
         count_or_none(kwargs.get("partition_names")),
     )
-    _set_span_attribute(span, AISpanAttributes.MILVUS_QUERY_LIMIT, kwargs.get("limit"))
 
 
 @dont_throw
@@ -295,8 +294,8 @@ def _set_delete_attributes(span, kwargs):
     )
     _set_span_attribute(
         span,
-        AISpanAttributes.MILVUS_DELETE_TIMEOUT_COUNT,
-        count_or_none(kwargs.get("timeout")),
+        AISpanAttributes.MILVUS_DELETE_TIMEOUT,
+        kwargs.get("timeout"),
     )
     _set_span_attribute(
         span,
