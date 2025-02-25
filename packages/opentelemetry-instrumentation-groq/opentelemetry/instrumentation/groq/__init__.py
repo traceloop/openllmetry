@@ -188,7 +188,7 @@ def _set_response_attributes(span, response, token_histogram):
     set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, response.get("model"))
     set_span_attribute(span, GEN_AI_RESPONSE_ID, response.get("id"))
 
-    usage = response.get("usage")
+    usage = response.get("usage") or {}
     prompt_tokens = usage.get("prompt_tokens")
     completion_tokens = usage.get("completion_tokens")
     if usage:
@@ -203,13 +203,13 @@ def _set_response_attributes(span, response, token_histogram):
             span, SpanAttributes.LLM_USAGE_PROMPT_TOKENS, prompt_tokens
         )
 
-    if type(prompt_tokens) is int and prompt_tokens >= 0:
+    if isinstance(prompt_tokens, int) and prompt_tokens >= 0 and token_histogram is not None:
         token_histogram.record(prompt_tokens, attributes={
             SpanAttributes.LLM_TOKEN_TYPE: "input",
             SpanAttributes.LLM_RESPONSE_MODEL: response.get("model")
         })
 
-    if type(completion_tokens) is int and completion_tokens >= 0:
+    if isinstance(completion_tokens, int) and completion_tokens >= 0 and token_histogram is not None:
         token_histogram.record(completion_tokens, attributes={
             SpanAttributes.LLM_TOKEN_TYPE: "output",
             SpanAttributes.LLM_RESPONSE_MODEL: response.get("model")
