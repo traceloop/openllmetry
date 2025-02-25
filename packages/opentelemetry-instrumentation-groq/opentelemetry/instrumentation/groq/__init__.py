@@ -183,25 +183,37 @@ def _set_completions(span, choices):
 
 
 @dont_throw
-def _set_response_attributes(span, response):
+def _set_response_attributes(span, response, token_histogram):
     response = model_as_dict(response)
-
     set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, response.get("model"))
     set_span_attribute(span, GEN_AI_RESPONSE_ID, response.get("id"))
 
-    usage = response.get("usage")
+    usage = response.get("usage") or {}
+    prompt_tokens = usage.get("prompt_tokens")
+    completion_tokens = usage.get("completion_tokens")
     if usage:
         set_span_attribute(
             span, SpanAttributes.LLM_USAGE_TOTAL_TOKENS, usage.get("total_tokens")
         )
         set_span_attribute(
             span,
-            SpanAttributes.LLM_USAGE_COMPLETION_TOKENS,
-            usage.get("completion_tokens"),
+            SpanAttributes.LLM_USAGE_COMPLETION_TOKENS, completion_tokens
         )
         set_span_attribute(
-            span, SpanAttributes.LLM_USAGE_PROMPT_TOKENS, usage.get("prompt_tokens")
+            span, SpanAttributes.LLM_USAGE_PROMPT_TOKENS, prompt_tokens
         )
+
+    if isinstance(prompt_tokens, int) and prompt_tokens >= 0 and token_histogram is not None:
+        token_histogram.record(prompt_tokens, attributes={
+            SpanAttributes.LLM_TOKEN_TYPE: "input",
+            SpanAttributes.LLM_RESPONSE_MODEL: response.get("model")
+        })
+
+    if isinstance(completion_tokens, int) and completion_tokens >= 0 and token_histogram is not None:
+        token_histogram.record(completion_tokens, attributes={
+            SpanAttributes.LLM_TOKEN_TYPE: "output",
+            SpanAttributes.LLM_RESPONSE_MODEL: response.get("model")
+        })
 
     choices = response.get("choices")
     if should_send_prompts() and choices:
@@ -429,7 +441,7 @@ def _wrap(
                 )
 
             if span.is_recording():
-                _set_response_attributes(span, response)
+                _set_response_attributes(span, response, token_histogram)
 
         except Exception as ex:  # pylint: disable=broad-except
             logger.warning(
@@ -515,7 +527,7 @@ async def _awrap(
             )
 
         if span.is_recording():
-            _set_response_attributes(span, response)
+            _set_response_attributes(span, response, token_histogram)
 
         if span.is_recording():
             span.set_status(Status(StatusCode.OK))
