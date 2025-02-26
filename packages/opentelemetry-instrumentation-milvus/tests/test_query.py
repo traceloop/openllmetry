@@ -196,3 +196,41 @@ def test_milvus_query_and(exporter, collection):
         _id = event.attributes.get("id")
         assert isinstance(tag, str)
         assert isinstance(_id, int)
+        
+        
+def test_milvus_create_collection(exporter, collection):
+    collection_name = "quick_setup"
+    milvus.create_collection(
+    collection_name=collection_name,
+    dimension=5,
+    primary_field_name="my_id",
+    id_type="string",
+    vector_field_name="my_vector",
+    metric_type="L2",
+    auto_id=True,
+    max_length=512,
+    timeout=10
+    )
+    insert_data(collection_name)
+    spans = exporter.get_finished_spans()
+    span = next(span for span in spans if span.name == "milvus.query")
+
+    assert span.attributes.get(SpanAttributes.VECTOR_DB_VENDOR) == "milvus"
+    assert span.attributes.get(SpanAttributes.VECTOR_DB_OPERATION) == "create_collection"
+    assert (
+        span.attributes.get(SpanAttributes.MILVUS_CREATE_COLLECTION_NAME) == collection_name
+    )
+    assert span.attributes.get(SpanAttributes.MILVUS_CREATE_COLLECTION_DIMENSION) == 5
+    assert span.attributes.get(SpanAttributes.MILVUS_CREATE_COLLECTION_ID_TYPE) == "string"
+    assert span.attributes.get(SpanAttributes.MILVUS_CREATE_COLLECTION_METRIC_TYPE) == "L2"
+    assert span.attributes.get(SpanAttributes.MILVUS_CREATE_COLLECTION_TIMEOUT) == 10
+    assert span.attributes.get(SpanAttributes.MILVUS_CREATE_COLLECTION_PRIMARY_FIELD) == "my_id"
+    assert span.attributes.get(SpanAttributes.MILVUS_CREATE_COLLECTION_VECTOR_FIELD) == "my_vector"
+    events = span.events
+    for event in events:
+        assert event.name == Events.DB_QUERY_RESULT.value
+        tag = event.attributes.get("color_tag")
+        _id = event.attributes.get("id")
+        assert isinstance(tag, str)
+        assert isinstance(_id, int)
+    print("completed")

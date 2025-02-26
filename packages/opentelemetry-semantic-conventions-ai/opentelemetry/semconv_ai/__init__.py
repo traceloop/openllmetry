@@ -166,7 +166,7 @@ class SpanAttributes:
     MILVUS_GET_COLLECTION_NAME = "db.milvus.get.collection_name"
     MILVUS_GET_PARTITION_NAMES_COUNT = "db.milvus.get.partition_names_count"
     MILVUS_GET_IDS_COUNT = "db.milvus.get.ids_count"
-    MILVUS_GET_OUTPUT_FIELDS_COUNT = "db.milvus.get.output_fields_count"
+    MILVUS_GET_OUTPUT_FIELDS_COUNT = "db.milvus.get.output_fields_count"    
     MILVUS_GET_TIMEOUT = "db.milvus.get.timeout"
     MILVUS_CREATE_COLLECTION_NAME = "db.milvus.create_collection.collection_name"
     MILVUS_CREATE_COLLECTION_DIMENSION = "db.milvus.create_collection.dimension"
@@ -182,6 +182,7 @@ class SpanAttributes:
     MILVUS_QUERY_COLLECTION_NAME = "db.milvus.query.collection_name"
     MILVUS_QUERY_FILTER = "db.milvus.query.filter"
     MILVUS_QUERY_IDS_COUNT = "db.milvus.query.ids_count"
+    MILVUS_QUERY_LIMIT = "db.milvus.query.limit"
     MILVUS_QUERY_OUTPUT_FIELDS_COUNT = "db.milvus.query.output_fields_count"
     MILVUS_QUERY_PARTITION_NAMES_COUNT = "db.milvus.query.partition_names_count"
     MILVUS_QUERY_TIMEOUT = "db.milvus.query.timeout"
@@ -198,9 +199,6 @@ class SpanAttributes:
     MILVUS_UPSERT_DATA_COUNT = "db.milvus.upsert.data_count"
     MILVUS_UPSERT_PARTITION_NAME = "db.milvus.upsert.partition_name"
     MILVUS_UPSERT_TIMEOUT = "db.milvus.upsert.timeout"
-    MILVUS_INSERT_EMBEDDINGS_COUNT = "db.milvus.insert.embeddings_count"
-    MILVUS_SEARCH_EMBEDDINGS_COUNT = "db.milvus.search.embeddings_count"
-    MILVUS_UPSERT_EMBEDDINGS_COUNT = "db.milvus.upsert.embeddings_count"
 
     # Qdrant
     QDRANT_SEARCH_COLLECTION_NAME = "qdrant.search.collection_name"
