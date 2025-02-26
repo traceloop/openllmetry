@@ -1,6 +1,7 @@
 """OpenTelemetry Bedrock instrumentation"""
 
-from functools import wraps
+from functools import partial, wraps
+from itertools import tee
 import json
 import logging
 import os
@@ -212,6 +213,8 @@ def _instrumented_model_invoke_with_response_stream(fn, tracer, metric_params):
     return with_instrumentation
 
 def _instrumented_converse(fn, tracer, metric_params):
+    # see https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/bedrock-runtime/client/converse.html
+    # for the request/response format
     @wraps(fn)
     def with_instrumentation(*args, **kwargs):
         if context_api.get_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY):
@@ -233,13 +236,12 @@ def _instrumented_converse_stream(fn, tracer, metric_params):
         if context_api.get_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY):
             return fn(*args, **kwargs)
 
-        with tracer.start_as_current_span(
-                "bedrock.converse", kind=SpanKind.CLIENT
-        ) as span:
-            response = fn(*args, **kwargs)
+        span = tracer.start_span("bedrock.converse", kind=SpanKind.CLIENT)
+        response = fn(*args, **kwargs)
+        if span.is_recording():
             _handle_converse_stream(span, kwargs, response, metric_params)
 
-            return response
+        return response
 
     return with_instrumentation
 
@@ -248,6 +250,10 @@ def _handle_stream_call(span, kwargs, response, metric_params):
 
     (vendor, model) = kwargs.get("modelId").split(".")
     request_body = json.loads(kwargs.get("body"))
+
+    headers = {}
+    if "ResponseMetadata" in response:
+        headers = response.get("ResponseMetadata").get("HTTPHeaders", {})
 
     @dont_throw
     def stream_done(response_body):
@@ -258,26 +264,25 @@ def _handle_stream_call(span, kwargs, response, metric_params):
 
         guardrail_handling(response_body, vendor, model, metric_params)
 
-        _set_model_span_attributes(vendor, model, span, request_body, response_body, metric_params)
+        _set_model_span_attributes(vendor, model, span, request_body, response_body, headers, metric_params)
 
         span.end()
 
-    if vendor == "amazon":
-        from itertools import tee
-        original_event_stream, copy_event_stream = tee(response["body"], 2)
-        response["body"] = original_event_stream
-        response_body = _uniform_amazon_event_stream(response, copy_event_stream, span)
-
-        metric_params.vendor = vendor
-        metric_params.model = model
-        metric_params.is_stream = True
-
-        guardrail_handling(response_body, vendor, model, metric_params)
-        _set_model_span_attributes(vendor, model, span, request_body, response_body, metric_params)
-
-        span.end()
-    else:
-        response["body"] = StreamingWrapper(response["body"], stream_done_callback=stream_done)
+    # if vendor == "amazon":
+    #     original_event_stream, copy_event_stream = tee(response["body"], 2)
+    #     response["body"] = original_event_stream
+    #     response_body = _uniform_amazon_event_stream(copy_event_stream)
+    #
+    #     metric_params.vendor = vendor
+    #     metric_params.model = model
+    #     metric_params.is_stream = True
+    #
+    #     guardrail_handling(response_body, vendor, model, metric_params)
+    #     _set_model_span_attributes(vendor, model, span, request_body, headers, response_body, metric_params)
+    #
+    #     span.end()
+    # else:
+    response["body"] = StreamingWrapper(response["body"], stream_done_callback=stream_done)
 
 
 @dont_throw
@@ -287,6 +292,9 @@ def _handle_call(span, kwargs, response, metric_params):
     )
     request_body = json.loads(kwargs.get("body"))
     response_body = json.loads(response.get("body").read())
+    headers = {}
+    if "ResponseMetadata" in response:
+        headers = response.get("ResponseMetadata").get("HTTPHeaders", {})
 
     (vendor, model) = kwargs.get("modelId").split(".")
 
@@ -296,7 +304,7 @@ def _handle_call(span, kwargs, response, metric_params):
 
     guardrail_handling(response_body, vendor, model, metric_params)
 
-    _set_model_span_attributes(vendor, model, span, request_body, response_body, metric_params)
+    _set_model_span_attributes(vendor, model, span, request_body, response_body, headers, metric_params)
 
 
 @dont_throw
@@ -304,21 +312,143 @@ def _handle_converse(span, kwargs, response, metric_params):
     (vendor, model) = kwargs.get("modelId").split(".")
     guardrail_converse(response, vendor, model, metric_params)
 
+    _set_span_attribute(span, SpanAttributes.LLM_SYSTEM, vendor)
+    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, model)
+    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TYPE, LLMRequestTypeValues.CHAT.value)
+
+    #if vendor == "amazon":
+    config = {}
+    if "inferenceConfig" in kwargs:
+        config = kwargs.get("inferenceConfig")
+
+    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TOP_P, config.get("topP"))
+    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TEMPERATURE, config.get("temperature"))
+    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MAX_TOKENS, config.get("maxTokens"))
+
+    _converse_usage_record(span, response, metric_params)
+
+    if should_send_prompts():
+        prompt_idx = 0
+        if "system" in kwargs:
+            for idx, prompt in enumerate(kwargs["system"]):
+                prompt_idx = idx+1
+                _set_span_attribute(
+                    span, f"{SpanAttributes.LLM_PROMPTS}.{idx}.role", "system"
+                )
+                # TODO: add support for "image"
+                _set_span_attribute(
+                    span, f"{SpanAttributes.LLM_PROMPTS}.{idx}.content", prompt.get("text")
+                )
+        if "messages" in kwargs:
+            for idx, prompt in enumerate(kwargs["messages"]):
+                _set_span_attribute(
+                    span, f"{SpanAttributes.LLM_PROMPTS}.{prompt_idx+idx}.role", prompt.get("role")
+                )
+                # TODO: here we stringify the object, consider moving these to events or prompt.{i}.content.{j}
+                _set_span_attribute(
+                    span, f"{SpanAttributes.LLM_PROMPTS}.{prompt_idx+idx}.content", json.dumps(prompt.get("content", ""), default=str)
+                )
+
+        if "output" in response:
+            message = response["output"]["message"]
+            _set_span_attribute(
+                span, f"{SpanAttributes.LLM_COMPLETIONS}.0.role", message.get("role")
+            )
+            for idx, content in enumerate(message['content']):
+                _set_span_attribute(
+                    span,
+                    f"{SpanAttributes.LLM_COMPLETIONS}.{idx}.content",
+                    content.get("text"),
+                )
+
+
 @dont_throw
 def _handle_converse_stream(span, kwargs, response, metric_params):
     (vendor, model) = kwargs.get("modelId").split(".")
+
+    _set_span_attribute(span, SpanAttributes.LLM_SYSTEM, vendor)
+    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, model)
+    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TYPE, LLMRequestTypeValues.CHAT.value)
+
+    config = {}
+    if "inferenceConfig" in kwargs:
+        config = kwargs.get("inferenceConfig")
+
+    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TOP_P, config.get("topP"))
+    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TEMPERATURE, config.get("temperature"))
+    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MAX_TOKENS, config.get("maxTokens"))
+
+    if should_send_prompts():
+        prompt_idx = 0
+        if "system" in kwargs:
+            for idx, prompt in enumerate(kwargs["system"]):
+                prompt_idx = idx+1
+                _set_span_attribute(
+                    span, f"{SpanAttributes.LLM_PROMPTS}.{idx}.role", "system"
+                )
+                # TODO: add support for "image"
+                _set_span_attribute(
+                    span, f"{SpanAttributes.LLM_PROMPTS}.{idx}.content", prompt.get("text")
+                )
+        if "messages" in kwargs:
+            for idx, prompt in enumerate(kwargs["messages"]):
+                _set_span_attribute(
+                    span, f"{SpanAttributes.LLM_PROMPTS}.{prompt_idx+idx}.role", prompt.get("role")
+                )
+                # TODO: here we stringify the object, consider moving these to events or prompt.{i}.content.{j}
+                _set_span_attribute(
+                    span, f"{SpanAttributes.LLM_PROMPTS}.{prompt_idx+idx}.content", json.dumps(prompt.get("content", ""), default=str)
+                )
+
     stream = response.get('stream')
     if stream:
         def handler(func):
             def wrap(*args, **kwargs):
-                e = func(*args, **kwargs)
-                if 'metadata' in e:
-                    guardrail_converse(e['metadata'], vendor, model, metric_params)
-                return e
-            return wrap
+                response_msg = kwargs.pop("response_msg")
+                span = kwargs.pop("span")
+                event = func(*args, **kwargs)
+                if 'contentBlockDelta' in event:
+                    response_msg.append(event['contentBlockDelta']['delta']['text'])
+                elif 'messageStart' in event:
+                    if should_send_prompts():
+                        role = event['messageStart']['role']
+                        _set_span_attribute(
+                            span, f"{SpanAttributes.LLM_COMPLETIONS}.0.role", role
+                        )
+                elif 'metadata' in event:
+                    # last message sent
+                    guardrail_converse(event['metadata'], vendor, model, metric_params)
+                    _converse_usage_record(span, event['metadata'], metric_params)
+                    span.end()
+                elif "messageStop" in event:
+                    if should_send_prompts():
+                        _set_span_attribute(
+                            span,
+                            f"{SpanAttributes.LLM_COMPLETIONS}.{idx}.content",
+                            ''.join(response_msg),
+                        )
+                return event
+            return partial(wrap, response_msg=[], span=span)
         stream._parse_event = handler(stream._parse_event)
 
-def _uniform_amazon_event_stream(response, event_stream, span):
+
+def _converse_usage_record(span, response, metric_params):
+    prompt_tokens = 0
+    completion_tokens = 0
+    if "usage" in response:
+        if "inputTokens" in response["usage"]:
+            prompt_tokens = response["usage"]["inputTokens"]
+        if "outputTokens" in response["usage"]:
+            completion_tokens = response["usage"]["outputTokens"]
+
+    _record_usage_to_span(
+        span,
+        prompt_tokens,
+        completion_tokens,
+        metric_params,
+    )
+
+def _uniform_amazon_event_stream(event_stream):
     results = []
     inputTokenCount = 0
     for event in event_stream:
@@ -399,7 +529,7 @@ def _metric_shared_attributes(
         "stream": is_streaming,
     }
 
-def _set_model_span_attributes(vendor, model, span, request_body, response_body, metric_params):
+def _set_model_span_attributes(vendor, model, span, request_body, response_body, headers, metric_params):
 
     response_model = response_body.get("model")
     response_id = response_body.get("id")
@@ -425,7 +555,7 @@ def _set_model_span_attributes(vendor, model, span, request_body, response_body,
     elif vendor == "meta":
         _set_llama_span_attributes(span, request_body, response_body, metric_params)
     elif vendor == "amazon":
-        _set_amazon_span_attributes(span, request_body, response_body, metric_params)
+        _set_amazon_span_attributes(span, request_body, response_body, headers, metric_params)
 
 def _set_cohere_span_attributes(span, request_body, response_body, metric_params):
     _set_span_attribute(
@@ -685,45 +815,97 @@ def _set_llama_span_attributes(span, request_body, response_body, metric_params)
                 )
 
 
-def _set_amazon_span_attributes(span, request_body, response_body, metric_params):
+def _set_amazon_span_attributes(span, request_body, response_body, headers, metric_params):
     _set_span_attribute(
         span, SpanAttributes.LLM_REQUEST_TYPE, LLMRequestTypeValues.COMPLETION.value
     )
-    config = request_body.get("textGenerationConfig", {})
-    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TOP_P, config.get("topP"))
-    _set_span_attribute(
-        span, SpanAttributes.LLM_REQUEST_TEMPERATURE, config.get("temperature")
-    )
-    _set_span_attribute(
-        span, SpanAttributes.LLM_REQUEST_MAX_TOKENS, config.get("maxTokenCount")
-    )
+
+    if "textGenerationConfig" in request_body:
+        config = request_body.get("textGenerationConfig", {})
+        _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TOP_P, config.get("topP"))
+        _set_span_attribute(
+            span, SpanAttributes.LLM_REQUEST_TEMPERATURE, config.get("temperature")
+        )
+        _set_span_attribute(
+            span, SpanAttributes.LLM_REQUEST_MAX_TOKENS, config.get("maxTokenCount")
+        )
+    elif "inferenceConfig" in request_body:
+        config = request_body.get("inferenceConfig", {})
+        _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TOP_P, config.get("topP"))
+        _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TEMPERATURE, config.get("temperature"))
+        _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MAX_TOKENS, config.get("maxTokens"))
 
 
-    total_complition_tokens = 0
+    total_completion_tokens = 0
+    total_prompt_tokens = 0
     if "results" in response_body:
+        total_prompt_tokens = int(response_body.get("inputTextTokenCount", 0))
         for result in response_body.get("results"):
             if "tokenCount" in result:
-                total_complition_tokens += int(result.get("tokenCount"))
+                total_completion_tokens += int(result.get("tokenCount", 0))
             elif "totalOutputTextTokenCount" in result:
-                total_complition_tokens += int(result.get("totalOutputTextTokenCount"))
+                total_completion_tokens += int(result.get("totalOutputTextTokenCount", 0))
+    elif "usage" in response_body:
+        total_prompt_tokens += int(response_body.get("inputTokens", 0))
+        total_completion_tokens += int(headers.get("x-amzn-bedrock-output-token-count", 0))
+    # checks for Titan models
+    if "inputTextTokenCount" in response_body:
+        total_prompt_tokens = response_body.get("inputTextTokenCount")
+    if "totalOutputTextTokenCount" in response_body:
+        total_completion_tokens = response_body.get("totalOutputTextTokenCount")
 
     _record_usage_to_span(
         span,
-        response_body.get("inputTextTokenCount"),
-        total_complition_tokens,
+        total_prompt_tokens,
+        total_completion_tokens,
         metric_params,
     )
 
     if should_send_prompts():
-        _set_span_attribute(
-            span, f"{SpanAttributes.LLM_PROMPTS}.0.user", request_body.get("inputText")
-        )
+        if "inputText" in request_body:
+            _set_span_attribute(
+                span, f"{SpanAttributes.LLM_PROMPTS}.0.user", request_body.get("inputText")
+            )
+        else:
+            prompt_idx = 0
+            if "system" in request_body:
+                for idx, prompt in enumerate(request_body["system"]):
+                    prompt_idx = idx+1
+                    _set_span_attribute(
+                        span, f"{SpanAttributes.LLM_PROMPTS}.{idx}.role", "system"
+                    )
+                    # TODO: add support for "image"
+                    _set_span_attribute(
+                        span, f"{SpanAttributes.LLM_PROMPTS}.{idx}.content", prompt.get("text")
+                    )
+            for idx, prompt in enumerate(request_body["messages"]):
+                _set_span_attribute(
+                    span, f"{SpanAttributes.LLM_PROMPTS}.{prompt_idx+idx}.role", prompt.get("role")
+                )
+                # TODO: here we stringify the object, consider moving these to events or prompt.{i}.content.{j}
+                _set_span_attribute(
+                    span, f"{SpanAttributes.LLM_PROMPTS}.{prompt_idx+idx}.content", json.dumps(prompt.get("content", ""), default=str)
+                )
+
+
         if "results" in response_body:
             for i, result in enumerate(response_body.get("results")):
                 _set_span_attribute(
                     span,
                     f"{SpanAttributes.LLM_COMPLETIONS}.{i}.content",
                     result.get("outputText"),
+                )
+        elif "outputText" in response_body:
+            _set_span_attribute(
+                span,
+                f"{SpanAttributes.LLM_COMPLETIONS}.0.content",
+                response_body.get("outputText"),
+            )
+        elif "output" in response_body:
+            msgs = response_body.get("output").get("message", {}).get("content", [])
+            for idx, msg in enumerate(msgs):
+                _set_span_attribute(
+                    span, f"{SpanAttributes.LLM_COMPLETIONS}.{idx}.content", msg.get("text")
                 )
 
 
