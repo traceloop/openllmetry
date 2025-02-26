@@ -1,3 +1,30 @@
+## v0.38.7 (2025-02-19)
+
+### Fix
+
+- **langchain**: warning with mixed metadata value types (#2665)
+- **langchain**: handle errors (#2664)
+- **groq**: streaming support (#2663)
+
+## v0.38.6 (2025-02-17)
+
+### Fix
+
+- **sdk**: async generator wrapping (#2635)
+- **instrumentation**: watsonx initialize parameters (#2633)
+
+## v0.38.5 (2025-02-10)
+
+### Fix
+
+- **sdk**: Fix async decorator input & output json encoder (#2629)
+
+## v0.38.4 (2025-02-06)
+
+### Fix
+
+- **sdk**: improve package name detection with type hints and null safety (#2618)
+
 ## v0.38.3 (2025-02-05)
 
 ### Fix

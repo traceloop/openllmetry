@@ -273,7 +273,7 @@ async def test_async_generator_workflow(exporter):
 
     results = []
 
-    async for num in await stream_numbers():
+    async for num in stream_numbers():
         results.append(num)
 
     spans = exporter.get_finished_spans()

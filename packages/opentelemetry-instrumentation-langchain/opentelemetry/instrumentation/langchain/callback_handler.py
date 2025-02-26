@@ -30,6 +30,7 @@ from opentelemetry.instrumentation.langchain.utils import (
     should_send_prompts,
 )
 from opentelemetry.metrics import Histogram
+from opentelemetry.trace.status import Status, StatusCode
 
 
 @dataclass
@@ -274,7 +275,7 @@ def _sanitize_metadata_value(value: Any) -> Any:
     if isinstance(value, (bool, str, bytes, int, float)):
         return value
     if isinstance(value, (list, tuple)):
-        return [_sanitize_metadata_value(v) for v in value]
+        return [str(_sanitize_metadata_value(v)) for v in value]
     # Convert other types to strings
     return str(value)
 
@@ -744,3 +745,79 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             return f"{parent_span.entity_name}"
         else:
             return f"{parent_span.entity_path}.{parent_span.entity_name}"
+
+    def _handle_error(
+        self,
+        error: BaseException,
+        run_id: UUID,
+        parent_run_id: Optional[UUID] = None,
+        **kwargs: Any,
+    ) -> None:
+        """Common error handling logic for all components."""
+        if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
+            return
+
+        span = self._get_span(run_id)
+        span.set_status(Status(StatusCode.ERROR))
+        span.record_exception(error)
+        self._end_span(span, run_id)
+
+    @dont_throw
+    def on_llm_error(
+        self,
+        error: BaseException,
+        *,
+        run_id: UUID,
+        parent_run_id: Optional[UUID] = None,
+        **kwargs: Any,
+    ) -> None:
+        """Run when LLM errors."""
+        self._handle_error(error, run_id, parent_run_id, **kwargs)
+
+    @dont_throw
+    def on_chain_error(
+        self,
+        error: BaseException,
+        *,
+        run_id: UUID,
+        parent_run_id: Optional[UUID] = None,
+        **kwargs: Any,
+    ) -> None:
+        """Run when chain errors."""
+        self._handle_error(error, run_id, parent_run_id, **kwargs)
+
+    @dont_throw
+    def on_tool_error(
+        self,
+        error: BaseException,
+        *,
+        run_id: UUID,
+        parent_run_id: Optional[UUID] = None,
+        **kwargs: Any,
+    ) -> None:
+        """Run when tool errors."""
+        self._handle_error(error, run_id, parent_run_id, **kwargs)
+
+    @dont_throw
+    def on_agent_error(
+        self,
+        error: BaseException,
+        *,
+        run_id: UUID,
+        parent_run_id: Optional[UUID] = None,
+        **kwargs: Any,
+    ) -> None:
+        """Run when agent errors."""
+        self._handle_error(error, run_id, parent_run_id, **kwargs)
+
+    @dont_throw
+    def on_retriever_error(
+        self,
+        error: BaseException,
+        *,
+        run_id: UUID,
+        parent_run_id: Optional[UUID] = None,
+        **kwargs: Any,
+    ) -> None:
+        """Run when retriever errors."""
+        self._handle_error(error, run_id, parent_run_id, **kwargs)
