@@ -54,12 +54,13 @@ class StreamingWrapper(ObjectProxy):
 
     def _accumulate_events(self, event):
         for key in event:
-            if key in self._accumulating_body:
-                if key == "contentBlockDelta":
-                    self._accumulating_body["outputText"] += event.get(key).get("delta", {}).get("text")
+            if key == "contentBlockDelta":
+                delta = event.get(key).get("delta", {}).get("text")
+                if "outputText" in self._accumulating_body:
+                    self._accumulating_body["outputText"] += delta
                 else:
-                    self._accumulating_body[key] += event.get(key)
+                    self._accumulating_body["outputText"] = delta
+            elif key in self._accumulating_body:
+                self._accumulating_body[key] += event.get(key)
             else:
-                if key == "contentBlockDelta":
-                    self._accumulating_body["outputText"] = event.get(key).get("delta", {}).get("text")
                 self._accumulating_body[key] = event.get(key)

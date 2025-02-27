@@ -8,7 +8,10 @@ import os
 import time
 from typing import Collection
 from opentelemetry.instrumentation.bedrock.config import Config
-from opentelemetry.instrumentation.bedrock.guardrail import guardrail_handling, guardrail_converse
+from opentelemetry.instrumentation.bedrock.guardrail import (
+    guardrail_handling,
+    guardrail_converse,
+)
 from opentelemetry.instrumentation.bedrock.reusable_streaming_body import (
     ReusableStreamingBody,
 )
@@ -156,8 +159,12 @@ def _wrap(
                     client.invoke_model_with_response_stream, tracer, metric_params
                 )
             )
-            client.converse = _instrumented_converse(client.converse, tracer, metric_params)
-            client.converse_stream = _instrumented_converse_stream(client.converse_stream, tracer, metric_params)
+            client.converse = _instrumented_converse(
+                client.converse, tracer, metric_params
+            )
+            client.converse_stream = _instrumented_converse_stream(
+                client.converse_stream, tracer, metric_params
+            )
             return client
         except Exception as e:
             end_time = time.time()
@@ -212,6 +219,7 @@ def _instrumented_model_invoke_with_response_stream(fn, tracer, metric_params):
 
     return with_instrumentation
 
+
 def _instrumented_converse(fn, tracer, metric_params):
     # see https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/bedrock-runtime/client/converse.html
     # for the request/response format
@@ -221,7 +229,7 @@ def _instrumented_converse(fn, tracer, metric_params):
             return fn(*args, **kwargs)
 
         with tracer.start_as_current_span(
-                "bedrock.converse", kind=SpanKind.CLIENT
+            "bedrock.converse", kind=SpanKind.CLIENT
         ) as span:
             response = fn(*args, **kwargs)
             _handle_converse(span, kwargs, response, metric_params)
@@ -229,6 +237,7 @@ def _instrumented_converse(fn, tracer, metric_params):
             return response
 
     return with_instrumentation
+
 
 def _instrumented_converse_stream(fn, tracer, metric_params):
     @wraps(fn)
@@ -244,6 +253,7 @@ def _instrumented_converse_stream(fn, tracer, metric_params):
         return response
 
     return with_instrumentation
+
 
 @dont_throw
 def _handle_stream_call(span, kwargs, response, metric_params):
@@ -264,11 +274,15 @@ def _handle_stream_call(span, kwargs, response, metric_params):
 
         guardrail_handling(response_body, vendor, model, metric_params)
 
-        _set_model_span_attributes(vendor, model, span, request_body, response_body, headers, metric_params)
+        _set_model_span_attributes(
+            vendor, model, span, request_body, response_body, headers, metric_params
+        )
 
         span.end()
 
-    response["body"] = StreamingWrapper(response["body"], stream_done_callback=stream_done)
+    response["body"] = StreamingWrapper(
+        response["body"], stream_done_callback=stream_done
+    )
 
 
 @dont_throw
@@ -290,7 +304,9 @@ def _handle_call(span, kwargs, response, metric_params):
 
     guardrail_handling(response_body, vendor, model, metric_params)
 
-    _set_model_span_attributes(vendor, model, span, request_body, response_body, headers, metric_params)
+    _set_model_span_attributes(
+        vendor, model, span, request_body, response_body, headers, metric_params
+    )
 
 
 @dont_throw
@@ -300,16 +316,22 @@ def _handle_converse(span, kwargs, response, metric_params):
 
     _set_span_attribute(span, SpanAttributes.LLM_SYSTEM, vendor)
     _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, model)
-    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TYPE, LLMRequestTypeValues.CHAT.value)
+    _set_span_attribute(
+        span, SpanAttributes.LLM_REQUEST_TYPE, LLMRequestTypeValues.CHAT.value
+    )
 
-    #if vendor == "amazon":
+    # if vendor == "amazon":
     config = {}
     if "inferenceConfig" in kwargs:
         config = kwargs.get("inferenceConfig")
 
     _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TOP_P, config.get("topP"))
-    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TEMPERATURE, config.get("temperature"))
-    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MAX_TOKENS, config.get("maxTokens"))
+    _set_span_attribute(
+        span, SpanAttributes.LLM_REQUEST_TEMPERATURE, config.get("temperature")
+    )
+    _set_span_attribute(
+        span, SpanAttributes.LLM_REQUEST_MAX_TOKENS, config.get("maxTokens")
+    )
 
     _converse_usage_record(span, response, metric_params)
 
@@ -317,22 +339,28 @@ def _handle_converse(span, kwargs, response, metric_params):
         prompt_idx = 0
         if "system" in kwargs:
             for idx, prompt in enumerate(kwargs["system"]):
-                prompt_idx = idx+1
+                prompt_idx = idx + 1
                 _set_span_attribute(
                     span, f"{SpanAttributes.LLM_PROMPTS}.{idx}.role", "system"
                 )
                 # TODO: add support for "image"
                 _set_span_attribute(
-                    span, f"{SpanAttributes.LLM_PROMPTS}.{idx}.content", prompt.get("text")
+                    span,
+                    f"{SpanAttributes.LLM_PROMPTS}.{idx}.content",
+                    prompt.get("text"),
                 )
         if "messages" in kwargs:
             for idx, prompt in enumerate(kwargs["messages"]):
                 _set_span_attribute(
-                    span, f"{SpanAttributes.LLM_PROMPTS}.{prompt_idx+idx}.role", prompt.get("role")
+                    span,
+                    f"{SpanAttributes.LLM_PROMPTS}.{prompt_idx+idx}.role",
+                    prompt.get("role"),
                 )
                 # TODO: here we stringify the object, consider moving these to events or prompt.{i}.content.{j}
                 _set_span_attribute(
-                    span, f"{SpanAttributes.LLM_PROMPTS}.{prompt_idx+idx}.content", json.dumps(prompt.get("content", ""), default=str)
+                    span,
+                    f"{SpanAttributes.LLM_PROMPTS}.{prompt_idx+idx}.content",
+                    json.dumps(prompt.get("content", ""), default=str),
                 )
 
         if "output" in response:
@@ -340,7 +368,7 @@ def _handle_converse(span, kwargs, response, metric_params):
             _set_span_attribute(
                 span, f"{SpanAttributes.LLM_COMPLETIONS}.0.role", message.get("role")
             )
-            for idx, content in enumerate(message['content']):
+            for idx, content in enumerate(message["content"]):
                 _set_span_attribute(
                     span,
                     f"{SpanAttributes.LLM_COMPLETIONS}.{idx}.content",
@@ -354,67 +382,82 @@ def _handle_converse_stream(span, kwargs, response, metric_params):
 
     _set_span_attribute(span, SpanAttributes.LLM_SYSTEM, vendor)
     _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, model)
-    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TYPE, LLMRequestTypeValues.CHAT.value)
+    _set_span_attribute(
+        span, SpanAttributes.LLM_REQUEST_TYPE, LLMRequestTypeValues.CHAT.value
+    )
 
     config = {}
     if "inferenceConfig" in kwargs:
         config = kwargs.get("inferenceConfig")
 
     _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TOP_P, config.get("topP"))
-    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TEMPERATURE, config.get("temperature"))
-    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MAX_TOKENS, config.get("maxTokens"))
+    _set_span_attribute(
+        span, SpanAttributes.LLM_REQUEST_TEMPERATURE, config.get("temperature")
+    )
+    _set_span_attribute(
+        span, SpanAttributes.LLM_REQUEST_MAX_TOKENS, config.get("maxTokens")
+    )
 
     if should_send_prompts():
         prompt_idx = 0
         if "system" in kwargs:
             for idx, prompt in enumerate(kwargs["system"]):
-                prompt_idx = idx+1
+                prompt_idx = idx + 1
                 _set_span_attribute(
                     span, f"{SpanAttributes.LLM_PROMPTS}.{idx}.role", "system"
                 )
                 # TODO: add support for "image"
                 _set_span_attribute(
-                    span, f"{SpanAttributes.LLM_PROMPTS}.{idx}.content", prompt.get("text")
+                    span,
+                    f"{SpanAttributes.LLM_PROMPTS}.{idx}.content",
+                    prompt.get("text"),
                 )
         if "messages" in kwargs:
             for idx, prompt in enumerate(kwargs["messages"]):
                 _set_span_attribute(
-                    span, f"{SpanAttributes.LLM_PROMPTS}.{prompt_idx+idx}.role", prompt.get("role")
+                    span,
+                    f"{SpanAttributes.LLM_PROMPTS}.{prompt_idx+idx}.role",
+                    prompt.get("role"),
                 )
                 # TODO: here we stringify the object, consider moving these to events or prompt.{i}.content.{j}
                 _set_span_attribute(
-                    span, f"{SpanAttributes.LLM_PROMPTS}.{prompt_idx+idx}.content", json.dumps(prompt.get("content", ""), default=str)
+                    span,
+                    f"{SpanAttributes.LLM_PROMPTS}.{prompt_idx+idx}.content",
+                    json.dumps(prompt.get("content", ""), default=str),
                 )
 
-    stream = response.get('stream')
+    stream = response.get("stream")
     if stream:
+
         def handler(func):
             def wrap(*args, **kwargs):
                 response_msg = kwargs.pop("response_msg")
                 span = kwargs.pop("span")
                 event = func(*args, **kwargs)
-                if 'contentBlockDelta' in event:
-                    response_msg.append(event['contentBlockDelta']['delta']['text'])
-                elif 'messageStart' in event:
+                if "contentBlockDelta" in event:
+                    response_msg.append(event["contentBlockDelta"]["delta"]["text"])
+                elif "messageStart" in event:
                     if should_send_prompts():
-                        role = event['messageStart']['role']
+                        role = event["messageStart"]["role"]
                         _set_span_attribute(
                             span, f"{SpanAttributes.LLM_COMPLETIONS}.0.role", role
                         )
-                elif 'metadata' in event:
+                elif "metadata" in event:
                     # last message sent
-                    guardrail_converse(event['metadata'], vendor, model, metric_params)
-                    _converse_usage_record(span, event['metadata'], metric_params)
+                    guardrail_converse(event["metadata"], vendor, model, metric_params)
+                    _converse_usage_record(span, event["metadata"], metric_params)
                     span.end()
                 elif "messageStop" in event:
                     if should_send_prompts():
                         _set_span_attribute(
                             span,
                             f"{SpanAttributes.LLM_COMPLETIONS}.0.content",
-                            ''.join(response_msg),
+                            "".join(response_msg),
                         )
                 return event
+
             return partial(wrap, response_msg=[], span=span)
+
         stream._parse_event = handler(stream._parse_event)
 
 
@@ -434,22 +477,24 @@ def _converse_usage_record(span, response, metric_params):
         metric_params,
     )
 
+
 def _uniform_amazon_event_stream(event_stream):
     results = []
     inputTokenCount = 0
     for event in event_stream:
-        if 'chunk' in event:
-            data = json.loads(event['chunk'].get('bytes').decode())
+        if "chunk" in event:
+            data = json.loads(event["chunk"].get("bytes").decode())
             for key in data:
-                if key == 'inputTextTokenCount':
+                if key == "inputTextTokenCount":
                     inputTokenCount = data[key]
-            if 'inputTextTokenCount' in data:
-                del data['inputTextTokenCount']
+            if "inputTextTokenCount" in data:
+                del data["inputTextTokenCount"]
             results.append(data)
     return {
         "inputTextTokenCount": inputTokenCount,
         "results": results,
     }
+
 
 def _record_usage_to_span(span, prompt_tokens, completion_tokens, metric_params):
     _set_span_attribute(
@@ -515,7 +560,10 @@ def _metric_shared_attributes(
         "stream": is_streaming,
     }
 
-def _set_model_span_attributes(vendor, model, span, request_body, response_body, headers, metric_params):
+
+def _set_model_span_attributes(
+    vendor, model, span, request_body, response_body, headers, metric_params
+):
 
     response_model = response_body.get("model")
     response_id = response_body.get("id")
@@ -541,7 +589,10 @@ def _set_model_span_attributes(vendor, model, span, request_body, response_body,
     elif vendor == "meta":
         _set_llama_span_attributes(span, request_body, response_body, metric_params)
     elif vendor == "amazon":
-        _set_amazon_span_attributes(span, request_body, response_body, headers, metric_params)
+        _set_amazon_span_attributes(
+            span, request_body, response_body, headers, metric_params
+        )
+
 
 def _set_cohere_span_attributes(span, request_body, response_body, metric_params):
     _set_span_attribute(
@@ -801,7 +852,9 @@ def _set_llama_span_attributes(span, request_body, response_body, metric_params)
                 )
 
 
-def _set_amazon_span_attributes(span, request_body, response_body, headers, metric_params):
+def _set_amazon_span_attributes(
+    span, request_body, response_body, headers, metric_params
+):
     _set_span_attribute(
         span, SpanAttributes.LLM_REQUEST_TYPE, LLMRequestTypeValues.COMPLETION.value
     )
@@ -818,9 +871,12 @@ def _set_amazon_span_attributes(span, request_body, response_body, headers, metr
     elif "inferenceConfig" in request_body:
         config = request_body.get("inferenceConfig", {})
         _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TOP_P, config.get("topP"))
-        _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TEMPERATURE, config.get("temperature"))
-        _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MAX_TOKENS, config.get("maxTokens"))
-
+        _set_span_attribute(
+            span, SpanAttributes.LLM_REQUEST_TEMPERATURE, config.get("temperature")
+        )
+        _set_span_attribute(
+            span, SpanAttributes.LLM_REQUEST_MAX_TOKENS, config.get("maxTokens")
+        )
 
     total_completion_tokens = 0
     total_prompt_tokens = 0
@@ -830,10 +886,14 @@ def _set_amazon_span_attributes(span, request_body, response_body, headers, metr
             if "tokenCount" in result:
                 total_completion_tokens += int(result.get("tokenCount", 0))
             elif "totalOutputTextTokenCount" in result:
-                total_completion_tokens += int(result.get("totalOutputTextTokenCount", 0))
+                total_completion_tokens += int(
+                    result.get("totalOutputTextTokenCount", 0)
+                )
     elif "usage" in response_body:
         total_prompt_tokens += int(response_body.get("inputTokens", 0))
-        total_completion_tokens += int(headers.get("x-amzn-bedrock-output-token-count", 0))
+        total_completion_tokens += int(
+            headers.get("x-amzn-bedrock-output-token-count", 0)
+        )
     # checks for Titan models
     if "inputTextTokenCount" in response_body:
         total_prompt_tokens = response_body.get("inputTextTokenCount")
@@ -850,29 +910,36 @@ def _set_amazon_span_attributes(span, request_body, response_body, headers, metr
     if should_send_prompts():
         if "inputText" in request_body:
             _set_span_attribute(
-                span, f"{SpanAttributes.LLM_PROMPTS}.0.user", request_body.get("inputText")
+                span,
+                f"{SpanAttributes.LLM_PROMPTS}.0.user",
+                request_body.get("inputText"),
             )
         else:
             prompt_idx = 0
             if "system" in request_body:
                 for idx, prompt in enumerate(request_body["system"]):
-                    prompt_idx = idx+1
+                    prompt_idx = idx + 1
                     _set_span_attribute(
                         span, f"{SpanAttributes.LLM_PROMPTS}.{idx}.role", "system"
                     )
                     # TODO: add support for "image"
                     _set_span_attribute(
-                        span, f"{SpanAttributes.LLM_PROMPTS}.{idx}.content", prompt.get("text")
+                        span,
+                        f"{SpanAttributes.LLM_PROMPTS}.{idx}.content",
+                        prompt.get("text"),
                     )
             for idx, prompt in enumerate(request_body["messages"]):
                 _set_span_attribute(
-                    span, f"{SpanAttributes.LLM_PROMPTS}.{prompt_idx+idx}.role", prompt.get("role")
+                    span,
+                    f"{SpanAttributes.LLM_PROMPTS}.{prompt_idx+idx}.role",
+                    prompt.get("role"),
                 )
                 # TODO: here we stringify the object, consider moving these to events or prompt.{i}.content.{j}
                 _set_span_attribute(
-                    span, f"{SpanAttributes.LLM_PROMPTS}.{prompt_idx+idx}.content", json.dumps(prompt.get("content", ""), default=str)
+                    span,
+                    f"{SpanAttributes.LLM_PROMPTS}.{prompt_idx+idx}.content",
+                    json.dumps(prompt.get("content", ""), default=str),
                 )
-
 
         if "results" in response_body:
             for i, result in enumerate(response_body.get("results")):
@@ -891,7 +958,9 @@ def _set_amazon_span_attributes(span, request_body, response_body, headers, metr
             msgs = response_body.get("output").get("message", {}).get("content", [])
             for idx, msg in enumerate(msgs):
                 _set_span_attribute(
-                    span, f"{SpanAttributes.LLM_COMPLETIONS}.{idx}.content", msg.get("text")
+                    span,
+                    f"{SpanAttributes.LLM_COMPLETIONS}.{idx}.content",
+                    msg.get("text"),
                 )
 
 

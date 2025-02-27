@@ -1,5 +1,3 @@
-from pyexpat.errors import messages
-
 import pytest
 from opentelemetry.semconv_ai import SpanAttributes
 
@@ -74,12 +72,13 @@ def test_titan_completion(test_context, brt):
     # only request id in the response.
     assert bedrock_span.attributes.get("gen_ai.response.id") is None
 
+
 @pytest.mark.vcr
 def test_titan_invoke_stream(test_context, brt):
     body = json.dumps(
         {
             "inputText": "Translate to spanish: 'Amazon Bedrock is the easiest way to build and"
-                         + "scale generative AI applications with base models (FMs)'.",
+            + "scale generative AI applications with base models (FMs)'.",
             "textGenerationConfig": {
                 "maxTokenCount": 200,
                 "temperature": 0.5,
@@ -96,18 +95,18 @@ def test_titan_invoke_stream(test_context, brt):
         body=body, modelId=modelId, accept=accept, contentType=contentType
     )
 
-    stream = response.get('body')
+    stream = response.get("body")
     response_body = None
     generated_text = []
     if stream:
         for event in stream:
-            if 'chunk' in event:
-                response_body = json.loads(event['chunk'].get('bytes').decode())
+            if "chunk" in event:
+                response_body = json.loads(event["chunk"].get("bytes").decode())
                 assert response_body != None
-                generated_text.append(response_body['outputText'])
+                generated_text.append(response_body["outputText"])
 
     assert len(generated_text) > 0
-    #response_body = json.loads(response.get("body").read())
+    # response_body = json.loads(response.get("body").read())
 
     exporter, _, _ = test_context
     spans = exporter.get_finished_spans()
@@ -118,8 +117,8 @@ def test_titan_invoke_stream(test_context, brt):
 
     # Assert on model name
     assert (
-            bedrock_span.attributes[SpanAttributes.LLM_REQUEST_MODEL]
-            == "titan-text-express-v1"
+        bedrock_span.attributes[SpanAttributes.LLM_REQUEST_MODEL]
+        == "titan-text-express-v1"
     )
 
     # Assert on vendor
@@ -134,15 +133,15 @@ def test_titan_invoke_stream(test_context, brt):
         "scale generative AI applications with base models (FMs)'."
     )
     assert (
-            bedrock_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.user"]
-            == expected_prompt
+        bedrock_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.user"]
+        == expected_prompt
     )
 
     # Assert on response
-    completion_text = ''.join(generated_text)
+    completion_text = "".join(generated_text)
     assert (
-            bedrock_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"]
-            == completion_text
+        bedrock_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"]
+        == completion_text
     )
 
     # Assert on other request parameters
@@ -157,32 +156,33 @@ def test_titan_invoke_stream(test_context, brt):
 @pytest.mark.vcr
 def test_titan_converse(test_context, brt):
     guardrail = {
-        'guardrailIdentifier': "5zwrmdlsra2e",
-        'guardrailVersion': 'DRAFT',
-        'trace': 'enabled'
+        "guardrailIdentifier": "5zwrmdlsra2e",
+        "guardrailVersion": "DRAFT",
+        "trace": "enabled",
     }
-    messages = [{
-        "role": "user",
-        "content": [
-            {
-                "guardContent": {
-                    "text": {
-                        "text": "Tokyo is the capital of Japan.",
-                        "qualifiers": ["grounding_source"],
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "guardContent": {
+                        "text": {
+                            "text": "Tokyo is the capital of Japan.",
+                            "qualifiers": ["grounding_source"],
+                        }
                     }
-                }
-            },
-            {
-                "guardContent": {
-                    "text": {
-                        "text": "What is the capital of Japan?",
-                        "qualifiers": ["query"],
+                },
+                {
+                    "guardContent": {
+                        "text": {
+                            "text": "What is the capital of Japan?",
+                            "qualifiers": ["query"],
+                        }
                     }
-                }
-            },
-        ]
-    }]
-
+                },
+            ],
+        }
+    ]
 
     modelId = "amazon.titan-text-express-v1"
 
@@ -201,8 +201,8 @@ def test_titan_converse(test_context, brt):
 
     # Assert on model name
     assert (
-            bedrock_span.attributes[SpanAttributes.LLM_REQUEST_MODEL]
-            == "titan-text-express-v1"
+        bedrock_span.attributes[SpanAttributes.LLM_REQUEST_MODEL]
+        == "titan-text-express-v1"
     )
 
     # Assert on vendor
@@ -212,53 +212,51 @@ def test_titan_converse(test_context, brt):
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
 
     # Assert on prompt
-    assert (
-            bedrock_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"]
-            == "user"
-    )
-    assert (
-            bedrock_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
-            == json.dumps(messages[0].get("content"), default=str)
-    )
+    assert bedrock_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"] == "user"
+    assert bedrock_span.attributes[
+        f"{SpanAttributes.LLM_PROMPTS}.0.content"
+    ] == json.dumps(messages[0].get("content"), default=str)
 
     # Assert on response
     generated_text = response["output"]["message"]["content"]
     for i in range(0, len(generated_text)):
         assert (
-                bedrock_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.{i}.content"]
-                == generated_text[i]["text"]
+            bedrock_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.{i}.content"]
+            == generated_text[i]["text"]
         )
 
 
 @pytest.mark.vcr
 def test_titan_converse_stream(test_context, brt):
     guardrail = {
-        'guardrailIdentifier': "5zwrmdlsra2e",
-        'guardrailVersion': 'DRAFT',
-        'trace': 'enabled'
+        "guardrailIdentifier": "5zwrmdlsra2e",
+        "guardrailVersion": "DRAFT",
+        "trace": "enabled",
     }
 
-    messages = [{
-        "role": "user",
-        "content": [
-            {
-                "guardContent": {
-                    "text": {
-                        "text": "Tokyo is the capital of Japan.",
-                        "qualifiers": ["grounding_source"],
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "guardContent": {
+                        "text": {
+                            "text": "Tokyo is the capital of Japan.",
+                            "qualifiers": ["grounding_source"],
+                        }
                     }
-                }
-            },
-            {
-                "guardContent": {
-                    "text": {
-                        "text": "What is the capital of Japan?",
-                        "qualifiers": ["query"],
+                },
+                {
+                    "guardContent": {
+                        "text": {
+                            "text": "What is the capital of Japan?",
+                            "qualifiers": ["query"],
+                        }
                     }
-                }
-            },
-        ]
-    }]
+                },
+            ],
+        }
+    ]
 
     modelId = "amazon.titan-text-express-v1"
 
@@ -268,7 +266,7 @@ def test_titan_converse_stream(test_context, brt):
         guardrailConfig=guardrail,
     )
 
-    stream = response.get('stream')
+    stream = response.get("stream")
 
     response_role = None
     content = ""
@@ -278,17 +276,17 @@ def test_titan_converse_stream(test_context, brt):
     if stream:
         for event in stream:
 
-            if 'messageStart' in event:
-                response_role = event['messageStart']['role']
+            if "messageStart" in event:
+                response_role = event["messageStart"]["role"]
 
-            if 'contentBlockDelta' in event:
-                content += event['contentBlockDelta']['delta']['text']
+            if "contentBlockDelta" in event:
+                content += event["contentBlockDelta"]["delta"]["text"]
 
-            if 'metadata' in event:
-                metadata = event['metadata']
-                if 'usage' in metadata:
-                    inputTokens = metadata['usage']['inputTokens']
-                    outputTokens = metadata['usage']['outputTokens']
+            if "metadata" in event:
+                metadata = event["metadata"]
+                if "usage" in metadata:
+                    inputTokens = metadata["usage"]["inputTokens"]
+                    outputTokens = metadata["usage"]["outputTokens"]
 
     exporter, _, _ = test_context
     spans = exporter.get_finished_spans()
@@ -299,8 +297,8 @@ def test_titan_converse_stream(test_context, brt):
 
     # Assert on model name
     assert (
-            bedrock_span.attributes[SpanAttributes.LLM_REQUEST_MODEL]
-            == "titan-text-express-v1"
+        bedrock_span.attributes[SpanAttributes.LLM_REQUEST_MODEL]
+        == "titan-text-express-v1"
     )
 
     # Assert on vendor
@@ -310,26 +308,30 @@ def test_titan_converse_stream(test_context, brt):
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
 
     # Assert on prompt
-    assert (
-            bedrock_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"]
-            == "user"
-    )
-    assert (
-            bedrock_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
-            == json.dumps(messages[0].get("content"), default=str)
-    )
+    assert bedrock_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"] == "user"
+    assert bedrock_span.attributes[
+        f"{SpanAttributes.LLM_PROMPTS}.0.content"
+    ] == json.dumps(messages[0].get("content"), default=str)
 
     # Assert on response
     assert (
-            bedrock_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"]
-            == content
+        bedrock_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"]
+        == content
     )
     assert (
-            bedrock_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.role"]
-            == response_role
+        bedrock_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.role"]
+        == response_role
     )
 
     # Assert on usage data
-    assert bedrock_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == inputTokens
-    assert bedrock_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS] == outputTokens
-    assert bedrock_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == inputTokens + outputTokens
+    assert (
+        bedrock_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == inputTokens
+    )
+    assert (
+        bedrock_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS]
+        == outputTokens
+    )
+    assert (
+        bedrock_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
+        == inputTokens + outputTokens
+    )

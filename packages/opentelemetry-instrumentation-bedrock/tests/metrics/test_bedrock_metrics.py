@@ -3,6 +3,7 @@ import json
 import pytest
 from opentelemetry.semconv_ai import Meters, SpanAttributes
 
+
 @pytest.mark.vcr
 def test_invoke_model_metrics(test_context, brt):
     if brt is None:

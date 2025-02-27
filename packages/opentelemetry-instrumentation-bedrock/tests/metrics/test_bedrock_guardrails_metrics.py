@@ -6,10 +6,6 @@ from opentelemetry.semconv_ai import Meters, SpanAttributes
 
 @pytest.mark.vcr
 def test_titan_invoke_model_guardrail(test_context, brt):
-    if brt is None:
-        print("test_invoke_model_metrics test skipped.")
-        return
-
     _, _, reader = test_context
 
     body = json.dumps({})
@@ -21,14 +17,10 @@ def test_titan_invoke_model_guardrail(test_context, brt):
 
     assert_guardrails(reader)
 
+
 @pytest.mark.vcr
 def test_titan_invoke_stream_guardrail(test_context, brt):
-    if brt is None:
-        print("test_invoke_model_metrics test skipped.")
-        return
-
     _, _, reader = test_context
-
 
     body = json.dumps({})
 
@@ -44,16 +36,12 @@ def test_titan_invoke_stream_guardrail(test_context, brt):
 
 @pytest.mark.vcr
 def test_titan_converse_guardrail(test_context, brt):
-    if brt is None:
-        print("test_invoke_model_metrics test skipped.")
-        return
-
     _, _, reader = test_context
 
     guardrail = {
-        'guardrailIdentifier': "5zwrmdlsra2e",
-        'guardrailVersion': 'DRAFT',
-        'trace': 'enabled'
+        "guardrailIdentifier": "5zwrmdlsra2e",
+        "guardrailVersion": "DRAFT",
+        "trace": "enabled",
     }
 
     brt.converse(
@@ -64,18 +52,15 @@ def test_titan_converse_guardrail(test_context, brt):
 
     assert_guardrails(reader)
 
+
 @pytest.mark.vcr
 def test_titan_converse_stream_guardrail(test_context, brt):
-    if brt is None:
-        print("test_invoke_model_metrics test skipped.")
-        return
-
     _, _, reader = test_context
 
     guardrail = {
-        'guardrailIdentifier': "5zwrmdlsra2e",
-        'guardrailVersion': 'DRAFT',
-        'trace': 'enabled'
+        "guardrailIdentifier": "5zwrmdlsra2e",
+        "guardrailVersion": "DRAFT",
+        "trace": "enabled",
     }
 
     r = brt.converse_stream(
@@ -134,10 +119,9 @@ def assert_guardrails(reader):
                         ]
                         assert data_point.value > 0
 
-
                 assert (
-                        metric.data.data_points[0].attributes[SpanAttributes.LLM_SYSTEM]
-                        == "bedrock"
+                    metric.data.data_points[0].attributes[SpanAttributes.LLM_SYSTEM]
+                    == "bedrock"
                 )
 
     assert found_activations is True
