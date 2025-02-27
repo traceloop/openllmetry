@@ -4,34 +4,6 @@ import pytest
 from opentelemetry.semconv_ai import Meters, SpanAttributes
 
 @pytest.mark.vcr
-def test_invoke_model_guardrail(test_context, brt):
-    if brt is None:
-        print("test_invoke_model_metrics test skipped.")
-        return
-
-    _, _, reader = test_context
-
-    body = json.dumps(
-        {
-            "inputText": "Tell me a joke about opentelemetry",
-            "textGenerationConfig": {
-                "maxTokenCount": 200,
-                "temperature": 0.5,
-                "topP": 0.5,
-            },
-        }
-    )
-
-    r = brt.invoke_model(
-        body=body,
-        modelId="amazon.titan-text-express-v1",
-        accept="application/json",
-        contentType="application/json",
-    )
-    print(r)
-
-
-@pytest.mark.vcr
 def test_invoke_model_metrics(test_context, brt):
     if brt is None:
         print("test_invoke_model_metrics test skipped.")

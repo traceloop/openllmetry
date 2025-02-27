@@ -268,20 +268,6 @@ def _handle_stream_call(span, kwargs, response, metric_params):
 
         span.end()
 
-    # if vendor == "amazon":
-    #     original_event_stream, copy_event_stream = tee(response["body"], 2)
-    #     response["body"] = original_event_stream
-    #     response_body = _uniform_amazon_event_stream(copy_event_stream)
-    #
-    #     metric_params.vendor = vendor
-    #     metric_params.model = model
-    #     metric_params.is_stream = True
-    #
-    #     guardrail_handling(response_body, vendor, model, metric_params)
-    #     _set_model_span_attributes(vendor, model, span, request_body, headers, response_body, metric_params)
-    #
-    #     span.end()
-    # else:
     response["body"] = StreamingWrapper(response["body"], stream_done_callback=stream_done)
 
 
@@ -424,7 +410,7 @@ def _handle_converse_stream(span, kwargs, response, metric_params):
                     if should_send_prompts():
                         _set_span_attribute(
                             span,
-                            f"{SpanAttributes.LLM_COMPLETIONS}.{idx}.content",
+                            f"{SpanAttributes.LLM_COMPLETIONS}.0.content",
                             ''.join(response_msg),
                         )
                 return event
