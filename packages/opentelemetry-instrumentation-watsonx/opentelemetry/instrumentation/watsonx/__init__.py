@@ -2,6 +2,7 @@
 
 import logging
 import os
+import sys
 import types
 import time
 from typing import Collection, Optional
@@ -481,6 +482,9 @@ def _wrap(
             duration_histogram.record(duration, attributes=attributes)
         if exception_counter:
             exception_counter.add(1, attributes=attributes)
+
+        exc_type, exc_val, exc_tb = sys.exc_info()
+        span.__exit__(exc_type, exc_val, exc_tb)
 
         raise e
 
