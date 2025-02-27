@@ -1,3 +1,10 @@
+## v0.38.8 (2025-02-27)
+
+### Fix
+
+- **vertexai**: support generative model chat session tracing (#2689)
+- **groq**: Updated the instrumentation to collect the token histogram (#2685)
+
 ## v0.38.7 (2025-02-19)
 
 ### Fix
