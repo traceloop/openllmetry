@@ -91,8 +91,9 @@ def count_or_none(obj):
 
     return None
 
+
 @dont_throw
-def  _set_create_collection_attributes(span, kwargs):
+def _set_create_collection_attributes(span, kwargs):
     _set_span_attribute(
         span,
         AISpanAttributes.MILVUS_CREATE_COLLECTION_NAME,
@@ -128,8 +129,8 @@ def  _set_create_collection_attributes(span, kwargs):
         AISpanAttributes.MILVUS_CREATE_COLLECTION_VECTOR_FIELD,
         kwargs.get("vector_field_name"),
     )
-    
-    
+
+
 @dont_throw
 def _set_insert_attributes(span, kwargs):
     _set_span_attribute(

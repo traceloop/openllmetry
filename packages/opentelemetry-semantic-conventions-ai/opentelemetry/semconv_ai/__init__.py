@@ -166,7 +166,7 @@ class SpanAttributes:
     MILVUS_GET_COLLECTION_NAME = "db.milvus.get.collection_name"
     MILVUS_GET_PARTITION_NAMES_COUNT = "db.milvus.get.partition_names_count"
     MILVUS_GET_IDS_COUNT = "db.milvus.get.ids_count"
-    MILVUS_GET_OUTPUT_FIELDS_COUNT = "db.milvus.get.output_fields_count"    
+    MILVUS_GET_OUTPUT_FIELDS_COUNT = "db.milvus.get.output_fields_count"
     MILVUS_GET_TIMEOUT = "db.milvus.get.timeout"
     MILVUS_CREATE_COLLECTION_NAME = "db.milvus.create_collection.collection_name"
     MILVUS_CREATE_COLLECTION_DIMENSION = "db.milvus.create_collection.dimension"
