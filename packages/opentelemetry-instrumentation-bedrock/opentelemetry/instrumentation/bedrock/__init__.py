@@ -661,7 +661,9 @@ def _set_imported_model_span_attributes(span, request_body, response_body, metri
         span, SpanAttributes.LLM_REQUEST_MAX_TOKENS, request_body.get("max_tokens")
     )
     prompt_tokens = response_body.get("usage", {}).get("prompt_tokens") or response_body.get("prompt_token_count")
-    completion_tokens = response_body.get("usage", {}).get("completion_tokens") or response_body.get("generation_token_count")
+    completion_tokens = response_body.get("usage", {}).get(
+        "completion_tokens"
+    ) or response_body.get("generation_token_count")
 
     _record_usage_to_span(span, prompt_tokens, completion_tokens, metric_params, )
 
