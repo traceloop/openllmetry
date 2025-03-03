@@ -89,7 +89,6 @@ WRAPPED_METHODS = [
     {"package": "botocore.session", "object": "Session", "method": "create_client"},
 ]
 
-
 def should_send_prompts():
     return (
         os.getenv("TRACELOOP_TRACE_CONTENT") or "true"
@@ -920,6 +919,14 @@ def _set_amazon_span_attributes(
                     msg.get("text"),
                 )
 
+class GuardrailMeters:
+    LLM_BEDROCK_GUARDRAIL_ACTIVATION = "gen_ai.bedrock.guardrail.activation"
+    LLM_BEDROCK_GUARDRAIL_LATENCY = "gen_ai.bedrock.guardrail.latency"
+    LLM_BEDROCK_GUARDRAIL_COVERAGE = "gen_ai.bedrock.guardrail.coverage"
+    LLM_BEDROCK_GUARDRAIL_SENSITIVE = "gen_ai.bedrock.guardrail.sensitive_info"
+    LLM_BEDROCK_GUARDRAIL_TOPICS = "gen_ai.bedrock.guardrail.topics"
+    LLM_BEDROCK_GUARDRAIL_CONTENT = "gen_ai.bedrock.guardrail.content"
+    LLM_BEDROCK_GUARDRAIL_WORDS = "gen_ai.bedrock.guardrail.words"
 
 def _create_metrics(meter: Meter):
     token_histogram = meter.create_histogram(
@@ -949,43 +956,43 @@ def _create_metrics(meter: Meter):
 
     # Guardrail metrics
     guardrail_activation = meter.create_counter(
-        name=Meters.LLM_BEDROCK_GUARDRAIL_ACTIVATION,
+        name=GuardrailMeters.LLM_BEDROCK_GUARDRAIL_ACTIVATION,
         unit="",
         description="Number of guardrail activation",
     )
 
     guardrail_latency_histogram = meter.create_histogram(
-        name=Meters.LLM_BEDROCK_GUARDRAIL_LATENCY,
+        name=GuardrailMeters.LLM_BEDROCK_GUARDRAIL_LATENCY,
         unit="ms",
         description="GenAI guardrail latency",
     )
 
     guardrail_coverage = meter.create_counter(
-        name=Meters.LLM_BEDROCK_GUARDRAIL_COVERAGE,
+        name=GuardrailMeters.LLM_BEDROCK_GUARDRAIL_COVERAGE,
         unit="char",
         description="GenAI guardrail coverage",
     )
 
     guardrail_sensitive_info = meter.create_counter(
-        name=Meters.LLM_BEDROCK_GUARDRAIL_SENSITIVE,
+        name=GuardrailMeters.LLM_BEDROCK_GUARDRAIL_SENSITIVE,
         unit="",
         description="GenAI guardrail sensitive information protection",
     )
 
     guardrail_topic = meter.create_counter(
-        name=Meters.LLM_BEDROCK_GUARDRAIL_TOPICS,
+        name=GuardrailMeters.LLM_BEDROCK_GUARDRAIL_TOPICS,
         unit="",
         description="GenAI guardrail topics protection",
     )
 
     guardrail_content = meter.create_counter(
-        name=Meters.LLM_BEDROCK_GUARDRAIL_CONTENT,
+        name=GuardrailMeters.LLM_BEDROCK_GUARDRAIL_CONTENT,
         unit="",
         description="GenAI guardrail content filter protection",
     )
 
     guardrail_words = meter.create_counter(
-        name=Meters.LLM_BEDROCK_GUARDRAIL_WORDS,
+        name=GuardrailMeters.LLM_BEDROCK_GUARDRAIL_WORDS,
         unit="",
         description="GenAI guardrail words filter protection",
     )

@@ -1,7 +1,9 @@
 import json
 
 import pytest
-from opentelemetry.semconv_ai import Meters, SpanAttributes
+from opentelemetry.semconv_ai import SpanAttributes
+
+from opentelemetry.instrumentation.bedrock import GuardrailMeters
 
 
 @pytest.mark.vcr
@@ -90,13 +92,13 @@ def assert_guardrails(reader):
         for sm in rm.scope_metrics:
             for metric in sm.metrics:
 
-                if metric.name == Meters.LLM_BEDROCK_GUARDRAIL_ACTIVATION:
+                if metric.name == GuardrailMeters.LLM_BEDROCK_GUARDRAIL_ACTIVATION:
                     found_activations = True
                     for data_point in metric.data.data_points:
                         assert data_point.attributes["gen_ai.guardrail"] != ""
                         assert data_point.value > 0
 
-                if metric.name == Meters.LLM_BEDROCK_GUARDRAIL_LATENCY:
+                if metric.name == GuardrailMeters.LLM_BEDROCK_GUARDRAIL_LATENCY:
                     found_latency = True
                     for data_point in metric.data.data_points:
                         assert data_point.attributes[SpanAttributes.LLM_TOKEN_TYPE] in [
@@ -110,7 +112,7 @@ def assert_guardrails(reader):
                         data_point.sum > 0 for data_point in metric.data.data_points
                     )
 
-                if metric.name == Meters.LLM_BEDROCK_GUARDRAIL_COVERAGE:
+                if metric.name == GuardrailMeters.LLM_BEDROCK_GUARDRAIL_COVERAGE:
                     found_coverage = True
                     for data_point in metric.data.data_points:
                         assert data_point.attributes[SpanAttributes.LLM_TOKEN_TYPE] in [
