@@ -1,7 +1,6 @@
 """OpenTelemetry Bedrock instrumentation"""
 
 from functools import partial, wraps
-from itertools import tee
 import json
 import logging
 import os
@@ -320,7 +319,6 @@ def _handle_converse(span, kwargs, response, metric_params):
         span, SpanAttributes.LLM_REQUEST_TYPE, LLMRequestTypeValues.CHAT.value
     )
 
-    # if vendor == "amazon":
     config = {}
     if "inferenceConfig" in kwargs:
         config = kwargs.get("inferenceConfig")
@@ -336,32 +334,7 @@ def _handle_converse(span, kwargs, response, metric_params):
     _converse_usage_record(span, response, metric_params)
 
     if should_send_prompts():
-        prompt_idx = 0
-        if "system" in kwargs:
-            for idx, prompt in enumerate(kwargs["system"]):
-                prompt_idx = idx + 1
-                _set_span_attribute(
-                    span, f"{SpanAttributes.LLM_PROMPTS}.{idx}.role", "system"
-                )
-                # TODO: add support for "image"
-                _set_span_attribute(
-                    span,
-                    f"{SpanAttributes.LLM_PROMPTS}.{idx}.content",
-                    prompt.get("text"),
-                )
-        if "messages" in kwargs:
-            for idx, prompt in enumerate(kwargs["messages"]):
-                _set_span_attribute(
-                    span,
-                    f"{SpanAttributes.LLM_PROMPTS}.{prompt_idx+idx}.role",
-                    prompt.get("role"),
-                )
-                # TODO: here we stringify the object, consider moving these to events or prompt.{i}.content.{j}
-                _set_span_attribute(
-                    span,
-                    f"{SpanAttributes.LLM_PROMPTS}.{prompt_idx+idx}.content",
-                    json.dumps(prompt.get("content", ""), default=str),
-                )
+        _report_converse_input_prompt(kwargs, span)
 
         if "output" in response:
             message = response["output"]["message"]
@@ -399,32 +372,7 @@ def _handle_converse_stream(span, kwargs, response, metric_params):
     )
 
     if should_send_prompts():
-        prompt_idx = 0
-        if "system" in kwargs:
-            for idx, prompt in enumerate(kwargs["system"]):
-                prompt_idx = idx + 1
-                _set_span_attribute(
-                    span, f"{SpanAttributes.LLM_PROMPTS}.{idx}.role", "system"
-                )
-                # TODO: add support for "image"
-                _set_span_attribute(
-                    span,
-                    f"{SpanAttributes.LLM_PROMPTS}.{idx}.content",
-                    prompt.get("text"),
-                )
-        if "messages" in kwargs:
-            for idx, prompt in enumerate(kwargs["messages"]):
-                _set_span_attribute(
-                    span,
-                    f"{SpanAttributes.LLM_PROMPTS}.{prompt_idx+idx}.role",
-                    prompt.get("role"),
-                )
-                # TODO: here we stringify the object, consider moving these to events or prompt.{i}.content.{j}
-                _set_span_attribute(
-                    span,
-                    f"{SpanAttributes.LLM_PROMPTS}.{prompt_idx+idx}.content",
-                    json.dumps(prompt.get("content", ""), default=str),
-                )
+        _report_converse_input_prompt(kwargs, span)
 
     stream = response.get("stream")
     if stream:
@@ -460,6 +408,33 @@ def _handle_converse_stream(span, kwargs, response, metric_params):
 
         stream._parse_event = handler(stream._parse_event)
 
+def _report_converse_input_prompt(kwargs, span):
+    prompt_idx = 0
+    if "system" in kwargs:
+        for idx, prompt in enumerate(kwargs["system"]):
+            prompt_idx = idx + 1
+            _set_span_attribute(
+                span, f"{SpanAttributes.LLM_PROMPTS}.{idx}.role", "system"
+            )
+            # TODO: add support for "image"
+            _set_span_attribute(
+                span,
+                f"{SpanAttributes.LLM_PROMPTS}.{idx}.content",
+                prompt.get("text"),
+            )
+    if "messages" in kwargs:
+        for idx, prompt in enumerate(kwargs["messages"]):
+            _set_span_attribute(
+                span,
+                f"{SpanAttributes.LLM_PROMPTS}.{prompt_idx+idx}.role",
+                prompt.get("role"),
+            )
+            # TODO: here we stringify the object, consider moving these to events or prompt.{i}.content.{j}
+            _set_span_attribute(
+                span,
+                f"{SpanAttributes.LLM_PROMPTS}.{prompt_idx+idx}.content",
+                json.dumps(prompt.get("content", ""), default=str),
+            )
 
 def _converse_usage_record(span, response, metric_params):
     prompt_tokens = 0
@@ -476,24 +451,6 @@ def _converse_usage_record(span, response, metric_params):
         completion_tokens,
         metric_params,
     )
-
-
-def _uniform_amazon_event_stream(event_stream):
-    results = []
-    inputTokenCount = 0
-    for event in event_stream:
-        if "chunk" in event:
-            data = json.loads(event["chunk"].get("bytes").decode())
-            for key in data:
-                if key == "inputTextTokenCount":
-                    inputTokenCount = data[key]
-            if "inputTextTokenCount" in data:
-                del data["inputTextTokenCount"]
-            results.append(data)
-    return {
-        "inputTextTokenCount": inputTokenCount,
-        "results": results,
-    }
 
 
 def _record_usage_to_span(span, prompt_tokens, completion_tokens, metric_params):
