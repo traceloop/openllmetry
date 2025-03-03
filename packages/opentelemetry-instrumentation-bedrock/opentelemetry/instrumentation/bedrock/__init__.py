@@ -197,9 +197,10 @@ def _handle_stream_call(span, kwargs, response, metric_params):
     @dont_throw
     def stream_done(response_body):
         request_body = json.loads(kwargs.get("body"))
+        modelId = kwargs.get("modelId")
 
-        if "." in kwargs.get("modelId"):
-            (vendor, model) = kwargs.get("modelId").split(".")
+        if modelId is not None and "." in modelId:
+            (vendor, model) = modelId.split(".")
         else:
             vendor = "imported_model"
             model = kwargs.get("modelId")
@@ -252,9 +253,10 @@ def _handle_call(span, kwargs, response, metric_params):
     )
     request_body = json.loads(kwargs.get("body"))
     response_body = json.loads(response.get("body").read())
+    modelId = kwargs.get("modelId")
 
-    if "." in kwargs.get("modelId"):
-        (vendor, model) = kwargs.get("modelId").split(".")
+    if modelId is not None and "." in modelId:
+        (vendor, model) = modelId.split(".")
     else:
         vendor = "imported_model"
         model = kwargs.get("modelId")
@@ -660,7 +662,11 @@ def _set_imported_model_span_attributes(span, request_body, response_body, metri
     _set_span_attribute(
         span, SpanAttributes.LLM_REQUEST_MAX_TOKENS, request_body.get("max_tokens")
     )
-    prompt_tokens = response_body.get("usage", {}).get("prompt_tokens") if response_body.get("usage", {}).get("prompt_tokens") is not None else response_body.get("prompt_token_count")
+    prompt_tokens = (
+        response_body.get("usage", {}).get("prompt_tokens")
+        if response_body.get("usage", {}).get("prompt_tokens") is not None
+        else response_body.get("prompt_token_count")
+    )
     completion_tokens = response_body.get("usage", {}).get(
         "completion_tokens"
     ) or response_body.get("generation_token_count")
