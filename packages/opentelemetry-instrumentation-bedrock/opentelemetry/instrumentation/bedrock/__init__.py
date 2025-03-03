@@ -198,7 +198,11 @@ def _handle_stream_call(span, kwargs, response, metric_params):
     def stream_done(response_body):
         request_body = json.loads(kwargs.get("body"))
 
-        (vendor, model) = kwargs.get("modelId").split(".")
+        if "." in kwargs.get("modelId"):
+            (vendor, model) = kwargs.get("modelId").split(".")
+        else:
+            vendor = "imported_model"
+            model = kwargs.get("modelId")
 
         metric_params.vendor = vendor
         metric_params.model = model
@@ -233,6 +237,8 @@ def _handle_stream_call(span, kwargs, response, metric_params):
             _set_amazon_span_attributes(
                 span, request_body, response_body, metric_params
             )
+        elif vendor == "imported_model":
+            _set_imported_model_span_attributes(span, request_body, response_body, metric_params)
 
         span.end()
 
@@ -247,8 +253,11 @@ def _handle_call(span, kwargs, response, metric_params):
     request_body = json.loads(kwargs.get("body"))
     response_body = json.loads(response.get("body").read())
 
-    (vendor, model) = kwargs.get("modelId").split(".")
-
+    if "." in kwargs.get("modelId"):
+        (vendor, model) = kwargs.get("modelId").split(".")
+    else:
+        vendor = "imported_model"
+        model = kwargs.get("modelId")
     metric_params.vendor = vendor
     metric_params.model = model
     metric_params.is_stream = False
@@ -278,6 +287,8 @@ def _handle_call(span, kwargs, response, metric_params):
         _set_llama_span_attributes(span, request_body, response_body, metric_params)
     elif vendor == "amazon":
         _set_amazon_span_attributes(span, request_body, response_body, metric_params)
+    elif vendor == "imported_model":
+        _set_imported_model_span_attributes(span, request_body, response_body, metric_params)
 
 
 def _record_usage_to_span(span, prompt_tokens, completion_tokens, metric_params):
@@ -633,6 +644,34 @@ def _set_amazon_span_attributes(span, request_body, response_body, metric_params
                 span,
                 f"{SpanAttributes.LLM_COMPLETIONS}.{i}.content",
                 result.get("outputText"),
+            )
+
+
+def _set_imported_model_span_attributes(span, request_body, response_body, metric_params):
+    _set_span_attribute(
+        span, SpanAttributes.LLM_REQUEST_TYPE, LLMRequestTypeValues.COMPLETION.value
+    )
+    _set_span_attribute(
+        span, SpanAttributes.LLM_REQUEST_TOP_P, request_body.get("topP")
+    )
+    _set_span_attribute(
+        span, SpanAttributes.LLM_REQUEST_TEMPERATURE, request_body.get("temperature")
+    )
+    _set_span_attribute(
+        span, SpanAttributes.LLM_REQUEST_MAX_TOKENS, request_body.get("max_tokens")
+    )
+    prompt_tokens = response_body.get("usage", {}).get("prompt_tokens") or response_body.get("prompt_token_count")
+    completion_tokens = response_body.get("usage", {}).get("completion_tokens") or response_body.get("generation_token_count")
+
+    _record_usage_to_span(span, prompt_tokens, completion_tokens, metric_params, )
+
+    if should_send_prompts():
+        _set_span_attribute(
+            span, f"{SpanAttributes.LLM_PROMPTS}.0.content", request_body.get("prompt")
+        )
+        _set_span_attribute(
+                span, f"{SpanAttributes.LLM_COMPLETIONS}.0.content",
+                response_body.get("generation"),
             )
 
 
