@@ -196,3 +196,43 @@ def test_milvus_query_and(exporter, collection):
         _id = event.attributes.get("id")
         assert isinstance(tag, str)
         assert isinstance(_id, int)
+
+
+def test_milvus_get_collection(exporter, collection):
+    insert_data(collection)
+    milvus.get(
+        collection_name=collection,
+        ids=[1000, 1001, 1002],
+        output_fields=["color_tag"],
+        timeout=10,
+    )
+    spans = exporter.get_finished_spans()
+    span = next(span for span in spans if span.name == "milvus.get")
+
+    assert span.attributes.get(SpanAttributes.VECTOR_DB_VENDOR) == "milvus"
+    assert span.attributes.get(SpanAttributes.VECTOR_DB_OPERATION) == "get"
+    assert (
+        span.attributes.get(SpanAttributes.MILVUS_GET_COLLECTION_NAME) == collection
+    )
+    assert span.attributes.get(SpanAttributes.MILVUS_GET_OUTPUT_FIELDS_COUNT) == 1
+    assert span.attributes.get(SpanAttributes.MILVUS_GET_TIMEOUT) == 10
+    assert span.attributes.get(SpanAttributes.MILVUS_GET_IDS_COUNT) == 3
+
+
+def test_milvus_delete_collection(exporter, collection):
+    insert_data(collection)
+    milvus.delete(
+        collection_name=collection,
+        ids=[1000, 1001, 1002],
+        timeout=10
+        )
+    spans = exporter.get_finished_spans()
+    span = next(span for span in spans if span.name == "milvus.delete")
+
+    assert span.attributes.get(SpanAttributes.VECTOR_DB_VENDOR) == "milvus"
+    assert span.attributes.get(SpanAttributes.VECTOR_DB_OPERATION) == "delete"
+    assert (
+        span.attributes.get(SpanAttributes.MILVUS_DELETE_COLLECTION_NAME) == collection
+    )
+    assert span.attributes.get(SpanAttributes.MILVUS_DELETE_IDS_COUNT) == 3
+    assert span.attributes.get(SpanAttributes.MILVUS_DELETE_TIMEOUT) == 10
