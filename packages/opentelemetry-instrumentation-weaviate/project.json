@@ -7,7 +7,7 @@
     "lock": {
       "executor": "@nxlv/python:run-commands",
       "options": {
-        "command": "poetry lock --no-update",
+        "command": "poetry lock",
         "cwd": "packages/opentelemetry-instrumentation-weaviate"
       }
     },
