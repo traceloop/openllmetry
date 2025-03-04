@@ -7,6 +7,7 @@ import inspect
 import warnings
 
 from opentelemetry import trace
+from opentelemetry.trace.status import Status, StatusCode
 from opentelemetry import context as context_api
 from opentelemetry.semconv_ai import SpanAttributes, TraceloopSpanKindValues
 
@@ -71,9 +72,14 @@ def aentity_class(
 def _handle_generator(span, res):
     # for some reason the SPAN_KEY is not being set in the context of the generator, so we re-set it
     context_api.attach(trace.set_span_in_context(span))
-    yield from res
-
-    span.end()
+    try:
+        yield from res
+    except Exception as e:
+        span.set_status(Status(StatusCode.ERROR, str(e)))
+        span.record_exception(e)
+        raise e
+    finally:
+        span.end()
 
     # Note: we don't detach the context here as this fails in some situations
     # https://github.com/open-telemetry/opentelemetry-python/issues/2606
@@ -188,7 +194,14 @@ def entity_method(
                     _handle_span_input(span, args, kwargs, cls=JSONEncoder)
 
                     async for item in _ahandle_generator(span, ctx_token, fn(*args, **kwargs)):
-                        yield item
+                        try:
+                            yield item
+                        except Exception as e:
+                            span.set_status(Status(StatusCode.ERROR, str(e)))
+                            span.record_exception(e)
+                            raise e
+                        finally:
+                            _cleanup_span(span, ctx_token)
                 return async_gen_wrap
             else:
                 @wraps(fn)
@@ -203,6 +216,10 @@ def entity_method(
                         res = await fn(*args, **kwargs)
                         _handle_span_output(span, res, cls=JSONEncoder)
                         return res
+                    except Exception as e:
+                        span.set_status(Status(StatusCode.ERROR, str(e)))
+                        span.record_exception(e)
+                        raise e
                     finally:
                         _cleanup_span(span, ctx_token)
                 return async_wrap
@@ -216,7 +233,13 @@ def entity_method(
                 span, ctx, ctx_token = _setup_span(entity_name, tlp_span_kind, version)
 
                 _handle_span_input(span, args, kwargs, cls=JSONEncoder)
-                res = fn(*args, **kwargs)
+                try:
+                    res = fn(*args, **kwargs)
+                except Exception as e:
+                    span.set_status(Status(StatusCode.ERROR, str(e)))
+                    span.record_exception(e)
+                    _cleanup_span(span, ctx_token)
+                    raise e
 
                 # span will be ended in the generator
                 if isinstance(res, types.GeneratorType):
