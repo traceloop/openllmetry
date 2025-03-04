@@ -1,3 +1,10 @@
+## v0.38.9 (2025-03-04)
+
+### Fix
+
+- **milvus**: updated the instrumentation to collect get() and create_collection() span attributes  (#2687)
+- **semconv**: added new semantic conventions for milvus db (#2727)
+
 ## v0.38.8 (2025-02-27)
 
 ### Fix
