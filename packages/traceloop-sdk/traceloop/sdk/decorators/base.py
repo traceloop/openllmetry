@@ -87,11 +87,16 @@ def _handle_generator(span, res):
 
 
 async def _ahandle_generator(span, ctx_token, res):
-    async for part in res:
-        yield part
-
-    span.end()
-    context_api.detach(ctx_token)
+    try:
+        async for part in res:
+            yield part
+    except Exception as e:
+        span.set_status(Status(StatusCode.ERROR, str(e)))
+        span.record_exception(e)
+        raise e
+    finally:
+        span.end()
+        context_api.detach(ctx_token)
 
 
 def _should_send_prompts():
@@ -193,15 +198,12 @@ def entity_method(
                     span, ctx, ctx_token = _setup_span(entity_name, tlp_span_kind, version)
                     _handle_span_input(span, args, kwargs, cls=JSONEncoder)
 
+                    res = []
                     async for item in _ahandle_generator(span, ctx_token, fn(*args, **kwargs)):
-                        try:
-                            yield item
-                        except Exception as e:
-                            span.set_status(Status(StatusCode.ERROR, str(e)))
-                            span.record_exception(e)
-                            raise e
-                        finally:
-                            _cleanup_span(span, ctx_token)
+                        res.append(item)
+                        yield item
+                    _handle_span_output(span, res, cls=JSONEncoder)
+
                 return async_gen_wrap
             else:
                 @wraps(fn)
