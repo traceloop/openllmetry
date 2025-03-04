@@ -42,6 +42,13 @@ WRAPPED_METHODS = [
         "is_async": True,
     },
     {
+        "package": "vertexai.generative_models",
+        "object": "ChatSession",
+        "method": "send_message",
+        "span_name": "vertexai.send_message",
+        "is_async": False,
+    },
+    {
         "package": "vertexai.preview.generative_models",
         "object": "GenerativeModel",
         "method": "generate_content",
@@ -54,6 +61,13 @@ WRAPPED_METHODS = [
         "method": "generate_content_async",
         "span_name": "vertexai.generate_content_async",
         "is_async": True,
+    },
+    {
+        "package": "vertexai.preview.generative_models",
+        "object": "ChatSession",
+        "method": "send_message",
+        "span_name": "vertexai.send_message",
+        "is_async": False,
     },
     {
         "package": "vertexai.language_models",

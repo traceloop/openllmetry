@@ -325,6 +325,8 @@ def _build_and_set_stream_response(
     start_time,
 ):
     stream_generated_text = ""
+    stream_model_id = ""
+    stream_stop_reason = ""
     stream_generated_token_count = 0
     stream_input_token_count = 0
     for item in response:
