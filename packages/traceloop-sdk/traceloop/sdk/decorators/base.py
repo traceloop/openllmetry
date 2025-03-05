@@ -198,12 +198,8 @@ def entity_method(
                     span, ctx, ctx_token = _setup_span(entity_name, tlp_span_kind, version)
                     _handle_span_input(span, args, kwargs, cls=JSONEncoder)
 
-                    res = []
                     async for item in _ahandle_generator(span, ctx_token, fn(*args, **kwargs)):
-                        res.append(item)
                         yield item
-                    _handle_span_output(span, res, cls=JSONEncoder)
-
                 return async_gen_wrap
             else:
                 @wraps(fn)

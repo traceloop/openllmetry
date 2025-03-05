@@ -229,9 +229,7 @@ def test_unrelated_entities(exporter):
 
     assert task_1_span.attributes[SpanAttributes.TRACELOOP_ENTITY_NAME] == "task_1"
     assert task_1_span.attributes[SpanAttributes.TRACELOOP_SPAN_KIND] == "task"
-    # Note: In the current implementation, spans may have parent relationships
-    # even for unrelated entities due to how the tracer context is managed
-    # assert task_1_span.parent is None
+    assert task_1_span.parent is None
 
 
 def test_unserializable_workflow(exporter):
