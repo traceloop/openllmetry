@@ -7,7 +7,7 @@ from traceloop.sdk.instruments import Instruments
 from traceloop.sdk.tracing.tracing import TracerWrapper
 from opentelemetry.sdk.trace.export import SimpleSpanProcessor
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
-
+from opentelemetry.context import attach, Context
 pytest_plugins = []
 
 
@@ -26,6 +26,10 @@ def exporter():
 @pytest.fixture(autouse=True)
 def clear_exporter(exporter):
     exporter.clear()
+    # Reset the tracing context to ensure tests don't affect each other
+    # Create a new empty context and attach it
+    # This effectively removes all previous context values
+    attach(Context())
 
 
 @pytest.fixture(autouse=True)
