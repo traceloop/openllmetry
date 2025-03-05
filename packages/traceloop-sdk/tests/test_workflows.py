@@ -23,9 +23,7 @@ def async_openai_client():
 def test_simple_workflow(exporter, openai_client):
     @task(name="something_creator", version=2)
     def create_something(what: str, subject: str):
-        Traceloop.set_prompt(
-            "Tell me a {what} about {subject}", {"what": what, "subject": subject}, 5
-        )
+        Traceloop.set_prompt("Tell me a {what} about {subject}", {"what": what, "subject": subject}, 5)
         completion = openai_client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[{"role": "user", "content": f"Tell me a {what} about {subject}"}],
@@ -45,43 +43,23 @@ def test_simple_workflow(exporter, openai_client):
         "pirate_joke_generator.workflow",
     ]
     open_ai_span = next(span for span in spans if span.name == "openai.chat")
-    assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
-        == "Tell me a joke about OpenTelemetry"
-    )
+    assert open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"] == "Tell me a joke about OpenTelemetry"
     assert open_ai_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
-    assert (
-        open_ai_span.attributes.get("traceloop.prompt.template")
-        == "Tell me a {what} about {subject}"
-    )
-    assert (
-        open_ai_span.attributes.get("traceloop.prompt.template_variables.what")
-        == "joke"
-    )
-    assert (
-        open_ai_span.attributes.get("traceloop.prompt.template_variables.subject")
-        == "OpenTelemetry"
-    )
+    assert open_ai_span.attributes.get("traceloop.prompt.template") == "Tell me a {what} about {subject}"
+    assert open_ai_span.attributes.get("traceloop.prompt.template_variables.what") == "joke"
+    assert open_ai_span.attributes.get("traceloop.prompt.template_variables.subject") == "OpenTelemetry"
     assert open_ai_span.attributes.get("traceloop.prompt.version") == 5
 
-    workflow_span = next(
-        span for span in spans if span.name == "pirate_joke_generator.workflow"
-    )
+    workflow_span = next(span for span in spans if span.name == "pirate_joke_generator.workflow")
     task_span = next(span for span in spans if span.name == "something_creator.task")
     assert json.loads(task_span.attributes[SpanAttributes.TRACELOOP_ENTITY_INPUT]) == {
         "args": ["joke"],
         "kwargs": {"subject": "OpenTelemetry"},
     }
 
-    assert (
-        json.loads(task_span.attributes.get(SpanAttributes.TRACELOOP_ENTITY_OUTPUT))
-        == joke
-    )
+    assert json.loads(task_span.attributes.get(SpanAttributes.TRACELOOP_ENTITY_OUTPUT)) == joke
     assert task_span.parent.span_id == workflow_span.context.span_id
-    assert (
-        workflow_span.attributes[SpanAttributes.TRACELOOP_ENTITY_NAME]
-        == "pirate_joke_generator"
-    )
+    assert workflow_span.attributes[SpanAttributes.TRACELOOP_ENTITY_NAME] == "pirate_joke_generator"
     assert workflow_span.attributes[SpanAttributes.TRACELOOP_ENTITY_VERSION] == 1
     assert task_span.attributes[SpanAttributes.TRACELOOP_ENTITY_VERSION] == 2
 
@@ -91,9 +69,7 @@ def test_simple_workflow(exporter, openai_client):
 async def test_simple_aworkflow(exporter, async_openai_client):
     @task(name="something_creator", version=2)
     async def create_something(what: str, subject: str):
-        Traceloop.set_prompt(
-            "Tell me a {what} about {subject}", {"what": what, "subject": subject}, 5
-        )
+        Traceloop.set_prompt("Tell me a {what} about {subject}", {"what": what, "subject": subject}, 5)
         completion = await async_openai_client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[{"role": "user", "content": f"Tell me a {what} about {subject}"}],
@@ -113,57 +89,34 @@ async def test_simple_aworkflow(exporter, async_openai_client):
         "pirate_joke_generator.workflow",
     ]
     open_ai_span = next(span for span in spans if span.name == "openai.chat")
-    assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
-        == "Tell me a joke about OpenTelemetry"
-    )
+    assert open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"] == "Tell me a joke about OpenTelemetry"
     assert open_ai_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
-    assert (
-        open_ai_span.attributes.get("traceloop.prompt.template")
-        == "Tell me a {what} about {subject}"
-    )
-    assert (
-        open_ai_span.attributes.get("traceloop.prompt.template_variables.what")
-        == "joke"
-    )
-    assert (
-        open_ai_span.attributes.get("traceloop.prompt.template_variables.subject")
-        == "OpenTelemetry"
-    )
+    assert open_ai_span.attributes.get("traceloop.prompt.template") == "Tell me a {what} about {subject}"
+    assert open_ai_span.attributes.get("traceloop.prompt.template_variables.what") == "joke"
+    assert open_ai_span.attributes.get("traceloop.prompt.template_variables.subject") == "OpenTelemetry"
     assert open_ai_span.attributes.get("traceloop.prompt.version") == 5
 
-    workflow_span = next(
-        span for span in spans if span.name == "pirate_joke_generator.workflow"
-    )
+    workflow_span = next(span for span in spans if span.name == "pirate_joke_generator.workflow")
     task_span = next(span for span in spans if span.name == "something_creator.task")
     assert json.loads(task_span.attributes[SpanAttributes.TRACELOOP_ENTITY_INPUT]) == {
         "args": ["joke"],
         "kwargs": {"subject": "OpenTelemetry"},
     }
 
-    assert (
-        json.loads(task_span.attributes.get(SpanAttributes.TRACELOOP_ENTITY_OUTPUT))
-        == joke
-    )
+    assert json.loads(task_span.attributes.get(SpanAttributes.TRACELOOP_ENTITY_OUTPUT)) == joke
     assert task_span.parent.span_id == workflow_span.context.span_id
-    assert (
-        workflow_span.attributes[SpanAttributes.TRACELOOP_ENTITY_NAME]
-        == "pirate_joke_generator"
-    )
+    assert workflow_span.attributes[SpanAttributes.TRACELOOP_ENTITY_NAME] == "pirate_joke_generator"
     assert workflow_span.attributes[SpanAttributes.TRACELOOP_ENTITY_VERSION] == 1
     assert task_span.attributes[SpanAttributes.TRACELOOP_ENTITY_VERSION] == 2
 
 
 @pytest.mark.vcr
 def test_streaming_workflow(exporter, openai_client):
-
     @task(name="pirate_joke_generator")
     def joke_task():
         response_stream = openai_client.chat.completions.create(
             model="gpt-3.5-turbo",
-            messages=[
-                {"role": "user", "content": "Tell me a joke about OpenTelemetry"}
-            ],
+            messages=[{"role": "user", "content": "Tell me a joke about OpenTelemetry"}],
             stream=True,
         )
         for chunk in response_stream:
@@ -191,9 +144,7 @@ def test_streaming_workflow(exporter, openai_client):
             "joke_manager.workflow",
         ]
     )
-    generator_span = next(
-        span for span in spans if span.name == "pirate_joke_generator.task"
-    )
+    generator_span = next(span for span in spans if span.name == "pirate_joke_generator.task")
     runner_span = next(span for span in spans if span.name == "joke_runner.task")
     manager_span = next(span for span in spans if span.name == "joke_manager.workflow")
     openai_span = next(span for span in spans if span.name == "openai.chat")
@@ -222,9 +173,7 @@ def test_unrelated_entities(exporter):
     workflow_1_span = spans[0]
     task_1_span = spans[1]
 
-    assert (
-        workflow_1_span.attributes[SpanAttributes.TRACELOOP_ENTITY_NAME] == "workflow_1"
-    )
+    assert workflow_1_span.attributes[SpanAttributes.TRACELOOP_ENTITY_NAME] == "workflow_1"
     assert workflow_1_span.attributes[SpanAttributes.TRACELOOP_SPAN_KIND] == "workflow"
 
     assert task_1_span.attributes[SpanAttributes.TRACELOOP_ENTITY_NAME] == "task_1"
@@ -265,7 +214,6 @@ async def test_unserializable_async_workflow(exporter):
 
 @pytest.mark.asyncio
 async def test_async_generator_workflow(exporter):
-
     @workflow(name="async generator")
     async def stream_numbers():
         for i in range(3):
@@ -280,7 +228,7 @@ async def test_async_generator_workflow(exporter):
     spans = exporter.get_finished_spans()
 
     assert results == [0, 1, 2]
-    assert [span.name for span in spans] == ['async generator.workflow']
+    assert [span.name for span in spans] == ["async generator.workflow"]
 
 
 def test_sync_workflow_error_handling(exporter):
