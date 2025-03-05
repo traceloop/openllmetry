@@ -23,6 +23,12 @@ WRAPPED_METHODS = [
     {
         "package": pymilvus,
         "object": "MilvusClient",
+        "method": "create_collection",
+        "span_name": "milvus.create_collection"
+    },
+    {
+        "package": pymilvus,
+        "object": "MilvusClient",
         "method": "insert",
         "span_name": "milvus.insert"
     },
