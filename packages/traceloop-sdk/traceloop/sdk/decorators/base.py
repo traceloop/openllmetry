@@ -77,7 +77,7 @@ def _handle_generator(span, res):
     except Exception as e:
         span.set_status(Status(StatusCode.ERROR, str(e)))
         span.record_exception(e)
-        raise e
+        raise
     finally:
         span.end()
 
@@ -93,7 +93,7 @@ async def _ahandle_generator(span, ctx_token, res):
     except Exception as e:
         span.set_status(Status(StatusCode.ERROR, str(e)))
         span.record_exception(e)
-        raise e
+        raise
     finally:
         span.end()
         context_api.detach(ctx_token)
@@ -217,7 +217,7 @@ def entity_method(
                     except Exception as e:
                         span.set_status(Status(StatusCode.ERROR, str(e)))
                         span.record_exception(e)
-                        raise e
+                        raise
                     finally:
                         _cleanup_span(span, ctx_token)
                 return async_wrap
@@ -237,7 +237,7 @@ def entity_method(
                     span.set_status(Status(StatusCode.ERROR, str(e)))
                     span.record_exception(e)
                     _cleanup_span(span, ctx_token)
-                    raise e
+                    raise
 
                 # span will be ended in the generator
                 if isinstance(res, types.GeneratorType):
