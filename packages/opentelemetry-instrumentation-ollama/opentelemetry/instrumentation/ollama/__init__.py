@@ -208,7 +208,7 @@ def _set_response_attributes(span, token_histogram, llm_request_type, response):
             },
         )
 
-    if type(output_tokens) is int and output_tokens >= 0:
+    if isinstance(output_tokens, int) and output_tokens >= 0:
         token_histogram.record(
             output_tokens,
             attributes={
