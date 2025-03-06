@@ -10,7 +10,7 @@ def test_imported_model_completion(test_context, brt):
     payload = {"prompt": prompt, "max_tokens": 100, "topP": 2, "temperature": 0.5}
     payload_str = json.dumps(payload)
 
-    model_arn = "arn:aws:bedrock:us-east-1:767398002385:imported-model/r770sa9lvkp3"
+    model_arn = "arn:aws:bedrock:us-east-1:576853654267:imported-model/r123wa7lhoe3"
     response = brt.invoke_model(modelId=model_arn, body=payload_str)
     data = json.loads(response["body"].read().decode("utf-8"))
     exporter, _, _ = test_context
@@ -21,7 +21,7 @@ def test_imported_model_completion(test_context, brt):
 
     assert (
         imported_model_span.attributes[SpanAttributes.LLM_REQUEST_MODEL]
-        == "arn:aws:bedrock:us-east-1:767398002385:imported-model/r770sa9lvkp3"
+        == "arn:aws:bedrock:us-east-1:576853654267:imported-model/r123wa7lhoe3"
     )
     assert (
         imported_model_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "completion"
