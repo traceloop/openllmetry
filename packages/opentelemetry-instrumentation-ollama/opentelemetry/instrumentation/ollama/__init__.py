@@ -330,7 +330,7 @@ def _wrap(
                 duration,
                 attributes={
                     SpanAttributes.LLM_SYSTEM: "Ollama",
-                    SpanAttributes.LLM_RESPONSE_MODEL: response.get("model"),
+                    SpanAttributes.LLM_RESPONSE_MODEL: response.model,
                 },
             )
 
@@ -386,7 +386,7 @@ async def _awrap(
                 duration,
                 attributes={
                     SpanAttributes.LLM_SYSTEM: "Ollama",
-                    SpanAttributes.LLM_RESPONSE_MODEL: response.get("model"),
+                    SpanAttributes.LLM_RESPONSE_MODEL: response.model,
                 },
             )
 
