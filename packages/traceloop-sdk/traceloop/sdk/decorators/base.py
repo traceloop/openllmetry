@@ -258,7 +258,7 @@ def entity_class(
     tlp_span_kind: Optional[TraceloopSpanKindValues] = TraceloopSpanKindValues.TASK,
 ):
     def decorator(cls):
-        task_name = name if name else camel_to_snake(cls.__name__)
+        task_name = name if name else camel_to_snake(cls.__qualname__)
         method = getattr(cls, method_name)
         setattr(
             cls,
