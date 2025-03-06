@@ -185,7 +185,7 @@ def entity_method(
 ):
     def decorate(fn):
         is_async = _is_async_method(fn)
-        entity_name = name or fn.__name__
+        entity_name = name or fn.__qualname__
         if is_async:
             if inspect.isasyncgenfunction(fn):
                 @wraps(fn)
