@@ -1,3 +1,9 @@
+## v0.38.11 (2025-03-06)
+
+### Fix
+
+- **sdk**: When tracing task with no `name` provided , use qualified name instaed of name (#2743)
+
 ## v0.38.10 (2025-03-05)
 
 ### Fix
