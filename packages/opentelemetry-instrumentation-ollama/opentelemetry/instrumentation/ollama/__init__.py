@@ -198,7 +198,11 @@ def _set_response_attributes(span, token_histogram, llm_request_type, response):
         "Ollama"
     )
 
-    if isinstance(input_tokens, int) and input_tokens >= 0:
+    if (
+        token_histogram is not None
+        and isinstance(input_tokens, int)
+        and input_tokens >= 0
+    ):
         token_histogram.record(
             input_tokens,
             attributes={
@@ -208,7 +212,11 @@ def _set_response_attributes(span, token_histogram, llm_request_type, response):
             },
         )
 
-    if isinstance(output_tokens, int) and output_tokens >= 0:
+    if (
+        token_histogram is not None
+        and isinstance(output_tokens, int)
+        and output_tokens >= 0
+    ):
         token_histogram.record(
             output_tokens,
             attributes={
@@ -319,9 +327,9 @@ def _wrap(
     if span.is_recording():
         _set_input_attributes(span, llm_request_type, kwargs)
 
-    start_time = time.time()
+    start_time = time.perf_counter()
     response = wrapped(*args, **kwargs)
-    end_time = time.time()
+    end_time = time.perf_counter()
 
     if response:
         if duration_histogram:
@@ -376,9 +384,9 @@ async def _awrap(
     if span.is_recording():
         _set_input_attributes(span, llm_request_type, kwargs)
 
-    start_time = time.time()
+    start_time = time.perf_counter()
     response = await wrapped(*args, **kwargs)
-    end_time = time.time()
+    end_time = time.perf_counter()
     if response:
         if duration_histogram:
             duration = end_time - start_time
@@ -401,7 +409,7 @@ async def _awrap(
     return response
 
 
-def _create_metrics(meter: Meter):
+def _build_metrics(meter: Meter):
     token_histogram = meter.create_histogram(
         name=Meters.LLM_TOKEN_USAGE,
         unit="token",
@@ -417,7 +425,7 @@ def _create_metrics(meter: Meter):
     return token_histogram, duration_histogram
 
 
-def is_metrics_enabled() -> bool:
+def is_metrics_collection_enabled() -> bool:
     return (os.getenv("TRACELOOP_METRICS_ENABLED") or "true").lower() == "true"
 
 
@@ -438,11 +446,11 @@ class OllamaInstrumentor(BaseInstrumentor):
         meter_provider = kwargs.get("meter_provider")
         meter = get_meter(__name__, __version__, meter_provider)
 
-        if is_metrics_enabled():
+        if is_metrics_collection_enabled():
             (
                 token_histogram,
                 duration_histogram,
-            ) = _create_metrics(meter)
+            ) = _build_metrics(meter)
         else:
             (
                 token_histogram,
