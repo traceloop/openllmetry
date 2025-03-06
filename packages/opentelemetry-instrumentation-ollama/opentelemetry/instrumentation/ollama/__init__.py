@@ -447,7 +447,7 @@ class OllamaInstrumentor(BaseInstrumentor):
             (
                 token_histogram,
                 duration_histogram,
-            ) = (None, None, None)
+            ) = (None, None)
 
         for wrapped_method in WRAPPED_METHODS:
             wrap_method = wrapped_method.get("method")
