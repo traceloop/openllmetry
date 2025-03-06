@@ -3,14 +3,16 @@
 import logging
 import os
 import json
+import time
 from typing import Collection
 from opentelemetry.instrumentation.ollama.config import Config
 from opentelemetry.instrumentation.ollama.utils import dont_throw
 from wrapt import wrap_function_wrapper
 
 from opentelemetry import context as context_api
-from opentelemetry.trace import get_tracer, SpanKind
+from opentelemetry.trace import get_tracer, SpanKind, Tracer
 from opentelemetry.trace.status import Status, StatusCode
+from opentelemetry.metrics import Histogram, Meter, get_meter
 
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.instrumentation.utils import (
@@ -22,6 +24,7 @@ from opentelemetry.semconv_ai import (
     SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
     SpanAttributes,
     LLMRequestTypeValues,
+    Meters
 )
 from opentelemetry.instrumentation.ollama.version import __version__
 
@@ -145,7 +148,7 @@ def _set_input_attributes(span, llm_request_type, kwargs):
 
 
 @dont_throw
-def _set_response_attributes(span, llm_request_type, response):
+def _set_response_attributes(span, token_histogram, llm_request_type, response):
     if should_send_prompts():
         if llm_request_type == LLMRequestTypeValues.COMPLETION:
             _set_span_attribute(
@@ -189,9 +192,34 @@ def _set_response_attributes(span, llm_request_type, response):
         SpanAttributes.LLM_USAGE_PROMPT_TOKENS,
         input_tokens,
     )
+    _set_span_attribute(
+        span,
+        SpanAttributes.LLM_SYSTEM,
+        "Ollama"
+    )
+
+    if isinstance(input_tokens, int) and input_tokens >= 0:
+        token_histogram.record(
+            input_tokens,
+            attributes={
+                SpanAttributes.LLM_SYSTEM: "Ollama",
+                SpanAttributes.LLM_TOKEN_TYPE: "input",
+                SpanAttributes.LLM_RESPONSE_MODEL: response.get("model"),
+            },
+        )
+
+    if type(output_tokens) is int and output_tokens >= 0:
+        token_histogram.record(
+            output_tokens,
+            attributes={
+                SpanAttributes.LLM_SYSTEM: "Ollama",
+                SpanAttributes.LLM_TOKEN_TYPE: "output",
+                SpanAttributes.LLM_RESPONSE_MODEL: response.get("model"),
+            },
+        )
 
 
-def _accumulate_streaming_response(span, llm_request_type, response):
+def _accumulate_streaming_response(span, token_histogram, llm_request_type, response):
     if llm_request_type == LLMRequestTypeValues.CHAT:
         accumulated_response = {"message": {"content": "", "role": ""}}
     elif llm_request_type == LLMRequestTypeValues.COMPLETION:
@@ -206,11 +234,11 @@ def _accumulate_streaming_response(span, llm_request_type, response):
         elif llm_request_type == LLMRequestTypeValues.COMPLETION:
             accumulated_response["response"] += res["response"]
 
-    _set_response_attributes(span, llm_request_type, res | accumulated_response)
+    _set_response_attributes(span, token_histogram, llm_request_type, res | accumulated_response)
     span.end()
 
 
-async def _aaccumulate_streaming_response(span, llm_request_type, response):
+async def _aaccumulate_streaming_response(span, token_histogram, llm_request_type, response):
     if llm_request_type == LLMRequestTypeValues.CHAT:
         accumulated_response = {"message": {"content": "", "role": ""}}
     elif llm_request_type == LLMRequestTypeValues.COMPLETION:
@@ -225,16 +253,25 @@ async def _aaccumulate_streaming_response(span, llm_request_type, response):
         elif llm_request_type == LLMRequestTypeValues.COMPLETION:
             accumulated_response["response"] += res["response"]
 
-    _set_response_attributes(span, llm_request_type, res | accumulated_response)
+    _set_response_attributes(span, token_histogram, llm_request_type, res | accumulated_response)
     span.end()
 
 
 def _with_tracer_wrapper(func):
     """Helper for providing tracer for wrapper functions."""
 
-    def _with_tracer(tracer, to_wrap):
+    def _with_tracer(tracer, token_histogram, duration_histogram, to_wrap):
         def wrapper(wrapped, instance, args, kwargs):
-            return func(tracer, to_wrap, wrapped, instance, args, kwargs)
+            return func(
+                tracer,
+                token_histogram,
+                duration_histogram,
+                to_wrap,
+                wrapped,
+                instance,
+                args,
+                kwargs,
+            )
 
         return wrapper
 
@@ -253,7 +290,16 @@ def _llm_request_type_by_method(method_name):
 
 
 @_with_tracer_wrapper
-def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
+def _wrap(
+    tracer: Tracer,
+    token_histogram: Histogram,
+    duration_histogram: Histogram,
+    to_wrap,
+    wrapped,
+    instance,
+    args,
+    kwargs,
+):
     """Instruments and calls every function defined in TO_WRAP."""
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY) or context_api.get_value(
         SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY
@@ -273,14 +319,26 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
     if span.is_recording():
         _set_input_attributes(span, llm_request_type, kwargs)
 
+    start_time = time.time()
     response = wrapped(*args, **kwargs)
+    end_time = time.time()
 
     if response:
+        if duration_histogram:
+            duration = end_time - start_time
+            duration_histogram.record(
+                duration,
+                attributes={
+                    SpanAttributes.LLM_SYSTEM: "Ollama",
+                    SpanAttributes.LLM_RESPONSE_MODEL: response.get("model"),
+                },
+            )
+
         if span.is_recording():
             if kwargs.get("stream"):
-                return _accumulate_streaming_response(span, llm_request_type, response)
+                return _accumulate_streaming_response(span, token_histogram, llm_request_type, response)
 
-            _set_response_attributes(span, llm_request_type, response)
+            _set_response_attributes(span, token_histogram, llm_request_type, response)
             span.set_status(Status(StatusCode.OK))
 
     span.end()
@@ -288,7 +346,16 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
 
 
 @_with_tracer_wrapper
-async def _awrap(tracer, to_wrap, wrapped, instance, args, kwargs):
+async def _awrap(
+    tracer: Tracer,
+    token_histogram: Histogram,
+    duration_histogram: Histogram,
+    to_wrap,
+    wrapped,
+    instance,
+    args,
+    kwargs,
+):
     """Instruments and calls every function defined in TO_WRAP."""
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY) or context_api.get_value(
         SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY
@@ -309,18 +376,49 @@ async def _awrap(tracer, to_wrap, wrapped, instance, args, kwargs):
     if span.is_recording():
         _set_input_attributes(span, llm_request_type, kwargs)
 
+    start_time = time.time()
     response = await wrapped(*args, **kwargs)
-
+    end_time = time.time()
     if response:
+        if duration_histogram:
+            duration = end_time - start_time
+            duration_histogram.record(
+                duration,
+                attributes={
+                    SpanAttributes.LLM_SYSTEM: "Ollama",
+                    SpanAttributes.LLM_RESPONSE_MODEL: response.get("model"),
+                },
+            )
+
         if span.is_recording():
             if kwargs.get("stream"):
-                return _aaccumulate_streaming_response(span, llm_request_type, response)
+                return _aaccumulate_streaming_response(span, token_histogram, llm_request_type, response)
 
-            _set_response_attributes(span, llm_request_type, response)
+            _set_response_attributes(span, token_histogram, llm_request_type, response)
             span.set_status(Status(StatusCode.OK))
 
     span.end()
     return response
+
+
+def _create_metrics(meter: Meter):
+    token_histogram = meter.create_histogram(
+        name=Meters.LLM_TOKEN_USAGE,
+        unit="token",
+        description="Measures number of input and output tokens used",
+    )
+
+    duration_histogram = meter.create_histogram(
+        name=Meters.LLM_OPERATION_DURATION,
+        unit="s",
+        description="GenAI operation duration",
+    )
+
+    return token_histogram, duration_histogram
+
+
+def is_metrics_enabled() -> bool:
+    return (os.getenv("TRACELOOP_METRICS_ENABLED") or "true").lower() == "true"
 
 
 class OllamaInstrumentor(BaseInstrumentor):
@@ -336,22 +434,37 @@ class OllamaInstrumentor(BaseInstrumentor):
     def _instrument(self, **kwargs):
         tracer_provider = kwargs.get("tracer_provider")
         tracer = get_tracer(__name__, __version__, tracer_provider)
+
+        meter_provider = kwargs.get("meter_provider")
+        meter = get_meter(__name__, __version__, meter_provider)
+
+        if is_metrics_enabled():
+            (
+                token_histogram,
+                duration_histogram,
+            ) = _create_metrics(meter)
+        else:
+            (
+                token_histogram,
+                duration_histogram,
+            ) = (None, None, None)
+
         for wrapped_method in WRAPPED_METHODS:
             wrap_method = wrapped_method.get("method")
             wrap_function_wrapper(
                 "ollama._client",
                 f"Client.{wrap_method}",
-                _wrap(tracer, wrapped_method),
+                _wrap(tracer, token_histogram, duration_histogram, wrapped_method),
             )
             wrap_function_wrapper(
                 "ollama._client",
                 f"AsyncClient.{wrap_method}",
-                _awrap(tracer, wrapped_method),
+                _awrap(tracer, token_histogram, duration_histogram, wrapped_method),
             )
             wrap_function_wrapper(
                 "ollama",
                 f"{wrap_method}",
-                _wrap(tracer, wrapped_method),
+                _wrap(tracer, token_histogram, duration_histogram, wrapped_method),
             )
 
     def _uninstrument(self, **kwargs):
