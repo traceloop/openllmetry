@@ -1,3 +1,9 @@
+## v0.38.12 (2025-03-07)
+
+### Fix
+
+- **sdk**: client shouldn't be initialized if destination is not traceloop (#2754)
+
 ## v0.38.11 (2025-03-06)
 
 ### Fix
