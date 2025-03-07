@@ -87,19 +87,6 @@ class Traceloop:
         api_key = os.getenv("TRACELOOP_API_KEY") or api_key
         Traceloop.__app_name = app_name
 
-        if (
-            traceloop_sync_enabled
-            and api_endpoint.find("traceloop.com") != -1
-            and api_key
-            and (exporter is None)
-            and (processor is None)
-        ):
-            Traceloop.__fetcher = Fetcher(base_url=api_endpoint, api_key=api_key)
-            Traceloop.__fetcher.run()
-            print(
-                Fore.GREEN + "Traceloop syncing configuration and prompts" + Fore.RESET
-            )
-
         if not is_tracing_enabled():
             print(Fore.YELLOW + "Tracing is disabled" + Fore.RESET)
             return
@@ -190,10 +177,24 @@ class Traceloop:
             )
             Traceloop.__logger_wrapper = LoggerWrapper(exporter=logging_exporter)
 
-        if not api_key:
-            return
-        Traceloop.__client = Client(api_key=api_key, app_name=app_name, api_endpoint=api_endpoint)
-        return Traceloop.__client
+        if (
+            api_endpoint.find("traceloop.com") != -1
+            and api_key
+            and (exporter is None)
+            and (processor is None)
+        ):
+            if traceloop_sync_enabled:
+                Traceloop.__fetcher = Fetcher(base_url=api_endpoint, api_key=api_key)
+                Traceloop.__fetcher.run()
+                print(
+                    Fore.GREEN
+                    + "Traceloop syncing configuration and prompts"
+                    + Fore.RESET
+                )
+            Traceloop.__client = Client(
+                api_key=api_key, app_name=app_name, api_endpoint=api_endpoint
+            )
+            return Traceloop.__client
 
     def set_association_properties(properties: dict) -> None:
         set_association_properties(properties)
