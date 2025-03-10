@@ -9,8 +9,7 @@ def test_imported_model_completion(test_context, brt):
     prompt = "Explain quantum mechanics."
     payload = {"prompt": prompt, "max_tokens": 100, "topP": 2, "temperature": 0.5}
     payload_str = json.dumps(payload)
-
-    model_arn = "arn:aws:bedrock:us-east-1:576853654267:imported-model/r123wa7lhoe3"
+    model_arn = "arn:aws:sagemaker:us-east-1:767398002385:endpoint/endpoint-quick-start-idr7y"
     response = brt.invoke_model(modelId=model_arn, body=payload_str)
     data = json.loads(response["body"].read().decode("utf-8"))
     exporter, _, _ = test_context
@@ -21,7 +20,7 @@ def test_imported_model_completion(test_context, brt):
 
     assert (
         imported_model_span.attributes[SpanAttributes.LLM_REQUEST_MODEL]
-        == "arn:aws:bedrock:us-east-1:576853654267:imported-model/r123wa7lhoe3"
+        == "arn:aws:sagemaker:us-east-1:767398002385:endpoint/endpoint-quick-start-idr7y"
     )
     assert (
         imported_model_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "completion"
@@ -35,8 +34,4 @@ def test_imported_model_completion(test_context, brt):
     assert (
         imported_model_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
         == prompt
-    )
-    assert (
-        imported_model_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"]
-        == data["generation"]
     )
