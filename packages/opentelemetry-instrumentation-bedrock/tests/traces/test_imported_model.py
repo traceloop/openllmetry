@@ -35,3 +35,4 @@ def test_imported_model_completion(test_context, brt):
         imported_model_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
         == prompt
     )
+    assert data is not None
