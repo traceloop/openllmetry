@@ -1,6 +1,9 @@
 import pytest
 import ollama
 from opentelemetry.semconv_ai import SpanAttributes
+from unittest.mock import MagicMock
+from opentelemetry.instrumentation.ollama import _set_response_attributes
+from opentelemetry.semconv_ai import LLMRequestTypeValues
 
 
 @pytest.mark.vcr
@@ -211,4 +214,33 @@ async def test_ollama_async_streaming_chat(exporter):
         SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
     ) + ollama_span.attributes.get(
         SpanAttributes.LLM_USAGE_PROMPT_TOKENS
+    )
+
+
+@pytest.mark.vcr
+def test_token_histogram_recording():
+    span = MagicMock()
+    token_histogram = MagicMock()
+    llm_request_type = LLMRequestTypeValues.COMPLETION
+    response = {
+        "model": "llama3",
+        "prompt_eval_count": 7,
+        "eval_count": 10,
+    }
+    _set_response_attributes(span, token_histogram, llm_request_type, response)
+    token_histogram.record.assert_any_call(
+        7,
+        attributes={
+            SpanAttributes.LLM_SYSTEM: "Ollama",
+            SpanAttributes.LLM_TOKEN_TYPE: "input",
+            SpanAttributes.LLM_RESPONSE_MODEL: "llama3",
+        },
+    )
+    token_histogram.record.assert_any_call(
+        10,
+        attributes={
+            SpanAttributes.LLM_SYSTEM: "Ollama",
+            SpanAttributes.LLM_TOKEN_TYPE: "output",
+            SpanAttributes.LLM_RESPONSE_MODEL: "llama3",
+        },
     )
