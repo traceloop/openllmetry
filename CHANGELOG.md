@@ -1,3 +1,15 @@
+## v0.38.12 (2025-03-07)
+
+### Fix
+
+- **sdk**: client shouldn't be initialized if destination is not traceloop (#2754)
+
+## v0.38.11 (2025-03-06)
+
+### Fix
+
+- **sdk**: When tracing task with no `name` provided , use qualified name instaed of name (#2743)
+
 ## v0.38.10 (2025-03-05)
 
 ### Fix
