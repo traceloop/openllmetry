@@ -1,3 +1,28 @@
+## v0.38.12 (2025-03-07)
+
+### Fix
+
+- **sdk**: client shouldn't be initialized if destination is not traceloop (#2754)
+
+## v0.38.11 (2025-03-06)
+
+### Fix
+
+- **sdk**: When tracing task with no `name` provided , use qualified name instaed of name (#2743)
+
+## v0.38.10 (2025-03-05)
+
+### Fix
+
+- **sdk**: record exceptions (#2733)
+
+## v0.38.9 (2025-03-04)
+
+### Fix
+
+- **milvus**: updated the instrumentation to collect get() and create_collection() span attributes  (#2687)
+- **semconv**: added new semantic conventions for milvus db (#2727)
+
 ## v0.38.8 (2025-02-27)
 
 ### Fix
