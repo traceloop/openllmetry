@@ -552,6 +552,8 @@ def _set_model_span_attributes(
         _set_amazon_span_attributes(
             span, request_body, response_body, headers, metric_params
         )
+    elif vendor == "imported_model":
+        _set_imported_model_span_attributes(span, request_body, response_body, metric_params)
 
 
 def _set_cohere_span_attributes(span, request_body, response_body, metric_params):
