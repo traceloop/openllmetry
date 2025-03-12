@@ -102,7 +102,6 @@ def test_titan_invoke_stream(test_context, brt):
         for event in stream:
             if "chunk" in event:
                 response_body = json.loads(event["chunk"].get("bytes").decode())
-                assert response_body != None
                 generated_text.append(response_body["outputText"])
 
     assert len(generated_text) > 0

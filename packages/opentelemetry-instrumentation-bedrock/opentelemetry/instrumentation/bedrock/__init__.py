@@ -89,6 +89,9 @@ WRAPPED_METHODS = [
     {"package": "botocore.session", "object": "Session", "method": "create_client"},
 ]
 
+_BEDROCK_INVOKE_SPAN_NAME = "bedrock.completion"
+_BEDROCK_CONVERSE_SPAN_NAME = "bedrock.converse"
+
 def should_send_prompts():
     return (
         os.getenv("TRACELOOP_TRACE_CONTENT") or "true"
@@ -189,7 +192,7 @@ def _instrumented_model_invoke(fn, tracer, metric_params):
             return fn(*args, **kwargs)
 
         with tracer.start_as_current_span(
-            "bedrock.completion", kind=SpanKind.CLIENT
+            _BEDROCK_INVOKE_SPAN_NAME, kind=SpanKind.CLIENT
         ) as span:
             response = fn(*args, **kwargs)
 
@@ -207,7 +210,7 @@ def _instrumented_model_invoke_with_response_stream(fn, tracer, metric_params):
         if context_api.get_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY):
             return fn(*args, **kwargs)
 
-        span = tracer.start_span("bedrock.completion", kind=SpanKind.CLIENT)
+        span = tracer.start_span(_BEDROCK_INVOKE_SPAN_NAME, kind=SpanKind.CLIENT)
         response = fn(*args, **kwargs)
 
         if span.is_recording():
@@ -219,7 +222,8 @@ def _instrumented_model_invoke_with_response_stream(fn, tracer, metric_params):
 
 
 def _instrumented_converse(fn, tracer, metric_params):
-    # see https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/bedrock-runtime/client/converse.html
+    # see
+    # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/bedrock-runtime/client/converse.html
     # for the request/response format
     @wraps(fn)
     def with_instrumentation(*args, **kwargs):
@@ -227,7 +231,7 @@ def _instrumented_converse(fn, tracer, metric_params):
             return fn(*args, **kwargs)
 
         with tracer.start_as_current_span(
-            "bedrock.converse", kind=SpanKind.CLIENT
+            _BEDROCK_CONVERSE_SPAN_NAME, kind=SpanKind.CLIENT
         ) as span:
             response = fn(*args, **kwargs)
             _handle_converse(span, kwargs, response, metric_params)
@@ -243,7 +247,7 @@ def _instrumented_converse_stream(fn, tracer, metric_params):
         if context_api.get_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY):
             return fn(*args, **kwargs)
 
-        span = tracer.start_span("bedrock.converse", kind=SpanKind.CLIENT)
+        span = tracer.start_span(_BEDROCK_CONVERSE_SPAN_NAME, kind=SpanKind.CLIENT)
         response = fn(*args, **kwargs)
         if span.is_recording():
             _handle_converse_stream(span, kwargs, response, metric_params)
@@ -411,6 +415,7 @@ def _handle_converse_stream(span, kwargs, response, metric_params):
 
         stream._parse_event = handler(stream._parse_event)
 
+
 def _report_converse_input_prompt(kwargs, span):
     prompt_idx = 0
     if "system" in kwargs:
@@ -438,6 +443,7 @@ def _report_converse_input_prompt(kwargs, span):
                 f"{SpanAttributes.LLM_PROMPTS}.{prompt_idx+idx}.content",
                 json.dumps(prompt.get("content", ""), default=str),
             )
+
 
 def _converse_usage_record(span, response, metric_params):
     prompt_tokens = 0
@@ -925,6 +931,7 @@ def _set_amazon_span_attributes(
                     msg.get("text"),
                 )
 
+
 class GuardrailMeters:
     LLM_BEDROCK_GUARDRAIL_ACTIVATION = "gen_ai.bedrock.guardrail.activation"
     LLM_BEDROCK_GUARDRAIL_LATENCY = "gen_ai.bedrock.guardrail.latency"
@@ -933,6 +940,7 @@ class GuardrailMeters:
     LLM_BEDROCK_GUARDRAIL_TOPICS = "gen_ai.bedrock.guardrail.topics"
     LLM_BEDROCK_GUARDRAIL_CONTENT = "gen_ai.bedrock.guardrail.content"
     LLM_BEDROCK_GUARDRAIL_WORDS = "gen_ai.bedrock.guardrail.words"
+
 
 def _set_imported_model_span_attributes(span, request_body, response_body, metric_params):
     _set_span_attribute(

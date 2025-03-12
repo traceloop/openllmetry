@@ -37,7 +37,7 @@ class ReusableStreamingBody(StreamingBody):
                 self._verify_content_length()
 
         if amt is None:
-            return self._buffer[self._buffer_cursor :]
+            return self._buffer[self._buffer_cursor:]
         else:
             self._buffer_cursor += amt
-            return self._buffer[self._buffer_cursor - amt : self._buffer_cursor]
+            return self._buffer[self._buffer_cursor-amt:self._buffer_cursor]

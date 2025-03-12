@@ -177,7 +177,8 @@ def test_nova_converse(test_context, brt):
                 {
                     "guardContent": {
                         "text": {
-                            "text": "Tokyo is the capital of Japan. The Greater Tokyo area is the most populous metropolitan area in the world.",
+                            "text": "Tokyo is the capital of Japan." +
+                                    "The Greater Tokyo area is the most populous metropolitan area in the world.",
                             "qualifiers": ["grounding_source"],
                         }
                     }
@@ -264,7 +265,8 @@ def test_nova_converse_stream(test_context, brt):
                 {
                     "guardContent": {
                         "text": {
-                            "text": "Tokyo is the capital of Japan. The Greater Tokyo area is the most populous metropolitan area in the world.",
+                            "text": "Tokyo is the capital of Japan." +
+                                    "The Greater Tokyo area is the most populous metropolitan area in the world.",
                             "qualifiers": ["grounding_source"],
                         }
                     }
