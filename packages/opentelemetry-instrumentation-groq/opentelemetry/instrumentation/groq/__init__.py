@@ -196,24 +196,35 @@ def _set_response_attributes(span, response, token_histogram):
             span, SpanAttributes.LLM_USAGE_TOTAL_TOKENS, usage.get("total_tokens")
         )
         set_span_attribute(
-            span,
-            SpanAttributes.LLM_USAGE_COMPLETION_TOKENS, completion_tokens
+            span, SpanAttributes.LLM_USAGE_COMPLETION_TOKENS, completion_tokens
         )
-        set_span_attribute(
-            span, SpanAttributes.LLM_USAGE_PROMPT_TOKENS, prompt_tokens
+        set_span_attribute(span, SpanAttributes.LLM_USAGE_PROMPT_TOKENS, prompt_tokens)
+
+    if (
+        isinstance(prompt_tokens, int)
+        and prompt_tokens >= 0
+        and token_histogram is not None
+    ):
+        token_histogram.record(
+            prompt_tokens,
+            attributes={
+                SpanAttributes.LLM_TOKEN_TYPE: "input",
+                SpanAttributes.LLM_RESPONSE_MODEL: response.get("model"),
+            },
         )
 
-    if isinstance(prompt_tokens, int) and prompt_tokens >= 0 and token_histogram is not None:
-        token_histogram.record(prompt_tokens, attributes={
-            SpanAttributes.LLM_TOKEN_TYPE: "input",
-            SpanAttributes.LLM_RESPONSE_MODEL: response.get("model")
-        })
-
-    if isinstance(completion_tokens, int) and completion_tokens >= 0 and token_histogram is not None:
-        token_histogram.record(completion_tokens, attributes={
-            SpanAttributes.LLM_TOKEN_TYPE: "output",
-            SpanAttributes.LLM_RESPONSE_MODEL: response.get("model")
-        })
+    if (
+        isinstance(completion_tokens, int)
+        and completion_tokens >= 0
+        and token_histogram is not None
+    ):
+        token_histogram.record(
+            completion_tokens,
+            attributes={
+                SpanAttributes.LLM_TOKEN_TYPE: "output",
+                SpanAttributes.LLM_RESPONSE_MODEL: response.get("model"),
+            },
+        )
 
     choices = response.get("choices")
     if should_send_prompts() and choices:
@@ -575,7 +586,7 @@ class GroqInstrumentor(BaseInstrumentor):
                 token_histogram,
                 choice_counter,
                 duration_histogram,
-            ) = (None, None, None, None)
+            ) = (None, None, None)
 
         for wrapped_method in WRAPPED_METHODS:
             wrap_package = wrapped_method.get("package")
