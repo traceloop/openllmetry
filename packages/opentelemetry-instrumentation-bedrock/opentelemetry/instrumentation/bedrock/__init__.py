@@ -92,6 +92,7 @@ WRAPPED_METHODS = [
 _BEDROCK_INVOKE_SPAN_NAME = "bedrock.completion"
 _BEDROCK_CONVERSE_SPAN_NAME = "bedrock.converse"
 
+
 def should_send_prompts():
     return (
         os.getenv("TRACELOOP_TRACE_CONTENT") or "true"

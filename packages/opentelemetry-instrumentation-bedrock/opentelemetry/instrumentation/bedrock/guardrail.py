@@ -6,6 +6,7 @@ class Type(Enum):
     INPUT = "input"
     OUTPUT = "output"
 
+
 class GuardrailAttributes:
     GUARDRAIL = "gen_ai.guardrail"
     TYPE = "gen_ai.guardrail.type"
@@ -15,6 +16,7 @@ class GuardrailAttributes:
     CONTENT = "gen_ai.guardrail.content"
     CONFIDENCE = "gen_ai.guardrail.confidence"
     MATCH = "gen_ai.guardrail.match"
+
 
 def is_guardrail_activated(response):
     if "results" in response:
