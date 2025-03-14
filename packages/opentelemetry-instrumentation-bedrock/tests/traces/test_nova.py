@@ -5,25 +5,27 @@ import json
 
 
 @pytest.mark.vcr
-def test_titan_completion(test_context, brt):
-    body = json.dumps(
-        {
-            "inputText": "Translate to spanish: 'Amazon Bedrock is the easiest way to build and"
-            + "scale generative AI applications with base models (FMs)'.",
-            "textGenerationConfig": {
-                "maxTokenCount": 200,
-                "temperature": 0.5,
-                "topP": 0.5,
-            },
-        }
-    )
+def test_nova_completion(test_context, brt):
 
-    modelId = "amazon.titan-text-express-v1"
+    system_list = [{"text": "tell me a very two sentence story."}]
+    message_list = [{"role": "user", "content": [{"text": "A camping trip"}]}]
+    inf_params = {"maxTokens": 500, "topP": 0.9, "topK": 20, "temperature": 0.7}
+    request_body = {
+        "schemaVersion": "messages-v1",
+        "messages": message_list,
+        "system": system_list,
+        "inferenceConfig": inf_params,
+    }
+
+    modelId = "amazon.nova-lite-v1:0"
     accept = "application/json"
     contentType = "application/json"
 
     response = brt.invoke_model(
-        body=body, modelId=modelId, accept=accept, contentType=contentType
+        body=json.dumps(request_body),
+        modelId=modelId,
+        accept=accept,
+        contentType=contentType,
     )
 
     response_body = json.loads(response.get("body").read())
@@ -36,10 +38,7 @@ def test_titan_completion(test_context, brt):
     bedrock_span = spans[0]
 
     # Assert on model name
-    assert (
-        bedrock_span.attributes[SpanAttributes.LLM_REQUEST_MODEL]
-        == "titan-text-express-v1"
-    )
+    assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "nova-lite-v1:0"
 
     # Assert on vendor
     assert bedrock_span.attributes[SpanAttributes.LLM_SYSTEM] == "amazon"
@@ -47,65 +46,71 @@ def test_titan_completion(test_context, brt):
     # Assert on request type
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "completion"
 
+    # Assert on system prompt
+    assert bedrock_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"] == "system"
+    assert bedrock_span.attributes[
+        f"{SpanAttributes.LLM_PROMPTS}.0.content"
+    ] == system_list[0].get("text")
+
     # Assert on prompt
-    expected_prompt = (
-        "Translate to spanish: 'Amazon Bedrock is the easiest way to build and"
-        "scale generative AI applications with base models (FMs)'."
-    )
-    assert (
-        bedrock_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.user"]
-        == expected_prompt
-    )
+    assert bedrock_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.role"] == "user"
+
+    assert bedrock_span.attributes[
+        f"{SpanAttributes.LLM_PROMPTS}.1.content"
+    ] == json.dumps(message_list[0].get("content"), default=str)
 
     # Assert on response
-    generated_text = response_body["results"][0]["outputText"]
-    assert (
-        bedrock_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"]
-        == generated_text
-    )
+    generated_text = response_body["output"]["message"]["content"]
+    for i in range(0, len(generated_text)):
+        assert (
+            bedrock_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.{i}.content"]
+            == generated_text[i]["text"]
+        )
 
     # Assert on other request parameters
-    assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_MAX_TOKENS] == 200
-    assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TEMPERATURE] == 0.5
-    assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TOP_P] == 0.5
+    assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_MAX_TOKENS] == 500
+    assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TEMPERATURE] == 0.7
+    assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TOP_P] == 0.9
     # There is no response id for Amazon Titan models in the response body,
     # only request id in the response.
     assert bedrock_span.attributes.get("gen_ai.response.id") is None
 
 
 @pytest.mark.vcr
-def test_titan_invoke_stream(test_context, brt):
-    body = json.dumps(
-        {
-            "inputText": "Translate to spanish: 'Amazon Bedrock is the easiest way to build and"
-            + "scale generative AI applications with base models (FMs)'.",
-            "textGenerationConfig": {
-                "maxTokenCount": 200,
-                "temperature": 0.5,
-                "topP": 0.5,
-            },
-        }
-    )
+def test_nova_invoke_stream(test_context, brt):
+    system_list = [{"text": "tell me a very two sentence story."}]
+    message_list = [{"role": "user", "content": [{"text": "A camping trip"}]}]
+    inf_params = {"maxTokens": 500, "topP": 0.9, "topK": 20, "temperature": 0.7}
+    request_body = {
+        "schemaVersion": "messages-v1",
+        "messages": message_list,
+        "system": system_list,
+        "inferenceConfig": inf_params,
+    }
 
-    modelId = "amazon.titan-text-express-v1"
+    modelId = "amazon.nova-lite-v1:0"
     accept = "application/json"
     contentType = "application/json"
 
     response = brt.invoke_model_with_response_stream(
-        body=body, modelId=modelId, accept=accept, contentType=contentType
+        body=json.dumps(request_body),
+        modelId=modelId,
+        accept=accept,
+        contentType=contentType,
     )
 
     stream = response.get("body")
-    response_body = None
     generated_text = []
     if stream:
         for event in stream:
             if "chunk" in event:
                 response_body = json.loads(event["chunk"].get("bytes").decode())
-                generated_text.append(response_body["outputText"])
+                assert response_body is not None
+                content_block_delta = response_body.get("contentBlockDelta")
+                if content_block_delta:
+                    generated_text.append(content_block_delta.get("delta").get("text"))
 
     assert len(generated_text) > 0
-    # response_body = json.loads(response.get("body").read())
 
     exporter, _, _ = test_context
     spans = exporter.get_finished_spans()
@@ -115,10 +120,7 @@ def test_titan_invoke_stream(test_context, brt):
     bedrock_span = spans[0]
 
     # Assert on model name
-    assert (
-        bedrock_span.attributes[SpanAttributes.LLM_REQUEST_MODEL]
-        == "titan-text-express-v1"
-    )
+    assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "nova-lite-v1:0"
 
     # Assert on vendor
     assert bedrock_span.attributes[SpanAttributes.LLM_SYSTEM] == "amazon"
@@ -126,34 +128,43 @@ def test_titan_invoke_stream(test_context, brt):
     # Assert on request type
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "completion"
 
+    # Assert on system prompt
+    assert bedrock_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"] == "system"
+    assert bedrock_span.attributes[
+        f"{SpanAttributes.LLM_PROMPTS}.0.content"
+    ] == system_list[0].get("text")
+
     # Assert on prompt
-    expected_prompt = (
-        "Translate to spanish: 'Amazon Bedrock is the easiest way to build and"
-        "scale generative AI applications with base models (FMs)'."
-    )
-    assert (
-        bedrock_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.user"]
-        == expected_prompt
-    )
+    assert bedrock_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.role"] == "user"
+
+    assert bedrock_span.attributes[
+        f"{SpanAttributes.LLM_PROMPTS}.1.content"
+    ] == json.dumps(message_list[0].get("content"), default=str)
 
     # Assert on response
-    completion_text = "".join(generated_text)
+    completion_msg = "".join(generated_text)
     assert (
         bedrock_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"]
-        == completion_text
+        == completion_msg
     )
 
     # Assert on other request parameters
-    assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_MAX_TOKENS] == 200
-    assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TEMPERATURE] == 0.5
-    assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TOP_P] == 0.5
+    assert bedrock_span.attributes[
+        SpanAttributes.LLM_REQUEST_MAX_TOKENS
+    ] == inf_params.get("maxTokens")
+    assert bedrock_span.attributes[
+        SpanAttributes.LLM_REQUEST_TEMPERATURE
+    ] == inf_params.get("temperature")
+    assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TOP_P] == inf_params.get(
+        "topP"
+    )
     # There is no response id for Amazon Titan models in the response body,
     # only request id in the response.
     assert bedrock_span.attributes.get("gen_ai.response.id") is None
 
 
 @pytest.mark.vcr
-def test_titan_converse(test_context, brt):
+def test_nova_converse(test_context, brt):
     guardrail = {
         "guardrailIdentifier": "5zwrmdlsra2e",
         "guardrailVersion": "DRAFT",
@@ -166,7 +177,8 @@ def test_titan_converse(test_context, brt):
                 {
                     "guardContent": {
                         "text": {
-                            "text": "Tokyo is the capital of Japan.",
+                            "text": "Tokyo is the capital of Japan." +
+                                    "The Greater Tokyo area is the most populous metropolitan area in the world.",
                             "qualifiers": ["grounding_source"],
                         }
                     }
@@ -179,16 +191,23 @@ def test_titan_converse(test_context, brt):
                         }
                     }
                 },
+                {"text": "What is the capital of Japan?"},
             ],
         }
     ]
 
-    modelId = "amazon.titan-text-express-v1"
+    system = [{"text": "You are a helpful assistant"}]
+
+    modelId = "amazon.nova-lite-v1:0"
+
+    inf_params = {"maxTokens": 300, "topP": 0.1, "temperature": 0.3}
 
     response = brt.converse(
         modelId=modelId,
         messages=messages,
         guardrailConfig=guardrail,
+        system=system,
+        inferenceConfig=inf_params,
     )
 
     exporter, _, _ = test_context
@@ -199,10 +218,7 @@ def test_titan_converse(test_context, brt):
     bedrock_span = spans[0]
 
     # Assert on model name
-    assert (
-        bedrock_span.attributes[SpanAttributes.LLM_REQUEST_MODEL]
-        == "titan-text-express-v1"
-    )
+    assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "nova-lite-v1:0"
 
     # Assert on vendor
     assert bedrock_span.attributes[SpanAttributes.LLM_SYSTEM] == "amazon"
@@ -210,10 +226,15 @@ def test_titan_converse(test_context, brt):
     # Assert on request type
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
 
+    # Assert on system prompt
+    assert bedrock_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"] == "system"
+    assert bedrock_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"] == system[
+        0
+    ].get("text")
+
     # Assert on prompt
-    assert bedrock_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"] == "user"
     assert bedrock_span.attributes[
-        f"{SpanAttributes.LLM_PROMPTS}.0.content"
+        f"{SpanAttributes.LLM_PROMPTS}.1.content"
     ] == json.dumps(messages[0].get("content"), default=str)
 
     # Assert on response
@@ -224,15 +245,19 @@ def test_titan_converse(test_context, brt):
             == generated_text[i]["text"]
         )
 
+    # Assert on other request parameters
+    assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_MAX_TOKENS] == 300
+    assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TEMPERATURE] == 0.3
+    assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TOP_P] == 0.1
+
 
 @pytest.mark.vcr
-def test_titan_converse_stream(test_context, brt):
+def test_nova_converse_stream(test_context, brt):
     guardrail = {
         "guardrailIdentifier": "5zwrmdlsra2e",
         "guardrailVersion": "DRAFT",
         "trace": "enabled",
     }
-
     messages = [
         {
             "role": "user",
@@ -240,7 +265,8 @@ def test_titan_converse_stream(test_context, brt):
                 {
                     "guardContent": {
                         "text": {
-                            "text": "Tokyo is the capital of Japan.",
+                            "text": "Tokyo is the capital of Japan." +
+                                    "The Greater Tokyo area is the most populous metropolitan area in the world.",
                             "qualifiers": ["grounding_source"],
                         }
                     }
@@ -253,16 +279,23 @@ def test_titan_converse_stream(test_context, brt):
                         }
                     }
                 },
+                {"text": "What is the capital of Japan?"},
             ],
         }
     ]
 
-    modelId = "amazon.titan-text-express-v1"
+    system = [{"text": "You are a helpful assistant"}]
+
+    modelId = "amazon.nova-lite-v1:0"
+
+    inf_params = {"maxTokens": 300, "topP": 0.1, "temperature": 0.3}
 
     response = brt.converse_stream(
         modelId=modelId,
         messages=messages,
         guardrailConfig=guardrail,
+        system=system,
+        inferenceConfig=inf_params,
     )
 
     stream = response.get("stream")
@@ -295,10 +328,7 @@ def test_titan_converse_stream(test_context, brt):
     bedrock_span = spans[0]
 
     # Assert on model name
-    assert (
-        bedrock_span.attributes[SpanAttributes.LLM_REQUEST_MODEL]
-        == "titan-text-express-v1"
-    )
+    assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "nova-lite-v1:0"
 
     # Assert on vendor
     assert bedrock_span.attributes[SpanAttributes.LLM_SYSTEM] == "amazon"
@@ -306,10 +336,15 @@ def test_titan_converse_stream(test_context, brt):
     # Assert on request type
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
 
+    # Assert on system prompt
+    assert bedrock_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"] == "system"
+    assert bedrock_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"] == system[
+        0
+    ].get("text")
+
     # Assert on prompt
-    assert bedrock_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"] == "user"
     assert bedrock_span.attributes[
-        f"{SpanAttributes.LLM_PROMPTS}.0.content"
+        f"{SpanAttributes.LLM_PROMPTS}.1.content"
     ] == json.dumps(messages[0].get("content"), default=str)
 
     # Assert on response
@@ -321,6 +356,11 @@ def test_titan_converse_stream(test_context, brt):
         bedrock_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.role"]
         == response_role
     )
+
+    # Assert on other request parameters
+    assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_MAX_TOKENS] == 300
+    assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TEMPERATURE] == 0.3
+    assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TOP_P] == 0.1
 
     # Assert on usage data
     assert (

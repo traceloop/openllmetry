@@ -1,0 +1,87 @@
+interactions:
+- request:
+    body: '{"messages": [{"role": "user", "content": [{"guardContent": {"text": {"text":
+      "Tokyo is the capital of Japan.", "qualifiers": ["grounding_source"]}}},
+      {"guardContent": {"text": {"text": "What is the capital of Japan?", "qualifiers":
+      ["query"]}}}]}], "guardrailConfig": {"guardrailIdentifier": "5zwrmdlsra2e",
+      "guardrailVersion": "DRAFT", "trace": "enabled"}}'
+    headers:
+      Content-Length:
+      - '369'
+      Content-Type:
+      - !!binary |
+        YXBwbGljYXRpb24vanNvbg==
+      User-Agent:
+      - !!binary |
+        Qm90bzMvMS4zNi41IG1kL0JvdG9jb3JlIzEuMzYuNSB1YS8yLjAgb3MvbWFjb3MjMjQuMy4wIG1k
+        L2FyY2gjYXJtNjQgbGFuZy9weXRob24jMy45LjYgbWQvcHlpbXBsI0NQeXRob24gY2ZnL3JldHJ5
+        LW1vZGUjbGVnYWN5IEJvdG9jb3JlLzEuMzYuNQ==
+      X-Amz-Date:
+      - !!binary |
+        MjAyNTAyMjVUMTQ1NjU0Wg==
+      amz-sdk-invocation-id:
+      - !!binary |
+        NGY3Nzc1YzUtYzVkNi00NGZjLWI0ODktZWZlZDZmZmM1Mzhj
+      amz-sdk-request:
+      - !!binary |
+        YXR0ZW1wdD0x
+    method: POST
+    uri: https://bedrock-runtime.us-east-1.amazonaws.com/model/amazon.titan-text-express-v1/converse-stream
+  response:
+    body:
+      string: !!binary |
+        AAAAmgAAAFJ78dAACzpldmVudC10eXBlBwAMbWVzc2FnZVN0YXJ0DTpjb250ZW50LXR5cGUHABBh
+        cHBsaWNhdGlvbi9qc29uDTptZXNzYWdlLXR5cGUHAAVldmVudHsicCI6ImFiY2RlZmdoaWprbG1u
+        b3BxcnN0dXZ3eHl6QUJDIiwicm9sZSI6ImFzc2lzdGFudCJ92EeA9QAAASMAAABX3RCdTws6ZXZl
+        bnQtdHlwZQcAEWNvbnRlbnRCbG9ja0RlbHRhDTpjb250ZW50LXR5cGUHABBhcHBsaWNhdGlvbi9q
+        c29uDTptZXNzYWdlLXR5cGUHAAVldmVudHsiY29udGVudEJsb2NrSW5kZXgiOjAsImRlbHRhIjp7
+        InRleHQiOiJIZWxsbywge0FERFJFU1N9IGlzIHRoZSBjYXBpdGFsIG9mIHtBRERSRVNTfS4gV291
+        bGQgeW91IGxpa2UgdG8ga25vdyBtb3JlIGFib3V0IHtBRERSRVNTfT8ifSwicCI6ImFiY2RlZmdo
+        aWprbG1ub3BxcnN0dXZ3eHl6QUJDREVGR0hJSktMTU5PUFFSU1RVViJ9BIQ09gAAAJkAAABWOzxu
+        yQs6ZXZlbnQtdHlwZQcAEGNvbnRlbnRCbG9ja1N0b3ANOmNvbnRlbnQtdHlwZQcAEGFwcGxpY2F0
+        aW9uL2pzb24NOm1lc3NhZ2UtdHlwZQcABWV2ZW50eyJjb250ZW50QmxvY2tJbmRleCI6MCwicCI6
+        ImFiY2RlZmdoaWprbG1ub3BxcnN0dSJ9d2II1AAAAMMAAABR1/ssAAs6ZXZlbnQtdHlwZQcAC21l
+        c3NhZ2VTdG9wDTpjb250ZW50LXR5cGUHABBhcHBsaWNhdGlvbi9qc29uDTptZXNzYWdlLXR5cGUH
+        AAVldmVudHsicCI6ImFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6QUJDREVGR0hJSktMTU5PUFFS
+        U1RVVldYWVowMSIsInN0b3BSZWFzb24iOiJndWFyZHJhaWxfaW50ZXJ2ZW5lZCJ9c7dkIgAABZsA
+        AABOAl00TAs6ZXZlbnQtdHlwZQcACG1ldGFkYXRhDTpjb250ZW50LXR5cGUHABBhcHBsaWNhdGlv
+        bi9qc29uDTptZXNzYWdlLXR5cGUHAAVldmVudHsibWV0cmljcyI6eyJsYXRlbmN5TXMiOjE4NDV9
+        LCJwIjoiYWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXpBQkNERUZHSCIsInRyYWNlIjp7Imd1YXJk
+        cmFpbCI6eyJpbnB1dEFzc2Vzc21lbnQiOnsiNXp3cm1kbHNyYTJlIjp7Imludm9jYXRpb25NZXRy
+        aWNzIjp7Imd1YXJkcmFpbENvdmVyYWdlIjp7InRleHRDaGFyYWN0ZXJzIjp7Imd1YXJkZWQiOjAs
+        InRvdGFsIjo3MH19LCJndWFyZHJhaWxQcm9jZXNzaW5nTGF0ZW5jeSI6MjYyLCJ1c2FnZSI6eyJj
+        b250ZW50UG9saWN5VW5pdHMiOjEsImNvbnRleHR1YWxHcm91bmRpbmdQb2xpY3lVbml0cyI6MCwi
+        c2Vuc2l0aXZlSW5mb3JtYXRpb25Qb2xpY3lGcmVlVW5pdHMiOjAsInNlbnNpdGl2ZUluZm9ybWF0
+        aW9uUG9saWN5VW5pdHMiOjEsInRvcGljUG9saWN5VW5pdHMiOjEsIndvcmRQb2xpY3lVbml0cyI6
+        MX19fX0sIm1vZGVsT3V0cHV0IjpbIlxuQm90OiBIZWxsbywgVG9reW8gaXMgdGhlIGNhcGl0YWwg
+        b2YgSmFwYW4uIFdvdWxkIHlvdSBsaWtlIHRvIGtub3cgbW9yZSBhYm91dCBUb2t5bz8iXSwib3V0
+        cHV0QXNzZXNzbWVudHMiOnsiNXp3cm1kbHNyYTJlIjpbeyJjb250ZXh0dWFsR3JvdW5kaW5nUG9s
+        aWN5Ijp7ImZpbHRlcnMiOlt7ImFjdGlvbiI6Ik5PTkUiLCJzY29yZSI6MC45OCwidGhyZXNob2xk
+        IjowLjc1LCJ0eXBlIjoiR1JPVU5ESU5HIn0seyJhY3Rpb24iOiJOT05FIiwic2NvcmUiOjEuMCwi
+        dGhyZXNob2xkIjowLjc1LCJ0eXBlIjoiUkVMRVZBTkNFIn1dfSwiaW52b2NhdGlvbk1ldHJpY3Mi
+        OnsiZ3VhcmRyYWlsQ292ZXJhZ2UiOnsidGV4dENoYXJhY3RlcnMiOnsiZ3VhcmRlZCI6ODQsInRv
+        dGFsIjo4NH19LCJndWFyZHJhaWxQcm9jZXNzaW5nTGF0ZW5jeSI6MzI1LCJ1c2FnZSI6eyJjb250
+        ZW50UG9saWN5VW5pdHMiOjEsImNvbnRleHR1YWxHcm91bmRpbmdQb2xpY3lVbml0cyI6MSwic2Vu
+        c2l0aXZlSW5mb3JtYXRpb25Qb2xpY3lGcmVlVW5pdHMiOjEsInNlbnNpdGl2ZUluZm9ybWF0aW9u
+        UG9saWN5VW5pdHMiOjEsInRvcGljUG9saWN5VW5pdHMiOjEsIndvcmRQb2xpY3lVbml0cyI6MX19
+        LCJzZW5zaXRpdmVJbmZvcm1hdGlvblBvbGljeSI6eyJwaWlFbnRpdGllcyI6W3siYWN0aW9uIjoi
+        QU5PTllNSVpFRCIsIm1hdGNoIjoiVG9reW8iLCJ0eXBlIjoiQUREUkVTUyJ9LHsiYWN0aW9uIjoi
+        QU5PTllNSVpFRCIsIm1hdGNoIjoiSmFwYW4iLCJ0eXBlIjoiQUREUkVTUyJ9LHsiYWN0aW9uIjoi
+        QU5PTllNSVpFRCIsIm1hdGNoIjoiVG9reW8iLCJ0eXBlIjoiQUREUkVTUyJ9XX19XX19fSwidXNh
+        Z2UiOnsiaW5wdXRUb2tlbnMiOjI4LCJvdXRwdXRUb2tlbnMiOjIyLCJ0b3RhbFRva2VucyI6NTB9
+        fcdZOG8=
+    headers:
+      Connection:
+      - keep-alive
+      Content-Type:
+      - application/vnd.amazon.eventstream
+      Date:
+      - Tue, 25 Feb 2025 14:56:55 GMT
+      Transfer-Encoding:
+      - chunked
+      x-amzn-RequestId:
+      - a1d54d91-9d4a-4f3d-8467-75659919051d
+    status:
+      code: 200
+      message: OK
+version: 1
