@@ -106,7 +106,7 @@ def messages_list_wrapper(tracer, wrapped, instance, args, kwargs):
         start_time=run.get("start_time"),
     )
 
-    i = 0
+    prompt_index = 0
     if assistants.get(run["assistant_id"]) is not None or Config.enrich_assistant:
         if Config.enrich_assistant:
             assistant = model_as_dict(
@@ -131,27 +131,35 @@ def messages_list_wrapper(tracer, wrapped, instance, args, kwargs):
             SpanAttributes.LLM_RESPONSE_MODEL,
             assistant["model"],
         )
-        _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.{i}.role", "system")
+        _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.{prompt_index}.role", "system")
         _set_span_attribute(
             span,
-            f"{SpanAttributes.LLM_PROMPTS}.{i}.content",
+            f"{SpanAttributes.LLM_PROMPTS}.{prompt_index}.content",
             assistant["instructions"],
         )
-        i += 1
-    _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.{i}.role", "system")
+        prompt_index += 1
+    _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.{prompt_index}.role", "system")
     _set_span_attribute(
-        span, f"{SpanAttributes.LLM_PROMPTS}.{i}.content", run["instructions"]
+        span, f"{SpanAttributes.LLM_PROMPTS}.{prompt_index}.content", run["instructions"]
     )
+    prompt_index += 1
 
-    for i, msg in enumerate(messages):
-        prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{i}"
+    completion_index = 0
+    for msg in messages:
+        prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{completion_index}"
         content = msg.get("content")
 
-        _set_span_attribute(span, f"{prefix}.role", msg.get("role"))
-        _set_span_attribute(
-            span, f"{prefix}.content", content[0].get("text").get("value")
-        )
-        _set_span_attribute(span, f"gen_ai.response.{i}.id", msg.get("id"))
+        message_content = content[0].get("text").get("value")
+        message_role = msg.get("role")
+        if message_role in ["user", "system"]:
+            _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.{prompt_index}.role", message_role)
+            _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.{prompt_index}.content", message_content)
+            prompt_index += 1
+        else:
+            _set_span_attribute(span, f"{prefix}.role", msg.get("role"))
+            _set_span_attribute(span, f"{prefix}.content", message_content)
+            _set_span_attribute(span, f"gen_ai.response.{completion_index}.id", msg.get("id"))
+            completion_index += 1
 
     if run.get("usage"):
         usage_dict = model_as_dict(run.get("usage"))
@@ -223,7 +231,7 @@ def runs_create_and_stream_wrapper(tracer, wrapped, instance, args, kwargs):
     )
 
     kwargs["event_handler"] = EventHandleWrapper(
-        original_handler=kwargs["event_handler"], span=span
+        original_handler=kwargs["event_handler"], span=span,
     )
 
     response = wrapped(*args, **kwargs)
