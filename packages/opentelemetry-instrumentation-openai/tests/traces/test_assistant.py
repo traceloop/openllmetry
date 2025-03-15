@@ -18,11 +18,12 @@ def assistant(openai_client):
 @pytest.mark.vcr
 def test_new_assistant(exporter, openai_client, assistant):
     thread = openai_client.beta.threads.create()
+    user_message = "I need to solve the equation `3x + 11 = 14`. Can you help me?"
 
     openai_client.beta.threads.messages.create(
         thread_id=thread.id,
         role="user",
-        content="I need to solve the equation `3x + 11 = 14`. Can you help me?",
+        content=user_message,
     )
 
     run = openai_client.beta.threads.runs.create(
@@ -69,33 +70,40 @@ def test_new_assistant(exporter, openai_client, assistant):
         == "Please address the user as Jane Doe. The user has a premium account."
     )
     assert open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.role"] == "system"
+    assert open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.2.role"] == "user"
+    assert open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.2.content"] == user_message
     assert open_ai_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 145
     assert open_ai_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS] == 155
     assert open_ai_span.attributes[SpanAttributes.LLM_SYSTEM] == "openai"
 
-    for idx, message in enumerate(messages.data):
+    completion_index = 0
+    for message in messages.data:
+        if message.role in ["user", "system"]:
+            continue
         assert (
-            open_ai_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.{idx}.content"]
+            open_ai_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.{completion_index}.content"]
             == message.content[0].text.value
         )
         assert (
-            open_ai_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.{idx}.role"]
+            open_ai_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.{completion_index}.role"]
             == message.role
         )
         assert (
-            open_ai_span.attributes[f"gen_ai.response.{idx}.id"]
+            open_ai_span.attributes[f"gen_ai.response.{completion_index}.id"]
             == message.id
         )
+        completion_index += 1
 
 
 @pytest.mark.vcr
 def test_new_assistant_with_polling(exporter, openai_client, assistant):
     thread = openai_client.beta.threads.create()
+    user_message = "I need to solve the equation `3x + 11 = 14`. Can you help me?"
 
     openai_client.beta.threads.messages.create(
         thread_id=thread.id,
         role="user",
-        content="I need to solve the equation `3x + 11 = 14`. Can you help me?",
+        content=user_message,
     )
 
     run = openai_client.beta.threads.runs.create_and_poll(
@@ -128,30 +136,40 @@ def test_new_assistant_with_polling(exporter, openai_client, assistant):
         == "Please address the user as Jane Doe. The user has a premium account."
     )
     assert open_ai_span.attributes["gen_ai.prompt.1.role"] == "system"
+    assert open_ai_span.attributes["gen_ai.prompt.2.role"] == "user"
+    assert open_ai_span.attributes["gen_ai.prompt.2.content"] == user_message
     assert open_ai_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 374
     assert open_ai_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS] == 86
     assert open_ai_span.attributes[SpanAttributes.LLM_SYSTEM] == "openai"
 
-    for idx, message in enumerate(messages.data):
+    completion_index = 0
+    for message in messages.data:
+        if message.role in ["user", "system"]:
+            continue
         assert (
-            open_ai_span.attributes[f"gen_ai.completion.{idx}.content"]
+            open_ai_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.{completion_index}.content"]
             == message.content[0].text.value
         )
-        assert open_ai_span.attributes[f"gen_ai.completion.{idx}.role"] == message.role
         assert (
-            open_ai_span.attributes[f"gen_ai.response.{idx}.id"]
+            open_ai_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.{completion_index}.role"]
+            == message.role
+        )
+        assert (
+            open_ai_span.attributes[f"gen_ai.response.{completion_index}.id"]
             == message.id
         )
+        completion_index += 1
 
 
 @pytest.mark.vcr
 def test_existing_assistant(exporter, openai_client):
     thread = openai_client.beta.threads.create()
+    user_message = "I need to solve the equation `3x + 11 = 14`. Can you help me?"
 
     openai_client.beta.threads.messages.create(
         thread_id=thread.id,
         role="user",
-        content="I need to solve the equation `3x + 11 = 14`. Can you help me?",
+        content=user_message,
     )
 
     run = openai_client.beta.threads.runs.create(
@@ -197,23 +215,29 @@ def test_existing_assistant(exporter, openai_client):
         == "Please address the user as Jane Doe. The user has a premium account."
     )
     assert open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.role"] == "system"
+    assert open_ai_span.attributes["gen_ai.prompt.2.role"] == "user"
+    assert open_ai_span.attributes["gen_ai.prompt.2.content"] == user_message
     assert open_ai_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 639
     assert open_ai_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS] == 170
     assert open_ai_span.attributes[SpanAttributes.LLM_SYSTEM] == "openai"
 
-    for idx, message in enumerate(messages.data):
+    completion_index = 0
+    for message in messages.data:
+        if message.role in ["user", "system"]:
+            continue
         assert (
-            open_ai_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.{idx}.content"]
+            open_ai_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.{completion_index}.content"]
             == message.content[0].text.value
         )
         assert (
-            open_ai_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.{idx}.role"]
+            open_ai_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.{completion_index}.role"]
             == message.role
         )
         assert (
-            open_ai_span.attributes[f"gen_ai.response.{idx}.id"]
+            open_ai_span.attributes[f"gen_ai.response.{completion_index}.id"]
             == message.id
         )
+        completion_index += 1
 
 
 @pytest.mark.vcr
