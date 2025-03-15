@@ -138,6 +138,8 @@ OpenLLMetry can instrument everything that [OpenTelemetry already instruments](h
 - ✅ [Milvus](https://milvus.io/)
 - ✅ [Marqo](https://marqo.ai/)
 - ✅ [LanceDB](https://lancedb.com/)
+- ✅ [FAISS](https://faiss.com/)
+
 
 ### Frameworks
 
