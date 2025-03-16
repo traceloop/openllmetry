@@ -1,24 +1,23 @@
 interactions:
 - request:
     body: '{"max_tokens": 1024, "messages": [{"role": "user", "content": [{"type":
-      "text", "text": "test_anthropic_prompt_caching_async_stream <- IGNORE THIS.
-      ARTICLES START ON THE NEXT LINE\nOpen-Source Library OpenLLMetry Brings LLM
-      Functionality to OpenTelemetry\nTraceloop, a YCombinator-backed company, has
-      announced the release of OpenLLMetry, a new open-source\nlibrary designed to
-      extend OpenTelemetry with Large Language Model (LLM) functionality. This innovative\ntool
-      aims to bridge the gap between traditional application monitoring and the rapidly
-      evolving field\nof AI-powered systems. OpenLLMetry builds upon the widely-adopted
-      OpenTelemetry framework, which provides\na standardized approach to collecting
-      and exporting telemetry data from cloud-native applications. By\nintegrating
-      LLM-specific features, OpenLLMetry enables developers to gain deeper insights
-      into\nthe performance and behavior of AI models within their applications.\n\nKey
-      features of OpenLLMetry include:\n\nLLM-specific metrics and traces\nSeamless
-      integration with existing OpenTelemetry setups\nSupport for popular LLM frameworks
-      and platforms\n\nThe open-source nature of OpenLLMetry is expected to foster
-      community contributions and rapid adoption\namong developers working with LLMs.
-      As AI continues to transform the software landscape, tools\nlike OpenLLMetry
-      are poised to play a vital role in ensuring the reliability and performance
-      of\nnext-generation applications.\n\n========================================================================\n\nMajor
+      "text", "text": "test_anthropic_prompt_caching_stream <- IGNORE THIS. ARTICLES
+      START ON THE NEXT LINE\nOpen-Source Library OpenLLMetry Brings LLM Functionality
+      to OpenTelemetry\nTraceloop, a YCombinator-backed company, has announced the
+      release of OpenLLMetry, a new open-source\nlibrary designed to extend OpenTelemetry
+      with Large Language Model (LLM) functionality. This innovative\ntool aims to
+      bridge the gap between traditional application monitoring and the rapidly evolving
+      field\nof AI-powered systems. OpenLLMetry builds upon the widely-adopted OpenTelemetry
+      framework, which provides\na standardized approach to collecting and exporting
+      telemetry data from cloud-native applications. By\nintegrating LLM-specific
+      features, OpenLLMetry enables developers to gain deeper insights into\nthe performance
+      and behavior of AI models within their applications.\n\nKey features of OpenLLMetry
+      include:\n\nLLM-specific metrics and traces\nSeamless integration with existing
+      OpenTelemetry setups\nSupport for popular LLM frameworks and platforms\n\nThe
+      open-source nature of OpenLLMetry is expected to foster community contributions
+      and rapid adoption\namong developers working with LLMs. As AI continues to transform
+      the software landscape, tools\nlike OpenLLMetry are poised to play a vital role
+      in ensuring the reliability and performance of\nnext-generation applications.\n\n========================================================================\n\nMajor
       LLM Providers Introduce Prompt Caching, Boosting Speed and Reducing Costs\n\nIn
       a significant development for the artificial intelligence industry, leading
       Large Language Model (LLM) providers,\nincluding Anthropic, have announced the
@@ -78,49 +77,50 @@ interactions:
       - application/json
       accept-encoding:
       - gzip, deflate
-      anthropic-beta:
-      - prompt-caching-2024-07-31
       anthropic-version:
       - '2023-06-01'
       connection:
       - keep-alive
       content-length:
-      - '5999'
+      - '5993'
       content-type:
       - application/json
       host:
       - api.anthropic.com
       user-agent:
-      - AsyncAnthropic/Python 0.36.2
+      - Anthropic/Python 0.49.0
       x-stainless-arch:
       - arm64
       x-stainless-async:
-      - async:asyncio
+      - 'false'
       x-stainless-lang:
       - python
       x-stainless-os:
       - MacOS
       x-stainless-package-version:
-      - 0.36.2
+      - 0.49.0
+      x-stainless-read-timeout:
+      - '600'
       x-stainless-retry-count:
       - '0'
       x-stainless-runtime:
       - CPython
       x-stainless-runtime-version:
-      - 3.12.3
+      - 3.9.6
+      x-stainless-timeout:
+      - NOT_GIVEN
     method: POST
-    uri: https://api.anthropic.com/v1/messages?beta=prompt_caching
+    uri: https://api.anthropic.com/v1/messages
   response:
     body:
       string: 'event: message_start
 
-        data: {"type":"message_start","message":{"id":"msg_01VBrTFKAYvujMd593dtpRHF","type":"message","role":"assistant","model":"claude-3-5-sonnet-20240620","content":[],"stop_reason":null,"stop_sequence":null,"usage":{"input_tokens":4,"cache_creation_input_tokens":1167,"cache_read_input_tokens":0,"output_tokens":1}}  }
+        data: {"type":"message_start","message":{"id":"msg_017FfRkh9PCC8YbjnhDMrPuK","type":"message","role":"assistant","model":"claude-3-5-sonnet-20240620","content":[],"stop_reason":null,"stop_sequence":null,"usage":{"input_tokens":4,"cache_creation_input_tokens":1165,"cache_read_input_tokens":0,"output_tokens":1}}   }
 
 
         event: content_block_start
 
-        data: {"type":"content_block_start","index":0,"content_block":{"type":"text","text":""}
-        }
+        data: {"type":"content_block_start","index":0,"content_block":{"type":"text","text":""}}
 
 
         event: ping
@@ -130,447 +130,220 @@ interactions:
 
         event: content_block_delta
 
-        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"Here"}          }
+        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"Here"}       }
 
 
         event: content_block_delta
 
         data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
-        are conc"}             }
-
-
-        event: content_block_delta
-
-        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"ise
-        summ"}   }
-
-
-        event: content_block_delta
-
-        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"aries
-        of the"}           }
+        are concise summaries of the three"}           }
 
 
         event: content_block_delta
 
         data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
-        three"}               }
+        articles:\n\n1."}         }
 
 
         event: content_block_delta
 
         data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
-        articles"}              }
+        OpenLLMetry: New"}            }
 
 
         event: content_block_delta
 
-        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":":\n\n1"}  }
+        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
+        open-source library extends OpenTelemetry"}    }
+
+
+        event: content_block_delta
+
+        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
+        with LLM functionality"}           }
+
+
+        event: content_block_delta
+
+        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":",
+        enabling deeper insights into AI"}        }
+
+
+        event: content_block_delta
+
+        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
+        model performance in applications. Key"}}
+
+
+        event: content_block_delta
+
+        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
+        features include LLM"}   }
+
+
+        event: content_block_delta
+
+        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"-specific
+        metrics/traces an"}}
+
+
+        event: content_block_delta
+
+        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"d
+        integration with existing setups.\n\n2."}    }
+
+
+        event: content_block_delta
+
+        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
+        Major LLM providers"} }
+
+
+        event: content_block_delta
+
+        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
+        introduce prompt caching,"}   }
+
+
+        event: content_block_delta
+
+        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
+        dramatically improving speed and reducing costs"}            }
+
+
+        event: content_block_delta
+
+        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
+        for API calls. Benefits include millis"}         }
+
+
+        event: content_block_delta
+
+        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"econd
+        response times,"}              }
+
+
+        event: content_block_delta
+
+        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
+        lower computational resources, and improved scalability"}            }
 
 
         event: content_block_delta
 
         data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":".
-        Open"}             }
-
-
-        event: content_block_delta
-
-        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"LLMetry:"}
-        }
+        Particularly useful for applications with repetitive"} }
 
 
         event: content_block_delta
 
         data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
-        New"}               }
-
-
-        event: content_block_delta
-
-        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
-        open"}        }
-
-
-        event: content_block_delta
-
-        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"-source
-        library"}          }
-
-
-        event: content_block_delta
-
-        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
-        extending"}  }
-
-
-        event: content_block_delta
-
-        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
-        OpenTelemetry"}           }
-
-
-        event: content_block_delta
-
-        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
-        with"}            }
-
-
-        event: content_block_delta
-
-        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
-        L"}          }
-
-
-        event: content_block_delta
-
-        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"LM
-        functionality"}         }
-
-
-        event: content_block_delta
-
-        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":".
-        Key"}     }
-
-
-        event: content_block_delta
-
-        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
-        features include L"}      }
-
-
-        event: content_block_delta
-
-        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"LM-specific
-        metrics"}        }
-
-
-        event: content_block_delta
-
-        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
-        and traces, integration"}       }
-
-
-        event: content_block_delta
-
-        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
-        with existing"}  }
-
-
-        event: content_block_delta
-
-        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
-        OpenTelemetry"}    }
-
-
-        event: content_block_delta
-
-        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
-        setups, and support"}             }
-
-
-        event: content_block_delta
-
-        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
-        for popular LLM"} }
-
-
-        event: content_block_delta
-
-        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
-        frameworks."}           }
-
-
-        event: content_block_delta
-
-        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
-        Aims to provide"}            }
-
-
-        event: content_block_delta
-
-        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
-        deeper"}              }
-
-
-        event: content_block_delta
-
-        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
-        insights into AI"}}
-
-
-        event: content_block_delta
-
-        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
-        model performance within"}    }
-
-
-        event: content_block_delta
-
-        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
-        applications.\n\n2."}     }
-
-
-        event: content_block_delta
-
-        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
-        Major LLM providers"}       }
-
-
-        event: content_block_delta
-
-        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
-        introduce prompt caching to"}   }
-
-
-        event: content_block_delta
-
-        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
-        improve speed and reduce costs"}     }
-
-
-        event: content_block_delta
-
-        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":".
-        Benefits"}           }
-
-
-        event: content_block_delta
-
-        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
-        include faster"}            }
-
-
-        event: content_block_delta
-
-        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
-        response times, lower"} }
-
-
-        event: content_block_delta
-
-        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
-        computational costs, and improve"} }
+        prompts like chatbots an"}  }
 
 
         event: content_block_delta
 
         data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"d
-        scalability. Particularly"}}
+        content moderation."}}
+
+
+        event: content_block_delta
+
+        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"\n\n3.
+        Unit testing is"}        }
 
 
         event: content_block_delta
 
         data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
-        useful for applications with repet"} }
-
-
-        event: content_block_delta
-
-        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"itive
-        prom"}       }
-
-
-        event: content_block_delta
-
-        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"pts
-        like chat"}             }
-
-
-        event: content_block_delta
-
-        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"bots
-        an"}            }
-
-
-        event: content_block_delta
-
-        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"d
-        content moderation."}  }
+        crucial in software development."}        }
 
 
         event: content_block_delta
 
         data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
-        Expecte"}    }
-
-
-        event: content_block_delta
-
-        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"d
-        to impact AI industry"}  }
+        Key benefits:\n-"}       }
 
 
         event: content_block_delta
 
         data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
-        through"}               }
-
-
-        event: content_block_delta
-
-        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
-        wider"}   }
-
-
-        event: content_block_delta
-
-        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
-        adoption and new application paradig"}     }
-
-
-        event: content_block_delta
-
-        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"ms.\n\n3."}     }
-
-
-        event: content_block_delta
-
-        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
-        Importance of unit testing in"}              }
-
-
-        event: content_block_delta
-
-        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
-        software development:"}    }
+        Catches bugs early"}           }
 
 
         event: content_block_delta
 
         data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"\n-
-        Catches bugs"}            }
-
-
-        event: content_block_delta
-
-        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
-        early"}         }
+        Saves time and money "}        }
 
 
         event: content_block_delta
 
         data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"\n-
-        Saves time an"}         }
+        Improves"}      }
 
 
         event: content_block_delta
 
-        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"d
-        money"}         }
+        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
+        code quality\n-"}  }
+
+
+        event: content_block_delta
+
+        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
+        Facilitates refactoring"}              }
 
 
         event: content_block_delta
 
         data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"\n-
-        Improves code"}          }
+        Serves as"}              }
 
 
         event: content_block_delta
 
         data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
-        quality\n- Facilit"}        }
+        documentation\n- Enhances collaboration"}  }
 
 
         event: content_block_delta
 
-        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"ates
-        refactoring"}             }
-
-
-        event: content_block_delta
-
-        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"\n-
-        Serves as documentation"}            }
-
-
-        event: content_block_delta
-
-        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"\n-
-        Enhances"}       }
+        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"\nThe
+        post emphasizes that unit testing"}              }
 
 
         event: content_block_delta
 
         data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
-        collaboration"}              }
-
-
-        event: content_block_delta
-
-        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"\nThe"}              }
+        is a professional responsibility with"}        }
 
 
         event: content_block_delta
 
         data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
-        post"}}
-
-
-        event: content_block_delta
-
-        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
-        emphas"}  }
-
-
-        event: content_block_delta
-
-        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"izes
-        unit testing as a"}            }
-
-
-        event: content_block_delta
-
-        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
-        crucial"}          }
-
-
-        event: content_block_delta
-
-        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
-        professional"}   }
-
-
-        event: content_block_delta
-
-        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
-        responsibility that"}       }
-
-
-        event: content_block_delta
-
-        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
-        pays off in"}          }
-
-
-        event: content_block_delta
-
-        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
-        the long run."}         }
+        long-term payoffs."}   }
 
 
         event: content_block_stop
 
-        data: {"type":"content_block_stop","index":0   }
+        data: {"type":"content_block_stop","index":0         }
 
 
         event: message_delta
 
-        data: {"type":"message_delta","delta":{"stop_reason":"end_turn","stop_sequence":null},"usage":{"output_tokens":224}          }
+        data: {"type":"message_delta","delta":{"stop_reason":"end_turn","stop_sequence":null},"usage":{"output_tokens":201}           }
 
 
         event: message_stop
 
-        data: {"type":"message_stop"    }
+        data: {"type":"message_stop"             }
 
 
         '
     headers:
-      CF-Cache-Status:
-      - DYNAMIC
       CF-RAY:
-      - 8d4f55f1bc74173b-SJC
+      - 920b09b769c1ecf1-ALA
       Cache-Control:
       - no-cache
       Connection:
@@ -578,27 +351,43 @@ interactions:
       Content-Type:
       - text/event-stream; charset=utf-8
       Date:
-      - Sat, 19 Oct 2024 08:18:09 GMT
+      - Sat, 15 Mar 2025 09:38:28 GMT
       Server:
       - cloudflare
       Transfer-Encoding:
       - chunked
       X-Robots-Tag:
       - none
+      anthropic-organization-id:
+      - 04aa8588-6567-40cb-9042-a54b20ebaf4f
+      anthropic-ratelimit-input-tokens-limit:
+      - '400000'
+      anthropic-ratelimit-input-tokens-remaining:
+      - '399000'
+      anthropic-ratelimit-input-tokens-reset:
+      - '2025-03-15T09:38:27Z'
+      anthropic-ratelimit-output-tokens-limit:
+      - '80000'
+      anthropic-ratelimit-output-tokens-remaining:
+      - '79000'
+      anthropic-ratelimit-output-tokens-reset:
+      - '2025-03-15T09:38:28Z'
       anthropic-ratelimit-requests-limit:
-      - '50'
+      - '4000'
       anthropic-ratelimit-requests-remaining:
-      - '49'
+      - '3999'
       anthropic-ratelimit-requests-reset:
-      - '2024-10-19T08:18:55Z'
+      - '2025-03-15T09:38:27Z'
       anthropic-ratelimit-tokens-limit:
-      - '40000'
+      - '480000'
       anthropic-ratelimit-tokens-remaining:
-      - '38000'
+      - '478000'
       anthropic-ratelimit-tokens-reset:
-      - '2024-10-19T08:18:11Z'
+      - '2025-03-15T09:38:27Z'
+      cf-cache-status:
+      - DYNAMIC
       request-id:
-      - req_01D8a9dg61KFzypbJZZVD5qy
+      - req_01JSeMFFxkhLG8Rhohx2omtN
       via:
       - 1.1 google
     status:
@@ -606,24 +395,23 @@ interactions:
       message: OK
 - request:
     body: '{"max_tokens": 1024, "messages": [{"role": "user", "content": [{"type":
-      "text", "text": "test_anthropic_prompt_caching_async_stream <- IGNORE THIS.
-      ARTICLES START ON THE NEXT LINE\nOpen-Source Library OpenLLMetry Brings LLM
-      Functionality to OpenTelemetry\nTraceloop, a YCombinator-backed company, has
-      announced the release of OpenLLMetry, a new open-source\nlibrary designed to
-      extend OpenTelemetry with Large Language Model (LLM) functionality. This innovative\ntool
-      aims to bridge the gap between traditional application monitoring and the rapidly
-      evolving field\nof AI-powered systems. OpenLLMetry builds upon the widely-adopted
-      OpenTelemetry framework, which provides\na standardized approach to collecting
-      and exporting telemetry data from cloud-native applications. By\nintegrating
-      LLM-specific features, OpenLLMetry enables developers to gain deeper insights
-      into\nthe performance and behavior of AI models within their applications.\n\nKey
-      features of OpenLLMetry include:\n\nLLM-specific metrics and traces\nSeamless
-      integration with existing OpenTelemetry setups\nSupport for popular LLM frameworks
-      and platforms\n\nThe open-source nature of OpenLLMetry is expected to foster
-      community contributions and rapid adoption\namong developers working with LLMs.
-      As AI continues to transform the software landscape, tools\nlike OpenLLMetry
-      are poised to play a vital role in ensuring the reliability and performance
-      of\nnext-generation applications.\n\n========================================================================\n\nMajor
+      "text", "text": "test_anthropic_prompt_caching_stream <- IGNORE THIS. ARTICLES
+      START ON THE NEXT LINE\nOpen-Source Library OpenLLMetry Brings LLM Functionality
+      to OpenTelemetry\nTraceloop, a YCombinator-backed company, has announced the
+      release of OpenLLMetry, a new open-source\nlibrary designed to extend OpenTelemetry
+      with Large Language Model (LLM) functionality. This innovative\ntool aims to
+      bridge the gap between traditional application monitoring and the rapidly evolving
+      field\nof AI-powered systems. OpenLLMetry builds upon the widely-adopted OpenTelemetry
+      framework, which provides\na standardized approach to collecting and exporting
+      telemetry data from cloud-native applications. By\nintegrating LLM-specific
+      features, OpenLLMetry enables developers to gain deeper insights into\nthe performance
+      and behavior of AI models within their applications.\n\nKey features of OpenLLMetry
+      include:\n\nLLM-specific metrics and traces\nSeamless integration with existing
+      OpenTelemetry setups\nSupport for popular LLM frameworks and platforms\n\nThe
+      open-source nature of OpenLLMetry is expected to foster community contributions
+      and rapid adoption\namong developers working with LLMs. As AI continues to transform
+      the software landscape, tools\nlike OpenLLMetry are poised to play a vital role
+      in ensuring the reliability and performance of\nnext-generation applications.\n\n========================================================================\n\nMajor
       LLM Providers Introduce Prompt Caching, Boosting Speed and Reducing Costs\n\nIn
       a significant development for the artificial intelligence industry, leading
       Large Language Model (LLM) providers,\nincluding Anthropic, have announced the
@@ -683,48 +471,50 @@ interactions:
       - application/json
       accept-encoding:
       - gzip, deflate
-      anthropic-beta:
-      - prompt-caching-2024-07-31
       anthropic-version:
       - '2023-06-01'
       connection:
       - keep-alive
       content-length:
-      - '5999'
+      - '5993'
       content-type:
       - application/json
       host:
       - api.anthropic.com
       user-agent:
-      - AsyncAnthropic/Python 0.36.2
+      - Anthropic/Python 0.49.0
       x-stainless-arch:
       - arm64
       x-stainless-async:
-      - async:asyncio
+      - 'false'
       x-stainless-lang:
       - python
       x-stainless-os:
       - MacOS
       x-stainless-package-version:
-      - 0.36.2
+      - 0.49.0
+      x-stainless-read-timeout:
+      - '600'
       x-stainless-retry-count:
       - '0'
       x-stainless-runtime:
       - CPython
       x-stainless-runtime-version:
-      - 3.12.3
+      - 3.9.6
+      x-stainless-timeout:
+      - NOT_GIVEN
     method: POST
-    uri: https://api.anthropic.com/v1/messages?beta=prompt_caching
+    uri: https://api.anthropic.com/v1/messages
   response:
     body:
       string: 'event: message_start
 
-        data: {"type":"message_start","message":{"id":"msg_01BqqtrPfxepxW2xPuZz1m6h","type":"message","role":"assistant","model":"claude-3-5-sonnet-20240620","content":[],"stop_reason":null,"stop_sequence":null,"usage":{"input_tokens":4,"cache_creation_input_tokens":0,"cache_read_input_tokens":1167,"output_tokens":1}}            }
+        data: {"type":"message_start","message":{"id":"msg_01XQRA3bs4SB4yTBMwD3dbUi","type":"message","role":"assistant","model":"claude-3-5-sonnet-20240620","content":[],"stop_reason":null,"stop_sequence":null,"usage":{"input_tokens":4,"cache_creation_input_tokens":0,"cache_read_input_tokens":1165,"output_tokens":1}}         }
 
 
         event: content_block_start
 
-        data: {"type":"content_block_start","index":0,"content_block":{"type":"text","text":""}           }
+        data: {"type":"content_block_start","index":0,"content_block":{"type":"text","text":""}}
 
 
         event: ping
@@ -734,404 +524,261 @@ interactions:
 
         event: content_block_delta
 
-        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"Here"}   }
+        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"Here"}}
 
 
         event: content_block_delta
 
         data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
-        are conc"}        }
-
-
-        event: content_block_delta
-
-        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"ise
-        summ"}    }
+        are concise summ"}           }
 
 
         event: content_block_delta
 
         data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"aries
-        of the"}    }
+        of the three"} }
 
 
         event: content_block_delta
 
         data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
-        three"}     }
+        articles:\n\n1. OpenLLMet"}        }
 
 
         event: content_block_delta
 
-        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
-        articles"}        }
-
-
-        event: content_block_delta
-
-        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":":\n\n1"}
-        }
-
-
-        event: content_block_delta
-
-        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":".
-        Open"}               }
-
-
-        event: content_block_delta
-
-        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"LLMetry:"}            }
-
-
-        event: content_block_delta
-
-        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
-        New"}}
-
-
-        event: content_block_delta
-
-        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
-        open"}   }
+        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"ry:
+        New open"}         }
 
 
         event: content_block_delta
 
         data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"-source
-        library"}      }
+        library extending OpenTelemetry"}           }
 
 
         event: content_block_delta
 
         data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
-        extends"}          }
+        with LLM functionality"}       }
+
+
+        event: content_block_delta
+
+        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":".
+        Key features include L"}    }
+
+
+        event: content_block_delta
+
+        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"LM-specific
+        metrics"}    }
+
+
+        event: content_block_delta
+
+        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"/traces,
+        integration"}              }
 
 
         event: content_block_delta
 
         data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
-        OpenTelemetry"}  }
+        with existing set"}            }
+
+
+        event: content_block_delta
+
+        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"ups,
+        and support for"}           }
 
 
         event: content_block_delta
 
         data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
-        with LLM functionality"}              }
+        popular LLM frameworks"}              }
 
 
         event: content_block_delta
 
-        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":","}             }
-
-
-        event: content_block_delta
-
-        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
-        enabling deeper"}   }
+        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":".
+        Aims to provide"}          }
 
 
         event: content_block_delta
 
         data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
-        insights into AI"}           }
+        deeper insights into AI"}     }
 
 
         event: content_block_delta
 
         data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
-        model performance in"}           }
+        model performance in applications.\n\n2."}   }
 
 
         event: content_block_delta
 
         data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
-        applications. Key"}              }
+        Major LLM providers"}}
 
 
         event: content_block_delta
 
         data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
-        features include LLM"}             }
+        introduce prompt caching to"}             }
 
 
         event: content_block_delta
 
-        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"-specific
-        metrics/"}               }
+        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
+        improve speed and reduce costs"}       }
 
 
         event: content_block_delta
 
-        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"traces
-        an"}        }
+        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":".
+        Benefits include faster response times,"}     }
+
+
+        event: content_block_delta
+
+        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
+        lower computational costs, and improve"}           }
 
 
         event: content_block_delta
 
         data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"d
-        integration"}  }
+        scalability. Particularly"}        }
 
 
         event: content_block_delta
 
         data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
-        with existing set"} }
-
-
-        event: content_block_delta
-
-        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"ups."}           }
-
-
-        event: content_block_delta
-
-        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"\n\n2.
-        Major L"}          }
-
-
-        event: content_block_delta
-
-        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"LM
-        providers"}    }
+        useful for applications with repetitive"}         }
 
 
         event: content_block_delta
 
         data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
-        introduce prompt caching,"}             }
-
-
-        event: content_block_delta
-
-        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
-        dramatically"}              }
-
-
-        event: content_block_delta
-
-        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
-        improving spee"}              }
+        prompts like chatbots an"}   }
 
 
         event: content_block_delta
 
         data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"d
-        and reducing costs for API"}       }
+        content moderation. Expected to impact"}           }
 
 
         event: content_block_delta
 
         data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
-        calls."}    }
+        AI industry by enabling wider adoption and new"}           }
 
 
         event: content_block_delta
 
         data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
-        Benefits"} }
+        application types.\n\n3."}       }
 
 
         event: content_block_delta
 
         data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
-        include millis"}              }
-
-
-        event: content_block_delta
-
-        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"econd
-        response times,"} }
+        Importance of unit testing in"}}
 
 
         event: content_block_delta
 
         data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
-        lower"}              }
+        software development:\n- Catches bugs"}         }
 
 
         event: content_block_delta
 
         data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
-        computational"}       }
+        early\n- Saves"}     }
 
 
         event: content_block_delta
 
         data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
-        resources"}          }
-
-
-        event: content_block_delta
-
-        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":","}               }
+        time and money\n-"}              }
 
 
         event: content_block_delta
 
         data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
-        and improve"}      }
+        Improves code quality"}             }
+
+
+        event: content_block_delta
+
+        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"\n-
+        Facilitates"}         }
+
+
+        event: content_block_delta
+
+        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
+        refactoring\n-"}          }
+
+
+        event: content_block_delta
+
+        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
+        Serves as documentation"}              }
+
+
+        event: content_block_delta
+
+        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"\n-
+        Enhances collaboration"}           }
+
+
+        event: content_block_delta
+
+        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"\nThe
+        post emphasizes that unit testing"}            }
+
+
+        event: content_block_delta
+
+        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
+        is crucial for professional software development an"}           }
 
 
         event: content_block_delta
 
         data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"d
-        scalability."}          }
+        pays off in the long run"}            }
 
 
         event: content_block_delta
 
-        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
-        Particularly"}  }
-
-
-        event: content_block_delta
-
-        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
-        useful"} }
-
-
-        event: content_block_delta
-
-        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
-        for applications with repetitive"}      }
-
-
-        event: content_block_delta
-
-        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
-        prompts like"}             }
-
-
-        event: content_block_delta
-
-        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
-        chatbots an"}  }
-
-
-        event: content_block_delta
-
-        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"d
-        translation"}        }
-
-
-        event: content_block_delta
-
-        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
-        services."}           }
-
-
-        event: content_block_delta
-
-        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"\n\n3.
-        Unit testing"}}
-
-
-        event: content_block_delta
-
-        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
-        is crucial"}            }
-
-
-        event: content_block_delta
-
-        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
-        in software development:"}           }
-
-
-        event: content_block_delta
-
-        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
-        Catches bugs early, saves"}      }
-
-
-        event: content_block_delta
-
-        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
-        time/money, impro"}   }
-
-
-        event: content_block_delta
-
-        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"ves
-        code quality, facilit"}     }
-
-
-        event: content_block_delta
-
-        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"ates
-        refactoring,"}     }
-
-
-        event: content_block_delta
-
-        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
-        serves as documentation, an"}        }
-
-
-        event: content_block_delta
-
-        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"d
-        enhances collaboration. The"}    }
-
-
-        event: content_block_delta
-
-        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
-        post"}         }
-
-
-        event: content_block_delta
-
-        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
-        emphasizes that"}  }
-
-
-        event: content_block_delta
-
-        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
-        investing"}       }
-
-
-        event: content_block_delta
-
-        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
-        in unit testing is a"}      }
-
-
-        event: content_block_delta
-
-        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
-        professional responsibility with"}    }
-
-
-        event: content_block_delta
-
-        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
-        long-term benefits."}  }
+        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"."}       }
 
 
         event: content_block_stop
 
-        data: {"type":"content_block_stop","index":0          }
+        data: {"type":"content_block_stop","index":0     }
 
 
         event: message_delta
 
-        data: {"type":"message_delta","delta":{"stop_reason":"end_turn","stop_sequence":null},"usage":{"output_tokens":186}   }
+        data: {"type":"message_delta","delta":{"stop_reason":"end_turn","stop_sequence":null},"usage":{"output_tokens":221}             }
 
 
         event: message_stop
 
-        data: {"type":"message_stop"               }
+        data: {"type":"message_stop"             }
 
 
         '
     headers:
-      CF-Cache-Status:
-      - DYNAMIC
       CF-RAY:
-      - 8d4f56200a12173b-SJC
+      - 920b09d33da0ecf1-ALA
       Cache-Control:
       - no-cache
       Connection:
@@ -1139,27 +786,43 @@ interactions:
       Content-Type:
       - text/event-stream; charset=utf-8
       Date:
-      - Sat, 19 Oct 2024 08:18:17 GMT
+      - Sat, 15 Mar 2025 09:38:32 GMT
       Server:
       - cloudflare
       Transfer-Encoding:
       - chunked
       X-Robots-Tag:
       - none
+      anthropic-organization-id:
+      - 04aa8588-6567-40cb-9042-a54b20ebaf4f
+      anthropic-ratelimit-input-tokens-limit:
+      - '400000'
+      anthropic-ratelimit-input-tokens-remaining:
+      - '399000'
+      anthropic-ratelimit-input-tokens-reset:
+      - '2025-03-15T09:38:31Z'
+      anthropic-ratelimit-output-tokens-limit:
+      - '80000'
+      anthropic-ratelimit-output-tokens-remaining:
+      - '79000'
+      anthropic-ratelimit-output-tokens-reset:
+      - '2025-03-15T09:38:32Z'
       anthropic-ratelimit-requests-limit:
-      - '50'
+      - '4000'
       anthropic-ratelimit-requests-remaining:
-      - '49'
+      - '3999'
       anthropic-ratelimit-requests-reset:
-      - '2024-10-19T08:18:55Z'
+      - '2025-03-15T09:38:31Z'
       anthropic-ratelimit-tokens-limit:
-      - '40000'
+      - '480000'
       anthropic-ratelimit-tokens-remaining:
-      - '38000'
+      - '478000'
       anthropic-ratelimit-tokens-reset:
-      - '2024-10-19T08:18:19Z'
+      - '2025-03-15T09:38:31Z'
+      cf-cache-status:
+      - DYNAMIC
       request-id:
-      - req_013pSJwGsRyHBayiBD38PjTK
+      - req_011ZwbAjZK7Ld6vDn2Qu1tG6
       via:
       - 1.1 google
     status:
