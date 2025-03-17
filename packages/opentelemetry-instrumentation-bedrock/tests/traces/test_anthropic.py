@@ -232,3 +232,56 @@ def test_anthropic_3_completion_string_content(test_context, brt):
         anthropic_span.attributes.get("gen_ai.response.id")
         == "msg_bdrk_01WR9VHqpyBzBhzgwCDapaQD"
     )
+
+
+@pytest.mark.vcr
+def test_anthropic_cross_region(test_context, brt):
+    inference_config = {"temperature": 0.5}
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                { "text": "Human: Tell me a joke about opentelemetry Assistant:"},
+            ],
+        },
+    ]
+    response = brt.converse(
+        modelId="arn:aws:bedrock:us-east-1:012345678901:inference-profile/us.anthropic.claude-3-7-sonnet-20250219-v1:0",
+        messages=messages,
+        inferenceConfig=inference_config,
+    )
+
+    completion = response["output"]["message"]["content"][0]['text']
+
+    exporter, _, _ = test_context
+    spans = exporter.get_finished_spans()
+
+    assert len(spans) == 1
+
+    anthropic_span = spans[0]
+    assert anthropic_span.name == "bedrock.converse"
+
+    # Assert on model name and vendor
+    assert anthropic_span.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "claude-3-7-sonnet-20250219-v1"
+    assert anthropic_span.attributes[SpanAttributes.LLM_SYSTEM] == "anthropic"
+
+
+    assert (
+            anthropic_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
+            == json.dumps(messages[0]["content"])
+    )
+    assert (
+            anthropic_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
+            == completion
+    )
+
+    assert anthropic_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 20
+    assert anthropic_span.attributes.get(
+        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
+    ) + anthropic_span.attributes.get(
+        SpanAttributes.LLM_USAGE_PROMPT_TOKENS
+    ) == anthropic_span.attributes.get(
+        SpanAttributes.LLM_USAGE_TOTAL_TOKENS
+    )
+    # Bedrock does not return the response id for claude-v2:1
+    assert anthropic_span.attributes.get("gen_ai.response.id") is None
