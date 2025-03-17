@@ -374,3 +374,67 @@ def test_nova_converse_stream(test_context, brt):
         bedrock_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
         == inputTokens + outputTokens
     )
+
+
+@pytest.mark.vcr
+def test_nova_cross_region_invoke(test_context, brt):
+
+    message_list = [{"role": "user", "content": [{"text": "Tell me a joke about OpenTelemetry"}]}]
+    inf_params = {"maxTokens": 500, "topP": 0.9, "topK": 20, "temperature": 0.7}
+    request_body = {
+        "messages": message_list,
+        "inferenceConfig": inf_params,
+    }
+
+    modelId = "us.amazon.nova-lite-v1:0"
+    accept = "application/json"
+    contentType = "application/json"
+
+    response = brt.invoke_model(
+        body=json.dumps(request_body),
+        modelId=modelId,
+        accept=accept,
+        contentType=contentType,
+    )
+
+    response_body = json.loads(response.get("body").read())
+
+    exporter, _, _ = test_context
+    spans = exporter.get_finished_spans()
+    assert len(spans) == 1
+    assert spans[0].name == "bedrock.completion"
+
+    bedrock_span = spans[0]
+
+    # Assert on model name and vendor
+    assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "nova-lite-v1:0"
+    assert bedrock_span.attributes[SpanAttributes.LLM_SYSTEM] == "amazon"
+
+    # Assert on vendor
+    assert bedrock_span.attributes[SpanAttributes.LLM_SYSTEM] == "amazon"
+
+    # Assert on request type
+    assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "completion"
+
+    # Assert on prompt
+    assert bedrock_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"] == "user"
+
+    assert bedrock_span.attributes[
+               f"{SpanAttributes.LLM_PROMPTS}.0.content"
+           ] == json.dumps(message_list[0].get("content"), default=str)
+
+    # Assert on response
+    generated_text = response_body["output"]["message"]["content"]
+    for i in range(0, len(generated_text)):
+        assert (
+                bedrock_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.{i}.content"]
+                == generated_text[i]["text"]
+        )
+
+    # Assert on other request parameters
+    assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_MAX_TOKENS] == 500
+    assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TEMPERATURE] == 0.7
+    assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TOP_P] == 0.9
+    # There is no response id for Amazon Titan models in the response body,
+    # only request id in the response.
+    assert bedrock_span.attributes.get("gen_ai.response.id") is None
