@@ -412,7 +412,6 @@ def _handle_converse_stream(span, kwargs, response, metric_params):
         stream._parse_event = handler(stream._parse_event)
 
 
-
 def _get_vendor_model(modelId):
     # Docs:
     # https://docs.aws.amazon.com/bedrock/latest/userguide/inference-profiles-support.html#inference-profiles-support-system
@@ -437,6 +436,7 @@ def _cross_region_check(value):
     else:
         (vendor, model) = value.split(".")
     return vendor, model
+
 
 def _report_converse_input_prompt(kwargs, span):
     prompt_idx = 0

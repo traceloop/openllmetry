@@ -375,6 +375,7 @@ def test_nova_converse_stream(test_context, brt):
         == inputTokens + outputTokens
     )
 
+
 @pytest.mark.vcr
 def test_nova_cross_region_invoke(test_context, brt):
 
