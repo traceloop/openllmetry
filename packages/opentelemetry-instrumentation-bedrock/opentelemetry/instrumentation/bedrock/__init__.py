@@ -420,7 +420,7 @@ def _get_vendor_model(modelId):
 
     if modelId is not None and modelId.startswith("arn"):
         components = modelId.split(":")
-        if len(components) > 6:
+        if len(components) > 5:
             inf_profile = components[5].split("/")
             if len(inf_profile) == 2:
                 (vendor, model) = _cross_region_check(inf_profile[1])
@@ -433,7 +433,10 @@ def _get_vendor_model(modelId):
 def _cross_region_check(value):
     prefixes = ["us", "us-gov", "eu", "apac"]
     if any(value.startswith(prefix + ".") for prefix in prefixes):
-        (region, vendor, model) = value.split(".")
+        parts = value.split(".")
+        if len(parts) > 2:
+            parts.pop(0)
+        return parts[0], parts[1]
     else:
         (vendor, model) = value.split(".")
     return vendor, model
