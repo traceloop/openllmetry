@@ -423,7 +423,8 @@ def _get_vendor_model(modelId):
         if len(components) > 5:
             inf_profile = components[5].split("/")
             if len(inf_profile) == 2:
-                (vendor, model) = _cross_region_check(inf_profile[1])
+                if "." in inf_profile[1]:
+                    (vendor, model) = _cross_region_check(inf_profile[1])
     elif modelId is not None and "." in modelId:
         (vendor, model) = _cross_region_check(modelId)
 
