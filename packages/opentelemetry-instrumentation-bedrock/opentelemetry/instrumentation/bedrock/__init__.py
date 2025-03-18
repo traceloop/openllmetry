@@ -11,6 +11,7 @@ from opentelemetry.instrumentation.bedrock.guardrail import (
     guardrail_handling,
     guardrail_converse,
 )
+from opentelemetry.instrumentation.bedrock.prompt_caching import prompt_caching_handling
 from opentelemetry.instrumentation.bedrock.reusable_streaming_body import (
     ReusableStreamingBody,
 )
@@ -56,6 +57,7 @@ class MetricParams:
         guardrail_topic: Counter,
         guardrail_content: Counter,
         guardrail_words: Counter,
+        prompt_caching: Counter,
     ):
         self.vendor = ""
         self.model = ""
@@ -71,6 +73,7 @@ class MetricParams:
         self.guardrail_topic = guardrail_topic
         self.guardrail_content = guardrail_content
         self.guardrail_words = guardrail_words
+        self.prompt_caching = prompt_caching
         self.start_time = time.time()
 
 
@@ -275,6 +278,7 @@ def _handle_stream_call(span, kwargs, response, metric_params):
         metric_params.model = model
         metric_params.is_stream = True
 
+        prompt_caching_handling(headers, vendor, model, metric_params)
         guardrail_handling(response_body, vendor, model, metric_params)
 
         _set_model_span_attributes(
@@ -304,6 +308,7 @@ def _handle_call(span, kwargs, response, metric_params):
     metric_params.model = model
     metric_params.is_stream = False
 
+    prompt_caching_handling(headers, vendor, model, metric_params)
     guardrail_handling(response_body, vendor, model, metric_params)
 
     _set_model_span_attributes(
@@ -959,16 +964,6 @@ def _set_amazon_span_attributes(
                 )
 
 
-class GuardrailMeters:
-    LLM_BEDROCK_GUARDRAIL_ACTIVATION = "gen_ai.bedrock.guardrail.activation"
-    LLM_BEDROCK_GUARDRAIL_LATENCY = "gen_ai.bedrock.guardrail.latency"
-    LLM_BEDROCK_GUARDRAIL_COVERAGE = "gen_ai.bedrock.guardrail.coverage"
-    LLM_BEDROCK_GUARDRAIL_SENSITIVE = "gen_ai.bedrock.guardrail.sensitive_info"
-    LLM_BEDROCK_GUARDRAIL_TOPICS = "gen_ai.bedrock.guardrail.topics"
-    LLM_BEDROCK_GUARDRAIL_CONTENT = "gen_ai.bedrock.guardrail.content"
-    LLM_BEDROCK_GUARDRAIL_WORDS = "gen_ai.bedrock.guardrail.words"
-
-
 def _set_imported_model_span_attributes(span, request_body, response_body, metric_params):
     _set_span_attribute(
         span, SpanAttributes.LLM_REQUEST_TYPE, LLMRequestTypeValues.COMPLETION.value
@@ -1002,6 +997,18 @@ def _set_imported_model_span_attributes(span, request_body, response_body, metri
                 response_body.get("generation"),
             )
 
+class GuardrailMeters:
+    LLM_BEDROCK_GUARDRAIL_ACTIVATION = "gen_ai.bedrock.guardrail.activation"
+    LLM_BEDROCK_GUARDRAIL_LATENCY = "gen_ai.bedrock.guardrail.latency"
+    LLM_BEDROCK_GUARDRAIL_COVERAGE = "gen_ai.bedrock.guardrail.coverage"
+    LLM_BEDROCK_GUARDRAIL_SENSITIVE = "gen_ai.bedrock.guardrail.sensitive_info"
+    LLM_BEDROCK_GUARDRAIL_TOPICS = "gen_ai.bedrock.guardrail.topics"
+    LLM_BEDROCK_GUARDRAIL_CONTENT = "gen_ai.bedrock.guardrail.content"
+    LLM_BEDROCK_GUARDRAIL_WORDS = "gen_ai.bedrock.guardrail.words"
+
+class PromptCaching:
+    # will be moved under the AI SemConv. Not namespaced since also OpenAI supports this.
+    LLM_BEDROCK_PROMPT_CACHING = "gen_ai.prompt.caching"
 
 def _create_metrics(meter: Meter):
     token_histogram = meter.create_histogram(
@@ -1072,6 +1079,13 @@ def _create_metrics(meter: Meter):
         description="GenAI guardrail words filter protection",
     )
 
+    # Prompt Caching
+    prompt_caching = meter.create_counter(
+        name=PromptCaching.LLM_BEDROCK_PROMPT_CACHING,
+        unit="",
+        description="Number of cached tokens",
+    )
+
     return (
         token_histogram,
         choice_counter,
@@ -1084,6 +1098,7 @@ def _create_metrics(meter: Meter):
         guardrail_topic,
         guardrail_content,
         guardrail_words,
+        prompt_caching,
     )
 
 
@@ -1119,6 +1134,7 @@ class BedrockInstrumentor(BaseInstrumentor):
                 guardrail_topic,
                 guardrail_content,
                 guardrail_words,
+                prompt_caching,
             ) = _create_metrics(meter)
         else:
             (
@@ -1133,7 +1149,8 @@ class BedrockInstrumentor(BaseInstrumentor):
                 guardrail_topic,
                 guardrail_content,
                 guardrail_words,
-            ) = (None, None, None, None, None, None, None, None, None, None, None)
+                prompt_caching,
+            ) = (None, None, None, None, None, None, None, None, None, None, None, None)
 
         metric_params = MetricParams(
             token_histogram,
@@ -1147,6 +1164,7 @@ class BedrockInstrumentor(BaseInstrumentor):
             guardrail_topic,
             guardrail_content,
             guardrail_words,
+            prompt_caching,
         )
 
         for wrapped_method in WRAPPED_METHODS:
