@@ -2,8 +2,10 @@ class CachingHeaders:
     READ = "x-amzn-bedrock-cache-read-input-token-count"
     WRITE = "x-amzn-bedrock-cache-write-input-token-count"
 
-class CacheSpanAttrs: # TODO: move it under SemConv pkg
+
+class CacheSpanAttrs:  # TODO: move it under SemConv pkg
     TYPE = "gen_ai.cache.type"
+
 
 def prompt_caching_handling(headers, vendor, model, metric_params):
     base_attrs = {

@@ -997,6 +997,7 @@ def _set_imported_model_span_attributes(span, request_body, response_body, metri
                 response_body.get("generation"),
             )
 
+
 class GuardrailMeters:
     LLM_BEDROCK_GUARDRAIL_ACTIVATION = "gen_ai.bedrock.guardrail.activation"
     LLM_BEDROCK_GUARDRAIL_LATENCY = "gen_ai.bedrock.guardrail.latency"
@@ -1006,9 +1007,11 @@ class GuardrailMeters:
     LLM_BEDROCK_GUARDRAIL_CONTENT = "gen_ai.bedrock.guardrail.content"
     LLM_BEDROCK_GUARDRAIL_WORDS = "gen_ai.bedrock.guardrail.words"
 
+
 class PromptCaching:
     # will be moved under the AI SemConv. Not namespaced since also OpenAI supports this.
     LLM_BEDROCK_PROMPT_CACHING = "gen_ai.prompt.caching"
+
 
 def _create_metrics(meter: Meter):
     token_histogram = meter.create_histogram(

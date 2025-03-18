@@ -1,14 +1,13 @@
 import json
 
 import pytest
-from opentelemetry.semconv_ai import SpanAttributes
 
 from opentelemetry.instrumentation.bedrock import PromptCaching
 from opentelemetry.instrumentation.bedrock.prompt_caching import CacheSpanAttrs
 
 
 def call(brt):
-    body={
+    body = {
         "anthropic_version": "bedrock-2023-05-31",
         "system": "very very long system prompt",
         "messages": [
@@ -38,6 +37,7 @@ def call(brt):
         body=json.dumps(body),
     )
 
+
 def get_metric(resource_metrics, name):
     for rm in resource_metrics:
         for sm in rm.scope_metrics:
@@ -45,6 +45,7 @@ def get_metric(resource_metrics, name):
                 if metric.name == name:
                     return metric
     raise Exception(f"No metric found with name {name}")
+
 
 def assert_metric(reader, usage):
     metrics_data = reader.get_metrics_data()
@@ -75,7 +76,6 @@ def test_prompt_cache(test_context, brt):
     assert response_body['usage']['cache_creation_input_tokens'] > 0
     cumulative_workaround = response_body['usage']['cache_creation_input_tokens']
     assert_metric(reader, response_body['usage'])
-
 
     response = call(brt)
     response_body = json.loads(response.get('body').read())
