@@ -28,6 +28,7 @@ from opentelemetry.instrumentation.openai.v1.assistant_wrappers import (
     runs_retrieve_wrapper,
     runs_create_and_stream_wrapper,
     messages_list_wrapper,
+    responses_retrieve_wrapper,
 )
 
 from opentelemetry.instrumentation.openai.utils import is_metrics_enabled
@@ -242,6 +243,11 @@ class OpenAIV1Instrumentor(BaseInstrumentor):
                 "openai.resources.beta.threads.messages",
                 "Messages.list",
                 messages_list_wrapper(tracer),
+            )
+            wrap_function_wrapper(
+                "openai.resources.responses", 
+                "Responses.retrieve",  
+                responses_retrieve_wrapper(tracer),  
             )
         except (AttributeError, ModuleNotFoundError):
             pass
