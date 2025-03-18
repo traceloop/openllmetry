@@ -322,8 +322,6 @@ def test_prompt_cache(test_context, brt):
             body=json.dumps(body),
         )
 
-        prompt_caching_call(brt)
-
     prompt_caching_call(brt)
     prompt_caching_call(brt)
 
