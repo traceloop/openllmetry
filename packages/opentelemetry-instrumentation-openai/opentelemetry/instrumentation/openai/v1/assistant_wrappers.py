@@ -15,7 +15,7 @@ from opentelemetry.instrumentation.openai.shared.config import Config
 
 from openai._legacy_response import LegacyAPIResponse
 from openai.types.beta.threads.run import Run
-from openai.types.beta.responses.response import Response
+from openai.types.responses import Response
 
 logger = logging.getLogger(__name__)
 
