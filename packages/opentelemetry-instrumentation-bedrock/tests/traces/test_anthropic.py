@@ -3,6 +3,8 @@ import json
 import pytest
 from opentelemetry.semconv_ai import SpanAttributes
 
+from opentelemetry.instrumentation.bedrock.prompt_caching import CacheSpanAttrs
+
 
 @pytest.mark.vcr
 def test_anthropic_2_completion(test_context, brt):
@@ -284,3 +286,52 @@ def test_anthropic_cross_region(test_context, brt):
     )
     # Bedrock does not return the response id for claude-v2:1
     assert anthropic_span.attributes.get("gen_ai.response.id") is None
+
+
+@pytest.mark.vcr
+def test_prompt_cache(test_context, brt):
+
+    def prompt_caching_call(brt):
+        body = {
+            "anthropic_version": "bedrock-2023-05-31",
+            "system": "very very long system prompt",
+            "messages": [
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "How do I write js?",
+                            "cache_control": {
+                                "type": "ephemeral"
+                            }
+                        },
+                    ]
+                }
+            ],
+            "max_tokens": 50,
+            "temperature": 0.1,
+            "top_p": 0.1,
+            "stop_sequences": [
+                "stop"
+            ],
+            "top_k": 250
+        }
+        return brt.invoke_model(
+            modelId="anthropic.claude-3-5-haiku-20241022-v1:0",
+            body=json.dumps(body),
+        )
+
+        prompt_caching_call(brt)
+
+    prompt_caching_call(brt)
+    prompt_caching_call(brt)
+
+    exporter, _, _ = test_context
+    spans = exporter.get_finished_spans()
+
+    assert len(spans) == 2
+
+    # first writes, second reads
+    assert spans[0].attributes.get(CacheSpanAttrs.CACHED) == "write"
+    assert spans[1].attributes.get(CacheSpanAttrs.CACHED) == "read"
