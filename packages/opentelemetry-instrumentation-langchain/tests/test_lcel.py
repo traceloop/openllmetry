@@ -1,5 +1,5 @@
 import json
-
+import datetime
 import pytest
 from langchain_core.utils.function_calling import (
     convert_pydantic_to_openai_function,
@@ -252,3 +252,56 @@ async def test_async_invoke(exporter):
         "StrOutputParser.task",
         "RunnableSequence.workflow",
     ] == [span.name for span in spans]
+
+
+@pytest.mark.vcr
+def test_lcel_with_datetime(exporter):
+    test_date = datetime.datetime(2023, 5, 17, 12, 34, 56)
+
+    class Joke(BaseModel):
+        """Joke to tell user."""
+
+        setup: str = Field(description="question to set up a joke")
+        punchline: str = Field(description="answer to resolve the joke")
+
+    openai_functions = [convert_pydantic_to_openai_function(Joke)]
+
+    prompt = ChatPromptTemplate.from_messages(
+        [("system", "You are helpful assistant"), ("user", "{input}")]
+    )
+    model = ChatOpenAI(model="gpt-3.5-turbo")
+    output_parser = JsonOutputFunctionsParser()
+
+    chain = (
+        prompt | model.bind(functions=openai_functions) | output_parser
+    ).with_config(
+        {
+            "run_name": "DateTimeTestChain",
+            "tags": ["datetime_test"],
+            "metadata": {"timestamp": test_date, "test_name": "datetime_test"},
+        }
+    )
+
+    chain.invoke({"input": "tell me a short joke"})
+
+    spans = exporter.get_finished_spans()
+
+    workflow_span = next(
+        span for span in spans if span.name == "DateTimeTestChain.workflow"
+    )
+
+    entity_input = json.loads(
+        workflow_span.attributes[SpanAttributes.TRACELOOP_ENTITY_INPUT]
+    )
+
+    assert entity_input["metadata"]["timestamp"] == "2023-05-17T12:34:56"
+    assert entity_input["metadata"]["test_name"] == "datetime_test"
+
+    assert set(
+        [
+            "ChatPromptTemplate.task",
+            "JsonOutputFunctionsParser.task",
+            "ChatOpenAI.chat",
+            "DateTimeTestChain.workflow",
+        ]
+    ) == set([span.name for span in spans])
