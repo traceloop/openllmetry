@@ -11,6 +11,7 @@ from opentelemetry.instrumentation.bedrock.guardrail import (
     guardrail_handling,
     guardrail_converse,
 )
+from opentelemetry.instrumentation.bedrock.prompt_caching import prompt_caching_handling
 from opentelemetry.instrumentation.bedrock.reusable_streaming_body import (
     ReusableStreamingBody,
 )
@@ -56,6 +57,7 @@ class MetricParams:
         guardrail_topic: Counter,
         guardrail_content: Counter,
         guardrail_words: Counter,
+        prompt_caching: Counter,
     ):
         self.vendor = ""
         self.model = ""
@@ -71,6 +73,7 @@ class MetricParams:
         self.guardrail_topic = guardrail_topic
         self.guardrail_content = guardrail_content
         self.guardrail_words = guardrail_words
+        self.prompt_caching = prompt_caching
         self.start_time = time.time()
 
 
@@ -261,7 +264,7 @@ def _instrumented_converse_stream(fn, tracer, metric_params):
 @dont_throw
 def _handle_stream_call(span, kwargs, response, metric_params):
 
-    (vendor, model) = kwargs.get("modelId").split(".")
+    (vendor, model) = _get_vendor_model(kwargs.get("modelId"))
     request_body = json.loads(kwargs.get("body"))
 
     headers = {}
@@ -275,6 +278,7 @@ def _handle_stream_call(span, kwargs, response, metric_params):
         metric_params.model = model
         metric_params.is_stream = True
 
+        prompt_caching_handling(headers, vendor, model, metric_params)
         guardrail_handling(response_body, vendor, model, metric_params)
 
         _set_model_span_attributes(
@@ -299,16 +303,12 @@ def _handle_call(span, kwargs, response, metric_params):
     if "ResponseMetadata" in response:
         headers = response.get("ResponseMetadata").get("HTTPHeaders", {})
 
-    modelId = kwargs.get("modelId")
-    if modelId is not None and "." in modelId:
-        (vendor, model) = modelId.split(".")
-    else:
-        vendor = "imported_model"
-        model = kwargs.get("modelId")
+    (vendor, model) = _get_vendor_model(kwargs.get("modelId"))
     metric_params.vendor = vendor
     metric_params.model = model
     metric_params.is_stream = False
 
+    prompt_caching_handling(headers, vendor, model, metric_params)
     guardrail_handling(response_body, vendor, model, metric_params)
 
     _set_model_span_attributes(
@@ -318,7 +318,7 @@ def _handle_call(span, kwargs, response, metric_params):
 
 @dont_throw
 def _handle_converse(span, kwargs, response, metric_params):
-    (vendor, model) = kwargs.get("modelId").split(".")
+    (vendor, model) = _get_vendor_model(kwargs.get("modelId"))
     guardrail_converse(response, vendor, model, metric_params)
 
     _set_span_attribute(span, SpanAttributes.LLM_SYSTEM, vendor)
@@ -359,7 +359,7 @@ def _handle_converse(span, kwargs, response, metric_params):
 
 @dont_throw
 def _handle_converse_stream(span, kwargs, response, metric_params):
-    (vendor, model) = kwargs.get("modelId").split(".")
+    (vendor, model) = _get_vendor_model(kwargs.get("modelId"))
 
     _set_span_attribute(span, SpanAttributes.LLM_SYSTEM, vendor)
     _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, model)
@@ -415,6 +415,37 @@ def _handle_converse_stream(span, kwargs, response, metric_params):
             return partial(wrap, response_msg=[], span=span)
 
         stream._parse_event = handler(stream._parse_event)
+
+
+def _get_vendor_model(modelId):
+    # Docs:
+    # https://docs.aws.amazon.com/bedrock/latest/userguide/inference-profiles-support.html#inference-profiles-support-system
+    vendor = "imported_model"
+    model = modelId
+
+    if modelId is not None and modelId.startswith("arn"):
+        components = modelId.split(":")
+        if len(components) > 5:
+            inf_profile = components[5].split("/")
+            if len(inf_profile) == 2:
+                if "." in inf_profile[1]:
+                    (vendor, model) = _cross_region_check(inf_profile[1])
+    elif modelId is not None and "." in modelId:
+        (vendor, model) = _cross_region_check(modelId)
+
+    return vendor, model
+
+
+def _cross_region_check(value):
+    prefixes = ["us", "us-gov", "eu", "apac"]
+    if any(value.startswith(prefix + ".") for prefix in prefixes):
+        parts = value.split(".")
+        if len(parts) > 2:
+            parts.pop(0)
+        return parts[0], parts[1]
+    else:
+        (vendor, model) = value.split(".")
+    return vendor, model
 
 
 def _report_converse_input_prompt(kwargs, span):
@@ -933,16 +964,6 @@ def _set_amazon_span_attributes(
                 )
 
 
-class GuardrailMeters:
-    LLM_BEDROCK_GUARDRAIL_ACTIVATION = "gen_ai.bedrock.guardrail.activation"
-    LLM_BEDROCK_GUARDRAIL_LATENCY = "gen_ai.bedrock.guardrail.latency"
-    LLM_BEDROCK_GUARDRAIL_COVERAGE = "gen_ai.bedrock.guardrail.coverage"
-    LLM_BEDROCK_GUARDRAIL_SENSITIVE = "gen_ai.bedrock.guardrail.sensitive_info"
-    LLM_BEDROCK_GUARDRAIL_TOPICS = "gen_ai.bedrock.guardrail.topics"
-    LLM_BEDROCK_GUARDRAIL_CONTENT = "gen_ai.bedrock.guardrail.content"
-    LLM_BEDROCK_GUARDRAIL_WORDS = "gen_ai.bedrock.guardrail.words"
-
-
 def _set_imported_model_span_attributes(span, request_body, response_body, metric_params):
     _set_span_attribute(
         span, SpanAttributes.LLM_REQUEST_TYPE, LLMRequestTypeValues.COMPLETION.value
@@ -975,6 +996,21 @@ def _set_imported_model_span_attributes(span, request_body, response_body, metri
                 span, f"{SpanAttributes.LLM_COMPLETIONS}.0.content",
                 response_body.get("generation"),
             )
+
+
+class GuardrailMeters:
+    LLM_BEDROCK_GUARDRAIL_ACTIVATION = "gen_ai.bedrock.guardrail.activation"
+    LLM_BEDROCK_GUARDRAIL_LATENCY = "gen_ai.bedrock.guardrail.latency"
+    LLM_BEDROCK_GUARDRAIL_COVERAGE = "gen_ai.bedrock.guardrail.coverage"
+    LLM_BEDROCK_GUARDRAIL_SENSITIVE = "gen_ai.bedrock.guardrail.sensitive_info"
+    LLM_BEDROCK_GUARDRAIL_TOPICS = "gen_ai.bedrock.guardrail.topics"
+    LLM_BEDROCK_GUARDRAIL_CONTENT = "gen_ai.bedrock.guardrail.content"
+    LLM_BEDROCK_GUARDRAIL_WORDS = "gen_ai.bedrock.guardrail.words"
+
+
+class PromptCaching:
+    # will be moved under the AI SemConv. Not namespaced since also OpenAI supports this.
+    LLM_BEDROCK_PROMPT_CACHING = "gen_ai.prompt.caching"
 
 
 def _create_metrics(meter: Meter):
@@ -1046,6 +1082,13 @@ def _create_metrics(meter: Meter):
         description="GenAI guardrail words filter protection",
     )
 
+    # Prompt Caching
+    prompt_caching = meter.create_counter(
+        name=PromptCaching.LLM_BEDROCK_PROMPT_CACHING,
+        unit="",
+        description="Number of cached tokens",
+    )
+
     return (
         token_histogram,
         choice_counter,
@@ -1058,6 +1101,7 @@ def _create_metrics(meter: Meter):
         guardrail_topic,
         guardrail_content,
         guardrail_words,
+        prompt_caching,
     )
 
 
@@ -1093,6 +1137,7 @@ class BedrockInstrumentor(BaseInstrumentor):
                 guardrail_topic,
                 guardrail_content,
                 guardrail_words,
+                prompt_caching,
             ) = _create_metrics(meter)
         else:
             (
@@ -1107,7 +1152,8 @@ class BedrockInstrumentor(BaseInstrumentor):
                 guardrail_topic,
                 guardrail_content,
                 guardrail_words,
-            ) = (None, None, None, None, None, None, None, None, None, None, None)
+                prompt_caching,
+            ) = (None, None, None, None, None, None, None, None, None, None, None, None)
 
         metric_params = MetricParams(
             token_histogram,
@@ -1121,6 +1167,7 @@ class BedrockInstrumentor(BaseInstrumentor):
             guardrail_topic,
             guardrail_content,
             guardrail_words,
+            prompt_caching,
         )
 
         for wrapped_method in WRAPPED_METHODS:
