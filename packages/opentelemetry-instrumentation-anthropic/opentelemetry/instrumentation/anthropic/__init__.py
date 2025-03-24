@@ -231,6 +231,28 @@ def _set_span_completions(span, response):
             # but the API allows for multiple text blocks, so concatenate them
             if content_block_type == "text":
                 text += content.text
+            elif content_block_type == "thinking":
+                content = dict(content)
+                # override the role to thinking
+                set_span_attribute(
+                    span,
+                    f"{prefix}.role",
+                    "thinking",
+                )
+                set_span_attribute(
+                    span,
+                    f"{prefix}.content",
+                    content.get("thinking"),
+                )
+                # increment the index for subsequent content blocks
+                index += 1
+                prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{index}"
+                # set the role to the original role on the next completions
+                set_span_attribute(
+                    span,
+                    f"{prefix}.role",
+                    response.get("role"),
+                )
             elif content_block_type == "tool_use":
                 content = dict(content)
                 set_span_attribute(
@@ -269,17 +291,11 @@ async def _aset_token_usage(
 
     if usage := response.get("usage"):
         prompt_tokens = usage.input_tokens
+        cache_read_tokens = dict(usage).get("cache_read_input_tokens", 0) or 0
+        cache_creation_tokens = dict(usage).get("cache_creation_input_tokens", 0) or 0
     else:
         prompt_tokens = await acount_prompt_tokens_from_request(anthropic, request)
-
-    if usage := response.get("usage"):
-        cache_read_tokens = dict(usage).get("cache_read_input_tokens", 0)
-    else:
         cache_read_tokens = 0
-
-    if usage := response.get("usage"):
-        cache_creation_tokens = dict(usage).get("cache_creation_input_tokens", 0)
-    else:
         cache_creation_tokens = 0
 
     input_tokens = prompt_tokens + cache_read_tokens + cache_creation_tokens
@@ -360,17 +376,11 @@ def _set_token_usage(
 
     if usage := response.get("usage"):
         prompt_tokens = usage.input_tokens
+        cache_read_tokens = dict(usage).get("cache_read_input_tokens", 0) or 0
+        cache_creation_tokens = dict(usage).get("cache_creation_input_tokens", 0) or 0
     else:
         prompt_tokens = count_prompt_tokens_from_request(anthropic, request)
-
-    if usage := response.get("usage"):
-        cache_read_tokens = dict(usage).get("cache_read_input_tokens", 0)
-    else:
         cache_read_tokens = 0
-
-    if usage := response.get("usage"):
-        cache_creation_tokens = dict(usage).get("cache_creation_input_tokens", 0)
-    else:
         cache_creation_tokens = 0
 
     input_tokens = prompt_tokens + cache_read_tokens + cache_creation_tokens

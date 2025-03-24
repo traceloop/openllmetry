@@ -27,10 +27,13 @@ def _process_response_item(item, complete_response):
     elif item.type == "content_block_start":
         index = item.index
         if len(complete_response.get("events")) <= index:
-            complete_response["events"].append({"index": index, "text": ""})
-    elif item.type == "content_block_delta" and item.delta.type == "text_delta":
+            complete_response["events"].append({"index": index, "text": "", "type": item.content_block.type})
+    elif item.type == "content_block_delta" and item.delta.type in ["thinking_delta", "text_delta"]:
         index = item.index
-        complete_response.get("events")[index]["text"] += item.delta.text
+        if item.delta.type == 'thinking_delta':
+            complete_response["events"][index]["text"] += item.delta.thinking
+        elif item.delta.type == 'text_delta':
+            complete_response["events"][index]["text"] += item.delta.text
     elif item.type == "message_delta":
         for event in complete_response.get("events", []):
             event["finish_reason"] = item.delta.stop_reason
@@ -52,8 +55,8 @@ def _set_token_usage(
     token_histogram: Histogram = None,
     choice_counter: Counter = None,
 ):
-    cache_read_tokens = complete_response.get("usage", {}).get("cache_read_input_tokens", 0)
-    cache_creation_tokens = complete_response.get("usage", {}).get("cache_creation_input_tokens", 0)
+    cache_read_tokens = complete_response.get("usage", {}).get("cache_read_input_tokens", 0) or 0
+    cache_creation_tokens = complete_response.get("usage", {}).get("cache_creation_input_tokens", 0) or 0
 
     input_tokens = prompt_tokens + cache_read_tokens + cache_creation_tokens
     total_tokens = input_tokens + completion_tokens
@@ -116,6 +119,8 @@ def _set_completions(span, events):
             set_span_attribute(
                 span, f"{prefix}.finish_reason", event.get("finish_reason")
             )
+            role = "thinking" if event.get("type") == "thinking" else "assistant"
+            set_span_attribute(span, f"{prefix}.role", role)
             set_span_attribute(span, f"{prefix}.content", event.get("text"))
     except Exception as e:
         logger.warning("Failed to set completion attributes, error: %s", str(e))
@@ -159,13 +164,13 @@ def build_from_streaming_response(
             completion_tokens = -1
             # prompt_usage
             if usage := complete_response.get("usage"):
-                prompt_tokens = usage.get("input_tokens", 0)
+                prompt_tokens = usage.get("input_tokens", 0) or 0
             else:
                 prompt_tokens = count_prompt_tokens_from_request(instance, kwargs)
 
             # completion_usage
             if usage := complete_response.get("usage"):
-                completion_tokens = usage.get("output_tokens", 0)
+                completion_tokens = usage.get("output_tokens", 0) or 0
             else:
                 completion_content = ""
                 if complete_response.get("events"):
@@ -174,7 +179,7 @@ def build_from_streaming_response(
                         if event.get("text"):
                             completion_content += event.get("text")
 
-                    if model_name:
+                    if model_name and hasattr(instance, "count_tokens"):
                         completion_tokens = instance.count_tokens(completion_content)
 
             _set_token_usage(
@@ -250,7 +255,7 @@ async def abuild_from_streaming_response(
                         if event.get("text"):
                             completion_content += event.get("text")
 
-                    if model_name:
+                    if model_name and hasattr(instance, "count_tokens"):
                         completion_tokens = instance.count_tokens(completion_content)
 
             _set_token_usage(
