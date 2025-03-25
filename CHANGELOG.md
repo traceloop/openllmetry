@@ -1,3 +1,20 @@
+## v0.39.0 (2025-03-25)
+
+### Feat
+
+- **instrumentation**: add metric for Bedrock prompt caching (#2788)
+- **bedrock**: add support for ARN and cross region endpoint (#2785)
+- **instrumentation**: Support Converse APIs and guardrail metrics (#2725)
+
+### Fix
+
+- **bedrock**: add span attr for Bedrock prompt caching (#2789)
+- **anthropic**: add thinking as a separate completion message (#2780)
+- **langchain**: support for date/time in langchain serializations (#2792)
+- **openai**: set user messages as prompts, not completions (#2781)
+- **groq**: exception when metrics are turned off (#2778)
+- **ollama**: Implemented meter in the instrumentation (#2741)
+
 ## v0.38.12 (2025-03-07)
 
 ### Fix
