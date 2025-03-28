@@ -2,9 +2,6 @@ from typing import Callable, Collection, Optional
 from typing_extensions import Coroutine
 
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
-from wrapt import wrap_function_wrapper
-from opentelemetry.trace import get_tracer
-
 from opentelemetry.instrumentation.openai.shared.config import Config
 from opentelemetry.instrumentation.openai.utils import is_openai_v1
 
@@ -39,39 +36,15 @@ class OpenAIInstrumentor(BaseInstrumentor):
     def _instrument(self, **kwargs):
         if is_openai_v1():
             from opentelemetry.instrumentation.openai.v1 import OpenAIV1Instrumentor
-
             OpenAIV1Instrumentor().instrument(**kwargs)
         else:
             from opentelemetry.instrumentation.openai.v0 import OpenAIV0Instrumentor
-
             OpenAIV0Instrumentor().instrument(**kwargs)
-
-        # Add support for batch completions
-        from opentelemetry.instrumentation.openai.shared.completion_wrappers import (
-            batch_completion_wrapper,
-            abatch_completion_wrapper,
-        )
-
-        tracer = get_tracer(__name__)
-
-        wrap_function_wrapper(
-            "openai.resources.completions",
-            "Completions.create_batch",
-            batch_completion_wrapper(tracer),
-        )
-
-        wrap_function_wrapper(
-            "openai.resources.completions",
-            "AsyncCompletions.create_batch",
-            abatch_completion_wrapper(tracer),
-        )
 
     def _uninstrument(self, **kwargs):
         if is_openai_v1():
             from opentelemetry.instrumentation.openai.v1 import OpenAIV1Instrumentor
-
             OpenAIV1Instrumentor().uninstrument(**kwargs)
         else:
             from opentelemetry.instrumentation.openai.v0 import OpenAIV0Instrumentor
-
             OpenAIV0Instrumentor().uninstrument(**kwargs)
