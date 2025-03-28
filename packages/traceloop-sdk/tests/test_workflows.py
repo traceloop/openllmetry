@@ -474,7 +474,7 @@ def test_dataclass_serialization_workflow(exporter):
         return dataclass_task(data)
 
     data = TestDataClass(field1="value1", field2=123)
-    result = dataclass_workflow(data)
+    dataclass_workflow(data)
 
     spans = exporter.get_finished_spans()
     assert [span.name for span in spans] == ["dataclass_task.task", "dataclass_workflow.workflow"]
