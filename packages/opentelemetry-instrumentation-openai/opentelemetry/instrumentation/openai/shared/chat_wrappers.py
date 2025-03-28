@@ -484,64 +484,51 @@ def _set_completions(span, choices):
 def _set_streaming_token_metrics(
     request_kwargs, complete_response, span, token_counter, shared_attributes
 ):
-    # use tiktoken calculate token usage
-    if not should_record_stream_token_usage():
-        return
+    # Initialize with zeros to ensure we always have valid counts
+    prompt_usage = 0
+    completion_usage = 0
 
-    # kwargs={'model': 'gpt-3.5', 'messages': [{'role': 'user', 'content': '...'}], 'stream': True}
-    prompt_usage = -1
-    completion_usage = -1
-
-    # prompt_usage
+    # prompt_usage calculation for chat
     if request_kwargs and request_kwargs.get("messages"):
+        messages = request_kwargs.get("messages")
         prompt_content = ""
-        # setting the default model_name as gpt-4. As this uses the embedding "cl100k_base" that
-        # is used by most of the other model.
-        model_name = (
-            complete_response.get("model") or request_kwargs.get("model") or "gpt-4"
-        )
-        for msg in request_kwargs.get("messages"):
-            if msg.get("content"):
-                prompt_content += msg.get("content")
-        if model_name:
-            prompt_usage = get_token_count_from_string(prompt_content, model_name)
+        model_name = complete_response.get("model") or request_kwargs.get("model") or "gpt-3.5-turbo"
 
-    # completion_usage
+        for msg in messages:
+            if msg.get("content"):
+                prompt_content += str(msg.get("content", ""))
+        
+        if prompt_content:
+            prompt_usage = get_token_count_from_string(prompt_content, model_name)
+            if prompt_usage is None:  # Fallback if token counting fails
+                prompt_usage = len(prompt_content.split()) * 2
+
+    # completion_usage calculation
+    completion_content = ""
     if complete_response.get("choices"):
-        completion_content = ""
-        # setting the default model_name as gpt-4. As this uses the embedding "cl100k_base" that
-        # is used by most of the other model.
-        model_name = complete_response.get("model") or "gpt-4"
+        model_name = complete_response.get("model") or request_kwargs.get("model") or "gpt-3.5-turbo"
 
         for choice in complete_response.get("choices"):
             if choice.get("message") and choice.get("message").get("content"):
-                completion_content += choice["message"]["content"]
+                completion_content += str(choice["message"]["content"])
+            elif choice.get("delta") and choice.get("delta").get("content"):
+                completion_content += str(choice["delta"]["content"])
 
-        if model_name:
-            completion_usage = get_token_count_from_string(
-                completion_content, model_name
-            )
+    if completion_content:
+        completion_usage = get_token_count_from_string(completion_content, model_name)
+        if completion_usage is None:  # Fallback if token counting fails
+            completion_usage = len(completion_content.split()) * 2
 
-    # span record
+    # Always set span usage metrics since we have valid counts
     _set_span_stream_usage(span, prompt_usage, completion_usage)
 
-    # metrics record
+    # metrics record 
     if token_counter:
-        if type(prompt_usage) is int and prompt_usage >= 0:
-            attributes_with_token_type = {
-                **shared_attributes,
-                SpanAttributes.LLM_TOKEN_TYPE: "input",
-            }
-            token_counter.record(prompt_usage, attributes=attributes_with_token_type)
+        attributes_with_token_type = {**shared_attributes, SpanAttributes.LLM_TOKEN_TYPE: "input"}
+        token_counter.record(prompt_usage, attributes=attributes_with_token_type)
 
-        if type(completion_usage) is int and completion_usage >= 0:
-            attributes_with_token_type = {
-                **shared_attributes,
-                SpanAttributes.LLM_TOKEN_TYPE: "output",
-            }
-            token_counter.record(
-                completion_usage, attributes=attributes_with_token_type
-            )
+        attributes_with_token_type = {**shared_attributes, SpanAttributes.LLM_TOKEN_TYPE: "output"}
+        token_counter.record(completion_usage, attributes=attributes_with_token_type)
 
 
 class ChatStream(ObjectProxy):

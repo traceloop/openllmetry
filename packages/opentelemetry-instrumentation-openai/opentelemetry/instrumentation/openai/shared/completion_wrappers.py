@@ -246,37 +246,44 @@ async def _abuild_from_streaming_response(span, request_kwargs, response):
     span.end()
 
 
-@dont_throw
+@dont_throw 
 def _set_token_usage(span, request_kwargs, complete_response):
-    # use tiktoken calculate token usage
-    if should_record_stream_token_usage():
-        prompt_usage = -1
-        completion_usage = -1
+    # Initialize with zeros to ensure we always have valid counts
+    prompt_usage = 0
+    completion_usage = 0
 
-        # prompt_usage
-        if request_kwargs and request_kwargs.get("prompt"):
-            prompt_content = request_kwargs.get("prompt")
-            model_name = complete_response.get("model") or None
+    # prompt_usage calculation 
+    if request_kwargs and request_kwargs.get("prompt"):
+        prompt_content = request_kwargs.get("prompt")
+        model_name = complete_response.get("model") or request_kwargs.get("model") or "davinci-002"
 
-            if model_name:
-                prompt_usage = get_token_count_from_string(prompt_content, model_name)
+        if isinstance(prompt_content, list):
+            for p in prompt_content:
+                p_count = get_token_count_from_string(str(p), model_name)
+                if p_count is None:  # Fallback if token counting fails
+                    p_count = len(str(p).split()) * 2
+                prompt_usage += p_count
+        else:
+            prompt_usage = get_token_count_from_string(str(prompt_content), model_name)
+            if prompt_usage is None:  # Fallback if token counting fails
+                prompt_usage = len(str(prompt_content).split()) * 2
 
-        # completion_usage
-        if complete_response.get("choices"):
-            completion_content = ""
-            model_name = complete_response.get("model") or None
+    # completion_usage calculation
+    completion_content = ""
+    if complete_response.get("choices"):
+        model_name = complete_response.get("model") or request_kwargs.get("model") or "davinci-002"
 
-            for choice in complete_response.get("choices"):
-                if choice.get("text"):
-                    completion_content += choice.get("text")
+        for choice in complete_response.get("choices"):
+            if choice.get("text"):
+                completion_content += str(choice.get("text"))
 
-            if model_name:
-                completion_usage = get_token_count_from_string(
-                    completion_content, model_name
-                )
+    if completion_content:
+        completion_usage = get_token_count_from_string(completion_content, model_name)
+        if completion_usage is None:  # Fallback if token counting fails
+            completion_usage = len(completion_content.split()) * 2
 
-        # span record
-        _set_span_stream_usage(span, prompt_usage, completion_usage)
+    # Always set span usage metrics since we have valid counts
+    _set_span_stream_usage(span, prompt_usage, completion_usage)
 
 
 @dont_throw

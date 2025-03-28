@@ -27,7 +27,7 @@ def is_metrics_enabled() -> bool:
 
 
 def should_record_stream_token_usage():
-    return Config.enrich_token_usage
+    return Config.enrich_token_usage or (os.getenv("TRACELOOP_STREAM_TOKEN_USAGE") or "false").lower() == "true"
 
 
 def _with_image_gen_metric_wrapper(func):
