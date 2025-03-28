@@ -157,3 +157,12 @@ def run_async(method):
         thread.join()
     else:
         asyncio.run(method)
+
+
+def wrap_function_wrapper(module, func_name, wrapper):
+    """
+    A helper function to wrap a function with a given wrapper.
+    """
+    from wrapt import wrap_function_wrapper as wrap
+
+    wrap(module, func_name, wrapper)
