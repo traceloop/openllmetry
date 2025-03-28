@@ -110,12 +110,8 @@ def test_completion_streaming(exporter, openai_client):
         completion_tokens = open_ai_span.attributes.get(
             SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
         )
-        prompt_tokens = open_ai_span.attributes.get(
-            SpanAttributes.LLM_USAGE_PROMPT_TOKENS
-        )
-        total_tokens = open_ai_span.attributes.get(
-            SpanAttributes.LLM_USAGE_TOTAL_TOKENS
-        )
+        prompt_tokens = open_ai_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS)
+        total_tokens = open_ai_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS)
         assert completion_tokens and prompt_tokens and total_tokens
         assert completion_tokens + prompt_tokens == total_tokens
         assert open_ai_span.attributes.get("gen_ai.response.id") == "cmpl-8wq44ev1DvyhsBfm1hNwxfv6Dltco"
