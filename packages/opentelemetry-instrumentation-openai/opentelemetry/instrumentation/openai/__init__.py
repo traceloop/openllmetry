@@ -2,6 +2,8 @@ from typing import Callable, Collection, Optional
 from typing_extensions import Coroutine
 
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
+from opentelemetry.instrumentation.utils import wrap_function_wrapper
+from opentelemetry.trace import get_tracer
 
 from opentelemetry.instrumentation.openai.shared.config import Config
 from opentelemetry.instrumentation.openai.utils import is_openai_v1
@@ -49,6 +51,8 @@ class OpenAIInstrumentor(BaseInstrumentor):
             batch_completion_wrapper,
             abatch_completion_wrapper,
         )
+
+        tracer = get_tracer(__name__)
 
         wrap_function_wrapper(
             "openai.resources.completions",
