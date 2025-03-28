@@ -1,7 +1,6 @@
 import logging
 
 from opentelemetry import context as context_api
-from opentelemetry.instrumentation.openai.utils import wrap_function_wrapper
 
 from opentelemetry.semconv_ai import (
     SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
