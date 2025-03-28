@@ -44,6 +44,14 @@ class OpenAIInstrumentor(BaseInstrumentor):
 
             OpenAIV0Instrumentor().instrument(**kwargs)
 
+        from opentelemetry.instrumentation.openai.shared.completion_wrappers import (
+            batch_completion_wrapper,
+            abatch_completion_wrapper,
+        )
+
+        wrap_function_wrapper("openai", "BatchCompletion.create", batch_completion_wrapper(tracer))
+        wrap_function_wrapper("openai", "BatchCompletion.acreate", abatch_completion_wrapper(tracer))
+
     def _uninstrument(self, **kwargs):
         if is_openai_v1():
             from opentelemetry.instrumentation.openai.v1 import OpenAIV1Instrumentor
@@ -53,3 +61,6 @@ class OpenAIInstrumentor(BaseInstrumentor):
             from opentelemetry.instrumentation.openai.v0 import OpenAIV0Instrumentor
 
             OpenAIV0Instrumentor().uninstrument(**kwargs)
+
+        unwrap_function_wrapper("openai", "BatchCompletion.create")
+        unwrap_function_wrapper("openai", "BatchCompletion.acreate")
