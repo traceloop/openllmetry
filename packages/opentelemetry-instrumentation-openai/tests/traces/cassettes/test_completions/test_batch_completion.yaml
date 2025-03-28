@@ -1,0 +1,114 @@
+interactions:
+- request:
+    body: '{"model": "davinci-002", "prompt": ["Tell me a joke about opentelemetry",
+      "Explain recursion in programming"]}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '110'
+      content-type:
+      - application/json
+      host:
+      - api.openai.com
+      traceparent:
+      - 00-a57dcfb5a4ecc373feb5f215b7ce4c14-7e98e544d883bd60-01
+      user-agent:
+      - OpenAI/Python 1.51.2
+      x-stainless-arch:
+      - x64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - Linux
+      x-stainless-package-version:
+      - 1.51.2
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.12.1
+    method: POST
+    uri: https://api.openai.com/v1/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA6RRzU7CQBC+9ykme6aGtiLYi4kXhMSTJmrEkGU7tivbmbrdRQkh4UH05XwSs4XI
+        QW9e5vB98/1kZhMBCF2IHISqGxNfjs8qerhtzovL1esAr1f348HryE7Lu6tEiV7Y5sULKhcUDt/d
+        XHHdGHSaaU8ri9JhcEyGp1kyHA3TrCNqLtAEWSFXmpTO036axf1hnCbxKj2IK9YKW5HDYwQAsOkm
+        7KOC9mRGM5rAm2yhZE0lOIZaLhGYEOSCvYOv3UfL3iq066/dZw8W3sEEHPOyy+jsNBX4LnLo/yCG
+        y8byIkSTN+YHf9ak22puUbZMoYFBKl0lOn7b+7slGEmllyXCjGK4q9agW7iRtbdSw1SqJWgCVyE8
+        e+ctXnRrkzZAFkHS+nfT5J9NI4Cn7sS+lSWK/FBaNJbrxs0dL5GCZZLtDcXxr0cySw+kYyfNET8d
+        RCFiG30DAAD//wMA6FKUEk8CAAA=
+    headers:
+      CF-RAY:
+      - 927871e78cca3f7f-BOM
+      Cache-Control:
+      - no-cache, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Fri, 28 Mar 2025 16:18:43 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=0beUUGRvL890lzrpWg8VB8regcwmQmWhR0RJHjZaGEU-1743178723-1.0.1.1-8yNnrcefSlm5c0XgWx8GRm1P2eI8orAsBWsb9TG1BdLqQ6uEg2YeerkN0G6z5jpml3BGA9qO3MtPce7nWngDzeTzexpMHSsCAb4U2FZTjCc;
+        path=/; expires=Fri, 28-Mar-25 16:48:43 GMT; domain=.api.openai.com; HttpOnly;
+        Secure; SameSite=None
+      - _cfuvid=VdYM5xlZagS6kytGOmb_CwWiJAjJBySTF4WxTzGW6yg-1743178723906-0.0.1.1-604800000;
+        path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      access-control-allow-origin:
+      - '*'
+      access-control-expose-headers:
+      - X-Request-ID
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      openai-model:
+      - davinci:2023-07-21-v2
+      openai-organization:
+      - cynario
+      openai-processing-ms:
+      - '203'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      via:
+      - envoy-router-679d696b6b-4vsl9
+      x-envoy-upstream-service-time:
+      - '161'
+      x-ratelimit-limit-requests:
+      - '3000'
+      x-ratelimit-limit-tokens:
+      - '250000'
+      x-ratelimit-remaining-requests:
+      - '2999'
+      x-ratelimit-remaining-tokens:
+      - '249981'
+      x-ratelimit-reset-requests:
+      - 20ms
+      x-ratelimit-reset-tokens:
+      - 4ms
+      x-request-id:
+      - req_84b8619ed910ccc95c1ddc03d06d22e3
+    status:
+      code: 200
+      message: OK
+version: 1

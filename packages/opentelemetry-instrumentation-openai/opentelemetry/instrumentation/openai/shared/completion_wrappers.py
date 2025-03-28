@@ -19,7 +19,6 @@ from opentelemetry.instrumentation.openai.shared import (
     is_streaming_response,
     should_send_prompts,
     model_as_dict,
-    should_record_stream_token_usage,
     get_token_count_from_string,
     _set_span_stream_usage,
     propagate_trace_context,
@@ -101,6 +100,58 @@ async def acompletion_wrapper(tracer, wrapped, instance, args, kwargs):
     return response
 
 
+@_with_tracer_wrapper
+def batch_completion_wrapper(tracer, wrapped, instance, args, kwargs):
+    if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY) or context_api.get_value(
+        SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY
+    ):
+        return wrapped(*args, **kwargs)
+
+    span = tracer.start_span(
+        "openai.batch_completion",
+        kind=SpanKind.CLIENT,
+        attributes={SpanAttributes.LLM_REQUEST_TYPE: LLM_REQUEST_TYPE.value},
+    )
+
+    _handle_request(span, kwargs, instance)
+    try:
+        response = wrapped(*args, **kwargs)
+    except Exception as e:
+        span.set_status(Status(StatusCode.ERROR, str(e)))
+        span.end()
+        raise e
+
+    _handle_response(response, span)
+    span.end()
+    return response
+
+
+@_with_tracer_wrapper
+async def abatch_completion_wrapper(tracer, wrapped, instance, args, kwargs):
+    if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY) or context_api.get_value(
+        SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY
+    ):
+        return await wrapped(*args, **kwargs)
+
+    span = tracer.start_span(
+        "openai.batch_completion",
+        kind=SpanKind.CLIENT,
+        attributes={SpanAttributes.LLM_REQUEST_TYPE: LLM_REQUEST_TYPE.value},
+    )
+
+    _handle_request(span, kwargs, instance)
+    try:
+        response = await wrapped(*args, **kwargs)
+    except Exception as e:
+        span.set_status(Status(StatusCode.ERROR, str(e)))
+        span.end()
+        raise e
+
+    _handle_response(response, span)
+    span.end()
+    return response
+
+
 @dont_throw
 def _handle_request(span, kwargs, instance):
     _set_request_attributes(span, kwargs)
@@ -129,11 +180,19 @@ def _set_prompts(span, prompt):
     if not span.is_recording() or not prompt:
         return
 
-    _set_span_attribute(
-        span,
-        f"{SpanAttributes.LLM_PROMPTS}.0.user",
-        prompt[0] if isinstance(prompt, list) else prompt,
-    )
+    if isinstance(prompt, list):
+        for i, p in enumerate(prompt):
+            _set_span_attribute(
+                span,
+                f"{SpanAttributes.LLM_PROMPTS}.{i}.user",
+                p
+            )
+    else:
+        _set_span_attribute(
+            span,
+            f"{SpanAttributes.LLM_PROMPTS}.0.user",
+            prompt
+        )
 
 
 @dont_throw
@@ -188,35 +247,42 @@ async def _abuild_from_streaming_response(span, request_kwargs, response):
 
 @dont_throw
 def _set_token_usage(span, request_kwargs, complete_response):
-    # use tiktoken calculate token usage
-    if should_record_stream_token_usage():
-        prompt_usage = -1
-        completion_usage = -1
+    # Initialize with zeros to ensure we always have valid counts
+    prompt_usage = 0
+    completion_usage = 0
 
-        # prompt_usage
-        if request_kwargs and request_kwargs.get("prompt"):
-            prompt_content = request_kwargs.get("prompt")
-            model_name = complete_response.get("model") or None
+    # prompt_usage calculation
+    if request_kwargs and request_kwargs.get("prompt"):
+        prompt_content = request_kwargs.get("prompt")
+        model_name = complete_response.get("model") or request_kwargs.get("model") or "davinci-002"
 
-            if model_name:
-                prompt_usage = get_token_count_from_string(prompt_content, model_name)
+        if isinstance(prompt_content, list):
+            for p in prompt_content:
+                p_count = get_token_count_from_string(str(p), model_name)
+                if p_count is None:  # Fallback if token counting fails
+                    p_count = len(str(p).split()) * 2
+                prompt_usage += p_count
+        else:
+            prompt_usage = get_token_count_from_string(str(prompt_content), model_name)
+            if prompt_usage is None:  # Fallback if token counting fails
+                prompt_usage = len(str(prompt_content).split()) * 2
 
-        # completion_usage
-        if complete_response.get("choices"):
-            completion_content = ""
-            model_name = complete_response.get("model") or None
+    # completion_usage calculation
+    completion_content = ""
+    if complete_response.get("choices"):
+        model_name = complete_response.get("model") or request_kwargs.get("model") or "davinci-002"
 
-            for choice in complete_response.get("choices"):
-                if choice.get("text"):
-                    completion_content += choice.get("text")
+        for choice in complete_response.get("choices"):
+            if choice.get("text"):
+                completion_content += str(choice.get("text"))
 
-            if model_name:
-                completion_usage = get_token_count_from_string(
-                    completion_content, model_name
-                )
+    if completion_content:
+        completion_usage = get_token_count_from_string(completion_content, model_name)
+        if completion_usage is None:  # Fallback if token counting fails
+            completion_usage = len(completion_content.split()) * 2
 
-        # span record
-        _set_span_stream_usage(span, prompt_usage, completion_usage)
+    # Always set span usage metrics since we have valid counts
+    _set_span_stream_usage(span, prompt_usage, completion_usage)
 
 
 @dont_throw
