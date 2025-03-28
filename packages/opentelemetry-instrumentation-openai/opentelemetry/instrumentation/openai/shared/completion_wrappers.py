@@ -19,7 +19,6 @@ from opentelemetry.instrumentation.openai.shared import (
     is_streaming_response,
     should_send_prompts,
     model_as_dict,
-    should_record_stream_token_usage,
     get_token_count_from_string,
     _set_span_stream_usage,
     propagate_trace_context,
@@ -246,13 +245,13 @@ async def _abuild_from_streaming_response(span, request_kwargs, response):
     span.end()
 
 
-@dont_throw 
+@dont_throw
 def _set_token_usage(span, request_kwargs, complete_response):
     # Initialize with zeros to ensure we always have valid counts
     prompt_usage = 0
     completion_usage = 0
 
-    # prompt_usage calculation 
+    # prompt_usage calculation
     if request_kwargs and request_kwargs.get("prompt"):
         prompt_content = request_kwargs.get("prompt")
         model_name = complete_response.get("model") or request_kwargs.get("model") or "davinci-002"

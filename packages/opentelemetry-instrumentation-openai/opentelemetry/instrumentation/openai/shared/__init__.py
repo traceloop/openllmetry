@@ -260,24 +260,17 @@ def get_token_count_from_string(string: str, model_name: str):
         return None
 
     import tiktoken
-    
     try:
-        # Try to get from cache first
         encoding = tiktoken_encodings.get(model_name)
         if encoding is None:
-            # If not in cache, try using base encoder for all models
-            # This avoids needing to fetch model-specific encodings
             encoding = tiktoken.get_encoding("cl100k_base")
             tiktoken_encodings[model_name] = encoding
-            
         token_count = len(encoding.encode(string))
         return token_count
     except Exception as ex:
         logger.warning(
             f"Failed to count tokens for model {model_name}, error: {str(ex)}"
         )
-        # Return conservative estimate based on words
-        # This is a fallback when tiktoken fails
         return len(string.split()) * 2
 
 

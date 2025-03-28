@@ -5,7 +5,6 @@ import time
 from opentelemetry.instrumentation.openai.shared.config import Config
 from wrapt import ObjectProxy
 
-
 from opentelemetry import context as context_api
 from opentelemetry.metrics import Counter, Histogram
 from opentelemetry.semconv_ai import (
@@ -13,12 +12,14 @@ from opentelemetry.semconv_ai import (
     SpanAttributes,
     LLMRequestTypeValues,
 )
+from opentelemetry.trace import SpanKind, Tracer, Status, StatusCode
 
 from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
 from opentelemetry.instrumentation.openai.utils import (
     _with_chat_telemetry_wrapper,
     dont_throw,
     run_async,
+    is_openai_v1,
 )
 from opentelemetry.instrumentation.openai.shared import (
     metric_shared_attributes,
@@ -34,15 +35,10 @@ from opentelemetry.instrumentation.openai.shared import (
     model_as_dict,
     _get_openai_base_url,
     OPENAI_LLM_USAGE_TOKEN_TYPES,
-    should_record_stream_token_usage,
     get_token_count_from_string,
     _set_span_stream_usage,
     propagate_trace_context,
 )
-from opentelemetry.trace import SpanKind, Tracer
-from opentelemetry.trace.status import Status, StatusCode
-
-from opentelemetry.instrumentation.openai.utils import is_openai_v1
 
 SPAN_NAME = "openai.chat"
 PROMPT_FILTER_KEY = "prompt_filter_results"
@@ -497,7 +493,6 @@ def _set_streaming_token_metrics(
         for msg in messages:
             if msg.get("content"):
                 prompt_content += str(msg.get("content", ""))
-        
         if prompt_content:
             prompt_usage = get_token_count_from_string(prompt_content, model_name)
             if prompt_usage is None:  # Fallback if token counting fails
@@ -522,7 +517,7 @@ def _set_streaming_token_metrics(
     # Always set span usage metrics since we have valid counts
     _set_span_stream_usage(span, prompt_usage, completion_usage)
 
-    # metrics record 
+    # metrics record
     if token_counter:
         attributes_with_token_type = {**shared_attributes, SpanAttributes.LLM_TOKEN_TYPE: "input"}
         token_counter.record(prompt_usage, attributes=attributes_with_token_type)
