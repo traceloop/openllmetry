@@ -44,6 +44,24 @@ class OpenAIInstrumentor(BaseInstrumentor):
 
             OpenAIV0Instrumentor().instrument(**kwargs)
 
+        # Add support for batch completions
+        from opentelemetry.instrumentation.openai.shared.completion_wrappers import (
+            batch_completion_wrapper,
+            abatch_completion_wrapper,
+        )
+
+        wrap_function_wrapper(
+            "openai.resources.completions",
+            "Completions.create_batch",
+            batch_completion_wrapper(tracer),
+        )
+
+        wrap_function_wrapper(
+            "openai.resources.completions",
+            "AsyncCompletions.create_batch",
+            abatch_completion_wrapper(tracer),
+        )
+
     def _uninstrument(self, **kwargs):
         if is_openai_v1():
             from opentelemetry.instrumentation.openai.v1 import OpenAIV1Instrumentor

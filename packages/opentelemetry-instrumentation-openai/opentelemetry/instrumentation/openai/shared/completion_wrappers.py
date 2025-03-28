@@ -101,6 +101,58 @@ async def acompletion_wrapper(tracer, wrapped, instance, args, kwargs):
     return response
 
 
+@_with_tracer_wrapper
+def batch_completion_wrapper(tracer, wrapped, instance, args, kwargs):
+    if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY) or context_api.get_value(
+        SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY
+    ):
+        return wrapped(*args, **kwargs)
+
+    span = tracer.start_span(
+        "openai.batch_completion",
+        kind=SpanKind.CLIENT,
+        attributes={SpanAttributes.LLM_REQUEST_TYPE: LLM_REQUEST_TYPE.value},
+    )
+
+    _handle_request(span, kwargs, instance)
+    try:
+        response = wrapped(*args, **kwargs)
+    except Exception as e:
+        span.set_status(Status(StatusCode.ERROR, str(e)))
+        span.end()
+        raise e
+
+    _handle_response(response, span)
+    span.end()
+    return response
+
+
+@_with_tracer_wrapper
+async def abatch_completion_wrapper(tracer, wrapped, instance, args, kwargs):
+    if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY) or context_api.get_value(
+        SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY
+    ):
+        return await wrapped(*args, **kwargs)
+
+    span = tracer.start_span(
+        "openai.batch_completion",
+        kind=SpanKind.CLIENT,
+        attributes={SpanAttributes.LLM_REQUEST_TYPE: LLM_REQUEST_TYPE.value},
+    )
+
+    _handle_request(span, kwargs, instance)
+    try:
+        response = await wrapped(*args, **kwargs)
+    except Exception as e:
+        span.set_status(Status(StatusCode.ERROR, str(e)))
+        span.end()
+        raise e
+
+    _handle_response(response, span)
+    span.end()
+    return response
+
+
 @dont_throw
 def _handle_request(span, kwargs, instance):
     _set_request_attributes(span, kwargs)
