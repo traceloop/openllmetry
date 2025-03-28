@@ -2,7 +2,7 @@ from typing import Callable, Collection, Optional
 from typing_extensions import Coroutine
 
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
-from opentelemetry.instrumentation.utils import wrap_function_wrapper
+from wrapt import wrap_function_wrapper
 from opentelemetry.trace import get_tracer
 
 from opentelemetry.instrumentation.openai.shared.config import Config
