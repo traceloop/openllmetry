@@ -1,5 +1,6 @@
 import asyncio
 import json
+import dataclasses
 
 import pytest
 from openai import OpenAI, AsyncOpenAI
@@ -455,3 +456,40 @@ async def test_nested_async_generator_error_handling(exporter):
     workflow_span = next(span for span in spans if span.name == "async_generator_parent_workflow.workflow")
     assert workflow_span.status.status_code == StatusCode.ERROR
     assert error_message in workflow_span.status.description
+
+
+@dataclasses.dataclass
+class TestDataClass:
+    field1: str
+    field2: int
+
+
+def test_dataclass_serialization_workflow(exporter):
+    @task(name="dataclass_task")
+    def dataclass_task(data: TestDataClass):
+        return data
+
+    @workflow(name="dataclass_workflow")
+    def dataclass_workflow(data: TestDataClass):
+        return dataclass_task(data)
+
+    data = TestDataClass(field1="value1", field2=123)
+    result = dataclass_workflow(data)
+
+    spans = exporter.get_finished_spans()
+    assert [span.name for span in spans] == ["dataclass_task.task", "dataclass_workflow.workflow"]
+
+    task_span = spans[0]
+    workflow_span = spans[1]
+
+    assert json.loads(task_span.attributes[SpanAttributes.TRACELOOP_ENTITY_INPUT]) == {
+        "args": [{"field1": "value1", "field2": 123}],
+        "kwargs": {},
+    }
+    assert json.loads(task_span.attributes[SpanAttributes.TRACELOOP_ENTITY_OUTPUT]) == {
+        "field1": "value1",
+        "field2": 123,
+    }
+    assert task_span.parent.span_id == workflow_span.context.span_id
+    assert workflow_span.attributes[SpanAttributes.TRACELOOP_ENTITY_NAME] == "dataclass_workflow"
+    assert task_span.attributes[SpanAttributes.TRACELOOP_ENTITY_NAME] == "dataclass_task"

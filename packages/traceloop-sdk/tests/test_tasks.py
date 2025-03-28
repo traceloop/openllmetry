@@ -1,6 +1,7 @@
 import json
 import pytest
 import asyncio
+import dataclasses
 from typing import Generator, AsyncGenerator
 
 from langchain_openai import ChatOpenAI
@@ -123,3 +124,32 @@ async def test_async_generator_task_error_handling(exporter):
     assert task_span.status.status_code == StatusCode.ERROR
     assert error_message in task_span.status.description
     assert results == [1]
+
+
+@dataclasses.dataclass
+class TestDataClass:
+    field1: str
+    field2: int
+
+
+def test_dataclass_serialization_task(exporter):
+    @task(name="dataclass_task")
+    def dataclass_task(data: TestDataClass):
+        return data
+
+    data = TestDataClass(field1="value1", field2=123)
+    result = dataclass_task(data)
+
+    spans = exporter.get_finished_spans()
+    assert [span.name for span in spans] == ["dataclass_task.task"]
+
+    task_span = spans[0]
+
+    assert json.loads(task_span.attributes[SpanAttributes.TRACELOOP_ENTITY_INPUT]) == {
+        "args": [{"field1": "value1", "field2": 123}],
+        "kwargs": {},
+    }
+    assert json.loads(task_span.attributes[SpanAttributes.TRACELOOP_ENTITY_OUTPUT]) == {
+        "field1": "value1",
+        "field2": 123,
+    }
