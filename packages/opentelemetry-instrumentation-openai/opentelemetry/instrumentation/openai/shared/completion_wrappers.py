@@ -181,11 +181,19 @@ def _set_prompts(span, prompt):
     if not span.is_recording() or not prompt:
         return
 
-    _set_span_attribute(
-        span,
-        f"{SpanAttributes.LLM_PROMPTS}.0.user",
-        prompt[0] if isinstance(prompt, list) else prompt,
-    )
+    if isinstance(prompt, list):
+        for i, p in enumerate(prompt):
+            _set_span_attribute(
+                span,
+                f"{SpanAttributes.LLM_PROMPTS}.{i}.user",
+                p
+            )
+    else:
+        _set_span_attribute(
+            span,
+            f"{SpanAttributes.LLM_PROMPTS}.0.user",
+            prompt
+        )
 
 
 @dont_throw
