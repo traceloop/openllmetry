@@ -2,28 +2,32 @@
 
 import logging
 import os
-from typing import Collection
-from opentelemetry.instrumentation.cohere.config import Config
-from opentelemetry.instrumentation.cohere.utils import dont_throw
-from wrapt import wrap_function_wrapper
+from typing import Collection, Union
 
 from opentelemetry import context as context_api
-from opentelemetry.trace import get_tracer, SpanKind
-from opentelemetry.trace.status import Status, StatusCode
-
+from opentelemetry._events import Event, EventLogger, get_event_logger
+from opentelemetry.instrumentation.cohere.config import Config
+from opentelemetry.instrumentation.cohere.utils import dont_throw, is_content_enabled
+from opentelemetry.instrumentation.cohere.version import __version__
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.instrumentation.utils import (
     _SUPPRESS_INSTRUMENTATION_KEY,
     unwrap,
 )
-
-from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import GEN_AI_RESPONSE_ID
+from opentelemetry.semconv._incubating.attributes import (
+    gen_ai_attributes as GenAIAttributes,
+)
+from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
+    GEN_AI_RESPONSE_ID,
+)
 from opentelemetry.semconv_ai import (
     SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
-    SpanAttributes,
     LLMRequestTypeValues,
+    SpanAttributes,
 )
-from opentelemetry.instrumentation.cohere.version import __version__
+from opentelemetry.trace import SpanKind, Tracer, get_tracer
+from opentelemetry.trace.status import Status, StatusCode
+from wrapt import wrap_function_wrapper
 
 logger = logging.getLogger(__name__)
 
@@ -203,9 +207,9 @@ def _set_response_attributes(span, llm_request_type, response):
 def _with_tracer_wrapper(func):
     """Helper for providing tracer for wrapper functions."""
 
-    def _with_tracer(tracer, to_wrap):
+    def _with_tracer(tracer, event_logger, to_wrap):
         def wrapper(wrapped, instance, args, kwargs):
-            return func(tracer, to_wrap, wrapped, instance, args, kwargs)
+            return func(tracer, event_logger, to_wrap, wrapped, instance, args, kwargs)
 
         return wrapper
 
@@ -223,8 +227,72 @@ def _llm_request_type_by_method(method_name):
         return LLMRequestTypeValues.UNKNOWN
 
 
+def _input_to_event(llm_request_type: str, kwargs) -> Event:
+    attributes = {
+        GenAIAttributes.GEN_AI_SYSTEM: GenAIAttributes.GenAiSystemValues.COHERE.value
+    }
+    body = {}
+
+    if is_content_enabled():
+        if llm_request_type == LLMRequestTypeValues.CHAT:
+            body = {"content": kwargs.get("message")}
+        elif llm_request_type == LLMRequestTypeValues.RERANK:
+            body = {
+                "content": {
+                    "query": kwargs.get("query"),
+                    "documents": kwargs.get("documents"),
+                }
+            }
+        elif llm_request_type == LLMRequestTypeValues.COMPLETION:
+            body = {"content": kwargs.get("prompt")}
+
+    return Event(name="gen_ai.user.message", body=body, attributes=attributes)
+
+
+def _response_to_event(index: int, llm_request_type: str, response) -> Event:
+    attributes = {
+        GenAIAttributes.GEN_AI_SYSTEM: GenAIAttributes.GenAiSystemValues.COHERE.value
+    }
+    body = {}
+
+    if llm_request_type == LLMRequestTypeValues.RERANK:
+        # Cohere does not provide a finish_reason in rerank
+        body["finish_reason"] = "UNKNOWN"
+        body["index"] = index
+        body["message"] = (
+            {
+                "content": [
+                    {
+                        "index": result.index,
+                        "document": result.document,
+                        "relevance_score": result.relevance_score,
+                    }
+                    for result in response.results
+                ]
+            }
+            if is_content_enabled()
+            else {}
+        )
+    elif (
+        llm_request_type == LLMRequestTypeValues.CHAT or LLMRequestTypeValues.COMPLETION
+    ):
+        body["finish_reason"] = response.finish_reason
+        body["index"] = index
+        body["message"] = {"content": response.text} if is_content_enabled() else {}
+
+    return Event(name="gen_ai.choice", body=body, attributes=attributes)
+
+
 @_with_tracer_wrapper
-def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
+def _wrap(
+    tracer: Tracer,
+    event_logger: Union[EventLogger, None],
+    to_wrap,
+    wrapped,
+    instance,
+    args,
+    kwargs,
+):
     """Instruments and calls every function defined in TO_WRAP."""
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY) or context_api.get_value(
         SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY
@@ -243,6 +311,8 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
     ) as span:
         if span.is_recording():
             _set_input_attributes(span, llm_request_type, kwargs)
+        if not Config.use_legacy_attributes and event_logger is not None:
+            event_logger.emit(_input_to_event(llm_request_type, kwargs))
 
         response = wrapped(*args, **kwargs)
 
@@ -250,6 +320,14 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
             if span.is_recording():
                 _set_response_attributes(span, llm_request_type, response)
                 span.set_status(Status(StatusCode.OK))
+            if not Config.use_legacy_attributes and event_logger is not None:
+                if llm_request_type == LLMRequestTypeValues.COMPLETION:
+                    for index, generation in enumerate(response.generations):
+                        event_logger.emit(
+                            _response_to_event(index, llm_request_type, generation)
+                        )
+                else:
+                    event_logger.emit(_response_to_event(0, llm_request_type, response))
 
         return response
 
@@ -257,9 +335,10 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
 class CohereInstrumentor(BaseInstrumentor):
     """An instrumentor for Cohere's client library."""
 
-    def __init__(self, exception_logger=None):
+    def __init__(self, exception_logger=None, use_legacy_attributes=True):
         super().__init__()
         Config.exception_logger = exception_logger
+        Config.use_legacy_attributes = use_legacy_attributes
 
     def instrumentation_dependencies(self) -> Collection[str]:
         return _instruments
@@ -267,13 +346,21 @@ class CohereInstrumentor(BaseInstrumentor):
     def _instrument(self, **kwargs):
         tracer_provider = kwargs.get("tracer_provider")
         tracer = get_tracer(__name__, __version__, tracer_provider)
+
+        if Config.use_legacy_attributes:
+            event_logger = None
+        else:
+            event_logger_provider = kwargs.get("event_logger_provider")
+            event_logger = get_event_logger(
+                __name__, __version__, event_logger_provider=event_logger_provider
+            )
         for wrapped_method in WRAPPED_METHODS:
             wrap_object = wrapped_method.get("object")
             wrap_method = wrapped_method.get("method")
             wrap_function_wrapper(
                 "cohere.client",
                 f"{wrap_object}.{wrap_method}",
-                _wrap(tracer, wrapped_method),
+                _wrap(tracer, event_logger, wrapped_method),
             )
 
     def _uninstrument(self, **kwargs):
