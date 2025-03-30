@@ -121,7 +121,7 @@ def _llm_request_type_by_method(method_name):
         return LLMRequestTypeValues.UNKNOWN
 
 
-def _chat_completion_to_event(span: Span, args, kwargs) -> Event:
+def _chat_completion_to_event(args, kwargs) -> Event:
     request = kwargs.get("request") if kwargs.get("request") else args[0]
 
     attributes = {GenAIAttributes.GEN_AI_SYSTEM: "AlephAlpha"}
@@ -171,8 +171,8 @@ def _wrap(
     )
     if span.is_recording():
         _set_input_attributes(span, llm_request_type, args, kwargs)
-    if event_logger is not None:
-        event_logger.emit(_chat_completion_to_event(span, args, kwargs))
+    if not Config.use_legacy_attributes and event_logger is not None:
+        event_logger.emit(_chat_completion_to_event(args, kwargs))
 
     response = wrapped(*args, **kwargs)
 
@@ -180,7 +180,7 @@ def _wrap(
         if span.is_recording():
             _set_response_attributes(span, llm_request_type, response)
             span.set_status(Status(StatusCode.OK))
-        if event_logger is not None:
+        if not Config.use_legacy_attributes and event_logger is not None:
             for index, completion in enumerate(response.completions):
                 event_logger.emit(_completion_to_event(index, completion))
 
@@ -208,9 +208,7 @@ class AlephAlphaInstrumentor(BaseInstrumentor):
         else:
             event_logger_provider = kwargs.get("event_logger_provider")
             event_logger = get_event_logger(
-                __name__,
-                __version__,
-                event_logger_provider=event_logger_provider,
+                __name__, __version__, event_logger_provider=event_logger_provider
             )
 
         for wrapped_method in WRAPPED_METHODS:
