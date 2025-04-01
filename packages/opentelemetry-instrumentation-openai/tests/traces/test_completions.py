@@ -110,12 +110,8 @@ def test_completion_streaming(exporter, openai_client):
         completion_tokens = open_ai_span.attributes.get(
             SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
         )
-        prompt_tokens = open_ai_span.attributes.get(
-            SpanAttributes.LLM_USAGE_PROMPT_TOKENS
-        )
-        total_tokens = open_ai_span.attributes.get(
-            SpanAttributes.LLM_USAGE_TOTAL_TOKENS
-        )
+        prompt_tokens = open_ai_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS)
+        total_tokens = open_ai_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS)
         assert completion_tokens and prompt_tokens and total_tokens
         assert completion_tokens + prompt_tokens == total_tokens
         assert open_ai_span.attributes.get("gen_ai.response.id") == "cmpl-8wq44ev1DvyhsBfm1hNwxfv6Dltco"
@@ -202,3 +198,57 @@ async def test_async_completion_context_propagation(exporter, async_vllm_openai_
 
     assert_request_contains_tracecontext(request, openai_span)
     assert openai_span.attributes.get("gen_ai.response.id") == "cmpl-4acc6171f6c34008af07ca8490da3b95"
+
+
+@pytest.mark.vcr
+def test_batch_completion(exporter, openai_client):
+    openai_client.completions.create(
+        model="davinci-002",
+        prompt=["Tell me a joke about opentelemetry", "Explain recursion in programming"],
+    )
+
+    spans = exporter.get_finished_spans()
+    assert [span.name for span in spans] == [
+        "openai.completion",
+    ]
+    open_ai_span = spans[0]
+    assert (
+        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.user"]
+        == "Tell me a joke about opentelemetry"
+    )
+    assert (
+        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.user"]
+        == "Explain recursion in programming"
+    )
+    assert open_ai_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
+    assert open_ai_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.1.content")
+    assert (
+        open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)
+        == "https://api.openai.com/v1/"
+    )
+    assert open_ai_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is False
+
+
+@pytest.mark.vcr
+@pytest.mark.asyncio
+async def test_async_batch_completion(exporter, async_openai_client):
+    await async_openai_client.completions.create(
+        model="davinci-002",
+        prompt=["Tell me a joke about opentelemetry", "Explain recursion in programming"],
+    )
+
+    spans = exporter.get_finished_spans()
+    assert [span.name for span in spans] == [
+        "openai.completion",
+    ]
+    open_ai_span = spans[0]
+    assert (
+        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.user"]
+        == "Tell me a joke about opentelemetry"
+    )
+    assert (
+        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.user"]
+        == "Explain recursion in programming"
+    )
+    assert open_ai_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
+    assert open_ai_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.1.content")
