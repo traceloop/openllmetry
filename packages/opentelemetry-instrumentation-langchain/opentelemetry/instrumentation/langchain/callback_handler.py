@@ -77,7 +77,7 @@ def _set_request_params(span, kwargs, span_holder: SpanHolder):
 
     span.set_attribute(SpanAttributes.LLM_REQUEST_MODEL, model)
     # response is not available for LLM requests (as opposed to chat)
-    span.set_attribute(SpanAttributes.LLM_RESPONSE_MODEL, model)
+    span.set_attribute(SpanAttributes.LLM_RESPONSE_MODEL, model or "unknown")
 
     if "invocation_params" in kwargs:
         params = (
@@ -359,10 +359,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
 
         span.set_attribute(SpanAttributes.TRACELOOP_WORKFLOW_NAME, workflow_name)
         span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_PATH, entity_path)
-
-        token = context_api.attach(
-            context_api.set_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY, True)
-        )
+        token = context_api.attach(set_span_in_context(span))
 
         self.spans[run_id] = SpanHolder(
             span, token, None, [], workflow_name, entity_name, entity_path
@@ -422,6 +419,19 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         )
         span.set_attribute(SpanAttributes.LLM_SYSTEM, "Langchain")
         span.set_attribute(SpanAttributes.LLM_REQUEST_TYPE, request_type.value)
+
+        # we already have an LLM span by this point,
+        # so skip any downstream instrumentation from here
+        token = context_api.attach(
+            context_api.set_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY, True)
+        )
+
+        self.spans[run_id] = SpanHolder(
+            span, token, None, [], workflow_name, None, entity_path
+        )
+
+        if parent_run_id is not None and parent_run_id in self.spans:
+            self.spans[parent_run_id].children.append(run_id)
 
         return span
 
@@ -579,7 +589,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
                 "model_name"
             ) or response.llm_output.get("model_id")
             if model_name is not None:
-                span.set_attribute(SpanAttributes.LLM_RESPONSE_MODEL, model_name)
+                span.set_attribute(SpanAttributes.LLM_RESPONSE_MODEL, model_name or "unknown")
 
                 if self.spans[run_id].request_model is None:
                     span.set_attribute(SpanAttributes.LLM_REQUEST_MODEL, model_name)
