@@ -155,7 +155,7 @@ def messages_list_wrapper(tracer, wrapped, instance, args, kwargs):
         )
         _set_span_attribute(
             span,
-            SpanAttributes.LLM_RESPONSE_MODEL,
+            SpanAttributes.LLM_RESPONSE_MODEL or "unknown",
             assistant["model"],
         )
         if should_emit_events():
@@ -271,7 +271,7 @@ def runs_create_and_stream_wrapper(tracer, wrapped, instance, args, kwargs):
         )
         _set_span_attribute(
             span,
-            SpanAttributes.LLM_RESPONSE_MODEL,
+            SpanAttributes.LLM_RESPONSE_MODEL or "unknown",
             assistants[assistant_id]["model"],
         )
         if should_emit_events():
