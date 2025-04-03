@@ -155,8 +155,8 @@ def messages_list_wrapper(tracer, wrapped, instance, args, kwargs):
         )
         _set_span_attribute(
             span,
-            SpanAttributes.LLM_RESPONSE_MODEL or "unknown",
-            assistant["model"],
+            SpanAttributes.LLM_RESPONSE_MODEL,
+            assistant["model"] or "unknown",
         )
         if should_emit_events():
             emit_event(MessageEvent(content=assistant["instructions"], role="system"))
