@@ -121,7 +121,8 @@ def _llm_request_type_by_method(method_name):
         return LLMRequestTypeValues.UNKNOWN
 
 
-def _chat_completion_to_event(args, kwargs) -> Event:
+@dont_throw
+def _input_to_event(args, kwargs) -> Event:
     request = kwargs.get("request") if kwargs.get("request") else args[0]
 
     attributes = {GenAIAttributes.GEN_AI_SYSTEM: "AlephAlpha"}
@@ -130,7 +131,8 @@ def _chat_completion_to_event(args, kwargs) -> Event:
     return Event(name="gen_ai.user.message", body=body, attributes=attributes)
 
 
-def _completion_to_event(index, completion) -> Event:
+@dont_throw
+def _response_to_event(index, completion) -> Event:
     attributes = {GenAIAttributes.GEN_AI_SYSTEM: "AlephAlpha"}
 
     body = {"index": index, "finish_reason": completion.finish_reason}
@@ -172,7 +174,7 @@ def _wrap(
     if span.is_recording():
         _set_input_attributes(span, llm_request_type, args, kwargs)
     if not Config.use_legacy_attributes and event_logger is not None:
-        event_logger.emit(_chat_completion_to_event(args, kwargs))
+        event_logger.emit(_input_to_event(args, kwargs))
 
     response = wrapped(*args, **kwargs)
 
@@ -182,7 +184,7 @@ def _wrap(
             span.set_status(Status(StatusCode.OK))
         if not Config.use_legacy_attributes and event_logger is not None:
             for index, completion in enumerate(response.completions):
-                event_logger.emit(_completion_to_event(index, completion))
+                event_logger.emit(_response_to_event(index, completion))
 
     span.end()
     return response

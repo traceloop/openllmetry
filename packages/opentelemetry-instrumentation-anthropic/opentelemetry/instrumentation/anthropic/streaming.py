@@ -1,17 +1,25 @@
 import logging
 import time
+from typing import Union
 
+from opentelemetry._events import Event, EventLogger
 from opentelemetry.instrumentation.anthropic.config import Config
 from opentelemetry.instrumentation.anthropic.utils import (
+    count_prompt_tokens_from_request,
     dont_throw,
     error_metrics_attributes,
-    count_prompt_tokens_from_request,
+    is_content_enabled,
     set_span_attribute,
     shared_metrics_attributes,
     should_send_prompts,
 )
 from opentelemetry.metrics import Counter, Histogram
-from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import GEN_AI_RESPONSE_ID
+from opentelemetry.semconv._incubating.attributes import (
+    gen_ai_attributes as GenAIAttributes,
+)
+from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
+    GEN_AI_RESPONSE_ID,
+)
 from opentelemetry.semconv_ai import SpanAttributes
 from opentelemetry.trace.status import Status, StatusCode
 
@@ -27,12 +35,17 @@ def _process_response_item(item, complete_response):
     elif item.type == "content_block_start":
         index = item.index
         if len(complete_response.get("events")) <= index:
-            complete_response["events"].append({"index": index, "text": "", "type": item.content_block.type})
-    elif item.type == "content_block_delta" and item.delta.type in ["thinking_delta", "text_delta"]:
+            complete_response["events"].append(
+                {"index": index, "text": "", "type": item.content_block.type}
+            )
+    elif item.type == "content_block_delta" and item.delta.type in [
+        "thinking_delta",
+        "text_delta",
+    ]:
         index = item.index
-        if item.delta.type == 'thinking_delta':
+        if item.delta.type == "thinking_delta":
             complete_response["events"][index]["text"] += item.delta.thinking
-        elif item.delta.type == 'text_delta':
+        elif item.delta.type == "text_delta":
             complete_response["events"][index]["text"] += item.delta.text
     elif item.type == "message_delta":
         for event in complete_response.get("events", []):
@@ -40,10 +53,32 @@ def _process_response_item(item, complete_response):
         if item.usage:
             if "usage" in complete_response:
                 item_output_tokens = dict(item.usage).get("output_tokens", 0)
-                existing_output_tokens = complete_response["usage"].get("output_tokens", 0)
-                complete_response["usage"]["output_tokens"] = item_output_tokens + existing_output_tokens
+                existing_output_tokens = complete_response["usage"].get(
+                    "output_tokens", 0
+                )
+                complete_response["usage"]["output_tokens"] = (
+                    item_output_tokens + existing_output_tokens
+                )
             else:
                 complete_response["usage"] = dict(item.usage)
+
+
+@dont_throw
+def _emit_events_complete_response(event_logger: EventLogger, complete_response: dict):
+    attributes = {
+        GenAIAttributes.GEN_AI_SYSTEM: GenAIAttributes.GenAiSystemValues.ANTHROPIC.value
+    }
+    for message in complete_response.get("events", []):
+        body = {
+            "index": message.get("index"),
+            "finish_reason": message.get("finish_reason"),
+        }
+        body["message"] = (
+            {"content": {"type": message.get("type"), "content": message.get("text")}}
+            if is_content_enabled()
+            else {}
+        )
+        event_logger.emit(Event(name="gen_ai.choice", body=body, attributes=attributes))
 
 
 def _set_token_usage(
@@ -55,8 +90,12 @@ def _set_token_usage(
     token_histogram: Histogram = None,
     choice_counter: Counter = None,
 ):
-    cache_read_tokens = complete_response.get("usage", {}).get("cache_read_input_tokens", 0) or 0
-    cache_creation_tokens = complete_response.get("usage", {}).get("cache_creation_input_tokens", 0) or 0
+    cache_read_tokens = (
+        complete_response.get("usage", {}).get("cache_read_input_tokens", 0) or 0
+    )
+    cache_creation_tokens = (
+        complete_response.get("usage", {}).get("cache_creation_input_tokens", 0) or 0
+    )
 
     input_tokens = prompt_tokens + cache_read_tokens + cache_creation_tokens
     total_tokens = input_tokens + completion_tokens
@@ -74,7 +113,9 @@ def _set_token_usage(
         span, SpanAttributes.LLM_USAGE_CACHE_READ_INPUT_TOKENS, cache_read_tokens
     )
     set_span_attribute(
-        span, SpanAttributes.LLM_USAGE_CACHE_CREATION_INPUT_TOKENS, cache_creation_tokens
+        span,
+        SpanAttributes.LLM_USAGE_CACHE_CREATION_INPUT_TOKENS,
+        cache_creation_tokens,
     )
 
     if token_histogram and type(input_tokens) is int and input_tokens >= 0:
@@ -136,6 +177,7 @@ def build_from_streaming_response(
     choice_counter: Counter = None,
     duration_histogram: Histogram = None,
     exception_counter: Counter = None,
+    event_logger: Union[EventLogger, None] = None,
     kwargs: dict = {},
 ):
     complete_response = {"events": [], "model": "", "usage": {}, "id": ""}
@@ -197,6 +239,9 @@ def build_from_streaming_response(
     if should_send_prompts():
         _set_completions(span, complete_response.get("events"))
 
+    if not Config.use_legacy_attributes and event_logger is not None:
+        _emit_events_complete_response(event_logger, complete_response)
+
     span.set_status(Status(StatusCode.OK))
     span.end()
 
@@ -211,6 +256,7 @@ async def abuild_from_streaming_response(
     choice_counter: Counter = None,
     duration_histogram: Histogram = None,
     exception_counter: Counter = None,
+    event_logger: Union[EventLogger, None] = None,
     kwargs: dict = {},
 ):
     complete_response = {"events": [], "model": "", "usage": {}, "id": ""}
@@ -272,6 +318,9 @@ async def abuild_from_streaming_response(
 
     if should_send_prompts():
         _set_completions(span, complete_response.get("events"))
+
+    if not Config.use_legacy_attributes and event_logger is not None:
+        _emit_events_complete_response(event_logger, complete_response)
 
     span.set_status(Status(StatusCode.OK))
     span.end()
