@@ -227,6 +227,7 @@ def _llm_request_type_by_method(method_name):
         return LLMRequestTypeValues.UNKNOWN
 
 
+@dont_throw
 def _input_to_event(llm_request_type: str, kwargs) -> Event:
     attributes = {
         GenAIAttributes.GEN_AI_SYSTEM: GenAIAttributes.GenAiSystemValues.COHERE.value
@@ -249,6 +250,7 @@ def _input_to_event(llm_request_type: str, kwargs) -> Event:
     return Event(name="gen_ai.user.message", body=body, attributes=attributes)
 
 
+@dont_throw
 def _response_to_event(index: int, llm_request_type: str, response) -> Event:
     attributes = {
         GenAIAttributes.GEN_AI_SYSTEM: GenAIAttributes.GenAiSystemValues.COHERE.value

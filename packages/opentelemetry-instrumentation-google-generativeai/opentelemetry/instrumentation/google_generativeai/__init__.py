@@ -242,6 +242,7 @@ def _with_tracer_wrapper(func):
     return _with_tracer
 
 
+@dont_throw
 def _emit_events_requests(event_logger: EventLogger, args, kwargs):
     contents = []
 
@@ -271,6 +272,7 @@ def _emit_events_requests(event_logger: EventLogger, args, kwargs):
         )
 
 
+@dont_throw
 def _emit_events_responses(
     event_logger: EventLogger, response: GenerateContentResponse
 ):
