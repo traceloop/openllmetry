@@ -1,32 +1,34 @@
 """OpenTelemetry Ollama instrumentation"""
 
+import json
 import logging
 import os
-import json
 import time
-from typing import Collection
-from opentelemetry.instrumentation.ollama.config import Config
-from opentelemetry.instrumentation.ollama.utils import dont_throw
-from wrapt import wrap_function_wrapper
+from typing import Collection, Dict, List, Union
 
 from opentelemetry import context as context_api
-from opentelemetry.trace import get_tracer, SpanKind, Tracer
-from opentelemetry.trace.status import Status, StatusCode
-from opentelemetry.metrics import Histogram, Meter, get_meter
-
+from opentelemetry._events import Event, EventLogger, get_event_logger
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
+from opentelemetry.instrumentation.ollama.config import Config
+from opentelemetry.instrumentation.ollama.utils import dont_throw, is_content_enabled
+from opentelemetry.instrumentation.ollama.version import __version__
 from opentelemetry.instrumentation.utils import (
     _SUPPRESS_INSTRUMENTATION_KEY,
     unwrap,
 )
-
+from opentelemetry.metrics import Histogram, Meter, get_meter
+from opentelemetry.semconv._incubating.attributes import (
+    gen_ai_attributes as GenAIAttributes,
+)
 from opentelemetry.semconv_ai import (
     SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
-    SpanAttributes,
     LLMRequestTypeValues,
-    Meters
+    Meters,
+    SpanAttributes,
 )
-from opentelemetry.instrumentation.ollama.version import __version__
+from opentelemetry.trace import SpanKind, Tracer, get_tracer
+from opentelemetry.trace.status import Status, StatusCode
+from wrapt import wrap_function_wrapper
 
 logger = logging.getLogger(__name__)
 
@@ -192,11 +194,7 @@ def _set_response_attributes(span, token_histogram, llm_request_type, response):
         SpanAttributes.LLM_USAGE_PROMPT_TOKENS,
         input_tokens,
     )
-    _set_span_attribute(
-        span,
-        SpanAttributes.LLM_SYSTEM,
-        "Ollama"
-    )
+    _set_span_attribute(span, SpanAttributes.LLM_SYSTEM, "Ollama")
 
     if (
         token_histogram is not None
@@ -227,7 +225,9 @@ def _set_response_attributes(span, token_histogram, llm_request_type, response):
         )
 
 
-def _accumulate_streaming_response(span, token_histogram, llm_request_type, response):
+def _accumulate_streaming_response(
+    span, token_histogram, llm_request_type, event_logger, response
+):
     if llm_request_type == LLMRequestTypeValues.CHAT:
         accumulated_response = {"message": {"content": "", "role": ""}}
     elif llm_request_type == LLMRequestTypeValues.COMPLETION:
@@ -241,13 +241,22 @@ def _accumulate_streaming_response(span, token_histogram, llm_request_type, resp
             accumulated_response["message"]["role"] = res["message"]["role"]
         elif llm_request_type == LLMRequestTypeValues.COMPLETION:
             accumulated_response["response"] += res["response"]
+        if res.get("done"):
+            accumulated_response["done_reason"] = res.get("done_reason")
 
-    response_data = res.model_dump() if hasattr(res, 'model_dump') else res
-    _set_response_attributes(span, token_histogram, llm_request_type, response_data | accumulated_response)
+    response_data = res.model_dump() if hasattr(res, "model_dump") else res
+    _set_response_attributes(
+        span, token_histogram, llm_request_type, response_data | accumulated_response
+    )
+    if not Config.use_legacy_attributes and event_logger is not None:
+        _emit_response_event(event_logger, llm_request_type, accumulated_response)
+
     span.end()
 
 
-async def _aaccumulate_streaming_response(span, token_histogram, llm_request_type, response):
+async def _aaccumulate_streaming_response(
+    span, token_histogram, llm_request_type, event_logger, response
+):
     if llm_request_type == LLMRequestTypeValues.CHAT:
         accumulated_response = {"message": {"content": "", "role": ""}}
     elif llm_request_type == LLMRequestTypeValues.COMPLETION:
@@ -261,21 +270,28 @@ async def _aaccumulate_streaming_response(span, token_histogram, llm_request_typ
             accumulated_response["message"]["role"] = res["message"]["role"]
         elif llm_request_type == LLMRequestTypeValues.COMPLETION:
             accumulated_response["response"] += res["response"]
+        if res.get("done"):
+            accumulated_response["done_reason"] = res.get("done_reason")
 
-    response_data = res.model_dump() if hasattr(res, 'model_dump') else res
-    _set_response_attributes(span, token_histogram, llm_request_type, response_data | accumulated_response)
+    response_data = res.model_dump() if hasattr(res, "model_dump") else res
+    _set_response_attributes(
+        span, token_histogram, llm_request_type, response_data | accumulated_response
+    )
     span.end()
 
 
 def _with_tracer_wrapper(func):
     """Helper for providing tracer for wrapper functions."""
 
-    def _with_tracer(tracer, token_histogram, duration_histogram, to_wrap):
+    def _with_tracer(
+        tracer, token_histogram, duration_histogram, event_logger, to_wrap
+    ):
         def wrapper(wrapped, instance, args, kwargs):
             return func(
                 tracer,
                 token_histogram,
                 duration_histogram,
+                event_logger,
                 to_wrap,
                 wrapped,
                 instance,
@@ -299,11 +315,107 @@ def _llm_request_type_by_method(method_name):
         return LLMRequestTypeValues.UNKNOWN
 
 
+@dont_throw
+def _emit_input_events(event_logger: EventLogger, llm_request_type, args, kwargs):
+    attributes = {GenAIAttributes.GEN_AI_SYSTEM: "ollama"}
+
+    if llm_request_type == LLMRequestTypeValues.CHAT:
+        messages: List[Dict] = (
+            kwargs.get("messages") if kwargs.get("messages") is not None else args[1]
+        )
+        for message in messages:
+            role = message.get("role")
+            name = (
+                f"gen_ai.{role}.message" if role is not None else "gen_ai.user.message"
+            )
+            if is_content_enabled():
+                content = message.get("content")
+                images = message.get("images")
+                tool_calls = message.get("tool_calls")
+                body = {
+                    "content": {"content": content},
+                }
+                if images is not None:
+                    body["content"]["images"] = images
+                if tool_calls is not None:
+                    body["tool_calls"] = tool_calls
+                if role is not None and role != "user":
+                    body["role"] = role
+            else:
+                body = {}
+            event_logger.emit(Event(name=name, attributes=attributes, body=body))
+
+    elif llm_request_type == LLMRequestTypeValues.COMPLETION:
+        prompt = kwargs.get("prompt") if kwargs.get("prompt") is not None else args[1]
+        body = {"content": prompt} if is_content_enabled() else {}
+        event_logger.emit(
+            Event(name="gen_ai.user.message", attributes=attributes, body=body)
+        )
+
+    elif llm_request_type == LLMRequestTypeValues.EMBEDDING:
+        prompt = kwargs.get("prompt") if kwargs.get("prompt") is not None else args[1]
+        body = {"content": prompt} if is_content_enabled() else {}
+        event_logger.emit(
+            Event(name="gen_ai.user.message", attributes=attributes, body=body)
+        )
+
+    else:
+        raise ValueError(
+            "It wasn't possible to emit the input events due to an unknow llm_request_type."
+        )
+
+
+@dont_throw
+def _emit_response_event(event_logger: EventLogger, llm_request_type, response: dict):
+    attributes = {GenAIAttributes.GEN_AI_SYSTEM: "ollama"}
+
+    if llm_request_type == LLMRequestTypeValues.CHAT:
+        finish_reason = response.get("done_reason")
+        body = {
+            "index": 0,
+            "finish_reason": finish_reason if finish_reason is not None else "unknown",
+            "message": {},
+        }
+        if is_content_enabled():
+            role = response.get("message").get("role")
+            body["message"]["content"] = response.get("message").get("content")
+            if role is not None and role != "assistant":
+                body["message"]["role"] = role
+        event_logger.emit(Event("gen_ai.choice", attributes=attributes, body=body))
+
+    elif llm_request_type == LLMRequestTypeValues.COMPLETION:
+        finish_reason = response.get("done_reason")
+        body = {
+            "index": 0,
+            "finish_reason": finish_reason if finish_reason is not None else "unknown",
+            "message": {},
+        }
+        if is_content_enabled():
+            body["message"]["content"] = response.get("response")
+        event_logger.emit(Event("gen_ai.choice", attributes=attributes, body=body))
+
+    elif llm_request_type == LLMRequestTypeValues.EMBEDDING:
+        body = {
+            "index": 0,
+            "finish_reason": "unknown",
+            "message": {},
+        }
+        if is_content_enabled():
+            body["message"]["content"] = response.get("embedding")
+        event_logger.emit(Event("gen_ai.choice", attributes=attributes, body=body))
+
+    else:
+        raise ValueError(
+            "It wasn't possible to emit the choice events due to an unknow llm_request_type."
+        )
+
+
 @_with_tracer_wrapper
 def _wrap(
     tracer: Tracer,
     token_histogram: Histogram,
     duration_histogram: Histogram,
+    event_logger: Union[EventLogger, None],
     to_wrap,
     wrapped,
     instance,
@@ -328,6 +440,8 @@ def _wrap(
     )
     if span.is_recording():
         _set_input_attributes(span, llm_request_type, kwargs)
+    if not Config.use_legacy_attributes and event_logger is not None:
+        _emit_input_events(event_logger, llm_request_type, args, kwargs)
 
     start_time = time.perf_counter()
     response = wrapped(*args, **kwargs)
@@ -346,9 +460,12 @@ def _wrap(
 
         if span.is_recording():
             if kwargs.get("stream"):
-                return _accumulate_streaming_response(span, token_histogram, llm_request_type, response)
-
+                return _accumulate_streaming_response(
+                    span, token_histogram, llm_request_type, event_logger, response
+                )
             _set_response_attributes(span, token_histogram, llm_request_type, response)
+            if not Config.use_legacy_attributes and event_logger is not None:
+                _emit_response_event(event_logger, llm_request_type, response)
             span.set_status(Status(StatusCode.OK))
 
     span.end()
@@ -360,6 +477,7 @@ async def _awrap(
     tracer: Tracer,
     token_histogram: Histogram,
     duration_histogram: Histogram,
+    event_logger: Union[EventLogger, None],
     to_wrap,
     wrapped,
     instance,
@@ -385,6 +503,8 @@ async def _awrap(
 
     if span.is_recording():
         _set_input_attributes(span, llm_request_type, kwargs)
+    if not Config.use_legacy_attributes and event_logger is not None:
+        _emit_input_events(event_logger, llm_request_type, args, kwargs)
 
     start_time = time.perf_counter()
     response = await wrapped(*args, **kwargs)
@@ -402,9 +522,13 @@ async def _awrap(
 
         if span.is_recording():
             if kwargs.get("stream"):
-                return _aaccumulate_streaming_response(span, token_histogram, llm_request_type, response)
+                return _aaccumulate_streaming_response(
+                    span, token_histogram, llm_request_type, event_logger, response
+                )
 
             _set_response_attributes(span, token_histogram, llm_request_type, response)
+            if not Config.use_legacy_attributes and event_logger is not None:
+                _emit_response_event(event_logger, llm_request_type, response)
             span.set_status(Status(StatusCode.OK))
 
     span.end()
@@ -434,9 +558,10 @@ def is_metrics_collection_enabled() -> bool:
 class OllamaInstrumentor(BaseInstrumentor):
     """An instrumentor for Ollama's client library."""
 
-    def __init__(self, exception_logger=None):
+    def __init__(self, exception_logger=None, use_legacy_attributes=True):
         super().__init__()
         Config.exception_logger = exception_logger
+        Config.use_legacy_attributes = use_legacy_attributes
 
     def instrumentation_dependencies(self) -> Collection[str]:
         return _instruments
@@ -459,35 +584,59 @@ class OllamaInstrumentor(BaseInstrumentor):
                 duration_histogram,
             ) = (None, None)
 
+        if Config.use_legacy_attributes:
+            event_logger = None
+        else:
+            event_logger_provider = kwargs.get("event_logger_provider")
+            event_logger = get_event_logger(
+                __name__, __version__, event_logger_provider=event_logger_provider
+            )
+
         for wrapped_method in WRAPPED_METHODS:
             wrap_method = wrapped_method.get("method")
             wrap_function_wrapper(
                 "ollama._client",
                 f"Client.{wrap_method}",
-                _wrap(tracer, token_histogram, duration_histogram, wrapped_method),
+                _wrap(
+                    tracer,
+                    token_histogram,
+                    duration_histogram,
+                    event_logger,
+                    wrapped_method,
+                ),
             )
             wrap_function_wrapper(
                 "ollama._client",
                 f"AsyncClient.{wrap_method}",
-                _awrap(tracer, token_histogram, duration_histogram, wrapped_method),
+                _awrap(
+                    tracer,
+                    token_histogram,
+                    duration_histogram,
+                    event_logger,
+                    wrapped_method,
+                ),
             )
             wrap_function_wrapper(
                 "ollama",
                 f"{wrap_method}",
-                _wrap(tracer, token_histogram, duration_histogram, wrapped_method),
+                _wrap(
+                    tracer,
+                    token_histogram,
+                    duration_histogram,
+                    event_logger,
+                    wrapped_method,
+                ),
             )
 
     def _uninstrument(self, **kwargs):
-        for wrapped_method in WRAPPED_METHODS:
-            unwrap(
-                "ollama._client.Client",
-                wrapped_method.get("method"),
-            )
-            unwrap(
-                "ollama._client.AsyncClient",
-                wrapped_method.get("method"),
-            )
-            unwrap(
-                "ollama",
-                wrapped_method.get("method"),
-            )
+        try:
+            import ollama
+            from ollama._client import AsyncClient, Client
+
+            for wrapped_method in WRAPPED_METHODS:
+                method_name = wrapped_method.get("method")
+                unwrap(Client, method_name)
+                unwrap(AsyncClient, method_name)
+                unwrap(ollama, method_name)
+        except ImportError:
+            logger.warning("Failed to import ollama modules for uninstrumentation.")
