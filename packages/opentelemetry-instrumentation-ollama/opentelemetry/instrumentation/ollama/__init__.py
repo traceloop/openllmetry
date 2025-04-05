@@ -361,7 +361,7 @@ def _emit_input_events(event_logger: EventLogger, llm_request_type, args, kwargs
 
     else:
         raise ValueError(
-            "It wasn't possible to emit the input events due to an unknow llm_request_type."
+            "It wasn't possible to emit the input events due to an unknown llm_request_type."
         )
 
 
