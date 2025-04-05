@@ -344,6 +344,7 @@ def _set_streaming_response_attributes(
         )
 
 
+@dont_throw
 def _emit_streaming_response_events(
     event_logger: EventLogger, accumulated_content: str, finish_reason: Union[str, None]
 ):
@@ -418,6 +419,7 @@ async def _create_async_stream_processor(response, span, event_logger):
     span.end()
 
 
+@dont_throw
 def _emit_input_events(event_logger: EventLogger, kwargs: dict):
     attributes = {
         GenAIAttributes.GEN_AI_SYSTEM: GenAIAttributes.GenAiSystemValues.GROQ.value
@@ -434,6 +436,7 @@ def _emit_input_events(event_logger: EventLogger, kwargs: dict):
         event_logger.emit(Event(name=name, attributes=attributes, body=body))
 
 
+@dont_throw
 def _emit_response_events(event_logger: EventLogger, response: ChatCompletion):
     attributes = {
         GenAIAttributes.GEN_AI_SYSTEM: GenAIAttributes.GenAiSystemValues.GROQ.value
