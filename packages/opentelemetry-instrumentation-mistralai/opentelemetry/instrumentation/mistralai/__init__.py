@@ -1,37 +1,42 @@
 """OpenTelemetry Mistral AI instrumentation"""
 
+import json
 import logging
 import os
-import json
-from typing import Collection
-from opentelemetry.instrumentation.mistralai.config import Config
-from opentelemetry.instrumentation.mistralai.utils import dont_throw
-from wrapt import wrap_function_wrapper
+from typing import Collection, Union
 
 from opentelemetry import context as context_api
-from opentelemetry.trace import get_tracer, SpanKind
-from opentelemetry.trace.status import Status, StatusCode
-
+from opentelemetry._events import Event, EventLogger, get_event_logger
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
+from opentelemetry.instrumentation.mistralai.config import Config
+from opentelemetry.instrumentation.mistralai.utils import dont_throw, is_content_enabled
+from opentelemetry.instrumentation.mistralai.version import __version__
 from opentelemetry.instrumentation.utils import (
     _SUPPRESS_INSTRUMENTATION_KEY,
     unwrap,
 )
-
-from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import GEN_AI_RESPONSE_ID
+from opentelemetry.semconv._incubating.attributes import (
+    gen_ai_attributes as GenAIAttributes,
+)
+from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
+    GEN_AI_RESPONSE_ID,
+)
 from opentelemetry.semconv_ai import (
     SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
-    SpanAttributes,
     LLMRequestTypeValues,
+    SpanAttributes,
 )
-from opentelemetry.instrumentation.mistralai.version import __version__
+from opentelemetry.trace import SpanKind, get_tracer
+from opentelemetry.trace.status import Status, StatusCode
+from wrapt import wrap_function_wrapper
 
 from mistralai.models.chat_completion import (
-    ChatMessage,
     ChatCompletionResponse,
     ChatCompletionResponseChoice,
+    ChatMessage,
 )
 from mistralai.models.common import UsageInfo
+from mistralai.models.embeddings import EmbeddingResponse
 
 logger = logging.getLogger(__name__)
 
@@ -171,7 +176,9 @@ def _set_response_attributes(span, llm_request_type, response):
     )
 
 
-def _accumulate_streaming_response(span, llm_request_type, response):
+def _accumulate_streaming_response(
+    span, llm_request_type, event_logger: Union[EventLogger, None], response
+):
     accumulated_response = ChatCompletionResponse(
         id="",
         object="",
@@ -207,10 +214,16 @@ def _accumulate_streaming_response(span, llm_request_type, response):
             accumulated_response.choices[idx].message.role = choice.delta.role
 
     _set_response_attributes(span, llm_request_type, accumulated_response)
+
+    if not Config.use_legacy_attributes and event_logger is not None:
+        _emit_response_events(event_logger, accumulated_response)
+
     span.end()
 
 
-async def _aaccumulate_streaming_response(span, llm_request_type, response):
+async def _aaccumulate_streaming_response(
+    span, llm_request_type, event_logger: Union[EventLogger, None], response
+):
     accumulated_response = ChatCompletionResponse(
         id="",
         object="",
@@ -246,15 +259,19 @@ async def _aaccumulate_streaming_response(span, llm_request_type, response):
             accumulated_response.choices[idx].message.role = choice.delta.role
 
     _set_response_attributes(span, llm_request_type, accumulated_response)
+
+    if not Config.use_legacy_attributes and event_logger is not None:
+        _emit_response_events(event_logger, accumulated_response)
+
     span.end()
 
 
 def _with_tracer_wrapper(func):
     """Helper for providing tracer for wrapper functions."""
 
-    def _with_tracer(tracer, to_wrap):
+    def _with_tracer(tracer, event_logger, to_wrap):
         def wrapper(wrapped, instance, args, kwargs):
-            return func(tracer, to_wrap, wrapped, instance, args, kwargs)
+            return func(tracer, event_logger, to_wrap, wrapped, instance, args, kwargs)
 
         return wrapper
 
@@ -270,8 +287,99 @@ def _llm_request_type_by_method(method_name):
         return LLMRequestTypeValues.UNKNOWN
 
 
+@dont_throw
+def _emit_input_events(event_logger: EventLogger, method_wrapped: str, args, kwargs):
+    attributes = {GenAIAttributes.GEN_AI_SYSTEM: "mistral_ai"}
+    # Handle chat events
+    if method_wrapped == "mistralai.chat":
+        messages = args[0] if len(args) > 0 else kwargs.get("messages", [])
+        for message in messages:
+            if isinstance(message, ChatMessage):
+                role = message.role
+                content = message.content
+            elif isinstance(message, dict):
+                role = message.get("role")
+                content = message.get("content")
+
+            body = {}
+
+            if role is not None:
+                name = f"gen_ai.{role}.message"
+                if role != "user":
+                    body["role"] = role
+            else:
+                name = "gen_ai.user.message"
+
+            if is_content_enabled():
+                body["content"] = content
+            event_logger.emit(Event(name=name, attributes=attributes, body=body))
+
+    # Handle embedding events
+    elif method_wrapped == "mistralai.embeddings":
+        embedding_input = args[0] if len(args) > 0 else kwargs.get("input", [])
+        if isinstance(embedding_input, str):
+            body = {"content": embedding_input} if is_content_enabled() else {}
+            event_logger.emit(
+                Event(name="gen_ai.user.message", attributes=attributes, body=body)
+            )
+        elif isinstance(embedding_input, list):
+            for prompt in embedding_input:
+                body = {"content": prompt} if is_content_enabled() else {}
+                event_logger.emit(
+                    Event(name="gen_ai.user.message", attributes=attributes, body=body)
+                )
+
+
+def _emit_response_events(
+    event_logger: EventLogger,
+    response: Union[ChatCompletionResponse, EmbeddingResponse],
+):
+    attributes = {GenAIAttributes.GEN_AI_SYSTEM: "mistral_ai"}
+    # Handle chat events
+    if isinstance(response, ChatCompletionResponse):
+        for choice in response.choices:
+            body = {
+                "index": choice.index,
+                "finish_reason": choice.finish_reason.value,
+            }
+            if is_content_enabled():
+                body["message"] = {"content": choice.message.content}
+                if choice.message.role is not None:
+                    body["message"]["role"] = choice.message.role
+
+            else:
+                body["message"] = {}
+            event_logger.emit(
+                Event(name="gen_ai.choice", attributes=attributes, body=body)
+            )
+
+    # Handle embedding events
+    elif isinstance(response, EmbeddingResponse):
+        for embedding in response.data:
+            body = {
+                "index": embedding.index,
+                "finish_reason": "unknown",
+            }
+
+            if is_content_enabled():
+                body["message"] = {"content": embedding.embedding}
+            else:
+                body["message"] = {}
+            event_logger.emit(
+                Event(name="gen_ai.choice", attributes=attributes, body=body)
+            )
+
+
 @_with_tracer_wrapper
-def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
+def _wrap(
+    tracer,
+    event_logger: Union[EventLogger, None],
+    to_wrap,
+    wrapped,
+    instance,
+    args,
+    kwargs,
+):
     """Instruments and calls every function defined in TO_WRAP."""
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY) or context_api.get_value(
         SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY
@@ -291,14 +399,21 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
     if span.is_recording():
         _set_input_attributes(span, llm_request_type, to_wrap, kwargs)
 
+    if not Config.use_legacy_attributes and event_logger is not None:
+        _emit_input_events(event_logger, name, args, kwargs)
+
     response = wrapped(*args, **kwargs)
 
     if response:
         if span.is_recording():
             if to_wrap.get("streaming"):
-                return _accumulate_streaming_response(span, llm_request_type, response)
+                return _accumulate_streaming_response(
+                    span, llm_request_type, event_logger, response
+                )
 
             _set_response_attributes(span, llm_request_type, response)
+            if not Config.use_legacy_attributes and event_logger is not None:
+                _emit_response_events(event_logger, response)
             span.set_status(Status(StatusCode.OK))
 
     span.end()
@@ -306,7 +421,15 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
 
 
 @_with_tracer_wrapper
-async def _awrap(tracer, to_wrap, wrapped, instance, args, kwargs):
+async def _awrap(
+    tracer,
+    event_logger: Union[EventLogger, None],
+    to_wrap,
+    wrapped,
+    instance,
+    args,
+    kwargs,
+):
     """Instruments and calls every function defined in TO_WRAP."""
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY) or context_api.get_value(
         SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY
@@ -327,6 +450,9 @@ async def _awrap(tracer, to_wrap, wrapped, instance, args, kwargs):
     if span.is_recording():
         _set_input_attributes(span, llm_request_type, to_wrap, kwargs)
 
+    if not Config.use_legacy_attributes and event_logger is not None:
+        _emit_input_events(event_logger, name, args, kwargs)
+
     if to_wrap.get("streaming"):
         response = wrapped(*args, **kwargs)
     else:
@@ -335,9 +461,13 @@ async def _awrap(tracer, to_wrap, wrapped, instance, args, kwargs):
     if response:
         if span.is_recording():
             if to_wrap.get("streaming"):
-                return _aaccumulate_streaming_response(span, llm_request_type, response)
+                return _aaccumulate_streaming_response(
+                    span, llm_request_type, event_logger, response
+                )
 
             _set_response_attributes(span, llm_request_type, response)
+            if not Config.use_legacy_attributes and event_logger is not None:
+                _emit_response_events(event_logger, response)
             span.set_status(Status(StatusCode.OK))
 
     span.end()
@@ -347,9 +477,10 @@ async def _awrap(tracer, to_wrap, wrapped, instance, args, kwargs):
 class MistralAiInstrumentor(BaseInstrumentor):
     """An instrumentor for Mistral AI's client library."""
 
-    def __init__(self, exception_logger=None):
+    def __init__(self, exception_logger=None, use_legacy_attributes=True):
         super().__init__()
         Config.exception_logger = exception_logger
+        Config.use_legacy_attributes = use_legacy_attributes
 
     def instrumentation_dependencies(self) -> Collection[str]:
         return _instruments
@@ -357,27 +488,32 @@ class MistralAiInstrumentor(BaseInstrumentor):
     def _instrument(self, **kwargs):
         tracer_provider = kwargs.get("tracer_provider")
         tracer = get_tracer(__name__, __version__, tracer_provider)
+
+        if Config.use_legacy_attributes:
+            event_logger = None
+        else:
+            event_logger_provider = kwargs.get("event_logger_provider")
+            event_logger = get_event_logger(
+                __name__, __version__, event_logger_provider=event_logger_provider
+            )
+
         for wrapped_method in WRAPPED_METHODS:
             wrap_method = wrapped_method.get("method")
             wrap_function_wrapper(
                 "mistralai.client",
                 f"MistralClient.{wrap_method}",
-                _wrap(tracer, wrapped_method),
+                _wrap(tracer, event_logger, wrapped_method),
             )
             wrap_function_wrapper(
                 "mistralai.async_client",
                 f"MistralAsyncClient.{wrap_method}",
-                _awrap(tracer, wrapped_method),
+                _awrap(tracer, event_logger, wrapped_method),
             )
 
     def _uninstrument(self, **kwargs):
         for wrapped_method in WRAPPED_METHODS:
-            wrap_object = wrapped_method.get("object")
+            unwrap("mistralai.client.MistralClient", wrapped_method.get("method"))
             unwrap(
-                f"mistralai.client.MistralClient.{wrap_object}",
-                wrapped_method.get("method"),
-            )
-            unwrap(
-                f"mistralai.async_client.AsyncMistralClient.{wrap_object}",
+                "mistralai.async_client.MistralAsyncClient",
                 wrapped_method.get("method"),
             )

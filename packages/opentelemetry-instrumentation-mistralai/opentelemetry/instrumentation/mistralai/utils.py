@@ -1,6 +1,12 @@
 import logging
 import traceback
+from os import environ
+
 from opentelemetry.instrumentation.mistralai.config import Config
+
+OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT = (
+    "OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT"
+)
 
 
 def dont_throw(func):
@@ -26,3 +32,11 @@ def dont_throw(func):
                 Config.exception_logger(e)
 
     return wrapper
+
+
+def is_content_enabled() -> bool:
+    capture_content = environ.get(
+        OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT, "false"
+    )
+
+    return capture_content.lower() == "true"
