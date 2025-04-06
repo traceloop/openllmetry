@@ -1,6 +1,12 @@
 import logging
-from opentelemetry.instrumentation.together.config import Config
+import os
 import traceback
+
+from opentelemetry.instrumentation.together.config import Config
+
+OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT = (
+    "OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT"
+)
 
 
 def dont_throw(func):
@@ -26,3 +32,11 @@ def dont_throw(func):
                 Config.exception_logger(e)
 
     return wrapper
+
+
+def is_content_enabled() -> bool:
+    capture_content = os.environ.get(
+        OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT, "false"
+    )
+
+    return capture_content.lower() == "true"
