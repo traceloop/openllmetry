@@ -38,7 +38,7 @@ from opentelemetry.instrumentation.llamaindex.dispatcher_wrapper import instrume
 
 logger = logging.getLogger(__name__)
 
-_instruments = ("llama-index >= 0.7.0",)
+_instruments = ("llama-index-core >= 0.7.0",)
 
 
 class LlamaIndexInstrumentor(BaseInstrumentor):
@@ -55,7 +55,7 @@ class LlamaIndexInstrumentor(BaseInstrumentor):
         tracer_provider = kwargs.get("tracer_provider")
         tracer = get_tracer(__name__, __version__, tracer_provider)
 
-        if import_version("llama-index") >= "0.10.20":
+        if import_version("llama-index-core") >= "0.10.20":
             instrument_with_dispatcher(tracer)
         else:
             RetrieverQueryEngineInstrumentor(tracer).instrument()
