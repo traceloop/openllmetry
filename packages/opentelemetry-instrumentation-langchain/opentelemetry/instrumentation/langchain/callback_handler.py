@@ -601,12 +601,6 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             )
 
         self._end_span(span, run_id)
-        if parent_run_id is None:
-            context_api.attach(
-                context_api.set_value(
-                    SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY, False
-                )
-            )
 
     @dont_throw
     def on_chat_model_start(
