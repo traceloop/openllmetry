@@ -1,0 +1,50 @@
+interactions:
+  - request:
+      body: '{"messages": [{"role": "user", "content": [{"text": "Human: Tell me a joke
+      about opentelemetry Assistant:"}]}], "guardrailConfig": {"guardrailIdentifier":
+      "v9kpg6yrwhs2", "guardrailVersion": "DRAFT", "trace": "enabled"}, "inferenceConfig":
+      {"temperature": 0.5}}'
+      headers:
+        Content-Length:
+          - '261'
+        Content-Type:
+          - !!binary |
+            YXBwbGljYXRpb24vanNvbg==
+        User-Agent:
+          - !!binary |
+            Qm90bzMvMS4zNy4xMyBtZC9Cb3RvY29yZSMxLjM3LjEzIHVhLzIuMSBvcy9tYWNvcyMyNC4zLjAg
+            bWQvYXJjaCNhcm02NCBsYW5nL3B5dGhvbiMzLjkuNiBtZC9weWltcGwjQ1B5dGhvbiBjZmcvcmV0
+            cnktbW9kZSNsZWdhY3kgQm90b2NvcmUvMS4zNy4xMw==
+        X-Amz-Date:
+          - !!binary |
+            MjAyNTAzMTdUMTMzMjAzWg==
+        amz-sdk-invocation-id:
+          - !!binary |
+            YWRkNDMwM2EtMDhmZS00MjdjLWE0OWEtMzU0NzkzYzE5OWIz
+        amz-sdk-request:
+          - !!binary |
+            YXR0ZW1wdD0x
+      method: POST
+      uri: https://bedrock-runtime.us-east-1.amazonaws.com/model/arn%3Aaws%3Abedrock%3Aus-east-1%3A012345678901%3Ainference-profile%2Fus.anthropic.claude-3-7-sonnet-20250219-v1%3A0/converse
+    response:
+      body:
+        string: '{"metrics":{"latencyMs":2900},"output":{"message":{"content":[{"text":"Why
+        did the developer start using OpenTelemetry?\n\nBecause they wanted to \"trace\"
+        their steps when their application was running slow, but got lost in a \"span\"
+        of metrics, logs, and traces!\n\nTurns out debugging is much easier when you''re
+        not completely in the dark about what your distributed system is doing!"}],"role":"assistant"}},"stopReason":"end_turn","trace":{"guardrail":{"inputAssessment":{"v9kpg6yrwhs2":{"invocationMetrics":{"guardrailCoverage":{"textCharacters":{"guarded":52,"total":52}},"guardrailProcessingLatency":296,"usage":{"contentPolicyUnits":1,"contextualGroundingPolicyUnits":0,"sensitiveInformationPolicyFreeUnits":0,"sensitiveInformationPolicyUnits":1,"topicPolicyUnits":1,"wordPolicyUnits":1}}}},"outputAssessments":{"v9kpg6yrwhs2":[{"invocationMetrics":{"guardrailCoverage":{"textCharacters":{"guarded":308,"total":308}},"guardrailProcessingLatency":236,"usage":{"contentPolicyUnits":1,"contextualGroundingPolicyUnits":0,"sensitiveInformationPolicyFreeUnits":1,"sensitiveInformationPolicyUnits":1,"topicPolicyUnits":1,"wordPolicyUnits":1}}}]}}},"usage":{"cacheReadInputTokenCount":0,"cacheReadInputTokens":0,"cacheWriteInputTokenCount":0,"cacheWriteInputTokens":0,"inputTokens":20,"outputTokens":72,"totalTokens":92}}'
+      headers:
+        Connection:
+          - keep-alive
+        Content-Length:
+          - '1322'
+        Content-Type:
+          - application/json
+        Date:
+          - Mon, 17 Mar 2025 13:32:07 GMT
+        x-amzn-RequestId:
+          - 48a1e323-e366-4401-93a3-eb326790a4db
+      status:
+        code: 200
+        message: OK
+version: 1
