@@ -1,46 +1,48 @@
 """OpenTelemetry Bedrock instrumentation"""
 
-from functools import partial, wraps
 import json
 import logging
 import os
 import time
-from typing import Collection
+from functools import partial, wraps
+from typing import Collection, Union
+
+import anthropic
+from opentelemetry import context as context_api
+from opentelemetry._events import Event, EventLogger, get_event_logger
 from opentelemetry.instrumentation.bedrock.config import Config
 from opentelemetry.instrumentation.bedrock.guardrail import (
-    guardrail_handling,
     guardrail_converse,
+    guardrail_handling,
 )
 from opentelemetry.instrumentation.bedrock.prompt_caching import prompt_caching_handling
 from opentelemetry.instrumentation.bedrock.reusable_streaming_body import (
     ReusableStreamingBody,
 )
 from opentelemetry.instrumentation.bedrock.streaming_wrapper import StreamingWrapper
-from opentelemetry.instrumentation.bedrock.utils import dont_throw
-from opentelemetry.metrics import Counter, Histogram, Meter, get_meter
-from wrapt import wrap_function_wrapper
-import anthropic
-
-from opentelemetry import context as context_api
-from opentelemetry.trace import get_tracer, SpanKind
-
+from opentelemetry.instrumentation.bedrock.utils import (
+    dont_throw,
+    get_event_attributes,
+    is_content_enabled,
+)
+from opentelemetry.instrumentation.bedrock.version import __version__
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.instrumentation.utils import (
     _SUPPRESS_INSTRUMENTATION_KEY,
     unwrap,
 )
-
+from opentelemetry.metrics import Counter, Histogram, Meter, get_meter
 from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
     GEN_AI_RESPONSE_ID,
 )
 from opentelemetry.semconv_ai import (
     SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
-    SpanAttributes,
     LLMRequestTypeValues,
     Meters,
+    SpanAttributes,
 )
-
-from opentelemetry.instrumentation.bedrock.version import __version__
+from opentelemetry.trace import SpanKind, get_tracer
+from wrapt import wrap_function_wrapper
 
 
 class MetricParams:
@@ -119,12 +121,14 @@ def _with_tracer_wrapper(func):
     def _with_tracer(
         tracer,
         metric_params,
+        event_logger,
         to_wrap,
     ):
         def wrapper(wrapped, instance, args, kwargs):
             return func(
                 tracer,
                 metric_params,
+                event_logger,
                 to_wrap,
                 wrapped,
                 instance,
@@ -141,6 +145,7 @@ def _with_tracer_wrapper(func):
 def _wrap(
     tracer,
     metric_params,
+    event_logger: Union[EventLogger, None],
     to_wrap,
     wrapped,
     instance,
@@ -157,18 +162,21 @@ def _wrap(
             metric_params.start_time = time.time()
             client = wrapped(*args, **kwargs)
             client.invoke_model = _instrumented_model_invoke(
-                client.invoke_model, tracer, metric_params
+                client.invoke_model, tracer, metric_params, event_logger
             )
             client.invoke_model_with_response_stream = (
                 _instrumented_model_invoke_with_response_stream(
-                    client.invoke_model_with_response_stream, tracer, metric_params
+                    client.invoke_model_with_response_stream,
+                    tracer,
+                    metric_params,
+                    event_logger,
                 )
             )
             client.converse = _instrumented_converse(
-                client.converse, tracer, metric_params
+                client.converse, tracer, metric_params, event_logger
             )
             client.converse_stream = _instrumented_converse_stream(
-                client.converse_stream, tracer, metric_params
+                client.converse_stream, tracer, metric_params, event_logger
             )
             return client
         except Exception as e:
@@ -189,7 +197,152 @@ def _wrap(
     return wrapped(*args, **kwargs)
 
 
-def _instrumented_model_invoke(fn, tracer, metric_params):
+@dont_throw
+def _emit_input_events(event_logger: EventLogger, args, kwargs):
+    attributes = get_event_attributes()
+    input_body = json.loads(kwargs.get("body"))
+    prompt = input_body.get("prompt")
+    messages = input_body.get("messages")
+    input_text = input_body.get("inputText")
+    system_messages = input_body.get("system")
+
+    if system_messages:
+        for message in system_messages:
+            body = {}
+
+            if is_content_enabled():
+                body["content"] = message.get("text")
+
+            event_logger.emit(
+                Event("gen_ai.system.message", attributes=attributes, body=body)
+            )
+
+    if messages:
+        for message in messages:
+            body = {}
+            role = message.get("role") or "user"
+
+            if is_content_enabled():
+                body["content"] = message.get("content")
+            if role != "user":
+                body["role"] = role
+
+            event_logger.emit(
+                Event(f"gen_ai.{role}.message", attributes=attributes, body=body)
+            )
+
+    elif prompt is not None:
+        body = {}
+
+        if is_content_enabled():
+            body["content"] = prompt
+
+        event_logger.emit(
+            Event("gen_ai.user.message", attributes=attributes, body=body)
+        )
+
+    elif input_text is not None:
+        body = {}
+
+        if is_content_enabled():
+            body["content"] = input_text
+
+        event_logger.emit(
+            Event("gen_ai.user.message", attributes=attributes, body=body)
+        )
+
+    else:
+        raise ValueError(
+            "It wasn't possible to emit the input events due to unknown kwargs."
+        )
+
+
+@dont_throw
+def _emit_response_events_model_invoke(event_logger: EventLogger, response):
+    attributes = get_event_attributes()
+    response_body: dict = json.loads(response.get("body").read())
+    body = {"index": 0, "finish_reason": "", "message": {}}
+
+    if response_body.get("completions") is not None:
+        for i, message in enumerate(response_body.get("completions")):
+            body["index"] = i
+            body["finish_reason"] = message.get("finishReason", {}).get("reason")
+
+            if is_content_enabled():
+                body["message"]["content"] = message.get("data", {}).get("text")
+
+            event_logger.emit(Event("gen_ai.choice", attributes=attributes, body=body))
+
+    elif (
+        response_body.get("completion") is not None
+        or response_body.get("generation") is not None
+    ):
+        body["finish_reason"] = response_body.get("stop_reason", "unknown")
+
+        if is_content_enabled():
+            body["message"]["content"] = response_body.get(
+                "completion"
+            ) or response_body.get("generation")
+
+        event_logger.emit(Event("gen_ai.choice", attributes=attributes, body=body))
+
+    elif response_body.get("generations") is not None:
+        for i, message in enumerate(response_body.get("generations")):
+            body["index"] = i
+            body["finish_reason"] = message.get("finish_reason", "unknown")
+
+            if is_content_enabled():
+                body["message"]["content"] = message.get("text")
+
+            event_logger.emit(Event("gen_ai.choice", attributes=attributes, body=body))
+
+    elif response_body.get("choices") is not None:
+        for i, message in enumerate(response_body.get("choices")):
+            body["index"] = i
+            body["finish_reason"] = message.get("finish_reason", "unknown")
+
+            if is_content_enabled():
+                body["message"]["content"] = message.get("text")
+
+            event_logger.emit(Event("gen_ai.choice", attributes=attributes, body=body))
+
+    elif response_body.get("output") is not None:
+        body["finish_reason"] = response_body.get("stopReason", "unknown")
+
+        if is_content_enabled():
+            body["message"]["content"] = (
+                response_body.get("output", {}).get("message", {}).get("content")
+            )
+
+        event_logger.emit(Event("gen_ai.choice", attributes=attributes, body=body))
+
+    elif response_body.get("results") is not None:
+        for i, message in enumerate(response_body.get("results")):
+            body["index"] = i
+            body["finish_reason"] = message.get("completionReason", "unknown")
+
+            if is_content_enabled():
+                body["message"]["content"] = message.get("outputText")
+
+            event_logger.emit(Event("gen_ai.choice", attributes=attributes, body=body))
+
+    elif response_body.get("content") is not None:
+        body["finish_reason"] = response_body.get("stop_reason", "unknown")
+
+        if is_content_enabled():
+            body["message"]["content"] = response_body.get("content")
+
+        event_logger.emit(Event("gen_ai.choice", attributes=attributes, body=body))
+
+    else:
+        raise ValueError(
+            "It wasn't possible to emit the choice events due to an unknow response body."
+        )
+
+
+def _instrumented_model_invoke(
+    fn, tracer, metric_params, event_logger: Union[EventLogger, None] = None
+):
     @wraps(fn)
     def with_instrumentation(*args, **kwargs):
         if context_api.get_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY):
@@ -198,34 +351,103 @@ def _instrumented_model_invoke(fn, tracer, metric_params):
         with tracer.start_as_current_span(
             _BEDROCK_INVOKE_SPAN_NAME, kind=SpanKind.CLIENT
         ) as span:
+            if not Config.use_legacy_attributes and event_logger is not None:
+                _emit_input_events(event_logger, args, kwargs)
+
             response = fn(*args, **kwargs)
 
             if span.is_recording():
                 _handle_call(span, kwargs, response, metric_params)
+
+            if not Config.use_legacy_attributes and event_logger is not None:
+                _emit_response_events_model_invoke(event_logger, response)
 
             return response
 
     return with_instrumentation
 
 
-def _instrumented_model_invoke_with_response_stream(fn, tracer, metric_params):
+def _instrumented_model_invoke_with_response_stream(
+    fn, tracer, metric_params, event_logger: Union[EventLogger, None]
+):
     @wraps(fn)
     def with_instrumentation(*args, **kwargs):
         if context_api.get_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY):
             return fn(*args, **kwargs)
 
         span = tracer.start_span(_BEDROCK_INVOKE_SPAN_NAME, kind=SpanKind.CLIENT)
+        if not Config.use_legacy_attributes and event_logger is not None:
+            _emit_input_events(event_logger, args, kwargs)
+
         response = fn(*args, **kwargs)
 
         if span.is_recording():
-            _handle_stream_call(span, kwargs, response, metric_params)
+            _handle_stream_call(
+                span,
+                kwargs,
+                response,
+                metric_params,
+                not Config.use_legacy_attributes,
+                event_logger,
+            )
 
         return response
 
     return with_instrumentation
 
 
-def _instrumented_converse(fn, tracer, metric_params):
+@dont_throw
+def _emit_input_events_converse(event_logger: EventLogger, args, kwargs):
+    attributes = get_event_attributes()
+    system_messages = kwargs.get("system")
+    messages = kwargs.get("messages")
+
+    if system_messages:
+        for message in system_messages:
+            body = {}
+
+            if is_content_enabled():
+                body["content"] = message.get("text")
+
+            event_logger.emit(
+                Event("gen_ai.system.message", attributes=attributes, body=body)
+            )
+
+    for message in messages:
+        body = {}
+        role = message.get("role") or "user"
+
+        if is_content_enabled():
+            body["content"] = message.get("content")
+        if role != "user":
+            body["role"] = role
+
+        event_logger.emit(
+            Event(f"gen_ai.{role}.message", attributes=attributes, body=body)
+        )
+
+
+@dont_throw
+def _emit_response_events_converse(event_logger: EventLogger, response: dict):
+    attributes = get_event_attributes()
+    body = {
+        "index": 0,
+        "finish_reason": response.get("stopReason", "unknown"),
+        "message": {},
+    }
+
+    if is_content_enabled():
+        body["message"]["content"] = (
+            response.get("output", {}).get("message", {}).get("content")
+        )
+        role = response.get("output", {}).get("message", {}).get("role")
+        if role != "assistant":
+            body["message"]["role"] = role
+
+    event_logger.emit(Event("gen_ai.choice", attributes=attributes, body=body))
+
+
+def _instrumented_converse(fn, tracer, metric_params, event_logger):
     # see
     # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/bedrock-runtime/client/converse.html
     # for the request/response format
@@ -237,24 +459,32 @@ def _instrumented_converse(fn, tracer, metric_params):
         with tracer.start_as_current_span(
             _BEDROCK_CONVERSE_SPAN_NAME, kind=SpanKind.CLIENT
         ) as span:
+            if not Config.use_legacy_attributes and event_logger is not None:
+                _emit_input_events_converse(event_logger, args, kwargs)
+
             response = fn(*args, **kwargs)
+
             _handle_converse(span, kwargs, response, metric_params)
+            if not Config.use_legacy_attributes and event_logger is not None:
+                _emit_response_events_converse(event_logger, response)
 
             return response
 
     return with_instrumentation
 
 
-def _instrumented_converse_stream(fn, tracer, metric_params):
+def _instrumented_converse_stream(fn, tracer, metric_params, event_logger):
     @wraps(fn)
     def with_instrumentation(*args, **kwargs):
         if context_api.get_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY):
             return fn(*args, **kwargs)
-
+        if not Config.use_legacy_attributes and event_logger is not None:
+            _emit_input_events_converse(event_logger, args, kwargs)
         span = tracer.start_span(_BEDROCK_CONVERSE_SPAN_NAME, kind=SpanKind.CLIENT)
+
         response = fn(*args, **kwargs)
         if span.is_recording():
-            _handle_converse_stream(span, kwargs, response, metric_params)
+            _handle_converse_stream(span, kwargs, response, metric_params, event_logger)
 
         return response
 
@@ -262,8 +492,14 @@ def _instrumented_converse_stream(fn, tracer, metric_params):
 
 
 @dont_throw
-def _handle_stream_call(span, kwargs, response, metric_params):
-
+def _handle_stream_call(
+    span,
+    kwargs,
+    response,
+    metric_params,
+    emit_events_otel: bool,
+    event_logger: Union[EventLogger, None],
+):
     (vendor, model) = _get_vendor_model(kwargs.get("modelId"))
     request_body = json.loads(kwargs.get("body"))
 
@@ -273,7 +509,6 @@ def _handle_stream_call(span, kwargs, response, metric_params):
 
     @dont_throw
     def stream_done(response_body):
-
         metric_params.vendor = vendor
         metric_params.model = model
         metric_params.is_stream = True
@@ -288,7 +523,10 @@ def _handle_stream_call(span, kwargs, response, metric_params):
         span.end()
 
     response["body"] = StreamingWrapper(
-        response["body"], stream_done_callback=stream_done
+        response["body"],
+        stream_done_callback=stream_done,
+        emit_events_otel=emit_events_otel,
+        event_logger=event_logger,
     )
 
 
@@ -358,7 +596,9 @@ def _handle_converse(span, kwargs, response, metric_params):
 
 
 @dont_throw
-def _handle_converse_stream(span, kwargs, response, metric_params):
+def _handle_converse_stream(
+    span, kwargs, response, metric_params, event_logger: Union[EventLogger, None]
+):
     (vendor, model) = _get_vendor_model(kwargs.get("modelId"))
 
     _set_span_attribute(span, SpanAttributes.LLM_SYSTEM, vendor)
@@ -409,6 +649,23 @@ def _handle_converse_stream(span, kwargs, response, metric_params):
                             span,
                             f"{SpanAttributes.LLM_COMPLETIONS}.0.content",
                             "".join(response_msg),
+                        )
+                    if not Config.use_legacy_attributes and event_logger is not None:
+                        accumulated_text = "".join(response_msg)
+                        attibutes = get_event_attributes()
+                        body = {
+                            "index": 0,
+                            "finish_reason": event.get("messageStop", {}).get(
+                                "stopReason"
+                            ),
+                            "message": {},
+                        }
+
+                        if is_content_enabled():
+                            body["message"]["content"] = accumulated_text
+
+                        event_logger.emit(
+                            Event(name="gen_ai.choice", body=body, attributes=attibutes)
                         )
                 return event
 
@@ -562,7 +819,6 @@ def _metric_shared_attributes(
 def _set_model_span_attributes(
     vendor, model, span, request_body, response_body, headers, metric_params
 ):
-
     response_model = response_body.get("model")
     response_id = response_body.get("id")
 
@@ -591,7 +847,9 @@ def _set_model_span_attributes(
             span, request_body, response_body, headers, metric_params
         )
     elif vendor == "imported_model":
-        _set_imported_model_span_attributes(span, request_body, response_body, metric_params)
+        _set_imported_model_span_attributes(
+            span, request_body, response_body, metric_params
+        )
 
 
 def _set_cohere_span_attributes(span, request_body, response_body, metric_params):
@@ -610,8 +868,6 @@ def _set_cohere_span_attributes(span, request_body, response_body, metric_params
     # https://docs.aws.amazon.com/bedrock/latest/userguide/model-parameters-cohere-command-r-plus.html
     input_tokens = response_body.get("token_count", {}).get("prompt_tokens")
     output_tokens = response_body.get("token_count", {}).get("response_tokens")
-
-    print("response_body", response_body)
 
     if input_tokens is None or output_tokens is None:
         meta = response_body.get("meta", {})
@@ -964,7 +1220,9 @@ def _set_amazon_span_attributes(
                 )
 
 
-def _set_imported_model_span_attributes(span, request_body, response_body, metric_params):
+def _set_imported_model_span_attributes(
+    span, request_body, response_body, metric_params
+):
     _set_span_attribute(
         span, SpanAttributes.LLM_REQUEST_TYPE, LLMRequestTypeValues.COMPLETION.value
     )
@@ -986,16 +1244,22 @@ def _set_imported_model_span_attributes(span, request_body, response_body, metri
         "completion_tokens"
     ) or response_body.get("generation_token_count")
 
-    _record_usage_to_span(span, prompt_tokens, completion_tokens, metric_params, )
+    _record_usage_to_span(
+        span,
+        prompt_tokens,
+        completion_tokens,
+        metric_params,
+    )
 
     if should_send_prompts():
         _set_span_attribute(
             span, f"{SpanAttributes.LLM_PROMPTS}.0.content", request_body.get("prompt")
         )
         _set_span_attribute(
-                span, f"{SpanAttributes.LLM_COMPLETIONS}.0.content",
-                response_body.get("generation"),
-            )
+            span,
+            f"{SpanAttributes.LLM_COMPLETIONS}.0.content",
+            response_body.get("generation"),
+        )
 
 
 class GuardrailMeters:
@@ -1108,10 +1372,16 @@ def _create_metrics(meter: Meter):
 class BedrockInstrumentor(BaseInstrumentor):
     """An instrumentor for Bedrock's client library."""
 
-    def __init__(self, enrich_token_usage: bool = False, exception_logger=None):
+    def __init__(
+        self,
+        enrich_token_usage: bool = False,
+        exception_logger=None,
+        use_legacy_attributes: bool = True,
+    ):
         super().__init__()
         Config.enrich_token_usage = enrich_token_usage
         Config.exception_logger = exception_logger
+        Config.use_legacy_attributes = use_legacy_attributes
 
     def instrumentation_dependencies(self) -> Collection[str]:
         return _instruments
@@ -1170,6 +1440,14 @@ class BedrockInstrumentor(BaseInstrumentor):
             prompt_caching,
         )
 
+        if Config.use_legacy_attributes:
+            event_logger = None
+        else:
+            event_logger_provider = kwargs.get("event_logger_provider")
+            event_logger = get_event_logger(
+                __name__, __version__, event_logger_provider=event_logger_provider
+            )
+
         for wrapped_method in WRAPPED_METHODS:
             wrap_package = wrapped_method.get("package")
             wrap_object = wrapped_method.get("object")
@@ -1180,6 +1458,7 @@ class BedrockInstrumentor(BaseInstrumentor):
                 _wrap(
                     tracer,
                     metric_params,
+                    event_logger,
                     wrapped_method,
                 ),
             )
