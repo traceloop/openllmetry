@@ -5,9 +5,7 @@ import json
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.trace import get_tracer
 from wrapt import wrap_function_wrapper as _W
-from opentelemetry.trace import Tracer
 from opentelemetry.trace.status import Status, StatusCode
-from langtrace_python_sdk.utils.llm import set_span_attributes
 from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
 from opentelemetry.trace.propagation import set_span_in_context
 
@@ -41,7 +39,19 @@ class McpInstrumentor(BaseInstrumentor):
         pass
 
 
-def serialize(request):
+def with_tracer_wrapper(func):
+    """Helper for providing tracer for wrapper functions."""
+
+    def _with_tracer(operation_name, tracer):
+        def wrapper(wrapped, instance, args, kwargs):
+            return func(operation_name, tracer, wrapped, instance, args, kwargs)
+        return wrapper
+    return _with_tracer
+
+def serialize(request, depth=0):
+    if depth > 2:
+        return {}
+    depth += 1
     def is_serializable(request):
         try:
             json.dumps(request)
@@ -52,67 +62,72 @@ def serialize(request):
         return json.dumps(request)
     else:
         result = {}
-        for attrib in request.__dict__:
-            print(attrib, request.__dict__[attrib])
-            if type(request.__dict__[attrib]) in [bool, str, int, float, type(None)]:
-                result[str(attrib)] = request.__dict__[attrib]
-            else:
-                result[str(attrib)] = serialize(request.__dict__[attrib])
+        try:
+            if hasattr(request, '__dict__'):
+                for attrib in request.__dict__:
+                    if type(request.__dict__[attrib]) in [bool, str, int, float, type(None)]:
+                        result[str(attrib)] = request.__dict__[attrib]
+                    else:
+                        result[str(attrib)] = serialize(request.__dict__[attrib], depth)
+        except Exception as e:
+            pass
         return json.dumps(result)
 
-def patch_mcp_server(operation_name, tracer: Tracer):
-    def traced_method(wrapped, instance, args, kwargs):
-        print(f"Server : \nArgs: {args}\nKwargs : {kwargs}\n")
-        attributes = {"name":f"{operation_name}", "method":"sse"}
-        attributes['args'] = serialize(args[1])
+@with_tracer_wrapper
+def patch_mcp_server(operation_name, tracer, wrapped, instance, args, kwargs):
+    method = args[1].method
+    carrier = {'traceparent': args[1].params.meta.traceparent}
+    ctx = TraceContextTextMapPropagator().extract(carrier=carrier)
+    with tracer.start_as_current_span(f"{method}", context=ctx) as span:
+        span.set_attribute("method", f"{method}")
+        span.set_attribute("operation_name", f"{operation_name}")
+        span.set_attribute("args",f"{serialize(args[1])}")
+        try:
+            result = wrapped(*args, **kwargs)
+            if result:
+                span.set_status(Status(StatusCode.OK))
+            return result
+        except Exception as e:
+            span.record_exception(e)
+            span.set_status(Status(StatusCode.ERROR, str(e)))
+            raise
 
-        method = args[1].method
-        carrier = {'traceparent': args[1].params.meta.traceparent}
-        ctx = TraceContextTextMapPropagator().extract(carrier=carrier)
-        with tracer.start_as_current_span(f"{method}", context=ctx) as span:
-            set_span_attributes(span, attributes)
-            try:
-                result = wrapped(*args, **kwargs)
-                if result:
-                    span.set_status(Status(StatusCode.OK))
-                return result
-            except Exception as e:
-                print(f"Exception {e}")
-                span.record_exception(e)
-                span.set_status(Status(StatusCode.ERROR, str(e)))
-                raise
-    return traced_method
-
-def patch_mcp_client(operation_name, tracer: Tracer):
-    def traced_method(wrapped, instance, args, kwargs):
-        print(f"Client : \nArgs: {args}\nKwargs : {kwargs}\n")
-        attributes = {"name":f"{operation_name}", "method":"sse"}
-        attributes['args'] = serialize(args[0].root)
-
+@with_tracer_wrapper
+def patch_mcp_client(operation_name, tracer, wrapped, instance, args, kwargs):    
+    meta = {}
+    method = args[0].root.method
+    params = args[0].root.params
+    if params is None:
+        args[0].root.params = mcp.types.RequestParams()
         meta = {}
-        method = args[0].root.method
-        params = args[0].root.params
-        if params is None:
-            args[0].root.params = mcp.types.RequestParams()
+    else:
+        meta = args[0].root.params.meta
+        if meta is None:
             meta = {}
-        else:
-            meta = args[0].root.params.meta
-            if meta is None:
-                meta = {}
+    
+    carrier = None
+    ctx = None
+    if hasattr(args[0].root.params, 'arguments'):
+        arguments = args[0].root.params.arguments
+        if '__meta__' in arguments:
+            carrier = arguments['__meta__']
+            args[0].root.params.arguments.pop('__meta__')
+    if carrier:    
+        ctx = TraceContextTextMapPropagator().extract(carrier=carrier)
 
-        with tracer.start_as_current_span(f"{method}") as span:
-            set_span_attributes(span, attributes)
-            ctx = set_span_in_context(span)
-            TraceContextTextMapPropagator().inject(meta, ctx)
-            args[0].root.params.meta = meta
-            try:
-                result = wrapped(*args, **kwargs)
-                if result:
-                    span.set_status(Status(StatusCode.OK))
-                return result
-            except Exception as e:
-                print(f"Exception {e}")
-                span.record_exception(e)
-                span.set_status(Status(StatusCode.ERROR, str(e)))
-                raise
-    return traced_method
+    with tracer.start_as_current_span(f"{method}", context=ctx) as span:
+        span.set_attribute("method", f"{method}")
+        span.set_attribute("operation_name", f"{operation_name}")
+        span.set_attribute("args",f"{serialize(args[1])}")
+        ctx = set_span_in_context(span)
+        TraceContextTextMapPropagator().inject(meta, ctx)
+        args[0].root.params.meta = meta
+        try:
+            result = wrapped(*args, **kwargs)
+            if result:
+                span.set_status(Status(StatusCode.OK))
+            return result
+        except Exception as e:
+            span.record_exception(e)
+            span.set_status(Status(StatusCode.ERROR, str(e)))
+            raise
