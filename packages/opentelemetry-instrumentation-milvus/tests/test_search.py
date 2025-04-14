@@ -257,7 +257,6 @@ def test_milvus_different_radius_result_counts(exporter, collection):
         total_matches = len(events)
         result_counts.append(total_matches)
 
-        print(total_matches)
 
     # Assert that the result counts are not all the same
     assert len(set(result_counts)) > 1, f"Expected differing result counts across radius values, got: {result_counts}"
