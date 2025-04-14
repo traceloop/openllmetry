@@ -4811,7 +4811,7 @@ opentelemetry-semantic-conventions = ">=0.50b0"
 opentelemetry-semantic-conventions-ai = "0.4.3"
 
 [package.extras]
-instruments = []
+instruments = ["ollama (>=0.4.7,<0.5.0)"]
 
 [package.source]
 type = "directory"
