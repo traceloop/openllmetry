@@ -242,7 +242,8 @@ def _accumulate_streaming_response(span, token_histogram, llm_request_type, resp
         elif llm_request_type == LLMRequestTypeValues.COMPLETION:
             accumulated_response["response"] += res["response"]
 
-    _set_response_attributes(span, token_histogram, llm_request_type, res | accumulated_response)
+    response_data = res.model_dump() if hasattr(res, 'model_dump') else res
+    _set_response_attributes(span, token_histogram, llm_request_type, response_data | accumulated_response)
     span.end()
 
 
@@ -261,7 +262,8 @@ async def _aaccumulate_streaming_response(span, token_histogram, llm_request_typ
         elif llm_request_type == LLMRequestTypeValues.COMPLETION:
             accumulated_response["response"] += res["response"]
 
-    _set_response_attributes(span, token_histogram, llm_request_type, res | accumulated_response)
+    response_data = res.model_dump() if hasattr(res, 'model_dump') else res
+    _set_response_attributes(span, token_histogram, llm_request_type, response_data | accumulated_response)
     span.end()
 
 
