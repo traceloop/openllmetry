@@ -7,7 +7,7 @@ from opentelemetry.instrumentation.utils import (
 )
 from opentelemetry.semconv_ai import Events
 from opentelemetry.semconv_ai import SpanAttributes as AISpanAttributes
-
+import time
 
 def _with_tracer_wrapper(func):
     """Helper for providing tracer for wrapper functions."""
@@ -54,9 +54,17 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
         elif to_wrap.get("method") == "create_collection":
             _set_create_collection_attributes(span, kwargs)
 
+        start_time = time.time()
         return_value = wrapped(*args, **kwargs)
+        end_time = time.time()
+
         if to_wrap.get("method") == "query":
             _add_query_result_events(span, return_value)
+
+        if to_wrap.get("method") == "search":
+            _set_span_attribute(span, AISpanAttributes.MILVUS_SEARCH_DURATION_IN_MS, ((end_time - start_time)*1000))
+            _set_span_attribute(span, AISpanAttributes.MILVUS_SEARCH_RESULT_STATUS, "success")
+            _add_search_result_events(span, return_value)
 
     return return_value
 
@@ -271,6 +279,69 @@ def _add_query_result_events(span, kwargs):
     for element in kwargs:
         span.add_event(name=Events.DB_QUERY_RESULT.value, attributes=element)
 
+@dont_throw
+def _add_search_result_events(span, kwargs):
+
+    all_distances = []
+    total_matches = 0
+
+    single_query = len(kwargs) == 1
+
+    def calculate_distances(distances):
+        """Helper function to calculate min, max, avg distances."""
+        if distances:
+            return min(distances), max(distances), sum(distances) / len(distances)
+        return None, None, None
+
+    def set_query_stats(query_idx, distances, match_ids):
+        """Helper function to set per-query stats in the span."""
+
+        _set_span_attribute(span, f"{AISpanAttributes.MILVUS_SEARCH_RESULT_COUNT}_{query_idx}", len(distances))
+        _set_span_attribute(span, f"{AISpanAttributes.MILVUS_SEARCH_RESULT_DISTANCES}_{query_idx}", _encode_include(distances))
+        _set_span_attribute(span, f"{AISpanAttributes.MILVUS_SEARCH_RESULT_TOP_IDS}_{query_idx}", _encode_include(match_ids))
+         
+        min_dist, max_dist, avg_dist = calculate_distances(distances)
+
+        _set_span_attribute(span, f"{AISpanAttributes.MILVUS_SEARCH_RESULT_MIN_DISTANCE}_{query_idx}", min_dist)
+        _set_span_attribute(span, f"{AISpanAttributes.MILVUS_SEARCH_RESULT_MAX_DISTANCE}_{query_idx}", max_dist)
+        _set_span_attribute(span, f"{AISpanAttributes.MILVUS_SEARCH_RESULT_AVG_DISTANCE}_{query_idx}", avg_dist)
+
+    def set_global_stats():
+        """Helper function to set global stats for a single query."""
+        _set_span_attribute(span, AISpanAttributes.MILVUS_SEARCH_RESULT_COUNT, total_matches)
+        _set_span_attribute(span, AISpanAttributes.MILVUS_SEARCH_RESULT_DISTANCES, _encode_include(all_distances))
+        _set_span_attribute(span, AISpanAttributes.MILVUS_SEARCH_RESULT_TOP_IDS, _encode_include(query_match_ids))
+
+        min_dist, max_dist, avg_dist = calculate_distances(all_distances)
+
+        _set_span_attribute(span, AISpanAttributes.MILVUS_SEARCH_RESULT_MIN_DISTANCE, min_dist)
+        _set_span_attribute(span, AISpanAttributes.MILVUS_SEARCH_RESULT_MAX_DISTANCE, max_dist)
+        _set_span_attribute(span, AISpanAttributes.MILVUS_SEARCH_RESULT_AVG_DISTANCE, avg_dist)
+
+    for query_idx, query_results in enumerate(kwargs):
+
+        query_distances = []
+        query_match_ids = []
+
+        for match in query_results:
+            distance = float(match["distance"])
+            query_distances.append(distance)
+            all_distances.append(distance)
+            total_matches += 1
+            query_match_ids.append(match["id"])
+
+            span.add_event(Events.DB_SEARCH_RESULT.value, attributes={
+                "query_index": query_idx,
+                "id": match["id"],
+                "distance": str(distance),
+                "entity": _encode_include(match["entity"]),
+            })
+
+        if not single_query:
+            set_query_stats(query_idx, query_distances, query_match_ids)
+
+    if single_query:
+        set_global_stats()
 
 @dont_throw
 def _set_upsert_attributes(span, kwargs):
