@@ -91,7 +91,6 @@ def count_or_none(obj):
 
     return None
 
-
 @dont_throw
 def _set_create_collection_attributes(span, kwargs):
     _set_span_attribute(
@@ -198,7 +197,7 @@ def _set_search_attributes(span, kwargs):
         count_or_none(kwargs.get("output_fields")),
     )
     _set_span_attribute(
-        span, AISpanAttributes.MILVUS_SEARCH_SEARCH_PARAMS, kwargs.get("search_params")
+        span, AISpanAttributes.MILVUS_SEARCH_SEARCH_PARAMS, _encode_include(kwargs.get("search_params"))
     )
     _set_span_attribute(
         span, AISpanAttributes.MILVUS_SEARCH_TIMEOUT, kwargs.get("timeout")
@@ -210,6 +209,31 @@ def _set_search_attributes(span, kwargs):
     )
     _set_span_attribute(
         span, AISpanAttributes.MILVUS_SEARCH_ANNS_FIELD, kwargs.get("anns_field")
+    )
+    _set_span_attribute(
+        span, AISpanAttributes.MILVUS_SEARCH_PARTITION_NAMES, _encode_partition_name(kwargs.get("partition_names"))
+    )
+    query_vectors = kwargs.get("data", [])
+    vector_dims = [len(vec) for vec in query_vectors]
+
+    _set_span_attribute(
+        span,
+        AISpanAttributes.MILVUS_SEARCH_QUERY_VECTOR_DIMENSION,
+        _encode_include(vector_dims)
+    )
+    _set_span_attribute(
+        span, 
+        AISpanAttributes.MILVUS_SEARCH_RADIUS, 
+        kwargs.get('search_params', {}).get('radius') if kwargs.get('search_params') and 'radius' in kwargs.get('search_params') else None
+    )
+    _set_span_attribute(
+        span, AISpanAttributes.MILVUS_SEARCH_METRIC_TYPE, 
+        kwargs.get('search_params', {}).get("metric_type") if kwargs.get('search_params') and "metric_type" in kwargs.get('search_params') else None
+    )
+
+    _set_span_attribute(
+        span, AISpanAttributes.MILVUS_SEARCH_INDEX_TYPE,
+        kwargs.get('search_params', {}).get("index_type") if kwargs.get('search_params') and "index_type" in kwargs.get('search_params') else None
     )
 
 
