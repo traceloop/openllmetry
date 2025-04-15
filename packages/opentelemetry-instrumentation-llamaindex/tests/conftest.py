@@ -51,3 +51,18 @@ def vcr_config():
         "filter_headers": ["authorization"],
         "ignore_hosts": ["raw.githubusercontent.com"],
     }
+
+
+def pytest_collection_modifyitems(items):
+    move_last = []
+    tests = []
+    for item in items:
+        # These tests are modifying imports and monkey patch python runtime
+        # it could lead to instability and multiple instrumentation of the code
+        # we move it as last tests to run to avoid side-effects.
+        if item.name.startswith("test_instrumentation"):
+            move_last.append(item)
+        else:
+            tests.append(item)
+    items[:] = tests
+    items += move_last

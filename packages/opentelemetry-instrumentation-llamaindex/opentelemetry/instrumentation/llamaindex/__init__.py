@@ -41,6 +41,7 @@ logger = logging.getLogger(__name__)
 _core_instruments = ("llama-index-core >= 0.7.0", )
 _full_instruments = ("llama-index >= 0.7.0",)
 
+
 class LlamaIndexInstrumentor(BaseInstrumentor):
     """An instrumentor for both: core and legacy LlamaIndex SDK."""
 
@@ -49,7 +50,7 @@ class LlamaIndexInstrumentor(BaseInstrumentor):
         self.core = LlamaIndexInstrumentorCore(exception_logger)
 
     def instrumentation_dependencies(self) -> Collection[str]:
-        return _core_instruments
+        return ()
 
     def _instrument(self, **kwargs):
         # Try to use the legacy entry point for instrumentation
@@ -59,7 +60,6 @@ class LlamaIndexInstrumentor(BaseInstrumentor):
             # it didn't work -> try the new package
             if self.core._check_dependency_conflicts() is None:
                 self.core.instrument(**kwargs)
-
 
     def _uninstrument(self, **kwargs: Any):
         self.legacy.uninstrument(**kwargs)
@@ -81,6 +81,7 @@ class LlamaIndexInstrumentor(BaseInstrumentor):
             QueryPipelineInstrumentor(tracer).instrument()
             BaseAgentInstrumentor(tracer).instrument()
             BaseToolInstrumentor(tracer).instrument()
+
 
 class LlamaIndexInstrumentorCore(BaseInstrumentor):
     """An instrumentor for core LlamaIndex SDK."""
