@@ -66,25 +66,21 @@ def insert_data(collection):
 
 def test_milvus_single_vector_search(exporter, collection):
     insert_data(collection)
-    
+
     query_vectors = [
         [random.uniform(-1, 1) for _ in range(5)],  # Random query vector for the search
     ]
-    search_params = {
-        "radius": 0.5,
-        "metric_type": "COSINE",
-        "index_type": "IVF_FLAT"
-    }
+    search_params = {"radius": 0.5, "metric_type": "COSINE", "index_type": "IVF_FLAT"}
     milvus.search(
         collection_name=collection,
         data=query_vectors,
-        anns_field="vector", 
+        anns_field="vector",
         search_params=search_params,
         output_fields=["color_tag"],
         limit=3,
-        timeout=10
+        timeout=10,
     )
-    
+
     # Get finished spans
     spans = exporter.get_finished_spans()
     span = next(span for span in spans if span.name == "milvus.search")
@@ -92,7 +88,9 @@ def test_milvus_single_vector_search(exporter, collection):
     # Check the span attributes related to search
     assert span.attributes.get(SpanAttributes.VECTOR_DB_VENDOR) == "milvus"
     assert span.attributes.get(SpanAttributes.VECTOR_DB_OPERATION) == "search"
-    assert span.attributes.get(SpanAttributes.MILVUS_SEARCH_COLLECTION_NAME) == collection
+    assert (
+        span.attributes.get(SpanAttributes.MILVUS_SEARCH_COLLECTION_NAME) == collection
+    )
     assert span.attributes.get(SpanAttributes.MILVUS_SEARCH_OUTPUT_FIELDS_COUNT) == 1
     assert span.attributes.get(SpanAttributes.MILVUS_SEARCH_LIMIT) == 3
     assert span.attributes.get(SpanAttributes.MILVUS_SEARCH_TIMEOUT) == 10
@@ -100,7 +98,10 @@ def test_milvus_single_vector_search(exporter, collection):
     assert span.attributes.get(SpanAttributes.MILVUS_SEARCH_RADIUS) == 0.5
     assert span.attributes.get(SpanAttributes.MILVUS_SEARCH_METRIC_TYPE) == "COSINE"
     assert span.attributes.get(SpanAttributes.MILVUS_SEARCH_INDEX_TYPE) == "IVF_FLAT"
-    assert span.attributes.get(SpanAttributes.MILVUS_SEARCH_QUERY_VECTOR_DIMENSION) == '[5]'
+    assert (
+        span.attributes.get(SpanAttributes.MILVUS_SEARCH_QUERY_VECTOR_DIMENSION)
+        == "[5]"
+    )
     distances = []
     ids = []
 
@@ -109,12 +110,14 @@ def test_milvus_single_vector_search(exporter, collection):
         assert event.name == Events.DB_SEARCH_RESULT.value
         _id = event.attributes.get("id")
         distance = event.attributes.get("distance")
-        
+
         assert isinstance(_id, int)
-        assert isinstance(distance, str) 
-        
+        assert isinstance(distance, str)
+
         # Collect the distances and IDs for further computation
-        distances.append(float(distance))  # Convert the distance to a float for computation
+        distances.append(
+            float(distance)
+        )  # Convert the distance to a float for computation
         ids.append(_id)
 
     # Now compute dynamic stats from the distances
@@ -123,38 +126,50 @@ def test_milvus_single_vector_search(exporter, collection):
     max_distance = max(distances)
     avg_distance = sum(distances) / total_matches
 
-    assert span.attributes.get(SpanAttributes.MILVUS_SEARCH_RESULT_COUNT) == total_matches
-    assert span.attributes.get(SpanAttributes.MILVUS_SEARCH_RESULT_MIN_DISTANCE) == min_distance
-    assert span.attributes.get(SpanAttributes.MILVUS_SEARCH_RESULT_MAX_DISTANCE) == max_distance
-    assert span.attributes.get(SpanAttributes.MILVUS_SEARCH_RESULT_AVG_DISTANCE) == avg_distance
+    assert (
+        span.attributes.get(SpanAttributes.MILVUS_SEARCH_RESULT_COUNT) == total_matches
+    )
+    assert (
+        span.attributes.get(SpanAttributes.MILVUS_SEARCH_RESULT_MIN_DISTANCE)
+        == min_distance
+    )
+    assert (
+        span.attributes.get(SpanAttributes.MILVUS_SEARCH_RESULT_MAX_DISTANCE)
+        == max_distance
+    )
+    assert (
+        span.attributes.get(SpanAttributes.MILVUS_SEARCH_RESULT_AVG_DISTANCE)
+        == avg_distance
+    )
     assert span.attributes.get(SpanAttributes.MILVUS_SEARCH_RESULT_STATUS) == "success"
-    assert span.attributes.get(SpanAttributes.MILVUS_SEARCH_RESULT_DISTANCES) == str(distances)
+    assert span.attributes.get(SpanAttributes.MILVUS_SEARCH_RESULT_DISTANCES) == str(
+        distances
+    )
     assert span.attributes.get(SpanAttributes.MILVUS_SEARCH_DURATION_IN_MS) is not None
     assert span.attributes.get(SpanAttributes.MILVUS_SEARCH_RESULT_TOP_IDS) == str(ids)
 
+
 def test_milvus_multiple_vector_search(exporter, collection):
     insert_data(collection)
-    
+
     query_vectors = [
         [random.uniform(-1, 1) for _ in range(5)],  # Random query vector for the search
         [random.uniform(-1, 1) for _ in range(5)],  # Another query vector
-        [random.uniform(-1, 1) for _ in range(5)],  # Another query vector (you can add more as needed)
+        [
+            random.uniform(-1, 1) for _ in range(5)
+        ],  # Another query vector (you can add more as needed)
     ]
-    search_params = {
-        "radius": 0.5,
-        "metric_type": "COSINE",
-        "index_type": "IVF_FLAT"
-    }
+    search_params = {"radius": 0.5, "metric_type": "COSINE", "index_type": "IVF_FLAT"}
     milvus.search(
         collection_name=collection,
         data=query_vectors,
-        anns_field="vector", 
+        anns_field="vector",
         search_params=search_params,
         output_fields=["color_tag"],
         limit=3,
-        timeout=10
+        timeout=10,
     )
-    
+
     # Get finished spans
     spans = exporter.get_finished_spans()
     span = next(span for span in spans if span.name == "milvus.search")
@@ -162,7 +177,9 @@ def test_milvus_multiple_vector_search(exporter, collection):
     # Check the span attributes related to search
     assert span.attributes.get(SpanAttributes.VECTOR_DB_VENDOR) == "milvus"
     assert span.attributes.get(SpanAttributes.VECTOR_DB_OPERATION) == "search"
-    assert span.attributes.get(SpanAttributes.MILVUS_SEARCH_COLLECTION_NAME) == collection
+    assert (
+        span.attributes.get(SpanAttributes.MILVUS_SEARCH_COLLECTION_NAME) == collection
+    )
     assert span.attributes.get(SpanAttributes.MILVUS_SEARCH_OUTPUT_FIELDS_COUNT) == 1
     assert span.attributes.get(SpanAttributes.MILVUS_SEARCH_LIMIT) == 3
     assert span.attributes.get(SpanAttributes.MILVUS_SEARCH_TIMEOUT) == 10
@@ -170,8 +187,10 @@ def test_milvus_multiple_vector_search(exporter, collection):
     assert span.attributes.get(SpanAttributes.MILVUS_SEARCH_RADIUS) == 0.5
     assert span.attributes.get(SpanAttributes.MILVUS_SEARCH_METRIC_TYPE) == "COSINE"
     assert span.attributes.get(SpanAttributes.MILVUS_SEARCH_INDEX_TYPE) == "IVF_FLAT"
-    assert span.attributes.get(SpanAttributes.MILVUS_SEARCH_QUERY_VECTOR_DIMENSION) == '[5, 5, 5]'
-    
+    assert (
+        span.attributes.get(SpanAttributes.MILVUS_SEARCH_QUERY_VECTOR_DIMENSION)
+        == "[5, 5, 5]"
+    )
 
     distances_dict = {}
     ids_dict = {}
@@ -182,23 +201,23 @@ def test_milvus_multiple_vector_search(exporter, collection):
         query_idx = event.attributes.get("query_index")
         _id = event.attributes.get("id")
         distance = event.attributes.get("distance")
-        
+
         assert isinstance(_id, int)
-        assert isinstance(distance, str) 
-        
+        assert isinstance(distance, str)
+
         distance = float(distance)
-        
+
         if query_idx not in distances_dict:
             distances_dict[query_idx] = []
             ids_dict[query_idx] = []
-        
+
         distances_dict[query_idx].append(distance)
         ids_dict[query_idx].append(_id)
 
     for query_idx in distances_dict:
         distances = distances_dict[query_idx]
         ids = ids_dict[query_idx]
-        
+
         total_matches = len(distances)
         min_distance = min(distances)
         max_distance = max(distances)
@@ -223,6 +242,7 @@ def test_milvus_multiple_vector_search(exporter, collection):
     assert span.attributes.get(SpanAttributes.MILVUS_SEARCH_RESULT_STATUS) == "success"
     assert span.attributes.get(SpanAttributes.MILVUS_SEARCH_DURATION_IN_MS) is not None
 
+
 def test_milvus_different_radius_result_counts(exporter, collection):
     insert_data(collection)
 
@@ -237,7 +257,7 @@ def test_milvus_different_radius_result_counts(exporter, collection):
         search_params = {
             "radius": radius,
             "metric_type": "COSINE",
-            "index_type": "IVF_FLAT"
+            "index_type": "IVF_FLAT",
         }
 
         milvus.search(
@@ -247,16 +267,22 @@ def test_milvus_different_radius_result_counts(exporter, collection):
             search_params=search_params,
             output_fields=["color_tag"],
             limit=3,
-            timeout=10
+            timeout=10,
         )
 
         spans = exporter.get_finished_spans()
-        span = next(span for span in spans if span.name == "milvus.search" and span.attributes.get(SpanAttributes.MILVUS_SEARCH_RADIUS) == radius)
+        span = next(
+            span
+            for span in spans
+            if span.name == "milvus.search"
+            and span.attributes.get(SpanAttributes.MILVUS_SEARCH_RADIUS) == radius
+        )
 
         events = [e for e in span.events if e.name == Events.DB_SEARCH_RESULT.value]
         total_matches = len(events)
         result_counts.append(total_matches)
 
-
     # Assert that the result counts are not all the same
-    assert len(set(result_counts)) > 1, f"Expected differing result counts across radius values, got: {result_counts}"
+    assert (
+        len(set(result_counts)) > 1
+    ), f"Expected differing result counts across radius values, got: {result_counts}"
