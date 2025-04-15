@@ -2,7 +2,7 @@
 
 import logging
 from importlib.metadata import version as import_version
-from typing import Collection, Any
+from typing import Collection
 
 from opentelemetry.instrumentation.llamaindex.config import Config
 from opentelemetry.trace import get_tracer
@@ -61,7 +61,7 @@ class LlamaIndexInstrumentor(BaseInstrumentor):
             if self.core._check_dependency_conflicts() is None:
                 self.core.instrument(**kwargs)
 
-    def _uninstrument(self, **kwargs: Any):
+    def _uninstrument(self, **kwargs):
         self.legacy.uninstrument(**kwargs)
         self.core.uninstrument(**kwargs)
 

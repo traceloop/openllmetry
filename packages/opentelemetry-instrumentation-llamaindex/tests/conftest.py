@@ -64,5 +64,4 @@ def pytest_collection_modifyitems(items):
             move_last.append(item)
         else:
             tests.append(item)
-    items[:] = tests
-    items += move_last
+    items[:] = tests + move_last
