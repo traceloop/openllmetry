@@ -1,28 +1,28 @@
-# OpenTelemetry CrewAI Instrumentation
+# OpenTelemetry MCP Instrumentation
 
-<a href="https://pypi.org/project/opentelemetry-instrumentation-crewai/">
-    <img src="https://badge.fury.io/py/opentelemetry-instrumentation-crewai.svg">
+<a href="https://pypi.org/project/opentelemetry-instrumentation-mcp/">
+    <img src="https://badge.fury.io/py/opentelemetry-instrumentation-mcp.svg">
 </a>
 
-This library allows tracing agentic workflows implemented with crewAI framework [crewAI library](https://github.com/crewAIInc/crewAI).
+This library allows tracing agentic workflows implemented with MCP framework [mcp python sdk](https://github.com/modelcontextprotocol/python-sdk).
 
 ## Installation
 
 ```bash
-pip install opentelemetry-instrumentation-crewai
+pip install opentelemetry-instrumentation-mcp
 ```
 
 ## Example usage
 
 ```python
-from opentelemetry.instrumentation.crewai import CrewAIInstrumentor
+from opentelemetry.instrumentation.mcp import McpInstrumentor
 
-CrewAIInstrumentor().instrument()
+McpInstrumentor().instrument()
 ```
 
 ## Privacy
 
-**By default, this instrumentation logs prompts, completions, and embeddings to span attributes**. This gives you a clear visibility into how your LLM application is working, and can make it easy to debug and evaluate the quality of the outputs.
+**By default, this instrumentation logs prompts, completions, and embeddings to span attributes**. This gives you a clear visibility into how your LLM application tool usage is working, and can make it easy to debug and evaluate the tool usage.
 
 However, you may want to disable this logging for privacy reasons, as they may contain highly sensitive data from your users. You may also simply want to reduce the size of your traces.
 

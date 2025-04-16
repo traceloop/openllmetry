@@ -680,10 +680,13 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             name,
             entity_path,
         )
-        meta = {}
+        trace_metadata = {}
         ctx = set_span_in_context(span)
-        TraceContextTextMapPropagator().inject(meta, ctx)
-        inputs["__meta__"] = meta
+        TraceContextTextMapPropagator().inject(trace_metadata, ctx)
+        
+        # Setting trace context as value of __traceparent_meta__ key in inputs.
+        # This will be read in MCP instrumentation and removed before sending for tool call.
+        if inputs is not None and isinstance(inputs, dict): inputs["__traceparent_meta__"] = trace_metadata
         if should_send_prompts():
             span.set_attribute(
                 SpanAttributes.TRACELOOP_ENTITY_INPUT,

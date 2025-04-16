@@ -1,6 +1,9 @@
 from typing import Collection
 import mcp
 import json
+import asyncio
+import nest_asyncio
+nest_asyncio.apply()
 
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.trace import get_tracer
@@ -8,6 +11,7 @@ from wrapt import wrap_function_wrapper as _W
 from opentelemetry.trace.status import Status, StatusCode
 from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
 from opentelemetry.trace.propagation import set_span_in_context
+from opentelemetry.semconv_ai import SpanAttributes
 
 from opentelemetry.instrumentation.mcp.version import __version__
 
@@ -21,19 +25,16 @@ class McpInstrumentor(BaseInstrumentor):
         tracer_provider = kwargs.get("tracer_provider")
         tracer = get_tracer(__name__, __version__, tracer_provider)
 
-        try:
-            _W(
-                "mcp.server.lowlevel.server",
-                "Server._handle_request",
-                patch_mcp_server("Server._handle_request", tracer),
-            )
-            _W(
-                "mcp.shared.session",
-                "BaseSession.send_request",
-                patch_mcp_client("BaseSession.send_request", tracer),
-            )
-        except Exception as e:
-            print(f"Error : {e}")
+        _W(
+            "mcp.server.lowlevel.server",
+            "Server._handle_request",
+            patch_mcp_server("Server._handle_request", tracer),
+        )
+        _W(
+            "mcp.shared.session",
+            "BaseSession.send_request",
+            patch_mcp_client("BaseSession.send_request", tracer),
+        )
 
     def _uninstrument(self, **kwargs):
         pass
@@ -79,9 +80,10 @@ def patch_mcp_server(operation_name, tracer, wrapped, instance, args, kwargs):
     carrier = {'traceparent': args[1].params.meta.traceparent}
     ctx = TraceContextTextMapPropagator().extract(carrier=carrier)
     with tracer.start_as_current_span(f"{method}", context=ctx) as span:
-        span.set_attribute("method", f"{method}")
-        span.set_attribute("operation_name", f"{operation_name}")
-        span.set_attribute("args",f"{serialize(args[1])}")
+        span.set_attribute(SpanAttributes.MCP_METHOD_NAME, f"{method}")
+        span.set_attribute(SpanAttributes.MCP_REQUEST_ID, f"{args[1].id}")
+        span.set_attribute(SpanAttributes.MCP_SESSION_INIT_OPTIONS, f"{args[2]._init_options}")
+        span.set_attribute(SpanAttributes.MCP_REQUEST_ARGUMENT,f"{serialize(args[1])}")
         try:
             result = wrapped(*args, **kwargs)
             if result:
@@ -109,16 +111,15 @@ def patch_mcp_client(operation_name, tracer, wrapped, instance, args, kwargs):
     ctx = None
     if hasattr(args[0].root.params, 'arguments'):
         arguments = args[0].root.params.arguments
-        if '__meta__' in arguments:
-            carrier = arguments['__meta__']
-            args[0].root.params.arguments.pop('__meta__')
+        if '__traceparent_meta__' in arguments:
+            carrier = arguments['__traceparent_meta__']
+            args[0].root.params.arguments.pop('__traceparent_meta__')
     if carrier:    
         ctx = TraceContextTextMapPropagator().extract(carrier=carrier)
 
     with tracer.start_as_current_span(f"{method}", context=ctx) as span:
-        span.set_attribute("method", f"{method}")
-        span.set_attribute("operation_name", f"{operation_name}")
-        span.set_attribute("args",f"{serialize(args[1])}")
+        span.set_attribute(SpanAttributes.MCP_METHOD_NAME, f"{method}")
+        span.set_attribute(SpanAttributes.MCP_REQUEST_ARGUMENT,f"{serialize(args[0])}")
         ctx = set_span_in_context(span)
         TraceContextTextMapPropagator().inject(meta, ctx)
         args[0].root.params.meta = meta
