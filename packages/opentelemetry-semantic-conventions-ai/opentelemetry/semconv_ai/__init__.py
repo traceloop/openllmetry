@@ -194,7 +194,20 @@ class SpanAttributes:
     MILVUS_SEARCH_OUTPUT_FIELDS_COUNT = "db.milvus.search.output_fields_count"
     MILVUS_SEARCH_PARTITION_NAMES_COUNT = "db.milvus.search.partition_names_count"
     MILVUS_SEARCH_SEARCH_PARAMS = "db.milvus.search.search_params"
+    MILVUS_SEARCH_PARTITION_NAMES = "db.milvus.search.partition_names"
+    MILVUS_SEARCH_QUERY_VECTOR_DIMENSION = "db.milvus.search.query_vector_dimension"
+    MILVUS_SEARCH_RADIUS = "db.milvus.search.radius"
+    MILVUS_SEARCH_METRIC_TYPE = "db.milvus.search.metric_type"
+    MILVUS_SEARCH_INDEX_TYPE = "db.milvus.search.index_type"
     MILVUS_SEARCH_TIMEOUT = "db.milvus.search.timeout"
+    MILVUS_SEARCH_RESULT_COUNT = "db.milvus.search.result_count"
+    MILVUS_SEARCH_RESULT_STATUS = "db.milvus.search.status"
+    MILVUS_SEARCH_RESULT_DISTANCES = "db.milvus.search.result_distances"
+    MILVUS_SEARCH_RESULT_MIN_DISTANCE = "db.milvus.search.result_min_distance"
+    MILVUS_SEARCH_RESULT_MAX_DISTANCE = "db.milvus.search.result_max_distance"
+    MILVUS_SEARCH_RESULT_AVG_DISTANCE = "db.milvus.search.result_avg_distance"
+    MILVUS_SEARCH_DURATION_IN_MS = "db.milvus.search.duration_ms"
+    MILVUS_SEARCH_RESULT_TOP_IDS = "db.milvus.search.result_top_ids"
     MILVUS_UPSERT_COLLECTION_NAME = "db.milvus.upsert.collection_name"
     MILVUS_UPSERT_DATA_COUNT = "db.milvus.upsert.data_count"
     MILVUS_UPSERT_PARTITION_NAME = "db.milvus.upsert.partition_name"
@@ -218,6 +231,7 @@ class SpanAttributes:
 class Events(Enum):
     DB_QUERY_EMBEDDINGS = "db.query.embeddings"
     DB_QUERY_RESULT = "db.query.result"
+    DB_SEARCH_RESULT = "db.search.result"
 
 
 class EventAttributes(Enum):
