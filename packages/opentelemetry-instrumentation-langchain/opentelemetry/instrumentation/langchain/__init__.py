@@ -168,7 +168,6 @@ class LangchainInstrumentor(BaseInstrumentor):
             # unwrap("langchain_openai.chat_models.base", "BaseOpenAI._stream")
             # unwrap("langchain_openai.chat_models.base", "BaseOpenAI._astream")
 
-
 class _BaseCallbackManagerInitWrapper:
     def __init__(self, callback_manager: "TraceloopCallbackHandler"):
         self._callback_manager = callback_manager

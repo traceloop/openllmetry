@@ -22,6 +22,7 @@ from opentelemetry.semconv_ai import (
 from opentelemetry.context.context import Context
 from opentelemetry.trace import SpanKind, set_span_in_context, Tracer
 from opentelemetry.trace.span import Span
+from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
 
 from opentelemetry import context as context_api
 from opentelemetry.instrumentation.langchain.utils import (
@@ -679,6 +680,13 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             name,
             entity_path,
         )
+        trace_metadata = {}
+        ctx = set_span_in_context(span)
+        TraceContextTextMapPropagator().inject(trace_metadata, ctx)
+        
+        # Setting trace context as value of __traceparent_meta__ key in inputs.
+        # This will be read in MCP instrumentation and removed before sending for tool call.
+        if inputs is not None and isinstance(inputs, dict): inputs["__traceparent_meta__"] = trace_metadata
         if should_send_prompts():
             span.set_attribute(
                 SpanAttributes.TRACELOOP_ENTITY_INPUT,
