@@ -38,24 +38,39 @@ from opentelemetry.instrumentation.llamaindex.dispatcher_wrapper import instrume
 
 logger = logging.getLogger(__name__)
 
-_instruments = ("llama-index >= 0.7.0",)
+_core_instruments = ("llama-index-core >= 0.7.0", )
+_full_instruments = ("llama-index >= 0.7.0",)
 
 
 class LlamaIndexInstrumentor(BaseInstrumentor):
-    """An instrumentor for LlamaIndex SDK."""
+    """An instrumentor for both: core and legacy LlamaIndex SDK."""
 
     def __init__(self, exception_logger=None):
-        super().__init__()
-        Config.exception_logger = exception_logger
+        self.legacy = LlamaIndexInstrumentorFull(exception_logger)
+        self.core = LlamaIndexInstrumentorCore(exception_logger)
 
     def instrumentation_dependencies(self) -> Collection[str]:
-        return _instruments
+        return ()
 
     def _instrument(self, **kwargs):
+        # Try to use the legacy entry point for instrumentation
+        if self.legacy._check_dependency_conflicts() is None:
+            self.legacy.instrument(**kwargs)
+        if not self.legacy._is_instrumented_by_opentelemetry:
+            # it didn't work -> try the new package
+            if self.core._check_dependency_conflicts() is None:
+                self.core.instrument(**kwargs)
+
+    def _uninstrument(self, **kwargs):
+        self.legacy.uninstrument(**kwargs)
+        self.core.uninstrument(**kwargs)
+
+    @staticmethod
+    def apply_instrumentation(name, **kwargs):
         tracer_provider = kwargs.get("tracer_provider")
         tracer = get_tracer(__name__, __version__, tracer_provider)
 
-        if import_version("llama-index") >= "0.10.20":
+        if import_version(name) >= "0.10.20":
             instrument_with_dispatcher(tracer)
         else:
             RetrieverQueryEngineInstrumentor(tracer).instrument()
@@ -66,6 +81,37 @@ class LlamaIndexInstrumentor(BaseInstrumentor):
             QueryPipelineInstrumentor(tracer).instrument()
             BaseAgentInstrumentor(tracer).instrument()
             BaseToolInstrumentor(tracer).instrument()
+
+
+class LlamaIndexInstrumentorCore(BaseInstrumentor):
+    """An instrumentor for core LlamaIndex SDK."""
+
+    def __init__(self, exception_logger=None):
+        super().__init__()
+        Config.exception_logger = exception_logger
+
+    def instrumentation_dependencies(self) -> Collection[str]:
+        return _core_instruments
+
+    def _instrument(self, **kwargs):
+        LlamaIndexInstrumentor.apply_instrumentation("llama-index-core", **kwargs)
+
+    def _uninstrument(self, **kwargs):
+        pass
+
+
+class LlamaIndexInstrumentorFull(BaseInstrumentor):
+    """An instrumentor for legacy LlamaIndex SDK."""
+
+    def __init__(self, exception_logger=None):
+        super().__init__()
+        Config.exception_logger = exception_logger
+
+    def instrumentation_dependencies(self) -> Collection[str]:
+        return _full_instruments
+
+    def _instrument(self, **kwargs):
+        LlamaIndexInstrumentor.apply_instrumentation("llama-index", **kwargs)
 
     def _uninstrument(self, **kwargs):
         pass
