@@ -1,14 +1,22 @@
-import pytest
-import ollama
-from opentelemetry.semconv_ai import SpanAttributes
 from unittest.mock import MagicMock
+
+import pytest
 from opentelemetry.instrumentation.ollama import _set_response_attributes
-from opentelemetry.semconv_ai import LLMRequestTypeValues
+from opentelemetry.sdk._logs import LogData
+from opentelemetry.semconv._incubating.attributes import (
+    event_attributes as EventAttributes,
+)
+from opentelemetry.semconv._incubating.attributes import (
+    gen_ai_attributes as GenAIAttributes,
+)
+from opentelemetry.semconv_ai import LLMRequestTypeValues, SpanAttributes
 
 
 @pytest.mark.vcr
-def test_ollama_chat(exporter):
-    response = ollama.chat(
+def test_ollama_chat_legacy(
+    instrument_legacy, ollama_client, span_exporter, log_exporter
+):
+    response = ollama_client.chat(
         model="llama3",
         messages=[
             {
@@ -18,7 +26,7 @@ def test_ollama_chat(exporter):
         ],
     )
 
-    spans = exporter.get_finished_spans()
+    spans = span_exporter.get_finished_spans()
     ollama_span = spans[0]
     assert ollama_span.name == "ollama.chat"
     assert ollama_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Ollama"
@@ -38,50 +46,168 @@ def test_ollama_chat(exporter):
         SpanAttributes.LLM_USAGE_TOTAL_TOKENS
     ) == ollama_span.attributes.get(
         SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
-    ) + ollama_span.attributes.get(
-        SpanAttributes.LLM_USAGE_PROMPT_TOKENS
-    )
+    ) + ollama_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS)
+
+    logs = log_exporter.get_finished_logs()
+    assert (
+        len(logs) == 0
+    ), "Assert that it doesn't emit logs when use_legacy_attributes is True"
 
 
 @pytest.mark.vcr
-def test_ollama_chat_tool_calls(exporter):
-    ollama.chat(
-        model="llama3.1",
+def test_ollama_chat_with_events_with_content(
+    instrument_with_content, ollama_client, span_exporter, log_exporter
+):
+    response = ollama_client.chat(
+        model="llama3",
         messages=[
             {
-                'role': 'assistant',
-                'content': '',
-                'tool_calls': [{
-                    'function': {
-                        'name': 'get_current_weather',
-                        'arguments': '{"location": "San Francisco"}'
-                    }
-                }]
+                "role": "user",
+                "content": "Tell me a joke about OpenTelemetry",
             },
-            {
-                'role': 'tool',
-                'content': 'The weather in San Francisco is 70 degrees and sunny.'
-            }
         ],
     )
 
-    spans = exporter.get_finished_spans()
+    spans = span_exporter.get_finished_spans()
+    ollama_span = spans[0]
+    assert ollama_span.name == "ollama.chat"
+    assert ollama_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Ollama"
+    assert ollama_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
+    assert not ollama_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
+    assert ollama_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_MODEL}") == "llama3"
+    assert (
+        ollama_span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.0.content")
+        == "Tell me a joke about OpenTelemetry"
+    )
+    assert (
+        ollama_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
+        == response["message"]["content"]
+    )
+    assert ollama_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 17
+    assert ollama_span.attributes.get(
+        SpanAttributes.LLM_USAGE_TOTAL_TOKENS
+    ) == ollama_span.attributes.get(
+        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
+    ) + ollama_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS)
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 2
+
+    # Validate user message Event
+    user_message_log = logs[0]
+    assert_message_in_logs(
+        user_message_log,
+        "gen_ai.user.message",
+        {"content": {"content": "Tell me a joke about OpenTelemetry"}},
+    )
+
+    # Validate the ai response
+    choice_event = {
+        "index": 0,
+        "finish_reason": "stop",
+        "message": {"content": response["message"]["content"]},
+    }
+    assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
+
+
+@pytest.mark.vcr
+def test_ollama_chat_with_events_with_no_content(
+    instrument_with_no_content, ollama_client, span_exporter, log_exporter
+):
+    response = ollama_client.chat(
+        model="llama3",
+        messages=[
+            {
+                "role": "user",
+                "content": "Tell me a joke about OpenTelemetry",
+            },
+        ],
+    )
+
+    spans = span_exporter.get_finished_spans()
+    ollama_span = spans[0]
+    assert ollama_span.name == "ollama.chat"
+    assert ollama_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Ollama"
+    assert ollama_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
+    assert not ollama_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
+    assert ollama_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_MODEL}") == "llama3"
+    assert (
+        ollama_span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.0.content")
+        == "Tell me a joke about OpenTelemetry"
+    )
+    assert (
+        ollama_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
+        == response["message"]["content"]
+    )
+    assert ollama_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 17
+    assert ollama_span.attributes.get(
+        SpanAttributes.LLM_USAGE_TOTAL_TOKENS
+    ) == ollama_span.attributes.get(
+        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
+    ) + ollama_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS)
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 2
+
+    # Validate user message Event
+    user_message_log = logs[0]
+    assert_message_in_logs(user_message_log, "gen_ai.user.message", {})
+
+    # Validate the ai response
+    choice_event = {
+        "index": 0,
+        "finish_reason": "stop",
+        "message": {},
+    }
+    assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
+
+
+@pytest.mark.vcr
+def test_ollama_chat_tool_calls_legacy(
+    instrument_legacy, ollama_client, span_exporter, log_exporter
+):
+    ollama_client.chat(
+        model="llama3.1",
+        messages=[
+            {
+                "role": "assistant",
+                "content": "",
+                "tool_calls": [
+                    {
+                        "function": {
+                            "name": "get_current_weather",
+                            "arguments": '{"location": "San Francisco"}',
+                        }
+                    }
+                ],
+            },
+            {
+                "role": "tool",
+                "content": "The weather in San Francisco is 70 degrees and sunny.",
+            },
+        ],
+    )
+
+    spans = span_exporter.get_finished_spans()
     ollama_span = spans[0]
 
     assert ollama_span.name == "ollama.chat"
     assert ollama_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Ollama"
     assert ollama_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
     assert not ollama_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
-    assert ollama_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_MODEL}") == "llama3.1"
-    assert f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.0.content" not in ollama_span.attributes
+    assert (
+        ollama_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_MODEL}") == "llama3.1"
+    )
+    assert (
+        f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.0.content"
+        not in ollama_span.attributes
+    )
     assert (
         ollama_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.tool_calls.0.name"]
         == "get_current_weather"
     )
     assert (
-        ollama_span.attributes[
-            f"{SpanAttributes.LLM_PROMPTS}.0.tool_calls.0.arguments"
-        ]
+        ollama_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.tool_calls.0.arguments"]
         == '{"location": "San Francisco"}'
     )
 
@@ -90,10 +216,188 @@ def test_ollama_chat_tool_calls(exporter):
         == "The weather in San Francisco is 70 degrees and sunny."
     )
 
+    logs = log_exporter.get_finished_logs()
+    assert (
+        len(logs) == 0
+    ), "Assert that it doesn't emit logs when use_legacy_attributes is True"
+
 
 @pytest.mark.vcr
-def test_ollama_streaming_chat(exporter):
-    gen = ollama.chat(
+def test_ollama_chat_tool_calls_with_events_with_content(
+    instrument_with_content, ollama_client, span_exporter, log_exporter
+):
+    response = ollama_client.chat(
+        model="llama3.1",
+        messages=[
+            {
+                "role": "assistant",
+                "content": "",
+                "tool_calls": [
+                    {
+                        "function": {
+                            "name": "get_current_weather",
+                            "arguments": '{"location": "San Francisco"}',
+                        }
+                    }
+                ],
+            },
+            {
+                "role": "tool",
+                "content": "The weather in San Francisco is 70 degrees and sunny.",
+            },
+        ],
+    )
+
+    spans = span_exporter.get_finished_spans()
+    ollama_span = spans[0]
+
+    assert ollama_span.name == "ollama.chat"
+    assert ollama_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Ollama"
+    assert ollama_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
+    assert not ollama_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
+    assert (
+        ollama_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_MODEL}") == "llama3.1"
+    )
+    assert (
+        f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.0.content"
+        not in ollama_span.attributes
+    )
+    assert (
+        ollama_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.tool_calls.0.name"]
+        == "get_current_weather"
+    )
+    assert (
+        ollama_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.tool_calls.0.arguments"]
+        == '{"location": "San Francisco"}'
+    )
+
+    assert (
+        ollama_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.content"]
+        == "The weather in San Francisco is 70 degrees and sunny."
+    )
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 3
+
+    # Validate assistant message Event
+    user_message_log = logs[0]
+    assistant_message = {
+        "content": {
+            "content": "",
+        },
+        "tool_calls": [
+            {
+                "function": {
+                    "name": "get_current_weather",
+                    "arguments": {"location": "San Francisco"},
+                }
+            }
+        ],
+        "role": "assistant",
+    }
+    assert_message_in_logs(
+        user_message_log, "gen_ai.assistant.message", assistant_message
+    )
+
+    # Validate the tool message Event
+    assert_message_in_logs(
+        logs[1],
+        "gen_ai.tool.message",
+        {
+            "role": "tool",
+            "content": {
+                "content": "The weather in San Francisco is 70 degrees and sunny."
+            },
+        },
+    )
+
+    # Validate the ai response
+    choice_event = {
+        "index": 0,
+        "finish_reason": "stop",
+        "message": {"content": response["message"]["content"]},
+    }
+    assert_message_in_logs(logs[2], "gen_ai.choice", choice_event)
+
+
+@pytest.mark.vcr
+def test_ollama_chat_tool_calls_with_events_with_no_content(
+    instrument_with_no_content, ollama_client, span_exporter, log_exporter
+):
+    ollama_client.chat(
+        model="llama3.1",
+        messages=[
+            {
+                "role": "assistant",
+                "content": "",
+                "tool_calls": [
+                    {
+                        "function": {
+                            "name": "get_current_weather",
+                            "arguments": '{"location": "San Francisco"}',
+                        }
+                    }
+                ],
+            },
+            {
+                "role": "tool",
+                "content": "The weather in San Francisco is 70 degrees and sunny.",
+            },
+        ],
+    )
+
+    spans = span_exporter.get_finished_spans()
+    ollama_span = spans[0]
+
+    assert ollama_span.name == "ollama.chat"
+    assert ollama_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Ollama"
+    assert ollama_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
+    assert not ollama_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
+    assert (
+        ollama_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_MODEL}") == "llama3.1"
+    )
+    assert (
+        f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.0.content"
+        not in ollama_span.attributes
+    )
+    assert (
+        ollama_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.tool_calls.0.name"]
+        == "get_current_weather"
+    )
+    assert (
+        ollama_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.tool_calls.0.arguments"]
+        == '{"location": "San Francisco"}'
+    )
+
+    assert (
+        ollama_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.content"]
+        == "The weather in San Francisco is 70 degrees and sunny."
+    )
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 3
+
+    # Validate assistant message Event
+    user_message_log = logs[0]
+    assert_message_in_logs(user_message_log, "gen_ai.assistant.message", {})
+
+    # Validate the tool message Event
+    assert_message_in_logs(logs[1], "gen_ai.tool.message", {})
+
+    # Validate the ai response
+    choice_event = {
+        "index": 0,
+        "finish_reason": "stop",
+        "message": {},
+    }
+    assert_message_in_logs(logs[2], "gen_ai.choice", choice_event)
+
+
+@pytest.mark.vcr
+def test_ollama_streaming_chat_legacy(
+    instrument_legacy, ollama_client, span_exporter, log_exporter
+):
+    gen = ollama_client.chat(
         model="llama3",
         messages=[
             {
@@ -108,7 +412,7 @@ def test_ollama_streaming_chat(exporter):
     for res in gen:
         response += res["message"]["content"]
 
-    spans = exporter.get_finished_spans()
+    spans = span_exporter.get_finished_spans()
     ollama_span = spans[0]
     assert ollama_span.name == "ollama.chat"
     assert ollama_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Ollama"
@@ -128,16 +432,138 @@ def test_ollama_streaming_chat(exporter):
         SpanAttributes.LLM_USAGE_TOTAL_TOKENS
     ) == ollama_span.attributes.get(
         SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
-    ) + ollama_span.attributes.get(
-        SpanAttributes.LLM_USAGE_PROMPT_TOKENS
+    ) + ollama_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS)
+
+    logs = log_exporter.get_finished_logs()
+    assert (
+        len(logs) == 0
+    ), "Assert that it doesn't emit logs when use_legacy_attributes is True"
+
+
+@pytest.mark.vcr
+def test_ollama_streaming_chat_with_events_with_content(
+    instrument_with_content, ollama_client, span_exporter, log_exporter
+):
+    gen = ollama_client.chat(
+        model="llama3",
+        messages=[
+            {
+                "role": "user",
+                "content": "Tell me a joke about OpenTelemetry",
+            },
+        ],
+        stream=True,
     )
+
+    response = ""
+    for res in gen:
+        response += res["message"]["content"]
+
+    spans = span_exporter.get_finished_spans()
+    ollama_span = spans[0]
+    assert ollama_span.name == "ollama.chat"
+    assert ollama_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Ollama"
+    assert ollama_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
+    assert ollama_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
+    assert ollama_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_MODEL}") == "llama3"
+    assert (
+        ollama_span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.0.content")
+        == "Tell me a joke about OpenTelemetry"
+    )
+    assert (
+        ollama_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
+        == response
+    )
+    assert ollama_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 17
+    assert ollama_span.attributes.get(
+        SpanAttributes.LLM_USAGE_TOTAL_TOKENS
+    ) == ollama_span.attributes.get(
+        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
+    ) + ollama_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS)
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 2
+
+    # Validate user message Event
+    user_message_log = logs[0]
+    assert_message_in_logs(
+        user_message_log,
+        "gen_ai.user.message",
+        {"content": {"content": "Tell me a joke about OpenTelemetry"}},
+    )
+
+    # Validate the ai response
+    choice_event = {
+        "index": 0,
+        "finish_reason": "stop",
+        "message": {"content": response},
+    }
+    assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
+
+
+@pytest.mark.vcr
+def test_ollama_streaming_chat_with_events_with_no_content(
+    instrument_with_no_content, ollama_client, span_exporter, log_exporter
+):
+    gen = ollama_client.chat(
+        model="llama3",
+        messages=[
+            {
+                "role": "user",
+                "content": "Tell me a joke about OpenTelemetry",
+            },
+        ],
+        stream=True,
+    )
+
+    response = ""
+    for res in gen:
+        response += res["message"]["content"]
+
+    spans = span_exporter.get_finished_spans()
+    ollama_span = spans[0]
+    assert ollama_span.name == "ollama.chat"
+    assert ollama_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Ollama"
+    assert ollama_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
+    assert ollama_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
+    assert ollama_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_MODEL}") == "llama3"
+    assert (
+        ollama_span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.0.content")
+        == "Tell me a joke about OpenTelemetry"
+    )
+    assert (
+        ollama_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
+        == response
+    )
+    assert ollama_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 17
+    assert ollama_span.attributes.get(
+        SpanAttributes.LLM_USAGE_TOTAL_TOKENS
+    ) == ollama_span.attributes.get(
+        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
+    ) + ollama_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS)
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 2
+
+    # Validate user message Event
+    user_message_log = logs[0]
+    assert_message_in_logs(user_message_log, "gen_ai.user.message", {})
+
+    # Validate the ai response
+    choice_event = {
+        "index": 0,
+        "finish_reason": "stop",
+        "message": {},
+    }
+    assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
 
 
 @pytest.mark.vcr
 @pytest.mark.asyncio
-async def test_ollama_async_chat(exporter):
-    client = ollama.AsyncClient()
-    response = await client.chat(
+async def test_ollama_async_chat_legacy(
+    instrument_legacy, ollama_client_async, span_exporter, log_exporter
+):
+    response = await ollama_client_async.chat(
         model="llama3",
         messages=[
             {
@@ -147,7 +573,7 @@ async def test_ollama_async_chat(exporter):
         ],
     )
 
-    spans = exporter.get_finished_spans()
+    spans = span_exporter.get_finished_spans()
     ollama_span = spans[0]
     assert ollama_span.name == "ollama.chat"
     assert ollama_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Ollama"
@@ -168,16 +594,132 @@ async def test_ollama_async_chat(exporter):
         SpanAttributes.LLM_USAGE_TOTAL_TOKENS
     ) == ollama_span.attributes.get(
         SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
-    ) + ollama_span.attributes.get(
-        SpanAttributes.LLM_USAGE_PROMPT_TOKENS
-    )
+    ) + ollama_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS)
+
+    logs = log_exporter.get_finished_logs()
+    assert (
+        len(logs) == 0
+    ), "Assert that it doesn't emit logs when use_legacy_attributes is True"
 
 
 @pytest.mark.vcr
 @pytest.mark.asyncio
-async def test_ollama_async_streaming_chat(exporter):
-    client = ollama.AsyncClient()
-    gen = await client.chat(
+async def test_ollama_async_chat_with_events_with_content(
+    instrument_with_content, ollama_client_async, span_exporter, log_exporter
+):
+    response = await ollama_client_async.chat(
+        model="llama3",
+        messages=[
+            {
+                "role": "user",
+                "content": "Tell me a joke about OpenTelemetry",
+            },
+        ],
+    )
+
+    spans = span_exporter.get_finished_spans()
+    ollama_span = spans[0]
+    assert ollama_span.name == "ollama.chat"
+    assert ollama_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Ollama"
+    assert ollama_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
+    assert not ollama_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
+    assert ollama_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_MODEL}") == "llama3"
+    assert (
+        ollama_span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.0.content")
+        == "Tell me a joke about OpenTelemetry"
+    )
+    assert (
+        ollama_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
+        == response["message"]["content"]
+    )
+    # For some reason, async ollama chat doesn't report prompt token usage back
+    # assert ollama_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 17
+    assert ollama_span.attributes.get(
+        SpanAttributes.LLM_USAGE_TOTAL_TOKENS
+    ) == ollama_span.attributes.get(
+        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
+    ) + ollama_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS)
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 2
+
+    # Validate user message Event
+    user_message_log = logs[0]
+    assert_message_in_logs(
+        user_message_log,
+        "gen_ai.user.message",
+        {"content": {"content": "Tell me a joke about OpenTelemetry"}},
+    )
+
+    # Validate the ai response
+    choice_event = {
+        "index": 0,
+        "finish_reason": "stop",
+        "message": {"content": response["message"]["content"]},
+    }
+    assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
+
+
+@pytest.mark.vcr
+@pytest.mark.asyncio
+async def test_ollama_async_chat_with_events_with_no_content(
+    instrument_with_no_content, ollama_client_async, span_exporter, log_exporter
+):
+    response = await ollama_client_async.chat(
+        model="llama3",
+        messages=[
+            {
+                "role": "user",
+                "content": "Tell me a joke about OpenTelemetry",
+            },
+        ],
+    )
+
+    spans = span_exporter.get_finished_spans()
+    ollama_span = spans[0]
+    assert ollama_span.name == "ollama.chat"
+    assert ollama_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Ollama"
+    assert ollama_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
+    assert not ollama_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
+    assert ollama_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_MODEL}") == "llama3"
+    assert (
+        ollama_span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.0.content")
+        == "Tell me a joke about OpenTelemetry"
+    )
+    assert (
+        ollama_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
+        == response["message"]["content"]
+    )
+    # For some reason, async ollama chat doesn't report prompt token usage back
+    # assert ollama_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 17
+    assert ollama_span.attributes.get(
+        SpanAttributes.LLM_USAGE_TOTAL_TOKENS
+    ) == ollama_span.attributes.get(
+        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
+    ) + ollama_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS)
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 2
+
+    # Validate user message Event
+    user_message_log = logs[0]
+    assert_message_in_logs(user_message_log, "gen_ai.user.message", {})
+
+    # Validate the ai response
+    choice_event = {
+        "index": 0,
+        "finish_reason": "stop",
+        "message": {},
+    }
+    assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
+
+
+@pytest.mark.vcr
+@pytest.mark.asyncio
+async def test_ollama_async_streaming_chat_legacy(
+    instrument_legacy, ollama_client_async, span_exporter, log_exporter
+):
+    gen = await ollama_client_async.chat(
         model="llama3",
         messages=[
             {
@@ -192,7 +734,7 @@ async def test_ollama_async_streaming_chat(exporter):
     async for res in gen:
         response += res["message"]["content"]
 
-    spans = exporter.get_finished_spans()
+    spans = span_exporter.get_finished_spans()
     ollama_span = spans[0]
     assert ollama_span.name == "ollama.chat"
     assert ollama_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Ollama"
@@ -212,9 +754,132 @@ async def test_ollama_async_streaming_chat(exporter):
         SpanAttributes.LLM_USAGE_TOTAL_TOKENS
     ) == ollama_span.attributes.get(
         SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
-    ) + ollama_span.attributes.get(
-        SpanAttributes.LLM_USAGE_PROMPT_TOKENS
+    ) + ollama_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS)
+
+    logs = log_exporter.get_finished_logs()
+    assert (
+        len(logs) == 0
+    ), "Assert that it doesn't emit logs when use_legacy_attributes is True"
+
+
+@pytest.mark.vcr
+@pytest.mark.asyncio
+async def test_ollama_async_streaming_chat_with_events_with_content(
+    instrument_with_content, ollama_client_async, span_exporter, log_exporter
+):
+    gen = await ollama_client_async.chat(
+        model="llama3",
+        messages=[
+            {
+                "role": "user",
+                "content": "Tell me a joke about OpenTelemetry",
+            },
+        ],
+        stream=True,
     )
+
+    response = ""
+    async for res in gen:
+        response += res["message"]["content"]
+
+    spans = span_exporter.get_finished_spans()
+    ollama_span = spans[0]
+    assert ollama_span.name == "ollama.chat"
+    assert ollama_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Ollama"
+    assert ollama_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
+    assert ollama_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
+    assert ollama_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_MODEL}") == "llama3"
+    assert (
+        ollama_span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.0.content")
+        == "Tell me a joke about OpenTelemetry"
+    )
+    assert (
+        ollama_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
+        == response
+    )
+    assert ollama_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 17
+    assert ollama_span.attributes.get(
+        SpanAttributes.LLM_USAGE_TOTAL_TOKENS
+    ) == ollama_span.attributes.get(
+        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
+    ) + ollama_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS)
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 2
+
+    # Validate user message Event
+    user_message_log = logs[0]
+    assert_message_in_logs(
+        user_message_log,
+        "gen_ai.user.message",
+        {"content": {"content": "Tell me a joke about OpenTelemetry"}},
+    )
+
+    # Validate the ai response
+    choice_event = {
+        "index": 0,
+        "finish_reason": "stop",
+        "message": {"content": response},
+    }
+    assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
+
+
+@pytest.mark.vcr
+@pytest.mark.asyncio
+async def test_ollama_async_streaming_chat_with_events_with_no_content(
+    instrument_with_no_content, ollama_client_async, span_exporter, log_exporter
+):
+    gen = await ollama_client_async.chat(
+        model="llama3",
+        messages=[
+            {
+                "role": "user",
+                "content": "Tell me a joke about OpenTelemetry",
+            },
+        ],
+        stream=True,
+    )
+
+    response = ""
+    async for res in gen:
+        response += res["message"]["content"]
+
+    spans = span_exporter.get_finished_spans()
+    ollama_span = spans[0]
+    assert ollama_span.name == "ollama.chat"
+    assert ollama_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Ollama"
+    assert ollama_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
+    assert ollama_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
+    assert ollama_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_MODEL}") == "llama3"
+    assert (
+        ollama_span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.0.content")
+        == "Tell me a joke about OpenTelemetry"
+    )
+    assert (
+        ollama_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
+        == response
+    )
+    assert ollama_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 17
+    assert ollama_span.attributes.get(
+        SpanAttributes.LLM_USAGE_TOTAL_TOKENS
+    ) == ollama_span.attributes.get(
+        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
+    ) + ollama_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS)
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 2
+
+    # Validate user message Event
+    user_message_log = logs[0]
+    assert_message_in_logs(user_message_log, "gen_ai.user.message", {})
+
+    # Validate the ai response
+    choice_event = {
+        "index": 0,
+        "finish_reason": "stop",
+        "message": {},
+    }
+    assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
 
 
 @pytest.mark.vcr
@@ -244,3 +909,14 @@ def test_token_histogram_recording():
             SpanAttributes.LLM_RESPONSE_MODEL: "llama3",
         },
     )
+
+
+def assert_message_in_logs(log: LogData, event_name: str, expected_content: dict):
+    assert log.log_record.attributes.get(EventAttributes.EVENT_NAME) == event_name
+    assert log.log_record.attributes.get(GenAIAttributes.GEN_AI_SYSTEM) == "ollama"
+
+    if not expected_content:
+        assert not log.log_record.body
+    else:
+        assert log.log_record.body
+        assert dict(log.log_record.body) == expected_content

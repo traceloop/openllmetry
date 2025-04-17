@@ -1,7 +1,8 @@
-from importlib.metadata import version
-import os
 import logging
+import os
 import traceback
+from importlib.metadata import version
+
 from opentelemetry import context as context_api
 from opentelemetry.instrumentation.groq.config import Config
 from opentelemetry.semconv_ai import SpanAttributes
@@ -10,6 +11,10 @@ GEN_AI_SYSTEM = "gen_ai.system"
 GEN_AI_SYSTEM_GROQ = "groq"
 
 _PYDANTIC_VERSION = version("pydantic")
+
+OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT = (
+    "OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT"
+)
 
 
 def set_span_attribute(span, name, value):
@@ -78,3 +83,11 @@ def model_as_dict(model):
         return model_as_dict(model.parse())
     else:
         return model
+
+
+def is_content_enabled() -> bool:
+    capture_content = os.environ.get(
+        OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT, "false"
+    )
+
+    return capture_content.lower() == "true"

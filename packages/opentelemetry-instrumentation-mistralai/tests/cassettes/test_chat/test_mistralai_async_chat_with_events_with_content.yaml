@@ -1,0 +1,62 @@
+interactions:
+- request:
+    body: '{"messages": [{"role": "user", "content": "Tell me a joke about OpenTelemetry"}],
+      "safe_prompt": false, "model": "mistral-tiny", "stream": false}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '145'
+      content-type:
+      - application/json
+      host:
+      - api.mistral.ai
+      user-agent:
+      - mistral-client-python/0.2.0
+    method: POST
+    uri: https://api.mistral.ai/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAAzyRQY8TMQyF/0rWF0AKaGbbaWkuSNw4cUHiwKLKTdxOIImj2IWOqv53lKLu0U/f
+        e5afrxADOPi4ptVxN2yP4XlYT3TA3Q53I04DbvyE0wos8OEXeQUHfkb94DnXRBq5gAXfCJUCuHE7
+        bjbb4XlaWcgcKIGDHEUbpvcay9LZmaMnAffjCrEEuoAbLGQSwROBu0LjROAARaIoFu0eLkql7/4+
+        LybEYL5WKt8oUSZtizm0WE4GTcZqlI3OZCo2XT69lJfymTyehUxU8xeLUrgjDT3dwcZnJcPH+3Bi
+        DsZz+UNNsB8nTz3i7Zc32czUqFsfyyTHRNYU1q56DmS4GbrUhLGY//1cjCyilOXpHVhQ5rT3mJKA
+        K+eUbhaOsUSZ941QuIADUa5gIfGpNj48uJ8Wzo96auNcda/8m4qAG8eeq5helWnbC3t851Veb263
+        fwAAAP//AwBaDk/J7QEAAA==
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 8898667d8c2a8e48-TLV
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Sat, 25 May 2024 20:50:54 GMT
+      Server:
+      - cloudflare
+      Transfer-Encoding:
+      - chunked
+      access-control-allow-origin:
+      - '*'
+      alt-svc:
+      - h3=":443"; ma=86400
+      x-kong-proxy-latency:
+      - '6'
+      x-kong-request-id:
+      - 9695304667dcf5089c27ca7e9e074810
+      x-kong-upstream-latency:
+      - '739'
+    status:
+      code: 200
+      message: OK
+version: 1

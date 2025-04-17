@@ -1,0 +1,40 @@
+interactions:
+- request:
+    body: '{"model": "llama3", "messages": [{"role": "user", "content": "Tell me a
+      joke about OpenTelemetry"}], "stream": false, "format": "", "options": {}, "keep_alive":
+      null}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '166'
+      content-type:
+      - application/json
+      host:
+      - 127.0.0.1:11434
+      user-agent:
+      - ollama-python/0.2.0 (arm64 darwin) Python/3.9.5
+    method: POST
+    uri: http://127.0.0.1:11434/api/chat
+  response:
+    body:
+      string: '{"model":"llama3","created_at":"2024-05-24T20:01:31.01558Z","message":{"role":"assistant","content":"A
+        joke about OpenTelemetry!\n\nWhy did the OpenTelemetry agent go to therapy?\n\nBecause
+        it was struggling to \"instrument\" its feelings and had a lot of \"traces\"
+        of anxiety!\n\n(Sorry, I know it''s a bit of a \"stretch\", but I hope it
+        brings a smile to your face!)"},"done_reason":"stop","done":true,"total_duration":10386172208,"load_duration":8078850750,"prompt_eval_count":17,"prompt_eval_duration":175861000,"eval_count":66,"eval_duration":2127200000}'
+    headers:
+      Content-Length:
+      - '560'
+      Content-Type:
+      - application/json; charset=utf-8
+      Date:
+      - Fri, 24 May 2024 20:01:31 GMT
+    status:
+      code: 200
+      message: OK
+version: 1
