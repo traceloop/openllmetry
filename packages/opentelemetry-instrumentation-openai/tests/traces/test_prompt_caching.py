@@ -44,7 +44,7 @@ def test_openai_prompt_caching(exporter):
     assert text == cache_creation_span.attributes["gen_ai.prompt.1.content"]
     assert cache_read_span.attributes["gen_ai.prompt.1.role"] == "user"
     assert text == cache_read_span.attributes["gen_ai.prompt.1.content"]
-    
+
     assert cache_creation_span.attributes.get("gen_ai.response.id") == "chatcmpl-BNi3xzj4EEAzo6vce1IwHwie9IRhH"
     assert cache_read_span.attributes.get("gen_ai.response.id") == "chatcmpl-BNi420iFNtIOHzy8Gq2fVS5utTus7"
 
@@ -106,7 +106,7 @@ async def test_openai_prompt_caching_async(exporter):
 
     assert cache_creation_span.attributes["gen_ai.completion.0.role"] == "assistant"
     assert cache_read_span.attributes["gen_ai.completion.0.role"] == "assistant"
-    
+
     assert cache_creation_span.attributes["gen_ai.usage.prompt_tokens"] == 1150
     assert cache_creation_span.attributes["gen_ai.usage.completion_tokens"] == 293
     assert cache_creation_span.attributes["gen_ai.usage.cache_read_input_tokens"] == 0
