@@ -1,3 +1,11 @@
+## v0.39.2 (2025-04-18)
+
+### Fix
+
+- **openai**: add cache read tokens from returned usage block (#2820)
+- **ollama**: type error in dict combination of ollama instrumentation (#2814)
+- **llama-index**: use the correct instrumentation point (#2807)
+
 ## v0.39.1 (2025-04-15)
 
 ### Fix
