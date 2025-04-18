@@ -185,6 +185,10 @@ def _set_response_attributes(span, response):
     _set_span_attribute(
         span, SpanAttributes.LLM_USAGE_PROMPT_TOKENS, usage.get("prompt_tokens")
     )
+    prompt_tokens_details = dict(usage.get("prompt_tokens_details", {}))
+    _set_span_attribute(
+        span, SpanAttributes.LLM_USAGE_CACHE_READ_INPUT_TOKENS, prompt_tokens_details.get("cached_tokens", 0)
+    )
     return
 
 
