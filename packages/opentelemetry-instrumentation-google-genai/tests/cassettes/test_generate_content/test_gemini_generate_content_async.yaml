@@ -1,0 +1,61 @@
+interactions:
+- request:
+    body: '{"contents": [{"parts": [{"text": "The opposite of hot is "}], "role":
+      "user"}]}'
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '80'
+      content-type:
+      - application/json
+      host:
+      - generativelanguage.googleapis.com
+      user-agent:
+      - google-genai-sdk/1.11.0 gl-python/3.9.6
+      x-goog-api-client:
+      - google-genai-sdk/1.11.0 gl-python/3.9.6
+    method: POST
+    uri: https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAC/61RTU/DMAy951dEOVbr1A9gKlfgBgJBhZBgh7C6bUQaV42HQNP+O2m7bilcySGy
+        /J797Ocd41xspClUIQmsuOSvLsP5bvh7DA2BIQdMKZdsZUcn7vh2XuwoBF99kchr4Ni2aBW5oOQ1
+        EleWB8EGdREEyzcjvML9MV4vTnIdauh7NViAnuj7iSBKZZStH0FaND3tKb9/EEdUfla3WLUdvvcT
+        h9EyitJVnCRpnMVnSZSkqyRmk/agKrZWVnAHJJ0n8ri5cD2alnL8AHOF28GTi1HGc3AGZweYkKSe
+        IfH54k9Te+0klfaN9Tx3y0ut6Hsw9eYlF55BNJtpMoh5Pv6e8J+0srkWO5xlvNQzdFaNJ6mgcUcK
+        k2UUllraOnTdQbA9+wEbGhUXgAIAAA==
+    headers:
+      Alt-Svc:
+      - h3=":443"; ma=2592000,h3-29=":443"; ma=2592000
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json; charset=UTF-8
+      Date:
+      - Mon, 21 Apr 2025 16:42:48 GMT
+      Server:
+      - scaffolding on HTTPServer2
+      Server-Timing:
+      - gfet4t7; dur=412
+      Transfer-Encoding:
+      - chunked
+      Vary:
+      - Origin
+      - X-Origin
+      - Referer
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - SAMEORIGIN
+      X-XSS-Protection:
+      - '0'
+    status:
+      code: 200
+      message: OK
+version: 1
