@@ -14,14 +14,14 @@ files = [
 
 [[package]]
 name = "anthropic"
-version = "0.31.2"
+version = "0.49.0"
 description = "The official Python library for the anthropic API"
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.8"
 groups = ["main"]
 files = [
-    {file = "anthropic-0.31.2-py3-none-any.whl", hash = "sha256:28d176b98c72615bfae30f0a9eee6297cc33bf52535d38156fc2805556e2f09b"},
-    {file = "anthropic-0.31.2.tar.gz", hash = "sha256:0134b73df8d1f142fc68675fbadb75e920054e9e3437b99df63f10f0fc6ac26f"},
+    {file = "anthropic-0.49.0-py3-none-any.whl", hash = "sha256:bbc17ad4e7094988d2fa86b87753ded8dce12498f4b85fe5810f208f454a8375"},
+    {file = "anthropic-0.49.0.tar.gz", hash = "sha256:c09e885b0f674b9119b4f296d8508907f6cff0009bc20d5cf6b35936c40b4398"},
 ]
 
 [package.dependencies]
@@ -31,8 +31,7 @@ httpx = ">=0.23.0,<1"
 jiter = ">=0.4.0,<1"
 pydantic = ">=1.9.0,<3"
 sniffio = "*"
-tokenizers = ">=0.13.0"
-typing-extensions = ">=4.7,<5"
+typing-extensions = ">=4.10,<5"
 
 [package.extras]
 bedrock = ["boto3 (>=1.28.57)", "botocore (>=1.31.57)"]
@@ -79,34 +78,34 @@ tomli = {version = "*", markers = "python_version < \"3.11\""}
 
 [[package]]
 name = "boto3"
-version = "1.34.145"
+version = "1.37.37"
 description = "The AWS SDK for Python"
 optional = false
 python-versions = ">=3.8"
 groups = ["test"]
 files = [
-    {file = "boto3-1.34.145-py3-none-any.whl", hash = "sha256:69d5afb7a017d07dd6bdfb680d2912d5d369b3fafa0a45161207d9f393b14d7e"},
-    {file = "boto3-1.34.145.tar.gz", hash = "sha256:ac770fb53dde1743aec56bd8e56b7ee2e2f5ad42a37825968ec4ff8428822640"},
+    {file = "boto3-1.37.37-py3-none-any.whl", hash = "sha256:d125cb11e22817f7a2581bade4bf7b75247b401888890239ceb5d3e902ccaf38"},
+    {file = "boto3-1.37.37.tar.gz", hash = "sha256:752d31105a45e3e01c8c68471db14ae439990b75a35e72b591ca528e2575b28f"},
 ]
 
 [package.dependencies]
-botocore = ">=1.34.145,<1.35.0"
+botocore = ">=1.37.37,<1.38.0"
 jmespath = ">=0.7.1,<2.0.0"
-s3transfer = ">=0.10.0,<0.11.0"
+s3transfer = ">=0.11.0,<0.12.0"
 
 [package.extras]
 crt = ["botocore[crt] (>=1.21.0,<2.0a0)"]
 
 [[package]]
 name = "botocore"
-version = "1.34.145"
+version = "1.37.37"
 description = "Low-level, data-driven core of boto 3."
 optional = false
 python-versions = ">=3.8"
 groups = ["test"]
 files = [
-    {file = "botocore-1.34.145-py3-none-any.whl", hash = "sha256:2e72e262de02adcb0264ac2bac159a28f55dbba8d9e52aa0308773a42950dff5"},
-    {file = "botocore-1.34.145.tar.gz", hash = "sha256:edf0fb4c02186ae29b76263ac5fda18b0a085d334a310551c9984407cf1079e6"},
+    {file = "botocore-1.37.37-py3-none-any.whl", hash = "sha256:eb730ff978f47c02f0c8ed07bccdc0db6d8fa098ed32ac31bee1da0e9be480d1"},
+    {file = "botocore-1.37.37.tar.gz", hash = "sha256:3eadde6fed95c4cb469cc39d1c3558528b7fa76d23e7e16d4bddc77250431a64"},
 ]
 
 [package.dependencies]
@@ -118,7 +117,7 @@ urllib3 = [
 ]
 
 [package.extras]
-crt = ["awscrt (==0.20.11)"]
+crt = ["awscrt (==0.23.8)"]
 
 [[package]]
 name = "certifi"
@@ -310,20 +309,20 @@ typing = ["typing-extensions (>=4.8) ; python_version < \"3.11\""]
 
 [[package]]
 name = "flake8"
-version = "7.0.0"
+version = "7.2.0"
 description = "the modular source code checker: pep8 pyflakes and co"
 optional = false
-python-versions = ">=3.8.1"
+python-versions = ">=3.9"
 groups = ["dev"]
 files = [
-    {file = "flake8-7.0.0-py2.py3-none-any.whl", hash = "sha256:a6dfbb75e03252917f2473ea9653f7cd799c3064e54d4c8140044c5c065f53c3"},
-    {file = "flake8-7.0.0.tar.gz", hash = "sha256:33f96621059e65eec474169085dc92bf26e7b2d47366b70be2f67ab80dc25132"},
+    {file = "flake8-7.2.0-py2.py3-none-any.whl", hash = "sha256:93b92ba5bdb60754a6da14fa3b93a9361fd00a59632ada61fd7b130436c40343"},
+    {file = "flake8-7.2.0.tar.gz", hash = "sha256:fa558ae3f6f7dbf2b4f22663e5343b6b6023620461f8d4ff2019ef4b5ee70426"},
 ]
 
 [package.dependencies]
 mccabe = ">=0.7.0,<0.8.0"
-pycodestyle = ">=2.11.0,<2.12.0"
-pyflakes = ">=3.2.0,<3.3.0"
+pycodestyle = ">=2.13.0,<2.14.0"
+pyflakes = ">=3.3.0,<3.4.0"
 
 [[package]]
 name = "fsspec"
@@ -807,14 +806,14 @@ testing = ["pytest", "pytest-benchmark"]
 
 [[package]]
 name = "pycodestyle"
-version = "2.11.1"
+version = "2.13.0"
 description = "Python style guide checker"
 optional = false
-python-versions = ">=3.8"
+python-versions = ">=3.9"
 groups = ["dev"]
 files = [
-    {file = "pycodestyle-2.11.1-py2.py3-none-any.whl", hash = "sha256:44fe31000b2d866f2e41841b18528a505fbd7fef9017b04eff4e2648a0fadc67"},
-    {file = "pycodestyle-2.11.1.tar.gz", hash = "sha256:41ba0e7afc9752dfb53ced5489e89f8186be00e599e712660695b7a75ff2663f"},
+    {file = "pycodestyle-2.13.0-py2.py3-none-any.whl", hash = "sha256:35863c5974a271c7a726ed228a14a4f6daf49df369d8c50cd9a6f58a5e143ba9"},
+    {file = "pycodestyle-2.13.0.tar.gz", hash = "sha256:c8415bf09abe81d9c7f872502a6eee881fbe85d8763dd5b9924bb0a01d67efae"},
 ]
 
 [[package]]
@@ -944,26 +943,26 @@ typing-extensions = ">=4.6.0,<4.7.0 || >4.7.0"
 
 [[package]]
 name = "pyflakes"
-version = "3.2.0"
+version = "3.3.2"
 description = "passive checker of Python programs"
 optional = false
-python-versions = ">=3.8"
+python-versions = ">=3.9"
 groups = ["dev"]
 files = [
-    {file = "pyflakes-3.2.0-py2.py3-none-any.whl", hash = "sha256:84b5be138a2dfbb40689ca07e2152deb896a65c3a3e24c251c5c62489568074a"},
-    {file = "pyflakes-3.2.0.tar.gz", hash = "sha256:1c61603ff154621fb2a9172037d84dca3500def8c8b630657d1701f026f8af3f"},
+    {file = "pyflakes-3.3.2-py2.py3-none-any.whl", hash = "sha256:5039c8339cbb1944045f4ee5466908906180f13cc99cc9949348d10f82a5c32a"},
+    {file = "pyflakes-3.3.2.tar.gz", hash = "sha256:6dfd61d87b97fba5dcfaaf781171ac16be16453be6d816147989e7f6e6a9576b"},
 ]
 
 [[package]]
 name = "pytest"
-version = "8.2.2"
+version = "8.3.5"
 description = "pytest: simple powerful testing with Python"
 optional = false
 python-versions = ">=3.8"
 groups = ["test"]
 files = [
-    {file = "pytest-8.2.2-py3-none-any.whl", hash = "sha256:c434598117762e2bd304e526244f67bf66bbd7b5d6cf22138be51ff661980343"},
-    {file = "pytest-8.2.2.tar.gz", hash = "sha256:de4bb8104e201939ccdc688b27a89a7be2079b22e2bd2b07f806b6ba71117977"},
+    {file = "pytest-8.3.5-py3-none-any.whl", hash = "sha256:c69214aa47deac29fad6c2a4f590b9c4a9fdb16a403176fe154b79c0b4d4d820"},
+    {file = "pytest-8.3.5.tar.gz", hash = "sha256:f4efe70cc14e511565ac476b57c279e12a855b11f48f212af1080ef2263d3845"},
 ]
 
 [package.dependencies]
@@ -971,7 +970,7 @@ colorama = {version = "*", markers = "sys_platform == \"win32\""}
 exceptiongroup = {version = ">=1.0.0rc8", markers = "python_version < \"3.11\""}
 iniconfig = "*"
 packaging = "*"
-pluggy = ">=1.5,<2.0"
+pluggy = ">=1.5,<2"
 tomli = {version = ">=1", markers = "python_version < \"3.11\""}
 
 [package.extras]
@@ -1117,21 +1116,21 @@ use-chardet-on-py3 = ["chardet (>=3.0.2,<6)"]
 
 [[package]]
 name = "s3transfer"
-version = "0.10.2"
+version = "0.11.5"
 description = "An Amazon S3 Transfer Manager"
 optional = false
 python-versions = ">=3.8"
 groups = ["test"]
 files = [
-    {file = "s3transfer-0.10.2-py3-none-any.whl", hash = "sha256:eca1c20de70a39daee580aef4986996620f365c4e0fda6a86100231d62f1bf69"},
-    {file = "s3transfer-0.10.2.tar.gz", hash = "sha256:0711534e9356d3cc692fdde846b4a1e4b0cb6519971860796e6bc4c7aea00ef6"},
+    {file = "s3transfer-0.11.5-py3-none-any.whl", hash = "sha256:757af0f2ac150d3c75bc4177a32355c3862a98d20447b69a0161812992fe0bd4"},
+    {file = "s3transfer-0.11.5.tar.gz", hash = "sha256:8c8aad92784779ab8688a61aefff3e28e9ebdce43142808eaa3f0b0f402f68b7"},
 ]
 
 [package.dependencies]
-botocore = ">=1.33.2,<2.0a.0"
+botocore = ">=1.37.4,<2.0a.0"
 
 [package.extras]
-crt = ["botocore[crt] (>=1.33.2,<2.0a.0)"]
+crt = ["botocore[crt] (>=1.37.4,<2.0a.0)"]
 
 [[package]]
 name = "six"
@@ -1258,7 +1257,6 @@ description = "HTTP library with thread-safe connection pooling, file post, and 
 optional = false
 python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*,>=2.7"
 groups = ["main", "test"]
-markers = "platform_python_implementation == \"PyPy\" or python_version < \"3.10\""
 files = [
     {file = "urllib3-1.26.19-py2.py3-none-any.whl", hash = "sha256:37a0344459b199fce0e80b0d3569837ec6b6937435c5244e7fd73fa6006830f3"},
     {file = "urllib3-1.26.19.tar.gz", hash = "sha256:3e3d753a8618b86d7de333b4223005f68720bcd6a7d2bcb9fbd2229ec7c1e429"},
@@ -1270,39 +1268,23 @@ secure = ["certifi", "cryptography (>=1.3.4)", "idna (>=2.0.0)", "ipaddress ; py
 socks = ["PySocks (>=1.5.6,!=1.5.7,<2.0)"]
 
 [[package]]
-name = "urllib3"
-version = "2.2.2"
-description = "HTTP library with thread-safe connection pooling, file post, and more."
-optional = false
-python-versions = ">=3.8"
-groups = ["main", "test"]
-markers = "platform_python_implementation != \"PyPy\" and python_version >= \"3.10\""
-files = [
-    {file = "urllib3-2.2.2-py3-none-any.whl", hash = "sha256:a448b2f64d686155468037e1ace9f2d2199776e17f0a46610480d311f73e3472"},
-    {file = "urllib3-2.2.2.tar.gz", hash = "sha256:dd505485549a7a552833da5e6063639d0d177c04f23bc3864e41e5dc5f612168"},
-]
-
-[package.extras]
-brotli = ["brotli (>=1.0.9) ; platform_python_implementation == \"CPython\"", "brotlicffi (>=0.8.0) ; platform_python_implementation != \"CPython\""]
-h2 = ["h2 (>=4,<5)"]
-socks = ["pysocks (>=1.5.6,!=1.5.7,<2.0)"]
-zstd = ["zstandard (>=0.18.0)"]
-
-[[package]]
 name = "vcrpy"
-version = "6.0.1"
+version = "7.0.0"
 description = "Automatically mock your HTTP interactions to simplify and speed up testing"
 optional = false
-python-versions = ">=3.8"
+python-versions = ">=3.9"
 groups = ["test"]
 files = [
-    {file = "vcrpy-6.0.1-py2.py3-none-any.whl", hash = "sha256:621c3fb2d6bd8aa9f87532c688e4575bcbbde0c0afeb5ebdb7e14cac409edfdd"},
-    {file = "vcrpy-6.0.1.tar.gz", hash = "sha256:9e023fee7f892baa0bbda2f7da7c8ac51165c1c6e38ff8688683a12a4bde9278"},
+    {file = "vcrpy-7.0.0-py2.py3-none-any.whl", hash = "sha256:55791e26c18daa363435054d8b35bd41a4ac441b6676167635d1b37a71dbe124"},
+    {file = "vcrpy-7.0.0.tar.gz", hash = "sha256:176391ad0425edde1680c5b20738ea3dc7fb942520a48d2993448050986b3a50"},
 ]
 
 [package.dependencies]
 PyYAML = "*"
-urllib3 = {version = "<2", markers = "platform_python_implementation == \"PyPy\" or python_version < \"3.10\""}
+urllib3 = [
+    {version = "<2", markers = "python_version < \"3.10\" or platform_python_implementation == \"PyPy\""},
+    {version = "*", markers = "platform_python_implementation != \"PyPy\" and python_version >= \"3.10\""},
+]
 wrapt = "*"
 yarl = "*"
 
@@ -1512,4 +1494,4 @@ test = ["big-O", "importlib-resources ; python_version < \"3.9\"", "jaraco.funct
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.9,<4"
-content-hash = "8ed5d8c55ef499c8f8b731628661f335e51ede20e94dfbbd54f804e37af5b1d3"
+content-hash = "17747834545aed66f4ef52816bddb322ad88ee8106bebe113c75c4ef8909c5f8"
