@@ -160,7 +160,6 @@ def _set_request_attributes(span, args, kwargs):
     if should_send_prompts():
         i = 0
         system_instruction: Optional[types.ContentUnion] = config_dict.get("system_instruction")
-        print(f"system_instruction: {system_instruction}")
         if system_instruction:
             set_span_attribute(
                 span,
