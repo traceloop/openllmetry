@@ -31,7 +31,7 @@ opentelemetry-semantic-conventions-ai = "0.4.3"
 
 [tool.poetry.group.dev.dependencies]
 autopep8 = "^2.2.0"
-flake8 = "7.0.0"
+flake8 = "7.2.0"
 pytest = "^8.2.2"
 pytest-sugar = "1.0.0"
 
@@ -39,7 +39,7 @@ pytest-sugar = "1.0.0"
 cohere = "^5.3.3"
 pytest = "^8.2.2"
 pytest-sugar = "1.0.0"
-vcrpy = "^6.0.1"
+vcrpy = ">=6.0.1,<8.0.0"
 pytest-recording = "^0.13.1"
 opentelemetry-sdk = "^1.27.0"
 
