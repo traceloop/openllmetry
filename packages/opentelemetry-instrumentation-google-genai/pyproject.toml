@@ -48,4 +48,4 @@ build-backend = "poetry.core.masonry.api"
 instruments = ["google-genai"]
 
 [tool.poetry.plugins."opentelemetry_instrumentor"]
-google_genai = "opentelemetry.instrumentation.google_genai:GoogleGenAiInstrumentor"
+google_genai = "opentelemetry.instrumentation.google_genai:GoogleGenAiSdkInstrumentor"

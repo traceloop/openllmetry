@@ -15,9 +15,9 @@ pip install opentelemetry-instrumentation-google-genai
 ## Example usage
 
 ```python
-from opentelemetry.instrumentation.google_genai import GoogleGenAiInstrumentor
+from opentelemetry.instrumentation.google_genai import GoogleGenAiSdkInstrumentor
 
-GoogleGenAiInstrumentor().instrument()
+GoogleGenAiSdkInstrumentor().instrument()
 ```
 
 ## Privacy

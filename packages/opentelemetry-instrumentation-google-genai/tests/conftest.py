@@ -7,7 +7,7 @@ from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
 from opentelemetry.sdk.trace.export import SimpleSpanProcessor
 from opentelemetry.instrumentation.google_genai import (
-    GoogleGenAiInstrumentor,
+    GoogleGenAiSdkInstrumentor,
 )
 
 pytest_plugins = []
@@ -22,7 +22,7 @@ def exporter():
     provider.add_span_processor(processor)
     trace.set_tracer_provider(provider)
 
-    GoogleGenAiInstrumentor().instrument()
+    GoogleGenAiSdkInstrumentor().instrument()
 
     return exporter
 
