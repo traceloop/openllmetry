@@ -335,11 +335,11 @@ def test_anthropic(exporter):
             "model": "claude-2.1",
             "stop_reason": "end_turn",
             "stop_sequence": None,
-            "usage": {"cache_creation_input_tokens": None, "cache_read_input_tokens": None, "input_tokens": 19, "output_tokens": 22},
+            "usage": {"input_tokens": 19, "output_tokens": 22},
         },
         "tool_calls": [],
         "type": "ai",
-        "usage_metadata": {"input_token_details": {}, "input_tokens": 19, "output_tokens": 22, "total_tokens": 41},
+        "usage_metadata": {"input_tokens": 19, "output_tokens": 22, "total_tokens": 41},
     }
 
 
