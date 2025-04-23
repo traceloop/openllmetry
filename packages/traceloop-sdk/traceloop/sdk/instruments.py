@@ -32,3 +32,4 @@ class Instruments(Enum):
     VERTEXAI = "vertexai"
     WATSONX = "watsonx"
     WEAVIATE = "weaviate"
+    MCP = "mcp"
