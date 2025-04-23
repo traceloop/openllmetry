@@ -106,17 +106,7 @@ def patch_mcp_client(operation_name, tracer, wrapped, instance, args, kwargs):
         if meta is None:
             meta = {}
 
-    carrier = None
-    ctx = None
-    if hasattr(args[0].root.params, 'arguments'):
-        arguments = args[0].root.params.arguments
-        if '__traceparent_meta__' in arguments:
-            carrier = arguments['__traceparent_meta__']
-            args[0].root.params.arguments.pop('__traceparent_meta__')
-    if carrier:    
-        ctx = TraceContextTextMapPropagator().extract(carrier=carrier)
-
-    with tracer.start_as_current_span(f"{method}", context=ctx) as span:
+    with tracer.start_as_current_span(f"{method}") as span:
         span.set_attribute(SpanAttributes.MCP_METHOD_NAME, f"{method}")
         span.set_attribute(SpanAttributes.MCP_REQUEST_ARGUMENT,f"{serialize(args[0])}")
         ctx = set_span_in_context(span)
