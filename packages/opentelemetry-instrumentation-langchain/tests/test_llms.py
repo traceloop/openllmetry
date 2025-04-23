@@ -69,10 +69,94 @@ def test_openai(exporter):
     prompt = ChatPromptTemplate.from_messages(
         [("system", "You are a helpful assistant"), ("human", "{input}")]
     )
-    model = ChatOpenAI(model="gpt-3.5-turbo")
+    model = ChatOpenAI(model="gpt-4o-mini")
     chain = prompt | model
 
-    response = chain.invoke({"input": "Tell me a joke about OpenTelemetry"})
+    # This prompt is long on purpose to trigger the cache (in order to reproduce the caching behavior when rewriting the cassette, run it twice)
+    prompt = """
+OpenTelemetry: A Deep Dive into the Standard for Observability
+OpenTelemetry is an open-source project under the Cloud Native Computing Foundation (CNCF) that provides a unified set of APIs, libraries, agents, and instrumentation to enable observability—specifically tracing, metrics, and logs—in distributed systems. It was formed through the merger of two earlier CNCF projects: OpenTracing and OpenCensus, both of which had overlapping goals but different implementations and user bases. OpenTelemetry combines the best of both, aiming to create a single, vendor-agnostic standard for telemetry data collection.
+
+Background and Motivation
+Modern software systems are increasingly composed of microservices, often deployed in cloud-native environments. These distributed architectures bring significant operational complexity: services may scale dynamically, instances may be short-lived, and failures may not be obvious. As a result, understanding how systems behave in production requires powerful observability tools.
+
+Historically, developers had to integrate separate tools for logging, metrics, and tracing, often using vendor-specific SDKs. This led to inconsistent data, vendor lock-in, and high maintenance costs. OpenTelemetry addresses this by offering a standardized, portable, and extensible approach to collecting telemetry data.
+
+Core Goals of OpenTelemetry
+Unified Observability Framework
+OpenTelemetry provides a single set of APIs and libraries to collect traces, metrics, and logs, promoting consistency across services and languages.
+Vendor-Neutral and Open Standards
+It enables instrumentation that is decoupled from any specific observability backend. This makes it easy to switch or support multiple backends like Prometheus, Jaeger, Zipkin, or commercial tools like Datadog, New Relic, and Honeycomb.
+Automatic and Manual Instrumentation
+OpenTelemetry supports both automatic instrumentation—where telemetry is collected with little to no code changes—and manual instrumentation for custom spans, metrics, and logs.
+Support for Multiple Languages
+The project supports most major programming languages including Java, Go, Python, JavaScript/TypeScript, .NET, C++, and more.
+Pluggable Architecture
+The design of OpenTelemetry is modular, allowing developers to plug in their exporters, processors, and samplers, and tailor the telemetry pipeline to suit their needs.
+Key Concepts and Components
+1. Traces and Spans
+Tracing is used to understand the flow of requests through a system. In OpenTelemetry:
+A trace represents the complete journey of a request across services.
+A span is a single operation within that journey (e.g., a database call, an HTTP request). Each span includes metadata like name, duration, parent-child relationships, and attributes.
+OpenTelemetry uses the W3C Trace Context standard to propagate context across service boundaries, enabling distributed tracing.
+2. Metrics
+Metrics capture numerical data about a system’s behavior, often for performance monitoring. OpenTelemetry supports:
+Counters: for counting occurrences of events.
+Gauges: for measuring values at a point in time.
+Histograms: for measuring distributions of values (e.g., request durations).
+Metrics are collected periodically and can be aggregated and exported efficiently.
+3. Logs (Logging Signals)
+OpenTelemetry is actively working to bring logging into the same ecosystem, creating semantic conventions and correlation mechanisms so logs can be linked with traces and metrics. The vision is to allow logs to be structured, contextualized, and used in conjunction with the other signals.
+4. Context Propagation
+The Context is a core abstraction that carries state between different parts of a distributed system. OpenTelemetry provides mechanisms to extract and inject context from and into messages (HTTP headers, gRPC metadata, etc.), ensuring trace continuity across services.
+The OpenTelemetry SDK Architecture
+The OpenTelemetry SDK is the implementation of the API and includes the full telemetry pipeline. Its key parts include:
+Instrumentation Libraries: Provide pre-built hooks for popular frameworks (e.g., Express.js, Spring, Django).
+API: Language-specific interfaces to create and manipulate telemetry data.
+SDK: Implements the core telemetry pipeline.
+Exporter: Sends data to a backend (e.g., OTLP, Jaeger, Prometheus).
+Processor: Processes telemetry data before export, such as batching or filtering.
+Sampler: Determines which traces or spans are collected.
+OTLP: OpenTelemetry Protocol
+OpenTelemetry defines its own protocol—OTLP (OpenTelemetry Protocol)—for exporting telemetry data. OTLP supports gRPC and HTTP/Protobuf and is designed for performance, extensibility, and interoperability.
+Collector
+The OpenTelemetry Collector is a key component that runs as an agent or gateway between applications and telemetry backends. It has no vendor dependencies and supports:
+Receivers: To receive telemetry data.
+Processors: To manipulate data (filtering, batching, transformation).
+Exporters: To send data to one or more observability backends.
+The Collector makes it easier to centralize telemetry processing, manage data pipelines, and enforce policies like sampling or redaction.
+Semantic Conventions
+OpenTelemetry defines semantic conventions for common operations and attributes. These conventions ensure consistency in telemetry data across libraries, vendors, and teams. For example, HTTP spans will have standardized attributes like http.method, http.status_code, http.route, etc.
+This standardization is critical for making dashboards, alerts, and queries portable and meaningful.
+Language Support
+OpenTelemetry has a broad ecosystem of language SDKs, each maturing at a slightly different pace. For instance:
+Java and Go: Among the most mature and production-ready.
+Python, .NET, JavaScript: Actively developed with good community support.
+C++, PHP, Ruby: Available but may have partial support or fewer features.
+Each language SDK supports the core signals (traces and metrics), with logs being integrated as work progresses.
+Adoption and Ecosystem
+OpenTelemetry is backed by all major cloud providers, observability vendors, and many large enterprises. It's quickly becoming the default instrumentation standard for open-source and commercial software. Projects and services like Kubernetes, Istio, Envoy, gRPC, and many frameworks are adopting OpenTelemetry natively.
+The CNCF landscape now includes OpenTelemetry as a graduated project (as of 2024), reflecting its stability, maturity, and widespread usage.
+Benefits for Developers and Operators
+Reduced Vendor Lock-in: Instrument once, export anywhere.
+Improved Developer Productivity: Consistent APIs and tooling.
+Better System Understanding: Correlate logs, traces, and metrics to resolve incidents faster.
+Cost Optimization: Fine-grained control over data volume and sampling.
+Compliance and Security: Centralized control over telemetry pipelines.
+Future Directions
+OpenTelemetry’s roadmap includes:
+Improved support for logs, including unified correlation with traces and metrics.
+Better semantic conventions and user-defined schemas.
+AI/ML for telemetry enrichment, anomaly detection, and intelligent sampling.
+Context-aware observability through automatic context propagation in async/streaming environments.
+Profiling signals integration in the long-term future.
+Conclusion
+OpenTelemetry is not just a tool or a library—it’s a movement toward a better way to understand and manage modern software systems. With deep community support, growing enterprise adoption, and a commitment to open standards, it is poised to be the foundation for observability for the next decade.
+Whether you are building a single microservice or running a complex mesh of applications across hybrid clouds, OpenTelemetry offers the instrumentation, tools, and ecosystem needed to bring clarity to your system's behavior—without the downsides of proprietary lock-in or fragmented tooling.
+
+
+    """
+    response = chain.invoke({"input": prompt})
 
     spans = exporter.get_finished_spans()
 
@@ -85,14 +169,14 @@ def test_openai(exporter):
     openai_span = next(span for span in spans if span.name == "ChatOpenAI.chat")
 
     assert openai_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
-    assert openai_span.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "gpt-3.5-turbo"
+    assert openai_span.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "gpt-4o-mini"
     assert (
         openai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
     ) == "You are a helpful assistant"
     assert (openai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"]) == "system"
     assert (
         openai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.content"]
-    ) == "Tell me a joke about OpenTelemetry"
+    ) == prompt
     assert (openai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.role"]) == "user"
     assert (
         openai_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"]
@@ -101,9 +185,11 @@ def test_openai(exporter):
     assert (
         openai_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.role"]
     ) == "assistant"
-    assert openai_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 24
-    assert openai_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS] == 26
-    assert openai_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 50
+
+    assert openai_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 1497
+    assert openai_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS] == 1037
+    assert openai_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 2534
+    assert openai_span.attributes[SpanAttributes.LLM_USAGE_CACHE_READ_INPUT_TOKENS] == 1408
 
 
 @pytest.mark.vcr
@@ -249,11 +335,11 @@ def test_anthropic(exporter):
             "model": "claude-2.1",
             "stop_reason": "end_turn",
             "stop_sequence": None,
-            "usage": {"input_tokens": 19, "output_tokens": 22},
+            "usage": {"cache_creation_input_tokens": None, "cache_read_input_tokens": None, "input_tokens": 19, "output_tokens": 22},
         },
         "tool_calls": [],
         "type": "ai",
-        "usage_metadata": {"input_tokens": 19, "output_tokens": 22, "total_tokens": 41},
+        "usage_metadata": {"input_token_details": {}, "input_tokens": 19, "output_tokens": 22, "total_tokens": 41},
     }
 
 
