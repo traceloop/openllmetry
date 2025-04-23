@@ -165,8 +165,6 @@ def _set_chat_request(
 def _set_chat_response(span: Span, response: LLMResult) -> None:
     if not should_send_prompts():
         return
-    
-    print(response)
 
     input_tokens = 0
     output_tokens = 0
