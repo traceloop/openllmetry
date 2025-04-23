@@ -46,16 +46,18 @@ def with_tracer_wrapper(func):
         return wrapper
     return _with_tracer
 
-def serialize(request, depth=0):
-    if depth > 2:
+def serialize(request, depth=0, max_depth=2):
+    if depth > max_depth:
         return {}
     depth += 1
+
     def is_serializable(request):
         try:
             json.dumps(request)
             return True
         except Exception:
             return False
+        
     if is_serializable(request):
         return json.dumps(request)
     else:
