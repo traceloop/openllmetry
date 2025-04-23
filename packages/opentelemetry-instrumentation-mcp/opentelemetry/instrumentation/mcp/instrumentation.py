@@ -76,12 +76,20 @@ def serialize(request, depth=0, max_depth=2):
 @with_tracer_wrapper
 def patch_mcp_server(operation_name, tracer, wrapped, instance, args, kwargs):
     method = args[1].method
-    carrier = {'traceparent': args[1].params.meta.traceparent}
-    ctx = TraceContextTextMapPropagator().extract(carrier=carrier)
+    carrier = None
+    ctx = None
+    if hasattr(args[1], 'params'):
+        if hasattr(args[1].params, 'meta'):
+            if hasattr(args[1].params.meta, 'traceparent'):
+                carrier = {'traceparent': args[1].params.meta.traceparent}
+    if carrier:
+        ctx = TraceContextTextMapPropagator().extract(carrier=carrier)
     with tracer.start_as_current_span(f"{method}", context=ctx) as span:
         span.set_attribute(SpanAttributes.MCP_METHOD_NAME, f"{method}")
-        span.set_attribute(SpanAttributes.MCP_REQUEST_ID, f"{args[1].id}")
-        span.set_attribute(SpanAttributes.MCP_SESSION_INIT_OPTIONS, f"{args[2]._init_options}")
+        if hasattr(args[1], 'id'):
+            span.set_attribute(SpanAttributes.MCP_REQUEST_ID, f"{args[1].id}")
+        if hasattr(args[2], '_init_options'):
+            span.set_attribute(SpanAttributes.MCP_SESSION_INIT_OPTIONS, f"{args[2]._init_options}")
         span.set_attribute(SpanAttributes.MCP_REQUEST_ARGUMENT,f"{serialize(args[1])}")
         try:
             result = wrapped(*args, **kwargs)
@@ -94,15 +102,20 @@ def patch_mcp_server(operation_name, tracer, wrapped, instance, args, kwargs):
             raise
 
 @with_tracer_wrapper
-def patch_mcp_client(operation_name, tracer, wrapped, instance, args, kwargs):    
-    meta = {}
-    method = args[0].root.method
-    params = args[0].root.params
+def patch_mcp_client(operation_name, tracer, wrapped, instance, args, kwargs):
+    meta = None
+    method = None
+    params = None
+    if hasattr(args[0].root, 'method'):
+        method = args[0].root.method
+    if hasattr(args[0].root, 'params'):
+        params = args[0].root.params
     if params is None:
         args[0].root.params = mcp.types.RequestParams()
         meta = {}
     else:
-        meta = args[0].root.params.meta
+        if hasattr(args[0].root.params, 'meta'):
+            meta = args[0].root.params.meta
         if meta is None:
             meta = {}
 
