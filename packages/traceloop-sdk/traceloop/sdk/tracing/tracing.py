@@ -1018,7 +1018,8 @@ def init_crewai_instrumentor():
         logging.error(f"Error initializing CrewAI instrumentor: {e}")
         Telemetry().log_exception(e)
         return False
-    
+
+
 def init_mcp_instrumentor():
     try:
         if is_package_installed("mcp"):

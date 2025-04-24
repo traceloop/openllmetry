@@ -51,6 +51,8 @@ def with_tracer_wrapper(func):
 
 
 def serialize(request, depth=0, max_depth=2):
+    """Serialize input args to MCP server into JSON. The function accepts input object and converts into JSON keeping depth in mind to prevent creating large nested JSON"""
+    
     if depth > max_depth:
         return {}
     depth += 1
