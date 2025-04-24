@@ -16,30 +16,30 @@ def langchain_app():
         SystemMessage(content="You are a funny sarcastic nerd."),
         HumanMessage(content="Tell me a joke about {subject}.")
     ])
-    
+
     # Get the joke
     subject = "OpenTelemetry"
     joke_chain = joke_prompt | chat | StrOutputParser()
     joke = joke_chain.invoke({"subject": subject})
-    
+
     print(f"Generated joke: {joke}")
-    
+
     # Step 2: Translate the joke to Sindarin
     translation_prompt = ChatPromptTemplate.from_messages([
         SystemMessage(content="You are an Elf."),
         HumanMessage(content=f"Translate this joke into Sindarin language:\n{joke}")
     ])
-    
+
     # Get the translation
     translation_chain = translation_prompt | chat | StrOutputParser()
     translation = translation_chain.invoke({})
-    
+
     result = {
         "subject": subject,
         "joke": joke,
         "text": translation
     }
-    
+
     print(result)
 
 

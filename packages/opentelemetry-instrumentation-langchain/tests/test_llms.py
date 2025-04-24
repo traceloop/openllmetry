@@ -72,6 +72,7 @@ def test_openai(exporter):
     model = ChatOpenAI(model="gpt-4o-mini")
     chain = prompt | model
 
+    # flake8: noqa: E501
     # This prompt is long on purpose to trigger the cache (in order to reproduce the caching behavior when rewriting the cassette, run it twice)
     prompt = """
 OpenTelemetry: A Deep Dive into the Standard for Observability
