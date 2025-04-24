@@ -8,12 +8,12 @@ show_missing = true
 
 [tool.poetry]
 name = "traceloop-sdk"
-version = "0.39.0"
+version = "0.39.2"
 description = "Traceloop Software Development Kit (SDK) for Python"
 authors = [
-  "Gal Kleinman <gal@traceloop.com>",
-  "Nir Gazit <nir@traceloop.com>",
-  "Tomer Friedman <tomer@traceloop.com>",
+    "Gal Kleinman <gal@traceloop.com>",
+    "Nir Gazit <nir@traceloop.com>",
+    "Tomer Friedman <tomer@traceloop.com>",
 ]
 repository = "https://github.com/traceloop/openllmetry"
 documentation = "https://traceloop.com/docs/openllmetry"
@@ -62,7 +62,7 @@ opentelemetry-instrumentation-alephalpha = { path = "../opentelemetry-instrument
 opentelemetry-instrumentation-marqo = { path = "../opentelemetry-instrumentation-marqo", develop = true }
 opentelemetry-instrumentation-groq = { path = "../opentelemetry-instrumentation-groq", develop = true }
 colorama = "^0.4.6"
-tenacity = "^8.2.3"
+tenacity = ">=8.2.3, <10.0"
 pydantic = ">=1"
 jinja2 = "^3.1.5"
 deprecated = "^1.2.14"
