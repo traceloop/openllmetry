@@ -1,36 +1,36 @@
 import logging
 
 from opentelemetry import context as context_api
-
-from opentelemetry.semconv_ai import (
-    SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
-    SpanAttributes,
-    LLMRequestTypeValues,
-)
-
-from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
-from opentelemetry.instrumentation.openai.utils import _with_tracer_wrapper, dont_throw
 from opentelemetry.instrumentation.openai.shared import (
     _set_client_attributes,
-    _set_request_attributes,
-    _set_span_attribute,
     _set_functions_attributes,
+    _set_request_attributes,
     _set_response_attributes,
-    is_streaming_response,
-    should_send_prompts,
-    model_as_dict,
-    should_record_stream_token_usage,
-    get_token_count_from_string,
+    _set_span_attribute,
     _set_span_stream_usage,
+    emit_choice_event,
+    emit_input_event,
+    get_token_count_from_string,
+    is_streaming_response,
+    model_as_dict,
     propagate_trace_context,
+    should_record_stream_token_usage,
+    should_send_prompts,
 )
-
-from opentelemetry.instrumentation.openai.utils import is_openai_v1
-
+from opentelemetry.instrumentation.openai.shared.config import Config
+from opentelemetry.instrumentation.openai.utils import (
+    _with_tracer_wrapper,
+    dont_throw,
+    is_openai_v1,
+)
+from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
+from opentelemetry.semconv_ai import (
+    SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
+    LLMRequestTypeValues,
+    SpanAttributes,
+)
 from opentelemetry.trace import SpanKind
 from opentelemetry.trace.status import Status, StatusCode
-
-from opentelemetry.instrumentation.openai.shared.config import Config
 
 SPAN_NAME = "openai.completion"
 LLM_REQUEST_TYPE = LLMRequestTypeValues.COMPLETION
@@ -52,7 +52,15 @@ def completion_wrapper(tracer, wrapped, instance, args, kwargs):
         attributes={SpanAttributes.LLM_REQUEST_TYPE: LLM_REQUEST_TYPE.value},
     )
 
+    if not Config.use_legacy_attributes and Config.event_logger is not None:
+        prompt = kwargs.get("prompt")
+        if isinstance(prompt, list):
+            for p in prompt:
+                emit_input_event({"content": p}, "user")
+        elif isinstance(prompt, str):
+            emit_input_event({"content": prompt}, "user")
     _handle_request(span, kwargs, instance)
+
     try:
         response = wrapped(*args, **kwargs)
     except Exception as e:
@@ -64,6 +72,15 @@ def completion_wrapper(tracer, wrapped, instance, args, kwargs):
         # span will be closed after the generator is done
         return _build_from_streaming_response(span, kwargs, response)
     else:
+        if not Config.use_legacy_attributes and Config.event_logger is not None:
+            for i, choice in enumerate(response.choices):
+                has_message = choice.text is not None
+                has_finish_reason = choice.finish_reason is not None
+
+                content = choice.text if has_message else None
+                finish_reason = choice.finish_reason if has_finish_reason else "unknown"
+
+                emit_choice_event(choice.index, content, "assistant", finish_reason)
         _handle_response(response, span)
 
     span.end()
@@ -83,6 +100,8 @@ async def acompletion_wrapper(tracer, wrapped, instance, args, kwargs):
         attributes={SpanAttributes.LLM_REQUEST_TYPE: LLM_REQUEST_TYPE.value},
     )
 
+    if not Config.use_legacy_attributes and Config.event_logger is not None:
+        emit_input_event({"content": kwargs.get("prompt")}, "user")
     _handle_request(span, kwargs, instance)
     try:
         response = await wrapped(*args, **kwargs)
@@ -95,6 +114,15 @@ async def acompletion_wrapper(tracer, wrapped, instance, args, kwargs):
         # span will be closed after the generator is done
         return _abuild_from_streaming_response(span, kwargs, response)
     else:
+        if not Config.use_legacy_attributes and Config.event_logger is not None:
+            for i, choice in enumerate(response.choices):
+                has_message = choice.text is not None
+                has_finish_reason = choice.finish_reason is not None
+
+                content = choice.text if has_message else None
+                finish_reason = choice.finish_reason if has_finish_reason else "unknown"
+
+                emit_choice_event(choice.index, content, "assistant", finish_reason)
         _handle_response(response, span)
 
     span.end()
@@ -165,6 +193,12 @@ def _build_from_streaming_response(span, request_kwargs, response):
         _set_completions(span, complete_response.get("choices"))
 
     span.set_status(Status(StatusCode.OK))
+    if not Config.use_legacy_attributes and Config.event_logger is not None:
+        for i, choice in enumerate(complete_response["choices"]):
+            content = choice.get("text")
+            finish_reason = choice.get("finish_reason", "unknown")
+            index = choice.get("index", i)
+            emit_choice_event(index, content, "assistant", finish_reason)
     span.end()
 
 
@@ -183,6 +217,12 @@ async def _abuild_from_streaming_response(span, request_kwargs, response):
         _set_completions(span, complete_response.get("choices"))
 
     span.set_status(Status(StatusCode.OK))
+    if not Config.use_legacy_attributes and Config.event_logger is not None:
+        for i, choice in enumerate(complete_response["choices"]):
+            content = choice.get("text")
+            finish_reason = choice.get("finish_reason", "unknown")
+            index = choice.get("index", i)
+            emit_choice_event(index, content, "assistant", finish_reason)
     span.end()
 
 

@@ -1,40 +1,41 @@
 import logging
 import time
+from collections.abc import Iterable
 
 from opentelemetry import context as context_api
+from opentelemetry.instrumentation.openai.shared import (
+    OPENAI_LLM_USAGE_TOKEN_TYPES,
+    _get_openai_base_url,
+    _set_client_attributes,
+    _set_request_attributes,
+    _set_response_attributes,
+    _set_span_attribute,
+    _token_type,
+    emit_choice_event,
+    emit_input_event,
+    metric_shared_attributes,
+    model_as_dict,
+    propagate_trace_context,
+    should_send_prompts,
+)
+from opentelemetry.instrumentation.openai.shared.config import Config
+from opentelemetry.instrumentation.openai.utils import (
+    _with_embeddings_telemetry_wrapper,
+    dont_throw,
+    is_openai_v1,
+    start_as_current_span_async,
+)
+from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
 from opentelemetry.metrics import Counter, Histogram
 from opentelemetry.semconv_ai import (
     SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
-    SpanAttributes,
     LLMRequestTypeValues,
+    SpanAttributes,
 )
+from opentelemetry.trace import SpanKind, Status, StatusCode
 
-from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
-from opentelemetry.instrumentation.openai.utils import (
-    dont_throw,
-    start_as_current_span_async,
-    _with_embeddings_telemetry_wrapper,
-)
-from opentelemetry.instrumentation.openai.shared import (
-    metric_shared_attributes,
-    _set_client_attributes,
-    _set_request_attributes,
-    _set_span_attribute,
-    _set_response_attributes,
-    _token_type,
-    should_send_prompts,
-    model_as_dict,
-    _get_openai_base_url,
-    OPENAI_LLM_USAGE_TOKEN_TYPES,
-    propagate_trace_context,
-)
-
-from opentelemetry.instrumentation.openai.shared.config import Config
-
-from opentelemetry.instrumentation.openai.utils import is_openai_v1
-
-from opentelemetry.trace import SpanKind
-from opentelemetry.trace import Status, StatusCode
+from openai._legacy_response import LegacyAPIResponse
+from openai.types.create_embedding_response import CreateEmbeddingResponse
 
 SPAN_NAME = "openai.embeddings"
 LLM_REQUEST_TYPE = LLMRequestTypeValues.EMBEDDING
@@ -64,6 +65,13 @@ def embeddings_wrapper(
         kind=SpanKind.CLIENT,
         attributes={SpanAttributes.LLM_REQUEST_TYPE: LLM_REQUEST_TYPE.value},
     ) as span:
+        if not Config.use_legacy_attributes and Config.event_logger is not None:
+            embeddings_input = kwargs.get("input")
+            if isinstance(embeddings_input, str):
+                emit_input_event({"content": embeddings_input}, "user")
+            elif isinstance(embeddings_input, Iterable):
+                for i in embeddings_input:
+                    emit_input_event({"content": i}, "user")
         _handle_request(span, kwargs, instance)
 
         try:
@@ -101,6 +109,18 @@ def embeddings_wrapper(
             duration,
         )
 
+        if not Config.use_legacy_attributes and Config.event_logger is not None:
+            if isinstance(response, CreateEmbeddingResponse):
+                for embedding in response.data:
+                    emit_choice_event(
+                        embedding.index, embedding.embedding, "assistant", "unknown"
+                    )
+            elif isinstance(response, LegacyAPIResponse):
+                parsed_response = response.parse()
+                for embedding in parsed_response.data:
+                    emit_choice_event(
+                        embedding.index, embedding.embedding, "assistant", "unknown"
+                    )
         return response
 
 
@@ -127,6 +147,13 @@ async def aembeddings_wrapper(
         kind=SpanKind.CLIENT,
         attributes={SpanAttributes.LLM_REQUEST_TYPE: LLM_REQUEST_TYPE.value},
     ) as span:
+        if not Config.use_legacy_attributes and Config.event_logger is not None:
+            embeddings_input = kwargs.get("input")
+            if isinstance(embeddings_input, str):
+                emit_input_event({"content": embeddings_input}, "user")
+            elif isinstance(embeddings_input, Iterable):
+                for i in embeddings_input:
+                    emit_input_event({"content": i}, "user")
         _handle_request(span, kwargs, instance)
         try:
             # record time for duration
@@ -161,7 +188,18 @@ async def aembeddings_wrapper(
             duration_histogram,
             duration,
         )
-
+        if not Config.use_legacy_attributes and Config.event_logger is not None:
+            if isinstance(response, CreateEmbeddingResponse):
+                for embedding in response.data:
+                    emit_choice_event(
+                        embedding.index, embedding.embedding, "assistant", "unknown"
+                    )
+            elif isinstance(response, LegacyAPIResponse):
+                parsed_response = response.parse()
+                for embedding in parsed_response.data:
+                    emit_choice_event(
+                        embedding.index, embedding.embedding, "assistant", "unknown"
+                    )
         return response
 
 

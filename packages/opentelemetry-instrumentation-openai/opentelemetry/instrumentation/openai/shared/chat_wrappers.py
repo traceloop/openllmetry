@@ -2,47 +2,46 @@ import copy
 import json
 import logging
 import time
-from opentelemetry.instrumentation.openai.shared.config import Config
-from wrapt import ObjectProxy
-
 
 from opentelemetry import context as context_api
-from opentelemetry.metrics import Counter, Histogram
-from opentelemetry.semconv_ai import (
-    SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
-    SpanAttributes,
-    LLMRequestTypeValues,
+from opentelemetry.instrumentation.openai.shared import (
+    OPENAI_LLM_USAGE_TOKEN_TYPES,
+    _get_openai_base_url,
+    _set_client_attributes,
+    _set_functions_attributes,
+    _set_request_attributes,
+    _set_response_attributes,
+    _set_span_attribute,
+    _set_span_stream_usage,
+    _token_type,
+    emit_choice_event,
+    emit_input_event,
+    get_token_count_from_string,
+    is_streaming_response,
+    metric_shared_attributes,
+    model_as_dict,
+    propagate_trace_context,
+    set_tools_attributes,
+    should_record_stream_token_usage,
+    should_send_prompts,
 )
-
-from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
+from opentelemetry.instrumentation.openai.shared.config import Config
 from opentelemetry.instrumentation.openai.utils import (
     _with_chat_telemetry_wrapper,
     dont_throw,
+    is_openai_v1,
     run_async,
 )
-from opentelemetry.instrumentation.openai.shared import (
-    metric_shared_attributes,
-    _set_client_attributes,
-    _set_request_attributes,
-    _set_span_attribute,
-    _set_functions_attributes,
-    _token_type,
-    set_tools_attributes,
-    _set_response_attributes,
-    is_streaming_response,
-    should_send_prompts,
-    model_as_dict,
-    _get_openai_base_url,
-    OPENAI_LLM_USAGE_TOKEN_TYPES,
-    should_record_stream_token_usage,
-    get_token_count_from_string,
-    _set_span_stream_usage,
-    propagate_trace_context,
+from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
+from opentelemetry.metrics import Counter, Histogram
+from opentelemetry.semconv_ai import (
+    SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
+    LLMRequestTypeValues,
+    SpanAttributes,
 )
 from opentelemetry.trace import SpanKind, Tracer
 from opentelemetry.trace.status import Status, StatusCode
-
-from opentelemetry.instrumentation.openai.utils import is_openai_v1
+from wrapt import ObjectProxy
 
 SPAN_NAME = "openai.chat"
 PROMPT_FILTER_KEY = "prompt_filter_results"
@@ -78,6 +77,14 @@ def chat_wrapper(
         kind=SpanKind.CLIENT,
         attributes={SpanAttributes.LLM_REQUEST_TYPE: LLM_REQUEST_TYPE.value},
     )
+
+    if not Config.use_legacy_attributes and Config.event_logger is not None:
+        for message in kwargs.get("messages", []):
+            emit_input_event(
+                {"content": message.get("content")},
+                message.get("role", "unknown"),
+                message.get("tool_calls", None),
+            )
 
     run_async(_handle_request(span, kwargs, instance))
 
@@ -143,6 +150,15 @@ def chat_wrapper(
         duration_histogram,
         duration,
     )
+
+    if (
+        not Config.use_legacy_attributes
+        and Config.event_logger is not None
+        and response.choices is not None
+    ):
+        for choice in response.choices:
+            _emit_choice_event(choice)
+
     span.end()
 
     return response
@@ -172,6 +188,13 @@ async def achat_wrapper(
         kind=SpanKind.CLIENT,
         attributes={SpanAttributes.LLM_REQUEST_TYPE: LLM_REQUEST_TYPE.value},
     )
+
+    if not Config.use_legacy_attributes and Config.event_logger is not None:
+        for message in kwargs.get("messages", []):
+            emit_input_event(
+                {"content": message.get("content")}, message.get("role", "unknown")
+            )
+
     await _handle_request(span, kwargs, instance)
 
     try:
@@ -238,9 +261,39 @@ async def achat_wrapper(
         duration_histogram,
         duration,
     )
+
+    if (
+        not Config.use_legacy_attributes
+        and Config.event_logger is not None
+        and response.choices is not None
+    ):
+        for choice in response.choices:
+            _emit_choice_event(choice)
+
     span.end()
 
     return response
+
+
+def _emit_choice_event(choice):
+    has_message = choice.message is not None
+    has_finish_reason = choice.finish_reason is not None
+    has_tool_calls = has_message and choice.message.tool_calls is not None
+    has_function_call = has_message and choice.message.function_call is not None
+
+    content = choice.message.content if has_message else None
+    role = choice.message.role if has_message else "unknown"
+    finish_reason = choice.finish_reason if has_finish_reason else "unknown"
+
+    if has_tool_calls and has_function_call:
+        tool_calls = choice.message.tool_calls + [choice.message.function_call]
+    elif has_tool_calls:
+        tool_calls = choice.message.tool_calls
+    elif has_function_call:
+        tool_calls = [choice.message.function_call]
+    else:
+        tool_calls = None
+    emit_choice_event(choice.index, content, role, finish_reason, tool_calls)
 
 
 @dont_throw
@@ -681,6 +734,9 @@ class ChatStream(ObjectProxy):
                 attributes=self._shared_attributes(),
             )
 
+        if not Config.use_legacy_attributes and Config.event_logger is not None:
+            self._emit_choice_events()
+
         _set_response_attributes(self._span, self._complete_response)
 
         if should_send_prompts():
@@ -688,6 +744,10 @@ class ChatStream(ObjectProxy):
 
         self._span.set_status(Status(StatusCode.OK))
         self._span.end()
+
+    def _emit_choice_events(self):
+        for choice in self._complete_response.get("choices", []):
+            _emit_choice_event_dict(choice)
 
 
 # Backward compatibility with OpenAI v0
@@ -750,6 +810,10 @@ def _build_from_streaming_response(
         duration_histogram.record(duration, attributes=shared_attributes)
     if streaming_time_to_generate and time_of_first_token:
         streaming_time_to_generate.record(time.time() - time_of_first_token)
+
+    if not Config.use_legacy_attributes and Config.event_logger is not None:
+        for choice in complete_response.get("choices", []):
+            _emit_choice_event_dict(choice)
 
     _set_response_attributes(span, complete_response)
 
@@ -818,6 +882,10 @@ async def _abuild_from_streaming_response(
     if streaming_time_to_generate and time_of_first_token:
         streaming_time_to_generate.record(time.time() - time_of_first_token)
 
+    if not Config.use_legacy_attributes and Config.event_logger is not None:
+        for choice in complete_response.get("choices", []):
+            _emit_choice_event_dict(choice)
+
     _set_response_attributes(span, complete_response)
 
     if should_send_prompts():
@@ -825,6 +893,33 @@ async def _abuild_from_streaming_response(
 
     span.set_status(Status(StatusCode.OK))
     span.end()
+
+
+def _emit_choice_event_dict(choice):
+    message = choice.get("message")
+    has_message = message is not None
+    has_finish_reason = choice.get("finish_reason") is not None
+    has_tool_calls = has_message and message.get("tool_calls") is not None
+    has_function_call = has_message and message.get("function_call") is not None
+
+    content = choice.get("message").get("content", "") if has_message else None
+    role = choice.get("message").get("role") if has_message else "unknown"
+    finish_reason = choice.get("finish_reason") if has_finish_reason else "unknown"
+
+    if has_tool_calls and has_function_call:
+        tool_calls = message.get("tool_calls") + [message.get("function_call")]
+    elif has_tool_calls:
+        tool_calls = message.get("tool_calls")
+    elif has_function_call:
+        tool_calls = [message.get("function_call")]
+    else:
+        tool_calls = None
+
+    if tool_calls is not None:
+        for tool_call in tool_calls:
+            tool_call["type"] = "function"
+
+    emit_choice_event(choice.get("index"), content, role, finish_reason, tool_calls)
 
 
 def _accumulate_stream_items(item, complete_response):

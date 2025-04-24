@@ -1,15 +1,20 @@
 import asyncio
-from importlib.metadata import version
-from contextlib import asynccontextmanager
 import logging
 import os
 import threading
 import traceback
+from contextlib import asynccontextmanager
+from importlib.metadata import version
 
-import openai
 from opentelemetry.instrumentation.openai.shared.config import Config
 
+import openai
+
 _OPENAI_VERSION = version("openai")
+
+OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT = (
+    "OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT"
+)
 
 
 def is_openai_v1():
@@ -34,7 +39,12 @@ def _with_image_gen_metric_wrapper(func):
     def _with_metric(duration_histogram, exception_counter):
         def wrapper(wrapped, instance, args, kwargs):
             return func(
-                duration_histogram, exception_counter, wrapped, instance, args, kwargs
+                duration_histogram,
+                exception_counter,
+                wrapped,
+                instance,
+                args,
+                kwargs,
             )
 
         return wrapper
@@ -157,3 +167,11 @@ def run_async(method):
         thread.join()
     else:
         asyncio.run(method)
+
+
+def is_content_enabled() -> bool:
+    capture_content = os.environ.get(
+        OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT, "false"
+    )
+
+    return capture_content.lower() == "true"
