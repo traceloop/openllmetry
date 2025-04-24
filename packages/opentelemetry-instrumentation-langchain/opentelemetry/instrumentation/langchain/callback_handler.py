@@ -169,6 +169,7 @@ def _set_chat_response(span: Span, response: LLMResult) -> None:
     input_tokens = 0
     output_tokens = 0
     total_tokens = 0
+    cache_read_tokens = 0
 
     i = 0
     for generations in response.generations:
@@ -189,6 +190,10 @@ def _set_chat_response(span: Span, response: LLMResult) -> None:
                     or 0
                 )
                 total_tokens = input_tokens + output_tokens
+
+                if generation.message.usage_metadata.get("input_token_details"):
+                    input_token_details = generation.message.usage_metadata.get("input_token_details", {})
+                    cache_read_tokens += input_token_details.get("cache_read", 0)
 
             prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{i}"
             if hasattr(generation, "text") and generation.text != "":
@@ -253,7 +258,7 @@ def _set_chat_response(span: Span, response: LLMResult) -> None:
                         )
             i += 1
 
-    if input_tokens > 0 or output_tokens > 0 or total_tokens > 0:
+    if input_tokens > 0 or output_tokens > 0 or total_tokens > 0 or cache_read_tokens > 0:
         span.set_attribute(
             SpanAttributes.LLM_USAGE_PROMPT_TOKENS,
             input_tokens,
@@ -265,6 +270,10 @@ def _set_chat_response(span: Span, response: LLMResult) -> None:
         span.set_attribute(
             SpanAttributes.LLM_USAGE_TOTAL_TOKENS,
             total_tokens,
+        )
+        span.set_attribute(
+            SpanAttributes.LLM_USAGE_CACHE_READ_INPUT_TOKENS,
+            cache_read_tokens,
         )
 
 
