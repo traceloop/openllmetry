@@ -4,7 +4,7 @@ OpenTelemetry MCP Instrumentation
     <img src="https://badge.fury.io/py/opentelemetry-instrumentation-mcp.svg">
 </a>
 
-This library allows tracing agentic workflows implemented with MCP framework [mcp python sdk](https://github.com/modelcontextprotocol/python-sdk).
+This library allows tracing of agentic workflows implemented with MCP framework [mcp python sdk](https://github.com/modelcontextprotocol/python-sdk).
 
 ## Installation
 

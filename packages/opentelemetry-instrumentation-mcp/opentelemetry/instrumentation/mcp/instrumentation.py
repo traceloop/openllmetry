@@ -4,7 +4,7 @@ import json
 
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.trace import get_tracer
-from wrapt import wrap_function_wrapper as _W
+from wrapt import wrap_function_wrapper
 from opentelemetry.trace.status import Status, StatusCode
 from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
 from opentelemetry.trace.propagation import set_span_in_context
@@ -23,12 +23,12 @@ class McpInstrumentor(BaseInstrumentor):
         tracer_provider = kwargs.get("tracer_provider")
         tracer = get_tracer(__name__, __version__, tracer_provider)
 
-        _W(
+        wrap_function_wrapper(
             "mcp.server.lowlevel.server",
             "Server._handle_request",
             patch_mcp_server("Server._handle_request", tracer),
         )
-        _W(
+        wrap_function_wrapper(
             "mcp.shared.session",
             "BaseSession.send_request",
             patch_mcp_client("BaseSession.send_request", tracer),
@@ -51,8 +51,10 @@ def with_tracer_wrapper(func):
 
 
 def serialize(request, depth=0, max_depth=2):
-    """Serialize input args to MCP server into JSON. The function accepts input object and converts into JSON keeping depth in mind to prevent creating large nested JSON"""
-    
+    """Serialize input args to MCP server into JSON.
+    The function accepts input object and converts into JSON
+    keeping depth in mind to prevent creating large nested JSON"""
+
     if depth > max_depth:
         return {}
     depth += 1
@@ -91,21 +93,26 @@ def patch_mcp_server(operation_name, tracer, wrapped, instance, args, kwargs):
     method = args[1].method
     carrier = None
     ctx = None
-    if hasattr(args[1], "params"):
-        if hasattr(args[1].params, "meta"):
-            if hasattr(args[1].params.meta, "traceparent"):
-                carrier = {"traceparent": args[1].params.meta.traceparent}
+    if len(args) > 1:
+        if hasattr(args[1], "params"):
+            if hasattr(args[1].params, "meta"):
+                if hasattr(args[1].params.meta, "traceparent"):
+                    carrier = {"traceparent": args[1].params.meta.traceparent}
     if carrier:
         ctx = TraceContextTextMapPropagator().extract(carrier=carrier)
     with tracer.start_as_current_span(f"{method}", context=ctx) as span:
         span.set_attribute(SpanAttributes.MCP_METHOD_NAME, f"{method}")
-        if hasattr(args[1], "id"):
-            span.set_attribute(SpanAttributes.MCP_REQUEST_ID, f"{args[1].id}")
-        if hasattr(args[2], "_init_options"):
-            span.set_attribute(
-                SpanAttributes.MCP_SESSION_INIT_OPTIONS, f"{args[2]._init_options}"
-            )
-        span.set_attribute(SpanAttributes.MCP_REQUEST_ARGUMENT, f"{serialize(args[1])}")
+        if len(args) > 1:
+            if hasattr(args[1], "id"):
+                span.set_attribute(SpanAttributes.MCP_REQUEST_ID, f"{args[1].id}")
+                span.set_attribute(
+                    SpanAttributes.MCP_REQUEST_ARGUMENT, f"{serialize(args[1])}"
+                )
+        if len(args) > 2:
+            if hasattr(args[2], "_init_options"):
+                span.set_attribute(
+                    SpanAttributes.MCP_SESSION_INIT_OPTIONS, f"{args[2]._init_options}"
+                )
         try:
             result = wrapped(*args, **kwargs)
             if result:
@@ -119,6 +126,8 @@ def patch_mcp_server(operation_name, tracer, wrapped, instance, args, kwargs):
 
 @with_tracer_wrapper
 def patch_mcp_client(operation_name, tracer, wrapped, instance, args, kwargs):
+    if len(args) < 1:
+        return
     meta = None
     method = None
     params = None
