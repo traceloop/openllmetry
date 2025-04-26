@@ -1,3 +1,9 @@
+## v0.39.3 (2025-04-24)
+
+### Fix
+
+- **langchain**: support cached tokens attributes logging (#2830)
+
 ## v0.39.2 (2025-04-18)
 
 ### Fix
