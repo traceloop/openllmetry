@@ -389,11 +389,7 @@ def emit_choice_event(
     finish_reason: str = "unknown",
     tool_calls: Optional[List[dict]] = None,
 ):
-    body = {
-        "index": index,
-        "finish_reason": finish_reason,
-        "message": {},
-    }
+    body = {"index": index, "finish_reason": finish_reason, "message": {}}
 
     if tool_calls:
         body["tool_calls"] = []
