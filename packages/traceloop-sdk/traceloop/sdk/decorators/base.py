@@ -1,10 +1,18 @@
 import json
 from functools import wraps
 import os
-import types
-from typing import Optional
+from typing import (
+    Optional,
+    TypeVar,
+    Callable,
+    Any,
+    cast,
+    ParamSpec,
+    Awaitable,
+)
 import inspect
 import warnings
+import types
 
 from opentelemetry import trace
 from opentelemetry.trace.status import Status, StatusCode
@@ -21,10 +29,16 @@ from traceloop.sdk.tracing.tracing import (
 from traceloop.sdk.utils import camel_to_snake
 from traceloop.sdk.utils.json_encoder import JSONEncoder
 
+P = ParamSpec("P")
+
+R = TypeVar("R")
+F = TypeVar("F", bound=Callable[P, R | Awaitable[R]])
+
 
 def _is_json_size_valid(json_str: str) -> bool:
     """Check if JSON string size is less than 1MB"""
     return len(json_str) < 1_000_000
+
 
 # Async Decorators - Deprecated
 
@@ -38,7 +52,7 @@ def aentity_method(
         "DeprecationWarning: The @aentity_method function will be removed in a future version. "
         "Please migrate to @entity_method for both sync and async operations.",
         DeprecationWarning,
-        stacklevel=2
+        stacklevel=2,
     )
 
     return entity_method(
@@ -58,7 +72,7 @@ def aentity_class(
         "DeprecationWarning: The @aentity_class function will be removed in a future version. "
         "Please migrate to @entity_class for both sync and async operations.",
         DeprecationWarning,
-        stacklevel=2
+        stacklevel=2,
     )
 
     return entity_class(
@@ -73,17 +87,17 @@ def _handle_generator(span, res):
     # for some reason the SPAN_KEY is not being set in the context of the generator, so we re-set it
     context_api.attach(trace.set_span_in_context(span))
     try:
-        yield from res
+        for item in res:
+            yield item
     except Exception as e:
         span.set_status(Status(StatusCode.ERROR, str(e)))
         span.record_exception(e)
         raise
     finally:
         span.end()
-
-    # Note: we don't detach the context here as this fails in some situations
-    # https://github.com/open-telemetry/opentelemetry-python/issues/2606
-    # This is not a problem since the context will be detached automatically during garbage collection
+        # Note: we don't detach the context here as this fails in some situations
+        # https://github.com/open-telemetry/opentelemetry-python/issues/2606
+        # This is not a problem since the context will be detached automatically during garbage collection
 
 
 async def _ahandle_generator(span, ctx_token, res):
@@ -134,9 +148,7 @@ def _setup_span(entity_name, tlp_span_kind, version):
             entity_path = get_chained_entity_path(entity_name)
             set_entity_path(entity_path)
 
-        span.set_attribute(
-            SpanAttributes.TRACELOOP_SPAN_KIND, tlp_span_kind.value
-        )
+        span.set_attribute(SpanAttributes.TRACELOOP_SPAN_KIND, tlp_span_kind.value)
         span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, entity_name)
         if version:
             span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_VERSION, version)
@@ -148,7 +160,9 @@ def _handle_span_input(span, args, kwargs, cls=None):
     """Handles entity input logging in JSON for both sync and async functions"""
     try:
         if _should_send_prompts():
-            json_input = json.dumps({"args": args, "kwargs": kwargs},  **({'cls': cls} if cls else {}))
+            json_input = json.dumps(
+                {"args": args, "kwargs": kwargs}, **({"cls": cls} if cls else {})
+            )
             if _is_json_size_valid(json_input):
                 span.set_attribute(
                     SpanAttributes.TRACELOOP_ENTITY_INPUT,
@@ -162,7 +176,7 @@ def _handle_span_output(span, res, cls=None):
     """Handles entity output logging in JSON for both sync and async functions"""
     try:
         if _should_send_prompts():
-            json_output = json.dumps(res,  **({'cls': cls} if cls else {}))
+            json_output = json.dumps(res, **({"cls": cls} if cls else {}))
             if _is_json_size_valid(json_output):
                 span.set_attribute(
                     SpanAttributes.TRACELOOP_ENTITY_OUTPUT,
@@ -182,34 +196,41 @@ def entity_method(
     name: Optional[str] = None,
     version: Optional[int] = None,
     tlp_span_kind: Optional[TraceloopSpanKindValues] = TraceloopSpanKindValues.TASK,
-):
-    def decorate(fn):
+) -> Callable[[F], F]:
+    def decorate(fn: F) -> F:
         is_async = _is_async_method(fn)
         entity_name = name or fn.__qualname__
         if is_async:
             if inspect.isasyncgenfunction(fn):
+
                 @wraps(fn)
-                async def async_gen_wrap(*args, **kwargs):
+                async def async_gen_wrap(*args: Any, **kwargs: Any) -> Any:
                     if not TracerWrapper.verify_initialized():
                         async for item in fn(*args, **kwargs):
                             yield item
                         return
 
-                    span, ctx, ctx_token = _setup_span(entity_name, tlp_span_kind, version)
+                    span, ctx, ctx_token = _setup_span(
+                        entity_name, tlp_span_kind, version
+                    )
                     _handle_span_input(span, args, kwargs, cls=JSONEncoder)
-
-                    async for item in _ahandle_generator(span, ctx_token, fn(*args, **kwargs)):
+                    async for item in _ahandle_generator(
+                        span, ctx_token, fn(*args, **kwargs)
+                    ):
                         yield item
-                return async_gen_wrap
+
+                return cast(F, async_gen_wrap)
             else:
+
                 @wraps(fn)
-                async def async_wrap(*args, **kwargs):
+                async def async_wrap(*args: Any, **kwargs: Any) -> Any:
                     if not TracerWrapper.verify_initialized():
                         return await fn(*args, **kwargs)
 
-                    span, ctx, ctx_token = _setup_span(entity_name, tlp_span_kind, version)
+                    span, ctx, ctx_token = _setup_span(
+                        entity_name, tlp_span_kind, version
+                    )
                     _handle_span_input(span, args, kwargs, cls=JSONEncoder)
-
                     try:
                         res = await fn(*args, **kwargs)
                         _handle_span_output(span, res, cls=JSONEncoder)
@@ -220,16 +241,16 @@ def entity_method(
                         raise
                     finally:
                         _cleanup_span(span, ctx_token)
-                return async_wrap
 
+                return cast(F, async_wrap)
         else:
+
             @wraps(fn)
-            def sync_wrap(*args, **kwargs):
+            def sync_wrap(*args: Any, **kwargs: Any) -> Any:
                 if not TracerWrapper.verify_initialized():
                     return fn(*args, **kwargs)
 
                 span, ctx, ctx_token = _setup_span(entity_name, tlp_span_kind, version)
-
                 _handle_span_input(span, args, kwargs, cls=JSONEncoder)
                 try:
                     res = fn(*args, **kwargs)
@@ -246,7 +267,8 @@ def entity_method(
                 _handle_span_output(span, res, cls=JSONEncoder)
                 _cleanup_span(span, ctx_token)
                 return res
-            return sync_wrap
+
+            return cast(F, sync_wrap)
 
     return decorate
 
