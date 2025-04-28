@@ -1154,7 +1154,6 @@ def test_streaming_new_assistant_with_events_with_content(
     )
 
     # Validate the first ai response
-    print(type(assistant_messages[0]))
     choice_event = {
         "index": 0,
         "finish_reason": "unknown",

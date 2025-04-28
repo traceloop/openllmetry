@@ -546,11 +546,6 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         metadata: Optional[dict[str, Any]] = None,
         **kwargs: Any,
     ) -> None:
-        # print("on_chain_start")
-        # print(f"inputs = {inputs}")
-        # print(f"run_id = {run_id}")
-        # print(f"parent_run_id = {parent_run_id}")
-
         """Run when chain starts running."""
         if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
             return
@@ -606,10 +601,6 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         parent_run_id: Optional[UUID] = None,
         **kwargs: Any,
     ) -> None:
-        # print("on_chain_end")
-        # print(f"outputs = {outputs}")
-        # print(f"run_id = {run_id}")
-        # print(f"parent_run_id = {parent_run_id}")
         """Run when chain ends running."""
         if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
             return
@@ -645,8 +636,6 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         metadata: Optional[dict[str, Any]] = None,
         **kwargs: Any,
     ) -> Any:
-        # print("on_chat_model_start")
-        # print(f"messages = {messages}")
         """Run when Chat Model starts running."""
         if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
             return
@@ -683,9 +672,6 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         metadata: Optional[dict[str, Any]] = None,
         **kwargs: Any,
     ) -> Any:
-        # print("on_llm_start")
-        # print(f"prompts = {prompts}")
-        # print(f"kwargs = {kwargs}")
         """Run when Chat Model starts running."""
         if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
             return
@@ -707,8 +693,6 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         parent_run_id: Union[UUID, None] = None,
         **kwargs: Any,
     ):
-        # print("on_llm_end")
-        # print(f"response = {response}")
         if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
             return
 
@@ -808,10 +792,6 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         inputs: Optional[dict[str, Any]] = None,
         **kwargs: Any,
     ) -> None:
-        # print("on_tool_start")
-        # print(f"input_str = {input_str}")
-        # print(f"run_id = {run_id}")
-        # print(f"parent_run_id = {parent_run_id}")
         """Run when tool starts running."""
         if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
             return
@@ -853,10 +833,6 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         parent_run_id: Optional[UUID] = None,
         **kwargs: Any,
     ) -> None:
-        # print("on_tool_end")
-        # print(f"output = {output}")
-        # print(f"run_id = {run_id}")
-        # print(f"parent_run_id = {parent_run_id}")
         """Run when tool ends running."""
         if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
             return

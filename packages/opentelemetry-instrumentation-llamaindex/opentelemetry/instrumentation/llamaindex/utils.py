@@ -1,13 +1,22 @@
 import dataclasses
 import json
-import os
 import logging
+import os
 import traceback
 from contextlib import asynccontextmanager
 
 from opentelemetry import context as context_api
+from opentelemetry._events import Event
 from opentelemetry.instrumentation.llamaindex.config import Config
+from opentelemetry.semconv._incubating.attributes import (
+    gen_ai_attributes as GenAIAttributes,
+)
 from opentelemetry.semconv_ai import SpanAttributes
+
+OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT = (
+    "OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT"
+)
+EVENT_ATTRIBUTES = {GenAIAttributes.GEN_AI_SYSTEM: "llamaindex"}
 
 
 def _with_tracer_wrapper(func):
@@ -84,3 +93,48 @@ def process_response(span, res):
             SpanAttributes.TRACELOOP_ENTITY_OUTPUT,
             json.dumps(res, cls=JSONEncoder),
         )
+
+
+def is_role_valid(role: str) -> bool:
+    return role in ["user", "assistant", "system", "tool"]
+
+
+def is_content_enabled() -> bool:
+    capture_content = os.environ.get(
+        OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT, "false"
+    )
+
+    return capture_content.lower() == "true"
+
+
+def emit_message_event(*, content, role: str):
+    body = {}
+
+    if is_content_enabled():
+        body["content"] = content
+        body["role"] = role
+
+    if is_role_valid(role):
+        event_name = "gen_ai.{}.message".format(role)
+    else:
+        event_name = "gen_ai.{}.message".format("user")
+
+    Config.event_logger.emit(Event(event_name, body=body, attributes=EVENT_ATTRIBUTES))
+
+
+def emit_choice_event(
+    *,
+    index: int = 0,
+    content,
+    role: str,
+    finish_reason: str,
+):
+    body = {"index": index, "finish_reason": finish_reason, "message": {}}
+
+    if is_content_enabled():
+        body["message"]["content"] = content
+        body["message"]["role"] = role
+
+    Config.event_logger.emit(
+        Event("gen_ai.choice", body=body, attributes=EVENT_ATTRIBUTES)
+    )

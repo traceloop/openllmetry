@@ -66,7 +66,6 @@ class StreamingWrapper(ObjectProxy):
             )
 
     def _accumulate_events(self, event):
-        print(self._accumulating_body)
         for key in event:
             if key == "contentBlockDelta":
                 delta = event.get(key).get("delta", {}).get("text")
