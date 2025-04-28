@@ -5,6 +5,7 @@ Traceloop.init()
 
 base_model = "gemma3:1b"
 
+
 def ollama_chat():
     stream_response = chat(
         model=base_model,

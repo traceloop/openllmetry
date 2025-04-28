@@ -1,5 +1,5 @@
 import pytest
-import ollama
+from ollama import AsyncClient, chat
 from opentelemetry.semconv_ai import SpanAttributes
 from unittest.mock import MagicMock
 from opentelemetry.instrumentation.ollama import _set_response_attributes
@@ -8,7 +8,7 @@ from opentelemetry.semconv_ai import LLMRequestTypeValues
 
 @pytest.mark.vcr
 def test_ollama_chat(exporter):
-    response = ollama.chat(
+    response = chat(
         model="llama3",
         messages=[
             {
@@ -45,7 +45,7 @@ def test_ollama_chat(exporter):
 
 @pytest.mark.vcr
 def test_ollama_chat_tool_calls(exporter):
-    ollama.chat(
+    chat(
         model="llama3.1",
         messages=[
             {
@@ -93,7 +93,7 @@ def test_ollama_chat_tool_calls(exporter):
 
 @pytest.mark.vcr
 def test_ollama_streaming_chat(exporter):
-    gen = ollama.chat(
+    gen = chat(
         model="llama3",
         messages=[
             {
@@ -136,7 +136,7 @@ def test_ollama_streaming_chat(exporter):
 @pytest.mark.vcr
 @pytest.mark.asyncio
 async def test_ollama_async_chat(exporter):
-    client = ollama.AsyncClient()
+    client = AsyncClient()
     response = await client.chat(
         model="llama3",
         messages=[
@@ -176,7 +176,7 @@ async def test_ollama_async_chat(exporter):
 @pytest.mark.vcr
 @pytest.mark.asyncio
 async def test_ollama_async_streaming_chat(exporter):
-    client = ollama.AsyncClient()
+    client = AsyncClient()
     gen = await client.chat(
         model="llama3",
         messages=[
