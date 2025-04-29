@@ -277,7 +277,6 @@ class ContextSavingStreamWriter(ObjectProxy):  # type: ignore
 
     async def send(self, item: Any) -> Any:
         with self._tracer.start_as_current_span("RequestStreamWriter") as span:
-            print("\n", serialize(item))
             if hasattr(item, "request_id"):
                 span.set_attribute(SpanAttributes.MCP_REQUEST_ID, f"{item.request_id}")
             if hasattr(item, "request"):
