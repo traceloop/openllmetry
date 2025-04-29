@@ -8,7 +8,7 @@ show_missing = true
 
 [tool.poetry]
 name = "opentelemetry-instrumentation-vertexai"
-version = "0.39.3"
+version = "0.39.4"
 description = "OpenTelemetry Vertex AI instrumentation"
 authors = [
   "Gal Kleinman <gal@traceloop.com>",

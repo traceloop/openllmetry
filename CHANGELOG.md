@@ -1,3 +1,9 @@
+## v0.39.4 (2025-04-28)
+
+### Fix
+
+- **sdk**: improve type safety in decorators (#2867)
+
 ## v0.39.3 (2025-04-24)
 
 ### Fix
