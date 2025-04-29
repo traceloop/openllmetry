@@ -219,6 +219,7 @@ class SpanAttributes:
     MCP_REQUEST_ARGUMENT = "mcp.request.argument"
     MCP_REQUEST_ID = "mcp.request.id"
     MCP_SESSION_INIT_OPTIONS = "mcp.session.init_options"
+    MCP_RESPONSE_VALUE = "mcp.response.value"
 
 
 class Events(Enum):
