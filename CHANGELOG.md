@@ -1,3 +1,9 @@
+## v0.40.0 (2025-04-30)
+
+### Feat
+
+- **instrumentation**: Adding MCP opentelemetry-instrumentation into traceloop (#2829)
+
 ## v0.39.4 (2025-04-28)
 
 ### Fix
