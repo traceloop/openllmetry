@@ -272,6 +272,8 @@ def set_association_properties(properties: dict) -> None:
 
 def _set_association_properties_attributes(span, properties: dict) -> None:
     for key, value in properties.items():
+        if isinstance(value, list):
+            value = tuple(value)
         span.set_attribute(
             f"{SpanAttributes.TRACELOOP_ASSOCIATION_PROPERTIES}.{key}", value
         )
@@ -1051,6 +1053,8 @@ def metrics_common_attributes():
     association_properties = get_value("association_properties")
     if association_properties is not None:
         for key, value in association_properties.items():
+            if isinstance(value, list):
+                value = tuple(value)
             common_attributes[
                 f"{SpanAttributes.TRACELOOP_ASSOCIATION_PROPERTIES}.{key}"
             ] = value
