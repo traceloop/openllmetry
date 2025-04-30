@@ -1,0 +1,78 @@
+{
+  "name": "opentelemetry-instrumentation-mcp",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "library",
+  "sourceRoot": "packages/opentelemetry-instrumentation-mcp/opentelemetry/instrumentation/mcp",
+  "targets": {
+    "lock": {
+      "executor": "@nxlv/python:run-commands",
+      "options": {
+        "command": "poetry lock",
+        "cwd": "packages/opentelemetry-instrumentation-mcp"
+      }
+    },
+    "add": {
+      "executor": "@nxlv/python:add",
+      "options": {}
+    },
+    "update": {
+      "executor": "@nxlv/python:update",
+      "options": {}
+    },
+    "remove": {
+      "executor": "@nxlv/python:remove",
+      "options": {}
+    },
+    "build": {
+      "executor": "@nxlv/python:build",
+      "outputs": ["{projectRoot}/dist"],
+      "options": {
+        "outputPath": "packages/opentelemetry-instrumentation-mcp/dist",
+        "publish": false,
+        "lockedVersions": true,
+        "bundleLocalDependencies": true
+      }
+    },
+    "install": {
+      "executor": "@nxlv/python:install",
+      "options": {
+        "silent": false,
+        "args": "",
+        "cacheDir": ".cache/pypoetry",
+        "verbose": false,
+        "debug": false
+      }
+    },
+    "lint": {
+      "executor": "@nxlv/python:flake8",
+      "outputs": [
+        "{workspaceRoot}/reports/packages/opentelemetry-instrumentation-mcp/pylint.txt"
+      ],
+      "options": {
+        "outputFile": "reports/packages/opentelemetry-instrumentation-mcp/pylint.txt"
+      }
+    },
+    "test": {
+      "executor": "@nxlv/python:run-commands",
+      "outputs": [
+        "{workspaceRoot}/reports/packages/opentelemetry-instrumentation-mcp/unittests",
+        "{workspaceRoot}/coverage/packages/opentelemetry-instrumentation-mcp"
+      ],
+      "options": {
+        "command": "poetry run pytest tests/",
+        "cwd": "packages/opentelemetry-instrumentation-mcp"
+      }
+    },
+    "build-release": {
+      "executor": "@nxlv/python:run-commands",
+      "options": {
+        "commands": [
+          "chmod +x ../../scripts/build-release.sh",
+          "../../scripts/build-release.sh"
+        ],
+        "cwd": "packages/opentelemetry-instrumentation-mcp"
+      }
+    }
+  },
+  "tags": ["instrumentation"]
+}
