@@ -1,3 +1,9 @@
+## v0.40.2 (2025-04-30)
+
+### Fix
+
+- **ci**: align mcp instrumentation version (#2876)
+
 ## v0.40.1 (2025-04-30)
 
 ### Fix
