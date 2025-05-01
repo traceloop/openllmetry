@@ -214,6 +214,13 @@ class SpanAttributes:
     MARQO_SEARCH_PROCESSING_TIME = "db.marqo.search.processing_time"
     MARQO_DELETE_DOCUMENTS_STATUS = "db.marqo.delete_documents.status"
 
+    # MCP
+    MCP_METHOD_NAME = "mcp.method.name"
+    MCP_REQUEST_ARGUMENT = "mcp.request.argument"
+    MCP_REQUEST_ID = "mcp.request.id"
+    MCP_SESSION_INIT_OPTIONS = "mcp.session.init_options"
+    MCP_RESPONSE_VALUE = "mcp.response.value"
+
 
 class Events(Enum):
     DB_QUERY_EMBEDDINGS = "db.query.embeddings"

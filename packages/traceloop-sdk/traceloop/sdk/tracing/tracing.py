@@ -454,6 +454,9 @@ def init_instrumentations(
         elif instrument == Instruments.WEAVIATE:
             if init_weaviate_instrumentor():
                 instrument_set = True
+        elif instrument == Instruments.MCP:
+            if init_mcp_instrumentor():
+                instrument_set = True
         else:
             print(Fore.RED + f"Warning: {instrument} instrumentation does not exist.")
             print(
@@ -1013,6 +1016,24 @@ def init_crewai_instrumentor():
         return True
     except Exception as e:
         logging.error(f"Error initializing CrewAI instrumentor: {e}")
+        Telemetry().log_exception(e)
+        return False
+
+
+def init_mcp_instrumentor():
+    try:
+        if is_package_installed("mcp"):
+            Telemetry().capture("instrumentation:mcp:init")
+            from opentelemetry.instrumentation.mcp import McpInstrumentor
+
+            instrumentor = McpInstrumentor(
+                exception_logger=lambda e: Telemetry().log_exception(e),
+            )
+            if not instrumentor.is_instrumented_by_opentelemetry:
+                instrumentor.instrument()
+        return True
+    except Exception as e:
+        logging.error(f"Error initializing MCP instrumentor: {e}")
         Telemetry().log_exception(e)
         return False
 
