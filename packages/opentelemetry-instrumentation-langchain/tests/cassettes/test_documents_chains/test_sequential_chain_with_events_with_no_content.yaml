@@ -1,0 +1,141 @@
+interactions:
+- request:
+    body: '{"message": "Write a concise summary of the following:\n\n\n\"Today, all
+      ridges and faces of the Matterhorn have been ascended in all seasons,\n    and
+      mountain guides take a large number of people up the northeast H\u00f6rnli route\n    each
+      summer. In total, up to 150 climbers attempt the Matterhorn each day during\n    summer.
+      By modern standards, the climb is fairly difficult (AD Difficulty rating),\n    but
+      not hard for skilled mountaineers according to French climbing grades. There\n    are
+      fixed ropes on parts of the route to help. Still, it should be remembered that\n    several
+      climbers may die on the mountain each year.\n    The usual pattern of ascent
+      is to take the Schwarzsee cable car up from Zermatt,\n    hike up to the H\u00f6rnli
+      Hut elev. 3,260 m (10,700 ft), a large stone building at the\n    base of the
+      main ridge, and spend the night. The next day, climbers rise at 3:30 am\n    so
+      as to reach the summit and descend before the regular afternoon clouds and storms\n    come
+      in. The Solvay Hut located on the ridge at 4,003 m (13,133 ft) can be used only\n    in
+      a case of emergency.\n    Other popular routes on the mountain include the Italian
+      (Lion) ridge (AD+ Difficulty\n    rating) and the Zmutt ridge (D Difficulty
+      rating). The four faces, as well as the\n    Furggen ridge, constitute the most
+      challenging routes to the summit. The north face\n    is amongst the six most
+      difficult faces of the Alps, as well as \u2018The Trilogy\u2019, the\n    three
+      hardest of the six, along with the north faces of the Eiger and the Grandes\n    Jorasses
+      (TD+ Difficulty rating).\"\n\n\nCONCISE SUMMARY:", "stream": false, "model":
+      "command", "chat_history": [], "temperature": 0.75}'
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '1709'
+      content-type:
+      - application/json
+      host:
+      - api.cohere.com
+      user-agent:
+      - python-httpx/0.27.0
+      x-client-name:
+      - langchain:partner
+      x-fern-language:
+      - Python
+      x-fern-sdk-name:
+      - cohere
+      x-fern-sdk-version:
+      - 5.5.3
+    method: POST
+    uri: https://api.cohere.com/v1/chat
+  response:
+    body:
+      string: "{\"response_id\":\"aaef5a62-6db8-436b-b291-a560d69d5188\",\"text\":\"The
+        Matterhorn, a mountain in the Alps, is a popular climbing destination, with
+        up to 150 climbers attempting the summit each day during the summer months.
+        Several climbing routes are available, ranging from moderately difficult (AD
+        Difficulty rating) to challenging (D Difficulty rating) and requiring skill
+        and preparedness. Fixed ropes are in place on some routes to assist climbers.
+        While the climb is achievable for skilled mountaineers, it is important to
+        note that it is not without risk, and several climbers may die on the mountain
+        each year. Hikers typically spend the night at the H\xF6rnli Hut before ascending
+        to the summit the following day and descending before afternoon clouds and
+        storms roll in. The Matterhorn's north face is renowned for its difficulty
+        and is considered one of the six most challenging faces of the Alps. Overall,
+        the Matterhorn presents a range of climbing opportunities for experienced
+        and aspiring mountaineers.\",\"generation_id\":\"73f5de94-ec1a-4633-86a4-491494401978\",\"chat_history\":[{\"role\":\"USER\",\"message\":\"Write
+        a concise summary of the following:\\n\\n\\n\\\"Today, all ridges and faces
+        of the Matterhorn have been ascended in all seasons,\\n    and mountain guides
+        take a large number of people up the northeast H\xF6rnli route\\n    each
+        summer. In total, up to 150 climbers attempt the Matterhorn each day during\\n
+        \   summer. By modern standards, the climb is fairly difficult (AD Difficulty
+        rating),\\n    but not hard for skilled mountaineers according to French climbing
+        grades. There\\n    are fixed ropes on parts of the route to help. Still,
+        it should be remembered that\\n    several climbers may die on the mountain
+        each year.\\n    The usual pattern of ascent is to take the Schwarzsee cable
+        car up from Zermatt,\\n    hike up to the H\xF6rnli Hut elev. 3,260 m (10,700
+        ft), a large stone building at the\\n    base of the main ridge, and spend
+        the night. The next day, climbers rise at 3:30 am\\n    so as to reach the
+        summit and descend before the regular afternoon clouds and storms\\n    come
+        in. The Solvay Hut located on the ridge at 4,003 m (13,133 ft) can be used
+        only\\n    in a case of emergency.\\n    Other popular routes on the mountain
+        include the Italian (Lion) ridge (AD+ Difficulty\\n    rating) and the Zmutt
+        ridge (D Difficulty rating). The four faces, as well as the\\n    Furggen
+        ridge, constitute the most challenging routes to the summit. The north face\\n
+        \   is amongst the six most difficult faces of the Alps, as well as \u2018The
+        Trilogy\u2019, the\\n    three hardest of the six, along with the north faces
+        of the Eiger and the Grandes\\n    Jorasses (TD+ Difficulty rating).\\\"\\n\\n\\nCONCISE
+        SUMMARY:\"},{\"role\":\"CHATBOT\",\"message\":\"The Matterhorn, a mountain
+        in the Alps, is a popular climbing destination, with up to 150 climbers attempting
+        the summit each day during the summer months. Several climbing routes are
+        available, ranging from moderately difficult (AD Difficulty rating) to challenging
+        (D Difficulty rating) and requiring skill and preparedness. Fixed ropes are
+        in place on some routes to assist climbers. While the climb is achievable
+        for skilled mountaineers, it is important to note that it is not without risk,
+        and several climbers may die on the mountain each year. Hikers typically spend
+        the night at the H\xF6rnli Hut before ascending to the summit the following
+        day and descending before afternoon clouds and storms roll in. The Matterhorn's
+        north face is renowned for its difficulty and is considered one of the six
+        most challenging faces of the Alps. Overall, the Matterhorn presents a range
+        of climbing opportunities for experienced and aspiring mountaineers.\"}],\"finish_reason\":\"COMPLETE\",\"meta\":{\"api_version\":{\"version\":\"1\"},\"billed_units\":{\"input_tokens\":420,\"output_tokens\":180},\"tokens\":{\"input_tokens\":431,\"output_tokens\":181}}}"
+    headers:
+      Alt-Svc:
+      - h3=":443"; ma=2592000,h3-29=":443"; ma=2592000
+      Via:
+      - 1.1 google
+      access-control-expose-headers:
+      - X-Debug-Trace-ID
+      cache-control:
+      - no-cache, no-store, no-transform, must-revalidate, private, max-age=0
+      content-type:
+      - application/json
+      date:
+      - Sat, 15 Jun 2024 20:16:51 GMT
+      expires:
+      - Thu, 01 Jan 1970 00:00:00 UTC
+      num_chars:
+      - '1863'
+      num_tokens:
+      - '600'
+      pragma:
+      - no-cache
+      server:
+      - envoy
+      transfer-encoding:
+      - chunked
+      vary:
+      - Origin
+      x-accel-expires:
+      - '0'
+      x-debug-trace-id:
+      - b4c98b43bda3a122914a234994c993a0
+      x-endpoint-monthly-call-limit:
+      - '1000'
+      x-envoy-upstream-service-time:
+      - '6063'
+      x-trial-endpoint-call-limit:
+      - '10'
+      x-trial-endpoint-call-remaining:
+      - '9'
+    status:
+      code: 200
+      message: OK
+version: 1

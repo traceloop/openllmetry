@@ -1,19 +1,22 @@
-from functools import singledispatchmethod
 import inspect
 import json
 import re
-from typing import Any, AsyncGenerator, Dict, Generator, List, Optional
 from dataclasses import dataclass, field
+from functools import singledispatchmethod
+from typing import Any, AsyncGenerator, Dict, Generator, List, Optional
 
-from llama_index.core.bridge.pydantic import PrivateAttr
 from llama_index.core.base.llms.types import MessageRole
 from llama_index.core.base.response.schema import StreamingResponse
+from llama_index.core.bridge.pydantic import PrivateAttr
 from llama_index.core.instrumentation import get_dispatcher
+from llama_index.core.instrumentation.event_handlers import BaseEventHandler
 from llama_index.core.instrumentation.events import BaseEvent
 from llama_index.core.instrumentation.events.agent import AgentToolCallEvent
-from llama_index.core.instrumentation.events.embedding import EmbeddingStartEvent
 from llama_index.core.instrumentation.events.chat_engine import (
     StreamChatEndEvent,
+)
+from llama_index.core.instrumentation.events.embedding import (
+    EmbeddingStartEvent,
 )
 from llama_index.core.instrumentation.events.llm import (
     LLMChatEndEvent,
@@ -22,13 +25,14 @@ from llama_index.core.instrumentation.events.llm import (
     LLMPredictEndEvent,
 )
 from llama_index.core.instrumentation.events.rerank import ReRankStartEvent
-from llama_index.core.instrumentation.event_handlers import BaseEventHandler
 from llama_index.core.instrumentation.span_handlers import BaseSpanHandler
 from llama_index.core.workflow import Workflow
 from opentelemetry import context as context_api
 from opentelemetry.instrumentation.llamaindex.utils import (
     JSONEncoder,
     dont_throw,
+    emit_choice_event,
+    emit_message_event,
     should_send_prompts,
 )
 from opentelemetry.semconv_ai import (
@@ -37,9 +41,8 @@ from opentelemetry.semconv_ai import (
     SpanAttributes,
     TraceloopSpanKindValues,
 )
-from opentelemetry.trace import set_span_in_context, Tracer
+from opentelemetry.trace import Tracer, set_span_in_context
 from opentelemetry.trace.span import Span
-
 
 # For these spans, instead of creating a span using data from LlamaIndex,
 # we use the regular OpenLLMetry instrumentations
@@ -269,7 +272,11 @@ class OpenLLMetrySpanHandler(BaseSpanHandler[SpanHolder]):
         )
 
         if isinstance(instance, Workflow):
-            span_name = f"{instance.__class__.__name__}.{kind}" if not parent_span_id else f"{method_name}.{kind}"
+            span_name = (
+                f"{instance.__class__.__name__}.{kind}"
+                if not parent_span_id
+                else f"{method_name}.{kind}"
+            )
         else:
             span_name = f"{class_name}.{kind}"
 
@@ -367,3 +374,33 @@ class OpenLLMetryEventHandler(BaseEventHandler):
         with self._span_handler.lock:
             for span in finished_spans:
                 self._span_handler.waiting_for_streaming_spans.pop(span.span_id)
+
+        if isinstance(event, LLMCompletionEndEvent):
+            # print(event.model_dump())
+            emit_message_event(content=event.prompt, role=MessageRole.USER.value)
+            emit_choice_event(
+                index=0,
+                content=event.response.text,
+                role=MessageRole.ASSISTANT.value,
+                finish_reason="unknown",
+            )
+        elif isinstance(event, LLMChatEndEvent):
+            # print(event.model_dump())
+            for message in event.messages:
+                emit_message_event(
+                    content=message.content,
+                    role=message.role.value,
+                )
+            if event.response:
+                try:
+                    finish_reason = event.response.raw.get("choices", [{}])[0].get(
+                        "finish_reason", "unknown"
+                    )
+                except (AttributeError, ValueError):
+                    finish_reason = "unknown"
+                emit_choice_event(
+                    index=0,
+                    content=event.response.message.content,
+                    role=event.response.message.role.value,
+                    finish_reason=finish_reason,
+                )

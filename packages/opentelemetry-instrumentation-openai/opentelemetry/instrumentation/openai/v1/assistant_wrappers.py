@@ -1,17 +1,18 @@
 import logging
 import time
+
 from opentelemetry import context as context_api
 from opentelemetry.instrumentation.openai.shared import (
     _set_span_attribute,
+    emit_choice_event,
+    emit_input_event,
     model_as_dict,
 )
-from opentelemetry.trace import SpanKind
-from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
-
-from opentelemetry.semconv_ai import SpanAttributes, LLMRequestTypeValues
-
-from opentelemetry.instrumentation.openai.utils import _with_tracer_wrapper, dont_throw
 from opentelemetry.instrumentation.openai.shared.config import Config
+from opentelemetry.instrumentation.openai.utils import _with_tracer_wrapper, dont_throw
+from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
+from opentelemetry.semconv_ai import LLMRequestTypeValues, SpanAttributes
+from opentelemetry.trace import SpanKind
 
 from openai._legacy_response import LegacyAPIResponse
 from openai.types.beta.threads.run import Run
@@ -131,17 +132,27 @@ def messages_list_wrapper(tracer, wrapped, instance, args, kwargs):
             SpanAttributes.LLM_RESPONSE_MODEL,
             assistant["model"],
         )
-        _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.{prompt_index}.role", "system")
+        _set_span_attribute(
+            span, f"{SpanAttributes.LLM_PROMPTS}.{prompt_index}.role", "system"
+        )
         _set_span_attribute(
             span,
             f"{SpanAttributes.LLM_PROMPTS}.{prompt_index}.content",
             assistant["instructions"],
         )
+        if not Config.use_legacy_attributes and Config.event_logger is not None:
+            emit_input_event({"content": assistant["instructions"]}, "system")
         prompt_index += 1
-    _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.{prompt_index}.role", "system")
     _set_span_attribute(
-        span, f"{SpanAttributes.LLM_PROMPTS}.{prompt_index}.content", run["instructions"]
+        span, f"{SpanAttributes.LLM_PROMPTS}.{prompt_index}.role", "system"
     )
+    _set_span_attribute(
+        span,
+        f"{SpanAttributes.LLM_PROMPTS}.{prompt_index}.content",
+        run["instructions"],
+    )
+    if not Config.use_legacy_attributes and Config.event_logger is not None:
+        emit_input_event({"content": run["instructions"]}, "system")
     prompt_index += 1
 
     completion_index = 0
@@ -152,13 +163,25 @@ def messages_list_wrapper(tracer, wrapped, instance, args, kwargs):
         message_content = content[0].get("text").get("value")
         message_role = msg.get("role")
         if message_role in ["user", "system"]:
-            _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.{prompt_index}.role", message_role)
-            _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.{prompt_index}.content", message_content)
+            _set_span_attribute(
+                span, f"{SpanAttributes.LLM_PROMPTS}.{prompt_index}.role", message_role
+            )
+            _set_span_attribute(
+                span,
+                f"{SpanAttributes.LLM_PROMPTS}.{prompt_index}.content",
+                message_content,
+            )
+            if not Config.use_legacy_attributes and Config.event_logger is not None:
+                emit_input_event({"content": message_content}, message_role)
             prompt_index += 1
         else:
             _set_span_attribute(span, f"{prefix}.role", msg.get("role"))
             _set_span_attribute(span, f"{prefix}.content", message_content)
-            _set_span_attribute(span, f"gen_ai.response.{completion_index}.id", msg.get("id"))
+            _set_span_attribute(
+                span, f"gen_ai.response.{completion_index}.id", msg.get("id")
+            )
+            if not Config.use_legacy_attributes and Config.event_logger is not None:
+                emit_choice_event(completion_index, message_content, message_role)
             completion_index += 1
 
     if run.get("usage"):
@@ -222,7 +245,14 @@ def runs_create_and_stream_wrapper(tracer, wrapped, instance, args, kwargs):
             f"{SpanAttributes.LLM_PROMPTS}.{i}.content",
             assistants[assistant_id]["instructions"],
         )
+        if not Config.use_legacy_attributes and Config.event_logger is not None:
+            emit_input_event(
+                {"content": assistants[assistant_id]["instructions"]}, "system"
+            )
         i += 1
+
+    if not Config.use_legacy_attributes and Config.event_logger is not None:
+        emit_input_event({"content": instructions}, "system")
     _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.{i}.role", "system")
     _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.{i}.content", instructions)
 
@@ -231,7 +261,8 @@ def runs_create_and_stream_wrapper(tracer, wrapped, instance, args, kwargs):
     )
 
     kwargs["event_handler"] = EventHandleWrapper(
-        original_handler=kwargs["event_handler"], span=span,
+        original_handler=kwargs["event_handler"],
+        span=span,
     )
 
     response = wrapped(*args, **kwargs)

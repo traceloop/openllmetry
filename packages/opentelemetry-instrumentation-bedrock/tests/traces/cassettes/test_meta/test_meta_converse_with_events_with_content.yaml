@@ -1,0 +1,47 @@
+interactions:
+- request:
+    body: '{"messages": [{"role": "user", "content": [{"text": "Tell me a joke about
+      opentelemetry"}]}], "system": [{"text": "You are an app that knows about everything."}],
+      "inferenceConfig": {"temperature": 0.5}, "additionalModelRequestFields": {}}'
+    headers:
+      Content-Length:
+      - '239'
+      Content-Type:
+      - !!binary |
+        YXBwbGljYXRpb24vanNvbg==
+      User-Agent:
+      - !!binary |
+        Qm90bzMvMS4zNi41IG1kL0JvdG9jb3JlIzEuMzYuNSB1YS8yLjAgb3MvbWFjb3MjMjQuMy4wIG1k
+        L2FyY2gjYXJtNjQgbGFuZy9weXRob24jMy45LjYgbWQvcHlpbXBsI0NQeXRob24gY2ZnL3JldHJ5
+        LW1vZGUjbGVnYWN5IEJvdG9jb3JlLzEuMzYuNQ==
+      X-Amz-Date:
+      - !!binary |
+        MjAyNTAyMjhUMTA1ODQ4Wg==
+      amz-sdk-invocation-id:
+      - !!binary |
+        ZTAyMmZjMWQtNjJiZS00NDU5LTgxODYtZWFmOThkYzdkZTky
+      amz-sdk-request:
+      - !!binary |
+        YXR0ZW1wdD0x
+    method: POST
+    uri: https://bedrock-runtime.us-east-1.amazonaws.com/model/meta.llama3-2-1b-instruct-v1%3A0/converse
+  response:
+    body:
+      string: '{"metrics":{"latencyMs":589},"output":{"message":{"content":[{"text":"Why
+        did the OpenTelemetry trace go to therapy?\n\nBecause it was struggling to
+        debug its issues and was feeling a little \"unreliable\"."}],"role":"assistant"}},"stopReason":"end_turn","usage":{"inputTokens":52,"outputTokens":30,"totalTokens":82}}'
+    headers:
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '317'
+      Content-Type:
+      - application/json
+      Date:
+      - Fri, 28 Feb 2025 10:58:49 GMT
+      x-amzn-RequestId:
+      - 066cf395-3e67-4723-bb37-6e71072889d4
+    status:
+      code: 200
+      message: OK
+version: 1

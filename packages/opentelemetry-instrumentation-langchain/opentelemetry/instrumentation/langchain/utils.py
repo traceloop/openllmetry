@@ -4,9 +4,20 @@ import json
 import logging
 import os
 import traceback
+from typing import Literal, Optional, TypedDict
+
 from opentelemetry import context as context_api
 from opentelemetry.instrumentation.langchain.config import Config
+from opentelemetry.semconv._incubating.attributes import (
+    gen_ai_attributes as GenAIAttributes,
+)
 from pydantic import BaseModel
+
+OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT = (
+    "OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT"
+)
+
+EVENT_ATTRIBUTES = {GenAIAttributes.GEN_AI_SYSTEM: "langchain"}
 
 
 class CallbackFilteredJSONEncoder(json.JSONEncoder):
@@ -65,3 +76,22 @@ def dont_throw(func):
                 Config.exception_logger(e)
 
     return wrapper
+
+
+def is_content_enabled() -> bool:
+    capture_content = os.environ.get(
+        OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT, "false"
+    )
+
+    return capture_content.lower() == "true"
+
+
+class ToolCallFunction(TypedDict):
+    arguments: Optional[dict]
+    name: str
+
+
+class ToolCall(TypedDict):
+    function: ToolCallFunction
+    id: str
+    type: Literal["function"]

@@ -1,39 +1,116 @@
 """Unit tests configuration module."""
 
-import pytest
 import os
-from opentelemetry import trace
-from opentelemetry.sdk.trace import TracerProvider
-from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
-from opentelemetry.sdk.trace.export import SimpleSpanProcessor
-from opentelemetry.instrumentation.openai import OpenAIInstrumentor
-from opentelemetry.instrumentation.cohere import CohereInstrumentor
+
+import pytest
+from opentelemetry._events import get_event_logger
 from opentelemetry.instrumentation.chromadb import ChromaInstrumentor
+from opentelemetry.instrumentation.cohere import CohereInstrumentor
 from opentelemetry.instrumentation.llamaindex import LlamaIndexInstrumentor
+from opentelemetry.instrumentation.llamaindex.config import Config
+from opentelemetry.instrumentation.llamaindex.utils import (
+    OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT,
+)
+from opentelemetry.instrumentation.llamaindex.version import __version__
+from opentelemetry.instrumentation.openai import OpenAIInstrumentor
+from opentelemetry.sdk._events import EventLoggerProvider
+from opentelemetry.sdk._logs import LoggerProvider
+from opentelemetry.sdk._logs.export import (
+    InMemoryLogExporter,
+    SimpleLogRecordProcessor,
+)
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import SimpleSpanProcessor
+from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
 
 pytest_plugins = []
 
 
-@pytest.fixture(scope="session")
-def exporter():
+@pytest.fixture(scope="session", name="span_exporter")
+def fixture_span_exporter():
     exporter = InMemorySpanExporter()
-    processor = SimpleSpanProcessor(exporter)
+    yield exporter
 
+
+@pytest.fixture(scope="session", name="tracer_provider")
+def fixture_tracer_provider(span_exporter):
     provider = TracerProvider()
-    provider.add_span_processor(processor)
-    trace.set_tracer_provider(provider)
+    provider.add_span_processor(SimpleSpanProcessor(span_exporter))
+    return provider
 
-    OpenAIInstrumentor().instrument()
-    ChromaInstrumentor().instrument()
-    CohereInstrumentor().instrument()
-    LlamaIndexInstrumentor().instrument()
 
-    return exporter
+@pytest.fixture(scope="function", name="log_exporter")
+def fixture_log_exporter():
+    exporter = InMemoryLogExporter()
+    yield exporter
+
+
+@pytest.fixture(scope="function", name="event_logger_provider")
+def fixture_event_logger_provider(log_exporter):
+    provider = LoggerProvider()
+    provider.add_log_record_processor(SimpleLogRecordProcessor(log_exporter))
+    event_logger_provider = EventLoggerProvider(provider)
+
+    return event_logger_provider
+
+
+@pytest.fixture(scope="session")
+def instrument_legacy(tracer_provider):
+    openai_instrumentor = OpenAIInstrumentor()
+    chroma_instrumentor = ChromaInstrumentor()
+    cohere_instrumentor = CohereInstrumentor()
+    instrumentor = LlamaIndexInstrumentor()
+
+    openai_instrumentor.instrument(tracer_provider=tracer_provider)
+    chroma_instrumentor.instrument(tracer_provider=tracer_provider)
+    cohere_instrumentor.instrument(tracer_provider=tracer_provider)
+    instrumentor.instrument(tracer_provider=tracer_provider)
+
+    yield instrumentor
+
+    openai_instrumentor.uninstrument()
+    chroma_instrumentor.uninstrument()
+    cohere_instrumentor.uninstrument()
+    instrumentor.uninstrument()
+
+
+@pytest.fixture(scope="function")
+def instrument_with_content(instrument_legacy, event_logger_provider):
+    os.environ.update({OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT: "True"})
+
+    instrumentor = instrument_legacy
+    Config.use_legacy_attributes = False
+    Config.event_logger = get_event_logger(
+        __name__, __version__, event_logger_provider=event_logger_provider
+    )
+
+    yield instrumentor
+
+    Config.use_legacy_attributes = True
+    Config.event_logger = None
+    os.environ.pop(OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT, None)
+
+
+@pytest.fixture(scope="function")
+def instrument_with_no_content(instrument_legacy, event_logger_provider):
+    os.environ.update({OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT: "False"})
+
+    instrumentor = instrument_legacy
+    Config.use_legacy_attributes = False
+    Config.event_logger = get_event_logger(
+        __name__, __version__, event_logger_provider=event_logger_provider
+    )
+
+    yield instrumentor
+
+    Config.use_legacy_attributes = True
+    Config.event_logger = None
+    os.environ.pop(OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT, None)
 
 
 @pytest.fixture(autouse=True)
-def clear_exporter(exporter):
-    exporter.clear()
+def clear_exporter(span_exporter):
+    span_exporter.clear()
 
 
 @pytest.fixture(autouse=True)
