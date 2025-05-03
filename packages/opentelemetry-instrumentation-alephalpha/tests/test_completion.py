@@ -1,6 +1,5 @@
 import pytest
 from aleph_alpha_client import CompletionRequest, Prompt
-from aleph_alpha_client.prompt import Text
 from opentelemetry.sdk._logs import LogData
 from opentelemetry.semconv._incubating.attributes import (
     event_attributes as EventAttributes,
@@ -51,7 +50,7 @@ def test_alephalpha_completion(
 
 @pytest.mark.vcr
 def test_alephalpha_completion_with_events_with_content(
-    span_exporter, log_exporter, aleph_alpha_client, instrument_with_content
+    instrument_with_content, aleph_alpha_client, span_exporter, log_exporter
 ):
     prompt_text = "Tell me a joke about OpenTelemetry."
     params = {
@@ -86,7 +85,7 @@ def test_alephalpha_completion_with_events_with_content(
     assert len(logs) == 2
 
     # Validate user message Event
-    user_message = {"content": [Text.from_text(prompt_text)]}
+    user_message = {"content": [{"controls": [], "type": "text", "data": prompt_text}]}
     user_message_log = logs[0]
     assert_message_in_logs(user_message_log, "gen_ai.user.message", user_message)
 
@@ -101,7 +100,7 @@ def test_alephalpha_completion_with_events_with_content(
 
 @pytest.mark.vcr
 def test_alephalpha_completion_with_events_with_no_content(
-    span_exporter, log_exporter, aleph_alpha_client, instrument_with_no_content
+    instrument_with_no_content, aleph_alpha_client, span_exporter, log_exporter
 ):
     prompt_text = "Tell me a joke about OpenTelemetry."
     params = {

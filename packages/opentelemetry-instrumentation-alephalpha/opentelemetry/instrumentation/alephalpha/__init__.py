@@ -2,23 +2,24 @@
 
 import logging
 import os
-from typing import Collection, Union
+from typing import Collection
 
+from aleph_alpha_client import CompletionRequest
 from opentelemetry import context as context_api
-from opentelemetry._events import Event, EventLogger, get_event_logger
+from opentelemetry._events import get_event_logger
 from opentelemetry.instrumentation.alephalpha.config import Config
-from opentelemetry.instrumentation.alephalpha.utils import (
-    dont_throw,
-    is_content_enabled,
+from opentelemetry.instrumentation.alephalpha.event_handler import (
+    ChoiceEvent,
+    CompletionMessage,
+    MessageEvent,
+    emit_event,
 )
+from opentelemetry.instrumentation.alephalpha.utils import dont_throw
 from opentelemetry.instrumentation.alephalpha.version import __version__
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.instrumentation.utils import (
     _SUPPRESS_INSTRUMENTATION_KEY,
     unwrap,
-)
-from opentelemetry.semconv._incubating.attributes import (
-    gen_ai_attributes as GenAIAttributes,
 )
 from opentelemetry.semconv_ai import (
     SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
@@ -105,9 +106,9 @@ def _set_response_attributes(span, llm_request_type, response):
 def _with_tracer_wrapper(func):
     """Helper for providing tracer for wrapper functions."""
 
-    def _with_tracer(tracer, event_logger, to_wrap):
+    def _with_tracer(tracer, to_wrap):
         def wrapper(wrapped, instance, args, kwargs):
-            return func(tracer, event_logger, to_wrap, wrapped, instance, args, kwargs)
+            return func(tracer, to_wrap, wrapped, instance, args, kwargs)
 
         return wrapper
 
@@ -121,32 +122,24 @@ def _llm_request_type_by_method(method_name):
         return LLMRequestTypeValues.UNKNOWN
 
 
-def _chat_completion_to_event(span: Span, args, kwargs) -> Event:
-    request = kwargs.get("request") if kwargs.get("request") else args[0]
-
-    attributes = {GenAIAttributes.GEN_AI_SYSTEM: "AlephAlpha"}
-    body = {"content": request.prompt.items} if is_content_enabled() else {}
-
-    return Event(name="gen_ai.user.message", body=body, attributes=attributes)
+def _chat_completion_to_event(args, kwargs) -> MessageEvent:
+    request: CompletionRequest = (
+        kwargs.get("request") if kwargs.get("request") else args[0]
+    )
+    return MessageEvent(content=request.prompt.to_json(), role="user")
 
 
-def _completion_to_event(index, completion) -> Event:
-    attributes = {GenAIAttributes.GEN_AI_SYSTEM: "AlephAlpha"}
-
-    body = {"index": index, "finish_reason": completion.finish_reason}
-    if is_content_enabled():
-        message = {"content": completion.completion}
-    else:
-        message = {}
-    body["message"] = message
-
-    return Event(name="gen_ai.choice", body=body, attributes=attributes)
+def _completion_to_event(index, completion) -> ChoiceEvent:
+    return ChoiceEvent(
+        index=index,
+        message=CompletionMessage(content=completion.completion, role="assistant"),
+        finish_reason=completion.finish_reason,
+    )
 
 
 @_with_tracer_wrapper
 def _wrap(
     tracer: Tracer,
-    event_logger: Union[EventLogger, None],
     to_wrap,
     wrapped,
     instance,
@@ -171,8 +164,7 @@ def _wrap(
     )
     if span.is_recording():
         _set_input_attributes(span, llm_request_type, args, kwargs)
-    if event_logger is not None:
-        event_logger.emit(_chat_completion_to_event(span, args, kwargs))
+        emit_event(_chat_completion_to_event(args, kwargs))
 
     response = wrapped(*args, **kwargs)
 
@@ -180,9 +172,8 @@ def _wrap(
         if span.is_recording():
             _set_response_attributes(span, llm_request_type, response)
             span.set_status(Status(StatusCode.OK))
-        if event_logger is not None:
-            for index, completion in enumerate(response.completions):
-                event_logger.emit(_completion_to_event(index, completion))
+        for index, completion in enumerate(response.completions):
+            emit_event(_completion_to_event(index, completion))
 
     span.end()
     return response
@@ -203,11 +194,9 @@ class AlephAlphaInstrumentor(BaseInstrumentor):
         tracer_provider = kwargs.get("tracer_provider")
         tracer = get_tracer(__name__, __version__, tracer_provider)
 
-        if Config.use_legacy_attributes:
-            event_logger = None
-        else:
+        if not Config.use_legacy_attributes:
             event_logger_provider = kwargs.get("event_logger_provider")
-            event_logger = get_event_logger(
+            Config.event_logger = get_event_logger(
                 __name__,
                 __version__,
                 event_logger_provider=event_logger_provider,
@@ -218,7 +207,7 @@ class AlephAlphaInstrumentor(BaseInstrumentor):
             wrap_function_wrapper(
                 "aleph_alpha_client",
                 f"Client.{wrap_method}",
-                _wrap(tracer, event_logger, wrapped_method),
+                _wrap(tracer, wrapped_method),
             )
 
     def _uninstrument(self, **kwargs):
