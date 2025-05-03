@@ -25,7 +25,7 @@ EVENT_ATTRIBUTES = {GenAIAttributes.GEN_AI_SYSTEM: "AlephAlpha"}
 """The attributes to be used for the event."""
 
 
-class _FunctionToollCall(TypedDict):
+class _FunctionToolCall(TypedDict):
     function_name: str
     arguments: Optional[dict[str, Any]]
 
@@ -34,7 +34,7 @@ class ToolCall(TypedDict):
     """Represents a tool call in the AI model."""
 
     id: str
-    function: _FunctionToollCall
+    function: _FunctionToolCall
     type: Literal["function"]
 
 
