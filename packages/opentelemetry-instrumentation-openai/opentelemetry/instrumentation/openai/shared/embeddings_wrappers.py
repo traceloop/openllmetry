@@ -11,14 +11,17 @@ from opentelemetry.instrumentation.openai.shared import (
     _set_response_attributes,
     _set_span_attribute,
     _token_type,
-    emit_choice_event,
-    emit_input_event,
     metric_shared_attributes,
     model_as_dict,
     propagate_trace_context,
     should_send_prompts,
 )
 from opentelemetry.instrumentation.openai.shared.config import Config
+from opentelemetry.instrumentation.openai.shared.event_handler import (
+    ChoiceEvent,
+    MessageEvent,
+    emit_event,
+)
 from opentelemetry.instrumentation.openai.utils import (
     _with_embeddings_telemetry_wrapper,
     dont_throw,
@@ -65,13 +68,6 @@ def embeddings_wrapper(
         kind=SpanKind.CLIENT,
         attributes={SpanAttributes.LLM_REQUEST_TYPE: LLM_REQUEST_TYPE.value},
     ) as span:
-        if not Config.use_legacy_attributes and Config.event_logger is not None:
-            embeddings_input = kwargs.get("input")
-            if isinstance(embeddings_input, str):
-                emit_input_event({"content": embeddings_input}, "user")
-            elif isinstance(embeddings_input, Iterable):
-                for i in embeddings_input:
-                    emit_input_event({"content": i}, "user")
         _handle_request(span, kwargs, instance)
 
         try:
@@ -109,18 +105,6 @@ def embeddings_wrapper(
             duration,
         )
 
-        if not Config.use_legacy_attributes and Config.event_logger is not None:
-            if isinstance(response, CreateEmbeddingResponse):
-                for embedding in response.data:
-                    emit_choice_event(
-                        embedding.index, embedding.embedding, "assistant", "unknown"
-                    )
-            elif isinstance(response, LegacyAPIResponse):
-                parsed_response = response.parse()
-                for embedding in parsed_response.data:
-                    emit_choice_event(
-                        embedding.index, embedding.embedding, "assistant", "unknown"
-                    )
         return response
 
 
@@ -147,14 +131,8 @@ async def aembeddings_wrapper(
         kind=SpanKind.CLIENT,
         attributes={SpanAttributes.LLM_REQUEST_TYPE: LLM_REQUEST_TYPE.value},
     ) as span:
-        if not Config.use_legacy_attributes and Config.event_logger is not None:
-            embeddings_input = kwargs.get("input")
-            if isinstance(embeddings_input, str):
-                emit_input_event({"content": embeddings_input}, "user")
-            elif isinstance(embeddings_input, Iterable):
-                for i in embeddings_input:
-                    emit_input_event({"content": i}, "user")
         _handle_request(span, kwargs, instance)
+
         try:
             # record time for duration
             start_time = time.time()
@@ -179,6 +157,7 @@ async def aembeddings_wrapper(
             raise e
 
         duration = end_time - start_time
+
         _handle_response(
             response,
             span,
@@ -188,18 +167,7 @@ async def aembeddings_wrapper(
             duration_histogram,
             duration,
         )
-        if not Config.use_legacy_attributes and Config.event_logger is not None:
-            if isinstance(response, CreateEmbeddingResponse):
-                for embedding in response.data:
-                    emit_choice_event(
-                        embedding.index, embedding.embedding, "assistant", "unknown"
-                    )
-            elif isinstance(response, LegacyAPIResponse):
-                parsed_response = response.parse()
-                for embedding in parsed_response.data:
-                    emit_choice_event(
-                        embedding.index, embedding.embedding, "assistant", "unknown"
-                    )
+
         return response
 
 
@@ -211,6 +179,7 @@ def _handle_request(span, kwargs, instance):
     _set_client_attributes(span, instance)
     if Config.enable_trace_context_propagation:
         propagate_trace_context(span, kwargs)
+    _emit_embeddings_message_event(kwargs.get("input"))
 
 
 @dont_throw
@@ -238,6 +207,8 @@ def _handle_response(
     )
     # span attributes
     _set_response_attributes(span, response_dict)
+
+    _emit_embeddings_choice_event(response)
 
 
 def _set_embeddings_metrics(
@@ -293,3 +264,32 @@ def _set_prompts(span, prompt):
             f"{SpanAttributes.LLM_PROMPTS}.0.content",
             prompt,
         )
+
+
+def _emit_embeddings_message_event(embeddings) -> None:
+    if isinstance(embeddings, str):
+        emit_event(MessageEvent(content=embeddings))
+    elif isinstance(embeddings, Iterable):
+        for i in embeddings:
+            emit_event(MessageEvent(content=i))
+
+
+def _emit_embeddings_choice_event(response) -> None:
+    if isinstance(response, CreateEmbeddingResponse):
+        for embedding in response.data:
+            emit_event(
+                ChoiceEvent(
+                    index=embedding.index,
+                    message={"content": embedding.embedding, "role": "assistant"},
+                )
+            )
+
+    elif isinstance(response, LegacyAPIResponse):
+        parsed_response = response.parse()
+        for embedding in parsed_response.data:
+            emit_event(
+                ChoiceEvent(
+                    index=embedding.index,
+                    message={"content": embedding.embedding, "role": "assistant"},
+                )
+            )

@@ -2,6 +2,8 @@ import copy
 import json
 import logging
 import time
+from functools import singledispatch
+from typing import List, Optional, Union
 
 from opentelemetry import context as context_api
 from opentelemetry.instrumentation.openai.shared import (
@@ -14,8 +16,6 @@ from opentelemetry.instrumentation.openai.shared import (
     _set_span_attribute,
     _set_span_stream_usage,
     _token_type,
-    emit_choice_event,
-    emit_input_event,
     get_token_count_from_string,
     is_streaming_response,
     metric_shared_attributes,
@@ -26,6 +26,12 @@ from opentelemetry.instrumentation.openai.shared import (
     should_send_prompts,
 )
 from opentelemetry.instrumentation.openai.shared.config import Config
+from opentelemetry.instrumentation.openai.shared.event_handler import (
+    ChoiceEvent,
+    MessageEvent,
+    ToolCall,
+    emit_event,
+)
 from opentelemetry.instrumentation.openai.utils import (
     _with_chat_telemetry_wrapper,
     dont_throw,
@@ -42,6 +48,9 @@ from opentelemetry.semconv_ai import (
 from opentelemetry.trace import SpanKind, Tracer
 from opentelemetry.trace.status import Status, StatusCode
 from wrapt import ObjectProxy
+
+from openai.types.chat import ChatCompletionMessageToolCall
+from openai.types.chat.chat_completion_message import FunctionCall
 
 SPAN_NAME = "openai.chat"
 PROMPT_FILTER_KEY = "prompt_filter_results"
@@ -77,14 +86,6 @@ def chat_wrapper(
         kind=SpanKind.CLIENT,
         attributes={SpanAttributes.LLM_REQUEST_TYPE: LLM_REQUEST_TYPE.value},
     )
-
-    if not Config.use_legacy_attributes and Config.event_logger is not None:
-        for message in kwargs.get("messages", []):
-            emit_input_event(
-                {"content": message.get("content")},
-                message.get("role", "unknown"),
-                message.get("tool_calls", None),
-            )
 
     run_async(_handle_request(span, kwargs, instance))
 
@@ -151,14 +152,6 @@ def chat_wrapper(
         duration,
     )
 
-    if (
-        not Config.use_legacy_attributes
-        and Config.event_logger is not None
-        and response.choices is not None
-    ):
-        for choice in response.choices:
-            _emit_choice_event(choice)
-
     span.end()
 
     return response
@@ -188,12 +181,6 @@ async def achat_wrapper(
         kind=SpanKind.CLIENT,
         attributes={SpanAttributes.LLM_REQUEST_TYPE: LLM_REQUEST_TYPE.value},
     )
-
-    if not Config.use_legacy_attributes and Config.event_logger is not None:
-        for message in kwargs.get("messages", []):
-            emit_input_event(
-                {"content": message.get("content")}, message.get("role", "unknown")
-            )
 
     await _handle_request(span, kwargs, instance)
 
@@ -262,38 +249,9 @@ async def achat_wrapper(
         duration,
     )
 
-    if (
-        not Config.use_legacy_attributes
-        and Config.event_logger is not None
-        and response.choices is not None
-    ):
-        for choice in response.choices:
-            _emit_choice_event(choice)
-
     span.end()
 
     return response
-
-
-def _emit_choice_event(choice):
-    has_message = choice.message is not None
-    has_finish_reason = choice.finish_reason is not None
-    has_tool_calls = has_message and choice.message.tool_calls is not None
-    has_function_call = has_message and choice.message.function_call is not None
-
-    content = choice.message.content if has_message else None
-    role = choice.message.role if has_message else "unknown"
-    finish_reason = choice.finish_reason if has_finish_reason else "unknown"
-
-    if has_tool_calls and has_function_call:
-        tool_calls = choice.message.tool_calls + [choice.message.function_call]
-    elif has_tool_calls:
-        tool_calls = choice.message.tool_calls
-    elif has_function_call:
-        tool_calls = [choice.message.function_call]
-    else:
-        tool_calls = None
-    emit_choice_event(choice.index, content, role, finish_reason, tool_calls)
 
 
 @dont_throw
@@ -308,6 +266,14 @@ async def _handle_request(span, kwargs, instance):
             set_tools_attributes(span, kwargs.get("tools"))
     if Config.enable_trace_context_propagation:
         propagate_trace_context(span, kwargs)
+    for message in kwargs.get("messages", []):
+        emit_event(
+            MessageEvent(
+                content=message.get("content"),
+                role=message.get("role"),
+                tool_calls=_parse_tool_calls(message.get("tool_calls", None)),
+            )
+        )
 
 
 @dont_throw
@@ -341,6 +307,9 @@ def _handle_response(
     if should_send_prompts():
         _set_completions(span, response_dict.get("choices"))
 
+    if response.choices is not None:
+        for choice in response.choices:
+            emit_event(_parse_choice_event(choice))
     return response
 
 
@@ -734,9 +703,6 @@ class ChatStream(ObjectProxy):
                 attributes=self._shared_attributes(),
             )
 
-        if not Config.use_legacy_attributes and Config.event_logger is not None:
-            self._emit_choice_events()
-
         _set_response_attributes(self._span, self._complete_response)
 
         if should_send_prompts():
@@ -745,9 +711,8 @@ class ChatStream(ObjectProxy):
         self._span.set_status(Status(StatusCode.OK))
         self._span.end()
 
-    def _emit_choice_events(self):
         for choice in self._complete_response.get("choices", []):
-            _emit_choice_event_dict(choice)
+            emit_event(_parse_choice_event(choice))
 
 
 # Backward compatibility with OpenAI v0
@@ -811,9 +776,8 @@ def _build_from_streaming_response(
     if streaming_time_to_generate and time_of_first_token:
         streaming_time_to_generate.record(time.time() - time_of_first_token)
 
-    if not Config.use_legacy_attributes and Config.event_logger is not None:
-        for choice in complete_response.get("choices", []):
-            _emit_choice_event_dict(choice)
+    for choice in complete_response.get("choices", []):
+        emit_event(_parse_choice_event(choice))
 
     _set_response_attributes(span, complete_response)
 
@@ -882,9 +846,8 @@ async def _abuild_from_streaming_response(
     if streaming_time_to_generate and time_of_first_token:
         streaming_time_to_generate.record(time.time() - time_of_first_token)
 
-    if not Config.use_legacy_attributes and Config.event_logger is not None:
-        for choice in complete_response.get("choices", []):
-            _emit_choice_event_dict(choice)
+    for choice in complete_response.get("choices", []):
+        emit_event(_parse_choice_event(choice))
 
     _set_response_attributes(span, complete_response)
 
@@ -895,12 +858,76 @@ async def _abuild_from_streaming_response(
     span.end()
 
 
-def _emit_choice_event_dict(choice):
+def _parse_tool_calls(
+    tool_calls: Optional[List[Union[dict, ChatCompletionMessageToolCall]]],
+) -> Union[List[ToolCall], None]:
+    """
+    Util to correctly parse the tool calls data from the OpenAI API to this module's
+    standard `ToolCall`.
+    """
+    if tool_calls is None:
+        return tool_calls
+
+    result = []
+
+    for tool_call in tool_calls:
+        tool_call_data = None
+
+        # Handle dict or ChatCompletionMessageToolCall
+        if isinstance(tool_call, dict):
+            tool_call_data = copy.deepcopy(tool_call)
+        elif isinstance(tool_call, ChatCompletionMessageToolCall):
+            tool_call_data = tool_call.model_dump()
+        elif isinstance(tool_call, FunctionCall):
+            function_call = tool_call.model_dump()
+            tool_call_data = ToolCall(
+                id="",
+                function={
+                    "name": function_call.get("name"),
+                    "arguments": function_call.get("arguments"),
+                },
+                type="function",
+            )
+
+        result.append(tool_call_data)
+    return result
+
+
+@singledispatch
+def _parse_choice_event(choice) -> ChoiceEvent:
+    has_message = choice.message is not None
+    has_finish_reason = choice.finish_reason is not None
+    has_tool_calls = has_message and choice.message.tool_calls
+    has_function_call = has_message and choice.message.function_call
+
+    content = choice.message.content if has_message else None
+    role = choice.message.role if has_message else "unknown"
+    finish_reason = choice.finish_reason if has_finish_reason else "unknown"
+
+    if has_tool_calls and has_function_call:
+        tool_calls = choice.message.tool_calls + [choice.message.function_call]
+    elif has_tool_calls:
+        tool_calls = choice.message.tool_calls
+    elif has_function_call:
+        tool_calls = [choice.message.function_call]
+    else:
+        tool_calls = None
+
+    return ChoiceEvent(
+        index=choice.index,
+        message={"content": content, "role": role},
+        finish_reason=finish_reason,
+        tool_calls=_parse_tool_calls(tool_calls),
+    )
+
+
+@_parse_choice_event.register
+def _(choice: dict) -> ChoiceEvent:
     message = choice.get("message")
     has_message = message is not None
     has_finish_reason = choice.get("finish_reason") is not None
-    has_tool_calls = has_message and message.get("tool_calls") is not None
-    has_function_call = has_message and message.get("function_call") is not None
+    has_tool_calls = has_message and message.get("tool_calls")
+    has_function_call = has_message and message.get("function_call")
 
     content = choice.get("message").get("content", "") if has_message else None
     role = choice.get("message").get("role") if has_message else "unknown"
@@ -919,7 +946,12 @@ def _emit_choice_event_dict(choice):
         for tool_call in tool_calls:
             tool_call["type"] = "function"
 
-    emit_choice_event(choice.get("index"), content, role, finish_reason, tool_calls)
+    return ChoiceEvent(
+        index=choice.get("index"),
+        message={"content": content, "role": role},
+        finish_reason=finish_reason,
+        tool_calls=tool_calls,
+    )
 
 
 def _accumulate_stream_items(item, complete_response):

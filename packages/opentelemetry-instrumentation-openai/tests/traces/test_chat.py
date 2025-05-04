@@ -103,7 +103,7 @@ def test_chat_with_events_with_content(
     assert_message_in_logs(
         user_message_log,
         "gen_ai.user.message",
-        {"content": {"content": "Tell me a joke about opentelemetry"}, "role": "user"},
+        {"content": "Tell me a joke about opentelemetry"},
     )
 
     # Validate the ai response
@@ -112,7 +112,6 @@ def test_chat_with_events_with_content(
         "finish_reason": "stop",
         "message": {
             "content": response.choices[0].message.content,
-            "role": "assistant",
         },
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
@@ -292,7 +291,7 @@ def test_chat_tool_calls_with_events_with_content(
 
     # Validate assistant message Event
     assistant_event = {
-        "content": {"content": None},
+        "content": None,
         "tool_calls": [
             {
                 "id": "1",
@@ -303,14 +302,12 @@ def test_chat_tool_calls_with_events_with_content(
                 },
             }
         ],
-        "role": "assistant",
     }
     assert_message_in_logs(logs[0], "gen_ai.assistant.message", assistant_event)
 
     # Validate the tool message Event
     tool_event = {
-        "role": "tool",
-        "content": {"content": "The weather in San Francisco is 70 degrees and sunny."},
+        "content": "The weather in San Francisco is 70 degrees and sunny.",
     }
     assert_message_in_logs(logs[1], "gen_ai.tool.message", tool_event)
 
@@ -320,7 +317,6 @@ def test_chat_tool_calls_with_events_with_content(
         "finish_reason": "stop",
         "message": {
             "content": "The weather in San Francisco is 70 degrees and sunny.",
-            "role": "assistant",
         },
     }
     assert_message_in_logs(logs[2], "gen_ai.choice", choice_event)
@@ -538,7 +534,7 @@ def test_chat_pydantic_based_tool_calls_with_events_with_content(
 
     # Validate assistant message Event
     assistant_event = {
-        "content": {"content": None},
+        "content": None,
         "tool_calls": [
             {
                 "id": "1",
@@ -549,14 +545,12 @@ def test_chat_pydantic_based_tool_calls_with_events_with_content(
                 },
             }
         ],
-        "role": "assistant",
     }
     assert_message_in_logs(logs[0], "gen_ai.assistant.message", assistant_event)
 
     # Validate the tool message Event
     tool_event = {
-        "role": "tool",
-        "content": {"content": "The weather in San Francisco is 70 degrees and sunny."},
+        "content": "The weather in San Francisco is 70 degrees and sunny.",
     }
     assert_message_in_logs(logs[1], "gen_ai.tool.message", tool_event)
 
@@ -566,7 +560,6 @@ def test_chat_pydantic_based_tool_calls_with_events_with_content(
         "finish_reason": "stop",
         "message": {
             "content": "The current weather in San Francisco is 70 degrees and sunny.",
-            "role": "assistant",
         },
     }
     assert_message_in_logs(logs[2], "gen_ai.choice", choice_event)
@@ -761,7 +754,7 @@ def test_chat_streaming_with_events_with_content(
     assert_message_in_logs(
         user_message_log,
         "gen_ai.user.message",
-        {"content": {"content": "Tell me a joke about opentelemetry"}, "role": "user"},
+        {"content": "Tell me a joke about opentelemetry"},
     )
 
     # Validate the ai response
@@ -770,7 +763,6 @@ def test_chat_streaming_with_events_with_content(
         "finish_reason": "stop",
         "message": {
             "content": "Why did the opentelemetry developer go broke? \nBecause they kept trying to trace their steps back too far!",
-            "role": "assistant",
         },
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
@@ -945,7 +937,7 @@ async def test_chat_async_streaming_with_events_with_content(
     assert_message_in_logs(
         user_message_log,
         "gen_ai.user.message",
-        {"content": {"content": "Tell me a joke about opentelemetry"}, "role": "user"},
+        {"content": "Tell me a joke about opentelemetry"},
     )
 
     # Validate the ai response
@@ -954,7 +946,6 @@ async def test_chat_async_streaming_with_events_with_content(
         "finish_reason": "stop",
         "message": {
             "content": "Why did the developer break up with Opentelemetry? Because it couldn't handle the baggage of all their tracing requests!",
-            "role": "assistant",
         },
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
@@ -1082,7 +1073,7 @@ def test_with_asyncio_run_with_events_with_content(
     assert_message_in_logs(
         user_message_log,
         "gen_ai.user.message",
-        {"content": {"content": "Tell me a joke about opentelemetry"}, "role": "user"},
+        {"content": "Tell me a joke about opentelemetry"},
     )
 
     # Validate the ai response
@@ -1091,7 +1082,6 @@ def test_with_asyncio_run_with_events_with_content(
         "finish_reason": "stop",
         "message": {
             "content": "Why did the developer bring a compass to the Opentelemetry party? \nTo ensure they didn't lose track of all their traces!",
-            "role": "assistant",
         },
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
@@ -1203,7 +1193,7 @@ def test_chat_context_propagation_with_events_with_content(
     assert_message_in_logs(
         user_message_log,
         "gen_ai.user.message",
-        {"content": {"content": "Tell me a joke about opentelemetry"}, "role": "user"},
+        {"content": "Tell me a joke about opentelemetry"},
     )
 
     # Validate the ai response
@@ -1212,7 +1202,6 @@ def test_chat_context_propagation_with_events_with_content(
         "finish_reason": "stop",
         "message": {
             "content": 'Why did the OpenTelemetry metric go to therapy?\n\nBecause it was feeling a little "trapped" in its logging function, and wanted to "release" its stress.',
-            "role": "assistant",
         },
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
@@ -1330,7 +1319,7 @@ async def test_chat_async_context_propagation_with_events_with_content(
     assert_message_in_logs(
         user_message_log,
         "gen_ai.user.message",
-        {"content": {"content": "Tell me a joke about opentelemetry"}, "role": "user"},
+        {"content": "Tell me a joke about opentelemetry"},
     )
 
     # Validate the ai response
@@ -1339,7 +1328,6 @@ async def test_chat_async_context_propagation_with_events_with_content(
         "finish_reason": "stop",
         "message": {
             "content": "A data scientist walks into an openTelemetry adoption meeting and says, \n\n\"I'm here to help track our progress, but I'm just a trace.\"",
-            "role": "assistant",
         },
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)

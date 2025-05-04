@@ -85,17 +85,14 @@ def test_completion_with_events_with_content(
     assert_message_in_logs(
         user_message_log,
         "gen_ai.user.message",
-        {"content": {"content": "Tell me a joke about opentelemetry"}, "role": "user"},
+        {"content": "Tell me a joke about opentelemetry"},
     )
 
     # Validate the ai response
     choice_event = {
         "index": 0,
         "finish_reason": "length",
-        "message": {
-            "content": response.choices[0].text,
-            "role": "assistant",
-        },
+        "message": {"content": response.choices[0].text},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
 
@@ -205,7 +202,7 @@ async def test_async_completion_with_events_with_content(
     assert_message_in_logs(
         user_message_log,
         "gen_ai.user.message",
-        {"content": {"content": "Tell me a joke about opentelemetry"}, "role": "user"},
+        {"content": "Tell me a joke about opentelemetry"},
     )
 
     # Validate the ai response
@@ -214,7 +211,6 @@ async def test_async_completion_with_events_with_content(
         "finish_reason": "length",
         "message": {
             "content": response.choices[0].text,
-            "role": "assistant",
         },
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
@@ -323,7 +319,7 @@ def test_completion_langchain_style_with_events_with_content(
     assert_message_in_logs(
         user_message_log,
         "gen_ai.user.message",
-        {"content": {"content": "Tell me a joke about opentelemetry"}, "role": "user"},
+        {"content": "Tell me a joke about opentelemetry"},
     )
 
     # Validate the ai response
@@ -332,7 +328,6 @@ def test_completion_langchain_style_with_events_with_content(
         "finish_reason": "length",
         "message": {
             "content": response.choices[0].text,
-            "role": "assistant",
         },
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
@@ -502,10 +497,7 @@ def test_completion_streaming_with_events_with_content(
         assert_message_in_logs(
             user_message_log,
             "gen_ai.user.message",
-            {
-                "content": {"content": "Tell me a joke about opentelemetry"},
-                "role": "user",
-            },
+            {"content": "Tell me a joke about opentelemetry"},
         )
 
         # Validate the ai response
@@ -513,8 +505,7 @@ def test_completion_streaming_with_events_with_content(
             "index": 0,
             "finish_reason": "length",
             "message": {
-                "content": "-common.\n\nI'm a python microservice that reads a JSON configuration file in order",
-                "role": "assistant",
+                "content": "-common.\n\nI'm a python microservice that reads a JSON configuration file in order"
             },
         }
         assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
@@ -676,10 +667,7 @@ async def test_async_completion_streaming_with_events_with_content(
     assert_message_in_logs(
         user_message_log,
         "gen_ai.user.message",
-        {
-            "content": {"content": "Tell me a joke about opentelemetry"},
-            "role": "user",
-        },
+        {"content": "Tell me a joke about opentelemetry"},
     )
 
     # Validate the ai response
@@ -688,7 +676,6 @@ async def test_async_completion_streaming_with_events_with_content(
         "finish_reason": "length",
         "message": {
             "content": " that isn’t about collecting logs\n\nJ) Some of these folks helped bring the",
-            "role": "assistant",
         },
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
@@ -809,10 +796,7 @@ def test_completion_context_propagation_with_events_with_content(
     assert_message_in_logs(
         user_message_log,
         "gen_ai.user.message",
-        {
-            "content": {"content": "Tell me a joke about opentelemetry"},
-            "role": "user",
-        },
+        {"content": "Tell me a joke about opentelemetry"},
     )
 
     # Validate the ai response
@@ -821,7 +805,6 @@ def test_completion_context_propagation_with_events_with_content(
         "finish_reason": "length",
         "message": {
             "content": "\n\nI want to share an interesting story about opentelemetry. I'd like",
-            "role": "assistant",
         },
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
@@ -937,10 +920,7 @@ async def test_async_completion_context_propagation_with_events_with_content(
     assert_message_in_logs(
         user_message_log,
         "gen_ai.user.message",
-        {
-            "content": {"content": "Tell me a joke about opentelemetry"},
-            "role": "user",
-        },
+        {"content": "Tell me a joke about opentelemetry"},
     )
 
     # Validate the ai response
@@ -949,7 +929,6 @@ async def test_async_completion_context_propagation_with_events_with_content(
         "finish_reason": "length",
         "message": {
             "content": "\n\nThere was a meter in a company that wanted to see improvement in the efficiency",
-            "role": "assistant",
         },
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)

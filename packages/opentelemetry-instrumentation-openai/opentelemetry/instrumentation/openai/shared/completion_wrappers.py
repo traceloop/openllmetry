@@ -8,8 +8,6 @@ from opentelemetry.instrumentation.openai.shared import (
     _set_response_attributes,
     _set_span_attribute,
     _set_span_stream_usage,
-    emit_choice_event,
-    emit_input_event,
     get_token_count_from_string,
     is_streaming_response,
     model_as_dict,
@@ -18,6 +16,11 @@ from opentelemetry.instrumentation.openai.shared import (
     should_send_prompts,
 )
 from opentelemetry.instrumentation.openai.shared.config import Config
+from opentelemetry.instrumentation.openai.shared.event_handler import (
+    ChoiceEvent,
+    MessageEvent,
+    emit_event,
+)
 from opentelemetry.instrumentation.openai.utils import (
     _with_tracer_wrapper,
     dont_throw,
@@ -52,13 +55,13 @@ def completion_wrapper(tracer, wrapped, instance, args, kwargs):
         attributes={SpanAttributes.LLM_REQUEST_TYPE: LLM_REQUEST_TYPE.value},
     )
 
-    if not Config.use_legacy_attributes and Config.event_logger is not None:
-        prompt = kwargs.get("prompt")
-        if isinstance(prompt, list):
-            for p in prompt:
-                emit_input_event({"content": p}, "user")
-        elif isinstance(prompt, str):
-            emit_input_event({"content": prompt}, "user")
+    prompt = kwargs.get("prompt")
+    if isinstance(prompt, list):
+        for p in prompt:
+            emit_event(MessageEvent(content=p))
+    elif isinstance(prompt, str):
+        emit_event(MessageEvent(content=prompt))
+
     _handle_request(span, kwargs, instance)
 
     try:
@@ -72,15 +75,8 @@ def completion_wrapper(tracer, wrapped, instance, args, kwargs):
         # span will be closed after the generator is done
         return _build_from_streaming_response(span, kwargs, response)
     else:
-        if not Config.use_legacy_attributes and Config.event_logger is not None:
-            for i, choice in enumerate(response.choices):
-                has_message = choice.text is not None
-                has_finish_reason = choice.finish_reason is not None
-
-                content = choice.text if has_message else None
-                finish_reason = choice.finish_reason if has_finish_reason else "unknown"
-
-                emit_choice_event(choice.index, content, "assistant", finish_reason)
+        for choice in response.choices:
+            emit_event(_parse_choice_event(choice))
         _handle_response(response, span)
 
     span.end()
@@ -100,8 +96,12 @@ async def acompletion_wrapper(tracer, wrapped, instance, args, kwargs):
         attributes={SpanAttributes.LLM_REQUEST_TYPE: LLM_REQUEST_TYPE.value},
     )
 
-    if not Config.use_legacy_attributes and Config.event_logger is not None:
-        emit_input_event({"content": kwargs.get("prompt")}, "user")
+    prompt = kwargs.get("prompt")
+    if isinstance(prompt, list):
+        for p in prompt:
+            emit_event(MessageEvent(content=p))
+    elif isinstance(prompt, str):
+        emit_event(MessageEvent(content=prompt))
     _handle_request(span, kwargs, instance)
     try:
         response = await wrapped(*args, **kwargs)
@@ -114,15 +114,8 @@ async def acompletion_wrapper(tracer, wrapped, instance, args, kwargs):
         # span will be closed after the generator is done
         return _abuild_from_streaming_response(span, kwargs, response)
     else:
-        if not Config.use_legacy_attributes and Config.event_logger is not None:
-            for i, choice in enumerate(response.choices):
-                has_message = choice.text is not None
-                has_finish_reason = choice.finish_reason is not None
-
-                content = choice.text if has_message else None
-                finish_reason = choice.finish_reason if has_finish_reason else "unknown"
-
-                emit_choice_event(choice.index, content, "assistant", finish_reason)
+        for choice in response.choices:
+            emit_event(_parse_choice_event(choice))
         _handle_response(response, span)
 
     span.end()
@@ -193,12 +186,14 @@ def _build_from_streaming_response(span, request_kwargs, response):
         _set_completions(span, complete_response.get("choices"))
 
     span.set_status(Status(StatusCode.OK))
-    if not Config.use_legacy_attributes and Config.event_logger is not None:
-        for i, choice in enumerate(complete_response["choices"]):
-            content = choice.get("text")
-            finish_reason = choice.get("finish_reason", "unknown")
-            index = choice.get("index", i)
-            emit_choice_event(index, content, "assistant", finish_reason)
+    for i, choice in enumerate(complete_response["choices"]):
+        emit_event(
+            ChoiceEvent(
+                index=choice.get("index", i),
+                message={"content": choice.get("text"), "role": "assistant"},
+                finish_reason=choice.get("finish_reason", "unknown"),
+            )
+        )
     span.end()
 
 
@@ -217,12 +212,14 @@ async def _abuild_from_streaming_response(span, request_kwargs, response):
         _set_completions(span, complete_response.get("choices"))
 
     span.set_status(Status(StatusCode.OK))
-    if not Config.use_legacy_attributes and Config.event_logger is not None:
-        for i, choice in enumerate(complete_response["choices"]):
-            content = choice.get("text")
-            finish_reason = choice.get("finish_reason", "unknown")
-            index = choice.get("index", i)
-            emit_choice_event(index, content, "assistant", finish_reason)
+    for i, choice in enumerate(complete_response["choices"]):
+        emit_event(
+            ChoiceEvent(
+                index=choice.get("index", i),
+                message={"content": choice.get("text"), "role": "assistant"},
+                finish_reason=choice.get("finish_reason", "unknown"),
+            )
+        )
     span.end()
 
 
@@ -278,3 +275,17 @@ def _accumulate_streaming_response(complete_response, item):
             complete_choice["text"] += choice.get("text")
 
     return complete_response
+
+
+def _parse_choice_event(choice) -> ChoiceEvent:
+    has_message = choice.text is not None
+    has_finish_reason = choice.finish_reason is not None
+
+    content = choice.text if has_message else None
+    finish_reason = choice.finish_reason if has_finish_reason else "unknown"
+
+    return ChoiceEvent(
+        index=choice.index,
+        message={"content": content, "role": "assistant"},
+        finish_reason=finish_reason,
+    )

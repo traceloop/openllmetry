@@ -85,7 +85,7 @@ def test_chat_with_events_with_content(
     assert_message_in_logs(
         logs[0],
         "gen_ai.user.message",
-        {"content": {"content": "Tell me a joke about opentelemetry"}, "role": "user"},
+        {"content": "Tell me a joke about opentelemetry"},
     )
 
     # Validate the ai response
@@ -94,7 +94,6 @@ def test_chat_with_events_with_content(
         "finish_reason": "stop",
         "message": {
             "content": response.choices[0].message.content,
-            "role": "assistant",
         },
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
@@ -246,17 +245,14 @@ def test_chat_content_filtering_with_events_with_content(
     assert_message_in_logs(
         logs[0],
         "gen_ai.user.message",
-        {"content": {"content": "Tell me a joke about opentelemetry"}, "role": "user"},
+        {"content": "Tell me a joke about opentelemetry"},
     )
 
     # Validate the ai response
     choice_event = {
         "index": 0,
         "finish_reason": "content_filter",
-        "message": {
-            "content": None,
-            "role": "unknown",
-        },
+        "message": {"content": None, "role": "unknown"},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
 
@@ -314,7 +310,11 @@ def test_chat_content_filtering_with_events_with_no_content(
     assert_message_in_logs(logs[0], "gen_ai.user.message", {})
 
     # Validate the ai response
-    choice_event = {"index": 0, "finish_reason": "content_filter", "message": {}}
+    choice_event = {
+        "index": 0,
+        "finish_reason": "content_filter",
+        "message": {"role": "unknown"},
+    }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
 
 
@@ -407,7 +407,7 @@ def test_prompt_content_filtering_with_events_with_content(
     assert_message_in_logs(
         logs[0],
         "gen_ai.user.message",
-        {"content": {"content": "Tell me a joke about opentelemetry"}, "role": "user"},
+        {"content": "Tell me a joke about opentelemetry"},
     )
 
 
@@ -571,7 +571,7 @@ def test_chat_streaming_with_events_with_content(
     assert_message_in_logs(
         logs[0],
         "gen_ai.user.message",
-        {"content": {"content": "Tell me a joke about opentelemetry"}, "role": "user"},
+        {"content": "Tell me a joke about opentelemetry"},
     )
 
     # Validate the ai response
@@ -580,7 +580,6 @@ def test_chat_streaming_with_events_with_content(
         "finish_reason": "stop",
         "message": {
             "content": "Why did the Opentelemetry developer bring a ladder to the coding competition? \n\nBecause they wanted to reach new traces!",
-            "role": "assistant",
         },
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
@@ -749,7 +748,7 @@ async def test_chat_async_streaming_with_events_with_content(
     assert_message_in_logs(
         logs[0],
         "gen_ai.user.message",
-        {"content": {"content": "Tell me a joke about opentelemetry"}, "role": "user"},
+        {"content": "Tell me a joke about opentelemetry"},
     )
 
     # Validate the ai response
@@ -758,7 +757,6 @@ async def test_chat_async_streaming_with_events_with_content(
         "finish_reason": "stop",
         "message": {
             "content": "Why did the OpenTelemetry project become a stand-up comedian?\n\nBecause it wanted to trace its steps and observe its laughter-per-minute rate!",
-            "role": "assistant",
         },
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)

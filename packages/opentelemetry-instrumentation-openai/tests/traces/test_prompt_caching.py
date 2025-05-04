@@ -155,11 +155,11 @@ def test_openai_prompt_caching_with_events_with_content(
 
     # Validate the first call events
     # Validate system message Event
-    system_message_event = {"content": {"content": system_message}, "role": "system"}
+    system_message_event = {"content": system_message}
     assert_message_in_logs(logs[0], "gen_ai.system.message", system_message_event)
 
     # Validate the user message Event
-    user_message_event = {"content": {"content": text}, "role": "user"}
+    user_message_event = {"content": text}
     assert_message_in_logs(logs[1], "gen_ai.user.message", user_message_event)
 
     # Validate the ai response
@@ -168,7 +168,6 @@ def test_openai_prompt_caching_with_events_with_content(
         "finish_reason": "stop",
         "message": {
             "content": responses[0].choices[0].message.content,
-            "role": "assistant",
         },
     }
     assert_message_in_logs(logs[2], "gen_ai.choice", choice_event)
@@ -186,7 +185,6 @@ def test_openai_prompt_caching_with_events_with_content(
         "finish_reason": "stop",
         "message": {
             "content": responses[1].choices[0].message.content,
-            "role": "assistant",
         },
     }
     assert_message_in_logs(logs[5], "gen_ai.choice", choice_event)
@@ -435,11 +433,11 @@ async def test_openai_prompt_caching_async_with_events_with_content(
 
     # Validate the first call events
     # Validate system message Event
-    system_message_event = {"content": {"content": system_message}, "role": "system"}
+    system_message_event = {"content": system_message}
     assert_message_in_logs(logs[0], "gen_ai.system.message", system_message_event)
 
     # Validate the user message Event
-    user_message_event = {"content": {"content": text}, "role": "user"}
+    user_message_event = {"content": text}
     assert_message_in_logs(logs[1], "gen_ai.user.message", user_message_event)
 
     # Validate the ai response
@@ -448,7 +446,6 @@ async def test_openai_prompt_caching_async_with_events_with_content(
         "finish_reason": "stop",
         "message": {
             "content": responses[0].choices[0].message.content,
-            "role": "assistant",
         },
     }
     assert_message_in_logs(logs[2], "gen_ai.choice", choice_event)
@@ -466,7 +463,6 @@ async def test_openai_prompt_caching_async_with_events_with_content(
         "finish_reason": "stop",
         "message": {
             "content": responses[1].choices[0].message.content,
-            "role": "assistant",
         },
     }
     assert_message_in_logs(logs[5], "gen_ai.choice", choice_event)
