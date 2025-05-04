@@ -160,14 +160,14 @@ def test_open_ai_function_calls_with_events_with_content(
     assert_message_in_logs(
         user_message_log,
         "gen_ai.user.message",
-        {"role": "user", "content": {"content": "What's the weather like in Boston?"}},
+        {"content": "What's the weather like in Boston?"},
     )
 
     # Validate the ai response
     choice_event = {
         "index": 0,
         "finish_reason": "function_call",
-        "message": {"content": None, "role": "assistant"},
+        "message": {"content": None},
         "tool_calls": [
             {
                 "id": "",
@@ -360,14 +360,14 @@ def test_open_ai_function_calls_tools_with_events_with_content(
     assert_message_in_logs(
         user_message_log,
         "gen_ai.user.message",
-        {"role": "user", "content": {"content": "What's the weather like in Boston?"}},
+        {"content": "What's the weather like in Boston?"},
     )
 
     # Validate the ai response
     choice_event = {
         "index": 0,
         "finish_reason": "tool_calls",
-        "message": {"content": None, "role": "assistant"},
+        "message": {"content": None},
         "tool_calls": [
             {
                 "id": "call_b4lU3wKOqwO7Xb2Ksok2XWyB",
@@ -563,17 +563,14 @@ async def test_open_ai_function_calls_tools_streaming_with_events_with_content(
     assert_message_in_logs(
         user_message_log,
         "gen_ai.user.message",
-        {
-            "role": "user",
-            "content": {"content": "What's the weather like in San Francisco?"},
-        },
+        {"content": "What's the weather like in San Francisco?"},
     )
 
     # Validate the ai response
     choice_event = {
         "index": 0,
         "finish_reason": "tool_calls",
-        "message": {"content": "", "role": "assistant"},
+        "message": {"content": ""},
         "tool_calls": [
             {
                 "function": {
@@ -814,19 +811,14 @@ def test_open_ai_function_calls_tools_parallel_with_events_with_content(
     assert_message_in_logs(
         user_message_log,
         "gen_ai.user.message",
-        {
-            "content": {
-                "content": "What's the weather like in San Francisco and Boston?",
-            },
-            "role": "user",
-        },
+        {"content": "What's the weather like in San Francisco and Boston?"},
     )
 
     # Validate the ai response
     choice_event = {
         "index": 0,
         "finish_reason": "tool_calls",
-        "message": {"content": None, "role": "assistant"},
+        "message": {"content": None},
         "tool_calls": [
             {
                 "function": {
@@ -1103,19 +1095,14 @@ async def test_open_ai_function_calls_tools_streaming_parallel_with_events_with_
     assert_message_in_logs(
         user_message_log,
         "gen_ai.user.message",
-        {
-            "content": {
-                "content": "What's the weather like in San Francisco and Boston?"
-            },
-            "role": "user",
-        },
+        {"content": "What's the weather like in San Francisco and Boston?"},
     )
 
     # Validate the ai response
     choice_event = {
         "index": 0,
         "finish_reason": "tool_calls",
-        "message": {"content": "", "role": "assistant"},
+        "message": {"content": ""},
         "tool_calls": [
             {
                 "function": {

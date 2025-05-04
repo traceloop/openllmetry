@@ -1,8 +1,8 @@
-from opentelemetry.instrumentation.openai.shared import (
-    _set_span_attribute,
-    emit_choice_event,
+from opentelemetry.instrumentation.openai.shared import _set_span_attribute
+from opentelemetry.instrumentation.openai.shared.event_handler import (
+    ChoiceEvent,
+    emit_event,
 )
-from opentelemetry.instrumentation.openai.shared.config import Config
 from opentelemetry.semconv_ai import SpanAttributes
 from typing_extensions import override
 
@@ -88,12 +88,15 @@ class EventHandleWrapper(AssistantEventHandler):
             f"gen_ai.response.{self._current_text_index}.id",
             message.id,
         )
-        if not Config.use_legacy_attributes and Config.event_logger is not None:
-            emit_choice_event(
-                self._current_text_index,
-                message.content[0].text.value,
-                message.role,
+        emit_event(
+            ChoiceEvent(
+                index=self._current_text_index,
+                message={
+                    "content": [item.model_dump() for item in message.content],
+                    "role": message.role,
+                },
             )
+        )
         self._original_handler.on_message_done(message)
         self._current_text_index += 1
 

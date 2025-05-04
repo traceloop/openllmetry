@@ -214,27 +214,17 @@ def test_new_assistant_with_events_with_content(
         logs[0],
         "gen_ai.system.message",
         {
-            "content": {
-                "content": "You are a personal math tutor. Write and run code to answer math questions."
-            },
-            "role": "system",
+            "content": "You are a personal math tutor. Write and run code to answer math questions.",
         },
     )
 
     # Validate assistent system message Event
     assert_message_in_logs(
-        logs[1],
-        "gen_ai.system.message",
-        {"content": {"content": model_instructions}, "role": "system"},
+        logs[1], "gen_ai.system.message", {"content": model_instructions}
     )
 
     # Validate user message Event
-    user_message_log = logs[2]
-    assert_message_in_logs(
-        user_message_log,
-        "gen_ai.user.message",
-        {"content": {"content": user_message}, "role": "user"},
-    )
+    assert_message_in_logs(logs[2], "gen_ai.user.message", {"content": user_message})
 
     # Validate the ai response
     choice_event = {
@@ -242,7 +232,6 @@ def test_new_assistant_with_events_with_content(
         "finish_reason": "unknown",
         "message": {
             "content": messages.data[-1].content[0].text.value,
-            "role": "assistant",
         },
     }
     assert_message_in_logs(logs[3], "gen_ai.choice", choice_event)
@@ -510,10 +499,7 @@ def test_new_assistant_with_polling_with_events_with_content(
         logs[0],
         "gen_ai.system.message",
         {
-            "content": {
-                "content": "You are a personal math tutor. Write and run code to answer math questions."
-            },
-            "role": "system",
+            "content": "You are a personal math tutor. Write and run code to answer math questions."
         },
     )
 
@@ -522,29 +508,21 @@ def test_new_assistant_with_polling_with_events_with_content(
         logs[1],
         "gen_ai.system.message",
         {
-            "content": {
-                "content": "Please address the user as Jane Doe. The user has a premium account."
-            },
-            "role": "system",
+            "content": "Please address the user as Jane Doe. The user has a premium account.",
         },
     )
 
     # Validate user message Event
     user_message_log = logs[2]
     assert_message_in_logs(
-        user_message_log,
-        "gen_ai.user.message",
-        {"content": {"content": user_message}, "role": "user"},
+        user_message_log, "gen_ai.user.message", {"content": user_message}
     )
 
     # Validate the ai response
     choice_event = {
         "index": 0,
         "finish_reason": "unknown",
-        "message": {
-            "content": messages.data[-1].content[0].text.value,
-            "role": "assistant",
-        },
+        "message": {"content": messages.data[-1].content[0].text.value},
     }
     assert_message_in_logs(logs[3], "gen_ai.choice", choice_event)
 
@@ -820,10 +798,7 @@ def test_existing_assistant_with_events_with_content(
         logs[0],
         "gen_ai.system.message",
         {
-            "content": {
-                "content": "You are a personal math tutor. Write and run code to answer math questions."
-            },
-            "role": "system",
+            "content": "You are a personal math tutor. Write and run code to answer math questions.",
         },
     )
 
@@ -832,10 +807,7 @@ def test_existing_assistant_with_events_with_content(
         logs[1],
         "gen_ai.system.message",
         {
-            "content": {
-                "content": "Please address the user as Jane Doe. The user has a premium account."
-            },
-            "role": "system",
+            "content": "Please address the user as Jane Doe. The user has a premium account.",
         },
     )
 
@@ -844,17 +816,14 @@ def test_existing_assistant_with_events_with_content(
     assert_message_in_logs(
         user_message_log,
         "gen_ai.user.message",
-        {"content": {"content": user_message}, "role": "user"},
+        {"content": user_message},
     )
 
     # Validate the first ai response
     choice_event = {
         "index": 0,
         "finish_reason": "unknown",
-        "message": {
-            "content": messages.data[-2].content[0].text.value,
-            "role": "assistant",
-        },
+        "message": {"content": messages.data[-2].content[0].text.value},
     }
     assert_message_in_logs(logs[3], "gen_ai.choice", choice_event)
 
@@ -862,10 +831,7 @@ def test_existing_assistant_with_events_with_content(
     choice_event = {
         "index": 1,
         "finish_reason": "unknown",
-        "message": {
-            "content": messages.data[-1].content[0].text.value,
-            "role": "assistant",
-        },
+        "message": {"content": messages.data[-1].content[0].text.value},
     }
     assert_message_in_logs(logs[4], "gen_ai.choice", choice_event)
 
@@ -1134,10 +1100,7 @@ def test_streaming_new_assistant_with_events_with_content(
         logs[0],
         "gen_ai.system.message",
         {
-            "content": {
-                "content": "You are a personal math tutor. Write and run code to answer math questions."
-            },
-            "role": "system",
+            "content": "You are a personal math tutor. Write and run code to answer math questions.",
         },
     )
 
@@ -1146,21 +1109,21 @@ def test_streaming_new_assistant_with_events_with_content(
         logs[1],
         "gen_ai.system.message",
         {
-            "content": {
-                "content": "Please address the user as Jane Doe. The user has a premium account."
-            },
-            "role": "system",
+            "content": "Please address the user as Jane Doe. The user has a premium account.",
         },
     )
 
     # Validate the first ai response
-    print(type(assistant_messages[0]))
     choice_event = {
         "index": 0,
         "finish_reason": "unknown",
         "message": {
-            "content": assistant_messages[0],
-            "role": "assistant",
+            "content": [
+                {
+                    "text": {"annotations": [], "value": assistant_messages[0]},
+                    "type": "text",
+                }
+            ],
         },
     }
     assert_message_in_logs(logs[2], "gen_ai.choice", choice_event)
@@ -1170,8 +1133,12 @@ def test_streaming_new_assistant_with_events_with_content(
         "index": 1,
         "finish_reason": "unknown",
         "message": {
-            "content": assistant_messages[1],
-            "role": "assistant",
+            "content": [
+                {
+                    "text": {"annotations": [], "value": assistant_messages[1]},
+                    "type": "text",
+                }
+            ],
         },
     }
     assert_message_in_logs(logs[3], "gen_ai.choice", choice_event)
@@ -1423,10 +1390,7 @@ def test_streaming_existing_assistant_with_events_with_content(
         logs[0],
         "gen_ai.system.message",
         {
-            "content": {
-                "content": "You are a personal math tutor. Write and run code to answer math questions."
-            },
-            "role": "system",
+            "content": "You are a personal math tutor. Write and run code to answer math questions.",
         },
     )
 
@@ -1435,10 +1399,7 @@ def test_streaming_existing_assistant_with_events_with_content(
         logs[1],
         "gen_ai.system.message",
         {
-            "content": {
-                "content": "Please address the user as Jane Doe. The user has a premium account."
-            },
-            "role": "system",
+            "content": "Please address the user as Jane Doe. The user has a premium account.",
         },
     )
 
@@ -1446,7 +1407,14 @@ def test_streaming_existing_assistant_with_events_with_content(
     choice_event = {
         "index": 0,
         "finish_reason": "unknown",
-        "message": {"content": assistant_messages[0], "role": "assistant"},
+        "message": {
+            "content": [
+                {
+                    "text": {"annotations": [], "value": assistant_messages[0]},
+                    "type": "text",
+                }
+            ],
+        },
     }
     assert_message_in_logs(logs[2], "gen_ai.choice", choice_event)
 

@@ -1,22 +1,15 @@
-import copy
 import json
 import logging
 import os
 import types
 from importlib.metadata import version
-from typing import List, Optional, Union
 
 from opentelemetry import context as context_api
-from opentelemetry._events import Event, EventLogger, get_event_logger
 from opentelemetry.instrumentation.openai.shared.config import Config
 from opentelemetry.instrumentation.openai.utils import (
     dont_throw,
-    is_content_enabled,
     is_openai_v1,
     should_record_stream_token_usage,
-)
-from opentelemetry.semconv._incubating.attributes import (
-    gen_ai_attributes as GenAIAttributes,
 )
 from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
     GEN_AI_RESPONSE_ID,
@@ -26,8 +19,6 @@ from opentelemetry.trace.propagation import set_span_in_context
 from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
 
 import openai
-from openai.types.chat import ChatCompletionMessageToolCall
-from openai.types.chat.chat_completion_message import FunctionCall
 
 OPENAI_LLM_USAGE_TOKEN_TYPES = ["prompt_tokens", "completion_tokens"]
 PROMPT_FILTER_KEY = "prompt_filter_results"
@@ -328,89 +319,3 @@ def propagate_trace_context(span, kwargs):
         ctx = set_span_in_context(span)
         TraceContextTextMapPropagator().inject(headers, context=ctx)
         kwargs["headers"] = headers
-
-
-def _extract_tool_call_data(tool_call: Union[dict, ChatCompletionMessageToolCall]):
-    tool_call_data = None
-
-    # Handle dict or ChatCompletionMessageToolCall
-    if isinstance(tool_call, dict):
-        tool_call_data = copy.deepcopy(tool_call)
-    elif isinstance(tool_call, ChatCompletionMessageToolCall):
-        tool_call_data = tool_call.model_dump()
-    elif isinstance(tool_call, FunctionCall):
-        function_call = tool_call.model_dump()
-        tool_call_data = {
-            "id": "",
-            "function": {
-                "name": function_call.get("name"),
-                "arguments": function_call.get("arguments"),
-            },
-            "type": "function",
-        }
-    if tool_call_data is None:
-        msg = "tool_call must be a dict, ChatCompletionMessageToolCall or FunctionCall"
-        raise ValueError(msg)
-
-    if not is_content_enabled():
-        tool_call_data["function"].pop("arguments", None)
-
-    return tool_call_data
-
-
-@dont_throw
-def emit_input_event(
-    content: dict,
-    role: str,
-    tool_calls: Optional[List[dict]] = None,
-):
-    body = {}
-
-    if role == "assistant" and tool_calls is not None:
-        body["tool_calls"] = []
-        for call in tool_calls:
-            tool_call_data = _extract_tool_call_data(call)
-            body["tool_calls"].append(tool_call_data)
-
-    if is_content_enabled():
-        body["content"] = content
-        body["role"] = role
-
-    Config.event_logger.emit(
-        Event(f"gen_ai.{role}.message", attributes=_get_event_attributes(), body=body)
-    )
-
-
-@dont_throw
-def emit_choice_event(
-    index: int,
-    content: dict,
-    role: str,
-    finish_reason: str = "unknown",
-    tool_calls: Optional[List[dict]] = None,
-):
-    body = {
-        "index": index,
-        "finish_reason": finish_reason,
-        "message": {},
-    }
-
-    if tool_calls:
-        body["tool_calls"] = []
-        for call in tool_calls:
-            tool_call_data = _extract_tool_call_data(call)
-            body["tool_calls"].append(tool_call_data)
-
-    if is_content_enabled():
-        body["message"]["content"] = content
-        body["message"]["role"] = role
-
-    Config.event_logger.emit(
-        Event("gen_ai.choice", attributes=_get_event_attributes(), body=body)
-    )
-
-
-def _get_event_attributes():
-    return {
-        GenAIAttributes.GEN_AI_SYSTEM: GenAIAttributes.GenAiSystemValues.OPENAI.value
-    }

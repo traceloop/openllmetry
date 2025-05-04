@@ -83,14 +83,14 @@ def test_embeddings_with_events_with_content(
     assert_message_in_logs(
         user_message_log,
         "gen_ai.user.message",
-        {"content": {"content": "Tell me a joke about opentelemetry"}, "role": "user"},
+        {"content": "Tell me a joke about opentelemetry"},
     )
 
     # Validate the ai response
     choice_event = {
         "index": 0,
         "finish_reason": "unknown",
-        "message": {"content": response.data[0].embedding, "role": "assistant"},
+        "message": {"content": response.data[0].embedding},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
 
@@ -211,14 +211,14 @@ def test_embeddings_with_raw_response_with_events_with_content(
     assert_message_in_logs(
         user_message_log,
         "gen_ai.user.message",
-        {"content": {"content": "Tell me a joke about opentelemetry"}, "role": "user"},
+        {"content": "Tell me a joke about opentelemetry"},
     )
 
     # Validate the ai response
     choice_event = {
         "index": 0,
         "finish_reason": "unknown",
-        "message": {"content": parsed_response.data[0].embedding, "role": "assistant"},
+        "message": {"content": parsed_response.data[0].embedding},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
 
@@ -356,14 +356,14 @@ def test_azure_openai_embeddings_with_events_with_content(
     assert_message_in_logs(
         user_message_log,
         "gen_ai.user.message",
-        {"content": {"content": "Tell me a joke about opentelemetry"}, "role": "user"},
+        {"content": "Tell me a joke about opentelemetry"},
     )
 
     # Validate the ai response
     choice_event = {
         "index": 0,
         "finish_reason": "unknown",
-        "message": {"content": response.data[0].embedding, "role": "assistant"},
+        "message": {"content": response.data[0].embedding},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
 
@@ -475,14 +475,14 @@ def test_embeddings_context_propagation_with_events_with_content(
     assert_message_in_logs(
         user_message_log,
         "gen_ai.user.message",
-        {"content": {"content": "Tell me a joke about opentelemetry"}, "role": "user"},
+        {"content": "Tell me a joke about opentelemetry"},
     )
 
     # Validate the ai response
     choice_event = {
         "index": 0,
         "finish_reason": "unknown",
-        "message": {"content": response.data[0].embedding, "role": "assistant"},
+        "message": {"content": response.data[0].embedding},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
 
@@ -578,14 +578,14 @@ async def test_async_embeddings_context_propagation_with_events_with_content(
     assert_message_in_logs(
         user_message_log,
         "gen_ai.user.message",
-        {"content": {"content": "Tell me a joke about opentelemetry"}, "role": "user"},
+        {"content": "Tell me a joke about opentelemetry"},
     )
 
     # Validate the ai response
     choice_event = {
         "index": 0,
         "finish_reason": "unknown",
-        "message": {"content": response.data[0].embedding, "role": "assistant"},
+        "message": {"content": response.data[0].embedding},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
 

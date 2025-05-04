@@ -117,7 +117,6 @@ def test_vision_with_events_with_content(
         == "chatcmpl-8wq4EsSXTQC0JbGzob3SBHg6pS7Tt"
     )
 
-    print(response)
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2
 
@@ -127,18 +126,15 @@ def test_vision_with_events_with_content(
         user_message_log,
         "gen_ai.user.message",
         {
-            "content": {
-                "content": [
-                    {"type": "text", "text": "What is in this image?"},
-                    {
-                        "type": "image_url",
-                        "image_url": {
-                            "url": "https://source.unsplash.com/8xznAGy4HcY/800x400"
-                        },
+            "content": [
+                {"type": "text", "text": "What is in this image?"},
+                {
+                    "type": "image_url",
+                    "image_url": {
+                        "url": "https://source.unsplash.com/8xznAGy4HcY/800x400"
                     },
-                ]
-            },
-            "role": "user",
+                },
+            ]
         },
     )
 
@@ -148,7 +144,6 @@ def test_vision_with_events_with_content(
         "finish_reason": "length",
         "message": {
             "content": response.choices[0].message.content,
-            "role": "assistant",
         },
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
@@ -340,7 +335,6 @@ def test_vision_base64_with_events_with_content(
         == "chatcmpl-AC7YAG2uy8c4VfbqJp4QkdHc5PDZ4"
     )
 
-    print(response)
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2
 
@@ -350,16 +344,13 @@ def test_vision_base64_with_events_with_content(
         user_message_log,
         "gen_ai.user.message",
         {
-            "content": {
-                "content": [
-                    {"type": "text", "text": "What is in this image?"},
-                    {
-                        "type": "image_url",
-                        "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"},
-                    },
-                ]
-            },
-            "role": "user",
+            "content": [
+                {"type": "text", "text": "What is in this image?"},
+                {
+                    "type": "image_url",
+                    "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"},
+                },
+            ]
         },
     )
 
@@ -369,7 +360,6 @@ def test_vision_base64_with_events_with_content(
         "finish_reason": "stop",
         "message": {
             "content": response.choices[0].message.content,
-            "role": "assistant",
         },
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
