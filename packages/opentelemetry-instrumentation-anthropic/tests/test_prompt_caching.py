@@ -1,8 +1,15 @@
 from pathlib import Path
 
 import pytest
+from opentelemetry.sdk._logs import LogData
+from opentelemetry.semconv._incubating.attributes import (
+    event_attributes as EventAttributes,
+)
+from opentelemetry.semconv._incubating.attributes import (
+    gen_ai_attributes as GenAIAttributes,
+)
 
-from .utils import assert_message_in_logs, verify_metrics
+from .utils import verify_metrics
 
 
 @pytest.mark.vcr
@@ -234,14 +241,12 @@ def test_anthropic_prompt_caching_with_events_with_content(
                     "text": system_message,
                 },
             ],
-            "role": "system",
         },
     )
 
     # Validate the first user message Event
     user_message_log = logs[1]
     ideal_user_log_message = {
-        "role": "user",
         "content": [
             {
                 "type": "text",
@@ -277,14 +282,12 @@ def test_anthropic_prompt_caching_with_events_with_content(
                     "text": system_message,
                 },
             ],
-            "role": "system",
         },
     )
 
     # Validate the second user message Event
     user_message_log = logs[4]
     ideal_user_log_message = {
-        "role": "user",
         "content": [
             {
                 "type": "text",
@@ -668,15 +671,13 @@ async def test_anthropic_prompt_caching_async_with_events_with_content(
                     "type": "text",
                     "text": system_message,
                 },
-            ],
-            "role": "system",
+            ]
         },
     )
 
     # Validate the first user message Event
     user_message_log = logs[1]
     ideal_user_log_message = {
-        "role": "user",
         "content": [
             {
                 "type": "text",
@@ -712,14 +713,12 @@ async def test_anthropic_prompt_caching_async_with_events_with_content(
                     "text": system_message,
                 },
             ],
-            "role": "system",
         },
     )
 
     # Validate the second user message Event
     user_message_log = logs[4]
     ideal_user_log_message = {
-        "role": "user",
         "content": [
             {
                 "type": "text",
@@ -1115,14 +1114,12 @@ def test_anthropic_prompt_caching_stream_with_events_with_content(
                     "text": system_message,
                 },
             ],
-            "role": "system",
         },
     )
 
     # Validate the first user message Event
     user_message_log = logs[1]
     ideal_user_log_message = {
-        "role": "user",
         "content": [
             {
                 "type": "text",
@@ -1161,14 +1158,12 @@ def test_anthropic_prompt_caching_stream_with_events_with_content(
                     "text": system_message,
                 },
             ],
-            "role": "system",
         },
     )
 
     # Validate the second user message Event
     user_message_log = logs[4]
     ideal_user_log_message = {
-        "role": "user",
         "content": [
             {
                 "type": "text",
@@ -1568,14 +1563,12 @@ async def test_anthropic_prompt_caching_async_stream_with_events_with_content(
                     "text": system_message,
                 },
             ],
-            "role": "system",
         },
     )
 
     # Validate the first user message Event
     user_message_log = logs[1]
     ideal_user_log_message = {
-        "role": "user",
         "content": [
             {
                 "type": "text",
@@ -1614,14 +1607,12 @@ async def test_anthropic_prompt_caching_async_stream_with_events_with_content(
                     "text": system_message,
                 },
             ],
-            "role": "system",
         },
     )
 
     # Validate the second user message Event
     user_message_log = logs[4]
     ideal_user_log_message = {
-        "role": "user",
         "content": [
             {
                 "type": "text",
@@ -1785,3 +1776,17 @@ async def test_anthropic_prompt_caching_async_stream_with_events_with_no_content
         }
         assert_message_in_logs(logs[i], "gen_ai.choice", choice_event)
         i += 1
+
+
+def assert_message_in_logs(log: LogData, event_name: str, expected_content: dict):
+    assert log.log_record.attributes.get(EventAttributes.EVENT_NAME) == event_name
+    assert (
+        log.log_record.attributes.get(GenAIAttributes.GEN_AI_SYSTEM)
+        == GenAIAttributes.GenAiSystemValues.ANTHROPIC.value
+    )
+
+    if not expected_content:
+        assert not log.log_record.body
+    else:
+        assert log.log_record.body
+        assert dict(log.log_record.body) == expected_content

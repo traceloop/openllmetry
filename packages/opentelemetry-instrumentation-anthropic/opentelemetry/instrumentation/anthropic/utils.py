@@ -5,6 +5,7 @@ import threading
 import traceback
 
 from opentelemetry import context as context_api
+from opentelemetry._events import EventLogger
 from opentelemetry.instrumentation.anthropic.config import Config
 from opentelemetry.semconv_ai import SpanAttributes
 
@@ -146,3 +147,13 @@ def is_content_enabled() -> bool:
     )
 
     return capture_content.lower() == "true"
+
+
+def should_emit_events() -> bool:
+    """
+    Checks if the instrumentation isn't using the legacy attributes
+    and if the event logger is not None.
+    """
+    return not Config.use_legacy_attributes and isinstance(
+        Config.event_logger, EventLogger
+    )

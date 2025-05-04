@@ -4,9 +4,16 @@ import json
 from pathlib import Path
 
 import pytest
+from opentelemetry.sdk._logs import LogData
+from opentelemetry.semconv._incubating.attributes import (
+    event_attributes as EventAttributes,
+)
+from opentelemetry.semconv._incubating.attributes import (
+    gen_ai_attributes as GenAIAttributes,
+)
 from opentelemetry.semconv_ai import SpanAttributes
 
-from .utils import assert_message_in_logs, verify_metrics
+from .utils import verify_metrics
 
 
 @pytest.mark.vcr
@@ -126,7 +133,7 @@ def test_anthropic_message_create_with_events_with_content(
     assert len(logs) == 2
 
     # Validate user message Event
-    user_message = {"content": "Tell me a joke about OpenTelemetry", "role": "user"}
+    user_message = {"content": "Tell me a joke about OpenTelemetry"}
     user_message_log = logs[0]
     assert_message_in_logs(user_message_log, "gen_ai.user.message", user_message)
 
@@ -352,16 +359,14 @@ def test_anthropic_multi_modal_with_events_with_content(
     assert len(logs) == 2
 
     # Validate user message Event
-    user_message_log = logs[0]
-    assert_message_in_logs(user_message_log, "gen_ai.user.message", user_message)
+    user_message.pop("role", None)
+    assert_message_in_logs(logs[0], "gen_ai.user.message", user_message)
 
     # Validate the ai response
     choice_event = {
         "index": 0,
         "finish_reason": "end_turn",
-        "message": {
-            "content": "The image shows 10 rounded rectangular shapes in various colors including red, orange, yellow, green, and blue, arranged in a pattern against a black background. The shapes are evenly spaced and create a balanced, symmetrical composition. The bright, contrasting colors stand out vividly against the dark backdrop."
-        },
+        "message": {"content": response.content[0].text},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
 
@@ -592,16 +597,14 @@ async def test_anthropic_async_multi_modal_with_events_with_content(
     assert len(logs) == 2
 
     # Validate user message Event
-    user_message_log = logs[0]
-    assert_message_in_logs(user_message_log, "gen_ai.user.message", user_message)
+    user_message.pop("role", None)
+    assert_message_in_logs(logs[0], "gen_ai.user.message", user_message)
 
     # Validate the ai response
     choice_event = {
         "index": 0,
         "finish_reason": "end_turn",
-        "message": {
-            "content": "I see 10 rounded rectangular shapes in various bright colors against a black background. The colors used are red, orange, teal, and green. The shapes are arranged in a pattern that looks somewhat like a bar chart or stacked blocks."
-        },
+        "message": {"content": response.content[0].text},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
 
@@ -821,8 +824,8 @@ def test_anthropic_message_streaming_with_events_with_content(
     assert len(logs) == 2
 
     # Validate user message Event
-    user_message_log = logs[0]
-    assert_message_in_logs(user_message_log, "gen_ai.user.message", user_message)
+    user_message.pop("role", None)
+    assert_message_in_logs(logs[0], "gen_ai.user.message", user_message)
 
     # Validate the ai response
     choice_event = {
@@ -831,7 +834,7 @@ def test_anthropic_message_streaming_with_events_with_content(
         "message": {
             "content": {
                 "type": "text",
-                "content": 'Here\'s an OpenTelemetry-themed joke for you:\n\nWhy did the developer feel so lost when using OpenTelemetry?\nThey were in a Span of Confusion!\n\nThe idea behind this joke is that OpenTelemetry uses the concept of "spans" to represent individual operations or requests within a distributed system. When a developer is first getting started with OpenTelemetry, they may feel a bit disoriented or lost trying to understand all the different spans and how they fit together - hence the "Span of Confusion" pun.\n\nHopefully this gives you a chuckle and provides a lighthearted introduction to some of the key concepts in OpenTelemetry. Let me know if you\'d like to hear any other tech-themed jokes!',
+                "content": response_content,
             }
         },
     }
@@ -1034,16 +1037,14 @@ async def test_async_anthropic_message_create_with_events_with_content(
     assert len(logs) == 2
 
     # Validate user message Event
-    user_message_log = logs[0]
-    assert_message_in_logs(user_message_log, "gen_ai.user.message", user_message)
+    user_message.pop("role", None)
+    assert_message_in_logs(logs[0], "gen_ai.user.message", user_message)
 
     # Validate the ai response
     choice_event = {
         "index": 0,
         "finish_reason": "end_turn",
-        "message": {
-            "content": 'Sure, here\'s a joke about OpenTelemetry:\n\nWhy did the developer decide to use OpenTelemetry?\n\nBecause they wanted to trace their application\'s every move!\n\nExplanation:\nOpenTelemetry is an open-source observability framework that provides a standard way to generate, collect, and export telemetry data (metrics, logs, and traces) for distributed systems. It allows developers to instrument their applications and gain insights into the behavior and performance of their systems.\n\nThe joke plays on the word "trace," which has a double meaning here. In the context of OpenTelemetry, "trace" refers to the ability to track and analyze the flow of requests through a distributed system. However, the joke humorously suggests that the developer wants to trace their application\'s "every move," as if the application is a person being closely monitored or followed.'
-        },
+        "message": {"content": response.content[0].text},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
 
@@ -1255,19 +1256,14 @@ async def test_async_anthropic_message_streaming_with_events_with_content(
     assert len(logs) == 2
 
     # Validate user message Event
-    user_message_log = logs[0]
-    assert_message_in_logs(user_message_log, "gen_ai.user.message", user_message)
+    user_message.pop("role", None)
+    assert_message_in_logs(logs[0], "gen_ai.user.message", user_message)
 
     # Validate the ai response
     choice_event = {
         "index": 0,
         "finish_reason": "end_turn",
-        "message": {
-            "content": {
-                "type": "text",
-                "content": "Here's an OpenTelemetry-themed joke for you:\n\nWhy was the OpenTelemetry tracer so tired? Because it had been tracing all day!\n\nIn the world of distributed tracing and observability, OpenTelemetry is the tracing library that just keeps going and going, collecting data from all your microservices. But even the most diligent tracer needs a break sometimes!",
-            }
-        },
+        "message": {"content": {"type": "text", "content": response_content}},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
 
@@ -1698,20 +1694,15 @@ def test_anthropic_tools_with_events_with_content(
     verify_metrics(resource_metrics, "claude-3-5-sonnet-20240620")
 
     logs = log_exporter.get_finished_logs()
-    assert len(logs) == 6
+    assert len(logs) == 5
 
     # Validate user message
-    user_message_log = logs[0]
-    assert_message_in_logs(user_message_log, "gen_ai.user.message", user_message)
+    user_message.pop("role", None)
+    assert_message_in_logs(logs[0], "gen_ai.user.message", user_message)
 
-    # Validate the first tool message
+    # Validate the tool messages input vent
     assert_message_in_logs(
-        logs[1], "gen_ai.user.message", {"type": "tolls_call", "content": tool_0}
-    )
-
-    # Validate the second tool message
-    assert_message_in_logs(
-        logs[2], "gen_ai.user.message", {"type": "tolls_call", "content": tool_1}
+        logs[1], "gen_ai.user.message", {"content": {"tools": [tool_0, tool_1]}}
     )
 
     # Validate the ai response
@@ -1722,39 +1713,43 @@ def test_anthropic_tools_with_events_with_content(
             "content": "Certainly! I'd be happy to help you with both the current weather in New York and the current time there. Let's use the available tools to get this information for you."
         },
     }
-    assert_message_in_logs(logs[3], "gen_ai.choice", ideal_response)
+    assert_message_in_logs(logs[2], "gen_ai.choice", ideal_response)
 
     # Validate the first tool call
     tool_call_0 = {
         "index": 1,
         "finish_reason": "tool_use",
-        "tool_calls": {
-            "id": "toolu_012r6TBCWjRHG71j6zruYyUL",
-            "type": "tool_use",
-            "function": {
-                "name": "get_weather",
-                "arguments": {"location": "New York, NY", "unit": "fahrenheit"},
-            },
-        },
-        "message": {},
+        "tool_calls": [
+            {
+                "id": "toolu_012r6TBCWjRHG71j6zruYyUL",
+                "type": "function",
+                "function": {
+                    "name": "get_weather",
+                    "arguments": {"location": "New York, NY", "unit": "fahrenheit"},
+                },
+            }
+        ],
+        "message": {"content": None},
     }
-    assert_message_in_logs(logs[4], "gen_ai.choice", tool_call_0)
+    assert_message_in_logs(logs[3], "gen_ai.choice", tool_call_0)
 
     # Validate the second tool call
     tool_call_1 = {
         "index": 2,
         "finish_reason": "tool_use",
-        "tool_calls": {
-            "id": "toolu_01SkeBKkLCNYWNuivqFerGDd",
-            "type": "tool_use",
-            "function": {
-                "name": "get_time",
-                "arguments": {"timezone": "America/New_York"},
-            },
-        },
-        "message": {},
+        "tool_calls": [
+            {
+                "id": "toolu_01SkeBKkLCNYWNuivqFerGDd",
+                "type": "function",
+                "function": {
+                    "name": "get_time",
+                    "arguments": {"timezone": "America/New_York"},
+                },
+            }
+        ],
+        "message": {"content": None},
     }
-    assert_message_in_logs(logs[5], "gen_ai.choice", tool_call_1)
+    assert_message_in_logs(logs[4], "gen_ai.choice", tool_call_1)
 
 
 @pytest.mark.vcr
@@ -1927,21 +1922,15 @@ def test_anthropic_tools_with_events_with_no_content(
     verify_metrics(resource_metrics, "claude-3-5-sonnet-20240620")
 
     logs = log_exporter.get_finished_logs()
-    assert len(logs) == 6
+    assert len(logs) == 5
 
     # Validate user message
     user_message_log = logs[0]
     assert_message_in_logs(user_message_log, "gen_ai.user.message", {})
 
     # Validate the first tool message
-    assert_message_in_logs(
-        logs[1], "gen_ai.user.message", {"type": "tolls_call", "content": {}}
-    )
 
-    # Validate the second tool message
-    assert_message_in_logs(
-        logs[2], "gen_ai.user.message", {"type": "tolls_call", "content": {}}
-    )
+    assert_message_in_logs(logs[1], "gen_ai.user.message", {})
 
     # Validate the ai response
     ideal_response = {
@@ -1949,39 +1938,41 @@ def test_anthropic_tools_with_events_with_no_content(
         "finish_reason": "tool_use",
         "message": {},
     }
-    assert_message_in_logs(logs[3], "gen_ai.choice", ideal_response)
+    assert_message_in_logs(logs[2], "gen_ai.choice", ideal_response)
 
     # Validate the first tool call
     tool_call_0 = {
         "index": 1,
         "finish_reason": "tool_use",
-        "tool_calls": {
-            "id": "toolu_012r6TBCWjRHG71j6zruYyUL",
-            "type": "tool_use",
-            "function": {
-                "name": "get_weather",
-                "arguments": {},
-            },
-        },
+        "tool_calls": [
+            {
+                "id": "toolu_012r6TBCWjRHG71j6zruYyUL",
+                "type": "function",
+                "function": {
+                    "name": "get_weather",
+                },
+            }
+        ],
         "message": {},
     }
-    assert_message_in_logs(logs[4], "gen_ai.choice", tool_call_0)
+    assert_message_in_logs(logs[3], "gen_ai.choice", tool_call_0)
 
     # Validate the second tool call
     tool_call_1 = {
         "index": 2,
         "finish_reason": "tool_use",
-        "tool_calls": {
-            "id": "toolu_01SkeBKkLCNYWNuivqFerGDd",
-            "type": "tool_use",
-            "function": {
-                "name": "get_time",
-                "arguments": {},
-            },
-        },
+        "tool_calls": [
+            {
+                "id": "toolu_01SkeBKkLCNYWNuivqFerGDd",
+                "type": "function",
+                "function": {
+                    "name": "get_time",
+                },
+            }
+        ],
         "message": {},
     }
-    assert_message_in_logs(logs[5], "gen_ai.choice", tool_call_1)
+    assert_message_in_logs(logs[4], "gen_ai.choice", tool_call_1)
 
 
 @pytest.mark.vcr
@@ -2054,15 +2045,12 @@ def test_with_asyncio_run_with_events_with_content(
     assert_message_in_logs(
         system_message_log,
         "gen_ai.system.message",
-        {
-            "content": [system_message],
-            "role": "system",
-        },
+        {"content": [system_message]},
     )
 
     # Validate user message Event
-    user_message_log = logs[1]
-    assert_message_in_logs(user_message_log, "gen_ai.user.message", user_message)
+    user_message.pop("role", None)
+    assert_message_in_logs(logs[1], "gen_ai.user.message", user_message)
 
     # Validate the ai response
     choice_event = {
@@ -2121,3 +2109,17 @@ def test_with_asyncio_run_with_events_with_no_content(
         "message": {},
     }
     assert_message_in_logs(logs[2], "gen_ai.choice", choice_event)
+
+
+def assert_message_in_logs(log: LogData, event_name: str, expected_content: dict):
+    assert log.log_record.attributes.get(EventAttributes.EVENT_NAME) == event_name
+    assert (
+        log.log_record.attributes.get(GenAIAttributes.GEN_AI_SYSTEM)
+        == GenAIAttributes.GenAiSystemValues.ANTHROPIC.value
+    )
+
+    if not expected_content:
+        assert not log.log_record.body
+    else:
+        assert log.log_record.body
+        assert dict(log.log_record.body) == expected_content

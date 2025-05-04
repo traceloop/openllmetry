@@ -4,11 +4,17 @@ import json
 import logging
 import os
 import time
-from typing import Any, Callable, Collection, Dict, Optional, Union
+from typing import Any, Callable, Collection, Dict, Optional
 
 from opentelemetry import context as context_api
-from opentelemetry._events import Event, EventLogger, get_event_logger
+from opentelemetry._events import Event, get_event_logger
 from opentelemetry.instrumentation.anthropic.config import Config
+from opentelemetry.instrumentation.anthropic.event_handler import (
+    ChoiceEvent,
+    MessageEvent,
+    ToolCall,
+    emit_event,
+)
 from opentelemetry.instrumentation.anthropic.streaming import (
     abuild_from_streaming_response,
     build_from_streaming_response,
@@ -482,7 +488,6 @@ def _with_chat_telemetry_wrapper(func):
         choice_counter,
         duration_histogram,
         exception_counter,
-        event_logger,
         to_wrap,
     ):
         def wrapper(wrapped, instance, args, kwargs):
@@ -492,7 +497,6 @@ def _with_chat_telemetry_wrapper(func):
                 choice_counter,
                 duration_histogram,
                 exception_counter,
-                event_logger,
                 to_wrap,
                 wrapped,
                 instance,
@@ -534,102 +538,86 @@ def _create_metrics(meter: Meter):
 
 
 @dont_throw
-def _emit_input_events(event_logger: Union[EventLogger, None], kwargs):
-    attributes = {
-        GenAIAttributes.GEN_AI_SYSTEM: GenAIAttributes.GenAiSystemValues.ANTHROPIC.value
-    }
-
+def _emit_input_events(kwargs):
     if kwargs.get("prompt") is not None:
-        body = {"content": kwargs.get("prompt")} if is_content_enabled() else {}
-        event_logger.emit(
-            Event(name="gen_ai.user.message", body=body, attributes=attributes)
-        )
+        emit_event(MessageEvent(content=kwargs.get("prompt"), role="user"))
 
     elif kwargs.get("messages") is not None:
         if kwargs.get("system"):
-            body = (
-                {"content": kwargs.get("system"), "role": "system"}
-                if is_content_enabled()
-                else {}
+            emit_event(MessageEvent(content=kwargs.get("system"), role="system"))
+        for message in kwargs.get("messages"):
+            emit_event(
+                MessageEvent(content=message.get("content"), role=message.get("role"))
             )
-            event_logger.emit(
-                Event(name="gen_ai.system.message", body=body, attributes=attributes)
-            )
-        for i, message in enumerate(kwargs.get("messages")):
-            body = (
-                {"content": message.get("content"), "role": message.get("role")}
-                if is_content_enabled()
-                else {}
-            )
-            event_logger.emit(
-                Event(
-                    name="gen_ai.{}.message".format(message.get("role", "user")),
-                    body=body,
-                    attributes=attributes,
-                )
-            )
-
     if kwargs.get("tools") is not None:
-        for i, tool in enumerate(kwargs.get("tools")):
-            body = {"type": "tolls_call", "content": {}}
-            if is_content_enabled():
-                body["content"] = tool
-            event_logger.emit(
-                Event(
-                    name="gen_ai.user.message",
-                    body=body,
-                    attributes=attributes,
-                )
-            )
+        emit_event(MessageEvent(content={"tools": kwargs.get("tools")}, role="user"))
 
 
 @dont_throw
-def _emit_response_events(event_logger: Union[EventLogger, None], response):
+def _emit_response_events(response):
     if not isinstance(response, dict):
-        response = response.__dict__
-
-    attributes = {
-        GenAIAttributes.GEN_AI_SYSTEM: GenAIAttributes.GenAiSystemValues.ANTHROPIC.value
-    }
+        response = dict(response)
 
     if response.get("completion"):
-        body = {"index": 0, "finish_reason": response.get("stop_reason")}
-        if is_content_enabled():
-            message = {"content": response.get("completion")}
-            if response.get("role"):
-                message["role"] = response.get("role")
-        else:
-            message = {}
-        body["message"] = message
-        event_logger.emit(Event(name="gen_ai.choice", body=body, attributes=attributes))
+        emit_event(
+            ChoiceEvent(
+                index=0,
+                message={
+                    "content": response.get("completion"),
+                    "role": response.get("role", "assistant"),
+                },
+                finish_reason=response.get("stop_reason"),
+            )
+        )
     elif response.get("content"):
         for i, completion in enumerate(response.get("content")):
-            body = {
-                "index": i,
-                "finish_reason": response.get("stop_reason"),
-            }
-            if completion.type == "tool_use":
-                body["tool_calls"] = {
-                    "id": completion.id,
-                    "type": completion.type,
-                    "function": {
-                        "name": completion.name,
-                        "arguments": completion.input if is_content_enabled() else {},
-                    },
+            # Parse message
+            if completion.type == "text":
+                message = {
+                    "content": completion.text,
+                    "role": response.get("role", "assistant"),
                 }
-            if is_content_enabled():
-                if completion.type == "text":
-                    message = {"content": completion.text}
-                elif completion.type == "thinking":
-                    message = {"content": completion.thinking}
-                elif completion.type == "tool_use":
-                    message = {}
+            elif completion.type == "thinking":
+                message = {
+                    "content": completion.thinking,
+                    "role": response.get("role", "assistant"),
+                }
+            elif completion.type == "tool_use":
+                message = {
+                    "content": None,
+                    "role": response.get("role", "assistant"),
+                }
             else:
-                message = {}
-            body["message"] = message
+                message = {
+                    "content": None,
+                    "role": response.get("role", "assistant"),
+                }
 
-            event_logger.emit(
-                Event(name="gen_ai.choice", body=body, attributes=attributes)
+            # Parse tool calls
+            if completion.type == "tool_use":
+                tool_calls = [
+                    ToolCall(
+                        id=completion.id,
+                        function={
+                            "name": completion.name,
+                            "arguments": completion.input
+                            if is_content_enabled()
+                            else {},
+                        },
+                        type="function",
+                    )
+                ]
+            else:
+                tool_calls = None
+
+            # Emit the event
+            emit_event(
+                ChoiceEvent(
+                    index=i,
+                    message=message,
+                    finish_reason=response.get("stop_reason"),
+                    tool_calls=tool_calls,
+                )
             )
 
 
@@ -653,7 +641,6 @@ def _wrap(
     choice_counter: Counter,
     duration_histogram: Histogram,
     exception_counter: Counter,
-    event_logger: Union[EventLogger, None],
     to_wrap,
     wrapped,
     instance,
@@ -678,8 +665,7 @@ def _wrap(
 
     if span.is_recording():
         run_async(_aset_input_attributes(span, kwargs))
-    if not Config.use_legacy_attributes and event_logger is not None:
-        _emit_input_events(event_logger, kwargs)
+    _emit_input_events(kwargs)
 
     start_time = time.time()
     try:
@@ -709,7 +695,6 @@ def _wrap(
             choice_counter,
             duration_histogram,
             exception_counter,
-            event_logger,
             kwargs,
         )
     elif response:
@@ -740,8 +725,7 @@ def _wrap(
                 "Failed to set response attributes for anthropic span, error: %s",
                 str(ex),
             )
-        if not Config.use_legacy_attributes and event_logger is not None:
-            _emit_response_events(event_logger, response)
+        _emit_response_events(response)
 
         if span.is_recording():
             span.set_status(Status(StatusCode.OK))
@@ -756,7 +740,6 @@ async def _awrap(
     choice_counter: Counter,
     duration_histogram: Histogram,
     exception_counter: Counter,
-    event_logger: Union[EventLogger, None],
     to_wrap,
     wrapped,
     instance,
@@ -786,8 +769,7 @@ async def _awrap(
         logger.warning(
             "Failed to set input attributes for anthropic span, error: %s", str(ex)
         )
-    if not Config.use_legacy_attributes and event_logger is not None:
-        _emit_input_events(event_logger, kwargs)
+    _emit_input_events(kwargs)
 
     start_time = time.time()
     try:
@@ -815,7 +797,6 @@ async def _awrap(
             choice_counter,
             duration_histogram,
             exception_counter,
-            event_logger,
             kwargs,
         )
     elif response:
@@ -843,8 +824,7 @@ async def _awrap(
         if span.is_recording():
             span.set_status(Status(StatusCode.OK))
 
-        if not Config.use_legacy_attributes and event_logger is not None:
-            _emit_response_events(event_logger, response)
+        _emit_response_events(response)
     span.end()
     return response
 
@@ -900,11 +880,9 @@ class AnthropicInstrumentor(BaseInstrumentor):
             ) = (None, None, None, None)
 
         # event_logger is inited here
-        if Config.use_legacy_attributes:
-            event_logger = None
-        else:
+        if not Config.use_legacy_attributes:
             event_logger_provider = kwargs.get("event_logger_provider")
-            event_logger = get_event_logger(
+            Config.event_logger = get_event_logger(
                 __name__, __version__, event_logger_provider=event_logger_provider
             )
 
@@ -923,7 +901,6 @@ class AnthropicInstrumentor(BaseInstrumentor):
                         choice_counter,
                         duration_histogram,
                         exception_counter,
-                        event_logger,
                         wrapped_method,
                     ),
                 )
@@ -944,7 +921,6 @@ class AnthropicInstrumentor(BaseInstrumentor):
                         choice_counter,
                         duration_histogram,
                         exception_counter,
-                        event_logger,
                         wrapped_method,
                     ),
                 )

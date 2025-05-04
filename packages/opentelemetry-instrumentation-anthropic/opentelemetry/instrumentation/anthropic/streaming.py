@@ -1,22 +1,20 @@
 import logging
 import time
-from typing import Union
 
-from opentelemetry._events import Event, EventLogger
 from opentelemetry.instrumentation.anthropic.config import Config
+from opentelemetry.instrumentation.anthropic.event_handler import (
+    ChoiceEvent,
+    emit_event,
+)
 from opentelemetry.instrumentation.anthropic.utils import (
     count_prompt_tokens_from_request,
     dont_throw,
     error_metrics_attributes,
-    is_content_enabled,
     set_span_attribute,
     shared_metrics_attributes,
     should_send_prompts,
 )
 from opentelemetry.metrics import Counter, Histogram
-from opentelemetry.semconv._incubating.attributes import (
-    gen_ai_attributes as GenAIAttributes,
-)
 from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
     GEN_AI_RESPONSE_ID,
 )
@@ -64,21 +62,21 @@ def _process_response_item(item, complete_response):
 
 
 @dont_throw
-def _emit_events_complete_response(event_logger: EventLogger, complete_response: dict):
-    attributes = {
-        GenAIAttributes.GEN_AI_SYSTEM: GenAIAttributes.GenAiSystemValues.ANTHROPIC.value
-    }
+def _emit_events_complete_response(complete_response: dict):
     for message in complete_response.get("events", []):
-        body = {
-            "index": message.get("index"),
-            "finish_reason": message.get("finish_reason"),
-        }
-        body["message"] = (
-            {"content": {"type": message.get("type"), "content": message.get("text")}}
-            if is_content_enabled()
-            else {}
+        emit_event(
+            ChoiceEvent(
+                index=message.get("index", 0),
+                message={
+                    "content": {
+                        "type": message.get("type"),
+                        "content": message.get("text"),
+                    },
+                    "role": message.get("role", "assistant"),
+                },
+                finish_reason=message.get("finish_reason", "unknown"),
+            )
         )
-        event_logger.emit(Event(name="gen_ai.choice", body=body, attributes=attributes))
 
 
 def _set_token_usage(
@@ -177,7 +175,6 @@ def build_from_streaming_response(
     choice_counter: Counter = None,
     duration_histogram: Histogram = None,
     exception_counter: Counter = None,
-    event_logger: Union[EventLogger, None] = None,
     kwargs: dict = {},
 ):
     complete_response = {"events": [], "model": "", "usage": {}, "id": ""}
@@ -239,8 +236,7 @@ def build_from_streaming_response(
     if should_send_prompts():
         _set_completions(span, complete_response.get("events"))
 
-    if not Config.use_legacy_attributes and event_logger is not None:
-        _emit_events_complete_response(event_logger, complete_response)
+    _emit_events_complete_response(complete_response)
 
     span.set_status(Status(StatusCode.OK))
     span.end()
@@ -256,7 +252,6 @@ async def abuild_from_streaming_response(
     choice_counter: Counter = None,
     duration_histogram: Histogram = None,
     exception_counter: Counter = None,
-    event_logger: Union[EventLogger, None] = None,
     kwargs: dict = {},
 ):
     complete_response = {"events": [], "model": "", "usage": {}, "id": ""}
@@ -319,8 +314,7 @@ async def abuild_from_streaming_response(
     if should_send_prompts():
         _set_completions(span, complete_response.get("events"))
 
-    if not Config.use_legacy_attributes and event_logger is not None:
-        _emit_events_complete_response(event_logger, complete_response)
+    _emit_events_complete_response(complete_response)
 
     span.set_status(Status(StatusCode.OK))
     span.end()
