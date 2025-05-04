@@ -87,15 +87,13 @@ def test_tool_calls_with_events_with_content(
     assert len(logs) == 2
 
     # Validate user message Event
-    assert_message_in_logs(
-        logs[0], "gen_ai.user.message", {"content": query_text, "role": "user"}
-    )
+    assert_message_in_logs(logs[0], "gen_ai.user.message", {"content": query_text})
 
     # Validate AI choice Event
     choice_event = {
         "index": 0,
         "finish_reason": "tool_calls",
-        "message": {"content": "", "role": "assistant"},
+        "message": {"content": ""},
         "tool_calls": [
             {
                 "function": {

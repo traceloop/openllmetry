@@ -104,15 +104,11 @@ def test_agents_with_events_with_content(
     assert len(logs) == 15
 
     # Validate that the user message Event exists
-    assert_message_in_logs(
-        logs, "gen_ai.user.message", {"content": prompt, "role": "user"}
-    )
+    assert_message_in_logs(logs, "gen_ai.user.message", {"content": prompt})
 
     # validate that the system message Event exists
     assert_message_in_logs(
-        logs,
-        "gen_ai.system.message",
-        {"content": "You are a helpful assistant", "role": "system"},
+        logs, "gen_ai.system.message", {"content": "You are a helpful assistant"}
     )
 
     # Validate that the assistant message Event exists
@@ -121,7 +117,6 @@ def test_agents_with_events_with_content(
         "gen_ai.assistant.message",
         {
             "content": "",
-            "role": "assistant",
             "tool_calls": [
                 {
                     "id": "call_vZSljoj56JmSCeTYR9UgYkdK",
@@ -139,7 +134,7 @@ def test_agents_with_events_with_content(
     choice_event = {
         "index": 0,
         "finish_reason": "tool_calls",
-        "message": {"content": "", "role": "assistant"},
+        "message": {"content": ""},
         "tool_calls": [
             {
                 "id": "call_vZSljoj56JmSCeTYR9UgYkdK",
@@ -157,10 +152,7 @@ def test_agents_with_events_with_content(
     choice_event = {
         "index": 0,
         "finish_reason": "stop",
-        "message": {
-            "content": response["output"],
-            "role": "assistant",
-        },
+        "message": {"content": response["output"]},
     }
     assert_message_in_logs(logs, "gen_ai.choice", choice_event)
 

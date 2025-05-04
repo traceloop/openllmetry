@@ -114,7 +114,6 @@ def test_sequential_chain_with_events_with_content(
             "content": 'Write a concise summary of the following:\n\n\n"{}"\n\n\nCONCISE SUMMARY:'.format(
                 response["input_documents"][0].page_content
             ),
-            "role": "user",
         },
     )
 
@@ -122,7 +121,7 @@ def test_sequential_chain_with_events_with_content(
     choice_event = {
         "index": 0,
         "finish_reason": "unknown",
-        "message": {"content": response["output_text"], "role": "assistant"},
+        "message": {"content": response["output_text"]},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
 

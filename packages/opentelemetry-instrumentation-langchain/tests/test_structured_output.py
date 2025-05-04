@@ -75,15 +75,13 @@ def test_structured_output_with_events_with_content(
     assert len(logs) == 2
 
     # Validate user message Event
-    assert_message_in_logs(
-        logs[0], "gen_ai.user.message", {"content": query_text, "role": "user"}
-    )
+    assert_message_in_logs(logs[0], "gen_ai.user.message", {"content": query_text})
 
     # Validate AI choice Event
     choice_event = {
         "index": 0,
         "finish_reason": "stop",
-        "message": {"content": result.model_dump_json(), "role": "assistant"},
+        "message": {"content": result.model_dump_json()},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
 

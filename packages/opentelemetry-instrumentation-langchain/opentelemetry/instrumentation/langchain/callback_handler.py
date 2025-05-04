@@ -26,15 +26,16 @@ from langchain_core.outputs import (
     LLMResult,
 )
 from opentelemetry import context as context_api
-from opentelemetry._events import Event
 from opentelemetry.context.context import Context
-from opentelemetry.instrumentation.langchain.utils import (
-    EVENT_ATTRIBUTES,
-    CallbackFilteredJSONEncoder,
-    Config,
+from opentelemetry.instrumentation.langchain.event_handler import (
+    ChoiceEvent,
+    MessageEvent,
     ToolCall,
+    emit_event,
+)
+from opentelemetry.instrumentation.langchain.utils import (
+    CallbackFilteredJSONEncoder,
     dont_throw,
-    is_content_enabled,
     should_send_prompts,
 )
 from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
@@ -320,46 +321,6 @@ def valid_role(role: str) -> bool:
     return role in ["user", "assistant", "system", "tool"]
 
 
-def _emit_message_event(*, content, role: str, tool_calls: Optional[List[dict]] = None):
-    body = {}
-
-    if role in ["assistant"] and tool_calls:
-        body["tool_calls"] = tool_calls
-
-    if is_content_enabled():
-        body["content"] = content
-        body["role"] = role
-
-    if valid_role(role):
-        event_name = "gen_ai.{}.message".format(role)
-    else:
-        event_name = "gen_ai.{}.message".format("user")
-
-    Config.event_logger.emit(Event(event_name, attributes=EVENT_ATTRIBUTES, body=body))
-
-
-def _emit_choice_event(
-    *,
-    index: int = 0,
-    content,
-    role: str,
-    finish_reason: str,
-    tool_calls: Optional[List[dict]] = None,
-):
-    body = {"index": index, "finish_reason": finish_reason, "message": {}}
-
-    if tool_calls:
-        body["tool_calls"] = tool_calls
-
-    if is_content_enabled():
-        body["message"]["content"] = content
-        body["message"]["role"] = role
-
-    Config.event_logger.emit(
-        Event("gen_ai.choice", attributes=EVENT_ATTRIBUTES, body=body)
-    )
-
-
 def get_message_role(message: Type[BaseMessage]) -> str:
     if isinstance(message, (SystemMessage, SystemMessageChunk)):
         return "system"
@@ -373,20 +334,30 @@ def get_message_role(message: Type[BaseMessage]) -> str:
         return "unknown"
 
 
-def _extract_tool_call_data(tool_call: dict[str, Any]) -> ToolCall:
-    tool_call_data = ToolCall(
-        id=tool_call.get("id", ""),
-        function={"name": tool_call.get("name", "")},
-        type="function",
-    )
+def _extract_tool_call_data(
+    tool_calls: Optional[List[dict[str, Any]]],
+) -> Union[List[ToolCall], None]:
+    if tool_calls is None:
+        return tool_calls
 
-    if is_content_enabled():
+    response = []
+
+    for tool_call in tool_calls:
+        tool_call_function = {"name": tool_call.get("name", "")}
+
         if tool_call.get("arguments"):
-            tool_call_data["function"]["arguments"] = tool_call["arguments"]
+            tool_call_function["arguments"] = tool_call["arguments"]
         elif tool_call.get("args"):
-            tool_call_data["function"]["arguments"] = tool_call["args"]
+            tool_call_function["arguments"] = tool_call["args"]
+        response.append(
+            ToolCall(
+                id=tool_call.get("id", ""),
+                function=tool_call_function,
+                type="function",
+            )
+        )
 
-    return tool_call_data
+    return response
 
 
 class TraceloopCallbackHandler(BaseCallbackHandler):
@@ -656,20 +627,19 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             run_id, parent_run_id, name, LLMRequestTypeValues.CHAT, metadata=metadata
         )
         _set_chat_request(span, serialized, messages, kwargs, self.spans[run_id])
-        if not Config.use_legacy_attributes and Config.event_logger is not None:
-            for message_list in messages:
-                for message in message_list:
-                    role = get_message_role(message)
-                    if hasattr(message, "tool_calls") and message.tool_calls:
-                        tool_calls = [
-                            _extract_tool_call_data(tool_call)
-                            for tool_call in message.tool_calls
-                        ]
-                    else:
-                        tool_calls = None
-                    _emit_message_event(
-                        content=message.content, role=role, tool_calls=tool_calls
+        for message_list in messages:
+            for message in message_list:
+                if hasattr(message, "tool_calls") and message.tool_calls:
+                    tool_calls = _extract_tool_call_data(message.tool_calls)
+                else:
+                    tool_calls = None
+                emit_event(
+                    MessageEvent(
+                        content=message.content,
+                        role=get_message_role(message),
+                        tool_calls=tool_calls,
                     )
+                )
 
     @dont_throw
     def on_llm_start(
@@ -695,9 +665,8 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             run_id, parent_run_id, name, LLMRequestTypeValues.COMPLETION
         )
         _set_llm_request(span, serialized, prompts, kwargs, self.spans[run_id])
-        if not Config.use_legacy_attributes and Config.event_logger is not None:
-            for prompt in prompts:
-                _emit_message_event(content=prompt, role="user")
+        for prompt in prompts:
+            emit_event(MessageEvent(content=prompt, role="user"))
 
     def on_llm_end(
         self,
@@ -790,10 +759,9 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             },
         )
 
-        if not Config.use_legacy_attributes and Config.event_logger is not None:
-            for generation_list in response.generations:
-                for i, generation in enumerate(generation_list):
-                    self._emit_generation_choice_event(i, generation)
+        for generation_list in response.generations:
+            for i, generation in enumerate(generation_list):
+                self._emit_generation_choice_event(index=i, generation=generation)
 
     @dont_throw
     def on_tool_start(
@@ -980,7 +948,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         self,
         index: int,
         generation: Union[
-            Generation, ChatGeneration, GenerationChunk, ChatGenerationChunk
+            ChatGeneration, ChatGenerationChunk, Generation, GenerationChunk
         ],
     ):
         if isinstance(generation, (ChatGeneration, ChatGenerationChunk)):
@@ -997,37 +965,37 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
                 hasattr(generation.message, "tool_calls")
                 and generation.message.tool_calls
             ):
-                tool_calls = [
-                    _extract_tool_call_data(tool_call)
-                    for tool_call in generation.message.tool_calls
-                ]
+                tool_calls = _extract_tool_call_data(generation.message.tool_calls)
             elif hasattr(
                 generation.message, "additional_kwargs"
             ) and generation.message.additional_kwargs.get("function_call"):
-                tool_calls = [
-                    _extract_tool_call_data(
-                        generation.message.additional_kwargs.get("function_call")
-                    )
-                ]
+                tool_calls = _extract_tool_call_data(
+                    [generation.message.additional_kwargs.get("function_call")]
+                )
             else:
                 tool_calls = None
 
             # Emit the event
             if hasattr(generation, "text") and generation.text != "":
-                _emit_choice_event(
-                    index=index,
-                    content=generation.text,
-                    role="assistant",
-                    finish_reason=finish_reason,
-                    tool_calls=tool_calls,
+                emit_event(
+                    ChoiceEvent(
+                        index=index,
+                        message={"content": generation.text, "role": "assistant"},
+                        finish_reason=finish_reason,
+                        tool_calls=tool_calls,
+                    )
                 )
             else:
-                _emit_choice_event(
-                    index=index,
-                    content=generation.message.content,
-                    role="assistant",
-                    finish_reason=finish_reason,
-                    tool_calls=tool_calls,
+                emit_event(
+                    ChoiceEvent(
+                        index=index,
+                        message={
+                            "content": generation.message.content,
+                            "role": "assistant",
+                        },
+                        finish_reason=finish_reason,
+                        tool_calls=tool_calls,
+                    )
                 )
         elif isinstance(generation, (Generation, GenerationChunk)):
             # Get finish reason
@@ -1039,9 +1007,10 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
                 finish_reason = "unknown"
 
             # Emit the event
-            _emit_choice_event(
-                index=index,
-                content=generation.text,
-                role="assistant",
-                finish_reason=finish_reason,
+            emit_event(
+                ChoiceEvent(
+                    index=index,
+                    message={"content": generation.text, "role": "assistant"},
+                    finish_reason=finish_reason,
+                )
             )

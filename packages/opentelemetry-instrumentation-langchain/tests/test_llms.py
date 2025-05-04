@@ -204,20 +204,14 @@ def test_custom_llm_with_events_with_content(
     assert_message_in_logs(
         logs[0],
         "gen_ai.user.message",
-        {
-            "content": "System: You are a helpful assistant\nHuman: tell me a short joke",
-            "role": "user",
-        },
+        {"content": "System: You are a helpful assistant\nHuman: tell me a short joke"},
     )
 
     # Validate AI choice Event
     choice_event = {
         "index": 0,
         "finish_reason": "unknown",
-        "message": {
-            "content": response,
-            "role": "assistant",
-        },
+        "message": {"content": response},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
 
@@ -381,21 +375,17 @@ def test_openai_with_events_with_content(
 
     # Validate system message Event
     assert_message_in_logs(
-        logs[0],
-        "gen_ai.system.message",
-        {"content": "You are a helpful assistant", "role": "system"},
+        logs[0], "gen_ai.system.message", {"content": "You are a helpful assistant"}
     )
 
     # Validate user message Event
-    assert_message_in_logs(
-        logs[1], "gen_ai.user.message", {"content": prompt, "role": "user"}
-    )
+    assert_message_in_logs(logs[1], "gen_ai.user.message", {"content": prompt})
 
     # Validate AI choice Event
     choice_event = {
         "index": 0,
         "finish_reason": "stop",
-        "message": {"content": response.content, "role": "assistant"},
+        "message": {"content": response.content},
     }
     assert_message_in_logs(logs[2], "gen_ai.choice", choice_event)
 
@@ -650,23 +640,19 @@ def test_openai_functions_with_events_with_content(
 
     # Validate system message Event
     assert_message_in_logs(
-        logs[0],
-        "gen_ai.system.message",
-        {"content": "You are helpful assistant", "role": "system"},
+        logs[0], "gen_ai.system.message", {"content": "You are helpful assistant"}
     )
 
     # Validate user message Event
     assert_message_in_logs(
-        logs[1],
-        "gen_ai.user.message",
-        {"content": "tell me a short joke", "role": "user"},
+        logs[1], "gen_ai.user.message", {"content": "tell me a short joke"}
     )
 
     # Validate AI choice Event
     choice_event = {
         "index": 0,
         "finish_reason": "function_call",
-        "message": {"content": "", "role": "assistant"},
+        "message": {"content": ""},
         "tool_calls": [
             {
                 "function": {
@@ -944,23 +930,19 @@ def test_anthropic_with_events_with_content(
 
     # Validate system message Event
     assert_message_in_logs(
-        logs[0],
-        "gen_ai.system.message",
-        {"content": "You are a helpful assistant", "role": "system"},
+        logs[0], "gen_ai.system.message", {"content": "You are a helpful assistant"}
     )
 
     # Validate user message Event
     assert_message_in_logs(
-        logs[1],
-        "gen_ai.user.message",
-        {"content": "tell me a short joke", "role": "user"},
+        logs[1], "gen_ai.user.message", {"content": "tell me a short joke"}
     )
 
     # Validate AI choice Event
     choice_event = {
         "index": 0,
         "finish_reason": "unknown",
-        "message": {"content": response.content, "role": "assistant"},
+        "message": {"content": response.content},
     }
     assert_message_in_logs(logs[2], "gen_ai.choice", choice_event)
 
@@ -1238,23 +1220,19 @@ def test_bedrock_with_events_with_content(
 
     # Validate system message Event
     assert_message_in_logs(
-        logs[0],
-        "gen_ai.system.message",
-        {"content": "You are a helpful assistant", "role": "system"},
+        logs[0], "gen_ai.system.message", {"content": "You are a helpful assistant"}
     )
 
     # Validate user message Event
     assert_message_in_logs(
-        logs[1],
-        "gen_ai.user.message",
-        {"content": "tell me a short joke", "role": "user"},
+        logs[1], "gen_ai.user.message", {"content": "tell me a short joke"}
     )
 
     # Validate AI choice Event
     choice_event = {
         "index": 0,
         "finish_reason": "unknown",
-        "message": {"content": response.content, "role": "assistant"},
+        "message": {"content": response.content},
     }
     assert_message_in_logs(logs[2], "gen_ai.choice", choice_event)
 
@@ -1450,24 +1428,21 @@ def test_trace_propagation_with_events_with_content(
         assert_message_in_logs(
             logs[0],
             "gen_ai.system.message",
-            {"content": "You are a helpful assistant ", "role": "system"},
+            {"content": "You are a helpful assistant "},
         )
 
         # Validate user message Event
         assert_message_in_logs(
             logs[1],
             "gen_ai.user.message",
-            {"content": "Tell me a joke about OpenTelemetry", "role": "user"},
+            {"content": "Tell me a joke about OpenTelemetry"},
         )
 
         # Validate AI choice Event
         choice_event = {
             "index": 0,
             "finish_reason": "length",
-            "message": {
-                "content": response.content,
-                "role": "assistant",
-            },
+            "message": {"content": response.content},
         }
         assert_message_in_logs(logs[2], "gen_ai.choice", choice_event)
     else:
@@ -1483,7 +1458,6 @@ def test_trace_propagation_with_events_with_content(
             "gen_ai.user.message",
             {
                 "content": "System: You are a helpful assistant \nHuman: Tell me a joke about OpenTelemetry",
-                "role": "user",
             },
         )
 
@@ -1491,7 +1465,7 @@ def test_trace_propagation_with_events_with_content(
         choice_event = {
             "index": 0,
             "finish_reason": "length",
-            "message": {"content": response, "role": "assistant"},
+            "message": {"content": response},
         }
         assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
 
@@ -1634,7 +1608,6 @@ def test_trace_propagation_stream_with_events_with_content(
         "gen_ai.user.message",
         {
             "content": "System: You are a helpful assistant \nHuman: Tell me a joke about OpenTelemetry",
-            "role": "user",
         },
     )
 
@@ -1642,7 +1615,7 @@ def test_trace_propagation_stream_with_events_with_content(
     choice_event = {
         "index": 0,
         "finish_reason": "length",
-        "message": {"content": "".join(chunks), "role": "assistant"},
+        "message": {"content": "".join(chunks)},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
 
@@ -1764,14 +1737,14 @@ async def test_trace_propagation_async_with_events_with_content(
         assert_message_in_logs(
             logs[0],
             "gen_ai.system.message",
-            {"content": "You are a helpful assistant ", "role": "system"},
+            {"content": "You are a helpful assistant "},
         )
 
         # Validate user message Event
         assert_message_in_logs(
             logs[1],
             "gen_ai.user.message",
-            {"content": "Tell me a joke about OpenTelemetry", "role": "user"},
+            {"content": "Tell me a joke about OpenTelemetry"},
         )
 
         # Validate AI choice Event
@@ -1780,7 +1753,6 @@ async def test_trace_propagation_async_with_events_with_content(
             "finish_reason": "length",
             "message": {
                 "content": response.content,
-                "role": "assistant",
             },
         }
         assert_message_in_logs(logs[2], "gen_ai.choice", choice_event)
@@ -1797,7 +1769,6 @@ async def test_trace_propagation_async_with_events_with_content(
             "gen_ai.user.message",
             {
                 "content": "System: You are a helpful assistant \nHuman: Tell me a joke about OpenTelemetry",
-                "role": "user",
             },
         )
 
@@ -1805,7 +1776,7 @@ async def test_trace_propagation_async_with_events_with_content(
         choice_event = {
             "index": 0,
             "finish_reason": "length",
-            "message": {"content": response, "role": "assistant"},
+            "message": {"content": response},
         }
         assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
 
@@ -1953,7 +1924,6 @@ async def test_trace_propagation_stream_async_with_events_with_content(
         "gen_ai.user.message",
         {
             "content": "System: You are a helpful assistant \nHuman: Tell me a joke about OpenTelemetry",
-            "role": "user",
         },
     )
 
@@ -1961,7 +1931,7 @@ async def test_trace_propagation_stream_async_with_events_with_content(
     choice_event = {
         "index": 0,
         "finish_reason": "length",
-        "message": {"content": "".join(chunks), "role": "assistant"},
+        "message": {"content": "".join(chunks)},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
 

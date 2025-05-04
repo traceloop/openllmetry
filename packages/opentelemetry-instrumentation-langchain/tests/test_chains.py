@@ -266,8 +266,7 @@ def test_sequential_chain_with_events_with_content(
         {
             "content": synopsis_template.format(
                 title="Tragedy at sunset on the beach", era="Victorian England"
-            ),
-            "role": "user",
+            )
         },
     )
 
@@ -275,7 +274,7 @@ def test_sequential_chain_with_events_with_content(
     choice_event = {
         "index": 0,
         "finish_reason": "stop",
-        "message": {"content": response["synopsis"], "role": "assistant"},
+        "message": {"content": response["synopsis"]},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
 
@@ -283,14 +282,14 @@ def test_sequential_chain_with_events_with_content(
     assert_message_in_logs(
         logs[2],
         "gen_ai.user.message",
-        {"content": template.format(synopsis=response["synopsis"]), "role": "user"},
+        {"content": template.format(synopsis=response["synopsis"])},
     )
 
     # Validate AI choice Event in the second chain
     choice_event = {
         "index": 0,
         "finish_reason": "length",
-        "message": {"content": response["review"], "role": "assistant"},
+        "message": {"content": response["review"]},
     }
     assert_message_in_logs(logs[3], "gen_ai.choice", choice_event)
 
@@ -610,7 +609,6 @@ async def test_asequential_chain_with_events_with_content(
             "content": synopsis_template.format(
                 title="Tragedy at sunset on the beach", era="Victorian England"
             ),
-            "role": "user",
         },
     )
 
@@ -618,7 +616,7 @@ async def test_asequential_chain_with_events_with_content(
     choice_event = {
         "index": 0,
         "finish_reason": "stop",
-        "message": {"content": response["synopsis"], "role": "assistant"},
+        "message": {"content": response["synopsis"]},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
 
@@ -626,14 +624,14 @@ async def test_asequential_chain_with_events_with_content(
     assert_message_in_logs(
         logs[2],
         "gen_ai.user.message",
-        {"content": template.format(synopsis=response["synopsis"]), "role": "user"},
+        {"content": template.format(synopsis=response["synopsis"])},
     )
 
     # Validate AI choice Event in the second chain
     choice_event = {
         "index": 0,
         "finish_reason": "length",
-        "message": {"content": response["review"], "role": "assistant"},
+        "message": {"content": response["review"]},
     }
     assert_message_in_logs(logs[3], "gen_ai.choice", choice_event)
 
@@ -796,7 +794,6 @@ def test_stream_with_events_with_content(
         "gen_ai.user.message",
         {
             "content": prompt_template.format(product="colorful socks"),
-            "role": "user",
         },
     )
 
@@ -804,7 +801,7 @@ def test_stream_with_events_with_content(
     choice_event = {
         "index": 0,
         "finish_reason": "unknown",
-        "message": {"content": "".join(chunks), "role": "assistant"},
+        "message": {"content": "".join(chunks)},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
 
@@ -905,17 +902,14 @@ async def test_astream_with_events_with_content(
     assert_message_in_logs(
         logs[0],
         "gen_ai.user.message",
-        {
-            "content": prompt_template.format(product="colorful socks"),
-            "role": "user",
-        },
+        {"content": prompt_template.format(product="colorful socks")},
     )
 
     # Validate AI choice Event
     choice_event = {
         "index": 0,
         "finish_reason": "unknown",
-        "message": {"content": "".join(chunks), "role": "assistant"},
+        "message": {"content": "".join(chunks)},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
 

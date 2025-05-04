@@ -253,23 +253,19 @@ def test_simple_lcel_with_events_with_content(
 
     # Validate system message Event
     assert_message_in_logs(
-        logs[0],
-        "gen_ai.system.message",
-        {"content": "You are helpful assistant", "role": "system"},
+        logs[0], "gen_ai.system.message", {"content": "You are helpful assistant"}
     )
 
     # Validate user message Event
     assert_message_in_logs(
-        logs[1],
-        "gen_ai.user.message",
-        {"content": "tell me a short joke", "role": "user"},
+        logs[1], "gen_ai.user.message", {"content": "tell me a short joke"}
     )
 
     # Validate AI choice Event
     choice_event = {
         "index": 0,
         "finish_reason": "function_call",
-        "message": {"content": "", "role": "assistant"},
+        "message": {"content": ""},
         "tool_calls": [
             {
                 "id": "",
@@ -531,14 +527,14 @@ async def test_async_lcel_with_events_with_content(
     assert_message_in_logs(
         logs[0],
         "gen_ai.user.message",
-        {"content": prompt_template.format(product="colorful socks"), "role": "user"},
+        {"content": prompt_template.format(product="colorful socks")},
     )
 
     # Validate AI choice Event
     choice_event = {
         "index": 0,
         "finish_reason": "stop",
-        "message": {"content": response, "role": "assistant"},
+        "message": {"content": response},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
 
@@ -671,14 +667,14 @@ def test_invoke_with_events_with_content(
     assert_message_in_logs(
         logs[0],
         "gen_ai.user.message",
-        {"content": prompt_template.format(product="colorful socks"), "role": "user"},
+        {"content": prompt_template.format(product="colorful socks")},
     )
 
     # Validate AI choice Event
     choice_event = {
         "index": 0,
         "finish_reason": "stop",
-        "message": {"content": response, "role": "assistant"},
+        "message": {"content": response},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
 
@@ -790,14 +786,14 @@ def test_stream_with_events_with_content(
     assert_message_in_logs(
         logs[0],
         "gen_ai.user.message",
-        {"content": prompt_template.format(product="colorful socks"), "role": "user"},
+        {"content": prompt_template.format(product="colorful socks")},
     )
 
     # Validate AI choice Event
     choice_event = {
         "index": 0,
         "finish_reason": "stop",
-        "message": {"content": "".join(chunks), "role": "assistant"},
+        "message": {"content": "".join(chunks)},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
 
@@ -908,14 +904,14 @@ async def test_async_invoke_with_events_with_content(
     assert_message_in_logs(
         logs[0],
         "gen_ai.user.message",
-        {"content": prompt_template.format(product="colorful socks"), "role": "user"},
+        {"content": prompt_template.format(product="colorful socks")},
     )
 
     # Validate AI choice Event
     choice_event = {
         "index": 0,
         "finish_reason": "stop",
-        "message": {"content": response, "role": "assistant"},
+        "message": {"content": response},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
 
@@ -1078,23 +1074,19 @@ def test_lcel_with_datetime_with_events_with_content(
 
     # Validate system message Event
     assert_message_in_logs(
-        logs[0],
-        "gen_ai.system.message",
-        {"content": "You are helpful assistant", "role": "system"},
+        logs[0], "gen_ai.system.message", {"content": "You are helpful assistant"}
     )
 
     # Validate user message Event
     assert_message_in_logs(
-        logs[1],
-        "gen_ai.user.message",
-        {"content": "tell me a short joke", "role": "user"},
+        logs[1], "gen_ai.user.message", {"content": "tell me a short joke"}
     )
 
     # Validate AI choice Event
     choice_event = {
         "index": 0,
         "finish_reason": "function_call",
-        "message": {"content": "", "role": "assistant"},
+        "message": {"content": ""},
         "tool_calls": [
             {
                 "id": "",

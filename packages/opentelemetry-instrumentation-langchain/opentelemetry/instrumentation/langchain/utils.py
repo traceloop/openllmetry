@@ -4,9 +4,9 @@ import json
 import logging
 import os
 import traceback
-from typing import Literal, Optional, TypedDict
 
 from opentelemetry import context as context_api
+from opentelemetry._events import EventLogger
 from opentelemetry.instrumentation.langchain.config import Config
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
@@ -78,20 +78,19 @@ def dont_throw(func):
     return wrapper
 
 
+def should_emit_events() -> bool:
+    """
+    Checks if the instrumentation isn't using the legacy attributes
+    and if the event logger is not None.
+    """
+    return not Config.use_legacy_attributes and isinstance(
+        Config.event_logger, EventLogger
+    )
+
+
 def is_content_enabled() -> bool:
     capture_content = os.environ.get(
         OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT, "false"
     )
 
     return capture_content.lower() == "true"
-
-
-class ToolCallFunction(TypedDict):
-    arguments: Optional[dict]
-    name: str
-
-
-class ToolCall(TypedDict):
-    function: ToolCallFunction
-    id: str
-    type: Literal["function"]
