@@ -53,7 +53,10 @@ def test_anthropic_message_create(exporter, reader):
         + anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS]
         == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
     )
-    assert anthropic_span.attributes.get("gen_ai.response.id") == "msg_01TPXhkPo8jy6yQMrMhjpiAE"
+    assert (
+        anthropic_span.attributes.get("gen_ai.response.id")
+        == "msg_01TPXhkPo8jy6yQMrMhjpiAE"
+    )
 
     metrics_data = reader.get_metrics_data()
     resource_metrics = metrics_data.resource_metrics
@@ -120,7 +123,10 @@ def test_anthropic_multi_modal(exporter):
         + anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS]
         == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
     )
-    assert anthropic_span.attributes.get("gen_ai.response.id") == "msg_01B37ySLPzYj8KY6uZmiPoxd"
+    assert (
+        anthropic_span.attributes.get("gen_ai.response.id")
+        == "msg_01B37ySLPzYj8KY6uZmiPoxd"
+    )
 
 
 @pytest.mark.vcr
@@ -184,7 +190,10 @@ async def test_anthropic_async_multi_modal(exporter):
         + anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS]
         == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
     )
-    assert anthropic_span.attributes.get("gen_ai.response.id") == "msg_01DWnmUo9hWk4Fk7V7Ddfa2w"
+    assert (
+        anthropic_span.attributes.get("gen_ai.response.id")
+        == "msg_01DWnmUo9hWk4Fk7V7Ddfa2w"
+    )
 
 
 @pytest.mark.vcr
@@ -237,7 +246,10 @@ def test_anthropic_message_streaming(exporter, reader):
         + anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS]
         == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
     )
-    assert anthropic_span.attributes.get("gen_ai.response.id") == "msg_01MXWxhWoPSgrYhjTuMDM6F1"
+    assert (
+        anthropic_span.attributes.get("gen_ai.response.id")
+        == "msg_01MXWxhWoPSgrYhjTuMDM6F1"
+    )
 
     metrics_data = reader.get_metrics_data()
     resource_metrics = metrics_data.resource_metrics
@@ -290,7 +302,10 @@ async def test_async_anthropic_message_create(exporter, reader):
         + anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS]
         == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
     )
-    assert anthropic_span.attributes.get("gen_ai.response.id") == "msg_01UFDDjsFn5BPQnfNwmsMnAY"
+    assert (
+        anthropic_span.attributes.get("gen_ai.response.id")
+        == "msg_01UFDDjsFn5BPQnfNwmsMnAY"
+    )
 
     metrics_data = reader.get_metrics_data()
     resource_metrics = metrics_data.resource_metrics
@@ -349,7 +364,10 @@ async def test_async_anthropic_message_streaming(exporter, reader):
         + anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS]
         == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
     )
-    assert anthropic_span.attributes.get("gen_ai.response.id") == "msg_016o6A7zDmgjucf5mWv1rrPD"
+    assert (
+        anthropic_span.attributes.get("gen_ai.response.id")
+        == "msg_016o6A7zDmgjucf5mWv1rrPD"
+    )
 
     metrics_data = reader.get_metrics_data()
     resource_metrics = metrics_data.resource_metrics
@@ -371,16 +389,16 @@ def test_anthropic_tools(exporter, reader):
                     "properties": {
                         "location": {
                             "type": "string",
-                            "description": "The city and state, e.g. San Francisco, CA"
+                            "description": "The city and state, e.g. San Francisco, CA",
                         },
                         "unit": {
                             "type": "string",
                             "enum": ["celsius", "fahrenheit"],
-                            "description": "The unit of temperature, either 'celsius' or 'fahrenheit'"
-                        }
+                            "description": "The unit of temperature, either 'celsius' or 'fahrenheit'",
+                        },
                     },
-                    "required": ["location"]
-                }
+                    "required": ["location"],
+                },
             },
             {
                 "name": "get_time",
@@ -390,19 +408,19 @@ def test_anthropic_tools(exporter, reader):
                     "properties": {
                         "timezone": {
                             "type": "string",
-                            "description": "The IANA time zone name, e.g. America/Los_Angeles"
+                            "description": "The IANA time zone name, e.g. America/Los_Angeles",
                         }
                     },
-                    "required": ["timezone"]
-                }
-            }
+                    "required": ["timezone"],
+                },
+            },
         ],
         messages=[
             {
                 "role": "user",
-                "content": "What is the weather like right now in New York? Also what time is it there now?"
+                "content": "What is the weather like right now in New York? Also what time is it there now?",
             }
-        ]
+        ],
     )
     try:
         client.messages.create(
@@ -428,69 +446,92 @@ def test_anthropic_tools(exporter, reader):
 
     # verify request and inputs
     assert (
-        anthropic_span.attributes["gen_ai.prompt.0.content"] ==
-        "What is the weather like right now in New York? Also what time is it there now?"
+        anthropic_span.attributes["gen_ai.prompt.0.content"]
+        == "What is the weather like right now in New York? Also what time is it there now?"
     )
     assert anthropic_span.attributes["gen_ai.prompt.0.role"] == "user"
-    assert (
-        anthropic_span.attributes["llm.request.functions.0.name"] == "get_weather"
-    )
+    assert anthropic_span.attributes["llm.request.functions.0.name"] == "get_weather"
     assert (
         anthropic_span.attributes["llm.request.functions.0.description"]
         == "Get the current weather in a given location"
     )
-    assert (
-        anthropic_span.attributes["llm.request.functions.0.input_schema"]
-        == json.dumps({
+    assert anthropic_span.attributes[
+        "llm.request.functions.0.parameters"
+    ] == json.dumps(
+        {
             "type": "object",
             "properties": {
                 "location": {
                     "type": "string",
-                    "description": "The city and state, e.g. San Francisco, CA"
+                    "description": "The city and state, e.g. San Francisco, CA",
                 },
                 "unit": {
                     "type": "string",
                     "enum": ["celsius", "fahrenheit"],
-                    "description": "The unit of temperature, either 'celsius' or 'fahrenheit'"
-                }
+                    "description": "The unit of temperature, either 'celsius' or 'fahrenheit'",
+                },
             },
-            "required": ["location"]
-        })
+            "required": ["location"],
+        }
     )
     assert anthropic_span.attributes["llm.request.functions.1.name"] == "get_time"
     assert (
         anthropic_span.attributes["llm.request.functions.1.description"]
         == "Get the current time in a given time zone"
     )
-    assert (
-        anthropic_span.attributes["llm.request.functions.1.input_schema"]
-        == json.dumps({
+    assert anthropic_span.attributes[
+        "llm.request.functions.1.parameters"
+    ] == json.dumps(
+        {
             "type": "object",
             "properties": {
                 "timezone": {
                     "type": "string",
-                    "description": "The IANA time zone name, e.g. America/Los_Angeles"
+                    "description": "The IANA time zone name, e.g. America/Los_Angeles",
                 }
             },
-            "required": ["timezone"]
-        })
+            "required": ["timezone"],
+        }
     )
 
     # verify response and output
-    assert anthropic_span.attributes["gen_ai.completion.0.finish_reason"] == response.stop_reason
-    assert anthropic_span.attributes["gen_ai.completion.0.content"] == response.content[0].text
+    assert (
+        anthropic_span.attributes["gen_ai.completion.0.finish_reason"]
+        == response.stop_reason
+    )
+    assert (
+        anthropic_span.attributes["gen_ai.completion.0.content"]
+        == response.content[0].text
+    )
     assert anthropic_span.attributes["gen_ai.completion.0.role"] == "assistant"
 
-    assert (anthropic_span.attributes["gen_ai.completion.0.tool_calls.0.id"]) == response.content[1].id
-    assert (anthropic_span.attributes["gen_ai.completion.0.tool_calls.0.name"]) == response.content[1].name
+    assert (
+        anthropic_span.attributes["gen_ai.completion.0.tool_calls.0.id"]
+    ) == response.content[1].id
+    assert (
+        anthropic_span.attributes["gen_ai.completion.0.tool_calls.0.name"]
+    ) == response.content[1].name
     response_input = json.dumps(response.content[1].input)
-    assert (anthropic_span.attributes["gen_ai.completion.0.tool_calls.0.arguments"] == response_input)
+    assert (
+        anthropic_span.attributes["gen_ai.completion.0.tool_calls.0.arguments"]
+        == response_input
+    )
 
-    assert (anthropic_span.attributes["gen_ai.completion.0.tool_calls.1.id"]) == response.content[2].id
-    assert (anthropic_span.attributes["gen_ai.completion.0.tool_calls.1.name"]) == response.content[2].name
+    assert (
+        anthropic_span.attributes["gen_ai.completion.0.tool_calls.1.id"]
+    ) == response.content[2].id
+    assert (
+        anthropic_span.attributes["gen_ai.completion.0.tool_calls.1.name"]
+    ) == response.content[2].name
     response_input = json.dumps(response.content[2].input)
-    assert (anthropic_span.attributes["gen_ai.completion.0.tool_calls.1.arguments"] == response_input)
-    assert anthropic_span.attributes.get("gen_ai.response.id") == "msg_01RBkXFe9TmDNNWThMz2HmGt"
+    assert (
+        anthropic_span.attributes["gen_ai.completion.0.tool_calls.1.arguments"]
+        == response_input
+    )
+    assert (
+        anthropic_span.attributes.get("gen_ai.response.id")
+        == "msg_01RBkXFe9TmDNNWThMz2HmGt"
+    )
 
     # verify metrics
     metrics_data = reader.get_metrics_data()
