@@ -1,11 +1,8 @@
 import json
-from typing import Union
 
-from opentelemetry._events import Event, EventLogger
+from opentelemetry.instrumentation.bedrock.event_handler import ChoiceEvent, emit_event
 from opentelemetry.instrumentation.bedrock.utils import (
     dont_throw,
-    get_event_attributes,
-    is_content_enabled,
 )
 from wrapt import ObjectProxy
 
@@ -15,15 +12,11 @@ class StreamingWrapper(ObjectProxy):
         self,
         response,
         stream_done_callback=None,
-        emit_events_otel: bool = False,
-        event_logger: Union[EventLogger, None] = None,
     ):
         super().__init__(response)
 
         self._stream_done_callback = stream_done_callback
         self._accumulating_body = {}
-        self._emit_events_otel = emit_events_otel
-        self._event_logger = event_logger
 
     def __iter__(self):
         it = iter(self.__wrapped__)
@@ -35,8 +28,7 @@ class StreamingWrapper(ObjectProxy):
                 yield event
             except StopIteration:
                 done = True
-                if self._emit_events_otel and self._event_logger is not None:
-                    self._emit_response_event()
+                self._emit_choice_event()
                 if self._stream_done_callback:
                     self._stream_done_callback(self._accumulating_body)
 
@@ -83,19 +75,16 @@ class StreamingWrapper(ObjectProxy):
             else:
                 self._accumulating_body[key] = event.get(key)
 
-    def _emit_response_event(self):
-        attributes = get_event_attributes()
-        body = {
-            "index": 0,
-            "finish_reason": self._accumulating_body.get("stop_reason") or "unknown",
-            "message": {},
-        }
-
-        if is_content_enabled():
-            body["message"]["content"] = self._accumulating_body.get(
-                "content"
-            ) or self._accumulating_body.get("outputText")
-
-        self._event_logger.emit(
-            Event(name="gen_ai.choice", body=body, attributes=attributes)
+    def _emit_choice_event(self):
+        emit_event(
+            ChoiceEvent(
+                index=0,
+                message={
+                    "content": self._accumulating_body.get("content")
+                    or self._accumulating_body.get("outputText"),
+                    "role": "assistant",
+                },
+                # Sometimes, the value is None, what goes agains the semantic conventions
+                finish_reason=self._accumulating_body.get("stop_reason") or "unknown",
+            )
         )

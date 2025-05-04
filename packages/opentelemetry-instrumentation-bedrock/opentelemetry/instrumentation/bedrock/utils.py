@@ -2,10 +2,8 @@ import logging
 import os
 import traceback
 
+from opentelemetry._events import EventLogger
 from opentelemetry.instrumentation.bedrock.config import Config
-from opentelemetry.semconv._incubating.attributes import (
-    gen_ai_attributes as GenAIAttributes,
-)
 
 OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT = (
     "OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT"
@@ -37,15 +35,20 @@ def dont_throw(func):
     return wrapper
 
 
-def get_event_attributes():
-    return {
-        GenAIAttributes.GEN_AI_SYSTEM: GenAIAttributes.GenAiSystemValues.AWS_BEDROCK.value
-    }
-
-
 def is_content_enabled() -> bool:
     capture_content = os.environ.get(
         OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT, "false"
     )
 
     return capture_content.lower() == "true"
+
+
+def should_emit_events() -> bool:
+    """
+    Checks if the instrumentation isn't using the legacy attributes
+    and if the event logger is not None.
+    """
+
+    return not Config.use_legacy_attributes and isinstance(
+        Config.event_logger, EventLogger
+    )
