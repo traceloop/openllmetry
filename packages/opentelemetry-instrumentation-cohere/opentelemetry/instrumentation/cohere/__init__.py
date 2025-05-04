@@ -5,8 +5,13 @@ import os
 from typing import Collection, Union
 
 from opentelemetry import context as context_api
-from opentelemetry._events import Event, EventLogger, get_event_logger
+from opentelemetry._events import Event, get_event_logger
 from opentelemetry.instrumentation.cohere.config import Config
+from opentelemetry.instrumentation.cohere.event_handler import (
+    ChoiceEvent,
+    MessageEvent,
+    emit_event,
+)
 from opentelemetry.instrumentation.cohere.utils import dont_throw, is_content_enabled
 from opentelemetry.instrumentation.cohere.version import __version__
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
@@ -207,9 +212,9 @@ def _set_response_attributes(span, llm_request_type, response):
 def _with_tracer_wrapper(func):
     """Helper for providing tracer for wrapper functions."""
 
-    def _with_tracer(tracer, event_logger, to_wrap):
+    def _with_tracer(tracer, to_wrap):
         def wrapper(wrapped, instance, args, kwargs):
-            return func(tracer, event_logger, to_wrap, wrapped, instance, args, kwargs)
+            return func(tracer, to_wrap, wrapped, instance, args, kwargs)
 
         return wrapper
 
@@ -227,66 +232,52 @@ def _llm_request_type_by_method(method_name):
         return LLMRequestTypeValues.UNKNOWN
 
 
-def _input_to_event(llm_request_type: str, kwargs) -> Event:
-    attributes = {
-        GenAIAttributes.GEN_AI_SYSTEM: GenAIAttributes.GenAiSystemValues.COHERE.value
-    }
-    body = {}
+def _parse_message_event(llm_request_type: str, kwargs) -> MessageEvent:
+    event_params = {}
 
-    if is_content_enabled():
-        if llm_request_type == LLMRequestTypeValues.CHAT:
-            body = {"content": kwargs.get("message")}
-        elif llm_request_type == LLMRequestTypeValues.RERANK:
-            body = {
-                "content": {
-                    "query": kwargs.get("query"),
-                    "documents": kwargs.get("documents"),
-                }
-            }
-        elif llm_request_type == LLMRequestTypeValues.COMPLETION:
-            body = {"content": kwargs.get("prompt")}
+    if llm_request_type == LLMRequestTypeValues.CHAT:
+        event_params = {"content": kwargs.get("message"), "role": "user"}
+    elif llm_request_type == LLMRequestTypeValues.RERANK:
+        event_params = {
+            "content": {
+                "query": kwargs.get("query"),
+                "documents": kwargs.get("documents"),
+            },
+            "role": "user",
+        }
+    elif llm_request_type == LLMRequestTypeValues.COMPLETION:
+        event_params = {"content": kwargs.get("prompt"), "role": "user"}
 
-    return Event(name="gen_ai.user.message", body=body, attributes=attributes)
+    return MessageEvent(**event_params)
 
 
-def _response_to_event(index: int, llm_request_type: str, response) -> Event:
-    attributes = {
-        GenAIAttributes.GEN_AI_SYSTEM: GenAIAttributes.GenAiSystemValues.COHERE.value
-    }
-    body = {}
+def _parse_choice_event(index: int, llm_request_type: str, response) -> ChoiceEvent:
+    event_params = {"index": index, "finish_reason": "unknown"}
 
     if llm_request_type == LLMRequestTypeValues.RERANK:
-        # Cohere does not provide a finish_reason in rerank
-        body["finish_reason"] = "UNKNOWN"
-        body["index"] = index
-        body["message"] = (
-            {
-                "content": [
-                    {
-                        "index": result.index,
-                        "document": result.document,
-                        "relevance_score": result.relevance_score,
-                    }
-                    for result in response.results
-                ]
-            }
-            if is_content_enabled()
-            else {}
-        )
+        event_params["message"] = {
+            "content": [
+                {
+                    "index": result.index,
+                    "document": result.document,
+                    "relevance_score": result.relevance_score,
+                }
+                for result in response.results
+            ],
+            "role": "assistant",
+        }
     elif (
         llm_request_type == LLMRequestTypeValues.CHAT or LLMRequestTypeValues.COMPLETION
     ):
-        body["finish_reason"] = response.finish_reason
-        body["index"] = index
-        body["message"] = {"content": response.text} if is_content_enabled() else {}
+        event_params["message"] = {"content": response.text, "role": "assistant"}
+        event_params["finish_reason"] = response.finish_reason
 
-    return Event(name="gen_ai.choice", body=body, attributes=attributes)
+    return ChoiceEvent(**event_params)
 
 
 @_with_tracer_wrapper
 def _wrap(
     tracer: Tracer,
-    event_logger: Union[EventLogger, None],
     to_wrap,
     wrapped,
     instance,
@@ -311,8 +302,7 @@ def _wrap(
     ) as span:
         if span.is_recording():
             _set_input_attributes(span, llm_request_type, kwargs)
-        if not Config.use_legacy_attributes and event_logger is not None:
-            event_logger.emit(_input_to_event(llm_request_type, kwargs))
+        emit_event(_parse_message_event(llm_request_type, kwargs))
 
         response = wrapped(*args, **kwargs)
 
@@ -320,14 +310,11 @@ def _wrap(
             if span.is_recording():
                 _set_response_attributes(span, llm_request_type, response)
                 span.set_status(Status(StatusCode.OK))
-            if not Config.use_legacy_attributes and event_logger is not None:
-                if llm_request_type == LLMRequestTypeValues.COMPLETION:
-                    for index, generation in enumerate(response.generations):
-                        event_logger.emit(
-                            _response_to_event(index, llm_request_type, generation)
-                        )
-                else:
-                    event_logger.emit(_response_to_event(0, llm_request_type, response))
+            if llm_request_type == LLMRequestTypeValues.COMPLETION:
+                for index, generation in enumerate(response.generations):
+                    emit_event(_parse_choice_event(index, llm_request_type, generation))
+            else:
+                emit_event(_parse_choice_event(0, llm_request_type, response))
 
         return response
 
@@ -347,11 +334,9 @@ class CohereInstrumentor(BaseInstrumentor):
         tracer_provider = kwargs.get("tracer_provider")
         tracer = get_tracer(__name__, __version__, tracer_provider)
 
-        if Config.use_legacy_attributes:
-            event_logger = None
-        else:
+        if not Config.use_legacy_attributes:
             event_logger_provider = kwargs.get("event_logger_provider")
-            event_logger = get_event_logger(
+            Config.event_logger = get_event_logger(
                 __name__, __version__, event_logger_provider=event_logger_provider
             )
         for wrapped_method in WRAPPED_METHODS:
@@ -360,7 +345,7 @@ class CohereInstrumentor(BaseInstrumentor):
             wrap_function_wrapper(
                 "cohere.client",
                 f"{wrap_object}.{wrap_method}",
-                _wrap(tracer, event_logger, wrapped_method),
+                _wrap(tracer, wrapped_method),
             )
 
     def _uninstrument(self, **kwargs):

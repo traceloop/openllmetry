@@ -176,7 +176,7 @@ def test_cohere_rerank_with_events_with_content(
     # Validate model response Event
     choice_event = {
         "index": 0,
-        "finish_reason": "UNKNOWN",
+        "finish_reason": "unknown",
         "message": {
             "content": [
                 {
@@ -274,7 +274,7 @@ def test_cohere_rerank_with_events_with_no_content(
     # Validate model response Event
     choice_event = {
         "index": 0,
-        "finish_reason": "UNKNOWN",
+        "finish_reason": "unknown",
         "message": {},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
