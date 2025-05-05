@@ -10,6 +10,11 @@ from opentelemetry import context as context_api
 from opentelemetry._events import Event, EventLogger, get_event_logger
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.instrumentation.sagemaker.config import Config
+from opentelemetry.instrumentation.sagemaker.event_handler import (
+    ChoiceEvent,
+    MessageEvent,
+    emit_event,
+)
 from opentelemetry.instrumentation.sagemaker.reusable_streaming_body import (
     ReusableStreamingBody,
 )
@@ -57,43 +62,44 @@ def _set_span_attribute(span, name, value):
     return
 
 
-def _emit_input_events(event_logger: EventLogger, kwargs):
-    attributes = {GenAIAttributes.GEN_AI_SYSTEM: "sagemaker"}
+def _emit_message_event(kwargs):
     input_body = json.loads(kwargs.get("Body"))
-    body = {"content": input_body.get("inputs", "")} if is_content_enabled() else {}
-    event_logger.emit(
-        Event(name="gen_ai.user.message", attributes=attributes, body=body)
-    )
+    emit_event(MessageEvent(content=input_body.get("inputs", ""), role="user"))
 
 
-def _emit_response_events(event_logger: EventLogger, response: dict):
-    attributes = {GenAIAttributes.GEN_AI_SYSTEM: "sagemaker"}
+def _emit_choice_events(response: dict):
     response_body: Union[StreamingWrapper, ReusableStreamingBody, None] = response.get(
         "Body"
     )
 
     if isinstance(response_body, StreamingWrapper):
-        body = {"index": 0, "finish_reason": "unknown", "message": {}}
-        if is_content_enabled():
-            body["message"]["content"] = response_body._accumulating_body
-        event_logger.emit(Event(name="gen_ai.choice", attributes=attributes, body=body))
-
+        emit_event(
+            ChoiceEvent(
+                index=0,
+                message={
+                    "content": response_body._accumulating_body,
+                    "role": "assistant",
+                },
+                finish_reason="unknown",
+            )
+        )
     elif isinstance(response_body, ReusableStreamingBody):
         for i, gen in enumerate(json.loads(response_body.read())):
-            body = {"index": i, "finish_reason": "unknown", "message": {}}
-            if is_content_enabled():
-                body["message"]["content"] = gen.get("generated_text")
-            event_logger.emit(
-                Event(name="gen_ai.choice", attributes=attributes, body=body)
+            emit_event(
+                ChoiceEvent(
+                    index=i,
+                    message={"content": gen.get("generated_text"), "role": "assistant"},
+                    finish_reason="unknown",
+                )
             )
 
 
 def _with_tracer_wrapper(func):
     """Helper for providing tracer for wrapper functions."""
 
-    def _with_tracer(tracer, event_logger, to_wrap):
+    def _with_tracer(tracer, to_wrap):
         def wrapper(wrapped, instance, args, kwargs):
-            return func(tracer, event_logger, to_wrap, wrapped, instance, args, kwargs)
+            return func(tracer, to_wrap, wrapped, instance, args, kwargs)
 
         return wrapper
 
@@ -103,7 +109,6 @@ def _with_tracer_wrapper(func):
 @_with_tracer_wrapper
 def _wrap(
     tracer,
-    event_logger: Union[EventLogger, None],
     to_wrap,
     wrapped,
     instance,
@@ -117,11 +122,11 @@ def _wrap(
     if kwargs.get("service_name") == "sagemaker-runtime":
         client = wrapped(*args, **kwargs)
         client.invoke_endpoint = _instrumented_endpoint_invoke(
-            client.invoke_endpoint, tracer, event_logger
+            client.invoke_endpoint, tracer
         )
         client.invoke_endpoint_with_response_stream = (
             _instrumented_endpoint_invoke_with_response_stream(
-                client.invoke_endpoint_with_response_stream, tracer, event_logger
+                client.invoke_endpoint_with_response_stream, tracer
             )
         )
 
@@ -130,7 +135,7 @@ def _wrap(
     return wrapped(*args, **kwargs)
 
 
-def _instrumented_endpoint_invoke(fn, tracer, event_logger: Union[EventLogger, None]):
+def _instrumented_endpoint_invoke(fn, tracer):
     @wraps(fn)
     def with_instrumentation(*args, **kwargs):
         if context_api.get_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY):
@@ -139,42 +144,34 @@ def _instrumented_endpoint_invoke(fn, tracer, event_logger: Union[EventLogger, N
         with tracer.start_as_current_span(
             "sagemaker.completion", kind=SpanKind.CLIENT
         ) as span:
-            if not Config.use_legacy_attributes and event_logger is not None:
-                _emit_input_events(event_logger, kwargs)
+            _emit_message_event(kwargs)
 
             response = fn(*args, **kwargs)
 
             if span.is_recording():
                 _handle_call(span, kwargs, response)
-
-            if not Config.use_legacy_attributes and event_logger is not None:
-                _emit_response_events(event_logger, response)
+            _emit_choice_events(response)
 
             return response
 
     return with_instrumentation
 
 
-def _instrumented_endpoint_invoke_with_response_stream(
-    fn, tracer, event_logger: Union[EventLogger, None]
-):
+def _instrumented_endpoint_invoke_with_response_stream(fn, tracer):
     @wraps(fn)
     def with_instrumentation(*args, **kwargs):
         if context_api.get_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY):
             return fn(*args, **kwargs)
 
         span = tracer.start_span("sagemaker.completion", kind=SpanKind.CLIENT)
-
-        if not Config.use_legacy_attributes and event_logger is not None:
-            _emit_input_events(event_logger, kwargs)
+        _emit_message_event(kwargs)
 
         response = fn(*args, **kwargs)
 
         if span.is_recording():
             _handle_stream_call(span, kwargs, response)
 
-        if not Config.use_legacy_attributes and event_logger is not None:
-            _emit_response_events(event_logger, response)
+        _emit_choice_events(response)
 
         return response
 
@@ -241,11 +238,9 @@ class SageMakerInstrumentor(BaseInstrumentor):
         tracer_provider = kwargs.get("tracer_provider")
         tracer = get_tracer(__name__, __version__, tracer_provider)
 
-        if Config.use_legacy_attributes:
-            event_logger = None
-        else:
+        if not Config.use_legacy_attributes:
             event_logger_provider = kwargs.get("event_logger_provider")
-            event_logger = get_event_logger(
+            Config.event_logger = get_event_logger(
                 __name__, __version__, event_logger_provider=event_logger_provider
             )
 
@@ -256,7 +251,7 @@ class SageMakerInstrumentor(BaseInstrumentor):
             wrap_function_wrapper(
                 wrap_package,
                 f"{wrap_object}.{wrap_method}",
-                _wrap(tracer, event_logger, wrapped_method),
+                _wrap(tracer, wrapped_method),
             )
 
     def _uninstrument(self, **kwargs):
