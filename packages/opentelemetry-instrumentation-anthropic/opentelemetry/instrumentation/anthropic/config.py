@@ -1,4 +1,6 @@
 from typing import Callable, Optional
+
+from opentelemetry._events import EventLogger
 from typing_extensions import Coroutine
 
 
@@ -9,3 +11,5 @@ class Config:
     upload_base64_image: Optional[
         Callable[[str, str, str, str], Coroutine[None, None, str]]
     ] = None
+    use_legacy_attributes = True
+    event_logger: Optional[EventLogger] = None

@@ -1,14 +1,20 @@
 import asyncio
-import os
 import logging
+import os
 import threading
 import traceback
+
 from opentelemetry import context as context_api
+from opentelemetry._events import EventLogger
 from opentelemetry.instrumentation.anthropic.config import Config
 from opentelemetry.semconv_ai import SpanAttributes
 
 GEN_AI_SYSTEM = "gen_ai.system"
 GEN_AI_SYSTEM_ANTHROPIC = "anthropic"
+
+OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT = (
+    "OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT"
+)
 
 
 def set_span_attribute(span, name, value):
@@ -133,3 +139,21 @@ def run_async(method):
         thread.join()
     else:
         asyncio.run(method)
+
+
+def is_content_enabled() -> bool:
+    capture_content = os.environ.get(
+        OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT, "false"
+    )
+
+    return capture_content.lower() == "true"
+
+
+def should_emit_events() -> bool:
+    """
+    Checks if the instrumentation isn't using the legacy attributes
+    and if the event logger is not None.
+    """
+    return not Config.use_legacy_attributes and isinstance(
+        Config.event_logger, EventLogger
+    )
