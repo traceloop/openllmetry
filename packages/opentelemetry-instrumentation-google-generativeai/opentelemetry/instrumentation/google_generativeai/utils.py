@@ -2,6 +2,7 @@ import logging
 import traceback
 from os import environ
 
+from opentelemetry._events import EventLogger
 from opentelemetry.instrumentation.google_generativeai.config import Config
 
 OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT = (
@@ -40,6 +41,17 @@ def is_content_enabled() -> bool:
     )
 
     return capture_content.lower() == "true"
+
+
+def should_emit_events() -> bool:
+    """
+    Checks if the instrumentation isn't using the legacy attributes
+    and if the event logger is not None.
+    """
+
+    return not Config.use_legacy_attributes and isinstance(
+        Config.event_logger, EventLogger
+    )
 
 
 def part_to_dict(part):

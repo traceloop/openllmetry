@@ -3,12 +3,17 @@
 import logging
 import os
 import types
-from typing import Collection, Union
+from typing import Collection
 
 from google.generativeai.types.generation_types import GenerateContentResponse
 from opentelemetry import context as context_api
-from opentelemetry._events import Event, EventLogger, get_event_logger
+from opentelemetry._events import Event, get_event_logger
 from opentelemetry.instrumentation.google_generativeai.config import Config
+from opentelemetry.instrumentation.google_generativeai.event_handler import (
+    ChoiceEvent,
+    MessageEvent,
+    emit_event,
+)
 from opentelemetry.instrumentation.google_generativeai.utils import (
     dont_throw,
     is_content_enabled,
@@ -17,9 +22,6 @@ from opentelemetry.instrumentation.google_generativeai.utils import (
 from opentelemetry.instrumentation.google_generativeai.version import __version__
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY, unwrap
-from opentelemetry.semconv._incubating.attributes import (
-    gen_ai_attributes as GenAIAttributes,
-)
 from opentelemetry.semconv_ai import (
     SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
     LLMRequestTypeValues,
@@ -174,7 +176,6 @@ def _set_response_attributes(span, response, llm_model):
 
 def _build_from_streaming_response(
     span,
-    event_logger: Union[EventLogger, None],
     response: GenerateContentResponse,
     llm_model,
 ):
@@ -187,18 +188,14 @@ def _build_from_streaming_response(
 
     _set_response_attributes(span, complete_response, llm_model)
 
-    if not Config.use_legacy_attributes and event_logger is not None:
-        _emit_events_responses(event_logger, response)
+    _emit_choice_events(response)
 
     span.set_status(Status(StatusCode.OK))
     span.end()
 
 
 async def _abuild_from_streaming_response(
-    span,
-    event_logger: Union[EventLogger, None],
-    response: GenerateContentResponse,
-    llm_model,
+    span, response: GenerateContentResponse, llm_model
 ):
     complete_response = ""
     async for item in response:
@@ -209,8 +206,7 @@ async def _abuild_from_streaming_response(
 
     _set_response_attributes(span, complete_response, llm_model)
 
-    if not Config.use_legacy_attributes and event_logger is not None:
-        _emit_events_responses(event_logger, response)
+    _emit_choice_events(response)
 
     span.set_status(Status(StatusCode.OK))
     span.end()
@@ -220,6 +216,7 @@ async def _abuild_from_streaming_response(
 def _handle_request(span, args, kwargs, llm_model):
     if span.is_recording():
         _set_input_attributes(span, args, kwargs, llm_model)
+    _emit_message_events(args, kwargs)
 
 
 @dont_throw
@@ -228,21 +225,22 @@ def _handle_response(span, response, llm_model):
         _set_response_attributes(span, response, llm_model)
 
         span.set_status(Status(StatusCode.OK))
+    _emit_choice_events(response)
 
 
 def _with_tracer_wrapper(func):
     """Helper for providing tracer for wrapper functions."""
 
-    def _with_tracer(tracer, event_logger, to_wrap):
+    def _with_tracer(tracer, to_wrap):
         def wrapper(wrapped, instance, args, kwargs):
-            return func(tracer, event_logger, to_wrap, wrapped, instance, args, kwargs)
+            return func(tracer, to_wrap, wrapped, instance, args, kwargs)
 
         return wrapper
 
     return _with_tracer
 
 
-def _emit_events_requests(event_logger: EventLogger, args, kwargs):
+def _emit_message_events(args, kwargs):
     contents = []
 
     # Get all prompts (Gemini accepts multiple prompts at once)
@@ -260,41 +258,27 @@ def _emit_events_requests(event_logger: EventLogger, args, kwargs):
         elif isinstance(kwarg_contents, list):
             contents.extend(kwarg_contents)
 
-    attributes = {GenAIAttributes.GEN_AI_SYSTEM: "gemini"}
-
     for prompt in contents:
-        body = {}
-        if is_content_enabled():
-            body["content"] = prompt
-        event_logger.emit(
-            Event(name="gen_ai.user.message", body=body, attributes=attributes)
-        )
+        emit_event(MessageEvent(content=prompt, role="user"))
 
 
-def _emit_events_responses(
-    event_logger: EventLogger, response: GenerateContentResponse
-):
-    attributes = {GenAIAttributes.GEN_AI_SYSTEM: "gemini"}
-
+def _emit_choice_events(response: GenerateContentResponse):
     for index, candidate in enumerate(response.candidates):
-        body = {
-            "index": index,
-            "finish_reason": candidate.finish_reason.name,
-            "message": {},
-        }
-        if is_content_enabled():
-            body["message"] = {
-                "content": [part_to_dict(i) for i in candidate.content.parts],
-                "role": candidate.content.role,
-            }
-
-        event_logger.emit(Event(name="gen_ai.choice", body=body, attributes=attributes))
+        emit_event(
+            ChoiceEvent(
+                index=index,
+                message={
+                    "content": [part_to_dict(i) for i in candidate.content.parts],
+                    "role": candidate.content.role,
+                },
+                finish_reason=candidate.finish_reason.name,
+            )
+        )
 
 
 @_with_tracer_wrapper
 async def _awrap(
     tracer,
-    event_logger: Union[EventLogger, None],
     to_wrap,
     wrapped,
     instance,
@@ -324,24 +308,16 @@ async def _awrap(
     )
 
     _handle_request(span, args, kwargs, llm_model)
-    if not Config.use_legacy_attributes and event_logger is not None:
-        _emit_events_requests(event_logger, args, kwargs)
 
     response = await wrapped(*args, **kwargs)
 
     if response:
         if is_streaming_response(response):
-            return _build_from_streaming_response(
-                span, event_logger, response, llm_model
-            )
+            return _build_from_streaming_response(span, response, llm_model)
         elif is_async_streaming_response(response):
-            return _abuild_from_streaming_response(
-                span, event_logger, response, llm_model
-            )
+            return _abuild_from_streaming_response(span, response, llm_model)
         else:
             _handle_response(span, response, llm_model)
-            if not Config.use_legacy_attributes and event_logger is not None:
-                _emit_events_responses(event_logger, response)
 
     span.end()
     return response
@@ -350,7 +326,6 @@ async def _awrap(
 @_with_tracer_wrapper
 def _wrap(
     tracer,
-    event_logger: Union[EventLogger, None],
     to_wrap,
     wrapped,
     instance,
@@ -380,24 +355,16 @@ def _wrap(
     )
 
     _handle_request(span, args, kwargs, llm_model)
-    if not Config.use_legacy_attributes and event_logger is not None:
-        _emit_events_requests(event_logger, args, kwargs)
 
     response = wrapped(*args, **kwargs)
 
     if response:
         if is_streaming_response(response):
-            return _build_from_streaming_response(
-                span, event_logger, response, llm_model
-            )
+            return _build_from_streaming_response(span, response, llm_model)
         elif is_async_streaming_response(response):
-            return _abuild_from_streaming_response(
-                span, event_logger, response, llm_model
-            )
+            return _abuild_from_streaming_response(span, response, llm_model)
         else:
             _handle_response(span, response, llm_model)
-            if not Config.use_legacy_attributes and event_logger is not None:
-                _emit_events_responses(event_logger, response)
 
     span.end()
     return response
@@ -418,11 +385,9 @@ class GoogleGenerativeAiInstrumentor(BaseInstrumentor):
         tracer_provider = kwargs.get("tracer_provider")
         tracer = get_tracer(__name__, __version__, tracer_provider)
 
-        if Config.use_legacy_attributes:
-            event_logger = None
-        else:
+        if not Config.use_legacy_attributes:
             event_logger_provider = kwargs.get("event_logger_provider")
-            event_logger = get_event_logger(
+            Config.event_logger = get_event_logger(
                 __name__, __version__, event_logger_provider=event_logger_provider
             )
 
@@ -435,9 +400,9 @@ class GoogleGenerativeAiInstrumentor(BaseInstrumentor):
                 wrap_package,
                 f"{wrap_object}.{wrap_method}",
                 (
-                    _awrap(tracer, event_logger, wrapped_method)
+                    _awrap(tracer, wrapped_method)
                     if wrap_method == "generate_content_async"
-                    else _wrap(tracer, event_logger, wrapped_method)
+                    else _wrap(tracer, wrapped_method)
                 ),
             )
 
