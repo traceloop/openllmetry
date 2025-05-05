@@ -109,7 +109,6 @@ def test_mistralai_chat_with_events_with_content(
         "index": 0,
         "finish_reason": "stop",
         "message": {
-            "role": "assistant",
             "content": "Why did the OpenTelemetry go to therapy?\n\nBecause it had too many traces and couldn't handle it!\n\n(For non-developers, OpenTelemetry is a set of APIs, libraries, agents, and instrumentation that standardize how you collect, generate, transport, and consume telemetry data.)",
         },
     }
@@ -451,7 +450,6 @@ async def test_mistralai_async_chat_with_events_with_content(
         "finish_reason": "stop",
         "message": {
             "content": "Why did OpenTelemetry bring a map to the party?\n\nBecause it wanted to trace the route of the good conversations!\n\n(I'm here to bring a smile, not to code or explain complex systems!)",
-            "role": "assistant",
         },
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
