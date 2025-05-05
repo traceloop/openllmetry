@@ -4,23 +4,32 @@ import logging
 import os
 import types
 from typing import Collection
-from opentelemetry.instrumentation.google_generativeai.config import Config
-from opentelemetry.instrumentation.google_generativeai.utils import dont_throw
-from wrapt import wrap_function_wrapper
 
+from google.generativeai.types.generation_types import GenerateContentResponse
 from opentelemetry import context as context_api
-from opentelemetry.trace import get_tracer, SpanKind
-from opentelemetry.trace.status import Status, StatusCode
-
-from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
-from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY, unwrap
-
-from opentelemetry.semconv_ai import (
-    SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
-    SpanAttributes,
-    LLMRequestTypeValues,
+from opentelemetry._events import Event, get_event_logger
+from opentelemetry.instrumentation.google_generativeai.config import Config
+from opentelemetry.instrumentation.google_generativeai.event_handler import (
+    ChoiceEvent,
+    MessageEvent,
+    emit_event,
+)
+from opentelemetry.instrumentation.google_generativeai.utils import (
+    dont_throw,
+    is_content_enabled,
+    part_to_dict,
 )
 from opentelemetry.instrumentation.google_generativeai.version import __version__
+from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
+from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY, unwrap
+from opentelemetry.semconv_ai import (
+    SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
+    LLMRequestTypeValues,
+    SpanAttributes,
+)
+from opentelemetry.trace import SpanKind, get_tracer
+from opentelemetry.trace.status import Status, StatusCode
+from wrapt import wrap_function_wrapper
 
 logger = logging.getLogger(__name__)
 
@@ -94,9 +103,7 @@ def _set_input_attributes(span, args, kwargs, llm_model):
         _set_span_attribute(
             span, f"{SpanAttributes.LLM_PROMPTS}.0.content", kwargs.get("prompt")
         )
-        _set_span_attribute(
-            span, f"{SpanAttributes.LLM_PROMPTS}.0.role", "user"
-        )
+        _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.0.role", "user")
 
     _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, llm_model)
     _set_span_attribute(
@@ -147,7 +154,9 @@ def _set_response_attributes(span, response, llm_model):
             _set_span_attribute(
                 span, f"{SpanAttributes.LLM_COMPLETIONS}.0.content", response.text
             )
-            _set_span_attribute(span, f"{SpanAttributes.LLM_COMPLETIONS}.0.role", "assistant")
+            _set_span_attribute(
+                span, f"{SpanAttributes.LLM_COMPLETIONS}.0.role", "assistant"
+            )
     else:
         if isinstance(response, list):
             for index, item in enumerate(response):
@@ -158,12 +167,18 @@ def _set_response_attributes(span, response, llm_model):
             _set_span_attribute(
                 span, f"{SpanAttributes.LLM_COMPLETIONS}.0.content", response
             )
-            _set_span_attribute(span, f"{SpanAttributes.LLM_COMPLETIONS}.0.role", "assistant")
+            _set_span_attribute(
+                span, f"{SpanAttributes.LLM_COMPLETIONS}.0.role", "assistant"
+            )
 
     return
 
 
-def _build_from_streaming_response(span, response, llm_model):
+def _build_from_streaming_response(
+    span,
+    response: GenerateContentResponse,
+    llm_model,
+):
     complete_response = ""
     for item in response:
         item_to_yield = item
@@ -173,11 +188,15 @@ def _build_from_streaming_response(span, response, llm_model):
 
     _set_response_attributes(span, complete_response, llm_model)
 
+    _emit_choice_events(response)
+
     span.set_status(Status(StatusCode.OK))
     span.end()
 
 
-async def _abuild_from_streaming_response(span, response, llm_model):
+async def _abuild_from_streaming_response(
+    span, response: GenerateContentResponse, llm_model
+):
     complete_response = ""
     async for item in response:
         item_to_yield = item
@@ -187,6 +206,8 @@ async def _abuild_from_streaming_response(span, response, llm_model):
 
     _set_response_attributes(span, complete_response, llm_model)
 
+    _emit_choice_events(response)
+
     span.set_status(Status(StatusCode.OK))
     span.end()
 
@@ -195,6 +216,7 @@ async def _abuild_from_streaming_response(span, response, llm_model):
 def _handle_request(span, args, kwargs, llm_model):
     if span.is_recording():
         _set_input_attributes(span, args, kwargs, llm_model)
+    _emit_message_events(args, kwargs)
 
 
 @dont_throw
@@ -203,6 +225,7 @@ def _handle_response(span, response, llm_model):
         _set_response_attributes(span, response, llm_model)
 
         span.set_status(Status(StatusCode.OK))
+    _emit_choice_events(response)
 
 
 def _with_tracer_wrapper(func):
@@ -217,8 +240,51 @@ def _with_tracer_wrapper(func):
     return _with_tracer
 
 
+def _emit_message_events(args, kwargs):
+    contents = []
+
+    # Get all prompts (Gemini accepts multiple prompts at once)
+    for arg in args:
+        if isinstance(arg, str):
+            contents.append(arg)
+        elif isinstance(arg, list):
+            contents.extend(arg)
+
+    # Process kwargs["contents"] if it exists
+    if "contents" in kwargs:
+        kwarg_contents = kwargs["contents"]
+        if isinstance(kwarg_contents, str):
+            contents.append(kwarg_contents)
+        elif isinstance(kwarg_contents, list):
+            contents.extend(kwarg_contents)
+
+    for prompt in contents:
+        emit_event(MessageEvent(content=prompt, role="user"))
+
+
+def _emit_choice_events(response: GenerateContentResponse):
+    for index, candidate in enumerate(response.candidates):
+        emit_event(
+            ChoiceEvent(
+                index=index,
+                message={
+                    "content": [part_to_dict(i) for i in candidate.content.parts],
+                    "role": candidate.content.role,
+                },
+                finish_reason=candidate.finish_reason.name,
+            )
+        )
+
+
 @_with_tracer_wrapper
-async def _awrap(tracer, to_wrap, wrapped, instance, args, kwargs):
+async def _awrap(
+    tracer,
+    to_wrap,
+    wrapped,
+    instance,
+    args,
+    kwargs,
+):
     """Instruments and calls every function defined in TO_WRAP."""
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY) or context_api.get_value(
         SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY
@@ -258,7 +324,14 @@ async def _awrap(tracer, to_wrap, wrapped, instance, args, kwargs):
 
 
 @_with_tracer_wrapper
-def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
+def _wrap(
+    tracer,
+    to_wrap,
+    wrapped,
+    instance,
+    args,
+    kwargs,
+):
     """Instruments and calls every function defined in TO_WRAP."""
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY) or context_api.get_value(
         SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY
@@ -300,9 +373,10 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
 class GoogleGenerativeAiInstrumentor(BaseInstrumentor):
     """An instrumentor for Google Generative AI's client library."""
 
-    def __init__(self, exception_logger=None):
+    def __init__(self, exception_logger=None, use_legacy_attributes=True):
         super().__init__()
         Config.exception_logger = exception_logger
+        Config.use_legacy_attributes = use_legacy_attributes
 
     def instrumentation_dependencies(self) -> Collection[str]:
         return _instruments
@@ -310,6 +384,13 @@ class GoogleGenerativeAiInstrumentor(BaseInstrumentor):
     def _instrument(self, **kwargs):
         tracer_provider = kwargs.get("tracer_provider")
         tracer = get_tracer(__name__, __version__, tracer_provider)
+
+        if not Config.use_legacy_attributes:
+            event_logger_provider = kwargs.get("event_logger_provider")
+            Config.event_logger = get_event_logger(
+                __name__, __version__, event_logger_provider=event_logger_provider
+            )
+
         for wrapped_method in WRAPPED_METHODS:
             wrap_package = wrapped_method.get("package")
             wrap_object = wrapped_method.get("object")
