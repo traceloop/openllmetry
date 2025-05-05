@@ -1,0 +1,121 @@
+interactions:
+- request:
+    body: '{"model": "davinci-002", "prompt": "Tell me a joke about opentelemetry",
+      "stream": true}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '88'
+      content-type:
+      - application/json
+      host:
+      - api.openai.com
+      user-agent:
+      - AsyncOpenAI/Python 1.12.0
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - async:asyncio
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.12.0
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.9.5
+    method: POST
+    uri: https://api.openai.com/v1/completions
+  response:
+    body:
+      string: "data: {\"id\":\"cmpl-8wq44uFYuGm6kNe44ntRwluggKZFY\",\"object\":\"text_completion\",\"created\":1709033852,\"choices\":[{\"text\":\"
+        that\",\"index\":0,\"logprobs\":null,\"finish_reason\":null}],\"model\":\"davinci-002\"}\n\ndata:
+        {\"id\":\"cmpl-8wq44uFYuGm6kNe44ntRwluggKZFY\",\"object\":\"text_completion\",\"created\":1709033852,\"choices\":[{\"text\":\"
+        isn\",\"index\":0,\"logprobs\":null,\"finish_reason\":null}],\"model\":\"davinci-002\"}\n\ndata:
+        {\"id\":\"cmpl-8wq44uFYuGm6kNe44ntRwluggKZFY\",\"object\":\"text_completion\",\"created\":1709033852,\"choices\":[{\"text\":\"\u2019t\",\"index\":0,\"logprobs\":null,\"finish_reason\":null}],\"model\":\"davinci-002\"}\n\ndata:
+        {\"id\":\"cmpl-8wq44uFYuGm6kNe44ntRwluggKZFY\",\"object\":\"text_completion\",\"created\":1709033852,\"choices\":[{\"text\":\"
+        about\",\"index\":0,\"logprobs\":null,\"finish_reason\":null}],\"model\":\"davinci-002\"}\n\ndata:
+        {\"id\":\"cmpl-8wq44uFYuGm6kNe44ntRwluggKZFY\",\"object\":\"text_completion\",\"created\":1709033852,\"choices\":[{\"text\":\"
+        collecting\",\"index\":0,\"logprobs\":null,\"finish_reason\":null}],\"model\":\"davinci-002\"}\n\ndata:
+        {\"id\":\"cmpl-8wq44uFYuGm6kNe44ntRwluggKZFY\",\"object\":\"text_completion\",\"created\":1709033852,\"choices\":[{\"text\":\"
+        logs\",\"index\":0,\"logprobs\":null,\"finish_reason\":null}],\"model\":\"davinci-002\"}\n\ndata:
+        {\"id\":\"cmpl-8wq44uFYuGm6kNe44ntRwluggKZFY\",\"object\":\"text_completion\",\"created\":1709033852,\"choices\":[{\"text\":\"\\n\\n\",\"index\":0,\"logprobs\":null,\"finish_reason\":null}],\"model\":\"davinci-002\"}\n\ndata:
+        {\"id\":\"cmpl-8wq44uFYuGm6kNe44ntRwluggKZFY\",\"object\":\"text_completion\",\"created\":1709033852,\"choices\":[{\"text\":\"J\",\"index\":0,\"logprobs\":null,\"finish_reason\":null}],\"model\":\"davinci-002\"}\n\ndata:
+        {\"id\":\"cmpl-8wq44uFYuGm6kNe44ntRwluggKZFY\",\"object\":\"text_completion\",\"created\":1709033852,\"choices\":[{\"text\":\")\",\"index\":0,\"logprobs\":null,\"finish_reason\":null}],\"model\":\"davinci-002\"}\n\ndata:
+        {\"id\":\"cmpl-8wq44uFYuGm6kNe44ntRwluggKZFY\",\"object\":\"text_completion\",\"created\":1709033852,\"choices\":[{\"text\":\"
+        Some\",\"index\":0,\"logprobs\":null,\"finish_reason\":null}],\"model\":\"davinci-002\"}\n\ndata:
+        {\"id\":\"cmpl-8wq44uFYuGm6kNe44ntRwluggKZFY\",\"object\":\"text_completion\",\"created\":1709033852,\"choices\":[{\"text\":\"
+        of\",\"index\":0,\"logprobs\":null,\"finish_reason\":null}],\"model\":\"davinci-002\"}\n\ndata:
+        {\"id\":\"cmpl-8wq44uFYuGm6kNe44ntRwluggKZFY\",\"object\":\"text_completion\",\"created\":1709033852,\"choices\":[{\"text\":\"
+        these\",\"index\":0,\"logprobs\":null,\"finish_reason\":null}],\"model\":\"davinci-002\"}\n\ndata:
+        {\"id\":\"cmpl-8wq44uFYuGm6kNe44ntRwluggKZFY\",\"object\":\"text_completion\",\"created\":1709033852,\"choices\":[{\"text\":\"
+        folks\",\"index\":0,\"logprobs\":null,\"finish_reason\":null}],\"model\":\"davinci-002\"}\n\ndata:
+        {\"id\":\"cmpl-8wq44uFYuGm6kNe44ntRwluggKZFY\",\"object\":\"text_completion\",\"created\":1709033852,\"choices\":[{\"text\":\"
+        helped\",\"index\":0,\"logprobs\":null,\"finish_reason\":null}],\"model\":\"davinci-002\"}\n\ndata:
+        {\"id\":\"cmpl-8wq44uFYuGm6kNe44ntRwluggKZFY\",\"object\":\"text_completion\",\"created\":1709033852,\"choices\":[{\"text\":\"
+        bring\",\"index\":0,\"logprobs\":null,\"finish_reason\":null}],\"model\":\"davinci-002\"}\n\ndata:
+        {\"id\":\"cmpl-8wq44uFYuGm6kNe44ntRwluggKZFY\",\"object\":\"text_completion\",\"created\":1709033852,\"choices\":[{\"text\":\"
+        the\",\"index\":0,\"logprobs\":null,\"finish_reason\":\"length\"}],\"model\":\"davinci-002\"}\n\ndata:
+        [DONE]\n\n"
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 85c022ebd94c374c-MXP
+      Cache-Control:
+      - no-cache, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Type:
+      - text/event-stream
+      Date:
+      - Tue, 27 Feb 2024 11:37:33 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=DQESYIv22XN80OsG0hK8uVOjj4Ki3mVUsGxDBTHcAng-1709033853-1.0-Ae626S1G1wgTnY5c9k6u22f356vNIazcUgjszHRIwgVKMD7jF/7oEgy/TRSTgIlpKboB35uPg3jdFYbfWhBoczg=;
+        path=/; expires=Tue, 27-Feb-24 12:07:33 GMT; domain=.api.openai.com; HttpOnly;
+        Secure; SameSite=None
+      - _cfuvid=_MCrEKBEr4LgRJz02C3D5a70TwWXKtEqIeQ9XZQhExc-1709033853105-0.0-604800000;
+        path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
+      Transfer-Encoding:
+      - chunked
+      access-control-allow-origin:
+      - '*'
+      alt-svc:
+      - h3=":443"; ma=86400
+      openai-model:
+      - davinci-002
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '30'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=15724800; includeSubDomains
+      x-ratelimit-limit-requests:
+      - '3000'
+      x-ratelimit-limit-tokens:
+      - '250000'
+      x-ratelimit-remaining-requests:
+      - '2999'
+      x-ratelimit-remaining-tokens:
+      - '249975'
+      x-ratelimit-reset-requests:
+      - 20ms
+      x-ratelimit-reset-tokens:
+      - 5ms
+      x-request-id:
+      - req_3f8b42f4f1a71c008007b43298fdacc3
+    status:
+      code: 200
+      message: OK
+version: 1

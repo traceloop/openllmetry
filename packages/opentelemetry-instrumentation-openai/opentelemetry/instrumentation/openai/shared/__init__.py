@@ -1,25 +1,24 @@
-import os
-import openai
 import json
-import types
 import logging
-
+import os
+import types
 from importlib.metadata import version
 
 from opentelemetry import context as context_api
-from opentelemetry.trace.propagation import set_span_in_context
-from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
-
 from opentelemetry.instrumentation.openai.shared.config import Config
-from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
-    GEN_AI_RESPONSE_ID,
-)
-from opentelemetry.semconv_ai import SpanAttributes
 from opentelemetry.instrumentation.openai.utils import (
     dont_throw,
     is_openai_v1,
     should_record_stream_token_usage,
 )
+from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
+    GEN_AI_RESPONSE_ID,
+)
+from opentelemetry.semconv_ai import SpanAttributes
+from opentelemetry.trace.propagation import set_span_in_context
+from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
+
+import openai
 
 OPENAI_LLM_USAGE_TOKEN_TYPES = ["prompt_tokens", "completion_tokens"]
 PROMPT_FILTER_KEY = "prompt_filter_results"
@@ -187,7 +186,9 @@ def _set_response_attributes(span, response):
     )
     prompt_tokens_details = dict(usage.get("prompt_tokens_details", {}))
     _set_span_attribute(
-        span, SpanAttributes.LLM_USAGE_CACHE_READ_INPUT_TOKENS, prompt_tokens_details.get("cached_tokens", 0)
+        span,
+        SpanAttributes.LLM_USAGE_CACHE_READ_INPUT_TOKENS,
+        prompt_tokens_details.get("cached_tokens", 0),
     )
     return
 
