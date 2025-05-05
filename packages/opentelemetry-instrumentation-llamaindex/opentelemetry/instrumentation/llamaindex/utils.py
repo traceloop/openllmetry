@@ -6,17 +6,13 @@ import traceback
 from contextlib import asynccontextmanager
 
 from opentelemetry import context as context_api
-from opentelemetry._events import Event
+from opentelemetry._events import EventLogger
 from opentelemetry.instrumentation.llamaindex.config import Config
-from opentelemetry.semconv._incubating.attributes import (
-    gen_ai_attributes as GenAIAttributes,
-)
 from opentelemetry.semconv_ai import SpanAttributes
 
 OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT = (
     "OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT"
 )
-EVENT_ATTRIBUTES = {GenAIAttributes.GEN_AI_SYSTEM: "llamaindex"}
 
 
 def _with_tracer_wrapper(func):
@@ -108,18 +104,12 @@ def is_content_enabled() -> bool:
 
 
 def emit_message_event(*, content, role: str):
-    body = {}
+    from opentelemetry.instrumentation.llamaindex.event_handler import (
+        MessageEvent,
+        emit_event,
+    )
 
-    if is_content_enabled():
-        body["content"] = content
-        body["role"] = role
-
-    if is_role_valid(role):
-        event_name = "gen_ai.{}.message".format(role)
-    else:
-        event_name = "gen_ai.{}.message".format("user")
-
-    Config.event_logger.emit(Event(event_name, body=body, attributes=EVENT_ATTRIBUTES))
+    emit_event(MessageEvent(content=content, role=role))
 
 
 def emit_choice_event(
@@ -129,12 +119,26 @@ def emit_choice_event(
     role: str,
     finish_reason: str,
 ):
-    body = {"index": index, "finish_reason": finish_reason, "message": {}}
+    from opentelemetry.instrumentation.llamaindex.event_handler import (
+        ChoiceEvent,
+        emit_event,
+    )
 
-    if is_content_enabled():
-        body["message"]["content"] = content
-        body["message"]["role"] = role
+    emit_event(
+        ChoiceEvent(
+            index=index,
+            message={"content": content, "role": role},
+            finish_reason=finish_reason,
+        )
+    )
 
-    Config.event_logger.emit(
-        Event("gen_ai.choice", body=body, attributes=EVENT_ATTRIBUTES)
+
+def should_emit_events() -> bool:
+    """
+    Checks if the instrumentation isn't using the legacy attributes
+    and if the event logger is not None.
+    """
+
+    return not Config.use_legacy_attributes and isinstance(
+        Config.event_logger, EventLogger
     )

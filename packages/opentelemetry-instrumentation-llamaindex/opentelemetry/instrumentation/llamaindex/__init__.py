@@ -72,9 +72,7 @@ class LlamaIndexInstrumentor(BaseInstrumentor):
         tracer_provider = kwargs.get("tracer_provider")
         tracer = get_tracer(__name__, __version__, tracer_provider)
 
-        if Config.use_legacy_attributes:
-            Config.event_logger = None
-        else:
+        if not Config.use_legacy_attributes:
             event_logger_provider = kwargs.get("event_logger_provider")
             Config.event_logger = get_event_logger(
                 __name__, __version__, event_logger_provider=event_logger_provider

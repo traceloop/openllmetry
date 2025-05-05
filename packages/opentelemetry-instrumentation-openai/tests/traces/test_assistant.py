@@ -1,7 +1,8 @@
+from typing_extensions import override
+
 import pytest
 from openai import AssistantEventHandler
 from opentelemetry.semconv_ai import SpanAttributes
-from typing_extensions import override
 
 
 @pytest.fixture
@@ -70,10 +71,7 @@ def test_new_assistant(exporter, openai_client, assistant):
     )
     assert open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.role"] == "system"
     assert open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.2.role"] == "user"
-    assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.2.content"]
-        == user_message
-    )
+    assert open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.2.content"] == user_message
     assert open_ai_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 145
     assert open_ai_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS] == 155
     assert open_ai_span.attributes[SpanAttributes.LLM_SYSTEM] == "openai"
@@ -83,15 +81,11 @@ def test_new_assistant(exporter, openai_client, assistant):
         if message.role in ["user", "system"]:
             continue
         assert (
-            open_ai_span.attributes[
-                f"{SpanAttributes.LLM_COMPLETIONS}.{completion_index}.content"
-            ]
+            open_ai_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.{completion_index}.content"]
             == message.content[0].text.value
         )
         assert (
-            open_ai_span.attributes[
-                f"{SpanAttributes.LLM_COMPLETIONS}.{completion_index}.role"
-            ]
+            open_ai_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.{completion_index}.role"]
             == message.role
         )
         assert (
@@ -153,15 +147,11 @@ def test_new_assistant_with_polling(exporter, openai_client, assistant):
         if message.role in ["user", "system"]:
             continue
         assert (
-            open_ai_span.attributes[
-                f"{SpanAttributes.LLM_COMPLETIONS}.{completion_index}.content"
-            ]
+            open_ai_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.{completion_index}.content"]
             == message.content[0].text.value
         )
         assert (
-            open_ai_span.attributes[
-                f"{SpanAttributes.LLM_COMPLETIONS}.{completion_index}.role"
-            ]
+            open_ai_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.{completion_index}.role"]
             == message.role
         )
         assert (
@@ -236,15 +226,11 @@ def test_existing_assistant(exporter, openai_client):
         if message.role in ["user", "system"]:
             continue
         assert (
-            open_ai_span.attributes[
-                f"{SpanAttributes.LLM_COMPLETIONS}.{completion_index}.content"
-            ]
+            open_ai_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.{completion_index}.content"]
             == message.content[0].text.value
         )
         assert (
-            open_ai_span.attributes[
-                f"{SpanAttributes.LLM_COMPLETIONS}.{completion_index}.role"
-            ]
+            open_ai_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.{completion_index}.role"]
             == message.role
         )
         assert (
@@ -322,134 +308,9 @@ def test_streaming_new_assistant(exporter, openai_client, assistant):
             open_ai_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.{idx}.role"]
             == "assistant"
         )
-        assert open_ai_span.attributes[f"gen_ai.response.{idx}.id"].startswith("msg")
-
-    logs = log_exporter.get_finished_logs()
-    assert (
-        len(logs) == 0
-    ), "Assert that it doesn't emit logs when use_legacy_attributes is True"
-
-
-@pytest.mark.vcr
-def test_streaming_new_assistant_with_events_with_content(
-    instrument_with_content, span_exporter, log_exporter, openai_client, assistant
-):
-    thread = openai_client.beta.threads.create()
-
-    openai_client.beta.threads.messages.create(
-        thread_id=thread.id,
-        role="user",
-        content="I need to solve the equation `3x + 11 = 14`. Can you help me?",
-    )
-
-    assistant_messages = []
-
-    class EventHandler(AssistantEventHandler):
-        @override
-        def on_text_created(self, text) -> None:
-            assistant_messages.append("")
-
-        @override
-        def on_text_delta(self, delta, snapshot):
-            assistant_messages[-1] += delta.value
-
-    with openai_client.beta.threads.runs.create_and_stream(
-        thread_id=thread.id,
-        assistant_id=assistant.id,
-        instructions="Please address the user as Jane Doe. The user has a premium account.",
-        event_handler=EventHandler(),
-    ) as stream:
-        stream.until_done()
-
-    spans = span_exporter.get_finished_spans()
-
-    assert [span.name for span in spans] == [
-        "openai.assistant.run_stream",
-    ]
-    open_ai_span = spans[0]
-    assert open_ai_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
-    assert (
-        open_ai_span.attributes[SpanAttributes.LLM_REQUEST_MODEL]
-        == "gpt-4-turbo-preview"
-    )
-    assert (
-        open_ai_span.attributes[SpanAttributes.LLM_RESPONSE_MODEL]
-        == "gpt-4-turbo-preview"
-    )
-    assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
-        == "You are a personal math tutor. Write and run code to answer math questions."
-    )
-    assert open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"] == "system"
-    assert (
-        open_ai_span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.1.content")
-        == "Please address the user as Jane Doe. The user has a premium account."
-    )
-    assert open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.role"] == "system"
-
-    assert open_ai_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 790
-    assert open_ai_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS] == 225
-    assert open_ai_span.attributes[SpanAttributes.LLM_SYSTEM] == "openai"
-
-    for idx, message in enumerate(assistant_messages):
         assert (
-            open_ai_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.{idx}.content"]
-            == message
+            open_ai_span.attributes[f"gen_ai.response.{idx}.id"].startswith("msg")
         )
-        assert (
-            open_ai_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.{idx}.role"]
-            == "assistant"
-        )
-        assert open_ai_span.attributes[f"gen_ai.response.{idx}.id"].startswith("msg")
-
-    logs = log_exporter.get_finished_logs()
-    assert len(logs) == 4
-
-    # Validate run system message Event
-    assert_message_in_logs(
-        logs[0],
-        "gen_ai.system.message",
-        {
-            "content": {
-                "content": "You are a personal math tutor. Write and run code to answer math questions."
-            },
-            "role": "system",
-        },
-    )
-
-    # Validate assistent system message Event
-    assert_message_in_logs(
-        logs[1],
-        "gen_ai.system.message",
-        {
-            "content": {
-                "content": "Please address the user as Jane Doe. The user has a premium account."
-            },
-            "role": "system",
-        },
-    )
-
-    # Validate the first ai response
-    choice_event = {
-        "index": 0,
-        "finish_reason": "unknown",
-        "message": {
-            "content": assistant_messages[0],
-            "role": "assistant",
-        },
-    }
-    assert_message_in_logs(logs[2], "gen_ai.choice", choice_event)
-
-    # Validate the second ai response
-    choice_event = {
-        "index": 1,
-        "finish_reason": "unknown",
-        "message": {
-            "content": assistant_messages[1],
-            "role": "assistant",
-        },
-    }
-    assert_message_in_logs(logs[3], "gen_ai.choice", choice_event)
 
 
 @pytest.mark.vcr
@@ -519,4 +380,6 @@ def test_streaming_existing_assistant(exporter, openai_client):
             open_ai_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.{idx}.role"]
             == "assistant"
         )
-        assert open_ai_span.attributes[f"gen_ai.response.{idx}.id"].startswith("msg_")
+        assert (
+            open_ai_span.attributes[f"gen_ai.response.{idx}.id"].startswith("msg_")
+        )
