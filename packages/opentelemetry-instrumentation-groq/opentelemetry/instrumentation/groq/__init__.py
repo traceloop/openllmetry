@@ -9,6 +9,11 @@ from typing import Callable, Collection, Union
 from opentelemetry import context as context_api
 from opentelemetry._events import Event, EventLogger, get_event_logger
 from opentelemetry.instrumentation.groq.config import Config
+from opentelemetry.instrumentation.groq.event_handler import (
+    ChoiceEvent,
+    MessageEvent,
+    emit_event,
+)
 from opentelemetry.instrumentation.groq.utils import (
     dont_throw,
     error_metrics_attributes,
@@ -254,12 +259,7 @@ def _with_chat_telemetry_wrapper(func):
     """Helper for providing tracer for wrapper functions. Includes metric collectors."""
 
     def _with_chat_telemetry(
-        tracer,
-        token_histogram,
-        choice_counter,
-        duration_histogram,
-        event_logger,
-        to_wrap,
+        tracer, token_histogram, choice_counter, duration_histogram, to_wrap
     ):
         def wrapper(wrapped, instance, args, kwargs):
             return func(
@@ -267,7 +267,6 @@ def _with_chat_telemetry_wrapper(func):
                 token_histogram,
                 choice_counter,
                 duration_histogram,
-                event_logger,
                 to_wrap,
                 wrapped,
                 instance,
@@ -345,24 +344,19 @@ def _set_streaming_response_attributes(
 
 
 def _emit_streaming_response_events(
-    event_logger: EventLogger, accumulated_content: str, finish_reason: Union[str, None]
+    accumulated_content: str, finish_reason: Union[str, None]
 ):
     """Emit events for streaming response."""
-    attributes = {
-        GenAIAttributes.GEN_AI_SYSTEM: GenAIAttributes.GenAiSystemValues.GROQ.value
-    }
-    body = {
-        "index": 0,
-        "finish_reason": finish_reason,
-        "message": {},
-    }
-    if is_content_enabled():
-        body["message"]["content"] = accumulated_content
-
-    event_logger.emit(Event(name="gen_ai.choice", attributes=attributes, body=body))
+    emit_event(
+        ChoiceEvent(
+            index=0,
+            message={"content": accumulated_content, "role": "assistant"},
+            finish_reason=finish_reason or "unknown",
+        )
+    )
 
 
-def _create_stream_processor(response, span, event_logger):
+def _create_stream_processor(response, span):
     """Create a generator that processes a stream while collecting telemetry."""
     accumulated_content = ""
     finish_reason = None
@@ -383,14 +377,12 @@ def _create_stream_processor(response, span, event_logger):
             span, accumulated_content, finish_reason, usage
         )
         span.set_status(Status(StatusCode.OK))
-    if not Config.use_legacy_attributes and event_logger is not None:
-        _emit_streaming_response_events(
-            event_logger, accumulated_content, finish_reason
-        )
+
+    _emit_streaming_response_events(accumulated_content, finish_reason)
     span.end()
 
 
-async def _create_async_stream_processor(response, span, event_logger):
+async def _create_async_stream_processor(response, span):
     """Create an async generator that processes a stream while collecting telemetry."""
     accumulated_content = ""
     finish_reason = None
@@ -411,44 +403,33 @@ async def _create_async_stream_processor(response, span, event_logger):
             span, accumulated_content, finish_reason, usage
         )
         span.set_status(Status(StatusCode.OK))
-    if not Config.use_legacy_attributes and event_logger is not None:
-        _emit_streaming_response_events(
-            event_logger, accumulated_content, finish_reason
-        )
+    _emit_streaming_response_events(accumulated_content, finish_reason)
     span.end()
 
 
-def _emit_input_events(event_logger: EventLogger, kwargs: dict):
-    attributes = {
-        GenAIAttributes.GEN_AI_SYSTEM: GenAIAttributes.GenAiSystemValues.GROQ.value
-    }
+@dont_throw
+def _emit_message_events(kwargs: dict):
     for message in kwargs.get("messages", []):
-        role = message.get("role")
-        content = message.get("content")
-
-        body = {"role": role} if role is not None and role != "user" else {}
-        if is_content_enabled() and content is not None:
-            body["content"] = content
-
-        name = f"gen_ai.{role}.message" if role is not None else "gen_ai.user.message"
-        event_logger.emit(Event(name=name, attributes=attributes, body=body))
+        emit_event(
+            MessageEvent(
+                content=message.get("content"), role=message.get("role", "unknown")
+            )
+        )
 
 
-def _emit_response_events(event_logger: EventLogger, response: ChatCompletion):
-    attributes = {
-        GenAIAttributes.GEN_AI_SYSTEM: GenAIAttributes.GenAiSystemValues.GROQ.value
-    }
+@dont_throw
+def _emit_choice_events(response: ChatCompletion):
     for choice in response.choices:
-        body = {
-            "index": choice.index,
-            "finish_reason": choice.finish_reason,
-            "message": {},
-        }
-        if is_content_enabled():
-            body["message"]["content"] = choice.message.content
-            if choice.message.role and choice.message.role != "assistant":
-                body["message"]["role"] = choice.message.role
-        event_logger.emit(Event(name="gen_ai.choice", attributes=attributes, body=body))
+        emit_event(
+            ChoiceEvent(
+                index=choice.index,
+                message={
+                    "content": choice.message.content,
+                    "role": choice.message.role or "unknown",
+                },
+                finish_reason=choice.finish_reason,
+            )
+        )
 
 
 @_with_chat_telemetry_wrapper
@@ -457,7 +438,6 @@ def _wrap(
     token_histogram: Histogram,
     choice_counter: Counter,
     duration_histogram: Histogram,
-    event_logger: Union[EventLogger, None],
     to_wrap,
     wrapped,
     instance,
@@ -483,8 +463,7 @@ def _wrap(
     if span.is_recording():
         _set_input_attributes(span, kwargs)
 
-    if not Config.use_legacy_attributes and event_logger is not None:
-        _emit_input_events(event_logger, kwargs)
+    _emit_message_events(kwargs)
 
     start_time = time.time()
     try:
@@ -503,7 +482,7 @@ def _wrap(
 
     if is_streaming_response(response):
         try:
-            return _create_stream_processor(response, span, event_logger)
+            return _create_stream_processor(response, span)
         except Exception as ex:
             logger.warning(
                 "Failed to process streaming response for groq span, error: %s",
@@ -532,8 +511,7 @@ def _wrap(
                 str(ex),
             )
 
-        if not Config.use_legacy_attributes and event_logger is not None:
-            _emit_response_events(event_logger, response)
+        _emit_choice_events(response)
 
         if span.is_recording():
             span.set_status(Status(StatusCode.OK))
@@ -547,7 +525,6 @@ async def _awrap(
     token_histogram: Histogram,
     choice_counter: Counter,
     duration_histogram: Histogram,
-    event_logger: Union[EventLogger, None],
     to_wrap,
     wrapped,
     instance,
@@ -578,8 +555,7 @@ async def _awrap(
             "Failed to set input attributes for groq span, error: %s", str(ex)
         )
 
-    if not Config.use_legacy_attributes and event_logger is not None:
-        _emit_input_events(event_logger, kwargs)
+    _emit_message_events(kwargs)
 
     start_time = time.time()
 
@@ -599,7 +575,7 @@ async def _awrap(
 
     if is_streaming_response(response):
         try:
-            return await _create_async_stream_processor(response, span, event_logger)
+            return await _create_async_stream_processor(response, span)
         except Exception as ex:
             logger.warning(
                 "Failed to process streaming response for groq span, error: %s",
@@ -624,8 +600,7 @@ async def _awrap(
         if span.is_recording():
             span.set_status(Status(StatusCode.OK))
 
-        if not Config.use_legacy_attributes and event_logger is not None:
-            _emit_response_events(event_logger, response)
+        _emit_choice_events(response)
 
     span.end()
     return response
@@ -675,11 +650,9 @@ class GroqInstrumentor(BaseInstrumentor):
                 duration_histogram,
             ) = (None, None, None)
 
-        if Config.use_legacy_attributes:
-            event_logger = None
-        else:
+        if not Config.use_legacy_attributes:
             event_logger_provider = kwargs.get("event_logger_provider")
-            event_logger = get_event_logger(
+            Config.event_logger = get_event_logger(
                 __name__, __version__, event_logger_provider=event_logger_provider
             )
 
@@ -697,7 +670,6 @@ class GroqInstrumentor(BaseInstrumentor):
                         token_histogram,
                         choice_counter,
                         duration_histogram,
-                        event_logger,
                         wrapped_method,
                     ),
                 )
@@ -717,7 +689,6 @@ class GroqInstrumentor(BaseInstrumentor):
                         token_histogram,
                         choice_counter,
                         duration_histogram,
-                        event_logger,
                         wrapped_method,
                     ),
                 )
