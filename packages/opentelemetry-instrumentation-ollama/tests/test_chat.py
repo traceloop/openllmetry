@@ -98,7 +98,7 @@ def test_ollama_chat_with_events_with_content(
     assert_message_in_logs(
         user_message_log,
         "gen_ai.user.message",
-        {"content": {"content": "Tell me a joke about OpenTelemetry"}},
+        {"content": "Tell me a joke about OpenTelemetry"},
     )
 
     # Validate the ai response
@@ -282,9 +282,7 @@ def test_ollama_chat_tool_calls_with_events_with_content(
     # Validate assistant message Event
     user_message_log = logs[0]
     assistant_message = {
-        "content": {
-            "content": "",
-        },
+        "content": "",
         "tool_calls": [
             {
                 "function": {
@@ -293,7 +291,6 @@ def test_ollama_chat_tool_calls_with_events_with_content(
                 }
             }
         ],
-        "role": "assistant",
     }
     assert_message_in_logs(
         user_message_log, "gen_ai.assistant.message", assistant_message
@@ -303,12 +300,7 @@ def test_ollama_chat_tool_calls_with_events_with_content(
     assert_message_in_logs(
         logs[1],
         "gen_ai.tool.message",
-        {
-            "role": "tool",
-            "content": {
-                "content": "The weather in San Francisco is 70 degrees and sunny."
-            },
-        },
+        {"content": "The weather in San Francisco is 70 degrees and sunny."},
     )
 
     # Validate the ai response
@@ -379,7 +371,11 @@ def test_ollama_chat_tool_calls_with_events_with_no_content(
 
     # Validate assistant message Event
     user_message_log = logs[0]
-    assert_message_in_logs(user_message_log, "gen_ai.assistant.message", {})
+    assert_message_in_logs(
+        user_message_log,
+        "gen_ai.assistant.message",
+        {"tool_calls": [{"function": {"name": "get_current_weather"}}]},
+    )
 
     # Validate the tool message Event
     assert_message_in_logs(logs[1], "gen_ai.tool.message", {})
@@ -489,7 +485,7 @@ def test_ollama_streaming_chat_with_events_with_content(
     assert_message_in_logs(
         user_message_log,
         "gen_ai.user.message",
-        {"content": {"content": "Tell me a joke about OpenTelemetry"}},
+        {"content": "Tell me a joke about OpenTelemetry"},
     )
 
     # Validate the ai response
@@ -648,7 +644,7 @@ async def test_ollama_async_chat_with_events_with_content(
     assert_message_in_logs(
         user_message_log,
         "gen_ai.user.message",
-        {"content": {"content": "Tell me a joke about OpenTelemetry"}},
+        {"content": "Tell me a joke about OpenTelemetry"},
     )
 
     # Validate the ai response
@@ -812,7 +808,7 @@ async def test_ollama_async_streaming_chat_with_events_with_content(
     assert_message_in_logs(
         user_message_log,
         "gen_ai.user.message",
-        {"content": {"content": "Tell me a joke about OpenTelemetry"}},
+        {"content": "Tell me a joke about OpenTelemetry"},
     )
 
     # Validate the ai response
