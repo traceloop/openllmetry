@@ -78,8 +78,8 @@ def instrument_with_content(tracer_provider, event_logger_provider):
 
     yield instrumentor
 
-    os.environ.pop(OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT, None)
     instrumentor.uninstrument()
+    os.environ.pop(OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT, None)
 
 
 @pytest.fixture(scope="function")
@@ -94,8 +94,8 @@ def instrument_with_no_content(tracer_provider, event_logger_provider):
 
     yield instrumentor
 
-    os.environ.pop(OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT, None)
     instrumentor.uninstrument()
+    os.environ.pop(OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT, None)
 
 
 @pytest.fixture(scope="module")

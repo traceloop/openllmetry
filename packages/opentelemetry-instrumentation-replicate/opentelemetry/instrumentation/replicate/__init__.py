@@ -6,17 +6,19 @@ import types
 from typing import Collection, Union
 
 from opentelemetry import context as context_api
-from opentelemetry._events import Event, EventLogger, get_event_logger
+from opentelemetry._events import Event, get_event_logger
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.instrumentation.replicate.config import Config
+from opentelemetry.instrumentation.replicate.event_handler import (
+    ChoiceEvent,
+    MessageEvent,
+    emit_event,
+)
 from opentelemetry.instrumentation.replicate.utils import dont_throw, is_content_enabled
 from opentelemetry.instrumentation.replicate.version import __version__
 from opentelemetry.instrumentation.utils import (
     _SUPPRESS_INSTRUMENTATION_KEY,
     unwrap,
-)
-from opentelemetry.semconv._incubating.attributes import (
-    gen_ai_attributes as GenAIAttributes,
 )
 from opentelemetry.semconv_ai import LLMRequestTypeValues, SpanAttributes
 from opentelemetry.trace import SpanKind, get_tracer
@@ -109,9 +111,7 @@ def _set_response_attributes(span, response):
     return
 
 
-def _build_from_streaming_response(
-    span, event_logger: Union[EventLogger, None], response
-):
+def _build_from_streaming_response(span, response):
     complete_response = ""
     for item in response:
         item_to_yield = item
@@ -120,8 +120,7 @@ def _build_from_streaming_response(
         yield item_to_yield
 
     _set_response_attributes(span, complete_response)
-    if not Config.use_legacy_attributes and event_logger is not None:
-        _emit_response_events(event_logger, complete_response)
+    _emit_choice_events(complete_response)
 
     span.set_status(Status(StatusCode.OK))
     span.end()
@@ -131,6 +130,8 @@ def _build_from_streaming_response(
 def _handle_request(span, args, kwargs):
     if span.is_recording():
         _set_input_attributes(span, args, kwargs)
+    model_input = kwargs.get("input") or args[1]
+    emit_event(MessageEvent(content=model_input.get("prompt")))
 
 
 @dont_throw
@@ -139,14 +140,15 @@ def _handle_response(span, response):
         _set_response_attributes(span, response)
 
         span.set_status(Status(StatusCode.OK))
+    _emit_choice_events(response)
 
 
 def _with_tracer_wrapper(func):
     """Helper for providing tracer for wrapper functions."""
 
-    def _with_tracer(tracer, event_logger, to_wrap):
+    def _with_tracer(tracer, to_wrap):
         def wrapper(wrapped, instance, args, kwargs):
-            return func(tracer, event_logger, to_wrap, wrapped, instance, args, kwargs)
+            return func(tracer, to_wrap, wrapped, instance, args, kwargs)
 
         return wrapper
 
@@ -154,46 +156,27 @@ def _with_tracer_wrapper(func):
 
 
 @dont_throw
-def _emit_input_events(event_logger: EventLogger, llm_func_name, args, kwargs):
-    attributes = {GenAIAttributes.GEN_AI_SYSTEM: "replicate"}
-    body = {}
-    if is_content_enabled():
-        model_input = kwargs.get("input") or args[1]
-        body["content"] = model_input.get("prompt")
-
-    event_logger.emit(
-        Event(name="gen_ai.user.message", attributes=attributes, body=body)
-    )
-
-
-@dont_throw
-def _emit_response_events(
-    event_logger: EventLogger, response: Union[str, list, Prediction]
-):
-    attributes = {GenAIAttributes.GEN_AI_SYSTEM: "replicate"}
-
+def _emit_choice_events(response: Union[str, list, Prediction]):
     # Handle replicate.run responses
     if isinstance(response, list):
         for i, generation in enumerate(response):
-            body = {"index": i, "finish_reason": "unknown", "message": {}}
-            if is_content_enabled():
-                body["message"]["content"] = generation
-        event_logger.emit(Event(name="gen_ai.choice", attributes=attributes, body=body))
-
+            emit_event(
+                ChoiceEvent(
+                    index=i, message={"content": generation, "role": "assistant"}
+                )
+            )
     # Handle replicate.predictions.create responses
     elif isinstance(response, Prediction):
-        body = {"index": 0, "finish_reason": "unknown", "message": {}}
-        if is_content_enabled():
-            body["message"]["content"] = response.output
-        event_logger.emit(Event(name="gen_ai.choice", attributes=attributes, body=body))
-
+        emit_event(
+            ChoiceEvent(
+                index=0, message={"content": response.output, "role": "assistant"}
+            )
+        )
     # Handle replicate.stream responses built from _build_from_streaming_response
     elif isinstance(response, str):
-        body = {"index": 0, "finish_reason": "unknown", "message": {}}
-        if is_content_enabled():
-            body["message"]["content"] = response
-        event_logger.emit(Event(name="gen_ai.choice", attributes=attributes, body=body))
-
+        emit_event(
+            ChoiceEvent(index=0, message={"content": response, "role": "assistant"})
+        )
     else:
         raise ValueError(
             "It wasn't possible to emit the choice events due to an unsupported response type"
@@ -203,7 +186,6 @@ def _emit_response_events(
 @_with_tracer_wrapper
 def _wrap(
     tracer,
-    event_logger: Union[EventLogger, None],
     to_wrap,
     wrapped,
     instance,
@@ -225,18 +207,14 @@ def _wrap(
     )
 
     _handle_request(span, args, kwargs)
-    if not Config.use_legacy_attributes and event_logger is not None:
-        _emit_input_events(event_logger, name, args, kwargs)
 
     response = wrapped(*args, **kwargs)
 
     if response:
         if is_streaming_response(response):
-            return _build_from_streaming_response(span, event_logger, response)
+            return _build_from_streaming_response(span, response)
         else:
             _handle_response(span, response)
-            if not Config.use_legacy_attributes and event_logger is not None:
-                _emit_response_events(event_logger, response)
 
     span.end()
     return response
@@ -257,11 +235,9 @@ class ReplicateInstrumentor(BaseInstrumentor):
         tracer_provider = kwargs.get("tracer_provider")
         tracer = get_tracer(__name__, __version__, tracer_provider)
 
-        if Config.use_legacy_attributes:
-            event_logger = None
-        else:
+        if not Config.use_legacy_attributes:
             event_logger_provider = kwargs.get("event_logger_provider")
-            event_logger = get_event_logger(
+            Config.event_logger = get_event_logger(
                 __name__, __version__, event_logger_provider=event_logger_provider
             )
 
@@ -269,7 +245,7 @@ class ReplicateInstrumentor(BaseInstrumentor):
             wrap_function_wrapper(
                 wrapper_method.get("module"),
                 wrapper_method.get("method"),
-                _wrap(tracer, event_logger, wrapper_method),
+                _wrap(tracer, wrapper_method),
             )
 
     def _uninstrument(self, **kwargs):
