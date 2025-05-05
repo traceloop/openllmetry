@@ -2,32 +2,38 @@
 
 import logging
 import os
-import types
 import time
+import types
 from typing import Collection, Optional
-from opentelemetry.instrumentation.watsonx.config import Config
-from opentelemetry.instrumentation.watsonx.utils import dont_throw
-from wrapt import wrap_function_wrapper
 
 from opentelemetry import context as context_api
-from opentelemetry.trace import get_tracer, SpanKind
-from opentelemetry.trace.status import Status, StatusCode
-from opentelemetry.metrics import get_meter
-from opentelemetry.metrics import Counter, Histogram
-
+from opentelemetry._events import get_event_logger
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.instrumentation.utils import (
     _SUPPRESS_INSTRUMENTATION_KEY,
     unwrap,
 )
-
+from opentelemetry.instrumentation.watsonx.config import Config
+from opentelemetry.instrumentation.watsonx.event_handler import (
+    ChoiceEvent,
+    MessageEvent,
+    emit_event,
+)
+from opentelemetry.instrumentation.watsonx.utils import dont_throw
+from opentelemetry.instrumentation.watsonx.version import __version__
+from opentelemetry.metrics import Counter, Histogram, get_meter
+from opentelemetry.semconv._incubating.attributes import (
+    gen_ai_attributes as GenAIAttributes,
+)
 from opentelemetry.semconv_ai import (
     SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
+    LLMRequestTypeValues,
     Meters,
     SpanAttributes,
-    LLMRequestTypeValues,
 )
-from opentelemetry.instrumentation.watsonx.version import __version__
+from opentelemetry.trace import SpanKind, get_tracer
+from opentelemetry.trace.status import Status, StatusCode
+from wrapt import wrap_function_wrapper
 
 logger = logging.getLogger(__name__)
 
@@ -315,6 +321,28 @@ def _set_response_attributes(
         duration_histogram.record(duration, attributes=shared_attributes)
 
 
+def _emit_input_events(args, kwargs):
+    prompt = kwargs.get("prompt") or args[0]
+
+    if isinstance(prompt, list):
+        for message in prompt:
+            emit_event(MessageEvent(content=message, role="user"))
+
+    elif isinstance(prompt, str):
+        emit_event(MessageEvent(content=prompt, role="user"))
+
+
+def _emit_response_events(response: dict):
+    for i, message in enumerate(response.get("results", [])):
+        emit_event(
+            ChoiceEvent(
+                index=i,
+                message={"content": message.get("generated_text"), "role": "assistant"},
+                finish_reason=message.get("stop_reason", "unknown"),
+            )
+        )
+
+
 def _build_and_set_stream_response(
     span,
     response,
@@ -384,6 +412,16 @@ def _build_and_set_stream_response(
     if duration and isinstance(duration, (float, int)) and duration_histogram:
         duration_histogram.record(duration, attributes=shared_attributes)
 
+    _emit_response_events(
+        {
+            "results": [
+                {
+                    "stop_reason": stream_stop_reason,
+                    "generated_text": stream_generated_text,
+                }
+            ]
+        },
+    )
     span.set_status(Status(StatusCode.OK))
     span.end()
 
@@ -465,6 +503,8 @@ def _wrap(
             elif raw_flag is False:
                 kwargs["raw_response"] = True
 
+    _emit_input_events(args, kwargs)
+
     try:
         start_time = time.time()
         response = wrapped(*args, **kwargs)
@@ -506,6 +546,8 @@ def _wrap(
                 duration,
             )
 
+            _emit_response_events(response)
+
     span.end()
     return response
 
@@ -519,9 +561,10 @@ class WatsonxSpanAttributes:
 class WatsonxInstrumentor(BaseInstrumentor):
     """An instrumentor for Watsonx's client library."""
 
-    def __init__(self, exception_logger=None):
+    def __init__(self, exception_logger=None, use_legacy_attributes: bool = True):
         super().__init__()
         Config.exception_logger = exception_logger
+        Config.use_legacy_attributes = use_legacy_attributes
 
     def instrumentation_dependencies(self) -> Collection[str]:
         return _instruments
@@ -568,6 +611,12 @@ class WatsonxInstrumentor(BaseInstrumentor):
                 None,
                 None,
                 None,
+            )
+
+        if not Config.use_legacy_attributes:
+            event_logger_provider = kwargs.get("event_logger_provider")
+            Config.event_logger = get_event_logger(
+                __name__, __version__, event_logger_provider=event_logger_provider
             )
 
         for wrapped_methods in WATSON_MODULES:
