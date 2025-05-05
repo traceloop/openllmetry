@@ -230,6 +230,7 @@ class SpanAttributes:
 class Events(Enum):
     DB_QUERY_EMBEDDINGS = "db.query.embeddings"
     DB_QUERY_RESULT = "db.query.result"
+    DB_SEARCH_RESULT = "db.search.result"
 
 
 class EventAttributes(Enum):
