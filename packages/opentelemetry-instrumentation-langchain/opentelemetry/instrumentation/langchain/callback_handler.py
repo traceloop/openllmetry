@@ -1,15 +1,45 @@
 import json
 import time
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Type, Union
 from uuid import UUID
 
 from langchain_core.callbacks import (
     BaseCallbackHandler,
 )
-from langchain_core.messages import BaseMessage
-from langchain_core.outputs import LLMResult
+from langchain_core.messages import (
+    AIMessage,
+    AIMessageChunk,
+    BaseMessage,
+    HumanMessage,
+    HumanMessageChunk,
+    SystemMessage,
+    SystemMessageChunk,
+    ToolMessage,
+    ToolMessageChunk,
+)
+from langchain_core.outputs import (
+    ChatGeneration,
+    ChatGenerationChunk,
+    Generation,
+    GenerationChunk,
+    LLMResult,
+)
+from opentelemetry import context as context_api
+from opentelemetry.context.context import Context
+from opentelemetry.instrumentation.langchain.event_handler import (
+    ChoiceEvent,
+    MessageEvent,
+    ToolCall,
+    emit_event,
+)
+from opentelemetry.instrumentation.langchain.utils import (
+    CallbackFilteredJSONEncoder,
+    dont_throw,
+    should_send_prompts,
+)
 from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
+from opentelemetry.metrics import Histogram
 from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
     GEN_AI_RESPONSE_ID,
 )
@@ -19,17 +49,8 @@ from opentelemetry.semconv_ai import (
     SpanAttributes,
     TraceloopSpanKindValues,
 )
-from opentelemetry.context.context import Context
-from opentelemetry.trace import SpanKind, set_span_in_context, Tracer
+from opentelemetry.trace import SpanKind, Tracer, set_span_in_context
 from opentelemetry.trace.span import Span
-
-from opentelemetry import context as context_api
-from opentelemetry.instrumentation.langchain.utils import (
-    CallbackFilteredJSONEncoder,
-    dont_throw,
-    should_send_prompts,
-)
-from opentelemetry.metrics import Histogram
 from opentelemetry.trace.status import Status, StatusCode
 
 
@@ -192,7 +213,9 @@ def _set_chat_response(span: Span, response: LLMResult) -> None:
                 total_tokens = input_tokens + output_tokens
 
                 if generation.message.usage_metadata.get("input_token_details"):
-                    input_token_details = generation.message.usage_metadata.get("input_token_details", {})
+                    input_token_details = generation.message.usage_metadata.get(
+                        "input_token_details", {}
+                    )
                     cache_read_tokens += input_token_details.get("cache_read", 0)
 
             prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{i}"
@@ -258,7 +281,12 @@ def _set_chat_response(span: Span, response: LLMResult) -> None:
                         )
             i += 1
 
-    if input_tokens > 0 or output_tokens > 0 or total_tokens > 0 or cache_read_tokens > 0:
+    if (
+        input_tokens > 0
+        or output_tokens > 0
+        or total_tokens > 0
+        or cache_read_tokens > 0
+    ):
         span.set_attribute(
             SpanAttributes.LLM_USAGE_PROMPT_TOKENS,
             input_tokens,
@@ -287,6 +315,49 @@ def _sanitize_metadata_value(value: Any) -> Any:
         return [str(_sanitize_metadata_value(v)) for v in value]
     # Convert other types to strings
     return str(value)
+
+
+def valid_role(role: str) -> bool:
+    return role in ["user", "assistant", "system", "tool"]
+
+
+def get_message_role(message: Type[BaseMessage]) -> str:
+    if isinstance(message, (SystemMessage, SystemMessageChunk)):
+        return "system"
+    elif isinstance(message, (HumanMessage, HumanMessageChunk)):
+        return "user"
+    elif isinstance(message, (AIMessage, AIMessageChunk)):
+        return "assistant"
+    elif isinstance(message, (ToolMessage, ToolMessageChunk)):
+        return "tool"
+    else:
+        return "unknown"
+
+
+def _extract_tool_call_data(
+    tool_calls: Optional[List[dict[str, Any]]],
+) -> Union[List[ToolCall], None]:
+    if tool_calls is None:
+        return tool_calls
+
+    response = []
+
+    for tool_call in tool_calls:
+        tool_call_function = {"name": tool_call.get("name", "")}
+
+        if tool_call.get("arguments"):
+            tool_call_function["arguments"] = tool_call["arguments"]
+        elif tool_call.get("args"):
+            tool_call_function["arguments"] = tool_call["args"]
+        response.append(
+            ToolCall(
+                id=tool_call.get("id", ""),
+                function=tool_call_function,
+                type="function",
+            )
+        )
+
+    return response
 
 
 class TraceloopCallbackHandler(BaseCallbackHandler):
@@ -446,6 +517,11 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         metadata: Optional[dict[str, Any]] = None,
         **kwargs: Any,
     ) -> None:
+        # print("on_chain_start")
+        # print(f"inputs = {inputs}")
+        # print(f"run_id = {run_id}")
+        # print(f"parent_run_id = {parent_run_id}")
+
         """Run when chain starts running."""
         if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
             return
@@ -501,6 +577,10 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         parent_run_id: Optional[UUID] = None,
         **kwargs: Any,
     ) -> None:
+        # print("on_chain_end")
+        # print(f"outputs = {outputs}")
+        # print(f"run_id = {run_id}")
+        # print(f"parent_run_id = {parent_run_id}")
         """Run when chain ends running."""
         if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
             return
@@ -536,6 +616,8 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         metadata: Optional[dict[str, Any]] = None,
         **kwargs: Any,
     ) -> Any:
+        # print("on_chat_model_start")
+        # print(f"messages = {messages}")
         """Run when Chat Model starts running."""
         if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
             return
@@ -545,6 +627,19 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             run_id, parent_run_id, name, LLMRequestTypeValues.CHAT, metadata=metadata
         )
         _set_chat_request(span, serialized, messages, kwargs, self.spans[run_id])
+        for message_list in messages:
+            for message in message_list:
+                if hasattr(message, "tool_calls") and message.tool_calls:
+                    tool_calls = _extract_tool_call_data(message.tool_calls)
+                else:
+                    tool_calls = None
+                emit_event(
+                    MessageEvent(
+                        content=message.content,
+                        role=get_message_role(message),
+                        tool_calls=tool_calls,
+                    )
+                )
 
     @dont_throw
     def on_llm_start(
@@ -558,6 +653,9 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         metadata: Optional[dict[str, Any]] = None,
         **kwargs: Any,
     ) -> Any:
+        # print("on_llm_start")
+        # print(f"prompts = {prompts}")
+        # print(f"kwargs = {kwargs}")
         """Run when Chat Model starts running."""
         if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
             return
@@ -567,8 +665,9 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             run_id, parent_run_id, name, LLMRequestTypeValues.COMPLETION
         )
         _set_llm_request(span, serialized, prompts, kwargs, self.spans[run_id])
+        for prompt in prompts:
+            emit_event(MessageEvent(content=prompt, role="user"))
 
-    @dont_throw
     def on_llm_end(
         self,
         response: LLMResult,
@@ -577,6 +676,8 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         parent_run_id: Union[UUID, None] = None,
         **kwargs: Any,
     ):
+        # print("on_llm_end")
+        # print(f"response = {response}")
         if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
             return
 
@@ -658,6 +759,10 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             },
         )
 
+        for generation_list in response.generations:
+            for i, generation in enumerate(generation_list):
+                self._emit_generation_choice_event(index=i, generation=generation)
+
     @dont_throw
     def on_tool_start(
         self,
@@ -671,6 +776,10 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         inputs: Optional[dict[str, Any]] = None,
         **kwargs: Any,
     ) -> None:
+        # print("on_tool_start")
+        # print(f"input_str = {input_str}")
+        # print(f"run_id = {run_id}")
+        # print(f"parent_run_id = {parent_run_id}")
         """Run when tool starts running."""
         if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
             return
@@ -712,6 +821,10 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         parent_run_id: Optional[UUID] = None,
         **kwargs: Any,
     ) -> None:
+        # print("on_tool_end")
+        # print(f"output = {output}")
+        # print(f"run_id = {run_id}")
+        # print(f"parent_run_id = {parent_run_id}")
         """Run when tool ends running."""
         if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
             return
@@ -830,3 +943,74 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
     ) -> None:
         """Run when retriever errors."""
         self._handle_error(error, run_id, parent_run_id, **kwargs)
+
+    def _emit_generation_choice_event(
+        self,
+        index: int,
+        generation: Union[
+            ChatGeneration, ChatGenerationChunk, Generation, GenerationChunk
+        ],
+    ):
+        if isinstance(generation, (ChatGeneration, ChatGenerationChunk)):
+            # Get finish reason
+            if hasattr(generation, "generation_info") and generation.generation_info:
+                finish_reason = generation.generation_info.get(
+                    "finish_reason", "unknown"
+                )
+            else:
+                finish_reason = "unknown"
+
+            # Get tool calls
+            if (
+                hasattr(generation.message, "tool_calls")
+                and generation.message.tool_calls
+            ):
+                tool_calls = _extract_tool_call_data(generation.message.tool_calls)
+            elif hasattr(
+                generation.message, "additional_kwargs"
+            ) and generation.message.additional_kwargs.get("function_call"):
+                tool_calls = _extract_tool_call_data(
+                    [generation.message.additional_kwargs.get("function_call")]
+                )
+            else:
+                tool_calls = None
+
+            # Emit the event
+            if hasattr(generation, "text") and generation.text != "":
+                emit_event(
+                    ChoiceEvent(
+                        index=index,
+                        message={"content": generation.text, "role": "assistant"},
+                        finish_reason=finish_reason,
+                        tool_calls=tool_calls,
+                    )
+                )
+            else:
+                emit_event(
+                    ChoiceEvent(
+                        index=index,
+                        message={
+                            "content": generation.message.content,
+                            "role": "assistant",
+                        },
+                        finish_reason=finish_reason,
+                        tool_calls=tool_calls,
+                    )
+                )
+        elif isinstance(generation, (Generation, GenerationChunk)):
+            # Get finish reason
+            if hasattr(generation, "generation_info") and generation.generation_info:
+                finish_reason = generation.generation_info.get(
+                    "finish_reason", "unknown"
+                )
+            else:
+                finish_reason = "unknown"
+
+            # Emit the event
+            emit_event(
+                ChoiceEvent(
+                    index=index,
+                    message={"content": generation.text, "role": "assistant"},
+                    finish_reason=finish_reason,
+                )
+            )
