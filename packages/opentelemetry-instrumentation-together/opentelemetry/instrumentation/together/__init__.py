@@ -8,6 +8,11 @@ from opentelemetry import context as context_api
 from opentelemetry._events import Event, EventLogger, get_event_logger
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.instrumentation.together.config import Config
+from opentelemetry.instrumentation.together.event_handler import (
+    ChoiceEvent,
+    MessageEvent,
+    emit_event,
+)
 from opentelemetry.instrumentation.together.utils import dont_throw, is_content_enabled
 from opentelemetry.instrumentation.together.version import __version__
 from opentelemetry.instrumentation.utils import (
@@ -142,9 +147,9 @@ def _set_response_attributes(span, llm_request_type, response):
 def _with_tracer_wrapper(func):
     """Helper for providing tracer for wrapper functions."""
 
-    def _with_tracer(tracer, event_logger, to_wrap):
+    def _with_tracer(tracer, to_wrap):
         def wrapper(wrapped, instance, args, kwargs):
-            return func(tracer, event_logger, to_wrap, wrapped, instance, args, kwargs)
+            return func(tracer, to_wrap, wrapped, instance, args, kwargs)
 
         return wrapper
 
@@ -161,31 +166,16 @@ def _llm_request_type_by_method(method_name):
 
 
 @dont_throw
-def _emit_input_events(event_logger: EventLogger, llm_request_type, kwargs):
-    attributes = {GenAIAttributes.GEN_AI_SYSTEM: "together"}
-
+def _emit_input_events(llm_request_type, kwargs):
     if llm_request_type == LLMRequestTypeValues.CHAT:
         for message in kwargs.get("messages"):
-            role = message.get("role") or "user"
-            body = {}
-            if is_content_enabled():
-                content = message.get("content")
-                body = {"content": content}
-                if role is not None and role != "user":
-                    body["role"] = role
-            event_logger.emit(
-                Event(f"gen_ai.{role}.message", attributes=attributes, body=body)
+            emit_event(
+                MessageEvent(
+                    content=message.get("content"), role=message.get("role") or "user"
+                )
             )
-
     elif llm_request_type == LLMRequestTypeValues.COMPLETION:
-        body = {}
-        if is_content_enabled():
-            content = kwargs.get("prompt")
-            body = {"content": content}
-        event_logger.emit(
-            Event("gen_ai.user.message", attributes=attributes, body=body)
-        )
-
+        emit_event(MessageEvent(content=kwargs.get("prompt"), role="user"))
     else:
         raise ValueError(
             "It wasn't possible to emit the input events due to an unknown llm_request_type."
@@ -193,45 +183,32 @@ def _emit_input_events(event_logger: EventLogger, llm_request_type, kwargs):
 
 
 @dont_throw
-def _emit_response_event(
-    event_logger: EventLogger,
-    llm_request_type,
-    response: Union[ChatCompletionResponse, CompletionResponse],
+def _emit_choice_event(
+    llm_request_type, response: Union[ChatCompletionResponse, CompletionResponse]
 ):
-    attributes = {
-        GenAIAttributes.GEN_AI_SYSTEM: "together",
-    }
-
     if llm_request_type == LLMRequestTypeValues.CHAT:
         response: ChatCompletionResponse
         for choice in response.choices:
-            body = {
-                "index": choice.index,
-                "finish_reason": choice.finish_reason,
-                "message": {},
-            }
-
-            if is_content_enabled():
-                role = choice.message.role
-                body["message"]["content"] = choice.message.content
-                if role is not None and role != "assistant":
-                    body["message"]["role"] = role
-
-            event_logger.emit(Event("gen_ai.choice", attributes=attributes, body=body))
-
+            emit_event(
+                ChoiceEvent(
+                    index=choice.index,
+                    message={
+                        "content": choice.message.content,
+                        "role": choice.message.role,
+                    },
+                    finish_reason=choice.finish_reason,
+                )
+            )
     elif llm_request_type == LLMRequestTypeValues.COMPLETION:
         response: CompletionResponse
         for choice in response.choices:
-            body = {
-                "index": choice.index,
-                "finish_reason": choice.finish_reason,
-                "message": {},
-            }
-
-            if is_content_enabled():
-                body["message"]["content"] = choice.text
-            event_logger.emit(Event("gen_ai.choice", attributes=attributes, body=body))
-
+            emit_event(
+                ChoiceEvent(
+                    index=choice.index,
+                    message={"content": choice.text, "role": "assistant"},
+                    finish_reason=choice.finish_reason,
+                )
+            )
     else:
         raise ValueError(
             "It wasn't possible to emit the choice events due to an unknow llm_request_type."
@@ -241,7 +218,6 @@ def _emit_response_event(
 @_with_tracer_wrapper
 def _wrap(
     tracer,
-    event_logger: Union[EventLogger, None],
     to_wrap,
     wrapped,
     instance,
@@ -267,8 +243,7 @@ def _wrap(
     if span.is_recording():
         _set_input_attributes(span, llm_request_type, kwargs)
 
-    if not Config.use_legacy_attributes and event_logger is not None:
-        _emit_input_events(event_logger, llm_request_type, kwargs)
+    _emit_input_events(llm_request_type, kwargs)
 
     response = wrapped(*args, **kwargs)
 
@@ -276,8 +251,7 @@ def _wrap(
         if span.is_recording():
             _set_response_attributes(span, llm_request_type, response)
 
-            if not Config.use_legacy_attributes and event_logger is not None:
-                _emit_response_event(event_logger, llm_request_type, response)
+            _emit_choice_event(llm_request_type, response)
 
             span.set_status(Status(StatusCode.OK))
 
@@ -300,11 +274,9 @@ class TogetherAiInstrumentor(BaseInstrumentor):
         tracer_provider = kwargs.get("tracer_provider")
         tracer = get_tracer(__name__, __version__, tracer_provider)
 
-        if Config.use_legacy_attributes:
-            event_logger = None
-        else:
+        if not Config.use_legacy_attributes:
             event_logger_provider = kwargs.get("event_logger_provider")
-            event_logger = get_event_logger(
+            Config.event_logger = get_event_logger(
                 __name__, __version__, event_logger_provider=event_logger_provider
             )
 
@@ -314,7 +286,7 @@ class TogetherAiInstrumentor(BaseInstrumentor):
             wrap_function_wrapper(
                 "together",
                 f"{wrap_object}.{wrap_method}",
-                _wrap(tracer, event_logger, wrapped_method),
+                _wrap(tracer, wrapped_method),
             )
 
     def _uninstrument(self, **kwargs):
