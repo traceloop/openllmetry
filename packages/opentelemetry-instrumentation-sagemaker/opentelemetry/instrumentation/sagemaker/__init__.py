@@ -63,7 +63,14 @@ def _set_span_attribute(span, name, value):
 
 
 def _emit_message_event(kwargs):
-    input_body = json.loads(kwargs.get("Body"))
+    try:
+        input_body = json.loads(kwargs.get("Body"))
+    except json.JSONDecodeError:
+        logger.debug(
+            "OpenTelemetry failed to decode the request body, error: %s",
+            kwargs.get("Body"),
+        )
+        return
     emit_event(MessageEvent(content=input_body.get("inputs", ""), role="user"))
 
 
@@ -77,7 +84,7 @@ def _emit_choice_events(response: dict):
             ChoiceEvent(
                 index=0,
                 message={
-                    "content": response_body._accumulating_body,
+                    "content": response_body.accumulating_body,
                     "role": "assistant",
                 },
                 finish_reason="unknown",
