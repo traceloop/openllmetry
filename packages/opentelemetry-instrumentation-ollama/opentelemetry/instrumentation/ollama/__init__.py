@@ -335,7 +335,7 @@ def _emit_message_events(llm_request_type, args, kwargs):
         emit_event(MessageEvent(content=prompt, role="user"))
     else:
         raise ValueError(
-            "It wasn't possible to emit the input events due to an unknow llm_request_type."
+            "It wasn't possible to emit the input events due to an unknown llm_request_type."
         )
 
 
@@ -372,7 +372,7 @@ def _emit_choice_events(llm_request_type, response: dict):
         )
     else:
         raise ValueError(
-            "It wasn't possible to emit the choice events due to an unknow llm_request_type."
+            "It wasn't possible to emit the choice events due to an unknown llm_request_type."
         )
 
 
