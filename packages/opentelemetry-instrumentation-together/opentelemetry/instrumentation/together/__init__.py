@@ -211,7 +211,7 @@ def _emit_choice_event(
             )
     else:
         raise ValueError(
-            "It wasn't possible to emit the choice events due to an unknow llm_request_type."
+            "It wasn't possible to emit the choice events due to an unknown llm_request_type."
         )
 
 
