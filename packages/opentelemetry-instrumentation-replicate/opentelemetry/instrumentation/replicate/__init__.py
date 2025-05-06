@@ -3,23 +3,29 @@
 import logging
 import os
 import types
-from typing import Collection
-from opentelemetry.instrumentation.replicate.config import Config
-from opentelemetry.instrumentation.replicate.utils import dont_throw
-from wrapt import wrap_function_wrapper
+from typing import Collection, Union
 
 from opentelemetry import context as context_api
-from opentelemetry.trace import get_tracer, SpanKind
-from opentelemetry.trace.status import Status, StatusCode
-
+from opentelemetry._events import Event, get_event_logger
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
+from opentelemetry.instrumentation.replicate.config import Config
+from opentelemetry.instrumentation.replicate.event_handler import (
+    ChoiceEvent,
+    MessageEvent,
+    emit_event,
+)
+from opentelemetry.instrumentation.replicate.utils import dont_throw, is_content_enabled
+from opentelemetry.instrumentation.replicate.version import __version__
 from opentelemetry.instrumentation.utils import (
     _SUPPRESS_INSTRUMENTATION_KEY,
     unwrap,
 )
+from opentelemetry.semconv_ai import LLMRequestTypeValues, SpanAttributes
+from opentelemetry.trace import SpanKind, get_tracer
+from opentelemetry.trace.status import Status, StatusCode
+from wrapt import wrap_function_wrapper
 
-from opentelemetry.semconv_ai import SpanAttributes, LLMRequestTypeValues
-from opentelemetry.instrumentation.replicate.version import __version__
+from replicate.prediction import Prediction
 
 logger = logging.getLogger(__name__)
 
@@ -114,6 +120,7 @@ def _build_from_streaming_response(span, response):
         yield item_to_yield
 
     _set_response_attributes(span, complete_response)
+    _emit_choice_events(complete_response)
 
     span.set_status(Status(StatusCode.OK))
     span.end()
@@ -123,6 +130,8 @@ def _build_from_streaming_response(span, response):
 def _handle_request(span, args, kwargs):
     if span.is_recording():
         _set_input_attributes(span, args, kwargs)
+    model_input = kwargs.get("input") or (args[1] if len(args) > 1 else None)
+    emit_event(MessageEvent(content=model_input.get("prompt")))
 
 
 @dont_throw
@@ -131,6 +140,7 @@ def _handle_response(span, response):
         _set_response_attributes(span, response)
 
         span.set_status(Status(StatusCode.OK))
+    _emit_choice_events(response)
 
 
 def _with_tracer_wrapper(func):
@@ -145,8 +155,43 @@ def _with_tracer_wrapper(func):
     return _with_tracer
 
 
+@dont_throw
+def _emit_choice_events(response: Union[str, list, Prediction]):
+    # Handle replicate.run responses
+    if isinstance(response, list):
+        for i, generation in enumerate(response):
+            emit_event(
+                ChoiceEvent(
+                    index=i, message={"content": generation, "role": "assistant"}
+                )
+            )
+    # Handle replicate.predictions.create responses
+    elif isinstance(response, Prediction):
+        emit_event(
+            ChoiceEvent(
+                index=0, message={"content": response.output, "role": "assistant"}
+            )
+        )
+    # Handle replicate.stream responses built from _build_from_streaming_response
+    elif isinstance(response, str):
+        emit_event(
+            ChoiceEvent(index=0, message={"content": response, "role": "assistant"})
+        )
+    else:
+        logger.error(
+            "It wasn't possible to emit the choice events due to an unsupported response type"
+        )
+
+
 @_with_tracer_wrapper
-def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
+def _wrap(
+    tracer,
+    to_wrap,
+    wrapped,
+    instance,
+    args,
+    kwargs,
+):
     """Instruments and calls every function defined in TO_WRAP."""
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
         return wrapped(*args, **kwargs)
@@ -178,9 +223,10 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
 class ReplicateInstrumentor(BaseInstrumentor):
     """An instrumentor for Replicate's client library."""
 
-    def __init__(self, exception_logger=None):
+    def __init__(self, exception_logger=None, use_legacy_attributes=True):
         super().__init__()
         Config.exception_logger = exception_logger
+        Config.use_legacy_attributes = use_legacy_attributes
 
     def instrumentation_dependencies(self) -> Collection[str]:
         return _instruments
@@ -188,6 +234,13 @@ class ReplicateInstrumentor(BaseInstrumentor):
     def _instrument(self, **kwargs):
         tracer_provider = kwargs.get("tracer_provider")
         tracer = get_tracer(__name__, __version__, tracer_provider)
+
+        if not Config.use_legacy_attributes:
+            event_logger_provider = kwargs.get("event_logger_provider")
+            Config.event_logger = get_event_logger(
+                __name__, __version__, event_logger_provider=event_logger_provider
+            )
+
         for wrapper_method in WRAPPED_METHODS:
             wrap_function_wrapper(
                 wrapper_method.get("module"),
@@ -196,5 +249,7 @@ class ReplicateInstrumentor(BaseInstrumentor):
             )
 
     def _uninstrument(self, **kwargs):
+        import replicate
+
         for wrapper_method in WRAPPED_METHODS:
-            unwrap(wrapper_method.get("module"), wrapper_method.get("method", ""))
+            unwrap(replicate, wrapper_method.get("method", ""))
