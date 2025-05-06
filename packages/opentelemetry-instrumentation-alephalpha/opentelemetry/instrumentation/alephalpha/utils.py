@@ -1,13 +1,7 @@
 import logging
 import traceback
-from os import environ
 
-from opentelemetry._events import EventLogger
 from opentelemetry.instrumentation.alephalpha.config import Config
-
-OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT = (
-    "OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT"
-)
 
 
 def dont_throw(func):
@@ -33,21 +27,3 @@ def dont_throw(func):
                 Config.exception_logger(e)
 
     return wrapper
-
-
-def is_content_enabled() -> bool:
-    capture_content = environ.get(
-        OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT, "false"
-    )
-
-    return capture_content.lower() == "true"
-
-
-def should_emit_events() -> bool:
-    """
-    Checks if the instrumentation isn't using the legacy attributes
-    and if the event logger is not None.
-    """
-    return not Config.use_legacy_attributes and isinstance(
-        Config.event_logger, EventLogger
-    )

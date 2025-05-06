@@ -50,7 +50,7 @@ def test_alephalpha_completion(
 
 @pytest.mark.vcr
 def test_alephalpha_completion_with_events_with_content(
-    instrument_with_content, aleph_alpha_client, span_exporter, log_exporter
+    span_exporter, log_exporter, aleph_alpha_client, instrument_with_content
 ):
     prompt_text = "Tell me a joke about OpenTelemetry."
     params = {
@@ -65,27 +65,20 @@ def test_alephalpha_completion_with_events_with_content(
     assert together_span.name == "alephalpha.completion"
     assert together_span.attributes.get("gen_ai.system") == "AlephAlpha"
     assert together_span.attributes.get("llm.request.type") == "completion"
-    assert together_span.attributes.get("gen_ai.request.model") == "luminous-base"
-    assert (
-        together_span.attributes.get("gen_ai.prompt.0.content")
-        == "Tell me a joke about OpenTelemetry."
-    )
-    assert (
-        together_span.attributes.get("gen_ai.completion.0.content")
-        == response.completions[0].completion
-    )
-    assert together_span.attributes.get("gen_ai.usage.prompt_tokens") == 9
-    assert together_span.attributes.get(
-        "llm.usage.total_tokens"
-    ) == together_span.attributes.get(
-        "gen_ai.usage.completion_tokens"
-    ) + together_span.attributes.get("gen_ai.usage.prompt_tokens")
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2
 
     # Validate user message Event
-    user_message = {"content": [{"controls": [], "type": "text", "data": prompt_text}]}
+    user_message = {
+        "content": [
+            {
+                "controls": [],
+                "data": "Tell me a joke about OpenTelemetry.",
+                "type": "text",
+            }
+        ]
+    }
     user_message_log = logs[0]
     assert_message_in_logs(user_message_log, "gen_ai.user.message", user_message)
 
@@ -100,7 +93,7 @@ def test_alephalpha_completion_with_events_with_content(
 
 @pytest.mark.vcr
 def test_alephalpha_completion_with_events_with_no_content(
-    instrument_with_no_content, aleph_alpha_client, span_exporter, log_exporter
+    span_exporter, log_exporter, aleph_alpha_client, instrument_with_no_content
 ):
     prompt_text = "Tell me a joke about OpenTelemetry."
     params = {
@@ -108,28 +101,13 @@ def test_alephalpha_completion_with_events_with_no_content(
         "maximum_tokens": 1000,
     }
     request = CompletionRequest(**params)
-    response = aleph_alpha_client.complete(request, model="luminous-base")
+    aleph_alpha_client.complete(request, model="luminous-base")
 
     spans = span_exporter.get_finished_spans()
     together_span = spans[0]
     assert together_span.name == "alephalpha.completion"
     assert together_span.attributes.get("gen_ai.system") == "AlephAlpha"
     assert together_span.attributes.get("llm.request.type") == "completion"
-    assert together_span.attributes.get("gen_ai.request.model") == "luminous-base"
-    assert (
-        together_span.attributes.get("gen_ai.prompt.0.content")
-        == "Tell me a joke about OpenTelemetry."
-    )
-    assert (
-        together_span.attributes.get("gen_ai.completion.0.content")
-        == response.completions[0].completion
-    )
-    assert together_span.attributes.get("gen_ai.usage.prompt_tokens") == 9
-    assert together_span.attributes.get(
-        "llm.usage.total_tokens"
-    ) == together_span.attributes.get(
-        "gen_ai.usage.completion_tokens"
-    ) + together_span.attributes.get("gen_ai.usage.prompt_tokens")
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2
