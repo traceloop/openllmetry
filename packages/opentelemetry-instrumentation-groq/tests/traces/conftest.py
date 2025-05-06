@@ -85,9 +85,6 @@ def async_groq_client():
 
 @pytest.fixture(scope="function")
 def instrument_legacy(reader, tracer_provider, meter_provider):
-    async def upload_base64_image(*args):
-        return "/some/url"
-
     instrumentor = GroqInstrumentor(enrich_token_usage=True)
     instrumentor.instrument(
         tracer_provider=tracer_provider,
@@ -104,9 +101,6 @@ def instrument_with_content(
     reader, tracer_provider, event_logger_provider, meter_provider
 ):
     os.environ.update({OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT: "True"})
-
-    async def upload_base64_image(*args):
-        return "/some/url"
 
     instrumentor = GroqInstrumentor(
         use_legacy_attributes=False,
@@ -129,9 +123,6 @@ def instrument_with_no_content(
     reader, tracer_provider, event_logger_provider, meter_provider
 ):
     os.environ.update({OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT: "False"})
-
-    async def upload_base64_image(*args):
-        return "/some/url"
 
     instrumentor = GroqInstrumentor(
         use_legacy_attributes=False, enrich_token_usage=True
