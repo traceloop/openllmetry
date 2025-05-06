@@ -130,7 +130,7 @@ def _build_from_streaming_response(span, response):
 def _handle_request(span, args, kwargs):
     if span.is_recording():
         _set_input_attributes(span, args, kwargs)
-    model_input = kwargs.get("input") or args[1]
+    model_input = kwargs.get("input") or (args[1] if len(args) > 1 else None)
     emit_event(MessageEvent(content=model_input.get("prompt")))
 
 
@@ -178,7 +178,7 @@ def _emit_choice_events(response: Union[str, list, Prediction]):
             ChoiceEvent(index=0, message={"content": response, "role": "assistant"})
         )
     else:
-        raise ValueError(
+        logger.error(
             "It wasn't possible to emit the choice events due to an unsupported response type"
         )
 
