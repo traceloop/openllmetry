@@ -2,29 +2,40 @@
 
 import logging
 import os
-from typing import Collection
-from opentelemetry.instrumentation.together.config import Config
-from opentelemetry.instrumentation.together.utils import dont_throw
-from wrapt import wrap_function_wrapper
+from typing import Collection, Union
 
 from opentelemetry import context as context_api
-from opentelemetry.trace import get_tracer, SpanKind
-from opentelemetry.trace.status import Status, StatusCode
-
+from opentelemetry._events import Event, EventLogger, get_event_logger
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
+from opentelemetry.instrumentation.together.config import Config
+from opentelemetry.instrumentation.together.event_handler import (
+    ChoiceEvent,
+    MessageEvent,
+    emit_event,
+)
+from opentelemetry.instrumentation.together.utils import dont_throw, is_content_enabled
+from opentelemetry.instrumentation.together.version import __version__
 from opentelemetry.instrumentation.utils import (
     _SUPPRESS_INSTRUMENTATION_KEY,
     unwrap,
 )
-
-from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import GEN_AI_RESPONSE_ID
+from opentelemetry.semconv._incubating.attributes import (
+    gen_ai_attributes as GenAIAttributes,
+)
+from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
+    GEN_AI_RESPONSE_ID,
+)
 from opentelemetry.semconv_ai import (
     SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
-    SpanAttributes,
     LLMRequestTypeValues,
+    SpanAttributes,
 )
-from opentelemetry.instrumentation.together.version import __version__
+from opentelemetry.trace import SpanKind, get_tracer
+from opentelemetry.trace.status import Status, StatusCode
+from wrapt import wrap_function_wrapper
 
+from together.types.chat_completions import ChatCompletionResponse
+from together.types.completions import CompletionResponse
 
 logger = logging.getLogger(__name__)
 
@@ -154,8 +165,65 @@ def _llm_request_type_by_method(method_name):
         return LLMRequestTypeValues.UNKNOWN
 
 
+@dont_throw
+def _emit_input_events(llm_request_type, kwargs):
+    if llm_request_type == LLMRequestTypeValues.CHAT:
+        for message in kwargs.get("messages"):
+            emit_event(
+                MessageEvent(
+                    content=message.get("content"), role=message.get("role") or "user"
+                )
+            )
+    elif llm_request_type == LLMRequestTypeValues.COMPLETION:
+        emit_event(MessageEvent(content=kwargs.get("prompt"), role="user"))
+    else:
+        raise ValueError(
+            "It wasn't possible to emit the input events due to an unknown llm_request_type."
+        )
+
+
+@dont_throw
+def _emit_choice_event(
+    llm_request_type, response: Union[ChatCompletionResponse, CompletionResponse]
+):
+    if llm_request_type == LLMRequestTypeValues.CHAT:
+        response: ChatCompletionResponse
+        for choice in response.choices:
+            emit_event(
+                ChoiceEvent(
+                    index=choice.index,
+                    message={
+                        "content": choice.message.content,
+                        "role": choice.message.role,
+                    },
+                    finish_reason=choice.finish_reason,
+                )
+            )
+    elif llm_request_type == LLMRequestTypeValues.COMPLETION:
+        response: CompletionResponse
+        for choice in response.choices:
+            emit_event(
+                ChoiceEvent(
+                    index=choice.index,
+                    message={"content": choice.text, "role": "assistant"},
+                    finish_reason=choice.finish_reason,
+                )
+            )
+    else:
+        raise ValueError(
+            "It wasn't possible to emit the choice events due to an unknown llm_request_type."
+        )
+
+
 @_with_tracer_wrapper
-def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
+def _wrap(
+    tracer,
+    to_wrap,
+    wrapped,
+    instance,
+    args,
+    kwargs,
+):
     """Instruments and calls every function defined in TO_WRAP."""
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY) or context_api.get_value(
         SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY
@@ -175,12 +243,16 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
     if span.is_recording():
         _set_input_attributes(span, llm_request_type, kwargs)
 
+    _emit_input_events(llm_request_type, kwargs)
+
     response = wrapped(*args, **kwargs)
 
     if response:
         if span.is_recording():
-
             _set_response_attributes(span, llm_request_type, response)
+
+            _emit_choice_event(llm_request_type, response)
+
             span.set_status(Status(StatusCode.OK))
 
     span.end()
@@ -190,9 +262,10 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
 class TogetherAiInstrumentor(BaseInstrumentor):
     """An instrumentor for Together AI's client library."""
 
-    def __init__(self, exception_logger=None):
+    def __init__(self, exception_logger=None, use_legacy_attributes: bool = True):
         super().__init__()
         Config.exception_logger = exception_logger
+        Config.use_legacy_attributes = use_legacy_attributes
 
     def instrumentation_dependencies(self) -> Collection[str]:
         return _instruments
@@ -200,6 +273,13 @@ class TogetherAiInstrumentor(BaseInstrumentor):
     def _instrument(self, **kwargs):
         tracer_provider = kwargs.get("tracer_provider")
         tracer = get_tracer(__name__, __version__, tracer_provider)
+
+        if not Config.use_legacy_attributes:
+            event_logger_provider = kwargs.get("event_logger_provider")
+            Config.event_logger = get_event_logger(
+                __name__, __version__, event_logger_provider=event_logger_provider
+            )
+
         for wrapped_method in WRAPPED_METHODS:
             wrap_object = wrapped_method.get("object")
             wrap_method = wrapped_method.get("method")
