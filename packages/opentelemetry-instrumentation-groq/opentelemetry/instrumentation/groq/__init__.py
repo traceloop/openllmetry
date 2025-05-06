@@ -4,14 +4,20 @@ import json
 import logging
 import os
 import time
-from typing import Callable, Collection
+from typing import Callable, Collection, Union
 
-from groq._streaming import AsyncStream, Stream
 from opentelemetry import context as context_api
+from opentelemetry._events import Event, EventLogger, get_event_logger
 from opentelemetry.instrumentation.groq.config import Config
+from opentelemetry.instrumentation.groq.event_handler import (
+    ChoiceEvent,
+    MessageEvent,
+    emit_event,
+)
 from opentelemetry.instrumentation.groq.utils import (
     dont_throw,
     error_metrics_attributes,
+    is_content_enabled,
     model_as_dict,
     set_span_attribute,
     shared_metrics_attributes,
@@ -21,18 +27,24 @@ from opentelemetry.instrumentation.groq.version import __version__
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY, unwrap
 from opentelemetry.metrics import Counter, Histogram, Meter, get_meter
+from opentelemetry.semconv._incubating.attributes import (
+    gen_ai_attributes as GenAIAttributes,
+)
 from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
     GEN_AI_RESPONSE_ID,
 )
 from opentelemetry.semconv_ai import (
     SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
     LLMRequestTypeValues,
-    SpanAttributes,
     Meters,
+    SpanAttributes,
 )
 from opentelemetry.trace import SpanKind, Tracer, get_tracer
 from opentelemetry.trace.status import Status, StatusCode
 from wrapt import wrap_function_wrapper
+
+from groq._streaming import AsyncStream, Stream
+from groq.types.chat.chat_completion import ChatCompletion
 
 logger = logging.getLogger(__name__)
 
@@ -247,11 +259,7 @@ def _with_chat_telemetry_wrapper(func):
     """Helper for providing tracer for wrapper functions. Includes metric collectors."""
 
     def _with_chat_telemetry(
-        tracer,
-        token_histogram,
-        choice_counter,
-        duration_histogram,
-        to_wrap,
+        tracer, token_histogram, choice_counter, duration_histogram, to_wrap
     ):
         def wrapper(wrapped, instance, args, kwargs):
             return func(
@@ -335,6 +343,19 @@ def _set_streaming_response_attributes(
         )
 
 
+def _emit_streaming_response_events(
+    accumulated_content: str, finish_reason: Union[str, None]
+):
+    """Emit events for streaming response."""
+    emit_event(
+        ChoiceEvent(
+            index=0,
+            message={"content": accumulated_content, "role": "assistant"},
+            finish_reason=finish_reason or "unknown",
+        )
+    )
+
+
 def _create_stream_processor(response, span):
     """Create a generator that processes a stream while collecting telemetry."""
     accumulated_content = ""
@@ -356,6 +377,8 @@ def _create_stream_processor(response, span):
             span, accumulated_content, finish_reason, usage
         )
         span.set_status(Status(StatusCode.OK))
+
+    _emit_streaming_response_events(accumulated_content, finish_reason)
     span.end()
 
 
@@ -380,7 +403,33 @@ async def _create_async_stream_processor(response, span):
             span, accumulated_content, finish_reason, usage
         )
         span.set_status(Status(StatusCode.OK))
+    _emit_streaming_response_events(accumulated_content, finish_reason)
     span.end()
+
+
+@dont_throw
+def _emit_message_events(kwargs: dict):
+    for message in kwargs.get("messages", []):
+        emit_event(
+            MessageEvent(
+                content=message.get("content"), role=message.get("role", "unknown")
+            )
+        )
+
+
+@dont_throw
+def _emit_choice_events(response: ChatCompletion):
+    for choice in response.choices:
+        emit_event(
+            ChoiceEvent(
+                index=choice.index,
+                message={
+                    "content": choice.message.content,
+                    "role": choice.message.role or "unknown",
+                },
+                finish_reason=choice.finish_reason,
+            )
+        )
 
 
 @_with_chat_telemetry_wrapper
@@ -413,6 +462,8 @@ def _wrap(
 
     if span.is_recording():
         _set_input_attributes(span, kwargs)
+
+    _emit_message_events(kwargs)
 
     start_time = time.time()
     try:
@@ -459,6 +510,9 @@ def _wrap(
                 "Failed to set response attributes for groq span, error: %s",
                 str(ex),
             )
+
+        _emit_choice_events(response)
+
         if span.is_recording():
             span.set_status(Status(StatusCode.OK))
     span.end()
@@ -501,7 +555,10 @@ async def _awrap(
             "Failed to set input attributes for groq span, error: %s", str(ex)
         )
 
+    _emit_message_events(kwargs)
+
     start_time = time.time()
+
     try:
         response = await wrapped(*args, **kwargs)
     except Exception as e:  # pylint: disable=broad-except
@@ -542,6 +599,9 @@ async def _awrap(
 
         if span.is_recording():
             span.set_status(Status(StatusCode.OK))
+
+        _emit_choice_events(response)
+
     span.end()
     return response
 
@@ -557,12 +617,14 @@ class GroqInstrumentor(BaseInstrumentor):
         self,
         enrich_token_usage: bool = False,
         exception_logger=None,
+        use_legacy_attributes: bool = True,
         get_common_metrics_attributes: Callable[[], dict] = lambda: {},
     ):
         super().__init__()
         Config.exception_logger = exception_logger
         Config.enrich_token_usage = enrich_token_usage
         Config.get_common_metrics_attributes = get_common_metrics_attributes
+        Config.use_legacy_attributes = use_legacy_attributes
 
     def instrumentation_dependencies(self) -> Collection[str]:
         return _instruments
@@ -587,6 +649,12 @@ class GroqInstrumentor(BaseInstrumentor):
                 choice_counter,
                 duration_histogram,
             ) = (None, None, None)
+
+        if not Config.use_legacy_attributes:
+            event_logger_provider = kwargs.get("event_logger_provider")
+            Config.event_logger = get_event_logger(
+                __name__, __version__, event_logger_provider=event_logger_provider
+            )
 
         for wrapped_method in WRAPPED_METHODS:
             wrap_package = wrapped_method.get("package")
@@ -636,8 +704,9 @@ class GroqInstrumentor(BaseInstrumentor):
                 wrapped_method.get("method"),
             )
         for wrapped_method in WRAPPED_AMETHODS:
+            wrap_package = wrapped_method.get("package")
             wrap_object = wrapped_method.get("object")
             unwrap(
-                f"groq.resources.completions.{wrap_object}",
+                f"{wrap_package}.{wrap_object}",
                 wrapped_method.get("method"),
             )
