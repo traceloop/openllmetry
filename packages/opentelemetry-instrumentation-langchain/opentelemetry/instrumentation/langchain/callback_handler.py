@@ -327,7 +327,12 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             child_span = self.spans[child_id].span
             if child_span.end_time is None:  # avoid warning on ended spans
                 child_span.end()
+            if child_id in self.spans:
+                del self.spans[child_id]
         span.end()
+
+        if run_id in self.spans:
+            del self.spans[run_id]
 
     def _create_span(
         self,
