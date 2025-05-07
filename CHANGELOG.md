@@ -1,3 +1,10 @@
+## v0.40.3 (2025-05-07)
+
+### Fix
+
+- **langchain**: report token counts when trace content is enabled (#2899)
+- **mcp+anthropic**: vanilla mcp crashed due to argument manipulation (#2881)
+
 ## v0.40.2 (2025-04-30)
 
 ### Fix
