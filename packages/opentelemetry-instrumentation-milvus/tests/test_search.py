@@ -3,7 +3,7 @@ import random
 
 import pymilvus
 import pytest
-from opentelemetry.semconv_ai import Events, SpanAttributes
+from opentelemetry.semconv_ai import Events, SpanAttributes, EventAttributes
 
 path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "milvus.db")
 milvus = pymilvus.MilvusClient(uri=path)
@@ -81,6 +81,7 @@ def test_milvus_single_vector_search(exporter, collection):
         timeout=10,
     )
 
+
     # Get finished spans
     spans = exporter.get_finished_spans()
     span = next(span for span in spans if span.name == "milvus.search")
@@ -103,13 +104,16 @@ def test_milvus_single_vector_search(exporter, collection):
     ids = []
 
     events = span.events
+
     for event in events:
         assert event.name == Events.DB_SEARCH_RESULT.value
-        _id = event.attributes.get("id")
-        distance = event.attributes.get("distance")
+        _id = event.attributes.get(EventAttributes.DB_SEARCH_RESULT_ID.value)
+        distance = event.attributes.get(EventAttributes.DB_SEARCH_RESULT_DISTANCE.value)
 
         assert isinstance(_id, int)
         assert isinstance(distance, str)
+
+
 
         # Collect the distances and IDs for further computation
         distances.append(
@@ -120,14 +124,7 @@ def test_milvus_single_vector_search(exporter, collection):
     # Now compute dynamic stats from the distances
     total_matches = len(events)
 
-    assert (
-        span.attributes.get(SpanAttributes.MILVUS_SEARCH_RESULT_COUNT) == total_matches
-    )
-    assert span.attributes.get(SpanAttributes.MILVUS_SEARCH_RESULT_DISTANCES) == str(
-        distances
-    )
-    assert span.attributes.get(SpanAttributes.MILVUS_SEARCH_RESULT_TOP_IDS) == str(ids)
-
+    assert span.attributes.get(SpanAttributes.MILVUS_SEARCH_RESULT_COUNT) == total_matches
 
 def test_milvus_multiple_vector_search(exporter, collection):
     insert_data(collection)
@@ -175,9 +172,9 @@ def test_milvus_multiple_vector_search(exporter, collection):
     events = span.events
     for event in events:
         assert event.name == Events.DB_SEARCH_RESULT.value
-        query_idx = event.attributes.get("query_index")
-        _id = event.attributes.get("id")
-        distance = event.attributes.get("distance")
+        query_idx = event.attributes.get(EventAttributes.DB_SEARCH_QUERY_INDEX.value)
+        _id = event.attributes.get(EventAttributes.DB_SEARCH_RESULT_ID.value)
+        distance = event.attributes.get(EventAttributes.DB_SEARCH_RESULT_DISTANCE.value)
 
         assert isinstance(_id, int)
         assert isinstance(distance, str)
@@ -197,12 +194,6 @@ def test_milvus_multiple_vector_search(exporter, collection):
 
         total_matches = len(distances)
 
-        # Build dynamic attribute keys
         count_key = f"{SpanAttributes.MILVUS_SEARCH_RESULT_COUNT}_{query_idx}"
-        distances_key = f"{SpanAttributes.MILVUS_SEARCH_RESULT_DISTANCES}_{query_idx}"
-        ids_key = f"{SpanAttributes.MILVUS_SEARCH_RESULT_TOP_IDS}_{query_idx}"
 
-        # Assert that span attributes match computed values
         assert span.attributes.get(count_key) == total_matches
-        assert span.attributes.get(distances_key) == str(distances)
-        assert span.attributes.get(ids_key) == str(ids)

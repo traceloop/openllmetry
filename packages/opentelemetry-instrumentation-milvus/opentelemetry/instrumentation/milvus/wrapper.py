@@ -5,7 +5,7 @@ from opentelemetry import context as context_api
 from opentelemetry.instrumentation.utils import (
     _SUPPRESS_INSTRUMENTATION_KEY,
 )
-from opentelemetry.semconv_ai import Events
+from opentelemetry.semconv_ai import Events, EventAttributes
 from opentelemetry.semconv_ai import SpanAttributes as AISpanAttributes
 
 
@@ -283,31 +283,11 @@ def _add_search_result_events(span, kwargs):
             f"{AISpanAttributes.MILVUS_SEARCH_RESULT_COUNT}_{query_idx}",
             len(distances),
         )
-        _set_span_attribute(
-            span,
-            f"{AISpanAttributes.MILVUS_SEARCH_RESULT_DISTANCES}_{query_idx}",
-            _encode_include(distances),
-        )
-        _set_span_attribute(
-            span,
-            f"{AISpanAttributes.MILVUS_SEARCH_RESULT_TOP_IDS}_{query_idx}",
-            _encode_include(match_ids),
-        )
 
     def set_global_stats():
         """Helper function to set global stats for a single query."""
         _set_span_attribute(
             span, AISpanAttributes.MILVUS_SEARCH_RESULT_COUNT, total_matches
-        )
-        _set_span_attribute(
-            span,
-            AISpanAttributes.MILVUS_SEARCH_RESULT_DISTANCES,
-            _encode_include(all_distances),
-        )
-        _set_span_attribute(
-            span,
-            AISpanAttributes.MILVUS_SEARCH_RESULT_TOP_IDS,
-            _encode_include(query_match_ids),
         )
 
     for query_idx, query_results in enumerate(kwargs):
@@ -325,10 +305,10 @@ def _add_search_result_events(span, kwargs):
             span.add_event(
                 Events.DB_SEARCH_RESULT.value,
                 attributes={
-                    "query_index": query_idx,
-                    "id": match["id"],
-                    "distance": str(distance),
-                    "entity": _encode_include(match["entity"]),
+                    EventAttributes.DB_SEARCH_RESULT_QUERY_ID.value: query_idx,
+                    EventAttributes.DB_SEARCH_RESULT_ID.value: match["id"],
+                    EventAttributes.DB_SEARCH_RESULT_DISTANCE.value: str(distance),
+                    EventAttributes.DB_SEARCH_RESULT_ENTITY.value:  _encode_include(match["entity"])
                 },
             )
 
