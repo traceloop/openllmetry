@@ -1,32 +1,39 @@
 """OpenTelemetry SageMaker instrumentation"""
 
-from functools import wraps
 import json
 import logging
 import os
-from typing import Collection
+from functools import wraps
+from typing import Collection, Union
+
+from opentelemetry import context as context_api
+from opentelemetry._events import Event, EventLogger, get_event_logger
+from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.instrumentation.sagemaker.config import Config
+from opentelemetry.instrumentation.sagemaker.event_handler import (
+    ChoiceEvent,
+    MessageEvent,
+    emit_event,
+)
 from opentelemetry.instrumentation.sagemaker.reusable_streaming_body import (
     ReusableStreamingBody,
 )
 from opentelemetry.instrumentation.sagemaker.streaming_wrapper import StreamingWrapper
-from opentelemetry.instrumentation.sagemaker.utils import dont_throw
-from wrapt import wrap_function_wrapper
-
-from opentelemetry import context as context_api
-from opentelemetry.trace import get_tracer, SpanKind
-
-from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
+from opentelemetry.instrumentation.sagemaker.utils import dont_throw, is_content_enabled
+from opentelemetry.instrumentation.sagemaker.version import __version__
 from opentelemetry.instrumentation.utils import (
     _SUPPRESS_INSTRUMENTATION_KEY,
     unwrap,
 )
-
+from opentelemetry.semconv._incubating.attributes import (
+    gen_ai_attributes as GenAIAttributes,
+)
 from opentelemetry.semconv_ai import (
     SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
     SpanAttributes,
 )
-from opentelemetry.instrumentation.sagemaker.version import __version__
+from opentelemetry.trace import SpanKind, get_tracer
+from wrapt import wrap_function_wrapper
 
 logger = logging.getLogger(__name__)
 
@@ -55,6 +62,45 @@ def _set_span_attribute(span, name, value):
     return
 
 
+def _emit_message_event(kwargs):
+    try:
+        input_body = json.loads(kwargs.get("Body"))
+    except json.JSONDecodeError:
+        logger.debug(
+            "OpenTelemetry failed to decode the request body, error: %s",
+            kwargs.get("Body"),
+        )
+        return
+    emit_event(MessageEvent(content=input_body.get("inputs", ""), role="user"))
+
+
+def _emit_choice_events(response: dict):
+    response_body: Union[StreamingWrapper, ReusableStreamingBody, None] = response.get(
+        "Body"
+    )
+
+    if isinstance(response_body, StreamingWrapper):
+        emit_event(
+            ChoiceEvent(
+                index=0,
+                message={
+                    "content": response_body.accumulating_body,
+                    "role": "assistant",
+                },
+                finish_reason="unknown",
+            )
+        )
+    elif isinstance(response_body, ReusableStreamingBody):
+        for i, gen in enumerate(json.loads(response_body.read())):
+            emit_event(
+                ChoiceEvent(
+                    index=i,
+                    message={"content": gen.get("generated_text"), "role": "assistant"},
+                    finish_reason="unknown",
+                )
+            )
+
+
 def _with_tracer_wrapper(func):
     """Helper for providing tracer for wrapper functions."""
 
@@ -68,7 +114,14 @@ def _with_tracer_wrapper(func):
 
 
 @_with_tracer_wrapper
-def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
+def _wrap(
+    tracer,
+    to_wrap,
+    wrapped,
+    instance,
+    args,
+    kwargs,
+):
     """Instruments and calls every function defined in TO_WRAP."""
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
         return wrapped(*args, **kwargs)
@@ -98,10 +151,13 @@ def _instrumented_endpoint_invoke(fn, tracer):
         with tracer.start_as_current_span(
             "sagemaker.completion", kind=SpanKind.CLIENT
         ) as span:
+            _emit_message_event(kwargs)
+
             response = fn(*args, **kwargs)
 
             if span.is_recording():
                 _handle_call(span, kwargs, response)
+            _emit_choice_events(response)
 
             return response
 
@@ -115,10 +171,14 @@ def _instrumented_endpoint_invoke_with_response_stream(fn, tracer):
             return fn(*args, **kwargs)
 
         span = tracer.start_span("sagemaker.completion", kind=SpanKind.CLIENT)
+        _emit_message_event(kwargs)
+
         response = fn(*args, **kwargs)
 
         if span.is_recording():
             _handle_stream_call(span, kwargs, response)
+
+        _emit_choice_events(response)
 
         return response
 
@@ -167,10 +227,16 @@ def _handle_call(span, kwargs, response):
 class SageMakerInstrumentor(BaseInstrumentor):
     """An instrumentor for Bedrock's client library."""
 
-    def __init__(self, enrich_token_usage: bool = False, exception_logger=None):
+    def __init__(
+        self,
+        enrich_token_usage: bool = False,
+        exception_logger=None,
+        use_legacy_attributes: bool = True,
+    ):
         super().__init__()
         Config.enrich_token_usage = enrich_token_usage
         Config.exception_logger = exception_logger
+        Config.use_legacy_attributes = use_legacy_attributes
 
     def instrumentation_dependencies(self) -> Collection[str]:
         return _instruments
@@ -178,6 +244,13 @@ class SageMakerInstrumentor(BaseInstrumentor):
     def _instrument(self, **kwargs):
         tracer_provider = kwargs.get("tracer_provider")
         tracer = get_tracer(__name__, __version__, tracer_provider)
+
+        if not Config.use_legacy_attributes:
+            event_logger_provider = kwargs.get("event_logger_provider")
+            Config.event_logger = get_event_logger(
+                __name__, __version__, event_logger_provider=event_logger_provider
+            )
+
         for wrapped_method in WRAPPED_METHODS:
             wrap_package = wrapped_method.get("package")
             wrap_object = wrapped_method.get("object")
