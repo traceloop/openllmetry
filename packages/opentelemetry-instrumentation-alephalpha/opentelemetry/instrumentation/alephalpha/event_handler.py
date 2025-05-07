@@ -49,7 +49,6 @@ class MessageEvent:
     content: Any
     role: str = "user"
     tool_calls: Optional[List[ToolCall]] = None
-    llm_request_model: Optional[str] = None
 
 
 @dataclass
@@ -58,8 +57,6 @@ class ChoiceEvent:
 
     index: int
     message: CompletionMessage
-    input_tokens: int
-    output_tokens: int
     finish_reason: str = "unknown"
     tool_calls: Optional[List[ToolCall]] = None
 

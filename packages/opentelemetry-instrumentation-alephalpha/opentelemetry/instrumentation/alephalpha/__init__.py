@@ -60,11 +60,9 @@ def _set_span_attribute(span, name, value):
     return
 
 
-def _set_input_attributes(event: MessageEvent, span: Span):
+def _set_prompt_attributes(event: MessageEvent, span: Span):
     if not span.is_recording():
         return
-
-    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, event.llm_request_model)
 
     if should_send_prompts():
         _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.0.role", "user")
@@ -75,7 +73,7 @@ def _set_input_attributes(event: MessageEvent, span: Span):
         )
 
 
-def _set_response_attributes(event: ChoiceEvent, span: Span):
+def _set_completion_attributes(event: ChoiceEvent, span: Span):
     if not span.is_recording():
         return
 
@@ -89,32 +87,37 @@ def _set_response_attributes(event: ChoiceEvent, span: Span):
             span, f"{SpanAttributes.LLM_COMPLETIONS}.0.role", "assistant"
         )
 
-    _set_span_attribute(span, SpanAttributes.LLM_USAGE_TOTAL_TOKENS, event.total_tokens)
-    _set_span_attribute(
-        span, SpanAttributes.LLM_USAGE_COMPLETION_TOKENS, event.output_tokens
-    )
-    _set_span_attribute(
-        span, SpanAttributes.LLM_USAGE_PROMPT_TOKENS, event.input_tokens
-    )
-
 
 @dont_throw
 def _handle_message_event(
-    event: MessageEvent,
-    span: Span,
-    event_logger: Optional[EventLogger],
+    event: MessageEvent, span: Span, event_logger: Optional[EventLogger], kwargs
 ):
+    if span.is_recording():
+        _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, kwargs.get("model"))
+
     if should_emit_events():
         return emit_event(event, event_logger)
     else:
-        return _set_input_attributes(event, span)
+        return _set_prompt_attributes(event, span)
 
 
-def _handle_choice_event(event: ChoiceEvent, span, event_logger):
+def _handle_response_event(event: ChoiceEvent, span, event_logger, response):
+    if span.is_recording():
+        input_tokens = getattr(response, "num_tokens_prompt_total", 0)
+        output_tokens = getattr(response, "num_tokens_generated", 0)
+
+        _set_span_attribute(
+            span, SpanAttributes.LLM_USAGE_TOTAL_TOKENS, input_tokens + output_tokens
+        )
+        _set_span_attribute(
+            span, SpanAttributes.LLM_USAGE_COMPLETION_TOKENS, output_tokens
+        )
+        _set_span_attribute(span, SpanAttributes.LLM_USAGE_PROMPT_TOKENS, input_tokens)
+
     if should_emit_events():
         emit_event(event, event_logger)
     else:
-        _set_response_attributes(event, span)
+        _set_completion_attributes(event, span)
 
 
 def _with_tracer_wrapper(func):
@@ -142,14 +145,10 @@ def _parse_message_event(args, kwargs) -> MessageEvent:
     return MessageEvent(
         content=request.prompt.to_json(),
         role="user",
-        llm_request_model=kwargs.get("model"),
     )
 
 
-def _parse_choice_event(response) -> List[ChoiceEvent]:
-    input_tokens = getattr(response, "num_tokens_prompt_total", 0)
-    output_tokens = getattr(response, "num_tokens_generated", 0)
-
+def _parse_response_event(response) -> List[ChoiceEvent]:
     return ChoiceEvent(
         index=0,
         message={
@@ -157,8 +156,6 @@ def _parse_choice_event(response) -> List[ChoiceEvent]:
             "role": "assistant",
         },
         finish_reason=response.completions[0].finish_reason,
-        input_tokens=input_tokens,
-        output_tokens=output_tokens,
     )
 
 
@@ -189,13 +186,13 @@ def _wrap(
         },
     )
     input_event = _parse_message_event(args, kwargs)
-    _handle_message_event(input_event, span, event_logger)
+    _handle_message_event(input_event, span, event_logger, kwargs)
 
     response = wrapped(*args, **kwargs)
 
     if response:
-        response_event = _parse_choice_event(response)
-        _handle_choice_event(response_event, span, event_logger)
+        response_event = _parse_response_event(response)
+        _handle_response_event(response_event, span, event_logger, response)
         if span.is_recording():
             span.set_status(Status(StatusCode.OK))
 

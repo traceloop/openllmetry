@@ -65,6 +65,13 @@ def test_alephalpha_completion_with_events_with_content(
     assert together_span.name == "alephalpha.completion"
     assert together_span.attributes.get("gen_ai.system") == "AlephAlpha"
     assert together_span.attributes.get("llm.request.type") == "completion"
+    assert together_span.attributes.get("gen_ai.request.model") == "luminous-base"
+    assert together_span.attributes.get("gen_ai.usage.prompt_tokens") == 9
+    assert together_span.attributes.get(
+        "llm.usage.total_tokens"
+    ) == together_span.attributes.get(
+        "gen_ai.usage.completion_tokens"
+    ) + together_span.attributes.get("gen_ai.usage.prompt_tokens")
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2
@@ -108,6 +115,13 @@ def test_alephalpha_completion_with_events_with_no_content(
     assert together_span.name == "alephalpha.completion"
     assert together_span.attributes.get("gen_ai.system") == "AlephAlpha"
     assert together_span.attributes.get("llm.request.type") == "completion"
+    assert together_span.attributes.get("gen_ai.request.model") == "luminous-base"
+    assert together_span.attributes.get("gen_ai.usage.prompt_tokens") == 9
+    assert together_span.attributes.get(
+        "llm.usage.total_tokens"
+    ) == together_span.attributes.get(
+        "gen_ai.usage.completion_tokens"
+    ) + together_span.attributes.get("gen_ai.usage.prompt_tokens")
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2
