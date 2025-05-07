@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "opentelemetry-instrumentation-watsonx"
-version = "0.40.2"
+version = "0.40.3"
 description = "OpenTelemetry IBM Watsonx Instrumentation"
 authors = ["Guangya Liu <gyliu@ibm.com>"]
 repository = "https://github.com/traceloop/openllmetry/tree/main/packages/opentelemetry-instrumentation-watsonx"
