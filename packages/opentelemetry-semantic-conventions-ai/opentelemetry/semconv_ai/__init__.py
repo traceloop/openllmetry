@@ -195,7 +195,6 @@ class SpanAttributes:
     MILVUS_SEARCH_PARTITION_NAMES_COUNT = "db.milvus.search.partition_names_count"
     MILVUS_SEARCH_SEARCH_PARAMS = "db.milvus.search.search_params"
     MILVUS_SEARCH_PARTITION_NAMES = "db.milvus.search.partition_names"
-    MILVUS_SEARCH_QUERY_VECTOR_DIMENSION = "db.milvus.search.vector.dimension"
     MILVUS_SEARCH_TIMEOUT = "db.milvus.search.timeout"
     MILVUS_UPSERT_COLLECTION_NAME = "db.milvus.upsert.collection_name"
     MILVUS_UPSERT_DATA_COUNT = "db.milvus.upsert.data_count"
@@ -227,6 +226,7 @@ class SpanAttributes:
 class Events(Enum):
     DB_QUERY_EMBEDDINGS = "db.query.embeddings"
     DB_QUERY_RESULT = "db.query.result"
+    DB_SEARCH_EMBEDDINGS = "db.search.embeddings"
     DB_SEARCH_RESULT = "db.search.result"
 
 
@@ -238,10 +238,20 @@ class EventAttributes(Enum):
     DB_QUERY_RESULT_ID = "db.query.result.id"
     DB_QUERY_RESULT_SCORE = "db.query.result.score"
     DB_QUERY_RESULT_DISTANCE = "db.query.result.distance"
-    DB_QUERY_RESULT_COUNT = "db.query.result.count"
     DB_QUERY_RESULT_METADATA = "db.query.result.metadata"
     DB_QUERY_RESULT_VECTOR = "db.query.result.vector"
     DB_QUERY_RESULT_DOCUMENT = "db.query.result.document"
+
+    # Search Embeddings
+    DB_SEARCH_EMBEDDINGS_VECTOR = "db.search.embeddings.vector"
+
+    # Query Result (canonical format)
+    DB_SEARCH_RESULT_ID = "db.search.result.id"
+    DB_SEARCH_RESULT_SCORE = "db.search.result.score"
+    DB_SEARCH_RESULT_DISTANCE = "db.search.result.distance"
+    DB_SEARCH_RESULT_METADATA = "db.search.result.metadata"
+    DB_SEARCH_RESULT_VECTOR = "db.search.result.vector"
+    DB_SEARCH_RESULT_DOCUMENT = "db.search.result.document"
 
 
 class LLMRequestTypeValues(Enum):
