@@ -4,7 +4,6 @@ import logging
 import os
 import json
 import time
-import functools
 from typing import Collection
 from opentelemetry.instrumentation.ollama.config import Config
 from opentelemetry.instrumentation.ollama.utils import dont_throw
@@ -454,22 +453,6 @@ def _build_metrics(meter: Meter):
 
 def is_metrics_collection_enabled() -> bool:
     return (os.getenv("TRACELOOP_METRICS_ENABLED") or "true").lower() == "true"
-
-
-# Proxy class to dynamically call the latest ollama function implementations
-class InstrumentedFunction:
-    """Proxy function that always invokes the latest ollama function implementation"""
-    def __init__(self, func_name):
-        self.func_name = func_name
-        import ollama
-        original = getattr(ollama, func_name)
-        functools.update_wrapper(self, original)
-        self.__wrapped__ = original
-
-    def __call__(self, *args, **kwargs):
-        import ollama
-        actual_func = getattr(ollama, self.func_name)
-        return actual_func(*args, **kwargs)
 
 
 class OllamaInstrumentor(BaseInstrumentor):
