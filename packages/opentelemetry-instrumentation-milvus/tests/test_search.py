@@ -81,7 +81,6 @@ def test_milvus_single_vector_search(exporter, collection):
         timeout=10,
     )
 
-
     # Get finished spans
     spans = exporter.get_finished_spans()
     span = next(span for span in spans if span.name == "milvus.search")
@@ -113,8 +112,6 @@ def test_milvus_single_vector_search(exporter, collection):
         assert isinstance(_id, int)
         assert isinstance(distance, str)
 
-
-
         # Collect the distances and IDs for further computation
         distances.append(
             float(distance)
@@ -124,7 +121,10 @@ def test_milvus_single_vector_search(exporter, collection):
     # Now compute dynamic stats from the distances
     total_matches = len(events)
 
-    assert span.attributes.get(SpanAttributes.MILVUS_SEARCH_RESULT_COUNT) == total_matches
+    assert (
+        span.attributes.get(SpanAttributes.MILVUS_SEARCH_RESULT_COUNT) == total_matches
+    )
+
 
 def test_milvus_multiple_vector_search(exporter, collection):
     insert_data(collection)
@@ -172,7 +172,9 @@ def test_milvus_multiple_vector_search(exporter, collection):
     events = span.events
     for event in events:
         assert event.name == Events.DB_SEARCH_RESULT.value
-        query_idx = event.attributes.get(EventAttributes.DB_SEARCH_QUERY_INDEX.value)
+        query_idx = event.attributes.get(
+            EventAttributes.DB_SEARCH_RESULT_QUERY_ID.value
+        )
         _id = event.attributes.get(EventAttributes.DB_SEARCH_RESULT_ID.value)
         distance = event.attributes.get(EventAttributes.DB_SEARCH_RESULT_DISTANCE.value)
 
@@ -190,7 +192,6 @@ def test_milvus_multiple_vector_search(exporter, collection):
 
     for query_idx in distances_dict:
         distances = distances_dict[query_idx]
-        ids = ids_dict[query_idx]
 
         total_matches = len(distances)
 
