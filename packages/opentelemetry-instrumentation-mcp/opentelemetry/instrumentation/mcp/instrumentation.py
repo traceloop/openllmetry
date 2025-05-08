@@ -2,7 +2,6 @@ from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from typing import Any, AsyncGenerator, Callable, Collection, Tuple, cast
 import json
-import mcp
 
 from opentelemetry import context, propagate
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
@@ -107,7 +106,9 @@ class McpInstrumentor(BaseInstrumentor):
         return traced_method
 
     def patch_mcp_client(self, tracer):
-        def traced_method(wrapped, instance, args, kwargs):
+        async def traced_method(wrapped, instance, args, kwargs):
+            import mcp.types
+
             if len(args) < 1:
                 return
             meta = None
@@ -119,25 +120,29 @@ class McpInstrumentor(BaseInstrumentor):
                 params = args[0].root.params
             if params is None:
                 args[0].root.params = mcp.types.RequestParams()
-                meta = {}
+                meta = mcp.types.RequestParams.Meta()
             else:
                 if hasattr(args[0].root.params, "meta"):
                     meta = args[0].root.params.meta
                 if meta is None:
-                    meta = {}
+                    meta = mcp.types.RequestParams.Meta()
 
-            with tracer.start_as_current_span(f"{method}") as span:
-                span.set_attribute(SpanAttributes.MCP_METHOD_NAME, f"{method}")
+            with tracer.start_as_current_span(f"{method}.mcp") as span:
                 span.set_attribute(
-                    SpanAttributes.MCP_REQUEST_ARGUMENT, f"{serialize(args[0])}"
+                    SpanAttributes.TRACELOOP_ENTITY_INPUT, f"{serialize(args[0])}"
                 )
                 ctx = set_span_in_context(span)
-                TraceContextTextMapPropagator().inject(meta, ctx)
+                parent_span = {}
+                TraceContextTextMapPropagator().inject(parent_span, ctx)
+                meta.traceparent = parent_span["traceparent"]
                 args[0].root.params.meta = meta
                 try:
-                    result = wrapped(*args, **kwargs)
-                    if result:
-                        span.set_status(Status(StatusCode.OK))
+                    result = await wrapped(*args, **kwargs)
+                    span.set_attribute(
+                        SpanAttributes.TRACELOOP_ENTITY_OUTPUT,
+                        serialize(result),
+                    )
+                    span.set_status(Status(StatusCode.OK))
                     return result
                 except Exception as e:
                     span.record_exception(e)
@@ -167,6 +172,8 @@ def serialize(request, depth=0, max_depth=4):
     else:
         result = {}
         try:
+            if hasattr(request, "model_dump_json"):
+                return request.model_dump_json()
             if hasattr(request, "__dict__"):
                 for attrib in request.__dict__:
                     if not attrib.startswith("_"):

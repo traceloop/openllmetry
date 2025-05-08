@@ -15,6 +15,7 @@ from opentelemetry.instrumentation.anthropic.streaming import (
     build_from_streaming_response,
 )
 from opentelemetry.instrumentation.anthropic.utils import (
+    JSONEncoder,
     acount_prompt_tokens_from_request,
     dont_throw,
     error_metrics_attributes,
@@ -28,7 +29,9 @@ from opentelemetry.instrumentation.anthropic.version import __version__
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY, unwrap
 from opentelemetry.metrics import Counter, Histogram, Meter, get_meter
-from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import GEN_AI_RESPONSE_ID
+from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
+    GEN_AI_RESPONSE_ID,
+)
 from opentelemetry.semconv_ai import (
     SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
     LLMRequestTypeValues,
@@ -145,7 +148,7 @@ async def _dump_content(message_index, content, span):
             for j, item in enumerate(content)
         ]
 
-        return json.dumps(content)
+        return json.dumps(content, cls=JSONEncoder)
 
 
 @dont_throw
@@ -207,10 +210,14 @@ async def _aset_input_attributes(span, kwargs):
             for i, tool in enumerate(kwargs.get("tools")):
                 prefix = f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.{i}"
                 set_span_attribute(span, f"{prefix}.name", tool.get("name"))
-                set_span_attribute(span, f"{prefix}.description", tool.get("description"))
+                set_span_attribute(
+                    span, f"{prefix}.description", tool.get("description")
+                )
                 input_schema = tool.get("input_schema")
                 if input_schema is not None:
-                    set_span_attribute(span, f"{prefix}.input_schema", json.dumps(input_schema))
+                    set_span_attribute(
+                        span, f"{prefix}.parameters", json.dumps(input_schema)
+                    )
 
 
 def _set_span_completions(span, response):
@@ -315,7 +322,9 @@ async def _aset_token_usage(
         completion_tokens = 0
         if hasattr(anthropic, "count_tokens"):
             if response.get("completion"):
-                completion_tokens = await anthropic.count_tokens(response.get("completion"))
+                completion_tokens = await anthropic.count_tokens(
+                    response.get("completion")
+                )
             elif response.get("content"):
                 completion_tokens = await anthropic.count_tokens(
                     response.get("content")[0].text
@@ -357,7 +366,9 @@ async def _aset_token_usage(
         span, SpanAttributes.LLM_USAGE_CACHE_READ_INPUT_TOKENS, cache_read_tokens
     )
     set_span_attribute(
-        span, SpanAttributes.LLM_USAGE_CACHE_CREATION_INPUT_TOKENS, cache_creation_tokens
+        span,
+        SpanAttributes.LLM_USAGE_CACHE_CREATION_INPUT_TOKENS,
+        cache_creation_tokens,
     )
 
 
@@ -402,7 +413,9 @@ def _set_token_usage(
             if response.get("completion"):
                 completion_tokens = anthropic.count_tokens(response.get("completion"))
             elif response.get("content"):
-                completion_tokens = anthropic.count_tokens(response.get("content")[0].text)
+                completion_tokens = anthropic.count_tokens(
+                    response.get("content")[0].text
+                )
 
     if token_histogram and type(completion_tokens) is int and completion_tokens >= 0:
         token_histogram.record(
@@ -440,7 +453,9 @@ def _set_token_usage(
         span, SpanAttributes.LLM_USAGE_CACHE_READ_INPUT_TOKENS, cache_read_tokens
     )
     set_span_attribute(
-        span, SpanAttributes.LLM_USAGE_CACHE_CREATION_INPUT_TOKENS, cache_creation_tokens
+        span,
+        SpanAttributes.LLM_USAGE_CACHE_CREATION_INPUT_TOKENS,
+        cache_creation_tokens,
     )
 
 
