@@ -302,16 +302,6 @@ def _add_search_result_events(span, kwargs):
             total_matches += 1
             query_match_ids.append(match["id"])
 
-            # span.add_event(
-            #     "db.milvus.search.result",
-            #     attributes={
-            #         "query_index": query_idx,
-            #         "id": match["id"],
-            #         "distance": str(distance),
-            #         "entity": _encode_include(match["entity"]),
-            #     }
-            # )
-
             span.add_event(
                 Events.DB_SEARCH_RESULT.value,
                 attributes={
