@@ -1,0 +1,202 @@
+interactions:
+- request:
+    body: '{"contents": [{"parts": [{"text": "Tell me about Google Gemini"}], "role":
+      "user"}]}'
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '84'
+      content-type:
+      - application/json
+      host:
+      - generativelanguage.googleapis.com
+      user-agent:
+      - google-genai-sdk/1.11.0 gl-python/3.9.6
+      x-goog-api-client:
+      - google-genai-sdk/1.11.0 gl-python/3.9.6
+    method: POST
+    uri: https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:streamGenerateContent?alt=sse
+  response:
+    body:
+      string: "data: {\"candidates\": [{\"content\": {\"parts\": [{\"text\": \"Google\"}],\"role\":
+        \"model\"}}],\"usageMetadata\": {\"promptTokenCount\": 6,\"totalTokenCount\":
+        6,\"promptTokensDetails\": [{\"modality\": \"TEXT\",\"tokenCount\": 6}]},\"modelVersion\":
+        \"gemini-2.0-flash-lite\"}\r\n\r\ndata: {\"candidates\": [{\"content\": {\"parts\":
+        [{\"text\": \" Gemini is the\"}],\"role\": \"model\"}}],\"usageMetadata\":
+        {\"promptTokenCount\": 6,\"totalTokenCount\": 6,\"promptTokensDetails\": [{\"modality\":
+        \"TEXT\",\"tokenCount\": 6}]},\"modelVersion\": \"gemini-2.0-flash-lite\"}\r\n\r\ndata:
+        {\"candidates\": [{\"content\": {\"parts\": [{\"text\": \" company's most
+        powerful and versatile AI model, designed to handle a wide range of\"}],\"role\":
+        \"model\"}}],\"usageMetadata\": {\"promptTokenCount\": 6,\"totalTokenCount\":
+        6,\"promptTokensDetails\": [{\"modality\": \"TEXT\",\"tokenCount\": 6}]},\"modelVersion\":
+        \"gemini-2.0-flash-lite\"}\r\n\r\ndata: {\"candidates\": [{\"content\": {\"parts\":
+        [{\"text\": \" tasks and modalities, from text and images to audio and video.
+        It represents a significant step forward\"}],\"role\": \"model\"}}],\"usageMetadata\":
+        {\"promptTokenCount\": 6,\"totalTokenCount\": 6,\"promptTokensDetails\": [{\"modality\":
+        \"TEXT\",\"tokenCount\": 6}]},\"modelVersion\": \"gemini-2.0-flash-lite\"}\r\n\r\ndata:
+        {\"candidates\": [{\"content\": {\"parts\": [{\"text\": \" in Google's AI
+        development, offering advanced capabilities and performance compared to its
+        predecessors. Here's a breakdown of key aspects of Google Gemini:\\n\\n**Key
+        Features and\"}],\"role\": \"model\"}}],\"usageMetadata\": {\"promptTokenCount\":
+        6,\"totalTokenCount\": 6,\"promptTokensDetails\": [{\"modality\": \"TEXT\",\"tokenCount\":
+        6}]},\"modelVersion\": \"gemini-2.0-flash-lite\"}\r\n\r\ndata: {\"candidates\":
+        [{\"content\": {\"parts\": [{\"text\": \" Capabilities:**\\n\\n*   **Multimodality:**
+        Gemini is a multimodal model, meaning it can understand and generate content
+        across different modalities. This includes text, images, audio\"}],\"role\":
+        \"model\"}}],\"usageMetadata\": {\"promptTokenCount\": 6,\"totalTokenCount\":
+        6,\"promptTokensDetails\": [{\"modality\": \"TEXT\",\"tokenCount\": 6}]},\"modelVersion\":
+        \"gemini-2.0-flash-lite\"}\r\n\r\ndata: {\"candidates\": [{\"content\": {\"parts\":
+        [{\"text\": \", video, and code. It's designed to process and reason about
+        information from these different sources simultaneously, leading to more sophisticated
+        and nuanced understanding.\\n*   **Advanced Reasoning and Problem-Solving:**
+        Gemini is built to excel at complex reasoning and problem\"}],\"role\": \"model\"}}],\"usageMetadata\":
+        {\"promptTokenCount\": 6,\"totalTokenCount\": 6,\"promptTokensDetails\": [{\"modality\":
+        \"TEXT\",\"tokenCount\": 6}]},\"modelVersion\": \"gemini-2.0-flash-lite\"}\r\n\r\ndata:
+        {\"candidates\": [{\"content\": {\"parts\": [{\"text\": \"-solving tasks.
+        It can analyze complex information, identify patterns, and generate creative
+        and logical solutions.\\n*   **Code Generation and Understanding:** Gemini
+        is adept at understanding, generating, and debugging code in multiple programming
+        languages. This makes it a\"}],\"role\": \"model\"}}],\"usageMetadata\": {\"promptTokenCount\":
+        6,\"totalTokenCount\": 6,\"promptTokensDetails\": [{\"modality\": \"TEXT\",\"tokenCount\":
+        6}]},\"modelVersion\": \"gemini-2.0-flash-lite\"}\r\n\r\ndata: {\"candidates\":
+        [{\"content\": {\"parts\": [{\"text\": \" valuable tool for developers and
+        programmers.\\n*   **Image Understanding and Generation:** Gemini can understand
+        and interpret images in detail, answering questions about their content, generating
+        image captions, and creating new images from text prompts.\\n*   **Audio and
+        Video Capabilities:** Gemini can process and generate content from audio and
+        video, allowing\"}],\"role\": \"model\"}}],\"usageMetadata\": {\"promptTokenCount\":
+        6,\"totalTokenCount\": 6,\"promptTokensDetails\": [{\"modality\": \"TEXT\",\"tokenCount\":
+        6}]},\"modelVersion\": \"gemini-2.0-flash-lite\"}\r\n\r\ndata: {\"candidates\":
+        [{\"content\": {\"parts\": [{\"text\": \" it to understand conversations,
+        analyze video footage, and create multimedia content.\\n*   **Different Sizes
+        (Models):** Gemini is available in different sizes and versions to accommodate
+        varying needs and resources:\\n    *   **Gemini Ultra:** The largest and most
+        powerful model, designed for highly complex tasks and intended for specialized\"}],\"role\":
+        \"model\"}}],\"usageMetadata\": {\"promptTokenCount\": 6,\"totalTokenCount\":
+        6,\"promptTokensDetails\": [{\"modality\": \"TEXT\",\"tokenCount\": 6}]},\"modelVersion\":
+        \"gemini-2.0-flash-lite\"}\r\n\r\ndata: {\"candidates\": [{\"content\": {\"parts\":
+        [{\"text\": \" use cases like Google's AI chatbot, Bard.\\n    *   **Gemini
+        Pro:** A versatile model suitable for a broad range of tasks, including those
+        in Google's AI-powered tools like Search and Workspace.\\n    *   **Gemini
+        Nano:** The most efficient model, designed for on-device tasks\"}],\"role\":
+        \"model\"}}],\"usageMetadata\": {\"promptTokenCount\": 6,\"totalTokenCount\":
+        6,\"promptTokensDetails\": [{\"modality\": \"TEXT\",\"tokenCount\": 6}]},\"modelVersion\":
+        \"gemini-2.0-flash-lite\"}\r\n\r\ndata: {\"candidates\": [{\"content\": {\"parts\":
+        [{\"text\": \" like those on Android phones, allowing for faster and more
+        private processing.\\n*   **Integration with Google Services:** Gemini is
+        integrated into many of Google's services, including:\\n    *   **Google Search:**
+        Improving the understanding of search queries and delivering more relevant
+        and informative results.\\n    *   **Google Bard (\"}],\"role\": \"model\"}}],\"usageMetadata\":
+        {\"promptTokenCount\": 6,\"totalTokenCount\": 6,\"promptTokensDetails\": [{\"modality\":
+        \"TEXT\",\"tokenCount\": 6}]},\"modelVersion\": \"gemini-2.0-flash-lite\"}\r\n\r\ndata:
+        {\"candidates\": [{\"content\": {\"parts\": [{\"text\": \"now Gemini):** Providing
+        a more advanced and capable conversational AI experience.\\n    *   **Google
+        Workspace (Gmail, Docs, Sheets, Slides):** Assisting with writing, editing,
+        summarizing, and other productivity tasks.\\n    *   **Android:** Enhancing
+        mobile experiences with features like smart replies and on-device processing\"}],\"role\":
+        \"model\"}}],\"usageMetadata\": {\"promptTokenCount\": 6,\"totalTokenCount\":
+        6,\"promptTokensDetails\": [{\"modality\": \"TEXT\",\"tokenCount\": 6}]},\"modelVersion\":
+        \"gemini-2.0-flash-lite\"}\r\n\r\ndata: {\"candidates\": [{\"content\": {\"parts\":
+        [{\"text\": \".\\n*   **Constant Improvement and Updates:** Google continues
+        to refine and improve Gemini through ongoing research and development, promising
+        increased performance, accuracy, and capabilities.\\n\\n**Uses and Applications:**\\n\\n*
+        \  **AI-Powered Chatbots:** Providing more human-like and informative conversations.\\n*
+        \  **Content Creation:** Ass\"}],\"role\": \"model\"}}],\"usageMetadata\":
+        {\"promptTokenCount\": 6,\"totalTokenCount\": 6,\"promptTokensDetails\": [{\"modality\":
+        \"TEXT\",\"tokenCount\": 6}]},\"modelVersion\": \"gemini-2.0-flash-lite\"}\r\n\r\ndata:
+        {\"candidates\": [{\"content\": {\"parts\": [{\"text\": \"isting with writing,
+        image generation, audio and video editing, and other creative tasks.\\n*   **Information
+        Retrieval and Summarization:** Quickly accessing and understanding complex
+        information.\\n*   **Coding and Software Development:** Helping with code
+        generation, debugging, and software development.\\n*   **Search and Discovery:**
+        Improving the accuracy\"}],\"role\": \"model\"}}],\"usageMetadata\": {\"promptTokenCount\":
+        6,\"totalTokenCount\": 6,\"promptTokensDetails\": [{\"modality\": \"TEXT\",\"tokenCount\":
+        6}]},\"modelVersion\": \"gemini-2.0-flash-lite\"}\r\n\r\ndata: {\"candidates\":
+        [{\"content\": {\"parts\": [{\"text\": \" and relevance of search results.\\n*
+        \  **Education and Learning:** Providing personalized learning experiences
+        and answering complex questions.\\n*   **Business and Productivity:** Streamlining
+        workflows and automating tasks.\\n*   **Healthcare:** Assisting with diagnostics,
+        drug discovery, and other medical applications.\\n\\n**Availability and Access:**\\n\\n*
+        \  \"}],\"role\": \"model\"}}],\"usageMetadata\": {\"promptTokenCount\": 6,\"totalTokenCount\":
+        6,\"promptTokensDetails\": [{\"modality\": \"TEXT\",\"tokenCount\": 6}]},\"modelVersion\":
+        \"gemini-2.0-flash-lite\"}\r\n\r\ndata: {\"candidates\": [{\"content\": {\"parts\":
+        [{\"text\": \"**Gemini Pro:** Generally accessible through various Google
+        services like Search, Bard, and Workspace, depending on the specific features
+        and regional availability.\\n*   **Gemini Ultra:** Primarily available through
+        Google Bard and select enterprise-level applications.\\n*   **Gemini Nano:**
+        Primarily available on supported Android devices.\\n\\n\"}],\"role\": \"model\"}}],\"usageMetadata\":
+        {\"promptTokenCount\": 6,\"totalTokenCount\": 6,\"promptTokensDetails\": [{\"modality\":
+        \"TEXT\",\"tokenCount\": 6}]},\"modelVersion\": \"gemini-2.0-flash-lite\"}\r\n\r\ndata:
+        {\"candidates\": [{\"content\": {\"parts\": [{\"text\": \"**Key Benefits of
+        Gemini:**\\n\\n*   **Enhanced Performance:** Superior performance in comparison
+        to previous Google models, especially in complex reasoning, coding, and multimodality
+        tasks.\\n*   **Versatility:** Able to handle a wide range of tasks and modalities,
+        making it suitable for various applications.\\n*   **Integration\"}],\"role\":
+        \"model\"}}],\"usageMetadata\": {\"promptTokenCount\": 6,\"totalTokenCount\":
+        6,\"promptTokensDetails\": [{\"modality\": \"TEXT\",\"tokenCount\": 6}]},\"modelVersion\":
+        \"gemini-2.0-flash-lite\"}\r\n\r\ndata: {\"candidates\": [{\"content\": {\"parts\":
+        [{\"text\": \":** Seamlessly integrated into Google's services, providing
+        immediate benefits to users.\\n*   **Efficiency:** Different model sizes allow
+        for tailoring the performance to specific needs and resource constraints.\\n\\n**Potential
+        Concerns:**\\n\\n*   **Bias and Fairness:** As with all large language models,
+        there's a potential for Gemini\"}],\"role\": \"model\"}}],\"usageMetadata\":
+        {\"promptTokenCount\": 6,\"totalTokenCount\": 6,\"promptTokensDetails\": [{\"modality\":
+        \"TEXT\",\"tokenCount\": 6}]},\"modelVersion\": \"gemini-2.0-flash-lite\"}\r\n\r\ndata:
+        {\"candidates\": [{\"content\": {\"parts\": [{\"text\": \" to exhibit biases
+        present in its training data, which can impact the output and lead to unfair
+        or discriminatory results. Google is working on mitigating bias.\\n*   **Accuracy
+        and Reliability:** While Gemini is powerful, it's not always perfect. Outputs
+        may contain inaccuracies, hallucinations, or false information. Critical evaluation
+        of results\"}],\"role\": \"model\"}}],\"usageMetadata\": {\"promptTokenCount\":
+        6,\"totalTokenCount\": 6,\"promptTokensDetails\": [{\"modality\": \"TEXT\",\"tokenCount\":
+        6}]},\"modelVersion\": \"gemini-2.0-flash-lite\"}\r\n\r\ndata: {\"candidates\":
+        [{\"content\": {\"parts\": [{\"text\": \" is always advised.\\n*   **Ethical
+        Considerations:** As AI models become more capable, ethical considerations
+        around their use, such as the potential for misuse in generating misinformation,
+        deepfakes, or malicious code, are important.\\n\\n**In Conclusion:**\\n\\nGoogle
+        Gemini is a significant advancement in AI technology. Its ability to\"}],\"role\":
+        \"model\"}}],\"usageMetadata\": {\"promptTokenCount\": 6,\"totalTokenCount\":
+        6,\"promptTokensDetails\": [{\"modality\": \"TEXT\",\"tokenCount\": 6}]},\"modelVersion\":
+        \"gemini-2.0-flash-lite\"}\r\n\r\ndata: {\"candidates\": [{\"content\": {\"parts\":
+        [{\"text\": \" handle multiple modalities and perform complex reasoning tasks
+        makes it a powerful tool with the potential to transform various industries
+        and aspects of life. As the technology continues to evolve, it's important
+        to be aware of both the benefits and the potential challenges associated with
+        its use.\\n\"}],\"role\": \"model\"},\"finishReason\": \"STOP\"}],\"usageMetadata\":
+        {\"promptTokenCount\": 5,\"candidatesTokenCount\": 1097,\"totalTokenCount\":
+        1102,\"promptTokensDetails\": [{\"modality\": \"TEXT\",\"tokenCount\": 5}],\"candidatesTokensDetails\":
+        [{\"modality\": \"TEXT\",\"tokenCount\": 1097}]},\"modelVersion\": \"gemini-2.0-flash-lite\"}\r\n\r\n"
+    headers:
+      Alt-Svc:
+      - h3=":443"; ma=2592000,h3-29=":443"; ma=2592000
+      Content-Disposition:
+      - attachment
+      Content-Type:
+      - text/event-stream
+      Date:
+      - Mon, 21 Apr 2025 16:42:49 GMT
+      Server:
+      - scaffolding on HTTPServer2
+      Server-Timing:
+      - gfet4t7; dur=340
+      Transfer-Encoding:
+      - chunked
+      Vary:
+      - Origin
+      - X-Origin
+      - Referer
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - SAMEORIGIN
+      X-XSS-Protection:
+      - '0'
+    status:
+      code: 200
+      message: OK
+version: 1
