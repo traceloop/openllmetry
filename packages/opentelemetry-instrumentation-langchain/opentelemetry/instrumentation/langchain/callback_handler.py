@@ -163,9 +163,6 @@ def _set_chat_request(
 
 
 def _set_chat_response(span: Span, response: LLMResult) -> None:
-    if not should_send_prompts():
-        return
-
     input_tokens = 0
     output_tokens = 0
     total_tokens = 0
@@ -195,67 +192,68 @@ def _set_chat_response(span: Span, response: LLMResult) -> None:
                     input_token_details = generation.message.usage_metadata.get("input_token_details", {})
                     cache_read_tokens += input_token_details.get("cache_read", 0)
 
-            prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{i}"
-            if hasattr(generation, "text") and generation.text != "":
-                span.set_attribute(
-                    f"{prefix}.content",
-                    generation.text,
-                )
-                span.set_attribute(f"{prefix}.role", "assistant")
-            else:
-                span.set_attribute(
-                    f"{prefix}.role",
-                    _message_type_to_role(generation.type),
-                )
-                if generation.message.content is str:
+            if should_send_prompts():
+                prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{i}"
+                if hasattr(generation, "text") and generation.text != "":
                     span.set_attribute(
                         f"{prefix}.content",
-                        generation.message.content,
+                        generation.text,
                     )
+                    span.set_attribute(f"{prefix}.role", "assistant")
                 else:
                     span.set_attribute(
-                        f"{prefix}.content",
-                        json.dumps(
-                            generation.message.content, cls=CallbackFilteredJSONEncoder
-                        ),
+                        f"{prefix}.role",
+                        _message_type_to_role(generation.type),
                     )
-                if generation.generation_info.get("finish_reason"):
-                    span.set_attribute(
-                        f"{prefix}.finish_reason",
-                        generation.generation_info.get("finish_reason"),
-                    )
-
-                if generation.message.additional_kwargs.get("function_call"):
-                    span.set_attribute(
-                        f"{prefix}.tool_calls.0.name",
-                        generation.message.additional_kwargs.get("function_call").get(
-                            "name"
-                        ),
-                    )
-                    span.set_attribute(
-                        f"{prefix}.tool_calls.0.arguments",
-                        generation.message.additional_kwargs.get("function_call").get(
-                            "arguments"
-                        ),
-                    )
-
-                if generation.message.additional_kwargs.get("tool_calls"):
-                    for idx, tool_call in enumerate(
-                        generation.message.additional_kwargs.get("tool_calls")
-                    ):
-                        tool_call_prefix = f"{prefix}.tool_calls.{idx}"
-
+                    if generation.message.content is str:
                         span.set_attribute(
-                            f"{tool_call_prefix}.id", tool_call.get("id")
+                            f"{prefix}.content",
+                            generation.message.content,
+                        )
+                    else:
+                        span.set_attribute(
+                            f"{prefix}.content",
+                            json.dumps(
+                                generation.message.content, cls=CallbackFilteredJSONEncoder
+                            ),
+                        )
+                    if generation.generation_info.get("finish_reason"):
+                        span.set_attribute(
+                            f"{prefix}.finish_reason",
+                            generation.generation_info.get("finish_reason"),
+                        )
+
+                    if generation.message.additional_kwargs.get("function_call"):
+                        span.set_attribute(
+                            f"{prefix}.tool_calls.0.name",
+                            generation.message.additional_kwargs.get("function_call").get(
+                                "name"
+                            ),
                         )
                         span.set_attribute(
-                            f"{tool_call_prefix}.name",
-                            tool_call.get("function").get("name"),
+                            f"{prefix}.tool_calls.0.arguments",
+                            generation.message.additional_kwargs.get("function_call").get(
+                                "arguments"
+                            ),
                         )
-                        span.set_attribute(
-                            f"{tool_call_prefix}.arguments",
-                            tool_call.get("function").get("arguments"),
-                        )
+
+                    if generation.message.additional_kwargs.get("tool_calls"):
+                        for idx, tool_call in enumerate(
+                            generation.message.additional_kwargs.get("tool_calls")
+                        ):
+                            tool_call_prefix = f"{prefix}.tool_calls.{idx}"
+
+                            span.set_attribute(
+                                f"{tool_call_prefix}.id", tool_call.get("id")
+                            )
+                            span.set_attribute(
+                                f"{tool_call_prefix}.name",
+                                tool_call.get("function").get("name"),
+                            )
+                            span.set_attribute(
+                                f"{tool_call_prefix}.arguments",
+                                tool_call.get("function").get("arguments"),
+                            )
             i += 1
 
     if input_tokens > 0 or output_tokens > 0 or total_tokens > 0 or cache_read_tokens > 0:
