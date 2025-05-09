@@ -251,7 +251,7 @@ class InstrumentedStreamWriter(ObjectProxy):  # type: ignore
                     SpanAttributes.MCP_RESPONSE_VALUE, f"{serialize(request.result)}"
                 )
                 if hasattr(request.result, "isError"):
-                    if request.result.isError == True:
+                    if request.result.isError is True:
                         span.set_status(
                             Status(StatusCode.ERROR, f"{serialize(request.result)}")
                         )
