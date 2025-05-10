@@ -148,6 +148,10 @@ OpenLLMetry can instrument everything that [OpenTelemetry already instruments](h
 - ✅ [LiteLLM](https://docs.litellm.ai/docs/observability/opentelemetry_integration)
 - ✅ [CrewAI](https://docs.crewai.com/introduction)
 
+### Protocol
+
+- ✅ [MCP](https://modelcontextprotocol.io/)
+
 ## 🔎 Telemetry
 
 The SDK provided with OpenLLMetry (not the instrumentations) contains a telemetry feature that collects **anonymous** usage information.
