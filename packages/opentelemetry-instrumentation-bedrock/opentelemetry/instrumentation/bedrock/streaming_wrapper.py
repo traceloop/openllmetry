@@ -1,5 +1,9 @@
 import json
-from opentelemetry.instrumentation.bedrock.utils import dont_throw
+
+from opentelemetry.instrumentation.bedrock.event_handler import ChoiceEvent, emit_event
+from opentelemetry.instrumentation.bedrock.utils import (
+    dont_throw,
+)
 from wrapt import ObjectProxy
 
 
@@ -24,6 +28,7 @@ class StreamingWrapper(ObjectProxy):
                 yield event
             except StopIteration:
                 done = True
+                self._emit_choice_event()
                 if self._stream_done_callback:
                     self._stream_done_callback(self._accumulating_body)
 
@@ -53,6 +58,7 @@ class StreamingWrapper(ObjectProxy):
             )
 
     def _accumulate_events(self, event):
+        print(self._accumulating_body)
         for key in event:
             if key == "contentBlockDelta":
                 delta = event.get(key).get("delta", {}).get("text")
@@ -62,5 +68,23 @@ class StreamingWrapper(ObjectProxy):
                     self._accumulating_body["outputText"] = delta
             elif key in self._accumulating_body:
                 self._accumulating_body[key] += event.get(key)
+            elif key == "messageStop":
+                self._accumulating_body["stop_reason"] = event.get(key).get(
+                    "stopReason"
+                )
             else:
                 self._accumulating_body[key] = event.get(key)
+
+    def _emit_choice_event(self):
+        emit_event(
+            ChoiceEvent(
+                index=0,
+                message={
+                    "content": self._accumulating_body.get("content")
+                    or self._accumulating_body.get("outputText"),
+                    "role": "assistant",
+                },
+                # Sometimes, the value is None, what goes agains the semantic conventions
+                finish_reason=self._accumulating_body.get("stop_reason") or "unknown",
+            )
+        )

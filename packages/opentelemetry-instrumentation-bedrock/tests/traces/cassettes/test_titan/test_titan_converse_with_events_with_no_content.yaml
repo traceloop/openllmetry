@@ -1,0 +1,51 @@
+interactions:
+- request:
+    body: '{"messages": [{"role": "user", "content": [{"guardContent": {"text": {"text":
+      "Tokyo is the capital of Japan 1234561666.", "qualifiers": ["grounding_source"]}}},
+      {"guardContent": {"text": {"text": "What is the capital of Japan?", "qualifiers":
+      ["query"]}}}]}], "guardrailConfig": {"guardrailIdentifier": "5zwrmdlsra2e",
+      "guardrailVersion": "DRAFT", "trace": "enabled"}}'
+    headers:
+      Content-Length:
+      - '369'
+      Content-Type:
+      - !!binary |
+        YXBwbGljYXRpb24vanNvbg==
+      User-Agent:
+      - !!binary |
+        Qm90bzMvMS4zNi41IG1kL0JvdG9jb3JlIzEuMzYuNSB1YS8yLjAgb3MvbWFjb3MjMjQuMy4wIG1k
+        L2FyY2gjYXJtNjQgbGFuZy9weXRob24jMy45LjYgbWQvcHlpbXBsI0NQeXRob24gY2ZnL3JldHJ5
+        LW1vZGUjbGVnYWN5IEJvdG9jb3JlLzEuMzYuNQ==
+      X-Amz-Date:
+      - !!binary |
+        MjAyNTAyMjVUMTQxOTM5Wg==
+      amz-sdk-invocation-id:
+      - !!binary |
+        ZGNjYzljNGYtMDVmMi00NDYzLTgzMGItZTFhMDc4NWY0YzY5
+      amz-sdk-request:
+      - !!binary |
+        YXR0ZW1wdD0x
+    method: POST
+    uri: https://bedrock-runtime.us-east-1.amazonaws.com/model/amazon.titan-text-express-v1/converse
+  response:
+    body:
+      string: "{\"metrics\":{\"latencyMs\":2135},\"output\":{\"message\":{\"content\":[{\"text\":\"{ADDRESS}
+        is the capital of {ADDRESS}.\_Is there anything else you would like to know
+        about {ADDRESS} or {ADDRESS}?\"}],\"role\":\"assistant\"}},\"stopReason\":\"guardrail_intervened\",\"trace\":{\"guardrail\":{\"inputAssessment\":{\"5zwrmdlsra2e\":{\"invocationMetrics\":{\"guardrailCoverage\":{\"textCharacters\":{\"guarded\":0,\"total\":70}},\"guardrailProcessingLatency\":236,\"usage\":{\"contentPolicyUnits\":1,\"contextualGroundingPolicyUnits\":0,\"sensitiveInformationPolicyFreeUnits\":0,\"sensitiveInformationPolicyUnits\":1,\"topicPolicyUnits\":1,\"wordPolicyUnits\":1}}}},\"modelOutput\":[\"{\\\"inputTextTokenCount\\\":28,\\\"results\\\":[{\\\"tokenCount\\\":26,\\\"outputText\\\":\\\"\\\\nBot:
+        Tokyo is the capital of Japan.\_Is there anything else you would like to know
+        about Tokyo or Japan?\\\",\\\"completionReason\\\":\\\"FINISH\\\"}]}\"],\"outputAssessments\":{\"5zwrmdlsra2e\":[{\"contextualGroundingPolicy\":{\"filters\":[{\"action\":\"NONE\",\"score\":0.94,\"threshold\":0.75,\"type\":\"GROUNDING\"},{\"action\":\"NONE\",\"score\":1.0,\"threshold\":0.75,\"type\":\"RELEVANCE\"}]},\"invocationMetrics\":{\"guardrailCoverage\":{\"textCharacters\":{\"guarded\":104,\"total\":104}},\"guardrailProcessingLatency\":354,\"usage\":{\"contentPolicyUnits\":1,\"contextualGroundingPolicyUnits\":1,\"sensitiveInformationPolicyFreeUnits\":1,\"sensitiveInformationPolicyUnits\":1,\"topicPolicyUnits\":1,\"wordPolicyUnits\":1}},\"sensitiveInformationPolicy\":{\"piiEntities\":[{\"action\":\"ANONYMIZED\",\"match\":\"Tokyo\",\"type\":\"ADDRESS\"},{\"action\":\"ANONYMIZED\",\"match\":\"Japan\",\"type\":\"ADDRESS\"},{\"action\":\"ANONYMIZED\",\"match\":\"Tokyo\",\"type\":\"ADDRESS\"},{\"action\":\"ANONYMIZED\",\"match\":\"Japan\",\"type\":\"ADDRESS\"}]}}]}}},\"usage\":{\"inputTokens\":28,\"outputTokens\":26,\"totalTokens\":54}}"
+    headers:
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '1712'
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 25 Feb 2025 14:19:42 GMT
+      x-amzn-RequestId:
+      - 79638e22-3435-4ffb-bd63-a764183e6eb0
+    status:
+      code: 200
+      message: OK
+version: 1
