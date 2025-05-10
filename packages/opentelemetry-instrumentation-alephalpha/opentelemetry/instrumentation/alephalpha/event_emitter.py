@@ -1,8 +1,11 @@
-from dataclasses import dataclass
 from enum import Enum
-from typing import Any, List, Literal, Optional, TypedDict, Union
+from typing import Union
 
 from opentelemetry._events import Event
+from opentelemetry.instrumentation.alephalpha.event_models import (
+    CompletionEvent,
+    PromptEvent,
+)
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
@@ -22,53 +25,7 @@ EVENT_ATTRIBUTES = {GenAIAttributes.GEN_AI_SYSTEM: "alephalpha"}
 """The attributes to be used for the event."""
 
 
-class _FunctionToolCall(TypedDict):
-    function_name: str
-    arguments: Optional[dict[str, Any]]
-
-
-class ToolCall(TypedDict):
-    """Represents a tool call in the AI model."""
-
-    id: str
-    function: _FunctionToolCall
-    type: Literal["function"]
-
-
-class CompletionMessage(TypedDict):
-    """Represents a message in the AI model."""
-
-    content: Any
-    role: str = "assistant"
-
-
-@dataclass
-class MessageEvent:
-    """Represents an input event for the AI model."""
-
-    content: Any
-    role: str = "user"
-    tool_calls: Optional[List[ToolCall]] = None
-
-
-@dataclass
-class ChoiceEvent:
-    """Represents a completion event for the AI model."""
-
-    index: int
-    message: CompletionMessage
-    finish_reason: str = "unknown"
-    tool_calls: Optional[List[ToolCall]] = None
-
-    @property
-    def total_tokens(self) -> Optional[int]:
-        """Returns the total number of tokens used in the event."""
-        if self.input_tokens is None or self.output_tokens is None:
-            return None
-        return self.input_tokens + self.output_tokens
-
-
-def emit_event(event: Union[MessageEvent, ChoiceEvent], event_logger) -> None:
+def emit_event(event: Union[PromptEvent, CompletionEvent], event_logger) -> None:
     from opentelemetry.instrumentation.alephalpha import (
         should_emit_events,
     )
@@ -82,15 +39,15 @@ def emit_event(event: Union[MessageEvent, ChoiceEvent], event_logger) -> None:
     if not should_emit_events():
         return
 
-    if isinstance(event, MessageEvent):
-        _emit_message_event(event, event_logger)
-    elif isinstance(event, ChoiceEvent):
-        _emit_choice_event(event, event_logger)
+    if isinstance(event, PromptEvent):
+        _emit_prompt_event(event, event_logger)
+    elif isinstance(event, CompletionEvent):
+        _emit_completion_event(event, event_logger)
     else:
         raise TypeError("Unsupported event type")
 
 
-def _emit_message_event(event: MessageEvent, event_logger) -> None:
+def _emit_prompt_event(event: PromptEvent, event_logger) -> None:
     from opentelemetry.instrumentation.alephalpha import (
         should_send_prompts,
     )
@@ -125,7 +82,7 @@ def _emit_message_event(event: MessageEvent, event_logger) -> None:
     event_logger.emit(Event(name=name, body=body, attributes=EVENT_ATTRIBUTES))
 
 
-def _emit_choice_event(event: ChoiceEvent, event_logger) -> None:
+def _emit_completion_event(event: CompletionEvent, event_logger) -> None:
     from opentelemetry.instrumentation.alephalpha import (
         should_send_prompts,
     )

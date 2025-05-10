@@ -7,10 +7,14 @@ from typing import Collection, List, Optional, Union
 from opentelemetry import context as context_api
 from opentelemetry._events import EventLogger, get_event_logger
 from opentelemetry.instrumentation.alephalpha.config import Config
-from opentelemetry.instrumentation.alephalpha.event_handler import (
-    ChoiceEvent,
-    MessageEvent,
-    emit_event,
+from opentelemetry.instrumentation.alephalpha.event_emitter import emit_event
+from opentelemetry.instrumentation.alephalpha.event_models import (
+    CompletionEvent,
+    PromptEvent,
+)
+from opentelemetry.instrumentation.alephalpha.span_utils import (
+    set_completion_attributes,
+    set_prompt_attributes,
 )
 from opentelemetry.instrumentation.alephalpha.utils import dont_throw
 from opentelemetry.instrumentation.alephalpha.version import __version__
@@ -60,37 +64,9 @@ def _set_span_attribute(span, name, value):
     return
 
 
-def _set_prompt_attributes(event: MessageEvent, span: Span):
-    if not span.is_recording():
-        return
-
-    if should_send_prompts():
-        _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.0.role", "user")
-        _set_span_attribute(
-            span,
-            f"{SpanAttributes.LLM_PROMPTS}.0.content",
-            event.content[0].get("data"),
-        )
-
-
-def _set_completion_attributes(event: ChoiceEvent, span: Span):
-    if not span.is_recording():
-        return
-
-    if should_send_prompts():
-        _set_span_attribute(
-            span,
-            f"{SpanAttributes.LLM_COMPLETIONS}.0.content",
-            event.message["content"],
-        )
-        _set_span_attribute(
-            span, f"{SpanAttributes.LLM_COMPLETIONS}.0.role", "assistant"
-        )
-
-
 @dont_throw
 def _handle_message_event(
-    event: MessageEvent, span: Span, event_logger: Optional[EventLogger], kwargs
+    event: PromptEvent, span: Span, event_logger: Optional[EventLogger], kwargs
 ):
     if span.is_recording():
         _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, kwargs.get("model"))
@@ -98,10 +74,10 @@ def _handle_message_event(
     if should_emit_events():
         return emit_event(event, event_logger)
     else:
-        return _set_prompt_attributes(event, span)
+        return set_prompt_attributes(event, span)
 
 
-def _handle_response_event(event: ChoiceEvent, span, event_logger, response):
+def _handle_completion_event(event: CompletionEvent, span, event_logger, response):
     if span.is_recording():
         input_tokens = getattr(response, "num_tokens_prompt_total", 0)
         output_tokens = getattr(response, "num_tokens_generated", 0)
@@ -117,7 +93,7 @@ def _handle_response_event(event: ChoiceEvent, span, event_logger, response):
     if should_emit_events():
         emit_event(event, event_logger)
     else:
-        _set_completion_attributes(event, span)
+        set_completion_attributes(event, span)
 
 
 def _with_tracer_wrapper(func):
@@ -139,17 +115,17 @@ def _llm_request_type_by_method(method_name):
         return LLMRequestTypeValues.UNKNOWN
 
 
-def _parse_message_event(args, kwargs) -> MessageEvent:
+def _parse_prompt_event(args, kwargs) -> PromptEvent:
     request = kwargs.get("request") if kwargs.get("request") else args[0]
 
-    return MessageEvent(
+    return PromptEvent(
         content=request.prompt.to_json(),
         role="user",
     )
 
 
-def _parse_response_event(response) -> List[ChoiceEvent]:
-    return ChoiceEvent(
+def _parse_completion_event(response) -> List[CompletionEvent]:
+    return CompletionEvent(
         index=0,
         message={
             "content": response.completions[0].completion,
@@ -185,14 +161,14 @@ def _wrap(
             SpanAttributes.LLM_REQUEST_TYPE: llm_request_type.value,
         },
     )
-    input_event = _parse_message_event(args, kwargs)
+    input_event = _parse_prompt_event(args, kwargs)
     _handle_message_event(input_event, span, event_logger, kwargs)
 
     response = wrapped(*args, **kwargs)
 
     if response:
-        response_event = _parse_response_event(response)
-        _handle_response_event(response_event, span, event_logger, response)
+        response_event = _parse_completion_event(response)
+        _handle_completion_event(response_event, span, event_logger, response)
         if span.is_recording():
             span.set_status(Status(StatusCode.OK))
 
