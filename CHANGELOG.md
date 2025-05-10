@@ -1,3 +1,12 @@
+## v0.40.4 (2025-05-10)
+
+### Fix
+
+- **milvus**: Enhanced Milvus VectorDB Instrumentation for Improved search Monitoring (#2815)
+- **milvus**: Added New Semantic Conventions for Milvus Search (Request for Version Update 0.4.5 -> 0.4.6) (#2883)
+- **MCP**: Added error status to traces in MCP server for tool calls (#2914)
+- **ollama**: pre-imported funcs instrumentation failure (#2871)
+
 ## v0.40.3 (2025-05-07)
 
 ### Fix
