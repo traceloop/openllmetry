@@ -95,7 +95,7 @@ def test_anthropic_thinking_with_events_with_content(
         ],
     }
 
-    response = anthropic_client.messages.create(
+    anthropic_client.messages.create(
         model="claude-3-7-sonnet-20250219",
         max_tokens=2048,
         thinking={
@@ -109,20 +109,6 @@ def test_anthropic_thinking_with_events_with_content(
     anthropic_span = spans[0]
 
     assert anthropic_span.name == "anthropic.chat"
-    assert anthropic_span.attributes["gen_ai.prompt.0.role"] == "user"
-    assert anthropic_span.attributes["gen_ai.prompt.0.content"] == prompt
-
-    assert anthropic_span.attributes["gen_ai.completion.0.role"] == "thinking"
-    assert (
-        anthropic_span.attributes["gen_ai.completion.0.content"]
-        == response.content[0].thinking
-    )
-
-    assert anthropic_span.attributes["gen_ai.completion.1.role"] == "assistant"
-    assert (
-        anthropic_span.attributes["gen_ai.completion.1.content"]
-        == response.content[1].text
-    )
 
     metrics_data = reader.get_metrics_data()
     resource_metrics = metrics_data.resource_metrics
@@ -169,7 +155,7 @@ def test_anthropic_thinking_with_events_with_no_content(
     except Exception:
         pass
 
-    response = anthropic_client.messages.create(
+    anthropic_client.messages.create(
         model="claude-3-7-sonnet-20250219",
         max_tokens=2048,
         thinking={
@@ -193,20 +179,6 @@ def test_anthropic_thinking_with_events_with_no_content(
     anthropic_span = spans[0]
 
     assert anthropic_span.name == "anthropic.chat"
-    assert anthropic_span.attributes["gen_ai.prompt.0.role"] == "user"
-    assert anthropic_span.attributes["gen_ai.prompt.0.content"] == prompt
-
-    assert anthropic_span.attributes["gen_ai.completion.0.role"] == "thinking"
-    assert (
-        anthropic_span.attributes["gen_ai.completion.0.content"]
-        == response.content[0].thinking
-    )
-
-    assert anthropic_span.attributes["gen_ai.completion.1.role"] == "assistant"
-    assert (
-        anthropic_span.attributes["gen_ai.completion.1.content"]
-        == response.content[1].text
-    )
 
     metrics_data = reader.get_metrics_data()
     resource_metrics = metrics_data.resource_metrics
@@ -323,7 +295,7 @@ async def test_async_anthropic_thinking_with_events_with_content(
         ],
     }
 
-    response = await async_anthropic_client.messages.create(
+    await async_anthropic_client.messages.create(
         model="claude-3-7-sonnet-20250219",
         max_tokens=2048,
         thinking={
@@ -337,20 +309,6 @@ async def test_async_anthropic_thinking_with_events_with_content(
     anthropic_span = spans[0]
 
     assert anthropic_span.name == "anthropic.chat"
-    assert anthropic_span.attributes["gen_ai.prompt.0.role"] == "user"
-    assert anthropic_span.attributes["gen_ai.prompt.0.content"] == prompt
-
-    assert anthropic_span.attributes["gen_ai.completion.0.role"] == "thinking"
-    assert (
-        anthropic_span.attributes["gen_ai.completion.0.content"]
-        == response.content[0].thinking
-    )
-
-    assert anthropic_span.attributes["gen_ai.completion.1.role"] == "assistant"
-    assert (
-        anthropic_span.attributes["gen_ai.completion.1.content"]
-        == response.content[1].text
-    )
 
     metrics_data = reader.get_metrics_data()
     resource_metrics = metrics_data.resource_metrics
@@ -402,7 +360,7 @@ async def test_async_anthropic_thinking_with_events_with_no_content(
     except Exception:
         pass
 
-    response = await async_anthropic_client.messages.create(
+    await async_anthropic_client.messages.create(
         model="claude-3-7-sonnet-20250219",
         max_tokens=2048,
         thinking={
@@ -426,20 +384,6 @@ async def test_async_anthropic_thinking_with_events_with_no_content(
     anthropic_span = spans[0]
 
     assert anthropic_span.name == "anthropic.chat"
-    assert anthropic_span.attributes["gen_ai.prompt.0.role"] == "user"
-    assert anthropic_span.attributes["gen_ai.prompt.0.content"] == prompt
-
-    assert anthropic_span.attributes["gen_ai.completion.0.role"] == "thinking"
-    assert (
-        anthropic_span.attributes["gen_ai.completion.0.content"]
-        == response.content[0].thinking
-    )
-
-    assert anthropic_span.attributes["gen_ai.completion.1.role"] == "assistant"
-    assert (
-        anthropic_span.attributes["gen_ai.completion.1.content"]
-        == response.content[1].text
-    )
 
     metrics_data = reader.get_metrics_data()
     resource_metrics = metrics_data.resource_metrics
@@ -586,14 +530,6 @@ def test_anthropic_thinking_streaming_with_events_with_content(
     anthropic_span = spans[0]
 
     assert anthropic_span.name == "anthropic.chat"
-    assert anthropic_span.attributes["gen_ai.prompt.0.role"] == "user"
-    assert anthropic_span.attributes["gen_ai.prompt.0.content"] == prompt
-
-    assert anthropic_span.attributes["gen_ai.completion.0.role"] == "thinking"
-    assert anthropic_span.attributes["gen_ai.completion.0.content"] == thinking
-
-    assert anthropic_span.attributes["gen_ai.completion.1.role"] == "assistant"
-    assert anthropic_span.attributes["gen_ai.completion.1.content"] == text
 
     metrics_data = reader.get_metrics_data()
     resource_metrics = metrics_data.resource_metrics
@@ -682,14 +618,6 @@ def test_anthropic_thinking_streaming_with_events_with_no_content(
     anthropic_span = spans[0]
 
     assert anthropic_span.name == "anthropic.chat"
-    assert anthropic_span.attributes["gen_ai.prompt.0.role"] == "user"
-    assert anthropic_span.attributes["gen_ai.prompt.0.content"] == prompt
-
-    assert anthropic_span.attributes["gen_ai.completion.0.role"] == "thinking"
-    assert anthropic_span.attributes["gen_ai.completion.0.content"] == thinking
-
-    assert anthropic_span.attributes["gen_ai.completion.1.role"] == "assistant"
-    assert anthropic_span.attributes["gen_ai.completion.1.content"] == text
 
     metrics_data = reader.get_metrics_data()
     resource_metrics = metrics_data.resource_metrics
@@ -838,14 +766,6 @@ async def test_async_anthropic_thinking_streaming_with_events_with_content(
     anthropic_span = spans[0]
 
     assert anthropic_span.name == "anthropic.chat"
-    assert anthropic_span.attributes["gen_ai.prompt.0.role"] == "user"
-    assert anthropic_span.attributes["gen_ai.prompt.0.content"] == prompt
-
-    assert anthropic_span.attributes["gen_ai.completion.0.role"] == "thinking"
-    assert anthropic_span.attributes["gen_ai.completion.0.content"] == thinking
-
-    assert anthropic_span.attributes["gen_ai.completion.1.role"] == "assistant"
-    assert anthropic_span.attributes["gen_ai.completion.1.content"] == text
 
     metrics_data = reader.get_metrics_data()
     resource_metrics = metrics_data.resource_metrics
@@ -939,14 +859,6 @@ async def test_async_anthropic_thinking_streaming_with_events_with_no_content(
     anthropic_span = spans[0]
 
     assert anthropic_span.name == "anthropic.chat"
-    assert anthropic_span.attributes["gen_ai.prompt.0.role"] == "user"
-    assert anthropic_span.attributes["gen_ai.prompt.0.content"] == prompt
-
-    assert anthropic_span.attributes["gen_ai.completion.0.role"] == "thinking"
-    assert anthropic_span.attributes["gen_ai.completion.0.content"] == thinking
-
-    assert anthropic_span.attributes["gen_ai.completion.1.role"] == "assistant"
-    assert anthropic_span.attributes["gen_ai.completion.1.content"] == text
 
     metrics_data = reader.get_metrics_data()
     resource_metrics = metrics_data.resource_metrics

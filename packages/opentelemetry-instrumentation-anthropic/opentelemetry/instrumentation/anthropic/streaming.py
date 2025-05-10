@@ -1,10 +1,14 @@
 import logging
 import time
+from typing import Optional
 
+from opentelemetry._events import EventLogger
 from opentelemetry.instrumentation.anthropic.config import Config
-from opentelemetry.instrumentation.anthropic.event_handler import (
-    ChoiceEvent,
-    emit_event,
+from opentelemetry.instrumentation.anthropic.event_emitter import (
+    emit_streaming_response_events,
+)
+from opentelemetry.instrumentation.anthropic.span_utils import (
+    set_streaming_response_attributes,
 )
 from opentelemetry.instrumentation.anthropic.utils import (
     count_prompt_tokens_from_request,
@@ -12,6 +16,7 @@ from opentelemetry.instrumentation.anthropic.utils import (
     error_metrics_attributes,
     set_span_attribute,
     shared_metrics_attributes,
+    should_emit_events,
     should_send_prompts,
 )
 from opentelemetry.metrics import Counter, Histogram
@@ -59,24 +64,6 @@ def _process_response_item(item, complete_response):
                 )
             else:
                 complete_response["usage"] = dict(item.usage)
-
-
-@dont_throw
-def _emit_events_complete_response(complete_response: dict):
-    for message in complete_response.get("events", []):
-        emit_event(
-            ChoiceEvent(
-                index=message.get("index", 0),
-                message={
-                    "content": {
-                        "type": message.get("type"),
-                        "content": message.get("text"),
-                    },
-                    "role": message.get("role", "assistant"),
-                },
-                finish_reason=message.get("finish_reason", "unknown"),
-            )
-        )
 
 
 def _set_token_usage(
@@ -147,22 +134,14 @@ def _set_token_usage(
             )
 
 
-def _set_completions(span, events):
-    if not span.is_recording() or not events:
-        return
-
-    try:
-        for event in events:
-            index = event.get("index")
-            prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{index}"
-            set_span_attribute(
-                span, f"{prefix}.finish_reason", event.get("finish_reason")
-            )
-            role = "thinking" if event.get("type") == "thinking" else "assistant"
-            set_span_attribute(span, f"{prefix}.role", role)
-            set_span_attribute(span, f"{prefix}.content", event.get("text"))
-    except Exception as e:
-        logger.warning("Failed to set completion attributes, error: %s", str(e))
+def _handle_streaming_response(span, event_logger, complete_response):
+    if should_emit_events() and event_logger:
+        emit_streaming_response_events(event_logger, complete_response)
+    else:
+        if not span.is_recording():
+            return
+        if should_send_prompts():
+            set_streaming_response_attributes(span, complete_response.get("events"))
 
 
 @dont_throw
@@ -175,6 +154,7 @@ def build_from_streaming_response(
     choice_counter: Counter = None,
     duration_histogram: Histogram = None,
     exception_counter: Counter = None,
+    event_logger: Optional[EventLogger] = None,
     kwargs: dict = {},
 ):
     complete_response = {"events": [], "model": "", "usage": {}, "id": ""}
@@ -233,13 +213,11 @@ def build_from_streaming_response(
         except Exception as e:
             logger.warning("Failed to set token usage, error: %s", e)
 
-    if should_send_prompts():
-        _set_completions(span, complete_response.get("events"))
+    _handle_streaming_response(span, event_logger, complete_response)
 
-    _emit_events_complete_response(complete_response)
-
-    span.set_status(Status(StatusCode.OK))
-    span.end()
+    if span.is_recording():
+        span.set_status(Status(StatusCode.OK))
+        span.end()
 
 
 @dont_throw
@@ -252,6 +230,7 @@ async def abuild_from_streaming_response(
     choice_counter: Counter = None,
     duration_histogram: Histogram = None,
     exception_counter: Counter = None,
+    event_logger: Optional[EventLogger] = None,
     kwargs: dict = {},
 ):
     complete_response = {"events": [], "model": "", "usage": {}, "id": ""}
@@ -311,10 +290,8 @@ async def abuild_from_streaming_response(
         except Exception as e:
             logger.warning("Failed to set token usage, error: %s", str(e))
 
-    if should_send_prompts():
-        _set_completions(span, complete_response.get("events"))
+    _handle_streaming_response(span, event_logger, complete_response)
 
-    _emit_events_complete_response(complete_response)
-
-    span.set_status(Status(StatusCode.OK))
-    span.end()
+    if span.is_recording():
+        span.set_status(Status(StatusCode.OK))
+        span.end()
