@@ -74,19 +74,6 @@ def test_gemini_generate_content_with_events_with_content(
     # assert all(span.name == "gemini.generate_content" for span in spans)
 
     # gemini_span = spans[0]
-    # assert (
-    #     gemini_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
-    #     == "The opposite of hot is\n"
-    # )
-    # assert gemini_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"] == "user"
-    # assert (
-    #     gemini_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
-    #     == "cold\n"
-    # )
-    # assert (
-    #     gemini_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.role")
-    #     == "assistant"
-    # )
 
     # assert gemini_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 5
     # assert (
@@ -135,19 +122,6 @@ def test_gemini_generate_content_with_events_with_no_content(
     # assert all(span.name == "gemini.generate_content" for span in spans)
 
     # gemini_span = spans[0]
-    # assert (
-    #     gemini_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
-    #     == "The opposite of hot is\n"
-    # )
-    # assert gemini_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"] == "user"
-    # assert (
-    #     gemini_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
-    #     == "cold\n"
-    # )
-    # assert (
-    #     gemini_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.role")
-    #     == "assistant"
-    # )
 
     # assert gemini_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 5
     # assert (

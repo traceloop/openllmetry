@@ -8,7 +8,7 @@ from opentelemetry.instrumentation.google_generativeai import (
     GoogleGenerativeAiInstrumentor,
 )
 from opentelemetry.instrumentation.google_generativeai.utils import (
-    OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT,
+    TRACELOOP_TRACE_CONTENT,
 )
 from opentelemetry.sdk._events import EventLoggerProvider
 from opentelemetry.sdk._logs import LoggerProvider
@@ -72,7 +72,7 @@ def instrument_legacy(tracer_provider):
 
 @pytest.fixture(scope="function")
 def instrument_with_content(tracer_provider, event_logger_provider):
-    os.environ.update({OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT: "True"})
+    os.environ.update({TRACELOOP_TRACE_CONTENT: "True"})
 
     instrumentor = GoogleGenerativeAiInstrumentor(use_legacy_attributes=False)
     instrumentor.instrument(
@@ -82,13 +82,13 @@ def instrument_with_content(tracer_provider, event_logger_provider):
 
     yield instrumentor
 
-    os.environ.pop(OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT, None)
+    os.environ.pop(TRACELOOP_TRACE_CONTENT, None)
     instrumentor.uninstrument()
 
 
 @pytest.fixture(scope="function")
 def instrument_with_no_content(tracer_provider, event_logger_provider):
-    os.environ.update({OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT: "False"})
+    os.environ.update({TRACELOOP_TRACE_CONTENT: "False"})
 
     instrumentor = GoogleGenerativeAiInstrumentor(use_legacy_attributes=False)
     instrumentor.instrument(
@@ -98,7 +98,7 @@ def instrument_with_no_content(tracer_provider, event_logger_provider):
 
     yield instrumentor
 
-    os.environ.pop(OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT, None)
+    os.environ.pop(TRACELOOP_TRACE_CONTENT, None)
     instrumentor.uninstrument()
 
 
