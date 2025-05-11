@@ -2,26 +2,26 @@
 
 import json
 import logging
-import os
 from typing import Collection, Union
 
 from opentelemetry import context as context_api
-from opentelemetry._events import Event, EventLogger, get_event_logger
+from opentelemetry._events import get_event_logger
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.instrumentation.mistralai.config import Config
-from opentelemetry.instrumentation.mistralai.event_handler import (
+from opentelemetry.instrumentation.mistralai.event_emitter import emit_event
+from opentelemetry.instrumentation.mistralai.event_models import (
     ChoiceEvent,
     MessageEvent,
-    emit_event,
 )
-from opentelemetry.instrumentation.mistralai.utils import dont_throw, is_content_enabled
+from opentelemetry.instrumentation.mistralai.utils import (
+    dont_throw,
+    should_emit_events,
+    should_send_prompts,
+)
 from opentelemetry.instrumentation.mistralai.version import __version__
 from opentelemetry.instrumentation.utils import (
     _SUPPRESS_INSTRUMENTATION_KEY,
     unwrap,
-)
-from opentelemetry.semconv._incubating.attributes import (
-    gen_ai_attributes as GenAIAttributes,
 )
 from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
     GEN_AI_RESPONSE_ID,
@@ -66,12 +66,6 @@ WRAPPED_METHODS = [
 ]
 
 
-def should_send_prompts():
-    return (
-        os.getenv("TRACELOOP_TRACE_CONTENT") or "true"
-    ).lower() == "true" or context_api.get_value("override_enable_content_tracing")
-
-
 def _set_span_attribute(span, name, value):
     if value is not None:
         if value != "":
@@ -81,13 +75,8 @@ def _set_span_attribute(span, name, value):
 
 @dont_throw
 def _set_input_attributes(span, llm_request_type, to_wrap, kwargs):
-    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, kwargs.get("model"))
-    _set_span_attribute(
-        span,
-        SpanAttributes.LLM_IS_STREAMING,
-        to_wrap.get("streaming"),
-    )
-
+    if not span.is_recording():
+        return
     if should_send_prompts():
         if llm_request_type == LLMRequestTypeValues.CHAT:
             _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.0.role", "user")
@@ -127,9 +116,20 @@ def _set_input_attributes(span, llm_request_type, to_wrap, kwargs):
 
 
 @dont_throw
+def _set_model_input_attributes(span, to_wrap, kwargs):
+    if not span.is_recording():
+        return
+    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, kwargs.get("model"))
+    _set_span_attribute(
+        span,
+        SpanAttributes.LLM_IS_STREAMING,
+        to_wrap.get("streaming"),
+    )
+
+
+@dont_throw
 def _set_response_attributes(span, llm_request_type, response):
-    _set_span_attribute(span, GEN_AI_RESPONSE_ID, response.id)
-    if llm_request_type == LLMRequestTypeValues.EMBEDDING:
+    if llm_request_type == LLMRequestTypeValues.EMBEDDING or not span.is_recording():
         return
 
     if should_send_prompts():
@@ -154,6 +154,17 @@ def _set_response_attributes(span, llm_request_type, response):
                 f"{prefix}.role",
                 choice.message.role,
             )
+
+
+@dont_throw
+def _set_model_response_attributes(span, llm_request_type, response):
+    if not span.is_recording():
+        return
+
+    _set_span_attribute(span, GEN_AI_RESPONSE_ID, response.id)
+
+    if llm_request_type == LLMRequestTypeValues.EMBEDDING:
+        return
 
     _set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, response.model)
 
@@ -181,7 +192,7 @@ def _set_response_attributes(span, llm_request_type, response):
     )
 
 
-def _accumulate_streaming_response(span, llm_request_type, response):
+def _accumulate_streaming_response(span, event_logger, llm_request_type, response):
     accumulated_response = ChatCompletionResponse(
         id="",
         object="",
@@ -216,14 +227,14 @@ def _accumulate_streaming_response(span, llm_request_type, response):
             accumulated_response.choices[idx].message.content += choice.delta.content
             accumulated_response.choices[idx].message.role = choice.delta.role
 
-    _set_response_attributes(span, llm_request_type, accumulated_response)
-
-    _emit_choice_events(accumulated_response)
+    _handle_response(span, event_logger, llm_request_type, accumulated_response)
 
     span.end()
 
 
-async def _aaccumulate_streaming_response(span, llm_request_type, response):
+async def _aaccumulate_streaming_response(
+    span, event_logger, llm_request_type, response
+):
     accumulated_response = ChatCompletionResponse(
         id="",
         object="",
@@ -258,9 +269,7 @@ async def _aaccumulate_streaming_response(span, llm_request_type, response):
             accumulated_response.choices[idx].message.content += choice.delta.content
             accumulated_response.choices[idx].message.role = choice.delta.role
 
-    _set_response_attributes(span, llm_request_type, accumulated_response)
-
-    _emit_choice_events(accumulated_response)
+    _handle_response(span, event_logger, llm_request_type, accumulated_response)
 
     span.end()
 
@@ -268,9 +277,9 @@ async def _aaccumulate_streaming_response(span, llm_request_type, response):
 def _with_tracer_wrapper(func):
     """Helper for providing tracer for wrapper functions."""
 
-    def _with_tracer(tracer, to_wrap):
+    def _with_tracer(tracer, event_logger, to_wrap):
         def wrapper(wrapped, instance, args, kwargs):
-            return func(tracer, to_wrap, wrapped, instance, args, kwargs)
+            return func(tracer, event_logger, to_wrap, wrapped, instance, args, kwargs)
 
         return wrapper
 
@@ -287,7 +296,7 @@ def _llm_request_type_by_method(method_name):
 
 
 @dont_throw
-def _emit_message_events(method_wrapped: str, args, kwargs):
+def _emit_message_events(method_wrapped: str, args, kwargs, event_logger):
     # Handle chat events
     if method_wrapped == "mistralai.chat":
         messages = args[0] if len(args) > 0 else kwargs.get("messages", [])
@@ -298,19 +307,23 @@ def _emit_message_events(method_wrapped: str, args, kwargs):
             elif isinstance(message, dict):
                 role = message.get("role", "unknown")
                 content = message.get("content")
-            emit_event(MessageEvent(content=content, role=role or "unknown"))
+            emit_event(
+                MessageEvent(content=content, role=role or "unknown"), event_logger
+            )
 
     # Handle embedding events
     elif method_wrapped == "mistralai.embeddings":
         embedding_input = args[0] if len(args) > 0 else kwargs.get("input", [])
         if isinstance(embedding_input, str):
-            emit_event(MessageEvent(content=embedding_input, role="user"))
+            emit_event(MessageEvent(content=embedding_input, role="user"), event_logger)
         elif isinstance(embedding_input, list):
             for prompt in embedding_input:
-                emit_event(MessageEvent(content=prompt, role="user"))
+                emit_event(MessageEvent(content=prompt, role="user"), event_logger)
 
 
-def _emit_choice_events(response: Union[ChatCompletionResponse, EmbeddingResponse]):
+def _emit_choice_events(
+    response: Union[ChatCompletionResponse, EmbeddingResponse], event_logger
+):
     # Handle chat events
     if isinstance(response, ChatCompletionResponse):
         for choice in response.choices:
@@ -322,7 +335,8 @@ def _emit_choice_events(response: Union[ChatCompletionResponse, EmbeddingRespons
                         "role": choice.message.role or "assistant",
                     },
                     finish_reason=choice.finish_reason or "unknown",
-                )
+                ),
+                event_logger,
             )
 
     # Handle embedding events
@@ -336,13 +350,36 @@ def _emit_choice_events(response: Union[ChatCompletionResponse, EmbeddingRespons
                         "role": "assistant",
                     },
                     finish_reason="unknown",
-                )
+                ),
+                event_logger,
             )
+
+
+def _handle_input(span, event_logger, args, kwargs, to_wrap):
+    name = to_wrap.get("span_name")
+    llm_request_type = _llm_request_type_by_method(to_wrap.get("method"))
+
+    _set_model_input_attributes(span, to_wrap, kwargs)
+
+    if should_emit_events() and event_logger:
+        _emit_message_events(name, args, kwargs, event_logger)
+    else:
+        _set_input_attributes(span, llm_request_type, to_wrap, kwargs)
+
+
+def _handle_response(span, event_logger, llm_request_type, response):
+    _set_model_response_attributes(span, llm_request_type, response)
+
+    if should_emit_events() and event_logger:
+        _emit_choice_events(response, event_logger)
+    else:
+        _set_response_attributes(span, llm_request_type, response)
 
 
 @_with_tracer_wrapper
 def _wrap(
     tracer,
+    event_logger,
     to_wrap,
     wrapped,
     instance,
@@ -365,20 +402,20 @@ def _wrap(
             SpanAttributes.LLM_REQUEST_TYPE: llm_request_type.value,
         },
     )
-    if span.is_recording():
-        _set_input_attributes(span, llm_request_type, to_wrap, kwargs)
 
-    _emit_message_events(name, args, kwargs)
+    _handle_input(span, event_logger, args, kwargs, to_wrap)
 
     response = wrapped(*args, **kwargs)
 
     if response:
-        if span.is_recording():
-            if to_wrap.get("streaming"):
-                return _accumulate_streaming_response(span, llm_request_type, response)
+        if to_wrap.get("streaming"):
+            return _accumulate_streaming_response(
+                span, event_logger, llm_request_type, response
+            )
 
-            _set_response_attributes(span, llm_request_type, response)
-            _emit_choice_events(response)
+        _handle_response(span, event_logger, llm_request_type, response)
+
+        if span.is_recording():
             span.set_status(Status(StatusCode.OK))
 
     span.end()
@@ -388,6 +425,7 @@ def _wrap(
 @_with_tracer_wrapper
 async def _awrap(
     tracer,
+    event_logger,
     to_wrap,
     wrapped,
     instance,
@@ -411,10 +449,7 @@ async def _awrap(
         },
     )
 
-    if span.is_recording():
-        _set_input_attributes(span, llm_request_type, to_wrap, kwargs)
-
-    _emit_message_events(name, args, kwargs)
+    _handle_input(span, event_logger, args, kwargs, to_wrap)
 
     if to_wrap.get("streaming"):
         response = wrapped(*args, **kwargs)
@@ -422,12 +457,14 @@ async def _awrap(
         response = await wrapped(*args, **kwargs)
 
     if response:
-        if span.is_recording():
-            if to_wrap.get("streaming"):
-                return _aaccumulate_streaming_response(span, llm_request_type, response)
+        if to_wrap.get("streaming"):
+            return _aaccumulate_streaming_response(
+                span, event_logger, llm_request_type, response
+            )
 
-            _set_response_attributes(span, llm_request_type, response)
-            _emit_choice_events(response)
+        _handle_response(span, event_logger, llm_request_type, response)
+
+        if span.is_recording():
             span.set_status(Status(StatusCode.OK))
 
     span.end()
@@ -449,9 +486,10 @@ class MistralAiInstrumentor(BaseInstrumentor):
         tracer_provider = kwargs.get("tracer_provider")
         tracer = get_tracer(__name__, __version__, tracer_provider)
 
+        event_logger = None
         if not Config.use_legacy_attributes:
             event_logger_provider = kwargs.get("event_logger_provider")
-            Config.event_logger = get_event_logger(
+            event_logger = get_event_logger(
                 __name__, __version__, event_logger_provider=event_logger_provider
             )
 
@@ -460,12 +498,12 @@ class MistralAiInstrumentor(BaseInstrumentor):
             wrap_function_wrapper(
                 "mistralai.client",
                 f"MistralClient.{wrap_method}",
-                _wrap(tracer, wrapped_method),
+                _wrap(tracer, event_logger, wrapped_method),
             )
             wrap_function_wrapper(
                 "mistralai.async_client",
                 f"MistralAsyncClient.{wrap_method}",
-                _awrap(tracer, wrapped_method),
+                _awrap(tracer, event_logger, wrapped_method),
             )
 
     def _uninstrument(self, **kwargs):

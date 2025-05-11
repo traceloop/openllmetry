@@ -67,10 +67,6 @@ def test_mistral_embeddings_with_events_with_content(
         == "mistral-embed"
     )
     assert (
-        mistral_span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.0.content")
-        == "Tell me a joke about OpenTelemetry"
-    )
-    assert (
         mistral_span.attributes.get("gen_ai.response.id")
         == "3fe947e29a95441a94086e11de21bff1"
     )
@@ -112,10 +108,6 @@ def test_mistral_embeddings_with_events_with_no_content(
     assert (
         mistral_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_MODEL}")
         == "mistral-embed"
-    )
-    assert (
-        mistral_span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.0.content")
-        == "Tell me a joke about OpenTelemetry"
     )
     assert (
         mistral_span.attributes.get("gen_ai.response.id")
@@ -199,10 +191,6 @@ async def test_mistral_async_embeddings_with_events_with_content(
         == "mistral-embed"
     )
     assert (
-        mistral_span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.0.content")
-        == "Tell me a joke about OpenTelemetry"
-    )
-    assert (
         mistral_span.attributes.get("gen_ai.response.id")
         == "220426da5cd84a8391a0d65738c90dc8"
     )
@@ -258,10 +246,6 @@ async def test_mistral_async_embeddings_with_events_with_no_content(
     assert (
         mistral_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_MODEL}")
         == "mistral-embed"
-    )
-    assert (
-        mistral_span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.0.content")
-        == "Tell me a joke about OpenTelemetry"
     )
     assert (
         mistral_span.attributes.get("gen_ai.response.id")
