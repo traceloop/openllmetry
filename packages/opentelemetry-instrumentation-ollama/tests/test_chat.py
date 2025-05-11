@@ -1,7 +1,9 @@
 from unittest.mock import MagicMock
 
 import pytest
-from opentelemetry.instrumentation.ollama import _set_response_attributes
+from opentelemetry.instrumentation.ollama.span_utils import (
+    set_model_response_attributes,
+)
 from opentelemetry.sdk._logs import LogData
 from opentelemetry.semconv._incubating.attributes import (
     event_attributes as EventAttributes,
@@ -75,14 +77,6 @@ def test_ollama_chat_with_events_with_content(
     assert ollama_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
     assert not ollama_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert ollama_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_MODEL}") == "llama3"
-    assert (
-        ollama_span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.0.content")
-        == "Tell me a joke about OpenTelemetry"
-    )
-    assert (
-        ollama_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
-        == response["message"]["content"]
-    )
     assert ollama_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 17
     assert ollama_span.attributes.get(
         SpanAttributes.LLM_USAGE_TOTAL_TOKENS
@@ -114,7 +108,7 @@ def test_ollama_chat_with_events_with_content(
 def test_ollama_chat_with_events_with_no_content(
     instrument_with_no_content, ollama_client, span_exporter, log_exporter
 ):
-    response = ollama_client.chat(
+    ollama_client.chat(
         model="llama3",
         messages=[
             {
@@ -131,14 +125,6 @@ def test_ollama_chat_with_events_with_no_content(
     assert ollama_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
     assert not ollama_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert ollama_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_MODEL}") == "llama3"
-    assert (
-        ollama_span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.0.content")
-        == "Tell me a joke about OpenTelemetry"
-    )
-    assert (
-        ollama_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
-        == response["message"]["content"]
-    )
     assert ollama_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 17
     assert ollama_span.attributes.get(
         SpanAttributes.LLM_USAGE_TOTAL_TOKENS
@@ -190,7 +176,6 @@ def test_ollama_chat_tool_calls_legacy(
 
     spans = span_exporter.get_finished_spans()
     ollama_span = spans[0]
-
     assert ollama_span.name == "ollama.chat"
     assert ollama_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Ollama"
     assert ollama_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
@@ -258,23 +243,6 @@ def test_ollama_chat_tool_calls_with_events_with_content(
     assert (
         ollama_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_MODEL}") == "llama3.1"
     )
-    assert (
-        f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.0.content"
-        not in ollama_span.attributes
-    )
-    assert (
-        ollama_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.tool_calls.0.name"]
-        == "get_current_weather"
-    )
-    assert (
-        ollama_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.tool_calls.0.arguments"]
-        == '{"location": "San Francisco"}'
-    )
-
-    assert (
-        ollama_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.content"]
-        == "The weather in San Francisco is 70 degrees and sunny."
-    )
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 3
@@ -285,10 +253,12 @@ def test_ollama_chat_tool_calls_with_events_with_content(
         "content": "",
         "tool_calls": [
             {
+                "id": "",
                 "function": {
-                    "name": "get_current_weather",
                     "arguments": {"location": "San Francisco"},
-                }
+                    "name": "get_current_weather",
+                },
+                "type": "function",
             }
         ],
     }
@@ -348,23 +318,6 @@ def test_ollama_chat_tool_calls_with_events_with_no_content(
     assert (
         ollama_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_MODEL}") == "llama3.1"
     )
-    assert (
-        f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.0.content"
-        not in ollama_span.attributes
-    )
-    assert (
-        ollama_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.tool_calls.0.name"]
-        == "get_current_weather"
-    )
-    assert (
-        ollama_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.tool_calls.0.arguments"]
-        == '{"location": "San Francisco"}'
-    )
-
-    assert (
-        ollama_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.content"]
-        == "The weather in San Francisco is 70 degrees and sunny."
-    )
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 3
@@ -374,7 +327,15 @@ def test_ollama_chat_tool_calls_with_events_with_no_content(
     assert_message_in_logs(
         user_message_log,
         "gen_ai.assistant.message",
-        {"tool_calls": [{"function": {"name": "get_current_weather"}}]},
+        {
+            "tool_calls": [
+                {
+                    "id": "",
+                    "function": {"name": "get_current_weather"},
+                    "type": "function",
+                }
+            ]
+        },
     )
 
     # Validate the tool message Event
@@ -462,14 +423,6 @@ def test_ollama_streaming_chat_with_events_with_content(
     assert ollama_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
     assert ollama_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert ollama_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_MODEL}") == "llama3"
-    assert (
-        ollama_span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.0.content")
-        == "Tell me a joke about OpenTelemetry"
-    )
-    assert (
-        ollama_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
-        == response
-    )
     assert ollama_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 17
     assert ollama_span.attributes.get(
         SpanAttributes.LLM_USAGE_TOTAL_TOKENS
@@ -523,14 +476,6 @@ def test_ollama_streaming_chat_with_events_with_no_content(
     assert ollama_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
     assert ollama_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert ollama_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_MODEL}") == "llama3"
-    assert (
-        ollama_span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.0.content")
-        == "Tell me a joke about OpenTelemetry"
-    )
-    assert (
-        ollama_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
-        == response
-    )
     assert ollama_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 17
     assert ollama_span.attributes.get(
         SpanAttributes.LLM_USAGE_TOTAL_TOKENS
@@ -620,14 +565,6 @@ async def test_ollama_async_chat_with_events_with_content(
     assert ollama_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
     assert not ollama_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert ollama_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_MODEL}") == "llama3"
-    assert (
-        ollama_span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.0.content")
-        == "Tell me a joke about OpenTelemetry"
-    )
-    assert (
-        ollama_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
-        == response["message"]["content"]
-    )
     # For some reason, async ollama chat doesn't report prompt token usage back
     # assert ollama_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 17
     assert ollama_span.attributes.get(
@@ -661,7 +598,7 @@ async def test_ollama_async_chat_with_events_with_content(
 async def test_ollama_async_chat_with_events_with_no_content(
     instrument_with_no_content, ollama_client_async, span_exporter, log_exporter
 ):
-    response = await ollama_client_async.chat(
+    await ollama_client_async.chat(
         model="llama3",
         messages=[
             {
@@ -678,14 +615,6 @@ async def test_ollama_async_chat_with_events_with_no_content(
     assert ollama_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
     assert not ollama_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert ollama_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_MODEL}") == "llama3"
-    assert (
-        ollama_span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.0.content")
-        == "Tell me a joke about OpenTelemetry"
-    )
-    assert (
-        ollama_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
-        == response["message"]["content"]
-    )
     # For some reason, async ollama chat doesn't report prompt token usage back
     # assert ollama_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 17
     assert ollama_span.attributes.get(
@@ -785,14 +714,6 @@ async def test_ollama_async_streaming_chat_with_events_with_content(
     assert ollama_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
     assert ollama_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert ollama_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_MODEL}") == "llama3"
-    assert (
-        ollama_span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.0.content")
-        == "Tell me a joke about OpenTelemetry"
-    )
-    assert (
-        ollama_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
-        == response
-    )
     assert ollama_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 17
     assert ollama_span.attributes.get(
         SpanAttributes.LLM_USAGE_TOTAL_TOKENS
@@ -847,14 +768,6 @@ async def test_ollama_async_streaming_chat_with_events_with_no_content(
     assert ollama_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
     assert ollama_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert ollama_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_MODEL}") == "llama3"
-    assert (
-        ollama_span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.0.content")
-        == "Tell me a joke about OpenTelemetry"
-    )
-    assert (
-        ollama_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
-        == response
-    )
     assert ollama_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 17
     assert ollama_span.attributes.get(
         SpanAttributes.LLM_USAGE_TOTAL_TOKENS
@@ -888,7 +801,7 @@ def test_token_histogram_recording():
         "prompt_eval_count": 7,
         "eval_count": 10,
     }
-    _set_response_attributes(span, token_histogram, llm_request_type, response)
+    set_model_response_attributes(span, token_histogram, llm_request_type, response)
     token_histogram.record.assert_any_call(
         7,
         attributes={

@@ -54,10 +54,6 @@ def test_ollama_embeddings_with_events_with_content(
     )
     assert not ollama_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert ollama_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_MODEL}") == "llama3"
-    assert (
-        ollama_span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.0.content")
-        == "Tell me a joke about OpenTelemetry"
-    )
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2
@@ -96,10 +92,6 @@ def test_ollama_embeddings_with_events_with_no_content(
     )
     assert not ollama_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert ollama_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_MODEL}") == "llama3"
-    assert (
-        ollama_span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.0.content")
-        == "Tell me a joke about OpenTelemetry"
-    )
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2
