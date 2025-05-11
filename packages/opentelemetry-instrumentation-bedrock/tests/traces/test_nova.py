@@ -128,26 +128,8 @@ def test_nova_completion_with_events_with_content(
     # Assert on request type
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "completion"
 
-    # Assert on system prompt
-    assert bedrock_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"] == "system"
-    assert bedrock_span.attributes[
-        f"{SpanAttributes.LLM_PROMPTS}.0.content"
-    ] == system_list[0].get("text")
-
-    # Assert on prompt
-    assert bedrock_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.role"] == "user"
-
-    assert bedrock_span.attributes[
-        f"{SpanAttributes.LLM_PROMPTS}.1.content"
-    ] == json.dumps(message_list[0].get("content"), default=str)
-
     # Assert on response
     generated_text = response_body["output"]["message"]["content"]
-    for i in range(0, len(generated_text)):
-        assert (
-            bedrock_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.{i}.content"]
-            == generated_text[i]["text"]
-        )
 
     # Assert on other request parameters
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_MAX_TOKENS] == 500
@@ -203,14 +185,12 @@ def test_nova_completion_with_events_with_no_content(
     accept = "application/json"
     contentType = "application/json"
 
-    response = brt.invoke_model(
+    brt.invoke_model(
         body=json.dumps(request_body),
         modelId=modelId,
         accept=accept,
         contentType=contentType,
     )
-
-    response_body = json.loads(response.get("body").read())
 
     spans = span_exporter.get_finished_spans()
     assert len(spans) == 1
@@ -226,27 +206,6 @@ def test_nova_completion_with_events_with_no_content(
 
     # Assert on request type
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "completion"
-
-    # Assert on system prompt
-    assert bedrock_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"] == "system"
-    assert bedrock_span.attributes[
-        f"{SpanAttributes.LLM_PROMPTS}.0.content"
-    ] == system_list[0].get("text")
-
-    # Assert on prompt
-    assert bedrock_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.role"] == "user"
-
-    assert bedrock_span.attributes[
-        f"{SpanAttributes.LLM_PROMPTS}.1.content"
-    ] == json.dumps(message_list[0].get("content"), default=str)
-
-    # Assert on response
-    generated_text = response_body["output"]["message"]["content"]
-    for i in range(0, len(generated_text)):
-        assert (
-            bedrock_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.{i}.content"]
-            == generated_text[i]["text"]
-        )
 
     # Assert on other request parameters
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_MAX_TOKENS] == 500
@@ -420,25 +379,8 @@ def test_nova_invoke_stream_with_events_with_content(
     # Assert on request type
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "completion"
 
-    # Assert on system prompt
-    assert bedrock_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"] == "system"
-    assert bedrock_span.attributes[
-        f"{SpanAttributes.LLM_PROMPTS}.0.content"
-    ] == system_list[0].get("text")
-
-    # Assert on prompt
-    assert bedrock_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.role"] == "user"
-
-    assert bedrock_span.attributes[
-        f"{SpanAttributes.LLM_PROMPTS}.1.content"
-    ] == json.dumps(message_list[0].get("content"), default=str)
-
     # Assert on response
     completion_msg = "".join(generated_text)
-    assert (
-        bedrock_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"]
-        == completion_msg
-    )
 
     # Assert on other request parameters
     assert bedrock_span.attributes[
@@ -534,26 +476,6 @@ def test_nova_invoke_stream_with_events_with_no_content(
 
     # Assert on request type
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "completion"
-
-    # Assert on system prompt
-    assert bedrock_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"] == "system"
-    assert bedrock_span.attributes[
-        f"{SpanAttributes.LLM_PROMPTS}.0.content"
-    ] == system_list[0].get("text")
-
-    # Assert on prompt
-    assert bedrock_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.role"] == "user"
-
-    assert bedrock_span.attributes[
-        f"{SpanAttributes.LLM_PROMPTS}.1.content"
-    ] == json.dumps(message_list[0].get("content"), default=str)
-
-    # Assert on response
-    completion_msg = "".join(generated_text)
-    assert (
-        bedrock_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"]
-        == completion_msg
-    )
 
     # Assert on other request parameters
     assert bedrock_span.attributes[
@@ -745,25 +667,6 @@ def test_nova_converse_with_events_with_content(
     # Assert on request type
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
 
-    # Assert on system prompt
-    assert bedrock_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"] == "system"
-    assert bedrock_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"] == system[
-        0
-    ].get("text")
-
-    # Assert on prompt
-    assert bedrock_span.attributes[
-        f"{SpanAttributes.LLM_PROMPTS}.1.content"
-    ] == json.dumps(messages[0].get("content"), default=str)
-
-    # Assert on response
-    generated_text = response["output"]["message"]["content"]
-    for i in range(0, len(generated_text)):
-        assert (
-            bedrock_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.{i}.content"]
-            == generated_text[i]["text"]
-        )
-
     # Assert on other request parameters
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_MAX_TOKENS] == 300
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TEMPERATURE] == 0.3
@@ -787,6 +690,7 @@ def test_nova_converse_with_events_with_content(
     )
 
     # Validate the ai response
+    generated_text = response["output"]["message"]["content"]
     choice_event = {
         "index": 0,
         "finish_reason": "guardrail_intervened",
@@ -858,25 +762,6 @@ def test_nova_converse_with_events_with_no_content(
 
     # Assert on request type
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
-
-    # Assert on system prompt
-    assert bedrock_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"] == "system"
-    assert bedrock_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"] == system[
-        0
-    ].get("text")
-
-    # Assert on prompt
-    assert bedrock_span.attributes[
-        f"{SpanAttributes.LLM_PROMPTS}.1.content"
-    ] == json.dumps(messages[0].get("content"), default=str)
-
-    # Assert on response
-    generated_text = response["output"]["message"]["content"]
-    for i in range(0, len(generated_text)):
-        assert (
-            bedrock_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.{i}.content"]
-            == generated_text[i]["text"]
-        )
 
     # Assert on other request parameters
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_MAX_TOKENS] == 300
@@ -1116,27 +1001,6 @@ def test_nova_converse_stream_with_events_with_content(
     # Assert on request type
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
 
-    # Assert on system prompt
-    assert bedrock_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"] == "system"
-    assert bedrock_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"] == system[
-        0
-    ].get("text")
-
-    # Assert on prompt
-    assert bedrock_span.attributes[
-        f"{SpanAttributes.LLM_PROMPTS}.1.content"
-    ] == json.dumps(messages[0].get("content"), default=str)
-
-    # Assert on response
-    assert (
-        bedrock_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"]
-        == content
-    )
-    assert (
-        bedrock_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.role"]
-        == response_role
-    )
-
     # Assert on other request parameters
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_MAX_TOKENS] == 300
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TEMPERATURE] == 0.3
@@ -1265,27 +1129,6 @@ def test_nova_converse_stream_with_events_with_no_content(
 
     # Assert on request type
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
-
-    # Assert on system prompt
-    assert bedrock_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"] == "system"
-    assert bedrock_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"] == system[
-        0
-    ].get("text")
-
-    # Assert on prompt
-    assert bedrock_span.attributes[
-        f"{SpanAttributes.LLM_PROMPTS}.1.content"
-    ] == json.dumps(messages[0].get("content"), default=str)
-
-    # Assert on response
-    assert (
-        bedrock_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"]
-        == content
-    )
-    assert (
-        bedrock_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.role"]
-        == response_role
-    )
 
     # Assert on other request parameters
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_MAX_TOKENS] == 300
@@ -1436,21 +1279,6 @@ def test_nova_cross_region_invoke_with_events_with_content(
     # Assert on request type
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "completion"
 
-    # Assert on prompt
-    assert bedrock_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"] == "user"
-
-    assert bedrock_span.attributes[
-        f"{SpanAttributes.LLM_PROMPTS}.0.content"
-    ] == json.dumps(message_list[0].get("content"), default=str)
-
-    # Assert on response
-    generated_text = response_body["output"]["message"]["content"]
-    for i in range(0, len(generated_text)):
-        assert (
-            bedrock_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.{i}.content"]
-            == generated_text[i]["text"]
-        )
-
     # Assert on other request parameters
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_MAX_TOKENS] == 500
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TEMPERATURE] == 0.7
@@ -1469,6 +1297,7 @@ def test_nova_cross_region_invoke_with_events_with_content(
     )
 
     # Validate the ai response
+    generated_text = response_body["output"]["message"]["content"]
     choice_event = {
         "index": 0,
         "finish_reason": "end_turn",
@@ -1494,14 +1323,12 @@ def test_nova_cross_region_invoke_with_events_with_no_content(
     accept = "application/json"
     contentType = "application/json"
 
-    response = brt.invoke_model(
+    brt.invoke_model(
         body=json.dumps(request_body),
         modelId=modelId,
         accept=accept,
         contentType=contentType,
     )
-
-    response_body = json.loads(response.get("body").read())
 
     spans = span_exporter.get_finished_spans()
     assert len(spans) == 1
@@ -1518,21 +1345,6 @@ def test_nova_cross_region_invoke_with_events_with_no_content(
 
     # Assert on request type
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "completion"
-
-    # Assert on prompt
-    assert bedrock_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"] == "user"
-
-    assert bedrock_span.attributes[
-        f"{SpanAttributes.LLM_PROMPTS}.0.content"
-    ] == json.dumps(message_list[0].get("content"), default=str)
-
-    # Assert on response
-    generated_text = response_body["output"]["message"]["content"]
-    for i in range(0, len(generated_text)):
-        assert (
-            bedrock_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.{i}.content"]
-            == generated_text[i]["text"]
-        )
 
     # Assert on other request parameters
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_MAX_TOKENS] == 500

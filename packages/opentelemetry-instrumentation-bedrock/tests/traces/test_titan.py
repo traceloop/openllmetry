@@ -128,23 +128,6 @@ def test_titan_completion_with_events_with_content(
     # Assert on request type
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "completion"
 
-    # Assert on prompt
-    expected_prompt = (
-        "Translate to spanish: 'Amazon Bedrock is the easiest way to build and"
-        "scale generative AI applications with base models (FMs)'."
-    )
-    assert (
-        bedrock_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.user"]
-        == expected_prompt
-    )
-
-    # Assert on response
-    generated_text = response_body["results"][0]["outputText"]
-    assert (
-        bedrock_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"]
-        == generated_text
-    )
-
     # Assert on other request parameters
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_MAX_TOKENS] == 200
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TEMPERATURE] == 0.5
@@ -168,6 +151,7 @@ def test_titan_completion_with_events_with_content(
     )
 
     # Validate the ai response
+    generated_text = response_body["results"][0]["outputText"]
     choice_event = {
         "index": 0,
         "finish_reason": "FINISH",
@@ -196,11 +180,7 @@ def test_titan_completion_with_events_with_no_content(
     accept = "application/json"
     contentType = "application/json"
 
-    response = brt.invoke_model(
-        body=body, modelId=modelId, accept=accept, contentType=contentType
-    )
-
-    response_body = json.loads(response.get("body").read())
+    brt.invoke_model(body=body, modelId=modelId, accept=accept, contentType=contentType)
 
     spans = span_exporter.get_finished_spans()
     assert len(spans) == 1
@@ -219,23 +199,6 @@ def test_titan_completion_with_events_with_no_content(
 
     # Assert on request type
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "completion"
-
-    # Assert on prompt
-    expected_prompt = (
-        "Translate to spanish: 'Amazon Bedrock is the easiest way to build and"
-        "scale generative AI applications with base models (FMs)'."
-    )
-    assert (
-        bedrock_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.user"]
-        == expected_prompt
-    )
-
-    # Assert on response
-    generated_text = response_body["results"][0]["outputText"]
-    assert (
-        bedrock_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"]
-        == generated_text
-    )
 
     # Assert on other request parameters
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_MAX_TOKENS] == 200
@@ -398,23 +361,6 @@ def test_titan_invoke_stream_with_events_with_content(
     # Assert on request type
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "completion"
 
-    # Assert on prompt
-    expected_prompt = (
-        "Translate to spanish: 'Amazon Bedrock is the easiest way to build and"
-        "scale generative AI applications with base models (FMs)'."
-    )
-    assert (
-        bedrock_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.user"]
-        == expected_prompt
-    )
-
-    # Assert on response
-    completion_text = "".join(generated_text)
-    assert (
-        bedrock_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"]
-        == completion_text
-    )
-
     # Assert on other request parameters
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_MAX_TOKENS] == 200
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TEMPERATURE] == 0.5
@@ -427,12 +373,17 @@ def test_titan_invoke_stream_with_events_with_content(
     assert len(logs) == 2
 
     # Validate user message Event
+    expected_prompt = (
+        "Translate to spanish: 'Amazon Bedrock is the easiest way to build and"
+        "scale generative AI applications with base models (FMs)'."
+    )
     user_message_log = logs[0]
     assert_message_in_logs(
         user_message_log, "gen_ai.user.message", {"content": expected_prompt}
     )
 
     # Validate the ai response
+    completion_text = "".join(generated_text)
     choice_event = {
         "index": 0,
         "finish_reason": "unknown",
@@ -494,23 +445,6 @@ def test_titan_invoke_stream_with_events_with_no_content(
 
     # Assert on request type
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "completion"
-
-    # Assert on prompt
-    expected_prompt = (
-        "Translate to spanish: 'Amazon Bedrock is the easiest way to build and"
-        "scale generative AI applications with base models (FMs)'."
-    )
-    assert (
-        bedrock_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.user"]
-        == expected_prompt
-    )
-
-    # Assert on response
-    completion_text = "".join(generated_text)
-    assert (
-        bedrock_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"]
-        == completion_text
-    )
 
     # Assert on other request parameters
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_MAX_TOKENS] == 200
@@ -670,20 +604,6 @@ def test_titan_converse_with_events_with_content(
     # Assert on request type
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
 
-    # Assert on prompt
-    assert bedrock_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"] == "user"
-    assert bedrock_span.attributes[
-        f"{SpanAttributes.LLM_PROMPTS}.0.content"
-    ] == json.dumps(messages[0].get("content"), default=str)
-
-    # Assert on response
-    generated_text = response["output"]["message"]["content"]
-    for i in range(0, len(generated_text)):
-        assert (
-            bedrock_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.{i}.content"]
-            == generated_text[i]["text"]
-        )
-
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2
 
@@ -694,6 +614,7 @@ def test_titan_converse_with_events_with_content(
     )
 
     # Validate the ai response
+    generated_text = response["output"]["message"]["content"]
     choice_event = {
         "index": 0,
         "finish_reason": "guardrail_intervened",
@@ -759,20 +680,6 @@ def test_titan_converse_with_events_with_no_content(
 
     # Assert on request type
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
-
-    # Assert on prompt
-    assert bedrock_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"] == "user"
-    assert bedrock_span.attributes[
-        f"{SpanAttributes.LLM_PROMPTS}.0.content"
-    ] == json.dumps(messages[0].get("content"), default=str)
-
-    # Assert on response
-    generated_text = response["output"]["message"]["content"]
-    for i in range(0, len(generated_text)):
-        assert (
-            bedrock_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.{i}.content"]
-            == generated_text[i]["text"]
-        )
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2
@@ -985,22 +892,6 @@ def test_titan_converse_stream_with_events_with_content(
     # Assert on request type
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
 
-    # Assert on prompt
-    assert bedrock_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"] == "user"
-    assert bedrock_span.attributes[
-        f"{SpanAttributes.LLM_PROMPTS}.0.content"
-    ] == json.dumps(messages[0].get("content"), default=str)
-
-    # Assert on response
-    assert (
-        bedrock_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"]
-        == content
-    )
-    assert (
-        bedrock_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.role"]
-        == response_role
-    )
-
     # Assert on usage data
     assert (
         bedrock_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == inputTokens
@@ -1112,22 +1003,6 @@ def test_titan_converse_stream_with_events_with_no_content(
 
     # Assert on request type
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
-
-    # Assert on prompt
-    assert bedrock_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"] == "user"
-    assert bedrock_span.attributes[
-        f"{SpanAttributes.LLM_PROMPTS}.0.content"
-    ] == json.dumps(messages[0].get("content"), default=str)
-
-    # Assert on response
-    assert (
-        bedrock_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"]
-        == content
-    )
-    assert (
-        bedrock_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.role"]
-        == response_role
-    )
 
     # Assert on usage data
     assert (

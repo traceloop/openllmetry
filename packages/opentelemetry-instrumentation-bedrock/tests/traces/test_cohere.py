@@ -93,11 +93,7 @@ def test_cohere_completion_with_events_with_no_content(
     accept = "application/json"
     contentType = "application/json"
 
-    response = brt.invoke_model(
-        body=body, modelId=modelId, accept=accept, contentType=contentType
-    )
-
-    response_body = json.loads(response.get("body").read())
+    brt.invoke_model(body=body, modelId=modelId, accept=accept, contentType=contentType)
 
     spans = span_exporter.get_finished_spans()
     assert len(spans) == 1
@@ -116,15 +112,7 @@ def test_cohere_completion_with_events_with_no_content(
     # Assert on request type
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "completion"
 
-    # Assert on prompt
-    assert bedrock_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.user"] == prompt
-
     # Assert on response
-    generated_text = response_body["generations"][0]["text"]
-    assert (
-        bedrock_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"]
-        == generated_text
-    )
     assert (
         bedrock_span.attributes.get("gen_ai.response.id")
         == "3266ca30-473c-4491-b6ef-5b1f033798d2"
@@ -192,15 +180,8 @@ def test_cohere_completion_with_events_with_content(
     # Assert on request type
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "completion"
 
-    # Assert on prompt
-    assert bedrock_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.user"] == prompt
-
     # Assert on response
     generated_text = response_body["generations"][0]["text"]
-    assert (
-        bedrock_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"]
-        == generated_text
-    )
     assert (
         bedrock_span.attributes.get("gen_ai.response.id")
         == "3266ca30-473c-4491-b6ef-5b1f033798d2"

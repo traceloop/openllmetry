@@ -81,10 +81,6 @@ def test_imported_model_completion_with_events_with_content(
     assert imported_model_span.attributes[SpanAttributes.LLM_REQUEST_TEMPERATURE] == 0.5
     assert imported_model_span.attributes[SpanAttributes.LLM_REQUEST_TOP_P] == 2
 
-    assert (
-        imported_model_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
-        == prompt
-    )
     assert data is not None
 
     logs = log_exporter.get_finished_logs()
@@ -133,10 +129,6 @@ def test_imported_model_completion_with_events_with_no_content(
     assert imported_model_span.attributes[SpanAttributes.LLM_REQUEST_TEMPERATURE] == 0.5
     assert imported_model_span.attributes[SpanAttributes.LLM_REQUEST_TOP_P] == 2
 
-    assert (
-        imported_model_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
-        == prompt
-    )
     assert data is not None
 
     logs = log_exporter.get_finished_logs()

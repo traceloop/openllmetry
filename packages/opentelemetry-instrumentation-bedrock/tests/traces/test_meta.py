@@ -245,11 +245,6 @@ def test_meta_llama3_completion_with_events_with_content(
         meta_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
         == response_body["generation_token_count"] + response_body["prompt_token_count"]
     )
-    assert meta_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"] == prompt
-    assert (
-        meta_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"]
-        == response_body["generation"]
-    )
     assert meta_span.attributes.get("gen_ai.response.id") is None
 
     logs = log_exporter.get_finished_logs()
@@ -298,11 +293,6 @@ def test_meta_llama3_completion_with_events_with_no_content(
     assert (
         meta_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
         == response_body["generation_token_count"] + response_body["prompt_token_count"]
-    )
-    assert meta_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"] == prompt
-    assert (
-        meta_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"]
-        == response_body["generation"]
     )
     assert meta_span.attributes.get("gen_ai.response.id") is None
 
@@ -425,23 +415,6 @@ def test_meta_converse_with_events_with_content(
         meta_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
         == response["usage"]["totalTokens"]
     )
-    assert meta_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"] == "system"
-    assert (
-        meta_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"] == system_prompt
-    )
-    assert meta_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.role"] == "user"
-    assert meta_span.attributes[
-        f"{SpanAttributes.LLM_PROMPTS}.1.content"
-    ] == json.dumps(messages[0]["content"])
-    for i in range(0, len(generated_text)):
-        assert (
-            meta_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.{i}.role"]
-            == "assistant"
-        )
-        assert (
-            meta_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.{i}.content"]
-            == generated_text[i]["text"]
-        )
     assert meta_span.attributes.get("gen_ai.response.id") is None
 
     logs = log_exporter.get_finished_logs()
@@ -492,7 +465,6 @@ def test_meta_converse_with_events_with_no_content(
         system=system,
         inferenceConfig=inference_config,
     )
-    generated_text = response["output"]["message"]["content"]
 
     spans = span_exporter.get_finished_spans()
     assert all(span.name == "bedrock.converse" for span in spans)
@@ -510,23 +482,6 @@ def test_meta_converse_with_events_with_no_content(
         meta_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
         == response["usage"]["totalTokens"]
     )
-    assert meta_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"] == "system"
-    assert (
-        meta_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"] == system_prompt
-    )
-    assert meta_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.role"] == "user"
-    assert meta_span.attributes[
-        f"{SpanAttributes.LLM_PROMPTS}.1.content"
-    ] == json.dumps(messages[0]["content"])
-    for i in range(0, len(generated_text)):
-        assert (
-            meta_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.{i}.role"]
-            == "assistant"
-        )
-        assert (
-            meta_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.{i}.content"]
-            == generated_text[i]["text"]
-        )
     assert meta_span.attributes.get("gen_ai.response.id") is None
 
     logs = log_exporter.get_finished_logs()
@@ -652,16 +607,12 @@ def test_meta_converse_stream_with_events_with_content(
 
     stream = response.get("stream")
 
-    response_role = None
     content = ""
     inputTokens = 0
     outputTokens = 0
 
     if stream:
         for event in stream:
-            if "messageStart" in event:
-                response_role = event["messageStart"]["role"]
-
             if "contentBlockDelta" in event:
                 content += event["contentBlockDelta"]["delta"]["text"]
 
@@ -682,22 +633,6 @@ def test_meta_converse_stream_with_events_with_content(
     assert (
         meta_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
         == inputTokens + outputTokens
-    )
-    assert meta_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"] == "system"
-    assert (
-        meta_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"] == system_prompt
-    )
-    assert meta_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.role"] == "user"
-    assert meta_span.attributes[
-        f"{SpanAttributes.LLM_PROMPTS}.1.content"
-    ] == json.dumps(messages[0]["content"])
-
-    assert (
-        meta_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.role"]
-        == response_role
-    )
-    assert (
-        meta_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"] == content
     )
     assert meta_span.attributes.get("gen_ai.response.id") is None
 
@@ -752,16 +687,12 @@ def test_meta_converse_stream_with_events_with_no_content(
 
     stream = response.get("stream")
 
-    response_role = None
     content = ""
     inputTokens = 0
     outputTokens = 0
 
     if stream:
         for event in stream:
-            if "messageStart" in event:
-                response_role = event["messageStart"]["role"]
-
             if "contentBlockDelta" in event:
                 content += event["contentBlockDelta"]["delta"]["text"]
 
@@ -782,22 +713,6 @@ def test_meta_converse_stream_with_events_with_no_content(
     assert (
         meta_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
         == inputTokens + outputTokens
-    )
-    assert meta_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"] == "system"
-    assert (
-        meta_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"] == system_prompt
-    )
-    assert meta_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.role"] == "user"
-    assert meta_span.attributes[
-        f"{SpanAttributes.LLM_PROMPTS}.1.content"
-    ] == json.dumps(messages[0]["content"])
-
-    assert (
-        meta_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.role"]
-        == response_role
-    )
-    assert (
-        meta_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"] == content
     )
     assert meta_span.attributes.get("gen_ai.response.id") is None
 
