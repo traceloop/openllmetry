@@ -57,11 +57,6 @@ def test_chat_with_events_with_content(
         "groq.chat",
     ]
     groq_span = spans[0]
-    assert (
-        groq_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
-        == "Tell me a joke about opentelemetry"
-    )
-    assert groq_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
     assert groq_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is False
     assert groq_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) > 0
     assert groq_span.attributes.get(SpanAttributes.LLM_USAGE_COMPLETION_TOKENS) > 0
@@ -108,11 +103,6 @@ def test_chat_with_events_with_no_content(
         "groq.chat",
     ]
     groq_span = spans[0]
-    assert (
-        groq_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
-        == "Tell me a joke about opentelemetry"
-    )
-    assert groq_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
     assert groq_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is False
     assert groq_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) > 0
     assert groq_span.attributes.get(SpanAttributes.LLM_USAGE_COMPLETION_TOKENS) > 0
@@ -190,11 +180,6 @@ async def test_async_chat_with_events_with_content(
         "groq.chat",
     ]
     groq_span = spans[0]
-    assert (
-        groq_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
-        == "Tell me a joke about opentelemetry"
-    )
-    assert groq_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
     assert groq_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is False
     assert groq_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) > 0
     assert groq_span.attributes.get(SpanAttributes.LLM_USAGE_COMPLETION_TOKENS) > 0
@@ -242,11 +227,6 @@ async def test_async_chat_with_events_with_no_content(
         "groq.chat",
     ]
     groq_span = spans[0]
-    assert (
-        groq_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
-        == "Tell me a joke about opentelemetry"
-    )
-    assert groq_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
     assert groq_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is False
     assert groq_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) > 0
     assert groq_span.attributes.get(SpanAttributes.LLM_USAGE_COMPLETION_TOKENS) > 0
@@ -333,14 +313,6 @@ def test_chat_streaming_with_events_with_content(
         "groq.chat",
     ]
     groq_span = spans[0]
-    assert (
-        groq_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
-        == "Tell me a joke about opentelemetry"
-    )
-    assert (
-        groq_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
-        == content
-    )
     assert groq_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is True
     assert groq_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 18
     assert groq_span.attributes.get(SpanAttributes.LLM_USAGE_COMPLETION_TOKENS) == 73
@@ -389,14 +361,6 @@ def test_chat_streaming_with_events_with_no_content(
         "groq.chat",
     ]
     groq_span = spans[0]
-    assert (
-        groq_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
-        == "Tell me a joke about opentelemetry"
-    )
-    assert (
-        groq_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
-        == content
-    )
     assert groq_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is True
     assert groq_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 18
     assert groq_span.attributes.get(SpanAttributes.LLM_USAGE_COMPLETION_TOKENS) == 73
