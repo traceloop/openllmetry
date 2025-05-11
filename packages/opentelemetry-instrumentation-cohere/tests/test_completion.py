@@ -53,18 +53,6 @@ def test_cohere_completion_with_events_with_content(
     assert cohere_span.attributes.get(SpanAttributes.LLM_SYSTEM) == "Cohere"
     assert cohere_span.attributes.get(SpanAttributes.LLM_REQUEST_TYPE) == "completion"
     assert cohere_span.attributes.get(SpanAttributes.LLM_REQUEST_MODEL) == "command"
-    assert (
-        cohere_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
-        == res.generations[0].text
-    )
-    assert (
-        cohere_span.attributes.get("gen_ai.response.id")
-        == "64c671fc-c536-41fc-adbd-5f7c81177371"
-    )
-    assert (
-        cohere_span.attributes.get("gen_ai.response.0.id")
-        == "13255d0a-eef8-47fc-91f7-d2607d228fbf"
-    )
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2
@@ -93,18 +81,6 @@ def test_cohere_completion_with_events_with_no_content(
     assert cohere_span.attributes.get(SpanAttributes.LLM_SYSTEM) == "Cohere"
     assert cohere_span.attributes.get(SpanAttributes.LLM_REQUEST_TYPE) == "completion"
     assert cohere_span.attributes.get(SpanAttributes.LLM_REQUEST_MODEL) == "command"
-    assert (
-        cohere_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
-        == res.generations[0].text
-    )
-    assert (
-        cohere_span.attributes.get("gen_ai.response.id")
-        == "64c671fc-c536-41fc-adbd-5f7c81177371"
-    )
-    assert (
-        cohere_span.attributes.get("gen_ai.response.0.id")
-        == "13255d0a-eef8-47fc-91f7-d2607d228fbf"
-    )
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2

@@ -59,24 +59,6 @@ def test_cohere_chat_with_events_with_content(
     assert cohere_span.attributes.get(SpanAttributes.LLM_SYSTEM) == "Cohere"
     assert cohere_span.attributes.get(SpanAttributes.LLM_REQUEST_TYPE) == "chat"
     assert cohere_span.attributes.get(SpanAttributes.LLM_REQUEST_MODEL) == "command"
-    assert (
-        cohere_span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.0.content")
-        == user_message
-    )
-    assert (
-        cohere_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
-        == res.text
-    )
-    assert cohere_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 58
-    assert cohere_span.attributes.get(
-        SpanAttributes.LLM_USAGE_TOTAL_TOKENS
-    ) == cohere_span.attributes.get(
-        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
-    ) + cohere_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS)
-    assert (
-        cohere_span.attributes.get("gen_ai.response.id")
-        == "440f51f4-3e47-44b6-a5d7-5ba33edcfc58"
-    )
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2
@@ -98,7 +80,7 @@ def test_cohere_chat_with_events_with_no_content(
     span_exporter, log_exporter, instrument_with_no_content, cohere_client
 ):
     user_message = "Tell me a joke, pirate style"
-    res = cohere_client.chat(model="command", message=user_message)
+    cohere_client.chat(model="command", message=user_message)
 
     spans = span_exporter.get_finished_spans()
     cohere_span = spans[0]
@@ -106,24 +88,6 @@ def test_cohere_chat_with_events_with_no_content(
     assert cohere_span.attributes.get(SpanAttributes.LLM_SYSTEM) == "Cohere"
     assert cohere_span.attributes.get(SpanAttributes.LLM_REQUEST_TYPE) == "chat"
     assert cohere_span.attributes.get(SpanAttributes.LLM_REQUEST_MODEL) == "command"
-    assert (
-        cohere_span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.0.content")
-        == user_message
-    )
-    assert (
-        cohere_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
-        == res.text
-    )
-    assert cohere_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 58
-    assert cohere_span.attributes.get(
-        SpanAttributes.LLM_USAGE_TOTAL_TOKENS
-    ) == cohere_span.attributes.get(
-        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
-    ) + cohere_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS)
-    assert (
-        cohere_span.attributes.get("gen_ai.response.id")
-        == "440f51f4-3e47-44b6-a5d7-5ba33edcfc58"
-    )
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2

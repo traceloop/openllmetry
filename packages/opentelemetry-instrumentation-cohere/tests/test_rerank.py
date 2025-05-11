@@ -124,44 +124,6 @@ def test_cohere_rerank_with_events_with_content(
         cohere_span.attributes.get(SpanAttributes.LLM_REQUEST_MODEL)
         == "rerank-multilingual-v2.0"
     )
-    assert (
-        cohere_span.attributes.get(
-            f"{SpanAttributes.LLM_PROMPTS}.{len(documents)}.role"
-        )
-        == "user"
-    )
-    assert (
-        cohere_span.attributes.get(
-            f"{SpanAttributes.LLM_PROMPTS}.{len(documents)}.content"
-        )
-        == query
-    )
-
-    for i, doc in enumerate(documents):
-        assert (
-            cohere_span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.{i}.role")
-            == "system"
-        )
-        assert (
-            cohere_span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.{i}.content")
-            == doc
-        )
-
-    for idx, result in enumerate(response.results):
-        assert (
-            cohere_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.{idx}.role")
-            == "assistant"
-        )
-        assert (
-            cohere_span.attributes.get(
-                f"{SpanAttributes.LLM_COMPLETIONS}.{idx}.content"
-            )
-            == f"Doc {result.index}, Score: {result.relevance_score}"
-        )
-    assert (
-        cohere_span.attributes.get("gen_ai.response.id")
-        == "c995b490-c717-411c-8fd0-8bf993cd8382"
-    )
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2
@@ -225,44 +187,6 @@ def test_cohere_rerank_with_events_with_no_content(
     assert (
         cohere_span.attributes.get(SpanAttributes.LLM_REQUEST_MODEL)
         == "rerank-multilingual-v2.0"
-    )
-    assert (
-        cohere_span.attributes.get(
-            f"{SpanAttributes.LLM_PROMPTS}.{len(documents)}.role"
-        )
-        == "user"
-    )
-    assert (
-        cohere_span.attributes.get(
-            f"{SpanAttributes.LLM_PROMPTS}.{len(documents)}.content"
-        )
-        == query
-    )
-
-    for i, doc in enumerate(documents):
-        assert (
-            cohere_span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.{i}.role")
-            == "system"
-        )
-        assert (
-            cohere_span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.{i}.content")
-            == doc
-        )
-
-    for idx, result in enumerate(response.results):
-        assert (
-            cohere_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.{idx}.role")
-            == "assistant"
-        )
-        assert (
-            cohere_span.attributes.get(
-                f"{SpanAttributes.LLM_COMPLETIONS}.{idx}.content"
-            )
-            == f"Doc {result.index}, Score: {result.relevance_score}"
-        )
-    assert (
-        cohere_span.attributes.get("gen_ai.response.id")
-        == "c995b490-c717-411c-8fd0-8bf993cd8382"
     )
 
     logs = log_exporter.get_finished_logs()
