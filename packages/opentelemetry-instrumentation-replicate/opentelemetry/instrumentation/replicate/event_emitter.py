@@ -1,17 +1,22 @@
-from dataclasses import asdict, dataclass
+from dataclasses import asdict
 from enum import Enum
-from typing import Any, List, Literal, Optional, TypedDict, Union
+from typing import Union
 
-from opentelemetry._events import Event
+from opentelemetry._events import Event, EventLogger
+from opentelemetry.instrumentation.replicate.event_models import (
+    ChoiceEvent,
+    MessageEvent,
+)
 from opentelemetry.instrumentation.replicate.utils import (
-    is_content_enabled,
+    dont_throw,
     should_emit_events,
+    should_send_prompts,
 )
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
 
-from .config import Config
+from replicate.prediction import Prediction
 
 
 class Roles(Enum):
@@ -28,64 +33,60 @@ EVENT_ATTRIBUTES = {GenAIAttributes.GEN_AI_SYSTEM: "replicate"}
 """The attributes to be used for the event."""
 
 
-class _FunctionToolCall(TypedDict):
-    function_name: str
-    arguments: Optional[dict[str, Any]]
+@dont_throw
+def emit_choice_events(
+    response: Union[str, list, Prediction], event_logger: Union[EventLogger, None]
+):
+    # Handle replicate.run responses
+    if isinstance(response, list):
+        for i, generation in enumerate(response):
+            emit_event(
+                ChoiceEvent(
+                    index=i, message={"content": generation, "role": "assistant"}
+                ),
+                event_logger,
+            )
+    # Handle replicate.predictions.create responses
+    elif isinstance(response, Prediction):
+        emit_event(
+            ChoiceEvent(
+                index=0, message={"content": response.output, "role": "assistant"}
+            ),
+            event_logger,
+        )
+    # Handle replicate.stream responses built from _build_from_streaming_response
+    elif isinstance(response, str):
+        emit_event(
+            ChoiceEvent(index=0, message={"content": response, "role": "assistant"}),
+            event_logger,
+        )
+    else:
+        logger.error(
+            "It wasn't possible to emit the choice events due to an unsupported response type"
+        )
 
 
-class ToolCall(TypedDict):
-    """Represents a tool call in the AI model."""
-
-    id: str
-    function: _FunctionToolCall
-    type: Literal["function"]
-
-
-class CompletionMessage(TypedDict):
-    """Represents a message in the AI model."""
-
-    content: Any
-    role: str = "assistant"
-
-
-@dataclass
-class MessageEvent:
-    """Represents an input event for the AI model."""
-
-    content: Any
-    role: str = "user"
-    tool_calls: Optional[List[ToolCall]] = None
-
-
-@dataclass
-class ChoiceEvent:
-    """Represents a completion event for the AI model."""
-
-    index: int
-    message: CompletionMessage
-    finish_reason: str = "unknown"
-    tool_calls: Optional[List[ToolCall]] = None
-
-
-def emit_event(event: Union[MessageEvent, ChoiceEvent]) -> None:
+def emit_event(
+    event: Union[MessageEvent, ChoiceEvent], event_logger: Union[EventLogger, None]
+) -> None:
     """
     Emit an event to the OpenTelemetry SDK.
 
     Args:
         event: The event to emit.
     """
-    if not should_emit_events():
+    if not should_emit_events() or event_logger is None:
         return
 
     if isinstance(event, MessageEvent):
-        _emit_message_event(event)
+        _emit_message_event(event, event_logger)
     elif isinstance(event, ChoiceEvent):
-        _emit_choice_event(event)
+        _emit_choice_event(event, event_logger)
     else:
         raise TypeError("Unsupported event type")
 
 
-def _emit_message_event(event: MessageEvent) -> None:
+def _emit_message_event(event: MessageEvent, event_logger: EventLogger) -> None:
     body = asdict(event)
 
     if event.role in VALID_MESSAGE_ROLES:
@@ -103,16 +104,16 @@ def _emit_message_event(event: MessageEvent) -> None:
     elif event.tool_calls is None:
         del body["tool_calls"]
 
-    if not is_content_enabled():
+    if not should_send_prompts():
         del body["content"]
         if body.get("tool_calls") is not None:
             for tool_call in body["tool_calls"]:
                 tool_call["function"].pop("arguments", None)
 
-    Config.event_logger.emit(Event(name=name, body=body, attributes=EVENT_ATTRIBUTES))
+    event_logger.emit(Event(name=name, body=body, attributes=EVENT_ATTRIBUTES))
 
 
-def _emit_choice_event(event: ChoiceEvent) -> None:
+def _emit_choice_event(event: ChoiceEvent, event_logger: EventLogger) -> None:
     body = asdict(event)
     if event.message["role"] == Roles.ASSISTANT.value:
         # According to the semantic conventions, the role is conditionally required if available
@@ -122,12 +123,12 @@ def _emit_choice_event(event: ChoiceEvent) -> None:
     if event.tool_calls is None:
         del body["tool_calls"]
 
-    if not is_content_enabled():
+    if not should_send_prompts():
         body["message"].pop("content", None)
         if body.get("tool_calls") is not None:
             for tool_call in body["tool_calls"]:
                 tool_call["function"].pop("arguments", None)
 
-    Config.event_logger.emit(
+    event_logger.emit(
         Event(name="gen_ai.choice", body=body, attributes=EVENT_ATTRIBUTES)
     )
