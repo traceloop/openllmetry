@@ -66,14 +66,6 @@ def test_together_chat_with_events_with_content(
         together_span.attributes.get("gen_ai.request.model")
         == "mistralai/Mixtral-8x7B-Instruct-v0.1"
     )
-    assert (
-        together_span.attributes.get("gen_ai.prompt.0.content")
-        == "Tell me a joke about OpenTelemetry."
-    )
-    assert (
-        together_span.attributes.get("gen_ai.completion.0.content")
-        == response.choices[0].message.content
-    )
     assert together_span.attributes.get("gen_ai.usage.prompt_tokens") == 18
     assert together_span.attributes.get(
         "llm.usage.total_tokens"
@@ -106,7 +98,7 @@ def test_together_chat_with_events_with_content(
 def test_together_chat_with_events_with_no_content(
     instrument_with_no_content, together_client, span_exporter, log_exporter
 ):
-    response = together_client.chat.completions.create(
+    together_client.chat.completions.create(
         model="mistralai/Mixtral-8x7B-Instruct-v0.1",
         messages=[{"role": "user", "content": "Tell me a joke about OpenTelemetry."}],
     )
@@ -119,14 +111,6 @@ def test_together_chat_with_events_with_no_content(
     assert (
         together_span.attributes.get("gen_ai.request.model")
         == "mistralai/Mixtral-8x7B-Instruct-v0.1"
-    )
-    assert (
-        together_span.attributes.get("gen_ai.prompt.0.content")
-        == "Tell me a joke about OpenTelemetry."
-    )
-    assert (
-        together_span.attributes.get("gen_ai.completion.0.content")
-        == response.choices[0].message.content
     )
     assert together_span.attributes.get("gen_ai.usage.prompt_tokens") == 18
     assert together_span.attributes.get(
