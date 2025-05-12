@@ -5,9 +5,7 @@ import os
 import pytest
 from opentelemetry import metrics
 from opentelemetry.instrumentation.watsonx import WatsonxInstrumentor
-from opentelemetry.instrumentation.watsonx.utils import (
-    OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT,
-)
+from opentelemetry.instrumentation.watsonx.utils import TRACELOOP_TRACE_CONTENT
 from opentelemetry.sdk._events import EventLoggerProvider
 from opentelemetry.sdk._logs import LoggerProvider
 from opentelemetry.sdk._logs.export import (
@@ -59,7 +57,7 @@ def fixture_event_logger_provider(log_exporter):
 
 @pytest.fixture(scope="function")
 def metrics_test_context_with_content(event_logger_provider):
-    os.environ.update({OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT: "True"})
+    os.environ.update({TRACELOOP_TRACE_CONTENT: "True"})
 
     resource = Resource.create()
     reader = InMemoryMetricReader()
@@ -81,12 +79,12 @@ def metrics_test_context_with_content(event_logger_provider):
 
     yield provider, reader
 
-    os.environ.pop(OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT, None)
+    os.environ.pop(TRACELOOP_TRACE_CONTENT, None)
 
 
 @pytest.fixture(scope="function")
 def metrics_test_context_with_no_content(event_logger_provider):
-    os.environ.update({OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT: "False"})
+    os.environ.update({TRACELOOP_TRACE_CONTENT: "False"})
 
     resource = Resource.create()
     reader = InMemoryMetricReader()
@@ -108,7 +106,7 @@ def metrics_test_context_with_no_content(event_logger_provider):
 
     yield provider, reader
 
-    os.environ.pop(OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT, None)
+    os.environ.pop(TRACELOOP_TRACE_CONTENT, None)
 
 
 @pytest.fixture(scope="module")

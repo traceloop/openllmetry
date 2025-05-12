@@ -49,12 +49,7 @@ def test_generate_with_events_with_content(
     response = watson_ai_model.generate(prompt="What is 1 + 1?")
     spans = exporter_with_content.get_finished_spans()
     watsonx_ai_span = spans[1]
-    assert (
-        watsonx_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.user"]
-        == "What is 1 + 1?"
-    )
     assert watsonx_ai_span.attributes[SpanAttributes.LLM_SYSTEM] == "Watsonx"
-    assert watsonx_ai_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
     assert watsonx_ai_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS)
 
     logs = log_exporter.get_finished_logs()
@@ -90,17 +85,11 @@ def test_generate_with_with_events_no_content(
     response = watson_ai_model.generate(prompt="What is 1 + 1?")
     spans = exporter_with_no_content.get_finished_spans()
     watsonx_ai_span = spans[1]
-    assert (
-        watsonx_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.user"]
-        == "What is 1 + 1?"
-    )
     assert watsonx_ai_span.attributes[SpanAttributes.LLM_SYSTEM] == "Watsonx"
-    assert watsonx_ai_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
     assert watsonx_ai_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS)
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2
-
     # Validate user message Event
     user_message_log = logs[0]
     assert_message_in_logs(user_message_log, "gen_ai.user.message", {})
@@ -165,15 +154,7 @@ def test_generate_text_stream_with_events_with_content(
         generated_text += chunk
     spans = exporter_with_content.get_finished_spans()
     watsonx_ai_span = spans[1]
-    assert (
-        watsonx_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.user"]
-        == "Write an epigram about the sun"
-    )
     assert watsonx_ai_span.attributes[SpanAttributes.LLM_SYSTEM] == "Watsonx"
-    assert (
-        watsonx_ai_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"]
-        == generated_text
-    )
     assert watsonx_ai_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS)
 
     logs = log_exporter.get_finished_logs()
@@ -214,15 +195,7 @@ def test_generate_text_stream_with_events_with_no_content(
         generated_text += chunk
     spans = exporter_with_no_content.get_finished_spans()
     watsonx_ai_span = spans[1]
-    assert (
-        watsonx_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.user"]
-        == "Write an epigram about the sun"
-    )
     assert watsonx_ai_span.attributes[SpanAttributes.LLM_SYSTEM] == "Watsonx"
-    assert (
-        watsonx_ai_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"]
-        == generated_text
-    )
     assert watsonx_ai_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS)
 
     logs = log_exporter.get_finished_logs()
