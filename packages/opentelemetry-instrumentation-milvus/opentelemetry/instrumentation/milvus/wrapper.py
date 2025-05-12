@@ -53,13 +53,18 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
             _set_query_attributes(span, kwargs)
         elif to_wrap.get("method") == "create_collection":
             _set_create_collection_attributes(span, kwargs)
+        elif to_wrap.get("method") == "hybrid_search":
+            _set_hybrid_search_attributes(span, kwargs)
 
         return_value = wrapped(*args, **kwargs)
 
         if to_wrap.get("method") == "query":
             _add_query_result_events(span, return_value)
 
-        if to_wrap.get("method") == "search":
+        if (
+            to_wrap.get("method") == "search"
+            or to_wrap.get("method") == "hybrid_search"
+        ):
             _add_search_result_events(span, return_value)
 
     return return_value
@@ -229,6 +234,58 @@ def _set_search_attributes(span, kwargs):
         span,
         AISpanAttributes.MILVUS_SEARCH_QUERY_VECTOR_DIMENSION,
         _encode_include(vector_dims),
+    )
+
+
+@dont_throw
+def _set_hybrid_search_attributes(span, kwargs):
+    _set_span_attribute(
+        span,
+        AISpanAttributes.MILVUS_SEARCH_COLLECTION_NAME,
+        kwargs.get("collection_name"),
+    )
+
+    reqs_info = []
+    for req in kwargs.get("reqs", []):
+        req_info = {
+            "anns_field": req.anns_field,
+            "param": req.param,
+        }
+        reqs_info.append(req_info)
+
+    _set_span_attribute(
+        span,
+        AISpanAttributes.MILVUS_HYBRID_SEARCH_ANNSEARCH_REQUEST,
+        _encode_include(reqs_info),
+    )
+    _set_span_attribute(
+        span,
+        AISpanAttributes.MILVUS_HYBRID_SEARCH_RANKER_TYPE,
+        _encode_include(type(kwargs.get("ranker")).__name__),
+    )
+    _set_span_attribute(span, AISpanAttributes.MILVUS_SEARCH_LIMIT, kwargs.get("limit"))
+    _set_span_attribute(
+        span,
+        AISpanAttributes.MILVUS_SEARCH_DATA_COUNT,
+        count_or_none(kwargs.get("reqs")),
+    )
+    _set_span_attribute(
+        span,
+        AISpanAttributes.MILVUS_SEARCH_OUTPUT_FIELDS_COUNT,
+        count_or_none(kwargs.get("output_fields")),
+    )
+    _set_span_attribute(
+        span, AISpanAttributes.MILVUS_SEARCH_TIMEOUT, kwargs.get("timeout")
+    )
+    _set_span_attribute(
+        span,
+        AISpanAttributes.MILVUS_SEARCH_PARTITION_NAMES_COUNT,
+        count_or_none(kwargs.get("partition_names")),
+    )
+    _set_span_attribute(
+        span,
+        AISpanAttributes.MILVUS_SEARCH_PARTITION_NAMES,
+        _encode_partition_name(kwargs.get("partition_names")),
     )
 
 
