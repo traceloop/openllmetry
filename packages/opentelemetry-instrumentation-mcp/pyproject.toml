@@ -19,7 +19,7 @@ readme = "README.md"
 include = "opentelemetry/instrumentation/mcp"
 
 [tool.poetry.dependencies]
-python = ">=3.10,<4"
+python = ">=3.9,<4"
 opentelemetry-api = "^1.28.0"
 opentelemetry-instrumentation = ">=0.50b0"
 opentelemetry-semantic-conventions = ">=0.50b0"
