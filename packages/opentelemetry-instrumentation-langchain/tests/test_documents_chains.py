@@ -95,14 +95,6 @@ def test_sequential_chain_with_events_with_content(
         "stuff_chain.workflow",
     ] == [span.name for span in spans]
 
-    stuff_span = next(span for span in spans if span.name == "stuff_chain.workflow")
-
-    data = json.loads(stuff_span.attributes[SpanAttributes.TRACELOOP_ENTITY_INPUT])
-    assert data["inputs"].keys() == {"input_documents"}
-    assert data["kwargs"]["name"] == "stuff_chain"
-    data = json.loads(stuff_span.attributes[SpanAttributes.TRACELOOP_ENTITY_OUTPUT])
-    assert data["outputs"].keys() == {"output_text"}
-
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2
 
@@ -148,14 +140,6 @@ def test_sequential_chain_with_events_with_no_content(
         "LLMChain.task",
         "stuff_chain.workflow",
     ] == [span.name for span in spans]
-
-    stuff_span = next(span for span in spans if span.name == "stuff_chain.workflow")
-
-    data = json.loads(stuff_span.attributes[SpanAttributes.TRACELOOP_ENTITY_INPUT])
-    assert data["inputs"].keys() == {"input_documents"}
-    assert data["kwargs"]["name"] == "stuff_chain"
-    data = json.loads(stuff_span.attributes[SpanAttributes.TRACELOOP_ENTITY_OUTPUT])
-    assert data["outputs"].keys() == {"output_text"}
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2

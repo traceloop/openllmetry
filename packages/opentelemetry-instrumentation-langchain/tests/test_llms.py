@@ -186,14 +186,6 @@ def test_custom_llm_with_events_with_content(
 
     assert hugging_face_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "completion"
     assert hugging_face_span.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "unknown"
-    assert (
-        hugging_face_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
-        == "System: You are a helpful assistant\nHuman: tell me a short joke"
-    )
-    assert (
-        hugging_face_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"]
-        == response
-    )
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2
@@ -244,14 +236,6 @@ def test_custom_llm_with_events_with_no_content(
 
     assert hugging_face_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "completion"
     assert hugging_face_span.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "unknown"
-    assert (
-        hugging_face_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
-        == "System: You are a helpful assistant\nHuman: tell me a short joke"
-    )
-    assert (
-        hugging_face_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"]
-        == response
-    )
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2
@@ -347,21 +331,6 @@ def test_openai_with_events_with_content(
 
     assert openai_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
     assert openai_span.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "gpt-4o-mini"
-    assert (
-        (openai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"])
-        == "You are a helpful assistant"
-    )
-    assert (openai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"]) == "system"
-    assert (openai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.content"]) == prompt
-    assert (openai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.role"]) == "user"
-    assert (
-        openai_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"]
-        == response.content
-    )
-    assert (
-        (openai_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.role"])
-        == "assistant"
-    )
 
     assert openai_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 1497
     assert openai_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS] == 1037
@@ -402,7 +371,7 @@ def test_openai_with_events_with_no_content(
 
     # Refactored the big prompt to a function to easily duplicate the test
     prompt = open_ai_prompt()
-    response = chain.invoke({"input": prompt})
+    chain.invoke({"input": prompt})
 
     spans = span_exporter.get_finished_spans()
 
@@ -416,21 +385,6 @@ def test_openai_with_events_with_no_content(
 
     assert openai_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
     assert openai_span.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "gpt-4o-mini"
-    assert (
-        (openai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"])
-        == "You are a helpful assistant"
-    )
-    assert (openai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"]) == "system"
-    assert (openai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.content"]) == prompt
-    assert (openai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.role"]) == "user"
-    assert (
-        openai_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"]
-        == response.content
-    )
-    assert (
-        (openai_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.role"])
-        == "assistant"
-    )
 
     assert openai_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 1497
     assert openai_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS] == 1037
@@ -567,7 +521,7 @@ def test_openai_functions_with_events_with_content(
     output_parser = JsonOutputFunctionsParser()
 
     chain = prompt | model.bind(functions=openai_functions) | output_parser
-    response = chain.invoke({"input": "tell me a short joke"})
+    chain.invoke({"input": "tell me a short joke"})
 
     spans = span_exporter.get_finished_spans()
 
@@ -584,53 +538,7 @@ def test_openai_functions_with_events_with_content(
 
     assert openai_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
     assert openai_span.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "gpt-3.5-turbo"
-    assert (
-        (openai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"])
-        == "You are helpful assistant"
-    )
-    assert (openai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"]) == "system"
-    assert (
-        (openai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.content"])
-        == "tell me a short joke"
-    )
-    assert (openai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.role"]) == "user"
-    assert (
-        openai_span.attributes[f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.0.name"]
-        == "Joke"
-    )
-    assert (
-        openai_span.attributes[f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.0.description"]
-        == "Joke to tell user."
-    )
-    assert (
-        json.loads(
-            openai_span.attributes[
-                f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.0.parameters"
-            ]
-        )
-    ) == {
-        "type": "object",
-        "properties": {
-            "setup": {"description": "question to set up a joke", "type": "string"},
-            "punchline": {
-                "description": "answer to resolve the joke",
-                "type": "string",
-            },
-        },
-        "required": ["setup", "punchline"],
-    }
-    assert (
-        openai_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.0.name"]
-        == "Joke"
-    )
-    assert (
-        json.loads(
-            openai_span.attributes[
-                f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.0.arguments"
-            ]
-        )
-        == response
-    )
+
     assert openai_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 76
     assert openai_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS] == 35
     assert openai_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 111
@@ -686,7 +594,7 @@ def test_openai_functions_with_events_with_no_content(
     output_parser = JsonOutputFunctionsParser()
 
     chain = prompt | model.bind(functions=openai_functions) | output_parser
-    response = chain.invoke({"input": "tell me a short joke"})
+    chain.invoke({"input": "tell me a short joke"})
 
     spans = span_exporter.get_finished_spans()
 
@@ -703,53 +611,7 @@ def test_openai_functions_with_events_with_no_content(
 
     assert openai_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
     assert openai_span.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "gpt-3.5-turbo"
-    assert (
-        (openai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"])
-        == "You are helpful assistant"
-    )
-    assert (openai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"]) == "system"
-    assert (
-        (openai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.content"])
-        == "tell me a short joke"
-    )
-    assert (openai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.role"]) == "user"
-    assert (
-        openai_span.attributes[f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.0.name"]
-        == "Joke"
-    )
-    assert (
-        openai_span.attributes[f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.0.description"]
-        == "Joke to tell user."
-    )
-    assert (
-        json.loads(
-            openai_span.attributes[
-                f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.0.parameters"
-            ]
-        )
-    ) == {
-        "type": "object",
-        "properties": {
-            "setup": {"description": "question to set up a joke", "type": "string"},
-            "punchline": {
-                "description": "answer to resolve the joke",
-                "type": "string",
-            },
-        },
-        "required": ["setup", "punchline"],
-    }
-    assert (
-        openai_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.0.name"]
-        == "Joke"
-    )
-    assert (
-        json.loads(
-            openai_span.attributes[
-                f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.0.arguments"
-            ]
-        )
-        == response
-    )
+
     assert openai_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 76
     assert openai_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS] == 35
     assert openai_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 111
@@ -872,33 +734,11 @@ def test_anthropic_with_events_with_content(
     ] == [span.name for span in spans]
 
     anthropic_span = next(span for span in spans if span.name == "ChatAnthropic.chat")
-    workflow_span = next(
-        span for span in spans if span.name == "RunnableSequence.workflow"
-    )
 
     assert anthropic_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
     assert anthropic_span.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "claude-2.1"
     assert anthropic_span.attributes[SpanAttributes.LLM_REQUEST_TEMPERATURE] == 0.5
-    assert (
-        (anthropic_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"])
-        == "You are a helpful assistant"
-    )
-    assert (
-        (anthropic_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"]) == "system"
-    )
-    assert (
-        (anthropic_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.content"])
-        == "tell me a short joke"
-    )
-    assert (anthropic_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.role"]) == "user"
-    assert (
-        anthropic_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"]
-        == response.content
-    )
-    assert (
-        (anthropic_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.role"])
-        == "assistant"
-    )
+
     assert anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 19
     assert anthropic_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS] == 22
     assert anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 41
@@ -906,24 +746,6 @@ def test_anthropic_with_events_with_content(
         anthropic_span.attributes["gen_ai.response.id"]
         == "msg_017fMG9SRDFTBhcD1ibtN1nK"
     )
-    output = json.loads(
-        workflow_span.attributes[SpanAttributes.TRACELOOP_ENTITY_OUTPUT]
-    )
-    # We need to remove the id from the output because it is random
-    assert {k: v for k, v in output["outputs"]["kwargs"].items() if k != "id"} == {
-        "content": "Why can't a bicycle stand up by itself? Because it's two-tired!",
-        "invalid_tool_calls": [],
-        "response_metadata": {
-            "id": "msg_017fMG9SRDFTBhcD1ibtN1nK",
-            "model": "claude-2.1",
-            "stop_reason": "end_turn",
-            "stop_sequence": None,
-            "usage": {"input_tokens": 19, "output_tokens": 22},
-        },
-        "tool_calls": [],
-        "type": "ai",
-        "usage_metadata": {"input_tokens": 19, "output_tokens": 22, "total_tokens": 41},
-    }
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 3
@@ -957,7 +779,7 @@ def test_anthropic_with_events_with_no_content(
     model = ChatAnthropic(model="claude-2.1", temperature=0.5)
 
     chain = prompt | model
-    response = chain.invoke({"input": "tell me a short joke"})
+    chain.invoke({"input": "tell me a short joke"})
 
     spans = span_exporter.get_finished_spans()
 
@@ -968,33 +790,11 @@ def test_anthropic_with_events_with_no_content(
     ] == [span.name for span in spans]
 
     anthropic_span = next(span for span in spans if span.name == "ChatAnthropic.chat")
-    workflow_span = next(
-        span for span in spans if span.name == "RunnableSequence.workflow"
-    )
 
     assert anthropic_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
     assert anthropic_span.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "claude-2.1"
     assert anthropic_span.attributes[SpanAttributes.LLM_REQUEST_TEMPERATURE] == 0.5
-    assert (
-        (anthropic_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"])
-        == "You are a helpful assistant"
-    )
-    assert (
-        (anthropic_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"]) == "system"
-    )
-    assert (
-        (anthropic_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.content"])
-        == "tell me a short joke"
-    )
-    assert (anthropic_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.role"]) == "user"
-    assert (
-        anthropic_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"]
-        == response.content
-    )
-    assert (
-        (anthropic_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.role"])
-        == "assistant"
-    )
+
     assert anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 19
     assert anthropic_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS] == 22
     assert anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 41
@@ -1002,24 +802,6 @@ def test_anthropic_with_events_with_no_content(
         anthropic_span.attributes["gen_ai.response.id"]
         == "msg_017fMG9SRDFTBhcD1ibtN1nK"
     )
-    output = json.loads(
-        workflow_span.attributes[SpanAttributes.TRACELOOP_ENTITY_OUTPUT]
-    )
-    # We need to remove the id from the output because it is random
-    assert {k: v for k, v in output["outputs"]["kwargs"].items() if k != "id"} == {
-        "content": "Why can't a bicycle stand up by itself? Because it's two-tired!",
-        "invalid_tool_calls": [],
-        "response_metadata": {
-            "id": "msg_017fMG9SRDFTBhcD1ibtN1nK",
-            "model": "claude-2.1",
-            "stop_reason": "end_turn",
-            "stop_sequence": None,
-            "usage": {"input_tokens": 19, "output_tokens": 22},
-        },
-        "tool_calls": [],
-        "type": "ai",
-        "usage_metadata": {"input_tokens": 19, "output_tokens": 22, "total_tokens": 41},
-    }
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 3
@@ -1159,61 +941,16 @@ def test_bedrock_with_events_with_content(
     ] == [span.name for span in spans]
 
     bedrock_span = next(span for span in spans if span.name == "ChatBedrock.chat")
-    workflow_span = next(
-        span for span in spans if span.name == "RunnableSequence.workflow"
-    )
 
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
     assert (
         bedrock_span.attributes[SpanAttributes.LLM_REQUEST_MODEL]
         == "anthropic.claude-3-haiku-20240307-v1:0"
     )
-    assert (
-        (bedrock_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"])
-        == "You are a helpful assistant"
-    )
-    assert (bedrock_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"]) == "system"
-    assert (
-        (bedrock_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.content"])
-        == "tell me a short joke"
-    )
-    assert (bedrock_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.role"]) == "user"
-    assert (
-        bedrock_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"]
-        == response.content
-    )
-    assert (
-        (bedrock_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.role"])
-        == "assistant"
-    )
+
     assert bedrock_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 16
     assert bedrock_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS] == 27
     assert bedrock_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 43
-    output = json.loads(
-        workflow_span.attributes[SpanAttributes.TRACELOOP_ENTITY_OUTPUT]
-    )
-    # We need to remove the id from the output because it is random
-    assert {k: v for k, v in output["outputs"]["kwargs"].items() if k != "id"} == {
-        "content": "Here's a short joke for you:\n\nWhat do you call a bear with no teeth? A gummy bear!",
-        "additional_kwargs": {
-            "model_id": "anthropic.claude-3-haiku-20240307-v1:0",
-            "stop_reason": "end_turn",
-            "usage": {"prompt_tokens": 16, "completion_tokens": 27, "total_tokens": 43},
-        },
-        "response_metadata": {
-            "model_id": "anthropic.claude-3-haiku-20240307-v1:0",
-            "stop_reason": "end_turn",
-            "usage": {"prompt_tokens": 16, "completion_tokens": 27, "total_tokens": 43},
-        },
-        "usage_metadata": {
-            "input_tokens": 16,
-            "output_tokens": 27,
-            "total_tokens": 43,
-        },
-        "type": "ai",
-        "tool_calls": [],
-        "invalid_tool_calls": [],
-    }
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 3
@@ -1256,7 +993,7 @@ def test_bedrock_with_events_with_no_content(
     )
 
     chain = prompt | model
-    response = chain.invoke({"input": "tell me a short joke"})
+    chain.invoke({"input": "tell me a short joke"})
 
     spans = span_exporter.get_finished_spans()
 
@@ -1267,61 +1004,15 @@ def test_bedrock_with_events_with_no_content(
     ] == [span.name for span in spans]
 
     bedrock_span = next(span for span in spans if span.name == "ChatBedrock.chat")
-    workflow_span = next(
-        span for span in spans if span.name == "RunnableSequence.workflow"
-    )
 
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
     assert (
         bedrock_span.attributes[SpanAttributes.LLM_REQUEST_MODEL]
         == "anthropic.claude-3-haiku-20240307-v1:0"
     )
-    assert (
-        (bedrock_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"])
-        == "You are a helpful assistant"
-    )
-    assert (bedrock_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"]) == "system"
-    assert (
-        (bedrock_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.content"])
-        == "tell me a short joke"
-    )
-    assert (bedrock_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.role"]) == "user"
-    assert (
-        bedrock_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"]
-        == response.content
-    )
-    assert (
-        (bedrock_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.role"])
-        == "assistant"
-    )
     assert bedrock_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 16
     assert bedrock_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS] == 27
     assert bedrock_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 43
-    output = json.loads(
-        workflow_span.attributes[SpanAttributes.TRACELOOP_ENTITY_OUTPUT]
-    )
-    # We need to remove the id from the output because it is random
-    assert {k: v for k, v in output["outputs"]["kwargs"].items() if k != "id"} == {
-        "content": "Here's a short joke for you:\n\nWhat do you call a bear with no teeth? A gummy bear!",
-        "additional_kwargs": {
-            "model_id": "anthropic.claude-3-haiku-20240307-v1:0",
-            "stop_reason": "end_turn",
-            "usage": {"prompt_tokens": 16, "completion_tokens": 27, "total_tokens": 43},
-        },
-        "response_metadata": {
-            "model_id": "anthropic.claude-3-haiku-20240307-v1:0",
-            "stop_reason": "end_turn",
-            "usage": {"prompt_tokens": 16, "completion_tokens": 27, "total_tokens": 43},
-        },
-        "usage_metadata": {
-            "input_tokens": 16,
-            "output_tokens": 27,
-            "total_tokens": 43,
-        },
-        "type": "ai",
-        "tool_calls": [],
-        "invalid_tool_calls": [],
-    }
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 3

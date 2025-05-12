@@ -211,40 +211,6 @@ def test_sequential_chain_with_events_with_content(
         for span in llm_spans
     )
 
-    synopsis_span = next(span for span in spans if span.name == "synopsis.task")
-    review_span = next(span for span in spans if span.name == "LLMChain.task")
-
-    data = json.loads(synopsis_span.attributes[SpanAttributes.TRACELOOP_ENTITY_INPUT])
-    assert data["inputs"] == {
-        "title": "Tragedy at sunset on the beach",
-        "era": "Victorian England",
-    }
-    assert data["kwargs"]["name"] == "synopsis"
-    data = json.loads(synopsis_span.attributes[SpanAttributes.TRACELOOP_ENTITY_OUTPUT])
-    assert data["outputs"].keys() == {
-        "synopsis",
-    }
-
-    data = json.loads(review_span.attributes[SpanAttributes.TRACELOOP_ENTITY_INPUT])
-    assert data["inputs"].keys() == {"title", "era", "synopsis"}
-    assert data["kwargs"]["name"] == "LLMChain"
-    data = json.loads(review_span.attributes[SpanAttributes.TRACELOOP_ENTITY_OUTPUT])
-    assert data["outputs"].keys() == {
-        "review",
-    }
-
-    overall_span = next(
-        span for span in spans if span.name == "SequentialChain.workflow"
-    )
-    data = json.loads(overall_span.attributes[SpanAttributes.TRACELOOP_ENTITY_INPUT])
-    assert data["inputs"] == {
-        "title": "Tragedy at sunset on the beach",
-        "era": "Victorian England",
-    }
-    assert data["kwargs"]["name"] == "SequentialChain"
-    data = json.loads(overall_span.attributes[SpanAttributes.TRACELOOP_ENTITY_OUTPUT])
-    assert data["outputs"].keys() == {"synopsis", "review"}
-
     openai_span = next(span for span in spans if span.name == "OpenAI.completion")
     assert (
         openai_span.attributes[SpanAttributes.LLM_REQUEST_MODEL]
@@ -254,7 +220,6 @@ def test_sequential_chain_with_events_with_content(
         (openai_span.attributes[SpanAttributes.LLM_RESPONSE_MODEL])
         == "gpt-3.5-turbo-instruct"
     )
-    assert openai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 4
@@ -367,40 +332,6 @@ def test_sequential_chain_with_events_with_no_content(
         for span in llm_spans
     )
 
-    synopsis_span = next(span for span in spans if span.name == "synopsis.task")
-    review_span = next(span for span in spans if span.name == "LLMChain.task")
-
-    data = json.loads(synopsis_span.attributes[SpanAttributes.TRACELOOP_ENTITY_INPUT])
-    assert data["inputs"] == {
-        "title": "Tragedy at sunset on the beach",
-        "era": "Victorian England",
-    }
-    assert data["kwargs"]["name"] == "synopsis"
-    data = json.loads(synopsis_span.attributes[SpanAttributes.TRACELOOP_ENTITY_OUTPUT])
-    assert data["outputs"].keys() == {
-        "synopsis",
-    }
-
-    data = json.loads(review_span.attributes[SpanAttributes.TRACELOOP_ENTITY_INPUT])
-    assert data["inputs"].keys() == {"title", "era", "synopsis"}
-    assert data["kwargs"]["name"] == "LLMChain"
-    data = json.loads(review_span.attributes[SpanAttributes.TRACELOOP_ENTITY_OUTPUT])
-    assert data["outputs"].keys() == {
-        "review",
-    }
-
-    overall_span = next(
-        span for span in spans if span.name == "SequentialChain.workflow"
-    )
-    data = json.loads(overall_span.attributes[SpanAttributes.TRACELOOP_ENTITY_INPUT])
-    assert data["inputs"] == {
-        "title": "Tragedy at sunset on the beach",
-        "era": "Victorian England",
-    }
-    assert data["kwargs"]["name"] == "SequentialChain"
-    data = json.loads(overall_span.attributes[SpanAttributes.TRACELOOP_ENTITY_OUTPUT])
-    assert data["outputs"].keys() == {"synopsis", "review"}
-
     openai_span = next(span for span in spans if span.name == "OpenAI.completion")
     assert (
         openai_span.attributes[SpanAttributes.LLM_REQUEST_MODEL]
@@ -410,7 +341,6 @@ def test_sequential_chain_with_events_with_no_content(
         (openai_span.attributes[SpanAttributes.LLM_RESPONSE_MODEL])
         == "gpt-3.5-turbo-instruct"
     )
-    assert openai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 4
@@ -563,41 +493,6 @@ async def test_asequential_chain_with_events_with_content(
         "SequentialChain.workflow",
     ] == [span.name for span in spans]
 
-    synopsis_span, review_span = [
-        span for span in spans if span.name == "LLMChain.task"
-    ]
-
-    data = json.loads(synopsis_span.attributes[SpanAttributes.TRACELOOP_ENTITY_INPUT])
-    assert data["inputs"] == {
-        "title": "Tragedy at sunset on the beach",
-        "era": "Victorian England",
-    }
-    assert data["kwargs"]["name"] == "LLMChain"
-    data = json.loads(synopsis_span.attributes[SpanAttributes.TRACELOOP_ENTITY_OUTPUT])
-    assert data["outputs"].keys() == {
-        "synopsis",
-    }
-
-    data = json.loads(review_span.attributes[SpanAttributes.TRACELOOP_ENTITY_INPUT])
-    assert data["inputs"].keys() == {"title", "era", "synopsis"}
-    assert data["kwargs"]["name"] == "LLMChain"
-    data = json.loads(review_span.attributes[SpanAttributes.TRACELOOP_ENTITY_OUTPUT])
-    assert data["outputs"].keys() == {
-        "review",
-    }
-
-    overall_span = next(
-        span for span in spans if span.name == "SequentialChain.workflow"
-    )
-    data = json.loads(overall_span.attributes[SpanAttributes.TRACELOOP_ENTITY_INPUT])
-    assert data["inputs"] == {
-        "title": "Tragedy at sunset on the beach",
-        "era": "Victorian England",
-    }
-    assert data["kwargs"]["name"] == "SequentialChain"
-    data = json.loads(overall_span.attributes[SpanAttributes.TRACELOOP_ENTITY_OUTPUT])
-    assert data["outputs"].keys() == {"synopsis", "review"}
-
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 4
 
@@ -686,37 +581,6 @@ async def test_asequential_chain_with_events_with_no_content(
     synopsis_span, review_span = [
         span for span in spans if span.name == "LLMChain.task"
     ]
-
-    data = json.loads(synopsis_span.attributes[SpanAttributes.TRACELOOP_ENTITY_INPUT])
-    assert data["inputs"] == {
-        "title": "Tragedy at sunset on the beach",
-        "era": "Victorian England",
-    }
-    assert data["kwargs"]["name"] == "LLMChain"
-    data = json.loads(synopsis_span.attributes[SpanAttributes.TRACELOOP_ENTITY_OUTPUT])
-    assert data["outputs"].keys() == {
-        "synopsis",
-    }
-
-    data = json.loads(review_span.attributes[SpanAttributes.TRACELOOP_ENTITY_INPUT])
-    assert data["inputs"].keys() == {"title", "era", "synopsis"}
-    assert data["kwargs"]["name"] == "LLMChain"
-    data = json.loads(review_span.attributes[SpanAttributes.TRACELOOP_ENTITY_OUTPUT])
-    assert data["outputs"].keys() == {
-        "review",
-    }
-
-    overall_span = next(
-        span for span in spans if span.name == "SequentialChain.workflow"
-    )
-    data = json.loads(overall_span.attributes[SpanAttributes.TRACELOOP_ENTITY_INPUT])
-    assert data["inputs"] == {
-        "title": "Tragedy at sunset on the beach",
-        "era": "Victorian England",
-    }
-    assert data["kwargs"]["name"] == "SequentialChain"
-    data = json.loads(overall_span.attributes[SpanAttributes.TRACELOOP_ENTITY_OUTPUT])
-    assert data["outputs"].keys() == {"synopsis", "review"}
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 4

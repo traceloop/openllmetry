@@ -7,9 +7,7 @@ from opentelemetry._events import get_event_logger
 from opentelemetry.instrumentation.bedrock import BedrockInstrumentor
 from opentelemetry.instrumentation.langchain import LangchainInstrumentor
 from opentelemetry.instrumentation.langchain.config import Config
-from opentelemetry.instrumentation.langchain.utils import (
-    OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT,
-)
+from opentelemetry.instrumentation.langchain.utils import TRACELOOP_TRACE_CONTENT
 from opentelemetry.instrumentation.langchain.version import __version__
 from opentelemetry.instrumentation.openai import OpenAIInstrumentor
 from opentelemetry.sdk._events import EventLoggerProvider
@@ -97,7 +95,7 @@ def instrument_legacy(reader, tracer_provider, meter_provider):
 
 @pytest.fixture(scope="function")
 def instrument_with_content(instrument_legacy, event_logger_provider):
-    os.environ.update({OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT: "True"})
+    os.environ.update({TRACELOOP_TRACE_CONTENT: "True"})
 
     Config.use_legacy_attributes = False
     Config.event_logger = get_event_logger(
@@ -109,12 +107,12 @@ def instrument_with_content(instrument_legacy, event_logger_provider):
 
     Config.use_legacy_attributes = True
     Config.event_logger = None
-    os.environ.pop(OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT, None)
+    os.environ.pop(TRACELOOP_TRACE_CONTENT, None)
 
 
 @pytest.fixture(scope="function")
 def instrument_with_no_content(instrument_legacy, event_logger_provider):
-    os.environ.update({OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT: "False"})
+    os.environ.update({TRACELOOP_TRACE_CONTENT: "False"})
 
     Config.use_legacy_attributes = False
     Config.event_logger = get_event_logger(
@@ -126,7 +124,7 @@ def instrument_with_no_content(instrument_legacy, event_logger_provider):
 
     Config.use_legacy_attributes = True
     Config.event_logger = None
-    os.environ.pop(OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT, None)
+    os.environ.pop(TRACELOOP_TRACE_CONTENT, None)
 
 
 @pytest.fixture(autouse=True)

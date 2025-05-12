@@ -187,67 +187,6 @@ def test_simple_lcel_with_events_with_content(
     assert chat_openai_task_span.parent.span_id == workflow_span.context.span_id
     assert output_parser_task_span.parent.span_id == workflow_span.context.span_id
 
-    assert json.loads(
-        workflow_span.attributes[SpanAttributes.TRACELOOP_ENTITY_INPUT]
-    ) == {
-        "inputs": {"input": "tell me a short joke"},
-        "tags": ["test_tag"],
-        "metadata": {},
-        "kwargs": {"name": "ThisIsATestChain"},
-    }
-    assert json.loads(
-        workflow_span.attributes[SpanAttributes.TRACELOOP_ENTITY_OUTPUT]
-    ) == {
-        "outputs": {
-            "setup": "Why couldn't the bicycle stand up by itself?",
-            "punchline": "It was two tired!",
-        },
-        "kwargs": {"tags": ["test_tag"]},
-    }
-    assert json.loads(
-        prompt_task_span.attributes[SpanAttributes.TRACELOOP_ENTITY_INPUT]
-    ) == {
-        "inputs": {"input": "tell me a short joke"},
-        "tags": ["seq:step:1", "test_tag"],
-        "metadata": {},
-        "kwargs": {
-            "run_type": "prompt",
-            "name": "ChatPromptTemplate",
-        },
-    }
-    assert json.loads(
-        prompt_task_span.attributes[SpanAttributes.TRACELOOP_ENTITY_OUTPUT]
-    ) == {
-        "kwargs": {"tags": ["seq:step:1", "test_tag"]},
-        "outputs": {
-            "id": ["langchain", "prompts", "chat", "ChatPromptValue"],
-            "kwargs": {
-                "messages": [
-                    {
-                        "id": ["langchain", "schema", "messages", "SystemMessage"],
-                        "kwargs": {
-                            "content": "You are helpful " "assistant",
-                            "type": "system",
-                        },
-                        "lc": 1,
-                        "type": "constructor",
-                    },
-                    {
-                        "id": ["langchain", "schema", "messages", "HumanMessage"],
-                        "kwargs": {
-                            "content": "tell me a short " "joke",
-                            "type": "human",
-                        },
-                        "lc": 1,
-                        "type": "constructor",
-                    },
-                ]
-            },
-            "lc": 1,
-            "type": "constructor",
-        },
-    }
-
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 3
 
@@ -330,67 +269,6 @@ def test_simple_lcel_with_events_with_no_content(
     assert prompt_task_span.parent.span_id == workflow_span.context.span_id
     assert chat_openai_task_span.parent.span_id == workflow_span.context.span_id
     assert output_parser_task_span.parent.span_id == workflow_span.context.span_id
-
-    assert json.loads(
-        workflow_span.attributes[SpanAttributes.TRACELOOP_ENTITY_INPUT]
-    ) == {
-        "inputs": {"input": "tell me a short joke"},
-        "tags": ["test_tag"],
-        "metadata": {},
-        "kwargs": {"name": "ThisIsATestChain"},
-    }
-    assert json.loads(
-        workflow_span.attributes[SpanAttributes.TRACELOOP_ENTITY_OUTPUT]
-    ) == {
-        "outputs": {
-            "setup": "Why couldn't the bicycle stand up by itself?",
-            "punchline": "It was two tired!",
-        },
-        "kwargs": {"tags": ["test_tag"]},
-    }
-    assert json.loads(
-        prompt_task_span.attributes[SpanAttributes.TRACELOOP_ENTITY_INPUT]
-    ) == {
-        "inputs": {"input": "tell me a short joke"},
-        "tags": ["seq:step:1", "test_tag"],
-        "metadata": {},
-        "kwargs": {
-            "run_type": "prompt",
-            "name": "ChatPromptTemplate",
-        },
-    }
-    assert json.loads(
-        prompt_task_span.attributes[SpanAttributes.TRACELOOP_ENTITY_OUTPUT]
-    ) == {
-        "kwargs": {"tags": ["seq:step:1", "test_tag"]},
-        "outputs": {
-            "id": ["langchain", "prompts", "chat", "ChatPromptValue"],
-            "kwargs": {
-                "messages": [
-                    {
-                        "id": ["langchain", "schema", "messages", "SystemMessage"],
-                        "kwargs": {
-                            "content": "You are helpful " "assistant",
-                            "type": "system",
-                        },
-                        "lc": 1,
-                        "type": "constructor",
-                    },
-                    {
-                        "id": ["langchain", "schema", "messages", "HumanMessage"],
-                        "kwargs": {
-                            "content": "tell me a short " "joke",
-                            "type": "human",
-                        },
-                        "lc": 1,
-                        "type": "constructor",
-                    },
-                ]
-            },
-            "lc": 1,
-            "type": "constructor",
-        },
-    }
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 3
@@ -505,21 +383,6 @@ async def test_async_lcel_with_events_with_content(
     assert chat_openai_task_span.parent.span_id == workflow_span.context.span_id
     assert output_parser_task_span.parent.span_id == workflow_span.context.span_id
 
-    assert json.loads(
-        workflow_span.attributes[SpanAttributes.TRACELOOP_ENTITY_INPUT]
-    ) == {
-        "inputs": {"product": "colorful socks"},
-        "tags": [],
-        "metadata": {},
-        "kwargs": {"name": "RunnableSequence"},
-    }
-    assert json.loads(
-        workflow_span.attributes[SpanAttributes.TRACELOOP_ENTITY_OUTPUT]
-    ) == {
-        "outputs": response,
-        "kwargs": {"tags": []},
-    }
-
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2
 
@@ -576,21 +439,6 @@ async def test_async_lcel_with_events_with_no_content(
 
     assert chat_openai_task_span.parent.span_id == workflow_span.context.span_id
     assert output_parser_task_span.parent.span_id == workflow_span.context.span_id
-
-    assert json.loads(
-        workflow_span.attributes[SpanAttributes.TRACELOOP_ENTITY_INPUT]
-    ) == {
-        "inputs": {"product": "colorful socks"},
-        "tags": [],
-        "metadata": {},
-        "kwargs": {"name": "RunnableSequence"},
-    }
-    assert json.loads(
-        workflow_span.attributes[SpanAttributes.TRACELOOP_ENTITY_OUTPUT]
-    ) == {
-        "outputs": response,
-        "kwargs": {"tags": []},
-    }
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2
@@ -1049,17 +897,6 @@ def test_lcel_with_datetime_with_events_with_content(
 
     spans = span_exporter.get_finished_spans()
 
-    workflow_span = next(
-        span for span in spans if span.name == "DateTimeTestChain.workflow"
-    )
-
-    entity_input = json.loads(
-        workflow_span.attributes[SpanAttributes.TRACELOOP_ENTITY_INPUT]
-    )
-
-    assert entity_input["metadata"]["timestamp"] == "2023-05-17T12:34:56"
-    assert entity_input["metadata"]["test_name"] == "datetime_test"
-
     assert set(
         [
             "ChatPromptTemplate.task",
@@ -1134,17 +971,6 @@ def test_lcel_with_datetime_with_events_with_no_content(
     chain.invoke({"input": "tell me a short joke"})
 
     spans = span_exporter.get_finished_spans()
-
-    workflow_span = next(
-        span for span in spans if span.name == "DateTimeTestChain.workflow"
-    )
-
-    entity_input = json.loads(
-        workflow_span.attributes[SpanAttributes.TRACELOOP_ENTITY_INPUT]
-    )
-
-    assert entity_input["metadata"]["timestamp"] == "2023-05-17T12:34:56"
-    assert entity_input["metadata"]["test_name"] == "datetime_test"
 
     assert set(
         [

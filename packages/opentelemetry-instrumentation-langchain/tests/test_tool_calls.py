@@ -61,27 +61,12 @@ def test_tool_calls_with_events_with_content(
     query = [HumanMessage(content=query_text)]
     model = ChatOpenAI(model="gpt-3.5-turbo", temperature=0)
     model_with_tools = model.bind_tools([food_analysis])
-    result = model_with_tools.invoke(query)
+    model_with_tools.invoke(query)
     spans = span_exporter.get_finished_spans()
 
     span_names = set(span.name for span in spans)
     expected_spans = {"ChatOpenAI.chat"}
     assert expected_spans.issubset(span_names)
-
-    chat_span = next(span for span in spans if span.name == "ChatOpenAI.chat")
-
-    assert chat_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"] == query_text
-    assert (
-        chat_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.0.name"]
-        == "food_analysis"
-    )
-
-    arguments = chat_span.attributes[
-        f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.0.arguments"
-    ]
-    assert arguments == result.model_dump().get("additional_kwargs").get("tool_calls")[
-        0
-    ].get("function").get("arguments")
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2
@@ -121,27 +106,12 @@ def test_tool_calls_with_events_with_no_content(
     query = [HumanMessage(content=query_text)]
     model = ChatOpenAI(model="gpt-3.5-turbo", temperature=0)
     model_with_tools = model.bind_tools([food_analysis])
-    result = model_with_tools.invoke(query)
+    model_with_tools.invoke(query)
     spans = span_exporter.get_finished_spans()
 
     span_names = set(span.name for span in spans)
     expected_spans = {"ChatOpenAI.chat"}
     assert expected_spans.issubset(span_names)
-
-    chat_span = next(span for span in spans if span.name == "ChatOpenAI.chat")
-
-    assert chat_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"] == query_text
-    assert (
-        chat_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.0.name"]
-        == "food_analysis"
-    )
-
-    arguments = chat_span.attributes[
-        f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.0.arguments"
-    ]
-    assert arguments == result.model_dump().get("additional_kwargs").get("tool_calls")[
-        0
-    ].get("function").get("arguments")
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2

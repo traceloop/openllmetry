@@ -13,9 +13,7 @@ from opentelemetry.semconv._incubating.attributes import (
 )
 from pydantic import BaseModel
 
-OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT = (
-    "OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT"
-)
+TRACELOOP_TRACE_CONTENT = "TRACELOOP_TRACE_CONTENT"
 
 EVENT_ATTRIBUTES = {GenAIAttributes.GEN_AI_SYSTEM: "langchain"}
 
@@ -49,7 +47,7 @@ class CallbackFilteredJSONEncoder(json.JSONEncoder):
 
 def should_send_prompts():
     return (
-        os.getenv("TRACELOOP_TRACE_CONTENT") or "true"
+        os.getenv(TRACELOOP_TRACE_CONTENT) or "true"
     ).lower() == "true" or context_api.get_value("override_enable_content_tracing")
 
 
@@ -86,11 +84,3 @@ def should_emit_events() -> bool:
     return not Config.use_legacy_attributes and isinstance(
         Config.event_logger, EventLogger
     )
-
-
-def is_content_enabled() -> bool:
-    capture_content = os.environ.get(
-        OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT, "false"
-    )
-
-    return capture_content.lower() == "true"

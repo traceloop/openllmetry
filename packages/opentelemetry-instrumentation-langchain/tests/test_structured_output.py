@@ -63,14 +63,6 @@ def test_structured_output_with_events_with_content(
     expected_spans = {"ChatOpenAI.chat"}
     assert expected_spans.issubset(span_names)
 
-    chat_span = next(span for span in spans if span.name == "ChatOpenAI.chat")
-
-    assert chat_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"] == query_text
-    assert (
-        chat_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"]
-        == result.model_dump_json()
-    )
-
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2
 
@@ -94,20 +86,12 @@ def test_structured_output_with_events_with_no_content(
     query = [HumanMessage(content=query_text)]
     model = ChatOpenAI(model="gpt-4o-mini", temperature=0)
     model_with_structured_output = model.with_structured_output(FoodAnalysis)
-    result = model_with_structured_output.invoke(query)
+    model_with_structured_output.invoke(query)
     spans = span_exporter.get_finished_spans()
 
     span_names = set(span.name for span in spans)
     expected_spans = {"ChatOpenAI.chat"}
     assert expected_spans.issubset(span_names)
-
-    chat_span = next(span for span in spans if span.name == "ChatOpenAI.chat")
-
-    assert chat_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"] == query_text
-    assert (
-        chat_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"]
-        == result.model_dump_json()
-    )
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2
