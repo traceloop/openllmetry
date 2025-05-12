@@ -35,10 +35,8 @@ def test_langgraph_llm_request(exporter):
         [
             "LangGraph.workflow",
             "__start__.task",
-            "ChannelWrite<...>.task",
-            "ChannelWrite<start:calculate>.task",
             "calculate.task",
-            "openai.chat",
-            "ChannelWrite<...,calculate>.task"
+            "ChannelWrite<calculate,request,result>.task",
+            "openai.chat"
         ]
     ) == set([span.name for span in spans])
