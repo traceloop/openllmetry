@@ -97,17 +97,6 @@ def test_vision_with_events_with_content(
         "openai.chat",
     ]
     open_ai_span = spans[0]
-    assert json.loads(
-        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
-    ) == [
-        {"type": "text", "text": "What is in this image?"},
-        {
-            "type": "image_url",
-            "image_url": {"url": "https://source.unsplash.com/8xznAGy4HcY/800x400"},
-        },
-    ]
-
-    assert open_ai_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
     assert (
         open_ai_span.attributes[SpanAttributes.LLM_OPENAI_API_BASE]
         == "https://api.openai.com/v1/"
@@ -179,17 +168,6 @@ def test_vision_with_events_with_no_content(
         "openai.chat",
     ]
     open_ai_span = spans[0]
-    assert json.loads(
-        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
-    ) == [
-        {"type": "text", "text": "What is in this image?"},
-        {
-            "type": "image_url",
-            "image_url": {"url": "https://source.unsplash.com/8xznAGy4HcY/800x400"},
-        },
-    ]
-
-    assert open_ai_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
     assert (
         open_ai_span.attributes[SpanAttributes.LLM_OPENAI_API_BASE]
         == "https://api.openai.com/v1/"
@@ -315,17 +293,6 @@ def test_vision_base64_with_events_with_content(
         "openai.chat",
     ]
     open_ai_span = spans[0]
-    assert json.loads(
-        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
-    ) == [
-        {"type": "text", "text": "What is in this image?"},
-        {
-            "type": "image_url",
-            "image_url": {"url": "/some/url"},
-        },
-    ]
-
-    assert open_ai_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
     assert (
         open_ai_span.attributes[SpanAttributes.LLM_OPENAI_API_BASE]
         == "https://api.openai.com/v1/"
@@ -405,17 +372,6 @@ def test_vision_base64_with_events_with_no_content(
         "openai.chat",
     ]
     open_ai_span = spans[0]
-    assert json.loads(
-        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
-    ) == [
-        {"type": "text", "text": "What is in this image?"},
-        {
-            "type": "image_url",
-            "image_url": {"url": "/some/url"},
-        },
-    ]
-
-    assert open_ai_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
     assert (
         open_ai_span.attributes[SpanAttributes.LLM_OPENAI_API_BASE]
         == "https://api.openai.com/v1/"

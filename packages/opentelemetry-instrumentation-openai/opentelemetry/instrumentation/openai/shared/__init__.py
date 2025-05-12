@@ -1,10 +1,8 @@
 import json
 import logging
-import os
 import types
 from importlib.metadata import version
 
-from opentelemetry import context as context_api
 from opentelemetry.instrumentation.openai.shared.config import Config
 from opentelemetry.instrumentation.openai.utils import (
     dont_throw,
@@ -30,12 +28,6 @@ _PYDANTIC_VERSION = version("pydantic")
 tiktoken_encodings = {}
 
 logger = logging.getLogger(__name__)
-
-
-def should_send_prompts():
-    return (
-        os.getenv("TRACELOOP_TRACE_CONTENT") or "true"
-    ).lower() == "true" or context_api.get_value("override_enable_content_tracing")
 
 
 def _set_span_attribute(span, name, value):
@@ -207,17 +199,17 @@ def _set_span_stream_usage(span, prompt_tokens, completion_tokens):
     if not span.is_recording():
         return
 
-    if type(completion_tokens) is int and completion_tokens >= 0:
+    if isinstance(completion_tokens, int) and completion_tokens >= 0:
         _set_span_attribute(
             span, SpanAttributes.LLM_USAGE_COMPLETION_TOKENS, completion_tokens
         )
 
-    if type(prompt_tokens) is int and prompt_tokens >= 0:
+    if isinstance(prompt_tokens, int) and prompt_tokens >= 0:
         _set_span_attribute(span, SpanAttributes.LLM_USAGE_PROMPT_TOKENS, prompt_tokens)
 
     if (
-        type(prompt_tokens) is int
-        and type(completion_tokens) is int
+        isinstance(prompt_tokens, int)
+        and isinstance(completion_tokens, int)
         and completion_tokens + prompt_tokens >= 0
     ):
         _set_span_attribute(

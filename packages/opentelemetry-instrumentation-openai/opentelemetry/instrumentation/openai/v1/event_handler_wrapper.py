@@ -1,8 +1,7 @@
 from opentelemetry.instrumentation.openai.shared import _set_span_attribute
-from opentelemetry.instrumentation.openai.shared.event_handler import (
-    ChoiceEvent,
-    emit_event,
-)
+from opentelemetry.instrumentation.openai.shared.event_emitter import emit_event
+from opentelemetry.instrumentation.openai.shared.event_models import ChoiceEvent
+from opentelemetry.instrumentation.openai.utils import should_emit_events
 from opentelemetry.semconv_ai import SpanAttributes
 from typing_extensions import override
 
@@ -111,16 +110,17 @@ class EventHandleWrapper(AssistantEventHandler):
     @override
     def on_text_done(self, text):
         self._original_handler.on_text_done(text)
-        _set_span_attribute(
-            self._span,
-            f"{SpanAttributes.LLM_COMPLETIONS}.{self._current_text_index}.role",
-            "assistant",
-        )
-        _set_span_attribute(
-            self._span,
-            f"{SpanAttributes.LLM_COMPLETIONS}.{self._current_text_index}.content",
-            text.value,
-        )
+        if not should_emit_events():
+            _set_span_attribute(
+                self._span,
+                f"{SpanAttributes.LLM_COMPLETIONS}.{self._current_text_index}.role",
+                "assistant",
+            )
+            _set_span_attribute(
+                self._span,
+                f"{SpanAttributes.LLM_COMPLETIONS}.{self._current_text_index}.content",
+                text.value,
+            )
 
     @override
     def on_image_file_done(self, image_file):

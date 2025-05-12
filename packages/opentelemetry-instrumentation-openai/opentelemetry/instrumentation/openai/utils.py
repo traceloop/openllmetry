@@ -6,6 +6,7 @@ import traceback
 from contextlib import asynccontextmanager
 from importlib.metadata import version
 
+from opentelemetry import context as context_api
 from opentelemetry._events import EventLogger
 from opentelemetry.instrumentation.openai.shared.config import Config
 
@@ -13,9 +14,7 @@ import openai
 
 _OPENAI_VERSION = version("openai")
 
-OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT = (
-    "OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT"
-)
+TRACELOOP_TRACE_CONTENT = "TRACELOOP_TRACE_CONTENT"
 
 
 def is_openai_v1():
@@ -170,12 +169,10 @@ def run_async(method):
         asyncio.run(method)
 
 
-def is_content_enabled() -> bool:
-    capture_content = os.environ.get(
-        OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT, "false"
-    )
-
-    return capture_content.lower() == "true"
+def should_send_prompts():
+    return (
+        os.getenv(TRACELOOP_TRACE_CONTENT) or "true"
+    ).lower() == "true" or context_api.get_value("override_enable_content_tracing")
 
 
 def should_emit_events() -> bool:

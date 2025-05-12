@@ -63,11 +63,6 @@ def test_completion_with_events_with_content(
     ]
     open_ai_span = spans[0]
     assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.user"]
-        == "Tell me a joke about opentelemetry"
-    )
-    assert open_ai_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
-    assert (
         open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)
         == "https://api.openai.com/v1/"
     )
@@ -111,11 +106,6 @@ def test_completion_with_events_with_no_content(
         "openai.completion",
     ]
     open_ai_span = spans[0]
-    assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.user"]
-        == "Tell me a joke about opentelemetry"
-    )
-    assert open_ai_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
     assert (
         open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)
         == "https://api.openai.com/v1/"
@@ -185,11 +175,6 @@ async def test_async_completion_with_events_with_content(
     ]
     open_ai_span = spans[0]
     assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.user"]
-        == "Tell me a joke about opentelemetry"
-    )
-    assert open_ai_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
-    assert (
         open_ai_span.attributes.get("gen_ai.response.id")
         == "cmpl-8wq43c8U5ZZCQBX5lrSpsANwcd3OF"
     )
@@ -231,11 +216,6 @@ async def test_async_completion_with_events_with_no_content(
         "openai.completion",
     ]
     open_ai_span = spans[0]
-    assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.user"]
-        == "Tell me a joke about opentelemetry"
-    )
-    assert open_ai_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
     assert (
         open_ai_span.attributes.get("gen_ai.response.id")
         == "cmpl-8wq43c8U5ZZCQBX5lrSpsANwcd3OF"
@@ -302,11 +282,6 @@ def test_completion_langchain_style_with_events_with_content(
     ]
     open_ai_span = spans[0]
     assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.user"]
-        == "Tell me a joke about opentelemetry"
-    )
-    assert open_ai_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
-    assert (
         open_ai_span.attributes.get("gen_ai.response.id")
         == "cmpl-8wq43QD6R2WqfxXLpYsRvSAIn9LB9"
     )
@@ -347,11 +322,6 @@ def test_completion_langchain_style_with_events_with_no_content(
         "openai.completion",
     ]
     open_ai_span = spans[0]
-    assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.user"]
-        == "Tell me a joke about opentelemetry"
-    )
-    assert open_ai_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
     assert (
         open_ai_span.attributes.get("gen_ai.response.id")
         == "cmpl-8wq43QD6R2WqfxXLpYsRvSAIn9LB9"
@@ -461,13 +431,6 @@ def test_completion_streaming_with_events_with_content(
         ]
         open_ai_span = spans[0]
         assert (
-            open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.user"]
-            == "Tell me a joke about opentelemetry"
-        )
-        assert open_ai_span.attributes.get(
-            f"{SpanAttributes.LLM_COMPLETIONS}.0.content"
-        )
-        assert (
             open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)
             == "https://api.openai.com/v1/"
         )
@@ -540,13 +503,6 @@ def test_completion_streaming_with_events_with_no_content(
             "openai.completion",
         ]
         open_ai_span = spans[0]
-        assert (
-            open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.user"]
-            == "Tell me a joke about opentelemetry"
-        )
-        assert open_ai_span.attributes.get(
-            f"{SpanAttributes.LLM_COMPLETIONS}.0.content"
-        )
         assert (
             open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)
             == "https://api.openai.com/v1/"
@@ -646,11 +602,6 @@ async def test_async_completion_streaming_with_events_with_content(
     ]
     open_ai_span = spans[0]
     assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.user"]
-        == "Tell me a joke about opentelemetry"
-    )
-    assert open_ai_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
-    assert (
         open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)
         == "https://api.openai.com/v1/"
     )
@@ -700,11 +651,6 @@ async def test_async_completion_streaming_with_events_with_no_content(
         "openai.completion",
     ]
     open_ai_span = spans[0]
-    assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.user"]
-        == "Tell me a joke about opentelemetry"
-    )
-    assert open_ai_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
     assert (
         open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)
         == "https://api.openai.com/v1/"

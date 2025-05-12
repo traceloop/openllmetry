@@ -7,9 +7,7 @@ from openai import AsyncAzureOpenAI, AsyncOpenAI, AzureOpenAI, OpenAI
 from opentelemetry._events import get_event_logger
 from opentelemetry.instrumentation.openai import OpenAIInstrumentor
 from opentelemetry.instrumentation.openai.shared.config import Config
-from opentelemetry.instrumentation.openai.utils import (
-    OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT,
-)
+from opentelemetry.instrumentation.openai.utils import TRACELOOP_TRACE_CONTENT
 from opentelemetry.instrumentation.openai.version import __version__
 from opentelemetry.sdk._events import EventLoggerProvider
 from opentelemetry.sdk._logs import LoggerProvider
@@ -142,7 +140,7 @@ def instrument_legacy(reader, tracer_provider, meter_provider):
 def instrument_with_content(
     instrument_legacy, reader, tracer_provider, event_logger_provider, meter_provider
 ):
-    os.environ.update({OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT: "True"})
+    os.environ.update({TRACELOOP_TRACE_CONTENT: "True"})
 
     instrumentor = instrument_legacy
     Config.use_legacy_attributes = False
@@ -154,7 +152,7 @@ def instrument_with_content(
 
     Config.use_legacy_attributes = True
     Config.event_logger = None
-    os.environ.pop(OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT, None)
+    os.environ.pop(TRACELOOP_TRACE_CONTENT, None)
     instrumentor.uninstrument()
 
 
@@ -162,7 +160,7 @@ def instrument_with_content(
 def instrument_with_no_content(
     instrument_legacy, reader, tracer_provider, event_logger_provider, meter_provider
 ):
-    os.environ.update({OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT: "False"})
+    os.environ.update({TRACELOOP_TRACE_CONTENT: "False"})
 
     instrumentor = instrument_legacy
     Config.use_legacy_attributes = False
@@ -174,7 +172,7 @@ def instrument_with_no_content(
 
     Config.use_legacy_attributes = True
     Config.event_logger = None
-    os.environ.pop(OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT, None)
+    os.environ.pop(TRACELOOP_TRACE_CONTENT, None)
     instrumentor.uninstrument()
 
 

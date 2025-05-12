@@ -23,20 +23,21 @@ from opentelemetry.instrumentation.openai.shared import (
     propagate_trace_context,
     set_tools_attributes,
     should_record_stream_token_usage,
-    should_send_prompts,
 )
 from opentelemetry.instrumentation.openai.shared.config import Config
-from opentelemetry.instrumentation.openai.shared.event_handler import (
+from opentelemetry.instrumentation.openai.shared.event_emitter import emit_event
+from opentelemetry.instrumentation.openai.shared.event_models import (
     ChoiceEvent,
     MessageEvent,
     ToolCall,
-    emit_event,
 )
 from opentelemetry.instrumentation.openai.utils import (
     _with_chat_telemetry_wrapper,
     dont_throw,
     is_openai_v1,
     run_async,
+    should_emit_events,
+    should_send_prompts,
 )
 from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
 from opentelemetry.metrics import Counter, Histogram
@@ -258,22 +259,24 @@ async def achat_wrapper(
 async def _handle_request(span, kwargs, instance):
     _set_request_attributes(span, kwargs)
     _set_client_attributes(span, instance)
-    if should_send_prompts():
-        await _set_prompts(span, kwargs.get("messages"))
-        if kwargs.get("functions"):
-            _set_functions_attributes(span, kwargs.get("functions"))
-        elif kwargs.get("tools"):
-            set_tools_attributes(span, kwargs.get("tools"))
+    if should_emit_events():
+        for message in kwargs.get("messages", []):
+            emit_event(
+                MessageEvent(
+                    content=message.get("content"),
+                    role=message.get("role"),
+                    tool_calls=_parse_tool_calls(message.get("tool_calls", None)),
+                )
+            )
+    else:
+        if should_send_prompts():
+            await _set_prompts(span, kwargs.get("messages"))
+            if kwargs.get("functions"):
+                _set_functions_attributes(span, kwargs.get("functions"))
+            elif kwargs.get("tools"):
+                set_tools_attributes(span, kwargs.get("tools"))
     if Config.enable_trace_context_propagation:
         propagate_trace_context(span, kwargs)
-    for message in kwargs.get("messages", []):
-        emit_event(
-            MessageEvent(
-                content=message.get("content"),
-                role=message.get("role"),
-                tool_calls=_parse_tool_calls(message.get("tool_calls", None)),
-            )
-        )
 
 
 @dont_throw
@@ -304,12 +307,14 @@ def _handle_response(
     # span attributes
     _set_response_attributes(span, response_dict)
 
-    if should_send_prompts():
-        _set_completions(span, response_dict.get("choices"))
+    if should_emit_events():
+        if response.choices is not None:
+            for choice in response.choices:
+                emit_event(_parse_choice_event(choice))
+    else:
+        if should_send_prompts():
+            _set_completions(span, response_dict.get("choices"))
 
-    if response.choices is not None:
-        for choice in response.choices:
-            emit_event(_parse_choice_event(choice))
     return response
 
 
@@ -549,14 +554,14 @@ def _set_streaming_token_metrics(
 
     # metrics record
     if token_counter:
-        if type(prompt_usage) is int and prompt_usage >= 0:
+        if isinstance(prompt_usage, int) and prompt_usage >= 0:
             attributes_with_token_type = {
                 **shared_attributes,
                 SpanAttributes.LLM_TOKEN_TYPE: "input",
             }
             token_counter.record(prompt_usage, attributes=attributes_with_token_type)
 
-        if type(completion_usage) is int and completion_usage >= 0:
+        if isinstance(completion_usage, int) and completion_usage >= 0:
             attributes_with_token_type = {
                 **shared_attributes,
                 SpanAttributes.LLM_TOKEN_TYPE: "output",
@@ -630,7 +635,7 @@ class ChatStream(ObjectProxy):
             chunk = self.__wrapped__.__next__()
         except Exception as e:
             if isinstance(e, StopIteration):
-                self._close_span()
+                self._process_complete_response()
             raise e
         else:
             self._process_item(chunk)
@@ -641,7 +646,7 @@ class ChatStream(ObjectProxy):
             chunk = await self.__wrapped__.__anext__()
         except Exception as e:
             if isinstance(e, StopAsyncIteration):
-                self._close_span()
+                self._process_complete_response()
             raise e
         else:
             self._process_item(chunk)
@@ -671,7 +676,7 @@ class ChatStream(ObjectProxy):
         )
 
     @dont_throw
-    def _close_span(self):
+    def _process_complete_response(self):
         _set_streaming_token_metrics(
             self._request_kwargs,
             self._complete_response,
@@ -704,15 +709,15 @@ class ChatStream(ObjectProxy):
             )
 
         _set_response_attributes(self._span, self._complete_response)
-
-        if should_send_prompts():
-            _set_completions(self._span, self._complete_response.get("choices"))
+        if should_emit_events():
+            for choice in self._complete_response.get("choices", []):
+                emit_event(_parse_choice_event(choice))
+        else:
+            if should_send_prompts():
+                _set_completions(self._span, self._complete_response.get("choices"))
 
         self._span.set_status(Status(StatusCode.OK))
         self._span.end()
-
-        for choice in self._complete_response.get("choices", []):
-            emit_event(_parse_choice_event(choice))
 
 
 # Backward compatibility with OpenAI v0
@@ -776,13 +781,13 @@ def _build_from_streaming_response(
     if streaming_time_to_generate and time_of_first_token:
         streaming_time_to_generate.record(time.time() - time_of_first_token)
 
-    for choice in complete_response.get("choices", []):
-        emit_event(_parse_choice_event(choice))
-
     _set_response_attributes(span, complete_response)
-
-    if should_send_prompts():
-        _set_completions(span, complete_response.get("choices"))
+    if should_emit_events():
+        for choice in complete_response.get("choices", []):
+            emit_event(_parse_choice_event(choice))
+    else:
+        if should_send_prompts():
+            _set_completions(span, complete_response.get("choices"))
 
     span.set_status(Status(StatusCode.OK))
     span.end()
@@ -846,13 +851,13 @@ async def _abuild_from_streaming_response(
     if streaming_time_to_generate and time_of_first_token:
         streaming_time_to_generate.record(time.time() - time_of_first_token)
 
-    for choice in complete_response.get("choices", []):
-        emit_event(_parse_choice_event(choice))
-
     _set_response_attributes(span, complete_response)
-
-    if should_send_prompts():
-        _set_completions(span, complete_response.get("choices"))
+    if should_emit_events():
+        for choice in complete_response.get("choices", []):
+            emit_event(_parse_choice_event(choice))
+    else:
+        if should_send_prompts():
+            _set_completions(span, complete_response.get("choices"))
 
     span.set_status(Status(StatusCode.OK))
     span.end()

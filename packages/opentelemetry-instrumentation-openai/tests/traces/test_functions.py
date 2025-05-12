@@ -128,22 +128,6 @@ def test_open_ai_function_calls_with_events_with_content(
     spans = span_exporter.get_finished_spans()
     open_ai_span = spans[0]
     assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
-        == "What's the weather like in Boston?"
-    )
-    assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.0.name"]
-        == "get_current_weather"
-    )
-    assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.0.description"]
-        == "Get the current weather in a given location"
-    )
-    assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.0.name"]
-        == "get_current_weather"
-    )
-    assert (
         open_ai_span.attributes[SpanAttributes.LLM_OPENAI_API_BASE]
         == "https://api.openai.com/v1/"
     )
@@ -214,22 +198,6 @@ def test_open_ai_function_calls_with_events_with_no_content(
 
     spans = span_exporter.get_finished_spans()
     open_ai_span = spans[0]
-    assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
-        == "What's the weather like in Boston?"
-    )
-    assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.0.name"]
-        == "get_current_weather"
-    )
-    assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.0.description"]
-        == "Get the current weather in a given location"
-    )
-    assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.0.name"]
-        == "get_current_weather"
-    )
     assert (
         open_ai_span.attributes[SpanAttributes.LLM_OPENAI_API_BASE]
         == "https://api.openai.com/v1/"
@@ -324,26 +292,6 @@ def test_open_ai_function_calls_tools_with_events_with_content(
     spans = span_exporter.get_finished_spans()
     open_ai_span = spans[0]
     assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
-        == "What's the weather like in Boston?"
-    )
-    assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.0.name"]
-        == "get_current_weather"
-    )
-    assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.0.description"]
-        == "Get the current weather"
-    )
-    assert isinstance(
-        open_ai_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.0.id"],
-        str,
-    )
-    assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.0.name"]
-        == "get_current_weather"
-    )
-    assert (
         open_ai_span.attributes[SpanAttributes.LLM_OPENAI_API_BASE]
         == "https://api.openai.com/v1/"
     )
@@ -395,26 +343,6 @@ def test_open_ai_function_calls_tools_with_events_with_no_content(
 
     spans = span_exporter.get_finished_spans()
     open_ai_span = spans[0]
-    assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
-        == "What's the weather like in Boston?"
-    )
-    assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.0.name"]
-        == "get_current_weather"
-    )
-    assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.0.description"]
-        == "Get the current weather"
-    )
-    assert isinstance(
-        open_ai_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.0.id"],
-        str,
-    )
-    assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.0.name"]
-        == "get_current_weather"
-    )
     assert (
         open_ai_span.attributes[SpanAttributes.LLM_OPENAI_API_BASE]
         == "https://api.openai.com/v1/"
@@ -526,30 +454,6 @@ async def test_open_ai_function_calls_tools_streaming_with_events_with_content(
     spans = span_exporter.get_finished_spans()
     open_ai_span = spans[0]
 
-    assert isinstance(
-        open_ai_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.0.id"],
-        str,
-    )
-    assert (
-        open_ai_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.0.name")
-        == "get_current_weather"
-    )
-    assert (
-        open_ai_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.finish_reason")
-        == "tool_calls"
-    )
-    assert (
-        open_ai_span.attributes.get(
-            f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.0.name"
-        )
-        == "get_current_weather"
-    )
-    assert (
-        open_ai_span.attributes.get(
-            f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.0.arguments"
-        )
-        == '{"location":"San Francisco, CA"}'
-    )
     assert (
         open_ai_span.attributes.get("gen_ai.response.id")
         == "chatcmpl-9g4TmLd49mPoD6c0EnGlhNAp8b0on"
@@ -609,30 +513,6 @@ async def test_open_ai_function_calls_tools_streaming_with_events_with_no_conten
     spans = span_exporter.get_finished_spans()
     open_ai_span = spans[0]
 
-    assert isinstance(
-        open_ai_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.0.id"],
-        str,
-    )
-    assert (
-        open_ai_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.0.name")
-        == "get_current_weather"
-    )
-    assert (
-        open_ai_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.finish_reason")
-        == "tool_calls"
-    )
-    assert (
-        open_ai_span.attributes.get(
-            f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.0.name"
-        )
-        == "get_current_weather"
-    )
-    assert (
-        open_ai_span.attributes.get(
-            f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.0.arguments"
-        )
-        == '{"location":"San Francisco, CA"}'
-    )
     assert (
         open_ai_span.attributes.get("gen_ai.response.id")
         == "chatcmpl-9g4TmLd49mPoD6c0EnGlhNAp8b0on"
@@ -757,48 +637,6 @@ def test_open_ai_function_calls_tools_parallel_with_events_with_content(
     open_ai_span = spans[0]
 
     assert (
-        open_ai_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.0.name")
-        == "get_current_weather"
-    )
-    assert (
-        open_ai_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.finish_reason")
-        == "tool_calls"
-    )
-
-    assert isinstance(
-        open_ai_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.0.id"],
-        str,
-    )
-    assert (
-        open_ai_span.attributes.get(
-            f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.0.name"
-        )
-        == "get_current_weather"
-    )
-    assert (
-        open_ai_span.attributes.get(
-            f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.0.arguments"
-        )
-        == '{"location": "San Francisco"}'
-    )
-
-    assert isinstance(
-        open_ai_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.1.id"],
-        str,
-    )
-    assert (
-        open_ai_span.attributes.get(
-            f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.1.name"
-        )
-        == "get_current_weather"
-    )
-    assert (
-        open_ai_span.attributes.get(
-            f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.1.arguments"
-        )
-        == '{"location": "Boston"}'
-    )
-    assert (
         open_ai_span.attributes.get("gen_ai.response.id")
         == "chatcmpl-9g4cZhrW9CsqihSvXslk0EUtjASsO"
     )
@@ -862,48 +700,6 @@ def test_open_ai_function_calls_tools_parallel_with_events_with_no_content(
     spans = span_exporter.get_finished_spans()
     open_ai_span = spans[0]
 
-    assert (
-        open_ai_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.0.name")
-        == "get_current_weather"
-    )
-    assert (
-        open_ai_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.finish_reason")
-        == "tool_calls"
-    )
-
-    assert isinstance(
-        open_ai_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.0.id"],
-        str,
-    )
-    assert (
-        open_ai_span.attributes.get(
-            f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.0.name"
-        )
-        == "get_current_weather"
-    )
-    assert (
-        open_ai_span.attributes.get(
-            f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.0.arguments"
-        )
-        == '{"location": "San Francisco"}'
-    )
-
-    assert isinstance(
-        open_ai_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.1.id"],
-        str,
-    )
-    assert (
-        open_ai_span.attributes.get(
-            f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.1.name"
-        )
-        == "get_current_weather"
-    )
-    assert (
-        open_ai_span.attributes.get(
-            f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.1.arguments"
-        )
-        == '{"location": "Boston"}'
-    )
     assert (
         open_ai_span.attributes.get("gen_ai.response.id")
         == "chatcmpl-9g4cZhrW9CsqihSvXslk0EUtjASsO"
@@ -1041,48 +837,6 @@ async def test_open_ai_function_calls_tools_streaming_parallel_with_events_with_
     open_ai_span = spans[0]
 
     assert (
-        open_ai_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.0.name")
-        == "get_current_weather"
-    )
-    assert (
-        open_ai_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.finish_reason")
-        == "tool_calls"
-    )
-
-    assert isinstance(
-        open_ai_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.0.id"],
-        str,
-    )
-    assert (
-        open_ai_span.attributes.get(
-            f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.0.name"
-        )
-        == "get_current_weather"
-    )
-    assert (
-        open_ai_span.attributes.get(
-            f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.0.arguments"
-        )
-        == '{"location": "San Francisco"}'
-    )
-
-    assert isinstance(
-        open_ai_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.1.id"],
-        str,
-    )
-    assert (
-        open_ai_span.attributes.get(
-            f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.1.name"
-        )
-        == "get_current_weather"
-    )
-    assert (
-        open_ai_span.attributes.get(
-            f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.1.arguments"
-        )
-        == '{"location": "Boston"}'
-    )
-    assert (
         open_ai_span.attributes.get("gen_ai.response.id")
         == "chatcmpl-9g58noIjRkOeNNxfFsFfcNjhXlul7"
     )
@@ -1152,48 +906,6 @@ async def test_open_ai_function_calls_tools_streaming_parallel_with_events_with_
     spans = span_exporter.get_finished_spans()
     open_ai_span = spans[0]
 
-    assert (
-        open_ai_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.0.name")
-        == "get_current_weather"
-    )
-    assert (
-        open_ai_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.finish_reason")
-        == "tool_calls"
-    )
-
-    assert isinstance(
-        open_ai_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.0.id"],
-        str,
-    )
-    assert (
-        open_ai_span.attributes.get(
-            f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.0.name"
-        )
-        == "get_current_weather"
-    )
-    assert (
-        open_ai_span.attributes.get(
-            f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.0.arguments"
-        )
-        == '{"location": "San Francisco"}'
-    )
-
-    assert isinstance(
-        open_ai_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.1.id"],
-        str,
-    )
-    assert (
-        open_ai_span.attributes.get(
-            f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.1.name"
-        )
-        == "get_current_weather"
-    )
-    assert (
-        open_ai_span.attributes.get(
-            f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.1.arguments"
-        )
-        == '{"location": "Boston"}'
-    )
     assert (
         open_ai_span.attributes.get("gen_ai.response.id")
         == "chatcmpl-9g58noIjRkOeNNxfFsFfcNjhXlul7"

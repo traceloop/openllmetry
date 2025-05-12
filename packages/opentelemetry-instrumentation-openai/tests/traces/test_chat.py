@@ -74,11 +74,7 @@ def test_chat_with_events_with_content(
         "openai.chat",
     ]
     open_ai_span = spans[0]
-    assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
-        == "Tell me a joke about opentelemetry"
-    )
-    assert open_ai_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
+
     assert (
         open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)
         == "https://api.openai.com/v1/"
@@ -132,11 +128,6 @@ def test_chat_with_events_with_no_content(
         "openai.chat",
     ]
     open_ai_span = spans[0]
-    assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
-        == "Tell me a joke about opentelemetry"
-    )
-    assert open_ai_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
     assert (
         open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)
         == "https://api.openai.com/v1/"
@@ -263,24 +254,7 @@ def test_chat_tool_calls_with_events_with_content(
     open_ai_span = spans[0]
 
     assert f"{SpanAttributes.LLM_PROMPTS}.0.content" not in open_ai_span.attributes
-    assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.tool_calls.0.name"]
-        == "get_current_weather"
-    )
-    assert (
-        open_ai_span.attributes[
-            f"{SpanAttributes.LLM_PROMPTS}.0.tool_calls.0.arguments"
-        ]
-        == '{"location": "San Francisco"}'
-    )
 
-    assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.content"]
-        == "The weather in San Francisco is 70 degrees and sunny."
-    )
-    assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.tool_call_id"] == "1"
-    )
     assert (
         open_ai_span.attributes.get("gen_ai.response.id")
         == "chatcmpl-9gKNZbUWSC4s2Uh2QfVV7PYiqWIuH"
@@ -358,24 +332,6 @@ def test_chat_tool_calls_with_events_with_no_content(
     open_ai_span = spans[0]
 
     assert f"{SpanAttributes.LLM_PROMPTS}.0.content" not in open_ai_span.attributes
-    assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.tool_calls.0.name"]
-        == "get_current_weather"
-    )
-    assert (
-        open_ai_span.attributes[
-            f"{SpanAttributes.LLM_PROMPTS}.0.tool_calls.0.arguments"
-        ]
-        == '{"location": "San Francisco"}'
-    )
-
-    assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.content"]
-        == "The weather in San Francisco is 70 degrees and sunny."
-    )
-    assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.tool_call_id"] == "1"
-    )
     assert (
         open_ai_span.attributes.get("gen_ai.response.id")
         == "chatcmpl-9gKNZbUWSC4s2Uh2QfVV7PYiqWIuH"
@@ -507,24 +463,6 @@ def test_chat_pydantic_based_tool_calls_with_events_with_content(
 
     assert f"{SpanAttributes.LLM_PROMPTS}.0.content" not in open_ai_span.attributes
     assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.tool_calls.0.name"]
-        == "get_current_weather"
-    )
-    assert (
-        open_ai_span.attributes[
-            f"{SpanAttributes.LLM_PROMPTS}.0.tool_calls.0.arguments"
-        ]
-        == '{"location": "San Francisco"}'
-    )
-
-    assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.content"]
-        == "The weather in San Francisco is 70 degrees and sunny."
-    )
-    assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.tool_call_id"] == "1"
-    )
-    assert (
         open_ai_span.attributes.get("gen_ai.response.id")
         == "chatcmpl-9lvGJKrBUPeJjHi3KKSEbGfcfomOP"
     )
@@ -601,24 +539,6 @@ def test_chat_pydantic_based_tool_calls_with_events_with_no_content(
     open_ai_span = spans[0]
 
     assert f"{SpanAttributes.LLM_PROMPTS}.0.content" not in open_ai_span.attributes
-    assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.tool_calls.0.name"]
-        == "get_current_weather"
-    )
-    assert (
-        open_ai_span.attributes[
-            f"{SpanAttributes.LLM_PROMPTS}.0.tool_calls.0.arguments"
-        ]
-        == '{"location": "San Francisco"}'
-    )
-
-    assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.content"]
-        == "The weather in San Francisco is 70 degrees and sunny."
-    )
-    assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.tool_call_id"] == "1"
-    )
     assert (
         open_ai_span.attributes.get("gen_ai.response.id")
         == "chatcmpl-9lvGJKrBUPeJjHi3KKSEbGfcfomOP"
@@ -720,11 +640,6 @@ def test_chat_streaming_with_events_with_content(
     ]
     open_ai_span = spans[0]
     assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
-        == "Tell me a joke about opentelemetry"
-    )
-    assert open_ai_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
-    assert (
         open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)
         == "https://api.openai.com/v1/"
     )
@@ -788,11 +703,6 @@ def test_chat_streaming_with_events_with_no_content(
         "openai.chat",
     ]
     open_ai_span = spans[0]
-    assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
-        == "Tell me a joke about opentelemetry"
-    )
-    assert open_ai_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
     assert (
         open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)
         == "https://api.openai.com/v1/"
@@ -903,11 +813,6 @@ async def test_chat_async_streaming_with_events_with_content(
     ]
     open_ai_span = spans[0]
     assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
-        == "Tell me a joke about opentelemetry"
-    )
-    assert open_ai_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
-    assert (
         open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)
         == "https://api.openai.com/v1/"
     )
@@ -972,11 +877,6 @@ async def test_chat_async_streaming_with_events_with_no_content(
         "openai.chat",
     ]
     open_ai_span = spans[0]
-    assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
-        == "Tell me a joke about opentelemetry"
-    )
-    assert open_ai_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
     assert (
         open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)
         == "https://api.openai.com/v1/"

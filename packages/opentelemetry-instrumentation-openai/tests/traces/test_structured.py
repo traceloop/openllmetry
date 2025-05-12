@@ -66,16 +66,11 @@ def test_parsed_completion_with_events_with_content(
         "openai.chat",
     ]
     open_ai_span = spans[0]
-    assert open_ai_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
     assert (
         open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)
         == "https://api.openai.com/v1/"
     )
     assert open_ai_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is False
-    assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
-        == "Tell me a joke about opentelemetry"
-    )
     assert (
         open_ai_span.attributes.get("gen_ai.response.id")
         == "chatcmpl-AGC1gNoe1Zyq9yZicdhLc85lmt2Ep"
@@ -116,16 +111,11 @@ def test_parsed_completion_with_events_with_no_content(
         "openai.chat",
     ]
     open_ai_span = spans[0]
-    assert open_ai_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
     assert (
         open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)
         == "https://api.openai.com/v1/"
     )
     assert open_ai_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is False
-    assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
-        == "Tell me a joke about opentelemetry"
-    )
     assert (
         open_ai_span.attributes.get("gen_ai.response.id")
         == "chatcmpl-AGC1gNoe1Zyq9yZicdhLc85lmt2Ep"
@@ -191,11 +181,6 @@ def test_parsed_refused_completion_with_events_with_content(
     ]
     open_ai_span = spans[0]
     assert f"{SpanAttributes.LLM_COMPLETIONS}.0.content" not in open_ai_span.attributes
-    assert f"{SpanAttributes.LLM_COMPLETIONS}.0.refusal" in open_ai_span.attributes
-    assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.refusal"]
-        == "I'm very sorry, but I can't assist with that request."
-    )
     assert (
         open_ai_span.attributes.get("gen_ai.response.id")
         == "chatcmpl-AGky8KFDbg6f5fF4qLtsBredIjZZh"
@@ -235,11 +220,6 @@ def test_parsed_refused_completion_with_events_with_no_content(
     ]
     open_ai_span = spans[0]
     assert f"{SpanAttributes.LLM_COMPLETIONS}.0.content" not in open_ai_span.attributes
-    assert f"{SpanAttributes.LLM_COMPLETIONS}.0.refusal" in open_ai_span.attributes
-    assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.refusal"]
-        == "I'm very sorry, but I can't assist with that request."
-    )
     assert (
         open_ai_span.attributes.get("gen_ai.response.id")
         == "chatcmpl-AGky8KFDbg6f5fF4qLtsBredIjZZh"
@@ -310,16 +290,11 @@ async def test_async_parsed_completion_with_events_with_content(
         "openai.chat",
     ]
     open_ai_span = spans[0]
-    assert open_ai_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
     assert (
         open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)
         == "https://api.openai.com/v1/"
     )
     assert open_ai_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is False
-    assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
-        == "Tell me a joke about opentelemetry"
-    )
     assert (
         open_ai_span.attributes.get("gen_ai.response.id")
         == "chatcmpl-AGC1iysV7rZ0qZ510vbeKVTNxSOHB"
@@ -361,16 +336,11 @@ async def test_async_parsed_completion_with_events_with_no_content(
         "openai.chat",
     ]
     open_ai_span = spans[0]
-    assert open_ai_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
     assert (
         open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)
         == "https://api.openai.com/v1/"
     )
     assert open_ai_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is False
-    assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
-        == "Tell me a joke about opentelemetry"
-    )
     assert (
         open_ai_span.attributes.get("gen_ai.response.id")
         == "chatcmpl-AGC1iysV7rZ0qZ510vbeKVTNxSOHB"
@@ -438,11 +408,6 @@ async def test_async_parsed_refused_completion_with_events_with_content(
     ]
     open_ai_span = spans[0]
     assert f"{SpanAttributes.LLM_COMPLETIONS}.0.content" not in open_ai_span.attributes
-    assert f"{SpanAttributes.LLM_COMPLETIONS}.0.refusal" in open_ai_span.attributes
-    assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.refusal"]
-        == "I'm very sorry, but I can't assist with that request."
-    )
     assert (
         open_ai_span.attributes.get("gen_ai.response.id")
         == "chatcmpl-AGkyFJGzZPUGAAEDJJuOS3idKvD3G"
@@ -483,11 +448,6 @@ async def test_async_parsed_refused_completion_with_events_with_no_content(
     ]
     open_ai_span = spans[0]
     assert f"{SpanAttributes.LLM_COMPLETIONS}.0.content" not in open_ai_span.attributes
-    assert f"{SpanAttributes.LLM_COMPLETIONS}.0.refusal" in open_ai_span.attributes
-    assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.refusal"]
-        == "I'm very sorry, but I can't assist with that request."
-    )
     assert (
         open_ai_span.attributes.get("gen_ai.response.id")
         == "chatcmpl-AGkyFJGzZPUGAAEDJJuOS3idKvD3G"

@@ -14,18 +14,19 @@ from opentelemetry.instrumentation.openai.shared import (
     metric_shared_attributes,
     model_as_dict,
     propagate_trace_context,
-    should_send_prompts,
 )
 from opentelemetry.instrumentation.openai.shared.config import Config
-from opentelemetry.instrumentation.openai.shared.event_handler import (
+from opentelemetry.instrumentation.openai.shared.event_emitter import emit_event
+from opentelemetry.instrumentation.openai.shared.event_models import (
     ChoiceEvent,
     MessageEvent,
-    emit_event,
 )
 from opentelemetry.instrumentation.openai.utils import (
     _with_embeddings_telemetry_wrapper,
     dont_throw,
     is_openai_v1,
+    should_emit_events,
+    should_send_prompts,
     start_as_current_span_async,
 )
 from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
@@ -174,12 +175,17 @@ async def aembeddings_wrapper(
 @dont_throw
 def _handle_request(span, kwargs, instance):
     _set_request_attributes(span, kwargs)
-    if should_send_prompts():
-        _set_prompts(span, kwargs.get("input"))
+
+    if should_emit_events():
+        _emit_embeddings_message_event(kwargs.get("input"))
+    else:
+        if should_send_prompts():
+            _set_prompts(span, kwargs.get("input"))
+
     _set_client_attributes(span, instance)
+
     if Config.enable_trace_context_propagation:
         propagate_trace_context(span, kwargs)
-    _emit_embeddings_message_event(kwargs.get("input"))
 
 
 @dont_throw
@@ -208,7 +214,9 @@ def _handle_response(
     # span attributes
     _set_response_attributes(span, response_dict)
 
-    _emit_embeddings_choice_event(response)
+    # emit events
+    if should_emit_events():
+        _emit_embeddings_choice_event(response)
 
 
 def _set_embeddings_metrics(

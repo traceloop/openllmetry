@@ -13,18 +13,19 @@ from opentelemetry.instrumentation.openai.shared import (
     model_as_dict,
     propagate_trace_context,
     should_record_stream_token_usage,
-    should_send_prompts,
 )
 from opentelemetry.instrumentation.openai.shared.config import Config
-from opentelemetry.instrumentation.openai.shared.event_handler import (
+from opentelemetry.instrumentation.openai.shared.event_emitter import emit_event
+from opentelemetry.instrumentation.openai.shared.event_models import (
     ChoiceEvent,
     MessageEvent,
-    emit_event,
 )
 from opentelemetry.instrumentation.openai.utils import (
     _with_tracer_wrapper,
     dont_throw,
     is_openai_v1,
+    should_emit_events,
+    should_send_prompts,
 )
 from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
 from opentelemetry.semconv_ai import (
@@ -55,13 +56,6 @@ def completion_wrapper(tracer, wrapped, instance, args, kwargs):
         attributes={SpanAttributes.LLM_REQUEST_TYPE: LLM_REQUEST_TYPE.value},
     )
 
-    prompt = kwargs.get("prompt")
-    if isinstance(prompt, list):
-        for p in prompt:
-            emit_event(MessageEvent(content=p))
-    elif isinstance(prompt, str):
-        emit_event(MessageEvent(content=prompt))
-
     _handle_request(span, kwargs, instance)
 
     try:
@@ -75,8 +69,6 @@ def completion_wrapper(tracer, wrapped, instance, args, kwargs):
         # span will be closed after the generator is done
         return _build_from_streaming_response(span, kwargs, response)
     else:
-        for choice in response.choices:
-            emit_event(_parse_choice_event(choice))
         _handle_response(response, span)
 
     span.end()
@@ -96,13 +88,8 @@ async def acompletion_wrapper(tracer, wrapped, instance, args, kwargs):
         attributes={SpanAttributes.LLM_REQUEST_TYPE: LLM_REQUEST_TYPE.value},
     )
 
-    prompt = kwargs.get("prompt")
-    if isinstance(prompt, list):
-        for p in prompt:
-            emit_event(MessageEvent(content=p))
-    elif isinstance(prompt, str):
-        emit_event(MessageEvent(content=prompt))
     _handle_request(span, kwargs, instance)
+
     try:
         response = await wrapped(*args, **kwargs)
     except Exception as e:
@@ -114,8 +101,6 @@ async def acompletion_wrapper(tracer, wrapped, instance, args, kwargs):
         # span will be closed after the generator is done
         return _abuild_from_streaming_response(span, kwargs, response)
     else:
-        for choice in response.choices:
-            emit_event(_parse_choice_event(choice))
         _handle_response(response, span)
 
     span.end()
@@ -125,12 +110,24 @@ async def acompletion_wrapper(tracer, wrapped, instance, args, kwargs):
 @dont_throw
 def _handle_request(span, kwargs, instance):
     _set_request_attributes(span, kwargs)
-    if should_send_prompts():
-        _set_prompts(span, kwargs.get("prompt"))
-        _set_functions_attributes(span, kwargs.get("functions"))
+    if should_emit_events():
+        _emit_prompts_events(kwargs)
+    else:
+        if should_send_prompts():
+            _set_prompts(span, kwargs.get("prompt"))
+            _set_functions_attributes(span, kwargs.get("functions"))
     _set_client_attributes(span, instance)
     if Config.enable_trace_context_propagation:
         propagate_trace_context(span, kwargs)
+
+
+def _emit_prompts_events(kwargs):
+    prompt = kwargs.get("prompt")
+    if isinstance(prompt, list):
+        for p in prompt:
+            emit_event(MessageEvent(content=p))
+    elif isinstance(prompt, str):
+        emit_event(MessageEvent(content=prompt))
 
 
 @dont_throw
@@ -141,9 +138,12 @@ def _handle_response(response, span):
         response_dict = response
 
     _set_response_attributes(span, response_dict)
-
-    if should_send_prompts():
-        _set_completions(span, response_dict.get("choices"))
+    if should_emit_events():
+        for choice in response.choices:
+            emit_event(_parse_choice_event(choice))
+    else:
+        if should_send_prompts():
+            _set_completions(span, response_dict.get("choices"))
 
 
 def _set_prompts(span, prompt):
@@ -182,18 +182,13 @@ def _build_from_streaming_response(span, request_kwargs, response):
 
     _set_token_usage(span, request_kwargs, complete_response)
 
-    if should_send_prompts():
-        _set_completions(span, complete_response.get("choices"))
+    if should_emit_events():
+        _emit_streaming_response_events(complete_response)
+    else:
+        if should_send_prompts():
+            _set_completions(span, complete_response.get("choices"))
 
     span.set_status(Status(StatusCode.OK))
-    for i, choice in enumerate(complete_response["choices"]):
-        emit_event(
-            ChoiceEvent(
-                index=choice.get("index", i),
-                message={"content": choice.get("text"), "role": "assistant"},
-                finish_reason=choice.get("finish_reason", "unknown"),
-            )
-        )
     span.end()
 
 
@@ -208,10 +203,17 @@ async def _abuild_from_streaming_response(span, request_kwargs, response):
 
     _set_token_usage(span, request_kwargs, complete_response)
 
-    if should_send_prompts():
-        _set_completions(span, complete_response.get("choices"))
+    if should_emit_events():
+        _emit_streaming_response_events(complete_response)
+    else:
+        if should_send_prompts():
+            _set_completions(span, complete_response.get("choices"))
 
     span.set_status(Status(StatusCode.OK))
+    span.end()
+
+
+def _emit_streaming_response_events(complete_response):
     for i, choice in enumerate(complete_response["choices"]):
         emit_event(
             ChoiceEvent(
@@ -220,7 +222,6 @@ async def _abuild_from_streaming_response(span, request_kwargs, response):
                 finish_reason=choice.get("finish_reason", "unknown"),
             )
         )
-    span.end()
 
 
 @dont_throw
