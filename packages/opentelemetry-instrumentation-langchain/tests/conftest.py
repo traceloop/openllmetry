@@ -13,6 +13,9 @@ from opentelemetry import metrics
 from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.metrics import MeterProvider
 from opentelemetry.sdk.metrics.export import InMemoryMetricReader
+from opentelemetry.trace import format_trace_id, format_span_id
+from opentelemetry.trace import get_tracer
+from opentelemetry.trace.propagation import set_span_in_context
 
 pytest_plugins = []
 
@@ -82,3 +85,12 @@ def clear_metrics_test_context(metrics_test_context):
 
     reader.shutdown()
     provider.shutdown()
+
+
+@pytest.fixture(scope="function", autouse=True)
+def reset_span_context(request):
+    tracer = get_tracer(__name__)
+    # starts a new trace per test function
+    # this avoids mixing of trace contexts leading to flaky results
+    with tracer.start_as_current_span(request.node.name, context=set_span_in_context(None)) as span:
+        yield
