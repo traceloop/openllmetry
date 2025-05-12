@@ -10,9 +10,7 @@ from opentelemetry._events import EventLogger
 from opentelemetry.instrumentation.llamaindex.config import Config
 from opentelemetry.semconv_ai import SpanAttributes
 
-OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT = (
-    "OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT"
-)
+TRACELOOP_TRACE_CONTENT = "TRACELOOP_TRACE_CONTENT"
 
 
 def _with_tracer_wrapper(func):
@@ -33,7 +31,7 @@ async def start_as_current_span_async(tracer, *args, **kwargs):
 
 def should_send_prompts():
     return (
-        os.getenv("TRACELOOP_TRACE_CONTENT") or "true"
+        os.getenv(TRACELOOP_TRACE_CONTENT) or "true"
     ).lower() == "true" or context_api.get_value("override_enable_content_tracing")
 
 
@@ -93,44 +91,6 @@ def process_response(span, res):
 
 def is_role_valid(role: str) -> bool:
     return role in ["user", "assistant", "system", "tool"]
-
-
-def is_content_enabled() -> bool:
-    capture_content = os.environ.get(
-        OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT, "false"
-    )
-
-    return capture_content.lower() == "true"
-
-
-def emit_message_event(*, content, role: str):
-    from opentelemetry.instrumentation.llamaindex.event_handler import (
-        MessageEvent,
-        emit_event,
-    )
-
-    emit_event(MessageEvent(content=content, role=role))
-
-
-def emit_choice_event(
-    *,
-    index: int = 0,
-    content,
-    role: str,
-    finish_reason: str,
-):
-    from opentelemetry.instrumentation.llamaindex.event_handler import (
-        ChoiceEvent,
-        emit_event,
-    )
-
-    emit_event(
-        ChoiceEvent(
-            index=index,
-            message={"content": content, "role": role},
-            finish_reason=finish_reason,
-        )
-    )
 
 
 def should_emit_events() -> bool:

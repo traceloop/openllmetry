@@ -8,9 +8,7 @@ from opentelemetry.instrumentation.chromadb import ChromaInstrumentor
 from opentelemetry.instrumentation.cohere import CohereInstrumentor
 from opentelemetry.instrumentation.llamaindex import LlamaIndexInstrumentor
 from opentelemetry.instrumentation.llamaindex.config import Config
-from opentelemetry.instrumentation.llamaindex.utils import (
-    OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT,
-)
+from opentelemetry.instrumentation.llamaindex.utils import TRACELOOP_TRACE_CONTENT
 from opentelemetry.instrumentation.llamaindex.version import __version__
 from opentelemetry.instrumentation.openai import OpenAIInstrumentor
 from opentelemetry.sdk._events import EventLoggerProvider
@@ -76,7 +74,7 @@ def instrument_legacy(tracer_provider):
 
 @pytest.fixture(scope="function")
 def instrument_with_content(instrument_legacy, event_logger_provider):
-    os.environ.update({OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT: "True"})
+    os.environ.update({TRACELOOP_TRACE_CONTENT: "True"})
 
     instrumentor = instrument_legacy
     Config.use_legacy_attributes = False
@@ -88,12 +86,12 @@ def instrument_with_content(instrument_legacy, event_logger_provider):
 
     Config.use_legacy_attributes = True
     Config.event_logger = None
-    os.environ.pop(OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT, None)
+    os.environ.pop(TRACELOOP_TRACE_CONTENT, None)
 
 
 @pytest.fixture(scope="function")
 def instrument_with_no_content(instrument_legacy, event_logger_provider):
-    os.environ.update({OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT: "False"})
+    os.environ.update({TRACELOOP_TRACE_CONTENT: "False"})
 
     instrumentor = instrument_legacy
     Config.use_legacy_attributes = False
@@ -105,7 +103,7 @@ def instrument_with_no_content(instrument_legacy, event_logger_provider):
 
     Config.use_legacy_attributes = True
     Config.event_logger = None
-    os.environ.pop(OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT, None)
+    os.environ.pop(TRACELOOP_TRACE_CONTENT, None)
 
 
 @pytest.fixture(autouse=True)

@@ -1,11 +1,20 @@
-from dataclasses import asdict, dataclass
+from dataclasses import asdict
 from enum import Enum
-from typing import Any, List, Literal, Optional, TypedDict, Union
+from typing import Union
 
+from llama_index.core.instrumentation.events.llm import (
+    LLMChatEndEvent,
+    LLMChatStartEvent,
+)
+from llama_index.core.instrumentation.events.rerank import ReRankStartEvent
 from opentelemetry._events import Event
+from opentelemetry.instrumentation.llamaindex.event_models import (
+    ChoiceEvent,
+    MessageEvent,
+)
 from opentelemetry.instrumentation.llamaindex.utils import (
-    is_content_enabled,
     should_emit_events,
+    should_send_prompts,
 )
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
@@ -28,43 +37,57 @@ EVENT_ATTRIBUTES = {GenAIAttributes.GEN_AI_SYSTEM: "llamaindex"}
 """The attributes to be used for the event."""
 
 
-class _FunctionToolCall(TypedDict):
-    function_name: str
-    arguments: Optional[dict[str, Any]]
+def emit_chat_message_events(event: LLMChatStartEvent):
+    for message in event.messages:
+        emit_event(MessageEvent(content=message.content, role=message.role.value))
 
 
-class ToolCall(TypedDict):
-    """Represents a tool call in the AI model."""
-
-    id: str
-    function: _FunctionToolCall
-    type: Literal["function"]
-
-
-class CompletionMessage(TypedDict):
-    """Represents a message in the AI model."""
-
-    content: Any
-    role: str = "assistant"
-
-
-@dataclass
-class MessageEvent:
-    """Represents an input event for the AI model."""
-
-    content: Any
-    role: str = "user"
-    tool_calls: Optional[List[ToolCall]] = None
+def emit_chat_response_events(event: LLMChatEndEvent):
+    if event.response:
+        print(f"===== emit_chat_response_events for span_id: {event.span_id} =====")
+        try:
+            finish_reason = event.response.raw.get("choices", [{}])[0].get(
+                "finish_reason", "unknown"
+            )
+        except (AttributeError, ValueError):
+            finish_reason = "unknown"
+        emit_choice_event(
+            index=0,
+            content=event.response.message.content,
+            role=event.response.message.role.value,
+            finish_reason=finish_reason,
+        )
 
 
-@dataclass
-class ChoiceEvent:
-    """Represents a completion event for the AI model."""
+def emit_rerank_message_event(event: ReRankStartEvent):
+    if event.query:
+        if isinstance(event.query, str):
+            emit_message_event(content=event.query, role="user")
+        else:
+            emit_message_event(content=event.query.query_str, role="user")
 
-    index: int
-    message: CompletionMessage
-    finish_reason: str = "unknown"
-    tool_calls: Optional[List[ToolCall]] = None
+
+def emit_message_event(*, content, role: str):
+    emit_event(MessageEvent(content=content, role=role))
+
+
+def emit_choice_event(
+    *,
+    index: int = 0,
+    content,
+    role: str,
+    finish_reason: str,
+):
+    print(
+        f"===== Emitting choice event: index={index}, role={role}, finish_reason={finish_reason} ====="
+    )
+    emit_event(
+        ChoiceEvent(
+            index=index,
+            message={"content": content, "role": role},
+            finish_reason=finish_reason,
+        )
+    )
 
 
 def emit_event(event: Union[MessageEvent, ChoiceEvent]) -> None:
@@ -103,7 +126,7 @@ def _emit_message_event(event: MessageEvent) -> None:
     elif event.tool_calls is None:
         del body["tool_calls"]
 
-    if not is_content_enabled():
+    if not should_send_prompts():
         del body["content"]
         if body.get("tool_calls") is not None:
             for tool_call in body["tool_calls"]:
@@ -122,7 +145,7 @@ def _emit_choice_event(event: ChoiceEvent) -> None:
     if event.tool_calls is None:
         del body["tool_calls"]
 
-    if not is_content_enabled():
+    if not should_send_prompts():
         body["message"].pop("content", None)
         if body.get("tool_calls") is not None:
             for tool_call in body["tool_calls"]:

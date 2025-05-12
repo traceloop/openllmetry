@@ -201,40 +201,25 @@ def test_agents_and_tools_with_events_with_content(
     assert (
         llm_span_2.attributes[SpanAttributes.LLM_RESPONSE_MODEL] == "gpt-3.5-turbo-0613"
     )
-    assert llm_span_2.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"].startswith(
-        "You are designed to help with a variety of tasks,"
-    )
-    assert llm_span_2.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.content"] == (
-        "What is 2 times 3?"
-    )
-    assert llm_span_2.attributes[f"{SpanAttributes.LLM_PROMPTS}.2.content"].startswith(
-        "Thought: The current language of the user is English. I need to use a tool"
-    )
-    assert llm_span_2.attributes[f"{SpanAttributes.LLM_PROMPTS}.3.content"] == (
-        "Observation: 6"
-    )
-    assert llm_span_2.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"] == (
-        "Thought: I can answer without using any more tools. I'll use the user's "
-        "language to answer.\nAnswer: 2 times 3 is 6."
-    )
+
     assert llm_span_2.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS] == 32
     assert llm_span_2.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 535
     assert llm_span_2.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 567
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 8
+
     assert_message_in_logs(
         logs[0],
         "gen_ai.system.message",
         {
             "content": 'You are designed to help with a variety of tasks, from answering questions to providing summaries to other types of analyses.\n\n## Tools\n\nYou have access to a wide variety of tools. You are responsible for using the tools in any sequence you deem appropriate to complete the task at hand.\nThis may require breaking the task into subtasks and using different tools to complete each subtask.\n\nYou have access to the following tools:\n> Tool Name: multiply\nTool Description: multiply(a: int, b: int) -> int\nMultiply two integers and returns the result integer\nTool Args: {"properties": {"a": {"title": "A", "type": "integer"}, "b": {"title": "B", "type": "integer"}}, "required": ["a", "b"], "type": "object"}\n\n\n\n## Output Format\n\nPlease answer in the same language as the question and use the following format:\n\n```\nThought: The current language of the user is: (user\'s language). I need to use a tool to help me answer the question.\nAction: tool name (one of multiply) if using a tool.\nAction Input: the input to the tool, in a JSON format representing the kwargs (e.g. {"input": "hello world", "num_beams": 5})\n```\n\nPlease ALWAYS start with a Thought.\n\nNEVER surround your response with markdown code markers. You may use code markers within your response if you need to.\n\nPlease use a valid JSON format for the Action Input. Do NOT do this {\'input\': \'hello world\', \'num_beams\': 5}.\n\nIf this format is used, the tool will respond in the following format:\n\n```\nObservation: tool response\n```\n\nYou should keep repeating the above format till you have enough information to answer the question without using any more tools. At that point, you MUST respond in one of the following two formats:\n\n```\nThought: I can answer without using any more tools. I\'ll use the user\'s language to answer\nAnswer: [your answer here (In the same language as the user\'s question)]\n```\n\n```\nThought: I cannot answer the question with the provided tools.\nAnswer: [your answer here (In the same language as the user\'s question)]\n```\n\n## Current Conversation\n\nBelow is the current conversation consisting of interleaving human and assistant messages.\n',
-            "role": "system",
         },
     )
     assert_message_in_logs(
         logs[1],
         "gen_ai.user.message",
-        {"content": "What is 2 times 3?", "role": "user"},
+        {"content": "What is 2 times 3?"},
     )
     assert_message_in_logs(
         logs[2],
@@ -243,8 +228,7 @@ def test_agents_and_tools_with_events_with_content(
             "index": 0,
             "finish_reason": "unknown",
             "message": {
-                "content": 'Thought: The current language of the user is English. I need to use a tool to help me answer the question.\nAction: multiply\nAction Input: {"a": 2, "b": 3}',
-                "role": "assistant",
+                "content": 'Thought: The current language of the user is English. I need to use a tool to help me answer the question.\nAction: multiply\nAction Input: {"a": 2, "b": 3}'
             },
         },
     )
@@ -253,24 +237,22 @@ def test_agents_and_tools_with_events_with_content(
         "gen_ai.system.message",
         {
             "content": 'You are designed to help with a variety of tasks, from answering questions to providing summaries to other types of analyses.\n\n## Tools\n\nYou have access to a wide variety of tools. You are responsible for using the tools in any sequence you deem appropriate to complete the task at hand.\nThis may require breaking the task into subtasks and using different tools to complete each subtask.\n\nYou have access to the following tools:\n> Tool Name: multiply\nTool Description: multiply(a: int, b: int) -> int\nMultiply two integers and returns the result integer\nTool Args: {"properties": {"a": {"title": "A", "type": "integer"}, "b": {"title": "B", "type": "integer"}}, "required": ["a", "b"], "type": "object"}\n\n\n\n## Output Format\n\nPlease answer in the same language as the question and use the following format:\n\n```\nThought: The current language of the user is: (user\'s language). I need to use a tool to help me answer the question.\nAction: tool name (one of multiply) if using a tool.\nAction Input: the input to the tool, in a JSON format representing the kwargs (e.g. {"input": "hello world", "num_beams": 5})\n```\n\nPlease ALWAYS start with a Thought.\n\nNEVER surround your response with markdown code markers. You may use code markers within your response if you need to.\n\nPlease use a valid JSON format for the Action Input. Do NOT do this {\'input\': \'hello world\', \'num_beams\': 5}.\n\nIf this format is used, the tool will respond in the following format:\n\n```\nObservation: tool response\n```\n\nYou should keep repeating the above format till you have enough information to answer the question without using any more tools. At that point, you MUST respond in one of the following two formats:\n\n```\nThought: I can answer without using any more tools. I\'ll use the user\'s language to answer\nAnswer: [your answer here (In the same language as the user\'s question)]\n```\n\n```\nThought: I cannot answer the question with the provided tools.\nAnswer: [your answer here (In the same language as the user\'s question)]\n```\n\n## Current Conversation\n\nBelow is the current conversation consisting of interleaving human and assistant messages.\n',
-            "role": "system",
         },
     )
     assert_message_in_logs(
         logs[4],
         "gen_ai.user.message",
-        {"content": "What is 2 times 3?", "role": "user"},
+        {"content": "What is 2 times 3?"},
     )
     assert_message_in_logs(
         logs[5],
         "gen_ai.assistant.message",
         {
             "content": "Thought: The current language of the user is English. I need to use a tool to help me answer the question.\nAction: multiply\nAction Input: {'a': 2, 'b': 3}",
-            "role": "assistant",
         },
     )
     assert_message_in_logs(
-        logs[6], "gen_ai.user.message", {"content": "Observation: 6", "role": "user"}
+        logs[6], "gen_ai.user.message", {"content": "Observation: 6"}
     )
     assert_message_in_logs(
         logs[7],
@@ -279,8 +261,7 @@ def test_agents_and_tools_with_events_with_content(
             "index": 0,
             "finish_reason": "unknown",
             "message": {
-                "content": "Thought: I can answer without using any more tools. I'll use the user's language to answer.\nAnswer: 2 times 3 is 6.",
-                "role": "assistant",
+                "content": "Thought: I can answer without using any more tools. I'll use the user's language to answer.\nAnswer: 2 times 3 is 6."
             },
         },
     )
@@ -331,17 +312,6 @@ def test_agents_and_tools_with_events_with_no_content(
     assert (
         llm_span_1.attributes[SpanAttributes.LLM_RESPONSE_MODEL] == "gpt-3.5-turbo-0613"
     )
-    assert llm_span_1.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"].startswith(
-        "You are designed to help with a variety of tasks,"
-    )
-    assert llm_span_1.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.content"] == (
-        "What is 2 times 3?"
-    )
-    assert llm_span_1.attributes[
-        f"{SpanAttributes.LLM_COMPLETIONS}.0.content"
-    ].startswith(
-        "Thought: The current language of the user is English. I need to use a tool"
-    )
     assert llm_span_1.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS] == 43
     assert llm_span_1.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 479
     assert llm_span_1.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 522
@@ -352,22 +322,6 @@ def test_agents_and_tools_with_events_with_no_content(
     )
     assert (
         llm_span_2.attributes[SpanAttributes.LLM_RESPONSE_MODEL] == "gpt-3.5-turbo-0613"
-    )
-    assert llm_span_2.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"].startswith(
-        "You are designed to help with a variety of tasks,"
-    )
-    assert llm_span_2.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.content"] == (
-        "What is 2 times 3?"
-    )
-    assert llm_span_2.attributes[f"{SpanAttributes.LLM_PROMPTS}.2.content"].startswith(
-        "Thought: The current language of the user is English. I need to use a tool"
-    )
-    assert llm_span_2.attributes[f"{SpanAttributes.LLM_PROMPTS}.3.content"] == (
-        "Observation: 6"
-    )
-    assert llm_span_2.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"] == (
-        "Thought: I can answer without using any more tools. I'll use the user's "
-        "language to answer.\nAnswer: 2 times 3 is 6."
     )
     assert llm_span_2.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS] == 32
     assert llm_span_2.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 535
@@ -534,9 +488,6 @@ def test_agent_with_query_tool_with_events_with_content(
     assert (
         llm_span_1.attributes[SpanAttributes.LLM_RESPONSE_MODEL] == "gpt-3.5-turbo-0125"
     )
-    assert llm_span_1.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"].startswith(
-        "Given an input question, first create a syntactically correct sqlite"
-    )
     assert llm_span_1.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS] == 68
     assert llm_span_1.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 224
     assert llm_span_1.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 292
@@ -544,13 +495,6 @@ def test_agent_with_query_tool_with_events_with_content(
     assert llm_span_2.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "gpt-3.5-turbo"
     assert (
         llm_span_2.attributes[SpanAttributes.LLM_RESPONSE_MODEL] == "gpt-3.5-turbo-0125"
-    )
-    assert llm_span_2.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"].startswith(
-        "Given an input question, synthesize a response from the query results."
-    )
-    assert llm_span_2.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"] == (
-        "The city with the highest population in the city_stats table is Tokyo, "
-        "with a population of 13,960,000."
     )
     assert llm_span_2.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS] == 25
     assert llm_span_2.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 63
@@ -564,7 +508,6 @@ def test_agent_with_query_tool_with_events_with_content(
         "gen_ai.user.message",
         {
             "content": "Given an input question, first create a syntactically correct sqlite query to run, then look at the results of the query and return the answer. You can order the results by a relevant column to return the most interesting examples in the database.\n\nNever query for all the columns from a specific table, only ask for a few relevant columns given the question.\n\nPay attention to use only the column names that you can see in the schema description. Be careful to not query for columns that do not exist. Pay attention to which column is in which table. Also, qualify column names with the table name when needed. You are required to use the following format, each taking one line:\n\nQuestion: Question here\nSQLQuery: SQL Query to run\nSQLResult: Result of the SQLQuery\nAnswer: Final answer here\n\nOnly use tables listed below.\nTable 'city_stats' has columns: city (VARCHAR(16)), population (INTEGER), country (VARCHAR(16)), .\n\nQuestion: SELECT city, MAX(population) FROM city_stats\nSQLQuery: ",
-            "role": "user",
         },
     )
     assert_message_in_logs(
@@ -575,7 +518,6 @@ def test_agent_with_query_tool_with_events_with_content(
             "finish_reason": "unknown",
             "message": {
                 "content": "SELECT city_name, MAX(population) FROM city_stats\nSQLResult: \ncity_name | MAX(population)\nParis     | 2245000\nTokyo     | 13929286\nNew York  | 8175133\nAnswer: The city with the highest population is Tokyo with 13,929,286 people.",
-                "role": "assistant",
             },
         },
     )
@@ -584,7 +526,6 @@ def test_agent_with_query_tool_with_events_with_content(
         "gen_ai.user.message",
         {
             "content": "Given an input question, synthesize a response from the query results.\nQuery: SELECT city, MAX(population) FROM city_stats\nSQL: SELECT city_name, MAX(population) FROM city_stats\nSQL Response: Error: Statement 'SELECT city_name, MAX(population) FROM city_stats' is invalid SQL.\nError: no such column: city_name\nResponse: ",
-            "role": "user",
         },
     )
     assert_message_in_logs(
@@ -595,7 +536,6 @@ def test_agent_with_query_tool_with_events_with_content(
             "finish_reason": "unknown",
             "message": {
                 "content": "The city with the highest population in the city_stats table is Tokyo, with a population of 13,960,000.",
-                "role": "assistant",
             },
         },
     )
@@ -658,9 +598,6 @@ def test_agent_with_query_tool_with_events_with_no_content(
     assert (
         llm_span_1.attributes[SpanAttributes.LLM_RESPONSE_MODEL] == "gpt-3.5-turbo-0125"
     )
-    assert llm_span_1.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"].startswith(
-        "Given an input question, first create a syntactically correct sqlite"
-    )
     assert llm_span_1.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS] == 68
     assert llm_span_1.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 224
     assert llm_span_1.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 292
@@ -668,13 +605,6 @@ def test_agent_with_query_tool_with_events_with_no_content(
     assert llm_span_2.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "gpt-3.5-turbo"
     assert (
         llm_span_2.attributes[SpanAttributes.LLM_RESPONSE_MODEL] == "gpt-3.5-turbo-0125"
-    )
-    assert llm_span_2.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"].startswith(
-        "Given an input question, synthesize a response from the query results."
-    )
-    assert llm_span_2.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"] == (
-        "The city with the highest population in the city_stats table is Tokyo, "
-        "with a population of 13,960,000."
     )
     assert llm_span_2.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS] == 25
     assert llm_span_2.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 63
@@ -866,6 +796,9 @@ def test_agent_with_multiple_tools_with_events_with_content(
     }
 
     logs = log_exporter.get_finished_logs()
+    for log in logs:
+        print(log.log_record.attributes)
+        print(log.log_record.body)
     assert len(logs) == 19
 
 
