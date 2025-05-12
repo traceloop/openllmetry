@@ -53,6 +53,8 @@ def _message_type_to_role(message_type: str) -> str:
         return "system"
     elif message_type == "ai":
         return "assistant"
+    elif message_type == "tool":
+        return "tool"
     else:
         return "unknown"
 
@@ -150,10 +152,17 @@ def _set_chat_request(
                 )
                 # if msg.content is string
                 if isinstance(msg.content, str):
-                    span.set_attribute(
-                        f"{SpanAttributes.LLM_PROMPTS}.{i}.content",
-                        msg.content,
-                    )
+                    tool_calls = dict(msg).get("tool_calls", msg.additional_kwargs.get("tool_calls"))
+                    if len(msg.content.strip()) == 0 and tool_calls is not None:
+                        span.set_attribute(
+                            f"{SpanAttributes.LLM_PROMPTS}.{i}.content",
+                            json.dumps(tool_calls, cls=CallbackFilteredJSONEncoder),
+                        )
+                    else:
+                        span.set_attribute(
+                            f"{SpanAttributes.LLM_PROMPTS}.{i}.content",
+                            msg.content,
+                        )
                 else:
                     span.set_attribute(
                         f"{SpanAttributes.LLM_PROMPTS}.{i}.content",
