@@ -198,6 +198,8 @@ class SpanAttributes:
     MILVUS_SEARCH_PARTITION_NAMES = "db.milvus.search.partition_names_count"
     MILVUS_SEARCH_RESULT_COUNT = "db.milvus.search.result_count"
     MILVUS_SEARCH_QUERY_VECTOR_DIMENSION = "db.milvus.search.query_vector_dimension"
+    MILVUS_HYBRID_SEARCH_ANNSEARCH_REQUEST = "db.milvus.hybrid_search.annsearch_request"
+    MILVUS_HYBRID_SEARCH_RANKER_TYPE = "db.milvus.hybrid_search.ranker_type"
     MILVUS_UPSERT_COLLECTION_NAME = "db.milvus.upsert.collection_name"
     MILVUS_UPSERT_DATA_COUNT = "db.milvus.upsert.data_count"
     MILVUS_UPSERT_PARTITION_NAME = "db.milvus.upsert.partition_name"
