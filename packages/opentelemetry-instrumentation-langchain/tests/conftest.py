@@ -13,7 +13,6 @@ from opentelemetry import metrics
 from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.metrics import MeterProvider
 from opentelemetry.sdk.metrics.export import InMemoryMetricReader
-from opentelemetry.trace import format_trace_id, format_span_id
 from opentelemetry.trace import get_tracer
 from opentelemetry.trace.propagation import set_span_in_context
 
