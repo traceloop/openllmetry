@@ -150,19 +150,18 @@ def _set_chat_request(
                     f"{SpanAttributes.LLM_PROMPTS}.{i}.role",
                     _message_type_to_role(msg.type),
                 )
-                # if msg.content is string
-                if isinstance(msg.content, str):
-                    tool_calls = dict(msg).get("tool_calls", msg.additional_kwargs.get("tool_calls"))
-                    if len(msg.content.strip()) == 0 and tool_calls is not None:
-                        span.set_attribute(
-                            f"{SpanAttributes.LLM_PROMPTS}.{i}.content",
-                            json.dumps(tool_calls, cls=CallbackFilteredJSONEncoder),
-                        )
-                    else:
-                        span.set_attribute(
-                            f"{SpanAttributes.LLM_PROMPTS}.{i}.content",
-                            msg.content,
-                        )
+                tool_calls = dict(msg).get("tool_calls", msg.additional_kwargs.get("tool_calls"))
+                # matches empty message content (str or dict or None)
+                if tool_calls is not None and not msg.content:
+                    span.set_attribute(
+                        f"{SpanAttributes.LLM_PROMPTS}.{i}.content",
+                        json.dumps(tool_calls, cls=CallbackFilteredJSONEncoder),
+                    )
+                elif isinstance(msg.content, str):
+                    span.set_attribute(
+                        f"{SpanAttributes.LLM_PROMPTS}.{i}.content",
+                        msg.content,
+                    )
                 else:
                     span.set_attribute(
                         f"{SpanAttributes.LLM_PROMPTS}.{i}.content",
