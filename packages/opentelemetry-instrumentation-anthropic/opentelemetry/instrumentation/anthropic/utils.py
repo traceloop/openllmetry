@@ -1,4 +1,5 @@
 import asyncio
+import json
 import os
 import logging
 import threading
@@ -133,3 +134,19 @@ def run_async(method):
         thread.join()
     else:
         asyncio.run(method)
+
+
+class JSONEncoder(json.JSONEncoder):
+    def default(self, o):
+        if hasattr(o, "to_json"):
+            return o.to_json()
+
+        if hasattr(o, "model_dump_json"):
+            return o.model_dump_json()
+
+        try:
+            return str(o)
+        except Exception:
+            logger = logging.getLogger(__name__)
+            logger.debug("Failed to serialize object of type: %s", type(o).__name__)
+            return ""

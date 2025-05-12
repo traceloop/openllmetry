@@ -48,6 +48,29 @@ WRAPPED_METHODS = [
 ]
 
 
+def _sanitize_copy_messages(wrapped, instance, args, kwargs):
+    # original signature: _copy_messages(messages)
+    messages = args[0] if args else []
+    sanitized = []
+    for msg in messages or []:
+        if isinstance(msg, dict):
+            msg_copy = dict(msg)
+            tc_list = msg_copy.get("tool_calls")
+            if tc_list:
+                for tc in tc_list:
+                    func = tc.get("function")
+                    arg = func.get("arguments") if func else None
+                    if isinstance(arg, str):
+                        try:
+                            func["arguments"] = json.loads(arg)
+                        except Exception:
+                            pass
+            sanitized.append(msg_copy)
+        else:
+            sanitized.append(msg)
+    return wrapped(sanitized)
+
+
 def should_send_prompts():
     return (
         os.getenv("TRACELOOP_TRACE_CONTENT") or "true"
@@ -89,14 +112,17 @@ def _set_prompts(span, messages):
                     f"{prefix}.tool_calls.{i}.name",
                     function.get("name"),
                 )
+                # record arguments: ensure it's a JSON string for span attributes
+                raw_args = function.get("arguments")
+                if isinstance(raw_args, dict):
+                    arg_str = json.dumps(raw_args)
+                else:
+                    arg_str = raw_args
                 _set_span_attribute(
                     span,
                     f"{prefix}.tool_calls.{i}.arguments",
-                    function.get("arguments"),
+                    arg_str,
                 )
-
-                if function.get("arguments"):
-                    function["arguments"] = json.loads(function.get("arguments"))
 
 
 def set_tools_attributes(span, tools):
@@ -118,15 +144,15 @@ def set_tools_attributes(span, tools):
 
 @dont_throw
 def _set_input_attributes(span, llm_request_type, kwargs):
-    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, kwargs.get("model"))
+    json_data = kwargs.get("json", {})
+    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, json_data.get("model"))
     _set_span_attribute(
         span, SpanAttributes.LLM_IS_STREAMING, kwargs.get("stream") or False
     )
-
     if should_send_prompts():
         if llm_request_type == LLMRequestTypeValues.CHAT:
             _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.0.role", "user")
-            for index, message in enumerate(kwargs.get("messages")):
+            for index, message in enumerate(json_data.get("messages")):
                 _set_span_attribute(
                     span,
                     f"{SpanAttributes.LLM_PROMPTS}.{index}.content",
@@ -137,13 +163,13 @@ def _set_input_attributes(span, llm_request_type, kwargs):
                     f"{SpanAttributes.LLM_PROMPTS}.{index}.role",
                     message.get("role"),
                 )
-            _set_prompts(span, kwargs.get("messages"))
-            if kwargs.get("tools"):
-                set_tools_attributes(span, kwargs.get("tools"))
+            _set_prompts(span, json_data.get("messages"))
+            if json_data.get("tools"):
+                set_tools_attributes(span, json_data.get("tools"))
         else:
             _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.0.role", "user")
             _set_span_attribute(
-                span, f"{SpanAttributes.LLM_PROMPTS}.0.content", kwargs.get("prompt")
+                span, f"{SpanAttributes.LLM_PROMPTS}.0.content", json_data.get("prompt")
             )
 
 
@@ -240,7 +266,8 @@ def _accumulate_streaming_response(span, token_histogram, llm_request_type, resp
             accumulated_response["message"]["content"] += res["message"]["content"]
             accumulated_response["message"]["role"] = res["message"]["role"]
         elif llm_request_type == LLMRequestTypeValues.COMPLETION:
-            accumulated_response["response"] += res["response"]
+            text = res.get("response", "")
+            accumulated_response["response"] += text
 
     response_data = res.model_dump() if hasattr(res, 'model_dump') else res
     _set_response_attributes(span, token_histogram, llm_request_type, response_data | accumulated_response)
@@ -260,7 +287,8 @@ async def _aaccumulate_streaming_response(span, token_histogram, llm_request_typ
             accumulated_response["message"]["content"] += res["message"]["content"]
             accumulated_response["message"]["role"] = res["message"]["role"]
         elif llm_request_type == LLMRequestTypeValues.COMPLETION:
-            accumulated_response["response"] += res["response"]
+            text = res.get("response", "")
+            accumulated_response["response"] += text
 
     response_data = res.model_dump() if hasattr(res, 'model_dump') else res
     _set_response_attributes(span, token_histogram, llm_request_type, response_data | accumulated_response)
@@ -336,13 +364,11 @@ def _wrap(
     if response:
         if duration_histogram:
             duration = end_time - start_time
-            duration_histogram.record(
-                duration,
-                attributes={
-                    SpanAttributes.LLM_SYSTEM: "Ollama",
-                    SpanAttributes.LLM_RESPONSE_MODEL: kwargs.get("model"),
-                },
-            )
+            attrs = {SpanAttributes.LLM_SYSTEM: "Ollama"}
+            model = kwargs.get("model")
+            if model is not None:
+                attrs[SpanAttributes.LLM_RESPONSE_MODEL] = model
+            duration_histogram.record(duration, attributes=attrs)
 
         if span.is_recording():
             if kwargs.get("stream"):
@@ -392,13 +418,11 @@ async def _awrap(
     if response:
         if duration_histogram:
             duration = end_time - start_time
-            duration_histogram.record(
-                duration,
-                attributes={
-                    SpanAttributes.LLM_SYSTEM: "Ollama",
-                    SpanAttributes.LLM_RESPONSE_MODEL: kwargs.get("model"),
-                },
-            )
+            attrs = {SpanAttributes.LLM_SYSTEM: "Ollama"}
+            model = kwargs.get("model")
+            if model is not None:
+                attrs[SpanAttributes.LLM_RESPONSE_MODEL] = model
+            duration_histogram.record(duration, attributes=attrs)
 
         if span.is_recording():
             if kwargs.get("stream"):
@@ -459,23 +483,23 @@ class OllamaInstrumentor(BaseInstrumentor):
                 duration_histogram,
             ) = (None, None)
 
-        for wrapped_method in WRAPPED_METHODS:
-            wrap_method = wrapped_method.get("method")
-            wrap_function_wrapper(
-                "ollama._client",
-                f"Client.{wrap_method}",
-                _wrap(tracer, token_histogram, duration_histogram, wrapped_method),
-            )
-            wrap_function_wrapper(
-                "ollama._client",
-                f"AsyncClient.{wrap_method}",
-                _awrap(tracer, token_histogram, duration_histogram, wrapped_method),
-            )
-            wrap_function_wrapper(
-                "ollama",
-                f"{wrap_method}",
-                _wrap(tracer, token_histogram, duration_histogram, wrapped_method),
-            )
+        # Patch _copy_messages to sanitize tool_calls arguments before Pydantic validation
+        wrap_function_wrapper(
+            "ollama._client",
+            "_copy_messages",
+            _sanitize_copy_messages,
+        )
+        # instrument all llm methods (generate/chat/embeddings) via _request dispatch wrapper
+        wrap_function_wrapper(
+            "ollama._client",
+            "Client._request",
+            _dispatch_wrap(tracer, token_histogram, duration_histogram),
+        )
+        wrap_function_wrapper(
+            "ollama._client",
+            "AsyncClient._request",
+            _dispatch_awrap(tracer, token_histogram, duration_histogram),
+        )
 
     def _uninstrument(self, **kwargs):
         for wrapped_method in WRAPPED_METHODS:
@@ -491,3 +515,33 @@ class OllamaInstrumentor(BaseInstrumentor):
                 "ollama",
                 wrapped_method.get("method"),
             )
+
+
+def _dispatch_wrap(tracer, token_histogram, duration_histogram):
+    def wrapper(wrapped, instance, args, kwargs):
+        to_wrap = None
+        if len(args) > 2 and isinstance(args[2], str):
+            path = args[2]
+            op = path.rstrip('/').split('/')[-1]
+            to_wrap = next((m for m in WRAPPED_METHODS if m.get("method") == op), None)
+        if to_wrap:
+            return _wrap(tracer, token_histogram, duration_histogram, to_wrap)(
+                wrapped, instance, args, kwargs
+            )
+        return wrapped(*args, **kwargs)
+    return wrapper
+
+
+def _dispatch_awrap(tracer, token_histogram, duration_histogram):
+    async def wrapper(wrapped, instance, args, kwargs):
+        to_wrap = None
+        if len(args) > 2 and isinstance(args[2], str):
+            path = args[2]
+            op = path.rstrip('/').split('/')[-1]
+            to_wrap = next((m for m in WRAPPED_METHODS if m.get("method") == op), None)
+        if to_wrap:
+            return await _awrap(tracer, token_histogram, duration_histogram, to_wrap)(
+                wrapped, instance, args, kwargs
+            )
+        return await wrapped(*args, **kwargs)
+    return wrapper
