@@ -263,7 +263,7 @@ def _set_hybrid_search_attributes(span, kwargs):
         AISpanAttributes.MILVUS_HYBRID_SEARCH_RANKER_TYPE,
         _encode_include(type(kwargs.get("ranker")).__name__),
     )
-    _set_span_attribute(span, AISpanAttributes.MILVUS_SEARCH_LIMIT, kwargs.get("limit"))
+    _set_span_attribute(span, AISpanAttributes.MILVUS_HYBRID_SEARCH_LIMIT, kwargs.get("limit"))
     _set_span_attribute(
         span,
         AISpanAttributes.MILVUS_HYBRID_SEARCH_DATA_COUNT,

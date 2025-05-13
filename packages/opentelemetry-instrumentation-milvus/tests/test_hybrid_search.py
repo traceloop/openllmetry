@@ -105,9 +105,6 @@ def test_hybrid_search_with_rrf(exporter, collection):
     # Span checks
     spans = exporter.get_finished_spans()
     span = next(span for span in spans if span.name == "milvus.hybrid_search")
-    # print("Span attributes:")
-    # for key, value in span.attributes.items():
-    #       print(f"  {key}: {value}")
 
     assert span.attributes.get(SpanAttributes.VECTOR_DB_VENDOR) == "milvus"
     assert span.attributes.get(SpanAttributes.VECTOR_DB_OPERATION) == "hybrid_search"
