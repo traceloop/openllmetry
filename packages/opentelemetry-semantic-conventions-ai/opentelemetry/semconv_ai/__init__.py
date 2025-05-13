@@ -196,6 +196,8 @@ class SpanAttributes:
     MILVUS_SEARCH_SEARCH_PARAMS = "db.milvus.search.search_params"
     MILVUS_SEARCH_TIMEOUT = "db.milvus.search.timeout"
     MILVUS_SEARCH_PARTITION_NAMES = "db.milvus.search.partition_names_count"
+    MILVUS_SEARCH_RESULT_COUNT = "db.milvus.search.result_count"
+    MILVUS_SEARCH_QUERY_VECTOR_DIMENSION = "db.milvus.search.query_vector_dimension"
     MILVUS_UPSERT_COLLECTION_NAME = "db.milvus.upsert.collection_name"
     MILVUS_UPSERT_DATA_COUNT = "db.milvus.upsert.data_count"
     MILVUS_UPSERT_PARTITION_NAME = "db.milvus.upsert.partition_name"
