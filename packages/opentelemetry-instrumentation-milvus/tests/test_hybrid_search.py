@@ -112,9 +112,9 @@ def test_hybrid_search_with_rrf(exporter, collection):
     assert span.attributes.get(SpanAttributes.VECTOR_DB_VENDOR) == "milvus"
     assert span.attributes.get(SpanAttributes.VECTOR_DB_OPERATION) == "hybrid_search"
     assert (
-        span.attributes.get(SpanAttributes.MILVUS_SEARCH_COLLECTION_NAME) == collection
+        span.attributes.get(SpanAttributes.MILVUS_HYBRID_SEARCH_COLLECTION_NAME) == collection
     )
-    assert span.attributes.get(SpanAttributes.MILVUS_SEARCH_LIMIT) == 10
+    assert span.attributes.get(SpanAttributes.MILVUS_HYBRID_SEARCH_LIMIT) == 10
 
     reqs_info = []
     for req in reqs:
@@ -135,7 +135,7 @@ def test_hybrid_search_with_rrf(exporter, collection):
     # Result events
     events = [e for e in span.events if e.name == Events.DB_SEARCH_RESULT.value]
 
-    assert span.attributes.get(SpanAttributes.MILVUS_SEARCH_RESULT_COUNT) == len(events)
+    assert span.attributes.get(SpanAttributes.MILVUS_HYBRID_SEARCH_RESULT_COUNT) == len(events)
 
     for event in events:
         _id = event.attributes.get(EventAttributes.DB_SEARCH_RESULT_ID.value)
