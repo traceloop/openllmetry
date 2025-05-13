@@ -241,7 +241,7 @@ def _set_search_attributes(span, kwargs):
 def _set_hybrid_search_attributes(span, kwargs):
     _set_span_attribute(
         span,
-        AISpanAttributes.MILVUS_SEARCH_COLLECTION_NAME,
+        AISpanAttributes.MILVUS_HYBRID_SEARCH_COLLECTION_NAME,
         kwargs.get("collection_name"),
     )
 
@@ -266,25 +266,25 @@ def _set_hybrid_search_attributes(span, kwargs):
     _set_span_attribute(span, AISpanAttributes.MILVUS_SEARCH_LIMIT, kwargs.get("limit"))
     _set_span_attribute(
         span,
-        AISpanAttributes.MILVUS_SEARCH_DATA_COUNT,
+        AISpanAttributes.MILVUS_HYBRID_SEARCH_DATA_COUNT,
         count_or_none(kwargs.get("reqs")),
     )
     _set_span_attribute(
         span,
-        AISpanAttributes.MILVUS_SEARCH_OUTPUT_FIELDS_COUNT,
+        AISpanAttributes.MILVUS_HYBRID_SEARCH_OUTPUT_FIELDS_COUNT,
         count_or_none(kwargs.get("output_fields")),
     )
     _set_span_attribute(
-        span, AISpanAttributes.MILVUS_SEARCH_TIMEOUT, kwargs.get("timeout")
+        span, AISpanAttributes.MILVUS_HYBRID_SEARCH_TIMEOUT, kwargs.get("timeout")
     )
     _set_span_attribute(
         span,
-        AISpanAttributes.MILVUS_SEARCH_PARTITION_NAMES_COUNT,
+        AISpanAttributes.MILVUS_HYBRID_SEARCH_PARTITION_NAMES_COUNT,
         count_or_none(kwargs.get("partition_names")),
     )
     _set_span_attribute(
         span,
-        AISpanAttributes.MILVUS_SEARCH_PARTITION_NAMES,
+        AISpanAttributes.MILVUS_HYBRID_SEARCH_PARTITION_NAMES,
         _encode_partition_name(kwargs.get("partition_names")),
     )
 
