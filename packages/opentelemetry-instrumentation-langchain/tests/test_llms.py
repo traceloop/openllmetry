@@ -334,13 +334,20 @@ def test_anthropic(exporter):
         "response_metadata": {
             "id": "msg_017fMG9SRDFTBhcD1ibtN1nK",
             "model": "claude-2.1",
+            "model_name": "claude-2.1",
             "stop_reason": "end_turn",
             "stop_sequence": None,
-            "usage": {"input_tokens": 19, "output_tokens": 22},
+            "usage": {
+                "input_tokens": 19,
+                "output_tokens": 22,
+                "cache_creation_input_tokens": None,
+                "cache_read_input_tokens": None,
+                "server_tool_use": None
+            },
         },
         "tool_calls": [],
         "type": "ai",
-        "usage_metadata": {"input_tokens": 19, "output_tokens": 22, "total_tokens": 41},
+        "usage_metadata": {"input_tokens": 19, "output_tokens": 22, "total_tokens": 41, "input_token_details": {}},
     }
 
 
