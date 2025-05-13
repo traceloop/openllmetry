@@ -4,8 +4,8 @@ from typing import Union
 
 from opentelemetry._events import Event, EventLogger
 from opentelemetry.instrumentation.together.event_models import (
-    ChoiceEvent,
-    MessageEvent,
+    CompletionEvent,
+    PromptEvent,
 )
 from opentelemetry.instrumentation.together.utils import (
     dont_throw,
@@ -38,19 +38,17 @@ EVENT_ATTRIBUTES = {GenAIAttributes.GEN_AI_SYSTEM: "together"}
 
 
 @dont_throw
-def emit_input_events(event_logger, llm_request_type, kwargs):
+def emit_prompt_events(event_logger, llm_request_type, kwargs):
     if llm_request_type == LLMRequestTypeValues.CHAT:
         for message in kwargs.get("messages"):
             emit_event(
-                MessageEvent(
+                PromptEvent(
                     content=message.get("content"), role=message.get("role") or "user"
                 ),
                 event_logger,
             )
     elif llm_request_type == LLMRequestTypeValues.COMPLETION:
-        emit_event(
-            MessageEvent(content=kwargs.get("prompt"), role="user"), event_logger
-        )
+        emit_event(PromptEvent(content=kwargs.get("prompt"), role="user"), event_logger)
     else:
         raise ValueError(
             "It wasn't possible to emit the input events due to an unknown llm_request_type."
@@ -58,7 +56,7 @@ def emit_input_events(event_logger, llm_request_type, kwargs):
 
 
 @dont_throw
-def emit_choice_event(
+def emit_completion_event(
     event_logger,
     llm_request_type,
     response: Union[ChatCompletionResponse, CompletionResponse],
@@ -67,7 +65,7 @@ def emit_choice_event(
         response: ChatCompletionResponse
         for choice in response.choices:
             emit_event(
-                ChoiceEvent(
+                CompletionEvent(
                     index=choice.index,
                     message={
                         "content": choice.message.content,
@@ -81,7 +79,7 @@ def emit_choice_event(
         response: CompletionResponse
         for choice in response.choices:
             emit_event(
-                ChoiceEvent(
+                CompletionEvent(
                     index=choice.index,
                     message={"content": choice.text, "role": "assistant"},
                     finish_reason=choice.finish_reason,
@@ -95,7 +93,7 @@ def emit_choice_event(
 
 
 def emit_event(
-    event: Union[MessageEvent, ChoiceEvent], event_logger: Union[EventLogger, None]
+    event: Union[PromptEvent, CompletionEvent], event_logger: Union[EventLogger, None]
 ) -> None:
     """
     Emit an event to the OpenTelemetry SDK.
@@ -106,15 +104,15 @@ def emit_event(
     if not should_emit_events():
         return
 
-    if isinstance(event, MessageEvent):
+    if isinstance(event, PromptEvent):
         _emit_message_event(event, event_logger)
-    elif isinstance(event, ChoiceEvent):
+    elif isinstance(event, CompletionEvent):
         _emit_choice_event(event, event_logger)
     else:
         raise TypeError("Unsupported event type")
 
 
-def _emit_message_event(event: MessageEvent, event_logger: EventLogger) -> None:
+def _emit_message_event(event: PromptEvent, event_logger: EventLogger) -> None:
     body = asdict(event)
 
     if event.role in VALID_MESSAGE_ROLES:
@@ -141,7 +139,7 @@ def _emit_message_event(event: MessageEvent, event_logger: EventLogger) -> None:
     event_logger.emit(Event(name=name, body=body, attributes=EVENT_ATTRIBUTES))
 
 
-def _emit_choice_event(event: ChoiceEvent, event_logger: EventLogger) -> None:
+def _emit_choice_event(event: CompletionEvent, event_logger: EventLogger) -> None:
     body = asdict(event)
     if event.message["role"] == Roles.ASSISTANT.value:
         # According to the semantic conventions, the role is conditionally required if available

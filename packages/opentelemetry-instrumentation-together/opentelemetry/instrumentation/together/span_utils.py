@@ -16,7 +16,7 @@ def _set_span_attribute(span, name, value):
 
 
 @dont_throw
-def set_input_attributes(span, llm_request_type, kwargs):
+def set_prompt_attributes(span, llm_request_type, kwargs):
     if not span.is_recording():
         return
 
@@ -42,7 +42,7 @@ def set_input_attributes(span, llm_request_type, kwargs):
 
 
 @dont_throw
-def set_model_input_attributes(span, kwargs):
+def set_model_prompt_attributes(span, kwargs):
     if not span.is_recording():
         return
 
@@ -55,7 +55,7 @@ def set_model_input_attributes(span, kwargs):
 
 
 @dont_throw
-def set_response_attributes(span, llm_request_type, response):
+def set_completion_attributes(span, llm_request_type, response):
     if not span.is_recording():
         return
 
@@ -81,7 +81,7 @@ def set_response_attributes(span, llm_request_type, response):
 
 
 @dont_throw
-def set_model_response_attributes(span, response):
+def set_model_completion_attributes(span, response):
     if not span.is_recording():
         return
 

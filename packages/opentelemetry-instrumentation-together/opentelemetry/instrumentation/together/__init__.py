@@ -8,14 +8,14 @@ from opentelemetry._events import get_event_logger
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.instrumentation.together.config import Config
 from opentelemetry.instrumentation.together.event_emitter import (
-    emit_choice_event,
-    emit_input_events,
+    emit_completion_event,
+    emit_prompt_events,
 )
 from opentelemetry.instrumentation.together.span_utils import (
-    set_input_attributes,
-    set_model_input_attributes,
-    set_model_response_attributes,
-    set_response_attributes,
+    set_completion_attributes,
+    set_model_completion_attributes,
+    set_model_prompt_attributes,
+    set_prompt_attributes,
 )
 from opentelemetry.instrumentation.together.utils import dont_throw, should_emit_events
 from opentelemetry.instrumentation.together.version import __version__
@@ -73,22 +73,22 @@ def _llm_request_type_by_method(method_name):
 
 @dont_throw
 def _handle_input(span, event_logger, llm_request_type, kwargs):
-    set_model_input_attributes(span, kwargs)
+    set_model_prompt_attributes(span, kwargs)
 
     if should_emit_events() and event_logger:
-        emit_input_events(event_logger, llm_request_type, kwargs)
+        emit_prompt_events(event_logger, llm_request_type, kwargs)
     else:
-        set_input_attributes(span, llm_request_type, kwargs)
+        set_prompt_attributes(span, llm_request_type, kwargs)
 
 
 @dont_throw
 def _handle_response(span, event_logger, llm_request_type, response):
     if should_emit_events() and event_logger:
-        emit_choice_event(event_logger, llm_request_type, response)
+        emit_completion_event(event_logger, llm_request_type, response)
     else:
-        set_response_attributes(span, llm_request_type, response)
+        set_completion_attributes(span, llm_request_type, response)
 
-    set_model_response_attributes(span, response)
+    set_model_completion_attributes(span, response)
 
 
 @_with_tracer_wrapper

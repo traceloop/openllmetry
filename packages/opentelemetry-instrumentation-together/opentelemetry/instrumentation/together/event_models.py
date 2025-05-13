@@ -23,7 +23,7 @@ class CompletionMessage(TypedDict):
 
 
 @dataclass
-class MessageEvent:
+class PromptEvent:
     """Represents an input event for the AI model."""
 
     content: Any
@@ -32,7 +32,7 @@ class MessageEvent:
 
 
 @dataclass
-class ChoiceEvent:
+class CompletionEvent:
     """Represents a completion event for the AI model."""
 
     index: int
