@@ -202,7 +202,6 @@ class SpanAttributes:
     MILVUS_UPSERT_DATA_COUNT = "db.milvus.upsert.data_count"
     MILVUS_UPSERT_PARTITION_NAME = "db.milvus.upsert.partition_name"
     MILVUS_UPSERT_TIMEOUT = "db.milvus.upsert.timeout"
-    MILVUS_HYBRID_SEARCH_RESULT_COUNT = "db.milvus.hybrid_search.result_count"
     MILVUS_HYBRID_SEARCH_COLLECTION_NAME = "db.milvus.hybrid_search.collection_name"
     MILVUS_HYBRID_SEARCH_DATA_COUNT = "db.milvus.hybrid_search.data_count"
     MILVUS_HYBRID_SEARCH_LIMIT = "db.milvus.hybrid_search.limit"
