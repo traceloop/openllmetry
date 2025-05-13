@@ -160,15 +160,9 @@ def _set_chat_request(
                     else msg.additional_kwargs.get("tool_calls")
                 )
 
-                # For most models, if tools are present, content is empty.
-                # Anthropic has tools in the content as well as tool_calls parsed by Langchain.
-                # We prefer tool_calls over content if both are present.
                 if tool_calls:
-                    _set_span_attribute(
-                        span,
-                        f"{SpanAttributes.LLM_PROMPTS}.{i}.content",
-                        json.dumps(tool_calls, cls=CallbackFilteredJSONEncoder),
-                    )
+                    _set_chat_tool_calls(span, f"{SpanAttributes.LLM_PROMPTS}.{i}", tool_calls)
+
                 else:
                     content = (
                         msg.content
@@ -277,27 +271,7 @@ def _set_chat_response(span: Span, response: LLMResult) -> None:
                             f"{prefix}.role",
                             "assistant",
                         )
-                        for idx, tool_call in enumerate(tool_calls):
-                            tool_call_prefix = f"{prefix}.tool_calls.{idx}"
-                            tool_call_dict = dict(tool_call)
-                            tool_id = tool_call_dict.get("id")
-                            tool_name = tool_call_dict.get("name", tool_call_dict.get("function", {}).get("name"))
-                            tool_args = tool_call_dict.get("args", tool_call_dict.get("function", {}).get("arguments"))
-
-                            _set_span_attribute(
-                                span,
-                                f"{tool_call_prefix}.id", tool_id
-                            )
-                            _set_span_attribute(
-                                span,
-                                f"{tool_call_prefix}.name",
-                                tool_name,
-                            )
-                            _set_span_attribute(
-                                span,
-                                f"{tool_call_prefix}.arguments",
-                                json.dumps(tool_args, cls=CallbackFilteredJSONEncoder),
-                            )
+                        _set_chat_tool_calls(span, prefix, tool_calls)
         i += 1
 
     if input_tokens > 0 or output_tokens > 0 or total_tokens > 0 or cache_read_tokens > 0:
@@ -320,6 +294,30 @@ def _set_chat_response(span: Span, response: LLMResult) -> None:
             span,
             SpanAttributes.LLM_USAGE_CACHE_READ_INPUT_TOKENS,
             cache_read_tokens,
+        )
+
+
+def _set_chat_tool_calls(span: Span, prefix: str, tool_calls: list[dict[str, Any]]) -> None:
+    for idx, tool_call in enumerate(tool_calls):
+        tool_call_prefix = f"{prefix}.tool_calls.{idx}"
+        tool_call_dict = dict(tool_call)
+        tool_id = tool_call_dict.get("id")
+        tool_name = tool_call_dict.get("name", tool_call_dict.get("function", {}).get("name"))
+        tool_args = tool_call_dict.get("args", tool_call_dict.get("function", {}).get("arguments"))
+
+        _set_span_attribute(
+            span,
+            f"{tool_call_prefix}.id", tool_id
+        )
+        _set_span_attribute(
+            span,
+            f"{tool_call_prefix}.name",
+            tool_name,
+        )
+        _set_span_attribute(
+            span,
+            f"{tool_call_prefix}.arguments",
+            json.dumps(tool_args, cls=CallbackFilteredJSONEncoder),
         )
 
 

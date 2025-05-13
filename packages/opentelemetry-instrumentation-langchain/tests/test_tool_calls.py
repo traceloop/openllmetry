@@ -77,7 +77,18 @@ def test_tool_calls_with_history(exporter):
     assert chat_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.content"] == messages[1].content
     assert chat_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.role"] == "user"
 
-    assert json.loads(chat_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.2.content"]) == messages[2].tool_calls
+    assert (
+        chat_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.2.tool_calls.0.name"]
+        == messages[2].tool_calls[0]["name"]
+    )
+    assert (
+        json.loads(chat_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.2.tool_calls.0.arguments"])
+        == messages[2].tool_calls[0]["args"]
+    )
+    assert (
+        chat_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.2.tool_calls.0.id"]
+        == messages[2].tool_calls[0]["id"]
+    )
     assert chat_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.2.role"] == "assistant"
 
     assert chat_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.3.content"] == messages[3].content
@@ -186,8 +197,18 @@ def test_tool_calls_anthropic_text_block_and_history(exporter):
     assert chat_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"] == "user"
     assert chat_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.role"] == "assistant"
 
-    # We check that we prefer tool_calls over content even if content is not empty
-    assert json.loads(chat_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.content"]) == messages[1].tool_calls
+    assert (
+        chat_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.tool_calls.0.name"]
+        == messages[1].tool_calls[0]["name"]
+    )
+    assert (
+        json.loads(chat_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.tool_calls.0.arguments"])
+        == messages[1].tool_calls[0]["args"]
+    )
+    assert (
+        chat_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.tool_calls.0.id"]
+        == messages[1].tool_calls[0]["id"]
+    )
 
     assert chat_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.2.role"] == "tool"
     assert chat_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.2.content"] == messages[2].content
