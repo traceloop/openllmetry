@@ -65,7 +65,7 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
             to_wrap.get("method") == "search"
             or to_wrap.get("method") == "hybrid_search"
         ):
-            _add_search_result_events(span, return_value)
+            _add_search_result_events(span, return_value, to_wrap.get("method"))
 
     return return_value
 
@@ -325,7 +325,7 @@ def _add_query_result_events(span, kwargs):
 
 
 @dont_throw
-def _add_search_result_events(span, kwargs):
+def _add_search_result_events(span, kwargs, method):
 
     all_distances = []
     total_matches = 0
@@ -334,18 +334,29 @@ def _add_search_result_events(span, kwargs):
 
     def set_query_stats(query_idx, distances, match_ids):
         """Helper function to set per-query stats in the span."""
-
-        _set_span_attribute(
-            span,
-            f"{AISpanAttributes.MILVUS_SEARCH_RESULT_COUNT}_{query_idx}",
-            len(distances),
-        )
+        if method == "search":
+            _set_span_attribute(
+                span,
+                f"{AISpanAttributes.MILVUS_SEARCH_RESULT_COUNT}_{query_idx}",
+                len(distances),
+            )
+        elif method == "hybrid_search":
+            _set_span_attribute(
+                span,
+                f"{AISpanAttributes.MILVUS_HYBRID_SEARCH_RESULT_COUNT}_{query_idx}",
+                len(distances),
+            )
 
     def set_global_stats():
         """Helper function to set global stats for a single query."""
-        _set_span_attribute(
-            span, AISpanAttributes.MILVUS_SEARCH_RESULT_COUNT, total_matches
-        )
+        if method == "search":
+            _set_span_attribute(
+                span, AISpanAttributes.MILVUS_SEARCH_RESULT_COUNT, total_matches
+            )
+        elif method == "hybrid_search":
+            _set_span_attribute(
+                span, AISpanAttributes.MILVUS_HYBRID_SEARCH_RESULT_COUNT, total_matches
+            )
 
     for query_idx, query_results in enumerate(kwargs):
 
