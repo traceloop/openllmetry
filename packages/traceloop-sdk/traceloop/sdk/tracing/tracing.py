@@ -403,6 +403,9 @@ def init_instrumentations(
         elif instrument == Instruments.MARQO:
             if init_marqo_instrumentor():
                 instrument_set = True
+        elif instrument == Instruments.MCP:
+            if init_mcp_instrumentor():
+                instrument_set = True
         elif instrument == Instruments.MILVUS:
             if init_milvus_instrumentor():
                 instrument_set = True
@@ -453,9 +456,6 @@ def init_instrumentations(
                 instrument_set = True
         elif instrument == Instruments.WEAVIATE:
             if init_weaviate_instrumentor():
-                instrument_set = True
-        elif instrument == Instruments.MCP:
-            if init_mcp_instrumentor():
                 instrument_set = True
         else:
             print(Fore.RED + f"Warning: {instrument} instrumentation does not exist.")
