@@ -44,7 +44,6 @@ def emit_chat_message_events(event: LLMChatStartEvent):
 
 def emit_chat_response_events(event: LLMChatEndEvent):
     if event.response:
-        print(f"===== emit_chat_response_events for span_id: {event.span_id} =====")
         try:
             finish_reason = event.response.raw.get("choices", [{}])[0].get(
                 "finish_reason", "unknown"
@@ -78,9 +77,6 @@ def emit_choice_event(
     role: str,
     finish_reason: str,
 ):
-    print(
-        f"===== Emitting choice event: index={index}, role={role}, finish_reason={finish_reason} ====="
-    )
     emit_event(
         ChoiceEvent(
             index=index,
