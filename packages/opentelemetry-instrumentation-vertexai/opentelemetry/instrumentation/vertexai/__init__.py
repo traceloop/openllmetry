@@ -152,7 +152,9 @@ def _build_from_streaming_response(span, event_logger, response, llm_model):
 
         yield item_to_yield
 
-    handle_streaming_response(span, event_logger, llm_model, response, token_usage)
+    handle_streaming_response(
+        span, event_logger, llm_model, complete_response, token_usage
+    )
 
     span.set_status(Status(StatusCode.OK))
     span.end()
@@ -189,7 +191,9 @@ def _handle_response(span, event_logger, response, llm_model):
     if should_emit_events():
         emit_response_events(response, event_logger)
     else:
-        set_response_attributes(span, llm_model, response.candidates[0].text)
+        set_response_attributes(
+            span, llm_model, response.candidates[0].text if response.candidates else ""
+        )
     if span.is_recording():
         span.set_status(Status(StatusCode.OK))
 
