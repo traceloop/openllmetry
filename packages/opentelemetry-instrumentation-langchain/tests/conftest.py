@@ -91,5 +91,5 @@ def reset_span_context(request):
     tracer = get_tracer(__name__)
     # starts a new trace per test function
     # this avoids mixing of trace contexts leading to flaky results
-    with tracer.start_as_current_span(request.node.name, context=set_span_in_context(None)) as span:
+    with tracer.start_as_current_span(request.node.name, context=set_span_in_context(None)):
         yield

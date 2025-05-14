@@ -772,7 +772,7 @@ description = "Lightweight in-process concurrent programming"
 optional = false
 python-versions = ">=3.7"
 groups = ["test"]
-markers = "python_version < \"3.13\" and (platform_machine == \"aarch64\" or platform_machine == \"ppc64le\" or platform_machine == \"x86_64\" or platform_machine == \"amd64\" or platform_machine == \"AMD64\" or platform_machine == \"win32\" or platform_machine == \"WIN32\")"
+markers = "(platform_machine == \"aarch64\" or platform_machine == \"ppc64le\" or platform_machine == \"x86_64\" or platform_machine == \"amd64\" or platform_machine == \"AMD64\" or platform_machine == \"win32\" or platform_machine == \"WIN32\") and python_version < \"3.13\" and (python_version <= \"3.11\" or python_version >= \"3.12\")"
 files = [
     {file = "greenlet-3.1.1-cp310-cp310-macosx_11_0_universal2.whl", hash = "sha256:0bbae94a29c9e5c7e4a2b7f0aae5c17e8e90acbfd3bf6270eeba60c39fce3563"},
     {file = "greenlet-3.1.1-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:0fde093fb93f35ca72a556cf72c92ea3ebfda3d79fc35bb19fbe685853869a83"},
@@ -1303,6 +1303,7 @@ description = "Building applications with LLMs through composability"
 optional = false
 python-versions = ">=3.9"
 groups = ["test"]
+markers = "python_version <= \"3.11\" or python_version >= \"3.12\""
 files = [
     {file = "langchain_core-0.3.59-py3-none-any.whl", hash = "sha256:9686baaff43f2c8175535da13faf40e6866769015e93130c3c1e4243e7244d70"},
     {file = "langchain_core-0.3.59.tar.gz", hash = "sha256:052a37cf298c505144f007e5aeede6ecff2dc92c827525d1ef59101eb3a4551c"},
@@ -2083,7 +2084,7 @@ wrapt = ">=1.0.0,<2.0.0"
 
 [[package]]
 name = "opentelemetry-instrumentation-bedrock"
-version = "0.40.4"
+version = "0.40.5"
 description = "OpenTelemetry Bedrock instrumentation"
 optional = false
 python-versions = ">=3.9,<4"
@@ -2106,7 +2107,7 @@ url = "../opentelemetry-instrumentation-bedrock"
 
 [[package]]
 name = "opentelemetry-instrumentation-openai"
-version = "0.40.4"
+version = "0.40.5"
 description = "OpenTelemetry OpenAI instrumentation"
 optional = false
 python-versions = ">=3.9,<4"
@@ -4221,12 +4222,4 @@ instruments = []
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.9,<4"
-<<<<<<< HEAD
-<<<<<<< HEAD
-content-hash = "c399786a7e26eea33d973c4103e8a29d1a625c382fbec8a6550a9311cf7f35e5"
-=======
-content-hash = "3bae285ea5454cc8bbe2415175fae89405631fe5305a12ba82096ab0cff7afb0"
->>>>>>> 73648f1d (Add test)
-=======
-content-hash = "40dcb2d8db1c43c489354bea556ba94ec58d3452124f0d82bb219465514023ff"
->>>>>>> 68b1624e (Match langgraph version used by sample apps)
+content-hash = "b8663044127052872de30920f26f16c29340a14e2832dd291fcb2be95786392d"
