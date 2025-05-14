@@ -39,10 +39,3 @@ class CompletionEvent:
     message: CompletionMessage
     finish_reason: str = "unknown"
     tool_calls: Optional[List[ToolCall]] = None
-
-    @property
-    def total_tokens(self) -> Optional[int]:
-        """Returns the total number of tokens used in the event."""
-        if self.input_tokens is None or self.output_tokens is None:
-            return None
-        return self.input_tokens + self.output_tokens
