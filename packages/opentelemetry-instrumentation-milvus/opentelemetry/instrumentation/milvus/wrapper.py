@@ -65,7 +65,7 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
             to_wrap.get("method") == "search"
             or to_wrap.get("method") == "hybrid_search"
         ):
-            _add_search_result_events(span, return_value, to_wrap.get("method"))
+            _add_search_result_events(span, return_value)
 
     return return_value
 
@@ -241,7 +241,7 @@ def _set_search_attributes(span, kwargs):
 def _set_hybrid_search_attributes(span, kwargs):
     _set_span_attribute(
         span,
-        AISpanAttributes.MILVUS_HYBRID_SEARCH_COLLECTION_NAME,
+        AISpanAttributes.MILVUS_SEARCH_COLLECTION_NAME,
         kwargs.get("collection_name"),
     )
 
@@ -255,36 +255,36 @@ def _set_hybrid_search_attributes(span, kwargs):
 
     _set_span_attribute(
         span,
-        AISpanAttributes.MILVUS_HYBRID_SEARCH_ANNSEARCH_REQUEST,
+        AISpanAttributes.MILVUS_SEARCH_ANNSEARCH_REQUEST,
         _encode_include(reqs_info),
     )
     _set_span_attribute(
         span,
-        AISpanAttributes.MILVUS_HYBRID_SEARCH_RANKER_TYPE,
+        AISpanAttributes.MILVUS_SEARCH_RANKER_TYPE,
         _encode_include(type(kwargs.get("ranker")).__name__),
     )
-    _set_span_attribute(span, AISpanAttributes.MILVUS_HYBRID_SEARCH_LIMIT, kwargs.get("limit"))
+    _set_span_attribute(span, AISpanAttributes.MILVUS_SEARCH_LIMIT, kwargs.get("limit"))
     _set_span_attribute(
         span,
-        AISpanAttributes.MILVUS_HYBRID_SEARCH_DATA_COUNT,
+        AISpanAttributes.MILVUS_SEARCH_DATA_COUNT,
         count_or_none(kwargs.get("reqs")),
     )
     _set_span_attribute(
         span,
-        AISpanAttributes.MILVUS_HYBRID_SEARCH_OUTPUT_FIELDS_COUNT,
+        AISpanAttributes.MILVUS_SEARCH_OUTPUT_FIELDS_COUNT,
         count_or_none(kwargs.get("output_fields")),
     )
     _set_span_attribute(
-        span, AISpanAttributes.MILVUS_HYBRID_SEARCH_TIMEOUT, kwargs.get("timeout")
+        span, AISpanAttributes.MILVUS_SEARCH_TIMEOUT, kwargs.get("timeout")
     )
     _set_span_attribute(
         span,
-        AISpanAttributes.MILVUS_HYBRID_SEARCH_PARTITION_NAMES_COUNT,
+        AISpanAttributes.MILVUS_SEARCH_PARTITION_NAMES_COUNT,
         count_or_none(kwargs.get("partition_names")),
     )
     _set_span_attribute(
         span,
-        AISpanAttributes.MILVUS_HYBRID_SEARCH_PARTITION_NAMES,
+        AISpanAttributes.MILVUS_SEARCH_PARTITION_NAMES,
         _encode_partition_name(kwargs.get("partition_names")),
     )
 
@@ -325,7 +325,7 @@ def _add_query_result_events(span, kwargs):
 
 
 @dont_throw
-def _add_search_result_events(span, kwargs, method):
+def _add_search_result_events(span, kwargs):
 
     all_distances = []
     total_matches = 0
@@ -334,30 +334,17 @@ def _add_search_result_events(span, kwargs, method):
 
     def set_query_stats(query_idx, distances, match_ids):
         """Helper function to set per-query stats in the span."""
-        if method == "search":
-            _set_span_attribute(
-                span,
-                f"{AISpanAttributes.MILVUS_SEARCH_RESULT_COUNT}_{query_idx}",
-                len(distances),
-            )
-        elif method == "hybrid_search":
-            _set_span_attribute(
-                span,
-                f"{AISpanAttributes.MILVUS_HYBRID_SEARCH_RESULT_COUNT}_{query_idx}",
-                len(distances),
-            )
+        _set_span_attribute(
+            span,
+            f"{AISpanAttributes.MILVUS_SEARCH_RESULT_COUNT}_{query_idx}",
+            len(distances),
+        )
 
     def set_global_stats():
         """Helper function to set global stats for a single query."""
-        if method == "search":
-            _set_span_attribute(
-                span, AISpanAttributes.MILVUS_SEARCH_RESULT_COUNT, total_matches
-            )
-        elif method == "hybrid_search":
-            _set_span_attribute(
-                span, AISpanAttributes.MILVUS_HYBRID_SEARCH_RESULT_COUNT, total_matches
-            )
-
+        _set_span_attribute(
+            span, AISpanAttributes.MILVUS_SEARCH_RESULT_COUNT, total_matches
+        )
     for query_idx, query_results in enumerate(kwargs):
 
         query_distances = []
