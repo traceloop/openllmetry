@@ -5,6 +5,8 @@ from typing import Collection
 from opentelemetry.instrumentation.langchain.config import Config
 from wrapt import wrap_function_wrapper
 
+from opentelemetry import context as context_api
+
 from opentelemetry.trace import get_tracer
 
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
@@ -24,7 +26,10 @@ from opentelemetry.instrumentation.langchain.callback_handler import (
 )
 
 from opentelemetry.metrics import get_meter
-from opentelemetry.semconv_ai import Meters
+from opentelemetry.semconv_ai import (
+    Meters,
+    SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY
+)
 
 logger = logging.getLogger(__name__)
 
@@ -226,5 +231,11 @@ class _OpenAITracingWrapper:
 
             # Update kwargs to include the modified headers
             kwargs["extra_headers"] = extra_headers
+
+        # In legacy chains like LLMChain, suppressing model instrumentations
+        # within create_llm_span doesn't work, so this should helps as a fallback
+        context_api.attach(
+            context_api.set_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY, True)
+        )
 
         return wrapped(*args, **kwargs)

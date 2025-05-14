@@ -1303,6 +1303,7 @@ description = "Building applications with LLMs through composability"
 optional = false
 python-versions = ">=3.9"
 groups = ["test"]
+markers = "python_version <= \"3.11\" or python_version >= \"3.12\""
 files = [
     {file = "langchain_core-0.3.59-py3-none-any.whl", hash = "sha256:9686baaff43f2c8175535da13faf40e6866769015e93130c3c1e4243e7244d70"},
     {file = "langchain_core-0.3.59.tar.gz", hash = "sha256:052a37cf298c505144f007e5aeede6ecff2dc92c827525d1ef59101eb3a4551c"},
@@ -3959,11 +3960,7 @@ description = "HTTP library with thread-safe connection pooling, file post, and 
 optional = false
 python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*,>=2.7"
 groups = ["test"]
-<<<<<<< HEAD
 markers = "platform_python_implementation == \"PyPy\" or python_version == \"3.9\""
-=======
-markers = "(platform_python_implementation == \"PyPy\" or python_version < \"3.10\") and (python_version <= \"3.11\" or python_version >= \"3.12\")"
->>>>>>> 86a0836b (Match langgraph version used by sample apps)
 files = [
     {file = "urllib3-1.26.20-py2.py3-none-any.whl", hash = "sha256:0ed14ccfbf1c30a9072c7ca157e4319b70d65f623e91e7b32fadb2853431016e"},
     {file = "urllib3-1.26.20.tar.gz", hash = "sha256:40c2dc0c681e47eb8f90e7e27bf6ff7df2e677421fd46756da1161c39ca70d32"},
