@@ -80,7 +80,7 @@ def _set_request_params(span, kwargs, span_holder: SpanHolder):
 
     _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, model)
     # response is not available for LLM requests (as opposed to chat)
-    _set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, model)
+    _set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, model or "unknown")
 
     if "invocation_params" in kwargs:
         params = (
@@ -327,8 +327,8 @@ def _sanitize_metadata_value(value: Any) -> Any:
         return None
     if isinstance(value, (bool, str, bytes, int, float)):
         return value
-    if isinstance(value, (list, tuple)):
-        return [str(_sanitize_metadata_value(v)) for v in value]
+    if isinstance(value, (dict, list, tuple)):
+        return json.dumps(value)
     # Convert other types to strings
     return str(value)
 
@@ -413,9 +413,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         _set_span_attribute(span, SpanAttributes.TRACELOOP_WORKFLOW_NAME, workflow_name)
         _set_span_attribute(span, SpanAttributes.TRACELOOP_ENTITY_PATH, entity_path)
 
-        token = context_api.attach(
-            context_api.set_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY, True)
-        )
+        token = context_api.attach(set_span_in_context(span))
 
         self.spans[run_id] = SpanHolder(
             span, token, None, [], workflow_name, entity_name, entity_path
@@ -475,6 +473,19 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         )
         _set_span_attribute(span, SpanAttributes.LLM_SYSTEM, "Langchain")
         _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TYPE, request_type.value)
+
+        # we already have an LLM span by this point,
+        # so skip any downstream instrumentation from here
+        token = context_api.attach(
+            context_api.set_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY, True)
+        )
+
+        self.spans[run_id] = SpanHolder(
+            span, token, None, [], workflow_name, None, entity_path
+        )
+
+        if parent_run_id is not None and parent_run_id in self.spans:
+            self.spans[parent_run_id].children.append(run_id)
 
         return span
 
@@ -563,12 +574,6 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             )
 
         self._end_span(span, run_id)
-        if parent_run_id is None:
-            context_api.attach(
-                context_api.set_value(
-                    SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY, False
-                )
-            )
 
     @dont_throw
     def on_chat_model_start(
@@ -634,7 +639,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
                 "model_name"
             ) or response.llm_output.get("model_id")
             if model_name is not None:
-                _set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, model_name)
+                _set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, model_name or "unknown")
 
                 if self.spans[run_id].request_model is None:
                     _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, model_name)
