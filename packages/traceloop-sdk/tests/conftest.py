@@ -1,6 +1,5 @@
 """Unit tests configuration module."""
 
-import inspect
 import os
 import re
 import pytest
@@ -10,8 +9,6 @@ from traceloop.sdk.tracing.tracing import TracerWrapper
 from opentelemetry.sdk.trace.export import SimpleSpanProcessor, BatchSpanProcessor
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
 from opentelemetry.context import attach, Context
-from opentelemetry import trace
-from opentelemetry.sdk.trace import TracerProvider
 pytest_plugins = []
 
 
