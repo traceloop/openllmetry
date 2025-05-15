@@ -73,6 +73,7 @@ class TracerWrapper(object):
         instruments: Optional[Set[Instruments]] = None,
         block_instruments: Optional[Set[Instruments]] = None,
         image_uploader: ImageUploader = None,
+        on_end: Optional[Callable[["ReadableSpan"], None]] = None,
     ) -> "TracerWrapper":
         if not hasattr(cls, "instance"):
             obj = cls.instance = super(TracerWrapper, cls).__new__(cls)
@@ -120,6 +121,16 @@ class TracerWrapper(object):
                         obj.__spans_exporter
                     )
                 obj.__spans_processor_original_on_start = None
+                if on_end:
+                    # Create a wrapper that calls both the custom and original methods
+                    original_on_end = obj.__spans_processor.on_end
+            
+                    def wrapped_on_end(span):
+                        # Call the custom on_end first
+                        on_end(span)
+                        # Then call the original to ensure normal processing
+                        original_on_end(span)
+                    obj.__spans_processor.on_end = wrapped_on_end
 
             obj.__spans_processor.on_start = obj._span_processor_on_start
             obj.__tracer_provider.add_span_processor(obj.__spans_processor)
