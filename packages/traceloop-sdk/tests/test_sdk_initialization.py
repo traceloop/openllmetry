@@ -41,7 +41,6 @@ def test_on_end(exporter_with_custom_on_end, openai_client):
 
     spans = exporter_with_custom_on_end.get_finished_spans()
     open_ai_span = spans[0]
-    print("ATTRIBUTES", open_ai_span.attributes)
     assert open_ai_span.attributes["gen_ai.prompt.0.content"] == "REDACTED"
     assert open_ai_span.attributes["gen_ai.completion.0.content"] == "REDACTED"
 
