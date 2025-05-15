@@ -107,7 +107,6 @@ def exporter_with_custom_on_end(exporter):
             elif isinstance(span_processor, BatchSpanProcessor):
                 span_processor.on_end = BatchSpanProcessor.on_end.__get__(span_processor, BatchSpanProcessor)
         
-        # Delete the instance
     if _trace_wrapper_instance:
         TracerWrapper.instance = _trace_wrapper_instance
 
