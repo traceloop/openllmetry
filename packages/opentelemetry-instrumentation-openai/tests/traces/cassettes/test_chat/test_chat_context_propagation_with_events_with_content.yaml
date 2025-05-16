@@ -1,0 +1,57 @@
+interactions:
+- request:
+    body: '{"messages": [{"role": "user", "content": "Tell me a joke about opentelemetry"}],
+      "model": "meta-llama/Llama-3.2-1B-Instruct"}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '126'
+      content-type:
+      - application/json
+      host:
+      - localhost:8000
+      traceparent:
+      - 00-2dee24aaae40f1526fdcd2eb208791ae-74ca2d0c67549b95-01
+      user-agent:
+      - OpenAI/Python 1.51.2
+      x-stainless-arch:
+      - x64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - Linux
+      x-stainless-package-version:
+      - 1.51.2
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.10.12
+    method: POST
+    uri: http://localhost:8000/v1/chat/completions
+  response:
+    body:
+      string: '{"id":"chat-43f4347c3299481e9704ab77439fbdb8","object":"chat.completion","created":1732108311,"model":"meta-llama/Llama-3.2-1B-Instruct","choices":[{"index":0,"message":{"role":"assistant","content":"Why
+        did the OpenTelemetry metric go to therapy?\n\nBecause it was feeling a little
+        \"trapped\" in its logging function, and wanted to \"release\" its stress.","tool_calls":[]},"logprobs":null,"finish_reason":"stop","stop_reason":null}],"usage":{"prompt_tokens":43,"total_tokens":79,"completion_tokens":36}}'
+    headers:
+      content-length:
+      - '506'
+      content-type:
+      - application/json
+      date:
+      - Wed, 20 Nov 2024 13:11:50 GMT
+      server:
+      - uvicorn
+    status:
+      code: 200
+      message: OK
+version: 1
