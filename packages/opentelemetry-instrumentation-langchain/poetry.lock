@@ -751,7 +751,7 @@ description = "Lightweight in-process concurrent programming"
 optional = false
 python-versions = ">=3.7"
 groups = ["test"]
-markers = "python_version < \"3.13\" and (platform_machine == \"aarch64\" or platform_machine == \"ppc64le\" or platform_machine == \"x86_64\" or platform_machine == \"amd64\" or platform_machine == \"AMD64\" or platform_machine == \"win32\" or platform_machine == \"WIN32\")"
+markers = "python_version <= \"3.12\" and (platform_machine == \"aarch64\" or platform_machine == \"ppc64le\" or platform_machine == \"x86_64\" or platform_machine == \"amd64\" or platform_machine == \"AMD64\" or platform_machine == \"win32\" or platform_machine == \"WIN32\")"
 files = [
     {file = "greenlet-3.1.1-cp310-cp310-macosx_11_0_universal2.whl", hash = "sha256:0bbae94a29c9e5c7e4a2b7f0aae5c17e8e90acbfd3bf6270eeba60c39fce3563"},
     {file = "greenlet-3.1.1-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:0fde093fb93f35ca72a556cf72c92ea3ebfda3d79fc35bb19fbe685853869a83"},
@@ -1973,7 +1973,7 @@ wrapt = ">=1.0.0,<2.0.0"
 
 [[package]]
 name = "opentelemetry-instrumentation-bedrock"
-version = "0.40.4"
+version = "0.40.5"
 description = "OpenTelemetry Bedrock instrumentation"
 optional = false
 python-versions = ">=3.9,<4"
@@ -1986,7 +1986,7 @@ anthropic = ">=0.17.0"
 opentelemetry-api = "^1.28.0"
 opentelemetry-instrumentation = ">=0.50b0"
 opentelemetry-semantic-conventions = ">=0.50b0"
-opentelemetry-semantic-conventions-ai = "0.4.8"
+opentelemetry-semantic-conventions-ai = "0.4.9"
 tokenizers = ">=0.13.0"
 
 [package.source]
@@ -1995,7 +1995,7 @@ url = "../opentelemetry-instrumentation-bedrock"
 
 [[package]]
 name = "opentelemetry-instrumentation-openai"
-version = "0.40.4"
+version = "0.40.5"
 description = "OpenTelemetry OpenAI instrumentation"
 optional = false
 python-versions = ">=3.9,<4"
@@ -2007,7 +2007,7 @@ develop = true
 opentelemetry-api = "^1.28.0"
 opentelemetry-instrumentation = ">=0.50b0"
 opentelemetry-semantic-conventions = ">=0.50b0"
-opentelemetry-semantic-conventions-ai = "0.4.8"
+opentelemetry-semantic-conventions-ai = "0.4.9"
 tiktoken = ">=0.6.0, <1"
 
 [package.extras]
@@ -2052,14 +2052,14 @@ opentelemetry-api = "1.29.0"
 
 [[package]]
 name = "opentelemetry-semantic-conventions-ai"
-version = "0.4.8"
+version = "0.4.9"
 description = "OpenTelemetry Semantic Conventions Extension for Large Language Models"
 optional = false
 python-versions = "<4,>=3.9"
 groups = ["main", "test"]
 files = [
-    {file = "opentelemetry_semantic_conventions_ai-0.4.8-py3-none-any.whl", hash = "sha256:02f7d5876a21e4376d5f4e7cd1157677e3e186f60bb3b6375a1205518a5f0908"},
-    {file = "opentelemetry_semantic_conventions_ai-0.4.8.tar.gz", hash = "sha256:b4663403315aa08e83c4651c13dbc1fbe3e518229b4df87ca32e24895dd04007"},
+    {file = "opentelemetry_semantic_conventions_ai-0.4.9-py3-none-any.whl", hash = "sha256:71149e46a72554ae17de46bca6c11ba540c19c89904bd4cc3111aac6edf10315"},
+    {file = "opentelemetry_semantic_conventions_ai-0.4.9.tar.gz", hash = "sha256:54a0b901959e2de5124384925846bac2ea0a6dab3de7e501ba6aecf5e293fe04"},
 ]
 
 [[package]]
@@ -4005,4 +4005,4 @@ instruments = []
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.9,<4"
-content-hash = "c399786a7e26eea33d973c4103e8a29d1a625c382fbec8a6550a9311cf7f35e5"
+content-hash = "b740c96c768345149b656b70444840037d68895f3c0cbbe1e96c12ab527b1bed"
