@@ -1,3 +1,10 @@
+## v0.40.5 (2025-05-13)
+
+### Fix
+
+- **langchain**: tools in message history (#2939)
+- **sdk**: Place MCP in its lexical order (#2943)
+
 ## v0.40.4 (2025-05-10)
 
 ### Fix
