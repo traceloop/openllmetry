@@ -1,3 +1,10 @@
+## v0.40.6 (2025-05-16)
+
+### Fix
+
+- **sdk**: support overriding the span processor on_end hook (#2947)
+- **milvus**: Added New Semantic Conventions for pymilvus MilvusClient Hybrid Search (#2944)
+
 ## v0.40.5 (2025-05-13)
 
 ### Fix
