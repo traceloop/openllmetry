@@ -32,14 +32,15 @@ def test_custom_span_processor(exporter_with_custom_span_processor):
     workflow_span = spans[0]
     assert workflow_span.attributes["custom_span"] == "yes"
 
+
 @pytest.mark.vcr
-def test_on_end(exporter_with_custom_on_end, openai_client):
+def test_span_postprocess_callback(exporter_with_custom_span_postprocess_callback, openai_client):
     openai_client.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=[{"role": "user", "content": "Tell me a joke about opentelemetry"}],
     )
 
-    spans = exporter_with_custom_on_end.get_finished_spans()
+    spans = exporter_with_custom_span_postprocess_callback.get_finished_spans()
     open_ai_span = spans[0]
     assert open_ai_span.attributes["gen_ai.prompt.0.content"] == "REDACTED"
     assert open_ai_span.attributes["gen_ai.completion.0.content"] == "REDACTED"

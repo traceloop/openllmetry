@@ -12,7 +12,7 @@ from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import (
     OTLPSpanExporter as GRPCExporter,
 )
 from opentelemetry.sdk.resources import Resource
-from opentelemetry.sdk.trace import TracerProvider, SpanProcessor
+from opentelemetry.sdk.trace import TracerProvider, SpanProcessor, ReadableSpan
 from opentelemetry.propagators.textmap import TextMapPropagator
 from opentelemetry.propagate import set_global_textmap
 from opentelemetry.sdk.trace.export import (
@@ -73,7 +73,7 @@ class TracerWrapper(object):
         instruments: Optional[Set[Instruments]] = None,
         block_instruments: Optional[Set[Instruments]] = None,
         image_uploader: ImageUploader = None,
-        on_end: Optional[Callable[["ReadableSpan"], None]] = None,
+        span_postprocess_callback: Optional[Callable[[ReadableSpan], None]] = None,
     ) -> "TracerWrapper":
         if not hasattr(cls, "instance"):
             obj = cls.instance = super(TracerWrapper, cls).__new__(cls)
@@ -121,13 +121,13 @@ class TracerWrapper(object):
                         obj.__spans_exporter
                     )
                 obj.__spans_processor_original_on_start = None
-                if on_end:
+                if span_postprocess_callback:
                     # Create a wrapper that calls both the custom and original methods
                     original_on_end = obj.__spans_processor.on_end
-            
+
                     def wrapped_on_end(span):
                         # Call the custom on_end first
-                        on_end(span)
+                        span_postprocess_callback(span)
                         # Then call the original to ensure normal processing
                         original_on_end(span)
                     obj.__spans_processor.on_end = wrapped_on_end
