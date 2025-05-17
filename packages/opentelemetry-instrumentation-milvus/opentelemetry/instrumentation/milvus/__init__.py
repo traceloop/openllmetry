@@ -62,6 +62,12 @@ WRAPPED_METHODS = [
         "method": "query",
         "span_name": "milvus.query"
     },
+    {
+        "package": pymilvus,
+        "object": "MilvusClient",
+        "method": "hybrid_search",
+        "span_name": "milvus.hybrid_search"
+    },
 ]
 
 
