@@ -296,6 +296,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         self.duration_histogram = duration_histogram
         self.token_histogram = token_histogram
         self.spans: dict[UUID, SpanHolder] = {}
+        self.spans_by_checkpoint: dict[str, SpanHolder] = {}
         self.run_inline = True
 
     @staticmethod
@@ -319,6 +320,9 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
 
     def _get_span(self, run_id: UUID) -> Span:
         return self.spans[run_id].span
+    
+    def _get_span_by_checkpoint_ns(self, checkpoint_ns: str) -> Span:
+        return self.spans_by_checkpoint[checkpoint_ns].span
 
     def _end_span(self, span: Span, run_id: UUID) -> None:
         for child_id in self.spans[run_id].children:
@@ -371,9 +375,13 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             context_api.set_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY, True)
         )
 
-        self.spans[run_id] = SpanHolder(
+        span_holder = SpanHolder(
             span, token, None, [], workflow_name, entity_name, entity_path
         )
+
+        self.spans[run_id] = span_holder
+        if metadata and metadata.get('langgraph_checkpoint_ns'):
+            self.spans_by_checkpoint[metadata.get('langgraph_checkpoint_ns')] = span_holder
 
         if parent_run_id is not None and parent_run_id in self.spans:
             self.spans[parent_run_id].children.append(run_id)

@@ -21,6 +21,8 @@ from opentelemetry.instrumentation.langchain.callback_handler import (
     TraceloopCallbackHandler,
 )
 
+from opentelemetry.instrumentation.langchain.langgraph_wrapper import LanggraphWrapper
+
 from opentelemetry.metrics import get_meter
 from opentelemetry.semconv_ai import Meters
 
@@ -76,6 +78,7 @@ class LangchainInstrumentor(BaseInstrumentor):
 
     def _wrap_openai_functions_for_tracing(self, traceloopCallbackHandler):
         openai_tracing_wrapper = _OpenAITracingWrapper(traceloopCallbackHandler)
+        tool_invoke_wrapper = LanggraphWrapper(traceloopCallbackHandler)
 
         # Wrap langchain_community.llms.openai.BaseOpenAI
         wrap_function_wrapper(
@@ -140,6 +143,55 @@ class LangchainInstrumentor(BaseInstrumentor):
             wrapper=openai_tracing_wrapper,
         )
 
+        # wrap_function_wrapper(
+        #     module="langchain_core.tools.base",
+        #     name="BaseTool.invoke",
+        #     wrapper=tool_invoke_wrapper,
+        # )
+
+        # wrap_function_wrapper(
+        #     module="langchain_core.tools.base",
+        #     name="ToolNode.ainvoke",
+        #     wrapper=tool_invoke_wrapper,
+        # )
+
+        # wrap_function_wrapper(
+        #     module="langchain_core.tools.base",
+        #     name="BaseTool._run",
+        #     wrapper=tool_invoke_wrapper,
+        # )
+
+        # wrap_function_wrapper(
+        #     module="langchain_core.tools.base",
+        #     name="BaseTool.arun",
+        #     wrapper=tool_invoke_wrapper,
+        # )
+
+        wrap_function_wrapper(
+            module="langchain_core.runnables.base",
+            name="Runnable.invoke",
+            wrapper=tool_invoke_wrapper,
+        )
+
+        wrap_function_wrapper(
+            module="langchain_core.runnables.base",
+            name="Runnable.ainvoke",
+            wrapper=tool_invoke_wrapper,
+        )
+
+        # wrap_function_wrapper(
+        #     module="langchain_core.runnables.base",
+        #     name="Runnable._run",
+        #     wrapper=tool_invoke_wrapper,
+        # )
+
+        # wrap_function_wrapper(
+        #     module="langchain_core.runnables.base",
+        #     name="Runnable.arun",
+        #     wrapper=tool_invoke_wrapper,
+        # )
+        
+        
         # Doesn't work :(
         # wrap_function_wrapper(
         #     module="langchain_openai.chat_models.base",
