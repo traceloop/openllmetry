@@ -136,8 +136,8 @@ class McpInstrumentor(BaseInstrumentor):
 
         return traced_method
 
-    @dont_throw
     def patch_mcp_client(self, tracer):
+        @dont_throw
         async def traced_method(wrapped, instance, args, kwargs):
             import mcp.types
 
