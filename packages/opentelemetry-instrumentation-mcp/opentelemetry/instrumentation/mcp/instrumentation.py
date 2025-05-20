@@ -2,6 +2,8 @@ from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from typing import Any, AsyncGenerator, Callable, Collection, Tuple, cast
 import json
+import logging
+import traceback
 
 from opentelemetry import context, propagate
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
@@ -12,11 +14,39 @@ from opentelemetry.trace.status import Status, StatusCode
 from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
 from opentelemetry.trace.propagation import set_span_in_context
 from opentelemetry.semconv_ai import SpanAttributes
-from opentelemetry.instrumentation.alephalpha.utils import dont_throw
 
 from opentelemetry.instrumentation.mcp.version import __version__
 
 _instruments = ("mcp >= 1.6.0",)
+
+
+class Config:
+    exception_logger = None
+
+
+def dont_throw(func):
+    """
+    A decorator that wraps the passed in function and logs exceptions instead of throwing them.
+
+    @param func: The function to wrap
+    @return: The wrapper function
+    """
+    # Obtain a logger specific to the function's module
+    logger = logging.getLogger(func.__module__)
+
+    def wrapper(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except Exception as e:
+            logger.debug(
+                "OpenLLMetry failed to trace in %s, error: %s",
+                func.__name__,
+                traceback.format_exc(),
+            )
+            if Config.exception_logger:
+                Config.exception_logger(e)
+
+    return wrapper
 
 
 class McpInstrumentor(BaseInstrumentor):
