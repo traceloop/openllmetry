@@ -251,7 +251,7 @@ class InstrumentedStreamWriter(ObjectProxy):  # type: ignore
         from mcp.types import JSONRPCMessage, JSONRPCRequest
         from mcp.shared.message import SessionMessage
 
-        if type(item) is SessionMessage:
+        if isinstance(item, SessionMessage):
             request = cast(JSONRPCMessage, item.message).root
         elif type(item) is JSONRPCMessage:
             request = cast(JSONRPCMessage, item).root
