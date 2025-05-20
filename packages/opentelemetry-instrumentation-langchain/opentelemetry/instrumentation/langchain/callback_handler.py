@@ -726,6 +726,9 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         _set_chat_response(span, response)
         self._end_span(span, run_id)
 
+        if self.spans[run_id].token:
+            context_api.detach(self.spans[run_id].token)
+
         # Record duration
         duration = time.time() - self.spans[run_id].start_time
         self.duration_histogram.record(
