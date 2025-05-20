@@ -217,7 +217,6 @@ class InstrumentedStreamReader(ObjectProxy):  # type: ignore
                 request = cast(JSONRPCMessage, item).root
             else:
                 return
-            
             if not isinstance(request, JSONRPCRequest):
                 yield item
                 continue
