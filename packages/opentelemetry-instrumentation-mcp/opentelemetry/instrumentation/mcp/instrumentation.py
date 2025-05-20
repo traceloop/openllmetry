@@ -211,7 +211,7 @@ class InstrumentedStreamReader(ObjectProxy):  # type: ignore
         from mcp.shared.message import SessionMessage
 
         async for item in self.__wrapped__:
-            if type(item) is SessionMessage:
+            if isinstance(item, SessionMessage):
                 request = cast(JSONRPCMessage, item.message).root
             elif type(item) is JSONRPCMessage:
                 request = cast(JSONRPCMessage, item).root
