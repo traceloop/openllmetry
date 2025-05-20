@@ -210,7 +210,7 @@ class InstrumentedStreamReader(ObjectProxy):  # type: ignore
         from mcp.types import JSONRPCMessage, JSONRPCRequest
 
         async for item in self.__wrapped__:
-            request = cast(JSONRPCMessage, item).root
+            request = cast(JSONRPCMessage, item.message).root
             if not isinstance(request, JSONRPCRequest):
                 yield item
                 continue
@@ -242,8 +242,14 @@ class InstrumentedStreamWriter(ObjectProxy):  # type: ignore
 
     async def send(self, item: Any) -> Any:
         from mcp.types import JSONRPCMessage, JSONRPCRequest
+        from mcp.shared.message import SessionMessage
 
-        request = cast(JSONRPCMessage, item).root
+        if type(item) is SessionMessage:
+            request = cast(JSONRPCMessage, item.message).root
+        elif type(item) is JSONRPCMessage:
+            request = cast(JSONRPCMessage, item).root
+        else:
+            return
 
         with self._tracer.start_as_current_span("ResponseStreamWriter") as span:
             if hasattr(request, "result"):
