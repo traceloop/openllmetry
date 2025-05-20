@@ -208,9 +208,16 @@ class InstrumentedStreamReader(ObjectProxy):  # type: ignore
 
     async def __aiter__(self) -> AsyncGenerator[Any, None]:
         from mcp.types import JSONRPCMessage, JSONRPCRequest
+        from mcp.shared.message import SessionMessage
 
         async for item in self.__wrapped__:
-            request = cast(JSONRPCMessage, item).root
+            if type(item) is SessionMessage:
+                request = cast(JSONRPCMessage, item.message).root
+            elif type(item) is JSONRPCMessage:
+                request = cast(JSONRPCMessage, item).root
+            else:
+                return
+            
             if not isinstance(request, JSONRPCRequest):
                 yield item
                 continue
@@ -242,8 +249,14 @@ class InstrumentedStreamWriter(ObjectProxy):  # type: ignore
 
     async def send(self, item: Any) -> Any:
         from mcp.types import JSONRPCMessage, JSONRPCRequest
+        from mcp.shared.message import SessionMessage
 
-        request = cast(JSONRPCMessage, item).root
+        if type(item) is SessionMessage:
+            request = cast(JSONRPCMessage, item.message).root
+        elif type(item) is JSONRPCMessage:
+            request = cast(JSONRPCMessage, item).root
+        else:
+            return
 
         with self._tracer.start_as_current_span("ResponseStreamWriter") as span:
             if hasattr(request, "result"):
