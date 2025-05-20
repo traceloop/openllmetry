@@ -8,9 +8,6 @@ class Meters:
     LLM_TOKEN_USAGE = "gen_ai.client.token.usage"
     LLM_OPERATION_DURATION = "gen_ai.client.operation.duration"
     LLM_COMPLETIONS_EXCEPTIONS = "llm.openai.chat_completions.exceptions"
-    LLM_STREAMING_TIME_TO_FIRST_TOKEN = (
-        "llm.openai.chat_completions.streaming_time_to_first_token"
-    )
     LLM_STREAMING_TIME_TO_GENERATE = (
         "llm.openai.chat_completions.streaming_time_to_generate"
     )
