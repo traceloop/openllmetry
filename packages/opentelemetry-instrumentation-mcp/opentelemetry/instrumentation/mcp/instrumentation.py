@@ -12,6 +12,7 @@ from opentelemetry.trace.status import Status, StatusCode
 from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
 from opentelemetry.trace.propagation import set_span_in_context
 from opentelemetry.semconv_ai import SpanAttributes
+from opentelemetry.instrumentation.alephalpha.utils import dont_throw
 
 from opentelemetry.instrumentation.mcp.version import __version__
 
@@ -105,6 +106,7 @@ class McpInstrumentor(BaseInstrumentor):
 
         return traced_method
 
+    @dont_throw
     def patch_mcp_client(self, tracer):
         async def traced_method(wrapped, instance, args, kwargs):
             import mcp.types
@@ -206,6 +208,7 @@ class InstrumentedStreamReader(ObjectProxy):  # type: ignore
     async def __aexit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> Any:
         return await self.__wrapped__.__aexit__(exc_type, exc_value, traceback)
 
+    @dont_throw
     async def __aiter__(self) -> AsyncGenerator[Any, None]:
         from mcp.types import JSONRPCMessage, JSONRPCRequest
         from mcp.shared.message import SessionMessage
@@ -246,6 +249,7 @@ class InstrumentedStreamWriter(ObjectProxy):  # type: ignore
     async def __aexit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> Any:
         return await self.__wrapped__.__aexit__(exc_type, exc_value, traceback)
 
+    @dont_throw
     async def send(self, item: Any) -> Any:
         from mcp.types import JSONRPCMessage, JSONRPCRequest
         from mcp.shared.message import SessionMessage
@@ -299,6 +303,7 @@ class ContextSavingStreamWriter(ObjectProxy):  # type: ignore
     async def __aexit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> Any:
         return await self.__wrapped__.__aexit__(exc_type, exc_value, traceback)
 
+    @dont_throw
     async def send(self, item: Any) -> Any:
         with self._tracer.start_as_current_span("RequestStreamWriter") as span:
             if hasattr(item, "request_id"):
