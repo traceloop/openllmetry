@@ -27,7 +27,7 @@ def is_metrics_enabled() -> bool:
 
 
 def should_record_stream_token_usage():
-    return Config.enrich_token_usage
+    return Config.enrich_token_usage or (os.getenv("TRACELOOP_STREAM_TOKEN_USAGE") or "false").lower() == "true"
 
 
 def _with_image_gen_metric_wrapper(func):
@@ -157,3 +157,12 @@ def run_async(method):
         thread.join()
     else:
         asyncio.run(method)
+
+
+def wrap_function_wrapper(module, func_name, wrapper):
+    """
+    A helper function to wrap a function with a given wrapper.
+    """
+    from wrapt import wrap_function_wrapper as wrap
+
+    wrap(module, func_name, wrapper)

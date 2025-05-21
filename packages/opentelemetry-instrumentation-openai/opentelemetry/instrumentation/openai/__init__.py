@@ -2,7 +2,6 @@ from typing import Callable, Collection, Optional
 from typing_extensions import Coroutine
 
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
-
 from opentelemetry.instrumentation.openai.shared.config import Config
 from opentelemetry.instrumentation.openai.utils import is_openai_v1
 
@@ -37,19 +36,15 @@ class OpenAIInstrumentor(BaseInstrumentor):
     def _instrument(self, **kwargs):
         if is_openai_v1():
             from opentelemetry.instrumentation.openai.v1 import OpenAIV1Instrumentor
-
             OpenAIV1Instrumentor().instrument(**kwargs)
         else:
             from opentelemetry.instrumentation.openai.v0 import OpenAIV0Instrumentor
-
             OpenAIV0Instrumentor().instrument(**kwargs)
 
     def _uninstrument(self, **kwargs):
         if is_openai_v1():
             from opentelemetry.instrumentation.openai.v1 import OpenAIV1Instrumentor
-
             OpenAIV1Instrumentor().uninstrument(**kwargs)
         else:
             from opentelemetry.instrumentation.openai.v0 import OpenAIV0Instrumentor
-
             OpenAIV0Instrumentor().uninstrument(**kwargs)

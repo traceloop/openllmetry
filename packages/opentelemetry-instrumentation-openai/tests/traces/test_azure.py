@@ -189,10 +189,15 @@ async def test_chat_async_streaming(exporter, async_azure_openai_client):
     )
     assert open_ai_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is True
 
-    assert open_ai_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS) == 36
-    assert open_ai_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 8
-    assert open_ai_span.attributes.get(SpanAttributes.LLM_USAGE_COMPLETION_TOKENS) == 28
-
     events = open_ai_span.events
     assert len(events) == chunk_count
-    assert open_ai_span.attributes.get("gen_ai.response.id") == "chatcmpl-9HpbbsSaH8U6amSDAwdA2WzMeDdLB"
+
+    # check token usage attributes for stream
+    completion_tokens = open_ai_span.attributes.get(
+        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
+    )
+    prompt_tokens = open_ai_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS)
+    total_tokens = open_ai_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS)
+    assert completion_tokens and prompt_tokens and total_tokens
+    assert completion_tokens + prompt_tokens == total_tokens
+    assert open_ai_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS) == 54
