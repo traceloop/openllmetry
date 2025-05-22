@@ -4,6 +4,7 @@ from typing import Any, Dict
 
 from opentelemetry.instrumentation.anthropic.config import Config
 from opentelemetry.instrumentation.anthropic.utils import (
+    JSONEncoder,
     dont_throw,
     should_send_prompts,
 )
@@ -60,7 +61,7 @@ async def _dump_content(message_index, content, span):
             for j, item in enumerate(content)
         ]
 
-        return json.dumps(content)
+        return json.dumps(content, cls=JSONEncoder)
 
 
 @dont_throw
