@@ -2,14 +2,21 @@ import asyncio
 
 import pytest
 import vertexai
+from opentelemetry.sdk._logs import LogData
+from opentelemetry.semconv._incubating.attributes import (
+    event_attributes as EventAttributes,
+)
+from opentelemetry.semconv._incubating.attributes import (
+    gen_ai_attributes as GenAIAttributes,
+)
 from opentelemetry.semconv_ai import SpanAttributes
-from vertexai.language_models import TextGenerationModel, ChatModel, InputOutputTextPair
+from vertexai.language_models import ChatModel, InputOutputTextPair, TextGenerationModel
 
 vertexai.init()
 
 
 @pytest.mark.vcr
-def test_vertexai_predict(exporter):
+def test_vertexai_predict(instrument_legacy, span_exporter, log_exporter):
     parameters = {
         "max_output_tokens": 256,
         "top_p": 0.8,
@@ -24,7 +31,7 @@ def test_vertexai_predict(exporter):
 
     response = response.text
 
-    spans = exporter.get_finished_spans()
+    spans = span_exporter.get_finished_spans()
     assert [span.name for span in spans] == [
         "vertexai.predict",
     ]
@@ -47,7 +54,7 @@ def test_vertexai_predict(exporter):
 
 
 @pytest.mark.vcr
-def test_vertexai_predict_async(exporter):
+def test_vertexai_predict_async(instrument_legacy, span_exporter, log_exporter):
     async def async_predict_text() -> str:
         """Ideation example with a Large Language Model"""
 
@@ -67,7 +74,7 @@ def test_vertexai_predict_async(exporter):
 
     response = asyncio.run(async_predict_text())
 
-    spans = exporter.get_finished_spans()
+    spans = span_exporter.get_finished_spans()
     assert [span.name for span in spans] == [
         "vertexai.predict",
     ]
@@ -90,7 +97,7 @@ def test_vertexai_predict_async(exporter):
 
 
 @pytest.mark.vcr
-def test_vertexai_stream(exporter):
+def test_vertexai_stream(instrument_legacy, span_exporter, log_exporter):
     text_generation_model = TextGenerationModel.from_pretrained("text-bison")
     parameters = {
         "max_output_tokens": 256,
@@ -105,7 +112,7 @@ def test_vertexai_stream(exporter):
     result = [response.text for response in responses]
     response = result
 
-    spans = exporter.get_finished_spans()
+    spans = span_exporter.get_finished_spans()
     assert [span.name for span in spans] == [
         "vertexai.predict",
     ]
@@ -125,7 +132,7 @@ def test_vertexai_stream(exporter):
 
 
 @pytest.mark.vcr
-def test_vertexai_stream_async(exporter):
+def test_vertexai_stream_async(instrument_legacy, span_exporter, log_exporter):
     async def async_streaming_prediction() -> list:
         """Streaming Text Example with a Large Language Model"""
 
@@ -145,7 +152,7 @@ def test_vertexai_stream_async(exporter):
 
     response = asyncio.run(async_streaming_prediction())
 
-    spans = exporter.get_finished_spans()
+    spans = span_exporter.get_finished_spans()
     assert [span.name for span in spans] == [
         "vertexai.predict",
     ]
@@ -165,7 +172,7 @@ def test_vertexai_stream_async(exporter):
 
 
 @pytest.mark.vcr
-def test_vertexai_chat(exporter):
+def test_vertexai_chat(instrument_legacy, span_exporter, log_exporter):
     chat_model = ChatModel.from_pretrained("chat-bison@001")
 
     parameters = {
@@ -190,7 +197,7 @@ def test_vertexai_chat(exporter):
 
     response = response.text
 
-    spans = exporter.get_finished_spans()
+    spans = span_exporter.get_finished_spans()
     assert [span.name for span in spans] == [
         "vertexai.send_message",
     ]
@@ -213,7 +220,7 @@ def test_vertexai_chat(exporter):
 
 
 @pytest.mark.vcr
-def test_vertexai_chat_stream(exporter):
+def test_vertexai_chat_stream(instrument_legacy, span_exporter, log_exporter):
     chat_model = ChatModel.from_pretrained("chat-bison@001")
 
     parameters = {
@@ -240,7 +247,7 @@ def test_vertexai_chat_stream(exporter):
     result = [response.text for response in responses]
     response = result
 
-    spans = exporter.get_finished_spans()
+    spans = span_exporter.get_finished_spans()
     assert [span.name for span in spans] == [
         "vertexai.send_message",
     ]
@@ -256,3 +263,17 @@ def test_vertexai_chat_stream(exporter):
     assert vertexai_span.attributes[
         f"{SpanAttributes.LLM_COMPLETIONS}.0.content"
     ] == "".join(response)
+
+
+def assert_message_in_logs(log: LogData, event_name: str, expected_content: dict):
+    assert log.log_record.attributes.get(EventAttributes.EVENT_NAME) == event_name
+    assert (
+        log.log_record.attributes.get(GenAIAttributes.GEN_AI_SYSTEM)
+        == GenAIAttributes.GenAiSystemValues.VERTEX_AI.value
+    )
+
+    if not expected_content:
+        assert not log.log_record.body
+    else:
+        assert log.log_record.body
+        assert dict(log.log_record.body) == expected_content
