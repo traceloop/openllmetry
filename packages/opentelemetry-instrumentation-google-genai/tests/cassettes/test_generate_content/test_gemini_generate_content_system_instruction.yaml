@@ -1,0 +1,63 @@
+interactions:
+- request:
+    body: '{"contents": [{"parts": [{"text": "The opposite of hot is "}], "role":
+      "user"}], "systemInstruction": {"parts": [{"text": "You are a helpful assistant
+      that can answer questions and help with tasks."}], "role": "user"}, "generationConfig":
+      {}}'
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '242'
+      content-type:
+      - application/json
+      host:
+      - generativelanguage.googleapis.com
+      user-agent:
+      - google-genai-sdk/1.11.0 gl-python/3.9.6
+      x-goog-api-client:
+      - google-genai-sdk/1.11.0 gl-python/3.9.6
+    method: POST
+    uri: https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAC/61RwU6EMBC98xVNj0QIy2I2eFVvGo0SY6IeussAjaVD6KzREP7dAgtbPNtDM5n3
+        Zt7Mm85jjB+EzmUuCAy/Ym82w1g3/gOGmkCTBeaUTTaipTN3ep0TWwrB91DEswoYNg0aSTYoWIXE
+        pGG+f0CV+374rrlT2C/xx8VZrkUFQ68ac1AzvZ8JvJBamuoJhEE90J6zh0e+oOKrvMOyaXE/TBxE
+        YRSncbLdRck2uUzSzSbdebP0KMqPRpRwDySsJWJZnNsWdUMZfoK+xuNoSRxNMo6DKzw9wYQk1Lpy
+        hpyu5sZqSuUa63hulxdK0s9o6u1rxh2DaD3U7JDnGPl3xH8SS9da3uku06leoDVyukkJtb1SEIdR
+        UChhqsB2B+713i83JPaBgQIAAA==
+    headers:
+      Alt-Svc:
+      - h3=":443"; ma=2592000,h3-29=":443"; ma=2592000
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json; charset=UTF-8
+      Date:
+      - Mon, 21 Apr 2025 17:34:30 GMT
+      Server:
+      - scaffolding on HTTPServer2
+      Server-Timing:
+      - gfet4t7; dur=433
+      Transfer-Encoding:
+      - chunked
+      Vary:
+      - Origin
+      - X-Origin
+      - Referer
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - SAMEORIGIN
+      X-XSS-Protection:
+      - '0'
+    status:
+      code: 200
+      message: OK
+version: 1
