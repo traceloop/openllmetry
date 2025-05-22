@@ -21,6 +21,7 @@ from opentelemetry.instrumentation.anthropic.streaming import (
     build_from_streaming_response,
 )
 from opentelemetry.instrumentation.anthropic.utils import (
+    JSONEncoder,
     acount_prompt_tokens_from_request,
     count_prompt_tokens_from_request,
     dont_throw,
