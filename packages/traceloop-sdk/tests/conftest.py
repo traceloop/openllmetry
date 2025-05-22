@@ -1,13 +1,16 @@
 """Unit tests configuration module."""
 
 import os
+import re
 import pytest
 from traceloop.sdk import Traceloop
 from traceloop.sdk.instruments import Instruments
 from traceloop.sdk.tracing.tracing import TracerWrapper
-from opentelemetry.sdk.trace.export import SimpleSpanProcessor
+from opentelemetry.sdk.trace.export import SimpleSpanProcessor, BatchSpanProcessor
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
 from opentelemetry.context import attach, Context
+from opentelemetry.sdk.trace import ReadableSpan
+
 pytest_plugins = []
 
 
@@ -66,6 +69,44 @@ def exporter_with_custom_span_processor():
     yield exporter
 
     # Restore singleton if any
+    if _trace_wrapper_instance:
+        TracerWrapper.instance = _trace_wrapper_instance
+
+
+@pytest.fixture(scope="function")
+def exporter_with_custom_span_postprocess_callback(exporter):
+
+    if hasattr(TracerWrapper, "instance"):
+        _trace_wrapper_instance = TracerWrapper.instance
+        del TracerWrapper.instance
+
+    def span_postprocess_callback(span: ReadableSpan) -> None:
+        prompt_pattern = re.compile(r"gen_ai\.prompt\.\d+\.content$")
+        completion_pattern = re.compile(r"gen_ai\.completion\.\d+\.content$")
+        if hasattr(span, "_attributes"):
+            attributes = span._attributes if span._attributes else {}
+            # Find and encode all matching attributes
+            for key, value in attributes.items():
+                if (prompt_pattern.match(key) or completion_pattern.match(key)) and isinstance(value, str):
+                    attributes[key] = "REDACTED"  # Modify the attributes directly
+
+    Traceloop.init(
+        exporter=exporter,
+        span_postprocess_callback=span_postprocess_callback,
+    )
+
+    yield exporter
+
+    if hasattr(TracerWrapper, "instance"):
+        # Get the span processor
+        if hasattr(TracerWrapper.instance, "_TracerWrapper__spans_processor"):
+            span_processor = TracerWrapper.instance._TracerWrapper__spans_processor
+            # Reset the on_end method to its original class implementation.
+            # This is needed to make this test run in isolation as SpanProcessor is a singleton.
+            if isinstance(span_processor, SimpleSpanProcessor):
+                span_processor.on_end = SimpleSpanProcessor.on_end.__get__(span_processor, SimpleSpanProcessor)
+            elif isinstance(span_processor, BatchSpanProcessor):
+                span_processor.on_end = BatchSpanProcessor.on_end.__get__(span_processor, BatchSpanProcessor)
     if _trace_wrapper_instance:
         TracerWrapper.instance = _trace_wrapper_instance
 
