@@ -1,3 +1,41 @@
+## v0.40.7 (2025-05-20)
+
+### Fix
+
+- **mcp**: Added support for newer version of MCP (#2956)
+- **gemini**: proper chat support (#2948)
+- **milvus**: Add instrumentation for pymilvus MilvusClient hybrid search operation (#2945)
+
+## v0.40.6 (2025-05-16)
+
+### Fix
+
+- **sdk**: support overriding the span processor on_end hook (#2947)
+- **milvus**: Added New Semantic Conventions for pymilvus MilvusClient Hybrid Search (#2944)
+
+## v0.40.5 (2025-05-13)
+
+### Fix
+
+- **langchain**: tools in message history (#2939)
+- **sdk**: Place MCP in its lexical order (#2943)
+
+## v0.40.4 (2025-05-10)
+
+### Fix
+
+- **milvus**: Enhanced Milvus VectorDB Instrumentation for Improved search Monitoring (#2815)
+- **milvus**: Added New Semantic Conventions for Milvus Search (Request for Version Update 0.4.5 -> 0.4.6) (#2883)
+- **MCP**: Added error status to traces in MCP server for tool calls (#2914)
+- **ollama**: pre-imported funcs instrumentation failure (#2871)
+
+## v0.40.3 (2025-05-07)
+
+### Fix
+
+- **langchain**: report token counts when trace content is enabled (#2899)
+- **mcp+anthropic**: vanilla mcp crashed due to argument manipulation (#2881)
+
 ## v0.40.2 (2025-04-30)
 
 ### Fix

@@ -8,7 +8,7 @@ show_missing = true
 
 [tool.poetry]
 name = "traceloop-sdk"
-version = "0.40.2"
+version = "0.40.7"
 description = "Traceloop Software Development Kit (SDK) for Python"
 authors = [
     "Gal Kleinman <gal@traceloop.com>",
@@ -34,7 +34,7 @@ opentelemetry-instrumentation-requests = ">=0.50b0"
 opentelemetry-instrumentation-sqlalchemy = ">=0.50b0"
 opentelemetry-instrumentation-urllib3 = ">=0.50b0"
 opentelemetry-instrumentation-threading = ">=0.50b0"
-opentelemetry-semantic-conventions-ai = "0.4.5"
+opentelemetry-semantic-conventions-ai = "0.4.9"
 opentelemetry-instrumentation-mistralai = { path = "../opentelemetry-instrumentation-mistralai", develop = true }
 opentelemetry-instrumentation-openai = { path = "../opentelemetry-instrumentation-openai", develop = true }
 opentelemetry-instrumentation-ollama = { path = "../opentelemetry-instrumentation-ollama", develop = true }

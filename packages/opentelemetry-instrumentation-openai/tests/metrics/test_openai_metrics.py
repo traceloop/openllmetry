@@ -1,6 +1,7 @@
 import pytest
 from openai import OpenAI
 from opentelemetry.semconv_ai import SpanAttributes, Meters
+from opentelemetry.semconv._incubating.metrics import gen_ai_metrics as GenAIMetrics
 from pydantic import BaseModel
 
 
@@ -184,7 +185,7 @@ def test_chat_streaming_metrics(metrics_test_context, openai_client):
                         data_point.sum > 0 for data_point in metric.data.data_points
                     )
 
-                if metric.name == Meters.LLM_STREAMING_TIME_TO_FIRST_TOKEN:
+                if metric.name == GenAIMetrics.GEN_AI_SERVER_TIME_TO_FIRST_TOKEN:
                     found_time_to_first_token_metric = True
                     assert any(
                         data_point.count > 0 for data_point in metric.data.data_points

@@ -1,6 +1,6 @@
 [tool.coverage.run]
 branch = true
-source = [ "opentelemetry/semconv/ai" ]
+source = ["opentelemetry/semconv/ai"]
 
 [tool.coverage.report]
 exclude_lines = ['if TYPE_CHECKING:']
@@ -8,12 +8,12 @@ show_missing = true
 
 [tool.poetry]
 name = "opentelemetry-semantic-conventions-ai"
-version = "0.4.5"
+version = "0.4.9"
 description = "OpenTelemetry Semantic Conventions Extension for Large Language Models"
 authors = [
   "Gal Kleinman <gal@traceloop.com>",
   "Nir Gazit <nir@traceloop.com>",
-  "Tomer Friedman <tomer@traceloop.com>"
+  "Tomer Friedman <tomer@traceloop.com>",
 ]
 license = "Apache-2.0"
 readme = "README.md"

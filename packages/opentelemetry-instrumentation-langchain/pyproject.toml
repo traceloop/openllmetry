@@ -8,7 +8,7 @@ show_missing = true
 
 [tool.poetry]
 name = "opentelemetry-instrumentation-langchain"
-version = "0.40.2"
+version = "0.40.7"
 description = "OpenTelemetry Langchain instrumentation"
 authors = [
   "Gal Kleinman <gal@traceloop.com>",
@@ -27,7 +27,7 @@ python = ">=3.9,<4"
 opentelemetry-api = "^1.28.0"
 opentelemetry-instrumentation = ">=0.50b0"
 opentelemetry-semantic-conventions = ">=0.50b0"
-opentelemetry-semantic-conventions-ai = "0.4.5"
+opentelemetry-semantic-conventions-ai = "0.4.9"
 
 [tool.poetry.group.dev.dependencies]
 autopep8 = "^2.3.1"
@@ -49,9 +49,9 @@ opentelemetry-sdk = "^1.27.0"
 opentelemetry-instrumentation-openai = { path = "../opentelemetry-instrumentation-openai", develop = true }
 opentelemetry-instrumentation-bedrock = { path = "../opentelemetry-instrumentation-bedrock", develop = true }
 text-generation = "^0.7.0"
-anthropic = "^0.37.1"
+anthropic = "^0.51.0"
 boto3 = "^1.35.49"
-langchain-anthropic = "=0.2.0"
+langchain-anthropic = "^0.3.13"
 langchain-aws = "^0.2.11"
 langchain-openai = "^0.3.1"
 langchain-cohere = "0.3.1"
