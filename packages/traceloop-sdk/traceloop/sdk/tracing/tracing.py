@@ -12,7 +12,7 @@ from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import (
     OTLPSpanExporter as GRPCExporter,
 )
 from opentelemetry.sdk.resources import Resource
-from opentelemetry.sdk.trace import TracerProvider, SpanProcessor
+from opentelemetry.sdk.trace import TracerProvider, SpanProcessor, ReadableSpan
 from opentelemetry.propagators.textmap import TextMapPropagator
 from opentelemetry.propagate import set_global_textmap
 from opentelemetry.sdk.trace.export import (
@@ -73,6 +73,7 @@ class TracerWrapper(object):
         instruments: Optional[Set[Instruments]] = None,
         block_instruments: Optional[Set[Instruments]] = None,
         image_uploader: ImageUploader = None,
+        span_postprocess_callback: Optional[Callable[[ReadableSpan], None]] = None,
     ) -> "TracerWrapper":
         if not hasattr(cls, "instance"):
             obj = cls.instance = super(TracerWrapper, cls).__new__(cls)
@@ -120,6 +121,16 @@ class TracerWrapper(object):
                         obj.__spans_exporter
                     )
                 obj.__spans_processor_original_on_start = None
+                if span_postprocess_callback:
+                    # Create a wrapper that calls both the custom and original methods
+                    original_on_end = obj.__spans_processor.on_end
+
+                    def wrapped_on_end(span):
+                        # Call the custom on_end first
+                        span_postprocess_callback(span)
+                        # Then call the original to ensure normal processing
+                        original_on_end(span)
+                    obj.__spans_processor.on_end = wrapped_on_end
 
             obj.__spans_processor.on_start = obj._span_processor_on_start
             obj.__tracer_provider.add_span_processor(obj.__spans_processor)
@@ -403,6 +414,9 @@ def init_instrumentations(
         elif instrument == Instruments.MARQO:
             if init_marqo_instrumentor():
                 instrument_set = True
+        elif instrument == Instruments.MCP:
+            if init_mcp_instrumentor():
+                instrument_set = True
         elif instrument == Instruments.MILVUS:
             if init_milvus_instrumentor():
                 instrument_set = True
@@ -453,9 +467,6 @@ def init_instrumentations(
                 instrument_set = True
         elif instrument == Instruments.WEAVIATE:
             if init_weaviate_instrumentor():
-                instrument_set = True
-        elif instrument == Instruments.MCP:
-            if init_mcp_instrumentor():
                 instrument_set = True
         else:
             print(Fore.RED + f"Warning: {instrument} instrumentation does not exist.")
