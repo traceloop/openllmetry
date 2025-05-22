@@ -8,7 +8,7 @@ show_missing = true
 
 [tool.poetry]
 name = "opentelemetry-instrumentation-crewai"
-version = "0.40.2"
+version = "0.40.7"
 description = "OpenTelemetry crewAI instrumentation"
 authors = ["Gal Kleinman <gal@traceloop.com>", "Nir Gazit <nir@traceloop.com>"]
 repository = "https://github.com/traceloop/openllmetry/tree/main/packages/opentelemetry-instrumentation-crewai"
@@ -23,7 +23,7 @@ python = ">=3.10,<4"
 opentelemetry-api = "^1.28.0"
 opentelemetry-instrumentation = ">=0.50b0"
 opentelemetry-semantic-conventions = ">=0.50b0"
-opentelemetry-semantic-conventions-ai = "0.4.5"
+opentelemetry-semantic-conventions-ai = "0.4.9"
 
 [tool.poetry.group.dev.dependencies]
 autopep8 = "^2.2.0"
