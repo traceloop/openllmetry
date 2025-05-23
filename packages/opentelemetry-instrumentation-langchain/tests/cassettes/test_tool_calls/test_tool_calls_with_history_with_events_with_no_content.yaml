@@ -1,0 +1,116 @@
+interactions:
+- request:
+    body: '{"messages": [{"content": "Be crisp and friendly.", "role": "system"},
+      {"content": "Hey, what''s the weather in San Francisco?", "role": "user"}, {"content":
+      null, "role": "assistant", "tool_calls": [{"type": "function", "id": "tool_123",
+      "function": {"name": "get_weather", "arguments": "{\"location\": \"San Francisco\"}"}}]},
+      {"content": "Sunny as always!", "role": "tool", "tool_call_id": "tool_123"},
+      {"content": "What''s the weather in London?", "role": "user"}], "model": "gpt-4.1-nano",
+      "stream": false, "temperature": 0.0, "tools": [{"type": "function", "function":
+      {"name": "get_weather", "description": "", "parameters": {"properties": {"location":
+      {"type": "string"}}, "required": ["location"], "type": "object"}}}]}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '726'
+      content-type:
+      - application/json
+      host:
+      - api.openai.com
+      traceparent:
+      - 00-8a7074195f479fa1b4e3d24a288b842d-d9e5fe68bce4dc62-01
+      user-agent:
+      - OpenAI/Python 1.59.9
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.59.9
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.9.6
+    method: POST
+    uri: https://api.openai.com/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAAwAAAP//jFNRb5swEH7nV1j3HCoIdCE8rtI0res0TVqjdamQYw7iztjMNuu6KP99
+        skmApJk0HpB1333ffXdn7wJCgJeQE2BbalnTivDt6l5Gq00W/7lZps+3d18+8OWD/WzYxvAbmDmG
+        2jwhs0fWFVNNK9ByJXuYaaQWnWq8SBdRliXL1AONKlE4Wt3aML2KQ0mlCufR/DqM0jBOD/St4gwN
+        5OR7QAghO/93RmWJvyEn0ewYadAYWiPkQxIhoJVwEaDGcGOptDAbQaakRem8y06ICWCVEgWjQoyF
+        +283OY/TokIU85/V7aqLsky8ocnT/cO3T1/f3UXN+0m9Xvql9YaqTrJhShN8iOdnxQgBSRvPrdEW
+        z0jtFvUZnRCguu4alNZZh90ahGLUCa4hX8NHJUt33MMJbR9cOj9OJqKx6gwVr0dFpVTWF/Czejwg
+        +2EtQtWtVhtzRoWKS262hUZqfLfToQdHI94CdCd7hVarprWFVT/QF82yXhTGuzeC8fUBtMpSMYlH
+        yeyCXFGipdzvfbhqjLItliN1vHK0K7maAMGk9dduLmn37XNZ/4/8CDCGrcWyaDWWnJ12PKZpdE/z
+        X2nDkL1hMKh/cYaF5ajdOkqsaCf69wLmxVhsiorLGnWruX80ULVFVpVpsoizTQLBPvgLAAD//wMA
+        5oqH9EMEAAA=
+    headers:
+      CF-RAY:
+      - 93ed4cdeec6a4145-LHR
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 12 May 2025 22:19:55 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=mbe_uOJ6Ky7FO_sZTcQcgi81zhOdu9k9PiAVjxfztUg-1747088395-1.0.1.1-9erdxlFG2kZqneS5V6JeO8rfWwV2XG0JqIhtJYl3r8AJFb.GfFjzdjNuNvq_3KMgkj6fV7CeHKGjTR9EoLBvQceo5Uu7UQpouZ90PgnlDqU;
+        path=/; expires=Mon, 12-May-25 22:49:55 GMT; domain=.api.openai.com; HttpOnly;
+        Secure; SameSite=None
+      - _cfuvid=8fWZbl3HbKNTJWZanv3dbqgrFf6ZPwGqc6IsROQLSII-1747088395188-0.0.1.1-604800000;
+        path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      access-control-expose-headers:
+      - X-Request-ID
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      openai-organization:
+      - user-xzaeeoqlanzncr8pomspsknu
+      openai-processing-ms:
+      - '939'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-envoy-upstream-service-time:
+      - '943'
+      x-ratelimit-limit-requests:
+      - '30000'
+      x-ratelimit-limit-tokens:
+      - '150000000'
+      x-ratelimit-remaining-requests:
+      - '29999'
+      x-ratelimit-remaining-tokens:
+      - '149999967'
+      x-ratelimit-reset-requests:
+      - 2ms
+      x-ratelimit-reset-tokens:
+      - 0s
+      x-request-id:
+      - req_2d6bbea821f6566c0b63a15c5d5da2ac
+    status:
+      code: 200
+      message: OK
+version: 1
