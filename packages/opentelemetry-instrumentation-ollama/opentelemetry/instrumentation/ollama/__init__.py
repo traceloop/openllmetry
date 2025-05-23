@@ -176,7 +176,12 @@ def _with_tracer_wrapper(func):
     """Helper for providing tracer for wrapper functions."""
 
     def _with_tracer(
-        tracer, token_histogram, duration_histogram, event_logger, to_wrap
+        tracer,
+        token_histogram,
+        duration_histogram,
+        event_logger,
+        streaming_time_to_first_token,
+        to_wrap,
     ):
         def wrapper(wrapped, instance, args, kwargs):
             return func(
@@ -184,6 +189,7 @@ def _with_tracer_wrapper(func):
                 token_histogram,
                 duration_histogram,
                 event_logger,
+                streaming_time_to_first_token,
                 to_wrap,
                 wrapped,
                 instance,
