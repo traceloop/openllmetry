@@ -1,4 +1,3 @@
-import json
 from dataclasses import asdict
 from enum import Enum
 from typing import Dict, List, Union
@@ -38,10 +37,9 @@ EVENT_ATTRIBUTES = {GenAIAttributes.GEN_AI_SYSTEM: "ollama"}
 
 @dont_throw
 def emit_message_events(llm_request_type, args, kwargs, event_logger):
+    json_data = kwargs.get("json", {})
     if llm_request_type == LLMRequestTypeValues.CHAT:
-        messages: List[Dict] = (
-            kwargs.get("messages") if kwargs.get("messages") is not None else args[1]
-        )
+        messages: List[Dict] = json_data.get("messages")
         for message in messages:
             content = message.get("content", {})
             images = message.get("images")
@@ -58,9 +56,10 @@ def emit_message_events(llm_request_type, args, kwargs, event_logger):
                     for tc in tool_calls
                 ]
                 for tool_call in tool_calls:
-                    tool_call["function"]["arguments"] = json.loads(
-                        tool_call["function"].get("arguments", "")
+                    tool_call["function"]["arguments"] = tool_call["function"].get(
+                        "arguments", ""
                     )
+
             role = message.get("role")
             emit_event(
                 MessageEvent(content=content, role=role, tool_calls=tool_calls),
@@ -70,7 +69,7 @@ def emit_message_events(llm_request_type, args, kwargs, event_logger):
         llm_request_type == LLMRequestTypeValues.COMPLETION
         or LLMRequestTypeValues.EMBEDDING
     ):
-        prompt = kwargs.get("prompt") if kwargs.get("prompt") is not None else args[1]
+        prompt = json_data.get("prompt", "")
         emit_event(MessageEvent(content=prompt, role="user"), event_logger)
     else:
         raise ValueError(

@@ -250,7 +250,7 @@ def test_ollama_chat_tool_calls_with_events_with_content(
     # Validate assistant message Event
     user_message_log = logs[0]
     assistant_message = {
-        "content": "",
+        "content": {},
         "tool_calls": [
             {
                 "id": "",
