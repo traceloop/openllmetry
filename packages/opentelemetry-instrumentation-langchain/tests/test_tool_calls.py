@@ -2,7 +2,6 @@ import json
 from typing import List
 
 import pytest
-from langchain.schema import HumanMessage
 from langchain_anthropic import ChatAnthropic
 from langchain_core.messages import (
     AIMessage,
@@ -52,9 +51,13 @@ def test_tool_calls(instrument_legacy, span_exporter, log_exporter):
     arguments = chat_span.attributes[
         f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.0.arguments"
     ]
-    assert arguments == result.model_dump().get("additional_kwargs").get("tool_calls")[
-        0
-    ].get("function").get("arguments")
+    assert json.loads(arguments) == json.loads(
+        result.model_dump()
+        .get("additional_kwargs")
+        .get("tool_calls")[0]
+        .get("function")
+        .get("arguments")
+    )
 
     logs = log_exporter.get_finished_logs()
     assert (
@@ -237,6 +240,183 @@ def test_tool_calls_with_history(instrument_legacy, span_exporter, log_exporter)
 
 
 @pytest.mark.vcr
+def test_tool_calls_with_history_with_events_with_content(
+    instrument_with_content, span_exporter, log_exporter
+):
+    def get_weather(location: str) -> str:
+        return "sunny"
+
+    messages: list[BaseMessage] = [
+        SystemMessage(content="Be crisp and friendly."),
+        HumanMessage(content="Hey, what's the weather in San Francisco?"),
+        AIMessage(
+            content="",
+            tool_calls=[
+                {
+                    "name": "get_weather",
+                    "args": {"location": "San Francisco"},
+                    "id": "tool_123",
+                    "type": "tool_call",
+                }
+            ],
+        ),
+        ToolMessage(content="Sunny as always!", tool_call_id="tool_123"),
+        HumanMessage(content="What's the weather in London?"),
+    ]
+    model = ChatOpenAI(model="gpt-4.1-nano", temperature=0)
+    model_with_tools = model.bind_tools([get_weather])
+    result = model_with_tools.invoke(messages)
+    spans = span_exporter.get_finished_spans()
+
+    assert len(spans) == 1
+    chat_span = spans[0]
+    assert chat_span.name == "ChatOpenAI.chat"
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 6
+
+    # Validate system message Event
+    assert_message_in_logs(
+        logs[0], "gen_ai.system.message", {"content": "Be crisp and friendly."}
+    )
+
+    # Validate user message Event
+    assert_message_in_logs(
+        logs[1],
+        "gen_ai.user.message",
+        {"content": "Hey, what's the weather in San Francisco?"},
+    )
+
+    # Validate AI message Event
+    assert_message_in_logs(
+        logs[2],
+        "gen_ai.assistant.message",
+        {
+            "content": "",
+            "tool_calls": [
+                {
+                    "id": messages[2].tool_calls[0]["id"],
+                    "function": {
+                        "name": messages[2].tool_calls[0]["name"],
+                        "arguments": messages[2].tool_calls[0]["args"],
+                    },
+                    "type": "function",
+                }
+            ],
+        },
+    )
+
+    # Validate tool message Event
+    assert_message_in_logs(
+        logs[3], "gen_ai.tool.message", {"content": "Sunny as always!"}
+    )
+
+    # Validate second user message Event
+    assert_message_in_logs(
+        logs[4], "gen_ai.user.message", {"content": "What's the weather in London?"}
+    )
+
+    # Validate AI choice Event
+    tool_call = result.model_dump()["additional_kwargs"]["tool_calls"][0]
+    choice_event = {
+        "index": 0,
+        "message": {"content": ""},
+        "finish_reason": "tool_calls",
+        "tool_calls": [
+            {
+                "id": tool_call["id"],
+                "function": {
+                    "name": tool_call["function"]["name"],
+                    "arguments": json.loads(tool_call["function"]["arguments"]),
+                },
+                "type": "function",
+            }
+        ],
+    }
+    assert_message_in_logs(logs[5], "gen_ai.choice", choice_event)
+
+
+@pytest.mark.vcr
+def test_tool_calls_with_history_with_events_with_no_content(
+    instrument_with_no_content, span_exporter, log_exporter
+):
+    def get_weather(location: str) -> str:
+        return "sunny"
+
+    messages: list[BaseMessage] = [
+        SystemMessage(content="Be crisp and friendly."),
+        HumanMessage(content="Hey, what's the weather in San Francisco?"),
+        AIMessage(
+            content="",
+            tool_calls=[
+                {
+                    "name": "get_weather",
+                    "args": {"location": "San Francisco"},
+                    "id": "tool_123",
+                    "type": "tool_call",
+                }
+            ],
+        ),
+        ToolMessage(content="Sunny as always!", tool_call_id="tool_123"),
+        HumanMessage(content="What's the weather in London?"),
+    ]
+    model = ChatOpenAI(model="gpt-4.1-nano", temperature=0)
+    model_with_tools = model.bind_tools([get_weather])
+    result = model_with_tools.invoke(messages)
+    spans = span_exporter.get_finished_spans()
+
+    assert len(spans) == 1
+    chat_span = spans[0]
+    assert chat_span.name == "ChatOpenAI.chat"
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 6
+
+    # Validate system message Event
+    assert_message_in_logs(logs[0], "gen_ai.system.message", {})
+
+    # Validate user message Event
+    assert_message_in_logs(logs[1], "gen_ai.user.message", {})
+
+    # Validate AI message Event
+    assert_message_in_logs(
+        logs[2],
+        "gen_ai.assistant.message",
+        {
+            "tool_calls": [
+                {
+                    "id": messages[2].tool_calls[0]["id"],
+                    "function": {"name": "get_weather"},
+                    "type": "function",
+                }
+            ],
+        },
+    )
+
+    # Validate tool message Event
+    assert_message_in_logs(logs[3], "gen_ai.tool.message", {})
+
+    # Validate second user message Event
+    assert_message_in_logs(logs[4], "gen_ai.user.message", {})
+
+    # Validate AI choice Event
+    tool_call = result.model_dump()["additional_kwargs"]["tool_calls"][0]
+    choice_event = {
+        "index": 0,
+        "message": {},
+        "finish_reason": "tool_calls",
+        "tool_calls": [
+            {
+                "id": tool_call["id"],
+                "function": {"name": "get_weather"},
+                "type": "function",
+            }
+        ],
+    }
+    assert_message_in_logs(logs[5], "gen_ai.choice", choice_event)
+
+
+@pytest.mark.vcr
 def test_tool_calls_anthropic_text_block(
     instrument_legacy, span_exporter, log_exporter
 ):
@@ -293,6 +473,113 @@ def test_tool_calls_anthropic_text_block(
     assert (
         len(logs) == 0
     ), "Assert that it doesn't emit logs when use_legacy_attributes is True"
+
+
+@pytest.mark.vcr
+def test_tool_calls_anthropic_text_block_with_events_with_content(
+    instrument_with_content, span_exporter, log_exporter
+):
+    # This test checks for cases when anthropic prepends a tool call with a text block.
+
+    def get_weather(location: str) -> str:
+        return "sunny"
+
+    def get_news(location: str) -> str:
+        return "Not much"
+
+    messages: list[BaseMessage] = [
+        HumanMessage(
+            content="Hey, what's the weather in San Francisco? Also, any news in town?"
+        ),
+    ]
+    model = ChatAnthropic(model="claude-3-5-haiku-latest")
+    model_with_tools = model.bind_tools([get_weather, get_news])
+    result = model_with_tools.invoke(messages)
+    spans = span_exporter.get_finished_spans()
+
+    assert len(spans) == 1
+    chat_span = spans[0]
+    assert chat_span.name == "ChatAnthropic.chat"
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 2
+
+    # Validate user message Event
+    assert_message_in_logs(
+        logs[0],
+        "gen_ai.user.message",
+        {
+            "content": "Hey, what's the weather in San Francisco? Also, any news in town?"
+        },
+    )
+
+    # Validate AI choice Event
+    result_dict = result.model_dump()
+    choice_event = {
+        "index": 0,
+        "message": {"content": result_dict["content"][0]["text"]},
+        "finish_reason": "unknown",
+        "tool_calls": [
+            {
+                "id": result_dict["content"][1]["id"],
+                "function": {
+                    "name": result_dict["content"][1]["name"],
+                    "arguments": result_dict["content"][1]["input"],
+                },
+                "type": "function",
+            }
+        ],
+    }
+    assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
+
+
+@pytest.mark.vcr
+def test_tool_calls_anthropic_text_block_with_events_with_no_content(
+    instrument_with_no_content, span_exporter, log_exporter
+):
+    # This test checks for cases when anthropic prepends a tool call with a text block.
+
+    def get_weather(location: str) -> str:
+        return "sunny"
+
+    def get_news(location: str) -> str:
+        return "Not much"
+
+    messages: list[BaseMessage] = [
+        HumanMessage(
+            content="Hey, what's the weather in San Francisco? Also, any news in town?"
+        ),
+    ]
+    model = ChatAnthropic(model="claude-3-5-haiku-latest")
+    model_with_tools = model.bind_tools([get_weather, get_news])
+    result = model_with_tools.invoke(messages)
+    spans = span_exporter.get_finished_spans()
+
+    assert len(spans) == 1
+    chat_span = spans[0]
+    assert chat_span.name == "ChatAnthropic.chat"
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 2
+
+    # Validate user message Event
+    assert_message_in_logs(logs[0], "gen_ai.user.message", {})
+
+    # Validate AI choice Event
+    result_dict = result.model_dump()
+    choice_event = {
+        "index": 0,
+        "message": {},
+        "finish_reason": "unknown",
+        "tool_calls": [
+            {
+                "id": result_dict["content"][1]["id"],
+                "function": {"name": result_dict["content"][1]["name"]},
+                "type": "function",
+            }
+        ],
+    }
+    assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
 
 
 @pytest.mark.vcr
@@ -405,6 +692,205 @@ def test_tool_calls_anthropic_text_block_and_history(
 
 
 @pytest.mark.vcr
+def test_tool_calls_anthropic_text_block_and_history_with_events_with_content(
+    instrument_with_content, span_exporter, log_exporter
+):
+    # This test checks for cases when anthropic prepends a tool call with a text block
+    # and then the response messaged is added to the history.
+    def get_weather(location: str) -> str:
+        return "sunny"
+
+    def get_news(location: str) -> str:
+        return "Not much"
+
+    messages: list[BaseMessage] = [
+        HumanMessage(
+            content="Hey, what's the weather in San Francisco? Also, any news in town?"
+        ),
+        AIMessage(
+            content=[
+                {
+                    "text": "I'll help you with that by checking the weather and news"
+                    " for San Francisco right away.\n\nFirst, let's check the weather:",
+                    "type": "text",
+                },
+                {
+                    "id": "toolu_016q9vtSd8CY2vnZSpEp1j4o",
+                    "input": {"location": "San Francisco"},
+                    "name": "get_weather",
+                    "type": "tool_use",
+                },
+            ],
+            tool_calls=[
+                {
+                    "name": "get_weather",
+                    "args": {"location": "San Francisco"},
+                    "id": "toolu_016q9vtSd8CY2vnZSpEp1j4o",
+                    "type": "tool_call",
+                }
+            ],
+        ),
+        ToolMessage(
+            content="Sunny as always!", tool_call_id="toolu_016q9vtSd8CY2vnZSpEp1j4o"
+        ),
+    ]
+    model = ChatAnthropic(model="claude-3-5-haiku-latest")
+    model_with_tools = model.bind_tools([get_weather, get_news])
+    result = model_with_tools.invoke(messages)
+    print(result.model_dump())
+    spans = span_exporter.get_finished_spans()
+
+    assert len(spans) == 1
+    chat_span = spans[0]
+    assert chat_span.name == "ChatAnthropic.chat"
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 4
+
+    # Validate user message Event
+    assert_message_in_logs(
+        logs[0], "gen_ai.user.message", {"content": messages[0].content}
+    )
+
+    # Validate AI message Event
+    assert_message_in_logs(
+        logs[1],
+        "gen_ai.assistant.message",
+        {
+            "content": messages[1].content,
+            "tool_calls": [
+                {
+                    "id": messages[1].tool_calls[0]["id"],
+                    "function": {
+                        "name": messages[1].tool_calls[0]["name"],
+                        "arguments": messages[1].tool_calls[0]["args"],
+                    },
+                    "type": "function",
+                }
+            ],
+        },
+    )
+
+    # Validate tool message Event
+    assert_message_in_logs(
+        logs[2], "gen_ai.tool.message", {"content": messages[2].content}
+    )
+
+    # Validate AI choice Event
+    result_dict = result.model_dump()
+    choice_event = {
+        "index": 0,
+        "message": {"content": result_dict["content"][0]["text"]},
+        "finish_reason": "unknown",
+        "tool_calls": [
+            {
+                "id": result_dict["content"][1]["id"],
+                "function": {
+                    "name": result_dict["content"][1]["name"],
+                    "arguments": result_dict["content"][1]["input"],
+                },
+                "type": "function",
+            }
+        ],
+    }
+    assert_message_in_logs(logs[3], "gen_ai.choice", choice_event)
+
+
+@pytest.mark.vcr
+def test_tool_calls_anthropic_text_block_and_history_with_events_with_no_content(
+    instrument_with_no_content, span_exporter, log_exporter
+):
+    # This test checks for cases when anthropic prepends a tool call with a text block
+    # and then the response messaged is added to the history.
+    def get_weather(location: str) -> str:
+        return "sunny"
+
+    def get_news(location: str) -> str:
+        return "Not much"
+
+    messages: list[BaseMessage] = [
+        HumanMessage(
+            content="Hey, what's the weather in San Francisco? Also, any news in town?"
+        ),
+        AIMessage(
+            content=[
+                {
+                    "text": "I'll help you with that by checking the weather and news"
+                    " for San Francisco right away.\n\nFirst, let's check the weather:",
+                    "type": "text",
+                },
+                {
+                    "id": "toolu_016q9vtSd8CY2vnZSpEp1j4o",
+                    "input": {"location": "San Francisco"},
+                    "name": "get_weather",
+                    "type": "tool_use",
+                },
+            ],
+            tool_calls=[
+                {
+                    "name": "get_weather",
+                    "args": {"location": "San Francisco"},
+                    "id": "toolu_016q9vtSd8CY2vnZSpEp1j4o",
+                    "type": "tool_call",
+                }
+            ],
+        ),
+        ToolMessage(
+            content="Sunny as always!", tool_call_id="toolu_016q9vtSd8CY2vnZSpEp1j4o"
+        ),
+    ]
+    model = ChatAnthropic(model="claude-3-5-haiku-latest")
+    model_with_tools = model.bind_tools([get_weather, get_news])
+    result = model_with_tools.invoke(messages)
+    print(result.model_dump())
+    spans = span_exporter.get_finished_spans()
+
+    assert len(spans) == 1
+    chat_span = spans[0]
+    assert chat_span.name == "ChatAnthropic.chat"
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 4
+
+    # Validate user message Event
+    assert_message_in_logs(logs[0], "gen_ai.user.message", {})
+
+    # Validate AI message Event
+    assert_message_in_logs(
+        logs[1],
+        "gen_ai.assistant.message",
+        {
+            "tool_calls": [
+                {
+                    "id": messages[1].tool_calls[0]["id"],
+                    "function": {"name": messages[1].tool_calls[0]["name"]},
+                    "type": "function",
+                }
+            ],
+        },
+    )
+
+    # Validate tool message Event
+    assert_message_in_logs(logs[2], "gen_ai.tool.message", {})
+
+    # Validate AI choice Event
+    result_dict = result.model_dump()
+    choice_event = {
+        "index": 0,
+        "message": {},
+        "finish_reason": "unknown",
+        "tool_calls": [
+            {
+                "id": result_dict["content"][1]["id"],
+                "function": {"name": result_dict["content"][1]["name"]},
+                "type": "function",
+            }
+        ],
+    }
+    assert_message_in_logs(logs[3], "gen_ai.choice", choice_event)
+
+
+@pytest.mark.vcr
 def test_parallel_tool_calls(instrument_legacy, span_exporter, log_exporter):
     def get_weather(location: str) -> str:
         return "sunny"
@@ -466,6 +952,120 @@ def test_parallel_tool_calls(instrument_legacy, span_exporter, log_exporter):
     assert (
         len(logs) == 0
     ), "Assert that it doesn't emit logs when use_legacy_attributes is True"
+
+
+@pytest.mark.vcr
+def test_parallel_tool_calls_with_events_with_content(
+    instrument_with_content, span_exporter, log_exporter
+):
+    def get_weather(location: str) -> str:
+        return "sunny"
+
+    def get_news(location: str) -> str:
+        return "Not much"
+
+    messages: list[BaseMessage] = [
+        HumanMessage(
+            content="Hey, what's the weather in San Francisco? Also, any news in town?"
+        ),
+    ]
+    model = ChatOpenAI(model="gpt-4.1-nano")
+    model_with_tools = model.bind_tools([get_weather, get_news])
+    result = model_with_tools.invoke(messages)
+    spans = span_exporter.get_finished_spans()
+
+    assert len(spans) == 1
+    chat_span = spans[0]
+    assert chat_span.name == "ChatOpenAI.chat"
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 2
+
+    # Validate user message Event
+    assert_message_in_logs(
+        logs[0], "gen_ai.user.message", {"content": messages[0].content}
+    )
+
+    # Validate AI choice Event
+    result_dict = result.model_dump()
+    tool_calls = result_dict["additional_kwargs"]["tool_calls"]
+    choice_event = {
+        "index": 0,
+        "message": {"content": result_dict["content"]},
+        "finish_reason": "tool_calls",
+        "tool_calls": [
+            {
+                "id": tool_calls[0]["id"],
+                "function": {
+                    "name": tool_calls[0]["function"]["name"],
+                    "arguments": json.loads(tool_calls[0]["function"]["arguments"]),
+                },
+                "type": "function",
+            },
+            {
+                "id": tool_calls[1]["id"],
+                "function": {
+                    "name": tool_calls[1]["function"]["name"],
+                    "arguments": json.loads(tool_calls[1]["function"]["arguments"]),
+                },
+                "type": "function",
+            },
+        ],
+    }
+    assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
+
+
+@pytest.mark.vcr
+def test_parallel_tool_calls_with_events_with_no_content(
+    instrument_with_no_content, span_exporter, log_exporter
+):
+    def get_weather(location: str) -> str:
+        return "sunny"
+
+    def get_news(location: str) -> str:
+        return "Not much"
+
+    messages: list[BaseMessage] = [
+        HumanMessage(
+            content="Hey, what's the weather in San Francisco? Also, any news in town?"
+        ),
+    ]
+    model = ChatOpenAI(model="gpt-4.1-nano")
+    model_with_tools = model.bind_tools([get_weather, get_news])
+    result = model_with_tools.invoke(messages)
+    spans = span_exporter.get_finished_spans()
+
+    assert len(spans) == 1
+    chat_span = spans[0]
+    assert chat_span.name == "ChatOpenAI.chat"
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 2
+
+    # Validate user message Event
+    assert_message_in_logs(logs[0], "gen_ai.user.message", {})
+
+    # Validate AI choice Event
+    result_dict = result.model_dump()
+    tool_calls = result_dict["additional_kwargs"]["tool_calls"]
+    choice_event = {
+        "index": 0,
+        "message": {},
+        "finish_reason": "tool_calls",
+        "tool_calls": [
+            {
+                "id": tool_calls[0]["id"],
+                "function": {"name": tool_calls[0]["function"]["name"]},
+                "type": "function",
+            },
+            {
+                "id": tool_calls[1]["id"],
+                "function": {"name": tool_calls[1]["function"]["name"]},
+                "type": "function",
+            },
+        ],
+    }
+    assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
 
 
 def assert_message_in_logs(log: LogData, event_name: str, expected_content: dict):
