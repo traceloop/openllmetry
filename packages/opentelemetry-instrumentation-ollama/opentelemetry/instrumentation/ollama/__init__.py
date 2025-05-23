@@ -20,11 +20,7 @@ from opentelemetry.instrumentation.ollama.span_utils import (
     set_model_response_attributes,
     set_response_attributes,
 )
-from opentelemetry.instrumentation.ollama.utils import (
-    dont_throw,
-    should_emit_events,
-    should_send_prompts,
-)
+from opentelemetry.instrumentation.ollama.utils import dont_throw, should_emit_events
 from opentelemetry.instrumentation.ollama.version import __version__
 from opentelemetry.instrumentation.utils import (
     _SUPPRESS_INSTRUMENTATION_KEY,

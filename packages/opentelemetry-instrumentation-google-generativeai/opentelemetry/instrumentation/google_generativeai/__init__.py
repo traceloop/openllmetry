@@ -39,12 +39,6 @@ WRAPPED_METHODS = [
         "method": "generate_content_async",
         "span_name": "gemini.generate_content_async",
     },
-    {
-        "package": "google.generativeai.generative_models",
-        "object": "ChatSession",
-        "method": "send_message",
-        "span_name": "gemini.send_message",
-    },
 ]
 
 
@@ -70,7 +64,27 @@ def _set_span_attribute(span, name, value):
 
 
 def _set_input_attributes(span, args, kwargs, llm_model):
-    if should_send_prompts() and args is not None and len(args) > 0:
+    if not should_send_prompts():
+        return
+
+    if "contents" in kwargs:
+        contents = kwargs["contents"]
+        if isinstance(contents, list):
+            for i, content in enumerate(contents):
+                if hasattr(content, "parts"):
+                    for part in content.parts:
+                        if hasattr(part, "text"):
+                            _set_span_attribute(
+                                span,
+                                f"{SpanAttributes.LLM_PROMPTS}.{i}.content",
+                                part.text,
+                            )
+                            _set_span_attribute(
+                                span,
+                                f"{SpanAttributes.LLM_PROMPTS}.{i}.role",
+                                getattr(content, "role", "user"),
+                            )
+    elif args and len(args) > 0:
         prompt = ""
         for arg in args:
             if isinstance(arg, str):
@@ -78,24 +92,27 @@ def _set_input_attributes(span, args, kwargs, llm_model):
             elif isinstance(arg, list):
                 for subarg in arg:
                     prompt = f"{prompt}{subarg}\n"
-
+        if prompt:
+            _set_span_attribute(
+                span,
+                f"{SpanAttributes.LLM_PROMPTS}.0.content",
+                prompt,
+            )
+            _set_span_attribute(
+                span,
+                f"{SpanAttributes.LLM_PROMPTS}.0.role",
+                "user",
+            )
+    elif "prompt" in kwargs:
         _set_span_attribute(
             span,
             f"{SpanAttributes.LLM_PROMPTS}.0.content",
-            prompt,
+            kwargs["prompt"],
         )
         _set_span_attribute(
             span,
             f"{SpanAttributes.LLM_PROMPTS}.0.role",
             "user",
-        )
-
-    if should_send_prompts():
-        _set_span_attribute(
-            span, f"{SpanAttributes.LLM_PROMPTS}.0.content", kwargs.get("prompt")
-        )
-        _set_span_attribute(
-            span, f"{SpanAttributes.LLM_PROMPTS}.0.role", "user"
         )
 
     _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, llm_model)
@@ -147,7 +164,9 @@ def _set_response_attributes(span, response, llm_model):
             _set_span_attribute(
                 span, f"{SpanAttributes.LLM_COMPLETIONS}.0.content", response.text
             )
-            _set_span_attribute(span, f"{SpanAttributes.LLM_COMPLETIONS}.0.role", "assistant")
+            _set_span_attribute(
+                span, f"{SpanAttributes.LLM_COMPLETIONS}.0.role", "assistant"
+            )
     else:
         if isinstance(response, list):
             for index, item in enumerate(response):
@@ -158,7 +177,9 @@ def _set_response_attributes(span, response, llm_model):
             _set_span_attribute(
                 span, f"{SpanAttributes.LLM_COMPLETIONS}.0.content", response
             )
-            _set_span_attribute(span, f"{SpanAttributes.LLM_COMPLETIONS}.0.role", "assistant")
+            _set_span_attribute(
+                span, f"{SpanAttributes.LLM_COMPLETIONS}.0.role", "assistant"
+            )
 
     return
 
@@ -191,7 +212,7 @@ async def _abuild_from_streaming_response(span, response, llm_model):
     span.end()
 
 
-@dont_throw
+# @dont_throw
 def _handle_request(span, args, kwargs, llm_model):
     if span.is_recording():
         _set_input_attributes(span, args, kwargs, llm_model)
@@ -227,9 +248,13 @@ async def _awrap(tracer, to_wrap, wrapped, instance, args, kwargs):
 
     llm_model = "unknown"
     if hasattr(instance, "_model_id"):
-        llm_model = instance._model_id
+        llm_model = instance._model_id.replace("models/", "")
     if hasattr(instance, "_model_name"):
-        llm_model = instance._model_name.replace("publishers/google/models/", "")
+        llm_model = instance._model_name.replace(
+            "publishers/google/models/", ""
+        ).replace("models/", "")
+    if hasattr(instance, "model") and hasattr(instance.model, "model_name"):
+        llm_model = instance.model.model_name.replace("models/", "")
 
     name = to_wrap.get("span_name")
     span = tracer.start_span(
@@ -267,9 +292,13 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
 
     llm_model = "unknown"
     if hasattr(instance, "_model_id"):
-        llm_model = instance._model_id
+        llm_model = instance._model_id.replace("models/", "")
     if hasattr(instance, "_model_name"):
-        llm_model = instance._model_name.replace("publishers/google/models/", "")
+        llm_model = instance._model_name.replace(
+            "publishers/google/models/", ""
+        ).replace("models/", "")
+    if hasattr(instance, "model") and hasattr(instance.model, "model_name"):
+        llm_model = instance.model.model_name.replace("models/", "")
 
     name = to_wrap.get("span_name")
     span = tracer.start_span(
