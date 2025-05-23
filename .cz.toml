@@ -4,7 +4,7 @@ tag_format = "v$version"
 version_scheme = "pep440"
 major_version_zero = true
 update_changelog_on_bump = true
-version = "0.40.2"
+version = "0.40.7"
 version_files = [
     "packages/opentelemetry-instrumentation-mcp/pyproject.toml:^version",
     "packages/opentelemetry-instrumentation-mcp/opentelemetry/instrumentation/mcp/version.py",

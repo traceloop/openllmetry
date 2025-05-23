@@ -50,12 +50,6 @@ WRAPPED_METHODS = [
         "method": "generate_content_async",
         "span_name": "gemini.generate_content_async",
     },
-    {
-        "package": "google.generativeai.generative_models",
-        "object": "ChatSession",
-        "method": "send_message",
-        "span_name": "gemini.send_message",
-    },
 ]
 
 
@@ -156,9 +150,13 @@ async def _awrap(
 
     llm_model = "unknown"
     if hasattr(instance, "_model_id"):
-        llm_model = instance._model_id
+        llm_model = instance._model_id.replace("models/", "")
     if hasattr(instance, "_model_name"):
-        llm_model = instance._model_name.replace("publishers/google/models/", "")
+        llm_model = instance._model_name.replace(
+            "publishers/google/models/", ""
+        ).replace("models/", "")
+    if hasattr(instance, "model") and hasattr(instance.model, "model_name"):
+        llm_model = instance.model.model_name.replace("models/", "")
 
     name = to_wrap.get("span_name")
     span = tracer.start_span(
@@ -208,9 +206,13 @@ def _wrap(
 
     llm_model = "unknown"
     if hasattr(instance, "_model_id"):
-        llm_model = instance._model_id
+        llm_model = instance._model_id.replace("models/", "")
     if hasattr(instance, "_model_name"):
-        llm_model = instance._model_name.replace("publishers/google/models/", "")
+        llm_model = instance._model_name.replace(
+            "publishers/google/models/", ""
+        ).replace("models/", "")
+    if hasattr(instance, "model") and hasattr(instance.model, "model_name"):
+        llm_model = instance.model.model_name.replace("models/", "")
 
     name = to_wrap.get("span_name")
     span = tracer.start_span(
