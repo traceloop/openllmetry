@@ -17,7 +17,28 @@ def _set_span_attribute(span, name, value):
 def set_input_attributes(span, args, kwargs, llm_model):
     if not span.is_recording():
         return
-    if should_send_prompts() and args is not None and len(args) > 0:
+
+    if not should_send_prompts():
+        return
+
+    if "contents" in kwargs:
+        contents = kwargs["contents"]
+        if isinstance(contents, list):
+            for i, content in enumerate(contents):
+                if hasattr(content, "parts"):
+                    for part in content.parts:
+                        if hasattr(part, "text"):
+                            _set_span_attribute(
+                                span,
+                                f"{SpanAttributes.LLM_PROMPTS}.{i}.content",
+                                part.text,
+                            )
+                            _set_span_attribute(
+                                span,
+                                f"{SpanAttributes.LLM_PROMPTS}.{i}.role",
+                                getattr(content, "role", "user"),
+                            )
+    elif args and len(args) > 0:
         prompt = ""
         for arg in args:
             if isinstance(arg, str):
@@ -25,23 +46,18 @@ def set_input_attributes(span, args, kwargs, llm_model):
             elif isinstance(arg, list):
                 for subarg in arg:
                     prompt = f"{prompt}{subarg}\n"
-
+        if prompt:
+            _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.0.content", prompt)
+            _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.0.role", "user")
+    elif "prompt" in kwargs:
         _set_span_attribute(
-            span,
-            f"{SpanAttributes.LLM_PROMPTS}.0.content",
-            prompt,
+            span, f"{SpanAttributes.LLM_PROMPTS}.0.content", kwargs["prompt"]
         )
         _set_span_attribute(
             span,
             f"{SpanAttributes.LLM_PROMPTS}.0.role",
             "user",
         )
-
-    if should_send_prompts():
-        _set_span_attribute(
-            span, f"{SpanAttributes.LLM_PROMPTS}.0.content", kwargs.get("prompt")
-        )
-        _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.0.role", "user")
 
 
 def set_model_request_attributes(span, kwargs, llm_model):
