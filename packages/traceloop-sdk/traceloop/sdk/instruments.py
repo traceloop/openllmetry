@@ -15,6 +15,7 @@ class Instruments(Enum):
     LANGCHAIN = "langchain"
     LLAMA_INDEX = "llama_index"
     MARQO = "marqo"
+    MCP = "mcp"
     MILVUS = "milvus"
     MISTRAL = "mistral"
     OLLAMA = "ollama"
@@ -32,4 +33,3 @@ class Instruments(Enum):
     VERTEXAI = "vertexai"
     WATSONX = "watsonx"
     WEAVIATE = "weaviate"
-    MCP = "mcp"

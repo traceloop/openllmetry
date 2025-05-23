@@ -194,8 +194,8 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         else:
             span = self.tracer.start_span(span_name, kind=kind)
 
-        span.set_attribute(SpanAttributes.TRACELOOP_WORKFLOW_NAME, workflow_name)
-        span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_PATH, entity_path)
+        _set_span_attribute(span, SpanAttributes.TRACELOOP_WORKFLOW_NAME, workflow_name)
+        _set_span_attribute(span, SpanAttributes.TRACELOOP_ENTITY_PATH, entity_path)
 
         token = context_api.attach(
             context_api.set_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY, True)
@@ -232,8 +232,8 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             metadata=metadata,
         )
 
-        span.set_attribute(SpanAttributes.TRACELOOP_SPAN_KIND, kind.value)
-        span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, entity_name)
+        _set_span_attribute(span, SpanAttributes.TRACELOOP_SPAN_KIND, kind.value)
+        _set_span_attribute(span, SpanAttributes.TRACELOOP_ENTITY_NAME, entity_name)
 
         return span
 
@@ -257,8 +257,8 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             entity_path=entity_path,
             metadata=metadata,
         )
-        span.set_attribute(SpanAttributes.LLM_SYSTEM, "Langchain")
-        span.set_attribute(SpanAttributes.LLM_REQUEST_TYPE, request_type.value)
+        _set_span_attribute(span, SpanAttributes.LLM_SYSTEM, "Langchain")
+        _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TYPE, request_type.value)
 
         return span
 
@@ -424,13 +424,15 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
                 "model_name"
             ) or response.llm_output.get("model_id")
             if model_name is not None:
-                span.set_attribute(SpanAttributes.LLM_RESPONSE_MODEL, model_name)
+                _set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, model_name)
 
                 if self.spans[run_id].request_model is None:
-                    span.set_attribute(SpanAttributes.LLM_REQUEST_MODEL, model_name)
+                    _set_span_attribute(
+                        span, SpanAttributes.LLM_REQUEST_MODEL, model_name
+                    )
             id = response.llm_output.get("id")
             if id is not None and id != "":
-                span.set_attribute(GEN_AI_RESPONSE_ID, id)
+                _set_span_attribute(span, GEN_AI_RESPONSE_ID, id)
 
         token_usage = (response.llm_output or {}).get("token_usage") or (
             response.llm_output or {}

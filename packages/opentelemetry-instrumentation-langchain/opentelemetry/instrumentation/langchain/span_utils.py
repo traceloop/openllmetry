@@ -19,6 +19,7 @@ from opentelemetry.semconv_ai import (
     SpanAttributes,
 )
 from opentelemetry.trace.span import Span
+from opentelemetry.util.types import AttributeValue
 
 
 @dataclass
@@ -41,12 +42,14 @@ def _message_type_to_role(message_type: str) -> str:
         return "system"
     elif message_type == "ai":
         return "assistant"
+    elif message_type == "tool":
+        return "tool"
     else:
         return "unknown"
 
 
-def _set_span_attribute(span, name, value):
-    if value is not None:
+def _set_span_attribute(span: Span, name: str, value: AttributeValue):
+    if value is not None and value != "":
         span.set_attribute(name, value)
 
 
@@ -66,9 +69,9 @@ def set_request_params(span, kwargs, span_holder: SpanHolder):
     else:
         model = "unknown"
 
-    span.set_attribute(SpanAttributes.LLM_REQUEST_MODEL, model)
+    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, model)
     # response is not available for LLM requests (as opposed to chat)
-    span.set_attribute(SpanAttributes.LLM_RESPONSE_MODEL, model)
+    _set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, model)
 
     if "invocation_params" in kwargs:
         params = (
@@ -95,13 +98,17 @@ def set_llm_request(
     kwargs: Any,
     span_holder: SpanHolder,
 ) -> None:
+    set_request_params(span, kwargs, span_holder)
+
     if should_send_prompts():
         for i, msg in enumerate(prompts):
-            span.set_attribute(
+            _set_span_attribute(
+                span,
                 f"{SpanAttributes.LLM_PROMPTS}.{i}.role",
                 "user",
             )
-            span.set_attribute(
+            _set_span_attribute(
+                span,
                 f"{SpanAttributes.LLM_PROMPTS}.{i}.content",
                 msg,
             )
@@ -114,6 +121,8 @@ def set_chat_request(
     kwargs: Any,
     span_holder: SpanHolder,
 ) -> None:
+    set_request_params(span, serialized.get("kwargs", {}), span_holder)
+
     if should_send_prompts():
         for i, function in enumerate(
             kwargs.get("invocation_params", {}).get("functions", [])
@@ -131,20 +140,32 @@ def set_chat_request(
         i = 0
         for message in messages:
             for msg in message:
-                span.set_attribute(
+                _set_span_attribute(
+                    span,
                     f"{SpanAttributes.LLM_PROMPTS}.{i}.role",
                     _message_type_to_role(msg.type),
                 )
-                # if msg.content is string
-                if isinstance(msg.content, str):
-                    span.set_attribute(
-                        f"{SpanAttributes.LLM_PROMPTS}.{i}.content",
-                        msg.content,
+                tool_calls = (
+                    msg.tool_calls
+                    if hasattr(msg, "tool_calls")
+                    else msg.additional_kwargs.get("tool_calls")
+                )
+
+                if tool_calls:
+                    _set_chat_tool_calls(
+                        span, f"{SpanAttributes.LLM_PROMPTS}.{i}", tool_calls
                     )
+
                 else:
-                    span.set_attribute(
+                    content = (
+                        msg.content
+                        if isinstance(msg.content, str)
+                        else json.dumps(msg.content, cls=CallbackFilteredJSONEncoder)
+                    )
+                    _set_span_attribute(
+                        span,
                         f"{SpanAttributes.LLM_PROMPTS}.{i}.content",
-                        json.dumps(msg.content, cls=CallbackFilteredJSONEncoder),
+                        content,
                     )
                 i += 1
 
@@ -158,65 +179,68 @@ def set_chat_response(span: Span, response: LLMResult) -> None:
         for generation in generations:
             prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{i}"
             if hasattr(generation, "text") and generation.text != "":
-                span.set_attribute(
+                _set_span_attribute(
+                    span,
                     f"{prefix}.content",
                     generation.text,
                 )
-                span.set_attribute(f"{prefix}.role", "assistant")
+                _set_span_attribute(span, f"{prefix}.role", "assistant")
             else:
-                span.set_attribute(
+                _set_span_attribute(
+                    span,
                     f"{prefix}.role",
                     _message_type_to_role(generation.type),
                 )
                 if generation.message.content is str:
-                    span.set_attribute(
+                    _set_span_attribute(
+                        span,
                         f"{prefix}.content",
                         generation.message.content,
                     )
                 else:
-                    span.set_attribute(
+                    _set_span_attribute(
+                        span,
                         f"{prefix}.content",
                         json.dumps(
                             generation.message.content, cls=CallbackFilteredJSONEncoder
                         ),
                     )
                 if generation.generation_info.get("finish_reason"):
-                    span.set_attribute(
+                    _set_span_attribute(
+                        span,
                         f"{prefix}.finish_reason",
                         generation.generation_info.get("finish_reason"),
                     )
 
                 if generation.message.additional_kwargs.get("function_call"):
-                    span.set_attribute(
+                    _set_span_attribute(
+                        span,
                         f"{prefix}.tool_calls.0.name",
                         generation.message.additional_kwargs.get("function_call").get(
                             "name"
                         ),
                     )
-                    span.set_attribute(
+                    _set_span_attribute(
+                        span,
                         f"{prefix}.tool_calls.0.arguments",
                         generation.message.additional_kwargs.get("function_call").get(
                             "arguments"
                         ),
                     )
 
-                if generation.message.additional_kwargs.get("tool_calls"):
-                    for idx, tool_call in enumerate(
-                        generation.message.additional_kwargs.get("tool_calls")
-                    ):
-                        tool_call_prefix = f"{prefix}.tool_calls.{idx}"
-
-                        span.set_attribute(
-                            f"{tool_call_prefix}.id", tool_call.get("id")
-                        )
-                        span.set_attribute(
-                            f"{tool_call_prefix}.name",
-                            tool_call.get("function").get("name"),
-                        )
-                        span.set_attribute(
-                            f"{tool_call_prefix}.arguments",
-                            tool_call.get("function").get("arguments"),
-                        )
+            if hasattr(generation, "message"):
+                tool_calls = (
+                    generation.message.tool_calls
+                    if hasattr(generation.message, "tool_calls")
+                    else generation.message.additional_kwargs.get("tool_calls")
+                )
+                if tool_calls and isinstance(tool_calls, list):
+                    _set_span_attribute(
+                        span,
+                        f"{prefix}.role",
+                        "assistant",
+                    )
+                    _set_chat_tool_calls(span, prefix, tool_calls)
             i += 1
 
 
@@ -259,19 +283,50 @@ def set_chat_response_usage(span: Span, response: LLMResult):
         or total_tokens > 0
         or cache_read_tokens > 0
     ):
-        span.set_attribute(
+        _set_span_attribute(
+            span,
             SpanAttributes.LLM_USAGE_PROMPT_TOKENS,
             input_tokens,
         )
-        span.set_attribute(
+        _set_span_attribute(
+            span,
             SpanAttributes.LLM_USAGE_COMPLETION_TOKENS,
             output_tokens,
         )
-        span.set_attribute(
+        _set_span_attribute(
+            span,
             SpanAttributes.LLM_USAGE_TOTAL_TOKENS,
             total_tokens,
         )
-        span.set_attribute(
+        _set_span_attribute(
+            span,
             SpanAttributes.LLM_USAGE_CACHE_READ_INPUT_TOKENS,
             cache_read_tokens,
+        )
+
+
+def _set_chat_tool_calls(
+    span: Span, prefix: str, tool_calls: list[dict[str, Any]]
+) -> None:
+    for idx, tool_call in enumerate(tool_calls):
+        tool_call_prefix = f"{prefix}.tool_calls.{idx}"
+        tool_call_dict = dict(tool_call)
+        tool_id = tool_call_dict.get("id")
+        tool_name = tool_call_dict.get(
+            "name", tool_call_dict.get("function", {}).get("name")
+        )
+        tool_args = tool_call_dict.get(
+            "args", tool_call_dict.get("function", {}).get("arguments")
+        )
+
+        _set_span_attribute(span, f"{tool_call_prefix}.id", tool_id)
+        _set_span_attribute(
+            span,
+            f"{tool_call_prefix}.name",
+            tool_name,
+        )
+        _set_span_attribute(
+            span,
+            f"{tool_call_prefix}.arguments",
+            json.dumps(tool_args, cls=CallbackFilteredJSONEncoder),
         )
