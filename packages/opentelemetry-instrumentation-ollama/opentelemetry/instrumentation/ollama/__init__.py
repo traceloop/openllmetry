@@ -456,19 +456,17 @@ class OllamaInstrumentor(BaseInstrumentor):
         )
 
     def _uninstrument(self, **kwargs):
-        for wrapped_method in WRAPPED_METHODS:
-            unwrap(
-                "ollama._client.Client",
-                wrapped_method.get("method"),
-            )
-            unwrap(
-                "ollama._client.AsyncClient",
-                wrapped_method.get("method"),
-            )
-            unwrap(
-                "ollama",
-                wrapped_method.get("method"),
-            )
+        try:
+            import ollama
+            from ollama._client import AsyncClient, Client
+
+            for wrapped_method in WRAPPED_METHODS:
+                method_name = wrapped_method.get("method")
+                unwrap(Client, method_name)
+                unwrap(AsyncClient, method_name)
+                unwrap(ollama, method_name)
+        except ImportError:
+            logger.warning("Failed to import ollama modules for uninstrumentation.")
 
 
 def _dispatch_wrap(
