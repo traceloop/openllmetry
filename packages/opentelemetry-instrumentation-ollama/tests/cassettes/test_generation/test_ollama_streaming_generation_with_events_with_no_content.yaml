@@ -1,0 +1,219 @@
+interactions:
+- request:
+    body: '{"model": "llama3", "prompt": "Tell me a joke about OpenTelemetry", "system":
+      "", "template": "", "context": [], "stream": true, "raw": false, "images": [],
+      "format": "", "options": {}, "keep_alive": null}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '205'
+      content-type:
+      - application/json
+      host:
+      - 127.0.0.1:11434
+      user-agent:
+      - ollama-python/0.2.0 (arm64 darwin) Python/3.9.5
+    method: POST
+    uri: http://127.0.0.1:11434/api/generate
+  response:
+    body:
+      string: '{"model":"llama3","created_at":"2024-05-24T20:48:36.231229Z","response":"A","done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:48:36.26284Z","response":" joke","done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:48:36.294446Z","response":"
+        about","done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:48:36.326753Z","response":"
+        Open","done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:48:36.358406Z","response":"Te","done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:48:36.390035Z","response":"lemetry","done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:48:36.421627Z","response":"!","done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:48:36.453271Z","response":"
+        Here","done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:48:36.486523Z","response":"''s","done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:48:36.518253Z","response":"
+        one","done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:48:36.549939Z","response":":\n\n","done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:48:36.581577Z","response":"Why","done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:48:36.613267Z","response":"
+        did","done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:48:36.644869Z","response":"
+        the","done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:48:36.676465Z","response":"
+        Open","done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:48:36.708201Z","response":"Te","done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:48:36.740215Z","response":"lemetry","done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:48:36.772096Z","response":"
+        Span","done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:48:36.805496Z","response":"
+        go","done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:48:36.83782Z","response":" to","done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:48:36.869601Z","response":"
+        therapy","done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:48:36.901433Z","response":"?\n\n","done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:48:36.933126Z","response":"Because","done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:48:36.964981Z","response":"
+        it","done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:48:36.997443Z","response":"
+        was","done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:48:37.029721Z","response":"
+        feeling","done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:48:37.061535Z","response":"
+        \"","done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:48:37.093349Z","response":"distributed","done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:48:37.126746Z","response":"\"","done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:48:37.15936Z","response":" and","done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:48:37.191337Z","response":"
+        wanted","done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:48:37.224816Z","response":"
+        to","done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:48:37.257224Z","response":"
+        get","done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:48:37.290823Z","response":"
+        to","done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:48:37.322751Z","response":"
+        the","done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:48:37.354693Z","response":"
+        \"","done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:48:37.386105Z","response":"root","done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:48:37.418358Z","response":"
+        cause","done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:48:37.450499Z","response":"\"","done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:48:37.482377Z","response":"
+        of","done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:48:37.514318Z","response":"
+        its","done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:48:37.546254Z","response":"
+        problems","done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:48:37.578209Z","response":"!\n\n","done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:48:37.610101Z","response":"(S","done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:48:37.642209Z","response":"orry","done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:48:37.674116Z","response":",","done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:48:37.706069Z","response":"
+        I","done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:48:37.737913Z","response":"
+        know","done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:48:37.770328Z","response":"
+        it","done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:48:37.802911Z","response":"''s","done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:48:37.834873Z","response":"
+        a","done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:48:37.866813Z","response":"
+        bit","done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:48:37.899409Z","response":"
+        of","done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:48:37.931391Z","response":"
+        a","done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:48:37.96344Z","response":" \"","done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:48:37.995448Z","response":"stretch","done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:48:38.027384Z","response":"\"...","done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:48:38.061041Z","response":"
+        Open","done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:48:38.092894Z","response":"Te","done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:48:38.125484Z","response":"lemetry","done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:48:38.157527Z","response":"
+        jokes","done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:48:38.191114Z","response":"
+        are","done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:48:38.223255Z","response":"
+        still","done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:48:38.255412Z","response":"
+        in","done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:48:38.287314Z","response":"
+        the","done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:48:38.319405Z","response":"
+        early","done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:48:38.353303Z","response":"
+        stages","done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:48:38.385604Z","response":"
+        of","done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:48:38.417684Z","response":"
+        development","done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:48:38.451321Z","response":"!)","done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:48:38.483408Z","response":"","done":true,"done_reason":"stop","context":[128006,882,128007,271,41551,757,264,22380,922,5377,6777,37058,128009,128006,78191,128007,271,32,22380,922,5377,6777,37058,0,5810,596,832,1473,10445,1550,279,5377,6777,37058,12168,733,311,15419,1980,18433,433,574,8430,330,63475,1,323,4934,311,636,311,279,330,2959,5353,1,315,1202,5435,2268,3844,8635,11,358,1440,433,596,264,2766,315,264,330,73184,53670,5377,6777,37058,32520,527,2103,304,279,4216,18094,315,4500,16715,128009],"total_duration":4218611084,"load_duration":1797788834,"prompt_eval_count":17,"prompt_eval_duration":167135000,"eval_count":71,"eval_duration":2252182000}
+
+        '
+    headers:
+      Content-Type:
+      - application/x-ndjson
+      Date:
+      - Fri, 24 May 2024 20:48:36 GMT
+      Transfer-Encoding:
+      - chunked
+    status:
+      code: 200
+      message: OK
+version: 1

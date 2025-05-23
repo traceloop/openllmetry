@@ -1,0 +1,38 @@
+interactions:
+- request:
+    body: '{"model": "llama3", "prompt": "Tell me a joke about OpenTelemetry", "system":
+      "", "template": "", "context": [], "stream": false, "raw": false, "images":
+      [], "format": "", "options": {}, "keep_alive": null}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '206'
+      content-type:
+      - application/json
+      host:
+      - 127.0.0.1:11434
+      user-agent:
+      - ollama-python/0.2.0 (arm64 darwin) Python/3.9.5
+    method: POST
+    uri: http://127.0.0.1:11434/api/generate
+  response:
+    body:
+      string: '{"model":"llama3","created_at":"2024-05-24T21:02:00.76482Z","response":"A
+        joke about OpenTelemetry!\n\nWhy did the OpenTelemetry collector go to therapy?\n\nBecause
+        it was feeling instrumented, but couldn''t seem to get a handle on its spans!","done":true,"done_reason":"stop","context":[128006,882,128007,271,41551,757,264,22380,922,5377,6777,37058,128009,128006,78191,128007,271,32,22380,922,5377,6777,37058,2268,10445,1550,279,5377,6777,37058,33053,733,311,15419,1980,18433,433,574,8430,14473,291,11,719,7846,956,2873,311,636,264,3790,389,1202,45395,0,128009],"total_duration":1230275417,"load_duration":988875,"prompt_eval_duration":33914000,"eval_count":38,"eval_duration":1194343000}'
+    headers:
+      Content-Length:
+      - '688'
+      Content-Type:
+      - application/json; charset=utf-8
+      Date:
+      - Fri, 24 May 2024 21:02:00 GMT
+    status:
+      code: 200
+      message: OK
+version: 1
