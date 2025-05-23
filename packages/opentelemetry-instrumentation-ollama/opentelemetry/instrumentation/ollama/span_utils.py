@@ -19,9 +19,11 @@ def set_input_attributes(span, llm_request_type, kwargs):
     if not span.is_recording():
         return
     if should_send_prompts():
+        json_data = kwargs.get("json", {})
+
         if llm_request_type == LLMRequestTypeValues.CHAT:
             _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.0.role", "user")
-            for index, message in enumerate(kwargs.get("messages")):
+            for index, message in enumerate(json_data.get("messages")):
                 _set_span_attribute(
                     span,
                     f"{SpanAttributes.LLM_PROMPTS}.{index}.content",
@@ -32,13 +34,13 @@ def set_input_attributes(span, llm_request_type, kwargs):
                     f"{SpanAttributes.LLM_PROMPTS}.{index}.role",
                     message.get("role"),
                 )
-            _set_prompts(span, kwargs.get("messages"))
-            if kwargs.get("tools"):
-                set_tools_attributes(span, kwargs.get("tools"))
+            _set_prompts(span, json_data.get("messages"))
+            if json_data.get("tools"):
+                set_tools_attributes(span, json_data.get("tools"))
         else:
             _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.0.role", "user")
             _set_span_attribute(
-                span, f"{SpanAttributes.LLM_PROMPTS}.0.content", kwargs.get("prompt")
+                span, f"{SpanAttributes.LLM_PROMPTS}.0.content", json_data.get("prompt")
             )
 
 
@@ -46,7 +48,8 @@ def set_input_attributes(span, llm_request_type, kwargs):
 def set_model_input_attributes(span, kwargs):
     if not span.is_recording():
         return
-    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, kwargs.get("model"))
+    json_data = kwargs.get("json", {})
+    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, json_data.get("model"))
     _set_span_attribute(
         span, SpanAttributes.LLM_IS_STREAMING, kwargs.get("stream") or False
     )
@@ -179,11 +182,14 @@ def _set_prompts(span, messages):
                     f"{prefix}.tool_calls.{i}.name",
                     function.get("name"),
                 )
+                # record arguments: ensure it's a JSON string for span attributes
+                raw_args = function.get("arguments")
+                if isinstance(raw_args, dict):
+                    arg_str = json.dumps(raw_args)
+                else:
+                    arg_str = raw_args
                 _set_span_attribute(
                     span,
                     f"{prefix}.tool_calls.{i}.arguments",
-                    function.get("arguments"),
+                    arg_str,
                 )
-
-                if function.get("arguments"):
-                    function["arguments"] = json.loads(function.get("arguments"))

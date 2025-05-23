@@ -31,6 +31,7 @@ from opentelemetry.instrumentation.utils import (
     unwrap,
 )
 from opentelemetry.metrics import Histogram, Meter, get_meter
+from opentelemetry.semconv._incubating.metrics import gen_ai_metrics as GenAIMetrics
 from opentelemetry.semconv_ai import (
     SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
     LLMRequestTypeValues,
@@ -61,24 +62,59 @@ WRAPPED_METHODS = [
 ]
 
 
+def _sanitize_copy_messages(wrapped, instance, args, kwargs):
+    # original signature: _copy_messages(messages)
+    messages = args[0] if args else []
+    sanitized = []
+    for msg in messages or []:
+        if isinstance(msg, dict):
+            msg_copy = dict(msg)
+            tc_list = msg_copy.get("tool_calls")
+            if tc_list:
+                for tc in tc_list:
+                    func = tc.get("function")
+                    arg = func.get("arguments") if func else None
+                    if isinstance(arg, str):
+                        try:
+                            func["arguments"] = json.loads(arg)
+                        except Exception:
+                            pass
+            sanitized.append(msg_copy)
+        else:
+            sanitized.append(msg)
+    return wrapped(sanitized)
+
+
 def _accumulate_streaming_response(
-    span, event_logger, token_histogram, llm_request_type, response
+    span,
+    event_logger,
+    token_histogram,
+    llm_request_type,
+    response,
+    streaming_time_to_first_token=None,
+    start_time=None,
 ):
     if llm_request_type == LLMRequestTypeValues.CHAT:
         accumulated_response = {"message": {"content": "", "role": ""}}
     elif llm_request_type == LLMRequestTypeValues.COMPLETION:
         accumulated_response = {"response": ""}
 
+    first_token = True
     for res in response:
+        if first_token and streaming_time_to_first_token and start_time is not None:
+            streaming_time_to_first_token.record(
+                time.perf_counter() - start_time,
+                attributes={SpanAttributes.LLM_SYSTEM: "Ollama"},
+            )
+            first_token = False
         yield res
 
         if llm_request_type == LLMRequestTypeValues.CHAT:
             accumulated_response["message"]["content"] += res["message"]["content"]
             accumulated_response["message"]["role"] = res["message"]["role"]
         elif llm_request_type == LLMRequestTypeValues.COMPLETION:
-            accumulated_response["response"] += res["response"]
-        if res.get("done"):
-            accumulated_response["done_reason"] = res.get("done_reason")
+            text = res.get("response", "")
+            accumulated_response["response"] += text
 
     response_data = res.model_dump() if hasattr(res, "model_dump") else res
     _handle_response(
@@ -93,23 +129,36 @@ def _accumulate_streaming_response(
 
 
 async def _aaccumulate_streaming_response(
-    span, event_logger, token_histogram, llm_request_type, response
+    span,
+    event_logger,
+    token_histogram,
+    llm_request_type,
+    response,
+    streaming_time_to_first_token=None,
+    start_time=None,
 ):
     if llm_request_type == LLMRequestTypeValues.CHAT:
         accumulated_response = {"message": {"content": "", "role": ""}}
     elif llm_request_type == LLMRequestTypeValues.COMPLETION:
         accumulated_response = {"response": ""}
 
+    first_token = True
+
     async for res in response:
+        if first_token and streaming_time_to_first_token and start_time is not None:
+            streaming_time_to_first_token.record(
+                time.perf_counter() - start_time,
+                attributes={SpanAttributes.LLM_SYSTEM: "Ollama"},
+            )
+            first_token = False
         yield res
 
         if llm_request_type == LLMRequestTypeValues.CHAT:
             accumulated_response["message"]["content"] += res["message"]["content"]
             accumulated_response["message"]["role"] = res["message"]["role"]
         elif llm_request_type == LLMRequestTypeValues.COMPLETION:
-            accumulated_response["response"] += res["response"]
-        if res.get("done"):
-            accumulated_response["done_reason"] = res.get("done_reason")
+            text = res.get("response", "")
+            accumulated_response["response"] += text
 
     response_data = res.model_dump() if hasattr(res, "model_dump") else res
     _handle_response(
@@ -183,6 +232,7 @@ def _wrap(
     token_histogram: Histogram,
     duration_histogram: Histogram,
     event_logger,
+    streaming_time_to_first_token: Histogram,
     to_wrap,
     wrapped,
     instance,
@@ -214,17 +264,21 @@ def _wrap(
     if response:
         if duration_histogram:
             duration = end_time - start_time
-            duration_histogram.record(
-                duration,
-                attributes={
-                    SpanAttributes.LLM_SYSTEM: "Ollama",
-                    SpanAttributes.LLM_RESPONSE_MODEL: kwargs.get("model"),
-                },
-            )
+            attrs = {SpanAttributes.LLM_SYSTEM: "Ollama"}
+            model = kwargs.get("model")
+            if model is not None:
+                attrs[SpanAttributes.LLM_RESPONSE_MODEL] = model
+            duration_histogram.record(duration, attributes=attrs)
 
         if kwargs.get("stream"):
             return _accumulate_streaming_response(
-                span, event_logger, token_histogram, llm_request_type, response
+                span,
+                event_logger,
+                token_histogram,
+                llm_request_type,
+                response,
+                streaming_time_to_first_token,
+                start_time,
             )
         _handle_response(
             span, event_logger, llm_request_type, token_histogram, response
@@ -242,6 +296,7 @@ async def _awrap(
     token_histogram: Histogram,
     duration_histogram: Histogram,
     event_logger,
+    streaming_time_to_first_token: Histogram,
     to_wrap,
     wrapped,
     instance,
@@ -273,17 +328,21 @@ async def _awrap(
     if response:
         if duration_histogram:
             duration = end_time - start_time
-            duration_histogram.record(
-                duration,
-                attributes={
-                    SpanAttributes.LLM_SYSTEM: "Ollama",
-                    SpanAttributes.LLM_RESPONSE_MODEL: kwargs.get("model"),
-                },
-            )
+            attrs = {SpanAttributes.LLM_SYSTEM: "Ollama"}
+            model = kwargs.get("model")
+            if model is not None:
+                attrs[SpanAttributes.LLM_RESPONSE_MODEL] = model
+            duration_histogram.record(duration, attributes=attrs)
 
         if kwargs.get("stream"):
             return _aaccumulate_streaming_response(
-                span, event_logger, token_histogram, llm_request_type, response
+                span,
+                event_logger,
+                token_histogram,
+                llm_request_type,
+                response,
+                streaming_time_to_first_token,
+                start_time,
             )
 
         _handle_response(
@@ -309,7 +368,13 @@ def _build_metrics(meter: Meter):
         description="GenAI operation duration",
     )
 
-    return token_histogram, duration_histogram
+    streaming_time_to_first_token = meter.create_histogram(
+        name=GenAIMetrics.GEN_AI_SERVER_TIME_TO_FIRST_TOKEN,
+        unit="s",
+        description="Time to first token in streaming chat completions",
+    )
+
+    return token_histogram, duration_histogram, streaming_time_to_first_token
 
 
 def is_metrics_collection_enabled() -> bool:
@@ -338,12 +403,14 @@ class OllamaInstrumentor(BaseInstrumentor):
             (
                 token_histogram,
                 duration_histogram,
+                streaming_time_to_first_token,
             ) = _build_metrics(meter)
         else:
             (
                 token_histogram,
                 duration_histogram,
-            ) = (None, None)
+                streaming_time_to_first_token,
+            ) = (None, None, None)
 
         event_logger = None
         if not Config.use_legacy_attributes:
@@ -352,51 +419,101 @@ class OllamaInstrumentor(BaseInstrumentor):
                 __name__, __version__, event_logger_provider=event_logger_provider
             )
 
-        for wrapped_method in WRAPPED_METHODS:
-            wrap_method = wrapped_method.get("method")
-            wrap_function_wrapper(
-                "ollama._client",
-                f"Client.{wrap_method}",
-                _wrap(
-                    tracer,
-                    token_histogram,
-                    duration_histogram,
-                    event_logger,
-                    wrapped_method,
-                ),
-            )
-            wrap_function_wrapper(
-                "ollama._client",
-                f"AsyncClient.{wrap_method}",
-                _awrap(
-                    tracer,
-                    token_histogram,
-                    duration_histogram,
-                    event_logger,
-                    wrapped_method,
-                ),
-            )
-            wrap_function_wrapper(
-                "ollama",
-                f"{wrap_method}",
-                _wrap(
-                    tracer,
-                    token_histogram,
-                    duration_histogram,
-                    event_logger,
-                    wrapped_method,
-                ),
-            )
+        # Patch _copy_messages to sanitize tool_calls arguments before Pydantic validation
+        wrap_function_wrapper(
+            "ollama._client",
+            "_copy_messages",
+            _sanitize_copy_messages,
+        )
+        # instrument all llm methods (generate/chat/embeddings) via _request dispatch wrapper
+        wrap_function_wrapper(
+            "ollama._client",
+            "Client._request",
+            _dispatch_wrap(
+                tracer,
+                token_histogram,
+                duration_histogram,
+                event_logger,
+                streaming_time_to_first_token,
+            ),
+        )
+        wrap_function_wrapper(
+            "ollama._client",
+            "AsyncClient._request",
+            _dispatch_awrap(
+                tracer,
+                token_histogram,
+                duration_histogram,
+                event_logger,
+                streaming_time_to_first_token,
+            ),
+        )
 
     def _uninstrument(self, **kwargs):
-        try:
-            import ollama
-            from ollama._client import AsyncClient, Client
+        for wrapped_method in WRAPPED_METHODS:
+            unwrap(
+                "ollama._client.Client",
+                wrapped_method.get("method"),
+            )
+            unwrap(
+                "ollama._client.AsyncClient",
+                wrapped_method.get("method"),
+            )
+            unwrap(
+                "ollama",
+                wrapped_method.get("method"),
+            )
 
-            for wrapped_method in WRAPPED_METHODS:
-                method_name = wrapped_method.get("method")
-                unwrap(Client, method_name)
-                unwrap(AsyncClient, method_name)
-                unwrap(ollama, method_name)
-        except ImportError:
-            logger.warning("Failed to import ollama modules for uninstrumentation.")
+
+def _dispatch_wrap(
+    tracer,
+    token_histogram,
+    duration_histogram,
+    event_logger,
+    streaming_time_to_first_token,
+):
+    def wrapper(wrapped, instance, args, kwargs):
+        to_wrap = None
+        if len(args) > 2 and isinstance(args[2], str):
+            path = args[2]
+            op = path.rstrip("/").split("/")[-1]
+            to_wrap = next((m for m in WRAPPED_METHODS if m.get("method") == op), None)
+        if to_wrap:
+            return _wrap(
+                tracer,
+                token_histogram,
+                duration_histogram,
+                event_logger,
+                streaming_time_to_first_token,
+                to_wrap,
+            )(wrapped, instance, args, kwargs)
+        return wrapped(*args, **kwargs)
+
+    return wrapper
+
+
+def _dispatch_awrap(
+    tracer,
+    token_histogram,
+    duration_histogram,
+    event_logger,
+    streaming_time_to_first_token,
+):
+    async def wrapper(wrapped, instance, args, kwargs):
+        to_wrap = None
+        if len(args) > 2 and isinstance(args[2], str):
+            path = args[2]
+            op = path.rstrip("/").split("/")[-1]
+            to_wrap = next((m for m in WRAPPED_METHODS if m.get("method") == op), None)
+        if to_wrap:
+            return await _awrap(
+                tracer,
+                token_histogram,
+                duration_histogram,
+                event_logger,
+                streaming_time_to_first_token,
+                to_wrap,
+            )(wrapped, instance, args, kwargs)
+        return await wrapped(*args, **kwargs)
+
+    return wrapper
