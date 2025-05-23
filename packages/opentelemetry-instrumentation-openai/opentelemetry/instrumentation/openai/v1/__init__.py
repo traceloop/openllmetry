@@ -1,6 +1,6 @@
-from typing import Collection, Union
+from typing import Collection
 
-from opentelemetry._events import Event, EventLogger, get_event_logger
+from opentelemetry._events import get_event_logger
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.instrumentation.openai.shared.chat_wrappers import (
     achat_wrapper,
@@ -29,6 +29,7 @@ from opentelemetry.instrumentation.openai.v1.assistant_wrappers import (
 from opentelemetry.instrumentation.openai.version import __version__
 from opentelemetry.instrumentation.utils import unwrap
 from opentelemetry.metrics import get_meter
+from opentelemetry.semconv._incubating.metrics import gen_ai_metrics as GenAIMetrics
 from opentelemetry.semconv_ai import Meters
 from opentelemetry.trace import get_tracer
 from wrapt import wrap_function_wrapper
@@ -80,7 +81,7 @@ class OpenAIV1Instrumentor(BaseInstrumentor):
             )
 
             streaming_time_to_first_token = meter.create_histogram(
-                name=Meters.LLM_STREAMING_TIME_TO_FIRST_TOKEN,
+                name=GenAIMetrics.GEN_AI_SERVER_TIME_TO_FIRST_TOKEN,
                 unit="s",
                 description="Time to first token in streaming chat completions",
             )

@@ -2,6 +2,8 @@ from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from typing import Any, AsyncGenerator, Callable, Collection, Tuple, cast
 import json
+import logging
+import traceback
 
 from opentelemetry import context, propagate
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
@@ -16,6 +18,35 @@ from opentelemetry.semconv_ai import SpanAttributes
 from opentelemetry.instrumentation.mcp.version import __version__
 
 _instruments = ("mcp >= 1.6.0",)
+
+
+class Config:
+    exception_logger = None
+
+
+def dont_throw(func):
+    """
+    A decorator that wraps the passed in function and logs exceptions instead of throwing them.
+
+    @param func: The function to wrap
+    @return: The wrapper function
+    """
+    # Obtain a logger specific to the function's module
+    logger = logging.getLogger(func.__module__)
+
+    def wrapper(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except Exception as e:
+            logger.debug(
+                "OpenLLMetry failed to trace in %s, error: %s",
+                func.__name__,
+                traceback.format_exc(),
+            )
+            if Config.exception_logger:
+                Config.exception_logger(e)
+
+    return wrapper
 
 
 class McpInstrumentor(BaseInstrumentor):
@@ -106,6 +137,7 @@ class McpInstrumentor(BaseInstrumentor):
         return traced_method
 
     def patch_mcp_client(self, tracer):
+        @dont_throw
         async def traced_method(wrapped, instance, args, kwargs):
             import mcp.types
 
@@ -206,11 +238,18 @@ class InstrumentedStreamReader(ObjectProxy):  # type: ignore
     async def __aexit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> Any:
         return await self.__wrapped__.__aexit__(exc_type, exc_value, traceback)
 
+    @dont_throw
     async def __aiter__(self) -> AsyncGenerator[Any, None]:
         from mcp.types import JSONRPCMessage, JSONRPCRequest
+        from mcp.shared.message import SessionMessage
 
         async for item in self.__wrapped__:
-            request = cast(JSONRPCMessage, item).root
+            if isinstance(item, SessionMessage):
+                request = cast(JSONRPCMessage, item.message).root
+            elif type(item) is JSONRPCMessage:
+                request = cast(JSONRPCMessage, item).root
+            else:
+                return
             if not isinstance(request, JSONRPCRequest):
                 yield item
                 continue
@@ -240,10 +279,17 @@ class InstrumentedStreamWriter(ObjectProxy):  # type: ignore
     async def __aexit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> Any:
         return await self.__wrapped__.__aexit__(exc_type, exc_value, traceback)
 
+    @dont_throw
     async def send(self, item: Any) -> Any:
         from mcp.types import JSONRPCMessage, JSONRPCRequest
+        from mcp.shared.message import SessionMessage
 
-        request = cast(JSONRPCMessage, item).root
+        if isinstance(item, SessionMessage):
+            request = cast(JSONRPCMessage, item.message).root
+        elif type(item) is JSONRPCMessage:
+            request = cast(JSONRPCMessage, item).root
+        else:
+            return
 
         with self._tracer.start_as_current_span("ResponseStreamWriter") as span:
             if hasattr(request, "result"):
@@ -287,6 +333,7 @@ class ContextSavingStreamWriter(ObjectProxy):  # type: ignore
     async def __aexit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> Any:
         return await self.__wrapped__.__aexit__(exc_type, exc_value, traceback)
 
+    @dont_throw
     async def send(self, item: Any) -> Any:
         with self._tracer.start_as_current_span("RequestStreamWriter") as span:
             if hasattr(item, "request_id"):
