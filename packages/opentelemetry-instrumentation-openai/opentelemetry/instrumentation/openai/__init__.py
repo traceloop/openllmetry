@@ -1,10 +1,9 @@
 from typing import Callable, Collection, Optional
-from typing_extensions import Coroutine
 
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
-
 from opentelemetry.instrumentation.openai.shared.config import Config
 from opentelemetry.instrumentation.openai.utils import is_openai_v1
+from typing_extensions import Coroutine
 
 _instruments = ("openai >= 0.27.0",)
 
@@ -22,6 +21,7 @@ class OpenAIInstrumentor(BaseInstrumentor):
             Callable[[str, str, str, str], Coroutine[None, None, str]]
         ] = lambda *args: "",
         enable_trace_context_propagation: bool = True,
+        use_legacy_attributes: bool = True,
     ):
         super().__init__()
         Config.enrich_assistant = enrich_assistant
@@ -30,6 +30,7 @@ class OpenAIInstrumentor(BaseInstrumentor):
         Config.get_common_metrics_attributes = get_common_metrics_attributes
         Config.upload_base64_image = upload_base64_image
         Config.enable_trace_context_propagation = enable_trace_context_propagation
+        Config.use_legacy_attributes = use_legacy_attributes
 
     def instrumentation_dependencies(self) -> Collection[str]:
         return _instruments
