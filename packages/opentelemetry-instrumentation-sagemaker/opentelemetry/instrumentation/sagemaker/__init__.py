@@ -152,7 +152,7 @@ def _try_parse_json(value):
         if isinstance(value, str):
             return json.loads(value)
         return value
-    except json.JSONDecodeError:
+    except (json.JSONDecodeError, UnicodeDecodeError):
         return value
 
 @dont_throw
