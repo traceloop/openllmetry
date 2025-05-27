@@ -169,8 +169,12 @@ def _handle_call(span, kwargs, response):
 
     endpoint_name = kwargs.get("EndpointName")
     _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, endpoint_name)
-    _set_span_attribute(span, SpanAttributes.TRACELOOP_ENTITY_INPUT, json.dumps(request_body))
-    _set_span_attribute(span, SpanAttributes.TRACELOOP_ENTITY_OUTPUT, json.dumps(response_body))
+    _set_span_attribute(
+        span, SpanAttributes.TRACELOOP_ENTITY_INPUT, json.dumps(request_body)
+        )
+    _set_span_attribute(
+        span, SpanAttributes.TRACELOOP_ENTITY_OUTPUT, json.dumps(response_body)
+        )
 
 
 class SageMakerInstrumentor(BaseInstrumentor):
