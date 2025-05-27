@@ -150,18 +150,19 @@ def _handle_call(span, kwargs, response):
     response["Body"] = ReusableStreamingBody(
         response["Body"]._raw_stream, response["Body"]._content_length
     )
-    request_body = json.loads(kwargs.get("Body"))
-    response_body = json.loads(response.get("Body").read())
 
+    # Read and decode request & response bodies
+    raw_request = kwargs.get("Body")
+    raw_response = response["Body"].read()
+
+    request_body = _try_parse_json(raw_request)
+    response_body = _try_parse_json(raw_response)
+
+    # Set trace attributes
     endpoint_name = kwargs.get("EndpointName")
-
     _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, endpoint_name)
-    _set_span_attribute(
-        span, SpanAttributes.TRACELOOP_ENTITY_INPUT, json.dumps(request_body)
-    )
-    _set_span_attribute(
-        span, SpanAttributes.TRACELOOP_ENTITY_OUTPUT, json.dumps(response_body)
-    )
+    _set_span_attribute(span, SpanAttributes.TRACELOOP_ENTITY_INPUT, json.dumps(request_body))
+    _set_span_attribute(span, SpanAttributes.TRACELOOP_ENTITY_OUTPUT, json.dumps(response_body))
 
 
 class SageMakerInstrumentor(BaseInstrumentor):
