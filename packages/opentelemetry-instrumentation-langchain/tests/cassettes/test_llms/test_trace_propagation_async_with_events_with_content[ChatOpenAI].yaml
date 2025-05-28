@@ -1,0 +1,55 @@
+interactions:
+- request:
+    body: '{"messages": [{"content": "You are a helpful assistant ", "role": "system"},
+      {"content": "Tell me a joke about OpenTelemetry", "role": "user"}], "model":
+      "facebook/opt-125m", "max_tokens": 20, "n": 1, "stream": false, "temperature":
+      0.7}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '237'
+      content-type:
+      - application/json
+      host:
+      - localhost:8000
+      traceparent:
+      - 00-79e07498f4db7bc2db3c25f35ea9810e-f2980fd006ba40c2-01
+      user-agent:
+      - AsyncOpenAI/Python 1.45.1
+      x-stainless-arch:
+      - x64
+      x-stainless-async:
+      - async:asyncio
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - Linux
+      x-stainless-package-version:
+      - 1.45.1
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.10.12
+    method: POST
+    uri: http://localhost:8000/v1/chat/completions
+  response:
+    body:
+      string: '{"id":"chat-886edcbf80f0488297c1dc110ba9b2ae","object":"chat.completion","created":1729072360,"model":"facebook/opt-125m","choices":[{"index":0,"message":{"role":"assistant","content":"<|im_end|>\n<|im_start|>user\n<|im","tool_calls":[]},"logprobs":null,"finish_reason":"length","stop_reason":null}],"usage":{"prompt_tokens":57,"total_tokens":77,"completion_tokens":20}}'
+    headers:
+      content-length:
+      - '370'
+      content-type:
+      - application/json
+      date:
+      - Wed, 16 Oct 2024 09:52:40 GMT
+      server:
+      - uvicorn
+    status:
+      code: 200
+      message: OK
+version: 1
