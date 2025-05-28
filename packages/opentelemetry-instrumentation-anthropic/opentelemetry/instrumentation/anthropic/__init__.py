@@ -112,11 +112,11 @@ WRAPPED_AMETHODS = [
 ]
 
 
-def is_streaming_response(response):
+def is_streaming_response(response: Any) -> bool:
     return isinstance(response, Stream) or isinstance(response, AsyncStream)
 
 
-async def _process_image_item(item, trace_id, span_id, message_index, content_index):
+async def _process_image_item(item: Dict[str, Any], trace_id: str, span_id: str, message_index: int, content_index: int) -> Dict[str, Any]:
     if not Config.upload_base64_image:
         return item
 
@@ -128,7 +128,7 @@ async def _process_image_item(item, trace_id, span_id, message_index, content_in
     return {"type": "image_url", "image_url": {"url": url}}
 
 
-async def _dump_content(message_index, content, span):
+async def _dump_content(message_index: int, content: Any, span: Any) -> str:
     if isinstance(content, str):
         return content
     elif isinstance(content, list):
@@ -152,7 +152,7 @@ async def _dump_content(message_index, content, span):
 
 
 @dont_throw
-async def _aset_input_attributes(span, kwargs):
+async def _aset_input_attributes(span: Any, kwargs: Dict[str, Any]) -> None:
     set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, kwargs.get("model"))
     set_span_attribute(
         span, SpanAttributes.LLM_REQUEST_MAX_TOKENS, kwargs.get("max_tokens_to_sample")
@@ -220,7 +220,7 @@ async def _aset_input_attributes(span, kwargs):
                     )
 
 
-def _set_span_completions(span, response):
+def _set_span_completions(span: Any, response: Dict[str, Any]) -> None:
     index = 0
     prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{index}"
     set_span_attribute(span, f"{prefix}.finish_reason", response.get("stop_reason"))
@@ -285,14 +285,14 @@ def _set_span_completions(span, response):
 
 @dont_throw
 async def _aset_token_usage(
-    span,
-    anthropic,
-    request,
-    response,
+    span: Any,
+    anthropic: Any,
+    request: Dict[str, Any],
+    response: Dict[str, Any],
     metric_attributes: dict = {},
-    token_histogram: Histogram = None,
-    choice_counter: Counter = None,
-):
+    token_histogram: Optional[Histogram] = None,
+    choice_counter: Optional[Counter] = None,
+) -> None:
     if not isinstance(response, dict):
         response = response.__dict__
 
@@ -374,14 +374,14 @@ async def _aset_token_usage(
 
 @dont_throw
 def _set_token_usage(
-    span,
-    anthropic,
-    request,
-    response,
+    span: Any,
+    anthropic: Any,
+    request: Dict[str, Any],
+    response: Dict[str, Any],
     metric_attributes: dict = {},
-    token_histogram: Histogram = None,
-    choice_counter: Counter = None,
-):
+    token_histogram: Optional[Histogram] = None,
+    choice_counter: Optional[Counter] = None,
+) -> None:
     if not isinstance(response, dict):
         response = response.__dict__
 
@@ -460,7 +460,7 @@ def _set_token_usage(
 
 
 @dont_throw
-def _set_response_attributes(span, response):
+def _set_response_attributes(span: Any, response: Dict[str, Any]) -> None:
     if not isinstance(response, dict):
         response = response.__dict__
     set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, response.get("model"))
@@ -573,12 +573,12 @@ def _wrap(
     choice_counter: Counter,
     duration_histogram: Histogram,
     exception_counter: Counter,
-    to_wrap,
-    wrapped,
-    instance,
-    args,
-    kwargs,
-):
+    to_wrap: Dict[str, Any],
+    wrapped: Callable,
+    instance: Any,
+    args: tuple,
+    kwargs: Dict[str, Any],
+) -> Any:
     """Instruments and calls every function defined in TO_WRAP."""
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY) or context_api.get_value(
         SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY
@@ -664,17 +664,17 @@ def _wrap(
 
 @_with_chat_telemetry_wrapper
 async def _awrap(
-    tracer,
+    tracer: Tracer,
     token_histogram: Histogram,
     choice_counter: Counter,
     duration_histogram: Histogram,
     exception_counter: Counter,
-    to_wrap,
-    wrapped,
-    instance,
-    args,
-    kwargs,
-):
+    to_wrap: Dict[str, Any],
+    wrapped: Callable,
+    instance: Any,
+    args: tuple,
+    kwargs: Dict[str, Any],
+) -> Any:
     """Instruments and calls every function defined in TO_WRAP."""
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY) or context_api.get_value(
         SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY
@@ -859,3 +859,4 @@ class AnthropicInstrumentor(BaseInstrumentor):
                 f"{wrap_package}.{wrap_object}",
                 wrapped_method.get("method"),
             )
+
