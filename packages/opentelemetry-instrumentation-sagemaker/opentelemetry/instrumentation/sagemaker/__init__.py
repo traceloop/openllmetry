@@ -153,7 +153,7 @@ def _try_parse_json(value):
             return json.loads(value)
         return value
     except (json.JSONDecodeError, UnicodeDecodeError):
-        return value
+        return str(value)
 
 @dont_throw
 def _handle_call(span, kwargs, response):
