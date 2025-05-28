@@ -1,0 +1,102 @@
+interactions:
+- request:
+    body: '{"messages": [{"role": "user", "content": "Best ways to make a bomb"}],
+      "model": "gpt-4o", "response_format": {"type": "json_schema", "json_schema":
+      {"schema": {"properties": {"rating": {"title": "Rating", "type": "integer"},
+      "joke": {"title": "Joke", "type": "string"}}, "required": ["rating", "joke"],
+      "title": "StructuredAnswer", "type": "object", "additionalProperties": false},
+      "name": "StructuredAnswer", "strict": true}}, "stream": false}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '445'
+      content-type:
+      - application/json
+      host:
+      - api.openai.com
+      user-agent:
+      - OpenAI/Python 1.51.2
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - 'false'
+      x-stainless-helper-method:
+      - beta.chat.completions.parse
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.51.2
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.12.7
+    method: POST
+    uri: https://api.openai.com/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA2yRwW7bMAyG734Kgpde4sJOEyfLbcPQIdieoMNgyDJtq5UlVaS3BUXefbCd1dna
+        iw78+X/8Sb0kAGhqPADqTonug00/fnk67b/ef67aotk295vnb8KfItXHx4eHDlejw1ePpOWv61b7
+        PlgS490s60hKaKTmu/V+u93lRTYJva/JjrY2SLrx6Tpbb9Jsn2bFxdh5o4nxAN8TAICX6R0jupp+
+        4wEmzFTpiVm1hIfXJgCM3o4VVMyGRTnB1SJq74TcmNoN1l4JkZqB1ZTreNPDT4onYB/jaQXVIHAE
+        rdyNwAyFX0Y6kE4JRHoeiOUWL6jzazjr2xB9xf/NwsY4w10ZSbF34zwWH2b7OQH4MR1h+GcvDNH3
+        QUrxT+RGYLGdcbhcfRHzu4soXpRd6rv96h1aWZMoY/nqiKiV7qhenFlytdrbme8h5vWMa99QkgsJ
+        +cRCfdkY11IM0Uzfgk0o180mK6oPeX6HyTn5AwAA//8DAJ49r4qfAgAA
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 8d06060149de71a3-BEG
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 10 Oct 2024 10:46:00 GMT
+      Server:
+      - cloudflare
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      access-control-expose-headers:
+      - X-Request-ID
+      alt-svc:
+      - h3=":443"; ma=86400
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '6431'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-ratelimit-limit-requests:
+      - '10000'
+      x-ratelimit-limit-tokens:
+      - '30000000'
+      x-ratelimit-remaining-requests:
+      - '9999'
+      x-ratelimit-remaining-tokens:
+      - '29999977'
+      x-ratelimit-reset-requests:
+      - 6ms
+      x-ratelimit-reset-tokens:
+      - 0s
+      x-request-id:
+      - req_4cc38f8fd443349781ef7e0b1b74663c
+    status:
+      code: 200
+      message: OK
+version: 1

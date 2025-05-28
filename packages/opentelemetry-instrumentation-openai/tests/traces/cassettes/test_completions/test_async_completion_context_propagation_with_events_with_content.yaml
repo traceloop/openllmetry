@@ -1,0 +1,56 @@
+interactions:
+- request:
+    body: '{"model": "meta-llama/Llama-3.2-1B-Instruct", "prompt": "Tell me a joke
+      about opentelemetry"}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '93'
+      content-type:
+      - application/json
+      host:
+      - localhost:8000
+      traceparent:
+      - 00-18eb7f064f1a21facfe00d2f261b2d10-a06931c3054de060-01
+      user-agent:
+      - AsyncOpenAI/Python 1.51.2
+      x-stainless-arch:
+      - x64
+      x-stainless-async:
+      - async:asyncio
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - Linux
+      x-stainless-package-version:
+      - 1.51.2
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.10.12
+    method: POST
+    uri: http://localhost:8000/v1/completions
+  response:
+    body:
+      string: '{"id":"cmpl-4acc6171f6c34008af07ca8490da3b95","object":"text_completion","created":1732108316,"model":"meta-llama/Llama-3.2-1B-Instruct","choices":[{"index":0,"text":"\n\nThere
+        was a meter in a company that wanted to see improvement in the efficiency","logprobs":null,"finish_reason":"length","stop_reason":null}],"usage":{"prompt_tokens":9,"total_tokens":25,"completion_tokens":16}}'
+    headers:
+      content-length:
+      - '383'
+      content-type:
+      - application/json
+      date:
+      - Wed, 20 Nov 2024 13:11:55 GMT
+      server:
+      - uvicorn
+    status:
+      code: 200
+      message: OK
+version: 1

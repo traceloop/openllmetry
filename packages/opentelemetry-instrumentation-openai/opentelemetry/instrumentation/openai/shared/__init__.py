@@ -1,25 +1,22 @@
-import os
-import openai
 import json
-import types
 import logging
-
+import types
 from importlib.metadata import version
 
-from opentelemetry import context as context_api
-from opentelemetry.trace.propagation import set_span_in_context
-from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
-
 from opentelemetry.instrumentation.openai.shared.config import Config
-from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
-    GEN_AI_RESPONSE_ID,
-)
-from opentelemetry.semconv_ai import SpanAttributes
 from opentelemetry.instrumentation.openai.utils import (
     dont_throw,
     is_openai_v1,
     should_record_stream_token_usage,
 )
+from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
+    GEN_AI_RESPONSE_ID,
+)
+from opentelemetry.semconv_ai import SpanAttributes
+from opentelemetry.trace.propagation import set_span_in_context
+from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
+
+import openai
 
 OPENAI_LLM_USAGE_TOKEN_TYPES = ["prompt_tokens", "completion_tokens"]
 PROMPT_FILTER_KEY = "prompt_filter_results"
@@ -31,12 +28,6 @@ _PYDANTIC_VERSION = version("pydantic")
 tiktoken_encodings = {}
 
 logger = logging.getLogger(__name__)
-
-
-def should_send_prompts():
-    return (
-        os.getenv("TRACELOOP_TRACE_CONTENT") or "true"
-    ).lower() == "true" or context_api.get_value("override_enable_content_tracing")
 
 
 def _set_span_attribute(span, name, value):
@@ -187,7 +178,9 @@ def _set_response_attributes(span, response):
     )
     prompt_tokens_details = dict(usage.get("prompt_tokens_details", {}))
     _set_span_attribute(
-        span, SpanAttributes.LLM_USAGE_CACHE_READ_INPUT_TOKENS, prompt_tokens_details.get("cached_tokens", 0)
+        span,
+        SpanAttributes.LLM_USAGE_CACHE_READ_INPUT_TOKENS,
+        prompt_tokens_details.get("cached_tokens", 0),
     )
     return
 
@@ -206,17 +199,17 @@ def _set_span_stream_usage(span, prompt_tokens, completion_tokens):
     if not span.is_recording():
         return
 
-    if type(completion_tokens) is int and completion_tokens >= 0:
+    if isinstance(completion_tokens, int) and completion_tokens >= 0:
         _set_span_attribute(
             span, SpanAttributes.LLM_USAGE_COMPLETION_TOKENS, completion_tokens
         )
 
-    if type(prompt_tokens) is int and prompt_tokens >= 0:
+    if isinstance(prompt_tokens, int) and prompt_tokens >= 0:
         _set_span_attribute(span, SpanAttributes.LLM_USAGE_PROMPT_TOKENS, prompt_tokens)
 
     if (
-        type(prompt_tokens) is int
-        and type(completion_tokens) is int
+        isinstance(prompt_tokens, int)
+        and isinstance(completion_tokens, int)
         and completion_tokens + prompt_tokens >= 0
     ):
         _set_span_attribute(
