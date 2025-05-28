@@ -20,7 +20,7 @@ class Instruments(Enum):
     MISTRAL = "mistral"
     OLLAMA = "ollama"
     OPENAI = "openai"
-    OPENAI_AGENT = "openai_agent"
+    OPENAI_AGENTS = "openai_agents"
     PINECONE = "pinecone"
     PYMYSQL = "pymysql"
     QDRANT = "qdrant"
