@@ -143,6 +143,7 @@ OpenLLMetry can instrument everything that [OpenTelemetry already instruments](h
 ### Frameworks
 
 - ✅ [LangChain](https://python.langchain.com/docs/introduction/)
+- ✅ [LangGraph](https://langchain-ai.github.io/langgraph/concepts/why-langgraph/)
 - ✅ [LlamaIndex](https://docs.llamaindex.ai/en/stable/module_guides/observability/observability.html#openllmetry)
 - ✅ [Haystack](https://haystack.deepset.ai/integrations/traceloop)
 - ✅ [LiteLLM](https://docs.litellm.ai/docs/observability/opentelemetry_integration)
