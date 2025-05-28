@@ -1,0 +1,71 @@
+interactions:
+- request:
+    body: '{"prompt": "Explain quantum mechanics.", "max_tokens": 100, "topP": 2,
+      "temperature": 0.5}'
+    headers:
+      Content-Length:
+      - '90'
+      User-Agent:
+      - !!binary |
+        Qm90bzMvMS4zNC4xNDUgbWQvQm90b2NvcmUjMS4zNC4xNDUgdWEvMi4wIG9zL21hY29zIzIzLjYu
+        MCBtZC9hcmNoI2FybTY0IGxhbmcvcHl0aG9uIzMuMTMuMSBtZC9weWltcGwjQ1B5dGhvbiBjZmcv
+        cmV0cnktbW9kZSNsZWdhY3kgQm90b2NvcmUvMS4zNC4xNDU=
+      X-Amz-Date:
+      - !!binary |
+        MjAyNTAzMTFUMDgzNDIzWg==
+      X-Amz-Security-Token:
+      - !!binary |
+        SVFvSmIzSnBaMmx1WDJWakVGa2FDWFZ6TFdWaGMzUXRNU0pHTUVRQ0lBVFBRTlRRTFdpK3lSNzgz
+        UkRsdnpGQWRPWUJ5NHpBZU9ERnFucVB6RjRZQWlBL2hFOVllckFqSzNMV25oTFlMZ3dJQkdjdFdj
+        S2RhUG9Fc3FlYUNYSDVsU3I0QVFpaC8vLy8vLy8vLy84QkVBQWFERGMyTnpNNU9EQXdNak00TlNJ
+        TXFhZWNoRGRUc093N2FOVkdLc3dCQ1JXREw5ZkRWYVBqL3hmWEdFdm9XTkIxS1YrVVdnVDJtVWlV
+        L2pHZWVaN0QyYy9mYlRCaXowNTk4NGZlSWcyM2FjQ21uQWJGNVFSQ1B2QjlYZ0VVb2lLNm94SUJC
+        eU1ZcFFSL3c2MlVLaEZIZjRWWVQybnEwbmNHb2NoOUl2aVRjZjFZMFRxb0FXTzR2QXlrK0Zhd3FS
+        NUZubzdFclVVam1kOExZUXBJZitrL1l1VVNrdmtFU0dkZTdnSkRyVkJHVEFVZVRsZGwvWUZRK0Jx
+        V2d6NFRtNGEvYlQxWFNuZ2lmNlMxUTVMV2s5S0Ewdzk1RnpZWG55a1hmeVlQZWEvcG9RRlhvUXFZ
+        c0NmUDk1VmZNS2Jodjc0R09wa0JxWVJFRmZqUlFxdnE4ZUdxQWhDN1FvaUREOHNENmwwTm9yV0pS
+        NktqbWNtQUF3Zzh2bm5yc0wyWXpOWjlZTDE2UkNrdmhRN0pxQ0VjTTNOT3dvZCtiSTUxNkpWb0Nt
+        WHlGWFBpNlkwWEpHbkRyOVV5NTYwa1dvZXcxVnB4b0JIbHZCdjNIQk9GQjlaM2UrYWpzRFJZd1lO
+        OEdabXRQZDJhZXRLMDRSMmRUMGw5RmtBQVFQNko5aUl6dnExRWtuK3M1QXVNY0Exa3hiYUY=
+      amz-sdk-invocation-id:
+      - !!binary |
+        MjBmNjNlZTMtNDJmYS00NGQzLWJiZTAtZGViZDJkOTA5OTJl
+      amz-sdk-request:
+      - !!binary |
+        YXR0ZW1wdD0x
+    method: POST
+    uri: https://bedrock-runtime.us-east-1.amazonaws.com/model/arn%3Aaws%3Asagemaker%3Aus-east-1%3A767398002385%3Aendpoint%2Fendpoint-quick-start-idr7y/invoke
+  response:
+    body:
+      string: "{\"object\":\"text_completion\",\"id\":\"\",\"created\":1741682064,\"\
+        model\":\"/opt/ml/model\",\"system_fingerprint\":\"3.0.1-native\",\"choices\"\
+        :[{\"index\":0,\"text\":\" I'm a high school student.\\nOkay, so I need to\
+        \ explain quantum mechanics to a high school student. Hmm, where do I start?\
+        \ I remember that quantum mechanics is a branch of physics that deals with\
+        \ the smallest particles, like atoms and subatomic particles. But how do I\
+        \ make that understandable?\\n\\nMaybe I should begin by contrasting classical\
+        \ physics with quantum mechanics. Classical physics, like what Newton studied,\
+        \ deals with everyday objects\u2014things we can see and touch. But when we\
+        \ get down to really\",\"logprobs\":null,\"finish_reason\":\"length\"}],\"\
+        usage\":{\"prompt_tokens\":6,\"completion_tokens\":100,\"total_tokens\":106}}"
+    headers:
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '773'
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 11 Mar 2025 08:34:31 GMT
+      X-Amzn-Bedrock-Input-Token-Count:
+      - '6'
+      X-Amzn-Bedrock-Invocation-Latency:
+      - '7123'
+      X-Amzn-Bedrock-Output-Token-Count:
+      - '100'
+      x-amzn-RequestId:
+      - 9857a894-dcae-4481-b47f-5ed82e1d6b68
+    status:
+      code: 200
+      message: OK
+version: 1
