@@ -98,7 +98,7 @@ def _instrumented_endpoint_invoke(fn, tracer, to_wrap):
         with tracer.start_as_current_span(
             "sagemaker.completion", kind=SpanKind.CLIENT, attributes={
                 SpanAttributes.PEER_SERVICE: to_wrap.get("object"), 
-                SpanAttributes.LLM_SYSTEM: "Sagemaker"
+                SpanAttributes.LLM_SYSTEM: "SageMaker"
             }
         ) as span:
             response = fn(*args, **kwargs)
@@ -119,7 +119,7 @@ def _instrumented_endpoint_invoke_with_response_stream(fn, tracer, to_wrap):
 
         span = tracer.start_span("sagemaker.completion", kind=SpanKind.CLIENT, attributes={
                 SpanAttributes.PEER_SERVICE: to_wrap.get("object"), 
-                SpanAttributes.LLM_SYSTEM: "Sagemaker",
+                SpanAttributes.LLM_SYSTEM: "SageMaker",
             })
         response = fn(*args, **kwargs)
 
