@@ -1,7 +1,9 @@
 import pytest
 from unittest.mock import MagicMock
-from opentelemetry.instrumentation.openai_agents import OpenAIAgentsInstrumentor
-from agents import Agent
+from opentelemetry.instrumentation.openai_agents \
+    import OpenAIAgentsInstrumentor
+from agents import Agent, Runner
+from unittest.mock import AsyncMock, patch
 from agents.extensions.models.litellm_model import LitellmModel
 from agents import ModelSettings
 
@@ -39,3 +41,14 @@ def test_openai_agent(test_agent, mock_instrumentor):
     assert test_agent.instructions == "You are a test assistant."
     assert test_agent.model.model == "mock-model"
     assert test_agent.model.api_key == "test-key"
+
+
+@pytest.mark.asyncio
+async def test_runner_mocked_output():
+    agent = test_agent()
+    mock_result = AsyncMock()
+    mock_result.final_output = "Hello, this is a mocked response!"
+
+    with patch.object(Runner, "run", return_value=mock_result):
+        result = await Runner.run(starting_agent=agent, input="Mock input")
+        assert result.final_output == "Hello, this is a mocked response!"
