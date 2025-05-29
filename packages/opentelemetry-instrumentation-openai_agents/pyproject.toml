@@ -32,6 +32,7 @@ flake8 = "7.1.1"
 pytest = "^8.2.2"
 pytest-sugar = "1.0.0"
 pytest-asyncio = "^1.0.0"
+litellm = "^1.71.2"
 
 [tool.poetry.group.test.dependencies]
 openai_agents = "^0.0.16"
