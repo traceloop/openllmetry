@@ -157,18 +157,18 @@ def _wrap(
             metric_params.start_time = time.time()
             client = wrapped(*args, **kwargs)
             client.invoke_model = _instrumented_model_invoke(
-                client.invoke_model, tracer, metric_params
+                client.invoke_model, tracer, metric_params, to_wrap
             )
             client.invoke_model_with_response_stream = (
                 _instrumented_model_invoke_with_response_stream(
-                    client.invoke_model_with_response_stream, tracer, metric_params
+                    client.invoke_model_with_response_stream, tracer, metric_params, to_wrap
                 )
             )
             client.converse = _instrumented_converse(
-                client.converse, tracer, metric_params
+                client.converse, tracer, metric_params, to_wrap
             )
             client.converse_stream = _instrumented_converse_stream(
-                client.converse_stream, tracer, metric_params
+                client.converse_stream, tracer, metric_params, to_wrap
             )
             return client
         except Exception as e:
@@ -189,14 +189,16 @@ def _wrap(
     return wrapped(*args, **kwargs)
 
 
-def _instrumented_model_invoke(fn, tracer, metric_params):
+def _instrumented_model_invoke(fn, tracer, metric_params, to_wrap):
     @wraps(fn)
     def with_instrumentation(*args, **kwargs):
         if context_api.get_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY):
             return fn(*args, **kwargs)
 
         with tracer.start_as_current_span(
-            _BEDROCK_INVOKE_SPAN_NAME, kind=SpanKind.CLIENT
+            _BEDROCK_INVOKE_SPAN_NAME, kind=SpanKind.CLIENT, attributes={
+                SpanAttributes.PEER_SERVICE: to_wrap.get("object"),
+            }
         ) as span:
             response = fn(*args, **kwargs)
 
@@ -208,13 +210,15 @@ def _instrumented_model_invoke(fn, tracer, metric_params):
     return with_instrumentation
 
 
-def _instrumented_model_invoke_with_response_stream(fn, tracer, metric_params):
+def _instrumented_model_invoke_with_response_stream(fn, tracer, metric_params, to_wrap):
     @wraps(fn)
     def with_instrumentation(*args, **kwargs):
         if context_api.get_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY):
             return fn(*args, **kwargs)
 
-        span = tracer.start_span(_BEDROCK_INVOKE_SPAN_NAME, kind=SpanKind.CLIENT)
+        span = tracer.start_span(_BEDROCK_INVOKE_SPAN_NAME, kind=SpanKind.CLIENT, attributes={
+                SpanAttributes.PEER_SERVICE: to_wrap.get("object"),
+            })
         response = fn(*args, **kwargs)
 
         if span.is_recording():
@@ -225,7 +229,7 @@ def _instrumented_model_invoke_with_response_stream(fn, tracer, metric_params):
     return with_instrumentation
 
 
-def _instrumented_converse(fn, tracer, metric_params):
+def _instrumented_converse(fn, tracer, metric_params, to_wrap):
     # see
     # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/bedrock-runtime/client/converse.html
     # for the request/response format
@@ -235,7 +239,9 @@ def _instrumented_converse(fn, tracer, metric_params):
             return fn(*args, **kwargs)
 
         with tracer.start_as_current_span(
-            _BEDROCK_CONVERSE_SPAN_NAME, kind=SpanKind.CLIENT
+            _BEDROCK_CONVERSE_SPAN_NAME, kind=SpanKind.CLIENT, attributes={
+                SpanAttributes.PEER_SERVICE: to_wrap.get("object"),
+            }
         ) as span:
             response = fn(*args, **kwargs)
             _handle_converse(span, kwargs, response, metric_params)
@@ -245,13 +251,15 @@ def _instrumented_converse(fn, tracer, metric_params):
     return with_instrumentation
 
 
-def _instrumented_converse_stream(fn, tracer, metric_params):
+def _instrumented_converse_stream(fn, tracer, metric_params, to_wrap):
     @wraps(fn)
     def with_instrumentation(*args, **kwargs):
         if context_api.get_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY):
             return fn(*args, **kwargs)
 
-        span = tracer.start_span(_BEDROCK_CONVERSE_SPAN_NAME, kind=SpanKind.CLIENT)
+        span = tracer.start_span(_BEDROCK_CONVERSE_SPAN_NAME, kind=SpanKind.CLIENT, attributes={
+                SpanAttributes.PEER_SERVICE: to_wrap.get("object"),
+            })
         response = fn(*args, **kwargs)
         if span.is_recording():
             _handle_converse_stream(span, kwargs, response, metric_params)

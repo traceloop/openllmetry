@@ -586,12 +586,14 @@ def _wrap(
         return wrapped(*args, **kwargs)
 
     name = to_wrap.get("span_name")
+    peer_service = to_wrap.get("object")
     span = tracer.start_span(
         name,
         kind=SpanKind.CLIENT,
         attributes={
             SpanAttributes.LLM_SYSTEM: "Anthropic",
             SpanAttributes.LLM_REQUEST_TYPE: LLMRequestTypeValues.COMPLETION.value,
+            SpanAttributes.PEER_SERVICE: peer_service
         },
     )
 
@@ -682,12 +684,14 @@ async def _awrap(
         return await wrapped(*args, **kwargs)
 
     name = to_wrap.get("span_name")
+    peer_service = to_wrap.get("object")
     span = tracer.start_span(
         name,
         kind=SpanKind.CLIENT,
         attributes={
             SpanAttributes.LLM_SYSTEM: "Anthropic",
             SpanAttributes.LLM_REQUEST_TYPE: LLMRequestTypeValues.COMPLETION.value,
+            SpanAttributes.PEER_SERVICE: peer_service
         },
     )
     try:

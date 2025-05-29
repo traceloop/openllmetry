@@ -99,6 +99,8 @@ def wrap_agent_execute_task(tracer, duration_histogram, token_histogram, wrapped
         kind=SpanKind.CLIENT,
         attributes={
             SpanAttributes.TRACELOOP_SPAN_KIND: TraceloopSpanKindValues.AGENT.value,
+            SpanAttributes.LLM_SYSTEM: "crewai",
+            SpanAttributes.PEER_SERVICE: "Agent"
         }
     ) as span:
         try:
@@ -140,6 +142,8 @@ def wrap_task_execute(tracer, duration_histogram, token_histogram, wrapped, inst
         kind=SpanKind.CLIENT,
         attributes={
             SpanAttributes.TRACELOOP_SPAN_KIND: TraceloopSpanKindValues.TASK.value,
+            SpanAttributes.LLM_SYSTEM: "crewai",
+            SpanAttributes.PEER_SERVICE: "Task"
         }
     ) as span:
         try:
@@ -160,6 +164,8 @@ def wrap_llm_call(tracer, duration_histogram, token_histogram, wrapped, instance
         f"{llm}.llm",
         kind=SpanKind.CLIENT,
         attributes={
+            SpanAttributes.LLM_SYSTEM: "crewai",
+            SpanAttributes.PEER_SERVICE: "LLM"
         }
     ) as span:
         start_time = time.time()

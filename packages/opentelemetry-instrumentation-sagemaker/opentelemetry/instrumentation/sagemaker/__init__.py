@@ -76,11 +76,11 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
     if kwargs.get("service_name") == "sagemaker-runtime":
         client = wrapped(*args, **kwargs)
         client.invoke_endpoint = _instrumented_endpoint_invoke(
-            client.invoke_endpoint, tracer
+            client.invoke_endpoint, tracer, to_wrap
         )
         client.invoke_endpoint_with_response_stream = (
             _instrumented_endpoint_invoke_with_response_stream(
-                client.invoke_endpoint_with_response_stream, tracer
+                client.invoke_endpoint_with_response_stream, tracer, to_wrap
             )
         )
 
@@ -89,14 +89,17 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
     return wrapped(*args, **kwargs)
 
 
-def _instrumented_endpoint_invoke(fn, tracer):
+def _instrumented_endpoint_invoke(fn, tracer, to_wrap):
     @wraps(fn)
     def with_instrumentation(*args, **kwargs):
         if context_api.get_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY):
             return fn(*args, **kwargs)
 
         with tracer.start_as_current_span(
-            "sagemaker.completion", kind=SpanKind.CLIENT
+            "sagemaker.completion", kind=SpanKind.CLIENT, attributes={
+                SpanAttributes.PEER_SERVICE: to_wrap.get("object"), 
+                SpanAttributes.LLM_SYSTEM: "Sagemaker"
+            }
         ) as span:
             response = fn(*args, **kwargs)
 
@@ -108,13 +111,16 @@ def _instrumented_endpoint_invoke(fn, tracer):
     return with_instrumentation
 
 
-def _instrumented_endpoint_invoke_with_response_stream(fn, tracer):
+def _instrumented_endpoint_invoke_with_response_stream(fn, tracer, to_wrap):
     @wraps(fn)
     def with_instrumentation(*args, **kwargs):
         if context_api.get_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY):
             return fn(*args, **kwargs)
 
-        span = tracer.start_span("sagemaker.completion", kind=SpanKind.CLIENT)
+        span = tracer.start_span("sagemaker.completion", kind=SpanKind.CLIENT, attributes={
+                SpanAttributes.PEER_SERVICE: to_wrap.get("object"), 
+                SpanAttributes.LLM_SYSTEM: "Sagemaker",
+            })
         response = fn(*args, **kwargs)
 
         if span.is_recording():
