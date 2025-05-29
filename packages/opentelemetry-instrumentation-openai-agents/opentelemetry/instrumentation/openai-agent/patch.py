@@ -83,9 +83,11 @@ def set_response_content_span_attribute(response, span):
             msg_type = getattr(output_message, "type", None)
 
             if role:
-                span.set_attribute(f"{SpanAttributes.LLM_COMPLETIONS}.role", role)
+                span.set_attribute(
+                    f"{SpanAttributes.LLM_COMPLETIONS}.role", role)
             if msg_type:
-                span.set_attribute(f"{SpanAttributes.LLM_COMPLETIONS}.type", msg_type)
+                span.set_attribute(
+                    f"{SpanAttributes.LLM_COMPLETIONS}.type", msg_type)
 
             if hasattr(output_message, "content") and isinstance(
                 output_message.content, list
@@ -106,10 +108,12 @@ def set_token_usage_span_attributes(response, span):
         total_tokens = getattr(usage, "total_tokens", None)
 
         if input_tokens is not None:
-            span.set_attribute(SpanAttributes.LLM_USAGE_PROMPT_TOKENS, input_tokens)
+            span.set_attribute(
+                SpanAttributes.LLM_USAGE_PROMPT_TOKENS, input_tokens)
         if output_tokens is not None:
             span.set_attribute(
                 SpanAttributes.LLM_USAGE_COMPLETION_TOKENS, output_tokens
             )
         if total_tokens is not None:
-            span.set_attribute(SpanAttributes.LLM_USAGE_TOTAL_TOKENS, total_tokens)
+            span.set_attribute(
+                SpanAttributes.LLM_USAGE_TOTAL_TOKENS, total_tokens)
