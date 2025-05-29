@@ -13,6 +13,7 @@ description = "OpenTelemetry openai agents instrumentation"
 authors = ["Gal Kleinman <gal@traceloop.com>", "Nir Gazit <nir@traceloop.com>"]
 repository = "https://github.com/traceloop/openllmetry/tree/main/packages/opentelemetry-instrumentation-openai_agents"
 license = "Apache-2.0"
+readme = "README.md"
 
 
 [[tool.poetry.packages]]
