@@ -45,7 +45,11 @@ def test_openai_agent(test_agent, mock_instrumentor):
 
 @pytest.mark.asyncio
 async def test_runner_mocked_output():
-    agent = test_agent()
+    agent = Agent(
+        name="MockAgent",
+        instructions="Just mock it",
+        model="fake-model"
+    )
     mock_result = AsyncMock()
     mock_result.final_output = "Hello, this is a mocked response!"
 
