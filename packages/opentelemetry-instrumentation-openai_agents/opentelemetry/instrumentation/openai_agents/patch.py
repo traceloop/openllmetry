@@ -64,40 +64,45 @@ def set_prompt_attributes(span, message_history):
     if not message_history:
         return
 
-    for msg in message_history:
+    for i, msg in enumerate(message_history):
         if isinstance(msg, dict):
-
             role = msg.get("role", "user")
             content = msg.get("content", "")
-
-    span.set_attribute(f"{SpanAttributes.LLM_PROMPTS}.role", role)
-    span.set_attribute(f"{SpanAttributes.LLM_PROMPTS}.content", content)
+            span.set_attribute(f"{SpanAttributes.LLM_PROMPTS}.{i}.role", role)
+            span.set_attribute(f"{SpanAttributes.LLM_PROMPTS}.{i}.content",
+                               content)
 
 
 def set_response_content_span_attribute(response, span):
-
     if hasattr(response, "output") and isinstance(response.output, list):
+        roles = []
+        types = []
+        contents = []
+
         for output_message in response.output:
-            # Extract role and type from output_message
             role = getattr(output_message, "role", None)
             msg_type = getattr(output_message, "type", None)
 
             if role:
-                span.set_attribute(
-                    f"{SpanAttributes.LLM_COMPLETIONS}.role", role)
+                roles.append(role)
             if msg_type:
-                span.set_attribute(
-                    f"{SpanAttributes.LLM_COMPLETIONS}.type", msg_type)
+                types.append(msg_type)
 
-            if hasattr(output_message, "content") and isinstance(
-                output_message.content, list
-            ):
+            if hasattr(output_message, "content") and \
+                    isinstance(output_message.content, list):
                 for content_item in output_message.content:
                     if hasattr(content_item, "text"):
-                        span.set_attribute(
-                            f"{SpanAttributes.LLM_COMPLETIONS}.content",
-                            content_item.text,
-                        )
+                        contents.append(content_item.text)
+
+        if roles:
+            span.set_attribute(f"{SpanAttributes.LLM_COMPLETIONS}.roles",
+                               roles)
+        if types:
+            span.set_attribute(f"{SpanAttributes.LLM_COMPLETIONS}.types",
+                               types)
+        if contents:
+            span.set_attribute(f"{SpanAttributes.LLM_COMPLETIONS}.contents",
+                               contents)
 
 
 def set_token_usage_span_attributes(response, span):
