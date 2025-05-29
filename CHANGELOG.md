@@ -1,3 +1,11 @@
+## v0.40.7 (2025-05-20)
+
+### Fix
+
+- **mcp**: Added support for newer version of MCP (#2956)
+- **gemini**: proper chat support (#2948)
+- **milvus**: Add instrumentation for pymilvus MilvusClient hybrid search operation (#2945)
+
 ## v0.40.6 (2025-05-16)
 
 ### Fix
