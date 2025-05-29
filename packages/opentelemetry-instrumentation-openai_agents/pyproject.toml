@@ -34,7 +34,7 @@ pytest-sugar = "1.0.0"
 pytest-asyncio = "^1.0.0"
 
 [tool.poetry.group.test.dependencies]
-openai_agents = "^0.0.2"
+openai_agents = "^0.0.16"
 pytest = "^8.2.2"
 pytest-sugar = "1.0.0"
 pytest-recording = "^0.13.1"
