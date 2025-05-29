@@ -52,6 +52,8 @@ def with_tracer_wrapper(func):
 @with_tracer_wrapper
 async def _wrap_agent_run(tracer: Tracer, wrapped, instance, args, kwargs):
     agent = args[0]
+    run_config = args[7] if len(args) > 7 else None
+    prompt_list = args[2] if len(args) > 2 else None
     agent_name = getattr(agent, "name", "agent")
     model_name = getattr(getattr(agent, "model", None), "model",
                          "unknown_model")
@@ -67,12 +69,10 @@ async def _wrap_agent_run(tracer: Tracer, wrapped, instance, args, kwargs):
         try:
             extract_agent_details(agent, span)
             set_model_settings_span_attributes(agent, span)
+            extract_run_config_details(run_config, span)
 
-            if len(args) > 7:
-                extract_run_config_details(args[7], span)
-
-            if len(args) > 2:
-                set_prompt_attributes(span, args[2])
+            if isinstance(prompt_list, list):
+                set_prompt_attributes(span, prompt_list)
 
             response = await wrapped(*args, **kwargs)
 
