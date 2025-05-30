@@ -1,4 +1,5 @@
 import asyncio
+import os
 from agents import Agent, Runner
 from agents.extensions.models.litellm_model import LitellmModel
 from agents import ModelSettings
@@ -8,7 +9,7 @@ Traceloop.init()
 
 useModel = LitellmModel(
     model="groq/llama3-70b-8192",
-    api_key="<Groq API Key>",
+    api_key=os.getenv("GROQ_API_KEY")
 )
 
 
