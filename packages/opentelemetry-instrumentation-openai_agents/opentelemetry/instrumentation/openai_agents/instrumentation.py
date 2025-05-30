@@ -1,3 +1,4 @@
+import os
 from typing import Collection
 
 from wrapt import wrap_function_wrapper
@@ -7,6 +8,7 @@ from opentelemetry.instrumentation.utils import unwrap
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.instrumentation.openai_agents.version import __version__
 from opentelemetry.semconv_ai import SpanAttributes
+from opentelemetry import context as context_api
 from .patch import (
     extract_agent_details,
     set_model_settings_span_attributes,
@@ -71,13 +73,14 @@ async def _wrap_agent_run(tracer: Tracer, wrapped, instance, args, kwargs):
             set_model_settings_span_attributes(agent, span)
             extract_run_config_details(run_config, span)
 
-            if isinstance(prompt_list, list):
-                set_prompt_attributes(span, prompt_list)
-
             response = await wrapped(*args, **kwargs)
 
-            set_response_content_span_attribute(response, span)
-            set_token_usage_span_attributes(response, span)
+            if should_send_prompts():
+                if isinstance(prompt_list, list):
+                    set_prompt_attributes(span, prompt_list)
+
+                set_response_content_span_attribute(response, span)
+                set_token_usage_span_attributes(response, span)
 
             span.set_status(Status(StatusCode.OK))
             return response
@@ -85,3 +88,11 @@ async def _wrap_agent_run(tracer: Tracer, wrapped, instance, args, kwargs):
         except Exception as e:
             span.set_status(Status(StatusCode.ERROR, str(e)))
             raise
+
+
+def should_send_prompts():
+    return (
+        os.getenv("TRACELOOP_TRACE_CONTENT") or "true"
+    ).lower() == "true" or context_api.get_value(
+        "override_enable_content_tracing"
+    )
