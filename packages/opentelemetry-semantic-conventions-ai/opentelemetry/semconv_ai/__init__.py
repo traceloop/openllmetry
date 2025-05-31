@@ -225,6 +225,7 @@ class SpanAttributes:
 
     # Service
     PEER_SERVICE = "peer.service"
+    
 
 class Events(Enum):
     DB_QUERY_EMBEDDINGS = "db.query.embeddings"
