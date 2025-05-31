@@ -223,6 +223,9 @@ class SpanAttributes:
     MCP_SESSION_INIT_OPTIONS = "mcp.session.init_options"
     MCP_RESPONSE_VALUE = "mcp.response.value"
 
+    # Service
+    PEER_SERVICE = "peer.service"
+    
 
 class Events(Enum):
     DB_QUERY_EMBEDDINGS = "db.query.embeddings"

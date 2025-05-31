@@ -475,6 +475,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         )
         _set_span_attribute(span, SpanAttributes.LLM_SYSTEM, "Langchain")
         _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TYPE, request_type.value)
+        _set_span_attribute(span, SpanAttributes.PEER_SYSTEM, name)
 
         return span
 

@@ -446,6 +446,7 @@ def _wrap(
         return wrapped(*args, **kwargs)
 
     name = to_wrap.get("span_name")
+    peer_service = to_wrap.get("object")
 
     span = tracer.start_span(
         name,
@@ -453,6 +454,7 @@ def _wrap(
         attributes={
             SpanAttributes.LLM_SYSTEM: "Watsonx",
             SpanAttributes.LLM_REQUEST_TYPE: LLMRequestTypeValues.COMPLETION.value,
+            SpanAttributes.PEER_SERVICE: peer_service
         },
     )
 
