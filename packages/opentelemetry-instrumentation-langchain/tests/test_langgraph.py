@@ -2,6 +2,10 @@ import pytest
 from openai import OpenAI
 from typing import TypedDict
 from langgraph.graph import StateGraph
+from opentelemetry.trace import get_tracer, set_span_in_context
+from opentelemetry import context as context_api
+from opentelemetry.context import get_current
+from opentelemetry import trace
 
 
 @pytest.mark.vcr
@@ -34,9 +38,7 @@ def test_langgraph_invoke(exporter):
     assert set(
         [
             "LangGraph.workflow",
-            "__start__.task",
             "calculate.task",
-            "ChannelWrite<calculate,request,result>.task",
             "openai.chat"
         ]
     ) == set([span.name for span in spans])
@@ -73,9 +75,7 @@ async def test_langgraph_ainvoke(exporter):
     assert set(
         [
             "LangGraph.workflow",
-            "__start__.task",
             "calculate.task",
-            "_write.task",
             "openai.chat"
         ]
     ) == set([span.name for span in spans])
@@ -98,21 +98,31 @@ def test_langgraph_double_invoke(exporter):
 
     graph = build_graph()
 
+    from opentelemetry import trace
+
+    assert "test_langgraph_double_invoke" == trace.get_current_span().name
+
     graph.invoke({"result": "init"})
-    graph.invoke({"result": "init"})
+    assert "test_langgraph_double_invoke" == trace.get_current_span().name
 
     spans = exporter.get_finished_spans()
-
     assert [
-        "__start__.task",
-        "ChannelWrite<mynode,result>.task",
-        "mynode.task",
-        "LangGraph.workflow",
-        "__start__.task",
-        "ChannelWrite<mynode,result>.task",
         "mynode.task",
         "LangGraph.workflow",
     ] == [span.name for span in spans]
+
+    graph.invoke({"result": "init"})
+    assert "test_langgraph_double_invoke" == trace.get_current_span().name
+
+    spans = exporter.get_finished_spans()
+    assert [
+        "mynode.task",
+        "LangGraph.workflow",
+        "mynode.task",
+        "LangGraph.workflow",
+    ] == [span.name for span in spans]
+    for span in spans:
+        print(span.to_json())
 
 
 @pytest.mark.vcr
@@ -133,18 +143,24 @@ async def test_langgraph_double_ainvoke(exporter):
 
     graph = build_graph()
 
+    assert "test_langgraph_double_ainvoke" == trace.get_current_span().name
+
     await graph.ainvoke({"result": "init"})
-    await graph.ainvoke({"result": "init"})
+    assert "test_langgraph_double_ainvoke" == trace.get_current_span().name
 
     spans = exporter.get_finished_spans()
-
     assert [
-        "__start__.task",
-        "_write.task",
         "mynode.task",
         "LangGraph.workflow",
-        "__start__.task",
-        "_write.task",
+    ] == [span.name for span in spans]
+
+    await graph.ainvoke({"result": "init"})
+    assert "test_langgraph_double_ainvoke" == trace.get_current_span().name
+
+    spans = exporter.get_finished_spans()
+    assert [
+        "mynode.task",
+        "LangGraph.workflow",
         "mynode.task",
         "LangGraph.workflow",
     ] == [span.name for span in spans]
