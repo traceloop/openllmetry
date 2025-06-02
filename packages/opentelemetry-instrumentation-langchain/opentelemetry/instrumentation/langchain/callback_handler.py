@@ -440,10 +440,8 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         _set_span_attribute(span, SpanAttributes.TRACELOOP_WORKFLOW_NAME, workflow_name)
         _set_span_attribute(span, SpanAttributes.TRACELOOP_ENTITY_PATH, entity_path)
 
-        token = context_api.attach(set_span_in_context(span))
-
         self.spans[run_id] = SpanHolder(
-            span, token, None, [], workflow_name, entity_name, entity_path
+            span, None, None, [], workflow_name, entity_name, entity_path
         )
 
         if parent_run_id is not None and parent_run_id in self.spans:
@@ -510,9 +508,6 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         self.spans[run_id] = SpanHolder(
             span, token, None, [], workflow_name, None, entity_path
         )
-
-        if parent_run_id is not None and parent_run_id in self.spans:
-            self.spans[parent_run_id].children.append(run_id)
 
         return span
 
@@ -601,6 +596,12 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             )
 
         self._end_span(span, run_id)
+        if parent_run_id is None:
+            context_api.attach(
+                context_api.set_value(
+                    SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY, False
+                )
+            )
 
     @dont_throw
     def on_chat_model_start(
@@ -725,9 +726,6 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
 
         _set_chat_response(span, response)
         self._end_span(span, run_id)
-
-        if self.spans[run_id].token:
-            context_api.detach(self.spans[run_id].token)
 
         # Record duration
         duration = time.time() - self.spans[run_id].start_time
