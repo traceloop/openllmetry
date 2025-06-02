@@ -2,9 +2,6 @@ import pytest
 from openai import OpenAI
 from typing import TypedDict
 from langgraph.graph import StateGraph
-from opentelemetry.trace import get_tracer, set_span_in_context
-from opentelemetry import context as context_api
-from opentelemetry.context import get_current
 from opentelemetry import trace
 
 
