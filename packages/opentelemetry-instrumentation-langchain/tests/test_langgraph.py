@@ -3,6 +3,7 @@ from openai import OpenAI
 from typing import TypedDict
 from langgraph.graph import StateGraph
 from opentelemetry import trace
+from opentelemetry.semconv_ai import SpanAttributes
 
 
 @pytest.mark.vcr
@@ -30,7 +31,7 @@ def test_langgraph_invoke(exporter):
     langgraph = workflow.compile()
 
     user_request = "What's 5 + 5?"
-    langgraph.invoke(input={"request": user_request})
+    response = langgraph.invoke(input={"request": user_request})["result"]
     spans = exporter.get_finished_spans()
     assert set(
         [
@@ -39,6 +40,30 @@ def test_langgraph_invoke(exporter):
             "openai.chat"
         ]
     ) == set([span.name for span in spans])
+
+    openai_span = next(span for span in spans if span.name == "openai.chat")
+    assert openai_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
+    assert openai_span.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "gpt-4o"
+    assert (
+        openai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
+    ) == "You are a mathematician."
+    assert (openai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"]) == "system"
+    assert (
+        openai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.content"]
+    ) == user_request
+    assert (openai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.role"]) == "user"
+    assert (
+        openai_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"]
+        == response
+    )
+    assert (
+        openai_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.role"]
+    ) == "assistant"
+
+    assert openai_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 24
+    assert openai_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS] == 11
+    assert openai_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 35
+    assert openai_span.attributes[SpanAttributes.LLM_USAGE_CACHE_READ_INPUT_TOKENS] == 0
 
 
 @pytest.mark.vcr
@@ -118,8 +143,6 @@ def test_langgraph_double_invoke(exporter):
         "mynode.task",
         "LangGraph.workflow",
     ] == [span.name for span in spans]
-    for span in spans:
-        print(span.to_json())
 
 
 @pytest.mark.vcr
