@@ -4,6 +4,7 @@ from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.trace import get_tracer
 from opentelemetry.metrics import get_meter
 from wrapt import wrap_function_wrapper
+from opentelemetry.semconv._incubating.metrics import gen_ai_metrics as GenAIMetrics
 
 from opentelemetry.instrumentation.openai.shared.chat_wrappers import (
     chat_wrapper,
@@ -61,7 +62,7 @@ class OpenAIV0Instrumentor(BaseInstrumentor):
             )
 
             streaming_time_to_first_token = meter.create_histogram(
-                name=Meters.LLM_STREAMING_TIME_TO_FIRST_TOKEN,
+                name=GenAIMetrics.GEN_AI_SERVER_TIME_TO_FIRST_TOKEN,
                 unit="s",
                 description="Time to first token in streaming chat completions",
             )
