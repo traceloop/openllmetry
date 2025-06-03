@@ -74,6 +74,7 @@ class SpanAttributes:
 
     # Agent
     AGENT_NAME = "gen_ai.agent.name"
+    AGENT_ID = "gen_ai.agent.id"
     AGENT_DESCRIPTION = "gen_ai.agent.description"
 
     # Haystack
