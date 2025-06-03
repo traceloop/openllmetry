@@ -72,6 +72,10 @@ class SpanAttributes:
     LLM_OPENAI_API_VERSION = "gen_ai.openai.api_version"
     LLM_OPENAI_API_TYPE = "gen_ai.openai.api_type"
 
+    # Agent
+    AGENT_NAME = "gen_ai.agent.name"
+    AGENT_DESCRIPTION = "gen_ai.agent.description"
+
     # Haystack
     HAYSTACK_OPENAI_CHAT = "haystack.openai.chat"
     HAYSTACK_OPENAI_COMPLETION = "haystack.openai.completion"
