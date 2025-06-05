@@ -66,7 +66,6 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
             ):
                 _add_search_result_events(span, return_value)
         except Exception as e:
-            print(dir(SpanAttributes))
             span.set_attribute(ERROR_TYPE, type(e).__name__)
             raise
 
