@@ -1,11 +1,13 @@
 import pytest
 from unittest.mock import MagicMock
-from opentelemetry.instrumentation.openai_agents \
-    import OpenAIAgentsInstrumentor
+from opentelemetry.instrumentation.openai_agents import (
+    OpenAIAgentsInstrumentor,
+)
 from agents import Agent, Runner
 from unittest.mock import AsyncMock, patch
 from agents.extensions.models.litellm_model import LitellmModel
 from agents import ModelSettings
+from opentelemetry.semconv_ai import SpanAttributes
 
 
 @pytest.fixture
@@ -18,41 +20,85 @@ def mock_instrumentor():
 
 @pytest.fixture
 def test_agent():
-    mock_model = LitellmModel(
-        model="mock-model",
-        api_key="test-key",
-    )
+
     return Agent(
-        name="TestAgent",
-        instructions="You are a test assistant.",
-        model=mock_model,
+        name="GroqAgent",
+        instructions="You are a helpful assistant that answers all questions",
+        model=LitellmModel(
+            model="groq/llama3-70b-8192",
+            api_key="tesT_api",
+        ),
         model_settings=ModelSettings(
-            temperature=0.3, max_tokens=128, top_p=0.8, frequency_penalty=0
+            temperature=0.3, max_tokens=1024, top_p=0.2, frequency_penalty=1.3
         ),
     )
 
 
-def test_openai_agent(test_agent, mock_instrumentor):
+def test_openai_agent_parameter(test_agent, mock_instrumentor):
     mock_instrumentor.instrument()
     mock_instrumentor.instrument.assert_called_once()
-    print("TEST AGENT:", test_agent)
 
-    assert test_agent.name == "TestAgent"
-    assert test_agent.instructions == "You are a test assistant."
-    assert test_agent.model.model == "mock-model"
-    assert test_agent.model.api_key == "test-key"
+    assert test_agent.name == "GroqAgent"
+    assert (
+        test_agent.instructions
+        == "You are a helpful assistant that answers all questions"
+    )
+    assert test_agent.model.model == "groq/llama3-70b-8192"
 
 
 @pytest.mark.asyncio
-async def test_runner_mocked_output():
-    agent = Agent(
-        name="MockAgent",
-        instructions="Just mock it",
-        model="fake-model"
-    )
+async def test_async_runner_mocked_output(test_agent):
+
     mock_result = AsyncMock()
     mock_result.final_output = "Hello, this is a mocked response!"
 
     with patch.object(Runner, "run", return_value=mock_result):
-        result = await Runner.run(starting_agent=agent, input="Mock input")
+        result = await Runner.run(
+            starting_agent=test_agent,
+            input="Mock input",
+        )
         assert result.final_output == "Hello, this is a mocked response!"
+
+
+def test_sync_runner_mocked_output(test_agent):
+    mock_result = MagicMock()
+    mock_result.final_output = "Hello, this is a mocked response!"
+
+    with patch.object(Runner, "run", return_value=mock_result):
+        result = Runner.run_sync(starting_agent=test_agent, input="Mock input")
+        assert result.final_output == "Hello, this is a mocked response!"
+
+
+@pytest.fixture
+def get_spans(test_agent, exporter):
+    query = "What is AI?"
+    Runner.run_sync(
+        test_agent,
+        query,
+    )
+    spans = exporter.get_finished_spans()
+    return spans
+
+
+def test_groq_agent_spans(get_spans, test_agent, exporter):
+
+    span = get_spans[0]
+
+    assert [span.name for span in get_spans] == [
+        "openai_agents.GroqAgent",
+    ]
+
+    assert span.attributes[SpanAttributes.LLM_SYSTEM] == "openai"
+    assert (
+        span.attributes[SpanAttributes.LLM_REQUEST_MODEL]
+        == "groq/llama3-70b-8192"
+    )
+    assert span.attributes[SpanAttributes.LLM_REQUEST_TEMPERATURE] == 0.3
+    assert span.attributes[SpanAttributes.LLM_REQUEST_MAX_TOKENS] == 1024
+    assert span.attributes[SpanAttributes.LLM_REQUEST_TOP_P] == 0.2
+    assert span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"] == "user"
+    assert (
+        span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
+        == "What is AI?"
+    )
+    assert span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 28
