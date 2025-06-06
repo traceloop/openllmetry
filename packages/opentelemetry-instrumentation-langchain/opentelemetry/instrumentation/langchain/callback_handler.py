@@ -399,6 +399,9 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             if child_span.end_time is None:  # avoid warning on ended spans
                 child_span.end()
         span.end()
+        token = self.spans[run_id].token
+        if token:
+            context_api.detach(token)
 
     def _create_span(
         self,
