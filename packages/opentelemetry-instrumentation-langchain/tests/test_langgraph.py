@@ -42,6 +42,9 @@ def test_langgraph_invoke(exporter):
     ) == set([span.name for span in spans])
 
     openai_span = next(span for span in spans if span.name == "openai.chat")
+    calculate_task_span = next(span for span in spans if span.name == "calculate.task")
+
+    assert openai_span.parent.span_id == calculate_task_span.context.span_id
     assert openai_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
     assert openai_span.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "gpt-4o"
     assert (
