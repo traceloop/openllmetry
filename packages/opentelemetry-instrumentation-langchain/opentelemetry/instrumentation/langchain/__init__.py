@@ -30,6 +30,14 @@ from opentelemetry.semconv_ai import (
     Meters,
     SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY
 )
+from langchain_core.callbacks import (
+    CallbackManager,
+    CallbackManagerForChainGroup,
+    CallbackManagerForChainRun,
+    CallbackManagerForLLMRun,
+    CallbackManagerForRetrieverRun,
+    CallbackManagerForToolRun,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -191,12 +199,28 @@ class _BaseCallbackManagerInitWrapper:
         args,
         kwargs,
     ) -> None:
+        parent_run_id = kwargs.get("parent_run_id")
+        span = None
+        if parent_run_id is not None:
+            span = self._callback_manager.spans[parent_run_id].span
         wrapped(*args, **kwargs)
         for handler in instance.inheritable_handlers:
             if isinstance(handler, type(self._callback_manager)):
                 break
         else:
             instance.add_handler(self._callback_manager, True)
+            if isinstance(instance, (
+                    CallbackManager,
+                    CallbackManagerForChainGroup,
+                    CallbackManagerForChainRun,
+                    CallbackManagerForLLMRun,
+                    CallbackManagerForRetrieverRun,
+                    CallbackManagerForToolRun,
+                )
+            ):
+                if span and not self._callback_manager.spans[parent_run_id].token:
+                    token = context_api.attach(set_span_in_context(span))
+                    self._callback_manager.spans[parent_run_id].token = token
 
 
 # This class wraps a function call to inject tracing information (trace headers) into
