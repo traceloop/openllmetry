@@ -66,11 +66,6 @@ class SpanAttributes:
     LLM_RESPONSE_STOP_REASON = "llm.response.stop_reason"
     LLM_CONTENT_COMPLETION_CHUNK = "llm.content.completion.chunk"
 
-    # Agent
-    AGENT_NAME = "gen_ai.agent.name"
-    AGENT_ID = "gen_ai.agent.id"
-    AGENT_DESCRIPTION = "gen_ai.agent.description"
-
     # OpenAI
     LLM_OPENAI_RESPONSE_SYSTEM_FINGERPRINT = "gen_ai.openai.system_fingerprint"
     LLM_OPENAI_API_BASE = "gen_ai.openai.api_base"

@@ -91,10 +91,10 @@ def extract_agent_details(test_agent, span):
     name = getattr(agent, "name", None)
     instructions = getattr(agent, "instructions", None)
     if name:
-        set_span_attribute(span, SpanAttributes.AGENT_NAME, name)
+        set_span_attribute(span, "gen_ai.agent.name", name)
     if instructions:
         set_span_attribute(
-            span, SpanAttributes.AGENT_DESCRIPTION, instructions
+            span, "gen_ai.agent.description", instructions
         )
 
     attributes = {}
