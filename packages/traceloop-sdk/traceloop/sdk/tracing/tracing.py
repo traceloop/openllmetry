@@ -647,7 +647,7 @@ def init_haystack_instrumentor():
 
 def init_langchain_instrumentor():
     try:
-        if is_package_installed("langchain"):
+        if is_package_installed("langchain") or is_package_installed("langgraph"):
             Telemetry().capture("instrumentation:langchain:init")
             from opentelemetry.instrumentation.langchain import LangchainInstrumentor
 
