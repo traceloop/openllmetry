@@ -28,6 +28,18 @@ def test_tool_calls(exporter):
         span for span in spans if span.name == "ChatOpenAI.chat"
     )
 
+    assert chat_span.attributes[f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.0.name"] == "food_analysis"
+    assert json.loads(chat_span.attributes[f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.0.parameters"]) == {
+        "properties": {
+            "name": {"type": "string"},
+            "healthy": {"type": "boolean"},
+            "calories": {"type": "integer"},
+            "taste_profile": {"type": "array", "items": {"type": "string"}},
+        },
+        "required": ["name", "healthy", "calories", "taste_profile"],
+        "type": "object",
+    }
+
     assert chat_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"] == query_text
     assert chat_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.0.name"] == "food_analysis"
 
@@ -70,6 +82,15 @@ def test_tool_calls_with_history(exporter):
     assert len(spans) == 1
     chat_span = spans[0]
     assert chat_span.name == "ChatOpenAI.chat"
+
+    assert chat_span.attributes[f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.0.name"] == "get_weather"
+    assert json.loads(chat_span.attributes[f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.0.parameters"]) == {
+        "properties": {
+            "location": {"type": "string"},
+        },
+        "required": ["location"],
+        "type": "object",
+    }
 
     assert chat_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"] == messages[0].content
     assert chat_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"] == "system"
@@ -128,6 +149,25 @@ def test_tool_calls_anthropic_text_block(exporter):
     assert len(spans) == 1
     chat_span = spans[0]
     assert chat_span.name == "ChatAnthropic.chat"
+
+    assert chat_span.attributes[f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.0.name"] == "get_weather"
+    assert json.loads(chat_span.attributes[f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.0.parameters"]) == {
+        "properties": {
+            "location": {"type": "string"},
+        },
+        "required": ["location"],
+        "type": "object",
+    }
+
+    assert chat_span.attributes[f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.1.name"] == "get_news"
+    assert json.loads(chat_span.attributes[f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.1.parameters"]) == {
+        "properties": {
+            "location": {"type": "string"},
+        },
+        "required": ["location"],
+        "type": "object",
+    }
+
     assert chat_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"] == messages[0].content
     assert chat_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"] == "user"
 
@@ -193,6 +233,25 @@ def test_tool_calls_anthropic_text_block_and_history(exporter):
     assert len(spans) == 1
     chat_span = spans[0]
     assert chat_span.name == "ChatAnthropic.chat"
+
+    assert chat_span.attributes[f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.0.name"] == "get_weather"
+    assert json.loads(chat_span.attributes[f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.0.parameters"]) == {
+        "properties": {
+            "location": {"type": "string"},
+        },
+        "required": ["location"],
+        "type": "object",
+    }
+
+    assert chat_span.attributes[f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.1.name"] == "get_news"
+    assert json.loads(chat_span.attributes[f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.1.parameters"]) == {
+        "properties": {
+            "location": {"type": "string"},
+        },
+        "required": ["location"],
+        "type": "object",
+    }
+
     assert chat_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"] == messages[0].content
     assert chat_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"] == "user"
     assert chat_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.role"] == "assistant"
@@ -252,6 +311,25 @@ def test_parallel_tool_calls(exporter):
     assert len(spans) == 1
     chat_span = spans[0]
     assert chat_span.name == "ChatOpenAI.chat"
+
+    assert chat_span.attributes[f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.0.name"] == "get_weather"
+    assert json.loads(chat_span.attributes[f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.0.parameters"]) == {
+        "properties": {
+            "location": {"type": "string"},
+        },
+        "required": ["location"],
+        "type": "object",
+    }
+
+    assert chat_span.attributes[f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.1.name"] == "get_news"
+    assert json.loads(chat_span.attributes[f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.1.parameters"]) == {
+        "properties": {
+            "location": {"type": "string"},
+        },
+        "required": ["location"],
+        "type": "object",
+    }
+
     assert chat_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"] == messages[0].content
     assert chat_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"] == "user"
 
