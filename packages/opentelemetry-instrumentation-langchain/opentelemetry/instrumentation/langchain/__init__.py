@@ -30,14 +30,6 @@ from opentelemetry.semconv_ai import (
     Meters,
     SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY
 )
-from langchain_core.callbacks import (
-    CallbackManager,
-    CallbackManagerForChainGroup,
-    CallbackManagerForChainRun,
-    CallbackManagerForLLMRun,
-    CallbackManagerForRetrieverRun,
-    CallbackManagerForToolRun,
-)
 
 logger = logging.getLogger(__name__)
 
@@ -209,15 +201,7 @@ class _BaseCallbackManagerInitWrapper:
                 break
         else:
             instance.add_handler(self._callback_manager, True)
-            if isinstance(instance, (
-                    CallbackManager,
-                    CallbackManagerForChainGroup,
-                    CallbackManagerForChainRun,
-                    CallbackManagerForLLMRun,
-                    CallbackManagerForRetrieverRun,
-                    CallbackManagerForToolRun,
-                )
-            ):
+            if not instance.is_async:
                 if span and not self._callback_manager.spans[parent_run_id].token:
                     token = context_api.attach(set_span_in_context(span))
                     self._callback_manager.spans[parent_run_id].token = token
