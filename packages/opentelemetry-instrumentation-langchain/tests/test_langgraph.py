@@ -71,6 +71,7 @@ def test_langgraph_invoke(exporter):
 
 @pytest.mark.vcr
 @pytest.mark.asyncio
+@pytest.mark.xfail(reason="Context propagation is not yet supported for async LangChain callbacks", strict=True)
 async def test_langgraph_ainvoke(exporter):
     client = OpenAI()
 
@@ -104,6 +105,9 @@ async def test_langgraph_ainvoke(exporter):
             "openai.chat"
         ]
     ) == set([span.name for span in spans])
+    openai_span = next(span for span in spans if span.name == "openai.chat")
+    calculate_task_span = next(span for span in spans if span.name == "calculate.task")
+    assert openai_span.parent.span_id == calculate_task_span.context.span_id
 
 
 @pytest.mark.vcr
