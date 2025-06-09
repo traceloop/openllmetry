@@ -369,6 +369,7 @@ async def _set_prompts(span, messages):
 
     for i, msg in enumerate(messages):
         prefix = f"{SpanAttributes.LLM_PROMPTS}.{i}"
+        msg = msg if isinstance(msg, dict) else model_as_dict(msg)
 
         _set_span_attribute(span, f"{prefix}.role", msg.get("role"))
         if msg.get("content"):
