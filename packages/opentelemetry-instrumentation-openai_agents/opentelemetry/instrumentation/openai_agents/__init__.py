@@ -83,19 +83,30 @@ async def _wrap_agent_run(tracer: Tracer, wrapped, instance, args, kwargs):
 def extract_agent_details(test_agent, span):
     if test_agent is None:
         return
+
     agent = getattr(test_agent, "agent", test_agent)
     if agent is None:
         return
 
-    attributes = {}
-    agent_dict = vars(agent)
+    name = getattr(agent, "name", None)
+    instructions = getattr(agent, "instructions", None)
+    if name:
+        set_span_attribute(span, SpanAttributes.AGENT_NAME, name)
+    if instructions:
+        set_span_attribute(
+            span, SpanAttributes.AGENT_DESCRIPTION, instructions
+        )
 
-    for key, value in agent_dict.items():
-        if value is not None and isinstance(value, (str, int, float, bool)):
-            attributes[f"openai.agent.{key}"] = value
-        # Optional: handle known short lists
-        elif isinstance(value, list) and len(value) != 0:
-            attributes[f"openai.agent.{key}_count"] = len(value)
+    attributes = {}
+    for key, value in vars(agent).items():
+        if key in ("name", "instructions"):
+            continue
+
+        if value is not None:
+            if isinstance(value, (str, int, float, bool)):
+                attributes[f"openai.agent.{key}"] = value
+            elif isinstance(value, list) and len(value) > 0:
+                attributes[f"openai.agent.{key}_count"] = len(value)
 
     if attributes:
         span.set_attributes(attributes)
