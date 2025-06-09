@@ -144,6 +144,7 @@ def _handle_stream_call(span, kwargs, response):
 
     response["Body"] = StreamingWrapper(response["Body"], stream_done)
 
+
 def _try_parse_json(value):
     """Try to decode JSON if it's a string or bytes; fallback to raw value."""
     try:
@@ -154,6 +155,7 @@ def _try_parse_json(value):
         return value
     except (json.JSONDecodeError, UnicodeDecodeError):
         return str(value)
+
 
 @dont_throw
 def _handle_call(span, kwargs, response):
