@@ -104,7 +104,7 @@ class LangchainInstrumentor(BaseInstrumentor):
                 name="BaseOpenAI._astream",
                 wrapper=openai_tracing_wrapper,
             )
-        
+
         if is_package_available("langchain_openai"):
             # Wrap langchain_openai.llms.base.BaseOpenAI
             wrap_function_wrapper(
