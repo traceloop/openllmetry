@@ -26,7 +26,7 @@ from opentelemetry.semconv_ai import Meters
 
 logger = logging.getLogger(__name__)
 
-_instruments = ("langchain >= 0.0.346", "langchain-core > 0.1.0")
+_instruments = ("langchain-core > 0.1.0", )
 
 
 class LangchainInstrumentor(BaseInstrumentor):
