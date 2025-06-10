@@ -25,7 +25,6 @@ async def test_async_runner_mocked_output():
         instructions="You are a helpful assistant that answers all questions",
         model=LitellmModel(
             model="groq/llama3-70b-8192",
-            api_key="tesT_api",
         ),
         model_settings=ModelSettings(
             temperature=0.3, max_tokens=1024, top_p=0.2, frequency_penalty=1.3
@@ -48,7 +47,6 @@ def test_sync_runner_mocked_output():
         instructions="You are a helpful assistant that answers all questions",
         model=LitellmModel(
             model="groq/llama3-70b-8192",
-            api_key="tesT_api",
         ),
         model_settings=ModelSettings(
             temperature=0.3, max_tokens=1024, top_p=0.2, frequency_penalty=1.3
@@ -69,7 +67,6 @@ def test_groq_agent_spans(exporter):
         instructions="You are a helpful assistant that answers all questions",
         model=LitellmModel(
             model="groq/llama3-70b-8192",
-            api_key="tesT_api",
         ),
         model_settings=ModelSettings(
             temperature=0.3, max_tokens=1024, top_p=0.2, frequency_penalty=1.3
