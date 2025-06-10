@@ -17,10 +17,10 @@ def mock_instrumentor():
     instrumentor.uninstrument = MagicMock()
     return instrumentor
 
-@pytest.fixture
-def test_agent():
 
-    return Agent(
+@pytest.mark.asyncio
+async def test_async_runner_mocked_output():
+    test_agent = Agent(
         name="GroqAgent",
         instructions="You are a helpful assistant that answers all questions",
         model=LitellmModel(
@@ -31,11 +31,6 @@ def test_agent():
             temperature=0.3, max_tokens=1024, top_p=0.2, frequency_penalty=1.3
         ),
     )
-
-
-@pytest.mark.asyncio
-async def test_async_runner_mocked_output(test_agent):
-
     mock_result = AsyncMock()
     mock_result.final_output = "Hello, this is a mocked response!"
 
@@ -47,7 +42,18 @@ async def test_async_runner_mocked_output(test_agent):
         assert result.final_output == "Hello, this is a mocked response!"
 
 
-def test_sync_runner_mocked_output(test_agent):
+def test_sync_runner_mocked_output():
+    test_agent = Agent(
+        name="GroqAgent",
+        instructions="You are a helpful assistant that answers all questions",
+        model=LitellmModel(
+            model="groq/llama3-70b-8192",
+            api_key="tesT_api",
+        ),
+        model_settings=ModelSettings(
+            temperature=0.3, max_tokens=1024, top_p=0.2, frequency_penalty=1.3
+        ),
+    )
     mock_result = MagicMock()
     mock_result.final_output = "Hello, this is a mocked response!"
 
@@ -57,7 +63,18 @@ def test_sync_runner_mocked_output(test_agent):
 
 
 @pytest.mark.vcr
-def test_groq_agent_spans(test_agent, exporter):
+def test_groq_agent_spans(exporter):
+    test_agent = Agent(
+        name="GroqAgent",
+        instructions="You are a helpful assistant that answers all questions",
+        model=LitellmModel(
+            model="groq/llama3-70b-8192",
+            api_key="tesT_api",
+        ),
+        model_settings=ModelSettings(
+            temperature=0.3, max_tokens=1024, top_p=0.2, frequency_penalty=1.3
+        ),
+    )
     query = "What is AI?"
     Runner.run_sync(
         test_agent,
