@@ -23,28 +23,49 @@ interactions:
     uri: https://api.groq.com/openai/v1/chat/completions
   response:
     body:
-      string: '{"error":{"message":"Invalid API Key","type":"invalid_request_error","code":"invalid_api_key"}}
-
-        '
+      string: !!binary |
+        H4sIAAAAAAAAA6RWwW4bNxC99yumvDQ1VoJkS5alS+EmRSEgDYKkaA91IYzI2V1GXJImubKUwP9e
+        DHdXsgOnQNGjqOHMmzdvHveL0EqshKwxycabkVrS5RLlfDTHOY5ms1KNlteX29HN4nq+vN7Ky6ty
+        Kgrhtp9Ipv7iWLrGG0raWVEIGQgTKbGaLmbL+WI+m08K0ThFRqyEMdjg1Wgx2Y5upstLDq+dlhTF
+        6q8vQltFB7HieIoRKxKrLyI4Q2IlMEYdE9rEd5xNZLn8bUi61FKjgbVNZIyuyEqCV7frHyFQSSFC
+        cpBqAkV7Ms43ZBO4EhhzmyhAPMZETYRUYwKJFjyF0oUGEsZdf5yOXks05giB7lsdCOq2QQv6Sc0C
+        YitrwLi6s3d2OoaLi7eEwWpbXVys4HZ9qsRFDP8FZXANKExYgFZkky6P4DElCjYWgFaBbnxwe+IO
+        dBigIbfo9hQg6YbGd/aSq30gjO4b5RrcMQNSR+04dXRmT+CD2xpq+lIq4ANIZ6VpcxRsMZICZzPC
+        HBJaQ3F8Z6+43nsKkjxP/YWCzEzwgVK+11pFgaenuly570g2uhBPvIFusCL+7Ylk3YFKdEhjJvT3
+        mqByaCIP73YNmnEqOpP9DkNwD+AC/Em4g9s1o3rTDV3b6ttzRi4oWUZQtlZyQ2dM3uCRb8uaYiwg
+        kHSV1Z/5qETJaF2AFNBGg4lPDdqq5T6GsfxKlgIajvuYgrNVD+0178mLwBpMsn5BYZmQE2p77P8k
+        mVo0Wa5n3GEQQzFMecQzzwecxvTSzNzerqHGCA3nRO+Nlpg6nXQsa1s95Tm13M/bvlF4H5ykGLmV
+        V+/evv8xN1dj2roUC9jrkOGd9rdX28DTmTxnT0p2W5e0jFlXbXLWNa6NsKdaS8Ocq+As9YkCB///
+        9R1U/XrwhT/yrjCENetyGH0nj87/QFGiXjAMpcTsRE8ix3d2xll/OXgKCT52o/5qXzLGRjda9rgo
+        R+tIoC0geAxJy9ZgAOUa1E/k2ZDizkBprKyLOrLMSm3RZiRo0RyjjsMGBQIMBJH2WZLp6KnfpxdH
+        /RvKWluCb/jYifKvzOy/GtcbIv+8RkbGwJoewSDXrmYbKYKlLENL6cGFXbb53O5nyiCGeX5oDY1+
+        zk72L+y3kd2QRopKbak3Ok753DifbWAW2NP94VfGO36ZmHt+dljaObbp1lW1MQVNXR5k20mZf9cG
+        MHpPTzcOakKTaomBCiDVdjtZdEm9CwnPwiN224Ta8uuWIa2hdp7Z1xFqMj5+D28cHF0LNe4pu8fJ
+        9e5binnfs5c5r2XkyB8UGL0jaIh7oYPnSs7+JB4LYVzFthLFyrbGFKLUVsd607mOWImYnBePfxei
+        HZ7x+5Za2vDYxWoynsznVzeT69m0ED64xqdNcjuyUawub85HQ/BkMltMrq6W/PIPXxqnC1eL6fPz
+        fGs6nlwXIrmE5hy5XJ6OTkF96sce6mYbCHfKPVgGnT9b+iYfC9FJZlNqW/HjpvMnSOk3Ss2QpnK+
+        5E+jw6YK7p5v5y+rQPebyfTTQal5NZ2U5QL9fVrM9tu0OMgH8fj43T8AAAD//wMAL63GAYMJAAA=
     headers:
       CF-RAY:
-      - 94da5f68be0a7f8b-MAA
+      - 94da7c064c037f9f-MAA
       Cache-Control:
       - private, max-age=0, no-store, no-cache, must-revalidate
       Connection:
       - keep-alive
-      Content-Length:
-      - '96'
+      Content-Encoding:
+      - gzip
       Content-Type:
       - application/json
       Date:
-      - Tue, 10 Jun 2025 16:51:18 GMT
+      - Tue, 10 Jun 2025 17:10:51 GMT
       Server:
       - cloudflare
       Set-Cookie:
-      - __cf_bm=YS9G27I0iZIUjtESpOTyvP4VlLG4VDsUKlFzw5l_8vM-1749574278-1.0.1.1-FnQ1GIRD9SddElaFtOyiaoOGKvanAce1PPb3vEd3wXB0.2eJRPFg.rLavDRAOINqx3NzeGCKoBU4ejmt2FLFnp_gjLzf1E19J4wnYTDkX.8;
-        path=/; expires=Tue, 10-Jun-25 17:21:18 GMT; domain=.groq.com; HttpOnly; Secure;
+      - __cf_bm=hav7qXylXlW1agzypxmHVnj0rz_dPpSQ3JaQ929zMHI-1749575451-1.0.1.1-NShuT5JG.z3wO0cO8toTysZJc9LFyPDtKFCn4m0wwLwP7pfGqZfaj4FG.1T06T1FfPZD3QiSSwYkfYP7Bd15y2Xmua4yE3qLUs4Vm5WIp5k;
+        path=/; expires=Tue, 10-Jun-25 17:40:51 GMT; domain=.groq.com; HttpOnly; Secure;
         SameSite=None
+      Transfer-Encoding:
+      - chunked
       alt-svc:
       - h3=":443"; ma=86400
       cf-cache-status:
@@ -53,9 +74,21 @@ interactions:
       - Origin
       x-groq-region:
       - gcp-asia-south1
+      x-ratelimit-limit-requests:
+      - '14400'
+      x-ratelimit-limit-tokens:
+      - '6000'
+      x-ratelimit-remaining-requests:
+      - '14399'
+      x-ratelimit-remaining-tokens:
+      - '5975'
+      x-ratelimit-reset-requests:
+      - 6s
+      x-ratelimit-reset-tokens:
+      - 250ms
       x-request-id:
-      - req_01jxdc1qcte6wtwpsvhjmnbbrq
+      - req_01jxdd5g10ff7apqt74vbt7xcw
     status:
-      code: 401
-      message: Unauthorized
+      code: 200
+      message: OK
 version: 1
