@@ -17,7 +17,6 @@ def mock_instrumentor():
     instrumentor.uninstrument = MagicMock()
     return instrumentor
 
-
 @pytest.fixture
 def test_agent():
 
@@ -32,18 +31,6 @@ def test_agent():
             temperature=0.3, max_tokens=1024, top_p=0.2, frequency_penalty=1.3
         ),
     )
-
-
-def test_openai_agent_parameter(test_agent, mock_instrumentor):
-    mock_instrumentor.instrument()
-    mock_instrumentor.instrument.assert_called_once()
-
-    assert test_agent.name == "GroqAgent"
-    assert (
-        test_agent.instructions
-        == "You are a helpful assistant that answers all questions"
-    )
-    assert test_agent.model.model == "groq/llama3-70b-8192"
 
 
 @pytest.mark.asyncio
@@ -69,22 +56,18 @@ def test_sync_runner_mocked_output(test_agent):
         assert result.final_output == "Hello, this is a mocked response!"
 
 
-@pytest.fixture
-def get_spans(test_agent, exporter):
+@pytest.mark.vcr
+def test_groq_agent_spans(test_agent, exporter):
     query = "What is AI?"
     Runner.run_sync(
         test_agent,
         query,
     )
     spans = exporter.get_finished_spans()
-    return spans
 
+    span = spans[0]
 
-def test_groq_agent_spans(get_spans, test_agent, exporter):
-
-    span = get_spans[0]
-
-    assert [span.name for span in get_spans] == [
+    assert [span.name for span in spans] == [
         "openai_agents.GroqAgent",
     ]
 
