@@ -1,4 +1,5 @@
 import pytest
+import os
 from unittest.mock import MagicMock
 from opentelemetry.instrumentation.openai_agents import (
     OpenAIAgentsInstrumentor,
@@ -64,13 +65,11 @@ def test_sync_runner_mocked_output():
 
 @pytest.mark.vcr
 def test_groq_agent_spans(exporter):
+    os.environ["OPENAI_API_KEY"] = "api-key"
     test_agent = Agent(
         name="GroqAgent",
         instructions="You are a helpful assistant that answers all questions",
-        model=LitellmModel(
-            model="groq/llama3-70b-8192",
-            api_key="tesT_api",
-        ),
+        model="test_model ",
         model_settings=ModelSettings(
             temperature=0.3, max_tokens=1024, top_p=0.2, frequency_penalty=1.3
         ),
@@ -91,7 +90,7 @@ def test_groq_agent_spans(exporter):
     assert span.attributes[SpanAttributes.LLM_SYSTEM] == "openai"
     assert (
         span.attributes[SpanAttributes.LLM_REQUEST_MODEL]
-        == "groq/llama3-70b-8192"
+        == "test_model"
     )
     assert span.attributes[SpanAttributes.LLM_REQUEST_TEMPERATURE] == 0.3
     assert span.attributes[SpanAttributes.LLM_REQUEST_MAX_TOKENS] == 1024
