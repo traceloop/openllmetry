@@ -1,3 +1,9 @@
+## v0.40.9 (2025-06-10)
+
+### Fix
+
+- **langchain**: Fix missing langchain dependency for LangGraph tracing (#2988)
+
 ## v0.40.8 (2025-06-09)
 
 ### Fix
