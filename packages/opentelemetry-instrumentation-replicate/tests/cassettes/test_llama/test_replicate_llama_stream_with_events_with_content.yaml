@@ -1,0 +1,108 @@
+interactions:
+- request:
+    body: '{"input": {"prompt": "tell me a joke about opentelemetry"}, "stream": true}'
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '75'
+      content-type:
+      - application/json
+      host:
+      - api.replicate.com
+      user-agent:
+      - replicate-python/0.23.1
+    method: POST
+    uri: https://api.replicate.com/v1/models/meta/llama-2-70b-chat/predictions
+  response:
+    body:
+      string: '{"id":"2knutntbosoct6233zaqaieafa","model":"replicate-internal/staging-llama-2-70b-chat-hf-mlc","version":"d-8f623a96edc0ad67103e44e1ead2db39","input":{"prompt":"tell
+        me a joke about opentelemetry"},"logs":"","error":null,"status":"starting","created_at":"2024-02-12T16:45:41.730471035Z","urls":{"cancel":"https://api.replicate.com/v1/predictions/2knutntbosoct6233zaqaieafa/cancel","get":"https://api.replicate.com/v1/predictions/2knutntbosoct6233zaqaieafa","stream":"https://streaming-api.svc.us.c.replicate.net/v1/streams/56o77r2wpzc3krgyiy444okt3coned5wjmkdbltjpnkdrh2hbhha"},"stream":true}
+
+        '
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 85464daefb5709c1-HFA
+      Connection:
+      - keep-alive
+      Content-Type:
+      - application/json; charset=utf-8
+      Date:
+      - Mon, 12 Feb 2024 16:45:41 GMT
+      NEL:
+      - '{"success_fraction":0,"report_to":"cf-nel","max_age":604800}'
+      Report-To:
+      - '{"endpoints":[{"url":"https:\/\/a.nel.cloudflare.com\/report\/v3?s=oSXJlMSq8xfic7tz%2FHVGdXlmHdPNKL8dnDtbdoDJAviDPvrVnUHHcOJi2BoL%2FMsunCm4MAN1klVF5sOvJZHYlW2MtWDGtW6%2BXw6qvwwP8FPLLaqPOtAYRNYW%2B8XwNKhtn0Oy"}],"group":"cf-nel","max_age":604800}'
+      Server:
+      - cloudflare
+      Strict-Transport-Security:
+      - max-age=15552000
+      Transfer-Encoding:
+      - chunked
+      alt-svc:
+      - h3=":443"; ma=86400
+      ratelimit-remaining:
+      - '599'
+      ratelimit-reset:
+      - '1'
+      via:
+      - 1.1 google
+    status:
+      code: 201
+      message: Created
+- request:
+    body: ''
+    headers:
+      accept:
+      - text/event-stream
+      accept-encoding:
+      - gzip, deflate
+      cache-control:
+      - no-store
+      connection:
+      - keep-alive
+      host:
+      - streaming-api.svc.us.c.replicate.net
+      user-agent:
+      - replicate-python/0.23.1
+    method: GET
+    uri: https://streaming-api.svc.us.c.replicate.net/v1/streams/56o77r2wpzc3krgyiy444okt3coned5wjmkdbltjpnkdrh2hbhha
+  response:
+    body:
+      string: ": hi\n\nevent: output\nid: 1707756341:0\ndata: \n\nevent: output\nid:
+        1707756341:1\ndata: Sure\n\nevent: output\nid: 1707756341:2\ndata: , here'\n\nevent:
+        output\nid: 1707756341:3\ndata: s a jo\n\nevent: output\nid: 1707756342:0\ndata:
+        ke about Open\n\nevent: output\nid: 1707756342:1\ndata: Telemetry\n\nevent:
+        output\nid: 1707756342:2\ndata: :\ndata: \ndata: Why\n\nevent: output\nid:
+        1707756342:3\ndata:  did the Open\n\nevent: output\nid: 1707756342:4\ndata:
+        Telemetry\n\nevent: output\nid: 1707756342:5\ndata:  agent go to\n\nevent:
+        output\nid: 1707756342:6\ndata:  therapy?\n\nevent: output\nid: 1707756342:7\ndata:
+        \ndata: \ndata: B\n\nevent: output\nid: 1707756342:8\ndata: ecause it was\n\nevent:
+        output\nid: 1707756342:9\ndata:  feeling a little\n\nevent: output\nid: 1707756342:10\ndata:
+        \ \"disconnected\n\nevent: output\nid: 1707756342:11\ndata: \" from its\n\nevent:
+        output\nid: 1707756342:12\ndata:  trace!\ndata: \ndata: I\n\nevent: output\nid:
+        1707756343:0\ndata:  hope that brought\n\nevent: output\nid: 1707756343:1\ndata:
+        \ a smile to\n\nevent: output\nid: 1707756343:2\ndata:  your face!\n\nevent:
+        output\nid: 1707756343:3\ndata:  Is there anything\n\nevent: output\nid: 1707756343:4\ndata:
+        \ else I can\n\nevent: output\nid: 1707756343:5\ndata:  assist you with\n\nevent:
+        output\nid: 1707756343:6\ndata: ?\n\nevent: done\nid: 1707756343:7\ndata:
+        {}\n\n:408: 408 Request Timeout\n\n"
+    headers:
+      Connection:
+      - keep-alive
+      Content-Type:
+      - text/event-stream; charset=utf-8
+      Date:
+      - Mon, 12 Feb 2024 16:45:42 GMT
+      Server:
+      - nginx/1.21.3
+    status:
+      code: 200
+      message: OK
+version: 1
