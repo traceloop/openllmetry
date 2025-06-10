@@ -1,18 +1,19 @@
-import pytest
-import chromadb
+from pathlib import Path
 
+import chromadb
+import pytest
 from llama_index.core import (
-    VectorStoreIndex,
     SimpleDirectoryReader,
     StorageContext,
+    VectorStoreIndex,
 )
-from llama_index.vector_stores.chroma import ChromaVectorStore
 from llama_index.embeddings.openai import OpenAIEmbedding
+from llama_index.vector_stores.chroma import ChromaVectorStore
 from opentelemetry.semconv_ai import SpanAttributes
 
 
 @pytest.mark.vcr
-def test_rag_with_chroma(exporter):
+def test_rag_with_chroma(instrument_legacy, span_exporter):
     chroma_client = chromadb.EphemeralClient()
     chroma_collection = chroma_client.create_collection("quickstart")
 
@@ -20,7 +21,9 @@ def test_rag_with_chroma(exporter):
     embed_model = OpenAIEmbedding(model="text-embedding-3-large")
 
     # load documents
-    documents = SimpleDirectoryReader("./data/paul_graham/").load_data()
+    current_dir = Path(__file__).parent.parent
+    data_dir = current_dir.joinpath("data/paul_graham")
+    documents = SimpleDirectoryReader(data_dir).load_data()
 
     # set up ChromaVectorStore and load in data
     vector_store = ChromaVectorStore(chroma_collection=chroma_collection)
@@ -31,7 +34,7 @@ def test_rag_with_chroma(exporter):
     engine = index.as_query_engine()
     engine.query("What did the author do growing up?")
 
-    spans = exporter.get_finished_spans()
+    spans = span_exporter.get_finished_spans()
     assert {
         "BaseQueryEngine.workflow",
         "BaseSynthesizer.task",
