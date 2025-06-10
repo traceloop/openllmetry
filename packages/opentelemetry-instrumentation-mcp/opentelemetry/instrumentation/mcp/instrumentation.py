@@ -14,6 +14,7 @@ from opentelemetry.trace.status import Status, StatusCode
 from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
 from opentelemetry.trace.propagation import set_span_in_context
 from opentelemetry.semconv_ai import SpanAttributes
+from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
 
 from opentelemetry.instrumentation.mcp.version import __version__
 
@@ -174,15 +175,19 @@ class McpInstrumentor(BaseInstrumentor):
                         SpanAttributes.TRACELOOP_ENTITY_OUTPUT,
                         serialize(result),
                     )
-                    span.set_status(Status(StatusCode.OK))
+                    if hasattr(result, "isError") and result.isError:
+                        span.set_status(Status(StatusCode.ERROR, f"{serialize(result)}"))
+                        span.set_attribute(ERROR_TYPE, f"{serialize(result)}")
+                    else:
+                        span.set_status(Status(StatusCode.OK))
                     return result
                 except Exception as e:
+                    span.set_attribute(ERROR_TYPE, type(e).__name__)
                     span.record_exception(e)
                     span.set_status(Status(StatusCode.ERROR, str(e)))
                     raise
 
         return traced_method
-
 
 def serialize(request, depth=0, max_depth=4):
     """Serialize input args to MCP server into JSON.
