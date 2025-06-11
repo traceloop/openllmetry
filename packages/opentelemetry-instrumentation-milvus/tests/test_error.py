@@ -3,7 +3,6 @@ import random
 
 import pymilvus
 import pytest
-from opentelemetry.semconv_ai import Events, SpanAttributes, EventAttributes
 
 path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "milvus.db")
 milvus = pymilvus.MilvusClient(uri=path)
@@ -69,7 +68,7 @@ def test_milvus_single_vector_search(exporter, collection):
 
     bad_query_vector = [random.uniform(-1, 1) for _ in range(2)]
     search_params = {"radius": 0.5, "metric_type": "COSINE", "index_type": "IVF_FLAT"}
-    with pytest.raises(Exception) as exc_info:
+    with pytest.raises(Exception):
         milvus.search(
             collection_name=collection,
             data=[bad_query_vector],
