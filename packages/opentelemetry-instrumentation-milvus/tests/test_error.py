@@ -76,34 +76,13 @@ def test_milvus_single_vector_search(exporter, collection):
             anns_field="vector",
             search_params=search_params,
             output_fields=["color_tag"],
-            limit=3, # wrong limit value
+            limit=3,
             timeout=10,
         )
-
-    # Print the exception message if you want
-    print(f"Caught expected exception: {exc_info.value}")
 
     # Get finished spans
     spans = exporter.get_finished_spans()
     span = next(span for span in spans if span.name == "milvus.search")
 
-    # Print span name
-    print(f"Span name: {span.name}")
-
-    # Print span attributes
-    print("Attributes:")
-    for key, value in span.attributes.items():
-        print(f"  {key}: {value}")
-
-    # Print span status
-    print("Status:")
-    print(f"  Status code: {span.status.status_code}")
-    print(f"  Description: {span.status.description}")
-
-    # Print span events
-    print("Events:")
-    for event in span.events:
-        print(f"  Event name: {event.name}")
-        print(f"  Attributes: {event.attributes}")
     # Check the span attributes related to search
     assert span.attributes.get("error.type") == "internal_error"
