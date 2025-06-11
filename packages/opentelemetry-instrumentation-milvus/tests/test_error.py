@@ -67,18 +67,16 @@ def insert_data(collection):
 def test_milvus_single_vector_search(exporter, collection):
     insert_data(collection)
 
-    query_vectors = [
-        [random.uniform(-1, 1) for _ in range(5)],  # Random query vector for the search
-    ]
+    bad_query_vector = [random.uniform(-1, 1) for _ in range(2)]
     search_params = {"radius": 0.5, "metric_type": "COSINE", "index_type": "IVF_FLAT"}
     with pytest.raises(Exception) as exc_info:
         milvus.search(
-            collection_name="random",
-            data=query_vectors,
+            collection_name=collection,
+            data=[bad_query_vector],
             anns_field="vector",
             search_params=search_params,
             output_fields=["color_tag"],
-            limit="3", # wrong limit value
+            limit=3, # wrong limit value
             timeout=10,
         )
 
@@ -108,4 +106,4 @@ def test_milvus_single_vector_search(exporter, collection):
         print(f"  Event name: {event.name}")
         print(f"  Attributes: {event.attributes}")
     # Check the span attributes related to search
-    assert span.attributes.get("error.type") == "ParamError"
+    assert span.attributes.get("error.type") == "internal_error"
