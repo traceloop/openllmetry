@@ -24,30 +24,30 @@ interactions:
   response:
     body:
       string: !!binary |
-        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
+        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
     headers:
       CF-RAY:
-      - 94da93b7890b7ea9-MAA
+      - 94e550c5181a7fdd-MAA
       Cache-Control:
       - private, max-age=0, no-store, no-cache, must-revalidate
       Connection:
@@ -57,12 +57,12 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Tue, 10 Jun 2025 17:27:02 GMT
+      - Thu, 12 Jun 2025 00:43:43 GMT
       Server:
       - cloudflare
       Set-Cookie:
-      - __cf_bm=dcUizx02Kr.GH3m2NviZHpMwhoJRBsT1KIs0ozjBLnE-1749576422-1.0.1.1-bAnTEvCP0Leu4U.FpHdRWH_bgBouUcPWrBGF22pd3goqFe2rNA4OQ_mTX_NH5CAkMfM4Ug85FCOBsUScaV0Sq9WyAedtLjBH62feU7ua5T0;
-        path=/; expires=Tue, 10-Jun-25 17:57:02 GMT; domain=.groq.com; HttpOnly; Secure;
+      - __cf_bm=H14agD0CuY2DGurPYwJfB8u6LJqFhkZMQz_kBjEw2cI-1749689023-1.0.1.1-LQmL5CnWOyy_DQSSaN9G7KOdplJjIkVGQsTDtkKEhcDwp7_zhr97pO897Sf5EQmOUSeUsRDkDdrI4j8xXdQ2kDGTxzzG770.sg5BoCbsYBU;
+        path=/; expires=Thu, 12-Jun-25 01:13:43 GMT; domain=.groq.com; HttpOnly; Secure;
         SameSite=None
       Transfer-Encoding:
       - chunked
@@ -87,7 +87,7 @@ interactions:
       x-ratelimit-reset-tokens:
       - 250ms
       x-request-id:
-      - req_01jxde33q6ej3v9fmeckwwknfb
+      - req_01jxgsfdtqfvzbrzpya47j2dmp
     status:
       code: 200
       message: OK
