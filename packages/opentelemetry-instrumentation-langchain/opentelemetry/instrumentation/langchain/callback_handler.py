@@ -6,6 +6,8 @@ from uuid import UUID
 
 from langchain_core.callbacks import (
     BaseCallbackHandler,
+    CallbackManager,
+    AsyncCallbackManager,
 )
 from langchain_core.messages import BaseMessage
 from langchain_core.outputs import LLMResult
@@ -370,6 +372,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         self.token_histogram = token_histogram
         self.spans: dict[UUID, SpanHolder] = {}
         self.run_inline = True
+        self._instance: CallbackManager | AsyncCallbackManager = None
 
     @staticmethod
     def _get_name_from_callback(
@@ -440,11 +443,15 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         else:
             span = self.tracer.start_span(span_name, kind=kind)
 
+        token = None
+        if self._instance and not self._instance.is_async:
+            token = context_api.attach(set_span_in_context(span))
+
         _set_span_attribute(span, SpanAttributes.TRACELOOP_WORKFLOW_NAME, workflow_name)
         _set_span_attribute(span, SpanAttributes.TRACELOOP_ENTITY_PATH, entity_path)
 
         self.spans[run_id] = SpanHolder(
-            span, None, None, [], workflow_name, entity_name, entity_path
+            span, token, None, [], workflow_name, entity_name, entity_path
         )
 
         if parent_run_id is not None and parent_run_id in self.spans:
