@@ -18,7 +18,6 @@ def mock_instrumentor():
     return instrumentor
 
 
-@pytest.mark.vcr
 @pytest.mark.asyncio
 async def test_async_runner_mocked_output():
     test_agent = Agent(
@@ -42,7 +41,6 @@ async def test_async_runner_mocked_output():
         assert result.final_output == "Hello, this is a mocked response!"
 
 
-@pytest.mark.vcr
 def test_sync_runner_mocked_output():
     test_agent = Agent(
         name="GroqAgent",

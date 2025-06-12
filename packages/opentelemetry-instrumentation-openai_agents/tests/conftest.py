@@ -30,6 +30,14 @@ def exporter():
     return exporter
 
 
+@pytest.fixture(autouse=True)
+def environment():
+    if not os.environ.get("OPENAI_API_KEY"):
+        os.environ["OPENAI_API_KEY"] = "api-key"
+    if not os.environ.get("GROQ_API_KEY"):
+        os.environ["GROQ_API_KEY"] = "api-key"
+
+
 @pytest.fixture(scope="module")
 def vcr_config():
     return {"filter_headers": ["authorization", "api-key"]}
