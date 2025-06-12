@@ -191,20 +191,13 @@ class _BaseCallbackManagerInitWrapper:
         args,
         kwargs,
     ) -> None:
-        parent_run_id = kwargs.get("parent_run_id")
-        span = None
-        if parent_run_id is not None:
-            span = self._callback_manager.spans[parent_run_id].span
         wrapped(*args, **kwargs)
         for handler in instance.inheritable_handlers:
             if isinstance(handler, type(self._callback_manager)):
                 break
         else:
+            self._callback_manager._instance = instance
             instance.add_handler(self._callback_manager, True)
-            if not instance.is_async:
-                if span and not self._callback_manager.spans[parent_run_id].token:
-                    token = context_api.attach(set_span_in_context(span))
-                    self._callback_manager.spans[parent_run_id].token = token
 
 
 # This class wraps a function call to inject tracing information (trace headers) into
