@@ -47,7 +47,7 @@ WRAPPED_METHODS = [
     },
     {
         "package": "google.genai.models",
-        "object": "AsyncModels", 
+        "object": "AsyncModels",
         "method": "generate_content",
         "span_name": "gemini.generate_content",
     },
