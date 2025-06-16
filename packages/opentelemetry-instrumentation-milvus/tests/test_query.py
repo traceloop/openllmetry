@@ -3,7 +3,8 @@ import random
 
 import pymilvus
 import pytest
-from opentelemetry.semconv_ai import Events, SpanAttributes
+from opentelemetry.semconv_ai import Events, SpanAttributes, Meters
+from .utils import find_metrics_by_name
 
 path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "milvus.db")
 milvus = pymilvus.MilvusClient(uri=path)
@@ -64,7 +65,7 @@ def insert_data(collection):
     milvus.insert(collection_name=collection, data=data)
 
 
-def test_milvus_insert(exporter, collection):
+def test_milvus_insert(exporter, collection, reader):
     insert_data(collection)
 
     spans = exporter.get_finished_spans()
@@ -75,8 +76,35 @@ def test_milvus_insert(exporter, collection):
     assert span.attributes.get(SpanAttributes.MILVUS_INSERT_COLLECTION_NAME) == "Colors"
     assert span.attributes.get(SpanAttributes.MILVUS_INSERT_DATA_COUNT) == 1003
 
+    metris_data = reader.get_metrics_data()
+    insert_metrics = find_metrics_by_name(metris_data, Meters.MILVUS_DB_USAGE_INSERT_UNITS)
+    for metric in insert_metrics:
+        assert all(dp.value == 1003 for dp in metric.data.data_points)
 
-def test_milvus_query_equal(exporter, collection):
+
+def test_milvus_upsert(exporter, collection, reader):
+    insert_data(collection)
+    modified_data = {
+            "id": 1000,
+            "vector": [random.uniform(-1, 1) for _ in range(5)],
+            "color": "red",
+            "tag": 1234,
+        }
+    milvus.upsert(collection_name=collection, data=modified_data)
+    spans = exporter.get_finished_spans()
+    span = next(span for span in spans if span.name == "milvus.upsert")
+
+    assert span.attributes.get(SpanAttributes.VECTOR_DB_VENDOR) == "milvus"
+    assert span.attributes.get(SpanAttributes.VECTOR_DB_OPERATION) == "upsert"
+    assert span.attributes.get(SpanAttributes.MILVUS_UPSERT_COLLECTION_NAME) == "Colors"
+
+    metris_data = reader.get_metrics_data()
+    upsert_metrics = find_metrics_by_name(metris_data, Meters.MILVUS_DB_USAGE_UPSERT_UNITS)
+    for metric in upsert_metrics:
+        assert all(dp.value == 1 for dp in metric.data.data_points)
+
+
+def test_milvus_query_equal(exporter, collection, reader):
     insert_data(collection)
     milvus.query(
         collection_name=collection,
@@ -95,6 +123,10 @@ def test_milvus_query_equal(exporter, collection):
     assert span.attributes.get(SpanAttributes.MILVUS_QUERY_FILTER) == 'color == "brown"'
     assert span.attributes.get(SpanAttributes.MILVUS_QUERY_OUTPUT_FIELDS_COUNT) == 1
     assert span.attributes.get(SpanAttributes.MILVUS_QUERY_LIMIT) == 3
+    metris_data = reader.get_metrics_data()
+    duration_metrics = find_metrics_by_name(metris_data, Meters.MILVUS_DB_QUERY_DURATION)
+    for metric in duration_metrics:
+        assert all(dp.sum >= 0 for dp in metric.data.data_points)
 
     events = span.events
     for event in events:
@@ -219,13 +251,11 @@ def test_milvus_get_collection(exporter, collection):
     assert span.attributes.get(SpanAttributes.MILVUS_GET_IDS_COUNT) == 3
 
 
-def test_milvus_delete_collection(exporter, collection):
+def test_milvus_delete_collection(exporter, collection, reader):
     insert_data(collection)
     milvus.delete(
-        collection_name=collection,
-        ids=[1000, 1001, 1002],
-        timeout=10
-        )
+        collection_name=collection, ids=[1000, 1001, 1002], timeout=10
+    )
     spans = exporter.get_finished_spans()
     span = next(span for span in spans if span.name == "milvus.delete")
 
@@ -236,3 +266,9 @@ def test_milvus_delete_collection(exporter, collection):
     )
     assert span.attributes.get(SpanAttributes.MILVUS_DELETE_IDS_COUNT) == 3
     assert span.attributes.get(SpanAttributes.MILVUS_DELETE_TIMEOUT) == 10
+    metris_data = reader.get_metrics_data()
+    delete_metrics = find_metrics_by_name(
+        metris_data, Meters.MILVUS_DB_USAGE_DELETE_UNITS
+    )
+    for metric in delete_metrics:
+        assert all(dp.value == 3 for dp in metric.data.data_points)
