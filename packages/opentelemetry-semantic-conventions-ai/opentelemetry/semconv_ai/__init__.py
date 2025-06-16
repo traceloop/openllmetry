@@ -21,6 +21,12 @@ class Meters:
     PINECONE_DB_USAGE_READ_UNITS = "db.pinecone.usage.read_units"
     PINECONE_DB_USAGE_WRITE_UNITS = "db.pinecone.usage_write_units"
 
+    MILVUS_DB_QUERY_DURATION = "db.milvus.query.duration"
+    MILVUS_DB_SEARCH_DISTANCE = "db.milvus.search.distance"
+    MILVUS_DB_USAGE_INSERT_UNITS = "db.milvus.usage.insert_units"
+    MILVUS_DB_USAGE_UPSERT_UNITS = "db.milvus.usage.upsert_units"
+    MILVUS_DB_USAGE_DELETE_UNITS = "db.milvus.usage.delete_units"
+
     LLM_WATSONX_COMPLETIONS_DURATION = "llm.watsonx.completions.duration"
     LLM_WATSONX_COMPLETIONS_EXCEPTIONS = "llm.watsonx.completions.exceptions"
     LLM_WATSONX_COMPLETIONS_RESPONSES = "llm.watsonx.completions.responses"
