@@ -1,7 +1,9 @@
+import time
 from opentelemetry.instrumentation.milvus.utils import dont_throw
 from opentelemetry.semconv.trace import SpanAttributes
 
 from opentelemetry import context as context_api
+from opentelemetry.trace.status import Status, StatusCode
 from opentelemetry.instrumentation.utils import (
     _SUPPRESS_INSTRUMENTATION_KEY,
 )
@@ -12,9 +14,27 @@ from opentelemetry.semconv_ai import SpanAttributes as AISpanAttributes
 def _with_tracer_wrapper(func):
     """Helper for providing tracer for wrapper functions."""
 
-    def _with_tracer(tracer, to_wrap):
+    def _with_tracer(
+            tracer,
+            query_duration_metric,
+            distance_metric,
+            insert_units_metric,
+            upsert_units_metric,
+            delete_units_metric,
+            to_wrap):
         def wrapper(wrapped, instance, args, kwargs):
-            return func(tracer, to_wrap, wrapped, instance, args, kwargs)
+            return func(
+                tracer,
+                query_duration_metric,
+                distance_metric,
+                insert_units_metric,
+                upsert_units_metric,
+                delete_units_metric,
+                to_wrap,
+                wrapped,
+                instance,
+                args,
+                kwargs)
 
         return wrapper
 
@@ -29,43 +49,75 @@ def _set_span_attribute(span, name, value):
 
 
 @_with_tracer_wrapper
-def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
+def _wrap(
+    tracer,
+    query_duration_metric,
+    distance_metric,
+    insert_units_metric,
+    upsert_units_metric,
+    delete_units_metric,
+    to_wrap,
+    wrapped,
+    instance,
+    args,
+    kwargs
+):
     """Instruments and calls every function defined in TO_WRAP."""
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
         return wrapped(*args, **kwargs)
 
+    method = to_wrap.get("method")
     name = to_wrap.get("span_name")
     with tracer.start_as_current_span(name) as span:
         span.set_attribute(SpanAttributes.DB_SYSTEM, "milvus")
         span.set_attribute(SpanAttributes.DB_OPERATION, to_wrap.get("method"))
 
-        if to_wrap.get("method") == "insert":
+        if method == "insert":
             _set_insert_attributes(span, kwargs)
-        elif to_wrap.get("method") == "upsert":
+        elif method == "upsert":
             _set_upsert_attributes(span, kwargs)
-        elif to_wrap.get("method") == "delete":
+        elif method == "delete":
             _set_delete_attributes(span, kwargs)
-        elif to_wrap.get("method") == "search":
+        elif method == "search":
             _set_search_attributes(span, kwargs)
-        elif to_wrap.get("method") == "get":
+        elif method == "get":
             _set_get_attributes(span, kwargs)
-        elif to_wrap.get("method") == "query":
+        elif method == "query":
             _set_query_attributes(span, kwargs)
-        elif to_wrap.get("method") == "create_collection":
+        elif method == "create_collection":
             _set_create_collection_attributes(span, kwargs)
-        elif to_wrap.get("method") == "hybrid_search":
+        elif method == "hybrid_search":
             _set_hybrid_search_attributes(span, kwargs)
 
+        start_time = time.time()
         return_value = wrapped(*args, **kwargs)
+        end_time = time.time()
 
-        if to_wrap.get("method") == "query":
+        if method == "query":
             _add_query_result_events(span, return_value)
 
-        if (
-            to_wrap.get("method") == "search"
-            or to_wrap.get("method") == "hybrid_search"
-        ):
+        elif (method == "search" or method == "hybrid_search"):
             _add_search_result_events(span, return_value)
+
+        shared_attributes = {SpanAttributes.DB_SYSTEM: "milvus"}
+        duration = end_time - start_time
+        if duration > 0 and query_duration_metric and method == "query":
+            query_duration_metric.record(duration, shared_attributes)
+
+        if return_value and span.is_recording():
+            if method == "search" or method == "hybrid_search":
+                set_search_response(span, distance_metric, shared_attributes, return_value)
+
+            _set_response_attributes(
+                span,
+                insert_units_metric,
+                upsert_units_metric,
+                delete_units_metric,
+                shared_attributes,
+                return_value,
+            )
+
+            span.set_status(Status(StatusCode.OK))
 
     return return_value
 
@@ -99,6 +151,27 @@ def count_or_none(obj):
         return len(obj)
 
     return None
+
+
+def _set_response_attributes(
+    span,
+    insert_units_metric,
+    upsert_units_metric,
+    delete_units_metric,
+    shared_attributes,
+    response
+):
+    if 'upsert_count' in response:
+        upsert_count = response['upsert_count']
+        upsert_units_metric.add(upsert_count, shared_attributes)
+
+    if ('insert_count' in response):
+        insert_count = response['insert_count']
+        insert_units_metric.add(insert_count, shared_attributes)
+
+    if ('delete_count' in response):
+        delete_count = response['delete_count']
+        delete_units_metric.add(delete_count, shared_attributes)
 
 
 @dont_throw
@@ -425,3 +498,13 @@ def _set_delete_attributes(span, kwargs):
         AISpanAttributes.MILVUS_DELETE_FILTER,
         _encode_filter(kwargs.get("filter")),
     )
+
+
+@dont_throw
+def set_search_response(distance_metric, shared_attributes, response):
+    for query_result in response:
+        for match in query_result:
+            distance = match.get("distance")
+
+            if distance_metric and distance is not None:
+                distance_metric.record(distance, shared_attributes)
