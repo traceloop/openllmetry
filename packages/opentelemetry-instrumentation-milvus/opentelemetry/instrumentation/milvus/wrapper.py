@@ -179,7 +179,6 @@ def _set_response_attributes(
     shared_attributes,
     response
 ):
-    print(response)
     if 'upsert_count' in response:
         upsert_count = response['upsert_count']
         upsert_units_metric.add(upsert_count, shared_attributes)

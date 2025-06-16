@@ -76,8 +76,8 @@ def test_milvus_insert(exporter, collection, reader):
     assert span.attributes.get(SpanAttributes.MILVUS_INSERT_COLLECTION_NAME) == "Colors"
     assert span.attributes.get(SpanAttributes.MILVUS_INSERT_DATA_COUNT) == 1003
 
-    metris_data = reader.get_metrics_data()
-    insert_metrics = find_metrics_by_name(metris_data, Meters.MILVUS_DB_USAGE_INSERT_UNITS)
+    metrics_data = reader.get_metrics_data()
+    insert_metrics = find_metrics_by_name(metrics_data, Meters.MILVUS_DB_USAGE_INSERT_UNITS)
     for metric in insert_metrics:
         assert all(dp.value == 1003 for dp in metric.data.data_points)
 
@@ -98,8 +98,8 @@ def test_milvus_upsert(exporter, collection, reader):
     assert span.attributes.get(SpanAttributes.VECTOR_DB_OPERATION) == "upsert"
     assert span.attributes.get(SpanAttributes.MILVUS_UPSERT_COLLECTION_NAME) == "Colors"
 
-    metris_data = reader.get_metrics_data()
-    upsert_metrics = find_metrics_by_name(metris_data, Meters.MILVUS_DB_USAGE_UPSERT_UNITS)
+    metrics_data = reader.get_metrics_data()
+    upsert_metrics = find_metrics_by_name(metrics_data, Meters.MILVUS_DB_USAGE_UPSERT_UNITS)
     for metric in upsert_metrics:
         assert all(dp.value == 1 for dp in metric.data.data_points)
 
@@ -123,8 +123,8 @@ def test_milvus_query_equal(exporter, collection, reader):
     assert span.attributes.get(SpanAttributes.MILVUS_QUERY_FILTER) == 'color == "brown"'
     assert span.attributes.get(SpanAttributes.MILVUS_QUERY_OUTPUT_FIELDS_COUNT) == 1
     assert span.attributes.get(SpanAttributes.MILVUS_QUERY_LIMIT) == 3
-    metris_data = reader.get_metrics_data()
-    duration_metrics = find_metrics_by_name(metris_data, Meters.MILVUS_DB_QUERY_DURATION)
+    metrics_data = reader.get_metrics_data()
+    duration_metrics = find_metrics_by_name(metrics_data, Meters.MILVUS_DB_QUERY_DURATION)
     for metric in duration_metrics:
         assert all(dp.sum >= 0 for dp in metric.data.data_points)
 
@@ -266,9 +266,9 @@ def test_milvus_delete_collection(exporter, collection, reader):
     )
     assert span.attributes.get(SpanAttributes.MILVUS_DELETE_IDS_COUNT) == 3
     assert span.attributes.get(SpanAttributes.MILVUS_DELETE_TIMEOUT) == 10
-    metris_data = reader.get_metrics_data()
+    metrics_data = reader.get_metrics_data()
     delete_metrics = find_metrics_by_name(
-        metris_data, Meters.MILVUS_DB_USAGE_DELETE_UNITS
+        metrics_data, Meters.MILVUS_DB_USAGE_DELETE_UNITS
     )
     for metric in delete_metrics:
         assert all(dp.value == 3 for dp in metric.data.data_points)
