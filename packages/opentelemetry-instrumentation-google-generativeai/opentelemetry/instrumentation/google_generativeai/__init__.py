@@ -82,7 +82,6 @@ def _set_input_attributes(span, args, kwargs, llm_model):
     if "contents" in kwargs:
         contents = kwargs["contents"]
         if isinstance(contents, str):
-            # Handle simple string content (google.genai package)
             _set_span_attribute(
                 span,
                 f"{SpanAttributes.LLM_PROMPTS}.0.content",
@@ -279,7 +278,6 @@ async def _awrap(tracer, to_wrap, wrapped, instance, args, kwargs):
         ).replace("models/", "")
     if hasattr(instance, "model") and hasattr(instance.model, "model_name"):
         llm_model = instance.model.model_name.replace("models/", "")
-    # Handle google.genai package where model is passed as parameter
     if "model" in kwargs:
         llm_model = kwargs["model"].replace("models/", "")
 
@@ -326,7 +324,6 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
         ).replace("models/", "")
     if hasattr(instance, "model") and hasattr(instance.model, "model_name"):
         llm_model = instance.model.model_name.replace("models/", "")
-    # Handle google.genai package where model is passed as parameter
     if "model" in kwargs:
         llm_model = kwargs["model"].replace("models/", "")
 
