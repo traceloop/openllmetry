@@ -183,17 +183,14 @@ def _set_response_attributes(
     if 'upsert_count' in response:
         upsert_count = response['upsert_count']
         upsert_units_metric.add(upsert_count, shared_attributes)
-        span.set_attribute(Meters.MILVUS_DB_USAGE_UPSERT_UNITS, upsert_count)
 
     if ('insert_count' in response):
         insert_count = response['insert_count']
         insert_units_metric.add(insert_count, shared_attributes)
-        span.set_attribute(Meters.MILVUS_DB_USAGE_INSERT_UNITS, insert_count)
 
     if ('delete_count' in response):
         delete_count = response['delete_count']
         delete_units_metric.add(delete_count, shared_attributes)
-        span.set_attribute(Meters.MILVUS_DB_USAGE_DELETE_UNITS, delete_count)
 
 
 @dont_throw
