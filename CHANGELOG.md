@@ -1,3 +1,4 @@
+
 ## v0.40.12 (2025-06-20)
 
 ### Fix
@@ -15,6 +16,8 @@
 ### Fix
 
 - **google-genai**: Add support for generate_content method in google genai models (#3014)
+
+=======
 
 ## v0.40.9 (2025-06-10)
 
