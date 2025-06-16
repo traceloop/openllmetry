@@ -24,7 +24,7 @@ from opentelemetry.instrumentation.google_generativeai.version import __version_
 
 logger = logging.getLogger(__name__)
 
-_instruments = ("google-generativeai >= 0.5.0",)
+_instruments = ("google-generativeai >= 0.5.0", "google-genai >= 0.1.0")
 
 WRAPPED_METHODS = [
     {
