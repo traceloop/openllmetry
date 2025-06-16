@@ -39,6 +39,18 @@ WRAPPED_METHODS = [
         "method": "generate_content_async",
         "span_name": "gemini.generate_content_async",
     },
+    {
+        "package": "google.genai.models",
+        "object": "Models",
+        "method": "generate_content",
+        "span_name": "gemini.generate_content",
+    },
+    {
+        "package": "google.genai.models",
+        "object": "AsyncModels", 
+        "method": "generate_content",
+        "span_name": "gemini.generate_content",
+    },
 ]
 
 
@@ -69,7 +81,19 @@ def _set_input_attributes(span, args, kwargs, llm_model):
 
     if "contents" in kwargs:
         contents = kwargs["contents"]
-        if isinstance(contents, list):
+        if isinstance(contents, str):
+            # Handle simple string content (google.genai package)
+            _set_span_attribute(
+                span,
+                f"{SpanAttributes.LLM_PROMPTS}.0.content",
+                contents,
+            )
+            _set_span_attribute(
+                span,
+                f"{SpanAttributes.LLM_PROMPTS}.0.role",
+                "user",
+            )
+        elif isinstance(contents, list):
             for i, content in enumerate(contents):
                 if hasattr(content, "parts"):
                     for part in content.parts:
@@ -255,6 +279,9 @@ async def _awrap(tracer, to_wrap, wrapped, instance, args, kwargs):
         ).replace("models/", "")
     if hasattr(instance, "model") and hasattr(instance.model, "model_name"):
         llm_model = instance.model.model_name.replace("models/", "")
+    # Handle google.genai package where model is passed as parameter
+    if "model" in kwargs:
+        llm_model = kwargs["model"].replace("models/", "")
 
     name = to_wrap.get("span_name")
     span = tracer.start_span(
@@ -299,6 +326,9 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
         ).replace("models/", "")
     if hasattr(instance, "model") and hasattr(instance.model, "model_name"):
         llm_model = instance.model.model_name.replace("models/", "")
+    # Handle google.genai package where model is passed as parameter
+    if "model" in kwargs:
+        llm_model = kwargs["model"].replace("models/", "")
 
     name = to_wrap.get("span_name")
     span = tracer.start_span(
