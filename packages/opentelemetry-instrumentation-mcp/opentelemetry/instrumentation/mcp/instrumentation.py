@@ -4,6 +4,8 @@ from typing import Any, AsyncGenerator, Callable, Collection, Tuple, cast
 import json
 import logging
 import traceback
+import re
+from http import HTTPStatus
 
 from opentelemetry import context, propagate
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
@@ -176,8 +178,8 @@ class McpInstrumentor(BaseInstrumentor):
                         serialize(result),
                     )
                     if hasattr(result, "isError") and result.isError:
-                        span.set_status(Status(StatusCode.ERROR, f"{serialize(result)}"))
-                        span.set_attribute(ERROR_TYPE, f"{serialize(result)}")
+                        span.set_status(Status(StatusCode.ERROR, f"{result.content[0].text}"))
+                        span.set_attribute(ERROR_TYPE, get_error_type(result.content[0].text))
                     else:
                         span.set_status(Status(StatusCode.OK))
                     return result
@@ -188,6 +190,19 @@ class McpInstrumentor(BaseInstrumentor):
                     raise
 
         return traced_method
+
+def get_error_type(error_message):
+    if type(error_message) != str:
+        return None
+    match = re.search(r'\b(4\d{2}|5\d{2})\b', error_message)
+    if match:
+        num = int(match.group())
+        if 400 <= num <= 599:
+            return HTTPStatus(num).name
+        else:
+            return None
+    else:
+        return None
 
 def serialize(request, depth=0, max_depth=4):
     """Serialize input args to MCP server into JSON.
@@ -229,8 +244,7 @@ def serialize(request, depth=0, max_depth=4):
         except Exception:
             pass
         return json.dumps(result)
-
-
+    
 class InstrumentedStreamReader(ObjectProxy):  # type: ignore
     # ObjectProxy missing context manager - https://github.com/GrahamDumpleton/wrapt/issues/73
     def __init__(self, wrapped, tracer):
@@ -301,11 +315,12 @@ class InstrumentedStreamWriter(ObjectProxy):  # type: ignore
                 span.set_attribute(
                     SpanAttributes.MCP_RESPONSE_VALUE, f"{serialize(request.result)}"
                 )
-                if hasattr(request.result, "isError"):
-                    if request.result.isError is True:
+                if 'isError' in request.result:
+                    if request.result['isError'] is True:
                         span.set_status(
-                            Status(StatusCode.ERROR, f"{serialize(request.result)}")
+                            Status(StatusCode.ERROR, f"{request.result['content'][0]['text']}")
                         )
+                        span.set_attribute(ERROR_TYPE, get_error_type(request.result['content'][0]['text']))
             if hasattr(request, "id"):
                 span.set_attribute(SpanAttributes.MCP_REQUEST_ID, f"{request.id}")
 
