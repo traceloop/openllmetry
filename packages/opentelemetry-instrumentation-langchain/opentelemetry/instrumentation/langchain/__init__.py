@@ -181,8 +181,8 @@ class LangchainInstrumentor(BaseInstrumentor):
 
 
 class _BaseCallbackManagerInitWrapper:
-    def __init__(self, callback_manager: "TraceloopCallbackHandler"):
-        self._callback_manager = callback_manager
+    def __init__(self, callback_handler: "TraceloopCallbackHandler"):
+        self._callback_handler = callback_handler
 
     def __call__(
         self,
@@ -193,11 +193,11 @@ class _BaseCallbackManagerInitWrapper:
     ) -> None:
         wrapped(*args, **kwargs)
         for handler in instance.inheritable_handlers:
-            if isinstance(handler, type(self._callback_manager)):
+            if isinstance(handler, type(self._callback_handler)):
                 break
         else:
-            self._callback_manager._instance = instance
-            instance.add_handler(self._callback_manager, True)
+            self._callback_handler._callback_manager = instance
+            instance.add_handler(self._callback_handler, True)
 
 
 # This class wraps a function call to inject tracing information (trace headers) into
