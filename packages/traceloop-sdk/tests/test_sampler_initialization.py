@@ -31,5 +31,5 @@ class TestSamplerInitialization:
             assert TracerWrapper.instance is not None
             
         finally:
-            if 'trace_wrapper_instance' in locals():
+            if '_trace_wrapper_instance' in locals():
                 TracerWrapper.instance = _trace_wrapper_instance
