@@ -18,18 +18,18 @@ class TestSamplerInitialization:
         try:
             exporter = InMemorySpanExporter()
             sampler = TraceIdRatioBased(0.5)  # 50% sampling rate
-            
+
             client = Traceloop.init(
                 app_name="test-rate-based-sampler",
                 sampler=sampler,
                 exporter=exporter,
                 disable_batch=True
             )
-            
+
             assert client is None
             assert hasattr(TracerWrapper, "instance")
             assert TracerWrapper.instance is not None
-            
+
         finally:
             if '_trace_wrapper_instance' in locals():
                 TracerWrapper.instance = _trace_wrapper_instance
