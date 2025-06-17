@@ -24,12 +24,10 @@ include = "opentelemetry/instrumentation/haystack"
 
 [tool.poetry.dependencies]
 python = ">=3.9,<4"
-opentelemetry-api = "^1.34.1"
+opentelemetry-api = "^1.28.0"
 opentelemetry-instrumentation = ">=0.50b0"
 opentelemetry-semantic-conventions = ">=0.50b0"
 opentelemetry-semantic-conventions-ai = "0.4.9"
-setuptools = "78.1.1"
-protobuf = "5.29.5"
 
 [tool.poetry.group.dev.dependencies]
 autopep8 = "^2.2.0"
@@ -43,7 +41,7 @@ pytest = "^8.2.2"
 pytest-sugar = "1.0.0"
 vcrpy = "^6.0.1"
 pytest-recording = "^0.13.1"
-opentelemetry-sdk = "^1.34.1"
+opentelemetry-sdk = "^1.27.0"
 
 [build-system]
 requires = ["poetry-core"]

@@ -1543,10 +1543,12 @@ files = []
 develop = true
 
 [package.dependencies]
-opentelemetry-api = "^1.28.0"
+opentelemetry-api = "^1.34.1"
 opentelemetry-instrumentation = ">=0.50b0"
 opentelemetry-semantic-conventions = ">=0.50b0"
 opentelemetry-semantic-conventions-ai = "0.4.9"
+protobuf = "5.29.5"
+setuptools = "78.1.1"
 
 [package.extras]
 instruments = []
@@ -1566,10 +1568,12 @@ files = []
 develop = true
 
 [package.dependencies]
-opentelemetry-api = "^1.28.0"
+opentelemetry-api = "^1.34.1"
 opentelemetry-instrumentation = ">=0.50b0"
 opentelemetry-semantic-conventions = ">=0.50b0"
 opentelemetry-semantic-conventions-ai = "0.4.9"
+protobuf = "5.29.5"
+setuptools = "78.1.1"
 
 [package.extras]
 instruments = []
@@ -1590,10 +1594,12 @@ develop = true
 
 [package.dependencies]
 anthropic = ">=0.17.0"
-opentelemetry-api = "^1.28.0"
+opentelemetry-api = "^1.34.1"
 opentelemetry-instrumentation = ">=0.50b0"
 opentelemetry-semantic-conventions = ">=0.50b0"
 opentelemetry-semantic-conventions-ai = "0.4.9"
+protobuf = "5.29.5"
+setuptools = "78.1.1"
 tokenizers = ">=0.13.0"
 
 [package.source]
@@ -1611,10 +1617,12 @@ files = []
 develop = true
 
 [package.dependencies]
-opentelemetry-api = "^1.28.0"
+opentelemetry-api = "^1.34.1"
 opentelemetry-instrumentation = ">=0.50b0"
 opentelemetry-semantic-conventions = ">=0.50b0"
 opentelemetry-semantic-conventions-ai = "0.4.9"
+protobuf = "5.29.5"
+setuptools = "78.1.1"
 
 [package.extras]
 instruments = []
@@ -1634,10 +1642,12 @@ files = []
 develop = true
 
 [package.dependencies]
-opentelemetry-api = "^1.28.0"
+opentelemetry-api = "^1.34.1"
 opentelemetry-instrumentation = ">=0.50b0"
 opentelemetry-semantic-conventions = ">=0.50b0"
 opentelemetry-semantic-conventions-ai = "0.4.9"
+protobuf = "5.29.5"
+setuptools = "78.1.1"
 
 [package.extras]
 instruments = []
@@ -1657,10 +1667,12 @@ files = []
 develop = true
 
 [package.dependencies]
-opentelemetry-api = "^1.28.0"
+opentelemetry-api = "^1.34.1"
 opentelemetry-instrumentation = ">=0.50b0"
 opentelemetry-semantic-conventions = ">=0.50b0"
 opentelemetry-semantic-conventions-ai = "0.4.9"
+protobuf = "5.29.5"
+setuptools = "78.1.1"
 
 [package.extras]
 instruments = []
@@ -1680,10 +1692,12 @@ files = []
 develop = true
 
 [package.dependencies]
-opentelemetry-api = "^1.28.0"
+opentelemetry-api = "^1.34.1"
 opentelemetry-instrumentation = ">=0.50b0"
 opentelemetry-semantic-conventions = ">=0.50b0"
 opentelemetry-semantic-conventions-ai = "0.4.9"
+protobuf = "5.29.5"
+setuptools = "78.1.1"
 
 [package.extras]
 instruments = []
@@ -1703,10 +1717,12 @@ files = []
 develop = true
 
 [package.dependencies]
-opentelemetry-api = "^1.28.0"
+opentelemetry-api = "^1.34.1"
 opentelemetry-instrumentation = ">=0.50b0"
 opentelemetry-semantic-conventions = ">=0.50b0"
 opentelemetry-semantic-conventions-ai = "0.4.9"
+protobuf = "5.29.5"
+setuptools = "78.1.1"
 
 [package.extras]
 instruments = []
@@ -1726,10 +1742,12 @@ files = []
 develop = true
 
 [package.dependencies]
-opentelemetry-api = "^1.28.0"
+opentelemetry-api = "^1.34.1"
 opentelemetry-instrumentation = ">=0.50b0"
 opentelemetry-semantic-conventions = ">=0.50b0"
 opentelemetry-semantic-conventions-ai = "0.4.9"
+protobuf = "5.29.5"
+setuptools = "78.1.1"
 
 [package.extras]
 instruments = []
@@ -1749,10 +1767,12 @@ files = []
 develop = true
 
 [package.dependencies]
-opentelemetry-api = "^1.28.0"
+opentelemetry-api = "^1.34.1"
 opentelemetry-instrumentation = ">=0.50b0"
 opentelemetry-semantic-conventions = ">=0.50b0"
 opentelemetry-semantic-conventions-ai = "0.4.9"
+protobuf = "5.29.5"
+setuptools = "78.1.1"
 
 [package.extras]
 instruments = []
@@ -1772,10 +1792,12 @@ files = []
 develop = true
 
 [package.dependencies]
-opentelemetry-api = "^1.28.0"
+opentelemetry-api = "^1.34.1"
 opentelemetry-instrumentation = ">=0.50b0"
 opentelemetry-semantic-conventions = ">=0.50b0"
 opentelemetry-semantic-conventions-ai = "0.4.9"
+protobuf = "5.29.5"
+setuptools = "78.1.1"
 
 [package.extras]
 instruments = []
@@ -1796,10 +1818,12 @@ develop = true
 
 [package.dependencies]
 inflection = "^0.5.1"
-opentelemetry-api = "^1.28.0"
+opentelemetry-api = "^1.34.1"
 opentelemetry-instrumentation = ">=0.50b0"
 opentelemetry-semantic-conventions = ">=0.50b0"
 opentelemetry-semantic-conventions-ai = "0.4.9"
+protobuf = "5.29.5"
+setuptools = "78.1.1"
 
 [package.extras]
 instruments = []
@@ -1835,10 +1859,12 @@ files = []
 develop = true
 
 [package.dependencies]
-opentelemetry-api = "^1.28.0"
+opentelemetry-api = "^1.34.1"
 opentelemetry-instrumentation = ">=0.50b0"
 opentelemetry-semantic-conventions = ">=0.50b0"
 opentelemetry-semantic-conventions-ai = "0.4.9"
+protobuf = "5.29.5"
+setuptools = "78.1.1"
 
 [package.extras]
 instruments = []
@@ -1858,10 +1884,12 @@ files = []
 develop = true
 
 [package.dependencies]
-opentelemetry-api = "^1.28.0"
+opentelemetry-api = "^1.34.1"
 opentelemetry-instrumentation = ">=0.50b0"
 opentelemetry-semantic-conventions = ">=0.50b0"
 opentelemetry-semantic-conventions-ai = "0.4.9"
+protobuf = "5.29.5"
+setuptools = "78.1.1"
 
 [package.extras]
 instruments = []
@@ -1881,10 +1909,12 @@ files = []
 develop = true
 
 [package.dependencies]
-opentelemetry-api = "^1.28.0"
+opentelemetry-api = "^1.34.1"
 opentelemetry-instrumentation = ">=0.50b0"
 opentelemetry-semantic-conventions = ">=0.50b0"
 opentelemetry-semantic-conventions-ai = "0.4.9"
+protobuf = "5.29.5"
+setuptools = "78.1.1"
 
 [package.extras]
 instruments = []
@@ -1904,10 +1934,12 @@ files = []
 develop = true
 
 [package.dependencies]
-opentelemetry-api = "^1.28.0"
+opentelemetry-api = "^1.34.1"
 opentelemetry-instrumentation = ">=0.50b0"
 opentelemetry-semantic-conventions = ">=0.50b0"
 opentelemetry-semantic-conventions-ai = "0.4.9"
+protobuf = "5.29.5"
+setuptools = "78.1.1"
 
 [package.extras]
 instruments = []
@@ -1927,10 +1959,12 @@ files = []
 develop = true
 
 [package.dependencies]
-opentelemetry-api = "^1.28.0"
+opentelemetry-api = "^1.34.1"
 opentelemetry-instrumentation = ">=0.50b0"
 opentelemetry-semantic-conventions = ">=0.50b0"
 opentelemetry-semantic-conventions-ai = "0.4.9"
+protobuf = "5.29.5"
+setuptools = "78.1.1"
 
 [package.extras]
 instruments = []
@@ -1950,10 +1984,12 @@ files = []
 develop = true
 
 [package.dependencies]
-opentelemetry-api = "^1.28.0"
+opentelemetry-api = "^1.34.1"
 opentelemetry-instrumentation = ">=0.50b0"
 opentelemetry-semantic-conventions = ">=0.50b0"
 opentelemetry-semantic-conventions-ai = "0.4.9"
+protobuf = "5.29.5"
+setuptools = "78.1.1"
 tiktoken = ">=0.6.0, <1"
 
 [package.extras]
@@ -1974,10 +2010,12 @@ files = []
 develop = true
 
 [package.dependencies]
-opentelemetry-api = "^1.28.0"
+opentelemetry-api = "^1.34.1"
 opentelemetry-instrumentation = ">=0.50b0"
 opentelemetry-semantic-conventions = ">=0.50b0"
 opentelemetry-semantic-conventions-ai = "0.4.9"
+protobuf = "5.29.5"
+setuptools = "78.1.1"
 
 [package.extras]
 instruments = []
@@ -1997,10 +2035,12 @@ files = []
 develop = true
 
 [package.dependencies]
-opentelemetry-api = "^1.28.0"
+opentelemetry-api = "^1.34.1"
 opentelemetry-instrumentation = ">=0.50b0"
 opentelemetry-semantic-conventions = ">=0.50b0"
 opentelemetry-semantic-conventions-ai = "0.4.9"
+protobuf = "5.29.5"
+setuptools = "78.1.1"
 
 [package.extras]
 instruments = []
@@ -2020,10 +2060,12 @@ files = []
 develop = true
 
 [package.dependencies]
-opentelemetry-api = "^1.28.0"
+opentelemetry-api = "^1.34.1"
 opentelemetry-instrumentation = ">=0.50b0"
 opentelemetry-semantic-conventions = ">=0.50b0"
 opentelemetry-semantic-conventions-ai = "0.4.9"
+protobuf = "5.29.5"
+setuptools = "78.1.1"
 
 [package.extras]
 instruments = []
@@ -2064,10 +2106,12 @@ files = []
 develop = true
 
 [package.dependencies]
-opentelemetry-api = "^1.26.0"
+opentelemetry-api = "^1.34.1"
 opentelemetry-instrumentation = ">=0.50b0"
 opentelemetry-semantic-conventions = ">=0.50b0"
 opentelemetry-semantic-conventions-ai = "0.4.9"
+protobuf = "5.29.5"
+setuptools = "78.1.1"
 
 [package.source]
 type = "directory"
@@ -2123,10 +2167,12 @@ files = []
 develop = true
 
 [package.dependencies]
-opentelemetry-api = "^1.28.0"
+opentelemetry-api = "^1.34.1"
 opentelemetry-instrumentation = ">=0.50b0"
 opentelemetry-semantic-conventions = ">=0.50b0"
 opentelemetry-semantic-conventions-ai = "0.4.9"
+protobuf = "5.29.5"
+setuptools = "78.1.1"
 
 [package.extras]
 instruments = []
@@ -2146,10 +2192,12 @@ files = []
 develop = true
 
 [package.dependencies]
-opentelemetry-api = "^1.28.0"
+opentelemetry-api = "^1.34.1"
 opentelemetry-instrumentation = ">=0.50b0"
 opentelemetry-semantic-conventions = ">=0.50b0"
 opentelemetry-semantic-conventions-ai = "0.4.9"
+protobuf = "5.29.5"
+setuptools = "78.1.1"
 
 [package.source]
 type = "directory"
@@ -2188,10 +2236,12 @@ files = []
 develop = true
 
 [package.dependencies]
-opentelemetry-api = "^1.28.0"
+opentelemetry-api = "^1.34.1"
 opentelemetry-instrumentation = ">=0.50b0"
 opentelemetry-semantic-conventions = ">=0.50b0"
 opentelemetry-semantic-conventions-ai = "0.4.9"
+protobuf = "5.29.5"
+setuptools = "78.1.1"
 
 [package.extras]
 instruments = []
@@ -2211,10 +2261,12 @@ files = []
 develop = true
 
 [package.dependencies]
-opentelemetry-api = "^1.28.0"
+opentelemetry-api = "^1.34.1"
 opentelemetry-instrumentation = ">=0.50b0"
 opentelemetry-semantic-conventions = ">=0.50b0"
 opentelemetry-semantic-conventions-ai = "0.4.9"
+protobuf = "5.29.5"
+setuptools = "78.1.1"
 
 [package.extras]
 instruments = []
@@ -2234,10 +2286,12 @@ files = []
 develop = true
 
 [package.dependencies]
-opentelemetry-api = "^1.28.0"
+opentelemetry-api = "^1.34.1"
 opentelemetry-instrumentation = ">=0.50b0"
 opentelemetry-semantic-conventions = ">=0.50b0"
 opentelemetry-semantic-conventions-ai = "0.4.9"
+protobuf = "5.29.5"
+setuptools = "78.1.1"
 
 [package.extras]
 instruments = []
