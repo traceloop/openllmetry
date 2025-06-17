@@ -4,6 +4,7 @@ from typing import TypedDict
 from langgraph.graph import StateGraph
 from opentelemetry import trace
 from opentelemetry.semconv_ai import SpanAttributes
+from opentelemetry.trace import NonRecordingSpan
 
 
 @pytest.mark.vcr
@@ -129,10 +130,10 @@ def test_langgraph_double_invoke(exporter):
 
     from opentelemetry import trace
 
-    assert "test_langgraph_double_invoke" == trace.get_current_span().name
+    assert isinstance(trace.get_current_span(), NonRecordingSpan)
 
     graph.invoke({"result": "init"})
-    assert "test_langgraph_double_invoke" == trace.get_current_span().name
+    assert isinstance(trace.get_current_span(), NonRecordingSpan)
 
     spans = exporter.get_finished_spans()
     assert [
@@ -141,7 +142,7 @@ def test_langgraph_double_invoke(exporter):
     ] == [span.name for span in spans]
 
     graph.invoke({"result": "init"})
-    assert "test_langgraph_double_invoke" == trace.get_current_span().name
+    assert isinstance(trace.get_current_span(), NonRecordingSpan)
 
     spans = exporter.get_finished_spans()
     assert [
@@ -170,10 +171,10 @@ async def test_langgraph_double_ainvoke(exporter):
 
     graph = build_graph()
 
-    assert "test_langgraph_double_ainvoke" == trace.get_current_span().name
+    assert isinstance(trace.get_current_span(), NonRecordingSpan)
 
     await graph.ainvoke({"result": "init"})
-    assert "test_langgraph_double_ainvoke" == trace.get_current_span().name
+    assert isinstance(trace.get_current_span(), NonRecordingSpan)
 
     spans = exporter.get_finished_spans()
     assert [
@@ -182,7 +183,7 @@ async def test_langgraph_double_ainvoke(exporter):
     ] == [span.name for span in spans]
 
     await graph.ainvoke({"result": "init"})
-    assert "test_langgraph_double_ainvoke" == trace.get_current_span().name
+    assert isinstance(trace.get_current_span(), NonRecordingSpan)
 
     spans = exporter.get_finished_spans()
     assert [
