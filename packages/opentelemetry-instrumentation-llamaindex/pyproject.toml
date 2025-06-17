@@ -29,8 +29,6 @@ opentelemetry-instrumentation = ">=0.50b0"
 opentelemetry-semantic-conventions = ">=0.50b0"
 opentelemetry-semantic-conventions-ai = "0.4.9"
 inflection = "^0.5.1"
-setuptools = "78.1.1"
-protobuf = "5.29.5"
 
 [tool.poetry.group.dev.dependencies]
 autopep8 = "^2.2.0"

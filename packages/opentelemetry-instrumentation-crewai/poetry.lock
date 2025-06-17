@@ -4235,8 +4235,8 @@ version = "5.29.5"
 description = ""
 optional = false
 python-versions = ">=3.8"
-groups = ["main", "test"]
-markers = "python_version <= \"3.11\" or python_version >= \"3.12\""
+groups = ["test"]
+markers = "python_version <= \"3.11\" or python_version >= \"3.12\" and python_full_version <= \"3.13.0\""
 files = [
     {file = "protobuf-5.29.5-cp310-abi3-win32.whl", hash = "sha256:3f1c6468a2cfd102ff4703976138844f78ebd1fb45f49011afc5139e9e283079"},
     {file = "protobuf-5.29.5-cp310-abi3-win_amd64.whl", hash = "sha256:3f76e3a3675b4a4d867b52e4a5f5b78a2ef9565549d4037e06cf7b0942b1d3fc"},
@@ -5375,8 +5375,8 @@ version = "78.1.1"
 description = "Easily download, build, install, upgrade, and uninstall Python packages"
 optional = false
 python-versions = ">=3.9"
-groups = ["main", "test"]
-markers = "python_version <= \"3.11\" or python_version >= \"3.12\""
+groups = ["test"]
+markers = "python_version <= \"3.11\" or python_version >= \"3.12\" and python_full_version <= \"3.13.0\""
 files = [
     {file = "setuptools-78.1.1-py3-none-any.whl", hash = "sha256:c3a9c4211ff4c309edb8b8c4f1cbfa7ae324c4ba9f91ff254e3d305b9fd54561"},
     {file = "setuptools-78.1.1.tar.gz", hash = "sha256:fcc17fd9cd898242f6b4adfaca46137a9edef687f43e6f78469692a5e70d851d"},
@@ -6621,4 +6621,4 @@ instruments = []
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10,<4"
-content-hash = "ab8be11b73cc9193fa7189abcb0b7d69098a7f45a06c4d6f618b97a677898fc5"
+content-hash = "60b1a316ff2b425ab486cf3f70f6cfa091c83aee6ecb39f928365f8e99b9bd8d"
