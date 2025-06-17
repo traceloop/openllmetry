@@ -93,7 +93,7 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
             ):
                 _add_search_result_events(span, return_value)
         except Exception as e:
-            error_type = code_to_error_type.get(e.code, type(e).__name__)
+            error_type = code_to_error_type.get(getattr(e, 'code', None), type(e).__name__)
             span.set_attribute(ERROR_TYPE, error_type)
             raise
 
