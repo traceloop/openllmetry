@@ -25,15 +25,15 @@ include = "traceloop/sdk"
 
 [tool.poetry.dependencies]
 python = ">=3.10,<4"
-opentelemetry-api = "^1.28.0"
-opentelemetry-sdk = "^1.28.0"
-opentelemetry-exporter-otlp-proto-http = "^1.28.0"
-opentelemetry-exporter-otlp-proto-grpc = "^1.28.0"
-opentelemetry-instrumentation-logging = ">=0.50b0"
-opentelemetry-instrumentation-requests = ">=0.50b0"
-opentelemetry-instrumentation-sqlalchemy = ">=0.50b0"
-opentelemetry-instrumentation-urllib3 = ">=0.50b0"
-opentelemetry-instrumentation-threading = ">=0.50b0"
+opentelemetry-api = "^1.34.1"
+opentelemetry-sdk = "^1.34.1"
+opentelemetry-exporter-otlp-proto-http = "^1.34.1"
+opentelemetry-exporter-otlp-proto-grpc = "^1.34.1"
+opentelemetry-instrumentation-logging = ">=0.55b1"
+opentelemetry-instrumentation-requests = ">=0.55b1"
+opentelemetry-instrumentation-sqlalchemy = ">=0.55b1"
+opentelemetry-instrumentation-urllib3 = ">=0.55b1"
+opentelemetry-instrumentation-threading = ">=0.55b1"
 opentelemetry-semantic-conventions-ai = "0.4.9"
 opentelemetry-instrumentation-mistralai = { path = "../opentelemetry-instrumentation-mistralai", develop = true }
 opentelemetry-instrumentation-openai = { path = "../opentelemetry-instrumentation-openai", develop = true }
@@ -69,6 +69,8 @@ jinja2 = "^3.1.5"
 deprecated = "^1.2.14"
 posthog = ">3.0.2, <4"
 aiohttp = "^3.11.11"
+setuptools = "78.1.1"
+protobuf = "5.29.5"
 
 [tool.poetry.group.dev.dependencies]
 autopep8 = "^2.2.0"
