@@ -372,7 +372,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         self.token_histogram = token_histogram
         self.spans: dict[UUID, SpanHolder] = {}
         self.run_inline = True
-        self._instance: CallbackManager | AsyncCallbackManager = None
+        self._callback_manager: CallbackManager | AsyncCallbackManager = None
 
     @staticmethod
     def _get_name_from_callback(
@@ -444,7 +444,8 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             span = self.tracer.start_span(span_name, kind=kind)
 
         token = None
-        if self._instance and not self._instance.is_async:
+        # TODO: update this once attach/detach works properly with async callbacks
+        if self._callback_manager and not self._callback_manager.is_async:
             token = context_api.attach(set_span_in_context(span))
 
         _set_span_attribute(span, SpanAttributes.TRACELOOP_WORKFLOW_NAME, workflow_name)
