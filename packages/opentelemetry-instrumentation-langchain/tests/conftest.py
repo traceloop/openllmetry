@@ -84,12 +84,3 @@ def clear_metrics_test_context(metrics_test_context):
 
     reader.shutdown()
     provider.shutdown()
-
-
-@pytest.fixture(scope="function", autouse=True)
-def reset_span_context(request):
-    tracer = get_tracer(__name__)
-    # starts a new trace per test function
-    # this avoids mixing of trace contexts leading to flaky results
-    with tracer.start_as_current_span(request.node.name, context=set_span_in_context(None)):
-        yield
