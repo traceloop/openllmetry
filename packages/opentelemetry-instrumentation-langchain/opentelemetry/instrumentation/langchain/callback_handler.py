@@ -193,6 +193,14 @@ def _set_chat_request(
                         f"{SpanAttributes.LLM_PROMPTS}.{i}.content",
                         content,
                     )
+
+                    if msg.type == "tool":
+                        _set_span_attribute(
+                            span,
+                            f"{SpanAttributes.LLM_PROMPTS}.{i}.tool_call_id",
+                            msg.tool_call_id,
+                        )
+
                 i += 1
 
 
