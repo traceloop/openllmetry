@@ -332,6 +332,124 @@ def test_tool_message_with_tool_call_id(exporter):
 
 
 @pytest.mark.vcr
+def test_tool_message_without_tool_call_id(exporter):
+    """Test that tool_call_id attribute is not set when ToolMessage lacks tool_call_id."""
+    def sample_tool(query: str) -> str:
+        return "Tool response"
+
+    # Create a ToolMessage without tool_call_id
+    tool_message = ToolMessage(content="Tool executed successfully")
+    # Ensure tool_call_id is not set or is None
+    if hasattr(tool_message, 'tool_call_id'):
+        tool_message.tool_call_id = None
+
+    messages: list[BaseMessage] = [
+        HumanMessage(content="Use the tool"),
+        AIMessage(
+            content="",
+            tool_calls=[
+                {
+                    "name": "sample_tool",
+                    "args": {"query": "test"},
+                    "id": "call_12345",
+                    "type": "tool_call",
+                }
+            ],
+        ),
+        tool_message,
+    ]
+    
+    model = ChatOpenAI(model="gpt-4.1-nano", temperature=0)
+    model_with_tools = model.bind_tools([sample_tool])
+    model_with_tools.invoke(messages)
+    spans = exporter.get_finished_spans()
+
+    assert len(spans) == 1
+    chat_span = spans[0]
+    assert chat_span.name == "ChatOpenAI.chat"
+
+    # Verify that the tool_call_id attribute is NOT set for the ToolMessage
+    assert chat_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.2.role"] == "tool"
+    assert chat_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.2.content"] == "Tool executed successfully"
+    
+    # This attribute should not exist in the span
+    tool_call_id_key = f"{SpanAttributes.LLM_PROMPTS}.2.tool_call_id"
+    assert tool_call_id_key not in chat_span.attributes
+
+
+@pytest.mark.vcr
+def test_tool_message_with_empty_tool_call_id(exporter):
+    """Test that tool_call_id attribute is not set when ToolMessage has None or empty tool_call_id."""
+    def sample_tool(query: str) -> str:
+        return "Tool response"
+
+    # Test with None tool_call_id
+    messages_none: list[BaseMessage] = [
+        HumanMessage(content="Use the tool"),
+        AIMessage(
+            content="",
+            tool_calls=[
+                {
+                    "name": "sample_tool",
+                    "args": {"query": "test"},
+                    "id": "call_12345",
+                    "type": "tool_call",
+                }
+            ],
+        ),
+        ToolMessage(content="Tool executed successfully", tool_call_id=None),
+    ]
+    
+    model = ChatOpenAI(model="gpt-4.1-nano", temperature=0)
+    model_with_tools = model.bind_tools([sample_tool])
+    model_with_tools.invoke(messages_none)
+    spans = exporter.get_finished_spans()
+
+    assert len(spans) == 1
+    chat_span = spans[0]
+    assert chat_span.name == "ChatOpenAI.chat"
+
+    # Verify that the tool_call_id attribute is NOT set when tool_call_id is None
+    assert chat_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.2.role"] == "tool"
+    assert chat_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.2.content"] == "Tool executed successfully"
+    
+    tool_call_id_key = f"{SpanAttributes.LLM_PROMPTS}.2.tool_call_id"
+    assert tool_call_id_key not in chat_span.attributes
+
+    # Test with empty string tool_call_id
+    messages_empty: list[BaseMessage] = [
+        HumanMessage(content="Use the tool again"),
+        AIMessage(
+            content="",
+            tool_calls=[
+                {
+                    "name": "sample_tool",
+                    "args": {"query": "test2"},
+                    "id": "call_67890",
+                    "type": "tool_call",
+                }
+            ],
+        ),
+        ToolMessage(content="Tool executed again", tool_call_id=""),
+    ]
+    
+    model_with_tools.invoke(messages_empty)
+    spans_empty = exporter.get_finished_spans()
+
+    # Should now have 2 spans total
+    assert len(spans_empty) == 2
+    chat_span_empty = spans_empty[1]  # The second span
+    assert chat_span_empty.name == "ChatOpenAI.chat"
+
+    # Verify that the tool_call_id attribute is NOT set when tool_call_id is empty string
+    assert chat_span_empty.attributes[f"{SpanAttributes.LLM_PROMPTS}.2.role"] == "tool"
+    assert chat_span_empty.attributes[f"{SpanAttributes.LLM_PROMPTS}.2.content"] == "Tool executed again"
+    
+    tool_call_id_key_empty = f"{SpanAttributes.LLM_PROMPTS}.2.tool_call_id"
+    assert tool_call_id_key_empty not in chat_span_empty.attributes
+
+
+@pytest.mark.vcr
 def test_parallel_tool_calls(exporter):
     def get_weather(location: str) -> str:
         return "sunny"

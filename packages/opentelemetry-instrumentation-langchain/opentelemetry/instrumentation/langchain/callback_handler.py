@@ -194,12 +194,12 @@ def _set_chat_request(
                         content,
                     )
 
-                    if msg.type == "tool":
-                        _set_span_attribute(
-                            span,
-                            f"{SpanAttributes.LLM_PROMPTS}.{i}.tool_call_id",
-                            msg.tool_call_id,
-                        )
+                if msg.type == "tool" and hasattr(msg, "tool_call_id"):
+                    _set_span_attribute(
+                        span,
+                        f"{SpanAttributes.LLM_PROMPTS}.{i}.tool_call_id",
+                        msg.tool_call_id,
+                    )
 
                 i += 1
 
