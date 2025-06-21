@@ -1286,3 +1286,140 @@ def assert_message_in_logs(log: LogData, event_name: str, expected_content: dict
     else:
         assert log.log_record.body
         assert dict(log.log_record.body) == expected_content
+
+
+@pytest.mark.vcr
+def test_chat_history_message_dict(span_exporter, openai_client):
+    first_user_message = {
+        "role": "user",
+        "content": "Generate a random noun in Korean. Respond with just that word.",
+    }
+    second_user_message = {
+        "role": "user",
+        "content": "Now, generate a sentence using the word you just gave me.",
+    }
+    first_response = openai_client.chat.completions.create(
+        model="gpt-4.1-nano",
+        messages=[first_user_message],
+    )
+
+    second_response = openai_client.chat.completions.create(
+        model="gpt-4.1-nano",
+        messages=[
+            first_user_message,
+            {
+                "role": "assistant",
+                "content": first_response.choices[0].message.content,
+            },
+            second_user_message,
+        ],
+    )
+
+    spans = span_exporter.get_finished_spans()
+
+    assert len(spans) == 2
+    first_span = spans[0]
+    assert first_span.name == "openai.chat"
+    assert (
+        first_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
+        == first_user_message["content"]
+    )
+    assert (
+        first_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"]
+        == first_user_message["role"]
+    )
+    assert (
+        first_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"]
+        == first_response.choices[0].message.content
+    )
+    assert (
+        first_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.role"] == "assistant"
+    )
+
+    second_span = spans[1]
+    assert second_span.name == "openai.chat"
+    assert (
+        second_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
+        == first_user_message["content"]
+    )
+    assert (
+        second_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"]
+        == second_response.choices[0].message.content
+    )
+    assert (
+        second_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.content"]
+        == first_response.choices[0].message.content
+    )
+    assert second_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.role"] == "assistant"
+    assert (
+        second_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.2.content"]
+        == second_user_message["content"]
+    )
+    assert second_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.2.role"] == "user"
+
+
+@pytest.mark.vcr
+def test_chat_history_message_pydantic(span_exporter, openai_client):
+    first_user_message = {
+        "role": "user",
+        "content": "Generate a random noun in Korean. Respond with just that word.",
+    }
+    second_user_message = {
+        "role": "user",
+        "content": "Now, generate a sentence using the word you just gave me.",
+    }
+    first_response = openai_client.chat.completions.create(
+        model="gpt-4.1-nano",
+        messages=[first_user_message],
+    )
+
+    second_response = openai_client.chat.completions.create(
+        model="gpt-4.1-nano",
+        messages=[
+            first_user_message,
+            first_response.choices[0].message,
+            second_user_message,
+        ],
+    )
+
+    spans = span_exporter.get_finished_spans()
+
+    assert len(spans) == 2
+    first_span = spans[0]
+    assert first_span.name == "openai.chat"
+    assert (
+        first_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
+        == first_user_message["content"]
+    )
+    assert (
+        first_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"]
+        == first_user_message["role"]
+    )
+    assert (
+        first_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"]
+        == first_response.choices[0].message.content
+    )
+    assert (
+        first_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.role"] == "assistant"
+    )
+
+    second_span = spans[1]
+    assert second_span.name == "openai.chat"
+    assert (
+        second_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
+        == first_user_message["content"]
+    )
+    assert (
+        second_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"]
+        == second_response.choices[0].message.content
+    )
+    assert (
+        second_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.content"]
+        == first_response.choices[0].message.content
+    )
+    assert second_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.role"] == "assistant"
+    assert (
+        second_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.2.content"]
+        == second_user_message["content"]
+    )
+    assert second_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.2.role"] == "user"

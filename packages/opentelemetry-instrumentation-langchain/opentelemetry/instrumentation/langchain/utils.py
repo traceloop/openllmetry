@@ -1,5 +1,6 @@
 import dataclasses
 import datetime
+import importlib.util
 import json
 import logging
 import os
@@ -66,3 +67,7 @@ def dont_throw(func):
                 Config.exception_logger(e)
 
     return wrapper
+
+
+def is_package_available(package_name):
+    return importlib.util.find_spec(package_name) is not None

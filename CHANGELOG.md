@@ -1,3 +1,34 @@
+## v0.40.12 (2025-06-20)
+
+### Fix
+
+- **langchain**: add tool call ids to tool message in history (#3033)
+
+## v0.40.11 (2025-06-17)
+
+### Fix
+
+- **sdk**: sampling support (#3027)
+
+## v0.40.10 (2025-06-17)
+
+### Fix
+
+- **google-genai**: Add support for generate_content method in google genai models (#3014)
+
+## v0.40.9 (2025-06-10)
+
+### Fix
+
+- **langchain**: Fix missing langchain dependency for LangGraph tracing (#2988)
+
+## v0.40.8 (2025-06-09)
+
+### Fix
+
+- **openai**: dump pydantic input message (#2979)
+- **langchain**: trace langchain tool definitions (#2978)
+
 ## v0.40.7 (2025-05-20)
 
 ### Fix
