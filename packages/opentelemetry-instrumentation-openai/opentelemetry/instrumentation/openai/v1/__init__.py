@@ -16,7 +16,8 @@ from opentelemetry.instrumentation.openai.shared.embeddings_wrappers import (
     embeddings_wrapper,
 )
 from opentelemetry.instrumentation.openai.shared.image_gen_wrappers import (
-    image_gen_metrics_wrapper,
+    image_gen_wrapper,
+    aimage_gen_wrapper,
 )
 from opentelemetry.instrumentation.openai.utils import is_metrics_enabled
 from opentelemetry.instrumentation.openai.v1.assistant_wrappers import (
@@ -192,7 +193,42 @@ class OpenAIV1Instrumentor(BaseInstrumentor):
         wrap_function_wrapper(
             "openai.resources.images",
             "Images.generate",
-            image_gen_metrics_wrapper(duration_histogram, image_gen_exception_counter),
+            image_gen_wrapper(
+                tracer,
+                duration_histogram,
+                image_gen_exception_counter,
+                "openai.generate",
+            ),
+        )
+        wrap_function_wrapper(
+            "openai.resources.images",
+            "AsyncImages.generate",
+            aimage_gen_wrapper(
+                tracer,
+                duration_histogram,
+                image_gen_exception_counter,
+                "openai.generate",
+            ),
+        )
+        wrap_function_wrapper(
+            "openai.resources.images",
+            "Images.edit",
+            image_gen_wrapper(
+                tracer,
+                duration_histogram,
+                image_gen_exception_counter,
+                "openai.edit",
+            ),
+        )
+        wrap_function_wrapper(
+            "openai.resources.images",
+            "AsyncImages.edit",
+            aimage_gen_wrapper(
+                tracer,
+                duration_histogram,
+                image_gen_exception_counter,
+                "openai.edit",
+            ),
         )
 
         # Beta APIs may not be available consistently in all versions
@@ -259,7 +295,7 @@ class OpenAIV1Instrumentor(BaseInstrumentor):
         unwrap("openai.resources.completions", "AsyncCompletions.create")
         unwrap("openai.resources.embeddings", "AsyncEmbeddings.create")
         unwrap("openai.resources.images", "Images.generate")
-
+        unwrap("openai.resources.images", "AsyncImages.generate")
         # Beta APIs may not be available consistently in all versions
         try:
             unwrap("openai.resources.beta.assistants", "Assistants.create")

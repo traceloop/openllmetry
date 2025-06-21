@@ -162,6 +162,12 @@ def _set_response_attributes(span, response):
     if not usage:
         return
 
+    set_usage_attributes(span, usage)
+
+    return
+
+
+def set_usage_attributes(span, usage):
     if is_openai_v1() and not isinstance(usage, dict):
         usage = usage.__dict__
 
@@ -176,13 +182,14 @@ def _set_response_attributes(span, response):
     _set_span_attribute(
         span, SpanAttributes.LLM_USAGE_PROMPT_TOKENS, usage.get("prompt_tokens")
     )
-    prompt_tokens_details = dict(usage.get("prompt_tokens_details", {}))
+    prompt_tokens_details = dict(
+        usage.get("prompt_tokens_details" or usage.get("input_token_details" or {}))
+    )
     _set_span_attribute(
         span,
         SpanAttributes.LLM_USAGE_CACHE_READ_INPUT_TOKENS,
         prompt_tokens_details.get("cached_tokens", 0),
     )
-    return
 
 
 def _log_prompt_filter(span, response_dict):
