@@ -1,17 +1,25 @@
 import logging
 import time
+
 from opentelemetry import context as context_api
 from opentelemetry.instrumentation.openai.shared import (
     _set_span_attribute,
     model_as_dict,
 )
-from opentelemetry.trace import SpanKind
-from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
-
-from opentelemetry.semconv_ai import SpanAttributes, LLMRequestTypeValues
-
-from opentelemetry.instrumentation.openai.utils import _with_tracer_wrapper, dont_throw
 from opentelemetry.instrumentation.openai.shared.config import Config
+from opentelemetry.instrumentation.openai.shared.event_emitter import emit_event
+from opentelemetry.instrumentation.openai.shared.event_models import (
+    ChoiceEvent,
+    MessageEvent,
+)
+from opentelemetry.instrumentation.openai.utils import (
+    _with_tracer_wrapper,
+    dont_throw,
+    should_emit_events,
+)
+from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
+from opentelemetry.semconv_ai import LLMRequestTypeValues, SpanAttributes
+from opentelemetry.trace import SpanKind
 
 from openai._legacy_response import LegacyAPIResponse
 from openai.types.beta.threads.run import Run
@@ -131,17 +139,27 @@ def messages_list_wrapper(tracer, wrapped, instance, args, kwargs):
             SpanAttributes.LLM_RESPONSE_MODEL,
             assistant["model"],
         )
-        _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.{prompt_index}.role", "system")
-        _set_span_attribute(
-            span,
-            f"{SpanAttributes.LLM_PROMPTS}.{prompt_index}.content",
-            assistant["instructions"],
-        )
+        if should_emit_events():
+            emit_event(MessageEvent(content=assistant["instructions"], role="system"))
+        else:
+            _set_span_attribute(
+                span, f"{SpanAttributes.LLM_PROMPTS}.{prompt_index}.role", "system"
+            )
+            _set_span_attribute(
+                span,
+                f"{SpanAttributes.LLM_PROMPTS}.{prompt_index}.content",
+                assistant["instructions"],
+            )
         prompt_index += 1
-    _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.{prompt_index}.role", "system")
     _set_span_attribute(
-        span, f"{SpanAttributes.LLM_PROMPTS}.{prompt_index}.content", run["instructions"]
+        span, f"{SpanAttributes.LLM_PROMPTS}.{prompt_index}.role", "system"
     )
+    _set_span_attribute(
+        span,
+        f"{SpanAttributes.LLM_PROMPTS}.{prompt_index}.content",
+        run["instructions"],
+    )
+    emit_event(MessageEvent(content=run["instructions"], role="system"))
     prompt_index += 1
 
     completion_index = 0
@@ -152,13 +170,34 @@ def messages_list_wrapper(tracer, wrapped, instance, args, kwargs):
         message_content = content[0].get("text").get("value")
         message_role = msg.get("role")
         if message_role in ["user", "system"]:
-            _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.{prompt_index}.role", message_role)
-            _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.{prompt_index}.content", message_content)
+            if should_emit_events():
+                emit_event(MessageEvent(content=message_content, role=message_role))
+            else:
+                _set_span_attribute(
+                    span,
+                    f"{SpanAttributes.LLM_PROMPTS}.{prompt_index}.role",
+                    message_role,
+                )
+                _set_span_attribute(
+                    span,
+                    f"{SpanAttributes.LLM_PROMPTS}.{prompt_index}.content",
+                    message_content,
+                )
             prompt_index += 1
         else:
-            _set_span_attribute(span, f"{prefix}.role", msg.get("role"))
-            _set_span_attribute(span, f"{prefix}.content", message_content)
-            _set_span_attribute(span, f"gen_ai.response.{completion_index}.id", msg.get("id"))
+            if should_emit_events():
+                emit_event(
+                    ChoiceEvent(
+                        index=completion_index,
+                        message={"content": message_content, "role": message_role},
+                    )
+                )
+            else:
+                _set_span_attribute(span, f"{prefix}.role", msg.get("role"))
+                _set_span_attribute(span, f"{prefix}.content", message_content)
+                _set_span_attribute(
+                    span, f"gen_ai.response.{completion_index}.id", msg.get("id")
+                )
             completion_index += 1
 
     if run.get("usage"):
@@ -216,22 +255,37 @@ def runs_create_and_stream_wrapper(tracer, wrapped, instance, args, kwargs):
             SpanAttributes.LLM_RESPONSE_MODEL,
             assistants[assistant_id]["model"],
         )
+        if should_emit_events():
+            emit_event(
+                MessageEvent(
+                    content=assistants[assistant_id]["instructions"], role="system"
+                )
+            )
+        else:
+            _set_span_attribute(
+                span, f"{SpanAttributes.LLM_PROMPTS}.{i}.role", "system"
+            )
+            _set_span_attribute(
+                span,
+                f"{SpanAttributes.LLM_PROMPTS}.{i}.content",
+                assistants[assistant_id]["instructions"],
+            )
+        i += 1
+    if should_emit_events():
+        emit_event(MessageEvent(content=instructions, role="system"))
+    else:
         _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.{i}.role", "system")
         _set_span_attribute(
-            span,
-            f"{SpanAttributes.LLM_PROMPTS}.{i}.content",
-            assistants[assistant_id]["instructions"],
+            span, f"{SpanAttributes.LLM_PROMPTS}.{i}.content", instructions
         )
-        i += 1
-    _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.{i}.role", "system")
-    _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.{i}.content", instructions)
 
     from opentelemetry.instrumentation.openai.v1.event_handler_wrapper import (
         EventHandleWrapper,
     )
 
     kwargs["event_handler"] = EventHandleWrapper(
-        original_handler=kwargs["event_handler"], span=span,
+        original_handler=kwargs["event_handler"],
+        span=span,
     )
 
     response = wrapped(*args, **kwargs)

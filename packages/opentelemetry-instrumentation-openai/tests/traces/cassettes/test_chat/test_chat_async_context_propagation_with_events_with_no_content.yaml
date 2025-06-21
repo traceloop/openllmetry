@@ -1,0 +1,57 @@
+interactions:
+- request:
+    body: '{"messages": [{"role": "user", "content": "Tell me a joke about opentelemetry"}],
+      "model": "meta-llama/Llama-3.2-1B-Instruct"}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '126'
+      content-type:
+      - application/json
+      host:
+      - localhost:8000
+      traceparent:
+      - 00-3b751724494d706cee7ab0146868ded5-c75e2c7466e5fcec-01
+      user-agent:
+      - AsyncOpenAI/Python 1.51.2
+      x-stainless-arch:
+      - x64
+      x-stainless-async:
+      - async:asyncio
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - Linux
+      x-stainless-package-version:
+      - 1.51.2
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.10.12
+    method: POST
+    uri: http://localhost:8000/v1/chat/completions
+  response:
+    body:
+      string: '{"id":"chat-4db07f02ecae49cbafe1d359db1650df","object":"chat.completion","created":1732108315,"model":"meta-llama/Llama-3.2-1B-Instruct","choices":[{"index":0,"message":{"role":"assistant","content":"A
+        data scientist walks into an openTelemetry adoption meeting and says, \n\n\"I''m
+        here to help track our progress, but I''m just a trace.\"","tool_calls":[]},"logprobs":null,"finish_reason":"stop","stop_reason":null}],"usage":{"prompt_tokens":43,"total_tokens":75,"completion_tokens":32}}'
+    headers:
+      content-length:
+      - '487'
+      content-type:
+      - application/json
+      date:
+      - Wed, 20 Nov 2024 13:11:55 GMT
+      server:
+      - uvicorn
+    status:
+      code: 200
+      message: OK
+version: 1
