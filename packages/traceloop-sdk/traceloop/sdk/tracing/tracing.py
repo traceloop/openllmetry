@@ -13,6 +13,7 @@ from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import (
 )
 from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider, SpanProcessor, ReadableSpan
+from opentelemetry.sdk.trace.sampling import Sampler
 from opentelemetry.propagators.textmap import TextMapPropagator
 from opentelemetry.propagate import set_global_textmap
 from opentelemetry.sdk.trace.export import (
@@ -69,6 +70,7 @@ class TracerWrapper(object):
         processor: SpanProcessor = None,
         propagator: TextMapPropagator = None,
         exporter: SpanExporter = None,
+        sampler: Optional[Sampler] = None,
         should_enrich_metrics: bool = True,
         instruments: Optional[Set[Instruments]] = None,
         block_instruments: Optional[Set[Instruments]] = None,
@@ -82,7 +84,7 @@ class TracerWrapper(object):
 
             obj.__image_uploader = image_uploader
             obj.__resource = Resource(attributes=TracerWrapper.resource_attributes)
-            obj.__tracer_provider = init_tracer_provider(resource=obj.__resource)
+            obj.__tracer_provider = init_tracer_provider(resource=obj.__resource, sampler=sampler)
             if processor:
                 Telemetry().capture("tracer:init", {"processor": "custom"})
                 obj.__spans_processor: SpanProcessor = processor
@@ -339,12 +341,15 @@ def init_spans_exporter(api_endpoint: str, headers: Dict[str, str]) -> SpanExpor
         return GRPCExporter(endpoint=f"{api_endpoint}", headers=headers)
 
 
-def init_tracer_provider(resource: Resource) -> TracerProvider:
+def init_tracer_provider(resource: Resource, sampler: Optional[Sampler] = None) -> TracerProvider:
     provider: TracerProvider = None
     default_provider: TracerProvider = get_tracer_provider()
 
     if isinstance(default_provider, ProxyTracerProvider):
-        provider = TracerProvider(resource=resource)
+        if sampler is not None:
+            provider = TracerProvider(resource=resource, sampler=sampler)
+        else:
+            provider = TracerProvider(resource=resource)
         trace.set_tracer_provider(provider)
     elif not hasattr(default_provider, "add_span_processor"):
         logging.error(
@@ -647,7 +652,7 @@ def init_haystack_instrumentor():
 
 def init_langchain_instrumentor():
     try:
-        if is_package_installed("langchain"):
+        if is_package_installed("langchain") or is_package_installed("langgraph"):
             Telemetry().capture("instrumentation:langchain:init")
             from opentelemetry.instrumentation.langchain import LangchainInstrumentor
 
