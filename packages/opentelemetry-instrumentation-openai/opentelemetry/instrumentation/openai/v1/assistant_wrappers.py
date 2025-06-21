@@ -15,11 +15,44 @@ from opentelemetry.instrumentation.openai.shared.config import Config
 
 from openai._legacy_response import LegacyAPIResponse
 from openai.types.beta.threads.run import Run
+from openai.types.responses import Response
 
 logger = logging.getLogger(__name__)
 
 assistants = {}
 runs = {}
+
+
+@_with_tracer_wrapper
+def responses_retrieve_wrapper(tracer, wrapped, instance, args, kwargs):
+    @dont_throw
+    def process_response(response):
+        if isinstance(response, LegacyAPIResponse):
+            parsed_response = response.parse()
+        else:
+            parsed_response = response
+        assert isinstance(parsed_response, Response)
+
+        response_id = parsed_response.id
+        response_text = parsed_response.content
+
+        span = tracer.start_span(
+            "openai.response.retrieve",
+            kind=SpanKind.CLIENT,
+            attributes={SpanAttributes.LLM_REQUEST_TYPE: LLMRequestTypeValues.CHAT.value},
+        )
+
+        _set_span_attribute(span, "gen_ai.response.id", response_id)
+        _set_span_attribute(span, "gen_ai.response.content", response_text)
+        span.end()
+
+    if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
+        return wrapped(*args, **kwargs)
+
+    response = wrapped(*args, **kwargs)
+    process_response(response)
+
+    return response
 
 
 @_with_tracer_wrapper
