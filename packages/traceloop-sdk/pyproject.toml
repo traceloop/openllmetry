@@ -73,7 +73,7 @@ posthog = ">3.0.2, <4"
 aiohttp = "^3.11.11"
 
 # --- OPTIONAL INSTRUMENTATION DEPENDENCIES ---
-opentelemetry-instrumentation-mistralai = { path = "../opentelemetry-instrumentation-mistralai", develop = true, optional = true }
+opentelemetry-instrumentation-mistralai = { path = "../opentelemetry-instrumentation-mistralai", develop = true }
 opentelemetry-instrumentation-openai = { path = "../opentelemetry-instrumentation-openai", develop = true, optional = true }
 opentelemetry-instrumentation-ollama = { path = "../opentelemetry-instrumentation-ollama", develop = true, optional = true }
 opentelemetry-instrumentation-anthropic = { path = "../opentelemetry-instrumentation-anthropic", develop = true, optional = true }
