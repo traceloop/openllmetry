@@ -368,7 +368,7 @@ class GoogleGenerativeAiInstrumentor(BaseInstrumentor):
             return ["google-generativeai >= 0.5.0"]
         else:
             return []
-        
+
     def _wrapped_methods(self):
         if is_package_installed("google-genai"):
             return WRAPPED_METHODS
