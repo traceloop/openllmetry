@@ -143,19 +143,12 @@ class TracerWrapper(object):
             # this makes sure otel context is propagated so we always want it
             ThreadingInstrumentor().instrument()
 
-            instrument_set = init_instrumentations(
+            init_instrumentations(
                 should_enrich_metrics,
                 image_uploader.aupload_base64_image,
                 instruments,
                 block_instruments,
             )
-
-            if not instrument_set:
-                print(
-                    Fore.RED + "Warning: No valid instruments set. Remove 'instrument' "
-                    "argument to use all instruments, or set a valid instrument."
-                )
-                print(Fore.RESET)
 
             obj.__content_allow_list = ContentAllowList()
 
