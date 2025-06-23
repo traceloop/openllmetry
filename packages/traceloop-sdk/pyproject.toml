@@ -34,6 +34,7 @@ opentelemetry-instrumentation-requests = ">=0.50b0"
 opentelemetry-instrumentation-sqlalchemy = ">=0.50b0"
 opentelemetry-instrumentation-urllib3 = ">=0.50b0"
 opentelemetry-instrumentation-threading = ">=0.50b0"
+opentelemetry-instrumentation-redis = ">=0.50b0"
 opentelemetry-semantic-conventions-ai = "0.4.9"
 opentelemetry-instrumentation-mistralai = { path = "../opentelemetry-instrumentation-mistralai", develop = true }
 opentelemetry-instrumentation-openai = { path = "../opentelemetry-instrumentation-openai", develop = true }
@@ -69,7 +70,7 @@ jinja2 = "^3.1.5"
 deprecated = "^1.2.14"
 posthog = ">3.0.2, <4"
 aiohttp = "^3.11.11"
-httpx = "^0.25.0"
+httpx = "^0.27.0"
 
 [tool.poetry.group.dev.dependencies]
 autopep8 = "^2.2.0"

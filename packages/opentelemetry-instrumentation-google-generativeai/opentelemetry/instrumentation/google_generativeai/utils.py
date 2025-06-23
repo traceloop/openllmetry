@@ -2,6 +2,7 @@ import logging
 import traceback
 
 from opentelemetry.instrumentation.google_generativeai.config import Config
+from importlib.metadata import Distribution, distributions
 
 
 def dont_throw(func):
@@ -27,3 +28,14 @@ def dont_throw(func):
                 Config.exception_logger(e)
 
     return wrapper
+
+def _get_package_name(dist: Distribution) -> str | None:
+    try:
+        return dist.name.lower()
+    except (KeyError, AttributeError):
+        return None
+    
+installed_packages = {name for dist in distributions() if (name := _get_package_name(dist)) is not None}
+
+def is_package_installed(package_name: str) -> bool:
+    return package_name.lower() in installed_packages
