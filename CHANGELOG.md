@@ -1,3 +1,9 @@
+## v0.40.12 (2025-06-20)
+
+### Fix
+
+- **langchain**: add tool call ids to tool message in history (#3033)
+
 ## v0.40.11 (2025-06-17)
 
 ### Fix
