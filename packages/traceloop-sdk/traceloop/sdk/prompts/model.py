@@ -2,16 +2,25 @@ import datetime
 from typing import List, Literal, Optional, Union
 from typing_extensions import Annotated
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 
 class TemplateEngine:
     JINJA2 = "jinja2"
 
 
-class RegistryObjectBaseModel(BaseModel):
-    class Config:
-        arbitrary_types_allowed = True
+try:
+   # For Pydantic v2 compatibility (replaces `class Config`)
+    from pydantic import ConfigDict
+
+    class RegistryObjectBaseModel(BaseModel):
+        model_config = ConfigDict(arbitrary_types_allowed=True)
+
+except ImportError:
+    # Pydantic v1 fallback
+    class RegistryObjectBaseModel(BaseModel):
+        class Config:
+            arbitrary_types_allowed = True
 
 
 class TextContent(RegistryObjectBaseModel):
