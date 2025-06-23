@@ -114,6 +114,7 @@ def test_tool_calls_with_history(exporter):
 
     assert chat_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.3.content"] == messages[3].content
     assert chat_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.3.role"] == "tool"
+    assert chat_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.3.tool_call_id"] == messages[3].tool_call_id
 
     assert chat_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.4.content"] == messages[4].content
     assert chat_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.4.role"] == "user"
@@ -271,6 +272,7 @@ def test_tool_calls_anthropic_text_block_and_history(exporter):
 
     assert chat_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.2.role"] == "tool"
     assert chat_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.2.content"] == messages[2].content
+    assert chat_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.2.tool_call_id"] == messages[2].tool_call_id
 
     assert chat_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.role"] == "assistant"
     # Test that we write both the content and the tool calls
@@ -290,6 +292,43 @@ def test_tool_calls_anthropic_text_block_and_history(exporter):
         json.loads(chat_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.0.arguments"])
         == {"location": "San Francisco"}
     )
+
+
+@pytest.mark.vcr
+def test_tool_message_with_tool_call_id(exporter):
+    """Test that tool_call_id is properly set in span attributes for ToolMessage."""
+    def sample_tool(query: str) -> str:
+        return "Tool response"
+
+    messages: list[BaseMessage] = [
+        HumanMessage(content="Use the tool"),
+        AIMessage(
+            content="",
+            tool_calls=[
+                {
+                    "name": "sample_tool",
+                    "args": {"query": "test"},
+                    "id": "call_12345",
+                    "type": "tool_call",
+                }
+            ],
+        ),
+        ToolMessage(content="Tool executed successfully", tool_call_id="call_12345"),
+    ]
+
+    model = ChatOpenAI(model="gpt-4.1-nano", temperature=0)
+    model_with_tools = model.bind_tools([sample_tool])
+    model_with_tools.invoke(messages)
+    spans = exporter.get_finished_spans()
+
+    assert len(spans) == 1
+    chat_span = spans[0]
+    assert chat_span.name == "ChatOpenAI.chat"
+
+    # Verify that the tool_call_id is properly set for the ToolMessage
+    assert chat_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.2.role"] == "tool"
+    assert chat_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.2.content"] == "Tool executed successfully"
+    assert chat_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.2.tool_call_id"] == "call_12345"
 
 
 @pytest.mark.vcr
