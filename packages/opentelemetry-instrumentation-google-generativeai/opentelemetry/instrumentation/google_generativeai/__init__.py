@@ -365,7 +365,7 @@ class GoogleGenerativeAiInstrumentor(BaseInstrumentor):
         if is_package_installed("google-genai"):
             return ("google-genai >= 0.1.0",)
         elif is_package_installed("google-generativeai"):
-            return ["google-generativeai"]
+            return ["google-generativeai >= 0.5.0"]
         else:
             return []
         

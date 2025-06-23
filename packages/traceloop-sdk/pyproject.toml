@@ -70,10 +70,6 @@ jinja2 = "^3.1.5"
 deprecated = "^1.2.14"
 posthog = ">3.0.2, <4"
 aiohttp = "^3.11.11"
-<<<<<<< HEAD
-=======
-httpx = "^0.27.0"
->>>>>>> a83dcd82 (fix: instrumentation dependencies issue for google, ollama and redis)
 
 [tool.poetry.group.dev.dependencies]
 autopep8 = "^2.2.0"
