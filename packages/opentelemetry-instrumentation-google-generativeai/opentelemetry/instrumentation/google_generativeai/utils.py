@@ -1,5 +1,6 @@
 import logging
 import traceback
+from typing import Optional
 
 from opentelemetry.instrumentation.google_generativeai.config import Config
 from importlib.metadata import Distribution, distributions
@@ -29,7 +30,7 @@ def dont_throw(func):
 
     return wrapper
 
-def _get_package_name(dist: Distribution) -> str | None:
+def _get_package_name(dist: Distribution) -> Optional[str]:
     try:
         return dist.name.lower()
     except (KeyError, AttributeError):
