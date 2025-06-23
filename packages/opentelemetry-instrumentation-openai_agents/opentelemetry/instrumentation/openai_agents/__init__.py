@@ -1,13 +1,19 @@
 """OpenTelemetry OpenAI Agents instrumentation"""
-
+import os
+import time
 from typing import Collection
 from wrapt import wrap_function_wrapper
 from opentelemetry.trace import SpanKind, get_tracer, Tracer
 from opentelemetry.trace.status import Status, StatusCode
+from opentelemetry.metrics import Histogram, Meter, get_meter
 from opentelemetry.instrumentation.utils import unwrap
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.instrumentation.openai_agents.version import __version__
-from opentelemetry.semconv_ai import SpanAttributes
+from opentelemetry.semconv_ai import (
+    SpanAttributes,
+    TraceloopSpanKindValues,
+    Meters,
+)
 from .utils import set_span_attribute
 
 
@@ -24,8 +30,28 @@ class OpenAIAgentsInstrumentor(BaseInstrumentor):
         tracer_provider = kwargs.get("tracer_provider")
         tracer = get_tracer(__name__, __version__, tracer_provider)
 
+        meter_provider = kwargs.get("meter_provider")
+        meter = get_meter(__name__, __version__, meter_provider)
+
+        if is_metrics_enabled():
+            (
+                token_histogram,
+                duration_histogram,
+            ) = _create_metrics(meter)
+        else:
+            (
+                token_histogram,
+                duration_histogram,
+            ) = (None, None)
+
         wrap_function_wrapper(
-            "agents.run", "Runner._get_new_response", _wrap_agent_run(tracer)
+            "agents.run",
+            "Runner._get_new_response",
+            _wrap_agent_run(
+                tracer,
+                duration_histogram,
+                token_histogram,
+            ),
         )
 
     def _uninstrument(self, **kwargs):
@@ -34,9 +60,17 @@ class OpenAIAgentsInstrumentor(BaseInstrumentor):
 
 def with_tracer_wrapper(func):
 
-    def _with_tracer(tracer):
+    def _with_tracer(tracer, duration_histogram, token_histogram):
         def wrapper(wrapped, instance, args, kwargs):
-            return func(tracer, wrapped, instance, args, kwargs)
+            return func(
+                tracer,
+                duration_histogram,
+                token_histogram,
+                wrapped,
+                instance,
+                args,
+                kwargs,
+            )
 
         return wrapper
 
@@ -44,7 +78,14 @@ def with_tracer_wrapper(func):
 
 
 @with_tracer_wrapper
-async def _wrap_agent_run(tracer: Tracer, wrapped, instance, args, kwargs):
+async def _wrap_agent_run(
+    tracer: Tracer,
+    duration_histogram: Histogram,
+    token_histogram: Histogram,
+    wrapped,
+    args,
+    kwargs,
+):
     agent = args[0]
     run_config = args[7] if len(args) > 7 else None
     prompt_list = args[2] if len(args) > 2 else None
@@ -58,19 +99,33 @@ async def _wrap_agent_run(tracer: Tracer, wrapped, instance, args, kwargs):
         attributes={
             SpanAttributes.LLM_SYSTEM: "openai",
             SpanAttributes.LLM_REQUEST_MODEL: model_name,
+            SpanAttributes.TRACELOOP_SPAN_KIND: (
+                TraceloopSpanKindValues.AGENT.value
+            )
         },
     ) as span:
         try:
+
             extract_agent_details(agent, span)
             set_model_settings_span_attributes(agent, span)
             extract_run_config_details(run_config, span)
-
+            start_time = time.time()
             response = await wrapped(*args, **kwargs)
+            if duration_histogram:
+                duration_histogram.record(
+                    time.time() - start_time,
+                    attributes={
+                        SpanAttributes.LLM_SYSTEM: "openai",
+                        SpanAttributes.LLM_RESPONSE_MODEL: model_name,
 
+                    },
+                )
             if isinstance(prompt_list, list):
                 set_prompt_attributes(span, prompt_list)
             set_response_content_span_attribute(response, span)
-            set_token_usage_span_attributes(response, span)
+            set_token_usage_span_attributes(
+                response, span, model_name, token_histogram
+            )
 
             span.set_status(Status(StatusCode.OK))
             return response
@@ -209,7 +264,9 @@ def set_response_content_span_attribute(response, span):
             )
 
 
-def set_token_usage_span_attributes(response, span):
+def set_token_usage_span_attributes(
+    response, span, model_name, token_histogram
+):
     if hasattr(response, "usage"):
         usage = response.usage
         input_tokens = getattr(usage, "input_tokens", None)
@@ -234,3 +291,40 @@ def set_token_usage_span_attributes(response, span):
                 SpanAttributes.LLM_USAGE_TOTAL_TOKENS,
                 total_tokens,
             )
+        if token_histogram:
+            token_histogram.record(
+                input_tokens,
+                attributes={
+                    SpanAttributes.LLM_SYSTEM: "openai",
+                    SpanAttributes.LLM_TOKEN_TYPE: "input",
+                    SpanAttributes.LLM_RESPONSE_MODEL: model_name,
+                },
+            )
+            token_histogram.record(
+                output_tokens,
+                attributes={
+                    SpanAttributes.LLM_SYSTEM: "openai",
+                    SpanAttributes.LLM_TOKEN_TYPE: "output",
+                    SpanAttributes.LLM_RESPONSE_MODEL: model_name,
+                },
+            )
+
+
+def is_metrics_enabled() -> bool:
+    return (os.getenv("TRACELOOP_METRICS_ENABLED") or "true").lower() == "true"
+
+
+def _create_metrics(meter: Meter):
+    token_histogram = meter.create_histogram(
+        name=Meters.LLM_TOKEN_USAGE,
+        unit="token",
+        description="Measures number of input and output tokens used",
+    )
+
+    duration_histogram = meter.create_histogram(
+        name=Meters.LLM_OPERATION_DURATION,
+        unit="s",
+        description="GenAI operation duration",
+    )
+
+    return token_histogram, duration_histogram
