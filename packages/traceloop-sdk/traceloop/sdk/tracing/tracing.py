@@ -479,7 +479,8 @@ def init_instrumentations(
         print(
             Fore.RED
             + "Warning: No valid instruments set. "
-            + "Specify instruments or remove 'instruments' argument to use all instruments."
+            + "Ensure the instrumented libraries are installed, specify valid instruments, "
+            + "or remove 'instruments' argument to use all instruments."
         )
         print(Fore.RESET)
 
