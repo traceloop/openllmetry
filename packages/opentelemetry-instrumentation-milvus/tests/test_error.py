@@ -66,12 +66,12 @@ def insert_data(collection):
 def test_milvus_single_vector_search(exporter, collection):
     insert_data(collection)
 
-    bad_query_vector = [random.uniform(-1, 1) for _ in range(2)]
+    query_vector = [random.uniform(-1, 1) for _ in range(5)]
     search_params = {"radius": 0.5, "metric_type": "COSINE", "index_type": "IVF_FLAT"}
     with pytest.raises(Exception):
         milvus.search(
-            collection_name=collection,
-            data=[bad_query_vector],
+            collection_name="random",  # non-existent collection
+            data=[query_vector],
             anns_field="vector",
             search_params=search_params,
             output_fields=["color_tag"],
@@ -84,4 +84,4 @@ def test_milvus_single_vector_search(exporter, collection):
     span = next(span for span in spans if span.name == "milvus.search")
 
     # Check the span attributes related to search
-    assert span.attributes.get("error.type") == "internal_error"
+    assert span.attributes.get("error.type") == "COLLECTION_NOT_FOUND"

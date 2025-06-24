@@ -8,31 +8,16 @@ from opentelemetry.instrumentation.utils import (
 from opentelemetry.semconv_ai import Events, EventAttributes
 from opentelemetry.semconv_ai import SpanAttributes as AISpanAttributes
 
-code_to_error_type = dict(
-    [
-        (1, "invalid_arguments"),
-        (2, "empty_collection"),
-        (3, "collection_already_exists"),
-        (4, "collection_not_loaded"),
-        (5, "partition_not_loaded"),
-        (6, "segment_not_loaded"),
-        (7, "database_not_exist"),
-        (100, "collection_not_exist"),
-        (111, "partition_not_exist"),
-        (112, "index_not_exist"),
-        (2000, "internal_error"),
-        (2100, "search_execution_error"),
-        (2200, "vector_data_invalid"),
-        (3000, "timeout_error"),
-        (3100, "index_build_timeout"),
-        (3200, "query_node_timeout"),
-        (4000, "connection_failed"),
-        (4100, "channel_not_ready"),
-        (5000, "authentication_failed"),
-        (5100, "permission_denied"),
-        (5200, "token_expired"),
-    ]
-)
+from pymilvus.client.types import Status
+from pymilvus.exceptions import ErrorCode
+
+code_to_error_type = {}
+for name in dir(Status):
+    value = getattr(Status, name)
+    if isinstance(value, int):
+        code_to_error_type[value] = name
+
+code_to_error_type.update({code.value: code.name for code in ErrorCode})
 
 
 def _with_tracer_wrapper(func):
@@ -93,7 +78,9 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
             ):
                 _add_search_result_events(span, return_value)
         except Exception as e:
-            error_type = code_to_error_type.get(getattr(e, 'code', None), type(e).__name__)
+            error_type = code_to_error_type.get(
+                getattr(e, "code", None), type(e).__name__
+            )
             span.set_attribute(ERROR_TYPE, error_type)
             raise
 
