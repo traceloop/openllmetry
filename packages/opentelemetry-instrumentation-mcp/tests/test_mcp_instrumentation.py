@@ -42,15 +42,15 @@ async def test_instrumented_stream_writer_send_sets_span_attributes(tracer):
         result = "ok"
         id = "id"
         params = {}
+        
     class DummyJSONRPCMessage:
         root = DummyRequest()
     mock_writer = AsyncMock()
     mock_writer.send = AsyncMock()
     writer = InstrumentedStreamWriter(mock_writer, tracer)
     await writer.send(DummyJSONRPCMessage())
-    # Check that a span was started and attributes were set
     tracer.start_as_current_span.assert_called_with("ResponseStreamWriter")
-    span = tracer.start_as_current_span.return_value.__enter__.return_value
+    # span = tracer.start_as_current_span.return_value.__enter__.return_value
     mock_writer.send.assert_awaited()
 
 
@@ -106,18 +106,16 @@ async def test_instrumented_stream_writer_span_attributes(tracer):
         result = "result_value"
         id = "request_id"
         params = {}
+
     class DummyJSONRPCMessage:
         root = DummyRequest()
+
     mock_writer = AsyncMock()
     mock_writer.send = AsyncMock()
     writer = InstrumentedStreamWriter(mock_writer, tracer)
     await writer.send(DummyJSONRPCMessage())
     tracer.start_as_current_span.assert_called_with("ResponseStreamWriter")
-    span = tracer.start_as_current_span.return_value.__enter__.return_value
-    print(span)
-    # If your implementation sets attributes, you can check like:
-    # span.set_attribute.assert_any_call("rpc.result", "result_value")
-    # span.set_attribute.assert_any_call("rpc.request_id", "request_id")
+    # span = tracer.start_as_current_span.return_value.__enter__.return_value
     mock_writer.send.assert_awaited()
 
 
@@ -129,10 +127,7 @@ async def test_context_saving_stream_writer_span_attributes(tracer):
     dummy_item = MagicMock()
     await writer.send(dummy_item)
     tracer.start_as_current_span.assert_called_with("RequestStreamWriter")
-    span = tracer.start_as_current_span.return_value.__enter__.return_value
-    print(span)
-    # If your implementation sets attributes, you can check like:
-    # span.set_attribute.assert_any_call("rpc.request_id", dummy_item.request_id)
+    # span = tracer.start_as_current_span.return_value.__enter__.return_value
     mock_writer.send.assert_awaited()
 
 
@@ -143,5 +138,4 @@ class InstrumentedStreamWriter:
 
     async def send(self, message):
         with self._tracer.start_as_current_span("ResponseStreamWriter") as span:
-            # Optionally set attributes on span here
             await self._writer.send(message)
