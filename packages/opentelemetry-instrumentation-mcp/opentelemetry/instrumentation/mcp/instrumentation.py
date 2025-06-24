@@ -192,7 +192,7 @@ class McpInstrumentor(BaseInstrumentor):
         return traced_method
 
 def get_error_type(error_message):
-    if type(error_message) != str:
+    if not isinstance(error_message, str):
         return None
     match = re.search(r'\b(4\d{2}|5\d{2})\b', error_message)
     if match:
