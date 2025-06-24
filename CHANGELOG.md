@@ -1,3 +1,12 @@
+## v0.40.13 (2025-06-24)
+
+### Fix
+
+- **sdk**: manual report of usage data (#3045)
+- **sagemaker**: Improve _handle_call to safely parse JSON, CSV, and byte inputs (#2963)
+- **anthropic**: serialize assistant message pydantic models (#3041)
+- **sdk**: Ensure instrumentors don’t report successful init if package isn’t installed (#3043)
+
 ## v0.40.12 (2025-06-20)
 
 ### Fix
