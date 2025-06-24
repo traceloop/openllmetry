@@ -1,40 +1,39 @@
 from typing import Collection
 
+from opentelemetry._events import get_event_logger
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
-from opentelemetry.trace import get_tracer
-
-from opentelemetry.metrics import get_meter
-from opentelemetry.semconv._incubating.metrics import gen_ai_metrics as GenAIMetrics
-
-from wrapt import wrap_function_wrapper
-
 from opentelemetry.instrumentation.openai.shared.chat_wrappers import (
-    chat_wrapper,
     achat_wrapper,
+    chat_wrapper,
 )
 from opentelemetry.instrumentation.openai.shared.completion_wrappers import (
-    completion_wrapper,
     acompletion_wrapper,
+    completion_wrapper,
 )
+from opentelemetry.instrumentation.openai.shared.config import Config
 from opentelemetry.instrumentation.openai.shared.embeddings_wrappers import (
-    embeddings_wrapper,
     aembeddings_wrapper,
+    embeddings_wrapper,
 )
 from opentelemetry.instrumentation.openai.shared.image_gen_wrappers import (
-    image_gen_metrics_wrapper,
+    image_gen_wrapper,
+    aimage_gen_wrapper,
 )
+from opentelemetry.instrumentation.openai.utils import is_metrics_enabled
 from opentelemetry.instrumentation.openai.v1.assistant_wrappers import (
     assistants_create_wrapper,
+    messages_list_wrapper,
+    runs_create_and_stream_wrapper,
     runs_create_wrapper,
     runs_retrieve_wrapper,
-    runs_create_and_stream_wrapper,
-    messages_list_wrapper,
 )
-
-from opentelemetry.instrumentation.openai.utils import is_metrics_enabled
 from opentelemetry.instrumentation.openai.version import __version__
-
+from opentelemetry.instrumentation.utils import unwrap
+from opentelemetry.metrics import get_meter
+from opentelemetry.semconv._incubating.metrics import gen_ai_metrics as GenAIMetrics
 from opentelemetry.semconv_ai import Meters
+from opentelemetry.trace import get_tracer
+from wrapt import wrap_function_wrapper
 
 _instruments = ("openai >= 1.0.0",)
 
@@ -50,6 +49,12 @@ class OpenAIV1Instrumentor(BaseInstrumentor):
         # meter and counters are inited here
         meter_provider = kwargs.get("meter_provider")
         meter = get_meter(__name__, __version__, meter_provider)
+
+        if not Config.use_legacy_attributes:
+            event_logger_provider = kwargs.get("event_logger_provider")
+            Config.event_logger = get_event_logger(
+                __name__, __version__, event_logger_provider=event_logger_provider
+            )
 
         if is_metrics_enabled():
             tokens_histogram = meter.create_histogram(
@@ -188,7 +193,42 @@ class OpenAIV1Instrumentor(BaseInstrumentor):
         wrap_function_wrapper(
             "openai.resources.images",
             "Images.generate",
-            image_gen_metrics_wrapper(duration_histogram, image_gen_exception_counter),
+            image_gen_wrapper(
+                tracer,
+                duration_histogram,
+                image_gen_exception_counter,
+                "openai.generate",
+            ),
+        )
+        wrap_function_wrapper(
+            "openai.resources.images",
+            "AsyncImages.generate",
+            aimage_gen_wrapper(
+                tracer,
+                duration_histogram,
+                image_gen_exception_counter,
+                "openai.generate",
+            ),
+        )
+        wrap_function_wrapper(
+            "openai.resources.images",
+            "Images.edit",
+            image_gen_wrapper(
+                tracer,
+                duration_histogram,
+                image_gen_exception_counter,
+                "openai.edit",
+            ),
+        )
+        wrap_function_wrapper(
+            "openai.resources.images",
+            "AsyncImages.edit",
+            aimage_gen_wrapper(
+                tracer,
+                duration_histogram,
+                image_gen_exception_counter,
+                "openai.edit",
+            ),
         )
 
         # Beta APIs may not be available consistently in all versions
@@ -248,4 +288,22 @@ class OpenAIV1Instrumentor(BaseInstrumentor):
             pass
 
     def _uninstrument(self, **kwargs):
-        pass
+        unwrap("openai.resources.chat.completions", "Completions.create")
+        unwrap("openai.resources.completions", "Completions.create")
+        unwrap("openai.resources.embeddings", "Embeddings.create")
+        unwrap("openai.resources.chat.completions", "AsyncCompletions.create")
+        unwrap("openai.resources.completions", "AsyncCompletions.create")
+        unwrap("openai.resources.embeddings", "AsyncEmbeddings.create")
+        unwrap("openai.resources.images", "Images.generate")
+        unwrap("openai.resources.images", "AsyncImages.generate")
+        # Beta APIs may not be available consistently in all versions
+        try:
+            unwrap("openai.resources.beta.assistants", "Assistants.create")
+            unwrap("openai.resources.beta.chat.completions", "Completions.parse")
+            unwrap("openai.resources.beta.chat.completions", "AsyncCompletions.parse")
+            unwrap("openai.resources.beta.threads.runs", "Runs.create")
+            unwrap("openai.resources.beta.threads.runs", "Runs.retrieve")
+            unwrap("openai.resources.beta.threads.runs", "Runs.create_and_stream")
+            unwrap("openai.resources.beta.threads.messages", "Messages.list")
+        except ImportError:
+            pass

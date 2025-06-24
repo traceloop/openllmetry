@@ -2,47 +2,56 @@ import copy
 import json
 import logging
 import time
-from opentelemetry.instrumentation.openai.shared.config import Config
-from wrapt import ObjectProxy
-
+from functools import singledispatch
+from typing import List, Optional, Union
 
 from opentelemetry import context as context_api
-from opentelemetry.metrics import Counter, Histogram
-from opentelemetry.semconv_ai import (
-    SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
-    SpanAttributes,
-    LLMRequestTypeValues,
+from opentelemetry.instrumentation.openai.shared import (
+    OPENAI_LLM_USAGE_TOKEN_TYPES,
+    _get_openai_base_url,
+    _set_client_attributes,
+    _set_functions_attributes,
+    _set_request_attributes,
+    _set_response_attributes,
+    _set_span_attribute,
+    _set_span_stream_usage,
+    _token_type,
+    get_token_count_from_string,
+    is_streaming_response,
+    metric_shared_attributes,
+    model_as_dict,
+    propagate_trace_context,
+    set_tools_attributes,
+    should_record_stream_token_usage,
 )
-
-from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
+from opentelemetry.instrumentation.openai.shared.config import Config
+from opentelemetry.instrumentation.openai.shared.event_emitter import emit_event
+from opentelemetry.instrumentation.openai.shared.event_models import (
+    ChoiceEvent,
+    MessageEvent,
+    ToolCall,
+)
 from opentelemetry.instrumentation.openai.utils import (
     _with_chat_telemetry_wrapper,
     dont_throw,
+    is_openai_v1,
     run_async,
-)
-from opentelemetry.instrumentation.openai.shared import (
-    metric_shared_attributes,
-    _set_client_attributes,
-    _set_request_attributes,
-    _set_span_attribute,
-    _set_functions_attributes,
-    _token_type,
-    set_tools_attributes,
-    _set_response_attributes,
-    is_streaming_response,
+    should_emit_events,
     should_send_prompts,
-    model_as_dict,
-    _get_openai_base_url,
-    OPENAI_LLM_USAGE_TOKEN_TYPES,
-    should_record_stream_token_usage,
-    get_token_count_from_string,
-    _set_span_stream_usage,
-    propagate_trace_context,
+)
+from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
+from opentelemetry.metrics import Counter, Histogram
+from opentelemetry.semconv_ai import (
+    SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
+    LLMRequestTypeValues,
+    SpanAttributes,
 )
 from opentelemetry.trace import SpanKind, Tracer
 from opentelemetry.trace.status import Status, StatusCode
+from wrapt import ObjectProxy
 
-from opentelemetry.instrumentation.openai.utils import is_openai_v1
+from openai.types.chat import ChatCompletionMessageToolCall
+from openai.types.chat.chat_completion_message import FunctionCall
 
 SPAN_NAME = "openai.chat"
 PROMPT_FILTER_KEY = "prompt_filter_results"
@@ -143,6 +152,7 @@ def chat_wrapper(
         duration_histogram,
         duration,
     )
+
     span.end()
 
     return response
@@ -172,6 +182,7 @@ async def achat_wrapper(
         kind=SpanKind.CLIENT,
         attributes={SpanAttributes.LLM_REQUEST_TYPE: LLM_REQUEST_TYPE.value},
     )
+
     await _handle_request(span, kwargs, instance)
 
     try:
@@ -238,6 +249,7 @@ async def achat_wrapper(
         duration_histogram,
         duration,
     )
+
     span.end()
 
     return response
@@ -247,12 +259,22 @@ async def achat_wrapper(
 async def _handle_request(span, kwargs, instance):
     _set_request_attributes(span, kwargs)
     _set_client_attributes(span, instance)
-    if should_send_prompts():
-        await _set_prompts(span, kwargs.get("messages"))
-        if kwargs.get("functions"):
-            _set_functions_attributes(span, kwargs.get("functions"))
-        elif kwargs.get("tools"):
-            set_tools_attributes(span, kwargs.get("tools"))
+    if should_emit_events():
+        for message in kwargs.get("messages", []):
+            emit_event(
+                MessageEvent(
+                    content=message.get("content"),
+                    role=message.get("role"),
+                    tool_calls=_parse_tool_calls(message.get("tool_calls", None)),
+                )
+            )
+    else:
+        if should_send_prompts():
+            await _set_prompts(span, kwargs.get("messages"))
+            if kwargs.get("functions"):
+                _set_functions_attributes(span, kwargs.get("functions"))
+            elif kwargs.get("tools"):
+                set_tools_attributes(span, kwargs.get("tools"))
     if Config.enable_trace_context_propagation:
         propagate_trace_context(span, kwargs)
 
@@ -285,8 +307,13 @@ def _handle_response(
     # span attributes
     _set_response_attributes(span, response_dict)
 
-    if should_send_prompts():
-        _set_completions(span, response_dict.get("choices"))
+    if should_emit_events():
+        if response.choices is not None:
+            for choice in response.choices:
+                emit_event(_parse_choice_event(choice))
+    else:
+        if should_send_prompts():
+            _set_completions(span, response_dict.get("choices"))
 
     return response
 
@@ -528,14 +555,14 @@ def _set_streaming_token_metrics(
 
     # metrics record
     if token_counter:
-        if type(prompt_usage) is int and prompt_usage >= 0:
+        if isinstance(prompt_usage, int) and prompt_usage >= 0:
             attributes_with_token_type = {
                 **shared_attributes,
                 SpanAttributes.LLM_TOKEN_TYPE: "input",
             }
             token_counter.record(prompt_usage, attributes=attributes_with_token_type)
 
-        if type(completion_usage) is int and completion_usage >= 0:
+        if isinstance(completion_usage, int) and completion_usage >= 0:
             attributes_with_token_type = {
                 **shared_attributes,
                 SpanAttributes.LLM_TOKEN_TYPE: "output",
@@ -609,7 +636,7 @@ class ChatStream(ObjectProxy):
             chunk = self.__wrapped__.__next__()
         except Exception as e:
             if isinstance(e, StopIteration):
-                self._close_span()
+                self._process_complete_response()
             raise e
         else:
             self._process_item(chunk)
@@ -620,7 +647,7 @@ class ChatStream(ObjectProxy):
             chunk = await self.__wrapped__.__anext__()
         except Exception as e:
             if isinstance(e, StopAsyncIteration):
-                self._close_span()
+                self._process_complete_response()
             raise e
         else:
             self._process_item(chunk)
@@ -650,7 +677,7 @@ class ChatStream(ObjectProxy):
         )
 
     @dont_throw
-    def _close_span(self):
+    def _process_complete_response(self):
         _set_streaming_token_metrics(
             self._request_kwargs,
             self._complete_response,
@@ -683,9 +710,12 @@ class ChatStream(ObjectProxy):
             )
 
         _set_response_attributes(self._span, self._complete_response)
-
-        if should_send_prompts():
-            _set_completions(self._span, self._complete_response.get("choices"))
+        if should_emit_events():
+            for choice in self._complete_response.get("choices", []):
+                emit_event(_parse_choice_event(choice))
+        else:
+            if should_send_prompts():
+                _set_completions(self._span, self._complete_response.get("choices"))
 
         self._span.set_status(Status(StatusCode.OK))
         self._span.end()
@@ -753,9 +783,12 @@ def _build_from_streaming_response(
         streaming_time_to_generate.record(time.time() - time_of_first_token)
 
     _set_response_attributes(span, complete_response)
-
-    if should_send_prompts():
-        _set_completions(span, complete_response.get("choices"))
+    if should_emit_events():
+        for choice in complete_response.get("choices", []):
+            emit_event(_parse_choice_event(choice))
+    else:
+        if should_send_prompts():
+            _set_completions(span, complete_response.get("choices"))
 
     span.set_status(Status(StatusCode.OK))
     span.end()
@@ -820,12 +853,111 @@ async def _abuild_from_streaming_response(
         streaming_time_to_generate.record(time.time() - time_of_first_token)
 
     _set_response_attributes(span, complete_response)
-
-    if should_send_prompts():
-        _set_completions(span, complete_response.get("choices"))
+    if should_emit_events():
+        for choice in complete_response.get("choices", []):
+            emit_event(_parse_choice_event(choice))
+    else:
+        if should_send_prompts():
+            _set_completions(span, complete_response.get("choices"))
 
     span.set_status(Status(StatusCode.OK))
     span.end()
+
+
+def _parse_tool_calls(
+    tool_calls: Optional[List[Union[dict, ChatCompletionMessageToolCall]]],
+) -> Union[List[ToolCall], None]:
+    """
+    Util to correctly parse the tool calls data from the OpenAI API to this module's
+    standard `ToolCall`.
+    """
+    if tool_calls is None:
+        return tool_calls
+
+    result = []
+
+    for tool_call in tool_calls:
+        tool_call_data = None
+
+        # Handle dict or ChatCompletionMessageToolCall
+        if isinstance(tool_call, dict):
+            tool_call_data = copy.deepcopy(tool_call)
+        elif isinstance(tool_call, ChatCompletionMessageToolCall):
+            tool_call_data = tool_call.model_dump()
+        elif isinstance(tool_call, FunctionCall):
+            function_call = tool_call.model_dump()
+            tool_call_data = ToolCall(
+                id="",
+                function={
+                    "name": function_call.get("name"),
+                    "arguments": function_call.get("arguments"),
+                },
+                type="function",
+            )
+
+        result.append(tool_call_data)
+    return result
+
+
+@singledispatch
+def _parse_choice_event(choice) -> ChoiceEvent:
+    has_message = choice.message is not None
+    has_finish_reason = choice.finish_reason is not None
+    has_tool_calls = has_message and choice.message.tool_calls
+    has_function_call = has_message and choice.message.function_call
+
+    content = choice.message.content if has_message else None
+    role = choice.message.role if has_message else "unknown"
+    finish_reason = choice.finish_reason if has_finish_reason else "unknown"
+
+    if has_tool_calls and has_function_call:
+        tool_calls = choice.message.tool_calls + [choice.message.function_call]
+    elif has_tool_calls:
+        tool_calls = choice.message.tool_calls
+    elif has_function_call:
+        tool_calls = [choice.message.function_call]
+    else:
+        tool_calls = None
+
+    return ChoiceEvent(
+        index=choice.index,
+        message={"content": content, "role": role},
+        finish_reason=finish_reason,
+        tool_calls=_parse_tool_calls(tool_calls),
+    )
+
+
+@_parse_choice_event.register
+def _(choice: dict) -> ChoiceEvent:
+    message = choice.get("message")
+    has_message = message is not None
+    has_finish_reason = choice.get("finish_reason") is not None
+    has_tool_calls = has_message and message.get("tool_calls")
+    has_function_call = has_message and message.get("function_call")
+
+    content = choice.get("message").get("content", "") if has_message else None
+    role = choice.get("message").get("role") if has_message else "unknown"
+    finish_reason = choice.get("finish_reason") if has_finish_reason else "unknown"
+
+    if has_tool_calls and has_function_call:
+        tool_calls = message.get("tool_calls") + [message.get("function_call")]
+    elif has_tool_calls:
+        tool_calls = message.get("tool_calls")
+    elif has_function_call:
+        tool_calls = [message.get("function_call")]
+    else:
+        tool_calls = None
+
+    if tool_calls is not None:
+        for tool_call in tool_calls:
+            tool_call["type"] = "function"
+
+    return ChoiceEvent(
+        index=choice.get("index"),
+        message={"content": content, "role": role},
+        finish_reason=finish_reason,
+        tool_calls=tool_calls,
+    )
 
 
 def _accumulate_stream_items(item, complete_response):
