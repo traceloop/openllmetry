@@ -1,3 +1,9 @@
+## v0.40.14 (2025-06-24)
+
+### Fix
+
+- instrumentation dependencies issue for google, ollama and redis (#3044)
+
 ## v0.40.13 (2025-06-24)
 
 ### Fix
