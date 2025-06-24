@@ -1064,9 +1064,8 @@ def metrics_common_attributes():
     association_properties = get_value("association_properties")
     if association_properties is not None:
         for key, value in association_properties.items():
-            if value is not None:
-                common_attributes[
-                    f"{SpanAttributes.TRACELOOP_ASSOCIATION_PROPERTIES}.{key}"
-                ] = value if isinstance(value, (bool, str, bytes, int, float)) else str(value)
+            common_attributes[
+                f"{SpanAttributes.TRACELOOP_ASSOCIATION_PROPERTIES}.{key}"
+            ] = value
 
     return common_attributes

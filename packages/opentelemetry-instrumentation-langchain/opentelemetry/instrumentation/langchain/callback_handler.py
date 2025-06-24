@@ -444,7 +444,10 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             span = self.tracer.start_span(span_name, kind=kind)
 
         token = None
-        # TODO: update this once attach/detach works properly with async callbacks
+        # TODO: make this unconditional once attach/detach works properly with async callbacks.
+        # Currently, it doesn't work due to this - https://github.com/langchain-ai/langchain/issues/31398
+        # As a sidenote, OTel Python users also report similar issues -
+        # https://github.com/open-telemetry/opentelemetry-python/issues/2606
         if self._callback_manager and not self._callback_manager.is_async:
             token = context_api.attach(set_span_in_context(span))
 

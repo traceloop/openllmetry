@@ -196,6 +196,9 @@ class _BaseCallbackManagerInitWrapper:
             if isinstance(handler, type(self._callback_handler)):
                 break
         else:
+            # Add a property to the handler which indicates the CallbackManager instance.
+            # Since the CallbackHandler only propagates context for sync callbacks,
+            # we need a way to determine the type of CallbackManager being wrapped.
             self._callback_handler._callback_manager = instance
             instance.add_handler(self._callback_handler, True)
 
