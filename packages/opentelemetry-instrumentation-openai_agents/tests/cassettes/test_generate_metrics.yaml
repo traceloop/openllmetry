@@ -1,0 +1,61 @@
+interactions:
+- request:
+    body: '{"model": "llama3-70b-8192", "messages": [{"content": "You are a helpful
+      assistant that answers all questions", "role": "system"}, {"role": "user", "content":
+      "What is AI?"}], "temperature": 0.3, "top_p": 0.2, "stream": false, "max_tokens":
+      1024, "frequency_penalty": 1.3}'
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '272'
+      content-type:
+      - application/json
+      host:
+      - api.groq.com
+      user-agent:
+      - Agents/Python 0.0.16
+    method: POST
+    uri: https://api.groq.com/openai/v1/chat/completions
+  response:
+    body:
+      string: '{"error":{"message":"Invalid API Key","type":"invalid_request_error","code":"invalid_api_key"}}
+
+        '
+    headers:
+      CF-RAY:
+      - 9551e266fdf648ec-BOM
+      Cache-Control:
+      - private, max-age=0, no-store, no-cache, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '96'
+      Content-Type:
+      - application/json
+      Date:
+      - Wed, 25 Jun 2025 04:57:29 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=DFnz2ky9ourC2shy79y_lPU7Rj991Ljluo3Txy99CDo-1750827449-1.0.1.1-jQUahPanxrJxOa.O7Kjd1f5_xBGz_6xfc5AhzP7dznMM4Q1jTq2wUbDomibeGMyAQvgrROGzQIrz0878E2bVSCWYPf2PgfExU.S3T_uJZq4;
+        path=/; expires=Wed, 25-Jun-25 05:27:29 GMT; domain=.groq.com; HttpOnly; Secure;
+        SameSite=None
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      vary:
+      - Origin
+      x-groq-region:
+      - gcp-asia-south1
+      x-request-id:
+      - req_01jyjq5f45e3bvq1vp9m4pwapx
+    status:
+      code: 401
+      message: Unauthorized
+version: 1
