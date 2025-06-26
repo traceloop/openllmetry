@@ -97,7 +97,7 @@ class MilvusInstrumentor(BaseInstrumentor):
             distance_metric = meter.create_histogram(
                 Meters.MILVUS_DB_SEARCH_DISTANCE,
                 "",
-                "Cosine distance between search query vector and matched vectors",
+                "Distance between search query vector and matched vectors",
             )
             insert_units_metric = meter.create_counter(
                 Meters.MILVUS_DB_USAGE_INSERT_UNITS,

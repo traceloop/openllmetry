@@ -124,7 +124,7 @@ def _wrap(
 
         if return_value and span.is_recording():
             if method == "search" or method == "hybrid_search":
-                set_search_response(span, distance_metric, shared_attributes, return_value)
+                set_search_response(distance_metric, shared_attributes, return_value)
 
             _set_response_attributes(
                 span,
