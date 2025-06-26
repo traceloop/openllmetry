@@ -85,3 +85,8 @@ def test_agent():
 @pytest.fixture(scope="module")
 def vcr_config():
     return {"filter_headers": ["authorization", "api-key"]}
+
+
+@pytest.fixture(scope='module')
+def vcr_cassette_options():
+    return {'record_mode': 'once'}
