@@ -91,4 +91,98 @@ interactions:
     status:
       code: 200
       message: OK
+- request:
+    body: '{"model": "llama3-70b-8192", "messages": [{"content": "You are a helpful
+      assistant that answers all questions", "role": "system"}, {"role": "user", "content":
+      "What is AI?"}], "temperature": 0.3, "top_p": 0.2, "stream": false, "max_tokens":
+      1024, "frequency_penalty": 1.3}'
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '272'
+      content-type:
+      - application/json
+      host:
+      - api.groq.com
+      user-agent:
+      - Agents/Python 0.0.16
+    method: POST
+    uri: https://api.groq.com/openai/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA5RWTY/bRgy991ewc2oD2fDXrj8uhZEgrYGiKJoAPXQLgx7R0sQjjnaG8q4S7H8v
+        KFleI00PvUkUh3x8fOToi3G52Rhbotiq9qP7FS2OB3sYzdc0GS3y2XyEqzWNcDmjPMe7xWI+MZkJ
+        h09k5XJwbENVexIX2GTGRkKh3Gymy7vJerK6m6wzU4WcvNkY77HC+Wg5OYxW0/VM3cvgLCWz+euL
+        cZzTs9lMMlNRSliQ2XwxMXgyG4MpuSTIomcCC7Gm30ZxR2cdetixkPeuILYEP2x3P0KkI8UEEkBK
+        gpzO5ENdEQuEIyjmRihCapNQlUBKFLDIUFM8hliBYDpdzNLWzqL3LUR6bFwkKJsKGdxNzgxSY0vA
+        tHngB56O4c2bXwkjOy7evNnAdnfNpEm8foJjDBXkKJiBy4nFHVuoUYQipwyQc3BVHcOZtAIXB2io
+        JYYzRRBX0fiBZ5rtD8IU/iNdhSdlwLrkgoZOwZ8J6hgOnqpLqjziE9jA1jedFxwwUQ6BO4SdS2w8
+        pfEDzzXf7xQt1dr1byRUZmIdSbpzDecUtXt5H6urOxGnENOVN3AVFqTvNZEte1BCzzJWQj+WBEVA
+        r73b7sB1fe21BhXa0jHd9FBKx6cM0Eofpqfbu9OlcymDQyPw5KTsxIEH5520GrOOwVJKcMYkgFVo
+        WJIm7YBXCvWISYWjcasQCdDaJqKQbwekaowEic4U0at8KPXAM3BKcO64eNXJbxhjeIIQ4U/CE2x3
+        Sug7Sq5gyjtMF0micmNV8Z06X6mrPbaOC7AlpZRBJBsKdp/VdESrpIYIEpGTR1GrRy4apXtQz8/E
+        HdYQ4YPEwMUFxtZVt1TjQPa/5wW5vQwEWWm0bEyn3g0v82KRXzHHQa/ZIMSRyrIzXHvmuBj09qGp
+        Kd5OXAcPyrYOUpLogKoyuoQugbKnTCGLb/tGvR4WdeOu9QdKcoFXOc5T9qqKOuia0eUi4TIy/ap7
+        vo5On67XlJbHoZfrdgclJqiUFKxr7yxKN1SO4YzRhUYf8yZJdNqeb6jiF0IvpcXYFfrOYcEhuZSB
+        aCu6PVZ7ZL4SVlNMgdG7z5RDRbmzjq/b4b1jvHD2PmKTQ05CVjFlEF06AaZEKWnYS7QQ5Ri8C1oE
+        FqRfhlZ8VCWpA17Hv5HAodKyzlQ666kDikfV6muAPnQMjRCEWlzlPnchxg+80MBvmyShoggfKJ5d
+        D/dtiXIIkjI4u9gJ63oXXDZX0i51hCCjb5NTVd918doDxUS2iU5aDfaxVPJui3cssVt4UEc6ayS1
+        druXbbeVIVKqAye6LqKv7pJ+H+XRnYnh0ALmZ+W6a/YwLoOaM8iJ6ptXzcQojQ7fMJXDEuocnkpn
+        SyDGg79ddeHrO+R/3BcPvIMy1OrmEpTk6/Q9vAvQhgZKPFM3yzpVER4bSr1y8RAage3uJ/OSGR8K
+        HYFkNtx4n5mjY5fKfT/TZmOShNq8/J2ZZrjHHxtqaK8AzGYyntwtluv5dLrKTB1DVctewok4mc3s
+        xjQ4TyaL5Xo1m+vVP/xqXA/Ml1/Zu1PT8eT+bjldzFb3mZEg6K8HFpPp1XT1vZ+uF9PJ+uWCeH+I
+        hKc8PPFQYX+77Y+OC73ZXPf/caz3eb5Amtq79dRk5nlfxPCo5Xa/VZEe95Ppp5YXx2XBx3y5qleL
+        x9mZqVrHwry8fPcPAAAA//8DAJnLmkeACQAA
+    headers:
+      CF-RAY:
+      - 95599d6978e7480b-BOM
+      Cache-Control:
+      - private, max-age=0, no-store, no-cache, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 26 Jun 2025 03:28:30 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=uOKhNVcrSUIHZEp8i3kVXVZVCT1bD6npx4UdFCz0z8w-1750908510-1.0.1.1-dgtpCONtAph3YqI8Jn_fcQLnLUBIq52rGV0o5nPUJ1ZjQNhTaWhL8pAG71aw5G3_3HEPC1.jbkx4iH4Tmu1.96UVfFRk8HWoIl9hN7ObfDM;
+        path=/; expires=Thu, 26-Jun-25 03:58:30 GMT; domain=.groq.com; HttpOnly; Secure;
+        SameSite=None
+      Transfer-Encoding:
+      - chunked
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      vary:
+      - Origin
+      x-groq-region:
+      - bom
+      x-ratelimit-limit-requests:
+      - '14400'
+      x-ratelimit-limit-tokens:
+      - '6000'
+      x-ratelimit-remaining-requests:
+      - '14399'
+      x-ratelimit-remaining-tokens:
+      - '5975'
+      x-ratelimit-reset-requests:
+      - 6s
+      x-ratelimit-reset-tokens:
+      - 250ms
+      x-request-id:
+      - req_01jyn4f7gnfd78p84q2vnem9rg
+    status:
+      code: 200
+      message: OK
 version: 1
