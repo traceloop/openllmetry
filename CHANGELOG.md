@@ -1,3 +1,57 @@
+## v0.40.14 (2025-06-24)
+
+### Fix
+
+- instrumentation dependencies issue for google, ollama and redis (#3044)
+
+## v0.40.13 (2025-06-24)
+
+### Fix
+
+- **sdk**: manual report of usage data (#3045)
+- **sagemaker**: Improve _handle_call to safely parse JSON, CSV, and byte inputs (#2963)
+- **anthropic**: serialize assistant message pydantic models (#3041)
+- **sdk**: Ensure instrumentors don’t report successful init if package isn’t installed (#3043)
+
+## v0.40.12 (2025-06-20)
+
+### Fix
+
+- **langchain**: add tool call ids to tool message in history (#3033)
+
+## v0.40.11 (2025-06-17)
+
+### Fix
+
+- **sdk**: sampling support (#3027)
+
+## v0.40.10 (2025-06-17)
+
+### Fix
+
+- **google-genai**: Add support for generate_content method in google genai models (#3014)
+
+## v0.40.9 (2025-06-10)
+
+### Fix
+
+- **langchain**: Fix missing langchain dependency for LangGraph tracing (#2988)
+
+## v0.40.8 (2025-06-09)
+
+### Fix
+
+- **openai**: dump pydantic input message (#2979)
+- **langchain**: trace langchain tool definitions (#2978)
+
+## v0.40.7 (2025-05-20)
+
+### Fix
+
+- **mcp**: Added support for newer version of MCP (#2956)
+- **gemini**: proper chat support (#2948)
+- **milvus**: Add instrumentation for pymilvus MilvusClient hybrid search operation (#2945)
+
 ## v0.40.6 (2025-05-16)
 
 ### Fix
