@@ -3,10 +3,8 @@ from unittest.mock import MagicMock
 from opentelemetry.instrumentation.openai_agents import (
     OpenAIAgentsInstrumentor,
 )
-from agents import Agent, Runner
+from agents import Runner
 from unittest.mock import AsyncMock, patch
-from agents.extensions.models.litellm_model import LitellmModel
-from agents import ModelSettings
 from opentelemetry.semconv_ai import SpanAttributes, Meters
 
 
@@ -73,17 +71,8 @@ def test_groq_agent_spans(exporter, test_agent):
 
 
 @pytest.mark.vcr
-def test_generate_metrics(metrics_test_context):
-    test_agent = Agent(
-        name="GroqAgent",
-        instructions="You are a helpful assistant that answers all questions",
-        model=LitellmModel(
-            model="groq/llama3-70b-8192",
-        ),
-        model_settings=ModelSettings(
-            temperature=0.3, max_tokens=1024, top_p=0.2, frequency_penalty=1.3
-        ),
-    )
+def test_generate_metrics(metrics_test_context, test_agent):
+
     provider, reader = metrics_test_context
 
     query = "What is AI?"
