@@ -45,11 +45,6 @@ def environment():
         os.environ["GROQ_API_KEY"] = "api-key"
 
 
-@pytest.fixture(scope="module")
-def vcr_config():
-    return {"filter_headers": ["authorization", "api-key"]}
-
-
 @pytest.fixture(autouse=True)
 def clear_exporter(exporter):
     exporter.clear()
@@ -85,3 +80,8 @@ def test_agent():
         ),
     )
     return test_agent
+
+
+@pytest.fixture(scope="module")
+def vcr_config():
+    return {"filter_headers": ["authorization", "api-key"]}
