@@ -95,7 +95,7 @@ class McpInstrumentor(BaseInstrumentor):
             lambda _: wrap_function_wrapper(
                 "mcp.client.streamable_http", "streamablehttp_client", self._transport_wrapper(tracer)
             ),
-            "mcp.client.streamablehttp_client",
+            "mcp.client.streamable_http",
         )
         register_post_import_hook(
             lambda _: wrap_function_wrapper(
