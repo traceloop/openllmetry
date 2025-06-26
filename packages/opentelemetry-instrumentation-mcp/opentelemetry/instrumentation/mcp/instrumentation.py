@@ -91,6 +91,20 @@ class McpInstrumentor(BaseInstrumentor):
             ),
             "mcp.server.session",
         )
+        register_post_import_hook(
+            lambda _: wrap_function_wrapper(
+                "mcp.client.streamable_http", "streamablehttp_client", self._transport_wrapper(tracer)
+            ),
+            "mcp.client.streamablehttp_client",
+        )
+        register_post_import_hook(
+            lambda _: wrap_function_wrapper(
+                "mcp.server.streamable_http",
+                "StreamableHTTPServerTransport.connect",
+                self._transport_wrapper(tracer),
+            ),
+            "mcp.server.streamable_http",
+        )
         wrap_function_wrapper(
             "mcp.shared.session",
             "BaseSession.send_request",
