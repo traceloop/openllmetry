@@ -73,7 +73,7 @@ def test_agent():
         name="GroqAgent",
         instructions="You are a helpful assistant that answers all questions",
         model=LitellmModel(
-            model="groq/llama3-70b-8192", api_key=os.environ["GROQ_API_KEY"]
+            model="groq/llama3-70b-8192",
         ),
         model_settings=ModelSettings(
             temperature=0.3, max_tokens=1024, top_p=0.2, frequency_penalty=1.3
