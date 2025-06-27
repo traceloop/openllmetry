@@ -178,12 +178,13 @@ class McpInstrumentor(BaseInstrumentor):
                         serialize(result),
                     )
                     if hasattr(result, "isError") and result.isError:
-                        span.set_status(
-                            Status(StatusCode.ERROR, f"{result.content[0].text}")
-                        )
-                        span.set_attribute(
-                            ERROR_TYPE, get_error_type(result.content[0].text)
-                        )
+                        if len(result.content) > 0:
+                            span.set_status(
+                                Status(StatusCode.ERROR, f"{result.content[0].text}")
+                            )
+                            span.set_attribute(
+                                ERROR_TYPE, get_error_type(result.content[0].text)
+                            )
                     else:
                         span.set_status(Status(StatusCode.OK))
                     return result
@@ -330,10 +331,9 @@ class InstrumentedStreamWriter(ObjectProxy):  # type: ignore
                                 f"{request.result['content'][0]['text']}",
                             )
                         )
-                        span.set_attribute(
-                            ERROR_TYPE,
-                            get_error_type(request.result["content"][0]["text"]),
-                        )
+                        error_type = get_error_type(request.result["content"][0]["text"])
+                        if error_type is not None:
+                            span.set_attribute(ERROR_TYPE,error_type)
             if hasattr(request, "id"):
                 span.set_attribute(SpanAttributes.MCP_REQUEST_ID, f"{request.id}")
 
