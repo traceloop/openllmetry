@@ -494,7 +494,9 @@ def init_openai_instrumentor(
     should_enrich_metrics: bool, base64_image_uploader: Callable[[str, str, str], str]
 ):
     try:
-        if is_package_installed("openai"):
+        if is_package_installed("openai") and is_package_installed(
+            "opentelemetry-instrumentation-openai"
+        ):
             Telemetry().capture("instrumentation:openai:init")
             from opentelemetry.instrumentation.openai import OpenAIInstrumentor
 
@@ -519,7 +521,9 @@ def init_anthropic_instrumentor(
     should_enrich_metrics: bool, base64_image_uploader: Callable[[str, str, str], str]
 ):
     try:
-        if is_package_installed("anthropic"):
+        if is_package_installed("anthropic") and is_package_installed(
+            "opentelemetry-instrumentation-anthropic"
+        ):
             Telemetry().capture("instrumentation:anthropic:init")
             from opentelemetry.instrumentation.anthropic import AnthropicInstrumentor
 
@@ -540,7 +544,9 @@ def init_anthropic_instrumentor(
 
 def init_cohere_instrumentor():
     try:
-        if is_package_installed("cohere"):
+        if is_package_installed("cohere") and is_package_installed(
+            "opentelemetry-instrumentation-cohere"
+        ):
             Telemetry().capture("instrumentation:cohere:init")
             from opentelemetry.instrumentation.cohere import CohereInstrumentor
 
@@ -558,7 +564,9 @@ def init_cohere_instrumentor():
 
 def init_pinecone_instrumentor():
     try:
-        if is_package_installed("pinecone"):
+        if is_package_installed("pinecone") and is_package_installed(
+            "opentelemetry-instrumentation-pinecone"
+        ):
             Telemetry().capture("instrumentation:pinecone:init")
             from opentelemetry.instrumentation.pinecone import PineconeInstrumentor
 
@@ -576,7 +584,9 @@ def init_pinecone_instrumentor():
 
 def init_qdrant_instrumentor():
     try:
-        if is_package_installed("qdrant_client"):
+        if is_package_installed("qdrant_client") and is_package_installed(
+            "opentelemetry-instrumentation-qdrant"
+        ):
             Telemetry().capture("instrumentation:qdrant:init")
             from opentelemetry.instrumentation.qdrant import QdrantInstrumentor
 
@@ -594,7 +604,9 @@ def init_qdrant_instrumentor():
 
 def init_chroma_instrumentor():
     try:
-        if is_package_installed("chromadb"):
+        if is_package_installed("chromadb") and is_package_installed(
+            "opentelemetry-instrumentation-chromadb"
+        ):
             Telemetry().capture("instrumentation:chromadb:init")
             from opentelemetry.instrumentation.chromadb import ChromaInstrumentor
 
@@ -632,7 +644,9 @@ def init_google_generativeai_instrumentor():
 
 def init_haystack_instrumentor():
     try:
-        if is_package_installed("haystack"):
+        if is_package_installed("haystack") and is_package_installed(
+            "opentelemetry-instrumentation-haystack"
+        ):
             Telemetry().capture("instrumentation:haystack:init")
             from opentelemetry.instrumentation.haystack import HaystackInstrumentor
 
@@ -650,7 +664,9 @@ def init_haystack_instrumentor():
 
 def init_langchain_instrumentor():
     try:
-        if is_package_installed("langchain") or is_package_installed("langgraph"):
+        if (
+            is_package_installed("langchain") or is_package_installed("langgraph")
+        ) and is_package_installed("opentelemetry-instrumentation-langchain"):
             Telemetry().capture("instrumentation:langchain:init")
             from opentelemetry.instrumentation.langchain import LangchainInstrumentor
 
@@ -668,7 +684,9 @@ def init_langchain_instrumentor():
 
 def init_mistralai_instrumentor():
     try:
-        if is_package_installed("mistralai"):
+        if is_package_installed("mistralai") and is_package_installed(
+            "opentelemetry-instrumentation-mistralai"
+        ):
             Telemetry().capture("instrumentation:mistralai:init")
             from opentelemetry.instrumentation.mistralai import MistralAiInstrumentor
 
@@ -686,7 +704,9 @@ def init_mistralai_instrumentor():
 
 def init_ollama_instrumentor():
     try:
-        if is_package_installed("ollama"):
+        if is_package_installed("ollama") and is_package_installed(
+            "opentelemetry-instrumentation-ollama"
+        ):
             Telemetry().capture("instrumentation:ollama:init")
             from opentelemetry.instrumentation.ollama import OllamaInstrumentor
 
@@ -704,7 +724,9 @@ def init_ollama_instrumentor():
 
 def init_transformers_instrumentor():
     try:
-        if is_package_installed("transformers"):
+        if is_package_installed("transformers") and is_package_installed(
+            "opentelemetry-instrumentation-transformers"
+        ):
             Telemetry().capture("instrumentation:transformers:init")
             from opentelemetry.instrumentation.transformers import (
                 TransformersInstrumentor,
@@ -724,7 +746,9 @@ def init_transformers_instrumentor():
 
 def init_together_instrumentor():
     try:
-        if is_package_installed("together"):
+        if is_package_installed("together") and is_package_installed(
+            "opentelemetry-instrumentation-together"
+        ):
             Telemetry().capture("instrumentation:together:init")
             from opentelemetry.instrumentation.together import TogetherAiInstrumentor
 
@@ -742,7 +766,9 @@ def init_together_instrumentor():
 
 def init_llama_index_instrumentor():
     try:
-        if is_package_installed("llama-index") or is_package_installed("llama_index"):
+        if (is_package_installed("llama-index") or is_package_installed("llama_index")) and is_package_installed(
+            "opentelemetry-instrumentation-llamaindex"
+        ):
             Telemetry().capture("instrumentation:llamaindex:init")
             from opentelemetry.instrumentation.llamaindex import LlamaIndexInstrumentor
 
@@ -760,7 +786,9 @@ def init_llama_index_instrumentor():
 
 def init_milvus_instrumentor():
     try:
-        if is_package_installed("pymilvus"):
+        if is_package_installed("pymilvus") and is_package_installed(
+            "opentelemetry-instrumentation-milvus"
+        ):
             Telemetry().capture("instrumentation:milvus:init")
             from opentelemetry.instrumentation.milvus import MilvusInstrumentor
 
@@ -823,7 +851,9 @@ def init_pymysql_instrumentor():
 
 def init_bedrock_instrumentor(should_enrich_metrics: bool):
     try:
-        if is_package_installed("boto3"):
+        if is_package_installed("boto3") and is_package_installed(
+            "opentelemetry-instrumentation-bedrock"
+        ):
             from opentelemetry.instrumentation.bedrock import BedrockInstrumentor
 
             instrumentor = BedrockInstrumentor(
@@ -841,7 +871,9 @@ def init_bedrock_instrumentor(should_enrich_metrics: bool):
 
 def init_sagemaker_instrumentor(should_enrich_metrics: bool):
     try:
-        if is_package_installed("boto3"):
+        if is_package_installed("boto3") and is_package_installed(
+            "opentelemetry-instrumentation-sagemaker"
+        ):
             from opentelemetry.instrumentation.sagemaker import SageMakerInstrumentor
 
             instrumentor = SageMakerInstrumentor(
@@ -859,7 +891,9 @@ def init_sagemaker_instrumentor(should_enrich_metrics: bool):
 
 def init_replicate_instrumentor():
     try:
-        if is_package_installed("replicate"):
+        if is_package_installed("replicate") and is_package_installed(
+            "opentelemetry-instrumentation-replicate"
+        ):
             Telemetry().capture("instrumentation:replicate:init")
             from opentelemetry.instrumentation.replicate import ReplicateInstrumentor
 
@@ -877,7 +911,9 @@ def init_replicate_instrumentor():
 
 def init_vertexai_instrumentor():
     try:
-        if is_package_installed("google-cloud-aiplatform"):
+        if is_package_installed("google-cloud-aiplatform") and is_package_installed(
+            "opentelemetry-instrumentation-vertexai"
+        ):
             Telemetry().capture("instrumentation:vertexai:init")
             from opentelemetry.instrumentation.vertexai import VertexAIInstrumentor
 
@@ -895,8 +931,10 @@ def init_vertexai_instrumentor():
 
 def init_watsonx_instrumentor():
     try:
-        if is_package_installed("ibm-watsonx-ai") or is_package_installed(
+        if (is_package_installed("ibm-watsonx-ai") or is_package_installed(
             "ibm_watson_machine_learning"
+        )) and is_package_installed(
+            "opentelemetry-instrumentation-watsonx"
         ):
             Telemetry().capture("instrumentation:watsonx:init")
             from opentelemetry.instrumentation.watsonx import WatsonxInstrumentor
@@ -915,7 +953,9 @@ def init_watsonx_instrumentor():
 
 def init_weaviate_instrumentor():
     try:
-        if is_package_installed("weaviate"):
+        if is_package_installed("weaviate") and is_package_installed(
+            "opentelemetry-instrumentation-weaviate"
+        ):
             Telemetry().capture("instrumentation:weaviate:init")
             from opentelemetry.instrumentation.weaviate import WeaviateInstrumentor
 
@@ -933,7 +973,9 @@ def init_weaviate_instrumentor():
 
 def init_alephalpha_instrumentor():
     try:
-        if is_package_installed("aleph_alpha_client"):
+        if is_package_installed("aleph_alpha_client") and is_package_installed(
+            "opentelemetry-instrumentation-alephalpha"
+        ):
             Telemetry().capture("instrumentation:alephalpha:init")
             from opentelemetry.instrumentation.alephalpha import AlephAlphaInstrumentor
 
@@ -951,7 +993,9 @@ def init_alephalpha_instrumentor():
 
 def init_marqo_instrumentor():
     try:
-        if is_package_installed("marqo"):
+        if is_package_installed("marqo") and is_package_installed(
+            "opentelemetry-instrumentation-marqo"
+        ):
             Telemetry().capture("instrumentation:marqo:init")
             from opentelemetry.instrumentation.marqo import MarqoInstrumentor
 
@@ -969,7 +1013,9 @@ def init_marqo_instrumentor():
 
 def init_lancedb_instrumentor():
     try:
-        if is_package_installed("lancedb"):
+        if is_package_installed("lancedb") and is_package_installed(
+            "opentelemetry-instrumentation-lancedb"
+        ):
             Telemetry().capture("instrumentation:lancedb:init")
             from opentelemetry.instrumentation.lancedb import LanceInstrumentor
 
@@ -1002,7 +1048,9 @@ def init_redis_instrumentor():
 
 def init_groq_instrumentor():
     try:
-        if is_package_installed("groq"):
+        if is_package_installed("groq") and is_package_installed(
+            "opentelemetry-instrumentation-groq"
+        ):
             Telemetry().capture("instrumentation:groq:init")
             from opentelemetry.instrumentation.groq import GroqInstrumentor
 
@@ -1020,7 +1068,9 @@ def init_groq_instrumentor():
 
 def init_crewai_instrumentor():
     try:
-        if is_package_installed("crewai"):
+        if is_package_installed("crewai") and is_package_installed(
+            "opentelemetry-instrumentation-crewai"
+        ):
             Telemetry().capture("instrumentation:crewai:init")
             from opentelemetry.instrumentation.crewai import CrewAIInstrumentor
 
@@ -1038,7 +1088,9 @@ def init_crewai_instrumentor():
 
 def init_mcp_instrumentor():
     try:
-        if is_package_installed("mcp"):
+        if is_package_installed("mcp") and is_package_installed(
+            "opentelemetry-instrumentation-mcp"
+        ):
             Telemetry().capture("instrumentation:mcp:init")
             from opentelemetry.instrumentation.mcp import McpInstrumentor
 
