@@ -1931,7 +1931,7 @@ url = "../opentelemetry-instrumentation-milvus"
 name = "opentelemetry-instrumentation-mistralai"
 version = "0.43.1"
 description = "OpenTelemetry Mistral AI instrumentation"
-optional = false
+optional = true
 python-versions = ">=3.9,<4"
 groups = ["main"]
 markers = "extra == \"mistralai\" or extra == \"all\""
