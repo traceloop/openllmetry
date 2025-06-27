@@ -333,7 +333,7 @@ class InstrumentedStreamWriter(ObjectProxy):  # type: ignore
                         )
                         error_type = get_error_type(request.result["content"][0]["text"])
                         if error_type is not None:
-                            span.set_attribute(ERROR_TYPE,error_type)
+                            span.set_attribute(ERROR_TYPE, error_type)
             if hasattr(request, "id"):
                 span.set_attribute(SpanAttributes.MCP_REQUEST_ID, f"{request.id}")
 
