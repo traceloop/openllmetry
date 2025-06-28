@@ -1,3 +1,36 @@
+## v0.40.14 (2025-06-24)
+
+### Fix
+
+- instrumentation dependencies issue for google, ollama and redis (#3044)
+
+## v0.40.13 (2025-06-24)
+
+### Fix
+
+- **sdk**: manual report of usage data (#3045)
+- **sagemaker**: Improve _handle_call to safely parse JSON, CSV, and byte inputs (#2963)
+- **anthropic**: serialize assistant message pydantic models (#3041)
+- **sdk**: Ensure instrumentors don’t report successful init if package isn’t installed (#3043)
+
+## v0.40.12 (2025-06-20)
+
+### Fix
+
+- **langchain**: add tool call ids to tool message in history (#3033)
+
+## v0.40.11 (2025-06-17)
+
+### Fix
+
+- **sdk**: sampling support (#3027)
+
+## v0.40.10 (2025-06-17)
+
+### Fix
+
+- **google-genai**: Add support for generate_content method in google genai models (#3014)
+
 ## v0.40.9 (2025-06-10)
 
 ### Fix
