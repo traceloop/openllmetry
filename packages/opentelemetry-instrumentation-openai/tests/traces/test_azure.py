@@ -525,7 +525,10 @@ def test_chat_streaming_with_events_with_content(
         "index": 0,
         "finish_reason": "stop",
         "message": {
-            "content": "Why did the Opentelemetry developer bring a ladder to the coding competition? \n\nBecause they wanted to reach new traces!",
+            "content": (
+                "Why did the Opentelemetry developer bring a ladder to the coding "
+                "competition? \n\nBecause they wanted to reach new traces!"
+            ),
         },
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
@@ -692,7 +695,10 @@ async def test_chat_async_streaming_with_events_with_content(
         "index": 0,
         "finish_reason": "stop",
         "message": {
-            "content": "Why did the OpenTelemetry project become a stand-up comedian?\n\nBecause it wanted to trace its steps and observe its laughter-per-minute rate!",
+            "content": (
+                "Why did the OpenTelemetry project become a stand-up comedian?\n\n"
+                "Because it wanted to trace its steps and observe its laughter-per-minute rate!"
+            ),
         },
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)

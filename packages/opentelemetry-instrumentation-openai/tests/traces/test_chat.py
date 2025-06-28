@@ -677,7 +677,10 @@ def test_chat_streaming_with_events_with_content(
         "index": 0,
         "finish_reason": "stop",
         "message": {
-            "content": "Why did the opentelemetry developer go broke? \nBecause they kept trying to trace their steps back too far!",
+            "content": (
+                "Why did the opentelemetry developer go broke? \n"
+                "Because they kept trying to trace their steps back too far!"
+            ),
         },
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
@@ -850,7 +853,8 @@ async def test_chat_async_streaming_with_events_with_content(
         "index": 0,
         "finish_reason": "stop",
         "message": {
-            "content": "Why did the developer break up with Opentelemetry? Because it couldn't handle the baggage of all their tracing requests!",
+            "content": "Why did the developer break up with Opentelemetry? "
+            "Because it couldn't handle the baggage of all their tracing requests!",
         },
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
@@ -981,7 +985,10 @@ def test_with_asyncio_run_with_events_with_content(
         "index": 0,
         "finish_reason": "stop",
         "message": {
-            "content": "Why did the developer bring a compass to the Opentelemetry party? \nTo ensure they didn't lose track of all their traces!",
+            "content": (
+                "Why did the developer bring a compass to the Opentelemetry party? \n"
+                "To ensure they didn't lose track of all their traces!"
+            ),
         },
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
@@ -1101,7 +1108,10 @@ def test_chat_context_propagation_with_events_with_content(
         "index": 0,
         "finish_reason": "stop",
         "message": {
-            "content": 'Why did the OpenTelemetry metric go to therapy?\n\nBecause it was feeling a little "trapped" in its logging function, and wanted to "release" its stress.',
+            "content": (
+                "Why did the OpenTelemetry metric go to therapy?\n\n"
+                'Because it was feeling a little "trapped" in its logging function, and wanted to "release" its stress.'
+            ),
         },
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
@@ -1227,7 +1237,10 @@ async def test_chat_async_context_propagation_with_events_with_content(
         "index": 0,
         "finish_reason": "stop",
         "message": {
-            "content": "A data scientist walks into an openTelemetry adoption meeting and says, \n\n\"I'm here to help track our progress, but I'm just a trace.\"",
+            "content": (
+                "A data scientist walks into an openTelemetry adoption meeting and says, \n\n"
+                "\"I'm here to help track our progress, but I'm just a trace.\""
+            ),
         },
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
