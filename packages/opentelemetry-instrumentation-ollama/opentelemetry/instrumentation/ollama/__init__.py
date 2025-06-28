@@ -40,7 +40,7 @@ from wrapt import wrap_function_wrapper
 
 logger = logging.getLogger(__name__)
 
-_instruments = ("ollama >= 0.2.0, < 1",)
+_instruments = ("ollama >= 0.4.0, < 1",)
 
 WRAPPED_METHODS = [
     {
