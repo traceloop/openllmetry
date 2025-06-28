@@ -3,19 +3,37 @@ import pydantic
 import re
 import time
 
+# Conditional imports for backward compatibility
+try:
+    from openai.types.responses import (
+        FunctionToolParam,
+        Response,
+        ResponseInputItemParam,
+        ResponseInputParam,
+        ResponseOutputItem,
+        ResponseUsage,
+        ToolParam,
+    )
+    from openai.types.responses.response_output_message_param import (
+        ResponseOutputMessageParam,
+    )
+    RESPONSES_AVAILABLE = True
+except ImportError:
+    # Fallback types for older OpenAI SDK versions
+    from typing import Any, Dict, List, Union
+
+    # Create basic fallback types
+    FunctionToolParam = Dict[str, Any]
+    Response = Any
+    ResponseInputItemParam = Dict[str, Any]
+    ResponseInputParam = Union[str, List[Dict[str, Any]]]
+    ResponseOutputItem = Dict[str, Any]
+    ResponseUsage = Dict[str, Any]
+    ToolParam = Dict[str, Any]
+    ResponseOutputMessageParam = Dict[str, Any]
+    RESPONSES_AVAILABLE = False
+
 from openai._legacy_response import LegacyAPIResponse
-from openai.types.responses import (
-    FunctionToolParam,
-    Response,
-    ResponseInputItemParam,
-    ResponseInputParam,
-    ResponseOutputItem,
-    ResponseUsage,
-    ToolParam,
-)
-from openai.types.responses.response_output_message_param import (
-    ResponseOutputMessageParam,
-)
 from opentelemetry import context as context_api
 from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
 from opentelemetry.semconv_ai import SpanAttributes
@@ -55,7 +73,10 @@ def prepare_input_param(input_param: ResponseInputItemParam) -> ResponseInputIte
         d = model_as_dict(input_param)
         if "type" not in d:
             d["type"] = "message"
-        return ResponseInputItemParam(**d)
+        if RESPONSES_AVAILABLE:
+            return ResponseInputItemParam(**d)
+        else:
+            return d
     except Exception:
         return input_param
 
@@ -79,8 +100,12 @@ def is_validator_iterator(content):
 
 # OpenAI API accepts output messages without an ID in its inputs, but
 # the ID is marked as required in the output type.
-class ResponseOutputMessageParamWithoutId(ResponseOutputMessageParam):
-    id: NotRequired[str]
+if RESPONSES_AVAILABLE:
+    class ResponseOutputMessageParamWithoutId(ResponseOutputMessageParam):
+        id: NotRequired[str]
+else:
+    # Fallback for older SDK versions
+    ResponseOutputMessageParamWithoutId = dict
 
 
 class TracedData(pydantic.BaseModel):
@@ -117,7 +142,10 @@ def get_tools_from_kwargs(kwargs: dict) -> list[ToolParam]:
 
     for tool in tools_input:
         if tool.get("type") == "function":
-            tools.append(FunctionToolParam(**tool))
+            if RESPONSES_AVAILABLE:
+                tools.append(FunctionToolParam(**tool))
+            else:
+                tools.append(tool)
 
     return tools
 

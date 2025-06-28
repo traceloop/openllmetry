@@ -42,6 +42,7 @@ from opentelemetry.semconv_ai import Meters
 from opentelemetry.trace import get_tracer
 from wrapt import wrap_function_wrapper
 
+
 _instruments = ("openai >= 1.0.0",)
 
 
@@ -347,5 +348,11 @@ class OpenAIV1Instrumentor(BaseInstrumentor):
             unwrap("openai.resources.beta.threads.runs", "Runs.retrieve")
             unwrap("openai.resources.beta.threads.runs", "Runs.create_and_stream")
             unwrap("openai.resources.beta.threads.messages", "Messages.list")
+            unwrap("openai.resources.responses", "Responses.create")
+            unwrap("openai.resources.responses", "Responses.retrieve")
+            unwrap("openai.resources.responses", "Responses.cancel")
+            unwrap("openai.resources.responses", "AsyncResponses.create")
+            unwrap("openai.resources.responses", "AsyncResponses.retrieve")
+            unwrap("openai.resources.responses", "AsyncResponses.cancel")
         except ImportError:
             pass
