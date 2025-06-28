@@ -41,6 +41,22 @@ class OpenAIV1Instrumentor(BaseInstrumentor):
     def instrumentation_dependencies(self) -> Collection[str]:
         return _instruments
 
+    def _try_wrap(self, module, function, wrapper):
+        """
+        Wrap a function if it exists, otherwise do nothing.
+        This is useful for handling cases where the function is not available in
+        the older versions of the library.
+
+        Args:
+            module (str): The module to wrap, e.g. "openai.resources.chat.completions"
+            function (str): "Object.function" to wrap, e.g. "Completions.parse"
+            wrapper (callable): The wrapper to apply to the function.
+        """
+        try:
+            wrap_function_wrapper(module, function, wrapper)
+        except (AttributeError, ModuleNotFoundError):
+            pass
+
     def _instrument(self, **kwargs):
         tracer_provider = kwargs.get("tracer_provider")
         tracer = get_tracer(__name__, __version__, tracer_provider)
@@ -179,6 +195,33 @@ class OpenAIV1Instrumentor(BaseInstrumentor):
                 embeddings_exception_counter,
             ),
         )
+        # in newer versions, Completions.parse are out of beta
+        self._try_wrap(
+            "openai.resources.chat.completions",
+            "Completions.parse",
+            chat_wrapper(
+                tracer,
+                tokens_histogram,
+                chat_choice_counter,
+                duration_histogram,
+                chat_exception_counter,
+                streaming_time_to_first_token,
+                streaming_time_to_generate,
+            ),
+        )
+        self._try_wrap(
+            "openai.resources.chat.completions",
+            "AsyncCompletions.parse",
+            achat_wrapper(
+                tracer,
+                tokens_histogram,
+                chat_choice_counter,
+                duration_histogram,
+                chat_exception_counter,
+                streaming_time_to_first_token,
+                streaming_time_to_generate,
+            ),
+        )
 
         if is_metrics_enabled():
             image_gen_exception_counter = meter.create_counter(
@@ -196,60 +239,57 @@ class OpenAIV1Instrumentor(BaseInstrumentor):
         )
 
         # Beta APIs may not be available consistently in all versions
-        try:
-            wrap_function_wrapper(
-                "openai.resources.beta.assistants",
-                "Assistants.create",
-                assistants_create_wrapper(tracer),
-            )
-            wrap_function_wrapper(
-                "openai.resources.beta.chat.completions",
-                "Completions.parse",
-                chat_wrapper(
-                    tracer,
-                    tokens_histogram,
-                    chat_choice_counter,
-                    duration_histogram,
-                    chat_exception_counter,
-                    streaming_time_to_first_token,
-                    streaming_time_to_generate,
-                ),
-            )
-            wrap_function_wrapper(
-                "openai.resources.beta.chat.completions",
-                "AsyncCompletions.parse",
-                achat_wrapper(
-                    tracer,
-                    tokens_histogram,
-                    chat_choice_counter,
-                    duration_histogram,
-                    chat_exception_counter,
-                    streaming_time_to_first_token,
-                    streaming_time_to_generate,
-                ),
-            )
-            wrap_function_wrapper(
-                "openai.resources.beta.threads.runs",
-                "Runs.create",
-                runs_create_wrapper(tracer),
-            )
-            wrap_function_wrapper(
-                "openai.resources.beta.threads.runs",
-                "Runs.retrieve",
-                runs_retrieve_wrapper(tracer),
-            )
-            wrap_function_wrapper(
-                "openai.resources.beta.threads.runs",
-                "Runs.create_and_stream",
-                runs_create_and_stream_wrapper(tracer),
-            )
-            wrap_function_wrapper(
-                "openai.resources.beta.threads.messages",
-                "Messages.list",
-                messages_list_wrapper(tracer),
-            )
-        except (AttributeError, ModuleNotFoundError):
-            pass
+        self._try_wrap(
+            "openai.resources.beta.assistants",
+            "Assistants.create",
+            assistants_create_wrapper(tracer),
+        )
+        self._try_wrap(
+            "openai.resources.beta.chat.completions",
+            "Completions.parse",
+            chat_wrapper(
+                tracer,
+                tokens_histogram,
+                chat_choice_counter,
+                duration_histogram,
+                chat_exception_counter,
+                streaming_time_to_first_token,
+                streaming_time_to_generate,
+            ),
+        )
+        self._try_wrap(
+            "openai.resources.beta.chat.completions",
+            "AsyncCompletions.parse",
+            achat_wrapper(
+                tracer,
+                tokens_histogram,
+                chat_choice_counter,
+                duration_histogram,
+                chat_exception_counter,
+                streaming_time_to_first_token,
+                streaming_time_to_generate,
+            ),
+        )
+        self._try_wrap(
+            "openai.resources.beta.threads.runs",
+            "Runs.create",
+            runs_create_wrapper(tracer),
+        )
+        self._try_wrap(
+            "openai.resources.beta.threads.runs",
+            "Runs.retrieve",
+            runs_retrieve_wrapper(tracer),
+        )
+        self._try_wrap(
+            "openai.resources.beta.threads.runs",
+            "Runs.create_and_stream",
+            runs_create_and_stream_wrapper(tracer),
+        )
+        self._try_wrap(
+            "openai.resources.beta.threads.messages",
+            "Messages.list",
+            messages_list_wrapper(tracer),
+        )
 
     def _uninstrument(self, **kwargs):
         unwrap("openai.resources.chat.completions", "Completions.create")
