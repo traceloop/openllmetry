@@ -44,6 +44,16 @@ class OpenAIV1Instrumentor(BaseInstrumentor):
         return _instruments
 
     def _try_wrap(self, module, function, wrapper):
+        """
+        Wrap a function if it exists, otherwise do nothing.
+        This is useful for handling cases where the function is not available in
+        the older versions of the library.
+
+        Args:
+            module (str): The module to wrap, e.g. "openai.resources.chat.completions"
+            function (str): "Object.function" to wrap, e.g. "Completions.parse"
+            wrapper (callable): The wrapper to apply to the function.
+        """
         try:
             wrap_function_wrapper(module, function, wrapper)
         except (AttributeError, ModuleNotFoundError):
