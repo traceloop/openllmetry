@@ -26,6 +26,14 @@ from opentelemetry.instrumentation.openai.v1.assistant_wrappers import (
     runs_create_wrapper,
     runs_retrieve_wrapper,
 )
+
+from opentelemetry.instrumentation.openai.v1.responses_wrappers import (
+    async_responses_cancel_wrapper,
+    async_responses_get_or_create_wrapper,
+    responses_cancel_wrapper,
+    responses_get_or_create_wrapper,
+)
+
 from opentelemetry.instrumentation.openai.version import __version__
 from opentelemetry.instrumentation.utils import unwrap
 from opentelemetry.metrics import get_meter
@@ -289,6 +297,36 @@ class OpenAIV1Instrumentor(BaseInstrumentor):
             "openai.resources.beta.threads.messages",
             "Messages.list",
             messages_list_wrapper(tracer),
+        )
+        self._try_wrap(
+            "openai.resources.responses",
+            "Responses.create",
+            responses_get_or_create_wrapper(tracer),
+        )
+        self._try_wrap(
+            "openai.resources.responses",
+            "Responses.retrieve",
+            responses_get_or_create_wrapper(tracer),
+        )
+        self._try_wrap(
+            "openai.resources.responses",
+            "Responses.cancel",
+            responses_cancel_wrapper(tracer),
+        )
+        self._try_wrap(
+            "openai.resources.responses",
+            "AsyncResponses.create",
+            async_responses_get_or_create_wrapper(tracer),
+        )
+        self._try_wrap(
+            "openai.resources.responses",
+            "AsyncResponses.retrieve",
+            async_responses_get_or_create_wrapper(tracer),
+        )
+        self._try_wrap(
+            "openai.resources.responses",
+            "AsyncResponses.cancel",
+            async_responses_cancel_wrapper(tracer),
         )
 
     def _uninstrument(self, **kwargs):
