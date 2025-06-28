@@ -51,13 +51,13 @@ def test_groq_agent_spans(exporter, test_agent):
     span = spans[0]
 
     assert [span.name for span in spans] == [
-        "GroqAgent.agent",
+        "WatsonXAgent.agent",
     ]
 
     assert span.attributes[SpanAttributes.LLM_SYSTEM] == "openai"
     assert (
         span.attributes[SpanAttributes.LLM_REQUEST_MODEL]
-        == "groq/llama3-70b-8192"
+        == "watsonx/meta-llama/llama-3-3-70b-instruct"
     )
     assert span.attributes[SpanAttributes.LLM_REQUEST_TEMPERATURE] == 0.3
     assert span.attributes[SpanAttributes.LLM_REQUEST_MAX_TOKENS] == 1024
@@ -67,7 +67,7 @@ def test_groq_agent_spans(exporter, test_agent):
         span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
         == "What is AI?"
     )
-    assert span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 28
+    assert span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 48
 
 
 @pytest.mark.vcr
@@ -83,7 +83,6 @@ def test_generate_metrics(metrics_test_context, test_agent):
     metrics_data = reader.get_metrics_data()
     resource_metrics = metrics_data.resource_metrics
 
-    print("RES", resource_metrics)
     assert len(resource_metrics) > 0
 
     found_token_metric = False
@@ -92,7 +91,7 @@ def test_generate_metrics(metrics_test_context, test_agent):
     for rm in resource_metrics:
         for sm in rm.scope_metrics:
             for metric in sm.metrics:
-                print(metric.name)
+
                 if metric.name == Meters.LLM_TOKEN_USAGE:
                     found_token_metric = True
                     for data_point in metric.data.data_points:
@@ -130,7 +129,7 @@ def test_generate_metrics(metrics_test_context, test_agent):
                     metric.data.data_points[0].attributes[
                         SpanAttributes.LLM_RESPONSE_MODEL
                     ]
-                    == "groq/llama3-70b-8192"
+                    == "watsonx/meta-llama/llama-3-3-70b-instruct"
                 )
 
         assert found_token_metric is True

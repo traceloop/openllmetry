@@ -1,9 +1,127 @@
 interactions:
 - request:
-    body: '{"model": "llama3-70b-8192", "messages": [{"content": "You are a helpful
+    body: grant_type=urn%3Aibm%3Aparams%3Aoauth%3Agrant-type%3Aapikey&apikey=5cSMM-2lAi040vKauIMv3Pp_zf6EP_Gse-D7z0CC03KV
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '111'
+      content-type:
+      - application/x-www-form-urlencoded
+      host:
+      - iam.cloud.ibm.com
+      user-agent:
+      - litellm/1.70.2
+    method: POST
+    uri: https://iam.cloud.ibm.com/identity/token
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAAI1UyZKjRhT8FYfOMxMFCC1zAy0IWgWNhNguBJtEQYFolkbI4X/3K3p6bEdM2D4B
+        b8nKfC+p32dhHKdtG3T3Iq1m32fpqDWhYxKDqCPe7kS8jUd9o7ZquW/9UV2oVLNwfuHVCn2D2tpz
+        uOtHvaaZBVf7G8Tr+W7AW10+FZmqkoH8Vz4u7SxSWA7wC7qxHFpMfdWpVvM7wY6dG9uMYN7rfMem
+        HkHIsC6Po1UAP7Pzy52ob+O5Yem5znvPjzNPNIJ+v6Q0JoCbezy2pAGjvXLe3chxo1Wh69OIrnvQ
+        QNk5JwF4lInonZleP4sc2qb2X3lLoRzDjsp9558Z14TzHLFKnd3tM+c7XBY6A9ML8UedXOTaK1Hv
+        8etu0irYhGH5Am1D15ZCR+uOpf4eTWfuuUTJejWvl2qlcx7jDXwiwDYVSqKzmEc8Ytz/19z/lSdP
+        ed8Rr7+oYfgl4NfRgf4tD1omjnbnwVx+rUFbQ2/m8fp74ojoQwfMUYF95jWKK5tCHmaAGW8Kuyz0
+        LS2MrfTE1g7hXEKepcO+Lw/duoD/JFF3VPSxD9rF3JqLeXt0eYYHvrBUzrCkB97iiXNcrhe+MydG
+        dRoT58J6ni5v94lij/FBq6H36jl6HgkQA6/54OmYZ3X/rPn0v+eYvF76JS7xw2D8yhOBJ+/Bt58D
+        53I3x4pGMfnBj/0fuSoY2xi0eOR6Zj7cwxzuD/15eYBG0KnOgStNDxIx8p2gWzuIewLObxPfCaPM
+        UHKQnwZZvUM/m20LnItj+dMD75/+Tg7F5OW43PfJfo1SV568mrhab7B6qx48V8siFy8invnrtvAF
+        +K7MLjnQwbfqLFZo47sTzhN8Okz7ns6S32PF7tk8IJfDHtmZn74rfMfPEueBmJ9griPTyfYfuSox
+        aEviQ1KolFt/e4mDu2tXaXO8RdFjVRm6qcnzJBqik5ZddldNwTkvcsdIcouncBiK+ehvRbmdj6V8
+        mzetFSVZb55kSQprPAajmPfBUbGR0G1VMfFeLfmiIUzfcBruXxb2nWQ0Ldyvka576Zw4qS6+vi21
+        TWOt34Sb4BkjN8+bPXfR6Ou9yNDRGIb9i7zfrfzTy6qpColXN0P4kF7RW5mP1fvXYSOab7btLl2L
+        a5ZtE3HGwa/gDqK2aSzNmk/fCK5W9uOa+d3YbV73Jj2HtmtdDlJgV8El1KxU1EXuNPayc3K57tyX
+        aWie87I65g1/uAfbZTdWmvs62I2FrdIbquUqV24yar8qZjMotX6mq+B2VL2zt97MWyTNvsya9Nqk
+        bfbz9q7uXdD2dX1vujSBPCnboG/TJiDJ7DvHi2vEIeHLbCoPurFOoUdOwyZtoDh91ATQAgJIwgKh
+        H5GwI3eIcEuR47jFkl99mbXxfWqFG+Y3eKsA/Y8/Ae6LeKRKBgAA
+    headers:
+      Akamai-GRN:
+      - 0.50952317.1751113130.5428725
+      Cache-Control:
+      - no-cache, no-store, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Language:
+      - en-US
+      Content-Length:
+      - '1065'
+      Content-Type:
+      - application/json
+      Date:
+      - Sat, 28 Jun 2025 12:18:51 GMT
+      Expires:
+      - '0'
+      Pragma:
+      - no-cache
+      Vary:
+      - Accept-Encoding
+      ibm-cloud-service-name:
+      - iam-identity
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains
+      transaction-id:
+      - emxqcmw-8a28dd369f41459dbe3cf03978198137
+      x-content-type-options:
+      - nosniff
+      x-correlation-id:
+      - emxqcmw-8a28dd369f41459dbe3cf03978198137
+      x-proxy-upstream-service-time:
+      - '82'
+      x-request-id:
+      - bffe4ff0-f907-4a4c-82ce-91a26eb4fd5e
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"data": [{"object": "trace.span", "id": "span_8b1ca7e2e81d469f9023006a",
+      "trace_id": "trace_1762200faadc45cbafc7a87eabc47b2f", "parent_id": "span_ba856a3f684947a3890603b0",
+      "started_at": "2025-06-28T12:18:41.753851+00:00", "ended_at": "2025-06-28T12:18:50.481282+00:00",
+      "span_data": {"type": "generation", "input": [{"content": "You are a helpful
       assistant that answers all questions", "role": "system"}, {"role": "user", "content":
-      "What is AI?"}], "temperature": 0.3, "top_p": 0.2, "stream": false, "max_tokens":
-      1024, "frequency_penalty": 1.3}'
+      "What is AI?"}], "output": [{"content": "**Artificial Intelligence (AI)** is
+      a field of computer science that focuses on creating intelligent machines capable
+      of performing tasks that typically require human intelligence, such as:\n\n1.
+      **Learning**: AI systems can learn from data and improve their performance over
+      time.\n2. **Reasoning**: AI systems can draw inferences, make decisions, and
+      solve problems using logical rules and algorithms.\n3. **Problem-solving**:
+      AI systems can identify problems, analyze data, and find solutions.\n4. **Perception**:
+      AI systems can interpret and understand data from sensors, such as images, speech,
+      and text.\n\nThe primary goal of AI is to create machines that can think and
+      act like humans, or even surpass human capabilities in specific domains.\n\n**Types
+      of AI:**\n\n1. **Narrow or Weak AI**: Designed to perform a specific task, such
+      as image recognition or language translation.\n2. **General or Strong AI**:
+      A hypothetical AI system that possesses the ability to understand, learn, and
+      apply knowledge across a wide range of tasks.\n3. **Superintelligence**: A hypothetical
+      AI system that significantly surpasses the intelligence of humans.\n\n**Applications
+      of AI:**\n\n1. Virtual assistants (e.g., Siri, Alexa)\n2. Image recognition
+      (e.g., self-driving cars)\n3. Natural Language Processing (e.g., chatbots)\n4.
+      Predictive analytics (e.g., recommendation systems)\n5. Robotics (e.g., industrial
+      automation)\n\n**Key Technologies:**\n\n1. Machine Learning\n2. Deep Learning\n3.
+      Neural Networks\n4. Computer Vision\n5.Natural Language Processing\n\nAI has
+      the potential to revolutionize numerous industries and aspects of our lives,
+      but it also raises important questions about ethics, bias, job displacement,,and
+      accountability.\n\nWould you like me to elaborate on any specific aspect of
+      AI?", "role": "assistant", "tool_calls": null, "function_call": null}], "model":
+      "watsonx/meta-llama/llama-3-3-70b-instruct", "model_config": {"temperature":
+      0.3, "top_p": 0.2, "frequency_penalty": 1.3, "presence_penalty": null, "tool_choice":
+      null, "parallel_tool_calls": null, "truncation": null, "max_tokens": 1024, "reasoning":
+      null, "metadata": null, "store": null, "include_usage": null, "extra_query":
+      null, "extra_body": null, "extra_headers": null, "base_url": "", "model_impl":
+      "litellm"}, "usage": {"input_tokens": 48, "output_tokens": 366}}, "error": null},
+      {"object": "trace.span", "id": "span_ba856a3f684947a3890603b0", "trace_id":
+      "trace_1762200faadc45cbafc7a87eabc47b2f", "parent_id": null, "started_at": "2025-06-28T12:18:41.753432+00:00",
+      "ended_at": "2025-06-28T12:18:50.483977+00:00", "span_data": {"type": "agent",
+      "name": "WatsonXAgent", "handoffs": [], "tools": [], "output_type": "str"},
+      "error": null}, {"object": "trace", "id": "trace_f1310c2e0ce54d8f9e43e334a0e083d7",
+      "workflow_name": "Agent workflow", "group_id": null, "metadata": null}]}'
     headers:
       accept:
       - '*/*'
@@ -12,82 +130,157 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '272'
+      - '3343'
       content-type:
       - application/json
       cookie:
-      - __cf_bm=UhYgVx9EVnQkzoJOk1kDwtbNsOMYXcWGyDYwZ_MUFU4-1750910536-1.0.1.1-qsSboPVc3tPouNnxyP9tWJmqI.4R8wEn615Q.x8cV_4dYXNjZEx_eYvMYgphv4GcrRZZOE.e9ZL3PkDViaC7gvuEjXSY712Ahv8zktbTa_4
+      - __cf_bm=16fD.ypA8.UTt1gBmxxWtMu87tFmb3EIS_K_cWAGpiY-1751113127-1.0.1.1-PB7XFUeuahhnctwXt33hfDM7FPxuRGvd2nZnR56oFJBEOyoeuNQhfxG5qr2frbOh4WkecO6Qceennc_8kn1FbMEQ2zNIRtGN0tgYTKG5xaw;
+        _cfuvid=RXJwCVWF7riVBs8ows8CKq9BG_HzOgEINnUHt3imFrI-1751113127214-0.0.1.1-604800000
       host:
-      - api.groq.com
+      - api.openai.com
+      openai-beta:
+      - traces=v1
       user-agent:
-      - Agents/Python 0.0.16
+      - python-httpx/0.27.0
     method: POST
-    uri: https://api.groq.com/openai/v1/chat/completions
+    uri: https://api.openai.com/v1/traces/ingest
   response:
     body:
-      string: !!binary |
-        H4sIAAAAAAAAA5RWTY/jNgy991ewOrUDJ3CSyeelCHaxbYCiKLoL9NApAlqmbW1kySPRmfEs5r8X
-        tONMum0Pvdk0RT4+PlL+okyudkpXyLpu7GS9XmdFmtEk15RN7ouNnmy28+VkneI6Xaxy1Nu1SpTP
-        PpPmy8Gp9nVjiY13KlE6EDLlajdbL9PtLF0u1omqfU5W7ZS1WONisk6zyWa2nYt75Y2mqHZ/fFHG
-        5fSsdmmiaooRS1K7Lyp4S2qnMEYTGR3LGe+YnKTfBzaF0QYtHByTtaYkpwm+2x++h0AFhQjsgSuC
-        nM5kfVOTY/AFCOaWKUDsIlMdgStk0OigoVD4UANjPF3M3DVGo7UdBHpsTSCo2hodmJucCcRWV4Bx
-        9+Ae3GwKd3c/EwZnXHl3t4P94ZpJklj5BEXwNeTImIDJybEpOmiQmYKLCaDLwdRN8GeSCkwYoaGU
-        6M8UgE1N0wc3l2y/EUb/H+lqPAkD2kTjJXT09kzQBJ9Zqi+p8oBPoL3Ttu29IMNIOXjXI+xdQmsp
-        Th/cQvL9SkFTI13/l4TCTGgCcX+udTkF6V4+xOrrjuSiD/HKG5gaS5L3hkhXAyimZ54KoZ8qgtKj
-        ld7tD2D6vg5agxp1ZRzd9JAr404JoOYhzEC3NadL52ICWcvwZLjqxYGZsYY7idkErylGOGNkwNq3
-        jqMk7YHXArXAKMKRuLUPBKh1G5DJdiNSMQaCSGcKaEU+FAfgCRghODeufNPJLxiCfwIf4HfCE+wP
-        Quh7iqZ0lPeYLpJE4UaL4nt1vlHXWOyMK0FXFGMCgbQvnXkRU4FaSPUBOKCLFlmsFl3ZCt2jen4k
-        12P1AT5y8K68wNib+pZqHMn+57yg6y4DQZpbKRvjaXDDy7xodG+Yw6jXZBTiRGTZG649M64c9fax
-        bSjcTlwPD6qu8VwRy4CKMvqEJoKwJ0yhY9sNjXo7zOLm+tZnFPkCrzYuj8mbKhova0aWC/vLyAyr
-        7vk6OkO6QVNSnvODXPcHqDBCLaRg01ijkfuhMg7OGIxv5TFvIwcj7fkXVfxEaLnSGPpC3xssnY8m
-        JsDSin6PNRaduxLWUIjeoTUvlENNudHGXbfDB+PwwtmHgG0OOTFpwZRAMPEEGCPFKGEv0Xzgwlvj
-        pQgsSb6MrfgkShIHvI5/y975Wso6U2W0pR4oFqLVtwBD6OBbJvANm9q89CGmD+5eAr9rI/uaAnyk
-        cDYD3HcVcuY5JnA2oRfW9S64bK4oXeoJQYe2i0ZUvezjdRmFSLoNhjsJ9qkS8m6LN45Dv/CgCXSW
-        SGLtd6/T/VaGQLHxLtJ1EX11lwz7KA/mTA6yDjA/C9d9s8dxGdWcQE7U3LxKJofcyvCNUzkuod7h
-        qTK6AnKY2dtV57++Q/7HffHgDlD5RtxMhIpsE7+F9x4630KFZ+pnWaYqwGNLcVAuZr5l2B9+UK+J
-        sr6UEYhq51prE1UYZ2J1HGZa7VRk36jXPxPVjvf4Y0stHQWA2qXTdLlaz9P5dpOoJvi64SP7E7mo
-        dvMb0+icpvfbWbqZy9U//mpcDyzWi7/b+1Ozabparmf3880qUewZ7fXAfTq7mq6+q3m6XKw2rxfE
-        xywQnnL/5MYKh9vtWBhXys1m+v+Pojnm+T3STC+3M5Wo52MZ/KOU2/9WBXo8prPPnVvli3VF1Wb7
-        mYsVvtDs/iWc1evrN38BAAD//wMA4UkFboAJAAA=
+      string: "{\n  \"error\": {\n    \"message\": \"Incorrect API key provided: api-key.\
+        \ You can find your API key at https://platform.openai.com/account/api-keys.\"\
+        ,\n    \"type\": \"invalid_request_error\",\n    \"param\": null,\n    \"\
+        code\": \"invalid_api_key\"\n  }\n}"
     headers:
       CF-RAY:
-      - 9559cee7ac22492e-BOM
-      Cache-Control:
-      - private, max-age=0, no-store, no-cache, must-revalidate
+      - 956d2115893a7f19-MAA
       Connection:
       - keep-alive
-      Content-Encoding:
-      - gzip
+      Content-Length:
+      - '236'
       Content-Type:
       - application/json
       Date:
-      - Thu, 26 Jun 2025 04:02:18 GMT
+      - Sat, 28 Jun 2025 12:18:53 GMT
       Server:
       - cloudflare
-      Transfer-Encoding:
-      - chunked
+      X-Content-Type-Options:
+      - nosniff
       alt-svc:
       - h3=":443"; ma=86400
       cf-cache-status:
       - DYNAMIC
-      vary:
-      - Origin
-      x-groq-region:
-      - bom
-      x-ratelimit-limit-requests:
-      - '14400'
-      x-ratelimit-limit-tokens:
-      - '6000'
-      x-ratelimit-remaining-requests:
-      - '14398'
-      x-ratelimit-remaining-tokens:
-      - '5585'
-      x-ratelimit-reset-requests:
-      - 10.775s
-      x-ratelimit-reset-tokens:
-      - 4.15s
+      openai-processing-ms:
+      - '18'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      www-authenticate:
+      - Bearer realm="OpenAI API"
       x-request-id:
-      - req_01jyn6d37heh89jtf6aze14zrv
+      - req_d32fce196fdb3c3af4975fa718768abe
+    status:
+      code: 401
+      message: Unauthorized
+- request:
+    body: '{"model": "meta-llama/llama-3-3-70b-instruct", "messages": [{"content":
+      "You are a helpful assistant that answers all questions", "role": "system"},
+      {"role": "user", "content": "What is AI?"}], "temperature": 0.3, "top_p": 0.2,
+      "max_tokens": 1024, "frequency_penalty": 1.3, "model_id": "meta-llama/llama-3-3-70b-instruct",
+      "project_id": "7df21499-6277-4938-af57-a409852ae8f1", "stream": false}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '393'
+      content-type:
+      - application/json
+      host:
+      - us-south.ml.cloud.ibm.com
+      user-agent:
+      - Agents/Python 0.0.16
+    method: POST
+    uri: https://us-south.ml.cloud.ibm.com/ml/v1/text/chat?version=2024-03-13
+  response:
+    body:
+      string: !!binary |
+        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
+        PX54fPwLAAD//wMAkMv6pkMKAAA=
+    headers:
+      CF-RAY:
+      - 956d210dda977f48-MAA
+      Cache-Control:
+      - no-cache, no-store, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Security-Policy:
+      - default-src 'none'; script-src 'self'; connect-src 'self'; img-src 'self';
+        style-src 'self'; frame-ancestors 'none'; form-action 'self';
+      Content-Type:
+      - application/json
+      Date:
+      - Sat, 28 Jun 2025 12:18:59 GMT
+      Pragma:
+      - no-cache
+      Referrer-Policy:
+      - strict-origin
+      Server:
+      - cloudflare
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains
+      - max-age=31536000; includeSubDomains
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - DENY
+      X-Global-Transaction-Id:
+      - 5fc42c528c6a1285e42b9ef318b8dff9
+      X-Requests-Limit-Period:
+      - '1000'
+      X-Requests-Limit-Rate:
+      - '8'
+      X-Requests-Limit-Remaining:
+      - '7'
+      X-Requests-Limit-Reset-After:
+      - '125'
+      X-Xss-Protection:
+      - 1; mode=block
+      - 1; mode=block
+      cf-cache-status:
+      - DYNAMIC
+      server-timing:
+      - intid;desc=d67d2691d65f38a7
     status:
       code: 200
       message: OK

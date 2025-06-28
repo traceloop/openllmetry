@@ -41,8 +41,12 @@ def exporter():
 def environment():
     if not os.environ.get("OPENAI_API_KEY"):
         os.environ["OPENAI_API_KEY"] = "api-key"
-    if not os.environ.get("GROQ_API_KEY"):
-        os.environ["GROQ_API_KEY"] = "api-key"
+    if not os.environ.get("WATSONX_URL"):
+        os.environ["WATSONX_URL"] = "url"
+    if not os.environ.get("WATSONX_PROJECT_ID"):
+        os.environ["WATSONX_PROJECT_ID"] = "project-id"
+    if not os.environ.get("WATSONX_API_KEY"):
+        os.environ["WATSONX_API_KEY"] = "api-key"
 
 
 @pytest.fixture(autouse=True)
@@ -70,10 +74,10 @@ def clear_metrics_test_context(metrics_test_context):
 @pytest.fixture(scope="session")
 def test_agent():
     test_agent = Agent(
-        name="GroqAgent",
+        name="WatsonXAgent",
         instructions="You are a helpful assistant that answers all questions",
         model=LitellmModel(
-            model="groq/llama3-70b-8192",
+            model="watsonx/meta-llama/llama-3-3-70b-instruct",
         ),
         model_settings=ModelSettings(
             temperature=0.3, max_tokens=1024, top_p=0.2, frequency_penalty=1.3

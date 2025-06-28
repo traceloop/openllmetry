@@ -1,9 +1,88 @@
 interactions:
 - request:
-    body: '{"model": "llama3-70b-8192", "messages": [{"content": "You are a helpful
-      assistant that answers all questions", "role": "system"}, {"role": "user", "content":
-      "What is AI?"}], "temperature": 0.3, "top_p": 0.2, "stream": false, "max_tokens":
-      1024, "frequency_penalty": 1.3}'
+    body: grant_type=urn%3Aibm%3Aparams%3Aoauth%3Agrant-type%3Aapikey&apikey=5cSMM-2lAi040vKauIMv3Pp_zf6EP_Gse-D7z0CC03KV
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '111'
+      content-type:
+      - application/x-www-form-urlencoded
+      host:
+      - iam.cloud.ibm.com
+      user-agent:
+      - litellm/1.70.2
+    method: POST
+    uri: https://iam.cloud.ibm.com/identity/token
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAAI1UyZKjRhT8FYfO7YkCGtTMTQgJFa2CBrHWRcHWYimWYZNgwv/ugp4e2xETtk+C
+        t+TLfC/F900QRUnXXfu6SKrN100yqW3gGpmewQnJBx7J0aTtYQfLY4cnKECiWii3WViBL7S28V3m
+        /aNeVY2CafAesFp+uCNZk8wihTC7Z/+Vj0onDZUlR/ELsrdcUqx9ldnAvM40uQBaiQCWb71WqkS7
+        AKDlxny2CsbPYY8teMeKPWMrTrFrlh8zTRLSflwSEmUUN/dZZO3uCByVy+GWnfdqFXiYhEQcqAay
+        zDE5yqOMef+y6MVp6JIucf7KWwphFuywPPb4snCNGd/lq8Q93D5z2GXSwL0vemn80cS21PglGHxW
+        7FetnJMtWJgjXeA5u8BV+3OpjeE688jESjrAvNnCSmP8hTflE1JsQyFZeOHzkAUL9/+193/lyRIW
+        u/z7L2oW/JLiN+GJ/C1Ptawcnd6ne/m1BlWkvanPamPs8uBDB92jQu+ZNyCqHELzdAdo4U2w6xSa
+        TApd3s3IOgCU74BvaRly7Ydm2dR/O15zIfi4B+kjRmQi1pk8dsGrM2RBRrd2DySjlXNUigJ2nzO9
+        MqfYtZee2WOdIVacKTqpDe19910tDzkao17D1NMRu9T9s+bT/75rsFqJS1Sih77wK82M/rI+fcc5
+        5VwenpGiEpT94Lf8P3LI6XJEtfjZ+2Xx4ZHuoX5os/2gGhedPOVKktMu0/MDp1kHGvc5ZBUr3xWj
+        TEF8kmY9exlp/7LbjnIuzuVPD4yf/o5PxerlqDwO8VEEiSetXo09ddCXequ5+56ahh4SQnbx103A
+        HH2vjD4+kTu2mjRSSIu9FWemPr2v915nSWOkOMOyD5rL6R2XmZ++K7CL09h9gMVPdK/TonO5f+jB
+        TCddFp3iAhJG/GJz5kORpUqAiSkE3ntvHjl4kXgc1encJ0JxnePx5g6ywHSu2Mek98SjD+OiBc9a
+        vhebroiKrd8o4m4bNObbfobs3D2mYCudH5f4ZWIIkSVtDI5MIti21LpiWl4NeZrU8+9vuyi9X8JG
+        kn1j4hLzetBZCOwWWHZ3wO0zvnMO63vGVWLci823I7vvqv1ccYFYqjUmfXOE3D3LRGMMv7HwUA8j
+        aG6mpAhz8vyavxSzLe0fJoPKgjOU2xZ0Ebx6QksGHh605DV0duOwtcLLqx4xyMFnwfJdJI6TNJ/Q
+        9pv4hkCAbGSyRoPTVivecqDe8uNYR6mBXrUT1sPzKD/XQJzfwji41vULkEHL3jdPmzZ5b5Mu/fn1
+        rur+2g1NU7d9EtN8VnbXoUvaaxZvvjIsLwIGcE+btfzaT01Ce6QkaJOWFiePJqNo14wicQIAPyJB
+        n9U0wmx5hmGELSM+bbqoXlvpF+Y3+lRR9D/+BKjx8TVKBgAA
+    headers:
+      Akamai-GRN:
+      - 0.50952317.1751113122.5426273
+      Cache-Control:
+      - no-cache, no-store, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Language:
+      - en-US
+      Content-Length:
+      - '1062'
+      Content-Type:
+      - application/json
+      Date:
+      - Sat, 28 Jun 2025 12:18:42 GMT
+      Expires:
+      - '0'
+      Pragma:
+      - no-cache
+      Vary:
+      - Accept-Encoding
+      ibm-cloud-service-name:
+      - iam-identity
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains
+      transaction-id:
+      - emxqcmw-9b9cd072627547caa97bac5bad50fd71
+      x-content-type-options:
+      - nosniff
+      x-correlation-id:
+      - emxqcmw-9b9cd072627547caa97bac5bad50fd71
+      x-proxy-upstream-service-time:
+      - '189'
+      x-request-id:
+      - 0ab9ff27-ca9d-41bb-a8bb-a3b9f80c988f
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"data": [{"object": "trace", "id": "trace_1762200faadc45cbafc7a87eabc47b2f",
+      "workflow_name": "Agent workflow", "group_id": null, "metadata": null}]}'
     headers:
       accept:
       - '*/*'
@@ -12,84 +91,160 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '272'
+      - '150'
       content-type:
       - application/json
       host:
-      - api.groq.com
+      - api.openai.com
+      openai-beta:
+      - traces=v1
       user-agent:
-      - Agents/Python 0.0.16
+      - python-httpx/0.27.0
     method: POST
-    uri: https://api.groq.com/openai/v1/chat/completions
+    uri: https://api.openai.com/v1/traces/ingest
   response:
     body:
-      string: !!binary |
-        H4sIAAAAAAAAA5RWTY/jNgy991ewOrUDJ0gy+ZjkUgS72DZAURTdBXroFAEj07Y2sqSR6Mx4FvPf
-        C8pJZrptD73ZNEU+Pj5S/qJMqTZKN8i6DXaEuJgvaXY30tV8PpqvltXojrAaIR6wmmlaz27XqlD+
-        8Jk0nw+OtW+DJTbeqULpSMhUqs10tZisp5PF7aJQrS/Jqo2yFlu8Ha0mh9HddD0T98YbTUlt/vii
-        jCvpSW0mhWopJaxJbb6o6C2pjcKUTGJ0LGe8Y3KSfhvZVEYbtLBzTNaampwm+G67+x4iVRQTsAdu
-        CEo6kfWhJcfgKxDMHVOE1CemNgE3yKDRQaBY+dgCYzqezdwHo9HaHiI9dCYSNF2LDsybnAWkTjeA
-        aXPv7t10DDc3PxNGZ1x9c7OB7e6aSZJY+QRV9C2UyFiAKcmxqXoIyEzRpQLQlWDaEP2JpAITL9BQ
-        SvQnisCmpfG9m0m23wiT/490LR6FAW2S8RI6eXsiCNEfLLXnVGXER9DeadtlLzhgohK8ywizS+ws
-        pfG9u5V8v1LUFKTr/5JQmIkhEudznSspSvfKIVauO5FLPqYrb2BarEneA5FuBlBMTzwWQj81BLVH
-        K73b7sDkvg5agxZ1Yxy96SE3xh0LQM1DmIFua47nzqUCDh3Do+EmiwMPxhruJWaIXlNKcMLEgK3v
-        HCdJmoG3ArXCJMKRuK2PBKh1F5HJ9hekYowEiU4U0Yp8KA3ACzBCcGlc/aqTXzBG/wg+wu+ER9ju
-        hND3lEztqMyYzpJE4UaL4rM6X6kLFnvjatANpVRAJO1rZ57FVKEWUn0EjuiSRRarRVd3QvdFPT+S
-        y1h9hI8cvavPMLamfUs1Xsj+57yg688DQZo7KRvTcXDD87xodK+Y40WvxUWII5FlNlx7Zlx90dvH
-        LlB8O3EZHjR98NwQy4CKMnJCk0DYE6bQse2HRr0eZnFzufUHSnyG1xpXpuJVFcHLmpHlwv48MsOq
-        e7qOzpBu0JSU5/wg1+0OGkzQCikYgjUaOQ+VcXDCaHwnj2WXOBppz7+o4idCy43GmAt9b7B2PplU
-        AEsr8h4LFp27EhYoJu/QmmcqoaXSaOOu2+GDcXjm7EPEroSSmLRgKiCadARMiVKSsOdoPnLlrfFS
-        BNYkXy6t+CRKEge8jn/H3vlWyjpRY7SlDBQr0eprgCF09B0T+MCmNc85xPjezSXwuy6xbynCR4on
-        M8B91yAfPKcCTiZmYV3vgvPmStKlTAg6tH0youpFjtcfKCbSXTTcS7BPjZD3tnjjOOaFByHSSSKJ
-        Ne9ep/NWhkgpeJfouoi+ukuGfVRGcyIHhx6wPAnXudmXcbmouYCSKLx5lUwOuZPhu0zlZQllh8fG
-        6AbI4cG+XXX+6zvkf9wX924HjQ/iZhI0ZEP6Ft576H0HDZ4oz7JMVYSHjtKgXDz4jmG7+0G9FMr6
-        WkYgqY3rrC1UZZxJzX6YabVRiX1QL38Wqrvc4w8ddbQXAGozGU8Ws/V8sVqtChWibwPv2R/JJbWZ
-        3b2aLs6TyXo1nU/mcvVffjWuB25Xt3+351PT8WS5WE3ns7tlodgz2uuB+WR6NV19l8u7xXL9cga8
-        P0TCY+kf3aXA4XLbV8bVcrGZ/PtRhX1ZzpGmerGeqkI97evoH6Ta/FcV6WE/mX7u3bKcTdcVN+sV
-        h/R0d3hunsNn9fLyzV8AAAD//wMAUvyXb38JAAA=
+      string: "{\n  \"error\": {\n    \"message\": \"Incorrect API key provided: api-key.\
+        \ You can find your API key at https://platform.openai.com/account/api-keys.\"\
+        ,\n    \"type\": \"invalid_request_error\",\n    \"param\": null,\n    \"\
+        code\": \"invalid_api_key\"\n  }\n}"
     headers:
       CF-RAY:
-      - 9559cedffa63492e-BOM
-      Cache-Control:
-      - private, max-age=0, no-store, no-cache, must-revalidate
+      - 956d20f00f30c728-MAA
       Connection:
       - keep-alive
-      Content-Encoding:
-      - gzip
+      Content-Length:
+      - '236'
       Content-Type:
       - application/json
       Date:
-      - Thu, 26 Jun 2025 04:02:16 GMT
+      - Sat, 28 Jun 2025 12:18:47 GMT
       Server:
       - cloudflare
       Set-Cookie:
-      - __cf_bm=UhYgVx9EVnQkzoJOk1kDwtbNsOMYXcWGyDYwZ_MUFU4-1750910536-1.0.1.1-qsSboPVc3tPouNnxyP9tWJmqI.4R8wEn615Q.x8cV_4dYXNjZEx_eYvMYgphv4GcrRZZOE.e9ZL3PkDViaC7gvuEjXSY712Ahv8zktbTa_4;
-        path=/; expires=Thu, 26-Jun-25 04:32:16 GMT; domain=.groq.com; HttpOnly; Secure;
-        SameSite=None
-      Transfer-Encoding:
-      - chunked
+      - __cf_bm=16fD.ypA8.UTt1gBmxxWtMu87tFmb3EIS_K_cWAGpiY-1751113127-1.0.1.1-PB7XFUeuahhnctwXt33hfDM7FPxuRGvd2nZnR56oFJBEOyoeuNQhfxG5qr2frbOh4WkecO6Qceennc_8kn1FbMEQ2zNIRtGN0tgYTKG5xaw;
+        path=/; expires=Sat, 28-Jun-25 12:48:47 GMT; domain=.api.openai.com; HttpOnly;
+        Secure; SameSite=None
+      - _cfuvid=RXJwCVWF7riVBs8ows8CKq9BG_HzOgEINnUHt3imFrI-1751113127214-0.0.1.1-604800000;
+        path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
+      X-Content-Type-Options:
+      - nosniff
       alt-svc:
       - h3=":443"; ma=86400
       cf-cache-status:
       - DYNAMIC
-      vary:
-      - Origin
-      x-groq-region:
-      - bom
-      x-ratelimit-limit-requests:
-      - '14400'
-      x-ratelimit-limit-tokens:
-      - '6000'
-      x-ratelimit-remaining-requests:
-      - '14399'
-      x-ratelimit-remaining-tokens:
-      - '5975'
-      x-ratelimit-reset-requests:
-      - 6s
-      x-ratelimit-reset-tokens:
-      - 250ms
+      openai-processing-ms:
+      - '20'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      www-authenticate:
+      - Bearer realm="OpenAI API"
       x-request-id:
-      - req_01jyn6d219fth97tpsx8bzhzpj
+      - req_5fe2905acd2fa224fa6660164a680597
+    status:
+      code: 401
+      message: Unauthorized
+- request:
+    body: '{"model": "meta-llama/llama-3-3-70b-instruct", "messages": [{"content":
+      "You are a helpful assistant that answers all questions", "role": "system"},
+      {"role": "user", "content": "What is AI?"}], "temperature": 0.3, "top_p": 0.2,
+      "max_tokens": 1024, "frequency_penalty": 1.3, "model_id": "meta-llama/llama-3-3-70b-instruct",
+      "project_id": "7df21499-6277-4938-af57-a409852ae8f1", "stream": false}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '393'
+      content-type:
+      - application/json
+      host:
+      - us-south.ml.cloud.ibm.com
+      user-agent:
+      - Agents/Python 0.0.16
+    method: POST
+    uri: https://us-south.ml.cloud.ibm.com/ml/v1/text/chat?version=2024-03-13
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA4xW72/jNgz9Vwh9WgM7bZo0SQMMQ7YBQ7Hb4XDXbcDWoaBl2uZVljxJbuo79H8f
+        KDtpsd9A0Q+ORD7yPT7qs+JS7ZRuMOq2M/lmtbpa0NU23+irdb4qllV+fUnXebFZrza0XpFeF3me
+        b7HaXhSLEotSX1Ub0pvFcnGN24KW11tcX6tMueIj6TjFnmvXdoYiO6sy1bqSzH1K3FLE3Bhs8Tz9
+        z5f5Mt9cFDnbEH2v4/H4/zyrG8eagtr9+lmxLelJ7S4y1VIIWJPafVbeGVI7hSFwiGjTHWcjWYE6
+        m+195Io1o4EbG8kYrslqgi/2N2ezGXAAhIrJlOAqkKL6SB6C5nQqNhihcroPFMBZ0J4wsq2BT7Ei
+        tKgbthRAY4eFIYnUka+cb+VoxPAQxkhx6FijMQN4+r1nT9D0LdpX0TRlEHrdAIbdnb2ziznMZm8I
+        vWVbz2Y72N9AGEKkVtJZMPITVN61UGJEQFsCt513jwKe2B+RoJTjHslD5Jbmd/ZSIr8nDO4fQpce
+        D8C2Ii+wQgYtPhCUpDmwsyFLuYIzjwSdd4WRe32Qio2rpUzwvaGQjqGpnefYtGF+Z5eS+d14JZcA
+        f5+fS7KRq+EUXTKiGT5RKnXMX/EIohclSvBVCk5eUyef/i6ujeQ7TzEF6G1JXoRTjg1MrQxkg/Ph
+        RAVwi7W0IHREuhlTR3qKc+HotpEOcIt+gNqhEf73NyKt6EbF0ItGkg4ERmzYPozN0REMP0xiCBk4
+        D/RIFkLvOwxhEklSFxuOTAHYChYt0obStcip+Ds7m90OnWhVIOxms5OG3qL37iChfyZ8gP2NdOZb
+        ClxbKgXopBPAl8Ci3D/1ADxpV1uW3kowg7bu5Xv0aINB+X4U13dkyUs7PHyI3tl6yrqHZuhcbCgm
+        lZzoGXvTuRBI/kS/MFY8CMAXprJR9iMN2HVmgAfrDobKmgC1d0Gm+sAlgUdbp4FMU3gU34e+I/96
+        6P4bljRKmoI2muHIzATydSTJNfI48bHvOsM6NeYvtPzEPvZo4GReAb6geT3P4AN7zmBv6AnPUjtv
+        /tL96WQgU+WlZ5ki0OjDWSryLcZemv/mSNA77zSFNJ/TTfHxwkW5sJrDO08l68iPNI5ZZH1CI2nb
+        lmyZyjhO09mdvZrDe1e412fZln2IXgwX++jadOVs7MX3NMAt6cY6sQgKL534YZwPOFpdqvlbou7V
+        F6mKUlFvKR6cfwgJ+DdH0/4pGZOA+pfiJd/+BhocqeucbAoBGx14epychD8R2L4l7/pwqujoZTIf
+        MXHpeg+GH8UZij4CR0ATHHhkkQa3nfPCKvzeUxgFgIXrI1BsWMslxpDBR1dAyaEzqKklG7NsdAXt
+        ehunAUhi+tn1poTB9aNdtCSgyWDhvHiMs4B2eBnfEeioua/Uc6Yqthyae59MX+1UiK5Tz79lajSp
+        Uu0Wm6vFYrFcXF4el/ojeemq2qnlfDm/UKfD9ygL9vLi8iq/WOeX29vF5W6x3V1dzNeb7S8qU/1x
+        Q788Fe6jeyAb1G65Xmeq867t4unbapup6CKaly+L1XOmRrVJoMOohPExcHoCqNuGAyS04zp/62x+
+        8/UPQnrZ6wi1rD1xuWIAFN/1Zd6hjwMY1mTDtOZbHBJlgaAPMmrCuZ5osyWINXhwheF6nOY5fD1M
+        Gy++QBB6sPaUyOEYIJJvQzLQcaExlWLfor7KGeMOEuDH92/mKhvfbiUHbZBb8vdTxenN5OmebeXU
+        TjUxdmF3fi4LqzMYxbfn2ri+nHPRytPsvHQ6nE/voPND+Hg+rc5c7pxXbZ7AhnkTW/NVOvcUvzw8
+        qeffnp//AAAA//8DALRqylBDCgAA
+    headers:
+      CF-RAY:
+      - 956d20d89e587f48-MAA
+      Cache-Control:
+      - no-cache, no-store, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Security-Policy:
+      - default-src 'none'; script-src 'self'; connect-src 'self'; img-src 'self';
+        style-src 'self'; frame-ancestors 'none'; form-action 'self';
+      Content-Type:
+      - application/json
+      Date:
+      - Sat, 28 Jun 2025 12:18:50 GMT
+      Pragma:
+      - no-cache
+      Referrer-Policy:
+      - strict-origin
+      Server:
+      - cloudflare
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains
+      - max-age=31536000; includeSubDomains
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - DENY
+      X-Global-Transaction-Id:
+      - 8af80b1dabdc5f7ec71319a8be398a69
+      X-Requests-Limit-Period:
+      - '1000'
+      X-Requests-Limit-Rate:
+      - '8'
+      X-Requests-Limit-Remaining:
+      - '7'
+      X-Requests-Limit-Reset-After:
+      - '125'
+      X-Xss-Protection:
+      - 1; mode=block
+      - 1; mode=block
+      cf-cache-status:
+      - DYNAMIC
+      server-timing:
+      - intid;desc=a84279c17edd4d31
     status:
       code: 200
       message: OK
