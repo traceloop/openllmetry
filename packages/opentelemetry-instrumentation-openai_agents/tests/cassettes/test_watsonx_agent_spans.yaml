@@ -1,0 +1,244 @@
+interactions:
+- request:
+    body: grant_type=urn%3Aibm%3Aparams%3Aoauth%3Agrant-type%3Aapikey&apikey=5cSMM-2lAi040vKauIMv3Pp_zf6EP_Gse-D7z0CC03KV
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '111'
+      content-type:
+      - application/x-www-form-urlencoded
+      host:
+      - iam.cloud.ibm.com
+      user-agent:
+      - litellm/1.70.2
+    method: POST
+    uri: https://iam.cloud.ibm.com/identity/token
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAAI1U2ZKjNhT9lZSfu6cEGLs9b9is7hY0NkagF5dZbAQSplmMcSr/HkFPT5KqqSRP
+        wF2Ozrn3oN9npzhOm+bYXou0nH2fpcO2PiGXOMQaoKrJUI0He2M1FtMbPFgLi249mB9EqwTfeG0V
+        IuH8Wb/duoVQ4Q0Q7VzroWqvd0VmWaQn/5WPmZ9Fxpjj+AXdeIgWU1+5q6z8ShzDethGOId50UKk
+        SXgPAFah9OZd7tA7tNCAAKLDHeZhbz/8z160oxHvx4zSmHDcPBShp/QQ6MZeu5C3zbY8BZhGdNVx
+        DXQ8ZydxHiyRw/2oF2cRok3q/5X3DCqM2BHTW7wfuSZCiOQyRdrlK4eRkJ1QP+rl8XuVHNZVyEAX
+        iqt20ir5ZMTCEm1Oga+c0LZ9Y/Ytms7UhcTIOiuvllZpC+HIm/OJOLZrUBLt5TwSwcj9f839X3mK
+        VMRIPv+iZsRnHL+KTPq3PNcycfTbkM/l1xq2K96bhaJ9S5AMPnXwORp8n3kF4tKnPM9nAEfeFCO/
+        sFVaOKrygJ4GYK6A0LPJuEvbO3D/KbKNLPC5D9rGwkqIRX8IxBHvSqBnCY6n3KEKJ84xWy0wmhOn
+        3A0JOow9j0D0u8Twh9jcVrz3HCI7jyQe417D3NOxONb9s+bL/yFyRZthBhm8OyM/tiP8KYb8G+ec
+        M9Pm0NhSSH7wG/+P3JIcNeZaQnLejz7U+Ryud/vB/elpD/sRAs6VpqZCnFyTbE/j8fhh5+7Ed8Jg
+        GUjM9cMhLzfeP8624ZyLN/bTA7cvfydmMXk5ZnqX6CuQBuvJq0mw7Zyx3qv6MNhmUQAXkTj667LA
+        Ev8u3TYxaY+9KosNWuNgwnlwn/bTvqez1rfY8LtxHjyX8z2OZ375rsAIZwm6g9FPfK7DqHPcfxRY
+        xKENic2ksKiw+gYtfbvZkIfamc9MAvscsKza1GuVKS8x7M7ti3pERfaiaqvK6c5u/tzfM5ocn59r
+        Wwn6x7wQC20e41Vy9G7oGsaL4agrRD4nKXNMOcl3ZR25vZF7ROzewkLpd+DFcXuzzAJSiYuVKisv
+        RP84vKBLstP1xTmXXjMPmH6+1201Xb+xV0NknrnBpPJKZYV9A++bc1gq/scphUlP5gAt5/m7Z5Ar
+        eD1+SKeqWDvt7XCTsq4c9kk3Vx1vf9c24Ws9H4LdTR90QTtqham52fEjq9n+I10Gm3exRPXN2fp2
+        6eL3uTsMmbiypbp1F+7ClKtdUZgp6+iStO17iJaQXGQjR5E9HA7rDUYhk64HX1y6zmX2NKvTc502
+        2c/bu7y2x6arqmvdpgnPE9YcuyatjySZfRdEeQUEID3NpvJjO1Qp71mnpzqteXF6rwhHOxKOJC0A
+        +BE5teTKI8JSFgRhKS3mT7Mmvk6t/Ib5jb+VHP2PPwEJIx8CSgYAAA==
+    headers:
+      Akamai-GRN:
+      - 0.55952317.1751113767.a3d3fce
+      Cache-Control:
+      - no-cache, no-store, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Language:
+      - en-US
+      Content-Length:
+      - '1066'
+      Content-Type:
+      - application/json
+      Date:
+      - Sat, 28 Jun 2025 12:29:27 GMT
+      Expires:
+      - '0'
+      Pragma:
+      - no-cache
+      Vary:
+      - Accept-Encoding
+      ibm-cloud-service-name:
+      - iam-identity
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains
+      transaction-id:
+      - NXdxbXg-7e7f5f559cfe4da39efb914b4ce49d14
+      x-content-type-options:
+      - nosniff
+      x-correlation-id:
+      - NXdxbXg-7e7f5f559cfe4da39efb914b4ce49d14
+      x-proxy-upstream-service-time:
+      - '90'
+      x-request-id:
+      - 36c532e3-b381-4b1a-8e15-b90e34730b40
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"data": [{"object": "trace", "id": "trace_8f932280c4904cc28b9d248f66ec6941",
+      "workflow_name": "Agent workflow", "group_id": null, "metadata": null}]}'
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '150'
+      content-type:
+      - application/json
+      host:
+      - api.openai.com
+      openai-beta:
+      - traces=v1
+      user-agent:
+      - python-httpx/0.27.0
+    method: POST
+    uri: https://api.openai.com/v1/traces/ingest
+  response:
+    body:
+      string: ''
+    headers:
+      CF-RAY:
+      - 956d30b109b57f10-MAA
+      Connection:
+      - keep-alive
+      Date:
+      - Sat, 28 Jun 2025 12:29:33 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=1aQV1V4Du38Q_IdmDVyU_YMc7IpZRag5P39xE.6AA.U-1751113773-1.0.1.1-7vnxduEGzD2RErCbI3FdYD6yZ1E_PVktfBHA5sPL4IRuiOoWS8MqIux3gl97H1w781ALkQhlSnI3IiO980EnFvDe2L_lFYhif2wzj_E9.II;
+        path=/; expires=Sat, 28-Jun-25 12:59:33 GMT; domain=.api.openai.com; HttpOnly;
+        Secure; SameSite=None
+      - _cfuvid=ryT0VN95Rp8v1TInzRlw.4EJn0ne7dpGKpzcgI2WVb4-1751113773009-0.0.1.1-604800000;
+        path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
+      X-Content-Type-Options:
+      - nosniff
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      openai-organization:
+      - user-ucpvq3kvunyzsbruinqfemcy
+      openai-processing-ms:
+      - '322'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-request-id:
+      - req_33e53504eab0a07f550d470828d5c48e
+    status:
+      code: 204
+      message: No Content
+- request:
+    body: '{"model": "meta-llama/llama-3-3-70b-instruct", "messages": [{"content":
+      "You are a helpful assistant that answers all questions", "role": "system"},
+      {"role": "user", "content": "What is AI?"}], "temperature": 0.3, "top_p": 0.2,
+      "max_tokens": 1024, "frequency_penalty": 1.3, "model_id": "meta-llama/llama-3-3-70b-instruct",
+      "project_id": "7df21499-6277-4938-af57-a409852ae8f1", "stream": false}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '393'
+      content-type:
+      - application/json
+      host:
+      - us-south.ml.cloud.ibm.com
+      user-agent:
+      - Agents/Python 0.0.16
+    method: POST
+    uri: https://us-south.ml.cloud.ibm.com/ml/v1/text/chat?version=2024-03-13
+  response:
+    body:
+      string: !!binary |
+        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
+        X8cn9fz78/NfAAAA//8DALCnnTZDCgAA
+    headers:
+      CF-RAY:
+      - 956d3098fe871792-MAA
+      Cache-Control:
+      - no-cache, no-store, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Security-Policy:
+      - default-src 'none'; script-src 'self'; connect-src 'self'; img-src 'self';
+        style-src 'self'; frame-ancestors 'none'; form-action 'self';
+      Content-Type:
+      - application/json
+      Date:
+      - Sat, 28 Jun 2025 12:29:36 GMT
+      Pragma:
+      - no-cache
+      Referrer-Policy:
+      - strict-origin
+      Server:
+      - cloudflare
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains
+      - max-age=31536000; includeSubDomains
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - DENY
+      X-Global-Transaction-Id:
+      - daa4226ef08c0a3571ad4852fc7e4d70
+      X-Requests-Limit-Period:
+      - '1000'
+      X-Requests-Limit-Rate:
+      - '8'
+      X-Requests-Limit-Remaining:
+      - '7'
+      X-Requests-Limit-Reset-After:
+      - '125'
+      X-Xss-Protection:
+      - 1; mode=block
+      - 1; mode=block
+      cf-cache-status:
+      - DYNAMIC
+      server-timing:
+      - intid;desc=95948317dc788cc3
+    status:
+      code: 200
+      message: OK
+version: 1

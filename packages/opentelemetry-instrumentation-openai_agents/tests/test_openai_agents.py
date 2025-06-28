@@ -40,7 +40,7 @@ def test_sync_runner_mocked_output(test_agent):
 
 
 @pytest.mark.vcr
-def test_groq_agent_spans(exporter, test_agent):
+def test_watsonx_agent_spans(exporter, test_agent):
     query = "What is AI?"
     Runner.run_sync(
         test_agent,
