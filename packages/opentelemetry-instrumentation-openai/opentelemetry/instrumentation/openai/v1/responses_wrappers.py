@@ -452,7 +452,6 @@ def responses_get_or_create_wrapper(tracer: Tracer, wrapped, instance, args, kwa
         )
         responses[parsed_response.id] = traced_data
     except Exception:
-        raise
         return response
 
     if parsed_response.status == "completed":
