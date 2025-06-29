@@ -1,7 +1,7 @@
 import json
 import asyncio
 from functools import wraps
-from typing import Any, Callable, Optional, TypeVar, ParamSpec, Awaitable, cast
+from typing import Any, Callable, Optional, TypeVar, ParamSpec, Awaitable, cast, Dict
 
 from opentelemetry import trace
 from opentelemetry.trace.status import Status, StatusCode
