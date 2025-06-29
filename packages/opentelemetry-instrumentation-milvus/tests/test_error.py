@@ -3,6 +3,7 @@ import random
 
 import pymilvus
 import pytest
+from opentelemetry.trace.status import StatusCode
 
 path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "milvus.db")
 milvus = pymilvus.MilvusClient(uri=path)
@@ -82,6 +83,9 @@ def test_milvus_single_vector_search(exporter, collection):
     # Get finished spans
     spans = exporter.get_finished_spans()
     span = next(span for span in spans if span.name == "milvus.search")
+
+    # Check if status code is error
+    assert span.status.status_code == StatusCode.ERROR
 
     # Check the span attributes related to search
     assert span.attributes.get("error.type") == "COLLECTION_NOT_FOUND"
