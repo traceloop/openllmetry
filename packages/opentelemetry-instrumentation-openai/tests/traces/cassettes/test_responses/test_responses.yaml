@@ -1,0 +1,104 @@
+interactions:
+- request:
+    body: '{"input": "What is the capital of France?", "model": "gpt-4.1-nano"}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '68'
+      content-type:
+      - application/json
+      host:
+      - api.openai.com
+      user-agent:
+      - OpenAI/Python 1.93.0
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.93.0
+      x-stainless-read-timeout:
+      - '600'
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.9.6
+    method: POST
+    uri: https://api.openai.com/v1/responses
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA3RUwW6jMBC95yssn5vK0CSQfMCe97C3aoUGM6RujQfZ46pVlX9fYQiBbXpB8N7M
+        88ybMV8bIaRp5ElIj6GvDuW+bcuyydpCl9nxeCxVrRRkbVkXu0NRq30NkDcH0Pqgml0rHwYBql9R
+        81WEXMAR1x6Bsalg4LJin2W5UtlT4gIDxzDkaOp6i4zNmFSDfjt7im6oqgUbMMHoPXl5Ei5amwDj
+        rolVgwzGhjUb2EfNhtwK7+Cjosh95IrpDb+TTGQrDXYt11GDdij23PN295htHTja5irfb9Vum+0m
+        H5KwPInnjRBCfKXnbHAXzrO/R3VM/kKjiixD/ZQX+VE3xV1/kwZ/9phUMAQ44434ychEanKM7lbS
+        sqyV7NUT/OA5OwWAc8Rw9fH574q0dO491XeYJHQS8s8LCg29YbCCWvHLg9MoTBC/wZvwKOecy/Q2
+        y0hPNpUGIZjA4HgMHgJTkOzBg7Vo1zNjH8eN6T2+G4qhui5lleYwz9QjBHLGneVp8kRi25LnRdDg
+        b+w68J8TuBHiMu4v+nejsWKDw1rKBluIdjRPBiaPy1oYux49cExw9qgmNJk0Hd6S7+D2vRhOipub
+        H88fe34ho0eTIpOcidtAJFNfLcakZrBfFuKj02nIqRUToLbX+xjTus1VGre6O9nu4Tu+uJBzLxr0
+        Cza3RDX2M2X/fyXLe/g92XmIPykzMdgbmeezgzHg6ofSIUMDDIP8ZXP5BwAA//8DAF4ZvUMbBQAA
+    headers:
+      CF-RAY:
+      - 956dc90fc846385f-LHR
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Sat, 28 Jun 2025 14:13:33 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=dQblcVyhFMjMhX8.3Q4cKb8IIJr99wGkSo3q.Csqsck-1751120013-1.0.1.1-vxo3rhFk0rtDva2_HwgE2jQaHQ0pWAsYM74sMXEUw6bO8CmNqO4b0EwbXiRmXPOOt8NlZ2lNmWaH.aYdu9C2.T1yLSQo8MXPkKrSh8lbIfo;
+        path=/; expires=Sat, 28-Jun-25 14:43:33 GMT; domain=.api.openai.com; HttpOnly;
+        Secure; SameSite=None
+      - _cfuvid=Vy7gFEyV028QIfoGgNLyz_tr8hfLa5_6..DnIzXtbG0-1751120013737-0.0.1.1-604800000;
+        path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      openai-organization:
+      - user-xzaeeoqlanzncr8pomspsknu
+      openai-processing-ms:
+      - '551'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-ratelimit-limit-requests:
+      - '30000'
+      x-ratelimit-limit-tokens:
+      - '150000000'
+      x-ratelimit-remaining-requests:
+      - '29999'
+      x-ratelimit-remaining-tokens:
+      - '149999967'
+      x-ratelimit-reset-requests:
+      - 2ms
+      x-ratelimit-reset-tokens:
+      - 0s
+      x-request-id:
+      - req_3e2f5c75b5c27714c7c1ef7fc5760c9d
+    status:
+      code: 200
+      message: OK
+version: 1
