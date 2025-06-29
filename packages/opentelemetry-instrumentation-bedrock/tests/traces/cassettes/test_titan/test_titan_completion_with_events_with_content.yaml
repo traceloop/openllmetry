@@ -1,0 +1,56 @@
+interactions:
+- request:
+    body: '{"inputText": "Translate to spanish: ''Amazon Bedrock is the easiest way
+      to build andscale generative AI applications with base models (FMs)''.", "textGenerationConfig":
+      {"maxTokenCount": 200, "temperature": 0.5, "topP": 0.5}}'
+    headers:
+      Accept:
+      - !!binary |
+        YXBwbGljYXRpb24vanNvbg==
+      Content-Length:
+      - '224'
+      Content-Type:
+      - !!binary |
+        YXBwbGljYXRpb24vanNvbg==
+      User-Agent:
+      - !!binary |
+        Qm90bzMvMS4zNC4xNDUgbWQvQm90b2NvcmUjMS4zNC4xNDUgdWEvMi4wIG9zL21hY29zIzIzLjUu
+        MCBtZC9hcmNoI2FybTY0IGxhbmcvcHl0aG9uIzMuMTIuMSBtZC9weWltcGwjQ1B5dGhvbiBjZmcv
+        cmV0cnktbW9kZSNsZWdhY3kgQm90b2NvcmUvMS4zNC4xNDU=
+      X-Amz-Date:
+      - !!binary |
+        MjAyNDA4MDJUMTU1MjAzWg==
+      amz-sdk-invocation-id:
+      - !!binary |
+        YjgwOGVlMjEtN2QwMi00NjllLTkxNDYtMmVjOWMwMjQ1Zjky
+      amz-sdk-request:
+      - !!binary |
+        YXR0ZW1wdD0x
+    method: POST
+    uri: https://bedrock-runtime.us-east-1.amazonaws.com/model/amazon.titan-text-express-v1/invoke
+  response:
+    body:
+      string: "{\"inputTextTokenCount\":30,\"results\":[{\"tokenCount\":29,\"outputText\":\":
+        \\\"Amazon Bedrock es la forma m\xE1s sencilla de crear y escalar aplicaciones
+        de IA generativa con modelos base (FM)\\\".\",\"completionReason\":\"FINISH\"}]}"
+    headers:
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '218'
+      Content-Type:
+      - application/json
+      Date:
+      - Fri, 02 Aug 2024 15:52:06 GMT
+      X-Amzn-Bedrock-Input-Token-Count:
+      - '30'
+      X-Amzn-Bedrock-Invocation-Latency:
+      - '2433'
+      X-Amzn-Bedrock-Output-Token-Count:
+      - '29'
+      x-amzn-RequestId:
+      - 72fc110c-c935-4e5f-86b0-2c7b27922dee
+    status:
+      code: 200
+      message: OK
+version: 1

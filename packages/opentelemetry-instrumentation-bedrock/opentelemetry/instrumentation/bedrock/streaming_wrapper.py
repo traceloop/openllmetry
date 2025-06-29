@@ -1,5 +1,8 @@
 import json
-from opentelemetry.instrumentation.bedrock.utils import dont_throw
+
+from opentelemetry.instrumentation.bedrock.utils import (
+    dont_throw,
+)
 from wrapt import ObjectProxy
 
 
@@ -53,6 +56,7 @@ class StreamingWrapper(ObjectProxy):
             )
 
     def _accumulate_events(self, event):
+        print(self._accumulating_body)
         for key in event:
             if key == "contentBlockDelta":
                 delta = event.get(key).get("delta", {}).get("text")
@@ -62,5 +66,9 @@ class StreamingWrapper(ObjectProxy):
                     self._accumulating_body["outputText"] = delta
             elif key in self._accumulating_body:
                 self._accumulating_body[key] += event.get(key)
+            elif key == "messageStop":
+                self._accumulating_body["stop_reason"] = event.get(key).get(
+                    "stopReason"
+                )
             else:
                 self._accumulating_body[key] = event.get(key)
