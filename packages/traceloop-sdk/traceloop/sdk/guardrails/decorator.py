@@ -12,10 +12,10 @@ from traceloop.sdk.tracing import get_tracer
 from traceloop.sdk.client import Client
 from traceloop.sdk.utils.json_encoder import JSONEncoder
 
-from .types import InputSchemaMapping
 from .context import set_current_score
 from .client import GuardrailsClient
 from .utils import extract_input_data, extract_output_data
+from .types import InputSchemaMapping
 
 P = ParamSpec("P")
 R = TypeVar("R")
@@ -45,106 +45,55 @@ def guardrails(
         if is_async:
             @wraps(fn)
             async def async_wrapper(*args: Any, **kwargs: Any) -> Any:
-                # Setup span
-                span, ctx, ctx_token = _setup_span(entity_name, TraceloopSpanKindValues.TASK, version)
-                _handle_span_input(span, args, kwargs, cls=JSONEncoder)
-                
                 try:
-                    # Execute original function first
-                    result = await fn(*args, **kwargs)
-                    
-                    # Extract input data based on schema
-                    input_data = extract_input_data(args, kwargs, input_schema)
-                    
-                    # Also extract from output if needed
-                    output_data = extract_output_data(result, input_schema)
-                    input_data.update(output_data)
                     
                     # Execute guardrails evaluation
-                    event_data = await _execute_guardrails(evaluator_slug, input_data)
+                    event_data = await _execute_evaluator(evaluator_slug, input_schema)
                     
                     # Calculate score
                     score = score_calculator(event_data)
                     
                     # Set score in context for access within function
                     set_current_score(score)
-                    
-                    # Add guardrails attributes to span
-                    span.set_attribute("traceloop.guardrails.score", score)
-                    span.set_attribute("traceloop.guardrails.evaluator_slug", evaluator_slug)
-                    span.set_attribute("traceloop.guardrails.input_schema", json.dumps(input_schema))
-                    span.set_attribute("traceloop.guardrails.event_data", json.dumps(event_data))
-                    
-                    _handle_span_output(span, result, cls=JSONEncoder)
-                    return result
+
+                    return
                     
                 except Exception as e:
-                    span.set_status(Status(StatusCode.ERROR, str(e)))
-                    span.record_exception(e)
                     raise
                 finally:
-                    _cleanup_span(span, ctx_token)
+                    pass
             
-            return cast(F, async_wrapper)
+            return async_wrapper
         else:
             @wraps(fn)
             def sync_wrapper(*args: Any, **kwargs: Any) -> Any:
-                # Setup span
-                span, ctx, ctx_token = _setup_span(entity_name, TraceloopSpanKindValues.TASK, version)
-                _handle_span_input(span, args, kwargs, cls=JSONEncoder)
-                
+
                 try:
-                    # Execute original function first
-                    result = fn(*args, **kwargs)
-                    
-                    # Extract input data based on schema
-                    input_data = extract_input_data(args, kwargs, input_schema)
-                    
-                    # Also extract from output if needed
-                    output_data = extract_output_data(result, input_schema)
-                    input_data.update(output_data)
-                    
                     # Execute guardrails evaluation in async context
-                    event_data = asyncio.run(_execute_guardrails(evaluator_slug, input_data))
+                    event_data = asyncio.run(_execute_evaluator(evaluator_slug, input_schema))
                     
                     # Calculate score
                     score = score_calculator(event_data)
                     
                     # Set score in context for access within function
                     set_current_score(score)
-                    
-                    # Add guardrails attributes to span
-                    span.set_attribute("traceloop.guardrails.score", score)
-                    span.set_attribute("traceloop.guardrails.evaluator_slug", evaluator_slug)
-                    span.set_attribute("traceloop.guardrails.input_schema", json.dumps(input_schema))
-                    span.set_attribute("traceloop.guardrails.event_data", json.dumps(event_data))
-                    
-                    _handle_span_output(span, result, cls=JSONEncoder)
-                    return result
+
+                    return
                     
                 except Exception as e:
-                    span.set_status(Status(StatusCode.ERROR, str(e)))
-                    span.record_exception(e)
                     raise
                 finally:
-                    _cleanup_span(span, ctx_token)
+                    pass
             
-            return cast(F, sync_wrapper)
+            return sync_wrapper
     
     return decorate
 
-async def _execute_guardrails(evaluator_slug: str, input_data: Dict[str, Any]) -> Dict[str, Any]:
+async def _execute_evaluator(evaluator_slug: str, input_data: Dict[str, Any]) -> Dict[str, Any]:
     """Execute guardrails evaluation and return event data."""
-    try:
-        # Get the current client instance
-        from traceloop.sdk import get_client
-        client = get_client()
-        
+    try:    
         # Create guardrails client
-        guardrails_client = GuardrailsClient(client._http)
-        
-        # Execute evaluator
-        event_data = await guardrails_client.execute_evaluator(evaluator_slug, input_data)
+        event_data = await GuardrailsClient().execute_evaluator(evaluator_slug, input_data)
         
         return event_data
     except Exception as e:

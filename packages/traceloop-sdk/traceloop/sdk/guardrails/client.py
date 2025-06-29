@@ -4,11 +4,10 @@ import asyncio
 from typing import Dict, Any, Optional
 import aiohttp
 from traceloop.sdk.client.http import HTTPClient
+import requests
 
-class GuardrailsClient:
-    def __init__(self, http_client: HTTPClient):
-        self.http_client = http_client
-    
+
+class GuardrailsClient:        
     async def execute_evaluator(self, slug: str, data: Dict[str, Any]) -> Dict[str, Any]:
         """Execute evaluator and return accumulated SSE event data."""
         url = f"projects/default/evaluators/{slug}/execute"
@@ -33,11 +32,9 @@ class GuardrailsClient:
         """Make POST request using the HTTP client."""
         try:
             # Convert sync HTTP client to async request
-            import requests
             response = requests.post(
-                f"{self.http_client.base_url}/v2/{url}",
+                f"http://localhost:3001/v2/{url}",
                 json=data,
-                headers=self.http_client._headers(),
                 timeout=30
             )
             response.raise_for_status()
