@@ -18,7 +18,6 @@ from traceloop.sdk.guardrails import (
     guardrails,
     get_current_score,
     InputExtractor,
-    InputSchemaMapping,
 )
 
 def calculate_sentiment_score(event_data: dict) -> float:

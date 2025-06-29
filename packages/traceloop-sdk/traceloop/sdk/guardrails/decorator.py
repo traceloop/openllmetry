@@ -1,12 +1,10 @@
 import asyncio
 from functools import wraps
 from typing import Any, Callable, Optional, TypeVar, ParamSpec, Awaitable, Dict
-import sys
 
 from traceloop.sdk.guardrails.guardrails import Guardrails
 from .context import set_current_score
-from .utils import extract_input_data
-from .types import InputSchemaMapping
+from .types import InputExtractor
 
 P = ParamSpec("P")
 R = TypeVar("R")
@@ -15,7 +13,7 @@ F = TypeVar("F", bound=Callable[P, R | Awaitable[R]])
 def guardrails(
     evaluator_slug: str,
     score_calculator: Callable[[Dict[str, Any]], float],
-    input_schema: InputSchemaMapping,
+    input_schema: Dict[str, InputExtractor],
     name: Optional[str] = None,
     version: Optional[int] = None,
 ) -> Callable[[F], F]:
@@ -31,6 +29,7 @@ def guardrails(
     """
     def decorate(fn: F) -> F:
         is_async = asyncio.iscoroutinefunction(fn)
+        print("is_async: ", is_async)
         entity_name = name or f"{fn.__qualname__}.guardrails"
         
         if is_async:
@@ -81,9 +80,11 @@ def guardrails(
     
     return decorate
 
-async def _execute_evaluator(evaluator_slug: str, input_schema: InputSchemaMapping, args: tuple, kwargs: dict) -> Dict[str, Any]:
+async def _execute_evaluator(evaluator_slug: str, input_schema: Dict[str, InputExtractor], args: tuple, kwargs: dict) -> Dict[str, Any]:
     """Execute guardrails evaluation and return event data."""
+    print("Executing evaluator")
     try:    
+     
         # Get client instance without circular import
         client = _get_client()
         event_data = await client.guardrails.execute_evaluator(evaluator_slug, input_schema)

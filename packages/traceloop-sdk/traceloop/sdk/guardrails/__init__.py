@@ -1,5 +1,5 @@
 from .context import get_current_score, set_current_score
-from .types import InputExtractor, InputSchemaMapping
+from .types import InputExtractor, ExecuteEvaluatorRequest
 from .decorator import guardrails
 
 __all__ = [
@@ -7,5 +7,5 @@ __all__ = [
     "get_current_score", 
     "set_current_score",
     "InputExtractor",
-    "InputSchemaMapping"
+    "ExecuteEvaluatorRequest"
 ] 
