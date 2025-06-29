@@ -39,6 +39,8 @@ def exporter():
 
 @pytest.fixture(autouse=True)
 def environment():
+    if not os.environ.get("OPENAI_API_KEY"):
+        os.environ["OPENAI_API_KEY"] == "api-key"
     if not os.environ.get("WATSONX_URL"):
         os.environ["WATSONX_URL"] = "url"
     if not os.environ.get("WATSONX_PROJECT_ID"):
