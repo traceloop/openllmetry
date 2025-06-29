@@ -8,6 +8,14 @@ from traceloop.sdk.decorators.base import (
     entity_method,
 )
 
+# Import guardrails decorator
+from traceloop.sdk.guardrails import (
+    guardrails,
+    get_current_score,
+    InputExtractor,
+    InputSchemaMapping,
+)
+
 P = ParamSpec("P")
 R = TypeVar("R")
 F = TypeVar("F", bound=Callable[P, R | Awaitable[R]])
