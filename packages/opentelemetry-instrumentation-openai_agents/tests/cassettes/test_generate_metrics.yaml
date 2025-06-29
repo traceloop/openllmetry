@@ -1,17 +1,13 @@
 interactions:
 - request:
-    body: grant_type=urn%3Aibm%3Aparams%3Aoauth%3Agrant-type%3Aapikey&apikey=5cSMM-2lAi040vKauIMv3Pp_zf6EP_Gse-D7z0CC03KV
+    body: grant_type=urn%3Aibm%3Aparams%3Aoauth%3Agrant-type%3Aapikey
     headers:
-      accept:
-      - application/json
       accept-encoding:
       - gzip, deflate
       connection:
       - keep-alive
       content-length:
       - '111'
-      content-type:
-      - application/x-www-form-urlencoded
       host:
       - iam.cloud.ibm.com
       user-agent:
@@ -21,28 +17,28 @@ interactions:
   response:
     body:
       string: !!binary |
-        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
+        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
     headers:
       Akamai-GRN:
-      - 0.55952317.1751179629.c815ef0
+      - 0.6dbc5668.1751180465.35bb847
       Cache-Control:
       - no-cache, no-store, must-revalidate
       Connection:
@@ -52,11 +48,11 @@ interactions:
       Content-Language:
       - en-US
       Content-Length:
-      - '1066'
+      - '1065'
       Content-Type:
       - application/json
       Date:
-      - Sun, 29 Jun 2025 06:47:09 GMT
+      - Sun, 29 Jun 2025 07:01:05 GMT
       Expires:
       - '0'
       Pragma:
@@ -68,22 +64,22 @@ interactions:
       strict-transport-security:
       - max-age=31536000; includeSubDomains
       transaction-id:
-      - azJqMnI-e8b800e9d32e4576b36f7e0f1b4a982d
+      - OHhya2Y-4a00734f5c8e452287501398cd988e88
       x-content-type-options:
       - nosniff
       x-correlation-id:
-      - azJqMnI-e8b800e9d32e4576b36f7e0f1b4a982d
+      - OHhya2Y-4a00734f5c8e452287501398cd988e88
       x-proxy-upstream-service-time:
-      - '61'
+      - '103'
       x-request-id:
-      - 07c6a1b8-fb72-439c-939c-cd23aa2ed512
+      - 8b4407fc-dac6-42cd-9dbd-489fec41d430
     status:
       code: 200
       message: OK
 - request:
-    body: '{"data": [{"object": "trace.span", "id": "span_dbe0779b6b114132a194aba5",
-      "trace_id": "trace_79cd451e0aed42c1a1275e5086dce33e", "parent_id": "span_b3a9736825b34b7d85467b40",
-      "started_at": "2025-06-29T06:47:01.333658+00:00", "ended_at": "2025-06-29T06:47:09.968099+00:00",
+    body: '{"data": [{"object": "trace.span", "id": "span_b4426aec3cf34450a2a80fc8",
+      "trace_id": "trace_23e99a3a88704c3f80f1ca23726dd552", "parent_id": "span_6a5bb950c56c405e99b4efa1",
+      "started_at": "2025-06-29T07:00:57.842066+00:00", "ended_at": "2025-06-29T07:01:06.152757+00:00",
       "span_data": {"type": "generation", "input": [{"content": "You are a helpful
       assistant that answers all questions", "role": "system"}, {"role": "user", "content":
       "What is AI?"}], "output": [{"content": "**Artificial Intelligence (AI)** is
@@ -114,26 +110,22 @@ interactions:
       "max_tokens": 1024, "reasoning": null, "metadata": null, "store": null, "include_usage":
       null, "extra_query": null, "extra_body": null, "extra_headers": null, "base_url":
       "", "model_impl": "litellm"}, "usage": {"input_tokens": 48, "output_tokens":
-      337}}, "error": null}, {"object": "trace.span", "id": "span_b3a9736825b34b7d85467b40",
-      "trace_id": "trace_79cd451e0aed42c1a1275e5086dce33e", "parent_id": null, "started_at":
-      "2025-06-29T06:47:01.332995+00:00", "ended_at": "2025-06-29T06:47:09.970802+00:00",
+      337}}, "error": null}, {"object": "trace.span", "id": "span_6a5bb950c56c405e99b4efa1",
+      "trace_id": "trace_23e99a3a88704c3f80f1ca23726dd552", "parent_id": null, "started_at":
+      "2025-06-29T07:00:57.841189+00:00", "ended_at": "2025-06-29T07:01:06.155477+00:00",
       "span_data": {"type": "agent", "name": "WatsonXAgent", "handoffs": [], "tools":
-      [], "output_type": "str"}, "error": null}, {"object": "trace", "id": "trace_4bc925ecb0c942e3a115337810f38085",
+      [], "output_type": "str"}, "error": null}, {"object": "trace", "id": "trace_aa45bdbaf05143368598fab0349d9ef8",
       "workflow_name": "Agent workflow", "group_id": null, "metadata": null}]}'
     headers:
-      accept:
-      - '*/*'
       accept-encoding:
       - gzip, deflate
       connection:
       - keep-alive
       content-length:
       - '3213'
-      content-type:
-      - application/json
       cookie:
-      - __cf_bm=7cmbPsurM4w..ZUreQf42.oVDnzn2ReTVPNZl0lDoLg-1751179625-1.0.1.1-KCz1prM8qkcX9x7WxOvXnEYj4wG1zTZ.CcH29ctctOvWxmdl2obVj8eWNdFpVwB1fibWvgaPhbH9U22vnTXKTUTS6Lq6YAUxKQllmG90eR8;
-        _cfuvid=SJMxqajLrd25WT5D1zllDDYWxuDga8QFj2d9DKIO9L0-1751179625572-0.0.1.1-604800000
+      - __cf_bm=SIcg7CoN_vx.iolYf.EnBpsaXnMWvC1egmLm0_5Hijc-1751180461-1.0.1.1-sUYyH4n.vsyXg3jnF_kW93VPDvAWmNdJmKN.xW1_XjJYBrXRLZfyE7usbNCU0o0zJdqk4Yqcv15GNuV5ImCMiJHV4cWhPOkl.aVKfQLLFrQ;
+        _cfuvid=ebhjMxGSpPcv_qcDM16Gka7ehAox6j0kOB1Xa8qgGLU-1751180461704-0.0.1.1-604800000
       host:
       - api.openai.com
       openai-beta:
@@ -147,11 +139,11 @@ interactions:
       string: ''
     headers:
       CF-RAY:
-      - 957378943e857ed9-MAA
+      - 95738cfe5c937f3f-MAA
       Connection:
       - keep-alive
       Date:
-      - Sun, 29 Jun 2025 06:47:11 GMT
+      - Sun, 29 Jun 2025 07:01:08 GMT
       Server:
       - cloudflare
       X-Content-Type-Options:
@@ -163,13 +155,13 @@ interactions:
       openai-organization:
       - user-ucpvq3kvunyzsbruinqfemcy
       openai-processing-ms:
-      - '362'
+      - '185'
       openai-version:
       - '2020-10-01'
       strict-transport-security:
       - max-age=31536000; includeSubDomains; preload
       x-request-id:
-      - req_3a7ecf7f5520ebc7f63ff988c968ef5c
+      - req_d2dc84ac20a17ec6531b28484c72e222
     status:
       code: 204
       message: No Content
@@ -180,16 +172,12 @@ interactions:
       "max_tokens": 1024, "frequency_penalty": 1.3, "model_id": "meta-llama/llama-3-3-70b-instruct",
       "project_id": "7df21499-6277-4938-af57-a409852ae8f1", "stream": false}'
     headers:
-      accept:
-      - application/json
       accept-encoding:
       - gzip, deflate
       connection:
       - keep-alive
       content-length:
       - '393'
-      content-type:
-      - application/json
       host:
       - us-south.ml.cloud.ibm.com
       user-agent:
@@ -199,33 +187,33 @@ interactions:
   response:
     body:
       string: !!binary |
-        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
+        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
+        uyHuSb59fDLPfzw//w0AAP//AwBu7dnfwQkAAA==
     headers:
       CF-RAY:
-      - 9573788b69167fb6-MAA
+      - 95738cf60d2c7fd3-MAA
       Cache-Control:
       - no-cache, no-store, must-revalidate
       Connection:
@@ -238,7 +226,7 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Sun, 29 Jun 2025 06:47:16 GMT
+      - Sun, 29 Jun 2025 07:01:13 GMT
       Pragma:
       - no-cache
       Referrer-Policy:
@@ -255,7 +243,7 @@ interactions:
       X-Frame-Options:
       - DENY
       X-Global-Transaction-Id:
-      - 08426ef883a963a82928399867c06c9b
+      - e644c8f88a144481c3a1b35a241a1749
       X-Requests-Limit-Period:
       - '1000'
       X-Requests-Limit-Rate:
@@ -270,7 +258,7 @@ interactions:
       cf-cache-status:
       - DYNAMIC
       server-timing:
-      - intid;desc=32a94ebc414f1ece
+      - intid;desc=81329d1fac4238ab
     status:
       code: 200
       message: OK
