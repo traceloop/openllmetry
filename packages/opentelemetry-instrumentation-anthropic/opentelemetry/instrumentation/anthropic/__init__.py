@@ -170,12 +170,25 @@ async def _aset_input_attributes(span, kwargs):
     )
     set_span_attribute(span, SpanAttributes.LLM_IS_STREAMING, kwargs.get("stream"))
 
+    # Handle system messages
+    if kwargs.get("system") is not None:
+        for i, message in enumerate(kwargs.get("system")):
+            set_span_attribute(
+                span,
+                f"{SpanAttributes.LLM_PROMPTS}.{i}.role",
+                "system"  # Assuming system messages have the role "system"
+            )
+            set_span_attribute(
+                span,
+                f"{SpanAttributes.LLM_PROMPTS}.{i}.content",
+                message.get("text", "")
+            )
+
     if should_send_prompts():
         if kwargs.get("prompt") is not None:
             set_span_attribute(
                 span, f"{SpanAttributes.LLM_PROMPTS}.0.user", kwargs.get("prompt")
             )
-
         elif kwargs.get("messages") is not None:
             has_system_message = False
             if kwargs.get("system"):
