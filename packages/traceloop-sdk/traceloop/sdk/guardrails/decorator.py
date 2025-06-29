@@ -1,20 +1,11 @@
-import json
 import asyncio
 from functools import wraps
-from typing import Any, Callable, Optional, TypeVar, ParamSpec, Awaitable, cast, Dict
+from typing import Any, Callable, Optional, TypeVar, ParamSpec, Awaitable, Dict
+import sys
 
-from opentelemetry import trace
-from opentelemetry.trace.status import Status, StatusCode
-from opentelemetry.semconv_ai import TraceloopSpanKindValues
-
-from traceloop.sdk.decorators.base import _setup_span, _handle_span_input, _handle_span_output, _cleanup_span
-from traceloop.sdk.tracing import get_tracer
-from traceloop.sdk.client import Client
-from traceloop.sdk.utils.json_encoder import JSONEncoder
-
+from traceloop.sdk.guardrails.guardrails import Guardrails
 from .context import set_current_score
-from .client import GuardrailsClient
-from .utils import extract_input_data, extract_output_data
+from .utils import extract_input_data
 from .types import InputSchemaMapping
 
 P = ParamSpec("P")
@@ -46,9 +37,8 @@ def guardrails(
             @wraps(fn)
             async def async_wrapper(*args: Any, **kwargs: Any) -> Any:
                 try:
-                    
                     # Execute guardrails evaluation
-                    event_data = await _execute_evaluator(evaluator_slug, input_schema)
+                    event_data = await _execute_evaluator(evaluator_slug, input_schema, args, kwargs)
                     
                     # Calculate score
                     score = score_calculator(event_data)
@@ -56,7 +46,8 @@ def guardrails(
                     # Set score in context for access within function
                     set_current_score(score)
 
-                    return
+                    # Call the original function
+                    return await fn(*args, **kwargs)
                     
                 except Exception as e:
                     raise
@@ -70,7 +61,7 @@ def guardrails(
 
                 try:
                     # Execute guardrails evaluation in async context
-                    event_data = asyncio.run(_execute_evaluator(evaluator_slug, input_schema))
+                    event_data = asyncio.run(_execute_evaluator(evaluator_slug, input_schema, args, kwargs))
                     
                     # Calculate score
                     score = score_calculator(event_data)
@@ -78,7 +69,8 @@ def guardrails(
                     # Set score in context for access within function
                     set_current_score(score)
 
-                    return
+                    # Call the original function
+                    return fn(*args, **kwargs)
                     
                 except Exception as e:
                     raise
@@ -89,14 +81,22 @@ def guardrails(
     
     return decorate
 
-async def _execute_evaluator(evaluator_slug: str, input_data: Dict[str, Any]) -> Dict[str, Any]:
+async def _execute_evaluator(evaluator_slug: str, input_schema: InputSchemaMapping, args: tuple, kwargs: dict) -> Dict[str, Any]:
     """Execute guardrails evaluation and return event data."""
     try:    
-        # Create guardrails client
-        event_data = await GuardrailsClient().execute_evaluator(evaluator_slug, input_data)
+        # Get client instance without circular import
+        client = _get_client()
+        event_data = await client.guardrails.execute_evaluator(evaluator_slug, input_schema)
+        
         
         return event_data
     except Exception as e:
         # Log error and return empty data
         print(f"Error executing guardrails: {str(e)}")
-        return {} 
+        return {}
+    
+def _get_client():
+    """Get the Traceloop client instance without circular import."""
+    # Import here to avoid circular import
+    from traceloop.sdk import Traceloop
+    return Traceloop.get() 

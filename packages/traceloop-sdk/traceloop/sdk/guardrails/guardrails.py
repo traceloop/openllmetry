@@ -1,16 +1,18 @@
 import json
-import re
-import asyncio
 from typing import Dict, Any, Optional
 import aiohttp
 from traceloop.sdk.client.http import HTTPClient
-import requests
 
 
-class GuardrailsClient:        
+class Guardrails:        
+    def __init__(self, http: HTTPClient, app_name: str):
+        self._http = http
+        self._app_name = app_name
+        self._flow = "guardrails"
+
     async def execute_evaluator(self, slug: str, data: Dict[str, Any]) -> Dict[str, Any]:
         """Execute evaluator and return accumulated SSE event data."""
-        url = f"projects/default/evaluators/{slug}/execute"
+        url = f"projects/default/evaluators/slug/{slug}/execute"
         
         try:
             # Make POST request to evaluator endpoint
@@ -31,14 +33,12 @@ class GuardrailsClient:
     async def _make_post_request(self, url: str, data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """Make POST request using the HTTP client."""
         try:
-            # Convert sync HTTP client to async request
-            response = requests.post(
-                f"http://localhost:3001/v2/{url}",
-                json=data,
-                timeout=30
-            )
-            response.raise_for_status()
-            return response.json()
+            request_body = {
+                "input_schema_mapping": data
+            }
+
+            response = self._http.post(url, request_body)
+            return response
         except Exception as e:
             print(f"Error making POST request to {url}: {str(e)}")
             return None

@@ -20,7 +20,6 @@ def calculate_score(event_data: dict) -> float:
     return event_data.get("pass", False)
 
 
-
 @guardrails(
     evaluator_slug="What I Hate",
     score_calculator=calculate_score,
@@ -35,6 +34,11 @@ def process_user_message(message: str, user_id: str) -> str:
     sentiment_score = get_current_score()
     
     print(f"Processing message for user {user_id} with sentiment score: {sentiment_score}")
+    
+    if sentiment_score:
+        return "Message approved"
+    else:
+        return "Message rejected"
 
 
 def main():
