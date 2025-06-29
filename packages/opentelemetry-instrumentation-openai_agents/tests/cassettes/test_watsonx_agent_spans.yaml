@@ -1,0 +1,231 @@
+interactions:
+- request:
+    body: grant_type=urn%3Aibm%3Aparams%3Aoauth%3Agrant-type%3Aapikey
+    headers:
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '111'
+      host:
+      - iam.cloud.ibm.com
+      user-agent:
+      - litellm/1.70.2
+    method: POST
+    uri: https://iam.cloud.ibm.com/identity/token
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAAI1UyZKjRhD9FYfO3RMsQmrmJolF0KLQUqKAC8GmZimgJEACOfzvrqKnx3bEhO0T
+        UJn58r3MR/0+C+M4bduga8q0nn2fpaN5C9Eht3NjtBRVspR4BBujNSqt9UdjYWATWsVZMGruG80l
+        HuIvn/mmeSh54m84ARTqw1LA+lhmhpE/8v+Kx5WTRTqLUfwSbyDC5VRXH4lRNLlVxKNVZIUFy85D
+        xtw7cZxVrIYdUnkPHjqgg9J7qnOgGwNABvfZ84gjWu9XGMc5xS08wYKrh8Vp+kn9yHcbsw5dH0dY
+        7qkGzPocRcqjSiTvxPT6WYRwmzp/xaGOeYYdVVrnnxjXhPeQVKdI/fiK+YjPQvRgeun5QJLzmngV
+        13uC3E1aRSdnWL6I29B1ViEyu10F7tHUU+MTPeuNgiyNGvAe4035RBT7oOM8OklFJHCM+/+a+7/y
+        FLDgI+nyixyGX1F8Em3x3+JUy8TRoTvA7a81mDKtzTwB3BMkcZ866Bx1us+CcHHtYBqnM7AYb+wj
+        pwQKLm1l9bSgynbKeRDkFjoPAJ6p/1YS2+fnPnAX8zIfC87oCgyP+gIavA1Xg6VYE+e4khc+mud2
+        fRwTdGY1T1dw+kR3xnhrElp78RAoIpGeUa/51NOxwPL+mfPlfw8dBFD5lVVZg834VcecPgWPfvsF
+        5Vypc0s3sZX/4Mf+j8IQbSWmWrz8cmI+1OgcmgE8z4MFPx5AOXOUK063q9wuVBFAdbCVwwPAw8R3
+        wqgyLtmun3b+dqf1bLYt5Vzuqp8euH/5O9mWk5fjSusTTeZSdz15NXHN3mb5kDw818wi11pEAvPX
+        x8IX6Xd96JItfviQZLGOb7474TypTx/Tvqde63usOz2bB40VdI+s55fvSh/5WYKG6X+jcx2ZTrb/
+        yDVyG7d5vE1KA/Pyt73yDrP40pP9uUv9qJDbepEPMT4I5lbtlVK+yIvivV2udvJl8cZhsehtM8zu
+        XZFdVsIrrgXpUBtOYxRAIq9bAY73dB+gPgYmON51eBNNAWrSRY3mfo/CYKtgYXdvlbbeFfwCnMjp
+        FZS2b3aLQkTuvi2bE2nXS7EMW3BT78vRMcYk4CO+D1YdbMbxsB/I6Mc3ZZVZR0/y6jB7VQK+VOX1
+        utHmJTjyJ81rrrbGtcZVxIgU76NVNYG0js1luX6mUVkVZ0iM5h5upf66k08CJMHluoena/XkEA67
+        OJM3zhJfhxUXhTBXj6GbdNrOXe9MXmj0+Qgvm+ZYSZ0mf4Q4QPUrOTa3OVE2u2sjSo/Zy+yWXm5p
+        m/28veumC9qekObWpQmN51Ub9G16C/Jk9p0XJJnjOfFlNqUH3UhSWrNOw1t6o8npQHKKFuQUSVxw
+        3I+TsMsbesIvJZ5/m3PS/GXWxs1USm+Y3+hbTdH/+BNG9Ma6SgYAAA==
+    headers:
+      Akamai-GRN:
+      - 0.1dbc5668.1751180457.99ed771
+      Cache-Control:
+      - no-cache, no-store, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Language:
+      - en-US
+      Content-Length:
+      - '1066'
+      Content-Type:
+      - application/json
+      Date:
+      - Sun, 29 Jun 2025 07:00:57 GMT
+      Expires:
+      - '0'
+      Pragma:
+      - no-cache
+      Vary:
+      - Accept-Encoding
+      ibm-cloud-service-name:
+      - iam-identity
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains
+      transaction-id:
+      - bmNsemw-79d6f366ba9e4be9bc7ec0a6de12b887
+      x-content-type-options:
+      - nosniff
+      x-correlation-id:
+      - bmNsemw-79d6f366ba9e4be9bc7ec0a6de12b887
+      x-proxy-upstream-service-time:
+      - '96'
+      x-request-id:
+      - 3f4747df-2220-49fc-8a20-dcaa8869fe42
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"data": [{"object": "trace", "id": "trace_23e99a3a88704c3f80f1ca23726dd552",
+      "workflow_name": "Agent workflow", "group_id": null, "metadata": null}]}'
+    headers:
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '150'
+      host:
+      - api.openai.com
+      openai-beta:
+      - traces=v1
+      user-agent:
+      - python-httpx/0.27.0
+    method: POST
+    uri: https://api.openai.com/v1/traces/ingest
+  response:
+    body:
+      string: ''
+    headers:
+      CF-RAY:
+      - 95738cd7f8c38007-MAA
+      Connection:
+      - keep-alive
+      Date:
+      - Sun, 29 Jun 2025 07:01:01 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=SIcg7CoN_vx.iolYf.EnBpsaXnMWvC1egmLm0_5Hijc-1751180461-1.0.1.1-sUYyH4n.vsyXg3jnF_kW93VPDvAWmNdJmKN.xW1_XjJYBrXRLZfyE7usbNCU0o0zJdqk4Yqcv15GNuV5ImCMiJHV4cWhPOkl.aVKfQLLFrQ;
+        path=/; expires=Sun, 29-Jun-25 07:31:01 GMT; domain=.api.openai.com; HttpOnly;
+        Secure; SameSite=None
+      - _cfuvid=ebhjMxGSpPcv_qcDM16Gka7ehAox6j0kOB1Xa8qgGLU-1751180461704-0.0.1.1-604800000;
+        path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
+      X-Content-Type-Options:
+      - nosniff
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      openai-organization:
+      - user-ucpvq3kvunyzsbruinqfemcy
+      openai-processing-ms:
+      - '139'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-request-id:
+      - req_61d0f6629d6ff9c557295bdc9d37c6ef
+    status:
+      code: 204
+      message: No Content
+- request:
+    body: '{"model": "meta-llama/llama-3-3-70b-instruct", "messages": [{"content":
+      "You are a helpful assistant that answers all questions", "role": "system"},
+      {"role": "user", "content": "What is AI?"}], "temperature": 0.3, "top_p": 0.2,
+      "max_tokens": 1024, "frequency_penalty": 1.3, "model_id": "meta-llama/llama-3-3-70b-instruct",
+      "project_id": "7df21499-6277-4938-af57-a409852ae8f1", "stream": false}'
+    headers:
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '393'
+      host:
+      - us-south.ml.cloud.ibm.com
+      user-agent:
+      - Agents/Python 0.0.16
+    method: POST
+    uri: https://us-south.ml.cloud.ibm.com/ml/v1/text/chat?version=2024-03-13
+  response:
+    body:
+      string: !!binary |
+        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
+    headers:
+      CF-RAY:
+      - 95738cc30ebe7fd3-MAA
+      Cache-Control:
+      - no-cache, no-store, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Security-Policy:
+      - default-src 'none'; script-src 'self'; connect-src 'self'; img-src 'self';
+        style-src 'self'; frame-ancestors 'none'; form-action 'self';
+      Content-Type:
+      - application/json
+      Date:
+      - Sun, 29 Jun 2025 07:01:05 GMT
+      Pragma:
+      - no-cache
+      Referrer-Policy:
+      - strict-origin
+      Server:
+      - cloudflare
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains
+      - max-age=31536000; includeSubDomains
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - DENY
+      X-Global-Transaction-Id:
+      - d66ca5f29004a6c130c2d17505160df3
+      X-Requests-Limit-Period:
+      - '1000'
+      X-Requests-Limit-Rate:
+      - '8'
+      X-Requests-Limit-Remaining:
+      - '7'
+      X-Requests-Limit-Reset-After:
+      - '125'
+      X-Xss-Protection:
+      - 1; mode=block
+      - 1; mode=block
+      cf-cache-status:
+      - DYNAMIC
+      server-timing:
+      - intid;desc=568df64fa9f94a25
+    status:
+      code: 200
+      message: OK
+version: 1

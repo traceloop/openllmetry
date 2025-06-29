@@ -1,0 +1,265 @@
+interactions:
+- request:
+    body: grant_type=urn%3Aibm%3Aparams%3Aoauth%3Agrant-type%3Aapikey
+    headers:
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '111'
+      host:
+      - iam.cloud.ibm.com
+      user-agent:
+      - litellm/1.70.2
+    method: POST
+    uri: https://iam.cloud.ibm.com/identity/token
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAAI1UXbOiOBD9K1s+z52CICrzJhf5WgN+ICF5sfhSAgFRUMSp/e8buHNnd6umdvcJ
+        SHefPqf7kO+TMI7Tpjm2lyKtJt8maW/fQrSlLrV6qK1kqMW98241Vqk3pLdmFrM9mB+AVQlfeW6N
+        kXj6yLftbSHW5F0ATr7qoOaouyKzLNrR/4rHpZ9FxhDj+AV79xArxrpqV1v5hbqaWhADA+dVtLjc
+        UY4hOABLay/LXA23UGM59M4yzFeSg6Dw0XPHIl5PSsZiynFzDKC37KCgG/vVma7f7SoMCIuYcuca
+        2NBnJ3EeZSLj/aCXZBFiTer/FfcMJg7YUam3ZD9wTUSM5CpFq/NnjCAxC1E36OXnzzo5qDUuhTsG
+        SjtqlXw6YBGJNWHgL0Nkt+vSeURjT11MjOxu5fXcqhwRD7w5n4hjbw1Go72cR0AYuP+vuf8rT8AA
+        QfLpFzkDfsnx68hkf4tzLSNHv8V8Lr/WYCu8NuObeiRIFj508DkafJ95LcSVz3iczwAOvBlBfuFo
+        rHC15Qt6KwHmSwF7DoXo8HS8A/ffUnaQJXzsg7WxqIgx8PsADHgXCj1LdL3lE2pw5ByXyoygKXWr
+        XZ+gw1DzCoB/Twy/j0275rUnjJw8kvgZ9xrhno7BkPfPnE//Y7QFTklKWMKnO/Dj3uNPgPk3yTnn
+        cjWFhs0g/cFv+D9yS3K1mGvB9LQffKjzOVyezuvw5B7tHA33nCtLzSV1B796q6erbTsnHzFeI0aZ
+        CYmpvly6ePD6YbYN51ysy58eeHz6OzGL0ctxqd8TXRHSQB29mgT23R3yvbrDgZ1FAZxFYPDXeUYk
+        /l1t28RkHfHqLDbYjQQjzov7tBv3PfZSH7Hh34d58FjO9zj0/PRdQRDJEvQc/zc+137QOew/Cizq
+        sobGZlJYTFS+2sXD2etnx0oippph8vtb0LYCPTCry6qyrzLxkuPEFm5X12nrRbEPHZETsN0g1tev
+        t917sgGLndVtzmF+Fpv1ow4gSU76SUBF6hPZ2WTRYiFtcAxPqV5X8/O2bhxcy4rUVXBhhvKUnLah
+        lRncpJaIos36+Mgf5U7Nzq2vWs3s5F+ddYjT6mqRjdRo12m81sCZHlXjiMP1q1T121TcmU+wsPbd
+        Rjg4YLoAmiwshbOZyPNLBzevZ9is6OwoYzU0ZeV+Mt1Xt7+BmbrUNu2x4l5EBBtxdLWzNlc6YORo
+        P/OT6wo89DfFfBmotzsgmUU3T4t3+Tbv9+LWk98u3UGunjNv6uXXOZYOyuNOvGA7+TK5padb2mQ/
+        b+/q0h6be11fbm2a8Dgtm+O9SW9Hmky+iUBWBFGQvkzG9GPb1ymvUdPwlt54cvqsKUc7Uo4kzQTh
+        x0nY0gs/EeeyKC6mwgx8mTTxZSzlN8xv/K3i6H/8CUEhE3FKBgAA
+    headers:
+      Akamai-GRN:
+      - 0.6dbc5668.1751180465.35bb847
+      Cache-Control:
+      - no-cache, no-store, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Language:
+      - en-US
+      Content-Length:
+      - '1065'
+      Content-Type:
+      - application/json
+      Date:
+      - Sun, 29 Jun 2025 07:01:05 GMT
+      Expires:
+      - '0'
+      Pragma:
+      - no-cache
+      Vary:
+      - Accept-Encoding
+      ibm-cloud-service-name:
+      - iam-identity
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains
+      transaction-id:
+      - OHhya2Y-4a00734f5c8e452287501398cd988e88
+      x-content-type-options:
+      - nosniff
+      x-correlation-id:
+      - OHhya2Y-4a00734f5c8e452287501398cd988e88
+      x-proxy-upstream-service-time:
+      - '103'
+      x-request-id:
+      - 8b4407fc-dac6-42cd-9dbd-489fec41d430
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"data": [{"object": "trace.span", "id": "span_b4426aec3cf34450a2a80fc8",
+      "trace_id": "trace_23e99a3a88704c3f80f1ca23726dd552", "parent_id": "span_6a5bb950c56c405e99b4efa1",
+      "started_at": "2025-06-29T07:00:57.842066+00:00", "ended_at": "2025-06-29T07:01:06.152757+00:00",
+      "span_data": {"type": "generation", "input": [{"content": "You are a helpful
+      assistant that answers all questions", "role": "system"}, {"role": "user", "content":
+      "What is AI?"}], "output": [{"content": "**Artificial Intelligence (AI)** is
+      a field of computer science that focuses on creating intelligent machines capable
+      of performing tasks that typically require human intelligence, such as:\n\n1.
+      **Learning**: AI systems can learn from data and improve their performance over
+      time.\n2. **Problem-solving**: AI systems can analyze situations, identify patterns,
+      and make decisions to solve complex problems.\n3. **Reasoning**: AI systems
+      can draw inferences, make predictions, and take actions based on available data.\n4.
+      **Perception**: AI systems can interpret and understand data from sensors, such
+      as images, speech, and text.\n\nThe primary goal of AI is to create machines
+      that can think and act like humans, or even surpass human capabilities in specific
+      domains.\n\n**Types of AI:**\n\n1. **Narrow or Weak AI**: Designed to perform
+      a specific task, such as image recognition or language translation.\n2. **General
+      or Strong AI**: A hypothetical AI system that possesses the ability to understand,
+      learn, and apply knowledge across a wide range of tasks.\n3. **Superintelligence**:
+      An AI system that significantly surpasses the intelligence of humans in many
+      domains.\n\n**Applications of AI:**\n\n1. Virtual assistants (e.g., Siri, Alexa)\n2.
+      Image recognition (e.g., self-driving cars)\n3. Natural Language Processing
+      (e.g., chatbots)\n4. Predictive analytics (e.g., recommendation systems)\n5.
+      Robotics (e.g., industrial automation)\n\nAI has the potential to revolutionize
+      numerous industries and aspects of our lives, but it also raises important questions
+      about ethics, safety, and responsibility.\n\nWould you like to know more about
+      a specific aspect of AI?", "role": "assistant", "tool_calls": null, "function_call":
+      null}], "model": "watsonx/meta-llama/llama-3-3-70b-instruct", "model_config":
+      {"temperature": 0.3, "top_p": 0.2, "frequency_penalty": 1.3, "presence_penalty":
+      null, "tool_choice": null, "parallel_tool_calls": null, "truncation": null,
+      "max_tokens": 1024, "reasoning": null, "metadata": null, "store": null, "include_usage":
+      null, "extra_query": null, "extra_body": null, "extra_headers": null, "base_url":
+      "", "model_impl": "litellm"}, "usage": {"input_tokens": 48, "output_tokens":
+      337}}, "error": null}, {"object": "trace.span", "id": "span_6a5bb950c56c405e99b4efa1",
+      "trace_id": "trace_23e99a3a88704c3f80f1ca23726dd552", "parent_id": null, "started_at":
+      "2025-06-29T07:00:57.841189+00:00", "ended_at": "2025-06-29T07:01:06.155477+00:00",
+      "span_data": {"type": "agent", "name": "WatsonXAgent", "handoffs": [], "tools":
+      [], "output_type": "str"}, "error": null}, {"object": "trace", "id": "trace_aa45bdbaf05143368598fab0349d9ef8",
+      "workflow_name": "Agent workflow", "group_id": null, "metadata": null}]}'
+    headers:
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '3213'
+      cookie:
+      - __cf_bm=SIcg7CoN_vx.iolYf.EnBpsaXnMWvC1egmLm0_5Hijc-1751180461-1.0.1.1-sUYyH4n.vsyXg3jnF_kW93VPDvAWmNdJmKN.xW1_XjJYBrXRLZfyE7usbNCU0o0zJdqk4Yqcv15GNuV5ImCMiJHV4cWhPOkl.aVKfQLLFrQ;
+        _cfuvid=ebhjMxGSpPcv_qcDM16Gka7ehAox6j0kOB1Xa8qgGLU-1751180461704-0.0.1.1-604800000
+      host:
+      - api.openai.com
+      openai-beta:
+      - traces=v1
+      user-agent:
+      - python-httpx/0.27.0
+    method: POST
+    uri: https://api.openai.com/v1/traces/ingest
+  response:
+    body:
+      string: ''
+    headers:
+      CF-RAY:
+      - 95738cfe5c937f3f-MAA
+      Connection:
+      - keep-alive
+      Date:
+      - Sun, 29 Jun 2025 07:01:08 GMT
+      Server:
+      - cloudflare
+      X-Content-Type-Options:
+      - nosniff
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      openai-organization:
+      - user-ucpvq3kvunyzsbruinqfemcy
+      openai-processing-ms:
+      - '185'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-request-id:
+      - req_d2dc84ac20a17ec6531b28484c72e222
+    status:
+      code: 204
+      message: No Content
+- request:
+    body: '{"model": "meta-llama/llama-3-3-70b-instruct", "messages": [{"content":
+      "You are a helpful assistant that answers all questions", "role": "system"},
+      {"role": "user", "content": "What is AI?"}], "temperature": 0.3, "top_p": 0.2,
+      "max_tokens": 1024, "frequency_penalty": 1.3, "model_id": "meta-llama/llama-3-3-70b-instruct",
+      "project_id": "7df21499-6277-4938-af57-a409852ae8f1", "stream": false}'
+    headers:
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '393'
+      host:
+      - us-south.ml.cloud.ibm.com
+      user-agent:
+      - Agents/Python 0.0.16
+    method: POST
+    uri: https://us-south.ml.cloud.ibm.com/ml/v1/text/chat?version=2024-03-13
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA4xWYWvjRhD9K8N+aoyk2LEd5wyluBRK4Hocd9cW2pQwXo2sbVa76s7Iie7Ify8j
+        yU64tlAI+bCeffN23psZfTGuNFtjaxTbtD6365v1VYmrHKv5Jl+ty2WO5fUmv15Xluia3mxsmec5
+        Xa9W9qa6ucHFarW6WdglLvbLNV6tFrjYrN6YzMT9n2Rlwi5sbFpP4mIwmWliSf5+SNyQYO49Nng5
+        /M+X+TLfzPe5Cyyps3IK/5+xto7OEpvt71+MCyU9me08Mw0x44HM9otJ0ZPZGmR2LBiGOzEIBaU6
+        m+2SuMpZhx5ug5D37kDBEnyzu72YzcAxIFSOfAmxAn1UJ5SArRuipEaBKtqOiSEGsIlQXDiAO2MJ
+        NGhrF4jBYot7T4rUUqpiajRUkB94RJK+dRa97yHRX51LBHXXYHiFZikD7mwNyNu7cBcWBcxmbwlT
+        cOEwm21hdwvcs1Cj6QJ4/QmqFBsoURAwlOCaNsWjkieXTkxQnxOPlEBcQ8VduFLk9ynuPTU5R3/8
+        9wQY0PefCdhJhyo3Z+BKCuKqHloUoaRHmrfBB4KSrGMNA4mgsASjVZ6gHZNxcReWmvwDIcf/eFeZ
+        8BFcqChpTTgbwdtEpbMTC00peorjCeyRqVSV8IjOD0poTYq7sBreSslSq6H/kk8VSG0iGWC7UFJS
+        N5VjVYf6MgWOic/6gGvwoNS4JbL1RIiepFDhPtVK1zWYejhE9GqK3a36TeJoI3oxzmAOpSG1Cw8D
+        EFoB7x4mh3AGMQEdKQB3qUXmyTmD5Zx34ojBBeVi1e9QxgZd4IHLbPapb9XASmE7m52N9Q5Tio8K
+        /SvhA+xutTI/ELtDoFKJTuYBfAFWO39VA0hk4yE4ra2CeQyHTs8lYWA/2ObkuB8pUNJyJPgoKYbD
+        lHUHdd9GqUm0Q17kGWvTRmbSPzU1jC/uleCLUtnYC6MM2La+h4cQHz2VB7VIiqyt/uhKgoThMHTp
+        0JonO37sWkqvO3GgFb6mosXRQmAQ35/UmIi9vq34o3aqS4Oh/0qTXdt6Z8ee+lqaX1ySDj2cpxrD
+        N1Qcigw+uuQy2Hl6wouhpLf/UGCKZPJVXianjQ0WE18MD32H0qkAb08ivU/RErNGTTd1wO+j6IVV
+        Ae+npjvSOAzE2TMbTds0FMrhGaeOurgL6wI+xH18HetC2bEkncTYSWyGKxf64N0t1DhWsI06uTVG
+        IiQ6Rt9pmPtMELqGUuz4DEQ8aq3WlKGEsUvg3VGbct8JOAH0HCGhU4Vc08akxYS/OuKx7riPnQBJ
+        7ax2MlYk/WihRNzGwG702qDZr7HzJfSxGztT4uAwaGKiCehVn4y0RmG/M8+ZqVxwXN+nYeqZrWGJ
+        rXn+IzPjNCjNdrFZLxY389X1+rRSj5R0mJqtWRbLYm7Owfeo6+1qfrXO59f51ZtP8812vtgulsV8
+        tfnNZKY77ceXRX0v8YECm+1yuclMm2LTyvlsdZMZiYL+Jepm/ZyZUVIFehyX0LiKzwvYfKodw8B2
+        XKbvYshvv/9JbVV2VuCgS0fHyb4H1AGXyrzFJD14ZynwtGQb7AeBmKBj9bMqPA12lUNHQ4K49+4w
+        tkwB3/fQDbaVFwoqDh4SDeo4YRBKDQ+TalxajkrtR/VaFb2Pjwrw84e3hcnGL6fSsfXoGkr304uH
+        L5ZE9y5U0WxNLdLy9vJSN0PrUXRAFtbHrizcvtEPo8syWr6cvkIuH/nPy2mL5nrnsmrygSwXtTT+
+        uyHuSb59fDLPfzw//w0AAP//AwBu7dnfwQkAAA==
+    headers:
+      CF-RAY:
+      - 95738cf60d2c7fd3-MAA
+      Cache-Control:
+      - no-cache, no-store, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Security-Policy:
+      - default-src 'none'; script-src 'self'; connect-src 'self'; img-src 'self';
+        style-src 'self'; frame-ancestors 'none'; form-action 'self';
+      Content-Type:
+      - application/json
+      Date:
+      - Sun, 29 Jun 2025 07:01:13 GMT
+      Pragma:
+      - no-cache
+      Referrer-Policy:
+      - strict-origin
+      Server:
+      - cloudflare
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains
+      - max-age=31536000; includeSubDomains
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - DENY
+      X-Global-Transaction-Id:
+      - e644c8f88a144481c3a1b35a241a1749
+      X-Requests-Limit-Period:
+      - '1000'
+      X-Requests-Limit-Rate:
+      - '8'
+      X-Requests-Limit-Remaining:
+      - '7'
+      X-Requests-Limit-Reset-After:
+      - '125'
+      X-Xss-Protection:
+      - 1; mode=block
+      - 1; mode=block
+      cf-cache-status:
+      - DYNAMIC
+      server-timing:
+      - intid;desc=81329d1fac4238ab
+    status:
+      code: 200
+      message: OK
+version: 1
