@@ -4,10 +4,19 @@ from pydantic import BaseModel
 from traceloop.sdk import Traceloop
 from traceloop.sdk.decorators import workflow, task
 
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+api_key = os.getenv("OPENAI_API_KEY")
+print("api_key:", api_key)
+traceloop_api_key = os.getenv("TRACELOOP_API_KEY")
+print("traceloop_api_key:", traceloop_api_key)
+base_url = os.getenv("TRACELOOP_BASE_URL")
+print("base_url:", base_url)
 
-Traceloop.init(app_name="story_service")
+client = OpenAI(api_key=api_key)
 
+Traceloop.init(app_name="story_service")  
+# Traceloop.init(app_name="story_service", 
+#                api_key='tl_9981e7218948437584e08e7b724304d8', 
+#                api_endpoint='https://api-staging.traceloop.com')
 
 class StoryStructure(BaseModel):
     setting: str
@@ -44,7 +53,7 @@ def build_joke_structure(joke: str):
     return result.choices[0].message.parsed
 
 
-@workflow(name="joke_structure")
+@workflow(name="nina_workflow")
 def joke_structure():
     joke = build_joke()
     return build_joke_structure(joke)
