@@ -47,7 +47,7 @@ class Traceloop:
     @staticmethod
     def init(
         app_name: str = sys.argv[0],
-        api_endpoint: str = "https://api.traceloop.com",
+        api_endpoint: str = "http://localhost:3002",
         api_key: Optional[str] = None,
         enabled: bool = True,
         headers: Dict[str, str] = {},
@@ -86,7 +86,9 @@ class Traceloop:
             Telemetry()
 
         api_endpoint = os.getenv("TRACELOOP_BASE_URL") or api_endpoint
+        print("api key before: ", api_key)
         api_key = os.getenv("TRACELOOP_API_KEY") or api_key
+        print("api_key: ", api_key)
         Traceloop.__app_name = app_name
 
         if not is_tracing_enabled():
@@ -182,8 +184,8 @@ class Traceloop:
             Traceloop.__logger_wrapper = LoggerWrapper(exporter=logging_exporter)
 
         if (
-            api_endpoint.find("traceloop.com") != -1
-            and api_key
+            # api_endpoint.find("traceloop.com") != -1
+            api_key
             and (exporter is None)
             and (processor is None)
         ):
@@ -198,6 +200,7 @@ class Traceloop:
             Traceloop.__client = Client(
                 api_key=api_key, app_name=app_name, api_endpoint=api_endpoint
             )
+            print("Client: ", Traceloop.__client)
             return Traceloop.__client
 
     def set_association_properties(properties: dict) -> None:

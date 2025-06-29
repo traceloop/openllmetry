@@ -8,4 +8,6 @@ class InputExtractor:
     use_regex: bool = False  # Whether to use regex pattern
     regex_pattern: Optional[str] = None  # Regex pattern to apply
 
-InputSchemaMapping = Dict[str, InputExtractor] 
+@dataclass
+class ExecuteEvaluatorRequest:
+    input_schema_mapping: Dict[str, InputExtractor] 
