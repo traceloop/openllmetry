@@ -44,7 +44,7 @@ def environment():
     if not os.environ.get("WATSONX_URL"):
         os.environ["WATSONX_URL"] = "url"
     if not os.environ.get("WATSONX_PROJECT_ID"):
-        os.environ["WATSONX_PROJECT_ID"] = "project-id"
+        os.environ["WATSONX_PROJECT_ID"] = "id"
     if not os.environ.get("WATSONX_API_KEY"):
         os.environ["WATSONX_API_KEY"] = "api-key"
 
@@ -88,4 +88,12 @@ def test_agent():
 
 @pytest.fixture(scope="module")
 def vcr_config():
-    return {"filter_headers": ["authorization", "api-key"]}
+    return {
+        "filter_headers": [
+            "authorization",
+            "accept",
+            "content-type",
+            "x-litellm-source",
+        ],
+        "filter_post_data_parameters": ["apikey"],
+    }
