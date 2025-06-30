@@ -1,36 +1,40 @@
 import logging
 
 from opentelemetry import context as context_api
-
-from opentelemetry.semconv_ai import (
-    SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
-    SpanAttributes,
-    LLMRequestTypeValues,
-)
-
-from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
-from opentelemetry.instrumentation.openai.utils import _with_tracer_wrapper, dont_throw
 from opentelemetry.instrumentation.openai.shared import (
     _set_client_attributes,
-    _set_request_attributes,
-    _set_span_attribute,
     _set_functions_attributes,
+    _set_request_attributes,
     _set_response_attributes,
-    is_streaming_response,
-    should_send_prompts,
-    model_as_dict,
-    should_record_stream_token_usage,
-    get_token_count_from_string,
+    _set_span_attribute,
     _set_span_stream_usage,
+    get_token_count_from_string,
+    is_streaming_response,
+    model_as_dict,
     propagate_trace_context,
+    should_record_stream_token_usage,
 )
-
-from opentelemetry.instrumentation.openai.utils import is_openai_v1
-
+from opentelemetry.instrumentation.openai.shared.config import Config
+from opentelemetry.instrumentation.openai.shared.event_emitter import emit_event
+from opentelemetry.instrumentation.openai.shared.event_models import (
+    ChoiceEvent,
+    MessageEvent,
+)
+from opentelemetry.instrumentation.openai.utils import (
+    _with_tracer_wrapper,
+    dont_throw,
+    is_openai_v1,
+    should_emit_events,
+    should_send_prompts,
+)
+from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
+from opentelemetry.semconv_ai import (
+    SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
+    LLMRequestTypeValues,
+    SpanAttributes,
+)
 from opentelemetry.trace import SpanKind
 from opentelemetry.trace.status import Status, StatusCode
-
-from opentelemetry.instrumentation.openai.shared.config import Config
 
 SPAN_NAME = "openai.completion"
 LLM_REQUEST_TYPE = LLMRequestTypeValues.COMPLETION
@@ -53,6 +57,7 @@ def completion_wrapper(tracer, wrapped, instance, args, kwargs):
     )
 
     _handle_request(span, kwargs, instance)
+
     try:
         response = wrapped(*args, **kwargs)
     except Exception as e:
@@ -84,6 +89,7 @@ async def acompletion_wrapper(tracer, wrapped, instance, args, kwargs):
     )
 
     _handle_request(span, kwargs, instance)
+
     try:
         response = await wrapped(*args, **kwargs)
     except Exception as e:
@@ -104,12 +110,24 @@ async def acompletion_wrapper(tracer, wrapped, instance, args, kwargs):
 @dont_throw
 def _handle_request(span, kwargs, instance):
     _set_request_attributes(span, kwargs)
-    if should_send_prompts():
-        _set_prompts(span, kwargs.get("prompt"))
-        _set_functions_attributes(span, kwargs.get("functions"))
+    if should_emit_events():
+        _emit_prompts_events(kwargs)
+    else:
+        if should_send_prompts():
+            _set_prompts(span, kwargs.get("prompt"))
+            _set_functions_attributes(span, kwargs.get("functions"))
     _set_client_attributes(span, instance)
     if Config.enable_trace_context_propagation:
         propagate_trace_context(span, kwargs)
+
+
+def _emit_prompts_events(kwargs):
+    prompt = kwargs.get("prompt")
+    if isinstance(prompt, list):
+        for p in prompt:
+            emit_event(MessageEvent(content=p))
+    elif isinstance(prompt, str):
+        emit_event(MessageEvent(content=prompt))
 
 
 @dont_throw
@@ -120,9 +138,12 @@ def _handle_response(response, span):
         response_dict = response
 
     _set_response_attributes(span, response_dict)
-
-    if should_send_prompts():
-        _set_completions(span, response_dict.get("choices"))
+    if should_emit_events():
+        for choice in response.choices:
+            emit_event(_parse_choice_event(choice))
+    else:
+        if should_send_prompts():
+            _set_completions(span, response_dict.get("choices"))
 
 
 def _set_prompts(span, prompt):
@@ -161,8 +182,11 @@ def _build_from_streaming_response(span, request_kwargs, response):
 
     _set_token_usage(span, request_kwargs, complete_response)
 
-    if should_send_prompts():
-        _set_completions(span, complete_response.get("choices"))
+    if should_emit_events():
+        _emit_streaming_response_events(complete_response)
+    else:
+        if should_send_prompts():
+            _set_completions(span, complete_response.get("choices"))
 
     span.set_status(Status(StatusCode.OK))
     span.end()
@@ -179,11 +203,25 @@ async def _abuild_from_streaming_response(span, request_kwargs, response):
 
     _set_token_usage(span, request_kwargs, complete_response)
 
-    if should_send_prompts():
-        _set_completions(span, complete_response.get("choices"))
+    if should_emit_events():
+        _emit_streaming_response_events(complete_response)
+    else:
+        if should_send_prompts():
+            _set_completions(span, complete_response.get("choices"))
 
     span.set_status(Status(StatusCode.OK))
     span.end()
+
+
+def _emit_streaming_response_events(complete_response):
+    for i, choice in enumerate(complete_response["choices"]):
+        emit_event(
+            ChoiceEvent(
+                index=choice.get("index", i),
+                message={"content": choice.get("text"), "role": "assistant"},
+                finish_reason=choice.get("finish_reason", "unknown"),
+            )
+        )
 
 
 @dont_throw
@@ -238,3 +276,17 @@ def _accumulate_streaming_response(complete_response, item):
             complete_choice["text"] += choice.get("text")
 
     return complete_response
+
+
+def _parse_choice_event(choice) -> ChoiceEvent:
+    has_message = choice.text is not None
+    has_finish_reason = choice.finish_reason is not None
+
+    content = choice.text if has_message else None
+    finish_reason = choice.finish_reason if has_finish_reason else "unknown"
+
+    return ChoiceEvent(
+        index=choice.index,
+        message={"content": content, "role": "assistant"},
+        finish_reason=finish_reason,
+    )
