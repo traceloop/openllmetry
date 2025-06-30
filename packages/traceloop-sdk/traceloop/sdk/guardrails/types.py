@@ -10,24 +10,7 @@ class InputExtractor(BaseModel):
 class ExecuteEvaluatorRequest(BaseModel):
     input_schema_mapping: Dict[str, InputExtractor] 
 
-class EvaluatorResult(BaseModel):
+class OutputSchema(BaseModel):
     reason: str
     success: bool = Field(alias="pass")
 
-class EvaluatorResponse(BaseModel):
-    result: EvaluatorResult
-
-class StreamEventData(BaseModel):
-    """Data payload in stream events"""
-    result: Optional[Dict[str, Any]] = None
-    error: Optional[str] = None
-    progress: Optional[float] = None
-    status: Optional[str] = None
-
-    class Config:
-        extra = "allow"
-
-class StreamEvent(BaseModel):
-    """Stream event structure"""
-    type: str
-    data: StreamEventData
