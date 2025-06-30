@@ -329,7 +329,7 @@ def _wrap(
             )
 
         _handle_response(
-            span, event_logger, token_histogram, llm_request_type, response
+            span, event_logger, llm_request_type, token_histogram, response
         )
         if span.is_recording():
             span.set_status(Status(StatusCode.OK))

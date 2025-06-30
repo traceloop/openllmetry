@@ -45,9 +45,7 @@ def test_ollama_streaming_metrics(instrument_legacy, reader):
 
 
 @pytest.mark.vcr
-def test_ollama_streaming_time_to_generate_metrics(metrics_test_context):
-    _, reader = metrics_test_context
-
+def test_ollama_streaming_time_to_generate_metrics(instrument_legacy, reader):
     gen = ollama.generate(
         model="gemma3:1b",
         prompt="Tell me a joke about OpenTelemetry",
