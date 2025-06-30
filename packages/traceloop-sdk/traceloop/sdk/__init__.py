@@ -33,6 +33,7 @@ from traceloop.sdk.tracing.tracing import (
 from typing import Dict
 from traceloop.sdk.client.client import Client
 
+
 class Traceloop:
     AUTO_CREATED_KEY_PATH = str(
         Path.home() / ".cache" / "traceloop" / "auto_created_key"
@@ -47,7 +48,7 @@ class Traceloop:
     @staticmethod
     def init(
         app_name: str = sys.argv[0],
-        api_endpoint: str = "http://localhost:3002",
+        api_endpoint: str = "https://api.traceloop.com",
         api_key: Optional[str] = None,
         enabled: bool = True,
         headers: Dict[str, str] = {},
@@ -86,9 +87,7 @@ class Traceloop:
             Telemetry()
 
         api_endpoint = os.getenv("TRACELOOP_BASE_URL") or api_endpoint
-        print("api key before: ", api_key)
         api_key = os.getenv("TRACELOOP_API_KEY") or api_key
-        print("api_key: ", api_key)
         Traceloop.__app_name = app_name
 
         if not is_tracing_enabled():
@@ -200,7 +199,6 @@ class Traceloop:
             Traceloop.__client = Client(
                 api_key=api_key, app_name=app_name, api_endpoint=api_endpoint
             )
-            print("Client: ", Traceloop.__client)
             return Traceloop.__client
 
     def set_association_properties(properties: dict) -> None:

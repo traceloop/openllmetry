@@ -1,5 +1,6 @@
 from dataclasses import dataclass
-from typing import Dict, Optional
+from typing import Dict, Optional, Any
+from pydantic import BaseModel
 
 @dataclass
 class InputExtractor:
@@ -11,3 +12,26 @@ class InputExtractor:
 @dataclass
 class ExecuteEvaluatorRequest:
     input_schema_mapping: Dict[str, InputExtractor] 
+
+@dataclass
+class EvaluatorResponse:
+    result: Dict[str, Any]
+    score: float
+    reason: str
+    metadata: Dict[str, Any]
+    raw_result: Dict[str, Any]
+
+class StreamEventData(BaseModel):
+    """Data payload in stream events"""
+    result: Optional[Dict[str, Any]] = None
+    error: Optional[str] = None
+    progress: Optional[float] = None
+    status: Optional[str] = None
+
+    class Config:
+        extra = "allow"
+
+class StreamEvent(BaseModel):
+    """Stream event structure"""
+    type: str
+    data: StreamEventData

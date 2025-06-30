@@ -40,4 +40,4 @@ class Client:
         self.api_key = api_key
         self._http = HTTPClient(base_url=self.api_endpoint, api_key=self.api_key, version=__version__)
         self.user_feedback = UserFeedback(self._http, self.app_name)
-        self.guardrails = Guardrails(self._http, self.app_name)
+        self.guardrails = Guardrails(self._http, self.app_name, self.api_key)

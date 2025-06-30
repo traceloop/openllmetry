@@ -10,7 +10,7 @@ import asyncio
 from traceloop.sdk import Traceloop
 from traceloop.sdk.guardrails import InputExtractor
 
-Traceloop.init(app_name="guardrails-example", api_key='tl_d0f5d2b32a054d8797fc2e15e102d91d')
+Traceloop.init(app_name="guardrails-example")
 
 
 async def main():
