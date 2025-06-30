@@ -124,6 +124,20 @@ async def start_as_current_span_async(tracer, *args, **kwargs):
         yield span
 
 
+def record_prompt_and_completion(span, prompt: str, completion: str):
+    """
+    Emit prompt/completion as attributes or events based on Config.
+    """
+    if Config.use_legacy_attributes:
+        span.set_attribute("llm.prompt", prompt)
+        span.set_attribute("llm.completion", completion)
+    else:
+        if Config.emit_prompt_events:
+            span.add_event("prompt", {"llm.prompt": prompt})
+        if Config.emit_completion_events:
+            span.add_event("completion", {"llm.completion": completion})
+
+
 def dont_throw(func):
     """
     A decorator that wraps the passed in function and logs exceptions instead of throwing them.

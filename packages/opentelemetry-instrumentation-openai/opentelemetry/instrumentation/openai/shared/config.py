@@ -4,6 +4,9 @@ from opentelemetry._events import EventLogger
 
 
 class Config:
+    use_legacy_attributes = True
+    emit_prompt_events = True
+    emit_completion_events = True
     enrich_token_usage = False
     enrich_assistant = False
     exception_logger = None
