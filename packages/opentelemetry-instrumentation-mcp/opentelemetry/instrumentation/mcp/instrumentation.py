@@ -182,9 +182,9 @@ class McpInstrumentor(BaseInstrumentor):
                             span.set_status(
                                 Status(StatusCode.ERROR, f"{result.content[0].text}")
                             )
-                            span.set_attribute(
-                                ERROR_TYPE, get_error_type(result.content[0].text)
-                            )
+                            error_type = get_error_type(result.content[0].text)
+                            if error_type is not None:
+                                span.set_attribute(ERROR_TYPE, error_type)
                     else:
                         span.set_status(Status(StatusCode.OK))
                     return result
