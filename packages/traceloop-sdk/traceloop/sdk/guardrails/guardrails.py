@@ -1,6 +1,7 @@
 import json
 from typing import Dict, Any, Optional
 import aiohttp
+from aiohttp.client import ClientSession
 from traceloop.sdk.client.http import HTTPClient
 from dataclasses import asdict
 from .types import ExecuteEvaluatorRequest, InputExtractor
