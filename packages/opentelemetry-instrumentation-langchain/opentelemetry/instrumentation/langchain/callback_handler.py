@@ -221,7 +221,7 @@ def _set_chat_response(span: Span, response: LLMResult, token_histogram: Histogr
             ):
                 if model_name is None and hasattr(generation.message, "response_metadata"):
                     model_name = generation.message.response_metadata.get("model_name")
-                
+
                 input_tokens += (
                     generation.message.usage_metadata.get("input_tokens")
                     or generation.message.usage_metadata.get("prompt_tokens")
@@ -326,7 +326,7 @@ def _set_chat_response(span: Span, response: LLMResult, token_histogram: Histogr
             SpanAttributes.LLM_USAGE_CACHE_READ_INPUT_TOKENS,
             cache_read_tokens,
         )
-    
+
         if record_token_usage:
             if model_name:
                 _set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, model_name)
