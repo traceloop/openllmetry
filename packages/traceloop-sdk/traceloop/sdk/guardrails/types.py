@@ -1,25 +1,21 @@
-from dataclasses import dataclass
 from typing import Dict, Optional, Any
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
-@dataclass
-class InputExtractor:
+class InputExtractor(BaseModel):
     source: str  # "input" or "output"
     key: Optional[str] = None  # Key to extract from
     use_regex: bool = False  # Whether to use regex pattern
     regex_pattern: Optional[str] = None  # Regex pattern to apply
 
-@dataclass
-class ExecuteEvaluatorRequest:
+class ExecuteEvaluatorRequest(BaseModel):
     input_schema_mapping: Dict[str, InputExtractor] 
 
-@dataclass
-class EvaluatorResponse:
-    result: Dict[str, Any]
-    score: float
+class EvaluatorResult(BaseModel):
     reason: str
-    metadata: Dict[str, Any]
-    raw_result: Dict[str, Any]
+    success: bool = Field(alias="pass")
+
+class EvaluatorResponse(BaseModel):
+    result: EvaluatorResult
 
 class StreamEventData(BaseModel):
     """Data payload in stream events"""
