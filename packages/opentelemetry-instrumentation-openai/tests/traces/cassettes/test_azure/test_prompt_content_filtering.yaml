@@ -33,7 +33,7 @@ interactions:
         x-stainless-runtime-version:
           - 3.12.1
       method: POST
-      uri: https://traceloop-stg.openai.azure.com//openai/deployments/openllmetry-testing/chat/completions?api-version=2024-02-01
+      uri: https://traceloop-stg.openai.azure.com/openai/deployments/openllmetry-testing/chat/completions?api-version=2024-02-01
     response:
       body:
         string:

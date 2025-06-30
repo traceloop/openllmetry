@@ -287,7 +287,7 @@ async def _awrap(tracer, to_wrap, wrapped, instance, args, kwargs):
         name,
         kind=SpanKind.CLIENT,
         attributes={
-            SpanAttributes.LLM_SYSTEM: "Gemini",
+            SpanAttributes.LLM_SYSTEM: "Google",
             SpanAttributes.LLM_REQUEST_TYPE: LLMRequestTypeValues.COMPLETION.value,
         },
     )
@@ -333,7 +333,7 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
         name,
         kind=SpanKind.CLIENT,
         attributes={
-            SpanAttributes.LLM_SYSTEM: "Gemini",
+            SpanAttributes.LLM_SYSTEM: "Google",
             SpanAttributes.LLM_REQUEST_TYPE: LLMRequestTypeValues.COMPLETION.value,
         },
     )
@@ -362,17 +362,17 @@ class GoogleGenerativeAiInstrumentor(BaseInstrumentor):
         Config.exception_logger = exception_logger
 
     def instrumentation_dependencies(self) -> Collection[str]:
-        if is_package_installed("google-genai"):
+        if is_package_installed("google.genai"):
             return ("google-genai >= 0.1.0",)
-        elif is_package_installed("google-generativeai"):
+        elif is_package_installed("google.generativeai"):
             return ["google-generativeai >= 0.5.0"]
         else:
             return []
 
     def _wrapped_methods(self):
-        if is_package_installed("google-genai"):
+        if is_package_installed("google.genai"):
             return WRAPPED_METHODS
-        elif is_package_installed("google-generativeai"):
+        elif is_package_installed("google.generativeai"):
             return LEGACY_WRAPPED_METHODS
         else:
             return []

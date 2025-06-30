@@ -32,7 +32,7 @@ interactions:
       x-stainless-runtime-version:
       - 3.12.1
     method: POST
-    uri: https://traceloop-stg.openai.azure.com//openai/deployments/openllmetry-testing/chat/completions?api-version=2024-02-01
+    uri: https://traceloop-stg.openai.azure.com/openai/deployments/openllmetry-testing/chat/completions?api-version=2024-02-01
   response:
     body:
       string: 'data: {"choices":[],"created":0,"id":"","model":"","object":"","prompt_filter_results":[{"prompt_index":0,"content_filter_results":{"hate":{"filtered":false,"severity":"safe"},"self_harm":{"filtered":false,"severity":"safe"},"sexual":{"filtered":false,"severity":"safe"},"violence":{"filtered":false,"severity":"safe"}}}]}
