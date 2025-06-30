@@ -88,6 +88,7 @@ def _accumulate_streaming_response(
     llm_request_type,
     response,
     streaming_time_to_first_token=None,
+    streaming_time_to_generate=None,
     start_time=None,
 ):
     if llm_request_type == LLMRequestTypeValues.CHAT:
@@ -96,10 +97,16 @@ def _accumulate_streaming_response(
         accumulated_response = {"response": ""}
 
     first_token = True
+    first_token_time = None
+    last_response = None
+
     for res in response:
+        last_response = res  # Track the last response explicitly
+
         if first_token and streaming_time_to_first_token and start_time is not None:
+            first_token_time = time.perf_counter()
             streaming_time_to_first_token.record(
-                time.perf_counter() - start_time,
+                first_token_time - start_time,
                 attributes={SpanAttributes.LLM_SYSTEM: "Ollama"},
             )
             first_token = False
@@ -112,15 +119,29 @@ def _accumulate_streaming_response(
             text = res.get("response", "")
             accumulated_response["response"] += text
 
-    response_data = res.model_dump() if hasattr(res, "model_dump") else res
-    _handle_response(
-        span,
-        event_logger,
-        llm_request_type,
-        token_histogram,
-        response_data | accumulated_response,
-    )
+    # Record streaming time to generate after the response is complete
+    if streaming_time_to_generate and first_token_time is not None:
+        model_name = last_response.get("model") if last_response else None
+        streaming_time_to_generate.record(
+            time.perf_counter() - first_token_time,
+            attributes={
+                SpanAttributes.LLM_SYSTEM: "Ollama",
+                SpanAttributes.LLM_RESPONSE_MODEL: model_name,
+            },
+        )
 
+    response_data = (
+        last_response.model_dump()
+        if last_response and hasattr(last_response, 'model_dump')
+        else last_response
+    )
+    _handle_response(
+        span=span,
+        event_logger=event_logger,
+        llm_request_type=llm_request_type,
+        token_histogram=token_histogram,
+        response=response_data | accumulated_response,
+    )
     span.end()
 
 
@@ -131,6 +152,7 @@ async def _aaccumulate_streaming_response(
     llm_request_type,
     response,
     streaming_time_to_first_token=None,
+    streaming_time_to_generate=None,
     start_time=None,
 ):
     if llm_request_type == LLMRequestTypeValues.CHAT:
@@ -139,11 +161,16 @@ async def _aaccumulate_streaming_response(
         accumulated_response = {"response": ""}
 
     first_token = True
+    first_token_time = None
+    last_response = None
 
     async for res in response:
+        last_response = res
+
         if first_token and streaming_time_to_first_token and start_time is not None:
+            first_token_time = time.perf_counter()
             streaming_time_to_first_token.record(
-                time.perf_counter() - start_time,
+                first_token_time - start_time,
                 attributes={SpanAttributes.LLM_SYSTEM: "Ollama"},
             )
             first_token = False
@@ -156,7 +183,22 @@ async def _aaccumulate_streaming_response(
             text = res.get("response", "")
             accumulated_response["response"] += text
 
-    response_data = res.model_dump() if hasattr(res, "model_dump") else res
+    # Record streaming time to generate after the response is complete
+    if streaming_time_to_generate and first_token_time is not None:
+        model_name = last_response.get("model") if last_response else None
+        streaming_time_to_generate.record(
+            time.perf_counter() - first_token_time,
+            attributes={
+                SpanAttributes.LLM_SYSTEM: "Ollama",
+                SpanAttributes.LLM_RESPONSE_MODEL: model_name,
+            },
+        )
+
+    response_data = (
+        last_response.model_dump()
+        if last_response and hasattr(last_response, 'model_dump')
+        else last_response
+    )
     _handle_response(
         span,
         event_logger,
@@ -164,7 +206,6 @@ async def _aaccumulate_streaming_response(
         token_histogram,
         response_data | accumulated_response,
     )
-
     span.end()
 
 
@@ -177,6 +218,7 @@ def _with_tracer_wrapper(func):
         duration_histogram,
         event_logger,
         streaming_time_to_first_token,
+        streaming_time_to_generate,
         to_wrap,
     ):
         def wrapper(wrapped, instance, args, kwargs):
@@ -186,6 +228,7 @@ def _with_tracer_wrapper(func):
                 duration_histogram,
                 event_logger,
                 streaming_time_to_first_token,
+                streaming_time_to_generate,
                 to_wrap,
                 wrapped,
                 instance,
@@ -235,6 +278,7 @@ def _wrap(
     duration_histogram: Histogram,
     event_logger,
     streaming_time_to_first_token: Histogram,
+    streaming_time_to_generate: Histogram,
     to_wrap,
     wrapped,
     instance,
@@ -280,10 +324,12 @@ def _wrap(
                 llm_request_type,
                 response,
                 streaming_time_to_first_token,
+                streaming_time_to_generate,
                 start_time,
             )
+
         _handle_response(
-            span, event_logger, llm_request_type, token_histogram, response
+            span, event_logger, token_histogram, llm_request_type, response
         )
         if span.is_recording():
             span.set_status(Status(StatusCode.OK))
@@ -299,6 +345,7 @@ async def _awrap(
     duration_histogram: Histogram,
     event_logger,
     streaming_time_to_first_token: Histogram,
+    streaming_time_to_generate: Histogram,
     to_wrap,
     wrapped,
     instance,
@@ -344,6 +391,7 @@ async def _awrap(
                 llm_request_type,
                 response,
                 streaming_time_to_first_token,
+                streaming_time_to_generate,
                 start_time,
             )
 
@@ -376,7 +424,13 @@ def _build_metrics(meter: Meter):
         description="Time to first token in streaming chat completions",
     )
 
-    return token_histogram, duration_histogram, streaming_time_to_first_token
+    streaming_time_to_generate = meter.create_histogram(
+        name=Meters.LLM_STREAMING_TIME_TO_GENERATE,
+        unit="s",
+        description="Time from first token to completion in streaming responses",
+    )
+
+    return token_histogram, duration_histogram, streaming_time_to_first_token, streaming_time_to_generate
 
 
 def is_metrics_collection_enabled() -> bool:
@@ -406,13 +460,15 @@ class OllamaInstrumentor(BaseInstrumentor):
                 token_histogram,
                 duration_histogram,
                 streaming_time_to_first_token,
+                streaming_time_to_generate,
             ) = _build_metrics(meter)
         else:
             (
                 token_histogram,
                 duration_histogram,
                 streaming_time_to_first_token,
-            ) = (None, None, None)
+                streaming_time_to_generate,
+            ) = (None, None, None, None)
 
         event_logger = None
         if not Config.use_legacy_attributes:
@@ -437,6 +493,7 @@ class OllamaInstrumentor(BaseInstrumentor):
                 duration_histogram,
                 event_logger,
                 streaming_time_to_first_token,
+                streaming_time_to_generate,
             ),
         )
         wrap_function_wrapper(
@@ -448,6 +505,7 @@ class OllamaInstrumentor(BaseInstrumentor):
                 duration_histogram,
                 event_logger,
                 streaming_time_to_first_token,
+                streaming_time_to_generate,
             ),
         )
 
@@ -471,6 +529,7 @@ def _dispatch_wrap(
     duration_histogram,
     event_logger,
     streaming_time_to_first_token,
+    streaming_time_to_generate
 ):
     def wrapper(wrapped, instance, args, kwargs):
         to_wrap = None
@@ -485,6 +544,7 @@ def _dispatch_wrap(
                 duration_histogram,
                 event_logger,
                 streaming_time_to_first_token,
+                streaming_time_to_generate,
                 to_wrap,
             )(wrapped, instance, args, kwargs)
         return wrapped(*args, **kwargs)
@@ -498,6 +558,7 @@ def _dispatch_awrap(
     duration_histogram,
     event_logger,
     streaming_time_to_first_token,
+    streaming_time_to_generate,
 ):
     async def wrapper(wrapped, instance, args, kwargs):
         to_wrap = None
@@ -512,6 +573,7 @@ def _dispatch_awrap(
                 duration_histogram,
                 event_logger,
                 streaming_time_to_first_token,
+                streaming_time_to_generate,
                 to_wrap,
             )(wrapped, instance, args, kwargs)
         return await wrapped(*args, **kwargs)
