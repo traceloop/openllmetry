@@ -34,7 +34,7 @@ def test_chat(instrument_legacy, span_exporter, log_exporter, azure_openai_clien
     assert open_ai_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
     assert (
         open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)
-        == "https://traceloop-stg.openai.azure.com//openai/"
+        == "https://traceloop-stg.openai.azure.com/openai/"
     )
     assert open_ai_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is False
     assert (
@@ -65,7 +65,7 @@ def test_chat_with_events_with_content(
     open_ai_span = spans[0]
     assert (
         open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)
-        == "https://traceloop-stg.openai.azure.com//openai/"
+        == "https://traceloop-stg.openai.azure.com/openai/"
     )
     assert open_ai_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is False
     assert (
@@ -111,7 +111,7 @@ def test_chat_with_events_with_no_content(
     open_ai_span = spans[0]
     assert (
         open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)
-        == "https://traceloop-stg.openai.azure.com//openai/"
+        == "https://traceloop-stg.openai.azure.com/openai/"
     )
     assert open_ai_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is False
     assert (
@@ -155,7 +155,7 @@ def test_chat_content_filtering(
     )
     assert (
         open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)
-        == "https://traceloop-stg.openai.azure.com//openai/"
+        == "https://traceloop-stg.openai.azure.com/openai/"
     )
     assert open_ai_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is False
     assert (
@@ -200,7 +200,7 @@ def test_chat_content_filtering_with_events_with_content(
 
     assert (
         open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)
-        == "https://traceloop-stg.openai.azure.com//openai/"
+        == "https://traceloop-stg.openai.azure.com/openai/"
     )
     assert open_ai_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is False
     assert (
@@ -245,7 +245,7 @@ def test_chat_content_filtering_with_events_with_no_content(
 
     assert (
         open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)
-        == "https://traceloop-stg.openai.azure.com//openai/"
+        == "https://traceloop-stg.openai.azure.com/openai/"
     )
     assert open_ai_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is False
     assert (
@@ -433,7 +433,7 @@ def test_chat_streaming(
     assert open_ai_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
     assert (
         open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)
-        == "https://traceloop-stg.openai.azure.com//openai/"
+        == "https://traceloop-stg.openai.azure.com/openai/"
     )
     assert open_ai_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is True
 
@@ -486,7 +486,7 @@ def test_chat_streaming_with_events_with_content(
 
     assert (
         open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)
-        == "https://traceloop-stg.openai.azure.com//openai/"
+        == "https://traceloop-stg.openai.azure.com/openai/"
     )
     assert open_ai_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is True
 
@@ -556,7 +556,7 @@ def test_chat_streaming_with_events_with_no_content(
     open_ai_span = spans[0]
     assert (
         open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)
-        == "https://traceloop-stg.openai.azure.com//openai/"
+        == "https://traceloop-stg.openai.azure.com/openai/"
     )
     assert open_ai_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is True
 
@@ -620,7 +620,7 @@ async def test_chat_async_streaming(
     assert open_ai_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
     assert (
         open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)
-        == "https://traceloop-stg.openai.azure.com//openai/"
+        == "https://traceloop-stg.openai.azure.com/openai/"
     )
     assert open_ai_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is True
 
@@ -665,7 +665,7 @@ async def test_chat_async_streaming_with_events_with_content(
 
     assert (
         open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)
-        == "https://traceloop-stg.openai.azure.com//openai/"
+        == "https://traceloop-stg.openai.azure.com/openai/"
     )
     assert open_ai_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is True
 
@@ -728,7 +728,7 @@ async def test_chat_async_streaming_with_events_with_no_content(
 
     assert (
         open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)
-        == "https://traceloop-stg.openai.azure.com//openai/"
+        == "https://traceloop-stg.openai.azure.com/openai/"
     )
     assert open_ai_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is True
 
