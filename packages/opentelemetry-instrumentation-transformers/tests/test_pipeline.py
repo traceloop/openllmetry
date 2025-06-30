@@ -14,14 +14,14 @@ def test_tranformers_pipeline(
     response = transformers_pipeline(prompt_text)
 
     spans = span_exporter.get_finished_spans()
-    together_span = spans[0]
-    assert together_span.name == "transformers_text_generation_pipeline.call"
-    assert together_span.attributes.get("gen_ai.system") == "gpt2"
-    assert together_span.attributes.get("llm.request.type") == "completion"
-    assert together_span.attributes.get("gen_ai.request.model") == "gpt2"
-    assert together_span.attributes.get("gen_ai.prompt.0.content") == prompt_text
+    transformers_span = spans[0]
+    assert transformers_span.name == "transformers_text_generation_pipeline.call"
+    assert transformers_span.attributes.get("gen_ai.system") == "gpt2"
+    assert transformers_span.attributes.get("llm.request.type") == "completion"
+    assert transformers_span.attributes.get("gen_ai.request.model") == "gpt2"
+    assert transformers_span.attributes.get("gen_ai.prompt.0.content") == prompt_text
     assert (
-        together_span.attributes.get("gen_ai.completion.0.content")
+        transformers_span.attributes.get("gen_ai.completion.0.content")
         == response[0]["generated_text"]
     )
 
@@ -38,11 +38,11 @@ def test_tranformers_pipeline_with_events_with_content(
     response = transformers_pipeline(prompt_text)
 
     spans = span_exporter.get_finished_spans()
-    together_span = spans[0]
-    assert together_span.name == "transformers_text_generation_pipeline.call"
-    assert together_span.attributes.get("gen_ai.system") == "gpt2"
-    assert together_span.attributes.get("llm.request.type") == "completion"
-    assert together_span.attributes.get("gen_ai.request.model") == "gpt2"
+    transformers_span = spans[0]
+    assert transformers_span.name == "transformers_text_generation_pipeline.call"
+    assert transformers_span.attributes.get("gen_ai.system") == "gpt2"
+    assert transformers_span.attributes.get("llm.request.type") == "completion"
+    assert transformers_span.attributes.get("gen_ai.request.model") == "gpt2"
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2
@@ -66,11 +66,11 @@ def test_tranformers_pipeline_with_events_with_no_content(
     transformers_pipeline(prompt_text)
 
     spans = span_exporter.get_finished_spans()
-    together_span = spans[0]
-    assert together_span.name == "transformers_text_generation_pipeline.call"
-    assert together_span.attributes.get("gen_ai.system") == "gpt2"
-    assert together_span.attributes.get("llm.request.type") == "completion"
-    assert together_span.attributes.get("gen_ai.request.model") == "gpt2"
+    transformers_span = spans[0]
+    assert transformers_span.name == "transformers_text_generation_pipeline.call"
+    assert transformers_span.attributes.get("gen_ai.system") == "gpt2"
+    assert transformers_span.attributes.get("llm.request.type") == "completion"
+    assert transformers_span.attributes.get("gen_ai.request.model") == "gpt2"
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2
