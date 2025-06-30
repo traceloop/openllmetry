@@ -331,7 +331,9 @@ class InstrumentedStreamWriter(ObjectProxy):  # type: ignore
                                 f"{request.result['content'][0]['text']}",
                             )
                         )
-                        error_type = get_error_type(request.result["content"][0]["text"])
+                        error_type = get_error_type(
+                            request.result["content"][0]["text"]
+                        )
                         if error_type is not None:
                             span.set_attribute(ERROR_TYPE, error_type)
             if hasattr(request, "id"):
