@@ -25,9 +25,7 @@ class HTTPClient:
         Make a POST request to the API
         """
         try:
-            full_url = f"{self.base_url}/v2/{path.lstrip('/')}"
-            print("Full URL: ", full_url)
-            response = requests.post(full_url, json=data, headers=self._headers())
+            response = requests.post(f"{self.base_url}/v2/{path.lstrip('/')}", json=data, headers=self._headers())
             response.raise_for_status()
             return response.json()
         except requests.exceptions.RequestException as e:
