@@ -101,7 +101,9 @@ def test_mistralai_chat_with_events_with_content(
         "index": 0,
         "finish_reason": "stop",
         "message": {
-            "content": "Why did the OpenTelemetry go to therapy?\n\nBecause it had too many traces and couldn't handle it!\n\n(For non-developers, OpenTelemetry is a set of APIs, libraries, agents, and instrumentation that standardize how you collect, generate, transport, and consume telemetry data.)",
+            "content": "Why did the OpenTelemetry go to therapy?\n\nBecause it had too many traces and couldn't "
+            "handle it!\n\n(For non-developers, OpenTelemetry is a set of APIs, libraries, agents, and instrumentation"
+            " that standardize how you collect, generate, transport, and consume telemetry data.)",
         },
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
@@ -255,7 +257,9 @@ def test_mistralai_streaming_chat_with_events_with_content(
         "index": 0,
         "finish_reason": "stop",
         "message": {
-            "content": "Why did OpenTelemetry bring a map to the party?\n\nBecause it heard there would be a lot of tracing!\n\n(For those not familiar, OpenTelemetry is an open-source project for standardizing observability data.)"
+            "content": "Why did OpenTelemetry bring a map to the party?\n\nBecause it heard there would be a lot of "
+            "tracing!\n\n(For those not familiar, OpenTelemetry is an open-source project for standardizing "
+            "observability data.)"
         },
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
@@ -409,7 +413,8 @@ async def test_mistralai_async_chat_with_events_with_content(
         "index": 0,
         "finish_reason": "stop",
         "message": {
-            "content": "Why did OpenTelemetry bring a map to the party?\n\nBecause it wanted to trace the route of the good conversations!\n\n(I'm here to bring a smile, not to code or explain complex systems!)",
+            "content": "Why did OpenTelemetry bring a map to the party?\n\nBecause it wanted to trace the route of "
+            "the good conversations!\n\n(I'm here to bring a smile, not to code or explain complex systems!)",
         },
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
@@ -561,7 +566,10 @@ async def test_mistralai_async_streaming_chat_with_events_with_content(
         "index": 0,
         "finish_reason": "stop",
         "message": {
-            "content": "Why did the OpenTelemetry library join a band?\n\nBecause it wanted to create beautiful, instrumented, and distributed melodies!\n\n(Note: This is a play on words, as OpenTelemetry helps developers to collect distributed traces, so they can monitor and improve the performance of their applications.)"
+            "content": "Why did the OpenTelemetry library join a band?\n\nBecause it wanted to create beautiful, "
+            "instrumented, and distributed melodies!\n\n(Note: This is a play on words, as OpenTelemetry helps "
+            "developers to collect distributed traces, so they can monitor and improve the performance of their "
+            "applications.)"
         },
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
