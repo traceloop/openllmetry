@@ -73,7 +73,7 @@ def test_cohere_completion_with_events_with_content(
 def test_cohere_completion_with_events_with_no_content(
     span_exporter, log_exporter, instrument_with_no_content, cohere_client
 ):
-    res = cohere_client.generate(model="command", prompt="Tell me a joke, pirate style")
+    cohere_client.generate(model="command", prompt="Tell me a joke, pirate style")
 
     spans = span_exporter.get_finished_spans()
     cohere_span = spans[0]

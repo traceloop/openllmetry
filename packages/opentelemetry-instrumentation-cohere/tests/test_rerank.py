@@ -175,7 +175,7 @@ def test_cohere_rerank_with_events_with_no_content(
         + " in North Dakota in the year 2010. The capital and seat of government is Bismarck.",
     ]
 
-    response = cohere_client.rerank(
+    cohere_client.rerank(
         query=query, documents=documents, top_n=3, model="rerank-multilingual-v2.0"
     )
 

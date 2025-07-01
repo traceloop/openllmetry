@@ -28,7 +28,6 @@ from opentelemetry.semconv_ai import (
     SpanAttributes,
 )
 from opentelemetry.trace import SpanKind, Tracer, get_tracer
-from opentelemetry.trace.status import Status, StatusCode
 from wrapt import wrap_function_wrapper
 
 logger = logging.getLogger(__name__)
