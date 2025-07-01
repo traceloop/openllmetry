@@ -422,8 +422,6 @@ def _get_vendor_model(modelId):
     # https://docs.aws.amazon.com/bedrock/latest/userguide/inference-profiles-support.html#inference-profiles-support-system
     vendor = "AWS"
     model = modelId
-
-    # Extract just the model name for better model identification
     if modelId is not None and modelId.startswith("arn"):
         components = modelId.split(":")
         if len(components) > 5:
