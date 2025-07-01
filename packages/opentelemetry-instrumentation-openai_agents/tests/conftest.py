@@ -17,7 +17,6 @@ from opentelemetry.sdk.metrics.export import InMemoryMetricReader
 from opentelemetry import metrics
 
 from agents import Agent
-from agents.extensions.models.litellm_model import LitellmModel
 from agents import ModelSettings
 
 pytest_plugins = []
@@ -41,7 +40,6 @@ def exporter():
 def environment():
     if not os.environ.get("OPENAI_API_KEY"):
         os.environ["OPENAI_API_KEY"] = "api-key"
-
 
 
 @pytest.fixture(autouse=True)
