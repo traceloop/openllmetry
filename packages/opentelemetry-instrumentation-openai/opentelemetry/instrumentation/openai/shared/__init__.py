@@ -242,7 +242,6 @@ def _get_openai_base_url(instance):
 
 
 def _get_vendor_from_url(base_url):
-    """Determine vendor based on OpenAI client base URL"""
     if not base_url:
         return "openai"
     
