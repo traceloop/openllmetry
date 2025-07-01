@@ -61,7 +61,7 @@ def emit_choice_events(
             event_logger,
         )
     else:
-        logger.error(
+        raise ValueError(
             "It wasn't possible to emit the choice events due to an unsupported response type"
         )
 
