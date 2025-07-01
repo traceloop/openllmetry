@@ -24,6 +24,7 @@ opentelemetry-api = "^1.28.0"
 opentelemetry-instrumentation = ">=0.50b0"
 opentelemetry-semantic-conventions = ">=0.50b0"
 opentelemetry-semantic-conventions-ai = "0.4.9"
+opentelemetry-exporter-otlp = "1.34.1"
 
 [tool.poetry.group.dev.dependencies]
 autopep8 = "^2.2.0"
@@ -47,3 +48,13 @@ instruments = ["mcp"]
 
 [tool.poetry.plugins."opentelemetry_instrumentor"]
 mcp = "opentelemetry.instrumentation.mcp:McpInstrumentor"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+pythonpath = [
+  "src",
+  ".",
+]
+testpaths = [
+  "tests",
+]
