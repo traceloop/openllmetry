@@ -1,5 +1,6 @@
 """OpenTelemetry Anthropic instrumentation"""
 
+import json
 import logging
 import os
 import time
@@ -13,6 +14,7 @@ from opentelemetry.instrumentation.anthropic.event_emitter import (
     emit_response_events,
 )
 from opentelemetry.instrumentation.anthropic.span_utils import (
+    _is_base64_image,
     aset_input_attributes,
     set_response_attributes,
 )
@@ -31,6 +33,7 @@ from opentelemetry.instrumentation.anthropic.utils import (
     set_span_attribute,
     shared_metrics_attributes,
     should_emit_events,
+    should_send_prompts,
 )
 from opentelemetry.instrumentation.anthropic.version import __version__
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor

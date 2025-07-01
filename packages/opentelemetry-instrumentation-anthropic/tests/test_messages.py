@@ -85,9 +85,9 @@ def test_anthropic_message_create_legacy(
     verify_metrics(resource_metrics, "claude-3-opus-20240229")
 
     logs = log_exporter.get_finished_logs()
-    assert (
-        len(logs) == 0
-    ), "Assert that it doesn't emit logs when use_legacy_attributes is True"
+    assert len(logs) == 0, (
+        "Assert that it doesn't emit logs when use_legacy_attributes is True"
+    )
 
 
 @pytest.mark.vcr
@@ -252,91 +252,10 @@ def test_anthropic_multi_modal_legacy(
         == "msg_01B37ySLPzYj8KY6uZmiPoxd"
     )
 
-
-@pytest.mark.vcr
-def test_anthropic_image_with_history(exporter):
-    client = Anthropic()
-    system_message = "You are a helpful assistant. Be concise and to the point."
-    user_message1 = {
-        "role": "user",
-        "content": "Are you capable of describing an image?"
-    }
-    user_message2 = {
-        "role": "user",
-        "content": [
-            {"type": "text", "text": "What do you see?"},
-            image_content_block,
-        ]
-    }
-
-    response1 = client.messages.create(
-        max_tokens=1024,
-        model="claude-3-5-haiku-latest",
-        system=system_message,
-        messages=[
-            user_message1,
-        ],
-    )
-
-    response2 = client.messages.create(
-        max_tokens=1024,
-        model="claude-3-5-haiku-latest",
-        system=system_message,
-        messages=[
-            user_message1,
-            {"role": "assistant", "content": response1.content},
-            user_message2,
-        ],
-    )
-
-    spans = exporter.get_finished_spans()
-    assert all(span.name == "anthropic.chat" for span in spans)
-    assert (
-        spans[0].attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"] ==
-        system_message
-    )
-    assert spans[0].attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"] == "system"
-    assert (
-        spans[0].attributes[f"{SpanAttributes.LLM_PROMPTS}.1.content"]
-        == "Are you capable of describing an image?"
-    )
-    assert spans[0].attributes[f"{SpanAttributes.LLM_PROMPTS}.1.role"] == "user"
-    assert spans[0].attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"] == response1.content[0].text
-    assert spans[0].attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.role"] == "assistant"
-    assert (
-        spans[0].attributes.get("gen_ai.response.id")
-        == "msg_01Ctc62hUPvikvYASXZqTo9q"
-    )
-
-    assert (
-        spans[1].attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"] ==
-        system_message
-    )
-    assert spans[1].attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"] == "system"
-    assert (
-        spans[1].attributes[f"{SpanAttributes.LLM_PROMPTS}.1.content"]
-        == "Are you capable of describing an image?"
-    )
-    assert spans[1].attributes[f"{SpanAttributes.LLM_PROMPTS}.1.role"] == "user"
-    assert spans[1].attributes[f"{SpanAttributes.LLM_PROMPTS}.2.content"] == response1.content[0].text
-    assert spans[1].attributes[f"{SpanAttributes.LLM_PROMPTS}.2.role"] == "assistant"
-    assert json.loads(spans[1].attributes[f"{SpanAttributes.LLM_PROMPTS}.3.content"]) == [
-        {"type": "text", "text": "What do you see?"},
-        {"type": "image_url", "image_url": {"url": "/some/url"}},
-    ]
-    assert spans[1].attributes[f"{SpanAttributes.LLM_PROMPTS}.3.role"] == "user"
-
-    assert spans[1].attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"] == response2.content[0].text
-    assert spans[1].attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.role"] == "assistant"
-    assert (
-        spans[1].attributes.get("gen_ai.response.id")
-        == "msg_01EtAvxHCWn5jjdUCnG4wEAd"
-    )
-
     logs = log_exporter.get_finished_logs()
-    assert (
-        len(logs) == 0
-    ), "Assert that it doesn't emit logs when use_legacy_attributes is True"
+    assert len(logs) == 0, (
+        "Assert that it doesn't emit logs when use_legacy_attributes is True"
+    )
 
 
 @pytest.mark.vcr
@@ -462,6 +381,104 @@ def test_anthropic_multi_modal_with_events_with_no_content(
 
 
 @pytest.mark.vcr
+def test_anthropic_image_with_history(
+    instrument_legacy, anthropic_client, span_exporter, log_exporter
+):
+    system_message = "You are a helpful assistant. Be concise and to the point."
+    user_message1 = {
+        "role": "user",
+        "content": "Are you capable of describing an image?",
+    }
+    user_message2 = {
+        "role": "user",
+        "content": [
+            {"type": "text", "text": "What do you see?"},
+            image_content_block,
+        ],
+    }
+
+    response1 = anthropic_client.messages.create(
+        max_tokens=1024,
+        model="claude-3-5-haiku-latest",
+        system=system_message,
+        messages=[
+            user_message1,
+        ],
+    )
+
+    response2 = anthropic_client.messages.create(
+        max_tokens=1024,
+        model="claude-3-5-haiku-latest",
+        system=system_message,
+        messages=[
+            user_message1,
+            {"role": "assistant", "content": response1.content},
+            user_message2,
+        ],
+    )
+
+    spans = span_exporter.get_finished_spans()
+    assert all(span.name == "anthropic.chat" for span in spans)
+    assert (
+        spans[0].attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"] == system_message
+    )
+    assert spans[0].attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"] == "system"
+    assert (
+        spans[0].attributes[f"{SpanAttributes.LLM_PROMPTS}.1.content"]
+        == "Are you capable of describing an image?"
+    )
+    assert spans[0].attributes[f"{SpanAttributes.LLM_PROMPTS}.1.role"] == "user"
+    assert (
+        spans[0].attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"]
+        == response1.content[0].text
+    )
+    assert (
+        spans[0].attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.role"] == "assistant"
+    )
+    assert (
+        spans[0].attributes.get("gen_ai.response.id") == "msg_01Ctc62hUPvikvYASXZqTo9q"
+    )
+
+    assert (
+        spans[1].attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"] == system_message
+    )
+    assert spans[1].attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"] == "system"
+    assert (
+        spans[1].attributes[f"{SpanAttributes.LLM_PROMPTS}.1.content"]
+        == "Are you capable of describing an image?"
+    )
+    assert spans[1].attributes[f"{SpanAttributes.LLM_PROMPTS}.1.role"] == "user"
+    assert (
+        spans[1].attributes[f"{SpanAttributes.LLM_PROMPTS}.2.content"]
+        == response1.content[0].text
+    )
+    assert spans[1].attributes[f"{SpanAttributes.LLM_PROMPTS}.2.role"] == "assistant"
+    assert json.loads(
+        spans[1].attributes[f"{SpanAttributes.LLM_PROMPTS}.3.content"]
+    ) == [
+        {"type": "text", "text": "What do you see?"},
+        {"type": "image_url", "image_url": {"url": "/some/url"}},
+    ]
+    assert spans[1].attributes[f"{SpanAttributes.LLM_PROMPTS}.3.role"] == "user"
+
+    assert (
+        spans[1].attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"]
+        == response2.content[0].text
+    )
+    assert (
+        spans[1].attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.role"] == "assistant"
+    )
+    assert (
+        spans[1].attributes.get("gen_ai.response.id") == "msg_01EtAvxHCWn5jjdUCnG4wEAd"
+    )
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 0, (
+        "Assert that it doesn't emit logs when use_legacy_attributes is True"
+    )
+
+
+@pytest.mark.vcr
 @pytest.mark.asyncio
 async def test_anthropic_async_multi_modal_legacy(
     instrument_legacy, async_anthropic_client, span_exporter, log_exporter
@@ -517,9 +534,9 @@ async def test_anthropic_async_multi_modal_legacy(
     )
 
     logs = log_exporter.get_finished_logs()
-    assert (
-        len(logs) == 0
-    ), "Assert that it doesn't emit logs when use_legacy_attributes is True"
+    assert len(logs) == 0, (
+        "Assert that it doesn't emit logs when use_legacy_attributes is True"
+    )
 
 
 @pytest.mark.vcr
@@ -707,9 +724,9 @@ def test_anthropic_message_streaming_legacy(
     verify_metrics(resource_metrics, "claude-3-haiku-20240307")
 
     logs = log_exporter.get_finished_logs()
-    assert (
-        len(logs) == 0
-    ), "Assert that it doesn't emit logs when use_legacy_attributes is True"
+    assert len(logs) == 0, (
+        "Assert that it doesn't emit logs when use_legacy_attributes is True"
+    )
 
 
 @pytest.mark.vcr
@@ -893,9 +910,9 @@ async def test_async_anthropic_message_create_legacy(
     verify_metrics(resource_metrics, "claude-3-opus-20240229")
 
     logs = log_exporter.get_finished_logs()
-    assert (
-        len(logs) == 0
-    ), "Assert that it doesn't emit logs when use_legacy_attributes is True"
+    assert len(logs) == 0, (
+        "Assert that it doesn't emit logs when use_legacy_attributes is True"
+    )
 
 
 @pytest.mark.vcr
@@ -1071,9 +1088,9 @@ async def test_async_anthropic_message_streaming_legacy(
     verify_metrics(resource_metrics, "claude-3-haiku-20240307")
 
     logs = log_exporter.get_finished_logs()
-    assert (
-        len(logs) == 0
-    ), "Assert that it doesn't emit logs when use_legacy_attributes is True"
+    assert len(logs) == 0, (
+        "Assert that it doesn't emit logs when use_legacy_attributes is True"
+    )
 
 
 @pytest.mark.vcr
@@ -1370,9 +1387,9 @@ def test_anthropic_tools_legacy(
     verify_metrics(resource_metrics, "claude-3-5-sonnet-20240620")
 
     logs = log_exporter.get_finished_logs()
-    assert (
-        len(logs) == 0
-    ), "Assert that it doesn't emit logs when use_legacy_attributes is True"
+    assert len(logs) == 0, (
+        "Assert that it doesn't emit logs when use_legacy_attributes is True"
+    )
 
 
 @pytest.mark.vcr
@@ -1669,9 +1686,9 @@ def test_with_asyncio_run_legacy(
     ]
 
     logs = log_exporter.get_finished_logs()
-    assert (
-        len(logs) == 0
-    ), "Assert that it doesn't emit logs when use_legacy_attributes is True"
+    assert len(logs) == 0, (
+        "Assert that it doesn't emit logs when use_legacy_attributes is True"
+    )
 
 
 @pytest.mark.vcr
