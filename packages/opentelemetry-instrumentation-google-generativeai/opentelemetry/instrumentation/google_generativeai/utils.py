@@ -1,3 +1,5 @@
+import importlib
+import importlib.util
 import logging
 import traceback
 
@@ -27,3 +29,7 @@ def dont_throw(func):
                 Config.exception_logger(e)
 
     return wrapper
+
+
+def is_package_installed(package_name: str) -> bool:
+    return importlib.util.find_spec(package_name) is not None

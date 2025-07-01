@@ -144,6 +144,18 @@ def _handle_stream_call(span, event_logger, kwargs, response):
     response["Body"] = StreamingWrapper(response["Body"], stream_done)
 
 
+def _try_parse_json(value):
+    """Try to decode JSON if it's a string or bytes; fallback to raw value."""
+    try:
+        if isinstance(value, bytes):
+            value = value.decode("utf-8").strip()
+        if isinstance(value, str):
+            return json.loads(value)
+        return value
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        return str(value)
+
+
 @dont_throw
 def _handle_call(span, event_logger, kwargs, response):
     # Handle Request
@@ -154,6 +166,21 @@ def _handle_call(span, event_logger, kwargs, response):
 
     response["Body"] = ReusableStreamingBody(
         response["Body"]._raw_stream, response["Body"]._content_length
+    )
+
+    raw_request = kwargs.get("Body")
+    raw_response = response["Body"].read()
+
+    request_body = _try_parse_json(raw_request)
+    response_body = _try_parse_json(raw_response)
+
+    endpoint_name = kwargs.get("EndpointName")
+    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, endpoint_name)
+    _set_span_attribute(
+        span, SpanAttributes.TRACELOOP_ENTITY_INPUT, json.dumps(request_body)
+    )
+    _set_span_attribute(
+        span, SpanAttributes.TRACELOOP_ENTITY_OUTPUT, json.dumps(response_body)
     )
     set_call_span_attributes(span, kwargs, response)
 

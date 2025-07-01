@@ -5,7 +5,7 @@ import os
 import types
 from typing import Collection
 from opentelemetry.instrumentation.google_generativeai.config import Config
-from opentelemetry.instrumentation.google_generativeai.utils import dont_throw
+from opentelemetry.instrumentation.google_generativeai.utils import dont_throw, is_package_installed
 from wrapt import wrap_function_wrapper
 
 from opentelemetry import context as context_api
@@ -24,9 +24,7 @@ from opentelemetry.instrumentation.google_generativeai.version import __version_
 
 logger = logging.getLogger(__name__)
 
-_instruments = ("google-generativeai >= 0.5.0",)
-
-WRAPPED_METHODS = [
+LEGACY_WRAPPED_METHODS = [
     {
         "package": "google.generativeai.generative_models",
         "object": "GenerativeModel",
@@ -39,11 +37,20 @@ WRAPPED_METHODS = [
         "method": "generate_content_async",
         "span_name": "gemini.generate_content_async",
     },
+]
+
+WRAPPED_METHODS = [
     {
-        "package": "google.generativeai.generative_models",
-        "object": "ChatSession",
-        "method": "send_message",
-        "span_name": "gemini.send_message",
+        "package": "google.genai.models",
+        "object": "Models",
+        "method": "generate_content",
+        "span_name": "gemini.generate_content",
+    },
+    {
+        "package": "google.genai.models",
+        "object": "AsyncModels",
+        "method": "generate_content",
+        "span_name": "gemini.generate_content",
     },
 ]
 
@@ -70,7 +77,38 @@ def _set_span_attribute(span, name, value):
 
 
 def _set_input_attributes(span, args, kwargs, llm_model):
-    if should_send_prompts() and args is not None and len(args) > 0:
+    if not should_send_prompts():
+        return
+
+    if "contents" in kwargs:
+        contents = kwargs["contents"]
+        if isinstance(contents, str):
+            _set_span_attribute(
+                span,
+                f"{SpanAttributes.LLM_PROMPTS}.0.content",
+                contents,
+            )
+            _set_span_attribute(
+                span,
+                f"{SpanAttributes.LLM_PROMPTS}.0.role",
+                "user",
+            )
+        elif isinstance(contents, list):
+            for i, content in enumerate(contents):
+                if hasattr(content, "parts"):
+                    for part in content.parts:
+                        if hasattr(part, "text"):
+                            _set_span_attribute(
+                                span,
+                                f"{SpanAttributes.LLM_PROMPTS}.{i}.content",
+                                part.text,
+                            )
+                            _set_span_attribute(
+                                span,
+                                f"{SpanAttributes.LLM_PROMPTS}.{i}.role",
+                                getattr(content, "role", "user"),
+                            )
+    elif args and len(args) > 0:
         prompt = ""
         for arg in args:
             if isinstance(arg, str):
@@ -78,24 +116,27 @@ def _set_input_attributes(span, args, kwargs, llm_model):
             elif isinstance(arg, list):
                 for subarg in arg:
                     prompt = f"{prompt}{subarg}\n"
-
+        if prompt:
+            _set_span_attribute(
+                span,
+                f"{SpanAttributes.LLM_PROMPTS}.0.content",
+                prompt,
+            )
+            _set_span_attribute(
+                span,
+                f"{SpanAttributes.LLM_PROMPTS}.0.role",
+                "user",
+            )
+    elif "prompt" in kwargs:
         _set_span_attribute(
             span,
             f"{SpanAttributes.LLM_PROMPTS}.0.content",
-            prompt,
+            kwargs["prompt"],
         )
         _set_span_attribute(
             span,
             f"{SpanAttributes.LLM_PROMPTS}.0.role",
             "user",
-        )
-
-    if should_send_prompts():
-        _set_span_attribute(
-            span, f"{SpanAttributes.LLM_PROMPTS}.0.content", kwargs.get("prompt")
-        )
-        _set_span_attribute(
-            span, f"{SpanAttributes.LLM_PROMPTS}.0.role", "user"
         )
 
     _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, llm_model)
@@ -147,7 +188,9 @@ def _set_response_attributes(span, response, llm_model):
             _set_span_attribute(
                 span, f"{SpanAttributes.LLM_COMPLETIONS}.0.content", response.text
             )
-            _set_span_attribute(span, f"{SpanAttributes.LLM_COMPLETIONS}.0.role", "assistant")
+            _set_span_attribute(
+                span, f"{SpanAttributes.LLM_COMPLETIONS}.0.role", "assistant"
+            )
     else:
         if isinstance(response, list):
             for index, item in enumerate(response):
@@ -158,7 +201,9 @@ def _set_response_attributes(span, response, llm_model):
             _set_span_attribute(
                 span, f"{SpanAttributes.LLM_COMPLETIONS}.0.content", response
             )
-            _set_span_attribute(span, f"{SpanAttributes.LLM_COMPLETIONS}.0.role", "assistant")
+            _set_span_attribute(
+                span, f"{SpanAttributes.LLM_COMPLETIONS}.0.role", "assistant"
+            )
 
     return
 
@@ -191,7 +236,7 @@ async def _abuild_from_streaming_response(span, response, llm_model):
     span.end()
 
 
-@dont_throw
+# @dont_throw
 def _handle_request(span, args, kwargs, llm_model):
     if span.is_recording():
         _set_input_attributes(span, args, kwargs, llm_model)
@@ -227,16 +272,22 @@ async def _awrap(tracer, to_wrap, wrapped, instance, args, kwargs):
 
     llm_model = "unknown"
     if hasattr(instance, "_model_id"):
-        llm_model = instance._model_id
+        llm_model = instance._model_id.replace("models/", "")
     if hasattr(instance, "_model_name"):
-        llm_model = instance._model_name.replace("publishers/google/models/", "")
+        llm_model = instance._model_name.replace(
+            "publishers/google/models/", ""
+        ).replace("models/", "")
+    if hasattr(instance, "model") and hasattr(instance.model, "model_name"):
+        llm_model = instance.model.model_name.replace("models/", "")
+    if "model" in kwargs:
+        llm_model = kwargs["model"].replace("models/", "")
 
     name = to_wrap.get("span_name")
     span = tracer.start_span(
         name,
         kind=SpanKind.CLIENT,
         attributes={
-            SpanAttributes.LLM_SYSTEM: "Gemini",
+            SpanAttributes.LLM_SYSTEM: "Google",
             SpanAttributes.LLM_REQUEST_TYPE: LLMRequestTypeValues.COMPLETION.value,
         },
     )
@@ -267,16 +318,22 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
 
     llm_model = "unknown"
     if hasattr(instance, "_model_id"):
-        llm_model = instance._model_id
+        llm_model = instance._model_id.replace("models/", "")
     if hasattr(instance, "_model_name"):
-        llm_model = instance._model_name.replace("publishers/google/models/", "")
+        llm_model = instance._model_name.replace(
+            "publishers/google/models/", ""
+        ).replace("models/", "")
+    if hasattr(instance, "model") and hasattr(instance.model, "model_name"):
+        llm_model = instance.model.model_name.replace("models/", "")
+    if "model" in kwargs:
+        llm_model = kwargs["model"].replace("models/", "")
 
     name = to_wrap.get("span_name")
     span = tracer.start_span(
         name,
         kind=SpanKind.CLIENT,
         attributes={
-            SpanAttributes.LLM_SYSTEM: "Gemini",
+            SpanAttributes.LLM_SYSTEM: "Google",
             SpanAttributes.LLM_REQUEST_TYPE: LLMRequestTypeValues.COMPLETION.value,
         },
     )
@@ -305,12 +362,25 @@ class GoogleGenerativeAiInstrumentor(BaseInstrumentor):
         Config.exception_logger = exception_logger
 
     def instrumentation_dependencies(self) -> Collection[str]:
-        return _instruments
+        if is_package_installed("google.genai"):
+            return ("google-genai >= 0.1.0",)
+        elif is_package_installed("google.generativeai"):
+            return ["google-generativeai >= 0.5.0"]
+        else:
+            return []
+
+    def _wrapped_methods(self):
+        if is_package_installed("google.genai"):
+            return WRAPPED_METHODS
+        elif is_package_installed("google.generativeai"):
+            return LEGACY_WRAPPED_METHODS
+        else:
+            return []
 
     def _instrument(self, **kwargs):
         tracer_provider = kwargs.get("tracer_provider")
         tracer = get_tracer(__name__, __version__, tracer_provider)
-        for wrapped_method in WRAPPED_METHODS:
+        for wrapped_method in self._wrapped_methods():
             wrap_package = wrapped_method.get("package")
             wrap_object = wrapped_method.get("object")
             wrap_method = wrapped_method.get("method")
@@ -326,7 +396,7 @@ class GoogleGenerativeAiInstrumentor(BaseInstrumentor):
             )
 
     def _uninstrument(self, **kwargs):
-        for wrapped_method in WRAPPED_METHODS:
+        for wrapped_method in self._wrapped_methods():
             wrap_package = wrapped_method.get("package")
             wrap_object = wrapped_method.get("object")
             unwrap(

@@ -8,11 +8,8 @@ class Meters:
     LLM_TOKEN_USAGE = "gen_ai.client.token.usage"
     LLM_OPERATION_DURATION = "gen_ai.client.operation.duration"
     LLM_COMPLETIONS_EXCEPTIONS = "llm.openai.chat_completions.exceptions"
-    LLM_STREAMING_TIME_TO_FIRST_TOKEN = (
-        "llm.openai.chat_completions.streaming_time_to_first_token"
-    )
     LLM_STREAMING_TIME_TO_GENERATE = (
-        "llm.openai.chat_completions.streaming_time_to_generate"
+        "llm.chat_completions.streaming_time_to_generate"
     )
     LLM_EMBEDDINGS_EXCEPTIONS = "llm.openai.embeddings.exceptions"
     LLM_EMBEDDINGS_VECTOR_SIZE = "llm.openai.embeddings.vector_size"
@@ -195,9 +192,11 @@ class SpanAttributes:
     MILVUS_SEARCH_PARTITION_NAMES_COUNT = "db.milvus.search.partition_names_count"
     MILVUS_SEARCH_SEARCH_PARAMS = "db.milvus.search.search_params"
     MILVUS_SEARCH_TIMEOUT = "db.milvus.search.timeout"
-    MILVUS_SEARCH_PARTITION_NAMES = "db.milvus.search.partition_names_count"
+    MILVUS_SEARCH_PARTITION_NAMES = "db.milvus.search.partition_names"
     MILVUS_SEARCH_RESULT_COUNT = "db.milvus.search.result_count"
     MILVUS_SEARCH_QUERY_VECTOR_DIMENSION = "db.milvus.search.query_vector_dimension"
+    MILVUS_SEARCH_ANNSEARCH_REQUEST = "db.milvus.search.annsearch_request"
+    MILVUS_SEARCH_RANKER_TYPE = "db.milvus.search.ranker_type"
     MILVUS_UPSERT_COLLECTION_NAME = "db.milvus.upsert.collection_name"
     MILVUS_UPSERT_DATA_COUNT = "db.milvus.upsert.data_count"
     MILVUS_UPSERT_PARTITION_NAME = "db.milvus.upsert.partition_name"

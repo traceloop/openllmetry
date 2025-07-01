@@ -8,7 +8,7 @@ show_missing = true
 
 [tool.poetry]
 name = "opentelemetry-instrumentation-openai"
-version = "0.40.4"
+version = "0.40.14"
 description = "OpenTelemetry OpenAI instrumentation"
 authors = [
   "Gal Kleinman <gal@traceloop.com>",
@@ -27,7 +27,7 @@ python = ">=3.9,<4"
 opentelemetry-api = "^1.28.0"
 opentelemetry-instrumentation = ">=0.50b0"
 opentelemetry-semantic-conventions = ">=0.50b0"
-opentelemetry-semantic-conventions-ai = "0.4.8"
+opentelemetry-semantic-conventions-ai = "0.4.9"
 tiktoken = ">=0.6.0, <1"
 
 [tool.poetry.group.dev.dependencies]
@@ -39,7 +39,7 @@ pytest = "^8.2.2"
 pytest-sugar = "1.0.0"
 vcrpy = "^6.0.1"
 pytest-recording = "^0.13.1"
-openai = { extras = ["datalib"], version = ">=1.50.0" }
+openai = { extras = ["datalib"], version = ">=1.66.0" }
 opentelemetry-sdk = "^1.27.0"
 pytest-asyncio = "^0.23.7"
 
