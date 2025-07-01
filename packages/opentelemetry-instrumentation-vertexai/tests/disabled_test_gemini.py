@@ -108,7 +108,8 @@ def test_vertexai_generate_content_with_events_with_content(
         logs[0],
         "gen_ai.user.message",
         {
-            "content": 'file_data {\n  mime_type: "image/jpeg"\n  file_uri: "gs://generativeai-downloads/images/scones.jpg"\n}\n\nwhat is shown in this image?\n'
+            "content": 'file_data {\n  mime_type: "image/jpeg"\n  file_uri: '
+            '"gs://generativeai-downloads/images/scones.jpg"\n}\n\nwhat is shown in this image?\n'
         },
     )
 
