@@ -3,6 +3,8 @@ import pydantic
 import re
 import time
 
+from openai import AsyncStream, Stream
+
 # Conditional imports for backward compatibility
 try:
     from openai.types.responses import (
@@ -386,6 +388,8 @@ def responses_get_or_create_wrapper(tracer: Tracer, wrapped, instance, args, kwa
 
     try:
         response = wrapped(*args, **kwargs)
+        if isinstance(response, Stream):
+            return response
     except Exception as e:
         response_id = kwargs.get("response_id")
         existing_data = {}
@@ -481,6 +485,8 @@ async def async_responses_get_or_create_wrapper(
 
     try:
         response = await wrapped(*args, **kwargs)
+        if isinstance(response, (Stream, AsyncStream)):
+            return response
     except Exception as e:
         response_id = kwargs.get("response_id")
         existing_data = {}
@@ -568,6 +574,8 @@ def responses_cancel_wrapper(tracer: Tracer, wrapped, instance, args, kwargs):
         return wrapped(*args, **kwargs)
 
     response = wrapped(*args, **kwargs)
+    if isinstance(response, Stream):
+        return response
     parsed_response = parse_response(response)
     existing_data = responses.pop(parsed_response.id, None)
     if existing_data is not None:
@@ -592,6 +600,8 @@ async def async_responses_cancel_wrapper(
         return await wrapped(*args, **kwargs)
 
     response = await wrapped(*args, **kwargs)
+    if isinstance(response, (Stream, AsyncStream)):
+        return response
     parsed_response = parse_response(response)
     existing_data = responses.pop(parsed_response.id, None)
     if existing_data is not None:
