@@ -153,9 +153,9 @@ def test_custom_llm(instrument_legacy, span_exporter, log_exporter):
     )
 
     logs = log_exporter.get_finished_logs()
-    assert (
-        len(logs) == 0
-    ), "Assert that it doesn't emit logs when use_legacy_attributes is True"
+    assert len(logs) == 0, (
+        "Assert that it doesn't emit logs when use_legacy_attributes is True"
+    )
 
 
 @pytest.mark.vcr
@@ -300,9 +300,9 @@ def test_openai(instrument_legacy, span_exporter, log_exporter):
     )
 
     logs = log_exporter.get_finished_logs()
-    assert (
-        len(logs) == 0
-    ), "Assert that it doesn't emit logs when use_legacy_attributes is True"
+    assert len(logs) == 0, (
+        "Assert that it doesn't emit logs when use_legacy_attributes is True"
+    )
 
 
 @pytest.mark.vcr
@@ -497,9 +497,9 @@ def test_openai_functions(instrument_legacy, span_exporter, log_exporter):
     assert openai_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 111
 
     logs = log_exporter.get_finished_logs()
-    assert (
-        len(logs) == 0
-    ), "Assert that it doesn't emit logs when use_legacy_attributes is True"
+    assert len(logs) == 0, (
+        "Assert that it doesn't emit logs when use_legacy_attributes is True"
+    )
 
 
 @pytest.mark.vcr
@@ -698,26 +698,26 @@ def test_anthropic(instrument_legacy, span_exporter, log_exporter):
         "response_metadata": {
             "id": "msg_017fMG9SRDFTBhcD1ibtN1nK",
             "model": "claude-2.1",
-            "model_name": "claude-2.1",
             "stop_reason": "end_turn",
             "stop_sequence": None,
             "usage": {
                 "input_tokens": 19,
                 "output_tokens": 22,
-                "cache_creation_input_tokens": None,
-                "cache_read_input_tokens": None,
-                "server_tool_use": None
             },
         },
         "tool_calls": [],
         "type": "ai",
-        "usage_metadata": {"input_tokens": 19, "output_tokens": 22, "total_tokens": 41, "input_token_details": {}},
+        "usage_metadata": {
+            "input_tokens": 19,
+            "output_tokens": 22,
+            "total_tokens": 41,
+        },
     }
 
     logs = log_exporter.get_finished_logs()
-    assert (
-        len(logs) == 0
-    ), "Assert that it doesn't emit logs when use_legacy_attributes is True"
+    assert len(logs) == 0, (
+        "Assert that it doesn't emit logs when use_legacy_attributes is True"
+    )
 
 
 @pytest.mark.vcr
@@ -913,9 +913,9 @@ def test_bedrock(instrument_legacy, span_exporter, log_exporter):
     }
 
     logs = log_exporter.get_finished_logs()
-    assert (
-        len(logs) == 0
-    ), "Assert that it doesn't emit logs when use_legacy_attributes is True"
+    assert len(logs) == 0, (
+        "Assert that it doesn't emit logs when use_legacy_attributes is True"
+    )
 
 
 @pytest.mark.vcr
@@ -1086,9 +1086,9 @@ def test_trace_propagation(instrument_legacy, span_exporter, log_exporter, LLM):
     assert_request_contains_tracecontext(request, openai_span)
 
     logs = log_exporter.get_finished_logs()
-    assert (
-        len(logs) == 0
-    ), "Assert that it doesn't emit logs when use_legacy_attributes is True"
+    assert len(logs) == 0, (
+        "Assert that it doesn't emit logs when use_legacy_attributes is True"
+    )
 
 
 @pytest.mark.vcr
@@ -1259,9 +1259,9 @@ def test_trace_propagation_stream(instrument_legacy, span_exporter, log_exporter
     assert_request_contains_tracecontext(request, openai_span)
 
     logs = log_exporter.get_finished_logs()
-    assert (
-        len(logs) == 0
-    ), "Assert that it doesn't emit logs when use_legacy_attributes is True"
+    assert len(logs) == 0, (
+        "Assert that it doesn't emit logs when use_legacy_attributes is True"
+    )
 
 
 @pytest.mark.vcr
@@ -1395,9 +1395,9 @@ async def test_trace_propagation_async(
     assert_request_contains_tracecontext(request, openai_span)
 
     logs = log_exporter.get_finished_logs()
-    assert (
-        len(logs) == 0
-    ), "Assert that it doesn't emit logs when use_legacy_attributes is True"
+    assert len(logs) == 0, (
+        "Assert that it doesn't emit logs when use_legacy_attributes is True"
+    )
 
 
 @pytest.mark.asyncio
@@ -1574,9 +1574,9 @@ async def test_trace_propagation_stream_async(
     assert_request_contains_tracecontext(request, openai_span)
 
     logs = log_exporter.get_finished_logs()
-    assert (
-        len(logs) == 0
-    ), "Assert that it doesn't emit logs when use_legacy_attributes is True"
+    assert len(logs) == 0, (
+        "Assert that it doesn't emit logs when use_legacy_attributes is True"
+    )
 
 
 @pytest.mark.asyncio

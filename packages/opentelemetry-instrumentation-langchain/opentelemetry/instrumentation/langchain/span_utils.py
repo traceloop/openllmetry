@@ -90,6 +90,25 @@ def set_request_params(span, kwargs, span_holder: SpanHolder):
     )
     _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TOP_P, params.get("top_p"))
 
+    tools = kwargs.get("invocation_params", {}).get("tools", [])
+    for i, tool in enumerate(tools):
+        tool_function = tool.get("function", tool)
+        _set_span_attribute(
+            span,
+            f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.{i}.name",
+            tool_function.get("name"),
+        )
+        _set_span_attribute(
+            span,
+            f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.{i}.description",
+            tool_function.get("description"),
+        )
+        _set_span_attribute(
+            span,
+            f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.{i}.parameters",
+            json.dumps(tool_function.get("parameters", tool.get("input_schema"))),
+        )
+
 
 def set_llm_request(
     span: Span,
@@ -167,6 +186,14 @@ def set_chat_request(
                         f"{SpanAttributes.LLM_PROMPTS}.{i}.content",
                         content,
                     )
+
+                if msg.type == "tool" and hasattr(msg, "tool_call_id"):
+                    _set_span_attribute(
+                        span,
+                        f"{SpanAttributes.LLM_PROMPTS}.{i}.tool_call_id",
+                        msg.tool_call_id,
+                    )
+
                 i += 1
 
 
@@ -330,3 +357,4 @@ def _set_chat_tool_calls(
             f"{tool_call_prefix}.arguments",
             json.dumps(tool_args, cls=CallbackFilteredJSONEncoder),
         )
+
