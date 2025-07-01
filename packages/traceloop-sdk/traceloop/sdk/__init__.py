@@ -183,8 +183,8 @@ class Traceloop:
             Traceloop.__logger_wrapper = LoggerWrapper(exporter=logging_exporter)
 
         if (
-            # api_endpoint.find("traceloop.com") != -1
-            api_key
+            api_endpoint.find("traceloop.com") != -1
+            and api_key
             and (exporter is None)
             and (processor is None)
         ):

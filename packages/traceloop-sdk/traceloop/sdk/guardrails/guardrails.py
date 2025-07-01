@@ -1,14 +1,12 @@
-from typing import Dict, Any, Optional, Callable
-from aiohttp.client import ClientSession
+from typing import Dict, Any, Optional
 from traceloop.sdk.client.http import HTTPClient
-from dataclasses import asdict
 from .types import ExecuteEvaluatorRequest, InputExtractor, OutputSchema
-from typing import Any, Dict, List, Union
-import time
 import os
 import httpx
 import json
-class Guardrails:        
+
+
+class Guardrails:
     def __init__(self, http: HTTPClient, app_name: str, api_key: str):
         self._http = http
         self._app_name = app_name
@@ -17,25 +15,27 @@ class Guardrails:
 
     async def execute_evaluator(self, slug: str, data: Dict[str, InputExtractor]) -> Dict[str, Any]:
         """Execute evaluator and return accumulated SSE event data."""
-        
-        
         try:
             response = await self._post_request(slug, data)
-            
+
             if response:
                 # Handle SSE streaming
-                response_from_stream = await self._wait_for_result(stream_url=response["stream_url"], execution_id=response["execution_id"], timeout=120)
-                
+                response_from_stream = await self._wait_for_result(
+                    stream_url=response["stream_url"],
+                    execution_id=response["execution_id"],
+                    timeout=120
+                )
+
                 return response_from_stream
             else:
                 # Handle direct response
                 return response or {}
-                
+
         except Exception as e:
             # Log error and return empty data
             print(f"Error executing evaluator {slug}. Error: {str(e)}")
             return {}
-    
+
     async def _post_request(self, slug: str, data: Dict[str, InputExtractor]) -> Optional[Dict[str, Any]]:
         """Make POST request using the HTTP client."""
         try:
@@ -50,15 +50,14 @@ class Guardrails:
         except Exception as e:
             print(f"Error making POST request to {url}: {str(e)}")
             return None
-    
-    
+
     async def _wait_for_result(
         self,
         execution_id: str,
         stream_url: str,
         timeout: int,
     ) -> Dict[str, Any]:
-        """Wait for the evaluation result via server-sent events."""        
+        """Wait for the evaluation result via server-sent events."""
         try:
             async with httpx.AsyncClient(timeout=httpx.Timeout(timeout)) as client:
                 headers = {
@@ -66,15 +65,16 @@ class Guardrails:
                     "Accept": "text/event-stream",
                     "Cache-Control": "no-cache"
                 }
-                api_endpoint = os.getenv("TRACELOOP_BASE_URL")  
+                api_endpoint = os.getenv("TRACELOOP_BASE_URL")
                 stream_url = f"{api_endpoint}/v2{stream_url}"
 
                 async with client.stream("GET", stream_url, headers=headers) as response:
-                   
                     if response.status_code != 200:
                         error_text = await response.aread()
-                        raise Exception(f"Failed to stream results: {response.status_code}, body: {error_text}")
-                    
+                        raise Exception(
+                            f"Failed to stream results: {response.status_code}, body: {error_text}"
+                        )
+
                     response_text = await response.aread()
                     parsed_response = self._parse_result(response_text)
 
@@ -94,12 +94,12 @@ class Guardrails:
         """Parse the response text into an EvaluatorResponse object using Pydantic."""
         try:
             response_data = json.loads(response_text)
-            
+
             inner_result = response_data.get("result", {}).get("result", {})
             evaluator_response = OutputSchema.model_validate(inner_result)
-            
+
             return evaluator_response
-            
+
         except Exception as e:
             print(f"Error parsing result: {e}")
             raise
