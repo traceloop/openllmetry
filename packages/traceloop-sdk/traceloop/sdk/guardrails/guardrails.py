@@ -53,11 +53,11 @@ def with_guardrails(slug: str, client=None):
                 
             evaluator_result = await client_instance.guardrails.execute_evaluator(slug, evaluator_data)
 
-            # Combine results
-            return {
-                "original_result": original_result,
-                "guardrails_result": evaluator_result
-            }
+            if not evaluator_result.success:
+                return "I can see you are seeking medical advice. Sorry for the inconvenience, but I cannot answer these types of questions."
+
+            return original_result
+           
         
         @wraps(func)
         def sync_wrapper(*args: P.args, **kwargs: P.kwargs) -> Dict[str, Any]:
