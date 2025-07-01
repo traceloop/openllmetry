@@ -1,5 +1,6 @@
-from typing import Dict, Optional, Any
+from typing import Dict, Optional
 from pydantic import BaseModel, Field
+
 
 class InputExtractor(BaseModel):
     source: str  # "input" or "output"
@@ -7,10 +8,11 @@ class InputExtractor(BaseModel):
     use_regex: bool = False  # Whether to use regex pattern
     regex_pattern: Optional[str] = None  # Regex pattern to apply
 
+
 class ExecuteEvaluatorRequest(BaseModel):
-    input_schema_mapping: Dict[str, InputExtractor] 
+    input_schema_mapping: Dict[str, InputExtractor]
+
 
 class OutputSchema(BaseModel):
     reason: str
     success: bool = Field(alias="pass")
-
