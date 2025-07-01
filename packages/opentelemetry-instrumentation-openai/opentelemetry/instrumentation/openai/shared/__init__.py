@@ -110,7 +110,6 @@ def _set_request_attributes(span, kwargs, instance=None):
 
     _set_api_attributes(span)
     
-    # Dynamic vendor detection
     base_url = _get_openai_base_url(instance) if instance else ""
     vendor = _get_vendor_from_url(base_url)
     _set_span_attribute(span, SpanAttributes.LLM_SYSTEM, vendor)
