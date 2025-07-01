@@ -99,6 +99,25 @@ def _set_request_params(span, kwargs, span_holder: SpanHolder):
     )
     _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TOP_P, params.get("top_p"))
 
+    tools = kwargs.get("invocation_params", {}).get("tools", [])
+    for i, tool in enumerate(tools):
+        tool_function = tool.get("function", tool)
+        _set_span_attribute(
+            span,
+            f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.{i}.name",
+            tool_function.get("name"),
+        )
+        _set_span_attribute(
+            span,
+            f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.{i}.description",
+            tool_function.get("description"),
+        )
+        _set_span_attribute(
+            span,
+            f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.{i}.parameters",
+            json.dumps(tool_function.get("parameters", tool.get("input_schema"))),
+        )
+
 
 def _set_llm_request(
     span: Span,
@@ -130,7 +149,7 @@ def _set_chat_request(
     kwargs: Any,
     span_holder: SpanHolder,
 ) -> None:
-    _set_request_params(span, serialized.get("kwargs", {}), span_holder)
+    _set_request_params(span, kwargs, span_holder)
 
     if should_send_prompts():
         for i, function in enumerate(
@@ -174,6 +193,14 @@ def _set_chat_request(
                         f"{SpanAttributes.LLM_PROMPTS}.{i}.content",
                         content,
                     )
+
+                if msg.type == "tool" and hasattr(msg, "tool_call_id"):
+                    _set_span_attribute(
+                        span,
+                        f"{SpanAttributes.LLM_PROMPTS}.{i}.tool_call_id",
+                        msg.tool_call_id,
+                    )
+
                 i += 1
 
 

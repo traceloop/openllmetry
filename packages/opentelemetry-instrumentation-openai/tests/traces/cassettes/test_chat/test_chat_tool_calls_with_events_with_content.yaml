@@ -1,7 +1,9 @@
 interactions:
 - request:
-    body: '{"messages": [{"role": "user", "content": "Tell me a joke about opentelemetry"}],
-      "model": "gpt-3.5-turbo"}'
+    body: '{"messages": [{"role": "assistant", "tool_calls": [{"id": "1", "type":
+      "function", "function": {"name": "get_current_weather", "arguments": "{\"location\":
+      \"San Francisco\"}"}}]}, {"role": "tool", "tool_call_id": "1", "content": "The
+      weather in San Francisco is 70 degrees and sunny."}], "model": "gpt-3.5-turbo"}'
     headers:
       accept:
       - application/json
@@ -10,13 +12,13 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '107'
+      - '314'
       content-type:
       - application/json
       host:
       - api.openai.com
       user-agent:
-      - OpenAI/Python 1.35.13
+      - OpenAI/Python 1.31.1
       x-stainless-arch:
       - arm64
       x-stainless-async:
@@ -26,28 +28,27 @@ interactions:
       x-stainless-os:
       - MacOS
       x-stainless-package-version:
-      - 1.35.13
+      - 1.31.1
       x-stainless-runtime:
       - CPython
       x-stainless-runtime-version:
-      - 3.9.5
+      - 3.12.3
     method: POST
     uri: https://api.openai.com/v1/chat/completions
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAAA1SRT2/CMAzF7/0UXi67AGphhcFlGmib2DhO2mGaUEhNG0jjKHE1EOK7Tyn/tIsP
-        7+fnPDuHBEDoQkxAqEqyqp3pjs3i/W3cX3zwc77D9fbVvZSfZj6bTeeboehEB602qPji6imqnUHW
-        ZE9YeZSMcWo26mfpKB3kjy2oqUATbaXj7qCXd7nxK+qmWT8/OyvSCoOYwHcCAHBoa8xoC9yJCaSd
-        i1JjCLJEMbk2AQhPJipChqADS8uic4OKLKNtY39Veyh0AVwhKCoQPK6bgMAEJcUagZOe908wRSUj
-        0xwt9p7hV1puW5FByaasGLQFaYEcWkaDNbLfA3vp7sT5/eM1uKHSeVrFJW1jzFVfa6tDtfQoA9kY
-        MjC5k/2YAPy0B2r+7Sycp9rxkmmLNg7M8tM4cfuSG+wPz5CJpbnpD1lyzifCPjDWy7W2JXrndXut
-        mDI5Jn8AAAD//wMA+iUaUiwCAAA=
+        H4sIAAAAAAAAA1SQUUvDMBSF3/srLnlex1pX6voqiCKIMrehIiNN79pomsTcFB1j/13SdSu+5OGc
+        nJPv5BABMFmxAphouBetVfGifnh8K1eb5c2c0lWTPu/W6/zpVX5v7rs7NgkJU36i8OfUVJjWKvTS
+        6JMtHHKPoTXJk8V1niXzpDdaU6EKsdr6+Gqaxb5zpYlnSZoNycZIgcQKeI8AAA79GRh1hb+sgNnk
+        rLRIxGtkxeUSAHNGBYVxIkmea88moymM9qh77JcG4Qe5b9CB1LDkGm4d10KSMCAJ8hlUWDtEAq4r
+        oE7r/ZQNVccLgzK1daYMvLpT6qLvpJbUbB1yMjq8R97YU/wYAXz0W7t/+Mw601q/9eYLdSicD1PZ
+        +LujmaSD6Y3natSzNBr4GO3JY7vdSV2js072wwNldIz+AAAA//8DAFgC3/b3AQAA
     headers:
       CF-Cache-Status:
       - DYNAMIC
       CF-RAY:
-      - 8a3c06ec694fada4-ATL
+      - 89ca0ace187267e5-SJC
       Connection:
       - keep-alive
       Content-Encoding:
@@ -55,29 +56,27 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Mon, 15 Jul 2024 19:05:59 GMT
+      - Mon, 01 Jul 2024 23:05:41 GMT
       Server:
       - cloudflare
       Set-Cookie:
-      - __cf_bm=7r92jUdUEA4wJGNCNqX1y_usNja6ZbX4SM4xdbD8r3E-1721070359-1.0.1.1-se82CXovc7ndM.lFT9BKWR72qvK2lRgsPlK5YnmE9otDNYE8e9R9v3CMBKy3SHO9cHAlhedMkC0x0GHKzILUPA;
-        path=/; expires=Mon, 15-Jul-24 19:35:59 GMT; domain=.api.openai.com; HttpOnly;
+      - __cf_bm=5KtfCvK8iEaeyiKJ_x.mKoz_lHBPohUO7we2u4JFgvI-1719875141-1.0.1.1-emXTOeWpVHhcRLjSmiFF90wqxIvME72vqSRqI6onZoc0a0MfJIIsD_Bcjns_XecEbRgOzrsytWQKY5rCmUDYpQ;
+        path=/; expires=Mon, 01-Jul-24 23:35:41 GMT; domain=.api.openai.com; HttpOnly;
         Secure; SameSite=None
-      - _cfuvid=DQePSM_v9bEa3hSaZw7w90aZlxFtRtbZunAmUoOiG98-1721070359012-0.0.1.1-604800000;
+      - _cfuvid=xT_vl23QbJqI6RPCdqTL8JznNz1gHw17O2DziF68JjM-1719875141467-0.0.1.1-604800000;
         path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
       Transfer-Encoding:
       - chunked
-      X-Content-Type-Options:
-      - nosniff
       alt-svc:
       - h3=":443"; ma=86400
       openai-organization:
-      - traceloop
+      - aca-labs-1
       openai-processing-ms:
-      - '443'
+      - '467'
       openai-version:
       - '2020-10-01'
       strict-transport-security:
-      - max-age=15552000; includeSubDomains; preload
+      - max-age=31536000; includeSubDomains
       x-ratelimit-limit-requests:
       - '5000'
       x-ratelimit-limit-tokens:
@@ -85,13 +84,13 @@ interactions:
       x-ratelimit-remaining-requests:
       - '4999'
       x-ratelimit-remaining-tokens:
-      - '159974'
+      - '159968'
       x-ratelimit-reset-requests:
       - 12ms
       x-ratelimit-reset-tokens:
-      - 9ms
+      - 12ms
       x-request-id:
-      - req_2c640127e33a8865f70ee056e6105cf3
+      - req_cb8fecee9a23c26d9b4ff686171a670b
     status:
       code: 200
       message: OK
