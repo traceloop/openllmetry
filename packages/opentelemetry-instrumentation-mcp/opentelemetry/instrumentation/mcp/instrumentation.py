@@ -93,7 +93,9 @@ class McpInstrumentor(BaseInstrumentor):
         )
         register_post_import_hook(
             lambda _: wrap_function_wrapper(
-                "mcp.client.streamable_http", "streamablehttp_client", self._transport_wrapper(tracer)
+                "mcp.client.streamable_http",
+                "streamablehttp_client",
+                self._transport_wrapper(tracer),
             ),
             "mcp.client.streamable_http",
         )
@@ -122,7 +124,11 @@ class McpInstrumentor(BaseInstrumentor):
         ) -> AsyncGenerator[
             Tuple["InstrumentedStreamReader", "InstrumentedStreamWriter"], None
         ]:
-            async with wrapped(*args, **kwargs) as (read_stream, write_stream):
+            async with wrapped(*args, **kwargs) as result:
+                try:
+                    read_stream, write_stream = result
+                except ValueError:
+                    read_stream, write_stream, _ = result
                 yield InstrumentedStreamReader(
                     read_stream, tracer
                 ), InstrumentedStreamWriter(write_stream, tracer)
