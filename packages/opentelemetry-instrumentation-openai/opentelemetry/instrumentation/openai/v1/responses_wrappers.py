@@ -45,6 +45,7 @@ from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
     GEN_AI_RESPONSE_ID,
     GEN_AI_REQUEST_MODEL,
     GEN_AI_RESPONSE_MODEL,
+    GEN_AI_SYSTEM,
 )
 from opentelemetry.trace import SpanKind, Span, StatusCode, Tracer
 from typing import Any, Optional, Union
@@ -62,6 +63,7 @@ from opentelemetry.instrumentation.openai.utils import (
 )
 
 SPAN_NAME = "openai.response"
+
 
 def prepare_input_param(input_param: ResponseInputItemParam) -> ResponseInputItemParam:
     """
@@ -176,6 +178,7 @@ def process_content_block(
 
 @dont_throw
 def set_data_attributes(traced_response: TracedData, span: Span):
+    _set_span_attribute(span, GEN_AI_SYSTEM, "openai")
     _set_span_attribute(span, GEN_AI_REQUEST_MODEL, traced_response.request_model)
     _set_span_attribute(span, GEN_AI_RESPONSE_ID, traced_response.response_id)
     _set_span_attribute(span, GEN_AI_RESPONSE_MODEL, traced_response.response_model)

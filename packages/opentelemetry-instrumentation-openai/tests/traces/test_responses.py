@@ -16,6 +16,7 @@ def test_responses(instrument_legacy, span_exporter: InMemorySpanExporter, opena
     assert len(spans) == 1
     span = spans[0]
     assert span.name == "openai.response"
+    assert span.attributes["gen_ai.system"] == "openai"
     assert span.attributes["gen_ai.request.model"] == "gpt-4.1-nano"
     assert span.attributes["gen_ai.response.model"] == "gpt-4.1-nano-2025-04-14"
     assert (
@@ -57,6 +58,7 @@ def test_responses_with_input_history(instrument_legacy, span_exporter: InMemory
     assert len(spans) == 2
     span = spans[1]
     assert span.name == "openai.response"
+    assert span.attributes["gen_ai.system"] == "openai"
     assert span.attributes["gen_ai.request.model"] == "gpt-4.1-nano"
     assert span.attributes["gen_ai.response.model"] == "gpt-4.1-nano-2025-04-14"
     assert (
@@ -115,18 +117,19 @@ def test_responses_tool_calls(instrument_legacy, span_exporter: InMemorySpanExpo
     spans = span_exporter.get_finished_spans()
 
     assert len(spans) == 1
-    open_ai_span = spans[0]
-    assert open_ai_span.name == "openai.response"
-    assert open_ai_span.attributes["gen_ai.request.model"] == "gpt-4.1-nano"
-    assert open_ai_span.attributes["gen_ai.response.model"] == "gpt-4.1-nano-2025-04-14"
+    span = spans[0]
+    assert span.name == "openai.response"
+    assert span.attributes["gen_ai.system"] == "openai"
+    assert span.attributes["gen_ai.request.model"] == "gpt-4.1-nano"
+    assert span.attributes["gen_ai.response.model"] == "gpt-4.1-nano-2025-04-14"
 
-    assert open_ai_span.attributes["gen_ai.prompt.0.content"] == "What's the weather in London?"
-    assert open_ai_span.attributes["gen_ai.prompt.0.role"] == "user"
-    assert open_ai_span.attributes["gen_ai.completion.0.role"] == "assistant"
-    assert open_ai_span.attributes["gen_ai.completion.0.tool_calls.0.name"] == "get_weather"
-    assert open_ai_span.attributes["gen_ai.completion.0.tool_calls.0.arguments"] == '{"location":"London"}'
-    assert open_ai_span.attributes["llm.request.functions.0.name"] == "get_weather"
-    assert json.loads(open_ai_span.attributes["llm.request.functions.0.parameters"]) == {
+    assert span.attributes["gen_ai.prompt.0.content"] == "What's the weather in London?"
+    assert span.attributes["gen_ai.prompt.0.role"] == "user"
+    assert span.attributes["gen_ai.completion.0.role"] == "assistant"
+    assert span.attributes["gen_ai.completion.0.tool_calls.0.name"] == "get_weather"
+    assert span.attributes["gen_ai.completion.0.tool_calls.0.arguments"] == '{"location":"London"}'
+    assert span.attributes["llm.request.functions.0.name"] == "get_weather"
+    assert json.loads(span.attributes["llm.request.functions.0.parameters"]) == {
         "type": "object",
         "properties": {
             "location": {
@@ -136,13 +139,13 @@ def test_responses_tool_calls(instrument_legacy, span_exporter: InMemorySpanExpo
         },
         "required": ["location"]
     }
-    assert open_ai_span.attributes["llm.request.functions.0.description"] == "Get the current weather for a location"
+    assert span.attributes["llm.request.functions.0.description"] == "Get the current weather for a location"
 
     assert (
-        open_ai_span.attributes["gen_ai.completion.0.tool_calls.0.id"]
+        span.attributes["gen_ai.completion.0.tool_calls.0.id"]
         == "fc_685ff89422ec819a977b2ea385bc9b6601c537ddeff5c2a2"
     )
     assert (
-        open_ai_span.attributes["gen_ai.response.id"]
+        span.attributes["gen_ai.response.id"]
         == "resp_685ff8928dc4819aac45e085ba66838101c537ddeff5c2a2"
     )
