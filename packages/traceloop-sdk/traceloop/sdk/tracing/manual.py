@@ -14,6 +14,8 @@ class LLMUsage(BaseModel):
     prompt_tokens: int
     completion_tokens: int
     total_tokens: int
+    cache_creation_input_tokens: int
+    cache_read_input_tokens: int
 
 
 class LLMSpan:
@@ -40,8 +42,27 @@ class LLMSpan:
                 f"{SpanAttributes.LLM_COMPLETIONS}.{idx}.role", "assistant"
             )
             self._span.set_attribute(
-                f"{SpanAttributes.LLM_COMPLETIONS}.{idx}", completion
+                f"{SpanAttributes.LLM_COMPLETIONS}.{idx}.content", completion
             )
+
+    def report_usage(self, usage: LLMUsage):
+        self._span.set_attribute(
+            SpanAttributes.LLM_USAGE_PROMPT_TOKENS, usage.prompt_tokens
+        )
+        self._span.set_attribute(
+            SpanAttributes.LLM_USAGE_COMPLETION_TOKENS, usage.completion_tokens
+        )
+        self._span.set_attribute(
+            SpanAttributes.LLM_USAGE_TOTAL_TOKENS, usage.total_tokens
+        )
+        self._span.set_attribute(
+            SpanAttributes.LLM_USAGE_CACHE_CREATION_INPUT_TOKENS,
+            usage.cache_creation_input_tokens,
+        )
+        self._span.set_attribute(
+            SpanAttributes.LLM_USAGE_CACHE_READ_INPUT_TOKENS,
+            usage.cache_read_input_tokens,
+        )
 
 
 @contextmanager
