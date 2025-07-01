@@ -52,7 +52,6 @@ def with_guardrails(slug: str, client=None):
                 client_instance = client
                 
             evaluator_result = await client_instance.guardrails.execute_evaluator(slug, evaluator_data)
-            print(f"ASYNC Evaluator result: {evaluator_result}")
 
             # Combine results
             return {
@@ -65,8 +64,6 @@ def with_guardrails(slug: str, client=None):
 
             # Execute the original function
             original_result = func(*args, **kwargs)
-
-            print(f"SYNC Original result: {original_result}")
             
             # Create input data for evaluator with the function output
             evaluator_data = {
