@@ -1,5 +1,6 @@
 import dataclasses
 import datetime
+import importlib.util
 import json
 import logging
 import os
@@ -84,3 +85,7 @@ def should_emit_events() -> bool:
     return not Config.use_legacy_attributes and isinstance(
         Config.event_logger, EventLogger
     )
+
+
+def is_package_available(package_name):
+    return importlib.util.find_spec(package_name) is not None

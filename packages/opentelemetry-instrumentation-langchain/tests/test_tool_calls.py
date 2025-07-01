@@ -40,7 +40,21 @@ def test_tool_calls(instrument_legacy, span_exporter, log_exporter):
     expected_spans = {"ChatOpenAI.chat"}
     assert expected_spans.issubset(span_names)
 
-    chat_span = next(span for span in spans if span.name == "ChatOpenAI.chat")
+    chat_span = next(
+        span for span in spans if span.name == "ChatOpenAI.chat"
+    )
+
+    assert chat_span.attributes[f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.0.name"] == "food_analysis"
+    assert json.loads(chat_span.attributes[f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.0.parameters"]) == {
+        "properties": {
+            "name": {"type": "string"},
+            "healthy": {"type": "boolean"},
+            "calories": {"type": "integer"},
+            "taste_profile": {"type": "array", "items": {"type": "string"}},
+        },
+        "required": ["name", "healthy", "calories", "taste_profile"],
+        "type": "object",
+    }
 
     assert chat_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"] == query_text
     assert (
@@ -178,6 +192,24 @@ def test_tool_calls_with_history(instrument_legacy, span_exporter, log_exporter)
     chat_span = spans[0]
     assert chat_span.name == "ChatOpenAI.chat"
 
+    assert chat_span.attributes[f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.0.name"] == "get_weather"
+    assert json.loads(chat_span.attributes[f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.0.parameters"]) == {
+        "properties": {
+            "location": {"type": "string"},
+        },
+        "required": ["location"],
+        "type": "object",
+    }
+
+    assert chat_span.attributes[f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.0.name"] == "get_weather"
+    assert json.loads(chat_span.attributes[f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.0.parameters"]) == {
+        "properties": {
+            "location": {"type": "string"},
+        },
+        "required": ["location"],
+        "type": "object",
+    }
+
     assert (
         chat_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
         == messages[0].content
@@ -213,6 +245,7 @@ def test_tool_calls_with_history(instrument_legacy, span_exporter, log_exporter)
         == messages[3].content
     )
     assert chat_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.3.role"] == "tool"
+    assert chat_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.3.tool_call_id"] == messages[3].tool_call_id
 
     assert (
         chat_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.4.content"]
@@ -441,6 +474,25 @@ def test_tool_calls_anthropic_text_block(
     assert len(spans) == 1
     chat_span = spans[0]
     assert chat_span.name == "ChatAnthropic.chat"
+
+    assert chat_span.attributes[f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.0.name"] == "get_weather"
+    assert json.loads(chat_span.attributes[f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.0.parameters"]) == {
+        "properties": {
+            "location": {"type": "string"},
+        },
+        "required": ["location"],
+        "type": "object",
+    }
+
+    assert chat_span.attributes[f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.1.name"] == "get_news"
+    assert json.loads(chat_span.attributes[f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.1.parameters"]) == {
+        "properties": {
+            "location": {"type": "string"},
+        },
+        "required": ["location"],
+        "type": "object",
+    }
+
     assert (
         chat_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
         == messages[0].content
@@ -633,6 +685,25 @@ def test_tool_calls_anthropic_text_block_and_history(
     assert len(spans) == 1
     chat_span = spans[0]
     assert chat_span.name == "ChatAnthropic.chat"
+
+    assert chat_span.attributes[f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.0.name"] == "get_weather"
+    assert json.loads(chat_span.attributes[f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.0.parameters"]) == {
+        "properties": {
+            "location": {"type": "string"},
+        },
+        "required": ["location"],
+        "type": "object",
+    }
+
+    assert chat_span.attributes[f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.1.name"] == "get_news"
+    assert json.loads(chat_span.attributes[f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.1.parameters"]) == {
+        "properties": {
+            "location": {"type": "string"},
+        },
+        "required": ["location"],
+        "type": "object",
+    }
+
     assert (
         chat_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
         == messages[0].content
@@ -662,6 +733,7 @@ def test_tool_calls_anthropic_text_block_and_history(
         chat_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.2.content"]
         == messages[2].content
     )
+    assert chat_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.2.tool_call_id"] == messages[2].tool_call_id
 
     assert (
         chat_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.role"] == "assistant"
@@ -797,6 +869,43 @@ def test_tool_calls_anthropic_text_block_and_history_with_events_with_content(
 
 
 @pytest.mark.vcr
+def test_tool_message_with_tool_call_id(exporter):
+    """Test that tool_call_id is properly set in span attributes for ToolMessage."""
+    def sample_tool(query: str) -> str:
+        return "Tool response"
+
+    messages: list[BaseMessage] = [
+        HumanMessage(content="Use the tool"),
+        AIMessage(
+            content="",
+            tool_calls=[
+                {
+                    "name": "sample_tool",
+                    "args": {"query": "test"},
+                    "id": "call_12345",
+                    "type": "tool_call",
+                }
+            ],
+        ),
+        ToolMessage(content="Tool executed successfully", tool_call_id="call_12345"),
+    ]
+
+    model = ChatOpenAI(model="gpt-4.1-nano", temperature=0)
+    model_with_tools = model.bind_tools([sample_tool])
+    model_with_tools.invoke(messages)
+    spans = exporter.get_finished_spans()
+
+    assert len(spans) == 1
+    chat_span = spans[0]
+    assert chat_span.name == "ChatOpenAI.chat"
+
+    # Verify that the tool_call_id is properly set for the ToolMessage
+    assert chat_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.2.role"] == "tool"
+    assert chat_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.2.content"] == "Tool executed successfully"
+    assert chat_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.2.tool_call_id"] == "call_12345"
+
+
+@pytest.mark.vcr
 def test_tool_calls_anthropic_text_block_and_history_with_events_with_no_content(
     instrument_with_no_content, span_exporter, log_exporter
 ):
@@ -891,6 +1000,43 @@ def test_tool_calls_anthropic_text_block_and_history_with_events_with_no_content
 
 
 @pytest.mark.vcr
+def test_tool_message_with_tool_call_id(exporter):
+    """Test that tool_call_id is properly set in span attributes for ToolMessage."""
+    def sample_tool(query: str) -> str:
+        return "Tool response"
+
+    messages: list[BaseMessage] = [
+        HumanMessage(content="Use the tool"),
+        AIMessage(
+            content="",
+            tool_calls=[
+                {
+                    "name": "sample_tool",
+                    "args": {"query": "test"},
+                    "id": "call_12345",
+                    "type": "tool_call",
+                }
+            ],
+        ),
+        ToolMessage(content="Tool executed successfully", tool_call_id="call_12345"),
+    ]
+
+    model = ChatOpenAI(model="gpt-4.1-nano", temperature=0)
+    model_with_tools = model.bind_tools([sample_tool])
+    model_with_tools.invoke(messages)
+    spans = exporter.get_finished_spans()
+
+    assert len(spans) == 1
+    chat_span = spans[0]
+    assert chat_span.name == "ChatOpenAI.chat"
+
+    # Verify that the tool_call_id is properly set for the ToolMessage
+    assert chat_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.2.role"] == "tool"
+    assert chat_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.2.content"] == "Tool executed successfully"
+    assert chat_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.2.tool_call_id"] == "call_12345"
+
+
+@pytest.mark.vcr
 def test_parallel_tool_calls(instrument_legacy, span_exporter, log_exporter):
     def get_weather(location: str) -> str:
         return "sunny"
@@ -911,6 +1057,25 @@ def test_parallel_tool_calls(instrument_legacy, span_exporter, log_exporter):
     assert len(spans) == 1
     chat_span = spans[0]
     assert chat_span.name == "ChatOpenAI.chat"
+
+    assert chat_span.attributes[f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.0.name"] == "get_weather"
+    assert json.loads(chat_span.attributes[f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.0.parameters"]) == {
+        "properties": {
+            "location": {"type": "string"},
+        },
+        "required": ["location"],
+        "type": "object",
+    }
+
+    assert chat_span.attributes[f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.1.name"] == "get_news"
+    assert json.loads(chat_span.attributes[f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.1.parameters"]) == {
+        "properties": {
+            "location": {"type": "string"},
+        },
+        "required": ["location"],
+        "type": "object",
+    }
+
     assert (
         chat_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
         == messages[0].content
