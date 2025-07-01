@@ -1,10 +1,120 @@
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, Callable, TypeVar, ParamSpec
 from traceloop.sdk.client.http import HTTPClient
 from .types import ExecuteEvaluatorRequest, InputExtractor, OutputSchema
 import os
 import httpx
 import json
+import asyncio
+from functools import wraps
 
+
+P = ParamSpec('P')
+R = TypeVar('R')
+
+
+def with_guardrails(slug: str, client=None):
+    """
+    Decorator that executes a guardrails evaluator on the decorated function's output.
+    
+    Args:
+        slug: The evaluator slug to execute
+        client: Optional client instance. If not provided, will try to get from Traceloop.get()
+        
+    Returns:
+        Combined result containing original function output and evaluator result
+    """
+    def decorator(func: Callable[P, R]) -> Callable[P, Dict[str, Any]]:
+        @wraps(func)
+        async def async_wrapper(*args: P.args, **kwargs: P.kwargs) -> Dict[str, Any]:
+
+            print(f"ASYNC Args: {args}")
+            print(f"ASYNC Kwargs: {kwargs}")
+
+            # Execute the original function
+            original_result = await func(*args, **kwargs)
+            print(f"ASYNC Original result: {original_result}")
+            
+            # Create input data for evaluator with the function output
+            evaluator_data = {
+                "completion": InputExtractor(
+                    source=original_result,
+                )
+            }
+            
+            # Get client instance
+            if client is None:
+                print("No client provided, trying to get from Traceloop.get()")
+                try:
+                    from traceloop.sdk import Traceloop
+                    client_instance = Traceloop.get()
+                except Exception as e:
+                    print(f"Warning: Could not get Traceloop client: {e}")
+                    return {
+                        "original_result": original_result,
+                        "guardrails_result": None
+                    }
+            else:
+                client_instance = client
+                
+            evaluator_result = await client_instance.guardrails.execute_evaluator(slug, evaluator_data)
+
+            print(f"ASYNC Evaluator result:", evaluator_result)
+            
+            # Combine results
+            return {
+                "original_result": original_result,
+                "guardrails_result": evaluator_result
+            }
+        
+        @wraps(func)
+        def sync_wrapper(*args: P.args, **kwargs: P.kwargs) -> Dict[str, Any]:
+            print(f"SYNC Args: {args}")
+            print(f"SYNC Kwargs: {kwargs}")
+
+            # Execute the original function
+            original_result = func(*args, **kwargs)
+
+            print(f"SYNC Original result: {original_result}")
+            
+            # Create input data for evaluator with the function output
+            evaluator_data = {
+                "completion": InputExtractor(
+                    source=original_result,
+                )
+            }
+            
+            # Get client instance
+            if client is None:
+                try:
+                    from traceloop.sdk import Traceloop
+                    client_instance = Traceloop.get()
+                except Exception as e:
+                    print(f"Warning: Could not get Traceloop client: {e}")
+                    return {
+                        "original_result": original_result,
+                        "guardrails_result": None
+                    }
+            else:
+                client_instance = client
+                
+            loop = asyncio.get_event_loop()
+            evaluator_result = loop.run_until_complete(client_instance.guardrails.execute_evaluator(slug, evaluator_data))
+
+            print(f"SYNC Evaluator result: {evaluator_result}")
+            
+            # Combine results
+            return {
+                "original_result": original_result,
+                "guardrails_result": evaluator_result
+            }
+        
+        # Return appropriate wrapper based on function type
+        if asyncio.iscoroutinefunction(func):
+            return async_wrapper
+        else:
+            return sync_wrapper
+    
+    return decorator
 
 class Guardrails:
     def __init__(self, http: HTTPClient, app_name: str, api_key: str):
