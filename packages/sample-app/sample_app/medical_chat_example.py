@@ -60,25 +60,13 @@ async def medical_chat_session():
                 print("Please enter your symptoms or medical concern.")
                 continue
             
-            print("\n🤖 Processing your request through the medical AI system...")
+            print("\n🤖 Processing your request through the medical AI system...\n")
             
             # Get the doctor's response with guardrails applied
             doctor_response = await get_doctor_response(patient_input)
-            
-            # Handle the response structure from guardrails decorator
-            if isinstance(doctor_response, dict):
-                print(f"👨‍⚕️ Doctor response: {doctor_response}")
-                guardrails_result = doctor_response.get('guardrails_result', 'N/A')
-                guardrails_success = guardrails_result.success
-                print(f"👨‍⚕️ Guardrails success: {guardrails_success}")
 
-                if guardrails_success:
-                    print(f"👨‍⚕️ Guardrails result: {guardrails_result}")
-                    print(f"\n👨‍⚕️ Doctor: {doctor_response.get('original_result', doctor_response)}")
-                else:
-                    print(f"👨‍⚕️ Guardrails result: {guardrails_result}")
-                    print(f"\n👨‍⚕️ Doctor: I can see you are seeking medical advice. Sorry for the inconvenience, but I cannot answer these types of questions.")
-
+            print(f"👨‍⚕️ Doctor response: {doctor_response}")
+    
             print("-" * 50)
             
         except KeyboardInterrupt:
