@@ -61,6 +61,7 @@ from opentelemetry.instrumentation.openai.utils import (
     should_send_prompts,
 )
 
+SPAN_NAME = "openai.response"
 
 def prepare_input_param(input_param: ResponseInputItemParam) -> ResponseInputItemParam:
     """
@@ -412,7 +413,7 @@ def responses_get_or_create_wrapper(tracer: Tracer, wrapped, instance, args, kwa
             traced_data = None
 
         span = tracer.start_span(
-            "openai.responses",
+            SPAN_NAME,
             kind=SpanKind.CLIENT,
             start_time=(
                 start_time if traced_data is None else int(traced_data.start_time)
@@ -456,7 +457,7 @@ def responses_get_or_create_wrapper(tracer: Tracer, wrapped, instance, args, kwa
 
     if parsed_response.status == "completed":
         span = tracer.start_span(
-            "openai.responses",
+            SPAN_NAME,
             kind=SpanKind.CLIENT,
             start_time=int(traced_data.start_time),
         )
@@ -503,7 +504,7 @@ async def async_responses_get_or_create_wrapper(
             traced_data = None
 
         span = tracer.start_span(
-            "openai.responses",
+            SPAN_NAME,
             kind=SpanKind.CLIENT,
             start_time=(
                 start_time if traced_data is None else int(traced_data.start_time)
@@ -547,7 +548,7 @@ async def async_responses_get_or_create_wrapper(
 
     if parsed_response.status == "completed":
         span = tracer.start_span(
-            "openai.responses",
+            SPAN_NAME,
             kind=SpanKind.CLIENT,
             start_time=int(traced_data.start_time),
         )
@@ -568,7 +569,7 @@ def responses_cancel_wrapper(tracer: Tracer, wrapped, instance, args, kwargs):
     existing_data = responses.pop(parsed_response.id, None)
     if existing_data is not None:
         span = tracer.start_span(
-            "openai.responses.create_background",
+            SPAN_NAME,
             kind=SpanKind.CLIENT,
             start_time=existing_data.start_time,
             record_exception=True,
@@ -592,7 +593,7 @@ async def async_responses_cancel_wrapper(
     existing_data = responses.pop(parsed_response.id, None)
     if existing_data is not None:
         span = tracer.start_span(
-            "openai.responses.create_background",
+            SPAN_NAME,
             kind=SpanKind.CLIENT,
             start_time=existing_data.start_time,
             record_exception=True,

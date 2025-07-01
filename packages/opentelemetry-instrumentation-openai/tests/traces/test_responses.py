@@ -15,7 +15,7 @@ def test_responses(instrument_legacy, span_exporter: InMemorySpanExporter, opena
     spans = span_exporter.get_finished_spans()
     assert len(spans) == 1
     span = spans[0]
-    assert span.name == "openai.responses"
+    assert span.name == "openai.response"
     assert span.attributes["gen_ai.request.model"] == "gpt-4.1-nano"
     assert span.attributes["gen_ai.response.model"] == "gpt-4.1-nano-2025-04-14"
     assert (
@@ -56,7 +56,7 @@ def test_responses_with_input_history(instrument_legacy, span_exporter: InMemory
     spans = span_exporter.get_finished_spans()
     assert len(spans) == 2
     span = spans[1]
-    assert span.name == "openai.responses"
+    assert span.name == "openai.response"
     assert span.attributes["gen_ai.request.model"] == "gpt-4.1-nano"
     assert span.attributes["gen_ai.response.model"] == "gpt-4.1-nano-2025-04-14"
     assert (
@@ -116,7 +116,7 @@ def test_responses_tool_calls(instrument_legacy, span_exporter: InMemorySpanExpo
 
     assert len(spans) == 1
     open_ai_span = spans[0]
-    assert open_ai_span.name == "openai.responses"
+    assert open_ai_span.name == "openai.response"
     assert open_ai_span.attributes["gen_ai.request.model"] == "gpt-4.1-nano"
     assert open_ai_span.attributes["gen_ai.response.model"] == "gpt-4.1-nano-2025-04-14"
 
