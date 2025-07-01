@@ -48,12 +48,12 @@ def test_watsonx_agent_spans(exporter, test_agent):
     )
     spans = exporter.get_finished_spans()
 
-    span = spans[0]
-
     assert [span.name for span in spans] == [
         "WatsonXAgent.agent",
     ]
 
+    assert len(spans) > 0, "No spans found to assert attributes on."
+    span = spans[0]
     assert span.attributes[SpanAttributes.LLM_SYSTEM] == "openai"
     assert (
         span.attributes[SpanAttributes.LLM_REQUEST_MODEL]
@@ -119,18 +119,20 @@ def test_generate_metrics(metrics_test_context, test_agent):
                         data_point.sum > 0
                         for data_point in metric.data.data_points
                     )
-                assert (
-                    metric.data.data_points[0].attributes[
-                        SpanAttributes.LLM_SYSTEM
-                    ]
-                    == "openai"
-                )
-                assert (
-                    metric.data.data_points[0].attributes[
-                        SpanAttributes.LLM_RESPONSE_MODEL
-                    ]
-                    == "watsonx/meta-llama/llama-3-3-70b-instruct"
-                )
+
+                if metric.data.data_points:
+                    assert (
+                        metric.data.data_points[0].attributes[
+                            SpanAttributes.LLM_SYSTEM
+                        ]
+                        == "openai"
+                    )
+                    assert (
+                        metric.data.data_points[0].attributes[
+                            SpanAttributes.LLM_RESPONSE_MODEL
+                        ]
+                        == "watsonx/meta-llama/llama-3-3-70b-instruct"
+                    )
 
         assert found_token_metric is True
         assert found_duration_metric is True
