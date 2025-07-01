@@ -26,13 +26,8 @@ def with_guardrails(slug: str, client=None):
     def decorator(func: Callable[P, R]) -> Callable[P, Dict[str, Any]]:
         @wraps(func)
         async def async_wrapper(*args: P.args, **kwargs: P.kwargs) -> Dict[str, Any]:
-
-            print(f"ASYNC Args: {args}")
-            print(f"ASYNC Kwargs: {kwargs}")
-
             # Execute the original function
             original_result = await func(*args, **kwargs)
-            print(f"ASYNC Original result: {original_result}")
             
             # Create input data for evaluator with the function output
             evaluator_data = {
@@ -57,9 +52,8 @@ def with_guardrails(slug: str, client=None):
                 client_instance = client
                 
             evaluator_result = await client_instance.guardrails.execute_evaluator(slug, evaluator_data)
+            print(f"ASYNC Evaluator result: {evaluator_result}")
 
-            print(f"ASYNC Evaluator result:", evaluator_result)
-            
             # Combine results
             return {
                 "original_result": original_result,
@@ -68,8 +62,6 @@ def with_guardrails(slug: str, client=None):
         
         @wraps(func)
         def sync_wrapper(*args: P.args, **kwargs: P.kwargs) -> Dict[str, Any]:
-            print(f"SYNC Args: {args}")
-            print(f"SYNC Kwargs: {kwargs}")
 
             # Execute the original function
             original_result = func(*args, **kwargs)
@@ -99,8 +91,6 @@ def with_guardrails(slug: str, client=None):
                 
             loop = asyncio.get_event_loop()
             evaluator_result = loop.run_until_complete(client_instance.guardrails.execute_evaluator(slug, evaluator_data))
-
-            print(f"SYNC Evaluator result: {evaluator_result}")
             
             # Combine results
             return {
@@ -206,6 +196,7 @@ class Guardrails:
             response_data = json.loads(response_text)
 
             inner_result = response_data.get("result", {}).get("result", {})
+
             evaluator_response = OutputSchema.model_validate(inner_result)
 
             return evaluator_response
