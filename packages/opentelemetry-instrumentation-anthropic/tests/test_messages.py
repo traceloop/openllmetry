@@ -139,7 +139,17 @@ def test_anthropic_message_create_with_events_with_content(
         "index": 0,
         "finish_reason": "end_turn",
         "message": {
-            "content": 'Sure, here\'s a joke about OpenTelemetry:\n\nWhy did the developer adopt OpenTelemetry?\nBecause they wanted to trace their steps and meter their progress!\n\nExplanation:\nOpenTelemetry is an open-source observability framework that provides a set of APIs, libraries, and tools to instrument, generate, collect, and export telemetry data (traces, metrics, and logs) for distributed systems. The joke plays on the words "trace" and "meter," which are key concepts in OpenTelemetry.\n\n- "Trace their steps" refers to distributed tracing, which involves recording the path of a request as it travels through a system of microservices.\n- "Meter their progress" refers to metrics, which are quantitative measurements of a system\'s performance and behavior.\n\nThe joke suggests that the developer adopted OpenTelemetry to gain better visibility and understanding of their application\'s behavior and performance, just like how one might trace their steps and meter their progress in real life.'
+            "content": "Sure, here's a joke about OpenTelemetry:\n\nWhy did the developer adopt OpenTelemetry?"
+            "\nBecause they wanted to trace their steps and meter their progress!\n\nExplanation:\nOpenTelemetry "
+            "is an open-source observability framework that provides a set of APIs, libraries, and tools to "
+            "instrument, generate, collect, and export telemetry data (traces, metrics, and logs) for distributed "
+            'systems. The joke plays on the words "trace" and "meter," which are key concepts in OpenTelemetry.\n\n- '
+            '"Trace their steps" refers to distributed tracing, which involves recording the path of a request as it '
+            'travels through a system of microservices.\n- "Meter their progress" refers to metrics, which are '
+            "quantitative measurements of a system's performance and behavior.\n\nThe joke suggests that the "
+            "developer adopted OpenTelemetry to gain better visibility and understanding of their application's "
+            "behavior and performance, just like how one might trace their steps and meter their progress in real "
+            "life."
         },
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
@@ -1485,7 +1495,8 @@ def test_anthropic_tools_with_events_with_content(
         "index": 0,
         "finish_reason": "tool_use",
         "message": {
-            "content": "Certainly! I'd be happy to help you with both the current weather in New York and the current time there. Let's use the available tools to get this information for you."
+            "content": "Certainly! I'd be happy to help you with both the current weather in New York and the current "
+            "time there. Let's use the available tools to get this information for you."
         },
     }
     assert_message_in_logs(logs[2], "gen_ai.choice", ideal_response)
@@ -1739,7 +1750,11 @@ def test_with_asyncio_run_with_events_with_content(
         "index": 0,
         "finish_reason": "end_turn",
         "message": {
-            "content": "I apologize, but I don't have access to real-time weather information. As an AI language model, I don't have the ability to check current weather conditions or forecasts. To get accurate and up-to-date weather information for San Francisco, you would need to check a reliable weather website, app, or local news source. These sources can provide you with current conditions, forecasts, and other weather-related details for specific locations."
+            "content": "I apologize, but I don't have access to real-time weather information. As an AI language "
+            "model, I don't have the ability to check current weather conditions or forecasts. To get accurate and "
+            "up-to-date weather information for San Francisco, you would need to check a reliable weather website, "
+            "app, or local news source. These sources can provide you with current conditions, forecasts, and other "
+            "weather-related details for specific locations."
         },
     }
     assert_message_in_logs(logs[2], "gen_ai.choice", choice_event)

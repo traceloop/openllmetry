@@ -245,7 +245,16 @@ def test_anthropic_prompt_caching_with_events_with_content(
         "index": 0,
         "finish_reason": "end_turn",
         "message": {
-            "content": "Here are concise summaries of the three articles:\n\n1. OpenLLMetry: New open-source library extends OpenTelemetry with LLM functionality, enabling developers to monitor AI model performance in applications. Key features include LLM-specific metrics/traces and integration with existing setups.\n\n2. Major LLM providers introduce prompt caching, dramatically improving speed and reducing costs for API calls. Benefits include millisecond response times, lower computational resources, and improved scalability. Particularly useful for applications with repetitive prompts like chatbots and content moderation.\n\n3. Unit testing is crucial in software development: It catches bugs early, saves time/money, improves code quality, facilitates refactoring, serves as documentation, and enhances collaboration. The post emphasizes that unit testing is a professional responsibility that pays off in the long run."
+            "content": "Here are concise summaries of the three articles:\n\n1. OpenLLMetry: New open-source library "
+            "extends OpenTelemetry with LLM functionality, enabling developers to monitor AI model performance in "
+            "applications. Key features include LLM-specific metrics/traces and integration with existing setups.\n\n"
+            "2. Major LLM providers introduce prompt caching, dramatically improving speed and reducing costs for API "
+            "calls. Benefits include millisecond response times, lower computational resources, and improved "
+            "scalability. Particularly useful for applications with repetitive prompts like chatbots and content "
+            "moderation.\n\n3. Unit testing is crucial in software development: It catches bugs early, saves "
+            "time/money, improves code quality, facilitates refactoring, serves as documentation, and enhances "
+            "collaboration. The post emphasizes that unit testing is a professional responsibility that pays off in "
+            "the long run."
         },
     }
     assert_message_in_logs(logs[2], "gen_ai.choice", choice_event)
@@ -286,7 +295,16 @@ def test_anthropic_prompt_caching_with_events_with_content(
         "index": 0,
         "finish_reason": "end_turn",
         "message": {
-            "content": "Here are concise summaries of the three articles:\n\n1. OpenLLMetry: New open-source library extending OpenTelemetry with LLM functionality. Key features include LLM-specific metrics/traces, integration with existing setups, and support for popular LLM frameworks. Aims to improve monitoring of AI-powered systems.\n\n2. Major LLM providers introduce prompt caching to boost speed and reduce costs. Benefits include faster response times, lower computational costs, and improved scalability. Particularly useful for applications with repetitive prompts like chatbots and content moderation. Expected to drive wider LLM adoption and new application paradigms.\n\n3. Argument for the importance of unit testing in software development. Benefits include early bug detection, time/cost savings, improved code quality, easier refactoring, documentation, and enhanced collaboration. Author argues unit testing is a professional responsibility that pays off in the long run."
+            "content": "Here are concise summaries of the three articles:\n\n1. OpenLLMetry: New open-source library "
+            "extending OpenTelemetry with LLM functionality. Key features include LLM-specific metrics/traces, "
+            "integration with existing setups, and support for popular LLM frameworks. Aims to improve monitoring of "
+            "AI-powered systems.\n\n2. Major LLM providers introduce prompt caching to boost speed and reduce costs. "
+            "Benefits include faster response times, lower computational costs, and improved scalability. Particularly "
+            "useful for applications with repetitive prompts like chatbots and content moderation. Expected to drive "
+            "wider LLM adoption and new application paradigms.\n\n3. Argument for the importance of unit testing in "
+            "software development. Benefits include early bug detection, time/cost savings, improved code quality, "
+            "easier refactoring, documentation, and enhanced collaboration. Author argues unit testing is a "
+            "professional responsibility that pays off in the long run."
         },
     }
     assert_message_in_logs(logs[5], "gen_ai.choice", choice_event)
@@ -636,7 +654,16 @@ async def test_anthropic_prompt_caching_async_with_events_with_content(
         "index": 0,
         "finish_reason": "end_turn",
         "message": {
-            "content": "Here are concise summaries of the three articles:\n\n1. OpenLLMetry: New open-source library extending OpenTelemetry with LLM functionality. Developed by Traceloop, it provides LLM-specific metrics and traces, integrates with existing setups, and supports popular LLM frameworks. Aims to improve monitoring of AI-powered systems.\n\n2. Major LLM providers introduce prompt caching: New feature stores responses for frequent prompts, improving speed and reducing costs. Benefits include millisecond response times, lower computational resources, and improved scalability. Particularly useful for applications with repetitive prompts like chatbots and translation services. \n\n3. Importance of unit testing in software development: Key benefits include early bug detection, time and cost savings, improved code quality, easier refactoring, documentation, and enhanced collaboration. The author argues unit testing is crucial for professional software development and pays off in the long run."
+            "content": "Here are concise summaries of the three articles:\n\n1. OpenLLMetry: New open-source library "
+            "extending OpenTelemetry with LLM functionality. Developed by Traceloop, it provides LLM-specific metrics "
+            "and traces, integrates with existing setups, and supports popular LLM frameworks. Aims to improve "
+            "monitoring of AI-powered systems.\n\n2. Major LLM providers introduce prompt caching: New feature stores "
+            "responses for frequent prompts, improving speed and reducing costs. Benefits include millisecond response "
+            "times, lower computational resources, and improved scalability. Particularly useful for applications with "
+            "repetitive prompts like chatbots and translation services. \n\n3. Importance of unit testing in software "
+            "development: Key benefits include early bug detection, time and cost savings, improved code quality, "
+            "easier refactoring, documentation, and enhanced collaboration. The author argues unit testing is crucial "
+            "for professional software development and pays off in the long run."
         },
     }
     assert_message_in_logs(logs[2], "gen_ai.choice", choice_event)
@@ -677,7 +704,17 @@ async def test_anthropic_prompt_caching_async_with_events_with_content(
         "index": 0,
         "finish_reason": "end_turn",
         "message": {
-            "content": "Here are concise summaries of the three articles:\n\n1. OpenLLMetry: New open-source library extending OpenTelemetry with LLM functionality. Key features include LLM-specific metrics/traces, integration with existing setups, and support for popular LLM frameworks. Aims to provide deeper insights into AI model performance within applications.\n\n2. Major LLM providers introduce prompt caching to improve speed and reduce costs. Benefits include millisecond response times, lower computational resources, and improved scalability. Particularly useful for applications with repetitive prompts like chatbots and content moderation. Expected to impact AI industry through wider adoption and new application paradigms.\n\n3. Importance of unit testing in software development:\n- Catches bugs early\n- Saves time and money \n- Improves code quality\n- Facilitates refactoring\n- Serves as documentation\n- Enhances collaboration\nThe post emphasizes that unit testing is crucial for professional software development and pays off in the long run."
+            "content": "Here are concise summaries of the three articles:\n\n1. OpenLLMetry: New open-source library "
+            "extending OpenTelemetry with LLM functionality. Key features include LLM-specific metrics/traces, "
+            "integration with existing setups, and support for popular LLM frameworks. Aims to provide deeper insights "
+            "into AI model performance within applications.\n\n2. Major LLM providers introduce prompt caching to "
+            "improve speed and reduce costs. Benefits include millisecond response times, lower computational "
+            "resources, and improved scalability. Particularly useful for applications with repetitive prompts like "
+            "chatbots and content moderation. Expected to impact AI industry through wider adoption and new application"
+            " paradigms.\n\n3. Importance of unit testing in software development:\n- Catches bugs early\n- Saves time "
+            "and money \n- Improves code quality\n- Facilitates refactoring\n- Serves as documentation\n- Enhances "
+            "collaboration\nThe post emphasizes that unit testing is crucial for professional software development and "
+            "pays off in the long run."
         },
     }
     assert_message_in_logs(logs[5], "gen_ai.choice", choice_event)
@@ -1040,7 +1077,16 @@ def test_anthropic_prompt_caching_stream_with_events_with_content(
         "message": {
             "content": {
                 "type": "text",
-                "content": "Here are concise summaries of the three articles:\n\n1. OpenLLMetry: New open-source library extends OpenTelemetry with LLM functionality, enabling deeper insights into AI model performance in applications. Key features include LLM-specific metrics/traces and integration with existing setups.\n\n2. Major LLM providers introduce prompt caching, dramatically improving speed and reducing costs for API calls. Benefits include millisecond response times, lower computational resources, and improved scalability. Particularly useful for applications with repetitive prompts like chatbots and content moderation.\n\n3. Unit testing is crucial in software development. Key benefits:\n- Catches bugs early\n- Saves time and money \n- Improves code quality\n- Facilitates refactoring\n- Serves as documentation\n- Enhances collaboration\nThe post emphasizes that unit testing is a professional responsibility with long-term payoffs.",
+                "content": "Here are concise summaries of the three articles:\n\n1. OpenLLMetry: New open-source "
+                "library extends OpenTelemetry with LLM functionality, enabling deeper insights into AI model "
+                "performance in applications. Key features include LLM-specific metrics/traces and integration with "
+                "existing setups.\n\n2. Major LLM providers introduce prompt caching, dramatically improving speed and "
+                "reducing costs for API calls. Benefits include millisecond response times, lower computational "
+                "resources, and improved scalability. Particularly useful for applications with repetitive prompts "
+                "like chatbots and content moderation.\n\n3. Unit testing is crucial in software development. Key "
+                "benefits:\n- Catches bugs early\n- Saves time and money \n- Improves code quality\n- Facilitates "
+                "refactoring\n- Serves as documentation\n- Enhances collaboration\nThe post emphasizes that unit "
+                "testing is a professional responsibility with long-term payoffs.",
             }
         },
     }
@@ -1084,7 +1130,17 @@ def test_anthropic_prompt_caching_stream_with_events_with_content(
         "message": {
             "content": {
                 "type": "text",
-                "content": "Here are concise summaries of the three articles:\n\n1. OpenLLMetry: New open-source library extending OpenTelemetry with LLM functionality. Key features include LLM-specific metrics/traces, integration with existing setups, and support for popular LLM frameworks. Aims to provide deeper insights into AI model performance in applications.\n\n2. Major LLM providers introduce prompt caching to improve speed and reduce costs. Benefits include faster response times, lower computational costs, and improved scalability. Particularly useful for applications with repetitive prompts like chatbots and content moderation. Expected to impact AI industry by enabling wider adoption and new application types.\n\n3. Importance of unit testing in software development:\n- Catches bugs early\n- Saves time and money\n- Improves code quality\n- Facilitates refactoring\n- Serves as documentation\n- Enhances collaboration\nThe post emphasizes that unit testing is crucial for professional software development and pays off in the long run.",
+                "content": "Here are concise summaries of the three articles:\n\n1. OpenLLMetry: New open-source "
+                "library extending OpenTelemetry with LLM functionality. Key features include LLM-specific "
+                "metrics/traces, integration with existing setups, and support for popular LLM frameworks. Aims to "
+                "provide deeper insights into AI model performance in applications.\n\n2. Major LLM providers "
+                "introduce prompt caching to improve speed and reduce costs. Benefits include faster response times, "
+                "lower computational costs, and improved scalability. Particularly useful for applications with "
+                "repetitive prompts like chatbots and content moderation. Expected to impact AI industry by enabling "
+                "wider adoption and new application types.\n\n3. Importance of unit testing in software development:\n-"
+                " Catches bugs early\n- Saves time and money\n- Improves code quality\n- Facilitates refactoring\n- "
+                "Serves as documentation\n- Enhances collaboration\nThe post emphasizes that unit testing is crucial "
+                "for professional software development and pays off in the long run.",
             }
         },
     }
@@ -1449,7 +1505,19 @@ async def test_anthropic_prompt_caching_async_stream_with_events_with_content(
         "message": {
             "content": {
                 "type": "text",
-                "content": "Here are concise summaries of the three articles:\n\n1. OpenLLMetry: New Open-Source Library for LLM Monitoring\n\nTraceloop released OpenLLMetry, an open-source library extending OpenTelemetry with LLM functionality. Key features:\n- LLM-specific metrics and traces\n- Integration with existing OpenTelemetry setups\n- Support for popular LLM frameworks\nAims to provide deeper insights into AI model performance in applications.\n\n2. Major LLM Providers Introduce Prompt Caching\n\nLeading LLM providers, including Anthropic, have implemented prompt caching to improve speed and reduce costs. Benefits:\n- Faster response times (milliseconds vs seconds)\n- Lower computational costs\n- Improved scalability\nParticularly useful for applications with repetitive prompts like chatbots and content moderation. Expected to drive wider LLM adoption and new application paradigms.\n\n3. Importance of Unit Testing in Software Development\n\nA software professional advocates for unit testing as crucial to development:\n- Catches bugs early\n- Saves time and money\n- Improves code quality and architecture\n- Facilitates refactoring\n- Acts as documentation\n- Enhances team collaboration\nEmphasized as a professional responsibility with long-term benefits.",
+                "content": "Here are concise summaries of the three articles:\n\n1. OpenLLMetry: New Open-Source "
+                "Library for LLM Monitoring\n\nTraceloop released OpenLLMetry, an open-source library extending "
+                "OpenTelemetry with LLM functionality. Key features:\n- LLM-specific metrics and traces\n- Integration "
+                "with existing OpenTelemetry setups\n- Support for popular LLM frameworks\nAims to provide deeper "
+                "insights into AI model performance in applications.\n\n2. Major LLM Providers Introduce Prompt Caching"
+                "\n\nLeading LLM providers, including Anthropic, have implemented prompt caching to improve speed and "
+                "reduce costs. Benefits:\n- Faster response times (milliseconds vs seconds)\n- Lower computational "
+                "costs\n- Improved scalability\nParticularly useful for applications with repetitive prompts like "
+                "chatbots and content moderation. Expected to drive wider LLM adoption and new application paradigms."
+                "\n\n3. Importance of Unit Testing in Software Development\n\nA software professional advocates for "
+                "unit testing as crucial to development:\n- Catches bugs early\n- Saves time and money\n- Improves code"
+                " quality and architecture\n- Facilitates refactoring\n- Acts as documentation\n- Enhances team "
+                "collaboration\nEmphasized as a professional responsibility with long-term benefits.",
             }
         },
     }
@@ -1493,7 +1561,20 @@ async def test_anthropic_prompt_caching_async_stream_with_events_with_content(
         "message": {
             "content": {
                 "type": "text",
-                "content": "Here are concise summaries of the three articles:\n\n1. OpenLLMetry: New Open-Source Library for LLM Monitoring\n\nTraceloop released OpenLLMetry, an open-source library extending OpenTelemetry with LLM functionality. Key features include LLM-specific metrics and traces, integration with existing setups, and support for popular LLM frameworks. It aims to provide deeper insights into AI model performance within applications.\n\n2. Major LLM Providers Introduce Prompt Caching\n\nLeading LLM providers, including Anthropic, have implemented prompt caching to improve speed and reduce costs of API calls. This technique stores responses for frequent prompts, dramatically reducing response times and computational resources. Benefits include improved scalability and cost-effectiveness, particularly for applications with repetitive prompt patterns.\n\n3. Importance of Unit Testing in Software Development\n\nThe article emphasizes the critical role of unit testing in software development. Key benefits include early bug detection, time and cost savings, improved code quality, easier refactoring, code documentation, and enhanced team collaboration. The author argues that unit testing is a professional responsibility that pays off significantly in the long run.",
+                "content": "Here are concise summaries of the three articles:\n\n1. OpenLLMetry: New Open-Source "
+                "Library for LLM Monitoring\n\nTraceloop released OpenLLMetry, an open-source library extending "
+                "OpenTelemetry with LLM functionality. Key features include LLM-specific metrics and traces, "
+                "integration with existing setups, and support for popular LLM frameworks. It aims to provide deeper "
+                "insights into AI model performance within applications.\n\n2. Major LLM Providers Introduce Prompt "
+                "Caching\n\nLeading LLM providers, including Anthropic, have implemented prompt caching to improve "
+                "speed and reduce costs of API calls. This technique stores responses for frequent prompts, "
+                "dramatically reducing response times and computational resources. Benefits include improved "
+                "scalability and cost-effectiveness, particularly for applications with repetitive prompt patterns.\n\n"
+                "3. Importance of Unit Testing in Software Development\n\nThe article emphasizes the critical role of "
+                "unit testing in software development. Key benefits include early bug detection, time and cost savings,"
+                " improved code quality, easier refactoring, code documentation, and enhanced team collaboration. The "
+                "author argues that unit testing is a professional responsibility that pays off significantly in the "
+                "long run.",
             }
         },
     }

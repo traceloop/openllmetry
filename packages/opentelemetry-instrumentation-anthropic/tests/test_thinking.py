@@ -126,7 +126,11 @@ def test_anthropic_thinking_with_events_with_content(
         "index": 0,
         "finish_reason": "end_turn",
         "message": {
-            "content": "Let me count the number of times the letter 'r' appears in the word \"strawberry\".\n\nThe word \"strawberry\" is spelled:\ns-t-r-a-w-b-e-r-r-y\n\nGoing through each letter:\ns - not an 'r'\nt - not an 'r'\nr - this is an 'r', so count = 1\na - not an 'r'\nw - not an 'r'\nb - not an 'r'\ne - not an 'r'\nr - this is an 'r', so count = 2\nr - this is an 'r', so count = 3\ny - not an 'r'\n\nSo the letter 'r' appears 3 times in the word \"strawberry\"."
+            "content": "Let me count the number of times the letter 'r' appears in the word \"strawberry\".\n\nThe "
+            "word \"strawberry\" is spelled:\ns-t-r-a-w-b-e-r-r-y\n\nGoing through each letter:\ns - not an 'r'\nt - "
+            "not an 'r'\nr - this is an 'r', so count = 1\na - not an 'r'\nw - not an 'r'\nb - not an 'r'\ne - not an "
+            "'r'\nr - this is an 'r', so count = 2\nr - this is an 'r', so count = 3\ny - not an 'r'\n\nSo the letter "
+            "'r' appears 3 times in the word \"strawberry\"."
         },
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
@@ -326,7 +330,10 @@ async def test_async_anthropic_thinking_with_events_with_content(
         "index": 0,
         "finish_reason": "end_turn",
         "message": {
-            "content": "Let me count the number of times the letter 'r' appears in the word \"strawberry\".\n\nThe word \"strawberry\" is spelled: s-t-r-a-w-b-e-r-r-y\n\nLet me check for each 'r':\n1. The third letter is 'r'\n2. The eighth letter is 'r'\n3. The ninth letter is 'r'\n\nSo there are 3 instances of the letter 'r' in the word \"strawberry\"."
+            "content": "Let me count the number of times the letter 'r' appears in the word \"strawberry\".\n\nThe "
+            "word \"strawberry\" is spelled: s-t-r-a-w-b-e-r-r-y\n\nLet me check for each 'r':\n1. The third letter is "
+            "'r'\n2. The eighth letter is 'r'\n3. The ninth letter is 'r'\n\nSo there are 3 instances of the letter "
+            "'r' in the word \"strawberry\"."
         },
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
@@ -549,7 +556,11 @@ def test_anthropic_thinking_streaming_with_events_with_content(
         "message": {
             "content": {
                 "type": "thinking",
-                "content": "Let me count the occurrences of the letter 'r' in the word \"strawberry\".\n\nThe word \"strawberry\" is spelled: s-t-r-a-w-b-e-r-r-y\n\nI'll go through each letter:\ns - not an 'r'\nt - not an 'r'\nr - this is an 'r', so count = 1\na - not an 'r'\nw - not an 'r'\nb - not an 'r'\ne - not an 'r'\nr - this is an 'r', so count = 2\nr - this is an 'r', so count = 3\ny - not an 'r'\n\nSo the letter 'r' appears 3 times in the word \"strawberry\".",
+                "content": "Let me count the occurrences of the letter 'r' in the word \"strawberry\".\n\nThe word "
+                "\"strawberry\" is spelled: s-t-r-a-w-b-e-r-r-y\n\nI'll go through each letter:\ns - not an 'r'\nt "
+                "- not an 'r'\nr - this is an 'r', so count = 1\na - not an 'r'\nw - not an 'r'\nb - not an 'r'\ne - "
+                "not an 'r'\nr - this is an 'r', so count = 2\nr - this is an 'r', so count = 3\ny - not an 'r'\n\nSo "
+                "the letter 'r' appears 3 times in the word \"strawberry\".",
             }
         },
     }
@@ -785,7 +796,11 @@ async def test_async_anthropic_thinking_streaming_with_events_with_content(
         "message": {
             "content": {
                 "type": "thinking",
-                "content": "I need to count the occurrences of the letter 'r' in the word \"strawberry\".\n\nThe word is: s-t-r-a-w-b-e-r-r-y\n\nGoing through each letter:\n- s: not an 'r'\n- t: not an 'r'\n- r: this is an 'r' (first occurrence)\n- a: not an 'r'\n- w: not an 'r'\n- b: not an 'r'\n- e: not an 'r'\n- r: this is an 'r' (second occurrence)\n- r: this is an 'r' (third occurrence)\n- y: not an 'r'\n\nSo the letter 'r' appears 3 times in the word \"strawberry\".",
+                "content": "I need to count the occurrences of the letter 'r' in the word \"strawberry\".\n\nThe word "
+                "is: s-t-r-a-w-b-e-r-r-y\n\nGoing through each letter:\n- s: not an 'r'\n- t: not an 'r'\n- r: this is "
+                "an 'r' (first occurrence)\n- a: not an 'r'\n- w: not an 'r'\n- b: not an 'r'\n- e: not an 'r'\n- r: "
+                "this is an 'r' (second occurrence)\n- r: this is an 'r' (third occurrence)\n- y: not an 'r'\n\nSo the "
+                "letter 'r' appears 3 times in the word \"strawberry\".",
             }
         },
     }
@@ -798,7 +813,8 @@ async def test_async_anthropic_thinking_streaming_with_events_with_content(
         "message": {
             "content": {
                 "type": "text",
-                "content": "The letter 'r' appears 3 times in the word \"strawberry\".\n\nYou can see them in the spelling: st(r)awbe(r)(r)y",
+                "content": "The letter 'r' appears 3 times in the word \"strawberry\".\n\nYou can see them in the "
+                "spelling: st(r)awbe(r)(r)y",
             }
         },
     }
