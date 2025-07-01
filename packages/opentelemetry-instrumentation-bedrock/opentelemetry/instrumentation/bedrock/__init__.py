@@ -441,7 +441,7 @@ def _cross_region_check(value):
     """
     if not value or "." not in value:
         return value
-    
+
     prefixes = ["us", "us-gov", "eu", "apac"]
     if any(value.startswith(prefix + ".") for prefix in prefixes):
         parts = value.split(".")

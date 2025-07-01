@@ -109,17 +109,17 @@ def _set_request_attributes(span, kwargs, instance=None):
         return
 
     _set_api_attributes(span)
-    
+
     base_url = _get_openai_base_url(instance) if instance else ""
     vendor = _get_vendor_from_url(base_url)
     _set_span_attribute(span, SpanAttributes.LLM_SYSTEM, vendor)
-    
+
     model = kwargs.get("model")
     if vendor == "AWS" and model and "." in model:
         model = _cross_region_check(model)
     elif vendor == "OpenRouter":
         model = _extract_model_name_from_provider_format(model)
-    
+
     _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, model)
     _set_span_attribute(
         span, SpanAttributes.LLM_REQUEST_MAX_TOKENS, kwargs.get("max_tokens")
@@ -244,7 +244,7 @@ def _get_openai_base_url(instance):
 def _get_vendor_from_url(base_url):
     if not base_url:
         return "openai"
-    
+
     if "openai.azure.com" in base_url:
         return "Azure"
     elif "amazonaws.com" in base_url or "bedrock" in base_url:
@@ -253,7 +253,7 @@ def _get_vendor_from_url(base_url):
         return "Google"
     elif "openrouter.ai" in base_url:
         return "OpenRouter"
-    
+
     return "openai"
 
 
@@ -263,7 +263,7 @@ def _cross_region_check(value):
     """
     if not value or "." not in value:
         return value
-    
+
     prefixes = ["us", "us-gov", "eu", "apac"]
     if any(value.startswith(prefix + ".") for prefix in prefixes):
         parts = value.split(".")
@@ -283,11 +283,11 @@ def _extract_model_name_from_provider_format(model_name):
     """
     if not model_name:
         return model_name
-    
+
     if "/" in model_name:
         parts = model_name.split("/")
         return parts[-1]  # Return the last part (actual model name)
-    
+
     return model_name
 
 

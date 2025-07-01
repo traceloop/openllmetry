@@ -10,7 +10,7 @@ def test_azure_vendor_detection(instrument_legacy, span_exporter, log_exporter):
         api_key="test-key",
         base_url="https://test.openai.azure.com/openai/",
     )
-    
+
     azure_client.chat.completions.create(
         model="gpt-4",
         messages=[{"role": "user", "content": "Test Azure vendor detection"}],
@@ -18,21 +18,21 @@ def test_azure_vendor_detection(instrument_legacy, span_exporter, log_exporter):
 
     spans = span_exporter.get_finished_spans()
     assert len(spans) == 1
-    
+
     open_ai_span = spans[0]
     assert open_ai_span.name == "openai.chat"
     assert open_ai_span.attributes[SpanAttributes.LLM_SYSTEM] == "Azure"
     assert open_ai_span.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "gpt-4"
 
 
-@pytest.mark.vcr 
+@pytest.mark.vcr
 def test_aws_bedrock_vendor_detection(instrument_legacy, span_exporter, log_exporter):
     """Test that AWS Bedrock via OpenAI SDK is detected as 'AWS' vendor"""
     aws_client = openai.OpenAI(
         api_key="test-key",
         base_url="https://bedrock-runtime.us-east-1.amazonaws.com/",
     )
-    
+
     aws_client.chat.completions.create(
         model="anthropic.claude-3-5-sonnet-20241022-v2:0",
         messages=[{"role": "user", "content": "Test AWS vendor detection"}],
@@ -40,7 +40,7 @@ def test_aws_bedrock_vendor_detection(instrument_legacy, span_exporter, log_expo
 
     spans = span_exporter.get_finished_spans()
     assert len(spans) == 1
-    
+
     open_ai_span = spans[0]
     assert open_ai_span.name == "openai.chat"
     assert open_ai_span.attributes[SpanAttributes.LLM_SYSTEM] == "AWS"
@@ -52,10 +52,10 @@ def test_aws_bedrock_vendor_detection(instrument_legacy, span_exporter, log_expo
 def test_google_vertex_vendor_detection(instrument_legacy, span_exporter, log_exporter):
     """Test that Google Vertex AI via OpenAI SDK is detected as 'Google' vendor"""
     google_client = openai.OpenAI(
-        api_key="test-key", 
+        api_key="test-key",
         base_url="https://us-central1-aiplatform.googleapis.com/v1/",
     )
-    
+
     google_client.chat.completions.create(
         model="gemini-pro",
         messages=[{"role": "user", "content": "Test Google vendor detection"}],
@@ -63,7 +63,7 @@ def test_google_vertex_vendor_detection(instrument_legacy, span_exporter, log_ex
 
     spans = span_exporter.get_finished_spans()
     assert len(spans) == 1
-    
+
     open_ai_span = spans[0]
     assert open_ai_span.name == "openai.chat"
     assert open_ai_span.attributes[SpanAttributes.LLM_SYSTEM] == "Google"
@@ -77,7 +77,7 @@ def test_openrouter_vendor_detection(instrument_legacy, span_exporter, log_expor
         api_key="test-key",
         base_url="https://openrouter.ai/api/v1/",
     )
-    
+
     openrouter_client.chat.completions.create(
         model="openai/gpt-4o",
         messages=[{"role": "user", "content": "Test OpenRouter vendor detection"}],
@@ -85,7 +85,7 @@ def test_openrouter_vendor_detection(instrument_legacy, span_exporter, log_expor
 
     spans = span_exporter.get_finished_spans()
     assert len(spans) == 1
-    
+
     open_ai_span = spans[0]
     assert open_ai_span.name == "openai.chat"
     assert open_ai_span.attributes[SpanAttributes.LLM_SYSTEM] == "OpenRouter"
@@ -103,7 +103,7 @@ def test_default_openai_vendor_detection(instrument_legacy, span_exporter, log_e
 
     spans = span_exporter.get_finished_spans()
     assert len(spans) == 1
-    
+
     open_ai_span = spans[0]
     assert open_ai_span.name == "openai.chat"
     assert open_ai_span.attributes[SpanAttributes.LLM_SYSTEM] == "openai"
@@ -117,7 +117,7 @@ def test_aws_regional_model_stripping(instrument_legacy, span_exporter, log_expo
         api_key="test-key",
         base_url="https://bedrock-runtime.us-east-1.amazonaws.com/",
     )
-    
+
     aws_client.chat.completions.create(
         model="us.anthropic.claude-3-5-sonnet-20241022-v2:0",
         messages=[{"role": "user", "content": "Test regional model stripping"}],
@@ -125,7 +125,7 @@ def test_aws_regional_model_stripping(instrument_legacy, span_exporter, log_expo
 
     spans = span_exporter.get_finished_spans()
     assert len(spans) == 1
-    
+
     open_ai_span = spans[0]
     assert open_ai_span.name == "openai.chat"
     assert open_ai_span.attributes[SpanAttributes.LLM_SYSTEM] == "AWS"
@@ -140,7 +140,7 @@ def test_embeddings_vendor_detection(instrument_legacy, span_exporter, log_expor
         api_key="test-key",
         base_url="https://test.openai.azure.com/openai/",
     )
-    
+
     azure_client.embeddings.create(
         model="text-embedding-ada-002",
         input="Test Azure embeddings vendor detection",
@@ -148,7 +148,7 @@ def test_embeddings_vendor_detection(instrument_legacy, span_exporter, log_expor
 
     spans = span_exporter.get_finished_spans()
     assert len(spans) == 1
-    
+
     open_ai_span = spans[0]
     assert open_ai_span.name == "openai.embeddings"
     assert open_ai_span.attributes[SpanAttributes.LLM_SYSTEM] == "Azure"
@@ -159,10 +159,10 @@ def test_embeddings_vendor_detection(instrument_legacy, span_exporter, log_expor
 def test_completions_vendor_detection(instrument_legacy, span_exporter, log_exporter):
     """Test vendor detection works for legacy completions endpoint"""
     openrouter_client = openai.OpenAI(
-        api_key="test-key", 
+        api_key="test-key",
         base_url="https://openrouter.ai/api/v1/",
     )
-    
+
     openrouter_client.completions.create(
         model="anthropic/claude-3-sonnet",
         prompt="Test OpenRouter completions vendor detection",
@@ -170,9 +170,9 @@ def test_completions_vendor_detection(instrument_legacy, span_exporter, log_expo
 
     spans = span_exporter.get_finished_spans()
     assert len(spans) == 1
-    
+
     open_ai_span = spans[0]
     assert open_ai_span.name == "openai.completion"
     assert open_ai_span.attributes[SpanAttributes.LLM_SYSTEM] == "OpenRouter"
     # Should strip provider prefix: anthropic/model -> model
-    assert open_ai_span.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "claude-3-sonnet" 
+    assert open_ai_span.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "claude-3-sonnet"
