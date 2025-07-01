@@ -436,6 +436,9 @@ def _get_vendor_model(modelId):
 
 
 def _cross_region_check(value):
+    """
+    Strip regional and vendor prefixes from model IDs.
+    """
     if not value or "." not in value:
         return value
     
