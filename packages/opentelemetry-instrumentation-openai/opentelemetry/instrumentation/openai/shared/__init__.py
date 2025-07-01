@@ -349,7 +349,6 @@ def metric_shared_attributes(
     response_model: str, operation: str, server_address: str, is_streaming: bool = False
 ):
     attributes = Config.get_common_metrics_attributes()
-    
     vendor = _get_vendor_from_url(server_address)
 
     return {

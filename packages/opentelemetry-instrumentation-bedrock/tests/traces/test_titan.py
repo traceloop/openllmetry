@@ -300,7 +300,7 @@ def test_titan_converse_stream(test_context, brt):
         == "titan-text-express-v1"
     )
 
-        # Assert on vendor
+    # Assert on vendor
     assert bedrock_span.attributes[SpanAttributes.LLM_SYSTEM] == "AWS"
 
     # Assert on request type  
