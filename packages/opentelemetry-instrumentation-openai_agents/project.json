@@ -2,7 +2,7 @@
   "name": "opentelemetry-instrumentation-openai_agents",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "projectType": "library",
-  "sourceRoot": "packages/opentelemetry-instrumentation-openai_agents/opentelemetry_instrumentation_openai_agents",
+  "sourceRoot": "packages/opentelemetry-instrumentation-openai_agents/opentelemetry/instrumentation/openai_agents",
   "targets": {
     "lock": {
       "executor": "@nxlv/python:run-commands",
