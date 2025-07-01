@@ -1,7 +1,7 @@
 from opentelemetry.semconv_ai import SpanAttributes
 import pytest
 from openai import OpenAI
-from traceloop.sdk.tracing.manual import LLMMessage, track_llm_call
+from traceloop.sdk.tracing.manual import LLMMessage, LLMUsage, track_llm_call
 
 
 @pytest.fixture
@@ -9,7 +9,6 @@ def openai_client():
     return OpenAI()
 
 
-@pytest.mark.vcr
 def test_manual_report(exporter, openai_client):
     with track_llm_call(vendor="openai", type="chat") as span:
         span.report_request(
@@ -19,14 +18,21 @@ def test_manual_report(exporter, openai_client):
             ],
         )
 
-        res = openai_client.chat.completions.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {"role": "user", "content": "Tell me a joke about opentelemetry"}
-            ],
-        )
+        res = [
+            "Why did the opentelemetry developer break up with their partner? Because they were tired"
+            + " of constantly tracing their every move!",
+        ]
 
-        span.report_response(res.model, [text.message.content for text in res.choices])
+        span.report_response("gpt-3.5-turbo-0125", res)
+        span.report_usage(
+            LLMUsage(
+                prompt_tokens=15,
+                completion_tokens=24,
+                total_tokens=39,
+                cache_creation_input_tokens=15,
+                cache_read_input_tokens=18,
+            )
+        )
 
     spans = exporter.get_finished_spans()
     open_ai_span = spans[0]
@@ -46,3 +52,13 @@ def test_manual_report(exporter, openai_client):
         + " of constantly tracing their every move!"
     )
     assert open_ai_span.end_time > open_ai_span.start_time
+    assert open_ai_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 15
+    assert open_ai_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS] == 24
+    assert open_ai_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 39
+    assert (
+        open_ai_span.attributes[SpanAttributes.LLM_USAGE_CACHE_CREATION_INPUT_TOKENS]
+        == 15
+    )
+    assert (
+        open_ai_span.attributes[SpanAttributes.LLM_USAGE_CACHE_READ_INPUT_TOKENS] == 18
+    )
