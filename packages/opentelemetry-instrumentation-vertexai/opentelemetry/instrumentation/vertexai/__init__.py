@@ -229,7 +229,7 @@ async def _awrap(tracer, event_logger, to_wrap, wrapped, instance, args, kwargs)
         name,
         kind=SpanKind.CLIENT,
         attributes={
-            SpanAttributes.LLM_SYSTEM: "VertexAI",
+            SpanAttributes.LLM_SYSTEM: "Google",
             SpanAttributes.LLM_REQUEST_TYPE: LLMRequestTypeValues.COMPLETION.value,
         },
     )
@@ -273,7 +273,7 @@ def _wrap(tracer, event_logger, to_wrap, wrapped, instance, args, kwargs):
         name,
         kind=SpanKind.CLIENT,
         attributes={
-            SpanAttributes.LLM_SYSTEM: "VertexAI",
+            SpanAttributes.LLM_SYSTEM: "Google",
             SpanAttributes.LLM_REQUEST_TYPE: LLMRequestTypeValues.COMPLETION.value,
         },
     )

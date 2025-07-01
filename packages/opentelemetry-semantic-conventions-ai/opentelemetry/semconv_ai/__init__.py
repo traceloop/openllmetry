@@ -9,7 +9,7 @@ class Meters:
     LLM_OPERATION_DURATION = "gen_ai.client.operation.duration"
     LLM_COMPLETIONS_EXCEPTIONS = "llm.openai.chat_completions.exceptions"
     LLM_STREAMING_TIME_TO_GENERATE = (
-        "llm.openai.chat_completions.streaming_time_to_generate"
+        "llm.chat_completions.streaming_time_to_generate"
     )
     LLM_EMBEDDINGS_EXCEPTIONS = "llm.openai.embeddings.exceptions"
     LLM_EMBEDDINGS_VECTOR_SIZE = "llm.openai.embeddings.vector_size"

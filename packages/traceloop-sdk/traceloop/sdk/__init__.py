@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Callable, Optional, Set
 from colorama import Fore
 from opentelemetry.sdk.trace import SpanProcessor, ReadableSpan
+from opentelemetry.sdk.trace.sampling import Sampler
 from opentelemetry.sdk.trace.export import SpanExporter
 from opentelemetry.sdk.metrics.export import MetricExporter
 from opentelemetry.sdk._logs.export import LogExporter
@@ -60,6 +61,7 @@ class Traceloop:
         logging_headers: Dict[str, str] = None,
         processor: Optional[SpanProcessor] = None,
         propagator: TextMapPropagator = None,
+        sampler: Optional[Sampler] = None,
         traceloop_sync_enabled: bool = False,
         should_enrich_metrics: bool = True,
         resource_attributes: dict = {},
@@ -144,6 +146,7 @@ class Traceloop:
             processor=processor,
             propagator=propagator,
             exporter=exporter,
+            sampler=sampler,
             should_enrich_metrics=should_enrich_metrics,
             image_uploader=image_uploader or ImageUploader(api_endpoint, api_key),
             instruments=instruments,

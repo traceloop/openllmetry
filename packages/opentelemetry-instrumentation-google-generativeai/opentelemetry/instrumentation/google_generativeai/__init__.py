@@ -5,7 +5,7 @@ import os
 import types
 from typing import Collection
 from opentelemetry.instrumentation.google_generativeai.config import Config
-from opentelemetry.instrumentation.google_generativeai.utils import dont_throw
+from opentelemetry.instrumentation.google_generativeai.utils import dont_throw, is_package_installed
 from wrapt import wrap_function_wrapper
 
 from opentelemetry import context as context_api
@@ -24,9 +24,7 @@ from opentelemetry.instrumentation.google_generativeai.version import __version_
 
 logger = logging.getLogger(__name__)
 
-_instruments = ("google-generativeai >= 0.5.0",)
-
-WRAPPED_METHODS = [
+LEGACY_WRAPPED_METHODS = [
     {
         "package": "google.generativeai.generative_models",
         "object": "GenerativeModel",
@@ -38,6 +36,21 @@ WRAPPED_METHODS = [
         "object": "GenerativeModel",
         "method": "generate_content_async",
         "span_name": "gemini.generate_content_async",
+    },
+]
+
+WRAPPED_METHODS = [
+    {
+        "package": "google.genai.models",
+        "object": "Models",
+        "method": "generate_content",
+        "span_name": "gemini.generate_content",
+    },
+    {
+        "package": "google.genai.models",
+        "object": "AsyncModels",
+        "method": "generate_content",
+        "span_name": "gemini.generate_content",
     },
 ]
 
@@ -69,7 +82,18 @@ def _set_input_attributes(span, args, kwargs, llm_model):
 
     if "contents" in kwargs:
         contents = kwargs["contents"]
-        if isinstance(contents, list):
+        if isinstance(contents, str):
+            _set_span_attribute(
+                span,
+                f"{SpanAttributes.LLM_PROMPTS}.0.content",
+                contents,
+            )
+            _set_span_attribute(
+                span,
+                f"{SpanAttributes.LLM_PROMPTS}.0.role",
+                "user",
+            )
+        elif isinstance(contents, list):
             for i, content in enumerate(contents):
                 if hasattr(content, "parts"):
                     for part in content.parts:
@@ -255,13 +279,15 @@ async def _awrap(tracer, to_wrap, wrapped, instance, args, kwargs):
         ).replace("models/", "")
     if hasattr(instance, "model") and hasattr(instance.model, "model_name"):
         llm_model = instance.model.model_name.replace("models/", "")
+    if "model" in kwargs:
+        llm_model = kwargs["model"].replace("models/", "")
 
     name = to_wrap.get("span_name")
     span = tracer.start_span(
         name,
         kind=SpanKind.CLIENT,
         attributes={
-            SpanAttributes.LLM_SYSTEM: "Gemini",
+            SpanAttributes.LLM_SYSTEM: "Google",
             SpanAttributes.LLM_REQUEST_TYPE: LLMRequestTypeValues.COMPLETION.value,
         },
     )
@@ -299,13 +325,15 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
         ).replace("models/", "")
     if hasattr(instance, "model") and hasattr(instance.model, "model_name"):
         llm_model = instance.model.model_name.replace("models/", "")
+    if "model" in kwargs:
+        llm_model = kwargs["model"].replace("models/", "")
 
     name = to_wrap.get("span_name")
     span = tracer.start_span(
         name,
         kind=SpanKind.CLIENT,
         attributes={
-            SpanAttributes.LLM_SYSTEM: "Gemini",
+            SpanAttributes.LLM_SYSTEM: "Google",
             SpanAttributes.LLM_REQUEST_TYPE: LLMRequestTypeValues.COMPLETION.value,
         },
     )
@@ -334,12 +362,25 @@ class GoogleGenerativeAiInstrumentor(BaseInstrumentor):
         Config.exception_logger = exception_logger
 
     def instrumentation_dependencies(self) -> Collection[str]:
-        return _instruments
+        if is_package_installed("google.genai"):
+            return ("google-genai >= 0.1.0",)
+        elif is_package_installed("google.generativeai"):
+            return ["google-generativeai >= 0.5.0"]
+        else:
+            return []
+
+    def _wrapped_methods(self):
+        if is_package_installed("google.genai"):
+            return WRAPPED_METHODS
+        elif is_package_installed("google.generativeai"):
+            return LEGACY_WRAPPED_METHODS
+        else:
+            return []
 
     def _instrument(self, **kwargs):
         tracer_provider = kwargs.get("tracer_provider")
         tracer = get_tracer(__name__, __version__, tracer_provider)
-        for wrapped_method in WRAPPED_METHODS:
+        for wrapped_method in self._wrapped_methods():
             wrap_package = wrapped_method.get("package")
             wrap_object = wrapped_method.get("object")
             wrap_method = wrapped_method.get("method")
@@ -355,7 +396,7 @@ class GoogleGenerativeAiInstrumentor(BaseInstrumentor):
             )
 
     def _uninstrument(self, **kwargs):
-        for wrapped_method in WRAPPED_METHODS:
+        for wrapped_method in self._wrapped_methods():
             wrap_package = wrapped_method.get("package")
             wrap_object = wrapped_method.get("object")
             unwrap(
