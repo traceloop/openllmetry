@@ -2,7 +2,7 @@ import asyncio
 import os
 from openai import AsyncOpenAI
 from traceloop.sdk import Traceloop
-from traceloop.sdk.guardrails.guardrails import with_guardrails
+from traceloop.sdk.guardrails.guardrails import guardrail
 
 
 Traceloop.init(
@@ -16,7 +16,7 @@ if not api_key:
 client = AsyncOpenAI(api_key=api_key)
 
 
-@with_guardrails(slug="valid_medical_chat", client=Traceloop.get())
+@guardrail(slug="valid_medical_chat")
 async def get_doctor_response(patient_message: str) -> str:
     """Get a doctor's response to patient input using GPT-4o."""
     

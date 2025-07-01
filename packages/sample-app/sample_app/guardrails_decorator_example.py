@@ -1,6 +1,6 @@
 import asyncio
 from traceloop.sdk import Traceloop
-from traceloop.sdk.guardrails.guardrails import with_guardrails
+from traceloop.sdk.guardrails.guardrails import guardrail
 
 
 Traceloop.init(
@@ -8,7 +8,7 @@ Traceloop.init(
 )
 
 
-@with_guardrails(slug="valid_medical_chat", client=Traceloop.get())
+@guardrail(slug="valid_medical_chat", client=Traceloop.get())
 async def generate_medical_response(patient_query: str) -> str:
     """Async function that generates a medical response."""
     # Simulate AI response generation
@@ -17,7 +17,7 @@ async def generate_medical_response(patient_query: str) -> str:
     return response
 
 
-@with_guardrails(slug="valid_medical_chat", client=Traceloop.get())
+@guardrail(slug="valid_medical_chat", client=Traceloop.get())
 def generate_medical_response_sync(patient_query: str) -> str:
     """Sync function that generates a medical response."""
     # Simulate AI response generation
