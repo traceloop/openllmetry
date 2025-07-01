@@ -1,6 +1,9 @@
 import os
 from typing import Literal, cast
 from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
+from traceloop.sdk import Traceloop
+from mcp.server.fastmcp import Context, FastMCP
+from tests.whoami import TestClientResult, WhoamiRequest
 
 transport = cast(
     Literal["sse", "stdio", "streamable-http"], os.environ.get("MCP_TRANSPORT")
@@ -8,13 +11,7 @@ transport = cast(
 otlp_endpoint = os.environ.get("OTEL_EXPORTER_OTLP_ENDPOINT")
 span_exporter = OTLPSpanExporter(f"{otlp_endpoint}/v1/traces")
 
-from traceloop.sdk import Traceloop
-
 Traceloop.init(app_name="StockMarketAgent", exporter=span_exporter)
-
-from mcp.server.fastmcp import Context, FastMCP
-from tests.whoami import TestClientResult, WhoamiRequest
-
 server = FastMCP(port=0)
 
 
