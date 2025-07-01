@@ -260,16 +260,21 @@ def _get_vendor_from_url(base_url):
 
 
 def _strip_bedrock_model_prefix(model_id):
-    """Strip vendor prefix from Bedrock model IDs"""
     if not model_id or "." not in model_id:
         return model_id
     
-    prefixes = ["us", "us-gov", "eu", "apac"]
-    if any(model_id.startswith(prefix + ".") for prefix in prefixes):
+    regional_prefixes = ["us", "us-gov", "eu", "apac"]
+    has_regional_prefix = False
+    
+    for prefix in regional_prefixes:
+        if model_id.startswith(prefix + "."):
+            has_regional_prefix = True
+            break
+    
+    if has_regional_prefix:
         parts = model_id.split(".")
         if len(parts) > 2:
-            parts.pop(0)
-            return parts[1]  # Return model part only
+            return parts[2]  # Return model name directly: [region, vendor, model]
     else:
         vendor, model = model_id.split(".", 1)
         return model
