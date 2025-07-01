@@ -420,7 +420,7 @@ def _handle_converse_stream(span, kwargs, response, metric_params):
 def _get_vendor_model(modelId):
     # Docs:
     # https://docs.aws.amazon.com/bedrock/latest/userguide/inference-profiles-support.html#inference-profiles-support-system
-    vendor = "AWS"  
+    vendor = "AWS"
     system_vendor = "imported_model"
     model = modelId
 
