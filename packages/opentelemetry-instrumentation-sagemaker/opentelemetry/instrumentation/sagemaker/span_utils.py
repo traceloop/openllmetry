@@ -5,6 +5,18 @@ from opentelemetry.semconv_ai import (
 )
 
 
+def _try_parse_json(value):
+    """Try to decode JSON if it's a string or bytes; fallback to raw value."""
+    try:
+        if isinstance(value, bytes):
+            value = value.decode("utf-8").strip()
+        if isinstance(value, str):
+            return json.loads(value)
+        return value
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        return str(value)
+
+
 def _set_span_attribute(span, name, value):
     if value is not None:
         if value != "":
@@ -33,16 +45,17 @@ def set_call_request_attributes(span, kwargs):
     if not span.is_recording():
         return
 
-    request_body = json.loads(kwargs.get("Body"))
+    raw_request = kwargs.get("Body")
+    request_body = _try_parse_json(raw_request)
     _set_span_attribute(
         span, SpanAttributes.TRACELOOP_ENTITY_INPUT, json.dumps(request_body)
     )
 
 
-def set_call_response_attributes(span, response):
+def set_call_response_attributes(span, raw_response):
     if not span.is_recording():
         return
-    response_body = json.loads(response.get("Body").read())
+    response_body = _try_parse_json(raw_response)
 
     _set_span_attribute(
         span, SpanAttributes.TRACELOOP_ENTITY_OUTPUT, json.dumps(response_body)
