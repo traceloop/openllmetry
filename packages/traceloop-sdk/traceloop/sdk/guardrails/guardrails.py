@@ -12,13 +12,12 @@ P = ParamSpec('P')
 R = TypeVar('R')
 
 
-def with_guardrails(slug: str, client=None):
+def guardrail(slug: str):
     """
     Decorator that executes a guardrails evaluator on the decorated function's output.
     
     Args:
         slug: The evaluator slug to execute
-        client: Optional client instance. If not provided, will try to get from Traceloop.get()
         
     Returns:
         Combined result containing original function output and evaluator result
@@ -36,20 +35,12 @@ def with_guardrails(slug: str, client=None):
                 )
             }
             
-            # Get client instance
-            if client is None:
-                print("No client provided, trying to get from Traceloop.get()")
-                try:
-                    from traceloop.sdk import Traceloop
-                    client_instance = Traceloop.get()
-                except Exception as e:
-                    print(f"Warning: Could not get Traceloop client: {e}")
-                    return {
-                        "original_result": original_result,
-                        "guardrails_result": None
-                    }
-            else:
-                client_instance = client
+            try:
+                from traceloop.sdk import Traceloop
+                client_instance = Traceloop.get()
+            except Exception as e:
+                print(f"Warning: Could not get Traceloop client: {e}")
+                return original_result
                 
             evaluator_result = await client_instance.guardrails.execute_evaluator(slug, evaluator_data)
 
@@ -73,18 +64,15 @@ def with_guardrails(slug: str, client=None):
             }
             
             # Get client instance
-            if client is None:
-                try:
-                    from traceloop.sdk import Traceloop
-                    client_instance = Traceloop.get()
-                except Exception as e:
-                    print(f"Warning: Could not get Traceloop client: {e}")
-                    return {
-                        "original_result": original_result,
-                        "guardrails_result": None
-                    }
-            else:
-                client_instance = client
+            try:
+                from traceloop.sdk import Traceloop
+                client_instance = Traceloop.get()
+            except Exception as e:
+                print(f"Warning: Could not get Traceloop client: {e}")
+                return {
+                    "original_result": original_result,
+                    "guardrails_result": None
+                }
                 
             loop = asyncio.get_event_loop()
             evaluator_result = loop.run_until_complete(client_instance.guardrails.execute_evaluator(slug, evaluator_data))

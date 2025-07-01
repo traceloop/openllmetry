@@ -1,9 +1,9 @@
 from .types import InputExtractor, ExecuteEvaluatorRequest
-from .guardrails import with_guardrails, Guardrails
+from .guardrails import guardrail, Guardrails
 
 __all__ = [
     "InputExtractor",
     "ExecuteEvaluatorRequest",
-    "with_guardrails",
+    "guardrail",
     "Guardrails"
 ]
