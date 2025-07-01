@@ -1,4 +1,5 @@
 from opentelemetry.instrumentation.google_generativeai.utils import (
+    dont_throw,
     should_send_prompts,
 )
 from opentelemetry.semconv_ai import (
@@ -14,6 +15,7 @@ def _set_span_attribute(span, name, value):
     return
 
 
+@dont_throw
 def set_input_attributes(span, args, kwargs, llm_model):
     if not span.is_recording():
         return
@@ -23,7 +25,18 @@ def set_input_attributes(span, args, kwargs, llm_model):
 
     if "contents" in kwargs:
         contents = kwargs["contents"]
-        if isinstance(contents, list):
+        if isinstance(contents, str):
+            _set_span_attribute(
+                span,
+                f"{SpanAttributes.LLM_PROMPTS}.0.content",
+                contents,
+            )
+            _set_span_attribute(
+                span,
+                f"{SpanAttributes.LLM_PROMPTS}.0.role",
+                "user",
+            )
+        elif isinstance(contents, list):
             for i, content in enumerate(contents):
                 if hasattr(content, "parts"):
                     for part in content.parts:
@@ -47,17 +60,21 @@ def set_input_attributes(span, args, kwargs, llm_model):
                 for subarg in arg:
                     prompt = f"{prompt}{subarg}\n"
         if prompt:
-            _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.0.content", prompt)
-            _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.0.role", "user")
+            _set_span_attribute(
+                span,
+                f"{SpanAttributes.LLM_PROMPTS}.0.content",
+                prompt,
+            )
+            _set_span_attribute(
+                span,
+                f"{SpanAttributes.LLM_PROMPTS}.0.role",
+                "user",
+            )
     elif "prompt" in kwargs:
         _set_span_attribute(
             span, f"{SpanAttributes.LLM_PROMPTS}.0.content", kwargs["prompt"]
         )
-        _set_span_attribute(
-            span,
-            f"{SpanAttributes.LLM_PROMPTS}.0.role",
-            "user",
-        )
+        _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.0.role", "user")
 
 
 def set_model_request_attributes(span, kwargs, llm_model):
@@ -80,6 +97,7 @@ def set_model_request_attributes(span, kwargs, llm_model):
     )
 
 
+@dont_throw
 def set_response_attributes(span, response, llm_model):
     if hasattr(response, "usage_metadata"):
         if isinstance(response.text, list):
