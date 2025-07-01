@@ -40,7 +40,7 @@ def test_sync_runner_mocked_output(test_agent):
 
 
 @pytest.mark.vcr
-def test_watsonx_agent_spans(exporter, test_agent):
+def test_agent_spans(exporter, test_agent):
     query = "What is AI?"
     Runner.run_sync(
         test_agent,
@@ -48,16 +48,16 @@ def test_watsonx_agent_spans(exporter, test_agent):
     )
     spans = exporter.get_finished_spans()
 
+    span = spans[0]
+
     assert [span.name for span in spans] == [
-        "WatsonXAgent.agent",
+        "testAgent.agent",
     ]
 
-    assert len(spans) > 0, "No spans found to assert attributes on."
-    span = spans[0]
     assert span.attributes[SpanAttributes.LLM_SYSTEM] == "openai"
     assert (
         span.attributes[SpanAttributes.LLM_REQUEST_MODEL]
-        == "watsonx/meta-llama/llama-3-3-70b-instruct"
+        == "gpt-4.0"
     )
     assert span.attributes[SpanAttributes.LLM_REQUEST_TEMPERATURE] == 0.3
     assert span.attributes[SpanAttributes.LLM_REQUEST_MAX_TOKENS] == 1024
@@ -119,20 +119,18 @@ def test_generate_metrics(metrics_test_context, test_agent):
                         data_point.sum > 0
                         for data_point in metric.data.data_points
                     )
-
-                if metric.data.data_points:
-                    assert (
-                        metric.data.data_points[0].attributes[
-                            SpanAttributes.LLM_SYSTEM
-                        ]
-                        == "openai"
-                    )
-                    assert (
-                        metric.data.data_points[0].attributes[
-                            SpanAttributes.LLM_RESPONSE_MODEL
-                        ]
-                        == "watsonx/meta-llama/llama-3-3-70b-instruct"
-                    )
+                assert (
+                    metric.data.data_points[0].attributes[
+                        SpanAttributes.LLM_SYSTEM
+                    ]
+                    == "openai"
+                )
+                assert (
+                    metric.data.data_points[0].attributes[
+                        SpanAttributes.LLM_RESPONSE_MODEL
+                    ]
+                    == "gpt-4.0"
+                )
 
         assert found_token_metric is True
         assert found_duration_metric is True
