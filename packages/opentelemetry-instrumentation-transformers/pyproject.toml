@@ -38,6 +38,7 @@ tensorflow = "^2.19.0"
 transformers = "^4.51.3"
 tf-keras = "^2.19.0"
 torch = "^2.7.0"
+opentelemetry-sdk = "^1.34.1"
 
 [build-system]
 requires = ["poetry-core"]

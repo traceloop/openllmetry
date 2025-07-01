@@ -49,7 +49,7 @@ def fixture_event_logger_provider(log_exporter):
 
 @pytest.fixture
 def transformers_pipeline():
-    return transformers.pipeline(task="text-generation", model="gpt2", framework="tf")
+    return transformers.pipeline(task="text-generation", model="gpt2")
 
 
 @pytest.fixture(scope="function")
