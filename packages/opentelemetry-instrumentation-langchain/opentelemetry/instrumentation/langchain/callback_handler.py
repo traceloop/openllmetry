@@ -62,19 +62,6 @@ from opentelemetry.trace.span import Span
 from opentelemetry.trace.status import Status, StatusCode
 
 
-@dataclass
-class SpanHolder:
-    span: Span
-    token: Any
-    context: Context
-    children: list[UUID]
-    workflow_name: str
-    entity_name: str
-    entity_path: str
-    start_time: float = field(default_factory=time.time)
-    request_model: Optional[str] = None
-
-
 def _message_type_to_role(message_type: str) -> str:
     if message_type == "human":
         return "user"
@@ -86,11 +73,6 @@ def _message_type_to_role(message_type: str) -> str:
         return "tool"
     else:
         return "unknown"
-
-
-def _set_span_attribute(span: Span, name: str, value: AttributeValue):
-    if value is not None and value != "":
-        span.set_attribute(name, value)
 
 
 def _set_request_params(span, kwargs, span_holder: SpanHolder):
