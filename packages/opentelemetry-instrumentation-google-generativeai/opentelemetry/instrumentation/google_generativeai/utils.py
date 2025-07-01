@@ -1,3 +1,5 @@
+import importlib
+import importlib.util
 import logging
 import os
 import traceback
@@ -67,3 +69,7 @@ def part_to_dict(part):
         response["code_execution_result"] = part.code_execution_result
 
     return response
+
+
+def is_package_installed(package_name: str) -> bool:
+    return importlib.util.find_spec(package_name) is not None
