@@ -174,7 +174,7 @@ async def aembeddings_wrapper(
 
 @dont_throw
 def _handle_request(span, kwargs, instance):
-    _set_request_attributes(span, kwargs)
+    _set_request_attributes(span, kwargs, instance)
 
     if should_emit_events():
         _emit_embeddings_message_event(kwargs.get("input"))

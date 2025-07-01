@@ -420,18 +420,19 @@ def _handle_converse_stream(span, kwargs, response, metric_params):
 def _get_vendor_model(modelId):
     # Docs:
     # https://docs.aws.amazon.com/bedrock/latest/userguide/inference-profiles-support.html#inference-profiles-support-system
-    vendor = "imported_model"
+    vendor = "AWS"
     model = modelId
 
+    # Extract just the model name for better model identification
     if modelId is not None and modelId.startswith("arn"):
         components = modelId.split(":")
         if len(components) > 5:
             inf_profile = components[5].split("/")
             if len(inf_profile) == 2:
                 if "." in inf_profile[1]:
-                    (vendor, model) = _cross_region_check(inf_profile[1])
+                    model = _cross_region_check(inf_profile[1])
     elif modelId is not None and "." in modelId:
-        (vendor, model) = _cross_region_check(modelId)
+        model = _cross_region_check(modelId)
 
     return vendor, model
 
@@ -442,10 +443,10 @@ def _cross_region_check(value):
         parts = value.split(".")
         if len(parts) > 2:
             parts.pop(0)
-        return parts[0], parts[1]
+        return parts[1]  # Return model part only
     else:
-        (vendor, model) = value.split(".")
-    return vendor, model
+        vendor, model = value.split(".", 1)
+        return model
 
 
 def _report_converse_input_prompt(kwargs, span):

@@ -104,13 +104,24 @@ def set_tools_attributes(span, tools):
         )
 
 
-def _set_request_attributes(span, kwargs):
+def _set_request_attributes(span, kwargs, instance=None):
     if not span.is_recording():
         return
 
     _set_api_attributes(span)
-    _set_span_attribute(span, SpanAttributes.LLM_SYSTEM, "OpenAI")
-    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, kwargs.get("model"))
+    
+    # Dynamic vendor detection
+    base_url = _get_openai_base_url(instance) if instance else ""
+    vendor = _get_vendor_from_url(base_url)
+    _set_span_attribute(span, SpanAttributes.LLM_SYSTEM, vendor)
+    
+    model = kwargs.get("model")
+    if vendor == "AWS" and model and "." in model:
+        model = _strip_bedrock_model_prefix(model)
+    elif vendor == "OpenRouter":
+        model = _extract_model_name_from_provider_format(model)
+    
+    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, model)
     _set_span_attribute(
         span, SpanAttributes.LLM_REQUEST_MAX_TOKENS, kwargs.get("max_tokens")
     )
@@ -149,7 +160,10 @@ def _set_response_attributes(span, response):
         )
         return
 
-    _set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, response.get("model"))
+    response_model = response.get("model")
+    if response_model:
+        response_model = _extract_model_name_from_provider_format(response_model)
+    _set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, response_model)
     _set_span_attribute(span, GEN_AI_RESPONSE_ID, response.get("id"))
 
     _set_span_attribute(
@@ -226,6 +240,56 @@ def _get_openai_base_url(instance):
             return str(client.base_url)
 
     return ""
+
+
+def _get_vendor_from_url(base_url):
+    """Determine vendor based on OpenAI client base URL"""
+    if not base_url:
+        return "OpenAI"
+    
+    if "openai.azure.com" in base_url:
+        return "Azure"
+    elif "amazonaws.com" in base_url or "bedrock" in base_url:
+        return "AWS"
+    elif "googleapis.com" in base_url or "vertex" in base_url:
+        return "Google"
+    elif "openrouter.ai" in base_url:
+        return "OpenRouter"
+    
+    return "OpenAI"
+
+
+def _strip_bedrock_model_prefix(model_id):
+    """Strip vendor prefix from Bedrock model IDs"""
+    if not model_id or "." not in model_id:
+        return model_id
+    
+    prefixes = ["us", "us-gov", "eu", "apac"]
+    if any(model_id.startswith(prefix + ".") for prefix in prefixes):
+        parts = model_id.split(".")
+        if len(parts) > 2:
+            parts.pop(0)
+            return parts[1]  # Return model part only
+    else:
+        vendor, model = model_id.split(".", 1)
+        return model
+    
+    return model_id
+
+
+def _extract_model_name_from_provider_format(model_name):
+    """
+    Extract model name from provider/model format.
+    E.g., 'openai/gpt-4o' -> 'gpt-4o', 'anthropic/claude-3-sonnet' -> 'claude-3-sonnet'
+    """
+    if not model_name:
+        return model_name
+    
+    if "/" in model_name:
+        parts = model_name.split("/")
+        return parts[-1]  # Return the last part (actual model name)
+    
+    return model_name
 
 
 def is_streaming_response(response):
