@@ -117,7 +117,7 @@ def _set_request_attributes(span, kwargs, instance=None):
     
     model = kwargs.get("model")
     if vendor == "AWS" and model and "." in model:
-        model = _strip_bedrock_model_prefix(model)
+        model = _cross_region_check(model)
     elif vendor == "OpenRouter":
         model = _extract_model_name_from_provider_format(model)
     
@@ -245,7 +245,7 @@ def _get_openai_base_url(instance):
 def _get_vendor_from_url(base_url):
     """Determine vendor based on OpenAI client base URL"""
     if not base_url:
-        return "OpenAI"
+        return "openai"
     
     if "openai.azure.com" in base_url:
         return "Azure"
@@ -256,30 +256,23 @@ def _get_vendor_from_url(base_url):
     elif "openrouter.ai" in base_url:
         return "OpenRouter"
     
-    return "OpenAI"
+    return "openai"
 
 
-def _strip_bedrock_model_prefix(model_id):
-    if not model_id or "." not in model_id:
-        return model_id
+def _cross_region_check(value):
+    if not value or "." not in value:
+        return value
     
-    regional_prefixes = ["us", "us-gov", "eu", "apac"]
-    has_regional_prefix = False
-    
-    for prefix in regional_prefixes:
-        if model_id.startswith(prefix + "."):
-            has_regional_prefix = True
-            break
-    
-    if has_regional_prefix:
-        parts = model_id.split(".")
+    prefixes = ["us", "us-gov", "eu", "apac"]
+    if any(value.startswith(prefix + ".") for prefix in prefixes):
+        parts = value.split(".")
         if len(parts) > 2:
-            return parts[2]  # Return model name directly: [region, vendor, model]
+            return parts[2]
+        else:
+            return value
     else:
-        vendor, model = model_id.split(".", 1)
+        vendor, model = value.split(".", 1)
         return model
-    
-    return model_id
 
 
 def _extract_model_name_from_provider_format(model_name):
@@ -358,10 +351,12 @@ def metric_shared_attributes(
     response_model: str, operation: str, server_address: str, is_streaming: bool = False
 ):
     attributes = Config.get_common_metrics_attributes()
+    
+    vendor = _get_vendor_from_url(server_address)
 
     return {
         **attributes,
-        SpanAttributes.LLM_SYSTEM: "openai",
+        SpanAttributes.LLM_SYSTEM: vendor,
         SpanAttributes.LLM_RESPONSE_MODEL: response_model,
         "gen_ai.operation.name": operation,
         "server.address": server_address,

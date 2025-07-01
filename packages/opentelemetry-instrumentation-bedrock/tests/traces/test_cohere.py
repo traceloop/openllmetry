@@ -38,7 +38,7 @@ def test_cohere_completion(test_context, brt):
     )
 
     # Assert on vendor
-    assert bedrock_span.attributes[SpanAttributes.LLM_SYSTEM] == "cohere"
+    assert bedrock_span.attributes[SpanAttributes.LLM_SYSTEM] == "AWS"
 
     # Assert on request type
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "completion"

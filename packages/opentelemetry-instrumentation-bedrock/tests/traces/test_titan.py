@@ -42,7 +42,7 @@ def test_titan_completion(test_context, brt):
     )
 
     # Assert on vendor
-    assert bedrock_span.attributes[SpanAttributes.LLM_SYSTEM] == "amazon"
+    assert bedrock_span.attributes[SpanAttributes.LLM_SYSTEM] == "AWS"
 
     # Assert on request type
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "completion"
@@ -121,7 +121,7 @@ def test_titan_invoke_stream(test_context, brt):
     )
 
     # Assert on vendor
-    assert bedrock_span.attributes[SpanAttributes.LLM_SYSTEM] == "amazon"
+    assert bedrock_span.attributes[SpanAttributes.LLM_SYSTEM] == "AWS"
 
     # Assert on request type
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "completion"
@@ -205,7 +205,7 @@ def test_titan_converse(test_context, brt):
     )
 
     # Assert on vendor
-    assert bedrock_span.attributes[SpanAttributes.LLM_SYSTEM] == "amazon"
+    assert bedrock_span.attributes[SpanAttributes.LLM_SYSTEM] == "AWS"
 
     # Assert on request type
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
@@ -300,10 +300,10 @@ def test_titan_converse_stream(test_context, brt):
         == "titan-text-express-v1"
     )
 
-    # Assert on vendor
-    assert bedrock_span.attributes[SpanAttributes.LLM_SYSTEM] == "amazon"
+        # Assert on vendor
+    assert bedrock_span.attributes[SpanAttributes.LLM_SYSTEM] == "AWS"
 
-    # Assert on request type
+    # Assert on request type  
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
 
     # Assert on prompt
