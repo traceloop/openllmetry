@@ -740,7 +740,7 @@ def test_nova_converse_with_events_with_no_content(
 
     inf_params = {"maxTokens": 300, "topP": 0.1, "temperature": 0.3}
 
-    response = brt.converse(
+    brt.converse(
         modelId=modelId,
         messages=messages,
         guardrailConfig=guardrail,
@@ -967,16 +967,12 @@ def test_nova_converse_stream_with_events_with_content(
 
     stream = response.get("stream")
 
-    response_role = None
     content = ""
     inputTokens = 0
     outputTokens = 0
 
     if stream:
         for event in stream:
-            if "messageStart" in event:
-                response_role = event["messageStart"]["role"]
-
             if "contentBlockDelta" in event:
                 content += event["contentBlockDelta"]["delta"]["text"]
 
@@ -1096,16 +1092,12 @@ def test_nova_converse_stream_with_events_with_no_content(
 
     stream = response.get("stream")
 
-    response_role = None
     content = ""
     inputTokens = 0
     outputTokens = 0
 
     if stream:
         for event in stream:
-            if "messageStart" in event:
-                response_role = event["messageStart"]["role"]
-
             if "contentBlockDelta" in event:
                 content += event["contentBlockDelta"]["delta"]["text"]
 
