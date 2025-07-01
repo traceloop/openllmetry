@@ -6,6 +6,7 @@ from opentelemetry.instrumentation.anthropic.config import Config
 from opentelemetry.instrumentation.anthropic.utils import (
     JSONEncoder,
     dont_throw,
+    model_as_dict,
     should_send_prompts,
 )
 from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
@@ -47,16 +48,20 @@ async def _dump_content(message_index, content, span):
     elif isinstance(content, list):
         # If the content is a list of text blocks, concatenate them.
         # This is more commonly used in prompt caching.
-        if all([item.get("type") == "text" for item in content]):
-            return "".join([item.get("text") for item in content])
+        if all([model_as_dict(item).get("type") == "text" for item in content]):
+            return "".join([model_as_dict(item).get("text") for item in content])
 
         content = [
             (
                 await _process_image_item(
-                    item, span.context.trace_id, span.context.span_id, message_index, j
+                    model_as_dict(item),
+                    span.context.trace_id,
+                    span.context.span_id,
+                    message_index,
+                    j,
                 )
-                if _is_base64_image(item)
-                else item
+                if _is_base64_image(model_as_dict(item))
+                else model_as_dict(item)
             )
             for j, item in enumerate(content)
         ]
