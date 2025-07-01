@@ -909,6 +909,7 @@ def test_tool_message_with_tool_call_id(instrument_legacy, span_exporter, log_ex
         "Assert that it doesn't emit logs when use_legacy_attributes is True"
     )
 
+
 @pytest.mark.vcr
 def test_tool_calls_anthropic_text_block_and_history_with_events_with_no_content(
     instrument_with_no_content, span_exporter, log_exporter

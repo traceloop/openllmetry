@@ -210,7 +210,8 @@ def test_simple_lcel_with_events_with_content(
                 "id": "",
                 "function": {
                     "name": "Joke",
-                    "arguments": '{"setup":"Why couldn\'t the bicycle stand up by itself?","punchline":"It was two tired!"}',
+                    "arguments": '{"setup":"Why couldn\'t the bicycle stand up by itself?","punchline":"It was two '
+                    'tired!"}',
                 },
                 "type": "function",
             }
@@ -416,7 +417,7 @@ async def test_async_lcel_with_events_with_no_content(
         "write 10 lines of random text about ${product}"
     )
     runnable = prompt | chat | StrOutputParser()
-    response = await runnable.ainvoke({"product": "colorful socks"})
+    await runnable.ainvoke({"product": "colorful socks"})
 
     spans = span_exporter.get_finished_spans()
 
@@ -929,7 +930,8 @@ def test_lcel_with_datetime_with_events_with_content(
                 "id": "",
                 "function": {
                     "name": "Joke",
-                    "arguments": '{"setup":"Why couldn\'t the bicycle stand up by itself?","punchline":"Because it was two tired!"}',
+                    "arguments": '{"setup":"Why couldn\'t the bicycle stand up by itself?","punchline":"Because it was '
+                    'two tired!"}',
                 },
                 "type": "function",
             }

@@ -357,4 +357,3 @@ def _set_chat_tool_calls(
             f"{tool_call_prefix}.arguments",
             json.dumps(tool_args, cls=CallbackFilteredJSONEncoder),
         )
-
