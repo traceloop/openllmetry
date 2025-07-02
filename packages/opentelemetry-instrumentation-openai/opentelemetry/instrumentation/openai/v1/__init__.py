@@ -26,6 +26,14 @@ from opentelemetry.instrumentation.openai.v1.assistant_wrappers import (
     runs_create_wrapper,
     runs_retrieve_wrapper,
 )
+
+from opentelemetry.instrumentation.openai.v1.responses_wrappers import (
+    async_responses_cancel_wrapper,
+    async_responses_get_or_create_wrapper,
+    responses_cancel_wrapper,
+    responses_get_or_create_wrapper,
+)
+
 from opentelemetry.instrumentation.openai.version import __version__
 from opentelemetry.instrumentation.utils import unwrap
 from opentelemetry.metrics import get_meter
@@ -33,6 +41,7 @@ from opentelemetry.semconv._incubating.metrics import gen_ai_metrics as GenAIMet
 from opentelemetry.semconv_ai import Meters
 from opentelemetry.trace import get_tracer
 from wrapt import wrap_function_wrapper
+
 
 _instruments = ("openai >= 1.0.0",)
 
@@ -290,6 +299,36 @@ class OpenAIV1Instrumentor(BaseInstrumentor):
             "Messages.list",
             messages_list_wrapper(tracer),
         )
+        self._try_wrap(
+            "openai.resources.responses",
+            "Responses.create",
+            responses_get_or_create_wrapper(tracer),
+        )
+        self._try_wrap(
+            "openai.resources.responses",
+            "Responses.retrieve",
+            responses_get_or_create_wrapper(tracer),
+        )
+        self._try_wrap(
+            "openai.resources.responses",
+            "Responses.cancel",
+            responses_cancel_wrapper(tracer),
+        )
+        self._try_wrap(
+            "openai.resources.responses",
+            "AsyncResponses.create",
+            async_responses_get_or_create_wrapper(tracer),
+        )
+        self._try_wrap(
+            "openai.resources.responses",
+            "AsyncResponses.retrieve",
+            async_responses_get_or_create_wrapper(tracer),
+        )
+        self._try_wrap(
+            "openai.resources.responses",
+            "AsyncResponses.cancel",
+            async_responses_cancel_wrapper(tracer),
+        )
 
     def _uninstrument(self, **kwargs):
         unwrap("openai.resources.chat.completions", "Completions.create")
@@ -309,5 +348,11 @@ class OpenAIV1Instrumentor(BaseInstrumentor):
             unwrap("openai.resources.beta.threads.runs", "Runs.retrieve")
             unwrap("openai.resources.beta.threads.runs", "Runs.create_and_stream")
             unwrap("openai.resources.beta.threads.messages", "Messages.list")
+            unwrap("openai.resources.responses", "Responses.create")
+            unwrap("openai.resources.responses", "Responses.retrieve")
+            unwrap("openai.resources.responses", "Responses.cancel")
+            unwrap("openai.resources.responses", "AsyncResponses.create")
+            unwrap("openai.resources.responses", "AsyncResponses.retrieve")
+            unwrap("openai.resources.responses", "AsyncResponses.cancel")
         except ImportError:
             pass
