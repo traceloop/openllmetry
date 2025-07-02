@@ -1,0 +1,84 @@
+interactions:
+- request:
+    body: '{"prompt": [{"type": "text", "data": "Tell me a joke about OpenTelemetry.",
+      "controls": []}], "maximum_tokens": 1000, "temperature": 0.0, "top_k": 0, "top_p":
+      0.0, "presence_penalty": 0.0, "frequency_penalty": 0.0, "repetition_penalties_include_prompt":
+      false, "use_multiplicative_presence_penalty": false, "n": 1, "tokens": false,
+      "disable_optimizations": false, "minimum_tokens": 0, "echo": false, "use_multiplicative_frequency_penalty":
+      false, "sequence_penalty": 0.0, "sequence_penalty_min_length": 2, "use_multiplicative_sequence_penalty":
+      false, "completion_bias_inclusion_first_token_only": false, "completion_bias_exclusion_first_token_only":
+      false, "control_log_additive": true, "repetition_penalties_include_completion":
+      true, "raw_completion": false, "model": "luminous-base"}'
+    headers:
+      Content-Length:
+      - '787'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - Aleph-Alpha-Python-Client-7.1.0
+    method: POST
+    uri: https://api.aleph-alpha.com/complete
+  response:
+    body:
+      string: '{"completions":[{"completion":"\n\nA:\n\nI think the best joke is the
+        one that is not funny.\n\nA:\n\nI think the best joke is the one that is not
+        funny.\n\nA:\n\nI think the best joke is the one that is not funny.\n\nA:\n\nI
+        think the best joke is the one that is not funny.\n\nA:\n\nI think the best
+        joke is the one that is not funny.\n\nA:\n\nI think the best joke is the one
+        that is not funny.\n\nA:\n\nI think the best joke is the one that is not funny.\n\nA:\n\nI
+        think the best joke is the one that is not funny.\n\nA:\n\nI think the best
+        joke is the one that is not funny.\n\nA:\n\nI think the best joke is the one
+        that is not funny.\n\nA:\n\nI think the best joke is the one that is not funny.\n\nA:\n\nI
+        think the best joke is the one that is not funny.\n\nA:\n\nI think the best
+        joke is the one that is not funny.\n\nA:\n\nI think the best joke is the one
+        that is not funny.\n\nA:\n\nI think the best joke is the one that is not funny.\n\nA:\n\nI
+        think the best joke is the one that is not funny.\n\nA:\n\nI think the best
+        joke is the one that is not funny.\n\nA:\n\nI think the best joke is the one
+        that is not funny.\n\nA:\n\nI think the best joke is the one that is not funny.\n\nA:\n\nI
+        think the best joke is the one that is not funny.\n\nA:\n\nI think the best
+        joke is the one that is not funny.\n\nA:\n\nI think the best joke is the one
+        that is not funny.\n\nA:\n\nI think the best joke is the one that is not funny.\n\nA:\n\nI
+        think the best joke is the one that is not funny.\n\nA:\n\nI think the best
+        joke is the one that is not funny.\n\nA:\n\nI think the best joke is the one
+        that is not funny.\n\nA:\n\nI think the best joke is the one that is not funny.\n\nA:\n\nI
+        think the best joke is the one that is not funny.\n\nA:\n\nI think the best
+        joke is the one that is not funny.\n\nA:\n\nI think the best joke is the one
+        that is not funny.\n\nA:\n\nI think the best joke is the one that is not funny.\n\nA:\n\nI
+        think the best joke is the one that is not funny.\n\nA:\n\nI think the best
+        joke is the one that is not funny.\n\nA:\n\nI think the best joke is the one
+        that is not funny.\n\nA:\n\nI think the best joke is the one that is not funny.\n\nA:\n\nI
+        think the best joke is the one that is not funny.\n\nA:\n\nI think the best
+        joke is the one that is not funny.\n\nA:\n\nI think the best joke is the one
+        that is not funny.\n\nA:\n\nI think the best joke is the one that is not funny.\n\nA:\n\nI
+        think the best joke is the one that is not funny.\n\nA:\n\nI think the best
+        joke is the one that is not funny.\n\nA:\n\nI think the best joke is the one
+        that is not funny.\n\nA:\n\nI think the best joke is the one that is not funny.\n\nA:\n\nI
+        think the best joke is the one that is not funny.\n\nA:\n\nI think the best
+        joke is the one that is not funny.\n\nA:\n\nI think the best joke is the one
+        that is not funny.\n\nA:\n\nI think the best joke is the one that is not funny.\n\nA:\n\nI
+        think the best joke is the one that is not funny.\n\nA:\n\nI think the best
+        joke is the one that is not funny.\n\nA:\n\nI think the best joke is the one
+        that is not funny.\n\nA:\n\nI think the best joke is the one that is not funny.\n\nA:\n\nI
+        think the best joke is the one that is not funny.\n\nA:\n\nI think the best
+        joke is","finish_reason":"maximum_tokens"}],"model_version":"2022-04","num_tokens_prompt_total":9,"num_tokens_generated":1000}'
+    headers:
+      access-control-allow-credentials:
+      - 'true'
+      access-control-expose-headers:
+      - content-type
+      content-length:
+      - '3356'
+      content-type:
+      - application/json
+      date:
+      - Sat, 08 Jun 2024 20:26:23 GMT
+      set-cookie:
+      - SERVERID=aa-api; path=/
+      strict-transport-security:
+      - max-age=63072000
+      vary:
+      - Origin, Access-Control-Request-Method, Access-Control-Request-Headers
+    status:
+      code: 200
+      message: ''
+version: 1

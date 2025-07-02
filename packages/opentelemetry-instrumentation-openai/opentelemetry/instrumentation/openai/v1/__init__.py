@@ -1,40 +1,47 @@
 from typing import Collection
 
+from opentelemetry._events import get_event_logger
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
-from opentelemetry.trace import get_tracer
-
-from opentelemetry.metrics import get_meter
-from opentelemetry.semconv._incubating.metrics import gen_ai_metrics as GenAIMetrics
-
-from wrapt import wrap_function_wrapper
-
 from opentelemetry.instrumentation.openai.shared.chat_wrappers import (
-    chat_wrapper,
     achat_wrapper,
+    chat_wrapper,
 )
 from opentelemetry.instrumentation.openai.shared.completion_wrappers import (
-    completion_wrapper,
     acompletion_wrapper,
+    completion_wrapper,
 )
+from opentelemetry.instrumentation.openai.shared.config import Config
 from opentelemetry.instrumentation.openai.shared.embeddings_wrappers import (
-    embeddings_wrapper,
     aembeddings_wrapper,
+    embeddings_wrapper,
 )
 from opentelemetry.instrumentation.openai.shared.image_gen_wrappers import (
     image_gen_metrics_wrapper,
 )
+from opentelemetry.instrumentation.openai.utils import is_metrics_enabled
 from opentelemetry.instrumentation.openai.v1.assistant_wrappers import (
     assistants_create_wrapper,
+    messages_list_wrapper,
+    runs_create_and_stream_wrapper,
     runs_create_wrapper,
     runs_retrieve_wrapper,
-    runs_create_and_stream_wrapper,
-    messages_list_wrapper,
 )
 
-from opentelemetry.instrumentation.openai.utils import is_metrics_enabled
-from opentelemetry.instrumentation.openai.version import __version__
+from opentelemetry.instrumentation.openai.v1.responses_wrappers import (
+    async_responses_cancel_wrapper,
+    async_responses_get_or_create_wrapper,
+    responses_cancel_wrapper,
+    responses_get_or_create_wrapper,
+)
 
+from opentelemetry.instrumentation.openai.version import __version__
+from opentelemetry.instrumentation.utils import unwrap
+from opentelemetry.metrics import get_meter
+from opentelemetry.semconv._incubating.metrics import gen_ai_metrics as GenAIMetrics
 from opentelemetry.semconv_ai import Meters
+from opentelemetry.trace import get_tracer
+from wrapt import wrap_function_wrapper
+
 
 _instruments = ("openai >= 1.0.0",)
 
@@ -43,6 +50,22 @@ class OpenAIV1Instrumentor(BaseInstrumentor):
     def instrumentation_dependencies(self) -> Collection[str]:
         return _instruments
 
+    def _try_wrap(self, module, function, wrapper):
+        """
+        Wrap a function if it exists, otherwise do nothing.
+        This is useful for handling cases where the function is not available in
+        the older versions of the library.
+
+        Args:
+            module (str): The module to wrap, e.g. "openai.resources.chat.completions"
+            function (str): "Object.function" to wrap, e.g. "Completions.parse"
+            wrapper (callable): The wrapper to apply to the function.
+        """
+        try:
+            wrap_function_wrapper(module, function, wrapper)
+        except (AttributeError, ModuleNotFoundError):
+            pass
+
     def _instrument(self, **kwargs):
         tracer_provider = kwargs.get("tracer_provider")
         tracer = get_tracer(__name__, __version__, tracer_provider)
@@ -50,6 +73,12 @@ class OpenAIV1Instrumentor(BaseInstrumentor):
         # meter and counters are inited here
         meter_provider = kwargs.get("meter_provider")
         meter = get_meter(__name__, __version__, meter_provider)
+
+        if not Config.use_legacy_attributes:
+            event_logger_provider = kwargs.get("event_logger_provider")
+            Config.event_logger = get_event_logger(
+                __name__, __version__, event_logger_provider=event_logger_provider
+            )
 
         if is_metrics_enabled():
             tokens_histogram = meter.create_histogram(
@@ -175,6 +204,33 @@ class OpenAIV1Instrumentor(BaseInstrumentor):
                 embeddings_exception_counter,
             ),
         )
+        # in newer versions, Completions.parse are out of beta
+        self._try_wrap(
+            "openai.resources.chat.completions",
+            "Completions.parse",
+            chat_wrapper(
+                tracer,
+                tokens_histogram,
+                chat_choice_counter,
+                duration_histogram,
+                chat_exception_counter,
+                streaming_time_to_first_token,
+                streaming_time_to_generate,
+            ),
+        )
+        self._try_wrap(
+            "openai.resources.chat.completions",
+            "AsyncCompletions.parse",
+            achat_wrapper(
+                tracer,
+                tokens_histogram,
+                chat_choice_counter,
+                duration_histogram,
+                chat_exception_counter,
+                streaming_time_to_first_token,
+                streaming_time_to_generate,
+            ),
+        )
 
         if is_metrics_enabled():
             image_gen_exception_counter = meter.create_counter(
@@ -192,60 +248,111 @@ class OpenAIV1Instrumentor(BaseInstrumentor):
         )
 
         # Beta APIs may not be available consistently in all versions
-        try:
-            wrap_function_wrapper(
-                "openai.resources.beta.assistants",
-                "Assistants.create",
-                assistants_create_wrapper(tracer),
-            )
-            wrap_function_wrapper(
-                "openai.resources.beta.chat.completions",
-                "Completions.parse",
-                chat_wrapper(
-                    tracer,
-                    tokens_histogram,
-                    chat_choice_counter,
-                    duration_histogram,
-                    chat_exception_counter,
-                    streaming_time_to_first_token,
-                    streaming_time_to_generate,
-                ),
-            )
-            wrap_function_wrapper(
-                "openai.resources.beta.chat.completions",
-                "AsyncCompletions.parse",
-                achat_wrapper(
-                    tracer,
-                    tokens_histogram,
-                    chat_choice_counter,
-                    duration_histogram,
-                    chat_exception_counter,
-                    streaming_time_to_first_token,
-                    streaming_time_to_generate,
-                ),
-            )
-            wrap_function_wrapper(
-                "openai.resources.beta.threads.runs",
-                "Runs.create",
-                runs_create_wrapper(tracer),
-            )
-            wrap_function_wrapper(
-                "openai.resources.beta.threads.runs",
-                "Runs.retrieve",
-                runs_retrieve_wrapper(tracer),
-            )
-            wrap_function_wrapper(
-                "openai.resources.beta.threads.runs",
-                "Runs.create_and_stream",
-                runs_create_and_stream_wrapper(tracer),
-            )
-            wrap_function_wrapper(
-                "openai.resources.beta.threads.messages",
-                "Messages.list",
-                messages_list_wrapper(tracer),
-            )
-        except (AttributeError, ModuleNotFoundError):
-            pass
+        self._try_wrap(
+            "openai.resources.beta.assistants",
+            "Assistants.create",
+            assistants_create_wrapper(tracer),
+        )
+        self._try_wrap(
+            "openai.resources.beta.chat.completions",
+            "Completions.parse",
+            chat_wrapper(
+                tracer,
+                tokens_histogram,
+                chat_choice_counter,
+                duration_histogram,
+                chat_exception_counter,
+                streaming_time_to_first_token,
+                streaming_time_to_generate,
+            ),
+        )
+        self._try_wrap(
+            "openai.resources.beta.chat.completions",
+            "AsyncCompletions.parse",
+            achat_wrapper(
+                tracer,
+                tokens_histogram,
+                chat_choice_counter,
+                duration_histogram,
+                chat_exception_counter,
+                streaming_time_to_first_token,
+                streaming_time_to_generate,
+            ),
+        )
+        self._try_wrap(
+            "openai.resources.beta.threads.runs",
+            "Runs.create",
+            runs_create_wrapper(tracer),
+        )
+        self._try_wrap(
+            "openai.resources.beta.threads.runs",
+            "Runs.retrieve",
+            runs_retrieve_wrapper(tracer),
+        )
+        self._try_wrap(
+            "openai.resources.beta.threads.runs",
+            "Runs.create_and_stream",
+            runs_create_and_stream_wrapper(tracer),
+        )
+        self._try_wrap(
+            "openai.resources.beta.threads.messages",
+            "Messages.list",
+            messages_list_wrapper(tracer),
+        )
+        self._try_wrap(
+            "openai.resources.responses",
+            "Responses.create",
+            responses_get_or_create_wrapper(tracer),
+        )
+        self._try_wrap(
+            "openai.resources.responses",
+            "Responses.retrieve",
+            responses_get_or_create_wrapper(tracer),
+        )
+        self._try_wrap(
+            "openai.resources.responses",
+            "Responses.cancel",
+            responses_cancel_wrapper(tracer),
+        )
+        self._try_wrap(
+            "openai.resources.responses",
+            "AsyncResponses.create",
+            async_responses_get_or_create_wrapper(tracer),
+        )
+        self._try_wrap(
+            "openai.resources.responses",
+            "AsyncResponses.retrieve",
+            async_responses_get_or_create_wrapper(tracer),
+        )
+        self._try_wrap(
+            "openai.resources.responses",
+            "AsyncResponses.cancel",
+            async_responses_cancel_wrapper(tracer),
+        )
 
     def _uninstrument(self, **kwargs):
-        pass
+        unwrap("openai.resources.chat.completions", "Completions.create")
+        unwrap("openai.resources.completions", "Completions.create")
+        unwrap("openai.resources.embeddings", "Embeddings.create")
+        unwrap("openai.resources.chat.completions", "AsyncCompletions.create")
+        unwrap("openai.resources.completions", "AsyncCompletions.create")
+        unwrap("openai.resources.embeddings", "AsyncEmbeddings.create")
+        unwrap("openai.resources.images", "Images.generate")
+
+        # Beta APIs may not be available consistently in all versions
+        try:
+            unwrap("openai.resources.beta.assistants", "Assistants.create")
+            unwrap("openai.resources.beta.chat.completions", "Completions.parse")
+            unwrap("openai.resources.beta.chat.completions", "AsyncCompletions.parse")
+            unwrap("openai.resources.beta.threads.runs", "Runs.create")
+            unwrap("openai.resources.beta.threads.runs", "Runs.retrieve")
+            unwrap("openai.resources.beta.threads.runs", "Runs.create_and_stream")
+            unwrap("openai.resources.beta.threads.messages", "Messages.list")
+            unwrap("openai.resources.responses", "Responses.create")
+            unwrap("openai.resources.responses", "Responses.retrieve")
+            unwrap("openai.resources.responses", "Responses.cancel")
+            unwrap("openai.resources.responses", "AsyncResponses.create")
+            unwrap("openai.resources.responses", "AsyncResponses.retrieve")
+            unwrap("openai.resources.responses", "AsyncResponses.cancel")
+        except ImportError:
+            pass
