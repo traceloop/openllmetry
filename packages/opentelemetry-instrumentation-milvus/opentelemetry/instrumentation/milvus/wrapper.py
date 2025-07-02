@@ -1,12 +1,23 @@
 from opentelemetry.instrumentation.milvus.utils import dont_throw
 from opentelemetry.semconv.trace import SpanAttributes
-
+from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
 from opentelemetry import context as context_api
 from opentelemetry.instrumentation.utils import (
     _SUPPRESS_INSTRUMENTATION_KEY,
 )
 from opentelemetry.semconv_ai import Events, EventAttributes
 from opentelemetry.semconv_ai import SpanAttributes as AISpanAttributes
+
+from pymilvus.client.types import Status
+from pymilvus.exceptions import ErrorCode
+
+code_to_error_type = {}
+for name in dir(Status):
+    value = getattr(Status, name)
+    if isinstance(value, int):
+        code_to_error_type[value] = name
+
+code_to_error_type.update({code.value: code.name for code in ErrorCode})
 
 
 def _with_tracer_wrapper(func):
@@ -56,16 +67,22 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
         elif to_wrap.get("method") == "hybrid_search":
             _set_hybrid_search_attributes(span, kwargs)
 
-        return_value = wrapped(*args, **kwargs)
+        try:
+            return_value = wrapped(*args, **kwargs)
+            if to_wrap.get("method") == "query":
+                _add_query_result_events(span, return_value)
 
-        if to_wrap.get("method") == "query":
-            _add_query_result_events(span, return_value)
-
-        if (
-            to_wrap.get("method") == "search"
-            or to_wrap.get("method") == "hybrid_search"
-        ):
-            _add_search_result_events(span, return_value)
+            if (
+                to_wrap.get("method") == "search"
+                or to_wrap.get("method") == "hybrid_search"
+            ):
+                _add_search_result_events(span, return_value)
+        except Exception as e:
+            error_type = code_to_error_type.get(
+                getattr(e, "code", None), type(e).__name__
+            )
+            span.set_attribute(ERROR_TYPE, error_type)
+            raise
 
     return return_value
 
@@ -345,6 +362,7 @@ def _add_search_result_events(span, kwargs):
         _set_span_attribute(
             span, AISpanAttributes.MILVUS_SEARCH_RESULT_COUNT, total_matches
         )
+
     for query_idx, query_results in enumerate(kwargs):
 
         query_distances = []
