@@ -166,11 +166,15 @@ def _set_request_attributes(span, kwargs):
             try:
                 schema = json.dumps(pydantic.TypeAdapter(response_format).json_schema())
             except Exception:
-                schema = json.dumps(response_format)
+                try:
+                    schema = json.dumps(response_format)
+                except Exception:
+                    pass
+
             if schema:
                 _set_span_attribute(
                     span,
-                    "gen_ai.request.structured_output_schema",
+                    SpanAttributes.LLM_REQUEST_STRUCTURED_OUTPUT_SCHEMA,
                     schema,
                 )
 
