@@ -204,12 +204,25 @@ def _set_chat_request(
                 i += 1
 
 
-def _set_chat_response(span: Span, response: LLMResult, token_histogram: Histogram, record_token_usage: bool) -> None:
+def _extract_model_name_from_response_metadata(response: LLMResult) -> Optional[str]:
+    """Extract model name from response metadata and set it as a span attribute if found."""
+    model_name = None
+    for generations in response.generations:
+        for generation in generations:
+            if (
+                hasattr(generation, "message")
+                and hasattr(generation.message, "response_metadata")
+                and generation.message.response_metadata is not None
+                and model_name is None
+            ):
+                model_name = generation.message.response_metadata.get("model_name")
+    return model_name or "unknown"
+
+def _set_chat_response(span: Span, response: LLMResult, token_histogram: Histogram, record_token_usage: bool, model_name: str) -> None:
     input_tokens = 0
     output_tokens = 0
     total_tokens = 0
     cache_read_tokens = 0
-    model_name = None
 
     i = 0
     for generations in response.generations:
@@ -219,9 +232,6 @@ def _set_chat_response(span: Span, response: LLMResult, token_histogram: Histogr
                 and hasattr(generation.message, "usage_metadata")
                 and generation.message.usage_metadata is not None
             ):
-                if model_name is None and hasattr(generation.message, "response_metadata"):
-                    model_name = generation.message.response_metadata.get("model_name")
-
                 input_tokens += (
                     generation.message.usage_metadata.get("input_tokens")
                     or generation.message.usage_metadata.get("prompt_tokens")
@@ -328,16 +338,13 @@ def _set_chat_response(span: Span, response: LLMResult, token_histogram: Histogr
         )
 
         if record_token_usage:
-            if model_name:
-                _set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, model_name)
-
             if input_tokens > 0:
                 token_histogram.record(
                     input_tokens,
                     attributes={
                         SpanAttributes.LLM_SYSTEM: "Langchain",
                         SpanAttributes.LLM_TOKEN_TYPE: "input",
-                        SpanAttributes.LLM_RESPONSE_MODEL: model_name or "unknown",
+                        SpanAttributes.LLM_RESPONSE_MODEL: model_name,
                     },
                 )
 
@@ -347,7 +354,7 @@ def _set_chat_response(span: Span, response: LLMResult, token_histogram: Histogr
                     attributes={
                         SpanAttributes.LLM_SYSTEM: "Langchain",
                         SpanAttributes.LLM_TOKEN_TYPE: "output",
-                        SpanAttributes.LLM_RESPONSE_MODEL: model_name or "unknown",
+                        SpanAttributes.LLM_RESPONSE_MODEL: model_name,
                     },
                 )
 
@@ -696,7 +703,8 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             id = response.llm_output.get("id")
             if id is not None and id != "":
                 _set_span_attribute(span, GEN_AI_RESPONSE_ID, id)
-
+        if model_name is None:
+            model_name = _extract_model_name_from_response_metadata(response)
         token_usage = (response.llm_output or {}).get("token_usage") or (
             response.llm_output or {}
         ).get("usage")
@@ -746,7 +754,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
                     },
                 )
 
-        _set_chat_response(span, response, self.token_histogram, token_usage is None)
+        _set_chat_response(span, response, self.token_histogram, token_usage is None, model_name)
         self._end_span(span, run_id)
 
         # Record duration
