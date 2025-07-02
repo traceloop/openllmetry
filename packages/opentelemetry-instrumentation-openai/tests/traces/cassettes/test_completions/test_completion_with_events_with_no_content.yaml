@@ -1,0 +1,99 @@
+interactions:
+- request:
+    body: '{"model": "davinci-002", "prompt": "Tell me a joke about opentelemetry"}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '72'
+      content-type:
+      - application/json
+      host:
+      - api.openai.com
+      user-agent:
+      - OpenAI/Python 1.12.0
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.12.0
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.9.5
+    method: POST
+    uri: https://api.openai.com/v1/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA0SQMU/DMBSE9/yKJ89YcpJCQ1ZQxcbQBQoocuxHYnD8gu3Soqr/HTmJ2sXDnb+7
+        0ztlAMxoVgNTw2h5dfhZFY/5lpSMyub+Yehed8+bl7Xe7A7sJv2m9gtVTETEY2wUDaPFaMjNtvIo
+        I6bEfC3uRVlWt2IyBtJoE6blr3HKcCGKBenJKAyshrcMAOA0vTAXJIJ3BNa0Xvq/d7fleggBJRSi
+        EFxUPC9reKJ53YQZp/HIahAXxVI3empThdtbe9E/jTOhbzzKQC41WXRd7NnknzOAj2ngPsgOWb0M
+        Y6OnYYxNpG90KbKa89j1FFcvv1vMSFHaq16sstRwzv4BAAD//wMAdLAgAoIBAAA=
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 85c022da9a47bb14-MXP
+      Cache-Control:
+      - no-cache, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 27 Feb 2024 11:37:30 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=8L78ss5z_LU7MemkD1pN_f_BDP7v_lYCqYqih9Zvicg-1709033850-1.0-AWIUdFiaopi5JT1nAItlYRWgcI6QDySDIp81VWqC+Jk/H93vqmteXVRKn7I1MiaEbV+LEP50bUYOxo25WKbMTaU=;
+        path=/; expires=Tue, 27-Feb-24 12:07:30 GMT; domain=.api.openai.com; HttpOnly;
+        Secure; SameSite=None
+      - _cfuvid=2D2znqizYnNBE.eWDDC23lZ7TacISDzNSSkQWwb4cZQ-1709033850735-0.0-604800000;
+        path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
+      Transfer-Encoding:
+      - chunked
+      access-control-allow-origin:
+      - '*'
+      alt-svc:
+      - h3=":443"; ma=86400
+      openai-model:
+      - davinci-002
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '358'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=15724800; includeSubDomains
+      x-ratelimit-limit-requests:
+      - '3000'
+      x-ratelimit-limit-tokens:
+      - '250000'
+      x-ratelimit-remaining-requests:
+      - '2999'
+      x-ratelimit-remaining-tokens:
+      - '249975'
+      x-ratelimit-reset-requests:
+      - 20ms
+      x-ratelimit-reset-tokens:
+      - 5ms
+      x-request-id:
+      - req_a7de5715969ad94860f4bf724e99032e
+    status:
+      code: 200
+      message: OK
+version: 1

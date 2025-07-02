@@ -1,19 +1,27 @@
-import pytest
-from opentelemetry.semconv_ai import SpanAttributes
 import json
+
+import pytest
+from opentelemetry.sdk._logs import LogData
+from opentelemetry.semconv._incubating.attributes import (
+    event_attributes as EventAttributes,
+)
+from opentelemetry.semconv._incubating.attributes import (
+    gen_ai_attributes as GenAIAttributes,
+)
+from opentelemetry.semconv_ai import SpanAttributes
 
 PROMPT_FILTER_KEY = "prompt_filter_results"
 PROMPT_ERROR = "prompt_error"
 
 
 @pytest.mark.vcr
-def test_chat(exporter, azure_openai_client):
+def test_chat(instrument_legacy, span_exporter, log_exporter, azure_openai_client):
     azure_openai_client.chat.completions.create(
         model="openllmetry-testing",
         messages=[{"role": "user", "content": "Tell me a joke about opentelemetry"}],
     )
 
-    spans = exporter.get_finished_spans()
+    spans = span_exporter.get_finished_spans()
 
     assert [span.name for span in spans] == [
         "openai.chat",
@@ -26,20 +34,112 @@ def test_chat(exporter, azure_openai_client):
     assert open_ai_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
     assert (
         open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)
-        == "https://traceloop-stg.openai.azure.com//openai/"
+        == "https://traceloop-stg.openai.azure.com/openai/"
     )
     assert open_ai_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is False
-    assert open_ai_span.attributes.get("gen_ai.response.id") == "chatcmpl-9HpbZPf84KZFiQG6fdY0KVtIwHyIa"
+    assert (
+        open_ai_span.attributes.get("gen_ai.response.id")
+        == "chatcmpl-9HpbZPf84KZFiQG6fdY0KVtIwHyIa"
+    )
+
+    logs = log_exporter.get_finished_logs()
+    assert (
+        len(logs) == 0
+    ), "Assert that it doesn't emit logs when use_legacy_attributes is True"
 
 
 @pytest.mark.vcr
-def test_chat_content_filtering(exporter, azure_openai_client):
+def test_chat_with_events_with_content(
+    instrument_with_content, span_exporter, log_exporter, azure_openai_client
+):
+    response = azure_openai_client.chat.completions.create(
+        model="openllmetry-testing",
+        messages=[{"role": "user", "content": "Tell me a joke about opentelemetry"}],
+    )
+
+    spans = span_exporter.get_finished_spans()
+
+    assert [span.name for span in spans] == [
+        "openai.chat",
+    ]
+    open_ai_span = spans[0]
+    assert (
+        open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)
+        == "https://traceloop-stg.openai.azure.com/openai/"
+    )
+    assert open_ai_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is False
+    assert (
+        open_ai_span.attributes.get("gen_ai.response.id")
+        == "chatcmpl-9HpbZPf84KZFiQG6fdY0KVtIwHyIa"
+    )
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 2
+
+    # Validate user message Event
+    assert_message_in_logs(
+        logs[0],
+        "gen_ai.user.message",
+        {"content": "Tell me a joke about opentelemetry"},
+    )
+
+    # Validate the ai response
+    choice_event = {
+        "index": 0,
+        "finish_reason": "stop",
+        "message": {
+            "content": response.choices[0].message.content,
+        },
+    }
+    assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
+
+
+@pytest.mark.vcr
+def test_chat_with_events_with_no_content(
+    instrument_with_no_content, span_exporter, log_exporter, azure_openai_client
+):
     azure_openai_client.chat.completions.create(
         model="openllmetry-testing",
         messages=[{"role": "user", "content": "Tell me a joke about opentelemetry"}],
     )
 
-    spans = exporter.get_finished_spans()
+    spans = span_exporter.get_finished_spans()
+
+    assert [span.name for span in spans] == [
+        "openai.chat",
+    ]
+    open_ai_span = spans[0]
+    assert (
+        open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)
+        == "https://traceloop-stg.openai.azure.com/openai/"
+    )
+    assert open_ai_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is False
+    assert (
+        open_ai_span.attributes.get("gen_ai.response.id")
+        == "chatcmpl-9HpbZPf84KZFiQG6fdY0KVtIwHyIa"
+    )
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 2
+
+    # Validate user message Event
+    assert_message_in_logs(logs[0], "gen_ai.user.message", {})
+
+    # Validate the ai response
+    choice_event = {"index": 0, "finish_reason": "stop", "message": {}}
+    assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
+
+
+@pytest.mark.vcr
+def test_chat_content_filtering(
+    instrument_legacy, span_exporter, log_exporter, azure_openai_client
+):
+    azure_openai_client.chat.completions.create(
+        model="openllmetry-testing",
+        messages=[{"role": "user", "content": "Tell me a joke about opentelemetry"}],
+    )
+
+    spans = span_exporter.get_finished_spans()
 
     assert [span.name for span in spans] == [
         "openai.chat",
@@ -55,10 +155,13 @@ def test_chat_content_filtering(exporter, azure_openai_client):
     )
     assert (
         open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)
-        == "https://traceloop-stg.openai.azure.com//openai/"
+        == "https://traceloop-stg.openai.azure.com/openai/"
     )
     assert open_ai_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is False
-    assert open_ai_span.attributes.get("gen_ai.response.id") == "chatcmpl-9HpyGSWv1hoKdGaUaiFhfxzTEVlZo"
+    assert (
+        open_ai_span.attributes.get("gen_ai.response.id")
+        == "chatcmpl-9HpyGSWv1hoKdGaUaiFhfxzTEVlZo"
+    )
 
     content_filter_json = open_ai_span.attributes.get(
         f"{SpanAttributes.LLM_COMPLETIONS}.0.content_filter_results"
@@ -73,15 +176,108 @@ def test_chat_content_filtering(exporter, azure_openai_client):
     assert content_filter_results["self_harm"]["filtered"] is False
     assert content_filter_results["self_harm"]["severity"] == "safe"
 
+    logs = log_exporter.get_finished_logs()
+    assert (
+        len(logs) == 0
+    ), "Assert that it doesn't emit logs when use_legacy_attributes is True"
+
 
 @pytest.mark.vcr
-def test_prompt_content_filtering(exporter, azure_openai_client):
+def test_chat_content_filtering_with_events_with_content(
+    instrument_with_content, span_exporter, log_exporter, azure_openai_client
+):
     azure_openai_client.chat.completions.create(
         model="openllmetry-testing",
         messages=[{"role": "user", "content": "Tell me a joke about opentelemetry"}],
     )
 
-    spans = exporter.get_finished_spans()
+    spans = span_exporter.get_finished_spans()
+
+    assert [span.name for span in spans] == [
+        "openai.chat",
+    ]
+    open_ai_span = spans[0]
+
+    assert (
+        open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)
+        == "https://traceloop-stg.openai.azure.com/openai/"
+    )
+    assert open_ai_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is False
+    assert (
+        open_ai_span.attributes.get("gen_ai.response.id")
+        == "chatcmpl-9HpyGSWv1hoKdGaUaiFhfxzTEVlZo"
+    )
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 2
+
+    # Validate user message Event
+    assert_message_in_logs(
+        logs[0],
+        "gen_ai.user.message",
+        {"content": "Tell me a joke about opentelemetry"},
+    )
+
+    # Validate the ai response
+    choice_event = {
+        "index": 0,
+        "finish_reason": "content_filter",
+        "message": {"content": None, "role": "unknown"},
+    }
+    assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
+
+
+@pytest.mark.vcr
+def test_chat_content_filtering_with_events_with_no_content(
+    instrument_with_no_content, span_exporter, log_exporter, azure_openai_client
+):
+    azure_openai_client.chat.completions.create(
+        model="openllmetry-testing",
+        messages=[{"role": "user", "content": "Tell me a joke about opentelemetry"}],
+    )
+
+    spans = span_exporter.get_finished_spans()
+
+    assert [span.name for span in spans] == [
+        "openai.chat",
+    ]
+    open_ai_span = spans[0]
+
+    assert (
+        open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)
+        == "https://traceloop-stg.openai.azure.com/openai/"
+    )
+    assert open_ai_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is False
+    assert (
+        open_ai_span.attributes.get("gen_ai.response.id")
+        == "chatcmpl-9HpyGSWv1hoKdGaUaiFhfxzTEVlZo"
+    )
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 2
+
+    # Validate user message Event
+    assert_message_in_logs(logs[0], "gen_ai.user.message", {})
+
+    # Validate the ai response
+    choice_event = {
+        "index": 0,
+        "finish_reason": "content_filter",
+        "message": {"role": "unknown"},
+    }
+    assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
+
+
+@pytest.mark.vcr
+def test_prompt_content_filtering(
+    instrument_legacy, span_exporter, log_exporter, azure_openai_client
+):
+    azure_openai_client.chat.completions.create(
+        model="openllmetry-testing",
+        messages=[{"role": "user", "content": "Tell me a joke about opentelemetry"}],
+    )
+
+    spans = span_exporter.get_finished_spans()
 
     assert [span.name for span in spans] == [
         "openai.chat",
@@ -110,9 +306,110 @@ def test_prompt_content_filtering(exporter, azure_openai_client):
 
     assert error["innererror"]["content_filter_result"]["sexual"]["severity"] == "safe"
 
+    logs = log_exporter.get_finished_logs()
+    assert (
+        len(logs) == 0
+    ), "Assert that it doesn't emit logs when use_legacy_attributes is True"
+
 
 @pytest.mark.vcr
-def test_chat_streaming(exporter, azure_openai_client):
+def test_prompt_content_filtering_with_events_with_content(
+    instrument_with_content, span_exporter, log_exporter, azure_openai_client
+):
+    azure_openai_client.chat.completions.create(
+        model="openllmetry-testing",
+        messages=[{"role": "user", "content": "Tell me a joke about opentelemetry"}],
+    )
+
+    spans = span_exporter.get_finished_spans()
+
+    assert [span.name for span in spans] == [
+        "openai.chat",
+    ]
+    open_ai_span = spans[0]
+
+    assert isinstance(
+        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.{PROMPT_ERROR}"], str
+    )
+
+    error = json.loads(
+        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.{PROMPT_ERROR}"]
+    )
+
+    assert "innererror" in error
+
+    assert "content_filter_result" in error["innererror"]
+
+    assert error["innererror"]["code"] == "ResponsibleAIPolicyViolation"
+
+    assert error["innererror"]["content_filter_result"]["hate"]["filtered"]
+
+    assert error["innererror"]["content_filter_result"]["hate"]["severity"] == "high"
+
+    assert error["innererror"]["content_filter_result"]["sexual"]["filtered"] is False
+
+    assert error["innererror"]["content_filter_result"]["sexual"]["severity"] == "safe"
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 1, "Should not have a response event because of the error."
+
+    # Validate user message Event
+    assert_message_in_logs(
+        logs[0],
+        "gen_ai.user.message",
+        {"content": "Tell me a joke about opentelemetry"},
+    )
+
+
+@pytest.mark.vcr
+def test_prompt_content_filtering_with_events_with_no_content(
+    instrument_with_no_content, span_exporter, log_exporter, azure_openai_client
+):
+    azure_openai_client.chat.completions.create(
+        model="openllmetry-testing",
+        messages=[{"role": "user", "content": "Tell me a joke about opentelemetry"}],
+    )
+
+    spans = span_exporter.get_finished_spans()
+
+    assert [span.name for span in spans] == [
+        "openai.chat",
+    ]
+    open_ai_span = spans[0]
+
+    assert isinstance(
+        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.{PROMPT_ERROR}"], str
+    )
+
+    error = json.loads(
+        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.{PROMPT_ERROR}"]
+    )
+
+    assert "innererror" in error
+
+    assert "content_filter_result" in error["innererror"]
+
+    assert error["innererror"]["code"] == "ResponsibleAIPolicyViolation"
+
+    assert error["innererror"]["content_filter_result"]["hate"]["filtered"]
+
+    assert error["innererror"]["content_filter_result"]["hate"]["severity"] == "high"
+
+    assert error["innererror"]["content_filter_result"]["sexual"]["filtered"] is False
+
+    assert error["innererror"]["content_filter_result"]["sexual"]["severity"] == "safe"
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 1, "Should not have a response event because of the error."
+
+    # Validate user message Event
+    assert_message_in_logs(logs[0], "gen_ai.user.message", {})
+
+
+@pytest.mark.vcr
+def test_chat_streaming(
+    instrument_legacy, span_exporter, log_exporter, azure_openai_client
+):
     response = azure_openai_client.chat.completions.create(
         model="openllmetry-testing",
         messages=[{"role": "user", "content": "Tell me a joke about opentelemetry"}],
@@ -123,7 +420,7 @@ def test_chat_streaming(exporter, azure_openai_client):
     for _ in response:
         chunk_count += 1
 
-    spans = exporter.get_finished_spans()
+    spans = span_exporter.get_finished_spans()
 
     assert [span.name for span in spans] == [
         "openai.chat",
@@ -136,7 +433,7 @@ def test_chat_streaming(exporter, azure_openai_client):
     assert open_ai_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
     assert (
         open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)
-        == "https://traceloop-stg.openai.azure.com//openai/"
+        == "https://traceloop-stg.openai.azure.com/openai/"
     )
     assert open_ai_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is True
 
@@ -155,12 +452,150 @@ def test_chat_streaming(exporter, azure_openai_client):
         prompt_filter_results[0]["content_filter_results"]["self_harm"]["filtered"]
         is False
     )
-    assert open_ai_span.attributes.get("gen_ai.response.id") == "chatcmpl-9HpbaAXyt0cAnlWvI8kUAFpZt5jyQ"
+    assert (
+        open_ai_span.attributes.get("gen_ai.response.id")
+        == "chatcmpl-9HpbaAXyt0cAnlWvI8kUAFpZt5jyQ"
+    )
+
+    logs = log_exporter.get_finished_logs()
+    assert (
+        len(logs) == 0
+    ), "Assert that it doesn't emit logs when use_legacy_attributes is True"
+
+
+@pytest.mark.vcr
+def test_chat_streaming_with_events_with_content(
+    instrument_with_content, span_exporter, log_exporter, azure_openai_client
+):
+    response = azure_openai_client.chat.completions.create(
+        model="openllmetry-testing",
+        messages=[{"role": "user", "content": "Tell me a joke about opentelemetry"}],
+        stream=True,
+    )
+
+    chunk_count = 0
+    for _ in response:
+        chunk_count += 1
+
+    spans = span_exporter.get_finished_spans()
+
+    assert [span.name for span in spans] == [
+        "openai.chat",
+    ]
+    open_ai_span = spans[0]
+
+    assert (
+        open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)
+        == "https://traceloop-stg.openai.azure.com/openai/"
+    )
+    assert open_ai_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is True
+
+    events = open_ai_span.events
+    assert len(events) == chunk_count
+
+    # prompt filter results
+    prompt_filter_results = json.loads(
+        open_ai_span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.{PROMPT_FILTER_KEY}")
+    )
+    assert prompt_filter_results[0]["prompt_index"] == 0
+    assert (
+        prompt_filter_results[0]["content_filter_results"]["hate"]["severity"] == "safe"
+    )
+    assert (
+        prompt_filter_results[0]["content_filter_results"]["self_harm"]["filtered"]
+        is False
+    )
+    assert (
+        open_ai_span.attributes.get("gen_ai.response.id")
+        == "chatcmpl-9HpbaAXyt0cAnlWvI8kUAFpZt5jyQ"
+    )
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 2
+
+    # Validate user message Event
+    assert_message_in_logs(
+        logs[0],
+        "gen_ai.user.message",
+        {"content": "Tell me a joke about opentelemetry"},
+    )
+
+    # Validate the ai response
+    choice_event = {
+        "index": 0,
+        "finish_reason": "stop",
+        "message": {
+            "content": (
+                "Why did the Opentelemetry developer bring a ladder to the coding "
+                "competition? \n\nBecause they wanted to reach new traces!"
+            ),
+        },
+    }
+    assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
+
+
+@pytest.mark.vcr
+def test_chat_streaming_with_events_with_no_content(
+    instrument_with_no_content, span_exporter, log_exporter, azure_openai_client
+):
+    response = azure_openai_client.chat.completions.create(
+        model="openllmetry-testing",
+        messages=[{"role": "user", "content": "Tell me a joke about opentelemetry"}],
+        stream=True,
+    )
+
+    chunk_count = 0
+    for _ in response:
+        chunk_count += 1
+
+    spans = span_exporter.get_finished_spans()
+
+    assert [span.name for span in spans] == [
+        "openai.chat",
+    ]
+    open_ai_span = spans[0]
+    assert (
+        open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)
+        == "https://traceloop-stg.openai.azure.com/openai/"
+    )
+    assert open_ai_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is True
+
+    events = open_ai_span.events
+    assert len(events) == chunk_count
+
+    # prompt filter results
+    prompt_filter_results = json.loads(
+        open_ai_span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.{PROMPT_FILTER_KEY}")
+    )
+    assert prompt_filter_results[0]["prompt_index"] == 0
+    assert (
+        prompt_filter_results[0]["content_filter_results"]["hate"]["severity"] == "safe"
+    )
+    assert (
+        prompt_filter_results[0]["content_filter_results"]["self_harm"]["filtered"]
+        is False
+    )
+    assert (
+        open_ai_span.attributes.get("gen_ai.response.id")
+        == "chatcmpl-9HpbaAXyt0cAnlWvI8kUAFpZt5jyQ"
+    )
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 2
+
+    # Validate user message Event
+    assert_message_in_logs(logs[0], "gen_ai.user.message", {})
+
+    # Validate the ai response
+    choice_event = {"index": 0, "finish_reason": "stop", "message": {}}
+    assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
 
 
 @pytest.mark.vcr
 @pytest.mark.asyncio
-async def test_chat_async_streaming(exporter, async_azure_openai_client):
+async def test_chat_async_streaming(
+    instrument_legacy, span_exporter, log_exporter, async_azure_openai_client
+):
     response = await async_azure_openai_client.chat.completions.create(
         model="openllmetry-testing",
         messages=[{"role": "user", "content": "Tell me a joke about opentelemetry"}],
@@ -171,7 +606,7 @@ async def test_chat_async_streaming(exporter, async_azure_openai_client):
     async for _ in response:
         chunk_count += 1
 
-    spans = exporter.get_finished_spans()
+    spans = span_exporter.get_finished_spans()
 
     assert [span.name for span in spans] == [
         "openai.chat",
@@ -185,7 +620,7 @@ async def test_chat_async_streaming(exporter, async_azure_openai_client):
     assert open_ai_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
     assert (
         open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)
-        == "https://traceloop-stg.openai.azure.com//openai/"
+        == "https://traceloop-stg.openai.azure.com/openai/"
     )
     assert open_ai_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is True
 
@@ -195,4 +630,139 @@ async def test_chat_async_streaming(exporter, async_azure_openai_client):
 
     events = open_ai_span.events
     assert len(events) == chunk_count
-    assert open_ai_span.attributes.get("gen_ai.response.id") == "chatcmpl-9HpbbsSaH8U6amSDAwdA2WzMeDdLB"
+    assert (
+        open_ai_span.attributes.get("gen_ai.response.id")
+        == "chatcmpl-9HpbbsSaH8U6amSDAwdA2WzMeDdLB"
+    )
+
+    logs = log_exporter.get_finished_logs()
+    assert (
+        len(logs) == 0
+    ), "Assert that it doesn't emit logs when use_legacy_attributes is True"
+
+
+@pytest.mark.vcr
+@pytest.mark.asyncio
+async def test_chat_async_streaming_with_events_with_content(
+    instrument_with_content, span_exporter, log_exporter, async_azure_openai_client
+):
+    response = await async_azure_openai_client.chat.completions.create(
+        model="openllmetry-testing",
+        messages=[{"role": "user", "content": "Tell me a joke about opentelemetry"}],
+        stream=True,
+    )
+
+    chunk_count = 0
+    async for _ in response:
+        chunk_count += 1
+
+    spans = span_exporter.get_finished_spans()
+
+    assert [span.name for span in spans] == [
+        "openai.chat",
+    ]
+    open_ai_span = spans[0]
+
+    assert (
+        open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)
+        == "https://traceloop-stg.openai.azure.com/openai/"
+    )
+    assert open_ai_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is True
+
+    assert open_ai_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS) == 36
+    assert open_ai_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 8
+    assert open_ai_span.attributes.get(SpanAttributes.LLM_USAGE_COMPLETION_TOKENS) == 28
+
+    events = open_ai_span.events
+    assert len(events) == chunk_count
+    assert (
+        open_ai_span.attributes.get("gen_ai.response.id")
+        == "chatcmpl-9HpbbsSaH8U6amSDAwdA2WzMeDdLB"
+    )
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 2
+
+    # Validate user message Event
+    assert_message_in_logs(
+        logs[0],
+        "gen_ai.user.message",
+        {"content": "Tell me a joke about opentelemetry"},
+    )
+
+    # Validate the ai response
+    choice_event = {
+        "index": 0,
+        "finish_reason": "stop",
+        "message": {
+            "content": (
+                "Why did the OpenTelemetry project become a stand-up comedian?\n\n"
+                "Because it wanted to trace its steps and observe its laughter-per-minute rate!"
+            ),
+        },
+    }
+    assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
+
+
+@pytest.mark.vcr
+@pytest.mark.asyncio
+async def test_chat_async_streaming_with_events_with_no_content(
+    instrument_with_no_content, span_exporter, log_exporter, async_azure_openai_client
+):
+    response = await async_azure_openai_client.chat.completions.create(
+        model="openllmetry-testing",
+        messages=[{"role": "user", "content": "Tell me a joke about opentelemetry"}],
+        stream=True,
+    )
+
+    chunk_count = 0
+    async for _ in response:
+        chunk_count += 1
+
+    spans = span_exporter.get_finished_spans()
+
+    assert [span.name for span in spans] == [
+        "openai.chat",
+    ]
+    open_ai_span = spans[0]
+
+    assert (
+        open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)
+        == "https://traceloop-stg.openai.azure.com/openai/"
+    )
+    assert open_ai_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is True
+
+    assert open_ai_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS) == 36
+    assert open_ai_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 8
+    assert open_ai_span.attributes.get(SpanAttributes.LLM_USAGE_COMPLETION_TOKENS) == 28
+
+    events = open_ai_span.events
+    assert len(events) == chunk_count
+    assert (
+        open_ai_span.attributes.get("gen_ai.response.id")
+        == "chatcmpl-9HpbbsSaH8U6amSDAwdA2WzMeDdLB"
+    )
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 2
+
+    # Validate user message Event
+    assert_message_in_logs(logs[0], "gen_ai.user.message", {})
+
+    # Validate the ai response
+    choice_event = {"index": 0, "finish_reason": "stop", "message": {}}
+    assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
+
+
+def assert_message_in_logs(log: LogData, event_name: str, expected_content: dict):
+    assert log.log_record.attributes.get(EventAttributes.EVENT_NAME) == event_name
+    assert (
+        log.log_record.attributes.get(GenAIAttributes.GEN_AI_SYSTEM)
+        == GenAIAttributes.GenAiSystemValues.OPENAI.value
+    )
+
+    if not expected_content:
+        assert not log.log_record.body
+    else:
+        assert log.log_record.body
+        assert dict(log.log_record.body) == expected_content
