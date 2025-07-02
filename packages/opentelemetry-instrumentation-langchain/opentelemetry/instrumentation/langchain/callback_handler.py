@@ -205,7 +205,6 @@ def _set_chat_request(
 
 
 def _extract_model_name_from_response_metadata(response: LLMResult) -> Optional[str]:
-    """Extract model name from response metadata and set it as a span attribute if found."""
     model_name = None
     for generations in response.generations:
         for generation in generations:
