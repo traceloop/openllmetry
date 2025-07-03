@@ -1,16 +1,16 @@
 interactions:
 - request:
-    body: '{"data": [{"object": "trace", "id": "trace_8d037c91c81e4d40ba7b20d08448e647",
+    body: '{"data": [{"object": "trace", "id": "trace_690330b96e384909b0c0312470266cab",
       "workflow_name": "Agent workflow", "group_id": null, "metadata": null}, {"object":
-      "trace.span", "id": "span_0aae87152b6c430f9f8458ec", "trace_id": "trace_8d037c91c81e4d40ba7b20d08448e647",
-      "parent_id": "span_223d7288c1134ef0a55996c0", "started_at": "2025-07-03T05:30:01.429182+00:00",
-      "ended_at": "2025-07-03T05:30:05.533168+00:00", "span_data": {"type": "response",
-      "response_id": "resp_6866155a0e08819983ab0cf0e1f49e13011fdf43d3023b4a"}, "error":
-      null}, {"object": "trace.span", "id": "span_223d7288c1134ef0a55996c0", "trace_id":
-      "trace_8d037c91c81e4d40ba7b20d08448e647", "parent_id": null, "started_at": "2025-07-03T05:30:01.409294+00:00",
-      "ended_at": "2025-07-03T05:30:05.533627+00:00", "span_data": {"type": "agent",
+      "trace.span", "id": "span_a18c82e1d4624898b1f85f62", "trace_id": "trace_690330b96e384909b0c0312470266cab",
+      "parent_id": "span_995966364c784e9db411bd65", "started_at": "2025-07-03T05:38:27.465134+00:00",
+      "ended_at": "2025-07-03T05:38:30.767241+00:00", "span_data": {"type": "response",
+      "response_id": "resp_686617543528819a8afa147fa10cd568082490260e37ab4d"}, "error":
+      null}, {"object": "trace.span", "id": "span_995966364c784e9db411bd65", "trace_id":
+      "trace_690330b96e384909b0c0312470266cab", "parent_id": null, "started_at": "2025-07-03T05:38:27.446223+00:00",
+      "ended_at": "2025-07-03T05:38:30.767638+00:00", "span_data": {"type": "agent",
       "name": "testAgent", "handoffs": [], "tools": [], "output_type": "str"}, "error":
-      null}, {"object": "trace", "id": "trace_a9f3e246c5c14c72b64cfe83a653b342", "workflow_name":
+      null}, {"object": "trace", "id": "trace_1b5f2bca49e54d28a07dd922ad47f2d5", "workflow_name":
       "Agent workflow", "group_id": null, "metadata": null}]}'
     headers:
       accept-encoding:
@@ -29,30 +29,21 @@ interactions:
     uri: https://api.openai.com/v1/traces/ingest
   response:
     body:
-      string: "{\n  \"error\": {\n    \"message\": \"The server had an error processing\
-        \ your request. Sorry about that! You can retry your request, or contact us\
-        \ through our help center at help.openai.com if you keep seeing this error.\
-        \ (Please include the request ID req_d1781c6246541ff51e4ac6863d214877 in your\
-        \ email.)\",\n    \"type\": \"server_error\",\n    \"param\": null,\n    \"\
-        code\": null\n  }\n}"
+      string: ''
     headers:
       CF-RAY:
-      - 9593fd2e1cc4c261-SIN
+      - 959409890f6ea8de-SIN
       Connection:
       - keep-alive
-      Content-Length:
-      - '369'
-      Content-Type:
-      - application/json
       Date:
-      - Thu, 03 Jul 2025 05:30:07 GMT
+      - Thu, 03 Jul 2025 05:38:33 GMT
       Server:
       - cloudflare
       Set-Cookie:
-      - __cf_bm=c2bWVx1XwF3Q6yz2hQ5BTnycFTvwgaN45okGmQ42dfU-1751520607-1.0.1.1-GbkaZdUCJ_PkkFlrHyl0kyfNBu2gW3HuWgFETOQO8wKxDFLDZGhGujcddZeZ_HRChvAugyfmpDbPNEi0wbeCHpofdAmtgzcDwtY51S9OatM;
-        path=/; expires=Thu, 03-Jul-25 06:00:07 GMT; domain=.api.openai.com; HttpOnly;
+      - __cf_bm=qEij9lNx0uWSacoBFo_j2mQVB2nnWPOA3uyhgtu2j7o-1751521113-1.0.1.1-oY2FXBXP6rClr0vH5cL1U1NBpedSGwWikCJBjhpd3lvsjg_NLtePUWhd7u.t3fDUVFl9FDSpmDxWbhBxq8SdNhJNoEyF8Ft3s7Dnxuw8SZk;
+        path=/; expires=Thu, 03-Jul-25 06:08:33 GMT; domain=.api.openai.com; HttpOnly;
         Secure; SameSite=None
-      - _cfuvid=vZ4P9SYJAxv80_WbaiutyCafyo3KYu2VbGY.9g1EAbM-1751520607346-0.0.1.1-604800000;
+      - _cfuvid=EnHl6TrvI0oXtKJctYlx6TVq8lq4_FgTwLB7QOopJos-1751521113590-0.0.1.1-604800000;
         path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
       X-Content-Type-Options:
       - nosniff
@@ -60,15 +51,19 @@ interactions:
       - h3=":443"; ma=86400
       cf-cache-status:
       - DYNAMIC
+      openai-organization:
+      - traceloop
       openai-processing-ms:
-      - '238'
+      - '399'
+      openai-version:
+      - '2020-10-01'
       strict-transport-security:
       - max-age=31536000; includeSubDomains; preload
       x-request-id:
-      - req_d1781c6246541ff51e4ac6863d214877
+      - req_23d466e537c965e47ccbde4f649ae24f
     status:
-      code: 500
-      message: Internal Server Error
+      code: 204
+      message: No Content
 - request:
     body: '{"input": [{"content": "What is AI?", "role": "user"}], "model": "gpt-4.1",
       "include": [], "instructions": "You are a helpful assistant that answers all
@@ -82,8 +77,8 @@ interactions:
       content-length:
       - '255'
       cookie:
-      - __cf_bm=XlHPPTLjK21CzIHA6cMYaItv4SKFUTJF21D9hshhZD4-1751520605-1.0.1.1-hkyQ9ZduTMkBEPfaF1NazWofWUWFe0bHcNSG4l9jMojQpNhoqTPlh_n2Bu7gKTm_P8WyYDY2zQ8vyFRCA2swXaCw8U_0l99Kd76kudjsVSU;
-        _cfuvid=WydTmPQq7iXZAwGhWfeqeZhqSJSK3PC2Me9cQGdXmF8-1751520605531-0.0.1.1-604800000
+      - __cf_bm=qdPyvz03IcglFKIMOTpS5u_2p8h_6YYatGJFmXcdqsA-1751521110-1.0.1.1-hpWuwd7lSHdhcZPERmaUuuvi7D7.JaFTvztMUmI9zZxNoFzUJVr1r3OfVFHxiTdn5buOpaAuC.SqtgmqpNqm5MQHJZF9dU1jSrjhP_2Ncak;
+        _cfuvid=bHwtoikLSYYfWc5v1GVFx_6.u2Xw82sPFoh8SdvWKuI-1751521110757-0.0.1.1-604800000
       host:
       - api.openai.com
       user-agent:
@@ -111,29 +106,29 @@ interactions:
   response:
     body:
       string: !!binary |
-        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
+        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
     headers:
       CF-RAY:
-      - 9593fd294ce94c95-SIN
+      - 9594097efccbce2a-SIN
       Connection:
       - keep-alive
       Content-Encoding:
@@ -141,7 +136,7 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Thu, 03 Jul 2025 05:30:09 GMT
+      - Thu, 03 Jul 2025 05:38:33 GMT
       Server:
       - cloudflare
       Transfer-Encoding:
@@ -155,7 +150,7 @@ interactions:
       openai-organization:
       - traceloop
       openai-processing-ms:
-      - '3184'
+      - '2650'
       openai-version:
       - '2020-10-01'
       strict-transport-security:
@@ -173,7 +168,7 @@ interactions:
       x-ratelimit-reset-tokens:
       - 0s
       x-request-id:
-      - req_d2ca8460abe415adc4f1d12ad6e4838f
+      - req_1c0c4257631481aec6915a646e0e0338
     status:
       code: 200
       message: OK
