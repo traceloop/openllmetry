@@ -69,7 +69,7 @@ def test_agent():
     test_agent = Agent(
         name="testAgent",
         instructions="You are a helpful assistant that answers all questions",
-        model="gpt-4.0",
+        model="gpt-4.1",
         model_settings=ModelSettings(
             temperature=0.3, max_tokens=1024, top_p=0.2, frequency_penalty=1.3
         ),

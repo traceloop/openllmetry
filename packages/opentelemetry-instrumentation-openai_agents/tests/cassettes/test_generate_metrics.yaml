@@ -1,0 +1,173 @@
+interactions:
+- request:
+    body: '{"data": [{"object": "trace", "id": "trace_a4677cd0b7e048d6948beb69b5b2c5ec",
+      "workflow_name": "Agent workflow", "group_id": null, "metadata": null}, {"object":
+      "trace.span", "id": "span_eff513497fb34d75a3160294", "trace_id": "trace_a4677cd0b7e048d6948beb69b5b2c5ec",
+      "parent_id": "span_160325affa214221a9392428", "started_at": "2025-07-03T05:21:09.354906+00:00",
+      "ended_at": "2025-07-03T05:21:12.487851+00:00", "span_data": {"type": "response",
+      "response_id": "resp_686613460bb8819b89be9ee007f5a8d10cb800a7c981d4dc"}, "error":
+      null}, {"object": "trace.span", "id": "span_160325affa214221a9392428", "trace_id":
+      "trace_a4677cd0b7e048d6948beb69b5b2c5ec", "parent_id": null, "started_at": "2025-07-03T05:21:09.334852+00:00",
+      "ended_at": "2025-07-03T05:21:12.488496+00:00", "span_data": {"type": "agent",
+      "name": "testAgent", "handoffs": [], "tools": [], "output_type": "str"}, "error":
+      null}, {"object": "trace", "id": "trace_136574d41c6843349bd83b2127ca6185", "workflow_name":
+      "Agent workflow", "group_id": null, "metadata": null}]}'
+    headers:
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '1030'
+      host:
+      - api.openai.com
+      openai-beta:
+      - traces=v1
+      user-agent:
+      - python-httpx/0.27.0
+    method: POST
+    uri: https://api.openai.com/v1/traces/ingest
+  response:
+    body:
+      string: ''
+    headers:
+      CF-RAY:
+      - 9593f02e9a60a8c6-SIN
+      Connection:
+      - keep-alive
+      Date:
+      - Thu, 03 Jul 2025 05:21:14 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=uuqCN595fA_VbfVW6kjJlEWYoPqFcDXCCKcmhcaMYUc-1751520074-1.0.1.1-l0J.yWFh8vDrdYTr.5sR2IJjhFJtHZPnmRYX4GfX9gZKHPgV9FRPDPbfW2PJLog4VVjago5lDz1YLrxl17YYCPUkXwBohXw6gbDduo3.EGU;
+        path=/; expires=Thu, 03-Jul-25 05:51:14 GMT; domain=.api.openai.com; HttpOnly;
+        Secure; SameSite=None
+      - _cfuvid=pEM1tW5g1wfQ8NfN3Lp._YBk..mCKuOszv1HChtnWOo-1751520074977-0.0.1.1-604800000;
+        path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
+      X-Content-Type-Options:
+      - nosniff
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '242'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-request-id:
+      - req_53e3c388286e7a4ff604378a87d5867c
+    status:
+      code: 204
+      message: No Content
+- request:
+    body: '{"input": [{"content": "What is AI?", "role": "user"}], "model": "gpt-4.1",
+      "include": [], "instructions": "You are a helpful assistant that answers all
+      questions", "max_output_tokens": 1024, "stream": false, "temperature": 0.3,
+      "tools": [], "top_p": 0.2}'
+    headers:
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '255'
+      cookie:
+      - __cf_bm=p8go97ULK2qtV4PJIPcnaIehF7MaPXIweoQuw8w86EU-1751520072-1.0.1.1-_0Oi3DJSl3i0URAkK.mCxv6b_93YzOQ2_wIssSDdCgWZI1.gIk96yRFuMh5wzSFlh1_8bzqModdwVZgo_Bj4a3U5zOMVyShsPJZ_xPZwX58;
+        _cfuvid=Xae8XRVUndqMeLvk4BMVeqvFwQMplJ0eBjxwqFcRiZ8-1751520072529-0.0.1.1-604800000
+      host:
+      - api.openai.com
+      user-agent:
+      - Agents/Python 0.0.16
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - async:asyncio
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.81.0
+      x-stainless-read-timeout:
+      - '600'
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.13.1
+    method: POST
+    uri: https://api.openai.com/v1/responses
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA3RVS2/jNhC+51cMdNoYcSA7suP4lmOAtoc+DsXuwhiRI4kNRWqHQyfeRf57QcpW
+        7DZ7Max5fPP++OMKoDC62ELBFIbderNeL+6qjapos1k81Fjpck2LjSJ9X2G9LjerskJc3y1X9RJX
+        y+ImAfj6H1JyAvEu0ChXTCikd5h0i/vVYrUsy/tl1gVBiSH5KN8PloT06FSjem7ZR5eyatAGymJi
+        9lxswUVrs8C4k+NOk6Cx4VIbhKMS410O8rePgEyA0JEdmmgBQzBB0AlIhwLowgtxALQWvkUKo2fG
+        6vF156MMUXbinykDLsplNSnFe7tTaC9T6L0mm2K3g8yr28V8WS5X87KaL6pj2zJmsYXPVwAAP/Lv
+        NI8+tKdxPCx0U6VxbFa12mD1UD9sdFUu8MNxZAw5DJRRKARs6V3xs75npfJOyL2ndJ7WBeypHfQq
+        k3c2QOe84Kntn79eKK1vB/b1B5oMtIViNnt8ms0gzUUHaDzDbPbIYhqjDFp4ckLWmpacotnsFp4E
+        mJo0NvEgHYGmPVk/9OQEfAOpxCjEEA5BqA/gGYJv5CWtQh67QgcDceO5B8HwHEAOg0mzPADTt2jY
+        uBa62KMDcxb9Fv7sKNDRxzhlo06QxrUBrHmm7Rf3xc3hL6eJczkJB52Ggb2iENKnRddGbAk+JQ9Q
+        HUrtJWcpjC7Y3EhI6xWuE9rvpHzrzPfkbHpsaaxoIFJd0v9CyC4pG/Y9aBTMIU0/sN8nud8Tg5ie
+        4FOPqjOOwB59coBf8TmZaVImpBmODbPZN43OUh9SYY9PuXM1QZMuFYyDHt0BaE980HgAIdU5b31r
+        KNxAiKoDDLA3LBHPbi8cS//DsEmxHi294vUNMCnf9+T02IHT+EZj6Xwg8A5+I2msec2OPX737voG
+        AtlmrtnklBVyuMkt6D2PM0scwATaNA1xWpO00iHb2LQ8Ie3N49MNMLp2amUw6VaAo6V5jYH0lJJ4
+        QL1HpygF0QlgWqzc2gyNGgdJKUtHhsG/uNti2v+347/pJAr2Np/Z1KfROBlmo2JARmvJXlKPcBzJ
+        cmDaGx/D7sTHu8wpEzUxYfBp6MX2eN8FNY1nOTNKXBH7HvlwFF4BvI3UTbw3inZiKDFyoanBaEci
+        KIJ4pvNchPqBGCVmcXl7d5Tmgz8GT+eH799nRJPtpuLH+GPNnTdqbFIUX0yKd3IpxA+7M8opJ+GQ
+        ExnfIeHoVN6yXIoJWNvTUxQzdU5ZGnfxBIwPwH/kZ2/RVItC1ZF+dyzHeo7e/3tZ7jYfaT4Cnsb4
+        M2zxgvYMer2cmhgDXTynPQkmwkj4b1dv/wIAAP//AwA79+EGGQgAAA==
+    headers:
+      CF-RAY:
+      - 9593f025c93389b3-SIN
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 03 Jul 2025 05:21:18 GMT
+      Server:
+      - cloudflare
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '6083'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-ratelimit-limit-requests:
+      - '10000'
+      x-ratelimit-limit-tokens:
+      - '30000000'
+      x-ratelimit-remaining-requests:
+      - '9999'
+      x-ratelimit-remaining-tokens:
+      - '29999957'
+      x-ratelimit-reset-requests:
+      - 6ms
+      x-ratelimit-reset-tokens:
+      - 0s
+      x-request-id:
+      - req_b1c52ffa79fa1c0f85d639ea6ff095e5
+    status:
+      code: 200
+      message: OK
+version: 1

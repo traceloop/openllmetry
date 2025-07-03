@@ -94,8 +94,7 @@ async def _wrap_agent_run(
     prompt_list = args[2] if len(args) > 2 else None
     tool_name = args[4] if len(args) > 4 else None
     agent_name = getattr(agent, "name", "agent")
-    model_name = getattr(getattr(agent, "model", None), "model",
-                         "unknown_model")
+    model_name = get_model_name(agent)
 
     with tracer.start_as_current_span(
         f"{agent_name}.agent",
@@ -139,6 +138,17 @@ async def _wrap_agent_run(
         except Exception as e:
             span.set_status(Status(StatusCode.ERROR, str(e)))
             raise
+
+
+def get_model_name(agent):
+    model_attr = getattr(
+        getattr(agent, "model", None), "model", "unknown_model"
+    )
+    if model_attr == "unknown_model":
+        model_attr = getattr(agent, "model", None)
+        return model_attr
+    else:
+        return model_attr
 
 
 def extract_agent_details(test_agent, span):

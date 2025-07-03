@@ -57,7 +57,7 @@ def test_agent_spans(exporter, test_agent):
     assert span.attributes[SpanAttributes.LLM_SYSTEM] == "openai"
     assert (
         span.attributes[SpanAttributes.LLM_REQUEST_MODEL]
-        == "gpt-4.0"
+        == "gpt-4.1"
     )
     assert span.attributes[SpanAttributes.LLM_REQUEST_TEMPERATURE] == 0.3
     assert span.attributes[SpanAttributes.LLM_REQUEST_MAX_TOKENS] == 1024
@@ -67,7 +67,7 @@ def test_agent_spans(exporter, test_agent):
         span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
         == "What is AI?"
     )
-    assert span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 48
+    assert span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 24
 
 
 @pytest.mark.vcr
@@ -129,7 +129,7 @@ def test_generate_metrics(metrics_test_context, test_agent):
                     metric.data.data_points[0].attributes[
                         SpanAttributes.LLM_RESPONSE_MODEL
                     ]
-                    == "gpt-4.0"
+                    == "gpt-4.1"
                 )
 
         assert found_token_metric is True
