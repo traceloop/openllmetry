@@ -48,7 +48,7 @@ class OpenAIAgentsInstrumentor(BaseInstrumentor):
 
         wrap_function_wrapper(
             "agents.run",
-            " AgentRunner._get_new_response",
+            "AgentRunner._get_new_response",
             _wrap_agent_run(
                 tracer,
                 duration_histogram,
