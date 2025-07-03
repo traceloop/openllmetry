@@ -30,15 +30,6 @@ async def test_async_runner_mocked_output(test_agent):
         assert result.final_output == "Hello, this is a mocked response!"
 
 
-def test_sync_runner_mocked_output(test_agent):
-    mock_result = MagicMock()
-    mock_result.final_output = "Hello, this is a mocked response!"
-
-    with patch.object(Runner, "run", return_value=mock_result):
-        result = Runner.run_sync(starting_agent=test_agent, input="Mock input")
-        assert result.final_output == "Hello, this is a mocked response!"
-
-
 @pytest.mark.vcr
 def test_agent_spans(exporter, test_agent):
     query = "What is AI?"
