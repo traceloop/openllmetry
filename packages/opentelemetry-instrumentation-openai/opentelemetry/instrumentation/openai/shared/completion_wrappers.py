@@ -69,7 +69,7 @@ def completion_wrapper(tracer, wrapped, instance, args, kwargs):
         # span will be closed after the generator is done
         return _build_from_streaming_response(span, kwargs, response)
     else:
-        _handle_response(response, span)
+        _handle_response(response, span, instance)
 
     span.end()
     return response
@@ -101,7 +101,7 @@ async def acompletion_wrapper(tracer, wrapped, instance, args, kwargs):
         # span will be closed after the generator is done
         return _abuild_from_streaming_response(span, kwargs, response)
     else:
-        _handle_response(response, span)
+        _handle_response(response, span, instance)
 
     span.end()
     return response
@@ -109,7 +109,7 @@ async def acompletion_wrapper(tracer, wrapped, instance, args, kwargs):
 
 @dont_throw
 def _handle_request(span, kwargs, instance):
-    _set_request_attributes(span, kwargs)
+    _set_request_attributes(span, kwargs, instance)
     if should_emit_events():
         _emit_prompts_events(kwargs)
     else:
@@ -131,7 +131,7 @@ def _emit_prompts_events(kwargs):
 
 
 @dont_throw
-def _handle_response(response, span):
+def _handle_response(response, span, instance=None):
     if is_openai_v1():
         response_dict = model_as_dict(response)
     else:
