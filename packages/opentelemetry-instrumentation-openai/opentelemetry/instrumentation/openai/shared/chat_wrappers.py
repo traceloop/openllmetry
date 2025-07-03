@@ -89,7 +89,6 @@ def chat_wrapper(
     )
 
     run_async(_handle_request(span, kwargs, instance))
-
     try:
         start_time = time.time()
         response = wrapped(*args, **kwargs)
@@ -107,6 +106,7 @@ def chat_wrapper(
         if exception_counter:
             exception_counter.add(1, attributes=attributes)
 
+        span.record_exception(e)
         span.set_status(Status(StatusCode.ERROR, str(e)))
         span.end()
 
@@ -204,6 +204,7 @@ async def achat_wrapper(
         if exception_counter:
             exception_counter.add(1, attributes=attributes)
 
+        span.record_exception(e)
         span.set_status(Status(StatusCode.ERROR, str(e)))
         span.end()
 

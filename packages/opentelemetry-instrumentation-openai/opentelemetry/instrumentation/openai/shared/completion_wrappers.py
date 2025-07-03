@@ -61,6 +61,7 @@ def completion_wrapper(tracer, wrapped, instance, args, kwargs):
     try:
         response = wrapped(*args, **kwargs)
     except Exception as e:
+        span.record_exception(e)
         span.set_status(Status(StatusCode.ERROR, str(e)))
         span.end()
         raise e
@@ -93,6 +94,7 @@ async def acompletion_wrapper(tracer, wrapped, instance, args, kwargs):
     try:
         response = await wrapped(*args, **kwargs)
     except Exception as e:
+        span.record_exception(e)
         span.set_status(Status(StatusCode.ERROR, str(e)))
         span.end()
         raise e

@@ -89,6 +89,7 @@ def embeddings_wrapper(
             if exception_counter:
                 exception_counter.add(1, attributes=attributes)
 
+            span.record_exception(e)
             span.set_status(Status(StatusCode.ERROR, str(e)))
             span.end()
 
@@ -152,6 +153,7 @@ async def aembeddings_wrapper(
             if exception_counter:
                 exception_counter.add(1, attributes=attributes)
 
+            span.record_exception(e)
             span.set_status(Status(StatusCode.ERROR, str(e)))
             span.end()
 

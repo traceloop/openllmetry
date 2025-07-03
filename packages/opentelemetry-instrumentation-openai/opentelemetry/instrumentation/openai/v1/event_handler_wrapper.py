@@ -3,6 +3,7 @@ from opentelemetry.instrumentation.openai.shared.event_emitter import emit_event
 from opentelemetry.instrumentation.openai.shared.event_models import ChoiceEvent
 from opentelemetry.instrumentation.openai.utils import should_emit_events
 from opentelemetry.semconv_ai import SpanAttributes
+from opentelemetry.trace import Status, StatusCode
 from typing_extensions import override
 
 from openai import AssistantEventHandler
@@ -66,6 +67,8 @@ class EventHandleWrapper(AssistantEventHandler):
 
     @override
     def on_exception(self, exception: Exception):
+        self._span.record_exception(exception)
+        self._span.set_status(Status(StatusCode.ERROR, str(exception)))
         self._original_handler.on_exception(exception)
 
     @override
