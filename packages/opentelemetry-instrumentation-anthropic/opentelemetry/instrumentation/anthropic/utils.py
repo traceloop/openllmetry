@@ -4,12 +4,14 @@ import os
 import logging
 import threading
 import traceback
+from importlib.metadata import version
 from opentelemetry import context as context_api
 from opentelemetry.instrumentation.anthropic.config import Config
 from opentelemetry.semconv_ai import SpanAttributes
 
 GEN_AI_SYSTEM = "gen_ai.system"
 GEN_AI_SYSTEM_ANTHROPIC = "anthropic"
+_PYDANTIC_VERSION = version("pydantic")
 
 
 def set_span_attribute(span, name, value):
@@ -150,3 +152,17 @@ class JSONEncoder(json.JSONEncoder):
             logger = logging.getLogger(__name__)
             logger.debug("Failed to serialize object of type: %s", type(o).__name__)
             return ""
+
+
+def model_as_dict(model):
+    if isinstance(model, dict):
+        return model
+    if _PYDANTIC_VERSION < "2.0.0" and hasattr(model, "dict"):
+        return model.dict()
+    if hasattr(model, "model_dump"):
+        return model.model_dump()
+    else:
+        try:
+            return dict(model)
+        except Exception:
+            return model
