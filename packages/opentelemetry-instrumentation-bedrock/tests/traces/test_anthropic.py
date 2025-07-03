@@ -62,8 +62,21 @@ def test_anthropic_3_completion_complex_content(test_context, brt):
                     "content": [
                         {"type": "text", "text": "Tell me a joke about opentelemetry"},
                     ],
-                }
+                },
+                {
+                    "role": "assistant",
+                    "content": [
+                        {"type": "text", "text": "Why did the microservice bring OpenTelemetry to the party?"}
+                    ],
+                },
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": "Because it knew how to keep track of all the span-taneous events!"}
+                    ],
+                },
             ],
+            "system": "You're a comedian",
             "max_tokens": 200,
             "temperature": 0.5,
             "anthropic_version": "bedrock-2023-05-31",
@@ -85,18 +98,22 @@ def test_anthropic_3_completion_complex_content(test_context, brt):
     assert all(span.name == "bedrock.completion" for span in spans)
 
     anthropic_span = spans[0]
-    assert json.loads(
-        anthropic_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
-    ) == [
-        {"type": "text", "text": "Tell me a joke about opentelemetry"},
-    ]
+
+    assert anthropic_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"] == "system"
+    assert anthropic_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"] == "You're a comedian"
+
+    assert anthropic_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.role"] == "user"
+    assert anthropic_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.content"] == "Tell me a joke about opentelemetry"
+
+    assert anthropic_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.2.role"] == "assistant"
+    assert anthropic_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.2.content"] == "Why did the microservice bring OpenTelemetry to the party?"
+
+    assert anthropic_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.3.role"] == "user"
+    assert anthropic_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.3.content"] == "Because it knew how to keep track of all the span-taneous events!"
 
     assert (
-        json.loads(
-            anthropic_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
-        )
-        == completion
-    )
+        anthropic_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
+    ) == completion[0].get("text")
 
     assert anthropic_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 16
     assert anthropic_span.attributes.get(
@@ -150,20 +167,9 @@ def test_anthropic_3_completion_streaming(test_context, brt):
     assert all(span.name == "bedrock.completion" for span in spans)
 
     anthropic_span = spans[0]
-    assert json.loads(
-        anthropic_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
-    ) == [
-        {"type": "text", "text": "Tell me a joke about opentelemetry"},
-    ]
+    assert anthropic_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"] == "Tell me a joke about opentelemetry"
 
-    assert json.loads(
-        anthropic_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
-    ) == [
-        {
-            "type": "text",
-            "text": completion,
-        }
-    ]
+    assert anthropic_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content") == completion
 
     assert anthropic_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 16
     assert anthropic_span.attributes.get(
@@ -210,16 +216,18 @@ def test_anthropic_3_completion_string_content(test_context, brt):
     assert all(span.name == "bedrock.completion" for span in spans)
 
     anthropic_span = spans[0]
+
+    for key, value in anthropic_span.attributes.items():
+        print(key, value)
+
     assert (
-        json.loads(anthropic_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"])
+        anthropic_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
         == "Tell me a joke about opentelemetry"
     )
 
     assert (
-        json.loads(
-            anthropic_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
-        )
-        == completion
+        anthropic_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
+        == completion[0].get("text")
     )
 
     assert anthropic_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 16

@@ -745,24 +745,43 @@ def _set_anthropic_messages_span_attributes(
         _record_usage_to_span(span, prompt_tokens, completion_tokens, metric_params)
 
     if should_send_prompts():
-        for idx, message in enumerate(request_body.get("messages")):
+        message_idx_start = 0
+        if request_body.get("system"):
+            _set_span_attribute(
+                span, f"{SpanAttributes.LLM_PROMPTS}.0.role", "system",
+            )
+            _set_span_attribute(
+                span, f"{SpanAttributes.LLM_PROMPTS}.0.content", request_body.get("system"),
+            )
+            message_idx_start += 1
+
+        for idx, message in enumerate(request_body.get("messages"), message_idx_start):
             _set_span_attribute(
                 span, f"{SpanAttributes.LLM_PROMPTS}.{idx}.role", message.get("role")
             )
+            content = message.get("content")
+            if isinstance(content, str):
+                text = content
+            else:
+                text = content[0].get("text")
             _set_span_attribute(
                 span,
-                f"{SpanAttributes.LLM_PROMPTS}.0.content",
-                json.dumps(message.get("content")),
+                f"{SpanAttributes.LLM_PROMPTS}.{idx}.content",
+                text,
             )
 
-        _set_span_attribute(
-            span, f"{SpanAttributes.LLM_COMPLETIONS}.0.content", "assistant"
-        )
-        _set_span_attribute(
-            span,
-            f"{SpanAttributes.LLM_COMPLETIONS}.0.content",
-            json.dumps(response_body.get("content")),
-        )
+        for idx, content in enumerate(response_body.get("content")):
+            _set_span_attribute(
+                span, f"{SpanAttributes.LLM_COMPLETIONS}.{idx}.role", "assistant"
+            )
+            _set_span_attribute(
+                span,
+                f"{SpanAttributes.LLM_COMPLETIONS}.{idx}.content",
+                content.get("text"),
+            )
+            _set_span_attribute(
+                span, f"{SpanAttributes.LLM_COMPLETIONS}.{idx}.finish_reason", response_body.get("stop_reason")
+            )
 
 
 def _count_anthropic_tokens(messages: list[str]):
