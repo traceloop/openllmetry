@@ -32,20 +32,11 @@ async def test_async_runner_mocked_output(test_agent):
 
 def test_sync_runner_mocked_output(test_agent):
     mock_result = MagicMock()
-    mock_result.final_output = (
-        "AI, or Artificial Intelligence, is the simulation of human intelligence "
-        "processes by machines, especially computer systems."
-    )
+    mock_result.final_output = "Hello, this is a mocked response!"
 
     with patch.object(Runner, "run", return_value=mock_result):
-        result = Runner.run_sync(
-            starting_agent=test_agent,
-            input="What is AI in one line?"
-        )
-        assert result.final_output == (
-            "AI, or Artificial Intelligence, is the simulation of human intelligence "
-            "processes by machines, especially computer systems."
-        )
+        result = Runner.run_sync(starting_agent=test_agent, input="Mock input")
+        assert result.final_output == "Hello, this is a mocked response!"
 
 
 @pytest.mark.vcr
