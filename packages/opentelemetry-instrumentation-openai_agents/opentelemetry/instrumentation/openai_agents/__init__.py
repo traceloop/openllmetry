@@ -19,7 +19,7 @@ from .utils import set_span_attribute
 from agents import FunctionTool, WebSearchTool, FileSearchTool, ComputerTool
 
 
-_instruments = ("openai-agents >= 0.0.2",)
+_instruments = ("openai-agents >= 0.0.19",)
 
 
 class OpenAIAgentsInstrumentor(BaseInstrumentor):
@@ -48,7 +48,7 @@ class OpenAIAgentsInstrumentor(BaseInstrumentor):
 
         wrap_function_wrapper(
             "agents.run",
-            "Runner._get_new_response",
+            " AgentRunner._get_new_response",
             _wrap_agent_run(
                 tracer,
                 duration_histogram,
@@ -57,7 +57,7 @@ class OpenAIAgentsInstrumentor(BaseInstrumentor):
         )
 
     def _uninstrument(self, **kwargs):
-        unwrap("agents.run.Runner", "_get_new_response")
+        unwrap("agents.run.AgentRunner", "_get_new_response")
 
 
 def with_tracer_wrapper(func):
