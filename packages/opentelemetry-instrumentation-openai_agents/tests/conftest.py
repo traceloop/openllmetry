@@ -79,12 +79,4 @@ def test_agent():
 
 @pytest.fixture(scope="module")
 def vcr_config():
-    return {
-        "filter_headers": [
-            "authorization",
-            "accept",
-            "content-type",
-            "x-litellm-source",
-        ],
-        "filter_post_data_parameters": ["apikey"],
-    }
+    return {"filter_headers": ["authorization", "api-key"]}

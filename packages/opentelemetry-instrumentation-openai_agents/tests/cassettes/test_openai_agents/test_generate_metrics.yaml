@@ -1,0 +1,158 @@
+interactions:
+- request:
+    body: '{"data":[{"object":"trace.span","id":"span_2fb8e520023d4d9aa6f7976a","trace_id":"trace_9ac375b4ce2445b9ab4d7b26f15f157c","parent_id":"span_7251b94a65ba4179b001416b","started_at":"2025-07-03T07:06:03.484268+00:00","ended_at":"2025-07-03T07:06:08.109817+00:00","span_data":{"type":"response","response_id":"resp_68662bdbf7a0819a973806969f4fd30c00693eed1ff48f47"},"error":null},{"object":"trace.span","id":"span_7251b94a65ba4179b001416b","trace_id":"trace_9ac375b4ce2445b9ab4d7b26f15f157c","parent_id":null,"started_at":"2025-07-03T07:06:03.468410+00:00","ended_at":"2025-07-03T07:06:08.110481+00:00","span_data":{"type":"agent","name":"testAgent","handoffs":[],"tools":[],"output_type":"str"},"error":null},{"object":"trace","id":"trace_0e952a99525844feb7630ddd0fd69834","workflow_name":"Agent
+      workflow","group_id":null,"metadata":null}]}'
+    headers:
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '836'
+      cookie:
+      - __cf_bm=f.ieN84oRZqo8ixvC_GgY68MV4gaISuVRkoxIwgoXjM-1751526369-1.0.1.1-6M01qA_hYXeDhvewT0qfLbF_NP2tLRNbXvLL_AuaKlVeZO2pUOHGwgrJGT89G_vz.ppUAMtuu9WqKQgHOiCH_P_ufc1O50FL_wZN42sPILo;
+        _cfuvid=R4h3jMVsJLoJmbXXnXvY39_lvqGzM3dMR.OLmwbQh.g-1751526369215-0.0.1.1-604800000
+      host:
+      - api.openai.com
+      openai-beta:
+      - traces=v1
+      user-agent:
+      - python-httpx/0.28.1
+    method: POST
+    uri: https://api.openai.com/v1/traces/ingest
+  response:
+    body:
+      string: ''
+    headers:
+      CF-RAY:
+      - 959489dffe32fd08-SIN
+      Connection:
+      - keep-alive
+      Date:
+      - Thu, 03 Jul 2025 07:06:10 GMT
+      Server:
+      - cloudflare
+      X-Content-Type-Options:
+      - nosniff
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '429'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-request-id:
+      - req_ac0dd87c9043ec1b0ffe4fc249585612
+    status:
+      code: 204
+      message: No Content
+- request:
+    body: '{"include":[],"input":[{"content":"What is AI?","role":"user"}],"instructions":"You
+      are a helpful assistant that answers all questions","max_output_tokens":1024,"model":"gpt-4.1","stream":false,"temperature":0.3,"tools":[],"top_p":0.2}'
+    headers:
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '235'
+      cookie:
+      - __cf_bm=bae2rWsOcbEAcVXTbPOsyf.74n2A1yQIOP6eTNior3c-1751526368-1.0.1.1-7UEnB_V3MJ0vFANnhO46maTteHVU9wml.PWRe.HBFg1QW807WO8NU3W4r9AzA27JZ073lSScwgVMLnIEcS5ZuRbRYNVfuIVJgaxN2PbNjJI;
+        _cfuvid=BO6.1dcjIkWE558UaNqu.52WmDxXUvMxl6sM35kDJg0-1751526368106-0.0.1.1-604800000
+      host:
+      - api.openai.com
+      user-agent:
+      - Agents/Python 0.0.16
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - async:asyncio
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.93.0
+      x-stainless-read-timeout:
+      - '600'
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.13.1
+    method: POST
+    uri: https://api.openai.com/v1/responses
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAAwAAAP//dFVLj+JGEL7Pryj5tIMAGcbDArc5IkVRlE0O0W6EinbZ7tDu9nZVs8Ou
+        5r9H3TYGktkLwvX46v31jweATJfZFjJP3O1X69VqeaD8eblYrxebzQHXG/VUPeH6GZfr9SLfbKq8
+        yMtqtdnkuCqzaQRwh39IyQXEWaZerjyhULnHqFt8fF48L1dPq3XSsaAEjj7KtZ0hoQHsgOpYexds
+        zKpCw5TE5L3z2RZsMCYJtL047ksS1IbvtSw+KNHOpiB/uQDoCRAaMl0VDCCzZkErIA0KoOVv5BnQ
+        GPgaiHvPhNXi694F6YLsxR0pAS7yZTEqxTmzV2juU2hdSSbGrjuZFfPFbJkvn2d5MVsUQ9sSZraF
+        zw8AAD/S7ziPlutxHIfFU5HGUZQVLTfrRfVxuS6K8t1xJAw5d5RQiBlruip+1vekVM4K2WtKt2nd
+        wV7aQa8yeicDtNYJXtr++e87pXF1593hHU0C2kI2mbzsJhOIcykZKudhMnnxoiutNBrYWSFjdE1W
+        0WQyh52ApyqOTRxIQ1DSiYzrWrICroJYYhDywGcWahmcB3aVfIurkMau0EJHvnK+BUE+Msi503GW
+        Z/D0NWivbQ1NaNGCvok+hz8aYhp8tFUmlLT9Yr/YGfxpS/KphOiLtoTOO0XM8dOiBI8GDNo6YE3w
+        wegjAXdEqon5xVY8RpjfSbna6u/RS7dYU0q/QxHylqPFL4TeRnXlXQv02pHXMTn40KJqtCUwg0UC
+        /OTMKVrHGZjYjZhai8coK0lpjlOLhr8ZPEdhjW0ftPQ6eZ6o0coQxzpfdql5B4IqHitoC3Qify7x
+        DEKqsc64WhMDB9UAMpy0l4A3h8dD7Z+01zHKi6FXfJyCJ+XalmyZ9micXW8sjWMCZ+FXksro1+TY
+        4ndnH6egGpSDE54Ck6lml7QVep721cZcWudpHkvYWeDQtujP07hnO9CctqjSZMr7/VF9YyunAlMZ
+        4ydyi+hDr/m6UNJoe5z2ze/jopKb9RFznk8m2XgAb8O/8SYy70y6s7FXvXE0TEZZhx6NIXPPPeJD
+        z5adp5N2gfcXQt4nUhm5yROyi4uRbYcDz6iqnJcbo0gWfXcG4QPAW8/d5E9a0V40RUrOSqowmJ4J
+        Mhbn6TYXobYjH9c+ivP50yBNFz8Ej/eH1+8bpkl2Y/F9/L7mxmnVNymIy0bFlV0ycd3+hnPyUdil
+        RJb9tw9WpU1LpWjGg7m8RSFx55iltndvQP8C/Ed+8xiNtShUDZVXx7yvZ/D+39NS5O9p3gMex/gz
+        bHGC5gZ6VYxNDEx372lLgiUKRvy3h7d/AQAA//8DAH8PZqsaCAAA
+    headers:
+      CF-RAY:
+      - 959489d93fb1f936-SIN
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 03 Jul 2025 07:06:10 GMT
+      Server:
+      - cloudflare
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '2092'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-ratelimit-limit-requests:
+      - '10000'
+      x-ratelimit-limit-tokens:
+      - '30000000'
+      x-ratelimit-remaining-requests:
+      - '9999'
+      x-ratelimit-remaining-tokens:
+      - '29999957'
+      x-ratelimit-reset-requests:
+      - 6ms
+      x-ratelimit-reset-tokens:
+      - 0s
+      x-request-id:
+      - req_1d678503ba8e83159d26695c3b21c59d
+    status:
+      code: 200
+      message: OK
+version: 1
