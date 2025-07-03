@@ -208,12 +208,11 @@ def _extract_model_name_from_response_metadata(response: LLMResult) -> str:
     for generations in response.generations:
         for generation in generations:
             if (
-                hasattr(generation, "message")
-                and hasattr(generation.message, "response_metadata")
-                and generation.message.response_metadata is not None
-                and generation.message.response_metadata.get("model_name")
+                getattr(generation, "message", None)
+                and getattr(generation.message, "response_metadata", None)
+                and (model_name := generation.message.response_metadata.get("model_name"))
             ):
-                return generation.message.response_metadata.get("model_name")
+                return model_name
     return "unknown"
 
 def _set_chat_response(span: Span, response: LLMResult, token_histogram: Histogram, record_token_usage: bool, model_name: str) -> None:
