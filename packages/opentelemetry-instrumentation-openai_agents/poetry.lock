@@ -1236,20 +1236,20 @@ voice-helpers = ["numpy (>=2.0.2)", "sounddevice (>=0.5.1)"]
 
 [[package]]
 name = "openai-agents"
-version = "0.0.16"
+version = "0.0.19"
 description = "OpenAI Agents SDK"
 optional = false
 python-versions = ">=3.9"
 groups = ["test"]
 files = [
-    {file = "openai_agents-0.0.16-py3-none-any.whl", hash = "sha256:e2bac96424162247a21d8bb8b3e2c61dc8eb2e795dd03b640cb346b7869578ac"},
-    {file = "openai_agents-0.0.16.tar.gz", hash = "sha256:4f01bf4ae0667bb5836f4425e88ba8c0629fe427a2d0e9dd6a42f5b5a14bf49b"},
+    {file = "openai_agents-0.0.19-py3-none-any.whl", hash = "sha256:daff03408e3a069e2a04fdf3968296cdc5f63ab635df1d8a54ca2e9352e68516"},
+    {file = "openai_agents-0.0.19.tar.gz", hash = "sha256:4090d683ef7257b3f6299f76e477ad51a970fd76de7c55df65f4bc5029580f2b"},
 ]
 
 [package.dependencies]
 griffe = ">=1.5.6,<2"
-mcp = {version = ">=1.8.0,<2", markers = "python_version >= \"3.10\""}
-openai = ">=1.81.0"
+mcp = {version = ">=1.9.4,<2", markers = "python_version >= \"3.10\""}
+openai = ">=1.87.0"
 pydantic = ">=2.10,<3"
 requests = ">=2.0,<3"
 types-requests = ">=2.0,<3"
@@ -2722,4 +2722,4 @@ instruments = []
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.9,<4"
-content-hash = "0d331385a724812bb8a503240ff849be4e1e93f83326f78724f205964a7d8be2"
+content-hash = "b049283b8c2b443b8538ac6d4ede5ee90ce69e534c627946841653815d282950"
