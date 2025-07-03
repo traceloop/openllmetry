@@ -25,7 +25,7 @@ def test_imported_model_completion(test_context, brt):
     assert (
         imported_model_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "completion"
     )
-    assert imported_model_span.attributes[SpanAttributes.LLM_SYSTEM] == "imported_model"
+    assert imported_model_span.attributes[SpanAttributes.LLM_SYSTEM] == "AWS"
     assert imported_model_span.attributes.get("gen_ai.response.id") is None
     assert imported_model_span.attributes[SpanAttributes.LLM_REQUEST_MAX_TOKENS] == 100
     assert imported_model_span.attributes[SpanAttributes.LLM_REQUEST_TEMPERATURE] == 0.5

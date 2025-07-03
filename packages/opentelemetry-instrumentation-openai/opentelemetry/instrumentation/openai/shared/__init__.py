@@ -104,13 +104,23 @@ def set_tools_attributes(span, tools):
         )
 
 
-def _set_request_attributes(span, kwargs):
+def _set_request_attributes(span, kwargs, instance=None):
     if not span.is_recording():
         return
 
     _set_api_attributes(span)
-    _set_span_attribute(span, SpanAttributes.LLM_SYSTEM, "OpenAI")
-    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, kwargs.get("model"))
+
+    base_url = _get_openai_base_url(instance) if instance else ""
+    vendor = _get_vendor_from_url(base_url)
+    _set_span_attribute(span, SpanAttributes.LLM_SYSTEM, vendor)
+
+    model = kwargs.get("model")
+    if vendor == "AWS" and model and "." in model:
+        model = _cross_region_check(model)
+    elif vendor == "OpenRouter":
+        model = _extract_model_name_from_provider_format(model)
+
+    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, model)
     _set_span_attribute(
         span, SpanAttributes.LLM_REQUEST_MAX_TOKENS, kwargs.get("max_tokens")
     )
@@ -192,7 +202,10 @@ def _set_response_attributes(span, response):
         )
         return
 
-    _set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, response.get("model"))
+    response_model = response.get("model")
+    if response_model:
+        response_model = _extract_model_name_from_provider_format(response_model)
+    _set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, response_model)
     _set_span_attribute(span, GEN_AI_RESPONSE_ID, response.get("id"))
 
     _set_span_attribute(
@@ -271,6 +284,53 @@ def _get_openai_base_url(instance):
     return ""
 
 
+def _get_vendor_from_url(base_url):
+    if not base_url:
+        return "openai"
+
+    if "openai.azure.com" in base_url:
+        return "Azure"
+    elif "amazonaws.com" in base_url or "bedrock" in base_url:
+        return "AWS"
+    elif "googleapis.com" in base_url or "vertex" in base_url:
+        return "Google"
+    elif "openrouter.ai" in base_url:
+        return "OpenRouter"
+
+    return "openai"
+
+
+def _cross_region_check(value):
+    if not value or "." not in value:
+        return value
+
+    prefixes = ["us", "us-gov", "eu", "apac"]
+    if any(value.startswith(prefix + ".") for prefix in prefixes):
+        parts = value.split(".")
+        if len(parts) > 2:
+            return parts[2]
+        else:
+            return value
+    else:
+        vendor, model = value.split(".", 1)
+        return model
+
+
+def _extract_model_name_from_provider_format(model_name):
+    """
+    Extract model name from provider/model format.
+    E.g., 'openai/gpt-4o' -> 'gpt-4o', 'anthropic/claude-3-sonnet' -> 'claude-3-sonnet'
+    """
+    if not model_name:
+        return model_name
+
+    if "/" in model_name:
+        parts = model_name.split("/")
+        return parts[-1]  # Return the last part (actual model name)
+
+    return model_name
+
+
 def is_streaming_response(response):
     if is_openai_v1():
         return isinstance(response, openai.Stream) or isinstance(
@@ -332,10 +392,11 @@ def metric_shared_attributes(
     response_model: str, operation: str, server_address: str, is_streaming: bool = False
 ):
     attributes = Config.get_common_metrics_attributes()
+    vendor = _get_vendor_from_url(server_address)
 
     return {
         **attributes,
-        SpanAttributes.LLM_SYSTEM: "openai",
+        SpanAttributes.LLM_SYSTEM: vendor,
         SpanAttributes.LLM_RESPONSE_MODEL: response_model,
         "gen_ai.operation.name": operation,
         "server.address": server_address,
