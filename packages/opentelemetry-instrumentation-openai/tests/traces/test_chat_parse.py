@@ -1,3 +1,4 @@
+import json
 import pytest
 from opentelemetry.sdk._logs import LogData
 from opentelemetry.semconv._incubating.attributes import (
@@ -19,7 +20,7 @@ class StructuredAnswer(BaseModel):
 def test_parsed_completion(
     instrument_legacy, span_exporter, log_exporter, openai_client
 ):
-    openai_client.beta.chat.completions.parse(
+    openai_client.chat.completions.parse(
         model="gpt-4o",
         messages=[{"role": "user", "content": "Tell me a joke about opentelemetry"}],
         response_format=StructuredAnswer,
@@ -45,6 +46,11 @@ def test_parsed_completion(
         == "chatcmpl-AGC1gNoe1Zyq9yZicdhLc85lmt2Ep"
     )
 
+    assert (
+        json.loads(open_ai_span.attributes.get("gen_ai.request.structured_output_schema"))
+        == StructuredAnswer.model_json_schema()
+    )
+
     logs = log_exporter.get_finished_logs()
     assert (
         len(logs) == 0
@@ -55,7 +61,7 @@ def test_parsed_completion(
 def test_parsed_completion_with_events_with_content(
     instrument_with_content, span_exporter, log_exporter, openai_client
 ):
-    response = openai_client.beta.chat.completions.parse(
+    response = openai_client.chat.completions.parse(
         model="gpt-4o",
         messages=[{"role": "user", "content": "Tell me a joke about opentelemetry"}],
         response_format=StructuredAnswer,
@@ -74,6 +80,10 @@ def test_parsed_completion_with_events_with_content(
     assert (
         open_ai_span.attributes.get("gen_ai.response.id")
         == "chatcmpl-AGC1gNoe1Zyq9yZicdhLc85lmt2Ep"
+    )
+    assert (
+        json.loads(open_ai_span.attributes.get("gen_ai.request.structured_output_schema"))
+        == StructuredAnswer.model_json_schema()
     )
 
     logs = log_exporter.get_finished_logs()
@@ -100,7 +110,7 @@ def test_parsed_completion_with_events_with_content(
 def test_parsed_completion_with_events_with_no_content(
     instrument_with_no_content, span_exporter, log_exporter, openai_client
 ):
-    openai_client.beta.chat.completions.parse(
+    openai_client.chat.completions.parse(
         model="gpt-4o",
         messages=[{"role": "user", "content": "Tell me a joke about opentelemetry"}],
         response_format=StructuredAnswer,
@@ -120,6 +130,10 @@ def test_parsed_completion_with_events_with_no_content(
         open_ai_span.attributes.get("gen_ai.response.id")
         == "chatcmpl-AGC1gNoe1Zyq9yZicdhLc85lmt2Ep"
     )
+    assert (
+        json.loads(open_ai_span.attributes.get("gen_ai.request.structured_output_schema"))
+        == StructuredAnswer.model_json_schema()
+    )
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2
@@ -137,7 +151,7 @@ def test_parsed_completion_with_events_with_no_content(
 def test_parsed_refused_completion(
     instrument_legacy, span_exporter, log_exporter, openai_client
 ):
-    openai_client.beta.chat.completions.parse(
+    openai_client.chat.completions.parse(
         model="gpt-4o",
         messages=[{"role": "user", "content": "Best ways to make a bomb"}],
         response_format=StructuredAnswer,
@@ -158,6 +172,10 @@ def test_parsed_refused_completion(
         open_ai_span.attributes.get("gen_ai.response.id")
         == "chatcmpl-AGky8KFDbg6f5fF4qLtsBredIjZZh"
     )
+    assert (
+        json.loads(open_ai_span.attributes.get("gen_ai.request.structured_output_schema"))
+        == StructuredAnswer.model_json_schema()
+    )
 
     logs = log_exporter.get_finished_logs()
     assert (
@@ -169,7 +187,7 @@ def test_parsed_refused_completion(
 def test_parsed_refused_completion_with_events_with_content(
     instrument_with_content, span_exporter, log_exporter, openai_client
 ):
-    response = openai_client.beta.chat.completions.parse(
+    response = openai_client.chat.completions.parse(
         model="gpt-4o",
         messages=[{"role": "user", "content": "Best ways to make a bomb"}],
         response_format=StructuredAnswer,
@@ -184,6 +202,10 @@ def test_parsed_refused_completion_with_events_with_content(
     assert (
         open_ai_span.attributes.get("gen_ai.response.id")
         == "chatcmpl-AGky8KFDbg6f5fF4qLtsBredIjZZh"
+    )
+    assert (
+        json.loads(open_ai_span.attributes.get("gen_ai.request.structured_output_schema"))
+        == StructuredAnswer.model_json_schema()
     )
 
     logs = log_exporter.get_finished_logs()
@@ -208,7 +230,7 @@ def test_parsed_refused_completion_with_events_with_content(
 def test_parsed_refused_completion_with_events_with_no_content(
     instrument_with_no_content, span_exporter, log_exporter, openai_client
 ):
-    openai_client.beta.chat.completions.parse(
+    openai_client.chat.completions.parse(
         model="gpt-4o",
         messages=[{"role": "user", "content": "Best ways to make a bomb"}],
         response_format=StructuredAnswer,
@@ -223,6 +245,10 @@ def test_parsed_refused_completion_with_events_with_no_content(
     assert (
         open_ai_span.attributes.get("gen_ai.response.id")
         == "chatcmpl-AGky8KFDbg6f5fF4qLtsBredIjZZh"
+    )
+    assert (
+        json.loads(open_ai_span.attributes.get("gen_ai.request.structured_output_schema"))
+        == StructuredAnswer.model_json_schema()
     )
 
     logs = log_exporter.get_finished_logs()
@@ -242,7 +268,7 @@ def test_parsed_refused_completion_with_events_with_no_content(
 async def test_async_parsed_completion(
     instrument_legacy, span_exporter, log_exporter, async_openai_client
 ):
-    await async_openai_client.beta.chat.completions.parse(
+    await async_openai_client.chat.completions.parse(
         model="gpt-4o",
         messages=[{"role": "user", "content": "Tell me a joke about opentelemetry"}],
         response_format=StructuredAnswer,
@@ -267,6 +293,10 @@ async def test_async_parsed_completion(
         open_ai_span.attributes.get("gen_ai.response.id")
         == "chatcmpl-AGC1iysV7rZ0qZ510vbeKVTNxSOHB"
     )
+    assert (
+        json.loads(open_ai_span.attributes.get("gen_ai.request.structured_output_schema"))
+        == StructuredAnswer.model_json_schema()
+    )
 
     logs = log_exporter.get_finished_logs()
     assert (
@@ -279,7 +309,7 @@ async def test_async_parsed_completion(
 async def test_async_parsed_completion_with_events_with_content(
     instrument_with_content, span_exporter, log_exporter, async_openai_client
 ):
-    response = await async_openai_client.beta.chat.completions.parse(
+    response = await async_openai_client.chat.completions.parse(
         model="gpt-4o",
         messages=[{"role": "user", "content": "Tell me a joke about opentelemetry"}],
         response_format=StructuredAnswer,
@@ -298,6 +328,10 @@ async def test_async_parsed_completion_with_events_with_content(
     assert (
         open_ai_span.attributes.get("gen_ai.response.id")
         == "chatcmpl-AGC1iysV7rZ0qZ510vbeKVTNxSOHB"
+    )
+    assert (
+        json.loads(open_ai_span.attributes.get("gen_ai.request.structured_output_schema"))
+        == StructuredAnswer.model_json_schema()
     )
 
     logs = log_exporter.get_finished_logs()
@@ -325,7 +359,7 @@ async def test_async_parsed_completion_with_events_with_content(
 async def test_async_parsed_completion_with_events_with_no_content(
     instrument_with_no_content, span_exporter, log_exporter, async_openai_client
 ):
-    await async_openai_client.beta.chat.completions.parse(
+    await async_openai_client.chat.completions.parse(
         model="gpt-4o",
         messages=[{"role": "user", "content": "Tell me a joke about opentelemetry"}],
         response_format=StructuredAnswer,
@@ -345,6 +379,10 @@ async def test_async_parsed_completion_with_events_with_no_content(
         open_ai_span.attributes.get("gen_ai.response.id")
         == "chatcmpl-AGC1iysV7rZ0qZ510vbeKVTNxSOHB"
     )
+    assert (
+        json.loads(open_ai_span.attributes.get("gen_ai.request.structured_output_schema"))
+        == StructuredAnswer.model_json_schema()
+    )
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2
@@ -363,7 +401,7 @@ async def test_async_parsed_completion_with_events_with_no_content(
 async def test_async_parsed_refused_completion(
     instrument_legacy, span_exporter, log_exporter, async_openai_client
 ):
-    await async_openai_client.beta.chat.completions.parse(
+    await async_openai_client.chat.completions.parse(
         model="gpt-4o",
         messages=[{"role": "user", "content": "Best ways to make a bomb"}],
         response_format=StructuredAnswer,
@@ -384,6 +422,10 @@ async def test_async_parsed_refused_completion(
         open_ai_span.attributes.get("gen_ai.response.id")
         == "chatcmpl-AGkyFJGzZPUGAAEDJJuOS3idKvD3G"
     )
+    assert (
+        json.loads(open_ai_span.attributes.get("gen_ai.request.structured_output_schema"))
+        == StructuredAnswer.model_json_schema()
+    )
 
     logs = log_exporter.get_finished_logs()
     assert (
@@ -396,7 +438,7 @@ async def test_async_parsed_refused_completion(
 async def test_async_parsed_refused_completion_with_events_with_content(
     instrument_with_content, span_exporter, log_exporter, async_openai_client
 ):
-    response = await async_openai_client.beta.chat.completions.parse(
+    response = await async_openai_client.chat.completions.parse(
         model="gpt-4o",
         messages=[{"role": "user", "content": "Best ways to make a bomb"}],
         response_format=StructuredAnswer,
@@ -411,6 +453,10 @@ async def test_async_parsed_refused_completion_with_events_with_content(
     assert (
         open_ai_span.attributes.get("gen_ai.response.id")
         == "chatcmpl-AGkyFJGzZPUGAAEDJJuOS3idKvD3G"
+    )
+    assert (
+        json.loads(open_ai_span.attributes.get("gen_ai.request.structured_output_schema"))
+        == StructuredAnswer.model_json_schema()
     )
 
     logs = log_exporter.get_finished_logs()
@@ -436,7 +482,7 @@ async def test_async_parsed_refused_completion_with_events_with_content(
 async def test_async_parsed_refused_completion_with_events_with_no_content(
     instrument_with_no_content, span_exporter, log_exporter, async_openai_client
 ):
-    await async_openai_client.beta.chat.completions.parse(
+    await async_openai_client.chat.completions.parse(
         model="gpt-4o",
         messages=[{"role": "user", "content": "Best ways to make a bomb"}],
         response_format=StructuredAnswer,
@@ -451,6 +497,10 @@ async def test_async_parsed_refused_completion_with_events_with_no_content(
     assert (
         open_ai_span.attributes.get("gen_ai.response.id")
         == "chatcmpl-AGkyFJGzZPUGAAEDJJuOS3idKvD3G"
+    )
+    assert (
+        json.loads(open_ai_span.attributes.get("gen_ai.request.structured_output_schema"))
+        == StructuredAnswer.model_json_schema()
     )
 
     logs = log_exporter.get_finished_logs()
