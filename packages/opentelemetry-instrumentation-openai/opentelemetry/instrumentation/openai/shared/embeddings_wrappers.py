@@ -93,7 +93,7 @@ def embeddings_wrapper(
             span.set_status(Status(StatusCode.ERROR, str(e)))
             span.end()
 
-            raise e
+            raise
 
         duration = end_time - start_time
 
@@ -157,7 +157,7 @@ async def aembeddings_wrapper(
             span.set_status(Status(StatusCode.ERROR, str(e)))
             span.end()
 
-            raise e
+            raise
 
         duration = end_time - start_time
 

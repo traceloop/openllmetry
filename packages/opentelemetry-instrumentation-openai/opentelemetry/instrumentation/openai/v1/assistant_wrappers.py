@@ -70,7 +70,7 @@ def runs_create_wrapper(tracer, wrapped, instance, args, kwargs):
             "exception": e,
             "end_time": time.time_ns(),
         }
-        raise e
+        raise
 
 
 @_with_tracer_wrapper
@@ -101,7 +101,7 @@ def runs_retrieve_wrapper(tracer, wrapped, instance, args, kwargs):
         if thread_id in runs:
             runs[thread_id]["exception"] = e
             runs[thread_id]["end_time"] = time.time_ns()
-        raise e
+        raise
 
 
 @_with_tracer_wrapper
@@ -312,4 +312,4 @@ def runs_create_and_stream_wrapper(tracer, wrapped, instance, args, kwargs):
         span.record_exception(e)
         span.set_status(Status(StatusCode.ERROR, str(e)))
         span.end()
-        raise e
+        raise

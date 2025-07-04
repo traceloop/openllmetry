@@ -431,7 +431,7 @@ def responses_get_or_create_wrapper(tracer: Tracer, wrapped, instance, args, kwa
         if traced_data:
             set_data_attributes(traced_data, span)
         span.end()
-        raise e
+        raise
     parsed_response = parse_response(response)
 
     existing_data = responses.get(parsed_response.id)
@@ -524,7 +524,7 @@ async def async_responses_get_or_create_wrapper(
         if traced_data:
             set_data_attributes(traced_data, span)
         span.end()
-        raise e
+        raise
     parsed_response = parse_response(response)
 
     existing_data = responses.get(parsed_response.id)

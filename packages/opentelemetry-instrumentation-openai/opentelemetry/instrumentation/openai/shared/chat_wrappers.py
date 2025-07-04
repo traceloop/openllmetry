@@ -110,7 +110,7 @@ def chat_wrapper(
         span.set_status(Status(StatusCode.ERROR, str(e)))
         span.end()
 
-        raise e
+        raise
 
     if is_streaming_response(response):
         # span will be closed after the generator is done
@@ -208,7 +208,7 @@ async def achat_wrapper(
         span.set_status(Status(StatusCode.ERROR, str(e)))
         span.end()
 
-        raise e
+        raise
 
     if is_streaming_response(response):
         # span will be closed after the generator is done
@@ -638,7 +638,7 @@ class ChatStream(ObjectProxy):
         except Exception as e:
             if isinstance(e, StopIteration):
                 self._process_complete_response()
-            raise e
+            raise
         else:
             self._process_item(chunk)
             return chunk
@@ -649,7 +649,7 @@ class ChatStream(ObjectProxy):
         except Exception as e:
             if isinstance(e, StopAsyncIteration):
                 self._process_complete_response()
-            raise e
+            raise
         else:
             self._process_item(chunk)
             return chunk
