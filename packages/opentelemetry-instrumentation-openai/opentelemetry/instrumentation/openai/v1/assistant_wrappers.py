@@ -18,6 +18,7 @@ from opentelemetry.instrumentation.openai.utils import (
     should_emit_events,
 )
 from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
+from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
 from opentelemetry.semconv_ai import LLMRequestTypeValues, SpanAttributes
 from opentelemetry.trace import SpanKind, Status, StatusCode
 
@@ -126,9 +127,10 @@ def messages_list_wrapper(tracer, wrapped, instance, args, kwargs):
         attributes={SpanAttributes.LLM_REQUEST_TYPE: LLMRequestTypeValues.CHAT.value},
         start_time=run.get("start_time"),
     )
-    if run.get("exception"):
-        span.record_exception(run.get("exception"))
-        span.set_status(Status(StatusCode.ERROR, str(run.get("exception"))))
+    if exception := run.get("exception"):
+        span.set_attribute(ERROR_TYPE, exception.__class__.__name__)
+        span.record_exception(exception)
+        span.set_status(Status(StatusCode.ERROR, str(exception)))
         span.end(run.get("end_time"))
 
     prompt_index = 0
@@ -309,6 +311,7 @@ def runs_create_and_stream_wrapper(tracer, wrapped, instance, args, kwargs):
         response = wrapped(*args, **kwargs)
         return response
     except Exception as e:
+        span.set_attribute(ERROR_TYPE, e.__class__.__name__)
         span.record_exception(e)
         span.set_status(Status(StatusCode.ERROR, str(e)))
         span.end()

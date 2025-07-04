@@ -949,6 +949,7 @@ def test_completion_exception(instrument_legacy, span_exporter, openai_client):
     assert "Traceback (most recent call last):" in event.attributes["exception.stacktrace"]
     assert "openai.AuthenticationError" in event.attributes["exception.stacktrace"]
     assert "invalid_api_key" in event.attributes["exception.stacktrace"]
+    assert open_ai_span.attributes.get("error.type") == "AuthenticationError"
 
 
 @pytest.mark.asyncio
@@ -980,6 +981,7 @@ async def test_async_completion_exception(instrument_legacy, span_exporter, asyn
     assert "Traceback (most recent call last):" in event.attributes["exception.stacktrace"]
     assert "openai.AuthenticationError" in event.attributes["exception.stacktrace"]
     assert "invalid_api_key" in event.attributes["exception.stacktrace"]
+    assert open_ai_span.attributes.get("error.type") == "AuthenticationError"
 
 
 def assert_message_in_logs(log: LogData, event_name: str, expected_content: dict):

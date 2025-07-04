@@ -562,6 +562,7 @@ def test_parsed_completion_exception(
     assert "Traceback (most recent call last):" in event.attributes["exception.stacktrace"]
     assert "openai.AuthenticationError" in event.attributes["exception.stacktrace"]
     assert "invalid_api_key" in event.attributes["exception.stacktrace"]
+    assert span.attributes.get("error.type") == "AuthenticationError"
 
 
 @pytest.mark.asyncio
@@ -596,3 +597,4 @@ async def test_async_parsed_completion_exception(
     assert "Traceback (most recent call last):" in event.attributes["exception.stacktrace"]
     assert "openai.AuthenticationError" in event.attributes["exception.stacktrace"]
     assert "invalid_api_key" in event.attributes["exception.stacktrace"]
+    assert span.attributes.get("error.type") == "AuthenticationError"

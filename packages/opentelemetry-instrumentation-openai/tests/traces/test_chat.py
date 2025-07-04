@@ -1470,6 +1470,7 @@ def test_chat_exception(instrument_legacy, span_exporter, openai_client):
     assert event.name == "exception"
     assert event.attributes["exception.type"] == "openai.AuthenticationError"
     assert event.attributes["exception.message"].startswith("Error code: 401")
+    assert open_ai_span.attributes.get("error.type") == "AuthenticationError"
     assert "Traceback (most recent call last):" in event.attributes["exception.stacktrace"]
     assert "openai.AuthenticationError" in event.attributes["exception.stacktrace"]
     assert "invalid_api_key" in event.attributes["exception.stacktrace"]
@@ -1510,3 +1511,4 @@ async def test_chat_async_exception(instrument_legacy, span_exporter, async_open
     assert "Traceback (most recent call last):" in event.attributes["exception.stacktrace"]
     assert "openai.AuthenticationError" in event.attributes["exception.stacktrace"]
     assert "invalid_api_key" in event.attributes["exception.stacktrace"]
+    assert open_ai_span.attributes.get("error.type") == "AuthenticationError"
