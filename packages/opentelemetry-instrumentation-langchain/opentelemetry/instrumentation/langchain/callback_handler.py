@@ -204,7 +204,25 @@ def _set_chat_request(
                 i += 1
 
 
-def _set_chat_response(span: Span, response: LLMResult) -> None:
+def _extract_model_name_from_response_metadata(response: LLMResult) -> str:
+    for generations in response.generations:
+        for generation in generations:
+            if (
+                getattr(generation, "message", None)
+                and getattr(generation.message, "response_metadata", None)
+                and (model_name := generation.message.response_metadata.get("model_name"))
+            ):
+                return model_name
+    return "unknown"
+
+
+def _set_chat_response(
+    span: Span,
+    response: LLMResult,
+    token_histogram: Histogram,
+    record_token_usage: bool,
+    model_name: str
+) -> None:
     input_tokens = 0
     output_tokens = 0
     total_tokens = 0
@@ -322,6 +340,27 @@ def _set_chat_response(span: Span, response: LLMResult) -> None:
             SpanAttributes.LLM_USAGE_CACHE_READ_INPUT_TOKENS,
             cache_read_tokens,
         )
+
+        if record_token_usage:
+            if input_tokens > 0:
+                token_histogram.record(
+                    input_tokens,
+                    attributes={
+                        SpanAttributes.LLM_SYSTEM: "Langchain",
+                        SpanAttributes.LLM_TOKEN_TYPE: "input",
+                        SpanAttributes.LLM_RESPONSE_MODEL: model_name,
+                    },
+                )
+
+            if output_tokens > 0:
+                token_histogram.record(
+                    output_tokens,
+                    attributes={
+                        SpanAttributes.LLM_SYSTEM: "Langchain",
+                        SpanAttributes.LLM_TOKEN_TYPE: "output",
+                        SpanAttributes.LLM_RESPONSE_MODEL: model_name,
+                    },
+                )
 
 
 def _set_chat_tool_calls(span: Span, prefix: str, tool_calls: list[dict[str, Any]]) -> None:
@@ -668,7 +707,8 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             id = response.llm_output.get("id")
             if id is not None and id != "":
                 _set_span_attribute(span, GEN_AI_RESPONSE_ID, id)
-
+        if model_name is None:
+            model_name = _extract_model_name_from_response_metadata(response)
         token_usage = (response.llm_output or {}).get("token_usage") or (
             response.llm_output or {}
         ).get("usage")
@@ -718,7 +758,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
                     },
                 )
 
-        _set_chat_response(span, response)
+        _set_chat_response(span, response, self.token_histogram, token_usage is None, model_name)
         self._end_span(span, run_id)
 
         # Record duration
