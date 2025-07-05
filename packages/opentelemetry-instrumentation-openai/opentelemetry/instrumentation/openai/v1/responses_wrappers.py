@@ -39,6 +39,7 @@ from openai._legacy_response import LegacyAPIResponse
 from opentelemetry import context as context_api
 from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
 from opentelemetry.semconv_ai import SpanAttributes
+from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
 from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
     GEN_AI_COMPLETION,
     GEN_AI_PROMPT,
@@ -426,6 +427,7 @@ def responses_get_or_create_wrapper(tracer: Tracer, wrapped, instance, args, kwa
                 start_time if traced_data is None else int(traced_data.start_time)
             ),
         )
+        span.set_attribute(ERROR_TYPE, e.__class__.__name__)
         span.record_exception(e)
         span.set_status(StatusCode.ERROR, str(e))
         if traced_data:
@@ -519,6 +521,7 @@ async def async_responses_get_or_create_wrapper(
                 start_time if traced_data is None else int(traced_data.start_time)
             ),
         )
+        span.set_attribute(ERROR_TYPE, e.__class__.__name__)
         span.record_exception(e)
         span.set_status(StatusCode.ERROR, str(e))
         if traced_data:
