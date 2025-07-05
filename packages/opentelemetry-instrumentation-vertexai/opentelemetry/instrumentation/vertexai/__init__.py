@@ -136,20 +136,43 @@ def _set_span_attribute(span, name, value):
 
 
 def _set_input_attributes(span, args, kwargs, llm_model):
-    if should_send_prompts() and args is not None and len(args) > 0:
-        prompt = ""
-        for arg in args:
-            if isinstance(arg, str):
-                prompt = f"{prompt}{arg}\n"
-            elif isinstance(arg, list):
-                for subarg in arg:
-                    prompt = f"{prompt}{subarg}\n"
+    if not should_send_prompts() or not args or not len(args):
+        return
 
-        _set_span_attribute(
-            span,
-            f"{SpanAttributes.LLM_PROMPTS}.0.user",
-            prompt,
-        )
+    msg_index = 0
+    for arg in args:
+        if isinstance(arg, str):
+            _set_span_attribute(
+                span,
+                f"{SpanAttributes.LLM_PROMPTS}.{msg_index}.user",
+                f"{arg}\n"
+            )
+            msg_index += 1
+        elif isinstance(arg, list):
+            for content in arg:
+                if hasattr(content, 'role') and hasattr(content, 'parts'):
+                    text = "\n".join(
+                        part.text if hasattr(part, 'text') else str(part)
+                        for part in content.parts
+                    )
+                    _set_span_attribute(
+                        span,
+                        f"{SpanAttributes.LLM_PROMPTS}.{msg_index}.role",
+                        content.role
+                    )
+                    _set_span_attribute(
+                        span,
+                        f"{SpanAttributes.LLM_PROMPTS}.{msg_index}.content",
+                        f"{text}\n"
+                    )
+                    msg_index += 1
+                else:
+                    _set_span_attribute(
+                        span,
+                        f"{SpanAttributes.LLM_PROMPTS}.{msg_index}.user",
+                        f"{content}\n"
+                    )
+                    msg_index += 1
 
     _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, llm_model)
     _set_span_attribute(
