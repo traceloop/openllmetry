@@ -265,7 +265,7 @@ def test_anthropic_cross_region(test_context, brt):
 
     # Assert on model name and vendor
     assert anthropic_span.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "claude-3-7-sonnet-20250219-v1"
-    assert anthropic_span.attributes[SpanAttributes.LLM_SYSTEM] == "anthropic"
+    assert anthropic_span.attributes[SpanAttributes.LLM_SYSTEM] == "AWS"
 
     assert (
             anthropic_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
