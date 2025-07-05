@@ -1,3 +1,4 @@
+import json
 import pytest
 from opentelemetry.sdk._logs import LogData
 from opentelemetry.semconv._incubating.attributes import (
@@ -7,6 +8,8 @@ from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
 from opentelemetry.semconv_ai import SpanAttributes
+from opentelemetry.sdk.trace import Span
+from opentelemetry.trace import StatusCode
 from pydantic import BaseModel
 
 
@@ -19,7 +22,7 @@ class StructuredAnswer(BaseModel):
 def test_parsed_completion(
     instrument_legacy, span_exporter, log_exporter, openai_client
 ):
-    openai_client.beta.chat.completions.parse(
+    openai_client.chat.completions.parse(
         model="gpt-4o",
         messages=[{"role": "user", "content": "Tell me a joke about opentelemetry"}],
         response_format=StructuredAnswer,
@@ -45,6 +48,11 @@ def test_parsed_completion(
         == "chatcmpl-AGC1gNoe1Zyq9yZicdhLc85lmt2Ep"
     )
 
+    assert (
+        json.loads(open_ai_span.attributes.get("gen_ai.request.structured_output_schema"))
+        == StructuredAnswer.model_json_schema()
+    )
+
     logs = log_exporter.get_finished_logs()
     assert (
         len(logs) == 0
@@ -55,7 +63,7 @@ def test_parsed_completion(
 def test_parsed_completion_with_events_with_content(
     instrument_with_content, span_exporter, log_exporter, openai_client
 ):
-    response = openai_client.beta.chat.completions.parse(
+    response = openai_client.chat.completions.parse(
         model="gpt-4o",
         messages=[{"role": "user", "content": "Tell me a joke about opentelemetry"}],
         response_format=StructuredAnswer,
@@ -74,6 +82,10 @@ def test_parsed_completion_with_events_with_content(
     assert (
         open_ai_span.attributes.get("gen_ai.response.id")
         == "chatcmpl-AGC1gNoe1Zyq9yZicdhLc85lmt2Ep"
+    )
+    assert (
+        json.loads(open_ai_span.attributes.get("gen_ai.request.structured_output_schema"))
+        == StructuredAnswer.model_json_schema()
     )
 
     logs = log_exporter.get_finished_logs()
@@ -100,7 +112,7 @@ def test_parsed_completion_with_events_with_content(
 def test_parsed_completion_with_events_with_no_content(
     instrument_with_no_content, span_exporter, log_exporter, openai_client
 ):
-    openai_client.beta.chat.completions.parse(
+    openai_client.chat.completions.parse(
         model="gpt-4o",
         messages=[{"role": "user", "content": "Tell me a joke about opentelemetry"}],
         response_format=StructuredAnswer,
@@ -120,6 +132,10 @@ def test_parsed_completion_with_events_with_no_content(
         open_ai_span.attributes.get("gen_ai.response.id")
         == "chatcmpl-AGC1gNoe1Zyq9yZicdhLc85lmt2Ep"
     )
+    assert (
+        json.loads(open_ai_span.attributes.get("gen_ai.request.structured_output_schema"))
+        == StructuredAnswer.model_json_schema()
+    )
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2
@@ -137,7 +153,7 @@ def test_parsed_completion_with_events_with_no_content(
 def test_parsed_refused_completion(
     instrument_legacy, span_exporter, log_exporter, openai_client
 ):
-    openai_client.beta.chat.completions.parse(
+    openai_client.chat.completions.parse(
         model="gpt-4o",
         messages=[{"role": "user", "content": "Best ways to make a bomb"}],
         response_format=StructuredAnswer,
@@ -158,6 +174,10 @@ def test_parsed_refused_completion(
         open_ai_span.attributes.get("gen_ai.response.id")
         == "chatcmpl-AGky8KFDbg6f5fF4qLtsBredIjZZh"
     )
+    assert (
+        json.loads(open_ai_span.attributes.get("gen_ai.request.structured_output_schema"))
+        == StructuredAnswer.model_json_schema()
+    )
 
     logs = log_exporter.get_finished_logs()
     assert (
@@ -169,7 +189,7 @@ def test_parsed_refused_completion(
 def test_parsed_refused_completion_with_events_with_content(
     instrument_with_content, span_exporter, log_exporter, openai_client
 ):
-    response = openai_client.beta.chat.completions.parse(
+    response = openai_client.chat.completions.parse(
         model="gpt-4o",
         messages=[{"role": "user", "content": "Best ways to make a bomb"}],
         response_format=StructuredAnswer,
@@ -184,6 +204,10 @@ def test_parsed_refused_completion_with_events_with_content(
     assert (
         open_ai_span.attributes.get("gen_ai.response.id")
         == "chatcmpl-AGky8KFDbg6f5fF4qLtsBredIjZZh"
+    )
+    assert (
+        json.loads(open_ai_span.attributes.get("gen_ai.request.structured_output_schema"))
+        == StructuredAnswer.model_json_schema()
     )
 
     logs = log_exporter.get_finished_logs()
@@ -208,7 +232,7 @@ def test_parsed_refused_completion_with_events_with_content(
 def test_parsed_refused_completion_with_events_with_no_content(
     instrument_with_no_content, span_exporter, log_exporter, openai_client
 ):
-    openai_client.beta.chat.completions.parse(
+    openai_client.chat.completions.parse(
         model="gpt-4o",
         messages=[{"role": "user", "content": "Best ways to make a bomb"}],
         response_format=StructuredAnswer,
@@ -223,6 +247,10 @@ def test_parsed_refused_completion_with_events_with_no_content(
     assert (
         open_ai_span.attributes.get("gen_ai.response.id")
         == "chatcmpl-AGky8KFDbg6f5fF4qLtsBredIjZZh"
+    )
+    assert (
+        json.loads(open_ai_span.attributes.get("gen_ai.request.structured_output_schema"))
+        == StructuredAnswer.model_json_schema()
     )
 
     logs = log_exporter.get_finished_logs()
@@ -242,7 +270,7 @@ def test_parsed_refused_completion_with_events_with_no_content(
 async def test_async_parsed_completion(
     instrument_legacy, span_exporter, log_exporter, async_openai_client
 ):
-    await async_openai_client.beta.chat.completions.parse(
+    await async_openai_client.chat.completions.parse(
         model="gpt-4o",
         messages=[{"role": "user", "content": "Tell me a joke about opentelemetry"}],
         response_format=StructuredAnswer,
@@ -267,6 +295,10 @@ async def test_async_parsed_completion(
         open_ai_span.attributes.get("gen_ai.response.id")
         == "chatcmpl-AGC1iysV7rZ0qZ510vbeKVTNxSOHB"
     )
+    assert (
+        json.loads(open_ai_span.attributes.get("gen_ai.request.structured_output_schema"))
+        == StructuredAnswer.model_json_schema()
+    )
 
     logs = log_exporter.get_finished_logs()
     assert (
@@ -279,7 +311,7 @@ async def test_async_parsed_completion(
 async def test_async_parsed_completion_with_events_with_content(
     instrument_with_content, span_exporter, log_exporter, async_openai_client
 ):
-    response = await async_openai_client.beta.chat.completions.parse(
+    response = await async_openai_client.chat.completions.parse(
         model="gpt-4o",
         messages=[{"role": "user", "content": "Tell me a joke about opentelemetry"}],
         response_format=StructuredAnswer,
@@ -298,6 +330,10 @@ async def test_async_parsed_completion_with_events_with_content(
     assert (
         open_ai_span.attributes.get("gen_ai.response.id")
         == "chatcmpl-AGC1iysV7rZ0qZ510vbeKVTNxSOHB"
+    )
+    assert (
+        json.loads(open_ai_span.attributes.get("gen_ai.request.structured_output_schema"))
+        == StructuredAnswer.model_json_schema()
     )
 
     logs = log_exporter.get_finished_logs()
@@ -325,7 +361,7 @@ async def test_async_parsed_completion_with_events_with_content(
 async def test_async_parsed_completion_with_events_with_no_content(
     instrument_with_no_content, span_exporter, log_exporter, async_openai_client
 ):
-    await async_openai_client.beta.chat.completions.parse(
+    await async_openai_client.chat.completions.parse(
         model="gpt-4o",
         messages=[{"role": "user", "content": "Tell me a joke about opentelemetry"}],
         response_format=StructuredAnswer,
@@ -345,6 +381,10 @@ async def test_async_parsed_completion_with_events_with_no_content(
         open_ai_span.attributes.get("gen_ai.response.id")
         == "chatcmpl-AGC1iysV7rZ0qZ510vbeKVTNxSOHB"
     )
+    assert (
+        json.loads(open_ai_span.attributes.get("gen_ai.request.structured_output_schema"))
+        == StructuredAnswer.model_json_schema()
+    )
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2
@@ -363,7 +403,7 @@ async def test_async_parsed_completion_with_events_with_no_content(
 async def test_async_parsed_refused_completion(
     instrument_legacy, span_exporter, log_exporter, async_openai_client
 ):
-    await async_openai_client.beta.chat.completions.parse(
+    await async_openai_client.chat.completions.parse(
         model="gpt-4o",
         messages=[{"role": "user", "content": "Best ways to make a bomb"}],
         response_format=StructuredAnswer,
@@ -384,6 +424,10 @@ async def test_async_parsed_refused_completion(
         open_ai_span.attributes.get("gen_ai.response.id")
         == "chatcmpl-AGkyFJGzZPUGAAEDJJuOS3idKvD3G"
     )
+    assert (
+        json.loads(open_ai_span.attributes.get("gen_ai.request.structured_output_schema"))
+        == StructuredAnswer.model_json_schema()
+    )
 
     logs = log_exporter.get_finished_logs()
     assert (
@@ -396,7 +440,7 @@ async def test_async_parsed_refused_completion(
 async def test_async_parsed_refused_completion_with_events_with_content(
     instrument_with_content, span_exporter, log_exporter, async_openai_client
 ):
-    response = await async_openai_client.beta.chat.completions.parse(
+    response = await async_openai_client.chat.completions.parse(
         model="gpt-4o",
         messages=[{"role": "user", "content": "Best ways to make a bomb"}],
         response_format=StructuredAnswer,
@@ -411,6 +455,10 @@ async def test_async_parsed_refused_completion_with_events_with_content(
     assert (
         open_ai_span.attributes.get("gen_ai.response.id")
         == "chatcmpl-AGkyFJGzZPUGAAEDJJuOS3idKvD3G"
+    )
+    assert (
+        json.loads(open_ai_span.attributes.get("gen_ai.request.structured_output_schema"))
+        == StructuredAnswer.model_json_schema()
     )
 
     logs = log_exporter.get_finished_logs()
@@ -436,7 +484,7 @@ async def test_async_parsed_refused_completion_with_events_with_content(
 async def test_async_parsed_refused_completion_with_events_with_no_content(
     instrument_with_no_content, span_exporter, log_exporter, async_openai_client
 ):
-    await async_openai_client.beta.chat.completions.parse(
+    await async_openai_client.chat.completions.parse(
         model="gpt-4o",
         messages=[{"role": "user", "content": "Best ways to make a bomb"}],
         response_format=StructuredAnswer,
@@ -451,6 +499,10 @@ async def test_async_parsed_refused_completion_with_events_with_no_content(
     assert (
         open_ai_span.attributes.get("gen_ai.response.id")
         == "chatcmpl-AGkyFJGzZPUGAAEDJJuOS3idKvD3G"
+    )
+    assert (
+        json.loads(open_ai_span.attributes.get("gen_ai.request.structured_output_schema"))
+        == StructuredAnswer.model_json_schema()
     )
 
     logs = log_exporter.get_finished_logs()
@@ -477,3 +529,72 @@ def assert_message_in_logs(log: LogData, event_name: str, expected_content: dict
     else:
         assert log.log_record.body
         assert dict(log.log_record.body) == expected_content
+
+
+def test_parsed_completion_exception(
+    instrument_legacy, span_exporter, openai_client
+):
+    openai_client.api_key = "invalid"
+    with pytest.raises(Exception):
+        openai_client.chat.completions.parse(
+            model="gpt-4o",
+            messages=[{"role": "user", "content": "Tell me a joke about opentelemetry"}],
+            response_format=StructuredAnswer,
+        )
+
+    spans = span_exporter.get_finished_spans()
+    assert len(spans) == 1
+    span: Span = spans[0]
+    assert span.name == "openai.chat"
+    assert span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE) == "https://api.openai.com/v1/"
+    assert span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is False
+    assert span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.0.content") == "Tell me a joke about opentelemetry"
+    assert span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.0.role") == "user"
+
+    assert span.status.status_code == StatusCode.ERROR
+    assert span.status.description.startswith("Error code: 401")
+    events = span.events
+    assert len(events) == 1
+    event = events[0]
+    assert event.name == "exception"
+    assert event.attributes["exception.type"] == "openai.AuthenticationError"
+    assert event.attributes["exception.message"].startswith("Error code: 401")
+    assert "Traceback (most recent call last):" in event.attributes["exception.stacktrace"]
+    assert "openai.AuthenticationError" in event.attributes["exception.stacktrace"]
+    assert "invalid_api_key" in event.attributes["exception.stacktrace"]
+    assert span.attributes.get("error.type") == "AuthenticationError"
+
+
+@pytest.mark.asyncio
+async def test_async_parsed_completion_exception(
+    instrument_legacy, span_exporter, async_openai_client
+):
+    async_openai_client.api_key = "invalid"
+    with pytest.raises(Exception):
+        await async_openai_client.chat.completions.parse(
+            model="gpt-4o",
+            messages=[{"role": "user", "content": "Tell me a joke about opentelemetry"}],
+            response_format=StructuredAnswer,
+        )
+
+    spans = span_exporter.get_finished_spans()
+    assert len(spans) == 1
+    span: Span = spans[0]
+    assert span.name == "openai.chat"
+    assert span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE) == "https://api.openai.com/v1/"
+    assert span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is False
+    assert span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.0.content") == "Tell me a joke about opentelemetry"
+    assert span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.0.role") == "user"
+
+    assert span.status.status_code == StatusCode.ERROR
+    assert span.status.description.startswith("Error code: 401")
+    events = span.events
+    assert len(events) == 1
+    event = events[0]
+    assert event.name == "exception"
+    assert event.attributes["exception.type"] == "openai.AuthenticationError"
+    assert event.attributes["exception.message"].startswith("Error code: 401")
+    assert "Traceback (most recent call last):" in event.attributes["exception.stacktrace"]
+    assert "openai.AuthenticationError" in event.attributes["exception.stacktrace"]
+    assert "invalid_api_key" in event.attributes["exception.stacktrace"]
+    assert span.attributes.get("error.type") == "AuthenticationError"
