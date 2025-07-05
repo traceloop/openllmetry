@@ -1,0 +1,45 @@
+interactions:
+- request:
+    body: '{"model": "llama3.1", "messages": [{"role": "assistant", "content": "",
+      "tool_calls": [{"function": {"name": "get_current_weather", "arguments": {"location":
+      "San Francisco"}}}]}, {"role": "tool", "content": "The weather in San Francisco
+      is 70 degrees and sunny."}], "tools": [], "stream": false, "format": "", "options":
+      {}, "keep_alive": null}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '345'
+      content-type:
+      - application/json
+      host:
+      - 127.0.0.1:11434
+      user-agent:
+      - ollama-python/0.3.2 (arm64 darwin) Python/3.12.4
+    method: POST
+    uri: http://127.0.0.1:11434/api/chat
+  response:
+    body:
+      string: '{"model":"llama3.1","created_at":"2024-09-16T02:41:57.128675Z","message":{"role":"assistant","content":"This
+        is a simple example, but in a real-world scenario, you would need to have
+        an API key to access the OpenWeatherMap API. You can get one for free on their
+        website. Also, this code should be placed in a file and run from there instead
+        of running it directly in the Python interpreter. \n\nNote: This is just a
+        simple example, in real-world scenarios, you would need to handle errors more
+        robustly and potentially add more features such as getting weather data for
+        multiple locations at once or handling different units (e.g., Celsius)."},"done_reason":"stop","done":true,"total_duration":6037504209,"load_duration":28126292,"prompt_eval_count":44,"prompt_eval_duration":182953000,"eval_count":113,"eval_duration":5825102000}'
+    headers:
+      Content-Length:
+      - '830'
+      Content-Type:
+      - application/json; charset=utf-8
+      Date:
+      - Mon, 16 Sep 2024 02:41:57 GMT
+    status:
+      code: 200
+      message: OK
+version: 1
