@@ -95,9 +95,48 @@ async def mcp_client(
                 client._receive_request_type = TestServerRequest
                 await client.initialize()
                 yield client
+        case "streamable-http":
+            proc = await asyncio.create_subprocess_exec(
+                sys.executable,
+                server_script,
+                env={
+                    "MCP_TRANSPORT": "streamable-http",
+                    "OTEL_EXPORTER_OTLP_ENDPOINT": otlp_endpoint,
+                    "PYTHONPATH": pythonpath,
+                },
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+            try:
+                from mcp.client.streamable_http import streamablehttp_client
+
+                stderr = proc.stderr
+                assert stderr is not None
+                port = None
+                for i in range(10):
+                    line = str(await stderr.readline())
+                    if "Uvicorn running" in line:
+                        _, rest = line.split("http://127.0.0.1:", 1)
+                        port, _ = rest.split(" ", 1)
+                        break
+                async with (
+                    streamablehttp_client(f"http://localhost:{port}/mcp") as (
+                        reader,
+                        writer,
+                    ),
+                    ClientSession(
+                        reader, writer, message_handler=message_handler
+                    ) as client,
+                ):
+                    client._receive_request_type = TestServerRequest
+                    await client.initialize()
+                    yield client
+            finally:
+                proc.kill()
+                await proc.wait()
 
 
-@pytest.mark.parametrize("transport", ["sse", "stdio"])
+@pytest.mark.parametrize("transport", ["sse", "stdio", "streamable-http"])
 async def test_mcp_instrumentor(
     transport: str, tracer: Tracer, telemetry: Telemetry, otlp_collector: OTLPServer
 ) -> None:
