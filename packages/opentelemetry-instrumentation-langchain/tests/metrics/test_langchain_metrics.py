@@ -142,21 +142,21 @@ def verify_langchain_metrics(metrics_reader):
     metrics_data = metrics_reader.get_metrics_data()
     resource_metrics = metrics_data.resource_metrics
     assert len(resource_metrics) > 0
-    
+
     found_token_metric = False
     found_duration_metric = False
-    
+
     for rm in resource_metrics:
         for sm in rm.scope_metrics:
             for metric in sm.metrics:
                 if metric.name == Meters.LLM_TOKEN_USAGE:
                     found_token_metric = True
                     verify_token_metrics(metric.data.data_points)
-                
+
                 if metric.name == Meters.LLM_OPERATION_DURATION:
                     found_duration_metric = True
                     verify_duration_metrics(metric.data.data_points)
-    
+
     return found_token_metric, found_duration_metric
 
 
@@ -169,16 +169,16 @@ def test_llm_chain_metrics_with_none_llm_output(metrics_test_context, chain, llm
     """
     _, metrics_reader = metrics_test_context
     original_generate = llm._generate
-    
+
     # Create a patched version that returns results with None llm_output
     def patched_generate(*args, **kwargs):
         result = original_generate(*args, **kwargs)
-        result.llm_output = None 
+        result.llm_output = None
         return result
-    
+
     with patch.object(llm, '_generate', side_effect=patched_generate):
         chain.run(product="colorful socks")
-    
+
     found_token_metric, found_duration_metric = verify_langchain_metrics(metrics_reader)
 
     assert found_token_metric is True, "Token usage metrics not found"

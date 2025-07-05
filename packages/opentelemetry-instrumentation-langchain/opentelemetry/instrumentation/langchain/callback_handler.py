@@ -217,10 +217,10 @@ def _extract_model_name_from_response_metadata(response: LLMResult) -> str:
 
 
 def _set_chat_response(
-    span: Span, 
-    response: LLMResult, 
+    span: Span,
+    response: LLMResult,
     token_histogram: Histogram,
-    record_token_usage: bool, 
+    record_token_usage: bool,
     model_name: str
 ) -> None:
     input_tokens = 0
