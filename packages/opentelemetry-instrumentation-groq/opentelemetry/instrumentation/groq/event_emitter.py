@@ -27,7 +27,8 @@ VALID_MESSAGE_ROLES = {role.value for role in Roles}
 """The valid roles for naming the message event."""
 
 EVENT_ATTRIBUTES = {
-    GenAIAttributes.GEN_AI_SYSTEM: GenAIAttributes.GenAiSystemValues.GROQ.value
+    # Should be GenAIAttributes.GenAiSystemValues.GROQ.value but it's not defined in the opentelemetry-semconv package
+    GenAIAttributes.GEN_AI_SYSTEM: "groq"
 }
 """The attributes to be used for the event."""
 
