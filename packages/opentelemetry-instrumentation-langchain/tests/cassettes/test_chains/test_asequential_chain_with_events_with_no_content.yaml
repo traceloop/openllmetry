@@ -1,0 +1,231 @@
+interactions:
+- request:
+    body: '{"model": "gpt-3.5-turbo-instruct", "prompt": ["You are a playwright. Given
+      the title of play and the era it is set in, it is your job to write a synopsis
+      for that title.\n\n    Title: Tragedy at sunset on the beach\n    Era: Victorian
+      England\n    Playwright: This is a synopsis for the above play:"], "frequency_penalty":
+      0, "logit_bias": {}, "max_tokens": 256, "n": 1, "presence_penalty": 0, "temperature":
+      0.7, "top_p": 1}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '426'
+      content-type:
+      - application/json
+      host:
+      - api.openai.com
+      user-agent:
+      - OpenAI/Python 1.12.0
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.12.0
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.11.1
+    method: POST
+    uri: https://api.openai.com/v1/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA2xTTW8TMRC951eM9sJlE6UtaUtuIEACpPJVqCqCqok9u2vijLeecZpQ9b8je7ft
+        hYtle+Y9v3meuZ8AVM5WS6jMtvfT87vb62/XF7dvr67+Xnzpvm4+Hf94f7U+Pz24j5+rOmeH9R8y
+        mhFKe70xYdt7Uhd4CJtIqJQZj87mr+Yni7OTRQlsgyWfYW2v05PZYqoprsPUsWhMRkd0F5whqZbw
+        awIAcF9WGN7KYFjxij8waEewdVYUQlMOotEZBWQLfQw9RZBgHOkhJ/x0RkN0yPCOW49sa0BoY0h9
+        jjbREVuBFrWjCGFg7wkNNcmDdCGS5EQEIeOTJQtrQtOBBrhDzZusILGQzuC1lCPtiB23kLgJ3koN
+        SiwusEB0QkWokImkAhgJIu0IPdkaEkfckfcZPAiJDRmFBg1aGut1EYRo67j1h6cM73YkTwIkMUih
+        ZwsW44ZJBCyJKdWmfiy0lFKDRmzJHoqRG5IaPOHuUcPgVROyygimQ27JzuCyiyG1XTEmusGkxqN0
+        azSb4WHHShFNbpDsQUeAyTpiQ3DnNEuiZ780b1HBk4XUZ3u1cwINavmJR0szb4aYwEK3KZONwCZ4
+        H+5mcOW0fMp20OTDjmpYk0Y8oK8H80t7oAfa92QUR4Wr6nI0AhW+ly997Ig32ahVBZb8jiRXFkYZ
+        eQT2TkcHurRFBkZNkf6vNSc5m0sJTC8ENCYCId/MoMxBaXnHlvbVEuZPNz60fQzrPB6cvH+6bxw7
+        6W4ioQTOUyIa+qpEHyYAv8toJcGWquU4UlUfw7bXGw0b4kx4ejTQVc8D/Rw8erkYoxoU/XPgeH46
+        yY88TP4BAAD//wMARyqwekoEAAA=
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 85c050e1ba1a0e19-MXP
+      Cache-Control:
+      - no-cache, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 27 Feb 2024 12:08:57 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=tweHeZeMtVPJLUV7SZB26Lipwpw.BQ1.4X_Y6CSKRRc-1709035737-1.0-AT33S2bZA8bffZwwKiVZne+rlqct/seEe76WNfaaj+/EMZBFJwAE9pYDb1NwytfKNW3NYdRhWae+H0Ezuy6Pgf0=;
+        path=/; expires=Tue, 27-Feb-24 12:38:57 GMT; domain=.api.openai.com; HttpOnly;
+        Secure; SameSite=None
+      - _cfuvid=oa6mlrcQaWGFRnmczT1FQHoA3dVLo.ySSS881dJvSvM-1709035737088-0.0-604800000;
+        path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
+      Transfer-Encoding:
+      - chunked
+      access-control-allow-origin:
+      - '*'
+      alt-svc:
+      - h3=":443"; ma=86400
+      openai-model:
+      - gpt-3.5-turbo-instruct
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '1553'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=15724800; includeSubDomains
+      x-ratelimit-limit-requests:
+      - '3000'
+      x-ratelimit-limit-tokens:
+      - '250000'
+      x-ratelimit-remaining-requests:
+      - '2999'
+      x-ratelimit-remaining-tokens:
+      - '249682'
+      x-ratelimit-reset-requests:
+      - 20ms
+      x-ratelimit-reset-tokens:
+      - 76ms
+      x-request-id:
+      - req_c0e8c1f38e972bfbc4998f99c2421b3a
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"model": "gpt-3.5-turbo-instruct", "prompt": ["You are a play critic from
+      the New York Times. Given the synopsis of play, it is your job to write a review
+      for that play.\n\n    Play Synopsis:\n     \n\nIn the midst of the strict and
+      proper society of Victorian England, a group of friends gather on the peaceful
+      shores of a secluded beach to watch the sunset. As the evening unfolds, tensions
+      rise and secrets are revealed, unravelling the perfect facade of their seemingly
+      perfect lives. As the sun sets and darkness descends upon the beach, tragedy
+      strikes, leaving the group forever changed. Through a series of flashbacks and
+      interactions, the audience witnesses the events that led up to this fateful
+      evening and the consequences that follow. With themes of love, betrayal, and
+      societal expectations, \"Tragedy at Sunset on the Beach\" delves into the complexities
+      of human nature and the consequences of hiding one''s true self. \n    Review
+      from a New York Times play critic of the above play:"], "frequency_penalty":
+      0, "logit_bias": {}, "max_tokens": 256, "n": 1, "presence_penalty": 0, "temperature":
+      0.7, "top_p": 1}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '1127'
+      content-type:
+      - application/json
+      cookie:
+      - __cf_bm=tweHeZeMtVPJLUV7SZB26Lipwpw.BQ1.4X_Y6CSKRRc-1709035737-1.0-AT33S2bZA8bffZwwKiVZne+rlqct/seEe76WNfaaj+/EMZBFJwAE9pYDb1NwytfKNW3NYdRhWae+H0Ezuy6Pgf0=;
+        _cfuvid=oa6mlrcQaWGFRnmczT1FQHoA3dVLo.ySSS881dJvSvM-1709035737088-0.0-604800000
+      host:
+      - api.openai.com
+      user-agent:
+      - OpenAI/Python 1.12.0
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.12.0
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.11.1
+    method: POST
+    uri: https://api.openai.com/v1/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA2xUS28kRQy+51dYc55EWcIqkCPSckFiEYmQlg1aearc3Sbucsfl6sloxX9Hrp6E
+        PXAZTdfD/vw96usFwI7z7g52aV7k8ofj86eHj8/r7zd4P2XkX75797Pd/zl+/ITf024fp/XwNyWP
+        G04v/iXpvAg5a9m2kxE6RcV3t9c/Xt+8v7257RuzZpK4Ni5+eXP1/tKbHfSSS3Vryc+3J+VEdXcH
+        ny8AAL72X9h6xeXH8lgedw+GI+UToMN9K5UctIBPBD8RpulxB1wBwSdt4+SXi+mqT1xGwJJhNF6W
+        +FgET+ATOjg+UY3vRMBbIeORcz+/mC5kUDUx+Ql0gD84uRpjgQ9lFCz5Ch4m2uolKk5WAU1byYAw
+        mrYlbg3GVHKF46Qwok9kARqhUpKWKcMhsIMrHNHjz0RQ+3B7ODQHrH2JViodveloVCvVPTiVyloq
+        GFfqoCslIw8YBEYroVDeQxPnGZ3kBEKYo4xrEGU4cuqlfWMkTVhG6h3ZQHilCoNGJbsKCX4TPB2N
+        x8nh8684019Qn1hkaCInOBLGedeR+pgI1dU6daIr7eFAbnhC2W9YO7MoQC8LJUfvo3QduELCxXlF
+        P8+cW4r9jfE0oWE6801wJJHLTCuJLrSJt+E3kq3qxEvt67NuRaNTXKWXRdQoR9tMiwf9Fu7pAhlT
+        7RIK1umA6WkrwiE1djz1Cj6Eem+IwoGDWqIcFCctg2knN/DosQCXQgaZ5g5hgxrnKj03KmlrOPEm
+        Ur/l1ggqSXDL3TlnS3bFVpRGtXdSm9lPgAddCVAESCp12YK06ji+ZiGSk6nyWKKbv5o4GKkcuYYT
+        OdAwUHIO5VBEj2dIgC1zQI0JB02tvqZwexNeegsKqrWgQGYUHRuF/Eei89E3CTdJW6VXKFseMJIc
+        nGfTBTDnMFbf15UspkOftS4TGX07xB6O7FuK3LA8Nxbe4tuDRd4dVcnWTkbtLkV7CgbdsPprG282
+        K8vGciuDSu6DBo//seookfwMVCrNByFIUSNTZMcqLHokG5p0TkrDEs5YyEKs+Kh7OBiX8ZxJ4YF6
+        9zkyO2CiqP2t38+O4eLGCdPZof/j984rG6SJZq4eOTyDD48uKAsG3CjY2T3bX/uD3N9eLpledndw
+        /bYiOi6mh3inSxN5Wx+4cJ2+GGHVEs+1UBl92vX9fy7+lYJCLLiULy1OTE9VsoKW7koFRfm5BSXx
+        JfnZqXkgIw0tjSAmKiEqF4SskakZVLYkvyQxByFhYmLBBbKllgsAAAD//wMAcIMQMtYGAAA=
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 85c050ed49520e19-MXP
+      Cache-Control:
+      - no-cache, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 27 Feb 2024 12:09:00 GMT
+      Server:
+      - cloudflare
+      Transfer-Encoding:
+      - chunked
+      access-control-allow-origin:
+      - '*'
+      alt-svc:
+      - h3=":443"; ma=86400
+      openai-model:
+      - gpt-3.5-turbo-instruct
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '3284'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=15724800; includeSubDomains
+      x-ratelimit-limit-requests:
+      - '3000'
+      x-ratelimit-limit-tokens:
+      - '250000'
+      x-ratelimit-remaining-requests:
+      - '2999'
+      x-ratelimit-remaining-tokens:
+      - '249507'
+      x-ratelimit-reset-requests:
+      - 20ms
+      x-ratelimit-reset-tokens:
+      - 118ms
+      x-request-id:
+      - req_2c7e25c90aa81889ede319a3fea4ca53
+    status:
+      code: 200
+      message: OK
+version: 1

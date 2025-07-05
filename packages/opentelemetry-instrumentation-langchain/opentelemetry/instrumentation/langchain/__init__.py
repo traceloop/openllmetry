@@ -2,29 +2,24 @@
 
 import logging
 from typing import Collection
-from opentelemetry.instrumentation.langchain.config import Config
-from wrapt import wrap_function_wrapper
 
-from opentelemetry.trace import get_tracer
-
+from opentelemetry._events import get_event_logger
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
-from opentelemetry.instrumentation.utils import unwrap
-
-from opentelemetry.instrumentation.langchain.version import __version__
-from opentelemetry.instrumentation.langchain.utils import is_package_available
-
-
-from opentelemetry.trace.propagation.tracecontext import (
-    TraceContextTextMapPropagator,
-)
-from opentelemetry.trace.propagation import set_span_in_context
-
 from opentelemetry.instrumentation.langchain.callback_handler import (
     TraceloopCallbackHandler,
 )
-
+from opentelemetry.instrumentation.langchain.config import Config
+from opentelemetry.instrumentation.langchain.utils import is_package_available
+from opentelemetry.instrumentation.langchain.version import __version__
+from opentelemetry.instrumentation.utils import unwrap
 from opentelemetry.metrics import get_meter
 from opentelemetry.semconv_ai import Meters
+from opentelemetry.trace import get_tracer
+from opentelemetry.trace.propagation import set_span_in_context
+from opentelemetry.trace.propagation.tracecontext import (
+    TraceContextTextMapPropagator,
+)
+from wrapt import wrap_function_wrapper
 
 logger = logging.getLogger(__name__)
 
@@ -34,9 +29,15 @@ _instruments = ("langchain-core > 0.1.0", )
 class LangchainInstrumentor(BaseInstrumentor):
     """An instrumentor for Langchain SDK."""
 
-    def __init__(self, exception_logger=None, disable_trace_context_propagation=False):
+    def __init__(
+        self,
+        exception_logger=None,
+        disable_trace_context_propagation=False,
+        use_legacy_attributes: bool = True,
+    ):
         super().__init__()
         Config.exception_logger = exception_logger
+        Config.use_legacy_attributes = use_legacy_attributes
         self.disable_trace_context_propagation = disable_trace_context_propagation
 
     def instrumentation_dependencies(self) -> Collection[str]:
@@ -63,6 +64,12 @@ class LangchainInstrumentor(BaseInstrumentor):
             unit="token",
             description="Measures number of input and output tokens used",
         )
+
+        if not Config.use_legacy_attributes:
+            event_logger_provider = kwargs.get("event_logger_provider")
+            Config.event_logger = get_event_logger(
+                __name__, __version__, event_logger_provider=event_logger_provider
+            )
 
         traceloopCallbackHandler = TraceloopCallbackHandler(
             tracer, duration_histogram, token_histogram
@@ -212,7 +219,6 @@ class _OpenAITracingWrapper:
         args,
         kwargs,
     ) -> None:
-
         run_manager = kwargs.get("run_manager")
         if run_manager:
             run_id = run_manager.run_id

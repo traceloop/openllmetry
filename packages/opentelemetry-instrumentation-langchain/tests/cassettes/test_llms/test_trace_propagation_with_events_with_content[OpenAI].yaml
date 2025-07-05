@@ -1,0 +1,56 @@
+interactions:
+- request:
+    body: '{"model": "facebook/opt-125m", "prompt": ["System: You are a helpful assistant
+      \nHuman: Tell me a joke about OpenTelemetry"], "frequency_penalty": 0, "logit_bias":
+      {}, "logprobs": null, "max_tokens": 20, "n": 1, "presence_penalty": 0, "seed":
+      null, "temperature": 0.7, "top_p": 1}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '280'
+      content-type:
+      - application/json
+      host:
+      - localhost:8000
+      traceparent:
+      - 00-8371e1bd56a7c1a52aadecf9eec4a539-572cdc19f7771ce8-01
+      user-agent:
+      - OpenAI/Python 1.45.1
+      x-stainless-arch:
+      - x64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - Linux
+      x-stainless-package-version:
+      - 1.45.1
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.10.12
+    method: POST
+    uri: http://localhost:8000/v1/completions
+  response:
+    body:
+      string: '{"id":"cmpl-0d0de051822641bf9109a34cd3152e00","object":"text_completion","created":1729072358,"model":"facebook/opt-125m","choices":[{"index":0,"text":",
+        and I will give you a pass.\nShocker : the PteS. goal is","logprobs":null,"finish_reason":"length","stop_reason":null}],"usage":{"prompt_tokens":20,"total_tokens":40,"completion_tokens":20}}'
+    headers:
+      content-length:
+      - '344'
+      content-type:
+      - application/json
+      date:
+      - Wed, 16 Oct 2024 09:52:38 GMT
+      server:
+      - uvicorn
+    status:
+      code: 200
+      message: OK
+version: 1
