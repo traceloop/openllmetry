@@ -264,7 +264,7 @@ def _instrumented_converse_stream(fn, tracer, metric_params):
 @dont_throw
 def _handle_stream_call(span, kwargs, response, metric_params):
 
-    (vendor, model) = _get_vendor_model(kwargs.get("modelId"))
+    (provider, model_vendor, model) = _get_vendor_model(kwargs.get("modelId"))
     request_body = json.loads(kwargs.get("body"))
 
     headers = {}
@@ -274,15 +274,15 @@ def _handle_stream_call(span, kwargs, response, metric_params):
     @dont_throw
     def stream_done(response_body):
 
-        metric_params.vendor = vendor
+        metric_params.vendor = provider
         metric_params.model = model
         metric_params.is_stream = True
 
-        prompt_caching_handling(headers, vendor, model, metric_params)
-        guardrail_handling(response_body, vendor, model, metric_params)
+        prompt_caching_handling(headers, provider, model, metric_params)
+        guardrail_handling(response_body, provider, model, metric_params)
 
         _set_model_span_attributes(
-            vendor, model, span, request_body, response_body, headers, metric_params
+            provider, model_vendor, model, span, request_body, response_body, headers, metric_params
         )
 
         span.end()
@@ -303,25 +303,25 @@ def _handle_call(span, kwargs, response, metric_params):
     if "ResponseMetadata" in response:
         headers = response.get("ResponseMetadata").get("HTTPHeaders", {})
 
-    (vendor, model) = _get_vendor_model(kwargs.get("modelId"))
-    metric_params.vendor = vendor
+    (provider, model_vendor, model) = _get_vendor_model(kwargs.get("modelId"))
+    metric_params.vendor = provider
     metric_params.model = model
     metric_params.is_stream = False
 
-    prompt_caching_handling(headers, vendor, model, metric_params)
-    guardrail_handling(response_body, vendor, model, metric_params)
+    prompt_caching_handling(headers, provider, model, metric_params)
+    guardrail_handling(response_body, provider, model, metric_params)
 
     _set_model_span_attributes(
-        vendor, model, span, request_body, response_body, headers, metric_params
+        provider, model_vendor, model, span, request_body, response_body, headers, metric_params
     )
 
 
 @dont_throw
 def _handle_converse(span, kwargs, response, metric_params):
-    (vendor, model) = _get_vendor_model(kwargs.get("modelId"))
-    guardrail_converse(response, vendor, model, metric_params)
+    (provider, model_vendor, model) = _get_vendor_model(kwargs.get("modelId"))
+    guardrail_converse(response, provider, model, metric_params)
 
-    _set_span_attribute(span, SpanAttributes.LLM_SYSTEM, vendor)
+    _set_span_attribute(span, SpanAttributes.LLM_SYSTEM, provider)
     _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, model)
     _set_span_attribute(
         span, SpanAttributes.LLM_REQUEST_TYPE, LLMRequestTypeValues.CHAT.value
@@ -359,9 +359,9 @@ def _handle_converse(span, kwargs, response, metric_params):
 
 @dont_throw
 def _handle_converse_stream(span, kwargs, response, metric_params):
-    (vendor, model) = _get_vendor_model(kwargs.get("modelId"))
+    (provider, model_vendor, model) = _get_vendor_model(kwargs.get("modelId"))
 
-    _set_span_attribute(span, SpanAttributes.LLM_SYSTEM, vendor)
+    _set_span_attribute(span, SpanAttributes.LLM_SYSTEM, provider)
     _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, model)
     _set_span_attribute(
         span, SpanAttributes.LLM_REQUEST_TYPE, LLMRequestTypeValues.CHAT.value
@@ -400,7 +400,7 @@ def _handle_converse_stream(span, kwargs, response, metric_params):
                         )
                 elif "metadata" in event:
                     # last message sent
-                    guardrail_converse(event["metadata"], vendor, model, metric_params)
+                    guardrail_converse(event["metadata"], provider, model, metric_params)
                     _converse_usage_record(span, event["metadata"], metric_params)
                     span.end()
                 elif "messageStop" in event:
@@ -420,7 +420,8 @@ def _handle_converse_stream(span, kwargs, response, metric_params):
 def _get_vendor_model(modelId):
     # Docs:
     # https://docs.aws.amazon.com/bedrock/latest/userguide/inference-profiles-support.html#inference-profiles-support-system
-    vendor = "imported_model"
+    provider = "AWS"
+    model_vendor = "imported_model"
     model = modelId
 
     if modelId is not None and modelId.startswith("arn"):
@@ -429,11 +430,11 @@ def _get_vendor_model(modelId):
             inf_profile = components[5].split("/")
             if len(inf_profile) == 2:
                 if "." in inf_profile[1]:
-                    (vendor, model) = _cross_region_check(inf_profile[1])
+                    (model_vendor, model) = _cross_region_check(inf_profile[1])
     elif modelId is not None and "." in modelId:
-        (vendor, model) = _cross_region_check(modelId)
+        (model_vendor, model) = _cross_region_check(modelId)
 
-    return vendor, model
+    return provider, model_vendor, model
 
 
 def _cross_region_check(value):
@@ -444,8 +445,8 @@ def _cross_region_check(value):
             parts.pop(0)
         return parts[0], parts[1]
     else:
-        (vendor, model) = value.split(".")
-    return vendor, model
+        (model_vendor, model) = value.split(".", 1)
+    return model_vendor, model
 
 
 def _report_converse_input_prompt(kwargs, span):
@@ -560,20 +561,20 @@ def _metric_shared_attributes(
 
 
 def _set_model_span_attributes(
-    vendor, model, span, request_body, response_body, headers, metric_params
+    provider, model_vendor, model, span, request_body, response_body, headers, metric_params
 ):
 
     response_model = response_body.get("model")
     response_id = response_body.get("id")
 
-    _set_span_attribute(span, SpanAttributes.LLM_SYSTEM, vendor)
+    _set_span_attribute(span, SpanAttributes.LLM_SYSTEM, provider)
     _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, model)
     _set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, response_model)
     _set_span_attribute(span, GEN_AI_RESPONSE_ID, response_id)
 
-    if vendor == "cohere":
+    if model_vendor == "cohere":
         _set_cohere_span_attributes(span, request_body, response_body, metric_params)
-    elif vendor == "anthropic":
+    elif model_vendor == "anthropic":
         if "prompt" in request_body:
             _set_anthropic_completion_span_attributes(
                 span, request_body, response_body, metric_params
@@ -582,15 +583,15 @@ def _set_model_span_attributes(
             _set_anthropic_messages_span_attributes(
                 span, request_body, response_body, metric_params
             )
-    elif vendor == "ai21":
+    elif model_vendor == "ai21":
         _set_ai21_span_attributes(span, request_body, response_body, metric_params)
-    elif vendor == "meta":
+    elif model_vendor == "meta":
         _set_llama_span_attributes(span, request_body, response_body, metric_params)
-    elif vendor == "amazon":
+    elif model_vendor == "amazon":
         _set_amazon_span_attributes(
             span, request_body, response_body, headers, metric_params
         )
-    elif vendor == "imported_model":
+    elif model_vendor == "imported_model":
         _set_imported_model_span_attributes(span, request_body, response_body, metric_params)
 
 
