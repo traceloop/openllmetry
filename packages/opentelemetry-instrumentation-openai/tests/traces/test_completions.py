@@ -10,6 +10,7 @@ from opentelemetry.semconv._incubating.attributes import (
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
+from opentelemetry.trace import StatusCode
 from opentelemetry.semconv_ai import SpanAttributes
 
 from .utils import assert_request_contains_tracecontext, spy_decorator
@@ -918,6 +919,69 @@ async def test_async_completion_context_propagation_with_events_with_no_content(
     # Validate the ai response
     choice_event = {"index": 0, "finish_reason": "length", "message": {}}
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
+
+
+def test_completion_exception(instrument_legacy, span_exporter, openai_client):
+    openai_client.api_key = "invalid"
+    with pytest.raises(Exception):
+        openai_client.completions.create(
+            model="gpt-3.5-turbo",
+            prompt="Tell me a joke about opentelemetry",
+        )
+
+    spans = span_exporter.get_finished_spans()
+    assert [span.name for span in spans] == [
+        "openai.completion",
+    ]
+    open_ai_span = spans[0]
+    assert (
+        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.user"]
+        == "Tell me a joke about opentelemetry"
+    )
+    assert open_ai_span.status.status_code == StatusCode.ERROR
+    assert open_ai_span.status.description.startswith("Error code: 401")
+    events = open_ai_span.events
+    assert len(events) == 1
+    event = events[0]
+    assert event.name == "exception"
+    assert event.attributes["exception.type"] == "openai.AuthenticationError"
+    assert event.attributes["exception.message"].startswith("Error code: 401")
+    assert "Traceback (most recent call last):" in event.attributes["exception.stacktrace"]
+    assert "openai.AuthenticationError" in event.attributes["exception.stacktrace"]
+    assert "invalid_api_key" in event.attributes["exception.stacktrace"]
+    assert open_ai_span.attributes.get("error.type") == "AuthenticationError"
+
+
+@pytest.mark.asyncio
+async def test_async_completion_exception(instrument_legacy, span_exporter, async_openai_client):
+    async_openai_client.api_key = "invalid"
+    with pytest.raises(Exception):
+        await async_openai_client.completions.create(
+            model="gpt-3.5-turbo",
+            prompt="Tell me a joke about opentelemetry",
+        )
+
+    spans = span_exporter.get_finished_spans()
+    assert [span.name for span in spans] == [
+        "openai.completion",
+    ]
+    open_ai_span = spans[0]
+    assert (
+        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.user"]
+        == "Tell me a joke about opentelemetry"
+    )
+    assert open_ai_span.status.status_code == StatusCode.ERROR
+    assert open_ai_span.status.description.startswith("Error code: 401")
+    events = open_ai_span.events
+    assert len(events) == 1
+    event = events[0]
+    assert event.name == "exception"
+    assert event.attributes["exception.type"] == "openai.AuthenticationError"
+    assert event.attributes["exception.message"].startswith("Error code: 401")
+    assert "Traceback (most recent call last):" in event.attributes["exception.stacktrace"]
+    assert "openai.AuthenticationError" in event.attributes["exception.stacktrace"]
+    assert "invalid_api_key" in event.attributes["exception.stacktrace"]
+    assert open_ai_span.attributes.get("error.type") == "AuthenticationError"
 
 
 def assert_message_in_logs(log: LogData, event_name: str, expected_content: dict):
