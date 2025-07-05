@@ -15,6 +15,7 @@ from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
 from opentelemetry.semconv_ai import SpanAttributes
+from opentelemetry.trace import StatusCode
 
 from .utils import assert_request_contains_tracecontext, spy_decorator
 
@@ -1436,3 +1437,78 @@ def test_chat_history_message_pydantic(span_exporter, openai_client):
         == second_user_message["content"]
     )
     assert second_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.2.role"] == "user"
+
+
+def test_chat_exception(instrument_legacy, span_exporter, openai_client):
+    openai_client.api_key = "invalid"
+    with pytest.raises(Exception):
+        openai_client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[{"role": "user", "content": "Tell me a joke about opentelemetry"}],
+        )
+
+    spans = span_exporter.get_finished_spans()
+
+    assert [span.name for span in spans] == [
+        "openai.chat",
+    ]
+    open_ai_span = spans[0]
+    assert (
+        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
+        == "Tell me a joke about opentelemetry"
+    )
+    assert (
+        open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)
+        == "https://api.openai.com/v1/"
+    )
+    assert open_ai_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is False
+    assert open_ai_span.status.status_code == StatusCode.ERROR
+    assert open_ai_span.status.description.startswith("Error code: 401")
+    events = open_ai_span.events
+    assert len(events) == 1
+    event = events[0]
+    assert event.name == "exception"
+    assert event.attributes["exception.type"] == "openai.AuthenticationError"
+    assert event.attributes["exception.message"].startswith("Error code: 401")
+    assert open_ai_span.attributes.get("error.type") == "AuthenticationError"
+    assert "Traceback (most recent call last):" in event.attributes["exception.stacktrace"]
+    assert "openai.AuthenticationError" in event.attributes["exception.stacktrace"]
+    assert "invalid_api_key" in event.attributes["exception.stacktrace"]
+
+
+@pytest.mark.asyncio
+async def test_chat_async_exception(instrument_legacy, span_exporter, async_openai_client):
+    async_openai_client.api_key = "invalid"
+    with pytest.raises(Exception):
+        await async_openai_client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[{"role": "user", "content": "Tell me a joke about opentelemetry"}],
+        )
+
+    spans = span_exporter.get_finished_spans()
+
+    assert [span.name for span in spans] == [
+        "openai.chat",
+    ]
+    open_ai_span = spans[0]
+    assert (
+        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
+        == "Tell me a joke about opentelemetry"
+    )
+    assert (
+        open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)
+        == "https://api.openai.com/v1/"
+    )
+    assert open_ai_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is False
+    assert open_ai_span.status.status_code == StatusCode.ERROR
+    assert open_ai_span.status.description.startswith("Error code: 401")
+    events = open_ai_span.events
+    assert len(events) == 1
+    event = events[0]
+    assert event.name == "exception"
+    assert event.attributes["exception.type"] == "openai.AuthenticationError"
+    assert event.attributes["exception.message"].startswith("Error code: 401")
+    assert "Traceback (most recent call last):" in event.attributes["exception.stacktrace"]
+    assert "openai.AuthenticationError" in event.attributes["exception.stacktrace"]
+    assert "invalid_api_key" in event.attributes["exception.stacktrace"]
+    assert open_ai_span.attributes.get("error.type") == "AuthenticationError"
