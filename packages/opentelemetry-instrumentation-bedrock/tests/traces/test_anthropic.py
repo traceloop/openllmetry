@@ -787,7 +787,7 @@ def test_anthropic_cross_region(instrument_legacy, brt, span_exporter, log_expor
         anthropic_span.attributes[SpanAttributes.LLM_REQUEST_MODEL]
         == "claude-3-7-sonnet-20250219-v1"
     )
-    assert anthropic_span.attributes[SpanAttributes.LLM_SYSTEM] == "anthropic"
+    assert anthropic_span.attributes[SpanAttributes.LLM_SYSTEM] == "AWS"
 
     assert anthropic_span.attributes[
         f"{SpanAttributes.LLM_PROMPTS}.0.content"
@@ -843,7 +843,7 @@ def test_anthropic_cross_region_with_events_with_content(
         anthropic_span.attributes[SpanAttributes.LLM_REQUEST_MODEL]
         == "claude-3-7-sonnet-20250219-v1"
     )
-    assert anthropic_span.attributes[SpanAttributes.LLM_SYSTEM] == "anthropic"
+    assert anthropic_span.attributes[SpanAttributes.LLM_SYSTEM] == "AWS"
 
     assert anthropic_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 20
     assert anthropic_span.attributes.get(
@@ -909,7 +909,7 @@ def test_anthropic_cross_region_with_events_with_no_content(
         anthropic_span.attributes[SpanAttributes.LLM_REQUEST_MODEL]
         == "claude-3-7-sonnet-20250219-v1"
     )
-    assert anthropic_span.attributes[SpanAttributes.LLM_SYSTEM] == "anthropic"
+    assert anthropic_span.attributes[SpanAttributes.LLM_SYSTEM] == "AWS"
 
     assert anthropic_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 20
     assert anthropic_span.attributes.get(

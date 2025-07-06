@@ -123,7 +123,7 @@ def test_titan_completion_with_events_with_content(
     )
 
     # Assert on vendor
-    assert bedrock_span.attributes[SpanAttributes.LLM_SYSTEM] == "amazon"
+    assert bedrock_span.attributes[SpanAttributes.LLM_SYSTEM] == "AWS"
 
     # Assert on request type
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "completion"
@@ -195,7 +195,7 @@ def test_titan_completion_with_events_with_no_content(
     )
 
     # Assert on vendor
-    assert bedrock_span.attributes[SpanAttributes.LLM_SYSTEM] == "amazon"
+    assert bedrock_span.attributes[SpanAttributes.LLM_SYSTEM] == "AWS"
 
     # Assert on request type
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "completion"
@@ -356,7 +356,7 @@ def test_titan_invoke_stream_with_events_with_content(
     )
 
     # Assert on vendor
-    assert bedrock_span.attributes[SpanAttributes.LLM_SYSTEM] == "amazon"
+    assert bedrock_span.attributes[SpanAttributes.LLM_SYSTEM] == "AWS"
 
     # Assert on request type
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "completion"
@@ -441,7 +441,7 @@ def test_titan_invoke_stream_with_events_with_no_content(
     )
 
     # Assert on vendor
-    assert bedrock_span.attributes[SpanAttributes.LLM_SYSTEM] == "amazon"
+    assert bedrock_span.attributes[SpanAttributes.LLM_SYSTEM] == "AWS"
 
     # Assert on request type
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "completion"
@@ -599,7 +599,7 @@ def test_titan_converse_with_events_with_content(
     )
 
     # Assert on vendor
-    assert bedrock_span.attributes[SpanAttributes.LLM_SYSTEM] == "amazon"
+    assert bedrock_span.attributes[SpanAttributes.LLM_SYSTEM] == "AWS"
 
     # Assert on request type
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
@@ -676,7 +676,7 @@ def test_titan_converse_with_events_with_no_content(
     )
 
     # Assert on vendor
-    assert bedrock_span.attributes[SpanAttributes.LLM_SYSTEM] == "amazon"
+    assert bedrock_span.attributes[SpanAttributes.LLM_SYSTEM] == "AWS"
 
     # Assert on request type
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
@@ -883,7 +883,7 @@ def test_titan_converse_stream_with_events_with_content(
     )
 
     # Assert on vendor
-    assert bedrock_span.attributes[SpanAttributes.LLM_SYSTEM] == "amazon"
+    assert bedrock_span.attributes[SpanAttributes.LLM_SYSTEM] == "AWS"
 
     # Assert on request type
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
@@ -991,7 +991,7 @@ def test_titan_converse_stream_with_events_with_no_content(
     )
 
     # Assert on vendor
-    assert bedrock_span.attributes[SpanAttributes.LLM_SYSTEM] == "amazon"
+    assert bedrock_span.attributes[SpanAttributes.LLM_SYSTEM] == "AWS"
 
     # Assert on request type
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"

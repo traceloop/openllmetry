@@ -75,7 +75,7 @@ def test_imported_model_completion_with_events_with_content(
     assert (
         imported_model_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "completion"
     )
-    assert imported_model_span.attributes[SpanAttributes.LLM_SYSTEM] == "imported_model"
+    assert imported_model_span.attributes[SpanAttributes.LLM_SYSTEM] == "AWS"
     assert imported_model_span.attributes.get("gen_ai.response.id") is None
     assert imported_model_span.attributes[SpanAttributes.LLM_REQUEST_MAX_TOKENS] == 100
     assert imported_model_span.attributes[SpanAttributes.LLM_REQUEST_TEMPERATURE] == 0.5
@@ -123,7 +123,7 @@ def test_imported_model_completion_with_events_with_no_content(
     assert (
         imported_model_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "completion"
     )
-    assert imported_model_span.attributes[SpanAttributes.LLM_SYSTEM] == "imported_model"
+    assert imported_model_span.attributes[SpanAttributes.LLM_SYSTEM] == "AWS"
     assert imported_model_span.attributes.get("gen_ai.response.id") is None
     assert imported_model_span.attributes[SpanAttributes.LLM_REQUEST_MAX_TOKENS] == 100
     assert imported_model_span.attributes[SpanAttributes.LLM_REQUEST_TEMPERATURE] == 0.5

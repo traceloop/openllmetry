@@ -123,7 +123,7 @@ def test_nova_completion_with_events_with_content(
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "nova-lite-v1:0"
 
     # Assert on vendor
-    assert bedrock_span.attributes[SpanAttributes.LLM_SYSTEM] == "amazon"
+    assert bedrock_span.attributes[SpanAttributes.LLM_SYSTEM] == "AWS"
 
     # Assert on request type
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "completion"
@@ -202,7 +202,7 @@ def test_nova_completion_with_events_with_no_content(
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "nova-lite-v1:0"
 
     # Assert on vendor
-    assert bedrock_span.attributes[SpanAttributes.LLM_SYSTEM] == "amazon"
+    assert bedrock_span.attributes[SpanAttributes.LLM_SYSTEM] == "AWS"
 
     # Assert on request type
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "completion"
@@ -374,7 +374,7 @@ def test_nova_invoke_stream_with_events_with_content(
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "nova-lite-v1:0"
 
     # Assert on vendor
-    assert bedrock_span.attributes[SpanAttributes.LLM_SYSTEM] == "amazon"
+    assert bedrock_span.attributes[SpanAttributes.LLM_SYSTEM] == "AWS"
 
     # Assert on request type
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "completion"
@@ -472,7 +472,7 @@ def test_nova_invoke_stream_with_events_with_no_content(
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "nova-lite-v1:0"
 
     # Assert on vendor
-    assert bedrock_span.attributes[SpanAttributes.LLM_SYSTEM] == "amazon"
+    assert bedrock_span.attributes[SpanAttributes.LLM_SYSTEM] == "AWS"
 
     # Assert on request type
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "completion"
@@ -662,7 +662,7 @@ def test_nova_converse_with_events_with_content(
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "nova-lite-v1:0"
 
     # Assert on vendor
-    assert bedrock_span.attributes[SpanAttributes.LLM_SYSTEM] == "amazon"
+    assert bedrock_span.attributes[SpanAttributes.LLM_SYSTEM] == "AWS"
 
     # Assert on request type
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
@@ -758,7 +758,7 @@ def test_nova_converse_with_events_with_no_content(
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "nova-lite-v1:0"
 
     # Assert on vendor
-    assert bedrock_span.attributes[SpanAttributes.LLM_SYSTEM] == "amazon"
+    assert bedrock_span.attributes[SpanAttributes.LLM_SYSTEM] == "AWS"
 
     # Assert on request type
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
@@ -992,7 +992,7 @@ def test_nova_converse_stream_with_events_with_content(
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "nova-lite-v1:0"
 
     # Assert on vendor
-    assert bedrock_span.attributes[SpanAttributes.LLM_SYSTEM] == "amazon"
+    assert bedrock_span.attributes[SpanAttributes.LLM_SYSTEM] == "AWS"
 
     # Assert on request type
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
@@ -1117,7 +1117,7 @@ def test_nova_converse_stream_with_events_with_no_content(
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "nova-lite-v1:0"
 
     # Assert on vendor
-    assert bedrock_span.attributes[SpanAttributes.LLM_SYSTEM] == "amazon"
+    assert bedrock_span.attributes[SpanAttributes.LLM_SYSTEM] == "AWS"
 
     # Assert on request type
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
@@ -1263,10 +1263,10 @@ def test_nova_cross_region_invoke_with_events_with_content(
 
     # Assert on model name and vendor
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "nova-lite-v1:0"
-    assert bedrock_span.attributes[SpanAttributes.LLM_SYSTEM] == "amazon"
+    assert bedrock_span.attributes[SpanAttributes.LLM_SYSTEM] == "AWS"
 
     # Assert on vendor
-    assert bedrock_span.attributes[SpanAttributes.LLM_SYSTEM] == "amazon"
+    assert bedrock_span.attributes[SpanAttributes.LLM_SYSTEM] == "AWS"
 
     # Assert on request type
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "completion"
@@ -1330,10 +1330,10 @@ def test_nova_cross_region_invoke_with_events_with_no_content(
 
     # Assert on model name and vendor
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "nova-lite-v1:0"
-    assert bedrock_span.attributes[SpanAttributes.LLM_SYSTEM] == "amazon"
+    assert bedrock_span.attributes[SpanAttributes.LLM_SYSTEM] == "AWS"
 
     # Assert on vendor
-    assert bedrock_span.attributes[SpanAttributes.LLM_SYSTEM] == "amazon"
+    assert bedrock_span.attributes[SpanAttributes.LLM_SYSTEM] == "AWS"
 
     # Assert on request type
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "completion"
