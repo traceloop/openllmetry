@@ -141,6 +141,8 @@ async def aset_input_attributes(span, kwargs):
 
 
 def _set_span_completions(span, response):
+    if not should_send_prompts():
+        return
     from opentelemetry.instrumentation.anthropic import set_span_attribute
 
     index = 0
@@ -227,12 +229,14 @@ def set_response_attributes(span, response):
             prompt_tokens + completion_tokens,
         )
 
-    if should_send_prompts():
-        _set_span_completions(span, response)
+    _set_span_completions(span, response)
 
 
 @dont_throw
 def set_streaming_response_attributes(span, complete_response_events):
+    if not should_send_prompts():
+        return
+
     from opentelemetry.instrumentation.anthropic import set_span_attribute
 
     if not span.is_recording() or not complete_response_events:

@@ -17,7 +17,6 @@ from opentelemetry.instrumentation.anthropic.utils import (
     set_span_attribute,
     shared_metrics_attributes,
     should_emit_events,
-    should_send_prompts,
 )
 from opentelemetry.metrics import Counter, Histogram
 from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
@@ -140,8 +139,7 @@ def _handle_streaming_response(span, event_logger, complete_response):
     else:
         if not span.is_recording():
             return
-        if should_send_prompts():
-            set_streaming_response_attributes(span, complete_response.get("events"))
+        set_streaming_response_attributes(span, complete_response.get("events"))
 
 
 @dont_throw
