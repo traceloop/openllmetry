@@ -190,7 +190,7 @@ def set_model_input_attributes(span, instance):
 
 
 def _set_stream_response_attributes(span, stream_response):
-    if not span.is_recording():
+    if not span.is_recording() or not should_send_prompts():
         return
     _set_span_attribute(
         span,
@@ -232,11 +232,12 @@ def _set_completion_content_attributes(
         return None
 
     if results := response.get("results"):
-        _set_span_attribute(
-            span,
-            f"{SpanAttributes.LLM_COMPLETIONS}.{index}.content",
-            results[0]["generated_text"],
-        )
+        if should_send_prompts():
+            _set_span_attribute(
+                span,
+                f"{SpanAttributes.LLM_COMPLETIONS}.{index}.content",
+                results[0]["generated_text"],
+            )
         model_id = response.get("model_id")
 
         if response_counter:
