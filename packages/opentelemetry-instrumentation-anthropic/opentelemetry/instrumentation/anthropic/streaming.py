@@ -1,17 +1,27 @@
 import logging
 import time
+from typing import Optional
 
+from opentelemetry._events import EventLogger
 from opentelemetry.instrumentation.anthropic.config import Config
+from opentelemetry.instrumentation.anthropic.event_emitter import (
+    emit_streaming_response_events,
+)
+from opentelemetry.instrumentation.anthropic.span_utils import (
+    set_streaming_response_attributes,
+)
 from opentelemetry.instrumentation.anthropic.utils import (
+    count_prompt_tokens_from_request,
     dont_throw,
     error_metrics_attributes,
-    count_prompt_tokens_from_request,
     set_span_attribute,
     shared_metrics_attributes,
-    should_send_prompts,
+    should_emit_events,
 )
 from opentelemetry.metrics import Counter, Histogram
-from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import GEN_AI_RESPONSE_ID
+from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
+    GEN_AI_RESPONSE_ID,
+)
 from opentelemetry.semconv_ai import SpanAttributes
 from opentelemetry.trace.status import Status, StatusCode
 
@@ -27,12 +37,17 @@ def _process_response_item(item, complete_response):
     elif item.type == "content_block_start":
         index = item.index
         if len(complete_response.get("events")) <= index:
-            complete_response["events"].append({"index": index, "text": "", "type": item.content_block.type})
-    elif item.type == "content_block_delta" and item.delta.type in ["thinking_delta", "text_delta"]:
+            complete_response["events"].append(
+                {"index": index, "text": "", "type": item.content_block.type}
+            )
+    elif item.type == "content_block_delta" and item.delta.type in [
+        "thinking_delta",
+        "text_delta",
+    ]:
         index = item.index
-        if item.delta.type == 'thinking_delta':
+        if item.delta.type == "thinking_delta":
             complete_response["events"][index]["text"] += item.delta.thinking
-        elif item.delta.type == 'text_delta':
+        elif item.delta.type == "text_delta":
             complete_response["events"][index]["text"] += item.delta.text
     elif item.type == "message_delta":
         for event in complete_response.get("events", []):
@@ -40,8 +55,12 @@ def _process_response_item(item, complete_response):
         if item.usage:
             if "usage" in complete_response:
                 item_output_tokens = dict(item.usage).get("output_tokens", 0)
-                existing_output_tokens = complete_response["usage"].get("output_tokens", 0)
-                complete_response["usage"]["output_tokens"] = item_output_tokens + existing_output_tokens
+                existing_output_tokens = complete_response["usage"].get(
+                    "output_tokens", 0
+                )
+                complete_response["usage"]["output_tokens"] = (
+                    item_output_tokens + existing_output_tokens
+                )
             else:
                 complete_response["usage"] = dict(item.usage)
 
@@ -55,8 +74,12 @@ def _set_token_usage(
     token_histogram: Histogram = None,
     choice_counter: Counter = None,
 ):
-    cache_read_tokens = complete_response.get("usage", {}).get("cache_read_input_tokens", 0) or 0
-    cache_creation_tokens = complete_response.get("usage", {}).get("cache_creation_input_tokens", 0) or 0
+    cache_read_tokens = (
+        complete_response.get("usage", {}).get("cache_read_input_tokens", 0) or 0
+    )
+    cache_creation_tokens = (
+        complete_response.get("usage", {}).get("cache_creation_input_tokens", 0) or 0
+    )
 
     input_tokens = prompt_tokens + cache_read_tokens + cache_creation_tokens
     total_tokens = input_tokens + completion_tokens
@@ -74,7 +97,9 @@ def _set_token_usage(
         span, SpanAttributes.LLM_USAGE_CACHE_READ_INPUT_TOKENS, cache_read_tokens
     )
     set_span_attribute(
-        span, SpanAttributes.LLM_USAGE_CACHE_CREATION_INPUT_TOKENS, cache_creation_tokens
+        span,
+        SpanAttributes.LLM_USAGE_CACHE_CREATION_INPUT_TOKENS,
+        cache_creation_tokens,
     )
 
     if token_histogram and type(input_tokens) is int and input_tokens >= 0:
@@ -108,22 +133,13 @@ def _set_token_usage(
             )
 
 
-def _set_completions(span, events):
-    if not span.is_recording() or not events:
-        return
-
-    try:
-        for event in events:
-            index = event.get("index")
-            prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{index}"
-            set_span_attribute(
-                span, f"{prefix}.finish_reason", event.get("finish_reason")
-            )
-            role = "thinking" if event.get("type") == "thinking" else "assistant"
-            set_span_attribute(span, f"{prefix}.role", role)
-            set_span_attribute(span, f"{prefix}.content", event.get("text"))
-    except Exception as e:
-        logger.warning("Failed to set completion attributes, error: %s", str(e))
+def _handle_streaming_response(span, event_logger, complete_response):
+    if should_emit_events() and event_logger:
+        emit_streaming_response_events(event_logger, complete_response)
+    else:
+        if not span.is_recording():
+            return
+        set_streaming_response_attributes(span, complete_response.get("events"))
 
 
 @dont_throw
@@ -136,6 +152,7 @@ def build_from_streaming_response(
     choice_counter: Counter = None,
     duration_histogram: Histogram = None,
     exception_counter: Counter = None,
+    event_logger: Optional[EventLogger] = None,
     kwargs: dict = {},
 ):
     complete_response = {"events": [], "model": "", "usage": {}, "id": ""}
@@ -194,11 +211,11 @@ def build_from_streaming_response(
         except Exception as e:
             logger.warning("Failed to set token usage, error: %s", e)
 
-    if should_send_prompts():
-        _set_completions(span, complete_response.get("events"))
+    _handle_streaming_response(span, event_logger, complete_response)
 
-    span.set_status(Status(StatusCode.OK))
-    span.end()
+    if span.is_recording():
+        span.set_status(Status(StatusCode.OK))
+        span.end()
 
 
 @dont_throw
@@ -211,6 +228,7 @@ async def abuild_from_streaming_response(
     choice_counter: Counter = None,
     duration_histogram: Histogram = None,
     exception_counter: Counter = None,
+    event_logger: Optional[EventLogger] = None,
     kwargs: dict = {},
 ):
     complete_response = {"events": [], "model": "", "usage": {}, "id": ""}
@@ -270,8 +288,8 @@ async def abuild_from_streaming_response(
         except Exception as e:
             logger.warning("Failed to set token usage, error: %s", str(e))
 
-    if should_send_prompts():
-        _set_completions(span, complete_response.get("events"))
+    _handle_streaming_response(span, event_logger, complete_response)
 
-    span.set_status(Status(StatusCode.OK))
-    span.end()
+    if span.is_recording():
+        span.set_status(Status(StatusCode.OK))
+        span.end()

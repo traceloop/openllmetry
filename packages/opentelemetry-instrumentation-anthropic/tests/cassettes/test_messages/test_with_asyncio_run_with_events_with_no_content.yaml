@@ -1,0 +1,79 @@
+interactions:
+- request:
+    body: '{"max_tokens": 1024, "messages": [{"role": "user", "content": "What is
+      the weather in San Francisco?"}], "model": "claude-3-5-sonnet-20240620", "system":
+      [{"type": "text", "text": "You help generate concise summaries of news articles
+      and blog posts that user sends you."}]}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      anthropic-version:
+      - '2023-06-01'
+      connection:
+      - keep-alive
+      content-length:
+      - '273'
+      content-type:
+      - application/json
+      host:
+      - api.anthropic.com
+      user-agent:
+      - AsyncAnthropic/Python 0.36.2
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - async:asyncio
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 0.36.2
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.11.8
+    method: POST
+    uri: https://api.anthropic.com/v1/messages
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA2ySwW4UMQyGX8XyhUtmtXRbJOZWUVZUXICWE0Irb+LuRM3aQ+x0KVXfHc3QdkHi
+        FNmJP3+/lAfMCXvc226zfH3ePn1Z+4fPXz/G04urd+M6vk/DBQb0+5GnV2xGO8aAVcvUILNsTuIY
+        cK+JC/YYC7XE3ao760xF2LuT5cnp8s3JEgNGFWdx7L89PEOdf07j89HjJdCoRXf5FwfYNodLSCqv
+        HAa6Y6AY2QxcoTKVzvOe4cDkA1fIcqN1T55VFnBuQALnl1BIdo12DLNe+BfnAwNtc8l+PzHjwPEW
+        YquVxV+4USXliWqgFW60ciRzW8C1wo59cmqVnIEkQRs71y5N5X+8pmm4IoF1JYnZoga41wYHbSWB
+        MKejBkHlkmlbjqQDby07B6BxDJNM0UgFhA8Gpq1GXsD1wMZPlUEkgbHqXU78Z1H24SXgMVg4xgpz
+        DH3aN+/tKhdyTpDYKRebU9jIMd/kODvMkAU+fg9oruOmMpkK9siSNt6q4NOF8Y/GEhl7aaUEbPN3
+        6h8wy9h843rLYtivVgG1+d+tt2ePj78BAAD//wMAfduzcKwCAAA=
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 8da652224d8f8e44-TLV
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 29 Oct 2024 21:39:55 GMT
+      Server:
+      - cloudflare
+      Transfer-Encoding:
+      - chunked
+      X-Robots-Tag:
+      - none
+      request-id:
+      - req_01BBAgmGQDEfqkKaFMjBh1yK
+      via:
+      - 1.1 google
+    status:
+      code: 200
+      message: OK
+version: 1
