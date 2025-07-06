@@ -99,6 +99,8 @@ def set_model_request_attributes(span, kwargs, llm_model):
 
 @dont_throw
 def set_response_attributes(span, response, llm_model):
+    if not should_send_prompts():
+        return
     if hasattr(response, "usage_metadata"):
         if isinstance(response.text, list):
             for index, item in enumerate(response):
