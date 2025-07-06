@@ -1,19 +1,21 @@
-from functools import singledispatchmethod
 import inspect
 import json
 import re
-from typing import Any, AsyncGenerator, Dict, Generator, List, Optional
 from dataclasses import dataclass, field
+from functools import singledispatchmethod
+from typing import Any, AsyncGenerator, Dict, Generator, List, Optional
 
-from llama_index.core.bridge.pydantic import PrivateAttr
-from llama_index.core.base.llms.types import MessageRole
 from llama_index.core.base.response.schema import StreamingResponse
+from llama_index.core.bridge.pydantic import PrivateAttr
 from llama_index.core.instrumentation import get_dispatcher
+from llama_index.core.instrumentation.event_handlers import BaseEventHandler
 from llama_index.core.instrumentation.events import BaseEvent
 from llama_index.core.instrumentation.events.agent import AgentToolCallEvent
-from llama_index.core.instrumentation.events.embedding import EmbeddingStartEvent
 from llama_index.core.instrumentation.events.chat_engine import (
     StreamChatEndEvent,
+)
+from llama_index.core.instrumentation.events.embedding import (
+    EmbeddingStartEvent,
 )
 from llama_index.core.instrumentation.events.llm import (
     LLMChatEndEvent,
@@ -22,24 +24,36 @@ from llama_index.core.instrumentation.events.llm import (
     LLMPredictEndEvent,
 )
 from llama_index.core.instrumentation.events.rerank import ReRankStartEvent
-from llama_index.core.instrumentation.event_handlers import BaseEventHandler
 from llama_index.core.instrumentation.span_handlers import BaseSpanHandler
 from llama_index.core.workflow import Workflow
 from opentelemetry import context as context_api
+from opentelemetry.instrumentation.llamaindex.event_emitter import (
+    emit_chat_message_events,
+    emit_chat_response_events,
+    emit_rerank_message_event,
+)
+from opentelemetry.instrumentation.llamaindex.span_utils import (
+    set_embedding,
+    set_llm_chat_request,
+    set_llm_chat_request_model_attributes,
+    set_llm_chat_response,
+    set_llm_chat_response_model_attributes,
+    set_llm_predict_response,
+    set_rerank,
+    set_rerank_model_attributes,
+    set_tool,
+)
 from opentelemetry.instrumentation.llamaindex.utils import (
     JSONEncoder,
-    dont_throw,
+    should_emit_events,
     should_send_prompts,
 )
 from opentelemetry.semconv_ai import (
     SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
-    LLMRequestTypeValues,
     SpanAttributes,
     TraceloopSpanKindValues,
 )
-from opentelemetry.trace import set_span_in_context, Tracer
-from opentelemetry.trace.span import Span
-
+from opentelemetry.trace import Span, Tracer, set_span_in_context
 
 # For these spans, instead of creating a span using data from LlamaIndex,
 # we use the regular OpenLLMetry instrumentations
@@ -58,109 +72,6 @@ def instrument_with_dispatcher(tracer: Tracer):
     openllmetry_span_handler = OpenLLMetrySpanHandler(tracer)
     dispatcher.add_span_handler(openllmetry_span_handler)
     dispatcher.add_event_handler(OpenLLMetryEventHandler(openllmetry_span_handler))
-
-
-@dont_throw
-def _set_llm_chat_request(event, span) -> None:
-    model_dict = event.model_dict
-    span.set_attribute(SpanAttributes.LLM_REQUEST_TYPE, LLMRequestTypeValues.CHAT.value)
-    span.set_attribute(SpanAttributes.LLM_REQUEST_MODEL, model_dict.get("model"))
-    span.set_attribute(
-        SpanAttributes.LLM_REQUEST_TEMPERATURE, model_dict.get("temperature")
-    )
-    if should_send_prompts():
-        for idx, message in enumerate(event.messages):
-            span.set_attribute(
-                f"{SpanAttributes.LLM_PROMPTS}.{idx}.role", message.role.value
-            )
-            span.set_attribute(
-                f"{SpanAttributes.LLM_PROMPTS}.{idx}.content", message.content
-            )
-
-
-@dont_throw
-def _set_llm_chat_response(event, span) -> None:
-    response = event.response
-    if should_send_prompts():
-        for idx, message in enumerate(event.messages):
-            span.set_attribute(
-                f"{SpanAttributes.LLM_PROMPTS}.{idx}.role", message.role.value
-            )
-            span.set_attribute(
-                f"{SpanAttributes.LLM_PROMPTS}.{idx}.content", message.content
-            )
-        span.set_attribute(
-            f"{SpanAttributes.LLM_COMPLETIONS}.0.role",
-            response.message.role.value,
-        )
-        span.set_attribute(
-            f"{SpanAttributes.LLM_COMPLETIONS}.0.content",
-            response.message.content,
-        )
-    if not (raw := response.raw):
-        return
-    span.set_attribute(
-        SpanAttributes.LLM_RESPONSE_MODEL,
-        (
-            raw.get("model") if "model" in raw else raw.model
-        ),  # raw can be Any, not just ChatCompletion
-    )
-    if usage := raw.get("usage") if "usage" in raw else raw.usage:
-        span.set_attribute(
-            SpanAttributes.LLM_USAGE_COMPLETION_TOKENS, usage.completion_tokens
-        )
-        span.set_attribute(SpanAttributes.LLM_USAGE_PROMPT_TOKENS, usage.prompt_tokens)
-        span.set_attribute(SpanAttributes.LLM_USAGE_TOTAL_TOKENS, usage.total_tokens)
-    if choices := raw.choices:
-        span.set_attribute(
-            SpanAttributes.LLM_RESPONSE_FINISH_REASON, choices[0].finish_reason
-        )
-
-
-@dont_throw
-def _set_llm_predict_response(event, span) -> None:
-    if should_send_prompts():
-        span.set_attribute(
-            f"{SpanAttributes.LLM_COMPLETIONS}.role",
-            MessageRole.ASSISTANT.value,
-        )
-        span.set_attribute(
-            f"{SpanAttributes.LLM_COMPLETIONS}.content",
-            event.output,
-        )
-
-
-@dont_throw
-def _set_embedding(event, span) -> None:
-    model_dict = event.model_dict
-    span.set_attribute(
-        f"{LLMRequestTypeValues.EMBEDDING.value}.model_name",
-        model_dict.get("model_name"),
-    )
-
-
-@dont_throw
-def _set_rerank(event, span) -> None:
-    span.set_attribute(
-        f"{LLMRequestTypeValues.RERANK.value}.model_name",
-        event.model_name,
-    )
-    span.set_attribute(
-        f"{LLMRequestTypeValues.RERANK.value}.top_n",
-        event.top_n,
-    )
-    if should_send_prompts():
-        span.set_attribute(
-            f"{LLMRequestTypeValues.RERANK.value}.query",
-            event.query.query_str,
-        )
-
-
-@dont_throw
-def _set_tool(event, span) -> None:
-    span.set_attribute("tool.name", event.tool.name)
-    span.set_attribute("tool.description", event.tool.description)
-    span.set_attribute("tool.arguments", event.arguments)
 
 
 @dataclass
@@ -205,27 +116,40 @@ class SpanHolder:
 
     @update_span_for_event.register
     def _(self, event: LLMChatStartEvent):
-        _set_llm_chat_request(event, self.otel_span)
+        set_llm_chat_request_model_attributes(event, self.otel_span)
+        if should_emit_events():
+            emit_chat_message_events(event)
+        else:
+            set_llm_chat_request(event, self.otel_span)
 
     @update_span_for_event.register
     def _(self, event: LLMChatEndEvent):
-        _set_llm_chat_response(event, self.otel_span)
+        set_llm_chat_response_model_attributes(event, self.otel_span)
+        if should_emit_events():
+            emit_chat_response_events(event)
+        else:
+            set_llm_chat_response(event, self.otel_span)  # noqa: F821
 
     @update_span_for_event.register
     def _(self, event: LLMPredictEndEvent):
-        _set_llm_predict_response(event, self.otel_span)
+        if not should_emit_events():
+            set_llm_predict_response(event, self.otel_span)
 
     @update_span_for_event.register
     def _(self, event: EmbeddingStartEvent):
-        _set_embedding(event, self.otel_span)
+        set_embedding(event, self.otel_span)
 
     @update_span_for_event.register
     def _(self, event: ReRankStartEvent):
-        _set_rerank(event, self.otel_span)
+        set_rerank_model_attributes(event, self.otel_span)
+        if should_emit_events():
+            emit_rerank_message_event(event)
+        else:
+            set_rerank(event, self.otel_span)
 
     @update_span_for_event.register
     def _(self, event: AgentToolCallEvent):
-        _set_tool(event, self.otel_span)
+        set_tool(event, self.otel_span)
 
 
 class OpenLLMetrySpanHandler(BaseSpanHandler[SpanHolder]):
@@ -269,7 +193,11 @@ class OpenLLMetrySpanHandler(BaseSpanHandler[SpanHolder]):
         )
 
         if isinstance(instance, Workflow):
-            span_name = f"{instance.__class__.__name__}.{kind}" if not parent_span_id else f"{method_name}.{kind}"
+            span_name = (
+                f"{instance.__class__.__name__}.{kind}"
+                if not parent_span_id
+                else f"{method_name}.{kind}"
+            )
         else:
             span_name = f"{class_name}.{kind}"
 
