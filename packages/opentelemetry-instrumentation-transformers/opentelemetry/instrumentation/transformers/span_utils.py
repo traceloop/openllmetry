@@ -1,4 +1,7 @@
-from opentelemetry.instrumentation.transformers.utils import dont_throw
+from opentelemetry.instrumentation.transformers.utils import (
+    dont_throw,
+    should_send_prompts,
+)
 from opentelemetry.semconv_ai import (
     SpanAttributes,
 )
@@ -62,7 +65,7 @@ def set_response_attributes(span, response):
 
 
 def _set_span_completions(span, completions):
-    if completions is None:
+    if completions is None or not should_send_prompts():
         return
 
     for i, completion in enumerate(completions):
@@ -71,7 +74,7 @@ def _set_span_completions(span, completions):
 
 
 def _set_span_prompts(span, messages):
-    if messages is None:
+    if messages is None or not should_send_prompts():
         return
 
     if isinstance(messages, str):
