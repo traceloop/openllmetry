@@ -55,7 +55,7 @@ def set_model_input_attributes(span, kwargs, llm_model):
 
 @dont_throw
 def set_response_attributes(span, llm_model, generation_text):
-    if not span.is_recording():
+    if not span.is_recording() or not should_send_prompts():
         return
     _set_span_attribute(span, f"{SpanAttributes.LLM_COMPLETIONS}.0.role", "assistant")
     _set_span_attribute(
