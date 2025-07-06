@@ -22,12 +22,12 @@ def _set_span_attribute(span, name, value):
     return
 
 
-def set_model_message_span_attributes(vendor, span, request_body):
+def set_model_message_span_attributes(model_vendor, span, request_body):
     if not should_send_prompts():
         return
-    if vendor == "cohere":
+    if model_vendor == "cohere":
         _set_prompt_span_attributes(span, request_body)
-    elif vendor == "anthropic":
+    elif model_vendor == "anthropic":
         if "prompt" in request_body:
             _set_prompt_span_attributes(span, request_body)
         elif "messages" in request_body:
@@ -42,47 +42,54 @@ def set_model_message_span_attributes(vendor, span, request_body):
                     f"{SpanAttributes.LLM_PROMPTS}.0.content",
                     json.dumps(message.get("content")),
                 )
-    elif vendor == "ai21":
+    elif model_vendor == "ai21":
         _set_prompt_span_attributes(span, request_body)
-    elif vendor == "meta":
+    elif model_vendor == "meta":
         _set_llama_prompt_span_attributes(span, request_body)
-    elif vendor == "amazon":
+    elif model_vendor == "amazon":
         _set_amazon_input_span_attributes(span, request_body)
-    elif vendor == "imported_model":
+    elif model_vendor == "imported_model":
         _set_imported_model_prompt_span_attributes(span, request_body)
 
 
-def set_model_choice_span_attributes(vendor, span, response_body):
+def set_model_choice_span_attributes(model_vendor, span, response_body):
     if not should_send_prompts():
         return
-    if vendor == "cohere":
+    if model_vendor == "cohere":
         _set_generations_span_attributes(span, response_body)
-    elif vendor == "anthropic":
+    elif model_vendor == "anthropic":
         _set_anthropic_response_span_attributes(span, response_body)
-    elif vendor == "ai21":
+    elif model_vendor == "ai21":
         _set_span_completions_attributes(span, response_body)
-    elif vendor == "meta":
+    elif model_vendor == "meta":
         _set_llama_response_span_attributes(span, response_body)
-    elif vendor == "amazon":
+    elif model_vendor == "amazon":
         _set_amazon_response_span_attributes(span, response_body)
-    elif vendor == "imported_model":
+    elif model_vendor == "imported_model":
         _set_imported_model_response_span_attributes(span, response_body)
 
 
 def set_model_span_attributes(
-    vendor, model, span, request_body, response_body, headers, metric_params
+    provider,
+    model_vendor,
+    model,
+    span,
+    request_body,
+    response_body,
+    headers,
+    metric_params,
 ):
     response_model = response_body.get("model")
     response_id = response_body.get("id")
 
-    _set_span_attribute(span, SpanAttributes.LLM_SYSTEM, vendor)
+    _set_span_attribute(span, SpanAttributes.LLM_SYSTEM, provider)
     _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, model)
     _set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, response_model)
     _set_span_attribute(span, GEN_AI_RESPONSE_ID, response_id)
 
-    if vendor == "cohere":
+    if model_vendor == "cohere":
         _set_cohere_span_attributes(span, request_body, response_body, metric_params)
-    elif vendor == "anthropic":
+    elif model_vendor == "anthropic":
         if "prompt" in request_body:
             _set_anthropic_completion_span_attributes(
                 span, request_body, response_body, metric_params
@@ -91,15 +98,15 @@ def set_model_span_attributes(
             _set_anthropic_messages_span_attributes(
                 span, request_body, response_body, metric_params
             )
-    elif vendor == "ai21":
+    elif model_vendor == "ai21":
         _set_ai21_span_attributes(span, request_body, response_body, metric_params)
-    elif vendor == "meta":
+    elif model_vendor == "meta":
         _set_llama_span_attributes(span, request_body, response_body, metric_params)
-    elif vendor == "amazon":
+    elif model_vendor == "amazon":
         _set_amazon_span_attributes(
             span, request_body, response_body, headers, metric_params
         )
-    elif vendor == "imported_model":
+    elif model_vendor == "imported_model":
         _set_imported_model_span_attributes(
             span, request_body, response_body, metric_params
         )
@@ -432,13 +439,13 @@ def _set_amazon_input_span_attributes(span, request_body):
         for idx, prompt in enumerate(request_body["messages"]):
             _set_span_attribute(
                 span,
-                f"{SpanAttributes.LLM_PROMPTS}.{prompt_idx+idx}.role",
+                f"{SpanAttributes.LLM_PROMPTS}.{prompt_idx + idx}.role",
                 prompt.get("role"),
             )
             # TODO: here we stringify the object, consider moving these to events or prompt.{i}.content.{j}
             _set_span_attribute(
                 span,
-                f"{SpanAttributes.LLM_PROMPTS}.{prompt_idx+idx}.content",
+                f"{SpanAttributes.LLM_PROMPTS}.{prompt_idx + idx}.content",
                 json.dumps(prompt.get("content", ""), default=str),
             )
 
@@ -578,8 +585,8 @@ def _metric_shared_attributes(
     }
 
 
-def set_converse_model_span_attributes(span, vendor, model, kwargs):
-    _set_span_attribute(span, SpanAttributes.LLM_SYSTEM, vendor)
+def set_converse_model_span_attributes(span, provider, model, kwargs):
+    _set_span_attribute(span, SpanAttributes.LLM_SYSTEM, provider)
     _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, model)
     _set_span_attribute(
         span, SpanAttributes.LLM_REQUEST_TYPE, LLMRequestTypeValues.CHAT.value
