@@ -9,6 +9,20 @@ from opentelemetry.semconv_ai import SpanAttributes
 
 from .utils import verify_metrics
 
+image_content_block = {
+    "type": "image",
+    "source": {
+        "type": "base64",
+        "media_type": "image/jpeg",
+        "data": base64.b64encode(
+            open(
+                Path(__file__).parent.joinpath("data/logo.jpg"),
+                "rb",
+            ).read()
+        ).decode("utf-8"),
+    },
+}
+
 
 @pytest.mark.vcr
 def test_anthropic_message_create(exporter, reader):
@@ -76,19 +90,7 @@ def test_anthropic_multi_modal(exporter):
                         "type": "text",
                         "text": "What do you see?",
                     },
-                    {
-                        "type": "image",
-                        "source": {
-                            "type": "base64",
-                            "media_type": "image/jpeg",
-                            "data": base64.b64encode(
-                                open(
-                                    Path(__file__).parent.joinpath("data/logo.jpg"),
-                                    "rb",
-                                ).read()
-                            ).decode("utf-8"),
-                        },
-                    },
+                    image_content_block,
                 ],
             },
         ],
@@ -130,6 +132,87 @@ def test_anthropic_multi_modal(exporter):
 
 
 @pytest.mark.vcr
+def test_anthropic_image_with_history(exporter):
+    client = Anthropic()
+    system_message = "You are a helpful assistant. Be concise and to the point."
+    user_message1 = {
+        "role": "user",
+        "content": "Are you capable of describing an image?"
+    }
+    user_message2 = {
+        "role": "user",
+        "content": [
+            {"type": "text", "text": "What do you see?"},
+            image_content_block,
+        ]
+    }
+
+    response1 = client.messages.create(
+        max_tokens=1024,
+        model="claude-3-5-haiku-latest",
+        system=system_message,
+        messages=[
+            user_message1,
+        ],
+    )
+
+    response2 = client.messages.create(
+        max_tokens=1024,
+        model="claude-3-5-haiku-latest",
+        system=system_message,
+        messages=[
+            user_message1,
+            {"role": "assistant", "content": response1.content},
+            user_message2,
+        ],
+    )
+
+    spans = exporter.get_finished_spans()
+    assert all(span.name == "anthropic.chat" for span in spans)
+    assert (
+        spans[0].attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"] ==
+        system_message
+    )
+    assert spans[0].attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"] == "system"
+    assert (
+        spans[0].attributes[f"{SpanAttributes.LLM_PROMPTS}.1.content"]
+        == "Are you capable of describing an image?"
+    )
+    assert spans[0].attributes[f"{SpanAttributes.LLM_PROMPTS}.1.role"] == "user"
+    assert spans[0].attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"] == response1.content[0].text
+    assert spans[0].attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.role"] == "assistant"
+    assert (
+        spans[0].attributes.get("gen_ai.response.id")
+        == "msg_01Ctc62hUPvikvYASXZqTo9q"
+    )
+
+    assert (
+        spans[1].attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"] ==
+        system_message
+    )
+    assert spans[1].attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"] == "system"
+    assert (
+        spans[1].attributes[f"{SpanAttributes.LLM_PROMPTS}.1.content"]
+        == "Are you capable of describing an image?"
+    )
+    assert spans[1].attributes[f"{SpanAttributes.LLM_PROMPTS}.1.role"] == "user"
+    assert spans[1].attributes[f"{SpanAttributes.LLM_PROMPTS}.2.content"] == response1.content[0].text
+    assert spans[1].attributes[f"{SpanAttributes.LLM_PROMPTS}.2.role"] == "assistant"
+    assert json.loads(spans[1].attributes[f"{SpanAttributes.LLM_PROMPTS}.3.content"]) == [
+        {"type": "text", "text": "What do you see?"},
+        {"type": "image_url", "image_url": {"url": "/some/url"}},
+    ]
+    assert spans[1].attributes[f"{SpanAttributes.LLM_PROMPTS}.3.role"] == "user"
+
+    assert spans[1].attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"] == response2.content[0].text
+    assert spans[1].attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.role"] == "assistant"
+    assert (
+        spans[1].attributes.get("gen_ai.response.id")
+        == "msg_01EtAvxHCWn5jjdUCnG4wEAd"
+    )
+
+
+@pytest.mark.vcr
 @pytest.mark.asyncio
 async def test_anthropic_async_multi_modal(exporter):
     client = AsyncAnthropic()
@@ -143,19 +226,7 @@ async def test_anthropic_async_multi_modal(exporter):
                         "type": "text",
                         "text": "What do you see?",
                     },
-                    {
-                        "type": "image",
-                        "source": {
-                            "type": "base64",
-                            "media_type": "image/jpeg",
-                            "data": base64.b64encode(
-                                open(
-                                    Path(__file__).parent.joinpath("data/logo.jpg"),
-                                    "rb",
-                                ).read()
-                            ).decode("utf-8"),
-                        },
-                    },
+                    image_content_block,
                 ],
             },
         ],

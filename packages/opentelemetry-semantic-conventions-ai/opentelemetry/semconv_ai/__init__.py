@@ -9,7 +9,7 @@ class Meters:
     LLM_OPERATION_DURATION = "gen_ai.client.operation.duration"
     LLM_COMPLETIONS_EXCEPTIONS = "llm.openai.chat_completions.exceptions"
     LLM_STREAMING_TIME_TO_GENERATE = (
-        "llm.openai.chat_completions.streaming_time_to_generate"
+        "llm.chat_completions.streaming_time_to_generate"
     )
     LLM_EMBEDDINGS_EXCEPTIONS = "llm.openai.embeddings.exceptions"
     LLM_EMBEDDINGS_VECTOR_SIZE = "llm.openai.embeddings.vector_size"
@@ -52,8 +52,7 @@ class SpanAttributes:
     LLM_USAGE_CACHE_CREATION_INPUT_TOKENS = "gen_ai.usage.cache_creation_input_tokens"
     LLM_USAGE_CACHE_READ_INPUT_TOKENS = "gen_ai.usage.cache_read_input_tokens"
     LLM_TOKEN_TYPE = "gen_ai.token.type"
-    # To be added
-    # LLM_RESPONSE_ID = "gen_ai.response.id"
+    LLM_REQUEST_STRUCTURED_OUTPUT_SCHEMA = "gen_ai.request.structured_output_schema"
 
     # LLM
     LLM_REQUEST_TYPE = "llm.request.type"
