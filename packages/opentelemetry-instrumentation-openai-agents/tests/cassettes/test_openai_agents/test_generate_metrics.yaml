@@ -1,6 +1,7 @@
 interactions:
 - request:
-    body: '{"data":[{"object":"trace.span","id":"span_2fb8e520023d4d9aa6f7976a","trace_id":"trace_9ac375b4ce2445b9ab4d7b26f15f157c","parent_id":"span_7251b94a65ba4179b001416b","started_at":"2025-07-03T07:06:03.484268+00:00","ended_at":"2025-07-03T07:06:08.109817+00:00","span_data":{"type":"response","response_id":"resp_68662bdbf7a0819a973806969f4fd30c00693eed1ff48f47"},"error":null},{"object":"trace.span","id":"span_7251b94a65ba4179b001416b","trace_id":"trace_9ac375b4ce2445b9ab4d7b26f15f157c","parent_id":null,"started_at":"2025-07-03T07:06:03.468410+00:00","ended_at":"2025-07-03T07:06:08.110481+00:00","span_data":{"type":"agent","name":"testAgent","handoffs":[],"tools":[],"output_type":"str"},"error":null},{"object":"trace","id":"trace_0e952a99525844feb7630ddd0fd69834","workflow_name":"Agent
+    body: '{"data":[{"object":"trace.span","id":"span_3c32f3bf724242e7a4eee97f","trace_id":"trace_e96092d63adb4094aa01e9f15b5c1ce6","parent_id":"span_68c78aa585da42bc9f2830f3","started_at":"2025-07-07T04:31:02.841318+00:00","ended_at":"2025-07-07T04:31:10.935525+00:00","span_data":{"type":"response","response_id":"resp_686b4d870e6481989d17104f0c295e93004b3b0813a1f1b4"},"error":null},{"object":"trace.span","id":"span_68c78aa585da42bc9f2830f3","trace_id":"trace_e96092d63adb4094aa01e9f15b5c1ce6","parent_id":null,"started_at":"2025-07-07T04:31:02.840912+00:00","ended_at":"2025-07-07T04:31:10.936048+00:00","span_data":{"type":"agent","name":"SearchAgent","handoffs":[],"tools":["web_search_preview"],"output_type":"str"},"error":null},{"object":"trace","id":"trace_90832d19793c4cc1aba9ee470ead6a1d","workflow_name":"Agent
+      workflow","group_id":null,"metadata":null},{"object":"trace.span","id":"span_71c150df84b04a10bed4c999","trace_id":"trace_90832d19793c4cc1aba9ee470ead6a1d","parent_id":"span_1bc95c2149e7468ca256a92e","started_at":"2025-07-07T04:31:10.940570+00:00","ended_at":"2025-07-07T04:31:11.988633+00:00","span_data":{"type":"response","response_id":"resp_686b4d8f2b80819ab34e3d377b06d1c20484ef65142f65c3"},"error":null},{"object":"trace.span","id":"span_4c8d4fc82b8c4be496840fa3","trace_id":"trace_90832d19793c4cc1aba9ee470ead6a1d","parent_id":"span_1bc95c2149e7468ca256a92e","started_at":"2025-07-07T04:31:11.989097+00:00","ended_at":"2025-07-07T04:31:11.989351+00:00","span_data":{"type":"handoff","from_agent":"TriageAgent","to_agent":"AgentA"},"error":null},{"object":"trace.span","id":"span_1bc95c2149e7468ca256a92e","trace_id":"trace_90832d19793c4cc1aba9ee470ead6a1d","parent_id":null,"started_at":"2025-07-07T04:31:10.940179+00:00","ended_at":"2025-07-07T04:31:11.989484+00:00","span_data":{"type":"agent","name":"TriageAgent","handoffs":["AgentA","AgentB"],"tools":["handoff_to_agent_a","handoff_to_agent_b"],"output_type":"str"},"error":null},{"object":"trace.span","id":"span_4f15c0a8e6864372a8a9b870","trace_id":"trace_90832d19793c4cc1aba9ee470ead6a1d","parent_id":"span_e7676ac3ed114af19b8dcf70","started_at":"2025-07-07T04:31:11.989939+00:00","ended_at":"2025-07-07T04:31:13.158312+00:00","span_data":{"type":"response","response_id":"resp_686b4d903524819a97f78a57f21991ea0484ef65142f65c3"},"error":null},{"object":"trace.span","id":"span_e7676ac3ed114af19b8dcf70","trace_id":"trace_90832d19793c4cc1aba9ee470ead6a1d","parent_id":null,"started_at":"2025-07-07T04:31:11.989529+00:00","ended_at":"2025-07-07T04:31:13.158580+00:00","span_data":{"type":"agent","name":"AgentA","handoffs":[],"tools":[],"output_type":"str"},"error":null},{"object":"trace","id":"trace_9e523501d7ca43cbbffef8d663ee2abe","workflow_name":"Agent
       workflow","group_id":null,"metadata":null}]}'
     headers:
       accept-encoding:
@@ -8,10 +9,10 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '836'
+      - '2779'
       cookie:
-      - __cf_bm=f.ieN84oRZqo8ixvC_GgY68MV4gaISuVRkoxIwgoXjM-1751526369-1.0.1.1-6M01qA_hYXeDhvewT0qfLbF_NP2tLRNbXvLL_AuaKlVeZO2pUOHGwgrJGT89G_vz.ppUAMtuu9WqKQgHOiCH_P_ufc1O50FL_wZN42sPILo;
-        _cfuvid=R4h3jMVsJLoJmbXXnXvY39_lvqGzM3dMR.OLmwbQh.g-1751526369215-0.0.1.1-604800000
+      - __cf_bm=2K51yZJfEE3.F991jNlShMI5YCBuX2mUJxMTIMyLy4I-1751862664-1.0.1.1-ysSWL5s.8BzvCjqgVeIidvf5oH57WlhgYNGT4l11nz5XZeYssRV0l6MJd2MlYRsqPpmDmtTD9kjRXUXldyee5ZrDJaA_zw9lqqvxHSniQ3Y;
+        _cfuvid=.4rTr7Z_6sKZyGNKdytIaE4FbYWS2xwAo.fSl6th2Co-1751862664181-0.0.1.1-604800000
       host:
       - api.openai.com
       openai-beta:
@@ -25,11 +26,11 @@ interactions:
       string: ''
     headers:
       CF-RAY:
-      - 959489dffe32fd08-SIN
+      - 95b49c737f59ff66-BOM
       Connection:
       - keep-alive
       Date:
-      - Thu, 03 Jul 2025 07:06:10 GMT
+      - Mon, 07 Jul 2025 04:31:15 GMT
       Server:
       - cloudflare
       X-Content-Type-Options:
@@ -41,13 +42,13 @@ interactions:
       openai-organization:
       - traceloop
       openai-processing-ms:
-      - '429'
+      - '101'
       openai-version:
       - '2020-10-01'
       strict-transport-security:
       - max-age=31536000; includeSubDomains; preload
       x-request-id:
-      - req_ac0dd87c9043ec1b0ffe4fc249585612
+      - req_cabcc3546fd392d7c94f8cf5acb90f6a
     status:
       code: 204
       message: No Content
@@ -62,12 +63,12 @@ interactions:
       content-length:
       - '235'
       cookie:
-      - __cf_bm=bae2rWsOcbEAcVXTbPOsyf.74n2A1yQIOP6eTNior3c-1751526368-1.0.1.1-7UEnB_V3MJ0vFANnhO46maTteHVU9wml.PWRe.HBFg1QW807WO8NU3W4r9AzA27JZ073lSScwgVMLnIEcS5ZuRbRYNVfuIVJgaxN2PbNjJI;
-        _cfuvid=BO6.1dcjIkWE558UaNqu.52WmDxXUvMxl6sM35kDJg0-1751526368106-0.0.1.1-604800000
+      - __cf_bm=3zyMrBe7N20pVl8x25O_On5.fvfIikDA012ufvx53nM-1751862660-1.0.1.1-JvGF1w1po85PLKWFrJyLhImrIM6CpkmMaYGua6WBvJlfDMgZo9Oigg5nRJtYzI47T1BQnozcg9CowCmBpXifPOG5KiUOD.Kr9VCCCeladCY;
+        _cfuvid=O..E2LqPai_CvoCODzw4ICRfn1jA4LzcFld6LdnWH1s-1751862660981-0.0.1.1-604800000
       host:
       - api.openai.com
       user-agent:
-      - Agents/Python 0.0.16
+      - Agents/Python 0.0.19
       x-stainless-arch:
       - arm64
       x-stainless-async:
@@ -91,27 +92,27 @@ interactions:
   response:
     body:
       string: !!binary |
-        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
+        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
     headers:
       CF-RAY:
-      - 959489d93fb1f936-SIN
+      - 95b49c6b9a934448-BOM
       Connection:
       - keep-alive
       Content-Encoding:
@@ -119,7 +120,7 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Thu, 03 Jul 2025 07:06:10 GMT
+      - Mon, 07 Jul 2025 04:31:15 GMT
       Server:
       - cloudflare
       Transfer-Encoding:
@@ -133,7 +134,7 @@ interactions:
       openai-organization:
       - traceloop
       openai-processing-ms:
-      - '2092'
+      - '1947'
       openai-version:
       - '2020-10-01'
       strict-transport-security:
@@ -151,7 +152,7 @@ interactions:
       x-ratelimit-reset-tokens:
       - 0s
       x-request-id:
-      - req_1d678503ba8e83159d26695c3b21c59d
+      - req_7e9650626740de3879ff430edef048cd
     status:
       code: 200
       message: OK

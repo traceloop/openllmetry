@@ -1,10 +1,16 @@
 import pytest
+import json
 from unittest.mock import MagicMock
 from opentelemetry.instrumentation.openai_agents import (
     OpenAIAgentsInstrumentor,
 )
 from agents import Runner
-from opentelemetry.semconv_ai import SpanAttributes, Meters
+from opentelemetry.trace import StatusCode
+from opentelemetry.semconv_ai import (
+    SpanAttributes,
+    TraceloopSpanKindValues,
+    Meters,
+)
 
 
 @pytest.fixture
@@ -26,24 +32,162 @@ def test_agent_spans(exporter, test_agent):
 
     span = spans[0]
 
-    assert [span.name for span in spans] == [
-        "testAgent.agent",
-    ]
-
+    assert span.name == "testAgent.agent"
+    assert span.kind == span.kind.CLIENT
     assert span.attributes[SpanAttributes.LLM_SYSTEM] == "openai"
+    assert span.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "gpt-4.1"
     assert (
-        span.attributes[SpanAttributes.LLM_REQUEST_MODEL]
-        == "gpt-4.1"
+        span.attributes[SpanAttributes.TRACELOOP_SPAN_KIND]
+        == TraceloopSpanKindValues.AGENT.value
     )
     assert span.attributes[SpanAttributes.LLM_REQUEST_TEMPERATURE] == 0.3
     assert span.attributes[SpanAttributes.LLM_REQUEST_MAX_TOKENS] == 1024
     assert span.attributes[SpanAttributes.LLM_REQUEST_TOP_P] == 0.2
+    assert span.attributes["openai.agent.model.frequency_penalty"] == 1.3
+    assert span.attributes["gen_ai.agent.name"] == "testAgent"
+    assert (
+        span.attributes["gen_ai.agent.description"]
+        == "You are a helpful assistant that answers all questions"
+    )
+
     assert span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"] == "user"
     assert (
         span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
-        == "What is AI?"
+        == "What is AI?")
+
+    assert span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] is not None
+    assert (
+        span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS]
+        is not None)
+    assert span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] is not None
+
+    assert (
+        span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.contents"]
+        is not None
     )
-    assert span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 24
+    assert (
+        len(span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.contents"]) > 0
+    )
+    assert (
+        span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.roles"]
+        is not None
+    )
+    assert (
+        len(span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.roles"]) > 0
+    )
+    assert (
+        span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.types"]
+        is not None
+    )
+    assert (
+        len(span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.types"]) > 0
+    )
+
+    assert span.status.status_code == StatusCode.OK
+
+
+@pytest.mark.vcr
+def test_agent_with_function_tool_spans(exporter, function_tool_agent):
+    query = "What is the weather in London?"
+    Runner.run_sync(
+        function_tool_agent,
+        query,
+    )
+    spans = exporter.get_finished_spans()
+
+    assert len(spans) == 4
+
+    agent_span = next(s for s in spans if s.name == "WeatherAgent.agent")
+    tool_span = next(s for s in spans if s.name == "get_weather.tool")
+
+    assert (
+        agent_span.attributes[SpanAttributes.TRACELOOP_SPAN_KIND]
+        == TraceloopSpanKindValues.AGENT.value
+    )
+    assert (
+        tool_span.attributes[SpanAttributes.TRACELOOP_SPAN_KIND]
+        == TraceloopSpanKindValues.TOOL.value
+    )
+    assert tool_span.kind == tool_span.kind.INTERNAL
+
+    assert tool_span.attributes["openai.agent.tool.name"] == "get_weather"
+    assert tool_span.attributes["openai.agent.tool.type"] == "FunctionTool"
+    assert (
+        tool_span.attributes["openai.agent.tool.description"]
+        == "Gets the current weather for a specified city."
+    )
+    assert (
+        "city"
+        in tool_span.attributes["openai.agent.tool.params_json_schema"]
+    )
+    assert tool_span.attributes["openai.agent.tool.strict_json_schema"] is True
+
+    assert agent_span.status.status_code == StatusCode.OK
+    assert tool_span.status.status_code == StatusCode.OK
+
+
+@pytest.mark.vcr
+def test_agent_with_web_search_tool_spans(exporter, web_search_tool_agent):
+    query = "Search for latest news on AI."
+    Runner.run_sync(
+        web_search_tool_agent,
+        query,
+    )
+    spans = exporter.get_finished_spans()
+
+    assert len(spans) == 2
+
+    agent_span = next(s for s in spans if s.name == "SearchAgent.agent")
+    tool_span = next(s for s in spans if s.name == "WebSearchTool.tool")
+
+    assert (
+        agent_span.attributes[SpanAttributes.TRACELOOP_SPAN_KIND]
+        == TraceloopSpanKindValues.AGENT.value
+    )
+    assert (
+        tool_span.attributes[SpanAttributes.TRACELOOP_SPAN_KIND]
+        == TraceloopSpanKindValues.TOOL.value
+    )
+    assert tool_span.kind == tool_span.kind.INTERNAL
+
+    assert tool_span.attributes["openai.agent.tool.type"] == "WebSearchTool"
+    assert (
+        tool_span.attributes["openai.agent.tool.search_context_size"]
+        is not None)
+    assert "openai.agent.tool.user_location" not in tool_span.attributes
+
+    assert agent_span.status.status_code == StatusCode.OK
+    assert tool_span.status.status_code == StatusCode.OK
+
+
+@pytest.mark.vcr
+def test_agent_with_handoff_spans(exporter, handoff_agent):
+
+    query = "Please handle this task by delegating to another agent."
+    Runner.run_sync(
+        handoff_agent,
+        query,
+    )
+    spans = exporter.get_finished_spans()
+
+    assert len(spans) >= 1
+    triage_agent_span = next(s for s in spans if s.name == "TriageAgent.agent")
+
+    assert triage_agent_span.attributes["openai.agent.handoff0"] is not None
+    handoff0_info = json.loads(
+        triage_agent_span.attributes["openai.agent.handoff0"]
+    )
+    assert handoff0_info["name"] == "AgentA"
+    assert handoff0_info["instructions"] == "Agent A does something."
+
+    assert triage_agent_span.attributes["openai.agent.handoff1"] is not None
+    handoff1_info = json.loads(
+        triage_agent_span.attributes["openai.agent.handoff1"]
+    )
+    assert handoff1_info["name"] == "AgentB"
+    assert handoff1_info["instructions"] == "Agent B does something else."
+
+    assert triage_agent_span.status.status_code == StatusCode.OK
 
 
 @pytest.mark.vcr

@@ -16,8 +16,8 @@ from opentelemetry.sdk.metrics import MeterProvider
 from opentelemetry.sdk.metrics.export import InMemoryMetricReader
 from opentelemetry import metrics
 
-from agents import Agent
-from agents import ModelSettings
+from agents import Agent, function_tool, ModelSettings, WebSearchTool
+from pydantic import BaseModel
 
 pytest_plugins = []
 
@@ -75,6 +75,65 @@ def test_agent():
         ),
     )
     return test_agent
+
+
+@pytest.fixture(scope="session")
+def function_tool_agent():
+    @function_tool
+    async def get_weather(city: str) -> str:
+        """Gets the current weather for a specified city."""
+        if city == "London":
+            return "It's cloudy with 15°C"
+        return "Weather not available."
+
+    return Agent(
+        name="WeatherAgent",
+        instructions=(
+            "You get the weather for a city using the get_weather tool."
+        ),
+        model="gpt-4.1",
+        tools=[get_weather],
+    )
+
+
+@pytest.fixture(scope="session")
+def web_search_tool_agent():
+    return Agent(
+        name="SearchAgent",
+        instructions="You search the web for information.",
+        model="gpt-4.1",
+        tools=[WebSearchTool()],
+    )
+
+
+@pytest.fixture(scope="session")
+def handoff_agent():
+
+    agent_a = Agent(name="AgentA", instructions="Agent A does something.",
+                    model="gpt-4.1")
+    agent_b = Agent(name="AgentB", instructions="Agent B does something else.",
+                    model="gpt-4.1")
+
+    class HandoffExample(BaseModel):
+        message: str
+
+    handoff_tool_a = agent_a.as_tool(
+        tool_name="handoff_to_agent_a",
+        tool_description="Handoff to Agent A for specific tasks",
+    )
+    handoff_tool_b = agent_b.as_tool(
+        tool_name="handoff_to_agent_b",
+        tool_description="Handoff to Agent B for different tasks",
+    )
+
+    triage_agent = Agent(
+        name="TriageAgent",
+        instructions="You decide which agent to handoff to.",
+        model="gpt-4.1",
+        handoffs=[agent_a, agent_b],
+        tools=[handoff_tool_a, handoff_tool_b]
+    )
+    return triage_agent
 
 
 @pytest.fixture(scope="module")
