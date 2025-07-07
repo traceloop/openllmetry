@@ -11,6 +11,9 @@ from opentelemetry.semconv_ai import (
     TraceloopSpanKindValues,
     Meters,
 )
+from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
+    GEN_AI_COMPLETION,
+)
 
 
 @pytest.fixture
@@ -110,17 +113,23 @@ def test_agent_with_function_tool_spans(exporter, function_tool_agent):
     )
     assert tool_span.kind == tool_span.kind.INTERNAL
 
-    assert tool_span.attributes["openai.agent.tool.name"] == "get_weather"
-    assert tool_span.attributes["openai.agent.tool.type"] == "FunctionTool"
     assert (
-        tool_span.attributes["openai.agent.tool.description"]
+        tool_span.attributes[f"{GEN_AI_COMPLETION}.tool.name"]
+        == "get_weather"
+    )
+    assert (
+        tool_span.attributes[f"{GEN_AI_COMPLETION}.tool.type"]
+        == "FunctionTool"
+    )
+    assert (
+        tool_span.attributes[f"{GEN_AI_COMPLETION}.tool.description"]
         == "Gets the current weather for a specified city."
     )
+
     assert (
-        "city"
-        in tool_span.attributes["openai.agent.tool.params_json_schema"]
+        tool_span.attributes[f"{GEN_AI_COMPLETION}.tool.strict_json_schema"]
+        is True
     )
-    assert tool_span.attributes["openai.agent.tool.strict_json_schema"] is True
 
     assert agent_span.status.status_code == StatusCode.OK
     assert tool_span.status.status_code == StatusCode.OK
@@ -150,11 +159,18 @@ def test_agent_with_web_search_tool_spans(exporter, web_search_tool_agent):
     )
     assert tool_span.kind == tool_span.kind.INTERNAL
 
-    assert tool_span.attributes["openai.agent.tool.type"] == "WebSearchTool"
     assert (
-        tool_span.attributes["openai.agent.tool.search_context_size"]
-        is not None)
-    assert "openai.agent.tool.user_location" not in tool_span.attributes
+        tool_span.attributes[f"{GEN_AI_COMPLETION}.tool.type"]
+        == "WebSearchTool"
+    )
+    assert (
+        tool_span.attributes[f"{GEN_AI_COMPLETION}.tool.search_context_size"]
+        is not None
+    )
+    assert (
+        f"{GEN_AI_COMPLETION}.tool.user_location"
+        not in tool_span.attributes
+    )
 
     assert agent_span.status.status_code == StatusCode.OK
     assert tool_span.status.status_code == StatusCode.OK

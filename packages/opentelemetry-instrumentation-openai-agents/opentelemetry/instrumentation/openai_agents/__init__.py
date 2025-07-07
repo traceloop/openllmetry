@@ -15,6 +15,9 @@ from opentelemetry.semconv_ai import (
     TraceloopSpanKindValues,
     Meters,
 )
+from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
+    GEN_AI_COMPLETION,
+)
 from .utils import set_span_attribute
 from agents import FunctionTool, WebSearchTool, FileSearchTool, ComputerTool
 
@@ -259,57 +262,54 @@ def extract_tool_details(tracer: Tracer, tools):
                 if tool_name:
                     if isinstance(tool, FunctionTool):
                         span.set_attribute(
-                            "openai.agent.tool.name", tool_name
+                            f"{GEN_AI_COMPLETION}.tool.name", tool_name
                         )
                         span.set_attribute(
-                            "openai.agent.tool.type", "FunctionTool"
+                             f"{GEN_AI_COMPLETION}.tool.type", "FunctionTool"
                         )
                         span.set_attribute(
-                            "openai.agent.tool.description", tool.description
+                            f"{GEN_AI_COMPLETION}.tool.description",
+                            tool.description
                         )
                         span.set_attribute(
-                            "openai.agent.tool.params_json_schema",
-                            str(tool.params_json_schema)
-                        )
-                        span.set_attribute(
-                            "openai.agent.tool.strict_json_schema",
-                            tool.strict_json_schema
+                             f"{GEN_AI_COMPLETION}.tool.strict_json_schema",
+                             tool.strict_json_schema
                         )
                     elif isinstance(tool, FileSearchTool):
                         span.set_attribute(
-                            "openai.agent.tool.type", "FileSearchTool"
+                            f"{GEN_AI_COMPLETION}.tool.type", "FileSearchTool"
                         )
                         span.set_attribute(
-                            "openai.agent.tool.vector_store_ids",
+                            f"{GEN_AI_COMPLETION}.tool.vector_store_ids",
                             str(tool.vector_store_ids)
                         )
                         span.set_attribute(
-                            "openai.agent.tool.max_num_results",
+                            f"{GEN_AI_COMPLETION}.tool.max_num_results",
                             tool.max_num_results
                         )
                         span.set_attribute(
-                            "openai.agent.tool.include_search_results",
+                            f"{GEN_AI_COMPLETION}.tool.include_search_results",
                             tool.include_search_results
                         )
                     elif isinstance(tool, WebSearchTool):
                         span.set_attribute(
-                            "openai.agent.tool.type", "WebSearchTool"
+                            f"{GEN_AI_COMPLETION}.tool.type", "WebSearchTool"
                         )
                         span.set_attribute(
-                            "openai.agent.tool.search_context_size",
+                            f"{GEN_AI_COMPLETION}.tool.search_context_size",
                             tool.search_context_size
                         )
                         if tool.user_location:
                             span.set_attribute(
-                                "openai.agent.tool.user_location",
+                                f"{GEN_AI_COMPLETION}.tool.user_location",
                                 str(tool.user_location)
                             )
                     elif isinstance(tool, ComputerTool):
                         span.set_attribute(
-                            "openai.agent.tool.type", "ComputerTool"
+                            f"{GEN_AI_COMPLETION}.tool.type", "ComputerTool"
                         )
                         span.set_attribute(
-                            "openai.agent.tool.computer",
+                            f"{GEN_AI_COMPLETION}.tool.computer",
                             str(tool.computer)
                         )
                 span.set_status(Status(StatusCode.OK))
