@@ -4,7 +4,6 @@ from opentelemetry.instrumentation.openai_agents import (
     OpenAIAgentsInstrumentor,
 )
 from agents import Runner
-from unittest.mock import AsyncMock, patch
 from opentelemetry.semconv_ai import SpanAttributes, Meters
 
 
@@ -14,20 +13,6 @@ def mock_instrumentor():
     instrumentor.instrument = MagicMock()
     instrumentor.uninstrument = MagicMock()
     return instrumentor
-
-
-@pytest.mark.asyncio
-async def test_async_runner_mocked_output(test_agent):
-
-    mock_result = AsyncMock()
-    mock_result.final_output = "Hello, this is a mocked response!"
-
-    with patch.object(Runner, "run", return_value=mock_result):
-        result = await Runner.run(
-            starting_agent=test_agent,
-            input="Mock input",
-        )
-        assert result.final_output == "Hello, this is a mocked response!"
 
 
 @pytest.mark.vcr

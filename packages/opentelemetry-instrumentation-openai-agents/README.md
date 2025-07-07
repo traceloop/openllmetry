@@ -1,7 +1,7 @@
 # OpenTelemetry OpenAI Agents Instrumentation
 
-<a href="https://pypi.org/project/opentelemetry-instrumentation-openai_agents/">
-    <img src="https://badge.fury.io/py/opentelemetry-instrumentation-openai_agents.svg">
+<a href="https://pypi.org/project/opentelemetry-instrumentation-openai-agents/">
+    <img src="https://badge.fury.io/py/opentelemetry-instrumentation-openai-agents.svg">
 </a>
 
 This library enables tracing of agentic workflows implemented using the [OpenAI Agents framework](https://github.com/openai/openai-agents-python), allowing visibility into agent reasoning, tool usage, and decision-making steps.
@@ -9,7 +9,7 @@ This library enables tracing of agentic workflows implemented using the [OpenAI 
 ## Installation
 
 ```bash
-pip install opentelemetry-instrumentation-openai_agents
+pip install opentelemetry-instrumentation-openai-agents
 ```
 
 ## Example usage
