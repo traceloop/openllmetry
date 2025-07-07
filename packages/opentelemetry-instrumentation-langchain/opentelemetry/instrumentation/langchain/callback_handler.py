@@ -5,6 +5,8 @@ from uuid import UUID
 
 from langchain_core.callbacks import (
     BaseCallbackHandler,
+    CallbackManager,
+    AsyncCallbackManager,
 )
 from langchain_core.messages import (
     AIMessage,
@@ -85,19 +87,6 @@ def _extract_class_name_from_serialized(serialized: Optional[dict[str, Any]]) ->
         return ""
 
 
-def _message_type_to_role(message_type: str) -> str:
-    if message_type == "human":
-        return "user"
-    elif message_type == "system":
-        return "system"
-    elif message_type == "ai":
-        return "assistant"
-    elif message_type == "tool":
-        return "tool"
-    else:
-        return "unknown"
-
-
 def _sanitize_metadata_value(value: Any) -> Any:
     """Convert metadata values to OpenTelemetry-compatible types."""
     if value is None:
@@ -163,6 +152,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         self.token_histogram = token_histogram
         self.spans: dict[UUID, SpanHolder] = {}
         self.run_inline = True
+        self._callback_manager: CallbackManager | AsyncCallbackManager = None
 
     @staticmethod
     def _get_name_from_callback(
@@ -192,6 +182,9 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             if child_span.end_time is None:  # avoid warning on ended spans
                 child_span.end()
         span.end()
+        token = self.spans[run_id].token
+        if token:
+            context_api.detach(token)
 
     def _create_span(
         self,
@@ -230,12 +223,16 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         else:
             span = self.tracer.start_span(span_name, kind=kind)
 
+        token = None
+        # TODO: make this unconditional once attach/detach works properly with async callbacks.
+        # Currently, it doesn't work due to this - https://github.com/langchain-ai/langchain/issues/31398
+        # As a sidenote, OTel Python users also report similar issues -
+        # https://github.com/open-telemetry/opentelemetry-python/issues/2606
+        if self._callback_manager and not self._callback_manager.is_async:
+            token = context_api.attach(set_span_in_context(span))
+
         _set_span_attribute(span, SpanAttributes.TRACELOOP_WORKFLOW_NAME, workflow_name)
         _set_span_attribute(span, SpanAttributes.TRACELOOP_ENTITY_PATH, entity_path)
-
-        token = context_api.attach(
-            context_api.set_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY, True)
-        )
 
         self.spans[run_id] = SpanHolder(
             span, token, None, [], workflow_name, entity_name, entity_path
@@ -299,6 +296,16 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
 
         _set_span_attribute(span, SpanAttributes.LLM_SYSTEM, vendor)
         _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TYPE, request_type.value)
+
+        # we already have an LLM span by this point,
+        # so skip any downstream instrumentation from here
+        token = context_api.attach(
+            context_api.set_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY, True)
+        )
+
+        self.spans[run_id] = SpanHolder(
+            span, token, None, [], workflow_name, None, entity_path
+        )
 
         return span
 
@@ -464,7 +471,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
                 "model_name"
             ) or response.llm_output.get("model_id")
             if model_name is not None:
-                _set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, model_name)
+                _set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, model_name or "unknown")
 
                 if self.spans[run_id].request_model is None:
                     _set_span_attribute(

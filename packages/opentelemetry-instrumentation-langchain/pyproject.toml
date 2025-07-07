@@ -58,6 +58,7 @@ langchain-cohere = "0.3.1"
 langchain-huggingface = "^0.1.2"
 pydantic = "^2.10.5"
 langchainhub = "^0.1.21"
+langgraph = "^0.4"
 
 [build-system]
 requires = ["poetry-core"]
