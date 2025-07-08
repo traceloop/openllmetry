@@ -57,6 +57,7 @@ class OpenAIAgentsInstrumentor(BaseInstrumentor):
                 duration_histogram,
                 token_histogram,
             ),
+
         )
 
     def _uninstrument(self, **kwargs):
@@ -66,8 +67,8 @@ class OpenAIAgentsInstrumentor(BaseInstrumentor):
 def with_tracer_wrapper(func):
 
     def _with_tracer(tracer, duration_histogram, token_histogram):
-        def wrapper(wrapped, instance, args, kwargs):
-            return func(
+        async def wrapper(wrapped, instance, args, kwargs):
+            return await func(
                 tracer,
                 duration_histogram,
                 token_histogram,
@@ -95,7 +96,6 @@ async def _wrap_agent_run(
     agent, *_ = args
     run_config = args[7] if len(args) > 7 else None
     prompt_list = args[2] if len(args) > 2 else None
-    tool_name = args[4] if len(args) > 4 else None
     agent_name = getattr(agent, "name", "agent")
     model_name = get_model_name(agent)
 
@@ -115,8 +115,13 @@ async def _wrap_agent_run(
             extract_agent_details(agent, span)
             set_model_settings_span_attributes(agent, span)
             extract_run_config_details(run_config, span)
-            if tool_name:
-                extract_tool_details(tracer, tool_name)
+            tools = (
+                args[4]
+                if len(args) > 4 and isinstance(args[4], list)
+                else []
+            )
+            if tools:
+                extract_tool_details(tracer, tools)
             start_time = time.time()
             response = await wrapped(*args, **kwargs)
             if duration_histogram:
@@ -132,7 +137,7 @@ async def _wrap_agent_run(
                 set_prompt_attributes(span, prompt_list)
             set_response_content_span_attribute(response, span)
             set_token_usage_span_attributes(
-                response, span, model_name, token_histogram
+                response, span, model_name, token_histogram, agent
             )
 
             span.set_status(Status(StatusCode.OK))
@@ -378,8 +383,13 @@ def set_response_content_span_attribute(response, span):
 
 
 def set_token_usage_span_attributes(
-    response, span, model_name, token_histogram
+    response, span, model_name, token_histogram, test_agent
 ):
+    agent = getattr(test_agent, "agent", test_agent)
+    if agent is None:
+        return
+
+    agent_name = getattr(agent, "name", None)
     if hasattr(response, "usage"):
         usage = response.usage
         input_tokens = getattr(usage, "input_tokens", None)
@@ -411,6 +421,7 @@ def set_token_usage_span_attributes(
                     SpanAttributes.LLM_SYSTEM: "openai",
                     SpanAttributes.LLM_TOKEN_TYPE: "input",
                     SpanAttributes.LLM_RESPONSE_MODEL: model_name,
+                    "gen_ai.agent.name": agent_name,
                 },
             )
             token_histogram.record(
@@ -419,6 +430,7 @@ def set_token_usage_span_attributes(
                     SpanAttributes.LLM_SYSTEM: "openai",
                     SpanAttributes.LLM_TOKEN_TYPE: "output",
                     SpanAttributes.LLM_RESPONSE_MODEL: model_name,
+                    "gen_ai.agent.name": agent_name,
                 },
             )
 
