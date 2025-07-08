@@ -1,8 +1,10 @@
+from pathlib import Path
+
 import pytest
 from llama_index.core import (
-    VectorStoreIndex,
-    SimpleDirectoryReader,
     PromptTemplate,
+    SimpleDirectoryReader,
+    VectorStoreIndex,
 )
 from llama_index.core.query_pipeline import QueryPipeline
 from llama_index.core.response_synthesizers import TreeSummarize
@@ -12,8 +14,10 @@ from opentelemetry.semconv_ai import SpanAttributes
 
 
 @pytest.mark.vcr
-def test_query_pipeline(exporter):
-    docs = SimpleDirectoryReader("./data/paul_graham/").load_data()
+def test_query_pipeline(instrument_legacy, span_exporter):
+    current_dir = Path(__file__).parent.parent
+    data_dir = current_dir.joinpath("data/paul_graham")
+    docs = SimpleDirectoryReader(data_dir).load_data()
 
     prompt_str = "Please generate a question about Paul Graham's life regarding the following topic {topic}"
     prompt_tmpl = PromptTemplate(prompt_str)
@@ -42,7 +46,7 @@ def test_query_pipeline(exporter):
 
     p.run(topic="YCombinator")
 
-    spans = exporter.get_finished_spans()
+    spans = span_exporter.get_finished_spans()
 
     assert {
         "QueryPipeline.workflow",

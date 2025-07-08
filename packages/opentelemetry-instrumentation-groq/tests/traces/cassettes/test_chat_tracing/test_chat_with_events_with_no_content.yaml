@@ -1,0 +1,555 @@
+interactions:
+- request:
+    body: '{"messages": [{"role": "user", "content": "Tell me a joke about opentelemetry"}],
+      "model": "llama3-8b-8192"}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '108'
+      content-type:
+      - application/json
+      host:
+      - api.groq.com
+      user-agent:
+      - Groq/Python 0.10.0
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 0.10.0
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.11.8
+    method: POST
+    uri: https://api.groq.com/openai/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA1SSu47bMBBFf4U7TRppIVkvmk2AVEmVJkCKOBAoaiTRS3FkcoSsYPjfAxmxg2V5
+        eS7mcecKtgcFZtJs5sWldVnVx3wY0qLUQ1r22ZDq3OTpgFLKQdayMgYSoO6Mhv8ZXw3Ni0O25CEB
+        E1Az9qDy5lCVZVXIKoGZenSgwDk96yKVXSrz42GnJ7IGI6hfV7C+x3dQWQIzxqhHBHWFQA5BgY7R
+        Rtaedw95Rr9X/4oBP0WhxZneUOiOVhbfF/Q/0OGMHDZ18if/c9pEb/uPP2IkwSR4QtGTYQqfd/QL
+        Gr1GFJbFHx3FgOisH4UWzjI7FCdwFFlYfzdy0AbjCV526zcx0YKCJ82iC9aPe193Yq+z0RoEbvgC
+        twQcjUugLoLyq3MJDNbbOLUBdSQPCiLTArffCayPLVxWXLFlOyOo7DXL67qpy/KYwBJoXrhlekMf
+        QeXyv/SAs7yRzSHf9/aI6cmXxUf54SkqWewvASbW7snX+VN5ok19yKqyuCUQt8g4t4P1I4Yl2HtG
+        w9LqIauqqjF6T/y9HQNd9qHulxfw0mb5ud7kprcFu0uo679KyrMsMjcqNjPOUKqt5QIAAAD//wMA
+        RfKJzqMCAAA=
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 8bdd43153af209bf-HFA
+      Cache-Control:
+      - private, max-age=0, no-store, no-cache, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Wed, 04 Sep 2024 10:23:05 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=LB2wU.4QF2Qax2J7zJtkB3dZRKtlNn2F..r.4nXTkac-1725445385-1.0.1.1-5ZAL7jPyUUlJ56YOs.PLQkS2TjlLpVyGMQt84_02yYCF3eqs2lovbZ6GtdF82PZtq5Q4PqgHfMjUsHE.Frf3yA;
+        path=/; expires=Wed, 04-Sep-24 10:53:05 GMT; domain=.groq.com; HttpOnly; Secure;
+        SameSite=None
+      Transfer-Encoding:
+      - chunked
+      alt-svc:
+      - h3=":443"; ma=86400
+      vary:
+      - Origin
+      via:
+      - 1.1 google
+      x-ratelimit-limit-requests:
+      - '14400'
+      x-ratelimit-limit-tokens:
+      - '30000'
+      x-ratelimit-remaining-requests:
+      - '14398'
+      x-ratelimit-remaining-tokens:
+      - '29987'
+      x-ratelimit-reset-requests:
+      - 10.332999999s
+      x-ratelimit-reset-tokens:
+      - 26ms
+      x-request-id:
+      - req_01j6y8yaypebqr66bn9r72s63h
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"messages": [{"role": "user", "content": "Tell me a joke about opentelemetry"}],
+      "model": "llama3-8b-8192"}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '108'
+      content-type:
+      - application/json
+      host:
+      - api.groq.com
+      user-agent:
+      - Groq/Python 0.10.0
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 0.10.0
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.11.8
+    method: POST
+    uri: https://api.groq.com/openai/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA1STTW+bQBCG7/0Vk7n0AhFgwIZL1Z5aKVIPPfRQKmuAAW+y7G52h9go8n+vcGpH
+        2duM3mc+NO++ouqxxu5A0k1Ox1VS5ElGRUxF2sV5USVxVWYcU77Ni6Qth6LvMELbPnIn/8H7zk5O
+        syhrMMLOMwn3WKfbrMjzIs/zCCfbs8YataaJNvGujXdpla3qg1UdB6z/vKIyPZ+wTiKcOAQaGetX
+        9FYz1kghqCBkZGWsETZr96/QenphCHbWcCQjAcTCgckDGbCOjbDmicUv8Gif+K4xjfnOnj8HsIbr
+        Nfx9WKBXPciB4ecH4pcjA6NdS8qBPbnlywp8447mwKAEjhRgYNbKjNCgeOqUGRuM9QJkTsrO4Q5+
+        vMmO1nvF/YWys+7B8At7aBmo1bz2aNB562gk4QZBSYAX0jMDmXU4kneU9JGWsLJB5u4JlAGCBlsa
+        Rxq5wZh7CELC95d9reO3AhP1DIud4eHnwx2eI9R2dN62AWszax3hoIwKh71nCtZgjUGsw/PfCOfr
+        OZ5nnnkvamKsk/skLcs021TROvrkZC/2iU3AOt29p67aZJPlWZUW6wGvfrkB2/Jj+gqVm7cXoVgh
+        fdNX+S1zk5bFtszy3TnCsAThaT8oM7J3Xl3MMrh9SeV2mxJXq4dP+9Hb53Wpyxfw/LxP0sdyqZIi
+        mYZlDKf82C9uGtw2O+H5/OkfAAAA//8DAJ/oAXwsAwAA
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 8bdd4487acfd09c9-HFA
+      Cache-Control:
+      - private, max-age=0, no-store, no-cache, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Wed, 04 Sep 2024 10:24:04 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=hQYNAKKBzEm8s69m03dxlIiV3sckuAKgLPW.QjWIRGM-1725445444-1.0.1.1-6zhK54gkwepht06KCCBGx0UAWicf3Z8LpmkyQ.McgdLIYLjLTsvU94rbAR9dhLpGoBabCrRM0D5wMkxOYLmaTw;
+        path=/; expires=Wed, 04-Sep-24 10:54:04 GMT; domain=.groq.com; HttpOnly; Secure;
+        SameSite=None
+      Transfer-Encoding:
+      - chunked
+      alt-svc:
+      - h3=":443"; ma=86400
+      vary:
+      - Origin
+      via:
+      - 1.1 google
+      x-ratelimit-limit-requests:
+      - '14400'
+      x-ratelimit-limit-tokens:
+      - '30000'
+      x-ratelimit-remaining-requests:
+      - '14398'
+      x-ratelimit-remaining-tokens:
+      - '29987'
+      x-ratelimit-reset-requests:
+      - 10.593999999s
+      x-ratelimit-reset-tokens:
+      - 26ms
+      x-request-id:
+      - req_01j6y9050mfygsx4wdypmfp72x
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"messages": [{"role": "user", "content": "Tell me a joke about opentelemetry"}],
+      "model": "llama3-8b-8192"}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '108'
+      content-type:
+      - application/json
+      host:
+      - api.groq.com
+      user-agent:
+      - Groq/Python 0.10.0
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 0.10.0
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.11.8
+    method: POST
+    uri: https://api.groq.com/openai/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA1RSy46cMBC85ys6fUkiwYrHMDBcIuWWUw4bKYcQocY04A3YHrvZXbSaf48YZSaK
+        j+Wqcpe73lD3WKOaSNTi5jjPs6Tk7BQfKzXEh+JQxZ3qkrjKU86zslKqLzFC2z2xkr/CB2UXN7No
+        azBC5ZmEe6zTMisOh2OVZxEutucZa5xnWiiPqy6u0lO2syerFQesf76hNj2/Yp1EuHAINDLWb+jt
+        zFgjhaCDkJFdY42w2V//MW3Q6x5kYvjm2HznmRcWv8GjIwOjBbH7pSe3fW5MY76wojUwaIEXChDE
+        r+M4azPuxAZfPDnQEmBi6oG8XU3f4NXedoH9M/cwk7BRG5Dprx4TPe96gol8D6IXhmYf0bCSq/HE
+        0FsJDULH8sJswPN55SDh/T7Sx0fr/RaBlg8BCDotYAcgaDA4Mg3GQkG0AreaCLpV4CtM1l0jdF6b
+        cReFRc+8R9js6mEgxe8/4SXC2Y7O2y5gbdZ5jnDQRoep9UzBGqwxiHV4+RXhevvu88ort3sKrJOH
+        JM3KIj9UWYTO28VJK/Y3m4B1Wv2DbuQkPWX7wvcN3QpxFxzL/+GbqCiqfD8RihWa7/yquCN3alkW
+        ZZWklwjDFoSXdtBmZO+8vrZhcO2RjmWZEp8URvjajt6e91TXjns+t0n6dNyIxpMfSqq2UCaSFENV
+        LBteLu/+AAAA//8DAMaqmtcNAwAA
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 8bdd666ce95609cb-HFA
+      Cache-Control:
+      - private, max-age=0, no-store, no-cache, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Wed, 04 Sep 2024 10:47:12 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=XTMhFlamhEzWNARy.lbw5ySeBBvsmrRjtyEWAjjJP.0-1725446832-1.0.1.1-99KexJW7rCYNON5Ejz9dGYxXmRPcO_wvdtw.bySSyqbXHlr6CYGnI4rFoSxT20VSlFIbcfy03Tr6ntpp7cjiLw;
+        path=/; expires=Wed, 04-Sep-24 11:17:12 GMT; domain=.groq.com; HttpOnly; Secure;
+        SameSite=None
+      Transfer-Encoding:
+      - chunked
+      alt-svc:
+      - h3=":443"; ma=86400
+      vary:
+      - Origin
+      via:
+      - 1.1 google
+      x-ratelimit-limit-requests:
+      - '14400'
+      x-ratelimit-limit-tokens:
+      - '30000'
+      x-ratelimit-remaining-requests:
+      - '14398'
+      x-ratelimit-remaining-tokens:
+      - '29987'
+      x-ratelimit-reset-requests:
+      - 10.781s
+      x-ratelimit-reset-tokens:
+      - 26ms
+      x-request-id:
+      - req_01j6yaag9rf7a8ys70t05f85my
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"messages": [{"role": "user", "content": "Tell me a joke about opentelemetry"}],
+      "model": "llama3-8b-8192"}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '108'
+      content-type:
+      - application/json
+      host:
+      - api.groq.com
+      user-agent:
+      - Groq/Python 0.10.0
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 0.10.0
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.11.8
+    method: POST
+    uri: https://api.groq.com/openai/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA1SRza7UMAxGXyV4w6a96n/TbJBYsWODxIJBVZq4nVzSpMSuYDS6745aMYPw8tM5
+        nyX7Ds6CAnPVbNbN57WcWt1OfV5XRZU31WRz2bQ6l/2EZWdqWzYdZBCnVzT8V3wxcd08sosBMjAJ
+        NaMFVfZV2zSd7LsM1mjRgwLv9arrXE65LIfqoK/RGSRQ3+7ggsXfoIoMViTSC4K6Q4oeQYEmcsQ6
+        8OHEwBiO7Z8w4XsSMaC6hEv4er0J66zgK4rPG4Yv6HFFTjdhovdoOCaxRMHxIJLebh8O6yMavRMK
+        x+KXJjEjehcWoYV3zB7FBUbadLhAHtCKuLOYU1yF9v5cZB1xctPOaAUnbU432LOLOO3LctZxFBcg
+        Eze8wFnimIQj2pHewVsGPi5bihOBCrv3GcwuOLqOCTXFAAqI4wZv3zPYH5f5ueOOI7sVQRUvRVk2
+        rZTFkMGW4rrxyPEHBgJVyn/RAy4qWbe9bI5jPn73FJr6//gh1a2sj8mAI2v/5LvymTxR2XVDWfZv
+        GdCNGNdxdmHBtCV3Pm7exrIfpmIeKjP8kZKOUkV8elF+IchX4ORYlFoYb2CYZVaZmFSWWJSabVFW
+        XmlgUlaWmmVQVp6nVFvLBQAAAP//AwArJB6PuAIAAA==
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 8bdd67816d5309c3-HFA
+      Cache-Control:
+      - private, max-age=0, no-store, no-cache, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Wed, 04 Sep 2024 10:47:56 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=GDyP8J2C_S.4V_CHLuslifmDkMCMz8PSksUdnwBGO0g-1725446876-1.0.1.1-APCJteS5eT_zOAV5Hq6_G3IV1eoJs465UqfWvQIIZW3PJlEdKQaWe5ooEyywWlFVyAo7hJU2WuKhyUjzQA02PA;
+        path=/; expires=Wed, 04-Sep-24 11:17:56 GMT; domain=.groq.com; HttpOnly; Secure;
+        SameSite=None
+      Transfer-Encoding:
+      - chunked
+      alt-svc:
+      - h3=":443"; ma=86400
+      vary:
+      - Origin
+      via:
+      - 1.1 google
+      x-ratelimit-limit-requests:
+      - '14400'
+      x-ratelimit-limit-tokens:
+      - '30000'
+      x-ratelimit-remaining-requests:
+      - '14398'
+      x-ratelimit-remaining-tokens:
+      - '29869'
+      x-ratelimit-reset-requests:
+      - 11.354999999s
+      x-ratelimit-reset-tokens:
+      - 261ms
+      x-request-id:
+      - req_01j6yabvarek8vwy04vvej0vwn
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"messages": [{"role": "user", "content": "Tell me a joke about opentelemetry"}],
+      "model": "llama3-8b-8192"}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '108'
+      content-type:
+      - application/json
+      host:
+      - api.groq.com
+      user-agent:
+      - Groq/Python 0.10.0
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 0.10.0
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.11.8
+    method: POST
+    uri: https://api.groq.com/openai/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA1SSMa/UMBCEe36F2YbGebKdXBK7QaKio0Gi4FDkJJvEh2P7bAcuerr/jvLEHWLL
+        2fm0mtG+ghlBwbDoPKzBFkz2KMRUFlq2oqjaEytaZGMxiHqcelnLSo5AwfcXHPJf8GXwa7CYjXdA
+        YYioM46geCNOVdXUNaew+hEtKLBWr7os2r5ouRSHe/FmwATq+ysYN+INFKOwYkp6RlCvEL1FUKBT
+        Milrlw/Gu4zuuP4ZI35IxDtUZ3d235adjGYkeUHyJaD7ihZXzHEnKWhHZk+yP5ZRh/3jAXzCQW8J
+        icnkt05kQrTGzeQMxqUctxVdxvEMRLubwby/hzsF6+cQfZ9Auc1aCpNxJi1dRJ28AwUp+wD3HxS2
+        R4Trhht22awIir0wzqXkvJLPoRCiX0Pusv+JLoHi7T/pQTEhGJdNc8R/tP0ERP2//IAEr49pKGSf
+        tX36q+qpPK1lW7d1Vd0ppD1lXLvJuBljiOat6il0vJE9m6QYJFC4dXP01yPe2wNFvHaMX+q9L/OA
+        2LP+sl9T2Zw4Lr9KuN/f/QEAAP//AwDxTnLyagIAAA==
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 8bdd7aae89f109cd-HFA
+      Cache-Control:
+      - private, max-age=0, no-store, no-cache, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Wed, 04 Sep 2024 11:01:02 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=nn9wNi04z9JzyVg.9IPUCmsneYDS56do0qzAzIMIJME-1725447662-1.0.1.1-Hga9u3H87yHkOmJ3lf3mD_x7NLIHyQ1nqUjirOcs9Ln1BVATiRvPAlKfsnWJOVLre34i9w6.BKGonKMy_6IPEg;
+        path=/; expires=Wed, 04-Sep-24 11:31:02 GMT; domain=.groq.com; HttpOnly; Secure;
+        SameSite=None
+      Transfer-Encoding:
+      - chunked
+      alt-svc:
+      - h3=":443"; ma=86400
+      vary:
+      - Origin
+      via:
+      - 1.1 google
+      x-ratelimit-limit-requests:
+      - '14400'
+      x-ratelimit-limit-tokens:
+      - '30000'
+      x-ratelimit-remaining-requests:
+      - '14399'
+      x-ratelimit-remaining-tokens:
+      - '29987'
+      x-ratelimit-reset-requests:
+      - 6s
+      x-ratelimit-reset-tokens:
+      - 26ms
+      x-request-id:
+      - req_01j6yb3tceeb0bjyqs3751ehv3
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"messages": [{"role": "user", "content": "Tell me a joke about opentelemetry"}],
+      "model": "llama3-8b-8192"}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '108'
+      content-type:
+      - application/json
+      host:
+      - api.groq.com
+      user-agent:
+      - Groq/Python 0.10.0
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 0.10.0
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.11.8
+    method: POST
+    uri: https://api.groq.com/openai/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA1SRy47bMAxFf0Xl2h7YiV/RpsD8QDcDdFEXgWLRtmb0GpFGEwT598IZJ2i5JO/R
+        5RWvYDRIGGbFg4s27wpV1WWt82Hf7PNq1Do/1bshb3VTNkPZqBE7yCCc3nHgDXwZgosW2QQPGQwJ
+        FaMGWba7uqrapiszcEGjBQnWKqf2eXfKu/KwW9VzMAMSyF9XMF7jGWSRgUMiNSHIK6RgESQoIkOs
+        PK9M8Ix+df85X4Q2WvCM4kdE/4YWHXK6CIrKiykIDuswqXj53vvev+KgFkJhWPxRJEZEa/wketCG
+        OJnTwqh7EMqfDfJFKK/vOuK0TNNdykH0IGIKUU2KsQdhmAS6sManb+J1YWH8fSP0Olud3hdi4RE1
+        6i/c+PVBh543fNuD7oY94DmGtM54RrdF2GIYYrhlYMMUUzgRSL9Ym8FovKH5mFBR8CCBOES4/c5g
+        efzj54ILHtk4BFm8FOWhrOqmKw5bdRnEFFzkI4cP9ASy/Kf1oIqybZp9W603eJz8CdS7/9sPqNp/
+        VQYcWNmnvi2enae0Lg6HtmhvGdCFGN1xNH7CFJO533v8q4L4xDQDU1NT8+REUOqpiE8vyi8EeQ+c
+        iotSC+MNDLPMKpNMUsqz0yrSLIoMDMqSctOMkgoNs5Vqa7kAAAAA//8DAIa+r9bvAgAA
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 8bdd7b2a4e4a09bf-HFA
+      Cache-Control:
+      - private, max-age=0, no-store, no-cache, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Wed, 04 Sep 2024 11:01:22 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=kh2iaDCBqJFglplI95U4sRvTEU66COsQTYQocku7NZQ-1725447682-1.0.1.1-vTOzesStou.VAjy1wNDDy9695tfM1GTzVOFW5BQeJ6GlPwufHOJH2mI1cST8Z2k883QTZ5A42Duzadrluyp_xw;
+        path=/; expires=Wed, 04-Sep-24 11:31:22 GMT; domain=.groq.com; HttpOnly; Secure;
+        SameSite=None
+      Transfer-Encoding:
+      - chunked
+      alt-svc:
+      - h3=":443"; ma=86400
+      vary:
+      - Origin
+      via:
+      - 1.1 google
+      x-ratelimit-limit-requests:
+      - '14400'
+      x-ratelimit-limit-tokens:
+      - '30000'
+      x-ratelimit-remaining-requests:
+      - '14399'
+      x-ratelimit-remaining-tokens:
+      - '29987'
+      x-ratelimit-reset-requests:
+      - 6s
+      x-ratelimit-reset-tokens:
+      - 26ms
+      x-request-id:
+      - req_01j6yb4dwkfxf8r00vbmf2bq1k
+    status:
+      code: 200
+      message: OK
+version: 1

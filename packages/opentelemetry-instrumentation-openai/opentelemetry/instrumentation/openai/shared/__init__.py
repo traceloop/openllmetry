@@ -15,8 +15,8 @@ from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
 from opentelemetry.semconv_ai import SpanAttributes
 from opentelemetry.trace.propagation import set_span_in_context
 from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
-
 import openai
+import pydantic
 
 OPENAI_LLM_USAGE_TOKEN_TYPES = ["prompt_tokens", "completion_tokens"]
 PROMPT_FILTER_KEY = "prompt_filter_results"
@@ -144,6 +144,49 @@ def _set_request_attributes(span, kwargs, instance=None):
     _set_span_attribute(
         span, SpanAttributes.LLM_IS_STREAMING, kwargs.get("stream") or False
     )
+    if response_format := kwargs.get("response_format"):
+        # backward-compatible check for
+        # openai.types.shared_params.response_format_json_schema.ResponseFormatJSONSchema
+        if (
+            isinstance(response_format, dict)
+            and response_format.get("type") == "json_schema"
+            and response_format.get("json_schema")
+        ):
+            schema = dict(response_format.get("json_schema")).get("schema")
+            if schema:
+                _set_span_attribute(
+                    span,
+                    SpanAttributes.LLM_REQUEST_STRUCTURED_OUTPUT_SCHEMA,
+                    json.dumps(schema),
+                )
+        elif (
+            isinstance(response_format, pydantic.BaseModel)
+            or (
+                hasattr(response_format, "model_json_schema")
+                and callable(response_format.model_json_schema)
+            )
+        ):
+            _set_span_attribute(
+                span,
+                SpanAttributes.LLM_REQUEST_STRUCTURED_OUTPUT_SCHEMA,
+                json.dumps(response_format.model_json_schema()),
+            )
+        else:
+            schema = None
+            try:
+                schema = json.dumps(pydantic.TypeAdapter(response_format).json_schema())
+            except Exception:
+                try:
+                    schema = json.dumps(response_format)
+                except Exception:
+                    pass
+
+            if schema:
+                _set_span_attribute(
+                    span,
+                    SpanAttributes.LLM_REQUEST_STRUCTURED_OUTPUT_SCHEMA,
+                    schema,
+                )
 
 
 @dont_throw
