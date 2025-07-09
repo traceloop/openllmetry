@@ -195,11 +195,12 @@ def _set_response_attributes(span, llm_model, generation_text, token_usage):
         )
 
     _set_span_attribute(span, f"{SpanAttributes.LLM_COMPLETIONS}.0.role", "assistant")
-    _set_span_attribute(
-        span,
-        f"{SpanAttributes.LLM_COMPLETIONS}.0.content",
-        generation_text,
-    )
+    if should_send_prompts():
+        _set_span_attribute(
+            span,
+            f"{SpanAttributes.LLM_COMPLETIONS}.0.content",
+            generation_text,
+        )
 
 
 def _build_from_streaming_response(span, response, llm_model):
