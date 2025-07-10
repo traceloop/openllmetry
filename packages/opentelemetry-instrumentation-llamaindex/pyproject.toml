@@ -27,7 +27,7 @@ python = ">=3.9,<4"
 opentelemetry-api = "^1.28.0"
 opentelemetry-instrumentation = ">=0.50b0"
 opentelemetry-semantic-conventions = ">=0.50b0"
-opentelemetry-semantic-conventions-ai = "0.4.9"
+opentelemetry-semantic-conventions-ai = "0.4.10"
 inflection = "^0.5.1"
 
 [tool.poetry.group.dev.dependencies]
@@ -52,6 +52,7 @@ llama-index-vector-stores-chroma = "^0.4.1"
 llama-index-llms-cohere = "^0.4.0"
 llama-index-embeddings-openai = "^0.3.1"
 onnxruntime = "<1.20.0"
+llama-parse = "^0.5.20"
 
 [build-system]
 requires = ["poetry-core"]
@@ -59,6 +60,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.extras]
 instruments = ["llama-index"]
+llamaparse = ["llama-parse"]
 
 [tool.poetry.plugins."opentelemetry_instrumentor"]
 llama-index = "opentelemetry.instrumentation.llamaindex:LlamaIndexInstrumentor"

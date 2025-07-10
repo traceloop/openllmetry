@@ -28,6 +28,9 @@ from opentelemetry.instrumentation.llamaindex.custom_llm_instrumentor import (
 from opentelemetry.instrumentation.llamaindex.dispatcher_wrapper import (
     instrument_with_dispatcher,
 )
+from opentelemetry.instrumentation.llamaindex.llamaparse_instrumentor import (
+    LlamaParseInstrumentor,
+)
 from opentelemetry.instrumentation.llamaindex.query_pipeline_instrumentor import (
     QueryPipelineInstrumentor,
 )
@@ -89,6 +92,12 @@ class LlamaIndexInstrumentor(BaseInstrumentor):
             QueryPipelineInstrumentor(tracer).instrument()
             BaseAgentInstrumentor(tracer).instrument()
             BaseToolInstrumentor(tracer).instrument()
+
+        # LlamaParse instrumentation works for all versions
+        try:
+            LlamaParseInstrumentor(tracer).instrument()
+        except Exception:
+            pass
 
 
 class LlamaIndexInstrumentorCore(BaseInstrumentor):
