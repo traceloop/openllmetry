@@ -194,8 +194,8 @@ def _set_response_attributes(span, llm_model, generation_text, token_usage):
             token_usage.prompt_token_count,
         )
 
-    _set_span_attribute(span, f"{SpanAttributes.LLM_COMPLETIONS}.0.role", "assistant")
     if should_send_prompts():
+        _set_span_attribute(span, f"{SpanAttributes.LLM_COMPLETIONS}.0.role", "assistant")
         _set_span_attribute(
             span,
             f"{SpanAttributes.LLM_COMPLETIONS}.0.content",
