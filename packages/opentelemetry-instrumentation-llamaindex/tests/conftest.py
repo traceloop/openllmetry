@@ -118,12 +118,14 @@ def environment():
         os.environ["OPENAI_API_KEY"] = "test_api_key"
     if "COHERE_API_KEY" not in os.environ:
         os.environ["COHERE_API_KEY"] = "test_api_key"
+    if "LLAMA_CLOUD_API_KEY" not in os.environ:
+        os.environ["LLAMA_CLOUD_API_KEY"] = "test_api_key"
 
 
 @pytest.fixture(scope="module")
 def vcr_config():
     return {
-        "filter_headers": ["authorization"],
+        "filter_headers": ["authorization", "api-key"],
         "ignore_hosts": ["raw.githubusercontent.com"],
     }
 
