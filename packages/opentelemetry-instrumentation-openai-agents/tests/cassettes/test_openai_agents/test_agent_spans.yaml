@@ -1,0 +1,109 @@
+interactions:
+- request:
+    body: '{"include":[],"input":[{"content":"What is AI?","role":"user"}],"instructions":"You
+      are a helpful assistant that answers all questions","max_output_tokens":1024,"model":"gpt-4.1","stream":false,"temperature":0.3,"tools":[],"top_p":0.2}'
+    headers:
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '235'
+      host:
+      - api.openai.com
+      user-agent:
+      - Agents/Python 0.0.19
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - async:asyncio
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.93.0
+      x-stainless-read-timeout:
+      - '600'
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.13.1
+    method: POST
+    uri: https://api.openai.com/v1/responses
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAAwAAAP//dFVLj9s4DL7PryB8aoPJIA8n48ltjgPs7mEfh0VbBIxM29pIoitR6aTF
+        /PeF5MRJdqeXIObj4+MjqR93AIWuiw0UnkK/XVfrXVlXy9ViPavmTxU+lY+EZbmi8mlZrZezZdU8
+        Nouyqtbl44rq4j4B8O4fUnIGYRdokCtPKFRvMenmj6t5tV6sV09ZFwQlhuSj2PaG5Ay2Q7VvPUeX
+        smrQBMpi8p59sQEXjckC7c6O25oEtQm32iA+KtHscpC/OQJ6AoSOTN9EAxiCDoJOQDoUQBe+kQ+A
+        xsDXSGHwzFgWX7ccpY+yFd5TBpzPFuWoFGazVWhuU7Bck0mx216m5cN8upgtVtNZOZ2Xp7ZlzGID
+        n+4AAH7k35EPG9qRDlxXAx2PqqK62tGiXjxVs+ZdOjKGHHvKKBQCtnRR/KzvWanYCblLStdp3cCe
+        20GvMnpnA3SOBc9t//TlRmm47T3v3tFkoA0Uk8nzy2QCiZc6QMMeJpNnL7rRSqOBFydkjG7JKZpM
+        HuBFwFOTaBMG6QhqOpDh3pIT4AZSiVHIQzgGIRuAPQRu5FsahUy7Qgc9+Ya9BcGwD4NYjr1OhB7B
+        09eoPUEXLTrQVwk8wJ8dBTq5aadMrBOqdm0Ao/e0+ew+uyn85WryuSLtWkBXQ+9ZUQjp06BrI7YE
+        H5IHqA5lx5ITFY8umNxLSBMWPia030lx6/T35KwttjQU1ROpLul/IfQuKRvPFmoUzCG17T0fkpwP
+        5EG0JfhgUXXaEZiTTw7wK+6TWU1Kh0Tj0DOTfRN7hmxIhT2/5ObtCJq0rKAdWHRHoAP5Y41HEFKd
+        Y8OtpnAPIaoOMMBBe4l4tX7hVPof2usU69nQK368B0+KrSVXDx04MzgYS8eBgB38RtIY/ZodLX5n
+        9/EeAplmWnudU1bow31ugWU/cAYto0nj8fwCOo/OcKjg1I9wGY3E5v5+aNCAgkqupkDM8aEYB/nt
+        9G+c7cKzyfsyVjsYJ8NsVPTo0RgytzdEfByuXu/poDmG7fmwbvNxGG+MJwycqCs2p0UtqGnYy5VR
+        WvpoLfrjSXgH8DbcYPIHrWgrmtJpLWpqMJpho4sg7Ok6FyHbk0eJWTx7WJ6keXNPwdMe4eX76mJk
+        u7H4If5Qc8daDU2KwsWouFyJQrjfXt2O2SjscyKL4dtHp/Ks5FJ0wJ05vykx38AxS+1ubvlwyf8j
+        v3pUxloUqo7qi+NsqOfk/b8nYjl7T/Me8Ejjz7CFBc0V9KocmxgD3byLlgTT2if8t7u3fwEAAP//
+        AwDDdoiz4gcAAA==
+    headers:
+      CF-RAY:
+      - 95b49c13bfb64448-BOM
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 07 Jul 2025 04:31:00 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=3zyMrBe7N20pVl8x25O_On5.fvfIikDA012ufvx53nM-1751862660-1.0.1.1-JvGF1w1po85PLKWFrJyLhImrIM6CpkmMaYGua6WBvJlfDMgZo9Oigg5nRJtYzI47T1BQnozcg9CowCmBpXifPOG5KiUOD.Kr9VCCCeladCY;
+        path=/; expires=Mon, 07-Jul-25 05:01:00 GMT; domain=.api.openai.com; HttpOnly;
+        Secure; SameSite=None
+      - _cfuvid=O..E2LqPai_CvoCODzw4ICRfn1jA4LzcFld6LdnWH1s-1751862660981-0.0.1.1-604800000;
+        path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '1539'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-ratelimit-limit-requests:
+      - '10000'
+      x-ratelimit-limit-tokens:
+      - '30000000'
+      x-ratelimit-remaining-requests:
+      - '9999'
+      x-ratelimit-remaining-tokens:
+      - '29999957'
+      x-ratelimit-reset-requests:
+      - 6ms
+      x-ratelimit-reset-tokens:
+      - 0s
+      x-request-id:
+      - req_c42c0f939c10ac8b42d36f54511f4bd3
+    status:
+      code: 200
+      message: OK
+version: 1
