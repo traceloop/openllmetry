@@ -285,6 +285,9 @@ def test_new_assistant_with_polling(
         thread_id=thread.id,
         assistant_id=assistant.id,
         instructions="Please address the user as Jane Doe. The user has a premium account.",
+        # Original test waited for much longer, but now that we have VCR cassetes recorded,
+        # we don't need to wait
+        poll_interval_ms=20,
     )
 
     messages = openai_client.beta.threads.messages.list(
@@ -362,6 +365,9 @@ def test_new_assistant_with_polling_with_events_with_content(
         thread_id=thread.id,
         assistant_id=assistant.id,
         instructions="Please address the user as Jane Doe. The user has a premium account.",
+        # Original test waited for much longer, but now that we have VCR cassetes recorded,
+        # we don't need to wait
+        poll_interval_ms=20,
     )
 
     messages = openai_client.beta.threads.messages.list(
@@ -435,6 +441,9 @@ def test_new_assistant_with_polling_with_events_with_no_content(
         thread_id=thread.id,
         assistant_id=assistant.id,
         instructions="Please address the user as Jane Doe. The user has a premium account.",
+        # Original test waited for much longer, but now that we have VCR cassetes recorded,
+        # we don't need to wait
+        poll_interval_ms=20,
     )
 
     openai_client.beta.threads.messages.list(thread_id=thread.id, order="asc")
