@@ -1,0 +1,57 @@
+interactions:
+- request:
+    body: '{"prompt": "Human: Tell me a joke about opentelemetry Assistant:", "max_tokens_to_sample":
+      200, "temperature": 0.5}'
+    headers:
+      Accept:
+      - !!binary |
+        YXBwbGljYXRpb24vanNvbg==
+      Content-Length:
+      - '115'
+      Content-Type:
+      - !!binary |
+        YXBwbGljYXRpb24vanNvbg==
+      User-Agent:
+      - !!binary |
+        Qm90bzMvMS4zNC4xMjEgbWQvQm90b2NvcmUjMS4zNC4xMjEgdWEvMi4wIG9zL3dpbmRvd3MjMTAg
+        bWQvYXJjaCNhbWQ2NCBsYW5nL3B5dGhvbiMzLjExLjUgbWQvcHlpbXBsI0NQeXRob24gY2ZnL3Jl
+        dHJ5LW1vZGUjbGVnYWN5IEJvdG9jb3JlLzEuMzQuMTIx
+      X-Amz-Date:
+      - !!binary |
+        MjAyNDA2MTFUMDAzNDM0Wg==
+      amz-sdk-invocation-id:
+      - !!binary |
+        ODIxZTcwN2UtYzg2OC00ZjUwLWEyMGYtZjU0NjhkYzgwODkw
+      amz-sdk-request:
+      - !!binary |
+        YXR0ZW1wdD0x
+    method: POST
+    uri: https://bedrock-runtime.us-east-1.amazonaws.com/model/anthropic.claude-v2%3A1/invoke
+  response:
+    body:
+      string: '{"type":"completion","completion":" Here''s a silly joke about opentelemetry:\n\nWhat
+        do you call an open source observability framework that keeps track of traces
+        and spans?\nOpenTele-metry!\n\nI tried to come up with a pun by playing on
+        the name \"opentelemetry.\" Hopefully it gives you a quick laugh! Let me know
+        if you''d like to hear another joke or have a different request.","stop_reason":"stop_sequence","stop":"\n\nHuman:"}'
+    headers:
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '431'
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 11 Jun 2024 00:34:41 GMT
+      X-Amzn-Bedrock-Input-Token-Count:
+      - '18'
+      X-Amzn-Bedrock-Invocation-Latency:
+      - '3304'
+      X-Amzn-Bedrock-Output-Token-Count:
+      - '87'
+      x-amzn-RequestId:
+      - 44c596e2-2d68-4036-b072-b821e40ed8d7
+    status:
+      code: 200
+      message: OK
+version: 1
