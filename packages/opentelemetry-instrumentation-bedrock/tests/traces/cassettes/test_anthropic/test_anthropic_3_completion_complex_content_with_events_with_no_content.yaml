@@ -1,0 +1,56 @@
+interactions:
+- request:
+    body: '{"messages": [{"role": "user", "content": [{"type": "text", "text": "Tell
+      me a joke about opentelemetry"}]}], "max_tokens": 200, "temperature": 0.5, "anthropic_version":
+      "bedrock-2023-05-31"}'
+    headers:
+      Accept:
+      - !!binary |
+        YXBwbGljYXRpb24vanNvbg==
+      Content-Length:
+      - '191'
+      Content-Type:
+      - !!binary |
+        YXBwbGljYXRpb24vanNvbg==
+      User-Agent:
+      - !!binary |
+        Qm90bzMvMS4zNC4xMjEgbWQvQm90b2NvcmUjMS4zNC4xMjEgdWEvMi4wIG9zL3dpbmRvd3MjMTAg
+        bWQvYXJjaCNhbWQ2NCBsYW5nL3B5dGhvbiMzLjExLjUgbWQvcHlpbXBsI0NQeXRob24gY2ZnL3Jl
+        dHJ5LW1vZGUjbGVnYWN5IEJvdG9jb3JlLzEuMzQuMTIx
+      X-Amz-Date:
+      - !!binary |
+        MjAyNDA2MTFUMDAzNDM4Wg==
+      amz-sdk-invocation-id:
+      - !!binary |
+        NTdlOTE3NmEtM2I2OS00M2E4LThjNWItZTA0MjdhODkwNGFj
+      amz-sdk-request:
+      - !!binary |
+        YXR0ZW1wdD0x
+    method: POST
+    uri: https://bedrock-runtime.us-east-1.amazonaws.com/model/anthropic.claude-3-sonnet-20240229-v1%3A0/invoke
+  response:
+    body:
+      string: '{"id":"msg_bdrk_01Q6Z4xmUkMigo9K4qd1fshW","type":"message","role":"assistant","model":"claude-3-sonnet-20240229","content":[{"type":"text","text":"Why
+        did the data packet cross the road? To get to the other side with OpenTelemetry''s
+        distributed tracing!"}],"stop_reason":"end_turn","stop_sequence":null,"usage":{"input_tokens":16,"output_tokens":29}}'
+    headers:
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '350'
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 11 Jun 2024 00:34:42 GMT
+      X-Amzn-Bedrock-Input-Token-Count:
+      - '16'
+      X-Amzn-Bedrock-Invocation-Latency:
+      - '844'
+      X-Amzn-Bedrock-Output-Token-Count:
+      - '29'
+      x-amzn-RequestId:
+      - 184b68a8-0d65-4208-9590-1aeab897915c
+    status:
+      code: 200
+      message: OK
+version: 1

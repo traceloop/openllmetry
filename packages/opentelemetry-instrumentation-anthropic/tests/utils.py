@@ -1,7 +1,9 @@
 from opentelemetry.semconv_ai import Meters, SpanAttributes
 
 
-def verify_metrics(resource_metrics, model_name: str, ignore_zero_input_tokens: bool = False):
+def verify_metrics(
+    resource_metrics, model_name: str, ignore_zero_input_tokens: bool = False
+):
     assert len(resource_metrics) > 0
     found_token_metric = False
     found_choice_metric = False
