@@ -1,7 +1,7 @@
-import pytest
 import ollama
-from opentelemetry.semconv_ai import Meters, SpanAttributes
+import pytest
 from opentelemetry.semconv._incubating.metrics import gen_ai_metrics as GenAIMetrics
+from opentelemetry.semconv_ai import Meters, SpanAttributes
 
 
 def _collect_metrics(reader):
@@ -17,9 +17,7 @@ def _collect_metrics(reader):
 
 
 @pytest.mark.vcr
-def test_ollama_streaming_metrics(metrics_test_context):
-    _, reader = metrics_test_context
-
+def test_ollama_streaming_metrics(instrument_legacy, reader):
     gen = ollama.generate(
         model="gemma3:1b",
         prompt="Tell me a joke about OpenTelemetry",
@@ -47,9 +45,7 @@ def test_ollama_streaming_metrics(metrics_test_context):
 
 
 @pytest.mark.vcr
-def test_ollama_streaming_time_to_generate_metrics(metrics_test_context):
-    _, reader = metrics_test_context
-
+def test_ollama_streaming_time_to_generate_metrics(instrument_legacy, reader):
     gen = ollama.generate(
         model="gemma3:1b",
         prompt="Tell me a joke about OpenTelemetry",

@@ -18,8 +18,9 @@ from opentelemetry.instrumentation.openai.utils import (
     should_emit_events,
 )
 from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
+from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
 from opentelemetry.semconv_ai import LLMRequestTypeValues, SpanAttributes
-from opentelemetry.trace import SpanKind
+from opentelemetry.trace import SpanKind, Status, StatusCode
 
 from openai._legacy_response import LegacyAPIResponse
 from openai.types.beta.threads.run import Run
@@ -53,17 +54,24 @@ def runs_create_wrapper(tracer, wrapped, instance, args, kwargs):
     thread_id = kwargs.get("thread_id")
     instructions = kwargs.get("instructions")
 
-    response = wrapped(*args, **kwargs)
-    response_dict = model_as_dict(response)
+    try:
+        response = wrapped(*args, **kwargs)
+        response_dict = model_as_dict(response)
 
-    runs[thread_id] = {
-        "start_time": time.time_ns(),
-        "assistant_id": kwargs.get("assistant_id"),
-        "instructions": instructions,
-        "run_id": response_dict.get("id"),
-    }
+        runs[thread_id] = {
+            "start_time": time.time_ns(),
+            "assistant_id": kwargs.get("assistant_id"),
+            "instructions": instructions,
+            "run_id": response_dict.get("id"),
+        }
 
-    return response
+        return response
+    except Exception as e:
+        runs[thread_id] = {
+            "exception": e,
+            "end_time": time.time_ns(),
+        }
+        raise
 
 
 @_with_tracer_wrapper
@@ -85,10 +93,16 @@ def runs_retrieve_wrapper(tracer, wrapped, instance, args, kwargs):
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
         return wrapped(*args, **kwargs)
 
-    response = wrapped(*args, **kwargs)
-    process_response(response)
-
-    return response
+    try:
+        response = wrapped(*args, **kwargs)
+        process_response(response)
+        return response
+    except Exception as e:
+        thread_id = kwargs.get("thread_id")
+        if thread_id in runs:
+            runs[thread_id]["exception"] = e
+            runs[thread_id]["end_time"] = time.time_ns()
+        raise
 
 
 @_with_tracer_wrapper
@@ -113,6 +127,11 @@ def messages_list_wrapper(tracer, wrapped, instance, args, kwargs):
         attributes={SpanAttributes.LLM_REQUEST_TYPE: LLMRequestTypeValues.CHAT.value},
         start_time=run.get("start_time"),
     )
+    if exception := run.get("exception"):
+        span.set_attribute(ERROR_TYPE, exception.__class__.__name__)
+        span.record_exception(exception)
+        span.set_status(Status(StatusCode.ERROR, str(exception)))
+        span.end(run.get("end_time"))
 
     prompt_index = 0
     if assistants.get(run["assistant_id"]) is not None or Config.enrich_assistant:
@@ -288,6 +307,12 @@ def runs_create_and_stream_wrapper(tracer, wrapped, instance, args, kwargs):
         span=span,
     )
 
-    response = wrapped(*args, **kwargs)
-
-    return response
+    try:
+        response = wrapped(*args, **kwargs)
+        return response
+    except Exception as e:
+        span.set_attribute(ERROR_TYPE, e.__class__.__name__)
+        span.record_exception(e)
+        span.set_status(Status(StatusCode.ERROR, str(e)))
+        span.end()
+        raise
