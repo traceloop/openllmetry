@@ -1067,11 +1067,11 @@ def init_openai_agents_instrumentor():
             )
             if not instrumentor.is_instrumented_by_opentelemetry:
                 instrumentor.instrument()
-        return True
+            return True
     except Exception as e:
         logging.error(f"Error initializing OpenAI Agents instrumentor: {e}")
         Telemetry().log_exception(e)
-        return False
+    return False
 
 
 def metrics_common_attributes():
