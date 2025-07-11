@@ -1,0 +1,41 @@
+interactions:
+- request:
+    body: '{"anthropic_version": "bedrock-2023-05-31", "messages": [{"role": "user",
+      "content": "tell me a short joke"}], "system": "You are helpful assistant",
+      "max_tokens": 1024}'
+    headers:
+      Accept:
+      - !!binary |
+        YXBwbGljYXRpb24vanNvbg==
+      Content-Length:
+      - '169'
+      Content-Type:
+      - !!binary |
+        YXBwbGljYXRpb24vanNvbg==
+    method: POST
+    uri: https://bedrock-runtime.us-east-1.amazonaws.com/model/anthropic.claude-3-haiku-20240307-v1%3A0/invoke
+  response:
+    body:
+      string: '{"id":"msg_tMvfcauJlAgxHmTMKY79Mk7s","type":"message","role":"assistant","content":[{"type":"text","text":"Here''s
+        a short joke for you:\n\nWhat do you call a bear with no teeth? A gummy bear!"}],"model":"claude-3-haiku-48k-20240307","stop_reason":"end_turn","stop_sequence":null,"usage":{"input_tokens":16,"output_tokens":27}}'
+    headers:
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '326'
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 09 Apr 2024 03:53:50 GMT
+      X-Amzn-Bedrock-Input-Token-Count:
+      - '16'
+      X-Amzn-Bedrock-Invocation-Latency:
+      - '695'
+      X-Amzn-Bedrock-Output-Token-Count:
+      - '27'
+      x-amzn-RequestId:
+      - 6de9702e-400c-4562-a2ba-47bb4506c7b2
+    status:
+      code: 200
+      message: OK
+version: 1

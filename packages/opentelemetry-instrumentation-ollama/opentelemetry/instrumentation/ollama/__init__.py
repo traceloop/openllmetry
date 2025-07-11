@@ -1,33 +1,42 @@
 """OpenTelemetry Ollama instrumentation"""
 
+import json
 import logging
 import os
-import json
 import time
 from typing import Collection
-from opentelemetry.instrumentation.ollama.config import Config
-from opentelemetry.instrumentation.ollama.utils import dont_throw
-from wrapt import wrap_function_wrapper
 
 from opentelemetry import context as context_api
-from opentelemetry.trace import get_tracer, SpanKind, Tracer
-from opentelemetry.trace.status import Status, StatusCode
-from opentelemetry.metrics import Histogram, Meter, get_meter
-from opentelemetry.semconv._incubating.metrics import gen_ai_metrics as GenAIMetrics
-
+from opentelemetry._events import get_event_logger
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
+from opentelemetry.instrumentation.ollama.config import Config
+from opentelemetry.instrumentation.ollama.event_emitter import (
+    emit_choice_events,
+    emit_message_events,
+)
+from opentelemetry.instrumentation.ollama.span_utils import (
+    set_input_attributes,
+    set_model_input_attributes,
+    set_model_response_attributes,
+    set_response_attributes,
+)
+from opentelemetry.instrumentation.ollama.utils import dont_throw, should_emit_events
+from opentelemetry.instrumentation.ollama.version import __version__
 from opentelemetry.instrumentation.utils import (
     _SUPPRESS_INSTRUMENTATION_KEY,
     unwrap,
 )
-
+from opentelemetry.metrics import Histogram, Meter, get_meter
+from opentelemetry.semconv._incubating.metrics import gen_ai_metrics as GenAIMetrics
 from opentelemetry.semconv_ai import (
     SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
-    SpanAttributes,
     LLMRequestTypeValues,
-    Meters
+    Meters,
+    SpanAttributes,
 )
-from opentelemetry.instrumentation.ollama.version import __version__
+from opentelemetry.trace import SpanKind, Tracer, get_tracer
+from opentelemetry.trace.status import Status, StatusCode
+from wrapt import wrap_function_wrapper
 
 logger = logging.getLogger(__name__)
 
@@ -72,196 +81,15 @@ def _sanitize_copy_messages(wrapped, instance, args, kwargs):
     return wrapped(sanitized)
 
 
-def should_send_prompts():
-    return (
-        os.getenv("TRACELOOP_TRACE_CONTENT") or "true"
-    ).lower() == "true" or context_api.get_value("override_enable_content_tracing")
-
-
-def _set_span_attribute(span, name, value):
-    if value is not None:
-        if value != "":
-            span.set_attribute(name, value)
-    return
-
-
-def _set_prompts(span, messages):
-    if not span.is_recording() or messages is None:
-        return
-    for i, msg in enumerate(messages):
-        prefix = f"{SpanAttributes.LLM_PROMPTS}.{i}"
-
-        _set_span_attribute(span, f"{prefix}.role", msg.get("role"))
-        if msg.get("content"):
-            content = msg.get("content")
-            if isinstance(content, list):
-                content = json.dumps(content)
-            _set_span_attribute(span, f"{prefix}.content", content)
-        if msg.get("tool_call_id"):
-            _set_span_attribute(span, f"{prefix}.tool_call_id", msg.get("tool_call_id"))
-        tool_calls = msg.get("tool_calls")
-        if tool_calls:
-            for i, tool_call in enumerate(tool_calls):
-                function = tool_call.get("function")
-                _set_span_attribute(
-                    span,
-                    f"{prefix}.tool_calls.{i}.id",
-                    tool_call.get("id"),
-                )
-                _set_span_attribute(
-                    span,
-                    f"{prefix}.tool_calls.{i}.name",
-                    function.get("name"),
-                )
-                # record arguments: ensure it's a JSON string for span attributes
-                raw_args = function.get("arguments")
-                if isinstance(raw_args, dict):
-                    arg_str = json.dumps(raw_args)
-                else:
-                    arg_str = raw_args
-                _set_span_attribute(
-                    span,
-                    f"{prefix}.tool_calls.{i}.arguments",
-                    arg_str,
-                )
-
-
-def set_tools_attributes(span, tools):
-    if not tools:
-        return
-
-    for i, tool in enumerate(tools):
-        function = tool.get("function")
-        if not function:
-            continue
-
-        prefix = f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.{i}"
-        _set_span_attribute(span, f"{prefix}.name", function.get("name"))
-        _set_span_attribute(span, f"{prefix}.description", function.get("description"))
-        _set_span_attribute(
-            span, f"{prefix}.parameters", json.dumps(function.get("parameters"))
-        )
-
-
-@dont_throw
-def _set_input_attributes(span, llm_request_type, kwargs):
-    json_data = kwargs.get("json", {})
-    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, json_data.get("model"))
-    _set_span_attribute(
-        span, SpanAttributes.LLM_IS_STREAMING, kwargs.get("stream") or False
-    )
-    if should_send_prompts():
-        if llm_request_type == LLMRequestTypeValues.CHAT:
-            _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.0.role", "user")
-            for index, message in enumerate(json_data.get("messages")):
-                _set_span_attribute(
-                    span,
-                    f"{SpanAttributes.LLM_PROMPTS}.{index}.content",
-                    message.get("content"),
-                )
-                _set_span_attribute(
-                    span,
-                    f"{SpanAttributes.LLM_PROMPTS}.{index}.role",
-                    message.get("role"),
-                )
-            _set_prompts(span, json_data.get("messages"))
-            if json_data.get("tools"):
-                set_tools_attributes(span, json_data.get("tools"))
-        else:
-            _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.0.role", "user")
-            _set_span_attribute(
-                span, f"{SpanAttributes.LLM_PROMPTS}.0.content", json_data.get("prompt")
-            )
-
-
-@dont_throw
-def _set_response_attributes(span, token_histogram, llm_request_type, response):
-    if should_send_prompts():
-        if llm_request_type == LLMRequestTypeValues.COMPLETION:
-            _set_span_attribute(
-                span,
-                f"{SpanAttributes.LLM_COMPLETIONS}.0.content",
-                response.get("response"),
-            )
-            _set_span_attribute(
-                span, f"{SpanAttributes.LLM_COMPLETIONS}.0.role", "assistant"
-            )
-        elif llm_request_type == LLMRequestTypeValues.CHAT:
-            index = 0
-            prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{index}"
-            _set_span_attribute(
-                span, f"{prefix}.content", response.get("message").get("content")
-            )
-            _set_span_attribute(
-                span, f"{prefix}.role", response.get("message").get("role")
-            )
-
-    if llm_request_type == LLMRequestTypeValues.EMBEDDING:
-        return
-
-    _set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, response.get("model"))
-
-    input_tokens = response.get("prompt_eval_count") or 0
-    output_tokens = response.get("eval_count") or 0
-
-    _set_span_attribute(
-        span,
-        SpanAttributes.LLM_USAGE_TOTAL_TOKENS,
-        input_tokens + output_tokens,
-    )
-    _set_span_attribute(
-        span,
-        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS,
-        output_tokens,
-    )
-    _set_span_attribute(
-        span,
-        SpanAttributes.LLM_USAGE_PROMPT_TOKENS,
-        input_tokens,
-    )
-    _set_span_attribute(
-        span,
-        SpanAttributes.LLM_SYSTEM,
-        "Ollama"
-    )
-
-    if (
-        token_histogram is not None
-        and isinstance(input_tokens, int)
-        and input_tokens >= 0
-    ):
-        token_histogram.record(
-            input_tokens,
-            attributes={
-                SpanAttributes.LLM_SYSTEM: "Ollama",
-                SpanAttributes.LLM_TOKEN_TYPE: "input",
-                SpanAttributes.LLM_RESPONSE_MODEL: response.get("model"),
-            },
-        )
-
-    if (
-        token_histogram is not None
-        and isinstance(output_tokens, int)
-        and output_tokens >= 0
-    ):
-        token_histogram.record(
-            output_tokens,
-            attributes={
-                SpanAttributes.LLM_SYSTEM: "Ollama",
-                SpanAttributes.LLM_TOKEN_TYPE: "output",
-                SpanAttributes.LLM_RESPONSE_MODEL: response.get("model"),
-            },
-        )
-
-
 def _accumulate_streaming_response(
     span,
+    event_logger,
     token_histogram,
     llm_request_type,
     response,
     streaming_time_to_first_token=None,
     streaming_time_to_generate=None,
-    start_time=None
+    start_time=None,
 ):
     if llm_request_type == LLMRequestTypeValues.CHAT:
         accumulated_response = {"message": {"content": "", "role": ""}}
@@ -307,13 +135,19 @@ def _accumulate_streaming_response(
         if last_response and hasattr(last_response, 'model_dump')
         else last_response
     )
-    if response_data:
-        _set_response_attributes(span, token_histogram, llm_request_type, response_data | accumulated_response)
+    _handle_response(
+        span=span,
+        event_logger=event_logger,
+        llm_request_type=llm_request_type,
+        token_histogram=token_histogram,
+        response=response_data | accumulated_response,
+    )
     span.end()
 
 
 async def _aaccumulate_streaming_response(
     span,
+    event_logger,
     token_histogram,
     llm_request_type,
     response,
@@ -365,8 +199,13 @@ async def _aaccumulate_streaming_response(
         if last_response and hasattr(last_response, 'model_dump')
         else last_response
     )
-    if response_data:
-        _set_response_attributes(span, token_histogram, llm_request_type, response_data | accumulated_response)
+    _handle_response(
+        span,
+        event_logger,
+        llm_request_type,
+        token_histogram,
+        response_data | accumulated_response,
+    )
     span.end()
 
 
@@ -377,15 +216,17 @@ def _with_tracer_wrapper(func):
         tracer,
         token_histogram,
         duration_histogram,
+        event_logger,
         streaming_time_to_first_token,
         streaming_time_to_generate,
-        to_wrap
+        to_wrap,
     ):
         def wrapper(wrapped, instance, args, kwargs):
             return func(
                 tracer,
                 token_histogram,
                 duration_histogram,
+                event_logger,
                 streaming_time_to_first_token,
                 streaming_time_to_generate,
                 to_wrap,
@@ -411,11 +252,31 @@ def _llm_request_type_by_method(method_name):
         return LLMRequestTypeValues.UNKNOWN
 
 
+@dont_throw
+def _handle_input(span, event_logger, llm_request_type, args, kwargs):
+    set_model_input_attributes(span, kwargs)
+    if should_emit_events() and event_logger:
+        emit_message_events(llm_request_type, args, kwargs, event_logger)
+    else:
+        set_input_attributes(span, llm_request_type, kwargs)
+
+
+@dont_throw
+def _handle_response(span, event_logger, llm_request_type, token_histogram, response):
+    if should_emit_events() and event_logger:
+        emit_choice_events(llm_request_type, response, event_logger)
+    else:
+        set_response_attributes(span, token_histogram, llm_request_type, response)
+
+    set_model_response_attributes(span, token_histogram, llm_request_type, response)
+
+
 @_with_tracer_wrapper
 def _wrap(
     tracer: Tracer,
     token_histogram: Histogram,
     duration_histogram: Histogram,
+    event_logger,
     streaming_time_to_first_token: Histogram,
     streaming_time_to_generate: Histogram,
     to_wrap,
@@ -440,8 +301,7 @@ def _wrap(
             SpanAttributes.LLM_REQUEST_TYPE: llm_request_type.value,
         },
     )
-    if span.is_recording():
-        _set_input_attributes(span, llm_request_type, kwargs)
+    _handle_input(span, event_logger, llm_request_type, args, kwargs)
 
     start_time = time.perf_counter()
     response = wrapped(*args, **kwargs)
@@ -456,19 +316,22 @@ def _wrap(
                 attrs[SpanAttributes.LLM_RESPONSE_MODEL] = model
             duration_histogram.record(duration, attributes=attrs)
 
-        if span.is_recording():
-            if kwargs.get("stream"):
-                return _accumulate_streaming_response(
-                    span,
-                    token_histogram,
-                    llm_request_type,
-                    response,
-                    streaming_time_to_first_token,
-                    streaming_time_to_generate,
-                    start_time,
-                )
+        if kwargs.get("stream"):
+            return _accumulate_streaming_response(
+                span,
+                event_logger,
+                token_histogram,
+                llm_request_type,
+                response,
+                streaming_time_to_first_token,
+                streaming_time_to_generate,
+                start_time,
+            )
 
-            _set_response_attributes(span, token_histogram, llm_request_type, response)
+        _handle_response(
+            span, event_logger, llm_request_type, token_histogram, response
+        )
+        if span.is_recording():
             span.set_status(Status(StatusCode.OK))
 
     span.end()
@@ -480,6 +343,7 @@ async def _awrap(
     tracer: Tracer,
     token_histogram: Histogram,
     duration_histogram: Histogram,
+    event_logger,
     streaming_time_to_first_token: Histogram,
     streaming_time_to_generate: Histogram,
     to_wrap,
@@ -505,8 +369,7 @@ async def _awrap(
         },
     )
 
-    if span.is_recording():
-        _set_input_attributes(span, llm_request_type, kwargs)
+    _handle_input(span, event_logger, llm_request_type, args, kwargs)
 
     start_time = time.perf_counter()
     response = await wrapped(*args, **kwargs)
@@ -520,19 +383,22 @@ async def _awrap(
                 attrs[SpanAttributes.LLM_RESPONSE_MODEL] = model
             duration_histogram.record(duration, attributes=attrs)
 
-        if span.is_recording():
-            if kwargs.get("stream"):
-                return _aaccumulate_streaming_response(
-                    span,
-                    token_histogram,
-                    llm_request_type,
-                    response,
-                    streaming_time_to_first_token,
-                    streaming_time_to_generate,
-                    start_time,
-                )
+        if kwargs.get("stream"):
+            return _aaccumulate_streaming_response(
+                span,
+                event_logger,
+                token_histogram,
+                llm_request_type,
+                response,
+                streaming_time_to_first_token,
+                streaming_time_to_generate,
+                start_time,
+            )
 
-            _set_response_attributes(span, token_histogram, llm_request_type, response)
+        _handle_response(
+            span, event_logger, llm_request_type, token_histogram, response
+        )
+        if span.is_recording():
             span.set_status(Status(StatusCode.OK))
 
     span.end()
@@ -574,9 +440,10 @@ def is_metrics_collection_enabled() -> bool:
 class OllamaInstrumentor(BaseInstrumentor):
     """An instrumentor for Ollama's client library."""
 
-    def __init__(self, exception_logger=None):
+    def __init__(self, exception_logger=None, use_legacy_attributes=True):
         super().__init__()
         Config.exception_logger = exception_logger
+        Config.use_legacy_attributes = use_legacy_attributes
 
     def instrumentation_dependencies(self) -> Collection[str]:
         return _instruments
@@ -603,6 +470,13 @@ class OllamaInstrumentor(BaseInstrumentor):
                 streaming_time_to_generate,
             ) = (None, None, None, None)
 
+        event_logger = None
+        if not Config.use_legacy_attributes:
+            event_logger_provider = kwargs.get("event_logger_provider")
+            event_logger = get_event_logger(
+                __name__, __version__, event_logger_provider=event_logger_provider
+            )
+
         # Patch _copy_messages to sanitize tool_calls arguments before Pydantic validation
         wrap_function_wrapper(
             "ollama._client",
@@ -617,8 +491,9 @@ class OllamaInstrumentor(BaseInstrumentor):
                 tracer,
                 token_histogram,
                 duration_histogram,
+                event_logger,
                 streaming_time_to_first_token,
-                streaming_time_to_generate
+                streaming_time_to_generate,
             ),
         )
         wrap_function_wrapper(
@@ -628,31 +503,31 @@ class OllamaInstrumentor(BaseInstrumentor):
                 tracer,
                 token_histogram,
                 duration_histogram,
+                event_logger,
                 streaming_time_to_first_token,
-                streaming_time_to_generate
+                streaming_time_to_generate,
             ),
         )
 
     def _uninstrument(self, **kwargs):
-        for wrapped_method in WRAPPED_METHODS:
-            unwrap(
-                "ollama._client.Client",
-                wrapped_method.get("method"),
-            )
-            unwrap(
-                "ollama._client.AsyncClient",
-                wrapped_method.get("method"),
-            )
-            unwrap(
-                "ollama",
-                wrapped_method.get("method"),
-            )
+        try:
+            import ollama
+            from ollama._client import AsyncClient, Client
+
+            for wrapped_method in WRAPPED_METHODS:
+                method_name = wrapped_method.get("method")
+                unwrap(Client, method_name)
+                unwrap(AsyncClient, method_name)
+                unwrap(ollama, method_name)
+        except ImportError:
+            logger.warning("Failed to import ollama modules for uninstrumentation.")
 
 
 def _dispatch_wrap(
     tracer,
     token_histogram,
     duration_histogram,
+    event_logger,
     streaming_time_to_first_token,
     streaming_time_to_generate
 ):
@@ -660,20 +535,20 @@ def _dispatch_wrap(
         to_wrap = None
         if len(args) > 2 and isinstance(args[2], str):
             path = args[2]
-            op = path.rstrip('/').split('/')[-1]
+            op = path.rstrip("/").split("/")[-1]
             to_wrap = next((m for m in WRAPPED_METHODS if m.get("method") == op), None)
         if to_wrap:
             return _wrap(
                 tracer,
                 token_histogram,
                 duration_histogram,
+                event_logger,
                 streaming_time_to_first_token,
                 streaming_time_to_generate,
-                to_wrap
-            )(
-                wrapped, instance, args, kwargs
-            )
+                to_wrap,
+            )(wrapped, instance, args, kwargs)
         return wrapped(*args, **kwargs)
+
     return wrapper
 
 
@@ -681,25 +556,26 @@ def _dispatch_awrap(
     tracer,
     token_histogram,
     duration_histogram,
+    event_logger,
     streaming_time_to_first_token,
-    streaming_time_to_generate
+    streaming_time_to_generate,
 ):
     async def wrapper(wrapped, instance, args, kwargs):
         to_wrap = None
         if len(args) > 2 and isinstance(args[2], str):
             path = args[2]
-            op = path.rstrip('/').split('/')[-1]
+            op = path.rstrip("/").split("/")[-1]
             to_wrap = next((m for m in WRAPPED_METHODS if m.get("method") == op), None)
         if to_wrap:
             return await _awrap(
                 tracer,
                 token_histogram,
                 duration_histogram,
+                event_logger,
                 streaming_time_to_first_token,
                 streaming_time_to_generate,
-                to_wrap
-            )(
-                wrapped, instance, args, kwargs
-            )
+                to_wrap,
+            )(wrapped, instance, args, kwargs)
         return await wrapped(*args, **kwargs)
+
     return wrapper

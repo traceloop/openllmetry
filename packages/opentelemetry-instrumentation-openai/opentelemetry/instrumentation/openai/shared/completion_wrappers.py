@@ -15,6 +15,7 @@ from opentelemetry.instrumentation.openai.shared import (
     should_record_stream_token_usage,
 )
 from opentelemetry.instrumentation.openai.shared.config import Config
+from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
 from opentelemetry.instrumentation.openai.shared.event_emitter import emit_event
 from opentelemetry.instrumentation.openai.shared.event_models import (
     ChoiceEvent,
@@ -61,15 +62,17 @@ def completion_wrapper(tracer, wrapped, instance, args, kwargs):
     try:
         response = wrapped(*args, **kwargs)
     except Exception as e:
+        span.set_attribute(ERROR_TYPE, e.__class__.__name__)
+        span.record_exception(e)
         span.set_status(Status(StatusCode.ERROR, str(e)))
         span.end()
-        raise e
+        raise
 
     if is_streaming_response(response):
         # span will be closed after the generator is done
         return _build_from_streaming_response(span, kwargs, response)
     else:
-        _handle_response(response, span)
+        _handle_response(response, span, instance)
 
     span.end()
     return response
@@ -93,15 +96,17 @@ async def acompletion_wrapper(tracer, wrapped, instance, args, kwargs):
     try:
         response = await wrapped(*args, **kwargs)
     except Exception as e:
+        span.set_attribute(ERROR_TYPE, e.__class__.__name__)
+        span.record_exception(e)
         span.set_status(Status(StatusCode.ERROR, str(e)))
         span.end()
-        raise e
+        raise
 
     if is_streaming_response(response):
         # span will be closed after the generator is done
         return _abuild_from_streaming_response(span, kwargs, response)
     else:
-        _handle_response(response, span)
+        _handle_response(response, span, instance)
 
     span.end()
     return response
@@ -109,7 +114,7 @@ async def acompletion_wrapper(tracer, wrapped, instance, args, kwargs):
 
 @dont_throw
 def _handle_request(span, kwargs, instance):
-    _set_request_attributes(span, kwargs)
+    _set_request_attributes(span, kwargs, instance)
     if should_emit_events():
         _emit_prompts_events(kwargs)
     else:
@@ -131,7 +136,7 @@ def _emit_prompts_events(kwargs):
 
 
 @dont_throw
-def _handle_response(response, span):
+def _handle_response(response, span, instance=None):
     if is_openai_v1():
         response_dict = model_as_dict(response)
     else:

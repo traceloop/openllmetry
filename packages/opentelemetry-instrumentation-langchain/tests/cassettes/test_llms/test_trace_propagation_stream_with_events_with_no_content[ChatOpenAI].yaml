@@ -1,0 +1,119 @@
+interactions:
+- request:
+    body: '{"messages": [{"content": "You are a helpful assistant ", "role": "system"},
+      {"content": "Tell me a joke about OpenTelemetry", "role": "user"}], "model":
+      "facebook/opt-125m", "max_tokens": 20, "n": 1, "stream": true, "temperature":
+      0.7}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '236'
+      content-type:
+      - application/json
+      host:
+      - localhost:8000
+      user-agent:
+      - OpenAI/Python 1.45.1
+      x-stainless-arch:
+      - x64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - Linux
+      x-stainless-package-version:
+      - 1.45.1
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.10.12
+    method: POST
+    uri: http://localhost:8000/v1/chat/completions
+  response:
+    body:
+      string: 'data: {"id":"chat-22c24755532348e6b6ff75297b1a71b3","object":"chat.completion.chunk","created":1729072360,"model":"facebook/opt-125m","choices":[{"index":0,"delta":{"role":"assistant"},"logprobs":null,"finish_reason":null}]}
+
+
+        data: {"id":"chat-22c24755532348e6b6ff75297b1a71b3","object":"chat.completion.chunk","created":1729072360,"model":"facebook/opt-125m","choices":[{"index":0,"delta":{"content":"<"},"logprobs":null,"finish_reason":null}]}
+
+
+        data: {"id":"chat-22c24755532348e6b6ff75297b1a71b3","object":"chat.completion.chunk","created":1729072360,"model":"facebook/opt-125m","choices":[{"index":0,"delta":{"content":"|"},"logprobs":null,"finish_reason":null}]}
+
+
+        data: {"id":"chat-22c24755532348e6b6ff75297b1a71b3","object":"chat.completion.chunk","created":1729072360,"model":"facebook/opt-125m","choices":[{"index":0,"delta":{"content":"im"},"logprobs":null,"finish_reason":null}]}
+
+
+        data: {"id":"chat-22c24755532348e6b6ff75297b1a71b3","object":"chat.completion.chunk","created":1729072360,"model":"facebook/opt-125m","choices":[{"index":0,"delta":{"content":"_"},"logprobs":null,"finish_reason":null}]}
+
+
+        data: {"id":"chat-22c24755532348e6b6ff75297b1a71b3","object":"chat.completion.chunk","created":1729072360,"model":"facebook/opt-125m","choices":[{"index":0,"delta":{"content":"end"},"logprobs":null,"finish_reason":null}]}
+
+
+        data: {"id":"chat-22c24755532348e6b6ff75297b1a71b3","object":"chat.completion.chunk","created":1729072360,"model":"facebook/opt-125m","choices":[{"index":0,"delta":{"content":"|"},"logprobs":null,"finish_reason":null}]}
+
+
+        data: {"id":"chat-22c24755532348e6b6ff75297b1a71b3","object":"chat.completion.chunk","created":1729072360,"model":"facebook/opt-125m","choices":[{"index":0,"delta":{"content":">"},"logprobs":null,"finish_reason":null}]}
+
+
+        data: {"id":"chat-22c24755532348e6b6ff75297b1a71b3","object":"chat.completion.chunk","created":1729072360,"model":"facebook/opt-125m","choices":[{"index":0,"delta":{"content":"doctor"},"logprobs":null,"finish_reason":null}]}
+
+
+        data: {"id":"chat-22c24755532348e6b6ff75297b1a71b3","object":"chat.completion.chunk","created":1729072360,"model":"facebook/opt-125m","choices":[{"index":0,"delta":{"content":"\n"},"logprobs":null,"finish_reason":null}]}
+
+
+        data: {"id":"chat-22c24755532348e6b6ff75297b1a71b3","object":"chat.completion.chunk","created":1729072360,"model":"facebook/opt-125m","choices":[{"index":0,"delta":{"content":"<"},"logprobs":null,"finish_reason":null}]}
+
+
+        data: {"id":"chat-22c24755532348e6b6ff75297b1a71b3","object":"chat.completion.chunk","created":1729072360,"model":"facebook/opt-125m","choices":[{"index":0,"delta":{"content":"|"},"logprobs":null,"finish_reason":null}]}
+
+
+        data: {"id":"chat-22c24755532348e6b6ff75297b1a71b3","object":"chat.completion.chunk","created":1729072360,"model":"facebook/opt-125m","choices":[{"index":0,"delta":{"content":"im"},"logprobs":null,"finish_reason":null}]}
+
+
+        data: {"id":"chat-22c24755532348e6b6ff75297b1a71b3","object":"chat.completion.chunk","created":1729072360,"model":"facebook/opt-125m","choices":[{"index":0,"delta":{"content":"_"},"logprobs":null,"finish_reason":null}]}
+
+
+        data: {"id":"chat-22c24755532348e6b6ff75297b1a71b3","object":"chat.completion.chunk","created":1729072360,"model":"facebook/opt-125m","choices":[{"index":0,"delta":{"content":"end"},"logprobs":null,"finish_reason":null}]}
+
+
+        data: {"id":"chat-22c24755532348e6b6ff75297b1a71b3","object":"chat.completion.chunk","created":1729072360,"model":"facebook/opt-125m","choices":[{"index":0,"delta":{"content":"|"},"logprobs":null,"finish_reason":null}]}
+
+
+        data: {"id":"chat-22c24755532348e6b6ff75297b1a71b3","object":"chat.completion.chunk","created":1729072360,"model":"facebook/opt-125m","choices":[{"index":0,"delta":{"content":">"},"logprobs":null,"finish_reason":null}]}
+
+
+        data: {"id":"chat-22c24755532348e6b6ff75297b1a71b3","object":"chat.completion.chunk","created":1729072360,"model":"facebook/opt-125m","choices":[{"index":0,"delta":{"content":"super"},"logprobs":null,"finish_reason":null}]}
+
+
+        data: {"id":"chat-22c24755532348e6b6ff75297b1a71b3","object":"chat.completion.chunk","created":1729072360,"model":"facebook/opt-125m","choices":[{"index":0,"delta":{"content":"visor"},"logprobs":null,"finish_reason":null}]}
+
+
+        data: {"id":"chat-22c24755532348e6b6ff75297b1a71b3","object":"chat.completion.chunk","created":1729072360,"model":"facebook/opt-125m","choices":[{"index":0,"delta":{"content":"\n"},"logprobs":null,"finish_reason":null}]}
+
+
+        data: {"id":"chat-22c24755532348e6b6ff75297b1a71b3","object":"chat.completion.chunk","created":1729072360,"model":"facebook/opt-125m","choices":[{"index":0,"delta":{"content":"<"},"logprobs":null,"finish_reason":"length","stop_reason":null}]}
+
+
+        data: [DONE]
+
+
+        '
+    headers:
+      content-type:
+      - text/event-stream; charset=utf-8
+      date:
+      - Wed, 16 Oct 2024 09:52:40 GMT
+      server:
+      - uvicorn
+      transfer-encoding:
+      - chunked
+    status:
+      code: 200
+      message: OK
+version: 1
