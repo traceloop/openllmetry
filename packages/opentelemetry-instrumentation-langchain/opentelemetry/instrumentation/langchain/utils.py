@@ -7,8 +7,16 @@ import os
 import traceback
 
 from opentelemetry import context as context_api
+from opentelemetry._events import EventLogger
 from opentelemetry.instrumentation.langchain.config import Config
+from opentelemetry.semconv._incubating.attributes import (
+    gen_ai_attributes as GenAIAttributes,
+)
 from pydantic import BaseModel
+
+TRACELOOP_TRACE_CONTENT = "TRACELOOP_TRACE_CONTENT"
+
+EVENT_ATTRIBUTES = {GenAIAttributes.GEN_AI_SYSTEM: "langchain"}
 
 
 class CallbackFilteredJSONEncoder(json.JSONEncoder):
@@ -40,7 +48,7 @@ class CallbackFilteredJSONEncoder(json.JSONEncoder):
 
 def should_send_prompts():
     return (
-        os.getenv("TRACELOOP_TRACE_CONTENT") or "true"
+        os.getenv(TRACELOOP_TRACE_CONTENT) or "true"
     ).lower() == "true" or context_api.get_value("override_enable_content_tracing")
 
 
@@ -67,6 +75,16 @@ def dont_throw(func):
                 Config.exception_logger(e)
 
     return wrapper
+
+
+def should_emit_events() -> bool:
+    """
+    Checks if the instrumentation isn't using the legacy attributes
+    and if the event logger is not None.
+    """
+    return not Config.use_legacy_attributes and isinstance(
+        Config.event_logger, EventLogger
+    )
 
 
 def is_package_available(package_name):

@@ -1,0 +1,56 @@
+interactions:
+- request:
+    body: '{"model": "facebook/opt-125m", "prompt": ["System: You are a helpful assistant
+      \nHuman: Tell me a joke about OpenTelemetry"], "frequency_penalty": 0, "logit_bias":
+      {}, "logprobs": null, "max_tokens": 20, "n": 1, "presence_penalty": 0, "seed":
+      null, "temperature": 0.7, "top_p": 1}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '280'
+      content-type:
+      - application/json
+      host:
+      - localhost:8000
+      traceparent:
+      - 00-de37a9e24b55ba0cbe4ca7ae14ac80f5-24da5ef129a231a9-01
+      user-agent:
+      - AsyncOpenAI/Python 1.45.1
+      x-stainless-arch:
+      - x64
+      x-stainless-async:
+      - async:asyncio
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - Linux
+      x-stainless-package-version:
+      - 1.45.1
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.10.12
+    method: POST
+    uri: http://localhost:8000/v1/completions
+  response:
+    body:
+      string: '{"id":"cmpl-28ea67ee95224106a4baee300a3606e4","object":"text_completion","created":1729072360,"model":"facebook/opt-125m","choices":[{"index":0,"text":".\n\nSystem:
+        I''m a good programmer, I''m going to write a lot of software","logprobs":null,"finish_reason":"length","stop_reason":null}],"usage":{"prompt_tokens":20,"total_tokens":40,"completion_tokens":20}}'
+    headers:
+      content-length:
+      - '358'
+      content-type:
+      - application/json
+      date:
+      - Wed, 16 Oct 2024 09:52:40 GMT
+      server:
+      - uvicorn
+    status:
+      code: 200
+      message: OK
+version: 1
