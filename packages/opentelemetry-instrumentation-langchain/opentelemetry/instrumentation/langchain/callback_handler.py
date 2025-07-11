@@ -1,15 +1,53 @@
 import json
 import time
-from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Type, Union
 from uuid import UUID
 
 from langchain_core.callbacks import (
     BaseCallbackHandler,
 )
-from langchain_core.messages import BaseMessage
-from langchain_core.outputs import LLMResult
+from langchain_core.messages import (
+    AIMessage,
+    AIMessageChunk,
+    BaseMessage,
+    HumanMessage,
+    HumanMessageChunk,
+    SystemMessage,
+    SystemMessageChunk,
+    ToolMessage,
+    ToolMessageChunk,
+)
+from langchain_core.outputs import (
+    ChatGeneration,
+    ChatGenerationChunk,
+    Generation,
+    GenerationChunk,
+    LLMResult,
+)
+from opentelemetry import context as context_api
+from opentelemetry.instrumentation.langchain.event_emitter import emit_event
+from opentelemetry.instrumentation.langchain.event_models import (
+    ChoiceEvent,
+    MessageEvent,
+    ToolCall,
+)
+from opentelemetry.instrumentation.langchain.span_utils import (
+    SpanHolder,
+    _set_span_attribute,
+    set_chat_request,
+    set_chat_response,
+    set_chat_response_usage,
+    set_llm_request,
+    set_request_params,
+)
+from opentelemetry.instrumentation.langchain.utils import (
+    CallbackFilteredJSONEncoder,
+    dont_throw,
+    should_emit_events,
+    should_send_prompts,
+)
 from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
+from opentelemetry.metrics import Histogram
 from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
     GEN_AI_RESPONSE_ID,
 )
@@ -19,32 +57,9 @@ from opentelemetry.semconv_ai import (
     SpanAttributes,
     TraceloopSpanKindValues,
 )
-from opentelemetry.context.context import Context
-from opentelemetry.trace import SpanKind, set_span_in_context, Tracer
+from opentelemetry.trace import SpanKind, Tracer, set_span_in_context
 from opentelemetry.trace.span import Span
-from opentelemetry.util.types import AttributeValue
-
-from opentelemetry import context as context_api
-from opentelemetry.instrumentation.langchain.utils import (
-    CallbackFilteredJSONEncoder,
-    dont_throw,
-    should_send_prompts,
-)
-from opentelemetry.metrics import Histogram
 from opentelemetry.trace.status import Status, StatusCode
-
-
-@dataclass
-class SpanHolder:
-    span: Span
-    token: Any
-    context: Context
-    children: list[UUID]
-    workflow_name: str
-    entity_name: str
-    entity_path: str
-    start_time: float = field(default_factory=time.time)
-    request_model: Optional[str] = None
 
 
 def _message_type_to_role(message_type: str) -> str:
@@ -60,294 +75,6 @@ def _message_type_to_role(message_type: str) -> str:
         return "unknown"
 
 
-def _set_span_attribute(span: Span, name: str, value: AttributeValue):
-    if value is not None and value != "":
-        span.set_attribute(name, value)
-
-
-def _set_request_params(span, kwargs, span_holder: SpanHolder):
-    for model_tag in ("model", "model_id", "model_name"):
-        if (model := kwargs.get(model_tag)) is not None:
-            span_holder.request_model = model
-            break
-        elif (
-            model := (kwargs.get("invocation_params") or {}).get(model_tag)
-        ) is not None:
-            span_holder.request_model = model
-            break
-    else:
-        model = "unknown"
-
-    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, model)
-    # response is not available for LLM requests (as opposed to chat)
-    _set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, model)
-
-    if "invocation_params" in kwargs:
-        params = (
-            kwargs["invocation_params"].get("params") or kwargs["invocation_params"]
-        )
-    else:
-        params = kwargs
-
-    _set_span_attribute(
-        span,
-        SpanAttributes.LLM_REQUEST_MAX_TOKENS,
-        params.get("max_tokens") or params.get("max_new_tokens"),
-    )
-    _set_span_attribute(
-        span, SpanAttributes.LLM_REQUEST_TEMPERATURE, params.get("temperature")
-    )
-    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TOP_P, params.get("top_p"))
-
-    tools = kwargs.get("invocation_params", {}).get("tools", [])
-    for i, tool in enumerate(tools):
-        tool_function = tool.get("function", tool)
-        _set_span_attribute(
-            span,
-            f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.{i}.name",
-            tool_function.get("name"),
-        )
-        _set_span_attribute(
-            span,
-            f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.{i}.description",
-            tool_function.get("description"),
-        )
-        _set_span_attribute(
-            span,
-            f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.{i}.parameters",
-            json.dumps(tool_function.get("parameters", tool.get("input_schema"))),
-        )
-
-
-def _set_llm_request(
-    span: Span,
-    serialized: dict[str, Any],
-    prompts: list[str],
-    kwargs: Any,
-    span_holder: SpanHolder,
-) -> None:
-    _set_request_params(span, kwargs, span_holder)
-
-    if should_send_prompts():
-        for i, msg in enumerate(prompts):
-            _set_span_attribute(
-                span,
-                f"{SpanAttributes.LLM_PROMPTS}.{i}.role",
-                "user",
-            )
-            _set_span_attribute(
-                span,
-                f"{SpanAttributes.LLM_PROMPTS}.{i}.content",
-                msg,
-            )
-
-
-def _set_chat_request(
-    span: Span,
-    serialized: dict[str, Any],
-    messages: list[list[BaseMessage]],
-    kwargs: Any,
-    span_holder: SpanHolder,
-) -> None:
-    _set_request_params(span, kwargs, span_holder)
-
-    if should_send_prompts():
-        for i, function in enumerate(
-            kwargs.get("invocation_params", {}).get("functions", [])
-        ):
-            prefix = f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.{i}"
-
-            _set_span_attribute(span, f"{prefix}.name", function.get("name"))
-            _set_span_attribute(
-                span, f"{prefix}.description", function.get("description")
-            )
-            _set_span_attribute(
-                span, f"{prefix}.parameters", json.dumps(function.get("parameters"))
-            )
-
-        i = 0
-        for message in messages:
-            for msg in message:
-                _set_span_attribute(
-                    span,
-                    f"{SpanAttributes.LLM_PROMPTS}.{i}.role",
-                    _message_type_to_role(msg.type),
-                )
-                tool_calls = (
-                    msg.tool_calls
-                    if hasattr(msg, "tool_calls")
-                    else msg.additional_kwargs.get("tool_calls")
-                )
-
-                if tool_calls:
-                    _set_chat_tool_calls(span, f"{SpanAttributes.LLM_PROMPTS}.{i}", tool_calls)
-
-                else:
-                    content = (
-                        msg.content
-                        if isinstance(msg.content, str)
-                        else json.dumps(msg.content, cls=CallbackFilteredJSONEncoder)
-                    )
-                    _set_span_attribute(
-                        span,
-                        f"{SpanAttributes.LLM_PROMPTS}.{i}.content",
-                        content,
-                    )
-
-                if msg.type == "tool" and hasattr(msg, "tool_call_id"):
-                    _set_span_attribute(
-                        span,
-                        f"{SpanAttributes.LLM_PROMPTS}.{i}.tool_call_id",
-                        msg.tool_call_id,
-                    )
-
-                i += 1
-
-
-def _set_chat_response(span: Span, response: LLMResult) -> None:
-    input_tokens = 0
-    output_tokens = 0
-    total_tokens = 0
-    cache_read_tokens = 0
-
-    i = 0
-    for generations in response.generations:
-        for generation in generations:
-            if (
-                hasattr(generation, "message")
-                and hasattr(generation.message, "usage_metadata")
-                and generation.message.usage_metadata is not None
-            ):
-                input_tokens += (
-                    generation.message.usage_metadata.get("input_tokens")
-                    or generation.message.usage_metadata.get("prompt_tokens")
-                    or 0
-                )
-                output_tokens += (
-                    generation.message.usage_metadata.get("output_tokens")
-                    or generation.message.usage_metadata.get("completion_tokens")
-                    or 0
-                )
-                total_tokens = input_tokens + output_tokens
-
-                if generation.message.usage_metadata.get("input_token_details"):
-                    input_token_details = generation.message.usage_metadata.get("input_token_details", {})
-                    cache_read_tokens += input_token_details.get("cache_read", 0)
-
-            if should_send_prompts():
-                prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{i}"
-                if hasattr(generation, "text") and generation.text != "":
-                    _set_span_attribute(
-                        span,
-                        f"{prefix}.content",
-                        generation.text,
-                    )
-                    _set_span_attribute(span, f"{prefix}.role", "assistant")
-                else:
-                    _set_span_attribute(
-                        span,
-                        f"{prefix}.role",
-                        _message_type_to_role(generation.type),
-                    )
-                    if generation.message.content is str:
-                        _set_span_attribute(
-                            span,
-                            f"{prefix}.content",
-                            generation.message.content,
-                        )
-                    else:
-                        _set_span_attribute(
-                            span,
-                            f"{prefix}.content",
-                            json.dumps(
-                                generation.message.content, cls=CallbackFilteredJSONEncoder
-                            ),
-                        )
-                    if generation.generation_info.get("finish_reason"):
-                        _set_span_attribute(
-                            span,
-                            f"{prefix}.finish_reason",
-                            generation.generation_info.get("finish_reason"),
-                        )
-
-                    if generation.message.additional_kwargs.get("function_call"):
-                        _set_span_attribute(
-                            span,
-                            f"{prefix}.tool_calls.0.name",
-                            generation.message.additional_kwargs.get("function_call").get(
-                                "name"
-                            ),
-                        )
-                        _set_span_attribute(
-                            span,
-                            f"{prefix}.tool_calls.0.arguments",
-                            generation.message.additional_kwargs.get("function_call").get(
-                                "arguments"
-                            ),
-                        )
-
-                if hasattr(generation, "message"):
-                    tool_calls = (
-                        generation.message.tool_calls
-                        if hasattr(generation.message, "tool_calls")
-                        else generation.message.additional_kwargs.get("tool_calls")
-                    )
-                    if tool_calls and isinstance(tool_calls, list):
-                        _set_span_attribute(
-                            span,
-                            f"{prefix}.role",
-                            "assistant",
-                        )
-                        _set_chat_tool_calls(span, prefix, tool_calls)
-        i += 1
-
-    if input_tokens > 0 or output_tokens > 0 or total_tokens > 0 or cache_read_tokens > 0:
-        _set_span_attribute(
-            span,
-            SpanAttributes.LLM_USAGE_PROMPT_TOKENS,
-            input_tokens,
-        )
-        _set_span_attribute(
-            span,
-            SpanAttributes.LLM_USAGE_COMPLETION_TOKENS,
-            output_tokens,
-        )
-        _set_span_attribute(
-            span,
-            SpanAttributes.LLM_USAGE_TOTAL_TOKENS,
-            total_tokens,
-        )
-        _set_span_attribute(
-            span,
-            SpanAttributes.LLM_USAGE_CACHE_READ_INPUT_TOKENS,
-            cache_read_tokens,
-        )
-
-
-def _set_chat_tool_calls(span: Span, prefix: str, tool_calls: list[dict[str, Any]]) -> None:
-    for idx, tool_call in enumerate(tool_calls):
-        tool_call_prefix = f"{prefix}.tool_calls.{idx}"
-        tool_call_dict = dict(tool_call)
-        tool_id = tool_call_dict.get("id")
-        tool_name = tool_call_dict.get("name", tool_call_dict.get("function", {}).get("name"))
-        tool_args = tool_call_dict.get("args", tool_call_dict.get("function", {}).get("arguments"))
-
-        _set_span_attribute(
-            span,
-            f"{tool_call_prefix}.id", tool_id
-        )
-        _set_span_attribute(
-            span,
-            f"{tool_call_prefix}.name",
-            tool_name,
-        )
-        _set_span_attribute(
-            span,
-            f"{tool_call_prefix}.arguments",
-            json.dumps(tool_args, cls=CallbackFilteredJSONEncoder),
-        )
-
-
 def _sanitize_metadata_value(value: Any) -> Any:
     """Convert metadata values to OpenTelemetry-compatible types."""
     if value is None:
@@ -358,6 +85,49 @@ def _sanitize_metadata_value(value: Any) -> Any:
         return [str(_sanitize_metadata_value(v)) for v in value]
     # Convert other types to strings
     return str(value)
+
+
+def valid_role(role: str) -> bool:
+    return role in ["user", "assistant", "system", "tool"]
+
+
+def get_message_role(message: Type[BaseMessage]) -> str:
+    if isinstance(message, (SystemMessage, SystemMessageChunk)):
+        return "system"
+    elif isinstance(message, (HumanMessage, HumanMessageChunk)):
+        return "user"
+    elif isinstance(message, (AIMessage, AIMessageChunk)):
+        return "assistant"
+    elif isinstance(message, (ToolMessage, ToolMessageChunk)):
+        return "tool"
+    else:
+        return "unknown"
+
+
+def _extract_tool_call_data(
+    tool_calls: Optional[List[dict[str, Any]]],
+) -> Union[List[ToolCall], None]:
+    if tool_calls is None:
+        return tool_calls
+
+    response = []
+
+    for tool_call in tool_calls:
+        tool_call_function = {"name": tool_call.get("name", "")}
+
+        if tool_call.get("arguments"):
+            tool_call_function["arguments"] = tool_call["arguments"]
+        elif tool_call.get("args"):
+            tool_call_function["arguments"] = tool_call["args"]
+        response.append(
+            ToolCall(
+                id=tool_call.get("id", ""),
+                function=tool_call_function,
+                type="function",
+            )
+        )
+
+    return response
 
 
 class TraceloopCallbackHandler(BaseCallbackHandler):
@@ -547,9 +317,8 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             entity_path,
             metadata,
         )
-        if should_send_prompts():
-            _set_span_attribute(
-                span,
+        if not should_emit_events() and should_send_prompts():
+            span.set_attribute(
                 SpanAttributes.TRACELOOP_ENTITY_INPUT,
                 json.dumps(
                     {
@@ -579,9 +348,8 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
 
         span_holder = self.spans[run_id]
         span = span_holder.span
-        if should_send_prompts():
-            _set_span_attribute(
-                span,
+        if not should_emit_events() and should_send_prompts():
+            span.set_attribute(
                 SpanAttributes.TRACELOOP_ENTITY_OUTPUT,
                 json.dumps(
                     {"outputs": outputs, "kwargs": kwargs},
@@ -617,7 +385,11 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         span = self._create_llm_span(
             run_id, parent_run_id, name, LLMRequestTypeValues.CHAT, metadata=metadata
         )
-        _set_chat_request(span, serialized, messages, kwargs, self.spans[run_id])
+        set_request_params(span, kwargs, self.spans[run_id])
+        if should_emit_events():
+            self._emit_chat_input_events(messages)
+        else:
+            set_chat_request(span, serialized, messages, kwargs, self.spans[run_id])
 
     @dont_throw
     def on_llm_start(
@@ -639,9 +411,13 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         span = self._create_llm_span(
             run_id, parent_run_id, name, LLMRequestTypeValues.COMPLETION
         )
-        _set_llm_request(span, serialized, prompts, kwargs, self.spans[run_id])
+        set_request_params(span, kwargs, self.spans[run_id])
+        if should_emit_events():
+            for prompt in prompts:
+                emit_event(MessageEvent(content=prompt, role="user"))
+        else:
+            set_llm_request(span, serialized, prompts, kwargs, self.spans[run_id])
 
-    @dont_throw
     def on_llm_end(
         self,
         response: LLMResult,
@@ -664,7 +440,9 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
                 _set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, model_name)
 
                 if self.spans[run_id].request_model is None:
-                    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, model_name)
+                    _set_span_attribute(
+                        span, SpanAttributes.LLM_REQUEST_MODEL, model_name
+                    )
             id = response.llm_output.get("id")
             if id is not None and id != "":
                 _set_span_attribute(span, GEN_AI_RESPONSE_ID, id)
@@ -717,8 +495,11 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
                         SpanAttributes.LLM_RESPONSE_MODEL: model_name or "unknown",
                     },
                 )
-
-        _set_chat_response(span, response)
+        set_chat_response_usage(span, response)
+        if should_emit_events():
+            self._emit_llm_end_events(response)
+        else:
+            set_chat_response(span, response)
         self._end_span(span, run_id)
 
         # Record duration
@@ -761,9 +542,8 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             name,
             entity_path,
         )
-        if should_send_prompts():
-            _set_span_attribute(
-                span,
+        if not should_emit_events() and should_send_prompts():
+            span.set_attribute(
                 SpanAttributes.TRACELOOP_ENTITY_INPUT,
                 json.dumps(
                     {
@@ -791,9 +571,8 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             return
 
         span = self._get_span(run_id)
-        if should_send_prompts():
-            _set_span_attribute(
-                span,
+        if not should_emit_events() and should_send_prompts():
+            span.set_attribute(
                 SpanAttributes.TRACELOOP_ENTITY_OUTPUT,
                 json.dumps(
                     {"output": output, "kwargs": kwargs},
@@ -905,3 +684,94 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
     ) -> None:
         """Run when retriever errors."""
         self._handle_error(error, run_id, parent_run_id, **kwargs)
+
+    def _emit_chat_input_events(self, messages):
+        for message_list in messages:
+            for message in message_list:
+                if hasattr(message, "tool_calls") and message.tool_calls:
+                    tool_calls = _extract_tool_call_data(message.tool_calls)
+                else:
+                    tool_calls = None
+                emit_event(
+                    MessageEvent(
+                        content=message.content,
+                        role=get_message_role(message),
+                        tool_calls=tool_calls,
+                    )
+                )
+
+    def _emit_llm_end_events(self, response):
+        for generation_list in response.generations:
+            for i, generation in enumerate(generation_list):
+                self._emit_generation_choice_event(index=i, generation=generation)
+
+    def _emit_generation_choice_event(
+        self,
+        index: int,
+        generation: Union[
+            ChatGeneration, ChatGenerationChunk, Generation, GenerationChunk
+        ],
+    ):
+        if isinstance(generation, (ChatGeneration, ChatGenerationChunk)):
+            # Get finish reason
+            if hasattr(generation, "generation_info") and generation.generation_info:
+                finish_reason = generation.generation_info.get(
+                    "finish_reason", "unknown"
+                )
+            else:
+                finish_reason = "unknown"
+
+            # Get tool calls
+            if (
+                hasattr(generation.message, "tool_calls")
+                and generation.message.tool_calls
+            ):
+                tool_calls = _extract_tool_call_data(generation.message.tool_calls)
+            elif hasattr(
+                generation.message, "additional_kwargs"
+            ) and generation.message.additional_kwargs.get("function_call"):
+                tool_calls = _extract_tool_call_data(
+                    [generation.message.additional_kwargs.get("function_call")]
+                )
+            else:
+                tool_calls = None
+
+            # Emit the event
+            if hasattr(generation, "text") and generation.text != "":
+                emit_event(
+                    ChoiceEvent(
+                        index=index,
+                        message={"content": generation.text, "role": "assistant"},
+                        finish_reason=finish_reason,
+                        tool_calls=tool_calls,
+                    )
+                )
+            else:
+                emit_event(
+                    ChoiceEvent(
+                        index=index,
+                        message={
+                            "content": generation.message.content,
+                            "role": "assistant",
+                        },
+                        finish_reason=finish_reason,
+                        tool_calls=tool_calls,
+                    )
+                )
+        elif isinstance(generation, (Generation, GenerationChunk)):
+            # Get finish reason
+            if hasattr(generation, "generation_info") and generation.generation_info:
+                finish_reason = generation.generation_info.get(
+                    "finish_reason", "unknown"
+                )
+            else:
+                finish_reason = "unknown"
+
+            # Emit the event
+            emit_event(
+                ChoiceEvent(
+                    index=index,
+                    message={"content": generation.text, "role": "assistant"},
+                    finish_reason=finish_reason,
+                )
+            )
