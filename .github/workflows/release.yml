@@ -5,7 +5,7 @@ on:
 
 jobs:
   bump-version:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest-m
 
     outputs:
       new_version: ${{ steps.cz.outputs.version }}
@@ -44,7 +44,7 @@ jobs:
 
 
   release-instrumentations:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest-m
     needs:
       - bump-version
     permissions:
@@ -83,7 +83,7 @@ jobs:
     
   
   release-sdk:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest-m
     needs:
       - release-instrumentations
     permissions:
@@ -118,7 +118,7 @@ jobs:
           packages-dir: packages/traceloop-sdk/dist/
 
   test-sdk-installation:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest-m
     needs:
       - bump-version
       - release-sdk
