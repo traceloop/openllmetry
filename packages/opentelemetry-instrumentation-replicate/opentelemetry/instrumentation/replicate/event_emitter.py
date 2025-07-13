@@ -1,6 +1,6 @@
 from dataclasses import asdict
 from enum import Enum
-from typing import Union
+from typing import Union, TYPE_CHECKING
 
 from opentelemetry._events import Event, EventLogger
 from opentelemetry.instrumentation.replicate.event_models import (
@@ -16,7 +16,8 @@ from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
 
-from replicate.prediction import Prediction
+if TYPE_CHECKING:
+    from replicate.prediction import Prediction
 
 
 class Roles(Enum):
@@ -35,7 +36,7 @@ EVENT_ATTRIBUTES = {GenAIAttributes.GEN_AI_SYSTEM: "replicate"}
 
 @dont_throw
 def emit_choice_events(
-    response: Union[str, list, Prediction], event_logger: Union[EventLogger, None]
+    response: Union[str, list, "Prediction"], event_logger: Union[EventLogger, None]
 ):
     # Handle replicate.run responses
     if isinstance(response, list):
@@ -47,7 +48,7 @@ def emit_choice_events(
                 event_logger,
             )
     # Handle replicate.predictions.create responses
-    elif isinstance(response, Prediction):
+    elif isinstance(response, "Prediction"):
         emit_event(
             ChoiceEvent(
                 index=0, message={"content": response.output, "role": "assistant"}
