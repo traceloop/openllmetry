@@ -38,6 +38,8 @@ version_files = [
     "packages/opentelemetry-instrumentation-ollama/opentelemetry/instrumentation/ollama/version.py",
     "packages/opentelemetry-instrumentation-openai/pyproject.toml:^version",
     "packages/opentelemetry-instrumentation-openai/opentelemetry/instrumentation/openai/version.py",
+    "packages/opentelemetry-instrumentation-openai-agents/pyproject.toml:^version",
+    "packages/opentelemetry-instrumentation-openai-agents/opentelemetry/instrumentation/openai_agents/version.py",
     "packages/opentelemetry-instrumentation-pinecone/pyproject.toml:^version",
     "packages/opentelemetry-instrumentation-pinecone/opentelemetry/instrumentation/pinecone/version.py",
     "packages/opentelemetry-instrumentation-marqo/pyproject.toml:^version",
