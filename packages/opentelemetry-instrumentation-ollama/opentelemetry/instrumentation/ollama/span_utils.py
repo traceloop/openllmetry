@@ -157,6 +157,8 @@ def set_tools_attributes(span, tools):
 def _set_prompts(span, messages):
     if not span.is_recording() or messages is None:
         return
+    if not should_send_prompts():
+        return
     for i, msg in enumerate(messages):
         prefix = f"{SpanAttributes.LLM_PROMPTS}.{i}"
 
