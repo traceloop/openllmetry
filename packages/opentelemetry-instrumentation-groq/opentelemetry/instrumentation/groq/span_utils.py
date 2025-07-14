@@ -67,7 +67,7 @@ def set_streaming_response_attributes(
     span, accumulated_content, finish_reason=None, usage=None
 ):
     """Set span attributes for accumulated streaming response."""
-    if not span.is_recording():
+    if not span.is_recording() or not should_send_prompts():
         return
 
     prefix = f"{SpanAttributes.LLM_COMPLETIONS}.0"
@@ -149,7 +149,7 @@ def set_response_attributes(span, response):
 
 
 def _set_completions(span, choices):
-    if choices is None:
+    if choices is None or not should_send_prompts():
         return
 
     for choice in choices:

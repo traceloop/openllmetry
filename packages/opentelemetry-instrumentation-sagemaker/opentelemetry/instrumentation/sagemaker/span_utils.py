@@ -1,5 +1,6 @@
 import json
 
+from opentelemetry.instrumentation.sagemaker.utils import should_send_prompts
 from opentelemetry.semconv_ai import (
     SpanAttributes,
 )
@@ -25,7 +26,7 @@ def _set_span_attribute(span, name, value):
 
 
 def set_stream_response_attributes(span, response_body):
-    if not span.is_recording():
+    if not span.is_recording() or not should_send_prompts():
         return
 
     _set_span_attribute(
@@ -42,7 +43,7 @@ def set_call_span_attributes(span, kwargs, response):
 
 
 def set_call_request_attributes(span, kwargs):
-    if not span.is_recording():
+    if not span.is_recording() or not should_send_prompts():
         return
 
     raw_request = kwargs.get("Body")
@@ -53,7 +54,7 @@ def set_call_request_attributes(span, kwargs):
 
 
 def set_call_response_attributes(span, raw_response):
-    if not span.is_recording():
+    if not span.is_recording() or not should_send_prompts():
         return
     response_body = _try_parse_json(raw_response)
 
