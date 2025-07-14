@@ -93,7 +93,7 @@ class LlamaIndexInstrumentor(BaseInstrumentor):
             BaseAgentInstrumentor(tracer).instrument()
             BaseToolInstrumentor(tracer).instrument()
 
-        # LlamaParse instrumentation works for all versions
+        # LlamaParse instrumentation doesn't work for all versions
         try:
             LlamaParseInstrumentor(tracer).instrument()
         except Exception:
