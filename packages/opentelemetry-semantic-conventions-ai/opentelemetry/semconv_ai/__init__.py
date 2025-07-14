@@ -21,6 +21,12 @@ class Meters:
     PINECONE_DB_USAGE_READ_UNITS = "db.pinecone.usage.read_units"
     PINECONE_DB_USAGE_WRITE_UNITS = "db.pinecone.usage_write_units"
 
+    DB_QUERY_DURATION = "db.client.query.duration"
+    DB_SEARCH_DISTANCE = "db.client.search.distance"
+    DB_USAGE_INSERT_UNITS = "db.client.usage.insert_units"
+    DB_USAGE_UPSERT_UNITS = "db.client.usage.upsert_units"
+    DB_USAGE_DELETE_UNITS = "db.client.usage.delete_units"
+
     LLM_WATSONX_COMPLETIONS_DURATION = "llm.watsonx.completions.duration"
     LLM_WATSONX_COMPLETIONS_EXCEPTIONS = "llm.watsonx.completions.exceptions"
     LLM_WATSONX_COMPLETIONS_RESPONSES = "llm.watsonx.completions.responses"
