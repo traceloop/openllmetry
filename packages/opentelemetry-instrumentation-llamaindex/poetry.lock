@@ -4817,4 +4817,4 @@ llamaparse = []
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.9,<4"
-content-hash = "6f2e09f970d940e3ee573cc5dcc0471daacf65644ae8e985a6cf0147fcf4fd54"
+content-hash = "ea993059e9ec79ab7f0c60375d0170048be378099aa8a86b233fcaaffef93b85"
