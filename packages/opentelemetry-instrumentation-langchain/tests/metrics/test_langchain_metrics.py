@@ -134,8 +134,8 @@ def verify_duration_metrics(data_points):
         assert data_point.attributes[SpanAttributes.LLM_SYSTEM] == "Langchain"
 
 
-def verify_langchain_metrics(metrics_reader):
-    metrics_data = metrics_reader.get_metrics_data()
+def verify_langchain_metrics(reader):
+    metrics_data = reader.get_metrics_data()
     resource_metrics = metrics_data.resource_metrics
     assert len(resource_metrics) > 0
 
@@ -157,13 +157,12 @@ def verify_langchain_metrics(metrics_reader):
 
 
 @pytest.mark.vcr
-def test_llm_chain_metrics_with_none_llm_output(metrics_test_context, chain, llm):
+def test_llm_chain_metrics_with_none_llm_output(instrument_legacy, reader, chain, llm):
     """
     This test verifies that the metrics system correctly handles edge cases where the
     LLM response contains a None value in the llm_output field, ensuring that token
     usage and operation duration metrics are still properly recorded.
     """
-    _, metrics_reader = metrics_test_context
     original_generate = llm._generate
 
     # Create a patched version that returns results with None llm_output
@@ -175,7 +174,7 @@ def test_llm_chain_metrics_with_none_llm_output(metrics_test_context, chain, llm
     with patch.object(llm, '_generate', side_effect=patched_generate):
         chain.run(product="colorful socks")
 
-    found_token_metric, found_duration_metric = verify_langchain_metrics(metrics_reader)
+    found_token_metric, found_duration_metric = verify_langchain_metrics(reader)
 
     assert found_token_metric is True, "Token usage metrics not found"
     assert found_duration_metric is True, "Operation duration metrics not found"
