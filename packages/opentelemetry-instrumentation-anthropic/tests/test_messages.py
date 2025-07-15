@@ -1291,10 +1291,10 @@ def test_anthropic_tools_legacy(
     anthropic_span = spans[0]
 
     # verify usage
-    assert anthropic_span.attributes["gen_ai.usage.prompt_tokens"] == 514
+    assert anthropic_span.attributes["gen_ai.usage.input_tokens"] == 514
     assert (
-        anthropic_span.attributes["gen_ai.usage.completion_tokens"]
-        + anthropic_span.attributes["gen_ai.usage.prompt_tokens"]
+        anthropic_span.attributes["gen_ai.usage.output_tokens"]
+        + anthropic_span.attributes["gen_ai.usage.input_tokens"]
         == anthropic_span.attributes["llm.usage.total_tokens"]
     )
 
@@ -1466,10 +1466,10 @@ def test_anthropic_tools_with_events_with_content(
     anthropic_span = spans[0]
 
     # verify usage
-    assert anthropic_span.attributes["gen_ai.usage.prompt_tokens"] == 514
+    assert anthropic_span.attributes["gen_ai.usage.input_tokens"] == 514
     assert (
-        anthropic_span.attributes["gen_ai.usage.completion_tokens"]
-        + anthropic_span.attributes["gen_ai.usage.prompt_tokens"]
+        anthropic_span.attributes["gen_ai.usage.output_tokens"]
+        + anthropic_span.attributes["gen_ai.usage.input_tokens"]
         == anthropic_span.attributes["llm.usage.total_tokens"]
     )
 
@@ -1602,10 +1602,10 @@ def test_anthropic_tools_with_events_with_no_content(
     anthropic_span = spans[0]
 
     # verify usage
-    assert anthropic_span.attributes["gen_ai.usage.prompt_tokens"] == 514
+    assert anthropic_span.attributes["gen_ai.usage.input_tokens"] == 514
     assert (
-        anthropic_span.attributes["gen_ai.usage.completion_tokens"]
-        + anthropic_span.attributes["gen_ai.usage.prompt_tokens"]
+        anthropic_span.attributes["gen_ai.usage.output_tokens"]
+        + anthropic_span.attributes["gen_ai.usage.input_tokens"]
         == anthropic_span.attributes["llm.usage.total_tokens"]
     )
 
