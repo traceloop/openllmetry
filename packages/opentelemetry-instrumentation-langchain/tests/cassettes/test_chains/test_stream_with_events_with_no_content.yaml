@@ -1,0 +1,206 @@
+interactions:
+- request:
+    body: '{"message": "write 2 lines of random text about $colorful socks", "model":
+      "command", "chat_history": [], "temperature": 0.75, "stream": true}'
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '142'
+      content-type:
+      - application/json
+      host:
+      - api.cohere.com
+      user-agent:
+      - python-httpx/0.27.0
+      x-client-name:
+      - langchain:partner
+      x-fern-language:
+      - Python
+      x-fern-sdk-name:
+      - cohere
+      x-fern-sdk-version:
+      - 5.5.8
+    method: POST
+    uri: https://api.cohere.com/v1/chat
+  response:
+    body:
+      string: '{"is_finished":false,"event_type":"stream-start","generation_id":"582d2f4e-4fb9-4de1-ad9b-a85b8b86edea"}
+
+        {"is_finished":false,"event_type":"text-generation","text":"Wearing"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" colorful"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" socks"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" is"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" a"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" great"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" way"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" to"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" show"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" off"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" your"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" personality"}
+
+        {"is_finished":false,"event_type":"text-generation","text":"."}
+
+        {"is_finished":false,"event_type":"text-generation","text":" Whether"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" you"}
+
+        {"is_finished":false,"event_type":"text-generation","text":"''re"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" into"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" bright"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" and"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" bold"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" colors"}
+
+        {"is_finished":false,"event_type":"text-generation","text":","}
+
+        {"is_finished":false,"event_type":"text-generation","text":" prefer"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" more"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" subtle"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" shades"}
+
+        {"is_finished":false,"event_type":"text-generation","text":","}
+
+        {"is_finished":false,"event_type":"text-generation","text":" or"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" even"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" opt"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" for"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" patterns"}
+
+        {"is_finished":false,"event_type":"text-generation","text":","}
+
+        {"is_finished":false,"event_type":"text-generation","text":" it"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" is"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" a"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" great"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" way"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" to"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" express"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" yourself"}
+
+        {"is_finished":false,"event_type":"text-generation","text":"."}
+
+        {"is_finished":false,"event_type":"text-generation","text":" \nThey"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" can"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" be"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" a"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" fantastic"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" conversation"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" starter"}
+
+        {"is_finished":false,"event_type":"text-generation","text":","}
+
+        {"is_finished":false,"event_type":"text-generation","text":" so"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" get"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" out"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" there"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" and"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" show"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" off"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" those"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" colorful"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" socks"}
+
+        {"is_finished":false,"event_type":"text-generation","text":"!"}
+
+        {"is_finished":true,"event_type":"stream-end","response":{"response_id":"00f83ba6-07e1-4af8-9107-a44cc43ddabe","text":"Wearing
+        colorful socks is a great way to show off your personality. Whether you''re
+        into bright and bold colors, prefer more subtle shades, or even opt for patterns,
+        it is a great way to express yourself. \nThey can be a fantastic conversation
+        starter, so get out there and show off those colorful socks!","generation_id":"582d2f4e-4fb9-4de1-ad9b-a85b8b86edea","chat_history":[{"role":"USER","message":"write
+        2 lines of random text about $colorful socks"},{"role":"CHATBOT","message":"Wearing
+        colorful socks is a great way to show off your personality. Whether you''re
+        into bright and bold colors, prefer more subtle shades, or even opt for patterns,
+        it is a great way to express yourself. \nThey can be a fantastic conversation
+        starter, so get out there and show off those colorful socks!"}],"finish_reason":"COMPLETE","meta":{"api_version":{"version":"1"},"billed_units":{"input_tokens":11,"output_tokens":64},"tokens":{"input_tokens":73,"output_tokens":64}}},"finish_reason":"COMPLETE"}
+
+        '
+    headers:
+      Alt-Svc:
+      - h3=":443"; ma=2592000,h3-29=":443"; ma=2592000
+      Transfer-Encoding:
+      - chunked
+      Via:
+      - 1.1 google
+      access-control-expose-headers:
+      - X-Debug-Trace-ID
+      cache-control:
+      - no-cache, no-store, no-transform, must-revalidate, private, max-age=0
+      content-type:
+      - application/stream+json
+      date:
+      - Mon, 01 Jul 2024 18:19:51 GMT
+      expires:
+      - Thu, 01 Jan 1970 00:00:00 UTC
+      pragma:
+      - no-cache
+      server:
+      - envoy
+      vary:
+      - Origin
+      x-accel-expires:
+      - '0'
+      x-debug-trace-id:
+      - 679de51dd5abce63bb90ca3858bf9cf7
+      x-endpoint-monthly-call-limit:
+      - '1000'
+      x-envoy-upstream-service-time:
+      - '156'
+      x-trial-endpoint-call-limit:
+      - '10'
+      x-trial-endpoint-call-remaining:
+      - '9'
+    status:
+      code: 200
+      message: OK
+version: 1

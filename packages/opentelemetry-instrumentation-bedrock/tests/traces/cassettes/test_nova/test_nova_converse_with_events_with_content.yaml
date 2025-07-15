@@ -1,0 +1,52 @@
+interactions:
+  - request:
+      body: '{"messages": [{"role": "user", "content": [{"guardContent": {"text": {"text":
+      "Tokyo is the capital of Japan 1234561666.", "qualifiers": ["grounding_source"]}}},
+      {"guardContent": {"text": {"text": "What is the capital of Japan?", "qualifiers":
+      ["query"]}}}]}], "guardrailConfig": {"guardrailIdentifier": "v9kpg6yrwhs2",
+      "guardrailVersion": "DRAFT", "trace": "enabled"}, "system": [{"text": "You are a helpful assistant"}],
+      "inferenceConfig": {"temperature": 0.5}, "additionalModelRequestFields": {"inferenceConfig":
+      {"topK": 10}}}'
+      headers:
+        Content-Length:
+          - '595'
+        Content-Type:
+          - !!binary |
+            YXBwbGljYXRpb24vanNvbg==
+        User-Agent:
+          - !!binary |
+            Qm90bzMvMS4zNi41IG1kL0JvdG9jb3JlIzEuMzYuNSB1YS8yLjAgb3MvbWFjb3MjMjQuMy4wIG1k
+            L2FyY2gjYXJtNjQgbGFuZy9weXRob24jMy45LjYgbWQvcHlpbXBsI0NQeXRob24gY2ZnL3JldHJ5
+            LW1vZGUjbGVnYWN5IEJvdG9jb3JlLzEuMzYuNQ==
+        X-Amz-Date:
+          - !!binary |
+            MjAyNTAyMjVUMDg1NjEzWg==
+        amz-sdk-invocation-id:
+          - !!binary |
+            NTI0ZGM4MGUtYjNmZS00YmY1LTljODMtMjcwNmY3OTBhODgx
+        amz-sdk-request:
+          - !!binary |
+            YXR0ZW1wdD0x
+      method: POST
+      uri: https://bedrock-runtime.us-east-1.amazonaws.com/model/amazon.nova-lite-v1%3A0/converse
+    response:
+      body:
+        string: '{"metrics":{"latencyMs":836},"output":{"message":{"content":[{"text":"{ADDRESS}
+        is the capital of Japan {Account Number}."}],"role":"assistant"}},"stopReason":"guardrail_intervened","trace":{"guardrail":{"inputAssessment":{"v9kpg6yrwhs2":{"invocationMetrics":{"guardrailCoverage":{"textCharacters":{"guarded":0,"total":70}},"guardrailProcessingLatency":231,"usage":{"contentPolicyUnits":1,"contextualGroundingPolicyUnits":0,"sensitiveInformationPolicyFreeUnits":0,"sensitiveInformationPolicyUnits":1,"topicPolicyUnits":1,"wordPolicyUnits":1}}}},"modelOutput":["{\"output\":{\"message\":{\"content\":[{\"text\":\"Tokyo
+        is the capital of Japan 1234561666.\"}],\"role\":\"assistant\"}},\"stopReason\":\"end_turn\",\"usage\":{\"inputTokens\":54,\"outputTokens\":18,\"totalTokens\":72}}"],"outputAssessments":{"v9kpg6yrwhs2":[{"contextualGroundingPolicy":{"filters":[{"action":"NONE","score":1.0,"threshold":0.75,"type":"GROUNDING"},{"action":"NONE","score":1.0,"threshold":0.75,"type":"RELEVANCE"}]},"invocationMetrics":{"guardrailCoverage":{"textCharacters":{"guarded":41,"total":41}},"guardrailProcessingLatency":340,"usage":{"contentPolicyUnits":1,"contextualGroundingPolicyUnits":1,"sensitiveInformationPolicyFreeUnits":1,"sensitiveInformationPolicyUnits":1,"topicPolicyUnits":1,"wordPolicyUnits":1}},"sensitiveInformationPolicy":{"piiEntities":[{"action":"ANONYMIZED","match":"Tokyo","type":"ADDRESS"}],"regexes":[{"action":"ANONYMIZED","match":"1234561666","name":"Account
+        Number","regex":"\\b\\d{6}\\d{4}\\b"}]}}]}}},"usage":{"inputTokens":54,"outputTokens":18,"totalTokens":72}}'
+      headers:
+        Connection:
+          - keep-alive
+        Content-Length:
+          - '1582'
+        Content-Type:
+          - application/json
+        Date:
+          - Tue, 25 Feb 2025 08:56:15 GMT
+        x-amzn-RequestId:
+          - cc146c6e-0feb-44ec-815a-c7c115d2f6d5
+      status:
+        code: 200
+        message: OK
+version: 1

@@ -1,0 +1,115 @@
+interactions:
+- request:
+    body: '{"messages": [{"content": "Analyze the following food item: avocado", "role":
+      "user"}], "model": "gpt-4o-mini", "response_format": {"type": "json_schema",
+      "json_schema": {"schema": {"properties": {"name": {"description": "The name
+      of the food item", "title": "Name", "type": "string"}, "healthy": {"description":
+      "Whether the food is good for you", "title": "Healthy", "type": "boolean"},
+      "calories": {"description": "Estimated calories per serving", "title": "Calories",
+      "type": "integer"}, "taste_profile": {"description": "List of taste characteristics",
+      "items": {"type": "string"}, "title": "Taste Profile", "type": "array"}}, "required":
+      ["name", "healthy", "calories", "taste_profile"], "title": "FoodAnalysis", "type":
+      "object", "additionalProperties": false}, "name": "FoodAnalysis", "strict":
+      true}}, "stream": false, "temperature": 0.0}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '847'
+      content-type:
+      - application/json
+      host:
+      - api.openai.com
+      traceparent:
+      - 00-9a3473068c7eeb4b4d486b350b17c671-6e62002a9b5be8b6-01
+      user-agent:
+      - OpenAI/Python 1.59.9
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - 'false'
+      x-stainless-helper-method:
+      - beta.chat.completions.parse
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.59.9
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.9.6
+    method: POST
+    uri: https://api.openai.com/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAAwAAAP//jFJNa9wwEL37V4g522W/sk59SyktpId+0B5KFIxWGttqZUlI47TLsv+9
+        yN6sNzSBXISYN+/x3swcMsZAK6gYyE6Q7L0pbuL3r58+BPX5m9Q72dqfpbv9+OV9+eNdc9tDnhhu
+        9wslPbLeSNd7g6SdnWAZUBAm1WW5Lq822+X1YgR6p9AkWuup2Lii11YXq8VqUyzKYnl9YndOS4xQ
+        sbuMMcYO45t8WoV/oWKj1ljpMUbRIlTnJsYgOJMqIGLUkYQlyGdQOktoR+sHDlb0yKHicPPgpFCO
+        Q86hQ2Go23OoKAyYc5DCuKAxcqiW20XOgUQkrH1wjTaJf8fHyP1+5O8GIgzT3w5E0y8a3XZk9iz+
+        QSQO98dLWwGbIYo0GjsYc6ofzzmNa31wu3jCz/VGWx27OqCIzqZMkZyHET1mjN2P8xyejAh8cL2n
+        mtxvtElwuXo76cG8xhldr08gORLmgrVd5c/o1QpJaBMvNgJSyA7VTJ3XJwal3QWQXaT+381z2lNy
+        bdvXyM+AlOgJVe0DKi2fJp7bAqYrf6ntPOXRMEQMD1piTRpD2oTCRgxmuj2I+0jY1422LQYf9HSA
+        ja/LFapS7K42ErJj9g8AAP//AwAFZuGgjgMAAA==
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 905f48a9edbdb614-WAW
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Wed, 22 Jan 2025 11:43:02 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=HJAZZapj9o3biwb3iY3_Rn8_5lNL1wwOd6BdUpbbIyA-1737546182-1.0.1.1-dQ.NXOd_sVZ59ejOkJfQHW2t0N_i3uGSLaycn4tsbK7h00eK53cWeYsw6uBH1p.LG1WQYLPfsO.qovgRD44Sbg;
+        path=/; expires=Wed, 22-Jan-25 12:13:02 GMT; domain=.api.openai.com; HttpOnly;
+        Secure; SameSite=None
+      - _cfuvid=Jk1vMCdYUpg7pXQLhLul6X9.jVwMalQ8sOVLPQlvIKI-1737546182084-0.0.1.1-604800000;
+        path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      access-control-expose-headers:
+      - X-Request-ID
+      alt-svc:
+      - h3=":443"; ma=86400
+      openai-processing-ms:
+      - '1104'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-ratelimit-limit-requests:
+      - '30000'
+      x-ratelimit-limit-tokens:
+      - '150000000'
+      x-ratelimit-remaining-requests:
+      - '29999'
+      x-ratelimit-remaining-tokens:
+      - '149999973'
+      x-ratelimit-reset-requests:
+      - 2ms
+      x-ratelimit-reset-tokens:
+      - 0s
+      x-request-id:
+      - req_e895c94ffee33d11694da45bc6c52b75
+    status:
+      code: 200
+      message: OK
+version: 1

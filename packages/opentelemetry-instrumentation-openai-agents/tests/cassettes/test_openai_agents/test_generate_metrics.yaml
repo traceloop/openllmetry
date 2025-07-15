@@ -1,0 +1,159 @@
+interactions:
+- request:
+    body: '{"data":[{"object":"trace.span","id":"span_3c32f3bf724242e7a4eee97f","trace_id":"trace_e96092d63adb4094aa01e9f15b5c1ce6","parent_id":"span_68c78aa585da42bc9f2830f3","started_at":"2025-07-07T04:31:02.841318+00:00","ended_at":"2025-07-07T04:31:10.935525+00:00","span_data":{"type":"response","response_id":"resp_686b4d870e6481989d17104f0c295e93004b3b0813a1f1b4"},"error":null},{"object":"trace.span","id":"span_68c78aa585da42bc9f2830f3","trace_id":"trace_e96092d63adb4094aa01e9f15b5c1ce6","parent_id":null,"started_at":"2025-07-07T04:31:02.840912+00:00","ended_at":"2025-07-07T04:31:10.936048+00:00","span_data":{"type":"agent","name":"SearchAgent","handoffs":[],"tools":["web_search_preview"],"output_type":"str"},"error":null},{"object":"trace","id":"trace_90832d19793c4cc1aba9ee470ead6a1d","workflow_name":"Agent
+      workflow","group_id":null,"metadata":null},{"object":"trace.span","id":"span_71c150df84b04a10bed4c999","trace_id":"trace_90832d19793c4cc1aba9ee470ead6a1d","parent_id":"span_1bc95c2149e7468ca256a92e","started_at":"2025-07-07T04:31:10.940570+00:00","ended_at":"2025-07-07T04:31:11.988633+00:00","span_data":{"type":"response","response_id":"resp_686b4d8f2b80819ab34e3d377b06d1c20484ef65142f65c3"},"error":null},{"object":"trace.span","id":"span_4c8d4fc82b8c4be496840fa3","trace_id":"trace_90832d19793c4cc1aba9ee470ead6a1d","parent_id":"span_1bc95c2149e7468ca256a92e","started_at":"2025-07-07T04:31:11.989097+00:00","ended_at":"2025-07-07T04:31:11.989351+00:00","span_data":{"type":"handoff","from_agent":"TriageAgent","to_agent":"AgentA"},"error":null},{"object":"trace.span","id":"span_1bc95c2149e7468ca256a92e","trace_id":"trace_90832d19793c4cc1aba9ee470ead6a1d","parent_id":null,"started_at":"2025-07-07T04:31:10.940179+00:00","ended_at":"2025-07-07T04:31:11.989484+00:00","span_data":{"type":"agent","name":"TriageAgent","handoffs":["AgentA","AgentB"],"tools":["handoff_to_agent_a","handoff_to_agent_b"],"output_type":"str"},"error":null},{"object":"trace.span","id":"span_4f15c0a8e6864372a8a9b870","trace_id":"trace_90832d19793c4cc1aba9ee470ead6a1d","parent_id":"span_e7676ac3ed114af19b8dcf70","started_at":"2025-07-07T04:31:11.989939+00:00","ended_at":"2025-07-07T04:31:13.158312+00:00","span_data":{"type":"response","response_id":"resp_686b4d903524819a97f78a57f21991ea0484ef65142f65c3"},"error":null},{"object":"trace.span","id":"span_e7676ac3ed114af19b8dcf70","trace_id":"trace_90832d19793c4cc1aba9ee470ead6a1d","parent_id":null,"started_at":"2025-07-07T04:31:11.989529+00:00","ended_at":"2025-07-07T04:31:13.158580+00:00","span_data":{"type":"agent","name":"AgentA","handoffs":[],"tools":[],"output_type":"str"},"error":null},{"object":"trace","id":"trace_9e523501d7ca43cbbffef8d663ee2abe","workflow_name":"Agent
+      workflow","group_id":null,"metadata":null}]}'
+    headers:
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '2779'
+      cookie:
+      - __cf_bm=2K51yZJfEE3.F991jNlShMI5YCBuX2mUJxMTIMyLy4I-1751862664-1.0.1.1-ysSWL5s.8BzvCjqgVeIidvf5oH57WlhgYNGT4l11nz5XZeYssRV0l6MJd2MlYRsqPpmDmtTD9kjRXUXldyee5ZrDJaA_zw9lqqvxHSniQ3Y;
+        _cfuvid=.4rTr7Z_6sKZyGNKdytIaE4FbYWS2xwAo.fSl6th2Co-1751862664181-0.0.1.1-604800000
+      host:
+      - api.openai.com
+      openai-beta:
+      - traces=v1
+      user-agent:
+      - python-httpx/0.28.1
+    method: POST
+    uri: https://api.openai.com/v1/traces/ingest
+  response:
+    body:
+      string: ''
+    headers:
+      CF-RAY:
+      - 95b49c737f59ff66-BOM
+      Connection:
+      - keep-alive
+      Date:
+      - Mon, 07 Jul 2025 04:31:15 GMT
+      Server:
+      - cloudflare
+      X-Content-Type-Options:
+      - nosniff
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '101'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-request-id:
+      - req_cabcc3546fd392d7c94f8cf5acb90f6a
+    status:
+      code: 204
+      message: No Content
+- request:
+    body: '{"include":[],"input":[{"content":"What is AI?","role":"user"}],"instructions":"You
+      are a helpful assistant that answers all questions","max_output_tokens":1024,"model":"gpt-4.1","stream":false,"temperature":0.3,"tools":[],"top_p":0.2}'
+    headers:
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '235'
+      cookie:
+      - __cf_bm=3zyMrBe7N20pVl8x25O_On5.fvfIikDA012ufvx53nM-1751862660-1.0.1.1-JvGF1w1po85PLKWFrJyLhImrIM6CpkmMaYGua6WBvJlfDMgZo9Oigg5nRJtYzI47T1BQnozcg9CowCmBpXifPOG5KiUOD.Kr9VCCCeladCY;
+        _cfuvid=O..E2LqPai_CvoCODzw4ICRfn1jA4LzcFld6LdnWH1s-1751862660981-0.0.1.1-604800000
+      host:
+      - api.openai.com
+      user-agent:
+      - Agents/Python 0.0.19
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - async:asyncio
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.93.0
+      x-stainless-read-timeout:
+      - '600'
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.13.1
+    method: POST
+    uri: https://api.openai.com/v1/responses
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA3RVS2/iSBC+51eUfJogiDAhQLjlGGl3D/s4rGZWqNwu273ph6e6mgkZ5b+vug0G
+        ZjMXhOvxdVV99fh+A1DouthCwRT63Wqzqpb1Y7mal5tN+YjVZkW4WJcP63m5eXxYzQnvq/vFqlGb
+        VfmgFsU0AfjqX1JyAvEu0CBXTChU7zDpyvVDuVktVuv7rAuCEkPyUd72hoTqwalC9dKyjy5F1aAJ
+        lMXE7LnYgovGZIF2J8ddTYLahGttEI5KtHf5kb99BGQChI5M30QDGIIOgk5AOhRAF74RB0Bj4Guk
+        MHhmLIuvOx+lj7IT/0IZsJwvlqNSvDc7heY6BOtrMunttpfZ8q6cLeaLh9l8OSuXx7JlzGILn28A
+        AL7n35EPG9qRjupxoAPXuKwelw3Ol2q9buYf0pEx5NBTRqEQsKWz4md1z0rlnZA7h3QZ1hXsqRz0
+        KqN3NkDnvOCp7J//uVIa3/bsqw80GWgLxWTy9DyZQOKlDtB4hsnkiUU3Wmk08OyEjNEtOUWTyR08
+        CzA1iTbxIB1BTXsyvrfkBHwDKcUoxBAOQcgG8AzBN/IttUKmXaGDnrjxbEEwvIRBLIdeJ0IPwPQ1
+        aibookUH+iKAO/izo0BHN+2UiXVC1a4NYPQLbb+4L24Gf7maOGekXQvoaujZKwohfRp0bcSW4FPy
+        ANWhVF7CbXL8nZRvnX5LdtpiS0P8PZHqkv4XQnZJ2bC3UKNgRte2Z79Pcr8nBtGW4JNF1WlHYI4+
+        +YFf8SWZ1aR0SIwN5THZNxFlyIaUw9NzrlNF0KS5BO3AojsA7YkPNR5ASHXOG99qClMIUXWAAfaa
+        JeLFpIVjln9o1umtJ0OveDsFJuWtJVfnxhnJGoyl84HAO/iNpDH6NTtafPPudgqBTDOrWeeQFXKY
+        5hJYzwM9aeKZoNZNQ5yaIjVwyDYmtUpIXfL0PAVG146lDDpNBnA0NKswUD2GJB6w3qNTVMOPJYU8
+        8OHcV+jQHN4IDHJLgNbHVALfnKmymDjPc/h6puGuGEfj/fhvnJaCvckTOBZ1ME6G2ajokdEYMtdb
+        STgOe7Rn2msfw+60qnd53YxbiwmDT+kU2+PoF9Q0nuXCKK2RaC3y4Si8AXgftjrxXivaiaa0rIua
+        Goxm2BFFEM90GYuQ7YlRYhbP7+6P0rwLjo+nycTz98UOynZj8sP7Q86d12ooUhRfjIrz3inE97uL
+        bTQfhX0OZDF8c3Qqt2RORQeszOlKxbxVxyi1u7oOw234QX5xpsZcFKqO6rPjfMjn6P2/o7MsP9J8
+        BDzS+DNs8YLmAnr1MBYxBrq6tJYEU8sm/Peb9/8AAAD//wMAGdO4ZjQIAAA=
+    headers:
+      CF-RAY:
+      - 95b49c6b9a934448-BOM
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 07 Jul 2025 04:31:15 GMT
+      Server:
+      - cloudflare
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '1947'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-ratelimit-limit-requests:
+      - '10000'
+      x-ratelimit-limit-tokens:
+      - '30000000'
+      x-ratelimit-remaining-requests:
+      - '9999'
+      x-ratelimit-remaining-tokens:
+      - '29999957'
+      x-ratelimit-reset-requests:
+      - 6ms
+      x-ratelimit-reset-tokens:
+      - 0s
+      x-request-id:
+      - req_7e9650626740de3879ff430edef048cd
+    status:
+      code: 200
+      message: OK
+version: 1

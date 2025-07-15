@@ -3,7 +3,7 @@ import pytest
 from langchain.chains import LLMChain
 from langchain.prompts import PromptTemplate
 from langchain_openai import ChatOpenAI
-from opentelemetry.semconv_ai import SpanAttributes, Meters
+from opentelemetry.semconv_ai import Meters, SpanAttributes
 
 
 @pytest.fixture
@@ -21,9 +21,7 @@ def chain(llm):
 
 
 @pytest.mark.vcr
-def test_llm_chain_metrics(metrics_test_context, chain):
-    _, reader = metrics_test_context
-
+def test_llm_chain_metrics(instrument_legacy, reader, chain):
     chain.run(product="colorful socks")
 
     metrics_data = reader.get_metrics_data()
@@ -68,9 +66,7 @@ def test_llm_chain_metrics(metrics_test_context, chain):
 
 
 @pytest.mark.vcr
-def test_llm_chain_streaming_metrics(metrics_test_context, llm):
-    _, reader = metrics_test_context
-
+def test_llm_chain_streaming_metrics(instrument_legacy, reader, llm):
     prompt = PromptTemplate(
         input_variables=["product"],
         template="What is a good name for a company that makes {product}?",
