@@ -1,3 +1,47 @@
+## v0.41.0 (2025-07-13)
+
+### Feat
+
+- **openai-agents**: initial instrumentation; collect OpenAI agent traces and metrics (#2966)
+- **google-generativeai**: implement emitting events in addition to current behavior (#2887)
+- **vertexai**: implement emitting events in addition to current behavior (#2942)
+- **langchain**: implement emitting events in addition to current behavior (#2889)
+- **anthropic**: implement emitting events in addition to current behavior (#2884)
+- **bedrock**: implement emitting events in addition to current behavior (#2885)
+- **llamaindex**: implement emitting events in addition to current behavior (#2941)
+- **watsonx**: implement emitting events in addition to current behavior (#2896)
+- **cohere**: implement emitting events in addition to current behavior (#2886)
+- **groq**: implement emitting events in addition to current behavior (#2888)
+- **sagemaker**: implement emitting events in addition to current behavior  (#2894)
+- **together**: implement emitting events in addition to current behavior  (#2895)
+- **replicate**: implement emitting events in addition to current behavior (#2893)
+- **ollama**: implement emitting events in addition to current behavior (#2891)
+- **mistralai**: implement emitting events in addition to current behavior  (#2890)
+- vendor matching (#3062)
+- **semconv**: add an attribute for output schema (#3064)
+- **transformers**: implement the support to emitting events in addition to current behavior (#2940)
+- **alephalpha**: implement emitting events in addition to current behavior (#2880)
+- **mcp**: Add support for mcp streamable http transport type (#3049)
+- **milvus**: Add error.type attribute from OpenTelemetry Semantic Conventions  (#3009)
+- **openai**: OpenAI responses minimal instrumentation (#3052)
+- **ollama**: add meter STTG to ollama instrumentation (#3053)
+- **openai**: implement emitting events in addition to current behavior (#2892)
+
+### Fix
+
+- align semconv deps (#3106)
+- **sagemaker**: add should_send_prompts checks (#3072)
+- **watsonx**: add should_send_prompts check to model response (#3071)
+- **groq**: add should_send_prompts checks (#3074)
+- **ollama**: add should_send_prompts check (#3073)
+- **transformers**: add should_send_prompts checks (#3070)
+- **groq**: wrong system attribute was given (#3069)
+- **openai**: record exception as span events as well (#3067)
+- **openai**: add request schema attribute (#3065)
+- **mcp**: add support for error_type in mcp instrumentation (#3050)
+- google gemini insturmentation (#3055)
+- **openai**: completions.parse out of beta, azure remove double-slash (#3051)
+
 ## v0.40.14 (2025-06-24)
 
 ### Fix
