@@ -11,7 +11,7 @@ def set_inference_input_attributes(span, method, kwargs):
 
     if method == "embed":
 
-        #emebedding specific attributes
+        #embedding specific attributes
         inputs = kwargs.get("inputs", [])
         set_span_attribute(span, "gen_ai.prompt.count", len(inputs))
 
@@ -24,7 +24,7 @@ def set_inference_input_attributes(span, method, kwargs):
         set_span_attribute(span, SpanAttributes.GEN_AI_INPUT_TOKENS, total_input_tokens)
 
     elif method == "rerank":
-        #re-raking specific attributes
+        #reranking specific attributes
         documents = kwargs.get("documents", [])
         documents = kwargs.get("documents", [])
         set_span_attribute(span, "pinecone.inference.document_count", len(documents))

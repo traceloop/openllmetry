@@ -185,10 +185,10 @@ def _wrap(
     ) as span:
         if span.is_recording():
             if "inference" in method:
-                method_name = method.split(".")[-1]  #extract embed or re-rank
+                method_name = method.split(".")[-1]  # extract embed or rerank
                 set_inference_input_attributes(span, method_name, kwargs)
             elif "assistant" in method:
-                method_name = method.split(".")[-1]
+                method_name = method.split(".")[-1]  # extract assistant method
                 set_assistant_input_attributes(span, method_name, kwargs)
             else:
                 _set_input_attributes(span, instance, kwargs)
