@@ -166,9 +166,26 @@ async def _wrap_agent_run_streamed(
                 if isinstance(input_data, str):
                     span.set_attribute("traceloop.entity.input", input_data)
                 elif isinstance(input_data, list) and len(input_data) > 0:
-                    # Convert list of input items to string representation
-                    input_str = json.dumps([item.model_dump() if hasattr(item, 'model_dump') else str(item) for item in input_data])
-                    span.set_attribute("traceloop.entity.input", input_str)
+                    # Convert list of input items to proper JSON
+                    try:
+                        input_objects = []
+                        for item in input_data:
+                            if hasattr(item, 'model_dump'):
+                                input_objects.append(item.model_dump())
+                            elif isinstance(item, dict):
+                                input_objects.append(item)
+                            else:
+                                # Try to parse as dict if it's a string representation
+                                try:
+                                    item_dict = eval(item) if isinstance(item, str) else item
+                                    input_objects.append(item_dict)
+                                except:
+                                    input_objects.append(str(item))
+                        input_str = json.dumps(input_objects)
+                        span.set_attribute("traceloop.entity.input", input_str)
+                    except Exception as e:
+                        # Fallback to string representation if JSON serialization fails
+                        span.set_attribute("traceloop.entity.input", str(input_data))
             
             # Get tools from agent
             tools = getattr(agent, "tools", [])
@@ -188,10 +205,45 @@ async def _wrap_agent_run_streamed(
                     output_data = model_response.output
                     if isinstance(output_data, str):
                         span.set_attribute("traceloop.entity.output", output_data)
+                    elif isinstance(output_data, list):
+                        # Convert list of output items to proper JSON
+                        try:
+                            output_objects = []
+                            for item in output_data:
+                                if hasattr(item, 'model_dump'):
+                                    output_objects.append(item.model_dump())
+                                elif isinstance(item, dict):
+                                    output_objects.append(item)
+                                else:
+                                    # Convert to dict representation if possible
+                                    try:
+                                        # For objects like ResponseFunctionToolCall, extract key attributes
+                                        if hasattr(item, '__dict__'):
+                                            item_dict = {k: v for k, v in item.__dict__.items() if not k.startswith('_')}
+                                            output_objects.append(item_dict)
+                                        else:
+                                            output_objects.append(str(item))
+                                    except:
+                                        output_objects.append(str(item))
+                            output_str = json.dumps(output_objects)
+                            span.set_attribute("traceloop.entity.output", output_str)
+                        except Exception as e:
+                            # Fallback to string representation if JSON serialization fails
+                            span.set_attribute("traceloop.entity.output", str(output_data))
                     else:
-                        # Convert output to string representation
-                        output_str = json.dumps(output_data.model_dump() if hasattr(output_data, 'model_dump') else str(output_data))
-                        span.set_attribute("traceloop.entity.output", output_str)
+                        # Convert output to proper JSON
+                        try:
+                            if hasattr(output_data, 'model_dump'):
+                                output_str = json.dumps(output_data.model_dump())
+                            elif hasattr(output_data, '__dict__'):
+                                output_dict = {k: v for k, v in output_data.__dict__.items() if not k.startswith('_')}
+                                output_str = json.dumps(output_dict)
+                            else:
+                                output_str = json.dumps(str(output_data))
+                            span.set_attribute("traceloop.entity.output", output_str)
+                        except Exception as e:
+                            # Fallback to string representation if JSON serialization fails
+                            span.set_attribute("traceloop.entity.output", str(output_data))
             
             # Set success status
             span.set_status(Status(StatusCode.OK))
@@ -271,9 +323,26 @@ async def _wrap_agent_run(
                 if isinstance(prompt_list, str):
                     span.set_attribute("traceloop.entity.input", prompt_list)
                 elif isinstance(prompt_list, list) and len(prompt_list) > 0:
-                    # Convert list of input items to string representation
-                    input_str = json.dumps([item.model_dump() if hasattr(item, 'model_dump') else str(item) for item in prompt_list])
-                    span.set_attribute("traceloop.entity.input", input_str)
+                    # Convert list of input items to proper JSON
+                    try:
+                        input_objects = []
+                        for item in prompt_list:
+                            if hasattr(item, 'model_dump'):
+                                input_objects.append(item.model_dump())
+                            elif isinstance(item, dict):
+                                input_objects.append(item)
+                            else:
+                                # Try to parse as dict if it's a string representation
+                                try:
+                                    item_dict = eval(item) if isinstance(item, str) else item
+                                    input_objects.append(item_dict)
+                                except:
+                                    input_objects.append(str(item))
+                        input_str = json.dumps(input_objects)
+                        span.set_attribute("traceloop.entity.input", input_str)
+                    except Exception as e:
+                        # Fallback to string representation if JSON serialization fails
+                        span.set_attribute("traceloop.entity.input", str(prompt_list))
             
             tools = (
                 args[4]
@@ -293,10 +362,45 @@ async def _wrap_agent_run(
                 output_data = response.output
                 if isinstance(output_data, str):
                     span.set_attribute("traceloop.entity.output", output_data)
+                elif isinstance(output_data, list):
+                    # Convert list of output items to proper JSON
+                    try:
+                        output_objects = []
+                        for item in output_data:
+                            if hasattr(item, 'model_dump'):
+                                output_objects.append(item.model_dump())
+                            elif isinstance(item, dict):
+                                output_objects.append(item)
+                            else:
+                                # Convert to dict representation if possible
+                                try:
+                                    # For objects like ResponseFunctionToolCall, extract key attributes
+                                    if hasattr(item, '__dict__'):
+                                        item_dict = {k: v for k, v in item.__dict__.items() if not k.startswith('_')}
+                                        output_objects.append(item_dict)
+                                    else:
+                                        output_objects.append(str(item))
+                                except:
+                                    output_objects.append(str(item))
+                        output_str = json.dumps(output_objects)
+                        span.set_attribute("traceloop.entity.output", output_str)
+                    except Exception as e:
+                        # Fallback to string representation if JSON serialization fails
+                        span.set_attribute("traceloop.entity.output", str(output_data))
                 else:
-                    # Convert output to string representation
-                    output_str = json.dumps(output_data.model_dump() if hasattr(output_data, 'model_dump') else str(output_data))
-                    span.set_attribute("traceloop.entity.output", output_str)
+                    # Convert output to proper JSON
+                    try:
+                        if hasattr(output_data, 'model_dump'):
+                            output_str = json.dumps(output_data.model_dump())
+                        elif hasattr(output_data, '__dict__'):
+                            output_dict = {k: v for k, v in output_data.__dict__.items() if not k.startswith('_')}
+                            output_str = json.dumps(output_dict)
+                        else:
+                            output_str = json.dumps(str(output_data))
+                        span.set_attribute("traceloop.entity.output", output_str)
+                    except Exception as e:
+                        # Fallback to string representation if JSON serialization fails
+                        span.set_attribute("traceloop.entity.output", str(output_data))
             if duration_histogram:
                 duration_histogram.record(
                     time.time() - start_time,

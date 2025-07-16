@@ -18,7 +18,7 @@ from opentelemetry import metrics
 
 from agents import Agent, function_tool, ModelSettings, WebSearchTool
 from pydantic import BaseModel
-from typing import List, Dict
+from typing import List, Dict, Union
 
 pytest_plugins = []
 
@@ -158,16 +158,16 @@ def recipe_workflow_agents():
     class SearchResponse(BaseModel):
         status: str
         message: str
-        recipes: Dict[str, Recipe] | None = None
-        recipe_count: int | None = None
-        query: str | None = None
+        recipes: Union[Dict[str, Recipe], None] = None
+        recipe_count: Union[int, None] = None
+        query: Union[str, None] = None
 
     class EditResponse(BaseModel):
         status: str
         message: str
-        modified_recipe: Recipe | None = None
-        changes_made: List[str] | None = None
-        original_recipe: Recipe | None = None
+        modified_recipe: Union[Recipe, None] = None
+        changes_made: Union[List[str], None] = None
+        original_recipe: Union[Recipe, None] = None
 
     # Mock recipe database
     MOCK_RECIPES = {

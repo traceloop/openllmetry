@@ -333,6 +333,7 @@ async def test_recipe_workflow_agent_handoffs_with_function_tools(exporter, reci
     search_tool_span = next(s for s in non_rest_spans if s.name == "search_recipes.tool")
     modify_tool_span = next(s for s in non_rest_spans if s.name == "plan_and_apply_recipe_modifications.tool")
     
+    
     # Verify span attributes for Main Chat Agent
     assert main_chat_span.attributes[SpanAttributes.LLM_SYSTEM] == "openai"
     assert main_chat_span.attributes["gen_ai.agent.name"] == "Main Chat Agent"
