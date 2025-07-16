@@ -47,8 +47,9 @@ def environment():
 def clear_exporter(exporter):
     exporter.clear()
     # Clear the global span storage between tests
-    from opentelemetry.instrumentation.openai_agents import _root_span_storage
+    from opentelemetry.instrumentation.openai_agents import _root_span_storage, _instrumented_tools
     _root_span_storage.clear()
+    _instrumented_tools.clear()
 
 
 @pytest.fixture(scope="session")
