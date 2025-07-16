@@ -369,8 +369,6 @@ def init_instrumentations(
     # Remove any instruments that were explicitly blocked
     instruments = instruments - block_instruments
 
-
-    print(f"instruments: {instruments}")
     instrument_set = False
     for instrument in instruments:
         if instrument == Instruments.ALEPHALPHA:
