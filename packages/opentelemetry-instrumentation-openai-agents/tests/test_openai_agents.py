@@ -270,3 +270,84 @@ def test_generate_metrics(metrics_test_context, test_agent):
 
         assert found_token_metric is True
         assert found_duration_metric is True
+
+
+@pytest.mark.vcr
+def test_recipe_workflow_agent_handoffs_with_function_tools(exporter, recipe_workflow_agents):
+    """Test agent handoffs with function tools matching the recipe management example."""
+    
+    main_chat_agent, recipe_editor_agent = recipe_workflow_agents
+    
+    query = "Can you edit the carbonara recipe to be vegetarian?"
+    
+    # Run with the main chat agent which should handoff to recipe editor
+    Runner.run_sync(
+        main_chat_agent,
+        query,
+    )
+    spans = exporter.get_finished_spans()
+    
+    # Filter out v1/responses REST calls as requested
+    non_rest_spans = [span for span in spans if not span.name.endswith("v1/responses")]
+    
+    # Verify we have the expected span structure
+    span_names = [span.name for span in non_rest_spans]
+    
+    # Should have Main Chat Agent and Recipe Editor Agent spans
+    assert "Main Chat Agent.agent" in span_names
+    assert "Recipe Editor Agent.agent" in span_names
+    
+    # Should have function tool calls from Recipe Editor Agent
+    assert "search_recipes.tool" in span_names
+    assert "plan_and_apply_recipe_modifications.tool" in span_names
+    
+    # Get the specific spans
+    main_chat_span = next(s for s in non_rest_spans if s.name == "Main Chat Agent.agent")
+    recipe_editor_span = next(s for s in non_rest_spans if s.name == "Recipe Editor Agent.agent")
+    search_tool_span = next(s for s in non_rest_spans if s.name == "search_recipes.tool")
+    modify_tool_span = next(s for s in non_rest_spans if s.name == "plan_and_apply_recipe_modifications.tool")
+    
+    # Verify span attributes for Main Chat Agent
+    assert main_chat_span.attributes[SpanAttributes.LLM_SYSTEM] == "openai"
+    assert main_chat_span.attributes["gen_ai.agent.name"] == "Main Chat Agent"
+    assert main_chat_span.attributes[SpanAttributes.TRACELOOP_SPAN_KIND] == TraceloopSpanKindValues.AGENT.value
+    
+    # Verify handoff attributes are present
+    assert "openai.agent.handoff0" in main_chat_span.attributes
+    handoff_info = json.loads(main_chat_span.attributes["openai.agent.handoff0"])
+    assert handoff_info["name"] == "Recipe Editor Agent"
+    
+    # Verify span attributes for Recipe Editor Agent  
+    assert recipe_editor_span.attributes[SpanAttributes.LLM_SYSTEM] == "openai"
+    assert recipe_editor_span.attributes["gen_ai.agent.name"] == "Recipe Editor Agent"
+    assert recipe_editor_span.attributes[SpanAttributes.TRACELOOP_SPAN_KIND] == TraceloopSpanKindValues.AGENT.value
+    
+    # Verify function tool spans
+    assert search_tool_span.attributes[SpanAttributes.TRACELOOP_SPAN_KIND] == TraceloopSpanKindValues.TOOL.value
+    assert search_tool_span.attributes[f"{GEN_AI_COMPLETION}.tool.name"] == "search_recipes"
+    assert search_tool_span.attributes[f"{GEN_AI_COMPLETION}.tool.type"] == "FunctionTool"
+    
+    assert modify_tool_span.attributes[SpanAttributes.TRACELOOP_SPAN_KIND] == TraceloopSpanKindValues.TOOL.value
+    assert modify_tool_span.attributes[f"{GEN_AI_COMPLETION}.tool.name"] == "plan_and_apply_recipe_modifications"
+    assert modify_tool_span.attributes[f"{GEN_AI_COMPLETION}.tool.type"] == "FunctionTool"
+    
+    # Verify span relationships/nesting
+    # Main chat agent should be root
+    assert main_chat_span.parent is None
+    
+    # Recipe editor agent should be a separate span (handoff creates new context)
+    # Tool spans should be children of the Recipe Editor Agent span  
+    assert search_tool_span.parent is not None
+    assert modify_tool_span.parent is not None
+    
+    # Verify all spans completed successfully
+    assert main_chat_span.status.status_code == StatusCode.OK
+    assert recipe_editor_span.status.status_code == StatusCode.OK
+    assert search_tool_span.status.status_code == StatusCode.OK
+    assert modify_tool_span.status.status_code == StatusCode.OK
+    
+    # Verify all spans share the same trace ID
+    main_trace_id = main_chat_span.get_span_context().trace_id
+    assert recipe_editor_span.get_span_context().trace_id == main_trace_id
+    assert search_tool_span.get_span_context().trace_id == main_trace_id
+    assert modify_tool_span.get_span_context().trace_id == main_trace_id

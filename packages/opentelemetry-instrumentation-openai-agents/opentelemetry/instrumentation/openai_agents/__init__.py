@@ -2,10 +2,12 @@
 import os
 import time
 import json
+import threading
 from typing import Collection
 from wrapt import wrap_function_wrapper
-from opentelemetry.trace import SpanKind, get_tracer, Tracer
+from opentelemetry.trace import SpanKind, get_tracer, Tracer, get_current_span, set_span_in_context
 from opentelemetry.trace.status import Status, StatusCode
+from opentelemetry import context
 from opentelemetry.metrics import Histogram, Meter, get_meter
 from opentelemetry.instrumentation.utils import unwrap
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
@@ -23,6 +25,9 @@ from agents import FunctionTool, WebSearchTool, FileSearchTool, ComputerTool
 
 
 _instruments = ("openai-agents >= 0.0.19",)
+
+# Global storage for root span to ensure proper propagation during handoffs
+_root_span_storage = {}
 
 
 class OpenAIAgentsInstrumentor(BaseInstrumentor):
@@ -99,6 +104,20 @@ async def _wrap_agent_run(
     agent_name = getattr(agent, "name", "agent")
     model_name = get_model_name(agent)
 
+    # Use current thread ID as key for global span storage
+    thread_id = threading.get_ident()
+    
+    # Check if we have a stored root span from a previous agent in the chain
+    root_span = _root_span_storage.get(thread_id, None)
+    
+    # Create span with proper parent relationship
+    # Only use root span as parent for subsequent agents, not for the first one
+    if root_span:
+        # Use the root span context to ensure same trace
+        ctx = set_span_in_context(root_span, context.get_current())
+    else:
+        ctx = context.get_current()
+    
     with tracer.start_as_current_span(
         f"{agent_name}.agent",
         kind=SpanKind.CLIENT,
@@ -109,8 +128,12 @@ async def _wrap_agent_run(
                 TraceloopSpanKindValues.AGENT.value
             )
         },
+        context=ctx,
     ) as span:
         try:
+            # Store the first span (root) for future agent handoffs, but only if not already stored
+            if not root_span:
+                _root_span_storage[thread_id] = span
 
             extract_agent_details(agent, span)
             set_model_settings_span_attributes(agent, span)
@@ -254,6 +277,14 @@ def extract_tool_details(tracer: Tracer, tools):
             tool_name = "ComputerTool"
         else:
             tool_name = getattr(tool, "name", "unknown_tool")
+        # Use stored root span if available, otherwise get current
+        thread_id = threading.get_ident()
+        root_span = _root_span_storage.get(thread_id, None)
+        if root_span:
+            ctx = set_span_in_context(root_span, context.get_current())
+        else:
+            ctx = context.get_current()
+        
         with tracer.start_as_current_span(
             f"{tool_name}.tool",
             kind=SpanKind.INTERNAL,
@@ -262,6 +293,7 @@ def extract_tool_details(tracer: Tracer, tools):
                     TraceloopSpanKindValues.TOOL.value
                 )
             },
+            context=ctx,
         ) as span:
             try:
                 if tool_name:

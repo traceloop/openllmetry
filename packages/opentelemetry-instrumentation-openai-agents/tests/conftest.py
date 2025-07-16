@@ -18,6 +18,7 @@ from opentelemetry import metrics
 
 from agents import Agent, function_tool, ModelSettings, WebSearchTool
 from pydantic import BaseModel
+from typing import List, Dict
 
 pytest_plugins = []
 
@@ -45,6 +46,9 @@ def environment():
 @pytest.fixture(autouse=True)
 def clear_exporter(exporter):
     exporter.clear()
+    # Clear the global span storage between tests
+    from opentelemetry.instrumentation.openai_agents import _root_span_storage
+    _root_span_storage.clear()
 
 
 @pytest.fixture(scope="session")
@@ -134,6 +138,114 @@ def handoff_agent():
         tools=[handoff_tool_a, handoff_tool_b]
     )
     return triage_agent
+
+
+@pytest.fixture(scope="session")
+def recipe_workflow_agents():
+    """Create Main Chat Agent and Recipe Editor Agent with function tools for recipe management."""
+    
+    # Mock recipe data structure  
+    class Recipe(BaseModel):
+        id: str
+        name: str
+        ingredients: List[str]
+        instructions: List[str]
+        prep_time: str
+        cook_time: str
+        servings: int
+
+    class SearchResponse(BaseModel):
+        status: str
+        message: str
+        recipes: Dict[str, Recipe] | None = None
+        recipe_count: int | None = None
+        query: str | None = None
+
+    class EditResponse(BaseModel):
+        status: str
+        message: str
+        modified_recipe: Recipe | None = None
+        changes_made: List[str] | None = None
+        original_recipe: Recipe | None = None
+
+    # Mock recipe database
+    MOCK_RECIPES = {
+        "spaghetti_carbonara": {
+            "id": "spaghetti_carbonara", 
+            "name": "Spaghetti Carbonara",
+            "ingredients": ["400g spaghetti", "200g pancetta", "4 large eggs", "100g Pecorino Romano cheese"],
+            "instructions": ["Cook spaghetti", "Dice pancetta", "Whisk eggs with cheese"],
+            "prep_time": "10 minutes",
+            "cook_time": "15 minutes", 
+            "servings": 4
+        }
+    }
+
+    @function_tool
+    async def search_recipes(query: str = "") -> SearchResponse:
+        """Search and browse recipes in the database."""
+        if "carbonara" in query.lower():
+            recipe_data = MOCK_RECIPES["spaghetti_carbonara"]
+            recipes_dict = {"spaghetti_carbonara": Recipe(**recipe_data)}
+            return SearchResponse(
+                status='success',
+                message=f'Found 1 recipes matching "{query}"',
+                recipes=recipes_dict,
+                recipe_count=1,
+                query=query
+            )
+        return SearchResponse(
+            status='success', 
+            message='No recipes found',
+            recipes={},
+            recipe_count=0,
+            query=query
+        )
+
+    @function_tool 
+    async def plan_and_apply_recipe_modifications(recipe: Recipe, modification_request: str) -> EditResponse:
+        """Plan modifications to a recipe based on user request and apply them."""
+        # Mock modification for vegetarian carbonara
+        if "vegetarian" in modification_request.lower() and "carbonara" in recipe.name.lower():
+            modified_recipe = Recipe(
+                id=recipe.id,
+                name="Vegetarian Carbonara",
+                ingredients=["400g spaghetti", "200g mushrooms", "4 large eggs", "100g Pecorino Romano cheese"], 
+                instructions=["Cook spaghetti", "Sauté mushrooms", "Whisk eggs with cheese"],
+                prep_time=recipe.prep_time,
+                cook_time=recipe.cook_time,
+                servings=recipe.servings
+            )
+            return EditResponse(
+                status='success',
+                message='Successfully modified Spaghetti Carbonara to be vegetarian',
+                modified_recipe=modified_recipe,
+                changes_made=["Replaced pancetta with mushrooms"],
+                original_recipe=recipe
+            )
+        
+        return EditResponse(
+            status='error',
+            message='Could not modify recipe'
+        )
+
+    # Create Recipe Editor Agent with function tools
+    recipe_editor_agent = Agent(
+        name="Recipe Editor Agent",
+        instructions="You are a recipe editor specialist. Help users search and modify recipes using your tools.",
+        model="gpt-4o",
+        tools=[search_recipes, plan_and_apply_recipe_modifications]
+    )
+
+    # Create Main Chat Agent with handoff capability
+    main_chat_agent = Agent(
+        name="Main Chat Agent", 
+        instructions="You handle general conversation and route recipe tasks to the recipe editor agent.",
+        model="gpt-4o",
+        handoffs=[recipe_editor_agent]
+    )
+
+    return main_chat_agent, recipe_editor_agent
 
 
 @pytest.fixture(scope="module")
