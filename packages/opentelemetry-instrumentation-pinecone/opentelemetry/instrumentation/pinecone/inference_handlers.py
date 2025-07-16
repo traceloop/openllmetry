@@ -26,7 +26,6 @@ def set_inference_input_attributes(span, method, kwargs):
     elif method == "rerank":
         #reranking specific attributes
         documents = kwargs.get("documents", [])
-        documents = kwargs.get("documents", [])
         set_span_attribute(span, "pinecone.inference.document_count", len(documents))
         set_span_attribute(span, "pinecone.inference.query", kwargs.get("query"))
         set_span_attribute(span, "pinecone.inference.top_k", kwargs.get("top_k"))
