@@ -64,9 +64,21 @@ class OpenAIAgentsInstrumentor(BaseInstrumentor):
             ),
 
         )
+        # Also hook into the streaming path
+        wrap_function_wrapper(
+            "agents.run",
+            "AgentRunner._run_single_turn_streamed",
+            _wrap_agent_run_streamed(
+                tracer,
+                duration_histogram,
+                token_histogram,
+            ),
+
+        )
 
     def _uninstrument(self, **kwargs):
         unwrap("agents.run.AgentRunner", "_get_new_response")
+        unwrap("agents.run.AgentRunner", "_run_single_turn_streamed")
 
 
 def with_tracer_wrapper(func):
@@ -86,6 +98,91 @@ def with_tracer_wrapper(func):
         return wrapper
 
     return _with_tracer
+
+
+@with_tracer_wrapper
+async def _wrap_agent_run_streamed(
+    tracer: Tracer,
+    duration_histogram: Histogram,
+    token_histogram: Histogram,
+    wrapped,
+    instance,
+    args,
+    kwargs,
+):
+    """Wrapper for _run_single_turn_streamed to handle streaming execution."""
+    # Extract agent from arguments (streamed_result, agent, hooks, context_wrapper, run_config, ...)
+    streamed_result = args[0] if len(args) > 0 else None
+    agent = args[1] if len(args) > 1 else None
+    run_config = args[4] if len(args) > 4 else None
+    
+    if not agent:
+        return await wrapped(*args, **kwargs)
+    
+    agent_name = getattr(agent, "name", "agent")
+    model_name = get_model_name(agent)
+    thread_id = threading.get_ident()
+    
+    # Check if we have a stored root span from a previous agent in the chain
+    root_span = _root_span_storage.get(thread_id, None)
+    
+    # Create span with proper parent relationship
+    if root_span:
+        # Use the root span context to ensure same trace
+        ctx = set_span_in_context(root_span, context.get_current())
+    else:
+        ctx = context.get_current()
+    
+    with tracer.start_as_current_span(
+        f"{agent_name}.agent",
+        kind=SpanKind.CLIENT,
+        attributes={
+            SpanAttributes.LLM_SYSTEM: "openai",
+            SpanAttributes.LLM_REQUEST_MODEL: model_name,
+            SpanAttributes.TRACELOOP_SPAN_KIND: (
+                TraceloopSpanKindValues.AGENT.value
+            )
+        },
+        context=ctx,
+    ) as span:
+        try:
+            # Store the first span (root) for future agent handoffs, but only if not already stored
+            if not root_span:
+                _root_span_storage[thread_id] = span
+            
+            extract_agent_details(agent, span)
+            set_model_settings_span_attributes(agent, span)
+            extract_run_config_details(run_config, span)
+            
+            # Get tools from agent
+            tools = getattr(agent, "tools", [])
+            if tools:
+                extract_tool_details(tracer, tools)
+            
+            start_time = time.time()
+            result = await wrapped(*args, **kwargs)
+            end_time = time.time()
+            
+            # Set success status
+            span.set_status(Status(StatusCode.OK))
+            
+            # Record metrics if available
+            if duration_histogram:
+                duration = end_time - start_time
+                duration_histogram.record(
+                    duration,
+                    attributes={
+                        SpanAttributes.LLM_SYSTEM: "openai",
+                        SpanAttributes.LLM_RESPONSE_MODEL: model_name,
+                        "gen_ai.agent.name": agent_name,
+                    },
+                )
+            
+            return result
+            
+        except Exception as e:
+            span.set_status(Status(StatusCode.ERROR, str(e)))
+            raise
 
 
 @with_tracer_wrapper

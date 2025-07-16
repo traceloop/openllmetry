@@ -273,18 +273,34 @@ def test_generate_metrics(metrics_test_context, test_agent):
 
 
 @pytest.mark.vcr
-def test_recipe_workflow_agent_handoffs_with_function_tools(exporter, recipe_workflow_agents):
+@pytest.mark.asyncio
+async def test_recipe_workflow_agent_handoffs_with_function_tools(exporter, recipe_workflow_agents):
     """Test agent handoffs with function tools matching the recipe management example."""
     
     main_chat_agent, recipe_editor_agent = recipe_workflow_agents
     
     query = "Can you edit the carbonara recipe to be vegetarian?"
     
-    # Run with the main chat agent which should handoff to recipe editor
-    Runner.run_sync(
-        main_chat_agent,
-        query,
-    )
+    # Run with the main chat agent which should handoff to recipe editor (using run_streamed like sample app)
+    messages = [{"role": "user", "content": query}]
+    main_runner = Runner().run_streamed(starting_agent=main_chat_agent, input=messages)
+    
+    # Consume the stream to complete the execution and get handoff info
+    handoff_info = None
+    async for event in main_runner.stream_events():
+        if event.type == "run_item_stream_event" and event.name == "handoff_occurred":
+            handoff_info = event.item.raw_item
+    
+    # If a hand-off to the recipe editor occurred, run the secondary agent like the sample app
+    if handoff_info and "recipe" in str(handoff_info).lower():
+        recipe_messages = [{"role": "user", "content": query}]
+        recipe_runner = Runner().run_streamed(
+            starting_agent=recipe_editor_agent, input=recipe_messages
+        )
+        # Consume the stream to complete the execution
+        async for event in recipe_runner.stream_events():
+            pass  # Just consume the events to let the execution complete
+    
     spans = exporter.get_finished_spans()
     
     # Filter out v1/responses REST calls as requested

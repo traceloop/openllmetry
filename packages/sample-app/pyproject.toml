@@ -94,6 +94,10 @@ develop = true
 path = "../opentelemetry-instrumentation-crewai"
 develop = true
 
+[tool.poetry.dependencies.opentelemetry-instrumentation-openai-agents]
+path = "../opentelemetry-instrumentation-openai-agents"
+develop = true
+
 [tool.poetry.group.dev.dependencies]
 autopep8 = "^2.3.1"
 flake8 = "7.1.1"
