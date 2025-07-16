@@ -144,8 +144,8 @@ def handoff_agent():
 @pytest.fixture(scope="session")
 def recipe_workflow_agents():
     """Create Main Chat Agent and Recipe Editor Agent with function tools for recipe management."""
-    
-    # Mock recipe data structure  
+
+    # Mock recipe data structure
     class Recipe(BaseModel):
         id: str
         name: str
@@ -172,12 +172,12 @@ def recipe_workflow_agents():
     # Mock recipe database
     MOCK_RECIPES = {
         "spaghetti_carbonara": {
-            "id": "spaghetti_carbonara", 
+            "id": "spaghetti_carbonara",
             "name": "Spaghetti Carbonara",
             "ingredients": ["400g spaghetti", "200g pancetta", "4 large eggs", "100g Pecorino Romano cheese"],
             "instructions": ["Cook spaghetti", "Dice pancetta", "Whisk eggs with cheese"],
             "prep_time": "10 minutes",
-            "cook_time": "15 minutes", 
+            "cook_time": "15 minutes",
             "servings": 4
         }
     }
@@ -196,14 +196,14 @@ def recipe_workflow_agents():
                 query=query
             )
         return SearchResponse(
-            status='success', 
+            status='success',
             message='No recipes found',
             recipes={},
             recipe_count=0,
             query=query
         )
 
-    @function_tool 
+    @function_tool
     async def plan_and_apply_recipe_modifications(recipe: Recipe, modification_request: str) -> EditResponse:
         """Plan modifications to a recipe based on user request and apply them."""
         # Mock modification for vegetarian carbonara
@@ -211,7 +211,7 @@ def recipe_workflow_agents():
             modified_recipe = Recipe(
                 id=recipe.id,
                 name="Vegetarian Carbonara",
-                ingredients=["400g spaghetti", "200g mushrooms", "4 large eggs", "100g Pecorino Romano cheese"], 
+                ingredients=["400g spaghetti", "200g mushrooms", "4 large eggs", "100g Pecorino Romano cheese"],
                 instructions=["Cook spaghetti", "Sauté mushrooms", "Whisk eggs with cheese"],
                 prep_time=recipe.prep_time,
                 cook_time=recipe.cook_time,
@@ -224,7 +224,7 @@ def recipe_workflow_agents():
                 changes_made=["Replaced pancetta with mushrooms"],
                 original_recipe=recipe
             )
-        
+
         return EditResponse(
             status='error',
             message='Could not modify recipe'
@@ -240,7 +240,7 @@ def recipe_workflow_agents():
 
     # Create Main Chat Agent with handoff capability
     main_chat_agent = Agent(
-        name="Main Chat Agent", 
+        name="Main Chat Agent",
         instructions="You handle general conversation and route recipe tasks to the recipe editor agent.",
         model="gpt-4o",
         handoffs=[recipe_editor_agent]

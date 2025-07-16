@@ -5,7 +5,7 @@ import json
 import threading
 from typing import Collection
 from wrapt import wrap_function_wrapper
-from opentelemetry.trace import SpanKind, get_tracer, Tracer, get_current_span, set_span_in_context
+from opentelemetry.trace import SpanKind, get_tracer, Tracer, set_span_in_context
 from opentelemetry.trace.status import Status, StatusCode
 from opentelemetry import context
 from opentelemetry.metrics import Histogram, Meter, get_meter
@@ -31,7 +31,6 @@ _root_span_storage = {}
 
 # Global registry to track already-instrumented tools to prevent duplicates
 _instrumented_tools = set()
-
 
 
 class OpenAIAgentsInstrumentor(BaseInstrumentor):
@@ -121,24 +120,24 @@ async def _wrap_agent_run_streamed(
     streamed_result = args[0] if len(args) > 0 else None
     agent = args[1] if len(args) > 1 else None
     run_config = args[4] if len(args) > 4 else None
-    
+
     if not agent:
         return await wrapped(*args, **kwargs)
-    
+
     agent_name = getattr(agent, "name", "agent")
     model_name = get_model_name(agent)
     thread_id = threading.get_ident()
-    
+
     # Check if we have a stored root span from a previous agent in the chain
     root_span = _root_span_storage.get(thread_id, None)
-    
+
     # Create span with proper parent relationship
     if root_span:
         # Use the root span context to ensure same trace
         ctx = set_span_in_context(root_span, context.get_current())
     else:
         ctx = context.get_current()
-    
+
     with tracer.start_as_current_span(
         f"{agent_name}.agent",
         kind=SpanKind.CLIENT,
@@ -155,11 +154,11 @@ async def _wrap_agent_run_streamed(
             # Store the first span (root) for future agent handoffs, but only if not already stored
             if not root_span:
                 _root_span_storage[thread_id] = span
-            
+
             extract_agent_details(agent, span)
             set_model_settings_span_attributes(agent, span)
             extract_run_config_details(run_config, span)
-            
+
             # Capture input from streamed_result
             if streamed_result and hasattr(streamed_result, 'input'):
                 input_data = streamed_result.input
@@ -179,25 +178,25 @@ async def _wrap_agent_run_streamed(
                                 try:
                                     item_dict = eval(item) if isinstance(item, str) else item
                                     input_objects.append(item_dict)
-                                except:
+                                except Exception:
                                     input_objects.append(str(item))
                         input_str = json.dumps(input_objects)
                         span.set_attribute("traceloop.entity.input", input_str)
-                    except Exception as e:
+                    except Exception:
                         # Fallback to string representation if JSON serialization fails
                         span.set_attribute("traceloop.entity.input", str(input_data))
-            
+
             # Get tools from agent
             tools = getattr(agent, "tools", [])
             if tools:
                 extract_tool_details(tracer, tools)
-            
+
             # Note: Hooks for tool span creation are injected at a higher level
-            
+
             start_time = time.time()
             result = await wrapped(*args, **kwargs)
             end_time = time.time()
-            
+
             # Capture output from result
             if result and hasattr(result, 'model_response'):
                 model_response = result.model_response
@@ -219,15 +218,18 @@ async def _wrap_agent_run_streamed(
                                     try:
                                         # For objects like ResponseFunctionToolCall, extract key attributes
                                         if hasattr(item, '__dict__'):
-                                            item_dict = {k: v for k, v in item.__dict__.items() if not k.startswith('_')}
+                                            item_dict = {
+                                                k: v for k, v in item.__dict__.items()
+                                                if not k.startswith('_')
+                                            }
                                             output_objects.append(item_dict)
                                         else:
                                             output_objects.append(str(item))
-                                    except:
+                                    except Exception:
                                         output_objects.append(str(item))
                             output_str = json.dumps(output_objects)
                             span.set_attribute("traceloop.entity.output", output_str)
-                        except Exception as e:
+                        except Exception:
                             # Fallback to string representation if JSON serialization fails
                             span.set_attribute("traceloop.entity.output", str(output_data))
                     else:
@@ -241,13 +243,13 @@ async def _wrap_agent_run_streamed(
                             else:
                                 output_str = json.dumps(str(output_data))
                             span.set_attribute("traceloop.entity.output", output_str)
-                        except Exception as e:
+                        except Exception:
                             # Fallback to string representation if JSON serialization fails
                             span.set_attribute("traceloop.entity.output", str(output_data))
-            
+
             # Set success status
             span.set_status(Status(StatusCode.OK))
-            
+
             # Record metrics if available
             if duration_histogram:
                 duration = end_time - start_time
@@ -259,9 +261,9 @@ async def _wrap_agent_run_streamed(
                         "gen_ai.agent.name": agent_name,
                     },
                 )
-            
+
             return result
-            
+
         except Exception as e:
             span.set_status(Status(StatusCode.ERROR, str(e)))
             raise
@@ -285,10 +287,10 @@ async def _wrap_agent_run(
 
     # Use current thread ID as key for global span storage
     thread_id = threading.get_ident()
-    
+
     # Check if we have a stored root span from a previous agent in the chain
     root_span = _root_span_storage.get(thread_id, None)
-    
+
     # Create span with proper parent relationship
     # Only use root span as parent for subsequent agents, not for the first one
     if root_span:
@@ -296,7 +298,7 @@ async def _wrap_agent_run(
         ctx = set_span_in_context(root_span, context.get_current())
     else:
         ctx = context.get_current()
-    
+
     with tracer.start_as_current_span(
         f"{agent_name}.agent",
         kind=SpanKind.CLIENT,
@@ -317,7 +319,7 @@ async def _wrap_agent_run(
             extract_agent_details(agent, span)
             set_model_settings_span_attributes(agent, span)
             extract_run_config_details(run_config, span)
-            
+
             # Capture input from prompt_list (args[2])
             if prompt_list:
                 if isinstance(prompt_list, str):
@@ -336,14 +338,14 @@ async def _wrap_agent_run(
                                 try:
                                     item_dict = eval(item) if isinstance(item, str) else item
                                     input_objects.append(item_dict)
-                                except:
+                                except Exception:
                                     input_objects.append(str(item))
                         input_str = json.dumps(input_objects)
                         span.set_attribute("traceloop.entity.input", input_str)
-                    except Exception as e:
+                    except Exception:
                         # Fallback to string representation if JSON serialization fails
                         span.set_attribute("traceloop.entity.input", str(prompt_list))
-            
+
             tools = (
                 args[4]
                 if len(args) > 4 and isinstance(args[4], list)
@@ -351,12 +353,12 @@ async def _wrap_agent_run(
             )
             if tools:
                 extract_tool_details(tracer, tools)
-            
+
             # Note: Hooks for tool span creation are injected at a higher level
-            
+
             start_time = time.time()
             response = await wrapped(*args, **kwargs)
-            
+
             # Capture output from response
             if response and hasattr(response, 'output'):
                 output_data = response.output
@@ -380,11 +382,11 @@ async def _wrap_agent_run(
                                         output_objects.append(item_dict)
                                     else:
                                         output_objects.append(str(item))
-                                except:
+                                except Exception:
                                     output_objects.append(str(item))
                         output_str = json.dumps(output_objects)
                         span.set_attribute("traceloop.entity.output", output_str)
-                    except Exception as e:
+                    except Exception:
                         # Fallback to string representation if JSON serialization fails
                         span.set_attribute("traceloop.entity.output", str(output_data))
                 else:
@@ -398,7 +400,7 @@ async def _wrap_agent_run(
                         else:
                             output_str = json.dumps(str(output_data))
                         span.set_attribute("traceloop.entity.output", output_str)
-                    except Exception as e:
+                    except Exception:
                         # Fallback to string representation if JSON serialization fails
                         span.set_attribute("traceloop.entity.output", str(output_data))
             if duration_histogram:
@@ -523,20 +525,20 @@ def extract_tool_details(tracer: Tracer, tools):
     """Create spans for hosted tools and wrap FunctionTool execution."""
     thread_id = threading.get_ident()
     root_span = _root_span_storage.get(thread_id, None)
-    
+
     for tool in tools:
         if isinstance(tool, FunctionTool):
             # Check if this tool instance is already instrumented
             tool_id = id(tool)
             if tool_id in _instrumented_tools:
                 continue  # Skip already instrumented tools
-            
+
             # Mark as instrumented
             _instrumented_tools.add(tool_id)
-            
+
             # Wrap the on_invoke_tool method to capture input/output
             original_on_invoke_tool = tool.on_invoke_tool
-            
+
             def create_wrapped_tool(original_tool, original_func):
                 async def wrapped_on_invoke_tool(tool_context, args_json):
                     tool_name = getattr(original_tool, "name", "tool")
@@ -545,7 +547,7 @@ def extract_tool_details(tracer: Tracer, tools):
                         ctx = set_span_in_context(root_span, context.get_current())
                     else:
                         ctx = context.get_current()
-                    
+
                     with tracer.start_as_current_span(
                         f"{tool_name}.tool",
                         kind=SpanKind.INTERNAL,
@@ -561,28 +563,31 @@ def extract_tool_details(tracer: Tracer, tools):
                             span.set_attribute(f"{GEN_AI_COMPLETION}.tool.name", tool_name)
                             span.set_attribute(f"{GEN_AI_COMPLETION}.tool.type", "FunctionTool")
                             span.set_attribute(f"{GEN_AI_COMPLETION}.tool.description", original_tool.description)
-                            span.set_attribute(f"{GEN_AI_COMPLETION}.tool.strict_json_schema", original_tool.strict_json_schema)
-                            
+                            span.set_attribute(
+                                f"{GEN_AI_COMPLETION}.tool.strict_json_schema",
+                                original_tool.strict_json_schema
+                            )
+
                             # Capture input
                             span.set_attribute("traceloop.entity.input", args_json)
-                            
+
                             # Execute the original tool
                             result = await original_func(tool_context, args_json)
-                            
+
                             # Capture output
                             span.set_attribute("traceloop.entity.output", str(result))
-                            
+
                             span.set_status(Status(StatusCode.OK))
                             return result
                         except Exception as e:
                             span.set_status(Status(StatusCode.ERROR, str(e)))
                             raise
-                
+
                 return wrapped_on_invoke_tool
-            
+
             # Replace the tool's on_invoke_tool with our wrapped version
             tool.on_invoke_tool = create_wrapped_tool(tool, original_on_invoke_tool)
-            
+
         elif isinstance(tool, (WebSearchTool, FileSearchTool, ComputerTool)):
             # For hosted tools, create spans immediately that will be active during agent execution
             # This recreates the behavior of the original implementation
@@ -591,7 +596,7 @@ def extract_tool_details(tracer: Tracer, tools):
                 ctx = set_span_in_context(root_span, context.get_current())
             else:
                 ctx = context.get_current()
-            
+
             span = tracer.start_span(
                 f"{tool_name}.tool",
                 kind=SpanKind.INTERNAL,
@@ -602,7 +607,7 @@ def extract_tool_details(tracer: Tracer, tools):
                 },
                 context=ctx,
             )
-            
+
             # Set tool-specific attributes
             if isinstance(tool, WebSearchTool):
                 span.set_attribute(f"{GEN_AI_COMPLETION}.tool.type", "WebSearchTool")
@@ -618,7 +623,7 @@ def extract_tool_details(tracer: Tracer, tools):
             elif isinstance(tool, ComputerTool):
                 span.set_attribute(f"{GEN_AI_COMPLETION}.tool.type", "ComputerTool")
                 span.set_attribute(f"{GEN_AI_COMPLETION}.tool.computer", str(tool.computer))
-            
+
             # End the span immediately with OK status
             span.set_status(Status(StatusCode.OK))
             span.end()
