@@ -1,0 +1,1397 @@
+interactions:
+- request:
+    body: '{"include":[],"input":[{"role":"user","content":"Can you edit the carbonara
+      recipe to be vegetarian?"}],"instructions":"You handle general conversation
+      and route recipe tasks to the recipe editor agent.","model":"gpt-4o","stream":true,"tools":[{"name":"transfer_to_recipe_editor_agent","parameters":{"additionalProperties":false,"type":"object","properties":{},"required":[]},"strict":true,"type":"function","description":"Handoff
+      to the Recipe Editor Agent agent to handle the request. "}]}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '491'
+      content-type:
+      - application/json
+      host:
+      - api.openai.com
+      user-agent:
+      - Agents/Python 0.0.19
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - async:asyncio
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.93.0
+      x-stainless-read-timeout:
+      - '600'
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.13.3
+    method: POST
+    uri: https://api.openai.com/v1/responses
+  response:
+    body:
+      string: 'event: response.created
+
+        data: {"type":"response.created","sequence_number":0,"response":{"id":"resp_68778d6abd44819ba9b0f3af5d27129808834f2183fbed82","object":"response","created_at":1752665450,"status":"in_progress","background":false,"error":null,"incomplete_details":null,"instructions":"You
+        handle general conversation and route recipe tasks to the recipe editor agent.","max_output_tokens":null,"max_tool_calls":null,"model":"gpt-4o-2024-08-06","output":[],"parallel_tool_calls":true,"previous_response_id":null,"reasoning":{"effort":null,"summary":null},"service_tier":"auto","store":true,"temperature":1.0,"text":{"format":{"type":"text"}},"tool_choice":"auto","tools":[{"type":"function","description":"Handoff
+        to the Recipe Editor Agent agent to handle the request. ","name":"transfer_to_recipe_editor_agent","parameters":{"additionalProperties":false,"type":"object","properties":{},"required":[]},"strict":true}],"top_logprobs":0,"top_p":1.0,"truncation":"disabled","usage":null,"user":null,"metadata":{}}}
+
+
+        event: response.in_progress
+
+        data: {"type":"response.in_progress","sequence_number":1,"response":{"id":"resp_68778d6abd44819ba9b0f3af5d27129808834f2183fbed82","object":"response","created_at":1752665450,"status":"in_progress","background":false,"error":null,"incomplete_details":null,"instructions":"You
+        handle general conversation and route recipe tasks to the recipe editor agent.","max_output_tokens":null,"max_tool_calls":null,"model":"gpt-4o-2024-08-06","output":[],"parallel_tool_calls":true,"previous_response_id":null,"reasoning":{"effort":null,"summary":null},"service_tier":"auto","store":true,"temperature":1.0,"text":{"format":{"type":"text"}},"tool_choice":"auto","tools":[{"type":"function","description":"Handoff
+        to the Recipe Editor Agent agent to handle the request. ","name":"transfer_to_recipe_editor_agent","parameters":{"additionalProperties":false,"type":"object","properties":{},"required":[]},"strict":true}],"top_logprobs":0,"top_p":1.0,"truncation":"disabled","usage":null,"user":null,"metadata":{}}}
+
+
+        event: response.output_item.added
+
+        data: {"type":"response.output_item.added","sequence_number":2,"output_index":0,"item":{"id":"fc_68778d6ba338819b94b7ff14349b1ec708834f2183fbed82","type":"function_call","status":"in_progress","arguments":"","call_id":"call_yyf88Lh8MunVvPWUwWTDnhE2","name":"transfer_to_recipe_editor_agent"}}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":3,"item_id":"fc_68778d6ba338819b94b7ff14349b1ec708834f2183fbed82","output_index":0,"delta":"{}"}
+
+
+        event: response.function_call_arguments.done
+
+        data: {"type":"response.function_call_arguments.done","sequence_number":4,"item_id":"fc_68778d6ba338819b94b7ff14349b1ec708834f2183fbed82","output_index":0,"arguments":"{}"}
+
+
+        event: response.output_item.done
+
+        data: {"type":"response.output_item.done","sequence_number":5,"output_index":0,"item":{"id":"fc_68778d6ba338819b94b7ff14349b1ec708834f2183fbed82","type":"function_call","status":"completed","arguments":"{}","call_id":"call_yyf88Lh8MunVvPWUwWTDnhE2","name":"transfer_to_recipe_editor_agent"}}
+
+
+        event: response.completed
+
+        data: {"type":"response.completed","sequence_number":6,"response":{"id":"resp_68778d6abd44819ba9b0f3af5d27129808834f2183fbed82","object":"response","created_at":1752665450,"status":"completed","background":false,"error":null,"incomplete_details":null,"instructions":"You
+        handle general conversation and route recipe tasks to the recipe editor agent.","max_output_tokens":null,"max_tool_calls":null,"model":"gpt-4o-2024-08-06","output":[{"id":"fc_68778d6ba338819b94b7ff14349b1ec708834f2183fbed82","type":"function_call","status":"completed","arguments":"{}","call_id":"call_yyf88Lh8MunVvPWUwWTDnhE2","name":"transfer_to_recipe_editor_agent"}],"parallel_tool_calls":true,"previous_response_id":null,"reasoning":{"effort":null,"summary":null},"service_tier":"default","store":true,"temperature":1.0,"text":{"format":{"type":"text"}},"tool_choice":"auto","tools":[{"type":"function","description":"Handoff
+        to the Recipe Editor Agent agent to handle the request. ","name":"transfer_to_recipe_editor_agent","parameters":{"additionalProperties":false,"type":"object","properties":{},"required":[]},"strict":true}],"top_logprobs":0,"top_p":1.0,"truncation":"disabled","usage":{"input_tokens":70,"input_tokens_details":{"cached_tokens":0},"output_tokens":14,"output_tokens_details":{"reasoning_tokens":0},"total_tokens":84},"user":null,"metadata":{}}}
+
+
+        '
+    headers:
+      CF-RAY:
+      - 96012b7a389fc22c-TLV
+      Connection:
+      - keep-alive
+      Content-Type:
+      - text/event-stream; charset=utf-8
+      Date:
+      - Wed, 16 Jul 2025 11:30:50 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=Q5dwK3X5KHnzlhrFje7YzIRtIrbBOyV63h7.T27nbWw-1752665450-1.0.1.1-eG_v9xK9nD4AZy_QmDihZGajqKaDR_Ph_fJzSFadUkEzvEyt2WFLmbaU6CuaDElG64n2cYVDl0MxpM2D9kU31jjhWALNrhzetaiSi0ObaGE;
+        path=/; expires=Wed, 16-Jul-25 12:00:50 GMT; domain=.api.openai.com; HttpOnly;
+        Secure; SameSite=None
+      - _cfuvid=KS8xS12wHosB6wDf1P5Wg9G35o0PpbQ4oS7Y8QvdsmU-1752665450978-0.0.1.1-604800000;
+        path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '153'
+      openai-project:
+      - proj_tzz1TbPPOXaf6j9tEkVUBIAa
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-request-id:
+      - req_1eabfc2a95f4f157086acb8e6b89c8fb
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"include":[],"input":[{"role":"user","content":"Can you edit the carbonara
+      recipe to be vegetarian?"},{"arguments":"{}","call_id":"call_yyf88Lh8MunVvPWUwWTDnhE2","name":"transfer_to_recipe_editor_agent","type":"function_call","id":"fc_68778d6ba338819b94b7ff14349b1ec708834f2183fbed82","status":"completed"},{"call_id":"call_yyf88Lh8MunVvPWUwWTDnhE2","output":"{\"assistant\":
+      \"Recipe Editor Agent\"}","type":"function_call_output"}],"instructions":"You
+      are a recipe editor specialist. Help users search and modify recipes using your
+      tools.","model":"gpt-4o","stream":true,"tools":[{"name":"search_recipes","parameters":{"properties":{"query":{"default":"","title":"Query","type":"string"}},"title":"search_recipes_args","type":"object","additionalProperties":false,"required":["query"]},"strict":true,"type":"function","description":"Search
+      and browse recipes in the database."},{"name":"plan_and_apply_recipe_modifications","parameters":{"$defs":{"Recipe":{"properties":{"id":{"title":"Id","type":"string"},"name":{"title":"Name","type":"string"},"ingredients":{"items":{"type":"string"},"title":"Ingredients","type":"array"},"instructions":{"items":{"type":"string"},"title":"Instructions","type":"array"},"prep_time":{"title":"Prep
+      Time","type":"string"},"cook_time":{"title":"Cook Time","type":"string"},"servings":{"title":"Servings","type":"integer"}},"required":["id","name","ingredients","instructions","prep_time","cook_time","servings"],"title":"Recipe","type":"object","additionalProperties":false}},"properties":{"recipe":{"$ref":"#/$defs/Recipe"},"modification_request":{"title":"Modification
+      Request","type":"string"}},"required":["recipe","modification_request"],"title":"plan_and_apply_recipe_modifications_args","type":"object","additionalProperties":false},"strict":true,"type":"function","description":"Plan
+      modifications to a recipe based on user request and apply them."}]}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '1896'
+      content-type:
+      - application/json
+      cookie:
+      - __cf_bm=Q5dwK3X5KHnzlhrFje7YzIRtIrbBOyV63h7.T27nbWw-1752665450-1.0.1.1-eG_v9xK9nD4AZy_QmDihZGajqKaDR_Ph_fJzSFadUkEzvEyt2WFLmbaU6CuaDElG64n2cYVDl0MxpM2D9kU31jjhWALNrhzetaiSi0ObaGE;
+        _cfuvid=KS8xS12wHosB6wDf1P5Wg9G35o0PpbQ4oS7Y8QvdsmU-1752665450978-0.0.1.1-604800000
+      host:
+      - api.openai.com
+      user-agent:
+      - Agents/Python 0.0.19
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - async:asyncio
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.93.0
+      x-stainless-read-timeout:
+      - '600'
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.13.3
+    method: POST
+    uri: https://api.openai.com/v1/responses
+  response:
+    body:
+      string: 'event: response.created
+
+        data: {"type":"response.created","sequence_number":0,"response":{"id":"resp_68778d6c1038819bba649581aae1fbd508834f2183fbed82","object":"response","created_at":1752665452,"status":"in_progress","background":false,"error":null,"incomplete_details":null,"instructions":"You
+        are a recipe editor specialist. Help users search and modify recipes using
+        your tools.","max_output_tokens":null,"max_tool_calls":null,"model":"gpt-4o-2024-08-06","output":[],"parallel_tool_calls":true,"previous_response_id":null,"reasoning":{"effort":null,"summary":null},"service_tier":"auto","store":true,"temperature":1.0,"text":{"format":{"type":"text"}},"tool_choice":"auto","tools":[{"type":"function","description":"Search
+        and browse recipes in the database.","name":"search_recipes","parameters":{"properties":{"query":{"default":"","title":"Query","type":"string"}},"title":"search_recipes_args","type":"object","additionalProperties":false,"required":["query"]},"strict":true},{"type":"function","description":"Plan
+        modifications to a recipe based on user request and apply them.","name":"plan_and_apply_recipe_modifications","parameters":{"$defs":{"Recipe":{"properties":{"id":{"title":"Id","type":"string"},"name":{"title":"Name","type":"string"},"ingredients":{"items":{"type":"string"},"title":"Ingredients","type":"array"},"instructions":{"items":{"type":"string"},"title":"Instructions","type":"array"},"prep_time":{"title":"Prep
+        Time","type":"string"},"cook_time":{"title":"Cook Time","type":"string"},"servings":{"title":"Servings","type":"integer"}},"required":["id","name","ingredients","instructions","prep_time","cook_time","servings"],"title":"Recipe","type":"object","additionalProperties":false}},"properties":{"recipe":{"$ref":"#/$defs/Recipe"},"modification_request":{"title":"Modification
+        Request","type":"string"}},"required":["recipe","modification_request"],"title":"plan_and_apply_recipe_modifications_args","type":"object","additionalProperties":false},"strict":true}],"top_logprobs":0,"top_p":1.0,"truncation":"disabled","usage":null,"user":null,"metadata":{}}}
+
+
+        event: response.in_progress
+
+        data: {"type":"response.in_progress","sequence_number":1,"response":{"id":"resp_68778d6c1038819bba649581aae1fbd508834f2183fbed82","object":"response","created_at":1752665452,"status":"in_progress","background":false,"error":null,"incomplete_details":null,"instructions":"You
+        are a recipe editor specialist. Help users search and modify recipes using
+        your tools.","max_output_tokens":null,"max_tool_calls":null,"model":"gpt-4o-2024-08-06","output":[],"parallel_tool_calls":true,"previous_response_id":null,"reasoning":{"effort":null,"summary":null},"service_tier":"auto","store":true,"temperature":1.0,"text":{"format":{"type":"text"}},"tool_choice":"auto","tools":[{"type":"function","description":"Search
+        and browse recipes in the database.","name":"search_recipes","parameters":{"properties":{"query":{"default":"","title":"Query","type":"string"}},"title":"search_recipes_args","type":"object","additionalProperties":false,"required":["query"]},"strict":true},{"type":"function","description":"Plan
+        modifications to a recipe based on user request and apply them.","name":"plan_and_apply_recipe_modifications","parameters":{"$defs":{"Recipe":{"properties":{"id":{"title":"Id","type":"string"},"name":{"title":"Name","type":"string"},"ingredients":{"items":{"type":"string"},"title":"Ingredients","type":"array"},"instructions":{"items":{"type":"string"},"title":"Instructions","type":"array"},"prep_time":{"title":"Prep
+        Time","type":"string"},"cook_time":{"title":"Cook Time","type":"string"},"servings":{"title":"Servings","type":"integer"}},"required":["id","name","ingredients","instructions","prep_time","cook_time","servings"],"title":"Recipe","type":"object","additionalProperties":false}},"properties":{"recipe":{"$ref":"#/$defs/Recipe"},"modification_request":{"title":"Modification
+        Request","type":"string"}},"required":["recipe","modification_request"],"title":"plan_and_apply_recipe_modifications_args","type":"object","additionalProperties":false},"strict":true}],"top_logprobs":0,"top_p":1.0,"truncation":"disabled","usage":null,"user":null,"metadata":{}}}
+
+
+        event: response.output_item.added
+
+        data: {"type":"response.output_item.added","sequence_number":2,"output_index":0,"item":{"id":"fc_68778d6cd608819bb13f66ac50c463d908834f2183fbed82","type":"function_call","status":"in_progress","arguments":"","call_id":"call_2Qnqf6tRaJ67xGOc1ZN5xvNU","name":"search_recipes"}}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":3,"item_id":"fc_68778d6cd608819bb13f66ac50c463d908834f2183fbed82","output_index":0,"delta":"{\""}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":4,"item_id":"fc_68778d6cd608819bb13f66ac50c463d908834f2183fbed82","output_index":0,"delta":"query"}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":5,"item_id":"fc_68778d6cd608819bb13f66ac50c463d908834f2183fbed82","output_index":0,"delta":"\":\""}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":6,"item_id":"fc_68778d6cd608819bb13f66ac50c463d908834f2183fbed82","output_index":0,"delta":"carbon"}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":7,"item_id":"fc_68778d6cd608819bb13f66ac50c463d908834f2183fbed82","output_index":0,"delta":"ara"}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":8,"item_id":"fc_68778d6cd608819bb13f66ac50c463d908834f2183fbed82","output_index":0,"delta":"\"}"}
+
+
+        event: response.function_call_arguments.done
+
+        data: {"type":"response.function_call_arguments.done","sequence_number":9,"item_id":"fc_68778d6cd608819bb13f66ac50c463d908834f2183fbed82","output_index":0,"arguments":"{\"query\":\"carbonara\"}"}
+
+
+        event: response.output_item.done
+
+        data: {"type":"response.output_item.done","sequence_number":10,"output_index":0,"item":{"id":"fc_68778d6cd608819bb13f66ac50c463d908834f2183fbed82","type":"function_call","status":"completed","arguments":"{\"query\":\"carbonara\"}","call_id":"call_2Qnqf6tRaJ67xGOc1ZN5xvNU","name":"search_recipes"}}
+
+
+        event: response.completed
+
+        data: {"type":"response.completed","sequence_number":11,"response":{"id":"resp_68778d6c1038819bba649581aae1fbd508834f2183fbed82","object":"response","created_at":1752665452,"status":"completed","background":false,"error":null,"incomplete_details":null,"instructions":"You
+        are a recipe editor specialist. Help users search and modify recipes using
+        your tools.","max_output_tokens":null,"max_tool_calls":null,"model":"gpt-4o-2024-08-06","output":[{"id":"fc_68778d6cd608819bb13f66ac50c463d908834f2183fbed82","type":"function_call","status":"completed","arguments":"{\"query\":\"carbonara\"}","call_id":"call_2Qnqf6tRaJ67xGOc1ZN5xvNU","name":"search_recipes"}],"parallel_tool_calls":true,"previous_response_id":null,"reasoning":{"effort":null,"summary":null},"service_tier":"default","store":true,"temperature":1.0,"text":{"format":{"type":"text"}},"tool_choice":"auto","tools":[{"type":"function","description":"Search
+        and browse recipes in the database.","name":"search_recipes","parameters":{"properties":{"query":{"default":"","title":"Query","type":"string"}},"title":"search_recipes_args","type":"object","additionalProperties":false,"required":["query"]},"strict":true},{"type":"function","description":"Plan
+        modifications to a recipe based on user request and apply them.","name":"plan_and_apply_recipe_modifications","parameters":{"$defs":{"Recipe":{"properties":{"id":{"title":"Id","type":"string"},"name":{"title":"Name","type":"string"},"ingredients":{"items":{"type":"string"},"title":"Ingredients","type":"array"},"instructions":{"items":{"type":"string"},"title":"Instructions","type":"array"},"prep_time":{"title":"Prep
+        Time","type":"string"},"cook_time":{"title":"Cook Time","type":"string"},"servings":{"title":"Servings","type":"integer"}},"required":["id","name","ingredients","instructions","prep_time","cook_time","servings"],"title":"Recipe","type":"object","additionalProperties":false}},"properties":{"recipe":{"$ref":"#/$defs/Recipe"},"modification_request":{"title":"Modification
+        Request","type":"string"}},"required":["recipe","modification_request"],"title":"plan_and_apply_recipe_modifications_args","type":"object","additionalProperties":false},"strict":true}],"top_logprobs":0,"top_p":1.0,"truncation":"disabled","usage":{"input_tokens":221,"input_tokens_details":{"cached_tokens":0},"output_tokens":17,"output_tokens_details":{"reasoning_tokens":0},"total_tokens":238},"user":null,"metadata":{}}}
+
+
+        '
+    headers:
+      CF-RAY:
+      - 96012b8268aec22c-TLV
+      Connection:
+      - keep-alive
+      Content-Type:
+      - text/event-stream; charset=utf-8
+      Date:
+      - Wed, 16 Jul 2025 11:30:52 GMT
+      Server:
+      - cloudflare
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '104'
+      openai-project:
+      - proj_tzz1TbPPOXaf6j9tEkVUBIAa
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-request-id:
+      - req_6cc4220a0f9e330693569e62349e6452
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"include":[],"input":[{"role":"user","content":"Can you edit the carbonara
+      recipe to be vegetarian?"},{"arguments":"{}","call_id":"call_yyf88Lh8MunVvPWUwWTDnhE2","name":"transfer_to_recipe_editor_agent","type":"function_call","id":"fc_68778d6ba338819b94b7ff14349b1ec708834f2183fbed82","status":"completed"},{"call_id":"call_yyf88Lh8MunVvPWUwWTDnhE2","output":"{\"assistant\":
+      \"Recipe Editor Agent\"}","type":"function_call_output"},{"arguments":"{\"query\":\"carbonara\"}","call_id":"call_2Qnqf6tRaJ67xGOc1ZN5xvNU","name":"search_recipes","type":"function_call","id":"fc_68778d6cd608819bb13f66ac50c463d908834f2183fbed82","status":"completed"},{"call_id":"call_2Qnqf6tRaJ67xGOc1ZN5xvNU","output":"status=''success''
+      message=''Found 1 recipes matching \"carbonara\"'' recipes={''spaghetti_carbonara'':
+      Recipe(id=''spaghetti_carbonara'', name=''Spaghetti Carbonara'', ingredients=[''400g
+      spaghetti'', ''200g pancetta'', ''4 large eggs'', ''100g Pecorino Romano cheese''],
+      instructions=[''Cook spaghetti'', ''Dice pancetta'', ''Whisk eggs with cheese''],
+      prep_time=''10 minutes'', cook_time=''15 minutes'', servings=4)} recipe_count=1
+      query=''carbonara''","type":"function_call_output"}],"instructions":"You are
+      a recipe editor specialist. Help users search and modify recipes using your
+      tools.","model":"gpt-4o","stream":true,"tools":[{"name":"search_recipes","parameters":{"properties":{"query":{"default":"","title":"Query","type":"string"}},"title":"search_recipes_args","type":"object","additionalProperties":false,"required":["query"]},"strict":true,"type":"function","description":"Search
+      and browse recipes in the database."},{"name":"plan_and_apply_recipe_modifications","parameters":{"$defs":{"Recipe":{"properties":{"id":{"title":"Id","type":"string"},"name":{"title":"Name","type":"string"},"ingredients":{"items":{"type":"string"},"title":"Ingredients","type":"array"},"instructions":{"items":{"type":"string"},"title":"Instructions","type":"array"},"prep_time":{"title":"Prep
+      Time","type":"string"},"cook_time":{"title":"Cook Time","type":"string"},"servings":{"title":"Servings","type":"integer"}},"required":["id","name","ingredients","instructions","prep_time","cook_time","servings"],"title":"Recipe","type":"object","additionalProperties":false}},"properties":{"recipe":{"$ref":"#/$defs/Recipe"},"modification_request":{"title":"Modification
+      Request","type":"string"}},"required":["recipe","modification_request"],"title":"plan_and_apply_recipe_modifications_args","type":"object","additionalProperties":false},"strict":true,"type":"function","description":"Plan
+      modifications to a recipe based on user request and apply them."}]}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '2617'
+      content-type:
+      - application/json
+      cookie:
+      - __cf_bm=Q5dwK3X5KHnzlhrFje7YzIRtIrbBOyV63h7.T27nbWw-1752665450-1.0.1.1-eG_v9xK9nD4AZy_QmDihZGajqKaDR_Ph_fJzSFadUkEzvEyt2WFLmbaU6CuaDElG64n2cYVDl0MxpM2D9kU31jjhWALNrhzetaiSi0ObaGE;
+        _cfuvid=KS8xS12wHosB6wDf1P5Wg9G35o0PpbQ4oS7Y8QvdsmU-1752665450978-0.0.1.1-604800000
+      host:
+      - api.openai.com
+      user-agent:
+      - Agents/Python 0.0.19
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - async:asyncio
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.93.0
+      x-stainless-read-timeout:
+      - '600'
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.13.3
+    method: POST
+    uri: https://api.openai.com/v1/responses
+  response:
+    body:
+      string: 'event: response.created
+
+        data: {"type":"response.created","sequence_number":0,"response":{"id":"resp_68778d6d8a00819bb8631a09a5c0cc0408834f2183fbed82","object":"response","created_at":1752665453,"status":"in_progress","background":false,"error":null,"incomplete_details":null,"instructions":"You
+        are a recipe editor specialist. Help users search and modify recipes using
+        your tools.","max_output_tokens":null,"max_tool_calls":null,"model":"gpt-4o-2024-08-06","output":[],"parallel_tool_calls":true,"previous_response_id":null,"reasoning":{"effort":null,"summary":null},"service_tier":"auto","store":true,"temperature":1.0,"text":{"format":{"type":"text"}},"tool_choice":"auto","tools":[{"type":"function","description":"Search
+        and browse recipes in the database.","name":"search_recipes","parameters":{"properties":{"query":{"default":"","title":"Query","type":"string"}},"title":"search_recipes_args","type":"object","additionalProperties":false,"required":["query"]},"strict":true},{"type":"function","description":"Plan
+        modifications to a recipe based on user request and apply them.","name":"plan_and_apply_recipe_modifications","parameters":{"$defs":{"Recipe":{"properties":{"id":{"title":"Id","type":"string"},"name":{"title":"Name","type":"string"},"ingredients":{"items":{"type":"string"},"title":"Ingredients","type":"array"},"instructions":{"items":{"type":"string"},"title":"Instructions","type":"array"},"prep_time":{"title":"Prep
+        Time","type":"string"},"cook_time":{"title":"Cook Time","type":"string"},"servings":{"title":"Servings","type":"integer"}},"required":["id","name","ingredients","instructions","prep_time","cook_time","servings"],"title":"Recipe","type":"object","additionalProperties":false}},"properties":{"recipe":{"$ref":"#/$defs/Recipe"},"modification_request":{"title":"Modification
+        Request","type":"string"}},"required":["recipe","modification_request"],"title":"plan_and_apply_recipe_modifications_args","type":"object","additionalProperties":false},"strict":true}],"top_logprobs":0,"top_p":1.0,"truncation":"disabled","usage":null,"user":null,"metadata":{}}}
+
+
+        event: response.in_progress
+
+        data: {"type":"response.in_progress","sequence_number":1,"response":{"id":"resp_68778d6d8a00819bb8631a09a5c0cc0408834f2183fbed82","object":"response","created_at":1752665453,"status":"in_progress","background":false,"error":null,"incomplete_details":null,"instructions":"You
+        are a recipe editor specialist. Help users search and modify recipes using
+        your tools.","max_output_tokens":null,"max_tool_calls":null,"model":"gpt-4o-2024-08-06","output":[],"parallel_tool_calls":true,"previous_response_id":null,"reasoning":{"effort":null,"summary":null},"service_tier":"auto","store":true,"temperature":1.0,"text":{"format":{"type":"text"}},"tool_choice":"auto","tools":[{"type":"function","description":"Search
+        and browse recipes in the database.","name":"search_recipes","parameters":{"properties":{"query":{"default":"","title":"Query","type":"string"}},"title":"search_recipes_args","type":"object","additionalProperties":false,"required":["query"]},"strict":true},{"type":"function","description":"Plan
+        modifications to a recipe based on user request and apply them.","name":"plan_and_apply_recipe_modifications","parameters":{"$defs":{"Recipe":{"properties":{"id":{"title":"Id","type":"string"},"name":{"title":"Name","type":"string"},"ingredients":{"items":{"type":"string"},"title":"Ingredients","type":"array"},"instructions":{"items":{"type":"string"},"title":"Instructions","type":"array"},"prep_time":{"title":"Prep
+        Time","type":"string"},"cook_time":{"title":"Cook Time","type":"string"},"servings":{"title":"Servings","type":"integer"}},"required":["id","name","ingredients","instructions","prep_time","cook_time","servings"],"title":"Recipe","type":"object","additionalProperties":false}},"properties":{"recipe":{"$ref":"#/$defs/Recipe"},"modification_request":{"title":"Modification
+        Request","type":"string"}},"required":["recipe","modification_request"],"title":"plan_and_apply_recipe_modifications_args","type":"object","additionalProperties":false},"strict":true}],"top_logprobs":0,"top_p":1.0,"truncation":"disabled","usage":null,"user":null,"metadata":{}}}
+
+
+        event: response.output_item.added
+
+        data: {"type":"response.output_item.added","sequence_number":2,"output_index":0,"item":{"id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","type":"function_call","status":"in_progress","arguments":"","call_id":"call_WhdshMQWkQekR41Ji4EsSLHk","name":"plan_and_apply_recipe_modifications"}}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":3,"item_id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","output_index":0,"delta":"{\""}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":4,"item_id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","output_index":0,"delta":"recipe"}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":5,"item_id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","output_index":0,"delta":"\":{\""}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":6,"item_id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","output_index":0,"delta":"id"}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":7,"item_id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","output_index":0,"delta":"\":\""}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":8,"item_id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","output_index":0,"delta":"sp"}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":9,"item_id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","output_index":0,"delta":"aghetti"}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":10,"item_id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","output_index":0,"delta":"_car"}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":11,"item_id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","output_index":0,"delta":"bon"}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":12,"item_id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","output_index":0,"delta":"ara"}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":13,"item_id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","output_index":0,"delta":"\",\""}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":14,"item_id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","output_index":0,"delta":"name"}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":15,"item_id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","output_index":0,"delta":"\":\""}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":16,"item_id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","output_index":0,"delta":"Sp"}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":17,"item_id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","output_index":0,"delta":"aghetti"}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":18,"item_id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","output_index":0,"delta":"
+        Carbon"}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":19,"item_id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","output_index":0,"delta":"ara"}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":20,"item_id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","output_index":0,"delta":"\",\""}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":21,"item_id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","output_index":0,"delta":"ingredients"}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":22,"item_id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","output_index":0,"delta":"\":[\""}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":23,"item_id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","output_index":0,"delta":"400"}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":24,"item_id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","output_index":0,"delta":"g"}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":25,"item_id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","output_index":0,"delta":"
+        spaghetti"}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":26,"item_id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","output_index":0,"delta":"\",\""}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":27,"item_id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","output_index":0,"delta":"200"}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":28,"item_id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","output_index":0,"delta":"g"}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":29,"item_id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","output_index":0,"delta":"
+        panc"}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":30,"item_id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","output_index":0,"delta":"etta"}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":31,"item_id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","output_index":0,"delta":"\",\""}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":32,"item_id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","output_index":0,"delta":"4"}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":33,"item_id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","output_index":0,"delta":"
+        large"}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":34,"item_id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","output_index":0,"delta":"
+        eggs"}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":35,"item_id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","output_index":0,"delta":"\",\""}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":36,"item_id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","output_index":0,"delta":"100"}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":37,"item_id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","output_index":0,"delta":"g"}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":38,"item_id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","output_index":0,"delta":"
+        Pec"}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":39,"item_id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","output_index":0,"delta":"or"}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":40,"item_id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","output_index":0,"delta":"ino"}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":41,"item_id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","output_index":0,"delta":"
+        Romano"}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":42,"item_id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","output_index":0,"delta":"
+        cheese"}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":43,"item_id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","output_index":0,"delta":"\"],"}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":44,"item_id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","output_index":0,"delta":"\""}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":45,"item_id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","output_index":0,"delta":"instructions"}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":46,"item_id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","output_index":0,"delta":"\":[\""}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":47,"item_id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","output_index":0,"delta":"Cook"}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":48,"item_id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","output_index":0,"delta":"
+        spaghetti"}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":49,"item_id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","output_index":0,"delta":"\",\""}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":50,"item_id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","output_index":0,"delta":"Dice"}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":51,"item_id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","output_index":0,"delta":"
+        panc"}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":52,"item_id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","output_index":0,"delta":"etta"}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":53,"item_id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","output_index":0,"delta":"\",\""}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":54,"item_id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","output_index":0,"delta":"Wh"}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":55,"item_id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","output_index":0,"delta":"isk"}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":56,"item_id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","output_index":0,"delta":"
+        eggs"}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":57,"item_id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","output_index":0,"delta":"
+        with"}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":58,"item_id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","output_index":0,"delta":"
+        cheese"}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":59,"item_id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","output_index":0,"delta":"\"],"}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":60,"item_id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","output_index":0,"delta":"\""}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":61,"item_id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","output_index":0,"delta":"prep"}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":62,"item_id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","output_index":0,"delta":"_time"}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":63,"item_id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","output_index":0,"delta":"\":\""}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":64,"item_id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","output_index":0,"delta":"10"}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":65,"item_id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","output_index":0,"delta":"
+        minutes"}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":66,"item_id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","output_index":0,"delta":"\",\""}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":67,"item_id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","output_index":0,"delta":"cook"}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":68,"item_id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","output_index":0,"delta":"_time"}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":69,"item_id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","output_index":0,"delta":"\":\""}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":70,"item_id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","output_index":0,"delta":"15"}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":71,"item_id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","output_index":0,"delta":"
+        minutes"}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":72,"item_id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","output_index":0,"delta":"\",\""}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":73,"item_id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","output_index":0,"delta":"serv"}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":74,"item_id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","output_index":0,"delta":"ings"}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":75,"item_id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","output_index":0,"delta":"\":"}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":76,"item_id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","output_index":0,"delta":"4"}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":77,"item_id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","output_index":0,"delta":"},\""}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":78,"item_id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","output_index":0,"delta":"mod"}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":79,"item_id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","output_index":0,"delta":"ification"}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":80,"item_id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","output_index":0,"delta":"_request"}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":81,"item_id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","output_index":0,"delta":"\":\""}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":82,"item_id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","output_index":0,"delta":"Make"}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":83,"item_id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","output_index":0,"delta":"
+        it"}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":84,"item_id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","output_index":0,"delta":"
+        vegetarian"}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":85,"item_id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","output_index":0,"delta":"
+        by"}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":86,"item_id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","output_index":0,"delta":"
+        replacing"}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":87,"item_id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","output_index":0,"delta":"
+        panc"}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":88,"item_id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","output_index":0,"delta":"etta"}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":89,"item_id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","output_index":0,"delta":"
+        with"}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":90,"item_id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","output_index":0,"delta":"
+        a"}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":91,"item_id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","output_index":0,"delta":"
+        vegetarian"}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":92,"item_id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","output_index":0,"delta":"
+        alternative"}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":93,"item_id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","output_index":0,"delta":"
+        and"}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":94,"item_id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","output_index":0,"delta":"
+        ensure"}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":95,"item_id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","output_index":0,"delta":"
+        no"}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":96,"item_id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","output_index":0,"delta":"
+        other"}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":97,"item_id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","output_index":0,"delta":"
+        meat"}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":98,"item_id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","output_index":0,"delta":"
+        products"}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":99,"item_id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","output_index":0,"delta":"
+        are"}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":100,"item_id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","output_index":0,"delta":"
+        used"}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":101,"item_id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","output_index":0,"delta":".\""}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":102,"item_id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","output_index":0,"delta":"}"}
+
+
+        event: response.function_call_arguments.done
+
+        data: {"type":"response.function_call_arguments.done","sequence_number":103,"item_id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","output_index":0,"arguments":"{\"recipe\":{\"id\":\"spaghetti_carbonara\",\"name\":\"Spaghetti
+        Carbonara\",\"ingredients\":[\"400g spaghetti\",\"200g pancetta\",\"4 large
+        eggs\",\"100g Pecorino Romano cheese\"],\"instructions\":[\"Cook spaghetti\",\"Dice
+        pancetta\",\"Whisk eggs with cheese\"],\"prep_time\":\"10 minutes\",\"cook_time\":\"15
+        minutes\",\"servings\":4},\"modification_request\":\"Make it vegetarian by
+        replacing pancetta with a vegetarian alternative and ensure no other meat
+        products are used.\"}"}
+
+
+        event: response.output_item.done
+
+        data: {"type":"response.output_item.done","sequence_number":104,"output_index":0,"item":{"id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","type":"function_call","status":"completed","arguments":"{\"recipe\":{\"id\":\"spaghetti_carbonara\",\"name\":\"Spaghetti
+        Carbonara\",\"ingredients\":[\"400g spaghetti\",\"200g pancetta\",\"4 large
+        eggs\",\"100g Pecorino Romano cheese\"],\"instructions\":[\"Cook spaghetti\",\"Dice
+        pancetta\",\"Whisk eggs with cheese\"],\"prep_time\":\"10 minutes\",\"cook_time\":\"15
+        minutes\",\"servings\":4},\"modification_request\":\"Make it vegetarian by
+        replacing pancetta with a vegetarian alternative and ensure no other meat
+        products are used.\"}","call_id":"call_WhdshMQWkQekR41Ji4EsSLHk","name":"plan_and_apply_recipe_modifications"}}
+
+
+        event: response.completed
+
+        data: {"type":"response.completed","sequence_number":105,"response":{"id":"resp_68778d6d8a00819bb8631a09a5c0cc0408834f2183fbed82","object":"response","created_at":1752665453,"status":"completed","background":false,"error":null,"incomplete_details":null,"instructions":"You
+        are a recipe editor specialist. Help users search and modify recipes using
+        your tools.","max_output_tokens":null,"max_tool_calls":null,"model":"gpt-4o-2024-08-06","output":[{"id":"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82","type":"function_call","status":"completed","arguments":"{\"recipe\":{\"id\":\"spaghetti_carbonara\",\"name\":\"Spaghetti
+        Carbonara\",\"ingredients\":[\"400g spaghetti\",\"200g pancetta\",\"4 large
+        eggs\",\"100g Pecorino Romano cheese\"],\"instructions\":[\"Cook spaghetti\",\"Dice
+        pancetta\",\"Whisk eggs with cheese\"],\"prep_time\":\"10 minutes\",\"cook_time\":\"15
+        minutes\",\"servings\":4},\"modification_request\":\"Make it vegetarian by
+        replacing pancetta with a vegetarian alternative and ensure no other meat
+        products are used.\"}","call_id":"call_WhdshMQWkQekR41Ji4EsSLHk","name":"plan_and_apply_recipe_modifications"}],"parallel_tool_calls":true,"previous_response_id":null,"reasoning":{"effort":null,"summary":null},"service_tier":"default","store":true,"temperature":1.0,"text":{"format":{"type":"text"}},"tool_choice":"auto","tools":[{"type":"function","description":"Search
+        and browse recipes in the database.","name":"search_recipes","parameters":{"properties":{"query":{"default":"","title":"Query","type":"string"}},"title":"search_recipes_args","type":"object","additionalProperties":false,"required":["query"]},"strict":true},{"type":"function","description":"Plan
+        modifications to a recipe based on user request and apply them.","name":"plan_and_apply_recipe_modifications","parameters":{"$defs":{"Recipe":{"properties":{"id":{"title":"Id","type":"string"},"name":{"title":"Name","type":"string"},"ingredients":{"items":{"type":"string"},"title":"Ingredients","type":"array"},"instructions":{"items":{"type":"string"},"title":"Instructions","type":"array"},"prep_time":{"title":"Prep
+        Time","type":"string"},"cook_time":{"title":"Cook Time","type":"string"},"servings":{"title":"Servings","type":"integer"}},"required":["id","name","ingredients","instructions","prep_time","cook_time","servings"],"title":"Recipe","type":"object","additionalProperties":false}},"properties":{"recipe":{"$ref":"#/$defs/Recipe"},"modification_request":{"title":"Modification
+        Request","type":"string"}},"required":["recipe","modification_request"],"title":"plan_and_apply_recipe_modifications_args","type":"object","additionalProperties":false},"strict":true}],"top_logprobs":0,"top_p":1.0,"truncation":"disabled","usage":{"input_tokens":354,"input_tokens_details":{"cached_tokens":0},"output_tokens":114,"output_tokens_details":{"reasoning_tokens":0},"total_tokens":468},"user":null,"metadata":{}}}
+
+
+        '
+    headers:
+      CF-RAY:
+      - 96012b8bb884c22c-TLV
+      Connection:
+      - keep-alive
+      Content-Type:
+      - text/event-stream; charset=utf-8
+      Date:
+      - Wed, 16 Jul 2025 11:30:53 GMT
+      Server:
+      - cloudflare
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '78'
+      openai-project:
+      - proj_tzz1TbPPOXaf6j9tEkVUBIAa
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-request-id:
+      - req_3557704cd798d9d0493dcd6bb49c0445
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"data":[{"object":"trace","id":"trace_b42d0aecd72a4353bec8809e9bd4c0cf","workflow_name":"Agent
+      workflow","group_id":null,"metadata":null},{"object":"trace.span","id":"span_d49322a46432499ca112144f","trace_id":"trace_b42d0aecd72a4353bec8809e9bd4c0cf","parent_id":"span_8f8402f303024fddae32ce4e","started_at":"2025-07-16T11:30:50.286097+00:00","ended_at":"2025-07-16T11:30:51.827209+00:00","span_data":{"type":"response","response_id":"resp_68778d6abd44819ba9b0f3af5d27129808834f2183fbed82"},"error":null},{"object":"trace.span","id":"span_3d80820580a742d1b5219558","trace_id":"trace_b42d0aecd72a4353bec8809e9bd4c0cf","parent_id":"span_8f8402f303024fddae32ce4e","started_at":"2025-07-16T11:30:51.827656+00:00","ended_at":"2025-07-16T11:30:51.827762+00:00","span_data":{"type":"handoff","from_agent":"Main
+      Chat Agent","to_agent":"Recipe Editor Agent"},"error":null},{"object":"trace.span","id":"span_8f8402f303024fddae32ce4e","trace_id":"trace_b42d0aecd72a4353bec8809e9bd4c0cf","parent_id":null,"started_at":"2025-07-16T11:30:50.279916+00:00","ended_at":"2025-07-16T11:30:51.827817+00:00","span_data":{"type":"agent","name":"Main
+      Chat Agent","handoffs":["Recipe Editor Agent"],"tools":[],"output_type":"str"},"error":null},{"object":"trace.span","id":"span_fd6ac8650ee84b049804cdc2","trace_id":"trace_b42d0aecd72a4353bec8809e9bd4c0cf","parent_id":"span_396de1432e494338a1fae820","started_at":"2025-07-16T11:30:51.828503+00:00","ended_at":"2025-07-16T11:30:53.299651+00:00","span_data":{"type":"response","response_id":"resp_68778d6c1038819bba649581aae1fbd508834f2183fbed82"},"error":null},{"object":"trace.span","id":"span_0b60aed436dc44c3bf250293","trace_id":"trace_b42d0aecd72a4353bec8809e9bd4c0cf","parent_id":"span_396de1432e494338a1fae820","started_at":"2025-07-16T11:30:53.300029+00:00","ended_at":"2025-07-16T11:30:53.300346+00:00","span_data":{"type":"function","name":"search_recipes","input":"{\"query\":\"carbonara\"}","output":"status=''success''
+      message=''Found 1 recipes matching \"carbonara\"'' recipes={''spaghetti_carbonara'':
+      Recipe(id=''spaghetti_carbonara'', name=''Spaghetti Carbonara'', ingredients=[''400g
+      spaghetti'', ''200g pancetta'', ''4 large eggs'', ''100g Pecorino Romano cheese''],
+      instructions=[''Cook spaghetti'', ''Dice pancetta'', ''Whisk eggs with cheese''],
+      prep_time=''10 minutes'', cook_time=''15 minutes'', servings=4)} recipe_count=1
+      query=''carbonara''","mcp_data":null},"error":null}]}'
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '2396'
+      content-type:
+      - application/json
+      host:
+      - api.openai.com
+      openai-beta:
+      - traces=v1
+      user-agent:
+      - python-httpx/0.28.1
+    method: POST
+    uri: https://api.openai.com/v1/traces/ingest
+  response:
+    body:
+      string: ''
+    headers:
+      CF-RAY:
+      - 96012b96ce86c222-TLV
+      Connection:
+      - keep-alive
+      Date:
+      - Wed, 16 Jul 2025 11:30:56 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=4MlHEsqG3_nwv_5I0YxMPgkE_IdsMBqGTw99.FUiZ5Q-1752665456-1.0.1.1-yWe1vwIKpW0jEl6X6j_CWA7bMpML5Ps4d2vQaaZYgYlUzQzDL.baS__sn7QN.OVuxb.wN6c5sawLLuNhxdrqk1eclw4RDqWN1INauE41oIQ;
+        path=/; expires=Wed, 16-Jul-25 12:00:56 GMT; domain=.api.openai.com; HttpOnly;
+        Secure; SameSite=None
+      - _cfuvid=nycvHbep8qGpppYOKsd3yP0viYITs9TTCOIR26CIGXs-1752665456163-0.0.1.1-604800000;
+        path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
+      X-Content-Type-Options:
+      - nosniff
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '91'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-request-id:
+      - req_b3c60c8515c8e52b829dc2af698b1db1
+    status:
+      code: 204
+      message: No Content
+- request:
+    body: "{\"data\":[{\"object\":\"trace.span\",\"id\":\"span_af7dafa53aad4f6996d0d2af\",\"trace_id\":\"trace_b42d0aecd72a4353bec8809e9bd4c0cf\",\"parent_id\":\"span_396de1432e494338a1fae820\",\"started_at\":\"2025-07-16T11:30:53.300739+00:00\",\"ended_at\":\"2025-07-16T11:30:55.994698+00:00\",\"span_data\":{\"type\":\"response\",\"response_id\":\"resp_68778d6d8a00819bb8631a09a5c0cc0408834f2183fbed82\"},\"error\":null},{\"object\":\"trace.span\",\"id\":\"span_97b870f1d2754e6e8d89de37\",\"trace_id\":\"trace_b42d0aecd72a4353bec8809e9bd4c0cf\",\"parent_id\":\"span_396de1432e494338a1fae820\",\"started_at\":\"2025-07-16T11:30:55.995301+00:00\",\"ended_at\":\"2025-07-16T11:30:55.995694+00:00\",\"span_data\":{\"type\":\"function\",\"name\":\"plan_and_apply_recipe_modifications\",\"input\":\"{\\\"recipe\\\":{\\\"id\\\":\\\"spaghetti_carbonara\\\",\\\"name\\\":\\\"Spaghetti
+      Carbonara\\\",\\\"ingredients\\\":[\\\"400g spaghetti\\\",\\\"200g pancetta\\\",\\\"4
+      large eggs\\\",\\\"100g Pecorino Romano cheese\\\"],\\\"instructions\\\":[\\\"Cook
+      spaghetti\\\",\\\"Dice pancetta\\\",\\\"Whisk eggs with cheese\\\"],\\\"prep_time\\\":\\\"10
+      minutes\\\",\\\"cook_time\\\":\\\"15 minutes\\\",\\\"servings\\\":4},\\\"modification_request\\\":\\\"Make
+      it vegetarian by replacing pancetta with a vegetarian alternative and ensure
+      no other meat products are used.\\\"}\",\"output\":\"status='success' message='Successfully
+      modified Spaghetti Carbonara to be vegetarian' modified_recipe=Recipe(id='spaghetti_carbonara',
+      name='Vegetarian Carbonara', ingredients=['400g spaghetti', '200g mushrooms',
+      '4 large eggs', '100g Pecorino Romano cheese'], instructions=['Cook spaghetti',
+      'Saut\xE9 mushrooms', 'Whisk eggs with cheese'], prep_time='10 minutes', cook_time='15
+      minutes', servings=4) changes_made=['Replaced pancetta with mushrooms'] original_recipe=Recipe(id='spaghetti_carbonara',
+      name='Spaghetti Carbonara', ingredients=['400g spaghetti', '200g pancetta',
+      '4 large eggs', '100g Pecorino Romano cheese'], instructions=['Cook spaghetti',
+      'Dice pancetta', 'Whisk eggs with cheese'], prep_time='10 minutes', cook_time='15
+      minutes', servings=4)\",\"mcp_data\":null},\"error\":null}]}"
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '1996'
+      content-type:
+      - application/json
+      cookie:
+      - __cf_bm=4MlHEsqG3_nwv_5I0YxMPgkE_IdsMBqGTw99.FUiZ5Q-1752665456-1.0.1.1-yWe1vwIKpW0jEl6X6j_CWA7bMpML5Ps4d2vQaaZYgYlUzQzDL.baS__sn7QN.OVuxb.wN6c5sawLLuNhxdrqk1eclw4RDqWN1INauE41oIQ;
+        _cfuvid=nycvHbep8qGpppYOKsd3yP0viYITs9TTCOIR26CIGXs-1752665456163-0.0.1.1-604800000
+      host:
+      - api.openai.com
+      openai-beta:
+      - traces=v1
+      user-agent:
+      - python-httpx/0.28.1
+    method: POST
+    uri: https://api.openai.com/v1/traces/ingest
+  response:
+    body:
+      string: ''
+    headers:
+      CF-RAY:
+      - 96012b9d1dd5c222-TLV
+      Connection:
+      - keep-alive
+      Date:
+      - Wed, 16 Jul 2025 11:30:56 GMT
+      Server:
+      - cloudflare
+      X-Content-Type-Options:
+      - nosniff
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '88'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-request-id:
+      - req_ed8e8878b20875e4be33fccfbbfb1ff8
+    status:
+      code: 204
+      message: No Content
+- request:
+    body: "{\"include\":[],\"input\":[{\"role\":\"user\",\"content\":\"Can you edit
+      the carbonara recipe to be vegetarian?\"},{\"arguments\":\"{}\",\"call_id\":\"call_yyf88Lh8MunVvPWUwWTDnhE2\",\"name\":\"transfer_to_recipe_editor_agent\",\"type\":\"function_call\",\"id\":\"fc_68778d6ba338819b94b7ff14349b1ec708834f2183fbed82\",\"status\":\"completed\"},{\"call_id\":\"call_yyf88Lh8MunVvPWUwWTDnhE2\",\"output\":\"{\\\"assistant\\\":
+      \\\"Recipe Editor Agent\\\"}\",\"type\":\"function_call_output\"},{\"arguments\":\"{\\\"query\\\":\\\"carbonara\\\"}\",\"call_id\":\"call_2Qnqf6tRaJ67xGOc1ZN5xvNU\",\"name\":\"search_recipes\",\"type\":\"function_call\",\"id\":\"fc_68778d6cd608819bb13f66ac50c463d908834f2183fbed82\",\"status\":\"completed\"},{\"call_id\":\"call_2Qnqf6tRaJ67xGOc1ZN5xvNU\",\"output\":\"status='success'
+      message='Found 1 recipes matching \\\"carbonara\\\"' recipes={'spaghetti_carbonara':
+      Recipe(id='spaghetti_carbonara', name='Spaghetti Carbonara', ingredients=['400g
+      spaghetti', '200g pancetta', '4 large eggs', '100g Pecorino Romano cheese'],
+      instructions=['Cook spaghetti', 'Dice pancetta', 'Whisk eggs with cheese'],
+      prep_time='10 minutes', cook_time='15 minutes', servings=4)} recipe_count=1
+      query='carbonara'\",\"type\":\"function_call_output\"},{\"arguments\":\"{\\\"recipe\\\":{\\\"id\\\":\\\"spaghetti_carbonara\\\",\\\"name\\\":\\\"Spaghetti
+      Carbonara\\\",\\\"ingredients\\\":[\\\"400g spaghetti\\\",\\\"200g pancetta\\\",\\\"4
+      large eggs\\\",\\\"100g Pecorino Romano cheese\\\"],\\\"instructions\\\":[\\\"Cook
+      spaghetti\\\",\\\"Dice pancetta\\\",\\\"Whisk eggs with cheese\\\"],\\\"prep_time\\\":\\\"10
+      minutes\\\",\\\"cook_time\\\":\\\"15 minutes\\\",\\\"servings\\\":4},\\\"modification_request\\\":\\\"Make
+      it vegetarian by replacing pancetta with a vegetarian alternative and ensure
+      no other meat products are used.\\\"}\",\"call_id\":\"call_WhdshMQWkQekR41Ji4EsSLHk\",\"name\":\"plan_and_apply_recipe_modifications\",\"type\":\"function_call\",\"id\":\"fc_68778d6ea9f8819bb8b78651ce73467108834f2183fbed82\",\"status\":\"completed\"},{\"call_id\":\"call_WhdshMQWkQekR41Ji4EsSLHk\",\"output\":\"status='success'
+      message='Successfully modified Spaghetti Carbonara to be vegetarian' modified_recipe=Recipe(id='spaghetti_carbonara',
+      name='Vegetarian Carbonara', ingredients=['400g spaghetti', '200g mushrooms',
+      '4 large eggs', '100g Pecorino Romano cheese'], instructions=['Cook spaghetti',
+      'Saut\xE9 mushrooms', 'Whisk eggs with cheese'], prep_time='10 minutes', cook_time='15
+      minutes', servings=4) changes_made=['Replaced pancetta with mushrooms'] original_recipe=Recipe(id='spaghetti_carbonara',
+      name='Spaghetti Carbonara', ingredients=['400g spaghetti', '200g pancetta',
+      '4 large eggs', '100g Pecorino Romano cheese'], instructions=['Cook spaghetti',
+      'Dice pancetta', 'Whisk eggs with cheese'], prep_time='10 minutes', cook_time='15
+      minutes', servings=4)\",\"type\":\"function_call_output\"}],\"instructions\":\"You
+      are a recipe editor specialist. Help users search and modify recipes using your
+      tools.\",\"model\":\"gpt-4o\",\"stream\":true,\"tools\":[{\"name\":\"search_recipes\",\"parameters\":{\"properties\":{\"query\":{\"default\":\"\",\"title\":\"Query\",\"type\":\"string\"}},\"title\":\"search_recipes_args\",\"type\":\"object\",\"additionalProperties\":false,\"required\":[\"query\"]},\"strict\":true,\"type\":\"function\",\"description\":\"Search
+      and browse recipes in the database.\"},{\"name\":\"plan_and_apply_recipe_modifications\",\"parameters\":{\"$defs\":{\"Recipe\":{\"properties\":{\"id\":{\"title\":\"Id\",\"type\":\"string\"},\"name\":{\"title\":\"Name\",\"type\":\"string\"},\"ingredients\":{\"items\":{\"type\":\"string\"},\"title\":\"Ingredients\",\"type\":\"array\"},\"instructions\":{\"items\":{\"type\":\"string\"},\"title\":\"Instructions\",\"type\":\"array\"},\"prep_time\":{\"title\":\"Prep
+      Time\",\"type\":\"string\"},\"cook_time\":{\"title\":\"Cook Time\",\"type\":\"string\"},\"servings\":{\"title\":\"Servings\",\"type\":\"integer\"}},\"required\":[\"id\",\"name\",\"ingredients\",\"instructions\",\"prep_time\",\"cook_time\",\"servings\"],\"title\":\"Recipe\",\"type\":\"object\",\"additionalProperties\":false}},\"properties\":{\"recipe\":{\"$ref\":\"#/$defs/Recipe\"},\"modification_request\":{\"title\":\"Modification
+      Request\",\"type\":\"string\"}},\"required\":[\"recipe\",\"modification_request\"],\"title\":\"plan_and_apply_recipe_modifications_args\",\"type\":\"object\",\"additionalProperties\":false},\"strict\":true,\"type\":\"function\",\"description\":\"Plan
+      modifications to a recipe based on user request and apply them.\"}]}"
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '4150'
+      content-type:
+      - application/json
+      cookie:
+      - __cf_bm=Q5dwK3X5KHnzlhrFje7YzIRtIrbBOyV63h7.T27nbWw-1752665450-1.0.1.1-eG_v9xK9nD4AZy_QmDihZGajqKaDR_Ph_fJzSFadUkEzvEyt2WFLmbaU6CuaDElG64n2cYVDl0MxpM2D9kU31jjhWALNrhzetaiSi0ObaGE;
+        _cfuvid=KS8xS12wHosB6wDf1P5Wg9G35o0PpbQ4oS7Y8QvdsmU-1752665450978-0.0.1.1-604800000
+      host:
+      - api.openai.com
+      user-agent:
+      - Agents/Python 0.0.19
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - async:asyncio
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.93.0
+      x-stainless-read-timeout:
+      - '600'
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.13.3
+    method: POST
+    uri: https://api.openai.com/v1/responses
+  response:
+    body:
+      string: "event: response.created\ndata: {\"type\":\"response.created\",\"sequence_number\":0,\"response\":{\"id\":\"resp_68778d703b00819bbede64cde7eeabb208834f2183fbed82\",\"object\":\"response\",\"created_at\":1752665456,\"status\":\"in_progress\",\"background\":false,\"error\":null,\"incomplete_details\":null,\"instructions\":\"You
+        are a recipe editor specialist. Help users search and modify recipes using
+        your tools.\",\"max_output_tokens\":null,\"max_tool_calls\":null,\"model\":\"gpt-4o-2024-08-06\",\"output\":[],\"parallel_tool_calls\":true,\"previous_response_id\":null,\"reasoning\":{\"effort\":null,\"summary\":null},\"service_tier\":\"auto\",\"store\":true,\"temperature\":1.0,\"text\":{\"format\":{\"type\":\"text\"}},\"tool_choice\":\"auto\",\"tools\":[{\"type\":\"function\",\"description\":\"Search
+        and browse recipes in the database.\",\"name\":\"search_recipes\",\"parameters\":{\"properties\":{\"query\":{\"default\":\"\",\"title\":\"Query\",\"type\":\"string\"}},\"title\":\"search_recipes_args\",\"type\":\"object\",\"additionalProperties\":false,\"required\":[\"query\"]},\"strict\":true},{\"type\":\"function\",\"description\":\"Plan
+        modifications to a recipe based on user request and apply them.\",\"name\":\"plan_and_apply_recipe_modifications\",\"parameters\":{\"$defs\":{\"Recipe\":{\"properties\":{\"id\":{\"title\":\"Id\",\"type\":\"string\"},\"name\":{\"title\":\"Name\",\"type\":\"string\"},\"ingredients\":{\"items\":{\"type\":\"string\"},\"title\":\"Ingredients\",\"type\":\"array\"},\"instructions\":{\"items\":{\"type\":\"string\"},\"title\":\"Instructions\",\"type\":\"array\"},\"prep_time\":{\"title\":\"Prep
+        Time\",\"type\":\"string\"},\"cook_time\":{\"title\":\"Cook Time\",\"type\":\"string\"},\"servings\":{\"title\":\"Servings\",\"type\":\"integer\"}},\"required\":[\"id\",\"name\",\"ingredients\",\"instructions\",\"prep_time\",\"cook_time\",\"servings\"],\"title\":\"Recipe\",\"type\":\"object\",\"additionalProperties\":false}},\"properties\":{\"recipe\":{\"$ref\":\"#/$defs/Recipe\"},\"modification_request\":{\"title\":\"Modification
+        Request\",\"type\":\"string\"}},\"required\":[\"recipe\",\"modification_request\"],\"title\":\"plan_and_apply_recipe_modifications_args\",\"type\":\"object\",\"additionalProperties\":false},\"strict\":true}],\"top_logprobs\":0,\"top_p\":1.0,\"truncation\":\"disabled\",\"usage\":null,\"user\":null,\"metadata\":{}}}\n\nevent:
+        response.in_progress\ndata: {\"type\":\"response.in_progress\",\"sequence_number\":1,\"response\":{\"id\":\"resp_68778d703b00819bbede64cde7eeabb208834f2183fbed82\",\"object\":\"response\",\"created_at\":1752665456,\"status\":\"in_progress\",\"background\":false,\"error\":null,\"incomplete_details\":null,\"instructions\":\"You
+        are a recipe editor specialist. Help users search and modify recipes using
+        your tools.\",\"max_output_tokens\":null,\"max_tool_calls\":null,\"model\":\"gpt-4o-2024-08-06\",\"output\":[],\"parallel_tool_calls\":true,\"previous_response_id\":null,\"reasoning\":{\"effort\":null,\"summary\":null},\"service_tier\":\"auto\",\"store\":true,\"temperature\":1.0,\"text\":{\"format\":{\"type\":\"text\"}},\"tool_choice\":\"auto\",\"tools\":[{\"type\":\"function\",\"description\":\"Search
+        and browse recipes in the database.\",\"name\":\"search_recipes\",\"parameters\":{\"properties\":{\"query\":{\"default\":\"\",\"title\":\"Query\",\"type\":\"string\"}},\"title\":\"search_recipes_args\",\"type\":\"object\",\"additionalProperties\":false,\"required\":[\"query\"]},\"strict\":true},{\"type\":\"function\",\"description\":\"Plan
+        modifications to a recipe based on user request and apply them.\",\"name\":\"plan_and_apply_recipe_modifications\",\"parameters\":{\"$defs\":{\"Recipe\":{\"properties\":{\"id\":{\"title\":\"Id\",\"type\":\"string\"},\"name\":{\"title\":\"Name\",\"type\":\"string\"},\"ingredients\":{\"items\":{\"type\":\"string\"},\"title\":\"Ingredients\",\"type\":\"array\"},\"instructions\":{\"items\":{\"type\":\"string\"},\"title\":\"Instructions\",\"type\":\"array\"},\"prep_time\":{\"title\":\"Prep
+        Time\",\"type\":\"string\"},\"cook_time\":{\"title\":\"Cook Time\",\"type\":\"string\"},\"servings\":{\"title\":\"Servings\",\"type\":\"integer\"}},\"required\":[\"id\",\"name\",\"ingredients\",\"instructions\",\"prep_time\",\"cook_time\",\"servings\"],\"title\":\"Recipe\",\"type\":\"object\",\"additionalProperties\":false}},\"properties\":{\"recipe\":{\"$ref\":\"#/$defs/Recipe\"},\"modification_request\":{\"title\":\"Modification
+        Request\",\"type\":\"string\"}},\"required\":[\"recipe\",\"modification_request\"],\"title\":\"plan_and_apply_recipe_modifications_args\",\"type\":\"object\",\"additionalProperties\":false},\"strict\":true}],\"top_logprobs\":0,\"top_p\":1.0,\"truncation\":\"disabled\",\"usage\":null,\"user\":null,\"metadata\":{}}}\n\nevent:
+        response.output_item.added\ndata: {\"type\":\"response.output_item.added\",\"sequence_number\":2,\"output_index\":0,\"item\":{\"id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"type\":\"message\",\"status\":\"in_progress\",\"content\":[],\"role\":\"assistant\"}}\n\nevent:
+        response.content_part.added\ndata: {\"type\":\"response.content_part.added\",\"sequence_number\":3,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"part\":{\"type\":\"output_text\",\"annotations\":[],\"logprobs\":[],\"text\":\"\"}}\n\nevent:
+        response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":4,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"I've\",\"logprobs\":[]}\n\nevent:
+        response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":5,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"
+        modified\",\"logprobs\":[]}\n\nevent: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":6,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"
+        the\",\"logprobs\":[]}\n\nevent: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":7,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"
+        Carbon\",\"logprobs\":[]}\n\nevent: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":8,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"ara\",\"logprobs\":[]}\n\nevent:
+        response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":9,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"
+        recipe\",\"logprobs\":[]}\n\nevent: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":10,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"
+        to\",\"logprobs\":[]}\n\nevent: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":11,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"
+        be\",\"logprobs\":[]}\n\nevent: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":12,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"
+        vegetarian\",\"logprobs\":[]}\n\nevent: response.output_text.delta\ndata:
+        {\"type\":\"response.output_text.delta\",\"sequence_number\":13,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\".\",\"logprobs\":[]}\n\nevent:
+        response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":14,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"
+        Here's\",\"logprobs\":[]}\n\nevent: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":15,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"
+        your\",\"logprobs\":[]}\n\nevent: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":16,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"
+        new\",\"logprobs\":[]}\n\nevent: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":17,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"
+        recipe\",\"logprobs\":[]}\n\nevent: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":18,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\":\\n\\n\",\"logprobs\":[]}\n\nevent:
+        response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":19,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"###\",\"logprobs\":[]}\n\nevent:
+        response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":20,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"
+        Vegetarian\",\"logprobs\":[]}\n\nevent: response.output_text.delta\ndata:
+        {\"type\":\"response.output_text.delta\",\"sequence_number\":21,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"
+        Carbon\",\"logprobs\":[]}\n\nevent: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":22,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"ara\",\"logprobs\":[]}\n\nevent:
+        response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":23,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"\\n\\n\",\"logprobs\":[]}\n\nevent:
+        response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":24,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"####\",\"logprobs\":[]}\n\nevent:
+        response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":25,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"
+        Ingredients\",\"logprobs\":[]}\n\nevent: response.output_text.delta\ndata:
+        {\"type\":\"response.output_text.delta\",\"sequence_number\":26,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"\\n\",\"logprobs\":[]}\n\nevent:
+        response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":27,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"-\",\"logprobs\":[]}\n\nevent:
+        response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":28,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"
+        \",\"logprobs\":[]}\n\nevent: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":29,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"400\",\"logprobs\":[]}\n\nevent:
+        response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":30,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"g\",\"logprobs\":[]}\n\nevent:
+        response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":31,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"
+        spaghetti\",\"logprobs\":[]}\n\nevent: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":32,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"\\n\",\"logprobs\":[]}\n\nevent:
+        response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":33,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"-\",\"logprobs\":[]}\n\nevent:
+        response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":34,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"
+        \",\"logprobs\":[]}\n\nevent: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":35,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"200\",\"logprobs\":[]}\n\nevent:
+        response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":36,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"g\",\"logprobs\":[]}\n\nevent:
+        response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":37,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"
+        mushrooms\",\"logprobs\":[]}\n\nevent: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":38,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"\\n\",\"logprobs\":[]}\n\nevent:
+        response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":39,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"-\",\"logprobs\":[]}\n\nevent:
+        response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":40,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"
+        \",\"logprobs\":[]}\n\nevent: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":41,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"4\",\"logprobs\":[]}\n\nevent:
+        response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":42,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"
+        large\",\"logprobs\":[]}\n\nevent: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":43,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"
+        eggs\",\"logprobs\":[]}\n\nevent: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":44,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"\\n\",\"logprobs\":[]}\n\nevent:
+        response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":45,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"-\",\"logprobs\":[]}\n\nevent:
+        response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":46,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"
+        \",\"logprobs\":[]}\n\nevent: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":47,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"100\",\"logprobs\":[]}\n\nevent:
+        response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":48,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"g\",\"logprobs\":[]}\n\nevent:
+        response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":49,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"
+        Pec\",\"logprobs\":[]}\n\nevent: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":50,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"or\",\"logprobs\":[]}\n\nevent:
+        response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":51,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"ino\",\"logprobs\":[]}\n\nevent:
+        response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":52,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"
+        Romano\",\"logprobs\":[]}\n\nevent: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":53,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"
+        cheese\",\"logprobs\":[]}\n\nevent: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":54,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"\\n\\n\",\"logprobs\":[]}\n\nevent:
+        response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":55,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"####\",\"logprobs\":[]}\n\nevent:
+        response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":56,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"
+        Instructions\",\"logprobs\":[]}\n\nevent: response.output_text.delta\ndata:
+        {\"type\":\"response.output_text.delta\",\"sequence_number\":57,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"\\n\",\"logprobs\":[]}\n\nevent:
+        response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":58,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"1\",\"logprobs\":[]}\n\nevent:
+        response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":59,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\".\",\"logprobs\":[]}\n\nevent:
+        response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":60,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"
+        Cook\",\"logprobs\":[]}\n\nevent: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":61,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"
+        the\",\"logprobs\":[]}\n\nevent: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":62,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"
+        spaghetti\",\"logprobs\":[]}\n\nevent: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":63,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\".\\n\",\"logprobs\":[]}\n\nevent:
+        response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":64,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"2\",\"logprobs\":[]}\n\nevent:
+        response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":65,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\".\",\"logprobs\":[]}\n\nevent:
+        response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":66,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"
+        S\",\"logprobs\":[]}\n\nevent: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":67,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"aut\xE9\",\"logprobs\":[]}\n\nevent:
+        response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":68,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"
+        the\",\"logprobs\":[]}\n\nevent: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":69,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"
+        mushrooms\",\"logprobs\":[]}\n\nevent: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":70,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\".\\n\",\"logprobs\":[]}\n\nevent:
+        response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":71,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"3\",\"logprobs\":[]}\n\nevent:
+        response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":72,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\".\",\"logprobs\":[]}\n\nevent:
+        response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":73,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"
+        Wh\",\"logprobs\":[]}\n\nevent: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":74,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"isk\",\"logprobs\":[]}\n\nevent:
+        response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":75,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"
+        the\",\"logprobs\":[]}\n\nevent: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":76,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"
+        eggs\",\"logprobs\":[]}\n\nevent: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":77,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"
+        with\",\"logprobs\":[]}\n\nevent: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":78,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"
+        the\",\"logprobs\":[]}\n\nevent: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":79,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"
+        cheese\",\"logprobs\":[]}\n\nevent: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":80,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\".\\n\\n\",\"logprobs\":[]}\n\nevent:
+        response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":81,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"####\",\"logprobs\":[]}\n\nevent:
+        response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":82,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"
+        Prep\",\"logprobs\":[]}\n\nevent: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":83,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"
+        Time\",\"logprobs\":[]}\n\nevent: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":84,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"\\n\",\"logprobs\":[]}\n\nevent:
+        response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":85,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"-\",\"logprobs\":[]}\n\nevent:
+        response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":86,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"
+        \",\"logprobs\":[]}\n\nevent: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":87,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"10\",\"logprobs\":[]}\n\nevent:
+        response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":88,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"
+        minutes\",\"logprobs\":[]}\n\nevent: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":89,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"\\n\\n\",\"logprobs\":[]}\n\nevent:
+        response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":90,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"####\",\"logprobs\":[]}\n\nevent:
+        response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":91,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"
+        Cook\",\"logprobs\":[]}\n\nevent: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":92,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"
+        Time\",\"logprobs\":[]}\n\nevent: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":93,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"\\n\",\"logprobs\":[]}\n\nevent:
+        response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":94,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"-\",\"logprobs\":[]}\n\nevent:
+        response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":95,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"
+        \",\"logprobs\":[]}\n\nevent: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":96,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"15\",\"logprobs\":[]}\n\nevent:
+        response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":97,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"
+        minutes\",\"logprobs\":[]}\n\nevent: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":98,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"\\n\\n\",\"logprobs\":[]}\n\nevent:
+        response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":99,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"####\",\"logprobs\":[]}\n\nevent:
+        response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":100,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"
+        Serv\",\"logprobs\":[]}\n\nevent: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":101,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"ings\",\"logprobs\":[]}\n\nevent:
+        response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":102,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"\\n\",\"logprobs\":[]}\n\nevent:
+        response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":103,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"-\",\"logprobs\":[]}\n\nevent:
+        response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":104,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"
+        \",\"logprobs\":[]}\n\nevent: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":105,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"4\",\"logprobs\":[]}\n\nevent:
+        response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":106,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"\\n\\n\",\"logprobs\":[]}\n\nevent:
+        response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":107,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"I've\",\"logprobs\":[]}\n\nevent:
+        response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":108,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"
+        replaced\",\"logprobs\":[]}\n\nevent: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":109,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"
+        the\",\"logprobs\":[]}\n\nevent: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":110,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"
+        panc\",\"logprobs\":[]}\n\nevent: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":111,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"etta\",\"logprobs\":[]}\n\nevent:
+        response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":112,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"
+        with\",\"logprobs\":[]}\n\nevent: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":113,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"
+        mushrooms\",\"logprobs\":[]}\n\nevent: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":114,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"
+        to\",\"logprobs\":[]}\n\nevent: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":115,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"
+        keep\",\"logprobs\":[]}\n\nevent: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":116,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"
+        it\",\"logprobs\":[]}\n\nevent: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":117,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"
+        vegetarian\",\"logprobs\":[]}\n\nevent: response.output_text.delta\ndata:
+        {\"type\":\"response.output_text.delta\",\"sequence_number\":118,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\".\",\"logprobs\":[]}\n\nevent:
+        response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":119,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"
+        Enjoy\",\"logprobs\":[]}\n\nevent: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":120,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"
+        your\",\"logprobs\":[]}\n\nevent: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":121,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"
+        meal\",\"logprobs\":[]}\n\nevent: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":122,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"delta\":\"!\",\"logprobs\":[]}\n\nevent:
+        response.output_text.done\ndata: {\"type\":\"response.output_text.done\",\"sequence_number\":123,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"text\":\"I've
+        modified the Carbonara recipe to be vegetarian. Here's your new recipe:\\n\\n###
+        Vegetarian Carbonara\\n\\n#### Ingredients\\n- 400g spaghetti\\n- 200g mushrooms\\n-
+        4 large eggs\\n- 100g Pecorino Romano cheese\\n\\n#### Instructions\\n1. Cook
+        the spaghetti.\\n2. Saut\xE9 the mushrooms.\\n3. Whisk the eggs with the cheese.\\n\\n####
+        Prep Time\\n- 10 minutes\\n\\n#### Cook Time\\n- 15 minutes\\n\\n#### Servings\\n-
+        4\\n\\nI've replaced the pancetta with mushrooms to keep it vegetarian. Enjoy
+        your meal!\",\"logprobs\":[]}\n\nevent: response.content_part.done\ndata:
+        {\"type\":\"response.content_part.done\",\"sequence_number\":124,\"item_id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"output_index\":0,\"content_index\":0,\"part\":{\"type\":\"output_text\",\"annotations\":[],\"logprobs\":[],\"text\":\"I've
+        modified the Carbonara recipe to be vegetarian. Here's your new recipe:\\n\\n###
+        Vegetarian Carbonara\\n\\n#### Ingredients\\n- 400g spaghetti\\n- 200g mushrooms\\n-
+        4 large eggs\\n- 100g Pecorino Romano cheese\\n\\n#### Instructions\\n1. Cook
+        the spaghetti.\\n2. Saut\xE9 the mushrooms.\\n3. Whisk the eggs with the cheese.\\n\\n####
+        Prep Time\\n- 10 minutes\\n\\n#### Cook Time\\n- 15 minutes\\n\\n#### Servings\\n-
+        4\\n\\nI've replaced the pancetta with mushrooms to keep it vegetarian. Enjoy
+        your meal!\"}}\n\nevent: response.output_item.done\ndata: {\"type\":\"response.output_item.done\",\"sequence_number\":125,\"output_index\":0,\"item\":{\"id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"type\":\"message\",\"status\":\"completed\",\"content\":[{\"type\":\"output_text\",\"annotations\":[],\"logprobs\":[],\"text\":\"I've
+        modified the Carbonara recipe to be vegetarian. Here's your new recipe:\\n\\n###
+        Vegetarian Carbonara\\n\\n#### Ingredients\\n- 400g spaghetti\\n- 200g mushrooms\\n-
+        4 large eggs\\n- 100g Pecorino Romano cheese\\n\\n#### Instructions\\n1. Cook
+        the spaghetti.\\n2. Saut\xE9 the mushrooms.\\n3. Whisk the eggs with the cheese.\\n\\n####
+        Prep Time\\n- 10 minutes\\n\\n#### Cook Time\\n- 15 minutes\\n\\n#### Servings\\n-
+        4\\n\\nI've replaced the pancetta with mushrooms to keep it vegetarian. Enjoy
+        your meal!\"}],\"role\":\"assistant\"}}\n\nevent: response.completed\ndata:
+        {\"type\":\"response.completed\",\"sequence_number\":126,\"response\":{\"id\":\"resp_68778d703b00819bbede64cde7eeabb208834f2183fbed82\",\"object\":\"response\",\"created_at\":1752665456,\"status\":\"completed\",\"background\":false,\"error\":null,\"incomplete_details\":null,\"instructions\":\"You
+        are a recipe editor specialist. Help users search and modify recipes using
+        your tools.\",\"max_output_tokens\":null,\"max_tool_calls\":null,\"model\":\"gpt-4o-2024-08-06\",\"output\":[{\"id\":\"msg_68778d70e044819ba621d601b731388b08834f2183fbed82\",\"type\":\"message\",\"status\":\"completed\",\"content\":[{\"type\":\"output_text\",\"annotations\":[],\"logprobs\":[],\"text\":\"I've
+        modified the Carbonara recipe to be vegetarian. Here's your new recipe:\\n\\n###
+        Vegetarian Carbonara\\n\\n#### Ingredients\\n- 400g spaghetti\\n- 200g mushrooms\\n-
+        4 large eggs\\n- 100g Pecorino Romano cheese\\n\\n#### Instructions\\n1. Cook
+        the spaghetti.\\n2. Saut\xE9 the mushrooms.\\n3. Whisk the eggs with the cheese.\\n\\n####
+        Prep Time\\n- 10 minutes\\n\\n#### Cook Time\\n- 15 minutes\\n\\n#### Servings\\n-
+        4\\n\\nI've replaced the pancetta with mushrooms to keep it vegetarian. Enjoy
+        your meal!\"}],\"role\":\"assistant\"}],\"parallel_tool_calls\":true,\"previous_response_id\":null,\"reasoning\":{\"effort\":null,\"summary\":null},\"service_tier\":\"default\",\"store\":true,\"temperature\":1.0,\"text\":{\"format\":{\"type\":\"text\"}},\"tool_choice\":\"auto\",\"tools\":[{\"type\":\"function\",\"description\":\"Search
+        and browse recipes in the database.\",\"name\":\"search_recipes\",\"parameters\":{\"properties\":{\"query\":{\"default\":\"\",\"title\":\"Query\",\"type\":\"string\"}},\"title\":\"search_recipes_args\",\"type\":\"object\",\"additionalProperties\":false,\"required\":[\"query\"]},\"strict\":true},{\"type\":\"function\",\"description\":\"Plan
+        modifications to a recipe based on user request and apply them.\",\"name\":\"plan_and_apply_recipe_modifications\",\"parameters\":{\"$defs\":{\"Recipe\":{\"properties\":{\"id\":{\"title\":\"Id\",\"type\":\"string\"},\"name\":{\"title\":\"Name\",\"type\":\"string\"},\"ingredients\":{\"items\":{\"type\":\"string\"},\"title\":\"Ingredients\",\"type\":\"array\"},\"instructions\":{\"items\":{\"type\":\"string\"},\"title\":\"Instructions\",\"type\":\"array\"},\"prep_time\":{\"title\":\"Prep
+        Time\",\"type\":\"string\"},\"cook_time\":{\"title\":\"Cook Time\",\"type\":\"string\"},\"servings\":{\"title\":\"Servings\",\"type\":\"integer\"}},\"required\":[\"id\",\"name\",\"ingredients\",\"instructions\",\"prep_time\",\"cook_time\",\"servings\"],\"title\":\"Recipe\",\"type\":\"object\",\"additionalProperties\":false}},\"properties\":{\"recipe\":{\"$ref\":\"#/$defs/Recipe\"},\"modification_request\":{\"title\":\"Modification
+        Request\",\"type\":\"string\"}},\"required\":[\"recipe\",\"modification_request\"],\"title\":\"plan_and_apply_recipe_modifications_args\",\"type\":\"object\",\"additionalProperties\":false},\"strict\":true}],\"top_logprobs\":0,\"top_p\":1.0,\"truncation\":\"disabled\",\"usage\":{\"input_tokens\":662,\"input_tokens_details\":{\"cached_tokens\":0},\"output_tokens\":121,\"output_tokens_details\":{\"reasoning_tokens\":0},\"total_tokens\":783},\"user\":null,\"metadata\":{}}}\n\n"
+    headers:
+      CF-RAY:
+      - 96012b9c8847c22c-TLV
+      Connection:
+      - keep-alive
+      Content-Type:
+      - text/event-stream; charset=utf-8
+      Date:
+      - Wed, 16 Jul 2025 11:30:56 GMT
+      Server:
+      - cloudflare
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '99'
+      openai-project:
+      - proj_tzz1TbPPOXaf6j9tEkVUBIAa
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-request-id:
+      - req_40cdfb5efd07b2ba84f9b91e672a6d83
+    status:
+      code: 200
+      message: OK
+version: 1
