@@ -46,8 +46,11 @@ def environment():
 @pytest.fixture(autouse=True)
 def clear_exporter(exporter):
     exporter.clear()
-    # Clear the global span storage between tests
-    from opentelemetry.instrumentation.openai_agents import _root_span_storage, _instrumented_tools
+    from opentelemetry.instrumentation.openai_agents import (
+        _root_span_storage,
+        _instrumented_tools,
+    )
+
     _root_span_storage.clear()
     _instrumented_tools.clear()
 
@@ -93,9 +96,7 @@ def function_tool_agent():
 
     return Agent(
         name="WeatherAgent",
-        instructions=(
-            "You get the weather for a city using the get_weather tool."
-        ),
+        instructions=("You get the weather for a city using the get_weather tool."),
         model="gpt-4.1",
         tools=[get_weather],
     )
@@ -114,10 +115,12 @@ def web_search_tool_agent():
 @pytest.fixture(scope="session")
 def handoff_agent():
 
-    agent_a = Agent(name="AgentA", instructions="Agent A does something.",
-                    model="gpt-4.1")
-    agent_b = Agent(name="AgentB", instructions="Agent B does something else.",
-                    model="gpt-4.1")
+    agent_a = Agent(
+        name="AgentA", instructions="Agent A does something.", model="gpt-4.1"
+    )
+    agent_b = Agent(
+        name="AgentB", instructions="Agent B does something else.", model="gpt-4.1"
+    )
 
     class HandoffExample(BaseModel):
         message: str
@@ -136,7 +139,7 @@ def handoff_agent():
         instructions="You decide which agent to handoff to.",
         model="gpt-4.1",
         handoffs=[agent_a, agent_b],
-        tools=[handoff_tool_a, handoff_tool_b]
+        tools=[handoff_tool_a, handoff_tool_b],
     )
     return triage_agent
 
@@ -145,7 +148,6 @@ def handoff_agent():
 def recipe_workflow_agents():
     """Create Main Chat Agent and Recipe Editor Agent with function tools for recipe management."""
 
-    # Mock recipe data structure
     class Recipe(BaseModel):
         id: str
         name: str
@@ -174,11 +176,20 @@ def recipe_workflow_agents():
         "spaghetti_carbonara": {
             "id": "spaghetti_carbonara",
             "name": "Spaghetti Carbonara",
-            "ingredients": ["400g spaghetti", "200g pancetta", "4 large eggs", "100g Pecorino Romano cheese"],
-            "instructions": ["Cook spaghetti", "Dice pancetta", "Whisk eggs with cheese"],
+            "ingredients": [
+                "400g spaghetti",
+                "200g pancetta",
+                "4 large eggs",
+                "100g Pecorino Romano cheese",
+            ],
+            "instructions": [
+                "Cook spaghetti",
+                "Dice pancetta",
+                "Whisk eggs with cheese",
+            ],
             "prep_time": "10 minutes",
             "cook_time": "15 minutes",
-            "servings": 4
+            "servings": 4,
         }
     }
 
@@ -189,61 +200,70 @@ def recipe_workflow_agents():
             recipe_data = MOCK_RECIPES["spaghetti_carbonara"]
             recipes_dict = {"spaghetti_carbonara": Recipe(**recipe_data)}
             return SearchResponse(
-                status='success',
+                status="success",
                 message=f'Found 1 recipes matching "{query}"',
                 recipes=recipes_dict,
                 recipe_count=1,
-                query=query
+                query=query,
             )
         return SearchResponse(
-            status='success',
-            message='No recipes found',
+            status="success",
+            message="No recipes found",
             recipes={},
             recipe_count=0,
-            query=query
+            query=query,
         )
 
     @function_tool
-    async def plan_and_apply_recipe_modifications(recipe: Recipe, modification_request: str) -> EditResponse:
+    async def plan_and_apply_recipe_modifications(
+        recipe: Recipe, modification_request: str
+    ) -> EditResponse:
         """Plan modifications to a recipe based on user request and apply them."""
-        # Mock modification for vegetarian carbonara
-        if "vegetarian" in modification_request.lower() and "carbonara" in recipe.name.lower():
+
+        if (
+            "vegetarian" in modification_request.lower()
+            and "carbonara" in recipe.name.lower()
+        ):
             modified_recipe = Recipe(
                 id=recipe.id,
                 name="Vegetarian Carbonara",
-                ingredients=["400g spaghetti", "200g mushrooms", "4 large eggs", "100g Pecorino Romano cheese"],
-                instructions=["Cook spaghetti", "Sauté mushrooms", "Whisk eggs with cheese"],
+                ingredients=[
+                    "400g spaghetti",
+                    "200g mushrooms",
+                    "4 large eggs",
+                    "100g Pecorino Romano cheese",
+                ],
+                instructions=[
+                    "Cook spaghetti",
+                    "Sauté mushrooms",
+                    "Whisk eggs with cheese",
+                ],
                 prep_time=recipe.prep_time,
                 cook_time=recipe.cook_time,
-                servings=recipe.servings
+                servings=recipe.servings,
             )
             return EditResponse(
-                status='success',
-                message='Successfully modified Spaghetti Carbonara to be vegetarian',
+                status="success",
+                message="Successfully modified Spaghetti Carbonara to be vegetarian",
                 modified_recipe=modified_recipe,
                 changes_made=["Replaced pancetta with mushrooms"],
-                original_recipe=recipe
+                original_recipe=recipe,
             )
 
-        return EditResponse(
-            status='error',
-            message='Could not modify recipe'
-        )
+        return EditResponse(status="error", message="Could not modify recipe")
 
-    # Create Recipe Editor Agent with function tools
     recipe_editor_agent = Agent(
         name="Recipe Editor Agent",
         instructions="You are a recipe editor specialist. Help users search and modify recipes using your tools.",
         model="gpt-4o",
-        tools=[search_recipes, plan_and_apply_recipe_modifications]
+        tools=[search_recipes, plan_and_apply_recipe_modifications],
     )
 
-    # Create Main Chat Agent with handoff capability
     main_chat_agent = Agent(
         name="Main Chat Agent",
         instructions="You handle general conversation and route recipe tasks to the recipe editor agent.",
         model="gpt-4o",
-        handoffs=[recipe_editor_agent]
+        handoffs=[recipe_editor_agent],
     )
 
     return main_chat_agent, recipe_editor_agent

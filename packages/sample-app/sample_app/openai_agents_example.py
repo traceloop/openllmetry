@@ -8,7 +8,6 @@ from pydantic import BaseModel
 import openai
 
 from traceloop.sdk import Traceloop
-from traceloop.sdk.decorators import agent
 
 from agents import Agent, function_tool, RunContextWrapper, Runner, ToolCallOutputItem
 from openai.types.responses import (
@@ -477,7 +476,6 @@ Return only the JSON response, no additional text.
         )
 
 
-@agent()
 class RecipeEditorAgent(Agent[ChatContext]):
     """Specialized agent for recipe editing and management tasks with function tools."""
 
@@ -515,7 +513,6 @@ class RecipeEditorAgent(Agent[ChatContext]):
         )
 
 
-@agent()
 class MainChatAgent(Agent[ChatContext]):
     """Main chat agent that handles general conversation and routes to specialized agents."""
 
@@ -573,9 +570,7 @@ async def handle_runner_stream(runner: "Runner"):
             if event.name == "tool_output" and isinstance(
                 event.item, ToolCallOutputItem
             ):
-                raw_item = (
-                    event.item.raw_item
-                )  # pyright: ignore [reportGeneralTypeIssues]
+                raw_item = event.item.raw_item
                 content = (
                     raw_item.get("content")
                     if isinstance(raw_item, dict)

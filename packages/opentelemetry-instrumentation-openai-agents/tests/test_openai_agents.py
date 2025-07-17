@@ -257,7 +257,7 @@ async def test_recipe_workflow_agent_handoffs_with_function_tools(
     assert span_names.count("Main Chat Agent.agent") == 1
     assert (
         span_names.count("Recipe Editor Agent.agent") == 3
-    )  # 3 turns is correct behavior
+    )
     assert span_names.count("search_recipes.tool") == 1
     assert span_names.count("plan_and_apply_recipe_modifications.tool") == 1
 
@@ -282,7 +282,6 @@ async def test_recipe_workflow_agent_handoffs_with_function_tools(
         if s.name == "plan_and_apply_recipe_modifications.tool"
     )
 
-    assert main_chat_span.attributes[SpanAttributes.LLM_SYSTEM] == "openai"
     assert main_chat_span.attributes["gen_ai.agent.name"] == "Main Chat Agent"
     assert (
         main_chat_span.attributes[SpanAttributes.TRACELOOP_SPAN_KIND]
@@ -292,12 +291,17 @@ async def test_recipe_workflow_agent_handoffs_with_function_tools(
     assert "traceloop.entity.input" in main_chat_span.attributes
     assert "traceloop.entity.output" in main_chat_span.attributes
 
+    # Validate that input and output are valid JSON
+    main_chat_input = json.loads(main_chat_span.attributes["traceloop.entity.input"])
+    main_chat_output = json.loads(main_chat_span.attributes["traceloop.entity.output"])
+    assert isinstance(main_chat_input, dict)
+    assert isinstance(main_chat_output, dict)
+
     assert "openai.agent.handoff0" in main_chat_span.attributes
     handoff_info = json.loads(main_chat_span.attributes["openai.agent.handoff0"])
     assert handoff_info["name"] == "Recipe Editor Agent"
 
     recipe_editor_span = recipe_editor_spans[0]
-    assert recipe_editor_span.attributes[SpanAttributes.LLM_SYSTEM] == "openai"
     assert recipe_editor_span.attributes["gen_ai.agent.name"] == "Recipe Editor Agent"
     assert (
         recipe_editor_span.attributes[SpanAttributes.TRACELOOP_SPAN_KIND]
@@ -306,6 +310,16 @@ async def test_recipe_workflow_agent_handoffs_with_function_tools(
 
     assert "traceloop.entity.input" in recipe_editor_span.attributes
     assert "traceloop.entity.output" in recipe_editor_span.attributes
+
+    # Validate that input and output are valid JSON
+    recipe_editor_input = json.loads(
+        recipe_editor_span.attributes["traceloop.entity.input"]
+    )
+    recipe_editor_output = json.loads(
+        recipe_editor_span.attributes["traceloop.entity.output"]
+    )
+    assert isinstance(recipe_editor_input, dict)
+    assert isinstance(recipe_editor_output, dict)
 
     assert (
         search_tool_span.attributes[SpanAttributes.TRACELOOP_SPAN_KIND]

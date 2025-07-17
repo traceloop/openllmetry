@@ -22,6 +22,7 @@ from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
     GEN_AI_COMPLETION,
 )
 from .utils import set_span_attribute
+from traceloop.sdk.utils.json_encoder import JSONEncoder
 from agents import FunctionTool, WebSearchTool, FileSearchTool, ComputerTool
 
 
@@ -78,6 +79,7 @@ class OpenAIAgentsInstrumentor(BaseInstrumentor):
         unwrap("agents.run.AgentRunner", "_get_new_response")
         unwrap("agents.run.AgentRunner", "_run_single_turn_streamed")
         _instrumented_tools.clear()
+        _root_span_storage.clear()
 
 
 def with_tracer_wrapper(func):
@@ -110,7 +112,6 @@ async def _wrap_agent_run_streamed(
     kwargs,
 ):
     """Wrapper for _run_single_turn_streamed to handle streaming execution."""
-    streamed_result = args[0] if len(args) > 0 else None
     agent = args[1] if len(args) > 1 else None
     run_config = args[4] if len(args) > 4 else None
 
@@ -124,7 +125,6 @@ async def _wrap_agent_run_streamed(
     root_span = _root_span_storage.get(thread_id)
 
     if root_span:
-        # Use the root span context to ensure same trace
         ctx = set_span_in_context(root_span, context.get_current())
     else:
         ctx = context.get_current()
@@ -133,8 +133,6 @@ async def _wrap_agent_run_streamed(
         f"{agent_name}.agent",
         kind=SpanKind.CLIENT,
         attributes={
-            SpanAttributes.LLM_SYSTEM: "openai",
-            SpanAttributes.LLM_REQUEST_MODEL: model_name,
             SpanAttributes.TRACELOOP_SPAN_KIND: (TraceloopSpanKindValues.AGENT.value),
         },
         context=ctx,
@@ -147,32 +145,32 @@ async def _wrap_agent_run_streamed(
             set_model_settings_span_attributes(agent, span)
             extract_run_config_details(run_config, span)
 
-            if streamed_result and hasattr(streamed_result, "input"):
-                input_data = streamed_result.input
-                if isinstance(input_data, str):
-                    span.set_attribute("traceloop.entity.input", input_data)
-                elif isinstance(input_data, list) and len(input_data) > 0:
+            try:
+                json_args = []
+                for arg in args:
                     try:
-                        input_objects = []
-                        for item in input_data:
-                            if hasattr(item, "model_dump"):
-                                input_objects.append(item.model_dump())
-                            elif isinstance(item, dict):
-                                input_objects.append(item)
-                            else:
-                                try:
-                                    item_dict = (
-                                        json.loads(item)
-                                        if isinstance(item, str)
-                                        else item
-                                    )
-                                    input_objects.append(item_dict)
-                                except Exception:
-                                    input_objects.append(str(item))
-                        input_str = json.dumps(input_objects)
-                        span.set_attribute("traceloop.entity.input", input_str)
-                    except Exception:
-                        span.set_attribute("traceloop.entity.input", str(input_data))
+                        json_args.append(json.loads(json.dumps(arg, cls=JSONEncoder)))
+                    except (TypeError, ValueError):
+                        json_args.append(str(arg))
+
+                json_kwargs = {}
+                for key, value in kwargs.items():
+                    try:
+                        json_kwargs[key] = json.loads(
+                            json.dumps(value, cls=JSONEncoder)
+                        )
+                    except (TypeError, ValueError):
+                        json_kwargs[key] = str(value)
+
+                input_data = {"args": json_args, "kwargs": json_kwargs}
+                input_str = json.dumps(input_data)
+                span.set_attribute("traceloop.entity.input", input_str)
+            except Exception:
+                fallback_data = {
+                    "args": [str(arg) for arg in args],
+                    "kwargs": {k: str(v) for k, v in kwargs.items()},
+                }
+                span.set_attribute("traceloop.entity.input", json.dumps(fallback_data))
 
             tools = getattr(agent, "tools", [])
             if tools:
@@ -182,57 +180,11 @@ async def _wrap_agent_run_streamed(
             result = await wrapped(*args, **kwargs)
             end_time = time.time()
 
-            if result and hasattr(result, "model_response"):
-                model_response = result.model_response
-                if hasattr(model_response, "output"):
-                    output_data = model_response.output
-                    if isinstance(output_data, str):
-                        span.set_attribute("traceloop.entity.output", output_data)
-                    elif isinstance(output_data, list):
-                        try:
-                            output_objects = []
-                            for item in output_data:
-                                if hasattr(item, "model_dump"):
-                                    output_objects.append(item.model_dump())
-                                elif isinstance(item, dict):
-                                    output_objects.append(item)
-                                else:
-                                    try:
-                                        if hasattr(item, "__dict__"):
-                                            item_dict = {
-                                                k: v
-                                                for k, v in item.__dict__.items()
-                                                if not k.startswith("_")
-                                            }
-                                            output_objects.append(item_dict)
-                                        else:
-                                            output_objects.append(str(item))
-                                    except Exception:
-                                        output_objects.append(str(item))
-                            output_str = json.dumps(output_objects)
-                            span.set_attribute("traceloop.entity.output", output_str)
-                        except Exception:
-                            span.set_attribute(
-                                "traceloop.entity.output", str(output_data)
-                            )
-                    else:
-                        try:
-                            if hasattr(output_data, "model_dump"):
-                                output_str = json.dumps(output_data.model_dump())
-                            elif hasattr(output_data, "__dict__"):
-                                output_dict = {
-                                    k: v
-                                    for k, v in output_data.__dict__.items()
-                                    if not k.startswith("_")
-                                }
-                                output_str = json.dumps(output_dict)
-                            else:
-                                output_str = json.dumps(str(output_data))
-                            span.set_attribute("traceloop.entity.output", output_str)
-                        except Exception:
-                            span.set_attribute(
-                                "traceloop.entity.output", str(output_data)
-                            )
+            try:
+                output_str = json.dumps(result, cls=JSONEncoder)
+                span.set_attribute("traceloop.entity.output", output_str)
+            except Exception:
+                span.set_attribute("traceloop.entity.output", json.dumps(str(result)))
 
             span.set_status(Status(StatusCode.OK))
 
@@ -295,31 +247,32 @@ async def _wrap_agent_run(
             set_model_settings_span_attributes(agent, span)
             extract_run_config_details(run_config, span)
 
-            if prompt_list:
-                if isinstance(prompt_list, str):
-                    span.set_attribute("traceloop.entity.input", prompt_list)
-                elif isinstance(prompt_list, list) and len(prompt_list) > 0:
+            try:
+                json_args = []
+                for arg in args:
                     try:
-                        input_objects = []
-                        for item in prompt_list:
-                            if hasattr(item, "model_dump"):
-                                input_objects.append(item.model_dump())
-                            elif isinstance(item, dict):
-                                input_objects.append(item)
-                            else:
-                                try:
-                                    item_dict = (
-                                        json.loads(item)
-                                        if isinstance(item, str)
-                                        else item
-                                    )
-                                    input_objects.append(item_dict)
-                                except Exception:
-                                    input_objects.append(str(item))
-                        input_str = json.dumps(input_objects)
-                        span.set_attribute("traceloop.entity.input", input_str)
-                    except Exception:
-                        span.set_attribute("traceloop.entity.input", str(prompt_list))
+                        json_args.append(json.loads(json.dumps(arg, cls=JSONEncoder)))
+                    except (TypeError, ValueError):
+                        json_args.append(str(arg))
+
+                json_kwargs = {}
+                for key, value in kwargs.items():
+                    try:
+                        json_kwargs[key] = json.loads(
+                            json.dumps(value, cls=JSONEncoder)
+                        )
+                    except (TypeError, ValueError):
+                        json_kwargs[key] = str(value)
+
+                input_data = {"args": json_args, "kwargs": json_kwargs}
+                input_str = json.dumps(input_data)
+                span.set_attribute("traceloop.entity.input", input_str)
+            except Exception:
+                fallback_data = {
+                    "args": [str(arg) for arg in args],
+                    "kwargs": {k: str(v) for k, v in kwargs.items()},
+                }
+                span.set_attribute("traceloop.entity.input", json.dumps(fallback_data))
 
             tools = args[4] if len(args) > 4 and isinstance(args[4], list) else []
             if tools:
@@ -328,51 +281,11 @@ async def _wrap_agent_run(
             start_time = time.time()
             response = await wrapped(*args, **kwargs)
 
-            if response and hasattr(response, "output"):
-                output_data = response.output
-                if isinstance(output_data, str):
-                    span.set_attribute("traceloop.entity.output", output_data)
-                elif isinstance(output_data, list):
-                    try:
-                        output_objects = []
-                        for item in output_data:
-                            if hasattr(item, "model_dump"):
-                                output_objects.append(item.model_dump())
-                            elif isinstance(item, dict):
-                                output_objects.append(item)
-                            else:
-                                try:
-                                    if hasattr(item, "__dict__"):
-                                        item_dict = {
-                                            k: v
-                                            for k, v in item.__dict__.items()
-                                            if not k.startswith("_")
-                                        }
-                                        output_objects.append(item_dict)
-                                    else:
-                                        output_objects.append(str(item))
-                                except Exception:
-                                    output_objects.append(str(item))
-                        output_str = json.dumps(output_objects)
-                        span.set_attribute("traceloop.entity.output", output_str)
-                    except Exception:
-                        span.set_attribute("traceloop.entity.output", str(output_data))
-                else:
-                    try:
-                        if hasattr(output_data, "model_dump"):
-                            output_str = json.dumps(output_data.model_dump())
-                        elif hasattr(output_data, "__dict__"):
-                            output_dict = {
-                                k: v
-                                for k, v in output_data.__dict__.items()
-                                if not k.startswith("_")
-                            }
-                            output_str = json.dumps(output_dict)
-                        else:
-                            output_str = json.dumps(str(output_data))
-                        span.set_attribute("traceloop.entity.output", output_str)
-                    except Exception:
-                        span.set_attribute("traceloop.entity.output", str(output_data))
+            try:
+                output_str = json.dumps(response, cls=JSONEncoder)
+                span.set_attribute("traceloop.entity.output", output_str)
+            except Exception:
+                span.set_attribute("traceloop.entity.output", json.dumps(str(response)))
             if duration_histogram:
                 duration_histogram.record(
                     time.time() - start_time,
