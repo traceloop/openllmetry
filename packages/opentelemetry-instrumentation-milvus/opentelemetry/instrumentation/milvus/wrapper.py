@@ -176,15 +176,15 @@ def _set_response_attributes(
     response
 ):
     if 'upsert_count' in response:
-        upsert_count = response['upsert_count']
+        upsert_count = response['upsert_count'] or 0
         upsert_units_metric.add(upsert_count, shared_attributes)
 
     if 'insert_count' in response:
-        insert_count = response['insert_count']
+        insert_count = response['insert_count'] or 0
         insert_units_metric.add(insert_count, shared_attributes)
 
     if 'delete_count' in response:
-        delete_count = response['delete_count']
+        delete_count = response['delete_count'] or 0
         delete_units_metric.add(delete_count, shared_attributes)
 
 
