@@ -2,7 +2,6 @@
 
 import pytest
 from opentelemetry import trace, metrics
-from opentelemetry.instrumentation.anthropic import AnthropicInstrumentor
 from opentelemetry.sdk.metrics import Counter, Histogram, MeterProvider
 from opentelemetry.sdk.metrics.export import (
     AggregationTemporality,
@@ -55,14 +54,7 @@ def meter_provider(reader):
 
 @pytest.fixture(scope="session", autouse=True)
 def instrument(exporter, reader, meter_provider):
-    async def upload_base64_image(*args):
-        return "/some/url"
-
-    AnthropicInstrumentor(
-        enrich_token_usage=True,
-        upload_base64_image=upload_base64_image,
-    ).instrument()
-
+    MilvusInstrumentor().instrument()
     yield
 
     exporter.shutdown()
