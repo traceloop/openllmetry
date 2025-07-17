@@ -162,13 +162,13 @@ async def _wrap_agent_run_streamed(
 
                 input_data = {"args": json_args, "kwargs": json_kwargs}
                 input_str = json.dumps(input_data)
-                span.set_attribute("traceloop.entity.input", input_str)
+                span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_INPUT, input_str)
             except Exception:
                 fallback_data = {
                     "args": [str(arg) for arg in args],
                     "kwargs": {k: str(v) for k, v in kwargs.items()},
                 }
-                span.set_attribute("traceloop.entity.input", json.dumps(fallback_data))
+                span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_INPUT, json.dumps(fallback_data))
 
             tools = getattr(agent, "tools", [])
             if tools:
@@ -180,9 +180,9 @@ async def _wrap_agent_run_streamed(
 
             try:
                 output_str = json.dumps(result, cls=JSONEncoder)
-                span.set_attribute("traceloop.entity.output", output_str)
+                span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_OUTPUT, output_str)
             except Exception:
-                span.set_attribute("traceloop.entity.output", json.dumps(str(result)))
+                span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_OUTPUT, json.dumps(str(result)))
 
             span.set_status(Status(StatusCode.OK))
 
@@ -260,13 +260,13 @@ async def _wrap_agent_run(
 
                 input_data = {"args": json_args, "kwargs": json_kwargs}
                 input_str = json.dumps(input_data)
-                span.set_attribute("traceloop.entity.input", input_str)
+                span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_INPUT, input_str)
             except Exception:
                 fallback_data = {
                     "args": [str(arg) for arg in args],
                     "kwargs": {k: str(v) for k, v in kwargs.items()},
                 }
-                span.set_attribute("traceloop.entity.input", json.dumps(fallback_data))
+                span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_INPUT, json.dumps(fallback_data))
 
             tools = args[4] if len(args) > 4 and isinstance(args[4], list) else []
             if tools:
@@ -277,9 +277,9 @@ async def _wrap_agent_run(
 
             try:
                 output_str = json.dumps(response, cls=JSONEncoder)
-                span.set_attribute("traceloop.entity.output", output_str)
+                span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_OUTPUT, output_str)
             except Exception:
-                span.set_attribute("traceloop.entity.output", json.dumps(str(response)))
+                span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_OUTPUT, json.dumps(str(response)))
             if duration_histogram:
                 duration_histogram.record(
                     time.time() - start_time,
@@ -437,9 +437,9 @@ def extract_tool_details(tracer: Tracer, tools):
                                 f"{GEN_AI_COMPLETION}.tool.strict_json_schema",
                                 original_tool.strict_json_schema,
                             )
-                            span.set_attribute("traceloop.entity.input", args_json)
+                            span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_INPUT, args_json)
                             result = await original_func(tool_context, args_json)
-                            span.set_attribute("traceloop.entity.output", str(result))
+                            span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_OUTPUT, str(result))
                             span.set_status(Status(StatusCode.OK))
                             return result
                         except Exception as e:
