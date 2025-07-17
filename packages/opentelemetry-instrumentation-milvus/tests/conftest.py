@@ -25,8 +25,6 @@ def exporter():
     provider.add_span_processor(processor)
     trace.set_tracer_provider(provider)
 
-    MilvusInstrumentor().instrument()
-
     return exporter
 
 
