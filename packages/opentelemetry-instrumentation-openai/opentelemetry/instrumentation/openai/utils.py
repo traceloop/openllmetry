@@ -15,6 +15,7 @@ import openai
 _OPENAI_VERSION = version("openai")
 
 TRACELOOP_TRACE_CONTENT = "TRACELOOP_TRACE_CONTENT"
+TRACELOOP_KEEP_INLINE_IMAGES = "TRACELOOP_KEEP_INLINE_IMAGES"
 
 
 def is_openai_v1():
@@ -174,6 +175,11 @@ def should_send_prompts():
         os.getenv(TRACELOOP_TRACE_CONTENT) or "true"
     ).lower() == "true" or context_api.get_value("override_enable_content_tracing")
 
+
+def should_keep_inline_images():
+    return (
+        os.getenv(TRACELOOP_KEEP_INLINE_IMAGES) or "false"
+    ).lower() == "true"
 
 def should_emit_events() -> bool:
     """
