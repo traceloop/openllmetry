@@ -37,8 +37,6 @@ def test_agent_spans(exporter, test_agent):
 
     assert span.name == "testAgent.agent"
     assert span.kind == span.kind.CLIENT
-    assert span.attributes[SpanAttributes.LLM_SYSTEM] == "openai"
-    assert span.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "gpt-4.1"
     assert (
         span.attributes[SpanAttributes.TRACELOOP_SPAN_KIND]
         == TraceloopSpanKindValues.AGENT.value
@@ -208,16 +206,6 @@ def test_generate_metrics(metrics_test_context, test_agent):
                     assert any(
                         data_point.sum > 0 for data_point in metric.data.data_points
                     )
-                assert (
-                    metric.data.data_points[0].attributes[SpanAttributes.LLM_SYSTEM]
-                    == "openai"
-                )
-                assert (
-                    metric.data.data_points[0].attributes[
-                        SpanAttributes.LLM_RESPONSE_MODEL
-                    ]
-                    == "gpt-4.1"
-                )
 
         assert found_token_metric is True
         assert found_duration_metric is True
@@ -255,9 +243,7 @@ async def test_recipe_workflow_agent_handoffs_with_function_tools(
     span_names = [span.name for span in non_rest_spans]
 
     assert span_names.count("Main Chat Agent.agent") == 1
-    assert (
-        span_names.count("Recipe Editor Agent.agent") == 3
-    )
+    assert span_names.count("Recipe Editor Agent.agent") == 3
     assert span_names.count("search_recipes.tool") == 1
     assert span_names.count("plan_and_apply_recipe_modifications.tool") == 1
 

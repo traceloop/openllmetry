@@ -29,7 +29,7 @@ from agents import FunctionTool, WebSearchTool, FileSearchTool, ComputerTool
 _instruments = ("openai-agents >= 0.0.19",)
 
 _root_span_storage = {}
-_instrumented_tools = weakref.WeakSet()
+_instrumented_tools = set()
 
 
 class OpenAIAgentsInstrumentor(BaseInstrumentor):
@@ -193,8 +193,6 @@ async def _wrap_agent_run_streamed(
                 duration_histogram.record(
                     duration,
                     attributes={
-                        SpanAttributes.LLM_SYSTEM: "openai",
-                        SpanAttributes.LLM_RESPONSE_MODEL: model_name,
                         "gen_ai.agent.name": agent_name,
                     },
                 )
@@ -233,8 +231,6 @@ async def _wrap_agent_run(
         f"{agent_name}.agent",
         kind=SpanKind.CLIENT,
         attributes={
-            SpanAttributes.LLM_SYSTEM: "openai",
-            SpanAttributes.LLM_REQUEST_MODEL: model_name,
             SpanAttributes.TRACELOOP_SPAN_KIND: (TraceloopSpanKindValues.AGENT.value),
         },
         context=ctx,
@@ -289,10 +285,6 @@ async def _wrap_agent_run(
             if duration_histogram:
                 duration_histogram.record(
                     time.time() - start_time,
-                    attributes={
-                        SpanAttributes.LLM_SYSTEM: "openai",
-                        SpanAttributes.LLM_RESPONSE_MODEL: model_name,
-                    },
                 )
             if isinstance(prompt_list, list):
                 set_prompt_attributes(span, prompt_list)
@@ -406,10 +398,11 @@ def extract_tool_details(tracer: Tracer, tools):
 
     for tool in tools:
         if isinstance(tool, FunctionTool):
-            if tool in _instrumented_tools:
+            tool_id = id(tool)
+            if tool_id in _instrumented_tools:
                 continue
 
-            _instrumented_tools.add(tool)
+            _instrumented_tools.add(tool_id)
 
             original_on_invoke_tool = tool.on_invoke_tool
 
