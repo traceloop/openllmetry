@@ -20,23 +20,23 @@ include = "opentelemetry/instrumentation/crewai"
 
 [tool.poetry.dependencies]
 python = ">=3.10,<4"
-opentelemetry-api = "^1.28.0"
+opentelemetry-api = "^1.35.0"
 opentelemetry-instrumentation = ">=0.50b0"
 opentelemetry-semantic-conventions = ">=0.50b0"
 opentelemetry-semantic-conventions-ai = "0.4.11"
 
 [tool.poetry.group.dev.dependencies]
-autopep8 = "^2.2.0"
-flake8 = "7.1.1"
-pytest = "^8.2.2"
+autopep8 = "^2.3.1"
+flake8 = "7.1.2"
+pytest = "^8.3.3"
 pytest-sugar = "1.0.0"
 
 [tool.poetry.group.test.dependencies]
 crewai = { version = "^0.80.0", python = ">=3.10,<=3.13" }
-pytest = "^8.2.2"
+pytest = "^8.3.3"
 pytest-sugar = "1.0.0"
-pytest-recording = "^0.13.1"
-opentelemetry-sdk = "^1.27.0"
+pytest-recording = "^0.13.2"
+opentelemetry-sdk = "^1.35.0"
 
 [build-system]
 requires = ["poetry-core"]

@@ -1,0 +1,4 @@
+[virtualenvs]
+create = true
+in-project = false
+path = "~/.cache/pypoetry/virtualenvs"
