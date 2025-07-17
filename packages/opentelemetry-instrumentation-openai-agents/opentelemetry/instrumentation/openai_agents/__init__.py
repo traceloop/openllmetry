@@ -4,6 +4,7 @@ import os
 import time
 import json
 import threading
+import weakref
 from typing import Collection
 from wrapt import wrap_function_wrapper
 from opentelemetry.trace import SpanKind, get_tracer, Tracer, set_span_in_context
@@ -28,7 +29,7 @@ from agents import FunctionTool, WebSearchTool, FileSearchTool, ComputerTool
 _instruments = ("openai-agents >= 0.0.19",)
 
 _root_span_storage = {}
-_instrumented_tools = set()
+_instrumented_tools = weakref.WeakSet()
 
 
 class OpenAIAgentsInstrumentor(BaseInstrumentor):
@@ -405,11 +406,10 @@ def extract_tool_details(tracer: Tracer, tools):
 
     for tool in tools:
         if isinstance(tool, FunctionTool):
-            tool_id = id(tool)
-            if tool_id in _instrumented_tools:
+            if tool in _instrumented_tools:
                 continue
 
-            _instrumented_tools.add(tool_id)
+            _instrumented_tools.add(tool)
 
             original_on_invoke_tool = tool.on_invoke_tool
 
