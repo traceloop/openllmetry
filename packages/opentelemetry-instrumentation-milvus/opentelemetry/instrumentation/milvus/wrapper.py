@@ -3,7 +3,6 @@ from opentelemetry.instrumentation.milvus.utils import dont_throw
 from opentelemetry.semconv.trace import SpanAttributes
 from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
 from opentelemetry import context as context_api
-from opentelemetry.trace.status import Status, StatusCode
 from opentelemetry.instrumentation.utils import (
     _SUPPRESS_INSTRUMENTATION_KEY,
 )
@@ -43,7 +42,6 @@ def _with_tracer_wrapper(func):
                 delete_units_metric,
                 to_wrap,
                 wrapped,
-                instance,
                 args,
                 kwargs)
 
@@ -69,7 +67,6 @@ def _wrap(
     delete_units_metric,
     to_wrap,
     wrapped,
-    instance,
     args,
     kwargs
 ):
@@ -107,7 +104,7 @@ def _wrap(
             if method == "query":
                 _add_query_result_events(span, return_value)
 
-            if (method == "search" or method == "hybrid_search"):
+            if method == "search" or method == "hybrid_search":
                 _add_search_result_events(span, return_value)
 
         except Exception as e:
@@ -117,7 +114,10 @@ def _wrap(
             span.set_attribute(ERROR_TYPE, error_type)
             raise
 
-        shared_attributes = {SpanAttributes.DB_SYSTEM: "milvus"}
+        shared_attributes = {
+            SpanAttributes.DB_SYSTEM: "milvus",
+            SpanAttributes.DB_OPERATION: method,
+        }
         duration = end_time - start_time
         if duration > 0 and query_duration_metric and method == "query":
             query_duration_metric.record(duration, shared_attributes)
@@ -127,15 +127,12 @@ def _wrap(
                 set_search_response(distance_metric, shared_attributes, return_value)
 
             _set_response_attributes(
-                span,
                 insert_units_metric,
                 upsert_units_metric,
                 delete_units_metric,
                 shared_attributes,
                 return_value,
             )
-
-            span.set_status(Status(StatusCode.OK))
 
     return return_value
 
@@ -172,7 +169,6 @@ def count_or_none(obj):
 
 
 def _set_response_attributes(
-    span,
     insert_units_metric,
     upsert_units_metric,
     delete_units_metric,
@@ -183,11 +179,11 @@ def _set_response_attributes(
         upsert_count = response['upsert_count']
         upsert_units_metric.add(upsert_count, shared_attributes)
 
-    if ('insert_count' in response):
+    if 'insert_count' in response:
         insert_count = response['insert_count']
         insert_units_metric.add(insert_count, shared_attributes)
 
-    if ('delete_count' in response):
+    if 'delete_count' in response:
         delete_count = response['delete_count']
         delete_units_metric.add(delete_count, shared_attributes)
 

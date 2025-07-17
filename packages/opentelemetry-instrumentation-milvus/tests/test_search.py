@@ -126,7 +126,7 @@ def test_milvus_single_vector_search(exporter, collection, reader):
         span.attributes.get(SpanAttributes.MILVUS_SEARCH_RESULT_COUNT) == total_matches
     )
     metrics_data = reader.get_metrics_data()
-    distance_metrics = find_metrics_by_name(metrics_data, Meters.MILVUS_DB_SEARCH_DISTANCE)
+    distance_metrics = find_metrics_by_name(metrics_data, Meters.DB_SEARCH_DISTANCE)
     for metric in distance_metrics:
         assert all(dp.sum >= 0 for dp in metric.data.data_points)
 

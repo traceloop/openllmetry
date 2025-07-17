@@ -90,27 +90,27 @@ class MilvusInstrumentor(BaseInstrumentor):
             meter = get_meter(__name__, __version__, meter_provider)
 
             query_duration_metric = meter.create_histogram(
-                Meters.MILVUS_DB_QUERY_DURATION,
+                Meters.DB_QUERY_DURATION,
                 "s",
-                "Duration of query operations to Milvus",
+                "Duration of query operations",
             )
             distance_metric = meter.create_histogram(
-                Meters.MILVUS_DB_SEARCH_DISTANCE,
+                Meters.DB_SEARCH_DISTANCE,
                 "",
                 "Distance between search query vector and matched vectors",
             )
             insert_units_metric = meter.create_counter(
-                Meters.MILVUS_DB_USAGE_INSERT_UNITS,
+                Meters.DB_USAGE_INSERT_UNITS,
                 "",
                 "Number of insert units consumed in serverless calls",
             )
             upsert_units_metric = meter.create_counter(
-                Meters.MILVUS_DB_USAGE_UPSERT_UNITS,
+                Meters.DB_USAGE_UPSERT_UNITS,
                 "",
                 "Number of upsert units consumed in serverless calls",
             )
             delete_units_metric = meter.create_counter(
-                Meters.MILVUS_DB_USAGE_DELETE_UNITS,
+                Meters.DB_USAGE_DELETE_UNITS,
                 "",
                 "Number of delete collections units consumed in serverless calls",
             )
