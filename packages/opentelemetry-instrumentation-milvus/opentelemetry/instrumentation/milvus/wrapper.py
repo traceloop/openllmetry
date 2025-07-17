@@ -122,7 +122,7 @@ def _wrap(
         if duration > 0 and query_duration_metric and method == "query":
             query_duration_metric.record(duration, shared_attributes)
 
-        if return_value and span.is_recording():
+        if return_value:
             if method == "search" or method == "hybrid_search":
                 set_search_response(distance_metric, shared_attributes, return_value)
 
@@ -167,7 +167,7 @@ def count_or_none(obj):
 
     return None
 
-
+@dont_throw
 def _set_response_attributes(
     insert_units_metric,
     upsert_units_metric,
@@ -175,6 +175,9 @@ def _set_response_attributes(
     shared_attributes,
     response
 ):
+    if not isinstance(response, dict):
+        return
+
     if 'upsert_count' in response:
         upsert_count = response['upsert_count'] or 0
         upsert_units_metric.add(upsert_count, shared_attributes)

@@ -112,7 +112,7 @@ class MilvusInstrumentor(BaseInstrumentor):
             delete_units_metric = meter.create_counter(
                 Meters.DB_USAGE_DELETE_UNITS,
                 "",
-                "Number of delete collections units consumed in serverless calls",
+                "Number of delete units consumed in serverless calls",
             )
 
         tracer_provider = kwargs.get("tracer_provider")
