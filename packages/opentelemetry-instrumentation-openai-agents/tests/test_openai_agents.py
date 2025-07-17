@@ -247,7 +247,7 @@ async def test_recipe_workflow_agent_handoffs_with_function_tools(
         recipe_runner = Runner().run_streamed(
             starting_agent=recipe_editor_agent, input=recipe_messages
         )
-        async for event in recipe_runner.stream_events():
+        async for _ in recipe_runner.stream_events():
             pass
 
     spans = exporter.get_finished_spans()

@@ -97,7 +97,7 @@ GLOBAL_RECIPE_CONTEXT = {
             "100g Pecorino Romano cheese, grated",
             "2 cloves garlic",
             "Black pepper",
-            "Salt"
+            "Salt",
         ],
         "instructions": [
             "Cook spaghetti in salted boiling water until al dente",
@@ -107,11 +107,11 @@ GLOBAL_RECIPE_CONTEXT = {
             "Add hot pasta to the pan with pancetta",
             "Remove from heat, add egg mixture, toss quickly",
             "Add pasta water if needed to create creamy sauce",
-            "Serve immediately with extra cheese"
+            "Serve immediately with extra cheese",
         ],
         "prep_time": "10 minutes",
         "cook_time": "15 minutes",
-        "servings": 4
+        "servings": 4,
     },
     "chicken_tikka_masala": {
         "id": "chicken_tikka_masala",
@@ -130,7 +130,7 @@ GLOBAL_RECIPE_CONTEXT = {
             "1 tsp cumin",
             "1 tsp coriander",
             "Salt and pepper",
-            "Fresh cilantro"
+            "Fresh cilantro",
         ],
         "instructions": [
             "Marinate chicken in yogurt, garam masala, and turmeric for 30 minutes",
@@ -140,11 +140,11 @@ GLOBAL_RECIPE_CONTEXT = {
             "Add tomatoes and tomato paste, simmer 10 minutes",
             "Add coconut milk and cooked chicken",
             "Simmer for 15 minutes until thick",
-            "Garnish with cilantro and serve with rice"
+            "Garnish with cilantro and serve with rice",
         ],
         "prep_time": "45 minutes",
         "cook_time": "30 minutes",
-        "servings": 4
+        "servings": 4,
     },
     "chocolate_chip_cookies": {
         "id": "chocolate_chip_cookies",
@@ -158,7 +158,7 @@ GLOBAL_RECIPE_CONTEXT = {
             "300g plain flour",
             "1 tsp baking soda",
             "1 tsp salt",
-            "300g chocolate chips"
+            "300g chocolate chips",
         ],
         "instructions": [
             "Preheat oven to 190°C (375°F)",
@@ -169,11 +169,11 @@ GLOBAL_RECIPE_CONTEXT = {
             "Fold in chocolate chips",
             "Drop rounded tablespoons onto baking sheet",
             "Bake for 9-11 minutes until golden brown",
-            "Cool on baking sheet for 5 minutes before transferring"
+            "Cool on baking sheet for 5 minutes before transferring",
         ],
         "prep_time": "15 minutes",
         "cook_time": "10 minutes",
-        "servings": 24
+        "servings": 24,
     },
     "beef_stir_fry": {
         "id": "beef_stir_fry",
@@ -191,7 +191,7 @@ GLOBAL_RECIPE_CONTEXT = {
             "1 tsp sesame oil",
             "1 tsp cornstarch",
             "2 tbsp water",
-            "Green onions for garnish"
+            "Green onions for garnish",
         ],
         "instructions": [
             "Heat wok or large pan over high heat",
@@ -202,11 +202,11 @@ GLOBAL_RECIPE_CONTEXT = {
             "Return beef to pan",
             "Mix soy sauce, oyster sauce, sesame oil, cornstarch and water",
             "Add sauce to pan, stir for 1 minute until thickened",
-            "Garnish with green onions and serve with rice"
+            "Garnish with green onions and serve with rice",
         ],
         "prep_time": "15 minutes",
         "cook_time": "8 minutes",
-        "servings": 4
+        "servings": 4,
     },
     "caesar_salad": {
         "id": "caesar_salad",
@@ -222,7 +222,7 @@ GLOBAL_RECIPE_CONTEXT = {
             "2 anchovy fillets, minced (optional)",
             "1 cup croutons",
             "Black pepper",
-            "Salt"
+            "Salt",
         ],
         "instructions": [
             "Wash and dry romaine lettuce thoroughly",
@@ -232,18 +232,19 @@ GLOBAL_RECIPE_CONTEXT = {
             "Toss lettuce with dressing",
             "Add most of the Parmesan cheese and toss",
             "Top with croutons and remaining cheese",
-            "Serve immediately"
+            "Serve immediately",
         ],
         "prep_time": "15 minutes",
         "cook_time": "0 minutes",
-        "servings": 4
-    }
+        "servings": 4,
+    },
 }
 
 
 @dataclass
 class ChatContext:
     """Standalone context for the chat application."""
+
     conversation_history: List[Dict[str, str]] = None
 
     def __post_init__(self):
@@ -253,9 +254,7 @@ class ChatContext:
 
 @function_tool
 async def plan_and_apply_recipe_modifications(
-    cw: RunContextWrapper[ChatContext],
-    recipe: Recipe,
-    modification_request: str
+    cw: RunContextWrapper[ChatContext], recipe: Recipe, modification_request: str
 ) -> EditResponse:
     """
     Plan modifications to a recipe based on user request and apply them.
@@ -270,10 +269,8 @@ async def plan_and_apply_recipe_modifications(
     print(f"Planning and applying modifications for recipe: {recipe.name}")
     print(f"Modification request: {modification_request}")
 
-    # Use OpenAI to intelligently modify the recipe
     client = openai.OpenAI()
 
-    # Create a detailed prompt for recipe modification
     modification_prompt = f"""
 You are an expert chef and recipe developer. You need to modify an existing recipe based on a user's request.
 
@@ -302,61 +299,56 @@ the requested modifications. Be creative but practical.
 Provide a clear list of what changes you made and explain your reasoning for the modifications.
 """
 
-    # Make the OpenAI call with structured response
     response = client.beta.chat.completions.parse(
-        model="gpt-4o-mini",  # Using the full model for complex recipe modifications
+        model="gpt-4o-mini",
         messages=[
-            {"role": "system",
-             "content": "You are an expert chef and recipe developer who modifies recipes based on user requests."},
-            {"role": "user", "content": modification_prompt}
+            {
+                "role": "system",
+                "content": "You are an expert chef and recipe developer who modifies recipes based on user requests.",
+            },
+            {"role": "user", "content": modification_prompt},
         ],
-        temperature=0.3,  # Some creativity but still consistent
+        temperature=0.3,
         max_tokens=1500,
-        response_format=RecipeModificationResult
+        response_format=RecipeModificationResult,
     )
 
-    # Get the structured response directly
     modification_result = response.choices[0].message.parsed
 
     modified_recipe_data = modification_result.modified_recipe.model_dump()
     changes_made = modification_result.changes_made
     reasoning = modification_result.modification_reasoning
+    required_fields = ["name", "ingredients", "instructions"]
 
-    # Validate the modified recipe has required fields
-    required_fields = ['name', 'ingredients', 'instructions']
     for field in required_fields:
         if field not in modified_recipe_data:
             print(f"\n[LLM response missing required field: {field}]\n")
             return EditResponse(
-                status='error',
-                message=f'LLM response missing required field: {field}'
+                status="error", message=f"LLM response missing required field: {field}"
             )
 
-    # Ensure we have the ID and preserve other metadata
-    modified_recipe_data['id'] = recipe.id
-    if 'prep_time' not in modified_recipe_data:
-        modified_recipe_data['prep_time'] = recipe.prep_time
-    if 'cook_time' not in modified_recipe_data:
-        modified_recipe_data['cook_time'] = recipe.cook_time
-    if 'servings' not in modified_recipe_data:
-        modified_recipe_data['servings'] = recipe.servings
+    modified_recipe_data["id"] = recipe.id
+    if "prep_time" not in modified_recipe_data:
+        modified_recipe_data["prep_time"] = recipe.prep_time
+    if "cook_time" not in modified_recipe_data:
+        modified_recipe_data["cook_time"] = recipe.cook_time
+    if "servings" not in modified_recipe_data:
+        modified_recipe_data["servings"] = recipe.servings
 
-    # Update the recipe in the database
     GLOBAL_RECIPE_CONTEXT[recipe.id] = modified_recipe_data
 
     return EditResponse(
-        status='success',
+        status="success",
         message=f'Successfully modified {modified_recipe_data["name"]} using AI. {reasoning}',
         modified_recipe=Recipe(**modified_recipe_data),
         changes_made=changes_made,
-        original_recipe=recipe
+        original_recipe=recipe,
     )
 
 
 @function_tool
 async def search_recipes(
-    cw: RunContextWrapper[ChatContext],
-    query: str = ""
+    cw: RunContextWrapper[ChatContext], query: str = ""
 ) -> SearchResponse:
     """
     Search and browse recipes in the database.
@@ -370,37 +362,34 @@ async def search_recipes(
     print(f"Searching recipes for query: '{query}'")
 
     try:
-        # Get recipe context
         recipe_context = GLOBAL_RECIPE_CONTEXT
 
-        # If no query, return all recipes
         if not query:
             recipes_dict = {k: Recipe(**v) for k, v in recipe_context.items()}
             return SearchResponse(
-                status='success',
-                message=f'Found {len(recipe_context)} recipes in database',
+                status="success",
+                message=f"Found {len(recipe_context)} recipes in database",
                 recipes=recipes_dict,
-                recipe_count=len(recipe_context)
+                recipe_count=len(recipe_context),
             )
 
-        # Use OpenAI to semantically search for relevant recipes
         client = openai.OpenAI()
-
-        # Prepare recipe summaries for the LLM
         recipe_summaries = []
+
         for recipe_id, recipe in recipe_context.items():
             summary = {
                 "id": recipe_id,
-                "name": recipe['name'],
-                "ingredients": recipe['ingredients'][:5],  # First 5 ingredients for brevity
+                "name": recipe["name"],
+                "ingredients": recipe["ingredients"][
+                    :5
+                ],  # First 5 ingredients for brevity
                 "cuisine_type": "various",  # Could be enhanced with actual cuisine classification
-                "prep_time": recipe.get('prep_time', 'Unknown'),
-                "cook_time": recipe.get('cook_time', 'Unknown'),
-                "servings": recipe.get('servings', 'Unknown')
+                "prep_time": recipe.get("prep_time", "Unknown"),
+                "cook_time": recipe.get("cook_time", "Unknown"),
+                "servings": recipe.get("servings", "Unknown"),
             }
             recipe_summaries.append(summary)
 
-        # Create prompt for semantic search
         search_prompt = f"""
 You are a recipe search expert. Given a user's search query and a list of available recipes,
 identify which recipes are most relevant to the user's request.
@@ -428,19 +417,19 @@ Consider:
 Return only the JSON response, no additional text.
 """
 
-        # Make the OpenAI call
         response = client.chat.completions.create(
-            model="gpt-4o-mini",  # Using a faster, cheaper model for search
+            model="gpt-4o-mini",
             messages=[
-                {"role": "system",
-                 "content": "You are a helpful recipe search assistant that returns only valid JSON."},
-                {"role": "user", "content": search_prompt}
+                {
+                    "role": "system",
+                    "content": "You are a helpful recipe search assistant that returns only valid JSON.",
+                },
+                {"role": "user", "content": search_prompt},
             ],
-            temperature=0.1,  # Low temperature for consistent results
-            max_tokens=500
+            temperature=0.1,
+            max_tokens=500,
         )
 
-        # Parse the LLM response
         llm_response = response.choices[0].message.content.strip()
 
         try:
@@ -448,17 +437,20 @@ Return only the JSON response, no additional text.
             relevant_ids = search_result.get("relevant_recipe_ids", [])
             reasoning = search_result.get("reasoning", "LLM analysis")
         except json.JSONDecodeError:
-            print("Failed to parse LLM response as JSON, falling back to keyword search")
-            # Fallback to simple keyword search if LLM response isn't valid JSON
+            print(
+                "Failed to parse LLM response as JSON, falling back to keyword search"
+            )
+
             query_lower = query.lower()
             relevant_ids = []
             for recipe_id, recipe in recipe_context.items():
-                if (query_lower in recipe['name'].lower() or
-                        any(query_lower in ingredient.lower() for ingredient in recipe['ingredients'])):
+                if query_lower in recipe["name"].lower() or any(
+                    query_lower in ingredient.lower()
+                    for ingredient in recipe["ingredients"]
+                ):
                     relevant_ids.append(recipe_id)
             reasoning = "Keyword-based fallback search"
 
-        # Build matching recipes dictionary
         matching_recipes = {}
         for recipe_id in relevant_ids:
             if recipe_id in recipe_context:
@@ -466,21 +458,22 @@ Return only the JSON response, no additional text.
 
         recipes_dict = {k: Recipe(**v) for k, v in matching_recipes.items()}
 
-        message = f'Found {len(matching_recipes)} recipes matching "{query}". {reasoning}'
+        message = (
+            f'Found {len(matching_recipes)} recipes matching "{query}". {reasoning}'
+        )
 
         return SearchResponse(
-            status='success',
+            status="success",
             message=message,
             recipes=recipes_dict,
             recipe_count=len(matching_recipes),
-            query=query
+            query=query,
         )
 
     except Exception as e:
         print(f"Error searching recipes: {str(e)}")
         return SearchResponse(
-            status='error',
-            message=f'Failed to search recipes: {str(e)}'
+            status="error", message=f"Failed to search recipes: {str(e)}"
         )
 
 
@@ -518,7 +511,7 @@ class RecipeEditorAgent(Agent[ChatContext]):
             Always explain the changes made and provide helpful cooking tips.
             """,
             model=model,
-            tools=[search_recipes, plan_and_apply_recipe_modifications]
+            tools=[search_recipes, plan_and_apply_recipe_modifications],
         )
 
 
@@ -526,7 +519,9 @@ class RecipeEditorAgent(Agent[ChatContext]):
 class MainChatAgent(Agent[ChatContext]):
     """Main chat agent that handles general conversation and routes to specialized agents."""
 
-    def __init__(self, model: str = "gpt-4o", recipe_editor_agent: RecipeEditorAgent = None):
+    def __init__(
+        self, model: str = "gpt-4o", recipe_editor_agent: RecipeEditorAgent = None
+    ):
         super().__init__(
             name="Main Chat Agent",
             instructions="""
@@ -548,13 +543,8 @@ class MainChatAgent(Agent[ChatContext]):
             """,
             model=model,
             tools=[],
-            handoffs=[recipe_editor_agent]
+            handoffs=[recipe_editor_agent],
         )
-
-
-# -------------------------------------------------------------
-# Utility helpers
-# -------------------------------------------------------------
 
 
 async def handle_runner_stream(runner: "Runner"):
@@ -573,45 +563,35 @@ async def handle_runner_stream(runner: "Runner"):
     handoff_info = None
 
     async for event in runner.stream_events():
-        # ---------------------------------------------
-        # Assistant text deltas & tool call metadata
-        # ---------------------------------------------
         if event.type == "raw_response_event":
             if isinstance(event.data, ResponseTextDeltaEvent):
-                # Stream the assistant's token delta
                 print(event.data.delta, end="", flush=True)
             elif isinstance(event.data, ResponseOutputItemAddedEvent):
                 if isinstance(event.data.item, ResponseFunctionToolCall):
-                    # Tool call metadata becomes available here
                     print(f"\n[Calling tool: {event.data.item.name}]\n")
-
-        # ---------------------------------------------
-        # Tool output events, hand-offs, and full messages
-        # ---------------------------------------------
         elif event.type == "run_item_stream_event":
-            if event.name == "tool_output" and isinstance(event.item, ToolCallOutputItem):
-                # The actual tool execution result becomes available here
-                raw_item = event.item.raw_item  # pyright: ignore [reportGeneralTypeIssues]
-                # `raw_item` can be an OpenAI object or a dict; handle generically
+            if event.name == "tool_output" and isinstance(
+                event.item, ToolCallOutputItem
+            ):
+                raw_item = (
+                    event.item.raw_item
+                )  # pyright: ignore [reportGeneralTypeIssues]
                 content = (
-                    raw_item.get("content") if isinstance(raw_item, dict) else getattr(raw_item, "content", "")
+                    raw_item.get("content")
+                    if isinstance(raw_item, dict)
+                    else getattr(raw_item, "content", "")
                 )
                 if content:
                     print(f"\n[Tool output: {content}]\n", end="", flush=True)
 
             elif event.name == "message_output_created":
-                # A full assistant message has been generated (useful for
-                # non-streamed messages such as after tool execution)
                 raw_item = event.item.raw_item
 
-                # Extract role/content defensively — the agents SDK isn't always
-                # consistent with attribute vs. dict access.
                 role = getattr(raw_item, "role", None)
                 if role is None and isinstance(raw_item, dict):
                     role = raw_item.get("role")
 
                 if role == "assistant":
-                    # Aggregate all textual parts for display
                     content_parts = []
                     for part in getattr(raw_item, "content", []):
                         if isinstance(part, ResponseOutputText):
@@ -621,13 +601,10 @@ async def handle_runner_stream(runner: "Runner"):
                     if content_parts:
                         print("".join(content_parts), end="", flush=True)
 
-            elif event.name == "handoff_occured":
-                # Capture handoff target so caller can decide if they need to
-                # invoke a different agent.
+            elif event.name == "handoff_occurred":
                 handoff_info = event.item.raw_item
                 print("\n[Handed off to Recipe Editor Agent]\n")
 
-    # Ensure we leave the cursor on the next line after streaming finishes
     print()
     return handoff_info
 
@@ -639,12 +616,8 @@ async def run_streaming_chat(user_input: str):
     print("Starting Streaming Chat Application with Agent Handoffs")
     print("=" * 60)
 
-    # Create chat context
-    chat_ctx = ChatContext(
-        conversation_history=[]
-    )
+    chat_ctx = ChatContext(conversation_history=[])
 
-    # Initialize agents
     recipe_editor_agent = RecipeEditorAgent()
     main_chat_agent = MainChatAgent(recipe_editor_agent=recipe_editor_agent)
 
@@ -659,14 +632,10 @@ async def run_streaming_chat(user_input: str):
 
     print("\nAssistant: ", end="", flush=True)
 
-    # Run the main chat agent
     messages = [{"role": "user", "content": user_input}]
-
     main_runner = Runner().run_streamed(starting_agent=main_chat_agent, input=messages)
     handoff_info = await handle_runner_stream(main_runner)
 
-    # If a hand-off to the recipe editor occurred, run the secondary
-    # agent and stream its output using the same helper.
     if handoff_info and "recipe" in str(handoff_info).lower():
         recipe_messages = [{"role": "user", "content": user_input}]
         recipe_runner = Runner().run_streamed(
@@ -690,5 +659,4 @@ if __name__ == "__main__":
 
     user_input = "Can you edit the carbonara recipe to be vegetarian?"
 
-    # Run the chat application
     asyncio.run(run_streaming_chat(user_input))
