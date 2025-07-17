@@ -21,8 +21,7 @@ from opentelemetry.semconv_ai import (
 from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
     GEN_AI_COMPLETION,
 )
-from .utils import set_span_attribute
-from traceloop.sdk.utils.json_encoder import JSONEncoder
+from .utils import set_span_attribute, JSONEncoder
 from agents import FunctionTool, WebSearchTool, FileSearchTool, ComputerTool
 
 
