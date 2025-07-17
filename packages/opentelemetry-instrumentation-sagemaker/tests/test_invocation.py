@@ -44,6 +44,7 @@ There's a llama in my garden  What should I do? [/INST]"""
 
     meta_span = spans[0]
     assert meta_span.attributes[SpanAttributes.LLM_REQUEST_MODEL] == endpoint_name
+    assert meta_span.attributes[SpanAttributes.LLM_SYSTEM] == "Sagemaker"
     assert meta_span.attributes[SpanAttributes.TRACELOOP_ENTITY_INPUT] == body
 
     logs = log_exporter.get_finished_logs()
@@ -85,6 +86,7 @@ There's a llama in my garden  What should I do? [/INST]"""
 
     meta_span = spans[0]
     assert meta_span.attributes[SpanAttributes.LLM_REQUEST_MODEL] == endpoint_name
+    assert meta_span.attributes[SpanAttributes.LLM_SYSTEM] == "Sagemaker"
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2
@@ -137,6 +139,7 @@ There's a llama in my garden  What should I do? [/INST]"""
 
     meta_span = spans[0]
     assert meta_span.attributes[SpanAttributes.LLM_REQUEST_MODEL] == endpoint_name
+    assert meta_span.attributes[SpanAttributes.LLM_SYSTEM] == "Sagemaker"
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2
