@@ -23,10 +23,6 @@ def should_send_prompts():
 
 class JSONEncoder(json.JSONEncoder):
     def default(self, o):
-        if isinstance(o, dict):
-            if "callbacks" in o:
-                o = {k: v for k, v in o.items() if k != "callbacks"}
-                return o
         if dataclasses.is_dataclass(o):
             return dataclasses.asdict(o)
 
