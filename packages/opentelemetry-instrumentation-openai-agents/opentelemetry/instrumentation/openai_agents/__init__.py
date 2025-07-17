@@ -4,7 +4,6 @@ import os
 import time
 import json
 import threading
-import weakref
 from typing import Collection
 from wrapt import wrap_function_wrapper
 from opentelemetry.trace import SpanKind, get_tracer, Tracer, set_span_in_context
@@ -119,7 +118,6 @@ async def _wrap_agent_run_streamed(
         return await wrapped(*args, **kwargs)
 
     agent_name = getattr(agent, "name", "agent")
-    model_name = get_model_name(agent)
     thread_id = threading.get_ident()
 
     root_span = _root_span_storage.get(thread_id)
