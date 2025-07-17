@@ -122,7 +122,7 @@ async def _wrap_agent_run_streamed(
     model_name = get_model_name(agent)
     thread_id = threading.get_ident()
 
-    root_span = _root_span_storage.get(thread_id, None)
+    root_span = _root_span_storage.get(thread_id)
 
     if root_span:
         # Use the root span context to ensure same trace
@@ -164,7 +164,7 @@ async def _wrap_agent_run_streamed(
                                 input_objects.append(item)
                             else:
                                 try:
-                                    item_dict = eval(item) if isinstance(item, str) else item
+                                    item_dict = json.loads(item) if isinstance(item, str) else item
                                     input_objects.append(item_dict)
                                 except Exception:
                                     input_objects.append(str(item))
@@ -300,7 +300,7 @@ async def _wrap_agent_run(
                                 input_objects.append(item)
                             else:
                                 try:
-                                    item_dict = eval(item) if isinstance(item, str) else item
+                                    item_dict = json.loads(item) if isinstance(item, str) else item
                                     input_objects.append(item_dict)
                                 except Exception:
                                     input_objects.append(str(item))
