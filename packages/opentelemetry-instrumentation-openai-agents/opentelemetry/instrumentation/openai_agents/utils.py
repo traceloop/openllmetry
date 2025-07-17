@@ -25,7 +25,7 @@ class JSONEncoder(json.JSONEncoder):
     def default(self, o):
         if isinstance(o, dict):
             if "callbacks" in o:
-                del o["callbacks"]
+                o = {k: v for k, v in o.items() if k != "callbacks"}
                 return o
         if dataclasses.is_dataclass(o):
             return dataclasses.asdict(o)
