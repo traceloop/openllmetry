@@ -167,6 +167,7 @@ def count_or_none(obj):
 
     return None
 
+
 @dont_throw
 def _set_response_attributes(
     insert_units_metric,
