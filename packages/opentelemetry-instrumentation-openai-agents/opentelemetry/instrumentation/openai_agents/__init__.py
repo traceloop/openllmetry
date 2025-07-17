@@ -1,4 +1,5 @@
 """OpenTelemetry OpenAI Agents instrumentation"""
+
 import os
 import time
 import json
@@ -62,7 +63,6 @@ class OpenAIAgentsInstrumentor(BaseInstrumentor):
                 duration_histogram,
                 token_histogram,
             ),
-
         )
         wrap_function_wrapper(
             "agents.run",
@@ -72,7 +72,6 @@ class OpenAIAgentsInstrumentor(BaseInstrumentor):
                 duration_histogram,
                 token_histogram,
             ),
-
         )
 
     def _uninstrument(self, **kwargs):
@@ -92,7 +91,7 @@ def with_tracer_wrapper(func):
                 wrapped,
                 instance,
                 args,
-                kwargs
+                kwargs,
             )
 
         return wrapper
@@ -136,9 +135,7 @@ async def _wrap_agent_run_streamed(
         attributes={
             SpanAttributes.LLM_SYSTEM: "openai",
             SpanAttributes.LLM_REQUEST_MODEL: model_name,
-            SpanAttributes.TRACELOOP_SPAN_KIND: (
-                TraceloopSpanKindValues.AGENT.value
-            )
+            SpanAttributes.TRACELOOP_SPAN_KIND: (TraceloopSpanKindValues.AGENT.value),
         },
         context=ctx,
     ) as span:
@@ -150,7 +147,7 @@ async def _wrap_agent_run_streamed(
             set_model_settings_span_attributes(agent, span)
             extract_run_config_details(run_config, span)
 
-            if streamed_result and hasattr(streamed_result, 'input'):
+            if streamed_result and hasattr(streamed_result, "input"):
                 input_data = streamed_result.input
                 if isinstance(input_data, str):
                     span.set_attribute("traceloop.entity.input", input_data)
@@ -158,13 +155,17 @@ async def _wrap_agent_run_streamed(
                     try:
                         input_objects = []
                         for item in input_data:
-                            if hasattr(item, 'model_dump'):
+                            if hasattr(item, "model_dump"):
                                 input_objects.append(item.model_dump())
                             elif isinstance(item, dict):
                                 input_objects.append(item)
                             else:
                                 try:
-                                    item_dict = json.loads(item) if isinstance(item, str) else item
+                                    item_dict = (
+                                        json.loads(item)
+                                        if isinstance(item, str)
+                                        else item
+                                    )
                                     input_objects.append(item_dict)
                                 except Exception:
                                     input_objects.append(str(item))
@@ -181,9 +182,9 @@ async def _wrap_agent_run_streamed(
             result = await wrapped(*args, **kwargs)
             end_time = time.time()
 
-            if result and hasattr(result, 'model_response'):
+            if result and hasattr(result, "model_response"):
                 model_response = result.model_response
-                if hasattr(model_response, 'output'):
+                if hasattr(model_response, "output"):
                     output_data = model_response.output
                     if isinstance(output_data, str):
                         span.set_attribute("traceloop.entity.output", output_data)
@@ -191,16 +192,17 @@ async def _wrap_agent_run_streamed(
                         try:
                             output_objects = []
                             for item in output_data:
-                                if hasattr(item, 'model_dump'):
+                                if hasattr(item, "model_dump"):
                                     output_objects.append(item.model_dump())
                                 elif isinstance(item, dict):
                                     output_objects.append(item)
                                 else:
                                     try:
-                                        if hasattr(item, '__dict__'):
+                                        if hasattr(item, "__dict__"):
                                             item_dict = {
-                                                k: v for k, v in item.__dict__.items()
-                                                if not k.startswith('_')
+                                                k: v
+                                                for k, v in item.__dict__.items()
+                                                if not k.startswith("_")
                                             }
                                             output_objects.append(item_dict)
                                         else:
@@ -210,19 +212,27 @@ async def _wrap_agent_run_streamed(
                             output_str = json.dumps(output_objects)
                             span.set_attribute("traceloop.entity.output", output_str)
                         except Exception:
-                            span.set_attribute("traceloop.entity.output", str(output_data))
+                            span.set_attribute(
+                                "traceloop.entity.output", str(output_data)
+                            )
                     else:
                         try:
-                            if hasattr(output_data, 'model_dump'):
+                            if hasattr(output_data, "model_dump"):
                                 output_str = json.dumps(output_data.model_dump())
-                            elif hasattr(output_data, '__dict__'):
-                                output_dict = {k: v for k, v in output_data.__dict__.items() if not k.startswith('_')}
+                            elif hasattr(output_data, "__dict__"):
+                                output_dict = {
+                                    k: v
+                                    for k, v in output_data.__dict__.items()
+                                    if not k.startswith("_")
+                                }
                                 output_str = json.dumps(output_dict)
                             else:
                                 output_str = json.dumps(str(output_data))
                             span.set_attribute("traceloop.entity.output", output_str)
                         except Exception:
-                            span.set_attribute("traceloop.entity.output", str(output_data))
+                            span.set_attribute(
+                                "traceloop.entity.output", str(output_data)
+                            )
 
             span.set_status(Status(StatusCode.OK))
 
@@ -260,7 +270,7 @@ async def _wrap_agent_run(
     agent_name = getattr(agent, "name", "agent")
     model_name = get_model_name(agent)
     thread_id = threading.get_ident()
-    root_span = _root_span_storage.get(thread_id, None)
+    root_span = _root_span_storage.get(thread_id)
 
     if root_span:
         ctx = set_span_in_context(root_span, context.get_current())
@@ -273,9 +283,7 @@ async def _wrap_agent_run(
         attributes={
             SpanAttributes.LLM_SYSTEM: "openai",
             SpanAttributes.LLM_REQUEST_MODEL: model_name,
-            SpanAttributes.TRACELOOP_SPAN_KIND: (
-                TraceloopSpanKindValues.AGENT.value
-            )
+            SpanAttributes.TRACELOOP_SPAN_KIND: (TraceloopSpanKindValues.AGENT.value),
         },
         context=ctx,
     ) as span:
@@ -294,13 +302,17 @@ async def _wrap_agent_run(
                     try:
                         input_objects = []
                         for item in prompt_list:
-                            if hasattr(item, 'model_dump'):
+                            if hasattr(item, "model_dump"):
                                 input_objects.append(item.model_dump())
                             elif isinstance(item, dict):
                                 input_objects.append(item)
                             else:
                                 try:
-                                    item_dict = json.loads(item) if isinstance(item, str) else item
+                                    item_dict = (
+                                        json.loads(item)
+                                        if isinstance(item, str)
+                                        else item
+                                    )
                                     input_objects.append(item_dict)
                                 except Exception:
                                     input_objects.append(str(item))
@@ -309,18 +321,14 @@ async def _wrap_agent_run(
                     except Exception:
                         span.set_attribute("traceloop.entity.input", str(prompt_list))
 
-            tools = (
-                args[4]
-                if len(args) > 4 and isinstance(args[4], list)
-                else []
-            )
+            tools = args[4] if len(args) > 4 and isinstance(args[4], list) else []
             if tools:
                 extract_tool_details(tracer, tools)
 
             start_time = time.time()
             response = await wrapped(*args, **kwargs)
 
-            if response and hasattr(response, 'output'):
+            if response and hasattr(response, "output"):
                 output_data = response.output
                 if isinstance(output_data, str):
                     span.set_attribute("traceloop.entity.output", output_data)
@@ -328,14 +336,18 @@ async def _wrap_agent_run(
                     try:
                         output_objects = []
                         for item in output_data:
-                            if hasattr(item, 'model_dump'):
+                            if hasattr(item, "model_dump"):
                                 output_objects.append(item.model_dump())
                             elif isinstance(item, dict):
                                 output_objects.append(item)
                             else:
                                 try:
-                                    if hasattr(item, '__dict__'):
-                                        item_dict = {k: v for k, v in item.__dict__.items() if not k.startswith('_')}
+                                    if hasattr(item, "__dict__"):
+                                        item_dict = {
+                                            k: v
+                                            for k, v in item.__dict__.items()
+                                            if not k.startswith("_")
+                                        }
                                         output_objects.append(item_dict)
                                     else:
                                         output_objects.append(str(item))
@@ -347,10 +359,14 @@ async def _wrap_agent_run(
                         span.set_attribute("traceloop.entity.output", str(output_data))
                 else:
                     try:
-                        if hasattr(output_data, 'model_dump'):
+                        if hasattr(output_data, "model_dump"):
                             output_str = json.dumps(output_data.model_dump())
-                        elif hasattr(output_data, '__dict__'):
-                            output_dict = {k: v for k, v in output_data.__dict__.items() if not k.startswith('_')}
+                        elif hasattr(output_data, "__dict__"):
+                            output_dict = {
+                                k: v
+                                for k, v in output_data.__dict__.items()
+                                if not k.startswith("_")
+                            }
                             output_str = json.dumps(output_dict)
                         else:
                             output_str = json.dumps(str(output_data))
@@ -363,7 +379,6 @@ async def _wrap_agent_run(
                     attributes={
                         SpanAttributes.LLM_SYSTEM: "openai",
                         SpanAttributes.LLM_RESPONSE_MODEL: model_name,
-
                     },
                 )
             if isinstance(prompt_list, list):
@@ -382,9 +397,7 @@ async def _wrap_agent_run(
 
 
 def get_model_name(agent):
-    model_attr = getattr(
-        getattr(agent, "model", None), "model", "unknown_model"
-    )
+    model_attr = getattr(getattr(agent, "model", None), "model", "unknown_model")
     if model_attr == "unknown_model":
         model_attr = getattr(agent, "model", None)
         return model_attr
@@ -407,9 +420,7 @@ def extract_agent_details(test_agent, span):
     if name:
         set_span_attribute(span, "gen_ai.agent.name", name)
     if instructions:
-        set_span_attribute(
-            span, "gen_ai.agent.description", instructions
-        )
+        set_span_attribute(span, "gen_ai.agent.description", instructions)
     if handoff_description:
         set_span_attribute(
             span, "gen_ai.agent.handoff_description", handoff_description
@@ -418,7 +429,7 @@ def extract_agent_details(test_agent, span):
         for idx, h in enumerate(handoffs):
             handoff_info = {
                 "name": getattr(h, "name", None),
-                "instructions": getattr(h, "instructions", None)
+                "instructions": getattr(h, "instructions", None),
             }
             handoff_json = json.dumps(handoff_info)
             span.set_attribute(f"openai.agent.handoff{idx}", handoff_json)
@@ -478,7 +489,7 @@ def extract_run_config_details(run_config, span):
 def extract_tool_details(tracer: Tracer, tools):
     """Create spans for hosted tools and wrap FunctionTool execution."""
     thread_id = threading.get_ident()
-    root_span = _root_span_storage.get(thread_id, None)
+    root_span = _root_span_storage.get(thread_id)
 
     for tool in tools:
         if isinstance(tool, FunctionTool):
@@ -509,12 +520,19 @@ def extract_tool_details(tracer: Tracer, tools):
                         context=ctx,
                     ) as span:
                         try:
-                            span.set_attribute(f"{GEN_AI_COMPLETION}.tool.name", tool_name)
-                            span.set_attribute(f"{GEN_AI_COMPLETION}.tool.type", "FunctionTool")
-                            span.set_attribute(f"{GEN_AI_COMPLETION}.tool.description", original_tool.description)
+                            span.set_attribute(
+                                f"{GEN_AI_COMPLETION}.tool.name", tool_name
+                            )
+                            span.set_attribute(
+                                f"{GEN_AI_COMPLETION}.tool.type", "FunctionTool"
+                            )
+                            span.set_attribute(
+                                f"{GEN_AI_COMPLETION}.tool.description",
+                                original_tool.description,
+                            )
                             span.set_attribute(
                                 f"{GEN_AI_COMPLETION}.tool.strict_json_schema",
-                                original_tool.strict_json_schema
+                                original_tool.strict_json_schema,
                             )
                             span.set_attribute("traceloop.entity.input", args_json)
                             result = await original_func(tool_context, args_json)
@@ -549,18 +567,35 @@ def extract_tool_details(tracer: Tracer, tools):
 
             if isinstance(tool, WebSearchTool):
                 span.set_attribute(f"{GEN_AI_COMPLETION}.tool.type", "WebSearchTool")
-                span.set_attribute(f"{GEN_AI_COMPLETION}.tool.search_context_size", tool.search_context_size)
+                span.set_attribute(
+                    f"{GEN_AI_COMPLETION}.tool.search_context_size",
+                    tool.search_context_size,
+                )
                 if tool.user_location:
-                    span.set_attribute(f"{GEN_AI_COMPLETION}.tool.user_location", str(tool.user_location))
+                    span.set_attribute(
+                        f"{GEN_AI_COMPLETION}.tool.user_location",
+                        str(tool.user_location),
+                    )
             elif isinstance(tool, FileSearchTool):
                 span.set_attribute(f"{GEN_AI_COMPLETION}.tool.type", "FileSearchTool")
-                span.set_attribute(f"{GEN_AI_COMPLETION}.tool.vector_store_ids", str(tool.vector_store_ids))
+                span.set_attribute(
+                    f"{GEN_AI_COMPLETION}.tool.vector_store_ids",
+                    str(tool.vector_store_ids),
+                )
                 if tool.max_num_results:
-                    span.set_attribute(f"{GEN_AI_COMPLETION}.tool.max_num_results", tool.max_num_results)
-                span.set_attribute(f"{GEN_AI_COMPLETION}.tool.include_search_results", tool.include_search_results)
+                    span.set_attribute(
+                        f"{GEN_AI_COMPLETION}.tool.max_num_results",
+                        tool.max_num_results,
+                    )
+                span.set_attribute(
+                    f"{GEN_AI_COMPLETION}.tool.include_search_results",
+                    tool.include_search_results,
+                )
             elif isinstance(tool, ComputerTool):
                 span.set_attribute(f"{GEN_AI_COMPLETION}.tool.type", "ComputerTool")
-                span.set_attribute(f"{GEN_AI_COMPLETION}.tool.computer", str(tool.computer))
+                span.set_attribute(
+                    f"{GEN_AI_COMPLETION}.tool.computer", str(tool.computer)
+                )
 
             span.set_status(Status(StatusCode.OK))
             span.end()
@@ -601,8 +636,9 @@ def set_response_content_span_attribute(response, span):
             if msg_type:
                 types.append(msg_type)
 
-            if hasattr(output_message, "content") and \
-                    isinstance(output_message.content, list):
+            if hasattr(output_message, "content") and isinstance(
+                output_message.content, list
+            ):
                 for content_item in output_message.content:
                     if hasattr(content_item, "text"):
                         contents.append(content_item.text)
