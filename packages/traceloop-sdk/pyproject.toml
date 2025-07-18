@@ -30,11 +30,7 @@ opentelemetry-sdk = "^1.28.0"
 opentelemetry-exporter-otlp-proto-http = "^1.28.0"
 opentelemetry-exporter-otlp-proto-grpc = "^1.28.0"
 opentelemetry-instrumentation-logging = ">=0.50b0"
-opentelemetry-instrumentation-requests = ">=0.50b0"
-opentelemetry-instrumentation-sqlalchemy = ">=0.50b0"
-opentelemetry-instrumentation-urllib3 = ">=0.50b0"
 opentelemetry-instrumentation-threading = ">=0.50b0"
-opentelemetry-instrumentation-redis = ">=0.50b0"
 opentelemetry-semantic-conventions-ai = "0.4.11"
 opentelemetry-instrumentation-mistralai = { path = "../opentelemetry-instrumentation-mistralai", develop = true }
 opentelemetry-instrumentation-openai = { path = "../opentelemetry-instrumentation-openai", develop = true }
@@ -73,6 +69,10 @@ posthog = ">3.0.2, <4"
 aiohttp = "^3.11.11"
 
 # --- OPTIONAL INSTRUMENTATION DEPENDENCIES ---
+opentelemetry-instrumentation-requests = { version = ">=0.50b0", optional = true }
+opentelemetry-instrumentation-sqlalchemy = { version = ">=0.50b0", optional = true }
+opentelemetry-instrumentation-urllib3 = { version = ">=0.50b0", optional = true }
+opentelemetry-instrumentation-redis = { version = ">=0.50b0", optional = true }
 opentelemetry-instrumentation-mistralai = { path = "../opentelemetry-instrumentation-mistralai", develop = true, optional = true }
 opentelemetry-instrumentation-openai = { path = "../opentelemetry-instrumentation-openai", develop = true, optional = true }
 opentelemetry-instrumentation-ollama = { path = "../opentelemetry-instrumentation-ollama", develop = true, optional = true }
@@ -102,6 +102,10 @@ opentelemetry-instrumentation-groq = { path = "../opentelemetry-instrumentation-
 opentelemetry-instrumentation-mcp = { path = "../opentelemetry-instrumentation-mcp", develop = true, optional = true }
 
 [tool.poetry.extras]
+requests = ["opentelemetry-instrumentation-requests"]
+sqlalchemy = ["opentelemetry-instrumentation-sqlalchemy"]
+urllib3 = ["opentelemetry-instrumentation-urllib3"]
+redis = ["opentelemetry-instrumentation-redis"]
 mistralai = ["opentelemetry-instrumentation-mistralai"]
 openai = ["opentelemetry-instrumentation-openai"]
 ollama = ["opentelemetry-instrumentation-ollama"]
@@ -131,6 +135,10 @@ groq = ["opentelemetry-instrumentation-groq"]
 mcp = ["opentelemetry-instrumentation-mcp"]
 
 all = [
+    "opentelemetry-instrumentation-requests",
+    "opentelemetry-instrumentation-sqlalchemy",
+    "opentelemetry-instrumentation-urllib3",
+    "opentelemetry-instrumentation-redis",
     "opentelemetry-instrumentation-mistralai",
     "opentelemetry-instrumentation-openai",
     "opentelemetry-instrumentation-ollama",
