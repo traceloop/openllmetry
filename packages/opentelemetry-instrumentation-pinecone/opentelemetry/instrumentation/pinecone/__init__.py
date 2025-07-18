@@ -27,6 +27,14 @@ from opentelemetry.instrumentation.pinecone.query_handlers import (
     set_query_input_attributes,
     set_query_response,
 )
+from opentelemetry.instrumentation.pinecone.inference_handlers import (
+    set_inference_input_attributes,
+    set_inference_response_attributes,
+)
+from opentelemetry.instrumentation.pinecone.assistant_handlers import (
+    set_assistant_input_attributes,
+    set_assistant_response_attributes,
+)
 from opentelemetry.semconv.trace import SpanAttributes
 from opentelemetry.semconv_ai import Meters, SpanAttributes as AISpanAttributes
 
@@ -66,6 +74,35 @@ WRAPPED_METHODS = [
         "method": "delete",
         "span_name": "pinecone.delete",
     },
+
+    #pinecone inference methods
+    {
+        "object": "Pinecone",
+        "method": "inference.embed",
+        "span_name": "pinecone.inference.embed",
+    },
+    {
+        "object": "Pinecone",
+        "method": "inference.rerank",
+        "span_name": "pinecone.inference.rerank",
+    },
+
+    #pinecone assistant methods
+    {
+        "object": "Pinecone",
+        "method": "assistant.create_assistant",
+        "span_name" : "pinecone.assistant.create",
+    },
+    {
+        "object": "Pinecone",
+        "method": "assistant.chat",
+        "span_name": "pinecone.assistant.chat",
+    },
+    {
+        "object": "Pinecone",
+        "method": "assistant.upload_file",
+        "span_name": "pinecone.assistant.upload_file",
+    }
 ]
 
 
@@ -132,11 +169,13 @@ def _wrap(
     args,
     kwargs,
 ):
-    """Instruments and calls every function defined in TO_WRAP."""
+    """instruments and calls every function defined in to_wrap."""
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
         return wrapped(*args, **kwargs)
 
     name = to_wrap.get("span_name")
+    method = to_wrap.get("method")
+
     with tracer.start_as_current_span(
         name,
         kind=SpanKind.CLIENT,
@@ -145,9 +184,16 @@ def _wrap(
         },
     ) as span:
         if span.is_recording():
-            _set_input_attributes(span, instance, kwargs)
-            if to_wrap.get("method") == "query":
-                set_query_input_attributes(span, kwargs)
+            if "inference" in method:
+                method_name = method.split(".")[-1]  # extract embed or rerank
+                set_inference_input_attributes(span, method_name, kwargs)
+            elif "assistant" in method:
+                method_name = method.split(".")[-1]  # extract assistant method
+                set_assistant_input_attributes(span, method_name, kwargs)
+            else:
+                _set_input_attributes(span, instance, kwargs)
+                if method == "query":
+                    set_query_input_attributes(span, kwargs)
 
         shared_attributes = {}
         if hasattr(instance, "_config"):
@@ -163,20 +209,26 @@ def _wrap(
 
         if response:
             if span.is_recording():
-                if to_wrap.get("method") == "query":
-                    set_query_response(span, scores_metric, shared_attributes, response)
+                if "inference" in method:
+                    method_name = method.split(".")[-1]
+                    set_inference_response_attributes(span, method_name, response)
+                elif "assistant" in method:
+                    method_name = method.split(".")[-1]
+                    set_assistant_response_attributes(span, method_name, response)
+                else:
+                    if to_wrap.get("method") == "query":
+                        set_query_response(span, scores_metric, shared_attributes, response)
+                    _set_response_attributes(
+                        span,
+                        read_units_metric,
+                        write_units_metric,
+                        shared_attributes,
+                        response,
+                    )
 
-                _set_response_attributes(
-                    span,
-                    read_units_metric,
-                    write_units_metric,
-                    shared_attributes,
-                    response,
-                )
-
-                span.set_status(Status(StatusCode.OK))
-
+        span.set_status(Status(StatusCode.OK))
         return response
+
 
 
 class PineconeInstrumentor(BaseInstrumentor):
