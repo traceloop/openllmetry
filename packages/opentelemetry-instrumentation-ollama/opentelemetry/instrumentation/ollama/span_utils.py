@@ -98,7 +98,7 @@ def set_model_response_attributes(span, token_histogram, llm_request_type, respo
     )
     _set_span_attribute(
         span,
-        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS,
+        SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS,
         output_tokens,
     )
     _set_span_attribute(

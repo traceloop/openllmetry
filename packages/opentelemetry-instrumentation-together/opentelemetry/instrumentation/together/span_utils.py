@@ -99,7 +99,7 @@ def set_model_completion_attributes(span, response):
     )
     _set_span_attribute(
         span,
-        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS,
+        SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS,
         output_tokens,
     )
     _set_span_attribute(

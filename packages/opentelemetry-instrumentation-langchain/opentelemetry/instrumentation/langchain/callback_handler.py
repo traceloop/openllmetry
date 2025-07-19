@@ -469,7 +469,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
                 span, SpanAttributes.LLM_USAGE_PROMPT_TOKENS, prompt_tokens
             )
             _set_span_attribute(
-                span, SpanAttributes.LLM_USAGE_COMPLETION_TOKENS, completion_tokens
+                span, SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS, completion_tokens
             )
             _set_span_attribute(
                 span, SpanAttributes.LLM_USAGE_TOTAL_TOKENS, total_tokens

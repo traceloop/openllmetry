@@ -226,7 +226,7 @@ def _set_response_attributes(span, response):
     )
     _set_span_attribute(
         span,
-        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS,
+        SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS,
         usage.get("completion_tokens"),
     )
     _set_span_attribute(
@@ -257,7 +257,7 @@ def _set_span_stream_usage(span, prompt_tokens, completion_tokens):
 
     if isinstance(completion_tokens, int) and completion_tokens >= 0:
         _set_span_attribute(
-            span, SpanAttributes.LLM_USAGE_COMPLETION_TOKENS, completion_tokens
+            span, SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS, completion_tokens
         )
 
     if isinstance(prompt_tokens, int) and prompt_tokens >= 0:

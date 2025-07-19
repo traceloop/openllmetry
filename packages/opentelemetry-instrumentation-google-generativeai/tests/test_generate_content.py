@@ -39,7 +39,7 @@ def test_gemini_generate_content_legacy(
 
     # assert gemini_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 5
     # assert (
-    #     gemini_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS]
+    #     gemini_span.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
     #     + gemini_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS]
     #     == gemini_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
     # )
@@ -77,7 +77,7 @@ def test_gemini_generate_content_with_events_with_content(
 
     # assert gemini_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 5
     # assert (
-    #     gemini_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS]
+    #     gemini_span.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
     #     + gemini_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS]
     #     == gemini_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
     # )
@@ -125,7 +125,7 @@ def test_gemini_generate_content_with_events_with_no_content(
 
     # assert gemini_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 5
     # assert (
-    #     gemini_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS]
+    #     gemini_span.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
     #     + gemini_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS]
     #     == gemini_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
     # )

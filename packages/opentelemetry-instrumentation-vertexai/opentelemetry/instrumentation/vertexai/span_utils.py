@@ -44,7 +44,7 @@ def set_model_input_attributes(span, kwargs, llm_model):
         span, SpanAttributes.GEN_AI_REQUEST_MAX_TOKENS, kwargs.get("max_output_tokens")
     )
     _set_span_attribute(span, SpanAttributes.GEN_AI_REQUEST_TOP_P, kwargs.get("top_p"))
-    _set_span_attribute(span, SpanAttributes.LLM_TOP_K, kwargs.get("top_k"))
+    _set_span_attribute(span, SpanAttributes.GEN_AI_REQUEST_TOP_K, kwargs.get("top_k"))
     _set_span_attribute(
         span, SpanAttributes.LLM_PRESENCE_PENALTY, kwargs.get("presence_penalty")
     )
@@ -79,7 +79,7 @@ def set_model_response_attributes(span, llm_model, token_usage):
         )
         _set_span_attribute(
             span,
-            SpanAttributes.LLM_USAGE_COMPLETION_TOKENS,
+            SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS,
             token_usage.candidates_token_count,
         )
         _set_span_attribute(

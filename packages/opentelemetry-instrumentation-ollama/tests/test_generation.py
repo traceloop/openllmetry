@@ -38,7 +38,7 @@ def test_ollama_generation_legacy(
     assert ollama_span.attributes.get(
         SpanAttributes.LLM_USAGE_TOTAL_TOKENS
     ) == ollama_span.attributes.get(
-        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
+        SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
     ) + ollama_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS)
 
     logs = log_exporter.get_finished_logs()
@@ -68,7 +68,7 @@ def test_ollama_generation_with_events_with_content(
     assert ollama_span.attributes.get(
         SpanAttributes.LLM_USAGE_TOTAL_TOKENS
     ) == ollama_span.attributes.get(
-        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
+        SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
     ) + ollama_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS)
 
     logs = log_exporter.get_finished_logs()
@@ -110,7 +110,7 @@ def test_ollama_generation_with_events_with_no_content(
     assert ollama_span.attributes.get(
         SpanAttributes.LLM_USAGE_TOTAL_TOKENS
     ) == ollama_span.attributes.get(
-        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
+        SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
     ) + ollama_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS)
 
     logs = log_exporter.get_finished_logs()
@@ -162,7 +162,7 @@ def test_ollama_streaming_generation_legacy(
     assert ollama_span.attributes.get(
         SpanAttributes.LLM_USAGE_TOTAL_TOKENS
     ) == ollama_span.attributes.get(
-        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
+        SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
     ) + ollama_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS)
 
     logs = log_exporter.get_finished_logs()
@@ -196,7 +196,7 @@ def test_ollama_streaming_generation_with_events_with_content(
     assert ollama_span.attributes.get(
         SpanAttributes.LLM_USAGE_TOTAL_TOKENS
     ) == ollama_span.attributes.get(
-        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
+        SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
     ) + ollama_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS)
 
     logs = log_exporter.get_finished_logs()
@@ -244,7 +244,7 @@ def test_ollama_streaming_generation_with_events_with_no_content(
     assert ollama_span.attributes.get(
         SpanAttributes.LLM_USAGE_TOTAL_TOKENS
     ) == ollama_span.attributes.get(
-        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
+        SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
     ) + ollama_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS)
 
     logs = log_exporter.get_finished_logs()
@@ -294,7 +294,7 @@ async def test_ollama_async_generation_legacy(
     assert ollama_span.attributes.get(
         SpanAttributes.LLM_USAGE_TOTAL_TOKENS
     ) == ollama_span.attributes.get(
-        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
+        SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
     ) + ollama_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS)
 
     logs = log_exporter.get_finished_logs()
@@ -326,7 +326,7 @@ async def test_ollama_async_generation_with_events_with_content(
     assert ollama_span.attributes.get(
         SpanAttributes.LLM_USAGE_TOTAL_TOKENS
     ) == ollama_span.attributes.get(
-        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
+        SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
     ) + ollama_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS)
 
     logs = log_exporter.get_finished_logs()
@@ -372,7 +372,7 @@ async def test_ollama_async_generation_with_events_with_no_content(
     assert ollama_span.attributes.get(
         SpanAttributes.LLM_USAGE_TOTAL_TOKENS
     ) == ollama_span.attributes.get(
-        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
+        SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
     ) + ollama_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS)
 
     logs = log_exporter.get_finished_logs()
@@ -426,7 +426,7 @@ async def test_ollama_async_streaming_generation_legacy(
     assert ollama_span.attributes.get(
         SpanAttributes.LLM_USAGE_TOTAL_TOKENS
     ) == ollama_span.attributes.get(
-        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
+        SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
     ) + ollama_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS)
 
     logs = log_exporter.get_finished_logs()
@@ -462,7 +462,7 @@ async def test_ollama_async_streaming_generation_with_events_with_content(
     assert ollama_span.attributes.get(
         SpanAttributes.LLM_USAGE_TOTAL_TOKENS
     ) == ollama_span.attributes.get(
-        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
+        SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
     ) + ollama_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS)
 
     logs = log_exporter.get_finished_logs()
@@ -512,7 +512,7 @@ async def test_ollama_async_streaming_generation_with_events_with_no_content(
     assert ollama_span.attributes.get(
         SpanAttributes.LLM_USAGE_TOTAL_TOKENS
     ) == ollama_span.attributes.get(
-        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
+        SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
     ) + ollama_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS)
 
     logs = log_exporter.get_finished_logs()

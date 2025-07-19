@@ -172,7 +172,7 @@ def set_model_input_attributes(span, instance):
             modelParameters.get("min_new_tokens", None),
         )
         _set_span_attribute(
-            span, SpanAttributes.LLM_TOP_K, modelParameters.get("top_k", None)
+            span, SpanAttributes.GEN_AI_REQUEST_TOP_K, modelParameters.get("top_k", None)
         )
         _set_span_attribute(
             span,
@@ -212,7 +212,7 @@ def _set_model_stream_response_attributes(span, stream_response):
     )
     _set_span_attribute(
         span,
-        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS,
+        SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS,
         stream_response.get("generated_token_count"),
     )
     total_token = stream_response.get("input_token_count") + stream_response.get(
@@ -321,7 +321,7 @@ def set_model_response_attributes(
     if (prompt_token + completion_token) != 0:
         _set_span_attribute(
             span,
-            SpanAttributes.LLM_USAGE_COMPLETION_TOKENS,
+            SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS,
             completion_token,
         )
         _set_span_attribute(

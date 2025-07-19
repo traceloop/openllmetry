@@ -43,7 +43,7 @@ def test_mistralai_chat_legacy(
     assert mistral_span.attributes.get(
         SpanAttributes.LLM_USAGE_TOTAL_TOKENS
     ) == mistral_span.attributes.get(
-        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
+        SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
     ) + mistral_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS)
     assert (
         mistral_span.attributes.get("gen_ai.response.id")
@@ -81,7 +81,7 @@ def test_mistralai_chat_with_events_with_content(
     assert mistral_span.attributes.get(
         SpanAttributes.LLM_USAGE_TOTAL_TOKENS
     ) == mistral_span.attributes.get(
-        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
+        SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
     ) + mistral_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS)
     assert (
         mistral_span.attributes.get("gen_ai.response.id")
@@ -134,7 +134,7 @@ def test_mistralai_chat_with_events_with_no_content(
     assert mistral_span.attributes.get(
         SpanAttributes.LLM_USAGE_TOTAL_TOKENS
     ) == mistral_span.attributes.get(
-        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
+        SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
     ) + mistral_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS)
     assert (
         mistral_span.attributes.get("gen_ai.response.id")
@@ -195,7 +195,7 @@ def test_mistralai_streaming_chat_legacy(
     assert mistral_span.attributes.get(
         SpanAttributes.LLM_USAGE_TOTAL_TOKENS
     ) == mistral_span.attributes.get(
-        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
+        SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
     ) + mistral_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS)
     assert (
         mistral_span.attributes.get("gen_ai.response.id")
@@ -237,7 +237,7 @@ def test_mistralai_streaming_chat_with_events_with_content(
     assert mistral_span.attributes.get(
         SpanAttributes.LLM_USAGE_TOTAL_TOKENS
     ) == mistral_span.attributes.get(
-        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
+        SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
     ) + mistral_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS)
     assert (
         mistral_span.attributes.get("gen_ai.response.id")
@@ -294,7 +294,7 @@ def test_mistralai_streaming_chat_with_events_with_no_content(
     assert mistral_span.attributes.get(
         SpanAttributes.LLM_USAGE_TOTAL_TOKENS
     ) == mistral_span.attributes.get(
-        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
+        SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
     ) + mistral_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS)
     assert (
         mistral_span.attributes.get("gen_ai.response.id")
@@ -353,7 +353,7 @@ async def test_mistralai_async_chat_legacy(
     assert mistral_span.attributes.get(
         SpanAttributes.LLM_USAGE_TOTAL_TOKENS
     ) == mistral_span.attributes.get(
-        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
+        SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
     ) + mistral_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS)
     assert (
         mistral_span.attributes.get("gen_ai.response.id")
@@ -393,7 +393,7 @@ async def test_mistralai_async_chat_with_events_with_content(
     assert mistral_span.attributes.get(
         SpanAttributes.LLM_USAGE_TOTAL_TOKENS
     ) == mistral_span.attributes.get(
-        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
+        SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
     ) + mistral_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS)
     assert (
         mistral_span.attributes.get("gen_ai.response.id")
@@ -447,7 +447,7 @@ async def test_mistralai_async_chat_with_events_with_no_content(
     assert mistral_span.attributes.get(
         SpanAttributes.LLM_USAGE_TOTAL_TOKENS
     ) == mistral_span.attributes.get(
-        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
+        SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
     ) + mistral_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS)
     assert (
         mistral_span.attributes.get("gen_ai.response.id")
@@ -506,7 +506,7 @@ async def test_mistralai_async_streaming_chat_legacy(
     assert mistral_span.attributes.get(
         SpanAttributes.LLM_USAGE_TOTAL_TOKENS
     ) == mistral_span.attributes.get(
-        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
+        SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
     ) + mistral_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS)
     assert (
         mistral_span.attributes.get("gen_ai.response.id")
@@ -546,7 +546,7 @@ async def test_mistralai_async_streaming_chat_with_events_with_content(
     assert mistral_span.attributes.get(
         SpanAttributes.LLM_USAGE_TOTAL_TOKENS
     ) == mistral_span.attributes.get(
-        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
+        SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
     ) + mistral_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS)
     assert (
         mistral_span.attributes.get("gen_ai.response.id")
@@ -602,7 +602,7 @@ async def test_mistralai_async_streaming_chat_with_events_with_no_content(
     assert mistral_span.attributes.get(
         SpanAttributes.LLM_USAGE_TOTAL_TOKENS
     ) == mistral_span.attributes.get(
-        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
+        SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
     ) + mistral_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS)
     assert (
         mistral_span.attributes.get("gen_ai.response.id")

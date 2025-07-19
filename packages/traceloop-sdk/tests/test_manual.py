@@ -53,7 +53,7 @@ def test_manual_report(exporter, openai_client):
     )
     assert open_ai_span.end_time > open_ai_span.start_time
     assert open_ai_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 15
-    assert open_ai_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS] == 24
+    assert open_ai_span.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 24
     assert open_ai_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 39
     assert (
         open_ai_span.attributes[SpanAttributes.LLM_USAGE_CACHE_CREATION_INPUT_TOKENS]

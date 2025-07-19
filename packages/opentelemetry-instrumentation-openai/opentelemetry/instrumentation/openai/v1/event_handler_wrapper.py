@@ -29,7 +29,7 @@ class EventHandleWrapper(AssistantEventHandler):
         )
         _set_span_attribute(
             self._span,
-            SpanAttributes.LLM_USAGE_COMPLETION_TOKENS,
+            SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS,
             self._completion_tokens,
         )
         self._original_handler.on_end()

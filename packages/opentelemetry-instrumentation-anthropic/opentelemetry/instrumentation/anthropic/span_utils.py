@@ -221,7 +221,7 @@ def set_response_attributes(span, response):
         completion_tokens = response.get("usage").output_tokens
         set_span_attribute(span, SpanAttributes.LLM_USAGE_PROMPT_TOKENS, prompt_tokens)
         set_span_attribute(
-            span, SpanAttributes.LLM_USAGE_COMPLETION_TOKENS, completion_tokens
+            span, SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS, completion_tokens
         )
         set_span_attribute(
             span,

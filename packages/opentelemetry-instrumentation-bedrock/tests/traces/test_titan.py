@@ -797,7 +797,7 @@ def test_titan_converse_stream(instrument_legacy, brt, span_exporter, log_export
         bedrock_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == inputTokens
     )
     assert (
-        bedrock_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS]
+        bedrock_span.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
         == outputTokens
     )
     assert (
@@ -893,7 +893,7 @@ def test_titan_converse_stream_with_events_with_content(
         bedrock_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == inputTokens
     )
     assert (
-        bedrock_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS]
+        bedrock_span.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
         == outputTokens
     )
     assert (
@@ -1001,7 +1001,7 @@ def test_titan_converse_stream_with_events_with_no_content(
         bedrock_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == inputTokens
     )
     assert (
-        bedrock_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS]
+        bedrock_span.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
         == outputTokens
     )
     assert (

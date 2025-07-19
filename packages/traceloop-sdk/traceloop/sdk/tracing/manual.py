@@ -50,7 +50,7 @@ class LLMSpan:
             SpanAttributes.LLM_USAGE_PROMPT_TOKENS, usage.prompt_tokens
         )
         self._span.set_attribute(
-            SpanAttributes.LLM_USAGE_COMPLETION_TOKENS, usage.completion_tokens
+            SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS, usage.completion_tokens
         )
         self._span.set_attribute(
             SpanAttributes.LLM_USAGE_TOTAL_TOKENS, usage.total_tokens

@@ -381,7 +381,7 @@ def test_completion_streaming(
 
         # check token usage attributes for stream
         completion_tokens = open_ai_span.attributes.get(
-            SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
+            SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
         )
         prompt_tokens = open_ai_span.attributes.get(
             SpanAttributes.LLM_USAGE_PROMPT_TOKENS
@@ -438,7 +438,7 @@ def test_completion_streaming_with_events_with_content(
 
         # check token usage attributes for stream
         completion_tokens = open_ai_span.attributes.get(
-            SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
+            SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
         )
         prompt_tokens = open_ai_span.attributes.get(
             SpanAttributes.LLM_USAGE_PROMPT_TOKENS
@@ -511,7 +511,7 @@ def test_completion_streaming_with_events_with_no_content(
 
         # check token usage attributes for stream
         completion_tokens = open_ai_span.attributes.get(
-            SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
+            SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
         )
         prompt_tokens = open_ai_span.attributes.get(
             SpanAttributes.LLM_USAGE_PROMPT_TOKENS

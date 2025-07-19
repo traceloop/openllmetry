@@ -223,7 +223,7 @@ def messages_list_wrapper(tracer, wrapped, instance, args, kwargs):
         usage_dict = model_as_dict(run.get("usage"))
         _set_span_attribute(
             span,
-            SpanAttributes.LLM_USAGE_COMPLETION_TOKENS,
+            SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS,
             usage_dict.get("completion_tokens"),
         )
         _set_span_attribute(

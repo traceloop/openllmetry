@@ -46,7 +46,7 @@ def test_vertexai_predict(instrument_legacy, span_exporter, log_exporter):
     )
     assert vertexai_span.attributes[SpanAttributes.GEN_AI_REQUEST_TOP_P] == 0.8
     assert vertexai_span.attributes[SpanAttributes.GEN_AI_REQUEST_MAX_TOKENS] == 256
-    assert vertexai_span.attributes[SpanAttributes.LLM_TOP_K] == 40
+    assert vertexai_span.attributes[SpanAttributes.GEN_AI_REQUEST_TOP_K] == 40
     assert (
         vertexai_span.attributes[f"{SpanAttributes.GEN_AI_COMPLETION}.0.content"]
         == response
@@ -89,7 +89,7 @@ def test_vertexai_predict_async(instrument_legacy, span_exporter, log_exporter):
     )
     assert vertexai_span.attributes[SpanAttributes.GEN_AI_REQUEST_TOP_P] == 0.8
     assert vertexai_span.attributes[SpanAttributes.GEN_AI_REQUEST_MAX_TOKENS] == 256
-    assert vertexai_span.attributes[SpanAttributes.LLM_TOP_K] == 40
+    assert vertexai_span.attributes[SpanAttributes.GEN_AI_REQUEST_TOP_K] == 40
     assert (
         vertexai_span.attributes[f"{SpanAttributes.GEN_AI_COMPLETION}.0.content"]
         == response
@@ -125,7 +125,7 @@ def test_vertexai_stream(instrument_legacy, span_exporter, log_exporter):
     )
     assert vertexai_span.attributes[SpanAttributes.GEN_AI_REQUEST_TOP_P] == 0.8
     assert vertexai_span.attributes[SpanAttributes.GEN_AI_REQUEST_MAX_TOKENS] == 256
-    assert vertexai_span.attributes[SpanAttributes.LLM_TOP_K] == 40
+    assert vertexai_span.attributes[SpanAttributes.GEN_AI_REQUEST_TOP_K] == 40
     assert vertexai_span.attributes[
         f"{SpanAttributes.GEN_AI_COMPLETION}.0.content"
     ] == "".join(response)
@@ -165,7 +165,7 @@ def test_vertexai_stream_async(instrument_legacy, span_exporter, log_exporter):
     )
     assert vertexai_span.attributes[SpanAttributes.GEN_AI_REQUEST_TOP_P] == 0.8
     assert vertexai_span.attributes[SpanAttributes.GEN_AI_REQUEST_MAX_TOKENS] == 256
-    assert vertexai_span.attributes[SpanAttributes.LLM_TOP_K] == 40
+    assert vertexai_span.attributes[SpanAttributes.GEN_AI_REQUEST_TOP_K] == 40
     assert vertexai_span.attributes[
         f"{SpanAttributes.GEN_AI_COMPLETION}.0.content"
     ] == "".join(response)
@@ -212,7 +212,7 @@ def test_vertexai_chat(instrument_legacy, span_exporter, log_exporter):
     )
     assert vertexai_span.attributes[SpanAttributes.GEN_AI_REQUEST_TOP_P] == 0.95
     assert vertexai_span.attributes[SpanAttributes.GEN_AI_REQUEST_MAX_TOKENS] == 256
-    assert vertexai_span.attributes[SpanAttributes.LLM_TOP_K] == 40
+    assert vertexai_span.attributes[SpanAttributes.GEN_AI_REQUEST_TOP_K] == 40
     assert (
         vertexai_span.attributes[f"{SpanAttributes.GEN_AI_COMPLETION}.0.content"]
         == response
@@ -259,7 +259,7 @@ def test_vertexai_chat_stream(instrument_legacy, span_exporter, log_exporter):
     assert vertexai_span.attributes[SpanAttributes.GEN_AI_REQUEST_TOP_P] == 0.95
     assert vertexai_span.attributes[SpanAttributes.GEN_AI_REQUEST_TEMPERATURE] == 0.8
     assert vertexai_span.attributes[SpanAttributes.GEN_AI_REQUEST_MAX_TOKENS] == 256
-    assert vertexai_span.attributes[SpanAttributes.LLM_TOP_K] == 40
+    assert vertexai_span.attributes[SpanAttributes.GEN_AI_REQUEST_TOP_K] == 40
     assert vertexai_span.attributes[
         f"{SpanAttributes.GEN_AI_COMPLETION}.0.content"
     ] == "".join(response)

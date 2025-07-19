@@ -70,7 +70,7 @@ def test_anthropic_message_create_legacy(
     )
     assert anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 17
     assert (
-        anthropic_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS]
+        anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
         + anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS]
         == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
     )
@@ -117,7 +117,7 @@ def test_anthropic_message_create_with_events_with_content(
     anthropic_span = spans[0]
     assert anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 17
     assert (
-        anthropic_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS]
+        anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
         + anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS]
         == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
     )
@@ -182,7 +182,7 @@ def test_anthropic_message_create_with_events_with_no_content(
     anthropic_span = spans[0]
     assert anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 17
     assert (
-        anthropic_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS]
+        anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
         + anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS]
         == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
     )
@@ -253,7 +253,7 @@ def test_anthropic_multi_modal_legacy(
     )
     assert anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 1381
     assert (
-        anthropic_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS]
+        anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
         + anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS]
         == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
     )
@@ -307,7 +307,7 @@ def test_anthropic_multi_modal_with_events_with_content(
     anthropic_span = spans[0]
     assert anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 1381
     assert (
-        anthropic_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS]
+        anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
         + anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS]
         == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
     )
@@ -368,7 +368,7 @@ def test_anthropic_multi_modal_with_events_with_no_content(
     anthropic_span = spans[0]
     assert anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 1381
     assert (
-        anthropic_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS]
+        anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
         + anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS]
         == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
     )
@@ -534,7 +534,7 @@ async def test_anthropic_async_multi_modal_legacy(
     )
     assert anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 1311
     assert (
-        anthropic_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS]
+        anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
         + anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS]
         == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
     )
@@ -589,7 +589,7 @@ async def test_anthropic_async_multi_modal_with_events_with_content(
     anthropic_span = spans[0]
     assert anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 1311
     assert (
-        anthropic_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS]
+        anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
         + anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS]
         == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
     )
@@ -651,7 +651,7 @@ async def test_anthropic_async_multi_modal_with_events_with_no_content(
     anthropic_span = spans[0]
     assert anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 1311
     assert (
-        anthropic_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS]
+        anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
         + anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS]
         == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
     )
@@ -719,7 +719,7 @@ def test_anthropic_message_streaming_legacy(
     )
     assert anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 17
     assert (
-        anthropic_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS]
+        anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
         + anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS]
         == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
     )
@@ -773,7 +773,7 @@ def test_anthropic_message_streaming_with_events_with_content(
     anthropic_span = spans[0]
     assert anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 17
     assert (
-        anthropic_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS]
+        anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
         + anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS]
         == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
     )
@@ -838,7 +838,7 @@ def test_anthropic_message_streaming_with_events_with_no_content(
     anthropic_span = spans[0]
     assert anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 17
     assert (
-        anthropic_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS]
+        anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
         + anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS]
         == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
     )
@@ -906,7 +906,7 @@ async def test_async_anthropic_message_create_legacy(
     )
     assert anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 17
     assert (
-        anthropic_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS]
+        anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
         + anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS]
         == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
     )
@@ -953,7 +953,7 @@ async def test_async_anthropic_message_create_with_events_with_content(
     anthropic_span = spans[0]
     assert anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 17
     assert (
-        anthropic_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS]
+        anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
         + anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS]
         == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
     )
@@ -1011,7 +1011,7 @@ async def test_async_anthropic_message_create_with_events_with_no_content(
     anthropic_span = spans[0]
     assert anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 17
     assert (
-        anthropic_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS]
+        anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
         + anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS]
         == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
     )
@@ -1084,7 +1084,7 @@ async def test_async_anthropic_message_streaming_legacy(
     )
     assert anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 17
     assert (
-        anthropic_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS]
+        anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
         + anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS]
         == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
     )
@@ -1138,7 +1138,7 @@ async def test_async_anthropic_message_streaming_with_events_with_content(
     anthropic_span = spans[0]
     assert anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 17
     assert (
-        anthropic_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS]
+        anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
         + anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS]
         == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
     )
@@ -1202,7 +1202,7 @@ async def test_async_anthropic_message_streaming_with_events_with_no_content(
     anthropic_span = spans[0]
     assert anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 17
     assert (
-        anthropic_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS]
+        anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
         + anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS]
         == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
     )

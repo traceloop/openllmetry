@@ -60,7 +60,7 @@ def test_agent_spans(exporter, test_agent):
 
     assert span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] is not None
     assert (
-        span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS]
+        span.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
         is not None)
     assert span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] is not None
 

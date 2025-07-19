@@ -106,7 +106,7 @@ def _set_span_chat_response(span, response):
         )
         _set_span_attribute(
             span,
-            SpanAttributes.LLM_USAGE_COMPLETION_TOKENS,
+            SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS,
             response.token_count.get("response_tokens"),
         )
         _set_span_attribute(
@@ -127,7 +127,7 @@ def _set_span_chat_response(span, response):
         )
         _set_span_attribute(
             span,
-            SpanAttributes.LLM_USAGE_COMPLETION_TOKENS,
+            SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS,
             output_tokens,
         )
         _set_span_attribute(

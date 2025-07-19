@@ -528,7 +528,7 @@ def _record_usage_to_span(span, prompt_tokens, completion_tokens, metric_params)
     )
     _set_span_attribute(
         span,
-        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS,
+        SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS,
         completion_tokens,
     )
     _set_span_attribute(

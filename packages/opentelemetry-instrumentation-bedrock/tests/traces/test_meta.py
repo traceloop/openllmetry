@@ -43,7 +43,7 @@ There's a llama in my garden  What should I do? [/INST]"""
         == response_body["prompt_token_count"]
     )
     assert (
-        meta_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS]
+        meta_span.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
         == response_body["generation_token_count"]
     )
     assert (
@@ -90,7 +90,7 @@ There's a llama in my garden  What should I do? [/INST]"""
         == response_body["prompt_token_count"]
     )
     assert (
-        meta_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS]
+        meta_span.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
         == response_body["generation_token_count"]
     )
     assert (
@@ -147,7 +147,7 @@ There's a llama in my garden  What should I do? [/INST]"""
         == response_body["prompt_token_count"]
     )
     assert (
-        meta_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS]
+        meta_span.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
         == response_body["generation_token_count"]
     )
     assert (
@@ -194,7 +194,7 @@ def test_meta_llama3_completion(instrument_legacy, brt, span_exporter, log_expor
         == response_body["prompt_token_count"]
     )
     assert (
-        meta_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS]
+        meta_span.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
         == response_body["generation_token_count"]
     )
     assert (
@@ -238,7 +238,7 @@ def test_meta_llama3_completion_with_events_with_content(
         == response_body["prompt_token_count"]
     )
     assert (
-        meta_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS]
+        meta_span.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
         == response_body["generation_token_count"]
     )
     assert (
@@ -287,7 +287,7 @@ def test_meta_llama3_completion_with_events_with_no_content(
         == response_body["prompt_token_count"]
     )
     assert (
-        meta_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS]
+        meta_span.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
         == response_body["generation_token_count"]
     )
     assert (
@@ -343,7 +343,7 @@ def test_meta_converse(instrument_legacy, brt, span_exporter, log_exporter):
         == response["usage"]["inputTokens"]
     )
     assert (
-        meta_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS]
+        meta_span.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
         == response["usage"]["outputTokens"]
     )
     assert (
@@ -408,7 +408,7 @@ def test_meta_converse_with_events_with_content(
         == response["usage"]["inputTokens"]
     )
     assert (
-        meta_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS]
+        meta_span.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
         == response["usage"]["outputTokens"]
     )
     assert (
@@ -475,7 +475,7 @@ def test_meta_converse_with_events_with_no_content(
         == response["usage"]["inputTokens"]
     )
     assert (
-        meta_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS]
+        meta_span.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
         == response["usage"]["outputTokens"]
     )
     assert (
@@ -552,7 +552,7 @@ def test_meta_converse_stream(instrument_legacy, brt, span_exporter, log_exporte
     meta_span = spans[0]
     assert meta_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == inputTokens
     assert (
-        meta_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS] == outputTokens
+        meta_span.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == outputTokens
     )
     assert (
         meta_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
@@ -628,7 +628,7 @@ def test_meta_converse_stream_with_events_with_content(
     meta_span = spans[0]
     assert meta_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == inputTokens
     assert (
-        meta_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS] == outputTokens
+        meta_span.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == outputTokens
     )
     assert (
         meta_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
@@ -708,7 +708,7 @@ def test_meta_converse_stream_with_events_with_no_content(
     meta_span = spans[0]
     assert meta_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == inputTokens
     assert (
-        meta_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS] == outputTokens
+        meta_span.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == outputTokens
     )
     assert (
         meta_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]

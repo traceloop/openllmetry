@@ -46,13 +46,13 @@ def test_ai21_j2_completion_string_content(
     assert meta_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == len(
         response_body.get("prompt").get("tokens")
     )
-    assert meta_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS] == len(
+    assert meta_span.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == len(
         response_body.get("completions")[0].get("data").get("tokens")
     )
     assert (
         meta_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
         == meta_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS]
-        + meta_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS]
+        + meta_span.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
     )
     # It is apparently always 1234, but for the sake of consistency,
     # we should not assert on it.
@@ -99,13 +99,13 @@ def test_ai21_j2_completion_string_content_with_events_with_content(
     assert meta_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == len(
         response_body.get("prompt").get("tokens")
     )
-    assert meta_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS] == len(
+    assert meta_span.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == len(
         response_body.get("completions")[0].get("data").get("tokens")
     )
     assert (
         meta_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
         == meta_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS]
-        + meta_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS]
+        + meta_span.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
     )
     # It is apparently always 1234, but for the sake of consistency,
     # we should not assert on it.
@@ -158,13 +158,13 @@ def test_ai21_j2_completion_string_content_with_events_with_no_content(
     assert meta_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == len(
         response_body.get("prompt").get("tokens")
     )
-    assert meta_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS] == len(
+    assert meta_span.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == len(
         response_body.get("completions")[0].get("data").get("tokens")
     )
     assert (
         meta_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
         == meta_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS]
-        + meta_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS]
+        + meta_span.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
     )
     # It is apparently always 1234, but for the sake of consistency,
     # we should not assert on it.

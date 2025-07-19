@@ -33,7 +33,7 @@ def test_cohere_chat_legacy(
     assert cohere_span.attributes.get(
         SpanAttributes.LLM_USAGE_TOTAL_TOKENS
     ) == cohere_span.attributes.get(
-        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
+        SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
     ) + cohere_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS)
     assert (
         cohere_span.attributes.get("gen_ai.response.id")
