@@ -112,7 +112,7 @@ def _set_request_attributes(span, kwargs, instance=None):
 
     base_url = _get_openai_base_url(instance) if instance else ""
     vendor = _get_vendor_from_url(base_url)
-    _set_span_attribute(span, SpanAttributes.LLM_SYSTEM, vendor)
+    _set_span_attribute(span, SpanAttributes.GEN_AI_SYSTEM, vendor)
 
     model = kwargs.get("model")
     if vendor == "AWS" and model and "." in model:
@@ -120,14 +120,14 @@ def _set_request_attributes(span, kwargs, instance=None):
     elif vendor == "OpenRouter":
         model = _extract_model_name_from_provider_format(model)
 
-    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, model)
+    _set_span_attribute(span, SpanAttributes.GEN_AI_REQUEST_MODEL, model)
     _set_span_attribute(
-        span, SpanAttributes.LLM_REQUEST_MAX_TOKENS, kwargs.get("max_tokens")
+        span, SpanAttributes.GEN_AI_REQUEST_MAX_TOKENS, kwargs.get("max_tokens")
     )
     _set_span_attribute(
-        span, SpanAttributes.LLM_REQUEST_TEMPERATURE, kwargs.get("temperature")
+        span, SpanAttributes.GEN_AI_REQUEST_TEMPERATURE, kwargs.get("temperature")
     )
-    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TOP_P, kwargs.get("top_p"))
+    _set_span_attribute(span, SpanAttributes.GEN_AI_REQUEST_TOP_P, kwargs.get("top_p"))
     _set_span_attribute(
         span, SpanAttributes.LLM_FREQUENCY_PENALTY, kwargs.get("frequency_penalty")
     )
@@ -197,7 +197,7 @@ def _set_response_attributes(span, response):
     if "error" in response:
         _set_span_attribute(
             span,
-            f"{SpanAttributes.LLM_PROMPTS}.{PROMPT_ERROR}",
+            f"{SpanAttributes.GEN_AI_PROMPT}.{PROMPT_ERROR}",
             json.dumps(response.get("error")),
         )
         return
@@ -205,7 +205,7 @@ def _set_response_attributes(span, response):
     response_model = response.get("model")
     if response_model:
         response_model = _extract_model_name_from_provider_format(response_model)
-    _set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, response_model)
+    _set_span_attribute(span, SpanAttributes.GEN_AI_RESPONSE_MODEL, response_model)
     _set_span_attribute(span, GEN_AI_RESPONSE_ID, response.get("id"))
 
     _set_span_attribute(
@@ -245,7 +245,7 @@ def _log_prompt_filter(span, response_dict):
     if response_dict.get("prompt_filter_results"):
         _set_span_attribute(
             span,
-            f"{SpanAttributes.LLM_PROMPTS}.{PROMPT_FILTER_KEY}",
+            f"{SpanAttributes.GEN_AI_PROMPT}.{PROMPT_FILTER_KEY}",
             json.dumps(response_dict.get("prompt_filter_results")),
         )
 
@@ -396,8 +396,8 @@ def metric_shared_attributes(
 
     return {
         **attributes,
-        SpanAttributes.LLM_SYSTEM: vendor,
-        SpanAttributes.LLM_RESPONSE_MODEL: response_model,
+        SpanAttributes.GEN_AI_SYSTEM: vendor,
+        SpanAttributes.GEN_AI_RESPONSE_MODEL: response_model,
         "gen_ai.operation.name": operation,
         "server.address": server_address,
         "stream": is_streaming,

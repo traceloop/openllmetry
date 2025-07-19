@@ -132,13 +132,13 @@ def _set_input_attributes(span, instance, kwargs):
             for index, input in enumerate(prompt):
                 _set_span_attribute(
                     span,
-                    f"{SpanAttributes.LLM_PROMPTS}.{index}.user",
+                    f"{SpanAttributes.GEN_AI_PROMPT}.{index}.user",
                     input,
                 )
         else:
             _set_span_attribute(
                 span,
-                f"{SpanAttributes.LLM_PROMPTS}.0.user",
+                f"{SpanAttributes.GEN_AI_PROMPT}.0.user",
                 prompt,
             )
 
@@ -147,7 +147,7 @@ def set_model_input_attributes(span, instance):
     if not span.is_recording():
         return
 
-    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, instance.model_id)
+    _set_span_attribute(span, SpanAttributes.GEN_AI_REQUEST_MODEL, instance.model_id)
     # Set other attributes
     modelParameters = instance.params
     if modelParameters is not None:
@@ -181,11 +181,11 @@ def set_model_input_attributes(span, instance):
         )
         _set_span_attribute(
             span,
-            SpanAttributes.LLM_REQUEST_TEMPERATURE,
+            SpanAttributes.GEN_AI_REQUEST_TEMPERATURE,
             modelParameters.get("temperature", None),
         )
         _set_span_attribute(
-            span, SpanAttributes.LLM_REQUEST_TOP_P, modelParameters.get("top_p", None)
+            span, SpanAttributes.GEN_AI_REQUEST_TOP_P, modelParameters.get("top_p", None)
         )
 
 
@@ -194,7 +194,7 @@ def _set_stream_response_attributes(span, stream_response):
         return
     _set_span_attribute(
         span,
-        f"{SpanAttributes.LLM_COMPLETIONS}.0.content",
+        f"{SpanAttributes.GEN_AI_COMPLETION}.0.content",
         stream_response.get("generated_text"),
     )
 
@@ -203,7 +203,7 @@ def _set_model_stream_response_attributes(span, stream_response):
     if not span.is_recording():
         return
     _set_span_attribute(
-        span, SpanAttributes.LLM_RESPONSE_MODEL, stream_response.get("model_id")
+        span, SpanAttributes.GEN_AI_RESPONSE_MODEL, stream_response.get("model_id")
     )
     _set_span_attribute(
         span,
@@ -235,14 +235,14 @@ def _set_completion_content_attributes(
         if should_send_prompts():
             _set_span_attribute(
                 span,
-                f"{SpanAttributes.LLM_COMPLETIONS}.{index}.content",
+                f"{SpanAttributes.GEN_AI_COMPLETION}.{index}.content",
                 results[0]["generated_text"],
             )
         model_id = response.get("model_id")
 
         if response_counter:
             attributes_with_reason = {
-                SpanAttributes.LLM_RESPONSE_MODEL: model_id,
+                SpanAttributes.GEN_AI_RESPONSE_MODEL: model_id,
                 SpanAttributes.LLM_RESPONSE_STOP_REASON: results[0]["stop_reason"],
             }
             response_counter.add(1, attributes=attributes_with_reason)
@@ -289,7 +289,7 @@ def _set_response_attributes(
 
     if model_id is None:
         return
-    _set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, model_id)
+    _set_span_attribute(span, SpanAttributes.GEN_AI_RESPONSE_MODEL, model_id)
 
     shared_attributes = _metric_shared_attributes(response_model=model_id)
 
@@ -298,12 +298,12 @@ def _set_response_attributes(
     if token_histogram:
         attributes_with_token_type = {
             **shared_attributes,
-            SpanAttributes.LLM_TOKEN_TYPE: "output",
+            SpanAttributes.GEN_AI_TOKEN_TYPE: "output",
         }
         token_histogram.record(completion_token, attributes=attributes_with_token_type)
         attributes_with_token_type = {
             **shared_attributes,
-            SpanAttributes.LLM_TOKEN_TYPE: "input",
+            SpanAttributes.GEN_AI_TOKEN_TYPE: "input",
         }
         token_histogram.record(prompt_token, attributes=attributes_with_token_type)
 
@@ -409,14 +409,14 @@ def _build_and_set_stream_response(
     if token_histogram:
         attributes_with_token_type = {
             **shared_attributes,
-            SpanAttributes.LLM_TOKEN_TYPE: "output",
+            SpanAttributes.GEN_AI_TOKEN_TYPE: "output",
         }
         token_histogram.record(
             stream_generated_token_count, attributes=attributes_with_token_type
         )
         attributes_with_token_type = {
             **shared_attributes,
-            SpanAttributes.LLM_TOKEN_TYPE: "input",
+            SpanAttributes.GEN_AI_TOKEN_TYPE: "input",
         }
         token_histogram.record(
             stream_input_token_count, attributes=attributes_with_token_type
@@ -436,8 +436,8 @@ def _build_and_set_stream_response(
 
 def _metric_shared_attributes(response_model: str, is_streaming: bool = False):
     return {
-        SpanAttributes.LLM_RESPONSE_MODEL: response_model,
-        SpanAttributes.LLM_SYSTEM: "watsonx",
+        SpanAttributes.GEN_AI_RESPONSE_MODEL: response_model,
+        SpanAttributes.GEN_AI_SYSTEM: "watsonx",
         "stream": is_streaming,
     }
 
@@ -561,7 +561,7 @@ def _wrap(
         name,
         kind=SpanKind.CLIENT,
         attributes={
-            SpanAttributes.LLM_SYSTEM: "Watsonx",
+            SpanAttributes.GEN_AI_SYSTEM: "Watsonx",
             SpanAttributes.LLM_REQUEST_TYPE: LLMRequestTypeValues.COMPLETION.value,
         },
     )

@@ -118,12 +118,12 @@ class EventHandleWrapper(AssistantEventHandler):
         if not should_emit_events():
             _set_span_attribute(
                 self._span,
-                f"{SpanAttributes.LLM_COMPLETIONS}.{self._current_text_index}.role",
+                f"{SpanAttributes.GEN_AI_COMPLETION}.{self._current_text_index}.role",
                 "assistant",
             )
             _set_span_attribute(
                 self._span,
-                f"{SpanAttributes.LLM_COMPLETIONS}.{self._current_text_index}.content",
+                f"{SpanAttributes.GEN_AI_COMPLETION}.{self._current_text_index}.content",
                 text.value,
             )
 

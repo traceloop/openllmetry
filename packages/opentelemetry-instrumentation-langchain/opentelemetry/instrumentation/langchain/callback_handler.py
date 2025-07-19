@@ -270,7 +270,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             entity_path=entity_path,
             metadata=metadata,
         )
-        _set_span_attribute(span, SpanAttributes.LLM_SYSTEM, "Langchain")
+        _set_span_attribute(span, SpanAttributes.GEN_AI_SYSTEM, "Langchain")
         _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TYPE, request_type.value)
 
         return span
@@ -437,11 +437,11 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
                 "model_name"
             ) or response.llm_output.get("model_id")
             if model_name is not None:
-                _set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, model_name)
+                _set_span_attribute(span, SpanAttributes.GEN_AI_RESPONSE_MODEL, model_name)
 
                 if self.spans[run_id].request_model is None:
                     _set_span_attribute(
-                        span, SpanAttributes.LLM_REQUEST_MODEL, model_name
+                        span, SpanAttributes.GEN_AI_REQUEST_MODEL, model_name
                     )
             id = response.llm_output.get("id")
             if id is not None and id != "":
@@ -480,9 +480,9 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
                 self.token_histogram.record(
                     prompt_tokens,
                     attributes={
-                        SpanAttributes.LLM_SYSTEM: "Langchain",
-                        SpanAttributes.LLM_TOKEN_TYPE: "input",
-                        SpanAttributes.LLM_RESPONSE_MODEL: model_name or "unknown",
+                        SpanAttributes.GEN_AI_SYSTEM: "Langchain",
+                        SpanAttributes.GEN_AI_TOKEN_TYPE: "input",
+                        SpanAttributes.GEN_AI_RESPONSE_MODEL: model_name or "unknown",
                     },
                 )
 
@@ -490,9 +490,9 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
                 self.token_histogram.record(
                     completion_tokens,
                     attributes={
-                        SpanAttributes.LLM_SYSTEM: "Langchain",
-                        SpanAttributes.LLM_TOKEN_TYPE: "output",
-                        SpanAttributes.LLM_RESPONSE_MODEL: model_name or "unknown",
+                        SpanAttributes.GEN_AI_SYSTEM: "Langchain",
+                        SpanAttributes.GEN_AI_TOKEN_TYPE: "output",
+                        SpanAttributes.GEN_AI_RESPONSE_MODEL: model_name or "unknown",
                     },
                 )
         set_chat_response_usage(span, response)
@@ -507,8 +507,8 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         self.duration_histogram.record(
             duration,
             attributes={
-                SpanAttributes.LLM_SYSTEM: "Langchain",
-                SpanAttributes.LLM_RESPONSE_MODEL: model_name or "unknown",
+                SpanAttributes.GEN_AI_SYSTEM: "Langchain",
+                SpanAttributes.GEN_AI_RESPONSE_MODEL: model_name or "unknown",
             },
         )
 

@@ -36,18 +36,18 @@ def test_manual_report(exporter, openai_client):
 
     spans = exporter.get_finished_spans()
     open_ai_span = spans[0]
-    assert open_ai_span.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "gpt-3.5-turbo"
-    assert open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"] == "user"
+    assert open_ai_span.attributes[SpanAttributes.GEN_AI_REQUEST_MODEL] == "gpt-3.5-turbo"
+    assert open_ai_span.attributes[f"{SpanAttributes.GEN_AI_PROMPT}.0.role"] == "user"
     assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
+        open_ai_span.attributes[f"{SpanAttributes.GEN_AI_PROMPT}.0.content"]
         == "Tell me a joke about opentelemetry"
     )
     assert (
-        open_ai_span.attributes[SpanAttributes.LLM_RESPONSE_MODEL]
+        open_ai_span.attributes[SpanAttributes.GEN_AI_RESPONSE_MODEL]
         == "gpt-3.5-turbo-0125"
     )
     assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"]
+        open_ai_span.attributes[f"{SpanAttributes.GEN_AI_COMPLETION}.0.content"]
         == "Why did the opentelemetry developer break up with their partner? Because they were tired"
         + " of constantly tracing their every move!"
     )

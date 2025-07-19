@@ -23,10 +23,10 @@ def test_chat_legacy(instrument_legacy, groq_client, span_exporter, log_exporter
     ]
     groq_span = spans[0]
     assert (
-        groq_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
+        groq_span.attributes[f"{SpanAttributes.GEN_AI_PROMPT}.0.content"]
         == "Tell me a joke about opentelemetry"
     )
-    assert groq_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
+    assert groq_span.attributes.get(f"{SpanAttributes.GEN_AI_COMPLETION}.0.content")
     assert groq_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is False
     assert groq_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) > 0
     assert groq_span.attributes.get(SpanAttributes.LLM_USAGE_COMPLETION_TOKENS) > 0
@@ -146,10 +146,10 @@ async def test_async_chat_legacy(
     ]
     groq_span = spans[0]
     assert (
-        groq_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
+        groq_span.attributes[f"{SpanAttributes.GEN_AI_PROMPT}.0.content"]
         == "Tell me a joke about opentelemetry"
     )
-    assert groq_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
+    assert groq_span.attributes.get(f"{SpanAttributes.GEN_AI_COMPLETION}.0.content")
     assert groq_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is False
     assert groq_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) > 0
     assert groq_span.attributes.get(SpanAttributes.LLM_USAGE_COMPLETION_TOKENS) > 0
@@ -277,11 +277,11 @@ def test_chat_streaming_legacy(
     ]
     groq_span = spans[0]
     assert (
-        groq_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
+        groq_span.attributes[f"{SpanAttributes.GEN_AI_PROMPT}.0.content"]
         == "Tell me a joke about opentelemetry"
     )
     assert (
-        groq_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
+        groq_span.attributes.get(f"{SpanAttributes.GEN_AI_COMPLETION}.0.content")
         == content
     )
     assert groq_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is True

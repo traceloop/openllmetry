@@ -145,37 +145,37 @@ def messages_list_wrapper(tracer, wrapped, instance, args, kwargs):
 
         _set_span_attribute(
             span,
-            SpanAttributes.LLM_SYSTEM,
+            SpanAttributes.GEN_AI_SYSTEM,
             "openai",
         )
         _set_span_attribute(
             span,
-            SpanAttributes.LLM_REQUEST_MODEL,
+            SpanAttributes.GEN_AI_REQUEST_MODEL,
             assistant["model"],
         )
         _set_span_attribute(
             span,
-            SpanAttributes.LLM_RESPONSE_MODEL,
+            SpanAttributes.GEN_AI_RESPONSE_MODEL,
             assistant["model"],
         )
         if should_emit_events():
             emit_event(MessageEvent(content=assistant["instructions"], role="system"))
         else:
             _set_span_attribute(
-                span, f"{SpanAttributes.LLM_PROMPTS}.{prompt_index}.role", "system"
+                span, f"{SpanAttributes.GEN_AI_PROMPT}.{prompt_index}.role", "system"
             )
             _set_span_attribute(
                 span,
-                f"{SpanAttributes.LLM_PROMPTS}.{prompt_index}.content",
+                f"{SpanAttributes.GEN_AI_PROMPT}.{prompt_index}.content",
                 assistant["instructions"],
             )
         prompt_index += 1
     _set_span_attribute(
-        span, f"{SpanAttributes.LLM_PROMPTS}.{prompt_index}.role", "system"
+        span, f"{SpanAttributes.GEN_AI_PROMPT}.{prompt_index}.role", "system"
     )
     _set_span_attribute(
         span,
-        f"{SpanAttributes.LLM_PROMPTS}.{prompt_index}.content",
+        f"{SpanAttributes.GEN_AI_PROMPT}.{prompt_index}.content",
         run["instructions"],
     )
     emit_event(MessageEvent(content=run["instructions"], role="system"))
@@ -183,7 +183,7 @@ def messages_list_wrapper(tracer, wrapped, instance, args, kwargs):
 
     completion_index = 0
     for msg in messages:
-        prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{completion_index}"
+        prefix = f"{SpanAttributes.GEN_AI_COMPLETION}.{completion_index}"
         content = msg.get("content")
 
         message_content = content[0].get("text").get("value")
@@ -194,12 +194,12 @@ def messages_list_wrapper(tracer, wrapped, instance, args, kwargs):
             else:
                 _set_span_attribute(
                     span,
-                    f"{SpanAttributes.LLM_PROMPTS}.{prompt_index}.role",
+                    f"{SpanAttributes.GEN_AI_PROMPT}.{prompt_index}.role",
                     message_role,
                 )
                 _set_span_attribute(
                     span,
-                    f"{SpanAttributes.LLM_PROMPTS}.{prompt_index}.content",
+                    f"{SpanAttributes.GEN_AI_PROMPT}.{prompt_index}.content",
                     message_content,
                 )
             prompt_index += 1
@@ -262,16 +262,16 @@ def runs_create_and_stream_wrapper(tracer, wrapped, instance, args, kwargs):
             assistant = assistants[assistant_id]
 
         _set_span_attribute(
-            span, SpanAttributes.LLM_REQUEST_MODEL, assistants[assistant_id]["model"]
+            span, SpanAttributes.GEN_AI_REQUEST_MODEL, assistants[assistant_id]["model"]
         )
         _set_span_attribute(
             span,
-            SpanAttributes.LLM_SYSTEM,
+            SpanAttributes.GEN_AI_SYSTEM,
             "openai",
         )
         _set_span_attribute(
             span,
-            SpanAttributes.LLM_RESPONSE_MODEL,
+            SpanAttributes.GEN_AI_RESPONSE_MODEL,
             assistants[assistant_id]["model"],
         )
         if should_emit_events():
@@ -282,20 +282,20 @@ def runs_create_and_stream_wrapper(tracer, wrapped, instance, args, kwargs):
             )
         else:
             _set_span_attribute(
-                span, f"{SpanAttributes.LLM_PROMPTS}.{i}.role", "system"
+                span, f"{SpanAttributes.GEN_AI_PROMPT}.{i}.role", "system"
             )
             _set_span_attribute(
                 span,
-                f"{SpanAttributes.LLM_PROMPTS}.{i}.content",
+                f"{SpanAttributes.GEN_AI_PROMPT}.{i}.content",
                 assistants[assistant_id]["instructions"],
             )
         i += 1
     if should_emit_events():
         emit_event(MessageEvent(content=instructions, role="system"))
     else:
-        _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.{i}.role", "system")
+        _set_span_attribute(span, f"{SpanAttributes.GEN_AI_PROMPT}.{i}.role", "system")
         _set_span_attribute(
-            span, f"{SpanAttributes.LLM_PROMPTS}.{i}.content", instructions
+            span, f"{SpanAttributes.GEN_AI_PROMPT}.{i}.content", instructions
         )
 
     from opentelemetry.instrumentation.openai.v1.event_handler_wrapper import (

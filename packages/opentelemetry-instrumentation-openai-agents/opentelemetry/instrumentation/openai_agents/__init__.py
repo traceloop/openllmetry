@@ -103,8 +103,8 @@ async def _wrap_agent_run(
         f"{agent_name}.agent",
         kind=SpanKind.CLIENT,
         attributes={
-            SpanAttributes.LLM_SYSTEM: "openai",
-            SpanAttributes.LLM_REQUEST_MODEL: model_name,
+            SpanAttributes.GEN_AI_SYSTEM: "openai",
+            SpanAttributes.GEN_AI_REQUEST_MODEL: model_name,
             SpanAttributes.TRACELOOP_SPAN_KIND: (
                 TraceloopSpanKindValues.AGENT.value
             )
@@ -128,8 +128,8 @@ async def _wrap_agent_run(
                 duration_histogram.record(
                     time.time() - start_time,
                     attributes={
-                        SpanAttributes.LLM_SYSTEM: "openai",
-                        SpanAttributes.LLM_RESPONSE_MODEL: model_name,
+                        SpanAttributes.GEN_AI_SYSTEM: "openai",
+                        SpanAttributes.GEN_AI_RESPONSE_MODEL: model_name,
 
                     },
                 )
@@ -213,9 +213,9 @@ def set_model_settings_span_attributes(agent, span):
     settings_dict = vars(model_settings)
 
     key_to_span_attr = {
-        "max_tokens": SpanAttributes.LLM_REQUEST_MAX_TOKENS,
-        "temperature": SpanAttributes.LLM_REQUEST_TEMPERATURE,
-        "top_p": SpanAttributes.LLM_REQUEST_TOP_P,
+        "max_tokens": SpanAttributes.GEN_AI_REQUEST_MAX_TOKENS,
+        "temperature": SpanAttributes.GEN_AI_REQUEST_TEMPERATURE,
+        "top_p": SpanAttributes.GEN_AI_REQUEST_TOP_P,
     }
 
     for key, value in settings_dict.items():
@@ -333,12 +333,12 @@ def set_prompt_attributes(span, message_history):
             content = msg.get("content", None)
             set_span_attribute(
                 span,
-                f"{SpanAttributes.LLM_PROMPTS}.{i}.role",
+                f"{SpanAttributes.GEN_AI_PROMPT}.{i}.role",
                 role,
             )
             set_span_attribute(
                 span,
-                f"{SpanAttributes.LLM_PROMPTS}.{i}.content",
+                f"{SpanAttributes.GEN_AI_PROMPT}.{i}.content",
                 content,
             )
 
@@ -367,18 +367,18 @@ def set_response_content_span_attribute(response, span):
         if roles:
             set_span_attribute(
                 span,
-                f"{SpanAttributes.LLM_COMPLETIONS}.roles",
+                f"{SpanAttributes.GEN_AI_COMPLETION}.roles",
                 roles,
             )
         if types:
             set_span_attribute(
                 span,
-                f"{SpanAttributes.LLM_COMPLETIONS}.types",
+                f"{SpanAttributes.GEN_AI_COMPLETION}.types",
                 types,
             )
         if contents:
             set_span_attribute(
-                span, f"{SpanAttributes.LLM_COMPLETIONS}.contents", contents
+                span, f"{SpanAttributes.GEN_AI_COMPLETION}.contents", contents
             )
 
 
@@ -418,18 +418,18 @@ def set_token_usage_span_attributes(
             token_histogram.record(
                 input_tokens,
                 attributes={
-                    SpanAttributes.LLM_SYSTEM: "openai",
-                    SpanAttributes.LLM_TOKEN_TYPE: "input",
-                    SpanAttributes.LLM_RESPONSE_MODEL: model_name,
+                    SpanAttributes.GEN_AI_SYSTEM: "openai",
+                    SpanAttributes.GEN_AI_TOKEN_TYPE: "input",
+                    SpanAttributes.GEN_AI_RESPONSE_MODEL: model_name,
                     "gen_ai.agent.name": agent_name,
                 },
             )
             token_histogram.record(
                 output_tokens,
                 attributes={
-                    SpanAttributes.LLM_SYSTEM: "openai",
-                    SpanAttributes.LLM_TOKEN_TYPE: "output",
-                    SpanAttributes.LLM_RESPONSE_MODEL: model_name,
+                    SpanAttributes.GEN_AI_SYSTEM: "openai",
+                    SpanAttributes.GEN_AI_TOKEN_TYPE: "output",
+                    SpanAttributes.GEN_AI_RESPONSE_MODEL: model_name,
                     "gen_ai.agent.name": agent_name,
                 },
             )

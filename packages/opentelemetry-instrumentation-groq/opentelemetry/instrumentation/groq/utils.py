@@ -60,7 +60,7 @@ def shared_metrics_attributes(response):
     return {
         **common_attributes,
         GEN_AI_SYSTEM: GEN_AI_SYSTEM_GROQ,
-        SpanAttributes.LLM_RESPONSE_MODEL: response_dict.get("model"),
+        SpanAttributes.GEN_AI_RESPONSE_MODEL: response_dict.get("model"),
     }
 
 

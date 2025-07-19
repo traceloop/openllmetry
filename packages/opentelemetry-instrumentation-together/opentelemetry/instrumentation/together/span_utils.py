@@ -22,22 +22,22 @@ def set_prompt_attributes(span, llm_request_type, kwargs):
 
     if should_send_prompts():
         if llm_request_type == LLMRequestTypeValues.CHAT:
-            _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.0.role", "user")
+            _set_span_attribute(span, f"{SpanAttributes.GEN_AI_PROMPT}.0.role", "user")
             for index, message in enumerate(kwargs.get("messages")):
                 _set_span_attribute(
                     span,
-                    f"{SpanAttributes.LLM_PROMPTS}.{index}.content",
+                    f"{SpanAttributes.GEN_AI_PROMPT}.{index}.content",
                     message.get("content"),
                 )
                 _set_span_attribute(
                     span,
-                    f"{SpanAttributes.LLM_PROMPTS}.{index}.role",
+                    f"{SpanAttributes.GEN_AI_PROMPT}.{index}.role",
                     message.get("role"),
                 )
         elif llm_request_type == LLMRequestTypeValues.COMPLETION:
-            _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.0.role", "user")
+            _set_span_attribute(span, f"{SpanAttributes.GEN_AI_PROMPT}.0.role", "user")
             _set_span_attribute(
-                span, f"{SpanAttributes.LLM_PROMPTS}.0.content", kwargs.get("prompt")
+                span, f"{SpanAttributes.GEN_AI_PROMPT}.0.content", kwargs.get("prompt")
             )
 
 
@@ -46,7 +46,7 @@ def set_model_prompt_attributes(span, kwargs):
     if not span.is_recording():
         return
 
-    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, kwargs.get("model"))
+    _set_span_attribute(span, SpanAttributes.GEN_AI_REQUEST_MODEL, kwargs.get("model"))
     _set_span_attribute(
         span,
         SpanAttributes.LLM_IS_STREAMING,
@@ -63,15 +63,15 @@ def set_completion_attributes(span, llm_request_type, response):
         if llm_request_type == LLMRequestTypeValues.COMPLETION:
             _set_span_attribute(
                 span,
-                f"{SpanAttributes.LLM_COMPLETIONS}.0.content",
+                f"{SpanAttributes.GEN_AI_COMPLETION}.0.content",
                 response.choices[0].text,
             )
             _set_span_attribute(
-                span, f"{SpanAttributes.LLM_COMPLETIONS}.0.role", "assistant"
+                span, f"{SpanAttributes.GEN_AI_COMPLETION}.0.role", "assistant"
             )
         elif llm_request_type == LLMRequestTypeValues.CHAT:
             index = 0
-            prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{index}"
+            prefix = f"{SpanAttributes.GEN_AI_COMPLETION}.{index}"
             _set_span_attribute(
                 span, f"{prefix}.content", response.choices[0].message.content
             )
@@ -85,7 +85,7 @@ def set_model_completion_attributes(span, response):
     if not span.is_recording():
         return
 
-    _set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, response.model)
+    _set_span_attribute(span, SpanAttributes.GEN_AI_RESPONSE_MODEL, response.model)
     _set_span_attribute(span, GEN_AI_RESPONSE_ID, response.id)
 
     usage_data = response.usage

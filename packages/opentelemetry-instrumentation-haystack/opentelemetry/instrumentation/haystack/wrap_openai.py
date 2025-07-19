@@ -20,12 +20,12 @@ def _set_input_attributes(span, llm_request_type, kwargs):
 
     if llm_request_type == LLMRequestTypeValues.COMPLETION:
         set_span_attribute(
-            span, f"{SpanAttributes.LLM_PROMPTS}.0.user", kwargs.get("prompt")
+            span, f"{SpanAttributes.GEN_AI_PROMPT}.0.user", kwargs.get("prompt")
         )
     elif llm_request_type == LLMRequestTypeValues.CHAT:
         set_span_attribute(
             span,
-            f"{SpanAttributes.LLM_PROMPTS}.0.user",
+            f"{SpanAttributes.GEN_AI_PROMPT}.0.user",
             [message.content for message in kwargs.get("messages")],
         )
 
@@ -33,17 +33,17 @@ def _set_input_attributes(span, llm_request_type, kwargs):
         generation_kwargs = kwargs["generation_kwargs"]
         if "model" in generation_kwargs:
             set_span_attribute(
-                span, SpanAttributes.LLM_REQUEST_MODEL, generation_kwargs["model"]
+                span, SpanAttributes.GEN_AI_REQUEST_MODEL, generation_kwargs["model"]
             )
         if "temperature" in generation_kwargs:
             set_span_attribute(
                 span,
-                SpanAttributes.LLM_REQUEST_TEMPERATURE,
+                SpanAttributes.GEN_AI_REQUEST_TEMPERATURE,
                 generation_kwargs["temperature"],
             )
         if "top_p" in generation_kwargs:
             set_span_attribute(
-                span, SpanAttributes.LLM_REQUEST_TOP_P, generation_kwargs["top_p"]
+                span, SpanAttributes.GEN_AI_REQUEST_TOP_P, generation_kwargs["top_p"]
             )
         if "frequency_penalty" in generation_kwargs:
             set_span_attribute(
@@ -66,7 +66,7 @@ def _set_span_completions(span, llm_request_type, choices):
         return
 
     for index, message in enumerate(choices):
-        prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{index}"
+        prefix = f"{SpanAttributes.GEN_AI_COMPLETION}.{index}"
 
         if llm_request_type == LLMRequestTypeValues.CHAT:
             if message is not None:
@@ -104,7 +104,7 @@ def wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
         ),
         kind=SpanKind.CLIENT,
         attributes={
-            SpanAttributes.LLM_SYSTEM: "OpenAI",
+            SpanAttributes.GEN_AI_SYSTEM: "OpenAI",
             SpanAttributes.LLM_REQUEST_TYPE: llm_request_type.value,
         },
     ) as span:

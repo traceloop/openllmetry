@@ -79,16 +79,16 @@ def _set_input_attributes(span, llm_request_type, to_wrap, kwargs):
         return
     if should_send_prompts():
         if llm_request_type == LLMRequestTypeValues.CHAT:
-            _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.0.role", "user")
+            _set_span_attribute(span, f"{SpanAttributes.GEN_AI_PROMPT}.0.role", "user")
             for index, message in enumerate(kwargs.get("messages")):
                 _set_span_attribute(
                     span,
-                    f"{SpanAttributes.LLM_PROMPTS}.{index}.content",
+                    f"{SpanAttributes.GEN_AI_PROMPT}.{index}.content",
                     message.content,
                 )
                 _set_span_attribute(
                     span,
-                    f"{SpanAttributes.LLM_PROMPTS}.{index}.role",
+                    f"{SpanAttributes.GEN_AI_PROMPT}.{index}.role",
                     message.role,
                 )
         else:
@@ -96,21 +96,21 @@ def _set_input_attributes(span, llm_request_type, to_wrap, kwargs):
 
             if isinstance(input, str):
                 _set_span_attribute(
-                    span, f"{SpanAttributes.LLM_PROMPTS}.0.role", "user"
+                    span, f"{SpanAttributes.GEN_AI_PROMPT}.0.role", "user"
                 )
                 _set_span_attribute(
-                    span, f"{SpanAttributes.LLM_PROMPTS}.0.content", input
+                    span, f"{SpanAttributes.GEN_AI_PROMPT}.0.content", input
                 )
             else:
                 for index, prompt in enumerate(input):
                     _set_span_attribute(
                         span,
-                        f"{SpanAttributes.LLM_PROMPTS}.{index}.role",
+                        f"{SpanAttributes.GEN_AI_PROMPT}.{index}.role",
                         "user",
                     )
                     _set_span_attribute(
                         span,
-                        f"{SpanAttributes.LLM_PROMPTS}.{index}.content",
+                        f"{SpanAttributes.GEN_AI_PROMPT}.{index}.content",
                         prompt,
                     )
 
@@ -119,7 +119,7 @@ def _set_input_attributes(span, llm_request_type, to_wrap, kwargs):
 def _set_model_input_attributes(span, to_wrap, kwargs):
     if not span.is_recording():
         return
-    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, kwargs.get("model"))
+    _set_span_attribute(span, SpanAttributes.GEN_AI_REQUEST_MODEL, kwargs.get("model"))
     _set_span_attribute(
         span,
         SpanAttributes.LLM_IS_STREAMING,
@@ -134,7 +134,7 @@ def _set_response_attributes(span, llm_request_type, response):
 
     if should_send_prompts():
         for index, choice in enumerate(response.choices):
-            prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{index}"
+            prefix = f"{SpanAttributes.GEN_AI_COMPLETION}.{index}"
             _set_span_attribute(
                 span,
                 f"{prefix}.finish_reason",
@@ -166,7 +166,7 @@ def _set_model_response_attributes(span, llm_request_type, response):
     if llm_request_type == LLMRequestTypeValues.EMBEDDING:
         return
 
-    _set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, response.model)
+    _set_span_attribute(span, SpanAttributes.GEN_AI_RESPONSE_MODEL, response.model)
 
     if not response.usage:
         return
@@ -398,7 +398,7 @@ def _wrap(
         name,
         kind=SpanKind.CLIENT,
         attributes={
-            SpanAttributes.LLM_SYSTEM: "MistralAI",
+            SpanAttributes.GEN_AI_SYSTEM: "MistralAI",
             SpanAttributes.LLM_REQUEST_TYPE: llm_request_type.value,
         },
     )
@@ -444,7 +444,7 @@ async def _awrap(
         name,
         kind=SpanKind.CLIENT,
         attributes={
-            SpanAttributes.LLM_SYSTEM: "MistralAI",
+            SpanAttributes.GEN_AI_SYSTEM: "MistralAI",
             SpanAttributes.LLM_REQUEST_TYPE: llm_request_type.value,
         },
     )

@@ -40,7 +40,7 @@ def test_ollama_streaming_metrics(instrument_legacy, reader):
     for name, dp in points:
         if name == GenAIMetrics.GEN_AI_SERVER_TIME_TO_FIRST_TOKEN:
             assert dp.sum > 0, "Time to first token should be greater than 0"
-            assert dp.attributes.get(SpanAttributes.LLM_SYSTEM) == "Ollama"
+            assert dp.attributes.get(SpanAttributes.GEN_AI_SYSTEM) == "Ollama"
             break
 
 
@@ -63,6 +63,6 @@ def test_ollama_streaming_time_to_generate_metrics(instrument_legacy, reader):
     for name, dp in points:
         if name == Meters.LLM_STREAMING_TIME_TO_GENERATE:
             assert dp.sum > 0, "Streaming time to generate should be greater than 0"
-            assert dp.attributes.get(SpanAttributes.LLM_SYSTEM) == "Ollama"
-            assert dp.attributes.get(SpanAttributes.LLM_RESPONSE_MODEL) is not None
+            assert dp.attributes.get(SpanAttributes.GEN_AI_SYSTEM) == "Ollama"
+            assert dp.attributes.get(SpanAttributes.GEN_AI_RESPONSE_MODEL) is not None
             break

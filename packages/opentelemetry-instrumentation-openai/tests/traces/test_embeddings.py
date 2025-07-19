@@ -29,11 +29,11 @@ def test_embeddings(instrument_legacy, span_exporter, log_exporter, openai_clien
     ]
     open_ai_span = spans[0]
     assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
+        open_ai_span.attributes[f"{SpanAttributes.GEN_AI_PROMPT}.0.content"]
         == "Tell me a joke about opentelemetry"
     )
     assert (
-        open_ai_span.attributes[SpanAttributes.LLM_REQUEST_MODEL]
+        open_ai_span.attributes[SpanAttributes.GEN_AI_REQUEST_MODEL]
         == "text-embedding-ada-002"
     )
     assert open_ai_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 8
@@ -63,7 +63,7 @@ def test_embeddings_with_events_with_content(
     ]
     open_ai_span = spans[0]
     assert (
-        open_ai_span.attributes[SpanAttributes.LLM_REQUEST_MODEL]
+        open_ai_span.attributes[SpanAttributes.GEN_AI_REQUEST_MODEL]
         == "text-embedding-ada-002"
     )
     assert open_ai_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 8
@@ -107,7 +107,7 @@ def test_embeddings_with_events_with_no_content(
     ]
     open_ai_span = spans[0]
     assert (
-        open_ai_span.attributes[SpanAttributes.LLM_REQUEST_MODEL]
+        open_ai_span.attributes[SpanAttributes.GEN_AI_REQUEST_MODEL]
         == "text-embedding-ada-002"
     )
     assert open_ai_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 8
@@ -142,12 +142,12 @@ def test_embeddings_with_raw_response(
     ]
     open_ai_span = spans[0]
     assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
+        open_ai_span.attributes[f"{SpanAttributes.GEN_AI_PROMPT}.0.content"]
         == "Tell me a joke about opentelemetry"
     )
 
     assert (
-        open_ai_span.attributes[SpanAttributes.LLM_REQUEST_MODEL]
+        open_ai_span.attributes[SpanAttributes.GEN_AI_REQUEST_MODEL]
         == "text-embedding-ada-002"
     )
     assert open_ai_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 8
@@ -180,7 +180,7 @@ def test_embeddings_with_raw_response_with_events_with_content(
     open_ai_span = spans[0]
 
     assert (
-        open_ai_span.attributes[SpanAttributes.LLM_REQUEST_MODEL]
+        open_ai_span.attributes[SpanAttributes.GEN_AI_REQUEST_MODEL]
         == "text-embedding-ada-002"
     )
     assert open_ai_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 8
@@ -227,7 +227,7 @@ def test_embeddings_with_raw_response_with_events_with_no_content(
     open_ai_span = spans[0]
 
     assert (
-        open_ai_span.attributes[SpanAttributes.LLM_REQUEST_MODEL]
+        open_ai_span.attributes[SpanAttributes.GEN_AI_REQUEST_MODEL]
         == "text-embedding-ada-002"
     )
     assert open_ai_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 8
@@ -274,10 +274,10 @@ def test_azure_openai_embeddings(instrument_legacy, span_exporter, log_exporter)
     ]
     open_ai_span = spans[0]
     assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
+        open_ai_span.attributes[f"{SpanAttributes.GEN_AI_PROMPT}.0.content"]
         == "Tell me a joke about opentelemetry"
     )
-    assert open_ai_span.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "embedding"
+    assert open_ai_span.attributes[SpanAttributes.GEN_AI_REQUEST_MODEL] == "embedding"
     assert open_ai_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 8
     assert (
         open_ai_span.attributes[SpanAttributes.LLM_OPENAI_API_BASE]
@@ -318,7 +318,7 @@ def test_azure_openai_embeddings_with_events_with_content(
         "openai.embeddings",
     ]
     open_ai_span = spans[0]
-    assert open_ai_span.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "embedding"
+    assert open_ai_span.attributes[SpanAttributes.GEN_AI_REQUEST_MODEL] == "embedding"
     assert open_ai_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 8
     assert (
         open_ai_span.attributes[SpanAttributes.LLM_OPENAI_API_BASE]
@@ -373,7 +373,7 @@ def test_azure_openai_embeddings_with_events_with_no_content(
         "openai.embeddings",
     ]
     open_ai_span = spans[0]
-    assert open_ai_span.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "embedding"
+    assert open_ai_span.attributes[SpanAttributes.GEN_AI_REQUEST_MODEL] == "embedding"
     assert open_ai_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 8
     assert (
         open_ai_span.attributes[SpanAttributes.LLM_OPENAI_API_BASE]

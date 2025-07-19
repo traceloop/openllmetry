@@ -37,11 +37,11 @@ def test_anthropic_2_completion(instrument_legacy, brt, span_exporter, log_expor
 
     anthropic_span = spans[0]
     assert (
-        anthropic_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.user"]
+        anthropic_span.attributes[f"{SpanAttributes.GEN_AI_PROMPT}.0.user"]
         == "Human: Tell me a joke about opentelemetry Assistant:"
     )
     assert (
-        anthropic_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
+        anthropic_span.attributes.get(f"{SpanAttributes.GEN_AI_COMPLETION}.0.content")
         == completion
     )
 
@@ -203,14 +203,14 @@ def test_anthropic_3_completion_complex_content(
 
     anthropic_span = spans[0]
     assert json.loads(
-        anthropic_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
+        anthropic_span.attributes[f"{SpanAttributes.GEN_AI_PROMPT}.0.content"]
     ) == [
         {"type": "text", "text": "Tell me a joke about opentelemetry"},
     ]
 
     assert (
         json.loads(
-            anthropic_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
+            anthropic_span.attributes.get(f"{SpanAttributes.GEN_AI_COMPLETION}.0.content")
         )
         == completion
     )
@@ -404,13 +404,13 @@ def test_anthropic_3_completion_streaming(
 
     anthropic_span = spans[0]
     assert json.loads(
-        anthropic_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
+        anthropic_span.attributes[f"{SpanAttributes.GEN_AI_PROMPT}.0.content"]
     ) == [
         {"type": "text", "text": "Tell me a joke about opentelemetry"},
     ]
 
     assert json.loads(
-        anthropic_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
+        anthropic_span.attributes.get(f"{SpanAttributes.GEN_AI_COMPLETION}.0.content")
     ) == [
         {
             "type": "text",
@@ -606,13 +606,13 @@ def test_anthropic_3_completion_string_content(
 
     anthropic_span = spans[0]
     assert (
-        json.loads(anthropic_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"])
+        json.loads(anthropic_span.attributes[f"{SpanAttributes.GEN_AI_PROMPT}.0.content"])
         == "Tell me a joke about opentelemetry"
     )
 
     assert (
         json.loads(
-            anthropic_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
+            anthropic_span.attributes.get(f"{SpanAttributes.GEN_AI_COMPLETION}.0.content")
         )
         == completion
     )
@@ -784,16 +784,16 @@ def test_anthropic_cross_region(instrument_legacy, brt, span_exporter, log_expor
 
     # Assert on model name and vendor
     assert (
-        anthropic_span.attributes[SpanAttributes.LLM_REQUEST_MODEL]
+        anthropic_span.attributes[SpanAttributes.GEN_AI_REQUEST_MODEL]
         == "claude-3-7-sonnet-20250219-v1"
     )
-    assert anthropic_span.attributes[SpanAttributes.LLM_SYSTEM] == "AWS"
+    assert anthropic_span.attributes[SpanAttributes.GEN_AI_SYSTEM] == "AWS"
 
     assert anthropic_span.attributes[
-        f"{SpanAttributes.LLM_PROMPTS}.0.content"
+        f"{SpanAttributes.GEN_AI_PROMPT}.0.content"
     ] == json.dumps(messages[0]["content"])
     assert (
-        anthropic_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
+        anthropic_span.attributes.get(f"{SpanAttributes.GEN_AI_COMPLETION}.0.content")
         == completion
     )
 
@@ -840,10 +840,10 @@ def test_anthropic_cross_region_with_events_with_content(
 
     # Assert on model name and vendor
     assert (
-        anthropic_span.attributes[SpanAttributes.LLM_REQUEST_MODEL]
+        anthropic_span.attributes[SpanAttributes.GEN_AI_REQUEST_MODEL]
         == "claude-3-7-sonnet-20250219-v1"
     )
-    assert anthropic_span.attributes[SpanAttributes.LLM_SYSTEM] == "AWS"
+    assert anthropic_span.attributes[SpanAttributes.GEN_AI_SYSTEM] == "AWS"
 
     assert anthropic_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 20
     assert anthropic_span.attributes.get(
@@ -906,10 +906,10 @@ def test_anthropic_cross_region_with_events_with_no_content(
 
     # Assert on model name and vendor
     assert (
-        anthropic_span.attributes[SpanAttributes.LLM_REQUEST_MODEL]
+        anthropic_span.attributes[SpanAttributes.GEN_AI_REQUEST_MODEL]
         == "claude-3-7-sonnet-20250219-v1"
     )
-    assert anthropic_span.attributes[SpanAttributes.LLM_SYSTEM] == "AWS"
+    assert anthropic_span.attributes[SpanAttributes.GEN_AI_SYSTEM] == "AWS"
 
     assert anthropic_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 20
     assert anthropic_span.attributes.get(

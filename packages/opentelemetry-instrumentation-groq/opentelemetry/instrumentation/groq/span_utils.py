@@ -24,18 +24,18 @@ def set_input_attributes(span, kwargs):
     if should_send_prompts():
         if kwargs.get("prompt") is not None:
             set_span_attribute(
-                span, f"{SpanAttributes.LLM_PROMPTS}.0.user", kwargs.get("prompt")
+                span, f"{SpanAttributes.GEN_AI_PROMPT}.0.user", kwargs.get("prompt")
             )
 
         elif kwargs.get("messages") is not None:
             for i, message in enumerate(kwargs.get("messages")):
                 set_span_attribute(
                     span,
-                    f"{SpanAttributes.LLM_PROMPTS}.{i}.content",
+                    f"{SpanAttributes.GEN_AI_PROMPT}.{i}.content",
                     _dump_content(message.get("content")),
                 )
                 set_span_attribute(
-                    span, f"{SpanAttributes.LLM_PROMPTS}.{i}.role", message.get("role")
+                    span, f"{SpanAttributes.GEN_AI_PROMPT}.{i}.role", message.get("role")
                 )
 
 
@@ -44,14 +44,14 @@ def set_model_input_attributes(span, kwargs):
     if not span.is_recording():
         return
 
-    set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, kwargs.get("model"))
+    set_span_attribute(span, SpanAttributes.GEN_AI_REQUEST_MODEL, kwargs.get("model"))
     set_span_attribute(
-        span, SpanAttributes.LLM_REQUEST_MAX_TOKENS, kwargs.get("max_tokens_to_sample")
+        span, SpanAttributes.GEN_AI_REQUEST_MAX_TOKENS, kwargs.get("max_tokens_to_sample")
     )
     set_span_attribute(
-        span, SpanAttributes.LLM_REQUEST_TEMPERATURE, kwargs.get("temperature")
+        span, SpanAttributes.GEN_AI_REQUEST_TEMPERATURE, kwargs.get("temperature")
     )
-    set_span_attribute(span, SpanAttributes.LLM_REQUEST_TOP_P, kwargs.get("top_p"))
+    set_span_attribute(span, SpanAttributes.GEN_AI_REQUEST_TOP_P, kwargs.get("top_p"))
     set_span_attribute(
         span, SpanAttributes.LLM_FREQUENCY_PENALTY, kwargs.get("frequency_penalty")
     )
@@ -70,7 +70,7 @@ def set_streaming_response_attributes(
     if not span.is_recording() or not should_send_prompts():
         return
 
-    prefix = f"{SpanAttributes.LLM_COMPLETIONS}.0"
+    prefix = f"{SpanAttributes.GEN_AI_COMPLETION}.0"
     set_span_attribute(span, f"{prefix}.role", "assistant")
     set_span_attribute(span, f"{prefix}.content", accumulated_content)
     if finish_reason:
@@ -98,7 +98,7 @@ def set_model_response_attributes(span, response, token_histogram):
     if not span.is_recording():
         return
     response = model_as_dict(response)
-    set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, response.get("model"))
+    set_span_attribute(span, SpanAttributes.GEN_AI_RESPONSE_MODEL, response.get("model"))
     set_span_attribute(span, GEN_AI_RESPONSE_ID, response.get("id"))
 
     usage = response.get("usage") or {}
@@ -121,8 +121,8 @@ def set_model_response_attributes(span, response, token_histogram):
         token_histogram.record(
             prompt_tokens,
             attributes={
-                SpanAttributes.LLM_TOKEN_TYPE: "input",
-                SpanAttributes.LLM_RESPONSE_MODEL: response.get("model"),
+                SpanAttributes.GEN_AI_TOKEN_TYPE: "input",
+                SpanAttributes.GEN_AI_RESPONSE_MODEL: response.get("model"),
             },
         )
 
@@ -134,8 +134,8 @@ def set_model_response_attributes(span, response, token_histogram):
         token_histogram.record(
             completion_tokens,
             attributes={
-                SpanAttributes.LLM_TOKEN_TYPE: "output",
-                SpanAttributes.LLM_RESPONSE_MODEL: response.get("model"),
+                SpanAttributes.GEN_AI_TOKEN_TYPE: "output",
+                SpanAttributes.GEN_AI_RESPONSE_MODEL: response.get("model"),
             },
         )
 
@@ -154,7 +154,7 @@ def _set_completions(span, choices):
 
     for choice in choices:
         index = choice.get("index")
-        prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{index}"
+        prefix = f"{SpanAttributes.GEN_AI_COMPLETION}.{index}"
         set_span_attribute(span, f"{prefix}.finish_reason", choice.get("finish_reason"))
 
         if choice.get("content_filter_results"):

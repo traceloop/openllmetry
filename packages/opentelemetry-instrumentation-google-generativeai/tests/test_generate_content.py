@@ -24,16 +24,16 @@ def test_gemini_generate_content_legacy(
 
     # gemini_span = spans[0]
     # assert (
-    #     gemini_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
+    #     gemini_span.attributes[f"{SpanAttributes.GEN_AI_PROMPT}.0.content"]
     #     == "The opposite of hot is\n"
     # )
-    # assert gemini_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"] == "user"
+    # assert gemini_span.attributes[f"{SpanAttributes.GEN_AI_PROMPT}.0.role"] == "user"
     # assert (
-    #     gemini_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
+    #     gemini_span.attributes.get(f"{SpanAttributes.GEN_AI_COMPLETION}.0.content")
     #     == "cold\n"
     # )
     # assert (
-    #     gemini_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.role")
+    #     gemini_span.attributes.get(f"{SpanAttributes.GEN_AI_COMPLETION}.0.role")
     #     == "assistant"
     # )
 
@@ -45,11 +45,11 @@ def test_gemini_generate_content_legacy(
     # )
 
     # assert (
-    #     gemini_span.attributes[SpanAttributes.LLM_REQUEST_MODEL]
+    #     gemini_span.attributes[SpanAttributes.GEN_AI_REQUEST_MODEL]
     #     == "models/gemini-1.5-flash"
     # )
     # assert (
-    #     gemini_span.attributes[SpanAttributes.LLM_RESPONSE_MODEL]
+    #     gemini_span.attributes[SpanAttributes.GEN_AI_RESPONSE_MODEL]
     #     == "models/gemini-1.5-flash"
     # )
 
@@ -83,11 +83,11 @@ def test_gemini_generate_content_with_events_with_content(
     # )
 
     # assert (
-    #     gemini_span.attributes[SpanAttributes.LLM_REQUEST_MODEL]
+    #     gemini_span.attributes[SpanAttributes.GEN_AI_REQUEST_MODEL]
     #     == "models/gemini-1.5-flash"
     # )
     # assert (
-    #     gemini_span.attributes[SpanAttributes.LLM_RESPONSE_MODEL]
+    #     gemini_span.attributes[SpanAttributes.GEN_AI_RESPONSE_MODEL]
     #     == "models/gemini-1.5-flash"
     # )
 
@@ -131,11 +131,11 @@ def test_gemini_generate_content_with_events_with_no_content(
     # )
 
     # assert (
-    #     gemini_span.attributes[SpanAttributes.LLM_REQUEST_MODEL]
+    #     gemini_span.attributes[SpanAttributes.GEN_AI_REQUEST_MODEL]
     #     == "models/gemini-1.5-flash"
     # )
     # assert (
-    #     gemini_span.attributes[SpanAttributes.LLM_RESPONSE_MODEL]
+    #     gemini_span.attributes[SpanAttributes.GEN_AI_RESPONSE_MODEL]
     #     == "models/gemini-1.5-flash"
     # )
 

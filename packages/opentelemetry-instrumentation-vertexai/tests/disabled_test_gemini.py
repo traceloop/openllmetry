@@ -32,10 +32,10 @@ def test_vertexai_generate_content(instrument_legacy, span_exporter, log_exporte
     vertexai_span = spans[0]
     assert (
         "what is shown in this image?"
-        in vertexai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.user"]
+        in vertexai_span.attributes[f"{SpanAttributes.GEN_AI_PROMPT}.0.user"]
     )
     assert (
-        vertexai_span.attributes[SpanAttributes.LLM_REQUEST_MODEL]
+        vertexai_span.attributes[SpanAttributes.GEN_AI_REQUEST_MODEL]
         == "gemini-2.0-flash-lite"
     )
     assert (
@@ -51,7 +51,7 @@ def test_vertexai_generate_content(instrument_legacy, span_exporter, log_exporte
         == response._raw_response.usage_metadata.candidates_token_count
     )
     assert (
-        vertexai_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"]
+        vertexai_span.attributes[f"{SpanAttributes.GEN_AI_COMPLETION}.0.content"]
         == response.text
     )
 
@@ -84,7 +84,7 @@ def test_vertexai_generate_content_with_events_with_content(
     vertexai_span = spans[0]
 
     assert (
-        vertexai_span.attributes[SpanAttributes.LLM_REQUEST_MODEL]
+        vertexai_span.attributes[SpanAttributes.GEN_AI_REQUEST_MODEL]
         == "gemini-2.0-flash-lite"
     )
     assert (
@@ -144,7 +144,7 @@ def test_vertexai_generate_content_with_events_with_no_content(
     vertexai_span = spans[0]
 
     assert (
-        vertexai_span.attributes[SpanAttributes.LLM_REQUEST_MODEL]
+        vertexai_span.attributes[SpanAttributes.GEN_AI_REQUEST_MODEL]
         == "gemini-2.0-flash-lite"
     )
     assert (

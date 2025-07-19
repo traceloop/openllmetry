@@ -24,19 +24,19 @@ def test_mistralai_chat_legacy(
     spans = span_exporter.get_finished_spans()
     mistral_span = spans[0]
     assert mistral_span.name == "mistralai.chat"
-    assert mistral_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "MistralAI"
+    assert mistral_span.attributes.get(f"{SpanAttributes.GEN_AI_SYSTEM}") == "MistralAI"
     assert mistral_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
     assert not mistral_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert (
-        mistral_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_MODEL}")
+        mistral_span.attributes.get(f"{SpanAttributes.GEN_AI_REQUEST_MODEL}")
         == "mistral-tiny"
     )
     assert (
-        mistral_span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.0.content")
+        mistral_span.attributes.get(f"{SpanAttributes.GEN_AI_PROMPT}.0.content")
         == "Tell me a joke about OpenTelemetry"
     )
     assert (
-        mistral_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
+        mistral_span.attributes.get(f"{SpanAttributes.GEN_AI_COMPLETION}.0.content")
         == response.choices[0].message.content
     )
     assert mistral_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 11
@@ -70,11 +70,11 @@ def test_mistralai_chat_with_events_with_content(
     spans = span_exporter.get_finished_spans()
     mistral_span = spans[0]
     assert mistral_span.name == "mistralai.chat"
-    assert mistral_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "MistralAI"
+    assert mistral_span.attributes.get(f"{SpanAttributes.GEN_AI_SYSTEM}") == "MistralAI"
     assert mistral_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
     assert not mistral_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert (
-        mistral_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_MODEL}")
+        mistral_span.attributes.get(f"{SpanAttributes.GEN_AI_REQUEST_MODEL}")
         == "mistral-tiny"
     )
     assert mistral_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 11
@@ -123,11 +123,11 @@ def test_mistralai_chat_with_events_with_no_content(
     spans = span_exporter.get_finished_spans()
     mistral_span = spans[0]
     assert mistral_span.name == "mistralai.chat"
-    assert mistral_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "MistralAI"
+    assert mistral_span.attributes.get(f"{SpanAttributes.GEN_AI_SYSTEM}") == "MistralAI"
     assert mistral_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
     assert not mistral_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert (
-        mistral_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_MODEL}")
+        mistral_span.attributes.get(f"{SpanAttributes.GEN_AI_REQUEST_MODEL}")
         == "mistral-tiny"
     )
     assert mistral_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 11
@@ -176,19 +176,19 @@ def test_mistralai_streaming_chat_legacy(
     spans = span_exporter.get_finished_spans()
     mistral_span = spans[0]
     assert mistral_span.name == "mistralai.chat"
-    assert mistral_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "MistralAI"
+    assert mistral_span.attributes.get(f"{SpanAttributes.GEN_AI_SYSTEM}") == "MistralAI"
     assert mistral_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
     assert mistral_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert (
-        mistral_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_MODEL}")
+        mistral_span.attributes.get(f"{SpanAttributes.GEN_AI_REQUEST_MODEL}")
         == "mistral-tiny"
     )
     assert (
-        mistral_span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.0.content")
+        mistral_span.attributes.get(f"{SpanAttributes.GEN_AI_PROMPT}.0.content")
         == "Tell me a joke about OpenTelemetry"
     )
     assert (
-        mistral_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
+        mistral_span.attributes.get(f"{SpanAttributes.GEN_AI_COMPLETION}.0.content")
         == response
     )
     assert mistral_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 11
@@ -226,11 +226,11 @@ def test_mistralai_streaming_chat_with_events_with_content(
     spans = span_exporter.get_finished_spans()
     mistral_span = spans[0]
     assert mistral_span.name == "mistralai.chat"
-    assert mistral_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "MistralAI"
+    assert mistral_span.attributes.get(f"{SpanAttributes.GEN_AI_SYSTEM}") == "MistralAI"
     assert mistral_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
     assert mistral_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert (
-        mistral_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_MODEL}")
+        mistral_span.attributes.get(f"{SpanAttributes.GEN_AI_REQUEST_MODEL}")
         == "mistral-tiny"
     )
     assert mistral_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 11
@@ -283,11 +283,11 @@ def test_mistralai_streaming_chat_with_events_with_no_content(
     spans = span_exporter.get_finished_spans()
     mistral_span = spans[0]
     assert mistral_span.name == "mistralai.chat"
-    assert mistral_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "MistralAI"
+    assert mistral_span.attributes.get(f"{SpanAttributes.GEN_AI_SYSTEM}") == "MistralAI"
     assert mistral_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
     assert mistral_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert (
-        mistral_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_MODEL}")
+        mistral_span.attributes.get(f"{SpanAttributes.GEN_AI_REQUEST_MODEL}")
         == "mistral-tiny"
     )
     assert mistral_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 11
@@ -333,19 +333,19 @@ async def test_mistralai_async_chat_legacy(
     spans = span_exporter.get_finished_spans()
     mistral_span = spans[0]
     assert mistral_span.name == "mistralai.chat"
-    assert mistral_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "MistralAI"
+    assert mistral_span.attributes.get(f"{SpanAttributes.GEN_AI_SYSTEM}") == "MistralAI"
     assert mistral_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
     assert not mistral_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert (
-        mistral_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_MODEL}")
+        mistral_span.attributes.get(f"{SpanAttributes.GEN_AI_REQUEST_MODEL}")
         == "mistral-tiny"
     )
     assert (
-        mistral_span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.0.content")
+        mistral_span.attributes.get(f"{SpanAttributes.GEN_AI_PROMPT}.0.content")
         == "Tell me a joke about OpenTelemetry"
     )
     assert (
-        mistral_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
+        mistral_span.attributes.get(f"{SpanAttributes.GEN_AI_COMPLETION}.0.content")
         == response.choices[0].message.content
     )
     # For some reason, async ollama chat doesn't report prompt token usage back
@@ -381,11 +381,11 @@ async def test_mistralai_async_chat_with_events_with_content(
     spans = span_exporter.get_finished_spans()
     mistral_span = spans[0]
     assert mistral_span.name == "mistralai.chat"
-    assert mistral_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "MistralAI"
+    assert mistral_span.attributes.get(f"{SpanAttributes.GEN_AI_SYSTEM}") == "MistralAI"
     assert mistral_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
     assert not mistral_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert (
-        mistral_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_MODEL}")
+        mistral_span.attributes.get(f"{SpanAttributes.GEN_AI_REQUEST_MODEL}")
         == "mistral-tiny"
     )
     # For some reason, async ollama chat doesn't report prompt token usage back
@@ -435,11 +435,11 @@ async def test_mistralai_async_chat_with_events_with_no_content(
     spans = span_exporter.get_finished_spans()
     mistral_span = spans[0]
     assert mistral_span.name == "mistralai.chat"
-    assert mistral_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "MistralAI"
+    assert mistral_span.attributes.get(f"{SpanAttributes.GEN_AI_SYSTEM}") == "MistralAI"
     assert mistral_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
     assert not mistral_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert (
-        mistral_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_MODEL}")
+        mistral_span.attributes.get(f"{SpanAttributes.GEN_AI_REQUEST_MODEL}")
         == "mistral-tiny"
     )
     # For some reason, async ollama chat doesn't report prompt token usage back
@@ -490,16 +490,16 @@ async def test_mistralai_async_streaming_chat_legacy(
     spans = span_exporter.get_finished_spans()
     mistral_span = spans[0]
     assert mistral_span.name == "mistralai.chat"
-    assert mistral_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "MistralAI"
+    assert mistral_span.attributes.get(f"{SpanAttributes.GEN_AI_SYSTEM}") == "MistralAI"
     assert mistral_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
     assert mistral_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert mistral_span.attributes.get("gen_ai.request.model") == "mistral-tiny"
     assert (
-        mistral_span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.0.content")
+        mistral_span.attributes.get(f"{SpanAttributes.GEN_AI_PROMPT}.0.content")
         == "Tell me a joke about OpenTelemetry"
     )
     assert (
-        mistral_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
+        mistral_span.attributes.get(f"{SpanAttributes.GEN_AI_COMPLETION}.0.content")
         == response
     )
     assert mistral_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 11
@@ -538,7 +538,7 @@ async def test_mistralai_async_streaming_chat_with_events_with_content(
     spans = span_exporter.get_finished_spans()
     mistral_span = spans[0]
     assert mistral_span.name == "mistralai.chat"
-    assert mistral_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "MistralAI"
+    assert mistral_span.attributes.get(f"{SpanAttributes.GEN_AI_SYSTEM}") == "MistralAI"
     assert mistral_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
     assert mistral_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert mistral_span.attributes.get("gen_ai.request.model") == "mistral-tiny"
@@ -594,7 +594,7 @@ async def test_mistralai_async_streaming_chat_with_events_with_no_content(
     spans = span_exporter.get_finished_spans()
     mistral_span = spans[0]
     assert mistral_span.name == "mistralai.chat"
-    assert mistral_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "MistralAI"
+    assert mistral_span.attributes.get(f"{SpanAttributes.GEN_AI_SYSTEM}") == "MistralAI"
     assert mistral_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
     assert mistral_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert mistral_span.attributes.get("gen_ai.request.model") == "mistral-tiny"

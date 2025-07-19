@@ -28,12 +28,12 @@ def set_input_attributes(span, args, kwargs, llm_model):
         if isinstance(contents, str):
             _set_span_attribute(
                 span,
-                f"{SpanAttributes.LLM_PROMPTS}.0.content",
+                f"{SpanAttributes.GEN_AI_PROMPT}.0.content",
                 contents,
             )
             _set_span_attribute(
                 span,
-                f"{SpanAttributes.LLM_PROMPTS}.0.role",
+                f"{SpanAttributes.GEN_AI_PROMPT}.0.role",
                 "user",
             )
         elif isinstance(contents, list):
@@ -43,12 +43,12 @@ def set_input_attributes(span, args, kwargs, llm_model):
                         if hasattr(part, "text"):
                             _set_span_attribute(
                                 span,
-                                f"{SpanAttributes.LLM_PROMPTS}.{i}.content",
+                                f"{SpanAttributes.GEN_AI_PROMPT}.{i}.content",
                                 part.text,
                             )
                             _set_span_attribute(
                                 span,
-                                f"{SpanAttributes.LLM_PROMPTS}.{i}.role",
+                                f"{SpanAttributes.GEN_AI_PROMPT}.{i}.role",
                                 getattr(content, "role", "user"),
                             )
     elif args and len(args) > 0:
@@ -62,32 +62,32 @@ def set_input_attributes(span, args, kwargs, llm_model):
         if prompt:
             _set_span_attribute(
                 span,
-                f"{SpanAttributes.LLM_PROMPTS}.0.content",
+                f"{SpanAttributes.GEN_AI_PROMPT}.0.content",
                 prompt,
             )
             _set_span_attribute(
                 span,
-                f"{SpanAttributes.LLM_PROMPTS}.0.role",
+                f"{SpanAttributes.GEN_AI_PROMPT}.0.role",
                 "user",
             )
     elif "prompt" in kwargs:
         _set_span_attribute(
-            span, f"{SpanAttributes.LLM_PROMPTS}.0.content", kwargs["prompt"]
+            span, f"{SpanAttributes.GEN_AI_PROMPT}.0.content", kwargs["prompt"]
         )
-        _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.0.role", "user")
+        _set_span_attribute(span, f"{SpanAttributes.GEN_AI_PROMPT}.0.role", "user")
 
 
 def set_model_request_attributes(span, kwargs, llm_model):
     if not span.is_recording():
         return
-    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, llm_model)
+    _set_span_attribute(span, SpanAttributes.GEN_AI_REQUEST_MODEL, llm_model)
     _set_span_attribute(
-        span, SpanAttributes.LLM_REQUEST_TEMPERATURE, kwargs.get("temperature")
+        span, SpanAttributes.GEN_AI_REQUEST_TEMPERATURE, kwargs.get("temperature")
     )
     _set_span_attribute(
-        span, SpanAttributes.LLM_REQUEST_MAX_TOKENS, kwargs.get("max_output_tokens")
+        span, SpanAttributes.GEN_AI_REQUEST_MAX_TOKENS, kwargs.get("max_output_tokens")
     )
-    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TOP_P, kwargs.get("top_p"))
+    _set_span_attribute(span, SpanAttributes.GEN_AI_REQUEST_TOP_P, kwargs.get("top_p"))
     _set_span_attribute(span, SpanAttributes.LLM_TOP_K, kwargs.get("top_k"))
     _set_span_attribute(
         span, SpanAttributes.LLM_PRESENCE_PENALTY, kwargs.get("presence_penalty")
@@ -104,28 +104,28 @@ def set_response_attributes(span, response, llm_model):
     if hasattr(response, "usage_metadata"):
         if isinstance(response.text, list):
             for index, item in enumerate(response):
-                prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{index}"
+                prefix = f"{SpanAttributes.GEN_AI_COMPLETION}.{index}"
                 _set_span_attribute(span, f"{prefix}.content", item.text)
                 _set_span_attribute(span, f"{prefix}.role", "assistant")
         elif isinstance(response.text, str):
             _set_span_attribute(
-                span, f"{SpanAttributes.LLM_COMPLETIONS}.0.content", response.text
+                span, f"{SpanAttributes.GEN_AI_COMPLETION}.0.content", response.text
             )
             _set_span_attribute(
-                span, f"{SpanAttributes.LLM_COMPLETIONS}.0.role", "assistant"
+                span, f"{SpanAttributes.GEN_AI_COMPLETION}.0.role", "assistant"
             )
     else:
         if isinstance(response, list):
             for index, item in enumerate(response):
-                prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{index}"
+                prefix = f"{SpanAttributes.GEN_AI_COMPLETION}.{index}"
                 _set_span_attribute(span, f"{prefix}.content", item)
                 _set_span_attribute(span, f"{prefix}.role", "assistant")
         elif isinstance(response, str):
             _set_span_attribute(
-                span, f"{SpanAttributes.LLM_COMPLETIONS}.0.content", response
+                span, f"{SpanAttributes.GEN_AI_COMPLETION}.0.content", response
             )
             _set_span_attribute(
-                span, f"{SpanAttributes.LLM_COMPLETIONS}.0.role", "assistant"
+                span, f"{SpanAttributes.GEN_AI_COMPLETION}.0.role", "assistant"
             )
 
 
@@ -133,7 +133,7 @@ def set_model_response_attributes(span, response, llm_model):
     if not span.is_recording():
         return
 
-    _set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, llm_model)
+    _set_span_attribute(span, SpanAttributes.GEN_AI_RESPONSE_MODEL, llm_model)
 
     if hasattr(response, "usage_metadata"):
         _set_span_attribute(

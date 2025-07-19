@@ -1,4 +1,5 @@
 from enum import Enum
+import opentelemetry.semconv._incubating.attributes.gen_ai_attributes as otel_gen_ai_attributes
 
 SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY = "suppress_language_model_instrumentation"
 
@@ -34,25 +35,44 @@ class Meters:
 
 
 class SpanAttributes:
-    # Semantic Conventions for LLM requests, this needs to be removed after
-    # OpenTelemetry Semantic Conventions support Gen AI.
-    # Issue at https://github.com/open-telemetry/opentelemetry-python/issues/3868
+    # OpenTelemetry Semantic Conventions for Gen AI - 
     # Refer to https://github.com/open-telemetry/semantic-conventions/blob/main/docs/gen-ai/gen-ai-spans.md
-    # for more detail for LLM spans from OpenTelemetry Community.
-    LLM_SYSTEM = "gen_ai.system"
-    LLM_REQUEST_MODEL = "gen_ai.request.model"
-    LLM_REQUEST_MAX_TOKENS = "gen_ai.request.max_tokens"
-    LLM_REQUEST_TEMPERATURE = "gen_ai.request.temperature"
-    LLM_REQUEST_TOP_P = "gen_ai.request.top_p"
-    LLM_PROMPTS = "gen_ai.prompt"
-    LLM_COMPLETIONS = "gen_ai.completion"
-    LLM_RESPONSE_MODEL = "gen_ai.response.model"
-    LLM_USAGE_COMPLETION_TOKENS = "gen_ai.usage.output_tokens"
-    LLM_USAGE_PROMPT_TOKENS = "gen_ai.usage.input_tokens"
-    LLM_USAGE_CACHE_CREATION_INPUT_TOKENS = "gen_ai.usage.cache_creation_input_tokens"
-    LLM_USAGE_CACHE_READ_INPUT_TOKENS = "gen_ai.usage.cache_read_input_tokens"
-    LLM_TOKEN_TYPE = "gen_ai.token.type"
-    LLM_REQUEST_STRUCTURED_OUTPUT_SCHEMA = "gen_ai.request.structured_output_schema"
+    GEN_AI_AGENT_DESCRIPTION=otel_gen_ai_attributes.GEN_AI_AGENT_DESCRIPTION
+    GEN_AI_AGENT_ID= otel_gen_ai_attributes.GEN_AI_AGENT_ID
+    GEN_AI_AGENT_NAME= otel_gen_ai_attributes.GEN_AI_AGENT_NAME
+    GEN_AI_COMPLETION=otel_gen_ai_attributes.GEN_AI_COMPLETION
+    GEN_AI_CONVERSATION_ID=otel_gen_ai_attributes.GEN_AI_CONVERSATION_ID
+    GEN_AI_DATA_SOURCE_ID=otel_gen_ai_attributes.GEN_AI_DATA_SOURCE_ID
+    GEN_AI_OPENAI_REQUEST_SERVICE_TIER=otel_gen_ai_attributes.GEN_AI_OPENAI_REQUEST_SERVICE_TIER
+    GEN_AI_OPENAI_RESPONSE_SERVICE_TIER=otel_gen_ai_attributes.GEN_AI_OPENAI_RESPONSE_SERVICE_TIER
+    GEN_AI_OPENAI_RESPONSE_SYSTEM_FINGERPRINT=otel_gen_ai_attributes.GEN_AI_OPENAI_RESPONSE_SYSTEM_FINGERPRINT
+    GEN_AI_OUTPUT_TYPE=otel_gen_ai_attributes.GEN_AI_OUTPUT_TYPE
+    GEN_AI_PROMPT=otel_gen_ai_attributes.GEN_AI_PROMPT
+    GEN_AI_REQUEST_CHOICE_COUNT=otel_gen_ai_attributes.GEN_AI_REQUEST_CHOICE_COUNT
+    GEN_AI_REQUEST_ENCODING_FORMATS= otel_gen_ai_attributes.GEN_AI_REQUEST_ENCODING_FORMATS
+    GEN_AI_REQUEST_FREQUENCY_PENALTY= otel_gen_ai_attributes.GEN_AI_REQUEST_FREQUENCY_PENALTY
+    GEN_AI_REQUEST_MAX_TOKENS=otel_gen_ai_attributes.GEN_AI_REQUEST_MAX_TOKENS
+    GEN_AI_REQUEST_MODEL=otel_gen_ai_attributes.GEN_AI_REQUEST_MODEL
+    GEN_AI_REQUEST_PRESENCE_PENALTY=otel_gen_ai_attributes.GEN_AI_REQUEST_PRESENCE_PENALTY
+    GEN_AI_REQUEST_SEED=otel_gen_ai_attributes.GEN_AI_REQUEST_SEED
+    GEN_AI_REQUEST_STOP_SEQUENCES=otel_gen_ai_attributes.GEN_AI_REQUEST_STOP_SEQUENCES
+    GEN_AI_REQUEST_TEMPERATURE=otel_gen_ai_attributes.GEN_AI_REQUEST_TEMPERATURE
+    GEN_AI_REQUEST_TOP_K=otel_gen_ai_attributes.GEN_AI_REQUEST_TOP_K
+    GEN_AI_REQUEST_TOP_P=otel_gen_ai_attributes.GEN_AI_REQUEST_TOP_P
+    GEN_AI_REQUEST_STRUCTURED_OUTPUT_SCHEMA = "gen_ai.request.structured_output_schema"
+    GEN_AI_RESPONSE_FINISH_REASONS=otel_gen_ai_attributes.GEN_AI_RESPONSE_FINISH_REASONS
+    GEN_AI_RESPONSE_ID=otel_gen_ai_attributes.GEN_AI_RESPONSE_ID
+    GEN_AI_RESPONSE_MODEL=otel_gen_ai_attributes.GEN_AI_RESPONSE_MODEL
+    GEN_AI_SYSTEM=otel_gen_ai_attributes.GEN_AI_SYSTEM
+    GEN_AI_TOKEN_TYPE=otel_gen_ai_attributes.GEN_AI_TOKEN_TYPE
+    GEN_AI_TOOL_CALL_ID=otel_gen_ai_attributes.GEN_AI_TOOL_CALL_ID
+    GEN_AI_TOOL_DESCRIPTION=otel_gen_ai_attributes.GEN_AI_TOOL_DESCRIPTION
+    GEN_AI_TOOL_NAME=otel_gen_ai_attributes.GEN_AI_TOOL_NAME
+    GEN_AI_TOOL_TYPE=otel_gen_ai_attributes.GEN_AI_TOOL_TYPE
+    GEN_AI_USAGE_INPUT_TOKENS=otel_gen_ai_attributes.GEN_AI_USAGE_INPUT_TOKENS
+    GEN_AI_USAGE_OUTPUT_TOKENS=otel_gen_ai_attributes.GEN_AI_USAGE_OUTPUT_TOKENS
+    GEN_AI_USAGE_CACHE_CREATION_INPUT_TOKENS = "gen_ai.usage.cache_creation_input_tokens"
+    GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS = "gen_ai.usage.cache_read_input_tokens"
 
     # LLM
     LLM_REQUEST_TYPE = "llm.request.type"

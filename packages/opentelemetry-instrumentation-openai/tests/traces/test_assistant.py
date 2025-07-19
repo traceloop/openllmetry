@@ -61,31 +61,31 @@ def test_new_assistant(
     open_ai_span = spans[0]
     assert open_ai_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
     assert (
-        open_ai_span.attributes[SpanAttributes.LLM_REQUEST_MODEL]
+        open_ai_span.attributes[SpanAttributes.GEN_AI_REQUEST_MODEL]
         == "gpt-4-turbo-preview"
     )
     assert (
-        open_ai_span.attributes[SpanAttributes.LLM_RESPONSE_MODEL]
+        open_ai_span.attributes[SpanAttributes.GEN_AI_RESPONSE_MODEL]
         == "gpt-4-turbo-preview"
     )
     assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
+        open_ai_span.attributes[f"{SpanAttributes.GEN_AI_PROMPT}.0.content"]
         == "You are a personal math tutor. Write and run code to answer math questions."
     )
-    assert open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"] == "system"
+    assert open_ai_span.attributes[f"{SpanAttributes.GEN_AI_PROMPT}.0.role"] == "system"
     assert (
-        open_ai_span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.1.content")
+        open_ai_span.attributes.get(f"{SpanAttributes.GEN_AI_PROMPT}.1.content")
         == "Please address the user as Jane Doe. The user has a premium account."
     )
-    assert open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.role"] == "system"
-    assert open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.2.role"] == "user"
+    assert open_ai_span.attributes[f"{SpanAttributes.GEN_AI_PROMPT}.1.role"] == "system"
+    assert open_ai_span.attributes[f"{SpanAttributes.GEN_AI_PROMPT}.2.role"] == "user"
     assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.2.content"]
+        open_ai_span.attributes[f"{SpanAttributes.GEN_AI_PROMPT}.2.content"]
         == user_message
     )
     assert open_ai_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 145
     assert open_ai_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS] == 155
-    assert open_ai_span.attributes[SpanAttributes.LLM_SYSTEM] == "openai"
+    assert open_ai_span.attributes[SpanAttributes.GEN_AI_SYSTEM] == "openai"
 
     completion_index = 0
     for message in messages.data:
@@ -93,13 +93,13 @@ def test_new_assistant(
             continue
         assert (
             open_ai_span.attributes[
-                f"{SpanAttributes.LLM_COMPLETIONS}.{completion_index}.content"
+                f"{SpanAttributes.GEN_AI_COMPLETION}.{completion_index}.content"
             ]
             == message.content[0].text.value
         )
         assert (
             open_ai_span.attributes[
-                f"{SpanAttributes.LLM_COMPLETIONS}.{completion_index}.role"
+                f"{SpanAttributes.GEN_AI_COMPLETION}.{completion_index}.role"
             ]
             == message.role
         )
@@ -158,17 +158,17 @@ def test_new_assistant_with_events_with_content(
     open_ai_span = spans[0]
     assert open_ai_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
     assert (
-        open_ai_span.attributes[SpanAttributes.LLM_REQUEST_MODEL]
+        open_ai_span.attributes[SpanAttributes.GEN_AI_REQUEST_MODEL]
         == "gpt-4-turbo-preview"
     )
     assert (
-        open_ai_span.attributes[SpanAttributes.LLM_RESPONSE_MODEL]
+        open_ai_span.attributes[SpanAttributes.GEN_AI_RESPONSE_MODEL]
         == "gpt-4-turbo-preview"
     )
 
     assert open_ai_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 145
     assert open_ai_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS] == 155
-    assert open_ai_span.attributes[SpanAttributes.LLM_SYSTEM] == "openai"
+    assert open_ai_span.attributes[SpanAttributes.GEN_AI_SYSTEM] == "openai"
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 4
@@ -239,16 +239,16 @@ def test_new_assistant_with_events_with_no_content(
     open_ai_span = spans[0]
     assert open_ai_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
     assert (
-        open_ai_span.attributes[SpanAttributes.LLM_REQUEST_MODEL]
+        open_ai_span.attributes[SpanAttributes.GEN_AI_REQUEST_MODEL]
         == "gpt-4-turbo-preview"
     )
     assert (
-        open_ai_span.attributes[SpanAttributes.LLM_RESPONSE_MODEL]
+        open_ai_span.attributes[SpanAttributes.GEN_AI_RESPONSE_MODEL]
         == "gpt-4-turbo-preview"
     )
     assert open_ai_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 145
     assert open_ai_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS] == 155
-    assert open_ai_span.attributes[SpanAttributes.LLM_SYSTEM] == "openai"
+    assert open_ai_span.attributes[SpanAttributes.GEN_AI_SYSTEM] == "openai"
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 4
@@ -318,7 +318,7 @@ def test_new_assistant_with_polling(
     assert open_ai_span.attributes["gen_ai.prompt.2.content"] == user_message
     assert open_ai_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 374
     assert open_ai_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS] == 86
-    assert open_ai_span.attributes[SpanAttributes.LLM_SYSTEM] == "openai"
+    assert open_ai_span.attributes[SpanAttributes.GEN_AI_SYSTEM] == "openai"
 
     completion_index = 0
     for message in messages.data:
@@ -326,13 +326,13 @@ def test_new_assistant_with_polling(
             continue
         assert (
             open_ai_span.attributes[
-                f"{SpanAttributes.LLM_COMPLETIONS}.{completion_index}.content"
+                f"{SpanAttributes.GEN_AI_COMPLETION}.{completion_index}.content"
             ]
             == message.content[0].text.value
         )
         assert (
             open_ai_span.attributes[
-                f"{SpanAttributes.LLM_COMPLETIONS}.{completion_index}.role"
+                f"{SpanAttributes.GEN_AI_COMPLETION}.{completion_index}.role"
             ]
             == message.role
         )
@@ -386,7 +386,7 @@ def test_new_assistant_with_polling_with_events_with_content(
     assert open_ai_span.attributes["gen_ai.response.model"] == "gpt-4-turbo-preview"
     assert open_ai_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 374
     assert open_ai_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS] == 86
-    assert open_ai_span.attributes[SpanAttributes.LLM_SYSTEM] == "openai"
+    assert open_ai_span.attributes[SpanAttributes.GEN_AI_SYSTEM] == "openai"
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 4
@@ -460,7 +460,7 @@ def test_new_assistant_with_polling_with_events_with_no_content(
     assert open_ai_span.attributes["gen_ai.response.model"] == "gpt-4-turbo-preview"
     assert open_ai_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 374
     assert open_ai_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS] == 86
-    assert open_ai_span.attributes[SpanAttributes.LLM_SYSTEM] == "openai"
+    assert open_ai_span.attributes[SpanAttributes.GEN_AI_SYSTEM] == "openai"
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 4
@@ -519,28 +519,28 @@ def test_existing_assistant(
     ]
     open_ai_span = spans[0]
     assert (
-        open_ai_span.attributes[SpanAttributes.LLM_REQUEST_MODEL]
+        open_ai_span.attributes[SpanAttributes.GEN_AI_REQUEST_MODEL]
         == "gpt-4-turbo-preview"
     )
     assert (
-        open_ai_span.attributes[SpanAttributes.LLM_RESPONSE_MODEL]
+        open_ai_span.attributes[SpanAttributes.GEN_AI_RESPONSE_MODEL]
         == "gpt-4-turbo-preview"
     )
     assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
+        open_ai_span.attributes[f"{SpanAttributes.GEN_AI_PROMPT}.0.content"]
         == "You are a personal math tutor. Write and run code to answer math questions."
     )
-    assert open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"] == "system"
+    assert open_ai_span.attributes[f"{SpanAttributes.GEN_AI_PROMPT}.0.role"] == "system"
     assert (
-        open_ai_span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.1.content")
+        open_ai_span.attributes.get(f"{SpanAttributes.GEN_AI_PROMPT}.1.content")
         == "Please address the user as Jane Doe. The user has a premium account."
     )
-    assert open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.role"] == "system"
+    assert open_ai_span.attributes[f"{SpanAttributes.GEN_AI_PROMPT}.1.role"] == "system"
     assert open_ai_span.attributes["gen_ai.prompt.2.role"] == "user"
     assert open_ai_span.attributes["gen_ai.prompt.2.content"] == user_message
     assert open_ai_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 639
     assert open_ai_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS] == 170
-    assert open_ai_span.attributes[SpanAttributes.LLM_SYSTEM] == "openai"
+    assert open_ai_span.attributes[SpanAttributes.GEN_AI_SYSTEM] == "openai"
 
     completion_index = 0
     for message in messages.data:
@@ -548,13 +548,13 @@ def test_existing_assistant(
             continue
         assert (
             open_ai_span.attributes[
-                f"{SpanAttributes.LLM_COMPLETIONS}.{completion_index}.content"
+                f"{SpanAttributes.GEN_AI_COMPLETION}.{completion_index}.content"
             ]
             == message.content[0].text.value
         )
         assert (
             open_ai_span.attributes[
-                f"{SpanAttributes.LLM_COMPLETIONS}.{completion_index}.role"
+                f"{SpanAttributes.GEN_AI_COMPLETION}.{completion_index}.role"
             ]
             == message.role
         )
@@ -609,17 +609,17 @@ def test_existing_assistant_with_events_with_content(
     ]
     open_ai_span = spans[0]
     assert (
-        open_ai_span.attributes[SpanAttributes.LLM_REQUEST_MODEL]
+        open_ai_span.attributes[SpanAttributes.GEN_AI_REQUEST_MODEL]
         == "gpt-4-turbo-preview"
     )
     assert (
-        open_ai_span.attributes[SpanAttributes.LLM_RESPONSE_MODEL]
+        open_ai_span.attributes[SpanAttributes.GEN_AI_RESPONSE_MODEL]
         == "gpt-4-turbo-preview"
     )
 
     assert open_ai_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 639
     assert open_ai_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS] == 170
-    assert open_ai_span.attributes[SpanAttributes.LLM_SYSTEM] == "openai"
+    assert open_ai_span.attributes[SpanAttributes.GEN_AI_SYSTEM] == "openai"
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 5
@@ -704,17 +704,17 @@ def test_existing_assistant_with_events_with_no_content(
     ]
     open_ai_span = spans[0]
     assert (
-        open_ai_span.attributes[SpanAttributes.LLM_REQUEST_MODEL]
+        open_ai_span.attributes[SpanAttributes.GEN_AI_REQUEST_MODEL]
         == "gpt-4-turbo-preview"
     )
     assert (
-        open_ai_span.attributes[SpanAttributes.LLM_RESPONSE_MODEL]
+        open_ai_span.attributes[SpanAttributes.GEN_AI_RESPONSE_MODEL]
         == "gpt-4-turbo-preview"
     )
 
     assert open_ai_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 639
     assert open_ai_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS] == 170
-    assert open_ai_span.attributes[SpanAttributes.LLM_SYSTEM] == "openai"
+    assert open_ai_span.attributes[SpanAttributes.GEN_AI_SYSTEM] == "openai"
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 5
@@ -777,35 +777,35 @@ def test_streaming_new_assistant(
     open_ai_span = spans[0]
     assert open_ai_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
     assert (
-        open_ai_span.attributes[SpanAttributes.LLM_REQUEST_MODEL]
+        open_ai_span.attributes[SpanAttributes.GEN_AI_REQUEST_MODEL]
         == "gpt-4-turbo-preview"
     )
     assert (
-        open_ai_span.attributes[SpanAttributes.LLM_RESPONSE_MODEL]
+        open_ai_span.attributes[SpanAttributes.GEN_AI_RESPONSE_MODEL]
         == "gpt-4-turbo-preview"
     )
     assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
+        open_ai_span.attributes[f"{SpanAttributes.GEN_AI_PROMPT}.0.content"]
         == "You are a personal math tutor. Write and run code to answer math questions."
     )
-    assert open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"] == "system"
+    assert open_ai_span.attributes[f"{SpanAttributes.GEN_AI_PROMPT}.0.role"] == "system"
     assert (
-        open_ai_span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.1.content")
+        open_ai_span.attributes.get(f"{SpanAttributes.GEN_AI_PROMPT}.1.content")
         == "Please address the user as Jane Doe. The user has a premium account."
     )
-    assert open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.role"] == "system"
+    assert open_ai_span.attributes[f"{SpanAttributes.GEN_AI_PROMPT}.1.role"] == "system"
 
     assert open_ai_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 790
     assert open_ai_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS] == 225
-    assert open_ai_span.attributes[SpanAttributes.LLM_SYSTEM] == "openai"
+    assert open_ai_span.attributes[SpanAttributes.GEN_AI_SYSTEM] == "openai"
 
     for idx, message in enumerate(assistant_messages):
         assert (
-            open_ai_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.{idx}.content"]
+            open_ai_span.attributes[f"{SpanAttributes.GEN_AI_COMPLETION}.{idx}.content"]
             == message
         )
         assert (
-            open_ai_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.{idx}.role"]
+            open_ai_span.attributes[f"{SpanAttributes.GEN_AI_COMPLETION}.{idx}.role"]
             == "assistant"
         )
         assert open_ai_span.attributes[f"gen_ai.response.{idx}.id"].startswith("msg")
@@ -855,17 +855,17 @@ def test_streaming_new_assistant_with_events_with_content(
     open_ai_span = spans[0]
     assert open_ai_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
     assert (
-        open_ai_span.attributes[SpanAttributes.LLM_REQUEST_MODEL]
+        open_ai_span.attributes[SpanAttributes.GEN_AI_REQUEST_MODEL]
         == "gpt-4-turbo-preview"
     )
     assert (
-        open_ai_span.attributes[SpanAttributes.LLM_RESPONSE_MODEL]
+        open_ai_span.attributes[SpanAttributes.GEN_AI_RESPONSE_MODEL]
         == "gpt-4-turbo-preview"
     )
 
     assert open_ai_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 790
     assert open_ai_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS] == 225
-    assert open_ai_span.attributes[SpanAttributes.LLM_SYSTEM] == "openai"
+    assert open_ai_span.attributes[SpanAttributes.GEN_AI_SYSTEM] == "openai"
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 4
@@ -958,17 +958,17 @@ def test_streaming_new_assistant_with_events_with_no_content(
     open_ai_span = spans[0]
     assert open_ai_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
     assert (
-        open_ai_span.attributes[SpanAttributes.LLM_REQUEST_MODEL]
+        open_ai_span.attributes[SpanAttributes.GEN_AI_REQUEST_MODEL]
         == "gpt-4-turbo-preview"
     )
     assert (
-        open_ai_span.attributes[SpanAttributes.LLM_RESPONSE_MODEL]
+        open_ai_span.attributes[SpanAttributes.GEN_AI_RESPONSE_MODEL]
         == "gpt-4-turbo-preview"
     )
 
     assert open_ai_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 790
     assert open_ai_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS] == 225
-    assert open_ai_span.attributes[SpanAttributes.LLM_SYSTEM] == "openai"
+    assert open_ai_span.attributes[SpanAttributes.GEN_AI_SYSTEM] == "openai"
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 4
@@ -1027,34 +1027,34 @@ def test_streaming_existing_assistant(
     open_ai_span = spans[0]
     assert open_ai_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
     assert (
-        open_ai_span.attributes[SpanAttributes.LLM_REQUEST_MODEL]
+        open_ai_span.attributes[SpanAttributes.GEN_AI_REQUEST_MODEL]
         == "gpt-4-turbo-preview"
     )
     assert (
-        open_ai_span.attributes[SpanAttributes.LLM_RESPONSE_MODEL]
+        open_ai_span.attributes[SpanAttributes.GEN_AI_RESPONSE_MODEL]
         == "gpt-4-turbo-preview"
     )
     assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
+        open_ai_span.attributes[f"{SpanAttributes.GEN_AI_PROMPT}.0.content"]
         == "You are a personal math tutor. Write and run code to answer math questions."
     )
-    assert open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"] == "system"
+    assert open_ai_span.attributes[f"{SpanAttributes.GEN_AI_PROMPT}.0.role"] == "system"
     assert (
-        open_ai_span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.1.content")
+        open_ai_span.attributes.get(f"{SpanAttributes.GEN_AI_PROMPT}.1.content")
         == "Please address the user as Jane Doe. The user has a premium account."
     )
-    assert open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.role"] == "system"
+    assert open_ai_span.attributes[f"{SpanAttributes.GEN_AI_PROMPT}.1.role"] == "system"
     assert open_ai_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 364
     assert open_ai_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS] == 88
-    assert open_ai_span.attributes[SpanAttributes.LLM_SYSTEM] == "openai"
+    assert open_ai_span.attributes[SpanAttributes.GEN_AI_SYSTEM] == "openai"
 
     for idx, message in enumerate(assistant_messages):
         assert (
-            open_ai_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.{idx}.content"]
+            open_ai_span.attributes[f"{SpanAttributes.GEN_AI_COMPLETION}.{idx}.content"]
             == message
         )
         assert (
-            open_ai_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.{idx}.role"]
+            open_ai_span.attributes[f"{SpanAttributes.GEN_AI_COMPLETION}.{idx}.role"]
             == "assistant"
         )
         assert open_ai_span.attributes[f"gen_ai.response.{idx}.id"].startswith("msg_")
@@ -1104,17 +1104,17 @@ def test_streaming_existing_assistant_with_events_with_content(
     open_ai_span = spans[0]
     assert open_ai_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
     assert (
-        open_ai_span.attributes[SpanAttributes.LLM_REQUEST_MODEL]
+        open_ai_span.attributes[SpanAttributes.GEN_AI_REQUEST_MODEL]
         == "gpt-4-turbo-preview"
     )
     assert (
-        open_ai_span.attributes[SpanAttributes.LLM_RESPONSE_MODEL]
+        open_ai_span.attributes[SpanAttributes.GEN_AI_RESPONSE_MODEL]
         == "gpt-4-turbo-preview"
     )
 
     assert open_ai_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 364
     assert open_ai_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS] == 88
-    assert open_ai_span.attributes[SpanAttributes.LLM_SYSTEM] == "openai"
+    assert open_ai_span.attributes[SpanAttributes.GEN_AI_SYSTEM] == "openai"
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 3
@@ -1192,17 +1192,17 @@ def test_streaming_existing_assistant_with_events_with_no_content(
     open_ai_span = spans[0]
     assert open_ai_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
     assert (
-        open_ai_span.attributes[SpanAttributes.LLM_REQUEST_MODEL]
+        open_ai_span.attributes[SpanAttributes.GEN_AI_REQUEST_MODEL]
         == "gpt-4-turbo-preview"
     )
     assert (
-        open_ai_span.attributes[SpanAttributes.LLM_RESPONSE_MODEL]
+        open_ai_span.attributes[SpanAttributes.GEN_AI_RESPONSE_MODEL]
         == "gpt-4-turbo-preview"
     )
 
     assert open_ai_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 364
     assert open_ai_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS] == 88
-    assert open_ai_span.attributes[SpanAttributes.LLM_SYSTEM] == "openai"
+    assert open_ai_span.attributes[SpanAttributes.GEN_AI_SYSTEM] == "openai"
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 3

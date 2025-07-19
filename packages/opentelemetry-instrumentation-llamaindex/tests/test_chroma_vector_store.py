@@ -58,14 +58,14 @@ def test_rag_with_chroma(instrument_legacy, span_exporter):
     assert synthesize_span.parent is not None
     assert llm_span.parent is not None
 
-    assert llm_span.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "gpt-3.5-turbo"
+    assert llm_span.attributes[SpanAttributes.GEN_AI_REQUEST_MODEL] == "gpt-3.5-turbo"
     assert (
-        llm_span.attributes[SpanAttributes.LLM_RESPONSE_MODEL] == "gpt-3.5-turbo-0125"
+        llm_span.attributes[SpanAttributes.GEN_AI_RESPONSE_MODEL] == "gpt-3.5-turbo-0125"
     )
-    assert llm_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"].startswith(
+    assert llm_span.attributes[f"{SpanAttributes.GEN_AI_PROMPT}.0.content"].startswith(
         "You are an expert Q&A system that is trusted around the world."
     )
-    assert llm_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"] == (
+    assert llm_span.attributes[f"{SpanAttributes.GEN_AI_COMPLETION}.0.content"] == (
         "The author worked on writing and programming before college."
     )
     assert llm_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS] == 10

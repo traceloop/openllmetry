@@ -36,7 +36,7 @@ def handle_invoke_metrics(t: Type, guardrail, attrs, metric_params):
                 input_latency,
                 attributes={
                     **attrs,
-                    SpanAttributes.LLM_TOKEN_TYPE: t.value,
+                    SpanAttributes.GEN_AI_TOKEN_TYPE: t.value,
                 },
             )
         if "guardrailCoverage" in guardrail["invocationMetrics"]:
@@ -46,7 +46,7 @@ def handle_invoke_metrics(t: Type, guardrail, attrs, metric_params):
                 char_guarded,
                 attributes={
                     **attrs,
-                    SpanAttributes.LLM_TOKEN_TYPE: t.value,
+                    SpanAttributes.GEN_AI_TOKEN_TYPE: t.value,
                 },
             )
 
@@ -133,8 +133,8 @@ def handle_words(t: Type, guardrail, attrs, metric_params):
 def guardrail_converse(response, vendor, model, metric_params):
     attrs = {
         "gen_ai.vendor": vendor,
-        SpanAttributes.LLM_RESPONSE_MODEL: model,
-        SpanAttributes.LLM_SYSTEM: "bedrock",
+        SpanAttributes.GEN_AI_RESPONSE_MODEL: model,
+        SpanAttributes.GEN_AI_SYSTEM: "bedrock",
     }
     if "trace" in response and "guardrail" in response["trace"]:
         guardrail = response["trace"]["guardrail"]
@@ -157,8 +157,8 @@ def guardrail_handling(response_body, vendor, model, metric_params):
     if "amazon-bedrock-guardrailAction" in response_body:
         attrs = {
             "gen_ai.vendor": vendor,
-            SpanAttributes.LLM_RESPONSE_MODEL: model,
-            SpanAttributes.LLM_SYSTEM: "bedrock",
+            SpanAttributes.GEN_AI_RESPONSE_MODEL: model,
+            SpanAttributes.GEN_AI_SYSTEM: "bedrock",
         }
         if "amazon-bedrock-trace" in response_body:
             bedrock_trace = response_body["amazon-bedrock-trace"]

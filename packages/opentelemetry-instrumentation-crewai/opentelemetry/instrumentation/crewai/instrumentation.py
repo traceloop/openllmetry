@@ -71,7 +71,7 @@ def wrap_kickoff(tracer: Tracer, duration_histogram: Histogram, token_histogram:
         "crewai.workflow",
         kind=SpanKind.INTERNAL,
         attributes={
-            SpanAttributes.LLM_SYSTEM: "crewai",
+            SpanAttributes.GEN_AI_SYSTEM: "crewai",
         }
     ) as span:
         try:
@@ -108,22 +108,22 @@ def wrap_agent_execute_task(tracer, duration_histogram, token_histogram, wrapped
                 token_histogram.record(
                     instance._token_process.get_summary().prompt_tokens,
                     attributes={
-                        SpanAttributes.LLM_SYSTEM: "crewai",
-                        SpanAttributes.LLM_TOKEN_TYPE: "input",
-                        SpanAttributes.LLM_RESPONSE_MODEL: str(instance.llm.model),
+                        SpanAttributes.GEN_AI_SYSTEM: "crewai",
+                        SpanAttributes.GEN_AI_TOKEN_TYPE: "input",
+                        SpanAttributes.GEN_AI_RESPONSE_MODEL: str(instance.llm.model),
                     }
                 )
                 token_histogram.record(
                     instance._token_process.get_summary().completion_tokens,
                     attributes={
-                        SpanAttributes.LLM_SYSTEM: "crewai",
-                        SpanAttributes.LLM_TOKEN_TYPE: "output",
-                        SpanAttributes.LLM_RESPONSE_MODEL: str(instance.llm.model),
+                        SpanAttributes.GEN_AI_SYSTEM: "crewai",
+                        SpanAttributes.GEN_AI_TOKEN_TYPE: "output",
+                        SpanAttributes.GEN_AI_RESPONSE_MODEL: str(instance.llm.model),
                     },
                 )
 
-            set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, str(instance.llm.model))
-            set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, str(instance.llm.model))
+            set_span_attribute(span, SpanAttributes.GEN_AI_REQUEST_MODEL, str(instance.llm.model))
+            set_span_attribute(span, SpanAttributes.GEN_AI_RESPONSE_MODEL, str(instance.llm.model))
             span.set_status(Status(StatusCode.OK))
             return result
         except Exception as ex:
@@ -172,8 +172,8 @@ def wrap_llm_call(tracer, duration_histogram, token_histogram, wrapped, instance
                 duration_histogram.record(
                     duration,
                     attributes={
-                     SpanAttributes.LLM_SYSTEM: "crewai",
-                     SpanAttributes.LLM_RESPONSE_MODEL: str(instance.model)
+                     SpanAttributes.GEN_AI_SYSTEM: "crewai",
+                     SpanAttributes.GEN_AI_RESPONSE_MODEL: str(instance.model)
                     },
                 )
 

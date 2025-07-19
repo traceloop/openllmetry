@@ -37,15 +37,15 @@ def test_agent_spans(exporter, test_agent):
 
     assert span.name == "testAgent.agent"
     assert span.kind == span.kind.CLIENT
-    assert span.attributes[SpanAttributes.LLM_SYSTEM] == "openai"
-    assert span.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "gpt-4.1"
+    assert span.attributes[SpanAttributes.GEN_AI_SYSTEM] == "openai"
+    assert span.attributes[SpanAttributes.GEN_AI_REQUEST_MODEL] == "gpt-4.1"
     assert (
         span.attributes[SpanAttributes.TRACELOOP_SPAN_KIND]
         == TraceloopSpanKindValues.AGENT.value
     )
-    assert span.attributes[SpanAttributes.LLM_REQUEST_TEMPERATURE] == 0.3
-    assert span.attributes[SpanAttributes.LLM_REQUEST_MAX_TOKENS] == 1024
-    assert span.attributes[SpanAttributes.LLM_REQUEST_TOP_P] == 0.2
+    assert span.attributes[SpanAttributes.GEN_AI_REQUEST_TEMPERATURE] == 0.3
+    assert span.attributes[SpanAttributes.GEN_AI_REQUEST_MAX_TOKENS] == 1024
+    assert span.attributes[SpanAttributes.GEN_AI_REQUEST_TOP_P] == 0.2
     assert span.attributes["openai.agent.model.frequency_penalty"] == 1.3
     assert span.attributes["gen_ai.agent.name"] == "testAgent"
     assert (
@@ -53,9 +53,9 @@ def test_agent_spans(exporter, test_agent):
         == "You are a helpful assistant that answers all questions"
     )
 
-    assert span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"] == "user"
+    assert span.attributes[f"{SpanAttributes.GEN_AI_PROMPT}.0.role"] == "user"
     assert (
-        span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
+        span.attributes[f"{SpanAttributes.GEN_AI_PROMPT}.0.content"]
         == "What is AI?")
 
     assert span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] is not None
@@ -65,25 +65,25 @@ def test_agent_spans(exporter, test_agent):
     assert span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] is not None
 
     assert (
-        span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.contents"]
+        span.attributes[f"{SpanAttributes.GEN_AI_COMPLETION}.contents"]
         is not None
     )
     assert (
-        len(span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.contents"]) > 0
+        len(span.attributes[f"{SpanAttributes.GEN_AI_COMPLETION}.contents"]) > 0
     )
     assert (
-        span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.roles"]
+        span.attributes[f"{SpanAttributes.GEN_AI_COMPLETION}.roles"]
         is not None
     )
     assert (
-        len(span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.roles"]) > 0
+        len(span.attributes[f"{SpanAttributes.GEN_AI_COMPLETION}.roles"]) > 0
     )
     assert (
-        span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.types"]
+        span.attributes[f"{SpanAttributes.GEN_AI_COMPLETION}.types"]
         is not None
     )
     assert (
-        len(span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.types"]) > 0
+        len(span.attributes[f"{SpanAttributes.GEN_AI_COMPLETION}.types"]) > 0
     )
 
     assert span.status.status_code == StatusCode.OK
@@ -234,7 +234,7 @@ def test_generate_metrics(metrics_test_context, test_agent):
                         assert (
                             (
                                 data_point.attributes[
-                                    SpanAttributes.LLM_TOKEN_TYPE
+                                    SpanAttributes.GEN_AI_TOKEN_TYPE
                                 ]
                                 in [
                                     "output",
@@ -257,13 +257,13 @@ def test_generate_metrics(metrics_test_context, test_agent):
                     )
                 assert (
                     metric.data.data_points[0].attributes[
-                        SpanAttributes.LLM_SYSTEM
+                        SpanAttributes.GEN_AI_SYSTEM
                     ]
                     == "openai"
                 )
                 assert (
                     metric.data.data_points[0].attributes[
-                        SpanAttributes.LLM_RESPONSE_MODEL
+                        SpanAttributes.GEN_AI_RESPONSE_MODEL
                     ]
                     == "gpt-4.1"
                 )

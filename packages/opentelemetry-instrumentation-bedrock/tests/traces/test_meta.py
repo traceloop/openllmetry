@@ -201,9 +201,9 @@ def test_meta_llama3_completion(instrument_legacy, brt, span_exporter, log_expor
         meta_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
         == response_body["generation_token_count"] + response_body["prompt_token_count"]
     )
-    assert meta_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"] == prompt
+    assert meta_span.attributes[f"{SpanAttributes.GEN_AI_PROMPT}.0.content"] == prompt
     assert (
-        meta_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"]
+        meta_span.attributes[f"{SpanAttributes.GEN_AI_COMPLETION}.0.content"]
         == response_body["generation"]
     )
     assert meta_span.attributes.get("gen_ai.response.id") is None
@@ -350,21 +350,21 @@ def test_meta_converse(instrument_legacy, brt, span_exporter, log_exporter):
         meta_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
         == response["usage"]["totalTokens"]
     )
-    assert meta_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"] == "system"
+    assert meta_span.attributes[f"{SpanAttributes.GEN_AI_PROMPT}.0.role"] == "system"
     assert (
-        meta_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"] == system_prompt
+        meta_span.attributes[f"{SpanAttributes.GEN_AI_PROMPT}.0.content"] == system_prompt
     )
-    assert meta_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.role"] == "user"
+    assert meta_span.attributes[f"{SpanAttributes.GEN_AI_PROMPT}.1.role"] == "user"
     assert meta_span.attributes[
-        f"{SpanAttributes.LLM_PROMPTS}.1.content"
+        f"{SpanAttributes.GEN_AI_PROMPT}.1.content"
     ] == json.dumps(messages[0]["content"])
     for i in range(0, len(generated_text)):
         assert (
-            meta_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.{i}.role"]
+            meta_span.attributes[f"{SpanAttributes.GEN_AI_COMPLETION}.{i}.role"]
             == "assistant"
         )
         assert (
-            meta_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.{i}.content"]
+            meta_span.attributes[f"{SpanAttributes.GEN_AI_COMPLETION}.{i}.content"]
             == generated_text[i]["text"]
         )
     assert meta_span.attributes.get("gen_ai.response.id") is None
@@ -558,21 +558,21 @@ def test_meta_converse_stream(instrument_legacy, brt, span_exporter, log_exporte
         meta_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
         == inputTokens + outputTokens
     )
-    assert meta_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"] == "system"
+    assert meta_span.attributes[f"{SpanAttributes.GEN_AI_PROMPT}.0.role"] == "system"
     assert (
-        meta_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"] == system_prompt
+        meta_span.attributes[f"{SpanAttributes.GEN_AI_PROMPT}.0.content"] == system_prompt
     )
-    assert meta_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.role"] == "user"
+    assert meta_span.attributes[f"{SpanAttributes.GEN_AI_PROMPT}.1.role"] == "user"
     assert meta_span.attributes[
-        f"{SpanAttributes.LLM_PROMPTS}.1.content"
+        f"{SpanAttributes.GEN_AI_PROMPT}.1.content"
     ] == json.dumps(messages[0]["content"])
 
     assert (
-        meta_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.role"]
+        meta_span.attributes[f"{SpanAttributes.GEN_AI_COMPLETION}.0.role"]
         == response_role
     )
     assert (
-        meta_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"] == content
+        meta_span.attributes[f"{SpanAttributes.GEN_AI_COMPLETION}.0.content"] == content
     )
     assert meta_span.attributes.get("gen_ai.response.id") is None
 

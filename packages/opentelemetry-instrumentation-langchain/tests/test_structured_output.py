@@ -36,9 +36,9 @@ def test_structured_output(instrument_legacy, span_exporter, log_exporter):
 
     chat_span = next(span for span in spans if span.name == "ChatOpenAI.chat")
 
-    assert chat_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"] == query_text
+    assert chat_span.attributes[f"{SpanAttributes.GEN_AI_PROMPT}.0.content"] == query_text
     assert (
-        chat_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"]
+        chat_span.attributes[f"{SpanAttributes.GEN_AI_COMPLETION}.0.content"]
         == result.model_dump_json()
     )
 
