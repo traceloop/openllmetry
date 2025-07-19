@@ -41,7 +41,7 @@ def test_chat_completion_metrics(instrument_legacy, reader, openai_client):
                 if metric.name == Meters.LLM_TOKEN_USAGE:
                     found_token_metric = True
                     for data_point in metric.data.data_points:
-                        assert data_point.attributes[SpanAttributes.LLM_TOKEN_TYPE] in [
+                        assert data_point.attributes[SpanAttributes.GEN_AI_TOKEN_TYPE] in [
                             "output",
                             "input",
                         ]
@@ -106,7 +106,7 @@ def test_chat_parsed_completion_metrics(instrument_legacy, reader, openai_client
         for sm in rm.scope_metrics:
             for metric in sm.metrics:
                 for data_point in metric.data.data_points:
-                    model = data_point.attributes.get(SpanAttributes.LLM_RESPONSE_MODEL)
+                    model = data_point.attributes.get(SpanAttributes.GEN_AI_RESPONSE_MODEL)
                     if (
                         metric.name == Meters.LLM_TOKEN_USAGE
                         and model == "gpt-4o-2024-08-06"
@@ -165,7 +165,7 @@ def test_chat_streaming_metrics(instrument_legacy, reader, openai_client):
                 if metric.name == Meters.LLM_TOKEN_USAGE:
                     found_token_metric = True
                     for data_point in metric.data.data_points:
-                        assert data_point.attributes[SpanAttributes.LLM_TOKEN_TYPE] in [
+                        assert data_point.attributes[SpanAttributes.GEN_AI_TOKEN_TYPE] in [
                             "output",
                             "input",
                         ]
@@ -205,10 +205,10 @@ def test_chat_streaming_metrics(instrument_legacy, reader, openai_client):
 
                 for data_point in metric.data.data_points:
                     assert (
-                        data_point.attributes.get(SpanAttributes.LLM_SYSTEM) == "openai"
+                        data_point.attributes.get(SpanAttributes.GEN_AI_SYSTEM) == "openai"
                     )
                     assert str(
-                        data_point.attributes[SpanAttributes.LLM_RESPONSE_MODEL]
+                        data_point.attributes[SpanAttributes.GEN_AI_RESPONSE_MODEL]
                     ) in ("gpt-3.5-turbo", "gpt-3.5-turbo-0125", "gpt-4o-2024-08-06")
                     assert data_point.attributes["gen_ai.operation.name"] == "chat"
                     assert data_point.attributes["server.address"] != ""

@@ -107,7 +107,7 @@ def _accumulate_streaming_response(
             first_token_time = time.perf_counter()
             streaming_time_to_first_token.record(
                 first_token_time - start_time,
-                attributes={SpanAttributes.LLM_SYSTEM: "Ollama"},
+                attributes={SpanAttributes.GEN_AI_SYSTEM: "Ollama"},
             )
             first_token = False
         yield res
@@ -125,8 +125,8 @@ def _accumulate_streaming_response(
         streaming_time_to_generate.record(
             time.perf_counter() - first_token_time,
             attributes={
-                SpanAttributes.LLM_SYSTEM: "Ollama",
-                SpanAttributes.LLM_RESPONSE_MODEL: model_name,
+                SpanAttributes.GEN_AI_SYSTEM: "Ollama",
+                SpanAttributes.GEN_AI_RESPONSE_MODEL: model_name,
             },
         )
 
@@ -171,7 +171,7 @@ async def _aaccumulate_streaming_response(
             first_token_time = time.perf_counter()
             streaming_time_to_first_token.record(
                 first_token_time - start_time,
-                attributes={SpanAttributes.LLM_SYSTEM: "Ollama"},
+                attributes={SpanAttributes.GEN_AI_SYSTEM: "Ollama"},
             )
             first_token = False
         yield res
@@ -189,8 +189,8 @@ async def _aaccumulate_streaming_response(
         streaming_time_to_generate.record(
             time.perf_counter() - first_token_time,
             attributes={
-                SpanAttributes.LLM_SYSTEM: "Ollama",
-                SpanAttributes.LLM_RESPONSE_MODEL: model_name,
+                SpanAttributes.GEN_AI_SYSTEM: "Ollama",
+                SpanAttributes.GEN_AI_RESPONSE_MODEL: model_name,
             },
         )
 
@@ -297,7 +297,7 @@ def _wrap(
         name,
         kind=SpanKind.CLIENT,
         attributes={
-            SpanAttributes.LLM_SYSTEM: "Ollama",
+            SpanAttributes.GEN_AI_SYSTEM: "Ollama",
             SpanAttributes.LLM_REQUEST_TYPE: llm_request_type.value,
         },
     )
@@ -310,10 +310,10 @@ def _wrap(
     if response:
         if duration_histogram:
             duration = end_time - start_time
-            attrs = {SpanAttributes.LLM_SYSTEM: "Ollama"}
+            attrs = {SpanAttributes.GEN_AI_SYSTEM: "Ollama"}
             model = kwargs.get("model")
             if model is not None:
-                attrs[SpanAttributes.LLM_RESPONSE_MODEL] = model
+                attrs[SpanAttributes.GEN_AI_RESPONSE_MODEL] = model
             duration_histogram.record(duration, attributes=attrs)
 
         if kwargs.get("stream"):
@@ -364,7 +364,7 @@ async def _awrap(
         name,
         kind=SpanKind.CLIENT,
         attributes={
-            SpanAttributes.LLM_SYSTEM: "Ollama",
+            SpanAttributes.GEN_AI_SYSTEM: "Ollama",
             SpanAttributes.LLM_REQUEST_TYPE: llm_request_type.value,
         },
     )
@@ -377,10 +377,10 @@ async def _awrap(
     if response:
         if duration_histogram:
             duration = end_time - start_time
-            attrs = {SpanAttributes.LLM_SYSTEM: "Ollama"}
+            attrs = {SpanAttributes.GEN_AI_SYSTEM: "Ollama"}
             model = kwargs.get("model")
             if model is not None:
-                attrs[SpanAttributes.LLM_RESPONSE_MODEL] = model
+                attrs[SpanAttributes.GEN_AI_RESPONSE_MODEL] = model
             duration_histogram.record(duration, attributes=attrs)
 
         if kwargs.get("stream"):

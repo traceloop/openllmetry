@@ -24,12 +24,12 @@ class EventHandleWrapper(AssistantEventHandler):
     def on_end(self):
         _set_span_attribute(
             self._span,
-            SpanAttributes.LLM_USAGE_PROMPT_TOKENS,
+            SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS,
             self._prompt_tokens,
         )
         _set_span_attribute(
             self._span,
-            SpanAttributes.LLM_USAGE_COMPLETION_TOKENS,
+            SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS,
             self._completion_tokens,
         )
         self._original_handler.on_end()
@@ -118,12 +118,12 @@ class EventHandleWrapper(AssistantEventHandler):
         if not should_emit_events():
             _set_span_attribute(
                 self._span,
-                f"{SpanAttributes.LLM_COMPLETIONS}.{self._current_text_index}.role",
+                f"{SpanAttributes.GEN_AI_COMPLETION}.{self._current_text_index}.role",
                 "assistant",
             )
             _set_span_attribute(
                 self._span,
-                f"{SpanAttributes.LLM_COMPLETIONS}.{self._current_text_index}.content",
+                f"{SpanAttributes.GEN_AI_COMPLETION}.{self._current_text_index}.content",
                 text.value,
             )
 

@@ -20,14 +20,14 @@ def test_ollama_embeddings_legacy(
     spans = span_exporter.get_finished_spans()
     ollama_span = spans[0]
     assert ollama_span.name == "ollama.embeddings"
-    assert ollama_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Ollama"
+    assert ollama_span.attributes.get(f"{SpanAttributes.GEN_AI_SYSTEM}") == "Ollama"
     assert (
         ollama_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "embedding"
     )
     assert not ollama_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
-    assert ollama_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_MODEL}") == "llama3"
+    assert ollama_span.attributes.get(f"{SpanAttributes.GEN_AI_REQUEST_MODEL}") == "llama3"
     assert (
-        ollama_span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.0.content")
+        ollama_span.attributes.get(f"{SpanAttributes.GEN_AI_PROMPT}.0.content")
         == "Tell me a joke about OpenTelemetry"
     )
 
@@ -48,12 +48,12 @@ def test_ollama_embeddings_with_events_with_content(
     spans = span_exporter.get_finished_spans()
     ollama_span = spans[0]
     assert ollama_span.name == "ollama.embeddings"
-    assert ollama_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Ollama"
+    assert ollama_span.attributes.get(f"{SpanAttributes.GEN_AI_SYSTEM}") == "Ollama"
     assert (
         ollama_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "embedding"
     )
     assert not ollama_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
-    assert ollama_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_MODEL}") == "llama3"
+    assert ollama_span.attributes.get(f"{SpanAttributes.GEN_AI_REQUEST_MODEL}") == "llama3"
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2
@@ -86,12 +86,12 @@ def test_ollama_embeddings_with_events_with_no_content(
     spans = span_exporter.get_finished_spans()
     ollama_span = spans[0]
     assert ollama_span.name == "ollama.embeddings"
-    assert ollama_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Ollama"
+    assert ollama_span.attributes.get(f"{SpanAttributes.GEN_AI_SYSTEM}") == "Ollama"
     assert (
         ollama_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "embedding"
     )
     assert not ollama_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
-    assert ollama_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_MODEL}") == "llama3"
+    assert ollama_span.attributes.get(f"{SpanAttributes.GEN_AI_REQUEST_MODEL}") == "llama3"
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2

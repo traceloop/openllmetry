@@ -36,13 +36,13 @@ def test_llm_chain_metrics(instrument_legacy, reader, chain):
                 if metric.name == Meters.LLM_TOKEN_USAGE:
                     found_token_metric = True
                     for data_point in metric.data.data_points:
-                        assert data_point.attributes[SpanAttributes.LLM_TOKEN_TYPE] in [
+                        assert data_point.attributes[SpanAttributes.GEN_AI_TOKEN_TYPE] in [
                             "output",
                             "input",
                         ]
                         assert data_point.sum > 0
                         assert (
-                            data_point.attributes[SpanAttributes.LLM_SYSTEM]
+                            data_point.attributes[SpanAttributes.GEN_AI_SYSTEM]
                             == "Langchain"
                         )
 
@@ -56,7 +56,7 @@ def test_llm_chain_metrics(instrument_legacy, reader, chain):
                     )
                     for data_point in metric.data.data_points:
                         assert (
-                            data_point.attributes[SpanAttributes.LLM_SYSTEM]
+                            data_point.attributes[SpanAttributes.GEN_AI_SYSTEM]
                             == "Langchain"
                         )
 
@@ -88,13 +88,13 @@ def test_llm_chain_streaming_metrics(instrument_legacy, reader, llm):
                 if metric.name == Meters.LLM_TOKEN_USAGE:
                     found_token_metric = True
                     for data_point in metric.data.data_points:
-                        assert data_point.attributes[SpanAttributes.LLM_TOKEN_TYPE] in [
+                        assert data_point.attributes[SpanAttributes.GEN_AI_TOKEN_TYPE] in [
                             "output",
                             "input",
                         ]
                         assert data_point.sum > 0
                         assert (
-                            data_point.attributes[SpanAttributes.LLM_SYSTEM]
+                            data_point.attributes[SpanAttributes.GEN_AI_SYSTEM]
                             == "Langchain"
                         )
 
@@ -108,7 +108,7 @@ def test_llm_chain_streaming_metrics(instrument_legacy, reader, llm):
                     )
                     for data_point in metric.data.data_points:
                         assert (
-                            data_point.attributes[SpanAttributes.LLM_SYSTEM]
+                            data_point.attributes[SpanAttributes.GEN_AI_SYSTEM]
                             == "Langchain"
                         )
 

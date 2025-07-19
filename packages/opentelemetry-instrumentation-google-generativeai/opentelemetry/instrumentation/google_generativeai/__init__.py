@@ -194,7 +194,7 @@ async def _awrap(
         name,
         kind=SpanKind.CLIENT,
         attributes={
-            SpanAttributes.LLM_SYSTEM: "Google",
+            SpanAttributes.GEN_AI_SYSTEM: "Google",
             SpanAttributes.LLM_REQUEST_TYPE: LLMRequestTypeValues.COMPLETION.value,
         },
     )
@@ -252,7 +252,7 @@ def _wrap(
         name,
         kind=SpanKind.CLIENT,
         attributes={
-            SpanAttributes.LLM_SYSTEM: "Google",
+            SpanAttributes.GEN_AI_SYSTEM: "Google",
             SpanAttributes.LLM_REQUEST_TYPE: LLMRequestTypeValues.COMPLETION.value,
         },
     )

@@ -71,7 +71,7 @@ def shared_metrics_attributes(response):
     return {
         **common_attributes,
         GEN_AI_SYSTEM: GEN_AI_SYSTEM_ANTHROPIC,
-        SpanAttributes.LLM_RESPONSE_MODEL: response.get("model"),
+        SpanAttributes.GEN_AI_RESPONSE_MODEL: response.get("model"),
     }
 
 

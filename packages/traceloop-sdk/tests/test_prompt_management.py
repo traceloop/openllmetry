@@ -82,8 +82,8 @@ def test_prompt_management(exporter, openai_client):
     ]
     open_ai_span = spans[0]
     assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
+        open_ai_span.attributes[f"{SpanAttributes.GEN_AI_PROMPT}.0.content"]
         == "Tell me a joke about OpenTelemetry, pirate style"
     )
-    assert open_ai_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
+    assert open_ai_span.attributes.get(f"{SpanAttributes.GEN_AI_COMPLETION}.0.content")
     assert open_ai_span.attributes.get("traceloop.prompt.key") == "joke_generator"

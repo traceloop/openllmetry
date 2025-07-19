@@ -41,9 +41,9 @@ def test_agent_spans(exporter, test_agent):
         span.attributes[SpanAttributes.TRACELOOP_SPAN_KIND]
         == TraceloopSpanKindValues.AGENT.value
     )
-    assert span.attributes[SpanAttributes.LLM_REQUEST_TEMPERATURE] == 0.3
-    assert span.attributes[SpanAttributes.LLM_REQUEST_MAX_TOKENS] == 1024
-    assert span.attributes[SpanAttributes.LLM_REQUEST_TOP_P] == 0.2
+    assert span.attributes[SpanAttributes.GEN_AI_REQUEST_TEMPERATURE] == 0.3
+    assert span.attributes[SpanAttributes.GEN_AI_REQUEST_MAX_TOKENS] == 1024
+    assert span.attributes[SpanAttributes.GEN_AI_REQUEST_TOP_P] == 0.2
     assert span.attributes["openai.agent.model.frequency_penalty"] == 1.3
     assert span.attributes["gen_ai.agent.name"] == "testAgent"
     assert (
@@ -51,19 +51,21 @@ def test_agent_spans(exporter, test_agent):
         == "You are a helpful assistant that answers all questions"
     )
 
-    assert span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"] == "user"
-    assert span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"] == "What is AI?"
+    assert span.attributes[f"{SpanAttributes.GEN_AI_PROMPT}.0.role"] == "user"
+    assert span.attributes[f"{SpanAttributes.GEN_AI_PROMPT}.0.content"] == "What is AI?"
 
-    assert span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] is not None
-    assert span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS] is not None
+    assert span.attributes[SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS] is not None
+    assert (
+        span.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
+        is not None)
     assert span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] is not None
 
-    assert span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.contents"] is not None
-    assert len(span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.contents"]) > 0
-    assert span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.roles"] is not None
-    assert len(span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.roles"]) > 0
-    assert span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.types"] is not None
-    assert len(span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.types"]) > 0
+    assert span.attributes[f"{SpanAttributes.GEN_AI_COMPLETION}.contents"] is not None
+    assert len(span.attributes[f"{SpanAttributes.GEN_AI_COMPLETION}.contents"]) > 0
+    assert span.attributes[f"{SpanAttributes.GEN_AI_COMPLETION}.roles"] is not None
+    assert len(span.attributes[f"{SpanAttributes.GEN_AI_COMPLETION}.roles"]) > 0
+    assert span.attributes[f"{SpanAttributes.GEN_AI_COMPLETION}.types"] is not None
+    assert len(span.attributes[f"{SpanAttributes.GEN_AI_COMPLETION}.types"]) > 0
 
     assert span.status.status_code == StatusCode.OK
 
@@ -191,7 +193,7 @@ def test_generate_metrics(metrics_test_context, test_agent):
                 if metric.name == Meters.LLM_TOKEN_USAGE:
                     found_token_metric = True
                     for data_point in metric.data.data_points:
-                        assert data_point.attributes[SpanAttributes.LLM_TOKEN_TYPE] in [
+                        assert data_point.attributes[SpanAttributes.GEN_AI_TOKEN_TYPE] in [
                             "output",
                             "input",
                         ]
