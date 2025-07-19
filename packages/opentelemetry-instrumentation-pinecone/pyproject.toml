@@ -43,14 +43,14 @@ vcrpy = "^6.0.1"
 pytest-recording = "^0.13.1"
 opentelemetry-sdk = "^1.27.0"
 opentelemetry-instrumentation-openai = { path = "../opentelemetry-instrumentation-openai", develop = true }
-pinecone = "^5.0.0"
+pinecone = "^6.0.1"
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.extras]
-instruments = ["pinecone-client"]
+instruments = ["pinecone"]
 
 [tool.poetry.plugins."opentelemetry_instrumentor"]
-pinecone_client = "opentelemetry.instrumentation.pinecone:PineconeInstrumentor"
+pinecone = "opentelemetry.instrumentation.pinecone:PineconeInstrumentor"

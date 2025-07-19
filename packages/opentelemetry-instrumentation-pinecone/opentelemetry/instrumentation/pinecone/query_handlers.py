@@ -6,7 +6,7 @@ from opentelemetry.instrumentation.pinecone.utils import dont_throw, set_span_at
 
 @dont_throw
 def set_query_input_attributes(span, kwargs):
-    # Pinecone-client 2.2.2 query kwargs
+    # Pinecone 2.2.2+ query kwargs
     # vector: Optional[List[float]] = None,
     # id: Optional[str] = None,
     # queries: Optional[Union[List[QueryVector], List[Tuple]]] = None,
