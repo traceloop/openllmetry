@@ -1,3 +1,9 @@
+## v0.40.15 (2025-07-19)
+
+### Fix
+
+- **pinecone**: replace pinecone-client with pinecone package (#XXXX)
+
 ## v0.40.14 (2025-06-24)
 
 ### Fix
