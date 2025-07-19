@@ -638,7 +638,7 @@ def init_google_generativeai_instrumentor():
         instrumentor_class_name="GoogleGenerativeAiInstrumentor",
         instrumentor_import_path="opentelemetry.instrumentation.google_generativeai",
         custom_check_function=lambda: (
-            is_package_installed("google-generativeai") and 
+            is_package_installed("google-generativeai") and
             is_package_installed("opentelemetry-instrumentation-google-generativeai")
         ) or is_package_installed("google-genai"),
         extra_name="google-generativeai",
@@ -848,7 +848,10 @@ def init_watsonx_instrumentor():
         instrumentor_package="opentelemetry-instrumentation-watsonx",
         instrumentor_class_name="WatsonxInstrumentor",
         instrumentor_import_path="opentelemetry.instrumentation.watsonx",
-        custom_check_function=lambda: is_package_installed("ibm-watsonx-ai") or is_package_installed("ibm_watson_machine_learning"),
+        custom_check_function=lambda: (
+            is_package_installed("ibm-watsonx-ai") or
+            is_package_installed("ibm_watson_machine_learning")
+        ),
         extra_name="watsonx",
         instrumentor_kwargs={
             "exception_logger": lambda e: Telemetry().log_exception(e),
@@ -995,7 +998,7 @@ def _init_generic_instrumentor(
 ):
     """
     Generic instrumentor initialization function
-    
+
     Args:
         library_name: Display name of the library (e.g., "OpenAI", "Anthropic")
         instrumentor_package: Package name to check for instrumentation (e.g., "opentelemetry-instrumentation-openai")
@@ -1014,7 +1017,7 @@ def _init_generic_instrumentor(
         # Default library packages to check
         if library_packages is None:
             library_packages = []
-        
+
         # Check if library is installed
         library_installed = False
         if custom_check_function:
@@ -1024,47 +1027,52 @@ def _init_generic_instrumentor(
         else:
             # For basic instrumentors, assume library is installed if no packages specified
             library_installed = True
-        
+
         # Check if instrumentation package is installed
         instrumentation_installed = True
         if requires_instrumentation_package:
             instrumentation_installed = is_package_installed(instrumentor_package)
-        
+
         if library_installed and instrumentation_installed:
             # Capture telemetry event
             if telemetry_event:
                 Telemetry().capture(telemetry_event)
-            
+
             # Import and initialize instrumentor
             module = importlib.import_module(instrumentor_import_path)
             instrumentor_class = getattr(module, instrumentor_class_name)
-            
+
             # Prepare kwargs
             kwargs = instrumentor_kwargs or {}
-            
+
             instrumentor = instrumentor_class(**kwargs)
-            
+
             if not instrumentor.is_instrumented_by_opentelemetry:
                 if excluded_urls:
                     instrumentor.instrument(excluded_urls=excluded_urls)
                 else:
                     instrumentor.instrument()
-                    
+
         elif library_installed and requires_instrumentation_package:
             # Library is installed but instrumentation package is not
-            extra_instruction = f"Install traceloop-sdk with the '{extra_name}' extra: pip install 'traceloop-sdk[{extra_name}]'" if extra_name else "Install the appropriate instrumentation package."
+            extra_instruction = (
+                f"Install traceloop-sdk with the '{extra_name}' extra: "
+                f"pip install 'traceloop-sdk[{extra_name}]'"
+                if extra_name
+                else "Install the appropriate instrumentation package."
+            )
             logging.info(
                 f"{library_name} SDK is installed but {instrumentor_package} is not. "
                 f"{extra_instruction}"
             )
-        
+
         return True
-    
+
     except Exception as e:
         log_func = logging.warning if use_warning_log else logging.error
         log_func(f"Error initializing {library_name} instrumentor: {e}")
         Telemetry().log_exception(e)
-    
+
     return False
 
 
