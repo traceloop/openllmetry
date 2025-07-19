@@ -2,7 +2,7 @@
 
 ### Fix
 
-- **pinecone**: replace pinecone-client with pinecone package (#XXXX)
+- **pinecone**: migrate to official pinecone package from deprecated pinecone-client (#2753)
 
 ## v0.40.14 (2025-06-24)
 
