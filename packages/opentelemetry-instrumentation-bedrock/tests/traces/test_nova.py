@@ -899,7 +899,7 @@ def test_nova_converse_stream(instrument_legacy, brt, span_exporter, log_exporte
 
     # Assert on usage data
     assert (
-        bedrock_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == inputTokens
+        bedrock_span.attributes[SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS] == inputTokens
     )
     assert (
         bedrock_span.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
@@ -1004,7 +1004,7 @@ def test_nova_converse_stream_with_events_with_content(
 
     # Assert on usage data
     assert (
-        bedrock_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == inputTokens
+        bedrock_span.attributes[SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS] == inputTokens
     )
     assert (
         bedrock_span.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
@@ -1129,7 +1129,7 @@ def test_nova_converse_stream_with_events_with_no_content(
 
     # Assert on usage data
     assert (
-        bedrock_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == inputTokens
+        bedrock_span.attributes[SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS] == inputTokens
     )
     assert (
         bedrock_span.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]

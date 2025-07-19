@@ -384,7 +384,7 @@ def test_completion_streaming(
             SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
         )
         prompt_tokens = open_ai_span.attributes.get(
-            SpanAttributes.LLM_USAGE_PROMPT_TOKENS
+            SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS
         )
         total_tokens = open_ai_span.attributes.get(
             SpanAttributes.LLM_USAGE_TOTAL_TOKENS
@@ -441,7 +441,7 @@ def test_completion_streaming_with_events_with_content(
             SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
         )
         prompt_tokens = open_ai_span.attributes.get(
-            SpanAttributes.LLM_USAGE_PROMPT_TOKENS
+            SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS
         )
         total_tokens = open_ai_span.attributes.get(
             SpanAttributes.LLM_USAGE_TOTAL_TOKENS
@@ -514,7 +514,7 @@ def test_completion_streaming_with_events_with_no_content(
             SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
         )
         prompt_tokens = open_ai_span.attributes.get(
-            SpanAttributes.LLM_USAGE_PROMPT_TOKENS
+            SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS
         )
         total_tokens = open_ai_span.attributes.get(
             SpanAttributes.LLM_USAGE_TOTAL_TOKENS

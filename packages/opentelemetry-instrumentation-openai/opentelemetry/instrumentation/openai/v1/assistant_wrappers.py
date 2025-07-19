@@ -228,7 +228,7 @@ def messages_list_wrapper(tracer, wrapped, instance, args, kwargs):
         )
         _set_span_attribute(
             span,
-            SpanAttributes.LLM_USAGE_PROMPT_TOKENS,
+            SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS,
             usage_dict.get("prompt_tokens"),
         )
 

@@ -207,7 +207,7 @@ def _set_model_stream_response_attributes(span, stream_response):
     )
     _set_span_attribute(
         span,
-        SpanAttributes.LLM_USAGE_PROMPT_TOKENS,
+        SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS,
         stream_response.get("input_token_count"),
     )
     _set_span_attribute(
@@ -326,7 +326,7 @@ def set_model_response_attributes(
         )
         _set_span_attribute(
             span,
-            SpanAttributes.LLM_USAGE_PROMPT_TOKENS,
+            SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS,
             prompt_token,
         )
         _set_span_attribute(

@@ -83,7 +83,7 @@ def test_new_assistant(
         open_ai_span.attributes[f"{SpanAttributes.GEN_AI_PROMPT}.2.content"]
         == user_message
     )
-    assert open_ai_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 145
+    assert open_ai_span.attributes[SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 145
     assert open_ai_span.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 155
     assert open_ai_span.attributes[SpanAttributes.GEN_AI_SYSTEM] == "openai"
 
@@ -166,7 +166,7 @@ def test_new_assistant_with_events_with_content(
         == "gpt-4-turbo-preview"
     )
 
-    assert open_ai_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 145
+    assert open_ai_span.attributes[SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 145
     assert open_ai_span.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 155
     assert open_ai_span.attributes[SpanAttributes.GEN_AI_SYSTEM] == "openai"
 
@@ -246,7 +246,7 @@ def test_new_assistant_with_events_with_no_content(
         open_ai_span.attributes[SpanAttributes.GEN_AI_RESPONSE_MODEL]
         == "gpt-4-turbo-preview"
     )
-    assert open_ai_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 145
+    assert open_ai_span.attributes[SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 145
     assert open_ai_span.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 155
     assert open_ai_span.attributes[SpanAttributes.GEN_AI_SYSTEM] == "openai"
 
@@ -316,7 +316,7 @@ def test_new_assistant_with_polling(
     assert open_ai_span.attributes["gen_ai.prompt.1.role"] == "system"
     assert open_ai_span.attributes["gen_ai.prompt.2.role"] == "user"
     assert open_ai_span.attributes["gen_ai.prompt.2.content"] == user_message
-    assert open_ai_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 374
+    assert open_ai_span.attributes[SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 374
     assert open_ai_span.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 86
     assert open_ai_span.attributes[SpanAttributes.GEN_AI_SYSTEM] == "openai"
 
@@ -384,7 +384,7 @@ def test_new_assistant_with_polling_with_events_with_content(
     assert open_ai_span.attributes["llm.request.type"] == "chat"
     assert open_ai_span.attributes["gen_ai.request.model"] == "gpt-4-turbo-preview"
     assert open_ai_span.attributes["gen_ai.response.model"] == "gpt-4-turbo-preview"
-    assert open_ai_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 374
+    assert open_ai_span.attributes[SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 374
     assert open_ai_span.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 86
     assert open_ai_span.attributes[SpanAttributes.GEN_AI_SYSTEM] == "openai"
 
@@ -458,7 +458,7 @@ def test_new_assistant_with_polling_with_events_with_no_content(
     assert open_ai_span.attributes["llm.request.type"] == "chat"
     assert open_ai_span.attributes["gen_ai.request.model"] == "gpt-4-turbo-preview"
     assert open_ai_span.attributes["gen_ai.response.model"] == "gpt-4-turbo-preview"
-    assert open_ai_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 374
+    assert open_ai_span.attributes[SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 374
     assert open_ai_span.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 86
     assert open_ai_span.attributes[SpanAttributes.GEN_AI_SYSTEM] == "openai"
 
@@ -538,7 +538,7 @@ def test_existing_assistant(
     assert open_ai_span.attributes[f"{SpanAttributes.GEN_AI_PROMPT}.1.role"] == "system"
     assert open_ai_span.attributes["gen_ai.prompt.2.role"] == "user"
     assert open_ai_span.attributes["gen_ai.prompt.2.content"] == user_message
-    assert open_ai_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 639
+    assert open_ai_span.attributes[SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 639
     assert open_ai_span.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 170
     assert open_ai_span.attributes[SpanAttributes.GEN_AI_SYSTEM] == "openai"
 
@@ -617,7 +617,7 @@ def test_existing_assistant_with_events_with_content(
         == "gpt-4-turbo-preview"
     )
 
-    assert open_ai_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 639
+    assert open_ai_span.attributes[SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 639
     assert open_ai_span.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 170
     assert open_ai_span.attributes[SpanAttributes.GEN_AI_SYSTEM] == "openai"
 
@@ -712,7 +712,7 @@ def test_existing_assistant_with_events_with_no_content(
         == "gpt-4-turbo-preview"
     )
 
-    assert open_ai_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 639
+    assert open_ai_span.attributes[SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 639
     assert open_ai_span.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 170
     assert open_ai_span.attributes[SpanAttributes.GEN_AI_SYSTEM] == "openai"
 
@@ -795,7 +795,7 @@ def test_streaming_new_assistant(
     )
     assert open_ai_span.attributes[f"{SpanAttributes.GEN_AI_PROMPT}.1.role"] == "system"
 
-    assert open_ai_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 790
+    assert open_ai_span.attributes[SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 790
     assert open_ai_span.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 225
     assert open_ai_span.attributes[SpanAttributes.GEN_AI_SYSTEM] == "openai"
 
@@ -863,7 +863,7 @@ def test_streaming_new_assistant_with_events_with_content(
         == "gpt-4-turbo-preview"
     )
 
-    assert open_ai_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 790
+    assert open_ai_span.attributes[SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 790
     assert open_ai_span.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 225
     assert open_ai_span.attributes[SpanAttributes.GEN_AI_SYSTEM] == "openai"
 
@@ -966,7 +966,7 @@ def test_streaming_new_assistant_with_events_with_no_content(
         == "gpt-4-turbo-preview"
     )
 
-    assert open_ai_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 790
+    assert open_ai_span.attributes[SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 790
     assert open_ai_span.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 225
     assert open_ai_span.attributes[SpanAttributes.GEN_AI_SYSTEM] == "openai"
 
@@ -1044,7 +1044,7 @@ def test_streaming_existing_assistant(
         == "Please address the user as Jane Doe. The user has a premium account."
     )
     assert open_ai_span.attributes[f"{SpanAttributes.GEN_AI_PROMPT}.1.role"] == "system"
-    assert open_ai_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 364
+    assert open_ai_span.attributes[SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 364
     assert open_ai_span.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 88
     assert open_ai_span.attributes[SpanAttributes.GEN_AI_SYSTEM] == "openai"
 
@@ -1112,7 +1112,7 @@ def test_streaming_existing_assistant_with_events_with_content(
         == "gpt-4-turbo-preview"
     )
 
-    assert open_ai_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 364
+    assert open_ai_span.attributes[SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 364
     assert open_ai_span.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 88
     assert open_ai_span.attributes[SpanAttributes.GEN_AI_SYSTEM] == "openai"
 
@@ -1200,7 +1200,7 @@ def test_streaming_existing_assistant_with_events_with_no_content(
         == "gpt-4-turbo-preview"
     )
 
-    assert open_ai_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 364
+    assert open_ai_span.attributes[SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 364
     assert open_ai_span.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 88
     assert open_ai_span.attributes[SpanAttributes.GEN_AI_SYSTEM] == "openai"
 

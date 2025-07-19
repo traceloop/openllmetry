@@ -28,7 +28,7 @@ def test_chat_legacy(instrument_legacy, groq_client, span_exporter, log_exporter
     )
     assert groq_span.attributes.get(f"{SpanAttributes.GEN_AI_COMPLETION}.0.content")
     assert groq_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is False
-    assert groq_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) > 0
+    assert groq_span.attributes.get(SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS) > 0
     assert groq_span.attributes.get(SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS) > 0
     assert groq_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS) > 0
     assert (
@@ -58,7 +58,7 @@ def test_chat_with_events_with_content(
     ]
     groq_span = spans[0]
     assert groq_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is False
-    assert groq_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) > 0
+    assert groq_span.attributes.get(SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS) > 0
     assert groq_span.attributes.get(SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS) > 0
     assert groq_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS) > 0
     assert (
@@ -105,7 +105,7 @@ def test_chat_with_events_with_no_content(
     ]
     groq_span = spans[0]
     assert groq_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is False
-    assert groq_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) > 0
+    assert groq_span.attributes.get(SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS) > 0
     assert groq_span.attributes.get(SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS) > 0
     assert groq_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS) > 0
     assert (
@@ -151,7 +151,7 @@ async def test_async_chat_legacy(
     )
     assert groq_span.attributes.get(f"{SpanAttributes.GEN_AI_COMPLETION}.0.content")
     assert groq_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is False
-    assert groq_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) > 0
+    assert groq_span.attributes.get(SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS) > 0
     assert groq_span.attributes.get(SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS) > 0
     assert groq_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS) > 0
     assert (
@@ -182,7 +182,7 @@ async def test_async_chat_with_events_with_content(
     ]
     groq_span = spans[0]
     assert groq_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is False
-    assert groq_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) > 0
+    assert groq_span.attributes.get(SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS) > 0
     assert groq_span.attributes.get(SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS) > 0
     assert groq_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS) > 0
     assert (
@@ -231,7 +231,7 @@ async def test_async_chat_with_events_with_no_content(
     ]
     groq_span = spans[0]
     assert groq_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is False
-    assert groq_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) > 0
+    assert groq_span.attributes.get(SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS) > 0
     assert groq_span.attributes.get(SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS) > 0
     assert groq_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS) > 0
     assert (
@@ -285,7 +285,7 @@ def test_chat_streaming_legacy(
         == content
     )
     assert groq_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is True
-    assert groq_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 18
+    assert groq_span.attributes.get(SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 18
     assert groq_span.attributes.get(SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS) == 73
     assert groq_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS) == 91
 
@@ -317,7 +317,7 @@ def test_chat_streaming_with_events_with_content(
     ]
     groq_span = spans[0]
     assert groq_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is True
-    assert groq_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 18
+    assert groq_span.attributes.get(SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 18
     assert groq_span.attributes.get(SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS) == 73
     assert groq_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS) == 91
 
@@ -367,7 +367,7 @@ def test_chat_streaming_with_events_with_no_content(
     ]
     groq_span = spans[0]
     assert groq_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is True
-    assert groq_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 18
+    assert groq_span.attributes.get(SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 18
     assert groq_span.attributes.get(SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS) == 73
     assert groq_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS) == 91
 

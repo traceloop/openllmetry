@@ -312,7 +312,7 @@ def set_chat_response_usage(span: Span, response: LLMResult):
     ):
         _set_span_attribute(
             span,
-            SpanAttributes.LLM_USAGE_PROMPT_TOKENS,
+            SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS,
             input_tokens,
         )
         _set_span_attribute(
@@ -327,7 +327,7 @@ def set_chat_response_usage(span: Span, response: LLMResult):
         )
         _set_span_attribute(
             span,
-            SpanAttributes.LLM_USAGE_CACHE_READ_INPUT_TOKENS,
+            SpanAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS,
             cache_read_tokens,
         )
 

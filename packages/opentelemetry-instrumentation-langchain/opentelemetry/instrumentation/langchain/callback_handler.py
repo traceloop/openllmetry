@@ -466,7 +466,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             )
 
             _set_span_attribute(
-                span, SpanAttributes.LLM_USAGE_PROMPT_TOKENS, prompt_tokens
+                span, SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS, prompt_tokens
             )
             _set_span_attribute(
                 span, SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS, completion_tokens

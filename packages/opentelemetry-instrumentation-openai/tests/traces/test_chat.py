@@ -605,7 +605,7 @@ def test_chat_streaming(instrument_legacy, span_exporter, log_exporter, openai_c
     completion_tokens = open_ai_span.attributes.get(
         SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
     )
-    prompt_tokens = open_ai_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS)
+    prompt_tokens = open_ai_span.attributes.get(SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS)
     total_tokens = open_ai_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS)
     assert completion_tokens and prompt_tokens and total_tokens
     assert completion_tokens + prompt_tokens == total_tokens
@@ -653,7 +653,7 @@ def test_chat_streaming_with_events_with_content(
     completion_tokens = open_ai_span.attributes.get(
         SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
     )
-    prompt_tokens = open_ai_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS)
+    prompt_tokens = open_ai_span.attributes.get(SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS)
     total_tokens = open_ai_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS)
     assert completion_tokens and prompt_tokens and total_tokens
     assert completion_tokens + prompt_tokens == total_tokens
@@ -720,7 +720,7 @@ def test_chat_streaming_with_events_with_no_content(
     completion_tokens = open_ai_span.attributes.get(
         SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
     )
-    prompt_tokens = open_ai_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS)
+    prompt_tokens = open_ai_span.attributes.get(SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS)
     total_tokens = open_ai_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS)
     assert completion_tokens and prompt_tokens and total_tokens
     assert completion_tokens + prompt_tokens == total_tokens
@@ -780,7 +780,7 @@ async def test_chat_async_streaming(
     completion_tokens = open_ai_span.attributes.get(
         SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
     )
-    prompt_tokens = open_ai_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS)
+    prompt_tokens = open_ai_span.attributes.get(SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS)
     total_tokens = open_ai_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS)
     assert completion_tokens and prompt_tokens and total_tokens
     assert completion_tokens + prompt_tokens == total_tokens
@@ -829,7 +829,7 @@ async def test_chat_async_streaming_with_events_with_content(
     completion_tokens = open_ai_span.attributes.get(
         SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
     )
-    prompt_tokens = open_ai_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS)
+    prompt_tokens = open_ai_span.attributes.get(SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS)
     total_tokens = open_ai_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS)
     assert completion_tokens and prompt_tokens and total_tokens
     assert completion_tokens + prompt_tokens == total_tokens
@@ -895,7 +895,7 @@ async def test_chat_async_streaming_with_events_with_no_content(
     completion_tokens = open_ai_span.attributes.get(
         SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
     )
-    prompt_tokens = open_ai_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS)
+    prompt_tokens = open_ai_span.attributes.get(SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS)
     total_tokens = open_ai_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS)
     assert completion_tokens and prompt_tokens and total_tokens
     assert completion_tokens + prompt_tokens == total_tokens

@@ -148,7 +148,7 @@ def set_model_response_attributes(span, response, llm_model):
         )
         _set_span_attribute(
             span,
-            SpanAttributes.LLM_USAGE_PROMPT_TOKENS,
+            SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS,
             response.usage_metadata.prompt_token_count,
         )
 

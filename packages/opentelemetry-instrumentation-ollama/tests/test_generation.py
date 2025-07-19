@@ -34,12 +34,12 @@ def test_ollama_generation_legacy(
         ollama_span.attributes.get(f"{SpanAttributes.GEN_AI_COMPLETION}.0.content")
         == response["response"]
     )
-    assert ollama_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 17
+    assert ollama_span.attributes.get(SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 17
     assert ollama_span.attributes.get(
         SpanAttributes.LLM_USAGE_TOTAL_TOKENS
     ) == ollama_span.attributes.get(
         SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
-    ) + ollama_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS)
+    ) + ollama_span.attributes.get(SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS)
 
     logs = log_exporter.get_finished_logs()
     assert (
@@ -64,12 +64,12 @@ def test_ollama_generation_with_events_with_content(
     )
     assert not ollama_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert ollama_span.attributes.get(f"{SpanAttributes.GEN_AI_REQUEST_MODEL}") == "llama3"
-    assert ollama_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 17
+    assert ollama_span.attributes.get(SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 17
     assert ollama_span.attributes.get(
         SpanAttributes.LLM_USAGE_TOTAL_TOKENS
     ) == ollama_span.attributes.get(
         SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
-    ) + ollama_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS)
+    ) + ollama_span.attributes.get(SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS)
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2
@@ -106,12 +106,12 @@ def test_ollama_generation_with_events_with_no_content(
     )
     assert not ollama_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert ollama_span.attributes.get(f"{SpanAttributes.GEN_AI_REQUEST_MODEL}") == "llama3"
-    assert ollama_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 17
+    assert ollama_span.attributes.get(SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 17
     assert ollama_span.attributes.get(
         SpanAttributes.LLM_USAGE_TOTAL_TOKENS
     ) == ollama_span.attributes.get(
         SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
-    ) + ollama_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS)
+    ) + ollama_span.attributes.get(SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS)
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2
@@ -158,12 +158,12 @@ def test_ollama_streaming_generation_legacy(
         ollama_span.attributes.get(f"{SpanAttributes.GEN_AI_COMPLETION}.0.content")
         == response
     )
-    assert ollama_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 17
+    assert ollama_span.attributes.get(SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 17
     assert ollama_span.attributes.get(
         SpanAttributes.LLM_USAGE_TOTAL_TOKENS
     ) == ollama_span.attributes.get(
         SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
-    ) + ollama_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS)
+    ) + ollama_span.attributes.get(SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS)
 
     logs = log_exporter.get_finished_logs()
     assert (
@@ -192,12 +192,12 @@ def test_ollama_streaming_generation_with_events_with_content(
     )
     assert ollama_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert ollama_span.attributes.get(f"{SpanAttributes.GEN_AI_REQUEST_MODEL}") == "llama3"
-    assert ollama_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 17
+    assert ollama_span.attributes.get(SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 17
     assert ollama_span.attributes.get(
         SpanAttributes.LLM_USAGE_TOTAL_TOKENS
     ) == ollama_span.attributes.get(
         SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
-    ) + ollama_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS)
+    ) + ollama_span.attributes.get(SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS)
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2
@@ -240,12 +240,12 @@ def test_ollama_streaming_generation_with_events_with_no_content(
     )
     assert ollama_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert ollama_span.attributes.get(f"{SpanAttributes.GEN_AI_REQUEST_MODEL}") == "llama3"
-    assert ollama_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 17
+    assert ollama_span.attributes.get(SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 17
     assert ollama_span.attributes.get(
         SpanAttributes.LLM_USAGE_TOTAL_TOKENS
     ) == ollama_span.attributes.get(
         SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
-    ) + ollama_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS)
+    ) + ollama_span.attributes.get(SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS)
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2
@@ -290,12 +290,12 @@ async def test_ollama_async_generation_legacy(
         == response["response"]
     )
     # For some reason, async ollama chat doesn't report prompt token usage back
-    # assert ollama_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 17
+    # assert ollama_span.attributes.get(SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 17
     assert ollama_span.attributes.get(
         SpanAttributes.LLM_USAGE_TOTAL_TOKENS
     ) == ollama_span.attributes.get(
         SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
-    ) + ollama_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS)
+    ) + ollama_span.attributes.get(SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS)
 
     logs = log_exporter.get_finished_logs()
     assert (
@@ -322,12 +322,12 @@ async def test_ollama_async_generation_with_events_with_content(
     assert not ollama_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert ollama_span.attributes.get(f"{SpanAttributes.GEN_AI_REQUEST_MODEL}") == "llama3"
     # For some reason, async ollama chat doesn't report prompt token usage back
-    # assert ollama_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 17
+    # assert ollama_span.attributes.get(SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 17
     assert ollama_span.attributes.get(
         SpanAttributes.LLM_USAGE_TOTAL_TOKENS
     ) == ollama_span.attributes.get(
         SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
-    ) + ollama_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS)
+    ) + ollama_span.attributes.get(SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS)
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2
@@ -368,12 +368,12 @@ async def test_ollama_async_generation_with_events_with_no_content(
     assert not ollama_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert ollama_span.attributes.get(f"{SpanAttributes.GEN_AI_REQUEST_MODEL}") == "llama3"
     # For some reason, async ollama chat doesn't report prompt token usage back
-    # assert ollama_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 17
+    # assert ollama_span.attributes.get(SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 17
     assert ollama_span.attributes.get(
         SpanAttributes.LLM_USAGE_TOTAL_TOKENS
     ) == ollama_span.attributes.get(
         SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
-    ) + ollama_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS)
+    ) + ollama_span.attributes.get(SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS)
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2
@@ -422,12 +422,12 @@ async def test_ollama_async_streaming_generation_legacy(
         == response
     )
     # For some reason, async ollama chat doesn't report prompt token usage back
-    # assert ollama_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 17
+    # assert ollama_span.attributes.get(SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 17
     assert ollama_span.attributes.get(
         SpanAttributes.LLM_USAGE_TOTAL_TOKENS
     ) == ollama_span.attributes.get(
         SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
-    ) + ollama_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS)
+    ) + ollama_span.attributes.get(SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS)
 
     logs = log_exporter.get_finished_logs()
     assert (
@@ -458,12 +458,12 @@ async def test_ollama_async_streaming_generation_with_events_with_content(
     assert ollama_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert ollama_span.attributes.get(f"{SpanAttributes.GEN_AI_REQUEST_MODEL}") == "llama3"
     # For some reason, async ollama chat doesn't report prompt token usage back
-    # assert ollama_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 17
+    # assert ollama_span.attributes.get(SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 17
     assert ollama_span.attributes.get(
         SpanAttributes.LLM_USAGE_TOTAL_TOKENS
     ) == ollama_span.attributes.get(
         SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
-    ) + ollama_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS)
+    ) + ollama_span.attributes.get(SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS)
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2
@@ -508,12 +508,12 @@ async def test_ollama_async_streaming_generation_with_events_with_no_content(
     assert ollama_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert ollama_span.attributes.get(f"{SpanAttributes.GEN_AI_REQUEST_MODEL}") == "llama3"
     # For some reason, async ollama chat doesn't report prompt token usage back
-    # assert ollama_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 17
+    # assert ollama_span.attributes.get(SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 17
     assert ollama_span.attributes.get(
         SpanAttributes.LLM_USAGE_TOTAL_TOKENS
     ) == ollama_span.attributes.get(
         SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
-    ) + ollama_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS)
+    ) + ollama_span.attributes.get(SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS)
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2

@@ -292,11 +292,11 @@ def test_openai(instrument_legacy, span_exporter, log_exporter):
         == "assistant"
     )
 
-    assert openai_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 1497
+    assert openai_span.attributes[SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 1497
     assert openai_span.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 1037
     assert openai_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 2534
     assert (
-        openai_span.attributes[SpanAttributes.LLM_USAGE_CACHE_READ_INPUT_TOKENS] == 1408
+        openai_span.attributes[SpanAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS] == 1408
     )
 
     logs = log_exporter.get_finished_logs()
@@ -332,11 +332,11 @@ def test_openai_with_events_with_content(
     assert openai_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
     assert openai_span.attributes[SpanAttributes.GEN_AI_REQUEST_MODEL] == "gpt-4o-mini"
 
-    assert openai_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 1497
+    assert openai_span.attributes[SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 1497
     assert openai_span.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 1037
     assert openai_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 2534
     assert (
-        openai_span.attributes[SpanAttributes.LLM_USAGE_CACHE_READ_INPUT_TOKENS] == 1408
+        openai_span.attributes[SpanAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS] == 1408
     )
 
     logs = log_exporter.get_finished_logs()
@@ -386,11 +386,11 @@ def test_openai_with_events_with_no_content(
     assert openai_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
     assert openai_span.attributes[SpanAttributes.GEN_AI_REQUEST_MODEL] == "gpt-4o-mini"
 
-    assert openai_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 1497
+    assert openai_span.attributes[SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 1497
     assert openai_span.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 1037
     assert openai_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 2534
     assert (
-        openai_span.attributes[SpanAttributes.LLM_USAGE_CACHE_READ_INPUT_TOKENS] == 1408
+        openai_span.attributes[SpanAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS] == 1408
     )
 
     logs = log_exporter.get_finished_logs()
@@ -492,7 +492,7 @@ def test_openai_functions(instrument_legacy, span_exporter, log_exporter):
         )
         == response
     )
-    assert openai_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 76
+    assert openai_span.attributes[SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 76
     assert openai_span.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 35
     assert openai_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 111
 
@@ -539,7 +539,7 @@ def test_openai_functions_with_events_with_content(
     assert openai_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
     assert openai_span.attributes[SpanAttributes.GEN_AI_REQUEST_MODEL] == "gpt-3.5-turbo"
 
-    assert openai_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 76
+    assert openai_span.attributes[SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 76
     assert openai_span.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 35
     assert openai_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 111
 
@@ -612,7 +612,7 @@ def test_openai_functions_with_events_with_no_content(
     assert openai_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
     assert openai_span.attributes[SpanAttributes.GEN_AI_REQUEST_MODEL] == "gpt-3.5-turbo"
 
-    assert openai_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 76
+    assert openai_span.attributes[SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 76
     assert openai_span.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 35
     assert openai_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 111
 
@@ -681,7 +681,7 @@ def test_anthropic(instrument_legacy, span_exporter, log_exporter):
         (anthropic_span.attributes[f"{SpanAttributes.GEN_AI_COMPLETION}.0.role"])
         == "assistant"
     )
-    assert anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 19
+    assert anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 19
     assert anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 22
     assert anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 41
     assert (
@@ -751,7 +751,7 @@ def test_anthropic_with_events_with_content(
     assert anthropic_span.attributes[SpanAttributes.GEN_AI_REQUEST_MODEL] == "claude-2.1"
     assert anthropic_span.attributes[SpanAttributes.GEN_AI_REQUEST_TEMPERATURE] == 0.5
 
-    assert anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 19
+    assert anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 19
     assert anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 22
     assert anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 41
     assert (
@@ -807,7 +807,7 @@ def test_anthropic_with_events_with_no_content(
     assert anthropic_span.attributes[SpanAttributes.GEN_AI_REQUEST_MODEL] == "claude-2.1"
     assert anthropic_span.attributes[SpanAttributes.GEN_AI_REQUEST_TEMPERATURE] == 0.5
 
-    assert anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 19
+    assert anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 19
     assert anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 22
     assert anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 41
     assert (
@@ -888,7 +888,7 @@ def test_bedrock(instrument_legacy, span_exporter, log_exporter):
         (bedrock_span.attributes[f"{SpanAttributes.GEN_AI_COMPLETION}.0.role"])
         == "assistant"
     )
-    assert bedrock_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 16
+    assert bedrock_span.attributes[SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 16
     assert bedrock_span.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 27
     assert bedrock_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 43
     output = json.loads(
@@ -960,7 +960,7 @@ def test_bedrock_with_events_with_content(
         == "anthropic.claude-3-haiku-20240307-v1:0"
     )
 
-    assert bedrock_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 16
+    assert bedrock_span.attributes[SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 16
     assert bedrock_span.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 27
     assert bedrock_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 43
 
@@ -1022,7 +1022,7 @@ def test_bedrock_with_events_with_no_content(
         bedrock_span.attributes[SpanAttributes.GEN_AI_REQUEST_MODEL]
         == "anthropic.claude-3-haiku-20240307-v1:0"
     )
-    assert bedrock_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 16
+    assert bedrock_span.attributes[SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 16
     assert bedrock_span.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 27
     assert bedrock_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 43
 

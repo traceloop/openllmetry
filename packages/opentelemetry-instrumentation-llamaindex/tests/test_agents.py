@@ -98,7 +98,7 @@ def test_agents_and_tools(instrument_legacy, span_exporter, log_exporter):
         "Thought: The current language of the user is English. I need to use a tool"
     )
     assert llm_span_1.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 43
-    assert llm_span_1.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 479
+    assert llm_span_1.attributes[SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 479
     assert llm_span_1.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 522
 
     assert llm_span_2.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
@@ -125,7 +125,7 @@ def test_agents_and_tools(instrument_legacy, span_exporter, log_exporter):
         "language to answer.\nAnswer: 2 times 3 is 6."
     )
     assert llm_span_2.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 32
-    assert llm_span_2.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 535
+    assert llm_span_2.attributes[SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 535
     assert llm_span_2.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 567
 
     logs = log_exporter.get_finished_logs()
@@ -191,7 +191,7 @@ def test_agents_and_tools_with_events_with_content(
         "Thought: The current language of the user is English. I need to use a tool"
     )
     assert llm_span_1.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 43
-    assert llm_span_1.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 479
+    assert llm_span_1.attributes[SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 479
     assert llm_span_1.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 522
 
     assert llm_span_2.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
@@ -203,7 +203,7 @@ def test_agents_and_tools_with_events_with_content(
     )
 
     assert llm_span_2.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 32
-    assert llm_span_2.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 535
+    assert llm_span_2.attributes[SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 535
     assert llm_span_2.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 567
 
     logs = log_exporter.get_finished_logs()
@@ -358,7 +358,7 @@ def test_agents_and_tools_with_events_with_no_content(
         llm_span_1.attributes[SpanAttributes.GEN_AI_RESPONSE_MODEL] == "gpt-3.5-turbo-0613"
     )
     assert llm_span_1.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 43
-    assert llm_span_1.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 479
+    assert llm_span_1.attributes[SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 479
     assert llm_span_1.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 522
 
     assert llm_span_2.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
@@ -369,7 +369,7 @@ def test_agents_and_tools_with_events_with_no_content(
         llm_span_2.attributes[SpanAttributes.GEN_AI_RESPONSE_MODEL] == "gpt-3.5-turbo-0613"
     )
     assert llm_span_2.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 32
-    assert llm_span_2.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 535
+    assert llm_span_2.attributes[SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 535
     assert llm_span_2.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 567
 
     logs = log_exporter.get_finished_logs()
@@ -452,7 +452,7 @@ def test_agent_with_query_tool(instrument_legacy, span_exporter, log_exporter):
         "Given an input question, first create a syntactically correct sqlite"
     )
     assert llm_span_1.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 68
-    assert llm_span_1.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 224
+    assert llm_span_1.attributes[SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 224
     assert llm_span_1.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 292
 
     assert llm_span_2.attributes[SpanAttributes.GEN_AI_REQUEST_MODEL] == "gpt-3.5-turbo"
@@ -467,7 +467,7 @@ def test_agent_with_query_tool(instrument_legacy, span_exporter, log_exporter):
         "with a population of 13,960,000."
     )
     assert llm_span_2.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 25
-    assert llm_span_2.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 63
+    assert llm_span_2.attributes[SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 63
     assert llm_span_2.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 88
 
     logs = log_exporter.get_finished_logs()
@@ -534,7 +534,7 @@ def test_agent_with_query_tool_with_events_with_content(
         llm_span_1.attributes[SpanAttributes.GEN_AI_RESPONSE_MODEL] == "gpt-3.5-turbo-0125"
     )
     assert llm_span_1.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 68
-    assert llm_span_1.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 224
+    assert llm_span_1.attributes[SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 224
     assert llm_span_1.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 292
 
     assert llm_span_2.attributes[SpanAttributes.GEN_AI_REQUEST_MODEL] == "gpt-3.5-turbo"
@@ -542,7 +542,7 @@ def test_agent_with_query_tool_with_events_with_content(
         llm_span_2.attributes[SpanAttributes.GEN_AI_RESPONSE_MODEL] == "gpt-3.5-turbo-0125"
     )
     assert llm_span_2.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 25
-    assert llm_span_2.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 63
+    assert llm_span_2.attributes[SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 63
     assert llm_span_2.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 88
 
     logs = log_exporter.get_finished_logs()
@@ -659,7 +659,7 @@ def test_agent_with_query_tool_with_events_with_no_content(
         llm_span_1.attributes[SpanAttributes.GEN_AI_RESPONSE_MODEL] == "gpt-3.5-turbo-0125"
     )
     assert llm_span_1.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 68
-    assert llm_span_1.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 224
+    assert llm_span_1.attributes[SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 224
     assert llm_span_1.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 292
 
     assert llm_span_2.attributes[SpanAttributes.GEN_AI_REQUEST_MODEL] == "gpt-3.5-turbo"
@@ -667,7 +667,7 @@ def test_agent_with_query_tool_with_events_with_no_content(
         llm_span_2.attributes[SpanAttributes.GEN_AI_RESPONSE_MODEL] == "gpt-3.5-turbo-0125"
     )
     assert llm_span_2.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 25
-    assert llm_span_2.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 63
+    assert llm_span_2.attributes[SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 63
     assert llm_span_2.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 88
 
     logs = log_exporter.get_finished_logs()

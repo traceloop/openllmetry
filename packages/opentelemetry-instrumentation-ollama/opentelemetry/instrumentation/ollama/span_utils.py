@@ -103,7 +103,7 @@ def set_model_response_attributes(span, token_histogram, llm_request_type, respo
     )
     _set_span_attribute(
         span,
-        SpanAttributes.LLM_USAGE_PROMPT_TOKENS,
+        SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS,
         input_tokens,
     )
     _set_span_attribute(span, SpanAttributes.GEN_AI_SYSTEM, "Ollama")

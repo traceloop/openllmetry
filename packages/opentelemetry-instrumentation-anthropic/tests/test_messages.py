@@ -68,10 +68,10 @@ def test_anthropic_message_create_legacy(
         anthropic_span.attributes.get(f"{SpanAttributes.GEN_AI_COMPLETION}.0.role")
         == "assistant"
     )
-    assert anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 17
+    assert anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 17
     assert (
         anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
-        + anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS]
+        + anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS]
         == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
     )
     assert (
@@ -115,10 +115,10 @@ def test_anthropic_message_create_with_events_with_content(
     assert all(span.name == "anthropic.chat" for span in spans)
 
     anthropic_span = spans[0]
-    assert anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 17
+    assert anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 17
     assert (
         anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
-        + anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS]
+        + anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS]
         == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
     )
 
@@ -180,10 +180,10 @@ def test_anthropic_message_create_with_events_with_no_content(
     assert all(span.name == "anthropic.chat" for span in spans)
 
     anthropic_span = spans[0]
-    assert anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 17
+    assert anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 17
     assert (
         anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
-        + anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS]
+        + anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS]
         == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
     )
 
@@ -251,10 +251,10 @@ def test_anthropic_multi_modal_legacy(
         anthropic_span.attributes.get(f"{SpanAttributes.GEN_AI_COMPLETION}.0.role")
         == "assistant"
     )
-    assert anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 1381
+    assert anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 1381
     assert (
         anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
-        + anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS]
+        + anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS]
         == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
     )
     assert (
@@ -305,10 +305,10 @@ def test_anthropic_multi_modal_with_events_with_content(
         "anthropic.chat",
     ]
     anthropic_span = spans[0]
-    assert anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 1381
+    assert anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 1381
     assert (
         anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
-        + anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS]
+        + anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS]
         == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
     )
 
@@ -366,10 +366,10 @@ def test_anthropic_multi_modal_with_events_with_no_content(
         "anthropic.chat",
     ]
     anthropic_span = spans[0]
-    assert anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 1381
+    assert anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 1381
     assert (
         anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
-        + anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS]
+        + anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS]
         == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
     )
 
@@ -532,10 +532,10 @@ async def test_anthropic_async_multi_modal_legacy(
         anthropic_span.attributes.get(f"{SpanAttributes.GEN_AI_COMPLETION}.0.role")
         == "assistant"
     )
-    assert anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 1311
+    assert anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 1311
     assert (
         anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
-        + anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS]
+        + anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS]
         == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
     )
     assert (
@@ -587,10 +587,10 @@ async def test_anthropic_async_multi_modal_with_events_with_content(
         "anthropic.chat",
     ]
     anthropic_span = spans[0]
-    assert anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 1311
+    assert anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 1311
     assert (
         anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
-        + anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS]
+        + anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS]
         == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
     )
 
@@ -649,10 +649,10 @@ async def test_anthropic_async_multi_modal_with_events_with_no_content(
         "anthropic.chat",
     ]
     anthropic_span = spans[0]
-    assert anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 1311
+    assert anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 1311
     assert (
         anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
-        + anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS]
+        + anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS]
         == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
     )
 
@@ -717,10 +717,10 @@ def test_anthropic_message_streaming_legacy(
         anthropic_span.attributes.get(f"{SpanAttributes.GEN_AI_COMPLETION}.0.role")
         == "assistant"
     )
-    assert anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 17
+    assert anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 17
     assert (
         anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
-        + anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS]
+        + anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS]
         == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
     )
     assert (
@@ -771,10 +771,10 @@ def test_anthropic_message_streaming_with_events_with_content(
         "anthropic.chat",
     ]
     anthropic_span = spans[0]
-    assert anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 17
+    assert anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 17
     assert (
         anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
-        + anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS]
+        + anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS]
         == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
     )
 
@@ -836,10 +836,10 @@ def test_anthropic_message_streaming_with_events_with_no_content(
         "anthropic.chat",
     ]
     anthropic_span = spans[0]
-    assert anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 17
+    assert anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 17
     assert (
         anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
-        + anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS]
+        + anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS]
         == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
     )
 
@@ -904,10 +904,10 @@ async def test_async_anthropic_message_create_legacy(
         anthropic_span.attributes.get(f"{SpanAttributes.GEN_AI_COMPLETION}.0.role")
         == "assistant"
     )
-    assert anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 17
+    assert anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 17
     assert (
         anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
-        + anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS]
+        + anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS]
         == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
     )
     assert (
@@ -951,10 +951,10 @@ async def test_async_anthropic_message_create_with_events_with_content(
         "anthropic.chat",
     ]
     anthropic_span = spans[0]
-    assert anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 17
+    assert anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 17
     assert (
         anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
-        + anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS]
+        + anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS]
         == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
     )
 
@@ -1009,10 +1009,10 @@ async def test_async_anthropic_message_create_with_events_with_no_content(
         "anthropic.chat",
     ]
     anthropic_span = spans[0]
-    assert anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 17
+    assert anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 17
     assert (
         anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
-        + anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS]
+        + anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS]
         == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
     )
 
@@ -1082,10 +1082,10 @@ async def test_async_anthropic_message_streaming_legacy(
         anthropic_span.attributes.get(f"{SpanAttributes.GEN_AI_COMPLETION}.0.role")
         == "assistant"
     )
-    assert anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 17
+    assert anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 17
     assert (
         anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
-        + anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS]
+        + anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS]
         == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
     )
     assert (
@@ -1136,10 +1136,10 @@ async def test_async_anthropic_message_streaming_with_events_with_content(
         "anthropic.chat",
     ]
     anthropic_span = spans[0]
-    assert anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 17
+    assert anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 17
     assert (
         anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
-        + anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS]
+        + anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS]
         == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
     )
 
@@ -1200,10 +1200,10 @@ async def test_async_anthropic_message_streaming_with_events_with_no_content(
         "anthropic.chat",
     ]
     anthropic_span = spans[0]
-    assert anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 17
+    assert anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 17
     assert (
         anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
-        + anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS]
+        + anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS]
         == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
     )
 

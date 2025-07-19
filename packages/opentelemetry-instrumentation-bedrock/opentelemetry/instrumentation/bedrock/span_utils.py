@@ -523,7 +523,7 @@ def _set_imported_model_prompt_span_attributes(span, request_body):
 def _record_usage_to_span(span, prompt_tokens, completion_tokens, metric_params):
     _set_span_attribute(
         span,
-        SpanAttributes.LLM_USAGE_PROMPT_TOKENS,
+        SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS,
         prompt_tokens,
     )
     _set_span_attribute(

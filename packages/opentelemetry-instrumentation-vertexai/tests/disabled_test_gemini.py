@@ -43,7 +43,7 @@ def test_vertexai_generate_content(instrument_legacy, span_exporter, log_exporte
         == response._raw_response.usage_metadata.total_token_count
     )
     assert (
-        vertexai_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS]
+        vertexai_span.attributes[SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS]
         == response._raw_response.usage_metadata.prompt_token_count
     )
     assert (
@@ -92,7 +92,7 @@ def test_vertexai_generate_content_with_events_with_content(
         == response._raw_response.usage_metadata.total_token_count
     )
     assert (
-        vertexai_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS]
+        vertexai_span.attributes[SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS]
         == response._raw_response.usage_metadata.prompt_token_count
     )
     assert (
@@ -152,7 +152,7 @@ def test_vertexai_generate_content_with_events_with_no_content(
         == response._raw_response.usage_metadata.total_token_count
     )
     assert (
-        vertexai_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS]
+        vertexai_span.attributes[SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS]
         == response._raw_response.usage_metadata.prompt_token_count
     )
     assert (

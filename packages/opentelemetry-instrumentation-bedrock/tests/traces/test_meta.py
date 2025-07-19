@@ -39,7 +39,7 @@ There's a llama in my garden  What should I do? [/INST]"""
 
     meta_span = spans[0]
     assert (
-        meta_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS]
+        meta_span.attributes[SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS]
         == response_body["prompt_token_count"]
     )
     assert (
@@ -86,7 +86,7 @@ There's a llama in my garden  What should I do? [/INST]"""
 
     meta_span = spans[0]
     assert (
-        meta_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS]
+        meta_span.attributes[SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS]
         == response_body["prompt_token_count"]
     )
     assert (
@@ -143,7 +143,7 @@ There's a llama in my garden  What should I do? [/INST]"""
 
     meta_span = spans[0]
     assert (
-        meta_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS]
+        meta_span.attributes[SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS]
         == response_body["prompt_token_count"]
     )
     assert (
@@ -190,7 +190,7 @@ def test_meta_llama3_completion(instrument_legacy, brt, span_exporter, log_expor
 
     meta_span = spans[0]
     assert (
-        meta_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS]
+        meta_span.attributes[SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS]
         == response_body["prompt_token_count"]
     )
     assert (
@@ -234,7 +234,7 @@ def test_meta_llama3_completion_with_events_with_content(
 
     meta_span = spans[0]
     assert (
-        meta_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS]
+        meta_span.attributes[SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS]
         == response_body["prompt_token_count"]
     )
     assert (
@@ -283,7 +283,7 @@ def test_meta_llama3_completion_with_events_with_no_content(
 
     meta_span = spans[0]
     assert (
-        meta_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS]
+        meta_span.attributes[SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS]
         == response_body["prompt_token_count"]
     )
     assert (
@@ -339,7 +339,7 @@ def test_meta_converse(instrument_legacy, brt, span_exporter, log_exporter):
 
     meta_span = spans[0]
     assert (
-        meta_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS]
+        meta_span.attributes[SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS]
         == response["usage"]["inputTokens"]
     )
     assert (
@@ -404,7 +404,7 @@ def test_meta_converse_with_events_with_content(
 
     meta_span = spans[0]
     assert (
-        meta_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS]
+        meta_span.attributes[SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS]
         == response["usage"]["inputTokens"]
     )
     assert (
@@ -471,7 +471,7 @@ def test_meta_converse_with_events_with_no_content(
 
     meta_span = spans[0]
     assert (
-        meta_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS]
+        meta_span.attributes[SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS]
         == response["usage"]["inputTokens"]
     )
     assert (
@@ -550,7 +550,7 @@ def test_meta_converse_stream(instrument_legacy, brt, span_exporter, log_exporte
     assert all(span.name == "bedrock.converse" for span in spans)
 
     meta_span = spans[0]
-    assert meta_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == inputTokens
+    assert meta_span.attributes[SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS] == inputTokens
     assert (
         meta_span.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == outputTokens
     )
@@ -626,7 +626,7 @@ def test_meta_converse_stream_with_events_with_content(
     assert all(span.name == "bedrock.converse" for span in spans)
 
     meta_span = spans[0]
-    assert meta_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == inputTokens
+    assert meta_span.attributes[SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS] == inputTokens
     assert (
         meta_span.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == outputTokens
     )
@@ -706,7 +706,7 @@ def test_meta_converse_stream_with_events_with_no_content(
     assert all(span.name == "bedrock.converse" for span in spans)
 
     meta_span = spans[0]
-    assert meta_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == inputTokens
+    assert meta_span.attributes[SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS] == inputTokens
     assert (
         meta_span.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == outputTokens
     )

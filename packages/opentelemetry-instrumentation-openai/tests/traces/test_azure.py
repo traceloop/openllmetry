@@ -625,7 +625,7 @@ async def test_chat_async_streaming(
     assert open_ai_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is True
 
     assert open_ai_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS) == 36
-    assert open_ai_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 8
+    assert open_ai_span.attributes.get(SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 8
     assert open_ai_span.attributes.get(SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS) == 28
 
     events = open_ai_span.events
@@ -670,7 +670,7 @@ async def test_chat_async_streaming_with_events_with_content(
     assert open_ai_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is True
 
     assert open_ai_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS) == 36
-    assert open_ai_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 8
+    assert open_ai_span.attributes.get(SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 8
     assert open_ai_span.attributes.get(SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS) == 28
 
     events = open_ai_span.events
@@ -733,7 +733,7 @@ async def test_chat_async_streaming_with_events_with_no_content(
     assert open_ai_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is True
 
     assert open_ai_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS) == 36
-    assert open_ai_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 8
+    assert open_ai_span.attributes.get(SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 8
     assert open_ai_span.attributes.get(SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS) == 28
 
     events = open_ai_span.events
