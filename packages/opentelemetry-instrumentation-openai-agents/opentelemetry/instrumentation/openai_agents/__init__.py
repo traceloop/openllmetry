@@ -1,11 +1,14 @@
 """OpenTelemetry OpenAI Agents instrumentation"""
+
 import os
 import time
 import json
+import threading
 from typing import Collection
 from wrapt import wrap_function_wrapper
-from opentelemetry.trace import SpanKind, get_tracer, Tracer
+from opentelemetry.trace import SpanKind, get_tracer, Tracer, set_span_in_context
 from opentelemetry.trace.status import Status, StatusCode
+from opentelemetry import context
 from opentelemetry.metrics import Histogram, Meter, get_meter
 from opentelemetry.instrumentation.utils import unwrap
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
@@ -18,11 +21,14 @@ from opentelemetry.semconv_ai import (
 from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
     GEN_AI_COMPLETION,
 )
-from .utils import set_span_attribute
+from .utils import set_span_attribute, JSONEncoder
 from agents import FunctionTool, WebSearchTool, FileSearchTool, ComputerTool
 
 
 _instruments = ("openai-agents >= 0.0.19",)
+
+_root_span_storage = {}
+_instrumented_tools = set()
 
 
 class OpenAIAgentsInstrumentor(BaseInstrumentor):
@@ -57,11 +63,22 @@ class OpenAIAgentsInstrumentor(BaseInstrumentor):
                 duration_histogram,
                 token_histogram,
             ),
-
+        )
+        wrap_function_wrapper(
+            "agents.run",
+            "AgentRunner._run_single_turn_streamed",
+            _wrap_agent_run_streamed(
+                tracer,
+                duration_histogram,
+                token_histogram,
+            ),
         )
 
     def _uninstrument(self, **kwargs):
         unwrap("agents.run.AgentRunner", "_get_new_response")
+        unwrap("agents.run.AgentRunner", "_run_single_turn_streamed")
+        _instrumented_tools.clear()
+        _root_span_storage.clear()
 
 
 def with_tracer_wrapper(func):
@@ -75,12 +92,114 @@ def with_tracer_wrapper(func):
                 wrapped,
                 instance,
                 args,
-                kwargs
+                kwargs,
             )
 
         return wrapper
 
     return _with_tracer
+
+
+@with_tracer_wrapper
+async def _wrap_agent_run_streamed(
+    tracer: Tracer,
+    duration_histogram: Histogram,
+    token_histogram: Histogram,
+    wrapped,
+    instance,
+    args,
+    kwargs,
+):
+    """Wrapper for _run_single_turn_streamed to handle streaming execution."""
+    agent = args[1] if len(args) > 1 else None
+    run_config = args[4] if len(args) > 4 else None
+
+    if not agent:
+        return await wrapped(*args, **kwargs)
+
+    agent_name = getattr(agent, "name", "agent")
+    thread_id = threading.get_ident()
+
+    root_span = _root_span_storage.get(thread_id)
+
+    if root_span:
+        ctx = set_span_in_context(root_span, context.get_current())
+    else:
+        ctx = context.get_current()
+
+    with tracer.start_as_current_span(
+        f"{agent_name}.agent",
+        kind=SpanKind.CLIENT,
+        attributes={
+            SpanAttributes.TRACELOOP_SPAN_KIND: (TraceloopSpanKindValues.AGENT.value),
+        },
+        context=ctx,
+    ) as span:
+        try:
+            if not root_span:
+                _root_span_storage[thread_id] = span
+
+            extract_agent_details(agent, span)
+            set_model_settings_span_attributes(agent, span)
+            extract_run_config_details(run_config, span)
+
+            try:
+                json_args = []
+                for arg in args:
+                    try:
+                        json_args.append(json.loads(json.dumps(arg, cls=JSONEncoder)))
+                    except (TypeError, ValueError):
+                        json_args.append(str(arg))
+
+                json_kwargs = {}
+                for key, value in kwargs.items():
+                    try:
+                        json_kwargs[key] = json.loads(
+                            json.dumps(value, cls=JSONEncoder)
+                        )
+                    except (TypeError, ValueError):
+                        json_kwargs[key] = str(value)
+
+                input_data = {"args": json_args, "kwargs": json_kwargs}
+                input_str = json.dumps(input_data)
+                span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_INPUT, input_str)
+            except Exception:
+                fallback_data = {
+                    "args": [str(arg) for arg in args],
+                    "kwargs": {k: str(v) for k, v in kwargs.items()},
+                }
+                span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_INPUT, json.dumps(fallback_data))
+
+            tools = getattr(agent, "tools", [])
+            if tools:
+                extract_tool_details(tracer, tools)
+
+            start_time = time.time()
+            result = await wrapped(*args, **kwargs)
+            end_time = time.time()
+
+            try:
+                output_str = json.dumps(result, cls=JSONEncoder)
+                span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_OUTPUT, output_str)
+            except Exception:
+                span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_OUTPUT, json.dumps(str(result)))
+
+            span.set_status(Status(StatusCode.OK))
+
+            if duration_histogram:
+                duration = end_time - start_time
+                duration_histogram.record(
+                    duration,
+                    attributes={
+                        "gen_ai.agent.name": agent_name,
+                    },
+                )
+
+            return result
+
+        except Exception as e:
+            span.set_status(Status(StatusCode.ERROR, str(e)))
+            raise
 
 
 @with_tracer_wrapper
@@ -98,40 +217,72 @@ async def _wrap_agent_run(
     prompt_list = args[2] if len(args) > 2 else None
     agent_name = getattr(agent, "name", "agent")
     model_name = get_model_name(agent)
+    thread_id = threading.get_ident()
+    root_span = _root_span_storage.get(thread_id)
+
+    if root_span:
+        ctx = set_span_in_context(root_span, context.get_current())
+    else:
+        ctx = context.get_current()
 
     with tracer.start_as_current_span(
         f"{agent_name}.agent",
         kind=SpanKind.CLIENT,
         attributes={
-            SpanAttributes.GEN_AI_SYSTEM: "openai",
-            SpanAttributes.GEN_AI_REQUEST_MODEL: model_name,
-            SpanAttributes.TRACELOOP_SPAN_KIND: (
-                TraceloopSpanKindValues.AGENT.value
-            )
+            SpanAttributes.TRACELOOP_SPAN_KIND: (TraceloopSpanKindValues.AGENT.value),
         },
+        context=ctx,
     ) as span:
         try:
+            if not root_span:
+                _root_span_storage[thread_id] = span
 
             extract_agent_details(agent, span)
             set_model_settings_span_attributes(agent, span)
             extract_run_config_details(run_config, span)
-            tools = (
-                args[4]
-                if len(args) > 4 and isinstance(args[4], list)
-                else []
-            )
+
+            try:
+                json_args = []
+                for arg in args:
+                    try:
+                        json_args.append(json.loads(json.dumps(arg, cls=JSONEncoder)))
+                    except (TypeError, ValueError):
+                        json_args.append(str(arg))
+
+                json_kwargs = {}
+                for key, value in kwargs.items():
+                    try:
+                        json_kwargs[key] = json.loads(
+                            json.dumps(value, cls=JSONEncoder)
+                        )
+                    except (TypeError, ValueError):
+                        json_kwargs[key] = str(value)
+
+                input_data = {"args": json_args, "kwargs": json_kwargs}
+                input_str = json.dumps(input_data)
+                span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_INPUT, input_str)
+            except Exception:
+                fallback_data = {
+                    "args": [str(arg) for arg in args],
+                    "kwargs": {k: str(v) for k, v in kwargs.items()},
+                }
+                span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_INPUT, json.dumps(fallback_data))
+
+            tools = args[4] if len(args) > 4 and isinstance(args[4], list) else []
             if tools:
                 extract_tool_details(tracer, tools)
+
             start_time = time.time()
             response = await wrapped(*args, **kwargs)
+
+            try:
+                output_str = json.dumps(response, cls=JSONEncoder)
+                span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_OUTPUT, output_str)
+            except Exception:
+                span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_OUTPUT, json.dumps(str(response)))
             if duration_histogram:
                 duration_histogram.record(
                     time.time() - start_time,
-                    attributes={
-                        SpanAttributes.GEN_AI_SYSTEM: "openai",
-                        SpanAttributes.GEN_AI_RESPONSE_MODEL: model_name,
-
-                    },
                 )
             if isinstance(prompt_list, list):
                 set_prompt_attributes(span, prompt_list)
@@ -149,9 +300,7 @@ async def _wrap_agent_run(
 
 
 def get_model_name(agent):
-    model_attr = getattr(
-        getattr(agent, "model", None), "model", "unknown_model"
-    )
+    model_attr = getattr(getattr(agent, "model", None), "model", "unknown_model")
     if model_attr == "unknown_model":
         model_attr = getattr(agent, "model", None)
         return model_attr
@@ -174,9 +323,7 @@ def extract_agent_details(test_agent, span):
     if name:
         set_span_attribute(span, "gen_ai.agent.name", name)
     if instructions:
-        set_span_attribute(
-            span, "gen_ai.agent.description", instructions
-        )
+        set_span_attribute(span, "gen_ai.agent.description", instructions)
     if handoff_description:
         set_span_attribute(
             span, "gen_ai.agent.handoff_description", handoff_description
@@ -185,7 +332,7 @@ def extract_agent_details(test_agent, span):
         for idx, h in enumerate(handoffs):
             handoff_info = {
                 "name": getattr(h, "name", None),
-                "instructions": getattr(h, "instructions", None)
+                "instructions": getattr(h, "instructions", None),
             }
             handoff_json = json.dumps(handoff_info)
             span.set_attribute(f"openai.agent.handoff{idx}", handoff_json)
@@ -243,84 +390,118 @@ def extract_run_config_details(run_config, span):
 
 
 def extract_tool_details(tracer: Tracer, tools):
+    """Create spans for hosted tools and wrap FunctionTool execution."""
+    thread_id = threading.get_ident()
+    root_span = _root_span_storage.get(thread_id)
+
     for tool in tools:
         if isinstance(tool, FunctionTool):
-            tool_name = getattr(tool, "name", "tool")
-        elif isinstance(tool, FileSearchTool):
-            tool_name = "FileSearchTool"
-        elif isinstance(tool, WebSearchTool):
-            tool_name = "WebSearchTool"
-        elif isinstance(tool, ComputerTool):
-            tool_name = "ComputerTool"
-        else:
-            tool_name = getattr(tool, "name", "unknown_tool")
-        with tracer.start_as_current_span(
-            f"{tool_name}.tool",
-            kind=SpanKind.INTERNAL,
-            attributes={
-                SpanAttributes.TRACELOOP_SPAN_KIND: (
-                    TraceloopSpanKindValues.TOOL.value
-                )
-            },
-        ) as span:
-            try:
-                if tool_name:
-                    if isinstance(tool, FunctionTool):
-                        span.set_attribute(
-                            f"{GEN_AI_COMPLETION}.tool.name", tool_name
-                        )
-                        span.set_attribute(
-                             f"{GEN_AI_COMPLETION}.tool.type", "FunctionTool"
-                        )
-                        span.set_attribute(
-                            f"{GEN_AI_COMPLETION}.tool.description",
-                            tool.description
-                        )
-                        span.set_attribute(
-                             f"{GEN_AI_COMPLETION}.tool.strict_json_schema",
-                             tool.strict_json_schema
-                        )
-                    elif isinstance(tool, FileSearchTool):
-                        span.set_attribute(
-                            f"{GEN_AI_COMPLETION}.tool.type", "FileSearchTool"
-                        )
-                        span.set_attribute(
-                            f"{GEN_AI_COMPLETION}.tool.vector_store_ids",
-                            str(tool.vector_store_ids)
-                        )
-                        span.set_attribute(
-                            f"{GEN_AI_COMPLETION}.tool.max_num_results",
-                            tool.max_num_results
-                        )
-                        span.set_attribute(
-                            f"{GEN_AI_COMPLETION}.tool.include_search_results",
-                            tool.include_search_results
-                        )
-                    elif isinstance(tool, WebSearchTool):
-                        span.set_attribute(
-                            f"{GEN_AI_COMPLETION}.tool.type", "WebSearchTool"
-                        )
-                        span.set_attribute(
-                            f"{GEN_AI_COMPLETION}.tool.search_context_size",
-                            tool.search_context_size
-                        )
-                        if tool.user_location:
-                            span.set_attribute(
-                                f"{GEN_AI_COMPLETION}.tool.user_location",
-                                str(tool.user_location)
+            tool_id = id(tool)
+            if tool_id in _instrumented_tools:
+                continue
+
+            _instrumented_tools.add(tool_id)
+
+            original_on_invoke_tool = tool.on_invoke_tool
+
+            def create_wrapped_tool(original_tool, original_func):
+                async def wrapped_on_invoke_tool(tool_context, args_json):
+                    tool_name = getattr(original_tool, "name", "tool")
+                    if root_span:
+                        ctx = set_span_in_context(root_span, context.get_current())
+                    else:
+                        ctx = context.get_current()
+
+                    with tracer.start_as_current_span(
+                        f"{tool_name}.tool",
+                        kind=SpanKind.INTERNAL,
+                        attributes={
+                            SpanAttributes.TRACELOOP_SPAN_KIND: (
+                                TraceloopSpanKindValues.TOOL.value
                             )
-                    elif isinstance(tool, ComputerTool):
-                        span.set_attribute(
-                            f"{GEN_AI_COMPLETION}.tool.type", "ComputerTool"
-                        )
-                        span.set_attribute(
-                            f"{GEN_AI_COMPLETION}.tool.computer",
-                            str(tool.computer)
-                        )
-                span.set_status(Status(StatusCode.OK))
-            except Exception as e:
-                span.set_status(Status(StatusCode.ERROR, str(e)))
-                raise
+                        },
+                        context=ctx,
+                    ) as span:
+                        try:
+                            span.set_attribute(
+                                f"{GEN_AI_COMPLETION}.tool.name", tool_name
+                            )
+                            span.set_attribute(
+                                f"{GEN_AI_COMPLETION}.tool.type", "FunctionTool"
+                            )
+                            span.set_attribute(
+                                f"{GEN_AI_COMPLETION}.tool.description",
+                                original_tool.description,
+                            )
+                            span.set_attribute(
+                                f"{GEN_AI_COMPLETION}.tool.strict_json_schema",
+                                original_tool.strict_json_schema,
+                            )
+                            span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_INPUT, args_json)
+                            result = await original_func(tool_context, args_json)
+                            span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_OUTPUT, str(result))
+                            span.set_status(Status(StatusCode.OK))
+                            return result
+                        except Exception as e:
+                            span.set_status(Status(StatusCode.ERROR, str(e)))
+                            raise
+
+                return wrapped_on_invoke_tool
+
+            tool.on_invoke_tool = create_wrapped_tool(tool, original_on_invoke_tool)
+
+        elif isinstance(tool, (WebSearchTool, FileSearchTool, ComputerTool)):
+            tool_name = type(tool).__name__
+            if root_span:
+                ctx = set_span_in_context(root_span, context.get_current())
+            else:
+                ctx = context.get_current()
+
+            span = tracer.start_span(
+                f"{tool_name}.tool",
+                kind=SpanKind.INTERNAL,
+                attributes={
+                    SpanAttributes.TRACELOOP_SPAN_KIND: (
+                        TraceloopSpanKindValues.TOOL.value
+                    )
+                },
+                context=ctx,
+            )
+
+            if isinstance(tool, WebSearchTool):
+                span.set_attribute(f"{GEN_AI_COMPLETION}.tool.type", "WebSearchTool")
+                span.set_attribute(
+                    f"{GEN_AI_COMPLETION}.tool.search_context_size",
+                    tool.search_context_size,
+                )
+                if tool.user_location:
+                    span.set_attribute(
+                        f"{GEN_AI_COMPLETION}.tool.user_location",
+                        str(tool.user_location),
+                    )
+            elif isinstance(tool, FileSearchTool):
+                span.set_attribute(f"{GEN_AI_COMPLETION}.tool.type", "FileSearchTool")
+                span.set_attribute(
+                    f"{GEN_AI_COMPLETION}.tool.vector_store_ids",
+                    str(tool.vector_store_ids),
+                )
+                if tool.max_num_results:
+                    span.set_attribute(
+                        f"{GEN_AI_COMPLETION}.tool.max_num_results",
+                        tool.max_num_results,
+                    )
+                span.set_attribute(
+                    f"{GEN_AI_COMPLETION}.tool.include_search_results",
+                    tool.include_search_results,
+                )
+            elif isinstance(tool, ComputerTool):
+                span.set_attribute(f"{GEN_AI_COMPLETION}.tool.type", "ComputerTool")
+                span.set_attribute(
+                    f"{GEN_AI_COMPLETION}.tool.computer", str(tool.computer)
+                )
+
+            span.set_status(Status(StatusCode.OK))
+            span.end()
 
 
 def set_prompt_attributes(span, message_history):
@@ -358,8 +539,9 @@ def set_response_content_span_attribute(response, span):
             if msg_type:
                 types.append(msg_type)
 
-            if hasattr(output_message, "content") and \
-                    isinstance(output_message.content, list):
+            if hasattr(output_message, "content") and isinstance(
+                output_message.content, list
+            ):
                 for content_item in output_message.content:
                     if hasattr(content_item, "text"):
                         contents.append(content_item.text)

@@ -55,6 +55,7 @@ llama-index-llms-openai = "^0.3.12"
 ibm-watson-machine-learning = "^1.0.367"
 ollama = "^0.4.7"
 mcp = "^1.7.1"
+openai-agents = "^0.0.19"
 
 
 [tool.poetry.dependencies.opentelemetry-instrumentation-openai]
@@ -91,6 +92,10 @@ develop = true
 
 [tool.poetry.dependencies.opentelemetry-instrumentation-crewai]
 path = "../opentelemetry-instrumentation-crewai"
+develop = true
+
+[tool.poetry.dependencies.opentelemetry-instrumentation-openai-agents]
+path = "../opentelemetry-instrumentation-openai-agents"
 develop = true
 
 [tool.poetry.group.dev.dependencies]
