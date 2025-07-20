@@ -38,6 +38,15 @@ class Message(RegistryObjectBaseModel):
     variables: Optional[List[str]] = []
 
 
+class ToolFunction(RegistryObjectBaseModel):
+    name: str
+    description: str
+    parameters: dict
+
+class Tool(RegistryObjectBaseModel):
+    type: Literal["function"]
+    function: ToolFunction
+    
 class ModelConfig(RegistryObjectBaseModel):
     mode: str
     model: str
@@ -47,7 +56,8 @@ class ModelConfig(RegistryObjectBaseModel):
     stop: List[str]
     frequency_penalty: float
     presence_penalty: float
-
+    tool_choice: Optional[str] = None
+    tools: Optional[List[Tool]] = None
 
 class PromptVersion(RegistryObjectBaseModel):
     id: str
