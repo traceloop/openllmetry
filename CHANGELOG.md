@@ -1,3 +1,15 @@
+## v0.42.0 (2025-07-17)
+
+### Feat
+
+- **llamaindex**: support llamaparse instrumentation (#3103)
+- **milvus**: add semantic convention for Milvus DB metrics (#3015)
+
+### Fix
+
+- **openai-agents**: fix broken traces with agents handoff on run_stream (#3143)
+- **traceloop-sdk**: redefine histogram bucket boundaries (#3129)
+
 ## v0.41.0 (2025-07-13)
 
 ### Feat
