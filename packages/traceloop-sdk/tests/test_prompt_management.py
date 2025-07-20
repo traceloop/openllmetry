@@ -242,24 +242,33 @@ def test_prompt_management(exporter, openai_client):
 
 @pytest.mark.vcr
 def test_prompt_management_with_tools(exporter, openai_client):
-    PromptRegistryClient()._registry.load(prompts_json=json.loads(prompts_with_tools_json))
+    PromptRegistryClient()._registry.load(
+        prompts_json=json.loads(prompts_with_tools_json)
+    )
     prompt_args = get_prompt(key="joke_generator", variables={"style": "pirate"})
     openai_client.chat.completions.create(**prompt_args)
 
     spans = exporter.get_finished_spans()
     open_ai_span = spans[0]
-    completion = open_ai_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.0.name")
+    completion = open_ai_span.attributes.get(
+        f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.0.name"
+    )
     assert completion == "get_joke"
+
 
 @pytest.mark.vcr
 def test_prompt_management_with_response_format(exporter, openai_client):
-    PromptRegistryClient()._registry.load(prompts_json=json.loads(prompts_with_response_format_json))
+    PromptRegistryClient()._registry.load(
+        prompts_json=json.loads(prompts_with_response_format_json)
+    )
     prompt_args = get_prompt(key="joke_generator", variables={"style": "pirate"})
     openai_client.chat.completions.create(**prompt_args)
 
     spans = exporter.get_finished_spans()
     open_ai_span = spans[0]
-    completion = open_ai_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
+    completion = open_ai_span.attributes.get(
+        f"{SpanAttributes.LLM_COMPLETIONS}.0.content"
+    )
     try:
         json.loads(completion)
     except json.JSONDecodeError:
