@@ -75,6 +75,8 @@ class PromptRegistryClient:
                 f"Prompt {key} does not have an available version to render"
             )
 
+        # By default, OpenAI will set tool_choice to "auto"
+        # if tools not provided and there is tool_choice setted its throw an error
         if (
             not prompt_version.llm_config.tools
             or len(prompt_version.llm_config.tools) == 0
