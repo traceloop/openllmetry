@@ -1,4 +1,5 @@
 import pytest
+import importlib.util
 from opentelemetry.sdk._logs import LogData
 from opentelemetry.semconv._incubating.attributes import (
     event_attributes as EventAttributes,
@@ -7,8 +8,13 @@ from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
 
+# Skip the whole module if torch (or any other heavy backend) is absent.
+pytestmark = pytest.mark.skipif(
+    importlib.util.find_spec("torch") is None,
+    reason="`torch` not available – install extras to run these tests",
+)
 
-@pytest.mark.skip(reason="Tests disabled")
+
 def test_tranformers_pipeline(
     instrument_legacy, span_exporter, log_exporter, transformers_pipeline
 ):
@@ -33,7 +39,6 @@ def test_tranformers_pipeline(
     ), "Assert that it doesn't emit logs when use_legacy_attributes is True"
 
 
-@pytest.mark.skip(reason="Tests disabled")
 def test_tranformers_pipeline_with_events_with_content(
     instrument_with_content, span_exporter, log_exporter, transformers_pipeline
 ):
@@ -62,7 +67,6 @@ def test_tranformers_pipeline_with_events_with_content(
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
 
 
-@pytest.mark.skip(reason="Tests disabled")
 def test_tranformers_pipeline_with_events_with_no_content(
     instrument_with_no_content, span_exporter, log_exporter, transformers_pipeline
 ):
