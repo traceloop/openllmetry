@@ -49,6 +49,10 @@ class Tool(RegistryObjectBaseModel):
     function: ToolFunction
 
 
+class ResponseFormat(RegistryObjectBaseModel):
+    type: Literal["json_schema"]
+    json_schema: dict
+
 class ModelConfig(RegistryObjectBaseModel):
     mode: str
     model: str
@@ -60,6 +64,7 @@ class ModelConfig(RegistryObjectBaseModel):
     presence_penalty: float
     tool_choice: Optional[str] = None
     tools: Optional[List[Tool]] = None
+    response_format: Optional[ResponseFormat] = None
 
 
 class PromptVersion(RegistryObjectBaseModel):
