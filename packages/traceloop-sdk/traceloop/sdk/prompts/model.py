@@ -53,6 +53,7 @@ class ResponseFormat(RegistryObjectBaseModel):
     type: Literal["json_schema"]
     json_schema: dict
 
+
 class ModelConfig(RegistryObjectBaseModel):
     mode: str
     model: str
@@ -62,7 +63,7 @@ class ModelConfig(RegistryObjectBaseModel):
     stop: List[str]
     frequency_penalty: float
     presence_penalty: float
-    tool_choice: Optional[str] = None
+    tool_choice: Optional[Literal["none", "auto", "required"]] = None
     tools: Optional[List[Tool]] = None
     response_format: Optional[ResponseFormat] = None
 
