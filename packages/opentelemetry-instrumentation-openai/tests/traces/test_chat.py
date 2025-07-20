@@ -1625,7 +1625,7 @@ def test_chat_streaming_not_consumed(instrument_legacy, span_exporter, log_expor
 
     streaming_data_points = [
         dp for dp in duration_metric.data.data_points
-        if dp.attributes.get("stream") is True or "stream" in dp.attributes
+        if dp.attributes.get("stream") is True
     ]
     assert len(streaming_data_points) >= 1, (
         f"Expected at least one streaming data point, got data points with attributes: "
@@ -1701,7 +1701,7 @@ def test_chat_streaming_partial_consumption(instrument_legacy, span_exporter, lo
 
     streaming_data_points = [
         dp for dp in duration_metric.data.data_points
-        if dp.attributes.get("stream") is True or "stream" in dp.attributes
+        if dp.attributes.get("stream") is True
     ]
     assert len(streaming_data_points) >= 1, (
         f"Expected at least one streaming data point, got data points with attributes: "

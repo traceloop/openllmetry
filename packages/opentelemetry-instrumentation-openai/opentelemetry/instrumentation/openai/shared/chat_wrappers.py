@@ -294,6 +294,7 @@ def _handle_response(
     choice_counter=None,
     duration_histogram=None,
     duration=None,
+    is_streaming: bool = False,
 ):
     if is_openai_v1():
         response_dict = model_as_dict(response)
@@ -308,6 +309,7 @@ def _handle_response(
         duration_histogram,
         response_dict,
         duration,
+        is_streaming,
     )
 
     # span attributes
@@ -325,13 +327,19 @@ def _handle_response(
 
 
 def _set_chat_metrics(
-    instance, token_counter, choice_counter, duration_histogram, response_dict, duration
+    instance,
+    token_counter,
+    choice_counter,
+    duration_histogram,
+    response_dict,
+    duration,
+    is_streaming: bool = False,
 ):
     shared_attributes = metric_shared_attributes(
         response_model=response_dict.get("model") or None,
         operation="chat",
         server_address=_get_openai_base_url(instance),
-        is_streaming=False,
+        is_streaming=is_streaming,
     )
 
     # token metrics
