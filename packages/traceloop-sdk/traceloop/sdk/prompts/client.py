@@ -76,7 +76,7 @@ class PromptRegistryClient:
             )
 
         # By default, OpenAI will set tool_choice to "auto"
-        # if tools not provided and there is tool_choice setted its throw an error
+        # if tools not provided and there is tool_choice set it throws an error
         if (
             not prompt_version.llm_config.tools
             or len(prompt_version.llm_config.tools) == 0
