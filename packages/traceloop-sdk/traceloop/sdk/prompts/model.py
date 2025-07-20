@@ -1,8 +1,8 @@
 import datetime
 from typing import List, Literal, Optional, Union
-from typing_extensions import Annotated
 
 from pydantic import BaseModel, Field
+from typing_extensions import Annotated
 
 
 class TemplateEngine:
@@ -43,10 +43,12 @@ class ToolFunction(RegistryObjectBaseModel):
     description: str
     parameters: dict
 
+
 class Tool(RegistryObjectBaseModel):
     type: Literal["function"]
     function: ToolFunction
-    
+
+
 class ModelConfig(RegistryObjectBaseModel):
     mode: str
     model: str
@@ -58,6 +60,7 @@ class ModelConfig(RegistryObjectBaseModel):
     presence_penalty: float
     tool_choice: Optional[str] = None
     tools: Optional[List[Tool]] = None
+
 
 class PromptVersion(RegistryObjectBaseModel):
     id: str
