@@ -34,10 +34,7 @@ autopep8 = "^2.2.0"
 flake8 = "7.0.0"
 pytest = "^8.2.2"
 pytest-sugar = "1.0.0"
-tensorflow = "^2.19.0"
 transformers = "^4.51.3"
-tf-keras = "^2.19.0"
-torch = "^2.7.0"
 opentelemetry-sdk = "^1.34.1"
 
 [build-system]
