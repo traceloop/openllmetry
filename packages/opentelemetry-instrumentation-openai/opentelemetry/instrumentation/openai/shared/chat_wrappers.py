@@ -549,7 +549,8 @@ def _set_streaming_token_metrics(
                 if msg.get("content"):
                     prompt_content += msg.get("content")
             if model_name and should_record_stream_token_usage():
-                prompt_usage = get_token_count_from_string(prompt_content, model_name)
+                prompt_usage = get_token_count_from_string(
+                    prompt_content, model_name)
 
         # Calculate completion tokens if not available from API
         if completion_usage == -1 and complete_response.get("choices"):
@@ -639,10 +640,21 @@ class ChatStream(ObjectProxy):
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
+        cleanup_exception = None
         try:
             self._ensure_cleanup()
-        finally:
-            return self.__wrapped__.__exit__(exc_type, exc_val, exc_tb)
+        except Exception as e:
+            cleanup_exception = e
+            # Don't re-raise to avoid masking original exception
+
+        result = self.__wrapped__.__exit__(exc_type, exc_val, exc_tb)
+
+        if cleanup_exception:
+            # Log cleanup exception but don't affect context manager behavior
+            logger.debug(
+                "Error during ChatStream cleanup in __exit__: %s", cleanup_exception)
+
+        return result
 
     async def __aenter__(self):
         return self
