@@ -521,45 +521,46 @@ def _set_completions(span, choices):
 def _set_streaming_token_metrics(
     request_kwargs, complete_response, span, token_counter, shared_attributes
 ):
-    # use tiktoken calculate token usage
     if not should_record_stream_token_usage():
         return
 
-    # kwargs={'model': 'gpt-3.5', 'messages': [{'role': 'user', 'content': '...'}], 'stream': True}
     prompt_usage = -1
     completion_usage = -1
 
-    # prompt_usage
-    if request_kwargs and request_kwargs.get("messages"):
-        prompt_content = ""
-        # setting the default model_name as gpt-4. As this uses the embedding "cl100k_base" that
-        # is used by most of the other model.
+    # First, try to get usage from API response
+    if complete_response.get("usage"):
+        usage = complete_response["usage"]
+        if usage.get("prompt_tokens"):
+            prompt_usage = usage["prompt_tokens"]
+        if usage.get("completion_tokens"):
+            completion_usage = usage["completion_tokens"]
+
+    # If API response doesn't have usage, fallback to tiktoken calculation
+    if prompt_usage == -1 or completion_usage == -1:
         model_name = (
             complete_response.get("model") or request_kwargs.get(
                 "model") or "gpt-4"
         )
-        for msg in request_kwargs.get("messages"):
-            if msg.get("content"):
-                prompt_content += msg.get("content")
-        if model_name:
-            prompt_usage = get_token_count_from_string(
-                prompt_content, model_name)
 
-    # completion_usage
-    if complete_response.get("choices"):
-        completion_content = ""
-        # setting the default model_name as gpt-4. As this uses the embedding "cl100k_base" that
-        # is used by most of the other model.
-        model_name = complete_response.get("model") or "gpt-4"
+        # Calculate prompt tokens if not available from API
+        if prompt_usage == -1 and request_kwargs and request_kwargs.get("messages"):
+            prompt_content = ""
+            for msg in request_kwargs.get("messages"):
+                if msg.get("content"):
+                    prompt_content += msg.get("content")
+            if model_name and should_record_stream_token_usage():
+                prompt_usage = get_token_count_from_string(prompt_content, model_name)
 
-        for choice in complete_response.get("choices"):
-            if choice.get("message") and choice.get("message").get("content"):
-                completion_content += choice["message"]["content"]
-
-        if model_name:
-            completion_usage = get_token_count_from_string(
-                completion_content, model_name
-            )
+        # Calculate completion tokens if not available from API
+        if completion_usage == -1 and complete_response.get("choices"):
+            completion_content = ""
+            for choice in complete_response.get("choices"):
+                if choice.get("message") and choice.get("message").get("content"):
+                    completion_content += choice["message"]["content"]
+            if model_name and should_record_stream_token_usage():
+                completion_usage = get_token_count_from_string(
+                    completion_content, model_name
+                )
 
     # span record
     _set_span_stream_usage(span, prompt_usage, completion_usage)
@@ -1076,6 +1077,13 @@ def _accumulate_stream_items(item, complete_response):
 
     complete_response["model"] = item.get("model")
     complete_response["id"] = item.get("id")
+
+    # capture usage information from the last stream chunks
+    if item.get("usage"):
+        complete_response["usage"] = item.get("usage")
+    elif item.get("choices") and item["choices"][0].get("usage"):
+        # Some LLM providers like moonshot mistakenly place token usage information within choices[0], handle this.
+        complete_response["usage"] = item["choices"][0].get("usage")
 
     # prompt filter results
     if item.get("prompt_filter_results"):
