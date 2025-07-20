@@ -15,6 +15,7 @@ from opentelemetry.instrumentation.langchain.utils import (
     CallbackFilteredJSONEncoder,
     should_send_prompts,
 )
+from opentelemetry.metrics import Histogram
 from opentelemetry.semconv_ai import (
     SpanAttributes,
 )
@@ -271,13 +272,18 @@ def set_chat_response(span: Span, response: LLMResult) -> None:
             i += 1
 
 
-def set_chat_response_usage(span: Span, response: LLMResult):
+def set_chat_response_usage(
+    span: Span,
+    response: LLMResult,
+    token_histogram: Histogram,
+    record_token_usage: bool,
+    model_name: str
+) -> None:
     input_tokens = 0
     output_tokens = 0
     total_tokens = 0
     cache_read_tokens = 0
 
-    i = 0
     for generations in response.generations:
         for generation in generations:
             if (
@@ -302,7 +308,6 @@ def set_chat_response_usage(span: Span, response: LLMResult):
                         "input_token_details", {}
                     )
                     cache_read_tokens += input_token_details.get("cache_read", 0)
-            i += 1
 
     if (
         input_tokens > 0
@@ -330,6 +335,38 @@ def set_chat_response_usage(span: Span, response: LLMResult):
             SpanAttributes.LLM_USAGE_CACHE_READ_INPUT_TOKENS,
             cache_read_tokens,
         )
+        if record_token_usage:
+            if input_tokens > 0:
+                token_histogram.record(
+                    input_tokens,
+                    attributes={
+                        SpanAttributes.LLM_SYSTEM: "Langchain",
+                        SpanAttributes.LLM_TOKEN_TYPE: "input",
+                        SpanAttributes.LLM_RESPONSE_MODEL: model_name,
+                    },
+                )
+
+            if output_tokens > 0:
+                token_histogram.record(
+                    output_tokens,
+                    attributes={
+                        SpanAttributes.LLM_SYSTEM: "Langchain",
+                        SpanAttributes.LLM_TOKEN_TYPE: "output",
+                        SpanAttributes.LLM_RESPONSE_MODEL: model_name,
+                    },
+                )
+
+
+def extract_model_name_from_response_metadata(response: LLMResult) -> str:
+    for generations in response.generations:
+        for generation in generations:
+            if (
+                getattr(generation, "message", None)
+                and getattr(generation.message, "response_metadata", None)
+                and (model_name := generation.message.response_metadata.get("model_name"))
+            ):
+                return model_name
+    return "unknown"
 
 
 def _set_chat_tool_calls(
