@@ -1,9 +1,17 @@
+import pytest
+import importlib.util
 from opentelemetry.sdk._logs import LogData
 from opentelemetry.semconv._incubating.attributes import (
     event_attributes as EventAttributes,
 )
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
+)
+
+# Skip the whole module if torch (or any other heavy backend) is absent.
+pytestmark = pytest.mark.skipif(
+    importlib.util.find_spec("torch") is None,
+    reason="`torch` not available – install extras to run these tests",
 )
 
 
