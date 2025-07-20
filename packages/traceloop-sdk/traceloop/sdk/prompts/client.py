@@ -75,6 +75,12 @@ class PromptRegistryClient:
                 f"Prompt {key} does not have an available version to render"
             )
 
+        if (
+            not prompt_version.llm_config.tools
+            or len(prompt_version.llm_config.tools) == 0
+        ) and prompt_version.llm_config.tool_choice is not None:
+            prompt_version.llm_config.tool_choice = None
+
         params_dict = {"messages": self.render_messages(prompt_version, **variables)}
         params_dict.update(
             (k, v) for k, v in iter(prompt_version.llm_config) if v not in [None, []]
