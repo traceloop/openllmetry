@@ -611,7 +611,6 @@ def _set_cohere_span_attributes(span, request_body, response_body, metric_params
     input_tokens = response_body.get("token_count", {}).get("prompt_tokens")
     output_tokens = response_body.get("token_count", {}).get("response_tokens")
 
-    print("response_body", response_body)
 
     if input_tokens is None or output_tokens is None:
         meta = response_body.get("meta", {})
