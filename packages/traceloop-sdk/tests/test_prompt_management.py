@@ -272,5 +272,5 @@ def test_prompt_management_with_response_format(exporter, openai_client):
     try:
         json.loads(completion)
     except json.JSONDecodeError:
-        assert False
+        pytest.fail("Response is not valid JSON")
     assert True
