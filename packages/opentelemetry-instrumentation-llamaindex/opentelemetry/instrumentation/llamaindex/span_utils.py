@@ -33,9 +33,9 @@ def set_llm_chat_request_model_attributes(event, span):
     span.set_attribute(SpanAttributes.LLM_REQUEST_TYPE, LLMRequestTypeValues.CHAT.value)
 
     # For StructuredLLM, the model and temperature are nested under model_dict.llm
-    if "llm" in model_dict and hasattr(model_dict["llm"], "model"):
-        model = model_dict["llm"].model
-        temperature = getattr(model_dict["llm"], "temperature", None)
+    if "llm" in model_dict:
+        model = model_dict.get("llm", {}).get("model")
+        temperature = model_dict.get("llm", {}).get("temperature")
     else:
         model = model_dict.get("model")
         temperature = model_dict.get("temperature")

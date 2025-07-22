@@ -2,6 +2,7 @@ import pytest
 from llama_index.core.llms import ChatMessage
 from llama_index.llms.openai import OpenAI
 from pydantic import BaseModel, Field
+from opentelemetry.semconv_ai import SpanAttributes, LLMRequestTypeValues
 
 
 class Invoice(BaseModel):
@@ -41,7 +42,10 @@ def test_structured_llm_model_attributes(instrument_with_content, span_exporter)
 
     llm_span = None
     for span in spans:
-        if "llm" in span.name.lower():
+        if (
+            span.attributes.get(SpanAttributes.LLM_REQUEST_TYPE)
+            == LLMRequestTypeValues.CHAT.value
+        ):
             llm_span = span
             break
 
@@ -64,11 +68,9 @@ async def test_structured_llm_achat_model_attributes(
 
     This is the async version of the test that reproduces the original issue.
     """
-    # Create OpenAI LLM and convert to StructuredLLM
     llm = OpenAI(model="gpt-4o", temperature=0.5)
     structured_llm = llm.as_structured_llm(Invoice)
 
-    # Prepare messages
     messages = [
         ChatMessage(
             role="system",
@@ -86,7 +88,10 @@ async def test_structured_llm_achat_model_attributes(
 
     llm_span = None
     for span in spans:
-        if "llm" in span.name.lower():
+        if (
+            span.attributes.get(SpanAttributes.LLM_REQUEST_TYPE)
+            == LLMRequestTypeValues.CHAT.value
+        ):
             llm_span = span
             break
 
