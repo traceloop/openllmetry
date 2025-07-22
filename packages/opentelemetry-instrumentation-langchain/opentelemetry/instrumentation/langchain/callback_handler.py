@@ -34,6 +34,7 @@ from opentelemetry.instrumentation.langchain.event_models import (
 from opentelemetry.instrumentation.langchain.span_utils import (
     SpanHolder,
     _set_span_attribute,
+    extract_model_name_from_response_metadata,
     set_chat_request,
     set_chat_response,
     set_chat_response_usage,
@@ -446,7 +447,8 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             id = response.llm_output.get("id")
             if id is not None and id != "":
                 _set_span_attribute(span, GEN_AI_RESPONSE_ID, id)
-
+        if model_name is None:
+            model_name = extract_model_name_from_response_metadata(response)
         token_usage = (response.llm_output or {}).get("token_usage") or (
             response.llm_output or {}
         ).get("usage")
@@ -495,7 +497,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
                         SpanAttributes.GEN_AI_RESPONSE_MODEL: model_name or "unknown",
                     },
                 )
-        set_chat_response_usage(span, response)
+        set_chat_response_usage(span, response, self.token_histogram, token_usage is None, model_name)
         if should_emit_events():
             self._emit_llm_end_events(response)
         else:
