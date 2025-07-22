@@ -25,7 +25,9 @@
     },
     "build": {
       "executor": "@nxlv/python:build",
-      "outputs": ["{projectRoot}/dist"],
+      "outputs": [
+        "{projectRoot}/dist"
+      ],
       "options": {
         "outputPath": "packages/opentelemetry-instrumentation-vertexai/dist",
         "publish": false,
@@ -44,12 +46,13 @@
       }
     },
     "lint": {
-      "executor": "@nxlv/python:flake8",
+      "executor": "@nxlv/python:run-commands",
       "outputs": [
         "{workspaceRoot}/reports/packages/opentelemetry-instrumentation-vertexai/pylint.txt"
       ],
       "options": {
-        "outputFile": "reports/packages/opentelemetry-instrumentation-vertexai/pylint.txt"
+        "command": "uv sync --extra dev && uv run flake8 opentelemetry/ --output-file reports/packages/opentelemetry-instrumentation-vertexai/pylint.txt",
+        "cwd": "packages/opentelemetry-instrumentation-vertexai"
       }
     },
     "test": {
@@ -74,5 +77,7 @@
       }
     }
   },
-  "tags": ["instrumentation"]
+  "tags": [
+    "instrumentation"
+  ]
 }

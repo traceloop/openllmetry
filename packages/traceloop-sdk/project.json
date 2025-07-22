@@ -44,10 +44,11 @@
       }
     },
     "lint": {
-      "executor": "@nxlv/python:flake8",
+      "executor": "@nxlv/python:run-commands",
       "outputs": ["{workspaceRoot}/reports/packages/traceloop-sdk/pylint.txt"],
       "options": {
-        "outputFile": "reports/packages/traceloop-sdk/pylint.txt"
+        "command": "uv sync --extra dev && uv run flake8 traceloop/ --output-file reports/packages/traceloop-sdk/pylint.txt",
+        "cwd": "packages/traceloop-sdk"
       }
     },
     "test": {

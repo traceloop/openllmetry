@@ -44,12 +44,13 @@
       }
     },
     "lint": {
-      "executor": "@nxlv/python:flake8",
+      "executor": "@nxlv/python:run-commands",
       "outputs": [
         "{workspaceRoot}/reports/packages/opentelemetry-semantic-conventions-ai/pylint.txt"
       ],
       "options": {
-        "outputFile": "reports/packages/opentelemetry-semantic-conventions-ai/pylint.txt"
+        "command": "uv sync --extra dev && uv run flake8 opentelemetry/ --output-file reports/packages/opentelemetry-semantic-conventions-ai/pylint.txt",
+        "cwd": "packages/opentelemetry-semantic-conventions-ai"
       }
     },
     "test": {
