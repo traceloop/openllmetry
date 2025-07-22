@@ -1,56 +1,57 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "opentelemetry-instrumentation-pinecone"
+version = "0.43.0"
+description = "OpenTelemetry Pinecone instrumentation"
+authors = [
+    {name = "Gal Kleinman", email = "gal@traceloop.com"},
+    {name = "Nir Gazit", email = "nir@traceloop.com"},
+    {name = "Tomer Friedman", email = "tomer@traceloop.com"},
+]
+license = {text = "Apache-2.0"}
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "opentelemetry-api>=1.28.0",
+    "opentelemetry-instrumentation>=0.50b0",
+    "opentelemetry-semantic-conventions>=0.50b0",
+    "opentelemetry-semantic-conventions-ai",
+]
+instruments = ["pinecone-client"]
+
+[project.optional-dependencies]
+dev = [
+    "autopep8>=2.2.0",
+    "flake8>=7.1.2",
+    "pytest>=8.2.2",
+    "pytest-sugar>=1.0.0",
+]
+test = [
+    "openai>=1.31.1",
+    "pytest>=8.2.2",
+    "pytest-sugar>=1.0.0",
+    "vcrpy>=6.0.1",
+    "pytest-recording>=0.13.1",
+    "opentelemetry-sdk>=1.27.0",
+    "pinecone-client>=5.0.0",
+]
+
+[project.entry-points."opentelemetry_instrumentor"]
+pinecone_client = "opentelemetry.instrumentation.pinecone:PineconeInstrumentor"
+
+[project.urls]
+Repository = "https://github.com/traceloop/openllmetry/tree/main/packages/opentelemetry-instrumentation-pinecone"
+
+[tool.hatch.build.targets.wheel]
+packages = ["opentelemetry"]
+
 [tool.coverage.run]
 branch = true
 source = ["opentelemetry/instrumentation/pinecone"]
 
 [tool.coverage.report]
-exclude_lines = ["if TYPE_CHECKING:"]
+exclude_lines = ['if TYPE_CHECKING:']
 show_missing = true
-
-[tool.poetry]
-name = "opentelemetry-instrumentation-pinecone"
-version = "0.43.0"
-description = "OpenTelemetry Pinecone instrumentation"
-authors = [
-  "Gal Kleinman <gal@traceloop.com>",
-  "Nir Gazit <nir@traceloop.com>",
-  "Tomer Friedman <tomer@traceloop.com>",
-]
-repository = "https://github.com/traceloop/openllmetry/tree/main/packages/opentelemetry-instrumentation-pinecone"
-license = "Apache-2.0"
-readme = "README.md"
-
-[[tool.poetry.packages]]
-include = "opentelemetry/instrumentation/pinecone"
-
-[tool.poetry.dependencies]
-python = ">=3.9,<4"
-opentelemetry-api = "^1.28.0"
-opentelemetry-instrumentation = ">=0.50b0"
-opentelemetry-semantic-conventions = ">=0.50b0"
-opentelemetry-semantic-conventions-ai = "0.4.11"
-
-[tool.poetry.group.dev.dependencies]
-autopep8 = "^2.2.0"
-flake8 = "7.0.0"
-pytest = "^8.2.2"
-pytest-sugar = "1.0.0"
-
-[tool.poetry.group.test.dependencies]
-openai = { version = "^1.31.1", extras = ["datalib"] }
-pytest = "^8.2.2"
-pytest-sugar = "1.0.0"
-vcrpy = "^6.0.1"
-pytest-recording = "^0.13.1"
-opentelemetry-sdk = "^1.27.0"
-opentelemetry-instrumentation-openai = { path = "../opentelemetry-instrumentation-openai", develop = true }
-pinecone-client = "^5.0.0"
-
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
-
-[tool.poetry.extras]
-instruments = ["pinecone-client"]
-
-[tool.poetry.plugins."opentelemetry_instrumentor"]
-pinecone_client = "opentelemetry.instrumentation.pinecone:PineconeInstrumentor"

@@ -1,35 +1,36 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "opentelemetry-semantic-conventions-ai"
+version = "0.43.0"
+description = "OpenTelemetry Semantic Conventions Extension for Large Language Models"
+authors = [
+    {name = "Gal Kleinman", email = "gal@traceloop.com"},
+    {name = "Nir Gazit", email = "nir@traceloop.com"},
+    {name = "Tomer Friedman", email = "tomer@traceloop.com"},
+]
+license = {text = "Apache-2.0"}
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = []
+
+[project.optional-dependencies]
+dev = [
+    "autopep8>=2.2.0",
+    "flake8>=7.1.2",
+    "pytest>=8.2.2",
+    "pytest-sugar==1.0.0",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["opentelemetry"]
+
 [tool.coverage.run]
 branch = true
-source = ["opentelemetry/semconv/ai"]
+source = ["opentelemetry/semconv_ai"]
 
 [tool.coverage.report]
 exclude_lines = ['if TYPE_CHECKING:']
 show_missing = true
-
-[tool.poetry]
-name = "opentelemetry-semantic-conventions-ai"
-version = "0.4.11"
-description = "OpenTelemetry Semantic Conventions Extension for Large Language Models"
-authors = [
-  "Gal Kleinman <gal@traceloop.com>",
-  "Nir Gazit <nir@traceloop.com>",
-  "Tomer Friedman <tomer@traceloop.com>",
-]
-license = "Apache-2.0"
-readme = "README.md"
-
-[[tool.poetry.packages]]
-include = "opentelemetry/semconv_ai"
-
-[tool.poetry.dependencies]
-python = ">=3.9,<4"
-
-[tool.poetry.group.dev.dependencies]
-autopep8 = "^2.2.0"
-flake8 = "7.0.0"
-pytest = "^8.2.2"
-pytest-sugar = "1.0.0"
-
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"

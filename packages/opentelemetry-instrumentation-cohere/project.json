@@ -7,7 +7,7 @@
     "lock": {
       "executor": "@nxlv/python:run-commands",
       "options": {
-        "command": "poetry lock",
+        "command": "uv lock",
         "cwd": "packages/opentelemetry-instrumentation-cohere"
       }
     },
@@ -38,7 +38,7 @@
       "options": {
         "silent": false,
         "args": "",
-        "cacheDir": ".cache/pypoetry",
+        "cacheDir": ".cache/uv",
         "verbose": false,
         "debug": false
       }
@@ -59,7 +59,7 @@
         "{workspaceRoot}/coverage/packages/opentelemetry-instrumentation-cohere"
       ],
       "options": {
-        "command": "poetry run pytest tests/",
+        "command": "uv run pytest tests/",
         "cwd": "packages/opentelemetry-instrumentation-cohere"
       }
     },

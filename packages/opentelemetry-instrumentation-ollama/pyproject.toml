@@ -1,3 +1,52 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "opentelemetry-instrumentation-ollama"
+version = "0.43.0"
+description = "OpenTelemetry Ollama instrumentation"
+authors = [
+    {name = "Gal Kleinman", email = "gal@traceloop.com"},
+    {name = "Nir Gazit", email = "nir@traceloop.com"},
+]
+license = {text = "Apache-2.0"}
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "opentelemetry-api>=1.28.0",
+    "opentelemetry-instrumentation>=0.50b0",
+    "opentelemetry-semantic-conventions>=0.50b0",
+    "opentelemetry-semantic-conventions-ai",
+]
+instruments = ["ollama"]
+
+[project.optional-dependencies]
+dev = [
+    "autopep8>=2.2.0",
+    "flake8>=7.1.2",
+    "pytest>=8.2.2",
+    "pytest-sugar>=1.0.0",
+]
+test = [
+    "pytest>=8.2.2",
+    "pytest-sugar>=1.0.0",
+    "vcrpy>=6.0.1",
+    "pytest-recording>=0.13.1",
+    "pytest-asyncio>=0.23.7",
+    "opentelemetry-sdk>=1.27.0",
+    "ollama>=0.4.7",
+]
+
+[project.entry-points."opentelemetry_instrumentor"]
+ollama = "opentelemetry.instrumentation.ollama:OllamaInstrumentor"
+
+[project.urls]
+Repository = "https://github.com/traceloop/openllmetry/tree/main/packages/opentelemetry-instrumentation-ollama"
+
+[tool.hatch.build.targets.wheel]
+packages = ["opentelemetry"]
+
 [tool.coverage.run]
 branch = true
 source = ["opentelemetry/instrumentation/ollama"]
@@ -5,47 +54,3 @@ source = ["opentelemetry/instrumentation/ollama"]
 [tool.coverage.report]
 exclude_lines = ['if TYPE_CHECKING:']
 show_missing = true
-
-[tool.poetry]
-name = "opentelemetry-instrumentation-ollama"
-version = "0.43.0"
-description = "OpenTelemetry Ollama instrumentation"
-authors = ["Gal Kleinman <gal@traceloop.com>", "Nir Gazit <nir@traceloop.com>"]
-repository = "https://github.com/traceloop/openllmetry/tree/main/packages/opentelemetry-instrumentation-ollama"
-license = "Apache-2.0"
-readme = "README.md"
-
-[[tool.poetry.packages]]
-include = "opentelemetry/instrumentation/ollama"
-
-[tool.poetry.dependencies]
-python = ">=3.9,<4"
-opentelemetry-api = "^1.28.0"
-opentelemetry-instrumentation = ">=0.50b0"
-opentelemetry-semantic-conventions = ">=0.50b0"
-opentelemetry-semantic-conventions-ai = "0.4.11"
-
-[tool.poetry.group.dev.dependencies]
-autopep8 = "^2.2.0"
-flake8 = "7.0.0"
-pytest = "^8.2.2"
-pytest-sugar = "1.0.0"
-
-[tool.poetry.group.test.dependencies]
-pytest = "^8.2.2"
-pytest-sugar = "1.0.0"
-vcrpy = "^6.0.1"
-pytest-recording = "^0.13.1"
-pytest-asyncio = "^0.23.7"
-opentelemetry-sdk = "^1.27.0"
-ollama = "^0.4.7"
-
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
-
-[tool.poetry.extras]
-instruments = ["ollama"]
-
-[tool.poetry.plugins."opentelemetry_instrumentor"]
-ollama = "opentelemetry.instrumentation.ollama:OllamaInstrumentor"
