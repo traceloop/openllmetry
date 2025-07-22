@@ -70,56 +70,56 @@ def _detect_vendor_from_class(serialized: dict[str, Any]) -> str:
 
     Args:
         serialized: Serialized model information from LangChain callback
-    
+
     Returns:
-        Vendor string (e.g., "openai", "Azure", "AWS", "Google", etc.)
+        Vendor string
     """
     class_id = serialized.get("id", [])
     if not class_id:
         return "Langchain"  # Fallback
-    
+
     # Get the class name (last element in id array)
     class_name = class_id[-1] if isinstance(class_id, list) else str(class_id)
-    
+
     # Vendor detection rules (order matters - most specific first)
     vendor_rules = [
         ({"AzureChatOpenAI", "AzureOpenAI", "AzureOpenAIEmbeddings"}, ["azure"], "Azure"),
-        
+
         ({"ChatOpenAI", "OpenAI", "OpenAIEmbeddings"}, ["openai"], "openai"),
-        
+
         ({"ChatBedrock", "BedrockEmbeddings", "Bedrock", "BedrockChat"}, ["bedrock", "aws"], "AWS"),
-        
+
         ({"ChatAnthropic", "AnthropicLLM"}, ["anthropic"], "Anthropic"),
-        
-        ({"ChatVertexAI", "VertexAI", "VertexAIEmbeddings", "ChatGoogleGenerativeAI", 
-          "GoogleGenerativeAI", "GooglePaLM", "ChatGooglePaLM"}, 
+
+        ({"ChatVertexAI", "VertexAI", "VertexAIEmbeddings", "ChatGoogleGenerativeAI",
+          "GoogleGenerativeAI", "GooglePaLM", "ChatGooglePaLM"},
          ["vertex", "google", "palm", "gemini"], "Google"),
-        
+
         ({"ChatCohere", "CohereEmbeddings", "Cohere"}, ["cohere"], "Cohere"),
-        
-        ({"HuggingFacePipeline", "HuggingFaceTextGenInference", "HuggingFaceEmbeddings", 
+
+        ({"HuggingFacePipeline", "HuggingFaceTextGenInference", "HuggingFaceEmbeddings",
           "ChatHuggingFace"}, ["huggingface"], "HuggingFace"),
-        
+
         ({"ChatOllama", "OllamaEmbeddings", "Ollama"}, ["ollama"], "Ollama"),
-        
+
         ({"Together", "ChatTogether"}, ["together"], "Together"),
-        
+
         ({"Replicate", "ChatReplicate"}, ["replicate"], "Replicate"),
-        
+
         ({"ChatFireworks", "Fireworks"}, ["fireworks"], "Fireworks"),
-        
+
         ({"ChatGroq"}, ["groq"], "Groq"),
-        
+
         ({"ChatMistralAI", "MistralAI"}, ["mistral"], "MistralAI"),
     ]
-    
-    class_lower = class_name.lower()
+
     for exact_matches, patterns, vendor in vendor_rules:
         if class_name in exact_matches:
             return vendor
+        class_lower = class_name.lower()
         if any(pattern in class_lower for pattern in patterns):
             return vendor
-    
+
     return "Langchain"  # Fallback
 
 
@@ -332,9 +332,9 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             entity_path=entity_path,
             metadata=metadata,
         )
-        
+
         vendor = _detect_vendor_from_class(serialized or {})
-        
+
         _set_span_attribute(span, SpanAttributes.LLM_SYSTEM, vendor)
         _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TYPE, request_type.value)
 
