@@ -63,6 +63,66 @@ from opentelemetry.trace.span import Span
 from opentelemetry.trace.status import Status, StatusCode
 
 
+def _detect_vendor_from_class(serialized: dict[str, Any]) -> str:
+    """
+    Detect vendor from LangChain model class name.
+    Uses unified detection rules combining exact matches and patterns.
+
+    Args:
+        serialized: Serialized model information from LangChain callback
+    
+    Returns:
+        Vendor string (e.g., "openai", "Azure", "AWS", "Google", etc.)
+    """
+    class_id = serialized.get("id", [])
+    if not class_id:
+        return "Langchain"  # Fallback
+    
+    # Get the class name (last element in id array)
+    class_name = class_id[-1] if isinstance(class_id, list) else str(class_id)
+    
+    # Vendor detection rules (order matters - most specific first)
+    vendor_rules = [
+        ({"AzureChatOpenAI", "AzureOpenAI", "AzureOpenAIEmbeddings"}, ["azure"], "Azure"),
+        
+        ({"ChatOpenAI", "OpenAI", "OpenAIEmbeddings"}, ["openai"], "openai"),
+        
+        ({"ChatBedrock", "BedrockEmbeddings", "Bedrock", "BedrockChat"}, ["bedrock", "aws"], "AWS"),
+        
+        ({"ChatAnthropic", "AnthropicLLM"}, ["anthropic"], "Anthropic"),
+        
+        ({"ChatVertexAI", "VertexAI", "VertexAIEmbeddings", "ChatGoogleGenerativeAI", 
+          "GoogleGenerativeAI", "GooglePaLM", "ChatGooglePaLM"}, 
+         ["vertex", "google", "palm", "gemini"], "Google"),
+        
+        ({"ChatCohere", "CohereEmbeddings", "Cohere"}, ["cohere"], "Cohere"),
+        
+        ({"HuggingFacePipeline", "HuggingFaceTextGenInference", "HuggingFaceEmbeddings", 
+          "ChatHuggingFace"}, ["huggingface"], "HuggingFace"),
+        
+        ({"ChatOllama", "OllamaEmbeddings", "Ollama"}, ["ollama"], "Ollama"),
+        
+        ({"Together", "ChatTogether"}, ["together"], "Together"),
+        
+        ({"Replicate", "ChatReplicate"}, ["replicate"], "Replicate"),
+        
+        ({"ChatFireworks", "Fireworks"}, ["fireworks"], "Fireworks"),
+        
+        ({"ChatGroq"}, ["groq"], "Groq"),
+        
+        ({"ChatMistralAI", "MistralAI"}, ["mistral"], "MistralAI"),
+    ]
+    
+    class_lower = class_name.lower()
+    for exact_matches, patterns, vendor in vendor_rules:
+        if class_name in exact_matches:
+            return vendor
+        if any(pattern in class_lower for pattern in patterns):
+            return vendor
+    
+    return "Langchain"  # Fallback
+
+
 def _message_type_to_role(message_type: str) -> str:
     if message_type == "human":
         return "user"
@@ -258,6 +318,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         name: str,
         request_type: LLMRequestTypeValues,
         metadata: Optional[dict[str, Any]] = None,
+        serialized: Optional[dict[str, Any]] = None,
     ) -> Span:
         workflow_name = self.get_workflow_name(parent_run_id)
         entity_path = self.get_entity_path(parent_run_id)
@@ -271,7 +332,10 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             entity_path=entity_path,
             metadata=metadata,
         )
-        _set_span_attribute(span, SpanAttributes.LLM_SYSTEM, "Langchain")
+        
+        vendor = _detect_vendor_from_class(serialized or {})
+        
+        _set_span_attribute(span, SpanAttributes.LLM_SYSTEM, vendor)
         _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TYPE, request_type.value)
 
         return span
@@ -384,7 +448,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
 
         name = self._get_name_from_callback(serialized, kwargs=kwargs)
         span = self._create_llm_span(
-            run_id, parent_run_id, name, LLMRequestTypeValues.CHAT, metadata=metadata
+            run_id, parent_run_id, name, LLMRequestTypeValues.CHAT, metadata=metadata, serialized=serialized
         )
         set_request_params(span, kwargs, self.spans[run_id])
         if should_emit_events():
@@ -410,7 +474,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
 
         name = self._get_name_from_callback(serialized, kwargs=kwargs)
         span = self._create_llm_span(
-            run_id, parent_run_id, name, LLMRequestTypeValues.COMPLETION
+            run_id, parent_run_id, name, LLMRequestTypeValues.COMPLETION, serialized=serialized
         )
         set_request_params(span, kwargs, self.spans[run_id])
         if should_emit_events():
