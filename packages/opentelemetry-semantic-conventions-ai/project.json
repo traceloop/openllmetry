@@ -59,7 +59,7 @@
         "{workspaceRoot}/coverage/packages/opentelemetry-semantic-conventions-ai"
       ],
       "options": {
-        "command": "uv run pytest tests/",
+        "command": "uv sync --extra dev && uv run pytest tests/",
         "cwd": "packages/opentelemetry-semantic-conventions-ai"
       }
     },

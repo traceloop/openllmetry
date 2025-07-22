@@ -59,7 +59,7 @@
         "{workspaceRoot}/coverage/packages/opentelemetry-instrumentation-transformers"
       ],
       "options": {
-        "command": "uv run pytest tests/",
+        "command": "uv sync --extra dev && uv run pytest tests/",
         "cwd": "packages/opentelemetry-instrumentation-transformers"
       }
     },

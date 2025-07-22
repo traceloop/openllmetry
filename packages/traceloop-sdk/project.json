@@ -57,7 +57,7 @@
         "{workspaceRoot}/coverage/packages/traceloop-sdk"
       ],
       "options": {
-        "command": "uv run pytest tests/",
+        "command": "uv sync --extra test && uv run pytest tests/",
         "cwd": "packages/traceloop-sdk"
       }
     },

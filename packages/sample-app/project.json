@@ -57,7 +57,7 @@
         "{workspaceRoot}/coverage/packages/sample-app"
       ],
       "options": {
-        "command": "uv run pytest tests/",
+        "command": "uv sync --extra dev && uv run pytest tests/",
         "cwd": "packages/sample-app"
       }
     }

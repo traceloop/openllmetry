@@ -59,7 +59,7 @@
         "{workspaceRoot}/coverage/packages/opentelemetry-instrumentation-groq"
       ],
       "options": {
-        "command": "uv run pytest tests/",
+        "command": "uv sync --extra test && uv run pytest tests/",
         "cwd": "packages/opentelemetry-instrumentation-groq"
       }
     },
