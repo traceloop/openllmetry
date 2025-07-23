@@ -1,3 +1,9 @@
+## v0.43.1 (2025-07-23)
+
+### Fix
+
+- **langchain**: added vendors to llm calls (#3165)
+
 ## v0.43.0 (2025-07-22)
 
 ### Feat
