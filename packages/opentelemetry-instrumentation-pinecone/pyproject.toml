@@ -31,6 +31,7 @@ dev = [
 ]
 test = [
     "openai>=1.31.1",
+    "opentelemetry-instrumentation-openai",
     "pytest>=8.2.2",
     "pytest-sugar>=1.0.0",
     "vcrpy>=6.0.1",
