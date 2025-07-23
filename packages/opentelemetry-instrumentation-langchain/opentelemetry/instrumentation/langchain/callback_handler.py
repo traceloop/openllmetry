@@ -329,7 +329,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             metadata=metadata,
         )
 
-        class_id = serialized.get("id", [])
+        class_id = (serialized or {}).get("id", [])
 
         # Get the class name (last element in id array)
         if isinstance(class_id, list) and len(class_id) > 0:
