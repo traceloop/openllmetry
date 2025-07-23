@@ -63,23 +63,19 @@ from opentelemetry.trace.span import Span
 from opentelemetry.trace.status import Status, StatusCode
 
 
-def _detect_vendor_from_class(serialized: dict[str, Any]) -> str:
+def _detect_vendor_from_class(class_name: str) -> str:
     """
     Detect vendor from LangChain model class name.
     Uses unified detection rules combining exact matches and patterns.
 
     Args:
-        serialized: Serialized model information from LangChain callback
+        class_name: The class name extracted from serialized model information
 
     Returns:
         Vendor string
     """
-    class_id = serialized.get("id", [])
-    if not class_id:
+    if not class_name:  # Handles None, empty string, or other falsy values
         return "Langchain"  # Fallback
-
-    # Get the class name (last element in id array)
-    class_name = class_id[-1] if isinstance(class_id, list) else str(class_id)
 
     # Vendor detection rules (order matters - most specific first)
     vendor_rules = [
@@ -333,7 +329,17 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             metadata=metadata,
         )
 
-        vendor = _detect_vendor_from_class(serialized or {})
+        class_id = serialized.get("id", [])
+
+        # Get the class name (last element in id array)
+        if isinstance(class_id, list) and len(class_id) > 0:
+            class_name = class_id[-1]
+        elif class_id:
+            class_name = str(class_id)
+        else:
+            class_name = ""
+        
+        vendor = _detect_vendor_from_class(class_name)
 
         _set_span_attribute(span, SpanAttributes.LLM_SYSTEM, vendor)
         _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TYPE, request_type.value)
