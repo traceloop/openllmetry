@@ -34,6 +34,7 @@ test = [
     "langchain-community>=0.3.3",
     "openai>=1.52.2",
     "opentelemetry-instrumentation-bedrock",
+    "opentelemetry-instrumentation-openai",
     "pytest>=8.3.3",
     "pytest-sugar>=1.0.0",
     "vcrpy>=6.0.2",

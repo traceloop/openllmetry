@@ -35,6 +35,8 @@ test = [
     "chromadb>=0.5.23",
     "openai>=1.52.2",
     "opentelemetry-instrumentation-chromadb",
+    "opentelemetry-instrumentation-cohere",
+    "opentelemetry-instrumentation-openai",
     "opentelemetry-sdk>=1.27.0",
     "llama-index>=0.12.6",
     "llama-index-postprocessor-cohere-rerank>=0.3.0",
