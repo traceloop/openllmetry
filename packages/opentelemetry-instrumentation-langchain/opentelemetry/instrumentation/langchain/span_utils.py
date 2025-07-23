@@ -336,11 +336,13 @@ def set_chat_response_usage(
             cache_read_tokens,
         )
         if record_token_usage:
+            vendor = span.attributes.get(SpanAttributes.LLM_SYSTEM, "Langchain")
+            
             if input_tokens > 0:
                 token_histogram.record(
                     input_tokens,
                     attributes={
-                        SpanAttributes.LLM_SYSTEM: "Langchain",
+                        SpanAttributes.LLM_SYSTEM: vendor,
                         SpanAttributes.LLM_TOKEN_TYPE: "input",
                         SpanAttributes.LLM_RESPONSE_MODEL: model_name,
                     },
@@ -350,7 +352,7 @@ def set_chat_response_usage(
                 token_histogram.record(
                     output_tokens,
                     attributes={
-                        SpanAttributes.LLM_SYSTEM: "Langchain",
+                        SpanAttributes.LLM_SYSTEM: vendor,
                         SpanAttributes.LLM_TOKEN_TYPE: "output",
                         SpanAttributes.LLM_RESPONSE_MODEL: model_name,
                     },

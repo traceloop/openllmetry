@@ -124,14 +124,14 @@ def verify_token_metrics(data_points):
             "input",
         ]
         assert data_point.sum > 0
-        assert data_point.attributes[SpanAttributes.LLM_SYSTEM] == "Langchain"
+        assert data_point.attributes[SpanAttributes.LLM_SYSTEM] == "openai"
 
 
 def verify_duration_metrics(data_points):
     assert any(data_point.count > 0 for data_point in data_points)
     assert any(data_point.sum > 0 for data_point in data_points)
     for data_point in data_points:
-        assert data_point.attributes[SpanAttributes.LLM_SYSTEM] == "Langchain"
+        assert data_point.attributes[SpanAttributes.LLM_SYSTEM] == "openai"
 
 
 def verify_langchain_metrics(reader):
