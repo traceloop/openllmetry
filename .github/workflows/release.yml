@@ -21,8 +21,14 @@ jobs:
         with:
           python-version: 3.11
 
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - name: Configure uv to use system Python
+        run: |
+          echo "UV_SYSTEM_PYTHON=1" >> $GITHUB_ENV
+          echo "UV_PYTHON=$(which python)" >> $GITHUB_ENV
 
       - id: cz
         name: Bump Version, Create Tag and Changelog
@@ -60,8 +66,14 @@ jobs:
         with:
           python-version: 3.11
 
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - name: Configure uv to use system Python
+        run: |
+          echo "UV_SYSTEM_PYTHON=1" >> $GITHUB_ENV
+          echo "UV_PYTHON=$(which python)" >> $GITHUB_ENV
 
       - uses: actions/setup-node@v4
         with:
@@ -98,8 +110,14 @@ jobs:
         with:
           python-version: 3.11
 
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - name: Configure uv to use system Python
+        run: |
+          echo "UV_SYSTEM_PYTHON=1" >> $GITHUB_ENV
+          echo "UV_PYTHON=$(which python)" >> $GITHUB_ENV
 
       - uses: actions/setup-node@v4
         with:

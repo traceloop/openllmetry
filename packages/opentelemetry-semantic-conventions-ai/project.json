@@ -7,7 +7,7 @@
     "lock": {
       "executor": "@nxlv/python:run-commands",
       "options": {
-        "command": "poetry lock",
+        "command": "uv lock",
         "cwd": "packages/opentelemetry-semantic-conventions-ai"
       }
     },
@@ -38,18 +38,19 @@
       "options": {
         "silent": false,
         "args": "",
-        "cacheDir": ".cache/pypoetry",
+        "cacheDir": ".cache/uv",
         "verbose": false,
         "debug": false
       }
     },
     "lint": {
-      "executor": "@nxlv/python:flake8",
+      "executor": "@nxlv/python:run-commands",
       "outputs": [
         "{workspaceRoot}/reports/packages/opentelemetry-semantic-conventions-ai/pylint.txt"
       ],
       "options": {
-        "outputFile": "reports/packages/opentelemetry-semantic-conventions-ai/pylint.txt"
+        "command": "uv sync --extra dev && uv run flake8 opentelemetry/ --output-file reports/packages/opentelemetry-semantic-conventions-ai/pylint.txt",
+        "cwd": "packages/opentelemetry-semantic-conventions-ai"
       }
     },
     "test": {
@@ -59,7 +60,17 @@
         "{workspaceRoot}/coverage/packages/opentelemetry-semantic-conventions-ai"
       ],
       "options": {
-        "command": "poetry run pytest tests/",
+        "command": "uv sync --extra dev && uv run pytest tests/",
+        "cwd": "packages/opentelemetry-semantic-conventions-ai"
+      }
+    },
+    "build-release": {
+      "executor": "@nxlv/python:run-commands",
+      "options": {
+        "commands": [
+          "chmod +x ../../scripts/build-release.sh",
+          "../../scripts/build-release.sh"
+        ],
         "cwd": "packages/opentelemetry-semantic-conventions-ai"
       }
     }

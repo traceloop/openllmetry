@@ -7,7 +7,7 @@
     "lock": {
       "executor": "@nxlv/python:run-commands",
       "options": {
-        "command": "poetry lock",
+        "command": "uv lock",
         "cwd": "packages/opentelemetry-instrumentation-chromadb"
       }
     },
@@ -38,18 +38,19 @@
       "options": {
         "silent": false,
         "args": "",
-        "cacheDir": ".cache/pypoetry",
+        "cacheDir": ".cache/uv",
         "verbose": false,
         "debug": false
       }
     },
     "lint": {
-      "executor": "@nxlv/python:flake8",
+      "executor": "@nxlv/python:run-commands",
       "outputs": [
         "{workspaceRoot}/reports/packages/opentelemetry-instrumentation-chromadb/pylint.txt"
       ],
       "options": {
-        "outputFile": "reports/packages/opentelemetry-instrumentation-chromadb/pylint.txt"
+        "command": "uv sync --extra dev && uv run flake8 opentelemetry/ --output-file reports/packages/opentelemetry-instrumentation-chromadb/pylint.txt",
+        "cwd": "packages/opentelemetry-instrumentation-chromadb"
       }
     },
     "test": {
@@ -59,7 +60,7 @@
         "{workspaceRoot}/coverage/packages/opentelemetry-instrumentation-chromadb"
       ],
       "options": {
-        "command": "poetry run pytest tests/",
+        "command": "uv sync --extra test && uv run pytest tests/",
         "cwd": "packages/opentelemetry-instrumentation-chromadb"
       }
     },

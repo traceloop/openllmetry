@@ -7,7 +7,7 @@
     "lock": {
       "executor": "@nxlv/python:run-commands",
       "options": {
-        "command": "poetry lock",
+        "command": "uv lock",
         "cwd": "packages/sample-app"
       }
     },
@@ -38,16 +38,17 @@
       "options": {
         "silent": false,
         "args": "",
-        "cacheDir": ".cache/pypoetry",
+        "cacheDir": ".cache/uv",
         "verbose": false,
         "debug": false
       }
     },
     "lint": {
-      "executor": "@nxlv/python:flake8",
+      "executor": "@nxlv/python:run-commands",
       "outputs": ["{workspaceRoot}/reports/packages/sample-app/pylint.txt"],
       "options": {
-        "outputFile": "reports/packages/sample-app/pylint.txt"
+        "command": "uv sync --extra dev && uv run flake8 sample_app/ --output-file reports/packages/sample-app/pylint.txt",
+        "cwd": "packages/sample-app"
       }
     },
     "test": {
@@ -57,7 +58,7 @@
         "{workspaceRoot}/coverage/packages/sample-app"
       ],
       "options": {
-        "command": "poetry run pytest tests/",
+        "command": "uv sync --extra dev && uv run pytest tests/",
         "cwd": "packages/sample-app"
       }
     }

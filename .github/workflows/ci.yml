@@ -35,8 +35,14 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: 3.11
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - name: Configure uv to use system Python
+        run: |
+          echo "UV_SYSTEM_PYTHON=1" >> $GITHUB_ENV
+          echo "UV_PYTHON=$(which python)" >> $GITHUB_ENV
 
       - uses: actions/setup-node@v4
         with:
@@ -63,8 +69,14 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - name: Configure uv to use system Python
+        run: |
+          echo "UV_SYSTEM_PYTHON=1" >> $GITHUB_ENV
+          echo "UV_PYTHON=$(which python)" >> $GITHUB_ENV
 
       - uses: actions/setup-node@v4
         with:
@@ -88,7 +100,7 @@ jobs:
       id-token: "write"
     strategy:
       matrix:
-        python-version: ["3.9", "3.10", "3.11", "3.12"]
+        python-version: ["3.10", "3.11", "3.12"]
 
     steps:
       - uses: actions/checkout@v4
@@ -101,8 +113,14 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - name: Configure uv to use system Python
+        run: |
+          echo "UV_SYSTEM_PYTHON=1" >> $GITHUB_ENV
+          echo "UV_PYTHON=$(which python)" >> $GITHUB_ENV
 
       - uses: actions/setup-node@v4
         with:

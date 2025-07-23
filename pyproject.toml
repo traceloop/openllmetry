@@ -1,0 +1,46 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "openllmetry-workspace"
+version = "0.43.0"
+description = "OpenLLMetry workspace - OpenTelemetry-based observability for LLM applications"
+authors = [
+    {name = "Gal Kleinman", email = "gal@traceloop.com"},
+    {name = "Nir Gazit", email = "nir@traceloop.com"},
+    {name = "Tomer Friedman", email = "tomer@traceloop.com"},
+]
+license = {text = "Apache-2.0"}
+requires-python = ">=3.9"
+dependencies = []
+
+[project.optional-dependencies]
+# Shared dev dependencies for consistent versions across packages
+dev = [
+    "autopep8>=2.2.0",
+    "flake8>=7.1.2",
+    "pytest>=8.2.2",
+    "pytest-sugar>=1.0.0",
+]
+
+[tool.uv]
+package = false
+
+[tool.uv.workspace]
+members = [
+    "packages/opentelemetry-semantic-conventions-ai",
+    "packages/traceloop-sdk",
+]
+
+[tool.uv.sources]
+# Local development sources for semantic conventions
+opentelemetry-semantic-conventions-ai = { workspace = true }
+
+[tool.coverage.run]
+branch = true
+source = ["opentelemetry"]
+
+[tool.coverage.report]
+exclude_lines = ["if TYPE_CHECKING:"]
+show_missing = true

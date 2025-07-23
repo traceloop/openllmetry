@@ -7,7 +7,7 @@
     "lock": {
       "executor": "@nxlv/python:run-commands",
       "options": {
-        "command": "poetry lock",
+        "command": "uv lock",
         "cwd": "packages/opentelemetry-instrumentation-haystack"
       }
     },
@@ -25,7 +25,9 @@
     },
     "build": {
       "executor": "@nxlv/python:build",
-      "outputs": ["{projectRoot}/dist"],
+      "outputs": [
+        "{projectRoot}/dist"
+      ],
       "options": {
         "outputPath": "packages/opentelemetry-instrumentation-haystack/dist",
         "publish": false,
@@ -38,18 +40,19 @@
       "options": {
         "silent": false,
         "args": "",
-        "cacheDir": ".cache/pypoetry",
+        "cacheDir": ".cache/uv",
         "verbose": false,
         "debug": false
       }
     },
     "lint": {
-      "executor": "@nxlv/python:flake8",
+      "executor": "@nxlv/python:run-commands",
       "outputs": [
         "{workspaceRoot}/reports/packages/opentelemetry-instrumentation-haystack/pylint.txt"
       ],
       "options": {
-        "outputFile": "reports/packages/opentelemetry-instrumentation-haystack/pylint.txt"
+        "command": "uv sync --extra dev && uv run flake8 opentelemetry/ --output-file reports/packages/opentelemetry-instrumentation-haystack/pylint.txt",
+        "cwd": "packages/opentelemetry-instrumentation-haystack"
       }
     },
     "test": {
@@ -59,7 +62,7 @@
         "{workspaceRoot}/coverage/packages/opentelemetry-instrumentation-haystack"
       ],
       "options": {
-        "command": "poetry run pytest tests/",
+        "command": "uv sync --extra test && uv run pytest tests/",
         "cwd": "packages/opentelemetry-instrumentation-haystack"
       }
     },
@@ -74,5 +77,7 @@
       }
     }
   },
-  "tags": ["instrumentation"]
+  "tags": [
+    "instrumentation"
+  ]
 }
