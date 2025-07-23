@@ -41,6 +41,9 @@ from opentelemetry.instrumentation.langchain.span_utils import (
     set_llm_request,
     set_request_params,
 )
+from opentelemetry.instrumentation.langchain.vendor_detection import (
+    detect_vendor_from_class,
+)
 from opentelemetry.instrumentation.langchain.utils import (
     CallbackFilteredJSONEncoder,
     dont_throw,
@@ -80,62 +83,6 @@ def _extract_class_name_from_serialized(serialized: Optional[dict[str, Any]]) ->
         return str(class_id)
     else:
         return ""
-
-
-def _detect_vendor_from_class(class_name: str) -> str:
-    """
-    Detect vendor from LangChain model class name.
-    Uses unified detection rules combining exact matches and patterns.
-
-    Args:
-        class_name: The class name extracted from serialized model information
-
-    Returns:
-        Vendor string
-    """
-    if not class_name:  # Handles None, empty string, or other falsy values
-        return "Langchain"  # Fallback
-
-    # Vendor detection rules (order matters - most specific first)
-    vendor_rules = [
-        ({"AzureChatOpenAI", "AzureOpenAI", "AzureOpenAIEmbeddings"}, ["azure"], "Azure"),
-
-        ({"ChatOpenAI", "OpenAI", "OpenAIEmbeddings"}, ["openai"], "openai"),
-
-        ({"ChatBedrock", "BedrockEmbeddings", "Bedrock", "BedrockChat"}, ["bedrock", "aws"], "AWS"),
-
-        ({"ChatAnthropic", "AnthropicLLM"}, ["anthropic"], "Anthropic"),
-
-        ({"ChatVertexAI", "VertexAI", "VertexAIEmbeddings", "ChatGoogleGenerativeAI",
-          "GoogleGenerativeAI", "GooglePaLM", "ChatGooglePaLM"},
-         ["vertex", "google", "palm", "gemini"], "Google"),
-
-        ({"ChatCohere", "CohereEmbeddings", "Cohere"}, ["cohere"], "Cohere"),
-
-        ({"HuggingFacePipeline", "HuggingFaceTextGenInference", "HuggingFaceEmbeddings",
-          "ChatHuggingFace"}, ["huggingface"], "HuggingFace"),
-
-        ({"ChatOllama", "OllamaEmbeddings", "Ollama"}, ["ollama"], "Ollama"),
-
-        ({"Together", "ChatTogether"}, ["together"], "Together"),
-
-        ({"Replicate", "ChatReplicate"}, ["replicate"], "Replicate"),
-
-        ({"ChatFireworks", "Fireworks"}, ["fireworks"], "Fireworks"),
-
-        ({"ChatGroq"}, ["groq"], "Groq"),
-
-        ({"ChatMistralAI", "MistralAI"}, ["mistral"], "MistralAI"),
-    ]
-
-    for exact_matches, patterns, vendor in vendor_rules:
-        if class_name in exact_matches:
-            return vendor
-        class_lower = class_name.lower()
-        if any(pattern in class_lower for pattern in patterns):
-            return vendor
-
-    return "Langchain"  # Fallback
 
 
 def _message_type_to_role(message_type: str) -> str:
@@ -348,7 +295,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             metadata=metadata,
         )
 
-        vendor = _detect_vendor_from_class(_extract_class_name_from_serialized(serialized))
+        vendor = detect_vendor_from_class(_extract_class_name_from_serialized(serialized))
 
         _set_span_attribute(span, SpanAttributes.LLM_SYSTEM, vendor)
         _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TYPE, request_type.value)
