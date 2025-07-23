@@ -337,7 +337,7 @@ def set_chat_response_usage(
         )
         if record_token_usage:
             vendor = span.attributes.get(SpanAttributes.LLM_SYSTEM, "Langchain")
-            
+
             if input_tokens > 0:
                 token_histogram.record(
                     input_tokens,
