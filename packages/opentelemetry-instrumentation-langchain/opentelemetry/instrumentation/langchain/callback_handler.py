@@ -62,6 +62,7 @@ from opentelemetry.trace import SpanKind, Tracer, set_span_in_context
 from opentelemetry.trace.span import Span
 from opentelemetry.trace.status import Status, StatusCode
 
+
 def _extract_class_name_from_serialized(serialized: Optional[dict[str, Any]]) -> str:
     """
     Extract class name from serialized model information.
@@ -79,6 +80,7 @@ def _extract_class_name_from_serialized(serialized: Optional[dict[str, Any]]) ->
         return str(class_id)
     else:
         return ""
+
 
 def _detect_vendor_from_class(class_name: str) -> str:
     """
@@ -345,7 +347,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             entity_path=entity_path,
             metadata=metadata,
         )
- 
+
         vendor = _detect_vendor_from_class(_extract_class_name_from_serialized(serialized))
 
         _set_span_attribute(span, SpanAttributes.LLM_SYSTEM, vendor)
