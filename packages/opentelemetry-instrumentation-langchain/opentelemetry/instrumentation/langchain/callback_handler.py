@@ -557,11 +557,12 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             )
 
             # Record token usage metrics
+            vendor = span.attributes.get(SpanAttributes.LLM_SYSTEM, "Langchain")
             if prompt_tokens > 0:
                 self.token_histogram.record(
                     prompt_tokens,
                     attributes={
-                        SpanAttributes.LLM_SYSTEM: "Langchain",
+                        SpanAttributes.LLM_SYSTEM: vendor,
                         SpanAttributes.LLM_TOKEN_TYPE: "input",
                         SpanAttributes.LLM_RESPONSE_MODEL: model_name or "unknown",
                     },
@@ -571,7 +572,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
                 self.token_histogram.record(
                     completion_tokens,
                     attributes={
-                        SpanAttributes.LLM_SYSTEM: "Langchain",
+                        SpanAttributes.LLM_SYSTEM: vendor,
                         SpanAttributes.LLM_TOKEN_TYPE: "output",
                         SpanAttributes.LLM_RESPONSE_MODEL: model_name or "unknown",
                     },
@@ -585,10 +586,11 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
 
         # Record duration
         duration = time.time() - self.spans[run_id].start_time
+        vendor = span.attributes.get(SpanAttributes.LLM_SYSTEM, "Langchain")
         self.duration_histogram.record(
             duration,
             attributes={
-                SpanAttributes.LLM_SYSTEM: "Langchain",
+                SpanAttributes.LLM_SYSTEM: vendor,
                 SpanAttributes.LLM_RESPONSE_MODEL: model_name or "unknown",
             },
         )
