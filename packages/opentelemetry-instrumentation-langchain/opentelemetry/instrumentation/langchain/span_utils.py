@@ -17,7 +17,9 @@ from opentelemetry.instrumentation.langchain.utils import (
 )
 from opentelemetry.metrics import Histogram
 from opentelemetry.semconv_ai import (
+    LLMVendor,
     SpanAttributes,
+    TraceloopSpanKindValues,
 )
 from opentelemetry.trace.span import Span
 from opentelemetry.util.types import AttributeValue
@@ -336,7 +338,7 @@ def set_chat_response_usage(
             cache_read_tokens,
         )
         if record_token_usage:
-            vendor = span.attributes.get(SpanAttributes.LLM_SYSTEM, "Langchain")
+            vendor = span.attributes.get(SpanAttributes.LLM_SYSTEM, LLMVendor.LANGCHAIN.value)
 
             if input_tokens > 0:
                 token_histogram.record(

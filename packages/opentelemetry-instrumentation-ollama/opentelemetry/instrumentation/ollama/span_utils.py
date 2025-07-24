@@ -3,6 +3,7 @@ import json
 from opentelemetry.instrumentation.ollama.utils import dont_throw, should_send_prompts
 from opentelemetry.semconv_ai import (
     LLMRequestTypeValues,
+    LLMVendor,
     SpanAttributes,
 )
 
@@ -106,7 +107,7 @@ def set_model_response_attributes(span, token_histogram, llm_request_type, respo
         SpanAttributes.LLM_USAGE_PROMPT_TOKENS,
         input_tokens,
     )
-    _set_span_attribute(span, SpanAttributes.LLM_SYSTEM, "Ollama")
+    _set_span_attribute(span, SpanAttributes.LLM_SYSTEM, LLMVendor.OLLAMA.value)
 
     if (
         token_histogram is not None
@@ -116,7 +117,7 @@ def set_model_response_attributes(span, token_histogram, llm_request_type, respo
         token_histogram.record(
             input_tokens,
             attributes={
-                SpanAttributes.LLM_SYSTEM: "Ollama",
+                SpanAttributes.LLM_SYSTEM: LLMVendor.OLLAMA.value,
                 SpanAttributes.LLM_TOKEN_TYPE: "input",
                 SpanAttributes.LLM_RESPONSE_MODEL: response.get("model"),
             },
@@ -130,7 +131,7 @@ def set_model_response_attributes(span, token_histogram, llm_request_type, respo
         token_histogram.record(
             output_tokens,
             attributes={
-                SpanAttributes.LLM_SYSTEM: "Ollama",
+                SpanAttributes.LLM_SYSTEM: LLMVendor.OLLAMA.value,
                 SpanAttributes.LLM_TOKEN_TYPE: "output",
                 SpanAttributes.LLM_RESPONSE_MODEL: response.get("model"),
             },

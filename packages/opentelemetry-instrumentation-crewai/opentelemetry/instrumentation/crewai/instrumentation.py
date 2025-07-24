@@ -9,7 +9,7 @@ from opentelemetry.metrics import Histogram, Meter, get_meter
 from opentelemetry.instrumentation.utils import unwrap
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.instrumentation.crewai.version import __version__
-from opentelemetry.semconv_ai import SpanAttributes, TraceloopSpanKindValues, Meters
+from opentelemetry.semconv_ai import SpanAttributes, TraceloopSpanKindValues, Meters, LLMVendor
 from .crewai_span_attributes import CrewAISpanAttributes, set_span_attribute
 
 _instruments = ("crewai >= 0.70.0",)
@@ -71,7 +71,7 @@ def wrap_kickoff(tracer: Tracer, duration_histogram: Histogram, token_histogram:
         "crewai.workflow",
         kind=SpanKind.INTERNAL,
         attributes={
-            SpanAttributes.LLM_SYSTEM: "crewai",
+            SpanAttributes.LLM_SYSTEM: LLMVendor.CREWAI.value,
         }
     ) as span:
         try:
@@ -108,7 +108,7 @@ def wrap_agent_execute_task(tracer, duration_histogram, token_histogram, wrapped
                 token_histogram.record(
                     instance._token_process.get_summary().prompt_tokens,
                     attributes={
-                        SpanAttributes.LLM_SYSTEM: "crewai",
+                        SpanAttributes.LLM_SYSTEM: LLMVendor.CREWAI.value,
                         SpanAttributes.LLM_TOKEN_TYPE: "input",
                         SpanAttributes.LLM_RESPONSE_MODEL: str(instance.llm.model),
                     }
@@ -116,7 +116,7 @@ def wrap_agent_execute_task(tracer, duration_histogram, token_histogram, wrapped
                 token_histogram.record(
                     instance._token_process.get_summary().completion_tokens,
                     attributes={
-                        SpanAttributes.LLM_SYSTEM: "crewai",
+                        SpanAttributes.LLM_SYSTEM: LLMVendor.CREWAI.value,
                         SpanAttributes.LLM_TOKEN_TYPE: "output",
                         SpanAttributes.LLM_RESPONSE_MODEL: str(instance.llm.model),
                     },
@@ -172,7 +172,7 @@ def wrap_llm_call(tracer, duration_histogram, token_histogram, wrapped, instance
                 duration_histogram.record(
                     duration,
                     attributes={
-                     SpanAttributes.LLM_SYSTEM: "crewai",
+                     SpanAttributes.LLM_SYSTEM: LLMVendor.CREWAI.value,
                      SpanAttributes.LLM_RESPONSE_MODEL: str(instance.model)
                     },
                 )
