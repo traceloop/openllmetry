@@ -1,8 +1,8 @@
 import datetime
 from typing import List, Literal, Optional, Union
-from typing_extensions import Annotated
 
 from pydantic import BaseModel, Field
+from typing_extensions import Annotated
 
 
 class TemplateEngine:
@@ -38,6 +38,22 @@ class Message(RegistryObjectBaseModel):
     variables: Optional[List[str]] = []
 
 
+class ToolFunction(RegistryObjectBaseModel):
+    name: str
+    description: str
+    parameters: dict
+
+
+class Tool(RegistryObjectBaseModel):
+    type: Literal["function"]
+    function: ToolFunction
+
+
+class ResponseFormat(RegistryObjectBaseModel):
+    type: Literal["json_schema"]
+    json_schema: dict
+
+
 class ModelConfig(RegistryObjectBaseModel):
     mode: str
     model: str
@@ -47,6 +63,9 @@ class ModelConfig(RegistryObjectBaseModel):
     stop: List[str]
     frequency_penalty: float
     presence_penalty: float
+    tool_choice: Optional[Literal["none", "auto", "required"]] = None
+    tools: Optional[List[Tool]] = None
+    response_format: Optional[ResponseFormat] = None
 
 
 class PromptVersion(RegistryObjectBaseModel):
