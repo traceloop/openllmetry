@@ -17,6 +17,7 @@ from opentelemetry.semconv_ai import (
     SpanAttributes,
     TraceloopSpanKindValues,
     Meters,
+    LLMVendor,
 )
 from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
     GEN_AI_COMPLETION,
@@ -600,7 +601,7 @@ def set_token_usage_span_attributes(
             token_histogram.record(
                 input_tokens,
                 attributes={
-                    SpanAttributes.LLM_SYSTEM: "openai",
+                    SpanAttributes.LLM_SYSTEM: LLMVendor.OPENAI.value,
                     SpanAttributes.LLM_TOKEN_TYPE: "input",
                     SpanAttributes.LLM_RESPONSE_MODEL: model_name,
                     "gen_ai.agent.name": agent_name,
@@ -609,7 +610,7 @@ def set_token_usage_span_attributes(
             token_histogram.record(
                 output_tokens,
                 attributes={
-                    SpanAttributes.LLM_SYSTEM: "openai",
+                    SpanAttributes.LLM_SYSTEM: LLMVendor.OPENAI.value,
                     SpanAttributes.LLM_TOKEN_TYPE: "output",
                     SpanAttributes.LLM_RESPONSE_MODEL: model_name,
                     "gen_ai.agent.name": agent_name,

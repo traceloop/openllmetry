@@ -50,6 +50,7 @@ from opentelemetry.instrumentation.utils import (
 from opentelemetry.metrics import Counter, Histogram, Meter, get_meter
 from opentelemetry.semconv_ai import (
     SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
+    LLMVendor,
     Meters,
 )
 from opentelemetry.trace import Span, SpanKind, get_tracer
@@ -418,7 +419,7 @@ def _handle_converse_stream(span, kwargs, response, metric_params, event_logger)
 def _get_vendor_model(modelId):
     # Docs:
     # https://docs.aws.amazon.com/bedrock/latest/userguide/inference-profiles-support.html#inference-profiles-support-system
-    provider = "AWS"
+    provider = LLMVendor.AWS.value
     model_vendor = "imported_model"
     model = modelId
 

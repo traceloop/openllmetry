@@ -31,6 +31,7 @@ from opentelemetry.semconv._incubating.metrics import gen_ai_metrics as GenAIMet
 from opentelemetry.semconv_ai import (
     SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
     LLMRequestTypeValues,
+    LLMVendor,
     Meters,
     SpanAttributes,
 )
@@ -107,7 +108,7 @@ def _accumulate_streaming_response(
             first_token_time = time.perf_counter()
             streaming_time_to_first_token.record(
                 first_token_time - start_time,
-                attributes={SpanAttributes.LLM_SYSTEM: "Ollama"},
+                attributes={SpanAttributes.LLM_SYSTEM: LLMVendor.OLLAMA.value},
             )
             first_token = False
         yield res
@@ -125,7 +126,7 @@ def _accumulate_streaming_response(
         streaming_time_to_generate.record(
             time.perf_counter() - first_token_time,
             attributes={
-                SpanAttributes.LLM_SYSTEM: "Ollama",
+                SpanAttributes.LLM_SYSTEM: LLMVendor.OLLAMA.value,
                 SpanAttributes.LLM_RESPONSE_MODEL: model_name,
             },
         )
@@ -171,7 +172,7 @@ async def _aaccumulate_streaming_response(
             first_token_time = time.perf_counter()
             streaming_time_to_first_token.record(
                 first_token_time - start_time,
-                attributes={SpanAttributes.LLM_SYSTEM: "Ollama"},
+                attributes={SpanAttributes.LLM_SYSTEM: LLMVendor.OLLAMA.value},
             )
             first_token = False
         yield res
@@ -189,7 +190,7 @@ async def _aaccumulate_streaming_response(
         streaming_time_to_generate.record(
             time.perf_counter() - first_token_time,
             attributes={
-                SpanAttributes.LLM_SYSTEM: "Ollama",
+                SpanAttributes.LLM_SYSTEM: LLMVendor.OLLAMA.value,
                 SpanAttributes.LLM_RESPONSE_MODEL: model_name,
             },
         )
@@ -297,7 +298,7 @@ def _wrap(
         name,
         kind=SpanKind.CLIENT,
         attributes={
-            SpanAttributes.LLM_SYSTEM: "Ollama",
+            SpanAttributes.LLM_SYSTEM: LLMVendor.OLLAMA.value,
             SpanAttributes.LLM_REQUEST_TYPE: llm_request_type.value,
         },
     )
@@ -310,7 +311,7 @@ def _wrap(
     if response:
         if duration_histogram:
             duration = end_time - start_time
-            attrs = {SpanAttributes.LLM_SYSTEM: "Ollama"}
+            attrs = {SpanAttributes.LLM_SYSTEM: LLMVendor.OLLAMA.value}
             model = kwargs.get("model")
             if model is not None:
                 attrs[SpanAttributes.LLM_RESPONSE_MODEL] = model
@@ -364,7 +365,7 @@ async def _awrap(
         name,
         kind=SpanKind.CLIENT,
         attributes={
-            SpanAttributes.LLM_SYSTEM: "Ollama",
+            SpanAttributes.LLM_SYSTEM: LLMVendor.OLLAMA.value,
             SpanAttributes.LLM_REQUEST_TYPE: llm_request_type.value,
         },
     )
@@ -377,7 +378,7 @@ async def _awrap(
     if response:
         if duration_histogram:
             duration = end_time - start_time
-            attrs = {SpanAttributes.LLM_SYSTEM: "Ollama"}
+            attrs = {SpanAttributes.LLM_SYSTEM: LLMVendor.OLLAMA.value}
             model = kwargs.get("model")
             if model is not None:
                 attrs[SpanAttributes.LLM_RESPONSE_MODEL] = model

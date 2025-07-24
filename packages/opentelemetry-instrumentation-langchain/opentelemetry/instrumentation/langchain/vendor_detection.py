@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from typing import Set, List
+from opentelemetry.semconv_ai import LLMVendor
 
 
 @dataclass(frozen=True)
@@ -26,22 +27,22 @@ def _get_vendor_rules() -> List[VendorRule]:
         VendorRule(
             exact_matches={"AzureChatOpenAI", "AzureOpenAI", "AzureOpenAIEmbeddings"},
             patterns=["azure"],
-            vendor_name="Azure"
+            vendor_name=LLMVendor.AZURE.value
         ),
         VendorRule(
             exact_matches={"ChatOpenAI", "OpenAI", "OpenAIEmbeddings"},
             patterns=["openai"],
-            vendor_name="openai"
+            vendor_name=LLMVendor.OPENAI.value
         ),
         VendorRule(
             exact_matches={"ChatBedrock", "BedrockEmbeddings", "Bedrock", "BedrockChat"},
             patterns=["bedrock", "aws"],
-            vendor_name="AWS"
+            vendor_name=LLMVendor.AWS.value
         ),
         VendorRule(
             exact_matches={"ChatAnthropic", "AnthropicLLM"},
             patterns=["anthropic"],
-            vendor_name="Anthropic"
+            vendor_name=LLMVendor.ANTHROPIC.value
         ),
         VendorRule(
             exact_matches={
@@ -49,12 +50,12 @@ def _get_vendor_rules() -> List[VendorRule]:
                 "GoogleGenerativeAI", "GooglePaLM", "ChatGooglePaLM"
             },
             patterns=["vertex", "google", "palm", "gemini"],
-            vendor_name="Google"
+            vendor_name=LLMVendor.GOOGLE.value
         ),
         VendorRule(
             exact_matches={"ChatCohere", "CohereEmbeddings", "Cohere"},
             patterns=["cohere"],
-            vendor_name="Cohere"
+            vendor_name=LLMVendor.COHERE.value
         ),
         VendorRule(
             exact_matches={
@@ -62,37 +63,37 @@ def _get_vendor_rules() -> List[VendorRule]:
                 "HuggingFaceEmbeddings", "ChatHuggingFace"
             },
             patterns=["huggingface"],
-            vendor_name="HuggingFace"
+            vendor_name=LLMVendor.HUGGINGFACE.value
         ),
         VendorRule(
             exact_matches={"ChatOllama", "OllamaEmbeddings", "Ollama"},
             patterns=["ollama"],
-            vendor_name="Ollama"
+            vendor_name=LLMVendor.OLLAMA.value
         ),
         VendorRule(
             exact_matches={"Together", "ChatTogether"},
             patterns=["together"],
-            vendor_name="Together"
+            vendor_name=LLMVendor.TOGETHER_AI.value
         ),
         VendorRule(
             exact_matches={"Replicate", "ChatReplicate"},
             patterns=["replicate"],
-            vendor_name="Replicate"
+            vendor_name=LLMVendor.REPLICATE.value
         ),
         VendorRule(
             exact_matches={"ChatFireworks", "Fireworks"},
             patterns=["fireworks"],
-            vendor_name="Fireworks"
+            vendor_name=LLMVendor.FIREWORKS.value
         ),
         VendorRule(
             exact_matches={"ChatGroq"},
             patterns=["groq"],
-            vendor_name="Groq"
+            vendor_name=LLMVendor.GROQ.value
         ),
         VendorRule(
             exact_matches={"ChatMistralAI", "MistralAI"},
             patterns=["mistral"],
-            vendor_name="MistralAI"
+            vendor_name=LLMVendor.MISTRALAI.value
         ),
     ]
 
@@ -109,7 +110,7 @@ def detect_vendor_from_class(class_name: str) -> str:
         Vendor string, defaults to "Langchain" if no match found
     """
     if not class_name:
-        return "Langchain"
+        return LLMVendor.LANGCHAIN.value
 
     vendor_rules = _get_vendor_rules()
 

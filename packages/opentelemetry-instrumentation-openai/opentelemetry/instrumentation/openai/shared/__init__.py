@@ -12,7 +12,7 @@ from opentelemetry.instrumentation.openai.utils import (
 from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
     GEN_AI_RESPONSE_ID,
 )
-from opentelemetry.semconv_ai import SpanAttributes
+from opentelemetry.semconv_ai import SpanAttributes, LLMVendor
 from opentelemetry.trace.propagation import set_span_in_context
 from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
 import openai
@@ -115,9 +115,9 @@ def _set_request_attributes(span, kwargs, instance=None):
     _set_span_attribute(span, SpanAttributes.LLM_SYSTEM, vendor)
 
     model = kwargs.get("model")
-    if vendor == "AWS" and model and "." in model:
+    if vendor == LLMVendor.AWS.value and model and "." in model:
         model = _cross_region_check(model)
-    elif vendor == "OpenRouter":
+    elif vendor == LLMVendor.OPENROUTER.value:
         model = _extract_model_name_from_provider_format(model)
 
     _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, model)
@@ -286,18 +286,18 @@ def _get_openai_base_url(instance):
 
 def _get_vendor_from_url(base_url):
     if not base_url:
-        return "openai"
+        return LLMVendor.OPENAI.value
 
     if "openai.azure.com" in base_url:
-        return "Azure"
+        return LLMVendor.AZURE.value
     elif "amazonaws.com" in base_url or "bedrock" in base_url:
-        return "AWS"
+        return LLMVendor.AWS.value
     elif "googleapis.com" in base_url or "vertex" in base_url:
-        return "Google"
+        return LLMVendor.GOOGLE.value
     elif "openrouter.ai" in base_url:
-        return "OpenRouter"
+        return LLMVendor.OPENROUTER.value
 
-    return "openai"
+    return LLMVendor.OPENAI.value
 
 
 def _cross_region_check(value):

@@ -29,6 +29,7 @@ from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
 from opentelemetry.semconv_ai import (
     SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
     LLMRequestTypeValues,
+    LLMVendor,
     SpanAttributes,
 )
 from opentelemetry.trace import SpanKind, get_tracer
@@ -398,7 +399,7 @@ def _wrap(
         name,
         kind=SpanKind.CLIENT,
         attributes={
-            SpanAttributes.LLM_SYSTEM: "MistralAI",
+            SpanAttributes.LLM_SYSTEM: LLMVendor.MISTRALAI.value,
             SpanAttributes.LLM_REQUEST_TYPE: llm_request_type.value,
         },
     )
@@ -444,7 +445,7 @@ async def _awrap(
         name,
         kind=SpanKind.CLIENT,
         attributes={
-            SpanAttributes.LLM_SYSTEM: "MistralAI",
+            SpanAttributes.LLM_SYSTEM: LLMVendor.MISTRALAI.value,
             SpanAttributes.LLM_REQUEST_TYPE: llm_request_type.value,
         },
     )

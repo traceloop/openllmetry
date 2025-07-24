@@ -5,7 +5,7 @@ from opentelemetry.trace import SpanKind
 from opentelemetry.trace.status import Status, StatusCode
 
 from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
-from opentelemetry.semconv_ai import SpanAttributes, LLMRequestTypeValues
+from opentelemetry.semconv_ai import SpanAttributes, LLMRequestTypeValues, LLMVendor
 from opentelemetry.instrumentation.haystack.utils import (
     dont_throw,
     with_tracer_wrapper,
@@ -104,7 +104,7 @@ def wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
         ),
         kind=SpanKind.CLIENT,
         attributes={
-            SpanAttributes.LLM_SYSTEM: "OpenAI",
+            SpanAttributes.LLM_SYSTEM: LLMVendor.OPENAI.value,
             SpanAttributes.LLM_REQUEST_TYPE: llm_request_type.value,
         },
     ) as span:
