@@ -1,8 +1,10 @@
 from contextlib import contextmanager
+from typing import Union
 from opentelemetry.semconv_ai import SpanAttributes
 from opentelemetry.trace import Span
 from pydantic import BaseModel
 from traceloop.sdk.tracing.context_manager import get_tracer
+from traceloop.sdk.vendors import LLMVendor
 
 
 class LLMMessage(BaseModel):
@@ -66,10 +68,11 @@ class LLMSpan:
 
 
 @contextmanager
-def track_llm_call(vendor: str, type: str):
+def track_llm_call(vendor: Union[str, LLMVendor], type: str):
+    vendor_str = str(vendor)
     with get_tracer() as tracer:
-        with tracer.start_as_current_span(name=f"{vendor}.{type}") as span:
-            span.set_attribute(SpanAttributes.LLM_SYSTEM, vendor)
+        with tracer.start_as_current_span(name=f"{vendor_str}.{type}") as span:
+            span.set_attribute(SpanAttributes.LLM_SYSTEM, vendor_str)
             span.set_attribute(SpanAttributes.LLM_REQUEST_TYPE, type)
             llm_span = LLMSpan(span)
             try:
