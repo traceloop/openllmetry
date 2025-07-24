@@ -34,13 +34,9 @@
       }
     },
     "install": {
-      "executor": "@nxlv/python:install",
+      "executor": "@nxlv/python:run-commands",
       "options": {
-        "silent": false,
-        "args": "",
-        "cacheDir": ".cache/pypoetry",
-        "verbose": false,
-        "debug": false
+        "command": "cd packages/traceloop-sdk && poetry install --extras all"
       }
     },
     "lint": {
