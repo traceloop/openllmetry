@@ -1,10 +1,9 @@
 from contextlib import contextmanager
 from typing import Union
-from opentelemetry.semconv_ai import SpanAttributes
+from opentelemetry.semconv_ai import SpanAttributes, LLMVendor
 from opentelemetry.trace import Span
 from pydantic import BaseModel
 from traceloop.sdk.tracing.context_manager import get_tracer
-from traceloop.sdk.vendors import LLMVendor
 
 
 class LLMMessage(BaseModel):
