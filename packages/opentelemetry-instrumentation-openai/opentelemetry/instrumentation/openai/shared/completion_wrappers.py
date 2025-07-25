@@ -157,7 +157,7 @@ def _set_prompts(span, prompt):
 
     _set_span_attribute(
         span,
-        f"{SpanAttributes.LLM_PROMPTS}.0.user",
+        f"{SpanAttributes.GEN_AI_PROMPT}.0.user",
         prompt[0] if isinstance(prompt, list) else prompt,
     )
 
@@ -169,7 +169,7 @@ def _set_completions(span, choices):
 
     for choice in choices:
         index = choice.get("index")
-        prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{index}"
+        prefix = f"{SpanAttributes.GEN_AI_COMPLETION}.{index}"
         _set_span_attribute(
             span, f"{prefix}.finish_reason", choice.get("finish_reason")
         )

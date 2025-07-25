@@ -142,16 +142,16 @@ async def acomplete_wrapper(tracer, wrapped, instance: CustomLLM, args, kwargs):
 
 @dont_throw
 def _handle_request(span, llm_request_type, args, kwargs, instance: CustomLLM):
-    _set_span_attribute(span, SpanAttributes.LLM_SYSTEM, instance.__class__.__name__)
+    _set_span_attribute(span, SpanAttributes.GEN_AI_SYSTEM, instance.__class__.__name__)
     _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TYPE, llm_request_type.value)
     _set_span_attribute(
-        span, SpanAttributes.LLM_REQUEST_MODEL, instance.metadata.model_name
+        span, SpanAttributes.GEN_AI_REQUEST_MODEL, instance.metadata.model_name
     )
     _set_span_attribute(
-        span, SpanAttributes.LLM_REQUEST_MAX_TOKENS, instance.metadata.context_window
+        span, SpanAttributes.GEN_AI_REQUEST_MAX_TOKENS, instance.metadata.context_window
     )
     _set_span_attribute(
-        span, SpanAttributes.LLM_REQUEST_TOP_P, instance.metadata.num_output
+        span, SpanAttributes.GEN_AI_REQUEST_TOP_P, instance.metadata.num_output
     )
 
     if should_send_prompts():
@@ -161,7 +161,7 @@ def _handle_request(span, llm_request_type, args, kwargs, instance: CustomLLM):
                 prompt = args[0]
                 _set_span_attribute(
                     span,
-                    f"{SpanAttributes.LLM_PROMPTS}.0.user",
+                    f"{SpanAttributes.GEN_AI_PROMPT}.0.user",
                     prompt[0] if isinstance(prompt, list) else prompt,
                 )
 
@@ -171,13 +171,13 @@ def _handle_request(span, llm_request_type, args, kwargs, instance: CustomLLM):
 @dont_throw
 def _handle_response(span, llm_request_type, instance, response):
     _set_span_attribute(
-        span, SpanAttributes.LLM_RESPONSE_MODEL, instance.metadata.model_name
+        span, SpanAttributes.GEN_AI_RESPONSE_MODEL, instance.metadata.model_name
     )
 
     if should_send_prompts():
         if llm_request_type == LLMRequestTypeValues.COMPLETION:
             _set_span_attribute(
-                span, f"{SpanAttributes.LLM_COMPLETIONS}.0.content", response.text
+                span, f"{SpanAttributes.GEN_AI_COMPLETION}.0.content", response.text
             )
 
     return

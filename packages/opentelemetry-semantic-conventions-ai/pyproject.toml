@@ -23,6 +23,7 @@ include = "opentelemetry/semconv_ai"
 
 [tool.poetry.dependencies]
 python = ">=3.9,<4"
+opentelemetry-sdk = "^1.35.0"
 
 [tool.poetry.group.dev.dependencies]
 autopep8 = "^2.2.0"

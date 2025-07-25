@@ -113,7 +113,7 @@ def _wrap(
         name,
         kind=SpanKind.CLIENT,
         attributes={
-            SpanAttributes.LLM_SYSTEM: "TogetherAI",
+            SpanAttributes.GEN_AI_SYSTEM: "TogetherAI",
             SpanAttributes.LLM_REQUEST_TYPE: llm_request_type.value,
         },
     )

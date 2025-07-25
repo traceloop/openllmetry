@@ -84,21 +84,21 @@ def _set_token_usage(
     input_tokens = prompt_tokens + cache_read_tokens + cache_creation_tokens
     total_tokens = input_tokens + completion_tokens
 
-    set_span_attribute(span, SpanAttributes.LLM_USAGE_PROMPT_TOKENS, input_tokens)
+    set_span_attribute(span, SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS, input_tokens)
     set_span_attribute(
-        span, SpanAttributes.LLM_USAGE_COMPLETION_TOKENS, completion_tokens
+        span, SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS, completion_tokens
     )
     set_span_attribute(span, SpanAttributes.LLM_USAGE_TOTAL_TOKENS, total_tokens)
 
     set_span_attribute(
-        span, SpanAttributes.LLM_RESPONSE_MODEL, complete_response.get("model")
+        span, SpanAttributes.GEN_AI_RESPONSE_MODEL, complete_response.get("model")
     )
     set_span_attribute(
-        span, SpanAttributes.LLM_USAGE_CACHE_READ_INPUT_TOKENS, cache_read_tokens
+        span, SpanAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS, cache_read_tokens
     )
     set_span_attribute(
         span,
-        SpanAttributes.LLM_USAGE_CACHE_CREATION_INPUT_TOKENS,
+        SpanAttributes.GEN_AI_USAGE_CACHE_CREATION_INPUT_TOKENS,
         cache_creation_tokens,
     )
 
@@ -107,7 +107,7 @@ def _set_token_usage(
             input_tokens,
             attributes={
                 **metric_attributes,
-                SpanAttributes.LLM_TOKEN_TYPE: "input",
+                SpanAttributes.GEN_AI_TOKEN_TYPE: "input",
             },
         )
 
@@ -116,7 +116,7 @@ def _set_token_usage(
             completion_tokens,
             attributes={
                 **metric_attributes,
-                SpanAttributes.LLM_TOKEN_TYPE: "output",
+                SpanAttributes.GEN_AI_TOKEN_TYPE: "output",
             },
         )
 

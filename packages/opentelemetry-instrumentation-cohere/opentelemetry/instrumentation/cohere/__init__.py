@@ -114,7 +114,7 @@ def _wrap(
         name,
         kind=SpanKind.CLIENT,
         attributes={
-            SpanAttributes.LLM_SYSTEM: "Cohere",
+            SpanAttributes.GEN_AI_SYSTEM: "Cohere",
             SpanAttributes.LLM_REQUEST_TYPE: llm_request_type.value,
         },
     ) as span:

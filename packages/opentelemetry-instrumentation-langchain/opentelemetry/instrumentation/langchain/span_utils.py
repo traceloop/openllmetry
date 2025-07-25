@@ -70,9 +70,9 @@ def set_request_params(span, kwargs, span_holder: SpanHolder):
     else:
         model = "unknown"
 
-    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, model)
+    _set_span_attribute(span, SpanAttributes.GEN_AI_REQUEST_MODEL, model)
     # response is not available for LLM requests (as opposed to chat)
-    _set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, model)
+    _set_span_attribute(span, SpanAttributes.GEN_AI_RESPONSE_MODEL, model)
 
     if "invocation_params" in kwargs:
         params = (
@@ -83,13 +83,13 @@ def set_request_params(span, kwargs, span_holder: SpanHolder):
 
     _set_span_attribute(
         span,
-        SpanAttributes.LLM_REQUEST_MAX_TOKENS,
+        SpanAttributes.GEN_AI_REQUEST_MAX_TOKENS,
         params.get("max_tokens") or params.get("max_new_tokens"),
     )
     _set_span_attribute(
-        span, SpanAttributes.LLM_REQUEST_TEMPERATURE, params.get("temperature")
+        span, SpanAttributes.GEN_AI_REQUEST_TEMPERATURE, params.get("temperature")
     )
-    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TOP_P, params.get("top_p"))
+    _set_span_attribute(span, SpanAttributes.GEN_AI_REQUEST_TOP_P, params.get("top_p"))
 
     tools = kwargs.get("invocation_params", {}).get("tools", [])
     for i, tool in enumerate(tools):
@@ -124,12 +124,12 @@ def set_llm_request(
         for i, msg in enumerate(prompts):
             _set_span_attribute(
                 span,
-                f"{SpanAttributes.LLM_PROMPTS}.{i}.role",
+                f"{SpanAttributes.GEN_AI_PROMPT}.{i}.role",
                 "user",
             )
             _set_span_attribute(
                 span,
-                f"{SpanAttributes.LLM_PROMPTS}.{i}.content",
+                f"{SpanAttributes.GEN_AI_PROMPT}.{i}.content",
                 msg,
             )
 
@@ -162,7 +162,7 @@ def set_chat_request(
             for msg in message:
                 _set_span_attribute(
                     span,
-                    f"{SpanAttributes.LLM_PROMPTS}.{i}.role",
+                    f"{SpanAttributes.GEN_AI_PROMPT}.{i}.role",
                     _message_type_to_role(msg.type),
                 )
                 tool_calls = (
@@ -173,7 +173,7 @@ def set_chat_request(
 
                 if tool_calls:
                     _set_chat_tool_calls(
-                        span, f"{SpanAttributes.LLM_PROMPTS}.{i}", tool_calls
+                        span, f"{SpanAttributes.GEN_AI_PROMPT}.{i}", tool_calls
                     )
 
                 else:
@@ -184,14 +184,14 @@ def set_chat_request(
                     )
                     _set_span_attribute(
                         span,
-                        f"{SpanAttributes.LLM_PROMPTS}.{i}.content",
+                        f"{SpanAttributes.GEN_AI_PROMPT}.{i}.content",
                         content,
                     )
 
                 if msg.type == "tool" and hasattr(msg, "tool_call_id"):
                     _set_span_attribute(
                         span,
-                        f"{SpanAttributes.LLM_PROMPTS}.{i}.tool_call_id",
+                        f"{SpanAttributes.GEN_AI_PROMPT}.{i}.tool_call_id",
                         msg.tool_call_id,
                     )
 
@@ -205,7 +205,7 @@ def set_chat_response(span: Span, response: LLMResult) -> None:
     i = 0
     for generations in response.generations:
         for generation in generations:
-            prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{i}"
+            prefix = f"{SpanAttributes.GEN_AI_COMPLETION}.{i}"
             if hasattr(generation, "text") and generation.text != "":
                 _set_span_attribute(
                     span,
@@ -317,12 +317,12 @@ def set_chat_response_usage(
     ):
         _set_span_attribute(
             span,
-            SpanAttributes.LLM_USAGE_PROMPT_TOKENS,
+            SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS,
             input_tokens,
         )
         _set_span_attribute(
             span,
-            SpanAttributes.LLM_USAGE_COMPLETION_TOKENS,
+            SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS,
             output_tokens,
         )
         _set_span_attribute(
@@ -332,7 +332,7 @@ def set_chat_response_usage(
         )
         _set_span_attribute(
             span,
-            SpanAttributes.LLM_USAGE_CACHE_READ_INPUT_TOKENS,
+            SpanAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS,
             cache_read_tokens,
         )
         if record_token_usage:
