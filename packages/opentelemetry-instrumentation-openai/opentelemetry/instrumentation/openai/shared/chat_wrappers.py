@@ -525,10 +525,10 @@ def _set_streaming_token_metrics(
     # First, try to get usage from API response
     if complete_response.get("usage"):
         usage = complete_response["usage"]
-        if usage.get("prompt_tokens"):
-            prompt_usage = usage["prompt_tokens"]
-        if usage.get("completion_tokens"):
-            completion_usage = usage["completion_tokens"]
+        if usage.get("input_tokens"):
+            prompt_usage = usage["input_tokens"]
+        if usage.get("output_tokens"):
+            completion_usage = usage["output_tokens"]
 
     # If API response doesn't have usage, fallback to tiktoken calculation
     if prompt_usage == -1 or completion_usage == -1:

@@ -89,8 +89,8 @@ def set_model_completion_attributes(span, response):
     _set_span_attribute(span, GEN_AI_RESPONSE_ID, response.id)
 
     usage_data = response.usage
-    input_tokens = getattr(usage_data, "prompt_tokens", 0)
-    output_tokens = getattr(usage_data, "completion_tokens", 0)
+    input_tokens = getattr(usage_data, "input_tokens", 0)
+    output_tokens = getattr(usage_data, "output_tokens", 0)
 
     _set_span_attribute(
         span,
@@ -99,11 +99,11 @@ def set_model_completion_attributes(span, response):
     )
     _set_span_attribute(
         span,
-        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS,
+        SpanAttributes.LLM_USAGE_OUTPUT_TOKENS,
         output_tokens,
     )
     _set_span_attribute(
         span,
-        SpanAttributes.LLM_USAGE_PROMPT_TOKENS,
+        SpanAttributes.LLM_USAGE_INPUT_TOKENS,
         input_tokens,
     )

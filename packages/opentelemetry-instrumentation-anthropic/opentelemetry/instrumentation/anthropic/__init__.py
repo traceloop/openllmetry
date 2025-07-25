@@ -175,9 +175,9 @@ async def _aset_token_usage(
             },
         )
 
-    set_span_attribute(span, SpanAttributes.LLM_USAGE_PROMPT_TOKENS, input_tokens)
+    set_span_attribute(span, SpanAttributes.LLM_USAGE_INPUT_TOKENS, input_tokens)
     set_span_attribute(
-        span, SpanAttributes.LLM_USAGE_COMPLETION_TOKENS, completion_tokens
+        span, SpanAttributes.LLM_USAGE_OUTPUT_TOKENS, completion_tokens
     )
     set_span_attribute(span, SpanAttributes.LLM_USAGE_TOTAL_TOKENS, total_tokens)
 
@@ -266,9 +266,9 @@ def _set_token_usage(
             },
         )
 
-    set_span_attribute(span, SpanAttributes.LLM_USAGE_PROMPT_TOKENS, input_tokens)
+    set_span_attribute(span, SpanAttributes.LLM_USAGE_INPUT_TOKENS, input_tokens)
     set_span_attribute(
-        span, SpanAttributes.LLM_USAGE_COMPLETION_TOKENS, completion_tokens
+        span, SpanAttributes.LLM_USAGE_OUTPUT_TOKENS, completion_tokens
     )
     set_span_attribute(span, SpanAttributes.LLM_USAGE_TOTAL_TOKENS, total_tokens)
 

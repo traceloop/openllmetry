@@ -24,12 +24,12 @@ class EventHandleWrapper(AssistantEventHandler):
     def on_end(self):
         _set_span_attribute(
             self._span,
-            SpanAttributes.LLM_USAGE_PROMPT_TOKENS,
+            SpanAttributes.LLM_USAGE_INPUT_TOKENS,
             self._prompt_tokens,
         )
         _set_span_attribute(
             self._span,
-            SpanAttributes.LLM_USAGE_COMPLETION_TOKENS,
+            SpanAttributes.LLM_USAGE_OUTPUT_TOKENS,
             self._completion_tokens,
         )
         self._original_handler.on_end()

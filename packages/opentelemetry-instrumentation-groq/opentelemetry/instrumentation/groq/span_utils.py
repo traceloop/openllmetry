@@ -83,10 +83,10 @@ def set_model_streaming_response_attributes(span, usage):
 
     if usage:
         set_span_attribute(
-            span, SpanAttributes.LLM_USAGE_COMPLETION_TOKENS, usage.completion_tokens
+            span, SpanAttributes.LLM_USAGE_OUTPUT_TOKENS, usage.completion_tokens
         )
         set_span_attribute(
-            span, SpanAttributes.LLM_USAGE_PROMPT_TOKENS, usage.prompt_tokens
+            span, SpanAttributes.LLM_USAGE_INPUT_TOKENS, usage.prompt_tokens
         )
         set_span_attribute(
             span, SpanAttributes.LLM_USAGE_TOTAL_TOKENS, usage.total_tokens
@@ -102,16 +102,16 @@ def set_model_response_attributes(span, response, token_histogram):
     set_span_attribute(span, GEN_AI_RESPONSE_ID, response.get("id"))
 
     usage = response.get("usage") or {}
-    prompt_tokens = usage.get("prompt_tokens")
-    completion_tokens = usage.get("completion_tokens")
+    prompt_tokens = usage.get("input_tokens")
+    completion_tokens = usage.get("output_tokens")
     if usage:
         set_span_attribute(
             span, SpanAttributes.LLM_USAGE_TOTAL_TOKENS, usage.get("total_tokens")
         )
         set_span_attribute(
-            span, SpanAttributes.LLM_USAGE_COMPLETION_TOKENS, completion_tokens
+            span, SpanAttributes.LLM_USAGE_OUTPUT_TOKENS, completion_tokens
         )
-        set_span_attribute(span, SpanAttributes.LLM_USAGE_PROMPT_TOKENS, prompt_tokens)
+        set_span_attribute(span, SpanAttributes.LLM_USAGE_INPUT_TOKENS, prompt_tokens)
 
     if (
         isinstance(prompt_tokens, int)
