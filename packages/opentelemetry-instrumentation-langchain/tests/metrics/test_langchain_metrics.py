@@ -44,7 +44,7 @@ def test_llm_chain_metrics(instrument_legacy, reader, chain):
                         assert data_point.sum > 0
                         assert (
                             data_point.attributes[SpanAttributes.GEN_AI_SYSTEM]
-                            == "Langchain"
+                            == "openai"
                         )
 
                 if metric.name == Meters.LLM_OPERATION_DURATION:
@@ -58,7 +58,7 @@ def test_llm_chain_metrics(instrument_legacy, reader, chain):
                     for data_point in metric.data.data_points:
                         assert (
                             data_point.attributes[SpanAttributes.GEN_AI_SYSTEM]
-                            == "Langchain"
+                            == "openai"
                         )
 
     assert found_token_metric is True
@@ -96,7 +96,7 @@ def test_llm_chain_streaming_metrics(instrument_legacy, reader, llm):
                         assert data_point.sum > 0
                         assert (
                             data_point.attributes[SpanAttributes.GEN_AI_SYSTEM]
-                            == "Langchain"
+                            == "openai"
                         )
 
                 if metric.name == Meters.LLM_OPERATION_DURATION:
@@ -110,7 +110,7 @@ def test_llm_chain_streaming_metrics(instrument_legacy, reader, llm):
                     for data_point in metric.data.data_points:
                         assert (
                             data_point.attributes[SpanAttributes.GEN_AI_SYSTEM]
-                            == "Langchain"
+                            == "openai"
                         )
 
     assert found_token_metric is True
@@ -124,14 +124,14 @@ def verify_token_metrics(data_points):
             "input",
         ]
         assert data_point.sum > 0
-        assert data_point.attributes[SpanAttributes.LLM_SYSTEM] == "Langchain"
+        assert data_point.attributes[SpanAttributes.LLM_SYSTEM] == "openai"
 
 
 def verify_duration_metrics(data_points):
     assert any(data_point.count > 0 for data_point in data_points)
     assert any(data_point.sum > 0 for data_point in data_points)
     for data_point in data_points:
-        assert data_point.attributes[SpanAttributes.LLM_SYSTEM] == "Langchain"
+        assert data_point.attributes[SpanAttributes.LLM_SYSTEM] == "openai"
 
 
 def verify_langchain_metrics(reader):
