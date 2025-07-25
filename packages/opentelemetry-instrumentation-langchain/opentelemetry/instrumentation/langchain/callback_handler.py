@@ -34,11 +34,15 @@ from opentelemetry.instrumentation.langchain.event_models import (
 from opentelemetry.instrumentation.langchain.span_utils import (
     SpanHolder,
     _set_span_attribute,
+    extract_model_name_from_response_metadata,
     set_chat_request,
     set_chat_response,
     set_chat_response_usage,
     set_llm_request,
     set_request_params,
+)
+from opentelemetry.instrumentation.langchain.vendor_detection import (
+    detect_vendor_from_class,
 )
 from opentelemetry.instrumentation.langchain.utils import (
     CallbackFilteredJSONEncoder,
@@ -60,6 +64,25 @@ from opentelemetry.semconv_ai import (
 from opentelemetry.trace import SpanKind, Tracer, set_span_in_context
 from opentelemetry.trace.span import Span
 from opentelemetry.trace.status import Status, StatusCode
+
+
+def _extract_class_name_from_serialized(serialized: Optional[dict[str, Any]]) -> str:
+    """
+    Extract class name from serialized model information.
+
+    Args:
+        serialized: Serialized model information from LangChain callback
+
+    Returns:
+        Class name string, or empty string if not found
+    """
+    class_id = (serialized or {}).get("id", [])
+    if isinstance(class_id, list) and len(class_id) > 0:
+        return class_id[-1]
+    elif class_id:
+        return str(class_id)
+    else:
+        return ""
 
 
 def _message_type_to_role(message_type: str) -> str:
@@ -257,6 +280,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         name: str,
         request_type: LLMRequestTypeValues,
         metadata: Optional[dict[str, Any]] = None,
+        serialized: Optional[dict[str, Any]] = None,
     ) -> Span:
         workflow_name = self.get_workflow_name(parent_run_id)
         entity_path = self.get_entity_path(parent_run_id)
@@ -270,7 +294,10 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             entity_path=entity_path,
             metadata=metadata,
         )
-        _set_span_attribute(span, SpanAttributes.LLM_SYSTEM, "Langchain")
+
+        vendor = detect_vendor_from_class(_extract_class_name_from_serialized(serialized))
+
+        _set_span_attribute(span, SpanAttributes.LLM_SYSTEM, vendor)
         _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TYPE, request_type.value)
 
         return span
@@ -383,7 +410,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
 
         name = self._get_name_from_callback(serialized, kwargs=kwargs)
         span = self._create_llm_span(
-            run_id, parent_run_id, name, LLMRequestTypeValues.CHAT, metadata=metadata
+            run_id, parent_run_id, name, LLMRequestTypeValues.CHAT, metadata=metadata, serialized=serialized
         )
         set_request_params(span, kwargs, self.spans[run_id])
         if should_emit_events():
@@ -409,7 +436,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
 
         name = self._get_name_from_callback(serialized, kwargs=kwargs)
         span = self._create_llm_span(
-            run_id, parent_run_id, name, LLMRequestTypeValues.COMPLETION
+            run_id, parent_run_id, name, LLMRequestTypeValues.COMPLETION, serialized=serialized
         )
         set_request_params(span, kwargs, self.spans[run_id])
         if should_emit_events():
@@ -446,7 +473,8 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             id = response.llm_output.get("id")
             if id is not None and id != "":
                 _set_span_attribute(span, GEN_AI_RESPONSE_ID, id)
-
+        if model_name is None:
+            model_name = extract_model_name_from_response_metadata(response)
         token_usage = (response.llm_output or {}).get("token_usage") or (
             response.llm_output or {}
         ).get("usage")
@@ -476,11 +504,12 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             )
 
             # Record token usage metrics
+            vendor = span.attributes.get(SpanAttributes.LLM_SYSTEM, "Langchain")
             if prompt_tokens > 0:
                 self.token_histogram.record(
                     prompt_tokens,
                     attributes={
-                        SpanAttributes.LLM_SYSTEM: "Langchain",
+                        SpanAttributes.LLM_SYSTEM: vendor,
                         SpanAttributes.LLM_TOKEN_TYPE: "input",
                         SpanAttributes.LLM_RESPONSE_MODEL: model_name or "unknown",
                     },
@@ -490,12 +519,12 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
                 self.token_histogram.record(
                     completion_tokens,
                     attributes={
-                        SpanAttributes.LLM_SYSTEM: "Langchain",
+                        SpanAttributes.LLM_SYSTEM: vendor,
                         SpanAttributes.LLM_TOKEN_TYPE: "output",
                         SpanAttributes.LLM_RESPONSE_MODEL: model_name or "unknown",
                     },
                 )
-        set_chat_response_usage(span, response)
+        set_chat_response_usage(span, response, self.token_histogram, token_usage is None, model_name)
         if should_emit_events():
             self._emit_llm_end_events(response)
         else:
@@ -504,10 +533,11 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
 
         # Record duration
         duration = time.time() - self.spans[run_id].start_time
+        vendor = span.attributes.get(SpanAttributes.LLM_SYSTEM, "Langchain")
         self.duration_histogram.record(
             duration,
             attributes={
-                SpanAttributes.LLM_SYSTEM: "Langchain",
+                SpanAttributes.LLM_SYSTEM: vendor,
                 SpanAttributes.LLM_RESPONSE_MODEL: model_name or "unknown",
             },
         )
