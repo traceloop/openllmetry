@@ -132,7 +132,7 @@ def _set_cohere_span_attributes(span, request_body, response_body, metric_params
 
     # based on contract at
     # https://docs.aws.amazon.com/bedrock/latest/userguide/model-parameters-cohere-command-r-plus.html
-    input_tokens = response_body.get("token_count", {}).get("prompt_tokens")
+    input_tokens = response_body.get("token_count", {}).get("input_tokens")
     output_tokens = response_body.get("token_count", {}).get("response_tokens")
 
     if input_tokens is None or output_tokens is None:
@@ -490,12 +490,12 @@ def _set_imported_model_span_attributes(
         span, SpanAttributes.LLM_REQUEST_MAX_TOKENS, request_body.get("max_tokens")
     )
     prompt_tokens = (
-        response_body.get("usage", {}).get("prompt_tokens")
-        if response_body.get("usage", {}).get("prompt_tokens") is not None
+        response_body.get("usage", {}).get("input_tokens")
+        if response_body.get("usage", {}).get("input_tokens") is not None
         else response_body.get("prompt_token_count")
     )
     completion_tokens = response_body.get("usage", {}).get(
-        "completion_tokens"
+        "output_tokens"
     ) or response_body.get("generation_token_count")
 
     _record_usage_to_span(
@@ -523,12 +523,12 @@ def _set_imported_model_prompt_span_attributes(span, request_body):
 def _record_usage_to_span(span, prompt_tokens, completion_tokens, metric_params):
     _set_span_attribute(
         span,
-        SpanAttributes.LLM_USAGE_PROMPT_TOKENS,
+        SpanAttributes.LLM_USAGE_INPUT_TOKENS,
         prompt_tokens,
     )
     _set_span_attribute(
         span,
-        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS,
+        SpanAttributes.LLM_USAGE_OUTPUT_TOKENS,
         completion_tokens,
     )
     _set_span_attribute(

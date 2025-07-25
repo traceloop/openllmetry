@@ -84,9 +84,9 @@ def set_llm_chat_response_model_attributes(event, span):
     )
     if usage := raw.get("usage") if "usage" in raw else raw.usage:
         span.set_attribute(
-            SpanAttributes.LLM_USAGE_COMPLETION_TOKENS, usage.completion_tokens
+            SpanAttributes.LLM_USAGE_OUTPUT_TOKENS, usage.completion_tokens
         )
-        span.set_attribute(SpanAttributes.LLM_USAGE_PROMPT_TOKENS, usage.prompt_tokens)
+        span.set_attribute(SpanAttributes.LLM_USAGE_INPUT_TOKENS, usage.prompt_tokens)
         span.set_attribute(SpanAttributes.LLM_USAGE_TOTAL_TOKENS, usage.total_tokens)
     if choices := raw.choices:
         span.set_attribute(

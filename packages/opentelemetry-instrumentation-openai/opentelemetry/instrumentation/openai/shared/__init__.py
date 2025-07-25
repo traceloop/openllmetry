@@ -18,7 +18,7 @@ from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapProp
 import openai
 import pydantic
 
-OPENAI_LLM_USAGE_TOKEN_TYPES = ["prompt_tokens", "completion_tokens"]
+OPENAI_LLM_USAGE_TOKEN_TYPES = ["input_tokens", "output_tokens"]
 PROMPT_FILTER_KEY = "prompt_filter_results"
 PROMPT_ERROR = "prompt_error"
 
@@ -226,11 +226,11 @@ def _set_response_attributes(span, response):
     )
     _set_span_attribute(
         span,
-        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS,
-        usage.get("completion_tokens"),
+        SpanAttributes.LLM_USAGE_OUTPUT_TOKENS,
+        usage.get("output_tokens"),
     )
     _set_span_attribute(
-        span, SpanAttributes.LLM_USAGE_PROMPT_TOKENS, usage.get("prompt_tokens")
+        span, SpanAttributes.LLM_USAGE_INPUT_TOKENS, usage.get("input_tokens")
     )
     prompt_tokens_details = dict(usage.get("prompt_tokens_details", {}))
     _set_span_attribute(
@@ -257,11 +257,11 @@ def _set_span_stream_usage(span, prompt_tokens, completion_tokens):
 
     if isinstance(completion_tokens, int) and completion_tokens >= 0:
         _set_span_attribute(
-            span, SpanAttributes.LLM_USAGE_COMPLETION_TOKENS, completion_tokens
+            span, SpanAttributes.LLM_USAGE_OUTPUT_TOKENS, completion_tokens
         )
 
     if isinstance(prompt_tokens, int) and prompt_tokens >= 0:
-        _set_span_attribute(span, SpanAttributes.LLM_USAGE_PROMPT_TOKENS, prompt_tokens)
+        _set_span_attribute(span, SpanAttributes.LLM_USAGE_INPUT_TOKENS, prompt_tokens)
 
     if (
         isinstance(prompt_tokens, int)
@@ -386,9 +386,9 @@ def get_token_count_from_string(string: str, model_name: str):
 
 
 def _token_type(token_type: str):
-    if token_type == "prompt_tokens":
+    if token_type == "input_tokens":
         return "input"
-    elif token_type == "completion_tokens":
+    elif token_type == "output_tokens":
         return "output"
 
     return None

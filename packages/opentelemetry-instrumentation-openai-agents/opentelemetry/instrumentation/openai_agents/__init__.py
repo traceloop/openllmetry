@@ -581,13 +581,13 @@ def set_token_usage_span_attributes(
         if input_tokens is not None:
             set_span_attribute(
                 span,
-                SpanAttributes.LLM_USAGE_PROMPT_TOKENS,
+                SpanAttributes.LLM_USAGE_INPUT_TOKENS,
                 input_tokens,
             )
         if output_tokens is not None:
             set_span_attribute(
                 span,
-                SpanAttributes.LLM_USAGE_COMPLETION_TOKENS,
+                SpanAttributes.LLM_USAGE_OUTPUT_TOKENS,
                 output_tokens,
             )
         if total_tokens is not None:
