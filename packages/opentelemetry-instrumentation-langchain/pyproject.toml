@@ -15,41 +15,41 @@ license = {text = "Apache-2.0"}
 readme = "README.md"
 requires-python = ">=3.9"
 dependencies = [
-    "opentelemetry-api>=1.28.0",
-    "opentelemetry-instrumentation>=0.50b0",
-    "opentelemetry-semantic-conventions>=0.50b0",
+    "opentelemetry-api>=1.35.0",
+    "opentelemetry-instrumentation>=0.56b0",
+    "opentelemetry-semantic-conventions>=0.56b0",
     "opentelemetry-semantic-conventions-ai",
 ]
 instruments = ["langchain"]
 
 [project.optional-dependencies]
 dev = [
-    "autopep8>=2.3.1",
-    "flake8>=7.1.2",
-    "pytest>=8.3.3",
+    "autopep8>=2.3.2",
+    "flake8>=7.3.0",
+    "pytest>=8.4.1",
     "pytest-sugar>=1.0.0",
 ]
 test = [
-    "langchain>=0.3.15",
-    "langchain-community>=0.3.3",
-    "openai>=1.52.2",
+    "langchain>=0.3.27",
+    "langchain-community>=0.3.27",
+    "openai>=1.97.1",
     "opentelemetry-instrumentation-bedrock",
     "opentelemetry-instrumentation-openai",
-    "pytest>=8.3.3",
+    "pytest>=8.4.1",
     "pytest-sugar>=1.0.0",
     "vcrpy>=6.0.2",
-    "pytest-recording>=0.13.2",
-    "pytest-asyncio>=0.24.0",
-    "opentelemetry-sdk>=1.27.0",
+    "pytest-recording>=0.13.4",
+    "pytest-asyncio>=1.1.0",
+    "opentelemetry-sdk>=1.35.0",
     "text-generation>=0.7.0",
-    "anthropic>=0.51.0",
-    "boto3>=1.35.49",
-    "langchain-anthropic>=0.3.13",
-    "langchain-aws>=0.2.11",
-    "langchain-openai>=0.3.1",
-    "langchain-cohere>=0.3.1",
-    "langchain-huggingface>=0.1.2",
-    "pydantic>=2.10.5",
+    "anthropic>=0.59.0",
+    "boto3>=1.39.14",
+    "langchain-anthropic>=0.3.17",
+    "langchain-aws>=0.2.29",
+    "langchain-openai>=0.3.28",
+    "langchain-cohere>=0.4.4",
+    "langchain-huggingface>=0.3.1",
+    "pydantic>=2.11.7",
     "langchainhub>=0.1.21",
 ]
 

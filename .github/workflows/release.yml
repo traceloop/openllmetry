@@ -79,7 +79,11 @@ jobs:
         with:
           node-version: 18
 
-      - run: npm ci
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - run: pnpm install --frozen-lockfile
 
       - name: Build Instrumentations
         run: npx nx run-many -t build-release --projects=tag:instrumentation
@@ -123,7 +127,11 @@ jobs:
         with:
           node-version: 18
 
-      - run: npm ci
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - run: pnpm install --frozen-lockfile
 
       - name: Build Traceloop SDK
         run: npx nx run traceloop-sdk:build-release
