@@ -192,10 +192,12 @@ def _set_segment_query_attributes(span, kwargs):
 @dont_throw
 def _add_segment_query_embeddings_events(span, kwargs):
     for i, embeddings in enumerate(kwargs.get("query_embeddings", [])):
+        # Convert numpy array to list for JSON serialization
+        embeddings_list = embeddings.tolist() if hasattr(embeddings, 'tolist') else embeddings
         span.add_event(
             name=Events.DB_QUERY_EMBEDDINGS.value,
             attributes={
-                EventAttributes.DB_QUERY_EMBEDDINGS_VECTOR.value: json.dumps(embeddings)
+                EventAttributes.DB_QUERY_EMBEDDINGS_VECTOR.value: json.dumps(embeddings_list)
             },
         )
 

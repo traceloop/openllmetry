@@ -3,6 +3,7 @@
 import logging
 import chromadb
 import chromadb.api.segment
+import chromadb.api.rust
 
 from typing import Collection
 
@@ -24,6 +25,12 @@ WRAPPED_METHODS = [
     {
         "package": chromadb.api.segment,
         "object": "SegmentAPI",
+        "method": "_query",
+        "span_name": "chroma.query.segment._query",
+    },
+    {
+        "package": chromadb.api.rust,
+        "object": "RustBindingsAPI",
         "method": "_query",
         "span_name": "chroma.query.segment._query",
     },
