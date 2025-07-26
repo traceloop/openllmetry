@@ -51,7 +51,7 @@ def fixture_event_logger_provider(log_exporter):
 
 @pytest.fixture
 def aleph_alpha_client():
-    return Client(token=os.environ.get("AA_TOKEN"))
+    return Client(host="https://api.aleph-alpha.com", token=os.environ.get("AA_TOKEN"))
 
 
 @pytest.fixture(scope="function")

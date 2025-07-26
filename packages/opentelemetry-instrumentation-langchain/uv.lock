@@ -457,7 +457,7 @@ name = "exceptiongroup"
 version = "1.3.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "typing-extensions", marker = "python_full_version < '3.13'" },
+    { name = "typing-extensions", marker = "python_full_version < '3.11'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/0b/9f/a65090624ecf468cdca03533906e7c69ed7588582240cfe7cc9e770b50eb/exceptiongroup-1.3.0.tar.gz", hash = "sha256:b241f5885f560bc56a59ee63ca4c6a8bfa46ae4ad651af316d4e81817bb9fd88", size = 29749 }
 wheels = [
@@ -1427,6 +1427,23 @@ wheels = [
 ]
 
 [[package]]
+name = "opentelemetry-instrumentation-bedrock"
+version = "0.43.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "anthropic" },
+    { name = "opentelemetry-api" },
+    { name = "opentelemetry-instrumentation" },
+    { name = "opentelemetry-semantic-conventions" },
+    { name = "opentelemetry-semantic-conventions-ai" },
+    { name = "tokenizers" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/5a/9a/032ea5fc0d0a085afbd8b066d88751b2a4555eeef919abaf979f8c1b4c34/opentelemetry_instrumentation_bedrock-0.43.1.tar.gz", hash = "sha256:b772245da335ab6b0868ab9056fa8f6974e07885f79b72a9dd38b774ceb90812", size = 14549 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/b5/3f/2be7a9e792aad909079f8b42e24b7796df210ae4d1112a75b3399ffd167d/opentelemetry_instrumentation_bedrock-0.43.1-py3-none-any.whl", hash = "sha256:4c38b78ba46bbc39cadaf49f0ebe50053f31b851720e7aed8744687fd069ab1c", size = 18167 },
+]
+
+[[package]]
 name = "opentelemetry-instrumentation-langchain"
 version = "0.43.0"
 source = { editable = "." }
@@ -1456,6 +1473,8 @@ test = [
     { name = "langchain-openai" },
     { name = "langchainhub" },
     { name = "openai" },
+    { name = "opentelemetry-instrumentation-bedrock" },
+    { name = "opentelemetry-instrumentation-openai" },
     { name = "opentelemetry-sdk" },
     { name = "pydantic" },
     { name = "pytest" },
@@ -1483,6 +1502,8 @@ requires-dist = [
     { name = "openai", marker = "extra == 'test'", specifier = ">=1.52.2" },
     { name = "opentelemetry-api", specifier = ">=1.28.0" },
     { name = "opentelemetry-instrumentation", specifier = ">=0.50b0" },
+    { name = "opentelemetry-instrumentation-bedrock", marker = "extra == 'test'" },
+    { name = "opentelemetry-instrumentation-openai", marker = "extra == 'test'" },
     { name = "opentelemetry-sdk", marker = "extra == 'test'", specifier = ">=1.27.0" },
     { name = "opentelemetry-semantic-conventions", specifier = ">=0.50b0" },
     { name = "opentelemetry-semantic-conventions-ai" },
@@ -1497,6 +1518,22 @@ requires-dist = [
     { name = "vcrpy", marker = "extra == 'test'", specifier = ">=6.0.2" },
 ]
 provides-extras = ["dev", "test"]
+
+[[package]]
+name = "opentelemetry-instrumentation-openai"
+version = "0.43.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "opentelemetry-api" },
+    { name = "opentelemetry-instrumentation" },
+    { name = "opentelemetry-semantic-conventions" },
+    { name = "opentelemetry-semantic-conventions-ai" },
+    { name = "tiktoken" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/df/cf/90675fdf938c67fa362a75f5d26ad83a9982d520ea4f9a8c84e149e93665/opentelemetry_instrumentation_openai-0.43.1.tar.gz", hash = "sha256:73fb071bd1d03481adf33473f784a90101e7a813f742049fb9e5b18c11cef699", size = 23438 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e8/d6/e253457cd2739e386a9a6f137091522d085b24239cad8ef2af80840d7959/opentelemetry_instrumentation_openai-0.43.1-py3-none-any.whl", hash = "sha256:7b4d738d7c33b8601bce7db345f16852e7c6e65253c7c23e521d31541362bc74", size = 33543 },
+]
 
 [[package]]
 name = "opentelemetry-sdk"

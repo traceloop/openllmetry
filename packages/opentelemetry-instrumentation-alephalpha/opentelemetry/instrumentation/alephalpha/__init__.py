@@ -35,7 +35,7 @@ from wrapt import wrap_function_wrapper
 
 logger = logging.getLogger(__name__)
 
-_instruments = ("aleph_alpha_client >= 7.1.0, <8",)
+_instruments = ("aleph_alpha_client >= 7.1.0",)
 
 WRAPPED_METHODS = [
     {

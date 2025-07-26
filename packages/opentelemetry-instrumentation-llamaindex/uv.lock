@@ -2385,6 +2385,36 @@ wheels = [
 ]
 
 [[package]]
+name = "opentelemetry-instrumentation-chromadb"
+version = "0.43.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "opentelemetry-api" },
+    { name = "opentelemetry-instrumentation" },
+    { name = "opentelemetry-semantic-conventions" },
+    { name = "opentelemetry-semantic-conventions-ai" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/3c/92/7ad1a3846cfecd82cd80711d73f9c08dcd46d9ebb1912f063f7b2e1d5261/opentelemetry_instrumentation_chromadb-0.43.1.tar.gz", hash = "sha256:572f47df9851b93725043befccc776cf912e32182ced534883581e9903109a30", size = 4386 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/9b/79/9131666143339d708e0abf03b324eeeab23c2eae0ae1e7bdfad632c4aec9/opentelemetry_instrumentation_chromadb-0.43.1-py3-none-any.whl", hash = "sha256:08bd6496371269b4c1b99720ee9b3bf9687597f81586c7c1602f48b59b31948c", size = 6296 },
+]
+
+[[package]]
+name = "opentelemetry-instrumentation-cohere"
+version = "0.43.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "opentelemetry-api" },
+    { name = "opentelemetry-instrumentation" },
+    { name = "opentelemetry-semantic-conventions" },
+    { name = "opentelemetry-semantic-conventions-ai" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/99/d8/67a7d36e7642b7ae41185b9dce11cad148ec55c652dad1eb3517791a583b/opentelemetry_instrumentation_cohere-0.43.1.tar.gz", hash = "sha256:147c390b94cb7b60cdfe4b5898747d714961d0d409f548fb5fc25b9ad2a0ca90", size = 5983 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/16/3d/fb1cd87d025a2faf831fa49cb150900d7315ade1eb04caf94df1f40bc8eb/opentelemetry_instrumentation_cohere-0.43.1-py3-none-any.whl", hash = "sha256:ebadbec94368e2867c2bf6a4c23bd955e5a0d61f3ab5fc333b2a27160e392c43", size = 8778 },
+]
+
+[[package]]
 name = "opentelemetry-instrumentation-llamaindex"
 version = "0.43.0"
 source = { editable = "." }
@@ -2413,6 +2443,9 @@ test = [
     { name = "llama-parse" },
     { name = "onnxruntime" },
     { name = "openai" },
+    { name = "opentelemetry-instrumentation-chromadb" },
+    { name = "opentelemetry-instrumentation-cohere" },
+    { name = "opentelemetry-instrumentation-openai" },
     { name = "opentelemetry-sdk" },
     { name = "pytest-asyncio" },
     { name = "pytest-recording" },
@@ -2437,6 +2470,9 @@ requires-dist = [
     { name = "openai", marker = "extra == 'test'", specifier = ">=1.52.2" },
     { name = "opentelemetry-api", specifier = ">=1.28.0" },
     { name = "opentelemetry-instrumentation", specifier = ">=0.50b0" },
+    { name = "opentelemetry-instrumentation-chromadb", marker = "extra == 'test'" },
+    { name = "opentelemetry-instrumentation-cohere", marker = "extra == 'test'" },
+    { name = "opentelemetry-instrumentation-openai", marker = "extra == 'test'" },
     { name = "opentelemetry-sdk", marker = "extra == 'test'", specifier = ">=1.27.0" },
     { name = "opentelemetry-semantic-conventions", specifier = ">=0.50b0" },
     { name = "opentelemetry-semantic-conventions-ai" },
@@ -2446,6 +2482,22 @@ requires-dist = [
     { name = "vcrpy", marker = "extra == 'test'", specifier = ">=6.0.1" },
 ]
 provides-extras = ["dev", "test"]
+
+[[package]]
+name = "opentelemetry-instrumentation-openai"
+version = "0.43.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "opentelemetry-api" },
+    { name = "opentelemetry-instrumentation" },
+    { name = "opentelemetry-semantic-conventions" },
+    { name = "opentelemetry-semantic-conventions-ai" },
+    { name = "tiktoken" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/df/cf/90675fdf938c67fa362a75f5d26ad83a9982d520ea4f9a8c84e149e93665/opentelemetry_instrumentation_openai-0.43.1.tar.gz", hash = "sha256:73fb071bd1d03481adf33473f784a90101e7a813f742049fb9e5b18c11cef699", size = 23438 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e8/d6/e253457cd2739e386a9a6f137091522d085b24239cad8ef2af80840d7959/opentelemetry_instrumentation_openai-0.43.1-py3-none-any.whl", hash = "sha256:7b4d738d7c33b8601bce7db345f16852e7c6e65253c7c23e521d31541362bc74", size = 33543 },
+]
 
 [[package]]
 name = "opentelemetry-proto"
