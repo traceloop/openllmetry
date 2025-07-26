@@ -62,7 +62,7 @@
         "{workspaceRoot}/coverage/packages/opentelemetry-instrumentation-llamaindex"
       ],
       "options": {
-        "command": "uv sync --extra dev && uv run pytest tests/",
+        "command": "uv sync --extra test && uv run pytest tests/",
         "cwd": "packages/opentelemetry-instrumentation-llamaindex"
       }
     },
