@@ -20,7 +20,7 @@ dependencies = [
     "opentelemetry-semantic-conventions>=0.50b0",
     "opentelemetry-semantic-conventions-ai",
 ]
-instruments = ["pinecone-client"]
+instruments = ["pinecone"]
 
 [project.optional-dependencies]
 dev = [
@@ -37,11 +37,11 @@ test = [
     "vcrpy>=6.0.1",
     "pytest-recording>=0.13.1",
     "opentelemetry-sdk>=1.27.0",
-    "pinecone-client>=5.0.0",
+    "pinecone>=5.0.0",
 ]
 
 [project.entry-points."opentelemetry_instrumentor"]
-pinecone_client = "opentelemetry.instrumentation.pinecone:PineconeInstrumentor"
+pinecone = "opentelemetry.instrumentation.pinecone:PineconeInstrumentor"
 
 [project.urls]
 Repository = "https://github.com/traceloop/openllmetry/tree/main/packages/opentelemetry-instrumentation-pinecone"
@@ -56,3 +56,8 @@ source = ["opentelemetry/instrumentation/pinecone"]
 [tool.coverage.report]
 exclude_lines = ['if TYPE_CHECKING:']
 show_missing = true
+
+[dependency-groups]
+test = [
+    "pinecone>=5.0.0",
+]

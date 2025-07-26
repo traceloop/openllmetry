@@ -17,7 +17,7 @@ requires-python = ">=3.10"
 dependencies = [
     "openai>=1.52.2",
     "requests>=2.32.3",
-    "pinecone-client>=3.2.2",
+    "pinecone>=3.2.2",
     "llama-index>=0.12.6",
     "duckduckgo-search>=3.9.11",
     "chromadb>=0.5.15",

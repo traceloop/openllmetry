@@ -32,36 +32,24 @@ from opentelemetry.semconv_ai import Meters, SpanAttributes as AISpanAttributes
 
 logger = logging.getLogger(__name__)
 
-_instruments = ("pinecone-client >= 2.2.2, <6",)
+_instruments = ("pinecone >= 5.0.0",)
 
 
 WRAPPED_METHODS = [
     {
-        "object": "GRPCIndex",
-        "method": "query",
-        "span_name": "pinecone.query",
-    },
-    {
-        "object": "GRPCIndex",
-        "method": "upsert",
-        "span_name": "pinecone.upsert",
-    },
-    {
-        "object": "GRPCIndex",
-        "method": "delete",
-        "span_name": "pinecone.delete",
-    },
-    {
+        "module": "pinecone.db_data.index",
         "object": "Index",
         "method": "query",
         "span_name": "pinecone.query",
     },
     {
+        "module": "pinecone.db_data.index",
         "object": "Index",
         "method": "upsert",
         "span_name": "pinecone.upsert",
     },
     {
+        "module": "pinecone.db_data.index",
         "object": "Index",
         "method": "delete",
         "span_name": "pinecone.delete",
@@ -71,7 +59,19 @@ WRAPPED_METHODS = [
 
 @dont_throw
 def _set_input_attributes(span, instance, kwargs):
-    set_span_attribute(span, SpanAttributes.SERVER_ADDRESS, instance._config.host)
+    # Try different ways to get the host/server address
+    host = None
+    if hasattr(instance, '_config') and hasattr(instance._config, 'host'):
+        host = instance._config.host
+    elif hasattr(instance, 'config') and hasattr(instance.config, 'host'):
+        host = instance.config.host
+    elif hasattr(instance, '_host'):
+        host = instance._host
+    elif hasattr(instance, 'host'):
+        host = instance.host
+    
+    if host:
+        set_span_attribute(span, SpanAttributes.SERVER_ADDRESS, host)
 
 
 @dont_throw
@@ -150,8 +150,19 @@ def _wrap(
                 set_query_input_attributes(span, kwargs)
 
         shared_attributes = {}
-        if hasattr(instance, "_config"):
-            shared_attributes["server.address"] = instance._config.host
+        # Try different ways to get the host/server address for metrics
+        host = None
+        if hasattr(instance, '_config') and hasattr(instance._config, 'host'):
+            host = instance._config.host
+        elif hasattr(instance, 'config') and hasattr(instance.config, 'host'):
+            host = instance.config.host
+        elif hasattr(instance, '_host'):
+            host = instance._host
+        elif hasattr(instance, 'host'):
+            host = instance.host
+        
+        if host:
+            shared_attributes["server.address"] = host
 
         start_time = time.time()
         response = wrapped(*args, **kwargs)
@@ -218,23 +229,38 @@ class PineconeInstrumentor(BaseInstrumentor):
         tracer_provider = kwargs.get("tracer_provider")
         tracer = get_tracer(__name__, __version__, tracer_provider)
         for wrapped_method in WRAPPED_METHODS:
+            wrap_module = wrapped_method.get("module")
             wrap_object = wrapped_method.get("object")
-            wrap_method = wrapped_method.get("method")
-            if getattr(pinecone, wrap_object, None):
-                wrap_function_wrapper(
-                    "pinecone",
-                    f"{wrap_object}.{wrap_method}",
-                    _wrap(
-                        tracer,
-                        query_duration_metric,
-                        read_units_metric,
-                        write_units_metric,
-                        scores_metric,
-                        wrapped_method,
-                    ),
-                )
+            wrap_method_name = wrapped_method.get("method")
+            
+            # Try to import the module and check if the class exists
+            try:
+                import importlib
+                module = importlib.import_module(wrap_module)
+                if hasattr(module, wrap_object):
+                    wrap_function_wrapper(
+                        wrap_module,
+                        f"{wrap_object}.{wrap_method_name}",
+                        _wrap(
+                            tracer,
+                            query_duration_metric,
+                            read_units_metric,
+                            write_units_metric,
+                            scores_metric,
+                            wrapped_method,
+                        ),
+                    )
+            except ImportError:
+                logger.warning(f"Could not import module {wrap_module} for instrumentation")
+                continue
 
     def _uninstrument(self, **kwargs):
         for wrapped_method in WRAPPED_METHODS:
+            wrap_module = wrapped_method.get("module")
             wrap_object = wrapped_method.get("object")
-            unwrap(f"pinecone.{wrap_object}", wrapped_method.get("method"))
+            wrap_method_name = wrapped_method.get("method")
+            try:
+                unwrap(f"{wrap_module}.{wrap_object}", wrap_method_name)
+            except Exception:
+                # Ignore errors during uninstrumentation
+                pass
