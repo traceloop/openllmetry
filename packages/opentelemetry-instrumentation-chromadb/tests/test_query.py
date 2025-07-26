@@ -1,17 +1,24 @@
 import json
-from os import getcwd
+import tempfile
+from pathlib import Path
 
 import chromadb
 import pytest
 from opentelemetry.semconv_ai import Events, SpanAttributes
 
-chroma = chromadb.PersistentClient(path=getcwd())
+
+@pytest.fixture(scope="session")
+def chroma_client():
+    """Create a ChromaDB client with a temporary directory that gets cleaned up."""
+    with tempfile.TemporaryDirectory() as temp_dir:
+        client = chromadb.PersistentClient(path=temp_dir)
+        yield client
 
 
 @pytest.fixture
-def collection():
-    yield chroma.create_collection(name="Students")
-    chroma.delete_collection(name="Students")
+def collection(chroma_client):
+    yield chroma_client.create_collection(name="Students")
+    chroma_client.delete_collection(name="Students")
 
 
 def add_documents(collection, with_metadata=False):
