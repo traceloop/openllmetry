@@ -45,7 +45,7 @@ def test_anthropic_2_completion(instrument_legacy, brt, span_exporter, log_expor
         == completion
     )
 
-    assert anthropic_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 13
+    assert anthropic_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 18
     assert anthropic_span.attributes.get(
         SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
     ) + anthropic_span.attributes.get(
@@ -87,7 +87,7 @@ def test_anthropic_2_completion_with_events_with_content(
 
     anthropic_span = spans[0]
 
-    assert anthropic_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 13
+    assert anthropic_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 18
     assert anthropic_span.attributes.get(
         SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
     ) + anthropic_span.attributes.get(
@@ -143,7 +143,7 @@ def test_anthropic_2_completion_with_events_with_no_content(
 
     anthropic_span = spans[0]
 
-    assert anthropic_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 13
+    assert anthropic_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 18
     assert anthropic_span.attributes.get(
         SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
     ) + anthropic_span.attributes.get(

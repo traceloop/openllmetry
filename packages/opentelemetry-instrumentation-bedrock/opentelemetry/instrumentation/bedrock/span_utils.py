@@ -92,7 +92,7 @@ def set_model_span_attributes(
     elif model_vendor == "anthropic":
         if "prompt" in request_body:
             _set_anthropic_completion_span_attributes(
-                span, request_body, response_body, metric_params
+                span, request_body, response_body, headers, metric_params
             )
         elif "messages" in request_body:
             _set_anthropic_messages_span_attributes(
@@ -160,7 +160,7 @@ def _set_generations_span_attributes(span, response_body):
 
 
 def _set_anthropic_completion_span_attributes(
-    span, request_body, response_body, metric_params
+    span, request_body, response_body, headers, metric_params
 ):
     _set_span_attribute(
         span, SpanAttributes.LLM_REQUEST_TYPE, LLMRequestTypeValues.COMPLETION.value
@@ -193,6 +193,13 @@ def _set_anthropic_completion_span_attributes(
             span,
             response_body.get("invocation_metrics").get("inputTokenCount"),
             response_body.get("invocation_metrics").get("outputTokenCount"),
+            metric_params,
+        )
+    elif headers and "x-amzn-bedrock-input-token-count" in headers and "x-amzn-bedrock-output-token-count" in headers:
+        _record_usage_to_span(
+            span,
+            int(headers.get("x-amzn-bedrock-input-token-count")),
+            int(headers.get("x-amzn-bedrock-output-token-count")),
             metric_params,
         )
     elif Config.enrich_token_usage:
