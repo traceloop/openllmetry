@@ -51,6 +51,9 @@ test = [
     "anthropic>=0.25.2",
     "langchain>=0.2.5",
     "langchain-openai>=0.1.15",
+    "opentelemetry-instrumentation-openai",
+    "opentelemetry-instrumentation-anthropic",
+    "opentelemetry-instrumentation-langchain",
 ]
 
 [project.urls]
