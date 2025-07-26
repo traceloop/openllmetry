@@ -19,7 +19,7 @@ wheels = [
 
 [[package]]
 name = "anthropic"
-version = "0.58.2"
+version = "0.59.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "anyio" },
@@ -30,9 +30,9 @@ dependencies = [
     { name = "sniffio" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/95/b9/ab06c586aa5a5e7499017cee5ebab94ee260e75975c45395f32b8592abdd/anthropic-0.58.2.tar.gz", hash = "sha256:86396cc45530a83acea25ae6bca9f86656af81e3d598b4d22a1300e0e4cf8df8", size = 425125 }
+sdist = { url = "https://files.pythonhosted.org/packages/fe/cf/52daff015f5a1f24eec891b3041f5f816712fea8b5113dc76638bcbc23d8/anthropic-0.59.0.tar.gz", hash = "sha256:d710d1ef0547ebbb64b03f219e44ba078e83fc83752b96a9b22e9726b523fd8f", size = 425679 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/d0/f2/68d908ff308c9a65af5749ec31952e01d32f19ea073b0268affc616e6ebc/anthropic-0.58.2-py3-none-any.whl", hash = "sha256:3742181c634c725f337b71096839b6404145e33a8e190c75387c4028b825864d", size = 292896 },
+    { url = "https://files.pythonhosted.org/packages/3c/b1/03f680393eac04afd8f2be44ee0e39e033c40faf43dbc1c11764b07a2687/anthropic-0.59.0-py3-none-any.whl", hash = "sha256:cbc8b3dccef66ad6435c4fa1d317e5ebb092399a4b88b33a09dc4bf3944c3183", size = 293057 },
 ]
 
 [[package]]
@@ -463,21 +463,21 @@ test = [
 
 [package.metadata]
 requires-dist = [
-    { name = "anthropic", marker = "extra == 'test'", specifier = ">=0.36.0" },
-    { name = "autopep8", marker = "extra == 'dev'", specifier = ">=2.2.0" },
-    { name = "flake8", marker = "extra == 'dev'", specifier = ">=7.1.2" },
-    { name = "opentelemetry-api", specifier = ">=1.28.0" },
-    { name = "opentelemetry-instrumentation", specifier = ">=0.50b0" },
-    { name = "opentelemetry-sdk", marker = "extra == 'test'", specifier = ">=1.27.0" },
-    { name = "opentelemetry-semantic-conventions", specifier = ">=0.50b0" },
+    { name = "anthropic", marker = "extra == 'test'", specifier = ">=0.59.0" },
+    { name = "autopep8", marker = "extra == 'dev'", specifier = ">=2.3.2" },
+    { name = "flake8", marker = "extra == 'dev'", specifier = ">=7.3.0" },
+    { name = "opentelemetry-api", specifier = ">=1.35.0" },
+    { name = "opentelemetry-instrumentation", specifier = ">=0.56b0" },
+    { name = "opentelemetry-sdk", marker = "extra == 'test'", specifier = ">=1.35.0" },
+    { name = "opentelemetry-semantic-conventions", specifier = ">=0.56b0" },
     { name = "opentelemetry-semantic-conventions-ai" },
-    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.2.2" },
-    { name = "pytest", marker = "extra == 'test'", specifier = ">=8.2.2" },
-    { name = "pytest-asyncio", marker = "extra == 'test'", specifier = ">=0.23.7" },
-    { name = "pytest-recording", marker = "extra == 'test'", specifier = ">=0.13.1" },
+    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.4.1" },
+    { name = "pytest", marker = "extra == 'test'", specifier = ">=8.4.1" },
+    { name = "pytest-asyncio", marker = "extra == 'test'", specifier = ">=1.1.0" },
+    { name = "pytest-recording", marker = "extra == 'test'", specifier = ">=0.13.4" },
     { name = "pytest-sugar", marker = "extra == 'dev'", specifier = "==1.0.0" },
     { name = "pytest-sugar", marker = "extra == 'test'", specifier = "==1.0.0" },
-    { name = "vcrpy", marker = "extra == 'test'", specifier = ">=6.0.1" },
+    { name = "vcrpy", marker = "extra == 'test'", specifier = ">=7.0.0" },
 ]
 provides-extras = ["dev", "test"]
 

@@ -83,9 +83,9 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "autopep8", marker = "extra == 'dev'", specifier = ">=2.2.0" },
-    { name = "flake8", marker = "extra == 'dev'", specifier = ">=7.1.2" },
-    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.2.2" },
+    { name = "autopep8", marker = "extra == 'dev'", specifier = ">=2.3.2" },
+    { name = "flake8", marker = "extra == 'dev'", specifier = ">=7.3.0" },
+    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.4.1" },
     { name = "pytest-sugar", marker = "extra == 'dev'", specifier = "==1.0.0" },
 ]
 provides-extras = ["dev"]

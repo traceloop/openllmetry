@@ -155,7 +155,7 @@ name = "exceptiongroup"
 version = "1.3.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "typing-extensions", marker = "python_full_version < '3.13'" },
+    { name = "typing-extensions", marker = "python_full_version < '3.11'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/0b/9f/a65090624ecf468cdca03533906e7c69ed7588582240cfe7cc9e770b50eb/exceptiongroup-1.3.0.tar.gz", hash = "sha256:b241f5885f560bc56a59ee63ca4c6a8bfa46ae4ad651af316d4e81817bb9fd88", size = 29749 }
 wheels = [
@@ -258,7 +258,7 @@ wheels = [
 
 [[package]]
 name = "google-genai"
-version = "1.26.0"
+version = "1.27.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "anyio" },
@@ -270,9 +270,9 @@ dependencies = [
     { name = "typing-extensions" },
     { name = "websockets" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/4a/6e/d9618081990ad7c4907c93fcccacb13081e825ca818e9e18618f91050246/google_genai-1.26.0.tar.gz", hash = "sha256:d7b019ac98ca07888caa6121a953eb65db20f78370d8ae06aec29fb534534dc8", size = 218877 }
+sdist = { url = "https://files.pythonhosted.org/packages/9a/37/6c0ececc3a7a629029b5beed2ceb9f28f73292236eb96272355636769b0d/google_genai-1.27.0.tar.gz", hash = "sha256:15a13ffe7b3938da50b9ab77204664d82122617256f55b5ce403d593848ef635", size = 220099 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/50/7d/201894058552d5ed810930f9483bf6be8650e3d599efab180d0510d0eea1/google_genai-1.26.0-py3-none-any.whl", hash = "sha256:a050de052ee6e68654ba7cdb97028a576ad7108d0ecc9257c69bcc555498e9a2", size = 217693 },
+    { url = "https://files.pythonhosted.org/packages/5a/12/279afe7357af73f9737a3412b6f0bc1482075b896340eb46a2f9cb0fd791/google_genai-1.27.0-py3-none-any.whl", hash = "sha256:afd6b4efaf8ec1d20a6e6657d768b68d998d60007c6e220e9024e23c913c1833", size = 218489 },
 ]
 
 [[package]]
@@ -643,21 +643,21 @@ test = [
 
 [package.metadata]
 requires-dist = [
-    { name = "autopep8", marker = "extra == 'dev'", specifier = ">=2.2.0" },
-    { name = "flake8", marker = "extra == 'dev'", specifier = ">=7.1.2" },
-    { name = "google-genai", marker = "extra == 'test'", specifier = ">=1.0.0" },
-    { name = "google-generativeai", marker = "extra == 'test'", specifier = ">=0.8.3" },
-    { name = "opentelemetry-api", specifier = ">=1.28.0" },
-    { name = "opentelemetry-instrumentation", specifier = ">=0.50b0" },
-    { name = "opentelemetry-sdk", marker = "extra == 'test'", specifier = ">=1.27.0" },
-    { name = "opentelemetry-semantic-conventions", specifier = ">=0.50b0" },
+    { name = "autopep8", marker = "extra == 'dev'", specifier = ">=2.3.2" },
+    { name = "flake8", marker = "extra == 'dev'", specifier = ">=7.3.0" },
+    { name = "google-genai", marker = "extra == 'test'", specifier = ">=1.27.0" },
+    { name = "google-generativeai", marker = "extra == 'test'", specifier = ">=0.8.5" },
+    { name = "opentelemetry-api", specifier = ">=1.35.0" },
+    { name = "opentelemetry-instrumentation", specifier = ">=0.56b0" },
+    { name = "opentelemetry-sdk", marker = "extra == 'test'", specifier = ">=1.35.0" },
+    { name = "opentelemetry-semantic-conventions", specifier = ">=0.56b0" },
     { name = "opentelemetry-semantic-conventions-ai" },
-    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.2.2" },
-    { name = "pytest", marker = "extra == 'test'", specifier = ">=8.2.2" },
-    { name = "pytest-recording", marker = "extra == 'test'", specifier = ">=0.13.1" },
+    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.4.1" },
+    { name = "pytest", marker = "extra == 'test'", specifier = ">=8.4.1" },
+    { name = "pytest-recording", marker = "extra == 'test'", specifier = ">=0.13.4" },
     { name = "pytest-sugar", marker = "extra == 'dev'", specifier = ">=1.0.0" },
     { name = "pytest-sugar", marker = "extra == 'test'", specifier = ">=1.0.0" },
-    { name = "vcrpy", marker = "extra == 'test'", specifier = ">=6.0.1" },
+    { name = "vcrpy", marker = "extra == 'test'", specifier = ">=7.0.0" },
 ]
 provides-extras = ["dev", "test"]
 

@@ -15,26 +15,26 @@ license = {text = "Apache-2.0"}
 readme = "README.md"
 requires-python = ">=3.9"
 dependencies = [
-    "opentelemetry-api>=1.28.0",
-    "opentelemetry-instrumentation>=0.50b0",
-    "opentelemetry-semantic-conventions>=0.50b0",
+    "opentelemetry-api>=1.35.0",
+    "opentelemetry-instrumentation>=0.56b0",
+    "opentelemetry-semantic-conventions>=0.56b0",
     "opentelemetry-semantic-conventions-ai",
     "tiktoken>=0.6.0,<1",
 ]
 
 [project.optional-dependencies]
 dev = [
-    "autopep8>=2.2.0",
-    "flake8>=7.1.2",
+    "autopep8>=2.3.2",
+    "flake8>=7.3.0",
 ]
 test = [
-    "pytest>=8.2.2",
+    "pytest>=8.4.1",
     "pytest-sugar==1.0.0",
-    "vcrpy>=6.0.1",
-    "pytest-recording>=0.13.1",
-    "openai[datalib]>=1.66.0",
-    "opentelemetry-sdk>=1.27.0",
-    "pytest-asyncio>=0.23.7",
+    "vcrpy>=7.0.0",
+    "pytest-recording>=0.13.4",
+    "openai[datalib]>=1.97.1",
+    "opentelemetry-sdk>=1.35.0",
+    "pytest-asyncio>=1.1.0",
 ]
 instruments = ["openai"]
 

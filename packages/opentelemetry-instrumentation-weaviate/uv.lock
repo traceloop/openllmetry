@@ -665,7 +665,7 @@ wheels = [
 
 [[package]]
 name = "openai"
-version = "1.97.0"
+version = "1.97.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "anyio" },
@@ -677,9 +677,9 @@ dependencies = [
     { name = "tqdm" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/e0/c6/b8d66e4f3b95493a8957065b24533333c927dc23817abe397f13fe589c6e/openai-1.97.0.tar.gz", hash = "sha256:0be349569ccaa4fb54f97bb808423fd29ccaeb1246ee1be762e0c81a47bae0aa", size = 493850 }
+sdist = { url = "https://files.pythonhosted.org/packages/a6/57/1c471f6b3efb879d26686d31582997615e969f3bb4458111c9705e56332e/openai-1.97.1.tar.gz", hash = "sha256:a744b27ae624e3d4135225da9b1c89c107a2a7e5bc4c93e5b7b5214772ce7a4e", size = 494267 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/8a/91/1f1cf577f745e956b276a8b1d3d76fa7a6ee0c2b05db3b001b900f2c71db/openai-1.97.0-py3-none-any.whl", hash = "sha256:a1c24d96f4609f3f7f51c9e1c2606d97cc6e334833438659cfd687e9c972c610", size = 764953 },
+    { url = "https://files.pythonhosted.org/packages/ee/35/412a0e9c3f0d37c94ed764b8ac7adae2d834dbd20e69f6aca582118e0f55/openai-1.97.1-py3-none-any.whl", hash = "sha256:4e96bbdf672ec3d44968c9ea39d2c375891db1acc1794668d8149d5fa6000606", size = 764380 },
 ]
 
 [[package]]
@@ -757,22 +757,22 @@ test = [
 
 [package.metadata]
 requires-dist = [
-    { name = "autopep8", marker = "extra == 'dev'", specifier = ">=2.2.0" },
-    { name = "flake8", marker = "extra == 'dev'", specifier = ">=7.1.2" },
-    { name = "openai", marker = "extra == 'test'", specifier = ">=1.31.1" },
-    { name = "opentelemetry-api", specifier = ">=1.28.0" },
-    { name = "opentelemetry-instrumentation", specifier = ">=0.50b0" },
+    { name = "autopep8", marker = "extra == 'dev'", specifier = ">=2.3.2" },
+    { name = "flake8", marker = "extra == 'dev'", specifier = ">=7.3.0" },
+    { name = "openai", marker = "extra == 'test'", specifier = ">=1.97.1" },
+    { name = "opentelemetry-api", specifier = ">=1.35.0" },
+    { name = "opentelemetry-instrumentation", specifier = ">=0.56b0" },
     { name = "opentelemetry-instrumentation-openai", marker = "extra == 'test'" },
-    { name = "opentelemetry-sdk", marker = "extra == 'test'", specifier = ">=1.27.0" },
-    { name = "opentelemetry-semantic-conventions", specifier = ">=0.50b0" },
+    { name = "opentelemetry-sdk", marker = "extra == 'test'", specifier = ">=1.35.0" },
+    { name = "opentelemetry-semantic-conventions", specifier = ">=0.56b0" },
     { name = "opentelemetry-semantic-conventions-ai" },
-    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.2.2" },
-    { name = "pytest", marker = "extra == 'test'", specifier = ">=8.2.2" },
-    { name = "pytest-recording", marker = "extra == 'test'", specifier = ">=0.13.1" },
+    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.4.1" },
+    { name = "pytest", marker = "extra == 'test'", specifier = ">=8.4.1" },
+    { name = "pytest-recording", marker = "extra == 'test'", specifier = ">=0.13.4" },
     { name = "pytest-sugar", marker = "extra == 'dev'", specifier = ">=1.0.0" },
     { name = "pytest-sugar", marker = "extra == 'test'", specifier = ">=1.0.0" },
-    { name = "vcrpy", marker = "extra == 'test'", specifier = ">=6.0.1" },
-    { name = "weaviate-client", marker = "extra == 'test'", specifier = ">=3.26,<5.0" },
+    { name = "vcrpy", marker = "extra == 'test'", specifier = ">=7.0.0" },
+    { name = "weaviate-client", marker = "extra == 'test'", specifier = ">=4.16.4" },
 ]
 provides-extras = ["dev", "test"]
 
@@ -1476,7 +1476,7 @@ wheels = [
 
 [[package]]
 name = "weaviate-client"
-version = "4.16.3"
+version = "4.16.4"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "authlib" },
@@ -1487,9 +1487,9 @@ dependencies = [
     { name = "pydantic" },
     { name = "validators" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/43/09/fefbffd499da6d46d897eecde4942a5ce4880dc8fdccbbd2363704a6ba32/weaviate_client-4.16.3.tar.gz", hash = "sha256:e0c7f160787623fefcee0bfe2d160ad1b2f0178c5d1d92fea41de124a0cb1b2a", size = 779601 }
+sdist = { url = "https://files.pythonhosted.org/packages/b1/6a/be2257fbd890674204c393782e75b794cf0939a8dab8a4f1c0ab38d1663a/weaviate_client-4.16.4.tar.gz", hash = "sha256:50efc819274640564bbeca91405aef1674170e3d93f0bd7a9496b5b37d0fe746", size = 779617 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/8f/7a/97cfe61a6610eacd9b81691052c50c01d100eb4b136fb9a4ccccabf098c7/weaviate_client-4.16.3-py3-none-any.whl", hash = "sha256:e970db032ce8ce20e9dc56d25fd1944d06fe90976c29b4ae56c3aa2991ab81f1", size = 597232 },
+    { url = "https://files.pythonhosted.org/packages/c1/a5/414c1452b786a27be1d1314c3051abf82af921ca20ada16df55c0d19997d/weaviate_client-4.16.4-py3-none-any.whl", hash = "sha256:299bab2ae822271ddc40005a7cd95f332e8243c7cff38df3bb9f4aca23221dcc", size = 597160 },
 ]
 
 [[package]]

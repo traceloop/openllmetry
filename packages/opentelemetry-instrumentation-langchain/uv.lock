@@ -1515,7 +1515,7 @@ requires-dist = [
     { name = "pytest-sugar", marker = "extra == 'dev'", specifier = ">=1.0.0" },
     { name = "pytest-sugar", marker = "extra == 'test'", specifier = ">=1.0.0" },
     { name = "text-generation", marker = "extra == 'test'", specifier = ">=0.7.0" },
-    { name = "vcrpy", marker = "extra == 'test'", specifier = ">=6.0.2" },
+    { name = "vcrpy", marker = "extra == 'test'", specifier = ">=7.0.0" },
 ]
 provides-extras = ["dev", "test"]
 

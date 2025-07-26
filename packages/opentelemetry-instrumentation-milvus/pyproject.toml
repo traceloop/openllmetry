@@ -15,26 +15,26 @@ license = {text = "Apache-2.0"}
 readme = "README.md"
 requires-python = ">=3.9"
 dependencies = [
-    "opentelemetry-api>=1.28.0",
-    "opentelemetry-semantic-conventions>=0.50b0",
-    "opentelemetry-instrumentation>=0.50b0",
+    "opentelemetry-api>=1.35.0",
+    "opentelemetry-semantic-conventions>=0.56b0",
+    "opentelemetry-instrumentation>=0.56b0",
     "opentelemetry-semantic-conventions-ai",
 ]
 instruments = ["milvus"]
 
 [project.optional-dependencies]
 dev = [
-    "autopep8>=2.2.0",
-    "flake8>=7.1.2",
-    "pytest>=8.2.2",
+    "autopep8>=2.3.2",
+    "flake8>=7.3.0",
+    "pytest>=8.4.1",
     "pytest-sugar>=1.0.0",
-    "pymilvus>=2.4.1",
+    "pymilvus>=2.5.14",
 ]
 test = [
-    "pymilvus>=2.4.1",
-    "pytest>=8.2.2",
+    "pymilvus>=2.5.14",
+    "pytest>=8.4.1",
     "pytest-sugar>=1.0.0",
-    "opentelemetry-sdk>=1.27.0",
+    "opentelemetry-sdk>=1.35.0",
 ]
 
 [project.entry-points."opentelemetry_instrumentor"]

@@ -13,11 +13,11 @@ authors = [
 ]
 license = {text = "Apache-2.0"}
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 dependencies = [
-    "opentelemetry-api>=1.28.0",
-    "opentelemetry-instrumentation>=0.50b0",
-    "opentelemetry-semantic-conventions>=0.50b0",
+    "opentelemetry-api>=1.35.0",
+    "opentelemetry-instrumentation>=0.56b0",
+    "opentelemetry-semantic-conventions>=0.56b0",
     "opentelemetry-semantic-conventions-ai",
     "inflection>=0.5.1",
 ]
@@ -25,28 +25,28 @@ instruments = ["llama-index"]
 
 [project.optional-dependencies]
 dev = [
-    "autopep8>=2.2.0",
-    "flake8>=7.1.2",
+    "autopep8>=2.3.2",
+    "flake8>=7.3.0",
 ]
 test = [
-    "vcrpy>=6.0.1",
-    "pytest-recording>=0.13.1",
-    "pytest-asyncio>=0.23.7",
-    "chromadb>=0.5.23",
-    "openai>=1.52.2",
+    "vcrpy>=7.0.0",
+    "pytest-recording>=0.13.4",
+    "pytest-asyncio>=1.1.0",
+    "chromadb>=1.0.15",
+    "openai>=1.97.1",
     "opentelemetry-instrumentation-chromadb",
     "opentelemetry-instrumentation-cohere",
     "opentelemetry-instrumentation-openai",
-    "opentelemetry-sdk>=1.27.0",
-    "llama-index>=0.12.6",
-    "llama-index-postprocessor-cohere-rerank>=0.3.0",
-    "sqlalchemy>=2.0.31",
-    "llama-index-agent-openai>=0.4.1",
-    "llama-index-vector-stores-chroma>=0.4.1",
-    "llama-index-llms-cohere>=0.4.0",
+    "opentelemetry-sdk>=1.35.0",
+    "llama-index>=0.12.52",
+    "llama-index-postprocessor-cohere-rerank>=0.4.0",
+    "sqlalchemy>=2.0.41",
+    "llama-index-agent-openai>=0.4.12",
+    "llama-index-vector-stores-chroma>=0.4.2",
+    "llama-index-llms-cohere>=0.5.0",
     "llama-index-embeddings-openai>=0.3.1",
     "onnxruntime<1.20.0",
-    "llama-parse>=0.5.20",
+    "llama-parse>=0.6.51",
 ]
 
 [project.entry-points."opentelemetry_instrumentor"]

@@ -37,7 +37,7 @@ test = [
     "opentelemetry-instrumentation-openai",
     "pytest>=8.4.1",
     "pytest-sugar>=1.0.0",
-    "vcrpy>=6.0.2",
+    "vcrpy>=7.0.0",
     "pytest-recording>=0.13.4",
     "pytest-asyncio>=1.1.0",
     "opentelemetry-sdk>=1.35.0",

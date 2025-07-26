@@ -18,9 +18,9 @@ dependencies = []
 
 [project.optional-dependencies]
 dev = [
-    "autopep8>=2.2.0",
-    "flake8>=7.1.2",
-    "pytest>=8.2.2",
+    "autopep8>=2.3.2",
+    "flake8>=7.3.0",
+    "pytest>=8.4.1",
     "pytest-sugar==1.0.0",
 ]
 
