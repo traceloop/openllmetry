@@ -24,7 +24,7 @@ from opentelemetry.instrumentation.utils import (
     _SUPPRESS_INSTRUMENTATION_KEY,
     unwrap,
 )
-from opentelemetry.semconv_ai import LLMRequestTypeValues, SpanAttributes
+from opentelemetry.semconv_ai import LLMRequestTypeValues, LLMVendor, SpanAttributes
 from opentelemetry.trace import SpanKind, get_tracer
 from opentelemetry.trace.status import Status, StatusCode
 from wrapt import wrap_function_wrapper
@@ -123,7 +123,7 @@ def _wrap(
         name,
         kind=SpanKind.CLIENT,
         attributes={
-            SpanAttributes.LLM_SYSTEM: "Replicate",
+            SpanAttributes.LLM_SYSTEM: LLMVendor.REPLICATE.value,
             SpanAttributes.LLM_REQUEST_TYPE: LLMRequestTypeValues.COMPLETION.value,
         },
     )

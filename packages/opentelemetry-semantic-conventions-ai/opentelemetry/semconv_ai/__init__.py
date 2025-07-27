@@ -3,6 +3,45 @@ from enum import Enum
 SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY = "suppress_language_model_instrumentation"
 
 
+class System(Enum):
+    """
+    Supported LLM vendor (System) names used across OpenLLMetry instrumentations.
+
+    These values match the actual strings used in span attributes (LLM_SYSTEM)
+    throughout the instrumentation packages.
+    """
+
+    OPENAI = "openai"
+    ANTHROPIC = "Anthropic"
+    COHERE = "Cohere"
+    MISTRALAI = "MistralAI"
+    OLLAMA = "Ollama"
+    GROQ = "Groq"
+    ALEPH_ALPHA = "AlephAlpha"
+    REPLICATE = "Replicate"
+    TOGETHER_AI = "TogetherAI"
+    WATSONX = "Watsonx"
+    HUGGINGFACE = "HuggingFace"
+    FIREWORKS = "Fireworks"
+
+    AZURE = "Azure"
+    AWS = "AWS"
+    GOOGLE = "Google"
+    OPENROUTER = "OpenRouter"
+
+    LANGCHAIN = "Langchain"
+    CREWAI = "crewai"
+
+    @classmethod
+    def values(cls):
+        """Return all system values as a list of strings."""
+        return [system.value for system in cls]
+
+    def __str__(self):
+        """Return the system value as string for easy usage."""
+        return self.value
+
+
 class Meters:
     LLM_GENERATION_CHOICES = "gen_ai.client.generation.choices"
     LLM_TOKEN_USAGE = "gen_ai.client.token.usage"

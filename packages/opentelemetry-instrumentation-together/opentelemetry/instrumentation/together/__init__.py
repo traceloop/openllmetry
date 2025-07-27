@@ -26,6 +26,7 @@ from opentelemetry.instrumentation.utils import (
 from opentelemetry.semconv_ai import (
     SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
     LLMRequestTypeValues,
+    LLMVendor,
     SpanAttributes,
 )
 from opentelemetry.trace import SpanKind, get_tracer
@@ -113,7 +114,7 @@ def _wrap(
         name,
         kind=SpanKind.CLIENT,
         attributes={
-            SpanAttributes.LLM_SYSTEM: "TogetherAI",
+            SpanAttributes.LLM_SYSTEM: LLMVendor.TOGETHER_AI.value,
             SpanAttributes.LLM_REQUEST_TYPE: llm_request_type.value,
         },
     )

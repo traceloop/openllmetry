@@ -33,6 +33,7 @@ from opentelemetry.metrics import Counter, Histogram, Meter, get_meter
 from opentelemetry.semconv_ai import (
     SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
     LLMRequestTypeValues,
+    LLMVendor,
     Meters,
     SpanAttributes,
 )
@@ -242,7 +243,7 @@ def _wrap(
         name,
         kind=SpanKind.CLIENT,
         attributes={
-            SpanAttributes.LLM_SYSTEM: "Groq",
+            SpanAttributes.LLM_SYSTEM: LLMVendor.GROQ.value,
             SpanAttributes.LLM_REQUEST_TYPE: LLMRequestTypeValues.COMPLETION.value,
         },
     )
@@ -324,7 +325,7 @@ async def _awrap(
         name,
         kind=SpanKind.CLIENT,
         attributes={
-            SpanAttributes.LLM_SYSTEM: "Groq",
+            SpanAttributes.LLM_SYSTEM: LLMVendor.GROQ.value,
             SpanAttributes.LLM_REQUEST_TYPE: LLMRequestTypeValues.COMPLETION.value,
         },
     )

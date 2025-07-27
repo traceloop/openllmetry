@@ -28,6 +28,7 @@ from opentelemetry.metrics import Counter, Histogram, get_meter
 from opentelemetry.semconv_ai import (
     SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
     LLMRequestTypeValues,
+    LLMVendor,
     Meters,
     SpanAttributes,
 )
@@ -437,7 +438,7 @@ def _build_and_set_stream_response(
 def _metric_shared_attributes(response_model: str, is_streaming: bool = False):
     return {
         SpanAttributes.LLM_RESPONSE_MODEL: response_model,
-        SpanAttributes.LLM_SYSTEM: "watsonx",
+        SpanAttributes.LLM_SYSTEM: LLMVendor.WATSONX.value,
         "stream": is_streaming,
     }
 
@@ -561,7 +562,7 @@ def _wrap(
         name,
         kind=SpanKind.CLIENT,
         attributes={
-            SpanAttributes.LLM_SYSTEM: "Watsonx",
+            SpanAttributes.LLM_SYSTEM: LLMVendor.WATSONX.value,
             SpanAttributes.LLM_REQUEST_TYPE: LLMRequestTypeValues.COMPLETION.value,
         },
     )

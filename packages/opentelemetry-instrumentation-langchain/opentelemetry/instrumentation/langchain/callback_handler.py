@@ -58,6 +58,7 @@ from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
 from opentelemetry.semconv_ai import (
     SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
     LLMRequestTypeValues,
+    LLMVendor,
     SpanAttributes,
     TraceloopSpanKindValues,
 )
@@ -504,7 +505,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             )
 
             # Record token usage metrics
-            vendor = span.attributes.get(SpanAttributes.LLM_SYSTEM, "Langchain")
+            vendor = span.attributes.get(SpanAttributes.LLM_SYSTEM, LLMVendor.LANGCHAIN.value)
             if prompt_tokens > 0:
                 self.token_histogram.record(
                     prompt_tokens,
@@ -533,7 +534,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
 
         # Record duration
         duration = time.time() - self.spans[run_id].start_time
-        vendor = span.attributes.get(SpanAttributes.LLM_SYSTEM, "Langchain")
+        vendor = span.attributes.get(SpanAttributes.LLM_SYSTEM, LLMVendor.LANGCHAIN.value)
         self.duration_histogram.record(
             duration,
             attributes={
