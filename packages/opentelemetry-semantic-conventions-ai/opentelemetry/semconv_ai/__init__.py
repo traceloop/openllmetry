@@ -272,3 +272,192 @@ class TraceloopSpanKindValues(Enum):
     AGENT = "agent"
     TOOL = "tool"
     UNKNOWN = "unknown"
+
+
+class MetricBuckets:
+    """Predefined histogram bucket boundaries for GenAI metrics."""
+
+    LLM_TOKEN_USAGE = [
+        1,
+        4,
+        16,
+        64,
+        256,
+        1024,
+        4096,
+        16384,
+        65536,
+        262144,
+        1048576,
+        4194304,
+        16777216,
+        67108864,
+    ]
+
+    PINECONE_DB_QUERY_DURATION = [
+        0.01,
+        0.02,
+        0.04,
+        0.08,
+        0.16,
+        0.32,
+        0.64,
+        1.28,
+        2.56,
+        5.12,
+        10.24,
+        20.48,
+        40.96,
+        81.92,
+    ]
+
+    PINECONE_DB_QUERY_SCORES = [
+        -1,
+        -0.875,
+        -0.75,
+        -0.625,
+        -0.5,
+        -0.375,
+        -0.25,
+        -0.125,
+        0,
+        0.125,
+        0.25,
+        0.375,
+        0.5,
+        0.625,
+        0.75,
+        0.875,
+        1,
+    ]
+
+
+class MetricViewsBuilder:
+    """Builder for OpenTelemetry metric views with predefined buckets."""
+
+    @staticmethod
+    def get_llm_token_usage_view():
+        from opentelemetry.sdk.metrics.view import View, ExplicitBucketHistogramAggregation
+
+        return View(
+            instrument_name=Meters.LLM_TOKEN_USAGE,
+            aggregation=ExplicitBucketHistogramAggregation(
+                MetricBuckets.LLM_TOKEN_USAGE
+            ),
+        )
+
+    @staticmethod
+    def get_pinecone_query_duration_view():
+        from opentelemetry.sdk.metrics.view import View, ExplicitBucketHistogramAggregation
+
+        return View(
+            instrument_name=Meters.PINECONE_DB_QUERY_DURATION,
+            aggregation=ExplicitBucketHistogramAggregation(
+                MetricBuckets.PINECONE_DB_QUERY_DURATION
+            ),
+        )
+
+    @staticmethod
+    def get_pinecone_query_scores_view():
+        from opentelemetry.sdk.metrics.view import View, ExplicitBucketHistogramAggregation
+
+        return View(
+            instrument_name=Meters.PINECONE_DB_QUERY_SCORES,
+            aggregation=ExplicitBucketHistogramAggregation(
+                MetricBuckets.PINECONE_DB_QUERY_SCORES
+            ),
+        )
+
+    @staticmethod
+    def get_llm_operation_duration_view():
+        from opentelemetry.sdk.metrics.view import View
+
+        return View(
+            instrument_name=Meters.LLM_OPERATION_DURATION,
+        )
+
+    @staticmethod
+    def get_db_query_duration_view():
+        from opentelemetry.sdk.metrics.view import View, ExplicitBucketHistogramAggregation
+
+        return View(
+            instrument_name=Meters.DB_QUERY_DURATION,
+            aggregation=ExplicitBucketHistogramAggregation(
+                MetricBuckets.PINECONE_DB_QUERY_DURATION
+            ),
+        )
+
+    @staticmethod
+    def get_db_search_distance_view():
+        from opentelemetry.sdk.metrics.view import View, ExplicitBucketHistogramAggregation
+
+        return View(
+            instrument_name=Meters.DB_SEARCH_DISTANCE,
+            aggregation=ExplicitBucketHistogramAggregation(
+                MetricBuckets.PINECONE_DB_QUERY_SCORES
+            ),
+        )
+
+    @staticmethod
+    def get_all_genai_views():
+        return [
+            MetricViewsBuilder.get_llm_token_usage_view(),
+            MetricViewsBuilder.get_pinecone_query_duration_view(),
+            MetricViewsBuilder.get_pinecone_query_scores_view(),
+            MetricViewsBuilder.get_llm_operation_duration_view(),
+            MetricViewsBuilder.get_db_query_duration_view(),
+            MetricViewsBuilder.get_db_search_distance_view(),
+        ]
+
+
+def apply_genai_bucket_configuration():
+    """Apply GenAI bucket configuration to the global MeterProvider."""
+    try:
+        from opentelemetry import metrics
+        from opentelemetry.sdk.metrics import MeterProvider
+
+        current_provider = metrics.get_meter_provider()
+
+        if hasattr(current_provider, '_genai_buckets_applied'):
+            return
+
+        genai_views = MetricViewsBuilder.get_all_genai_views()
+        provider_type = str(type(current_provider))
+
+        if ('NoOp' in provider_type or 'Proxy' in provider_type or
+                not hasattr(current_provider, '__module__') or
+                current_provider.__class__.__name__ == 'ProxyMeterProvider'):
+            new_provider = MeterProvider(views=genai_views)
+            new_provider._genai_buckets_applied = True
+            metrics.set_meter_provider(new_provider)
+
+        else:
+            existing_readers = []
+
+            if hasattr(current_provider, '_all_metric_readers'):
+                old_readers = list(getattr(current_provider, '_all_metric_readers', []))
+
+                for old_reader in old_readers:
+                    try:
+                        if hasattr(old_reader, '_exporter') and hasattr(old_reader, '_export_interval_millis'):
+                            from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
+                            new_reader = PeriodicExportingMetricReader(
+                                exporter=old_reader._exporter,
+                                export_interval_millis=old_reader._export_interval_millis
+                            )
+                            existing_readers.append(new_reader)
+                    except Exception:
+                        pass
+            try:
+                new_provider = MeterProvider(
+                    views=genai_views,
+                    metric_readers=existing_readers
+                )
+                new_provider._genai_buckets_applied = True
+
+                import opentelemetry.metrics._internal as metrics_internal
+                metrics_internal._METER_PROVIDER = new_provider
+            except Exception:
+                current_provider._genai_buckets_applied = True
+    except (ImportError, Exception):
+        pass
