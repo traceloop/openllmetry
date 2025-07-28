@@ -93,6 +93,10 @@ develop = true
 path = "../opentelemetry-instrumentation-crewai"
 develop = true
 
+[tool.poetry.dependencies.opentelemetry-semantic-conventions-ai]
+path = "../opentelemetry-semantic-conventions-ai"
+develop = true
+
 [tool.poetry.dependencies.opentelemetry-instrumentation-openai-agents]
 path = "../opentelemetry-instrumentation-openai-agents"
 develop = true
