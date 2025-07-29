@@ -1,13 +1,16 @@
-from opentelemetry.instrumentation.openai.shared import (
-    _set_span_attribute,
-)
+from opentelemetry.instrumentation.openai.shared import _set_span_attribute
+from opentelemetry.instrumentation.openai.shared.event_emitter import emit_event
+from opentelemetry.instrumentation.openai.shared.event_models import ChoiceEvent
+from opentelemetry.instrumentation.openai.utils import should_emit_events
+from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
 from opentelemetry.semconv_ai import SpanAttributes
-from openai import AssistantEventHandler
+from opentelemetry.trace import Status, StatusCode
 from typing_extensions import override
+
+from openai import AssistantEventHandler
 
 
 class EventHandleWrapper(AssistantEventHandler):
-
     _current_text_index = 0
     _prompt_tokens = 0
     _completion_tokens = 0
@@ -65,6 +68,9 @@ class EventHandleWrapper(AssistantEventHandler):
 
     @override
     def on_exception(self, exception: Exception):
+        self._span.set_attribute(ERROR_TYPE, exception.__class__.__name__)
+        self._span.record_exception(exception)
+        self._span.set_status(Status(StatusCode.ERROR, str(exception)))
         self._original_handler.on_exception(exception)
 
     @override
@@ -86,6 +92,15 @@ class EventHandleWrapper(AssistantEventHandler):
             f"gen_ai.response.{self._current_text_index}.id",
             message.id,
         )
+        emit_event(
+            ChoiceEvent(
+                index=self._current_text_index,
+                message={
+                    "content": [item.model_dump() for item in message.content],
+                    "role": message.role,
+                },
+            )
+        )
         self._original_handler.on_message_done(message)
         self._current_text_index += 1
 
@@ -100,16 +115,17 @@ class EventHandleWrapper(AssistantEventHandler):
     @override
     def on_text_done(self, text):
         self._original_handler.on_text_done(text)
-        _set_span_attribute(
-            self._span,
-            f"{SpanAttributes.LLM_COMPLETIONS}.{self._current_text_index}.role",
-            "assistant",
-        )
-        _set_span_attribute(
-            self._span,
-            f"{SpanAttributes.LLM_COMPLETIONS}.{self._current_text_index}.content",
-            text.value,
-        )
+        if not should_emit_events():
+            _set_span_attribute(
+                self._span,
+                f"{SpanAttributes.LLM_COMPLETIONS}.{self._current_text_index}.role",
+                "assistant",
+            )
+            _set_span_attribute(
+                self._span,
+                f"{SpanAttributes.LLM_COMPLETIONS}.{self._current_text_index}.content",
+                text.value,
+            )
 
     @override
     def on_image_file_done(self, image_file):

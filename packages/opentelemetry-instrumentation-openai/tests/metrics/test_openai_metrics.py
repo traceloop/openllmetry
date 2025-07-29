@@ -1,7 +1,7 @@
 import pytest
 from openai import OpenAI
-from opentelemetry.semconv_ai import SpanAttributes, Meters
 from opentelemetry.semconv._incubating.metrics import gen_ai_metrics as GenAIMetrics
+from opentelemetry.semconv_ai import Meters, SpanAttributes
 from pydantic import BaseModel
 
 
@@ -11,9 +11,7 @@ def openai_client():
 
 
 @pytest.mark.vcr
-def test_chat_completion_metrics(metrics_test_context, openai_client):
-    _, reader = metrics_test_context
-
+def test_chat_completion_metrics(instrument_legacy, reader, openai_client):
     openai_client.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=[
@@ -40,7 +38,6 @@ def test_chat_completion_metrics(metrics_test_context, openai_client):
     for rm in resource_metrics:
         for sm in rm.scope_metrics:
             for metric in sm.metrics:
-
                 if metric.name == Meters.LLM_TOKEN_USAGE:
                     found_token_metric = True
                     for data_point in metric.data.data_points:
@@ -76,9 +73,7 @@ def test_chat_completion_metrics(metrics_test_context, openai_client):
 
 
 @pytest.mark.vcr
-def test_chat_parsed_completion_metrics(metrics_test_context, openai_client):
-    _, reader = metrics_test_context
-
+def test_chat_parsed_completion_metrics(instrument_legacy, reader, openai_client):
     class StructuredAnswer(BaseModel):
         poem: str
         style: str
@@ -112,11 +107,20 @@ def test_chat_parsed_completion_metrics(metrics_test_context, openai_client):
             for metric in sm.metrics:
                 for data_point in metric.data.data_points:
                     model = data_point.attributes.get(SpanAttributes.LLM_RESPONSE_MODEL)
-                    if metric.name == Meters.LLM_TOKEN_USAGE and model == 'gpt-4o-2024-08-06':
+                    if (
+                        metric.name == Meters.LLM_TOKEN_USAGE
+                        and model == "gpt-4o-2024-08-06"
+                    ):
                         found_token_metric = True
-                    elif metric.name == Meters.LLM_GENERATION_CHOICES and model == 'gpt-4o-2024-08-06':
+                    elif (
+                        metric.name == Meters.LLM_GENERATION_CHOICES
+                        and model == "gpt-4o-2024-08-06"
+                    ):
                         found_choice_metric = True
-                    elif metric.name == Meters.LLM_OPERATION_DURATION and model == 'gpt-4o-2024-08-06':
+                    elif (
+                        metric.name == Meters.LLM_OPERATION_DURATION
+                        and model == "gpt-4o-2024-08-06"
+                    ):
                         found_duration_metric = True
 
     assert found_token_metric
@@ -125,9 +129,7 @@ def test_chat_parsed_completion_metrics(metrics_test_context, openai_client):
 
 
 @pytest.mark.vcr
-def test_chat_streaming_metrics(metrics_test_context, openai_client):
-    _, reader = metrics_test_context
-
+def test_chat_streaming_metrics(instrument_legacy, reader, openai_client):
     response = openai_client.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=[
@@ -147,7 +149,6 @@ def test_chat_streaming_metrics(metrics_test_context, openai_client):
     for _ in response:
         pass
 
-    reader.get_metrics_data()
     metrics_data = reader.get_metrics_data()
     resource_metrics = metrics_data.resource_metrics
     assert len(resource_metrics) > 0
@@ -161,7 +162,6 @@ def test_chat_streaming_metrics(metrics_test_context, openai_client):
     for rm in resource_metrics:
         for sm in rm.scope_metrics:
             for metric in sm.metrics:
-
                 if metric.name == Meters.LLM_TOKEN_USAGE:
                     found_token_metric = True
                     for data_point in metric.data.data_points:
@@ -221,8 +221,7 @@ def test_chat_streaming_metrics(metrics_test_context, openai_client):
 
 
 @pytest.mark.vcr
-def test_embeddings_metrics(metrics_test_context, openai_client):
-    provider, reader = metrics_test_context
+def test_embeddings_metrics(instrument_legacy, reader, openai_client):
     openai_client.embeddings.create(
         input="Tell me a joke about opentelemetry",
         model="text-embedding-ada-002",
@@ -270,8 +269,7 @@ def test_embeddings_metrics(metrics_test_context, openai_client):
 
 
 @pytest.mark.vcr
-def test_image_gen_metrics(metrics_test_context, openai_client):
-    provider, reader = metrics_test_context
+def test_image_gen_metrics(instrument_legacy, reader, openai_client):
     openai_client.images.generate(
         model="dall-e-2",
         prompt="a white siamese cat",

@@ -1,7 +1,7 @@
 name: Release - Traceloop SDK & Standalone Instrumentations
 
 on:
-    workflow_dispatch:
+  workflow_dispatch:
 
 jobs:
   bump-version:
@@ -42,7 +42,6 @@ jobs:
       - name: Print Version
         run: echo "Bumped to version ${{ steps.cz.outputs.version }}"
 
-
   release-instrumentations:
     runs-on: ubuntu-latest
     needs:
@@ -67,12 +66,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 18
-    
+
       - run: npm ci
-      
+
       - name: Build Instrumentations
         run: npx nx run-many -t build-release --projects=tag:instrumentation
-      
+
       - run: mkdir instrumentations-dist
       - run: cp packages/opentelemetry-instrumentation-*/dist/* instrumentations-dist
 
@@ -80,8 +79,7 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           packages-dir: instrumentations-dist/
-    
-  
+
   release-sdk:
     runs-on: ubuntu-latest
     needs:
@@ -106,9 +104,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 18
-    
+
       - run: npm ci
-      
+
       - name: Build Traceloop SDK
         run: npx nx run traceloop-sdk:build-release
 

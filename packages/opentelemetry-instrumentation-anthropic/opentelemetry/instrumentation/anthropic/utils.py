@@ -1,15 +1,20 @@
 import asyncio
 import json
-import os
 import logging
+import os
 import threading
 import traceback
+from importlib.metadata import version
+
 from opentelemetry import context as context_api
 from opentelemetry.instrumentation.anthropic.config import Config
 from opentelemetry.semconv_ai import SpanAttributes
 
 GEN_AI_SYSTEM = "gen_ai.system"
 GEN_AI_SYSTEM_ANTHROPIC = "anthropic"
+_PYDANTIC_VERSION = version("pydantic")
+
+TRACELOOP_TRACE_CONTENT = "TRACELOOP_TRACE_CONTENT"
 
 
 def set_span_attribute(span, name, value):
@@ -21,7 +26,7 @@ def set_span_attribute(span, name, value):
 
 def should_send_prompts():
     return (
-        os.getenv("TRACELOOP_TRACE_CONTENT") or "true"
+        os.getenv(TRACELOOP_TRACE_CONTENT) or "true"
     ).lower() == "true" or context_api.get_value("override_enable_content_tracing")
 
 
@@ -136,6 +141,14 @@ def run_async(method):
         asyncio.run(method)
 
 
+def should_emit_events() -> bool:
+    """
+    Checks if the instrumentation isn't using the legacy attributes
+    and if the event logger is not None.
+    """
+    return not Config.use_legacy_attributes
+
+
 class JSONEncoder(json.JSONEncoder):
     def default(self, o):
         if hasattr(o, "to_json"):
@@ -150,3 +163,17 @@ class JSONEncoder(json.JSONEncoder):
             logger = logging.getLogger(__name__)
             logger.debug("Failed to serialize object of type: %s", type(o).__name__)
             return ""
+
+
+def model_as_dict(model):
+    if isinstance(model, dict):
+        return model
+    if _PYDANTIC_VERSION < "2.0.0" and hasattr(model, "dict"):
+        return model.dict()
+    if hasattr(model, "model_dump"):
+        return model.model_dump()
+    else:
+        try:
+            return dict(model)
+        except Exception:
+            return model

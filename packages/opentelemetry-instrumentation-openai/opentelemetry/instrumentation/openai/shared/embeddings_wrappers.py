@@ -1,40 +1,46 @@
 import logging
 import time
+from collections.abc import Iterable
 
 from opentelemetry import context as context_api
-from opentelemetry.metrics import Counter, Histogram
-from opentelemetry.semconv_ai import (
-    SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
-    SpanAttributes,
-    LLMRequestTypeValues,
-)
-
-from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
-from opentelemetry.instrumentation.openai.utils import (
-    dont_throw,
-    start_as_current_span_async,
-    _with_embeddings_telemetry_wrapper,
-)
 from opentelemetry.instrumentation.openai.shared import (
-    metric_shared_attributes,
+    OPENAI_LLM_USAGE_TOKEN_TYPES,
+    _get_openai_base_url,
     _set_client_attributes,
     _set_request_attributes,
-    _set_span_attribute,
     _set_response_attributes,
+    _set_span_attribute,
     _token_type,
-    should_send_prompts,
+    metric_shared_attributes,
     model_as_dict,
-    _get_openai_base_url,
-    OPENAI_LLM_USAGE_TOKEN_TYPES,
     propagate_trace_context,
 )
-
 from opentelemetry.instrumentation.openai.shared.config import Config
+from opentelemetry.instrumentation.openai.shared.event_emitter import emit_event
+from opentelemetry.instrumentation.openai.shared.event_models import (
+    ChoiceEvent,
+    MessageEvent,
+)
+from opentelemetry.instrumentation.openai.utils import (
+    _with_embeddings_telemetry_wrapper,
+    dont_throw,
+    is_openai_v1,
+    should_emit_events,
+    should_send_prompts,
+    start_as_current_span_async,
+)
+from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
+from opentelemetry.metrics import Counter, Histogram
+from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
+from opentelemetry.semconv_ai import (
+    SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
+    LLMRequestTypeValues,
+    SpanAttributes,
+)
+from opentelemetry.trace import SpanKind, Status, StatusCode
 
-from opentelemetry.instrumentation.openai.utils import is_openai_v1
-
-from opentelemetry.trace import SpanKind
-from opentelemetry.trace import Status, StatusCode
+from openai._legacy_response import LegacyAPIResponse
+from openai.types.create_embedding_response import CreateEmbeddingResponse
 
 SPAN_NAME = "openai.embeddings"
 LLM_REQUEST_TYPE = LLMRequestTypeValues.EMBEDDING
@@ -84,10 +90,12 @@ def embeddings_wrapper(
             if exception_counter:
                 exception_counter.add(1, attributes=attributes)
 
+            span.set_attribute(ERROR_TYPE, e.__class__.__name__)
+            span.record_exception(e)
             span.set_status(Status(StatusCode.ERROR, str(e)))
             span.end()
 
-            raise e
+            raise
 
         duration = end_time - start_time
 
@@ -128,6 +136,7 @@ async def aembeddings_wrapper(
         attributes={SpanAttributes.LLM_REQUEST_TYPE: LLM_REQUEST_TYPE.value},
     ) as span:
         _handle_request(span, kwargs, instance)
+
         try:
             # record time for duration
             start_time = time.time()
@@ -146,12 +155,15 @@ async def aembeddings_wrapper(
             if exception_counter:
                 exception_counter.add(1, attributes=attributes)
 
+            span.set_attribute(ERROR_TYPE, e.__class__.__name__)
+            span.record_exception(e)
             span.set_status(Status(StatusCode.ERROR, str(e)))
             span.end()
 
-            raise e
+            raise
 
         duration = end_time - start_time
+
         _handle_response(
             response,
             span,
@@ -167,10 +179,16 @@ async def aembeddings_wrapper(
 
 @dont_throw
 def _handle_request(span, kwargs, instance):
-    _set_request_attributes(span, kwargs)
-    if should_send_prompts():
-        _set_prompts(span, kwargs.get("input"))
+    _set_request_attributes(span, kwargs, instance)
+
+    if should_emit_events():
+        _emit_embeddings_message_event(kwargs.get("input"))
+    else:
+        if should_send_prompts():
+            _set_prompts(span, kwargs.get("input"))
+
     _set_client_attributes(span, instance)
+
     if Config.enable_trace_context_propagation:
         propagate_trace_context(span, kwargs)
 
@@ -200,6 +218,10 @@ def _handle_response(
     )
     # span attributes
     _set_response_attributes(span, response_dict)
+
+    # emit events
+    if should_emit_events():
+        _emit_embeddings_choice_event(response)
 
 
 def _set_embeddings_metrics(
@@ -255,3 +277,32 @@ def _set_prompts(span, prompt):
             f"{SpanAttributes.LLM_PROMPTS}.0.content",
             prompt,
         )
+
+
+def _emit_embeddings_message_event(embeddings) -> None:
+    if isinstance(embeddings, str):
+        emit_event(MessageEvent(content=embeddings))
+    elif isinstance(embeddings, Iterable):
+        for i in embeddings:
+            emit_event(MessageEvent(content=i))
+
+
+def _emit_embeddings_choice_event(response) -> None:
+    if isinstance(response, CreateEmbeddingResponse):
+        for embedding in response.data:
+            emit_event(
+                ChoiceEvent(
+                    index=embedding.index,
+                    message={"content": embedding.embedding, "role": "assistant"},
+                )
+            )
+
+    elif isinstance(response, LegacyAPIResponse):
+        parsed_response = response.parse()
+        for embedding in parsed_response.data:
+            emit_event(
+                ChoiceEvent(
+                    index=embedding.index,
+                    message={"content": embedding.embedding, "role": "assistant"},
+                )
+            )

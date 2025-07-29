@@ -3,14 +3,42 @@ from enum import Enum
 SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY = "suppress_language_model_instrumentation"
 
 
+class GenAISystem(Enum):
+    """
+    Supported LLM vendor (System) names used across OpenLLMetry instrumentations.
+
+    These values match the actual strings used in span attributes (LLM_SYSTEM)
+    throughout the instrumentation packages.
+    """
+
+    OPENAI = "openai"
+    ANTHROPIC = "Anthropic"
+    COHERE = "Cohere"
+    MISTRALAI = "MistralAI"
+    OLLAMA = "Ollama"
+    GROQ = "Groq"
+    ALEPH_ALPHA = "AlephAlpha"
+    REPLICATE = "Replicate"
+    TOGETHER_AI = "TogetherAI"
+    WATSONX = "Watsonx"
+    HUGGINGFACE = "HuggingFace"
+    FIREWORKS = "Fireworks"
+
+    AZURE = "Azure"
+    AWS = "AWS"
+    GOOGLE = "Google"
+    OPENROUTER = "OpenRouter"
+
+    LANGCHAIN = "Langchain"
+    CREWAI = "crewai"
+
+
 class Meters:
     LLM_GENERATION_CHOICES = "gen_ai.client.generation.choices"
     LLM_TOKEN_USAGE = "gen_ai.client.token.usage"
     LLM_OPERATION_DURATION = "gen_ai.client.operation.duration"
     LLM_COMPLETIONS_EXCEPTIONS = "llm.openai.chat_completions.exceptions"
-    LLM_STREAMING_TIME_TO_GENERATE = (
-        "llm.openai.chat_completions.streaming_time_to_generate"
-    )
+    LLM_STREAMING_TIME_TO_GENERATE = "llm.chat_completions.streaming_time_to_generate"
     LLM_EMBEDDINGS_EXCEPTIONS = "llm.openai.embeddings.exceptions"
     LLM_EMBEDDINGS_VECTOR_SIZE = "llm.openai.embeddings.vector_size"
     LLM_IMAGE_GENERATIONS_EXCEPTIONS = "llm.openai.image_generations.exceptions"
@@ -20,6 +48,12 @@ class Meters:
     PINECONE_DB_QUERY_SCORES = "db.pinecone.query.scores"
     PINECONE_DB_USAGE_READ_UNITS = "db.pinecone.usage.read_units"
     PINECONE_DB_USAGE_WRITE_UNITS = "db.pinecone.usage_write_units"
+
+    DB_QUERY_DURATION = "db.client.query.duration"
+    DB_SEARCH_DISTANCE = "db.client.search.distance"
+    DB_USAGE_INSERT_UNITS = "db.client.usage.insert_units"
+    DB_USAGE_UPSERT_UNITS = "db.client.usage.upsert_units"
+    DB_USAGE_DELETE_UNITS = "db.client.usage.delete_units"
 
     LLM_WATSONX_COMPLETIONS_DURATION = "llm.watsonx.completions.duration"
     LLM_WATSONX_COMPLETIONS_EXCEPTIONS = "llm.watsonx.completions.exceptions"
@@ -46,8 +80,7 @@ class SpanAttributes:
     LLM_USAGE_CACHE_CREATION_INPUT_TOKENS = "gen_ai.usage.cache_creation_input_tokens"
     LLM_USAGE_CACHE_READ_INPUT_TOKENS = "gen_ai.usage.cache_read_input_tokens"
     LLM_TOKEN_TYPE = "gen_ai.token.type"
-    # To be added
-    # LLM_RESPONSE_ID = "gen_ai.response.id"
+    LLM_REQUEST_STRUCTURED_OUTPUT_SCHEMA = "gen_ai.request.structured_output_schema"
 
     # LLM
     LLM_REQUEST_TYPE = "llm.request.type"

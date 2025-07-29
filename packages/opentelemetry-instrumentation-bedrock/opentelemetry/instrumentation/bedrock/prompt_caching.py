@@ -17,6 +17,8 @@ def prompt_caching_handling(headers, vendor, model, metric_params):
         "gen_ai.response.model": model,
     }
     span = trace.get_current_span()
+    if not isinstance(span, trace.Span):
+        return
     if CachingHeaders.READ in headers:
         read_cached_tokens = int(headers[CachingHeaders.READ])
         metric_params.prompt_caching.add(

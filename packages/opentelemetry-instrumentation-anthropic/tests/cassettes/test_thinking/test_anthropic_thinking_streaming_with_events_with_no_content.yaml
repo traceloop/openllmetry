@@ -1,0 +1,251 @@
+interactions:
+- request:
+    body: '{"max_tokens": 2048, "messages": [{"role": "user", "content": [{"type":
+      "text", "text": "How many times does the letter ''r'' appear in the word strawberry?"}]}],
+      "model": "claude-3-7-sonnet-20250219", "stream": true, "thinking": {"type":
+      "enabled", "budget_tokens": 1024}}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      anthropic-version:
+      - '2023-06-01'
+      connection:
+      - keep-alive
+      content-length:
+      - '271'
+      content-type:
+      - application/json
+      host:
+      - api.anthropic.com
+      user-agent:
+      - Anthropic/Python 0.49.0
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 0.49.0
+      x-stainless-read-timeout:
+      - '600'
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.9.6
+      x-stainless-timeout:
+      - NOT_GIVEN
+    method: POST
+    uri: https://api.anthropic.com/v1/messages
+  response:
+    body:
+      string: 'event: message_start
+
+        data: {"type":"message_start","message":{"id":"msg_01SZKz6DEhWnfZcxPQDQz49Y","type":"message","role":"assistant","model":"claude-3-7-sonnet-20250219","content":[],"stop_reason":null,"stop_sequence":null,"usage":{"input_tokens":52,"cache_creation_input_tokens":0,"cache_read_input_tokens":0,"output_tokens":2}}            }
+
+
+        event: content_block_start
+
+        data: {"type":"content_block_start","index":0,"content_block":{"type":"thinking","thinking":"","signature":""}          }
+
+
+        event: ping
+
+        data: {"type": "ping"}
+
+
+        event: content_block_delta
+
+        data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":"Let"}          }
+
+
+        event: content_block_delta
+
+        data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":"
+        me count the occurrences of the letter "}             }
+
+
+        event: content_block_delta
+
+        data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":"''r''
+        in the word \"strawberry\"."}      }
+
+
+        event: content_block_delta
+
+        data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":"\n\nThe
+        word \"strawberry\" is spelled: s-t-r"}    }
+
+
+        event: content_block_delta
+
+        data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":"-a-w-b-e-r"}              }
+
+
+        event: content_block_delta
+
+        data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":"-r-y\n\nI''ll
+        go through each letter:"}          }
+
+
+        event: content_block_delta
+
+        data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":"\ns
+        - not an ''r''\nt - not an"}   }
+
+
+        event: content_block_delta
+
+        data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":"
+        ''r''\nr - this is an ''r'',"}          }
+
+
+        event: content_block_delta
+
+        data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":"
+        so count = 1\na - not an ''r"}            }
+
+
+        event: content_block_delta
+
+        data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":"''\nw
+        - not an ''r''"} }
+
+
+        event: content_block_delta
+
+        data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":"\nb
+        - not an ''r''\ne - not an "}           }
+
+
+        event: content_block_delta
+
+        data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":"''r''\nr
+        - this is an ''r'', so count"}  }
+
+
+        event: content_block_delta
+
+        data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":"
+        = 2\nr - this is an ''r'', so count"}}
+
+
+        event: content_block_delta
+
+        data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":"
+        = 3\ny - not an ''"}           }
+
+
+        event: content_block_delta
+
+        data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":"r''\n\nSo
+        the letter ''r"}    }
+
+
+        event: content_block_delta
+
+        data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":"''
+        appears 3 times in the word \"strawberry\"."}    }
+
+
+        event: content_block_delta
+
+        data: {"type":"content_block_delta","index":0,"delta":{"type":"signature_delta","signature":"ErUBCkYIARgCIkCepoF8CXqdCGI7O1AAkEcxvta5WeUn1g3tOabtne7C0veTgb4mBCBB/rl13SMG1wijfpaq06s2Tu8sf6J9CmeKEgw2ovIZoQGsrJ81ZIEaDEPNWl0TXzR0+AuTSiIw1rXwhHTbINnuGKC/Su7yTL+e28Njv5HYbyOBLG98oCsnMgeglPWWKlmhd9ik0TcXKh3wmkIqarugd7LuaWUDdtxyL9V0IJKnul7nuNx8Yg=="}           }
+
+
+        event: content_block_stop
+
+        data: {"type":"content_block_stop","index":0              }
+
+
+        event: content_block_start
+
+        data: {"type":"content_block_start","index":1,"content_block":{"type":"text","text":""}           }
+
+
+        event: content_block_delta
+
+        data: {"type":"content_block_delta","index":1,"delta":{"type":"text_delta","text":"The
+        letter ''r'' appears 3 times in the word \"straw"} }
+
+
+        event: content_block_delta
+
+        data: {"type":"content_block_delta","index":1,"delta":{"type":"text_delta","text":"berry\"."}              }
+
+
+        event: content_block_stop
+
+        data: {"type":"content_block_stop","index":1               }
+
+
+        event: message_delta
+
+        data: {"type":"message_delta","delta":{"stop_reason":"end_turn","stop_sequence":null},"usage":{"output_tokens":216}           }
+
+
+        event: message_stop
+
+        data: {"type":"message_stop"             }
+
+
+        '
+    headers:
+      CF-RAY:
+      - 920c2df809ceecf9-ALA
+      Cache-Control:
+      - no-cache
+      Connection:
+      - keep-alive
+      Content-Type:
+      - text/event-stream; charset=utf-8
+      Date:
+      - Sat, 15 Mar 2025 12:57:59 GMT
+      Server:
+      - cloudflare
+      Transfer-Encoding:
+      - chunked
+      X-Robots-Tag:
+      - none
+      anthropic-organization-id:
+      - 04aa8588-6567-40cb-9042-a54b20ebaf4f
+      anthropic-ratelimit-input-tokens-limit:
+      - '200000'
+      anthropic-ratelimit-input-tokens-remaining:
+      - '126000'
+      anthropic-ratelimit-input-tokens-reset:
+      - '2025-03-15T12:58:20Z'
+      anthropic-ratelimit-output-tokens-limit:
+      - '80000'
+      anthropic-ratelimit-output-tokens-remaining:
+      - '59000'
+      anthropic-ratelimit-output-tokens-reset:
+      - '2025-03-15T12:58:13Z'
+      anthropic-ratelimit-requests-limit:
+      - '4000'
+      anthropic-ratelimit-requests-remaining:
+      - '3999'
+      anthropic-ratelimit-requests-reset:
+      - '2025-03-15T12:57:58Z'
+      anthropic-ratelimit-tokens-limit:
+      - '280000'
+      anthropic-ratelimit-tokens-remaining:
+      - '185000'
+      anthropic-ratelimit-tokens-reset:
+      - '2025-03-15T12:58:13Z'
+      cf-cache-status:
+      - DYNAMIC
+      request-id:
+      - req_01VVUWcAUP5Q8x4z9dr6ktGD
+      via:
+      - 1.1 google
+    status:
+      code: 200
+      message: OK
+version: 1

@@ -2,39 +2,42 @@
 
 import logging
 from typing import Collection
-from opentelemetry.instrumentation.langchain.config import Config
-from wrapt import wrap_function_wrapper
 
-from opentelemetry.trace import get_tracer
-
+from opentelemetry._events import get_event_logger
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
-from opentelemetry.instrumentation.utils import unwrap
-
-from opentelemetry.instrumentation.langchain.version import __version__
-
-from opentelemetry.trace.propagation.tracecontext import (
-    TraceContextTextMapPropagator,
-)
-from opentelemetry.trace.propagation import set_span_in_context
-
 from opentelemetry.instrumentation.langchain.callback_handler import (
     TraceloopCallbackHandler,
 )
-
+from opentelemetry.instrumentation.langchain.config import Config
+from opentelemetry.instrumentation.langchain.utils import is_package_available
+from opentelemetry.instrumentation.langchain.version import __version__
+from opentelemetry.instrumentation.utils import unwrap
 from opentelemetry.metrics import get_meter
 from opentelemetry.semconv_ai import Meters
+from opentelemetry.trace import get_tracer
+from opentelemetry.trace.propagation import set_span_in_context
+from opentelemetry.trace.propagation.tracecontext import (
+    TraceContextTextMapPropagator,
+)
+from wrapt import wrap_function_wrapper
 
 logger = logging.getLogger(__name__)
 
-_instruments = ("langchain >= 0.0.346", "langchain-core > 0.1.0")
+_instruments = ("langchain-core > 0.1.0", )
 
 
 class LangchainInstrumentor(BaseInstrumentor):
     """An instrumentor for Langchain SDK."""
 
-    def __init__(self, exception_logger=None, disable_trace_context_propagation=False):
+    def __init__(
+        self,
+        exception_logger=None,
+        disable_trace_context_propagation=False,
+        use_legacy_attributes: bool = True,
+    ):
         super().__init__()
         Config.exception_logger = exception_logger
+        Config.use_legacy_attributes = use_legacy_attributes
         self.disable_trace_context_propagation = disable_trace_context_propagation
 
     def instrumentation_dependencies(self) -> Collection[str]:
@@ -62,6 +65,12 @@ class LangchainInstrumentor(BaseInstrumentor):
             description="Measures number of input and output tokens used",
         )
 
+        if not Config.use_legacy_attributes:
+            event_logger_provider = kwargs.get("event_logger_provider")
+            Config.event_logger = get_event_logger(
+                __name__, __version__, event_logger_provider=event_logger_provider
+            )
+
         traceloopCallbackHandler = TraceloopCallbackHandler(
             tracer, duration_histogram, token_histogram
         )
@@ -77,96 +86,100 @@ class LangchainInstrumentor(BaseInstrumentor):
     def _wrap_openai_functions_for_tracing(self, traceloopCallbackHandler):
         openai_tracing_wrapper = _OpenAITracingWrapper(traceloopCallbackHandler)
 
-        # Wrap langchain_community.llms.openai.BaseOpenAI
-        wrap_function_wrapper(
-            module="langchain_community.llms.openai",
-            name="BaseOpenAI._generate",
-            wrapper=openai_tracing_wrapper,
-        )
+        if is_package_available("langchain_community"):
+            # Wrap langchain_community.llms.openai.BaseOpenAI
+            wrap_function_wrapper(
+                module="langchain_community.llms.openai",
+                name="BaseOpenAI._generate",
+                wrapper=openai_tracing_wrapper,
+            )
 
-        wrap_function_wrapper(
-            module="langchain_community.llms.openai",
-            name="BaseOpenAI._agenerate",
-            wrapper=openai_tracing_wrapper,
-        )
+            wrap_function_wrapper(
+                module="langchain_community.llms.openai",
+                name="BaseOpenAI._agenerate",
+                wrapper=openai_tracing_wrapper,
+            )
 
-        wrap_function_wrapper(
-            module="langchain_community.llms.openai",
-            name="BaseOpenAI._stream",
-            wrapper=openai_tracing_wrapper,
-        )
+            wrap_function_wrapper(
+                module="langchain_community.llms.openai",
+                name="BaseOpenAI._stream",
+                wrapper=openai_tracing_wrapper,
+            )
 
-        wrap_function_wrapper(
-            module="langchain_community.llms.openai",
-            name="BaseOpenAI._astream",
-            wrapper=openai_tracing_wrapper,
-        )
+            wrap_function_wrapper(
+                module="langchain_community.llms.openai",
+                name="BaseOpenAI._astream",
+                wrapper=openai_tracing_wrapper,
+            )
 
-        # Wrap langchain_openai.llms.base.BaseOpenAI
-        wrap_function_wrapper(
-            module="langchain_openai.llms.base",
-            name="BaseOpenAI._generate",
-            wrapper=openai_tracing_wrapper,
-        )
+        if is_package_available("langchain_openai"):
+            # Wrap langchain_openai.llms.base.BaseOpenAI
+            wrap_function_wrapper(
+                module="langchain_openai.llms.base",
+                name="BaseOpenAI._generate",
+                wrapper=openai_tracing_wrapper,
+            )
 
-        wrap_function_wrapper(
-            module="langchain_openai.llms.base",
-            name="BaseOpenAI._agenerate",
-            wrapper=openai_tracing_wrapper,
-        )
+            wrap_function_wrapper(
+                module="langchain_openai.llms.base",
+                name="BaseOpenAI._agenerate",
+                wrapper=openai_tracing_wrapper,
+            )
 
-        wrap_function_wrapper(
-            module="langchain_openai.llms.base",
-            name="BaseOpenAI._stream",
-            wrapper=openai_tracing_wrapper,
-        )
+            wrap_function_wrapper(
+                module="langchain_openai.llms.base",
+                name="BaseOpenAI._stream",
+                wrapper=openai_tracing_wrapper,
+            )
 
-        wrap_function_wrapper(
-            module="langchain_openai.llms.base",
-            name="BaseOpenAI._astream",
-            wrapper=openai_tracing_wrapper,
-        )
+            wrap_function_wrapper(
+                module="langchain_openai.llms.base",
+                name="BaseOpenAI._astream",
+                wrapper=openai_tracing_wrapper,
+            )
 
-        # langchain_openai.chat_models.base.BaseOpenAI
-        wrap_function_wrapper(
-            module="langchain_openai.chat_models.base",
-            name="BaseChatOpenAI._generate",
-            wrapper=openai_tracing_wrapper,
-        )
+            # langchain_openai.chat_models.base.BaseOpenAI
+            wrap_function_wrapper(
+                module="langchain_openai.chat_models.base",
+                name="BaseChatOpenAI._generate",
+                wrapper=openai_tracing_wrapper,
+            )
 
-        wrap_function_wrapper(
-            module="langchain_openai.chat_models.base",
-            name="BaseChatOpenAI._agenerate",
-            wrapper=openai_tracing_wrapper,
-        )
+            wrap_function_wrapper(
+                module="langchain_openai.chat_models.base",
+                name="BaseChatOpenAI._agenerate",
+                wrapper=openai_tracing_wrapper,
+            )
 
-        # Doesn't work :(
-        # wrap_function_wrapper(
-        #     module="langchain_openai.chat_models.base",
-        #     name="BaseChatOpenAI._stream",
-        #     wrapper=openai_tracing_wrapper,
-        # )
-        # wrap_function_wrapper(
-        #     module="langchain_openai.chat_models.base",
-        #     name="BaseChatOpenAI._astream",
-        #     wrapper=openai_tracing_wrapper,
-        # )
+            # Doesn't work :(
+            # wrap_function_wrapper(
+            #     module="langchain_openai.chat_models.base",
+            #     name="BaseChatOpenAI._stream",
+            #     wrapper=openai_tracing_wrapper,
+            # )
+            # wrap_function_wrapper(
+            #     module="langchain_openai.chat_models.base",
+            #     name="BaseChatOpenAI._astream",
+            #     wrapper=openai_tracing_wrapper,
+            # )
 
     def _uninstrument(self, **kwargs):
         unwrap("langchain_core.callbacks", "BaseCallbackManager.__init__")
         if not self.disable_trace_context_propagation:
-            unwrap("langchain_community.llms.openai", "BaseOpenAI._generate")
-            unwrap("langchain_community.llms.openai", "BaseOpenAI._agenerate")
-            unwrap("langchain_community.llms.openai", "BaseOpenAI._stream")
-            unwrap("langchain_community.llms.openai", "BaseOpenAI._astream")
-            unwrap("langchain_openai.llms.base", "BaseOpenAI._generate")
-            unwrap("langchain_openai.llms.base", "BaseOpenAI._agenerate")
-            unwrap("langchain_openai.llms.base", "BaseOpenAI._stream")
-            unwrap("langchain_openai.llms.base", "BaseOpenAI._astream")
-            unwrap("langchain_openai.chat_models.base", "BaseOpenAI._generate")
-            unwrap("langchain_openai.chat_models.base", "BaseOpenAI._agenerate")
-            # unwrap("langchain_openai.chat_models.base", "BaseOpenAI._stream")
-            # unwrap("langchain_openai.chat_models.base", "BaseOpenAI._astream")
+            if is_package_available("langchain_community"):
+                unwrap("langchain_community.llms.openai", "BaseOpenAI._generate")
+                unwrap("langchain_community.llms.openai", "BaseOpenAI._agenerate")
+                unwrap("langchain_community.llms.openai", "BaseOpenAI._stream")
+                unwrap("langchain_community.llms.openai", "BaseOpenAI._astream")
+            if is_package_available("langchain_openai"):
+                unwrap("langchain_openai.llms.base", "BaseOpenAI._generate")
+                unwrap("langchain_openai.llms.base", "BaseOpenAI._agenerate")
+                unwrap("langchain_openai.llms.base", "BaseOpenAI._stream")
+                unwrap("langchain_openai.llms.base", "BaseOpenAI._astream")
+                unwrap("langchain_openai.chat_models.base", "BaseOpenAI._generate")
+                unwrap("langchain_openai.chat_models.base", "BaseOpenAI._agenerate")
+                # unwrap("langchain_openai.chat_models.base", "BaseOpenAI._stream")
+                # unwrap("langchain_openai.chat_models.base", "BaseOpenAI._astream")
 
 
 class _BaseCallbackManagerInitWrapper:
@@ -206,7 +219,6 @@ class _OpenAITracingWrapper:
         args,
         kwargs,
     ) -> None:
-
         run_manager = kwargs.get("run_manager")
         if run_manager:
             run_id = run_manager.run_id
