@@ -30,6 +30,43 @@ image_content_block = {
 }
 
 
+TOOLS = [
+    {
+        "name": "get_weather",
+        "description": "Get the current weather in a given location",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "location": {
+                    "type": "string",
+                    "description": "The city and state, e.g. San Francisco, CA",
+                },
+                "unit": {
+                    "type": "string",
+                    "enum": ["celsius", "fahrenheit"],
+                    "description": "The unit of temperature, either 'celsius' or 'fahrenheit'",
+                },
+            },
+            "required": ["location"],
+        },
+    },
+    {
+        "name": "get_time",
+        "description": "Get the current time in a given time zone",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "timezone": {
+                    "type": "string",
+                    "description": "The IANA time zone name, e.g. America/Los_Angeles",
+                }
+            },
+            "required": ["timezone"],
+        },
+    },
+]
+
+
 @pytest.mark.vcr
 def test_anthropic_message_create_legacy(
     instrument_legacy, anthropic_client, span_exporter, log_exporter, reader
@@ -1234,41 +1271,7 @@ def test_anthropic_tools_legacy(
     response = anthropic_client.messages.create(
         model="claude-3-5-sonnet-20240620",
         max_tokens=1024,
-        tools=[
-            {
-                "name": "get_weather",
-                "description": "Get the current weather in a given location",
-                "input_schema": {
-                    "type": "object",
-                    "properties": {
-                        "location": {
-                            "type": "string",
-                            "description": "The city and state, e.g. San Francisco, CA",
-                        },
-                        "unit": {
-                            "type": "string",
-                            "enum": ["celsius", "fahrenheit"],
-                            "description": "The unit of temperature, either 'celsius' or 'fahrenheit'",
-                        },
-                    },
-                    "required": ["location"],
-                },
-            },
-            {
-                "name": "get_time",
-                "description": "Get the current time in a given time zone",
-                "input_schema": {
-                    "type": "object",
-                    "properties": {
-                        "timezone": {
-                            "type": "string",
-                            "description": "The IANA time zone name, e.g. America/Los_Angeles",
-                        }
-                    },
-                    "required": ["timezone"],
-                },
-            },
-        ],
+        tools=TOOLS,
         messages=[
             {
                 "role": "user",
@@ -1411,45 +1414,10 @@ def test_anthropic_tools_with_events_with_content(
         "content": "What is the weather like right now in New York? Also what time is it there now?",
     }
 
-    tool_0 = {
-        "name": "get_weather",
-        "description": "Get the current weather in a given location",
-        "input_schema": {
-            "type": "object",
-            "properties": {
-                "location": {
-                    "type": "string",
-                    "description": "The city and state, e.g. San Francisco, CA",
-                },
-                "unit": {
-                    "type": "string",
-                    "enum": ["celsius", "fahrenheit"],
-                    "description": "The unit of temperature, either 'celsius' or 'fahrenheit'",
-                },
-            },
-            "required": ["location"],
-        },
-    }
-
-    tool_1 = {
-        "name": "get_time",
-        "description": "Get the current time in a given time zone",
-        "input_schema": {
-            "type": "object",
-            "properties": {
-                "timezone": {
-                    "type": "string",
-                    "description": "The IANA time zone name, e.g. America/Los_Angeles",
-                }
-            },
-            "required": ["timezone"],
-        },
-    }
-
     anthropic_client.messages.create(
         model="claude-3-5-sonnet-20240620",
         max_tokens=1024,
-        tools=[tool_0, tool_1],
+        tools=TOOLS,
         messages=[user_message],
     )
     try:
@@ -1487,7 +1455,7 @@ def test_anthropic_tools_with_events_with_content(
 
     # Validate the tool messages input vent
     assert_message_in_logs(
-        logs[1], "gen_ai.user.message", {"content": {"tools": [tool_0, tool_1]}}
+        logs[1], "gen_ai.user.message", {"content": {"tools": TOOLS}}
     )
 
     # Validate the ai response
@@ -1545,41 +1513,7 @@ def test_anthropic_tools_with_events_with_no_content(
     anthropic_client.messages.create(
         model="claude-3-5-sonnet-20240620",
         max_tokens=1024,
-        tools=[
-            {
-                "name": "get_weather",
-                "description": "Get the current weather in a given location",
-                "input_schema": {
-                    "type": "object",
-                    "properties": {
-                        "location": {
-                            "type": "string",
-                            "description": "The city and state, e.g. San Francisco, CA",
-                        },
-                        "unit": {
-                            "type": "string",
-                            "enum": ["celsius", "fahrenheit"],
-                            "description": "The unit of temperature, either 'celsius' or 'fahrenheit'",
-                        },
-                    },
-                    "required": ["location"],
-                },
-            },
-            {
-                "name": "get_time",
-                "description": "Get the current time in a given time zone",
-                "input_schema": {
-                    "type": "object",
-                    "properties": {
-                        "timezone": {
-                            "type": "string",
-                            "description": "The IANA time zone name, e.g. America/Los_Angeles",
-                        }
-                    },
-                    "required": ["timezone"],
-                },
-            },
-        ],
+        tools=TOOLS,
         messages=[
             {
                 "role": "user",
@@ -1669,6 +1603,715 @@ def test_anthropic_tools_with_events_with_no_content(
 
 
 @pytest.mark.vcr
+def test_anthropic_tools_history_legacy(
+    instrument_legacy, anthropic_client, span_exporter, log_exporter, reader
+):
+    response = anthropic_client.messages.create(
+        model="claude-3-5-haiku-20241022",
+        max_tokens=1024,
+        tools=TOOLS,
+        messages=[
+            {
+                "role": "user",
+                "content": "What is the weather and current time in San Francisco?",
+            },
+            {
+                "role": "assistant",
+                "content": [
+                    {
+                        "type": "text",
+                        "text": "I'll help you get the weather and current time in San Francisco.",
+                    },
+                    {
+                        "id": "call_1",
+                        "type": "tool_use",
+                        "name": "get_weather",
+                        "input": {"location": "San Francisco, CA"},
+                    },
+                ],
+            },
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "tool_result",
+                        "content": "Sunny and 65 degrees Fahrenheit",
+                        "tool_use_id": "call_1",
+                    }
+                ],
+            },
+        ],
+    )
+
+    try:
+        anthropic_client.messages.create(
+            unknown_parameter="unknown",
+        )
+    except Exception:
+        pass
+
+    spans = span_exporter.get_finished_spans()
+    # verify overall shape
+    assert all(span.name == "anthropic.chat" for span in spans)
+    assert len(spans) == 1
+
+    anthropic_span = spans[0]
+
+    # verify usage
+    assert anthropic_span.attributes["gen_ai.usage.prompt_tokens"] == 568
+    assert (
+        anthropic_span.attributes["gen_ai.usage.completion_tokens"]
+        + anthropic_span.attributes["gen_ai.usage.prompt_tokens"]
+        == anthropic_span.attributes["llm.usage.total_tokens"]
+    )
+
+    # verify metrics
+    metrics_data = reader.get_metrics_data()
+    resource_metrics = metrics_data.resource_metrics
+    verify_metrics(resource_metrics, "claude-3-5-haiku-20241022")
+
+    # verify request and inputs
+    assert (
+        anthropic_span.attributes["gen_ai.prompt.0.content"]
+        == "What is the weather and current time in San Francisco?"
+    )
+    assert anthropic_span.attributes["gen_ai.prompt.0.role"] == "user"
+    assert (
+        anthropic_span.attributes["gen_ai.prompt.1.content"]
+        == "I'll help you get the weather and current time in San Francisco."
+    )
+    assert anthropic_span.attributes["gen_ai.prompt.1.role"] == "assistant"
+    assert json.loads(anthropic_span.attributes["gen_ai.prompt.2.content"]) == [
+        {
+            "type": "tool_result",
+            "content": "Sunny and 65 degrees Fahrenheit",
+            "tool_use_id": "call_1",
+        }
+    ]
+    assert anthropic_span.attributes["gen_ai.prompt.2.role"] == "user"
+    assert anthropic_span.attributes["llm.request.functions.0.name"] == "get_weather"
+    assert (
+        anthropic_span.attributes["llm.request.functions.0.description"]
+        == "Get the current weather in a given location"
+    )
+    assert anthropic_span.attributes[
+        "llm.request.functions.0.input_schema"
+    ] == json.dumps(
+        {
+            "type": "object",
+            "properties": {
+                "location": {
+                    "type": "string",
+                    "description": "The city and state, e.g. San Francisco, CA",
+                },
+                "unit": {
+                    "type": "string",
+                    "enum": ["celsius", "fahrenheit"],
+                    "description": "The unit of temperature, either 'celsius' or 'fahrenheit'",
+                },
+            },
+            "required": ["location"],
+        }
+    )
+    assert anthropic_span.attributes["llm.request.functions.1.name"] == "get_time"
+    assert (
+        anthropic_span.attributes["llm.request.functions.1.description"]
+        == "Get the current time in a given time zone"
+    )
+    assert anthropic_span.attributes[
+        "llm.request.functions.1.input_schema"
+    ] == json.dumps(
+        {
+            "type": "object",
+            "properties": {
+                "timezone": {
+                    "type": "string",
+                    "description": "The IANA time zone name, e.g. America/Los_Angeles",
+                }
+            },
+            "required": ["timezone"],
+        }
+    )
+
+    # verify response and output
+    assert (
+        anthropic_span.attributes["gen_ai.completion.0.finish_reason"]
+        == response.stop_reason
+    )
+    assert "gen_ai.completion.0.content" not in anthropic_span.attributes
+    assert anthropic_span.attributes["gen_ai.completion.0.role"] == "assistant"
+
+    assert (
+        anthropic_span.attributes["gen_ai.completion.0.tool_calls.0.id"]
+    ) == response.content[0].id
+    assert (
+        anthropic_span.attributes["gen_ai.completion.0.tool_calls.0.name"]
+    ) == response.content[0].name
+    response_input = json.dumps(response.content[0].input)
+    assert (
+        anthropic_span.attributes["gen_ai.completion.0.tool_calls.0.arguments"]
+        == response_input
+    )
+
+    assert (
+        anthropic_span.attributes.get("gen_ai.response.id")
+        == "msg_01QJDheQSo4hSrxgtLpEJFkA"
+    )
+
+    logs = log_exporter.get_finished_logs()
+    assert (
+        len(logs) == 0
+    ), "Assert that it doesn't emit logs when use_legacy_attributes is True"
+
+
+@pytest.mark.vcr
+def test_anthropic_tools_history_with_events_with_content(
+    instrument_with_content, anthropic_client, span_exporter, log_exporter, reader
+):
+    user_message = {
+        "role": "user",
+        "content": "What is the weather and current time in San Francisco?",
+    }
+    first_assistant_message = {
+        "role": "assistant",
+        "content": [
+            {
+                "type": "text",
+                "text": "I'll help you get the weather and current time in San Francisco.",
+            },
+            {
+                "id": "call_1",
+                "type": "tool_use",
+                "name": "get_weather",
+                "input": {"location": "San Francisco, CA"},
+            },
+        ],
+    }
+    tool_result_message = {
+        "role": "user",
+        "content": [
+            {"type": "tool_result", "content": "Sunny and 65 degrees Fahrenheit", "tool_use_id": "call_1"},
+        ],
+    }
+    anthropic_client.messages.create(
+        model="claude-3-5-haiku-20241022",
+        max_tokens=1024,
+        tools=TOOLS,
+        messages=[
+            user_message,
+            first_assistant_message,
+            tool_result_message,
+        ],
+    )
+    try:
+        anthropic_client.messages.create(
+            unknown_parameter="unknown",
+        )
+    except Exception:
+        pass
+
+    spans = span_exporter.get_finished_spans()
+    # verify overall shape
+    assert all(span.name == "anthropic.chat" for span in spans)
+    assert len(spans) == 1
+
+    anthropic_span = spans[0]
+
+    # verify usage
+    assert anthropic_span.attributes["gen_ai.usage.prompt_tokens"] == 568
+    assert (
+        anthropic_span.attributes["gen_ai.usage.completion_tokens"]
+        + anthropic_span.attributes["gen_ai.usage.prompt_tokens"]
+        == anthropic_span.attributes["llm.usage.total_tokens"]
+    )
+
+    # verify metrics
+    metrics_data = reader.get_metrics_data()
+    resource_metrics = metrics_data.resource_metrics
+    verify_metrics(resource_metrics, "claude-3-5-haiku-20241022")
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 5
+
+    # Validate user message
+    user_message.pop("role", None)
+    assert_message_in_logs(logs[0], "gen_ai.user.message", user_message)
+
+    first_assistant_message.pop("role", None)
+    # Validate the tool messages input event
+    assert_message_in_logs(
+        logs[1], "gen_ai.assistant.message", first_assistant_message
+    )
+
+    tool_result_message.pop("role", None)
+    assert_message_in_logs(logs[2], "gen_ai.user.message", tool_result_message)
+
+    assert_message_in_logs(logs[3], "gen_ai.user.message", {"content": {"tools": TOOLS}})
+
+    # Validate the second tool call
+    tool_call = {
+        "index": 0,
+        "finish_reason": "tool_use",
+        "tool_calls": [
+            {
+                "id": "toolu_013CVavAKjSN7RZoE2ZN4xQJ",
+                "type": "function",
+                "function": {
+                    "name": "get_time",
+                    "arguments": {"timezone": "America/Los_Angeles"},
+                },
+            }
+        ],
+        "message": {"content": None},
+    }
+    assert_message_in_logs(logs[4], "gen_ai.choice", tool_call)
+
+
+@pytest.mark.vcr
+def test_anthropic_tools_history_with_events_with_no_content(
+    instrument_with_no_content, anthropic_client, span_exporter, log_exporter, reader
+):
+    user_message = {
+        "role": "user",
+        "content": "What is the weather and current time in San Francisco?",
+    }
+    first_assistant_message = {
+        "role": "assistant",
+        "content": [
+            {
+                "type": "text",
+                "text": "I'll help you get the weather and current time in San Francisco.",
+            },
+            {
+                "id": "call_1",
+                "type": "tool_use",
+                "name": "get_weather",
+                "input": {"location": "San Francisco, CA"},
+            },
+        ],
+    }
+    tool_result_message = {
+        "role": "user",
+        "content": [
+            {"type": "tool_result", "content": "Sunny and 65 degrees Fahrenheit", "tool_use_id": "call_1"},
+        ],
+    }
+    anthropic_client.messages.create(
+        model="claude-3-5-haiku-20241022",
+        max_tokens=1024,
+        tools=TOOLS,
+        messages=[
+            user_message,
+            first_assistant_message,
+            tool_result_message,
+        ],
+    )
+    try:
+        anthropic_client.messages.create(
+            unknown_parameter="unknown",
+        )
+    except Exception:
+        pass
+
+    spans = span_exporter.get_finished_spans()
+    # verify overall shape
+    assert all(span.name == "anthropic.chat" for span in spans)
+    assert len(spans) == 1
+
+    anthropic_span = spans[0]
+
+    # verify usage
+    assert anthropic_span.attributes["gen_ai.usage.prompt_tokens"] == 568
+    assert (
+        anthropic_span.attributes["gen_ai.usage.completion_tokens"]
+        + anthropic_span.attributes["gen_ai.usage.prompt_tokens"]
+        == anthropic_span.attributes["llm.usage.total_tokens"]
+    )
+
+    # verify metrics
+    metrics_data = reader.get_metrics_data()
+    resource_metrics = metrics_data.resource_metrics
+    verify_metrics(resource_metrics, "claude-3-5-haiku-20241022")
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 5
+
+    # Validate user message
+    assert_message_in_logs(logs[0], "gen_ai.user.message", {})
+
+    # Validate the tool messages input event
+    assert_message_in_logs(
+        logs[1], "gen_ai.assistant.message", {}
+    )
+
+    assert_message_in_logs(logs[2], "gen_ai.user.message", {})
+
+    assert_message_in_logs(logs[3], "gen_ai.user.message", {})
+
+    # Validate the second tool call
+    tool_call = {
+        "index": 0,
+        "finish_reason": "tool_use",
+        "tool_calls": [
+            {
+                "id": "toolu_01S4zmdHhnEuStnkkoyVdiv6",
+                "type": "function",
+                "function": {
+                    "name": "get_time",
+                    # no arguments
+                },
+            }
+        ],
+        # empty message
+        "message": {},
+    }
+    assert_message_in_logs(logs[4], "gen_ai.choice", tool_call)
+
+
+@pytest.mark.vcr
+def test_anthropic_tools_streaming_legacy(
+    instrument_legacy, anthropic_client, span_exporter, log_exporter, reader
+):
+    response = anthropic_client.messages.create(
+        model="claude-3-5-sonnet-20240620",
+        max_tokens=1024,
+        tools=TOOLS,
+        messages=[
+            {
+                "role": "user",
+                "content": "What is the weather and current time in San Francisco?",
+            }
+        ],
+        stream=True,
+    )
+
+    try:
+        anthropic_client.messages.create(
+            unknown_parameter="unknown",
+        )
+    except Exception:
+        pass
+
+    # consume the streaming iterator
+    for _ in response:
+        pass
+
+    spans = span_exporter.get_finished_spans()
+    # verify overall shape
+    assert all(span.name == "anthropic.chat" for span in spans)
+    assert len(spans) == 1
+
+    anthropic_span = spans[0]
+
+    # verify usage
+    assert anthropic_span.attributes["gen_ai.usage.prompt_tokens"] == 506
+    assert (
+        anthropic_span.attributes["gen_ai.usage.completion_tokens"]
+        + anthropic_span.attributes["gen_ai.usage.prompt_tokens"]
+        == anthropic_span.attributes["llm.usage.total_tokens"]
+    )
+
+    # verify metrics
+    metrics_data = reader.get_metrics_data()
+    resource_metrics = metrics_data.resource_metrics
+    verify_metrics(resource_metrics, "claude-3-5-sonnet-20240620")
+
+    # verify request and inputs
+    assert (
+        anthropic_span.attributes["gen_ai.prompt.0.content"]
+        == "What is the weather and current time in San Francisco?"
+    )
+    assert anthropic_span.attributes["gen_ai.prompt.0.role"] == "user"
+    assert anthropic_span.attributes["llm.request.functions.0.name"] == "get_weather"
+    assert (
+        anthropic_span.attributes["llm.request.functions.0.description"]
+        == "Get the current weather in a given location"
+    )
+    assert anthropic_span.attributes[
+        "llm.request.functions.0.input_schema"
+    ] == json.dumps(
+        {
+            "type": "object",
+            "properties": {
+                "location": {
+                    "type": "string",
+                    "description": "The city and state, e.g. San Francisco, CA",
+                },
+                "unit": {
+                    "type": "string",
+                    "enum": ["celsius", "fahrenheit"],
+                    "description": "The unit of temperature, either 'celsius' or 'fahrenheit'",
+                },
+            },
+            "required": ["location"],
+        }
+    )
+    assert anthropic_span.attributes["llm.request.functions.1.name"] == "get_time"
+    assert (
+        anthropic_span.attributes["llm.request.functions.1.description"]
+        == "Get the current time in a given time zone"
+    )
+    assert anthropic_span.attributes[
+        "llm.request.functions.1.input_schema"
+    ] == json.dumps(
+        {
+            "type": "object",
+            "properties": {
+                "timezone": {
+                    "type": "string",
+                    "description": "The IANA time zone name, e.g. America/Los_Angeles",
+                }
+            },
+            "required": ["timezone"],
+        }
+    )
+
+    # verify response and output
+    assert (
+        anthropic_span.attributes["gen_ai.completion.0.content"]
+        == "Certainly! I can help you with that information. "
+        "To get the weather and current time in San Francisco, I'll need to use "
+        "two separate functions. Let me fetch that data for you."
+    )
+    assert anthropic_span.attributes["gen_ai.completion.0.role"] == "assistant"
+
+    assert (
+        anthropic_span.attributes["gen_ai.completion.0.tool_calls.0.id"]
+    ) == "toolu_0121kXsENLvoDZ72LCuAnCCz"
+    assert (
+        anthropic_span.attributes["gen_ai.completion.0.tool_calls.0.name"]
+    ) == "get_time"
+    assert json.loads(
+        anthropic_span.attributes["gen_ai.completion.0.tool_calls.0.arguments"]
+    ) == {"timezone": "America/Los_Angeles"}
+
+    assert (
+        anthropic_span.attributes.get("gen_ai.response.id")
+        == "msg_0138UNF3YbNp49KkqZtUBWqz"
+    )
+
+    logs = log_exporter.get_finished_logs()
+    assert (
+        len(logs) == 0
+    ), "Assert that it doesn't emit logs when use_legacy_attributes is True"
+
+
+@pytest.mark.vcr
+def test_anthropic_tools_streaming_with_events_with_content(
+    instrument_with_content, anthropic_client, span_exporter, log_exporter, reader
+):
+    user_message = {
+        "role": "user",
+        "content": "What is the weather like right now in New York? Also what time is it there now?",
+    }
+
+    response = anthropic_client.messages.create(
+        model="claude-3-5-sonnet-20240620",
+        max_tokens=1024,
+        tools=TOOLS,
+        messages=[user_message],
+        stream=True,
+    )
+
+    # consume the streaming iterator
+    for _ in response:
+        pass
+
+    try:
+        anthropic_client.messages.create(
+            unknown_parameter="unknown",
+        )
+    except Exception:
+        pass
+    spans = span_exporter.get_finished_spans()
+    # verify overall shape
+    assert all(span.name == "anthropic.chat" for span in spans)
+    assert len(spans) == 1
+
+    anthropic_span = spans[0]
+
+    # verify usage
+    assert anthropic_span.attributes["gen_ai.usage.prompt_tokens"] == 514
+    assert (
+        anthropic_span.attributes["gen_ai.usage.completion_tokens"]
+        + anthropic_span.attributes["gen_ai.usage.prompt_tokens"]
+        == anthropic_span.attributes["llm.usage.total_tokens"]
+    )
+
+    # verify metrics
+    metrics_data = reader.get_metrics_data()
+    resource_metrics = metrics_data.resource_metrics
+    verify_metrics(resource_metrics, "claude-3-5-sonnet-20240620")
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 5
+
+    # Validate user message
+    user_message.pop("role", None)
+    assert_message_in_logs(logs[0], "gen_ai.user.message", user_message)
+
+    # Validate the tool messages input vent
+    assert_message_in_logs(
+        logs[1], "gen_ai.user.message", {"content": {"tools": TOOLS}}
+    )
+
+    # Validate the ai response
+    ideal_response = {
+        "index": 0,
+        "finish_reason": "tool_use",
+        "message": {
+            "content": {
+                "content": "Certainly! I'd be happy to help you with both the current "
+                "weather in New York and the current "
+                "time there. To get this information, I'll need to use two different "
+                "tools. Let's start with the weather, "
+                "and then we'll check the time.",
+                "type": "text",
+            }
+        },
+    }
+    assert_message_in_logs(logs[2], "gen_ai.choice", ideal_response)
+
+    # Validate the first tool call
+    tool_call_0 = {
+        "index": 1,
+        "finish_reason": "tool_use",
+        "tool_calls": [
+            {
+                "id": "toolu_01UGYEgvuRFeXbTZKyDyqo9P",
+                "type": "function",
+                "function": {
+                    "name": "get_weather",
+                    "arguments": {"location": "New York, NY", "unit": "fahrenheit"},
+                },
+            }
+        ],
+        "message": {"content": None},
+    }
+    assert_message_in_logs(logs[3], "gen_ai.choice", tool_call_0)
+
+    # Validate the second tool call
+    tool_call_1 = {
+        "index": 2,
+        "finish_reason": "tool_use",
+        "tool_calls": [
+            {
+                "id": "toolu_01VCGwdaiXbGQJHRCzoWgK2U",
+                "type": "function",
+                "function": {
+                    "name": "get_time",
+                    "arguments": {"timezone": "America/New_York"},
+                },
+            }
+        ],
+        "message": {"content": None},
+    }
+    assert_message_in_logs(logs[4], "gen_ai.choice", tool_call_1)
+
+
+@pytest.mark.vcr
+def test_anthropic_tools_streaming_with_events_with_no_content(
+    instrument_with_no_content, anthropic_client, span_exporter, log_exporter, reader
+):
+    user_message = {
+        "role": "user",
+        "content": "What is the weather like right now in New York? Also what time is it there now?",
+    }
+
+    response = anthropic_client.messages.create(
+        model="claude-3-5-sonnet-20240620",
+        max_tokens=1024,
+        tools=TOOLS,
+        messages=[user_message],
+        stream=True,
+    )
+
+    # consume the streaming iterator
+    for _ in response:
+        pass
+
+    try:
+        anthropic_client.messages.create(
+            unknown_parameter="unknown",
+        )
+    except Exception:
+        pass
+    spans = span_exporter.get_finished_spans()
+    # verify overall shape
+    assert all(span.name == "anthropic.chat" for span in spans)
+    assert len(spans) == 1
+
+    anthropic_span = spans[0]
+
+    # verify usage
+    assert anthropic_span.attributes["gen_ai.usage.prompt_tokens"] == 514
+    assert (
+        anthropic_span.attributes["gen_ai.usage.completion_tokens"]
+        + anthropic_span.attributes["gen_ai.usage.prompt_tokens"]
+        == anthropic_span.attributes["llm.usage.total_tokens"]
+    )
+
+    # verify metrics
+    metrics_data = reader.get_metrics_data()
+    resource_metrics = metrics_data.resource_metrics
+    verify_metrics(resource_metrics, "claude-3-5-sonnet-20240620")
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 5
+
+    # Validate user message
+    user_message.pop("role", None)
+    assert_message_in_logs(logs[0], "gen_ai.user.message", {})
+
+    # Validate the tool messages input vent
+    assert_message_in_logs(logs[1], "gen_ai.user.message", {})
+
+    assert_message_in_logs(logs[2], "gen_ai.choice", {
+        "finish_reason": "tool_use",
+        "index": 0,
+        "message": {},
+    })
+
+    # Validate the first tool call
+    tool_call_0 = {
+        "index": 1,
+        "finish_reason": "tool_use",
+        "tool_calls": [
+            {
+                "id": "toolu_01YUs66wivdF51ENZFX8gX9S",
+                "type": "function",
+                "function": {
+                    "name": "get_weather",
+                    # no arguments
+                },
+            }
+        ],
+        # empty message
+        "message": {},
+    }
+    assert_message_in_logs(logs[3], "gen_ai.choice", tool_call_0)
+
+    # Validate the second tool call
+    tool_call_1 = {
+        "index": 2,
+        "finish_reason": "tool_use",
+        "tool_calls": [
+            {
+                "id": "toolu_01NRtod2L7M7TBDj9GCzsZCx",
+                "type": "function",
+                "function": {
+                    "name": "get_time",
+                    # no arguments
+                },
+            }
+        ],
+        # empty message
+        "message": {},
+    }
+    assert_message_in_logs(logs[4], "gen_ai.choice", tool_call_1)
+
+
+@pytest.mark.vcr
 def test_with_asyncio_run_legacy(
     instrument_legacy, async_anthropic_client, span_exporter, log_exporter
 ):
@@ -1697,9 +2340,9 @@ def test_with_asyncio_run_legacy(
     ]
 
     logs = log_exporter.get_finished_logs()
-    assert len(logs) == 0, (
-        "Assert that it doesn't emit logs when use_legacy_attributes is True"
-    )
+    assert (
+        len(logs) == 0
+    ), "Assert that it doesn't emit logs when use_legacy_attributes is True"
 
 
 @pytest.mark.vcr
