@@ -106,13 +106,13 @@ def _set_span_chat_response(span, response):
         )
         _set_span_attribute(
             span,
-            SpanAttributes.LLM_USAGE_COMPLETION_TOKENS,
+            SpanAttributes.LLM_USAGE_OUTPUT_TOKENS,
             response.token_count.get("response_tokens"),
         )
         _set_span_attribute(
             span,
-            SpanAttributes.LLM_USAGE_PROMPT_TOKENS,
-            response.token_count.get("prompt_tokens"),
+            SpanAttributes.LLM_USAGE_INPUT_TOKENS,
+            response.token_count.get("input_tokens"),
         )
 
     # Cohere v5
@@ -127,12 +127,12 @@ def _set_span_chat_response(span, response):
         )
         _set_span_attribute(
             span,
-            SpanAttributes.LLM_USAGE_COMPLETION_TOKENS,
+            SpanAttributes.LLM_USAGE_OUTPUT_TOKENS,
             output_tokens,
         )
         _set_span_attribute(
             span,
-            SpanAttributes.LLM_USAGE_PROMPT_TOKENS,
+            SpanAttributes.LLM_USAGE_INPUT_TOKENS,
             input_tokens,
         )
 

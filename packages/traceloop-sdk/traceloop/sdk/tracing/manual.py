@@ -47,10 +47,10 @@ class LLMSpan:
 
     def report_usage(self, usage: LLMUsage):
         self._span.set_attribute(
-            SpanAttributes.LLM_USAGE_PROMPT_TOKENS, usage.prompt_tokens
+            SpanAttributes.LLM_USAGE_INPUT_TOKENS, usage.prompt_tokens
         )
         self._span.set_attribute(
-            SpanAttributes.LLM_USAGE_COMPLETION_TOKENS, usage.completion_tokens
+            SpanAttributes.LLM_USAGE_OUTPUT_TOKENS, usage.completion_tokens
         )
         self._span.set_attribute(
             SpanAttributes.LLM_USAGE_TOTAL_TOKENS, usage.total_tokens
