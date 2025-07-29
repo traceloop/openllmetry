@@ -148,5 +148,5 @@ class CrewAISpanAttributes:
         )
 
     def _set_attribute(self, key, value):
-        if value:
+        if value is not None:
             set_span_attribute(self.span, key, str(value) if isinstance(value, list) else value)
