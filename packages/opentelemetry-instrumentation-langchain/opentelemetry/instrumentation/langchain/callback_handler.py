@@ -64,7 +64,7 @@ from opentelemetry.semconv_ai import (
 from opentelemetry.trace import SpanKind, Tracer, set_span_in_context
 from opentelemetry.trace.span import Span
 from opentelemetry.trace.status import Status, StatusCode
-
+from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
 
 def _extract_class_name_from_serialized(serialized: Optional[dict[str, Any]]) -> str:
     """
@@ -689,6 +689,8 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         **kwargs: Any,
     ) -> None:
         """Run when tool errors."""
+        span = self._get_span(run_id)
+        span.set_attribute(ERROR_TYPE, type(error).__name__)
         self._handle_error(error, run_id, parent_run_id, **kwargs)
 
     @dont_throw
