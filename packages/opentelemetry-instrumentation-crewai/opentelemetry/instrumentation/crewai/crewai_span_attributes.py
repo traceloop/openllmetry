@@ -13,7 +13,7 @@ class CrewAISpanAttributes:
     def __init__(self, span: Span, instance) -> None:
         self.span = span
         self.instance = instance
-        self.crew = {"tasks": [], "agents": [], "llms": []}
+        self.crew = {"tasks": [], "agents": []}
         self.process_instance()
 
     def process_instance(self):
@@ -44,9 +44,27 @@ class CrewAISpanAttributes:
             self._set_attribute(f"crewai.task.{key}", value)
 
     def _process_llm(self):
-        llm_data = self._populate_llm_attributes()
-        for key, value in llm_data.items():
-            self._set_attribute(f"crewai.llm.{key}", value)
+        fields = [
+            "model",
+            "timeout",
+            "temperature",
+            "top_p",
+            "n",
+            "stop",
+            "max_completion_tokens",
+            "max_tokens",
+            "presence_penalty",
+            "frequency_penalty",
+            "seed",
+            "logprobs",
+            "top_logprobs",
+            "base_url",
+            "api_version",
+        ]
+
+        for field in fields:
+            value = getattr(self.instance, field, None)
+            self._set_attribute(f"crewai.llm.{field}", value)
 
     def _populate_crew_attributes(self):
         for key, value in self.instance.__dict__.items():
@@ -56,8 +74,6 @@ class CrewAISpanAttributes:
                 self._parse_tasks(value)
             elif key == "agents":
                 self._parse_agents(value)
-            elif key == "llms":
-                self._parse_llms(value)
             else:
                 self.crew[key] = str(value)
 
@@ -90,20 +106,6 @@ class CrewAISpanAttributes:
                 "output_file": task.output_file,
             }
             for task in tasks
-        ]
-
-    def _parse_llms(self, llms):
-        self.crew["tasks"] = [
-            {
-                "temperature": llm.temperature,
-                "max_tokens": llm.max_tokens,
-                "max_completion_tokens": llm.max_completion_tokens,
-                "top_p": llm.top_p,
-                "n": llm.n,
-                "seed": llm.seed,
-                "base_url": llm.base_url,
-                "api_version": llm.api_version, }
-            for llm in llms
         ]
 
     def _extract_agent_data(self, agent):
