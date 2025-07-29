@@ -8,7 +8,7 @@ from opentelemetry.trace import INVALID_SPAN
 
 
 @pytest.mark.vcr
-def test_langgraph_invoke(exporter):
+def test_langgraph_invoke(instrument_legacy, span_exporter):
     client = OpenAI()
 
     class State(TypedDict):
@@ -33,7 +33,7 @@ def test_langgraph_invoke(exporter):
 
     user_request = "What's 5 + 5?"
     response = langgraph.invoke(input={"request": user_request})["result"]
-    spans = exporter.get_finished_spans()
+    spans = span_exporter.get_finished_spans()
     assert set(
         [
             "LangGraph.workflow",
@@ -73,7 +73,7 @@ def test_langgraph_invoke(exporter):
 @pytest.mark.vcr
 @pytest.mark.asyncio
 @pytest.mark.xfail(reason="Context propagation is not yet supported for async LangChain callbacks", strict=True)
-async def test_langgraph_ainvoke(exporter):
+async def test_langgraph_ainvoke(instrument_legacy, span_exporter):
     client = OpenAI()
 
     class State(TypedDict):
@@ -98,7 +98,7 @@ async def test_langgraph_ainvoke(exporter):
 
     user_request = "What's 5 + 5?"
     await langgraph.ainvoke(input={"request": user_request})
-    spans = exporter.get_finished_spans()
+    spans = span_exporter.get_finished_spans()
     assert set(
         [
             "LangGraph.workflow",
@@ -112,7 +112,7 @@ async def test_langgraph_ainvoke(exporter):
 
 
 @pytest.mark.vcr
-def test_langgraph_double_invoke(exporter):
+def test_langgraph_double_invoke(instrument_legacy, span_exporter):
     class DummyGraphState(TypedDict):
         result: str
 
@@ -135,7 +135,7 @@ def test_langgraph_double_invoke(exporter):
     graph.invoke({"result": "init"})
     assert trace.get_current_span() == INVALID_SPAN
 
-    spans = exporter.get_finished_spans()
+    spans = span_exporter.get_finished_spans()
     assert [
         "mynode.task",
         "LangGraph.workflow",
@@ -144,7 +144,7 @@ def test_langgraph_double_invoke(exporter):
     graph.invoke({"result": "init"})
     assert trace.get_current_span() == INVALID_SPAN
 
-    spans = exporter.get_finished_spans()
+    spans = span_exporter.get_finished_spans()
     assert [
         "mynode.task",
         "LangGraph.workflow",
@@ -155,7 +155,7 @@ def test_langgraph_double_invoke(exporter):
 
 @pytest.mark.vcr
 @pytest.mark.asyncio
-async def test_langgraph_double_ainvoke(exporter):
+async def test_langgraph_double_ainvoke(instrument_legacy, span_exporter):
     class DummyGraphState(TypedDict):
         result: str
 
@@ -176,7 +176,7 @@ async def test_langgraph_double_ainvoke(exporter):
     await graph.ainvoke({"result": "init"})
     assert trace.get_current_span() == INVALID_SPAN
 
-    spans = exporter.get_finished_spans()
+    spans = span_exporter.get_finished_spans()
     assert [
         "mynode.task",
         "LangGraph.workflow",
@@ -185,7 +185,7 @@ async def test_langgraph_double_ainvoke(exporter):
     await graph.ainvoke({"result": "init"})
     assert trace.get_current_span() == INVALID_SPAN
 
-    spans = exporter.get_finished_spans()
+    spans = span_exporter.get_finished_spans()
     assert [
         "mynode.task",
         "LangGraph.workflow",
