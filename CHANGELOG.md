@@ -1,3 +1,34 @@
+## v0.43.1 (2025-07-23)
+
+### Fix
+
+- **langchain**: added vendors to llm calls (#3165)
+
+## v0.43.0 (2025-07-22)
+
+### Feat
+
+- **prompts**: add tool function support (#3153)
+
+### Fix
+
+- **llamaindex**: structured llm model and temperature parsing (#3159)
+- **langchain**: report token usage histogram (#3059)
+- **openai**: prioritize api-provided token over tiktoken calculation (#3142)
+- **milvus**: Add metrics support (#3013)
+
+## v0.42.0 (2025-07-17)
+
+### Feat
+
+- **llamaindex**: support llamaparse instrumentation (#3103)
+- **milvus**: add semantic convention for Milvus DB metrics (#3015)
+
+### Fix
+
+- **openai-agents**: fix broken traces with agents handoff on run_stream (#3143)
+- **traceloop-sdk**: redefine histogram bucket boundaries (#3129)
+
 ## v0.41.0 (2025-07-13)
 
 ### Feat

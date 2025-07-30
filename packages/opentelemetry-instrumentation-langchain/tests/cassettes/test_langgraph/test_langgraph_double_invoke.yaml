@@ -1,0 +1,90 @@
+interactions:
+- request:
+    body: '{"messages": [{"role": "system", "content": "You are a mathematician."},
+      {"role": "user", "content": "What''s 5 + 5?"}], "model": "gpt-4o"}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '138'
+      content-type:
+      - application/json
+      host:
+      - api.openai.com
+      user-agent:
+      - OpenAI/Python 1.75.0
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.75.0
+      x-stainless-read-timeout:
+      - '600'
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.12.9
+    method: POST
+    uri: https://api.openai.com/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAACo1Sy27bMBC8+ysInlLUCiQ/kwK95NBDH0ATFG2C2BBociWxoUiCpIIUhv89S0m27DyAXghwZmc4u9ztiBAqBf1EKK9Y4LVVydWfa+Uuxe/vt9++8Er9qNzmbvnzZnr16+uDpuOoMJu/wMNedc4N6iBI09PcAQsQXbPlbJkuLrN02hK1EaCirLQhmZlkkk5mSXqRpIteWBnJwWPFPV4J2bZnjKgFPCGcjvdIDd6zEhDbFyHojIoIZd5LH5gOrW1PcqMDIIT8anU2Jx/JnHwmWbpafTg/rnNQNJ7FmLpR6ohgWpvAYpttwnXP7A6ZlCmtMxv/QkoLqaWvcpyKxxHh+z4YS1t2h+e67b05aYeiUW1DHswDtM9NZp0dHYY9kFnWkwEDqgGfzsdvuOUCApMqFhwGzBmvQAzKYdCsEdIcEaOjnl+Hecu761vq8n/sB4JzsLhFuXUgJD9teChzEFfxvbIuLJ5tYOrBPeKC5UGCi/8goGCN6raE+n8+QJ3jZ5XgrJPdqhQ2L+Ybwfl0slzQ0e4Z7HF8PzIDAAA=
+    headers:
+      CF-RAY:
+      - 93eb75e69c28abe5-YYZ
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 12 May 2025 16:58:24 GMT
+      Server:
+      - cloudflare
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      access-control-expose-headers:
+      - X-Request-ID
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      openai-processing-ms:
+      - '442'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-envoy-upstream-service-time:
+      - '447'
+      x-ratelimit-limit-requests:
+      - '10000'
+      x-ratelimit-limit-tokens:
+      - '30000000'
+      x-ratelimit-remaining-requests:
+      - '9999'
+      x-ratelimit-remaining-tokens:
+      - '29999986'
+      x-ratelimit-reset-requests:
+      - 6ms
+      x-ratelimit-reset-tokens:
+      - 0s
+    status:
+      code: 200
+      message: OK
+version: 1

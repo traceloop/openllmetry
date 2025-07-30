@@ -6,14 +6,17 @@ import pymilvus
 from typing import Collection
 
 from opentelemetry.instrumentation.milvus.config import Config
+from opentelemetry.metrics import get_meter
 from opentelemetry.trace import get_tracer
 from wrapt import wrap_function_wrapper
 
+from opentelemetry.semconv_ai import Meters
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.instrumentation.utils import unwrap
 
 from opentelemetry.instrumentation.milvus.wrapper import _wrap
 from opentelemetry.instrumentation.milvus.version import __version__
+from opentelemetry.instrumentation.milvus.utils import is_metrics_enabled
 
 logger = logging.getLogger(__name__)
 
@@ -82,8 +85,39 @@ class MilvusInstrumentor(BaseInstrumentor):
         return _instruments
 
     def _instrument(self, **kwargs):
+        if is_metrics_enabled():
+            meter_provider = kwargs.get("meter_provider")
+            meter = get_meter(__name__, __version__, meter_provider)
+
+            query_duration_metric = meter.create_histogram(
+                Meters.DB_QUERY_DURATION,
+                "s",
+                "Duration of query operations",
+            )
+            distance_metric = meter.create_histogram(
+                Meters.DB_SEARCH_DISTANCE,
+                "",
+                "Distance between search query vector and matched vectors",
+            )
+            insert_units_metric = meter.create_counter(
+                Meters.DB_USAGE_INSERT_UNITS,
+                "",
+                "Number of insert units consumed in serverless calls",
+            )
+            upsert_units_metric = meter.create_counter(
+                Meters.DB_USAGE_UPSERT_UNITS,
+                "",
+                "Number of upsert units consumed in serverless calls",
+            )
+            delete_units_metric = meter.create_counter(
+                Meters.DB_USAGE_DELETE_UNITS,
+                "",
+                "Number of delete units consumed in serverless calls",
+            )
+
         tracer_provider = kwargs.get("tracer_provider")
         tracer = get_tracer(__name__, __version__, tracer_provider)
+
         for wrapped_method in WRAPPED_METHODS:
             wrap_package = wrapped_method.get("package")
             wrap_object = wrapped_method.get("object")
@@ -92,7 +126,15 @@ class MilvusInstrumentor(BaseInstrumentor):
                 wrap_function_wrapper(
                     wrap_package,
                     f"{wrap_object}.{wrap_method}",
-                    _wrap(tracer, wrapped_method),
+                    _wrap(
+                        tracer,
+                        query_duration_metric,
+                        distance_metric,
+                        insert_units_metric,
+                        upsert_units_metric,
+                        delete_units_metric,
+                        wrapped_method
+                    ),
                 )
 
     def _uninstrument(self, **kwargs):
