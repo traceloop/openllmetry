@@ -66,7 +66,7 @@ class CrewAISpanAttributes:
                 self._set_attribute(SpanAttributes.LLM_REQUEST_MODEL, value)
             elif field == "temperature":
                 self._set_attribute(SpanAttributes.LLM_REQUEST_TEMPERATURE, value)
-            elif field == "top_p":  
+            elif field == "top_p":
                 self._set_attribute(SpanAttributes.LLM_REQUEST_TOP_P, value)
             elif field == "max_tokens":
                 self._set_attribute(SpanAttributes.LLM_REQUEST_MAX_TOKENS, value)
