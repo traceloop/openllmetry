@@ -1,4 +1,5 @@
 from opentelemetry.trace import Span
+from opentelemetry.semconv_ai import SpanAttributes
 import json
 
 
@@ -46,7 +47,6 @@ class CrewAISpanAttributes:
     def _process_llm(self):
         fields = [
             "model",
-            "timeout",
             "temperature",
             "top_p",
             "n",
@@ -55,16 +55,27 @@ class CrewAISpanAttributes:
             "max_tokens",
             "presence_penalty",
             "frequency_penalty",
-            "seed",
-            "logprobs",
-            "top_logprobs",
-            "base_url",
-            "api_version",
+            "seed"
         ]
 
         for field in fields:
             value = getattr(self.instance, field, None)
-            self._set_attribute(f"crewai.llm.{field}", value)
+            if value is None:
+                continue
+            if field == "model":
+                self._set_attribute(SpanAttributes.LLM_REQUEST_MODEL, value)
+            elif field == "temperature":
+                self._set_attribute(SpanAttributes.LLM_REQUEST_TEMPERATURE, value)
+            elif field == "top_p":  
+                self._set_attribute(SpanAttributes.LLM_REQUEST_TOP_P, value)
+            elif field == "max_tokens":
+                self._set_attribute(SpanAttributes.LLM_REQUEST_MAX_TOKENS, value)
+            elif field == "presence_penalty":
+                self._set_attribute(SpanAttributes.LLM_PRESENCE_PENALTY, value)
+            elif field == "frequency_penalty":
+                self._set_attribute(SpanAttributes.LLM_FREQUENCY_PENALTY, value)
+            else:
+                self._set_attribute(f"llm.{field}", value)
 
     def _populate_crew_attributes(self):
         for key, value in self.instance.__dict__.items():
