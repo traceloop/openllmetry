@@ -66,7 +66,15 @@ For a complete guide, go to our [docs](https://traceloop.com/docs/openllmetry/ge
 Install the SDK:
 
 ```bash
-pip install traceloop-sdk
+pip install "traceloop-sdk[all]"
+```
+
+Or, if you want to install only the instrumentations you need, you can install them individually, check the above docs for more details
+
+```bash
+pip install "traceloop-sdk[openai]"
+pip install "traceloop-sdk[anthropic]"
+pip install "traceloop-sdk[langchain,pinecone]"
 ```
 
 Then, to start instrumenting your code, just add this line to your code:
