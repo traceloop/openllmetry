@@ -146,6 +146,7 @@ class TracerWrapper(object):
                     disable_batch=disable_batch,
                     exporter=exporter
                 )
+                obj.__spans_processor_original_on_start = None
                 
                 if span_postprocess_callback:
                     # Create a wrapper that calls both the custom and original methods

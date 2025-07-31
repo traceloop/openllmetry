@@ -1,7 +1,6 @@
 from opentelemetry.sdk.trace.export import ConsoleSpanExporter
 from opentelemetry.sdk.trace.export import SimpleSpanProcessor
 from traceloop.sdk import Traceloop
-from traceloop.sdk.tracing.context_manager import get_tracer
 from traceloop.sdk.decorators import task
 from openai import OpenAI
 import os
