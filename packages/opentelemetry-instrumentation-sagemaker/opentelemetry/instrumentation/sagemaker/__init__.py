@@ -171,12 +171,10 @@ class SageMakerInstrumentor(BaseInstrumentor):
 
     def __init__(
         self,
-        enrich_token_usage: bool = False,
         exception_logger=None,
         use_legacy_attributes: bool = True,
     ):
         super().__init__()
-        Config.enrich_token_usage = enrich_token_usage
         Config.exception_logger = exception_logger
         Config.use_legacy_attributes = use_legacy_attributes
 

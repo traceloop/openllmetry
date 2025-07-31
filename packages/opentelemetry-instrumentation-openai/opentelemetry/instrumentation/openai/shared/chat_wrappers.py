@@ -17,13 +17,11 @@ from opentelemetry.instrumentation.openai.shared import (
     _set_span_attribute,
     _set_span_stream_usage,
     _token_type,
-    get_token_count_from_string,
     is_streaming_response,
     metric_shared_attributes,
     model_as_dict,
     propagate_trace_context,
     set_tools_attributes,
-    should_record_stream_token_usage,
 )
 from opentelemetry.instrumentation.openai.shared.config import Config
 from opentelemetry.instrumentation.openai.shared.event_emitter import emit_event
@@ -529,47 +527,16 @@ def _set_completions(span, choices):
 def _set_streaming_token_metrics(
     request_kwargs, complete_response, span, token_counter, shared_attributes
 ):
-    if not should_record_stream_token_usage():
-        return
-
     prompt_usage = -1
     completion_usage = -1
 
-    # First, try to get usage from API response
+    # Use token usage from API response only
     if complete_response.get("usage"):
         usage = complete_response["usage"]
         if usage.get("prompt_tokens"):
             prompt_usage = usage["prompt_tokens"]
         if usage.get("completion_tokens"):
             completion_usage = usage["completion_tokens"]
-
-    # If API response doesn't have usage, fallback to tiktoken calculation
-    if prompt_usage == -1 or completion_usage == -1:
-        model_name = (
-            complete_response.get("model") or request_kwargs.get(
-                "model") or "gpt-4"
-        )
-
-        # Calculate prompt tokens if not available from API
-        if prompt_usage == -1 and request_kwargs and request_kwargs.get("messages"):
-            prompt_content = ""
-            for msg in request_kwargs.get("messages"):
-                if msg.get("content"):
-                    prompt_content += msg.get("content")
-            if model_name and should_record_stream_token_usage():
-                prompt_usage = get_token_count_from_string(
-                    prompt_content, model_name)
-
-        # Calculate completion tokens if not available from API
-        if completion_usage == -1 and complete_response.get("choices"):
-            completion_content = ""
-            for choice in complete_response.get("choices"):
-                if choice.get("message") and choice.get("message").get("content"):
-                    completion_content += choice["message"]["content"]
-            if model_name and should_record_stream_token_usage():
-                completion_usage = get_token_count_from_string(
-                    completion_content, model_name
-                )
 
     # span record
     _set_span_stream_usage(span, prompt_usage, completion_usage)

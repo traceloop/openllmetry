@@ -44,6 +44,14 @@ def openai_client():
 
 
 @pytest.fixture
+def mock_openai_client():
+    return OpenAI(
+        api_key="test-key",
+        base_url="http://localhost:5002/v1/"
+    )
+
+
+@pytest.fixture
 def vllm_openai_client():
     return OpenAI(base_url="http://localhost:8000/v1")
 
@@ -123,7 +131,6 @@ def instrument_legacy(reader, tracer_provider, meter_provider):
 
     instrumentor = OpenAIInstrumentor(
         enrich_assistant=True,
-        enrich_token_usage=True,
         upload_base64_image=upload_base64_image,
     )
     instrumentor.instrument(
