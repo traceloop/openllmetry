@@ -219,36 +219,36 @@ class Traceloop:
     ) -> SpanProcessor:
         """
         Creates and returns the default Traceloop span processor.
-        
+
         This function allows users to get the default Traceloop span processor
         to combine it with their custom processors when using the processors parameter.
-        
+
         Args:
             disable_batch: If True, uses SimpleSpanProcessor, otherwise BatchSpanProcessor
             api_endpoint: The endpoint URL for the exporter (uses current config if None)
             headers: Headers for the exporter (uses current config if None)
             exporter: Custom exporter to use (creates default if None)
-        
+
         Returns:
             SpanProcessor: The default Traceloop span processor
-        
+
         Example:
             # Get the default processor and combine with custom one
             default_processor = Traceloop.get_default_span_processor()
             custom_processor = MyCustomSpanProcessor()
-            
+
             Traceloop.init(
                 processors=[default_processor, custom_processor]
             )
         """
         from traceloop.sdk.tracing.tracing import get_default_span_processor
-        if not headers:
-            if not api_key:
+        if headers is None:
+            if api_key is None:
                 api_key = os.getenv("TRACELOOP_API_KEY")
             headers = {
                 "Authorization": f"Bearer {api_key}",
             }
-        if not api_endpoint:
+        if api_endpoint is None:
             api_endpoint = os.getenv("TRACELOOP_BASE_URL")
         return get_default_span_processor(disable_batch, api_endpoint, headers, exporter)
 

@@ -14,14 +14,13 @@ console_processor = SimpleSpanProcessor(ConsoleSpanExporter())
 Traceloop.init(processors=[traceloop_processor, console_processor])
 
 
-
 @task(name="joke_creation", version=1)
 def create_joke():
     completion = client.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=[{"role": "user", "content": "Tell me a joke about opentelemetry multiple span processors"}],
     )
-    
+
     result = completion.choices[0].message.content
     print(result)
     return result
@@ -29,7 +28,7 @@ def create_joke():
 
 def main():
     create_joke()
-    
+
+
 if __name__ == "__main__":
     main()
-
