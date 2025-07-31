@@ -31,10 +31,6 @@ def is_metrics_enabled() -> bool:
     return (os.getenv("TRACELOOP_METRICS_ENABLED") or "true").lower() == "true"
 
 
-def should_record_stream_token_usage():
-    return Config.enrich_token_usage
-
-
 def _with_image_gen_metric_wrapper(func):
     def _with_metric(duration_histogram, exception_counter):
         def wrapper(wrapped, instance, args, kwargs):
