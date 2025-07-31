@@ -36,7 +36,7 @@ F = TypeVar("F", bound=Callable[P, R | Awaitable[R]])
 
 
 def _truncate_json_if_needed(json_str: str) -> str:
-    """Truncate JSON string if it exceeds OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT"""
+    """Truncate JSON string if it exceeds OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT; truncation may yield an invalid JSON string, which is expected for logging purposes."""
     limit_str = os.getenv("OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT")
     if limit_str:
         try:
