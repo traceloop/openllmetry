@@ -32,7 +32,7 @@ from traceloop.sdk.instruments import Instruments
 from traceloop.sdk.tracing.content_allow_list import ContentAllowList
 from traceloop.sdk.utils import is_notebook
 from traceloop.sdk.utils.package_check import is_package_installed
-from typing import Callable, Dict, Optional, Set
+from typing import Callable, Dict, List, Optional, Set
 
 
 TRACER_NAME = "traceloop.tracer"
@@ -67,7 +67,8 @@ class TracerWrapper(object):
     def __new__(
         cls,
         disable_batch=False,
-        processor: SpanProcessor = None,
+        processor: Optional[SpanProcessor] = None,
+        processors: Optional[List[SpanProcessor]] = None,
         propagator: TextMapPropagator = None,
         exporter: SpanExporter = None,
         sampler: Optional[Sampler] = None,
@@ -85,10 +86,44 @@ class TracerWrapper(object):
             obj.__image_uploader = image_uploader
             obj.__resource = Resource(attributes=TracerWrapper.resource_attributes)
             obj.__tracer_provider = init_tracer_provider(resource=obj.__resource, sampler=sampler)
-            if processor:
+            
+            # Validate that only one processor parameter is provided
+            if processor is not None and processors is not None:
+                raise ValueError("Cannot specify both 'processor' and 'processors' parameters. Use only one.")
+            
+            # Handle multiple processors case
+            if processors is not None:
+                obj.__spans_processors = []
+                obj.__traceloop_processor = None
+                obj.__spans_processor_original_on_start = []
+                for proc in processors:
+                    obj.__spans_processors.append(proc)
+                    obj.__spans_processor_original_on_start.append(proc.on_start)
+                    proc.on_start = obj._span_processor_on_start
+                    
+                    obj.__tracer_provider.add_span_processor(proc)
+                
+                # Find the Traceloop processor (if any) to apply special handling
+                # We'll identify it by checking if it was created by get_default_span_processor
+                # For now, we'll apply the special on_start to the first processor that looks like ours
+                for proc in processors:
+                    if isinstance(proc, (SimpleSpanProcessor, BatchSpanProcessor)):
+                        # This might be our default processor, apply special handling
+                        proc.on_start = obj._span_processor_on_start
+                        obj.__traceloop_processor = proc
+                        break
+                
+                Telemetry().capture("tracer:init", {"processor": "multiple", "count": len(processors)})
+                
+            # Handle single processor case (backward compatibility)
+            elif processor is not None:
                 Telemetry().capture("tracer:init", {"processor": "custom"})
                 obj.__spans_processor: SpanProcessor = processor
                 obj.__spans_processor_original_on_start = processor.on_start
+                obj.__spans_processor.on_start = obj._span_processor_on_start
+                obj.__tracer_provider.add_span_processor(obj.__spans_processor)
+                
+            # Handle default processor case
             else:
                 if exporter:
                     Telemetry().capture(
@@ -107,22 +142,11 @@ class TracerWrapper(object):
                         },
                     )
 
-                obj.__spans_exporter: SpanExporter = (
-                    exporter
-                    if exporter
-                    else init_spans_exporter(
-                        TracerWrapper.endpoint, TracerWrapper.headers
-                    )
+                obj.__spans_processor: SpanProcessor = get_default_span_processor(
+                    disable_batch=disable_batch,
+                    exporter=exporter
                 )
-                if disable_batch or is_notebook():
-                    obj.__spans_processor: SpanProcessor = SimpleSpanProcessor(
-                        obj.__spans_exporter
-                    )
-                else:
-                    obj.__spans_processor: SpanProcessor = BatchSpanProcessor(
-                        obj.__spans_exporter
-                    )
-                obj.__spans_processor_original_on_start = None
+                
                 if span_postprocess_callback:
                     # Create a wrapper that calls both the custom and original methods
                     original_on_end = obj.__spans_processor.on_end
@@ -134,8 +158,8 @@ class TracerWrapper(object):
                         original_on_end(span)
                     obj.__spans_processor.on_end = wrapped_on_end
 
-            obj.__spans_processor.on_start = obj._span_processor_on_start
-            obj.__tracer_provider.add_span_processor(obj.__spans_processor)
+                obj.__spans_processor.on_start = obj._span_processor_on_start
+                obj.__tracer_provider.add_span_processor(obj.__spans_processor)
 
             if propagator:
                 set_global_textmap(propagator)
@@ -224,7 +248,12 @@ class TracerWrapper(object):
 
         # Call original on_start method if it exists in custom processor
         if self.__spans_processor_original_on_start:
-            self.__spans_processor_original_on_start(span, parent_context)
+            original = self.__spans_processor_original_on_start
+            if callable(original):
+                original(span, parent_context)
+            elif isinstance(original, list):
+                for func in original:
+                    func(span, parent_context)
 
     @staticmethod
     def set_static_params(
@@ -261,7 +290,11 @@ class TracerWrapper(object):
         cls.__disabled = disabled
 
     def flush(self):
-        self.__spans_processor.force_flush()
+        if hasattr(self, '_TracerWrapper__spans_processor'):
+            self.__spans_processor.force_flush()
+        elif hasattr(self, '_TracerWrapper__spans_processors'):
+            for processor in self.__spans_processors:
+                processor.force_flush()
 
     def get_tracer(self):
         return self.__tracer_provider.get_tracer(TRACER_NAME)
@@ -332,6 +365,35 @@ def init_spans_exporter(api_endpoint: str, headers: Dict[str, str]) -> SpanExpor
         return HTTPExporter(endpoint=f"{api_endpoint}/v1/traces", headers=headers)
     else:
         return GRPCExporter(endpoint=f"{api_endpoint}", headers=headers)
+
+
+def get_default_span_processor(
+    disable_batch: bool = False,
+    api_endpoint: Optional[str] = None,
+    headers: Optional[Dict[str, str]] = None,
+    exporter: Optional[SpanExporter] = None
+) -> SpanProcessor:
+    """
+    Creates and returns the default Traceloop span processor.
+    
+    Args:
+        disable_batch: If True, uses SimpleSpanProcessor, otherwise BatchSpanProcessor
+        api_endpoint: The endpoint URL for the exporter (uses TracerWrapper.endpoint if None)
+        headers: Headers for the exporter (uses TracerWrapper.headers if None)
+        exporter: Custom exporter to use (creates default if None)
+    
+    Returns:
+        SpanProcessor: The default Traceloop span processor
+    """
+    endpoint = api_endpoint or TracerWrapper.endpoint
+    request_headers = headers or TracerWrapper.headers
+    
+    spans_exporter = exporter or init_spans_exporter(endpoint, request_headers)
+    
+    if disable_batch or is_notebook():
+        return SimpleSpanProcessor(spans_exporter)
+    else:
+        return BatchSpanProcessor(spans_exporter)
 
 
 def init_tracer_provider(resource: Resource, sampler: Optional[Sampler] = None) -> TracerProvider:
