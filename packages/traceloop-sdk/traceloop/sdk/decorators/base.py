@@ -41,7 +41,7 @@ def _truncate_json_if_needed(json_str: str) -> str:
     if limit_str:
         try:
             limit = int(limit_str)
-            if len(json_str) > limit:
+            if limit > 0 and len(json_str) > limit:
                 return json_str[:limit]
         except ValueError:
             pass
