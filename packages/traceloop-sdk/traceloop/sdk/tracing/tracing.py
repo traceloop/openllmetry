@@ -21,7 +21,9 @@ from opentelemetry.sdk.trace.export import (
     SimpleSpanProcessor,
     BatchSpanProcessor,
 )
-from opentelemetry.trace import get_tracer_provider, ProxyTracerProvider
+from opentelemetry.context import Context
+
+from opentelemetry.trace import get_tracer_provider, ProxyTracerProvider, Span
 from opentelemetry.context import get_value, attach, set_value
 from opentelemetry.instrumentation.threading import ThreadingInstrumentor
 
@@ -103,6 +105,9 @@ class TracerWrapper(object):
                             orig(span, parent_context)
 
                     proc.on_start = chained_on_start
+                    if hasattr(proc, "_traceloop_processor"):
+                        proc.on_start = obj._span_processor_on_start
+
                     obj.__spans_processors.append(proc)
 
                     obj.__tracer_provider.add_span_processor(proc)
@@ -121,6 +126,8 @@ class TracerWrapper(object):
                         orig(span, parent_context)
 
                 obj.__spans_processor.on_start = chained_on_start
+                if hasattr(obj.__spans_processor, "_traceloop_processor"):
+                    obj.__spans_processor.on_start = obj._span_processor_on_start
                 obj.__tracer_provider.add_span_processor(obj.__spans_processor)
 
             # Handle default processor case
@@ -146,7 +153,6 @@ class TracerWrapper(object):
                     disable_batch=disable_batch,
                     exporter=exporter
                 )
-                obj.__spans_processor_original_on_start = None
 
                 if span_postprocess_callback:
                     # Create a wrapper that calls both the custom and original methods
@@ -358,6 +364,63 @@ def init_spans_exporter(api_endpoint: str, headers: Dict[str, str]) -> SpanExpor
     else:
         return GRPCExporter(endpoint=f"{api_endpoint}", headers=headers)
 
+# Same as _span_processor_on_start but without the usage of self which comes from the sdk, good for standalone usage
+def default_span_processor_on_start(span: Span, parent_context: Context | None = None):
+    workflow_name = get_value("workflow_name")
+    if workflow_name is not None:
+        span.set_attribute(SpanAttributes.TRACELOOP_WORKFLOW_NAME, str(workflow_name))
+
+    entity_path = get_value("entity_path")
+    if entity_path is not None:
+        span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_PATH, str(entity_path))
+
+    association_properties = get_value("association_properties")
+    if association_properties is not None and isinstance(association_properties, dict):
+        _set_association_properties_attributes(span, association_properties)
+
+    if is_llm_span(span):
+        managed_prompt = get_value("managed_prompt")
+        if managed_prompt is not None:
+            span.set_attribute(
+                SpanAttributes.TRACELOOP_PROMPT_MANAGED, str(managed_prompt)
+            )
+
+        prompt_key = get_value("prompt_key")
+        if prompt_key is not None:
+            span.set_attribute(SpanAttributes.TRACELOOP_PROMPT_KEY, str(prompt_key))
+
+        prompt_version = get_value("prompt_version")
+        if prompt_version is not None:
+            span.set_attribute(
+                SpanAttributes.TRACELOOP_PROMPT_VERSION, str(prompt_version)
+            )
+
+        prompt_version_name = get_value("prompt_version_name")
+        if prompt_version_name is not None:
+            span.set_attribute(
+                SpanAttributes.TRACELOOP_PROMPT_VERSION_NAME, str(prompt_version_name)
+            )
+
+        prompt_version_hash = get_value("prompt_version_hash")
+        if prompt_version_hash is not None:
+            span.set_attribute(
+                SpanAttributes.TRACELOOP_PROMPT_VERSION_HASH, str(prompt_version_hash)
+            )
+
+        prompt_template = get_value("prompt_template")
+        if prompt_template is not None:
+            span.set_attribute(
+                SpanAttributes.TRACELOOP_PROMPT_TEMPLATE, str(prompt_template)
+            )
+
+        prompt_template_variables = get_value("prompt_template_variables")
+        if prompt_template_variables is not None and isinstance(prompt_template_variables, dict):
+            for key, value in prompt_template_variables.items():
+                span.set_attribute(
+                    f"{SpanAttributes.TRACELOOP_PROMPT_TEMPLATE_VARIABLES}.{key}",
+                    value,
+                )
+
 
 def get_default_span_processor(
     disable_batch: bool = False,
@@ -388,6 +451,7 @@ def get_default_span_processor(
         processor = BatchSpanProcessor(spans_exporter)
 
     setattr(processor, "_traceloop_processor", True)
+    processor.on_start = default_span_processor_on_start
     return processor
 
 
