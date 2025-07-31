@@ -364,8 +364,11 @@ def init_spans_exporter(api_endpoint: str, headers: Dict[str, str]) -> SpanExpor
     else:
         return GRPCExporter(endpoint=f"{api_endpoint}", headers=headers)
 
-# Same as _span_processor_on_start but without the usage of self which comes from the sdk, good for standalone usage
+
 def default_span_processor_on_start(span: Span, parent_context: Context | None = None):
+    """
+    Same as _span_processor_on_start but without the usage of self which comes from the sdk, good for standalone usage.
+    """
     workflow_name = get_value("workflow_name")
     if workflow_name is not None:
         span.set_attribute(SpanAttributes.TRACELOOP_WORKFLOW_NAME, str(workflow_name))
