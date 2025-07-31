@@ -7,7 +7,6 @@ from opentelemetry.instrumentation.openai.shared.config import Config
 from opentelemetry.instrumentation.openai.utils import (
     dont_throw,
     is_openai_v1,
-    should_record_stream_token_usage,
 )
 from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
     GEN_AI_RESPONSE_ID,
@@ -24,8 +23,6 @@ PROMPT_ERROR = "prompt_error"
 
 _PYDANTIC_VERSION = version("pydantic")
 
-# tiktoken encodings map for different model, key is model_name, value is tiktoken encoding
-tiktoken_encodings = {}
 
 logger = logging.getLogger(__name__)
 
@@ -353,36 +350,6 @@ def model_as_dict(model):
         return model_as_dict(model.parse())
     else:
         return model
-
-
-def get_token_count_from_string(string: str, model_name: str):
-    if not should_record_stream_token_usage():
-        return None
-
-    import tiktoken
-
-    if tiktoken_encodings.get(model_name) is None:
-        try:
-            encoding = tiktoken.encoding_for_model(model_name)
-        except KeyError as ex:
-            # no such model_name in tiktoken
-            logger.warning(
-                f"Failed to get tiktoken encoding for model_name {model_name}, error: {str(ex)}"
-            )
-            return None
-        except Exception as ex:
-            # Other exceptions in tiktok
-            logger.warning(
-                f"Failed to get tiktoken encoding for model_name {model_name}, error: {str(ex)}"
-            )
-            return None
-
-        tiktoken_encodings[model_name] = encoding
-    else:
-        encoding = tiktoken_encodings.get(model_name)
-
-    token_count = len(encoding.encode(string))
-    return token_count
 
 
 def _token_type(token_type: str):
