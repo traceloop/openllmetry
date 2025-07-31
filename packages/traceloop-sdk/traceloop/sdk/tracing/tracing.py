@@ -94,12 +94,16 @@ class TracerWrapper(object):
             # Handle multiple processors case
             if processors is not None:
                 obj.__spans_processors = []
-                obj.__spans_processor_original_on_start = []
                 for proc in processors:
+                    original_on_start = proc.on_start
+
+                    def chained_on_start(span, parent_context=None, orig=original_on_start):
+                        obj._span_processor_on_start(span, parent_context)
+                        if orig:
+                            orig(span, parent_context)
+
+                    proc.on_start = chained_on_start
                     obj.__spans_processors.append(proc)
-                    obj.__spans_processor_original_on_start.append(proc.on_start)
-                    if hasattr(proc, "_traceloop_processor"):
-                        proc.on_start = obj._span_processor_on_start
 
                     obj.__tracer_provider.add_span_processor(proc)
 
@@ -109,8 +113,14 @@ class TracerWrapper(object):
             elif processor is not None:
                 Telemetry().capture("tracer:init", {"processor": "custom"})
                 obj.__spans_processor: SpanProcessor = processor
-                obj.__spans_processor_original_on_start = processor.on_start
-                obj.__spans_processor.on_start = obj._span_processor_on_start
+                original_on_start = obj.__spans_processor.on_start
+
+                def chained_on_start(span, parent_context=None, orig=original_on_start):
+                    obj._span_processor_on_start(span, parent_context)
+                    if orig:
+                        orig(span, parent_context)
+
+                obj.__spans_processor.on_start = chained_on_start
                 obj.__tracer_provider.add_span_processor(obj.__spans_processor)
 
             # Handle default processor case
@@ -236,15 +246,6 @@ class TracerWrapper(object):
                         f"{SpanAttributes.TRACELOOP_PROMPT_TEMPLATE_VARIABLES}.{key}",
                         value,
                     )
-
-        # Call original on_start method if it exists in custom processor
-        if self.__spans_processor_original_on_start:
-            original = self.__spans_processor_original_on_start
-            if callable(original):
-                original(span, parent_context)
-            elif isinstance(original, list):
-                for func in original:
-                    func(span, parent_context)
 
     @staticmethod
     def set_static_params(

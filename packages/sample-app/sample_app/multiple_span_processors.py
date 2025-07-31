@@ -9,6 +9,7 @@ client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 
 traceloop_processor = Traceloop.get_default_span_processor(disable_batch=True)
+
 console_processor = SimpleSpanProcessor(ConsoleSpanExporter())
 
 Traceloop.init(processors=[traceloop_processor, console_processor])
