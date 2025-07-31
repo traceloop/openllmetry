@@ -4,7 +4,6 @@ from unittest.mock import MagicMock, patch
 import boto3
 import httpx
 import pytest
-
 from langchain.output_parsers.openai_functions import JsonOutputFunctionsParser
 from langchain.prompts import ChatPromptTemplate
 from langchain_anthropic import ChatAnthropic
@@ -16,73 +15,34 @@ from langchain_community.llms.vllm import VLLMOpenAI
 from langchain_community.utils.openai_functions import (
     convert_pydantic_to_openai_function,
 )
-from pydantic import BaseModel, Field
 from langchain_openai import ChatOpenAI, OpenAI
+from opentelemetry.sdk._logs import LogData
 from opentelemetry.sdk.trace import Span
-from opentelemetry.semconv_ai import SpanAttributes
-from opentelemetry.trace.propagation.tracecontext import (
-    TraceContextTextMapPropagator,
+from opentelemetry.semconv._incubating.attributes import (
+    event_attributes as EventAttributes,
 )
+from opentelemetry.semconv._incubating.attributes import (
+    gen_ai_attributes as GenAIAttributes,
+)
+from opentelemetry.semconv_ai import SpanAttributes
 from opentelemetry.trace.propagation import (
     get_current_span,
 )
+from opentelemetry.trace.propagation.tracecontext import (
+    TraceContextTextMapPropagator,
+)
+from pydantic import BaseModel, Field
 
 
-@pytest.mark.vcr
-def test_custom_llm(exporter):
-    prompt = ChatPromptTemplate.from_messages(
-        [("system", "You are a helpful assistant"), ("user", "{input}")]
-    )
-    model = HuggingFaceTextGenInference(
-        inference_server_url="https://w8qtunpthvh1r7a0.us-east-1.aws.endpoints.huggingface.cloud"
-    )
-
-    chain = prompt | model
-    response = chain.invoke({"input": "tell me a short joke"})
-
-    spans = exporter.get_finished_spans()
-
-    assert [
-        "ChatPromptTemplate.task",
-        "HuggingFaceTextGenInference.completion",
-        "RunnableSequence.workflow",
-    ] == [span.name for span in spans]
-
-    hugging_face_span = next(
-        span for span in spans if span.name == "HuggingFaceTextGenInference.completion"
-    )
-
-    assert hugging_face_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "completion"
-    assert hugging_face_span.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "unknown"
-    assert (
-        hugging_face_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
-        == "System: You are a helpful assistant\nHuman: tell me a short joke"
-    )
-    assert (
-        hugging_face_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"]
-        == response
-    )
-
-
-@pytest.mark.vcr
-def test_openai(exporter):
-    prompt = ChatPromptTemplate.from_messages(
-        [("system", "You are a helpful assistant"), ("human", "{input}")]
-    )
-    model = ChatOpenAI(model="gpt-4o-mini")
-    chain = prompt | model
-
+def open_ai_prompt():
     # flake8: noqa: E501
     # This prompt is long on purpose to trigger the cache (in order to reproduce the caching behavior when rewriting the cassette, run it twice)
-    prompt = """
+    return """
 OpenTelemetry: A Deep Dive into the Standard for Observability
 OpenTelemetry is an open-source project under the Cloud Native Computing Foundation (CNCF) that provides a unified set of APIs, libraries, agents, and instrumentation to enable observability—specifically tracing, metrics, and logs—in distributed systems. It was formed through the merger of two earlier CNCF projects: OpenTracing and OpenCensus, both of which had overlapping goals but different implementations and user bases. OpenTelemetry combines the best of both, aiming to create a single, vendor-agnostic standard for telemetry data collection.
-
 Background and Motivation
 Modern software systems are increasingly composed of microservices, often deployed in cloud-native environments. These distributed architectures bring significant operational complexity: services may scale dynamically, instances may be short-lived, and failures may not be obvious. As a result, understanding how systems behave in production requires powerful observability tools.
-
 Historically, developers had to integrate separate tools for logging, metrics, and tracing, often using vendor-specific SDKs. This led to inconsistent data, vendor lock-in, and high maintenance costs. OpenTelemetry addresses this by offering a standardized, portable, and extensible approach to collecting telemetry data.
-
 Core Goals of OpenTelemetry
 Unified Observability Framework
 OpenTelemetry provides a single set of APIs and libraries to collect traces, metrics, and logs, promoting consistency across services and languages.
@@ -154,12 +114,158 @@ Profiling signals integration in the long-term future.
 Conclusion
 OpenTelemetry is not just a tool or a library—it’s a movement toward a better way to understand and manage modern software systems. With deep community support, growing enterprise adoption, and a commitment to open standards, it is poised to be the foundation for observability for the next decade.
 Whether you are building a single microservice or running a complex mesh of applications across hybrid clouds, OpenTelemetry offers the instrumentation, tools, and ecosystem needed to bring clarity to your system's behavior—without the downsides of proprietary lock-in or fragmented tooling.
-
-
     """
+
+
+@pytest.mark.vcr
+def test_custom_llm(instrument_legacy, span_exporter, log_exporter):
+    prompt = ChatPromptTemplate.from_messages(
+        [("system", "You are a helpful assistant"), ("user", "{input}")]
+    )
+    model = HuggingFaceTextGenInference(
+        inference_server_url="https://w8qtunpthvh1r7a0.us-east-1.aws.endpoints.huggingface.cloud"
+    )
+
+    chain = prompt | model
+    response = chain.invoke({"input": "tell me a short joke"})
+
+    spans = span_exporter.get_finished_spans()
+
+    assert [
+        "ChatPromptTemplate.task",
+        "HuggingFaceTextGenInference.completion",
+        "RunnableSequence.workflow",
+    ] == [span.name for span in spans]
+
+    hugging_face_span = next(
+        span for span in spans if span.name == "HuggingFaceTextGenInference.completion"
+    )
+
+    assert hugging_face_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "completion"
+    assert hugging_face_span.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "unknown"
+    assert hugging_face_span.attributes[SpanAttributes.LLM_SYSTEM] == "HuggingFace"
+    assert (
+        hugging_face_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
+        == "System: You are a helpful assistant\nHuman: tell me a short joke"
+    )
+    assert (
+        hugging_face_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"]
+        == response
+    )
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 0, (
+        "Assert that it doesn't emit logs when use_legacy_attributes is True"
+    )
+
+
+@pytest.mark.vcr
+def test_custom_llm_with_events_with_content(
+    instrument_with_content, span_exporter, log_exporter
+):
+    prompt = ChatPromptTemplate.from_messages(
+        [("system", "You are a helpful assistant"), ("user", "{input}")]
+    )
+    model = HuggingFaceTextGenInference(
+        inference_server_url="https://w8qtunpthvh1r7a0.us-east-1.aws.endpoints.huggingface.cloud"
+    )
+
+    chain = prompt | model
+    response = chain.invoke({"input": "tell me a short joke"})
+
+    spans = span_exporter.get_finished_spans()
+
+    assert [
+        "ChatPromptTemplate.task",
+        "HuggingFaceTextGenInference.completion",
+        "RunnableSequence.workflow",
+    ] == [span.name for span in spans]
+
+    hugging_face_span = next(
+        span for span in spans if span.name == "HuggingFaceTextGenInference.completion"
+    )
+
+    assert hugging_face_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "completion"
+    assert hugging_face_span.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "unknown"
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 2
+
+    # Validate user message Event
+    # With the custom llm, LangChain is emitting only one "on_llm_start" callback,
+    # because of this, both the systm instruction and the user message are in the same event
+    assert_message_in_logs(
+        logs[0],
+        "gen_ai.user.message",
+        {"content": "System: You are a helpful assistant\nHuman: tell me a short joke"},
+    )
+
+    # Validate AI choice Event
+    choice_event = {
+        "index": 0,
+        "finish_reason": "unknown",
+        "message": {"content": response},
+    }
+    assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
+
+
+@pytest.mark.vcr
+def test_custom_llm_with_events_with_no_content(
+    instrument_with_no_content, span_exporter, log_exporter
+):
+    prompt = ChatPromptTemplate.from_messages(
+        [("system", "You are a helpful assistant"), ("user", "{input}")]
+    )
+    model = HuggingFaceTextGenInference(
+        inference_server_url="https://w8qtunpthvh1r7a0.us-east-1.aws.endpoints.huggingface.cloud"
+    )
+
+    chain = prompt | model
+    response = chain.invoke({"input": "tell me a short joke"})
+
+    spans = span_exporter.get_finished_spans()
+
+    assert [
+        "ChatPromptTemplate.task",
+        "HuggingFaceTextGenInference.completion",
+        "RunnableSequence.workflow",
+    ] == [span.name for span in spans]
+
+    hugging_face_span = next(
+        span for span in spans if span.name == "HuggingFaceTextGenInference.completion"
+    )
+
+    assert hugging_face_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "completion"
+    assert hugging_face_span.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "unknown"
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 2
+
+    # Validate user message Event
+    assert_message_in_logs(logs[0], "gen_ai.user.message", {})
+
+    # Validate AI choice Event
+    choice_event = {
+        "index": 0,
+        "finish_reason": "unknown",
+        "message": {},
+    }
+    assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
+
+
+@pytest.mark.vcr
+def test_openai(instrument_legacy, span_exporter, log_exporter):
+    prompt = ChatPromptTemplate.from_messages(
+        [("system", "You are a helpful assistant"), ("human", "{input}")]
+    )
+    model = ChatOpenAI(model="gpt-4o-mini")
+    chain = prompt | model
+
+    # Refactored the big prompt to a function to easily duplicate the test
+    prompt = open_ai_prompt()
     response = chain.invoke({"input": prompt})
 
-    spans = exporter.get_finished_spans()
+    spans = span_exporter.get_finished_spans()
 
     assert [
         "ChatPromptTemplate.task",
@@ -171,30 +277,144 @@ Whether you are building a single microservice or running a complex mesh of appl
 
     assert openai_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
     assert openai_span.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "gpt-4o-mini"
+    assert openai_span.attributes[SpanAttributes.LLM_SYSTEM] == "openai"
     assert (
-        openai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
-    ) == "You are a helpful assistant"
+        (openai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"])
+        == "You are a helpful assistant"
+    )
     assert (openai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"]) == "system"
-    assert (
-        openai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.content"]
-    ) == prompt
+    assert (openai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.content"]) == prompt
     assert (openai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.role"]) == "user"
     assert (
         openai_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"]
         == response.content
     )
     assert (
-        openai_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.role"]
-    ) == "assistant"
+        (openai_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.role"])
+        == "assistant"
+    )
 
     assert openai_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 1497
     assert openai_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS] == 1037
     assert openai_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 2534
-    assert openai_span.attributes[SpanAttributes.LLM_USAGE_CACHE_READ_INPUT_TOKENS] == 1408
+    assert (
+        openai_span.attributes[SpanAttributes.LLM_USAGE_CACHE_READ_INPUT_TOKENS] == 1408
+    )
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 0, (
+        "Assert that it doesn't emit logs when use_legacy_attributes is True"
+    )
 
 
 @pytest.mark.vcr
-def test_openai_functions(exporter):
+def test_openai_with_events_with_content(
+    instrument_with_content, span_exporter, log_exporter
+):
+    prompt = ChatPromptTemplate.from_messages(
+        [("system", "You are a helpful assistant"), ("human", "{input}")]
+    )
+    model = ChatOpenAI(model="gpt-4o-mini")
+    chain = prompt | model
+
+    # Refactored the big prompt to a function to easily duplicate the test
+    prompt = open_ai_prompt()
+    response = chain.invoke({"input": prompt})
+
+    spans = span_exporter.get_finished_spans()
+
+    assert [
+        "ChatPromptTemplate.task",
+        "ChatOpenAI.chat",
+        "RunnableSequence.workflow",
+    ] == [span.name for span in spans]
+
+    openai_span = next(span for span in spans if span.name == "ChatOpenAI.chat")
+
+    assert openai_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
+    assert openai_span.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "gpt-4o-mini"
+
+    assert openai_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 1497
+    assert openai_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS] == 1037
+    assert openai_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 2534
+    assert (
+        openai_span.attributes[SpanAttributes.LLM_USAGE_CACHE_READ_INPUT_TOKENS] == 1408
+    )
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 3
+
+    # Validate system message Event
+    assert_message_in_logs(
+        logs[0], "gen_ai.system.message", {"content": "You are a helpful assistant"}
+    )
+
+    # Validate user message Event
+    assert_message_in_logs(logs[1], "gen_ai.user.message", {"content": prompt})
+
+    # Validate AI choice Event
+    choice_event = {
+        "index": 0,
+        "finish_reason": "stop",
+        "message": {"content": response.content},
+    }
+    assert_message_in_logs(logs[2], "gen_ai.choice", choice_event)
+
+
+@pytest.mark.vcr
+def test_openai_with_events_with_no_content(
+    instrument_with_no_content, span_exporter, log_exporter
+):
+    prompt = ChatPromptTemplate.from_messages(
+        [("system", "You are a helpful assistant"), ("human", "{input}")]
+    )
+    model = ChatOpenAI(model="gpt-4o-mini")
+    chain = prompt | model
+
+    # Refactored the big prompt to a function to easily duplicate the test
+    prompt = open_ai_prompt()
+    chain.invoke({"input": prompt})
+
+    spans = span_exporter.get_finished_spans()
+
+    assert [
+        "ChatPromptTemplate.task",
+        "ChatOpenAI.chat",
+        "RunnableSequence.workflow",
+    ] == [span.name for span in spans]
+
+    openai_span = next(span for span in spans if span.name == "ChatOpenAI.chat")
+
+    assert openai_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
+    assert openai_span.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "gpt-4o-mini"
+
+    assert openai_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 1497
+    assert openai_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS] == 1037
+    assert openai_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 2534
+    assert (
+        openai_span.attributes[SpanAttributes.LLM_USAGE_CACHE_READ_INPUT_TOKENS] == 1408
+    )
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 3
+
+    # Validate system message Event
+    assert_message_in_logs(logs[0], "gen_ai.system.message", {})
+
+    # Validate user message Event
+    assert_message_in_logs(logs[1], "gen_ai.user.message", {})
+
+    # Validate AI choice Event
+    choice_event = {
+        "index": 0,
+        "finish_reason": "stop",
+        "message": {},
+    }
+    assert_message_in_logs(logs[2], "gen_ai.choice", choice_event)
+
+
+@pytest.mark.vcr
+def test_openai_functions(instrument_legacy, span_exporter, log_exporter):
     class Joke(BaseModel):
         """Joke to tell user."""
 
@@ -212,7 +432,7 @@ def test_openai_functions(exporter):
     chain = prompt | model.bind(functions=openai_functions) | output_parser
     response = chain.invoke({"input": "tell me a short joke"})
 
-    spans = exporter.get_finished_spans()
+    spans = span_exporter.get_finished_spans()
 
     assert set(
         [
@@ -228,12 +448,14 @@ def test_openai_functions(exporter):
     assert openai_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
     assert openai_span.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "gpt-3.5-turbo"
     assert (
-        openai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
-    ) == "You are helpful assistant"
+        (openai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"])
+        == "You are helpful assistant"
+    )
     assert (openai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"]) == "system"
     assert (
-        openai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.content"]
-    ) == "tell me a short joke"
+        (openai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.content"])
+        == "tell me a short joke"
+    )
     assert (openai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.role"]) == "user"
     assert (
         openai_span.attributes[f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.0.name"]
@@ -276,9 +498,147 @@ def test_openai_functions(exporter):
     assert openai_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS] == 35
     assert openai_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 111
 
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 0, (
+        "Assert that it doesn't emit logs when use_legacy_attributes is True"
+    )
+
 
 @pytest.mark.vcr
-def test_anthropic(exporter):
+def test_openai_functions_with_events_with_content(
+    instrument_with_content, span_exporter, log_exporter
+):
+    class Joke(BaseModel):
+        """Joke to tell user."""
+
+        setup: str = Field(description="question to set up a joke")
+        punchline: str = Field(description="answer to resolve the joke")
+
+    openai_functions = [convert_pydantic_to_openai_function(Joke)]
+
+    prompt = ChatPromptTemplate.from_messages(
+        [("system", "You are helpful assistant"), ("user", "{input}")]
+    )
+    model = ChatOpenAI(model="gpt-3.5-turbo")
+    output_parser = JsonOutputFunctionsParser()
+
+    chain = prompt | model.bind(functions=openai_functions) | output_parser
+    chain.invoke({"input": "tell me a short joke"})
+
+    spans = span_exporter.get_finished_spans()
+
+    assert set(
+        [
+            "ChatPromptTemplate.task",
+            "JsonOutputFunctionsParser.task",
+            "ChatOpenAI.chat",
+            "RunnableSequence.workflow",
+        ]
+    ) == set([span.name for span in spans])
+
+    openai_span = next(span for span in spans if span.name == "ChatOpenAI.chat")
+
+    assert openai_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
+    assert openai_span.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "gpt-3.5-turbo"
+
+    assert openai_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 76
+    assert openai_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS] == 35
+    assert openai_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 111
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 3
+
+    # Validate system message Event
+    assert_message_in_logs(
+        logs[0], "gen_ai.system.message", {"content": "You are helpful assistant"}
+    )
+
+    # Validate user message Event
+    assert_message_in_logs(
+        logs[1], "gen_ai.user.message", {"content": "tell me a short joke"}
+    )
+
+    # Validate AI choice Event
+    choice_event = {
+        "index": 0,
+        "finish_reason": "function_call",
+        "message": {"content": ""},
+        "tool_calls": [
+            {
+                "function": {
+                    "arguments": '{"setup":"Why did the scarecrow win an award?","punchline":"Because he was outstanding in his field!"}',
+                    "name": "Joke",
+                },
+                "id": "",
+                "type": "function",
+            }
+        ],
+    }
+    assert_message_in_logs(logs[2], "gen_ai.choice", choice_event)
+
+
+@pytest.mark.vcr
+def test_openai_functions_with_events_with_no_content(
+    instrument_with_no_content, span_exporter, log_exporter
+):
+    class Joke(BaseModel):
+        """Joke to tell user."""
+
+        setup: str = Field(description="question to set up a joke")
+        punchline: str = Field(description="answer to resolve the joke")
+
+    openai_functions = [convert_pydantic_to_openai_function(Joke)]
+
+    prompt = ChatPromptTemplate.from_messages(
+        [("system", "You are helpful assistant"), ("user", "{input}")]
+    )
+    model = ChatOpenAI(model="gpt-3.5-turbo")
+    output_parser = JsonOutputFunctionsParser()
+
+    chain = prompt | model.bind(functions=openai_functions) | output_parser
+    chain.invoke({"input": "tell me a short joke"})
+
+    spans = span_exporter.get_finished_spans()
+
+    assert set(
+        [
+            "ChatPromptTemplate.task",
+            "JsonOutputFunctionsParser.task",
+            "ChatOpenAI.chat",
+            "RunnableSequence.workflow",
+        ]
+    ) == set([span.name for span in spans])
+
+    openai_span = next(span for span in spans if span.name == "ChatOpenAI.chat")
+
+    assert openai_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
+    assert openai_span.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "gpt-3.5-turbo"
+
+    assert openai_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 76
+    assert openai_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS] == 35
+    assert openai_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 111
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 3
+
+    # Validate system message Event
+    assert_message_in_logs(logs[0], "gen_ai.system.message", {})
+
+    # Validate user message Event
+    assert_message_in_logs(logs[1], "gen_ai.user.message", {})
+
+    # Validate AI choice Event
+    choice_event = {
+        "index": 0,
+        "finish_reason": "function_call",
+        "message": {},
+        "tool_calls": [{"function": {"name": "Joke"}, "id": "", "type": "function"}],
+    }
+    assert_message_in_logs(logs[2], "gen_ai.choice", choice_event)
+
+
+@pytest.mark.vcr
+def test_anthropic(instrument_legacy, span_exporter, log_exporter):
     prompt = ChatPromptTemplate.from_messages(
         [("system", "You are a helpful assistant"), ("user", "{input}")]
     )
@@ -287,7 +647,7 @@ def test_anthropic(exporter):
     chain = prompt | model
     response = chain.invoke({"input": "tell me a short joke"})
 
-    spans = exporter.get_finished_spans()
+    spans = span_exporter.get_finished_spans()
 
     assert [
         "ChatPromptTemplate.task",
@@ -302,28 +662,35 @@ def test_anthropic(exporter):
 
     assert anthropic_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
     assert anthropic_span.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "claude-2.1"
+    assert anthropic_span.attributes[SpanAttributes.LLM_SYSTEM] == "Anthropic"
     assert anthropic_span.attributes[SpanAttributes.LLM_REQUEST_TEMPERATURE] == 0.5
     assert (
-        anthropic_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
-    ) == "You are a helpful assistant"
+        (anthropic_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"])
+        == "You are a helpful assistant"
+    )
     assert (
-        anthropic_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"]
-    ) == "system"
+        (anthropic_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"]) == "system"
+    )
     assert (
-        anthropic_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.content"]
-    ) == "tell me a short joke"
+        (anthropic_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.content"])
+        == "tell me a short joke"
+    )
     assert (anthropic_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.role"]) == "user"
     assert (
         anthropic_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"]
         == response.content
     )
     assert (
-        anthropic_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.role"]
-    ) == "assistant"
+        (anthropic_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.role"])
+        == "assistant"
+    )
     assert anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 19
     assert anthropic_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS] == 22
     assert anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 41
-    assert anthropic_span.attributes["gen_ai.response.id"] == "msg_017fMG9SRDFTBhcD1ibtN1nK"
+    assert (
+        anthropic_span.attributes["gen_ai.response.id"]
+        == "msg_017fMG9SRDFTBhcD1ibtN1nK"
+    )
     output = json.loads(
         workflow_span.attributes[SpanAttributes.TRACELOOP_ENTITY_OUTPUT]
     )
@@ -338,21 +705,139 @@ def test_anthropic(exporter):
             "stop_reason": "end_turn",
             "stop_sequence": None,
             "usage": {
-                "input_tokens": 19,
-                "output_tokens": 22,
                 "cache_creation_input_tokens": None,
                 "cache_read_input_tokens": None,
-                "server_tool_use": None
+                "input_tokens": 19,
+                "output_tokens": 22,
+                "server_tool_use": None,
             },
         },
         "tool_calls": [],
         "type": "ai",
-        "usage_metadata": {"input_tokens": 19, "output_tokens": 22, "total_tokens": 41, "input_token_details": {}},
+        "usage_metadata": {
+            "input_token_details": {},
+            "input_tokens": 19,
+            "output_tokens": 22,
+            "total_tokens": 41,
+        },
     }
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 0, (
+        "Assert that it doesn't emit logs when use_legacy_attributes is True"
+    )
 
 
 @pytest.mark.vcr
-def test_bedrock(exporter):
+def test_anthropic_with_events_with_content(
+    instrument_with_content, span_exporter, log_exporter
+):
+    prompt = ChatPromptTemplate.from_messages(
+        [("system", "You are a helpful assistant"), ("user", "{input}")]
+    )
+    model = ChatAnthropic(model="claude-2.1", temperature=0.5)
+
+    chain = prompt | model
+    response = chain.invoke({"input": "tell me a short joke"})
+
+    spans = span_exporter.get_finished_spans()
+
+    assert [
+        "ChatPromptTemplate.task",
+        "ChatAnthropic.chat",
+        "RunnableSequence.workflow",
+    ] == [span.name for span in spans]
+
+    anthropic_span = next(span for span in spans if span.name == "ChatAnthropic.chat")
+
+    assert anthropic_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
+    assert anthropic_span.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "claude-2.1"
+    assert anthropic_span.attributes[SpanAttributes.LLM_REQUEST_TEMPERATURE] == 0.5
+
+    assert anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 19
+    assert anthropic_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS] == 22
+    assert anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 41
+    assert (
+        anthropic_span.attributes["gen_ai.response.id"]
+        == "msg_017fMG9SRDFTBhcD1ibtN1nK"
+    )
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 3
+
+    # Validate system message Event
+    assert_message_in_logs(
+        logs[0], "gen_ai.system.message", {"content": "You are a helpful assistant"}
+    )
+
+    # Validate user message Event
+    assert_message_in_logs(
+        logs[1], "gen_ai.user.message", {"content": "tell me a short joke"}
+    )
+
+    # Validate AI choice Event
+    choice_event = {
+        "index": 0,
+        "finish_reason": "unknown",
+        "message": {"content": response.content},
+    }
+    assert_message_in_logs(logs[2], "gen_ai.choice", choice_event)
+
+
+@pytest.mark.vcr
+def test_anthropic_with_events_with_no_content(
+    instrument_with_no_content, span_exporter, log_exporter
+):
+    prompt = ChatPromptTemplate.from_messages(
+        [("system", "You are a helpful assistant"), ("user", "{input}")]
+    )
+    model = ChatAnthropic(model="claude-2.1", temperature=0.5)
+
+    chain = prompt | model
+    chain.invoke({"input": "tell me a short joke"})
+
+    spans = span_exporter.get_finished_spans()
+
+    assert [
+        "ChatPromptTemplate.task",
+        "ChatAnthropic.chat",
+        "RunnableSequence.workflow",
+    ] == [span.name for span in spans]
+
+    anthropic_span = next(span for span in spans if span.name == "ChatAnthropic.chat")
+
+    assert anthropic_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
+    assert anthropic_span.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "claude-2.1"
+    assert anthropic_span.attributes[SpanAttributes.LLM_REQUEST_TEMPERATURE] == 0.5
+
+    assert anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 19
+    assert anthropic_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS] == 22
+    assert anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 41
+    assert (
+        anthropic_span.attributes["gen_ai.response.id"]
+        == "msg_017fMG9SRDFTBhcD1ibtN1nK"
+    )
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 3
+
+    # Validate system message Event
+    assert_message_in_logs(logs[0], "gen_ai.system.message", {})
+
+    # Validate user message Event
+    assert_message_in_logs(logs[1], "gen_ai.user.message", {})
+
+    # Validate AI choice Event
+    choice_event = {
+        "index": 0,
+        "finish_reason": "unknown",
+        "message": {},
+    }
+    assert_message_in_logs(logs[2], "gen_ai.choice", choice_event)
+
+
+@pytest.mark.vcr
+def test_bedrock(instrument_legacy, span_exporter, log_exporter):
     prompt = ChatPromptTemplate.from_messages(
         [("system", "You are a helpful assistant"), ("user", "{input}")]
     )
@@ -370,7 +855,7 @@ def test_bedrock(exporter):
     chain = prompt | model
     response = chain.invoke({"input": "tell me a short joke"})
 
-    spans = exporter.get_finished_spans()
+    spans = span_exporter.get_finished_spans()
 
     assert [
         "ChatPromptTemplate.task",
@@ -388,21 +873,25 @@ def test_bedrock(exporter):
         bedrock_span.attributes[SpanAttributes.LLM_REQUEST_MODEL]
         == "anthropic.claude-3-haiku-20240307-v1:0"
     )
+    assert bedrock_span.attributes[SpanAttributes.LLM_SYSTEM] == "AWS"
     assert (
-        bedrock_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
-    ) == "You are a helpful assistant"
+        (bedrock_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"])
+        == "You are a helpful assistant"
+    )
     assert (bedrock_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"]) == "system"
     assert (
-        bedrock_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.content"]
-    ) == "tell me a short joke"
+        (bedrock_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.content"])
+        == "tell me a short joke"
+    )
     assert (bedrock_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.role"]) == "user"
     assert (
         bedrock_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"]
         == response.content
     )
     assert (
-        bedrock_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.role"]
-    ) == "assistant"
+        (bedrock_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.role"])
+        == "assistant"
+    )
     assert bedrock_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 16
     assert bedrock_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS] == 27
     assert bedrock_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 43
@@ -432,6 +921,132 @@ def test_bedrock(exporter):
         "invalid_tool_calls": [],
     }
 
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 0, (
+        "Assert that it doesn't emit logs when use_legacy_attributes is True"
+    )
+
+
+@pytest.mark.vcr
+def test_bedrock_with_events_with_content(
+    instrument_with_content, span_exporter, log_exporter
+):
+    prompt = ChatPromptTemplate.from_messages(
+        [("system", "You are a helpful assistant"), ("user", "{input}")]
+    )
+    model = ChatBedrock(
+        model_id="anthropic.claude-3-haiku-20240307-v1:0",
+        client=boto3.client(
+            "bedrock-runtime",
+            aws_access_key_id="test_key",
+            aws_secret_access_key="test_secret",
+            aws_session_token="a/mock/token",
+            region_name="us-east-1",
+        ),
+    )
+
+    chain = prompt | model
+    response = chain.invoke({"input": "tell me a short joke"})
+
+    spans = span_exporter.get_finished_spans()
+
+    assert [
+        "ChatPromptTemplate.task",
+        "ChatBedrock.chat",
+        "RunnableSequence.workflow",
+    ] == [span.name for span in spans]
+
+    bedrock_span = next(span for span in spans if span.name == "ChatBedrock.chat")
+
+    assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
+    assert (
+        bedrock_span.attributes[SpanAttributes.LLM_REQUEST_MODEL]
+        == "anthropic.claude-3-haiku-20240307-v1:0"
+    )
+
+    assert bedrock_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 16
+    assert bedrock_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS] == 27
+    assert bedrock_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 43
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 3
+
+    # Validate system message Event
+    assert_message_in_logs(
+        logs[0], "gen_ai.system.message", {"content": "You are a helpful assistant"}
+    )
+
+    # Validate user message Event
+    assert_message_in_logs(
+        logs[1], "gen_ai.user.message", {"content": "tell me a short joke"}
+    )
+
+    # Validate AI choice Event
+    choice_event = {
+        "index": 0,
+        "finish_reason": "unknown",
+        "message": {"content": response.content},
+    }
+    assert_message_in_logs(logs[2], "gen_ai.choice", choice_event)
+
+
+@pytest.mark.vcr
+def test_bedrock_with_events_with_no_content(
+    instrument_with_no_content, span_exporter, log_exporter
+):
+    prompt = ChatPromptTemplate.from_messages(
+        [("system", "You are a helpful assistant"), ("user", "{input}")]
+    )
+    model = ChatBedrock(
+        model_id="anthropic.claude-3-haiku-20240307-v1:0",
+        client=boto3.client(
+            "bedrock-runtime",
+            aws_access_key_id="test_key",
+            aws_secret_access_key="test_secret",
+            aws_session_token="a/mock/token",
+            region_name="us-east-1",
+        ),
+    )
+
+    chain = prompt | model
+    chain.invoke({"input": "tell me a short joke"})
+
+    spans = span_exporter.get_finished_spans()
+
+    assert [
+        "ChatPromptTemplate.task",
+        "ChatBedrock.chat",
+        "RunnableSequence.workflow",
+    ] == [span.name for span in spans]
+
+    bedrock_span = next(span for span in spans if span.name == "ChatBedrock.chat")
+
+    assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
+    assert (
+        bedrock_span.attributes[SpanAttributes.LLM_REQUEST_MODEL]
+        == "anthropic.claude-3-haiku-20240307-v1:0"
+    )
+    assert bedrock_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 16
+    assert bedrock_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS] == 27
+    assert bedrock_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 43
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 3
+
+    # Validate system message Event
+    assert_message_in_logs(logs[0], "gen_ai.system.message", {})
+
+    # Validate user message Event
+    assert_message_in_logs(logs[1], "gen_ai.user.message", {})
+
+    # Validate AI choice Event
+    choice_event = {
+        "index": 0,
+        "finish_reason": "unknown",
+        "message": {},
+    }
+    assert_message_in_logs(logs[2], "gen_ai.choice", choice_event)
+
 
 # from: https://stackoverflow.com/a/41599695/2749989
 def spy_decorator(method_to_decorate):
@@ -457,7 +1072,7 @@ def assert_request_contains_tracecontext(request: httpx.Request, expected_span: 
 
 @pytest.mark.vcr
 @pytest.mark.parametrize("LLM", [OpenAI, VLLMOpenAI, ChatOpenAI])
-def test_trace_propagation(exporter, LLM):
+def test_trace_propagation(instrument_legacy, span_exporter, log_exporter, LLM):
     prompt = ChatPromptTemplate.from_messages(
         [("system", "You are a helpful assistant "), ("human", "{input}")]
     )
@@ -471,7 +1086,46 @@ def test_trace_propagation(exporter, LLM):
         _ = chain.invoke({"input": "Tell me a joke about OpenTelemetry"})
     send_spy.mock.assert_called_once()
 
-    spans = exporter.get_finished_spans()
+    spans = span_exporter.get_finished_spans()
+    openai_span = next(span for span in spans if "OpenAI" in span.name)
+
+    expected_vendors = {
+        OpenAI: "openai",
+        VLLMOpenAI: "openai", 
+        ChatOpenAI: "openai"
+    }
+    assert openai_span.attributes[SpanAttributes.LLM_SYSTEM] == expected_vendors[LLM]
+
+    args, kwargs = send_spy.mock.call_args
+    request = args[0]
+
+    assert_request_contains_tracecontext(request, openai_span)
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 0, (
+        "Assert that it doesn't emit logs when use_legacy_attributes is True"
+    )
+
+
+@pytest.mark.vcr
+@pytest.mark.parametrize("LLM", [OpenAI, VLLMOpenAI, ChatOpenAI])
+def test_trace_propagation_with_events_with_content(
+    instrument_with_content, span_exporter, log_exporter, LLM
+):
+    prompt = ChatPromptTemplate.from_messages(
+        [("system", "You are a helpful assistant "), ("human", "{input}")]
+    )
+    model = LLM(
+        model="facebook/opt-125m", base_url="http://localhost:8000/v1", max_tokens=20
+    )
+    chain = prompt | model
+
+    send_spy = spy_decorator(httpx.Client.send)
+    with patch.object(httpx.Client, "send", send_spy):
+        response = chain.invoke({"input": "Tell me a joke about OpenTelemetry"})
+    send_spy.mock.assert_called_once()
+
+    spans = span_exporter.get_finished_spans()
     openai_span = next(span for span in spans if "OpenAI" in span.name)
 
     args, kwargs = send_spy.mock.call_args
@@ -479,12 +1133,124 @@ def test_trace_propagation(exporter, LLM):
 
     assert_request_contains_tracecontext(request, openai_span)
 
+    logs = log_exporter.get_finished_logs()
+
+    if issubclass(LLM, ChatOpenAI):
+        assert len(logs) == 3
+
+        # Validate system message Event
+        assert_message_in_logs(
+            logs[0],
+            "gen_ai.system.message",
+            {"content": "You are a helpful assistant "},
+        )
+
+        # Validate user message Event
+        assert_message_in_logs(
+            logs[1],
+            "gen_ai.user.message",
+            {"content": "Tell me a joke about OpenTelemetry"},
+        )
+
+        # Validate AI choice Event
+        choice_event = {
+            "index": 0,
+            "finish_reason": "length",
+            "message": {"content": response.content},
+        }
+        assert_message_in_logs(logs[2], "gen_ai.choice", choice_event)
+    else:
+        assert len(logs) == 2
+
+        # Validate system and user message Event
+
+        # With both OpenAI and VLLMOpenAI, LangChain is emitting only one
+        # "on_llm_start" callback, because of this, both the system
+        # instruction and the user message are in the same event
+        assert_message_in_logs(
+            logs[0],
+            "gen_ai.user.message",
+            {
+                "content": "System: You are a helpful assistant \nHuman: Tell me a joke about OpenTelemetry",
+            },
+        )
+
+        # Validate AI choice Event
+        choice_event = {
+            "index": 0,
+            "finish_reason": "length",
+            "message": {"content": response},
+        }
+        assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
+
+
+@pytest.mark.vcr
+@pytest.mark.parametrize("LLM", [OpenAI, VLLMOpenAI, ChatOpenAI])
+def test_trace_propagation_with_events_with_no_content(
+    instrument_with_no_content, span_exporter, log_exporter, LLM
+):
+    prompt = ChatPromptTemplate.from_messages(
+        [("system", "You are a helpful assistant "), ("human", "{input}")]
+    )
+    model = LLM(
+        model="facebook/opt-125m", base_url="http://localhost:8000/v1", max_tokens=20
+    )
+    chain = prompt | model
+
+    send_spy = spy_decorator(httpx.Client.send)
+    with patch.object(httpx.Client, "send", send_spy):
+        _ = chain.invoke({"input": "Tell me a joke about OpenTelemetry"})
+    send_spy.mock.assert_called_once()
+
+    spans = span_exporter.get_finished_spans()
+    openai_span = next(span for span in spans if "OpenAI" in span.name)
+
+    args, kwargs = send_spy.mock.call_args
+    request = args[0]
+
+    assert_request_contains_tracecontext(request, openai_span)
+
+    logs = log_exporter.get_finished_logs()
+    if issubclass(LLM, ChatOpenAI):
+        assert len(logs) == 3
+
+        # Validate system message Event
+        assert_message_in_logs(logs[0], "gen_ai.system.message", {})
+
+        # Validate user message Event
+        assert_message_in_logs(logs[1], "gen_ai.user.message", {})
+
+        # Validate AI choice Event
+        choice_event = {
+            "index": 0,
+            "finish_reason": "length",
+            "message": {},
+        }
+        assert_message_in_logs(logs[2], "gen_ai.choice", choice_event)
+    else:
+        assert len(logs) == 2
+
+        # Validate system and user message Event
+
+        # With both OpenAI and VLLMOpenAI, LangChain is emitting only one
+        # "on_llm_start" callback, because of this, both the system
+        # instruction and the user message are in the same event
+        assert_message_in_logs(logs[0], "gen_ai.user.message", {})
+
+        # Validate AI choice Event
+        choice_event = {
+            "index": 0,
+            "finish_reason": "length",
+            "message": {},
+        }
+        assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
+
 
 @pytest.mark.vcr
 @pytest.mark.parametrize(
     "LLM", [OpenAI, VLLMOpenAI, pytest.param(ChatOpenAI, marks=pytest.mark.xfail)]
 )
-def test_trace_propagation_stream(exporter, LLM):
+def test_trace_propagation_stream(instrument_legacy, span_exporter, log_exporter, LLM):
     prompt = ChatPromptTemplate.from_messages(
         [("system", "You are a helpful assistant "), ("human", "{input}")]
     )
@@ -500,7 +1266,7 @@ def test_trace_propagation_stream(exporter, LLM):
             pass
     send_spy.mock.assert_called_once()
 
-    spans = exporter.get_finished_spans()
+    spans = span_exporter.get_finished_spans()
     openai_span = next(span for span in spans if "OpenAI" in span.name)
 
     args, kwargs = send_spy.mock.call_args
@@ -508,11 +1274,121 @@ def test_trace_propagation_stream(exporter, LLM):
 
     assert_request_contains_tracecontext(request, openai_span)
 
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 0, (
+        "Assert that it doesn't emit logs when use_legacy_attributes is True"
+    )
+
+
+@pytest.mark.vcr
+@pytest.mark.parametrize(
+    "LLM", [OpenAI, VLLMOpenAI, pytest.param(ChatOpenAI, marks=pytest.mark.xfail)]
+)
+def test_trace_propagation_stream_with_events_with_content(
+    instrument_with_content, span_exporter, log_exporter, LLM
+):
+    prompt = ChatPromptTemplate.from_messages(
+        [("system", "You are a helpful assistant "), ("human", "{input}")]
+    )
+    model = LLM(
+        model="facebook/opt-125m", base_url="http://localhost:8000/v1", max_tokens=20
+    )
+    chain = prompt | model
+
+    send_spy = spy_decorator(httpx.Client.send)
+    with patch.object(httpx.Client, "send", send_spy):
+        stream = chain.stream({"input": "Tell me a joke about OpenTelemetry"})
+        chunks = [s for s in stream]
+    send_spy.mock.assert_called_once()
+
+    spans = span_exporter.get_finished_spans()
+    openai_span = next(span for span in spans if "OpenAI" in span.name)
+
+    args, kwargs = send_spy.mock.call_args
+    request = args[0]
+
+    assert_request_contains_tracecontext(request, openai_span)
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 2
+
+    # Validate system and user message Event
+
+    # With both OpenAI and VLLMOpenAI, LangChain is emitting only one
+    # "on_llm_start" callback, because of this, both the system
+    # instruction and the user message are in the same event
+    assert_message_in_logs(
+        logs[0],
+        "gen_ai.user.message",
+        {
+            "content": "System: You are a helpful assistant \nHuman: Tell me a joke about OpenTelemetry",
+        },
+    )
+
+    # Validate AI choice Event
+    choice_event = {
+        "index": 0,
+        "finish_reason": "length",
+        "message": {"content": "".join(chunks)},
+    }
+    assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
+
+
+@pytest.mark.vcr
+@pytest.mark.parametrize(
+    "LLM", [OpenAI, VLLMOpenAI, pytest.param(ChatOpenAI, marks=pytest.mark.xfail)]
+)
+def test_trace_propagation_stream_with_events_with_no_content(
+    instrument_with_no_content, span_exporter, log_exporter, LLM
+):
+    prompt = ChatPromptTemplate.from_messages(
+        [("system", "You are a helpful assistant "), ("human", "{input}")]
+    )
+    model = LLM(
+        model="facebook/opt-125m", base_url="http://localhost:8000/v1", max_tokens=20
+    )
+    chain = prompt | model
+
+    send_spy = spy_decorator(httpx.Client.send)
+    with patch.object(httpx.Client, "send", send_spy):
+        stream = chain.stream({"input": "Tell me a joke about OpenTelemetry"})
+        for _ in stream:
+            pass
+    send_spy.mock.assert_called_once()
+
+    spans = span_exporter.get_finished_spans()
+    openai_span = next(span for span in spans if "OpenAI" in span.name)
+
+    args, kwargs = send_spy.mock.call_args
+    request = args[0]
+
+    assert_request_contains_tracecontext(request, openai_span)
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 2
+
+    # Validate system and user message Event
+
+    # With both OpenAI and VLLMOpenAI, LangChain is emitting only one
+    # "on_llm_start" callback, because of this, both the system
+    # instruction and the user message are in the same event
+    assert_message_in_logs(logs[0], "gen_ai.user.message", {})
+
+    # Validate AI choice Event
+    choice_event = {
+        "index": 0,
+        "finish_reason": "length",
+        "message": {},
+    }
+    assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
+
 
 @pytest.mark.asyncio
 @pytest.mark.vcr
 @pytest.mark.parametrize("LLM", [OpenAI, VLLMOpenAI, ChatOpenAI])
-async def test_trace_propagation_async(exporter, LLM):
+async def test_trace_propagation_async(
+    instrument_legacy, span_exporter, log_exporter, LLM
+):
     prompt = ChatPromptTemplate.from_messages(
         [("system", "You are a helpful assistant "), ("human", "{input}")]
     )
@@ -526,7 +1402,7 @@ async def test_trace_propagation_async(exporter, LLM):
         _ = await chain.ainvoke({"input": "Tell me a joke about OpenTelemetry"})
     send_spy.mock.assert_called_once()
 
-    spans = exporter.get_finished_spans()
+    spans = span_exporter.get_finished_spans()
     openai_span = next(span for span in spans if "OpenAI" in span.name)
 
     args, kwargs = send_spy.mock.call_args
@@ -534,13 +1410,162 @@ async def test_trace_propagation_async(exporter, LLM):
 
     assert_request_contains_tracecontext(request, openai_span)
 
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 0, (
+        "Assert that it doesn't emit logs when use_legacy_attributes is True"
+    )
+
+
+@pytest.mark.asyncio
+@pytest.mark.vcr
+@pytest.mark.parametrize("LLM", [OpenAI, VLLMOpenAI, ChatOpenAI])
+async def test_trace_propagation_async_with_events_with_content(
+    instrument_with_content, span_exporter, log_exporter, LLM
+):
+    prompt = ChatPromptTemplate.from_messages(
+        [("system", "You are a helpful assistant "), ("human", "{input}")]
+    )
+    model = LLM(
+        model="facebook/opt-125m", base_url="http://localhost:8000/v1", max_tokens=20
+    )
+    chain = prompt | model
+
+    send_spy = spy_decorator(httpx.AsyncClient.send)
+    with patch.object(httpx.AsyncClient, "send", send_spy):
+        response = await chain.ainvoke({"input": "Tell me a joke about OpenTelemetry"})
+    send_spy.mock.assert_called_once()
+
+    spans = span_exporter.get_finished_spans()
+    openai_span = next(span for span in spans if "OpenAI" in span.name)
+
+    args, kwargs = send_spy.mock.call_args
+    request = args[0]
+
+    assert_request_contains_tracecontext(request, openai_span)
+
+    logs = log_exporter.get_finished_logs()
+    if issubclass(LLM, ChatOpenAI):
+        assert len(logs) == 3
+
+        # Validate system message Event
+        assert_message_in_logs(
+            logs[0],
+            "gen_ai.system.message",
+            {"content": "You are a helpful assistant "},
+        )
+
+        # Validate user message Event
+        assert_message_in_logs(
+            logs[1],
+            "gen_ai.user.message",
+            {"content": "Tell me a joke about OpenTelemetry"},
+        )
+
+        # Validate AI choice Event
+        choice_event = {
+            "index": 0,
+            "finish_reason": "length",
+            "message": {
+                "content": response.content,
+            },
+        }
+        assert_message_in_logs(logs[2], "gen_ai.choice", choice_event)
+    else:
+        assert len(logs) == 2
+
+        # Validate system and user message Event
+
+        # With both OpenAI and VLLMOpenAI, LangChain is emitting only one
+        # "on_llm_start" callback, because of this, both the system
+        # instruction and the user message are in the same event
+        assert_message_in_logs(
+            logs[0],
+            "gen_ai.user.message",
+            {
+                "content": "System: You are a helpful assistant \nHuman: Tell me a joke about OpenTelemetry",
+            },
+        )
+
+        # Validate AI choice Event
+        choice_event = {
+            "index": 0,
+            "finish_reason": "length",
+            "message": {"content": response},
+        }
+        assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
+
+
+@pytest.mark.asyncio
+@pytest.mark.vcr
+@pytest.mark.parametrize("LLM", [OpenAI, VLLMOpenAI, ChatOpenAI])
+async def test_trace_propagation_async_with_events_with_no_content(
+    instrument_with_no_content, span_exporter, log_exporter, LLM
+):
+    prompt = ChatPromptTemplate.from_messages(
+        [("system", "You are a helpful assistant "), ("human", "{input}")]
+    )
+    model = LLM(
+        model="facebook/opt-125m", base_url="http://localhost:8000/v1", max_tokens=20
+    )
+    chain = prompt | model
+
+    send_spy = spy_decorator(httpx.AsyncClient.send)
+    with patch.object(httpx.AsyncClient, "send", send_spy):
+        _ = await chain.ainvoke({"input": "Tell me a joke about OpenTelemetry"})
+    send_spy.mock.assert_called_once()
+
+    spans = span_exporter.get_finished_spans()
+    openai_span = next(span for span in spans if "OpenAI" in span.name)
+
+    args, kwargs = send_spy.mock.call_args
+    request = args[0]
+
+    assert_request_contains_tracecontext(request, openai_span)
+
+    logs = log_exporter.get_finished_logs()
+    if issubclass(LLM, ChatOpenAI):
+        assert len(logs) == 3
+
+        # Validate system message Event
+        assert_message_in_logs(logs[0], "gen_ai.system.message", {})
+
+        # Validate user message Event
+        assert_message_in_logs(logs[1], "gen_ai.user.message", {})
+
+        # Validate AI choice Event
+        choice_event = {
+            "index": 0,
+            "finish_reason": "length",
+            "message": {},
+        }
+        assert_message_in_logs(logs[2], "gen_ai.choice", choice_event)
+    else:
+        assert len(logs) == 2
+
+        # Validate system and user message Event
+
+        # With both OpenAI and VLLMOpenAI, LangChain is emitting only one
+        # "on_llm_start" callback, because of this, both the system
+        # instruction and the user message are in the same event
+        assert_message_in_logs(logs[0], "gen_ai.user.message", {})
+
+        # Validate AI choice Event
+        choice_event = {
+            "index": 0,
+            "finish_reason": "length",
+            "message": {},
+        }
+        assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
+
 
 @pytest.mark.asyncio
 @pytest.mark.vcr
 @pytest.mark.parametrize(
     "LLM", [OpenAI, VLLMOpenAI, pytest.param(ChatOpenAI, marks=pytest.mark.xfail)]
 )
-async def test_trace_propagation_stream_async(exporter, LLM):
+async def test_trace_propagation_stream_async(
+    instrument_legacy, span_exporter, log_exporter, LLM
+):
     prompt = ChatPromptTemplate.from_messages(
         [("system", "You are a helpful assistant "), ("human", "{input}")]
     )
@@ -556,10 +1581,131 @@ async def test_trace_propagation_stream_async(exporter, LLM):
             pass
     send_spy.mock.assert_called_once()
 
-    spans = exporter.get_finished_spans()
+    spans = span_exporter.get_finished_spans()
     openai_span = next(span for span in spans if "OpenAI" in span.name)
 
     args, kwargs = send_spy.mock.call_args
     request = args[0]
 
     assert_request_contains_tracecontext(request, openai_span)
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 0, (
+        "Assert that it doesn't emit logs when use_legacy_attributes is True"
+    )
+
+
+@pytest.mark.asyncio
+@pytest.mark.vcr
+@pytest.mark.parametrize(
+    "LLM", [OpenAI, VLLMOpenAI, pytest.param(ChatOpenAI, marks=pytest.mark.xfail)]
+)
+async def test_trace_propagation_stream_async_with_events_with_content(
+    instrument_with_content, span_exporter, log_exporter, LLM
+):
+    prompt = ChatPromptTemplate.from_messages(
+        [("system", "You are a helpful assistant "), ("human", "{input}")]
+    )
+    model = LLM(
+        model="facebook/opt-125m", base_url="http://localhost:8000/v1", max_tokens=20
+    )
+    chain = prompt | model
+
+    send_spy = spy_decorator(httpx.AsyncClient.send)
+    with patch.object(httpx.AsyncClient, "send", send_spy):
+        stream = chain.astream({"input": "Tell me a joke about OpenTelemetry"})
+        chunks = [s async for s in stream]
+    send_spy.mock.assert_called_once()
+
+    spans = span_exporter.get_finished_spans()
+    openai_span = next(span for span in spans if "OpenAI" in span.name)
+
+    args, kwargs = send_spy.mock.call_args
+    request = args[0]
+
+    assert_request_contains_tracecontext(request, openai_span)
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 2
+
+    # Validate system and user message Event
+
+    # With both OpenAI and VLLMOpenAI, LangChain is emitting only one
+    # "on_llm_start" callback, because of this, both the system
+    # instruction and the user message are in the same event
+    assert_message_in_logs(
+        logs[0],
+        "gen_ai.user.message",
+        {
+            "content": "System: You are a helpful assistant \nHuman: Tell me a joke about OpenTelemetry",
+        },
+    )
+
+    # Validate AI choice Event
+    choice_event = {
+        "index": 0,
+        "finish_reason": "length",
+        "message": {"content": "".join(chunks)},
+    }
+    assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
+
+
+@pytest.mark.asyncio
+@pytest.mark.vcr
+@pytest.mark.parametrize(
+    "LLM", [OpenAI, VLLMOpenAI, pytest.param(ChatOpenAI, marks=pytest.mark.xfail)]
+)
+async def test_trace_propagation_stream_async_with_events_with_no_content(
+    instrument_with_no_content, span_exporter, log_exporter, LLM
+):
+    prompt = ChatPromptTemplate.from_messages(
+        [("system", "You are a helpful assistant "), ("human", "{input}")]
+    )
+    model = LLM(
+        model="facebook/opt-125m", base_url="http://localhost:8000/v1", max_tokens=20
+    )
+    chain = prompt | model
+
+    send_spy = spy_decorator(httpx.AsyncClient.send)
+    with patch.object(httpx.AsyncClient, "send", send_spy):
+        stream = chain.astream({"input": "Tell me a joke about OpenTelemetry"})
+        async for _ in stream:
+            pass
+    send_spy.mock.assert_called_once()
+
+    spans = span_exporter.get_finished_spans()
+    openai_span = next(span for span in spans if "OpenAI" in span.name)
+
+    args, kwargs = send_spy.mock.call_args
+    request = args[0]
+
+    assert_request_contains_tracecontext(request, openai_span)
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 2
+
+    # Validate system and user message Event
+
+    # With both OpenAI and VLLMOpenAI, LangChain is emitting only one
+    # "on_llm_start" callback, because of this, both the system
+    # instruction and the user message are in the same event
+    assert_message_in_logs(logs[0], "gen_ai.user.message", {})
+
+    # Validate AI choice Event
+    choice_event = {
+        "index": 0,
+        "finish_reason": "length",
+        "message": {},
+    }
+    assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
+
+
+def assert_message_in_logs(log: LogData, event_name: str, expected_content: dict):
+    assert log.log_record.attributes.get(EventAttributes.EVENT_NAME) == event_name
+    assert log.log_record.attributes.get(GenAIAttributes.GEN_AI_SYSTEM) == "langchain"
+
+    if not expected_content:
+        assert not log.log_record.body
+    else:
+        assert log.log_record.body
+        assert dict(log.log_record.body) == expected_content

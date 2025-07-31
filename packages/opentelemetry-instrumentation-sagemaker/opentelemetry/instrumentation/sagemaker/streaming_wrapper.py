@@ -13,6 +13,10 @@ class StreamingWrapper(ObjectProxy):
         self._stream_done_callback = stream_done_callback
         self._accumulating_body = ""
 
+    @property
+    def accumulating_body(self):
+        return self._accumulating_body
+
     def __iter__(self):
         for event in self.__wrapped__:
             self._process_event(event)

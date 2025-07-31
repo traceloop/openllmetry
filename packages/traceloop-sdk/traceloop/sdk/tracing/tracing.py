@@ -427,6 +427,9 @@ def init_instrumentations(
         elif instrument == Instruments.OPENAI:
             if init_openai_instrumentor(should_enrich_metrics, base64_image_uploader):
                 instrument_set = True
+        elif instrument == Instruments.OPENAI_AGENTS:
+            if init_openai_agents_instrumentor():
+                instrument_set = True
         elif instrument == Instruments.PINECONE:
             if init_pinecone_instrumentor():
                 instrument_set = True
@@ -498,7 +501,6 @@ def init_openai_instrumentor(
             instrumentor = OpenAIInstrumentor(
                 exception_logger=lambda e: Telemetry().log_exception(e),
                 enrich_assistant=should_enrich_metrics,
-                enrich_token_usage=should_enrich_metrics,
                 get_common_metrics_attributes=metrics_common_attributes,
                 upload_base64_image=base64_image_uploader,
             )
@@ -843,7 +845,6 @@ def init_sagemaker_instrumentor(should_enrich_metrics: bool):
 
             instrumentor = SageMakerInstrumentor(
                 exception_logger=lambda e: Telemetry().log_exception(e),
-                enrich_token_usage=should_enrich_metrics,
             )
             if not instrumentor.is_instrumented_by_opentelemetry:
                 instrumentor.instrument()
@@ -1047,6 +1048,26 @@ def init_mcp_instrumentor():
             return True
     except Exception as e:
         logging.error(f"Error initializing MCP instrumentor: {e}")
+        Telemetry().log_exception(e)
+    return False
+
+
+def init_openai_agents_instrumentor():
+    try:
+        if is_package_installed("openai-agents"):
+            Telemetry().capture("instrumentation:openai_agents:init")
+            from opentelemetry.instrumentation.openai_agents import (
+                OpenAIAgentsInstrumentor,
+            )
+
+            instrumentor = OpenAIAgentsInstrumentor(
+                exception_logger=lambda e: Telemetry().log_exception(e),
+            )
+            if not instrumentor.is_instrumented_by_opentelemetry:
+                instrumentor.instrument()
+            return True
+    except Exception as e:
+        logging.error(f"Error initializing OpenAI Agents instrumentor: {e}")
         Telemetry().log_exception(e)
     return False
 

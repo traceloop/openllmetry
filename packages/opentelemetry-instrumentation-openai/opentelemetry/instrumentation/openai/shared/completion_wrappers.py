@@ -8,13 +8,12 @@ from opentelemetry.instrumentation.openai.shared import (
     _set_response_attributes,
     _set_span_attribute,
     _set_span_stream_usage,
-    get_token_count_from_string,
     is_streaming_response,
     model_as_dict,
     propagate_trace_context,
-    should_record_stream_token_usage,
 )
 from opentelemetry.instrumentation.openai.shared.config import Config
+from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
 from opentelemetry.instrumentation.openai.shared.event_emitter import emit_event
 from opentelemetry.instrumentation.openai.shared.event_models import (
     ChoiceEvent,
@@ -61,15 +60,17 @@ def completion_wrapper(tracer, wrapped, instance, args, kwargs):
     try:
         response = wrapped(*args, **kwargs)
     except Exception as e:
+        span.set_attribute(ERROR_TYPE, e.__class__.__name__)
+        span.record_exception(e)
         span.set_status(Status(StatusCode.ERROR, str(e)))
         span.end()
-        raise e
+        raise
 
     if is_streaming_response(response):
         # span will be closed after the generator is done
         return _build_from_streaming_response(span, kwargs, response)
     else:
-        _handle_response(response, span)
+        _handle_response(response, span, instance)
 
     span.end()
     return response
@@ -93,15 +94,17 @@ async def acompletion_wrapper(tracer, wrapped, instance, args, kwargs):
     try:
         response = await wrapped(*args, **kwargs)
     except Exception as e:
+        span.set_attribute(ERROR_TYPE, e.__class__.__name__)
+        span.record_exception(e)
         span.set_status(Status(StatusCode.ERROR, str(e)))
         span.end()
-        raise e
+        raise
 
     if is_streaming_response(response):
         # span will be closed after the generator is done
         return _abuild_from_streaming_response(span, kwargs, response)
     else:
-        _handle_response(response, span)
+        _handle_response(response, span, instance)
 
     span.end()
     return response
@@ -109,7 +112,7 @@ async def acompletion_wrapper(tracer, wrapped, instance, args, kwargs):
 
 @dont_throw
 def _handle_request(span, kwargs, instance):
-    _set_request_attributes(span, kwargs)
+    _set_request_attributes(span, kwargs, instance)
     if should_emit_events():
         _emit_prompts_events(kwargs)
     else:
@@ -131,7 +134,7 @@ def _emit_prompts_events(kwargs):
 
 
 @dont_throw
-def _handle_response(response, span):
+def _handle_response(response, span, instance=None):
     if is_openai_v1():
         response_dict = model_as_dict(response)
     else:
@@ -226,35 +229,19 @@ def _emit_streaming_response_events(complete_response):
 
 @dont_throw
 def _set_token_usage(span, request_kwargs, complete_response):
-    # use tiktoken calculate token usage
-    if should_record_stream_token_usage():
-        prompt_usage = -1
-        completion_usage = -1
+    prompt_usage = -1
+    completion_usage = -1
 
-        # prompt_usage
-        if request_kwargs and request_kwargs.get("prompt"):
-            prompt_content = request_kwargs.get("prompt")
-            model_name = complete_response.get("model") or None
+    # Use token usage from API response only
+    if complete_response.get("usage"):
+        usage = complete_response["usage"]
+        if usage.get("prompt_tokens"):
+            prompt_usage = usage["prompt_tokens"]
+        if usage.get("completion_tokens"):
+            completion_usage = usage["completion_tokens"]
 
-            if model_name:
-                prompt_usage = get_token_count_from_string(prompt_content, model_name)
-
-        # completion_usage
-        if complete_response.get("choices"):
-            completion_content = ""
-            model_name = complete_response.get("model") or None
-
-            for choice in complete_response.get("choices"):
-                if choice.get("text"):
-                    completion_content += choice.get("text")
-
-            if model_name:
-                completion_usage = get_token_count_from_string(
-                    completion_content, model_name
-                )
-
-        # span record
-        _set_span_stream_usage(span, prompt_usage, completion_usage)
+    # span record
+    _set_span_stream_usage(span, prompt_usage, completion_usage)
 
 
 @dont_throw
@@ -264,6 +251,11 @@ def _accumulate_streaming_response(complete_response, item):
 
     complete_response["model"] = item.get("model")
     complete_response["id"] = item.get("id")
+
+    # capture usage information from the stream chunks
+    if item.get("usage"):
+        complete_response["usage"] = item.get("usage")
+
     for choice in item.get("choices"):
         index = choice.get("index")
         if len(complete_response.get("choices")) <= index:

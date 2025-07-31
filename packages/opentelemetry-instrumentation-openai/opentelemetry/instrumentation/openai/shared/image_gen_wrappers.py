@@ -47,7 +47,7 @@ def image_gen_metrics_wrapper(
         if exception_counter:
             exception_counter.add(1, attributes=attributes)
 
-        raise e
+        raise
 
     if is_openai_v1():
         response_dict = model_as_dict(response)

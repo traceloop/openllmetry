@@ -1,0 +1,68 @@
+interactions:
+- request:
+    body: '{"inputs": "<s>[INST] <<SYS>>\nYou are a helpful, respectful and honest
+      assistant. Always answer as helpfully as possible, while being safe.  Your\nanswers
+      should not include any harmful, unethical, racist, sexist, toxic, dangerous,
+      or illegal content. Please ensure\nthat your responses are socially unbiased
+      and positive in nature.\n\nIf a question does not make any sense, or is not
+      factually coherent, explain why instead of answering something not\ncorrect.
+      If you don''t know the answer to a question, please don''t share false information.\n<</SYS>>\n\nThere''s
+      a llama in my garden  What should I do? [/INST]", "parameters": {"temperature":
+      0.1, "top_p": 0.9, "max_new_tokens": 128}}'
+    headers:
+      Content-Length:
+      - '688'
+      Content-Type:
+      - !!binary |
+        YXBwbGljYXRpb24vanNvbg==
+      User-Agent:
+      - !!binary |
+        Qm90bzMvMS4zNC41NSBtZC9Cb3RvY29yZSMxLjM0Ljc1IHVhLzIuMCBvcy9tYWNvcyMyMy42LjAg
+        bWQvYXJjaCNhcm02NCBsYW5nL3B5dGhvbiMzLjExLjggbWQvcHlpbXBsI0NQeXRob24gY2ZnL3Jl
+        dHJ5LW1vZGUjbGVnYWN5IEJvdG9jb3JlLzEuMzQuNzU=
+      X-Amz-Date:
+      - !!binary |
+        MjAyNDA5MjZUMjIzNzA0Wg==
+      amz-sdk-invocation-id:
+      - !!binary |
+        MjY0NGQ3NWItMWUyOC00YzI0LThhOGUtZGM3MjQzOGQ1ODQw
+      amz-sdk-request:
+      - !!binary |
+        YXR0ZW1wdD0x
+    method: POST
+    uri: https://runtime.sagemaker.us-east-1.amazonaws.com/endpoints/my-llama2-endpoint/invocations
+  response:
+    body:
+      string: '[{"generated_text":"<s>[INST] <<SYS>>\nYou are a helpful, respectful
+        and honest assistant. Always answer as helpfully as possible, while being
+        safe.  Your\nanswers should not include any harmful, unethical, racist, sexist,
+        toxic, dangerous, or illegal content. Please ensure\nthat your responses are
+        socially unbiased and positive in nature.\n\nIf a question does not make any
+        sense, or is not factually coherent, explain why instead of answering something
+        not\ncorrect. If you don''t know the answer to a question, please don''t share
+        false information.\n<</SYS>>\n\nThere''s a llama in my garden  What should
+        I do? [/INST]  Thank you for asking! I''m here to help you in a safe and respectful
+        manner. However, I must point out that the question you''ve provided is not
+        factually coherent, as llamas are not typically found in gardens. They are
+        domesticated animals that are typically kept on farms or in zoos.\n\nIf you''re
+        experiencing a situation where you believe there is a llama in your garden,
+        I would suggest taking a closer look to verify the presence of the animal.
+        If you''re still unsure, you may want to contact your local animal control
+        or a wildlife"}]'
+    headers:
+      Content-Length:
+      - '1161'
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 26 Sep 2024 22:37:09 GMT
+      connection:
+      - keep-alive
+      x-Amzn-Invoked-Production-Variant:
+      - AllTraffic
+      x-amzn-RequestId:
+      - eb2619e2-a22c-439b-b935-55f1c15c0ed4
+    status:
+      code: 200
+      message: OK
+version: 1
