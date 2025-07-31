@@ -52,6 +52,14 @@ def mock_openai_client():
 
 
 @pytest.fixture
+def deepseek_client():
+    return OpenAI(
+        api_key="test-key",
+        base_url="https://api.deepseek.com/v1"
+    )
+
+
+@pytest.fixture
 def vllm_openai_client():
     return OpenAI(base_url="http://localhost:8000/v1")
 
