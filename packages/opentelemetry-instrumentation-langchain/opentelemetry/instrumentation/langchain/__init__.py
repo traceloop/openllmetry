@@ -49,6 +49,12 @@ class LangchainInstrumentor(BaseInstrumentor):
     def _instrument(self, **kwargs):
         tracer_provider = kwargs.get("tracer_provider")
         tracer = get_tracer(__name__, __version__, tracer_provider)
+        
+        # Set the global tracer provider so user code gets tracers from the same provider
+        # This ensures that spans created by user code inside LangChain nodes are properly nested
+        if tracer_provider is not None:
+            from opentelemetry import trace
+            trace.set_tracer_provider(tracer_provider)
 
         # Add meter creation
         meter_provider = kwargs.get("meter_provider")
