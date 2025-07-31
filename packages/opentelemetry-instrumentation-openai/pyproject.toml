@@ -41,6 +41,7 @@ pytest-recording = "^0.13.1"
 openai = { extras = ["datalib"], version = ">=1.66.0" }
 opentelemetry-sdk = "^1.27.0"
 pytest-asyncio = "^0.23.7"
+requests = "^2.31.0"
 
 [build-system]
 requires = ["poetry-core"]
