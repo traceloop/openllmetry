@@ -100,9 +100,9 @@ class TracerWrapper(object):
                     original_on_start = proc.on_start
                     is_traceloop_processor = hasattr(proc, "_traceloop_processor")
 
-                    def chained_on_start(span, parent_context=None, orig=original_on_start):
+                    def chained_on_start(span, parent_context=None, orig=original_on_start, is_traceloop=is_traceloop_processor):
                         obj._span_processor_on_start(span, parent_context)
-                        if orig and not is_traceloop_processor:
+                        if orig and not is_traceloop:
                             orig(span, parent_context)
 
                     proc.on_start = chained_on_start
@@ -119,9 +119,9 @@ class TracerWrapper(object):
                 original_on_start = obj.__spans_processor.on_start
                 is_traceloop_processor = hasattr(obj.__spans_processor, "_traceloop_processor")
 
-                def chained_on_start(span, parent_context=None, orig=original_on_start):
+                def chained_on_start(span, parent_context=None, orig=original_on_start, is_traceloop=is_traceloop_processor):
                     obj._span_processor_on_start(span, parent_context)
-                    if orig and not is_traceloop_processor:
+                    if orig and not is_traceloop:
                         orig(span, parent_context)
 
                 obj.__spans_processor.on_start = chained_on_start
