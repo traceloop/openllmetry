@@ -98,12 +98,11 @@ class TracerWrapper(object):
                 obj.__spans_processors = []
                 for proc in processors:
                     original_on_start = proc.on_start
-                    is_traceloop_processor = hasattr(proc, "_traceloop_processor")
 
-                    def chained_on_start(span, parent_context=None, orig=original_on_start, is_traceloop=is_traceloop_processor):
-                        obj._span_processor_on_start(span, parent_context)
-                        if orig and not is_traceloop:
+                    def chained_on_start(span, parent_context=None, orig=original_on_start):
+                        if orig:
                             orig(span, parent_context)
+                        obj._span_processor_on_start(span, parent_context)
 
                     proc.on_start = chained_on_start
                     obj.__spans_processors.append(proc)
@@ -117,11 +116,10 @@ class TracerWrapper(object):
                 Telemetry().capture("tracer:init", {"processor": "custom"})
                 obj.__spans_processor: SpanProcessor = processor
                 original_on_start = obj.__spans_processor.on_start
-                is_traceloop_processor = hasattr(obj.__spans_processor, "_traceloop_processor")
 
-                def chained_on_start(span, parent_context=None, orig=original_on_start, is_traceloop=is_traceloop_processor):
+                def chained_on_start(span, parent_context=None, orig=original_on_start):
                     obj._span_processor_on_start(span, parent_context)
-                    if orig and not is_traceloop:
+                    if orig:
                         orig(span, parent_context)
 
                 obj.__spans_processor.on_start = chained_on_start
