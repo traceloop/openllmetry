@@ -62,11 +62,13 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
             "search_groups",
             "query",
             "discover",
+            "query_points",
+            "query_points_groups",
             "recommend",
             "recommend_groups",
         ]:
             _set_search_attributes(span, args, kwargs)
-        elif method in ["search_batch", "recommend_batch", "discover_batch"]:
+        elif method in ["search_batch", "recommend_batch", "discover_batch", "query_batch_points"]:
             _set_batch_search_attributes(span, args, kwargs, method)
 
         response = wrapped(*args, **kwargs)
