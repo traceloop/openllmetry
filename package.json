@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
-    "prepare": "husky install",
+    "prepare": "husky",
     "lint": "nx run-many --target=lint",
     "lint:fix": "nx run-many --target=lint:fix"
   },
@@ -18,6 +18,6 @@
     "packages/*"
   ],
   "lint-staged": {
-    "**/*.py": "npx nx affected --target=lint:fix"
+    "**/*.py": "nx affected --target=lint:fix"
   }
 }
