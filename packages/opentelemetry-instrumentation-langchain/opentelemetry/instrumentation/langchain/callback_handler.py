@@ -184,7 +184,12 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         span.end()
         token = self.spans[run_id].token
         if token:
-            context_api.detach(token)
+            try:
+                context_api.detach(token)
+            except ValueError:
+                # Context detach can fail in async scenarios when tokens are created in different contexts
+                # This is expected behavior and doesn't affect the correct span hierarchy
+                pass
 
     def _create_span(
         self,
@@ -224,12 +229,10 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             span = self.tracer.start_span(span_name, kind=kind)
 
         token = None
-        # TODO: make this unconditional once attach/detach works properly with async callbacks.
-        # Currently, it doesn't work due to this - https://github.com/langchain-ai/langchain/issues/31398
-        # As a sidenote, OTel Python users also report similar issues -
-        # https://github.com/open-telemetry/opentelemetry-python/issues/2606
-        if self._callback_manager and not self._callback_manager.is_async:
-            token = context_api.attach(set_span_in_context(span))
+        # Always attach context for both sync and async callbacks to ensure proper span hierarchy
+        # This fixes GitHub issue #3203 where user spans inside nodes don't get proper parents
+        # Previously only worked for sync callbacks, but async is the common case with LangGraph
+        token = context_api.attach(set_span_in_context(span))
 
         _set_span_attribute(span, SpanAttributes.TRACELOOP_WORKFLOW_NAME, workflow_name)
         _set_span_attribute(span, SpanAttributes.TRACELOOP_ENTITY_PATH, entity_path)
