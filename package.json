@@ -2,13 +2,22 @@
   "name": "openllmetry",
   "version": "0.0.0",
   "license": "MIT",
-  "scripts": {},
+  "scripts": {
+    "prepare": "husky",
+    "lint": "nx run-many --target=lint",
+    "lint:fix": "nx run-many --target=lint:fix"
+  },
   "private": true,
   "devDependencies": {
     "@nxlv/python": "^20.14.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.1.2",
     "nx": "^20.8.1"
   },
   "workspaces": [
     "packages/*"
-  ]
+  ],
+  "lint-staged": {
+    "**/*.py": "npx nx affected --target=lint:fix"
+  }
 }

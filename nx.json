@@ -18,7 +18,8 @@
           "**/*.py"
         ],
         "fix": true
-      }
+      },
+      "cache": false
     }
   }
 }
