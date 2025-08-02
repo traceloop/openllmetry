@@ -47,7 +47,7 @@ def _get_or_set_root_span_context(span=None):
 
     if current_trace and current_trace.trace_id != "no-op":
         trace_id = current_trace.trace_id
-        
+
         with _storage_lock:
             weak_ref = _root_span_storage.get(trace_id)
             root_span = weak_ref() if weak_ref else None
@@ -61,7 +61,7 @@ def _get_or_set_root_span_context(span=None):
                         with _storage_lock:
                             if _root_span_storage.get(trace_id) is ref:
                                 del _root_span_storage[trace_id]
-                    
+
                     _root_span_storage[trace_id] = weakref.ref(span, cleanup_callback)
                     return set_span_in_context(span, ctx)
                 return ctx
