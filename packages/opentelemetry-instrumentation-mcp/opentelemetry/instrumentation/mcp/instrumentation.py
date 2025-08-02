@@ -130,11 +130,21 @@ class McpInstrumentor(BaseInstrumentor):
             async with wrapped(*args, **kwargs) as result:
                 try:
                     read_stream, write_stream = result
+                    yield InstrumentedStreamReader(
+                        read_stream, tracer
+                    ), InstrumentedStreamWriter(write_stream, tracer)
                 except ValueError:
-                    read_stream, write_stream, _ = result
-                yield InstrumentedStreamReader(
-                    read_stream, tracer
-                ), InstrumentedStreamWriter(write_stream, tracer)
+                    try:
+                        read_stream, write_stream, get_session_id_callback = result
+                        yield InstrumentedStreamReader(
+                            read_stream, tracer
+                        ), InstrumentedStreamWriter(write_stream, tracer), get_session_id_callback
+                    except Exception as e:
+                        logging.warning(f"mcp instrumentation _transport_wrapper exception: {e}")
+                        yield result
+                except Exception as e:
+                    logging.warning(f"mcp instrumentation transport_wrapper exception: {e}")
+                    yield result
 
         return traced_method
 
