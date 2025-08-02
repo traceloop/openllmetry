@@ -45,7 +45,6 @@
         "debug": false
       }
     },
-    "lint": {},
     "test": {
       "executor": "@nxlv/python:run-commands",
       "outputs": [
