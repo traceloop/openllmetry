@@ -178,7 +178,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
 
     def _end_span(self, span: Span, run_id: UUID) -> None:
         for child_id in self.spans[run_id].children:
-            if child_id in self.spans: 
+            if child_id in self.spans:
                 child_span = self.spans[child_id].span
                 if child_span.end_time is None:  # avoid warning on ended spans
                     child_span.end()
@@ -186,7 +186,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         token = self.spans[run_id].token
         if token:
             context_api.detach(token)
-        
+
         del self.spans[run_id]
 
     def _create_span(
@@ -550,7 +550,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
                 SpanAttributes.LLM_RESPONSE_MODEL: model_name or "unknown",
             },
         )
-        
+
         self._end_span(span, run_id)
 
     @dont_throw
