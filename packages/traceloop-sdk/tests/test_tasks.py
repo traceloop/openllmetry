@@ -153,3 +153,129 @@ def test_dataclass_serialization_task(exporter):
         "field1": "value1",
         "field2": 123,
     }
+
+
+def test_json_truncation_with_otel_limit(exporter, monkeypatch):
+    """Test that JSON input/output is truncated when OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT is set"""
+    # Set environment variable to a small limit for testing
+    monkeypatch.setenv("OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT", "50")
+
+    @task(name="truncation_task")
+    def truncation_task(long_input):
+        # Return a long output that will also be truncated
+        return "This is a very long output string that should definitely exceed the 50 character limit"
+
+    # Call with a long input that will be truncated
+    long_input = "This is a very long input string that should definitely exceed the 50 character limit"
+    truncation_task(long_input)
+
+    spans = exporter.get_finished_spans()
+    task_span = spans[0]
+
+    # Check that input was truncated
+    input_json = task_span.attributes[SpanAttributes.TRACELOOP_ENTITY_INPUT]
+    assert len(input_json) == 50
+    assert input_json.startswith('{"args": ["This is a very long input string that s')
+
+    # Check that output was truncated
+    output_json = task_span.attributes[SpanAttributes.TRACELOOP_ENTITY_OUTPUT]
+    assert len(output_json) == 50
+    assert output_json.startswith('"This is a very long output string that should def')
+
+
+def test_json_no_truncation_without_otel_limit(exporter, monkeypatch):
+    """Test that JSON input/output is not truncated when OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT is not set"""
+    # Ensure environment variable is not set
+    monkeypatch.delenv("OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT", raising=False)
+
+    @task(name="no_truncation_task")
+    def no_truncation_task(long_input):
+        return "This is a very long output string that would be truncated if limits were set but should remain intact"
+
+    long_input = "This is a very long input string that would be truncated if limits were set but should remain intact"
+    result = no_truncation_task(long_input)
+
+    spans = exporter.get_finished_spans()
+    task_span = spans[0]
+
+    # Check that input was not truncated
+    input_data = json.loads(task_span.attributes[SpanAttributes.TRACELOOP_ENTITY_INPUT])
+    assert input_data["args"][0] == long_input
+
+    # Check that output was not truncated
+    output_data = json.loads(task_span.attributes[SpanAttributes.TRACELOOP_ENTITY_OUTPUT])
+    assert output_data == result
+
+
+def test_json_truncation_with_invalid_otel_limit(exporter, monkeypatch):
+    """Test that invalid OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT values are ignored"""
+    # Set environment variable to invalid value
+    monkeypatch.setenv("OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT", "not_a_number")
+
+    @task(name="invalid_limit_task")
+    def invalid_limit_task(test_input):
+        return "This output should not be truncated because the limit is invalid"
+
+    test_input = "This input should not be truncated because the limit is invalid"
+    result = invalid_limit_task(test_input)
+
+    spans = exporter.get_finished_spans()
+    task_span = spans[0]
+
+    # Check that input was not truncated (since invalid limit should be ignored)
+    input_data = json.loads(task_span.attributes[SpanAttributes.TRACELOOP_ENTITY_INPUT])
+    assert input_data["args"][0] == test_input
+
+    # Check that output was not truncated
+    output_data = json.loads(task_span.attributes[SpanAttributes.TRACELOOP_ENTITY_OUTPUT])
+    assert output_data == result
+
+
+@pytest.mark.asyncio
+async def test_async_json_truncation_with_otel_limit(exporter, monkeypatch):
+    """Test that JSON truncation works with async tasks"""
+    # Set environment variable to a small limit for testing
+    monkeypatch.setenv("OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT", "40")
+
+    @task(name="async_truncation_task")
+    async def async_truncation_task(long_input):
+        await asyncio.sleep(0.1)  # Simulate async work
+        return "This is a long async output that should be truncated"
+
+    long_input = "This is a long async input that should be truncated"
+    await async_truncation_task(long_input)
+
+    spans = exporter.get_finished_spans()
+    task_span = spans[0]
+
+    # Check that input was truncated
+    input_json = task_span.attributes[SpanAttributes.TRACELOOP_ENTITY_INPUT]
+    assert len(input_json) == 40
+
+    # Check that output was truncated
+    output_json = task_span.attributes[SpanAttributes.TRACELOOP_ENTITY_OUTPUT]
+    assert len(output_json) == 40
+
+
+def test_json_truncation_preserves_short_content(exporter, monkeypatch):
+    """Test that short content is not affected by truncation limits"""
+    # Set environment variable to a limit larger than our content
+    monkeypatch.setenv("OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT", "1000")
+
+    @task(name="short_content_task")
+    def short_content_task(short_input):
+        return "short output"
+
+    short_input = "short input"
+    result = short_content_task(short_input)
+
+    spans = exporter.get_finished_spans()
+    task_span = spans[0]
+
+    # Check that short input was preserved completely
+    input_data = json.loads(task_span.attributes[SpanAttributes.TRACELOOP_ENTITY_INPUT])
+    assert input_data["args"][0] == short_input
+
+    # Check that short output was preserved completely
+    output_data = json.loads(task_span.attributes[SpanAttributes.TRACELOOP_ENTITY_OUTPUT])
+    assert output_data == result
