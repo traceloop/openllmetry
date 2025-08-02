@@ -162,20 +162,19 @@ def _wrap(
         if duration > 0 and query_duration_metric and to_wrap.get("method") == "query":
             query_duration_metric.record(duration, shared_attributes)
 
-        if response:
-            if span.is_recording():
-                if to_wrap.get("method") == "query":
-                    set_query_response(span, scores_metric, shared_attributes, response)
+        if response and span.is_recording():
+            if to_wrap.get("method") == "query":
+                set_query_response(span, scores_metric, shared_attributes, response)
 
-                _set_response_attributes(
-                    span,
-                    read_units_metric,
-                    write_units_metric,
-                    shared_attributes,
-                    response,
-                )
+            _set_response_attributes(
+                span,
+                read_units_metric,
+                write_units_metric,
+                shared_attributes,
+                response,
+            )
 
-                span.set_status(Status(StatusCode.OK))
+            span.set_status(Status(StatusCode.OK))
 
         return response
 

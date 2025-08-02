@@ -18,9 +18,8 @@ TRACELOOP_TRACE_CONTENT = "TRACELOOP_TRACE_CONTENT"
 
 
 def set_span_attribute(span, name, value):
-    if value is not None:
-        if value != "":
-            span.set_attribute(name, value)
+    if value is not None and value != "":
+        span.set_attribute(name, value)
     return
 
 
