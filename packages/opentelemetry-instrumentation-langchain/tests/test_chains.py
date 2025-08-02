@@ -612,14 +612,12 @@ def test_stream(instrument_legacy, span_exporter, log_exporter):
     chunks = list(runnable.stream({"product": "colorful socks"}))
     spans = span_exporter.get_finished_spans()
 
-    assert set(
-        [
+    assert {
             "PromptTemplate.task",
             "StrOutputParser.task",
             "ChatCohere.chat",
             "RunnableSequence.workflow",
-        ]
-    ) == set([span.name for span in spans])
+        } == {span.name for span in spans}
     assert len(chunks) == 62
 
     logs = log_exporter.get_finished_logs()
@@ -640,14 +638,12 @@ def test_stream_with_events_with_content(
     chunks = list(runnable.stream({"product": "colorful socks"}))
     spans = span_exporter.get_finished_spans()
 
-    assert set(
-        [
+    assert {
             "PromptTemplate.task",
             "StrOutputParser.task",
             "ChatCohere.chat",
             "RunnableSequence.workflow",
-        ]
-    ) == set([span.name for span in spans])
+        } == {span.name for span in spans}
     assert len(chunks) == 62
 
     logs = log_exporter.get_finished_logs()
@@ -684,14 +680,12 @@ def test_stream_with_events_with_no_content(
     chunks = list(runnable.stream({"product": "colorful socks"}))
     spans = span_exporter.get_finished_spans()
 
-    assert set(
-        [
+    assert {
             "PromptTemplate.task",
             "StrOutputParser.task",
             "ChatCohere.chat",
             "RunnableSequence.workflow",
-        ]
-    ) == set([span.name for span in spans])
+        } == {span.name for span in spans}
     assert len(chunks) == 62
 
     logs = log_exporter.get_finished_logs()
@@ -719,14 +713,12 @@ async def test_astream(instrument_legacy, span_exporter, log_exporter):
         chunks.append(chunk)
     spans = span_exporter.get_finished_spans()
 
-    assert set(
-        [
+    assert {
             "PromptTemplate.task",
             "ChatCohere.chat",
             "StrOutputParser.task",
             "RunnableSequence.workflow",
-        ]
-    ) == set([span.name for span in spans])
+        } == {span.name for span in spans}
     assert len(chunks) == 144
 
     logs = log_exporter.get_finished_logs()
@@ -750,14 +742,12 @@ async def test_astream_with_events_with_content(
         chunks.append(chunk)
     spans = span_exporter.get_finished_spans()
 
-    assert set(
-        [
+    assert {
             "PromptTemplate.task",
             "ChatCohere.chat",
             "StrOutputParser.task",
             "RunnableSequence.workflow",
-        ]
-    ) == set([span.name for span in spans])
+        } == {span.name for span in spans}
     assert len(chunks) == 144
 
     logs = log_exporter.get_finished_logs()
@@ -795,14 +785,12 @@ async def test_astream_with_events_with_no_content(
         chunks.append(chunk)
     spans = span_exporter.get_finished_spans()
 
-    assert set(
-        [
+    assert {
             "PromptTemplate.task",
             "ChatCohere.chat",
             "StrOutputParser.task",
             "RunnableSequence.workflow",
-        ]
-    ) == set([span.name for span in spans])
+        } == {span.name for span in spans}
     assert len(chunks) == 144
 
     logs = log_exporter.get_finished_logs()

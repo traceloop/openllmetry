@@ -1,4 +1,3 @@
-from typing import List
 
 import pytest
 from langchain.schema import HumanMessage
@@ -19,7 +18,7 @@ class FoodAnalysis(BaseModel):
     name: str = Field(description="The name of the food item")
     healthy: bool = Field(description="Whether the food is good for you")
     calories: int = Field(description="Estimated calories per serving")
-    taste_profile: List[str] = Field(description="List of taste characteristics")
+    taste_profile: list[str] = Field(description="List of taste characteristics")
 
 
 @pytest.mark.vcr
@@ -31,7 +30,7 @@ def test_structured_output(instrument_legacy, span_exporter, log_exporter):
     result = model_with_structured_output.invoke(query)
     spans = span_exporter.get_finished_spans()
 
-    span_names = set(span.name for span in spans)
+    span_names = {span.name for span in spans}
     expected_spans = {"ChatOpenAI.chat"}
     assert expected_spans.issubset(span_names)
 
@@ -60,7 +59,7 @@ def test_structured_output_with_events_with_content(
     result = model_with_structured_output.invoke(query)
     spans = span_exporter.get_finished_spans()
 
-    span_names = set(span.name for span in spans)
+    span_names = {span.name for span in spans}
     expected_spans = {"ChatOpenAI.chat"}
     assert expected_spans.issubset(span_names)
 
@@ -90,7 +89,7 @@ def test_structured_output_with_events_with_no_content(
     model_with_structured_output.invoke(query)
     spans = span_exporter.get_finished_spans()
 
-    span_names = set(span.name for span in spans)
+    span_names = {span.name for span in spans}
     expected_spans = {"ChatOpenAI.chat"}
     assert expected_spans.issubset(span_names)
 

@@ -435,14 +435,12 @@ def test_openai_functions(instrument_legacy, span_exporter, log_exporter):
 
     spans = span_exporter.get_finished_spans()
 
-    assert set(
-        [
+    assert {
             "ChatPromptTemplate.task",
             "JsonOutputFunctionsParser.task",
             "ChatOpenAI.chat",
             "RunnableSequence.workflow",
-        ]
-    ) == set([span.name for span in spans])
+        } == {span.name for span in spans}
 
     openai_span = next(span for span in spans if span.name == "ChatOpenAI.chat")
 
@@ -528,14 +526,12 @@ def test_openai_functions_with_events_with_content(
 
     spans = span_exporter.get_finished_spans()
 
-    assert set(
-        [
+    assert {
             "ChatPromptTemplate.task",
             "JsonOutputFunctionsParser.task",
             "ChatOpenAI.chat",
             "RunnableSequence.workflow",
-        ]
-    ) == set([span.name for span in spans])
+        } == {span.name for span in spans}
 
     openai_span = next(span for span in spans if span.name == "ChatOpenAI.chat")
 
@@ -601,14 +597,12 @@ def test_openai_functions_with_events_with_no_content(
 
     spans = span_exporter.get_finished_spans()
 
-    assert set(
-        [
+    assert {
             "ChatPromptTemplate.task",
             "JsonOutputFunctionsParser.task",
             "ChatOpenAI.chat",
             "RunnableSequence.workflow",
-        ]
-    ) == set([span.name for span in spans])
+        } == {span.name for span in spans}
 
     openai_span = next(span for span in spans if span.name == "ChatOpenAI.chat")
 
@@ -1299,7 +1293,7 @@ def test_trace_propagation_stream_with_events_with_content(
     send_spy = spy_decorator(httpx.Client.send)
     with patch.object(httpx.Client, "send", send_spy):
         stream = chain.stream({"input": "Tell me a joke about OpenTelemetry"})
-        chunks = [s for s in stream]
+        chunks = list(stream)
     send_spy.mock.assert_called_once()
 
     spans = span_exporter.get_finished_spans()

@@ -1,6 +1,6 @@
 import json
 import time
-from typing import Any, Dict, List, Optional, Type, Union
+from typing import Any, Optional, Union
 from uuid import UUID
 
 from langchain_core.callbacks import (
@@ -104,7 +104,7 @@ def valid_role(role: str) -> bool:
     return role in ["user", "assistant", "system", "tool"]
 
 
-def get_message_role(message: Type[BaseMessage]) -> str:
+def get_message_role(message: type[BaseMessage]) -> str:
     if isinstance(message, (SystemMessage, SystemMessageChunk)):
         return "system"
     elif isinstance(message, (HumanMessage, HumanMessageChunk)):
@@ -118,8 +118,8 @@ def get_message_role(message: Type[BaseMessage]) -> str:
 
 
 def _extract_tool_call_data(
-    tool_calls: Optional[List[dict[str, Any]]],
-) -> Union[List[ToolCall], None]:
+    tool_calls: Optional[list[dict[str, Any]]],
+) -> Union[list[ToolCall], None]:
     if tool_calls is None:
         return tool_calls
 
@@ -429,8 +429,8 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
     @dont_throw
     def on_llm_start(
         self,
-        serialized: Dict[str, Any],
-        prompts: List[str],
+        serialized: dict[str, Any],
+        prompts: list[str],
         *,
         run_id: UUID,
         tags: Optional[list[str]] = None,

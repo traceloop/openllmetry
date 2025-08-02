@@ -1,5 +1,4 @@
 import os
-from typing import Tuple
 
 import pytest
 from langchain import hub
@@ -35,7 +34,7 @@ def test_agents(instrument_legacy, span_exporter, log_exporter):
 
     spans = span_exporter.get_finished_spans()
 
-    assert set([span.name for span in spans]) == {
+    assert {span.name for span in spans} == {
         "RunnableLambda.task",
         "RunnableParallel<agent_scratchpad>.task",
         "RunnableAssign<agent_scratchpad>.task",
@@ -82,7 +81,7 @@ def test_agents_with_events_with_content(
 
     spans = span_exporter.get_finished_spans()
 
-    assert set([span.name for span in spans]) == {
+    assert {span.name for span in spans} == {
         "RunnableLambda.task",
         "RunnableParallel<agent_scratchpad>.task",
         "RunnableAssign<agent_scratchpad>.task",
@@ -179,7 +178,7 @@ def test_agents_with_events_with_no_content(
 
     spans = span_exporter.get_finished_spans()
 
-    assert set([span.name for span in spans]) == {
+    assert {span.name for span in spans} == {
         "RunnableLambda.task",
         "RunnableParallel<agent_scratchpad>.task",
         "RunnableAssign<agent_scratchpad>.task",
@@ -247,7 +246,7 @@ def test_agents_with_events_with_no_content(
 
 
 def assert_message_in_logs(
-    logs: Tuple[LogData], event_name: str, expected_content: dict
+    logs: tuple[LogData], event_name: str, expected_content: dict
 ):
     assert any(
         log.log_record.attributes.get(EventAttributes.EVENT_NAME) == event_name

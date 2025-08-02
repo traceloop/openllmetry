@@ -64,9 +64,8 @@ class CustomLLMInstrumentor:
 
 
 def _set_span_attribute(span, name, value):
-    if value is not None:
-        if value != "":
-            span.set_attribute(name, value)
+    if value is not None and value != "":
+        span.set_attribute(name, value)
     return
 
 
@@ -152,16 +151,14 @@ def _handle_request(span, llm_request_type, args, kwargs, instance: CustomLLM):
         span, SpanAttributes.LLM_REQUEST_TOP_P, instance.metadata.num_output
     )
 
-    if should_send_prompts():
+    if should_send_prompts() and llm_request_type == LLMRequestTypeValues.COMPLETION and len(args) > 0:
         # TODO: add support for chat
-        if llm_request_type == LLMRequestTypeValues.COMPLETION:
-            if len(args) > 0:
-                prompt = args[0]
-                _set_span_attribute(
-                    span,
-                    f"{SpanAttributes.LLM_PROMPTS}.0.user",
-                    prompt[0] if isinstance(prompt, list) else prompt,
-                )
+        prompt = args[0]
+        _set_span_attribute(
+            span,
+            f"{SpanAttributes.LLM_PROMPTS}.0.user",
+            prompt[0] if isinstance(prompt, list) else prompt,
+        )
 
     return
 
@@ -172,11 +169,10 @@ def _handle_response(span, llm_request_type, instance, response):
         span, SpanAttributes.LLM_RESPONSE_MODEL, instance.metadata.model_name
     )
 
-    if should_send_prompts():
-        if llm_request_type == LLMRequestTypeValues.COMPLETION:
-            _set_span_attribute(
-                span, f"{SpanAttributes.LLM_COMPLETIONS}.0.content", response.text
-            )
+    if should_send_prompts() and llm_request_type == LLMRequestTypeValues.COMPLETION:
+        _set_span_attribute(
+            span, f"{SpanAttributes.LLM_COMPLETIONS}.0.content", response.text
+        )
 
     return
 

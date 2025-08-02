@@ -27,12 +27,11 @@ class OTLPHandler(BaseHTTPRequestHandler):
 
     def do_POST(self) -> None:
         request_url = urlparse(self.path)
-        match request_url.path:
-            case "/v1/traces":
-                self._handle_traces()
-            case _:
-                self.send_response(404)
-                self.end_headers()
+        if request_url.path == "/v1/traces":
+            self._handle_traces()
+        else:
+            self.send_response(404)
+            self.end_headers()
 
     def _handle_traces(self) -> None:
         content_length = int(self.headers["Content-Length"])

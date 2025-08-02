@@ -112,10 +112,9 @@ def wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
 
         response = wrapped(*args, **kwargs)
 
-        if response:
-            if span.is_recording():
-                _set_response_attributes(span, llm_request_type, response)
+        if response and span.is_recording():
+            _set_response_attributes(span, llm_request_type, response)
 
-                span.set_status(Status(StatusCode.OK))
+            span.set_status(Status(StatusCode.OK))
 
         return response

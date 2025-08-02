@@ -44,14 +44,12 @@ def test_simple_lcel(instrument_legacy, span_exporter, log_exporter):
 
     spans = span_exporter.get_finished_spans()
 
-    assert set(
-        [
+    assert {
             "ChatPromptTemplate.task",
             "JsonOutputFunctionsParser.task",
             "ChatOpenAI.chat",
             "ThisIsATestChain.workflow",
-        ]
-    ) == set([span.name for span in spans])
+        } == {span.name for span in spans}
 
     workflow_span = next(
         span for span in spans if span.name == "ThisIsATestChain.workflow"
@@ -162,14 +160,12 @@ def test_simple_lcel_with_events_with_content(
 
     spans = span_exporter.get_finished_spans()
 
-    assert set(
-        [
+    assert {
             "ChatPromptTemplate.task",
             "JsonOutputFunctionsParser.task",
             "ChatOpenAI.chat",
             "ThisIsATestChain.workflow",
-        ]
-    ) == set([span.name for span in spans])
+        } == {span.name for span in spans}
 
     workflow_span = next(
         span for span in spans if span.name == "ThisIsATestChain.workflow"
@@ -246,14 +242,12 @@ def test_simple_lcel_with_events_with_no_content(
 
     spans = span_exporter.get_finished_spans()
 
-    assert set(
-        [
+    assert {
             "ChatPromptTemplate.task",
             "JsonOutputFunctionsParser.task",
             "ChatOpenAI.chat",
             "ThisIsATestChain.workflow",
-        ]
-    ) == set([span.name for span in spans])
+        } == {span.name for span in spans}
 
     workflow_span = next(
         span for span in spans if span.name == "ThisIsATestChain.workflow"
@@ -312,7 +306,7 @@ async def test_async_lcel(instrument_legacy, span_exporter, log_exporter):
         "ChatOpenAI.chat",
         "StrOutputParser.task",
         "RunnableSequence.workflow",
-    } == set([span.name for span in spans])
+    } == {span.name for span in spans}
 
     workflow_span = next(
         span for span in spans if span.name == "RunnableSequence.workflow"
@@ -370,7 +364,7 @@ async def test_async_lcel_with_events_with_content(
         "ChatOpenAI.chat",
         "StrOutputParser.task",
         "RunnableSequence.workflow",
-    } == set([span.name for span in spans])
+    } == {span.name for span in spans}
 
     workflow_span = next(
         span for span in spans if span.name == "RunnableSequence.workflow"
@@ -427,7 +421,7 @@ async def test_async_lcel_with_events_with_no_content(
         "ChatOpenAI.chat",
         "StrOutputParser.task",
         "RunnableSequence.workflow",
-    } == set([span.name for span in spans])
+    } == {span.name for span in spans}
 
     workflow_span = next(
         span for span in spans if span.name == "RunnableSequence.workflow"
@@ -618,7 +612,7 @@ def test_stream_with_events_with_content(
         input={"product": "colorful socks"},
         config={"configurable": {"session_id": 1234}},
     )
-    chunks = [s for s in res]
+    chunks = list(res)
 
     spans = span_exporter.get_finished_spans()
 
@@ -850,14 +844,12 @@ def test_lcel_with_datetime(instrument_legacy, span_exporter, log_exporter):
     assert entity_input["metadata"]["timestamp"] == "2023-05-17T12:34:56"
     assert entity_input["metadata"]["test_name"] == "datetime_test"
 
-    assert set(
-        [
+    assert {
             "ChatPromptTemplate.task",
             "JsonOutputFunctionsParser.task",
             "ChatOpenAI.chat",
             "DateTimeTestChain.workflow",
-        ]
-    ) == set([span.name for span in spans])
+        } == {span.name for span in spans}
 
     logs = log_exporter.get_finished_logs()
     assert (
@@ -899,14 +891,12 @@ def test_lcel_with_datetime_with_events_with_content(
 
     spans = span_exporter.get_finished_spans()
 
-    assert set(
-        [
+    assert {
             "ChatPromptTemplate.task",
             "JsonOutputFunctionsParser.task",
             "ChatOpenAI.chat",
             "DateTimeTestChain.workflow",
-        ]
-    ) == set([span.name for span in spans])
+        } == {span.name for span in spans}
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 3
@@ -975,14 +965,12 @@ def test_lcel_with_datetime_with_events_with_no_content(
 
     spans = span_exporter.get_finished_spans()
 
-    assert set(
-        [
+    assert {
             "ChatPromptTemplate.task",
             "JsonOutputFunctionsParser.task",
             "ChatOpenAI.chat",
             "DateTimeTestChain.workflow",
-        ]
-    ) == set([span.name for span in spans])
+        } == {span.name for span in spans}
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 3

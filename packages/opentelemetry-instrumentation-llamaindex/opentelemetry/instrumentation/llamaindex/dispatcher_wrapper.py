@@ -4,7 +4,7 @@ import re
 from collections.abc import AsyncGenerator, Generator
 from dataclasses import dataclass, field
 from functools import singledispatchmethod
-from typing import Any, Dict, List, Optional
+from typing import Any, ClassVar, Optional
 
 from llama_index.core.base.response.schema import StreamingResponse
 from llama_index.core.bridge.pydantic import PrivateAttr
@@ -87,19 +87,19 @@ class SpanHolder:
 
     _active: bool = field(init=False, default=True)
 
-    def process_event(self, event: BaseEvent) -> List["SpanHolder"]:
+    def process_event(self, event: BaseEvent) -> list["SpanHolder"]:
         self.update_span_for_event(event)
 
         if self.waiting_for_streaming and isinstance(event, STREAMING_END_EVENTS):
             self.end()
-            return [self] + self.notify_parent()
+            return [self, *self.notify_parent()]
 
         return []
 
-    def notify_parent(self) -> List["SpanHolder"]:
+    def notify_parent(self) -> list["SpanHolder"]:
         if self.parent:
             self.parent.end()
-            return [self.parent] + self.parent.notify_parent()
+            return [self.parent, *self.parent.notify_parent()]
         return []
 
     def end(self, should_detach_context: bool = True):
@@ -155,7 +155,7 @@ class SpanHolder:
 
 
 class OpenLLMetrySpanHandler(BaseSpanHandler[SpanHolder]):
-    waiting_for_streaming_spans: Dict[str, SpanHolder] = {}
+    waiting_for_streaming_spans: ClassVar[dict[str, SpanHolder]] = {}
     _tracer: Tracer = PrivateAttr()
 
     def __init__(self, tracer: Tracer):
@@ -168,7 +168,7 @@ class OpenLLMetrySpanHandler(BaseSpanHandler[SpanHolder]):
         bound_args: inspect.BoundArguments,
         instance: Optional[Any] = None,
         parent_span_id: Optional[str] = None,
-        tags: Optional[Dict[str, Any]] = None,
+        tags: Optional[dict[str, Any]] = None,
         **kwargs: Any,
     ) -> Optional[SpanHolder]:
         """Create a span."""

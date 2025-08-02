@@ -36,13 +36,11 @@ def test_langgraph_invoke(instrument_legacy, span_exporter):
     user_request = "What's 5 + 5?"
     response = langgraph.invoke(input={"request": user_request})["result"]
     spans = span_exporter.get_finished_spans()
-    assert set(
-        [
+    assert {
             "LangGraph.workflow",
             "calculate.task",
             "openai.chat"
-        ]
-    ) == set([span.name for span in spans])
+        } == {span.name for span in spans}
 
     openai_span = next(span for span in spans if span.name == "openai.chat")
     calculate_task_span = next(span for span in spans if span.name == "calculate.task")
@@ -101,13 +99,11 @@ async def test_langgraph_ainvoke(instrument_legacy, span_exporter):
     user_request = "What's 5 + 5?"
     await langgraph.ainvoke(input={"request": user_request})
     spans = span_exporter.get_finished_spans()
-    assert set(
-        [
+    assert {
             "LangGraph.workflow",
             "calculate.task",
             "openai.chat"
-        ]
-    ) == set([span.name for span in spans])
+        } == {span.name for span in spans}
     openai_span = next(span for span in spans if span.name == "openai.chat")
     calculate_task_span = next(span for span in spans if span.name == "calculate.task")
     assert openai_span.parent.span_id == calculate_task_span.context.span_id
