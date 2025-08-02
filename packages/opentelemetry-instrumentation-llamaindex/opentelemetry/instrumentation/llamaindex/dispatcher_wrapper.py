@@ -1,9 +1,10 @@
 import inspect
 import json
 import re
+from collections.abc import AsyncGenerator, Generator
 from dataclasses import dataclass, field
 from functools import singledispatchmethod
-from typing import Any, AsyncGenerator, Dict, Generator, List, Optional
+from typing import Any, Dict, List, Optional
 
 from llama_index.core.base.response.schema import StreamingResponse
 from llama_index.core.bridge.pydantic import PrivateAttr
@@ -26,6 +27,7 @@ from llama_index.core.instrumentation.events.llm import (
 from llama_index.core.instrumentation.events.rerank import ReRankStartEvent
 from llama_index.core.instrumentation.span_handlers import BaseSpanHandler
 from llama_index.core.workflow import Workflow
+
 from opentelemetry import context as context_api
 from opentelemetry.instrumentation.llamaindex.event_emitter import (
     emit_chat_message_events,
@@ -128,7 +130,7 @@ class SpanHolder:
         if should_emit_events():
             emit_chat_response_events(event)
         else:
-            set_llm_chat_response(event, self.otel_span)  # noqa: F821
+            set_llm_chat_response(event, self.otel_span)
 
     @update_span_for_event.register
     def _(self, event: LLMPredictEndEvent):

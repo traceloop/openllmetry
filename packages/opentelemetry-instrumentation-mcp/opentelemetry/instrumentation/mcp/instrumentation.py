@@ -1,24 +1,25 @@
-from contextlib import asynccontextmanager
-from dataclasses import dataclass
-from typing import Any, AsyncGenerator, Callable, Collection, Tuple, cast
 import json
 import logging
-import traceback
 import re
+import traceback
+from collections.abc import AsyncGenerator, Collection
+from contextlib import asynccontextmanager
+from dataclasses import dataclass
 from http import HTTPStatus
+from typing import Any, Callable, Tuple, cast
+
+from wrapt import ObjectProxy, register_post_import_hook, wrap_function_wrapper
 
 from opentelemetry import context, propagate
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
-from opentelemetry.instrumentation.utils import unwrap
-from opentelemetry.trace import get_tracer
-from wrapt import ObjectProxy, register_post_import_hook, wrap_function_wrapper
-from opentelemetry.trace.status import Status, StatusCode
-from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
-from opentelemetry.trace.propagation import set_span_in_context
-from opentelemetry.semconv_ai import SpanAttributes
-from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
-
 from opentelemetry.instrumentation.mcp.version import __version__
+from opentelemetry.instrumentation.utils import unwrap
+from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
+from opentelemetry.semconv_ai import SpanAttributes
+from opentelemetry.trace import get_tracer
+from opentelemetry.trace.propagation import set_span_in_context
+from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
+from opentelemetry.trace.status import Status, StatusCode
 
 _instruments = ("mcp >= 1.6.0",)
 
@@ -287,8 +288,8 @@ class InstrumentedStreamReader(ObjectProxy):  # type: ignore
 
     @dont_throw
     async def __aiter__(self) -> AsyncGenerator[Any, None]:
-        from mcp.types import JSONRPCMessage, JSONRPCRequest
         from mcp.shared.message import SessionMessage
+        from mcp.types import JSONRPCMessage, JSONRPCRequest
 
         async for item in self.__wrapped__:
             if isinstance(item, SessionMessage):
@@ -328,8 +329,8 @@ class InstrumentedStreamWriter(ObjectProxy):  # type: ignore
 
     @dont_throw
     async def send(self, item: Any) -> Any:
-        from mcp.types import JSONRPCMessage, JSONRPCRequest
         from mcp.shared.message import SessionMessage
+        from mcp.types import JSONRPCMessage, JSONRPCRequest
 
         if isinstance(item, SessionMessage):
             request = cast(JSONRPCMessage, item.message).root

@@ -9,6 +9,8 @@ from langchain_core.utils.function_calling import (
     convert_pydantic_to_openai_function,
 )
 from langchain_openai import ChatOpenAI
+from pydantic import BaseModel, Field
+
 from opentelemetry.sdk._logs import LogData
 from opentelemetry.semconv._incubating.attributes import (
     event_attributes as EventAttributes,
@@ -17,7 +19,6 @@ from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
 from opentelemetry.semconv_ai import SpanAttributes
-from pydantic import BaseModel, Field
 
 
 @pytest.mark.vcr

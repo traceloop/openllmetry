@@ -6,13 +6,14 @@ import logging
 import os
 import traceback
 
+from pydantic import BaseModel
+
 from opentelemetry import context as context_api
 from opentelemetry._events import EventLogger
 from opentelemetry.instrumentation.langchain.config import Config
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
-from pydantic import BaseModel
 
 TRACELOOP_TRACE_CONTENT = "TRACELOOP_TRACE_CONTENT"
 

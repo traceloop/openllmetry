@@ -2,6 +2,7 @@ from unittest.mock import patch
 
 import httpx
 import pytest
+
 from opentelemetry.sdk._logs import LogData
 from opentelemetry.semconv._incubating.attributes import (
     event_attributes as EventAttributes,
@@ -9,8 +10,8 @@ from opentelemetry.semconv._incubating.attributes import (
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
-from opentelemetry.trace import StatusCode
 from opentelemetry.semconv_ai import SpanAttributes
+from opentelemetry.trace import StatusCode
 
 from .utils import assert_request_contains_tracecontext, spy_decorator
 

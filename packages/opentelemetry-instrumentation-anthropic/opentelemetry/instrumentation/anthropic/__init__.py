@@ -3,8 +3,12 @@
 import logging
 import os
 import time
-from typing import Callable, Collection, Optional
+from collections.abc import Collection, Coroutine
+from typing import Callable, Optional
 
+from wrapt import wrap_function_wrapper
+
+from anthropic._streaming import AsyncStream, Stream
 from opentelemetry import context as context_api
 from opentelemetry._events import EventLogger, get_event_logger
 from opentelemetry.instrumentation.anthropic.config import Config
@@ -42,10 +46,6 @@ from opentelemetry.semconv_ai import (
 )
 from opentelemetry.trace import Span, SpanKind, Tracer, get_tracer
 from opentelemetry.trace.status import Status, StatusCode
-from typing_extensions import Coroutine
-from wrapt import wrap_function_wrapper
-
-from anthropic._streaming import AsyncStream, Stream
 
 logger = logging.getLogger(__name__)
 

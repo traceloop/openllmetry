@@ -1,12 +1,14 @@
-from unittest.mock import patch
 from typing import TypedDict
+from unittest.mock import patch
+
 import pytest
 from langchain.chains import LLMChain
 from langchain.prompts import PromptTemplate
 from langchain_openai import ChatOpenAI
-from opentelemetry.semconv_ai import Meters, SpanAttributes
 from langgraph.graph import StateGraph
 from openai import OpenAI
+
+from opentelemetry.semconv_ai import Meters, SpanAttributes
 
 
 @pytest.fixture

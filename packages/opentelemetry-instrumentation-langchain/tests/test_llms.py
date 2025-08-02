@@ -16,6 +16,8 @@ from langchain_community.utils.openai_functions import (
     convert_pydantic_to_openai_function,
 )
 from langchain_openai import ChatOpenAI, OpenAI
+from pydantic import BaseModel, Field
+
 from opentelemetry.sdk._logs import LogData
 from opentelemetry.sdk.trace import Span
 from opentelemetry.semconv._incubating.attributes import (
@@ -31,7 +33,6 @@ from opentelemetry.trace.propagation import (
 from opentelemetry.trace.propagation.tracecontext import (
     TraceContextTextMapPropagator,
 )
-from pydantic import BaseModel, Field
 
 
 def open_ai_prompt():

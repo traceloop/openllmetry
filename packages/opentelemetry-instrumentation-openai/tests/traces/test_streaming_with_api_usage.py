@@ -1,5 +1,6 @@
 import pytest
 from openai import OpenAI
+
 from opentelemetry.semconv_ai import SpanAttributes
 
 

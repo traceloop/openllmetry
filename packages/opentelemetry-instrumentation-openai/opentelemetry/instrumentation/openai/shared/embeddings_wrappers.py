@@ -2,6 +2,8 @@ import logging
 import time
 from collections.abc import Iterable
 
+from openai._legacy_response import LegacyAPIResponse
+from openai.types.create_embedding_response import CreateEmbeddingResponse
 from opentelemetry import context as context_api
 from opentelemetry.instrumentation.openai.shared import (
     OPENAI_LLM_USAGE_TOKEN_TYPES,
@@ -38,9 +40,6 @@ from opentelemetry.semconv_ai import (
     SpanAttributes,
 )
 from opentelemetry.trace import SpanKind, Status, StatusCode
-
-from openai._legacy_response import LegacyAPIResponse
-from openai.types.create_embedding_response import CreateEmbeddingResponse
 
 SPAN_NAME = "openai.embeddings"
 LLM_REQUEST_TYPE = LLMRequestTypeValues.EMBEDDING

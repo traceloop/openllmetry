@@ -10,7 +10,8 @@ TRACELOOP_TRACE_CONTENT = "TRACELOOP_TRACE_CONTENT"
 
 def dont_throw(func):
     """
-    A decorator that wraps the passed in function and logs exceptions instead of throwing them.
+    A decorator that wraps the passed in function and logs exceptions instead of
+    throwing them.
 
     @param func: The function to wrap
     @return: The wrapper function

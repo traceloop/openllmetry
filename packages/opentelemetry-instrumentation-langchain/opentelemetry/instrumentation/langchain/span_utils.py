@@ -10,6 +10,7 @@ from langchain_core.messages import (
 from langchain_core.outputs import (
     LLMResult,
 )
+
 from opentelemetry.context.context import Context
 from opentelemetry.instrumentation.langchain.utils import (
     CallbackFilteredJSONEncoder,

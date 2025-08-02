@@ -1,19 +1,17 @@
 """OpenTelemetry LanceDB instrumentation"""
 
 import logging
-import lancedb.table
+from collections.abc import Collection
 
-from typing import Collection
-
-from opentelemetry.instrumentation.lancedb.config import Config
-from opentelemetry.trace import get_tracer
 from wrapt import wrap_function_wrapper
 
+import lancedb.table
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
-from opentelemetry.instrumentation.utils import unwrap
-
-from opentelemetry.instrumentation.lancedb.wrapper import _wrap
+from opentelemetry.instrumentation.lancedb.config import Config
 from opentelemetry.instrumentation.lancedb.version import __version__
+from opentelemetry.instrumentation.lancedb.wrapper import _wrap
+from opentelemetry.instrumentation.utils import unwrap
+from opentelemetry.trace import get_tracer
 
 logger = logging.getLogger(__name__)
 

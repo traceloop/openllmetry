@@ -1,5 +1,6 @@
-from opentelemetry.semconv_ai import SpanAttributes
 from enum import Enum
+
+from opentelemetry.semconv_ai import SpanAttributes
 
 
 class Type(Enum):

@@ -4,6 +4,7 @@ import os
 
 import pytest
 from anthropic import Anthropic, AsyncAnthropic
+
 from opentelemetry.instrumentation.anthropic import AnthropicInstrumentor
 from opentelemetry.instrumentation.anthropic.utils import TRACELOOP_TRACE_CONTENT
 from opentelemetry.sdk._events import EventLoggerProvider

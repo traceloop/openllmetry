@@ -1,6 +1,10 @@
 import json
+
 import pytest
+from pydantic import BaseModel
+
 from opentelemetry.sdk._logs import LogData
+from opentelemetry.sdk.trace import Span
 from opentelemetry.semconv._incubating.attributes import (
     event_attributes as EventAttributes,
 )
@@ -8,9 +12,7 @@ from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
 from opentelemetry.semconv_ai import SpanAttributes
-from opentelemetry.sdk.trace import Span
 from opentelemetry.trace import StatusCode
-from pydantic import BaseModel
 
 
 class StructuredAnswer(BaseModel):

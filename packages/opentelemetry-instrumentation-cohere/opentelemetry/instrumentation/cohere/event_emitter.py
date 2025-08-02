@@ -91,18 +91,16 @@ def _emit_message_event(event: MessageEvent, event_logger: EventLogger) -> None:
     body = asdict(event)
 
     if event.role in VALID_MESSAGE_ROLES:
-        name = "gen_ai.{}.message".format(event.role)
-        # According to the semantic conventions, the role is conditionally required if available
-        # and not equal to the "role" in the message name. So, remove the role from the body if
-        # it is the same as the in the event name.
+        name = f"gen_ai.{event.role}.message"
+        # According to the semantic conventions, the role is conditionally required
+        # if available and not equal to the "role" in the message name. So, remove the
+        # role from the body if it is the same as the in the event name.
         body.pop("role", None)
     else:
         name = "gen_ai.user.message"
 
     # According to the semantic conventions, only the assistant role has tool call
-    if event.role != Roles.ASSISTANT.value and event.tool_calls is not None:
-        del body["tool_calls"]
-    elif event.tool_calls is None:
+    if event.role != Roles.ASSISTANT.value or event.tool_calls is None:
         del body["tool_calls"]
 
     if not should_send_prompts():
@@ -117,8 +115,9 @@ def _emit_message_event(event: MessageEvent, event_logger: EventLogger) -> None:
 def _emit_choice_event(event: ChoiceEvent, event_logger: EventLogger) -> None:
     body = asdict(event)
     if event.message["role"] == Roles.ASSISTANT.value:
-        # According to the semantic conventions, the role is conditionally required if available
-        # and not equal to "assistant", so remove the role from the body if it is "assistant".
+        # According to the semantic conventions, the role is conditionally required
+        # if available and not equal to "assistant", so remove the role from the
+        # body if it is "assistant".
         body["message"].pop("role", None)
 
     if event.tool_calls is None:

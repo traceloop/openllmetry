@@ -1,11 +1,11 @@
 """OpenTelemetry Langchain instrumentation"""
 
 import logging
-from typing import Collection
+from collections.abc import Collection
+
+from wrapt import wrap_function_wrapper
 
 from opentelemetry import context as context_api
-
-
 from opentelemetry._events import get_event_logger
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.instrumentation.langchain.callback_handler import (
@@ -16,13 +16,12 @@ from opentelemetry.instrumentation.langchain.utils import is_package_available
 from opentelemetry.instrumentation.langchain.version import __version__
 from opentelemetry.instrumentation.utils import unwrap
 from opentelemetry.metrics import get_meter
-from opentelemetry.semconv_ai import Meters, SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY
+from opentelemetry.semconv_ai import SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY, Meters
 from opentelemetry.trace import get_tracer
 from opentelemetry.trace.propagation import set_span_in_context
 from opentelemetry.trace.propagation.tracecontext import (
     TraceContextTextMapPropagator,
 )
-from wrapt import wrap_function_wrapper
 
 logger = logging.getLogger(__name__)
 

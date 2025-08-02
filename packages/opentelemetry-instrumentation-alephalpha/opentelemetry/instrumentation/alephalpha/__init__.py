@@ -2,7 +2,10 @@
 
 import logging
 import os
-from typing import Collection, List, Optional, Union
+from collections.abc import Collection
+from typing import Optional, Union
+
+from wrapt import wrap_function_wrapper
 
 from opentelemetry import context as context_api
 from opentelemetry._events import EventLogger, get_event_logger
@@ -31,7 +34,6 @@ from opentelemetry.semconv_ai import (
 from opentelemetry.trace import SpanKind, Tracer, get_tracer
 from opentelemetry.trace.span import Span
 from opentelemetry.trace.status import Status, StatusCode
-from wrapt import wrap_function_wrapper
 
 logger = logging.getLogger(__name__)
 
@@ -58,9 +60,8 @@ def should_emit_events():
 
 
 def _set_span_attribute(span, name, value):
-    if value is not None:
-        if value != "":
-            span.set_attribute(name, value)
+    if value is not None and value != "":
+        span.set_attribute(name, value)
     return
 
 
@@ -124,7 +125,7 @@ def _parse_prompt_event(args, kwargs) -> PromptEvent:
     )
 
 
-def _parse_completion_event(response) -> List[CompletionEvent]:
+def _parse_completion_event(response) -> list[CompletionEvent]:
     return CompletionEvent(
         index=0,
         message={

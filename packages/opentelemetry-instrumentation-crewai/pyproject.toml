@@ -46,3 +46,42 @@ instruments = ["crewai"]
 
 [tool.poetry.plugins."opentelemetry_instrumentor"]
 crewai = "opentelemetry.instrumentation.crewai:CrewAIInstrumentor"
+
+[tool.ruff]
+target-version = "py39"
+line-length = 120
+indent-width = 4
+
+[tool.ruff.lint]
+
+select = [
+    "E",      
+    "F",      
+    "B",      
+    "I",      
+    "UP",     
+    "C4",     
+    "SIM",    
+    "RUF",    
+]
+
+
+fixable = [
+    "UP006",
+    "UP035",
+    "F401",   
+    "I",      
+    "UP",     
+    "RUF100", 
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*" = ["S101"]  
+
+[tool.ruff.lint.isort]
+known-first-party = ["opentelemetry"]
+
+[tool.ruff.format]
+
+quote-style = "double"
+docstring-code-format = true

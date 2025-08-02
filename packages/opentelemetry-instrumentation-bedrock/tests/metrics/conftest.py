@@ -2,6 +2,7 @@ import os
 
 import boto3
 import pytest
+
 from opentelemetry import metrics, trace
 from opentelemetry.instrumentation.bedrock import BedrockInstrumentor
 from opentelemetry.sdk.metrics import MeterProvider

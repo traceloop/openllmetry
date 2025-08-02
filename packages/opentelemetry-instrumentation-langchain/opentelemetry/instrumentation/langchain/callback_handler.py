@@ -4,9 +4,9 @@ from typing import Any, Dict, List, Optional, Type, Union
 from uuid import UUID
 
 from langchain_core.callbacks import (
+    AsyncCallbackManager,
     BaseCallbackHandler,
     CallbackManager,
-    AsyncCallbackManager,
 )
 from langchain_core.messages import (
     AIMessage,
@@ -26,6 +26,7 @@ from langchain_core.outputs import (
     GenerationChunk,
     LLMResult,
 )
+
 from opentelemetry import context as context_api
 from opentelemetry.instrumentation.langchain.event_emitter import emit_event
 from opentelemetry.instrumentation.langchain.event_models import (
@@ -43,14 +44,14 @@ from opentelemetry.instrumentation.langchain.span_utils import (
     set_llm_request,
     set_request_params,
 )
-from opentelemetry.instrumentation.langchain.vendor_detection import (
-    detect_vendor_from_class,
-)
 from opentelemetry.instrumentation.langchain.utils import (
     CallbackFilteredJSONEncoder,
     dont_throw,
     should_emit_events,
     should_send_prompts,
+)
+from opentelemetry.instrumentation.langchain.vendor_detection import (
+    detect_vendor_from_class,
 )
 from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
 from opentelemetry.metrics import Histogram

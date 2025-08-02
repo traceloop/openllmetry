@@ -4,6 +4,7 @@ import os
 
 import boto3
 import pytest
+
 from opentelemetry.instrumentation.bedrock import BedrockInstrumentor
 from opentelemetry.instrumentation.bedrock.utils import TRACELOOP_TRACE_CONTENT
 from opentelemetry.sdk._events import EventLoggerProvider

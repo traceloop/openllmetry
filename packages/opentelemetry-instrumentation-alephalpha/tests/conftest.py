@@ -4,6 +4,7 @@ import os
 
 import pytest
 from aleph_alpha_client import Client
+
 from opentelemetry.instrumentation.alephalpha import (
     TRACELOOP_TRACE_CONTENT,
     AlephAlphaInstrumentor,

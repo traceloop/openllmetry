@@ -1,21 +1,19 @@
 import importlib
 import pkgutil
 
-from wrapt import wrap_function_wrapper
+import llama_index.llms
 from inflection import underscore
+from wrapt import wrap_function_wrapper
 
 from opentelemetry import context as context_api
-
-from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
-from opentelemetry.semconv_ai import SpanAttributes, LLMRequestTypeValues
 from opentelemetry.instrumentation.llamaindex.utils import (
     _with_tracer_wrapper,
     dont_throw,
-    start_as_current_span_async,
     should_send_prompts,
+    start_as_current_span_async,
 )
-
-import llama_index.llms
+from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
+from opentelemetry.semconv_ai import LLMRequestTypeValues, SpanAttributes
 
 try:
     from llama_index.core.llms.custom import CustomLLM

@@ -1,13 +1,13 @@
+from collections.abc import Generator
 from threading import Thread
-from typing import Generator
 
 import pytest
+
 from opentelemetry import trace as trace_api
 from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
+from opentelemetry.instrumentation.mcp import McpInstrumentor
 from opentelemetry.sdk import trace as trace_sdk
 from opentelemetry.sdk.trace.export import SimpleSpanProcessor
-
-from opentelemetry.instrumentation.mcp import McpInstrumentor
 from tests.trace_collector import OTLPServer, Telemetry
 
 

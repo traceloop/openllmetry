@@ -4,6 +4,7 @@ import os
 
 import pytest
 from openai import AsyncAzureOpenAI, AsyncOpenAI, AzureOpenAI, OpenAI
+
 from opentelemetry._events import get_event_logger
 from opentelemetry.instrumentation.openai import OpenAIInstrumentor
 from opentelemetry.instrumentation.openai.shared.config import Config

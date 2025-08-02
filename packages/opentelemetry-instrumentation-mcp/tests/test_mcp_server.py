@@ -1,18 +1,18 @@
-import pytest
 import asyncio
 import subprocess
 import sys
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import AsyncGenerator
 
-from opentelemetry.trace import Tracer
+import pytest
 from mcp import ClientSession
 from mcp.shared.session import RequestResponder
 from mcp.types import ClientResult, ServerNotification, ServerRequest
-from tests.whoami import TestClientResult, TestServerRequest, WhoamiResult
 
+from opentelemetry.trace import Tracer
 from tests.trace_collector import OTLPServer, Telemetry
+from tests.whoami import TestClientResult, TestServerRequest, WhoamiResult
 
 
 @asynccontextmanager

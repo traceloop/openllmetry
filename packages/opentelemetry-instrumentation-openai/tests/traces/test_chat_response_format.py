@@ -1,10 +1,14 @@
-from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
-from openai import AsyncOpenAI, OpenAI
-from openai.types.shared_params.response_format_json_schema import ResponseFormatJSONSchema, JSONSchema
-
 import json
-import pytest
+
 import pydantic
+import pytest
+from openai import AsyncOpenAI, OpenAI
+from openai.types.shared_params.response_format_json_schema import (
+    JSONSchema,
+    ResponseFormatJSONSchema,
+)
+
+from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
 
 
 class Joke(pydantic.BaseModel):

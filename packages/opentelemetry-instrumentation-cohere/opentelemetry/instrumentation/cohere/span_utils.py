@@ -13,9 +13,8 @@ from opentelemetry.trace.status import Status, StatusCode
 
 
 def _set_span_attribute(span, name, value):
-    if value is not None:
-        if value != "":
-            span.set_attribute(name, value)
+    if value is not None and value != "":
+        span.set_attribute(name, value)
     return
 
 
@@ -139,10 +138,7 @@ def _set_span_chat_response(span, response):
 
 def _set_span_generations_response(span, response):
     _set_span_attribute(span, GEN_AI_RESPONSE_ID, response.id)
-    if hasattr(response, "generations"):
-        generations = response.generations  # Cohere v5
-    else:
-        generations = response  # Cohere v4
+    generations = response.generations if hasattr(response, "generations") else response
 
     for index, generation in enumerate(generations):
         prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{index}"

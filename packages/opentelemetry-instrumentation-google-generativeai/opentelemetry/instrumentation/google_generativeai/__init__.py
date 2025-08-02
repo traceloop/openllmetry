@@ -2,9 +2,11 @@
 
 import logging
 import types
-from typing import Collection
+from collections.abc import Collection
 
 from google.generativeai.types.generation_types import GenerateContentResponse
+from wrapt import wrap_function_wrapper
+
 from opentelemetry import context as context_api
 from opentelemetry._events import get_event_logger
 from opentelemetry.instrumentation.google_generativeai.config import Config
@@ -32,7 +34,6 @@ from opentelemetry.semconv_ai import (
     SpanAttributes,
 )
 from opentelemetry.trace import SpanKind, get_tracer
-from wrapt import wrap_function_wrapper
 
 logger = logging.getLogger(__name__)
 

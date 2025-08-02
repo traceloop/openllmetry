@@ -1,14 +1,14 @@
-from opentelemetry.instrumentation.chromadb.utils import dont_throw
-from opentelemetry.semconv.trace import SpanAttributes
+import itertools
+import json
 
 from opentelemetry import context as context_api
+from opentelemetry.instrumentation.chromadb.utils import dont_throw
 from opentelemetry.instrumentation.utils import (
     _SUPPRESS_INSTRUMENTATION_KEY,
 )
+from opentelemetry.semconv.trace import SpanAttributes
 from opentelemetry.semconv_ai import EventAttributes, Events
 from opentelemetry.semconv_ai import SpanAttributes as AISpanAttributes
-import itertools
-import json
 
 
 def _with_tracer_wrapper(func):

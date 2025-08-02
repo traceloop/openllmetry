@@ -1,7 +1,9 @@
-import pytest
-from openai import OpenAI
 from typing import TypedDict
+
+import pytest
 from langgraph.graph import StateGraph
+from openai import OpenAI
+
 from opentelemetry import trace
 from opentelemetry.semconv_ai import SpanAttributes
 from opentelemetry.trace import INVALID_SPAN

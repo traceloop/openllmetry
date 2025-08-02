@@ -1,8 +1,8 @@
 """OpenTelemetry LlamaIndex instrumentation"""
 
 import logging
+from collections.abc import Collection
 from importlib.metadata import version as import_version
-from typing import Collection
 
 from opentelemetry._events import get_event_logger
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor

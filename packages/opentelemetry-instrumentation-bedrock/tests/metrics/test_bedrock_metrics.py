@@ -1,6 +1,7 @@
 import json
 
 import pytest
+
 from opentelemetry.semconv_ai import Meters, SpanAttributes
 
 

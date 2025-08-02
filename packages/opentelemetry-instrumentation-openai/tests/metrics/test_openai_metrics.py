@@ -1,8 +1,9 @@
 import pytest
 from openai import OpenAI
+from pydantic import BaseModel
+
 from opentelemetry.semconv._incubating.metrics import gen_ai_metrics as GenAIMetrics
 from opentelemetry.semconv_ai import Meters, SpanAttributes
-from pydantic import BaseModel
 
 
 @pytest.fixture

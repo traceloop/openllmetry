@@ -1,15 +1,17 @@
 import os
 import time
-from typing import Collection
+from collections.abc import Collection
 
 from wrapt import wrap_function_wrapper
-from opentelemetry.trace import SpanKind, get_tracer, Tracer
-from opentelemetry.trace.status import Status, StatusCode
-from opentelemetry.metrics import Histogram, Meter, get_meter
-from opentelemetry.instrumentation.utils import unwrap
-from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
+
 from opentelemetry.instrumentation.crewai.version import __version__
-from opentelemetry.semconv_ai import SpanAttributes, TraceloopSpanKindValues, Meters
+from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
+from opentelemetry.instrumentation.utils import unwrap
+from opentelemetry.metrics import Histogram, Meter, get_meter
+from opentelemetry.semconv_ai import Meters, SpanAttributes, TraceloopSpanKindValues
+from opentelemetry.trace import SpanKind, Tracer, get_tracer
+from opentelemetry.trace.status import Status, StatusCode
+
 from .crewai_span_attributes import CrewAISpanAttributes, set_span_attribute
 
 _instruments = ("crewai >= 0.70.0",)

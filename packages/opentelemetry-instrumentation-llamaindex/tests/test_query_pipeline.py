@@ -10,6 +10,7 @@ from llama_index.core.query_pipeline import QueryPipeline
 from llama_index.core.response_synthesizers import TreeSummarize
 from llama_index.llms.openai import OpenAI
 from llama_index.postprocessor.cohere_rerank import CohereRerank
+
 from opentelemetry.semconv_ai import SpanAttributes
 
 

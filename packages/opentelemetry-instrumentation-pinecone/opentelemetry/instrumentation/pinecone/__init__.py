@@ -2,33 +2,34 @@
 
 import logging
 import time
-import pinecone
-from typing import Collection
+from collections.abc import Collection
+
 from wrapt import wrap_function_wrapper
 
+import pinecone
 from opentelemetry import context as context_api
-from opentelemetry.metrics import get_meter
-from opentelemetry.trace import get_tracer, SpanKind
-from opentelemetry.trace.status import Status, StatusCode
-
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
-from opentelemetry.instrumentation.utils import (
-    _SUPPRESS_INSTRUMENTATION_KEY,
-    unwrap,
-)
 from opentelemetry.instrumentation.pinecone.config import Config
+from opentelemetry.instrumentation.pinecone.query_handlers import (
+    set_query_input_attributes,
+    set_query_response,
+)
 from opentelemetry.instrumentation.pinecone.utils import (
     dont_throw,
     is_metrics_enabled,
     set_span_attribute,
 )
 from opentelemetry.instrumentation.pinecone.version import __version__
-from opentelemetry.instrumentation.pinecone.query_handlers import (
-    set_query_input_attributes,
-    set_query_response,
+from opentelemetry.instrumentation.utils import (
+    _SUPPRESS_INSTRUMENTATION_KEY,
+    unwrap,
 )
+from opentelemetry.metrics import get_meter
 from opentelemetry.semconv.trace import SpanAttributes
-from opentelemetry.semconv_ai import Meters, SpanAttributes as AISpanAttributes
+from opentelemetry.semconv_ai import Meters
+from opentelemetry.semconv_ai import SpanAttributes as AISpanAttributes
+from opentelemetry.trace import SpanKind, get_tracer
+from opentelemetry.trace.status import Status, StatusCode
 
 logger = logging.getLogger(__name__)
 

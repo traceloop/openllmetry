@@ -1,19 +1,17 @@
 """OpenTelemetry Marqo instrumentation"""
 
 import logging
-import marqo.index
+from collections.abc import Collection
 
-from typing import Collection
-
-from opentelemetry.instrumentation.marqo.config import Config
-from opentelemetry.trace import get_tracer
 from wrapt import wrap_function_wrapper
 
+import marqo.index
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
-from opentelemetry.instrumentation.utils import unwrap
-
-from opentelemetry.instrumentation.marqo.wrapper import _wrap
+from opentelemetry.instrumentation.marqo.config import Config
 from opentelemetry.instrumentation.marqo.version import __version__
+from opentelemetry.instrumentation.marqo.wrapper import _wrap
+from opentelemetry.instrumentation.utils import unwrap
+from opentelemetry.trace import get_tracer
 
 logger = logging.getLogger(__name__)
 

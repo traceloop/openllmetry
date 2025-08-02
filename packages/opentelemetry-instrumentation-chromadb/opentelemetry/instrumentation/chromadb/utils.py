@@ -1,5 +1,6 @@
 import logging
 import traceback
+
 from opentelemetry.instrumentation.chromadb.config import Config
 
 

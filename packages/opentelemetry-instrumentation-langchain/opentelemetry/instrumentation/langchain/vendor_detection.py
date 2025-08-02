@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Set, List
+from typing import List, Set
 
 
 @dataclass(frozen=True)

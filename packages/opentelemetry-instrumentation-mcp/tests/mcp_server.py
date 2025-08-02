@@ -1,8 +1,10 @@
 import os
 from typing import Literal, cast
-from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
-from traceloop.sdk import Traceloop
+
 from mcp.server.fastmcp import Context, FastMCP
+from traceloop.sdk import Traceloop
+
+from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
 from tests.whoami import TestClientResult, WhoamiRequest
 
 transport = cast(

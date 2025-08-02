@@ -1,4 +1,5 @@
-from importlib.metadata import version as package_version, PackageNotFoundError
+from importlib.metadata import PackageNotFoundError
+from importlib.metadata import version as package_version
 
 from wrapt import wrap_function_wrapper
 

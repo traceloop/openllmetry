@@ -2,6 +2,7 @@ from dataclasses import asdict
 from enum import Enum
 from typing import Union
 
+from groq.types.chat.chat_completion import ChatCompletion
 from opentelemetry._events import Event, EventLogger
 from opentelemetry.instrumentation.groq.event_models import ChoiceEvent, MessageEvent
 from opentelemetry.instrumentation.groq.utils import (
@@ -12,8 +13,6 @@ from opentelemetry.instrumentation.groq.utils import (
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
-
-from groq.types.chat.chat_completion import ChatCompletion
 
 
 class Roles(Enum):
@@ -99,7 +98,7 @@ def _emit_message_event(event: MessageEvent, event_logger: EventLogger) -> None:
     body = asdict(event)
 
     if event.role in VALID_MESSAGE_ROLES:
-        name = "gen_ai.{}.message".format(event.role)
+        name = f"gen_ai.{event.role}.message"
         # According to the semantic conventions, the role is conditionally required if available
         # and not equal to the "role" in the message name. So, remove the role from the body if
         # it is the same as the in the event name.
@@ -108,9 +107,7 @@ def _emit_message_event(event: MessageEvent, event_logger: EventLogger) -> None:
         name = "gen_ai.user.message"
 
     # According to the semantic conventions, only the assistant role has tool call
-    if event.role != Roles.ASSISTANT.value and event.tool_calls is not None:
-        del body["tool_calls"]
-    elif event.tool_calls is None:
+    if event.role != Roles.ASSISTANT.value or event.tool_calls is None:
         del body["tool_calls"]
 
     if not should_send_prompts():

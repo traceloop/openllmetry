@@ -6,11 +6,10 @@ import traceback
 from contextlib import asynccontextmanager
 from importlib.metadata import version
 
+import openai
 from opentelemetry import context as context_api
 from opentelemetry._events import EventLogger
 from opentelemetry.instrumentation.openai.shared.config import Config
-
-import openai
 
 _OPENAI_VERSION = version("openai")
 

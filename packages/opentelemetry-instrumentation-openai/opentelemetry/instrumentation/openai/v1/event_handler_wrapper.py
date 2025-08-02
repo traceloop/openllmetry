@@ -1,3 +1,6 @@
+from typing_extensions import override
+
+from openai import AssistantEventHandler
 from opentelemetry.instrumentation.openai.shared import _set_span_attribute
 from opentelemetry.instrumentation.openai.shared.event_emitter import emit_event
 from opentelemetry.instrumentation.openai.shared.event_models import ChoiceEvent
@@ -5,9 +8,6 @@ from opentelemetry.instrumentation.openai.utils import should_emit_events
 from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
 from opentelemetry.semconv_ai import SpanAttributes
 from opentelemetry.trace import Status, StatusCode
-from typing_extensions import override
-
-from openai import AssistantEventHandler
 
 
 class EventHandleWrapper(AssistantEventHandler):

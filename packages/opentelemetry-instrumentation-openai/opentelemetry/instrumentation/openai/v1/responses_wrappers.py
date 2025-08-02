@@ -1,7 +1,8 @@
 import json
-import pydantic
 import re
 import time
+
+import pydantic
 
 from openai import AsyncStream, Stream
 
@@ -35,35 +36,35 @@ except ImportError:
     ResponseOutputMessageParam = Dict[str, Any]
     RESPONSES_AVAILABLE = False
 
-from openai._legacy_response import LegacyAPIResponse
-from opentelemetry import context as context_api
-from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
-from opentelemetry.semconv_ai import SpanAttributes
-from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
-from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
-    GEN_AI_COMPLETION,
-    GEN_AI_PROMPT,
-    GEN_AI_USAGE_INPUT_TOKENS,
-    GEN_AI_USAGE_OUTPUT_TOKENS,
-    GEN_AI_RESPONSE_ID,
-    GEN_AI_REQUEST_MODEL,
-    GEN_AI_RESPONSE_MODEL,
-    GEN_AI_SYSTEM,
-)
-from opentelemetry.trace import SpanKind, Span, StatusCode, Tracer
 from typing import Any, Optional, Union
+
 from typing_extensions import NotRequired
 
+from openai._legacy_response import LegacyAPIResponse
+from opentelemetry import context as context_api
 from opentelemetry.instrumentation.openai.shared import (
     _set_span_attribute,
     model_as_dict,
 )
-
 from opentelemetry.instrumentation.openai.utils import (
     _with_tracer_wrapper,
     dont_throw,
     should_send_prompts,
 )
+from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
+from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
+    GEN_AI_COMPLETION,
+    GEN_AI_PROMPT,
+    GEN_AI_REQUEST_MODEL,
+    GEN_AI_RESPONSE_ID,
+    GEN_AI_RESPONSE_MODEL,
+    GEN_AI_SYSTEM,
+    GEN_AI_USAGE_INPUT_TOKENS,
+    GEN_AI_USAGE_OUTPUT_TOKENS,
+)
+from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
+from opentelemetry.semconv_ai import SpanAttributes
+from opentelemetry.trace import Span, SpanKind, StatusCode, Tracer
 
 SPAN_NAME = "openai.response"
 

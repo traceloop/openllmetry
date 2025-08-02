@@ -6,6 +6,10 @@ import time
 from functools import singledispatch
 from typing import List, Optional, Union
 
+from wrapt import ObjectProxy
+
+from openai.types.chat import ChatCompletionMessageToolCall
+from openai.types.chat.chat_completion_message import FunctionCall
 from opentelemetry import context as context_api
 from opentelemetry.instrumentation.openai.shared import (
     OPENAI_LLM_USAGE_TOKEN_TYPES,
@@ -48,10 +52,6 @@ from opentelemetry.semconv_ai import (
 )
 from opentelemetry.trace import SpanKind, Tracer
 from opentelemetry.trace.status import Status, StatusCode
-from wrapt import ObjectProxy
-
-from openai.types.chat import ChatCompletionMessageToolCall
-from openai.types.chat.chat_completion_message import FunctionCall
 
 SPAN_NAME = "openai.chat"
 PROMPT_FILTER_KEY = "prompt_filter_results"
