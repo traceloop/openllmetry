@@ -221,7 +221,7 @@ def test_custom_llm_with_events_with_no_content(
     )
 
     chain = prompt | model
-    response = chain.invoke({"input": "tell me a short joke"})
+    chain.invoke({"input": "tell me a short joke"})
 
     spans = span_exporter.get_finished_spans()
 
