@@ -40,15 +40,18 @@ def _process_response_item(item, complete_response):
             complete_response["events"].append(
                 {"index": index, "text": "", "type": item.content_block.type}
             )
-    elif item.type == "content_block_delta" and item.delta.type in [
-        "thinking_delta",
-        "text_delta",
-    ]:
+            if item.content_block.type == "tool_use":
+                complete_response["events"][index]["id"] = item.content_block.id
+                complete_response["events"][index]["name"] = item.content_block.name
+                complete_response["events"][index]["input"] = """"""
+    elif item.type == "content_block_delta":
         index = item.index
         if item.delta.type == "thinking_delta":
             complete_response["events"][index]["text"] += item.delta.thinking
         elif item.delta.type == "text_delta":
             complete_response["events"][index]["text"] += item.delta.text
+        elif item.delta.type == "input_json_delta":
+            complete_response["events"][index]["input"] += item.delta.partial_json
     elif item.type == "message_delta":
         for event in complete_response.get("events", []):
             event["finish_reason"] = item.delta.stop_reason
