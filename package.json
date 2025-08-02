@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
-    "prepare": "husky",
+    "prepare": "husky install",
     "lint": "nx run-many --target=lint",
     "lint:fix": "nx run-many --target=lint:fix"
   },
