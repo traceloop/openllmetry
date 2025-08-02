@@ -25,7 +25,9 @@
     },
     "build": {
       "executor": "@nxlv/python:build",
-      "outputs": ["{projectRoot}/dist"],
+      "outputs": [
+        "{projectRoot}/dist"
+      ],
       "options": {
         "outputPath": "packages/opentelemetry-instrumentation-weaviate/dist",
         "publish": false,
@@ -43,15 +45,7 @@
         "debug": false
       }
     },
-    "lint": {
-      "executor": "@nxlv/python:flake8",
-      "outputs": [
-        "{workspaceRoot}/reports/packages/opentelemetry-instrumentation-weaviate/pylint.txt"
-      ],
-      "options": {
-        "outputFile": "reports/packages/opentelemetry-instrumentation-weaviate/pylint.txt"
-      }
-    },
+    "lint": {},
     "test": {
       "executor": "@nxlv/python:run-commands",
       "outputs": [
@@ -72,8 +66,14 @@
         ],
         "cwd": "packages/opentelemetry-instrumentation-weaviate"
       },
-      "dependsOn": ["^build-release"]
-    }
+      "dependsOn": [
+        "^build-release"
+      ]
+    },
+    "lint:fix": {},
+    "lint": {}
   },
-  "tags": ["instrumentation"]
+  "tags": [
+    "instrumentation"
+  ]
 }

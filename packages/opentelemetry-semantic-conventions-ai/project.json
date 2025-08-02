@@ -25,7 +25,9 @@
     },
     "build": {
       "executor": "@nxlv/python:build",
-      "outputs": ["{projectRoot}/dist"],
+      "outputs": [
+        "{projectRoot}/dist"
+      ],
       "options": {
         "outputPath": "packages/opentelemetry-semantic-conventions-ai/dist",
         "publish": false,
@@ -43,15 +45,7 @@
         "debug": false
       }
     },
-    "lint": {
-      "executor": "@nxlv/python:flake8",
-      "outputs": [
-        "{workspaceRoot}/reports/packages/opentelemetry-semantic-conventions-ai/pylint.txt"
-      ],
-      "options": {
-        "outputFile": "reports/packages/opentelemetry-semantic-conventions-ai/pylint.txt"
-      }
-    },
+    "lint": {},
     "test": {
       "executor": "@nxlv/python:run-commands",
       "outputs": [
@@ -62,7 +56,8 @@
         "command": "poetry run pytest tests/",
         "cwd": "packages/opentelemetry-semantic-conventions-ai"
       }
-    }
+    },
+    "lint:fix": {}
   },
   "tags": []
 }
