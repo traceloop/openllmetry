@@ -43,13 +43,6 @@ def test_agents(instrument_legacy, span_exporter, log_exporter):
         "ToolsAgentOutputParser.task",
         "RunnableSequence.task",
         "tavily_search_results_json.tool",
-        "RunnableLambda.task",
-        "RunnableParallel<agent_scratchpad>.task",
-        "RunnableAssign<agent_scratchpad>.task",
-        "ChatPromptTemplate.task",
-        "ChatOpenAI.chat",
-        "ToolsAgentOutputParser.task",
-        "RunnableSequence.task",
         "AgentExecutor.workflow",
     }
 
@@ -90,13 +83,6 @@ def test_agents_with_events_with_content(
         "ToolsAgentOutputParser.task",
         "RunnableSequence.task",
         "tavily_search_results_json.tool",
-        "RunnableLambda.task",
-        "RunnableParallel<agent_scratchpad>.task",
-        "RunnableAssign<agent_scratchpad>.task",
-        "ChatPromptTemplate.task",
-        "ChatOpenAI.chat",
-        "ToolsAgentOutputParser.task",
-        "RunnableSequence.task",
         "AgentExecutor.workflow",
     }
 
@@ -187,13 +173,6 @@ def test_agents_with_events_with_no_content(
         "ToolsAgentOutputParser.task",
         "RunnableSequence.task",
         "tavily_search_results_json.tool",
-        "RunnableLambda.task",
-        "RunnableParallel<agent_scratchpad>.task",
-        "RunnableAssign<agent_scratchpad>.task",
-        "ChatPromptTemplate.task",
-        "ChatOpenAI.chat",
-        "ToolsAgentOutputParser.task",
-        "RunnableSequence.task",
         "AgentExecutor.workflow",
     }
 

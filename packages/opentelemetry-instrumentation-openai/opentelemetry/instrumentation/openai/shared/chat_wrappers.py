@@ -4,7 +4,7 @@ import logging
 import threading
 import time
 from functools import singledispatch
-from typing import List, Optional, Union
+from typing import Optional, Union
 
 from wrapt import ObjectProxy
 
@@ -294,10 +294,7 @@ def _handle_response(
     duration=None,
     is_streaming: bool = False,
 ):
-    if is_openai_v1():
-        response_dict = model_as_dict(response)
-    else:
-        response_dict = response
+    response_dict = model_as_dict(response) if is_openai_v1() else response
 
     # metrics record
     _set_chat_metrics(
@@ -383,10 +380,7 @@ def _is_base64_image(item):
     if not isinstance(item.get("image_url"), dict):
         return False
 
-    if "data:image/" not in item.get("image_url", {}).get("url", ""):
-        return False
-
-    return True
+    return "data:image/" in item.get("image_url", {}).get("url", "")
 
 
 async def _process_image_item(item, trace_id, span_id, message_index, content_index):
@@ -869,10 +863,7 @@ def _build_from_streaming_response(
         )
 
     # duration metrics
-    if start_time and isinstance(start_time, (float, int)):
-        duration = time.time() - start_time
-    else:
-        duration = None
+    duration = time.time() - start_time if start_time and isinstance(start_time, (float, int)) else None
     if duration and isinstance(duration, (float, int)) and duration_histogram:
         duration_histogram.record(duration, attributes=shared_attributes)
     if streaming_time_to_generate and time_of_first_token:
@@ -940,10 +931,7 @@ async def _abuild_from_streaming_response(
         )
 
     # duration metrics
-    if start_time and isinstance(start_time, (float, int)):
-        duration = time.time() - start_time
-    else:
-        duration = None
+    duration = time.time() - start_time if start_time and isinstance(start_time, (float, int)) else None
     if duration and isinstance(duration, (float, int)) and duration_histogram:
         duration_histogram.record(duration, attributes=shared_attributes)
     if streaming_time_to_generate and time_of_first_token:
@@ -962,8 +950,8 @@ async def _abuild_from_streaming_response(
 
 
 def _parse_tool_calls(
-    tool_calls: Optional[List[Union[dict, ChatCompletionMessageToolCall]]],
-) -> Union[List[ToolCall], None]:
+    tool_calls: Optional[list[Union[dict, ChatCompletionMessageToolCall]]],
+) -> Union[list[ToolCall], None]:
     """
     Util to correctly parse the tool calls data from the OpenAI API to this module's
     standard `ToolCall`.
@@ -1008,7 +996,7 @@ def _parse_choice_event(choice) -> ChoiceEvent:
     finish_reason = choice.finish_reason if has_finish_reason else "unknown"
 
     if has_tool_calls and has_function_call:
-        tool_calls = choice.message.tool_calls + [choice.message.function_call]
+        tool_calls = [*choice.message.tool_calls, choice.message.function_call]
     elif has_tool_calls:
         tool_calls = choice.message.tool_calls
     elif has_function_call:
@@ -1038,7 +1026,7 @@ def _(choice: dict) -> ChoiceEvent:
         "finish_reason") if has_finish_reason else "unknown"
 
     if has_tool_calls and has_function_call:
-        tool_calls = message.get("tool_calls") + [message.get("function_call")]
+        tool_calls = [*message.get("tool_calls"), message.get("function_call")]
     elif has_tool_calls:
         tool_calls = message.get("tool_calls")
     elif has_function_call:

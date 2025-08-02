@@ -590,9 +590,9 @@ def test_chat_streaming(instrument_legacy, span_exporter, log_exporter, mock_ope
         stream=True,
     )
 
-    chunk_count = 0
+    # Consume the stream
     for _ in response:
-        chunk_count += 1
+        pass
 
     spans = span_exporter.get_finished_spans()
 
@@ -649,9 +649,8 @@ def test_chat_streaming_with_events_with_content(
         stream=True,
     )
 
-    chunk_count = 0
-    for _ in response:
-        chunk_count += 1
+    # Count chunks while consuming the stream
+    chunk_count = sum(1 for _ in response)
 
     spans = span_exporter.get_finished_spans()
 
@@ -720,9 +719,8 @@ def test_chat_streaming_with_events_with_no_content(
         stream=True,
     )
 
-    chunk_count = 0
-    for _ in response:
-        chunk_count += 1
+    # Count chunks while consuming the stream
+    chunk_count = sum(1 for _ in response)
 
     spans = span_exporter.get_finished_spans()
 
@@ -1726,7 +1724,7 @@ def test_chat_streaming_exception_during_consumption(instrument_legacy, span_exp
     # Simulate exception during consumption
     count = 0
     try:
-        for chunk in response:
+        for _chunk in response:
             count += 1
             if count == 2:  # Interrupt after second chunk
                 raise Exception("Simulated interruption")

@@ -53,13 +53,13 @@ def test_sequential_chain(instrument_legacy, span_exporter, log_exporter):
 
     spans = span_exporter.get_finished_spans()
 
-    assert [
+    assert [span.name for span in spans] == [
         "OpenAI.completion",
         "synopsis.task",
         "OpenAI.completion",
         "LLMChain.task",
         "SequentialChain.workflow",
-    ] == [span.name for span in spans]
+    ]
 
     workflow_span = next(
         span for span in spans if span.name == "SequentialChain.workflow"
@@ -177,13 +177,13 @@ def test_sequential_chain_with_events_with_content(
 
     spans = span_exporter.get_finished_spans()
 
-    assert [
+    assert [span.name for span in spans] == [
         "OpenAI.completion",
         "synopsis.task",
         "OpenAI.completion",
         "LLMChain.task",
         "SequentialChain.workflow",
-    ] == [span.name for span in spans]
+    ]
 
     workflow_span = next(
         span for span in spans if span.name == "SequentialChain.workflow"
@@ -298,13 +298,13 @@ def test_sequential_chain_with_events_with_no_content(
 
     spans = span_exporter.get_finished_spans()
 
-    assert [
+    assert [span.name for span in spans] == [
         "OpenAI.completion",
         "synopsis.task",
         "OpenAI.completion",
         "LLMChain.task",
         "SequentialChain.workflow",
-    ] == [span.name for span in spans]
+    ]
 
     workflow_span = next(
         span for span in spans if span.name == "SequentialChain.workflow"
@@ -398,13 +398,13 @@ async def test_asequential_chain(instrument_legacy, span_exporter, log_exporter)
 
     spans = span_exporter.get_finished_spans()
 
-    assert [
+    assert [span.name for span in spans] == [
         "OpenAI.completion",
         "LLMChain.task",
         "OpenAI.completion",
         "LLMChain.task",
         "SequentialChain.workflow",
-    ] == [span.name for span in spans]
+    ]
 
     synopsis_span, review_span = [
         span for span in spans if span.name == "LLMChain.task"
@@ -486,13 +486,13 @@ async def test_asequential_chain_with_events_with_content(
 
     spans = span_exporter.get_finished_spans()
 
-    assert [
+    assert [span.name for span in spans] == [
         "OpenAI.completion",
         "LLMChain.task",
         "OpenAI.completion",
         "LLMChain.task",
         "SequentialChain.workflow",
-    ] == [span.name for span in spans]
+    ]
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 4
@@ -571,13 +571,13 @@ async def test_asequential_chain_with_events_with_no_content(
 
     spans = span_exporter.get_finished_spans()
 
-    assert [
+    assert [span.name for span in spans] == [
         "OpenAI.completion",
         "LLMChain.task",
         "OpenAI.completion",
         "LLMChain.task",
         "SequentialChain.workflow",
-    ] == [span.name for span in spans]
+    ]
 
     synopsis_span, review_span = [
         span for span in spans if span.name == "LLMChain.task"

@@ -22,10 +22,9 @@ EVENT_ATTRIBUTES = {GenAIAttributes.GEN_AI_SYSTEM: "langchain"}
 
 class CallbackFilteredJSONEncoder(json.JSONEncoder):
     def default(self, o):
-        if isinstance(o, dict):
-            if "callbacks" in o:
-                del o["callbacks"]
-                return o
+        if isinstance(o, dict) and "callbacks" in o:
+            del o["callbacks"]
+            return o
 
         if dataclasses.is_dataclass(o):
             return dataclasses.asdict(o)

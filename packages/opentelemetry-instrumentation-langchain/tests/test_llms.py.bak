@@ -62,7 +62,7 @@ A trace represents the complete journey of a request across services.
 A span is a single operation within that journey (e.g., a database call, an HTTP request). Each span includes metadata like name, duration, parent-child relationships, and attributes.
 OpenTelemetry uses the W3C Trace Context standard to propagate context across service boundaries, enabling distributed tracing.
 2. Metrics
-Metrics capture numerical data about a system's behavior, often for performance monitoring. OpenTelemetry supports:
+Metrics capture numerical data about a system’s behavior, often for performance monitoring. OpenTelemetry supports:
 Counters: for counting occurrences of events.
 Gauges: for measuring values at a point in time.
 Histograms: for measuring distributions of values (e.g., request durations).
@@ -106,14 +106,14 @@ Better System Understanding: Correlate logs, traces, and metrics to resolve inci
 Cost Optimization: Fine-grained control over data volume and sampling.
 Compliance and Security: Centralized control over telemetry pipelines.
 Future Directions
-OpenTelemetry's roadmap includes:
+OpenTelemetry’s roadmap includes:
 Improved support for logs, including unified correlation with traces and metrics.
 Better semantic conventions and user-defined schemas.
 AI/ML for telemetry enrichment, anomaly detection, and intelligent sampling.
 Context-aware observability through automatic context propagation in async/streaming environments.
 Profiling signals integration in the long-term future.
 Conclusion
-OpenTelemetry is not just a tool or a library—it's a movement toward a better way to understand and manage modern software systems. With deep community support, growing enterprise adoption, and a commitment to open standards, it is poised to be the foundation for observability for the next decade.
+OpenTelemetry is not just a tool or a library—it’s a movement toward a better way to understand and manage modern software systems. With deep community support, growing enterprise adoption, and a commitment to open standards, it is poised to be the foundation for observability for the next decade.
 Whether you are building a single microservice or running a complex mesh of applications across hybrid clouds, OpenTelemetry offers the instrumentation, tools, and ecosystem needed to bring clarity to your system's behavior—without the downsides of proprietary lock-in or fragmented tooling.
     """
 

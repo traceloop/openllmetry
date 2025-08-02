@@ -635,9 +635,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
     def get_entity_path(self, parent_run_id: str):
         parent_span = self.get_parent_span(parent_run_id)
 
-        if parent_span is None:
-            return ""
-        elif (
+        if parent_span is None or (
             parent_span.entity_path == ""
             and parent_span.entity_name == parent_span.workflow_name
         ):

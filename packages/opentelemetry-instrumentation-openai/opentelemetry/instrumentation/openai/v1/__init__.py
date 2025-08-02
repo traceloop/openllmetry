@@ -1,3 +1,4 @@
+import contextlib
 from collections.abc import Collection
 
 from wrapt import wrap_function_wrapper
@@ -59,10 +60,8 @@ class OpenAIV1Instrumentor(BaseInstrumentor):
             function (str): "Object.function" to wrap, e.g. "Completions.parse"
             wrapper (callable): The wrapper to apply to the function.
         """
-        try:
+        with contextlib.suppress(AttributeError, ModuleNotFoundError):
             wrap_function_wrapper(module, function, wrapper)
-        except (AttributeError, ModuleNotFoundError):
-            pass
 
     def _instrument(self, **kwargs):
         tracer_provider = kwargs.get("tracer_provider")

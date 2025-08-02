@@ -202,10 +202,7 @@ def _handle_response(
     duration_histogram=None,
     duration=None,
 ):
-    if is_openai_v1():
-        response_dict = model_as_dict(response)
-    else:
-        response_dict = response
+    response_dict = model_as_dict(response) if is_openai_v1() else response
     # metrics record
     _set_embeddings_metrics(
         instance,

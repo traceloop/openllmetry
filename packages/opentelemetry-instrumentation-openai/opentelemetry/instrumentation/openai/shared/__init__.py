@@ -1,3 +1,4 @@
+import contextlib
 import json
 import logging
 import types
@@ -174,10 +175,8 @@ def _set_request_attributes(span, kwargs, instance=None):
             try:
                 schema = json.dumps(pydantic.TypeAdapter(response_format).json_schema())
             except Exception:
-                try:
+                with contextlib.suppress(Exception):
                     schema = json.dumps(response_format)
-                except Exception:
-                    pass
 
             if schema:
                 _set_span_attribute(
@@ -331,13 +330,9 @@ def _extract_model_name_from_provider_format(model_name):
 
 def is_streaming_response(response):
     if is_openai_v1():
-        return isinstance(response, openai.Stream) or isinstance(
-            response, openai.AsyncStream
-        )
+        return isinstance(response, (openai.Stream, openai.AsyncStream))
 
-    return isinstance(response, types.GeneratorType) or isinstance(
-        response, types.AsyncGeneratorType
-    )
+    return isinstance(response, (types.GeneratorType, types.AsyncGeneratorType))
 
 
 def model_as_dict(model):

@@ -77,10 +77,7 @@ def runs_create_wrapper(tracer, wrapped, instance, args, kwargs):
 def runs_retrieve_wrapper(tracer, wrapped, instance, args, kwargs):
     @dont_throw
     def process_response(response):
-        if type(response) is LegacyAPIResponse:
-            parsed_response = response.parse()
-        else:
-            parsed_response = response
+        parsed_response = response.parse() if type(response) is LegacyAPIResponse else response
         assert type(parsed_response) is Run
 
         if parsed_response.thread_id in runs:

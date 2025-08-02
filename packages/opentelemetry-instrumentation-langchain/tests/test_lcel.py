@@ -467,12 +467,10 @@ def test_invoke(instrument_legacy, span_exporter, log_exporter):
 
     spans = span_exporter.get_finished_spans()
 
-    assert [
-        "PromptTemplate.task",
+    assert [span.name for span in spans] == ["PromptTemplate.task",
         "ChatOpenAI.chat",
         "StrOutputParser.task",
-        "RunnableSequence.workflow",
-    ] == [span.name for span in spans]
+        "RunnableSequence.workflow",]
 
     logs = log_exporter.get_finished_logs()
     assert (
@@ -497,12 +495,10 @@ def test_invoke_with_events_with_content(
 
     spans = span_exporter.get_finished_spans()
 
-    assert [
-        "PromptTemplate.task",
+    assert [span.name for span in spans] == ["PromptTemplate.task",
         "ChatOpenAI.chat",
         "StrOutputParser.task",
-        "RunnableSequence.workflow",
-    ] == [span.name for span in spans]
+        "RunnableSequence.workflow",]
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2
@@ -541,12 +537,10 @@ def test_invoke_with_events_with_no_content(
 
     spans = span_exporter.get_finished_spans()
 
-    assert [
-        "PromptTemplate.task",
+    assert [span.name for span in spans] == ["PromptTemplate.task",
         "ChatOpenAI.chat",
         "StrOutputParser.task",
-        "RunnableSequence.workflow",
-    ] == [span.name for span in spans]
+        "RunnableSequence.workflow",]
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2
@@ -583,12 +577,10 @@ def test_stream(instrument_legacy, span_exporter, log_exporter):
 
     spans = span_exporter.get_finished_spans()
 
-    assert [
-        "PromptTemplate.task",
+    assert [span.name for span in spans] == ["PromptTemplate.task",
         "ChatOpenAI.chat",
         "StrOutputParser.task",
-        "RunnableSequence.workflow",
-    ] == [span.name for span in spans]
+        "RunnableSequence.workflow",]
 
     logs = log_exporter.get_finished_logs()
     assert (
@@ -616,12 +608,10 @@ def test_stream_with_events_with_content(
 
     spans = span_exporter.get_finished_spans()
 
-    assert [
-        "PromptTemplate.task",
+    assert [span.name for span in spans] == ["PromptTemplate.task",
         "ChatOpenAI.chat",
         "StrOutputParser.task",
-        "RunnableSequence.workflow",
-    ] == [span.name for span in spans]
+        "RunnableSequence.workflow",]
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2
@@ -664,12 +654,10 @@ def test_stream_with_events_with_no_content(
 
     spans = span_exporter.get_finished_spans()
 
-    assert [
-        "PromptTemplate.task",
+    assert [span.name for span in spans] == ["PromptTemplate.task",
         "ChatOpenAI.chat",
         "StrOutputParser.task",
-        "RunnableSequence.workflow",
-    ] == [span.name for span in spans]
+        "RunnableSequence.workflow",]
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2
@@ -703,12 +691,10 @@ async def test_async_invoke(instrument_legacy, span_exporter, log_exporter):
 
     spans = span_exporter.get_finished_spans()
 
-    assert [
-        "PromptTemplate.task",
+    assert [span.name for span in spans] == ["PromptTemplate.task",
         "ChatOpenAI.chat",
         "StrOutputParser.task",
-        "RunnableSequence.workflow",
-    ] == [span.name for span in spans]
+        "RunnableSequence.workflow",]
 
     logs = log_exporter.get_finished_logs()
     assert (
@@ -734,12 +720,10 @@ async def test_async_invoke_with_events_with_content(
 
     spans = span_exporter.get_finished_spans()
 
-    assert [
-        "PromptTemplate.task",
+    assert [span.name for span in spans] == ["PromptTemplate.task",
         "ChatOpenAI.chat",
         "StrOutputParser.task",
-        "RunnableSequence.workflow",
-    ] == [span.name for span in spans]
+        "RunnableSequence.workflow",]
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2
@@ -779,12 +763,10 @@ async def test_async_invoke_with_events_with_no_content(
 
     spans = span_exporter.get_finished_spans()
 
-    assert [
-        "PromptTemplate.task",
+    assert [span.name for span in spans] == ["PromptTemplate.task",
         "ChatOpenAI.chat",
         "StrOutputParser.task",
-        "RunnableSequence.workflow",
-    ] == [span.name for span in spans]
+        "RunnableSequence.workflow",]
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2

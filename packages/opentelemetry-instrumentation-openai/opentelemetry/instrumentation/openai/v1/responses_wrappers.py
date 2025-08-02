@@ -23,17 +23,17 @@ try:
     RESPONSES_AVAILABLE = True
 except ImportError:
     # Fallback types for older OpenAI SDK versions
-    from typing import Any, Dict, List, Union
+    from typing import Any, Union
 
     # Create basic fallback types
-    FunctionToolParam = Dict[str, Any]
+    FunctionToolParam = dict[str, Any]
     Response = Any
-    ResponseInputItemParam = Dict[str, Any]
-    ResponseInputParam = Union[str, List[Dict[str, Any]]]
-    ResponseOutputItem = Dict[str, Any]
-    ResponseUsage = Dict[str, Any]
-    ToolParam = Dict[str, Any]
-    ResponseOutputMessageParam = Dict[str, Any]
+    ResponseInputItemParam = dict[str, Any]
+    ResponseInputParam = Union[str, list[dict[str, Any]]]
+    ResponseOutputItem = dict[str, Any]
+    ResponseUsage = dict[str, Any]
+    ToolParam = dict[str, Any]
+    ResponseOutputMessageParam = dict[str, Any]
     RESPONSES_AVAILABLE = False
 
 from typing import Any, Optional, Union
@@ -438,10 +438,7 @@ def responses_get_or_create_wrapper(tracer: Tracer, wrapped, instance, args, kwa
     parsed_response = parse_response(response)
 
     existing_data = responses.get(parsed_response.id)
-    if existing_data is None:
-        existing_data = {}
-    else:
-        existing_data = existing_data.model_dump()
+    existing_data = {} if existing_data is None else existing_data.model_dump()
 
     request_tools = get_tools_from_kwargs(kwargs)
 
@@ -532,10 +529,7 @@ async def async_responses_get_or_create_wrapper(
     parsed_response = parse_response(response)
 
     existing_data = responses.get(parsed_response.id)
-    if existing_data is None:
-        existing_data = {}
-    else:
-        existing_data = existing_data.model_dump()
+    existing_data = {} if existing_data is None else existing_data.model_dump()
 
     request_tools = get_tools_from_kwargs(kwargs)
 

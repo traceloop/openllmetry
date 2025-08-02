@@ -135,10 +135,7 @@ def _emit_prompts_events(kwargs):
 
 @dont_throw
 def _handle_response(response, span, instance=None):
-    if is_openai_v1():
-        response_dict = model_as_dict(response)
-    else:
-        response_dict = response
+    response_dict = model_as_dict(response) if is_openai_v1() else response
 
     _set_response_attributes(span, response_dict)
     if should_emit_events():

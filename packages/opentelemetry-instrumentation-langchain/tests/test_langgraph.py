@@ -134,21 +134,17 @@ def test_langgraph_double_invoke(instrument_legacy, span_exporter):
     assert trace.get_current_span() == INVALID_SPAN
 
     spans = span_exporter.get_finished_spans()
-    assert [
-        "mynode.task",
-        "LangGraph.workflow",
-    ] == [span.name for span in spans]
+    assert [span.name for span in spans] == ["mynode.task",
+        "LangGraph.workflow",]
 
     graph.invoke({"result": "init"})
     assert trace.get_current_span() == INVALID_SPAN
 
     spans = span_exporter.get_finished_spans()
-    assert [
-        "mynode.task",
+    assert [span.name for span in spans] == ["mynode.task",
         "LangGraph.workflow",
         "mynode.task",
-        "LangGraph.workflow",
-    ] == [span.name for span in spans]
+        "LangGraph.workflow",]
 
 
 @pytest.mark.vcr
@@ -175,18 +171,14 @@ async def test_langgraph_double_ainvoke(instrument_legacy, span_exporter):
     assert trace.get_current_span() == INVALID_SPAN
 
     spans = span_exporter.get_finished_spans()
-    assert [
-        "mynode.task",
-        "LangGraph.workflow",
-    ] == [span.name for span in spans]
+    assert [span.name for span in spans] == ["mynode.task",
+        "LangGraph.workflow",]
 
     await graph.ainvoke({"result": "init"})
     assert trace.get_current_span() == INVALID_SPAN
 
     spans = span_exporter.get_finished_spans()
-    assert [
-        "mynode.task",
+    assert [span.name for span in spans] == ["mynode.task",
         "LangGraph.workflow",
         "mynode.task",
-        "LangGraph.workflow",
-    ] == [span.name for span in spans]
+        "LangGraph.workflow",]

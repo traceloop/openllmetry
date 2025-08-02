@@ -592,7 +592,7 @@ async def test_async_completion_streaming_with_events_with_content(
         "index": 0,
         "finish_reason": "length",
         "message": {
-            "content": " that isn’t about collecting logs\n\nJ) Some of these folks helped bring the",
+            "content": " that isn't about collecting logs\n\nJ) Some of these folks helped bring the",
         },
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
