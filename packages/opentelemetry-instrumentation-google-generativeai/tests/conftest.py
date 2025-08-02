@@ -4,6 +4,7 @@ import os
 
 import google.generativeai as genai
 import pytest
+
 from opentelemetry.instrumentation.google_generativeai import (
     GoogleGenerativeAiInstrumentor,
 )

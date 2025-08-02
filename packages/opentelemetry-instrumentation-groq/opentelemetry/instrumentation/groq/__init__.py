@@ -1,10 +1,15 @@
 """OpenTelemetry Groq instrumentation"""
 
+import contextlib
 import logging
 import os
 import time
-from typing import Callable, Collection, Union
+from collections.abc import Collection
+from typing import Callable, Union
 
+from wrapt import wrap_function_wrapper
+
+from groq._streaming import AsyncStream, Stream
 from opentelemetry import context as context_api
 from opentelemetry._events import EventLogger, get_event_logger
 from opentelemetry.instrumentation.groq.config import Config
@@ -38,9 +43,6 @@ from opentelemetry.semconv_ai import (
 )
 from opentelemetry.trace import SpanKind, Tracer, get_tracer
 from opentelemetry.trace.status import Status, StatusCode
-from wrapt import wrap_function_wrapper
-
-from groq._streaming import AsyncStream, Stream
 
 logger = logging.getLogger(__name__)
 
@@ -66,7 +68,7 @@ WRAPPED_AMETHODS = [
 
 
 def is_streaming_response(response):
-    return isinstance(response, Stream) or isinstance(response, AsyncStream)
+    return isinstance(response, (Stream, AsyncStream))
 
 
 def _with_chat_telemetry_wrapper(func):
@@ -430,7 +432,7 @@ class GroqInstrumentor(BaseInstrumentor):
             wrap_object = wrapped_method.get("object")
             wrap_method = wrapped_method.get("method")
 
-            try:
+            with contextlib.suppress(ModuleNotFoundError):
                 wrap_function_wrapper(
                     wrap_package,
                     f"{wrap_object}.{wrap_method}",
@@ -443,14 +445,12 @@ class GroqInstrumentor(BaseInstrumentor):
                         wrapped_method,
                     ),
                 )
-            except ModuleNotFoundError:
-                pass  # that's ok, we don't want to fail if some methods do not exist
 
         for wrapped_method in WRAPPED_AMETHODS:
             wrap_package = wrapped_method.get("package")
             wrap_object = wrapped_method.get("object")
             wrap_method = wrapped_method.get("method")
-            try:
+            with contextlib.suppress(ModuleNotFoundError):
                 wrap_function_wrapper(
                     wrap_package,
                     f"{wrap_object}.{wrap_method}",
@@ -463,8 +463,6 @@ class GroqInstrumentor(BaseInstrumentor):
                         wrapped_method,
                     ),
                 )
-            except ModuleNotFoundError:
-                pass  # that's ok, we don't want to fail if some methods do not exist
 
     def _uninstrument(self, **kwargs):
         for wrapped_method in WRAPPED_METHODS:

@@ -1,6 +1,10 @@
-import pytest
 from unittest.mock import MagicMock, patch
-from opentelemetry.instrumentation.openai.shared.embeddings_wrappers import _set_embeddings_metrics
+
+import pytest
+
+from opentelemetry.instrumentation.openai.shared.embeddings_wrappers import (
+    _set_embeddings_metrics,
+)
 
 
 @pytest.mark.vcr

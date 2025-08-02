@@ -1,5 +1,25 @@
 {
   "extends": "nx/presets/npm.json",
   "$schema": "./node_modules/nx/schemas/nx-schema.json",
-  "plugins": ["@nxlv/python"]
+  "plugins": ["@nxlv/python"],
+  "targetDefaults": {
+    "lint": {
+      "executor": "@nxlv/python:ruff-check",
+      "options": {
+        "lintFilePatterns": [
+          "."
+        ]
+      }
+    },
+    "lint:fix": {
+      "executor": "@nxlv/python:ruff-check",
+      "options": {
+        "lintFilePatterns": [
+          "."
+        ],
+        "fix": true
+      },
+      "cache": false
+    }
+  }
 }

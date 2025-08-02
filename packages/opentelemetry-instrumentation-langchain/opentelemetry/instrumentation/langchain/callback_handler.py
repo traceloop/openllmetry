@@ -1,12 +1,12 @@
 import json
 import time
-from typing import Any, Dict, List, Optional, Type, Union
+from typing import Any, Optional, Union
 from uuid import UUID
 
 from langchain_core.callbacks import (
+    AsyncCallbackManager,
     BaseCallbackHandler,
     CallbackManager,
-    AsyncCallbackManager,
 )
 from langchain_core.messages import (
     AIMessage,
@@ -26,6 +26,7 @@ from langchain_core.outputs import (
     GenerationChunk,
     LLMResult,
 )
+
 from opentelemetry import context as context_api
 from opentelemetry.instrumentation.langchain.event_emitter import emit_event
 from opentelemetry.instrumentation.langchain.event_models import (
@@ -43,14 +44,14 @@ from opentelemetry.instrumentation.langchain.span_utils import (
     set_llm_request,
     set_request_params,
 )
-from opentelemetry.instrumentation.langchain.vendor_detection import (
-    detect_vendor_from_class,
-)
 from opentelemetry.instrumentation.langchain.utils import (
     CallbackFilteredJSONEncoder,
     dont_throw,
     should_emit_events,
     should_send_prompts,
+)
+from opentelemetry.instrumentation.langchain.vendor_detection import (
+    detect_vendor_from_class,
 )
 from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
 from opentelemetry.metrics import Histogram
@@ -103,7 +104,7 @@ def valid_role(role: str) -> bool:
     return role in ["user", "assistant", "system", "tool"]
 
 
-def get_message_role(message: Type[BaseMessage]) -> str:
+def get_message_role(message: type[BaseMessage]) -> str:
     if isinstance(message, (SystemMessage, SystemMessageChunk)):
         return "system"
     elif isinstance(message, (HumanMessage, HumanMessageChunk)):
@@ -117,8 +118,8 @@ def get_message_role(message: Type[BaseMessage]) -> str:
 
 
 def _extract_tool_call_data(
-    tool_calls: Optional[List[dict[str, Any]]],
-) -> Union[List[ToolCall], None]:
+    tool_calls: Optional[list[dict[str, Any]]],
+) -> Union[list[ToolCall], None]:
     if tool_calls is None:
         return tool_calls
 
@@ -428,8 +429,8 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
     @dont_throw
     def on_llm_start(
         self,
-        serialized: Dict[str, Any],
-        prompts: List[str],
+        serialized: dict[str, Any],
+        prompts: list[str],
         *,
         run_id: UUID,
         tags: Optional[list[str]] = None,
@@ -634,9 +635,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
     def get_entity_path(self, parent_run_id: str):
         parent_span = self.get_parent_span(parent_run_id)
 
-        if parent_span is None:
-            return ""
-        elif (
+        if parent_span is None or (
             parent_span.entity_path == ""
             and parent_span.entity_name == parent_span.workflow_name
         ):

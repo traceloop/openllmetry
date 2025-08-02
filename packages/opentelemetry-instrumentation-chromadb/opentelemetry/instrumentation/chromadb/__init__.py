@@ -1,20 +1,18 @@
 """OpenTelemetry Chroma DB instrumentation"""
 
 import logging
-import chromadb
-import chromadb.api.segment
+from collections.abc import Collection
 
-from typing import Collection
-
-from opentelemetry.instrumentation.chromadb.config import Config
-from opentelemetry.trace import get_tracer
 from wrapt import wrap_function_wrapper
 
+import chromadb
+import chromadb.api.segment
+from opentelemetry.instrumentation.chromadb.config import Config
+from opentelemetry.instrumentation.chromadb.version import __version__
+from opentelemetry.instrumentation.chromadb.wrapper import _wrap
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.instrumentation.utils import unwrap
-
-from opentelemetry.instrumentation.chromadb.wrapper import _wrap
-from opentelemetry.instrumentation.chromadb.version import __version__
+from opentelemetry.trace import get_tracer
 
 logger = logging.getLogger(__name__)
 

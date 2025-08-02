@@ -8,6 +8,8 @@ from llama_index.core.query_engine import NLSQLTableQueryEngine
 from llama_index.core.tools import FunctionTool, QueryEngineTool
 from llama_index.llms.cohere import Cohere
 from llama_index.llms.openai import OpenAI
+from sqlalchemy import Column, Integer, MetaData, String, Table, create_engine, insert
+
 from opentelemetry.sdk._logs import LogData
 from opentelemetry.semconv._incubating.attributes import (
     event_attributes as EventAttributes,
@@ -16,7 +18,6 @@ from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
 from opentelemetry.semconv_ai import SpanAttributes
-from sqlalchemy import Column, Integer, MetaData, String, Table, create_engine, insert
 
 
 def make_sql_table():

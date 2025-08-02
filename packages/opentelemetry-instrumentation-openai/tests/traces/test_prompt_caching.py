@@ -2,6 +2,7 @@ from pathlib import Path
 
 import pytest
 from openai import AsyncOpenAI, OpenAI
+
 from opentelemetry.sdk._logs import LogData
 from opentelemetry.semconv._incubating.attributes import (
     event_attributes as EventAttributes,
@@ -13,7 +14,7 @@ from opentelemetry.semconv._incubating.attributes import (
 
 @pytest.mark.vcr
 def test_openai_prompt_caching(instrument_legacy, span_exporter, log_exporter):
-    with open(Path(__file__).parent.parent.joinpath("data/1024+tokens.txt"), "r") as f:
+    with open(Path(__file__).parent.parent.joinpath("data/1024+tokens.txt")) as f:
         # add the unique test name to the prompt to avoid caching leaking to other tests
         text = (
             "test_openai_prompt_caching <- IGNORE THIS. ARTICLES START ON THE NEXT LINE\n"
@@ -85,7 +86,7 @@ def test_openai_prompt_caching(instrument_legacy, span_exporter, log_exporter):
 def test_openai_prompt_caching_with_events_with_content(
     instrument_with_content, span_exporter, log_exporter
 ):
-    with open(Path(__file__).parent.parent.joinpath("data/1024+tokens.txt"), "r") as f:
+    with open(Path(__file__).parent.parent.joinpath("data/1024+tokens.txt")) as f:
         # add the unique test name to the prompt to avoid caching leaking to other tests
         text = (
             "test_openai_prompt_caching <- IGNORE THIS. ARTICLES START ON THE NEXT LINE\n"
@@ -181,7 +182,7 @@ def test_openai_prompt_caching_with_events_with_content(
 def test_openai_prompt_caching_with_events_with_no_content(
     instrument_with_no_content, span_exporter, log_exporter
 ):
-    with open(Path(__file__).parent.parent.joinpath("data/1024+tokens.txt"), "r") as f:
+    with open(Path(__file__).parent.parent.joinpath("data/1024+tokens.txt")) as f:
         # add the unique test name to the prompt to avoid caching leaking to other tests
         text = (
             "test_openai_prompt_caching <- IGNORE THIS. ARTICLES START ON THE NEXT LINE\n"
@@ -266,7 +267,7 @@ def test_openai_prompt_caching_with_events_with_no_content(
 async def test_openai_prompt_caching_async(
     instrument_legacy, span_exporter, log_exporter
 ):
-    with open(Path(__file__).parent.parent.joinpath("data/1024+tokens.txt"), "r") as f:
+    with open(Path(__file__).parent.parent.joinpath("data/1024+tokens.txt")) as f:
         # add the unique test name to the prompt to avoid caching leaking to other tests
         text = (
             "test_openai_prompt_caching_async <- IGNORE THIS. ARTICLES START ON THE NEXT LINE\n"
@@ -338,7 +339,7 @@ async def test_openai_prompt_caching_async(
 async def test_openai_prompt_caching_async_with_events_with_content(
     instrument_with_content, span_exporter, log_exporter
 ):
-    with open(Path(__file__).parent.parent.joinpath("data/1024+tokens.txt"), "r") as f:
+    with open(Path(__file__).parent.parent.joinpath("data/1024+tokens.txt")) as f:
         # add the unique test name to the prompt to avoid caching leaking to other tests
         text = (
             "test_openai_prompt_caching_async <- IGNORE THIS. ARTICLES START ON THE NEXT LINE\n"
@@ -435,7 +436,7 @@ async def test_openai_prompt_caching_async_with_events_with_content(
 async def test_openai_prompt_caching_async_with_events_with_no_content(
     instrument_with_no_content, span_exporter, log_exporter
 ):
-    with open(Path(__file__).parent.parent.joinpath("data/1024+tokens.txt"), "r") as f:
+    with open(Path(__file__).parent.parent.joinpath("data/1024+tokens.txt")) as f:
         # add the unique test name to the prompt to avoid caching leaking to other tests
         text = (
             "test_openai_prompt_caching_async <- IGNORE THIS. ARTICLES START ON THE NEXT LINE\n"

@@ -16,6 +16,8 @@ from langchain_community.utils.openai_functions import (
     convert_pydantic_to_openai_function,
 )
 from langchain_openai import ChatOpenAI, OpenAI
+from pydantic import BaseModel, Field
+
 from opentelemetry.sdk._logs import LogData
 from opentelemetry.sdk.trace import Span
 from opentelemetry.semconv._incubating.attributes import (
@@ -31,7 +33,6 @@ from opentelemetry.trace.propagation import (
 from opentelemetry.trace.propagation.tracecontext import (
     TraceContextTextMapPropagator,
 )
-from pydantic import BaseModel, Field
 
 
 def open_ai_prompt():
@@ -61,7 +62,7 @@ A trace represents the complete journey of a request across services.
 A span is a single operation within that journey (e.g., a database call, an HTTP request). Each span includes metadata like name, duration, parent-child relationships, and attributes.
 OpenTelemetry uses the W3C Trace Context standard to propagate context across service boundaries, enabling distributed tracing.
 2. Metrics
-Metrics capture numerical data about a system’s behavior, often for performance monitoring. OpenTelemetry supports:
+Metrics capture numerical data about a system's behavior, often for performance monitoring. OpenTelemetry supports:
 Counters: for counting occurrences of events.
 Gauges: for measuring values at a point in time.
 Histograms: for measuring distributions of values (e.g., request durations).
@@ -105,14 +106,14 @@ Better System Understanding: Correlate logs, traces, and metrics to resolve inci
 Cost Optimization: Fine-grained control over data volume and sampling.
 Compliance and Security: Centralized control over telemetry pipelines.
 Future Directions
-OpenTelemetry’s roadmap includes:
+OpenTelemetry's roadmap includes:
 Improved support for logs, including unified correlation with traces and metrics.
 Better semantic conventions and user-defined schemas.
 AI/ML for telemetry enrichment, anomaly detection, and intelligent sampling.
 Context-aware observability through automatic context propagation in async/streaming environments.
 Profiling signals integration in the long-term future.
 Conclusion
-OpenTelemetry is not just a tool or a library—it’s a movement toward a better way to understand and manage modern software systems. With deep community support, growing enterprise adoption, and a commitment to open standards, it is poised to be the foundation for observability for the next decade.
+OpenTelemetry is not just a tool or a library—it's a movement toward a better way to understand and manage modern software systems. With deep community support, growing enterprise adoption, and a commitment to open standards, it is poised to be the foundation for observability for the next decade.
 Whether you are building a single microservice or running a complex mesh of applications across hybrid clouds, OpenTelemetry offers the instrumentation, tools, and ecosystem needed to bring clarity to your system's behavior—without the downsides of proprietary lock-in or fragmented tooling.
     """
 
@@ -131,11 +132,9 @@ def test_custom_llm(instrument_legacy, span_exporter, log_exporter):
 
     spans = span_exporter.get_finished_spans()
 
-    assert [
-        "ChatPromptTemplate.task",
+    assert [span.name for span in spans] == ["ChatPromptTemplate.task",
         "HuggingFaceTextGenInference.completion",
-        "RunnableSequence.workflow",
-    ] == [span.name for span in spans]
+        "RunnableSequence.workflow",]
 
     hugging_face_span = next(
         span for span in spans if span.name == "HuggingFaceTextGenInference.completion"
@@ -175,11 +174,9 @@ def test_custom_llm_with_events_with_content(
 
     spans = span_exporter.get_finished_spans()
 
-    assert [
-        "ChatPromptTemplate.task",
+    assert [span.name for span in spans] == ["ChatPromptTemplate.task",
         "HuggingFaceTextGenInference.completion",
-        "RunnableSequence.workflow",
-    ] == [span.name for span in spans]
+        "RunnableSequence.workflow",]
 
     hugging_face_span = next(
         span for span in spans if span.name == "HuggingFaceTextGenInference.completion"
@@ -221,15 +218,13 @@ def test_custom_llm_with_events_with_no_content(
     )
 
     chain = prompt | model
-    response = chain.invoke({"input": "tell me a short joke"})
+    chain.invoke({"input": "tell me a short joke"})
 
     spans = span_exporter.get_finished_spans()
 
-    assert [
-        "ChatPromptTemplate.task",
+    assert [span.name for span in spans] == ["ChatPromptTemplate.task",
         "HuggingFaceTextGenInference.completion",
-        "RunnableSequence.workflow",
-    ] == [span.name for span in spans]
+        "RunnableSequence.workflow",]
 
     hugging_face_span = next(
         span for span in spans if span.name == "HuggingFaceTextGenInference.completion"
@@ -267,11 +262,9 @@ def test_openai(instrument_legacy, span_exporter, log_exporter):
 
     spans = span_exporter.get_finished_spans()
 
-    assert [
-        "ChatPromptTemplate.task",
+    assert [span.name for span in spans] == ["ChatPromptTemplate.task",
         "ChatOpenAI.chat",
-        "RunnableSequence.workflow",
-    ] == [span.name for span in spans]
+        "RunnableSequence.workflow",]
 
     openai_span = next(span for span in spans if span.name == "ChatOpenAI.chat")
 
@@ -323,11 +316,9 @@ def test_openai_with_events_with_content(
 
     spans = span_exporter.get_finished_spans()
 
-    assert [
-        "ChatPromptTemplate.task",
+    assert [span.name for span in spans] == ["ChatPromptTemplate.task",
         "ChatOpenAI.chat",
-        "RunnableSequence.workflow",
-    ] == [span.name for span in spans]
+        "RunnableSequence.workflow",]
 
     openai_span = next(span for span in spans if span.name == "ChatOpenAI.chat")
 
@@ -377,11 +368,9 @@ def test_openai_with_events_with_no_content(
 
     spans = span_exporter.get_finished_spans()
 
-    assert [
-        "ChatPromptTemplate.task",
+    assert [span.name for span in spans] == ["ChatPromptTemplate.task",
         "ChatOpenAI.chat",
-        "RunnableSequence.workflow",
-    ] == [span.name for span in spans]
+        "RunnableSequence.workflow",]
 
     openai_span = next(span for span in spans if span.name == "ChatOpenAI.chat")
 
@@ -434,14 +423,12 @@ def test_openai_functions(instrument_legacy, span_exporter, log_exporter):
 
     spans = span_exporter.get_finished_spans()
 
-    assert set(
-        [
+    assert {
             "ChatPromptTemplate.task",
             "JsonOutputFunctionsParser.task",
             "ChatOpenAI.chat",
             "RunnableSequence.workflow",
-        ]
-    ) == set([span.name for span in spans])
+        } == {span.name for span in spans}
 
     openai_span = next(span for span in spans if span.name == "ChatOpenAI.chat")
 
@@ -527,14 +514,12 @@ def test_openai_functions_with_events_with_content(
 
     spans = span_exporter.get_finished_spans()
 
-    assert set(
-        [
+    assert {
             "ChatPromptTemplate.task",
             "JsonOutputFunctionsParser.task",
             "ChatOpenAI.chat",
             "RunnableSequence.workflow",
-        ]
-    ) == set([span.name for span in spans])
+        } == {span.name for span in spans}
 
     openai_span = next(span for span in spans if span.name == "ChatOpenAI.chat")
 
@@ -600,14 +585,12 @@ def test_openai_functions_with_events_with_no_content(
 
     spans = span_exporter.get_finished_spans()
 
-    assert set(
-        [
+    assert {
             "ChatPromptTemplate.task",
             "JsonOutputFunctionsParser.task",
             "ChatOpenAI.chat",
             "RunnableSequence.workflow",
-        ]
-    ) == set([span.name for span in spans])
+        } == {span.name for span in spans}
 
     openai_span = next(span for span in spans if span.name == "ChatOpenAI.chat")
 
@@ -649,11 +632,11 @@ def test_anthropic(instrument_legacy, span_exporter, log_exporter):
 
     spans = span_exporter.get_finished_spans()
 
-    assert [
+    assert [span.name for span in spans] == [
         "ChatPromptTemplate.task",
         "ChatAnthropic.chat",
         "RunnableSequence.workflow",
-    ] == [span.name for span in spans]
+    ]
 
     anthropic_span = next(span for span in spans if span.name == "ChatAnthropic.chat")
     workflow_span = next(
@@ -742,11 +725,11 @@ def test_anthropic_with_events_with_content(
 
     spans = span_exporter.get_finished_spans()
 
-    assert [
+    assert [span.name for span in spans] == [
         "ChatPromptTemplate.task",
         "ChatAnthropic.chat",
         "RunnableSequence.workflow",
-    ] == [span.name for span in spans]
+    ]
 
     anthropic_span = next(span for span in spans if span.name == "ChatAnthropic.chat")
 
@@ -798,11 +781,11 @@ def test_anthropic_with_events_with_no_content(
 
     spans = span_exporter.get_finished_spans()
 
-    assert [
+    assert [span.name for span in spans] == [
         "ChatPromptTemplate.task",
         "ChatAnthropic.chat",
         "RunnableSequence.workflow",
-    ] == [span.name for span in spans]
+    ]
 
     anthropic_span = next(span for span in spans if span.name == "ChatAnthropic.chat")
 
@@ -857,11 +840,11 @@ def test_bedrock(instrument_legacy, span_exporter, log_exporter):
 
     spans = span_exporter.get_finished_spans()
 
-    assert [
+    assert [span.name for span in spans] == [
         "ChatPromptTemplate.task",
         "ChatBedrock.chat",
         "RunnableSequence.workflow",
-    ] == [span.name for span in spans]
+    ]
 
     bedrock_span = next(span for span in spans if span.name == "ChatBedrock.chat")
     workflow_span = next(
@@ -950,11 +933,11 @@ def test_bedrock_with_events_with_content(
 
     spans = span_exporter.get_finished_spans()
 
-    assert [
+    assert [span.name for span in spans] == [
         "ChatPromptTemplate.task",
         "ChatBedrock.chat",
         "RunnableSequence.workflow",
-    ] == [span.name for span in spans]
+    ]
 
     bedrock_span = next(span for span in spans if span.name == "ChatBedrock.chat")
 
@@ -1013,11 +996,11 @@ def test_bedrock_with_events_with_no_content(
 
     spans = span_exporter.get_finished_spans()
 
-    assert [
+    assert [span.name for span in spans] == [
         "ChatPromptTemplate.task",
         "ChatBedrock.chat",
         "RunnableSequence.workflow",
-    ] == [span.name for span in spans]
+    ]
 
     bedrock_span = next(span for span in spans if span.name == "ChatBedrock.chat")
 
@@ -1298,7 +1281,7 @@ def test_trace_propagation_stream_with_events_with_content(
     send_spy = spy_decorator(httpx.Client.send)
     with patch.object(httpx.Client, "send", send_spy):
         stream = chain.stream({"input": "Tell me a joke about OpenTelemetry"})
-        chunks = [s for s in stream]
+        chunks = list(stream)
     send_spy.mock.assert_called_once()
 
     spans = span_exporter.get_finished_spans()

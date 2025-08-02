@@ -1,5 +1,6 @@
 import pytest
 from openai import OpenAI
+
 from opentelemetry.semconv_ai import SpanAttributes
 
 
@@ -55,7 +56,7 @@ def test_streaming_with_api_usage_and_events(
         stream=True,
     )
 
-    for chunk in response:
+    for _chunk in response:
         pass  # Just consume the stream
 
     spans = span_exporter.get_finished_spans()

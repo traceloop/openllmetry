@@ -26,8 +26,7 @@ opentelemetry-semantic-conventions = ">=0.50b0"
 opentelemetry-semantic-conventions-ai = "0.4.11"
 
 [tool.poetry.group.dev.dependencies]
-autopep8 = "^2.2.0"
-flake8 = "7.1.1"
+ruff = "^0.12.7"
 pytest = "^8.2.2"
 pytest-sugar = "1.0.0"
 
@@ -47,3 +46,42 @@ instruments = ["crewai"]
 
 [tool.poetry.plugins."opentelemetry_instrumentor"]
 crewai = "opentelemetry.instrumentation.crewai:CrewAIInstrumentor"
+
+[tool.ruff]
+target-version = "py39"
+line-length = 120
+indent-width = 4
+
+[tool.ruff.lint]
+
+select = [
+    "E",      
+    "F",      
+    "B",      
+    "I",      
+    "UP",     
+    "C4",     
+    "SIM",    
+    "RUF",    
+]
+
+
+fixable = [
+    "UP006",
+    "UP035",
+    "F401",   
+    "I",      
+    "UP",     
+    "RUF100", 
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*" = ["S101", "B017"]  
+
+[tool.ruff.lint.isort]
+known-first-party = ["opentelemetry"]
+
+[tool.ruff.format]
+
+quote-style = "double"
+docstring-code-format = true

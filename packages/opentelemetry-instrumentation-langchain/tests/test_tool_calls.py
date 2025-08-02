@@ -1,5 +1,4 @@
 import json
-from typing import List
 
 import pytest
 from langchain_anthropic import ChatAnthropic
@@ -11,6 +10,7 @@ from langchain_core.messages import (
     ToolMessage,
 )
 from langchain_openai import ChatOpenAI
+
 from opentelemetry.sdk._logs import LogData
 from opentelemetry.semconv._incubating.attributes import (
     event_attributes as EventAttributes,
@@ -22,7 +22,7 @@ from opentelemetry.semconv_ai import SpanAttributes
 
 
 def food_analysis(
-    name: str, healthy: bool, calories: int, taste_profile: List[str]
+    name: str, healthy: bool, calories: int, taste_profile: list[str]
 ) -> str:
     return "pass"
 
@@ -36,7 +36,7 @@ def test_tool_calls(instrument_legacy, span_exporter, log_exporter):
     result = model_with_tools.invoke(query)
     spans = span_exporter.get_finished_spans()
 
-    span_names = set(span.name for span in spans)
+    span_names = {span.name for span in spans}
     expected_spans = {"ChatOpenAI.chat"}
     assert expected_spans.issubset(span_names)
 
@@ -90,7 +90,7 @@ def test_tool_calls_with_events_with_content(
     model_with_tools.invoke(query)
     spans = span_exporter.get_finished_spans()
 
-    span_names = set(span.name for span in spans)
+    span_names = {span.name for span in spans}
     expected_spans = {"ChatOpenAI.chat"}
     assert expected_spans.issubset(span_names)
 
@@ -135,7 +135,7 @@ def test_tool_calls_with_events_with_no_content(
     model_with_tools.invoke(query)
     spans = span_exporter.get_finished_spans()
 
-    span_names = set(span.name for span in spans)
+    span_names = {span.name for span in spans}
     expected_spans = {"ChatOpenAI.chat"}
     assert expected_spans.issubset(span_names)
 

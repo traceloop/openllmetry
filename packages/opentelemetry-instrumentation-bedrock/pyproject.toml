@@ -32,8 +32,7 @@ anthropic = ">=0.17.0"
 tokenizers = ">=0.13.0"
 
 [tool.poetry.group.dev.dependencies]
-autopep8 = "^2.2.0"
-flake8 = "7.0.0"
+ruff = "^0.12.7"
 
 [tool.poetry.group.test.dependencies]
 boto3 = "^1.34.120"
@@ -46,3 +45,42 @@ opentelemetry-sdk = "^1.27.0"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.ruff]
+target-version = "py39"
+line-length = 120
+indent-width = 4
+
+[tool.ruff.lint]
+
+select = [
+    "E",      
+    "F",      
+    "B",      
+    "I",      
+    "UP",     
+    "C4",     
+    "SIM",    
+    "RUF",    
+]
+
+
+fixable = [
+    "UP006",
+    "UP035",
+    "F401",   
+    "I",      
+    "UP",     
+    "RUF100", 
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*" = ["S101"]  
+
+[tool.ruff.lint.isort]
+known-first-party = ["opentelemetry"]
+
+[tool.ruff.format]
+
+quote-style = "double"
+docstring-code-format = true

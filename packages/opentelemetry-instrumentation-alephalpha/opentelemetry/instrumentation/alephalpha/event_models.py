@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Any, List, Literal, Optional, TypedDict
+from typing import Any, Literal, Optional, TypedDict
 
 
 class _FunctionToolCall(TypedDict):
@@ -28,7 +28,7 @@ class PromptEvent:
 
     content: Any
     role: str = "user"
-    tool_calls: Optional[List[ToolCall]] = None
+    tool_calls: Optional[list[ToolCall]] = None
 
 
 @dataclass
@@ -38,7 +38,7 @@ class CompletionEvent:
     index: int
     message: CompletionMessage
     finish_reason: str = "unknown"
-    tool_calls: Optional[List[ToolCall]] = None
+    tool_calls: Optional[list[ToolCall]] = None
 
     @property
     def total_tokens(self) -> Optional[int]:

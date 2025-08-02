@@ -3,6 +3,7 @@ from os import getcwd
 
 import chromadb
 import pytest
+
 from opentelemetry.semconv_ai import Events, SpanAttributes
 
 chroma = chromadb.PersistentClient(path=getcwd())

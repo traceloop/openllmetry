@@ -1,4 +1,4 @@
-from typing import Optional, TypeVar, Callable, Any, ParamSpec, Awaitable
+from typing import Optional, TypeVar, Callable, ParamSpec, Awaitable
 import warnings
 
 from opentelemetry.semconv_ai import TraceloopSpanKindValues

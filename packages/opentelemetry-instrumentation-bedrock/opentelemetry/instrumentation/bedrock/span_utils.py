@@ -2,6 +2,7 @@ import json
 import time
 
 import anthropic
+
 from opentelemetry.instrumentation.bedrock.config import Config
 from opentelemetry.instrumentation.bedrock.utils import should_send_prompts
 from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
@@ -16,9 +17,8 @@ anthropic_client = anthropic.Anthropic()
 
 
 def _set_span_attribute(span, name, value):
-    if value is not None:
-        if value != "":
-            span.set_attribute(name, value)
+    if value is not None and value != "":
+        span.set_attribute(name, value)
     return
 
 

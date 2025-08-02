@@ -1,6 +1,7 @@
 import json
 
 import pytest
+
 from opentelemetry.instrumentation.bedrock.prompt_caching import CacheSpanAttrs
 from opentelemetry.sdk._logs import LogData
 from opentelemetry.semconv._incubating.attributes import (

@@ -2,33 +2,34 @@
 
 import logging
 import time
-import pinecone
-from typing import Collection
+from collections.abc import Collection
+
 from wrapt import wrap_function_wrapper
 
+import pinecone
 from opentelemetry import context as context_api
-from opentelemetry.metrics import get_meter
-from opentelemetry.trace import get_tracer, SpanKind
-from opentelemetry.trace.status import Status, StatusCode
-
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
-from opentelemetry.instrumentation.utils import (
-    _SUPPRESS_INSTRUMENTATION_KEY,
-    unwrap,
-)
 from opentelemetry.instrumentation.pinecone.config import Config
+from opentelemetry.instrumentation.pinecone.query_handlers import (
+    set_query_input_attributes,
+    set_query_response,
+)
 from opentelemetry.instrumentation.pinecone.utils import (
     dont_throw,
     is_metrics_enabled,
     set_span_attribute,
 )
 from opentelemetry.instrumentation.pinecone.version import __version__
-from opentelemetry.instrumentation.pinecone.query_handlers import (
-    set_query_input_attributes,
-    set_query_response,
+from opentelemetry.instrumentation.utils import (
+    _SUPPRESS_INSTRUMENTATION_KEY,
+    unwrap,
 )
+from opentelemetry.metrics import get_meter
 from opentelemetry.semconv.trace import SpanAttributes
-from opentelemetry.semconv_ai import Meters, SpanAttributes as AISpanAttributes
+from opentelemetry.semconv_ai import Meters
+from opentelemetry.semconv_ai import SpanAttributes as AISpanAttributes
+from opentelemetry.trace import SpanKind, get_tracer
+from opentelemetry.trace.status import Status, StatusCode
 
 logger = logging.getLogger(__name__)
 
@@ -161,20 +162,19 @@ def _wrap(
         if duration > 0 and query_duration_metric and to_wrap.get("method") == "query":
             query_duration_metric.record(duration, shared_attributes)
 
-        if response:
-            if span.is_recording():
-                if to_wrap.get("method") == "query":
-                    set_query_response(span, scores_metric, shared_attributes, response)
+        if response and span.is_recording():
+            if to_wrap.get("method") == "query":
+                set_query_response(span, scores_metric, shared_attributes, response)
 
-                _set_response_attributes(
-                    span,
-                    read_units_metric,
-                    write_units_metric,
-                    shared_attributes,
-                    response,
-                )
+            _set_response_attributes(
+                span,
+                read_units_metric,
+                write_units_metric,
+                shared_attributes,
+                response,
+            )
 
-                span.set_status(Status(StatusCode.OK))
+            span.set_status(Status(StatusCode.OK))
 
         return response
 

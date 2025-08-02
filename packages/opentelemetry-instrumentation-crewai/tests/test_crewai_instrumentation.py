@@ -1,7 +1,9 @@
-import pytest
 from unittest.mock import MagicMock
+
+import pytest
+from crewai import Agent, Crew, Task
+
 from opentelemetry.instrumentation.crewai import CrewAIInstrumentor
-from crewai import Agent, Task, Crew
 from opentelemetry.trace.status import StatusCode
 
 

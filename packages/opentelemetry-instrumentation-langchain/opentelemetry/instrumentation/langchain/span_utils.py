@@ -10,6 +10,7 @@ from langchain_core.messages import (
 from langchain_core.outputs import (
     LLMResult,
 )
+
 from opentelemetry.context.context import Context
 from opentelemetry.instrumentation.langchain.utils import (
     CallbackFilteredJSONEncoder,
@@ -37,16 +38,12 @@ class SpanHolder:
 
 
 def _message_type_to_role(message_type: str) -> str:
-    if message_type == "human":
-        return "user"
-    elif message_type == "system":
-        return "system"
-    elif message_type == "ai":
-        return "assistant"
-    elif message_type == "tool":
-        return "tool"
-    else:
-        return "unknown"
+    return {
+        "human": "user",
+        "system": "system",
+        "ai": "assistant",
+        "tool": "tool",
+    }.get(message_type, "unknown")
 
 
 def _set_span_attribute(span: Span, name: str, value: AttributeValue):
@@ -59,10 +56,7 @@ def set_request_params(span, kwargs, span_holder: SpanHolder):
         return
 
     for model_tag in ("model", "model_id", "model_name"):
-        if (model := kwargs.get(model_tag)) is not None:
-            span_holder.request_model = model
-            break
-        elif (
+        if (model := kwargs.get(model_tag)) is not None or (
             model := (kwargs.get("invocation_params") or {}).get(model_tag)
         ) is not None:
             span_holder.request_model = model

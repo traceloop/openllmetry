@@ -1,8 +1,10 @@
-import httpx
-from opentelemetry.sdk.trace import Span
-from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
-from opentelemetry.trace.propagation import get_current_span
 from unittest.mock import MagicMock
+
+import httpx
+
+from opentelemetry.sdk.trace import Span
+from opentelemetry.trace.propagation import get_current_span
+from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
 
 
 # from: https://stackoverflow.com/a/41599695/2749989

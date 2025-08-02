@@ -1,6 +1,8 @@
 import logging
 import time
 
+from openai._legacy_response import LegacyAPIResponse
+from openai.types.beta.threads.run import Run
 from opentelemetry import context as context_api
 from opentelemetry.instrumentation.openai.shared import (
     _set_span_attribute,
@@ -21,9 +23,6 @@ from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
 from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
 from opentelemetry.semconv_ai import LLMRequestTypeValues, SpanAttributes
 from opentelemetry.trace import SpanKind, Status, StatusCode
-
-from openai._legacy_response import LegacyAPIResponse
-from openai.types.beta.threads.run import Run
 
 logger = logging.getLogger(__name__)
 
@@ -78,10 +77,7 @@ def runs_create_wrapper(tracer, wrapped, instance, args, kwargs):
 def runs_retrieve_wrapper(tracer, wrapped, instance, args, kwargs):
     @dont_throw
     def process_response(response):
-        if type(response) is LegacyAPIResponse:
-            parsed_response = response.parse()
-        else:
-            parsed_response = response
+        parsed_response = response.parse() if type(response) is LegacyAPIResponse else response
         assert type(parsed_response) is Run
 
         if parsed_response.thread_id in runs:

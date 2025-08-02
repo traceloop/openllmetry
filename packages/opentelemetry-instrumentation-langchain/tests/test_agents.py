@@ -1,11 +1,11 @@
 import os
-from typing import Tuple
 
 import pytest
 from langchain import hub
 from langchain.agents import AgentExecutor, create_tool_calling_agent
 from langchain_community.tools.tavily_search import TavilySearchResults
 from langchain_openai import ChatOpenAI
+
 from opentelemetry.sdk._logs import LogData
 from opentelemetry.semconv._incubating.attributes import (
     event_attributes as EventAttributes,
@@ -34,7 +34,7 @@ def test_agents(instrument_legacy, span_exporter, log_exporter):
 
     spans = span_exporter.get_finished_spans()
 
-    assert set([span.name for span in spans]) == {
+    assert {span.name for span in spans} == {
         "RunnableLambda.task",
         "RunnableParallel<agent_scratchpad>.task",
         "RunnableAssign<agent_scratchpad>.task",
@@ -43,13 +43,6 @@ def test_agents(instrument_legacy, span_exporter, log_exporter):
         "ToolsAgentOutputParser.task",
         "RunnableSequence.task",
         "tavily_search_results_json.tool",
-        "RunnableLambda.task",
-        "RunnableParallel<agent_scratchpad>.task",
-        "RunnableAssign<agent_scratchpad>.task",
-        "ChatPromptTemplate.task",
-        "ChatOpenAI.chat",
-        "ToolsAgentOutputParser.task",
-        "RunnableSequence.task",
         "AgentExecutor.workflow",
     }
 
@@ -81,7 +74,7 @@ def test_agents_with_events_with_content(
 
     spans = span_exporter.get_finished_spans()
 
-    assert set([span.name for span in spans]) == {
+    assert {span.name for span in spans} == {
         "RunnableLambda.task",
         "RunnableParallel<agent_scratchpad>.task",
         "RunnableAssign<agent_scratchpad>.task",
@@ -90,13 +83,6 @@ def test_agents_with_events_with_content(
         "ToolsAgentOutputParser.task",
         "RunnableSequence.task",
         "tavily_search_results_json.tool",
-        "RunnableLambda.task",
-        "RunnableParallel<agent_scratchpad>.task",
-        "RunnableAssign<agent_scratchpad>.task",
-        "ChatPromptTemplate.task",
-        "ChatOpenAI.chat",
-        "ToolsAgentOutputParser.task",
-        "RunnableSequence.task",
         "AgentExecutor.workflow",
     }
 
@@ -178,7 +164,7 @@ def test_agents_with_events_with_no_content(
 
     spans = span_exporter.get_finished_spans()
 
-    assert set([span.name for span in spans]) == {
+    assert {span.name for span in spans} == {
         "RunnableLambda.task",
         "RunnableParallel<agent_scratchpad>.task",
         "RunnableAssign<agent_scratchpad>.task",
@@ -187,13 +173,6 @@ def test_agents_with_events_with_no_content(
         "ToolsAgentOutputParser.task",
         "RunnableSequence.task",
         "tavily_search_results_json.tool",
-        "RunnableLambda.task",
-        "RunnableParallel<agent_scratchpad>.task",
-        "RunnableAssign<agent_scratchpad>.task",
-        "ChatPromptTemplate.task",
-        "ChatOpenAI.chat",
-        "ToolsAgentOutputParser.task",
-        "RunnableSequence.task",
         "AgentExecutor.workflow",
     }
 
@@ -246,7 +225,7 @@ def test_agents_with_events_with_no_content(
 
 
 def assert_message_in_logs(
-    logs: Tuple[LogData], event_name: str, expected_content: dict
+    logs: tuple[LogData], event_name: str, expected_content: dict
 ):
     assert any(
         log.log_record.attributes.get(EventAttributes.EVENT_NAME) == event_name

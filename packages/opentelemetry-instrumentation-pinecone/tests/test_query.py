@@ -2,8 +2,9 @@ import os
 
 import pytest
 from openai import OpenAI
-from opentelemetry.semconv_ai import Events, Meters, SpanAttributes
 from pinecone import Pinecone
+
+from opentelemetry.semconv_ai import Events, Meters, SpanAttributes
 
 
 @pytest.fixture
@@ -13,22 +14,30 @@ def openai_client():
 
 def retrieve(openai_client, index, query):
     context_limit = 3750
-    res = openai_client.embeddings.create(input=[query], model="text-embedding-ada-002")
+    res = openai_client.embeddings.create(
+        input=[query], model="text-embedding-ada-002"
+    )
 
     # retrieve from Pinecone
     xq = res.data[0].embedding
 
     # get relevant contexts
-    res = index.query(top_k=3, include_metadata=True, include_values=True, vector=xq)
+    res = index.query(
+        top_k=3, include_metadata=True, include_values=True, vector=xq
+    )
     contexts = [x["metadata"]["text"] for x in res.matches]
 
     # build our prompt with the retrieved contexts included
-    prompt_start = "Answer the question based on the context below.\n\n" + "Context:\n"
+    prompt_start = (
+        "Answer the question based on the context below.\n\n" + "Context:\n"
+    )
     prompt_end = f"\n\nQuestion: {query}\nAnswer:"
     # append contexts until hitting limit
     for i in range(1, len(contexts)):
         if len("\n\n---\n\n".join(contexts[:i])) >= context_limit:
-            prompt = prompt_start + "\n\n---\n\n".join(contexts[: i - 1]) + prompt_end
+            prompt = (
+                prompt_start + "\n\n---\n\n".join(contexts[: i - 1]) + prompt_end
+            )
             break
         elif i == len(contexts) - 1:
             prompt = prompt_start + "\n\n---\n\n".join(contexts) + prompt_end
@@ -56,7 +65,8 @@ def run_query(openai_client, index, query: str):
 
 
 @pytest.mark.skip(
-    "Can't record GRPC-based tests with VCR, as it doesn't support recording GRPC requests."
+    "Can't record GRPC-based tests with VCR, as it doesn't support recording "
+    "GRPC requests."
 )
 def test_pinecone_grpc_retrieval(traces_exporter, openai_client):
     pc = Pinecone(
@@ -67,7 +77,7 @@ def test_pinecone_grpc_retrieval(traces_exporter, openai_client):
 
     query = (
         "Which training method should I use for sentence transformers when "
-        + "I only have pairs of related sentences?"
+        "I only have pairs of related sentences?"
     )
     run_query(openai_client, index, query)
 
@@ -89,7 +99,7 @@ def test_pinecone_retrieval(traces_exporter, metrics_reader, openai_client):
 
     query = (
         "Which training method should I use for sentence transformers when "
-        + "I only have pairs of related sentences?"
+        "I only have pairs of related sentences?"
     )
     query_res = run_query(openai_client, index, query)
 
@@ -101,9 +111,8 @@ def test_pinecone_retrieval(traces_exporter, metrics_reader, openai_client):
     ]
 
     span = next(span for span in spans if span.name == "pinecone.query")
-    assert (
-        span.attributes.get("server.address")
-        == "https://gen-qa-openai-fast-90c5d9e.svc.gcp-starter.pinecone.io"
+    assert span.attributes.get("server.address") == (
+        "https://gen-qa-openai-fast-90c5d9e.svc.gcp-starter.pinecone.io"
     )
     assert span.attributes.get(SpanAttributes.PINECONE_QUERY_TOP_K) == 3
     assert span.attributes.get(SpanAttributes.PINECONE_USAGE_READ_UNITS) == 6
@@ -115,7 +124,9 @@ def test_pinecone_retrieval(traces_exporter, metrics_reader, openai_client):
     assert len(events) > 0
 
     embeddings_events = [
-        event for event in span.events if Events.DB_QUERY_EMBEDDINGS.value in event.name
+        event
+        for event in span.events
+        if Events.DB_QUERY_EMBEDDINGS.value in event.name
     ]
     for event in embeddings_events:
         assert event.name == Events.DB_QUERY_EMBEDDINGS.value
@@ -125,7 +136,9 @@ def test_pinecone_retrieval(traces_exporter, metrics_reader, openai_client):
             assert v >= -1 and v <= 1
 
     query_result_events = [
-        event for event in span.events if "db.pinecone.query.result" in event.name
+        event
+        for event in span.events
+        if "db.pinecone.query.result" in event.name
     ]
     for event in query_result_events:
         assert event.name == "db.pinecone.query.result"
@@ -163,29 +176,27 @@ def test_pinecone_retrieval(traces_exporter, metrics_reader, openai_client):
                     found_scores_metric = True
                     for data_point in metric.data.data_points:
                         assert data_point.sum == sum(
-                            match.get("score") for match in query_res.get("matches")
+                            match.get("score")
+                            for match in query_res.get("matches")
                         )
-                        assert (
-                            data_point.attributes["server.address"]
-                            == "https://gen-qa-openai-fast-90c5d9e.svc.gcp-starter.pinecone.io"
+                        assert data_point.attributes["server.address"] == (
+                            "https://gen-qa-openai-fast-90c5d9e.svc.gcp-starter.pinecone.io"
                         )
 
                 if metric.name == Meters.PINECONE_DB_USAGE_READ_UNITS:
                     found_read_units_metric = True
                     for data_point in metric.data.data_points:
                         assert data_point.value == 6
-                        assert (
-                            data_point.attributes["server.address"]
-                            == "https://gen-qa-openai-fast-90c5d9e.svc.gcp-starter.pinecone.io"
+                        assert data_point.attributes["server.address"] == (
+                            "https://gen-qa-openai-fast-90c5d9e.svc.gcp-starter.pinecone.io"
                         )
 
                 if metric.name == Meters.PINECONE_DB_USAGE_WRITE_UNITS:
                     found_write_units_metric = True
                     for data_point in metric.data.data_points:
                         assert data_point.value == 0
-                        assert (
-                            data_point.attributes["server.address"]
-                            == "https://gen-qa-openai-fast-90c5d9e.svc.gcp-starter.pinecone.io"
+                        assert data_point.attributes["server.address"] == (
+                            "https://gen-qa-openai-fast-90c5d9e.svc.gcp-starter.pinecone.io"
                         )
 
     assert found_query_duration_metric is True

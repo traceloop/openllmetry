@@ -25,7 +25,9 @@
     },
     "build": {
       "executor": "@nxlv/python:build",
-      "outputs": ["{projectRoot}/dist"],
+      "outputs": [
+        "{projectRoot}/dist"
+      ],
       "options": {
         "outputPath": "packages/traceloop-sdk/dist",
         "publish": false,
@@ -43,13 +45,7 @@
         "debug": false
       }
     },
-    "lint": {
-      "executor": "@nxlv/python:flake8",
-      "outputs": ["{workspaceRoot}/reports/packages/traceloop-sdk/pylint.txt"],
-      "options": {
-        "outputFile": "reports/packages/traceloop-sdk/pylint.txt"
-      }
-    },
+    "lint": {},
     "test": {
       "executor": "@nxlv/python:run-commands",
       "outputs": [
@@ -70,7 +66,10 @@
         ],
         "cwd": "packages/traceloop-sdk"
       }
-    }
+    },
+    "lint:fix": {}
   },
-  "tags": ["sdk"]
+  "tags": [
+    "sdk"
+  ]
 }

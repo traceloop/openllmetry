@@ -4,8 +4,10 @@ import json
 import logging
 import os
 import time
+from collections.abc import Collection
 from functools import partial, wraps
-from typing import Collection
+
+from wrapt import wrap_function_wrapper
 
 from opentelemetry import context as context_api
 from opentelemetry._events import get_event_logger
@@ -53,7 +55,6 @@ from opentelemetry.semconv_ai import (
     Meters,
 )
 from opentelemetry.trace import Span, SpanKind, get_tracer
-from wrapt import wrap_function_wrapper
 
 
 class MetricParams:
@@ -426,9 +427,8 @@ def _get_vendor_model(modelId):
         components = modelId.split(":")
         if len(components) > 5:
             inf_profile = components[5].split("/")
-            if len(inf_profile) == 2:
-                if "." in inf_profile[1]:
-                    (model_vendor, model) = _cross_region_check(inf_profile[1])
+            if len(inf_profile) == 2 and "." in inf_profile[1]:
+                (model_vendor, model) = _cross_region_check(inf_profile[1])
     elif modelId is not None and "." in modelId:
         (model_vendor, model) = _cross_region_check(modelId)
 

@@ -1,9 +1,9 @@
 import json
 
 import pytest
-from opentelemetry.semconv_ai import SpanAttributes
 
 from opentelemetry.instrumentation.bedrock import GuardrailMeters
+from opentelemetry.semconv_ai import SpanAttributes
 
 
 @pytest.mark.vcr

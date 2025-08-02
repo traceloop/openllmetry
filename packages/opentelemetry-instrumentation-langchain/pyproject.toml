@@ -30,8 +30,7 @@ opentelemetry-semantic-conventions = ">=0.50b0"
 opentelemetry-semantic-conventions-ai = "0.4.11"
 
 [tool.poetry.group.dev.dependencies]
-autopep8 = "^2.3.1"
-flake8 = "7.1.1"
+ruff = "^0.12.7"
 pytest = "^8.3.3"
 pytest-sugar = "1.0.0"
 
@@ -69,3 +68,43 @@ instruments = ["langchain"]
 
 [tool.poetry.plugins."opentelemetry_instrumentor"]
 langchain = "opentelemetry.instrumentation.langchain:LangchainInstrumentor"
+
+[tool.ruff]
+target-version = "py39"
+line-length = 120
+indent-width = 4
+
+[tool.ruff.lint]
+
+select = [
+    "E",      
+    "F",      
+    "B",      
+    "I",      
+    "UP",     
+    "C4",     
+    "SIM",    
+    "RUF",    
+]
+
+
+fixable = [
+    "UP006",
+    "UP035",
+    "F401",   
+    "I",      
+    "UP",     
+    "C4",
+    "RUF100", 
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*" = ["S101"]  
+
+[tool.ruff.lint.isort]
+known-first-party = ["opentelemetry"]
+
+[tool.ruff.format]
+
+quote-style = "double"
+docstring-code-format = true

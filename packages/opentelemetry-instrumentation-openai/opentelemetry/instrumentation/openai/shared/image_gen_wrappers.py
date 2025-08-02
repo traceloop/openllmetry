@@ -49,10 +49,7 @@ def image_gen_metrics_wrapper(
 
         raise
 
-    if is_openai_v1():
-        response_dict = model_as_dict(response)
-    else:
-        response_dict = response
+    response_dict = model_as_dict(response) if is_openai_v1() else response
 
     # not provide response.model in ImagesResponse response, use model in request kwargs
     shared_attributes = metric_shared_attributes(

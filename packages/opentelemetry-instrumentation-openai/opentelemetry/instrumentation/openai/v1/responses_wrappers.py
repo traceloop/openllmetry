@@ -1,7 +1,8 @@
 import json
-import pydantic
 import re
 import time
+
+import pydantic
 
 from openai import AsyncStream, Stream
 
@@ -22,48 +23,48 @@ try:
     RESPONSES_AVAILABLE = True
 except ImportError:
     # Fallback types for older OpenAI SDK versions
-    from typing import Any, Dict, List, Union
+    from typing import Any, Union
 
     # Create basic fallback types
-    FunctionToolParam = Dict[str, Any]
+    FunctionToolParam = dict[str, Any]
     Response = Any
-    ResponseInputItemParam = Dict[str, Any]
-    ResponseInputParam = Union[str, List[Dict[str, Any]]]
-    ResponseOutputItem = Dict[str, Any]
-    ResponseUsage = Dict[str, Any]
-    ToolParam = Dict[str, Any]
-    ResponseOutputMessageParam = Dict[str, Any]
+    ResponseInputItemParam = dict[str, Any]
+    ResponseInputParam = Union[str, list[dict[str, Any]]]
+    ResponseOutputItem = dict[str, Any]
+    ResponseUsage = dict[str, Any]
+    ToolParam = dict[str, Any]
+    ResponseOutputMessageParam = dict[str, Any]
     RESPONSES_AVAILABLE = False
+
+from typing import Any, Optional, Union
+
+from typing_extensions import NotRequired
 
 from openai._legacy_response import LegacyAPIResponse
 from opentelemetry import context as context_api
-from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
-from opentelemetry.semconv_ai import SpanAttributes
-from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
-from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
-    GEN_AI_COMPLETION,
-    GEN_AI_PROMPT,
-    GEN_AI_USAGE_INPUT_TOKENS,
-    GEN_AI_USAGE_OUTPUT_TOKENS,
-    GEN_AI_RESPONSE_ID,
-    GEN_AI_REQUEST_MODEL,
-    GEN_AI_RESPONSE_MODEL,
-    GEN_AI_SYSTEM,
-)
-from opentelemetry.trace import SpanKind, Span, StatusCode, Tracer
-from typing import Any, Optional, Union
-from typing_extensions import NotRequired
-
 from opentelemetry.instrumentation.openai.shared import (
     _set_span_attribute,
     model_as_dict,
 )
-
 from opentelemetry.instrumentation.openai.utils import (
     _with_tracer_wrapper,
     dont_throw,
     should_send_prompts,
 )
+from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
+from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
+    GEN_AI_COMPLETION,
+    GEN_AI_PROMPT,
+    GEN_AI_REQUEST_MODEL,
+    GEN_AI_RESPONSE_ID,
+    GEN_AI_RESPONSE_MODEL,
+    GEN_AI_SYSTEM,
+    GEN_AI_USAGE_INPUT_TOKENS,
+    GEN_AI_USAGE_OUTPUT_TOKENS,
+)
+from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
+from opentelemetry.semconv_ai import SpanAttributes
+from opentelemetry.trace import Span, SpanKind, StatusCode, Tracer
 
 SPAN_NAME = "openai.response"
 
@@ -437,10 +438,7 @@ def responses_get_or_create_wrapper(tracer: Tracer, wrapped, instance, args, kwa
     parsed_response = parse_response(response)
 
     existing_data = responses.get(parsed_response.id)
-    if existing_data is None:
-        existing_data = {}
-    else:
-        existing_data = existing_data.model_dump()
+    existing_data = {} if existing_data is None else existing_data.model_dump()
 
     request_tools = get_tools_from_kwargs(kwargs)
 
@@ -531,10 +529,7 @@ async def async_responses_get_or_create_wrapper(
     parsed_response = parse_response(response)
 
     existing_data = responses.get(parsed_response.id)
-    if existing_data is None:
-        existing_data = {}
-    else:
-        existing_data = existing_data.model_dump()
+    existing_data = {} if existing_data is None else existing_data.model_dump()
 
     request_tools = get_tools_from_kwargs(kwargs)
 

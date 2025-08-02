@@ -13,7 +13,6 @@ from opentelemetry.instrumentation.openai.shared import (
     propagate_trace_context,
 )
 from opentelemetry.instrumentation.openai.shared.config import Config
-from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
 from opentelemetry.instrumentation.openai.shared.event_emitter import emit_event
 from opentelemetry.instrumentation.openai.shared.event_models import (
     ChoiceEvent,
@@ -27,6 +26,7 @@ from opentelemetry.instrumentation.openai.utils import (
     should_send_prompts,
 )
 from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
+from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
 from opentelemetry.semconv_ai import (
     SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
     LLMRequestTypeValues,
@@ -135,10 +135,7 @@ def _emit_prompts_events(kwargs):
 
 @dont_throw
 def _handle_response(response, span, instance=None):
-    if is_openai_v1():
-        response_dict = model_as_dict(response)
-    else:
-        response_dict = response
+    response_dict = model_as_dict(response) if is_openai_v1() else response
 
     _set_response_attributes(span, response_dict)
     if should_emit_events():

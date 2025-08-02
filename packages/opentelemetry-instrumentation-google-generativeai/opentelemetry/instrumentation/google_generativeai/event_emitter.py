@@ -3,6 +3,7 @@ from enum import Enum
 from typing import Union
 
 from google.generativeai.types.generation_types import GenerateContentResponse
+
 from opentelemetry._events import Event, EventLogger
 from opentelemetry.instrumentation.google_generativeai.event_models import (
     ChoiceEvent,
@@ -95,7 +96,7 @@ def _emit_message_event(event: MessageEvent, event_logger: Union[EventLogger]) -
     body = asdict(event)
 
     if event.role in VALID_MESSAGE_ROLES:
-        name = "gen_ai.{}.message".format(event.role)
+        name = f"gen_ai.{event.role}.message"
         # According to the semantic conventions, the role is conditionally required if available
         # and not equal to the "role" in the message name. So, remove the role from the body if
         # it is the same as the in the event name.
@@ -104,9 +105,7 @@ def _emit_message_event(event: MessageEvent, event_logger: Union[EventLogger]) -
         name = "gen_ai.user.message"
 
     # According to the semantic conventions, only the assistant role has tool call
-    if event.role != Roles.ASSISTANT.value and event.tool_calls is not None:
-        del body["tool_calls"]
-    elif event.tool_calls is None:
+    if event.role != Roles.ASSISTANT.value or event.tool_calls is None:
         del body["tool_calls"]
 
     if not should_send_prompts():

@@ -1,8 +1,8 @@
-from botocore.response import StreamingBody
 from botocore.exceptions import (
     ReadTimeoutError,
     ResponseStreamingError,
 )
+from botocore.response import StreamingBody
 from urllib3.exceptions import ProtocolError as URLLib3ProtocolError
 from urllib3.exceptions import ReadTimeoutError as URLLib3ReadTimeoutError
 
@@ -25,9 +25,9 @@ class ReusableStreamingBody(StreamingBody):
                 self._buffer = self._raw_stream.read()
             except URLLib3ReadTimeoutError as e:
                 # TODO: the url will be None as urllib3 isn't setting it yet
-                raise ReadTimeoutError(endpoint_url=e.url, error=e)
+                raise ReadTimeoutError(endpoint_url=e.url, error=e) from e
             except URLLib3ProtocolError as e:
-                raise ResponseStreamingError(error=e)
+                raise ResponseStreamingError(error=e) from e
 
             self._amount_read += len(self._buffer)
             if amt is None or (not self._buffer and amt > 0):

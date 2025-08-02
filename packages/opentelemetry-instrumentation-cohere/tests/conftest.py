@@ -4,6 +4,7 @@ import os
 
 import cohere
 import pytest
+
 from opentelemetry.instrumentation.cohere import CohereInstrumentor
 from opentelemetry.instrumentation.cohere.utils import TRACELOOP_TRACE_CONTENT
 from opentelemetry.sdk._events import EventLoggerProvider

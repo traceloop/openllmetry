@@ -1,10 +1,9 @@
-from opentelemetry.instrumentation.lancedb.utils import dont_throw
-from opentelemetry.semconv.trace import SpanAttributes
-
 from opentelemetry import context as context_api
+from opentelemetry.instrumentation.lancedb.utils import dont_throw
 from opentelemetry.instrumentation.utils import (
     _SUPPRESS_INSTRUMENTATION_KEY,
 )
+from opentelemetry.semconv.trace import SpanAttributes
 from opentelemetry.semconv_ai import SpanAttributes as AISpanAttributes
 
 
@@ -21,9 +20,8 @@ def _with_tracer_wrapper(func):
 
 
 def _set_span_attribute(span, name, value):
-    if value is not None:
-        if value != "":
-            span.set_attribute(name, value)
+    if value is not None and value != "":
+        span.set_attribute(name, value)
     return
 
 

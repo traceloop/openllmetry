@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import pytest
+
 from opentelemetry.sdk._logs import LogData
 from opentelemetry.semconv._incubating.attributes import (
     event_attributes as EventAttributes,
@@ -16,7 +17,7 @@ from .utils import verify_metrics
 def test_anthropic_prompt_caching_legacy(
     instrument_legacy, anthropic_client, span_exporter, log_exporter, reader
 ):
-    with open(Path(__file__).parent.joinpath("data/1024+tokens.txt"), "r") as f:
+    with open(Path(__file__).parent.joinpath("data/1024+tokens.txt")) as f:
         # add the unique test name to the prompt to avoid caching leaking to other tests
         text = (
             "test_anthropic_prompt_caching <- IGNORE THIS. ARTICLES START ON THE NEXT LINE\n"
@@ -126,7 +127,7 @@ def test_anthropic_prompt_caching_legacy(
 def test_anthropic_prompt_caching_with_events_with_content(
     instrument_with_content, anthropic_client, span_exporter, log_exporter, reader
 ):
-    with open(Path(__file__).parent.joinpath("data/1024+tokens.txt"), "r") as f:
+    with open(Path(__file__).parent.joinpath("data/1024+tokens.txt")) as f:
         # add the unique test name to the prompt to avoid caching leaking to other tests
         text = (
             "test_anthropic_prompt_caching <- IGNORE THIS. ARTICLES START ON THE NEXT LINE\n"
@@ -314,7 +315,7 @@ def test_anthropic_prompt_caching_with_events_with_content(
 def test_anthropic_prompt_caching_with_events_with_no_content(
     instrument_with_no_content, anthropic_client, span_exporter, log_exporter, reader
 ):
-    with open(Path(__file__).parent.joinpath("data/1024+tokens.txt"), "r") as f:
+    with open(Path(__file__).parent.joinpath("data/1024+tokens.txt")) as f:
         # add the unique test name to the prompt to avoid caching leaking to other tests
         text = (
             "test_anthropic_prompt_caching <- IGNORE THIS. ARTICLES START ON THE NEXT LINE\n"
@@ -424,7 +425,7 @@ def test_anthropic_prompt_caching_with_events_with_no_content(
 async def test_anthropic_prompt_caching_async_legacy(
     instrument_legacy, async_anthropic_client, span_exporter, log_exporter, reader
 ):
-    with open(Path(__file__).parent.joinpath("data/1024+tokens.txt"), "r") as f:
+    with open(Path(__file__).parent.joinpath("data/1024+tokens.txt")) as f:
         # add the unique test name to the prompt to avoid caching leaking to other tests
         text = (
             "test_anthropic_prompt_caching_async <- IGNORE THIS. ARTICLES START ON THE NEXT LINE\n"
@@ -535,7 +536,7 @@ async def test_anthropic_prompt_caching_async_legacy(
 async def test_anthropic_prompt_caching_async_with_events_with_content(
     instrument_with_content, async_anthropic_client, span_exporter, log_exporter, reader
 ):
-    with open(Path(__file__).parent.joinpath("data/1024+tokens.txt"), "r") as f:
+    with open(Path(__file__).parent.joinpath("data/1024+tokens.txt")) as f:
         # add the unique test name to the prompt to avoid caching leaking to other tests
         text = (
             "test_anthropic_prompt_caching_async <- IGNORE THIS. ARTICLES START ON THE NEXT LINE\n"
@@ -729,7 +730,7 @@ async def test_anthropic_prompt_caching_async_with_events_with_no_content(
     log_exporter,
     reader,
 ):
-    with open(Path(__file__).parent.joinpath("data/1024+tokens.txt"), "r") as f:
+    with open(Path(__file__).parent.joinpath("data/1024+tokens.txt")) as f:
         # add the unique test name to the prompt to avoid caching leaking to other tests
         text = (
             "test_anthropic_prompt_caching_async <- IGNORE THIS. ARTICLES START ON THE NEXT LINE\n"
@@ -838,7 +839,7 @@ async def test_anthropic_prompt_caching_async_with_events_with_no_content(
 def test_anthropic_prompt_caching_stream_legacy(
     instrument_legacy, anthropic_client, span_exporter, log_exporter, reader
 ):
-    with open(Path(__file__).parent.joinpath("data/1024+tokens.txt"), "r") as f:
+    with open(Path(__file__).parent.joinpath("data/1024+tokens.txt")) as f:
         # add the unique test name to the prompt to avoid caching leaking to other tests
         text = (
             "test_anthropic_prompt_caching_stream <- IGNORE THIS. ARTICLES START ON THE NEXT LINE\n"
@@ -952,7 +953,7 @@ def test_anthropic_prompt_caching_stream_legacy(
 def test_anthropic_prompt_caching_stream_with_events_with_content(
     instrument_with_content, anthropic_client, span_exporter, log_exporter, reader
 ):
-    with open(Path(__file__).parent.joinpath("data/1024+tokens.txt"), "r") as f:
+    with open(Path(__file__).parent.joinpath("data/1024+tokens.txt")) as f:
         # add the unique test name to the prompt to avoid caching leaking to other tests
         text = (
             "test_anthropic_prompt_caching_stream <- IGNORE THIS. ARTICLES START ON THE NEXT LINE\n"
@@ -1151,7 +1152,7 @@ def test_anthropic_prompt_caching_stream_with_events_with_content(
 def test_anthropic_prompt_caching_stream_with_events_with_no_content(
     instrument_with_no_content, anthropic_client, span_exporter, log_exporter, reader
 ):
-    with open(Path(__file__).parent.joinpath("data/1024+tokens.txt"), "r") as f:
+    with open(Path(__file__).parent.joinpath("data/1024+tokens.txt")) as f:
         # add the unique test name to the prompt to avoid caching leaking to other tests
         text = (
             "test_anthropic_prompt_caching_stream <- IGNORE THIS. ARTICLES START ON THE NEXT LINE\n"
@@ -1265,7 +1266,7 @@ def test_anthropic_prompt_caching_stream_with_events_with_no_content(
 async def test_anthropic_prompt_caching_async_stream_legacy(
     instrument_legacy, async_anthropic_client, span_exporter, log_exporter, reader
 ):
-    with open(Path(__file__).parent.joinpath("data/1024+tokens.txt"), "r") as f:
+    with open(Path(__file__).parent.joinpath("data/1024+tokens.txt")) as f:
         # add the unique test name to the prompt to avoid caching leaking to other tests
         text = (
             "test_anthropic_prompt_caching_async_stream <- IGNORE THIS. ARTICLES START ON THE NEXT LINE\n"
@@ -1380,7 +1381,7 @@ async def test_anthropic_prompt_caching_async_stream_legacy(
 async def test_anthropic_prompt_caching_async_stream_with_events_with_content(
     instrument_with_content, async_anthropic_client, span_exporter, log_exporter, reader
 ):
-    with open(Path(__file__).parent.joinpath("data/1024+tokens.txt"), "r") as f:
+    with open(Path(__file__).parent.joinpath("data/1024+tokens.txt")) as f:
         # add the unique test name to the prompt to avoid caching leaking to other tests
         text = (
             "test_anthropic_prompt_caching_async_stream <- IGNORE THIS. ARTICLES START ON THE NEXT LINE\n"
@@ -1590,7 +1591,7 @@ async def test_anthropic_prompt_caching_async_stream_with_events_with_no_content
     log_exporter,
     reader,
 ):
-    with open(Path(__file__).parent.joinpath("data/1024+tokens.txt"), "r") as f:
+    with open(Path(__file__).parent.joinpath("data/1024+tokens.txt")) as f:
         # add the unique test name to the prompt to avoid caching leaking to other tests
         text = (
             "test_anthropic_prompt_caching_async_stream <- IGNORE THIS. ARTICLES START ON THE NEXT LINE\n"

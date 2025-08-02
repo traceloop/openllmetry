@@ -73,10 +73,13 @@ def _set_token_usage(
     complete_response,
     prompt_tokens,
     completion_tokens,
-    metric_attributes: dict = {},
+    metric_attributes: Optional[dict] = None,
     token_histogram: Histogram = None,
     choice_counter: Counter = None,
 ):
+    if metric_attributes is None:
+        metric_attributes = {}
+    
     cache_read_tokens = (
         complete_response.get("usage", {}).get("cache_read_input_tokens", 0) or 0
     )
@@ -156,8 +159,11 @@ def build_from_streaming_response(
     duration_histogram: Histogram = None,
     exception_counter: Counter = None,
     event_logger: Optional[EventLogger] = None,
-    kwargs: dict = {},
+    kwargs: Optional[dict] = None,
 ):
+    if kwargs is None:
+        kwargs = {}
+    
     complete_response = {"events": [], "model": "", "usage": {}, "id": ""}
     for item in response:
         try:
@@ -232,8 +238,11 @@ async def abuild_from_streaming_response(
     duration_histogram: Histogram = None,
     exception_counter: Counter = None,
     event_logger: Optional[EventLogger] = None,
-    kwargs: dict = {},
+    kwargs: Optional[dict] = None,
 ):
+    if kwargs is None:
+        kwargs = {}
+    
     complete_response = {"events": [], "model": "", "usage": {}, "id": ""}
     async for item in response:
         try:

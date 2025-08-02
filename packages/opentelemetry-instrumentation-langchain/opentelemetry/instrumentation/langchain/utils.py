@@ -6,13 +6,14 @@ import logging
 import os
 import traceback
 
+from pydantic import BaseModel
+
 from opentelemetry import context as context_api
 from opentelemetry._events import EventLogger
 from opentelemetry.instrumentation.langchain.config import Config
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
-from pydantic import BaseModel
 
 TRACELOOP_TRACE_CONTENT = "TRACELOOP_TRACE_CONTENT"
 
@@ -21,10 +22,9 @@ EVENT_ATTRIBUTES = {GenAIAttributes.GEN_AI_SYSTEM: "langchain"}
 
 class CallbackFilteredJSONEncoder(json.JSONEncoder):
     def default(self, o):
-        if isinstance(o, dict):
-            if "callbacks" in o:
-                del o["callbacks"]
-                return o
+        if isinstance(o, dict) and "callbacks" in o:
+            del o["callbacks"]
+            return o
 
         if dataclasses.is_dataclass(o):
             return dataclasses.asdict(o)

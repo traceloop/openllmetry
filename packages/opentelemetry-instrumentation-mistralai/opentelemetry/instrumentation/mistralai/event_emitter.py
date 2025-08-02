@@ -63,9 +63,7 @@ def _emit_message_event(event: MessageEvent, event_logger: EventLogger) -> None:
         name = "gen_ai.user.message"
 
     # According to the semantic conventions, only the assistant role has tool call
-    if event.role != Roles.ASSISTANT.value and event.tool_calls is not None:
-        del body["tool_calls"]
-    elif event.tool_calls is None:
+    if event.role != Roles.ASSISTANT.value or event.tool_calls is None:
         del body["tool_calls"]
 
     if not should_send_prompts():

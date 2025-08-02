@@ -17,7 +17,7 @@ def test_instrumentation_llamaindex():
 def test_instrumentation_llamaindex_core(monkeypatch):
     # clean installation of otel
     imports = sys.modules.copy()
-    for k, v in imports.items():
+    for k, _v in imports.items():
         if k.startswith("opentelemetry"):
             del sys.modules[k]
     # removal of llamaindex pkg

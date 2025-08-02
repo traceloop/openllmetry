@@ -1,9 +1,10 @@
 import json
 
+from wrapt import ObjectProxy
+
 from opentelemetry.instrumentation.bedrock.utils import (
     dont_throw,
 )
-from wrapt import ObjectProxy
 
 
 class StreamingWrapper(ObjectProxy):

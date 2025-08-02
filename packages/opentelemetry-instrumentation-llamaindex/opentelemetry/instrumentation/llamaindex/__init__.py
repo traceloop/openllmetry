@@ -1,8 +1,9 @@
 """OpenTelemetry LlamaIndex instrumentation"""
 
+import contextlib
 import logging
+from collections.abc import Collection
 from importlib.metadata import version as import_version
-from typing import Collection
 
 from opentelemetry._events import get_event_logger
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
@@ -61,10 +62,9 @@ class LlamaIndexInstrumentor(BaseInstrumentor):
         # Try to use the legacy entry point for instrumentation
         if self.legacy._check_dependency_conflicts() is None:
             self.legacy.instrument(**kwargs)
-        if not self.legacy._is_instrumented_by_opentelemetry:
+        if not self.legacy._is_instrumented_by_opentelemetry and self.core._check_dependency_conflicts() is None:
             # it didn't work -> try the new package
-            if self.core._check_dependency_conflicts() is None:
-                self.core.instrument(**kwargs)
+            self.core.instrument(**kwargs)
 
     def _uninstrument(self, **kwargs):
         self.legacy.uninstrument(**kwargs)
@@ -94,10 +94,8 @@ class LlamaIndexInstrumentor(BaseInstrumentor):
             BaseToolInstrumentor(tracer).instrument()
 
         # LlamaParse instrumentation doesn't work for all versions
-        try:
+        with contextlib.suppress(Exception):
             LlamaParseInstrumentor(tracer).instrument()
-        except Exception:
-            pass
 
 
 class LlamaIndexInstrumentorCore(BaseInstrumentor):

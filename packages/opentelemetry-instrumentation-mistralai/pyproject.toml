@@ -26,8 +26,7 @@ opentelemetry-semantic-conventions = ">=0.50b0"
 opentelemetry-semantic-conventions-ai = "0.4.11"
 
 [tool.poetry.group.dev.dependencies]
-autopep8 = "^2.2.0"
-flake8 = "7.0.0"
+ruff = "^0.12.7"
 pytest = "^8.2.2"
 pytest-sugar = "1.0.0"
 

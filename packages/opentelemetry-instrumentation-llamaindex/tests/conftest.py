@@ -3,6 +3,7 @@
 import os
 
 import pytest
+
 from opentelemetry._events import get_event_logger
 from opentelemetry.instrumentation.chromadb import ChromaInstrumentor
 from opentelemetry.instrumentation.cohere import CohereInstrumentor

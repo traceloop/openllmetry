@@ -1,7 +1,10 @@
 """OpenTelemetry Cohere instrumentation"""
 
 import logging
-from typing import Collection, Union
+from collections.abc import Collection
+from typing import Union
+
+from wrapt import wrap_function_wrapper
 
 from opentelemetry import context as context_api
 from opentelemetry._events import EventLogger, get_event_logger
@@ -28,7 +31,6 @@ from opentelemetry.semconv_ai import (
     SpanAttributes,
 )
 from opentelemetry.trace import SpanKind, Tracer, get_tracer
-from wrapt import wrap_function_wrapper
 
 logger = logging.getLogger(__name__)
 
@@ -66,14 +68,12 @@ def _with_tracer_wrapper(func):
 
 
 def _llm_request_type_by_method(method_name):
-    if method_name == "chat":
-        return LLMRequestTypeValues.CHAT
-    elif method_name == "generate":
-        return LLMRequestTypeValues.COMPLETION
-    elif method_name == "rerank":
-        return LLMRequestTypeValues.RERANK
-    else:
-        return LLMRequestTypeValues.UNKNOWN
+    method_mapping = {
+        "chat": LLMRequestTypeValues.CHAT,
+        "generate": LLMRequestTypeValues.COMPLETION,
+        "rerank": LLMRequestTypeValues.RERANK,
+    }
+    return method_mapping.get(method_name, LLMRequestTypeValues.UNKNOWN)
 
 
 @dont_throw

@@ -1,11 +1,10 @@
 from dataclasses import dataclass
-from typing import Set, List
 
 
 @dataclass(frozen=True)
 class VendorRule:
-    exact_matches: Set[str]
-    patterns: List[str]
+    exact_matches: set[str]
+    patterns: list[str]
     vendor_name: str
 
     def matches(self, class_name: str) -> bool:
@@ -15,7 +14,7 @@ class VendorRule:
         return any(pattern in class_lower for pattern in self.patterns)
 
 
-def _get_vendor_rules() -> List[VendorRule]:
+def _get_vendor_rules() -> list[VendorRule]:
     """
     Get vendor detection rules ordered by specificity (most specific first).
 

@@ -2,7 +2,8 @@ import pytest
 from llama_index.core.llms import ChatMessage
 from llama_index.llms.openai import OpenAI
 from pydantic import BaseModel, Field
-from opentelemetry.semconv_ai import SpanAttributes, LLMRequestTypeValues
+
+from opentelemetry.semconv_ai import LLMRequestTypeValues, SpanAttributes
 
 
 class Invoice(BaseModel):

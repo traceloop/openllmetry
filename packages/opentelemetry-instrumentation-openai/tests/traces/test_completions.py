@@ -2,6 +2,7 @@ from unittest.mock import patch
 
 import httpx
 import pytest
+
 from opentelemetry.sdk._logs import LogData
 from opentelemetry.semconv._incubating.attributes import (
     event_attributes as EventAttributes,
@@ -9,8 +10,8 @@ from opentelemetry.semconv._incubating.attributes import (
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
-from opentelemetry.trace import StatusCode
 from opentelemetry.semconv_ai import SpanAttributes
+from opentelemetry.trace import StatusCode
 
 from .utils import assert_request_contains_tracecontext, spy_decorator
 
@@ -591,7 +592,7 @@ async def test_async_completion_streaming_with_events_with_content(
         "index": 0,
         "finish_reason": "length",
         "message": {
-            "content": " that isn’t about collecting logs\n\nJ) Some of these folks helped bring the",
+            "content": " that isn't about collecting logs\n\nJ) Some of these folks helped bring the",
         },
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)

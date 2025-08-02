@@ -1,5 +1,6 @@
 import lancedb
 import pytest
+
 from opentelemetry.semconv_ai import SpanAttributes
 
 db = lancedb.connect("data/sample-lancedb")

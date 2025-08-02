@@ -1,4 +1,5 @@
 from llama_index.core.base.llms.types import MessageRole
+
 from opentelemetry.instrumentation.llamaindex.utils import (
     dont_throw,
     should_send_prompts,

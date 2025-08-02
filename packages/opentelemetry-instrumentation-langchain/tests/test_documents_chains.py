@@ -4,6 +4,7 @@ import pytest
 from langchain.chains.summarize import load_summarize_chain
 from langchain.text_splitter import CharacterTextSplitter
 from langchain_cohere import ChatCohere
+
 from opentelemetry.sdk._logs import LogData
 from opentelemetry.semconv._incubating.attributes import (
     event_attributes as EventAttributes,
@@ -31,7 +32,7 @@ INPUT_TEXT = """
     Other popular routes on the mountain include the Italian (Lion) ridge (AD+ Difficulty
     rating) and the Zmutt ridge (D Difficulty rating). The four faces, as well as the
     Furggen ridge, constitute the most challenging routes to the summit. The north face
-    is amongst the six most difficult faces of the Alps, as well as ‘The Trilogy’, the
+    is amongst the six most difficult faces of the Alps, as well as 'The Trilogy', the
     three hardest of the six, along with the north faces of the Eiger and the Grandes
     Jorasses (TD+ Difficulty rating).
 """
@@ -52,11 +53,9 @@ def test_sequential_chain(instrument_legacy, span_exporter, log_exporter):
 
     spans = span_exporter.get_finished_spans()
 
-    assert [
-        "ChatCohere.chat",
+    assert [span.name for span in spans] == ["ChatCohere.chat",
         "LLMChain.task",
-        "stuff_chain.workflow",
-    ] == [span.name for span in spans]
+        "stuff_chain.workflow",]
 
     stuff_span = next(span for span in spans if span.name == "stuff_chain.workflow")
 
@@ -89,11 +88,9 @@ def test_sequential_chain_with_events_with_content(
 
     spans = span_exporter.get_finished_spans()
 
-    assert [
-        "ChatCohere.chat",
+    assert [span.name for span in spans] == ["ChatCohere.chat",
         "LLMChain.task",
-        "stuff_chain.workflow",
-    ] == [span.name for span in spans]
+        "stuff_chain.workflow",]
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2
@@ -135,11 +132,9 @@ def test_sequential_chain_with_events_with_no_content(
 
     spans = span_exporter.get_finished_spans()
 
-    assert [
-        "ChatCohere.chat",
+    assert [span.name for span in spans] == ["ChatCohere.chat",
         "LLMChain.task",
-        "stuff_chain.workflow",
-    ] == [span.name for span in spans]
+        "stuff_chain.workflow",]
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2

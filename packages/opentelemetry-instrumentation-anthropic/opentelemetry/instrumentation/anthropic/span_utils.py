@@ -1,6 +1,6 @@
 import json
 import logging
-from typing import Any, Dict
+from typing import Any
 
 from opentelemetry.instrumentation.anthropic.config import Config
 from opentelemetry.instrumentation.anthropic.utils import (
@@ -17,17 +17,14 @@ from opentelemetry.semconv_ai import SpanAttributes
 logger = logging.getLogger(__name__)
 
 
-def _is_base64_image(item: Dict[str, Any]) -> bool:
+def _is_base64_image(item: dict[str, Any]) -> bool:
     if not isinstance(item, dict):
         return False
 
     if not isinstance(item.get("source"), dict):
         return False
 
-    if item.get("type") != "image" or item["source"].get("type") != "base64":
-        return False
-
-    return True
+    return not (item.get("type") != "image" or item["source"].get("type") != "base64")
 
 
 async def _process_image_item(item, trace_id, span_id, message_index, content_index):
@@ -48,7 +45,7 @@ async def _dump_content(message_index, content, span):
     elif isinstance(content, list):
         # If the content is a list of text blocks, concatenate them.
         # This is more commonly used in prompt caching.
-        if all([model_as_dict(item).get("type") == "text" for item in content]):
+        if all(model_as_dict(item).get("type") == "text" for item in content):
             return "".join([model_as_dict(item).get("text") for item in content])
 
         content = [

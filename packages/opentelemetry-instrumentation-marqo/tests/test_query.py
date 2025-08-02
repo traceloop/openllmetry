@@ -1,5 +1,6 @@
 import marqo
 import pytest
+
 from opentelemetry.semconv_ai import Events, SpanAttributes
 
 mq = marqo.Client(url="http://localhost:8882")

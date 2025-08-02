@@ -4,6 +4,7 @@ import os
 
 import pytest
 from groq import AsyncGroq, Groq
+
 from opentelemetry.instrumentation.groq import GroqInstrumentor
 from opentelemetry.instrumentation.groq.utils import TRACELOOP_TRACE_CONTENT
 from opentelemetry.sdk._events import EventLoggerProvider

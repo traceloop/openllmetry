@@ -1,14 +1,14 @@
-from opentelemetry.instrumentation.chromadb.utils import dont_throw
-from opentelemetry.semconv.trace import SpanAttributes
+import itertools
+import json
 
 from opentelemetry import context as context_api
+from opentelemetry.instrumentation.chromadb.utils import dont_throw
 from opentelemetry.instrumentation.utils import (
     _SUPPRESS_INSTRUMENTATION_KEY,
 )
+from opentelemetry.semconv.trace import SpanAttributes
 from opentelemetry.semconv_ai import EventAttributes, Events
 from opentelemetry.semconv_ai import SpanAttributes as AISpanAttributes
-import itertools
-import json
 
 
 def _with_tracer_wrapper(func):
@@ -24,9 +24,8 @@ def _with_tracer_wrapper(func):
 
 
 def _set_span_attribute(span, name, value):
-    if value is not None:
-        if value != "":
-            span.set_attribute(name, value)
+    if value is not None and value != "":
+        span.set_attribute(name, value)
     return
 
 
@@ -191,7 +190,7 @@ def _set_segment_query_attributes(span, kwargs):
 
 @dont_throw
 def _add_segment_query_embeddings_events(span, kwargs):
-    for i, embeddings in enumerate(kwargs.get("query_embeddings", [])):
+    for _i, embeddings in enumerate(kwargs.get("query_embeddings", [])):
         span.add_event(
             name=Events.DB_QUERY_EMBEDDINGS.value,
             attributes={

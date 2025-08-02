@@ -1,8 +1,12 @@
+import contextlib
 import json
 import logging
 import types
 from importlib.metadata import version
 
+import pydantic
+
+import openai
 from opentelemetry.instrumentation.openai.shared.config import Config
 from opentelemetry.instrumentation.openai.utils import (
     dont_throw,
@@ -14,8 +18,6 @@ from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
 from opentelemetry.semconv_ai import SpanAttributes
 from opentelemetry.trace.propagation import set_span_in_context
 from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
-import openai
-import pydantic
 
 OPENAI_LLM_USAGE_TOKEN_TYPES = ["prompt_tokens", "completion_tokens"]
 PROMPT_FILTER_KEY = "prompt_filter_results"
@@ -173,10 +175,8 @@ def _set_request_attributes(span, kwargs, instance=None):
             try:
                 schema = json.dumps(pydantic.TypeAdapter(response_format).json_schema())
             except Exception:
-                try:
+                with contextlib.suppress(Exception):
                     schema = json.dumps(response_format)
-                except Exception:
-                    pass
 
             if schema:
                 _set_span_attribute(
@@ -330,13 +330,9 @@ def _extract_model_name_from_provider_format(model_name):
 
 def is_streaming_response(response):
     if is_openai_v1():
-        return isinstance(response, openai.Stream) or isinstance(
-            response, openai.AsyncStream
-        )
+        return isinstance(response, (openai.Stream, openai.AsyncStream))
 
-    return isinstance(response, types.GeneratorType) or isinstance(
-        response, types.AsyncGeneratorType
-    )
+    return isinstance(response, (types.GeneratorType, types.AsyncGeneratorType))
 
 
 def model_as_dict(model):

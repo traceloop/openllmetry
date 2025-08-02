@@ -1,5 +1,6 @@
-import pytest
 import os
+
+import pytest
 from llama_parse import LlamaParse
 
 from opentelemetry.semconv_ai import SpanAttributes, TraceloopSpanKindValues

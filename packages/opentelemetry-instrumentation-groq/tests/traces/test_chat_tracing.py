@@ -1,4 +1,5 @@
 import pytest
+
 from opentelemetry.sdk._logs import LogData
 from opentelemetry.semconv._incubating.attributes import (
     event_attributes as EventAttributes,
@@ -206,9 +207,12 @@ async def test_async_chat_with_events_with_content(
         "index": 0,
         "finish_reason": "stop",
         "message": {
-            "content": "A joke about OpenTelemetry! Here's one:\n\nWhy did the OpenTelemetry agent go to therapy?\n\n"
-            'Because it was struggling to "trace" its emotions and "span" its feelings of frustration!\n\n(Sorry, '
-            'it\'s a bit of a " metrics"-al pun, but I hope it "counted" as a good joke!)'
+            "content": (
+                "A joke about OpenTelemetry! Here's one:\n\nWhy did the OpenTelemetry "
+                "agent go to therapy?\n\nBecause it was struggling to \"trace\" its "
+                "emotions and \"span\" its feelings of frustration!\n\n(Sorry, it's a "
+                'bit of a " metrics"-al pun, but I hope it "counted" as a good joke!)'
+            )
         },
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
@@ -337,9 +341,13 @@ def test_chat_streaming_with_events_with_content(
         "index": 0,
         "finish_reason": "stop",
         "message": {
-            "content": "A joke about OpenTelemetry!\n\nWhy did the OpenTelemetry Span go to therapy?\n\nBecause it "
-            'was feeling "traced" out and needed to "inject" some self-care into its life!\n\n(Sorry, it\'s a bit of '
-            'a " instrumentation"-ally-challenged joke, but I hope it "exposes" a smile on your face!)'
+            "content": (
+                "A joke about OpenTelemetry!\n\nWhy did the OpenTelemetry Span go to "
+                "therapy?\n\nBecause it was feeling \"traced\" out and needed to "
+                "\"inject\" some self-care into its life!\n\n(Sorry, it's a bit of "
+                'a " instrumentation"-ally-challenged joke, but I hope it "exposes" '
+                'a smile on your face!)'
+            )
         },
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)

@@ -1,5 +1,6 @@
 import pytest
 from aleph_alpha_client import CompletionRequest, Prompt
+
 from opentelemetry.sdk._logs import LogData
 from opentelemetry.semconv._incubating.attributes import (
     event_attributes as EventAttributes,

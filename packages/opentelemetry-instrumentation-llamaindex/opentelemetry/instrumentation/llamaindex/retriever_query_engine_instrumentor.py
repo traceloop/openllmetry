@@ -1,6 +1,8 @@
 from importlib.metadata import PackageNotFoundError
 from importlib.metadata import version as package_version
 
+from wrapt import wrap_function_wrapper
+
 from opentelemetry.context import attach, set_value
 from opentelemetry.instrumentation.llamaindex.utils import (
     _with_tracer_wrapper,
@@ -9,7 +11,6 @@ from opentelemetry.instrumentation.llamaindex.utils import (
     start_as_current_span_async,
 )
 from opentelemetry.semconv_ai import SpanAttributes, TraceloopSpanKindValues
-from wrapt import wrap_function_wrapper
 
 V9_MODULE_NAME = "llama_index.query_engine.retriever_query_engine"
 V10_MODULE_NAME = "llama_index.core.query_engine.retriever_query_engine"

@@ -1,4 +1,6 @@
-from typing import Collection
+from collections.abc import Collection
+
+from wrapt import wrap_function_wrapper
 
 from opentelemetry._events import get_event_logger
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
@@ -22,7 +24,6 @@ from opentelemetry.metrics import get_meter
 from opentelemetry.semconv._incubating.metrics import gen_ai_metrics as GenAIMetrics
 from opentelemetry.semconv_ai import Meters
 from opentelemetry.trace import get_tracer
-from wrapt import wrap_function_wrapper
 
 _instruments = ("openai >= 0.27.0", "openai < 1.0.0")
 

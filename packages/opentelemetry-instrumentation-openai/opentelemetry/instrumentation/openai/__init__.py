@@ -1,9 +1,9 @@
-from typing import Callable, Collection, Optional
+from collections.abc import Collection, Coroutine
+from typing import Callable, Optional
 
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.instrumentation.openai.shared.config import Config
 from opentelemetry.instrumentation.openai.utils import is_openai_v1
-from typing_extensions import Coroutine
 
 _instruments = ("openai >= 0.27.0",)
 

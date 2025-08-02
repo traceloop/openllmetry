@@ -1,10 +1,15 @@
 """OpenTelemetry Anthropic instrumentation"""
 
+import contextlib
 import logging
 import os
 import time
-from typing import Callable, Collection, Optional
+from collections.abc import Collection, Coroutine
+from typing import Callable, Optional
 
+from wrapt import wrap_function_wrapper
+
+from anthropic._streaming import AsyncStream, Stream
 from opentelemetry import context as context_api
 from opentelemetry._events import EventLogger, get_event_logger
 from opentelemetry.instrumentation.anthropic.config import Config
@@ -42,10 +47,6 @@ from opentelemetry.semconv_ai import (
 )
 from opentelemetry.trace import Span, SpanKind, Tracer, get_tracer
 from opentelemetry.trace.status import Status, StatusCode
-from typing_extensions import Coroutine
-from wrapt import wrap_function_wrapper
-
-from anthropic._streaming import AsyncStream, Stream
 
 logger = logging.getLogger(__name__)
 
@@ -95,7 +96,7 @@ WRAPPED_AMETHODS = [
 
 
 def is_streaming_response(response):
-    return isinstance(response, Stream) or isinstance(response, AsyncStream)
+    return isinstance(response, (Stream, AsyncStream))
 
 
 @dont_throw
@@ -104,10 +105,13 @@ async def _aset_token_usage(
     anthropic,
     request,
     response,
-    metric_attributes: dict = {},
+    metric_attributes: Optional[dict] = None,
     token_histogram: Histogram = None,
     choice_counter: Counter = None,
 ):
+    if metric_attributes is None:
+        metric_attributes = {}
+    
     if not isinstance(response, dict):
         response = response.__dict__
 
@@ -197,10 +201,13 @@ def _set_token_usage(
     anthropic,
     request,
     response,
-    metric_attributes: dict = {},
+    metric_attributes: Optional[dict] = None,
     token_histogram: Histogram = None,
     choice_counter: Counter = None,
 ):
+    if metric_attributes is None:
+        metric_attributes = {}
+    
     if not isinstance(response, dict):
         response = response.__dict__
 
@@ -620,7 +627,7 @@ class AnthropicInstrumentor(BaseInstrumentor):
             wrap_object = wrapped_method.get("object")
             wrap_method = wrapped_method.get("method")
 
-            try:
+            with contextlib.suppress(ModuleNotFoundError):
                 wrap_function_wrapper(
                     wrap_package,
                     f"{wrap_object}.{wrap_method}",
@@ -634,14 +641,12 @@ class AnthropicInstrumentor(BaseInstrumentor):
                         wrapped_method,
                     ),
                 )
-            except ModuleNotFoundError:
-                pass  # that's ok, we don't want to fail if some methods do not exist
 
         for wrapped_method in WRAPPED_AMETHODS:
             wrap_package = wrapped_method.get("package")
             wrap_object = wrapped_method.get("object")
             wrap_method = wrapped_method.get("method")
-            try:
+            with contextlib.suppress(ModuleNotFoundError):
                 wrap_function_wrapper(
                     wrap_package,
                     f"{wrap_object}.{wrap_method}",
@@ -655,8 +660,6 @@ class AnthropicInstrumentor(BaseInstrumentor):
                         wrapped_method,
                     ),
                 )
-            except ModuleNotFoundError:
-                pass  # that's ok, we don't want to fail if some methods do not exist
 
     def _uninstrument(self, **kwargs):
         for wrapped_method in WRAPPED_METHODS:
