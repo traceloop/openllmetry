@@ -181,3 +181,6 @@ chroma.sqlite3
 # Claude Code files
 CLAUDE.md
 .claude/
+
+# VSCode
+.vscode/
