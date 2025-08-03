@@ -9,7 +9,7 @@ if TYPE_CHECKING:
 
 class Row(DatasetBaseModel):
     id: str
-    index: int = Field(alias="rowIndex")
+    row_index: int = Field(alias="rowIndex")
     values: Dict[str, Any]
     dataset_id: str
     _client: Optional["Dataset"] = PrivateAttr(default=None)

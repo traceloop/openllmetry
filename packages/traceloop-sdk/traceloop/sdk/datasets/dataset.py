@@ -52,13 +52,13 @@ class Dataset(DatasetBaseModel):
             for row_data in rows_with_names
         ]
     
-    def _create_columns(self, raw_columns: List[ColumnDefinition]):
+    def _create_columns(self, raw_columns: Dict[str, ColumnDefinition]):
             """Create Column objects from API response which includes column IDs"""
             for column_id, column_def in raw_columns.items():
                 column = Column(
                     id=column_id,
-                    name=column_def["name"],
-                    type=column_def["type"],
+                    name=column_def.name,
+                    type=column_def.type,
                     dataset_id=self.id,
                     _client=self
                 )
@@ -68,7 +68,7 @@ class Dataset(DatasetBaseModel):
         for _, row_obj in enumerate(raw_rows):
             row = Row(
                 id=row_obj.id,
-                index=row_obj.rowIndex,
+                row_index=row_obj.rowIndex,
                 values=row_obj.values,
                 dataset_id=self.id,
                 _client=self
@@ -111,14 +111,10 @@ class Dataset(DatasetBaseModel):
         
         validated_data = DatasetFullData(**result)
         
-        dataset = Dataset(
-            id=validated_data.id,
-            slug=validated_data.slug,
-            name=validated_data.name,
-            description=validated_data.description,
-            created_at=validated_data.created_at,
-            updated_at=validated_data.updated_at
-        )
+        # Extract the fields needed for Dataset construction, excluding columns and rows
+        dataset_data = validated_data.model_dump(exclude={'columns', 'rows'})
+        dataset = Dataset(**dataset_data)
+        
         dataset._create_columns(validated_data.columns)
         dataset._create_rows(validated_data.rows)
         
