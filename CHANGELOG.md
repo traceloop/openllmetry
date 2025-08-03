@@ -1,3 +1,23 @@
+## v0.44.0 (2025-08-03)
+
+### Feat
+
+- **sdk**: support multiple span processors (#3207)
+- **semantic-conentions-ai**: add LLMVendor enum to semantic conventions (#3170)
+
+### Fix
+
+- **langchain**: spans dictionary memory leak (#3216)
+- **openai-agents**: use framework's context to infer trace (#3215)
+- **sdk**: respect truncation otel environment variable (#3212)
+- **anthropic**: async stream manager (#3220)
+- **langchain**: populate metadata as span attributes in batch operations (#3218)
+- **anthropic**: various fixes around tools parsing (#3204)
+- **qdrant**: fix qdrant-client auto instrumentation condition (#3208)
+- **instrumentation**: remove param `enrich_token_usage` and simplify token calculation (#3205)
+- **langchain**: ensure llm spans are created for sync cases (#3201)
+- **openai**: support for openai non-consumed streams (#3155)
+
 ## v0.43.1 (2025-07-23)
 
 ### Fix
