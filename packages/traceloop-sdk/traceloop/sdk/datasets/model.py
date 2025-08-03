@@ -64,6 +64,7 @@ class RowObject(BaseModel):
 
 class CreateRowsResponse(BaseModel):
     rows: List[RowObject]
+    total: int
 
 
 class UpdateRowInput(BaseModel):

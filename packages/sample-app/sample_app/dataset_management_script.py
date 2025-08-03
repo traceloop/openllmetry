@@ -52,22 +52,13 @@ def get_dataset_by_slug(slug: str) -> Dataset:
         print(f"Error retrieving dataset: {e}")
         raise
 
-def add_row(dataset: Dataset, row_data: Dict[str, Any]) -> Row:
+def add_rows(dataset: Dataset, row_data: Dict[str, Any]) -> Row:
     """Add a new row to the dataset"""
     print(f"Adding row: {row_data}")
     
     try:
-        # Convert column names to column IDs
-        row_with_ids = {}
-        for col_name, value in row_data.items():
-            column = next((col for col in dataset.columns if col.name == col_name), None)
-            if column:
-                row_with_ids[column.id] = value
-            else:
-                print(f"Warning: Column '{col_name}' not found in dataset")
-        
         # Add row via API
-        rows_response = dataset.add_rows(dataset.slug, [row_with_ids])
+        rows_response = dataset.add_rows([row_data])
         
         # Create Row object and add to dataset
         if rows_response.rows:
@@ -226,12 +217,12 @@ def main():
         dataset = get_dataset_by_slug(slug)
         print_dataset_info(dataset)
         
-        # # Example row operations
-        # print("\n=== Example Operations ===")
+        # Example row operations
+        print("\n=== Example Operations ===")
         
-        # # Add a new row
-        # new_row_data = {"name": "New Employee", "age": 25, "city": "Austin", "salary": 80000}
-        # add_row(dataset, new_row_data)
+        # Add a new row
+        new_row_data = {"cmdvki9zv003801vv1idaywus": "New Employee", "cmdvki9zv003901vv5zr5i24b": 25, "cmdvki9zv003a01vvvqqlytpr": True, "cmdvki9zv003b01vvmk3d22km": "hi"}
+        add_rows(dataset, new_row_data)
         
         # # Add a new column
         # add_column(dataset, "department", ColumnType.STRING)

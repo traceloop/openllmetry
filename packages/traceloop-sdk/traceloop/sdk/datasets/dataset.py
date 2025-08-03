@@ -29,6 +29,10 @@ class Dataset(DatasetBaseModel):
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
     _http: Optional[HTTPClient] = PrivateAttr(default=None)
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._http = self._get_http_client()
     
     def _get_http_client(self) -> HTTPClient:
         """Get or create HTTP client instance"""
@@ -97,7 +101,7 @@ class Dataset(DatasetBaseModel):
 
     @classmethod
     def delete_by_slug(cls, slug: str) -> None:
-        """Delete dataset by ID without requiring an instance"""
+        """Delete dataset by slug without requiring an instance"""
         result = cls._get_http_client_static().post(f"projects/default/datasets/{slug}/delete", {})
         if result is None:
             raise Exception(f"Failed to delete dataset {slug}")
@@ -240,7 +244,7 @@ class Dataset(DatasetBaseModel):
         """Create new dataset"""
         data = input.model_dump()
         
-        result = self._get_http_client().post("projects/default/datasets", data)
+        result = self._http.post("projects/default/datasets", data)
         
         if result is None:
             raise Exception("Failed to create dataset")
@@ -253,16 +257,9 @@ class Dataset(DatasetBaseModel):
 
         return response
 
-    def get_dataset_api(self, dataset_id: str) -> Dict[str, Any]:
-        """Retrieve dataset by ID"""
-        result = self._get_http_client().get(f"datasets/{dataset_id}")
-        if result is None:
-            raise Exception(f"Failed to get dataset {dataset_id}")
-        return result
-
     def get_all_datasets_api(self) -> List[Dict[str, Any]]:
         """List all datasets"""
-        result = self._get_http_client().get("datasets")
+        result = self._http.get("datasets")
         if result is None:
             raise Exception("Failed to get datasets")
         return result.get("datasets", [])
@@ -271,7 +268,7 @@ class Dataset(DatasetBaseModel):
         """Delete dataset"""
         # Assuming DELETE method exists in HTTPClient (would need to add)
         # For now, we'll use a POST with delete action
-        result = self._get_http_client().post(f"datasets/{dataset_id}/delete", {})
+        result = self._http.post(f"datasets/{dataset_id}/delete", {})
         if result is None:
             raise Exception(f"Failed to delete dataset {dataset_id}")
 
@@ -284,35 +281,38 @@ class Dataset(DatasetBaseModel):
         if config:
             data["config"] = config
         
-        result = self._get_http_client().post(f"datasets/{dataset_id}/columns", data)
+        result = self._http.post(f"datasets/{dataset_id}/columns", data)
         if result is None:
             raise Exception(f"Failed to add column to dataset {dataset_id}")
         return result
 
     def update_column_api(self, dataset_id: str, column_id: str, **kwargs) -> Dict[str, Any]:
         """Update column properties"""
-        result = self._get_http_client().post(f"datasets/{dataset_id}/columns/{column_id}", kwargs)
+        result = self._http.post(f"datasets/{dataset_id}/columns/{column_id}", kwargs)
         if result is None:
             raise Exception(f"Failed to update column {column_id}")
         return result
 
     def delete_column_api(self, dataset_id: str, column_id: str) -> None:
         """Delete column"""
-        result = self._get_http_client().post(f"datasets/{dataset_id}/columns/{column_id}/delete", {})
+        result = self._http.post(f"datasets/{dataset_id}/columns/{column_id}/delete", {})
         if result is None:
             raise Exception(f"Failed to delete column {column_id}")
 
-    def add_rows(self, dataset_slug: str, rows: List[ValuesMap]) -> CreateRowsResponse:
+    def add_rows(self, rows: List[ValuesMap]) -> CreateRowsResponse:
         """Add rows to dataset"""
         data = {"rows": rows}
-        result = self._get_http_client().post(f"projects/default/datasets/{dataset_slug}/rows", data)
+        result = self._http.post(f"projects/default/datasets/{self.slug}/rows", data)
         if result is None:
-            raise Exception(f"Failed to add row to dataset {dataset_slug}")
-        return CreateRowsResponse(**result)
+            raise Exception(f"Failed to add row to dataset {self.slug}")
+        
+        response = CreateRowsResponse(**result)
+        self._create_rows(response.rows)
+        return response
 
-    def delete_row_api(self, dataset_id: str, row_id: str) -> None:
+    def delete_row(self, row_id: str) -> None:
         """Delete row"""
-        result = self._get_http_client().post(f"datasets/{dataset_id}/rows/{row_id}/delete", {})
+        result = self._get_http_client().post(f"projects/default/datasets/{self.slug}/rows/{row_id}/delete", {})
         if result is None:
             raise Exception(f"Failed to delete row {row_id}")
 
