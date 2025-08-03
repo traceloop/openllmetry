@@ -234,6 +234,11 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         _set_span_attribute(span, SpanAttributes.TRACELOOP_WORKFLOW_NAME, workflow_name)
         _set_span_attribute(span, SpanAttributes.TRACELOOP_ENTITY_PATH, entity_path)
 
+        # Set metadata as span attributes if available
+        if metadata is not None:
+            for key, value in sanitized_metadata.items():
+                _set_span_attribute(span, f"{SpanAttributes.TRACELOOP_ASSOCIATION_PROPERTIES}.{key}", value)
+
         self.spans[run_id] = SpanHolder(
             span, token, None, [], workflow_name, entity_name, entity_path
         )
