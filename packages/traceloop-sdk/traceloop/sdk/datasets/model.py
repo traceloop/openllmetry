@@ -71,7 +71,8 @@ class DatasetMetadata(BaseModel):
     slug: str
     name: str
     description: Optional[str] = None
-    last_version: Optional[str] = None
-    created_at: Optional[datetime.datetime] = None
-    updated_at: Optional[datetime.datetime] = None
+    last_version: Optional[str] = Field(default=None, alias="lastVersion")
+    columns: List[ColumnDefinition]
+    created_at: Optional[datetime.datetime] = Field(default=None, alias="createdAt")
+    updated_at: Optional[datetime.datetime] = Field(default=None, alias="updatedAt")
 
