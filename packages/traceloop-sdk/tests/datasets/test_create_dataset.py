@@ -1,61 +1,3 @@
-def create_dataset_response(price_type="string", in_stock_type="string"):
-    """Generate dataset response with configurable column types"""
-    return {
-        "id": "cmdvei5dd000g01vvyftz2zv1",
-        "orgId": "c108269c-cf1e-4ac6-a7e4-5a456cc9fdb7",
-        "projectId": "cm9v2g95l0011z613sv851kwd",
-        "slug": "daatset-12",
-        "name": "Dataset",
-        "description": "Dataset Description",
-        "columns": {
-            "cmdvei5dd000d01vv2yvmp7vt": {
-                "name": "Name",
-                "type": "string"
-            },
-            "cmdvei5dd000e01vvz0eb5kz8": {
-                "name": "Price",
-                "type": price_type
-            },
-            "cmdvei5dd000f01vv7aazk674": {
-                "name": "In Stock",
-                "type": in_stock_type
-            }
-        },
-        "lastVersion": None,
-        "createdAt": "2025-08-03T08:09:53.329521779Z",
-        "updatedAt": "2025-08-03T08:09:53.329522049Z"
-    }
-
-create_rows_response_json = """
-{
-    "rows": [
-        {
-            "id": "row_1_id",
-            "rowIndex": 1,
-            "values": {
-                "cmdvei5dd000d01vv2yvmp7vt": "Laptop",
-                "cmdvei5dd000e01vvz0eb5kz8": 999.99,
-                "cmdvei5dd000f01vv7aazk674": true
-            },
-            "created_at": "2025-08-03T08:10:00.000Z",
-            "updated_at": "2025-08-03T08:10:00.000Z"
-        },
-        {
-            "id": "row_2_id",
-            "rowIndex": 2,
-            "values": {
-                "cmdvei5dd000d01vv2yvmp7vt": "Mouse",
-                "cmdvei5dd000e01vvz0eb5kz8": 29.99,
-                "cmdvei5dd000f01vv7aazk674": false
-            },
-            "created_at": "2025-08-03T08:10:00.000Z",
-            "updated_at": "2025-08-03T08:10:00.000Z"
-        }
-    ],
-    "total": 2
-}
-"""
-
 import json
 import pytest
 import tempfile
@@ -63,7 +5,7 @@ import os
 import pandas as pd
 from unittest.mock import patch, MagicMock
 from traceloop.sdk.datasets.dataset import Dataset
-
+from .mock_response import create_dataset_response, create_rows_response_json
 
 @patch.dict("os.environ", {"TRACELOOP_API_KEY": "test-api-key"})
 def test_create_dataset_from_csv():

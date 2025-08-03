@@ -19,7 +19,7 @@ class Row(DatasetBaseModel):
         if self._client is None:
             from .dataset import Dataset
             self._client = Dataset()
-        self._client.delete_row_api(self.dataset_id, self.id)
+        self._client.delete_row(self.dataset_id, self.id)
 
     def update(self, values: Dict[str, Any]) -> None:
         """Update this row's values"""
