@@ -3,10 +3,10 @@ from pydantic import BaseModel, ConfigDict
 
 
 class ColumnType(str, Enum):
-    STRING = "STRING"
-    BOOLEAN = "BOOLEAN"
-    NUMBER = "NUMBER"
-    JSON = "JSON"
+    STRING = "string"
+    BOOLEAN = "boolean"
+    NUMBER = "number"
+    JSON = "json"
 
 
 class DatasetBaseModel(BaseModel):

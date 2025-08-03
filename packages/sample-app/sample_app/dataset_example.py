@@ -42,20 +42,7 @@ def dataset_from_csv_example():
             description="Sample employee data for demonstration"
         )
         
-        print(f"Created dataset: {dataset.name}")
-        print(f"Dataset ID: {dataset.id}")
-        print(f"Number of columns: {len(dataset.columns)}")
-        print(f"Number of rows: {len(dataset.rows)}")
-        
-        # Display column information
-        print("\nColumns:")
-        for col in dataset.columns:
-            print(f"  - {col.name} ({col.type})")
-        
-        # Display first few rows
-        print("\nFirst 3 rows:")
-        for i, row in enumerate(dataset.rows[:3]):
-            print(f"  Row {i+1}: {row.values}")
+        print(f"Create dataset response: {dataset.model_dump_json()}")
             
     except Exception as e:
         print(f"Error creating dataset from CSV: {e}")
@@ -128,11 +115,11 @@ def main():
     # Run CSV example
     dataset_from_csv_example()
     
-    # Run DataFrame example
-    dataset_from_dataframe_example()
+    # # Run DataFrame example
+    # dataset_from_dataframe_example()
     
-    # Run manual example
-    manual_dataset_example()
+    # # Run manual example
+    # manual_dataset_example()
     
     print("\n" + "=" * 50)
     print("Examples completed!")
