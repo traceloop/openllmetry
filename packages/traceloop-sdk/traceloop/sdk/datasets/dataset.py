@@ -6,7 +6,7 @@ from pydantic import Field, PrivateAttr
 import pandas as pd 
 import os
 
-from traceloop.sdk.datasets.model import ColumnDefinition, ValuesMap, CreateDatasetRequest, CreateDatasetResponse, CreateRowsResponse, ColumnType, DatasetMetadata, RowObject
+from traceloop.sdk.datasets.model import ColumnDefinition, ValuesMap, CreateDatasetRequest, CreateDatasetResponse, CreateRowsResponse, ColumnType, DatasetMetadata, RowObject, DatasetFullData
 from .base import DatasetBaseModel
 from .column import Column
 from .row import Row
@@ -19,15 +19,15 @@ class Dataset(DatasetBaseModel):
     Dataset class dataset API communication
     """
     id: Optional[str] = Field(default=None, alias="id")
-    name: str
+    name: Optional[str] = None
     slug: str
     description: Optional[str] = None
     columns_definition: Optional[List[ColumnDefinition]] = Field(default_factory=list)
-    columns: List[Column] = Field(default_factory=list)
-    rows: List[Row] = Field(default_factory=list)
+    columns: Optional[List[Column]] = Field(default_factory=list)
+    rows: Optional[List[Row]] = Field(default_factory=list)
     last_version: Optional[str] = None
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
+    created_at: datetime
+    updated_at: datetime
     _http: Optional[HTTPClient] = PrivateAttr(default=None)
     
     def _get_http_client(self) -> HTTPClient:
@@ -67,9 +67,9 @@ class Dataset(DatasetBaseModel):
     def _create_rows(self, raw_rows: List[RowObject]):
         for _, row_obj in enumerate(raw_rows):
             row = Row(
-                id=row_obj["id"],
-                index=row_obj["row_index"],
-                values=row_obj["values"],
+                id=row_obj.id,
+                index=row_obj.rowIndex,
+                values=row_obj.values,
                 dataset_id=self.id,
                 _client=self
             )
@@ -109,17 +109,18 @@ class Dataset(DatasetBaseModel):
         if result is None:  
             raise Exception(f"Failed to get dataset {slug}")
         
+        validated_data = DatasetFullData(**result)
+        
         dataset = Dataset(
-            id=result.get("id"),
-            name=result.get("name"),
-            slug=result.get("slug"),
-            description=result.get("description"),
-            last_version=result.get("lastVersion"),
-            created_at=result.get("createdAt"),
-            updated_at=result.get("updatedAt")
+            id=validated_data.id,
+            slug=validated_data.slug,
+            name=validated_data.name,
+            description=validated_data.description,
+            created_at=validated_data.created_at,
+            updated_at=validated_data.updated_at
         )
-        dataset._create_columns(result.get("columns", []))
-        dataset._create_rows(result.get("rows", []))
+        dataset._create_columns(validated_data.columns)
+        dataset._create_rows(validated_data.rows)
         
         return dataset
 
