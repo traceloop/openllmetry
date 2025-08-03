@@ -6,7 +6,7 @@ from typing import List, Optional, Dict, Any
 
 class ColumnType(str, Enum):
     STRING = "string"
-    NUMBER = "number"
+    INTEGER = "integer"
     BOOLEAN = "boolean"
     JSON = "json"
 
@@ -15,20 +15,23 @@ class ColumnDefinition(BaseModel):
     name: str
     type: ColumnType
 
+
 class CreateDatasetRequest(BaseModel):
     slug: str
     name: Optional[str] = None
     description: Optional[str] = None
     columns: Optional[List[ColumnDefinition]] = None
 
+
 class CreateDatasetResponse(BaseModel):
     id: str
     slug: str
     name: str
     description: Optional[str] = None
-    columns: Optional[List[ColumnDefinition]] = None
-    created_at: datetime
-    updated_at: datetime
+    columns: Dict[str, ColumnDefinition]
+    lastVersion: Optional[str] = None
+    createdAt: datetime.datetime
+    updatedAt: datetime.datetime
 
 
 ValuesMap = Dict[str, Any]
@@ -51,6 +54,13 @@ class UpdateColumnInput(BaseModel):
 
 class CreateRowsInput(BaseModel):
     rows: List[ValuesMap]
+
+class RowObject(BaseModel):
+    id: str
+    values: ValuesMap
+
+class CreateRowsResponse(BaseModel):
+    rows: List[RowObject]
 
 
 class UpdateRowInput(BaseModel):
