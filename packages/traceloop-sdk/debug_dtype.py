@@ -12,10 +12,11 @@ print(f"is_numeric_dtype: {pd.api.types.is_numeric_dtype(df['in_stock'].dtype)}"
 
 # Test the logic from the code
 dtype = df['in_stock'].dtype
-if pd.api.types.is_numeric_dtype(dtype):
-    col_type = "NUMBER"
-elif pd.api.types.is_bool_dtype(dtype):
+
+if pd.api.types.is_bool_dtype(dtype):
     col_type = "BOOLEAN"
+elif pd.api.types.is_numeric_dtype(dtype):
+    col_type = "NUMBER"
 else:
     col_type = "STRING"
 
