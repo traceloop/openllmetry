@@ -1,5 +1,6 @@
 from dataclasses import asdict
 from enum import Enum
+import json
 from typing import Optional, Union
 
 from opentelemetry._events import Event, EventLogger
@@ -127,8 +128,29 @@ def emit_streaming_response_events(
     event_logger: Optional[EventLogger], complete_response: dict
 ):
     for message in complete_response.get("events", []):
-        emit_event(
-            ChoiceEvent(
+        # Parse tool calls
+        if message.get("type") == "tool_use":
+            tool_calls = [
+                ToolCall(
+                    id=message.get("id"),
+                    function={
+                        "name": message.get("name"),
+                        "arguments": json.loads(message.get("input", '{}')),
+                    },
+                    type="function",
+                )
+            ]
+            event = ChoiceEvent(
+                index=message.get("index", 0),
+                message={
+                    "content": None,
+                    "role": message.get("role", "assistant"),
+                },
+                finish_reason=message.get("finish_reason", "unknown"),
+                tool_calls=tool_calls,
+            )
+        else:
+            event = ChoiceEvent(
                 index=message.get("index", 0),
                 message={
                     "content": {
@@ -138,9 +160,8 @@ def emit_streaming_response_events(
                     "role": message.get("role", "assistant"),
                 },
                 finish_reason=message.get("finish_reason", "unknown"),
-            ),
-            event_logger,
-        )
+            )
+        emit_event(event, event_logger)
 
 
 def emit_event(

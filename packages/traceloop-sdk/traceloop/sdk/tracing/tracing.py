@@ -567,7 +567,6 @@ def init_openai_instrumentor(
             instrumentor = OpenAIInstrumentor(
                 exception_logger=lambda e: Telemetry().log_exception(e),
                 enrich_assistant=should_enrich_metrics,
-                enrich_token_usage=should_enrich_metrics,
                 get_common_metrics_attributes=metrics_common_attributes,
                 upload_base64_image=base64_image_uploader,
             )
@@ -642,7 +641,7 @@ def init_pinecone_instrumentor():
 
 def init_qdrant_instrumentor():
     try:
-        if is_package_installed("qdrant_client"):
+        if is_package_installed("qdrant_client") or is_package_installed("qdrant-client"):
             Telemetry().capture("instrumentation:qdrant:init")
             from opentelemetry.instrumentation.qdrant import QdrantInstrumentor
 
@@ -912,7 +911,6 @@ def init_sagemaker_instrumentor(should_enrich_metrics: bool):
 
             instrumentor = SageMakerInstrumentor(
                 exception_logger=lambda e: Telemetry().log_exception(e),
-                enrich_token_usage=should_enrich_metrics,
             )
             if not instrumentor.is_instrumented_by_opentelemetry:
                 instrumentor.instrument()
