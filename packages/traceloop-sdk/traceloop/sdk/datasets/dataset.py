@@ -26,8 +26,8 @@ class Dataset(DatasetBaseModel):
     columns: Optional[List[Column]] = Field(default_factory=list)
     rows: Optional[List[Row]] = Field(default_factory=list)
     last_version: Optional[str] = None
-    created_at: datetime
-    updated_at: datetime
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
     _http: Optional[HTTPClient] = PrivateAttr(default=None)
     
     def _get_http_client(self) -> HTTPClient:
