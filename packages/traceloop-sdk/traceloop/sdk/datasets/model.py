@@ -66,4 +66,12 @@ class CreateRowsResponse(BaseModel):
 class UpdateRowInput(BaseModel):
     values: ValuesMap
 
+class DatasetMetadata(BaseModel):
+    id: str
+    slug: str
+    name: str
+    description: Optional[str] = None
+    last_version: Optional[str] = None
+    created_at: Optional[datetime.datetime] = None
+    updated_at: Optional[datetime.datetime] = None
 
