@@ -188,66 +188,17 @@ class TracerWrapper(object):
         self.flush()
 
     def _span_processor_on_start(self, span, parent_context):
-        workflow_name = get_value("workflow_name")
-        if workflow_name is not None:
-            span.set_attribute(SpanAttributes.TRACELOOP_WORKFLOW_NAME, workflow_name)
+        default_span_processor_on_start(span, parent_context)
 
-        entity_path = get_value("entity_path")
-        if entity_path is not None:
-            span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_PATH, entity_path)
-
+        # TODO: this is here only because we need self to be able to access the content allow list
+        # we should refactor this to not need self
         association_properties = get_value("association_properties")
         if association_properties is not None:
-            _set_association_properties_attributes(span, association_properties)
-
             if not self.enable_content_tracing:
                 if self.__content_allow_list.is_allowed(association_properties):
                     attach(set_value("override_enable_content_tracing", True))
                 else:
                     attach(set_value("override_enable_content_tracing", False))
-
-        if is_llm_span(span):
-            managed_prompt = get_value("managed_prompt")
-            if managed_prompt is not None:
-                span.set_attribute(
-                    SpanAttributes.TRACELOOP_PROMPT_MANAGED, managed_prompt
-                )
-
-            prompt_key = get_value("prompt_key")
-            if prompt_key is not None:
-                span.set_attribute(SpanAttributes.TRACELOOP_PROMPT_KEY, prompt_key)
-
-            prompt_version = get_value("prompt_version")
-            if prompt_version is not None:
-                span.set_attribute(
-                    SpanAttributes.TRACELOOP_PROMPT_VERSION, prompt_version
-                )
-
-            prompt_version_name = get_value("prompt_version_name")
-            if prompt_version_name is not None:
-                span.set_attribute(
-                    SpanAttributes.TRACELOOP_PROMPT_VERSION_NAME, prompt_version_name
-                )
-
-            prompt_version_hash = get_value("prompt_version_hash")
-            if prompt_version_hash is not None:
-                span.set_attribute(
-                    SpanAttributes.TRACELOOP_PROMPT_VERSION_HASH, prompt_version_hash
-                )
-
-            prompt_template = get_value("prompt_template")
-            if prompt_template is not None:
-                span.set_attribute(
-                    SpanAttributes.TRACELOOP_PROMPT_TEMPLATE, prompt_template
-                )
-
-            prompt_template_variables = get_value("prompt_template_variables")
-            if prompt_template_variables is not None:
-                for key, value in prompt_template_variables.items():
-                    span.set_attribute(
-                        f"{SpanAttributes.TRACELOOP_PROMPT_TEMPLATE_VARIABLES}.{key}",
-                        value,
-                    )
 
     @staticmethod
     def set_static_params(
