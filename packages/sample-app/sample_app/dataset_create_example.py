@@ -77,35 +77,16 @@ def dataset_from_dataframe_example():
     except Exception as e:
         print(f"Error creating dataset from DataFrame: {e}")
 
-def manual_dataset_example():
-    """Demonstrate creating a dataset manually and adding columns/rows"""
-    print("\n=== Manual Dataset Creation Example ===")
-    
-    try:
-        # This would require a more complete implementation
-        # For now, we'll show the basic structure
-        print("Manual dataset creation would involve:")
-        print("1. Creating a Dataset instance")
-        print("2. Adding columns using add_column()")
-        print("3. Adding rows programmatically")
-        print("4. This requires additional API methods not shown in the current implementation")
-        
-    except Exception as e:
-        print(f"Error with manual dataset creation: {e}")
-
 def main():
     print("Traceloop Dataset Examples")
     print("=" * 50)
     
-    # # Run CSV example
-    # dataset_from_csv_example()
+    # Run CSV example
+    dataset_from_csv_example()
     
     # Run DataFrame example
     dataset_from_dataframe_example()
-    
-    # # Run manual example
-    # manual_dataset_example()
-    
+
     print("\n" + "=" * 50)
     print("Examples completed!")
 
