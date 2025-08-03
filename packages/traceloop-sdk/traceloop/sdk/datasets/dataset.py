@@ -6,7 +6,7 @@ from pydantic import Field, PrivateAttr
 import pandas as pd 
 import os
 
-from traceloop.sdk.datasets.model import ColumnDefinition, ValuesMap, CreateDatasetRequest, CreateDatasetResponse, CreateRowsResponse, ColumnType, DatasetMetadata
+from traceloop.sdk.datasets.model import ColumnDefinition, ValuesMap, CreateDatasetRequest, CreateDatasetResponse, CreateRowsResponse, ColumnType, DatasetMetadata, RowObject
 from .base import DatasetBaseModel
 from .column import Column
 from .row import Row
@@ -18,11 +18,11 @@ class Dataset(DatasetBaseModel):
     """
     Dataset class dataset API communication
     """
-    id: Optional[str] = None
+    id: Optional[str] = Field(default=None, alias="id")
     name: str
     slug: str
     description: Optional[str] = None
-    columns_definition: List[ColumnDefinition] = Field(default_factory=list)
+    columns_definition: Optional[List[ColumnDefinition]] = Field(default_factory=list)
     columns: List[Column] = Field(default_factory=list)
     rows: List[Row] = Field(default_factory=list)
     last_version: Optional[str] = None
@@ -52,24 +52,24 @@ class Dataset(DatasetBaseModel):
             for row_data in rows_with_names
         ]
     
-    def _create_columns(self, api_dataset: CreateDatasetResponse):
+    def _create_columns(self, raw_columns: List[ColumnDefinition]):
             """Create Column objects from API response which includes column IDs"""
-            for column_id, column_def in api_dataset.columns.items():
+            for column_id, column_def in raw_columns.items():
                 column = Column(
                     id=column_id,
-                    name=column_def.name,
-                    type=column_def.type,
+                    name=column_def["name"],
+                    type=column_def["type"],
                     dataset_id=self.id,
                     _client=self
                 )
                 self.columns.append(column)
     
-    def _create_rows(self, rows_response: CreateRowsResponse):
-        for _, row_obj in enumerate(rows_response.rows):
+    def _create_rows(self, raw_rows: List[RowObject]):
+        for _, row_obj in enumerate(raw_rows):
             row = Row(
-                id=row_obj.id,
-                index=row_obj.index,
-                values=row_obj.values,
+                id=row_obj["id"],
+                index=row_obj["row_index"],
+                values=row_obj["values"],
                 dataset_id=self.id,
                 _client=self
             )
@@ -109,9 +109,17 @@ class Dataset(DatasetBaseModel):
         if result is None:  
             raise Exception(f"Failed to get dataset {slug}")
         
-        dataset = Dataset(**result)
-        dataset._create_columns(result)
-        dataset._create_rows(result)
+        dataset = Dataset(
+            id=result.get("id"),
+            name=result.get("name"),
+            slug=result.get("slug"),
+            description=result.get("description"),
+            last_version=result.get("lastVersion"),
+            created_at=result.get("createdAt"),
+            updated_at=result.get("updatedAt")
+        )
+        dataset._create_columns(result.get("columns", []))
+        dataset._create_rows(result.get("rows", []))
         
         return dataset
 
@@ -159,13 +167,13 @@ class Dataset(DatasetBaseModel):
         
         dataset_response = dataset.create_dataset(CreateDatasetRequest(slug=slug, name=name, description=description, columns=columns_definition))
         
-        dataset._create_columns(dataset_response)
+        dataset._create_columns(dataset_response.columns)
         
         rows_with_ids = dataset._convert_rows_by_names_to_col_ids(rows_with_names)
         
         rows_response = dataset.add_rows(dataset_response.slug, rows_with_ids)
         
-        dataset._create_rows(rows_response)
+        dataset._create_rows(rows_response.rows)
         
         return dataset
 
@@ -204,13 +212,13 @@ class Dataset(DatasetBaseModel):
         
         dataset_response = dataset.create_dataset(CreateDatasetRequest(slug=slug, name=name, description=description, columns=columns_definition))
         
-        dataset._create_columns(dataset_response)
+        dataset._create_columns(dataset_response.columns)
         
         rows_with_ids = dataset._convert_rows_by_names_to_col_ids(df.to_dict(orient="records"))
         
         rows_response = dataset.add_rows(dataset_response.slug, rows_with_ids)
         
-        dataset._create_rows(rows_response)
+        dataset._create_rows(rows_response.rows)
         
         return dataset
 
