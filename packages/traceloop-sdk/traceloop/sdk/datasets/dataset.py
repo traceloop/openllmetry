@@ -35,8 +35,7 @@ class Dataset(DatasetBaseModel):
         if self._http is None:
             # Get API configuration from environment or defaults
             api_key = os.environ.get("TRACELOOP_API_KEY", "")
-            # api_endpoint = os.environ.get("TRACELOOP_BASE_URL", "https://api.traceloop.com")
-            api_endpoint = "http://localhost:3000"
+            api_endpoint = os.environ.get("TRACELOOP_BASE_URL", "https://api.traceloop.com")
             
             if not api_key:
                 raise ValueError("TRACELOOP_API_KEY environment variable is required")
@@ -65,9 +64,10 @@ class Dataset(DatasetBaseModel):
                 self.columns.append(column)
     
     def _create_rows(self, rows_response: CreateRowsResponse):
-        for row_obj in rows_response.rows:
+        for idx, row_obj in enumerate(rows_response.rows):
             row = Row(
                 id=row_obj.id,
+                index=idx,
                 values=row_obj.values,
                 dataset_id=self.id,
                 _client=self
@@ -141,10 +141,10 @@ class Dataset(DatasetBaseModel):
         columns_definition: List[ColumnDefinition] = []
         for col_name in df.columns:
             dtype = df[col_name].dtype
-            if pd.api.types.is_numeric_dtype(dtype):
-                col_type = ColumnType.NUMBER
-            elif pd.api.types.is_bool_dtype(dtype):
+            if pd.api.types.is_bool_dtype(dtype):
                 col_type = ColumnType.BOOLEAN
+            elif pd.api.types.is_numeric_dtype(dtype):
+                col_type = ColumnType.NUMBER
             else:
                 col_type = ColumnType.STRING
             

@@ -67,7 +67,7 @@ def dataset_from_dataframe_example():
         # Create dataset from DataFrame
         dataset = Dataset.from_dataframe(
             df=df,
-            slug="product-inventory",
+            slug="product-inventory-2",
             name="Product Inventory",
             description="Sample product inventory data"
         )
