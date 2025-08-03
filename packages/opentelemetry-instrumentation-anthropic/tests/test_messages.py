@@ -2463,3 +2463,380 @@ def assert_message_in_logs(log: LogData, event_name: str, expected_content: dict
     else:
         assert log.log_record.body
         assert dict(log.log_record.body) == expected_content
+
+
+@pytest.mark.vcr
+def test_anthropic_message_stream_manager_legacy(
+    instrument_legacy, anthropic_client, span_exporter, log_exporter, reader
+):
+    response_content = ""
+    with anthropic_client.messages.stream(
+        max_tokens=1024,
+        messages=[
+            {
+                "role": "user",
+                "content": "Tell me a joke about OpenTelemetry",
+            }
+        ],
+        model="claude-3-5-haiku-20241022",
+    ) as stream:
+        for event in stream:
+            if event.type == "content_block_delta" and event.delta.type == "text_delta":
+                response_content += event.delta.text
+
+    try:
+        anthropic_client.messages.create(
+            unknown_parameter="unknown",
+        )
+    except Exception:
+        pass
+
+    spans = span_exporter.get_finished_spans()
+    assert [span.name for span in spans] == [
+        "anthropic.chat",
+    ]
+    anthropic_span = spans[0]
+    assert (
+        anthropic_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
+        == "Tell me a joke about OpenTelemetry"
+    )
+    assert (anthropic_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"]) == "user"
+    assert (
+        anthropic_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
+        == response_content
+    )
+    assert (
+        anthropic_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.role")
+        == "assistant"
+    )
+    assert anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 17
+    assert (
+        anthropic_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS]
+        + anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS]
+        == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
+    )
+    assert (
+        anthropic_span.attributes.get("gen_ai.response.id")
+        == "msg_01MCkQZZtEKF3nVbFaExwATe"
+    )
+
+    metrics_data = reader.get_metrics_data()
+    resource_metrics = metrics_data.resource_metrics
+
+    verify_metrics(resource_metrics, "claude-3-5-haiku-20241022")
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 0, (
+        "Assert that it doesn't emit logs when use_legacy_attributes is True"
+    )
+
+
+@pytest.mark.vcr
+def test_anthropic_message_stream_manager_with_events_with_content(
+    instrument_with_content, anthropic_client, span_exporter, log_exporter, reader
+):
+    user_message = {
+        "role": "user",
+        "content": "Tell me a joke about OpenTelemetry",
+    }
+
+    response_content = ""
+    with anthropic_client.messages.stream(
+        max_tokens=1024,
+        messages=[user_message],
+        model="claude-3-5-haiku-20241022",
+    ) as stream:
+        for event in stream:
+            if event.type == "content_block_delta" and event.delta.type == "text_delta":
+                response_content += event.delta.text
+
+    try:
+        anthropic_client.messages.create(
+            unknown_parameter="unknown",
+        )
+    except Exception:
+        pass
+
+    spans = span_exporter.get_finished_spans()
+    assert [span.name for span in spans] == [
+        "anthropic.chat",
+    ]
+    anthropic_span = spans[0]
+    assert anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 17
+    assert (
+        anthropic_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS]
+        + anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS]
+        == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
+    )
+
+    metrics_data = reader.get_metrics_data()
+    resource_metrics = metrics_data.resource_metrics
+
+    verify_metrics(resource_metrics, "claude-3-5-haiku-20241022")
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 2
+
+    # Validate user message Event
+    user_message.pop("role", None)
+    assert_message_in_logs(logs[0], "gen_ai.user.message", user_message)
+
+    # Validate the ai response
+    choice_event = {
+        "index": 0,
+        "finish_reason": "end_turn",
+        "message": {
+            "content": {
+                "type": "text",
+                "content": response_content,
+            }
+        },
+    }
+    assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
+
+
+@pytest.mark.vcr
+def test_anthropic_message_stream_manager_with_events_with_no_content(
+    instrument_with_no_content, anthropic_client, span_exporter, log_exporter, reader
+):
+    response_content = ""
+    with anthropic_client.messages.stream(
+        max_tokens=1024,
+        messages=[
+            {
+                "role": "user",
+                "content": "Tell me a joke about OpenTelemetry",
+            }
+        ],
+        model="claude-3-5-haiku-20241022",
+    ) as stream:
+        for event in stream:
+            if event.type == "content_block_delta" and event.delta.type == "text_delta":
+                response_content += event.delta.text
+
+    try:
+        anthropic_client.messages.create(
+            unknown_parameter="unknown",
+        )
+    except Exception:
+        pass
+
+    spans = span_exporter.get_finished_spans()
+    assert [span.name for span in spans] == [
+        "anthropic.chat",
+    ]
+    anthropic_span = spans[0]
+    assert anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 17
+    assert (
+        anthropic_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS]
+        + anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS]
+        == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
+    )
+
+    metrics_data = reader.get_metrics_data()
+    resource_metrics = metrics_data.resource_metrics
+
+    verify_metrics(resource_metrics, "claude-3-5-haiku-20241022")
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 2
+
+    # Validate user message Event
+    user_message_log = logs[0]
+    assert_message_in_logs(user_message_log, "gen_ai.user.message", {})
+
+    # Validate the ai response
+    choice_event = {
+        "index": 0,
+        "finish_reason": "end_turn",
+        "message": {},
+    }
+    assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
+
+
+@pytest.mark.vcr
+@pytest.mark.asyncio
+async def test_async_anthropic_message_stream_manager_legacy(
+    instrument_legacy, async_anthropic_client, span_exporter, log_exporter, reader
+):
+    response_content = ""
+    async with async_anthropic_client.messages.stream(
+        max_tokens=1024,
+        messages=[
+            {
+                "role": "user",
+                "content": "Tell me a joke about OpenTelemetry",
+            }
+        ],
+        model="claude-3-5-haiku-20241022",
+    ) as stream:
+        async for event in stream:
+            if event.type == "content_block_delta" and event.delta.type == "text_delta":
+                response_content += event.delta.text
+
+    try:
+        await async_anthropic_client.messages.create(
+            unknown_parameter="unknown",
+        )
+    except Exception:
+        pass
+
+    spans = span_exporter.get_finished_spans()
+    assert [span.name for span in spans] == [
+        "anthropic.chat",
+    ]
+    anthropic_span = spans[0]
+    assert (
+        anthropic_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
+        == "Tell me a joke about OpenTelemetry"
+    )
+    assert (anthropic_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"]) == "user"
+    assert (
+        anthropic_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
+        == response_content
+    )
+    assert (
+        anthropic_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.role")
+        == "assistant"
+    )
+    assert anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 17
+    assert (
+        anthropic_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS]
+        + anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS]
+        == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
+    )
+    assert (
+        anthropic_span.attributes.get("gen_ai.response.id")
+        == "msg_01E414PCSTg6skd6JWPTX5Uc"
+    )
+
+    metrics_data = reader.get_metrics_data()
+    resource_metrics = metrics_data.resource_metrics
+    verify_metrics(resource_metrics, "claude-3-5-haiku-20241022")
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 0, (
+        "Assert that it doesn't emit logs when use_legacy_attributes is True"
+    )
+
+
+@pytest.mark.vcr
+@pytest.mark.asyncio
+async def test_async_anthropic_message_stream_manager_with_events_with_content(
+    instrument_with_content, async_anthropic_client, span_exporter, log_exporter, reader
+):
+    try:
+        await async_anthropic_client.messages.create(
+            unknown_parameter="unknown",
+        )
+    except Exception:
+        pass
+
+    user_message = {
+        "role": "user",
+        "content": "Tell me a joke about OpenTelemetry",
+    }
+
+    response_content = ""
+    async with async_anthropic_client.messages.stream(
+        max_tokens=1024,
+        messages=[user_message],
+        model="claude-3-5-haiku-20241022",
+    ) as stream:
+        async for event in stream:
+            if event.type == "content_block_delta" and event.delta.type == "text_delta":
+                response_content += event.delta.text
+
+    spans = span_exporter.get_finished_spans()
+    assert [span.name for span in spans] == [
+        "anthropic.chat",
+    ]
+    anthropic_span = spans[0]
+    assert anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 17
+    assert (
+        anthropic_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS]
+        + anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS]
+        == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
+    )
+
+    metrics_data = reader.get_metrics_data()
+    resource_metrics = metrics_data.resource_metrics
+    verify_metrics(resource_metrics, "claude-3-5-haiku-20241022")
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 2
+
+    # Validate user message Event
+    user_message.pop("role", None)
+    assert_message_in_logs(logs[0], "gen_ai.user.message", user_message)
+
+    # Validate the ai response
+    choice_event = {
+        "index": 0,
+        "finish_reason": "end_turn",
+        "message": {"content": {"type": "text", "content": response_content}},
+    }
+    assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
+
+
+@pytest.mark.vcr
+@pytest.mark.asyncio
+async def test_async_anthropic_message_stream_manager_with_events_with_no_content(
+    instrument_with_no_content,
+    async_anthropic_client,
+    span_exporter,
+    log_exporter,
+    reader,
+):
+    try:
+        await async_anthropic_client.messages.create(
+            unknown_parameter="unknown",
+        )
+    except Exception:
+        pass
+
+    response_content = ""
+    async with async_anthropic_client.messages.stream(
+        max_tokens=1024,
+        messages=[
+            {
+                "role": "user",
+                "content": "Tell me a joke about OpenTelemetry",
+            }
+        ],
+        model="claude-3-5-haiku-20241022",
+    ) as stream:
+        async for event in stream:
+            if event.type == "content_block_delta" and event.delta.type == "text_delta":
+                response_content += event.delta.text
+
+    spans = span_exporter.get_finished_spans()
+    assert [span.name for span in spans] == [
+        "anthropic.chat",
+    ]
+    anthropic_span = spans[0]
+    assert anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 17
+    assert (
+        anthropic_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS]
+        + anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS]
+        == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
+    )
+
+    metrics_data = reader.get_metrics_data()
+    resource_metrics = metrics_data.resource_metrics
+    verify_metrics(resource_metrics, "claude-3-5-haiku-20241022")
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 2
+
+    # Validate user message Event
+    user_message_log = logs[0]
+    assert_message_in_logs(user_message_log, "gen_ai.user.message", {})
+
+    # Validate the ai response
+    choice_event = {
+        "index": 0,
+        "finish_reason": "end_turn",
+        "message": {},
+    }
+    assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
