@@ -15,21 +15,20 @@ class TestDatasetFromCSV:
         with pytest.raises(FileNotFoundError):
             Dataset.from_csv("non_existent.csv", slug="test")
 
-    @patch('traceloop.sdk.datasets.client.DatasetClient')
-    def test_from_csv_basic(self, mock_client_class):
+    @patch('traceloop.sdk.datasets.dataset.Dataset.create_dataset_api')
+    @patch('traceloop.sdk.datasets.dataset.Dataset.add_column_api')
+    @patch('traceloop.sdk.datasets.dataset.Dataset.add_row_api')
+    def test_from_csv_basic(self, mock_add_row, mock_add_column, mock_create_dataset):
         """Test basic CSV import functionality"""
-        # Mock the client and API responses
-        mock_client = Mock()
-        mock_client_class.return_value = mock_client
-        
-        mock_client.create_dataset.return_value = {
+        # Mock the API responses
+        mock_create_dataset.return_value = {
             "id": "dataset_123",
             "created_at": "2024-01-01T00:00:00Z",
             "updated_at": "2024-01-01T00:00:00Z"
         }
         
-        mock_client.add_column.return_value = {"id": "col_123"}
-        mock_client.add_row.return_value = {"id": "row_123"}
+        mock_add_column.return_value = {"id": "col_123"}
+        mock_add_row.return_value = {"id": "row_123"}
 
         # Create a temporary CSV file
         with tempfile.NamedTemporaryFile(mode='w', suffix='.csv', delete=False) as f:
@@ -63,27 +62,26 @@ class TestDatasetFromCSV:
             assert dataset.columns[2].name == "email"
 
             # Verify API calls
-            mock_client.create_dataset.assert_called_once_with("Test Dataset", "A test dataset")
-            assert mock_client.add_column.call_count == 3
-            assert mock_client.add_row.call_count == 2
+            mock_create_dataset.assert_called_once_with("Test Dataset", "A test dataset")
+            assert mock_add_column.call_count == 3
+            assert mock_add_row.call_count == 2
 
         finally:
             # Clean up temporary file
             os.unlink(csv_path)
 
-    @patch('traceloop.sdk.datasets.client.DatasetClient')
-    def test_from_csv_defaults(self, mock_client_class):
+    @patch('traceloop.sdk.datasets.dataset.Dataset.create_dataset_api')
+    @patch('traceloop.sdk.datasets.dataset.Dataset.add_column_api')
+    @patch('traceloop.sdk.datasets.dataset.Dataset.add_row_api')
+    def test_from_csv_defaults(self, mock_add_row, mock_add_column, mock_create_dataset):
         """Test CSV import with default values"""
-        mock_client = Mock()
-        mock_client_class.return_value = mock_client
-        
-        mock_client.create_dataset.return_value = {
+        mock_create_dataset.return_value = {
             "id": "dataset_123",
             "created_at": "2024-01-01T00:00:00Z",
             "updated_at": "2024-01-01T00:00:00Z"
         }
         
-        mock_client.add_column.return_value = {"id": "col_123"}
+        mock_add_column.return_value = {"id": "col_123"}
 
         # Create a temporary CSV file
         with tempfile.NamedTemporaryFile(mode='w', suffix='.csv', delete=False) as f:
@@ -108,24 +106,23 @@ class TestDatasetFromCSV:
 class TestDatasetFromDataFrame:
     """Test Dataset.from_dataframe() method"""
 
-    @patch('traceloop.sdk.datasets.client.DatasetClient')
-    def test_from_dataframe_basic(self, mock_client_class):
+    @patch('traceloop.sdk.datasets.dataset.Dataset.create_dataset_api')
+    @patch('traceloop.sdk.datasets.dataset.Dataset.add_column_api')
+    @patch('traceloop.sdk.datasets.dataset.Dataset.add_row_api')
+    def test_from_dataframe_basic(self, mock_add_row, mock_add_column, mock_create_dataset):
         """Test basic DataFrame import functionality"""
         # Skip if pandas not available
         pd = pytest.importorskip("pandas")
         
-        # Mock the client and API responses
-        mock_client = Mock()
-        mock_client_class.return_value = mock_client
-        
-        mock_client.create_dataset.return_value = {
+        # Mock the API responses
+        mock_create_dataset.return_value = {
             "id": "dataset_123",
             "created_at": "2024-01-01T00:00:00Z",
             "updated_at": "2024-01-01T00:00:00Z"
         }
         
-        mock_client.add_column.return_value = {"id": "col_123"}
-        mock_client.add_row.return_value = {"id": "row_123"}
+        mock_add_column.return_value = {"id": "col_123"}
+        mock_add_row.return_value = {"id": "row_123"}
 
         # Create test DataFrame
         df = pd.DataFrame({
@@ -160,9 +157,9 @@ class TestDatasetFromDataFrame:
         assert active_col.type == ColumnType.BOOLEAN
 
         # Verify API calls
-        mock_client.create_dataset.assert_called_once_with("Test Dataset", "A test dataset")
-        assert mock_client.add_column.call_count == 3
-        assert mock_client.add_row.call_count == 2
+        mock_create_dataset.assert_called_once_with("Test Dataset", "A test dataset")
+        assert mock_add_column.call_count == 3
+        assert mock_add_row.call_count == 2
 
     def test_from_dataframe_no_pandas(self):
         """Test that ImportError is raised when pandas not available"""
@@ -170,27 +167,24 @@ class TestDatasetFromDataFrame:
             with pytest.raises(ImportError, match="pandas is required"):
                 Dataset.from_dataframe(None, slug="test")
 
-    @patch('traceloop.sdk.datasets.client.DatasetClient')
-    def test_from_dataframe_invalid_input(self, mock_client_class):
+    def test_from_dataframe_invalid_input(self):
         """Test that TypeError is raised for invalid input"""
         with pytest.raises(TypeError, match="Expected pandas DataFrame"):
             Dataset.from_dataframe("not a dataframe", slug="test")
 
-    @patch('traceloop.sdk.datasets.client.DatasetClient')
-    def test_from_dataframe_defaults(self, mock_client_class):
+    @patch('traceloop.sdk.datasets.dataset.Dataset.create_dataset_api')
+    @patch('traceloop.sdk.datasets.dataset.Dataset.add_column_api')
+    def test_from_dataframe_defaults(self, mock_add_column, mock_create_dataset):
         """Test DataFrame import with default values"""
         pd = pytest.importorskip("pandas")
         
-        mock_client = Mock()
-        mock_client_class.return_value = mock_client
-        
-        mock_client.create_dataset.return_value = {
+        mock_create_dataset.return_value = {
             "id": "dataset_123",
             "created_at": "2024-01-01T00:00:00Z",
             "updated_at": "2024-01-01T00:00:00Z"
         }
         
-        mock_client.add_column.return_value = {"id": "col_123"}
+        mock_add_column.return_value = {"id": "col_123"}
 
         # Create simple DataFrame
         df = pd.DataFrame({'col1': ['value1']})
@@ -203,22 +197,12 @@ class TestDatasetFromDataFrame:
         assert dataset.description is None
 
 
-class TestDatasetClient:
-    """Test DatasetClient functionality"""
+class TestDatasetHTTPClient:
+    """Test Dataset HTTP client functionality"""
 
-    def test_client_singleton(self):
-        """Test that DatasetClient follows singleton pattern"""
-        with patch.dict(os.environ, {'TRACELOOP_API_KEY': 'test_key'}):
-            from traceloop.sdk.datasets.client import DatasetClient
-            
-            client1 = DatasetClient()
-            client2 = DatasetClient()
-            
-            assert client1 is client2
-
-    def test_client_no_api_key(self):
+    def test_dataset_no_api_key(self):
         """Test that ValueError is raised when API key not provided"""
         with patch.dict(os.environ, {}, clear=True):
+            dataset = Dataset(name="test", slug="test")
             with pytest.raises(ValueError, match="TRACELOOP_API_KEY environment variable is required"):
-                from traceloop.sdk.datasets.client import DatasetClient
-                DatasetClient()
+                dataset._get_http_client()

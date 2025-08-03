@@ -4,7 +4,7 @@ from pydantic import PrivateAttr
 from .base import DatasetBaseModel
 
 if TYPE_CHECKING:
-    from .client import DatasetClient
+    from .dataset import Dataset
 
 
 class Row(DatasetBaseModel):
@@ -12,21 +12,21 @@ class Row(DatasetBaseModel):
     index: int
     values: Dict[str, Any]
     dataset_id: str
-    _client: Optional["DatasetClient"] = PrivateAttr(default=None)
+    _client: Optional["Dataset"] = PrivateAttr(default=None)
 
     def delete(self) -> None:
         """Remove this row from dataset"""
         if self._client is None:
-            from .client import DatasetClient
-            self._client = DatasetClient()
-        self._client.delete_row(self.dataset_id, self.id)
+            from .dataset import Dataset
+            self._client = Dataset()
+        self._client.delete_row_api(self.dataset_id, self.id)
 
     def update(self, values: Dict[str, Any]) -> None:
         """Update this row's values"""
         if self._client is None:
-            from .client import DatasetClient
-            self._client = DatasetClient()
-        self._client.update_cells(self.dataset_id, {self.id: values})
+            from .dataset import Dataset
+            self._client = Dataset()
+        self._client.update_cells_api(self.dataset_id, {self.id: values})
         self.values.update(values)
 
     def get_value(self, column_name: str) -> Any:
