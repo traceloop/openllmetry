@@ -47,22 +47,35 @@ class Dataset(DatasetBaseModel):
             self._http = HTTPClient(base_url=api_endpoint, api_key=api_key, version=__version__)
         
         return self._http
-
-    def _convert_column_names_to_ids(self, values: ValuesMap) -> ValuesMap:
-        """Convert column name-based values to column ID-based values"""
-        column_name_to_id = {}
-        for col in self.columns:
-            column_name_to_id[col.name] = col.id
-        
-        converted_values = {}
-        for name, value in values.items():
-            if name in column_name_to_id:
-                converted_values[column_name_to_id[name]] = value
-            else:
-                # Fallback to original name if no mapping found
-                converted_values[name] = value
-        
-        return converted_values
+    
+    def _convert_rows_to_column_ids(self, rows_with_names: List[ValuesMap]) -> List[ValuesMap]:
+        """Convert multiple rows from column names to column IDs"""
+        return [
+            {column.id: val for column, val in zip(self.columns, row_data.values())}
+            for row_data in rows_with_names
+        ]
+    
+    def _create_columns(self, api_dataset: CreateDatasetResponse):
+            """Create Column objects from API response which includes column IDs"""
+            for column_id, column_def in api_dataset.columns.items():
+                column = Column(
+                    id=column_id,
+                    name=column_def.name,
+                    type=column_def.type,
+                    dataset_id=self.id,
+                    _client=self
+                )
+                self.columns.append(column)
+    
+    def _create_rows(self, rows_response: CreateRowsResponse):
+        for row_obj in rows_response.rows:
+            row = Row(
+                id=row_obj.id,
+                values=row_obj.values,
+                dataset_id=self.id,
+                _client=self
+            )
+            self.rows.append(row)
 
     @classmethod
     def from_csv(
@@ -73,8 +86,6 @@ class Dataset(DatasetBaseModel):
         description: Optional[str] = None
     ) -> "Dataset":
         """Class method to create dataset from CSV file"""
-        print("NOMI - from_csv")
-
         path = Path(file_path)
         if not path.exists():
             raise FileNotFoundError(f"CSV file not found: {file_path}")
@@ -108,39 +119,15 @@ class Dataset(DatasetBaseModel):
             columns_definition=columns_definition,
         )
         
-        # Create dataset via API and get ID
-        api_dataset = dataset.create_dataset_api(CreateDatasetRequest(slug=slug, name=name, description=description, columns=columns_definition))
+        dataset_response = dataset.create_dataset(CreateDatasetRequest(slug=slug, name=name, description=description, columns=columns_definition))
         
-        # Create Column objects from API response which includes column IDs
-        for column_id, column_def in api_dataset.columns.items():
-            column = Column(
-                id=column_id,
-                name=column_def.name,
-                type=column_def.type,
-                dataset_id=dataset.id,
-                _client=dataset
-            )
-            dataset.columns.append(column)
+        dataset._create_columns(dataset_response)
         
-        # Convert row values from column names to column IDs
-        rows_with_ids = []
-        for row_data in rows_with_names:
-            converted_values = dataset._convert_column_names_to_ids(row_data)
-            rows_with_ids.append(converted_values)
+        rows_with_ids = dataset._convert_rows_to_column_ids(rows_with_names)
         
-        # Add rows via API
-        rows_response = dataset.add_rows_api(api_dataset.slug, rows_with_ids)
+        rows_response = dataset.add_rows(dataset_response.slug, rows_with_ids)
         
-        # Create Row objects from API response
-        for row_obj in rows_response.rows:
-            row = Row(
-                id=row_obj.id,
-                index=len(dataset.rows),
-                values=row_obj.values,
-                dataset_id=dataset.id,
-                _client=dataset
-            )
-            dataset.rows.append(row)
+        dataset._create_rows(rows_response)
         
         return dataset
 
@@ -185,7 +172,7 @@ class Dataset(DatasetBaseModel):
         )
         
         # Create dataset via API and get ID
-        api_dataset = dataset.create_dataset_api(CreateDatasetRequest(slug=slug, name=name, description=description, columns=columns_definition))
+        api_dataset = dataset.create_dataset(CreateDatasetRequest(slug=slug, name=name, description=description, columns=columns_definition))
         dataset.id = api_dataset.id
         dataset.created_at = api_dataset.createdAt
         dataset.updated_at = api_dataset.updatedAt
@@ -217,11 +204,11 @@ class Dataset(DatasetBaseModel):
         # Convert row values from column names to column IDs
         rows_with_ids = []
         for row_data in rows_with_names:
-            converted_values = dataset._convert_column_names_to_ids(row_data)
+            converted_values = dataset._get_rows_by_col_ids(row_data)
             rows_with_ids.append(converted_values)
         
         # Add rows via API
-        rows_response = dataset.add_rows_api(api_dataset.slug, rows_with_ids)
+        rows_response = dataset.add_rows(api_dataset.slug, rows_with_ids)
         
         # Create Row objects from API response
         for row_obj in rows_response.rows:
@@ -253,14 +240,12 @@ class Dataset(DatasetBaseModel):
     
     # API Methods
     
-    def create_dataset_api(self, input: CreateDatasetRequest) -> CreateDatasetResponse:
+    def create_dataset(self, input: CreateDatasetRequest) -> CreateDatasetResponse:
         """Create new dataset"""
-        print("NOMI - create_dataset")
         data = input.model_dump()
         
-        print(f"NOMI - data: {data}")
         result = self._get_http_client().post("projects/default/datasets", data)
-        print(f"NOMI - result: {result}")
+        
         if result is None:
             raise Exception("Failed to create dataset")
         self.id = result["id"]
@@ -321,7 +306,7 @@ class Dataset(DatasetBaseModel):
         if result is None:
             raise Exception(f"Failed to delete column {column_id}")
 
-    def add_rows_api(self, dataset_slug: str, rows: List[ValuesMap]) -> CreateRowsResponse:
+    def add_rows(self, dataset_slug: str, rows: List[ValuesMap]) -> CreateRowsResponse:
         """Add rows to dataset"""
         data = {"rows": rows}
         result = self._get_http_client().post(f"projects/default/datasets/{dataset_slug}/rows", data)
