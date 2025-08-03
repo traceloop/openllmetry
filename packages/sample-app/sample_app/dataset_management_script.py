@@ -26,7 +26,7 @@ def list_all_datasets() -> List[Dataset]:
     
     try:
         # Use the new class method - no temporary instance needed!
-        datasets = Dataset.get_all_datasets()
+        datasets = Dataset.get_all()
         print(f"Found {len(datasets)} datasets")
         for dataset_data in datasets:
             print(f"  - {dataset_data.name} (slug: {dataset_data.slug}, ID: {dataset_data.id})")
@@ -216,17 +216,15 @@ def print_dataset_info(dataset: Dataset) -> None:
 
 def main():
     """Simple example usage of the dataset management functions"""
-    slug = "employee-data-1"
     
     try:
-        # First, list all available datasets using the new class method
-        print("=== All Available Datasets ===")
-        list_all_datasets()
+        # print("=== All Available Datasets ===")
+        # list_all_datasets()
         
-        # # Get dataset by slug using the improved approach
-        # print(f"\n=== Getting Dataset by Slug ===")
-        # dataset = get_dataset_by_slug(slug)
-        # print_dataset_info(dataset)
+        print(f"\n=== Getting Dataset by Slug ===")
+        slug = "product-inventory-2"
+        dataset = get_dataset_by_slug(slug)
+        print_dataset_info(dataset)
         
         # # Example row operations
         # print("\n=== Example Operations ===")

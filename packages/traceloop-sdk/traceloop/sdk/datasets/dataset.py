@@ -86,7 +86,7 @@ class Dataset(DatasetBaseModel):
         return HTTPClient(base_url=api_endpoint, api_key=api_key, version=__version__)
 
     @classmethod
-    def get_all_datasets(cls) -> List[DatasetMetadata]:
+    def get_all(cls) -> List[DatasetMetadata]:
         """List all datasets metadata"""
         result = cls._get_http_client_static().get("projects/default/datasets")
         if result is None:
@@ -94,69 +94,19 @@ class Dataset(DatasetBaseModel):
         return [DatasetMetadata(**dataset) for dataset in result]
 
     @classmethod
-    def get_dataset_by_id(cls, dataset_id: str) -> Dict[str, Any]:
-        """Retrieve dataset by ID without requiring an instance"""
-        result = cls._get_http_client_static().get(f"datasets/{dataset_id}")
-        if result is None:
-            raise Exception(f"Failed to get dataset {dataset_id}")
-        return result
-
-    @classmethod
-    def delete_dataset_by_id(cls, dataset_id: str) -> None:
+    def delete_by_slug(cls, slug: str) -> None:
         """Delete dataset by ID without requiring an instance"""
-        result = cls._get_http_client_static().post(f"datasets/{dataset_id}/delete", {})
+        result = cls._get_http_client_static().post(f"projects/default/datasets/{slug}/delete", {})
         if result is None:
-            raise Exception(f"Failed to delete dataset {dataset_id}")
+            raise Exception(f"Failed to delete dataset {slug}")
 
     @classmethod
     def get_by_slug(cls, slug: str) -> "Dataset":
         """Get a dataset by slug and return a full Dataset instance"""
-        # Get all datasets
-        all_datasets = cls.get_all_datasets()
-        
-        # Find dataset with matching slug
-        for dataset_data in all_datasets:
-            if dataset_data.get("slug") == slug:
-                # Get full dataset details
-                full_dataset = cls.get_dataset_by_id(dataset_data["id"])
-                
-                # Create Dataset instance with full data
-                dataset = cls(
-                    id=full_dataset["id"],
-                    name=full_dataset["name"],
-                    slug=full_dataset["slug"],
-                    description=full_dataset.get("description"),
-                    created_at=full_dataset.get("created_at"),
-                    updated_at=full_dataset.get("updated_at")
-                )
-                
-                # Populate columns and rows if available
-                if "columns" in full_dataset:
-                    for col_id, col_data in full_dataset["columns"].items():
-                        column = Column(
-                            id=col_id,
-                            name=col_data["name"],
-                            type=ColumnType(col_data["type"]),
-                            dataset_id=dataset.id,
-                            _client=dataset
-                        )
-                        dataset.columns.append(column)
-                
-                if "rows" in full_dataset:
-                    from .row import Row
-                    for idx, row_data in enumerate(full_dataset["rows"]):
-                        row = Row(
-                            id=row_data["id"],
-                            index=idx,
-                            values=row_data["values"],
-                            dataset_id=dataset.id,
-                            _client=dataset
-                        )
-                        dataset.rows.append(row)
-                
-                return dataset
-        
-        raise ValueError(f"Dataset with slug '{slug}' not found")
+        result = cls._get_http_client_static().get(f"projects/default/datasets/{slug}")
+        if result is None:  
+            raise Exception(f"Failed to get dataset {slug}")
+        return Dataset(**result)
 
     @classmethod
     def from_csv(
