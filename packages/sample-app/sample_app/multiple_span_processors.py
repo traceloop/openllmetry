@@ -12,7 +12,7 @@ traceloop_processor = Traceloop.get_default_span_processor(disable_batch=True)
 
 console_processor = SimpleSpanProcessor(ConsoleSpanExporter())
 
-Traceloop.init(processors=[traceloop_processor, console_processor])
+Traceloop.init(processor=[traceloop_processor, console_processor])
 
 
 @task(name="joke_creation", version=1)

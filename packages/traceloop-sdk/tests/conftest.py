@@ -200,7 +200,7 @@ def exporters_with_multiple_span_processors():
     Traceloop.init(
         app_name="test_multiple_processors",
         api_endpoint="http://localhost:4318",  # Use local endpoint to avoid API key requirement
-        processors=processors,
+        processor=processors,
         disable_batch=True,
     )
 
@@ -209,7 +209,7 @@ def exporters_with_multiple_span_processors():
         "default": default_exporter,
         "custom": custom_exporter,
         "metrics": metrics_exporter,
-        "processors": processors
+        "processor": processors
     }
 
     # Restore singleton if any

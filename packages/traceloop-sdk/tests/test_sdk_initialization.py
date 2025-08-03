@@ -143,33 +143,3 @@ def test_get_default_span_processor():
     assert isinstance(processor, BatchSpanProcessor)
     assert hasattr(processor, "_traceloop_processor")
     assert getattr(processor, "_traceloop_processor") is True
-
-
-def test_processors_parameter_validation():
-    """Test that using both processor and processors parameters raises an error."""
-    from traceloop.sdk import Traceloop
-    from traceloop.sdk.tracing.tracing import TracerWrapper
-    from opentelemetry.sdk.trace.export import SimpleSpanProcessor
-    from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
-
-    # Clear singleton if existed
-    if hasattr(TracerWrapper, "instance"):
-        _trace_wrapper_instance = TracerWrapper.instance
-        del TracerWrapper.instance
-
-    try:
-        exporter = InMemorySpanExporter()
-        processor = SimpleSpanProcessor(exporter)
-
-        # This should raise a ValueError
-        with pytest.raises(ValueError, match="Cannot specify both 'processor' and 'processors' parameters"):
-            Traceloop.init(
-                app_name="test_validation",
-                processor=processor,
-                processors=[processor],
-                disable_batch=True,
-            )
-    finally:
-        # Restore singleton if any
-        if '_trace_wrapper_instance' in locals():
-            TracerWrapper.instance = _trace_wrapper_instance
