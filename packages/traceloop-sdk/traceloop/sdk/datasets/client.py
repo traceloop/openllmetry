@@ -25,13 +25,16 @@ class DatasetClient:
 
         return cls.instance
 
-    def create_dataset(self, name: str, description: Optional[str] = None) -> Dict[str, Any]:
+    def create_dataset(self, name: str, description: Optional[str] = None, columns: Optional[List[Dict[str, Any]]] = None) -> Dict[str, Any]:
         """Create new dataset"""
+        print("NOMI - create_dataset")
         data = {"name": name}
         if description:
             data["description"] = description
         
-        result = self._http.post("datasets", data)
+        print(f"NOMI - data: {data}")
+        result = self._http.post("projects/default/datasets", data)
+        print(f"NOMI - result: {result}")
         if result is None:
             raise Exception("Failed to create dataset")
         return result

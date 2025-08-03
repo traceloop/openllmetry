@@ -36,6 +36,8 @@ class Dataset(DatasetBaseModel):
         description: Optional[str] = None
     ) -> "Dataset":
         """Class method to create dataset from CSV file"""
+        print("NOMI - from_csv")
+
         path = Path(file_path)
         if not path.exists():
             raise FileNotFoundError(f"CSV file not found: {file_path}")
@@ -73,6 +75,9 @@ class Dataset(DatasetBaseModel):
                     "values": dict(row_data),
                     "dataset_id": "temp"  # Will be set after dataset creation
                 })
+
+                print(f"NOMI - row_data: {row_data}")
+                print(f"NOMI - columns: {columns}")
         
         # Create dataset instance
         dataset = cls(
