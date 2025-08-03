@@ -47,7 +47,7 @@ Represents a dataset column with type and configuration, and provides methods fo
 
 **Attributes:**
 - `id`: str - Column ID
-- `name`: str - Column name
+- `name`: str - Column name`
 - `type`: ColumnType - Column type enum
 - `config`: dict - Type-specific configuration
 - `dataset_id`: str - Parent dataset ID
