@@ -37,7 +37,7 @@ def dataset_from_csv_example():
         # Create dataset from CSV
         dataset = Dataset.from_csv(
             file_path=csv_file,
-            slug="employee-data",
+            slug="employee-data-1",
             name="Employee Dataset",
             description="Sample employee data for demonstration"
         )
