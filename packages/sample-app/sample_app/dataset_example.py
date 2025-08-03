@@ -72,23 +72,8 @@ def dataset_from_dataframe_example():
             description="Sample product inventory data"
         )
         
-        print(f"Created dataset: {dataset.name}")
-        print(f"Dataset ID: {dataset.id}")
-        print(f"Number of columns: {len(dataset.columns)}")
-        print(f"Number of rows: {len(dataset.rows)}")
-        
-        # Display column information with inferred types
-        print("\nColumns with inferred types:")
-        for col in dataset.columns:
-            print(f"  - {col.name} ({col.type})")
-        
-        # Display all rows
-        print("\nAll rows:")
-        for i, row in enumerate(dataset.rows):
-            print(f"  Row {i+1}: {row.values}")
+        print(f"Created dataset: {dataset.model_dump_json()}")
             
-    except ImportError:
-        print("pandas not available. Install with: pip install pandas")
     except Exception as e:
         print(f"Error creating dataset from DataFrame: {e}")
 
@@ -112,11 +97,11 @@ def main():
     print("Traceloop Dataset Examples")
     print("=" * 50)
     
-    # Run CSV example
-    dataset_from_csv_example()
+    # # Run CSV example
+    # dataset_from_csv_example()
     
-    # # Run DataFrame example
-    # dataset_from_dataframe_example()
+    # Run DataFrame example
+    dataset_from_dataframe_example()
     
     # # Run manual example
     # manual_dataset_example()
