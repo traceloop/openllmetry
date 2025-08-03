@@ -1,22 +1,17 @@
 import csv
 from datetime import datetime
-from typing import List, Optional, Dict, Any, TYPE_CHECKING
+from typing import List, Optional, Dict, Any
 from pathlib import Path
 from pydantic import Field, PrivateAttr
+import pandas as pd 
 import os
 
-from traceloop.sdk.datasets.model import ColumnDefinition, ValuesMap, CreateDatasetRequest, CreateDatasetResponse, CreateRowsResponse
-from .base import DatasetBaseModel, ColumnType
+from traceloop.sdk.datasets.model import ColumnDefinition, ValuesMap, CreateDatasetRequest, CreateDatasetResponse, CreateRowsResponse, ColumnType
+from .base import DatasetBaseModel
 from .column import Column
 from .row import Row
 from traceloop.sdk.client.http import HTTPClient
 from traceloop.sdk.version import __version__
-
-if TYPE_CHECKING:
-    try:
-        import pandas as pd
-    except ImportError:
-        pd = None
 
 
 class Dataset(DatasetBaseModel):
@@ -30,6 +25,7 @@ class Dataset(DatasetBaseModel):
     columns_definition: List[ColumnDefinition] = Field(default_factory=list)
     columns: List[Column] = Field(default_factory=list)
     rows: List[Row] = Field(default_factory=list)
+    last_version: Optional[str] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
     _http: Optional[HTTPClient] = PrivateAttr(default=None)
@@ -39,7 +35,8 @@ class Dataset(DatasetBaseModel):
         if self._http is None:
             # Get API configuration from environment or defaults
             api_key = os.environ.get("TRACELOOP_API_KEY", "")
-            api_endpoint = os.environ.get("TRACELOOP_BASE_URL", "https://api.traceloop.com")
+            # api_endpoint = os.environ.get("TRACELOOP_BASE_URL", "https://api.traceloop.com")
+            api_endpoint = "http://localhost:3000"
             
             if not api_key:
                 raise ValueError("TRACELOOP_API_KEY environment variable is required")
@@ -48,7 +45,7 @@ class Dataset(DatasetBaseModel):
         
         return self._http
     
-    def _convert_rows_to_column_ids(self, rows_with_names: List[ValuesMap]) -> List[ValuesMap]:
+    def _convert_rows_by_names_to_col_ids(self, rows_with_names: List[ValuesMap]) -> List[ValuesMap]:
         """Convert multiple rows from column names to column IDs"""
         return [
             {column.id: val for column, val in zip(self.columns, row_data.values())}
@@ -123,7 +120,7 @@ class Dataset(DatasetBaseModel):
         
         dataset._create_columns(dataset_response)
         
-        rows_with_ids = dataset._convert_rows_to_column_ids(rows_with_names)
+        rows_with_ids = dataset._convert_rows_by_names_to_col_ids(rows_with_names)
         
         rows_response = dataset.add_rows(dataset_response.slug, rows_with_ids)
         
@@ -139,27 +136,20 @@ class Dataset(DatasetBaseModel):
         name: Optional[str] = None,
         description: Optional[str] = None
     ) -> "Dataset":
-        """Class method to create dataset from pandas DataFrame"""        
-        if not isinstance(df, pd.DataFrame):
-            raise TypeError("Expected pandas DataFrame")
-        
-        if name is None:
-            name = f"Dataset from DataFrame"
-        
+        """Class method to create dataset from pandas DataFrame"""         
         # Create column definitions from DataFrame
         columns_definition: List[ColumnDefinition] = []
         for col_name in df.columns:
-            # Infer column type from pandas dtype
             dtype = df[col_name].dtype
             if pd.api.types.is_numeric_dtype(dtype):
-                col_type = ColumnType.INTEGER
+                col_type = ColumnType.NUMBER
             elif pd.api.types.is_bool_dtype(dtype):
                 col_type = ColumnType.BOOLEAN
             else:
                 col_type = ColumnType.STRING
             
             columns_definition.append(ColumnDefinition(
-                name=str(col_name),
+                name=col_name,
                 type=col_type
             ))
         
@@ -171,55 +161,15 @@ class Dataset(DatasetBaseModel):
             columns_definition=columns_definition,
         )
         
-        # Create dataset via API and get ID
-        api_dataset = dataset.create_dataset(CreateDatasetRequest(slug=slug, name=name, description=description, columns=columns_definition))
-        dataset.id = api_dataset.id
-        dataset.created_at = api_dataset.createdAt
-        dataset.updated_at = api_dataset.updatedAt
+        dataset_response = dataset.create_dataset(CreateDatasetRequest(slug=slug, name=name, description=description, columns=columns_definition))
         
-        # Create Column objects from API response which includes column IDs
-        for column_id, column_def in api_dataset.columns.items():
-            column = Column(
-                id=column_id,
-                name=column_def.name,
-                type=column_def.type,
-                dataset_id=dataset.id,
-                _client=dataset
-            )
-            dataset.columns.append(column)
+        dataset._create_columns(dataset_response)
         
-        # Prepare rows with column names first
-        rows_with_names = []
-        for row_idx, (_, pandas_row) in enumerate(df.iterrows()):
-            # Convert pandas row to dict, handling NaN values
-            row_values = {}
-            for col_name in df.columns:
-                value = pandas_row[col_name]
-                if pd.isna(value):
-                    row_values[str(col_name)] = None
-                else:
-                    row_values[str(col_name)] = value
-            rows_with_names.append(row_values)
+        rows_with_ids = dataset._convert_rows_by_names_to_col_ids(df.to_dict(orient="records"))
         
-        # Convert row values from column names to column IDs
-        rows_with_ids = []
-        for row_data in rows_with_names:
-            converted_values = dataset._get_rows_by_col_ids(row_data)
-            rows_with_ids.append(converted_values)
+        rows_response = dataset.add_rows(dataset_response.slug, rows_with_ids)
         
-        # Add rows via API
-        rows_response = dataset.add_rows(api_dataset.slug, rows_with_ids)
-        
-        # Create Row objects from API response
-        for row_obj in rows_response.rows:
-            row = Row(
-                id=row_obj.id,
-                index=len(dataset.rows),
-                values=row_obj.values,
-                dataset_id=dataset.id,
-                _client=dataset
-            )
-            dataset.rows.append(row)
+        dataset._create_rows(rows_response)
         
         return dataset
 
@@ -248,14 +198,14 @@ class Dataset(DatasetBaseModel):
         
         if result is None:
             raise Exception("Failed to create dataset")
-        self.id = result["id"]
-        self.slug = result["slug"]
-        self.name = result["name"]
-        self.columns_definition = result["columns"]
-        self.description = result["description"]
-        self.created_at = result["createdAt"]
-        self.updated_at = result["updatedAt"]
-        return CreateDatasetResponse(**result)
+        
+        response = CreateDatasetResponse(**result)
+
+        for field, value in response.model_dump().items():
+            if hasattr(self, field) and field != 'columns':
+                setattr(self, field, value)
+
+        return response
 
     def get_dataset_api(self, dataset_id: str) -> Dict[str, Any]:
         """Retrieve dataset by ID"""

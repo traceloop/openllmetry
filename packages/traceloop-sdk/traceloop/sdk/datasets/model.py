@@ -1,12 +1,12 @@
 import datetime
 from enum import Enum
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import List, Optional, Dict, Any
 
 
 class ColumnType(str, Enum):
     STRING = "string"
-    INTEGER = "integer"
+    NUMBER = "number"
     BOOLEAN = "boolean"
     JSON = "json"
 
@@ -29,9 +29,9 @@ class CreateDatasetResponse(BaseModel):
     name: str
     description: Optional[str] = None
     columns: Dict[str, ColumnDefinition]
-    lastVersion: Optional[str] = None
-    createdAt: datetime.datetime
-    updatedAt: datetime.datetime
+    last_version: Optional[str] = Field(default=None, alias="lastVersion")
+    created_at: datetime.datetime = Field(default=None, alias="createdAt")
+    updated_at: datetime.datetime = Field(default=None, alias="updatedAt")
 
 
 ValuesMap = Dict[str, Any]
