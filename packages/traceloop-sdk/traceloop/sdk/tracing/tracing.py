@@ -34,7 +34,7 @@ from traceloop.sdk.instruments import Instruments
 from traceloop.sdk.tracing.content_allow_list import ContentAllowList
 from traceloop.sdk.utils import is_notebook
 from traceloop.sdk.utils.package_check import is_package_installed
-from typing import Callable, Dict, List, Optional, Set
+from typing import Callable, Dict, List, Optional, Set, Union
 
 
 TRACER_NAME = "traceloop.tracer"
@@ -69,8 +69,7 @@ class TracerWrapper(object):
     def __new__(
         cls,
         disable_batch=False,
-        processor: Optional[SpanProcessor] = None,
-        processors: Optional[List[SpanProcessor]] = None,
+        processor: Optional[Union[SpanProcessor, List[SpanProcessor]]] = None,
         propagator: TextMapPropagator = None,
         exporter: SpanExporter = None,
         sampler: Optional[Sampler] = None,
@@ -89,14 +88,10 @@ class TracerWrapper(object):
             obj.__resource = Resource(attributes=TracerWrapper.resource_attributes)
             obj.__tracer_provider = init_tracer_provider(resource=obj.__resource, sampler=sampler)
 
-            # Validate that only one processor parameter is provided
-            if processor is not None and processors is not None:
-                raise ValueError("Cannot specify both 'processor' and 'processors' parameters. Use only one.")
-
             # Handle multiple processors case
-            if processors is not None:
+            if processor is not None and isinstance(processor, list):
                 obj.__spans_processors = []
-                for proc in processors:
+                for proc in processor:
                     original_on_start = proc.on_start
 
                     def chained_on_start(span, parent_context=None, orig=original_on_start):
@@ -109,7 +104,7 @@ class TracerWrapper(object):
 
                     obj.__tracer_provider.add_span_processor(proc)
 
-                Telemetry().capture("tracer:init", {"processor": "multiple", "count": len(processors)})
+                Telemetry().capture("tracer:init", {"processor": "multiple", "count": len(processor)})
 
             # Handle single processor case (backward compatibility)
             elif processor is not None:
@@ -145,7 +140,7 @@ class TracerWrapper(object):
                         },
                     )
 
-                obj.__spans_processor: SpanProcessor = get_default_span_processor(
+                obj.__spans_processor = get_default_span_processor(
                     disable_batch=disable_batch,
                     exporter=exporter
                 )

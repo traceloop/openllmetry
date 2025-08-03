@@ -2,7 +2,7 @@ import os
 import sys
 from pathlib import Path
 
-from typing import Callable, List, Optional, Set
+from typing import Callable, List, Optional, Set, Union
 from colorama import Fore
 from opentelemetry.sdk.trace import SpanProcessor, ReadableSpan
 from opentelemetry.sdk.trace.sampling import Sampler
@@ -59,8 +59,7 @@ class Traceloop:
         metrics_headers: Dict[str, str] = None,
         logging_exporter: LogExporter = None,
         logging_headers: Dict[str, str] = None,
-        processor: Optional[SpanProcessor] = None,
-        processors: Optional[List[SpanProcessor]] = None,
+        processor: Optional[Union[SpanProcessor, List[SpanProcessor]]] = None,
         propagator: TextMapPropagator = None,
         sampler: Optional[Sampler] = None,
         traceloop_sync_enabled: bool = False,
@@ -145,7 +144,6 @@ class Traceloop:
         Traceloop.__tracer_wrapper = TracerWrapper(
             disable_batch=disable_batch,
             processor=processor,
-            processors=processors,
             propagator=propagator,
             exporter=exporter,
             sampler=sampler,
