@@ -13,12 +13,12 @@ Usage:
 
 from typing import Dict, Any, List, Optional
 from traceloop.sdk import Traceloop
-from traceloop.sdk.datasets import Dataset, Column, Row, ColumnType
+from traceloop.sdk.datasets import Dataset, Column, Row, ColumnType, DatasetMetadata
 
 # Initialize Traceloop
 Traceloop.init()
 
-def list_all_datasets() -> List[Dataset]:
+def list_all_datasets() -> List[DatasetMetadata]:
     """
     List all datasets using the new class method approach.
     """

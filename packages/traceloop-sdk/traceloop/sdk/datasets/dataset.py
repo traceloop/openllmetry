@@ -35,7 +35,8 @@ class Dataset(DatasetBaseModel):
         if self._http is None:
             # Get API configuration from environment or defaults
             api_key = os.environ.get("TRACELOOP_API_KEY", "")
-            api_endpoint = os.environ.get("TRACELOOP_BASE_URL", "https://api.traceloop.com")
+            # api_endpoint = os.environ.get("TRACELOOP_BASE_URL", "https://api.traceloop.com")
+            api_endpoint = "http://localhost:3001"
             
             if not api_key:
                 raise ValueError("TRACELOOP_API_KEY environment variable is required")
@@ -64,10 +65,10 @@ class Dataset(DatasetBaseModel):
                 self.columns.append(column)
     
     def _create_rows(self, rows_response: CreateRowsResponse):
-        for idx, row_obj in enumerate(rows_response.rows):
+        for _, row_obj in enumerate(rows_response.rows):
             row = Row(
                 id=row_obj.id,
-                index=idx,
+                index=row_obj.index,
                 values=row_obj.values,
                 dataset_id=self.id,
                 _client=self
@@ -78,7 +79,8 @@ class Dataset(DatasetBaseModel):
     def _get_http_client_static(cls) -> HTTPClient:
         """Get HTTP client instance for static operations"""
         api_key = os.environ.get("TRACELOOP_API_KEY", "")
-        api_endpoint = os.environ.get("TRACELOOP_BASE_URL", "https://api.traceloop.com")
+        # api_endpoint = os.environ.get("TRACELOOP_BASE_URL", "https://api.traceloop.com")
+        api_endpoint = "http://localhost:3001"
         
         if not api_key:
             raise ValueError("TRACELOOP_API_KEY environment variable is required")
@@ -106,7 +108,12 @@ class Dataset(DatasetBaseModel):
         result = cls._get_http_client_static().get(f"projects/default/datasets/{slug}")
         if result is None:  
             raise Exception(f"Failed to get dataset {slug}")
-        return Dataset(**result)
+        
+        dataset = Dataset(**result)
+        dataset._create_columns(result)
+        dataset._create_rows(result)
+        
+        return dataset
 
     @classmethod
     def from_csv(
