@@ -255,3 +255,24 @@ get_all_datasets_json = """
     "total": 6
 }
 """
+
+add_column_response_json = """
+{
+    "id": "cmdpy2ah40000q9p0ait7vukf",
+    "slug": "daatset-5",
+    "name": "Data",
+    "description": "Data for example",
+    "columns": {
+        "cmdwq9a320000coitckjwfpj4": {
+            "name": "New col number",
+            "type": "number"
+        },
+        "cmdwqcict0000t3itd63u2dml": {
+            "name": "New bool",
+            "type": "boolean"
+        }
+    },
+    "created_at": "2025-07-30T15:30:48.712Z",
+    "updated_at": "2025-08-04T09:26:41.255Z"
+}
+"""

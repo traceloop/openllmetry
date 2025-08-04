@@ -218,15 +218,14 @@ class Dataset(DatasetBaseModel):
                 
         return dataset
 
-    def add_column(self, name: str, col_type: ColumnType, config: Optional[Dict[str, Any]] = None) -> Column:
+    def add_column(self, name: str, col_type: ColumnType) -> Column:
         """Add new column (returns Column object)"""
-        api_col = self.add_column_api(self.id, name, col_type, config)
+        api_col = self.add_column_api(self.id, name, col_type)
         
         column = Column(
             id=api_col["id"],
             name=name,
             type=col_type,
-            config=config,
             dataset_id=self.id,
             _client=self
         )
@@ -267,16 +266,14 @@ class Dataset(DatasetBaseModel):
         if result is None:
             raise Exception(f"Failed to delete dataset {dataset_id}")
 
-    def add_column_api(self, dataset_id: str, name: str, col_type: str, config: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    def add_column_api(self, dataset_id: str, name: str, col_type: str) -> Dict[str, Any]:
         """Add column to dataset"""
         data = {
             "name": name,
             "type": col_type
         }
-        if config:
-            data["config"] = config
         
-        result = self._http.post(f"datasets/{dataset_id}/columns", data)
+        result = self._http.post(f"projects/default/datasets/{dataset_id}/columns", data)
         if result is None:
             raise Exception(f"Failed to add column to dataset {dataset_id}")
         return result
