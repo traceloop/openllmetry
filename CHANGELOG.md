@@ -1,3 +1,9 @@
+## v0.44.1 (2025-08-04)
+
+### Fix
+
+- **mcp**: do not override meta pydantic types (#3179)
+
 ## v0.44.0 (2025-08-03)
 
 ### Feat
