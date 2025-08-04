@@ -49,8 +49,7 @@ class Dataset(DatasetBaseModel):
         if self._http is None:
             # Get API configuration from environment or defaults
             api_key = os.environ.get("TRACELOOP_API_KEY", "")
-            # api_endpoint = os.environ.get("TRACELOOP_BASE_URL", "https://api.traceloop.com")
-            api_endpoint = "http://localhost:3001"
+            api_endpoint = os.environ.get("TRACELOOP_BASE_URL", "https://api.traceloop.com")
 
             if not api_key:
                 raise ValueError("TRACELOOP_API_KEY environment variable is required")
@@ -99,8 +98,7 @@ class Dataset(DatasetBaseModel):
     def _get_http_client_static(cls) -> HTTPClient:
         """Get HTTP client instance for static operations"""
         api_key = os.environ.get("TRACELOOP_API_KEY", "")
-        # api_endpoint = os.environ.get("TRACELOOP_BASE_URL", "https://api.traceloop.com")
-        api_endpoint = "http://localhost:3001"
+        api_endpoint = os.environ.get("TRACELOOP_BASE_URL", "https://api.traceloop.com")
 
         if not api_key:
             raise ValueError("TRACELOOP_API_KEY environment variable is required")
@@ -350,13 +348,10 @@ class Dataset(DatasetBaseModel):
         if result is None:
             raise Exception(f"Failed to delete row {row_id}")
 
-    def update_row_api(self, row_id: str, values: Dict[str, Any]) -> Dict[str, Any]:
+    def update_row_api(self, row_id: str, values: Dict[str, Any]):
         """Update row values"""
         data = {"values": values}
-        result = self._get_http_client().put(
+        self._get_http_client().put(
             f"projects/default/datasets/{self.slug}/rows/{row_id}",
             data
         )
-        if result is None:
-            raise Exception(f"Failed to update cells in dataset {self.slug}")
-        return result

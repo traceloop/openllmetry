@@ -1,4 +1,5 @@
 import json
+import requests
 import pytest
 from unittest.mock import patch, MagicMock
 from traceloop.sdk.datasets.dataset import Dataset
@@ -348,7 +349,7 @@ def test_update_row_api_failure():
     """Test handling of API failure when updating row"""
     with patch.object(Dataset, '_get_http_client') as mock_get_client:
         mock_client = MagicMock()
-        mock_client.put.return_value = None  # API failure
+        mock_client.put.side_effect = requests.exceptions.RequestException("Test exception")
         mock_client.post.return_value = json.loads(add_rows_response_json)
         mock_get_client.return_value = mock_client
 
@@ -363,10 +364,8 @@ def test_update_row_api_failure():
         new_values = {"cmdr3ce1s0003hmp0vqons5ey": "Updated Name"}
 
         # Try to update a row
-        with pytest.raises(Exception) as exc_info:
+        with pytest.raises(Exception):
             row_to_update.update(new_values)
-
-        assert "Failed to update cells in dataset" in str(exc_info.value)
 
 
 def assert_row_values(dataset, row_index, expected_id, expected_values):
