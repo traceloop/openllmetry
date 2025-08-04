@@ -19,7 +19,6 @@ def create_mock_dataset_with_columns_definition():
         name="Test Dataset",
         slug="test-dataset",
         description="Test dataset",
-        columns_definition=columns_definition
     )
 
     return dataset, columns_definition
@@ -56,7 +55,6 @@ def create_simple_mock_dataset():
         name="Test Dataset",
         slug="test-dataset",
         description="Test dataset",
-        columns_definition=columns_definition
     )
 
     return dataset, columns_definition

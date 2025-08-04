@@ -295,3 +295,9 @@ Monitor,299.99,true,Electronics,
 ,0,true,,
 Keyboard,79.99,true,Accessories,
 """
+
+add_column_response_json = {
+    "id": "new_column_id",
+    "name": "Test Column",
+    "type": "string"
+}

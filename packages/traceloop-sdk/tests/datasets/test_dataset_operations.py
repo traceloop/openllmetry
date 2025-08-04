@@ -77,11 +77,11 @@ def test_get_dataset_by_version():
         mock_http_client_class.return_value = mock_client
         
         dataset = Dataset(slug="product-inventory-2")
-        csv_data = dataset.get_version_csv("v1")
+        csv_data = dataset.get_version_csv(slug="product-inventory", version="v1")
 
         assert isinstance(csv_data, str)
 
-        mock_client.get.assert_called_once_with("projects/default/datasets/product-inventory-2/versions/v1")
+        mock_client.get.assert_called_once_with("projects/default/datasets/product-inventory/versions/v1")
 
 
 @patch.dict("os.environ", {"TRACELOOP_API_KEY": "test-api-key"})

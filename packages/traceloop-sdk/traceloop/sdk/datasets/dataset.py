@@ -88,9 +88,7 @@ class Dataset(DatasetBaseModel):
     def _get_http_client_static(cls) -> HTTPClient:
         """Get HTTP client instance for static operations"""
         api_key = os.environ.get("TRACELOOP_API_KEY", "")
-        # api_endpoint = os.environ.get("TRACELOOP_BASE_URL", "https://api.traceloop.com")
-
-        api_endpoint = "http://localhost:3001"
+        api_endpoint = os.environ.get("TRACELOOP_BASE_URL", "https://api.traceloop.com")
 
         if not api_key:
             raise ValueError("TRACELOOP_API_KEY environment variable is required")
