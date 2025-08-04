@@ -277,3 +277,21 @@ basic_dataset_response_json = """
     "updated_at": "2025-08-04T09:26:41.255Z"
 }
 """
+
+publish_dataset_response_json = """
+{
+    "datasetId": "cmdpy2ah40000q9p0ait7vukf",
+    "version": "v1"
+}
+"""
+
+get_dataset_by_version_json = """
+product,price,in_stock,category,New Column 1
+Laptop,999.99,false,Electronics,
+,0,true,,
+Mouse,29.99,false,Accessories,
+,0,false,,
+Monitor,299.99,true,Electronics,
+,0,true,,
+Keyboard,79.99,true,Accessories,
+"""
