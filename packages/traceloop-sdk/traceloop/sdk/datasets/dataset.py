@@ -49,19 +49,7 @@ class Dataset(DatasetBaseModel):
     def _get_http_client(self) -> HTTPClient:
         """Get or create HTTP client instance"""
         if self._http is None:
-            # Get API configuration from environment or defaults
-            api_key = os.environ.get("TRACELOOP_API_KEY", "")
-            api_endpoint = os.environ.get("TRACELOOP_BASE_URL", "https://api.traceloop.com")
-
-            if not api_key:
-                raise ValueError("TRACELOOP_API_KEY environment variable is required")
-
-            self._http = HTTPClient(
-                base_url=api_endpoint,
-                api_key=api_key,
-                version=__version__
-            )
-
+            self._http = self._get_http_client_static()
         return self._http
 
     def _convert_rows_by_names_to_col_ids(
@@ -101,6 +89,7 @@ class Dataset(DatasetBaseModel):
         """Get HTTP client instance for static operations"""
         api_key = os.environ.get("TRACELOOP_API_KEY", "")
         # api_endpoint = os.environ.get("TRACELOOP_BASE_URL", "https://api.traceloop.com")
+
         api_endpoint = "http://localhost:3001"
 
         if not api_key:
@@ -326,8 +315,7 @@ class Dataset(DatasetBaseModel):
     def delete_column_api(self, column_id: str) -> None:
         """Delete column"""
         result = self._http.delete(
-            f"projects/default/datasets/{self.slug}/columns/{column_id}",
-            {}
+            f"projects/default/datasets/{self.slug}/columns/{column_id}"
         )
         if result is None:
             raise Exception(f"Failed to delete column {column_id}")
@@ -363,10 +351,7 @@ class Dataset(DatasetBaseModel):
 
     def delete_row_api(self, row_id: str) -> None:
         """Delete row"""
-        result = self._get_http_client().delete(
-            f"projects/default/datasets/{self.slug}/rows/{row_id}",
-            {}
-        )
+        result = self._get_http_client().delete(f"projects/default/datasets/{self.slug}/rows/{row_id}")
         if result is None:
             raise Exception(f"Failed to delete row {row_id}")
 

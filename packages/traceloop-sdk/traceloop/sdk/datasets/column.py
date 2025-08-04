@@ -37,11 +37,9 @@ class Column(DatasetBaseModel):
         update_data = {}
         if name is not None:
             update_data["name"] = name
-            self.name = name
 
         if type is not None:
             update_data["type"] = type
-            self.type = type
 
         if update_data:
             self._client.update_column_api(column_id=self.id, data=update_data)
