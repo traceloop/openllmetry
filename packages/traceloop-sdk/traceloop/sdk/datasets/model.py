@@ -1,6 +1,6 @@
 import datetime
 from enum import Enum
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from typing import List, Optional, Dict, Any
 
 
@@ -9,6 +9,9 @@ class ColumnType(str, Enum):
     NUMBER = "number"
     BOOLEAN = "boolean"
     JSON = "json"
+
+class DatasetBaseModel(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True, populate_by_name=True)
 
 
 class ColumnDefinition(BaseModel):
