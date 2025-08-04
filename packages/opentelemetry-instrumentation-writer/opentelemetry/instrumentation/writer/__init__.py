@@ -23,12 +23,30 @@ _instruments = ("writer-sdk >= 2.2.1, < 3",)
 
 WRAPPED_METHODS = [
     {
-        "method": "creations.create",
-        "span_name": "writer.completions",
+        "package": "writerai.resources.chat",
+        "object": "ChatResource",
+        "method": "chat",
+        "span_name": "writerai.chat",
     },
     {
-        "method": "chat.chat",
-        "span_name": "writer.chat",
+        "package": "writerai.resources.completions",
+        "object": "CompletionsResource",
+        "method": "create",
+        "span_name": "writerai.completions",
+    },
+]
+WRAPPED_AMETHODS = [
+    {
+        "package": "writerai.resources.chat",
+        "object": "AsyncChatResource",
+        "method": "chat",
+        "span_name": "writerai.chat",
+    },
+    {
+        "package": "writerai.resources.completions",
+        "object": "AsyncCompletionsResource",
+        "method": "create",
+        "span_name": "writerai.completions",
     },
 ]
 
@@ -58,74 +76,23 @@ def _build_metrics(meter: Meter):
         description="Time from first token to completion in streaming responses",
     )
 
+    choice_counter = meter.create_counter(
+        name=Meters.LLM_GENERATION_CHOICES,
+        unit="choice",
+        description="Number of choices returned by chat completions call",
+    )
+
     return (
         token_histogram,
         duration_histogram,
         streaming_time_to_first_token,
         streaming_time_to_generate,
+        choice_counter,
     )
 
 
 def is_metrics_collection_enabled() -> bool:
     return (os.getenv("TRACELOOP_METRICS_ENABLED") or "true").lower() == "true"
-
-
-def _dispatch_wrap(
-    tracer,
-    token_histogram,
-    duration_histogram,
-    event_logger,
-    streaming_time_to_first_token,
-    streaming_time_to_generate,
-):
-    def wrapper(wrapped, instance, args, kwargs):
-        to_wrap = None
-        if len(args) > 2 and isinstance(args[2], str):
-            path = args[2]
-            op = path.rstrip("/").split("/")[-1]
-            to_wrap = next((m for m in WRAPPED_METHODS if m.get("method") == op), None)
-        if to_wrap:
-            return _wrap(
-                tracer,
-                token_histogram,
-                duration_histogram,
-                event_logger,
-                streaming_time_to_first_token,
-                streaming_time_to_generate,
-                to_wrap,
-            )(wrapped, instance, args, kwargs)
-        return wrapped(*args, **kwargs)
-
-    return wrapper
-
-
-def _dispatch_awrap(
-    tracer,
-    token_histogram,
-    duration_histogram,
-    event_logger,
-    streaming_time_to_first_token,
-    streaming_time_to_generate,
-):
-    async def wrapper(wrapped, instance, args, kwargs):
-        to_wrap = None
-        if len(args) > 2 and isinstance(args[2], str):
-            path = args[2]
-            op = path.rstrip("/").split("/")[-1]
-            to_wrap = next((m for m in WRAPPED_METHODS if m.get("method") == op), None)
-        if to_wrap:
-            return await _awrap(
-                tracer,
-                token_histogram,
-                duration_histogram,
-                event_logger,
-                streaming_time_to_first_token,
-                streaming_time_to_generate,
-                to_wrap,
-            )(wrapped, instance, args, kwargs)
-        return await wrapped(*args, **kwargs)
-
-    return wrapper
 
 
 class WriterInstrumentor(BaseInstrumentor):
@@ -152,6 +119,7 @@ class WriterInstrumentor(BaseInstrumentor):
                 duration_histogram,
                 streaming_time_to_first_token,
                 streaming_time_to_generate,
+                choice_counter,
             ) = _build_metrics(meter)
         else:
             (
@@ -159,7 +127,8 @@ class WriterInstrumentor(BaseInstrumentor):
                 duration_histogram,
                 streaming_time_to_first_token,
                 streaming_time_to_generate,
-            ) = (None, None, None, None)
+                choice_counter,
+            ) = (None, None, None, None, None)
 
         event_logger = None
         if not Config.use_legacy_attributes:
@@ -168,46 +137,63 @@ class WriterInstrumentor(BaseInstrumentor):
                 __name__, __version__, event_logger_provider=event_logger_provider
             )
 
-        wrap_function_wrapper(
-            "writerai",
-            "_copy_messages",  # TODO fix path
-            _sanitize_copy_messages,
-        )
+        for wrapped_method in WRAPPED_METHODS:
+            wrap_package = wrapped_method.get("package")
+            wrap_object = wrapped_method.get("object")
+            wrap_method = wrapped_method.get("method")
 
-        wrap_function_wrapper(
-            "writerai",
-            "Writer",  # TODO fix path
-            _dispatch_wrap(
-                tracer,
-                token_histogram,
-                duration_histogram,
-                event_logger,
-                streaming_time_to_first_token,
-                streaming_time_to_generate,
-            ),
-        )
-        wrap_function_wrapper(
-            "writerai",
-            "AsyncWriter",  # TODO fix path
-            _dispatch_awrap(
-                tracer,
-                token_histogram,
-                duration_histogram,
-                event_logger,
-                streaming_time_to_first_token,
-                streaming_time_to_generate,
-            ),
-        )
+            try:
+                wrap_function_wrapper(
+                    wrap_package,
+                    f"{wrap_object}.{wrap_method}",
+                    _wrap(
+                        tracer,
+                        token_histogram,
+                        duration_histogram,
+                        streaming_time_to_first_token,
+                        streaming_time_to_generate,
+                        choice_counter,
+                        event_logger,
+                        wrapped_method,
+                    ),
+                )
+            except ModuleNotFoundError:
+                pass
+
+        for wrapped_method in WRAPPED_AMETHODS:
+            wrap_package = wrapped_method.get("package")
+            wrap_object = wrapped_method.get("object")
+            wrap_method = wrapped_method.get("method")
+            try:
+                wrap_function_wrapper(
+                    wrap_package,
+                    f"{wrap_object}.{wrap_method}",
+                    _awrap(
+                        tracer,
+                        token_histogram,
+                        duration_histogram,
+                        streaming_time_to_first_token,
+                        streaming_time_to_generate,
+                        choice_counter,
+                        event_logger,
+                        wrapped_method,
+                    ),
+                )
+            except ModuleNotFoundError:
+                pass
 
     def _uninstrument(self, **kwargs):
-        try:
-            import writerai
-            from writerai import AsyncWriter, Writer
-
-            for wrapped_method in WRAPPED_METHODS:
-                method_name = wrapped_method.get("method")
-                unwrap(Writer, method_name)
-                unwrap(AsyncWriter, method_name)
-                unwrap(writerai, method_name)
-        except ImportError:
-            logger.warning("Failed to import writer modules for uninstrumentation.")
+        for wrapped_method in WRAPPED_METHODS:
+            wrap_package = wrapped_method.get("package")
+            wrap_object = wrapped_method.get("object")
+            unwrap(
+                f"{wrap_package}.{wrap_object}",
+                wrapped_method.get("method"),
+            )
+        for wrapped_method in WRAPPED_AMETHODS:
+            wrap_package = wrapped_method.get("package")
+            wrap_object = wrapped_method.get("object")
+            unwrap(
+                f"{wrap_package}.{wrap_object}",
+                wrapped_method.get("method"),
+            )
