@@ -163,6 +163,45 @@ def test_add_rows_mixed_types():
         assert isinstance(row.values["cmdr3ce1s0005hmp0bdln01js"], bool)
 
 
+@patch.dict("os.environ", {"TRACELOOP_API_KEY": "test-api-key"})
+def test_delete_row():
+    """Test deleting a row via dataset.rows[index].delete()"""
+    with patch.object(Dataset, '_get_http_client') as mock_get_client:
+        mock_client = MagicMock()
+        mock_client.post.return_value = json.loads(add_rows_response_json)
+        
+        mock_client.delete.return_value = True
+        mock_get_client.return_value = mock_client
+        
+        dataset, _ = create_mock_dataset_with_columns()
+        
+        test_rows = get_test_rows_data()
+        dataset.add_rows(test_rows)
+        
+        # Verify we have 4 rows initially
+        assert len(dataset.rows) == 4
+        
+        # Get the second row (index 1)
+        row_to_delete = dataset.rows[1]
+        row_id_to_delete = row_to_delete.id
+        
+        # Delete the row
+        row_to_delete.delete()
+        
+        # Verify the delete API was called correctly
+        mock_client.delete.assert_called_with(
+            f"projects/default/datasets/{dataset.slug}/rows/{row_id_to_delete}", 
+            {}
+        )
+        
+        # Verify the row was removed from the dataset
+        assert len(dataset.rows) == 3
+        
+        # Verify the specific row was removed
+        remaining_row_ids = [row.id for row in dataset.rows]
+        assert row_id_to_delete not in remaining_row_ids
+
+
 def assert_row_values(dataset, row_index, expected_id, expected_values):
     """Helper function to assert row values and reduce code duplication"""
     row = dataset.rows[row_index] if row_index < len(dataset.rows) else None
