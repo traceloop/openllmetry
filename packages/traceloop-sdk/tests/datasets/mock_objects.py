@@ -14,6 +14,7 @@ def create_mock_dataset_with_columns():
     ]
     
     dataset = Dataset(
+        id="mock-dataset-id",
         name="Test Dataset",
         slug="test-dataset",
         description="Test dataset",
@@ -73,7 +74,7 @@ def get_test_rows_data():
         {"cmdr3ce1s0003hmp0vqons5ey": "Gal", "cmdr3ce1s0004hmp0ies575jr": 8, "cmdr3ce1s0005hmp0bdln01js": True},
         {"cmdr3ce1s0003hmp0vqons5ey": "Nir", "cmdr3ce1s0004hmp0ies575jr": 70, "cmdr3ce1s0005hmp0bdln01js": False},
         {"cmdr3ce1s0003hmp0vqons5ey": "Nina", "cmdr3ce1s0004hmp0ies575jr": 52, "cmdr3ce1s0005hmp0bdln01js": True},
-        {"cmdr3ce1s0003hmp0vqons5ey": "Aviv", "cmdr3ce1s0004hmp0ies575jr": 52, "cmdr3ce1s0005hmp0bdln01js": True},
+        {"cmdr3ce1s0003hmp0vqons5ey": "Aviv", "cmdr3ce1s0004hmp0ies575jr": 52, "cmdr3ce1s0005hmp0bdln01js": False},
     ]
 
 

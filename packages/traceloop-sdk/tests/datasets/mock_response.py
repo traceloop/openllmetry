@@ -177,12 +177,25 @@ add_rows_response_json = """
             "values": {
                 "cmdr3ce1s0003hmp0vqons5ey": "Aviv",
                 "cmdr3ce1s0004hmp0ies575jr": 52,
-                "cmdr3ce1s0005hmp0bdln01js": true
+                "cmdr3ce1s0005hmp0bdln01js": false
             },
             "created_at": "2025-08-03T12:00:00.000Z",
             "updated_at": "2025-08-03T12:00:00.000Z"
         }
     ],
     "total": 4
+}
+"""
+
+single_row_response_json = """
+{
+    "rows": [{
+        "id": "single_row_id",
+        "rowIndex": 1,
+        "values": {"cmdr3ce1s0003hmp0vqons5ey": "single"},
+        "created_at": "2025-08-03T12:00:00.000Z",
+        "updated_at": "2025-08-03T12:00:00.000Z"
+    }],
+    "total": 1
 }
 """
