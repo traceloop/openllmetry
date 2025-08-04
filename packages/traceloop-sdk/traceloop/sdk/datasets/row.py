@@ -25,7 +25,7 @@ class Row(DatasetBaseModel):
         """Update this row's values"""
         if self._client is None:
             raise ValueError("Row must be associated with a dataset to update")
-        self._client.update_cells_api(self.dataset_id, {self.id: values})
+        self._client.update_row_api(self.id, values)
         self.values.update(values)
 
     def get_value(self, column_name: str) -> Any:

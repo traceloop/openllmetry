@@ -178,28 +178,105 @@ def test_delete_row():
         test_rows = get_test_rows_data()
         dataset.add_rows(test_rows)
         
-        # Verify we have 4 rows initially
         assert len(dataset.rows) == 4
         
-        # Get the second row (index 1)
         row_to_delete = dataset.rows[1]
         row_id_to_delete = row_to_delete.id
         
-        # Delete the row
         row_to_delete.delete()
         
-        # Verify the delete API was called correctly
         mock_client.delete.assert_called_with(
             f"projects/default/datasets/{dataset.slug}/rows/{row_id_to_delete}", 
             {}
         )
         
-        # Verify the row was removed from the dataset
         assert len(dataset.rows) == 3
         
-        # Verify the specific row was removed
         remaining_row_ids = [row.id for row in dataset.rows]
         assert row_id_to_delete not in remaining_row_ids
+
+
+@patch.dict("os.environ", {"TRACELOOP_API_KEY": "test-api-key"})
+def test_update_row():
+    """Test updating a row's values"""
+    with patch.object(Dataset, '_get_http_client') as mock_get_client:
+        mock_client = MagicMock()
+        mock_client.post.return_value = json.loads(add_rows_response_json)
+        
+        # Mock the update API response (Go service returns 200 with no body)
+        mock_client.put.return_value = {}
+        mock_get_client.return_value = mock_client
+        
+        dataset, _ = create_mock_dataset_with_columns()
+        
+        test_rows = get_test_rows_data()
+        dataset.add_rows(test_rows)
+        
+        assert len(dataset.rows) == 4
+        
+        row_to_update = dataset.rows[0]
+        
+        new_name = "Updated Name"
+        new_values = {
+            dataset.columns[0].id: new_name,
+            dataset.columns[1].id: 99
+        }
+        
+        row_to_update.update(new_values)
+        
+        # Verify API call was made correctly
+        mock_client.put.assert_called_with(
+            f"projects/default/datasets/{dataset.slug}/rows/{row_to_update.id}", 
+            {"values": new_values}
+        )
+        
+        assert dataset.rows[0].values[dataset.columns[0].id] == new_name
+        assert dataset.rows[0].values[dataset.columns[1].id] == 99
+
+
+@patch.dict("os.environ", {"TRACELOOP_API_KEY": "test-api-key"})
+def test_update_row_without_client():
+    """Test updating a row that is not associated with a dataset"""
+    from traceloop.sdk.datasets.row import Row
+    
+    # Create a row without a client
+    row = Row(
+        id="test_row", 
+        row_index=1, 
+        values={"test": "value"}, 
+        dataset_id="test_dataset"
+    )
+    
+    # Should raise ValueError when trying to update
+    with pytest.raises(ValueError) as exc_info:
+        row.update({"test": "new_value"})
+    
+    assert "Row must be associated with a dataset to update" in str(exc_info.value)
+
+
+@patch.dict("os.environ", {"TRACELOOP_API_KEY": "test-api-key"})
+def test_update_row_api_failure():
+    """Test handling of API failure when updating a row"""
+    with patch.object(Dataset, '_get_http_client') as mock_get_client:
+        mock_client = MagicMock()
+        mock_client.post.return_value = json.loads(add_rows_response_json)
+        
+        # Mock API failure (returns None)
+        mock_client.put.return_value = None
+        mock_get_client.return_value = mock_client
+        
+        dataset, _ = create_mock_dataset_with_columns()
+        
+        test_rows = get_test_rows_data()
+        dataset.add_rows(test_rows)
+        
+        row_to_update = dataset.rows[0]
+        
+        # Should raise exception on API failure
+        with pytest.raises(Exception) as exc_info:
+            row_to_update.update({"cmdr3ce1s0003hmp0vqons5ey": "Updated Name"})
+        
+        assert f"Failed to update cells in dataset {dataset.slug}" in str(exc_info.value)
 
 
 def assert_row_values(dataset, row_index, expected_id, expected_values):
