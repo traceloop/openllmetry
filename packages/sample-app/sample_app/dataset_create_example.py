@@ -109,12 +109,13 @@ def update_column_example(dataset: Dataset, column: Column):
     print("\n=== Update Column Example ===")
     
     try:
-        column.update(name=f"{column.name}_updated", type=ColumnType.NUMBER)
+        updated_name = "updated_name"
+        column.update(name=updated_name, type=ColumnType.NUMBER)
         print(f"Updated column: {column.name} (ID: {column.id})")
         
-        updated_col = dataset.columns.find(lambda c: c.id == column.id)
+        updated_col = next((c for c in dataset.columns if c.id == column.id), None)
         assert updated_col is not None
-        assert updated_col.name == f"{column.name}_updated"
+        assert updated_col.name == f"{column.name}"
         assert updated_col.type == ColumnType.NUMBER
             
     except Exception as e:
@@ -141,21 +142,17 @@ def add_row_example(dataset: Dataset) -> Row:
     try:
         num_rows = len(dataset.rows)
         
-        # Create row data using column IDs
+        # Create row data
         row_data = {}
         for column in dataset.columns:
-            if column.name == "name":
-                row_data[column.id] = "New Employee"
-            elif column.name == "age":
-                row_data[column.id] = 27
-            elif column.name == "city":
-                row_data[column.id] = "Austin"
-            elif column.name == "salary":
-                row_data[column.id] = 80000
-            elif column.name == "department":
-                row_data[column.id] = "Engineering"
-            else:
-                row_data[column.id] = "Default Value"
+            if column.name == "product":
+                row_data[column.id] = "Updated Product"
+            elif column.name == "price":
+                row_data[column.id] = 28.0
+            elif column.name == "in_stock":
+                row_data[column.id] = True
+            elif column.name == "category":
+                row_data[column.id] = "Marketing"
         
         # Add row via API
         rows_response = dataset.add_rows_api([row_data])
@@ -202,7 +199,7 @@ def update_row_example(dataset: Dataset):
         
         # Update the row
         row.update(updates)
-        updated_row = dataset.rows.find(lambda r: r.id == row.id)
+        updated_row = next((r for r in dataset.rows if r.id == row.id), None)
         assert updated_row is not None
         print(f"Updated row: {updated_row.model_dump_json()}")
         
@@ -276,7 +273,6 @@ def main():
     ds1 = dataset_from_csv_example("example-1")
     column = add_column_example(ds1)
     update_column_example(ds1, column)
-    add_row_example(ds1)
     published_version = publish_dataset_example(ds1)
     delete_row_example(ds1)
     delete_column_example(ds1, column)
@@ -288,6 +284,7 @@ def main():
     ds2 = dataset_from_dataframe_example("example-2")
     column = add_column_example(ds2)
     update_column_example(ds2, column)
+    add_row_example(ds2)
     update_row_example(ds2)
     delete_column_example(ds2, column)
     delete_dataset_example(ds2.slug)
