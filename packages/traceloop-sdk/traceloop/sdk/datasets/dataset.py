@@ -249,6 +249,8 @@ class Dataset(DatasetBaseModel):
 
         return response
 
+    # Column APIs
+    
     def add_column_api(self, dataset_id: str, name: str, col_type: str) -> Dict[str, Any]:
         """Add column to dataset"""
         data = {
@@ -263,7 +265,7 @@ class Dataset(DatasetBaseModel):
 
     def delete_column_api(self, dataset_id: str, column_id: str) -> None:
         """Delete column"""
-        result = self._http.post(f"datasets/{dataset_id}/columns/{column_id}/delete", {})
+        result = self._http.delete(f"projects/default/datasets/{dataset_id}/columns/{column_id}", {})
         if result is None:
             raise Exception(f"Failed to delete column {column_id}")
 
@@ -273,6 +275,8 @@ class Dataset(DatasetBaseModel):
         if result is None:
             raise Exception(f"Failed to update column {column_id}")
         return result
+
+    # Row APIs
 
     def add_rows(self, rows: List[ValuesMap]) -> CreateRowsResponse:
         """Add rows to dataset"""

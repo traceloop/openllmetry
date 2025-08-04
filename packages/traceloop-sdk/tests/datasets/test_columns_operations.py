@@ -96,3 +96,61 @@ def test_update_column(mock_get_http_client):
     assert dataset.columns[0].type == new_type
     assert dataset.columns[0].id == column_to_update.id
     assert dataset.columns[0].dataset_id == dataset.id
+
+@patch('traceloop.sdk.datasets.dataset.Dataset._get_http_client')
+def test_delete_column(mock_get_http_client):
+    """Test deleting a column from dataset"""
+    mock_http_client = Mock()
+    mock_get_http_client.return_value = mock_http_client
+    
+    # Mock API returns status 200 with no body
+    mock_http_client.delete.return_value = True
+    
+    dataset, existing_columns = create_dataset_with_existing_columns()
+    existing_column_1, existing_column_2 = existing_columns
+    
+    # Add some rows with data for both columns
+    from traceloop.sdk.datasets.row import Row
+    row1 = Row(
+        id="row_id_1",
+        row_index=0,
+        values={existing_column_1.id: "test_value_1", existing_column_2.id: 42},
+        dataset_id="test_dataset_id",
+        _client=dataset
+    )
+    row2 = Row(
+        id="row_id_2", 
+        row_index=1,
+        values={existing_column_1.id: "test_value_2", existing_column_2.id: 84},
+        dataset_id="test_dataset_id",
+        _client=dataset
+    )
+    dataset.rows = [row1, row2]
+    
+    assert len(dataset.columns) == 2
+    assert len(dataset.rows) == 2
+    assert existing_column_1.id in row1.values
+    assert existing_column_1.id in row2.values
+    
+    existing_column_1.delete()
+    
+    # Verify API was called correctly
+    mock_http_client.delete.assert_called_once_with(
+        "projects/default/datasets/test_dataset_id/columns/column_id_1",
+        {}
+    )
+    
+    # Verify column was removed from dataset
+    assert len(dataset.columns) == 1
+    assert existing_column_1 not in dataset.columns
+    assert existing_column_2 in dataset.columns
+    
+    # Verify column values were removed from all rows
+    assert existing_column_1.id not in row1.values
+    assert existing_column_1.id not in row2.values
+    
+    # Verify other column values remain intact
+    assert existing_column_2.id in row1.values
+    assert existing_column_2.id in row2.values
+    assert row1.values[existing_column_2.id] == 42
+    assert row2.values[existing_column_2.id] == 84
