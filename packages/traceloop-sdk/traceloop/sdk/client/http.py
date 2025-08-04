@@ -43,7 +43,7 @@ class HTTPClient:
         except requests.exceptions.RequestException as e:
             print(Fore.RED + f"Error making request to {path}: {str(e)}" + Fore.RESET)
             return None
-    
+
     def delete(self, path: str) -> bool:
         """
         Make a DELETE request to the API
@@ -55,7 +55,7 @@ class HTTPClient:
         except requests.exceptions.RequestException as e:
             print(Fore.RED + f"Error making request to {path}: {str(e)}" + Fore.RESET)
             return None
-        
+
     def put(self, path: str, data: Dict[str, Any]) -> Any:
         """
         Make a PUT request to the API
@@ -66,4 +66,4 @@ class HTTPClient:
             return response.json()
         except requests.exceptions.RequestException as e:
             print(Fore.RED + f"Error making request to {path}: {str(e)}" + Fore.RESET)
-            return None 
+            return None

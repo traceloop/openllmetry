@@ -26,6 +26,7 @@ def create_dataset_response(price_type="string", in_stock_type="string"):
         "updatedAt": "2025-08-03T08:09:53.329522049Z"
     }
 
+
 create_rows_response_json = """
 {
     "rows": [

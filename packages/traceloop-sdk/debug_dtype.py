@@ -4,7 +4,7 @@ import pandas as pd
 data = {'in_stock': [True, True, False, True]}
 df = pd.DataFrame(data)
 
-print(f"Column: in_stock")
+print("Column: in_stock")
 print(f"Values: {df['in_stock'].tolist()}")
 print(f"dtype: {df['in_stock'].dtype}")
 print(f"is_bool_dtype: {pd.api.types.is_bool_dtype(df['in_stock'].dtype)}")

@@ -1,7 +1,7 @@
 import json
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 from traceloop.sdk.datasets.dataset import Dataset
-from traceloop.sdk.datasets.model import ColumnDefinition, ColumnType, CreateDatasetRequest
+from traceloop.sdk.datasets.model import ColumnDefinition, ColumnType
 from traceloop.sdk.datasets.column import Column
 from .mock_response import create_dataset_response, add_rows_response_json, create_rows_response_json
 
@@ -13,7 +13,7 @@ def create_mock_dataset_with_columns_definition():
         ColumnDefinition(name="value", type=ColumnType.NUMBER),
         ColumnDefinition(name="active", type=ColumnType.BOOLEAN)
     ]
-    
+
     dataset = Dataset(
         id="mock-dataset-id",
         name="Test Dataset",
@@ -21,16 +21,17 @@ def create_mock_dataset_with_columns_definition():
         description="Test dataset",
         columns_definition=columns_definition
     )
-    
+
     return dataset, columns_definition
+
 
 def create_mock_dataset_with_columns():
     """Create a mock dataset with standard test columns"""
     dataset, columns_definition = create_mock_dataset_with_columns_definition()
-    
+
     raw_columns = {"column_id_" + str(i): column for i, column in enumerate(columns_definition)}
     dataset._create_columns(raw_columns)
-    
+
     return dataset
 
 
@@ -43,12 +44,13 @@ def setup_mock_http_client_for_dataset_creation():
     ]
     return mock_client
 
+
 def create_simple_mock_dataset():
     """Create a mock dataset with just one column for simple tests"""
     columns_definition = [
         ColumnDefinition(name="name", type=ColumnType.STRING)
     ]
-    
+
     dataset = Dataset(
         id="test_dataset_id",
         name="Test Dataset",
@@ -56,7 +58,7 @@ def create_simple_mock_dataset():
         description="Test dataset",
         columns_definition=columns_definition
     )
-    
+
     return dataset, columns_definition
 
 
@@ -87,7 +89,7 @@ def create_dataset_with_existing_columns():
         slug="test-dataset",
         name="Test Dataset"
     )
-    
+
     # Add existing columns to the dataset
     existing_column_1 = Column(
         id="column_id_1",
@@ -96,15 +98,15 @@ def create_dataset_with_existing_columns():
         dataset_id="test_dataset_id"
     )
     existing_column_2 = Column(
-        id="column_id_2", 
+        id="column_id_2",
         name="Column 2",
         type=ColumnType.NUMBER,
         dataset_id="test_dataset_id"
     )
-    
+
     existing_column_1._client = dataset
     existing_column_2._client = dataset
-    
+
     dataset.columns.extend([existing_column_1, existing_column_2])
-    
+
     return dataset, [existing_column_1, existing_column_2]
