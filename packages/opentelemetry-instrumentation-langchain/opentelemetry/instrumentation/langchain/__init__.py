@@ -3,6 +3,9 @@
 import logging
 from typing import Collection
 
+from opentelemetry import context as context_api
+
+
 from opentelemetry._events import get_event_logger
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.instrumentation.langchain.callback_handler import (
@@ -13,7 +16,7 @@ from opentelemetry.instrumentation.langchain.utils import is_package_available
 from opentelemetry.instrumentation.langchain.version import __version__
 from opentelemetry.instrumentation.utils import unwrap
 from opentelemetry.metrics import get_meter
-from opentelemetry.semconv_ai import Meters
+from opentelemetry.semconv_ai import Meters, SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY
 from opentelemetry.trace import get_tracer
 from opentelemetry.trace.propagation import set_span_in_context
 from opentelemetry.trace.propagation.tracecontext import (
@@ -190,8 +193,8 @@ class LangchainInstrumentor(BaseInstrumentor):
 
 
 class _BaseCallbackManagerInitWrapper:
-    def __init__(self, callback_manager: "TraceloopCallbackHandler"):
-        self._callback_manager = callback_manager
+    def __init__(self, callback_handler: "TraceloopCallbackHandler"):
+        self._callback_handler = callback_handler
 
     def __call__(
         self,
@@ -202,10 +205,14 @@ class _BaseCallbackManagerInitWrapper:
     ) -> None:
         wrapped(*args, **kwargs)
         for handler in instance.inheritable_handlers:
-            if isinstance(handler, type(self._callback_manager)):
+            if isinstance(handler, type(self._callback_handler)):
                 break
         else:
-            instance.add_handler(self._callback_manager, True)
+            # Add a property to the handler which indicates the CallbackManager instance.
+            # Since the CallbackHandler only propagates context for sync callbacks,
+            # we need a way to determine the type of CallbackManager being wrapped.
+            self._callback_handler._callback_manager = instance
+            instance.add_handler(self._callback_handler, True)
 
 
 # This class wraps a function call to inject tracing information (trace headers) into
@@ -239,5 +246,11 @@ class _OpenAITracingWrapper:
 
             # Update kwargs to include the modified headers
             kwargs["extra_headers"] = extra_headers
+
+        # In legacy chains like LLMChain, suppressing model instrumentations
+        # within create_llm_span doesn't work, so this should helps as a fallback
+        context_api.attach(
+            context_api.set_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY, True)
+        )
 
         return wrapped(*args, **kwargs)

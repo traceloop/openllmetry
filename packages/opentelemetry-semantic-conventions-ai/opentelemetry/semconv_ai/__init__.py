@@ -3,14 +3,42 @@ from enum import Enum
 SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY = "suppress_language_model_instrumentation"
 
 
+class GenAISystem(Enum):
+    """
+    Supported LLM vendor (System) names used across OpenLLMetry instrumentations.
+
+    These values match the actual strings used in span attributes (LLM_SYSTEM)
+    throughout the instrumentation packages.
+    """
+
+    OPENAI = "openai"
+    ANTHROPIC = "Anthropic"
+    COHERE = "Cohere"
+    MISTRALAI = "MistralAI"
+    OLLAMA = "Ollama"
+    GROQ = "Groq"
+    ALEPH_ALPHA = "AlephAlpha"
+    REPLICATE = "Replicate"
+    TOGETHER_AI = "TogetherAI"
+    WATSONX = "Watsonx"
+    HUGGINGFACE = "HuggingFace"
+    FIREWORKS = "Fireworks"
+
+    AZURE = "Azure"
+    AWS = "AWS"
+    GOOGLE = "Google"
+    OPENROUTER = "OpenRouter"
+
+    LANGCHAIN = "Langchain"
+    CREWAI = "crewai"
+
+
 class Meters:
     LLM_GENERATION_CHOICES = "gen_ai.client.generation.choices"
     LLM_TOKEN_USAGE = "gen_ai.client.token.usage"
     LLM_OPERATION_DURATION = "gen_ai.client.operation.duration"
     LLM_COMPLETIONS_EXCEPTIONS = "llm.openai.chat_completions.exceptions"
-    LLM_STREAMING_TIME_TO_GENERATE = (
-        "llm.chat_completions.streaming_time_to_generate"
-    )
+    LLM_STREAMING_TIME_TO_GENERATE = "llm.chat_completions.streaming_time_to_generate"
     LLM_EMBEDDINGS_EXCEPTIONS = "llm.openai.embeddings.exceptions"
     LLM_EMBEDDINGS_VECTOR_SIZE = "llm.openai.embeddings.vector_size"
     LLM_IMAGE_GENERATIONS_EXCEPTIONS = "llm.openai.image_generations.exceptions"

@@ -4,6 +4,7 @@ import os
 import time
 import json
 import threading
+import weakref
 from typing import Collection
 from wrapt import wrap_function_wrapper
 from opentelemetry.trace import SpanKind, get_tracer, Tracer, set_span_in_context
@@ -23,12 +24,49 @@ from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
 )
 from .utils import set_span_attribute, JSONEncoder
 from agents import FunctionTool, WebSearchTool, FileSearchTool, ComputerTool
+from agents.tracing.scope import Scope
 
 
 _instruments = ("openai-agents >= 0.0.19",)
 
 _root_span_storage = {}
+_storage_lock = threading.RLock()
 _instrumented_tools = set()
+
+
+def _get_or_set_root_span_context(span=None):
+    """Get root span context using scope-based trace_id approach.
+
+    Args:
+        span: Current span to potentially set as root span
+
+    Returns:
+        context: The appropriate context with root span set
+    """
+    current_trace = Scope.get_current_trace()
+
+    if current_trace and current_trace.trace_id != "no-op":
+        trace_id = current_trace.trace_id
+
+        with _storage_lock:
+            weak_ref = _root_span_storage.get(trace_id)
+            root_span = weak_ref() if weak_ref else None
+
+            if root_span:
+                return set_span_in_context(root_span, context.get_current())
+            else:
+                ctx = context.get_current()
+                if span:
+                    def cleanup_callback(ref):
+                        with _storage_lock:
+                            if _root_span_storage.get(trace_id) is ref:
+                                del _root_span_storage[trace_id]
+
+                    _root_span_storage[trace_id] = weakref.ref(span, cleanup_callback)
+                    return set_span_in_context(span, ctx)
+                return ctx
+    else:
+        return context.get_current()
 
 
 class OpenAIAgentsInstrumentor(BaseInstrumentor):
@@ -126,14 +164,8 @@ async def _wrap_agent_run_streamed(
         return await wrapped(*args, **kwargs)
 
     agent_name = getattr(agent, "name", "agent")
-    thread_id = threading.get_ident()
 
-    root_span = _root_span_storage.get(thread_id)
-
-    if root_span:
-        ctx = set_span_in_context(root_span, context.get_current())
-    else:
-        ctx = context.get_current()
+    ctx = _get_or_set_root_span_context()
 
     with tracer.start_as_current_span(
         f"{agent_name}.agent",
@@ -144,8 +176,7 @@ async def _wrap_agent_run_streamed(
         context=ctx,
     ) as span:
         try:
-            if not root_span:
-                _root_span_storage[thread_id] = span
+            ctx = _get_or_set_root_span_context(span)
 
             extract_agent_details(agent, span)
             set_model_settings_span_attributes(agent, span)
@@ -225,13 +256,8 @@ async def _wrap_agent_run(
     prompt_list = args[2] if len(args) > 2 else None
     agent_name = getattr(agent, "name", "agent")
     model_name = get_model_name(agent)
-    thread_id = threading.get_ident()
-    root_span = _root_span_storage.get(thread_id)
 
-    if root_span:
-        ctx = set_span_in_context(root_span, context.get_current())
-    else:
-        ctx = context.get_current()
+    ctx = _get_or_set_root_span_context()
 
     with tracer.start_as_current_span(
         f"{agent_name}.agent",
@@ -242,8 +268,7 @@ async def _wrap_agent_run(
         context=ctx,
     ) as span:
         try:
-            if not root_span:
-                _root_span_storage[thread_id] = span
+            ctx = _get_or_set_root_span_context(span)
 
             extract_agent_details(agent, span)
             set_model_settings_span_attributes(agent, span)
@@ -399,9 +424,6 @@ def extract_run_config_details(run_config, span):
 
 def extract_tool_details(tracer: Tracer, tools):
     """Create spans for hosted tools and wrap FunctionTool execution."""
-    thread_id = threading.get_ident()
-    root_span = _root_span_storage.get(thread_id)
-
     for tool in tools:
         if isinstance(tool, FunctionTool):
             tool_id = id(tool)
@@ -415,10 +437,7 @@ def extract_tool_details(tracer: Tracer, tools):
             def create_wrapped_tool(original_tool, original_func):
                 async def wrapped_on_invoke_tool(tool_context, args_json):
                     tool_name = getattr(original_tool, "name", "tool")
-                    if root_span:
-                        ctx = set_span_in_context(root_span, context.get_current())
-                    else:
-                        ctx = context.get_current()
+                    ctx = _get_or_set_root_span_context()
 
                     with tracer.start_as_current_span(
                         f"{tool_name}.tool",
@@ -460,10 +479,7 @@ def extract_tool_details(tracer: Tracer, tools):
 
         elif isinstance(tool, (WebSearchTool, FileSearchTool, ComputerTool)):
             tool_name = type(tool).__name__
-            if root_span:
-                ctx = set_span_in_context(root_span, context.get_current())
-            else:
-                ctx = context.get_current()
+            ctx = _get_or_set_root_span_context()
 
             span = tracer.start_span(
                 f"{tool_name}.tool",

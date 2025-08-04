@@ -40,15 +40,18 @@ def _process_response_item(item, complete_response):
             complete_response["events"].append(
                 {"index": index, "text": "", "type": item.content_block.type}
             )
-    elif item.type == "content_block_delta" and item.delta.type in [
-        "thinking_delta",
-        "text_delta",
-    ]:
+            if item.content_block.type == "tool_use":
+                complete_response["events"][index]["id"] = item.content_block.id
+                complete_response["events"][index]["name"] = item.content_block.name
+                complete_response["events"][index]["input"] = """"""
+    elif item.type == "content_block_delta":
         index = item.index
         if item.delta.type == "thinking_delta":
             complete_response["events"][index]["text"] += item.delta.thinking
         elif item.delta.type == "text_delta":
             complete_response["events"][index]["text"] += item.delta.text
+        elif item.delta.type == "input_json_delta":
+            complete_response["events"][index]["input"] += item.delta.partial_json
     elif item.type == "message_delta":
         for event in complete_response.get("events", []):
             event["finish_reason"] = item.delta.stop_reason
@@ -293,3 +296,99 @@ async def abuild_from_streaming_response(
     if span.is_recording():
         span.set_status(Status(StatusCode.OK))
         span.end()
+
+
+class WrappedMessageStreamManager:
+    """Wrapper for MessageStreamManager that handles instrumentation"""
+
+    def __init__(
+        self,
+        stream_manager,
+        span,
+        instance,
+        start_time,
+        token_histogram,
+        choice_counter,
+        duration_histogram,
+        exception_counter,
+        event_logger,
+        kwargs,
+    ):
+        self._stream_manager = stream_manager
+        self._span = span
+        self._instance = instance
+        self._start_time = start_time
+        self._token_histogram = token_histogram
+        self._choice_counter = choice_counter
+        self._duration_histogram = duration_histogram
+        self._exception_counter = exception_counter
+        self._event_logger = event_logger
+        self._kwargs = kwargs
+
+    def __enter__(self):
+        # Call the original stream manager's __enter__ to get the actual stream
+        stream = self._stream_manager.__enter__()
+        # Return the wrapped stream
+        return build_from_streaming_response(
+            self._span,
+            stream,
+            self._instance,
+            self._start_time,
+            self._token_histogram,
+            self._choice_counter,
+            self._duration_histogram,
+            self._exception_counter,
+            self._event_logger,
+            self._kwargs,
+        )
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        return self._stream_manager.__exit__(exc_type, exc_val, exc_tb)
+
+
+class WrappedAsyncMessageStreamManager:
+    """Wrapper for AsyncMessageStreamManager that handles instrumentation"""
+
+    def __init__(
+        self,
+        stream_manager,
+        span,
+        instance,
+        start_time,
+        token_histogram,
+        choice_counter,
+        duration_histogram,
+        exception_counter,
+        event_logger,
+        kwargs,
+    ):
+        self._stream_manager = stream_manager
+        self._span = span
+        self._instance = instance
+        self._start_time = start_time
+        self._token_histogram = token_histogram
+        self._choice_counter = choice_counter
+        self._duration_histogram = duration_histogram
+        self._exception_counter = exception_counter
+        self._event_logger = event_logger
+        self._kwargs = kwargs
+
+    async def __aenter__(self):
+        # Call the original stream manager's __aenter__ to get the actual stream
+        stream = await self._stream_manager.__aenter__()
+        # Return the wrapped stream
+        return abuild_from_streaming_response(
+            self._span,
+            stream,
+            self._instance,
+            self._start_time,
+            self._token_histogram,
+            self._choice_counter,
+            self._duration_histogram,
+            self._exception_counter,
+            self._event_logger,
+            self._kwargs,
+        )
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        return await self._stream_manager.__aexit__(exc_type, exc_val, exc_tb)
