@@ -10,11 +10,10 @@ from http import HTTPStatus
 from opentelemetry import context, propagate
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.instrumentation.utils import unwrap
-from opentelemetry.trace import get_tracer
+from opentelemetry.trace import get_tracer, Tracer
 from wrapt import ObjectProxy, register_post_import_hook, wrap_function_wrapper
 from opentelemetry.trace.status import Status, StatusCode
 from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
-from opentelemetry.trace.propagation import set_span_in_context
 from opentelemetry.semconv_ai import SpanAttributes
 from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
 
@@ -159,38 +158,30 @@ class McpInstrumentor(BaseInstrumentor):
 
         return traced_method
 
-    def patch_mcp_client(self, tracer):
+    def patch_mcp_client(self, tracer: Tracer):
         @dont_throw
         async def traced_method(wrapped, instance, args, kwargs):
-            import mcp.types
-
-            if len(args) < 1:
-                return
             meta = None
             method = None
             params = None
-            if hasattr(args[0].root, "method"):
+            if len(args) > 0 and hasattr(args[0].root, "method"):
                 method = args[0].root.method
-            if hasattr(args[0].root, "params"):
+            if len(args) > 0 and hasattr(args[0].root, "params"):
                 params = args[0].root.params
-            if params is None:
-                args[0].root.params = mcp.types.RequestParams()
-                meta = mcp.types.RequestParams.Meta()
-            else:
+            if params:
                 if hasattr(args[0].root.params, "meta"):
                     meta = args[0].root.params.meta
-                if meta is None:
-                    meta = mcp.types.RequestParams.Meta()
 
             with tracer.start_as_current_span(f"{method}.mcp") as span:
                 span.set_attribute(
                     SpanAttributes.TRACELOOP_ENTITY_INPUT, f"{serialize(args[0])}"
                 )
-                ctx = set_span_in_context(span)
-                parent_span = {}
-                TraceContextTextMapPropagator().inject(parent_span, ctx)
-                meta.traceparent = parent_span["traceparent"]
-                args[0].root.params.meta = meta
+
+                if meta and len(args) > 0:
+                    carrier = {}
+                    TraceContextTextMapPropagator().inject(carrier)
+                    meta.traceparent = carrier["traceparent"]
+                    args[0].root.params.meta = meta
                 try:
                     result = await wrapped(*args, **kwargs)
                     span.set_attribute(
