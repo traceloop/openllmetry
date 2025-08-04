@@ -10,6 +10,7 @@ class ColumnType(str, Enum):
     BOOLEAN = "boolean"
     JSON = "json"
 
+
 class DatasetBaseModel(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True, populate_by_name=True)
 
@@ -71,14 +72,17 @@ class CreateRowsResponse(BaseModel):
     rows: List[RowObject]
     total: int
 
+
 class PublishDatasetResponse(BaseModel):
     dataset_id: str = Field(alias="datasetId")
     version: str
+
 
 class AddColumnResponse(BaseModel):
     id: str
     name: str
     type: ColumnType
+
 
 class UpdateRowInput(BaseModel):
     values: ValuesMap
@@ -105,4 +109,3 @@ class DatasetFullData(BaseModel):
     rows: List[RowObject]
     created_at: datetime.datetime
     updated_at: datetime.datetime
-
