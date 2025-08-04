@@ -3,7 +3,7 @@ from traceloop.sdk.datasets.model import ColumnType
 from traceloop.sdk.datasets.column import Column
 
 from tests.datasets.mock_objects import create_simple_mock_dataset, create_dataset_with_existing_columns
-from tests.datasets.mock_response import basic_dataset_response_json
+from tests.datasets.mock_response import basic_dataset_response_json, add_column_response_json
 import json
 
 
@@ -13,14 +13,14 @@ def test_add_column_to_empty_dataset(mock_get_http_client):
     mock_http_client = Mock()
     mock_get_http_client.return_value = mock_http_client
 
-    mock_http_client.post.return_value = {"id": "new_column_id"}
+    mock_http_client.post.return_value = add_column_response_json
 
     dataset, _ = create_simple_mock_dataset()
 
     new_column = dataset.add_column("Test Column", ColumnType.STRING)
 
     mock_http_client.post.assert_called_once_with(
-        "projects/default/datasets/test_dataset_id/columns",
+        f"projects/default/datasets/{dataset.slug}/columns",
         {"name": "Test Column", "type": ColumnType.STRING}
     )
 
@@ -40,24 +40,24 @@ def test_add_column_to_dataset_with_existing_columns(mock_get_http_client):
     mock_http_client = Mock()
     mock_get_http_client.return_value = mock_http_client
 
-    mock_http_client.post.return_value = {"id": "new_column_id_2"}
+    mock_http_client.post.return_value = add_column_response_json
 
     dataset, existing_columns = create_dataset_with_existing_columns()
     existing_column_1, existing_column_2 = existing_columns
 
     assert len(dataset.columns) == 2
 
-    new_column = dataset.add_column("New Boolean Column", ColumnType.BOOLEAN)
+    new_column = dataset.add_column("Test Column", ColumnType.STRING)
 
     mock_http_client.post.assert_called_once_with(
-        "projects/default/datasets/test_dataset_id/columns",
-        {"name": "New Boolean Column", "type": ColumnType.BOOLEAN}
+        f"projects/default/datasets/{dataset.slug}/columns",
+        {"name": "Test Column", "type": ColumnType.STRING}
     )
 
     assert isinstance(new_column, Column)
-    assert new_column.id == "new_column_id_2"
-    assert new_column.name == "New Boolean Column"
-    assert new_column.type == ColumnType.BOOLEAN
+    assert new_column.id == "new_column_id"
+    assert new_column.name == "Test Column"
+    assert new_column.type == ColumnType.STRING
     assert new_column.dataset_id == "test_dataset_id"
 
     assert new_column in dataset.columns
@@ -90,7 +90,7 @@ def test_update_column(mock_get_http_client):
     dataset.columns[0].update(name=new_name, type=new_type)
 
     mock_http_client.put.assert_called_once_with(
-        f"projects/default/datasets/{dataset.id}/columns/{column_to_update.id}",
+        f"projects/default/datasets/{dataset.slug}/columns/{column_to_update.id}",
         {"name": new_name, "type": new_type}
     )
 
@@ -139,8 +139,7 @@ def test_delete_column(mock_get_http_client):
 
     # Verify API was called correctly
     mock_http_client.delete.assert_called_once_with(
-        "projects/default/datasets/test_dataset_id/columns/column_id_1",
-        {}
+        f"projects/default/datasets/{dataset.slug}/columns/column_id_1"
     )
 
     # Verify column was removed from dataset
