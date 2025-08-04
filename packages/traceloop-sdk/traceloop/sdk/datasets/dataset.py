@@ -200,7 +200,7 @@ class Dataset(DatasetBaseModel):
 
         rows_with_ids = dataset._convert_rows_by_names_to_col_ids(rows_with_names)
 
-        dataset.add_rows(rows_with_ids)
+        dataset.add_rows_api(rows_with_ids)
 
         return dataset
 
@@ -252,7 +252,7 @@ class Dataset(DatasetBaseModel):
             df.to_dict(orient="records")
         )
 
-        dataset.add_rows(rows_with_ids)
+        dataset.add_rows_api(rows_with_ids)
 
         return dataset
 

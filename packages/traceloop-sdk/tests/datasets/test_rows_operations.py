@@ -28,7 +28,7 @@ def test_add_rows_to_dataset():
 
         test_rows = get_test_rows_data()
 
-        result = dataset.add_rows(test_rows)
+        result = dataset.add_rows_api(test_rows)
 
         # Verify the response
         assert result.total == 4
@@ -95,7 +95,7 @@ def test_add_single_row():
 
         # Add single row
         test_row = [{"cmdr3ce1s0003hmp0vqons5ey": "single"}]
-        result = dataset.add_rows(test_row)
+        result = dataset.add_rows_api(test_row)
 
         # Verify the response
         assert result.total == 1
@@ -136,7 +136,7 @@ def test_add_rows_api_failure():
 
         # Test that add_rows raises exception on API failure
         with pytest.raises(Exception) as exc_info:
-            dataset.add_rows([{"cmdr3ce1s0003hmp0vqons5ey": "test"}])
+            dataset.add_rows_api([{"cmdr3ce1s0003hmp0vqons5ey": "test"}])
 
         assert "Failed to add row to dataset" in str(exc_info.value)
 
@@ -147,8 +147,33 @@ def test_add_rows_mixed_types():
     with patch.object(Dataset, '_get_http_client') as mock_get_client:
         mock_client = MagicMock()
 
-        # Mock response with mixed data types
-        mixed_types_response = json.loads(add_rows_response_json)
+        # Create a custom response with exactly 3 rows for mixed types test
+        mixed_types_response = {
+            "rows": [
+                {
+                    "id": "mixed_row_1",
+                    "rowIndex": 0,
+                    "values": {"cmdr3ce1s0003hmp0vqons5ey": "string_value"},
+                    "created_at": "2025-08-03T12:00:00.000Z",
+                    "updated_at": "2025-08-03T12:00:00.000Z"
+                },
+                {
+                    "id": "mixed_row_2",
+                    "rowIndex": 1,
+                    "values": {"cmdr3ce1s0004hmp0ies575jr": 42},
+                    "created_at": "2025-08-03T12:00:00.000Z",
+                    "updated_at": "2025-08-03T12:00:00.000Z"
+                },
+                {
+                    "id": "mixed_row_3",
+                    "rowIndex": 2,
+                    "values": {"cmdr3ce1s0005hmp0bdln01js": True},
+                    "created_at": "2025-08-03T12:00:00.000Z",
+                    "updated_at": "2025-08-03T12:00:00.000Z"
+                }
+            ],
+            "total": 3
+        }
 
         mock_client.post.side_effect = [
             create_dataset_response(),  # create_dataset call
@@ -176,7 +201,7 @@ def test_add_rows_mixed_types():
             {"cmdr3ce1s0005hmp0bdln01js": True}
         ]
 
-        result = dataset.add_rows(mixed_rows)
+        result = dataset.add_rows_api(mixed_rows)
 
         # Verify the response
         assert result.total == 3
@@ -189,20 +214,21 @@ def test_delete_row():
     with patch.object(Dataset, '_get_http_client') as mock_get_client:
         mock_client = MagicMock()
         mock_client.delete.return_value = {"success": True}
+        mock_client.post.return_value = json.loads(add_rows_response_json)
         mock_get_client.return_value = mock_client
 
-        dataset, _ = create_mock_dataset_with_columns()
+        dataset = create_mock_dataset_with_columns()
 
         # Add some rows first
         test_rows = get_test_rows_data()
-        dataset.add_rows(test_rows)
+        dataset.add_rows_api(test_rows)
 
-        # Delete a row
-        row_id = "row_add_1"
-        result = dataset.delete_row(row_id)
+        # Get the row to delete
+        row_to_delete = dataset.rows[0]
+        row_id = row_to_delete.id
 
-        # Verify the response
-        assert result["success"] is True
+        # Delete the row using the Row object's delete method
+        row_to_delete.delete()
 
         # Verify the row was removed from the dataset
         remaining_row_ids = [row.id for row in dataset.rows]
@@ -213,54 +239,108 @@ def test_delete_row():
 
 
 @patch.dict("os.environ", {"TRACELOOP_API_KEY": "test-api-key"})
+def test_delete_row_without_client():
+    """Test deleting a row when it's not associated with a dataset"""
+    # Create a row without a client
+    from traceloop.sdk.datasets.row import Row
+
+    row = Row(
+        id="test_row_id",
+        row_index=1,
+        values={"test": "value"},
+        dataset_id="test_dataset_id"
+    )
+
+    # Try to delete a row without a client
+    with pytest.raises(ValueError) as exc_info:
+        row.delete()
+
+    assert "Row must be associated with a dataset to delete" in str(exc_info.value)
+
+
+@patch.dict("os.environ", {"TRACELOOP_API_KEY": "test-api-key"})
 def test_update_row():
     """Test updating a row in dataset"""
     with patch.object(Dataset, '_get_http_client') as mock_get_client:
         mock_client = MagicMock()
         mock_client.put.return_value = {"success": True}
+        mock_client.post.return_value = json.loads(add_rows_response_json)
         mock_get_client.return_value = mock_client
 
-        dataset, _ = create_mock_dataset_with_columns()
+        dataset = create_mock_dataset_with_columns()
 
         # Add some rows first
         test_rows = get_test_rows_data()
-        dataset.add_rows(test_rows)
+        dataset.add_rows_api(test_rows)
 
-        # Update a row
-        row_id = "row_add_1"
+        # Get the row to update
+        row_to_update = dataset.rows[0]
         new_values = {"cmdr3ce1s0003hmp0vqons5ey": "Updated Name"}
 
-        result = dataset.update_row(row_id, new_values)
-
-        # Verify the response
-        assert result["success"] is True
+        # Update the row using the Row object's update method
+        row_to_update.update(new_values)
 
         # Verify the row was updated in the dataset
-        updated_row = next((row for row in dataset.rows if row.id == row_id), None)
-        assert updated_row is not None
-        assert updated_row.values["cmdr3ce1s0003hmp0vqons5ey"] == "Updated Name"
+        assert row_to_update.values["cmdr3ce1s0003hmp0vqons5ey"] == "Updated Name"
 
         # Verify the API was called correctly
         mock_client.put.assert_called_once()
 
 
 @patch.dict("os.environ", {"TRACELOOP_API_KEY": "test-api-key"})
+def test_update_row_without_dataset():
+    """Test updating a row when it's not associated with a dataset"""
+    # Create a row without a client
+    from traceloop.sdk.datasets.row import Row
+
+    row = Row(
+        id="test_row_id",
+        row_index=1,
+        values={"test": "value"},
+        dataset_id="test_dataset_id"
+    )
+
+    # Try to update a row without a client
+    with pytest.raises(ValueError) as exc_info:
+        row.update({"test": "new_value"})
+
+    assert "Row must be associated with a dataset to update" in str(exc_info.value)
+
+
+@patch.dict("os.environ", {"TRACELOOP_API_KEY": "test-api-key"})
 def test_update_row_without_client():
     """Test updating a row when HTTP client is not available"""
-    dataset, _ = create_mock_dataset_with_columns()
+    with patch.object(Dataset, '_get_http_client') as mock_get_client:
+        mock_client = MagicMock()
+        mock_client.post.return_value = json.loads(add_rows_response_json)
 
-    # Add some rows first
-    test_rows = get_test_rows_data()
-    dataset.add_rows(test_rows)
+        # Make the mock raise an exception when called after setting _http to None
+        def mock_get_client_side_effect():
+            if hasattr(mock_get_client_side_effect, '_http_none') and mock_get_client_side_effect._http_none:
+                raise ValueError("TRACELOOP_API_KEY environment variable is required")
+            return mock_client
 
-    # Try to update a row without HTTP client
-    row_id = "row_add_1"
-    new_values = {"cmdr3ce1s0003hmp0vqons5ey": "Updated Name"}
+        mock_get_client.side_effect = mock_get_client_side_effect
 
-    with pytest.raises(Exception) as exc_info:
-        dataset.update_row(row_id, new_values)
+        dataset = create_mock_dataset_with_columns()
 
-    assert "HTTP client not available" in str(exc_info.value)
+        # Add some rows first
+        test_rows = get_test_rows_data()
+        dataset.add_rows_api(test_rows)
+
+        # Get the row to update
+        row_to_update = dataset.rows[0]
+        new_values = {"cmdr3ce1s0003hmp0vqons5ey": "Updated Name"}
+
+        # Remove the HTTP client to simulate the scenario
+        dataset._http = None
+        mock_get_client_side_effect._http_none = True
+
+        # Try to update a row without HTTP client
+        with pytest.raises(ValueError) as exc_info:
+            row_to_update.update(new_values)
+
+        assert "TRACELOOP_API_KEY environment variable is required" in str(exc_info.value)
 
 
 @patch.dict("os.environ", {"TRACELOOP_API_KEY": "test-api-key"})
@@ -269,22 +349,24 @@ def test_update_row_api_failure():
     with patch.object(Dataset, '_get_http_client') as mock_get_client:
         mock_client = MagicMock()
         mock_client.put.return_value = None  # API failure
+        mock_client.post.return_value = json.loads(add_rows_response_json)
         mock_get_client.return_value = mock_client
 
-        dataset, _ = create_mock_dataset_with_columns()
+        dataset = create_mock_dataset_with_columns()
 
         # Add some rows first
         test_rows = get_test_rows_data()
-        dataset.add_rows(test_rows)
+        dataset.add_rows_api(test_rows)
 
-        # Try to update a row
-        row_id = "row_add_1"
+        # Get the row to update
+        row_to_update = dataset.rows[0]
         new_values = {"cmdr3ce1s0003hmp0vqons5ey": "Updated Name"}
 
+        # Try to update a row
         with pytest.raises(Exception) as exc_info:
-            dataset.update_row(row_id, new_values)
+            row_to_update.update(new_values)
 
-        assert "Failed to update row" in str(exc_info.value)
+        assert "Failed to update cells in dataset" in str(exc_info.value)
 
 
 def assert_row_values(dataset, row_index, expected_id, expected_values):
