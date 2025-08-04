@@ -9,7 +9,7 @@ class TestConstants:
 
     # Dataset IDs and Identifiers
     DATASET_ID = "cmdvei5dd000g01vvyftz2zv1"
-    DATASET_SLUG = "daatset-12"
+    DATASET_SLUG = "test-dataset"
     DATASET_NAME = "Dataset"
     DATASET_DESCRIPTION = "Dataset Description"
 
@@ -49,10 +49,6 @@ class TestConstants:
     LAPTOP_PRICE = 999.99
     MOUSE_VALUE = "Mouse"
     MOUSE_PRICE = 29.99
-
-    # Row Indices
-    FIRST_ROW_INDEX = 1
-    SECOND_ROW_INDEX = 2
 
     # CSV Test Content
     SAMPLE_CSV_CONTENT = """Name,Price,In Stock

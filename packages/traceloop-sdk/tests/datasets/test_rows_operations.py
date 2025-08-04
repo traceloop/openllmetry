@@ -106,7 +106,6 @@ def test_add_single_row():
         # Check the row
         row = dataset.rows[0]
         assert row.id == "single_row_id"
-        assert row.row_index == 1
         assert row.values["cmdr3ce1s0003hmp0vqons5ey"] == "single"
 
 
@@ -247,7 +246,6 @@ def test_delete_row_without_client():
 
     row = Row(
         id="test_row_id",
-        row_index=1,
         values={"test": "value"},
         dataset_id="test_dataset_id"
     )
@@ -296,7 +294,6 @@ def test_update_row_without_dataset():
 
     row = Row(
         id="test_row_id",
-        row_index=1,
         values={"test": "value"},
         dataset_id="test_dataset_id"
     )
@@ -364,7 +361,7 @@ def test_update_row_api_failure():
         new_values = {"cmdr3ce1s0003hmp0vqons5ey": "Updated Name"}
 
         # Try to update a row
-        with pytest.raises(Exception):
+        with pytest.raises(requests.exceptions.RequestException):
             row_to_update.update(new_values)
 
 

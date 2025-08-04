@@ -116,7 +116,6 @@ def test_delete_column(mock_get_http_client):
     from traceloop.sdk.datasets.row import Row
     row1 = Row(
         id="row_id_1",
-        row_index=0,
         values={existing_column_1.id: "test_value_1", existing_column_2.id: 42},
         dataset_id="test_dataset_id",
         _client=dataset

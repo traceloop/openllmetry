@@ -1,5 +1,5 @@
 from typing import Optional, Dict, Any, TYPE_CHECKING
-from pydantic import PrivateAttr, Field
+from pydantic import PrivateAttr
 
 from .model import DatasetBaseModel
 
@@ -9,7 +9,6 @@ if TYPE_CHECKING:
 
 class Row(DatasetBaseModel):
     id: str
-    row_index: int = Field(alias="rowIndex")
     values: Dict[str, Any]
     dataset_id: str
     _client: Optional["Dataset"] = PrivateAttr(default=None)
