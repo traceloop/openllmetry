@@ -3,10 +3,20 @@ from datetime import datetime
 from typing import List, Optional, Dict, Any
 from pathlib import Path
 from pydantic import Field, PrivateAttr
-import pandas as pd 
+import pandas as pd
 import os
 
-from traceloop.sdk.datasets.model import ColumnDefinition, ValuesMap, CreateDatasetRequest, CreateDatasetResponse, CreateRowsResponse, ColumnType, DatasetMetadata, RowObject, DatasetFullData
+from traceloop.sdk.datasets.model import (
+    ColumnDefinition,
+    ValuesMap,
+    CreateDatasetRequest,
+    CreateDatasetResponse,
+    CreateRowsResponse,
+    ColumnType,
+    DatasetMetadata,
+    RowObject,
+    DatasetFullData
+)
 from .base import DatasetBaseModel
 from .column import Column
 from .row import Row
@@ -33,7 +43,7 @@ class Dataset(DatasetBaseModel):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._http = self._get_http_client()
-    
+
     def _get_http_client(self) -> HTTPClient:
         """Get or create HTTP client instance"""
         if self._http is None:
@@ -41,33 +51,39 @@ class Dataset(DatasetBaseModel):
             api_key = os.environ.get("TRACELOOP_API_KEY", "")
             # api_endpoint = os.environ.get("TRACELOOP_BASE_URL", "https://api.traceloop.com")
             api_endpoint = "http://localhost:3001"
-            
+
             if not api_key:
                 raise ValueError("TRACELOOP_API_KEY environment variable is required")
-            
-            self._http = HTTPClient(base_url=api_endpoint, api_key=api_key, version=__version__)
-        
+
+            self._http = HTTPClient(
+                base_url=api_endpoint,
+                api_key=api_key,
+                version=__version__
+            )
+
         return self._http
-    
-    def _convert_rows_by_names_to_col_ids(self, rows_with_names: List[ValuesMap]) -> List[ValuesMap]:
+
+    def _convert_rows_by_names_to_col_ids(
+        self, rows_with_names: List[ValuesMap]
+    ) -> List[ValuesMap]:
         """Convert multiple rows from column names to column IDs"""
         return [
             {column.id: val for column, val in zip(self.columns, row_data.values())}
             for row_data in rows_with_names
         ]
-    
+
     def _create_columns(self, raw_columns: Dict[str, ColumnDefinition]):
-            """Create Column objects from API response which includes column IDs"""
-            for column_id, column_def in raw_columns.items():
-                column = Column(
-                    id=column_id,
-                    name=column_def.name,
-                    type=column_def.type,
-                    dataset_id=self.id
-                )
-                column._client = self
-                self.columns.append(column)
-    
+        """Create Column objects from API response which includes column IDs"""
+        for column_id, column_def in raw_columns.items():
+            column = Column(
+                id=column_id,
+                name=column_def.name,
+                type=column_def.type,
+                dataset_id=self.id
+            )
+            column._client = self
+            self.columns.append(column)
+
     def _create_rows(self, raw_rows: List[RowObject]):
         for _, row_obj in enumerate(raw_rows):
             row = Row(
@@ -85,11 +101,15 @@ class Dataset(DatasetBaseModel):
         api_key = os.environ.get("TRACELOOP_API_KEY", "")
         # api_endpoint = os.environ.get("TRACELOOP_BASE_URL", "https://api.traceloop.com")
         api_endpoint = "http://localhost:3001"
-        
+
         if not api_key:
             raise ValueError("TRACELOOP_API_KEY environment variable is required")
-        
-        return HTTPClient(base_url=api_endpoint, api_key=api_key, version=__version__)
+
+        return HTTPClient(
+            base_url=api_endpoint,
+            api_key=api_key,
+            version=__version__
+        )
 
     @classmethod
     def get_all(cls) -> List[DatasetMetadata]:
@@ -102,7 +122,9 @@ class Dataset(DatasetBaseModel):
     @classmethod
     def delete_by_slug(cls, slug: str) -> None:
         """Delete dataset by slug without requiring an instance"""
-        success = cls._get_http_client_static().delete(f"projects/default/datasets/{slug}")
+        success = cls._get_http_client_static().delete(
+            f"projects/default/datasets/{slug}"
+        )
         if not success:
             raise Exception(f"Failed to delete dataset {slug}")
 
@@ -110,17 +132,17 @@ class Dataset(DatasetBaseModel):
     def get_by_slug(cls, slug: str) -> "Dataset":
         """Get a dataset by slug and return a full Dataset instance"""
         result = cls._get_http_client_static().get(f"projects/default/datasets/{slug}")
-        if result is None:  
+        if result is None:
             raise Exception(f"Failed to get dataset {slug}")
-        
+
         validated_data = DatasetFullData(**result)
-        
+
         dataset_data = validated_data.model_dump(exclude={'columns', 'rows'})
         dataset = Dataset(**dataset_data)
-        
+
         dataset._create_columns(validated_data.columns)
         dataset._create_rows(validated_data.rows)
-        
+
         return dataset
 
     @classmethod
@@ -135,28 +157,28 @@ class Dataset(DatasetBaseModel):
         path = Path(file_path)
         if not path.exists():
             raise FileNotFoundError(f"CSV file not found: {file_path}")
-        
+
         columns_definition: List[ColumnDefinition] = []
         rows_with_names: List[ValuesMap] = []
-        
+
         with open(file_path, 'r', encoding='utf-8') as csvfile:
             # Detect delimiter
             sample = csvfile.read(1024)
             csvfile.seek(0)
             sniffer = csv.Sniffer()
             delimiter = sniffer.sniff(sample).delimiter
-            
+
             reader = csv.DictReader(csvfile, delimiter=delimiter)
-            
+
             for _, field_name in enumerate(reader.fieldnames):
                 columns_definition.append(ColumnDefinition(
                     name=field_name,
                     type=ColumnType.STRING,
                 ))
-            
+
             for _, row_data in enumerate(reader):
                 rows_with_names.append(dict(row_data))
-        
+
         # Create dataset instance
         dataset = cls(
             name=name,
@@ -164,15 +186,22 @@ class Dataset(DatasetBaseModel):
             description=description,
             columns_definition=columns_definition,
         )
-        
-        dataset_response = dataset.create_dataset(CreateDatasetRequest(slug=slug, name=name, description=description, columns=columns_definition))
-        
+
+        dataset_response = dataset.create_dataset(
+            CreateDatasetRequest(
+                slug=slug,
+                name=name,
+                description=description,
+                columns=columns_definition
+            )
+        )
+
         dataset._create_columns(dataset_response.columns)
-        
+
         rows_with_ids = dataset._convert_rows_by_names_to_col_ids(rows_with_names)
-        
-        rows_response = dataset.add_rows(rows_with_ids)
-                
+
+        dataset.add_rows(rows_with_ids)
+
         return dataset
 
     @classmethod
@@ -183,7 +212,7 @@ class Dataset(DatasetBaseModel):
         name: Optional[str] = None,
         description: Optional[str] = None
     ) -> "Dataset":
-        """Class method to create dataset from pandas DataFrame"""         
+        """Class method to create dataset from pandas DataFrame"""
         # Create column definitions from DataFrame
         columns_definition: List[ColumnDefinition] = []
         for col_name in df.columns:
@@ -194,12 +223,12 @@ class Dataset(DatasetBaseModel):
                 col_type = ColumnType.NUMBER
             else:
                 col_type = ColumnType.STRING
-            
+
             columns_definition.append(ColumnDefinition(
                 name=col_name,
                 type=col_type
             ))
-        
+
         # Create dataset instance
         dataset = cls(
             name=name,
@@ -207,21 +236,30 @@ class Dataset(DatasetBaseModel):
             description=description,
             columns_definition=columns_definition,
         )
-        
-        dataset_response = dataset.create_dataset(CreateDatasetRequest(slug=slug, name=name, description=description, columns=columns_definition))
-        
+
+        dataset_response = dataset.create_dataset(
+            CreateDatasetRequest(
+                slug=slug,
+                name=name,
+                description=description,
+                columns=columns_definition
+            )
+        )
+
         dataset._create_columns(dataset_response.columns)
-        
-        rows_with_ids = dataset._convert_rows_by_names_to_col_ids(df.to_dict(orient="records"))
-        
-        rows_response = dataset.add_rows(rows_with_ids)
-                
+
+        rows_with_ids = dataset._convert_rows_by_names_to_col_ids(
+            df.to_dict(orient="records")
+        )
+
+        dataset.add_rows(rows_with_ids)
+
         return dataset
 
     def add_column(self, name: str, col_type: ColumnType) -> Column:
         """Add new column (returns Column object)"""
         api_col = self.add_column_api(self.id, name, col_type)
-        
+
         column = Column(
             id=api_col["id"],
             name=name,
@@ -231,16 +269,16 @@ class Dataset(DatasetBaseModel):
         )
         self.columns.append(column)
         return column
-        
+
     def create_dataset(self, input: CreateDatasetRequest) -> CreateDatasetResponse:
         """Create new dataset"""
         data = input.model_dump()
-        
+
         result = self._http.post("projects/default/datasets", data)
-        
+
         if result is None:
             raise Exception("Failed to create dataset")
-        
+
         response = CreateDatasetResponse(**result)
 
         for field, value in response.model_dump().items():
@@ -250,28 +288,39 @@ class Dataset(DatasetBaseModel):
         return response
 
     # Column APIs
-    
+
     def add_column_api(self, dataset_id: str, name: str, col_type: str) -> Dict[str, Any]:
         """Add column to dataset"""
         data = {
             "name": name,
             "type": col_type
         }
-        
-        result = self._http.post(f"projects/default/datasets/{dataset_id}/columns", data)
+
+        result = self._http.post(
+            f"projects/default/datasets/{dataset_id}/columns",
+            data
+        )
         if result is None:
             raise Exception(f"Failed to add column to dataset {dataset_id}")
         return result
 
     def delete_column_api(self, dataset_id: str, column_id: str) -> None:
         """Delete column"""
-        result = self._http.delete(f"projects/default/datasets/{dataset_id}/columns/{column_id}", {})
+        result = self._http.delete(
+            f"projects/default/datasets/{dataset_id}/columns/{column_id}",
+            {}
+        )
         if result is None:
             raise Exception(f"Failed to delete column {column_id}")
 
-    def update_column_api(self, dataset_id: str, column_id: str, **kwargs) -> Dict[str, Any]:
+    def update_column_api(
+        self, dataset_id: str, column_id: str, **kwargs
+    ) -> Dict[str, Any]:
         """Update column properties"""
-        result = self._http.put(f"projects/default/datasets/{dataset_id}/columns/{column_id}", kwargs)
+        result = self._http.put(
+            f"projects/default/datasets/{dataset_id}/columns/{column_id}",
+            kwargs
+        )
         if result is None:
             raise Exception(f"Failed to update column {column_id}")
         return result
@@ -281,24 +330,33 @@ class Dataset(DatasetBaseModel):
     def add_rows_api(self, rows: List[ValuesMap]) -> CreateRowsResponse:
         """Add rows to dataset"""
         data = {"rows": rows}
-        result = self._http.post(f"projects/default/datasets/{self.slug}/rows", data)
+        result = self._http.post(
+            f"projects/default/datasets/{self.slug}/rows",
+            data
+        )
         if result is None:
             raise Exception(f"Failed to add row to dataset {self.slug}")
-        
+
         response = CreateRowsResponse(**result)
         self._create_rows(response.rows)
         return response
 
     def delete_row_api(self, row_id: str) -> None:
         """Delete row"""
-        result = self._get_http_client().delete(f"projects/default/datasets/{self.slug}/rows/{row_id}", {})
+        result = self._get_http_client().delete(
+            f"projects/default/datasets/{self.slug}/rows/{row_id}",
+            {}
+        )
         if result is None:
             raise Exception(f"Failed to delete row {row_id}")
 
     def update_row_api(self, row_id: str, values: Dict[str, Any]) -> Dict[str, Any]:
         """Update row values"""
         data = {"values": values}
-        result = self._get_http_client().put(f"projects/default/datasets/{self.slug}/rows/{row_id}", data)
+        result = self._get_http_client().put(
+            f"projects/default/datasets/{self.slug}/rows/{row_id}",
+            data
+        )
         if result is None:
             raise Exception(f"Failed to update cells in dataset {self.slug}")
         return result

@@ -1,4 +1,4 @@
-from typing import Optional, Dict, Any, TYPE_CHECKING
+from typing import Optional, TYPE_CHECKING
 from pydantic import PrivateAttr
 
 from .base import DatasetBaseModel
@@ -19,11 +19,11 @@ class Column(DatasetBaseModel):
         """Remove this column from dataset"""
         if self._client is None:
             raise ValueError("Column must be associated with a dataset to delete")
-        
+
         self._client.delete_column_api(self.dataset_id, self.id)
-        
+
         self._client.columns.remove(self)
-        
+
         # Update all rows by removing this column's values
         for row in self._client.rows:
             if self.id in row.values:
@@ -33,18 +33,17 @@ class Column(DatasetBaseModel):
         """Update this column's properties"""
         if self._client is None:
             raise ValueError("Column must be associated with a dataset to update")
-        
+
         update_data = {}
         if name is not None:
             update_data["name"] = name
             self.name = name
-            
+
         if type is not None:
             update_data["type"] = type
             self.type = type
-            
+
         if update_data:
             self._client.update_column_api(self.dataset_id, self.id, **update_data)
             self.name = name
             self.type = type
-

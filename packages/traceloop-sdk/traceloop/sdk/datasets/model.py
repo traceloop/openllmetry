@@ -55,12 +55,14 @@ class UpdateColumnInput(BaseModel):
 class CreateRowsInput(BaseModel):
     rows: List[ValuesMap]
 
+
 class RowObject(BaseModel):
     id: str
     rowIndex: float = Field(alias="rowIndex")
     values: ValuesMap
     created_at: datetime.datetime = Field(alias="created_at")
     updated_at: datetime.datetime = Field(alias="updated_at")
+
 
 class CreateRowsResponse(BaseModel):
     rows: List[RowObject]
@@ -70,6 +72,7 @@ class CreateRowsResponse(BaseModel):
 class UpdateRowInput(BaseModel):
     values: ValuesMap
 
+
 class DatasetMetadata(BaseModel):
     id: str
     slug: str
@@ -77,7 +80,7 @@ class DatasetMetadata(BaseModel):
     description: Optional[str] = None
     last_version: Optional[str] = Field(default=None, alias="lastVersion")
     columns: Optional[List[ColumnDefinition]] = None
-    created_at: Optional[datetime.datetime] 
+    created_at: Optional[datetime.datetime]
     updated_at: Optional[datetime.datetime]
 
 
@@ -87,8 +90,7 @@ class DatasetFullData(BaseModel):
     slug: str
     name: Optional[str] = None
     description: Optional[str] = None
-    columns: Dict[str, ColumnDefinition] 
+    columns: Dict[str, ColumnDefinition]
     rows: List[RowObject]
     created_at: datetime.datetime
     updated_at: datetime.datetime
-
