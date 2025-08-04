@@ -20,7 +20,15 @@ class Column(DatasetBaseModel):
         if self._client is None:
             from .dataset import Dataset
             self._client = Dataset()
+        
         self._client.delete_column_api(self.dataset_id, self.id)
+        
+        self._client.columns.remove(self)
+        
+        # Update all rows by removing this column's values
+        for row in self._client.rows:
+            if self.id in row.values:
+                del row.values[self.id]
 
     def update(self, name: Optional[str] = None, type: Optional[ColumnType] = None) -> None:
         """Update this column's properties"""
