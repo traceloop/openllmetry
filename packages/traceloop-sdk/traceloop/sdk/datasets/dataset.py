@@ -15,7 +15,8 @@ from traceloop.sdk.datasets.model import (
     ColumnType,
     DatasetMetadata,
     RowObject,
-    DatasetFullData
+    DatasetFullData,
+    PublishDatasetResponse
 )
 from .base import DatasetBaseModel
 from .column import Column
@@ -253,6 +254,22 @@ class Dataset(DatasetBaseModel):
         dataset.add_rows_api(rows_with_ids)
 
         return dataset
+
+    def publish(self) -> str:
+        """Publish dataset"""
+        result = self._http.post(
+            f"projects/default/datasets/{self.slug}/publish",{}
+        )
+        if result is None:
+            raise Exception(f"Failed to publish dataset {self.slug}")
+        return PublishDatasetResponse(**result).version
+
+    def get_version_csv(self, version: str) -> str:
+        """Get a specific version of a dataset as a CSV string"""
+        result = self._http.get(f"projects/default/datasets/{self.slug}/versions/{version}")
+        if result is None:
+            raise Exception(f"Failed to get dataset {self.slug} by version {version}")
+        return result
 
     def add_column(self, name: str, col_type: ColumnType) -> Column:
         """Add new column (returns Column object)"""

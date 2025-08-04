@@ -68,6 +68,10 @@ class CreateRowsResponse(BaseModel):
     rows: List[RowObject]
     total: int
 
+class PublishDatasetResponse(BaseModel):
+    dataset_id: str = Field(alias="datasetId")
+    version: str
+
 
 class UpdateRowInput(BaseModel):
     values: ValuesMap
@@ -94,3 +98,4 @@ class DatasetFullData(BaseModel):
     rows: List[RowObject]
     created_at: datetime.datetime
     updated_at: datetime.datetime
+
