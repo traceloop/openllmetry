@@ -2,6 +2,7 @@ import json
 from unittest.mock import MagicMock, patch
 from traceloop.sdk.datasets.dataset import Dataset
 from traceloop.sdk.datasets.model import ColumnDefinition, ColumnType, CreateDatasetRequest
+from traceloop.sdk.datasets.column import Column
 from .mock_response import create_dataset_response, add_rows_response_json, create_rows_response_json
 
 
@@ -59,6 +60,7 @@ def create_simple_mock_dataset():
     ]
     
     dataset = Dataset(
+        id="test_dataset_id",
         name="Test Dataset",
         slug="test-dataset",
         description="Test dataset",
@@ -86,3 +88,29 @@ def setup_mock_http_client_for_get_rows():
         json.loads(create_rows_response_json)  # get existing rows
     ]
     return mock_client
+
+
+def create_dataset_with_existing_columns():
+    """Create a dataset with existing columns for testing column operations"""
+    dataset = Dataset(
+        id="test_dataset_id",
+        slug="test-dataset",
+        name="Test Dataset"
+    )
+    
+    # Add existing columns to the dataset
+    existing_column_1 = Column(
+        id="column_id_1",
+        name="Column 1",
+        type=ColumnType.STRING,
+        dataset_id="test_dataset_id"
+    )
+    existing_column_2 = Column(
+        id="column_id_2", 
+        name="Column 2",
+        type=ColumnType.NUMBER,
+        dataset_id="test_dataset_id"
+    )
+    dataset.columns.extend([existing_column_1, existing_column_2])
+    
+    return dataset, [existing_column_1, existing_column_2]

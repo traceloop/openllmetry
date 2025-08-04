@@ -12,7 +12,6 @@ class Column(DatasetBaseModel):
     id: str
     name: str
     type: ColumnType
-    config: Optional[Dict[str, Any]] = None
     dataset_id: str
     _client: Optional["Dataset"] = PrivateAttr(default=None)
 
