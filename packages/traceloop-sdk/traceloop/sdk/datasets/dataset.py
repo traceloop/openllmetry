@@ -63,9 +63,9 @@ class Dataset(DatasetBaseModel):
                     id=column_id,
                     name=column_def.name,
                     type=column_def.type,
-                    dataset_id=self.id,
-                    _client=self
+                    dataset_id=self.id
                 )
+                column._client = self
                 self.columns.append(column)
     
     def _create_rows(self, raw_rows: List[RowObject]):
@@ -74,9 +74,9 @@ class Dataset(DatasetBaseModel):
                 id=row_obj.id,
                 row_index=row_obj.rowIndex,
                 values=row_obj.values,
-                dataset_id=self.id,
-                _client=self
+                dataset_id=self.id
             )
+            row._client = self
             self.rows.append(row)
 
     @classmethod
@@ -291,7 +291,7 @@ class Dataset(DatasetBaseModel):
 
     def delete_row(self, row_id: str) -> None:
         """Delete row"""
-        result = self._get_http_client().post(f"projects/default/datasets/{self.slug}/rows/{row_id}/delete", {})
+        result = self._get_http_client().delete(f"projects/default/datasets/{self.slug}/rows/{row_id}", {})
         if result is None:
             raise Exception(f"Failed to delete row {row_id}")
 
