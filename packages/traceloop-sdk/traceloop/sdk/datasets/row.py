@@ -27,12 +27,3 @@ class Row(DatasetBaseModel):
             raise ValueError("Row must be associated with a dataset to update")
         self._client.update_row_api(self.id, values)
         self.values.update(values)
-
-    def get_value(self, column_name: str) -> Any:
-        """Get value by column name"""
-        return self.values.get(column_name)
-
-    def set_value(self, column_name: str, value: Any) -> None:
-        """Set value by column name"""
-        self.values[column_name] = value
-        self.update({column_name: value})
