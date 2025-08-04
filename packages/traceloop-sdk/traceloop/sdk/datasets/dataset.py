@@ -295,18 +295,10 @@ class Dataset(DatasetBaseModel):
         if result is None:
             raise Exception(f"Failed to delete row {row_id}")
 
-    def update_cells_api(self, dataset_id: str, updates: Dict[str, Dict[str, Any]]) -> Dict[str, Any]:
-        """Bulk update cells"""
-        data = {"updates": updates}
-        result = self._get_http_client().post(f"datasets/{dataset_id}/cells", data)
+    def update_row_api(self, row_id: str, values: Dict[str, Any]) -> Dict[str, Any]:
+        """Update row values"""
+        data = {"values": values}
+        result = self._get_http_client().put(f"projects/default/datasets/{self.slug}/rows/{row_id}", data)
         if result is None:
-            raise Exception(f"Failed to update cells in dataset {dataset_id}")
-        return result
-
-    def update_column_order_api(self, dataset_id: str, column_ids: List[str]) -> Dict[str, Any]:
-        """Reorder columns"""
-        data = {"column_ids": column_ids}
-        result = self._get_http_client().post(f"datasets/{dataset_id}/column-order", data)
-        if result is None:
-            raise Exception(f"Failed to update column order in dataset {dataset_id}")
+            raise Exception(f"Failed to update cells in dataset {self.slug}")
         return result

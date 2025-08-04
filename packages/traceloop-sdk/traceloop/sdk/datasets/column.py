@@ -18,8 +18,7 @@ class Column(DatasetBaseModel):
     def delete(self) -> None:
         """Remove this column from dataset"""
         if self._client is None:
-            from .dataset import Dataset
-            self._client = Dataset()
+            raise ValueError("Column must be associated with a dataset to delete")
         
         self._client.delete_column_api(self.dataset_id, self.id)
         
@@ -33,8 +32,7 @@ class Column(DatasetBaseModel):
     def update(self, name: Optional[str] = None, type: Optional[ColumnType] = None) -> None:
         """Update this column's properties"""
         if self._client is None:
-            from .dataset import Dataset
-            self._client = Dataset()
+            raise ValueError("Column must be associated with a dataset to update")
         
         update_data = {}
         if name is not None:

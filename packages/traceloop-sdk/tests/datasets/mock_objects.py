@@ -34,25 +34,6 @@ def setup_mock_http_client_for_dataset_creation():
     ]
     return mock_client
 
-
-def create_and_setup_test_dataset():
-    """Create a test dataset and set it up with mocked API calls"""
-    dataset, columns_definition = create_mock_dataset_with_columns()
-    
-    # Create the dataset on API
-    dataset_response = dataset.create_dataset(CreateDatasetRequest(
-        slug="test-dataset",
-        name="Test Dataset",
-        description="Test dataset",
-        columns=columns_definition
-    ))
-    
-    # Create columns from response
-    dataset._create_columns(dataset_response.columns)
-    
-    return dataset, columns_definition
-
-
 def create_simple_mock_dataset():
     """Create a mock dataset with just one column for simple tests"""
     columns_definition = [
