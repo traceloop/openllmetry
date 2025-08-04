@@ -76,7 +76,7 @@ class DatasetMetadata(BaseModel):
     name: str
     description: Optional[str] = None
     last_version: Optional[str] = Field(default=None, alias="lastVersion")
-    columns: List[ColumnDefinition]
+    columns: Optional[List[ColumnDefinition]] = None
     created_at: Optional[datetime.datetime] 
     updated_at: Optional[datetime.datetime]
 
