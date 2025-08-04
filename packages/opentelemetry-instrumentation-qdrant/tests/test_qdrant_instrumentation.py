@@ -156,7 +156,7 @@ def query_batch_points(qdrant: QdrantClient):
 
 
 def test_qdrant_query_batch_points(exporter, qdrant):
-    if not hasattr(qdrant, "query_points"):
+    if not hasattr(qdrant, "query_batch_points"):
         pytest.skip("query_batch_points method is not available in this qdrant-client version, available in qdrant-client v1.10.0 and later")
 
     upload_collection(qdrant)

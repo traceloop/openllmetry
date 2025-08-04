@@ -51,7 +51,7 @@ class QdrantInstrumentor(BaseInstrumentor):
         for wrapped_method in WRAPPED_METHODS:
             wrap_object = wrapped_method.get("object")
             wrap_method = wrapped_method.get("method")
-            wrapped_object= getattr(qdrant_client, wrap_object, None)
+            wrapped_object = getattr(qdrant_client, wrap_object, None)
 
             if wrapped_object and hasattr(wrapped_object, wrap_method):
                 wrap_function_wrapper(
