@@ -1,6 +1,7 @@
 from unittest.mock import Mock, patch
 from traceloop.sdk.datasets.model import ColumnType
 from traceloop.sdk.datasets.column import Column
+from traceloop.sdk.datasets.dataset import Dataset
 from tests.datasets.mock_objects import create_simple_mock_dataset,create_dataset_with_existing_columns
 from tests.datasets.mock_response import basic_dataset_response_json
 import json
@@ -70,33 +71,28 @@ def test_add_column_to_dataset_with_existing_columns(mock_get_http_client):
 
 @patch('traceloop.sdk.datasets.dataset.Dataset._get_http_client')
 def test_update_column(mock_get_http_client):
-    """Test updating a column name using basic_dataset_response_json"""
+    """Test updating a column name from dataset.columns[0].update() using basic_dataset_response_json"""
     mock_http_client = Mock()
     mock_get_http_client.return_value = mock_http_client
     
-    dataset_data = json.loads(basic_dataset_response_json)
+    mock_http_client.put.return_value = json.loads(basic_dataset_response_json)
     
-    mock_http_client.put.return_value = {"success": True}
+    dataset, _ = create_dataset_with_existing_columns()
     
-    column_id = "cmdwq9a320000coitckjwfpj4"
-    column_data = dataset_data["columns"][column_id]
+    column_to_update = dataset.columns[0]
     
-    column = Column(
-        id=column_id,
-        name="old_name",
-        type=ColumnType.STRING,
-        dataset_id=dataset_data["id"]
-    )
+    response_data = json.loads(basic_dataset_response_json)
+    new_name = response_data["columns"]["column_id_1"]["name"]
+    new_type = response_data["columns"]["column_id_1"]["type"]
     
-    new_name = dataset_data["columns"][column_id]["name"]
-    column.update(name=new_name, type=ColumnType.NUMBER)
+    dataset.columns[0].update(name=new_name, type=new_type)
     
     mock_http_client.put.assert_called_once_with(
-        f"projects/default/datasets/{dataset_data['id']}/columns/{column_id}",
-        {"name": new_name}
+        f"projects/default/datasets/{dataset.id}/columns/{column_to_update.id}",
+        {"name": new_name, "type": new_type}
     )
     
-    assert column.name == new_name
-    assert column.id == column_id
-    assert column.type == ColumnType.NUMBER
-    assert column.dataset_id == dataset_data["id"]
+    assert dataset.columns[0].name == new_name
+    assert dataset.columns[0].type == new_type
+    assert dataset.columns[0].id == column_to_update.id
+    assert dataset.columns[0].dataset_id == dataset.id

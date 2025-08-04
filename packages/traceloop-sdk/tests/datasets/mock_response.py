@@ -263,11 +263,11 @@ basic_dataset_response_json = """
     "name": "Data",
     "description": "Data for example",
     "columns": {
-        "cmdwq9a320000coitckjwfpj4": {
+        "column_id_1": {
             "name": "col_number",
             "type": "number"
         },
-        "cmdwqcict0000t3itd63u2dml": {
+        "column_id_2": {
             "name": "col_bool",
             "type": "boolean"
         }
