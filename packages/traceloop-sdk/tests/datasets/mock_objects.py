@@ -111,6 +111,10 @@ def create_dataset_with_existing_columns():
         type=ColumnType.NUMBER,
         dataset_id="test_dataset_id"
     )
+    
+    existing_column_1._client = dataset
+    existing_column_2._client = dataset
+    
     dataset.columns.extend([existing_column_1, existing_column_2])
     
     return dataset, [existing_column_1, existing_column_2]
