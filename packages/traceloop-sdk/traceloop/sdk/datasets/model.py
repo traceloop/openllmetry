@@ -72,6 +72,10 @@ class PublishDatasetResponse(BaseModel):
     dataset_id: str = Field(alias="datasetId")
     version: str
 
+class AddColumnResponse(BaseModel):
+    id: str
+    name: str
+    type: ColumnType
 
 class UpdateRowInput(BaseModel):
     values: ValuesMap
@@ -83,13 +87,13 @@ class DatasetMetadata(BaseModel):
     name: str
     description: Optional[str] = None
     last_version: Optional[str] = Field(default=None, alias="lastVersion")
-    columns: Optional[List[ColumnDefinition]] = None
+    columns: Optional[Dict[str, ColumnDefinition]] = Field(default=None)
     created_at: Optional[datetime.datetime]
     updated_at: Optional[datetime.datetime]
 
 
 class DatasetFullData(BaseModel):
-    """Full dataset response matching Go BasicDataset + rows"""
+    """Full dataset response with columns and rows"""
     id: str
     slug: str
     name: Optional[str] = None

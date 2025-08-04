@@ -20,7 +20,7 @@ class Column(DatasetBaseModel):
         if self._client is None:
             raise ValueError("Column must be associated with a dataset to delete")
 
-        self._client.delete_column_api(self.dataset_id, self.id)
+        self._client.delete_column_api(self.id)
 
         self._client.columns.remove(self)
 
@@ -44,6 +44,6 @@ class Column(DatasetBaseModel):
             self.type = type
 
         if update_data:
-            self._client.update_column_api(self.dataset_id, self.id, **update_data)
+            self._client.update_column_api(column_id=self.id, data=update_data)
             self.name = name
             self.type = type
