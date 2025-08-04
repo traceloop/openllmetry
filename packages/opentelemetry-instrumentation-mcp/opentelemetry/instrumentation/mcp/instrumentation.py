@@ -1,6 +1,6 @@
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
-from typing import Any, AsyncGenerator, Callable, Collection, Tuple, cast
+from typing import Any, AsyncGenerator, Callable, Collection, Tuple, cast, Union
 import json
 import logging
 import traceback
@@ -125,7 +125,11 @@ class McpInstrumentor(BaseInstrumentor):
         async def traced_method(
             wrapped: Callable[..., Any], instance: Any, args: Any, kwargs: Any
         ) -> AsyncGenerator[
-            Tuple["InstrumentedStreamReader", "InstrumentedStreamWriter"], None
+            Union[
+                Tuple[InstrumentedStreamReader, InstrumentedStreamWriter],
+                Tuple[InstrumentedStreamReader, InstrumentedStreamWriter, Any]
+            ],
+            None
         ]:
             async with wrapped(*args, **kwargs) as result:
                 try:
