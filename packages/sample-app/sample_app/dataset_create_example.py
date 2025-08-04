@@ -94,7 +94,6 @@ def add_column_example(dataset: Dataset) -> Column:
         new_column = dataset.add_column(
             name="department",
             col_type=ColumnType.STRING,
-            config={"description": "Employee department"}
         )
         print(f"Added column: {new_column.name} (ID: {new_column.id})")
     
@@ -159,7 +158,7 @@ def add_row_example(dataset: Dataset) -> Row:
                 row_data[column.id] = "Default Value"
         
         # Add row via API
-        rows_response = dataset.add_rows([row_data])
+        rows_response = dataset.add_rows_api([row_data])
         
         if rows_response.rows:
             new_row = rows_response.rows[0]
@@ -238,6 +237,31 @@ def delete_row_example(dataset: Dataset):
         print(f"Error deleting row: {e}")
 
 
+def publish_dataset_example(dataset: Dataset) -> str:
+    """Demonstrate publishing a dataset"""
+    print("\n=== Publish Dataset Example ===")
+    
+    try:
+        published_version = dataset.publish()
+        print(f"Published dataset: {dataset.slug}, version: {published_version}")
+        return published_version
+        
+    except Exception as e:
+        print(f"Error publishing dataset: {e}")
+
+
+def get_dataset_by_version_example(slug: str, version: str):
+    """Demonstrate getting a dataset by version"""
+    print("\n=== Get Dataset by Version Example ===")
+    
+    try:
+        dataset_csv = Dataset.get_version_csv(slug=slug, version=version)
+        print(f"Retrieved dataset:\n{dataset_csv}")
+        
+    except Exception as e:
+        print(f"Error getting dataset by version: {e}")
+
+
 def delete_dataset_example(slug: str):
     """Demonstrate deleting a dataset"""
     print("\n=== Delete Dataset Example ===")
@@ -253,9 +277,12 @@ def main():
     column = add_column_example(ds1)
     update_column_example(ds1, column)
     add_row_example(ds1)
+    published_version = publish_dataset_example(ds1)
     delete_row_example(ds1)
     delete_column_example(ds1, column)
     delete_dataset_example(ds1.slug)
+
+    get_dataset_by_version_example(slug="example-1", version=published_version)
 
 
     ds2 = dataset_from_dataframe_example("example-2")
@@ -264,6 +291,7 @@ def main():
     update_row_example(ds2)
     delete_column_example(ds2, column)
     delete_dataset_example(ds2.slug)
+
 
     print("\n" + "=" * 50)
     print("Examples completed!")

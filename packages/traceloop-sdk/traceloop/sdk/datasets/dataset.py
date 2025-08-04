@@ -16,7 +16,8 @@ from traceloop.sdk.datasets.model import (
     DatasetMetadata,
     RowObject,
     DatasetFullData,
-    PublishDatasetResponse
+    PublishDatasetResponse,
+    AddColumnResponse
 )
 from .base import DatasetBaseModel
 from .column import Column
@@ -99,7 +100,8 @@ class Dataset(DatasetBaseModel):
     def _get_http_client_static(cls) -> HTTPClient:
         """Get HTTP client instance for static operations"""
         api_key = os.environ.get("TRACELOOP_API_KEY", "")
-        api_endpoint = os.environ.get("TRACELOOP_BASE_URL", "https://api.traceloop.com")
+        # api_endpoint = os.environ.get("TRACELOOP_BASE_URL", "https://api.traceloop.com")
+        api_endpoint = "http://localhost:3001"
 
         if not api_key:
             raise ValueError("TRACELOOP_API_KEY environment variable is required")
@@ -255,6 +257,14 @@ class Dataset(DatasetBaseModel):
 
         return dataset
 
+    @classmethod
+    def get_version_csv(cls, slug: str, version: str) -> str:
+        """Get a specific version of a dataset as a CSV string"""
+        result = cls._get_http_client_static().get(f"projects/default/datasets/{slug}/versions/{version}")
+        if result is None:
+            raise Exception(f"Failed to get dataset {slug} by version {version}")
+        return result
+
     def publish(self) -> str:
         """Publish dataset"""
         result = self._http.post(
@@ -264,24 +274,18 @@ class Dataset(DatasetBaseModel):
             raise Exception(f"Failed to publish dataset {self.slug}")
         return PublishDatasetResponse(**result).version
 
-    def get_version_csv(self, version: str) -> str:
-        """Get a specific version of a dataset as a CSV string"""
-        result = self._http.get(f"projects/default/datasets/{self.slug}/versions/{version}")
-        if result is None:
-            raise Exception(f"Failed to get dataset {self.slug} by version {version}")
-        return result
 
     def add_column(self, name: str, col_type: ColumnType) -> Column:
         """Add new column (returns Column object)"""
-        api_col = self.add_column_api(self.id, name, col_type)
+        col_response = self.add_column_api(name, col_type)
 
         column = Column(
-            id=api_col["id"],
-            name=name,
-            type=col_type,
-            dataset_id=self.id,
-            _client=self
+            id=col_response.id,
+            name=col_response.name,
+            type=col_response.type,
+            dataset_id=self.id
         )
+        column._client = self
         self.columns.append(column)
         return column
 
@@ -304,7 +308,7 @@ class Dataset(DatasetBaseModel):
 
     # Column APIs
 
-    def add_column_api(self, dataset_id: str, name: str, col_type: str) -> Dict[str, Any]:
+    def add_column_api(self, name: str, col_type: str) -> AddColumnResponse:
         """Add column to dataset"""
         data = {
             "name": name,
@@ -312,29 +316,30 @@ class Dataset(DatasetBaseModel):
         }
 
         result = self._http.post(
-            f"projects/default/datasets/{dataset_id}/columns",
+            f"projects/default/datasets/{self.slug}/columns",
             data
         )
         if result is None:
-            raise Exception(f"Failed to add column to dataset {dataset_id}")
-        return result
+            raise Exception(f"Failed to add column to dataset {self.slug}")
+        return AddColumnResponse(**result)
 
-    def delete_column_api(self, dataset_id: str, column_id: str) -> None:
+    def delete_column_api(self, column_id: str) -> None:
         """Delete column"""
         result = self._http.delete(
-            f"projects/default/datasets/{dataset_id}/columns/{column_id}",
+            f"projects/default/datasets/{self.slug}/columns/{column_id}",
             {}
         )
         if result is None:
             raise Exception(f"Failed to delete column {column_id}")
 
     def update_column_api(
-        self, dataset_id: str, column_id: str, **kwargs
+        self, column_id: str,
+        data: Dict[str, str]
     ) -> Dict[str, Any]:
         """Update column properties"""
         result = self._http.put(
-            f"projects/default/datasets/{dataset_id}/columns/{column_id}",
-            kwargs
+            f"projects/default/datasets/{self.slug}/columns/{column_id}",
+            data
         )
         if result is None:
             raise Exception(f"Failed to update column {column_id}")
