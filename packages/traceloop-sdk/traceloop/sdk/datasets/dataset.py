@@ -254,12 +254,11 @@ class Dataset(DatasetBaseModel):
     def publish(self) -> str:
         """Publish dataset"""
         result = self._http.post(
-            f"projects/default/datasets/{self.slug}/publish",{}
+            f"projects/default/datasets/{self.slug}/publish", {}
         )
         if result is None:
             raise Exception(f"Failed to publish dataset {self.slug}")
         return PublishDatasetResponse(**result).version
-
 
     def add_column(self, name: str, col_type: ColumnType) -> Column:
         """Add new column (returns Column object)"""

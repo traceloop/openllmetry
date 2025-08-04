@@ -44,7 +44,7 @@ def dataset_from_csv_example(slug: str) -> Dataset:
             description="Sample employee data for demonstration"
         )
 
-        print(f"Created dataset from CSV successfully")
+        print("Created dataset from CSV successfully")
         return dataset
 
     except Exception as e:
@@ -77,7 +77,7 @@ def dataset_from_dataframe_example(slug: str) -> Dataset:
             description="Sample product inventory data"
         )
 
-        print(f"Created dataset from DataFrame successfully")
+        print("Created dataset from DataFrame successfully")
         return dataset
 
     except Exception as e:
@@ -88,7 +88,7 @@ def dataset_from_dataframe_example(slug: str) -> Dataset:
 def add_column_example(dataset: Dataset) -> Column:
     """Demonstrate adding a column to a dataset"""
     print("\n=== Add Column Example ===")
-    
+
     try:
         num_columns = len(dataset.columns)
         new_column = dataset.add_column(
@@ -96,10 +96,10 @@ def add_column_example(dataset: Dataset) -> Column:
             col_type=ColumnType.STRING,
         )
         print(f"Added column: {new_column.name} (ID: {new_column.id})")
-    
+
         assert len(dataset.columns) == num_columns + 1
         return new_column
-        
+
     except Exception as e:
         print(f"Error adding column: {e}")
 
@@ -107,17 +107,17 @@ def add_column_example(dataset: Dataset) -> Column:
 def update_column_example(dataset: Dataset, column: Column):
     """Demonstrate updating a column in a dataset"""
     print("\n=== Update Column Example ===")
-    
+
     try:
         updated_name = "updated_name"
         column.update(name=updated_name, type=ColumnType.NUMBER)
         print(f"Updated column: {column.name} (ID: {column.id})")
-        
+
         updated_col = next((c for c in dataset.columns if c.id == column.id), None)
         assert updated_col is not None
         assert updated_col.name == f"{column.name}"
         assert updated_col.type == ColumnType.NUMBER
-            
+
     except Exception as e:
         print(f"Error updating column: {e}")
 
@@ -125,12 +125,12 @@ def update_column_example(dataset: Dataset, column: Column):
 def delete_column_example(dataset: Dataset, column: Column):
     """Demonstrate deleting a column from a dataset"""
     print("\n=== Delete Column Example ===")
-    
+
     try:
         column.delete()
         print(f"Deleted column: {column.name} (ID: {column.id})")
         assert column.id not in [c.id for c in dataset.columns]
-            
+
     except Exception as e:
         print(f"Error deleting column: {e}")
 
@@ -138,10 +138,10 @@ def delete_column_example(dataset: Dataset, column: Column):
 def add_row_example(dataset: Dataset) -> Row:
     """Demonstrate adding a row to a dataset"""
     print("\n=== Add Row Example ===")
-    
+
     try:
         num_rows = len(dataset.rows)
-        
+
         # Create row data
         row_data = {}
         for column in dataset.columns:
@@ -153,10 +153,10 @@ def add_row_example(dataset: Dataset) -> Row:
                 row_data[column.id] = True
             elif column.name == "category":
                 row_data[column.id] = "Marketing"
-        
+
         # Add row via API
         rows_response = dataset.add_rows_api([row_data])
-        
+
         if rows_response.rows:
             new_row = rows_response.rows[0]
             print(f"Added row with ID: {new_row.id}")
@@ -166,7 +166,7 @@ def add_row_example(dataset: Dataset) -> Row:
         else:
             print("No row was added")
             return None
-            
+
     except Exception as e:
         print(f"Error adding row: {e}")
         return None
@@ -175,16 +175,16 @@ def add_row_example(dataset: Dataset) -> Row:
 def update_row_example(dataset: Dataset):
     """Demonstrate updating a row in a dataset"""
     print("\n=== Update Row Example ===")
-    
+
     try:
         if not dataset.rows:
             print("No rows to update")
             return
-            
+
         # Get the first row
         row = dataset.rows[0]
         print(f"Updating row: {row.id}")
-        
+
         # Create update data
         updates = {}
         for column in dataset.columns:
@@ -196,13 +196,13 @@ def update_row_example(dataset: Dataset):
                 updates[column.id] = True
             elif column.name == "category":
                 updates[column.id] = "Marketing"
-        
+
         # Update the row
         row.update(updates)
         updated_row = next((r for r in dataset.rows if r.id == row.id), None)
         assert updated_row is not None
         print(f"Updated row: {updated_row.model_dump_json()}")
-        
+
     except Exception as e:
         print(f"Error updating row: {e}")
 
@@ -210,26 +210,26 @@ def update_row_example(dataset: Dataset):
 def delete_row_example(dataset: Dataset):
     """Demonstrate deleting a row from a dataset"""
     print("\n=== Delete Row Example ===")
-    
+
     try:
         num_rows = len(dataset.rows)
         if not dataset.rows:
             print("No rows to delete")
             return
-            
+
         # Get the first row
         row = dataset.rows[0]
         row_id = row.id
         print(f"Deleting row: {row_id}")
-        
+
         # Delete the row
         row.delete()
         print(f"Deleted row: {row_id}")
-        
+
         # Verify row is no longer in dataset
         assert row_id not in [r.id for r in dataset.rows]
         assert len(dataset.rows) == num_rows - 1
-        
+
     except Exception as e:
         print(f"Error deleting row: {e}")
 
@@ -237,12 +237,12 @@ def delete_row_example(dataset: Dataset):
 def publish_dataset_example(dataset: Dataset) -> str:
     """Demonstrate publishing a dataset"""
     print("\n=== Publish Dataset Example ===")
-    
+
     try:
         published_version = dataset.publish()
         print(f"Published dataset: {dataset.slug}, version: {published_version}")
         return published_version
-        
+
     except Exception as e:
         print(f"Error publishing dataset: {e}")
 
@@ -250,11 +250,11 @@ def publish_dataset_example(dataset: Dataset) -> str:
 def get_dataset_by_version_example(slug: str, version: str):
     """Demonstrate getting a dataset by version"""
     print("\n=== Get Dataset by Version Example ===")
-    
+
     try:
         dataset_csv = Dataset.get_version_csv(slug=slug, version=version)
         print(f"Retrieved dataset:\n{dataset_csv}")
-        
+
     except Exception as e:
         print(f"Error getting dataset by version: {e}")
 
@@ -280,7 +280,6 @@ def main():
 
     get_dataset_by_version_example(slug="example-1", version=published_version)
 
-
     ds2 = dataset_from_dataframe_example("example-2")
     column = add_column_example(ds2)
     update_column_example(ds2, column)
@@ -288,7 +287,6 @@ def main():
     update_row_example(ds2)
     delete_column_example(ds2, column)
     delete_dataset_example(ds2.slug)
-
 
     print("\n" + "=" * 50)
     print("Examples completed!")
