@@ -1,8 +1,7 @@
 from typing import Optional, TYPE_CHECKING
 from pydantic import PrivateAttr
 
-from .base import DatasetBaseModel
-from .model import ColumnType
+from .model import ColumnType, DatasetBaseModel
 
 if TYPE_CHECKING:
     from .dataset import Dataset

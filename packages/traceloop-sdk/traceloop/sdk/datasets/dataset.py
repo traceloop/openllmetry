@@ -17,9 +17,9 @@ from traceloop.sdk.datasets.model import (
     RowObject,
     DatasetFullData,
     PublishDatasetResponse,
-    AddColumnResponse
+    AddColumnResponse,
+    DatasetBaseModel
 )
-from .base import DatasetBaseModel
 from .column import Column
 from .row import Row
 from traceloop.sdk.client.http import HTTPClient
@@ -34,7 +34,6 @@ class Dataset(DatasetBaseModel):
     name: Optional[str] = None
     slug: str
     description: Optional[str] = None
-    columns_definition: Optional[List[ColumnDefinition]] = Field(default_factory=list)
     columns: Optional[List[Column]] = Field(default_factory=list)
     rows: Optional[List[Row]] = Field(default_factory=list)
     last_version: Optional[str] = None
