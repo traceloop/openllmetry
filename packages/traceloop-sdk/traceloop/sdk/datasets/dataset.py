@@ -278,7 +278,7 @@ class Dataset(DatasetBaseModel):
 
     # Row APIs
 
-    def add_rows(self, rows: List[ValuesMap]) -> CreateRowsResponse:
+    def add_rows_api(self, rows: List[ValuesMap]) -> CreateRowsResponse:
         """Add rows to dataset"""
         data = {"rows": rows}
         result = self._http.post(f"projects/default/datasets/{self.slug}/rows", data)
@@ -289,7 +289,7 @@ class Dataset(DatasetBaseModel):
         self._create_rows(response.rows)
         return response
 
-    def delete_row(self, row_id: str) -> None:
+    def delete_row_api(self, row_id: str) -> None:
         """Delete row"""
         result = self._get_http_client().delete(f"projects/default/datasets/{self.slug}/rows/{row_id}", {})
         if result is None:
