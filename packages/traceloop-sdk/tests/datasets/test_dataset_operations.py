@@ -33,7 +33,7 @@ def test_get_dataset_by_slug():
         assert price_column is not None
         assert price_column.type == "number"
 
-        laptop_row = next((row for row in dataset.rows if row.row_index == 1), None)
+        laptop_row = dataset.rows[0]
         assert laptop_row is not None
         assert laptop_row.values["cmdvki9zv003801vv1idaywus"] == "Laptop"
         assert laptop_row.values["cmdvki9zv003901vv5zr5i24b"] == 999.99

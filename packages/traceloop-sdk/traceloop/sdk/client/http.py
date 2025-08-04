@@ -54,7 +54,7 @@ class HTTPClient:
             return response.status_code == 204 or response.status_code == 200
         except requests.exceptions.RequestException as e:
             print(Fore.RED + f"Error making request to {path}: {str(e)}" + Fore.RESET)
-            return None
+            return False
 
     def put(self, path: str, data: Dict[str, Any]) -> Any:
         """

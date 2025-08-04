@@ -4,7 +4,7 @@ def create_dataset_response(price_type="string", in_stock_type="string"):
         "id": "cmdvei5dd000g01vvyftz2zv1",
         "orgId": "c108269c-cf1e-4ac6-a7e4-5a456cc9fdb7",
         "projectId": "cm9v2g95l0011z613sv851kwd",
-        "slug": "daatset-12",
+        "slug": "test-dataset",
         "name": "Dataset",
         "description": "Dataset Description",
         "columns": {

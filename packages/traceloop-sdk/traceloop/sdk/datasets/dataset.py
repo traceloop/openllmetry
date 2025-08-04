@@ -76,7 +76,6 @@ class Dataset(DatasetBaseModel):
         for _, row_obj in enumerate(raw_rows):
             row = Row(
                 id=row_obj.id,
-                row_index=row_obj.rowIndex,
                 values=row_obj.values,
                 dataset_id=self.id
             )
@@ -157,7 +156,7 @@ class Dataset(DatasetBaseModel):
 
             reader = csv.DictReader(csvfile, delimiter=delimiter)
 
-            for _, field_name in enumerate(reader.fieldnames):
+            for field_name in reader.fieldnames:
                 columns_definition.append(ColumnDefinition(
                     name=field_name,
                     type=ColumnType.STRING,
@@ -171,7 +170,6 @@ class Dataset(DatasetBaseModel):
             name=name,
             slug=slug,
             description=description,
-            columns_definition=columns_definition,
         )
 
         dataset_response = dataset.create_dataset(
@@ -221,7 +219,6 @@ class Dataset(DatasetBaseModel):
             name=name,
             slug=slug,
             description=description,
-            columns_definition=columns_definition,
         )
 
         dataset_response = dataset.create_dataset(

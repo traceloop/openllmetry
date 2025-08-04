@@ -62,7 +62,6 @@ class CreateRowsInput(BaseModel):
 
 class RowObject(BaseModel):
     id: str
-    rowIndex: float = Field(alias="rowIndex")
     values: ValuesMap
     created_at: datetime.datetime = Field(alias="created_at")
     updated_at: datetime.datetime = Field(alias="updated_at")

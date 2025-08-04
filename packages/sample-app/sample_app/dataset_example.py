@@ -115,7 +115,7 @@ def update_column_example(dataset: Dataset, column: Column):
 
         updated_col = next((c for c in dataset.columns if c.id == column.id), None)
         assert updated_col is not None
-        assert updated_col.name == f"{column.name}"
+        assert updated_col.name == updated_name
         assert updated_col.type == ColumnType.NUMBER
 
     except Exception as e:
@@ -262,8 +262,11 @@ def get_dataset_by_version_example(slug: str, version: str):
 def delete_dataset_example(slug: str):
     """Demonstrate deleting a dataset"""
     print("\n=== Delete Dataset Example ===")
-    Dataset.delete_by_slug(slug)
-    print("Dataset deleted")
+    try:
+        Dataset.delete_by_slug(slug)
+        print("Dataset deleted")
+    except Exception as e:
+        print(f"Error deleting dataset: {e}")
 
 
 def main():
