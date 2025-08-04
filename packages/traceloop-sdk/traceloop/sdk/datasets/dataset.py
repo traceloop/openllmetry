@@ -172,10 +172,8 @@ class Dataset(DatasetBaseModel):
         
         rows_with_ids = dataset._convert_rows_by_names_to_col_ids(rows_with_names)
         
-        rows_response = dataset.add_rows(dataset_response.slug, rows_with_ids)
-        
-        dataset._create_rows(rows_response.rows)
-        
+        rows_response = dataset.add_rows(rows_with_ids)
+                
         return dataset
 
     @classmethod
@@ -217,10 +215,8 @@ class Dataset(DatasetBaseModel):
         
         rows_with_ids = dataset._convert_rows_by_names_to_col_ids(df.to_dict(orient="records"))
         
-        rows_response = dataset.add_rows(dataset_response.slug, rows_with_ids)
-        
-        dataset._create_rows(rows_response.rows)
-        
+        rows_response = dataset.add_rows(rows_with_ids)
+                
         return dataset
 
     def add_column(self, name: str, col_type: ColumnType, config: Optional[Dict[str, Any]] = None) -> Column:
