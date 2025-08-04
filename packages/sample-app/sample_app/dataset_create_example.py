@@ -67,7 +67,7 @@ def dataset_from_dataframe_example():
         # Create dataset from DataFrame
         dataset = Dataset.from_dataframe(
             df=df,
-            slug="product-inventory-2",
+            slug="product-inventory-5",
             name="Product Inventory",
             description="Sample product inventory data"
         )
@@ -76,16 +76,25 @@ def dataset_from_dataframe_example():
             
     except Exception as e:
         print(f"Error creating dataset from DataFrame: {e}")
+    
+    return dataset
+
+def delete_dataset_example(slug: str):
+    """Demonstrate deleting a dataset"""
+    print("\n=== Delete Dataset Example ===")
+    Dataset.delete_by_slug(slug)
+    print("Dataset deleted")
+
 
 def main():
     print("Traceloop Dataset Examples")
     print("=" * 50)
     
-    # Run CSV example
-    dataset_from_csv_example()
+    # dataset_from_csv_example()
     
-    # Run DataFrame example
-    dataset_from_dataframe_example()
+    ds = dataset_from_dataframe_example()
+
+    delete_dataset_example(ds.slug)
 
     print("\n" + "=" * 50)
     print("Examples completed!")

@@ -102,8 +102,8 @@ class Dataset(DatasetBaseModel):
     @classmethod
     def delete_by_slug(cls, slug: str) -> None:
         """Delete dataset by slug without requiring an instance"""
-        result = cls._get_http_client_static().post(f"projects/default/datasets/{slug}/delete", {})
-        if result is None:
+        success = cls._get_http_client_static().delete(f"projects/default/datasets/{slug}")
+        if not success:
             raise Exception(f"Failed to delete dataset {slug}")
 
     @classmethod
@@ -115,7 +115,6 @@ class Dataset(DatasetBaseModel):
         
         validated_data = DatasetFullData(**result)
         
-        # Extract the fields needed for Dataset construction, excluding columns and rows
         dataset_data = validated_data.model_dump(exclude={'columns', 'rows'})
         dataset = Dataset(**dataset_data)
         
