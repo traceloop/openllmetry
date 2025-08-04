@@ -6,7 +6,7 @@ from traceloop.sdk.datasets.column import Column
 from .mock_response import create_dataset_response, add_rows_response_json, create_rows_response_json
 
 
-def create_mock_dataset_with_columns():
+def create_mock_dataset_with_columns_definition():
     """Create a mock dataset with standard test columns"""
     columns_definition = [
         ColumnDefinition(name="name", type=ColumnType.STRING),
@@ -23,6 +23,15 @@ def create_mock_dataset_with_columns():
     )
     
     return dataset, columns_definition
+
+def create_mock_dataset_with_columns():
+    """Create a mock dataset with standard test columns"""
+    dataset, columns_definition = create_mock_dataset_with_columns_definition()
+    
+    raw_columns = {"column_id_" + str(i): column for i, column in enumerate(columns_definition)}
+    dataset._create_columns(raw_columns)
+    
+    return dataset
 
 
 def setup_mock_http_client_for_dataset_creation():

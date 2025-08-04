@@ -5,9 +5,10 @@ from traceloop.sdk.datasets.dataset import Dataset
 from traceloop.sdk.datasets.model import ColumnDefinition, ColumnType, CreateDatasetRequest
 from .mock_response import create_dataset_response, add_rows_response_json, single_row_response_json 
 from .mock_objects import (
-    create_mock_dataset_with_columns,
+    create_mock_dataset_with_columns_definition,
     create_simple_mock_dataset,
-    get_test_rows_data
+    get_test_rows_data,
+    create_mock_dataset_with_columns
 )
 
 
@@ -19,7 +20,7 @@ def test_add_rows_to_dataset():
         mock_client.post.return_value = json.loads(add_rows_response_json)
         mock_get_client.return_value = mock_client
         
-        dataset, _ = create_mock_dataset_with_columns()
+        dataset, _ = create_mock_dataset_with_columns_definition()
                 
         test_rows = get_test_rows_data()
         
@@ -134,7 +135,7 @@ def test_add_rows_mixed_types():
         mock_client.post.return_value = mixed_types_response
         mock_get_client.return_value = mock_client
         
-        dataset, columns_definition = create_mock_dataset_with_columns()        
+        dataset, columns_definition = create_mock_dataset_with_columns_definition()        
         
         # Add row with mixed types
         test_row = [{
@@ -173,7 +174,7 @@ def test_delete_row():
         mock_client.delete.return_value = True
         mock_get_client.return_value = mock_client
         
-        dataset, _ = create_mock_dataset_with_columns()
+        dataset, _ = create_mock_dataset_with_columns_definition()
         
         test_rows = get_test_rows_data()
         dataset.add_rows(test_rows)
@@ -207,7 +208,7 @@ def test_update_row():
         mock_client.put.return_value = {}
         mock_get_client.return_value = mock_client
         
-        dataset, _ = create_mock_dataset_with_columns()
+        dataset = create_mock_dataset_with_columns()
         
         test_rows = get_test_rows_data()
         dataset.add_rows(test_rows)
@@ -265,7 +266,7 @@ def test_update_row_api_failure():
         mock_client.put.return_value = None
         mock_get_client.return_value = mock_client
         
-        dataset, _ = create_mock_dataset_with_columns()
+        dataset, _ = create_mock_dataset_with_columns_definition()
         
         test_rows = get_test_rows_data()
         dataset.add_rows(test_rows)
