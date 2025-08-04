@@ -22,7 +22,7 @@ class Column(DatasetBaseModel):
             self._client = Dataset()
         self._client.delete_column_api(self.dataset_id, self.id)
 
-    def update(self, name: Optional[str] = None, config: Optional[Dict[str, Any]] = None) -> None:
+    def update(self, name: Optional[str] = None, type: Optional[ColumnType] = None) -> None:
         """Update this column's properties"""
         if self._client is None:
             from .dataset import Dataset
@@ -32,9 +32,13 @@ class Column(DatasetBaseModel):
         if name is not None:
             update_data["name"] = name
             self.name = name
-        if config is not None:
-            update_data["config"] = config
-            self.config = config
+            
+        if type is not None:
+            update_data["type"] = type
+            self.type = type
             
         if update_data:
             self._client.update_column_api(self.dataset_id, self.id, **update_data)
+            self.name = name
+            self.type = type
+

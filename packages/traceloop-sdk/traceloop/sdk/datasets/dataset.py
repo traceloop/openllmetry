@@ -231,9 +231,7 @@ class Dataset(DatasetBaseModel):
         )
         self.columns.append(column)
         return column
-    
-    # API Methods
-    
+        
     def create_dataset(self, input: CreateDatasetRequest) -> CreateDatasetResponse:
         """Create new dataset"""
         data = input.model_dump()
@@ -251,21 +249,6 @@ class Dataset(DatasetBaseModel):
 
         return response
 
-    def get_all_datasets_api(self) -> List[Dict[str, Any]]:
-        """List all datasets"""
-        result = self._http.get("datasets")
-        if result is None:
-            raise Exception("Failed to get datasets")
-        return result.get("datasets", [])
-
-    def delete_dataset_api(self, dataset_id: str) -> None:
-        """Delete dataset"""
-        # Assuming DELETE method exists in HTTPClient (would need to add)
-        # For now, we'll use a POST with delete action
-        result = self._http.post(f"datasets/{dataset_id}/delete", {})
-        if result is None:
-            raise Exception(f"Failed to delete dataset {dataset_id}")
-
     def add_column_api(self, dataset_id: str, name: str, col_type: str) -> Dict[str, Any]:
         """Add column to dataset"""
         data = {
@@ -278,18 +261,18 @@ class Dataset(DatasetBaseModel):
             raise Exception(f"Failed to add column to dataset {dataset_id}")
         return result
 
-    def update_column_api(self, dataset_id: str, column_id: str, **kwargs) -> Dict[str, Any]:
-        """Update column properties"""
-        result = self._http.post(f"datasets/{dataset_id}/columns/{column_id}", kwargs)
-        if result is None:
-            raise Exception(f"Failed to update column {column_id}")
-        return result
-
     def delete_column_api(self, dataset_id: str, column_id: str) -> None:
         """Delete column"""
         result = self._http.post(f"datasets/{dataset_id}/columns/{column_id}/delete", {})
         if result is None:
             raise Exception(f"Failed to delete column {column_id}")
+
+    def update_column_api(self, dataset_id: str, column_id: str, **kwargs) -> Dict[str, Any]:
+        """Update column properties"""
+        result = self._http.put(f"projects/default/datasets/{dataset_id}/columns/{column_id}", kwargs)
+        if result is None:
+            raise Exception(f"Failed to update column {column_id}")
+        return result
 
     def add_rows(self, rows: List[ValuesMap]) -> CreateRowsResponse:
         """Add rows to dataset"""

@@ -256,7 +256,7 @@ get_all_datasets_json = """
 }
 """
 
-add_column_response_json = """
+basic_dataset_response_json = """
 {
     "id": "cmdpy2ah40000q9p0ait7vukf",
     "slug": "daatset-5",
@@ -264,11 +264,11 @@ add_column_response_json = """
     "description": "Data for example",
     "columns": {
         "cmdwq9a320000coitckjwfpj4": {
-            "name": "New col number",
+            "name": "col_number",
             "type": "number"
         },
         "cmdwqcict0000t3itd63u2dml": {
-            "name": "New bool",
+            "name": "col_bool",
             "type": "boolean"
         }
     },
