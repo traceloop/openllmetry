@@ -2,7 +2,6 @@ import pytest
 from qdrant_client import QdrantClient, models
 from opentelemetry.semconv_ai import SpanAttributes
 
-
 # This fixture returns an empty in-memroy QdrantClient instance for each test
 @pytest.fixture
 def qdrant():
@@ -106,7 +105,7 @@ def search_batch(qdrant: QdrantClient):
     )
 
 
-def test_qdrant_search(exporter, qdrant):
+def test_qdrant_search_batch(exporter, qdrant):
     upload_collection(qdrant)
     search_batch(qdrant)
 
@@ -118,3 +117,81 @@ def test_qdrant_search(exporter, qdrant):
         == COLLECTION_NAME
     )
     assert span.attributes.get(SpanAttributes.QDRANT_SEARCH_BATCH_REQUESTS_COUNT) == 4
+
+
+def query_points(qdrant: QdrantClient):
+    from opentelemetry.instrumentation.qdrant import version
+    print(f"Qdrant Instrumentation Version: {version.__version__}")
+
+    qdrant.query_points(COLLECTION_NAME, query=[0.1] * EMBEDDING_DIM, limit=1)
+
+
+def test_qdrant_query_points(exporter, qdrant):
+    if not hasattr(qdrant, "query_points"):
+        pytest.skip("query_points method is not available in this QdrantClient version, available in qdrant-client v1.10.0 and later")
+
+    upload_collection(qdrant)
+    query_points(qdrant)
+
+    spans = exporter.get_finished_spans()
+    span = next(span for span in spans if span.name == "qdrant.query_points")
+
+    assert (
+        span.attributes.get(SpanAttributes.QDRANT_QUERY_POINTS_COLLECTION_NAME)
+        == COLLECTION_NAME
+    )
+    assert span.attributes.get(SpanAttributes.VECTOR_DB_QUERY_TOP_K) == 1
+
+
+def query_batch_points(qdrant: QdrantClient):
+    qdrant.query_batch_points(
+        COLLECTION_NAME,
+        requests=[
+            models.QueryRequest(query=[0.1] * EMBEDDING_DIM, limit=10),
+            models.QueryRequest(query=[0.2] * EMBEDDING_DIM, limit=5),
+            models.QueryRequest(query=[0.42] * EMBEDDING_DIM, limit=2),
+            models.QueryRequest(query=[0.21] * EMBEDDING_DIM, limit=1),
+        ],
+    )
+
+
+def test_qdrant_query_batch_points(exporter, qdrant):
+    if not hasattr(qdrant, "query_batch_points"):
+        pytest.skip("query_batch_points method is not available in this qdrant-client version, available in qdrant-client v1.10.0 and later")
+
+    upload_collection(qdrant)
+    query_batch_points(qdrant)
+
+    spans = exporter.get_finished_spans()
+    span = next(span for span in spans if span.name == "qdrant.query_batch_points")
+
+    assert (
+        span.attributes.get(SpanAttributes.QDRANT_QUERY_BATCH_POINTS_COLLECTION_NAME)
+        == COLLECTION_NAME
+    )
+    assert span.attributes.get(SpanAttributes.QDRANT_QUERY_BATCH_POINTS_REQUESTS_COUNT) == 4
+
+
+def query_points_groups(qdrant: QdrantClient):
+    from opentelemetry.instrumentation.qdrant import version
+    print(f"Qdrant Instrumentation Version: {version.__version__}")
+
+    qdrant.query_points_groups(COLLECTION_NAME, query=[0.1] * EMBEDDING_DIM, limit=1, group_by="id")
+
+
+def test_qdrant_query_points_groups(exporter, qdrant):
+    if not hasattr(qdrant, "query_points_groups"):
+        pytest.skip("query_points_groups method is not available in this qdrant-client version, available in qdrant-client v1.11.0 and later")
+
+    upload_collection(qdrant)
+    query_points_groups(qdrant)
+
+    spans = exporter.get_finished_spans()
+    span = next(span for span in spans if span.name == "qdrant.query_points_groups")
+
+    assert (
+        span.attributes.get(SpanAttributes.QDRANT_QUERY_POINTS_GROUPS_COLLECTION_NAME)
+        == COLLECTION_NAME
+    )
+    assert span.attributes.get(SpanAttributes.VECTOR_DB_QUERY_TOP_K) == 1
+
