@@ -2,18 +2,23 @@
 
 import logging
 import os
-from typing import Collection
+from typing import Collection, Union
 
-from opentelemetry._events import get_event_logger
+from opentelemetry._events import EventLogger, get_event_logger
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
-from opentelemetry.instrumentation.utils import unwrap
-from opentelemetry.metrics import Meter, get_meter
+from opentelemetry.instrumentation.utils import (_SUPPRESS_INSTRUMENTATION_KEY,
+                                                 unwrap)
+from opentelemetry.metrics import Counter, Histogram, Meter, get_meter
 from opentelemetry.semconv._incubating.metrics import \
     gen_ai_metrics as GenAIMetrics
-from opentelemetry.semconv_ai import Meters
-from opentelemetry.trace import get_tracer
+from opentelemetry.semconv_ai import (
+    SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY, LLMRequestTypeValues, Meters,
+    SpanAttributes)
+from opentelemetry.trace import SpanKind, get_tracer
 from wrapt import wrap_function_wrapper
+from writerai._streaming import AsyncStream, Stream
 
+from opentelemetry import context as context_api
 from opentelemetry.instrumentation.writer.config import Config
 from opentelemetry.instrumentation.writer.version import __version__
 
@@ -49,6 +54,121 @@ WRAPPED_AMETHODS = [
         "span_name": "writerai.completions",
     },
 ]
+
+
+def is_streaming_response(response):
+    return isinstance(response, Stream) or isinstance(response, AsyncStream)
+
+
+def _request_type_by_method(method_name):
+    if method_name == "chat":
+        return LLMRequestTypeValues.CHAT
+    elif method_name == "create":
+        return LLMRequestTypeValues.COMPLETION
+    else:
+        return LLMRequestTypeValues.UNKNOWN
+
+
+def _with_tracer_wrapper(func):
+    """Helper for providing tracer for wrapper functions. Includes metric collectors."""
+
+    def _with_chat_telemetry(
+        tracer,
+        token_histogram,
+        duration_histogram,
+        streaming_time_to_first_token,
+        streaming_time_to_generate,
+        choice_counter,
+        event_logger,
+        to_wrap,
+    ):
+        def wrapper(wrapped, instance, args, kwargs):
+            return func(
+                tracer,
+                token_histogram,
+                duration_histogram,
+                streaming_time_to_first_token,
+                streaming_time_to_generate,
+                choice_counter,
+                event_logger,
+                to_wrap,
+                wrapped,
+                instance,
+                args,
+                kwargs,
+            )
+
+        return wrapper
+
+    return _with_chat_telemetry
+
+
+@_with_tracer_wrapper
+async def _wrap(
+    tracer,
+    token_histogram: Histogram,
+    duration_histogram: Histogram,
+    streaming_time_to_first_token: Histogram,
+    streaming_time_to_generate: Histogram,
+    choice_counter: Counter,
+    event_logger: Union[EventLogger, None],
+    to_wrap,
+    wrapped,
+    instance,
+    args,
+    kwargs,
+):
+    """Instruments and calls every function defined in TO_WRAP."""
+    if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY) or context_api.get_value(
+        SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY
+    ):
+        return wrapped(*args, **kwargs)
+
+    name = to_wrap.get("span_name")
+    request_type = _request_type_by_method(to_wrap.get("method"))
+
+    span = tracer.start_span(
+        name,
+        kind=SpanKind.CLIENT,
+        attributes={
+            SpanAttributes.LLM_SYSTEM: "Writer",
+            SpanAttributes.LLM_REQUEST_TYPE: request_type.value,
+        },
+    )
+
+
+@_with_tracer_wrapper
+async def _awrap(
+    tracer,
+    token_histogram: Histogram,
+    duration_histogram: Histogram,
+    streaming_time_to_first_token: Histogram,
+    streaming_time_to_generate: Histogram,
+    choice_counter: Counter,
+    event_logger: Union[EventLogger, None],
+    to_wrap,
+    wrapped,
+    instance,
+    args,
+    kwargs,
+):
+    """Instruments and calls every function defined in TO_WRAP."""
+    if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY) or context_api.get_value(
+        SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY
+    ):
+        return wrapped(*args, **kwargs)
+
+    name = to_wrap.get("span_name")
+    request_type = _request_type_by_method(to_wrap.get("method"))
+
+    span = tracer.start_span(
+        name,
+        kind=SpanKind.CLIENT,
+        attributes={
+            SpanAttributes.LLM_SYSTEM: "Writer",
+            SpanAttributes.LLM_REQUEST_TYPE: request_type.value,
+        },
+    )
 
 
 def _build_metrics(meter: Meter):
