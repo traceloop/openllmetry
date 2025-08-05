@@ -55,8 +55,10 @@ class Dataset(DatasetBaseModel):
         self, rows_with_names: List[ValuesMap]
     ) -> List[ValuesMap]:
         """Convert multiple rows from column names to column IDs"""
+        # Create a mapping from column names to column IDs
+        name_to_id = {col.name: col.id for col in self.columns}
         return [
-            {column.id: val for column, val in zip(self.columns, row_data.values())}
+            {name_to_id[col_name]: val for col_name, val in row_data.items() if col_name in name_to_id}
             for row_data in rows_with_names
         ]
 
