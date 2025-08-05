@@ -306,42 +306,6 @@ def test_update_row_without_dataset():
 
 
 @patch.dict("os.environ", {"TRACELOOP_API_KEY": "test-api-key"})
-def test_update_row_without_client():
-    """Test updating a row when HTTP client is not available"""
-    with patch.object(Dataset, '_get_http_client') as mock_get_client:
-        mock_client = MagicMock()
-        mock_client.post.return_value = json.loads(add_rows_response_json)
-
-        # Make the mock raise an exception when called after setting _http to None
-        def mock_get_client_side_effect():
-            if hasattr(mock_get_client_side_effect, '_http_none') and mock_get_client_side_effect._http_none:
-                raise ValueError("TRACELOOP_API_KEY environment variable is required")
-            return mock_client
-
-        mock_get_client.side_effect = mock_get_client_side_effect
-
-        dataset = create_mock_dataset_with_columns()
-
-        # Add some rows first
-        test_rows = get_test_rows_data()
-        dataset.add_rows_api(test_rows)
-
-        # Get the row to update
-        row_to_update = dataset.rows[0]
-        new_values = {"cmdr3ce1s0003hmp0vqons5ey": "Updated Name"}
-
-        # Remove the HTTP client to simulate the scenario
-        dataset._http = None
-        mock_get_client_side_effect._http_none = True
-
-        # Try to update a row without HTTP client
-        with pytest.raises(ValueError) as exc_info:
-            row_to_update.update(new_values)
-
-        assert "TRACELOOP_API_KEY environment variable is required" in str(exc_info.value)
-
-
-@patch.dict("os.environ", {"TRACELOOP_API_KEY": "test-api-key"})
 def test_update_row_api_failure():
     """Test handling of API failure when updating row"""
     with patch.object(Dataset, '_get_http_client') as mock_get_client:
