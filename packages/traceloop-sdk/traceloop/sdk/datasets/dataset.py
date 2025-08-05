@@ -346,14 +346,14 @@ class Dataset(DatasetBaseModel):
 
     def delete_row_api(self, row_id: str) -> None:
         """Delete row"""
-        result = self._get_http_client().delete(f"projects/default/datasets/{self.slug}/rows/{row_id}")
+        result = self._http.delete(f"projects/default/datasets/{self.slug}/rows/{row_id}")
         if result is None:
             raise Exception(f"Failed to delete row {row_id}")
 
     def update_row_api(self, row_id: str, values: Dict[str, Any]):
         """Update row values"""
         data = {"values": values}
-        self._get_http_client().put(
+        self._http.put(
             f"projects/default/datasets/{self.slug}/rows/{row_id}",
             data
         )
