@@ -19,6 +19,8 @@ from opentelemetry.instrumentation.anthropic.span_utils import (
 from opentelemetry.instrumentation.anthropic.streaming import (
     abuild_from_streaming_response,
     build_from_streaming_response,
+    WrappedAsyncMessageStreamManager,
+    WrappedMessageStreamManager,
 )
 from opentelemetry.instrumentation.anthropic.utils import (
     acount_prompt_tokens_from_request,
@@ -70,6 +72,15 @@ WRAPPED_METHODS = [
         "method": "stream",
         "span_name": "anthropic.chat",
     },
+    # This method is on an async resource, but is meant to be called as
+    # an async context manager (async with), which we don't need to await;
+    # thus, we wrap it with a sync wrapper
+    {
+        "package": "anthropic.resources.messages",
+        "object": "AsyncMessages",
+        "method": "stream",
+        "span_name": "anthropic.chat",
+    },
 ]
 
 WRAPPED_AMETHODS = [
@@ -85,17 +96,28 @@ WRAPPED_AMETHODS = [
         "method": "create",
         "span_name": "anthropic.chat",
     },
-    {
-        "package": "anthropic.resources.messages",
-        "object": "AsyncMessages",
-        "method": "stream",
-        "span_name": "anthropic.chat",
-    },
 ]
 
 
 def is_streaming_response(response):
     return isinstance(response, Stream) or isinstance(response, AsyncStream)
+
+
+def is_stream_manager(response):
+    """Check if response is a MessageStreamManager or AsyncMessageStreamManager"""
+    try:
+        from anthropic.lib.streaming._messages import (
+            MessageStreamManager,
+            AsyncMessageStreamManager,
+        )
+
+        return isinstance(response, (MessageStreamManager, AsyncMessageStreamManager))
+    except ImportError:
+        # Check by class name as fallback
+        return (
+            response.__class__.__name__ == "MessageStreamManager"
+            or response.__class__.__name__ == "AsyncMessageStreamManager"
+        )
 
 
 @dont_throw
@@ -435,6 +457,33 @@ def _wrap(
             event_logger,
             kwargs,
         )
+    elif is_stream_manager(response):
+        if response.__class__.__name__ == "AsyncMessageStreamManager":
+            return WrappedAsyncMessageStreamManager(
+                response,
+                span,
+                instance._client,
+                start_time,
+                token_histogram,
+                choice_counter,
+                duration_histogram,
+                exception_counter,
+                event_logger,
+                kwargs,
+            )
+        else:
+            return WrappedMessageStreamManager(
+                response,
+                span,
+                instance._client,
+                start_time,
+                token_histogram,
+                choice_counter,
+                duration_histogram,
+                exception_counter,
+                event_logger,
+                kwargs,
+            )
     elif response:
         try:
             metric_attributes = shared_metrics_attributes(response)
@@ -529,6 +578,33 @@ async def _awrap(
             event_logger,
             kwargs,
         )
+    elif is_stream_manager(response):
+        if response.__class__.__name__ == "AsyncMessageStreamManager":
+            return WrappedAsyncMessageStreamManager(
+                response,
+                span,
+                instance._client,
+                start_time,
+                token_histogram,
+                choice_counter,
+                duration_histogram,
+                exception_counter,
+                event_logger,
+                kwargs,
+            )
+        else:
+            return WrappedMessageStreamManager(
+                response,
+                span,
+                instance._client,
+                start_time,
+                token_histogram,
+                choice_counter,
+                duration_histogram,
+                exception_counter,
+                event_logger,
+                kwargs,
+            )
     elif response:
         metric_attributes = shared_metrics_attributes(response)
 
