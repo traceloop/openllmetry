@@ -2,24 +2,36 @@
 
 import logging
 import os
+import time
 from typing import Collection, Union
 
 from opentelemetry._events import EventLogger, get_event_logger
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
-from opentelemetry.instrumentation.utils import (_SUPPRESS_INSTRUMENTATION_KEY,
-                                                 unwrap)
+from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY, unwrap
 from opentelemetry.metrics import Counter, Histogram, Meter, get_meter
-from opentelemetry.semconv._incubating.metrics import \
-    gen_ai_metrics as GenAIMetrics
+from opentelemetry.semconv._incubating.metrics import gen_ai_metrics as GenAIMetrics
 from opentelemetry.semconv_ai import (
-    SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY, LLMRequestTypeValues, Meters,
-    SpanAttributes)
+    SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
+    LLMRequestTypeValues,
+    Meters,
+    SpanAttributes,
+)
 from opentelemetry.trace import SpanKind, get_tracer
+from opentelemetry.trace.status import Status, StatusCode
 from wrapt import wrap_function_wrapper
 from writerai._streaming import AsyncStream, Stream
 
 from opentelemetry import context as context_api
 from opentelemetry.instrumentation.writer.config import Config
+from opentelemetry.instrumentation.writer.span_utils import (
+    set_input_attributes,
+    set_model_input_attributes,
+)
+from opentelemetry.instrumentation.writer.utils import (
+    error_metrics_attributes,
+    response_attributes,
+    should_emit_events,
+)
 from opentelemetry.instrumentation.writer.version import __version__
 
 logger = logging.getLogger(__name__)
@@ -58,6 +70,14 @@ WRAPPED_AMETHODS = [
 
 def is_streaming_response(response):
     return isinstance(response, Stream) or isinstance(response, AsyncStream)
+
+
+def _handle_input(span, kwargs, event_logger):
+    set_model_input_attributes(span, kwargs)
+    if should_emit_events() and event_logger:
+        ...  # TODO message events emitter
+    else:
+        set_input_attributes(span, kwargs)
 
 
 def _request_type_by_method(method_name):
@@ -104,7 +124,7 @@ def _with_tracer_wrapper(func):
 
 
 @_with_tracer_wrapper
-async def _wrap(
+def _wrap(
     tracer,
     token_histogram: Histogram,
     duration_histogram: Histogram,
@@ -135,6 +155,55 @@ async def _wrap(
             SpanAttributes.LLM_REQUEST_TYPE: request_type.value,
         },
     )
+
+    _handle_input(span, kwargs, event_logger)
+
+    start_time = time.time()
+    try:
+        response = wrapped(*args, **kwargs)
+    except Exception as e:  # pylint: disable=broad-except
+        end_time = time.time()
+
+        if duration_histogram:
+            duration = end_time - start_time
+            duration_histogram.record(duration, attributes=error_metrics_attributes(e))
+
+        raise e
+
+    if is_streaming_response(response):
+        try:
+            ...  # TODO streaming response processor method
+        except Exception as ex:
+            logger.warning(
+                "Failed to process streaming response for writer span, error: %s",
+                str(ex),
+            )
+            span.set_status(Status(StatusCode.ERROR))
+            span.end()
+            raise
+    elif response:
+        end_time = time.time()
+        try:
+            if duration_histogram:
+                duration = end_time - start_time
+                duration_histogram.record(
+                    duration,
+                    attributes=response_attributes(response),
+                )
+
+            # TODO non-streaming response processor method
+
+        except Exception as ex:  # pylint: disable=broad-except
+            logger.warning(
+                "Failed to set response attributes for writer span, error: %s",
+                str(ex),
+            )
+
+        if span.is_recording():
+            span.set_status(Status(StatusCode.OK))
+
+    span.end()
+    return response
 
 
 @_with_tracer_wrapper
@@ -156,7 +225,7 @@ async def _awrap(
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY) or context_api.get_value(
         SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY
     ):
-        return wrapped(*args, **kwargs)
+        return await wrapped(*args, **kwargs)
 
     name = to_wrap.get("span_name")
     request_type = _request_type_by_method(to_wrap.get("method"))
@@ -169,6 +238,55 @@ async def _awrap(
             SpanAttributes.LLM_REQUEST_TYPE: request_type.value,
         },
     )
+
+    _handle_input(span, kwargs, event_logger)
+
+    start_time = time.time()
+    try:
+        response = await wrapped(*args, **kwargs)
+    except Exception as e:  # pylint: disable=broad-except
+        end_time = time.time()
+
+        if duration_histogram:
+            duration = end_time - start_time
+            duration_histogram.record(duration, attributes=error_metrics_attributes(e))
+
+        raise e
+
+    if is_streaming_response(response):
+        try:
+            ...  # TODO async streaming response processor method
+        except Exception as ex:
+            logger.warning(
+                "Failed to process streaming response for writer span, error: %s",
+                str(ex),
+            )
+            span.set_status(Status(StatusCode.ERROR))
+            span.end()
+            raise
+    elif response:
+        end_time = time.time()
+        try:
+            if duration_histogram:
+                duration = end_time - start_time
+                duration_histogram.record(
+                    duration,
+                    attributes=response_attributes(response),
+                )
+
+            # TODO non-streaming response processor method
+
+        except Exception as ex:  # pylint: disable=broad-except
+            logger.warning(
+                "Failed to set response attributes for writer span, error: %s",
+                str(ex),
+            )
+
+        if span.is_recording():
+            span.set_status(Status(StatusCode.OK))
+
+    span.end()
+    return response
 
 
 def _build_metrics(meter: Meter):
