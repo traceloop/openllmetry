@@ -34,3 +34,4 @@ class Instruments(Enum):
     VERTEXAI = "vertexai"
     WATSONX = "watsonx"
     WEAVIATE = "weaviate"
+    WRITER = "writer"
