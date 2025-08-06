@@ -476,6 +476,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         else:
             set_llm_request(span, serialized, prompts, kwargs, self.spans[run_id])
 
+    @dont_throw
     def on_llm_end(
         self,
         response: LLMResult,
