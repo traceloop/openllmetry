@@ -4,8 +4,7 @@ from traceloop.sdk.evaluators.model import (
     InputSchemaMapping,
     ExecuteEvaluatorRequest,
     ExecuteEvaluatorResponse,
-    EvaluatorResult,
-    StreamEvent
+    StreamEvent,
 )
 from traceloop.sdk.evaluators.stream_client import SSEClient
 
@@ -58,7 +57,6 @@ __all__ = [
     "InputSchemaMapping",
     "ExecuteEvaluatorRequest",
     "ExecuteEvaluatorResponse", 
-    "EvaluatorResult",
     "StreamEvent",
     "SSEClient",
     "run_evaluator",

@@ -28,6 +28,7 @@ def run_basic_example():
             },
             timeout_in_sec=120
         )
+        print(f"Result from evaluator: {result}")
     except Exception as e:
         print(f"Error: {e}")
         raise

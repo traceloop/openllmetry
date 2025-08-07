@@ -23,22 +23,13 @@ class ExecuteEvaluatorResponse(BaseModel):
     stream_url: str
 
 
-class EvaluatorResult(BaseModel):
-    """Final result from SSE stream"""
-    execution_id: str
-    status: str  # completed, failed, running
-    result: Optional[Dict[str, Any]] = None
-    error: Optional[str] = None
-    completed_at: Optional[datetime.datetime] = None
-
-
 class StreamEvent(BaseModel):
     """Individual event from SSE stream"""
     event_type: str  # progress, result, error
     data: Dict[str, Any]
     timestamp: datetime.datetime
 
-    
+
 class ExecutionResponse(BaseModel):
     """Complete response structure for evaluator execution"""
     execution_id: str

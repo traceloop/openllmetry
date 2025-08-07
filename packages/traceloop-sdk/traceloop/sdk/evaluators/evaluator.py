@@ -18,23 +18,20 @@ from .stream_client import SSEClient
 class Evaluator(DatasetBaseModel):
     """
     Evaluator class for executing evaluators with SSE streaming
-    """
-    _api_endpoint: str
-    _api_key: str
-
-    def __init__(self):
-        self._api_endpoint = os.environ.get("TRACELOOP_BASE_URL", "https://api.traceloop.com")
-        self._api_key = os.environ.get("TRACELOOP_API_KEY", "")
+    """  
         
     @classmethod
     def _get_http_client_static(cls) -> HTTPClient:
         """Get HTTP client instance for static operations"""
-        if not cls._api_key:
+        api_endpoint = os.environ.get("TRACELOOP_BASE_URL", "https://api.traceloop.com")
+        api_key = os.environ.get("TRACELOOP_API_KEY", "")
+
+        if not api_key:
             raise ValueError("TRACELOOP_API_KEY environment variable is required")
 
         return HTTPClient(
-            base_url=cls._api_endpoint,
-            api_key=cls._api_key,
+            base_url=api_endpoint,
+            api_key=api_key,
             version=__version__
         )
 
@@ -48,7 +45,7 @@ class Evaluator(DatasetBaseModel):
         
         Args:
             evaluator_slug: Slug of the evaluator to execute
-            input_schema_mapping: Dict mapping field names to source fields
+            input: Dict mapping evaluator input field names to their values. {field_name: value, ...}
             timeout: Timeout in seconds for execution
         
         Returns:
@@ -79,7 +76,7 @@ class Evaluator(DatasetBaseModel):
     def _wait_for_sse_result(cls, stream_url: str, execution_id: str, timeout_in_sec: int) -> Dict[str, Any]:
         """Wait synchronously for result from SSE stream - based on guardrails pattern"""
         result_container = {"result": None, "received": False, "error": None}
-        sse_client = SSEClient(cls._api_key, cls._api_endpoint)     
+        sse_client = SSEClient()     
 
         # Run async SSE stream in thread
         def run_sse_stream():
@@ -100,11 +97,10 @@ class Evaluator(DatasetBaseModel):
         
         thread = threading.Thread(target=run_sse_stream)
         thread.start()
-        thread.join(timeout_in_sec + 5)  # Add small buffer to thread timeout
+        thread.join(timeout_in_sec)
         
         if not result_container["received"]:
-            sse_client.stop_stream(execution_id)
-            raise TimeoutError(f"Evaluator execution {execution_id} timed out after {timeout}s")
+            raise TimeoutError(f"Evaluator execution {execution_id} timed out after {timeout_in_sec}s")
         
         if result_container["error"]:
             raise Exception(f"SSE stream error: {result_container['error']}")

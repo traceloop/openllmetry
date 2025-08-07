@@ -1,9 +1,6 @@
-import asyncio
 import httpx
 import json
 import os
-from typing import Dict, Optional, Callable
-from datetime import datetime
 
 from .model import ExecutionResponse
 
@@ -11,10 +8,9 @@ from .model import ExecutionResponse
 class SSEClient:
     """Handles Server-Sent Events streaming"""
     
-    def __init__(self, api_key: str, api_endpoint: str):
-        self.api_key = api_key
-        self.api_endpoint = api_endpoint
-        self.active_streams: Dict[str, asyncio.Task] = {}
+    def __init__(self):
+        self._api_endpoint = os.environ.get("TRACELOOP_BASE_URL", "https://api.traceloop.com")
+        self._api_key = os.environ.get("TRACELOOP_API_KEY", "")
     
     async def wait_for_result(
         self,
@@ -27,12 +23,12 @@ class SSEClient:
         """
         try:
             headers = {
-                "Authorization": f"Bearer {self.api_key}",
+                "Authorization": f"Bearer {self._api_key}",
                 "Accept": "text/event-stream", 
                 "Cache-Control": "no-cache"
             }
             
-            full_stream_url = f"{self.api_endpoint}/v2{stream_url}"
+            full_stream_url = f"{self._api_endpoint}/v2{stream_url}"
             
             async with httpx.stream("GET", full_stream_url, headers=headers, timeout=httpx.Timeout(timeout_in_sec)) as response:
                 if response.status_code != 200:
@@ -66,8 +62,3 @@ class SSEClient:
         except Exception as e:
             raise Exception(f"Failed to parse response into ExecutionResponse: {e}")
     
-    def stop_stream(self, execution_id: str) -> None:
-        """Stop streaming for a specific execution"""
-        if execution_id in self.active_streams:
-            self.active_streams[execution_id].cancel()
-            self.active_streams.pop(execution_id)
