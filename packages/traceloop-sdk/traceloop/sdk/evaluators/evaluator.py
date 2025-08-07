@@ -17,13 +17,27 @@ class Evaluator:
     Evaluator class for executing evaluators with SSE streaming
     """
         
-
+    @classmethod
+    def _create_async_client(cls) -> httpx.AsyncClient:
+        """Create new async HTTP client"""
+        api_key = os.environ.get("TRACELOOP_API_KEY", "")
+        if not api_key:
+            raise ValueError("TRACELOOP_API_KEY environment variable is required")
+        
+        return httpx.AsyncClient(
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json",
+                "User-Agent": f"traceloop-sdk/{__version__}"
+            },
+            timeout=httpx.Timeout(120.0)
+        )
+    
     @classmethod
     async def run(cls, 
                   evaluator_slug: str,
                   input: Dict[str, str], 
-                  client: httpx.AsyncClient,
-                  timeout_in_sec: int = 120) -> Dict[str, Any]:
+                      timeout_in_sec: int = 120) -> Dict[str, Any]:
         """
         Execute evaluator with input schema mapping and wait for result
         
@@ -42,9 +56,12 @@ class Evaluator:
         api_endpoint = os.environ.get("TRACELOOP_BASE_URL", "https://api.traceloop.com")
         body = request.model_dump()
         
+        client = cls._create_async_client()
+        full_url = f"{api_endpoint}/v2/evaluators/slug/{evaluator_slug}/execute"
+        print(f"Evaluator full URL: {full_url}")
         # Make API call to trigger evaluator
         response = await client.post(
-            f"{api_endpoint}/evaluators/slug/{evaluator_slug}/execute",
+            full_url,
             json=body,
             timeout=timeout_in_sec
         )
@@ -57,10 +74,10 @@ class Evaluator:
         
         # Wait for SSE result using async SSE client with shared HTTP client
         sse_client = SSEClient(shared_client=client)
-        return await sse_client.wait_for_result(
+        sse_result = await sse_client.wait_for_result(
             execute_response.execution_id,
             execute_response.stream_url, 
             timeout_in_sec
         )
-
+        return sse_result
 

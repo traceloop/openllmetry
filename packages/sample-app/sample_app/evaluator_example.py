@@ -13,13 +13,14 @@ Requirements:
 - Valid evaluator slug that exists in your Traceloop account
 """
 
+import asyncio
 from traceloop.sdk.evaluators import Evaluator
 
 # Debug/Run configuration
-def run_basic_example():
+async def run_basic_example():
     """Run a basic evaluator example"""
     try:
-        result = Evaluator.run(
+        result = await Evaluator.run(
             evaluator_slug="What I Hate",
             input={
                 "love_only": "apples",
@@ -35,5 +36,5 @@ def run_basic_example():
     return result   
 
 if __name__ == "__main__":    
-    result = run_basic_example()
+    result = asyncio.run(run_basic_example())
     print(f"Result: {result}")
