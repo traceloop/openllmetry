@@ -13,17 +13,22 @@ Requirements:
 - Valid evaluator slug that exists in your Traceloop account
 """
 
+import asyncio
+from colorama import Fore, Style, init
 from traceloop.sdk import Traceloop
 from traceloop.sdk.experiments import Experiment
+
+# Initialize colorama for cross-platform color support
+init()
 
 
 # Initialize Traceloop
 Traceloop.init()
 
 
-def run_basic_experiment_example():
+async def run_basic_experiment_example():
     """Run a basic experiment with multiple inputs"""
-    print("=== Basic Experiment Example ===")
+    print(f"{Fore.CYAN}=== Basic Experiment Example ==={Style.RESET_ALL}")
     
     try:
         # Multiple test inputs for the same evaluator
@@ -47,41 +52,41 @@ def run_basic_experiment_example():
         ]
         
         # Run experiment
-        result = Experiment.run(
+        result = await Experiment.run(
             evaluator_slug="What I Hate",
             inputs=test_inputs,
             timeout_in_sec=120
         )
         
-        print(f"\n=== Experiment Results ===")
-        print(f"Evaluator: {result.evaluator_slug}")
-        print(f"Total runs: {result.total_runs}")
-        print(f"Successful runs: {result.successful_runs}")
-        print(f"Failed runs: {result.failed_runs}")
-        print(f"Total execution time: {result.total_execution_time:.2f} seconds")
+        print(f"\n{Fore.CYAN}=== Experiment Results ==={Style.RESET_ALL}")
+        print(f"{Fore.GREEN}Evaluator:{Style.RESET_ALL} {result.evaluator_slug}")
+        print(f"{Fore.GREEN}Total runs:{Style.RESET_ALL} {result.total_runs}")
+        print(f"{Fore.GREEN}Successful runs:{Style.RESET_ALL} {result.successful_runs}")
+        print(f"{Fore.GREEN}Failed runs:{Style.RESET_ALL} {result.failed_runs}")
+        print(f"{Fore.GREEN}Total execution time:{Style.RESET_ALL} {result.total_execution_time:.2f} seconds")
         
         # Display individual results
-        print(f"\n=== Individual Results ===")
+        print(f"\n{Fore.CYAN}=== Individual Results ==={Style.RESET_ALL}")
         for run_result in result.results:
-            print(f"\nInput {run_result.input_index + 1}:")
-            print(f"  Data: {run_result.input_data}")
-            print(f"  Execution time: {run_result.execution_time:.2f}s")
+            print(f"\n{Fore.YELLOW}Input {run_result.input_index + 1}:{Style.RESET_ALL}")
+            print(f"  {Fore.BLUE}Data:{Style.RESET_ALL} {run_result.input_data}")
+            print(f"  {Fore.BLUE}Execution time:{Style.RESET_ALL} {run_result.execution_time:.2f}s")
             
             if run_result.error:
-                print(f"  Error: {run_result.error}")
+                print(f"  {Fore.RED}Error:{Style.RESET_ALL} {run_result.error}")
             else:
-                print(f"  Result: {run_result.result}")
+                print(f"  {Fore.GREEN}Result:{Style.RESET_ALL} {run_result.result}")
         
         return result
         
     except Exception as e:
-        print(f"Error running experiment: {e}")
+        print(f"{Fore.RED}Error running experiment:{Style.RESET_ALL} {e}")
         raise
 
 
 def run_experiment_with_error_handling():
     """Demonstrate experiment with some inputs that might fail"""
-    print("\n=== Experiment with Error Handling ===")
+    print(f"\n{Fore.CYAN}=== Experiment with Error Handling ==={Style.RESET_ALL}")
     
     try:
         # Mix of valid and potentially problematic inputs
@@ -106,59 +111,58 @@ def run_experiment_with_error_handling():
             timeout_in_sec=60  # Shorter timeout
         )
         
-        print(f"\nResults Summary:")
-        print(f"Success rate: {result.successful_runs}/{result.total_runs} ({result.successful_runs/result.total_runs*100:.1f}%)")
+        print(f"\n{Fore.GREEN}Results Summary:{Style.RESET_ALL}")
+        print(f"{Fore.GREEN}Success rate:{Style.RESET_ALL} {result.successful_runs}/{result.total_runs} ({result.successful_runs/result.total_runs*100:.1f}%)")
         
         # Show only failed runs
         failed_runs = [r for r in result.results if r.error]
         if failed_runs:
-            print(f"\nFailed runs:")
+            print(f"\n{Fore.RED}Failed runs:{Style.RESET_ALL}")
             for run_result in failed_runs:
-                print(f"  Input {run_result.input_index + 1}: {run_result.error}")
+                print(f"  {Fore.YELLOW}Input {run_result.input_index + 1}:{Style.RESET_ALL} {run_result.error}")
         
         return result
         
     except Exception as e:
-        print(f"Error running experiment: {e}")
+        print(f"{Fore.RED}Error running experiment:{Style.RESET_ALL} {e}")
         raise
 
 
 def analyze_experiment_results(result):
     """Analyze and display insights from experiment results"""
-    print("\n=== Experiment Analysis ===")
+    print(f"\n{Fore.CYAN}=== Experiment Analysis ==={Style.RESET_ALL}")
     
     if result.successful_runs == 0:
-        print("No successful runs to analyze")
+        print(f"{Fore.YELLOW}No successful runs to analyze{Style.RESET_ALL}")
         return
     
     # Calculate average execution time for successful runs
     successful_results = [r for r in result.results if r.error is None]
     avg_time = sum(r.execution_time for r in successful_results) / len(successful_results)
     
-    print(f"Average execution time: {avg_time:.2f} seconds")
-    print(f"Fastest run: {min(r.execution_time for r in successful_results):.2f}s")
-    print(f"Slowest run: {max(r.execution_time for r in successful_results):.2f}s")
+    print(f"{Fore.GREEN}Average execution time:{Style.RESET_ALL} {avg_time:.2f} seconds")
+    print(f"{Fore.GREEN}Fastest run:{Style.RESET_ALL} {min(r.execution_time for r in successful_results):.2f}s")
+    print(f"{Fore.GREEN}Slowest run:{Style.RESET_ALL} {max(r.execution_time for r in successful_results):.2f}s")
     
-    # Show result patterns (if any)
-    print(f"\nResult patterns:")
-    for i, run_result in enumerate(successful_results):
+    print(f"\n{Fore.BLUE}Result patterns:{Style.RESET_ALL}")
+    for _, run_result in enumerate(successful_results):
         if run_result.result:
-            print(f"  Run {run_result.input_index + 1}: {type(run_result.result).__name__}")
+            print(f"  {Fore.YELLOW}Run {run_result.input_index + 1}:{Style.RESET_ALL} {type(run_result.result).__name__}")
 
 
 if __name__ == "__main__":
-    print("Traceloop Experiment Examples")
+    print(f"{Fore.MAGENTA}Traceloop Experiment Examples{Style.RESET_ALL}")
     print("=" * 50)
     
     try:
-        basic_result = run_basic_experiment_example()
+        basic_result = asyncio.run(run_basic_experiment_example())
         
         # error_handling_result = run_experiment_with_error_handling()
         
         # analyze_experiment_results(basic_result)
         
         print("\n" + "=" * 50)
-        print("Experiment examples completed!")
+        print(f"{Fore.GREEN}Experiment examples completed!{Style.RESET_ALL}")
         
     except Exception as e:
-        print(f"Example failed with error: {e}")
+        print(f"{Fore.RED}Example failed with error:{Style.RESET_ALL} {e}")

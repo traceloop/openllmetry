@@ -36,7 +36,6 @@ class Experiment:
         client = await Evaluator._create_async_client()
         
         try:
-            # Create async tasks for parallel execution
             tasks = [
                 cls._execute_single_run(evaluator_slug, input_data, i, client, timeout_in_sec)
                 for i, input_data in enumerate(inputs)

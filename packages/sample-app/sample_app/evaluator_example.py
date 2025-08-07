@@ -14,7 +14,11 @@ Requirements:
 """
 
 import asyncio
+from colorama import Fore, Style, init
 from traceloop.sdk.evaluators import Evaluator
+
+# Initialize colorama for cross-platform color support
+init()
 
 # Debug/Run configuration
 async def run_basic_example():
@@ -29,12 +33,12 @@ async def run_basic_example():
             timeout_in_sec=120
         )
         print("\n" + "*" * 100)
-        print(f"Result from evaluator: {result}")
+        print(f"{Fore.GREEN}Result from evaluator:{Style.RESET_ALL} {result}")
     except Exception as e:
-        print(f"Error: {e}")
+        print(f"{Fore.RED}Error:{Style.RESET_ALL} {e}")
         raise
     return result   
 
 if __name__ == "__main__":    
     result = asyncio.run(run_basic_example())
-    print(f"Result: {result}")
+    print(f"\n{Fore.BLUE}Final Result:{Style.RESET_ALL} {result}")
