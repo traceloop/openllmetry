@@ -7,45 +7,49 @@ from traceloop.sdk.evaluators.model import (
     EvaluatorResult,
     StreamEvent
 )
-from traceloop.sdk.evaluators.stream_client import SSEResultClient
+from traceloop.sdk.evaluators.stream_client import SSEClient
 
 
-def run_evaluator(evaluator_slug: str, input_schema_mapping: dict, **kwargs):
+def run_evaluator(evaluator_slug: str, input_schema_mapping: dict, timeout: int = 500):
     """
-    Execute an evaluator with input schema mapping
+    Execute an evaluator with input schema mapping and wait for result
     
     Args:
         evaluator_slug: Slug of the evaluator to execute
         input_schema_mapping: Dict mapping field names to source fields
-        **kwargs: Additional arguments (callback, wait_for_result, timeout)
+        timeout: Timeout in seconds for execution
     
     Returns:
-        ExecuteEvaluatorResponse or result data
+        Dict[str, Any]: The evaluation result from SSE stream
     """
     return Evaluator.run(
         evaluator_slug=evaluator_slug,
         input_schema_mapping=input_schema_mapping,
-        **kwargs
+        timeout=timeout
     )
 
 
-async def run_evaluator_async(evaluator_slug: str, input_schema_mapping: dict, **kwargs):
+def create_evaluator(slug: str, evaluator_slug: str, name: str, description: str):
     """
-    Execute an evaluator asynchronously
+    Create a simple evaluator data structure for testing
     
     Args:
-        evaluator_slug: Slug of the evaluator to execute
-        input_schema_mapping: Dict mapping field names to source fields
-        **kwargs: Additional arguments (callback, timeout)
+        slug: Evaluator slug identifier
+        evaluator_slug: Evaluator type slug
+        name: Display name
+        description: Description of evaluator
     
     Returns:
-        ExecuteEvaluatorResponse
+        Simple object with evaluator properties
     """
-    return await Evaluator.run_async(
-        evaluator_slug=evaluator_slug,
-        input_schema_mapping=input_schema_mapping,
-        **kwargs
-    )
+    class SimpleEvaluator:
+        def __init__(self, slug, evaluator_slug, name, description):
+            self.slug = slug
+            self.evaluator_slug = evaluator_slug
+            self.name = name
+            self.description = description
+    
+    return SimpleEvaluator(slug, evaluator_slug, name, description)
 
 
 __all__ = [
@@ -56,7 +60,7 @@ __all__ = [
     "ExecuteEvaluatorResponse", 
     "EvaluatorResult",
     "StreamEvent",
-    "SSEResultClient",
+    "SSEClient",
     "run_evaluator",
-    "run_evaluator_async"
+    "create_evaluator"
 ]

@@ -2,56 +2,52 @@ import asyncio
 import httpx
 import json
 import os
-from typing import Dict, Any, Optional, Callable
+from typing import Dict, Optional, Callable
 from datetime import datetime
 
+from .model import ExecutionResponse
 
-class SSEResultClient:
-    """Handles Server-Sent Events streaming for evaluator results - based on guardrails implementation"""
+
+class SSEClient:
+    """Handles Server-Sent Events streaming"""
     
-    def __init__(self, api_key: str):
+    def __init__(self, api_key: str, api_endpoint: str):
         self.api_key = api_key
+        self.api_endpoint = api_endpoint
         self.active_streams: Dict[str, asyncio.Task] = {}
     
     async def wait_for_result(
         self,
         execution_id: str,
         stream_url: str, 
-        timeout: int = 120,
-        callback: Optional[Callable[[Dict[str, Any]], None]] = None
-    ) -> Dict[str, Any]:
+        timeout_in_sec: int = 120,
+    ) -> ExecutionResponse:
         """
-        Wait for evaluation result via SSE streaming.
-        Based on guardrails._wait_for_result implementation.
+        Wait for execution result via SSE streaming.
         """
         try:
-            async with httpx.AsyncClient(timeout=httpx.Timeout(timeout)) as client:
-                headers = {
-                    "Authorization": f"Bearer {self.api_key}",
-                    "Accept": "text/event-stream", 
-                    "Cache-Control": "no-cache"
-                }
+            headers = {
+                "Authorization": f"Bearer {self.api_key}",
+                "Accept": "text/event-stream", 
+                "Cache-Control": "no-cache"
+            }
+            
+            full_stream_url = f"{self.api_endpoint}/v2{stream_url}"
+            
+            async with httpx.stream("GET", full_stream_url, headers=headers, timeout=httpx.Timeout(timeout_in_sec)) as response:
+                if response.status_code != 200:
+                    error_text = await response.aread()
+                    raise Exception(
+                        f"Failed to stream results: {response.status_code}, body: {error_text}"
+                    )
                 
-                # Construct full stream URL
-                api_endpoint = os.getenv("TRACELOOP_BASE_URL", "https://api.traceloop.com")
-                full_stream_url = f"{api_endpoint}/v2{stream_url}"
+                response_text = await response.aread()
+                parsed_result = self._parse_sse_result(response_text.decode())
                 
-                async with client.stream("GET", full_stream_url, headers=headers) as response:
-                    if response.status_code != 200:
-                        error_text = await response.aread()
-                        raise Exception(
-                            f"Failed to stream results: {response.status_code}, body: {error_text}"
-                        )
-                    
-                    # Read the complete SSE response
-                    response_text = await response.aread()
-                    parsed_result = self._parse_sse_result(response_text.decode())
-                    
-                    # Invoke callback if provided
-                    if callback:
-                        callback(parsed_result)
-                    
-                    return parsed_result
+                if parsed_result.execution_id != execution_id:
+                    raise Exception(f"Execution ID mismatch: {parsed_result.execution_id} != {execution_id}")
+                
+                return parsed_result
                     
         except httpx.ConnectError as e:
             raise Exception(f"Failed to connect to stream URL: {full_stream_url}. Error: {e}")
@@ -60,27 +56,15 @@ class SSEResultClient:
         except Exception as e:
             raise Exception(f"Unexpected error in SSE stream: {e}")
     
-    def _parse_sse_result(self, response_text: str) -> Dict[str, Any]:
-        """Parse SSE response text into result data"""
+    def _parse_sse_result(self, response_text: str) -> ExecutionResponse:
+        """Parse SSE response text into ExecutionResponse"""
         try:
-            # Parse the JSON response (following guardrails pattern)
             response_data = json.loads(response_text)
-            return response_data
+            return ExecutionResponse(**response_data)
         except json.JSONDecodeError as e:
             raise Exception(f"Failed to parse SSE result as JSON: {e}")
-    
-    def start_async_stream(
-        self, 
-        execution_id: str,
-        stream_url: str,
-        callback: Callable[[Dict[str, Any]], None],
-        timeout: int = 120
-    ) -> None:
-        """Start streaming results asynchronously with callback"""
-        task = asyncio.create_task(
-            self.wait_for_result(execution_id, stream_url, timeout, callback)
-        )
-        self.active_streams[execution_id] = task
+        except Exception as e:
+            raise Exception(f"Failed to parse response into ExecutionResponse: {e}")
     
     def stop_stream(self, execution_id: str) -> None:
         """Stop streaming for a specific execution"""

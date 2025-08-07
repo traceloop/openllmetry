@@ -1,7 +1,7 @@
 import os
 import asyncio
 import threading
-from typing import Dict, Any, Optional, Callable, Union
+from typing import Dict, Any
 
 from traceloop.sdk.datasets.model import DatasetBaseModel
 from traceloop.sdk.client.http import HTTPClient
@@ -12,7 +12,7 @@ from .model import (
     ExecuteEvaluatorRequest,
     ExecuteEvaluatorResponse
 )
-from .stream_client import SSEResultClient
+from .stream_client import SSEClient
 
 
 class Evaluator(DatasetBaseModel):
@@ -24,7 +24,8 @@ class Evaluator(DatasetBaseModel):
     def _get_http_client_static(cls) -> HTTPClient:
         """Get HTTP client instance for static operations"""
         api_key = os.environ.get("TRACELOOP_API_KEY", "")
-        api_endpoint = os.environ.get("TRACELOOP_BASE_URL", "https://api.traceloop.com")
+        # api_endpoint = os.environ.get("TRACELOOP_BASE_URL", "https://api.traceloop.com")
+        api_endpoint = "http://localhost:3001"
 
         if not api_key:
             raise ValueError("TRACELOOP_API_KEY environment variable is required")
@@ -38,38 +39,30 @@ class Evaluator(DatasetBaseModel):
     @classmethod
     def run(cls, 
             evaluator_slug: str,
-            input_schema_mapping: Dict[str, str], 
-            callback: Optional[Callable[[Dict[str, Any]], None]] = None,
-            wait_for_result: bool = True,
-            timeout: int = 500) -> Union[ExecuteEvaluatorResponse, Dict[str, Any]]:
+            input: Dict[str, str], 
+            timeout: int = 500) -> Dict[str, Any]:
         """
-        Execute evaluator with input schema mapping
+        Execute evaluator with input schema mapping and wait for result
         
         Args:
             evaluator_slug: Slug of the evaluator to execute
             input_schema_mapping: Dict mapping field names to source fields
-            callback: Optional callback function for async result handling
-            wait_for_result: If True, blocks until result is received via SSE stream
-            timeout: Timeout in seconds for synchronous execution
+            timeout: Timeout in seconds for execution
         
         Returns:
-            ExecuteEvaluatorResponse (immediate) or Dict[str, Any] (if waiting for result)
+            Dict[str, Any]: The evaluation result from SSE stream
         """
-        # Convert dict to proper model format
-        mapping = InputSchemaMapping(__root__={
-            field: InputExtractor(source=source) 
-            for field, source in input_schema_mapping.items()
-        })
+      
+        schema_mapping = InputSchemaMapping(root={k: InputExtractor(source=v) for k, v in input.items()})
+        request = ExecuteEvaluatorRequest(input_schema_mapping=schema_mapping, source="experiments")
         
-        request = ExecuteEvaluatorRequest(input_schema_mapping=mapping)
-        
-        # Get HTTP client
         http_client = cls._get_http_client_static()
-        
+        body = request.model_dump()
+        print("body:", body)
         # Make API call to trigger evaluator
         result = http_client.post(
-            f"v2/evaluators/slug/{evaluator_slug}/execute",
-            request.model_dump(by_alias=True)
+            f"evaluators/slug/{evaluator_slug}/execute",
+            body
         )
         
         if result is None:
@@ -77,22 +70,15 @@ class Evaluator(DatasetBaseModel):
         
         response = ExecuteEvaluatorResponse(**result)
         
-        # Handle SSE streaming results
-        if callback or wait_for_result:
-            api_key = os.environ.get("TRACELOOP_API_KEY", "")
-            sse_client = SSEResultClient(api_key)
-            
-            if wait_for_result:
-                # Synchronous execution - wait for result
-                return cls._wait_for_sse_result(sse_client, response.stream_url, response.execution_id, timeout)
-            else:
-                # Asynchronous execution - start stream with callback
-                sse_client.start_async_stream(response.execution_id, response.stream_url, callback, timeout)
+        # Always wait for SSE streaming results synchronously
+        api_key = os.environ.get("TRACELOOP_API_KEY", "")
+        sse_client = SSEClient(api_key)
         
-        return response
+        # Wait for result from SSE stream
+        return cls._wait_for_sse_result(sse_client, response.stream_url, response.execution_id, timeout)
 
     @classmethod
-    def _wait_for_sse_result(cls, sse_client: SSEResultClient, stream_url: str, execution_id: str, timeout: int) -> Dict[str, Any]:
+    def _wait_for_sse_result(cls, sse_client: SSEClient, stream_url: str, execution_id: str, timeout: int) -> Dict[str, Any]:
         """Wait synchronously for result from SSE stream - based on guardrails pattern"""
         result_container = {"result": None, "received": False, "error": None}
         
@@ -125,39 +111,3 @@ class Evaluator(DatasetBaseModel):
         
         return result_container["result"]
 
-    @classmethod
-    async def run_async(cls, 
-                       evaluator_slug: str,
-                       input_schema_mapping: Dict[str, str],
-                       callback: Optional[Callable[[Dict[str, Any]], None]] = None,
-                       timeout: int = 120) -> ExecuteEvaluatorResponse:
-        """Async version of run method"""
-        # Convert dict to proper model format
-        mapping = InputSchemaMapping(__root__={
-            field: InputExtractor(source=source) 
-            for field, source in input_schema_mapping.items()
-        })
-        
-        request = ExecuteEvaluatorRequest(input_schema_mapping=mapping)
-        
-        # Get HTTP client
-        http_client = cls._get_http_client_static()
-        
-        # Make API call to trigger evaluator
-        result = http_client.post(
-            f"v2/evaluators/slug/{evaluator_slug}/execute",
-            request.model_dump(by_alias=True)
-        )
-        
-        if result is None:
-            raise Exception(f"Failed to execute evaluator {evaluator_slug}")
-        
-        response = ExecuteEvaluatorResponse(**result)
-        
-        # Set up SSE client for result delivery if callback provided
-        if callback:
-            api_key = os.environ.get("TRACELOOP_API_KEY", "")
-            sse_client = SSEResultClient(api_key)
-            sse_client.start_async_stream(response.execution_id, response.stream_url, callback, timeout)
-        
-        return response
