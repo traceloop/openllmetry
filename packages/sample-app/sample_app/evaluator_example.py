@@ -13,8 +13,7 @@ Requirements:
 - Valid evaluator slug that exists in your Traceloop account
 """
 
-import os
-from traceloop.sdk.evaluators import Evaluator, run_evaluator, InputExtractor
+from traceloop.sdk.evaluators import Evaluator
 
 # Debug/Run configuration
 def run_basic_example():
