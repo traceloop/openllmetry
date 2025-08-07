@@ -3,27 +3,8 @@
 Simple test script for the evaluators feature
 """
 
-import os
-import sys
+from traceloop.sdk.evaluators import create_evaluator
 
-# Add the SDK to the path for testing
-sys.path.insert(0, '/Users/ninakollman/Traceloop/openllmetry/packages/traceloop-sdk')
-
-def test_evaluators_import():
-    """Test that all evaluators components can be imported"""
-    try:
-        from traceloop.sdk.evaluators import (
-            evaluator,
-            create_evaluator,
-            InputExtractor,
-            ExecuteEvaluatorRequest,
-            ExecuteEvaluatorResponse
-        )
-        print("✅ Successfully imported evaluators module")
-        return True
-    except ImportError as e:
-        print(f"❌ Failed to import evaluators module: {e}")
-        return False
 
 def test_evaluator_creation():
     """Test creating an evaluator instance"""

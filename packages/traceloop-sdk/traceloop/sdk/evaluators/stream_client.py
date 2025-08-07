@@ -30,15 +30,16 @@ class SSEClient:
             
             full_stream_url = f"{self._api_endpoint}/v2{stream_url}"
             
-            async with httpx.stream("GET", full_stream_url, headers=headers, timeout=httpx.Timeout(timeout_in_sec)) as response:
-                if response.status_code != 200:
-                    error_text = await response.aread()
-                    raise Exception(
-                        f"Failed to stream results: {response.status_code}, body: {error_text}"
-                    )
-                
-                response_text = await response.aread()
-                parsed_result = self._parse_sse_result(response_text.decode())
+            async with httpx.AsyncClient() as client:
+                async with client.stream("GET", full_stream_url, headers=headers, timeout=httpx.Timeout(timeout_in_sec)) as response:
+                    if response.status_code != 200:
+                        error_text = await response.aread()
+                        raise Exception(
+                            f"Failed to stream results: {response.status_code}, body: {error_text}"
+                        )
+                    
+                    response_text = await response.aread()
+                    parsed_result = self._parse_sse_result(response_text.decode())
                 
                 if parsed_result.execution_id != execution_id:
                     raise Exception(f"Execution ID mismatch: {parsed_result.execution_id} != {execution_id}")

@@ -10,7 +10,8 @@ from .model import (
     InputExtractor,
     InputSchemaMapping,
     ExecuteEvaluatorRequest,
-    ExecuteEvaluatorResponse
+    ExecuteEvaluatorResponse,
+    ExecutionResponse
 )
 from .stream_client import SSEClient
 
@@ -73,7 +74,7 @@ class Evaluator(DatasetBaseModel):
         return cls._wait_for_sse_result(response.stream_url, response.execution_id, timeout_in_sec)
 
     @classmethod
-    def _wait_for_sse_result(cls, stream_url: str, execution_id: str, timeout_in_sec: int) -> Dict[str, Any]:
+    def _wait_for_sse_result(cls, stream_url: str, execution_id: str, timeout_in_sec: int) -> ExecutionResponse:
         """Wait synchronously for result from SSE stream - based on guardrails pattern"""
         result_container = {"result": None, "received": False, "error": None}
         sse_client = SSEClient()     
