@@ -14,7 +14,7 @@ class ExperimentRunResult(BaseModel):
     """Result from a single evaluator run within an experiment"""
     input_index: int
     input_data: Dict[str, str]
-    result: Optional[Dict[str, Any]] = None
+    result: Optional[Any] = None
     error: Optional[str] = None
     execution_time: Optional[float] = None
 

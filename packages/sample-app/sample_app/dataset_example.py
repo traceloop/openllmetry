@@ -273,23 +273,23 @@ def main():
     print("Traceloop Dataset Examples")
     print("=" * 50)
 
-    ds1 = dataset_from_csv_example("example-3")
+    ds1 = dataset_from_csv_example("ninja-1")
     column = add_column_example(ds1)
     update_column_example(ds1, column)
     published_version = publish_dataset_example(ds1)
     delete_row_example(ds1)
     delete_column_example(ds1, column)
-    delete_dataset_example(ds1.slug)
+    # delete_dataset_example(ds1.slug)
 
-    get_dataset_by_version_example(slug="example-3", version=published_version)
+    get_dataset_by_version_example(slug="ninja-1", version=published_version)
 
-    ds2 = dataset_from_dataframe_example("example-4")
+    ds2 = dataset_from_dataframe_example("ninja-2")
     column = add_column_example(ds2)
     update_column_example(ds2, column)
     add_row_example(ds2)
     update_row_example(ds2)
     delete_column_example(ds2, column)
-    delete_dataset_example(ds2.slug)
+    # delete_dataset_example(ds2.slug)
 
     print("\n" + "=" * 50)
     print("Examples completed!")
