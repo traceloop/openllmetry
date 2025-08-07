@@ -1,12 +1,12 @@
 import time
+import asyncio
 from typing import Dict, List
 
-from traceloop.sdk.datasets.model import DatasetBaseModel
 from traceloop.sdk.evaluators.evaluator import Evaluator
-from .model import ExperimentRequest, ExperimentResult, ExperimentRunResult
+from .model import ExperimentResult, ExperimentRunResult
 
 
-class Experiment(DatasetBaseModel):
+class Experiment:
     """
     Experiment class for running a single evaluator on multiple inputs
     """
@@ -15,12 +15,12 @@ class Experiment(DatasetBaseModel):
     description: str
 
     @classmethod
-    def run(cls, 
-            evaluator_slug: str,
-            inputs: List[Dict[str, str]], 
-            timeout_in_sec: int = 120) -> ExperimentResult:
+    async def run(cls, 
+                  evaluator_slug: str,
+                  inputs: List[Dict[str, str]], 
+                  timeout_in_sec: int = 120) -> ExperimentResult:
         """
-        Execute experiment: run single evaluator on multiple inputs
+        Execute experiment: run single evaluator on multiple inputs in parallel
         
         Args:
             evaluator_slug: Slug of the evaluator to execute
@@ -31,12 +31,23 @@ class Experiment(DatasetBaseModel):
             ExperimentResult: Aggregated results from all runs
         """
         start_time = time.time()
-        results = []
         
-        # Execute evaluator runs sequentially for now
-        for i, input_data in enumerate(inputs):
-            run_result = cls._execute_single_run(evaluator_slug, input_data, i, timeout_in_sec)
-            results.append(run_result)
+        # Create shared HTTP client for all evaluator runs
+        client = await Evaluator._create_async_client()
+        
+        try:
+            # Create async tasks for parallel execution
+            tasks = [
+                cls._execute_single_run(evaluator_slug, input_data, i, client, timeout_in_sec)
+                for i, input_data in enumerate(inputs)
+            ]
+            
+            # Execute all evaluator runs in parallel
+            results = await asyncio.gather(*tasks, return_exceptions=False)
+            
+        finally:
+            # Always close the client when done
+            await client.aclose()
         
         total_execution_time = time.time() - start_time
         
@@ -53,17 +64,19 @@ class Experiment(DatasetBaseModel):
             total_execution_time=total_execution_time
         )
 
+
     @classmethod
-    def _execute_single_run(cls, 
-                          evaluator_slug: str, 
-                          input_data: Dict[str, str], 
-                          input_index: int,
-                          timeout_in_sec: int) -> ExperimentRunResult:
+    async def _execute_single_run(cls, 
+                                  evaluator_slug: str, 
+                                  input_data: Dict[str, str], 
+                                  input_index: int,
+                                  client,
+                                  timeout_in_sec: int) -> ExperimentRunResult:
         """Execute a single evaluator run and capture result/error"""
         run_start = time.time()
         
         try:
-            result = Evaluator.run(evaluator_slug, input_data, timeout_in_sec)
+            result = await Evaluator.run(evaluator_slug, input_data, client, timeout_in_sec)
             execution_time = time.time() - run_start
             
             return ExperimentRunResult(
@@ -83,3 +96,4 @@ class Experiment(DatasetBaseModel):
                 error=str(e),
                 execution_time=execution_time
             )
+
