@@ -19,20 +19,22 @@ class Evaluator(DatasetBaseModel):
     """
     Evaluator class for executing evaluators with SSE streaming
     """
-    
+    _api_endpoint: str
+    _api_key: str
+
+    def __init__(self):
+        self._api_endpoint = os.environ.get("TRACELOOP_BASE_URL", "https://api.traceloop.com")
+        self._api_key = os.environ.get("TRACELOOP_API_KEY", "")
+        
     @classmethod
     def _get_http_client_static(cls) -> HTTPClient:
         """Get HTTP client instance for static operations"""
-        api_key = os.environ.get("TRACELOOP_API_KEY", "")
-        # api_endpoint = os.environ.get("TRACELOOP_BASE_URL", "https://api.traceloop.com")
-        api_endpoint = "http://localhost:3001"
-
-        if not api_key:
+        if not cls._api_key:
             raise ValueError("TRACELOOP_API_KEY environment variable is required")
 
         return HTTPClient(
-            base_url=api_endpoint,
-            api_key=api_key,
+            base_url=cls._api_endpoint,
+            api_key=cls._api_key,
             version=__version__
         )
 
@@ -40,7 +42,7 @@ class Evaluator(DatasetBaseModel):
     def run(cls, 
             evaluator_slug: str,
             input: Dict[str, str], 
-            timeout: int = 500) -> Dict[str, Any]:
+            timeout_in_sec: int = 120) -> Dict[str, Any]:
         """
         Execute evaluator with input schema mapping and wait for result
         
@@ -59,6 +61,7 @@ class Evaluator(DatasetBaseModel):
         http_client = cls._get_http_client_static()
         body = request.model_dump()
         print("body:", body)
+
         # Make API call to trigger evaluator
         result = http_client.post(
             f"evaluators/slug/{evaluator_slug}/execute",
@@ -69,26 +72,23 @@ class Evaluator(DatasetBaseModel):
             raise Exception(f"Failed to execute evaluator {evaluator_slug}")
         
         response = ExecuteEvaluatorResponse(**result)
-        
-        # Always wait for SSE streaming results synchronously
-        api_key = os.environ.get("TRACELOOP_API_KEY", "")
-        sse_client = SSEClient(api_key)
-        
-        # Wait for result from SSE stream
-        return cls._wait_for_sse_result(sse_client, response.stream_url, response.execution_id, timeout)
+           
+        return cls._wait_for_sse_result(response.stream_url, response.execution_id, timeout_in_sec)
 
     @classmethod
-    def _wait_for_sse_result(cls, sse_client: SSEClient, stream_url: str, execution_id: str, timeout: int) -> Dict[str, Any]:
+    def _wait_for_sse_result(cls, stream_url: str, execution_id: str, timeout_in_sec: int) -> Dict[str, Any]:
         """Wait synchronously for result from SSE stream - based on guardrails pattern"""
         result_container = {"result": None, "received": False, "error": None}
-        
+        sse_client = SSEClient(cls._api_key, cls._api_endpoint)     
+
         # Run async SSE stream in thread
         def run_sse_stream():
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
+
             try:
                 result = loop.run_until_complete(
-                    sse_client.wait_for_result(execution_id, stream_url, timeout)
+                    sse_client.wait_for_result(execution_id, stream_url, timeout_in_sec)
                 )
                 result_container["result"] = result
                 result_container["received"] = True
@@ -100,7 +100,7 @@ class Evaluator(DatasetBaseModel):
         
         thread = threading.Thread(target=run_sse_stream)
         thread.start()
-        thread.join(timeout + 5)  # Add small buffer to thread timeout
+        thread.join(timeout_in_sec + 5)  # Add small buffer to thread timeout
         
         if not result_container["received"]:
             sse_client.stop_stream(execution_id)

@@ -25,7 +25,7 @@ def run_evaluator(evaluator_slug: str, input_schema_mapping: dict, timeout: int 
     return Evaluator.run(
         evaluator_slug=evaluator_slug,
         input_schema_mapping=input_schema_mapping,
-        timeout=timeout
+        timeout_in_sec=timeout
     )
 
 

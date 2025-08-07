@@ -26,7 +26,7 @@ def run_basic_example():
                 "love_only": "apples",
                 "love_sentence": "My favorite fruit is apples and I love them", 
             },
-            timeout=120
+            timeout_in_sec=120
         )
     except Exception as e:
         print(f"Error: {e}")
