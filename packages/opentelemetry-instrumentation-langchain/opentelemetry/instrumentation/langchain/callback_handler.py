@@ -37,6 +37,7 @@ from opentelemetry.instrumentation.langchain.span_utils import (
     SpanHolder,
     _set_span_attribute,
     extract_model_name_from_response_metadata,
+    _extract_model_name_from_association_metadata,
     set_chat_request,
     set_chat_response,
     set_chat_response_usage,
@@ -508,6 +509,9 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
                 _set_span_attribute(span, GEN_AI_RESPONSE_ID, id)
         if model_name is None:
             model_name = extract_model_name_from_response_metadata(response)
+        if model_name is None and hasattr(context_api, "get_value"):
+            association_properties = context_api.get_value("association_properties") or {}
+            model_name = _extract_model_name_from_association_metadata(association_properties)
         token_usage = (response.llm_output or {}).get("token_usage") or (
             response.llm_output or {}
         ).get("usage")
