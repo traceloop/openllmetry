@@ -533,10 +533,10 @@ def _set_streaming_token_metrics(
     # Use token usage from API response only
     if complete_response.get("usage"):
         usage = complete_response["usage"]
-        if usage.get("prompt_tokens"):
-            prompt_usage = usage["prompt_tokens"]
-        if usage.get("completion_tokens"):
-            completion_usage = usage["completion_tokens"]
+        if usage.get("input_tokens"):
+            prompt_usage = usage["input_tokens"]
+        if usage.get("output_tokens"):
+            completion_usage = usage["output_tokens"]
 
     # span record
     _set_span_stream_usage(span, prompt_usage, completion_usage)
