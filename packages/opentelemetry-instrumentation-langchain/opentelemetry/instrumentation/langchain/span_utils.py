@@ -368,6 +368,11 @@ def extract_model_name_from_response_metadata(response: LLMResult) -> str:
                 and (model_name := generation.message.response_metadata.get("model_name"))
             ):
                 return model_name
+
+
+def _extract_model_name_from_association_metadata(metadata: Optional[dict[str, Any]] = None) -> str:
+    if metadata:
+        return metadata.get("ls_model_name") or "unknown"
     return "unknown"
 
 
