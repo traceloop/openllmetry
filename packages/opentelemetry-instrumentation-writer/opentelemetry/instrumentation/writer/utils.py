@@ -1,6 +1,7 @@
 import logging
 import os
 import traceback
+from importlib.metadata import version
 
 from opentelemetry.semconv_ai import SpanAttributes
 
@@ -9,6 +10,11 @@ from opentelemetry.instrumentation.writer import Config
 
 GEN_AI_SYSTEM = "gen_ai.system"
 GEN_AI_SYSTEM_WRITER = "writer"
+
+try:
+    _PYDANTIC_VERSION = version("pydantic")
+except ImportError:
+    _PYDANTIC_VERSION = "0.0.0"
 
 TRACELOOP_TRACE_CONTENT = "TRACELOOP_TRACE_CONTENT"
 
@@ -75,3 +81,13 @@ def should_emit_events() -> bool:
     """
 
     return not Config.use_legacy_attributes
+
+def model_as_dict(model):
+    if _PYDANTIC_VERSION < "2.0.0":
+        return model.dict()
+    if hasattr(model, "model_dump"):
+        return model.model_dump()
+    elif hasattr(model, "parse"):
+        return model_as_dict(model.parse())
+    else:
+        return model

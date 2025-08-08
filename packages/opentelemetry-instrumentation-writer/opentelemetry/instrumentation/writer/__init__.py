@@ -26,6 +26,8 @@ from opentelemetry.instrumentation.writer.config import Config
 from opentelemetry.instrumentation.writer.span_utils import (
     set_input_attributes,
     set_model_input_attributes,
+    set_model_response_attributes,
+    set_response_attributes,
 )
 from opentelemetry.instrumentation.writer.utils import (
     error_metrics_attributes,
@@ -75,7 +77,8 @@ def is_streaming_response(response):
 def _handle_input(span, kwargs, event_logger):
     set_model_input_attributes(span, kwargs)
     if should_emit_events() and event_logger:
-        ...  # TODO message events emitter
+        from opentelemetry.instrumentation.writer.event_emitter import emit_message_events
+        emit_message_events(kwargs, event_logger)
     else:
         set_input_attributes(span, kwargs)
 
@@ -121,6 +124,14 @@ def _with_tracer_wrapper(func):
         return wrapper
 
     return _with_chat_telemetry
+
+def _handle_response(span, response, token_histogram, event_logger):
+    set_model_response_attributes(span, response, token_histogram)
+    if should_emit_events() and event_logger:
+        from opentelemetry.instrumentation.writer.event_emitter import emit_choice_events
+        emit_choice_events(response, event_logger)
+    else:
+        set_response_attributes(span, response)
 
 
 @_with_tracer_wrapper
@@ -191,7 +202,8 @@ def _wrap(
                     attributes=response_attributes(response),
                 )
 
-            # TODO non-streaming response processor method
+            # Process non-streaming response attributes and events
+            _handle_response(span, response, token_histogram, event_logger)
 
         except Exception as ex:  # pylint: disable=broad-except
             logger.warning(
@@ -274,7 +286,8 @@ async def _awrap(
                     attributes=response_attributes(response),
                 )
 
-            # TODO non-streaming response processor method
+            # Process non-streaming response attributes and events
+            _handle_response(span, response, token_histogram, event_logger)
 
         except Exception as ex:  # pylint: disable=broad-except
             logger.warning(
