@@ -223,6 +223,8 @@ async def _wrap_agent_run_streamed(
                     duration,
                     attributes={
                         "gen_ai.agent.name": agent_name,
+                        SpanAttributes.LLM_SYSTEM: "openai",
+                        SpanAttributes.LLM_RESPONSE_MODEL: get_model_name(agent),
                     },
                 )
 
@@ -308,6 +310,11 @@ async def _wrap_agent_run(
             if duration_histogram:
                 duration_histogram.record(
                     time.time() - start_time,
+                    attributes={
+                        "gen_ai.agent.name": agent_name,
+                        SpanAttributes.LLM_SYSTEM: "openai",
+                        SpanAttributes.LLM_RESPONSE_MODEL: model_name,
+                    },
                 )
             if isinstance(prompt_list, list):
                 set_prompt_attributes(span, prompt_list)
