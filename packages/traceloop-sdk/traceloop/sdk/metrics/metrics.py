@@ -7,13 +7,13 @@ from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import (
 from opentelemetry.exporter.otlp.proto.http.metric_exporter import (
     OTLPMetricExporter as HTTPExporter,
 )
-from opentelemetry.semconv_ai import Meters
+from opentelemetry.semconv_ai import MetricViewsBuilder
 from opentelemetry.sdk.metrics import MeterProvider
 from opentelemetry.sdk.metrics.export import (
     PeriodicExportingMetricReader,
     MetricExporter,
 )
-from opentelemetry.sdk.metrics.view import View, ExplicitBucketHistogramAggregation
+from opentelemetry.sdk.metrics.view import View
 from opentelemetry.sdk.resources import Resource
 
 from opentelemetry import metrics
@@ -85,71 +85,4 @@ def init_metrics_provider(
 
 
 def metric_views() -> Sequence[View]:
-    return [
-        View(
-            instrument_name=Meters.LLM_TOKEN_USAGE,
-            aggregation=ExplicitBucketHistogramAggregation(
-                [
-                    1,
-                    4,
-                    16,
-                    64,
-                    256,
-                    1024,
-                    4096,
-                    16384,
-                    65536,
-                    262144,
-                    1048576,
-                    4194304,
-                    16777216,
-                    67108864,
-                ]
-            ),
-        ),
-        View(
-            instrument_name=Meters.PINECONE_DB_QUERY_DURATION,
-            aggregation=ExplicitBucketHistogramAggregation(
-                [
-                    0.01,
-                    0.02,
-                    0.04,
-                    0.08,
-                    0.16,
-                    0.32,
-                    0.64,
-                    1.28,
-                    2.56,
-                    5.12,
-                    10.24,
-                    20.48,
-                    40.96,
-                    81.92,
-                ]
-            ),
-        ),
-        View(
-            instrument_name=Meters.PINECONE_DB_QUERY_SCORES,
-            aggregation=ExplicitBucketHistogramAggregation(
-                [
-                    -1,
-                    -0.875,
-                    -0.75,
-                    -0.625,
-                    -0.5,
-                    -0.375,
-                    -0.25,
-                    -0.125,
-                    0,
-                    0.125,
-                    0.25,
-                    0.375,
-                    0.5,
-                    0.625,
-                    0.75,
-                    0.875,
-                    1,
-                ]
-            ),
-        ),
-    ]
+    return MetricViewsBuilder.get_all_genai_views()
