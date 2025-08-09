@@ -1,6 +1,6 @@
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
-from typing import Any, AsyncGenerator, Callable, Collection, Tuple, cast
+from typing import Any, AsyncGenerator, Callable, Collection, Tuple, cast, Union
 import json
 import logging
 import traceback
@@ -124,16 +124,30 @@ class McpInstrumentor(BaseInstrumentor):
         async def traced_method(
             wrapped: Callable[..., Any], instance: Any, args: Any, kwargs: Any
         ) -> AsyncGenerator[
-            Tuple["InstrumentedStreamReader", "InstrumentedStreamWriter"], None
+            Union[
+                Tuple[InstrumentedStreamReader, InstrumentedStreamWriter],
+                Tuple[InstrumentedStreamReader, InstrumentedStreamWriter, Any]
+            ],
+            None
         ]:
             async with wrapped(*args, **kwargs) as result:
                 try:
                     read_stream, write_stream = result
+                    yield InstrumentedStreamReader(
+                        read_stream, tracer
+                    ), InstrumentedStreamWriter(write_stream, tracer)
                 except ValueError:
-                    read_stream, write_stream, _ = result
-                yield InstrumentedStreamReader(
-                    read_stream, tracer
-                ), InstrumentedStreamWriter(write_stream, tracer)
+                    try:
+                        read_stream, write_stream, get_session_id_callback = result
+                        yield InstrumentedStreamReader(
+                            read_stream, tracer
+                        ), InstrumentedStreamWriter(write_stream, tracer), get_session_id_callback
+                    except Exception as e:
+                        logging.warning(f"mcp instrumentation _transport_wrapper exception: {e}")
+                        yield result
+                except Exception as e:
+                    logging.warning(f"mcp instrumentation transport_wrapper exception: {e}")
+                    yield result
 
         return traced_method
 
