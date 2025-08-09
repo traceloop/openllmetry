@@ -559,20 +559,22 @@ def init_instrumentations(
 def init_openai_instrumentor(
     should_enrich_metrics: bool, base64_image_uploader: Callable[[str, str, str], str]
 ):
-    try:
-        if is_package_installed("openai"):
-            Telemetry().capture("instrumentation:openai:init")
-            from opentelemetry.instrumentation.openai import OpenAIInstrumentor
 
-            instrumentor = OpenAIInstrumentor(
-                exception_logger=lambda e: Telemetry().log_exception(e),
-                enrich_assistant=should_enrich_metrics,
-                get_common_metrics_attributes=metrics_common_attributes,
-                upload_base64_image=base64_image_uploader,
-            )
-            if not instrumentor.is_instrumented_by_opentelemetry:
-                instrumentor.instrument()
-            return True
+    from traceloop.sdk.utils import require_dependency
+    require_dependency("openai", "llm")
+    try:
+        Telemetry().capture("instrumentation:openai:init")
+        from opentelemetry.instrumentation.openai import OpenAIInstrumentor
+
+        instrumentor = OpenAIInstrumentor(
+            exception_logger=lambda e: Telemetry().log_exception(e),
+            enrich_assistant=should_enrich_metrics,
+            get_common_metrics_attributes=metrics_common_attributes,
+            upload_base64_image=base64_image_uploader,
+        )
+        if not instrumentor.is_instrumented_by_opentelemetry:
+            instrumentor.instrument()
+        return True
 
     except Exception as e:
         logging.error(f"Error initializing OpenAI instrumentor: {e}")
@@ -583,20 +585,22 @@ def init_openai_instrumentor(
 def init_anthropic_instrumentor(
     should_enrich_metrics: bool, base64_image_uploader: Callable[[str, str, str], str]
 ):
-    try:
-        if is_package_installed("anthropic"):
-            Telemetry().capture("instrumentation:anthropic:init")
-            from opentelemetry.instrumentation.anthropic import AnthropicInstrumentor
 
-            instrumentor = AnthropicInstrumentor(
-                exception_logger=lambda e: Telemetry().log_exception(e),
-                enrich_token_usage=should_enrich_metrics,
-                get_common_metrics_attributes=metrics_common_attributes,
-                upload_base64_image=base64_image_uploader,
-            )
-            if not instrumentor.is_instrumented_by_opentelemetry:
-                instrumentor.instrument()
-            return True
+    from traceloop.sdk.utils import require_dependency
+    require_dependency("anthropic", "llm")
+    try:
+        Telemetry().capture("instrumentation:anthropic:init")
+        from opentelemetry.instrumentation.anthropic import AnthropicInstrumentor
+
+        instrumentor = AnthropicInstrumentor(
+            exception_logger=lambda e: Telemetry().log_exception(e),
+            enrich_token_usage=should_enrich_metrics,
+            get_common_metrics_attributes=metrics_common_attributes,
+            upload_base64_image=base64_image_uploader,
+        )
+        if not instrumentor.is_instrumented_by_opentelemetry:
+            instrumentor.instrument()
+        return True
     except Exception as e:
         logging.error(f"Error initializing Anthropic instrumentor: {e}")
         Telemetry().log_exception(e)
@@ -604,17 +608,19 @@ def init_anthropic_instrumentor(
 
 
 def init_cohere_instrumentor():
-    try:
-        if is_package_installed("cohere"):
-            Telemetry().capture("instrumentation:cohere:init")
-            from opentelemetry.instrumentation.cohere import CohereInstrumentor
 
-            instrumentor = CohereInstrumentor(
-                exception_logger=lambda e: Telemetry().log_exception(e),
-            )
-            if not instrumentor.is_instrumented_by_opentelemetry:
-                instrumentor.instrument()
-            return True
+    from traceloop.sdk.utils import require_dependency
+    require_dependency("cohere", "llm")
+    try:
+        Telemetry().capture("instrumentation:cohere:init")
+        from opentelemetry.instrumentation.cohere import CohereInstrumentor
+
+        instrumentor = CohereInstrumentor(
+            exception_logger=lambda e: Telemetry().log_exception(e),
+        )
+        if not instrumentor.is_instrumented_by_opentelemetry:
+            instrumentor.instrument()
+        return True
     except Exception as e:
         logging.error(f"Error initializing Cohere instrumentor: {e}")
         Telemetry().log_exception(e)
@@ -622,17 +628,19 @@ def init_cohere_instrumentor():
 
 
 def init_pinecone_instrumentor():
-    try:
-        if is_package_installed("pinecone"):
-            Telemetry().capture("instrumentation:pinecone:init")
-            from opentelemetry.instrumentation.pinecone import PineconeInstrumentor
 
-            instrumentor = PineconeInstrumentor(
-                exception_logger=lambda e: Telemetry().log_exception(e),
-            )
-            if not instrumentor.is_instrumented_by_opentelemetry:
-                instrumentor.instrument()
-            return True
+    from traceloop.sdk.utils import require_dependency
+    require_dependency("pinecone", "vectorstores")
+    try:
+        Telemetry().capture("instrumentation:pinecone:init")
+        from opentelemetry.instrumentation.pinecone import PineconeInstrumentor
+
+        instrumentor = PineconeInstrumentor(
+            exception_logger=lambda e: Telemetry().log_exception(e),
+        )
+        if not instrumentor.is_instrumented_by_opentelemetry:
+            instrumentor.instrument()
+        return True
     except Exception as e:
         logging.error(f"Error initializing Pinecone instrumentor: {e}")
         Telemetry().log_exception(e)
@@ -640,17 +648,19 @@ def init_pinecone_instrumentor():
 
 
 def init_qdrant_instrumentor():
-    try:
-        if is_package_installed("qdrant_client") or is_package_installed("qdrant-client"):
-            Telemetry().capture("instrumentation:qdrant:init")
-            from opentelemetry.instrumentation.qdrant import QdrantInstrumentor
 
-            instrumentor = QdrantInstrumentor(
-                exception_logger=lambda e: Telemetry().log_exception(e),
-            )
-            if not instrumentor.is_instrumented_by_opentelemetry:
-                instrumentor.instrument()
-            return True
+    from traceloop.sdk.utils import require_dependency
+    require_dependency("qdrant-client", "vectorstores")
+    try:
+        Telemetry().capture("instrumentation:qdrant:init")
+        from opentelemetry.instrumentation.qdrant import QdrantInstrumentor
+
+        instrumentor = QdrantInstrumentor(
+            exception_logger=lambda e: Telemetry().log_exception(e),
+        )
+        if not instrumentor.is_instrumented_by_opentelemetry:
+            instrumentor.instrument()
+        return True
     except Exception as e:
         logging.error(f"Error initializing Qdrant instrumentor: {e}")
         Telemetry().log_exception(e)
@@ -696,17 +706,19 @@ def init_google_generativeai_instrumentor():
 
 
 def init_haystack_instrumentor():
-    try:
-        if is_package_installed("haystack"):
-            Telemetry().capture("instrumentation:haystack:init")
-            from opentelemetry.instrumentation.haystack import HaystackInstrumentor
 
-            instrumentor = HaystackInstrumentor(
-                exception_logger=lambda e: Telemetry().log_exception(e),
-            )
-            if not instrumentor.is_instrumented_by_opentelemetry:
-                instrumentor.instrument()
-            return True
+    from traceloop.sdk.utils import require_dependency
+    require_dependency("haystack", "frameworks")
+    try:
+        Telemetry().capture("instrumentation:haystack:init")
+        from opentelemetry.instrumentation.haystack import HaystackInstrumentor
+
+        instrumentor = HaystackInstrumentor(
+            exception_logger=lambda e: Telemetry().log_exception(e),
+        )
+        if not instrumentor.is_instrumented_by_opentelemetry:
+            instrumentor.instrument()
+        return True
     except Exception as e:
         logging.error(f"Error initializing Haystack instrumentor: {e}")
         Telemetry().log_exception(e)
@@ -714,17 +726,19 @@ def init_haystack_instrumentor():
 
 
 def init_langchain_instrumentor():
-    try:
-        if is_package_installed("langchain") or is_package_installed("langgraph"):
-            Telemetry().capture("instrumentation:langchain:init")
-            from opentelemetry.instrumentation.langchain import LangchainInstrumentor
 
-            instrumentor = LangchainInstrumentor(
-                exception_logger=lambda e: Telemetry().log_exception(e),
-            )
-            if not instrumentor.is_instrumented_by_opentelemetry:
-                instrumentor.instrument()
-            return True
+    from traceloop.sdk.utils import require_dependency
+    require_dependency("langchain", "frameworks")
+    try:
+        Telemetry().capture("instrumentation:langchain:init")
+        from opentelemetry.instrumentation.langchain import LangchainInstrumentor
+
+        instrumentor = LangchainInstrumentor(
+            exception_logger=lambda e: Telemetry().log_exception(e),
+        )
+        if not instrumentor.is_instrumented_by_opentelemetry:
+            instrumentor.instrument()
+        return True
     except Exception as e:
         logging.error(f"Error initializing LangChain instrumentor: {e}")
         Telemetry().log_exception(e)
@@ -788,17 +802,19 @@ def init_transformers_instrumentor():
 
 
 def init_together_instrumentor():
-    try:
-        if is_package_installed("together"):
-            Telemetry().capture("instrumentation:together:init")
-            from opentelemetry.instrumentation.together import TogetherAiInstrumentor
 
-            instrumentor = TogetherAiInstrumentor(
-                exception_logger=lambda e: Telemetry().log_exception(e),
-            )
-            if not instrumentor.is_instrumented_by_opentelemetry:
-                instrumentor.instrument()
-            return True
+    from traceloop.sdk.utils import require_dependency
+    require_dependency("together", "frameworks")
+    try:
+        Telemetry().capture("instrumentation:together:init")
+        from opentelemetry.instrumentation.together import TogetherAiInstrumentor
+
+        instrumentor = TogetherAiInstrumentor(
+            exception_logger=lambda e: Telemetry().log_exception(e),
+        )
+        if not instrumentor.is_instrumented_by_opentelemetry:
+            instrumentor.instrument()
+        return True
     except Exception as e:
         logging.error(f"Error initializing TogetherAI instrumentor: {e}")
         Telemetry().log_exception(e)
@@ -806,17 +822,19 @@ def init_together_instrumentor():
 
 
 def init_llama_index_instrumentor():
-    try:
-        if is_package_installed("llama-index") or is_package_installed("llama_index"):
-            Telemetry().capture("instrumentation:llamaindex:init")
-            from opentelemetry.instrumentation.llamaindex import LlamaIndexInstrumentor
 
-            instrumentor = LlamaIndexInstrumentor(
-                exception_logger=lambda e: Telemetry().log_exception(e),
-            )
-            if not instrumentor.is_instrumented_by_opentelemetry:
-                instrumentor.instrument()
-            return True
+    from traceloop.sdk.utils import require_dependency
+    require_dependency("llama-index", "frameworks")
+    try:
+        Telemetry().capture("instrumentation:llamaindex:init")
+        from opentelemetry.instrumentation.llamaindex import LlamaIndexInstrumentor
+
+        instrumentor = LlamaIndexInstrumentor(
+            exception_logger=lambda e: Telemetry().log_exception(e),
+        )
+        if not instrumentor.is_instrumented_by_opentelemetry:
+            instrumentor.instrument()
+        return True
     except Exception as e:
         logging.error(f"Error initializing LlamaIndex instrumentor: {e}")
         Telemetry().log_exception(e)
@@ -824,17 +842,19 @@ def init_llama_index_instrumentor():
 
 
 def init_milvus_instrumentor():
-    try:
-        if is_package_installed("pymilvus"):
-            Telemetry().capture("instrumentation:milvus:init")
-            from opentelemetry.instrumentation.milvus import MilvusInstrumentor
 
-            instrumentor = MilvusInstrumentor(
-                exception_logger=lambda e: Telemetry().log_exception(e),
-            )
-            if not instrumentor.is_instrumented_by_opentelemetry:
-                instrumentor.instrument()
-            return True
+    from traceloop.sdk.utils import require_dependency
+    require_dependency("pymilvus", "vectorstores")
+    try:
+        Telemetry().capture("instrumentation:milvus:init")
+        from opentelemetry.instrumentation.milvus import MilvusInstrumentor
+
+        instrumentor = MilvusInstrumentor(
+            exception_logger=lambda e: Telemetry().log_exception(e),
+        )
+        if not instrumentor.is_instrumented_by_opentelemetry:
+            instrumentor.instrument()
+        return True
     except Exception as e:
         logging.error(f"Error initializing Milvus instrumentor: {e}")
         Telemetry().log_exception(e)
@@ -887,17 +907,19 @@ def init_pymysql_instrumentor():
 
 
 def init_bedrock_instrumentor(should_enrich_metrics: bool):
-    try:
-        if is_package_installed("boto3"):
-            from opentelemetry.instrumentation.bedrock import BedrockInstrumentor
 
-            instrumentor = BedrockInstrumentor(
-                exception_logger=lambda e: Telemetry().log_exception(e),
-                enrich_token_usage=should_enrich_metrics,
-            )
-            if not instrumentor.is_instrumented_by_opentelemetry:
-                instrumentor.instrument()
-            return True
+    from traceloop.sdk.utils import require_dependency
+    require_dependency("boto3", "cloud")
+    try:
+        from opentelemetry.instrumentation.bedrock import BedrockInstrumentor
+
+        instrumentor = BedrockInstrumentor(
+            exception_logger=lambda e: Telemetry().log_exception(e),
+            enrich_token_usage=should_enrich_metrics,
+        )
+        if not instrumentor.is_instrumented_by_opentelemetry:
+            instrumentor.instrument()
+        return True
     except Exception as e:
         logging.error(f"Error initializing Bedrock instrumentor: {e}")
         Telemetry().log_exception(e)
@@ -905,16 +927,18 @@ def init_bedrock_instrumentor(should_enrich_metrics: bool):
 
 
 def init_sagemaker_instrumentor(should_enrich_metrics: bool):
-    try:
-        if is_package_installed("boto3"):
-            from opentelemetry.instrumentation.sagemaker import SageMakerInstrumentor
 
-            instrumentor = SageMakerInstrumentor(
-                exception_logger=lambda e: Telemetry().log_exception(e),
-            )
-            if not instrumentor.is_instrumented_by_opentelemetry:
-                instrumentor.instrument()
-            return True
+    from traceloop.sdk.utils import require_dependency
+    require_dependency("boto3", "cloud")
+    try:
+        from opentelemetry.instrumentation.sagemaker import SageMakerInstrumentor
+
+        instrumentor = SageMakerInstrumentor(
+            exception_logger=lambda e: Telemetry().log_exception(e),
+        )
+        if not instrumentor.is_instrumented_by_opentelemetry:
+            instrumentor.instrument()
+        return True
     except Exception as e:
         logging.error(f"Error initializing SageMaker instrumentor: {e}")
         Telemetry().log_exception(e)
@@ -940,17 +964,19 @@ def init_replicate_instrumentor():
 
 
 def init_vertexai_instrumentor():
-    try:
-        if is_package_installed("google-cloud-aiplatform"):
-            Telemetry().capture("instrumentation:vertexai:init")
-            from opentelemetry.instrumentation.vertexai import VertexAIInstrumentor
 
-            instrumentor = VertexAIInstrumentor(
-                exception_logger=lambda e: Telemetry().log_exception(e),
-            )
-            if not instrumentor.is_instrumented_by_opentelemetry:
-                instrumentor.instrument()
-            return True
+    from traceloop.sdk.utils import require_dependency
+    require_dependency("google-cloud-aiplatform", "cloud")
+    try:
+        Telemetry().capture("instrumentation:vertexai:init")
+        from opentelemetry.instrumentation.vertexai import VertexAIInstrumentor
+
+        instrumentor = VertexAIInstrumentor(
+            exception_logger=lambda e: Telemetry().log_exception(e),
+        )
+        if not instrumentor.is_instrumented_by_opentelemetry:
+            instrumentor.instrument()
+        return True
     except Exception as e:
         logging.warning(f"Error initializing Vertex AI instrumentor: {e}")
         Telemetry().log_exception(e)
@@ -958,19 +984,19 @@ def init_vertexai_instrumentor():
 
 
 def init_watsonx_instrumentor():
-    try:
-        if is_package_installed("ibm-watsonx-ai") or is_package_installed(
-            "ibm_watson_machine_learning"
-        ):
-            Telemetry().capture("instrumentation:watsonx:init")
-            from opentelemetry.instrumentation.watsonx import WatsonxInstrumentor
 
-            instrumentor = WatsonxInstrumentor(
-                exception_logger=lambda e: Telemetry().log_exception(e),
-            )
-            if not instrumentor.is_instrumented_by_opentelemetry:
-                instrumentor.instrument()
-            return True
+    from traceloop.sdk.utils import require_dependency
+    require_dependency("ibm-watsonx-ai", "cloud")
+    try:
+        Telemetry().capture("instrumentation:watsonx:init")
+        from opentelemetry.instrumentation.watsonx import WatsonxInstrumentor
+
+        instrumentor = WatsonxInstrumentor(
+            exception_logger=lambda e: Telemetry().log_exception(e),
+        )
+        if not instrumentor.is_instrumented_by_opentelemetry:
+            instrumentor.instrument()
+        return True
     except Exception as e:
         logging.warning(f"Error initializing Watsonx instrumentor: {e}")
         Telemetry().log_exception(e)
@@ -978,17 +1004,19 @@ def init_watsonx_instrumentor():
 
 
 def init_weaviate_instrumentor():
-    try:
-        if is_package_installed("weaviate"):
-            Telemetry().capture("instrumentation:weaviate:init")
-            from opentelemetry.instrumentation.weaviate import WeaviateInstrumentor
 
-            instrumentor = WeaviateInstrumentor(
-                exception_logger=lambda e: Telemetry().log_exception(e),
-            )
-            if not instrumentor.is_instrumented_by_opentelemetry:
-                instrumentor.instrument()
-            return True
+    from traceloop.sdk.utils import require_dependency
+    require_dependency("weaviate", "vectorstores")
+    try:
+        Telemetry().capture("instrumentation:weaviate:init")
+        from opentelemetry.instrumentation.weaviate import WeaviateInstrumentor
+
+        instrumentor = WeaviateInstrumentor(
+            exception_logger=lambda e: Telemetry().log_exception(e),
+        )
+        if not instrumentor.is_instrumented_by_opentelemetry:
+            instrumentor.instrument()
+        return True
     except Exception as e:
         logging.warning(f"Error initializing Weaviate instrumentor: {e}")
         Telemetry().log_exception(e)
@@ -1014,17 +1042,19 @@ def init_alephalpha_instrumentor():
 
 
 def init_marqo_instrumentor():
-    try:
-        if is_package_installed("marqo"):
-            Telemetry().capture("instrumentation:marqo:init")
-            from opentelemetry.instrumentation.marqo import MarqoInstrumentor
 
-            instrumentor = MarqoInstrumentor(
-                exception_logger=lambda e: Telemetry().log_exception(e),
-            )
-            if not instrumentor.is_instrumented_by_opentelemetry:
-                instrumentor.instrument()
-            return True
+    from traceloop.sdk.utils import require_dependency
+    require_dependency("marqo", "vectorstores")
+    try:
+        Telemetry().capture("instrumentation:marqo:init")
+        from opentelemetry.instrumentation.marqo import MarqoInstrumentor
+
+        instrumentor = MarqoInstrumentor(
+            exception_logger=lambda e: Telemetry().log_exception(e),
+        )
+        if not instrumentor.is_instrumented_by_opentelemetry:
+            instrumentor.instrument()
+        return True
     except Exception as e:
         logging.error(f"Error initializing marqo instrumentor: {e}")
         Telemetry().log_exception(e)
@@ -1065,17 +1095,19 @@ def init_redis_instrumentor():
 
 
 def init_groq_instrumentor():
-    try:
-        if is_package_installed("groq"):
-            Telemetry().capture("instrumentation:groq:init")
-            from opentelemetry.instrumentation.groq import GroqInstrumentor
 
-            instrumentor = GroqInstrumentor(
-                exception_logger=lambda e: Telemetry().log_exception(e),
-            )
-            if not instrumentor.is_instrumented_by_opentelemetry:
-                instrumentor.instrument()
-            return True
+    from traceloop.sdk.utils import require_dependency
+    require_dependency("groq", "llm")
+    try:
+        Telemetry().capture("instrumentation:groq:init")
+        from opentelemetry.instrumentation.groq import GroqInstrumentor
+
+        instrumentor = GroqInstrumentor(
+            exception_logger=lambda e: Telemetry().log_exception(e),
+        )
+        if not instrumentor.is_instrumented_by_opentelemetry:
+            instrumentor.instrument()
+        return True
     except Exception as e:
         logging.error(f"Error initializing Groq instrumentor: {e}")
         Telemetry().log_exception(e)
@@ -1083,17 +1115,19 @@ def init_groq_instrumentor():
 
 
 def init_crewai_instrumentor():
-    try:
-        if is_package_installed("crewai"):
-            Telemetry().capture("instrumentation:crewai:init")
-            from opentelemetry.instrumentation.crewai import CrewAIInstrumentor
 
-            instrumentor = CrewAIInstrumentor(
-                exception_logger=lambda e: Telemetry().log_exception(e),
-            )
-            if not instrumentor.is_instrumented_by_opentelemetry:
-                instrumentor.instrument()
-            return True
+    from traceloop.sdk.utils import require_dependency
+    require_dependency("crewai", "frameworks")
+    try:
+        Telemetry().capture("instrumentation:crewai:init")
+        from opentelemetry.instrumentation.crewai import CrewAIInstrumentor
+
+        instrumentor = CrewAIInstrumentor(
+            exception_logger=lambda e: Telemetry().log_exception(e),
+        )
+        if not instrumentor.is_instrumented_by_opentelemetry:
+            instrumentor.instrument()
+        return True
     except Exception as e:
         logging.error(f"Error initializing CrewAI instrumentor: {e}")
         Telemetry().log_exception(e)
