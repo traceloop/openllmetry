@@ -20,7 +20,7 @@ def test_add_column_to_empty_dataset(mock_get_http_client):
     new_column = dataset.add_column("Test Column", ColumnType.STRING)
 
     mock_http_client.post.assert_called_once_with(
-        f"projects/default/datasets/{dataset.slug}/columns",
+        f"datasets/{dataset.slug}/columns",
         {"name": "Test Column", "type": ColumnType.STRING}
     )
 
@@ -50,7 +50,7 @@ def test_add_column_to_dataset_with_existing_columns(mock_get_http_client):
     new_column = dataset.add_column("Test Column", ColumnType.STRING)
 
     mock_http_client.post.assert_called_once_with(
-        f"projects/default/datasets/{dataset.slug}/columns",
+        f"datasets/{dataset.slug}/columns",
         {"name": "Test Column", "type": ColumnType.STRING}
     )
 
@@ -90,7 +90,7 @@ def test_update_column(mock_get_http_client):
     dataset.columns[0].update(name=new_name, type=new_type)
 
     mock_http_client.put.assert_called_once_with(
-        f"projects/default/datasets/{dataset.slug}/columns/{column_to_update.id}",
+        f"datasets/{dataset.slug}/columns/{column_to_update.id}",
         {"name": new_name, "type": new_type}
     )
 
@@ -138,7 +138,7 @@ def test_delete_column(mock_get_http_client):
 
     # Verify API was called correctly
     mock_http_client.delete.assert_called_once_with(
-        f"projects/default/datasets/{dataset.slug}/columns/column_id_1"
+        f"datasets/{dataset.slug}/columns/column_id_1"
     )
 
     # Verify column was removed from dataset

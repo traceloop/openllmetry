@@ -39,7 +39,7 @@ def test_get_dataset_by_slug():
         assert laptop_row.values["cmdvki9zv003901vv5zr5i24b"] == 999.99
         assert laptop_row.values["cmdvki9zv003a01vvvqqlytpr"] is True
 
-        mock_client.get.assert_called_once_with("projects/default/datasets/product-inventory-2")
+        mock_client.get.assert_called_once_with("datasets/product-inventory-2")
 
 
 @patch.dict("os.environ", {"TRACELOOP_API_KEY": "test-api-key"})
@@ -69,7 +69,7 @@ def test_get_all_datasets():
         assert last_dataset.slug == "employee-data"
         assert last_dataset.name == "Employee Dataset"
 
-        mock_client.get.assert_called_once_with("projects/default/datasets")
+        mock_client.get.assert_called_once_with("datasets")
 
 
 @patch.dict("os.environ", {"TRACELOOP_API_KEY": "test-api-key"})
@@ -84,7 +84,7 @@ def test_get_dataset_by_version():
 
         assert isinstance(csv_data, str)
 
-        mock_client.get.assert_called_once_with("projects/default/datasets/product-inventory/versions/v1")
+        mock_client.get.assert_called_once_with("datasets/product-inventory/versions/v1")
 
 
 @patch.dict("os.environ", {"TRACELOOP_API_KEY": "test-api-key"})
@@ -98,4 +98,4 @@ def test_publish_dataset():
         version = dataset.publish()
 
         assert version == "v1"
-        mock_client.post.assert_called_once_with("projects/default/datasets/test-dataset/publish", {})
+        mock_client.post.assert_called_once_with("datasets/test-dataset/publish", {})

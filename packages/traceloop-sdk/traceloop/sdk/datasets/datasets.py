@@ -26,44 +26,40 @@ class Datasets:
     def __init__(self, http: HTTPClient):
         self._http = http
 
-    @classmethod
-    def get_all(cls) -> List[DatasetMetadata]:
+    def get_all(self) -> List[DatasetMetadata]:
         """List all datasets metadata"""
-        result = cls._get_http_client_static().get("projects/default/datasets")
+        result = self._http.get("datasets")
         if result is None:
             raise Exception("Failed to get datasets")
         return [DatasetMetadata(**dataset) for dataset in result]
 
-    @classmethod
-    def delete_by_slug(cls, slug: str) -> None:
+    def delete_by_slug(self, slug: str) -> None:
         """Delete dataset by slug without requiring an instance"""
-        success = cls._get_http_client_static().delete(
-            f"projects/default/datasets/{slug}"
+        success = self._http.delete(
+            f"datasets/{slug}"
         )
         if not success:
             raise Exception(f"Failed to delete dataset {slug}")
 
-    @classmethod
-    def get_by_slug(cls, slug: str) -> "Dataset":
+    def get_by_slug(self, slug: str) -> "Dataset":
         """Get a dataset by slug and return a full Dataset instance"""
-        result = cls._get_http_client_static().get(f"projects/default/datasets/{slug}")
+        result = self._http.get(f"datasets/{slug}")
         if result is None:
             raise Exception(f"Failed to get dataset {slug}")
 
         validated_data = DatasetFullData(**result)
 
-        return Dataset.from_full_data(validated_data, cls._http)
+        return Dataset.from_full_data(validated_data, self._http)
 
 
-    @classmethod
     def from_csv(
-        cls,
+        self,
         file_path: str,
         slug: str,
         name: Optional[str] = None,
         description: Optional[str] = None
     ) -> "Dataset":
-        """Class method to create dataset from CSV file"""
+        """Create dataset from CSV file"""
         path = Path(file_path)
         if not path.exists():
             raise FileNotFoundError(f"CSV file not found: {file_path}")
@@ -89,7 +85,7 @@ class Datasets:
             for _, row_data in enumerate(reader):
                 rows_with_names.append(dict(row_data))
 
-        dataset_response = cls._create_dataset(
+        dataset_response = self._create_dataset(
             CreateDatasetRequest(
                 slug=slug,
                 name=name,
@@ -98,18 +94,18 @@ class Datasets:
             )
         )
 
-        return Dataset.from_create_dataset_response(dataset_response, rows_with_names, cls._http)
+        dataset = Dataset.from_create_dataset_response(dataset_response, rows_with_names, self._http)
+        return dataset
 
 
-    @classmethod
     def from_dataframe(
-        cls,
+        self,
         df: "pd.DataFrame",
         slug: str,
         name: Optional[str] = None,
         description: Optional[str] = None
     ) -> "Dataset":
-        """Class method to create dataset from pandas DataFrame"""
+        """Create dataset from pandas DataFrame"""
         # Create column definitions from DataFrame
         columns_definition: List[ColumnDefinition] = []
         for col_name in df.columns:
@@ -127,7 +123,7 @@ class Datasets:
             ))
 
 
-        dataset_response = cls._create_dataset(
+        dataset_response = self._create_dataset(
             CreateDatasetRequest(
                 slug=slug,
                 name=name,
@@ -138,29 +134,22 @@ class Datasets:
 
         rows = df.to_dict(orient="records")
 
-        return Dataset.from_create_dataset_response(dataset_response, rows, cls._http)
+        return Dataset.from_create_dataset_response(dataset_response, rows, self._http)
 
-    @classmethod
-    def get_version_csv(cls, slug: str, version: str) -> str:
+    def get_version_csv(self, slug: str, version: str) -> str:
         """Get a specific version of a dataset as a CSV string"""
-        result = cls._get_http_client_static().get(f"projects/default/datasets/{slug}/versions/{version}")
+        result = self._http.get(f"datasets/{slug}/versions/{version}")
         if result is None:
             raise Exception(f"Failed to get dataset {slug} by version {version}")
         return result
     
-    def _create_dataset(cls, input: CreateDatasetRequest) -> CreateDatasetResponse:
+    def _create_dataset(self, input: CreateDatasetRequest) -> CreateDatasetResponse:
         """Create new dataset"""
         data = input.model_dump()
 
-        result = cls._get_http_client_static().post("projects/default/datasets", data)
+        result = self._http.post("datasets", data)
 
         if result is None:
             raise Exception("Failed to create dataset")
 
-        response = CreateDatasetResponse(**result)
-
-        for field, value in response.model_dump().items():
-            if hasattr(cls, field) and field != 'columns':
-                setattr(cls, field, value)
-
-        return response
+        return CreateDatasetResponse(**result)

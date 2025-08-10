@@ -60,7 +60,7 @@ Mouse,29.99,false"""
     TEST_DATASET_ID = "test_dataset_id"
 
     # API Endpoints
-    DEFAULT_PROJECT_PATH = "projects/default/datasets"
+    DEFAULT_PROJECT_PATH = "datasets"
 
     # Version Information
     VERSION_V1 = "v1"

@@ -23,7 +23,7 @@ class Row:
 
     def delete(self) -> None:
         """Remove this row from dataset"""
-        result = self._http.delete(f"projects/default/datasets/{self.slug}/rows/{self.id}")
+        result = self._http.delete(f"datasets/{self.slug}/rows/{self.id}")
         if result is None:
             raise Exception(f"Failed to delete row {self.id}")
         self._dataset.rows.remove(self)
@@ -32,7 +32,7 @@ class Row:
         """Update this row's values"""
         data = {"values": values}
         result = self._http.put(
-            f"projects/default/datasets/{self.slug}/rows/{self.id}",
+            f"datasets/{self.slug}/rows/{self.id}",
             data
         )
         if result is None:

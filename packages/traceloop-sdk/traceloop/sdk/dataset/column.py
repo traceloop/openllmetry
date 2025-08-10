@@ -25,7 +25,7 @@ class Column:
             raise ValueError("Column must be associated with a dataset to delete")
         
         result = self._http.delete(
-            f"projects/default/datasets/{self._client.slug}/columns/{self.id}"
+            f"datasets/{self._client.slug}/columns/{self.id}"
         )
         if result is None:
             raise Exception(f"Failed to delete column {self.id}")

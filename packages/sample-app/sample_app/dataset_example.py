@@ -252,7 +252,7 @@ def get_dataset_by_version_example(slug: str, version: str):
     print("\n=== Get Dataset by Version Example ===")
 
     try:
-        dataset_csv = Dataset.get_version_csv(slug=slug, version=version)
+        dataset_csv = client.datasets.get_version_csv(slug=slug, version=version)
         print(f"Retrieved dataset:\n{dataset_csv}")
 
     except Exception as e:
@@ -263,7 +263,7 @@ def delete_dataset_example(slug: str):
     """Demonstrate deleting a dataset"""
     print("\n=== Delete Dataset Example ===")
     try:
-        Dataset.delete_by_slug(slug)
+        client.datasets.delete_by_slug(slug)
         print("Dataset deleted")
     except Exception as e:
         print(f"Error deleting dataset: {e}")
@@ -273,7 +273,7 @@ def main():
     print("Traceloop Dataset Examples")
     print("=" * 50)
 
-    ds1 = dataset_from_csv_example("example-1")
+    ds1 = dataset_from_csv_example("example-5")
     column = add_column_example(ds1)
     update_column_example(ds1, column)
     published_version = publish_dataset_example(ds1)
@@ -281,9 +281,9 @@ def main():
     delete_column_example(ds1, column)
     delete_dataset_example(ds1.slug)
 
-    get_dataset_by_version_example(slug="example-1", version=published_version)
+    get_dataset_by_version_example(slug="example-5", version=published_version)
 
-    ds2 = dataset_from_dataframe_example("example-2")
+    ds2 = dataset_from_dataframe_example("example-6")
     column = add_column_example(ds2)
     update_column_example(ds2, column)
     add_row_example(ds2)

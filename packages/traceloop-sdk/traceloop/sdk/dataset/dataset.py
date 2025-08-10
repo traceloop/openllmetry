@@ -62,6 +62,13 @@ class Dataset:
     def from_create_dataset_response(cls, response: CreateDatasetResponse, rows: List[ValuesMap], http: HTTPClient) -> "Dataset":
         """Create a Dataset instance from CreateDatasetResponse"""
         dataset = cls(http=http)
+        dataset.id = response.id
+        dataset.slug = response.slug
+        dataset.name = response.name
+        dataset.description = response.description
+        dataset.last_version = response.last_version
+        dataset.created_at = response.created_at
+        dataset.updated_at = response.updated_at
 
         dataset._create_columns(response.columns)
 
@@ -85,7 +92,7 @@ class Dataset:
     def publish(self) -> str:
         """Publish dataset"""
         result = self._http.post(
-            f"projects/default/datasets/{self.slug}/publish", {}
+            f"datasets/{self.slug}/publish", {}
         )
         if result is None:
             raise Exception(f"Failed to publish dataset {self.slug}")
@@ -94,7 +101,7 @@ class Dataset:
     def add_rows(self, rows: List[ValuesMap]) -> None:
         """Add rows to dataset"""
         result = self._http.post(
-            f"projects/default/datasets/{self.slug}/rows",
+            f"datasets/{self.slug}/rows",
             {"rows": rows}
         )
         if result is None:
@@ -111,7 +118,7 @@ class Dataset:
         }
 
         result = self._http.post(
-            f"projects/default/datasets/{self.slug}/columns",
+            f"datasets/{self.slug}/columns",
             data
         )
         if result is None:
