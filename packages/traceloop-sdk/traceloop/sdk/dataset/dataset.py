@@ -49,8 +49,7 @@ class Dataset:
         
         # Set all attributes from the dataset data
         for field, value in dataset_data.items():
-            if field != 'columns' and field != 'rows':  
-                setattr(dataset, field, value)
+            setattr(dataset, field, value)
         
         dataset._create_columns(full_data.columns)
         dataset._create_rows(full_data.rows)
@@ -61,13 +60,8 @@ class Dataset:
     def from_create_dataset_response(cls, response: CreateDatasetResponse, rows: List[ValuesMap], http: HTTPClient) -> "Dataset":
         """Create a Dataset instance from CreateDatasetResponse"""
         dataset = cls(http=http)
-        dataset.id = response.id
-        dataset.slug = response.slug
-        dataset.name = response.name
-        dataset.description = response.description
-        dataset.last_version = response.last_version
-        dataset.created_at = response.created_at
-        dataset.updated_at = response.updated_at
+        for field, value in response.model_dump(exclude={'columns'}).items():
+            setattr(dataset, field, value)
 
         dataset._create_columns(response.columns)
 

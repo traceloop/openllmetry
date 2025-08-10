@@ -1,4 +1,5 @@
 import json
+import pytest
 from traceloop.sdk.dataset.dataset import Dataset
 from traceloop.sdk.dataset.model import DatasetMetadata
 from .mock_response import (get_dataset_by_version_json,
@@ -91,3 +92,33 @@ def test_delete_by_slug_failure(datasets, mock_http):
         assert "Failed to delete dataset test-dataset" in str(e)
 
     mock_http.delete.assert_called_once_with("datasets/test-dataset")
+
+
+def test_get_all_datasets_failure(datasets, mock_http):
+    mock_http.get.return_value = None
+    
+    with pytest.raises(Exception) as exc_info:
+        datasets.get_all()
+    
+    assert "Failed to get datasets" in str(exc_info.value)
+    mock_http.get.assert_called_once_with("datasets")
+
+
+def test_get_dataset_by_slug_failure(datasets, mock_http):
+    mock_http.get.return_value = None
+    
+    with pytest.raises(Exception) as exc_info:
+        datasets.get_by_slug("non-existent-dataset")
+    
+    assert "Failed to get dataset non-existent-dataset" in str(exc_info.value)
+    mock_http.get.assert_called_once_with("datasets/non-existent-dataset")
+
+
+def test_get_version_csv_failure(datasets, mock_http):
+    mock_http.get.return_value = None
+    
+    with pytest.raises(Exception) as exc_info:
+        datasets.get_version_csv("non-existent-dataset", "v1")
+    
+    assert "Failed to get dataset non-existent-dataset by version v1" in str(exc_info.value)
+    mock_http.get.assert_called_once_with("datasets/non-existent-dataset/versions/v1")

@@ -113,3 +113,49 @@ def test_create_dataset_from_csv_file_not_found(datasets):
             slug=TestConstants.DATASET_SLUG,
             name=TestConstants.DATASET_NAME
         )
+
+
+def test_create_dataset_from_csv_create_failure(datasets, mock_http):
+    # Create temporary CSV file
+    csv_content = """Name,Price
+    Laptop,999.99"""
+
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.csv', delete=False) as f:
+        f.write(csv_content)
+        csv_path = f.name
+
+    try:
+        # Mock HTTP post to return None to simulate failure
+        mock_http.post.return_value = None
+        
+        with pytest.raises(Exception) as exc_info:
+            datasets.from_csv(
+                file_path=csv_path,
+                slug=TestConstants.DATASET_SLUG,
+                name=TestConstants.DATASET_NAME
+            )
+        
+        assert "Failed to create dataset" in str(exc_info.value)
+
+    finally:
+        os.unlink(csv_path)
+
+
+def test_create_dataset_from_dataframe_create_failure(datasets, mock_http):
+    # Create test dataframe
+    df = pd.DataFrame({
+        'Name': ['Laptop'],
+        'Price': [999.99]
+    })
+
+    # Mock HTTP post to return None to simulate failure
+    mock_http.post.return_value = None
+    
+    with pytest.raises(Exception) as exc_info:
+        datasets.from_dataframe(
+            df=df,
+            slug=TestConstants.DATASET_SLUG,
+            name=TestConstants.DATASET_NAME
+        )
+    
+    assert "Failed to create dataset" in str(exc_info.value)
