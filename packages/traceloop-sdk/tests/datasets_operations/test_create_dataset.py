@@ -4,7 +4,9 @@ import tempfile
 import os
 import pandas as pd
 from unittest.mock import patch, MagicMock
+from traceloop.sdk.datasets.datasets import Datasets
 from traceloop.sdk.dataset.dataset import Dataset
+from traceloop.sdk.client.http import HTTPClient
 from .mock_response import create_dataset_response, create_rows_response_json
 from .test_constants import TestConstants
 
@@ -21,7 +23,7 @@ def test_create_dataset_from_csv():
         csv_path = f.name
 
     try:
-        with patch.object(Dataset, '_get_http_client') as mock_get_client:
+        with patch('traceloop.sdk.client.http.HTTPClient') as mock_http_client_class:
             mock_client = MagicMock()
 
             # Mock dataset creation response
@@ -29,9 +31,10 @@ def test_create_dataset_from_csv():
                 create_dataset_response(),  # CSV: all string types
                 json.loads(create_rows_response_json)      # add_rows call
             ]
-            mock_get_client.return_value = mock_client
+            mock_http_client_class.return_value = mock_client
 
-            dataset = Dataset.from_csv(
+            datasets = Datasets(mock_client)
+            dataset = datasets.from_csv(
                 file_path=csv_path,
                 slug=TestConstants.DATASET_SLUG,
                 name=TestConstants.DATASET_NAME,
@@ -73,7 +76,7 @@ def test_create_dataset_from_dataframe():
         'In Stock': [True, False]
     })
 
-    with patch.object(Dataset, '_get_http_client') as mock_get_client:
+    with patch('traceloop.sdk.client.http.HTTPClient') as mock_http_client_class:
         mock_client = MagicMock()
 
         # Mock dataset creation response
@@ -81,9 +84,10 @@ def test_create_dataset_from_dataframe():
             create_dataset_response(price_type="number", in_stock_type="boolean"),  # DataFrame: inferred types
             json.loads(create_rows_response_json)      # add_rows call
         ]
-        mock_get_client.return_value = mock_client
+        mock_http_client_class.return_value = mock_client
 
-        dataset = Dataset.from_dataframe(
+        datasets = Datasets(mock_client)
+        dataset = datasets.from_dataframe(
             df=df,
             slug=TestConstants.DATASET_SLUG,
             name=TestConstants.DATASET_NAME,
@@ -119,9 +123,14 @@ def test_create_dataset_from_dataframe():
 
 @patch.dict("os.environ", {"TRACELOOP_API_KEY": "test-api-key"})
 def test_create_dataset_from_csv_file_not_found():
-    with pytest.raises(FileNotFoundError):
-        Dataset.from_csv(
-            file_path=TestConstants.NON_EXISTENT_FILE_PATH,
-            slug=TestConstants.DATASET_SLUG,
-            name=TestConstants.DATASET_NAME
-        )
+    with patch('traceloop.sdk.client.http.HTTPClient') as mock_http_client_class:
+        mock_client = MagicMock()
+        mock_http_client_class.return_value = mock_client
+        
+        datasets = Datasets(mock_client)
+        with pytest.raises(FileNotFoundError):
+            datasets.from_csv(
+                file_path=TestConstants.NON_EXISTENT_FILE_PATH,
+                slug=TestConstants.DATASET_SLUG,
+                name=TestConstants.DATASET_NAME
+            )

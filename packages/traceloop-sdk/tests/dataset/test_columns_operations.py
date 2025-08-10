@@ -2,12 +2,12 @@ from unittest.mock import Mock, patch
 from traceloop.sdk.dataset.model import ColumnType
 from traceloop.sdk.dataset.column import Column
 
-from tests.datasets.mock_objects import create_simple_mock_dataset, create_dataset_with_existing_columns
-from tests.datasets.mock_response import basic_dataset_response_json, add_column_response_json
+from .mock_objects import create_simple_mock_dataset, create_dataset_with_existing_columns
+from .mock_response import basic_dataset_response_json, add_column_response_json
 import json
 
 
-@patch('traceloop.sdk.datasets.dataset.Dataset._get_http_client')
+@patch('traceloop.sdk.dataset.dataset.Dataset._get_http_client')
 def test_add_column_to_empty_dataset(mock_get_http_client):
     """Test adding a new column to an empty dataset"""
     mock_http_client = Mock()
@@ -34,7 +34,7 @@ def test_add_column_to_empty_dataset(mock_get_http_client):
     assert len(dataset.columns) == 1
 
 
-@patch('traceloop.sdk.datasets.dataset.Dataset._get_http_client')
+@patch('traceloop.sdk.dataset.dataset.Dataset._get_http_client')
 def test_add_column_to_dataset_with_existing_columns(mock_get_http_client):
     """Test adding a new column to a dataset that already has columns"""
     mock_http_client = Mock()
@@ -71,7 +71,7 @@ def test_add_column_to_dataset_with_existing_columns(mock_get_http_client):
     assert dataset.columns[2] == new_column
 
 
-@patch('traceloop.sdk.datasets.dataset.Dataset._get_http_client')
+@patch('traceloop.sdk.dataset.dataset.Dataset._get_http_client')
 def test_update_column(mock_get_http_client):
     """Test updating a column name from dataset.columns[0].update() using basic_dataset_response_json"""
     mock_http_client = Mock()
@@ -100,7 +100,7 @@ def test_update_column(mock_get_http_client):
     assert dataset.columns[0].dataset_id == dataset.id
 
 
-@patch('traceloop.sdk.datasets.dataset.Dataset._get_http_client')
+@patch('traceloop.sdk.dataset.dataset.Dataset._get_http_client')
 def test_delete_column(mock_get_http_client):
     """Test deleting a column from dataset"""
     mock_http_client = Mock()

@@ -1,21 +1,22 @@
 import json
 from unittest.mock import patch, MagicMock
+from traceloop.sdk.datasets.datasets import Datasets
 from traceloop.sdk.dataset.dataset import Dataset
 from traceloop.sdk.dataset.model import DatasetMetadata
-from .mock_response import (publish_dataset_response_json,
-                            get_dataset_by_version_json,
+from .mock_response import (get_dataset_by_version_json,
                             get_all_datasets_json,
                             get_dataset_by_slug_json)
 
 
 @patch.dict("os.environ", {"TRACELOOP_API_KEY": "test-api-key"})
 def test_get_dataset_by_slug():
-    with patch.object(Dataset, '_get_http_client_static') as mock_get_client:
+    with patch('traceloop.sdk.client.http.HTTPClient') as mock_http_client_class:
         mock_client = MagicMock()
         mock_client.get.return_value = json.loads(get_dataset_by_slug_json)
-        mock_get_client.return_value = mock_client
+        mock_http_client_class.return_value = mock_client
 
-        dataset = Dataset.get_by_slug("product-inventory-2")
+        datasets = Datasets(mock_client)
+        dataset = datasets.get_by_slug("product-inventory-2")
 
         assert isinstance(dataset, Dataset)
         assert dataset.id == "cmdvki9zv003c01vvj7is4p80"
@@ -44,19 +45,20 @@ def test_get_dataset_by_slug():
 
 @patch.dict("os.environ", {"TRACELOOP_API_KEY": "test-api-key"})
 def test_get_all_datasets():
-    with patch.object(Dataset, '_get_http_client_static') as mock_get_client:
+    with patch('traceloop.sdk.client.http.HTTPClient') as mock_http_client_class:
         mock_client = MagicMock()
         mock_response = json.loads(get_all_datasets_json)
         mock_client.get.return_value = mock_response["datasets"]
-        mock_get_client.return_value = mock_client
+        mock_http_client_class.return_value = mock_client
 
-        datasets = Dataset.get_all()
+        datasets = Datasets(mock_client)
+        datasets_list = datasets.get_all()
 
-        assert isinstance(datasets, list)
-        assert len(datasets) == 6
+        assert isinstance(datasets_list, list)
+        assert len(datasets_list) == 6
 
         # Check first dataset
-        first_dataset = datasets[0]
+        first_dataset = datasets_list[0]
         assert isinstance(first_dataset, DatasetMetadata)
         assert first_dataset.id == "cmdwnop4y0004meitkf17oxtn"
         assert first_dataset.slug == "product-inventory-3"
@@ -64,7 +66,7 @@ def test_get_all_datasets():
         assert first_dataset.description == "Sample product inventory data"
 
         # Check last dataset
-        last_dataset = datasets[-1]
+        last_dataset = datasets_list[-1]
         assert last_dataset.id == "cmdvfm9ms001f01vvbe30fbuj"
         assert last_dataset.slug == "employee-data"
         assert last_dataset.name == "Employee Dataset"
@@ -73,14 +75,14 @@ def test_get_all_datasets():
 
 
 @patch.dict("os.environ", {"TRACELOOP_API_KEY": "test-api-key"})
-def test_get_dataset_by_version():
-    with patch('traceloop.sdk.datasets.dataset.HTTPClient') as mock_http_client_class:
+def test_get_version_csv():
+    with patch('traceloop.sdk.client.http.HTTPClient') as mock_http_client_class:
         mock_client = MagicMock()
         mock_client.get.return_value = get_dataset_by_version_json
         mock_http_client_class.return_value = mock_client
 
-        dataset = Dataset(slug="product-inventory-2")
-        csv_data = dataset.get_version_csv(slug="product-inventory", version="v1")
+        datasets = Datasets(mock_client)
+        csv_data = datasets.get_version_csv(slug="product-inventory", version="v1")
 
         assert isinstance(csv_data, str)
 
@@ -88,14 +90,31 @@ def test_get_dataset_by_version():
 
 
 @patch.dict("os.environ", {"TRACELOOP_API_KEY": "test-api-key"})
-def test_publish_dataset():
-    with patch('traceloop.sdk.datasets.dataset.HTTPClient') as mock_http_client_class:
+def test_delete_by_slug():
+    with patch('traceloop.sdk.client.http.HTTPClient') as mock_http_client_class:
         mock_client = MagicMock()
-        mock_client.post.return_value = json.loads(publish_dataset_response_json)
+        mock_client.delete.return_value = True
         mock_http_client_class.return_value = mock_client
 
-        dataset = Dataset(slug="test-dataset")
-        version = dataset.publish()
+        datasets = Datasets(mock_client)
+        datasets.delete_by_slug("test-dataset")
 
-        assert version == "v1"
-        mock_client.post.assert_called_once_with("datasets/test-dataset/publish", {})
+        mock_client.delete.assert_called_once_with("datasets/test-dataset")
+
+
+@patch.dict("os.environ", {"TRACELOOP_API_KEY": "test-api-key"})
+def test_delete_by_slug_failure():
+    with patch('traceloop.sdk.client.http.HTTPClient') as mock_http_client_class:
+        mock_client = MagicMock()
+        mock_client.delete.return_value = False
+        mock_http_client_class.return_value = mock_client
+
+        datasets = Datasets(mock_client)
+        
+        try:
+            datasets.delete_by_slug("test-dataset")
+            assert False, "Expected exception was not raised"
+        except Exception as e:
+            assert "Failed to delete dataset test-dataset" in str(e)
+
+        mock_client.delete.assert_called_once_with("datasets/test-dataset")

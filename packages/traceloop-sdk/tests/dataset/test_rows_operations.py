@@ -20,52 +20,45 @@ from .mock_objects import (
 @patch.dict("os.environ", {"TRACELOOP_API_KEY": "test-api-key"})
 def test_add_rows_to_dataset():
     """Test adding rows to an existing dataset"""
-    with patch.object(Dataset, '_get_http_client') as mock_get_client:
-        mock_client = MagicMock()
-        mock_client.post.return_value = json.loads(add_rows_response_json)
-        mock_get_client.return_value = mock_client
+    dataset, _ = create_mock_dataset_with_columns_definition()
+    mock_client = dataset._http
+    mock_client.post.return_value = json.loads(add_rows_response_json)
 
-        dataset, _ = create_mock_dataset_with_columns_definition()
+    test_rows = get_test_rows_data()
 
-        test_rows = get_test_rows_data()
+    dataset.add_rows(test_rows)
 
-        result = dataset.add_rows_api(test_rows)
+    # Verify that the dataset now contains the new rows
+    assert len(dataset.rows) == 4
 
-        # Verify the response
-        assert result.total == 4
-        assert len(result.rows) == 4
+    # Check all added rows
+    expected_rows = [
+        ("row_add_1", {
+            "cmdr3ce1s0003hmp0vqons5ey": "Gal",
+            "cmdr3ce1s0004hmp0ies575jr": 8,
+            "cmdr3ce1s0005hmp0bdln01js": True
+        }),
+        ("row_add_2", {
+            "cmdr3ce1s0003hmp0vqons5ey": "Nir",
+            "cmdr3ce1s0004hmp0ies575jr": 70,
+            "cmdr3ce1s0005hmp0bdln01js": False
+        }),
+        ("row_add_3", {
+            "cmdr3ce1s0003hmp0vqons5ey": "Nina",
+            "cmdr3ce1s0004hmp0ies575jr": 52,
+            "cmdr3ce1s0005hmp0bdln01js": True
+        }),
+        ("row_add_4", {
+            "cmdr3ce1s0003hmp0vqons5ey": "Aviv",
+            "cmdr3ce1s0004hmp0ies575jr": 52,
+            "cmdr3ce1s0005hmp0bdln01js": False
+        })
+    ]
 
-        # Verify that the dataset now contains the new rows
-        assert len(dataset.rows) == 4
+    for row_index, (expected_id, expected_values) in enumerate(expected_rows):
+        assert_row_values(dataset, row_index, expected_id, expected_values)
 
-        # Check all added rows
-        expected_rows = [
-            ("row_add_1", {
-                "cmdr3ce1s0003hmp0vqons5ey": "Gal",
-                "cmdr3ce1s0004hmp0ies575jr": 8,
-                "cmdr3ce1s0005hmp0bdln01js": True
-            }),
-            ("row_add_2", {
-                "cmdr3ce1s0003hmp0vqons5ey": "Nir",
-                "cmdr3ce1s0004hmp0ies575jr": 70,
-                "cmdr3ce1s0005hmp0bdln01js": False
-            }),
-            ("row_add_3", {
-                "cmdr3ce1s0003hmp0vqons5ey": "Nina",
-                "cmdr3ce1s0004hmp0ies575jr": 52,
-                "cmdr3ce1s0005hmp0bdln01js": True
-            }),
-            ("row_add_4", {
-                "cmdr3ce1s0003hmp0vqons5ey": "Aviv",
-                "cmdr3ce1s0004hmp0ies575jr": 52,
-                "cmdr3ce1s0005hmp0bdln01js": False
-            })
-        ]
-
-        for row_index, (expected_id, expected_values) in enumerate(expected_rows):
-            assert_row_values(dataset, row_index, expected_id, expected_values)
-
-        assert mock_client.post.call_count == 1
+    assert mock_client.post.call_count == 1
 
 
 @patch.dict("os.environ", {"TRACELOOP_API_KEY": "test-api-key"})

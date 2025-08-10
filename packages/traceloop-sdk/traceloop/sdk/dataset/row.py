@@ -32,7 +32,7 @@ class Row:
         """Update this row's values"""
         data = {"values": values}
         result = self._http.put(
-            f"datasets/{self.slug}/rows/{self.id}",
+            f"datasets/{self._dataset.slug}/rows/{self.id}",
             data
         )
         if result is None:
