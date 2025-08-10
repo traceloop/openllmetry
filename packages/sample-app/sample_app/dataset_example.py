@@ -200,7 +200,7 @@ def update_row_example(dataset: Dataset):
         row.update(updates)
         updated_row = next((r for r in dataset.rows if r.id == row.id), None)
         assert updated_row is not None
-        print(f"Updated row: {updated_row.model_dump_json()}")
+        print(f"Updated row: ID={updated_row.id}, values={updated_row.values}")
 
     except Exception as e:
         print(f"Error updating row: {e}")

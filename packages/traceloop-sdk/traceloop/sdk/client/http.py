@@ -27,7 +27,8 @@ class HTTPClient:
         try:
             response = requests.post(f"{self.base_url}/v2/{path.lstrip('/')}", json=data, headers=self._headers())
             response.raise_for_status()
-            return response.json()
+            json = response.json()
+            return json
         except requests.exceptions.RequestException as e:
             print(Fore.RED + f"Error making request to {path}: {str(e)}" + Fore.RESET)
             return None
@@ -39,7 +40,8 @@ class HTTPClient:
         try:
             response = requests.get(f"{self.base_url}/v2/{path.lstrip('/')}", params=params, headers=self._headers())
             response.raise_for_status()
-            return response.json()
+            json = response.json()
+            return json
         except requests.exceptions.RequestException as e:
             print(Fore.RED + f"Error making request to {path}: {str(e)}" + Fore.RESET)
             return None

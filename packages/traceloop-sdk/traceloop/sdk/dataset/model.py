@@ -29,9 +29,9 @@ class CreateDatasetResponse(BaseModel):
     name: str
     description: Optional[str] = None
     columns: Dict[str, ColumnDefinition]
-    last_version: Optional[str] = Field(default=None, alias="lastVersion")
-    created_at: datetime.datetime = Field(default=None, alias="createdAt")
-    updated_at: datetime.datetime = Field(default=None, alias="updatedAt")
+    last_version: Optional[str]
+    created_at: datetime.datetime
+    updated_at: datetime.datetime
 
 
 ValuesMap = Dict[str, Any]
@@ -59,8 +59,8 @@ class CreateRowsInput(BaseModel):
 class RowObject(BaseModel):
     id: str
     values: ValuesMap
-    created_at: datetime.datetime = Field(alias="created_at")
-    updated_at: datetime.datetime = Field(alias="updated_at")
+    created_at: datetime.datetime
+    updated_at: datetime.datetime
 
 
 class CreateRowsResponse(BaseModel):
@@ -69,7 +69,7 @@ class CreateRowsResponse(BaseModel):
 
 
 class PublishDatasetResponse(BaseModel):
-    dataset_id: str = Field(alias="datasetId")
+    dataset_id: str
     version: str
 
 
@@ -88,8 +88,8 @@ class DatasetMetadata(BaseModel):
     slug: str
     name: str
     description: Optional[str] = None
-    last_version: Optional[str] = Field(default=None, alias="lastVersion")
-    columns: Optional[Dict[str, ColumnDefinition]] = Field(default=None)
+    last_version: Optional[str]
+    columns: Optional[Dict[str, ColumnDefinition]]
     created_at: Optional[datetime.datetime]
     updated_at: Optional[datetime.datetime]
 
