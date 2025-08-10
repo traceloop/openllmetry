@@ -207,12 +207,12 @@ def _set_model_stream_response_attributes(span, stream_response):
     )
     _set_span_attribute(
         span,
-        SpanAttributes.LLM_USAGE_PROMPT_TOKENS,
+        SpanAttributes.LLM_USAGE_INPUT_TOKENS,
         stream_response.get("input_token_count"),
     )
     _set_span_attribute(
         span,
-        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS,
+        SpanAttributes.LLM_USAGE_OUTPUT_TOKENS,
         stream_response.get("generated_token_count"),
     )
     total_token = stream_response.get("input_token_count") + stream_response.get(
@@ -321,12 +321,12 @@ def set_model_response_attributes(
     if (prompt_token + completion_token) != 0:
         _set_span_attribute(
             span,
-            SpanAttributes.LLM_USAGE_COMPLETION_TOKENS,
+            SpanAttributes.LLM_USAGE_OUTPUT_TOKENS,
             completion_token,
         )
         _set_span_attribute(
             span,
-            SpanAttributes.LLM_USAGE_PROMPT_TOKENS,
+            SpanAttributes.LLM_USAGE_INPUT_TOKENS,
             prompt_token,
         )
         _set_span_attribute(

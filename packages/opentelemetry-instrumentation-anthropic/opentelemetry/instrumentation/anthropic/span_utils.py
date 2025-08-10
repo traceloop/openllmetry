@@ -244,9 +244,9 @@ def set_response_attributes(span, response):
     if response.get("usage"):
         prompt_tokens = response.get("usage").input_tokens
         completion_tokens = response.get("usage").output_tokens
-        set_span_attribute(span, SpanAttributes.LLM_USAGE_PROMPT_TOKENS, prompt_tokens)
+        set_span_attribute(span, SpanAttributes.LLM_USAGE_INPUT_TOKENS, prompt_tokens)
         set_span_attribute(
-            span, SpanAttributes.LLM_USAGE_COMPLETION_TOKENS, completion_tokens
+            span, SpanAttributes.LLM_USAGE_OUTPUT_TOKENS, completion_tokens
         )
         set_span_attribute(
             span,

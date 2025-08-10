@@ -517,24 +517,24 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         ).get("usage")
         if token_usage is not None:
             prompt_tokens = (
-                token_usage.get("prompt_tokens")
+                token_usage.get("input_tokens")
                 or token_usage.get("input_token_count")
-                or token_usage.get("input_tokens")
+                or token_usage.get("prompt_tokens")
             )
             completion_tokens = (
-                token_usage.get("completion_tokens")
+                token_usage.get("output_tokens")
                 or token_usage.get("generated_token_count")
-                or token_usage.get("output_tokens")
+                or token_usage.get("completion_tokens")
             )
             total_tokens = token_usage.get("total_tokens") or (
                 prompt_tokens + completion_tokens
             )
 
             _set_span_attribute(
-                span, SpanAttributes.LLM_USAGE_PROMPT_TOKENS, prompt_tokens
+                span, SpanAttributes.LLM_USAGE_INPUT_TOKENS, prompt_tokens
             )
             _set_span_attribute(
-                span, SpanAttributes.LLM_USAGE_COMPLETION_TOKENS, completion_tokens
+                span, SpanAttributes.LLM_USAGE_OUTPUT_TOKENS, completion_tokens
             )
             _set_span_attribute(
                 span, SpanAttributes.LLM_USAGE_TOTAL_TOKENS, total_tokens
