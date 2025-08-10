@@ -1,14 +1,13 @@
 from typing import Optional, Dict, Any, TYPE_CHECKING
 from pydantic import PrivateAttr
 
-from .model import DatasetBaseModel
 from traceloop.sdk.client.http import HTTPClient
 
 if TYPE_CHECKING:
     from .dataset import Dataset
 
 
-class Row(DatasetBaseModel):
+class Row:
     id: str
     values: Dict[str, Any]
     dataset_id: str

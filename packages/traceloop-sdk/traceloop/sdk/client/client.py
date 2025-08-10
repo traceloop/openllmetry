@@ -20,6 +20,7 @@ class Client:
     api_endpoint: str
     api_key: str
     user_feedback: UserFeedback
+    datasets: Datasets
     _http: HTTPClient
 
     def __init__(self, api_key: str, app_name: str = sys.argv[0], api_endpoint: str = "https://api.traceloop.com"):

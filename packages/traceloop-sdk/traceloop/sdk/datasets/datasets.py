@@ -1,8 +1,6 @@
 import csv
-from datetime import datetime
-from typing import List, Optional, Dict, Any
+from typing import List, Optional
 from pathlib import Path
-from pydantic import Field, PrivateAttr
 import pandas as pd
 
 
@@ -14,12 +12,11 @@ from traceloop.sdk.dataset.model import (
     ColumnType,
     DatasetMetadata,
     DatasetFullData,
-    DatasetBaseModel
 )
 from traceloop.sdk.dataset.dataset import Dataset
 from traceloop.sdk.client.http import HTTPClient
 
-class Datasets(DatasetBaseModel):
+class Datasets:
     """
     Datasets class dataset API communication
     """

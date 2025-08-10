@@ -11,10 +11,6 @@ class ColumnType(str, Enum):
     JSON = "json"
 
 
-class DatasetBaseModel(BaseModel):
-    model_config = ConfigDict(arbitrary_types_allowed=True, populate_by_name=True)
-
-
 class ColumnDefinition(BaseModel):
     name: str
     type: ColumnType

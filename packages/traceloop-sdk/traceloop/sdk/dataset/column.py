@@ -1,14 +1,14 @@
 from typing import Optional, TYPE_CHECKING
 from pydantic import PrivateAttr
 
-from .model import ColumnType, DatasetBaseModel
+from .model import ColumnType
 from traceloop.sdk.client.http import HTTPClient
 
 if TYPE_CHECKING:
     from .dataset import Dataset
 
 
-class Column(DatasetBaseModel):
+class Column:
     id: str
     name: str
     type: ColumnType

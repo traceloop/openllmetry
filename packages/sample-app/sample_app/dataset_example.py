@@ -9,7 +9,7 @@ import pandas as pd
 
 
 # Initialize Traceloop
-Traceloop.init()
+client = Traceloop.init()
 
 
 def create_sample_csv():
@@ -37,7 +37,7 @@ def dataset_from_csv_example(slug: str) -> Dataset:
 
     try:
         # Create dataset from CSV
-        dataset = Dataset.from_csv(
+        dataset = client.datasets.from_csv(
             file_path=csv_file,
             slug=slug,
             name="Employee Dataset",
@@ -70,7 +70,7 @@ def dataset_from_dataframe_example(slug: str) -> Dataset:
         df = pd.DataFrame(data)
 
         # Create dataset from DataFrame
-        dataset = Dataset.from_dataframe(
+        dataset = client.datasets.from_dataframe(
             df=df,
             slug=slug,
             name="Product Inventory",

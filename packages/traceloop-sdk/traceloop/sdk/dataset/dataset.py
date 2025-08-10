@@ -18,7 +18,6 @@ from traceloop.sdk.dataset.model import (
     DatasetFullData,
     PublishDatasetResponse,
     AddColumnResponse,
-    DatasetBaseModel
 )
 from .column import Column
 from .row import Row
@@ -26,7 +25,7 @@ from traceloop.sdk.client.http import HTTPClient
 from traceloop.sdk.version import __version__
 
 
-class Dataset(DatasetBaseModel):
+class Dataset:
     """
     Dataset class dataset API communication
     """
