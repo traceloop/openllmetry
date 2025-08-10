@@ -22,6 +22,7 @@ class Dataset:
     """
     Dataset class dataset API communication
     """
+
     id: str
     name: str
     slug: str
@@ -37,28 +38,30 @@ class Dataset:
         self._http = http
         self.columns = []
         self.rows = []
-    
+
     @classmethod
     def from_full_data(cls, full_data: DatasetFullData, http: HTTPClient) -> "Dataset":
         """Create a Dataset instance from DatasetFullData"""
-        dataset_data = full_data.model_dump(exclude={'columns', 'rows'})
+        dataset_data = full_data.model_dump(exclude={"columns", "rows"})
         dataset = cls(http=http)
-        
+
         # Set all attributes from the dataset data
         for field, value in dataset_data.items():
             setattr(dataset, field, value)
-        
+
         dataset._create_columns(full_data.columns)
         if full_data.rows:
             dataset._create_rows(full_data.rows)
-        
+
         return dataset
-    
+
     @classmethod
-    def from_create_dataset_response(cls, response: CreateDatasetResponse, rows: List[ValuesMap], http: HTTPClient) -> "Dataset":
+    def from_create_dataset_response(
+        cls, response: CreateDatasetResponse, rows: List[ValuesMap], http: HTTPClient
+    ) -> "Dataset":
         """Create a Dataset instance from CreateDatasetResponse"""
         dataset = cls(http=http)
-        for field, value in response.model_dump(exclude={'columns'}).items():
+        for field, value in response.model_dump(exclude={"columns"}).items():
             setattr(dataset, field, value)
 
         dataset._create_columns(response.columns)
@@ -76,25 +79,24 @@ class Dataset:
         # Create a mapping from column names to column IDs
         name_to_id = {col.name: col.id for col in self.columns}
         return [
-            {name_to_id[col_name]: val for col_name, val in row_data.items() if col_name in name_to_id}
+            {
+                name_to_id[col_name]: val
+                for col_name, val in row_data.items()
+                if col_name in name_to_id
+            }
             for row_data in rows_with_names
         ]
 
     def publish(self) -> str:
         """Publish dataset"""
-        result = self._http.post(
-            f"datasets/{self.slug}/publish", {}
-        )
+        result = self._http.post(f"datasets/{self.slug}/publish", {})
         if result is None:
             raise Exception(f"Failed to publish dataset {self.slug}")
         return PublishDatasetResponse(**result).version
 
     def add_rows(self, rows: List[ValuesMap]) -> None:
         """Add rows to dataset"""
-        result = self._http.post(
-            f"datasets/{self.slug}/rows",
-            {"rows": rows}
-        )
+        result = self._http.post(f"datasets/{self.slug}/rows", {"rows": rows})
         if result is None:
             raise Exception(f"Failed to add row to dataset {self.slug}")
 
@@ -103,26 +105,20 @@ class Dataset:
 
     def add_column(self, name: str, col_type: ColumnType) -> Column:
         """Add new column (returns Column object)"""
-        data = {
-            "name": name,
-            "type": col_type
-        }
+        data = {"name": name, "type": col_type}
 
-        result = self._http.post(
-            f"datasets/{self.slug}/columns",
-            data
-        )
+        result = self._http.post(f"datasets/{self.slug}/columns", data)
         if result is None:
             raise Exception(f"Failed to add column to dataset {self.slug}")
         col_response = AddColumnResponse(**result)
-    
+
         column = Column(
             http=self._http,
             dataset=self,
             id=col_response.id,
             name=col_response.name,
             type=col_response.type,
-            dataset_id=self.id
+            dataset_id=self.id,
         )
         self.columns.append(column)
         return column
@@ -136,7 +132,7 @@ class Dataset:
                 id=column_id,
                 name=column_def.name,
                 type=column_def.type,
-                dataset_id=self.id
+                dataset_id=self.id,
             )
             self.columns.append(column)
 
@@ -147,6 +143,6 @@ class Dataset:
                 dataset=self,
                 id=row_obj.id,
                 values=row_obj.values,
-                dataset_id=self.id
+                dataset_id=self.id,
             )
             self.rows.append(row)

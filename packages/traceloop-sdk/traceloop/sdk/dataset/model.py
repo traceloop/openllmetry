@@ -96,6 +96,7 @@ class DatasetMetadata(BaseModel):
 
 class DatasetFullData(BaseModel):
     """Full dataset response with columns and rows"""
+
     id: str
     slug: str
     name: Optional[str] = None

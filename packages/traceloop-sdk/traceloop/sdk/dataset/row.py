@@ -14,7 +14,14 @@ class Row:
     _dataset: "Dataset"
     _http: HTTPClient
 
-    def __init__(self, http: HTTPClient, dataset: "Dataset", id: str, values: Dict[str, Any], dataset_id: str):
+    def __init__(
+        self,
+        http: HTTPClient,
+        dataset: "Dataset",
+        id: str,
+        values: Dict[str, Any],
+        dataset_id: str,
+    ):
         self._http = http
         self._dataset = dataset
         self.id = id
@@ -31,10 +38,7 @@ class Row:
     def update(self, values: Dict[str, Any]) -> None:
         """Update this row's values"""
         data = {"values": values}
-        result = self._http.put(
-            f"datasets/{self._dataset.slug}/rows/{self.id}",
-            data
-        )
+        result = self._http.put(f"datasets/{self._dataset.slug}/rows/{self.id}", data)
         if result is None:
             raise Exception(f"Failed to update row {self.id}")
         self.values.update(values)

@@ -4,6 +4,7 @@ from pathlib import Path
 
 try:
     import pandas as pd
+
     PANDAS_AVAILABLE = True
 except ImportError:
     PANDAS_AVAILABLE = False
@@ -21,12 +22,13 @@ from traceloop.sdk.dataset.model import (
 from traceloop.sdk.dataset.dataset import Dataset
 from traceloop.sdk.client.http import HTTPClient
 
+
 class Datasets:
     """
     Datasets class dataset API communication
     """
-    _http: HTTPClient
 
+    _http: HTTPClient
 
     def __init__(self, http: HTTPClient):
         self._http = http
@@ -40,9 +42,7 @@ class Datasets:
 
     def delete_by_slug(self, slug: str) -> None:
         """Delete dataset by slug without requiring an instance"""
-        success = self._http.delete(
-            f"datasets/{slug}"
-        )
+        success = self._http.delete(f"datasets/{slug}")
         if not success:
             raise Exception(f"Failed to delete dataset {slug}")
 
@@ -56,13 +56,12 @@ class Datasets:
 
         return Dataset.from_full_data(validated_data, self._http)
 
-
     def from_csv(
         self,
         file_path: str,
         slug: str,
         name: Optional[str] = None,
-        description: Optional[str] = None
+        description: Optional[str] = None,
     ) -> "Dataset":
         """Create dataset from CSV file"""
         path = Path(file_path)
@@ -72,7 +71,7 @@ class Datasets:
         columns_definition: List[ColumnDefinition] = []
         rows_with_names: List[ValuesMap] = []
 
-        with open(file_path, 'r', encoding='utf-8') as csvfile:
+        with open(file_path, "r", encoding="utf-8") as csvfile:
             # Detect delimiter
             sample = csvfile.read(1024)
             csvfile.seek(0)
@@ -82,10 +81,12 @@ class Datasets:
             reader = csv.DictReader(csvfile, delimiter=delimiter)
 
             for field_name in reader.fieldnames:
-                columns_definition.append(ColumnDefinition(
-                    name=field_name,
-                    type=ColumnType.STRING,
-                ))
+                columns_definition.append(
+                    ColumnDefinition(
+                        name=field_name,
+                        type=ColumnType.STRING,
+                    )
+                )
 
             for _, row_data in enumerate(reader):
                 rows_with_names.append(dict(row_data))
@@ -95,20 +96,21 @@ class Datasets:
                 slug=slug,
                 name=name,
                 description=description,
-                columns=columns_definition
+                columns=columns_definition,
             )
         )
 
-        dataset = Dataset.from_create_dataset_response(dataset_response, rows_with_names, self._http)
+        dataset = Dataset.from_create_dataset_response(
+            dataset_response, rows_with_names, self._http
+        )
         return dataset
-
 
     def from_dataframe(
         self,
         df: "pd.DataFrame",
         slug: str,
         name: Optional[str] = None,
-        description: Optional[str] = None
+        description: Optional[str] = None,
     ) -> "Dataset":
         """Create dataset from pandas DataFrame"""
         # Create column definitions from DataFrame
@@ -122,18 +124,14 @@ class Datasets:
             else:
                 col_type = ColumnType.STRING
 
-            columns_definition.append(ColumnDefinition(
-                name=col_name,
-                type=col_type
-            ))
-
+            columns_definition.append(ColumnDefinition(name=col_name, type=col_type))
 
         dataset_response = self._create_dataset(
             CreateDatasetRequest(
                 slug=slug,
                 name=name,
                 description=description,
-                columns=columns_definition
+                columns=columns_definition,
             )
         )
 
@@ -147,7 +145,7 @@ class Datasets:
         if result is None:
             raise Exception(f"Failed to get dataset {slug} by version {version}")
         return result
-    
+
     def _create_dataset(self, input: CreateDatasetRequest) -> CreateDatasetResponse:
         """Create new dataset"""
         data = input.model_dump()

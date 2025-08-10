@@ -1,6 +1,7 @@
 """
 Example script demonstrating the Traceloop Dataset functionality
 """
+
 import os
 import tempfile
 from typing import Optional
@@ -23,7 +24,7 @@ Alice Brown,28,Seattle,90000
 Charlie Wilson,32,Boston,70000"""
 
     # Create temporary CSV file
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.csv', delete=False) as f:
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".csv", delete=False) as f:
         f.write(csv_content)
         return f.name
 
@@ -42,7 +43,7 @@ def dataset_from_csv_example(slug: str) -> Optional[Dataset]:
             file_path=csv_file,
             slug=slug,
             name="Employee Dataset",
-            description="Sample employee data for demonstration"
+            description="Sample employee data for demonstration",
         )
 
         print("Created dataset from CSV successfully")
@@ -63,10 +64,10 @@ def dataset_from_dataframe_example(slug: str) -> Optional[Dataset]:
     try:
         # Create sample DataFrame
         data = {
-            'product': ['Laptop', 'Mouse', 'Keyboard', 'Monitor'],
-            'price': [999.99, 29.99, 79.99, 299.99],
-            'in_stock': [True, True, False, True],
-            'category': ['Electronics', 'Accessories', 'Accessories', 'Electronics']
+            "product": ["Laptop", "Mouse", "Keyboard", "Monitor"],
+            "price": [999.99, 29.99, 79.99, 299.99],
+            "in_stock": [True, True, False, True],
+            "category": ["Electronics", "Accessories", "Accessories", "Electronics"],
         }
         df = pd.DataFrame(data)
 
@@ -75,7 +76,7 @@ def dataset_from_dataframe_example(slug: str) -> Optional[Dataset]:
             df=df,
             slug=slug,
             name="Product Inventory",
-            description="Sample product inventory data"
+            description="Sample product inventory data",
         )
 
         print("Created dataset from DataFrame successfully")

@@ -2,12 +2,15 @@ from unittest.mock import Mock, patch
 from traceloop.sdk.dataset.model import ColumnType
 from traceloop.sdk.dataset.column import Column
 
-from .mock_objects import create_simple_mock_dataset, create_dataset_with_existing_columns
+from .mock_objects import (
+    create_simple_mock_dataset,
+    create_dataset_with_existing_columns,
+)
 from .mock_response import basic_dataset_response_json, add_column_response_json
 import json
 
 
-@patch('traceloop.sdk.dataset.dataset.Dataset._get_http_client')
+@patch("traceloop.sdk.dataset.dataset.Dataset._get_http_client")
 def test_add_column_to_empty_dataset(mock_get_http_client):
     """Test adding a new column to an empty dataset"""
     mock_http_client = Mock()
@@ -20,7 +23,7 @@ def test_add_column_to_empty_dataset(mock_get_http_client):
 
     mock_http_client.post.assert_called_once_with(
         f"datasets/{dataset.slug}/columns",
-        {"name": "Test Column", "type": ColumnType.STRING}
+        {"name": "Test Column", "type": ColumnType.STRING},
     )
 
     assert isinstance(new_column, Column)
@@ -33,7 +36,7 @@ def test_add_column_to_empty_dataset(mock_get_http_client):
     assert len(dataset.columns) == 1
 
 
-@patch('traceloop.sdk.dataset.dataset.Dataset._get_http_client')
+@patch("traceloop.sdk.dataset.dataset.Dataset._get_http_client")
 def test_add_column_to_dataset_with_existing_columns(mock_get_http_client):
     """Test adding a new column to a dataset that already has columns"""
     mock_http_client = Mock()
@@ -49,7 +52,7 @@ def test_add_column_to_dataset_with_existing_columns(mock_get_http_client):
 
     mock_http_client.post.assert_called_once_with(
         f"datasets/{dataset.slug}/columns",
-        {"name": "Test Column", "type": ColumnType.STRING}
+        {"name": "Test Column", "type": ColumnType.STRING},
     )
 
     assert isinstance(new_column, Column)
@@ -69,7 +72,7 @@ def test_add_column_to_dataset_with_existing_columns(mock_get_http_client):
     assert dataset.columns[2] == new_column
 
 
-@patch('traceloop.sdk.dataset.dataset.Dataset._get_http_client')
+@patch("traceloop.sdk.dataset.dataset.Dataset._get_http_client")
 def test_update_column(mock_get_http_client):
     """Test updating a column name from dataset.columns[0].update() using basic_dataset_response_json"""
     mock_http_client = Mock()
@@ -88,7 +91,7 @@ def test_update_column(mock_get_http_client):
 
     mock_http_client.put.assert_called_once_with(
         f"datasets/{dataset.slug}/columns/{column_to_update.id}",
-        {"name": new_name, "type": new_type}
+        {"name": new_name, "type": new_type},
     )
 
     assert dataset.columns[0].name == new_name
@@ -97,7 +100,7 @@ def test_update_column(mock_get_http_client):
     assert dataset.columns[0].dataset_id == dataset.id
 
 
-@patch('traceloop.sdk.dataset.dataset.Dataset._get_http_client')
+@patch("traceloop.sdk.dataset.dataset.Dataset._get_http_client")
 def test_delete_column(mock_get_http_client):
     """Test deleting a column from dataset"""
     mock_http_client = Mock()
@@ -111,12 +114,13 @@ def test_delete_column(mock_get_http_client):
 
     # Add some rows with data for both columns
     from traceloop.sdk.dataset.row import Row
+
     row1 = Row(
         id="row_id_1",
         values={existing_column_1.id: "test_value_1", existing_column_2.id: 42},
         dataset_id="test_dataset_id",
         dataset=dataset,
-        http=dataset._http
+        http=dataset._http,
     )
     row2 = Row(
         id="row_id_2",
@@ -124,7 +128,7 @@ def test_delete_column(mock_get_http_client):
         values={existing_column_1.id: "test_value_2", existing_column_2.id: 84},
         dataset_id="test_dataset_id",
         dataset=dataset,
-        http=dataset._http
+        http=dataset._http,
     )
     dataset.rows = [row1, row2]
 

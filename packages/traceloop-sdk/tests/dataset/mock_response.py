@@ -8,22 +8,13 @@ def create_dataset_response(price_type="string", in_stock_type="string"):
         "name": "Dataset",
         "description": "Dataset Description",
         "columns": {
-            "cmdvei5dd000d01vv2yvmp7vt": {
-                "name": "Name",
-                "type": "string"
-            },
-            "cmdvei5dd000e01vvz0eb5kz8": {
-                "name": "Price",
-                "type": price_type
-            },
-            "cmdvei5dd000f01vv7aazk674": {
-                "name": "In Stock",
-                "type": in_stock_type
-            }
+            "cmdvei5dd000d01vv2yvmp7vt": {"name": "Name", "type": "string"},
+            "cmdvei5dd000e01vvz0eb5kz8": {"name": "Price", "type": price_type},
+            "cmdvei5dd000f01vv7aazk674": {"name": "In Stock", "type": in_stock_type},
         },
         "last_version": None,
         "created_at": "2025-08-03T08:09:53.329521779Z",
-        "updated_at": "2025-08-03T08:09:53.329522049Z"
+        "updated_at": "2025-08-03T08:09:53.329522049Z",
     }
 
 
@@ -299,5 +290,5 @@ Keyboard,79.99,true,Accessories,
 add_column_response_json = {
     "id": "new_column_id",
     "name": "Test Column",
-    "type": "string"
+    "type": "string",
 }
