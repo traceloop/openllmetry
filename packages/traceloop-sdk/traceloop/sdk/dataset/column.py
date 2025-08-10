@@ -44,9 +44,6 @@ class Column:
 
     def update(self, name: Optional[str] = None, type: Optional[ColumnType] = None) -> None:
         """Update this column's properties"""
-        if self._client is None:
-            raise ValueError("Column must be associated with a dataset to update")
-
         update_data = {}
         if name is not None:
             update_data["name"] = name
@@ -55,7 +52,13 @@ class Column:
             update_data["type"] = type
 
         if update_data:
-            self._client.update_column_api(column_id=self.id, data=update_data)
+            result = self._http.put(
+                f"datasets/{self._client.slug}/columns/{self.id}",
+                update_data
+            )
+            if result is None:
+                raise Exception(f"Failed to update column {self.id}")
+
             if name is not None:
                 self.name = name
             if type is not None:

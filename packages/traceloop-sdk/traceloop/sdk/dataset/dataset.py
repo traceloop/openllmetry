@@ -2,18 +2,14 @@ import csv
 from datetime import datetime
 from typing import List, Optional, Dict, Any
 from pathlib import Path
-from pydantic import Field, PrivateAttr
 import pandas as pd
-import os
 
 from traceloop.sdk.dataset.model import (
     ColumnDefinition,
     ValuesMap,
-    CreateDatasetRequest,
     CreateDatasetResponse,
     CreateRowsResponse,
     ColumnType,
-    DatasetMetadata,
     RowObject,
     DatasetFullData,
     PublishDatasetResponse,
@@ -29,19 +25,21 @@ class Dataset:
     """
     Dataset class dataset API communication
     """
-    id: Optional[str] = Field(default=None, alias="id")
-    name: Optional[str] = None
+    id: str
+    name: str
     slug: str
-    description: Optional[str] = None
-    columns: Optional[List[Column]] = Field(default_factory=list)
-    rows: Optional[List[Row]] = Field(default_factory=list)
+    description: str
+    columns: List[Column] = None
+    rows: Optional[List[Row]] = None
     last_version: Optional[str] = None
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
+    created_at: datetime
+    updated_at: datetime
     _http: HTTPClient
 
     def __init__(self, http: HTTPClient):
         self._http = http
+        self.columns = []
+        self.rows = []
     
     @classmethod
     def from_full_data(cls, full_data: DatasetFullData, http: HTTPClient) -> "Dataset":

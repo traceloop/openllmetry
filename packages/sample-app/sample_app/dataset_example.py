@@ -154,11 +154,10 @@ def add_row_example(dataset: Dataset) -> Row:
             elif column.name == "category":
                 row_data[column.id] = "Marketing"
 
-        # Add row via API
-        rows_response = dataset.add_rows_api([row_data])
+        dataset.add_rows([row_data])
 
-        if rows_response.rows:
-            new_row = rows_response.rows[0]
+        if dataset.rows:
+            new_row = dataset.rows[0]
             print(f"Added row with ID: {new_row.id}")
             assert len(dataset.rows) == num_rows + 1
             assert new_row.id in [r.id for r in dataset.rows]
@@ -279,7 +278,7 @@ def main():
     published_version = publish_dataset_example(ds1)
     delete_row_example(ds1)
     delete_column_example(ds1, column)
-    delete_dataset_example(ds1.slug)
+    # delete_dataset_example(ds1.slug)
 
     get_dataset_by_version_example(slug="example-5", version=published_version)
 
@@ -289,7 +288,7 @@ def main():
     add_row_example(ds2)
     update_row_example(ds2)
     delete_column_example(ds2, column)
-    delete_dataset_example(ds2.slug)
+    # delete_dataset_example(ds2.slug)
 
     print("\n" + "=" * 50)
     print("Examples completed!")
