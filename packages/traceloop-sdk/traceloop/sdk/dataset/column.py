@@ -14,19 +14,21 @@ class Column(DatasetBaseModel):
     type: ColumnType
     dataset_id: str
     _http: HTTPClient
+    _client: Optional["Dataset"] = PrivateAttr(default=None)
 
     def __init__(self, http: HTTPClient):
         self._http = http
 
     def delete(self) -> None:
         """Remove this column from dataset"""
+        if self._client is None:
+            raise ValueError("Column must be associated with a dataset to delete")
         
         result = self._http.delete(
-            f"projects/default/datasets/{self.slug}/columns/{self.id}"
+            f"projects/default/datasets/{self._client.slug}/columns/{self.id}"
         )
         if result is None:
             raise Exception(f"Failed to delete column {self.id}")
-
 
         self._client.columns.remove(self)
 

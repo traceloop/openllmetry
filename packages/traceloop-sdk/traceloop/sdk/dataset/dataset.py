@@ -68,7 +68,7 @@ class Dataset(DatasetBaseModel):
 
         rows_with_ids = dataset._convert_rows_by_names_to_col_ids(rows)
 
-        dataset.add_rows_api(rows_with_ids)
+        dataset._add_rows(rows_with_ids)
 
         return dataset
 
@@ -108,7 +108,8 @@ class Dataset(DatasetBaseModel):
         col_response = AddColumnResponse(**result)
     
         column = Column(
-            _http=self._http,
+            http=self._http,
+            dataset=self,
             id=col_response.id,
             name=col_response.name,
             type=col_response.type,
@@ -122,6 +123,7 @@ class Dataset(DatasetBaseModel):
         for column_id, column_def in raw_columns.items():
             column = Column(
                 _http=self._http,
+                _dataset=self,
                 id=column_id,
                 name=column_def.name,
                 type=column_def.type,
@@ -133,30 +135,17 @@ class Dataset(DatasetBaseModel):
     def _create_rows(self, raw_rows: List[RowObject]):
         for _, row_obj in enumerate(raw_rows):
             row = Row(
+                http=self._http,
+                dataset=self,
                 id=row_obj.id,
                 values=row_obj.values,
                 dataset_id=self.id
             )
             row._client = self
             self.rows.append(row)
-       
 
-    def update_column_api(
-        self, column_id: str,
-        data: Dict[str, str]
-    ) -> Dict[str, Any]:
-        """Update column properties"""
-        result = self._http.put(
-            f"projects/default/datasets/{self.slug}/columns/{column_id}",
-            data
-        )
-        if result is None:
-            raise Exception(f"Failed to update column {column_id}")
-        return result
 
-    # Row APIs
-
-    def add_rows_api(self, rows: List[ValuesMap]) -> CreateRowsResponse:
+    def _add_rows(self, rows: List[ValuesMap]) -> CreateRowsResponse:
         """Add rows to dataset"""
         data = {"rows": rows}
         result = self._http.post(
@@ -169,17 +158,3 @@ class Dataset(DatasetBaseModel):
         response = CreateRowsResponse(**result)
         self._create_rows(response.rows)
         return response
-
-    def delete_row_api(self, row_id: str) -> None:
-        """Delete row"""
-        result = self._http.delete(f"projects/default/datasets/{self.slug}/rows/{row_id}")
-        if result is None:
-            raise Exception(f"Failed to delete row {row_id}")
-
-    def update_row_api(self, row_id: str, values: Dict[str, Any]):
-        """Update row values"""
-        data = {"values": values}
-        self._http.put(
-            f"projects/default/datasets/{self.slug}/rows/{row_id}",
-            data
-        )
