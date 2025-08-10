@@ -156,7 +156,7 @@ def add_row_example(dataset: Dataset) -> Row:
 
         dataset.add_rows([row_data])
 
-        if dataset.rows:
+        if dataset.rows[0]:
             new_row = dataset.rows[0]
             print(f"Added row with ID: {new_row.id}")
             assert len(dataset.rows) == num_rows + 1
@@ -278,7 +278,7 @@ def main():
     published_version = publish_dataset_example(ds1)
     delete_row_example(ds1)
     delete_column_example(ds1, column)
-    # delete_dataset_example(ds1.slug)
+    delete_dataset_example(ds1.slug)
 
     get_dataset_by_version_example(slug="example-5", version=published_version)
 
@@ -288,7 +288,7 @@ def main():
     add_row_example(ds2)
     update_row_example(ds2)
     delete_column_example(ds2, column)
-    # delete_dataset_example(ds2.slug)
+    delete_dataset_example(ds2.slug)
 
     print("\n" + "=" * 50)
     print("Examples completed!")

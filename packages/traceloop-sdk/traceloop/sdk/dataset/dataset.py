@@ -2,7 +2,12 @@ import csv
 from datetime import datetime
 from typing import List, Optional, Dict, Any
 from pathlib import Path
-import pandas as pd
+
+try:
+    import pandas as pd
+    PANDAS_AVAILABLE = True
+except ImportError:
+    PANDAS_AVAILABLE = False
 
 from traceloop.sdk.dataset.model import (
     ColumnDefinition,

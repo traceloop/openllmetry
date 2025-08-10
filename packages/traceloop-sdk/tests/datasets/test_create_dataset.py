@@ -2,7 +2,13 @@ import json
 import pytest
 import tempfile
 import os
-import pandas as pd
+
+try:
+    import pandas as pd
+    PANDAS_AVAILABLE = True
+except ImportError:
+    PANDAS_AVAILABLE = False
+
 from traceloop.sdk.dataset.dataset import Dataset
 from .mock_response import create_dataset_response, create_rows_response_json
 from .test_constants import TestConstants

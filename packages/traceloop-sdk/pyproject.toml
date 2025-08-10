@@ -71,7 +71,9 @@ jinja2 = "^3.1.5"
 deprecated = "^1.2.14"
 posthog = ">3.0.2, <4"
 aiohttp = "^3.11.11"
-pandas = "^2.0.0"
+
+[tool.poetry.extras]
+dataframe = ["pandas"]
 
 [tool.poetry.group.dev.dependencies]
 autopep8 = "^2.2.0"
@@ -89,6 +91,7 @@ pytest-asyncio = "^0.23.7"
 anthropic = "^0.25.2"
 langchain = "^0.2.5"
 langchain-openai = "^0.1.15"
+pandas = "^2.0.0"
 
 [build-system]
 requires = ["poetry-core"]

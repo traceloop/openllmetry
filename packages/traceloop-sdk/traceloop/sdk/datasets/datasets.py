@@ -1,7 +1,12 @@
 import csv
 from typing import List, Optional
 from pathlib import Path
-import pandas as pd
+
+try:
+    import pandas as pd
+    PANDAS_AVAILABLE = True
+except ImportError:
+    PANDAS_AVAILABLE = False
 
 
 from traceloop.sdk.dataset.model import (
