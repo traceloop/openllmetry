@@ -175,6 +175,8 @@ cython_debug/
 # NX
 .nx
 
+# Test artifcats
+chroma.sqlite3
+
 # Claude Code files
-CLAUDE.md
 .claude/

@@ -4,7 +4,7 @@ Example script demonstrating the Traceloop Dataset functionality
 import os
 import tempfile
 from traceloop.sdk import Traceloop
-from traceloop.sdk.datasets import Dataset, ColumnType, Column, Row
+from traceloop.sdk.dataset import Dataset, ColumnType, Column, Row
 import pandas as pd
 
 

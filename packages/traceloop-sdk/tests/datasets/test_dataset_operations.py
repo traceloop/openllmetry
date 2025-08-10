@@ -1,7 +1,7 @@
 import json
 from unittest.mock import patch, MagicMock
-from traceloop.sdk.datasets.dataset import Dataset
-from traceloop.sdk.datasets.model import DatasetMetadata
+from traceloop.sdk.dataset.dataset import Dataset
+from traceloop.sdk.dataset.model import DatasetMetadata
 from .mock_response import (publish_dataset_response_json,
                             get_dataset_by_version_json,
                             get_all_datasets_json,

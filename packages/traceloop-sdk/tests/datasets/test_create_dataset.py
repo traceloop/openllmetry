@@ -4,7 +4,7 @@ import tempfile
 import os
 import pandas as pd
 from unittest.mock import patch, MagicMock
-from traceloop.sdk.datasets.dataset import Dataset
+from traceloop.sdk.dataset.dataset import Dataset
 from .mock_response import create_dataset_response, create_rows_response_json
 from .test_constants import TestConstants
 

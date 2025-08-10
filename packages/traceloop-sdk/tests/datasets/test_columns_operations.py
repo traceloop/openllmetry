@@ -1,6 +1,6 @@
 from unittest.mock import Mock, patch
-from traceloop.sdk.datasets.model import ColumnType
-from traceloop.sdk.datasets.column import Column
+from traceloop.sdk.dataset.model import ColumnType
+from traceloop.sdk.dataset.column import Column
 
 from tests.datasets.mock_objects import create_simple_mock_dataset, create_dataset_with_existing_columns
 from tests.datasets.mock_response import basic_dataset_response_json, add_column_response_json
@@ -113,7 +113,7 @@ def test_delete_column(mock_get_http_client):
     existing_column_1, existing_column_2 = existing_columns
 
     # Add some rows with data for both columns
-    from traceloop.sdk.datasets.row import Row
+    from traceloop.sdk.dataset.row import Row
     row1 = Row(
         id="row_id_1",
         values={existing_column_1.id: "test_value_1", existing_column_2.id: 42},

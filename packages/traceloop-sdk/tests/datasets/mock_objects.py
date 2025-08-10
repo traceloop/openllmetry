@@ -1,8 +1,8 @@
 import json
 from unittest.mock import MagicMock
-from traceloop.sdk.datasets.dataset import Dataset
-from traceloop.sdk.datasets.model import ColumnDefinition, ColumnType
-from traceloop.sdk.datasets.column import Column
+from traceloop.sdk.dataset.dataset import Dataset
+from traceloop.sdk.dataset.model import ColumnDefinition, ColumnType
+from traceloop.sdk.dataset.column import Column
 from .mock_response import create_dataset_response, add_rows_response_json, create_rows_response_json
 
 

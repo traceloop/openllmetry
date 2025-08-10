@@ -2,8 +2,8 @@ import json
 import requests
 import pytest
 from unittest.mock import patch, MagicMock
-from traceloop.sdk.datasets.dataset import Dataset
-from traceloop.sdk.datasets.model import CreateDatasetRequest
+from traceloop.sdk.dataset.dataset import Dataset
+from traceloop.sdk.dataset.model import CreateDatasetRequest
 from .mock_response import (
     create_dataset_response,
     add_rows_response_json,
@@ -242,7 +242,7 @@ def test_delete_row():
 def test_delete_row_without_client():
     """Test deleting a row when it's not associated with a dataset"""
     # Create a row without a client
-    from traceloop.sdk.datasets.row import Row
+    from traceloop.sdk.dataset.row import Row
 
     row = Row(
         id="test_row_id",
@@ -290,7 +290,7 @@ def test_update_row():
 def test_update_row_without_dataset():
     """Test updating a row when it's not associated with a dataset"""
     # Create a row without a client
-    from traceloop.sdk.datasets.row import Row
+    from traceloop.sdk.dataset.row import Row
 
     row = Row(
         id="test_row_id",

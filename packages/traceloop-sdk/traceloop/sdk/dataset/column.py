@@ -2,6 +2,7 @@ from typing import Optional, TYPE_CHECKING
 from pydantic import PrivateAttr
 
 from .model import ColumnType, DatasetBaseModel
+from traceloop.sdk.client.http import HTTPClient
 
 if TYPE_CHECKING:
     from .dataset import Dataset
@@ -12,14 +13,20 @@ class Column(DatasetBaseModel):
     name: str
     type: ColumnType
     dataset_id: str
-    _client: Optional["Dataset"] = PrivateAttr(default=None)
+    _http: HTTPClient
+
+    def __init__(self, http: HTTPClient):
+        self._http = http
 
     def delete(self) -> None:
         """Remove this column from dataset"""
-        if self._client is None:
-            raise ValueError("Column must be associated with a dataset to delete")
+        
+        result = self._http.delete(
+            f"projects/default/datasets/{self.slug}/columns/{self.id}"
+        )
+        if result is None:
+            raise Exception(f"Failed to delete column {self.id}")
 
-        self._client.delete_column_api(self.id)
 
         self._client.columns.remove(self)
 
