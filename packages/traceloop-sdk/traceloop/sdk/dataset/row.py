@@ -1,5 +1,4 @@
-from typing import Optional, Dict, Any, TYPE_CHECKING
-from pydantic import PrivateAttr
+from typing import Dict, Any, TYPE_CHECKING
 
 from traceloop.sdk.client.http import HTTPClient
 
@@ -30,10 +29,11 @@ class Row:
 
     def delete(self) -> None:
         """Remove this row from dataset"""
-        result = self._http.delete(f"datasets/{self.slug}/rows/{self.id}")
+        result = self._http.delete(f"datasets/{self._dataset.slug}/rows/{self.id}")
         if result is None:
             raise Exception(f"Failed to delete row {self.id}")
-        self._dataset.rows.remove(self)
+        if self._dataset.rows:
+            self._dataset.rows.remove(self)
 
     def update(self, values: Dict[str, Any]) -> None:
         """Update this row's values"""

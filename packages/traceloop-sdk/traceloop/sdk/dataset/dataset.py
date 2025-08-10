@@ -1,5 +1,6 @@
 from datetime import datetime
 from typing import List, Optional, Dict
+from pydantic import Field
 
 from traceloop.sdk.dataset.model import (
     ColumnDefinition,
@@ -15,7 +16,6 @@ from traceloop.sdk.dataset.model import (
 from .column import Column
 from .row import Row
 from traceloop.sdk.client.http import HTTPClient
-from traceloop.sdk.version import __version__
 
 
 class Dataset:
@@ -27,7 +27,7 @@ class Dataset:
     name: str
     slug: str
     description: str
-    columns: List[Column] = None
+    columns: List[Column] = Field(default_factory=list)
     rows: Optional[List[Row]] = None
     last_version: Optional[str] = None
     created_at: datetime
@@ -145,4 +145,7 @@ class Dataset:
                 values=row_obj.values,
                 dataset_id=self.id,
             )
-            self.rows.append(row)
+            if self.rows:
+                self.rows.append(row)
+            else:
+                self.rows = [row]

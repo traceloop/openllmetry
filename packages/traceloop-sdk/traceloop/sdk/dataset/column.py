@@ -1,5 +1,4 @@
 from typing import Optional, TYPE_CHECKING
-from pydantic import PrivateAttr
 
 from .model import ColumnType
 from traceloop.sdk.client.http import HTTPClient
@@ -44,9 +43,10 @@ class Column:
         self._client.columns.remove(self)
 
         # Update all rows by removing this column's values
-        for row in self._client.rows:
-            if self.id in row.values:
-                del row.values[self.id]
+        if self._client.rows:
+            for row in self._client.rows:
+                if self.id in row.values:
+                    del row.values[self.id]
 
     def update(
         self, name: Optional[str] = None, type: Optional[ColumnType] = None
