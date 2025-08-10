@@ -1,0 +1,191 @@
+from typing import Dict, Any, Optional, Callable, TypeVar, ParamSpec
+from traceloop.sdk.client.http import HTTPClient
+from .types import ExecuteEvaluatorRequest, InputExtractor, OutputSchema
+import os
+import httpx
+import json
+import asyncio
+from functools import wraps
+
+
+P = ParamSpec('P')
+R = TypeVar('R')
+
+
+def guardrail(slug: str):
+    """
+    Decorator that executes a guardrails evaluator on the decorated function's output.
+    
+    Args:
+        slug: The evaluator slug to execute
+        
+    Returns:
+        Combined result containing original function output and evaluator result
+    """
+    def decorator(func: Callable[P, R]) -> Callable[P, Dict[str, Any]]:
+        @wraps(func)
+        async def async_wrapper(*args: P.args, **kwargs: P.kwargs) -> Dict[str, Any]:
+            # Execute the original function
+            original_result = await func(*args, **kwargs)
+            
+            # Create input data for evaluator with the function output
+            evaluator_data = {
+                "completion": InputExtractor(
+                    source=original_result,
+                )
+            }
+            
+            try:
+                from traceloop.sdk import Traceloop
+                client_instance = Traceloop.get()
+            except Exception as e:
+                print(f"Warning: Could not get Traceloop client: {e}")
+                return original_result
+                
+            evaluator_result = await client_instance.guardrails.execute_evaluator(slug, evaluator_data)
+
+            if not evaluator_result.success:
+                return "I can see you are seeking medical advice. Sorry for the inconvenience, but I cannot answer these types of questions."
+
+            return original_result
+           
+        
+        @wraps(func)
+        def sync_wrapper(*args: P.args, **kwargs: P.kwargs) -> Dict[str, Any]:
+
+            # Execute the original function
+            original_result = func(*args, **kwargs)
+            
+            # Create input data for evaluator with the function output
+            evaluator_data = {
+                "completion": InputExtractor(
+                    source=original_result,
+                )
+            }
+            
+            # Get client instance
+            try:
+                from traceloop.sdk import Traceloop
+                client_instance = Traceloop.get()
+            except Exception as e:
+                print(f"Warning: Could not get Traceloop client: {e}")
+                return {
+                    "original_result": original_result,
+                    "guardrails_result": None
+                }
+                
+            loop = asyncio.get_event_loop()
+            evaluator_result = loop.run_until_complete(client_instance.guardrails.execute_evaluator(slug, evaluator_data))
+            
+            # Combine results
+            return {
+                "original_result": original_result,
+                "guardrails_result": evaluator_result
+            }
+        
+        # Return appropriate wrapper based on function type
+        if asyncio.iscoroutinefunction(func):
+            return async_wrapper
+        else:
+            return sync_wrapper
+    
+    return decorator
+
+class Guardrails:
+    def __init__(self, http: HTTPClient, app_name: str, api_key: str):
+        self._http = http
+        self._app_name = app_name
+        self._flow = "guardrails"
+        self._api_key = api_key
+
+    async def execute_evaluator(self, slug: str, data: Dict[str, InputExtractor]) -> Dict[str, Any]:
+        """Execute evaluator and return accumulated SSE event data."""
+        try:
+            response = await self._post_request(slug, data)
+
+            if response:
+                # Handle SSE streaming
+                response_from_stream = await self._wait_for_result(
+                    stream_url=response["stream_url"],
+                    execution_id=response["execution_id"],
+                    timeout=120
+                )
+
+                return response_from_stream
+            else:
+                # Handle direct response
+                return response or {}
+
+        except Exception as e:
+            # Log error and return empty data
+            print(f"Error executing evaluator {slug}. Error: {str(e)}")
+            return {}
+
+    async def _post_request(self, slug: str, data: Dict[str, InputExtractor]) -> Optional[Dict[str, Any]]:
+        """Make POST request using the HTTP client."""
+        try:
+            url = f"evaluators/slug/{slug}/execute"
+
+            request_body = ExecuteEvaluatorRequest(input_schema_mapping=data)
+            body = request_body.model_dump()
+
+            response = self._http.post(url, body)
+
+            return response
+        except Exception as e:
+            print(f"Error making POST request to {url}: {str(e)}")
+            return None
+
+    async def _wait_for_result(
+        self,
+        execution_id: str,
+        stream_url: str,
+        timeout: int,
+    ) -> Dict[str, Any]:
+        """Wait for the evaluation result via server-sent events."""
+        try:
+            async with httpx.AsyncClient(timeout=httpx.Timeout(timeout)) as client:
+                headers = {
+                    "Authorization": f"Bearer {self._api_key}",
+                    "Accept": "text/event-stream",
+                    "Cache-Control": "no-cache"
+                }
+                api_endpoint = os.getenv("TRACELOOP_BASE_URL")
+                stream_url = f"{api_endpoint}/v2{stream_url}"
+
+                async with client.stream("GET", stream_url, headers=headers) as response:
+                    if response.status_code != 200:
+                        error_text = await response.aread()
+                        raise Exception(
+                            f"Failed to stream results: {response.status_code}, body: {error_text}"
+                        )
+
+                    response_text = await response.aread()
+                    parsed_response = self._parse_result(response_text)
+
+                    return parsed_response
+
+        except httpx.ConnectError as e:
+            print(f"Connection error: {e}")
+            raise Exception(f"Failed to connect to stream URL: {stream_url}. Error: {e}")
+        except httpx.TimeoutException as e:
+            print(f"Timeout error: {e}")
+            raise Exception(f"Stream request timed out: {e}")
+        except Exception as e:
+            print(f"Unexpected error in _wait_for_result: {e}")
+            raise
+
+    def _parse_result(self, response_text: str) -> OutputSchema:
+        """Parse the response text into an EvaluatorResponse object using Pydantic."""
+        try:
+            response_data = json.loads(response_text)
+
+            inner_result = response_data.get("result", {}).get("result", {})
+
+            evaluator_response = OutputSchema.model_validate(inner_result)
+
+            return evaluator_response
+
+        except Exception as e:
+            print(f"Error parsing result: {e}")
+            raise
