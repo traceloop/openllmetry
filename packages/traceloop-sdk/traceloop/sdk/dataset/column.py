@@ -14,10 +14,15 @@ class Column:
     type: ColumnType
     dataset_id: str
     _http: HTTPClient
-    _client: Optional["Dataset"] = PrivateAttr(default=None)
+    _client: "Dataset"
 
-    def __init__(self, http: HTTPClient):
+    def __init__(self, http: HTTPClient, dataset: "Dataset", id: str, name: str, type: ColumnType, dataset_id: str):
         self._http = http
+        self._client = dataset
+        self.id = id
+        self.name = name
+        self.type = type
+        self.dataset_id = dataset_id
 
     def delete(self) -> None:
         """Remove this column from dataset"""

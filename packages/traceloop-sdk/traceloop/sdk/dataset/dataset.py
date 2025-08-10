@@ -140,14 +140,13 @@ class Dataset:
         """Create Column objects from API response which includes column IDs"""
         for column_id, column_def in raw_columns.items():
             column = Column(
-                _http=self._http,
-                _dataset=self,
+                http=self._http,
+                dataset=self,
                 id=column_id,
                 name=column_def.name,
                 type=column_def.type,
                 dataset_id=self.id
             )
-            column._client = self
             self.columns.append(column)
 
     def _create_rows(self, raw_rows: List[RowObject]):
