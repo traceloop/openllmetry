@@ -48,8 +48,8 @@ class CreateColumnInput(BaseModel):
 
 
 class UpdateColumnInput(BaseModel):
-    name: str
-    type: ColumnType
+    name: Optional[str] = None
+    type: Optional[ColumnType] = None
 
 
 class CreateRowsInput(BaseModel):

@@ -13,9 +13,8 @@ def test_add_column_to_empty_dataset(mock_get_http_client):
     mock_http_client = Mock()
     mock_get_http_client.return_value = mock_http_client
 
-    mock_http_client.post.return_value = add_column_response_json
-
     dataset, _ = create_simple_mock_dataset()
+    dataset._http.post.return_value = add_column_response_json
 
     new_column = dataset.add_column("Test Column", ColumnType.STRING)
 
@@ -40,9 +39,8 @@ def test_add_column_to_dataset_with_existing_columns(mock_get_http_client):
     mock_http_client = Mock()
     mock_get_http_client.return_value = mock_http_client
 
-    mock_http_client.post.return_value = add_column_response_json
-
     dataset, existing_columns = create_dataset_with_existing_columns()
+    dataset._http.post.return_value = add_column_response_json
     existing_column_1, existing_column_2 = existing_columns
 
     assert len(dataset.columns) == 2
@@ -77,9 +75,8 @@ def test_update_column(mock_get_http_client):
     mock_http_client = Mock()
     mock_get_http_client.return_value = mock_http_client
 
-    mock_http_client.put.return_value = json.loads(basic_dataset_response_json)
-
     dataset, _ = create_dataset_with_existing_columns()
+    dataset._http.put.return_value = json.loads(basic_dataset_response_json)
 
     column_to_update = dataset.columns[0]
 
@@ -118,14 +115,16 @@ def test_delete_column(mock_get_http_client):
         id="row_id_1",
         values={existing_column_1.id: "test_value_1", existing_column_2.id: 42},
         dataset_id="test_dataset_id",
-        _client=dataset
+        dataset=dataset,
+        http=dataset._http
     )
     row2 = Row(
         id="row_id_2",
         row_index=1,
         values={existing_column_1.id: "test_value_2", existing_column_2.id: 84},
         dataset_id="test_dataset_id",
-        _client=dataset
+        dataset=dataset,
+        http=dataset._http
     )
     dataset.rows = [row1, row2]
 

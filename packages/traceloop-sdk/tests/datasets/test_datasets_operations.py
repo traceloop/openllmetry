@@ -85,12 +85,10 @@ def test_delete_by_slug(datasets, mock_http):
 def test_delete_by_slug_failure(datasets, mock_http):
     mock_http.delete.return_value = False
     
-    try:
+    with pytest.raises(Exception) as exc_info:
         datasets.delete_by_slug("test-dataset")
-        assert False, "Expected exception was not raised"
-    except Exception as e:
-        assert "Failed to delete dataset test-dataset" in str(e)
-
+    
+    assert "Failed to delete dataset test-dataset" in str(exc_info.value)
     mock_http.delete.assert_called_once_with("datasets/test-dataset")
 
 

@@ -6,7 +6,7 @@ from traceloop.sdk.dataset.column import Column
 from .mock_response import create_dataset_response, add_rows_response_json, create_rows_response_json
 
 
-def create_mock_dataset_with_columns_definition():
+def create_mock_dataset_with_columns_definition(mock_http):
     """Create a mock dataset with standard test columns"""
     columns_definition = [
         ColumnDefinition(name="name", type=ColumnType.STRING),
@@ -19,14 +19,15 @@ def create_mock_dataset_with_columns_definition():
         name="Test Dataset",
         slug="test-dataset",
         description="Test dataset",
+        http=mock_http
     )
 
     return dataset, columns_definition
 
 
-def create_mock_dataset_with_columns():
+def create_mock_dataset_with_columns(mock_http):
     """Create a mock dataset with standard test columns"""
-    dataset, columns_definition = create_mock_dataset_with_columns_definition()
+    dataset, columns_definition = create_mock_dataset_with_columns_definition(mock_http)
 
     raw_columns = {"column_id_" + str(i): column for i, column in enumerate(columns_definition)}
     dataset._create_columns(raw_columns)
@@ -44,7 +45,7 @@ def setup_mock_http_client_for_dataset_creation():
     return mock_client
 
 
-def create_simple_mock_dataset():
+def create_simple_mock_dataset(mock_http):
     """Create a mock dataset with just one column for simple tests"""
     columns_definition = [
         ColumnDefinition(name="name", type=ColumnType.STRING)
@@ -55,6 +56,7 @@ def create_simple_mock_dataset():
         name="Test Dataset",
         slug="test-dataset",
         description="Test dataset",
+        http=mock_http
     )
 
     return dataset, columns_definition
@@ -80,12 +82,13 @@ def setup_mock_http_client_for_get_rows():
     return mock_client
 
 
-def create_dataset_with_existing_columns():
+def create_dataset_with_existing_columns(mock_http):
     """Create a dataset with existing columns for testing column operations"""
     dataset = Dataset(
         id="test_dataset_id",
         slug="test-dataset",
-        name="Test Dataset"
+        name="Test Dataset",
+        http=mock_http
     )
 
     # Add existing columns to the dataset

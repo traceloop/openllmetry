@@ -3,6 +3,7 @@ Example script demonstrating the Traceloop Dataset functionality
 """
 import os
 import tempfile
+from typing import Optional
 from traceloop.sdk import Traceloop
 from traceloop.sdk.dataset import Dataset, ColumnType, Column, Row
 import pandas as pd
@@ -27,7 +28,7 @@ Charlie Wilson,32,Boston,70000"""
         return f.name
 
 
-def dataset_from_csv_example(slug: str) -> Dataset:
+def dataset_from_csv_example(slug: str) -> Optional[Dataset]:
     """Demonstrate creating a dataset from a CSV file"""
     print("=== Dataset from CSV Example ===")
 
@@ -55,7 +56,7 @@ def dataset_from_csv_example(slug: str) -> Dataset:
         os.unlink(csv_file)
 
 
-def dataset_from_dataframe_example(slug: str) -> Dataset:
+def dataset_from_dataframe_example(slug: str) -> Optional[Dataset]:
     """Demonstrate creating a dataset from a pandas DataFrame"""
     print("\n=== Dataset from DataFrame Example ===")
 
@@ -85,7 +86,7 @@ def dataset_from_dataframe_example(slug: str) -> Dataset:
         return None
 
 
-def add_column_example(dataset: Dataset) -> Column:
+def add_column_example(dataset: Dataset) -> Optional[Column]:
     """Demonstrate adding a column to a dataset"""
     print("\n=== Add Column Example ===")
 
@@ -102,6 +103,7 @@ def add_column_example(dataset: Dataset) -> Column:
 
     except Exception as e:
         print(f"Error adding column: {e}")
+        return None
 
 
 def update_column_example(dataset: Dataset, column: Column):
@@ -135,7 +137,7 @@ def delete_column_example(dataset: Dataset, column: Column):
         print(f"Error deleting column: {e}")
 
 
-def add_row_example(dataset: Dataset) -> Row:
+def add_row_example(dataset: Dataset) -> Optional[Row]:
     """Demonstrate adding a row to a dataset"""
     print("\n=== Add Row Example ===")
 
@@ -156,7 +158,7 @@ def add_row_example(dataset: Dataset) -> Row:
 
         dataset.add_rows([row_data])
 
-        if dataset.rows[0]:
+        if dataset.rows and dataset.rows[0]:
             new_row = dataset.rows[0]
             print(f"Added row with ID: {new_row.id}")
             assert len(dataset.rows) == num_rows + 1
@@ -233,7 +235,7 @@ def delete_row_example(dataset: Dataset):
         print(f"Error deleting row: {e}")
 
 
-def publish_dataset_example(dataset: Dataset) -> str:
+def publish_dataset_example(dataset: Dataset) -> Optional[str]:
     """Demonstrate publishing a dataset"""
     print("\n=== Publish Dataset Example ===")
 
@@ -244,6 +246,7 @@ def publish_dataset_example(dataset: Dataset) -> str:
 
     except Exception as e:
         print(f"Error publishing dataset: {e}")
+        return None
 
 
 def get_dataset_by_version_example(slug: str, version: str):

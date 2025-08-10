@@ -1,13 +1,5 @@
-import csv
 from datetime import datetime
-from typing import List, Optional, Dict, Any
-from pathlib import Path
-
-try:
-    import pandas as pd
-    PANDAS_AVAILABLE = True
-except ImportError:
-    PANDAS_AVAILABLE = False
+from typing import List, Optional, Dict
 
 from traceloop.sdk.dataset.model import (
     ColumnDefinition,
@@ -57,7 +49,8 @@ class Dataset:
             setattr(dataset, field, value)
         
         dataset._create_columns(full_data.columns)
-        dataset._create_rows(full_data.rows)
+        if full_data.rows:
+            dataset._create_rows(full_data.rows)
         
         return dataset
     
