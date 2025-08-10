@@ -1,6 +1,6 @@
 import os
 import httpx
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 
 from traceloop.sdk.version import __version__
 from .model import (
@@ -37,7 +37,9 @@ class Evaluator:
     async def run(cls, 
                   evaluator_slug: str,
                   input: Dict[str, str], 
-                      timeout_in_sec: int = 120) -> Dict[str, Any]:
+                  timeout_in_sec: int = 120,
+                  client: Optional[httpx.AsyncClient] = None
+                  ) -> Dict[str, Any]:
         """
         Execute evaluator with input schema mapping and wait for result
         
@@ -56,7 +58,9 @@ class Evaluator:
         api_endpoint = os.environ.get("TRACELOOP_BASE_URL", "https://api.traceloop.com")
         body = request.model_dump()
         
-        client = cls._create_async_client()
+        if client is None:
+            client = cls._create_async_client()
+            
         full_url = f"{api_endpoint}/v2/evaluators/slug/{evaluator_slug}/execute"
         print(f"Evaluator full URL: {full_url}")
         # Make API call to trigger evaluator

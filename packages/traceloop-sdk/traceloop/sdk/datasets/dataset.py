@@ -20,6 +20,8 @@ from traceloop.sdk.datasets.model import (
     AddColumnResponse,
     DatasetBaseModel
 )
+from traceloop.sdk.experiments.model import ExperimentResult
+from traceloop.sdk.experiments.experiment import Experiment
 from .column import Column
 from .row import Row
 from traceloop.sdk.client.http import HTTPClient
@@ -248,6 +250,52 @@ class Dataset(DatasetBaseModel):
         result = cls._get_http_client_static().get(f"projects/default/datasets/{slug}/versions/{version}")
         if result is None:
             raise Exception(f"Failed to get dataset {slug} by version {version}")
+        return result
+
+    @classmethod
+    async def run_experiment(cls, slug: str, version: str, evaluator_slug: str, input_mapping: Dict[str, str]) -> ExperimentResult:
+        """Run an experiment on all rows of a dataset with input mapping
+        
+        Args:
+            slug: Dataset slug
+            version: Dataset version
+            evaluator_slug: Slug of the evaluator to run
+            input_mapping: Mapping of input_name -> column_name in dataset
+            timeout_in_sec: Timeout in seconds for each evaluator run
+            
+        Returns:
+            ExperimentResult containing results for all rows
+        """
+            # Get the dataset to access its rows
+        dataset = cls.get_version_csv(slug, version)
+        
+        # Get column name to ID mapping
+        col_name_to_id = {col.name: col.id for col in dataset.columns}
+        
+        # Validate mapping columns exist
+        for input_name, col_name in input_mapping.items():
+            if col_name not in col_name_to_id:
+                raise ValueError(f"Column '{col_name}' not found in dataset. Available columns: {list(col_name_to_id.keys())}")
+        
+        # Prepare inputs for all rows
+        inputs = []
+        for row in dataset.rows:
+            # Map row values to input format using the mapping
+            input_data = {}
+            for input_name, col_name in input_mapping.items():
+                col_id = col_name_to_id[col_name]
+                value = row.values.get(col_id, "")
+                # Convert all values to strings for ExperimentRunResult
+                input_data[input_name] = str(value) if value is not None else ""
+            inputs.append(input_data)
+        
+        # Run experiment using Experiment.evaluate
+        result = await Experiment.evaluate(
+            evaluator_slug=evaluator_slug,
+            inputs=inputs,
+            dataset_slug=slug
+        )
+        
         return result
 
     def publish(self) -> str:

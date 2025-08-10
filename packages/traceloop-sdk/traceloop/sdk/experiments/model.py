@@ -21,6 +21,7 @@ class ExperimentRunResult(BaseModel):
 
 class ExperimentResult(BaseModel):
     """Complete experiment results"""
+    experiment_id: str
     evaluator_slug: str
     total_runs: int
     successful_runs: int

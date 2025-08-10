@@ -268,7 +268,7 @@ def delete_dataset_example(slug: str):
     except Exception as e:
         print(f"Error deleting dataset: {e}")
 
-
+        
 def main():
     print("Traceloop Dataset Examples")
     print("=" * 50)
@@ -279,7 +279,7 @@ def main():
     published_version = publish_dataset_example(ds1)
     delete_row_example(ds1)
     delete_column_example(ds1, column)
-    # delete_dataset_example(ds1.slug)
+    delete_dataset_example(ds1.slug)
 
     get_dataset_by_version_example(slug="ninja-1", version=published_version)
 
@@ -289,7 +289,7 @@ def main():
     add_row_example(ds2)
     update_row_example(ds2)
     delete_column_example(ds2, column)
-    # delete_dataset_example(ds2.slug)
+    delete_dataset_example(ds2.slug)
 
     print("\n" + "=" * 50)
     print("Examples completed!")
