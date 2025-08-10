@@ -145,21 +145,21 @@ def test_add_rows_mixed_types():
             "rows": [
                 {
                     "id": "mixed_row_1",
-                    "rowIndex": 0,
+                    "row_index": 0,
                     "values": {"cmdr3ce1s0003hmp0vqons5ey": "string_value"},
                     "created_at": "2025-08-03T12:00:00.000Z",
                     "updated_at": "2025-08-03T12:00:00.000Z"
                 },
                 {
                     "id": "mixed_row_2",
-                    "rowIndex": 1,
+                    "row_index": 1,
                     "values": {"cmdr3ce1s0004hmp0ies575jr": 42},
                     "created_at": "2025-08-03T12:00:00.000Z",
                     "updated_at": "2025-08-03T12:00:00.000Z"
                 },
                 {
                     "id": "mixed_row_3",
-                    "rowIndex": 2,
+                    "row_index": 2,
                     "values": {"cmdr3ce1s0005hmp0bdln01js": True},
                     "created_at": "2025-08-03T12:00:00.000Z",
                     "updated_at": "2025-08-03T12:00:00.000Z"

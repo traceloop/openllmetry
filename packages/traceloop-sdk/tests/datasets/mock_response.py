@@ -2,8 +2,8 @@ def create_dataset_response(price_type="string", in_stock_type="string"):
     """Generate dataset response with configurable column types"""
     return {
         "id": "cmdvei5dd000g01vvyftz2zv1",
-        "orgId": "c108269c-cf1e-4ac6-a7e4-5a456cc9fdb7",
-        "projectId": "cm9v2g95l0011z613sv851kwd",
+        "org_id": "c108269c-cf1e-4ac6-a7e4-5a456cc9fdb7",
+        "project_id": "cm9v2g95l0011z613sv851kwd",
         "slug": "test-dataset",
         "name": "Dataset",
         "description": "Dataset Description",
@@ -21,9 +21,9 @@ def create_dataset_response(price_type="string", in_stock_type="string"):
                 "type": in_stock_type
             }
         },
-        "lastVersion": None,
-        "createdAt": "2025-08-03T08:09:53.329521779Z",
-        "updatedAt": "2025-08-03T08:09:53.329522049Z"
+        "last_version": None,
+        "created_at": "2025-08-03T08:09:53.329521779Z",
+        "updated_at": "2025-08-03T08:09:53.329522049Z"
     }
 
 
@@ -32,7 +32,7 @@ create_rows_response_json = """
     "rows": [
         {
             "id": "row_1_id",
-            "rowIndex": 1,
+            "row_index": 1,
             "values": {
                 "cmdvei5dd000d01vv2yvmp7vt": "Laptop",
                 "cmdvei5dd000e01vvz0eb5kz8": 999.99,
@@ -43,7 +43,7 @@ create_rows_response_json = """
         },
         {
             "id": "row_2_id",
-            "rowIndex": 2,
+            "row_index": 2,
             "values": {
                 "cmdvei5dd000d01vv2yvmp7vt": "Mouse",
                 "cmdvei5dd000e01vvz0eb5kz8": 29.99,
@@ -86,7 +86,7 @@ get_dataset_by_slug_json = """
     "rows": [
         {
             "id": "cmdvkieye003d01vv1zlmkjrg",
-            "rowIndex": 1,
+            "row_index": 1,
             "values": {
                 "cmdvki9zv003801vv1idaywus": "Laptop",
                 "cmdvki9zv003901vv5zr5i24b": 999.99,
@@ -98,7 +98,7 @@ get_dataset_by_slug_json = """
         },
         {
             "id": "cmdvkieye003e01vvs4onq0sq",
-            "rowIndex": 2,
+            "row_index": 2,
             "values": {
                 "cmdvki9zv003801vv1idaywus": "Mouse",
                 "cmdvki9zv003901vv5zr5i24b": 29.99,
@@ -110,7 +110,7 @@ get_dataset_by_slug_json = """
         },
         {
             "id": "cmdvkieye003f01vvkc6jxgad",
-            "rowIndex": 3,
+            "row_index": 3,
             "values": {
                 "cmdvki9zv003801vv1idaywus": "Keyboard",
                 "cmdvki9zv003901vv5zr5i24b": 79.99,
@@ -122,7 +122,7 @@ get_dataset_by_slug_json = """
         },
         {
             "id": "cmdvkieye003g01vvcuze8p1z",
-            "rowIndex": 4,
+            "row_index": 4,
             "values": {
                 "cmdvki9zv003801vv1idaywus": "Monitor",
                 "cmdvki9zv003901vv5zr5i24b": 299.99,
@@ -141,7 +141,7 @@ add_rows_response_json = """
     "rows": [
         {
             "id": "row_add_1",
-            "rowIndex": 0,
+            "row_index": 0,
             "values": {
                 "cmdr3ce1s0003hmp0vqons5ey": "Gal",
                 "cmdr3ce1s0004hmp0ies575jr": 8,
@@ -152,7 +152,7 @@ add_rows_response_json = """
         },
         {
             "id": "row_add_2",
-            "rowIndex": 1,
+            "row_index": 1,
             "values": {
                 "cmdr3ce1s0003hmp0vqons5ey": "Nir",
                 "cmdr3ce1s0004hmp0ies575jr": 70,
@@ -163,7 +163,7 @@ add_rows_response_json = """
         },
         {
             "id": "row_add_3",
-            "rowIndex": 2,
+            "row_index": 2,
             "values": {
                 "cmdr3ce1s0003hmp0vqons5ey": "Nina",
                 "cmdr3ce1s0004hmp0ies575jr": 52,
@@ -174,7 +174,7 @@ add_rows_response_json = """
         },
         {
             "id": "row_add_4",
-            "rowIndex": 3,
+            "row_index": 3,
             "values": {
                 "cmdr3ce1s0003hmp0vqons5ey": "Aviv",
                 "cmdr3ce1s0004hmp0ies575jr": 52,
@@ -192,7 +192,7 @@ single_row_response_json = """
 {
     "rows": [{
         "id": "single_row_id",
-        "rowIndex": 1,
+        "row_index": 1,
         "values": {"cmdr3ce1s0003hmp0vqons5ey": "single"},
         "created_at": "2025-08-03T12:00:00.000Z",
         "updated_at": "2025-08-03T12:00:00.000Z"
@@ -280,7 +280,7 @@ basic_dataset_response_json = """
 
 publish_dataset_response_json = """
 {
-    "datasetId": "cmdpy2ah40000q9p0ait7vukf",
+    "dataset_id": "cmdpy2ah40000q9p0ait7vukf",
     "version": "v1"
 }
 """
