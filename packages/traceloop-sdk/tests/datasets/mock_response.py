@@ -209,6 +209,8 @@ get_all_datasets_json = """
             "slug": "product-inventory-3",
             "name": "Product Inventory",
             "description": "Sample product inventory data",
+            "last_version": null,
+            "columns": {},
             "created_at": "2025-08-04T08:14:41.602Z",
             "updated_at": "2025-08-04T08:14:41.602Z"
         },
@@ -217,6 +219,8 @@ get_all_datasets_json = """
             "slug": "product-inventory",
             "name": "Product Inventory",
             "description": "Sample product inventory data",
+            "last_version": null,
+            "columns": {},
             "created_at": "2025-08-03T13:51:06.861Z",
             "updated_at": "2025-08-03T13:51:06.861Z"
         },
@@ -225,6 +229,8 @@ get_all_datasets_json = """
             "slug": "product-inventory-2",
             "name": "Product Inventory",
             "description": "Sample product inventory data",
+            "last_version": null,
+            "columns": {},
             "created_at": "2025-08-03T10:57:57.019Z",
             "updated_at": "2025-08-03T10:57:57.019Z"
         },
@@ -233,6 +239,8 @@ get_all_datasets_json = """
             "slug": "product-inventory-1",
             "name": "Product Inventory",
             "description": "Sample product inventory data",
+            "last_version": null,
+            "columns": {},
             "created_at": "2025-08-03T10:56:17.753Z",
             "updated_at": "2025-08-03T10:56:17.753Z"
         },
@@ -241,6 +249,8 @@ get_all_datasets_json = """
             "slug": "employee-data-1",
             "name": "Employee Dataset",
             "description": "Sample employee data for demonstration",
+            "last_version": null,
+            "columns": {},
             "created_at": "2025-08-03T08:56:50.81Z",
             "updated_at": "2025-08-03T08:56:50.81Z"
         },
@@ -249,6 +259,8 @@ get_all_datasets_json = """
             "slug": "employee-data",
             "name": "Employee Dataset",
             "description": "Sample employee data for demonstration",
+            "last_version": null,
+            "columns": {},
             "created_at": "2025-08-03T08:41:05.093Z",
             "updated_at": "2025-08-03T08:41:05.093Z"
         }

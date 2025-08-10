@@ -3,26 +3,11 @@ import pytest
 import tempfile
 import os
 import pandas as pd
-from unittest.mock import patch, MagicMock, Mock
-from traceloop.sdk.datasets.datasets import Datasets
 from traceloop.sdk.dataset.dataset import Dataset
-from traceloop.sdk.client.http import HTTPClient
 from .mock_response import create_dataset_response, create_rows_response_json
 from .test_constants import TestConstants
 
-@pytest.fixture
-def mock_http():
-    """Create a mock HTTP client"""
-    http = Mock(spec=HTTPClient)
-    http.post.return_value = {"status": "success"}
-    return http
 
-@pytest.fixture
-def datasets(mock_http):
-    """Create a Datasets instance with mock HTTP client"""
-    return Datasets(mock_http)
-
-@patch.dict("os.environ", {"TRACELOOP_API_KEY": "test-api-key"})
 def test_create_dataset_from_csv(datasets, mock_http):
     # Create temporary CSV file
     csv_content = """Name,Price,In Stock
@@ -36,8 +21,8 @@ def test_create_dataset_from_csv(datasets, mock_http):
     try:
         # Mock dataset creation response
         mock_http.post.side_effect = [
-            create_dataset_response(),  # CSV: all string types
-            json.loads(create_rows_response_json)      # add_rows call
+            create_dataset_response(),
+            json.loads(create_rows_response_json)
         ]
 
         dataset = datasets.from_csv(
@@ -57,11 +42,11 @@ def test_create_dataset_from_csv(datasets, mock_http):
 
         name_column = next((col for col in dataset.columns if col.name == "Name"), None)
         assert name_column is not None
-        assert name_column.type == "string"
+        assert name_column.type == TestConstants.STRING_TYPE
 
         price_column = next((col for col in dataset.columns if col.name == "Price"), None)
         assert price_column is not None
-        assert price_column.type == "string"  # CSV columns are always string initially
+        assert price_column.type == TestConstants.STRING_TYPE
 
         laptop_row = dataset.rows[0]
         assert laptop_row is not None
@@ -73,7 +58,6 @@ def test_create_dataset_from_csv(datasets, mock_http):
         os.unlink(csv_path)
 
 
-@patch.dict("os.environ", {"TRACELOOP_API_KEY": "test-api-key"})
 def test_create_dataset_from_dataframe(datasets, mock_http):
     # Create test dataframe
     df = pd.DataFrame({
@@ -84,8 +68,8 @@ def test_create_dataset_from_dataframe(datasets, mock_http):
 
     # Mock dataset creation response
     mock_http.post.side_effect = [
-        create_dataset_response(price_type="number", in_stock_type="boolean"),  # DataFrame: inferred types
-        json.loads(create_rows_response_json)      # add_rows call
+        create_dataset_response(price_type=TestConstants.NUMBER_TYPE, in_stock_type=TestConstants.BOOLEAN_TYPE),
+        json.loads(create_rows_response_json)
     ]
 
     dataset = datasets.from_dataframe(
@@ -105,15 +89,15 @@ def test_create_dataset_from_dataframe(datasets, mock_http):
 
     name_column = next((col for col in dataset.columns if col.name == "Name"), None)
     assert name_column is not None
-    assert name_column.type == "string"
+    assert name_column.type == TestConstants.STRING_TYPE
 
     price_column = next((col for col in dataset.columns if col.name == "Price"), None)
     assert price_column is not None
-    assert price_column.type == "number"
+    assert price_column.type == TestConstants.NUMBER_TYPE
 
     stock_column = next((col for col in dataset.columns if col.name == "In Stock"), None)
     assert stock_column is not None
-    assert stock_column.type == "boolean"
+    assert stock_column.type == TestConstants.BOOLEAN_TYPE
 
     laptop_row = dataset.rows[0]
     assert laptop_row is not None
@@ -122,7 +106,6 @@ def test_create_dataset_from_dataframe(datasets, mock_http):
     assert mock_http.post.call_count == 2
 
 
-@patch.dict("os.environ", {"TRACELOOP_API_KEY": "test-api-key"})
 def test_create_dataset_from_csv_file_not_found(datasets):
     with pytest.raises(FileNotFoundError):
         datasets.from_csv(

@@ -47,8 +47,9 @@ class Dataset:
         dataset_data = full_data.model_dump(exclude={'columns', 'rows'})
         dataset = cls(http=http)
         
+        # Set all attributes from the dataset data
         for field, value in dataset_data.items():
-            if hasattr(dataset, field):
+            if field != 'columns' and field != 'rows':  
                 setattr(dataset, field, value)
         
         dataset._create_columns(full_data.columns)
