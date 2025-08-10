@@ -4,28 +4,20 @@ from typing import List, Optional, Dict, Any
 from pathlib import Path
 from pydantic import Field, PrivateAttr
 import pandas as pd
-import os
+
 
 from traceloop.sdk.dataset.model import (
     ColumnDefinition,
     ValuesMap,
     CreateDatasetRequest,
     CreateDatasetResponse,
-    CreateRowsResponse,
     ColumnType,
     DatasetMetadata,
-    RowObject,
     DatasetFullData,
-    PublishDatasetResponse,
-    AddColumnResponse,
     DatasetBaseModel
 )
 from traceloop.sdk.dataset.dataset import Dataset
-from .column import Column
-from .row import Row
 from traceloop.sdk.client.http import HTTPClient
-from traceloop.sdk.version import __version__
-
 
 class Datasets(DatasetBaseModel):
     """
@@ -99,13 +91,6 @@ class Datasets(DatasetBaseModel):
 
             for _, row_data in enumerate(reader):
                 rows_with_names.append(dict(row_data))
-
-        # Create dataset instance
-        dataset = cls(
-            name=name,
-            slug=slug,
-            description=description,
-        )
 
         dataset_response = cls._create_dataset(
             CreateDatasetRequest(

@@ -68,7 +68,7 @@ class Dataset(DatasetBaseModel):
 
         rows_with_ids = dataset._convert_rows_by_names_to_col_ids(rows)
 
-        dataset._add_rows(rows_with_ids)
+        dataset.add_rows(rows_with_ids)
 
         return dataset
 
@@ -91,6 +91,18 @@ class Dataset(DatasetBaseModel):
         if result is None:
             raise Exception(f"Failed to publish dataset {self.slug}")
         return PublishDatasetResponse(**result).version
+
+    def add_rows(self, rows: List[ValuesMap]) -> None:
+        """Add rows to dataset"""
+        result = self._http.post(
+            f"projects/default/datasets/{self.slug}/rows",
+            {"rows": rows}
+        )
+        if result is None:
+            raise Exception(f"Failed to add row to dataset {self.slug}")
+
+        response = CreateRowsResponse(**result)
+        self._create_rows(response.rows)
 
     def add_column(self, name: str, col_type: ColumnType) -> Column:
         """Add new column (returns Column object)"""
@@ -141,20 +153,4 @@ class Dataset(DatasetBaseModel):
                 values=row_obj.values,
                 dataset_id=self.id
             )
-            row._client = self
             self.rows.append(row)
-
-
-    def _add_rows(self, rows: List[ValuesMap]) -> CreateRowsResponse:
-        """Add rows to dataset"""
-        data = {"rows": rows}
-        result = self._http.post(
-            f"projects/default/datasets/{self.slug}/rows",
-            data
-        )
-        if result is None:
-            raise Exception(f"Failed to add row to dataset {self.slug}")
-
-        response = CreateRowsResponse(**result)
-        self._create_rows(response.rows)
-        return response
