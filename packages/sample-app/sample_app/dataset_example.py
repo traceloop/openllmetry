@@ -262,6 +262,14 @@ def get_dataset_by_version_example(slug: str, version: str):
     except Exception as e:
         print(f"Error getting dataset by version: {e}")
 
+def get_dataset_by_slug_example(slug: str):
+    """Demonstrate getting a dataset by slug"""
+    print("\n=== Get Dataset by Slug Example ===")
+    try:
+        dataset = client.datasets.get_by_slug(slug)
+        print(f"Retrieved dataset: {dataset}")
+    except Exception as e:
+        print(f"Error getting dataset by slug: {e}")
 
 def delete_dataset_example(slug: str):
     """Demonstrate deleting a dataset"""
@@ -284,10 +292,10 @@ def main():
     published_version = publish_dataset_example(ds1)
     delete_row_example(ds1)
     delete_column_example(ds1, column)
+    get_dataset_by_slug_example(slug="sdk-example-1")
     get_dataset_by_version_example(slug="sdk-example-1", version=published_version)
 
     delete_dataset_example(ds1.slug)
-
 
     ds2 = dataset_from_dataframe_example("sdk-example-2")
 

@@ -57,7 +57,7 @@ class Dataset:
 
     @classmethod
     def from_create_dataset_response(
-        cls, response: CreateDatasetResponse, rows: List[ValuesMap], http: HTTPClient
+        cls, response: CreateDatasetResponse, http: HTTPClient
     ) -> "Dataset":
         """Create a Dataset instance from CreateDatasetResponse"""
         dataset = cls(http=http)
@@ -65,8 +65,9 @@ class Dataset:
             setattr(dataset, field, value)
 
         dataset._create_columns(response.columns)
-
-        dataset.add_rows(rows)
+        
+        if response.rows:
+            dataset._create_rows(response.rows)
 
         return dataset
     

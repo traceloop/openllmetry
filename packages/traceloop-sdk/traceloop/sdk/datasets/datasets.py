@@ -52,9 +52,9 @@ class Datasets:
         if result is None:
             raise Exception(f"Failed to get dataset {slug}")
 
-        validated_data = DatasetFullData(**result)
+        validated_data = CreateDatasetResponse(**result)
 
-        return Dataset.from_full_data(validated_data, self._http)
+        return Dataset.from_create_dataset_response(validated_data, self._http)
 
     def from_csv(
         self,
@@ -98,11 +98,12 @@ class Datasets:
                 name=name,
                 description=description,
                 columns=columns_definition,
+                rows=rows_with_names,
             )
         )
 
         dataset = Dataset.from_create_dataset_response(
-            dataset_response, rows_with_names, self._http
+            dataset_response, self._http
         )
         return dataset
 
@@ -127,16 +128,17 @@ class Datasets:
 
             columns_definition.append(ColumnDefinition(slug=self._slugify(col_name), name=col_name, type=col_type))
 
+        rows = [{self._slugify(k): v for k, v in row.items()} for row in df.to_dict(orient="records")]
+
         dataset_response = self._create_dataset(
             CreateDatasetRequest(
                 slug=slug,
                 name=name,
                 description=description,
                 columns=columns_definition,
+                rows=rows,
             )
         )
-
-        rows = [{self._slugify(k): v for k, v in row.items()} for row in df.to_dict(orient="records")]
 
         return Dataset.from_create_dataset_response(dataset_response, rows, self._http)
 
@@ -152,6 +154,8 @@ class Datasets:
         data = input.model_dump()
 
         result = self._http.post("datasets", data)
+
+        print(f"DEBUG: Create dataset result: {result}")
 
         if result is None:
             raise Exception("Failed to create dataset")

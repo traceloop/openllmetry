@@ -16,26 +16,46 @@ class ColumnDefinition(BaseModel):
     name: str
     type: ColumnType
 
+ValuesMap = Dict[str, Any]
 
 class CreateDatasetRequest(BaseModel):
     slug: str
     name: Optional[str] = None
     description: Optional[str] = None
     columns: Optional[List[ColumnDefinition]] = None
+    rows: Optional[List[ValuesMap]] = None
 
+class RowObject(BaseModel):
+    id: str
+    values: ValuesMap
+    created_at: datetime.datetime
+    updated_at: datetime.datetime
 
+    
 class CreateDatasetResponse(BaseModel):
     id: str
     slug: str
     name: str
     description: Optional[str] = None
     columns: Dict[str, ColumnDefinition]
-    last_version: Optional[str]
+    rows: Optional[List[RowObject]] = None
+    last_version: Optional[str] = None
     created_at: datetime.datetime
     updated_at: datetime.datetime
+    
 
+#TODO: remove this class
+class DatasetFullData(BaseModel):
+    """Full dataset response with columns and rows"""
 
-ValuesMap = Dict[str, Any]
+    id: str
+    slug: str
+    name: Optional[str] = None
+    description: Optional[str] = None
+    columns: Dict[str, ColumnDefinition]
+    rows: List[RowObject]
+    created_at: datetime.datetime
+    updated_at: datetime.datetime
 
 
 class UpdateDatasetInput(BaseModel):
@@ -56,13 +76,6 @@ class UpdateColumnInput(BaseModel):
 
 class CreateRowsInput(BaseModel):
     rows: List[ValuesMap]
-
-
-class RowObject(BaseModel):
-    id: str
-    values: ValuesMap
-    created_at: datetime.datetime
-    updated_at: datetime.datetime
 
 
 class CreateRowsResponse(BaseModel):
@@ -94,16 +107,3 @@ class DatasetMetadata(BaseModel):
     columns: Optional[Dict[str, ColumnDefinition]]
     created_at: Optional[datetime.datetime]
     updated_at: Optional[datetime.datetime]
-
-
-class DatasetFullData(BaseModel):
-    """Full dataset response with columns and rows"""
-
-    id: str
-    slug: str
-    name: Optional[str] = None
-    description: Optional[str] = None
-    columns: Dict[str, ColumnDefinition]
-    rows: List[RowObject]
-    created_at: datetime.datetime
-    updated_at: datetime.datetime
