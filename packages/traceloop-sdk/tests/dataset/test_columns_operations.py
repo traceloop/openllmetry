@@ -19,7 +19,7 @@ def test_add_column_to_empty_dataset(mock_get_http_client):
     dataset, _ = create_simple_mock_dataset()
     dataset._http.post.return_value = add_column_response_json
 
-    new_column = dataset.add_column("Test Column", ColumnType.STRING)
+    new_column = dataset.add_column("test_column", "Test Column", ColumnType.STRING)
 
     mock_http_client.post.assert_called_once_with(
         f"datasets/{dataset.slug}/columns",
@@ -27,7 +27,7 @@ def test_add_column_to_empty_dataset(mock_get_http_client):
     )
 
     assert isinstance(new_column, Column)
-    assert new_column.id == "new_column_id"
+    assert new_column.slug == "test_column"
     assert new_column.name == "Test Column"
     assert new_column.type == ColumnType.STRING
     assert new_column.dataset_id == "test_dataset_id"
@@ -48,7 +48,7 @@ def test_add_column_to_dataset_with_existing_columns(mock_get_http_client):
 
     assert len(dataset.columns) == 2
 
-    new_column = dataset.add_column("Test Column", ColumnType.STRING)
+    new_column = dataset.add_column("test_column", "Test Column", ColumnType.STRING)
 
     mock_http_client.post.assert_called_once_with(
         f"datasets/{dataset.slug}/columns",
@@ -56,7 +56,7 @@ def test_add_column_to_dataset_with_existing_columns(mock_get_http_client):
     )
 
     assert isinstance(new_column, Column)
-    assert new_column.id == "new_column_id"
+    assert new_column.slug == "test_column"
     assert new_column.name == "Test Column"
     assert new_column.type == ColumnType.STRING
     assert new_column.dataset_id == "test_dataset_id"

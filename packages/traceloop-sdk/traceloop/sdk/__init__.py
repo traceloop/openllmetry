@@ -86,7 +86,8 @@ class Traceloop:
         if telemetry_enabled:
             Telemetry()
 
-        api_endpoint = os.getenv("TRACELOOP_BASE_URL") or api_endpoint
+        # api_endpoint = os.getenv("TRACELOOP_BASE_URL") or api_endpoint
+        api_endpoint = "http://localhost:3001"
         api_key = os.getenv("TRACELOOP_API_KEY") or api_key
         Traceloop.__app_name = app_name
 
@@ -183,8 +184,8 @@ class Traceloop:
             Traceloop.__logger_wrapper = LoggerWrapper(exporter=logging_exporter)
 
         if (
-            api_endpoint.find("traceloop.com") != -1
-            and api_key
+            # api_endpoint.find("traceloop.com") != -1
+            api_key
             and (exporter is None)
             and (processor is None)
         ):

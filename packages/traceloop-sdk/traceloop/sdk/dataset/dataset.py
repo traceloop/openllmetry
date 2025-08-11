@@ -66,26 +66,10 @@ class Dataset:
 
         dataset._create_columns(response.columns)
 
-        rows_with_ids = dataset._convert_rows_by_names_to_col_ids(rows)
-
-        dataset.add_rows(rows_with_ids)
+        dataset.add_rows(rows)
 
         return dataset
-
-    def _convert_rows_by_names_to_col_ids(
-        self, rows_with_names: List[ValuesMap]
-    ) -> List[ValuesMap]:
-        """Convert multiple rows from column names to column IDs"""
-        # Create a mapping from column names to column IDs
-        name_to_id = {col.name: col.id for col in self.columns}
-        return [
-            {
-                name_to_id[col_name]: val
-                for col_name, val in row_data.items()
-                if col_name in name_to_id
-            }
-            for row_data in rows_with_names
-        ]
+    
 
     def publish(self) -> str:
         """Publish dataset"""
@@ -96,6 +80,7 @@ class Dataset:
 
     def add_rows(self, rows: List[ValuesMap]) -> None:
         """Add rows to dataset"""
+        print(f"Adding rows to dataset {self.slug}: {rows}")
         result = self._http.post(f"datasets/{self.slug}/rows", {"rows": rows})
         if result is None:
             raise Exception(f"Failed to add row to dataset {self.slug}")
@@ -103,9 +88,9 @@ class Dataset:
         response = CreateRowsResponse(**result)
         self._create_rows(response.rows)
 
-    def add_column(self, name: str, col_type: ColumnType) -> Column:
+    def add_column(self, slug: str, name: str, col_type: ColumnType) -> Column:
         """Add new column (returns Column object)"""
-        data = {"name": name, "type": col_type}
+        data = {"slug": slug, "name": name, "type": col_type}
 
         result = self._http.post(f"datasets/{self.slug}/columns", data)
         if result is None:
@@ -115,7 +100,7 @@ class Dataset:
         column = Column(
             http=self._http,
             dataset=self,
-            id=col_response.id,
+            slug=col_response.slug,
             name=col_response.name,
             type=col_response.type,
             dataset_id=self.id,
@@ -125,11 +110,11 @@ class Dataset:
 
     def _create_columns(self, raw_columns: Dict[str, ColumnDefinition]):
         """Create Column objects from API response which includes column IDs"""
-        for column_id, column_def in raw_columns.items():
+        for column_slug, column_def in raw_columns.items():
             column = Column(
                 http=self._http,
                 dataset=self,
-                id=column_id,
+                slug=column_slug,
                 name=column_def.name,
                 type=column_def.type,
                 dataset_id=self.id,

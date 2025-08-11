@@ -112,7 +112,7 @@ def create_dataset_with_existing_columns():
     existing_column_1 = Column(
         http=mock_http_client,
         dataset=dataset,
-        id="column_id_1",
+        slug="column_slug_1",
         name="Column 1",
         type=ColumnType.STRING,
         dataset_id="test_dataset_id",
@@ -120,7 +120,7 @@ def create_dataset_with_existing_columns():
     existing_column_2 = Column(
         http=mock_http_client,
         dataset=dataset,
-        id="column_id_2",
+        slug="column_slug_2",
         name="Column 2",
         type=ColumnType.NUMBER,
         dataset_id="test_dataset_id",

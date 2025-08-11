@@ -83,6 +83,7 @@ class Datasets:
             for field_name in reader.fieldnames:
                 columns_definition.append(
                     ColumnDefinition(
+                        slug=self._slugify(field_name),
                         name=field_name,
                         type=ColumnType.STRING,
                     )
@@ -124,7 +125,7 @@ class Datasets:
             else:
                 col_type = ColumnType.STRING
 
-            columns_definition.append(ColumnDefinition(name=col_name, type=col_type))
+            columns_definition.append(ColumnDefinition(slug=self._slugify(col_name), name=col_name, type=col_type))
 
         dataset_response = self._create_dataset(
             CreateDatasetRequest(
@@ -135,7 +136,8 @@ class Datasets:
             )
         )
 
-        rows = df.to_dict(orient="records")
+        rows = [{self._slugify(k): v for k, v in row.items()} for row in df.to_dict(orient="records")]
+        print(f"DataFrame to dict: {rows}")
 
         return Dataset.from_create_dataset_response(dataset_response, rows, self._http)
 
@@ -156,3 +158,7 @@ class Datasets:
             raise Exception("Failed to create dataset")
 
         return CreateDatasetResponse(**result)
+    
+    def _slugify(self, name: str) -> str:
+        """Slugify a name"""
+        return name.lower().replace(" ", "-").replace("_", "-")

@@ -13,9 +13,9 @@ from .mock_response import (
 def create_mock_dataset_with_columns_definition(mock_http):
     """Create a mock dataset with standard test columns"""
     columns_definition = [
-        ColumnDefinition(name="name", type=ColumnType.STRING),
-        ColumnDefinition(name="value", type=ColumnType.NUMBER),
-        ColumnDefinition(name="active", type=ColumnType.BOOLEAN),
+        ColumnDefinition(slug="name", name="name", type=ColumnType.STRING),
+        ColumnDefinition(slug="value", name="value", type=ColumnType.NUMBER),
+        ColumnDefinition(slug="active", name="active", type=ColumnType.BOOLEAN),
     ]
 
     dataset = Dataset(
@@ -110,13 +110,13 @@ def create_dataset_with_existing_columns(mock_http):
 
     # Add existing columns to the dataset
     existing_column_1 = Column(
-        id="column_id_1",
+        slug="column_slug_1",
         name="Column 1",
         type=ColumnType.STRING,
         dataset_id="test_dataset_id",
     )
     existing_column_2 = Column(
-        id="column_id_2",
+        slug="column_slug_2",
         name="Column 2",
         type=ColumnType.NUMBER,
         dataset_id="test_dataset_id",

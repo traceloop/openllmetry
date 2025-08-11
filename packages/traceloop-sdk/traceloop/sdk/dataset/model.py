@@ -12,6 +12,7 @@ class ColumnType(str, Enum):
 
 
 class ColumnDefinition(BaseModel):
+    slug: Optional[str] = None
     name: str
     type: ColumnType
 
@@ -43,6 +44,7 @@ class UpdateDatasetInput(BaseModel):
 
 
 class CreateColumnInput(BaseModel):
+    slug: str
     name: str
     type: ColumnType
 
@@ -74,7 +76,7 @@ class PublishDatasetResponse(BaseModel):
 
 
 class AddColumnResponse(BaseModel):
-    id: str
+    slug: str
     name: str
     type: ColumnType
 
