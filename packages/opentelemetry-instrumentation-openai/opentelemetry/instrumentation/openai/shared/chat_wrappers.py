@@ -1016,8 +1016,8 @@ def _is_chat_message_function_tool_call(model: Union[dict, pydantic.BaseModel]) 
 
 
 def _is_function_call(model: Union[dict, pydantic.BaseModel]) -> bool:
-    from openai.types.chat.chat_completion_message import FunctionCall
     try:
+        from openai.types.chat.chat_completion_message import FunctionCall
         return isinstance(model, FunctionCall)
     except Exception:
         return False
