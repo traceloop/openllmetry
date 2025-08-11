@@ -57,7 +57,7 @@ def test_get_dataset_with_columns(datasets):
     """Test retrieving a dataset and checking its columns"""
     try:
         # Try to get an existing dataset to check its columns
-        dataset = datasets.get_by_slug("nina-qa")
+        dataset = datasets.get_by_slug("test-qa")
 
         assert dataset is not None
         assert len(dataset.columns) >= 0  # Allow any number of columns

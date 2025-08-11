@@ -13,10 +13,10 @@ interactions:
       X-Traceloop-SDK-Version:
       - 1.0.0
     method: GET
-    uri: https://api-staging.traceloop.com/v2/datasets/nina-qa
+    uri: https://api-staging.traceloop.com/v2/datasets/test-qa
   response:
     body:
-      string: '{"id":"cme75m4is00004lp0dtfaczb9","slug":"nina-qa","name":"Nina QA","created_at":"2025-08-11T16:34:16.42Z","updated_at":"2025-08-11T16:34:16.42Z","rows":[]}'
+      string: '{"id":"cme75m4is00004lp0dtfaczb9","slug":"test-qa","name":"Test QA","created_at":"2025-08-11T16:34:16.42Z","updated_at":"2025-08-11T16:34:16.42Z","rows":[]}'
     headers:
       CF-RAY:
       - 96d9d7630b7bd9de-FRA

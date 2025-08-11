@@ -13,7 +13,7 @@ interactions:
       X-Traceloop-SDK-Version:
       - 1.0.0
     method: GET
-    uri: https://api-staging.traceloop.com/v2/datasets/nina-qa/versions/v1
+    uri: https://api-staging.traceloop.com/v2/datasets/test-qa/versions/v1
   response:
     body:
       string: 'New Column 1,New Column 2,New Column 3
@@ -39,7 +39,7 @@ interactions:
       cf-cache-status:
       - DYNAMIC
       content-disposition:
-      - attachment; filename="nina-qa-v1.csv"
+      - attachment; filename="test-qa-v1.csv"
       referrer-policy:
       - strict-origin-when-cross-origin
       strict-transport-security:

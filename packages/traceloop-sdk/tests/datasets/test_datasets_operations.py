@@ -6,11 +6,11 @@ from traceloop.sdk.dataset.model import DatasetMetadata
 @pytest.mark.vcr
 def test_get_dataset_by_slug(datasets):
     try:
-        dataset = datasets.get_by_slug("nina-qa")
+        dataset = datasets.get_by_slug("test-qa")
 
         assert isinstance(dataset, Dataset)
         # Use flexible assertions that work with recorded data
-        assert dataset.slug == "nina-qa"
+        assert dataset.slug == "test-qa"
         assert hasattr(dataset, "name")
         assert hasattr(dataset, "description")
         assert len(dataset.columns) >= 0  # Allow for any number of columns
@@ -43,7 +43,7 @@ def test_get_all_datasets(datasets):
 @pytest.mark.vcr
 def test_get_version_csv(datasets):
     try:
-        csv_data = datasets.get_version_csv(slug="nina-qa", version="v1")
+        csv_data = datasets.get_version_csv(slug="test-qa", version="v1")
         assert isinstance(csv_data, str)
     except Exception as e:
         # Allow for expected API errors during recording (dataset might not exist)

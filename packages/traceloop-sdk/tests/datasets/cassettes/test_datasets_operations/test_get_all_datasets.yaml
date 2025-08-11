@@ -16,7 +16,7 @@ interactions:
     uri: https://api-staging.traceloop.com/v2/datasets
   response:
     body:
-      string: '{"datasets":[{"id":"cme75m4is00004lp0dtfaczb9","slug":"nina-qa","name":"Nina
+      string: '{"datasets":[{"id":"cme75m4is00004lp0dtfaczb9","slug":"test-qa","name":"Test
         QA","created_at":"2025-08-11T16:34:16.42Z","updated_at":"2025-08-11T16:34:16.42Z"},{"id":"cme79wkpy002h0105bbkxyu2u","slug":"duplicate-df-test-slug","name":"Duplicate
         DataFrame Dataset","created_at":"2025-08-11T15:34:22.438Z","updated_at":"2025-08-11T15:34:22.438Z"},{"id":"cme79wjoj002e010569sqvzh8","slug":"test-df-dataset-1754926460","name":"Test
         DataFrame Dataset","description":"Dataset created from DataFrame for testing","created_at":"2025-08-11T15:34:21.092Z","updated_at":"2025-08-11T15:34:21.092Z"}],"total":3}'
