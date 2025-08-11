@@ -4,8 +4,7 @@ from unittest.mock import patch
 import httpx
 import pytest
 from openai.types.chat.chat_completion_message_tool_call import (
-    ChatCompletionMessageToolCall,
-    Function,
+    ChatCompletionMessageFunctionToolCall,
 )
 from opentelemetry.sdk._logs import LogData
 from opentelemetry.semconv._incubating.attributes import (
@@ -375,13 +374,21 @@ def test_chat_tool_calls_with_events_with_no_content(
 def test_chat_pydantic_based_tool_calls(
     instrument_legacy, span_exporter, log_exporter, openai_client
 ):
+    try:
+        from openai.types.chat.chat_completion_message_function_tool_call import Function
+    except (ImportError, ModuleNotFoundError, AttributeError):
+        try:
+            from openai.types.chat.chat_completion_message_tool_call import Function
+        except (ImportError, ModuleNotFoundError, AttributeError):
+            pytest.skip("Could not import Function. Please check your OpenAI version. Skipping test.")
+
     openai_client.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=[
             {
                 "role": "assistant",
                 "tool_calls": [
-                    ChatCompletionMessageToolCall(
+                    ChatCompletionMessageFunctionToolCall(
                         id="1",
                         type="function",
                         function=Function(
@@ -440,13 +447,21 @@ def test_chat_pydantic_based_tool_calls(
 def test_chat_pydantic_based_tool_calls_with_events_with_content(
     instrument_with_content, span_exporter, log_exporter, openai_client
 ):
+    try:
+        from openai.types.chat.chat_completion_message_function_tool_call import Function
+    except (ImportError, ModuleNotFoundError, AttributeError):
+        try:
+            from openai.types.chat.chat_completion_message_tool_call import Function
+        except (ImportError, ModuleNotFoundError, AttributeError):
+            pytest.skip("Could not import Function. Please check your OpenAI version. Skipping test.")
+
     openai_client.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=[
             {
                 "role": "assistant",
                 "tool_calls": [
-                    ChatCompletionMessageToolCall(
+                    ChatCompletionMessageFunctionToolCall(
                         id="1",
                         type="function",
                         function=Function(
@@ -518,13 +533,21 @@ def test_chat_pydantic_based_tool_calls_with_events_with_content(
 def test_chat_pydantic_based_tool_calls_with_events_with_no_content(
     instrument_with_no_content, span_exporter, log_exporter, openai_client
 ):
+    try:
+        from openai.types.chat.chat_completion_message_function_tool_call import Function
+    except (ImportError, ModuleNotFoundError, AttributeError):
+        try:
+            from openai.types.chat.chat_completion_message_tool_call import Function
+        except (ImportError, ModuleNotFoundError, AttributeError):
+            pytest.skip("Could not import Function. Please check your OpenAI version. Skipping test.")
+
     openai_client.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=[
             {
                 "role": "assistant",
                 "tool_calls": [
-                    ChatCompletionMessageToolCall(
+                    ChatCompletionMessageFunctionToolCall(
                         id="1",
                         type="function",
                         function=Function(
@@ -951,7 +974,6 @@ async def test_chat_async_streaming_with_events_with_no_content(
 
 
 @pytest.mark.vcr
-@pytest.mark.asyncio
 def test_with_asyncio_run(
     instrument_legacy, span_exporter, log_exporter, async_openai_client
 ):
@@ -981,7 +1003,6 @@ def test_with_asyncio_run(
 
 
 @pytest.mark.vcr
-@pytest.mark.asyncio
 def test_with_asyncio_run_with_events_with_content(
     instrument_with_content, span_exporter, log_exporter, async_openai_client
 ):
@@ -1030,7 +1051,6 @@ def test_with_asyncio_run_with_events_with_content(
 
 
 @pytest.mark.vcr
-@pytest.mark.asyncio
 def test_with_asyncio_run_with_events_with_no_content(
     instrument_with_no_content, span_exporter, log_exporter, async_openai_client
 ):
