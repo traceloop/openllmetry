@@ -1,12 +1,11 @@
-import json
 from unittest.mock import MagicMock
 from traceloop.sdk.dataset.dataset import Dataset
 from traceloop.sdk.dataset.model import ColumnDefinition, ColumnType
 from traceloop.sdk.dataset.column import Column
-from .mock_response import (
+from ..fixtures.dataset_responses import (
     create_dataset_response,
-    add_rows_response_json,
-    create_rows_response_json,
+    ADD_ROWS_RESPONSE,
+    CREATE_ROWS_RESPONSE,
 )
 
 
@@ -45,7 +44,7 @@ def setup_mock_http_client_for_dataset_creation():
     mock_client = MagicMock()
     mock_client.post.side_effect = [
         create_dataset_response(),  # create_dataset call
-        json.loads(add_rows_response_json),  # add_rows call
+        ADD_ROWS_RESPONSE,  # add_rows call
     ]
     return mock_client
 
