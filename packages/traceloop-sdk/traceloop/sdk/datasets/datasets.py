@@ -89,7 +89,9 @@ class Datasets:
                 )
 
             for _, row_data in enumerate(reader):
-                rows_with_names.append({self._slugify(k): v for k, v in row_data.items()})
+                rows_with_names.append(
+                    {self._slugify(k): v for k, v in row_data.items()}
+                )
 
         dataset_response = self._create_dataset(
             CreateDatasetRequest(
@@ -101,9 +103,7 @@ class Datasets:
             )
         )
 
-        dataset = Dataset.from_create_dataset_response(
-            dataset_response, self._http
-        )
+        dataset = Dataset.from_create_dataset_response(dataset_response, self._http)
         return dataset
 
     def from_dataframe(
@@ -125,9 +125,16 @@ class Datasets:
             else:
                 col_type = ColumnType.STRING
 
-            columns_definition.append(ColumnDefinition(slug=self._slugify(col_name), name=col_name, type=col_type))
+            columns_definition.append(
+                ColumnDefinition(
+                    slug=self._slugify(col_name), name=col_name, type=col_type
+                )
+            )
 
-        rows = [{self._slugify(k): v for k, v in row.items()} for row in df.to_dict(orient="records")]
+        rows = [
+            {self._slugify(k): v for k, v in row.items()}
+            for row in df.to_dict(orient="records")
+        ]
 
         dataset_response = self._create_dataset(
             CreateDatasetRequest(
@@ -158,23 +165,23 @@ class Datasets:
             raise Exception("Failed to create dataset")
 
         return CreateDatasetResponse(**result)
-    
+
     def _slugify(self, name: str) -> str:
         """Slugify a name"""
         import re
-        
+
         slug = name.lower()
-        
+
         # Replace spaces and underscores with hyphens
         slug = slug.replace(" ", "-").replace("_", "-")
-        
+
         # Remove any character that's not alphanumeric or hyphen
-        slug = re.sub(r'[^a-z0-9-]+', '', slug)
-        
+        slug = re.sub(r"[^a-z0-9-]+", "", slug)
+
         # Remove multiple consecutive hyphens
-        slug = re.sub(r'-+', '-', slug)
-        
+        slug = re.sub(r"-+", "-", slug)
+
         # Trim hyphens from start and end
-        slug = slug.strip('-')
-        
+        slug = slug.strip("-")
+
         return slug

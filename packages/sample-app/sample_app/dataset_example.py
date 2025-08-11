@@ -262,6 +262,7 @@ def get_dataset_by_version_example(slug: str, version: str):
     except Exception as e:
         print(f"Error getting dataset by version: {e}")
 
+
 def get_dataset_by_slug_example(slug: str):
     """Demonstrate getting a dataset by slug"""
     print("\n=== Get Dataset by Slug Example ===")
@@ -270,6 +271,7 @@ def get_dataset_by_slug_example(slug: str):
         print(f"Retrieved dataset: {dataset}")
     except Exception as e:
         print(f"Error getting dataset by slug: {e}")
+
 
 def delete_dataset_example(slug: str):
     """Demonstrate deleting a dataset"""

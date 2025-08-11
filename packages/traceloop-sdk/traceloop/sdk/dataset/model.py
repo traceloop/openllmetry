@@ -1,6 +1,6 @@
 import datetime
 from enum import Enum
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel
 from typing import List, Optional, Dict, Any
 
 
@@ -16,7 +16,9 @@ class ColumnDefinition(BaseModel):
     name: str
     type: ColumnType
 
+
 ValuesMap = Dict[str, Any]
+
 
 class CreateDatasetRequest(BaseModel):
     slug: str
@@ -25,13 +27,14 @@ class CreateDatasetRequest(BaseModel):
     columns: Optional[List[ColumnDefinition]] = None
     rows: Optional[List[ValuesMap]] = None
 
+
 class RowObject(BaseModel):
     id: str
     values: ValuesMap
     created_at: datetime.datetime
     updated_at: datetime.datetime
 
-    
+
 class CreateDatasetResponse(BaseModel):
     id: str
     slug: str

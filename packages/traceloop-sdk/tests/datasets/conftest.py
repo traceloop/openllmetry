@@ -9,6 +9,6 @@ def datasets():
     """Create a Datasets instance with HTTP client for VCR recording/playback"""
     api_key = os.environ.get("TRACELOOP_API_KEY", "fake-key-for-vcr-playback")
     base_url = os.environ.get("TRACELOOP_BASE_URL", "https://api.traceloop.com")
-    
+
     http = HTTPClient(base_url=base_url, api_key=api_key, version="1.0.0")
     return Datasets(http)

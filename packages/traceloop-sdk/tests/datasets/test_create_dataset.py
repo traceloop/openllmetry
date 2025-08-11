@@ -27,8 +27,9 @@ Mouse,29.99,false"""
     try:
         # Use unique slug for testing to avoid conflicts
         import time
+
         unique_slug = f"test-csv-dataset-{int(time.time())}"
-        
+
         dataset = datasets.from_csv(
             file_path=csv_path,
             slug=unique_slug,
@@ -45,7 +46,9 @@ Mouse,29.99,false"""
 
     except Exception as e:
         # Allow for expected API errors during recording
-        assert "Failed to create dataset" in str(e) or "401" in str(e) or "403" in str(e)
+        assert (
+            "Failed to create dataset" in str(e) or "401" in str(e) or "403" in str(e)
+        )
     finally:
         os.unlink(csv_path)
 
@@ -64,8 +67,9 @@ def test_create_dataset_from_dataframe(datasets):
     try:
         # Use unique slug for testing to avoid conflicts
         import time
+
         unique_slug = f"test-df-dataset-{int(time.time())}"
-        
+
         dataset = datasets.from_dataframe(
             df=df,
             slug=unique_slug,
@@ -84,12 +88,16 @@ def test_create_dataset_from_dataframe(datasets):
         column_names = [col.name for col in dataset.columns]
         name_columns = [name for name in column_names if "name" in name.lower()]
         price_columns = [name for name in column_names if "price" in name.lower()]
-        
-        assert len(name_columns) >= 1 or len(price_columns) >= 1  # At least one expected column
+
+        assert (
+            len(name_columns) >= 1 or len(price_columns) >= 1
+        )  # At least one expected column
 
     except Exception as e:
         # Allow for expected API errors during recording
-        assert "Failed to create dataset" in str(e) or "401" in str(e) or "403" in str(e)
+        assert (
+            "Failed to create dataset" in str(e) or "401" in str(e) or "403" in str(e)
+        )
 
 
 @pytest.mark.vcr
@@ -102,7 +110,7 @@ def test_create_dataset_from_csv_file_not_found(datasets):
         )
 
 
-@pytest.mark.vcr  
+@pytest.mark.vcr
 def test_create_dataset_with_duplicate_slug(datasets):
     # Test creating dataset with slug that already exists to record failure
     csv_content = """Name,Price
@@ -123,7 +131,11 @@ Laptop,999.99"""
 
         # The exact error message may vary based on the API response
         error_msg = str(exc_info.value)
-        assert "Failed to create dataset" in error_msg or "409" in error_msg or "already exists" in error_msg.lower()
+        assert (
+            "Failed to create dataset" in error_msg
+            or "409" in error_msg
+            or "already exists" in error_msg.lower()
+        )
 
     finally:
         os.unlink(csv_path)
@@ -137,13 +149,17 @@ def test_create_dataset_from_dataframe_with_duplicate_slug(datasets):
     try:
         with pytest.raises(Exception) as exc_info:
             datasets.from_dataframe(
-                df=df, 
+                df=df,
                 slug="duplicate-df-test-slug",  # Intentionally duplicate slug
-                name="Duplicate DataFrame Dataset"
+                name="Duplicate DataFrame Dataset",
             )
 
         error_msg = str(exc_info.value)
-        assert "Failed to create dataset" in error_msg or "409" in error_msg or "already exists" in error_msg.lower()
+        assert (
+            "Failed to create dataset" in error_msg
+            or "409" in error_msg
+            or "already exists" in error_msg.lower()
+        )
     except Exception:
         # If no exception is raised, it might mean the slug wasn't actually duplicate
         # This is acceptable for VCR testing

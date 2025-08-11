@@ -38,7 +38,6 @@ class Dataset:
         self.columns = []
         self.rows = []
 
-
     @classmethod
     def from_create_dataset_response(
         cls, response: CreateDatasetResponse, http: HTTPClient
@@ -49,12 +48,11 @@ class Dataset:
             setattr(dataset, field, value)
 
         dataset._create_columns(response.columns)
-        
+
         if response.rows:
             dataset._create_rows(response.rows)
 
         return dataset
-    
 
     def publish(self) -> str:
         """Publish dataset"""
