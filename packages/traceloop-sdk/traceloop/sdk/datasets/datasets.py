@@ -17,7 +17,6 @@ from traceloop.sdk.dataset.model import (
     CreateDatasetResponse,
     ColumnType,
     DatasetMetadata,
-    DatasetFullData,
 )
 from traceloop.sdk.dataset.dataset import Dataset
 from traceloop.sdk.client.http import HTTPClient
@@ -154,8 +153,6 @@ class Datasets:
         data = input.model_dump()
 
         result = self._http.post("datasets", data)
-
-        print(f"DEBUG: Create dataset result: {result}")
 
         if result is None:
             raise Exception("Failed to create dataset")

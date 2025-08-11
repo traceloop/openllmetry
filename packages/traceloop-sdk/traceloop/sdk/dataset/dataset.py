@@ -61,7 +61,7 @@ class Dataset:
     ) -> "Dataset":
         """Create a Dataset instance from CreateDatasetResponse"""
         dataset = cls(http=http)
-        for field, value in response.model_dump(exclude={"columns"}).items():
+        for field, value in response.model_dump(exclude={"columns", "rows"}).items():
             setattr(dataset, field, value)
 
         dataset._create_columns(response.columns)
