@@ -89,7 +89,7 @@ class Datasets:
                 )
 
             for _, row_data in enumerate(reader):
-                rows_with_names.append(dict(row_data))
+                rows_with_names.append({self._slugify(k): v for k, v in row_data.items()})
 
         dataset_response = self._create_dataset(
             CreateDatasetRequest(

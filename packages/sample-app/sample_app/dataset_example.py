@@ -16,7 +16,7 @@ client = Traceloop.init()
 
 def create_sample_csv():
     """Create a sample CSV file for demonstration"""
-    csv_content = """name,age,city,salary
+    csv_content = """Name,Age,City,Salary
 John Doe,30,New York,75000
 Jane Smith,25,San Francisco,85000
 Bob Johnson,35,Chicago,65000
