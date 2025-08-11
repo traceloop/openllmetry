@@ -15,21 +15,17 @@ interactions:
       X-Traceloop-SDK-Version:
       - 1.0.0
     method: DELETE
-    uri: https://api-staging.traceloop.com/v2/datasets/test-dataset-to-delete
+    uri: https://api-staging.traceloop.com/v2/datasets/test-csv-dataset-conflict
   response:
     body:
-      string: '{"error":"Dataset not found"}'
+      string: ''
     headers:
       CF-RAY:
-      - 96d8cc062b89c9a5-IAD
+      - 96d9e45b7ceebee1-LHR
       Connection:
       - keep-alive
-      Content-Length:
-      - '29'
-      Content-Type:
-      - application/json; charset=utf-8
       Date:
-      - Mon, 11 Aug 2025 15:34:25 GMT
+      - Mon, 11 Aug 2025 18:45:47 GMT
       Permissions-Policy:
       - geolocation=(self), microphone=()
       Server:
@@ -47,10 +43,10 @@ interactions:
       x-kong-proxy-latency:
       - '0'
       x-kong-request-id:
-      - aa6ef63f4b0fe52e9d6e223fc1f3cd7a
+      - ec6b04093f916b04edeeba108a74de3b
       x-kong-upstream-latency:
-      - '4'
+      - '16'
     status:
-      code: 404
-      message: Not Found
+      code: 204
+      message: No Content
 version: 1

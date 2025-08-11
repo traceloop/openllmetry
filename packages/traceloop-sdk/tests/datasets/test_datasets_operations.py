@@ -7,11 +7,11 @@ from .test_constants import TestConstants
 @pytest.mark.vcr
 def test_get_dataset_by_slug(datasets):
     try:
-        dataset = datasets.get_by_slug("product-inventory-2")
+        dataset = datasets.get_by_slug("nina-qa")
         
         assert isinstance(dataset, Dataset)
         # Use flexible assertions that work with recorded data
-        assert dataset.slug == "product-inventory-2"
+        assert dataset.slug == "nina-qa"
         assert hasattr(dataset, 'name')
         assert hasattr(dataset, 'description')
         assert len(dataset.columns) >= 0  # Allow for any number of columns
@@ -44,7 +44,7 @@ def test_get_all_datasets(datasets):
 @pytest.mark.vcr
 def test_get_version_csv(datasets):
     try:
-        csv_data = datasets.get_version_csv(slug="product-inventory", version="v1")
+        csv_data = datasets.get_version_csv(slug="nina-qa", version="v1")
         assert isinstance(csv_data, str)
     except Exception as e:
         # Allow for expected API errors during recording (dataset might not exist)
@@ -55,7 +55,7 @@ def test_get_version_csv(datasets):
 def test_delete_by_slug(datasets):
     try:
         # Use a test dataset that's safe to delete
-        datasets.delete_by_slug("test-dataset-to-delete")
+        datasets.delete_by_slug("test-csv-dataset-conflict")
     except Exception as e:
         # Allow for expected API errors (dataset might not exist)
         assert "Failed to delete dataset" in str(e) or "404" in str(e) or "401" in str(e)

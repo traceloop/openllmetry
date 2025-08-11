@@ -13,27 +13,33 @@ interactions:
       X-Traceloop-SDK-Version:
       - 1.0.0
     method: GET
-    uri: https://api-staging.traceloop.com/v2/datasets/product-inventory/versions/v1
+    uri: https://api-staging.traceloop.com/v2/datasets/nina-qa/versions/v1
   response:
     body:
-      string: '{"error":"Dataset not found"}'
+      string: 'New Column 1,New Column 2,New Column 3
+
+        hallo,0,false
+
+        '
     headers:
       CF-RAY:
-      - 96d8cc020ce6bcb9-ATL
+      - 96d9e31d681465ac-FRA
       Connection:
       - keep-alive
       Content-Length:
-      - '29'
+      - '53'
       Content-Type:
-      - application/json; charset=utf-8
+      - text/csv
       Date:
-      - Mon, 11 Aug 2025 15:34:24 GMT
+      - Mon, 11 Aug 2025 18:44:56 GMT
       Permissions-Policy:
       - geolocation=(self), microphone=()
       Server:
       - cloudflare
       cf-cache-status:
       - DYNAMIC
+      content-disposition:
+      - attachment; filename="nina-qa-v1.csv"
       referrer-policy:
       - strict-origin-when-cross-origin
       strict-transport-security:
@@ -45,10 +51,10 @@ interactions:
       x-kong-proxy-latency:
       - '0'
       x-kong-request-id:
-      - 71f69604aa6d9f2044dccb57ca93a579
+      - ba1ddf3b6759090b30df67276e68ed6d
       x-kong-upstream-latency:
-      - '4'
+      - '51'
     status:
-      code: 404
-      message: Not Found
+      code: 200
+      message: OK
 version: 1
