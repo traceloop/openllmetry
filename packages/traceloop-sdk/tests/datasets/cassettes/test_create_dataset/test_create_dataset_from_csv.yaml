@@ -1,11 +1,11 @@
 interactions:
 - request:
-    body: '{"slug": "test-csv-dataset-1754926459", "name": "Test CSV Dataset", "description":
+    body: '{"slug": "test-csv-dataset-conflict", "name": "Test CSV Dataset", "description":
       "Dataset created from CSV for testing", "columns": [{"slug": "name", "name":
       "Name", "type": "string"}, {"slug": "price", "name": "Price", "type": "string"},
-      {"slug": "in-stock", "name": "In Stock", "type": "string"}], "rows": [{"Name":
-      "Laptop", "Price": "999.99", "In Stock": "true"}, {"Name": "Mouse", "Price":
-      "29.99", "In Stock": "false"}]}'
+      {"slug": "in-stock", "name": "In Stock", "type": "string"}], "rows": [{"name":
+      "Laptop", "price": "999.99", "in-stock": "true"}, {"name": "Mouse", "price":
+      "29.99", "in-stock": "false"}]}'
     headers:
       Accept:
       - '*/*'
@@ -14,7 +14,7 @@ interactions:
       Connection:
       - keep-alive
       Content-Length:
-      - '428'
+      - '426'
       Content-Type:
       - application/json
       User-Agent:
@@ -25,18 +25,18 @@ interactions:
     uri: https://api-staging.traceloop.com/v2/datasets
   response:
     body:
-      string: '{"error":"row 0 has an invalid column slug: Name"}'
+      string: '{"error":"duplicate key value violates unique constraint"}'
     headers:
       CF-RAY:
-      - 96d8cbe92b92d66f-IAD
+      - 96d9cc1c6e10bc12-ZRH
       Connection:
       - keep-alive
       Content-Length:
-      - '50'
+      - '58'
       Content-Type:
       - application/json; charset=utf-8
       Date:
-      - Mon, 11 Aug 2025 15:34:20 GMT
+      - Mon, 11 Aug 2025 18:29:14 GMT
       Permissions-Policy:
       - geolocation=(self), microphone=()
       Server:
@@ -52,12 +52,12 @@ interactions:
       x-content-type:
       - nosniff
       x-kong-proxy-latency:
-      - '1'
+      - '0'
       x-kong-request-id:
-      - 1785d73a3781971989a4854e584e2334
+      - 0d57ca239631c0164ce86d3feab64256
       x-kong-upstream-latency:
-      - '3'
+      - '8'
     status:
-      code: 400
-      message: Bad Request
+      code: 409
+      message: Conflict
 version: 1
