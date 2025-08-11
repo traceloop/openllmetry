@@ -121,17 +121,19 @@ def messages_list_wrapper(tracer, wrapped, instance, args, kwargs):
     run = runs[id]
     messages = sorted(response_dict["data"], key=lambda x: x["created_at"])
 
-    span = tracer.start_span(
+    span_cm = tracer.start_as_current_span(
         "openai.assistant.run",
         kind=SpanKind.CLIENT,
         attributes={SpanAttributes.LLM_REQUEST_TYPE: LLMRequestTypeValues.CHAT.value},
         start_time=run.get("start_time"),
     )
+    span = span_cm.__enter__()
+
     if exception := run.get("exception"):
         span.set_attribute(ERROR_TYPE, exception.__class__.__name__)
         span.record_exception(exception)
         span.set_status(Status(StatusCode.ERROR, str(exception)))
-        span.end(run.get("end_time"))
+        span_cm.__exit__(None, None, None)
 
     prompt_index = 0
     if assistants.get(run["assistant_id"]) is not None or Config.enrich_assistant:
@@ -232,7 +234,7 @@ def messages_list_wrapper(tracer, wrapped, instance, args, kwargs):
             usage_dict.get("prompt_tokens"),
         )
 
-    span.end(run.get("end_time"))
+    span_cm.__exit__(None, None, None)
 
     return response
 
@@ -245,11 +247,12 @@ def runs_create_and_stream_wrapper(tracer, wrapped, instance, args, kwargs):
     assistant_id = kwargs.get("assistant_id")
     instructions = kwargs.get("instructions")
 
-    span = tracer.start_span(
+    span_cm = tracer.start_as_current_span(
         "openai.assistant.run_stream",
         kind=SpanKind.CLIENT,
         attributes={SpanAttributes.LLM_REQUEST_TYPE: LLMRequestTypeValues.CHAT.value},
     )
+    span = span_cm.__enter__()
 
     i = 0
     if assistants.get(assistant_id) is not None or Config.enrich_assistant:
@@ -314,5 +317,5 @@ def runs_create_and_stream_wrapper(tracer, wrapped, instance, args, kwargs):
         span.set_attribute(ERROR_TYPE, e.__class__.__name__)
         span.record_exception(e)
         span.set_status(Status(StatusCode.ERROR, str(e)))
-        span.end()
+        span_cm.__exit__(None, None, None)
         raise

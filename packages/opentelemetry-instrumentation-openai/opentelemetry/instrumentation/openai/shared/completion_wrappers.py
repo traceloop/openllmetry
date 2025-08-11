@@ -49,11 +49,12 @@ def completion_wrapper(tracer, wrapped, instance, args, kwargs):
         return wrapped(*args, **kwargs)
 
     # span needs to be opened and closed manually because the response is a generator
-    span = tracer.start_span(
+    span_cm = tracer.start_as_current_span(
         SPAN_NAME,
         kind=SpanKind.CLIENT,
         attributes={SpanAttributes.LLM_REQUEST_TYPE: LLM_REQUEST_TYPE.value},
     )
+    span = span_cm.__enter__()
 
     _handle_request(span, kwargs, instance)
 
@@ -63,7 +64,7 @@ def completion_wrapper(tracer, wrapped, instance, args, kwargs):
         span.set_attribute(ERROR_TYPE, e.__class__.__name__)
         span.record_exception(e)
         span.set_status(Status(StatusCode.ERROR, str(e)))
-        span.end()
+        span_cm.__exit__(None, None, None)
         raise
 
     if is_streaming_response(response):
@@ -72,7 +73,7 @@ def completion_wrapper(tracer, wrapped, instance, args, kwargs):
     else:
         _handle_response(response, span, instance)
 
-    span.end()
+    span_cm.__exit__(None, None, None)
     return response
 
 
@@ -83,11 +84,12 @@ async def acompletion_wrapper(tracer, wrapped, instance, args, kwargs):
     ):
         return await wrapped(*args, **kwargs)
 
-    span = tracer.start_span(
+    span_cm = tracer.start_as_current_span(
         name=SPAN_NAME,
         kind=SpanKind.CLIENT,
         attributes={SpanAttributes.LLM_REQUEST_TYPE: LLM_REQUEST_TYPE.value},
     )
+    span = span_cm.__enter__()
 
     _handle_request(span, kwargs, instance)
 
@@ -97,16 +99,16 @@ async def acompletion_wrapper(tracer, wrapped, instance, args, kwargs):
         span.set_attribute(ERROR_TYPE, e.__class__.__name__)
         span.record_exception(e)
         span.set_status(Status(StatusCode.ERROR, str(e)))
-        span.end()
+        span_cm.__exit__(None, None, None)
         raise
 
     if is_streaming_response(response):
         # span will be closed after the generator is done
-        return _abuild_from_streaming_response(span, kwargs, response)
+        return await _abuild_from_streaming_response(span, kwargs, response)
     else:
         _handle_response(response, span, instance)
 
-    span.end()
+    span_cm.__exit__(None, None, None)
     return response
 
 

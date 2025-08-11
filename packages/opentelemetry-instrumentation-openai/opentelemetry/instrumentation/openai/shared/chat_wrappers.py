@@ -80,11 +80,12 @@ def chat_wrapper(
         return wrapped(*args, **kwargs)
     # span needs to be opened and closed manually because the response is a generator
 
-    span = tracer.start_span(
+    span_cm = tracer.start_as_current_span(
         SPAN_NAME,
         kind=SpanKind.CLIENT,
         attributes={SpanAttributes.LLM_REQUEST_TYPE: LLM_REQUEST_TYPE.value},
     )
+    span = span_cm.__enter__()
 
     run_async(_handle_request(span, kwargs, instance))
     try:
@@ -107,7 +108,7 @@ def chat_wrapper(
         span.set_attribute(ERROR_TYPE, e.__class__.__name__)
         span.record_exception(e)
         span.set_status(Status(StatusCode.ERROR, str(e)))
-        span.end()
+        span_cm.__exit__(None, None, None)
 
         raise
 
@@ -152,7 +153,7 @@ def chat_wrapper(
         duration,
     )
 
-    span.end()
+    span_cm.__exit__(None, None, None)
 
     return response
 
@@ -176,11 +177,12 @@ async def achat_wrapper(
     ):
         return await wrapped(*args, **kwargs)
 
-    span = tracer.start_span(
+    span_cm = tracer.start_as_current_span(
         SPAN_NAME,
         kind=SpanKind.CLIENT,
         attributes={SpanAttributes.LLM_REQUEST_TYPE: LLM_REQUEST_TYPE.value},
     )
+    span = span_cm.__enter__()
 
     await _handle_request(span, kwargs, instance)
 
@@ -206,7 +208,7 @@ async def achat_wrapper(
         span.set_attribute(ERROR_TYPE, e.__class__.__name__)
         span.record_exception(e)
         span.set_status(Status(StatusCode.ERROR, str(e)))
-        span.end()
+        span_cm.__exit__(None, None, None)
 
         raise
 
@@ -251,7 +253,7 @@ async def achat_wrapper(
         duration,
     )
 
-    span.end()
+    span_cm.__exit__(None, None, None)
 
     return response
 
