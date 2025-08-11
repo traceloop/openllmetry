@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find . -name \"*.sh\" -type f)",
+      "Bash(grep -r \"poetry run\" .)",
+      "Bash(npx nx show projects)"
+    ],
+    "deny": []
+  }
+}
