@@ -13,13 +13,13 @@ interactions:
       X-Traceloop-SDK-Version:
       - 1.0.0
     method: GET
-    uri: https://api-staging.traceloop.com/v2/datasets/product-inventory/versions/v1
+    uri: https://api-staging.traceloop.com/v2/datasets/definitely-non-existent-dataset-12345
   response:
     body:
       string: '{"error":"Dataset not found"}'
     headers:
       CF-RAY:
-      - 96d8cca0db7fc987-IAD
+      - 96d8ccacfed7c95a-IAD
       Connection:
       - keep-alive
       Content-Length:
@@ -27,7 +27,7 @@ interactions:
       Content-Type:
       - application/json; charset=utf-8
       Date:
-      - Mon, 11 Aug 2025 15:34:49 GMT
+      - Mon, 11 Aug 2025 15:34:51 GMT
       Permissions-Policy:
       - geolocation=(self), microphone=()
       Server:
@@ -43,11 +43,11 @@ interactions:
       x-content-type:
       - nosniff
       x-kong-proxy-latency:
-      - '0'
+      - '1'
       x-kong-request-id:
-      - 394257712bda8c4202545d6fbcd2d339
+      - e3d807493f568218413e0d1c920f3103
       x-kong-upstream-latency:
-      - '4'
+      - '3'
     status:
       code: 404
       message: Not Found

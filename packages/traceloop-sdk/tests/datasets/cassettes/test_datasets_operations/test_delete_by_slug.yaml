@@ -8,18 +8,20 @@ interactions:
       - gzip, deflate
       Connection:
       - keep-alive
+      Content-Length:
+      - '0'
       User-Agent:
       - python-requests/2.32.3
       X-Traceloop-SDK-Version:
       - 1.0.0
-    method: GET
-    uri: https://api-staging.traceloop.com/v2/datasets/product-inventory/versions/v1
+    method: DELETE
+    uri: https://api-staging.traceloop.com/v2/datasets/test-dataset-to-delete
   response:
     body:
       string: '{"error":"Dataset not found"}'
     headers:
       CF-RAY:
-      - 96d8cca0db7fc987-IAD
+      - 96d8cc062b89c9a5-IAD
       Connection:
       - keep-alive
       Content-Length:
@@ -27,7 +29,7 @@ interactions:
       Content-Type:
       - application/json; charset=utf-8
       Date:
-      - Mon, 11 Aug 2025 15:34:49 GMT
+      - Mon, 11 Aug 2025 15:34:25 GMT
       Permissions-Policy:
       - geolocation=(self), microphone=()
       Server:
@@ -45,7 +47,7 @@ interactions:
       x-kong-proxy-latency:
       - '0'
       x-kong-request-id:
-      - 394257712bda8c4202545d6fbcd2d339
+      - aa6ef63f4b0fe52e9d6e223fc1f3cd7a
       x-kong-upstream-latency:
       - '4'
     status:

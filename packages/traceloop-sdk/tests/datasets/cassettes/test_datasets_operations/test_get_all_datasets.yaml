@@ -17,10 +17,12 @@ interactions:
   response:
     body:
       string: '{"datasets":[{"id":"cme75m4is00004lp0dtfaczb9","slug":"nina-qa","name":"Nina
-        QA","created_at":"2025-08-11T16:34:16.42Z","updated_at":"2025-08-11T16:34:16.42Z"}],"total":1}'
+        QA","created_at":"2025-08-11T16:34:16.42Z","updated_at":"2025-08-11T16:34:16.42Z"},{"id":"cme79wkpy002h0105bbkxyu2u","slug":"duplicate-df-test-slug","name":"Duplicate
+        DataFrame Dataset","created_at":"2025-08-11T15:34:22.438Z","updated_at":"2025-08-11T15:34:22.438Z"},{"id":"cme79wjoj002e010569sqvzh8","slug":"test-df-dataset-1754926460","name":"Test
+        DataFrame Dataset","description":"Dataset created from DataFrame for testing","created_at":"2025-08-11T15:34:21.092Z","updated_at":"2025-08-11T15:34:21.092Z"}],"total":3}'
     headers:
       CF-RAY:
-      - 96d8aef5a950270f-ATL
+      - 96d8cbfdde47d6b1-IAD
       Connection:
       - keep-alive
       Content-Encoding:
@@ -28,7 +30,7 @@ interactions:
       Content-Type:
       - application/json; charset=utf-8
       Date:
-      - Mon, 11 Aug 2025 15:14:34 GMT
+      - Mon, 11 Aug 2025 15:34:23 GMT
       Permissions-Policy:
       - geolocation=(self), microphone=()
       Server:
@@ -48,9 +50,9 @@ interactions:
       x-kong-proxy-latency:
       - '0'
       x-kong-request-id:
-      - afd87716912e567cacb9a21dcfa6fa50
+      - b8c5d94d0297757963c3f02f82bfde07
       x-kong-upstream-latency:
-      - '8'
+      - '4'
     status:
       code: 200
       message: OK

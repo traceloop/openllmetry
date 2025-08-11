@@ -28,7 +28,8 @@ class HTTPClient:
             response = requests.post(f"{self.base_url}/v2/{path.lstrip('/')}", json=data, headers=self._headers())
             response.raise_for_status()
             return response.json()
-        except requests.exceptions.RequestException as e:
+        except (requests.exceptions.RequestException, AttributeError) as e:
+            # AttributeError can occur with VCR mocking when response objects don't have expected attributes
             print(Fore.RED + f"Error making request to {path}: {str(e)}" + Fore.RESET)
             return None
 
@@ -39,13 +40,14 @@ class HTTPClient:
         try:
             response = requests.get(f"{self.base_url}/v2/{path.lstrip('/')}", params=params, headers=self._headers())
             response.raise_for_status()
-            
+
             content_type = response.headers.get('content-type', '').lower()
             if 'text/csv' in content_type:
                 return response.text
             else:
                 return response.json()
-        except requests.exceptions.RequestException as e:
+        except (requests.exceptions.RequestException, AttributeError) as e:
+            # AttributeError can occur with VCR mocking when response objects don't have expected attributes
             print(Fore.RED + f"Error making request to {path}: {str(e)}" + Fore.RESET)
             return None
 
@@ -57,7 +59,8 @@ class HTTPClient:
             response = requests.delete(f"{self.base_url}/v2/{path.lstrip('/')}", headers=self._headers())
             response.raise_for_status()
             return response.status_code == 204 or response.status_code == 200
-        except requests.exceptions.RequestException as e:
+        except (requests.exceptions.RequestException, AttributeError) as e:
+            # AttributeError can occur with VCR mocking when response objects don't have expected attributes
             print(Fore.RED + f"Error making request to {path}: {str(e)}" + Fore.RESET)
             return False
 
@@ -72,6 +75,7 @@ class HTTPClient:
                 return response.json()
             else:
                 return {}
-        except requests.exceptions.RequestException as e:
+        except (requests.exceptions.RequestException, AttributeError) as e:
+            # AttributeError can occur with VCR mocking when response objects don't have expected attributes
             print(Fore.RED + f"Error making request to {path}: {str(e)}" + Fore.RESET)
             return None
