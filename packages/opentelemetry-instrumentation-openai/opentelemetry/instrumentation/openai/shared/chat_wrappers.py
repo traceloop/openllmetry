@@ -7,6 +7,7 @@ from functools import singledispatch
 from typing import List, Optional, Union
 
 from opentelemetry import context as context_api
+import pydantic
 from opentelemetry.instrumentation.openai.shared import (
     OPENAI_LLM_USAGE_TOKEN_TYPES,
     _get_openai_base_url,
@@ -49,9 +50,6 @@ from opentelemetry.semconv_ai import (
 from opentelemetry.trace import SpanKind, Tracer
 from opentelemetry.trace.status import Status, StatusCode
 from wrapt import ObjectProxy
-
-from openai.types.chat import ChatCompletionMessageToolCall
-from openai.types.chat.chat_completion_message import FunctionCall
 
 SPAN_NAME = "openai.chat"
 PROMPT_FILTER_KEY = "prompt_filter_results"
@@ -961,8 +959,10 @@ async def _abuild_from_streaming_response(
     span.end()
 
 
+# pydantic.BaseModel here is ChatCompletionMessageFunctionToolCall (as of openai 1.99.7)
+# but we keep to a parent type to support older versions
 def _parse_tool_calls(
-    tool_calls: Optional[List[Union[dict, ChatCompletionMessageToolCall]]],
+    tool_calls: Optional[List[Union[dict, pydantic.BaseModel]]],
 ) -> Union[List[ToolCall], None]:
     """
     Util to correctly parse the tool calls data from the OpenAI API to this module's
@@ -976,12 +976,11 @@ def _parse_tool_calls(
     for tool_call in tool_calls:
         tool_call_data = None
 
-        # Handle dict or ChatCompletionMessageToolCall
         if isinstance(tool_call, dict):
             tool_call_data = copy.deepcopy(tool_call)
-        elif isinstance(tool_call, ChatCompletionMessageToolCall):
+        elif _is_chat_message_function_tool_call(tool_call):
             tool_call_data = tool_call.model_dump()
-        elif isinstance(tool_call, FunctionCall):
+        elif _is_function_call(tool_call):
             function_call = tool_call.model_dump()
             tool_call_data = ToolCall(
                 id="",
@@ -994,6 +993,34 @@ def _parse_tool_calls(
 
         result.append(tool_call_data)
     return result
+
+
+def _is_chat_message_function_tool_call(model: Union[dict, pydantic.BaseModel]) -> bool:
+    try:
+        from openai.types.chat.chat_completion_message_function_tool_call import (
+            ChatCompletionMessageFunctionToolCall,
+        )
+
+        return isinstance(model, ChatCompletionMessageFunctionToolCall)
+    except Exception:
+        try:
+            # Since OpenAI 1.99.3, ChatCompletionMessageToolCall is a Union,
+            # and the isinstance check will fail. This is fine, because in all
+            # those versions, the check above will succeed.
+            from openai.types.chat.chat_completion_message_tool_call import (
+                ChatCompletionMessageToolCall,
+            )
+            return isinstance(model, ChatCompletionMessageToolCall)
+        except Exception:
+            return False
+
+
+def _is_function_call(model: Union[dict, pydantic.BaseModel]) -> bool:
+    try:
+        from openai.types.chat.chat_completion_message import FunctionCall
+        return isinstance(model, FunctionCall)
+    except Exception:
+        return False
 
 
 @singledispatch
