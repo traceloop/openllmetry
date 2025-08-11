@@ -80,7 +80,6 @@ class Dataset:
 
     def add_rows(self, rows: List[ValuesMap]) -> None:
         """Add rows to dataset"""
-        print(f"Adding rows to dataset {self.slug}: {rows}")
         result = self._http.post(f"datasets/{self.slug}/rows", {"rows": rows})
         if result is None:
             raise Exception(f"Failed to add row to dataset {self.slug}")

@@ -137,7 +137,6 @@ class Datasets:
         )
 
         rows = [{self._slugify(k): v for k, v in row.items()} for row in df.to_dict(orient="records")]
-        print(f"DataFrame to dict: {rows}")
 
         return Dataset.from_create_dataset_response(dataset_response, rows, self._http)
 
@@ -161,4 +160,20 @@ class Datasets:
     
     def _slugify(self, name: str) -> str:
         """Slugify a name"""
-        return name.lower().replace(" ", "-").replace("_", "-")
+        import re
+        
+        slug = name.lower()
+        
+        # Replace spaces and underscores with hyphens
+        slug = slug.replace(" ", "-").replace("_", "-")
+        
+        # Remove any character that's not alphanumeric or hyphen
+        slug = re.sub(r'[^a-z0-9-]+', '', slug)
+        
+        # Remove multiple consecutive hyphens
+        slug = re.sub(r'-+', '-', slug)
+        
+        # Trim hyphens from start and end
+        slug = slug.strip('-')
+        
+        return slug

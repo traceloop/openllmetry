@@ -40,8 +40,12 @@ class HTTPClient:
         try:
             response = requests.get(f"{self.base_url}/v2/{path.lstrip('/')}", params=params, headers=self._headers())
             response.raise_for_status()
-            json = response.json()
-            return json
+            
+            content_type = response.headers.get('content-type', '').lower()
+            if 'text/csv' in content_type:
+                return response.text
+            else:
+                return response.json()
         except requests.exceptions.RequestException as e:
             print(Fore.RED + f"Error making request to {path}: {str(e)}" + Fore.RESET)
             return None

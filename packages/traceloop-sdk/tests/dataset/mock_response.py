@@ -8,9 +8,9 @@ def create_dataset_response(price_type="string", in_stock_type="string"):
         "name": "Dataset",
         "description": "Dataset Description",
         "columns": {
-            "cmdvei5dd000d01vv2yvmp7vt": {"name": "Name", "type": "string"},
-            "cmdvei5dd000e01vvz0eb5kz8": {"name": "Price", "type": price_type},
-            "cmdvei5dd000f01vv7aazk674": {"name": "In Stock", "type": in_stock_type},
+            "name": {"name": "Name", "type": "string"},
+            "price": {"name": "Price", "type": price_type},
+            "in-stock": {"name": "In Stock", "type": in_stock_type},
         },
         "last_version": None,
         "created_at": "2025-08-03T08:09:53.329521779Z",
@@ -25,9 +25,9 @@ create_rows_response_json = """
             "id": "row_1_id",
             "row_index": 1,
             "values": {
-                "cmdvei5dd000d01vv2yvmp7vt": "Laptop",
-                "cmdvei5dd000e01vvz0eb5kz8": 999.99,
-                "cmdvei5dd000f01vv7aazk674": true
+                "name": "Laptop",
+                "price": 999.99,
+                "in-stock": true
             },
             "created_at": "2025-08-03T08:10:00.000Z",
             "updated_at": "2025-08-03T08:10:00.000Z"
@@ -36,9 +36,9 @@ create_rows_response_json = """
             "id": "row_2_id",
             "row_index": 2,
             "values": {
-                "cmdvei5dd000d01vv2yvmp7vt": "Mouse",
-                "cmdvei5dd000e01vvz0eb5kz8": 29.99,
-                "cmdvei5dd000f01vv7aazk674": false
+                "name": "Mouse",
+                "price": 29.99,
+                "in-stock": false
             },
             "created_at": "2025-08-03T08:10:00.000Z",
             "updated_at": "2025-08-03T08:10:00.000Z"
@@ -55,19 +55,19 @@ get_dataset_by_slug_json = """
     "name": "Product Inventory",
     "description": "Sample product inventory data",
     "columns": {
-        "cmdvki9zv003801vv1idaywus": {
+        "product": {
             "name": "product",
             "type": "string"
         },
-        "cmdvki9zv003901vv5zr5i24b": {
+        "price": {
             "name": "price",
             "type": "number"
         },
-        "cmdvki9zv003a01vvvqqlytpr": {
+        "in-stock": {
             "name": "in_stock",
             "type": "boolean"
         },
-        "cmdvki9zv003b01vvmk3d22km": {
+        "category": {
             "name": "category",
             "type": "string"
         }
@@ -79,10 +79,10 @@ get_dataset_by_slug_json = """
             "id": "cmdvkieye003d01vv1zlmkjrg",
             "row_index": 1,
             "values": {
-                "cmdvki9zv003801vv1idaywus": "Laptop",
-                "cmdvki9zv003901vv5zr5i24b": 999.99,
-                "cmdvki9zv003a01vvvqqlytpr": true,
-                "cmdvki9zv003b01vvmk3d22km": "Electronics"
+                "product": "Laptop",
+                "price": 999.99,
+                "in-stock": true,
+                "category": "Electronics"
             },
             "created_at": "2025-08-03T10:58:03.451Z",
             "updated_at": "2025-08-03T10:58:03.451Z"
@@ -91,10 +91,10 @@ get_dataset_by_slug_json = """
             "id": "cmdvkieye003e01vvs4onq0sq",
             "row_index": 2,
             "values": {
-                "cmdvki9zv003801vv1idaywus": "Mouse",
-                "cmdvki9zv003901vv5zr5i24b": 29.99,
-                "cmdvki9zv003a01vvvqqlytpr": true,
-                "cmdvki9zv003b01vvmk3d22km": "Accessories"
+                "product": "Mouse",
+                "price": 29.99,
+                "in-stock": true,
+                "category": "Accessories"
             },
             "created_at": "2025-08-03T10:58:03.451Z",
             "updated_at": "2025-08-03T10:58:03.451Z"
@@ -103,10 +103,10 @@ get_dataset_by_slug_json = """
             "id": "cmdvkieye003f01vvkc6jxgad",
             "row_index": 3,
             "values": {
-                "cmdvki9zv003801vv1idaywus": "Keyboard",
-                "cmdvki9zv003901vv5zr5i24b": 79.99,
-                "cmdvki9zv003a01vvvqqlytpr": false,
-                "cmdvki9zv003b01vvmk3d22km": "Accessories"
+                "product": "Keyboard",
+                "price": 79.99,
+                "in-stock": false,
+                "category": "Accessories"
             },
             "created_at": "2025-08-03T10:58:03.451Z",
             "updated_at": "2025-08-03T10:58:03.451Z"
@@ -115,10 +115,10 @@ get_dataset_by_slug_json = """
             "id": "cmdvkieye003g01vvcuze8p1z",
             "row_index": 4,
             "values": {
-                "cmdvki9zv003801vv1idaywus": "Monitor",
-                "cmdvki9zv003901vv5zr5i24b": 299.99,
-                "cmdvki9zv003a01vvvqqlytpr": true,
-                "cmdvki9zv003b01vvmk3d22km": "Electronics"
+                "product": "Monitor",
+                "price": 299.99,
+                "in-stock": true,
+                "category": "Electronics"
             },
             "created_at": "2025-08-03T10:58:03.451Z",
             "updated_at": "2025-08-03T10:58:03.451Z"
@@ -134,9 +134,9 @@ add_rows_response_json = """
             "id": "row_add_1",
             "row_index": 0,
             "values": {
-                "cmdr3ce1s0003hmp0vqons5ey": "Gal",
-                "cmdr3ce1s0004hmp0ies575jr": 8,
-                "cmdr3ce1s0005hmp0bdln01js": true
+                "name": "Gal",
+                "age": 8,
+                "is-active": true
             },
             "created_at": "2025-08-03T12:00:00.000Z",
             "updated_at": "2025-08-03T12:00:00.000Z"
@@ -145,9 +145,9 @@ add_rows_response_json = """
             "id": "row_add_2",
             "row_index": 1,
             "values": {
-                "cmdr3ce1s0003hmp0vqons5ey": "Nir",
-                "cmdr3ce1s0004hmp0ies575jr": 70,
-                "cmdr3ce1s0005hmp0bdln01js": false
+                "name": "Nir",
+                "age": 70,
+                "is-active": false
             },
             "created_at": "2025-08-03T12:00:00.000Z",
             "updated_at": "2025-08-03T12:00:00.000Z"
@@ -156,9 +156,9 @@ add_rows_response_json = """
             "id": "row_add_3",
             "row_index": 2,
             "values": {
-                "cmdr3ce1s0003hmp0vqons5ey": "Nina",
-                "cmdr3ce1s0004hmp0ies575jr": 52,
-                "cmdr3ce1s0005hmp0bdln01js": true
+                "name": "Nina",
+                "age": 52,
+                "is-active": true
             },
             "created_at": "2025-08-03T12:00:00.000Z",
             "updated_at": "2025-08-03T12:00:00.000Z"
@@ -167,9 +167,9 @@ add_rows_response_json = """
             "id": "row_add_4",
             "row_index": 3,
             "values": {
-                "cmdr3ce1s0003hmp0vqons5ey": "Aviv",
-                "cmdr3ce1s0004hmp0ies575jr": 52,
-                "cmdr3ce1s0005hmp0bdln01js": false
+                "name": "Aviv",
+                "age": 52,
+                "is-active": false
             },
             "created_at": "2025-08-03T12:00:00.000Z",
             "updated_at": "2025-08-03T12:00:00.000Z"
@@ -184,7 +184,7 @@ single_row_response_json = """
     "rows": [{
         "id": "single_row_id",
         "row_index": 1,
-        "values": {"cmdr3ce1s0003hmp0vqons5ey": "single"},
+        "values": {"name": "single"},
         "created_at": "2025-08-03T12:00:00.000Z",
         "updated_at": "2025-08-03T12:00:00.000Z"
     }],
@@ -255,11 +255,13 @@ basic_dataset_response_json = """
     "name": "Data",
     "description": "Data for example",
     "columns": {
-        "column_id_1": {
+        "col-id-1": {
+            "slug": "col-id-1",
             "name": "col_number",
             "type": "number"
         },
-        "column_id_2": {
+        "col-id-2": {
+            "slug": "col-id-2",
             "name": "col_bool",
             "type": "boolean"
         }
@@ -288,7 +290,7 @@ Keyboard,79.99,true,Accessories,
 """
 
 add_column_response_json = {
-    "id": "new_column_id",
+    "slug": "new-column-id",
     "name": "Test Column",
     "type": "string",
 }
