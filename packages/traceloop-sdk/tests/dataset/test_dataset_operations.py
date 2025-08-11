@@ -5,7 +5,7 @@ import pytest
 def test_get_dataset_by_version(datasets):
     try:
         # Create a dataset instance and test CSV version retrieval
-        csv_data = datasets.get_version_csv(slug="product-inventory", version="v1")
+        csv_data = datasets.get_version_csv(slug="nina-qa", version="v1")
         assert isinstance(csv_data, str)
     except Exception as e:
         # Allow for expected API errors during recording (dataset/version might not exist)

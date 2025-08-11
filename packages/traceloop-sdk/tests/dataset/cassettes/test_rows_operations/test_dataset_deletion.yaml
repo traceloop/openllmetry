@@ -1,9 +1,6 @@
 interactions:
 - request:
-    body: '{"slug": "test-delete-1754926491", "name": "Test Delete Dataset", "description":
-      "Dataset for testing deletion", "columns": [{"slug": "nam", "name": "Nam", "type":
-      "string"}, {"slug": "", "name": "", "type": "string"}], "rows": [{"Nam": "T",
-      "": "stData"}]}'
+    body: null
     headers:
       Accept:
       - '*/*'
@@ -12,29 +9,23 @@ interactions:
       Connection:
       - keep-alive
       Content-Length:
-      - '257'
-      Content-Type:
-      - application/json
+      - '0'
       User-Agent:
       - python-requests/2.32.3
       X-Traceloop-SDK-Version:
       - 1.0.0
-    method: POST
-    uri: https://api-staging.traceloop.com/v2/datasets
+    method: DELETE
+    uri: https://api-staging.traceloop.com/v2/datasets/test-csv-dataset-1754936890
   response:
     body:
-      string: '{"error":"name is required for column "}'
+      string: ''
     headers:
       CF-RAY:
-      - 96d8ccb0ec08c94c-IAD
+      - 96d9f7f11a74744c-MIA
       Connection:
       - keep-alive
-      Content-Length:
-      - '40'
-      Content-Type:
-      - application/json; charset=utf-8
       Date:
-      - Mon, 11 Aug 2025 15:34:52 GMT
+      - Mon, 11 Aug 2025 18:59:09 GMT
       Permissions-Policy:
       - geolocation=(self), microphone=()
       Server:
@@ -50,12 +41,12 @@ interactions:
       x-content-type:
       - nosniff
       x-kong-proxy-latency:
-      - '1'
+      - '0'
       x-kong-request-id:
-      - 6cdb656015f05b4834666f3bdcac5375
+      - b52c91024537b77c0cbbf5575e93cc7d
       x-kong-upstream-latency:
-      - '2'
+      - '16'
     status:
-      code: 400
-      message: Bad Request
+      code: 204
+      message: No Content
 version: 1
