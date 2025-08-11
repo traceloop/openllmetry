@@ -128,7 +128,7 @@ def messages_list_wrapper(tracer, wrapped, instance, args, kwargs):
         attributes={SpanAttributes.LLM_REQUEST_TYPE: LLMRequestTypeValues.CHAT.value},
         start_time=run.get("start_time"),
     )
-    
+
     # Use the span as current context to ensure events get proper trace context
     with trace.use_span(span, end_on_exit=False):
         if exception := run.get("exception"):
