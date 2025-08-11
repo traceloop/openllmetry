@@ -139,7 +139,7 @@ class Datasets:
             )
         )
 
-        return Dataset.from_create_dataset_response(dataset_response, rows, self._http)
+        return Dataset.from_create_dataset_response(dataset_response, self._http)
 
     def get_version_csv(self, slug: str, version: str) -> str:
         """Get a specific version of a dataset as a CSV string"""

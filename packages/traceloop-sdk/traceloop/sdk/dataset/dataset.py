@@ -9,7 +9,6 @@ from traceloop.sdk.dataset.model import (
     CreateRowsResponse,
     ColumnType,
     RowObject,
-    DatasetFullData,
     PublishDatasetResponse,
     AddColumnResponse,
 )
@@ -39,21 +38,6 @@ class Dataset:
         self.columns = []
         self.rows = []
 
-    @classmethod
-    def from_full_data(cls, full_data: DatasetFullData, http: HTTPClient) -> "Dataset":
-        """Create a Dataset instance from DatasetFullData"""
-        dataset_data = full_data.model_dump(exclude={"columns", "rows"})
-        dataset = cls(http=http)
-
-        # Set all attributes from the dataset data
-        for field, value in dataset_data.items():
-            setattr(dataset, field, value)
-
-        dataset._create_columns(full_data.columns)
-        if full_data.rows:
-            dataset._create_rows(full_data.rows)
-
-        return dataset
 
     @classmethod
     def from_create_dataset_response(

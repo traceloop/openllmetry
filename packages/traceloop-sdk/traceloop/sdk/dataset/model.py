@@ -42,20 +42,6 @@ class CreateDatasetResponse(BaseModel):
     last_version: Optional[str] = None
     created_at: datetime.datetime
     updated_at: datetime.datetime
-    
-
-#TODO: remove this class
-class DatasetFullData(BaseModel):
-    """Full dataset response with columns and rows"""
-
-    id: str
-    slug: str
-    name: Optional[str] = None
-    description: Optional[str] = None
-    columns: Dict[str, ColumnDefinition]
-    rows: List[RowObject]
-    created_at: datetime.datetime
-    updated_at: datetime.datetime
 
 
 class UpdateDatasetInput(BaseModel):
