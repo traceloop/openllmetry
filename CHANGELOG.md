@@ -1,3 +1,10 @@
+## v0.44.2 (2025-08-11)
+
+### Fix
+
+- **openai**: dynamically import types for 1.99 (#3244)
+- **langchain**: Added new method for fetching model name from association metadata (#3237)
+
 ## v0.44.1 (2025-08-04)
 
 ### Fix
