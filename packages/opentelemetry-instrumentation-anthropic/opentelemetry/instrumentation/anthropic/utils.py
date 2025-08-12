@@ -64,7 +64,7 @@ def dont_throw(func):
 async def _aextract_response_data(response):
     """Async version of _extract_response_data that can await coroutines."""
     import inspect
-    
+
     # If we get a coroutine, await it
     if inspect.iscoroutine(response):
         try:
@@ -74,7 +74,7 @@ async def _aextract_response_data(response):
             logger = logging.getLogger(__name__)
             logger.debug(f"Failed to await coroutine response: {e}")
             return {}
-    
+
     if isinstance(response, dict):
         return response
 
@@ -102,14 +102,14 @@ async def _aextract_response_data(response):
 def _extract_response_data(response):
     """Extract the actual response data from both regular and with_raw_response wrapped responses."""
     import inspect
-    
+
     # If we get a coroutine, we cannot process it in sync context
     if inspect.iscoroutine(response):
         import logging
         logger = logging.getLogger(__name__)
         logger.warning(f"_extract_response_data received coroutine {response} - response processing skipped")
         return {}
-    
+
     if isinstance(response, dict):
         return response
 
