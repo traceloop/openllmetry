@@ -48,6 +48,7 @@ from opentelemetry.semconv_ai import (
     SpanAttributes,
 )
 from opentelemetry.trace import SpanKind, Tracer
+from opentelemetry import trace
 from opentelemetry.trace.status import Status, StatusCode
 from wrapt import ObjectProxy
 
@@ -86,75 +87,77 @@ def chat_wrapper(
         attributes={SpanAttributes.LLM_REQUEST_TYPE: LLM_REQUEST_TYPE.value},
     )
 
-    run_async(_handle_request(span, kwargs, instance))
-    try:
-        start_time = time.time()
-        response = wrapped(*args, **kwargs)
-        end_time = time.time()
-    except Exception as e:  # pylint: disable=broad-except
-        end_time = time.time()
-        duration = end_time - start_time if "start_time" in locals() else 0
+    # Use the span as current context to ensure events get proper trace context
+    with trace.use_span(span, end_on_exit=False):
+        run_async(_handle_request(span, kwargs, instance))
+        try:
+            start_time = time.time()
+            response = wrapped(*args, **kwargs)
+            end_time = time.time()
+        except Exception as e:  # pylint: disable=broad-except
+            end_time = time.time()
+            duration = end_time - start_time if "start_time" in locals() else 0
 
-        attributes = {
-            "error.type": e.__class__.__name__,
-        }
+            attributes = {
+                "error.type": e.__class__.__name__,
+            }
 
-        if duration > 0 and duration_histogram:
-            duration_histogram.record(duration, attributes=attributes)
-        if exception_counter:
-            exception_counter.add(1, attributes=attributes)
+            if duration > 0 and duration_histogram:
+                duration_histogram.record(duration, attributes=attributes)
+            if exception_counter:
+                exception_counter.add(1, attributes=attributes)
 
-        span.set_attribute(ERROR_TYPE, e.__class__.__name__)
-        span.record_exception(e)
-        span.set_status(Status(StatusCode.ERROR, str(e)))
+            span.set_attribute(ERROR_TYPE, e.__class__.__name__)
+            span.record_exception(e)
+            span.set_status(Status(StatusCode.ERROR, str(e)))
+            span.end()
+
+            raise
+
+        if is_streaming_response(response):
+            # span will be closed after the generator is done
+            if is_openai_v1():
+                return ChatStream(
+                    span,
+                    response,
+                    instance,
+                    token_counter,
+                    choice_counter,
+                    duration_histogram,
+                    streaming_time_to_first_token,
+                    streaming_time_to_generate,
+                    start_time,
+                    kwargs,
+                )
+            else:
+                return _build_from_streaming_response(
+                    span,
+                    response,
+                    instance,
+                    token_counter,
+                    choice_counter,
+                    duration_histogram,
+                    streaming_time_to_first_token,
+                    streaming_time_to_generate,
+                    start_time,
+                    kwargs,
+                )
+
+        duration = end_time - start_time
+
+        _handle_response(
+            response,
+            span,
+            instance,
+            token_counter,
+            choice_counter,
+            duration_histogram,
+            duration,
+        )
+
         span.end()
 
-        raise
-
-    if is_streaming_response(response):
-        # span will be closed after the generator is done
-        if is_openai_v1():
-            return ChatStream(
-                span,
-                response,
-                instance,
-                token_counter,
-                choice_counter,
-                duration_histogram,
-                streaming_time_to_first_token,
-                streaming_time_to_generate,
-                start_time,
-                kwargs,
-            )
-        else:
-            return _build_from_streaming_response(
-                span,
-                response,
-                instance,
-                token_counter,
-                choice_counter,
-                duration_histogram,
-                streaming_time_to_first_token,
-                streaming_time_to_generate,
-                start_time,
-                kwargs,
-            )
-
-    duration = end_time - start_time
-
-    _handle_response(
-        response,
-        span,
-        instance,
-        token_counter,
-        choice_counter,
-        duration_histogram,
-        duration,
-    )
-
-    span.end()
-
-    return response
+        return response
 
 
 @_with_chat_telemetry_wrapper
@@ -182,78 +185,80 @@ async def achat_wrapper(
         attributes={SpanAttributes.LLM_REQUEST_TYPE: LLM_REQUEST_TYPE.value},
     )
 
-    await _handle_request(span, kwargs, instance)
+    # Use the span as current context to ensure events get proper trace context
+    with trace.use_span(span, end_on_exit=False):
+        await _handle_request(span, kwargs, instance)
 
-    try:
-        start_time = time.time()
-        response = await wrapped(*args, **kwargs)
-        end_time = time.time()
-    except Exception as e:  # pylint: disable=broad-except
-        end_time = time.time()
-        duration = end_time - start_time if "start_time" in locals() else 0
+        try:
+            start_time = time.time()
+            response = await wrapped(*args, **kwargs)
+            end_time = time.time()
+        except Exception as e:  # pylint: disable=broad-except
+            end_time = time.time()
+            duration = end_time - start_time if "start_time" in locals() else 0
 
-        common_attributes = Config.get_common_metrics_attributes()
-        attributes = {
-            **common_attributes,
-            "error.type": e.__class__.__name__,
-        }
+            common_attributes = Config.get_common_metrics_attributes()
+            attributes = {
+                **common_attributes,
+                "error.type": e.__class__.__name__,
+            }
 
-        if duration > 0 and duration_histogram:
-            duration_histogram.record(duration, attributes=attributes)
-        if exception_counter:
-            exception_counter.add(1, attributes=attributes)
+            if duration > 0 and duration_histogram:
+                duration_histogram.record(duration, attributes=attributes)
+            if exception_counter:
+                exception_counter.add(1, attributes=attributes)
 
-        span.set_attribute(ERROR_TYPE, e.__class__.__name__)
-        span.record_exception(e)
-        span.set_status(Status(StatusCode.ERROR, str(e)))
+            span.set_attribute(ERROR_TYPE, e.__class__.__name__)
+            span.record_exception(e)
+            span.set_status(Status(StatusCode.ERROR, str(e)))
+            span.end()
+
+            raise
+
+        if is_streaming_response(response):
+            # span will be closed after the generator is done
+            if is_openai_v1():
+                return ChatStream(
+                    span,
+                    response,
+                    instance,
+                    token_counter,
+                    choice_counter,
+                    duration_histogram,
+                    streaming_time_to_first_token,
+                    streaming_time_to_generate,
+                    start_time,
+                    kwargs,
+                )
+            else:
+                return _abuild_from_streaming_response(
+                    span,
+                    response,
+                    instance,
+                    token_counter,
+                    choice_counter,
+                    duration_histogram,
+                    streaming_time_to_first_token,
+                    streaming_time_to_generate,
+                    start_time,
+                    kwargs,
+                )
+
+        duration = end_time - start_time
+
+        _handle_response(
+            response,
+            span,
+            instance,
+            token_counter,
+            choice_counter,
+            duration_histogram,
+            duration,
+        )
+
         span.end()
 
-        raise
-
-    if is_streaming_response(response):
-        # span will be closed after the generator is done
-        if is_openai_v1():
-            return ChatStream(
-                span,
-                response,
-                instance,
-                token_counter,
-                choice_counter,
-                duration_histogram,
-                streaming_time_to_first_token,
-                streaming_time_to_generate,
-                start_time,
-                kwargs,
-            )
-        else:
-            return _abuild_from_streaming_response(
-                span,
-                response,
-                instance,
-                token_counter,
-                choice_counter,
-                duration_histogram,
-                streaming_time_to_first_token,
-                streaming_time_to_generate,
-                start_time,
-                kwargs,
-            )
-
-    duration = end_time - start_time
-
-    _handle_response(
-        response,
-        span,
-        instance,
-        token_counter,
-        choice_counter,
-        duration_histogram,
-        duration,
-    )
-
-    span.end()
-
-    return response
+        return response
 
 
 @dont_throw
