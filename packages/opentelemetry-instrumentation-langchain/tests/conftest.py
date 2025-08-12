@@ -171,6 +171,7 @@ def vcr_config():
 
     return {
         "filter_headers": ["authorization", "x-api-key"],
-        "match_on": ["method", "scheme", "host", "port", "path", "query"],
+        "match_on": ["method", "scheme", "host", "port", "path", "query", "body"],
+        "filter_query_parameters": ["api_key", "access_token"],
         "before_record_request": before_record_request,
     }

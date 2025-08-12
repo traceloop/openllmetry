@@ -186,9 +186,7 @@ async def test_langgraph_double_ainvoke(instrument_legacy, span_exporter):
 
 
 @pytest.mark.vcr
-def test_langgraph_github_issue_3203_exact_reproduction(
-    instrument_legacy, span_exporter, tracer_provider
-):
+def test_nesting_of_langgraph_spans(instrument_legacy, span_exporter, tracer_provider):
     """Test that exactly reproduces the GitHub issue #3203 with the exact same code structure."""
     from opentelemetry import trace
     import asyncio
