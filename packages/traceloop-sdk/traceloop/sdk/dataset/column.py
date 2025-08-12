@@ -13,6 +13,7 @@ class Column(BaseDataset):
     name: str
     type: ColumnType
     _dataset: "Dataset"
+    deleted: bool = False
 
     def __init__(
         self,
@@ -30,6 +31,9 @@ class Column(BaseDataset):
 
     def delete(self) -> None:
         """Remove this column from dataset"""
+        if self.deleted:
+            raise Exception(f"Column {self.slug} already deleted")
+
         if self._dataset is None:
             raise ValueError("Column must be associated with a dataset to delete")
 
@@ -38,6 +42,7 @@ class Column(BaseDataset):
             raise Exception(f"Failed to delete column {self.slug}")
 
         self._dataset.columns.remove(self)
+        self.deleted = True
 
         # Update all rows by removing this column's values
         if self._dataset.rows:
@@ -49,6 +54,9 @@ class Column(BaseDataset):
         self, name: Optional[str] = None, type: Optional[ColumnType] = None
     ) -> None:
         """Update this column's properties"""
+        if self.deleted:
+            raise Exception(f"Column {self.slug} already deleted")
+
         update_data = {}
         if name is not None:
             update_data["name"] = name
