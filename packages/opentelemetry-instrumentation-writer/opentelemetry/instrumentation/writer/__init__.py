@@ -28,11 +28,19 @@ from opentelemetry.instrumentation.writer.span_utils import (
     set_model_input_attributes,
     set_model_response_attributes,
     set_response_attributes,
+    set_model_streaming_response_attributes,
+    set_streaming_response_attributes,
 )
 from opentelemetry.instrumentation.writer.utils import (
     error_metrics_attributes,
+    model_as_dict,
     response_attributes,
     should_emit_events,
+)
+from opentelemetry.instrumentation.writer.event_emitter import (
+    emit_streaming_response_events,
+    emit_message_events,
+    emit_choice_events,
 )
 from opentelemetry.instrumentation.writer.version import __version__
 
@@ -74,10 +82,98 @@ def is_streaming_response(response):
     return isinstance(response, Stream) or isinstance(response, AsyncStream)
 
 
+def _process_streaming_chunk(chunk):
+
+    chunk_dict = model_as_dict(chunk)
+    
+    if not chunk_dict.get("choices"):
+        return None, None, None
+
+    choice = chunk_dict["choices"][0]
+    delta = choice.get("delta", {})
+    
+    content = delta.get("content") if delta else choice.get("text")
+    finish_reason = choice.get("finish_reason")
+
+    usage = chunk_dict.get("usage")
+
+    return content, finish_reason, usage
+
+
+def _handle_streaming_response(
+    span, accumulated_content, finish_reason, usage, event_logger
+):
+    set_model_streaming_response_attributes(span, usage)
+    
+    if should_emit_events() and event_logger:
+        emit_streaming_response_events(accumulated_content, finish_reason, event_logger)
+    else:
+        set_streaming_response_attributes(
+            span, accumulated_content, finish_reason, usage
+        )
+
+
+def _create_stream_processor(response, span, event_logger):
+    accumulated_content = ""
+    finish_reason = None
+    usage = None
+
+    for chunk in response:
+        content, chunk_finish_reason, chunk_usage = _process_streaming_chunk(chunk)
+        
+        if content:
+            accumulated_content += content
+        
+        if chunk_finish_reason:
+            finish_reason = chunk_finish_reason
+        
+        if chunk_usage:
+            usage = chunk_usage
+        
+        yield chunk
+
+    _handle_streaming_response(
+        span, accumulated_content, finish_reason, usage, event_logger
+    )
+
+    if span.is_recording():
+        span.set_status(Status(StatusCode.OK))
+
+    span.end()
+
+
+async def _create_async_stream_processor(response, span, event_logger):
+    accumulated_content = ""
+    finish_reason = None
+    usage = None
+
+    async for chunk in response:
+        content, chunk_finish_reason, chunk_usage = _process_streaming_chunk(chunk)
+        
+        if content:
+            accumulated_content += content
+        
+        if chunk_finish_reason:
+            finish_reason = chunk_finish_reason
+        
+        if chunk_usage:
+            usage = chunk_usage
+        
+        yield chunk
+
+    _handle_streaming_response(
+        span, accumulated_content, finish_reason, usage, event_logger
+    )
+
+    if span.is_recording():
+        span.set_status(Status(StatusCode.OK))
+
+    span.end()
+
+
 def _handle_input(span, kwargs, event_logger):
     set_model_input_attributes(span, kwargs)
     if should_emit_events() and event_logger:
-        from opentelemetry.instrumentation.writer.event_emitter import emit_message_events
         emit_message_events(kwargs, event_logger)
     else:
         set_input_attributes(span, kwargs)
@@ -128,7 +224,6 @@ def _with_tracer_wrapper(func):
 def _handle_response(span, response, token_histogram, event_logger):
     set_model_response_attributes(span, response, token_histogram)
     if should_emit_events() and event_logger:
-        from opentelemetry.instrumentation.writer.event_emitter import emit_choice_events
         emit_choice_events(response, event_logger)
     else:
         set_response_attributes(span, response)
@@ -183,7 +278,7 @@ def _wrap(
 
     if is_streaming_response(response):
         try:
-            ...  # TODO streaming response processor method
+            return _create_stream_processor(response, span, event_logger)
         except Exception as ex:
             logger.warning(
                 "Failed to process streaming response for writer span, error: %s",
@@ -267,7 +362,7 @@ async def _awrap(
 
     if is_streaming_response(response):
         try:
-            ...  # TODO async streaming response processor method
+            return _create_async_stream_processor(response, span, event_logger)
         except Exception as ex:
             logger.warning(
                 "Failed to process streaming response for writer span, error: %s",
