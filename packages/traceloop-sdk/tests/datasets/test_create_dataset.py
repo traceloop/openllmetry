@@ -15,20 +15,16 @@ from .test_constants import TestConstants
 
 @pytest.mark.vcr
 def test_create_dataset_from_csv(datasets):
-    # Create temporary CSV file - Nina QA
     csv_content = """Name,Price,In Stock
 Laptop,999.99,true
 Mouse,29.99,false"""
 
     with tempfile.NamedTemporaryFile(mode="w", suffix=".csv", delete=False) as f:
         f.write(csv_content)
+        f.flush()
         csv_path = f.name
 
-    try:
-        # Use unique slug for testing to avoid conflicts
-        import time
-
-        unique_slug = f"test-csv-dataset-{int(time.time())}"
+        unique_slug = "test-csv-dataset"
 
         dataset = datasets.from_csv(
             file_path=csv_path,
@@ -44,12 +40,7 @@ Mouse,29.99,false"""
         assert len(dataset.columns) >= 2  # At least Name and Price columns
         assert len(dataset.rows) >= 0  # Allow for any number of rows
 
-    except Exception as e:
-        # Allow for expected API errors during recording
-        assert (
-            "Failed to create dataset" in str(e) or "401" in str(e) or "403" in str(e)
-        )
-    finally:
+    
         os.unlink(csv_path)
 
 
@@ -64,40 +55,33 @@ def test_create_dataset_from_dataframe(datasets):
         }
     )
 
-    try:
-        # Use unique slug for testing to avoid conflicts
-        import time
 
-        unique_slug = f"test-df-dataset-{int(time.time())}"
+    unique_slug = "test-df-dataset"
 
-        dataset = datasets.from_dataframe(
-            df=df,
-            slug=unique_slug,
-            name="Test DataFrame Dataset",
-            description="Dataset created from DataFrame for testing",
-        )
+    dataset = datasets.from_dataframe(
+        df=df,
+        slug=unique_slug,
+        name="Test DataFrame Dataset",
+        description="Dataset created from DataFrame for testing",
+    )
 
-        assert isinstance(dataset, Dataset)
-        assert dataset.slug == unique_slug
-        assert dataset.name == "Test DataFrame Dataset"
-        assert dataset.description == "Dataset created from DataFrame for testing"
-        assert len(dataset.columns) >= 2  # At least Name and Price columns
-        assert len(dataset.rows) >= 0  # Allow for any number of rows
+    assert isinstance(dataset, Dataset)
+    assert dataset.slug == unique_slug
+    assert dataset.name == "Test DataFrame Dataset"
+    assert dataset.description == "Dataset created from DataFrame for testing"
+    assert len(dataset.columns) >= 2  # At least Name and Price columns
+    assert len(dataset.rows) >= 0  # Allow for any number of rows
 
-        # Check for columns by name (flexible checking)
-        column_names = [col.name for col in dataset.columns]
-        name_columns = [name for name in column_names if "name" in name.lower()]
-        price_columns = [name for name in column_names if "price" in name.lower()]
+    # Check for columns by name (flexible checking)
+    column_names = [col.name for col in dataset.columns]
+    name_columns = [name for name in column_names if "name" in name.lower()]
+    price_columns = [name for name in column_names if "price" in name.lower()]
 
-        assert (
-            len(name_columns) >= 1 or len(price_columns) >= 1
-        )  # At least one expected column
+    assert (
+        len(name_columns) >= 1 or len(price_columns) >= 1
+    )  # At least one expected column
 
-    except Exception as e:
-        # Allow for expected API errors during recording
-        assert (
-            "Failed to create dataset" in str(e) or "401" in str(e) or "403" in str(e)
-        )
+
 
 
 @pytest.mark.vcr
@@ -118,10 +102,9 @@ Laptop,999.99"""
 
     with tempfile.NamedTemporaryFile(mode="w", suffix=".csv", delete=False) as f:
         f.write(csv_content)
+        f.flush()
         csv_path = f.name
 
-    try:
-        # Use a slug that's likely to already exist or cause conflict
         with pytest.raises(Exception) as exc_info:
             datasets.from_csv(
                 file_path=csv_path,
@@ -137,8 +120,7 @@ Laptop,999.99"""
             or "already exists" in error_msg.lower()
         )
 
-    finally:
-        os.unlink(csv_path)
+    os.unlink(csv_path)
 
 
 @pytest.mark.vcr
@@ -146,21 +128,17 @@ def test_create_dataset_from_dataframe_with_duplicate_slug(datasets):
     # Test creating dataset from dataframe with duplicate slug
     df = pd.DataFrame({"Name": ["Laptop"], "Price": [999.99]})
 
-    try:
-        with pytest.raises(Exception) as exc_info:
-            datasets.from_dataframe(
-                df=df,
-                slug="duplicate-df-test-slug",  # Intentionally duplicate slug
-                name="Duplicate DataFrame Dataset",
-            )
-
-        error_msg = str(exc_info.value)
-        assert (
-            "Failed to create dataset" in error_msg
-            or "409" in error_msg
-            or "already exists" in error_msg.lower()
+    with pytest.raises(Exception) as exc_info:
+        datasets.from_dataframe(
+            df=df,
+            slug="duplicate-df-test-slug",  # Intentionally duplicate slug
+            name="Duplicate DataFrame Dataset",
         )
-    except Exception:
-        # If no exception is raised, it might mean the slug wasn't actually duplicate
-        # This is acceptable for VCR testing
-        pass
+
+    error_msg = str(exc_info.value)
+    assert (
+        "Failed to create dataset" in error_msg
+        or "409" in error_msg
+        or "already exists" in error_msg.lower()
+    )
+    

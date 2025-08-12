@@ -1,6 +1,6 @@
 interactions:
 - request:
-    body: '{"slug": "test-df-dataset-1754926460", "name": "Test DataFrame Dataset",
+    body: '{"slug": "test-df-dataset", "name": "Test DataFrame Dataset",
       "description": "Dataset created from DataFrame for testing", "columns": [{"slug":
       "name", "name": "Name", "type": "string"}, {"slug": "price", "name": "Price",
       "type": "number"}, {"slug": "in-stock", "name": "In Stock", "type": "boolean"}],
@@ -25,7 +25,7 @@ interactions:
     uri: https://api-staging.traceloop.com/v2/datasets
   response:
     body:
-      string: '{"id":"cme79wjoj002e010569sqvzh8","slug":"test-df-dataset-1754926460","name":"Test
+      string: '{"id":"cme79wjoj002e010569sqvzh8","slug":"test-df-dataset","name":"Test
         DataFrame Dataset","description":"Dataset created from DataFrame for testing","columns":{"in-stock":{"slug":"in-stock","name":"In
         Stock","type":"boolean"},"name":{"slug":"name","name":"Name","type":"string"},"price":{"slug":"price","name":"Price","type":"number"}},"created_at":"2025-08-11T15:34:21.091571035Z","updated_at":"2025-08-11T15:34:21.091571087Z","rows":[{"id":"cme79wjoq002f0105rjlkbjg6","row_index":1,"values":{"in-stock":true,"name":"Laptop","price":999.99},"created_at":"2025-08-11T15:34:21.103449167Z","updated_at":"2025-08-11T15:34:21.103449167Z"},{"id":"cme79wjoq002g0105lelskagy","row_index":2,"values":{"in-stock":false,"name":"Mouse","price":29.99},"created_at":"2025-08-11T15:34:21.103449167Z","updated_at":"2025-08-11T15:34:21.103449167Z"}]}'
     headers:

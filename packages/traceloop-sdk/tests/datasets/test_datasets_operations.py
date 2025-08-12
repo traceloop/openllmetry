@@ -5,19 +5,14 @@ from traceloop.sdk.dataset.model import DatasetMetadata
 
 @pytest.mark.vcr
 def test_get_dataset_by_slug(datasets):
-    try:
-        dataset = datasets.get_by_slug("test-qa")
+    
+    dataset = datasets.get_by_slug("test-qa")
 
-        assert isinstance(dataset, Dataset)
-        # Use flexible assertions that work with recorded data
-        assert dataset.slug == "test-qa"
-        assert hasattr(dataset, "name")
-        assert hasattr(dataset, "description")
-        assert len(dataset.columns) >= 0  # Allow for any number of columns
-        assert len(dataset.rows) >= 0  # Allow for any number of rows
-    except Exception as e:
-        # Allow for expected API errors during recording
-        assert "Failed to get dataset" in str(e) or "404" in str(e) or "401" in str(e)
+    assert isinstance(dataset, Dataset)
+    assert dataset.slug == "test-qa"
+    assert hasattr(dataset, "name")
+    assert hasattr(dataset, "description")
+
 
 
 @pytest.mark.vcr

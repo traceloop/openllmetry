@@ -1,6 +1,6 @@
 interactions:
 - request:
-    body: '{"slug": "test-columns-1754938380", "name": "Test Columns Dataset", "description":
+    body: '{"slug": "test-columns-dataset", "name": "Test Columns Dataset", "description":
       "Dataset for testing column operations", "columns": [{"slug": "name", "name":
       "Name", "type": "string"}, {"slug": "price", "name": "Price", "type": "string"},
       {"slug": "instock", "name": "InStock", "type": "string"}, {"slug": "rating",
@@ -27,7 +27,7 @@ interactions:
     uri: https://api-staging.traceloop.com/v2/datasets
   response:
     body:
-      string: '{"id":"cme7h01j3003a0105krd8c5de","slug":"test-columns-1754938380","name":"Test
+      string: '{"id":"cme7h01j3003a0105krd8c5de","slug":"test-columns-dataset","name":"Test
         Columns Dataset","description":"Dataset for testing column operations","columns":{"instock":{"slug":"instock","name":"InStock","type":"string"},"name":{"slug":"name","name":"Name","type":"string"},"price":{"slug":"price","name":"Price","type":"string"},"rating":{"slug":"rating","name":"Rating","type":"string"}},"created_at":"2025-08-11T18:53:01.50360709Z","updated_at":"2025-08-11T18:53:01.503607146Z","rows":[{"id":"cme7h01jt003b0105w9q0str5","row_index":1,"values":{"instock":"true","name":"Product
         A","price":"99.99","rating":"4.5"},"created_at":"2025-08-11T18:53:01.542730767Z","updated_at":"2025-08-11T18:53:01.542730767Z"},{"id":"cme7h01jt003c0105mvd0d8fx","row_index":2,"values":{"instock":"false","name":"Product
         B","price":"149.99","rating":"3.8"},"created_at":"2025-08-11T18:53:01.542730767Z","updated_at":"2025-08-11T18:53:01.542730767Z"},{"id":"cme7h01jt003d0105atpespe6","row_index":3,"values":{"instock":"true","name":"Product

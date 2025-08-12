@@ -15,7 +15,7 @@ interactions:
       X-Traceloop-SDK-Version:
       - 1.0.0
     method: DELETE
-    uri: https://api-staging.traceloop.com/v2/datasets/test-csv-dataset-1754936890
+    uri: https://api-staging.traceloop.com/v2/datasets/test-csv-dataset
   response:
     body:
       string: ''
