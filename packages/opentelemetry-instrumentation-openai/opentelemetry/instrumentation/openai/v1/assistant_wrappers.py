@@ -183,7 +183,8 @@ def messages_list_wrapper(tracer, wrapped, instance, args, kwargs):
             f"{SpanAttributes.LLM_PROMPTS}.{prompt_index}.content",
             run["instructions"],
         )
-        emit_event(MessageEvent(content=run["instructions"], role="system"))
+        if should_emit_events():
+            emit_event(MessageEvent(content=run["instructions"], role="system"))
         prompt_index += 1
 
         completion_index = 0
