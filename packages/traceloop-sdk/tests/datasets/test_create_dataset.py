@@ -40,7 +40,6 @@ Mouse,29.99,false"""
         assert len(dataset.columns) >= 2  # At least Name and Price columns
         assert len(dataset.rows) >= 0  # Allow for any number of rows
 
-    
         os.unlink(csv_path)
 
 
@@ -54,7 +53,6 @@ def test_create_dataset_from_dataframe(datasets):
             "In Stock": [True, False],
         }
     )
-
 
     unique_slug = "test-df-dataset"
 
@@ -80,8 +78,6 @@ def test_create_dataset_from_dataframe(datasets):
     assert (
         len(name_columns) >= 1 or len(price_columns) >= 1
     )  # At least one expected column
-
-
 
 
 @pytest.mark.vcr
@@ -141,4 +137,3 @@ def test_create_dataset_from_dataframe_with_duplicate_slug(datasets):
         or "409" in error_msg
         or "already exists" in error_msg.lower()
     )
-    

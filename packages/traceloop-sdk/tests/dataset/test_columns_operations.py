@@ -6,7 +6,7 @@ import os
 @pytest.mark.vcr
 def test_create_dataset_with_columns(datasets):
     """Test creating a dataset with different column types using real API calls"""
-    
+
     unique_slug = "test-columns-dataset"
 
     csv_content = """Name,Price,InStock,Rating
@@ -37,13 +37,11 @@ Product C,79.99,true,4.2"""
 
     os.unlink(csv_path)
 
-   
-
 
 @pytest.mark.vcr
 def test_get_dataset_with_columns(datasets):
     """Test retrieving a dataset and checking its columns"""
-  
+
     dataset = datasets.get_by_slug("test-qa")
 
     assert dataset is not None
@@ -55,7 +53,6 @@ def test_get_dataset_with_columns(datasets):
         assert hasattr(column, "type")
         assert hasattr(column, "id") or hasattr(column, "slug")
 
-  
 
 @pytest.mark.vcr
 def test_dataset_operations_errors(datasets):

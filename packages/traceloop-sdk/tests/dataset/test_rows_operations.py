@@ -1,13 +1,12 @@
 import pytest
 import tempfile
 import os
-import time
 
 
 @pytest.mark.vcr
 def test_create_dataset_and_add_rows(datasets):
     """Test creating a dataset and adding rows using real API calls"""
-    
+
     unique_slug = "test-rows"
 
     csv_content = """Name,Age,Active
@@ -20,7 +19,6 @@ Bob,35,true"""
         f.flush()
         csv_path = f.name
 
-        
         dataset = datasets.from_csv(
             file_path=csv_path,
             slug=unique_slug,
@@ -36,7 +34,6 @@ Bob,35,true"""
         os.unlink(csv_path)
 
 
-
 @pytest.mark.vcr
 def test_add_rows(datasets):
     """Test the add_rows method that makes POST to /datasets/{slug}/rows"""
@@ -50,6 +47,7 @@ Jane,30,false"""
 
     with tempfile.NamedTemporaryFile(mode="w", suffix=".csv", delete=False) as f:
         f.write(csv_content)
+        f.flush()
         csv_path = f.name
 
         dataset = datasets.from_csv(
@@ -70,7 +68,6 @@ Jane,30,false"""
         assert dataset.rows is not None
         assert len(dataset.rows) == initial_row_count + 1
         assert any(row.values["name"] == "Alice" for row in dataset.rows)
-
 
     os.unlink(csv_path)
 

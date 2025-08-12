@@ -5,7 +5,6 @@ from traceloop.sdk.dataset.model import DatasetMetadata
 
 @pytest.mark.vcr
 def test_get_dataset_by_slug(datasets):
-    
     dataset = datasets.get_by_slug("test-qa")
 
     assert isinstance(dataset, Dataset)
@@ -14,25 +13,18 @@ def test_get_dataset_by_slug(datasets):
     assert hasattr(dataset, "description")
 
 
-
 @pytest.mark.vcr
 def test_get_all_datasets(datasets):
-    try:
-        datasets_list = datasets.get_all()
+    datasets_list = datasets.get_all()
 
-        assert isinstance(datasets_list, list)
-        # Allow for flexible dataset count since this will record real API data
-        assert len(datasets_list) >= 0
+    assert isinstance(datasets_list, list)
+    assert len(datasets_list) >= 0
 
-        # Check that all items are DatasetMetadata instances if any exist
-        for dataset in datasets_list:
-            assert isinstance(dataset, DatasetMetadata)
-            assert hasattr(dataset, "id")
-            assert hasattr(dataset, "slug")
-            assert hasattr(dataset, "name")
-    except Exception as e:
-        # Allow for expected API errors during recording
-        assert "Failed to get datasets" in str(e) or "401" in str(e)
+    for dataset in datasets_list:
+        assert isinstance(dataset, DatasetMetadata)
+        assert hasattr(dataset, "id")
+        assert hasattr(dataset, "slug")
+        assert hasattr(dataset, "name")
 
 
 @pytest.mark.vcr
