@@ -401,10 +401,18 @@ class GroqInstrumentor(BaseInstrumentor):
         tracer_provider = kwargs.get("tracer_provider")
         tracer = get_tracer(__name__, __version__, tracer_provider)
 
-        # meter and counters are inited here
         meter_provider = kwargs.get("meter_provider")
+
+        if meter_provider is None:
+            try:
+                from opentelemetry.semconv_ai import apply_genai_bucket_configuration
+                apply_genai_bucket_configuration()
+            except ImportError:
+                pass
+
         meter = get_meter(__name__, __version__, meter_provider)
 
+        # meter and counters are inited here
         if is_metrics_enabled():
             (
                 token_histogram,

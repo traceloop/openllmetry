@@ -2361,12 +2361,14 @@ name = "opentelemetry-semantic-conventions-ai"
 version = "0.4.11"
 description = "OpenTelemetry Semantic Conventions Extension for Large Language Models"
 optional = false
-python-versions = "<4,>=3.9"
+python-versions = ">=3.9,<4"
 groups = ["main"]
-files = [
-    {file = "opentelemetry_semantic_conventions_ai-0.4.11-py3-none-any.whl", hash = "sha256:9b07da1e66bed1746b61bb5d49d8fba9ae693625ec4ea94ddab390760505bf4b"},
-    {file = "opentelemetry_semantic_conventions_ai-0.4.11.tar.gz", hash = "sha256:bc84b71c66a01a5836a28104e691c5524f4f677fc90b40a4e6fbc2ec3e250610"},
-]
+files = []
+develop = true
+
+[package.source]
+type = "directory"
+url = "../opentelemetry-semantic-conventions-ai"
 
 [[package]]
 name = "opentelemetry-util-http"
@@ -3670,4 +3672,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10,<4"
-content-hash = "69ff992f5099f0a95011942d96d5ccb72c7c4dc4107d7a1475de10b5fd64a3f0"
+content-hash = "cd2345602579bd3e833e6bd7b27a3f28bc93708f16056e18e3ccecd4cd790018"

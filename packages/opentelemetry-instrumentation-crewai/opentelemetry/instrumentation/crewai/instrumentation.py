@@ -25,6 +25,14 @@ class CrewAIInstrumentor(BaseInstrumentor):
         tracer = get_tracer(__name__, __version__, tracer_provider)
 
         meter_provider = kwargs.get("meter_provider")
+
+        if meter_provider is None:
+            try:
+                from opentelemetry.semconv_ai import apply_genai_bucket_configuration
+                apply_genai_bucket_configuration()
+            except ImportError:
+                pass
+
         meter = get_meter(__name__, __version__, meter_provider)
 
         if is_metrics_enabled():

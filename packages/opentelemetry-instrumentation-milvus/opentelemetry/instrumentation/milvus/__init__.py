@@ -87,6 +87,14 @@ class MilvusInstrumentor(BaseInstrumentor):
     def _instrument(self, **kwargs):
         if is_metrics_enabled():
             meter_provider = kwargs.get("meter_provider")
+
+            if meter_provider is None:
+                try:
+                    from opentelemetry.semconv_ai import apply_genai_bucket_configuration
+                    apply_genai_bucket_configuration()
+                except ImportError:
+                    pass
+
             meter = get_meter(__name__, __version__, meter_provider)
 
             query_duration_metric = meter.create_histogram(
