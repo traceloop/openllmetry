@@ -154,7 +154,11 @@ class Traceloop:
             span_postprocess_callback=span_postprocess_callback,
         )
 
-        if not is_metrics_enabled() or not metrics_exporter and exporter:
+        metrics_disabled_by_config = not is_metrics_enabled()
+        has_custom_spans_pipeline = processor or exporter
+        custom_trace_without_custom_metrics = has_custom_spans_pipeline and not metrics_exporter
+
+        if metrics_disabled_by_config or custom_trace_without_custom_metrics:
             print(Fore.YELLOW + "Metrics are disabled" + Fore.RESET)
         else:
             metrics_endpoint = os.getenv("TRACELOOP_METRICS_ENDPOINT") or api_endpoint
