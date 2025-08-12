@@ -336,7 +336,8 @@ def create_customer_support_dataset(slug: str) -> Optional[Dataset]:
                 data.append(
                     {
                         "customer_query": query,
-                        "ai_response": "I apologize, but I'm unable to process your request at the moment. Please contact our support team directly.",
+                        "ai_response": """I apologize, but I'm unable to process your request at the moment.
+                            Please contact our support team directly.""",
                         "timestamp": datetime.now().isoformat(),
                         "query_category": "general_support",
                         "resolved": False,
@@ -388,7 +389,9 @@ def create_translation_dataset(slug: str) -> Optional[Dataset]:
                         messages=[
                             {
                                 "role": "system",
-                                "content": f"You are a professional translator. Translate the following English text to {lang}. Provide only the translation.",
+                                "content": f"""You are a professional translator.
+                                Translate the following English text to {lang}.
+                                Provide only the translation.""",
                             },
                             {"role": "user", "content": phrase},
                         ],
