@@ -187,7 +187,7 @@ async def test_langgraph_double_ainvoke(instrument_legacy, span_exporter):
 
 @pytest.mark.vcr
 def test_langgraph_github_issue_3203_exact_reproduction(
-    instrument_legacy, span_exporter
+    instrument_legacy, span_exporter, tracer_provider
 ):
     """Test that exactly reproduces the GitHub issue #3203 with the exact same code structure."""
     from opentelemetry import trace
@@ -195,6 +195,7 @@ def test_langgraph_github_issue_3203_exact_reproduction(
     import httpx
     from langgraph.graph import END, START, StateGraph
 
+    trace.set_tracer_provider(tracer_provider)
     tracer = trace.get_tracer(__name__)
 
     class TestAgentState(TypedDict):
@@ -339,5 +340,3 @@ def test_langgraph_github_issue_3203_exact_reproduction(
     assert http_call_task_span.parent.span_id == workflow_span.context.span_id
     assert otel_span_task_span.parent.span_id == workflow_span.context.span_id
     assert workflow_span.parent.span_id == root_span.context.span_id
-
-    return spans
