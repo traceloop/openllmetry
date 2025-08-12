@@ -1,13 +1,13 @@
 from typing import Dict, Any, TYPE_CHECKING
 
-from .base import BaseDataset
+from .base import BaseDatasetEntity
 from traceloop.sdk.client.http import HTTPClient
 
 if TYPE_CHECKING:
     from .dataset import Dataset
 
 
-class Row(BaseDataset):
+class Row(BaseDatasetEntity):
     id: str
     values: Dict[str, Any]
     _dataset: "Dataset"

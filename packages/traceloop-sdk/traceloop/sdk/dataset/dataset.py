@@ -13,11 +13,11 @@ from traceloop.sdk.dataset.model import (
 )
 from .column import Column
 from .row import Row
-from .base import BaseDataset
+from .base import BaseDatasetEntity
 from traceloop.sdk.client.http import HTTPClient
 
 
-class Dataset(BaseDataset):
+class Dataset(BaseDatasetEntity):
     """
     Dataset class dataset API communication
     """

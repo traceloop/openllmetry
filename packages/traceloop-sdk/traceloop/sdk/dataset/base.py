@@ -3,7 +3,7 @@ from datetime import datetime
 from traceloop.sdk.client.http import HTTPClient
 
 
-class BaseDataset(ABC):
+class BaseDatasetEntity(ABC):
     """
     Abstract base class for dataset-related objects with common attributes
     """

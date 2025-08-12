@@ -1,14 +1,14 @@
 from typing import Optional, TYPE_CHECKING
 
 from .model import ColumnType
-from .base import BaseDataset
+from .base import BaseDatasetEntity
 from traceloop.sdk.client.http import HTTPClient
 
 if TYPE_CHECKING:
     from .dataset import Dataset
 
 
-class Column(BaseDataset):
+class Column(BaseDatasetEntity):
     slug: str
     name: str
     type: ColumnType
