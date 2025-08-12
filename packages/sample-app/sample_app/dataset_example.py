@@ -5,9 +5,11 @@ Example script demonstrating the Traceloop Dataset functionality
 import os
 import tempfile
 from typing import Optional
+from datetime import datetime
 from traceloop.sdk import Traceloop
 from traceloop.sdk.dataset import Dataset, ColumnType, Column, Row
 import pandas as pd
+import openai
 
 
 # Initialize Traceloop
@@ -283,35 +285,223 @@ def delete_dataset_example(slug: str):
         print(f"Error deleting dataset: {e}")
 
 
+def create_customer_support_dataset(slug: str) -> Optional[Dataset]:
+    """Create a dataset with real OpenAI customer support interactions"""
+    print("\n=== Customer Support Dataset with OpenAI ===")
+
+    try:
+        # Sample customer queries
+        queries = [
+            "How do I reset my password?",
+            "My order hasn't arrived yet, what should I do?",
+            "Can I return this item after 30 days?",
+            "Do you offer international shipping?",
+            "What's your refund policy?",
+        ]
+
+        data = []
+        for query in queries:
+            try:
+                # Make OpenAI call for customer support response
+                client_openai = openai.OpenAI()
+                response = client_openai.chat.completions.create(
+                    model="gpt-4o-mini",
+                    messages=[
+                        {
+                            "role": "system",
+                            "content": "You are a helpful customer support agent for an e-commerce company.",
+                        },
+                        {"role": "user", "content": query},
+                    ],
+                    max_tokens=150,
+                    temperature=0.7,
+                )
+
+                ai_response = response.choices[0].message.content
+
+                data.append(
+                    {
+                        "customer_query": query,
+                        "ai_response": ai_response,
+                        "timestamp": datetime.now().isoformat(),
+                        "query_category": "general_support",
+                        "resolved": True,
+                    }
+                )
+                print(f"Generated response for: {query[:50]}...")
+
+            except Exception as e:
+                print(f"Error generating response for query '{query}': {e}")
+                # Add fallback data
+                data.append(
+                    {
+                        "customer_query": query,
+                        "ai_response": "I apologize, but I'm unable to process your request at the moment. Please contact our support team directly.",
+                        "timestamp": datetime.now().isoformat(),
+                        "query_category": "general_support",
+                        "resolved": False,
+                    }
+                )
+
+        # Create DataFrame and dataset
+        df = pd.DataFrame(data)
+
+        dataset = client.datasets.from_dataframe(
+            df=df,
+            slug=slug,
+            name="Customer Support Interactions",
+            description="Dataset of customer queries and AI-generated support responses",
+        )
+
+        print(f"Created customer support dataset with {len(data)} interactions")
+        return dataset
+
+    except Exception as e:
+        print(f"Error creating customer support dataset: {e}")
+        return None
+
+
+def create_translation_dataset(slug: str) -> Optional[Dataset]:
+    """Create a dataset with OpenAI translation examples"""
+    print("\n=== Translation Dataset with OpenAI ===")
+
+    try:
+        # Sample phrases to translate
+        phrases = [
+            "Hello, how are you today?",
+            "Thank you for your help.",
+            "Where is the nearest restaurant?",
+            "I would like to book a room.",
+            "What time does the store close?",
+        ]
+
+        languages = ["Spanish", "French", "German", "Italian"]
+
+        data = []
+        for phrase in phrases:
+            for lang in languages:
+                try:
+                    # Use OpenAI for translation
+                    client_openai = openai.OpenAI()
+                    response = client_openai.chat.completions.create(
+                        model="gpt-4o-mini",
+                        messages=[
+                            {
+                                "role": "system",
+                                "content": f"You are a professional translator. Translate the following English text to {lang}. Provide only the translation.",
+                            },
+                            {"role": "user", "content": phrase},
+                        ],
+                        max_tokens=100,
+                        temperature=0.3,
+                    )
+
+                    translation = response.choices[0].message.content.strip()
+
+                    data.append(
+                        {
+                            "source_text": phrase,
+                            "target_language": lang,
+                            "translation": translation,
+                            "timestamp": datetime.now().isoformat(),
+                            "confidence_score": 0.95,  # Mock confidence score
+                        }
+                    )
+                    print(f"Translated '{phrase}' to {lang}")
+
+                except Exception as e:
+                    print(f"Error translating '{phrase}' to {lang}: {e}")
+                    data.append(
+                        {
+                            "source_text": phrase,
+                            "target_language": lang,
+                            "translation": f"[Translation error for {lang}]",
+                            "timestamp": datetime.now().isoformat(),
+                            "confidence_score": 0.0,
+                        }
+                    )
+
+        # Create DataFrame and dataset
+        df = pd.DataFrame(data)
+
+        dataset = client.datasets.from_dataframe(
+            df=df,
+            slug=slug,
+            name="Translation Results",
+            description="Dataset of text translations generated using AI",
+        )
+
+        print(f"Created translation dataset with {len(data)} translations")
+        return dataset
+
+    except Exception as e:
+        print(f"Error creating translation dataset: {e}")
+        return None
+
+
 def main():
     print("Traceloop Dataset Examples")
     print("=" * 50)
 
     ds1 = dataset_from_csv_example("sdk-example-1")
-
-    column = add_column_example(ds1)
-    update_column_example(ds1, column)
-    published_version = publish_dataset_example(ds1)
-    delete_row_example(ds1)
-    delete_column_example(ds1, column)
-    get_dataset_by_slug_example(slug="sdk-example-1")
-    get_dataset_by_version_example(slug="sdk-example-1", version=published_version)
-
-    delete_dataset_example(ds1.slug)
+    if ds1:
+        column = add_column_example(ds1)
+        if column:
+            update_column_example(ds1, column)
+        published_version = publish_dataset_example(ds1)
+        delete_row_example(ds1)
+        if column:
+            delete_column_example(ds1, column)
+        get_dataset_by_slug_example(slug="sdk-example-1")
+        if published_version:
+            get_dataset_by_version_example(
+                slug="sdk-example-1", version=published_version
+            )
+        delete_dataset_example(ds1.slug)
 
     ds2 = dataset_from_dataframe_example("sdk-example-2")
+    if ds2:
+        column = add_column_example(ds2)
+        if column:
+            update_column_example(ds2, column)
+        add_row_example(ds2)
+        update_row_example(ds2)
+        if column:
+            delete_column_example(ds2, column)
+        published_version = publish_dataset_example(ds2)
+        if published_version:
+            get_dataset_by_version_example(
+                slug="sdk-example-2", version=published_version
+            )
+        delete_dataset_example(ds2.slug)
 
-    column = add_column_example(ds2)
-    update_column_example(ds2, column)
-    add_row_example(ds2)
-    update_row_example(ds2)
-    delete_column_example(ds2, column)
-    published_version = publish_dataset_example(ds2)
-    get_dataset_by_version_example(slug="sdk-example-2", version=published_version)
-    delete_dataset_example(ds2.slug)
+    # OpenAI examples
+    print("\n" + "=" * 50)
+    print("OpenAI Integration Examples")
+    print("=" * 50)
+
+    # Customer Support Dataset
+    support_ds = create_customer_support_dataset("openai-support-example")
+    if support_ds:
+        published_version = publish_dataset_example(support_ds)
+        if published_version:
+            get_dataset_by_version_example(
+                slug="openai-support-example", version=published_version
+            )
+        delete_dataset_example(support_ds.slug)
+
+    # Translation Dataset
+    translation_ds = create_translation_dataset("openai-translation-example")
+    if translation_ds:
+        published_version = publish_dataset_example(translation_ds)
+        if published_version:
+            get_dataset_by_version_example(
+                slug="openai-translation-example", version=published_version
+            )
+        delete_dataset_example(translation_ds.slug)
 
     print("\n" + "=" * 50)
-    print("Examples completed!")
+    print("All examples completed!")
 
 
 if __name__ == "__main__":
