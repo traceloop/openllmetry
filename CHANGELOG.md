@@ -1,3 +1,15 @@
+## v0.45.0 (2025-08-12)
+
+### Feat
+
+- **datasets**: add dataset and datasets functionality (#3247)
+
+### Fix
+
+- **anthropic**: support with_raw_response wrapper for span generation (#3250)
+- **langchain**: fix nesting of langgraph spans (#3206)
+- **langchain**: Add "dont_throw" to "on_llm_end" and remove blank file (#3232)
+
 ## v0.44.3 (2025-08-12)
 
 ### Fix
