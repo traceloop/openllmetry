@@ -1,16 +1,16 @@
 from typing import Dict, Any, TYPE_CHECKING
 
+from .base import BaseDataset
 from traceloop.sdk.client.http import HTTPClient
 
 if TYPE_CHECKING:
     from .dataset import Dataset
 
 
-class Row:
+class Row(BaseDataset):
     id: str
     values: Dict[str, Any]
     _dataset: "Dataset"
-    _http: HTTPClient
 
     def __init__(
         self,
@@ -19,7 +19,7 @@ class Row:
         id: str,
         values: Dict[str, Any],
     ):
-        self._http = http
+        super().__init__(http)
         self._dataset = dataset
         self.id = id
         self.values = values

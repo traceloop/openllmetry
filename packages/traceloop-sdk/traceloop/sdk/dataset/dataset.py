@@ -1,4 +1,3 @@
-from datetime import datetime
 from typing import List, Optional, Dict
 from pydantic import Field
 
@@ -14,10 +13,11 @@ from traceloop.sdk.dataset.model import (
 )
 from .column import Column
 from .row import Row
+from .base import BaseDataset
 from traceloop.sdk.client.http import HTTPClient
 
 
-class Dataset:
+class Dataset(BaseDataset):
     """
     Dataset class dataset API communication
     """
@@ -29,12 +29,9 @@ class Dataset:
     columns: List[Column] = Field(default_factory=list)
     rows: Optional[List[Row]] = Field(default_factory=list)
     last_version: Optional[str] = None
-    created_at: datetime
-    updated_at: datetime
-    _http: HTTPClient
 
     def __init__(self, http: HTTPClient):
-        self._http = http
+        super().__init__(http)
         self.columns = []
         self.rows = []
 
@@ -85,7 +82,6 @@ class Dataset:
             slug=col_response.slug,
             name=col_response.name,
             type=col_response.type,
-            dataset_id=self.id,
         )
         self.columns.append(column)
         return column
@@ -99,7 +95,6 @@ class Dataset:
                 slug=column_slug,
                 name=column_def.name,
                 type=column_def.type,
-                dataset_id=self.id,
             )
             self.columns.append(column)
 
@@ -110,7 +105,6 @@ class Dataset:
                 dataset=self,
                 id=row_obj.id,
                 values=row_obj.values,
-                dataset_id=self.id,
             )
             if self.rows:
                 self.rows.append(row)

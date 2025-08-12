@@ -1,17 +1,17 @@
 from typing import Optional, TYPE_CHECKING
 
 from .model import ColumnType
+from .base import BaseDataset
 from traceloop.sdk.client.http import HTTPClient
 
 if TYPE_CHECKING:
     from .dataset import Dataset
 
 
-class Column:
+class Column(BaseDataset):
     slug: str
     name: str
     type: ColumnType
-    _http: HTTPClient
     _dataset: "Dataset"
 
     def __init__(
@@ -22,7 +22,7 @@ class Column:
         name: str,
         type: ColumnType,
     ):
-        self._http = http
+        super().__init__(http)
         self._dataset = dataset
         self.slug = slug
         self.name = name
