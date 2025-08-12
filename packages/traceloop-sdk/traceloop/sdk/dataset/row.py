@@ -9,7 +9,6 @@ if TYPE_CHECKING:
 class Row:
     id: str
     values: Dict[str, Any]
-    dataset_id: str
     _dataset: "Dataset"
     _http: HTTPClient
 
@@ -19,13 +18,11 @@ class Row:
         dataset: "Dataset",
         id: str,
         values: Dict[str, Any],
-        dataset_id: str,
     ):
         self._http = http
         self._dataset = dataset
         self.id = id
         self.values = values
-        self.dataset_id = dataset_id
 
     def delete(self) -> None:
         """Remove this row from dataset"""

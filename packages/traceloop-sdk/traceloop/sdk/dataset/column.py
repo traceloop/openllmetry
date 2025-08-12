@@ -11,9 +11,8 @@ class Column:
     slug: str
     name: str
     type: ColumnType
-    dataset_id: Optional[str] = None
     _http: HTTPClient
-    _client: "Dataset"
+    _dataset: "Dataset"
 
     def __init__(
         self,
@@ -22,29 +21,27 @@ class Column:
         slug: str,
         name: str,
         type: ColumnType,
-        dataset_id: str,
     ):
         self._http = http
-        self._client = dataset
+        self._dataset = dataset
         self.slug = slug
         self.name = name
         self.type = type
-        self.dataset_id = dataset_id
 
     def delete(self) -> None:
         """Remove this column from dataset"""
-        if self._client is None:
+        if self._dataset is None:
             raise ValueError("Column must be associated with a dataset to delete")
 
-        result = self._http.delete(f"datasets/{self._client.slug}/columns/{self.slug}")
+        result = self._http.delete(f"datasets/{self._dataset.slug}/columns/{self.slug}")
         if result is None:
             raise Exception(f"Failed to delete column {self.slug}")
 
-        self._client.columns.remove(self)
+        self._dataset.columns.remove(self)
 
         # Update all rows by removing this column's values
-        if self._client.rows:
-            for row in self._client.rows:
+        if self._dataset.rows:
+            for row in self._dataset.rows:
                 if self.slug in row.values:
                     del row.values[self.slug]
 
@@ -61,7 +58,7 @@ class Column:
 
         if update_data:
             result = self._http.put(
-                f"datasets/{self._client.slug}/columns/{self.slug}", update_data
+                f"datasets/{self._dataset.slug}/columns/{self.slug}", update_data
             )
             if result is None:
                 raise Exception(f"Failed to update column {self.slug}")
