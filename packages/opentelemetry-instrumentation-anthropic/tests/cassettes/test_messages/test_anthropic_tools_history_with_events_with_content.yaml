@@ -1,0 +1,120 @@
+interactions:
+- request:
+    body: '{"max_tokens": 1024, "messages": [{"role": "user", "content": "What is
+      the weather and current time in San Francisco?"}, {"role": "assistant", "content":
+      [{"type": "text", "text": "I''ll help you get the weather and current time in
+      San Francisco."}, {"id": "call_1", "type": "tool_use", "name": "get_weather",
+      "input": {"location": "San Francisco, CA"}}]}, {"role": "user", "content": [{"type":
+      "tool_result", "content": "Sunny and 65 degrees Fahrenheit", "tool_use_id":
+      "call_1"}]}], "model": "claude-3-5-haiku-20241022", "tools": [{"name": "get_weather",
+      "description": "Get the current weather in a given location", "input_schema":
+      {"type": "object", "properties": {"location": {"type": "string", "description":
+      "The city and state, e.g. San Francisco, CA"}, "unit": {"type": "string", "enum":
+      ["celsius", "fahrenheit"], "description": "The unit of temperature, either ''celsius''
+      or ''fahrenheit''"}}, "required": ["location"]}}, {"name": "get_time", "description":
+      "Get the current time in a given time zone", "input_schema": {"type": "object",
+      "properties": {"timezone": {"type": "string", "description": "The IANA time
+      zone name, e.g. America/Los_Angeles"}}, "required": ["timezone"]}}]}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      anthropic-version:
+      - '2023-06-01'
+      connection:
+      - keep-alive
+      content-length:
+      - '1189'
+      content-type:
+      - application/json
+      host:
+      - api.anthropic.com
+      user-agent:
+      - Anthropic/Python 0.49.0
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 0.49.0
+      x-stainless-read-timeout:
+      - '600'
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.9.6
+      x-stainless-timeout:
+      - '600'
+    method: POST
+    uri: https://api.anthropic.com/v1/messages
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAAwAAAP//ZFDbSgMxEP2Xec7idnslb6UVxdqFKkitSAjZYRubTWomKdVl/12ypQ/F
+        xzPnNjMt6Ao4NFSLfDDBh8W0XNnt/n25XSwfN+f1uozAIPwcMamQSNYIDLwzaSCJNAVpAzBoXIUG
+        OCgjY4XZMBtne6kPMSvyYjTIiwIYKGcD2gD8o71mBueMiJRC+00SjiIfDBdv8jRffb2W05eduy92
+        5ei8eQIGVjbJV2MQQTe9zx5jAN5Cwr/OJnreoNdK3j07EnNbo0GCrvtkQMEdhUdJzt629wThd0Sr
+        ELiNxjCI/b28vXSI4A5oCfh4MmOgpNqjUB5l0M6KW0V+5T3K6j/nYrjJmzEg9CetUASNHjikt1bS
+        V9B1fwAAAP//AwCvh17XpAEAAA==
+    headers:
+      CF-RAY:
+      - 966d97b4ce4786d0-LHR
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 29 Jul 2025 15:19:06 GMT
+      Server:
+      - cloudflare
+      Transfer-Encoding:
+      - chunked
+      X-Robots-Tag:
+      - none
+      anthropic-organization-id:
+      - 04aa8588-6567-40cb-9042-a54b20ebaf4f
+      anthropic-ratelimit-input-tokens-limit:
+      - '400000'
+      anthropic-ratelimit-input-tokens-remaining:
+      - '400000'
+      anthropic-ratelimit-input-tokens-reset:
+      - '2025-07-29T15:19:06Z'
+      anthropic-ratelimit-output-tokens-limit:
+      - '80000'
+      anthropic-ratelimit-output-tokens-remaining:
+      - '80000'
+      anthropic-ratelimit-output-tokens-reset:
+      - '2025-07-29T15:19:06Z'
+      anthropic-ratelimit-requests-limit:
+      - '4000'
+      anthropic-ratelimit-requests-remaining:
+      - '3999'
+      anthropic-ratelimit-requests-reset:
+      - '2025-07-29T15:19:05Z'
+      anthropic-ratelimit-tokens-limit:
+      - '480000'
+      anthropic-ratelimit-tokens-remaining:
+      - '480000'
+      anthropic-ratelimit-tokens-reset:
+      - '2025-07-29T15:19:06Z'
+      cf-cache-status:
+      - DYNAMIC
+      request-id:
+      - req_011CRbXxLLnRT7FYiRdsa3YF
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      via:
+      - 1.1 google
+    status:
+      code: 200
+      message: OK
+version: 1

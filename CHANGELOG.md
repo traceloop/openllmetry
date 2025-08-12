@@ -1,3 +1,49 @@
+## v0.44.3 (2025-08-12)
+
+### Fix
+
+- **sdk**: avoid initializing metrics exporter on custom tracing config (#3249)
+- **openai**: propagate span IDs properly to events (#3243)
+
+## v0.44.2 (2025-08-11)
+
+### Fix
+
+- **openai**: dynamically import types for 1.99 (#3244)
+- **langchain**: Added new method for fetching model name from association metadata (#3237)
+
+## v0.44.1 (2025-08-04)
+
+### Fix
+
+- **mcp**: do not override meta pydantic types (#3179)
+
+## v0.44.0 (2025-08-03)
+
+### Feat
+
+- **sdk**: support multiple span processors (#3207)
+- **semantic-conentions-ai**: add LLMVendor enum to semantic conventions (#3170)
+
+### Fix
+
+- **langchain**: spans dictionary memory leak (#3216)
+- **openai-agents**: use framework's context to infer trace (#3215)
+- **sdk**: respect truncation otel environment variable (#3212)
+- **anthropic**: async stream manager (#3220)
+- **langchain**: populate metadata as span attributes in batch operations (#3218)
+- **anthropic**: various fixes around tools parsing (#3204)
+- **qdrant**: fix qdrant-client auto instrumentation condition (#3208)
+- **instrumentation**: remove param `enrich_token_usage` and simplify token calculation (#3205)
+- **langchain**: ensure llm spans are created for sync cases (#3201)
+- **openai**: support for openai non-consumed streams (#3155)
+
+## v0.43.1 (2025-07-23)
+
+### Fix
+
+- **langchain**: added vendors to llm calls (#3165)
+
 ## v0.43.0 (2025-07-22)
 
 ### Feat

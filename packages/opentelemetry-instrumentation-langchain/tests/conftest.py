@@ -76,7 +76,7 @@ def fixture_meter_provider(reader):
 @pytest.fixture(scope="session")
 def instrument_legacy(reader, tracer_provider, meter_provider):
     openai_instrumentor = OpenAIInstrumentor()
-    openai_instrumentor.instrument(tracer_provider=tracer_provider)
+    openai_instrumentor.instrument(tracer_provider=tracer_provider, meter_provider=meter_provider)
 
     langchain_instrumentor = LangchainInstrumentor()
     langchain_instrumentor.instrument(
@@ -151,5 +151,4 @@ def vcr_config():
     return {
         "filter_headers": ["authorization", "x-api-key"],
         "filter_body": ["api_key"],
-        "ignore_hosts": ["api.hub.langchain.com", "api.smith.langchain.com"],
     }

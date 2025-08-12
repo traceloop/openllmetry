@@ -113,18 +113,43 @@ async def aset_input_attributes(span, kwargs):
                 )
             for i, message in enumerate(kwargs.get("messages")):
                 prompt_index = i + (1 if has_system_message else 0)
+                content = message.get("content")
+                tool_use_blocks = []
+                other_blocks = []
+                if isinstance(content, list):
+                    for block in content:
+                        if dict(block).get("type") == "tool_use":
+                            tool_use_blocks.append(dict(block))
+                        else:
+                            other_blocks.append(block)
+                    content = other_blocks
                 set_span_attribute(
                     span,
                     f"{SpanAttributes.LLM_PROMPTS}.{prompt_index}.content",
-                    await _dump_content(
-                        message_index=i, span=span, content=message.get("content")
-                    ),
+                    await _dump_content(message_index=i, span=span, content=content),
                 )
                 set_span_attribute(
                     span,
                     f"{SpanAttributes.LLM_PROMPTS}.{prompt_index}.role",
                     message.get("role"),
                 )
+                if tool_use_blocks:
+                    for tool_num, tool_use_block in enumerate(tool_use_blocks):
+                        set_span_attribute(
+                            span,
+                            f"{SpanAttributes.LLM_PROMPTS}.{prompt_index}.tool_calls.{tool_num}.id",
+                            tool_use_block.get("id"),
+                        )
+                        set_span_attribute(
+                            span,
+                            f"{SpanAttributes.LLM_PROMPTS}.{prompt_index}.tool_calls.{tool_num}.name",
+                            tool_use_block.get("name"),
+                        )
+                        set_span_attribute(
+                            span,
+                            f"{SpanAttributes.LLM_PROMPTS}.{prompt_index}.tool_calls.{tool_num}.arguments",
+                            json.dumps(tool_use_block.get("input")),
+                        )
 
         if kwargs.get("tools") is not None:
             for i, tool in enumerate(kwargs.get("tools")):
@@ -160,7 +185,7 @@ def _set_span_completions(span, response):
             content_block_type = content.type
             # usually, Antrhopic responds with just one text block,
             # but the API allows for multiple text blocks, so concatenate them
-            if content_block_type == "text":
+            if content_block_type == "text" and hasattr(content, "text"):
                 text += content.text
             elif content_block_type == "thinking":
                 content = dict(content)
@@ -242,15 +267,32 @@ def set_streaming_response_attributes(span, complete_response_events):
     if not span.is_recording() or not complete_response_events:
         return
 
-    try:
-        for event in complete_response_events:
-            index = event.get("index")
-            prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{index}"
+    index = 0
+    for event in complete_response_events:
+        prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{index}"
+        set_span_attribute(span, f"{prefix}.finish_reason", event.get("finish_reason"))
+        role = "thinking" if event.get("type") == "thinking" else "assistant"
+        # Thinking is added as a separate completion, so we need to increment the index
+        if event.get("type") == "thinking":
+            index += 1
+        set_span_attribute(span, f"{prefix}.role", role)
+        if event.get("type") == "tool_use":
             set_span_attribute(
-                span, f"{prefix}.finish_reason", event.get("finish_reason")
+                span,
+                f"{prefix}.tool_calls.0.id",
+                event.get("id"),
             )
-            role = "thinking" if event.get("type") == "thinking" else "assistant"
-            set_span_attribute(span, f"{prefix}.role", role)
+            set_span_attribute(
+                span,
+                f"{prefix}.tool_calls.0.name",
+                event.get("name"),
+            )
+            tool_arguments = event.get("input")
+            if tool_arguments is not None:
+                set_span_attribute(
+                    span,
+                    f"{prefix}.tool_calls.0.arguments",
+                    tool_arguments,
+                )
+        else:
             set_span_attribute(span, f"{prefix}.content", event.get("text"))
-    except Exception as e:
-        logger.warning("Failed to set completion attributes, error: %s", str(e))

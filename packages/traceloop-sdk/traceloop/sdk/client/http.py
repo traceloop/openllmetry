@@ -25,7 +25,11 @@ class HTTPClient:
         Make a POST request to the API
         """
         try:
-            response = requests.post(f"{self.base_url}/v2/{path.lstrip('/')}", json=data, headers=self._headers())
+            response = requests.post(
+                f"{self.base_url}/v2/{path.lstrip('/')}",
+                json=data,
+                headers=self._headers(),
+            )
             response.raise_for_status()
             return response.json()
         except requests.exceptions.RequestException as e:
@@ -37,9 +41,51 @@ class HTTPClient:
         Make a GET request to the API
         """
         try:
-            response = requests.get(f"{self.base_url}/v2/{path.lstrip('/')}", params=params, headers=self._headers())
+            response = requests.get(
+                f"{self.base_url}/v2/{path.lstrip('/')}",
+                params=params,
+                headers=self._headers(),
+            )
             response.raise_for_status()
-            return response.json()
+
+            content_type = response.headers.get("content-type", "").lower()
+            if "text/csv" in content_type:
+                return response.text
+            else:
+                return response.json()
+        except requests.exceptions.RequestException as e:
+            print(Fore.RED + f"Error making request to {path}: {str(e)}" + Fore.RESET)
+            return None
+
+    def delete(self, path: str) -> bool:
+        """
+        Make a DELETE request to the API
+        """
+        try:
+            response = requests.delete(
+                f"{self.base_url}/v2/{path.lstrip('/')}", headers=self._headers()
+            )
+            response.raise_for_status()
+            return response.status_code == 204 or response.status_code == 200
+        except requests.exceptions.RequestException as e:
+            print(Fore.RED + f"Error making request to {path}: {str(e)}" + Fore.RESET)
+            return False
+
+    def put(self, path: str, data: Dict[str, Any]) -> Any:
+        """
+        Make a PUT request to the API
+        """
+        try:
+            response = requests.put(
+                f"{self.base_url}/v2/{path.lstrip('/')}",
+                json=data,
+                headers=self._headers(),
+            )
+            response.raise_for_status()
+            if response.content:
+                return response.json()
+            else:
+                return {}
         except requests.exceptions.RequestException as e:
             print(Fore.RED + f"Error making request to {path}: {str(e)}" + Fore.RESET)
             return None

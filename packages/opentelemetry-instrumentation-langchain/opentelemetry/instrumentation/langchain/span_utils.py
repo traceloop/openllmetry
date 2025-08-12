@@ -336,11 +336,13 @@ def set_chat_response_usage(
             cache_read_tokens,
         )
         if record_token_usage:
+            vendor = span.attributes.get(SpanAttributes.LLM_SYSTEM, "Langchain")
+
             if input_tokens > 0:
                 token_histogram.record(
                     input_tokens,
                     attributes={
-                        SpanAttributes.LLM_SYSTEM: "Langchain",
+                        SpanAttributes.LLM_SYSTEM: vendor,
                         SpanAttributes.LLM_TOKEN_TYPE: "input",
                         SpanAttributes.LLM_RESPONSE_MODEL: model_name,
                     },
@@ -350,7 +352,7 @@ def set_chat_response_usage(
                 token_histogram.record(
                     output_tokens,
                     attributes={
-                        SpanAttributes.LLM_SYSTEM: "Langchain",
+                        SpanAttributes.LLM_SYSTEM: vendor,
                         SpanAttributes.LLM_TOKEN_TYPE: "output",
                         SpanAttributes.LLM_RESPONSE_MODEL: model_name,
                     },
@@ -366,6 +368,11 @@ def extract_model_name_from_response_metadata(response: LLMResult) -> str:
                 and (model_name := generation.message.response_metadata.get("model_name"))
             ):
                 return model_name
+
+
+def _extract_model_name_from_association_metadata(metadata: Optional[dict[str, Any]] = None) -> str:
+    if metadata:
+        return metadata.get("ls_model_name") or "unknown"
     return "unknown"
 
 
