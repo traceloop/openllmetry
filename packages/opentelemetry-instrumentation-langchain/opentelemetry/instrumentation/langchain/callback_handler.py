@@ -233,10 +233,6 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         else:
             span = self.tracer.start_span(span_name, kind=kind)
 
-        token = None
-        # Always attach context for both sync and async callbacks to ensure proper span hierarchy
-        # This fixes GitHub issue #3203 where user spans inside nodes don't get proper parents
-        # Previously only worked for sync callbacks, but async is the common case with LangGraph
         token = context_api.attach(set_span_in_context(span))
 
         _set_span_attribute(span, SpanAttributes.TRACELOOP_WORKFLOW_NAME, workflow_name)
