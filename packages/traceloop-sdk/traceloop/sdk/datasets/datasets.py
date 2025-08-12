@@ -114,6 +114,11 @@ class Datasets:
         description: Optional[str] = None,
     ) -> "Dataset":
         """Create dataset from pandas DataFrame"""
+        if not PANDAS_AVAILABLE:
+            raise ImportError(
+                "pandas is required for from_dataframe. Install with: pip install pandas"
+            )
+
         # Create column definitions from DataFrame
         columns_definition: List[ColumnDefinition] = []
         for col_name in df.columns:
@@ -170,6 +175,9 @@ class Datasets:
         """Slugify a name"""
         import re
 
+        if not name:
+            raise ValueError("Name cannot be empty")
+
         slug = name.lower()
 
         # Replace spaces and underscores with hyphens
@@ -183,5 +191,8 @@ class Datasets:
 
         # Trim hyphens from start and end
         slug = slug.strip("-")
+
+        if not slug:
+            raise ValueError(f"Name '{name}' cannot be slugified to a valid slug")
 
         return slug

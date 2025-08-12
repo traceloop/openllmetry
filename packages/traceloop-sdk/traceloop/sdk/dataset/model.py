@@ -92,7 +92,7 @@ class DatasetMetadata(BaseModel):
     slug: str
     name: str
     description: Optional[str] = None
-    last_version: Optional[str]
-    columns: Optional[Dict[str, ColumnDefinition]]
-    created_at: Optional[datetime.datetime]
-    updated_at: Optional[datetime.datetime]
+    last_version: Optional[str] = None
+    columns: Optional[Dict[str, ColumnDefinition]] = None
+    created_at: datetime.datetime
+    updated_at: datetime.datetime
