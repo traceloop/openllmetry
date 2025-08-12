@@ -61,10 +61,32 @@ def dont_throw(func):
     return async_wrapper if asyncio.iscoroutinefunction(func) else sync_wrapper
 
 
+def _extract_response_data(response):
+    """Extract the actual response data from both regular and with_raw_response wrapped responses."""
+    if isinstance(response, dict):
+        return response
+
+    # Handle with_raw_response wrapped responses
+    if hasattr(response, 'parse') and callable(response.parse):
+        try:
+            # For with_raw_response, parse() gives us the actual response object
+            parsed_response = response.parse()
+            if not isinstance(parsed_response, dict):
+                parsed_response = parsed_response.__dict__
+            return parsed_response
+        except Exception:
+            pass
+
+    # Fallback to __dict__ for regular response objects
+    if hasattr(response, '__dict__'):
+        return response.__dict__
+
+    return {}
+
+
 @dont_throw
 def shared_metrics_attributes(response):
-    if not isinstance(response, dict):
-        response = response.__dict__
+    response = _extract_response_data(response)
 
     common_attributes = Config.get_common_metrics_attributes()
 

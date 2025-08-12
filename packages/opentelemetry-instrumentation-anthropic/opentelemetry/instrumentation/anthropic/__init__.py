@@ -130,8 +130,8 @@ async def _aset_token_usage(
     token_histogram: Histogram = None,
     choice_counter: Counter = None,
 ):
-    if not isinstance(response, dict):
-        response = response.__dict__
+    from opentelemetry.instrumentation.anthropic.utils import _extract_response_data
+    response = _extract_response_data(response)
 
     if usage := response.get("usage"):
         prompt_tokens = usage.input_tokens
@@ -223,8 +223,8 @@ def _set_token_usage(
     token_histogram: Histogram = None,
     choice_counter: Counter = None,
 ):
-    if not isinstance(response, dict):
-        response = response.__dict__
+    from opentelemetry.instrumentation.anthropic.utils import _extract_response_data
+    response = _extract_response_data(response)
 
     if usage := response.get("usage"):
         prompt_tokens = usage.input_tokens

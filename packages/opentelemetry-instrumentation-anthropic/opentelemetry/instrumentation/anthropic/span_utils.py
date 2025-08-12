@@ -8,6 +8,7 @@ from opentelemetry.instrumentation.anthropic.utils import (
     dont_throw,
     model_as_dict,
     should_send_prompts,
+    _extract_response_data,
 )
 from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
     GEN_AI_RESPONSE_ID,
@@ -170,6 +171,7 @@ def _set_span_completions(span, response):
         return
     from opentelemetry.instrumentation.anthropic import set_span_attribute
 
+    response = _extract_response_data(response)
     index = 0
     prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{index}"
     set_span_attribute(span, f"{prefix}.finish_reason", response.get("stop_reason"))
@@ -236,8 +238,7 @@ def _set_span_completions(span, response):
 def set_response_attributes(span, response):
     from opentelemetry.instrumentation.anthropic import set_span_attribute
 
-    if not isinstance(response, dict):
-        response = response.__dict__
+    response = _extract_response_data(response)
     set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, response.get("model"))
     set_span_attribute(span, GEN_AI_RESPONSE_ID, response.get("id"))
 
