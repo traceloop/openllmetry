@@ -113,3 +113,49 @@ async def test_async_anthropic_bedrock_regular_create(
         + anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS]
         == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
     )
+
+
+@pytest.mark.asyncio
+@pytest.mark.vcr
+async def test_async_anthropic_bedrock_beta_with_raw_response(
+    instrument_legacy, async_anthropic_bedrock_client, span_exporter, log_exporter, reader
+):
+    """Test that AsyncAnthropicBedrock beta.messages.with_raw_response.create generates spans"""
+    response = await async_anthropic_bedrock_client.beta.messages.with_raw_response.create(
+        max_tokens=1024,
+        messages=[
+            {
+                "role": "user",
+                "content": "Tell me a joke about OpenTelemetry",
+            }
+        ],
+        model="anthropic.claude-3-haiku-20240307-v1:0",
+    )
+
+    spans = span_exporter.get_finished_spans()
+    assert len(spans) == 1
+    assert all(span.name == "anthropic.chat" for span in spans)
+
+    anthropic_span = spans[0]
+    assert (
+        anthropic_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
+        == "Tell me a joke about OpenTelemetry"
+    )
+    assert (anthropic_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"]) == "user"
+    # For raw response, content is accessed differently
+    response_content = response.parse().content[0].text if hasattr(response, 'parse') else response.content[0].text
+    assert (
+        anthropic_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
+        == response_content
+    )
+    assert (
+        anthropic_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.role")
+        == "assistant"
+    )
+    assert anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] > 0
+    assert anthropic_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS] > 0
+    assert (
+        anthropic_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS]
+        + anthropic_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS]
+        == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
+    )
