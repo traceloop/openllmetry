@@ -81,6 +81,95 @@ WRAPPED_METHODS = [
         "method": "stream",
         "span_name": "anthropic.chat",
     },
+    # Regular messages with_raw_response methods
+    {
+        "package": "anthropic.resources.messages.messages",
+        "object": "MessagesWithRawResponse",
+        "method": "create",
+        "span_name": "anthropic.chat",
+    },
+    {
+        "package": "anthropic.resources.messages.messages",
+        "object": "AsyncMessagesWithRawResponse",
+        "method": "create",
+        "span_name": "anthropic.chat",
+    },
+    # Beta API methods (regular Anthropic SDK)
+    {
+        "package": "anthropic.resources.beta.messages.messages",
+        "object": "Messages",
+        "method": "create",
+        "span_name": "anthropic.chat",
+    },
+    {
+        "package": "anthropic.resources.beta.messages.messages",
+        "object": "Messages",
+        "method": "stream",
+        "span_name": "anthropic.chat",
+    },
+    {
+        "package": "anthropic.resources.beta.messages.messages",
+        "object": "AsyncMessages",
+        "method": "create",
+        "span_name": "anthropic.chat",
+    },
+    {
+        "package": "anthropic.resources.beta.messages.messages",
+        "object": "AsyncMessages",
+        "method": "stream",
+        "span_name": "anthropic.chat",
+    },
+    # Beta API with_raw_response methods (regular Anthropic SDK)
+    {
+        "package": "anthropic.resources.beta.messages.messages",
+        "object": "MessagesWithRawResponse",
+        "method": "create",
+        "span_name": "anthropic.chat",
+    },
+    {
+        "package": "anthropic.resources.beta.messages.messages",
+        "object": "AsyncMessagesWithRawResponse",
+        "method": "create",
+        "span_name": "anthropic.chat",
+    },
+    # Beta API methods (Bedrock SDK)
+    {
+        "package": "anthropic.lib.bedrock._beta_messages",
+        "object": "Messages",
+        "method": "create",
+        "span_name": "anthropic.chat",
+    },
+    {
+        "package": "anthropic.lib.bedrock._beta_messages",
+        "object": "Messages",
+        "method": "stream",
+        "span_name": "anthropic.chat",
+    },
+    {
+        "package": "anthropic.lib.bedrock._beta_messages",
+        "object": "AsyncMessages",
+        "method": "create",
+        "span_name": "anthropic.chat",
+    },
+    {
+        "package": "anthropic.lib.bedrock._beta_messages",
+        "object": "AsyncMessages",
+        "method": "stream",
+        "span_name": "anthropic.chat",
+    },
+    # Beta API with_raw_response methods (Bedrock SDK)
+    {
+        "package": "anthropic.lib.bedrock._beta_messages",
+        "object": "MessagesWithRawResponse",
+        "method": "create",
+        "span_name": "anthropic.chat",
+    },
+    {
+        "package": "anthropic.lib.bedrock._beta_messages",
+        "object": "AsyncMessagesWithRawResponse",
+        "method": "create",
+        "span_name": "anthropic.chat",
+    },
 ]
 
 WRAPPED_AMETHODS = [
@@ -710,7 +799,9 @@ class AnthropicInstrumentor(BaseInstrumentor):
                         wrapped_method,
                     ),
                 )
-            except ModuleNotFoundError:
+                logger.debug(f"Successfully wrapped {wrap_package}.{wrap_object}.{wrap_method}")
+            except Exception as e:
+                logger.debug(f"Failed to wrap {wrap_package}.{wrap_object}.{wrap_method}: {e}")
                 pass  # that's ok, we don't want to fail if some methods do not exist
 
         for wrapped_method in WRAPPED_AMETHODS:

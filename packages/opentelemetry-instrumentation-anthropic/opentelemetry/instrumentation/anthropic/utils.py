@@ -74,12 +74,15 @@ def _extract_response_data(response):
             if not isinstance(parsed_response, dict):
                 parsed_response = parsed_response.__dict__
             return parsed_response
-        except Exception:
-            pass
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.debug(f"Failed to parse response: {e}, response type: {type(response)}")
 
     # Fallback to __dict__ for regular response objects
     if hasattr(response, '__dict__'):
-        return response.__dict__
+        response_dict = response.__dict__
+        return response_dict
 
     return {}
 
