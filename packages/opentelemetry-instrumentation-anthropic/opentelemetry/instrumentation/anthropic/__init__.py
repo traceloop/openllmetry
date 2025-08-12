@@ -81,19 +81,6 @@ WRAPPED_METHODS = [
         "method": "stream",
         "span_name": "anthropic.chat",
     },
-    # Regular messages with_raw_response methods
-    {
-        "package": "anthropic.resources.messages.messages",
-        "object": "MessagesWithRawResponse",
-        "method": "create",
-        "span_name": "anthropic.chat",
-    },
-    {
-        "package": "anthropic.resources.messages.messages",
-        "object": "AsyncMessagesWithRawResponse",
-        "method": "create",
-        "span_name": "anthropic.chat",
-    },
     # Beta API methods (regular Anthropic SDK)
     {
         "package": "anthropic.resources.beta.messages.messages",
@@ -107,19 +94,6 @@ WRAPPED_METHODS = [
         "method": "stream",
         "span_name": "anthropic.chat",
     },
-    # Beta API with_raw_response methods (regular Anthropic SDK)
-    {
-        "package": "anthropic.resources.beta.messages.messages",
-        "object": "MessagesWithRawResponse",
-        "method": "create",
-        "span_name": "anthropic.chat",
-    },
-    {
-        "package": "anthropic.resources.beta.messages.messages",
-        "object": "AsyncMessagesWithRawResponse",
-        "method": "create",
-        "span_name": "anthropic.chat",
-    },
     # Beta API methods (Bedrock SDK)
     {
         "package": "anthropic.lib.bedrock._beta_messages",
@@ -131,19 +105,6 @@ WRAPPED_METHODS = [
         "package": "anthropic.lib.bedrock._beta_messages",
         "object": "Messages",
         "method": "stream",
-        "span_name": "anthropic.chat",
-    },
-    # Beta API with_raw_response methods (Bedrock SDK)
-    {
-        "package": "anthropic.lib.bedrock._beta_messages",
-        "object": "MessagesWithRawResponse",
-        "method": "create",
-        "span_name": "anthropic.chat",
-    },
-    {
-        "package": "anthropic.lib.bedrock._beta_messages",
-        "object": "AsyncMessagesWithRawResponse",
-        "method": "create",
         "span_name": "anthropic.chat",
     },
 ]
