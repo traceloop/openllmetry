@@ -23,7 +23,7 @@ def test_responses(instrument_legacy, span_exporter: InMemorySpanExporter, opena
         span.attributes["gen_ai.prompt.0.content"] == "What is the capital of France?"
     )
     assert span.attributes["gen_ai.prompt.0.role"] == "user"
-    assert span.attributes["gen_ai.completion.0.content"] == response.output_text
+    assert span.attributes["gen_ai.completion.0.content"] == response.output[0].content[0].text
     assert span.attributes["gen_ai.completion.0.role"] == "assistant"
 
 
@@ -46,7 +46,7 @@ def test_responses_with_input_history(instrument_legacy, span_exporter: InMemory
                 "content": [
                     {
                         "type": "output_text",
-                        "text": first_response.output_text,
+                        "text": first_response.output[0].content[0].text,
                     }
                 ],
             },
@@ -69,7 +69,7 @@ def test_responses_with_input_history(instrument_legacy, span_exporter: InMemory
     assert json.loads(span.attributes["gen_ai.prompt.1.content"]) == [
         {
             "type": "output_text",
-            "text": first_response.output_text,
+            "text": first_response.output[0].content[0].text,
         }
     ]
     assert span.attributes["gen_ai.prompt.1.role"] == "assistant"
@@ -78,7 +78,7 @@ def test_responses_with_input_history(instrument_legacy, span_exporter: InMemory
         == "Can you explain why you chose that word?"
     )
     assert span.attributes["gen_ai.prompt.2.role"] == "user"
-    assert span.attributes["gen_ai.completion.0.content"] == response.output_text
+    assert span.attributes["gen_ai.completion.0.content"] == response.output[0].content[0].text
     assert span.attributes["gen_ai.completion.0.role"] == "assistant"
 
 

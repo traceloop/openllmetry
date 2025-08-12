@@ -155,3 +155,63 @@ def exporter_with_no_metrics():
     if _trace_wrapper_instance:
         TracerWrapper.instance = _trace_wrapper_instance
         os.environ["TRACELOOP_METRICS_ENABLED"] = "true"
+
+
+@pytest.fixture
+def exporters_with_multiple_span_processors():
+    # Clear singleton if existed
+    if hasattr(TracerWrapper, "instance"):
+        _trace_wrapper_instance = TracerWrapper.instance
+        del TracerWrapper.instance
+
+    class CustomSpanProcessor(SimpleSpanProcessor):
+        def on_start(self, span, parent_context=None):
+            span.set_attribute("custom_processor", "enabled")
+            span.set_attribute("processor_type", "custom")
+
+    class MetricsSpanProcessor(SimpleSpanProcessor):
+        def __init__(self, exporter):
+            super().__init__(exporter)
+            self.span_count = 0
+
+        def on_start(self, span, parent_context=None):
+            self.span_count += 1
+            span.set_attribute("metrics_processor", "enabled")
+            span.set_attribute("span_count", self.span_count)
+
+    # Create exporters for different processors
+    default_exporter = InMemorySpanExporter()
+    custom_exporter = InMemorySpanExporter()
+    metrics_exporter = InMemorySpanExporter()
+
+    # Get the default Traceloop processor
+    default_processor = Traceloop.get_default_span_processor(
+        disable_batch=True,
+        exporter=default_exporter
+    )
+
+    # Create custom processors
+    custom_processor = CustomSpanProcessor(custom_exporter)
+    metrics_processor = MetricsSpanProcessor(metrics_exporter)
+
+    # Initialize with multiple processors
+    processors = [default_processor, custom_processor, metrics_processor]
+
+    Traceloop.init(
+        app_name="test_multiple_processors",
+        api_endpoint="http://localhost:4318",  # Use local endpoint to avoid API key requirement
+        processor=processors,
+        disable_batch=True,
+    )
+
+    # Return all exporters so we can verify each processor worked
+    yield {
+        "default": default_exporter,
+        "custom": custom_exporter,
+        "metrics": metrics_exporter,
+        "processor": processors
+    }
+
+    # Restore singleton if any
+    if _trace_wrapper_instance:
+        TracerWrapper.instance = _trace_wrapper_instance

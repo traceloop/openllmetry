@@ -7,6 +7,7 @@ from functools import singledispatch
 from typing import List, Optional, Union
 
 from opentelemetry import context as context_api
+import pydantic
 from opentelemetry.instrumentation.openai.shared import (
     OPENAI_LLM_USAGE_TOKEN_TYPES,
     _get_openai_base_url,
@@ -17,13 +18,11 @@ from opentelemetry.instrumentation.openai.shared import (
     _set_span_attribute,
     _set_span_stream_usage,
     _token_type,
-    get_token_count_from_string,
     is_streaming_response,
     metric_shared_attributes,
     model_as_dict,
     propagate_trace_context,
     set_tools_attributes,
-    should_record_stream_token_usage,
 )
 from opentelemetry.instrumentation.openai.shared.config import Config
 from opentelemetry.instrumentation.openai.shared.event_emitter import emit_event
@@ -49,11 +48,9 @@ from opentelemetry.semconv_ai import (
     SpanAttributes,
 )
 from opentelemetry.trace import SpanKind, Tracer
+from opentelemetry import trace
 from opentelemetry.trace.status import Status, StatusCode
 from wrapt import ObjectProxy
-
-from openai.types.chat import ChatCompletionMessageToolCall
-from openai.types.chat.chat_completion_message import FunctionCall
 
 SPAN_NAME = "openai.chat"
 PROMPT_FILTER_KEY = "prompt_filter_results"
@@ -90,75 +87,77 @@ def chat_wrapper(
         attributes={SpanAttributes.LLM_REQUEST_TYPE: LLM_REQUEST_TYPE.value},
     )
 
-    run_async(_handle_request(span, kwargs, instance))
-    try:
-        start_time = time.time()
-        response = wrapped(*args, **kwargs)
-        end_time = time.time()
-    except Exception as e:  # pylint: disable=broad-except
-        end_time = time.time()
-        duration = end_time - start_time if "start_time" in locals() else 0
+    # Use the span as current context to ensure events get proper trace context
+    with trace.use_span(span, end_on_exit=False):
+        run_async(_handle_request(span, kwargs, instance))
+        try:
+            start_time = time.time()
+            response = wrapped(*args, **kwargs)
+            end_time = time.time()
+        except Exception as e:  # pylint: disable=broad-except
+            end_time = time.time()
+            duration = end_time - start_time if "start_time" in locals() else 0
 
-        attributes = {
-            "error.type": e.__class__.__name__,
-        }
+            attributes = {
+                "error.type": e.__class__.__name__,
+            }
 
-        if duration > 0 and duration_histogram:
-            duration_histogram.record(duration, attributes=attributes)
-        if exception_counter:
-            exception_counter.add(1, attributes=attributes)
+            if duration > 0 and duration_histogram:
+                duration_histogram.record(duration, attributes=attributes)
+            if exception_counter:
+                exception_counter.add(1, attributes=attributes)
 
-        span.set_attribute(ERROR_TYPE, e.__class__.__name__)
-        span.record_exception(e)
-        span.set_status(Status(StatusCode.ERROR, str(e)))
+            span.set_attribute(ERROR_TYPE, e.__class__.__name__)
+            span.record_exception(e)
+            span.set_status(Status(StatusCode.ERROR, str(e)))
+            span.end()
+
+            raise
+
+        if is_streaming_response(response):
+            # span will be closed after the generator is done
+            if is_openai_v1():
+                return ChatStream(
+                    span,
+                    response,
+                    instance,
+                    token_counter,
+                    choice_counter,
+                    duration_histogram,
+                    streaming_time_to_first_token,
+                    streaming_time_to_generate,
+                    start_time,
+                    kwargs,
+                )
+            else:
+                return _build_from_streaming_response(
+                    span,
+                    response,
+                    instance,
+                    token_counter,
+                    choice_counter,
+                    duration_histogram,
+                    streaming_time_to_first_token,
+                    streaming_time_to_generate,
+                    start_time,
+                    kwargs,
+                )
+
+        duration = end_time - start_time
+
+        _handle_response(
+            response,
+            span,
+            instance,
+            token_counter,
+            choice_counter,
+            duration_histogram,
+            duration,
+        )
+
         span.end()
 
-        raise
-
-    if is_streaming_response(response):
-        # span will be closed after the generator is done
-        if is_openai_v1():
-            return ChatStream(
-                span,
-                response,
-                instance,
-                token_counter,
-                choice_counter,
-                duration_histogram,
-                streaming_time_to_first_token,
-                streaming_time_to_generate,
-                start_time,
-                kwargs,
-            )
-        else:
-            return _build_from_streaming_response(
-                span,
-                response,
-                instance,
-                token_counter,
-                choice_counter,
-                duration_histogram,
-                streaming_time_to_first_token,
-                streaming_time_to_generate,
-                start_time,
-                kwargs,
-            )
-
-    duration = end_time - start_time
-
-    _handle_response(
-        response,
-        span,
-        instance,
-        token_counter,
-        choice_counter,
-        duration_histogram,
-        duration,
-    )
-
-    span.end()
-
-    return response
+        return response
 
 
 @_with_chat_telemetry_wrapper
@@ -186,78 +185,80 @@ async def achat_wrapper(
         attributes={SpanAttributes.LLM_REQUEST_TYPE: LLM_REQUEST_TYPE.value},
     )
 
-    await _handle_request(span, kwargs, instance)
+    # Use the span as current context to ensure events get proper trace context
+    with trace.use_span(span, end_on_exit=False):
+        await _handle_request(span, kwargs, instance)
 
-    try:
-        start_time = time.time()
-        response = await wrapped(*args, **kwargs)
-        end_time = time.time()
-    except Exception as e:  # pylint: disable=broad-except
-        end_time = time.time()
-        duration = end_time - start_time if "start_time" in locals() else 0
+        try:
+            start_time = time.time()
+            response = await wrapped(*args, **kwargs)
+            end_time = time.time()
+        except Exception as e:  # pylint: disable=broad-except
+            end_time = time.time()
+            duration = end_time - start_time if "start_time" in locals() else 0
 
-        common_attributes = Config.get_common_metrics_attributes()
-        attributes = {
-            **common_attributes,
-            "error.type": e.__class__.__name__,
-        }
+            common_attributes = Config.get_common_metrics_attributes()
+            attributes = {
+                **common_attributes,
+                "error.type": e.__class__.__name__,
+            }
 
-        if duration > 0 and duration_histogram:
-            duration_histogram.record(duration, attributes=attributes)
-        if exception_counter:
-            exception_counter.add(1, attributes=attributes)
+            if duration > 0 and duration_histogram:
+                duration_histogram.record(duration, attributes=attributes)
+            if exception_counter:
+                exception_counter.add(1, attributes=attributes)
 
-        span.set_attribute(ERROR_TYPE, e.__class__.__name__)
-        span.record_exception(e)
-        span.set_status(Status(StatusCode.ERROR, str(e)))
+            span.set_attribute(ERROR_TYPE, e.__class__.__name__)
+            span.record_exception(e)
+            span.set_status(Status(StatusCode.ERROR, str(e)))
+            span.end()
+
+            raise
+
+        if is_streaming_response(response):
+            # span will be closed after the generator is done
+            if is_openai_v1():
+                return ChatStream(
+                    span,
+                    response,
+                    instance,
+                    token_counter,
+                    choice_counter,
+                    duration_histogram,
+                    streaming_time_to_first_token,
+                    streaming_time_to_generate,
+                    start_time,
+                    kwargs,
+                )
+            else:
+                return _abuild_from_streaming_response(
+                    span,
+                    response,
+                    instance,
+                    token_counter,
+                    choice_counter,
+                    duration_histogram,
+                    streaming_time_to_first_token,
+                    streaming_time_to_generate,
+                    start_time,
+                    kwargs,
+                )
+
+        duration = end_time - start_time
+
+        _handle_response(
+            response,
+            span,
+            instance,
+            token_counter,
+            choice_counter,
+            duration_histogram,
+            duration,
+        )
+
         span.end()
 
-        raise
-
-    if is_streaming_response(response):
-        # span will be closed after the generator is done
-        if is_openai_v1():
-            return ChatStream(
-                span,
-                response,
-                instance,
-                token_counter,
-                choice_counter,
-                duration_histogram,
-                streaming_time_to_first_token,
-                streaming_time_to_generate,
-                start_time,
-                kwargs,
-            )
-        else:
-            return _abuild_from_streaming_response(
-                span,
-                response,
-                instance,
-                token_counter,
-                choice_counter,
-                duration_histogram,
-                streaming_time_to_first_token,
-                streaming_time_to_generate,
-                start_time,
-                kwargs,
-            )
-
-    duration = end_time - start_time
-
-    _handle_response(
-        response,
-        span,
-        instance,
-        token_counter,
-        choice_counter,
-        duration_histogram,
-        duration,
-    )
-
-    span.end()
-
-    return response
+        return response
 
 
 @dont_throw
@@ -529,47 +530,16 @@ def _set_completions(span, choices):
 def _set_streaming_token_metrics(
     request_kwargs, complete_response, span, token_counter, shared_attributes
 ):
-    if not should_record_stream_token_usage():
-        return
-
     prompt_usage = -1
     completion_usage = -1
 
-    # First, try to get usage from API response
+    # Use token usage from API response only
     if complete_response.get("usage"):
         usage = complete_response["usage"]
         if usage.get("prompt_tokens"):
             prompt_usage = usage["prompt_tokens"]
         if usage.get("completion_tokens"):
             completion_usage = usage["completion_tokens"]
-
-    # If API response doesn't have usage, fallback to tiktoken calculation
-    if prompt_usage == -1 or completion_usage == -1:
-        model_name = (
-            complete_response.get("model") or request_kwargs.get(
-                "model") or "gpt-4"
-        )
-
-        # Calculate prompt tokens if not available from API
-        if prompt_usage == -1 and request_kwargs and request_kwargs.get("messages"):
-            prompt_content = ""
-            for msg in request_kwargs.get("messages"):
-                if msg.get("content"):
-                    prompt_content += msg.get("content")
-            if model_name and should_record_stream_token_usage():
-                prompt_usage = get_token_count_from_string(
-                    prompt_content, model_name)
-
-        # Calculate completion tokens if not available from API
-        if completion_usage == -1 and complete_response.get("choices"):
-            completion_content = ""
-            for choice in complete_response.get("choices"):
-                if choice.get("message") and choice.get("message").get("content"):
-                    completion_content += choice["message"]["content"]
-            if model_name and should_record_stream_token_usage():
-                completion_usage = get_token_count_from_string(
-                    completion_content, model_name
-                )
 
     # span record
     _set_span_stream_usage(span, prompt_usage, completion_usage)
@@ -994,8 +964,10 @@ async def _abuild_from_streaming_response(
     span.end()
 
 
+# pydantic.BaseModel here is ChatCompletionMessageFunctionToolCall (as of openai 1.99.7)
+# but we keep to a parent type to support older versions
 def _parse_tool_calls(
-    tool_calls: Optional[List[Union[dict, ChatCompletionMessageToolCall]]],
+    tool_calls: Optional[List[Union[dict, pydantic.BaseModel]]],
 ) -> Union[List[ToolCall], None]:
     """
     Util to correctly parse the tool calls data from the OpenAI API to this module's
@@ -1009,12 +981,11 @@ def _parse_tool_calls(
     for tool_call in tool_calls:
         tool_call_data = None
 
-        # Handle dict or ChatCompletionMessageToolCall
         if isinstance(tool_call, dict):
             tool_call_data = copy.deepcopy(tool_call)
-        elif isinstance(tool_call, ChatCompletionMessageToolCall):
+        elif _is_chat_message_function_tool_call(tool_call):
             tool_call_data = tool_call.model_dump()
-        elif isinstance(tool_call, FunctionCall):
+        elif _is_function_call(tool_call):
             function_call = tool_call.model_dump()
             tool_call_data = ToolCall(
                 id="",
@@ -1027,6 +998,34 @@ def _parse_tool_calls(
 
         result.append(tool_call_data)
     return result
+
+
+def _is_chat_message_function_tool_call(model: Union[dict, pydantic.BaseModel]) -> bool:
+    try:
+        from openai.types.chat.chat_completion_message_function_tool_call import (
+            ChatCompletionMessageFunctionToolCall,
+        )
+
+        return isinstance(model, ChatCompletionMessageFunctionToolCall)
+    except Exception:
+        try:
+            # Since OpenAI 1.99.3, ChatCompletionMessageToolCall is a Union,
+            # and the isinstance check will fail. This is fine, because in all
+            # those versions, the check above will succeed.
+            from openai.types.chat.chat_completion_message_tool_call import (
+                ChatCompletionMessageToolCall,
+            )
+            return isinstance(model, ChatCompletionMessageToolCall)
+        except Exception:
+            return False
+
+
+def _is_function_call(model: Union[dict, pydantic.BaseModel]) -> bool:
+    try:
+        from openai.types.chat.chat_completion_message import FunctionCall
+        return isinstance(model, FunctionCall)
+    except Exception:
+        return False
 
 
 @singledispatch
