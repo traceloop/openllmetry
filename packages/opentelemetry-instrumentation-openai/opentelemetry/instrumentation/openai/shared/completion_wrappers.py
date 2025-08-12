@@ -1,6 +1,7 @@
 import logging
 
 from opentelemetry import context as context_api
+from opentelemetry import trace
 from opentelemetry.instrumentation.openai.shared import (
     _set_client_attributes,
     _set_functions_attributes,
@@ -55,25 +56,27 @@ def completion_wrapper(tracer, wrapped, instance, args, kwargs):
         attributes={SpanAttributes.LLM_REQUEST_TYPE: LLM_REQUEST_TYPE.value},
     )
 
-    _handle_request(span, kwargs, instance)
+    # Use the span as current context to ensure events get proper trace context
+    with trace.use_span(span, end_on_exit=False):
+        _handle_request(span, kwargs, instance)
 
-    try:
-        response = wrapped(*args, **kwargs)
-    except Exception as e:
-        span.set_attribute(ERROR_TYPE, e.__class__.__name__)
-        span.record_exception(e)
-        span.set_status(Status(StatusCode.ERROR, str(e)))
+        try:
+            response = wrapped(*args, **kwargs)
+        except Exception as e:
+            span.set_attribute(ERROR_TYPE, e.__class__.__name__)
+            span.record_exception(e)
+            span.set_status(Status(StatusCode.ERROR, str(e)))
+            span.end()
+            raise
+
+        if is_streaming_response(response):
+            # span will be closed after the generator is done
+            return _build_from_streaming_response(span, kwargs, response)
+        else:
+            _handle_response(response, span, instance)
+
         span.end()
-        raise
-
-    if is_streaming_response(response):
-        # span will be closed after the generator is done
-        return _build_from_streaming_response(span, kwargs, response)
-    else:
-        _handle_response(response, span, instance)
-
-    span.end()
-    return response
+        return response
 
 
 @_with_tracer_wrapper
@@ -89,25 +92,27 @@ async def acompletion_wrapper(tracer, wrapped, instance, args, kwargs):
         attributes={SpanAttributes.LLM_REQUEST_TYPE: LLM_REQUEST_TYPE.value},
     )
 
-    _handle_request(span, kwargs, instance)
+    # Use the span as current context to ensure events get proper trace context
+    with trace.use_span(span, end_on_exit=False):
+        _handle_request(span, kwargs, instance)
 
-    try:
-        response = await wrapped(*args, **kwargs)
-    except Exception as e:
-        span.set_attribute(ERROR_TYPE, e.__class__.__name__)
-        span.record_exception(e)
-        span.set_status(Status(StatusCode.ERROR, str(e)))
+        try:
+            response = await wrapped(*args, **kwargs)
+        except Exception as e:
+            span.set_attribute(ERROR_TYPE, e.__class__.__name__)
+            span.record_exception(e)
+            span.set_status(Status(StatusCode.ERROR, str(e)))
+            span.end()
+            raise
+
+        if is_streaming_response(response):
+            # span will be closed after the generator is done
+            return _abuild_from_streaming_response(span, kwargs, response)
+        else:
+            _handle_response(response, span, instance)
+
         span.end()
-        raise
-
-    if is_streaming_response(response):
-        # span will be closed after the generator is done
-        return _abuild_from_streaming_response(span, kwargs, response)
-    else:
-        _handle_response(response, span, instance)
-
-    span.end()
-    return response
+        return response
 
 
 @dont_throw
