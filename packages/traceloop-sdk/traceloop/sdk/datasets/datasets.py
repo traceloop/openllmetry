@@ -37,6 +37,8 @@ class Datasets:
         result = self._http.get("datasets")
         if result is None:
             raise Exception("Failed to get datasets")
+        if isinstance(result, dict) and "datasets" in result:
+            return [DatasetMetadata(**dataset) for dataset in result["datasets"]]
         return [DatasetMetadata(**dataset) for dataset in result]
 
     def delete_by_slug(self, slug: str) -> None:

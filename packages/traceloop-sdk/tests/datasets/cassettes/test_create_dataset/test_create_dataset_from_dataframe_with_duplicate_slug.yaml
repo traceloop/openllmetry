@@ -23,15 +23,14 @@ interactions:
     uri: https://api-staging.traceloop.com/v2/datasets
   response:
     body:
-      string: '{"id":"cme79wkpy002h0105bbkxyu2u","slug":"duplicate-df-test-slug","name":"Duplicate
-        DataFrame Dataset","columns":{"name":{"slug":"name","name":"Name","type":"string"},"price":{"slug":"price","name":"Price","type":"number"}},"created_at":"2025-08-11T15:34:22.438121523Z","updated_at":"2025-08-11T15:34:22.438121579Z","rows":[{"id":"cme79wkq2002i0105pm3f1x9p","row_index":1,"values":{"name":"Laptop","price":999.99},"created_at":"2025-08-11T15:34:22.445414931Z","updated_at":"2025-08-11T15:34:22.445414931Z"}]}'
+      string: '{"error":"duplicate key value violates unique constraint"}'
     headers:
       CF-RAY:
       - 96d8cbf5e9b7c9a9-IAD
       Connection:
       - keep-alive
       Content-Length:
-      - '508'
+      - '58'
       Content-Type:
       - application/json; charset=utf-8
       Date:
@@ -57,6 +56,6 @@ interactions:
       x-kong-upstream-latency:
       - '16'
     status:
-      code: 201
-      message: Created
+      code: 409
+      message: Conflict
 version: 1
