@@ -1,3 +1,10 @@
+## v0.44.3 (2025-08-12)
+
+### Fix
+
+- **sdk**: avoid initializing metrics exporter on custom tracing config (#3249)
+- **openai**: propagate span IDs properly to events (#3243)
+
 ## v0.44.2 (2025-08-11)
 
 ### Fix
