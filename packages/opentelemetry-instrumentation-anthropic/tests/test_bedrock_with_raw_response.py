@@ -9,7 +9,7 @@ except ImportError:
 
 
 @pytest.fixture
-def async_anthropic_bedrock_client():
+def async_anthropic_bedrock_client(instrument_legacy):
     if AsyncAnthropicBedrock is None:
         pytest.skip("AsyncAnthropicBedrock not available")
 

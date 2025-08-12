@@ -107,18 +107,6 @@ WRAPPED_METHODS = [
         "method": "stream",
         "span_name": "anthropic.chat",
     },
-    {
-        "package": "anthropic.resources.beta.messages.messages",
-        "object": "AsyncMessages",
-        "method": "create",
-        "span_name": "anthropic.chat",
-    },
-    {
-        "package": "anthropic.resources.beta.messages.messages",
-        "object": "AsyncMessages",
-        "method": "stream",
-        "span_name": "anthropic.chat",
-    },
     # Beta API with_raw_response methods (regular Anthropic SDK)
     {
         "package": "anthropic.resources.beta.messages.messages",
@@ -142,18 +130,6 @@ WRAPPED_METHODS = [
     {
         "package": "anthropic.lib.bedrock._beta_messages",
         "object": "Messages",
-        "method": "stream",
-        "span_name": "anthropic.chat",
-    },
-    {
-        "package": "anthropic.lib.bedrock._beta_messages",
-        "object": "AsyncMessages",
-        "method": "create",
-        "span_name": "anthropic.chat",
-    },
-    {
-        "package": "anthropic.lib.bedrock._beta_messages",
-        "object": "AsyncMessages",
         "method": "stream",
         "span_name": "anthropic.chat",
     },
@@ -183,6 +159,32 @@ WRAPPED_AMETHODS = [
         "package": "anthropic.resources.messages",
         "object": "AsyncMessages",
         "method": "create",
+        "span_name": "anthropic.chat",
+    },
+    # Beta API async methods (regular Anthropic SDK)
+    {
+        "package": "anthropic.resources.beta.messages.messages",
+        "object": "AsyncMessages",
+        "method": "create",
+        "span_name": "anthropic.chat",
+    },
+    {
+        "package": "anthropic.resources.beta.messages.messages",
+        "object": "AsyncMessages",
+        "method": "stream",
+        "span_name": "anthropic.chat",
+    },
+    # Beta API async methods (Bedrock SDK)
+    {
+        "package": "anthropic.lib.bedrock._beta_messages",
+        "object": "AsyncMessages",
+        "method": "create",
+        "span_name": "anthropic.chat",
+    },
+    {
+        "package": "anthropic.lib.bedrock._beta_messages",
+        "object": "AsyncMessages",
+        "method": "stream",
         "span_name": "anthropic.chat",
     },
 ]
@@ -219,8 +221,8 @@ async def _aset_token_usage(
     token_histogram: Histogram = None,
     choice_counter: Counter = None,
 ):
-    from opentelemetry.instrumentation.anthropic.utils import _extract_response_data
-    response = _extract_response_data(response)
+    from opentelemetry.instrumentation.anthropic.utils import _aextract_response_data
+    response = await _aextract_response_data(response)
 
     if usage := response.get("usage"):
         prompt_tokens = usage.input_tokens
@@ -474,6 +476,17 @@ async def _ahandle_input(span: Span, event_logger: Optional[EventLogger], kwargs
 
 
 @dont_throw
+async def _ahandle_response(span: Span, event_logger: Optional[EventLogger], response):
+    if should_emit_events():
+        emit_response_events(event_logger, response)
+    else:
+        if not span.is_recording():
+            return
+        from opentelemetry.instrumentation.anthropic.span_utils import aset_response_attributes
+        await aset_response_attributes(span, response)
+
+
+@dont_throw
 def _handle_response(span: Span, event_logger: Optional[EventLogger], response):
     if should_emit_events():
         emit_response_events(event_logger, response)
@@ -695,7 +708,8 @@ async def _awrap(
                 kwargs,
             )
     elif response:
-        metric_attributes = shared_metrics_attributes(response)
+        from opentelemetry.instrumentation.anthropic.utils import ashared_metrics_attributes
+        metric_attributes = await ashared_metrics_attributes(response)
 
         if duration_histogram:
             duration = time.time() - start_time
@@ -704,7 +718,7 @@ async def _awrap(
                 attributes=metric_attributes,
             )
 
-        _handle_response(span, event_logger, response)
+        await _ahandle_response(span, event_logger, response)
 
         if span.is_recording():
             await _aset_token_usage(
@@ -822,7 +836,7 @@ class AnthropicInstrumentor(BaseInstrumentor):
                         wrapped_method,
                     ),
                 )
-            except ModuleNotFoundError:
+            except Exception as e:
                 pass  # that's ok, we don't want to fail if some methods do not exist
 
     def _uninstrument(self, **kwargs):
