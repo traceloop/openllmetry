@@ -69,7 +69,7 @@ Jane,30,false"""
             dataset = datasets.from_csv(
                 file_path=csv_path,
                 slug=unique_slug,
-                name="Test Add Rows Dataset", 
+                name="Test Add Rows Dataset",
                 description="Dataset for testing add_rows method",
             )
 
@@ -93,7 +93,7 @@ Jane,30,false"""
         assert (
             "Failed to create dataset" in str(e)
             or "Failed to add row" in str(e)
-            or "401" in str(e) 
+            or "401" in str(e)
             or "403" in str(e)
             or "409" in str(e)
         )

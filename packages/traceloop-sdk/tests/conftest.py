@@ -77,7 +77,6 @@ def exporter_with_custom_span_processor():
 
 @pytest.fixture(scope="function")
 def exporter_with_custom_span_postprocess_callback(exporter):
-
     if hasattr(TracerWrapper, "instance"):
         _trace_wrapper_instance = TracerWrapper.instance
         del TracerWrapper.instance
@@ -89,7 +88,9 @@ def exporter_with_custom_span_postprocess_callback(exporter):
             attributes = span._attributes if span._attributes else {}
             # Find and encode all matching attributes
             for key, value in attributes.items():
-                if (prompt_pattern.match(key) or completion_pattern.match(key)) and isinstance(value, str):
+                if (
+                    prompt_pattern.match(key) or completion_pattern.match(key)
+                ) and isinstance(value, str):
                     attributes[key] = "REDACTED"  # Modify the attributes directly
 
     Traceloop.init(
@@ -106,9 +107,13 @@ def exporter_with_custom_span_postprocess_callback(exporter):
             # Reset the on_end method to its original class implementation.
             # This is needed to make this test run in isolation as SpanProcessor is a singleton.
             if isinstance(span_processor, SimpleSpanProcessor):
-                span_processor.on_end = SimpleSpanProcessor.on_end.__get__(span_processor, SimpleSpanProcessor)
+                span_processor.on_end = SimpleSpanProcessor.on_end.__get__(
+                    span_processor, SimpleSpanProcessor
+                )
             elif isinstance(span_processor, BatchSpanProcessor):
-                span_processor.on_end = BatchSpanProcessor.on_end.__get__(span_processor, BatchSpanProcessor)
+                span_processor.on_end = BatchSpanProcessor.on_end.__get__(
+                    span_processor, BatchSpanProcessor
+                )
     if _trace_wrapper_instance:
         TracerWrapper.instance = _trace_wrapper_instance
 
@@ -188,8 +193,7 @@ def exporters_with_multiple_span_processors():
 
     # Get the default Traceloop processor
     default_processor = Traceloop.get_default_span_processor(
-        disable_batch=True,
-        exporter=default_exporter
+        disable_batch=True, exporter=default_exporter
     )
 
     # Create custom processors
@@ -211,12 +215,13 @@ def exporters_with_multiple_span_processors():
         "default": default_exporter,
         "custom": custom_exporter,
         "metrics": metrics_exporter,
-        "processor": processors
+        "processor": processors,
     }
 
     # Restore singleton if any
     if _trace_wrapper_instance:
         TracerWrapper.instance = _trace_wrapper_instance
+
 
 @pytest.fixture
 def datasets():
