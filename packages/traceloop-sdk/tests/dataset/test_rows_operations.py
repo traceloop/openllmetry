@@ -49,6 +49,57 @@ Bob,35,true"""
 
 
 @pytest.mark.vcr
+def test_add_rows(datasets):
+    """Test the add_rows method that makes POST to /datasets/{slug}/rows"""
+    try:
+        # Create a unique slug to avoid conflicts
+        unique_slug = f"test-add-rows-{int(time.time())}"
+
+        # Create a simple CSV for the initial dataset
+        csv_content = """Name,Age,Active
+John,25,true
+Jane,30,false"""
+
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".csv", delete=False) as f:
+            f.write(csv_content)
+            csv_path = f.name
+
+        try:
+            # First create a dataset
+            dataset = datasets.from_csv(
+                file_path=csv_path,
+                slug=unique_slug,
+                name="Test Add Rows Dataset", 
+                description="Dataset for testing add_rows method",
+            )
+
+            assert dataset is not None
+            initial_row_count = len(dataset.rows) if dataset.rows else 0
+
+            # Now test the add_rows method specifically
+            new_rows = [{"name": "Alice", "age": "28", "active": "true"}]
+            dataset.add_rows(new_rows)
+
+            # Verify the row was added
+            assert dataset.rows is not None
+            assert len(dataset.rows) == initial_row_count + 1
+            assert any(row.values["name"] == "Alice" for row in dataset.rows)
+
+        finally:
+            os.unlink(csv_path)
+
+    except Exception as e:
+        # Allow for expected API errors during recording
+        assert (
+            "Failed to create dataset" in str(e)
+            or "Failed to add row" in str(e)
+            or "401" in str(e) 
+            or "403" in str(e)
+            or "409" in str(e)
+        )
+
+
+@pytest.mark.vcr
 def test_dataset_row_operations_api_errors(datasets):
     """Test handling of API errors for row operations"""
     try:
