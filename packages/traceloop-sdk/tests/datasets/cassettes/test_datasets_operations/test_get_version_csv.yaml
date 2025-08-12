@@ -17,9 +17,7 @@ interactions:
   response:
     body:
       string: 'New Column 1,New Column 2,New Column 3
-
         hallo,0,false
-
         '
     headers:
       CF-RAY:

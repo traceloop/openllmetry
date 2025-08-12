@@ -27,7 +27,7 @@ class Dataset:
     slug: str
     description: str
     columns: List[Column] = Field(default_factory=list)
-    rows: Optional[List[Row]] = None
+    rows: Optional[List[Row]] = Field(default_factory=list)
     last_version: Optional[str] = None
     created_at: datetime
     updated_at: datetime
