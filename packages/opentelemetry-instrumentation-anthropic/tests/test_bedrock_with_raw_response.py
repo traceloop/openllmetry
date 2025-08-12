@@ -12,12 +12,12 @@ except ImportError:
 def async_anthropic_bedrock_client():
     if AsyncAnthropicBedrock is None:
         pytest.skip("AsyncAnthropicBedrock not available")
-    
+
     # Try to get credentials from environment first
     aws_access_key = os.environ.get("AWS_ACCESS_KEY_ID", "test-key")
     aws_secret_key = os.environ.get("AWS_SECRET_ACCESS_KEY", "test-secret")
     aws_region = os.environ.get("AWS_REGION", "us-east-1")
-    
+
     return AsyncAnthropicBedrock(
         aws_region=aws_region,
         aws_access_key=aws_access_key,
@@ -71,7 +71,7 @@ async def test_async_anthropic_bedrock_with_raw_response(
     )
 
 
-@pytest.mark.asyncio  
+@pytest.mark.asyncio
 @pytest.mark.vcr
 async def test_async_anthropic_bedrock_regular_create(
     instrument_legacy, async_anthropic_bedrock_client, span_exporter, log_exporter, reader
