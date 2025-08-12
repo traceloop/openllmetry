@@ -76,7 +76,9 @@ def fixture_meter_provider(reader):
 @pytest.fixture(scope="session")
 def instrument_legacy(reader, tracer_provider, meter_provider):
     openai_instrumentor = OpenAIInstrumentor()
-    openai_instrumentor.instrument(tracer_provider=tracer_provider, meter_provider=meter_provider)
+    openai_instrumentor.instrument(
+        tracer_provider=tracer_provider, meter_provider=meter_provider
+    )
 
     langchain_instrumentor = LangchainInstrumentor()
     langchain_instrumentor.instrument(
@@ -148,7 +150,27 @@ def environment():
 
 @pytest.fixture(scope="module")
 def vcr_config():
+    def before_record_request(request):
+        if hasattr(request, "body") and request.body:
+            import json
+
+            try:
+                if isinstance(request.body, (str, bytes)):
+                    body_str = (
+                        request.body.decode("utf-8")
+                        if isinstance(request.body, bytes)
+                        else request.body
+                    )
+                    body_data = json.loads(body_str)
+                    if "api_key" in body_data:
+                        body_data["api_key"] = "FILTERED"
+                        request.body = json.dumps(body_data)
+            except (json.JSONDecodeError, UnicodeDecodeError, AttributeError):
+                pass
+        return request
+
     return {
         "filter_headers": ["authorization", "x-api-key"],
-        "filter_body": ["api_key"],
+        "match_on": ["method", "scheme", "host", "port", "path", "query"],
+        "before_record_request": before_record_request,
     }
