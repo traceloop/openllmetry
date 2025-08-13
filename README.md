@@ -60,13 +60,20 @@ If you already have OpenTelemetry instrumented, you can just add any of our inst
 
 ## 🚀 Getting Started
 
+
 The easiest way to get started is to use our SDK.
 For a complete guide, go to our [docs](https://traceloop.com/docs/openllmetry/getting-started-python).
 
-Install the SDK:
+Install the SDK with all instrumentations:
 
 ```bash
-pip install traceloop-sdk
+pip install traceloop-sdk[full]
+```
+
+Or, to install only the instrumentations you need (for example, OpenAI and LangChain):
+
+```bash
+pip install traceloop-sdk[openai,langchain]
 ```
 
 Then, to start instrumenting your code, just add this line to your code:
