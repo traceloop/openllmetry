@@ -1,0 +1,52 @@
+interactions:
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '0'
+      User-Agent:
+      - python-requests/2.32.3
+      X-Traceloop-SDK-Version:
+      - 1.0.0
+    method: DELETE
+    uri: https://api-staging.traceloop.com/v2/datasets/test-csv-dataset
+  response:
+    body:
+      string: ''
+    headers:
+      CF-RAY:
+      - 96d9f7f11a74744c-MIA
+      Connection:
+      - keep-alive
+      Date:
+      - Mon, 11 Aug 2025 18:59:09 GMT
+      Permissions-Policy:
+      - geolocation=(self), microphone=()
+      Server:
+      - cloudflare
+      cf-cache-status:
+      - DYNAMIC
+      referrer-policy:
+      - strict-origin-when-cross-origin
+      strict-transport-security:
+      - max-age=7776000; includeSubDomains
+      via:
+      - kong/3.7.1
+      x-content-type:
+      - nosniff
+      x-kong-proxy-latency:
+      - '0'
+      x-kong-request-id:
+      - b52c91024537b77c0cbbf5575e93cc7d
+      x-kong-upstream-latency:
+      - '16'
+    status:
+      code: 204
+      message: No Content
+version: 1

@@ -101,7 +101,7 @@ def test_agents_with_events_with_content(
     }
 
     logs = log_exporter.get_finished_logs()
-    assert len(logs) == 15
+    assert len(logs) == 8
 
     # Validate that the user message Event exists
     assert_message_in_logs(logs, "gen_ai.user.message", {"content": prompt})
@@ -119,7 +119,7 @@ def test_agents_with_events_with_content(
             "content": "",
             "tool_calls": [
                 {
-                    "id": "call_vZSljoj56JmSCeTYR9UgYkdK",
+                    "id": "call_RQXCf1bdiBiFrtwfOTP3GCCd",
                     "function": {
                         "name": "tavily_search_results_json",
                         "arguments": {"query": "OpenLLMetry"},
@@ -137,7 +137,7 @@ def test_agents_with_events_with_content(
         "message": {"content": ""},
         "tool_calls": [
             {
-                "id": "call_vZSljoj56JmSCeTYR9UgYkdK",
+                "id": "call_RQXCf1bdiBiFrtwfOTP3GCCd",
                 "function": {
                     "name": "tavily_search_results_json",
                     "arguments": {"query": "OpenLLMetry"},
@@ -198,7 +198,7 @@ def test_agents_with_events_with_no_content(
     }
 
     logs = log_exporter.get_finished_logs()
-    assert len(logs) == 15
+    assert len(logs) == 8
     assert all(
         log.log_record.attributes.get(GenAIAttributes.GEN_AI_SYSTEM) == "langchain"
         for log in logs
@@ -217,7 +217,7 @@ def test_agents_with_events_with_no_content(
         {
             "tool_calls": [
                 {
-                    "id": "call_vZSljoj56JmSCeTYR9UgYkdK",
+                    "id": "call_Joct6NnIJFGGWfvMqZJPRB4C",
                     "function": {"name": "tavily_search_results_json"},
                     "type": "function",
                 }
@@ -232,7 +232,7 @@ def test_agents_with_events_with_no_content(
         "message": {},
         "tool_calls": [
             {
-                "id": "call_vZSljoj56JmSCeTYR9UgYkdK",
+                "id": "call_Joct6NnIJFGGWfvMqZJPRB4C",
                 "function": {"name": "tavily_search_results_json"},
                 "type": "function",
             }
