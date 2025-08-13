@@ -1,3 +1,10 @@
+## v0.45.1 (2025-08-13)
+
+### Fix
+
+- **langchain**: context detach exception (#3255)
+- **mcp**: MCP Instrumentation: streamablehttp_client Parameter Corruption (#3199)
+
 ## v0.45.0 (2025-08-12)
 
 ### Feat
