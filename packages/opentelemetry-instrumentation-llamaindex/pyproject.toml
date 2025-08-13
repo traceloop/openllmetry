@@ -23,7 +23,7 @@ readme = "README.md"
 include = "opentelemetry/instrumentation/llamaindex"
 
 [tool.poetry.dependencies]
-python = ">=3.9,<4"
+python = ">=3.10,<4"
 opentelemetry-api = "^1.28.0"
 opentelemetry-instrumentation = ">=0.50b0"
 opentelemetry-semantic-conventions = ">=0.50b0"
@@ -41,16 +41,15 @@ pytest-asyncio = "^0.23.7"
 chromadb = "^0.5.23"
 openai = "^1.52.2"
 opentelemetry-sdk = "^1.27.0"
-llama-index = "^0.12.6"
-llama-index-postprocessor-cohere-rerank = "^0.3.0"
+llama-index = "^0.13.1"
+llama-index-postprocessor-cohere-rerank = "^0.5.0"
 opentelemetry-instrumentation-openai = { path = "../opentelemetry-instrumentation-openai", develop = true }
 opentelemetry-instrumentation-cohere = { path = "../opentelemetry-instrumentation-cohere", develop = true }
 opentelemetry-instrumentation-chromadb = { path = "../opentelemetry-instrumentation-chromadb", develop = true }
 sqlalchemy = "^2.0.31"
-llama-index-agent-openai = "^0.4.1"
-llama-index-vector-stores-chroma = "^0.4.1"
-llama-index-llms-cohere = "^0.4.0"
-llama-index-embeddings-openai = "^0.3.1"
+llama-index-vector-stores-chroma = "^0.5.0"
+llama-index-llms-cohere = "^0.6.0"
+llama-index-embeddings-openai = "^0.5.0"
 onnxruntime = "<1.20.0"
 llama-parse = "^0.5.20"
 
