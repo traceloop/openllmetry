@@ -1,3 +1,9 @@
+## v0.45.3 (2025-08-14)
+
+### Fix
+
+- **anthropic**: temp disable beta apis instrumentation (#3258)
+
 ## v0.45.2 (2025-08-14)
 
 ### Fix
