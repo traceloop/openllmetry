@@ -187,17 +187,55 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         span.end()
         token = self.spans[run_id].token
         if token:
-            try:
-                # Use the runtime context directly to avoid logging from context_api.detach()
-                from opentelemetry.context import _RUNTIME_CONTEXT
-                _RUNTIME_CONTEXT.detach(token)
-            except (ValueError, RuntimeError, Exception):
-                # Context detach can fail in async scenarios when tokens are created in different contexts
-                # This includes ValueError, RuntimeError, and other context-related exceptions
-                # This is expected behavior and doesn't affect the correct span hierarchy
-                pass
+            self._safe_detach_context(token)
 
         del self.spans[run_id]
+
+    def _safe_attach_context(self, span: Span):
+        """
+        Safely attach span to context, handling potential failures in async scenarios.
+        
+        Returns the context token for later detachment, or None if attachment fails.
+        """
+        try:
+            return context_api.attach(set_span_in_context(span))
+        except Exception:
+            # Context attachment can fail in some edge cases, particularly in
+            # complex async scenarios or when context is corrupted.
+            # Return None to indicate no token needs to be detached later.
+            return None
+
+    def _safe_detach_context(self, token):
+        """
+        Safely detach context token without causing application crashes.
+        
+        This method implements a fail-safe approach to context detachment that handles
+        all known edge cases in async/concurrent scenarios where context tokens may
+        become invalid or be detached in different execution contexts.
+        
+        We use the runtime context directly to avoid logging errors from context_api.detach()
+        """
+        if not token:
+            return
+
+        try:
+            # Use the runtime context directly to avoid error logging from context_api.detach()
+            from opentelemetry.context import _RUNTIME_CONTEXT
+            _RUNTIME_CONTEXT.detach(token)
+        except Exception:
+            # Context detach can fail in async scenarios when tokens are created in different contexts
+            # This includes ValueError, RuntimeError, and other context-related exceptions
+            # This is expected behavior and doesn't affect the correct span hierarchy
+            # 
+            # Common scenarios where this happens:
+            # 1. Token created in one async task/thread, detached in another
+            # 2. Context was already detached by another process
+            # 3. Token became invalid due to context switching
+            # 4. Race conditions in highly concurrent scenarios
+            #
+            # This is safe to ignore as the span itself was properly ended
+            # and the tracing data is correctly captured.
+            pass
 
     def _create_span(
         self,
@@ -220,12 +258,17 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
                 for k, v in metadata.items()
                 if v is not None
             }
-            context_api.attach(
-                context_api.set_value(
-                    "association_properties",
-                    {**current_association_properties, **sanitized_metadata},
+            try:
+                context_api.attach(
+                    context_api.set_value(
+                        "association_properties",
+                        {**current_association_properties, **sanitized_metadata},
+                    )
                 )
-            )
+            except Exception:
+                # If setting association properties fails, continue without them
+                # This doesn't affect the core span functionality
+                pass
 
         if parent_run_id is not None and parent_run_id in self.spans:
             span = self.tracer.start_span(
@@ -236,7 +279,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         else:
             span = self.tracer.start_span(span_name, kind=kind)
 
-        token = context_api.attach(set_span_in_context(span))
+        token = self._safe_attach_context(span)
 
         _set_span_attribute(span, SpanAttributes.TRACELOOP_WORKFLOW_NAME, workflow_name)
         _set_span_attribute(span, SpanAttributes.TRACELOOP_ENTITY_PATH, entity_path)
@@ -317,9 +360,13 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
 
         # we already have an LLM span by this point,
         # so skip any downstream instrumentation from here
-        token = context_api.attach(
-            context_api.set_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY, True)
-        )
+        try:
+            token = context_api.attach(
+                context_api.set_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY, True)
+            )
+        except Exception:
+            # If context setting fails, continue without suppression token
+            token = None
 
         self.spans[run_id] = SpanHolder(
             span, token, None, [], workflow_name, None, entity_path
@@ -411,11 +458,15 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
 
         self._end_span(span, run_id)
         if parent_run_id is None:
-            context_api.attach(
-                context_api.set_value(
-                    SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY, False
+            try:
+                context_api.attach(
+                    context_api.set_value(
+                        SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY, False
+                    )
                 )
-            )
+            except Exception:
+                # If context reset fails, it's not critical for functionality
+                pass
 
     @dont_throw
     def on_chat_model_start(
