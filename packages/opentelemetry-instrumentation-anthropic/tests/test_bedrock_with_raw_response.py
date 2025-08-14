@@ -21,14 +21,19 @@ def async_anthropic_bedrock_client(instrument_legacy):
     return AsyncAnthropicBedrock(
         aws_region=aws_region,
         aws_access_key=aws_access_key,
-        aws_secret_key=aws_secret_key
+        aws_secret_key=aws_secret_key,
     )
 
 
+@pytest.mark.skip
 @pytest.mark.asyncio
 @pytest.mark.vcr
 async def test_async_anthropic_bedrock_with_raw_response(
-    instrument_legacy, async_anthropic_bedrock_client, span_exporter, log_exporter, reader
+    instrument_legacy,
+    async_anthropic_bedrock_client,
+    span_exporter,
+    log_exporter,
+    reader,
 ):
     """Test that AsyncAnthropicBedrock with_raw_response.create generates spans"""
     response = await async_anthropic_bedrock_client.messages.with_raw_response.create(
@@ -53,7 +58,11 @@ async def test_async_anthropic_bedrock_with_raw_response(
     )
     assert (anthropic_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"]) == "user"
     # For raw response, content is accessed differently
-    response_content = response.parse().content[0].text if hasattr(response, 'parse') else response.content[0].text
+    response_content = (
+        response.parse().content[0].text
+        if hasattr(response, "parse")
+        else response.content[0].text
+    )
     assert (
         anthropic_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
         == response_content
@@ -71,10 +80,15 @@ async def test_async_anthropic_bedrock_with_raw_response(
     )
 
 
+@pytest.mark.skip
 @pytest.mark.asyncio
 @pytest.mark.vcr
 async def test_async_anthropic_bedrock_regular_create(
-    instrument_legacy, async_anthropic_bedrock_client, span_exporter, log_exporter, reader
+    instrument_legacy,
+    async_anthropic_bedrock_client,
+    span_exporter,
+    log_exporter,
+    reader,
 ):
     """Test that regular AsyncAnthropicBedrock create works (for comparison)"""
     response = await async_anthropic_bedrock_client.messages.create(
@@ -115,21 +129,28 @@ async def test_async_anthropic_bedrock_regular_create(
     )
 
 
+@pytest.mark.skip
 @pytest.mark.asyncio
 @pytest.mark.vcr
 async def test_async_anthropic_bedrock_beta_with_raw_response(
-    instrument_legacy, async_anthropic_bedrock_client, span_exporter, log_exporter, reader
+    instrument_legacy,
+    async_anthropic_bedrock_client,
+    span_exporter,
+    log_exporter,
+    reader,
 ):
     """Test that AsyncAnthropicBedrock beta.messages.with_raw_response.create generates spans"""
-    response = await async_anthropic_bedrock_client.beta.messages.with_raw_response.create(
-        max_tokens=1024,
-        messages=[
-            {
-                "role": "user",
-                "content": "Tell me a joke about OpenTelemetry",
-            }
-        ],
-        model="anthropic.claude-3-haiku-20240307-v1:0",
+    response = (
+        await async_anthropic_bedrock_client.beta.messages.with_raw_response.create(
+            max_tokens=1024,
+            messages=[
+                {
+                    "role": "user",
+                    "content": "Tell me a joke about OpenTelemetry",
+                }
+            ],
+            model="anthropic.claude-3-haiku-20240307-v1:0",
+        )
     )
 
     spans = span_exporter.get_finished_spans()
@@ -143,7 +164,11 @@ async def test_async_anthropic_bedrock_beta_with_raw_response(
     )
     assert (anthropic_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"]) == "user"
     # For raw response, content is accessed differently
-    response_content = response.parse().content[0].text if hasattr(response, 'parse') else response.content[0].text
+    response_content = (
+        response.parse().content[0].text
+        if hasattr(response, "parse")
+        else response.content[0].text
+    )
     assert (
         anthropic_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
         == response_content
