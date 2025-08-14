@@ -81,32 +81,32 @@ WRAPPED_METHODS = [
         "method": "stream",
         "span_name": "anthropic.chat",
     },
-    # Beta API methods (regular Anthropic SDK)
-    {
-        "package": "anthropic.resources.beta.messages.messages",
-        "object": "Messages",
-        "method": "create",
-        "span_name": "anthropic.chat",
-    },
-    {
-        "package": "anthropic.resources.beta.messages.messages",
-        "object": "Messages",
-        "method": "stream",
-        "span_name": "anthropic.chat",
-    },
-    # Beta API methods (Bedrock SDK)
-    {
-        "package": "anthropic.lib.bedrock._beta_messages",
-        "object": "Messages",
-        "method": "create",
-        "span_name": "anthropic.chat",
-    },
-    {
-        "package": "anthropic.lib.bedrock._beta_messages",
-        "object": "Messages",
-        "method": "stream",
-        "span_name": "anthropic.chat",
-    },
+    # # Beta API methods (regular Anthropic SDK)
+    # {
+    #     "package": "anthropic.resources.beta.messages.messages",
+    #     "object": "Messages",
+    #     "method": "create",
+    #     "span_name": "anthropic.chat",
+    # },
+    # {
+    #     "package": "anthropic.resources.beta.messages.messages",
+    #     "object": "Messages",
+    #     "method": "stream",
+    #     "span_name": "anthropic.chat",
+    # },
+    # # Beta API methods (Bedrock SDK)
+    # {
+    #     "package": "anthropic.lib.bedrock._beta_messages",
+    #     "object": "Messages",
+    #     "method": "create",
+    #     "span_name": "anthropic.chat",
+    # },
+    # {
+    #     "package": "anthropic.lib.bedrock._beta_messages",
+    #     "object": "Messages",
+    #     "method": "stream",
+    #     "span_name": "anthropic.chat",
+    # },
 ]
 
 WRAPPED_AMETHODS = [
@@ -122,32 +122,32 @@ WRAPPED_AMETHODS = [
         "method": "create",
         "span_name": "anthropic.chat",
     },
-    # Beta API async methods (regular Anthropic SDK)
-    {
-        "package": "anthropic.resources.beta.messages.messages",
-        "object": "AsyncMessages",
-        "method": "create",
-        "span_name": "anthropic.chat",
-    },
-    {
-        "package": "anthropic.resources.beta.messages.messages",
-        "object": "AsyncMessages",
-        "method": "stream",
-        "span_name": "anthropic.chat",
-    },
-    # Beta API async methods (Bedrock SDK)
-    {
-        "package": "anthropic.lib.bedrock._beta_messages",
-        "object": "AsyncMessages",
-        "method": "create",
-        "span_name": "anthropic.chat",
-    },
-    {
-        "package": "anthropic.lib.bedrock._beta_messages",
-        "object": "AsyncMessages",
-        "method": "stream",
-        "span_name": "anthropic.chat",
-    },
+    # # Beta API async methods (regular Anthropic SDK)
+    # {
+    #     "package": "anthropic.resources.beta.messages.messages",
+    #     "object": "AsyncMessages",
+    #     "method": "create",
+    #     "span_name": "anthropic.chat",
+    # },
+    # {
+    #     "package": "anthropic.resources.beta.messages.messages",
+    #     "object": "AsyncMessages",
+    #     "method": "stream",
+    #     "span_name": "anthropic.chat",
+    # },
+    # # Beta API async methods (Bedrock SDK)
+    # {
+    #     "package": "anthropic.lib.bedrock._beta_messages",
+    #     "object": "AsyncMessages",
+    #     "method": "create",
+    #     "span_name": "anthropic.chat",
+    # },
+    # {
+    #     "package": "anthropic.lib.bedrock._beta_messages",
+    #     "object": "AsyncMessages",
+    #     "method": "stream",
+    #     "span_name": "anthropic.chat",
+    # },
 ]
 
 
@@ -183,6 +183,7 @@ async def _aset_token_usage(
     choice_counter: Counter = None,
 ):
     from opentelemetry.instrumentation.anthropic.utils import _aextract_response_data
+
     response = await _aextract_response_data(response)
 
     if usage := response.get("usage"):
@@ -276,6 +277,7 @@ def _set_token_usage(
     choice_counter: Counter = None,
 ):
     from opentelemetry.instrumentation.anthropic.utils import _extract_response_data
+
     response = _extract_response_data(response)
 
     if usage := response.get("usage"):
@@ -443,7 +445,10 @@ async def _ahandle_response(span: Span, event_logger: Optional[EventLogger], res
     else:
         if not span.is_recording():
             return
-        from opentelemetry.instrumentation.anthropic.span_utils import aset_response_attributes
+        from opentelemetry.instrumentation.anthropic.span_utils import (
+            aset_response_attributes,
+        )
+
         await aset_response_attributes(span, response)
 
 
@@ -669,7 +674,10 @@ async def _awrap(
                 kwargs,
             )
     elif response:
-        from opentelemetry.instrumentation.anthropic.utils import ashared_metrics_attributes
+        from opentelemetry.instrumentation.anthropic.utils import (
+            ashared_metrics_attributes,
+        )
+
         metric_attributes = await ashared_metrics_attributes(response)
 
         if duration_histogram:
@@ -774,9 +782,13 @@ class AnthropicInstrumentor(BaseInstrumentor):
                         wrapped_method,
                     ),
                 )
-                logger.debug(f"Successfully wrapped {wrap_package}.{wrap_object}.{wrap_method}")
+                logger.debug(
+                    f"Successfully wrapped {wrap_package}.{wrap_object}.{wrap_method}"
+                )
             except Exception as e:
-                logger.debug(f"Failed to wrap {wrap_package}.{wrap_object}.{wrap_method}: {e}")
+                logger.debug(
+                    f"Failed to wrap {wrap_package}.{wrap_object}.{wrap_method}: {e}"
+                )
                 pass  # that's ok, we don't want to fail if some methods do not exist
 
         for wrapped_method in WRAPPED_AMETHODS:
