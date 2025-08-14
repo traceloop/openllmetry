@@ -25,7 +25,6 @@ def async_anthropic_bedrock_client(instrument_legacy):
     )
 
 
-# @pytest.mark.skip
 @pytest.mark.asyncio
 @pytest.mark.vcr
 async def test_async_anthropic_bedrock_with_raw_response(
@@ -80,7 +79,6 @@ async def test_async_anthropic_bedrock_with_raw_response(
     )
 
 
-# @pytest.mark.skip
 @pytest.mark.asyncio
 @pytest.mark.vcr
 async def test_async_anthropic_bedrock_regular_create(
@@ -129,7 +127,6 @@ async def test_async_anthropic_bedrock_regular_create(
     )
 
 
-# @pytest.mark.skip
 @pytest.mark.asyncio
 @pytest.mark.vcr
 async def test_async_anthropic_bedrock_beta_with_raw_response(
