@@ -4,7 +4,7 @@ from unittest.mock import MagicMock
 from opentelemetry.instrumentation.openai_agents import (
     OpenAIAgentsInstrumentor,
 )
-from agents import Runner
+from agents import Runner, Agent
 from opentelemetry.trace import StatusCode
 from opentelemetry.semconv_ai import (
     SpanAttributes,
@@ -362,3 +362,157 @@ async def test_recipe_workflow_agent_handoffs_with_function_tools(
     # agent handoffs may create separate traces, so we verify spans exist
     # rather than requiring them to share the same trace ID
     assert len(all_trace_ids) >= 1
+
+
+@pytest.mark.vcr
+@pytest.mark.asyncio
+async def test_music_composer_handoff_hierarchy(exporter):
+    """Test that handed-off agent spans are properly nested under the parent agent span."""
+    
+    # Use the same approach as the working recipe workflow test
+    # Create agents with function tools to trigger handoffs properly
+    from pydantic import BaseModel
+    from agents import function_tool
+    
+    # Create a simple function tool for the composer
+    @function_tool
+    async def compose_music(style: str, key: str) -> str:
+        """Compose music in the specified style and key."""
+        return f"Composed a beautiful {style} piece in {key} major"
+    
+    # Create composer agent with function tools
+    composer_agent = Agent(
+        name="Symphony Composer", 
+        instructions="You compose and arrange symphonic music pieces using your composition tools.",
+        model="gpt-4o",
+        tools=[compose_music],
+    )
+    
+    # Create conductor agent that can hand off to composer
+    conductor_agent = Agent(
+        name="Orchestra Conductor",
+        instructions="You coordinate musical performances. When users ask for composition, hand off to the Symphony Composer.",
+        model="gpt-4o", 
+        handoffs=[composer_agent],
+    )
+    
+    # Test the handoff workflow
+    query = "Can you create a new symphony in D major?"
+    messages = [{"role": "user", "content": query}]
+    
+    # Run the main conductor agent which should handoff to composer automatically
+    # The handoff should happen within the same runner - no need for manual second runner
+    conductor_runner = Runner().run_streamed(starting_agent=conductor_agent, input=messages)
+    
+    handoff_occurred = False
+    async for event in conductor_runner.stream_events():
+        if event.type == "run_item_stream_event" and "handoff" in event.name.lower():
+            handoff_occurred = True
+            print(f"🔄 HANDOFF DETECTED: {event.name} - {event}")
+        # Let the handoff complete naturally within the same runner context
+    
+    spans = exporter.get_finished_spans()
+    non_rest_spans = [span for span in spans if not span.name.endswith("v1/responses")]
+    
+    # Sort spans by start time for waterfall visualization
+    sorted_spans = sorted(non_rest_spans, key=lambda s: s.start_time)
+    
+    print(f"\n{'='*80}")
+    print(f"WATERFALL VISUALIZATION - All spans ({len(sorted_spans)} total)")
+    print(f"{'='*80}")
+    
+    # Group by trace ID to show separate traces
+    from collections import defaultdict
+    traces = defaultdict(list)
+    for span in sorted_spans:
+        trace_id = span.get_span_context().trace_id
+        traces[trace_id].append(span)
+    
+    for trace_id, trace_spans in traces.items():
+        print(f"\n🔗 TRACE {trace_id}")
+        print(f"   Contains {len(trace_spans)} spans")
+        
+        # Build hierarchy for this trace
+        span_tree = {}
+        root_spans = []
+        
+        for span in trace_spans:
+            span_tree[span.context.span_id] = {
+                'span': span,
+                'children': [],
+                'parent_id': span.parent.span_id if span.parent else None
+            }
+            if span.parent is None:
+                root_spans.append(span)
+        
+        # Build parent-child relationships
+        for span_id, span_info in span_tree.items():
+            if span_info['parent_id']:
+                parent = span_tree.get(span_info['parent_id'])
+                if parent:
+                    parent['children'].append(span_info)
+        
+        # Print hierarchy
+        def print_span_tree(span_info, level=0):
+            span = span_info['span']
+            indent = "  " * level
+            duration = (span.end_time - span.start_time) / 1_000_000  # Convert to ms
+            
+            if level == 0:
+                print(f"{indent}📋 {span.name} (root)")
+            else:
+                print(f"{indent}├─ {span.name}")
+            
+            print(f"{indent}   ⏱️  Duration: {duration:.2f}ms")
+            print(f"{indent}   🆔 Span ID: {span.context.span_id}")
+            if span.parent:
+                print(f"{indent}   👤 Parent: {span.parent.span_id}")
+            else:
+                print(f"{indent}   👤 Parent: None (ROOT)")
+            
+            for child in span_info['children']:
+                print_span_tree(child, level + 1)
+        
+        # Print each root span and its children
+        for root_span in root_spans:
+            root_info = span_tree[root_span.context.span_id]
+            print_span_tree(root_info, 0)
+            print()
+    
+    print(f"{'='*80}")
+    print(f"HANDOFF ANALYSIS")
+    print(f"{'='*80}")
+    
+    print(f"Handoff occurred: {handoff_occurred}")
+    
+    # Find the conductor and composer spans
+    conductor_spans = [s for s in non_rest_spans if "Orchestra Conductor" in s.name]
+    composer_spans = [s for s in non_rest_spans if "Symphony Composer" in s.name]
+    tool_spans = [s for s in non_rest_spans if "compose_music" in s.name]
+    
+    print(f"📊 Span Summary:")
+    print(f"   • Conductor spans: {len(conductor_spans)}")
+    print(f"   • Composer spans: {len(composer_spans)}")
+    print(f"   • Tool spans: {len(tool_spans)}")
+    print(f"   • Total traces: {len(traces)}")
+    
+    # Analyze the problem
+    root_spans = [s for s in non_rest_spans if s.parent is None]
+    print(f"\n❌ PROBLEM IDENTIFIED:")
+    print(f"   • Found {len(root_spans)} root spans")
+    print(f"   • Should have only 1 root span (the initial conductor)")
+    print(f"   • Handoff agents should be children, not roots")
+    
+    for span in root_spans:
+        print(f"   • Root: {span.name} (trace: {span.get_span_context().trace_id})")
+    
+    # The failing assertion
+    expected_root_span_names = ["Orchestra Conductor.agent"]
+    actual_root_span_names = [s.name for s in root_spans]
+    unexpected_root_spans = [name for name in actual_root_span_names if name not in expected_root_span_names]
+    
+    print(f"\n🎯 Expected: Only 'Orchestra Conductor.agent' as root")
+    print(f"🔍 Actual: {actual_root_span_names}")
+    print(f"🚨 Problem: {unexpected_root_spans}")
+    
+    assert len(unexpected_root_spans) == 0, f"Found unexpected root spans that should be child spans: {unexpected_root_spans}. This demonstrates the handoff hierarchy bug!"
