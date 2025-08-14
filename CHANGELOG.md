@@ -1,3 +1,9 @@
+## v0.45.4 (2025-08-14)
+
+### Fix
+
+- relax opentelemetry-semantic-conventions-ai deps (#3259)
+
 ## v0.45.3 (2025-08-14)
 
 ### Fix
