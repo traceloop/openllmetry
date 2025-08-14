@@ -1,3 +1,9 @@
+## v0.45.2 (2025-08-14)
+
+### Fix
+
+- **langchain**: langgraph application crash due to context detach (#3256)
+
 ## v0.45.1 (2025-08-13)
 
 ### Fix
