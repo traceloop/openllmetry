@@ -194,7 +194,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
     def _safe_attach_context(self, span: Span):
         """
         Safely attach span to context, handling potential failures in async scenarios.
-        
+
         Returns the context token for later detachment, or None if attachment fails.
         """
         try:
@@ -208,11 +208,11 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
     def _safe_detach_context(self, token):
         """
         Safely detach context token without causing application crashes.
-        
+
         This method implements a fail-safe approach to context detachment that handles
         all known edge cases in async/concurrent scenarios where context tokens may
         become invalid or be detached in different execution contexts.
-        
+
         We use the runtime context directly to avoid logging errors from context_api.detach()
         """
         if not token:
@@ -221,12 +221,13 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         try:
             # Use the runtime context directly to avoid error logging from context_api.detach()
             from opentelemetry.context import _RUNTIME_CONTEXT
+
             _RUNTIME_CONTEXT.detach(token)
         except Exception:
             # Context detach can fail in async scenarios when tokens are created in different contexts
             # This includes ValueError, RuntimeError, and other context-related exceptions
             # This is expected behavior and doesn't affect the correct span hierarchy
-            # 
+            #
             # Common scenarios where this happens:
             # 1. Token created in one async task/thread, detached in another
             # 2. Context was already detached by another process
@@ -564,8 +565,12 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         if model_name is None:
             model_name = extract_model_name_from_response_metadata(response)
         if model_name is None and hasattr(context_api, "get_value"):
-            association_properties = context_api.get_value("association_properties") or {}
-            model_name = _extract_model_name_from_association_metadata(association_properties)
+            association_properties = (
+                context_api.get_value("association_properties") or {}
+            )
+            model_name = _extract_model_name_from_association_metadata(
+                association_properties
+            )
         token_usage = (response.llm_output or {}).get("token_usage") or (
             response.llm_output or {}
         ).get("usage")
