@@ -66,11 +66,11 @@ def error_metrics_attributes(exception):
 
 @dont_throw
 def response_attributes(response):
+    response_dict = model_as_dict(response)
+
     return {
         GEN_AI_SYSTEM: GEN_AI_SYSTEM_WRITER,
-        SpanAttributes.LLM_RESPONSE_MODEL: response.get(
-            "model"
-        ),  # TODO check if response is a dict, not a class instance
+        SpanAttributes.LLM_RESPONSE_MODEL: response_dict.get("model"),
     }
 
 

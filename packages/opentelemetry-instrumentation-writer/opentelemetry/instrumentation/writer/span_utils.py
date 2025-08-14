@@ -30,7 +30,27 @@ def set_input_attributes(span, kwargs):
                     f"{SpanAttributes.LLM_PROMPTS}.{i}.content",
                     message.get("content"),
                 )
-            # TODO add tool calls setter
+                tool_calls = message.get("tool_calls")
+                if tool_calls:
+                    for j, tool_call in enumerate(tool_calls):
+                        set_span_attribute(
+                            span, 
+                            f"{SpanAttributes.LLM_PROMPTS}.{i}.tool_calls.{j}.id", 
+                            tool_call.get("id")
+                        )
+                        
+                        function = tool_call.get("function", {})
+                        set_span_attribute(
+                            span, 
+                            f"{SpanAttributes.LLM_PROMPTS}.{i}.tool_calls.{j}.name", 
+                            function.get("name")
+                        )
+    
+                        set_span_attribute(
+                            span, 
+                            f"{SpanAttributes.LLM_PROMPTS}.{i}.tool_calls.{j}.arguments", 
+                            function.get("arguments")
+                        )
 
 
 @dont_throw
@@ -124,7 +144,6 @@ def _set_completions(span, choices):
             set_span_attribute(span, f"{prefix}.role", message.get("role", "assistant"))
             set_span_attribute(span, f"{prefix}.content", message.get("content"))
             
-            # Handle tool calls if present
             tool_calls = message.get("tool_calls")
             if tool_calls:
                 for i, tool_call in enumerate(tool_calls):
