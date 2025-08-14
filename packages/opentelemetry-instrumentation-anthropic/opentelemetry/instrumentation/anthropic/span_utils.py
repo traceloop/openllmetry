@@ -8,7 +8,6 @@ from opentelemetry.instrumentation.anthropic.utils import (
     dont_throw,
     model_as_dict,
     should_send_prompts,
-    _extract_response_data,
 )
 from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
     GEN_AI_RESPONSE_ID,
@@ -170,38 +169,65 @@ async def _aset_span_completions(span, response):
     if not should_send_prompts():
         return
     from opentelemetry.instrumentation.anthropic import set_span_attribute
-    from opentelemetry.instrumentation.anthropic.utils import _aextract_response_data
+    import inspect
 
-    response = await _aextract_response_data(response)
+    # If we get a coroutine, await it
+    if inspect.iscoroutine(response):
+        try:
+            response = await response
+        except Exception as e:
+            import logging
+
+            logger = logging.getLogger(__name__)
+            logger.debug(f"Failed to await coroutine response: {e}")
+            return
+
+    # Work directly with the response object to preserve its structure
     index = 0
     prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{index}"
-    set_span_attribute(span, f"{prefix}.finish_reason", response.get("stop_reason"))
-    if response.get("role"):
-        set_span_attribute(span, f"{prefix}.role", response.get("role"))
 
-    if response.get("completion"):
-        set_span_attribute(span, f"{prefix}.content", response.get("completion"))
-    elif response.get("content"):
+    # Safely get attributes without extracting the whole object
+    stop_reason = getattr(response, "stop_reason", None)
+    role = getattr(response, "role", None)
+    completion = getattr(response, "completion", None)
+    content = getattr(response, "content", None)
+
+    set_span_attribute(span, f"{prefix}.finish_reason", stop_reason)
+    if role:
+        set_span_attribute(span, f"{prefix}.role", role)
+
+    if completion:
+        set_span_attribute(span, f"{prefix}.content", completion)
+    elif content:
         tool_call_index = 0
         text = ""
-        for content in response.get("content"):
-            content_block_type = content.type
+        for content_item in content:
+            content_block_type = getattr(content_item, "type", None)
             # usually, Antrhopic responds with just one text block,
             # but the API allows for multiple text blocks, so concatenate them
-            if content_block_type == "text" and hasattr(content, "text"):
-                text += content.text
+            if content_block_type == "text" and hasattr(content_item, "text"):
+                text += content_item.text
             elif content_block_type == "thinking":
-                content = dict(content)
+                content_dict = (
+                    dict(content_item)
+                    if hasattr(content_item, "__dict__")
+                    else content_item
+                )
                 # override the role to thinking
                 set_span_attribute(
                     span,
                     f"{prefix}.role",
                     "thinking",
                 )
+                thinking_content = (
+                    content_dict.get("thinking")
+                    if isinstance(content_dict, dict)
+                    else getattr(content_item, "thinking", None)
+                )
                 set_span_attribute(
                     span,
                     f"{prefix}.content",
-                    content.get("thinking"),
+                    thinking_content,
                 )
                 # increment the index for subsequent content blocks
                 index += 1
@@ -210,26 +236,45 @@ async def _aset_span_completions(span, response):
                 set_span_attribute(
                     span,
                     f"{prefix}.role",
-                    response.get("role"),
+                    role,
                 )
             elif content_block_type == "tool_use":
-                content = dict(content)
+                content_dict = (
+                    dict(content_item)
+                    if hasattr(content_item, "__dict__")
+                    else content_item
+                )
+                tool_id = (
+                    content_dict.get("id")
+                    if isinstance(content_dict, dict)
+                    else getattr(content_item, "id", None)
+                )
+                tool_name = (
+                    content_dict.get("name")
+                    if isinstance(content_dict, dict)
+                    else getattr(content_item, "name", None)
+                )
+                tool_input = (
+                    content_dict.get("input")
+                    if isinstance(content_dict, dict)
+                    else getattr(content_item, "input", None)
+                )
+
                 set_span_attribute(
                     span,
                     f"{prefix}.tool_calls.{tool_call_index}.id",
-                    content.get("id"),
+                    tool_id,
                 )
                 set_span_attribute(
                     span,
                     f"{prefix}.tool_calls.{tool_call_index}.name",
-                    content.get("name"),
+                    tool_name,
                 )
-                tool_arguments = content.get("input")
-                if tool_arguments is not None:
+                if tool_input is not None:
                     set_span_attribute(
                         span,
                         f"{prefix}.tool_calls.{tool_call_index}.arguments",
-                        json.dumps(tool_arguments),
+                        json.dumps(tool_input),
                     )
                 tool_call_index += 1
         set_span_attribute(span, f"{prefix}.content", text)
@@ -239,37 +284,64 @@ def _set_span_completions(span, response):
     if not should_send_prompts():
         return
     from opentelemetry.instrumentation.anthropic import set_span_attribute
+    import inspect
 
-    response = _extract_response_data(response)
+    # If we get a coroutine, we cannot process it in sync context
+    if inspect.iscoroutine(response):
+        import logging
+
+        logger = logging.getLogger(__name__)
+        logger.warning(
+            f"_set_span_completions received coroutine {response} - span processing skipped"
+        )
+        return
+
+    # Work directly with the response object to preserve its structure
     index = 0
     prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{index}"
-    set_span_attribute(span, f"{prefix}.finish_reason", response.get("stop_reason"))
-    if response.get("role"):
-        set_span_attribute(span, f"{prefix}.role", response.get("role"))
 
-    if response.get("completion"):
-        set_span_attribute(span, f"{prefix}.content", response.get("completion"))
-    elif response.get("content"):
+    # Safely get attributes without extracting the whole object
+    stop_reason = getattr(response, "stop_reason", None)
+    role = getattr(response, "role", None)
+    completion = getattr(response, "completion", None)
+    content = getattr(response, "content", None)
+
+    set_span_attribute(span, f"{prefix}.finish_reason", stop_reason)
+    if role:
+        set_span_attribute(span, f"{prefix}.role", role)
+
+    if completion:
+        set_span_attribute(span, f"{prefix}.content", completion)
+    elif content:
         tool_call_index = 0
         text = ""
-        for content in response.get("content"):
-            content_block_type = content.type
+        for content_item in content:
+            content_block_type = getattr(content_item, "type", None)
             # usually, Antrhopic responds with just one text block,
             # but the API allows for multiple text blocks, so concatenate them
-            if content_block_type == "text" and hasattr(content, "text"):
-                text += content.text
+            if content_block_type == "text" and hasattr(content_item, "text"):
+                text += content_item.text
             elif content_block_type == "thinking":
-                content = dict(content)
+                content_dict = (
+                    dict(content_item)
+                    if hasattr(content_item, "__dict__")
+                    else content_item
+                )
                 # override the role to thinking
                 set_span_attribute(
                     span,
                     f"{prefix}.role",
                     "thinking",
                 )
+                thinking_content = (
+                    content_dict.get("thinking")
+                    if isinstance(content_dict, dict)
+                    else getattr(content_item, "thinking", None)
+                )
                 set_span_attribute(
                     span,
                     f"{prefix}.content",
-                    content.get("thinking"),
+                    thinking_content,
                 )
                 # increment the index for subsequent content blocks
                 index += 1
@@ -278,26 +350,45 @@ def _set_span_completions(span, response):
                 set_span_attribute(
                     span,
                     f"{prefix}.role",
-                    response.get("role"),
+                    role,
                 )
             elif content_block_type == "tool_use":
-                content = dict(content)
+                content_dict = (
+                    dict(content_item)
+                    if hasattr(content_item, "__dict__")
+                    else content_item
+                )
+                tool_id = (
+                    content_dict.get("id")
+                    if isinstance(content_dict, dict)
+                    else getattr(content_item, "id", None)
+                )
+                tool_name = (
+                    content_dict.get("name")
+                    if isinstance(content_dict, dict)
+                    else getattr(content_item, "name", None)
+                )
+                tool_input = (
+                    content_dict.get("input")
+                    if isinstance(content_dict, dict)
+                    else getattr(content_item, "input", None)
+                )
+
                 set_span_attribute(
                     span,
                     f"{prefix}.tool_calls.{tool_call_index}.id",
-                    content.get("id"),
+                    tool_id,
                 )
                 set_span_attribute(
                     span,
                     f"{prefix}.tool_calls.{tool_call_index}.name",
-                    content.get("name"),
+                    tool_name,
                 )
-                tool_arguments = content.get("input")
-                if tool_arguments is not None:
+                if tool_input is not None:
                     set_span_attribute(
                         span,
                         f"{prefix}.tool_calls.{tool_call_index}.arguments",
-                        json.dumps(tool_arguments),
+                        json.dumps(tool_input),
                     )
                 tool_call_index += 1
         set_span_attribute(span, f"{prefix}.content", text)
@@ -306,24 +397,44 @@ def _set_span_completions(span, response):
 @dont_throw
 async def aset_response_attributes(span, response):
     from opentelemetry.instrumentation.anthropic import set_span_attribute
-    from opentelemetry.instrumentation.anthropic.utils import _aextract_response_data
+    import inspect
 
-    response = await _aextract_response_data(response)
-    set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, response.get("model"))
-    set_span_attribute(span, GEN_AI_RESPONSE_ID, response.get("id"))
+    # If we get a coroutine, await it
+    if inspect.iscoroutine(response):
+        try:
+            response = await response
+        except Exception as e:
+            import logging
 
-    if response.get("usage"):
-        prompt_tokens = response.get("usage").input_tokens
-        completion_tokens = response.get("usage").output_tokens
-        set_span_attribute(span, SpanAttributes.LLM_USAGE_PROMPT_TOKENS, prompt_tokens)
-        set_span_attribute(
-            span, SpanAttributes.LLM_USAGE_COMPLETION_TOKENS, completion_tokens
-        )
-        set_span_attribute(
-            span,
-            SpanAttributes.LLM_USAGE_TOTAL_TOKENS,
-            prompt_tokens + completion_tokens,
-        )
+            logger = logging.getLogger(__name__)
+            logger.debug(f"Failed to await coroutine response: {e}")
+            return
+
+    # Work directly with the response object
+    model = getattr(response, "model", None)
+    response_id = getattr(response, "id", None)
+    usage = getattr(response, "usage", None)
+
+    set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, model)
+    set_span_attribute(span, GEN_AI_RESPONSE_ID, response_id)
+
+    if usage:
+        prompt_tokens = getattr(usage, "input_tokens", None)
+        completion_tokens = getattr(usage, "output_tokens", None)
+        if prompt_tokens is not None:
+            set_span_attribute(
+                span, SpanAttributes.LLM_USAGE_PROMPT_TOKENS, prompt_tokens
+            )
+        if completion_tokens is not None:
+            set_span_attribute(
+                span, SpanAttributes.LLM_USAGE_COMPLETION_TOKENS, completion_tokens
+            )
+        if prompt_tokens is not None and completion_tokens is not None:
+            set_span_attribute(
+                span,
+                SpanAttributes.LLM_USAGE_TOTAL_TOKENS,
+                prompt_tokens + completion_tokens,
+            )
 
     await _aset_span_completions(span, response)
 
@@ -331,23 +442,43 @@ async def aset_response_attributes(span, response):
 @dont_throw
 def set_response_attributes(span, response):
     from opentelemetry.instrumentation.anthropic import set_span_attribute
+    import inspect
 
-    response = _extract_response_data(response)
-    set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, response.get("model"))
-    set_span_attribute(span, GEN_AI_RESPONSE_ID, response.get("id"))
+    # If we get a coroutine, we cannot process it in sync context
+    if inspect.iscoroutine(response):
+        import logging
 
-    if response.get("usage"):
-        prompt_tokens = response.get("usage").input_tokens
-        completion_tokens = response.get("usage").output_tokens
-        set_span_attribute(span, SpanAttributes.LLM_USAGE_PROMPT_TOKENS, prompt_tokens)
-        set_span_attribute(
-            span, SpanAttributes.LLM_USAGE_COMPLETION_TOKENS, completion_tokens
+        logger = logging.getLogger(__name__)
+        logger.warning(
+            f"set_response_attributes received coroutine {response} - response processing skipped"
         )
-        set_span_attribute(
-            span,
-            SpanAttributes.LLM_USAGE_TOTAL_TOKENS,
-            prompt_tokens + completion_tokens,
-        )
+        return
+
+    # Work directly with the response object
+    model = getattr(response, "model", None)
+    response_id = getattr(response, "id", None)
+    usage = getattr(response, "usage", None)
+
+    set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, model)
+    set_span_attribute(span, GEN_AI_RESPONSE_ID, response_id)
+
+    if usage:
+        prompt_tokens = getattr(usage, "input_tokens", None)
+        completion_tokens = getattr(usage, "output_tokens", None)
+        if prompt_tokens is not None:
+            set_span_attribute(
+                span, SpanAttributes.LLM_USAGE_PROMPT_TOKENS, prompt_tokens
+            )
+        if completion_tokens is not None:
+            set_span_attribute(
+                span, SpanAttributes.LLM_USAGE_COMPLETION_TOKENS, completion_tokens
+            )
+        if prompt_tokens is not None and completion_tokens is not None:
+            set_span_attribute(
+                span,
+                SpanAttributes.LLM_USAGE_TOTAL_TOKENS,
+                prompt_tokens + completion_tokens,
+            )
 
     _set_span_completions(span, response)
 

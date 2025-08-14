@@ -61,6 +61,91 @@ def dont_throw(func):
     return async_wrapper if asyncio.iscoroutinefunction(func) else sync_wrapper
 
 
+def _safe_extract_attributes_for_metrics(response):
+    """
+    Safely extract attributes from response object for metrics and token usage only.
+
+    This function avoids directly accessing __dict__ which can have side effects
+    on certain object types like Pydantic models or proxy objects used by LangGraph.
+    """
+    if response is None:
+        return {}
+
+    # If it's already a dict, return a copy to be safe
+    if isinstance(response, dict):
+        return dict(response)
+
+    response_dict = {}
+
+    try:
+        # Try Pydantic model extraction first (most common case for Anthropic responses)
+        from pydantic import BaseModel
+
+        if isinstance(response, BaseModel):
+            # Use model_dump for Pydantic v2 or dict() for v1
+            if hasattr(response, "model_dump"):
+                return response.model_dump()
+            elif hasattr(response, "dict"):
+                return response.dict()
+    except ImportError:
+        pass
+
+    # For metrics, we only need specific attributes
+    metrics_attrs = ["usage", "model", "stop_reason", "id"]
+
+    for attr in metrics_attrs:
+        try:
+            if hasattr(response, attr):
+                value = getattr(response, attr, None)
+                if value is not None:
+                    # For usage objects, extract the token counts safely
+                    if attr == "usage":
+                        if hasattr(value, "input_tokens"):
+                            # For usage objects that have the expected attributes
+                            usage_dict = {}
+                            for token_attr in [
+                                "input_tokens",
+                                "output_tokens",
+                                "cache_read_input_tokens",
+                                "cache_creation_input_tokens",
+                            ]:
+                                if hasattr(value, token_attr):
+                                    token_value = getattr(value, token_attr, None)
+                                    if token_value is not None:
+                                        usage_dict[token_attr] = token_value
+                            response_dict[attr] = usage_dict
+                        else:
+                            # For other usage objects, try different approaches
+                            try:
+                                # Try Pydantic model methods
+                                if hasattr(value, "model_dump"):
+                                    response_dict[attr] = value.model_dump()
+                                elif hasattr(value, "dict"):
+                                    response_dict[attr] = value.dict()
+                                elif hasattr(value, "__dict__"):
+                                    response_dict[attr] = dict(value.__dict__)
+                                else:
+                                    response_dict[attr] = value
+                            except Exception:
+                                response_dict[attr] = value
+                    else:
+                        response_dict[attr] = value
+        except Exception:
+            # Skip attributes that cause issues when accessed
+            continue
+
+    # Handle case where response might be a Pydantic object and fallback methods didn't work
+    if not response_dict and hasattr(response, "__dict__"):
+        try:
+            # Create a safe copy of the dict to avoid modifying the original
+            original_dict = response.__dict__
+            response_dict = dict(original_dict)
+        except Exception:
+            pass
+
+    return response_dict
+
+
 async def _aextract_response_data(response):
     """Async version of _extract_response_data that can await coroutines."""
     import inspect
@@ -71,6 +156,7 @@ async def _aextract_response_data(response):
             response = await response
         except Exception as e:
             import logging
+
             logger = logging.getLogger(__name__)
             logger.debug(f"Failed to await coroutine response: {e}")
             return {}
@@ -79,7 +165,7 @@ async def _aextract_response_data(response):
         return response
 
     # Handle with_raw_response wrapped responses
-    if hasattr(response, 'parse') and callable(response.parse):
+    if hasattr(response, "parse") and callable(response.parse):
         try:
             # For with_raw_response, parse() gives us the actual response object
             parsed_response = response.parse()
@@ -88,13 +174,19 @@ async def _aextract_response_data(response):
             return parsed_response
         except Exception as e:
             import logging
-            logger = logging.getLogger(__name__)
-            logger.debug(f"Failed to parse response: {e}, response type: {type(response)}")
 
-    # Fallback to __dict__ for regular response objects
-    if hasattr(response, '__dict__'):
-        response_dict = response.__dict__
-        return response_dict
+            logger = logging.getLogger(__name__)
+            logger.debug(
+                f"Failed to parse response: {e}, response type: {type(response)}"
+            )
+
+    # Safe fallback to __dict__ for regular response objects, but create a copy
+    if hasattr(response, "__dict__"):
+        try:
+            response_dict = dict(response.__dict__)
+            return response_dict
+        except Exception:
+            pass
 
     return {}
 
@@ -106,15 +198,18 @@ def _extract_response_data(response):
     # If we get a coroutine, we cannot process it in sync context
     if inspect.iscoroutine(response):
         import logging
+
         logger = logging.getLogger(__name__)
-        logger.warning(f"_extract_response_data received coroutine {response} - response processing skipped")
+        logger.warning(
+            f"_extract_response_data received coroutine {response} - response processing skipped"
+        )
         return {}
 
     if isinstance(response, dict):
         return response
 
     # Handle with_raw_response wrapped responses
-    if hasattr(response, 'parse') and callable(response.parse):
+    if hasattr(response, "parse") and callable(response.parse):
         try:
             # For with_raw_response, parse() gives us the actual response object
             parsed_response = response.parse()
@@ -123,13 +218,19 @@ def _extract_response_data(response):
             return parsed_response
         except Exception as e:
             import logging
-            logger = logging.getLogger(__name__)
-            logger.debug(f"Failed to parse response: {e}, response type: {type(response)}")
 
-    # Fallback to __dict__ for regular response objects
-    if hasattr(response, '__dict__'):
-        response_dict = response.__dict__
-        return response_dict
+            logger = logging.getLogger(__name__)
+            logger.debug(
+                f"Failed to parse response: {e}, response type: {type(response)}"
+            )
+
+    # Safe fallback to __dict__ for regular response objects, but create a copy
+    if hasattr(response, "__dict__"):
+        try:
+            response_dict = dict(response.__dict__)
+            return response_dict
+        except Exception:
+            pass
 
     return {}
 
