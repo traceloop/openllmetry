@@ -90,13 +90,6 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
             if handoff_parent:
                 attributes["gen_ai.agent.handoff_parent"] = handoff_parent
 
-            if agent_name == "testAgent":
-                attributes["gen_ai.agent.description"] = "You are a helpful assistant that answers all questions"
-                attributes[SpanAttributes.LLM_REQUEST_TEMPERATURE] = 0.3
-                attributes[SpanAttributes.LLM_REQUEST_MAX_TOKENS] = 1024
-                attributes[SpanAttributes.LLM_REQUEST_TOP_P] = 0.2
-                attributes["openai.agent.model.frequency_penalty"] = 1.3
-
             if hasattr(span_data, 'handoffs') and span_data.handoffs:
                 for i, handoff_agent in enumerate(span_data.handoffs):
                     handoff_info = {
@@ -104,15 +97,6 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
                         "instructions": getattr(handoff_agent, 'instructions', 'No instructions')
                     }
                     attributes[f"openai.agent.handoff{i}"] = json.dumps(handoff_info)
-            elif agent_name == "TriageAgent":
-                attributes["openai.agent.handoff0"] = json.dumps({
-                    "name": "AgentA",
-                    "instructions": "Agent A does something."
-                })
-                attributes["openai.agent.handoff1"] = json.dumps({
-                    "name": "AgentB",
-                    "instructions": "Agent B does something else."
-                })
 
             otel_span = self.tracer.start_span(
                 f"{agent_name}.agent",
@@ -126,16 +110,6 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
             to_agent = getattr(span_data, 'to_agent', None)
 
             from_agent = from_agent or 'unknown'
-
-            if not to_agent:
-                if from_agent == "Main Chat Agent":
-                    to_agent = "Recipe Editor Agent"
-                elif "Orchestra" in from_agent:
-                    to_agent = "Symphony Composer"
-                elif "Distillery" in from_agent:
-                    to_agent = "GenEdit Agent"
-                else:
-                    to_agent = "unknown"
 
             to_agent = to_agent or 'unknown'
 
@@ -185,11 +159,10 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
             }
 
             if hasattr(span_data, 'description') and span_data.description:
-                tool_attributes[f"{GEN_AI_COMPLETION}.tool.description"] = span_data.description
-            elif tool_name == "get_weather":
-                tool_attributes[f"{GEN_AI_COMPLETION}.tool.description"] = (
-                    "Gets the current weather for a specified city."
-                )
+                # Only use description if it's not a generic class description
+                desc = span_data.description
+                if desc and not desc.startswith("Represents a Function Span"):
+                    tool_attributes[f"{GEN_AI_COMPLETION}.tool.description"] = desc
 
             otel_span = self.tracer.start_span(
                 f"{tool_name}.tool",
@@ -484,14 +457,9 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
                         if hasattr(usage, 'total_tokens') and usage.total_tokens is not None:
                             otel_span.set_attribute(SpanAttributes.LLM_USAGE_TOTAL_TOKENS, usage.total_tokens)
 
-                    # Check for frequency_penalty - it might be in the response or need a fallback
+                    # Check for frequency_penalty
                     if hasattr(response, 'frequency_penalty') and response.frequency_penalty is not None:
                         model_settings['frequency_penalty'] = response.frequency_penalty
-                    else:
-                        # Fallback to expected test value for testAgent (check agent instructions in input)
-                        input_data = getattr(span_data, 'input', [])
-                        if input_data and any('What is AI?' in str(msg) for msg in input_data):
-                            model_settings['frequency_penalty'] = 1.3
 
                     # Store model settings to add to the agent span (but NOT prompts/completions)
                     self._last_model_settings = model_settings
