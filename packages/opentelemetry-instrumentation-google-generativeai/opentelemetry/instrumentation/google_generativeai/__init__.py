@@ -4,7 +4,13 @@ import logging
 import types
 from typing import Collection
 
-from google.generativeai.types.generation_types import GenerateContentResponse
+try:
+    from google.generativeai.types.generation_types import GenerateContentResponse
+except ImportError:
+    try:
+        from google.genai.types import GenerateContentResponse
+    except ImportError:
+        GenerateContentResponse = None
 from opentelemetry import context as context_api
 from opentelemetry._events import get_event_logger
 from opentelemetry.instrumentation.google_generativeai.config import Config
@@ -48,21 +54,6 @@ LEGACY_WRAPPED_METHODS = [
         "object": "GenerativeModel",
         "method": "generate_content_async",
         "span_name": "gemini.generate_content_async",
-    },
-]
-
-WRAPPED_METHODS = [
-    {
-        "package": "google.genai.models",
-        "object": "Models",
-        "method": "generate_content",
-        "span_name": "gemini.generate_content",
-    },
-    {
-        "package": "google.genai.models",
-        "object": "AsyncModels",
-        "method": "generate_content",
-        "span_name": "gemini.generate_content",
     },
 ]
 
@@ -312,7 +303,7 @@ class GoogleGenerativeAiInstrumentor(BaseInstrumentor):
                 __name__, __version__, event_logger_provider=event_logger_provider
             )
 
-        for wrapped_method in WRAPPED_METHODS:
+        for wrapped_method in self._wrapped_methods():
             wrap_package = wrapped_method.get("package")
             wrap_object = wrapped_method.get("object")
             wrap_method = wrapped_method.get("method")
