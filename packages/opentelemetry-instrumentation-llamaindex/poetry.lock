@@ -1143,7 +1143,7 @@ description = "Lightweight in-process concurrent programming"
 optional = false
 python-versions = ">=3.7"
 groups = ["test"]
-markers = "(platform_machine == \"aarch64\" or platform_machine == \"ppc64le\" or platform_machine == \"x86_64\" or platform_machine == \"amd64\" or platform_machine == \"AMD64\" or platform_machine == \"win32\" or platform_machine == \"WIN32\") and python_version < \"3.13\" and (python_version <= \"3.11\" or python_version >= \"3.12\")"
+markers = "(python_version <= \"3.11\" or python_version >= \"3.12\") and python_version < \"3.13\" and (platform_machine == \"aarch64\" or platform_machine == \"ppc64le\" or platform_machine == \"x86_64\" or platform_machine == \"amd64\" or platform_machine == \"AMD64\" or platform_machine == \"win32\" or platform_machine == \"WIN32\")"
 files = [
     {file = "greenlet-3.1.1-cp310-cp310-macosx_11_0_universal2.whl", hash = "sha256:0bbae94a29c9e5c7e4a2b7f0aae5c17e8e90acbfd3bf6270eeba60c39fce3563"},
     {file = "greenlet-3.1.1-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:0fde093fb93f35ca72a556cf72c92ea3ebfda3d79fc35bb19fbe685853869a83"},
@@ -3746,7 +3746,7 @@ description = "A python implementation of GNU readline."
 optional = false
 python-versions = ">=3.8"
 groups = ["test"]
-markers = "sys_platform == \"win32\" and (python_version <= \"3.11\" or python_version >= \"3.12\")"
+markers = "(python_version <= \"3.11\" or python_version >= \"3.12\") and sys_platform == \"win32\""
 files = [
     {file = "pyreadline3-3.5.4-py3-none-any.whl", hash = "sha256:eaf8e6cc3c49bcccf145fc6067ba8643d1df34d604a1ec0eccbf7a18e6d3fae6"},
     {file = "pyreadline3-3.5.4.tar.gz", hash = "sha256:8d57d53039a1c75adba8e50dd3d992b28143480816187ea5efbd5c78e6c885b7"},
@@ -4629,7 +4629,7 @@ description = "Typing stubs for requests"
 optional = false
 python-versions = ">=3.7"
 groups = ["test"]
-markers = "platform_python_implementation == \"PyPy\" and python_version <= \"3.11\" or platform_python_implementation == \"PyPy\" and python_version >= \"3.12\" or python_version < \"3.10\""
+markers = "python_version < \"3.10\" or platform_python_implementation == \"PyPy\" and python_version <= \"3.11\" or platform_python_implementation == \"PyPy\" and python_version >= \"3.12\""
 files = [
     {file = "types-requests-2.31.0.6.tar.gz", hash = "sha256:cd74ce3b53c461f1228a9b783929ac73a666658f223e28ed29753771477b3bd0"},
     {file = "types_requests-2.31.0.6-py3-none-any.whl", hash = "sha256:a2db9cb228a81da8348b49ad6db3f5519452dd20a9c1e1a868c83c5fe88fd1a9"},
@@ -4661,7 +4661,7 @@ description = "Typing stubs for urllib3"
 optional = false
 python-versions = "*"
 groups = ["test"]
-markers = "platform_python_implementation == \"PyPy\" and python_version <= \"3.11\" or platform_python_implementation == \"PyPy\" and python_version >= \"3.12\" or python_version < \"3.10\""
+markers = "python_version < \"3.10\" or platform_python_implementation == \"PyPy\" and python_version <= \"3.11\" or platform_python_implementation == \"PyPy\" and python_version >= \"3.12\""
 files = [
     {file = "types-urllib3-1.26.25.14.tar.gz", hash = "sha256:229b7f577c951b8c1b92c1bc2b2fdb0b49847bd2af6d1cc2a2e3dd340f3bda8f"},
     {file = "types_urllib3-1.26.25.14-py3-none-any.whl", hash = "sha256:9683bbb7fb72e32bfe9d2be6e04875fbe1b3eeec3cbb4ea231435aa7fd6b4f0e"},
@@ -4733,7 +4733,7 @@ description = "HTTP library with thread-safe connection pooling, file post, and 
 optional = false
 python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*,>=2.7"
 groups = ["test"]
-markers = "platform_python_implementation == \"PyPy\" and python_version <= \"3.11\" or platform_python_implementation == \"PyPy\" and python_version >= \"3.12\" or python_version < \"3.10\""
+markers = "python_version < \"3.10\" or platform_python_implementation == \"PyPy\" and python_version <= \"3.11\" or platform_python_implementation == \"PyPy\" and python_version >= \"3.12\""
 files = [
     {file = "urllib3-1.26.20-py2.py3-none-any.whl", hash = "sha256:0ed14ccfbf1c30a9072c7ca157e4319b70d65f623e91e7b32fadb2853431016e"},
     {file = "urllib3-1.26.20.tar.gz", hash = "sha256:40c2dc0c681e47eb8f90e7e27bf6ff7df2e677421fd46756da1161c39ca70d32"},
@@ -4798,7 +4798,7 @@ description = "Fast implementation of asyncio event loop on top of libuv"
 optional = false
 python-versions = ">=3.8.0"
 groups = ["test"]
-markers = "platform_python_implementation != \"PyPy\" and (sys_platform != \"win32\" and sys_platform != \"cygwin\") and (python_version <= \"3.11\" or python_version >= \"3.12\")"
+markers = "platform_python_implementation != \"PyPy\" and (python_version <= \"3.11\" or python_version >= \"3.12\") and (sys_platform != \"win32\" and sys_platform != \"cygwin\")"
 files = [
     {file = "uvloop-0.21.0-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:ec7e6b09a6fdded42403182ab6b832b71f4edaf7f37a9a0e371a01db5f0cb45f"},
     {file = "uvloop-0.21.0-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:196274f2adb9689a289ad7d65700d37df0c0930fd8e4e743fa4834e850d7719d"},
@@ -4846,22 +4846,22 @@ test = ["aiohttp (>=3.10.5)", "flake8 (>=5.0,<6.0)", "mypy (>=0.800)", "psutil",
 
 [[package]]
 name = "vcrpy"
-version = "6.0.2"
+version = "7.0.0"
 description = "Automatically mock your HTTP interactions to simplify and speed up testing"
 optional = false
-python-versions = ">=3.8"
+python-versions = ">=3.9"
 groups = ["test"]
 markers = "python_version <= \"3.11\" or python_version >= \"3.12\""
 files = [
-    {file = "vcrpy-6.0.2-py2.py3-none-any.whl", hash = "sha256:40370223861181bc76a5e5d4b743a95058bb1ad516c3c08570316ab592f56cad"},
-    {file = "vcrpy-6.0.2.tar.gz", hash = "sha256:88e13d9111846745898411dbc74a75ce85870af96dd320d75f1ee33158addc09"},
+    {file = "vcrpy-7.0.0-py2.py3-none-any.whl", hash = "sha256:55791e26c18daa363435054d8b35bd41a4ac441b6676167635d1b37a71dbe124"},
+    {file = "vcrpy-7.0.0.tar.gz", hash = "sha256:176391ad0425edde1680c5b20738ea3dc7fb942520a48d2993448050986b3a50"},
 ]
 
 [package.dependencies]
 PyYAML = "*"
 urllib3 = [
+    {version = "<2", markers = "python_version < \"3.10\" or platform_python_implementation == \"PyPy\""},
     {version = "*", markers = "platform_python_implementation != \"PyPy\" and python_version >= \"3.10\""},
-    {version = "<2", markers = "platform_python_implementation == \"PyPy\" or python_version < \"3.10\""},
 ]
 wrapt = "*"
 yarl = "*"
@@ -5254,4 +5254,4 @@ llamaparse = []
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.9,<4"
-content-hash = "d8cb10a3a07fd3921102dcfb4c361d8501985ee031d86193a1a6bb2381295323"
+content-hash = "818f539718f459b8cf321001e07b1ade2a530e416b23594cd939149760b0ab96"

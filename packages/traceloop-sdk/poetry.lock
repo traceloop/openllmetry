@@ -1651,7 +1651,6 @@ opentelemetry-instrumentation = ">=0.50b0"
 opentelemetry-semantic-conventions = ">=0.50b0"
 opentelemetry-semantic-conventions-ai = "^0.4.12"
 protobuf = "^5.29.5"
-pypdf = "^6.0.0"
 
 [package.extras]
 instruments = []
@@ -1869,7 +1868,6 @@ opentelemetry-instrumentation = ">=0.50b0"
 opentelemetry-semantic-conventions = ">=0.50b0"
 opentelemetry-semantic-conventions-ai = "^0.4.12"
 protobuf = "^5.29.5"
-pypdf = "^6.0.0"
 
 [package.extras]
 instruments = []
@@ -1897,7 +1895,6 @@ opentelemetry-instrumentation = ">=0.50b0"
 opentelemetry-semantic-conventions = ">=0.50b0"
 opentelemetry-semantic-conventions-ai = "^0.4.12"
 protobuf = "^5.29.5"
-pypdf = "^6.0.0"
 
 [package.extras]
 instruments = []
@@ -2063,7 +2060,6 @@ opentelemetry-instrumentation = ">=0.50b0"
 opentelemetry-semantic-conventions = ">=0.50b0"
 opentelemetry-semantic-conventions-ai = "^0.4.12"
 protobuf = "^5.29.5"
-pypdf = "^6.0.0"
 
 [package.extras]
 instruments = []
@@ -2999,30 +2995,6 @@ files = [
 ]
 
 [[package]]
-name = "pypdf"
-version = "6.0.0"
-description = "A pure-python PDF library capable of splitting, merging, cropping, and transforming PDF files"
-optional = false
-python-versions = ">=3.9"
-groups = ["main"]
-markers = "python_version <= \"3.11\" or python_version >= \"3.12\""
-files = [
-    {file = "pypdf-6.0.0-py3-none-any.whl", hash = "sha256:56ea60100ce9f11fc3eec4f359da15e9aec3821b036c1f06d2b660d35683abb8"},
-    {file = "pypdf-6.0.0.tar.gz", hash = "sha256:282a99d2cc94a84a3a3159f0d9358c0af53f85b4d28d76ea38b96e9e5ac2a08d"},
-]
-
-[package.dependencies]
-typing_extensions = {version = ">=4.0", markers = "python_version < \"3.11\""}
-
-[package.extras]
-crypto = ["cryptography"]
-cryptodome = ["PyCryptodome"]
-dev = ["black", "flit", "pip-tools", "pre-commit", "pytest-cov", "pytest-socket", "pytest-timeout", "pytest-xdist", "wheel"]
-docs = ["myst_parser", "sphinx", "sphinx_rtd_theme"]
-full = ["Pillow (>=8.0.0)", "cryptography"]
-image = ["Pillow (>=8.0.0)"]
-
-[[package]]
 name = "pytest"
 version = "8.3.4"
 description = "pytest: simple powerful testing with Python"
@@ -3953,4 +3925,4 @@ datasets = []
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10,<4"
-content-hash = "ca5c27f45558b1275d540471b1acfdf08ed18f14f7ba77f226a15b6caa6c476f"
+content-hash = "c2395493793226a8214f6a02b495217e4403c07801e6bdb4e805492316f8841f"

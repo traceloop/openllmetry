@@ -55,7 +55,7 @@ groq = "^0.11.0"
 llama-index-llms-openai = "^0.4.0"
 ibm-watson-machine-learning = "^1.0.367"
 ollama = "^0.4.7"
-mcp = "^1.7.1"
+mcp = "^1.13.0"
 openai-agents = "^0.0.19"
 # Security constraints for transitive dependencies
 aiohttp = "^3.12.14"
