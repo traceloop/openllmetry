@@ -37,7 +37,6 @@ pytest-sugar = "1.0.0"
 vcrpy = "^6.0.1"
 pytest-recording = "^0.13.1"
 opentelemetry-sdk = "^1.27.0"
-google-generativeai = "^0.8.3"
 google-genai = "^1.0.0"
 
 [build-system]
@@ -45,7 +44,7 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.extras]
-instruments = ["google-generativeai", "google-genai"]
+instruments = ["google-genai"]
 
 [tool.poetry.plugins."opentelemetry_instrumentor"]
 google_generativeai = "opentelemetry.instrumentation.google_generativeai:GoogleGenerativeAiInstrumentor"
