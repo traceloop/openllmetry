@@ -4,15 +4,19 @@ interactions:
       get the weather for a city using the get_weather tool.","model":"gpt-4.1","stream":false,"tools":[{"name":"get_weather","parameters":{"properties":{"city":{"title":"City","type":"string"}},"required":["city"],"title":"get_weather_args","type":"object","additionalProperties":false},"strict":true,"type":"function","description":"Gets
       the current weather for a specified city."}]}'
     headers:
+      accept:
+      - application/json
       accept-encoding:
       - gzip, deflate
       connection:
       - keep-alive
       content-length:
       - '482'
+      content-type:
+      - application/json
       cookie:
-      - __cf_bm=3zyMrBe7N20pVl8x25O_On5.fvfIikDA012ufvx53nM-1751862660-1.0.1.1-JvGF1w1po85PLKWFrJyLhImrIM6CpkmMaYGua6WBvJlfDMgZo9Oigg5nRJtYzI47T1BQnozcg9CowCmBpXifPOG5KiUOD.Kr9VCCCeladCY;
-        _cfuvid=O..E2LqPai_CvoCODzw4ICRfn1jA4LzcFld6LdnWH1s-1751862660981-0.0.1.1-604800000
+      - __cf_bm=LcPsBWT.Y0Wq__UW1RVeH33OnZ77bvRujD4CBV_2Be0-1755270827-1.0.1.1-QXd6H1a_9G0wWy0O.FGgglIqfUkAkvgZCCU8hiyOKnohTtzf9q7UDdIXcUqkQX9prijECVsfMH01Ms4I0SqfNlnUaduJ9xvFdCbV22mT27E;
+        _cfuvid=x5atCLOrXirUGHA3zAM1hgcsMRMfQCSeWbIjl0JcCl4-1755270827899-0.0.1.1-604800000
       host:
       - api.openai.com
       user-agent:
@@ -34,28 +38,29 @@ interactions:
       x-stainless-runtime:
       - CPython
       x-stainless-runtime-version:
-      - 3.13.1
+      - 3.10.13
     method: POST
     uri: https://api.openai.com/v1/responses
   response:
     body:
       string: !!binary |
-        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
+        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
     headers:
       CF-RAY:
-      - 95b49c1f8e404448-BOM
+      - 96f9a42eac8009c9-HFA
       Connection:
       - keep-alive
       Content-Encoding:
@@ -63,7 +68,7 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Mon, 07 Jul 2025 04:31:01 GMT
+      - Fri, 15 Aug 2025 15:14:24 GMT
       Server:
       - cloudflare
       Transfer-Encoding:
@@ -77,11 +82,15 @@ interactions:
       openai-organization:
       - traceloop
       openai-processing-ms:
-      - '573'
+      - '1007'
+      openai-project:
+      - proj_tzz1TbPPOXaf6j9tEkVUBIAa
       openai-version:
       - '2020-10-01'
       strict-transport-security:
       - max-age=31536000; includeSubDomains; preload
+      x-envoy-upstream-service-time:
+      - '1010'
       x-ratelimit-limit-requests:
       - '10000'
       x-ratelimit-limit-tokens:
@@ -95,25 +104,29 @@ interactions:
       x-ratelimit-reset-tokens:
       - 0s
       x-request-id:
-      - req_38f9d22abf6365e3b21ac964b772eabe
+      - req_df02e81c512b219265d91574f7816775
     status:
       code: 200
       message: OK
 - request:
-    body: "{\"include\":[],\"input\":[{\"content\":\"What is the weather in London?\",\"role\":\"user\"},{\"arguments\":\"{\\\"city\\\":\\\"London\\\"}\",\"call_id\":\"call_rvHoZ9cFodEObEFytlOMOv38\",\"name\":\"get_weather\",\"type\":\"function_call\",\"id\":\"fc_686b4d859f988198b3db1f6daca17cc307d241e5e0cda7b7\",\"status\":\"completed\"},{\"call_id\":\"call_rvHoZ9cFodEObEFytlOMOv38\",\"output\":\"It's
+    body: "{\"include\":[],\"input\":[{\"content\":\"What is the weather in London?\",\"role\":\"user\"},{\"arguments\":\"{\\\"city\\\":\\\"London\\\"}\",\"call_id\":\"call_rStxc4wgodpbPtfe7Cqywhxy\",\"name\":\"get_weather\",\"type\":\"function_call\",\"id\":\"fc_689f4ed0160881a091631b0fb538480d0166c690d95bd46e\",\"status\":\"completed\"},{\"call_id\":\"call_rStxc4wgodpbPtfe7Cqywhxy\",\"output\":\"It's
       cloudy with 15\xB0C\",\"type\":\"function_call_output\"}],\"instructions\":\"You
       get the weather for a city using the get_weather tool.\",\"model\":\"gpt-4.1\",\"stream\":false,\"tools\":[{\"name\":\"get_weather\",\"parameters\":{\"properties\":{\"city\":{\"title\":\"City\",\"type\":\"string\"}},\"required\":[\"city\"],\"title\":\"get_weather_args\",\"type\":\"object\",\"additionalProperties\":false},\"strict\":true,\"type\":\"function\",\"description\":\"Gets
       the current weather for a specified city.\"}]}"
     headers:
+      accept:
+      - application/json
       accept-encoding:
       - gzip, deflate
       connection:
       - keep-alive
       content-length:
       - '794'
+      content-type:
+      - application/json
       cookie:
-      - __cf_bm=3zyMrBe7N20pVl8x25O_On5.fvfIikDA012ufvx53nM-1751862660-1.0.1.1-JvGF1w1po85PLKWFrJyLhImrIM6CpkmMaYGua6WBvJlfDMgZo9Oigg5nRJtYzI47T1BQnozcg9CowCmBpXifPOG5KiUOD.Kr9VCCCeladCY;
-        _cfuvid=O..E2LqPai_CvoCODzw4ICRfn1jA4LzcFld6LdnWH1s-1751862660981-0.0.1.1-604800000
+      - __cf_bm=LcPsBWT.Y0Wq__UW1RVeH33OnZ77bvRujD4CBV_2Be0-1755270827-1.0.1.1-QXd6H1a_9G0wWy0O.FGgglIqfUkAkvgZCCU8hiyOKnohTtzf9q7UDdIXcUqkQX9prijECVsfMH01Ms4I0SqfNlnUaduJ9xvFdCbV22mT27E;
+        _cfuvid=x5atCLOrXirUGHA3zAM1hgcsMRMfQCSeWbIjl0JcCl4-1755270827899-0.0.1.1-604800000
       host:
       - api.openai.com
       user-agent:
@@ -135,29 +148,30 @@ interactions:
       x-stainless-runtime:
       - CPython
       x-stainless-runtime-version:
-      - 3.13.1
+      - 3.10.13
     method: POST
     uri: https://api.openai.com/v1/responses
   response:
     body:
       string: !!binary |
-        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
+        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
+        AwAA//8DANYPDAGlBwAA
     headers:
       CF-RAY:
-      - 95b49c252ca74448-BOM
+      - 96f9a4361a8c09c9-HFA
       Connection:
       - keep-alive
       Content-Encoding:
@@ -165,7 +179,7 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Mon, 07 Jul 2025 04:31:02 GMT
+      - Fri, 15 Aug 2025 15:14:25 GMT
       Server:
       - cloudflare
       Transfer-Encoding:
@@ -179,11 +193,15 @@ interactions:
       openai-organization:
       - traceloop
       openai-processing-ms:
-      - '605'
+      - '718'
+      openai-project:
+      - proj_tzz1TbPPOXaf6j9tEkVUBIAa
       openai-version:
       - '2020-10-01'
       strict-transport-security:
       - max-age=31536000; includeSubDomains; preload
+      x-envoy-upstream-service-time:
+      - '724'
       x-ratelimit-limit-requests:
       - '10000'
       x-ratelimit-limit-tokens:
@@ -197,7 +215,7 @@ interactions:
       x-ratelimit-reset-tokens:
       - 0s
       x-request-id:
-      - req_6cb8ebde8affb4f1a01647c3613bca6c
+      - req_d62b8b62666a4db41234a4a83f829753
     status:
       code: 200
       message: OK
