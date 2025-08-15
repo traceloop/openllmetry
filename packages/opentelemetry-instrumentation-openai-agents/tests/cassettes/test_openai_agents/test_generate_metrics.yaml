@@ -1,18 +1,22 @@
 interactions:
 - request:
-    body: '{"data":[{"object":"trace.span","id":"span_3c32f3bf724242e7a4eee97f","trace_id":"trace_e96092d63adb4094aa01e9f15b5c1ce6","parent_id":"span_68c78aa585da42bc9f2830f3","started_at":"2025-07-07T04:31:02.841318+00:00","ended_at":"2025-07-07T04:31:10.935525+00:00","span_data":{"type":"response","response_id":"resp_686b4d870e6481989d17104f0c295e93004b3b0813a1f1b4"},"error":null},{"object":"trace.span","id":"span_68c78aa585da42bc9f2830f3","trace_id":"trace_e96092d63adb4094aa01e9f15b5c1ce6","parent_id":null,"started_at":"2025-07-07T04:31:02.840912+00:00","ended_at":"2025-07-07T04:31:10.936048+00:00","span_data":{"type":"agent","name":"SearchAgent","handoffs":[],"tools":["web_search_preview"],"output_type":"str"},"error":null},{"object":"trace","id":"trace_90832d19793c4cc1aba9ee470ead6a1d","workflow_name":"Agent
-      workflow","group_id":null,"metadata":null},{"object":"trace.span","id":"span_71c150df84b04a10bed4c999","trace_id":"trace_90832d19793c4cc1aba9ee470ead6a1d","parent_id":"span_1bc95c2149e7468ca256a92e","started_at":"2025-07-07T04:31:10.940570+00:00","ended_at":"2025-07-07T04:31:11.988633+00:00","span_data":{"type":"response","response_id":"resp_686b4d8f2b80819ab34e3d377b06d1c20484ef65142f65c3"},"error":null},{"object":"trace.span","id":"span_4c8d4fc82b8c4be496840fa3","trace_id":"trace_90832d19793c4cc1aba9ee470ead6a1d","parent_id":"span_1bc95c2149e7468ca256a92e","started_at":"2025-07-07T04:31:11.989097+00:00","ended_at":"2025-07-07T04:31:11.989351+00:00","span_data":{"type":"handoff","from_agent":"TriageAgent","to_agent":"AgentA"},"error":null},{"object":"trace.span","id":"span_1bc95c2149e7468ca256a92e","trace_id":"trace_90832d19793c4cc1aba9ee470ead6a1d","parent_id":null,"started_at":"2025-07-07T04:31:10.940179+00:00","ended_at":"2025-07-07T04:31:11.989484+00:00","span_data":{"type":"agent","name":"TriageAgent","handoffs":["AgentA","AgentB"],"tools":["handoff_to_agent_a","handoff_to_agent_b"],"output_type":"str"},"error":null},{"object":"trace.span","id":"span_4f15c0a8e6864372a8a9b870","trace_id":"trace_90832d19793c4cc1aba9ee470ead6a1d","parent_id":"span_e7676ac3ed114af19b8dcf70","started_at":"2025-07-07T04:31:11.989939+00:00","ended_at":"2025-07-07T04:31:13.158312+00:00","span_data":{"type":"response","response_id":"resp_686b4d903524819a97f78a57f21991ea0484ef65142f65c3"},"error":null},{"object":"trace.span","id":"span_e7676ac3ed114af19b8dcf70","trace_id":"trace_90832d19793c4cc1aba9ee470ead6a1d","parent_id":null,"started_at":"2025-07-07T04:31:11.989529+00:00","ended_at":"2025-07-07T04:31:13.158580+00:00","span_data":{"type":"agent","name":"AgentA","handoffs":[],"tools":[],"output_type":"str"},"error":null},{"object":"trace","id":"trace_9e523501d7ca43cbbffef8d663ee2abe","workflow_name":"Agent
+    body: '{"data":[{"object":"trace.span","id":"span_592ec2e06b8a4dc3b9369ba0","trace_id":"trace_677ed7b1d062439194c8e3d54ed879c2","parent_id":"span_c03ad8041497444d89807081","started_at":"2025-08-15T17:56:15.504305+00:00","ended_at":"2025-08-15T17:56:32.924924+00:00","span_data":{"type":"response","response_id":"resp_689f74c00c54819e8c87a14f710b59e802d985ee604595f2"},"error":null},{"object":"trace.span","id":"span_c03ad8041497444d89807081","trace_id":"trace_677ed7b1d062439194c8e3d54ed879c2","parent_id":null,"started_at":"2025-08-15T17:56:15.503703+00:00","ended_at":"2025-08-15T17:56:32.926026+00:00","span_data":{"type":"agent","name":"SearchAgent","handoffs":[],"tools":["web_search_preview"],"output_type":"str"},"error":null},{"object":"trace","id":"trace_ddebf51199d147aa9c276699d6344191","workflow_name":"Agent
+      workflow","group_id":null,"metadata":null},{"object":"trace.span","id":"span_62c6185da3e145b4a82a3402","trace_id":"trace_ddebf51199d147aa9c276699d6344191","parent_id":"span_31a060c154064c77860efebb","started_at":"2025-08-15T17:56:32.944060+00:00","ended_at":"2025-08-15T17:56:33.764724+00:00","span_data":{"type":"response","response_id":"resp_689f74d139588191a462ea4e7046500307faccddfd4bb942"},"error":null},{"object":"trace.span","id":"span_0bb132f90d1d494f8754f59f","trace_id":"trace_ddebf51199d147aa9c276699d6344191","parent_id":"span_31a060c154064c77860efebb","started_at":"2025-08-15T17:56:33.765094+00:00","ended_at":"2025-08-15T17:56:33.765369+00:00","span_data":{"type":"handoff","from_agent":"TriageAgent","to_agent":"AgentA"},"error":null},{"object":"trace.span","id":"span_31a060c154064c77860efebb","trace_id":"trace_ddebf51199d147aa9c276699d6344191","parent_id":null,"started_at":"2025-08-15T17:56:32.943376+00:00","ended_at":"2025-08-15T17:56:33.765656+00:00","span_data":{"type":"agent","name":"TriageAgent","handoffs":["AgentA","AgentB"],"tools":["handoff_to_agent_a","handoff_to_agent_b"],"output_type":"str"},"error":null},{"object":"trace.span","id":"span_5dae755c0c2b4a2582d35948","trace_id":"trace_ddebf51199d147aa9c276699d6344191","parent_id":"span_83a42886feef4f04ba202879","started_at":"2025-08-15T17:56:33.766388+00:00","ended_at":"2025-08-15T17:56:35.240587+00:00","span_data":{"type":"response","response_id":"resp_689f74d20ec88191b7c982b9eafade0c07faccddfd4bb942"},"error":null},{"object":"trace.span","id":"span_83a42886feef4f04ba202879","trace_id":"trace_ddebf51199d147aa9c276699d6344191","parent_id":null,"started_at":"2025-08-15T17:56:33.765861+00:00","ended_at":"2025-08-15T17:56:35.240878+00:00","span_data":{"type":"agent","name":"AgentA","handoffs":[],"tools":[],"output_type":"str"},"error":null},{"object":"trace","id":"trace_a14fd79430914a80afdc0c9f25282b1b","workflow_name":"Agent
       workflow","group_id":null,"metadata":null}]}'
     headers:
+      accept:
+      - '*/*'
       accept-encoding:
       - gzip, deflate
       connection:
       - keep-alive
       content-length:
       - '2779'
+      content-type:
+      - application/json
       cookie:
-      - __cf_bm=2K51yZJfEE3.F991jNlShMI5YCBuX2mUJxMTIMyLy4I-1751862664-1.0.1.1-ysSWL5s.8BzvCjqgVeIidvf5oH57WlhgYNGT4l11nz5XZeYssRV0l6MJd2MlYRsqPpmDmtTD9kjRXUXldyee5ZrDJaA_zw9lqqvxHSniQ3Y;
-        _cfuvid=.4rTr7Z_6sKZyGNKdytIaE4FbYWS2xwAo.fSl6th2Co-1751862664181-0.0.1.1-604800000
+      - __cf_bm=UhrfEFws9O_ZBKuSryCKFovrTxciXL8p2WJuM1K2dN8-1755280562-1.0.1.1-dIIsnsWKGJtA9W6u0MbXjq7UUseSGAthIGNSZMriLzkecTBUlPjjJFr6r0QnteF8Ul.liPTWhJI6mlCKQBREwPTAAOYdCC2ZirAu9ZrwIWA;
+        _cfuvid=zDtlMy4g5CGjInt8L2ecM4HeWcHtz0bFgxVbfE5vSqk-1755280562683-0.0.1.1-604800000
       host:
       - api.openai.com
       openai-beta:
@@ -26,11 +30,11 @@ interactions:
       string: ''
     headers:
       CF-RAY:
-      - 95b49c737f59ff66-BOM
+      - 96fa91d0efb409bb-HFA
       Connection:
       - keep-alive
       Date:
-      - Mon, 07 Jul 2025 04:31:15 GMT
+      - Fri, 15 Aug 2025 17:56:37 GMT
       Server:
       - cloudflare
       X-Content-Type-Options:
@@ -42,13 +46,17 @@ interactions:
       openai-organization:
       - traceloop
       openai-processing-ms:
-      - '101'
+      - '102'
+      openai-project:
+      - proj_tzz1TbPPOXaf6j9tEkVUBIAa
       openai-version:
       - '2020-10-01'
       strict-transport-security:
       - max-age=31536000; includeSubDomains; preload
+      x-envoy-upstream-service-time:
+      - '106'
       x-request-id:
-      - req_cabcc3546fd392d7c94f8cf5acb90f6a
+      - req_0e0eac723ad91ed664fec78595f6763b
     status:
       code: 204
       message: No Content
@@ -56,19 +64,23 @@ interactions:
     body: '{"include":[],"input":[{"content":"What is AI?","role":"user"}],"instructions":"You
       are a helpful assistant that answers all questions","max_output_tokens":1024,"model":"gpt-4.1","stream":false,"temperature":0.3,"tools":[],"top_p":0.2}'
     headers:
+      accept:
+      - application/json
       accept-encoding:
       - gzip, deflate
       connection:
       - keep-alive
       content-length:
       - '235'
+      content-type:
+      - application/json
       cookie:
-      - __cf_bm=3zyMrBe7N20pVl8x25O_On5.fvfIikDA012ufvx53nM-1751862660-1.0.1.1-JvGF1w1po85PLKWFrJyLhImrIM6CpkmMaYGua6WBvJlfDMgZo9Oigg5nRJtYzI47T1BQnozcg9CowCmBpXifPOG5KiUOD.Kr9VCCCeladCY;
-        _cfuvid=O..E2LqPai_CvoCODzw4ICRfn1jA4LzcFld6LdnWH1s-1751862660981-0.0.1.1-604800000
+      - __cf_bm=WwDHl7j6.dqwOcLIJAXqGOLTR6ZUq3JCq47vW3LBIBs-1755280559-1.0.1.1-na9dmQo.4u4zv1vUQ7SN457JVcBR1ifes3cOUutsLuVtLSfo_sZ1I8fRayi6NDR2VKiwUFBhrUYM85dJ8BB7Ior2pM9Ng5MfNJwvGRd3lgE;
+        _cfuvid=PWHn6CD5_OXbE3jv9HT7E4FDlSvoTN5AciqTl4Chslg-1755280559217-0.0.1.1-604800000
       host:
       - api.openai.com
       user-agent:
-      - Agents/Python 0.0.19
+      - Agents/Python 0.2.7
       x-stainless-arch:
       - arm64
       x-stainless-async:
@@ -78,7 +90,7 @@ interactions:
       x-stainless-os:
       - MacOS
       x-stainless-package-version:
-      - 1.93.0
+      - 1.99.9
       x-stainless-read-timeout:
       - '600'
       x-stainless-retry-count:
@@ -86,33 +98,34 @@ interactions:
       x-stainless-runtime:
       - CPython
       x-stainless-runtime-version:
-      - 3.13.1
+      - 3.10.13
     method: POST
     uri: https://api.openai.com/v1/responses
   response:
     body:
       string: !!binary |
-        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
+        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
+        SggAAA==
     headers:
       CF-RAY:
-      - 95b49c6b9a934448-BOM
+      - 96fa91c9694109c9-HFA
       Connection:
       - keep-alive
       Content-Encoding:
@@ -120,7 +133,7 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Mon, 07 Jul 2025 04:31:15 GMT
+      - Fri, 15 Aug 2025 17:56:38 GMT
       Server:
       - cloudflare
       Transfer-Encoding:
@@ -134,11 +147,15 @@ interactions:
       openai-organization:
       - traceloop
       openai-processing-ms:
-      - '1947'
+      - '3167'
+      openai-project:
+      - proj_tzz1TbPPOXaf6j9tEkVUBIAa
       openai-version:
       - '2020-10-01'
       strict-transport-security:
       - max-age=31536000; includeSubDomains; preload
+      x-envoy-upstream-service-time:
+      - '3171'
       x-ratelimit-limit-requests:
       - '10000'
       x-ratelimit-limit-tokens:
@@ -152,7 +169,7 @@ interactions:
       x-ratelimit-reset-tokens:
       - 0s
       x-request-id:
-      - req_7e9650626740de3879ff430edef048cd
+      - req_e75beac7fc4da4c25148e1b170170e79
     status:
       code: 200
       message: OK
