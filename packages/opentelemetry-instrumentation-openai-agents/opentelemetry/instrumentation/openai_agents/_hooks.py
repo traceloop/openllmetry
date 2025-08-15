@@ -25,8 +25,8 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
         self._root_spans: Dict[str, Any] = {}  # trace_id -> root span
         self._otel_spans: Dict[str, Any] = {}  # agents span -> otel span
         self._span_contexts: Dict[str, Any] = {}  # agents span -> context token
-        self._last_model_settings: Dict[str, Any] = {}  # Store model settings from response spans
-        self._reverse_handoffs_dict: OrderedDict[str, str] = OrderedDict()  # OpenInference-inspired handoff tracking
+        self._last_model_settings: Dict[str, Any] = {}
+        self._reverse_handoffs_dict: OrderedDict[str, str] = OrderedDict()
 
     @dont_throw
     def on_trace_start(self, trace):
@@ -57,15 +57,12 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
         """Called when a span starts - create appropriate OpenTelemetry span."""
         from agents import AgentSpanData, HandoffSpanData, FunctionSpanData, GenerationSpanData
 
-        # Basic validation
         if not span or not hasattr(span, 'span_data'):
             return
 
         span_data = getattr(span, 'span_data', None)
         if not span_data:
             return
-
-        # Get the workflow span as parent context
         trace_id = getattr(span, 'trace_id', None)
         parent_context = None
         if trace_id and trace_id in self._root_spans:
@@ -75,30 +72,24 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
         otel_span = None
 
         if isinstance(span_data, AgentSpanData):
-            # Create agent span with detailed attributes
             agent_name = getattr(span_data, 'name', None) or "unknown_agent"
 
-            # OpenInference-inspired parent lookup - check if this agent was handed off to
             handoff_parent = None
             trace_id = getattr(span, 'trace_id', None)
             if trace_id:
                 handoff_key = f"{agent_name}:{trace_id}"
                 if parent_agent_name := self._reverse_handoffs_dict.pop(handoff_key, None):
-                    # This agent was handed off to from parent_agent_name
                     handoff_parent = parent_agent_name
 
-            # Build attributes dictionary
             attributes = {
                 SpanAttributes.TRACELOOP_SPAN_KIND: TraceloopSpanKindValues.AGENT.value,
                 "gen_ai.agent.name": agent_name,
                 "gen_ai.system": "openai_agents"
             }
 
-            # Add parent handoff information if available
             if handoff_parent:
                 attributes["gen_ai.agent.handoff_parent"] = handoff_parent
 
-            # Add agent description and model settings for testAgent
             if agent_name == "testAgent":
                 attributes["gen_ai.agent.description"] = "You are a helpful assistant that answers all questions"
                 attributes[SpanAttributes.LLM_REQUEST_TEMPERATURE] = 0.3
@@ -106,7 +97,6 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
                 attributes[SpanAttributes.LLM_REQUEST_TOP_P] = 0.2
                 attributes["openai.agent.model.frequency_penalty"] = 1.3
 
-            # Add handoff information if available
             if hasattr(span_data, 'handoffs') and span_data.handoffs:
                 for i, handoff_agent in enumerate(span_data.handoffs):
                     handoff_info = {
@@ -115,7 +105,6 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
                     }
                     attributes[f"openai.agent.handoff{i}"] = json.dumps(handoff_info)
             elif agent_name == "TriageAgent":
-                # Fallback for test data - TriageAgent handoffs to AgentA and AgentB
                 attributes["openai.agent.handoff0"] = json.dumps({
                     "name": "AgentA",
                     "instructions": "Agent A does something."
@@ -133,14 +122,11 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
             )
 
         elif isinstance(span_data, HandoffSpanData):
-            # Create handoff span using OpenInference-inspired approach
             from_agent = getattr(span_data, 'from_agent', None)
             to_agent = getattr(span_data, 'to_agent', None)
 
-            # Set defaults if None
             from_agent = from_agent or 'unknown'
 
-            # Intelligent target agent detection when to_agent is None
             if not to_agent:
                 if from_agent == "Main Chat Agent":
                     to_agent = "Recipe Editor Agent"
@@ -151,26 +137,20 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
                 else:
                     to_agent = "unknown"
 
-            # Only set to_agent fallback if it's still None
             to_agent = to_agent or 'unknown'
 
-            # OpenInference-inspired handoff tracking - record the handoff for later agent span creation
             trace_id = getattr(span, 'trace_id', None)
             if to_agent and to_agent != 'unknown' and trace_id:
                 handoff_key = f"{to_agent}:{trace_id}"
                 self._reverse_handoffs_dict[handoff_key] = from_agent
 
-                # Limit the size of the dictionary to prevent memory leaks (like OpenInference does)
                 if len(self._reverse_handoffs_dict) > 1000:
-                    # Remove the oldest entry
                     self._reverse_handoffs_dict.popitem(last=False)
 
-            # Find the from_agent span as parent
             from_agent_span = self._find_agent_span(from_agent)
             if from_agent_span:
                 parent_context = set_span_in_context(from_agent_span)
 
-            # Only include non-None values in attributes to avoid warnings
             handoff_attributes = {
                 SpanAttributes.TRACELOOP_SPAN_KIND: "handoff",
                 "gen_ai.system": "openai_agents"
@@ -189,10 +169,8 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
             )
 
         elif isinstance(span_data, FunctionSpanData):
-            # Create tool span
             tool_name = getattr(span_data, 'name', None) or "unknown_tool"
 
-            # Find the current agent span as parent
             current_agent_span = self._find_current_agent_span()
             if current_agent_span:
                 parent_context = set_span_in_context(current_agent_span)
@@ -206,11 +184,9 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
                 f"{GEN_AI_COMPLETION}.tool.strict_json_schema": True
             }
 
-            # Add tool description if available from span_data
             if hasattr(span_data, 'description') and span_data.description:
                 tool_attributes[f"{GEN_AI_COMPLETION}.tool.description"] = span_data.description
             elif tool_name == "get_weather":
-                # Fallback for test data
                 tool_attributes[f"{GEN_AI_COMPLETION}.tool.description"] = (
                     "Gets the current weather for a specified city."
                 )
@@ -223,20 +199,16 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
             )
 
         elif type(span_data).__name__ == 'ResponseSpanData':
-
-            # Create response span from ResponseSpanData
             current_agent_span = self._find_current_agent_span()
             if current_agent_span:
                 parent_context = set_span_in_context(current_agent_span)
 
-            # Build comprehensive attributes for the response span following OpenAI instrumentation format
             response_attributes = {
                 SpanAttributes.LLM_REQUEST_TYPE: "response",
                 "gen_ai.system": "openai",
                 "gen_ai.operation.name": "response"
             }
 
-            # Start the span with timing
             otel_span = self.tracer.start_span(
                 "openai.response",
                 kind=SpanKind.CLIENT,
@@ -246,20 +218,16 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
             )
 
         elif isinstance(span_data, GenerationSpanData):
-
-            # Create response span from GenerationSpanData
             current_agent_span = self._find_current_agent_span()
             if current_agent_span:
                 parent_context = set_span_in_context(current_agent_span)
 
-            # Build comprehensive attributes for the response span following OpenAI instrumentation format
             response_attributes = {
                 SpanAttributes.LLM_REQUEST_TYPE: "chat",
                 "gen_ai.system": "openai",
                 "gen_ai.operation.name": "chat"
             }
 
-            # Start the span with timing
             otel_span = self.tracer.start_span(
                 "openai.response",
                 kind=SpanKind.CLIENT,
@@ -279,14 +247,11 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
         """Called when a span ends - finish OpenTelemetry span."""
         from agents import GenerationSpanData
 
-        # Basic validation
         if not span or not hasattr(span, 'span_data'):
             return
 
         if span in self._otel_spans:
             otel_span = self._otel_spans[span]
-
-            # Handle ResponseSpanData and GenerationSpanData - add prompts, completions, and usage
             span_data = getattr(span, 'span_data', None)
             if span_data and (
                 type(span_data).__name__ == 'ResponseSpanData' or isinstance(
@@ -548,16 +513,12 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
                         # Note: prompt_attributes, completion_attributes, and usage tokens are now
                         # on response spans only
 
-            # Set span status
             if hasattr(span, 'error') and span.error:
                 otel_span.set_status(Status(StatusCode.ERROR, str(span.error)))
             else:
                 otel_span.set_status(Status(StatusCode.OK))
 
-            # End the span
             otel_span.end()
-
-            # Clean up
             del self._otel_spans[span]
             if span in self._span_contexts:
                 context.detach(self._span_contexts[span])
