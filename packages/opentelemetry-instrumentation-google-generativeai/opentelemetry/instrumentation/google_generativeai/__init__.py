@@ -4,13 +4,7 @@ import logging
 import types
 from typing import Collection
 
-try:
-    from google.generativeai.types.generation_types import GenerateContentResponse
-except ImportError:
-    try:
-        from google.genai.types import GenerateContentResponse
-    except ImportError:
-        GenerateContentResponse = None
+from google.genai.types import GenerateContentResponse
 from opentelemetry import context as context_api
 from opentelemetry._events import get_event_logger
 from opentelemetry.instrumentation.google_generativeai.config import Config
@@ -26,7 +20,6 @@ from opentelemetry.instrumentation.google_generativeai.span_utils import (
 )
 from opentelemetry.instrumentation.google_generativeai.utils import (
     dont_throw,
-    is_package_installed,
     should_emit_events,
 )
 from opentelemetry.instrumentation.google_generativeai.version import __version__
@@ -41,21 +34,6 @@ from opentelemetry.trace import SpanKind, get_tracer
 from wrapt import wrap_function_wrapper
 
 logger = logging.getLogger(__name__)
-
-LEGACY_WRAPPED_METHODS = [
-    {
-        "package": "google.generativeai.generative_models",
-        "object": "GenerativeModel",
-        "method": "generate_content",
-        "span_name": "gemini.generate_content",
-    },
-    {
-        "package": "google.generativeai.generative_models",
-        "object": "GenerativeModel",
-        "method": "generate_content_async",
-        "span_name": "gemini.generate_content_async",
-    },
-]
 
 WRAPPED_METHODS = [
     {
@@ -277,20 +255,10 @@ class GoogleGenerativeAiInstrumentor(BaseInstrumentor):
         Config.use_legacy_attributes = use_legacy_attributes
 
     def instrumentation_dependencies(self) -> Collection[str]:
-        if is_package_installed("google.genai"):
-            return ("google-genai >= 0.1.0",)
-        elif is_package_installed("google.generativeai"):
-            return ["google-generativeai >= 0.5.0"]
-        else:
-            return []
+        return ("google-genai >= 1.0.0",)
 
     def _wrapped_methods(self):
-        if is_package_installed("google.genai"):
-            return WRAPPED_METHODS
-        elif is_package_installed("google.generativeai"):
-            return LEGACY_WRAPPED_METHODS
-        else:
-            return []
+        return WRAPPED_METHODS
 
     def _instrument(self, **kwargs):
         tracer_provider = kwargs.get("tracer_provider")

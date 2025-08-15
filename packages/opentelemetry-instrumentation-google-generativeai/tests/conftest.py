@@ -2,15 +2,7 @@
 
 import os
 
-try:
-    import google.generativeai as genai_legacy
-except ImportError:
-    genai_legacy = None
-
-try:
-    from google import genai as genai_new
-except ImportError:
-    genai_new = None
+from google import genai
 import pytest
 from opentelemetry.instrumentation.google_generativeai import (
     GoogleGenerativeAiInstrumentor,
@@ -61,15 +53,8 @@ def fixture_event_logger_provider(log_exporter):
 
 @pytest.fixture
 def genai_client():
-    # Prefer new client over legacy
-    if genai_new:
-        client = genai_new.Client(api_key=os.environ["GOOGLE_API_KEY"])
-        return client.models
-    elif genai_legacy:
-        genai_legacy.configure(api_key=os.environ["GOOGLE_API_KEY"])
-        return genai_legacy.GenerativeModel("gemini-1.5-flash")
-    else:
-        pytest.skip("Neither google-genai nor google-generativeai is installed")
+    client = genai.Client(api_key=os.environ["GOOGLE_API_KEY"])
+    return client.models
 
 
 @pytest.fixture(scope="function")
