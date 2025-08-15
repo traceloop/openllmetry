@@ -1,5 +1,3 @@
-# The software is (c) Copyright 2025 Distyl AI Inc. All rights reserved.
-
 import asyncio
 import json
 from typing import Dict, List
