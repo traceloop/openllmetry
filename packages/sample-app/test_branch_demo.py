@@ -8,14 +8,18 @@ Run this to see perfect parent-child span relationships in Traceloop!
 
 import asyncio
 import os
-from dotenv import load_dotenv
 from agents import Agent, function_tool, Runner
 from traceloop.sdk import Traceloop
 
-# Load environment variables from .env file
-load_dotenv()
+# Set up API key directly if needed
+if not os.getenv("OPENAI_API_KEY"):
+    print("⚠️ OPENAI_API_KEY not found in environment. Please set it.")
+    print("   You can either:")
+    print("   1. Set it in your shell: export OPENAI_API_KEY=sk-your-key")  
+    print("   2. Or edit the .env file in this directory")
+    exit(1)
 
-# Initialize Traceloop with dashboard exporter
+# Initialize Traceloop with OpenAI instrumentation
 from traceloop.sdk.instruments import Instruments
 
 Traceloop.init(
@@ -24,6 +28,31 @@ Traceloop.init(
     # Ensure OpenAI instrumentation is enabled
     instruments={Instruments.OPENAI, Instruments.OPENAI_AGENTS}
 )
+
+# Debug: Check which instrumentors are active
+from opentelemetry._logs import get_logger
+debug_logger = get_logger(__name__)
+print("🔍 Checking active OpenTelemetry instrumentors...")
+
+try:
+    from opentelemetry.instrumentation.registry import _INSTRUMENTED_LIBRARIES
+    print(f"📋 Active instrumentors: {list(_INSTRUMENTED_LIBRARIES.keys())}")
+except:
+    print("❓ Could not access instrumentation registry")
+
+# Test basic OpenAI call to verify completion spans
+print("🧪 Testing basic OpenAI completion to verify spans...")
+from openai import OpenAI
+test_client = OpenAI()
+try:
+    test_response = test_client.chat.completions.create(
+        model="gpt-4o",
+        messages=[{"role": "user", "content": "Test"}],
+        max_tokens=5
+    )
+    print(f"✅ Basic OpenAI test successful: {test_response.choices[0].message.content}")
+except Exception as e:
+    print(f"❌ Basic OpenAI test failed: {e}")
 print("✅ Traceloop initialized - traces will appear in your dashboard!")
 
 # Simple tools for the Analytics Agent

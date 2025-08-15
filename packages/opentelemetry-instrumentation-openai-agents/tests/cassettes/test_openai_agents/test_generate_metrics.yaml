@@ -1,10 +1,7 @@
 interactions:
 - request:
-    body: '{"data":[{"object":"trace.span","id":"span_fa9a11a094014a0f817a0548","trace_id":"trace_f34ef154c7854358859f18a24dd15b8c","parent_id":"span_23eb165214794bb094ccf23c","started_at":"2025-08-15T15:14:42.660951+00:00","ended_at":"2025-08-15T15:14:43.705624+00:00","span_data":{"type":"response","response_id":"resp_689f4ee2fb20819cb08d55bb0492e2da044d0eee2a64af46"},"error":null},{"object":"trace.span","id":"span_b02facfeb9ce4a6d9f4fcb9e","trace_id":"trace_f34ef154c7854358859f18a24dd15b8c","parent_id":"span_4c7fc48b4d2241878db88125","started_at":"2025-08-15T15:14:43.707793+00:00","ended_at":"2025-08-15T15:14:45.277646+00:00","span_data":{"type":"response","response_id":"resp_689f4ee3fdd8819d96c20731782803270b4d38f5bc9cd1b5"},"error":null},{"object":"trace.span","id":"span_4c7fc48b4d2241878db88125","trace_id":"trace_f34ef154c7854358859f18a24dd15b8c","parent_id":"span_b64cdaadb29545549ec5526f","started_at":"2025-08-15T15:14:43.707052+00:00","ended_at":"2025-08-15T15:14:45.278878+00:00","span_data":{"type":"agent","name":"AgentA","handoffs":[],"tools":[],"output_type":"str"},"error":null},{"object":"trace.span","id":"span_b64cdaadb29545549ec5526f","trace_id":"trace_f34ef154c7854358859f18a24dd15b8c","parent_id":"span_23eb165214794bb094ccf23c","started_at":"2025-08-15T15:14:43.706509+00:00","ended_at":"2025-08-15T15:14:45.279274+00:00","span_data":{"type":"function","name":"handoff_to_agent_a","input":"{\"input\":\"Please
-      handle this task by delegating to another agent.\"}","output":"Certainly! I
-      will delegate this task to Agent B.\n\n---\n\n**Agent B, please handle the following
-      task:**\n\n> Agent A does something.\n\nLet me know if you need further details,
-      Agent B.","mcp_data":null},"error":null},{"object":"trace.span","id":"span_9c24941a68b04618902514e2","trace_id":"trace_f34ef154c7854358859f18a24dd15b8c","parent_id":"span_23eb165214794bb094ccf23c","started_at":"2025-08-15T15:14:45.280231+00:00","ended_at":"2025-08-15T15:14:46.782539+00:00","span_data":{"type":"response","response_id":"resp_689f4ee59190819c8c3b04130bb51d4b044d0eee2a64af46"},"error":null},{"object":"trace.span","id":"span_23eb165214794bb094ccf23c","trace_id":"trace_f34ef154c7854358859f18a24dd15b8c","parent_id":null,"started_at":"2025-08-15T15:14:42.659298+00:00","ended_at":"2025-08-15T15:14:46.783532+00:00","span_data":{"type":"agent","name":"TriageAgent","handoffs":["AgentA","AgentB"],"tools":["handoff_to_agent_a","handoff_to_agent_b"],"output_type":"str"},"error":null},{"object":"trace","id":"trace_7c0af37c50dc47acac552f7002852301","workflow_name":"Agent
+    body: '{"data":[{"object":"trace.span","id":"span_592ec2e06b8a4dc3b9369ba0","trace_id":"trace_677ed7b1d062439194c8e3d54ed879c2","parent_id":"span_c03ad8041497444d89807081","started_at":"2025-08-15T17:56:15.504305+00:00","ended_at":"2025-08-15T17:56:32.924924+00:00","span_data":{"type":"response","response_id":"resp_689f74c00c54819e8c87a14f710b59e802d985ee604595f2"},"error":null},{"object":"trace.span","id":"span_c03ad8041497444d89807081","trace_id":"trace_677ed7b1d062439194c8e3d54ed879c2","parent_id":null,"started_at":"2025-08-15T17:56:15.503703+00:00","ended_at":"2025-08-15T17:56:32.926026+00:00","span_data":{"type":"agent","name":"SearchAgent","handoffs":[],"tools":["web_search_preview"],"output_type":"str"},"error":null},{"object":"trace","id":"trace_ddebf51199d147aa9c276699d6344191","workflow_name":"Agent
+      workflow","group_id":null,"metadata":null},{"object":"trace.span","id":"span_62c6185da3e145b4a82a3402","trace_id":"trace_ddebf51199d147aa9c276699d6344191","parent_id":"span_31a060c154064c77860efebb","started_at":"2025-08-15T17:56:32.944060+00:00","ended_at":"2025-08-15T17:56:33.764724+00:00","span_data":{"type":"response","response_id":"resp_689f74d139588191a462ea4e7046500307faccddfd4bb942"},"error":null},{"object":"trace.span","id":"span_0bb132f90d1d494f8754f59f","trace_id":"trace_ddebf51199d147aa9c276699d6344191","parent_id":"span_31a060c154064c77860efebb","started_at":"2025-08-15T17:56:33.765094+00:00","ended_at":"2025-08-15T17:56:33.765369+00:00","span_data":{"type":"handoff","from_agent":"TriageAgent","to_agent":"AgentA"},"error":null},{"object":"trace.span","id":"span_31a060c154064c77860efebb","trace_id":"trace_ddebf51199d147aa9c276699d6344191","parent_id":null,"started_at":"2025-08-15T17:56:32.943376+00:00","ended_at":"2025-08-15T17:56:33.765656+00:00","span_data":{"type":"agent","name":"TriageAgent","handoffs":["AgentA","AgentB"],"tools":["handoff_to_agent_a","handoff_to_agent_b"],"output_type":"str"},"error":null},{"object":"trace.span","id":"span_5dae755c0c2b4a2582d35948","trace_id":"trace_ddebf51199d147aa9c276699d6344191","parent_id":"span_83a42886feef4f04ba202879","started_at":"2025-08-15T17:56:33.766388+00:00","ended_at":"2025-08-15T17:56:35.240587+00:00","span_data":{"type":"response","response_id":"resp_689f74d20ec88191b7c982b9eafade0c07faccddfd4bb942"},"error":null},{"object":"trace.span","id":"span_83a42886feef4f04ba202879","trace_id":"trace_ddebf51199d147aa9c276699d6344191","parent_id":null,"started_at":"2025-08-15T17:56:33.765861+00:00","ended_at":"2025-08-15T17:56:35.240878+00:00","span_data":{"type":"agent","name":"AgentA","handoffs":[],"tools":[],"output_type":"str"},"error":null},{"object":"trace","id":"trace_a14fd79430914a80afdc0c9f25282b1b","workflow_name":"Agent
       workflow","group_id":null,"metadata":null}]}'
     headers:
       accept:
@@ -14,12 +11,12 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '2603'
+      - '2779'
       content-type:
       - application/json
       cookie:
-      - __cf_bm=uNv8mqYmmYnnF9ze0vyf2FX0xMaoPEwUF5TuBQY1QvM-1755270832-1.0.1.1-oS3hWqs33B0IjNRkvLv8YwAW60_tPEaRf2j63NpSkMmGZ9HqziCDsz8kxDIdqi._yC543Z7XDgYgvn5oBWnfDmdrWZwhhMKW4fj.NhGgm8E;
-        _cfuvid=krHDS__i71XJ5huVfhDIqCQ50yrkCM5TWF4Nq9Sjdig-1755270832394-0.0.1.1-604800000
+      - __cf_bm=UhrfEFws9O_ZBKuSryCKFovrTxciXL8p2WJuM1K2dN8-1755280562-1.0.1.1-dIIsnsWKGJtA9W6u0MbXjq7UUseSGAthIGNSZMriLzkecTBUlPjjJFr6r0QnteF8Ul.liPTWhJI6mlCKQBREwPTAAOYdCC2ZirAu9ZrwIWA;
+        _cfuvid=zDtlMy4g5CGjInt8L2ecM4HeWcHtz0bFgxVbfE5vSqk-1755280562683-0.0.1.1-604800000
       host:
       - api.openai.com
       openai-beta:
@@ -33,11 +30,11 @@ interactions:
       string: ''
     headers:
       CF-RAY:
-      - 96f9a4cd389b09bb-HFA
+      - 96fa91d0efb409bb-HFA
       Connection:
       - keep-alive
       Date:
-      - Fri, 15 Aug 2025 15:14:49 GMT
+      - Fri, 15 Aug 2025 17:56:37 GMT
       Server:
       - cloudflare
       X-Content-Type-Options:
@@ -49,7 +46,7 @@ interactions:
       openai-organization:
       - traceloop
       openai-processing-ms:
-      - '111'
+      - '102'
       openai-project:
       - proj_tzz1TbPPOXaf6j9tEkVUBIAa
       openai-version:
@@ -57,9 +54,9 @@ interactions:
       strict-transport-security:
       - max-age=31536000; includeSubDomains; preload
       x-envoy-upstream-service-time:
-      - '115'
+      - '106'
       x-request-id:
-      - req_0c25543911d9cf7066cb15481c8ce410
+      - req_0e0eac723ad91ed664fec78595f6763b
     status:
       code: 204
       message: No Content
@@ -78,12 +75,12 @@ interactions:
       content-type:
       - application/json
       cookie:
-      - __cf_bm=LcPsBWT.Y0Wq__UW1RVeH33OnZ77bvRujD4CBV_2Be0-1755270827-1.0.1.1-QXd6H1a_9G0wWy0O.FGgglIqfUkAkvgZCCU8hiyOKnohTtzf9q7UDdIXcUqkQX9prijECVsfMH01Ms4I0SqfNlnUaduJ9xvFdCbV22mT27E;
-        _cfuvid=x5atCLOrXirUGHA3zAM1hgcsMRMfQCSeWbIjl0JcCl4-1755270827899-0.0.1.1-604800000
+      - __cf_bm=WwDHl7j6.dqwOcLIJAXqGOLTR6ZUq3JCq47vW3LBIBs-1755280559-1.0.1.1-na9dmQo.4u4zv1vUQ7SN457JVcBR1ifes3cOUutsLuVtLSfo_sZ1I8fRayi6NDR2VKiwUFBhrUYM85dJ8BB7Ior2pM9Ng5MfNJwvGRd3lgE;
+        _cfuvid=PWHn6CD5_OXbE3jv9HT7E4FDlSvoTN5AciqTl4Chslg-1755280559217-0.0.1.1-604800000
       host:
       - api.openai.com
       user-agent:
-      - Agents/Python 0.0.19
+      - Agents/Python 0.2.7
       x-stainless-arch:
       - arm64
       x-stainless-async:
@@ -93,7 +90,7 @@ interactions:
       x-stainless-os:
       - MacOS
       x-stainless-package-version:
-      - 1.93.0
+      - 1.99.9
       x-stainless-read-timeout:
       - '600'
       x-stainless-retry-count:
@@ -107,28 +104,28 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAAAwAAAP//dFVNb+M2EL3nVwx02hi2IX/EcXzL0UBRFN32UGwKYUyNJNYUqeUMvfEu
-        8t8LUrJit9mLYc3H48yb4eOPO4BMl9kOMk/cFZvtU7Umelw8qfV28fSAaoFqUx2qipabVfWQH1ZL
-        3DxtVw/L/Kk6PGbTCOAO/5CSC4izTL1deUKhssDoWzw+PCwf8+32MflYUALHHOXazpBQ2ScdUB1r
-        74KNVVVomJKZvHc+24ENxiSDtpfEoiRBbfjWy+KDEu1sOuQvFwA9AUJDpquCAWTWLGgFpEEBtPyN
-        PAMaA18DcZ+ZsFp8LVyQLkgh7kgJcJEv16NTnDOFQnNbQutKMvHsupPZer6YLfPlwyxfzxbrgbaE
-        me3gyx0AwI/0O86j5XocB2Gex3Fsl7jZLDbrslLlapVXH44jYci5o4RCzFjTu+NnvCenclbIvpd0
-        XdYN7IUOepUxOwWgtU7wQvuXv2+cxtWdd4cPPAloB9lk8ryfTCDOpWSonIfJ5NmLrrTSaGBvhYzR
-        NVlFk8kc9gKeqjg2cSANQUknMq5ryQq4CmKLQcgDn1moZXAe2FXyLa5CGrtCCx35yvkWBPnIIOdO
-        x1mewdPXoL22NTShRQv66vQ5/NEQ05CjrTKhpN2LfbEz+NOW5FMLMRdtCZ13ipjjp0UJHg0YtHXA
-        muCT0UcC7ohUE+uLVNxHmN9Judrq7zFLt1hTKr9DEfKWY8QvhN5Gd+VdC/TakdexOPjUomq0JTBD
-        RAL87MwpRscZmMhGLK3FY7SVpDTHqcXA3wyeo7HGtj+09DplnqjRyhDHPp/3ibwDQRUvK2gLdCJ/
-        LvEMQqqxzrhaEwMH1QAynLSXgFcXj4feP2uv4ynPhl7xfgqelGtbsmXao3F2fbA0jgmchV9JKqNf
-        U2KL3529n4JqUA5OeApMpppdylboedp3G2tpnad5bGFvgUPboj9P4XkPmgEPLsiFk4FEhpeMW/Ty
-        kgGnNTunzsv4X9ua+00KHNLWWKJyWJjoPl52wBOyi7OYZ+Pmvw3/xsuQeWfSBRtJ6oNjYArKOvRo
-        DJlb0REfepnsPJ20C1xclLhIajKKUudd20mhUDVUHOl87RsrzHbDrc+oqpyXq6CoID1lg/EO4K0X
-        dKxIzoUuycb7SjdizeRPWlEhvT0rqcJgeu3IWJyn6yaE2o58vCjRnM9XgzVpxFBZvLH4/n2lTSmu
-        Z22o+ET+4FjLuVfEUoc2G+vueWycVj3xQVw2Ot6lKhPXFVcClo/GLtW47L99sCqtbepSMx7M5WEL
-        SYjHBrS9eVD65+Q/9quXbWwzja58T8xvWv3fO7XafuT5CHgc/8+wxQmaK+jNciQx8O28WxIsUTDi
-        v929/QsAAP//AwBtjf3YZwgAAA==
+        H4sIAAAAAAAAAwAAAP//dFVNb+M2EL3nVwx02hhJIH8lTm45GiiKotseit1CGFMjmTVFameGTryL
+        /PeClK3YbfZiWPPxOPNm+PjjCqCwdfEEBZP01f3qsXlY1PMV3pvVFGcbmpnpjKhZre7LDW7K1eIe
+        HzaLzdSYx2aJxU0CCJt/yOgJJHihwW6YUKmuMPmmD8vlbFUuH5fZJ4oaJeWY0PWOlOohaYNm13KI
+        PlXVoBPKZmIOXDyBj85lg/WnxKomRevk0ivK0agNPh/yV4iATICwJdc30QGKWFH0CrpFBfTyQiyA
+        zsG3SDJkZqwOX6sQtY9aadhRBpyWs8Xo1BBcZdBdltCFmlw6u+31dnE3vZ2Vs+VtubidLo60Zczi
+        Cb5cAQD8yL/jPDppT+NYzMppHsdj+fBgqDblrJyb+fzhw3FkDD30lFFIBFt6d/yM9+w0wSv595LO
+        y7qAPdFBrzpm5wD0PiieaP/y94XThbbnsPnAk4GeoJhMnteTCaS51AJNYJhMnlltY41FB2uv5Jxt
+        yRuaTO5grcDUpLFpAN0S1LQnF/qOvEJoILUYlRjkIEqdQGCQ0OhLWoU8doMeeuImcAeKshPQQ2/T
+        LA/A9C1atr6FbezQgz07/Q7+2JLQMcd642JNT1/9V38Lf/qaOLeQctHX0HMwJJI+PWpkdODQtxFb
+        gk/O7gikJ9wlf2B4YavWt9cJ63cyofX2e3LZDlvKPfSoSuwlRfxCyD65Gw4d0GtPbFOF8KlDs7We
+        wB0jMuDn4PYpOg3CJUpSfd1wdk3GShpdCvzN4SEZW+yGQ2u2OXNPW2scSWr2eZ0Z3BA06caC9UB7
+        4kONB1AyWx9caC0JSDRbQIG9ZY14dvvkSMBnyzad8uzoFa9vgMmEriNf52UaBzgE6zYIQfDwK2nj
+        7GtO7PB78Nc3IOSa21OxBlluhh5TBV1gukuFrz1I7Drkw01asTVYyQskZiAvZZBvrSfKGxCaE0lH
+        VlO49bsciEYh15X3RCaTu2Jc7rfjv3HfCw4u36GRgiE4BeagokdG58hd6opyHJSwZ9rbEKU6iW2V
+        BWPUnZ5D12tl0Gyp2tHh3MeEEtIuFE/Hi11Q0wTWs6AkEgM1R+MVwNug2diQHipbk09Xki70WIj3
+        1lClg72oqcHoBnkoRAPTeRNKXU+c7kIyl3fzozXLwLGydCnx/ftMfnLcwNqx4j3xJojVwyB6tY1d
+        MdY98LgN1gzERw3F6HhXo0JDX51pVDka+1zjbPjm6E1eytylFdy409sVs9aODVh/8WYML8Z/7GeP
+        19hmHl39nlhetPq/p2g+/cjzEfA4/p9ha1B0Z9DL5UhilMt5d6RYo2LCf7t6+xcAAP//AwCpa8sp
+        SggAAA==
     headers:
       CF-RAY:
-      - 96f9a4c36bfa09c9-HFA
+      - 96fa91c9694109c9-HFA
       Connection:
       - keep-alive
       Content-Encoding:
@@ -136,7 +133,7 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Fri, 15 Aug 2025 15:14:49 GMT
+      - Fri, 15 Aug 2025 17:56:38 GMT
       Server:
       - cloudflare
       Transfer-Encoding:
@@ -150,7 +147,7 @@ interactions:
       openai-organization:
       - traceloop
       openai-processing-ms:
-      - '2496'
+      - '3167'
       openai-project:
       - proj_tzz1TbPPOXaf6j9tEkVUBIAa
       openai-version:
@@ -158,7 +155,7 @@ interactions:
       strict-transport-security:
       - max-age=31536000; includeSubDomains; preload
       x-envoy-upstream-service-time:
-      - '2519'
+      - '3171'
       x-ratelimit-limit-requests:
       - '10000'
       x-ratelimit-limit-tokens:
@@ -172,7 +169,7 @@ interactions:
       x-ratelimit-reset-tokens:
       - 0s
       x-request-id:
-      - req_dc0bfd4b1f27d2c96892cccb447367bf
+      - req_e75beac7fc4da4c25148e1b170170e79
     status:
       code: 200
       message: OK

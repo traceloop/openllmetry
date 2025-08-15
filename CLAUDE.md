@@ -63,6 +63,22 @@ Store API keys only in environment variables/secure vaults; never in code or cas
 Typical record modes you may use: once, new_episodes, all, none (choose per test needs).
 Creating new cassettes requires valid API keys (OpenAI, Anthropic, etc.); ask the user to provide them if needed.
 
+## Debugging with Console Span Exporter
+For debugging OpenTelemetry spans and hierarchy issues, use the console exporter:
+
+```python
+from opentelemetry.sdk.trace.export import ConsoleSpanExporter
+from traceloop.sdk import Traceloop
+
+Traceloop.init(
+    app_name="debug-app",
+    exporter=ConsoleSpanExporter(),
+    # other config...
+)
+```
+
+This outputs all spans to console in JSON format, showing trace IDs, span IDs, parent relationships, and attributes for debugging span hierarchy issues.
+
 ## Semantic Conventions
 The semantic convention package follows the OpenTelemetry GenAI specification:
 https://opentelemetry.io/docs/specs/semconv/gen-ai/
