@@ -58,9 +58,6 @@ async def test_router_analytics_complete_workflow(exporter, workflow_agents):
     query = "Can you analyze the sales data from last quarter and generate a report?"
     messages = [{"role": "user", "content": query}]
     
-    print(f"\n🚀 Starting Data Router → Analytics Workflow")
-    print(f"📝 Query: {query}")
-    print("=" * 80)
     
     # Run the main Data Router agent which should handoff to Analytics
     router_runner = Runner().run_streamed(starting_agent=router_agent, input=messages)
@@ -70,111 +67,12 @@ async def test_router_analytics_complete_workflow(exporter, workflow_agents):
         if event.type == "run_item_stream_event":
             if "handoff" in event.name.lower():
                 handoff_occurred = True
-                print(f"🔄 HANDOFF DETECTED: {event.name}")
             elif "tool" in event.name.lower():
-                print(f"🔧 TOOL EXECUTION: {event.name}")
+                pass
     
     spans = exporter.get_finished_spans()
     non_rest_spans = [span for span in spans if not span.name.endswith("v1/responses")]
     
-    # Sort spans by start time for waterfall visualization
-    sorted_spans = sorted(non_rest_spans, key=lambda s: s.start_time)
-    
-    print(f"\n🎯 COMPLETE WORKFLOW TRACE")
-    print(f"📊 Total spans: {len(sorted_spans)}")
-    print("=" * 80)
-    
-    # Group by trace ID
-    from collections import defaultdict
-    traces = defaultdict(list)
-    for span in sorted_spans:
-        trace_id = span.get_span_context().trace_id
-        traces[trace_id].append(span)
-    
-    for i, (trace_id, trace_spans) in enumerate(traces.items(), 1):
-        print(f"\n🔗 TRACE {i}: {trace_id}")
-        print(f"   📈 Contains {len(trace_spans)} spans")
-        print("-" * 60)
-        
-        # Build hierarchy
-        span_tree = {}
-        root_spans = []
-        
-        for span in trace_spans:
-            span_tree[span.context.span_id] = {
-                "span": span,
-                "children": [],
-                "parent_id": span.parent.span_id if span.parent else None
-            }
-            if span.parent is None:
-                root_spans.append(span)
-        
-        # Build parent-child relationships
-        for span_id, span_info in span_tree.items():
-            if span_info["parent_id"]:
-                parent = span_tree.get(span_info["parent_id"])
-                if parent:
-                    parent["children"].append(span_info)
-        
-        # Print hierarchy like the Distillery/GenEdit example
-        def print_span_tree(span_info, level=0):
-            span = span_info["span"]
-            indent = "  " * level
-            duration = (span.end_time - span.start_time) / 1_000_000
-            
-            # Get span type icon
-            if "agent" in span.name.lower():
-                icon = "🤖" if level == 0 else "  🤖"
-                span_type = "Agent"
-            elif "tool" in span.name.lower():
-                icon = "  🔧"
-                span_type = "Tool"
-            elif "generation" in span.name.lower():
-                icon = "  🔵"
-                span_type = "Generation"
-            elif "handoff" in span.name.lower():
-                icon = "  🔄"
-                span_type = "Handoff"
-            else:
-                icon = "  📋"
-                span_type = "Other"
-            
-            status = "(ROOT)" if level == 0 else "(CHILD)"
-            
-            print(f"{indent}{icon} {span.name} {status}")
-            print(f"{indent}   ⏱️  Duration: {duration:.2f}ms")
-            print(f"{indent}   🏷️  Type: {span_type}")
-            
-            if span.parent:
-                print(f"{indent}   👤 Parent: {span.parent.span_id} ✅")
-            else:
-                print(f"{indent}   👤 Parent: None (ROOT)")
-            
-            # Show key attributes
-            agent_name = span.attributes.get("gen_ai.agent.name")
-            if agent_name:
-                print(f"{indent}   🎯 Agent: {agent_name}")
-            
-            tool_name = None
-            for attr_key in span.attributes.keys():
-                if "tool.name" in attr_key:
-                    tool_name = span.attributes[attr_key]
-                    break
-            if tool_name:
-                print(f"{indent}   🔧 Tool: {tool_name}")
-            
-            print()
-            
-            for child in span_info["children"]:
-                print_span_tree(child, level + 1)
-        
-        # Print each root span and its children
-        for root_span in root_spans:
-            root_info = span_tree[root_span.context.span_id]
-            print_span_tree(root_info, 0)
-    
-    print("=" * 80)
-    print("🎉 WORKFLOW ANALYSIS COMPLETE!")
     
     # Verify the expected structure like Distillery/GenEdit
     agent_spans = [s for s in non_rest_spans if "agent" in s.name.lower()]
@@ -182,35 +80,28 @@ async def test_router_analytics_complete_workflow(exporter, workflow_agents):
     root_spans = [s for s in non_rest_spans if s.parent is None]
     child_spans = [s for s in non_rest_spans if s.parent is not None]
     
-    print(f"📊 FINAL SUMMARY:")
-    print(f"   • Total traces: {len(traces)}")
-    print(f"   • Agent spans: {len(agent_spans)}")
-    print(f"   • Tool spans: {len(tool_spans)}")
-    print(f"   • Root spans: {len(root_spans)}")
-    print(f"   • Child spans: {len(child_spans)}")
-    print(f"   • Handoff occurred: {handoff_occurred}")
-    
     # Assertions for proper workflow
     assert handoff_occurred, "Handoff should have occurred"
     assert len(agent_spans) >= 2, "Should have at least Data Router and Analytics agents"
     assert len(tool_spans) >= 1, "Analytics agent should have used tools"
-    assert len(root_spans) == 1, "Should have exactly 1 root span (Data Router Agent)"
+    assert len(root_spans) == 1, "Should have exactly 1 root span (Agent Workflow)"
     
-    # Find the specific agents
-    router_spans = [s for s in agent_spans if "Data Router" in s.name]
-    analytics_spans = [s for s in agent_spans if "Analytics" in s.name]
+    # Find the specific agents, excluding handoff spans from individual agent counts
+    router_spans = [s for s in agent_spans if "Data Router" in s.name and ".agent" in s.name]
+    analytics_spans = [s for s in agent_spans if "Analytics" in s.name and ".agent" in s.name]
+    handoff_spans = [s for s in agent_spans if "handoff" in s.name]
     
-    assert len(router_spans) == 1, "Should have exactly 1 Data Router Agent span"
-    assert len(analytics_spans) >= 1, "Should have at least 1 Analytics Agent span"
+    assert len(router_spans) == 1, f"Should have exactly 1 Data Router Agent span, found {len(router_spans)}: {[s.name for s in router_spans]}"
+    assert len(analytics_spans) >= 1, f"Should have at least 1 Analytics Agent span, found {len(analytics_spans)}: {[s.name for s in analytics_spans]}"
     
-    # Verify hierarchy: Analytics should be child of Data Router
+    # Verify hierarchy: All agents should be children of workflow span
     router_span = router_spans[0]
     analytics_span = analytics_spans[0]
+    workflow_spans = [s for s in agent_spans if s.name == "Agent Workflow"]
+    workflow_span = workflow_spans[0]
     
-    assert router_span.parent is None, "Data Router Agent should be root"
+    assert workflow_span.parent is None, "Agent Workflow should be root"
+    assert router_span.parent is not None, "Data Router Agent should have parent"
     assert analytics_span.parent is not None, "Analytics Agent should have parent"
-    assert analytics_span.parent.span_id == router_span.context.span_id, "Analytics should be child of Data Router"
-    
-    print(f"\n✅ SUCCESS: Complete handoff workflow with proper hierarchy!")
-    print(f"   🤖 {router_span.name} → 🤖 {analytics_span.name}")
-    print(f"   🔧 Tools executed: {len(tool_spans)}")
+    assert router_span.parent.span_id == workflow_span.context.span_id, "Data Router should be child of Workflow"
+    assert analytics_span.parent.span_id == workflow_span.context.span_id, "Analytics should be child of Workflow"
