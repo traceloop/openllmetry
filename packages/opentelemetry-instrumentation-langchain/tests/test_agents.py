@@ -112,8 +112,14 @@ def test_agents_with_events_with_content(
     )
 
     # Validate that the assistant message Event exists (with flexible tool call ID)
-    assistant_logs = [log for log in logs if log.log_record.attributes.get('event.name') == "gen_ai.assistant.message"]
-    assert len(assistant_logs) > 0, "Should have at least one gen_ai.assistant.message log"
+    assistant_logs = [
+        log
+        for log in logs
+        if log.log_record.attributes.get("event.name") == "gen_ai.assistant.message"
+    ]
+    assert (
+        len(assistant_logs) > 0
+    ), "Should have at least one gen_ai.assistant.message log"
     assistant_log = assistant_logs[0]
     assistant_body = dict(assistant_log.log_record.body)
     assert assistant_body["content"] == ""
@@ -122,11 +128,20 @@ def test_agents_with_events_with_content(
     assert tool_call["function"]["name"] == "tavily_search_results_json"
     assert tool_call["function"]["arguments"] == {"query": "OpenLLMetry"}
     assert tool_call["type"] == "function"
-    assert tool_call["id"].startswith("call_")  # Tool call ID is random, just check prefix
+    assert tool_call["id"].startswith(
+        "call_"
+    )  # Tool call ID is random, just check prefix
 
     # Validate that the ai calls the tool (with flexible tool call ID)
-    choice_logs = [log for log in logs if log.log_record.attributes.get('event.name') == "gen_ai.choice" and dict(log.log_record.body).get("finish_reason") == "tool_calls"]
-    assert len(choice_logs) > 0, "Should have at least one gen_ai.choice log with tool_calls"
+    choice_logs = [
+        log
+        for log in logs
+        if log.log_record.attributes.get("event.name") == "gen_ai.choice"
+        and dict(log.log_record.body).get("finish_reason") == "tool_calls"
+    ]
+    assert (
+        len(choice_logs) > 0
+    ), "Should have at least one gen_ai.choice log with tool_calls"
     choice_log = choice_logs[0]
     choice_body = dict(choice_log.log_record.body)
     assert choice_body["index"] == 0
@@ -140,8 +155,15 @@ def test_agents_with_events_with_content(
     assert tool_call["id"].startswith("call_")  # Tool call ID is random
 
     # Validate that the final ai response exists
-    final_choice_logs = [log for log in logs if log.log_record.attributes.get('event.name') == "gen_ai.choice" and dict(log.log_record.body).get("finish_reason") == "stop"]
-    assert len(final_choice_logs) > 0, "Should have at least one gen_ai.choice log with stop"
+    final_choice_logs = [
+        log
+        for log in logs
+        if log.log_record.attributes.get("event.name") == "gen_ai.choice"
+        and dict(log.log_record.body).get("finish_reason") == "stop"
+    ]
+    assert (
+        len(final_choice_logs) > 0
+    ), "Should have at least one gen_ai.choice log with stop"
     final_choice_log = final_choice_logs[0]
     final_choice_body = dict(final_choice_log.log_record.body)
     assert final_choice_body["index"] == 0
@@ -203,8 +225,14 @@ def test_agents_with_events_with_no_content(
     assert_message_in_logs(logs, "gen_ai.system.message", {})
 
     # Validate that the assistant message Event exists (with flexible tool call ID, no content mode)
-    assistant_logs = [log for log in logs if log.log_record.attributes.get('event.name') == "gen_ai.assistant.message"]
-    assert len(assistant_logs) > 0, "Should have at least one gen_ai.assistant.message log"
+    assistant_logs = [
+        log
+        for log in logs
+        if log.log_record.attributes.get("event.name") == "gen_ai.assistant.message"
+    ]
+    assert (
+        len(assistant_logs) > 0
+    ), "Should have at least one gen_ai.assistant.message log"
     assistant_log = assistant_logs[0]
     assistant_body = dict(assistant_log.log_record.body)
     # In no content mode, content field may not be present
@@ -215,8 +243,15 @@ def test_agents_with_events_with_no_content(
     assert tool_call["id"].startswith("call_")  # Tool call ID is random
 
     # Validate that the ai calls the tool (with flexible tool call ID, no content mode)
-    choice_logs = [log for log in logs if log.log_record.attributes.get('event.name') == "gen_ai.choice" and dict(log.log_record.body).get("finish_reason") == "tool_calls"]
-    assert len(choice_logs) > 0, "Should have at least one gen_ai.choice log with tool_calls"
+    choice_logs = [
+        log
+        for log in logs
+        if log.log_record.attributes.get("event.name") == "gen_ai.choice"
+        and dict(log.log_record.body).get("finish_reason") == "tool_calls"
+    ]
+    assert (
+        len(choice_logs) > 0
+    ), "Should have at least one gen_ai.choice log with tool_calls"
     choice_log = choice_logs[0]
     choice_body = dict(choice_log.log_record.body)
     assert choice_body["index"] == 0
@@ -229,8 +264,15 @@ def test_agents_with_events_with_no_content(
     assert tool_call["id"].startswith("call_")  # Tool call ID is random
 
     # Validate that the final ai response exists (no content mode)
-    final_choice_logs = [log for log in logs if log.log_record.attributes.get('event.name') == "gen_ai.choice" and dict(log.log_record.body).get("finish_reason") == "stop"]
-    assert len(final_choice_logs) > 0, "Should have at least one gen_ai.choice log with stop"
+    final_choice_logs = [
+        log
+        for log in logs
+        if log.log_record.attributes.get("event.name") == "gen_ai.choice"
+        and dict(log.log_record.body).get("finish_reason") == "stop"
+    ]
+    assert (
+        len(final_choice_logs) > 0
+    ), "Should have at least one gen_ai.choice log with stop"
     final_choice_log = final_choice_logs[0]
     final_choice_body = dict(final_choice_log.log_record.body)
     assert final_choice_body["index"] == 0
