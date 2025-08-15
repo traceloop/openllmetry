@@ -260,3 +260,29 @@ async def test_recipe_agents_hierarchy(exporter, recipe_agents):
         
         if main_chat_parent:
             assert main_chat_parent.name == "Agent Workflow", f"Main Chat Agent parent should be Agent Workflow, got {main_chat_parent.name}"
+    
+    # Test openai.response spans - these should contain prompts, completions, and usage
+    response_spans = [s for s in spans if s.name == "openai.response"]
+    
+    assert len(response_spans) >= 1, f"Should have at least 1 openai.response span, found {len(response_spans)}"
+    
+    # Verify each response span has prompts, completions, and usage
+    for i, response_span in enumerate(response_spans):
+        
+        # Check for prompts
+        has_prompt = any(key.startswith("gen_ai.prompt.") for key in response_span.attributes.keys())
+        assert has_prompt, f"Response span {i} should have prompt attributes, attributes: {dict(response_span.attributes)}"
+        
+        # Check for completions 
+        has_completion = any(key.startswith("gen_ai.completion.") for key in response_span.attributes.keys())
+        assert has_completion, f"Response span {i} should have completion attributes, attributes: {dict(response_span.attributes)}"
+        
+        # Check for usage
+        has_usage = any(key.startswith("gen_ai.usage.") or key.startswith("llm.usage.") for key in response_span.attributes.keys())
+        assert has_usage, f"Response span {i} should have usage attributes, attributes: {dict(response_span.attributes)}"
+        
+        # Check specific expected attributes
+        assert "gen_ai.system" in response_span.attributes, f"Response span {i} should have gen_ai.system"
+        assert response_span.attributes["gen_ai.system"] == "openai", f"Response span {i} gen_ai.system should be 'openai'"
+        
+        pass  # Validation passed

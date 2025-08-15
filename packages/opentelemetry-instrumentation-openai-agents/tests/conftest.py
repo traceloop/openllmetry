@@ -42,7 +42,7 @@ def environment():
     if not os.environ.get("OPENAI_API_KEY"):
         os.environ["OPENAI_API_KEY"] = "api-key"
     # Disable OpenAI Agents SDK built-in tracing to prevent API calls
-    os.environ["OPENAI_AGENTS_DISABLE_TRACING"] = "1"
+    # os.environ["OPENAI_AGENTS_DISABLE_TRACING"] = "1"
 
 
 @pytest.fixture(autouse=True)

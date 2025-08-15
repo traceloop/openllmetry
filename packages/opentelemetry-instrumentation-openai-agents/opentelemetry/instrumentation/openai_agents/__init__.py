@@ -9,10 +9,7 @@ from opentelemetry.instrumentation.openai_agents.version import __version__
 from opentelemetry.semconv_ai import Meters
 
 
-
 _instruments = ("openai-agents >= 0.0.19",)
-
-
 
 
 class OpenAIAgentsInstrumentor(BaseInstrumentor):
@@ -29,34 +26,24 @@ class OpenAIAgentsInstrumentor(BaseInstrumentor):
         meter = get_meter(__name__, __version__, meter_provider)
 
         if is_metrics_enabled():
-            (
-                token_histogram,
-                duration_histogram,
-            ) = _create_metrics(meter)
-        else:
-            (
-                token_histogram,
-                duration_histogram,
-            ) = (None, None)
+            _create_metrics(meter)
 
         # Use hook-based approach with OpenAI Agents SDK callbacks
         try:
             from agents import add_trace_processor
             from ._hooks import OpenTelemetryTracingProcessor
-            
+
             # Create and add our OpenTelemetry processor
             otel_processor = OpenTelemetryTracingProcessor(tracer)
             add_trace_processor(otel_processor)
-            
-        except Exception as e:
+
+        except Exception:
             # Silently handle import errors - OpenAI Agents SDK may not be available
             pass
 
     def _uninstrument(self, **kwargs):
         # Hook-based approach: cleanup happens automatically when processors are removed
         pass
-
-
 
 
 def is_metrics_enabled() -> bool:
