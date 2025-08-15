@@ -642,7 +642,7 @@ async def run_streaming_chat(user_input: str):
             starting_agent=recipe_editor_agent, input=recipe_messages
         )
         await handle_runner_stream(recipe_runner)
-    
+
     print(f"\n{'='*60}")
     print("✅ OpenAI Agents demo completed successfully!")
     print("🔍 Spans are being captured by the OpenTelemetry instrumentation")

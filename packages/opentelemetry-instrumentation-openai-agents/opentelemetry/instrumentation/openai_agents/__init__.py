@@ -9,7 +9,7 @@ from opentelemetry.instrumentation.openai_agents.version import __version__
 from opentelemetry.semconv_ai import Meters
 
 
-_instruments = ("openai-agents >= 0.0.19",)
+_instruments = ("openai-agents >= 0.2.0",)
 
 
 class OpenAIAgentsInstrumentor(BaseInstrumentor):
