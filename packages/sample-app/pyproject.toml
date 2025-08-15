@@ -56,7 +56,7 @@ llama-index-llms-openai = "^0.4.0"
 ibm-watson-machine-learning = "^1.0.367"
 ollama = "^0.4.7"
 mcp = "^1.7.1"
-openai-agents = "^0.0.19"
+openai-agents = "^0.2.7"
 
 
 [tool.poetry.dependencies.opentelemetry-instrumentation-openai]

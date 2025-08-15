@@ -1,12 +1,10 @@
-# The software is (c) Copyright 2025 Distyl AI Inc. All rights reserved.
-
 import asyncio
 import json
 from typing import Dict, List
 from dataclasses import dataclass
 from pydantic import BaseModel
 import openai
-
+from dotenv import load_dotenv
 from traceloop.sdk import Traceloop
 
 from agents import Agent, function_tool, RunContextWrapper, Runner, ToolCallOutputItem
@@ -18,7 +16,12 @@ from openai.types.responses import (
     ResponseOutputRefusal,
 )
 
-Traceloop.init(disable_batch=True)
+load_dotenv()
+
+Traceloop.init(
+    app_name="openai-agents-demo",
+    disable_batch=False
+)
 
 
 class PlannedChange(BaseModel):
@@ -637,6 +640,11 @@ async def run_streaming_chat(user_input: str):
             starting_agent=recipe_editor_agent, input=recipe_messages
         )
         await handle_runner_stream(recipe_runner)
+
+    print(f"\n{'='*60}")
+    print("✅ OpenAI Agents demo completed successfully!")
+    print("🔍 Spans are being captured by the OpenTelemetry instrumentation")
+    print(f"{'='*60}")
 
 
 if __name__ == "__main__":

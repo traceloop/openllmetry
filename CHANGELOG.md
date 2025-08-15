@@ -1,3 +1,9 @@
+## v0.45.5 (2025-08-15)
+
+### Fix
+
+- **openai-agents**: switch to hook-based instrumentation (#3283)
+
 ## v0.45.4 (2025-08-14)
 
 ### Fix
