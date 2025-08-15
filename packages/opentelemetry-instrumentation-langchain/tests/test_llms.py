@@ -695,32 +695,35 @@ def test_anthropic(instrument_legacy, span_exporter, log_exporter):
         workflow_span.attributes[SpanAttributes.TRACELOOP_ENTITY_OUTPUT]
     )
     # We need to remove the id from the output because it is random
-    assert {k: v for k, v in output["outputs"]["kwargs"].items() if k != "id"} == {
-        "content": "Why can't a bicycle stand up by itself? Because it's two-tired!",
-        "invalid_tool_calls": [],
-        "response_metadata": {
-            "id": "msg_017fMG9SRDFTBhcD1ibtN1nK",
-            "model": "claude-2.1",
-            "model_name": "claude-2.1",
-            "stop_reason": "end_turn",
-            "stop_sequence": None,
-            "usage": {
-                "cache_creation_input_tokens": None,
-                "cache_read_input_tokens": None,
-                "input_tokens": 19,
-                "output_tokens": 22,
-                "server_tool_use": None,
-            },
-        },
-        "tool_calls": [],
-        "type": "ai",
-        "usage_metadata": {
-            "input_token_details": {},
-            "input_tokens": 19,
-            "output_tokens": 22,
-            "total_tokens": 41,
-        },
-    }
+    actual_output = {k: v for k, v in output["outputs"]["kwargs"].items() if k != "id"}
+    
+    # Check core fields that should always be present
+    assert actual_output["content"] == "Why can't a bicycle stand up by itself? Because it's two-tired!"
+    assert actual_output["invalid_tool_calls"] == []
+    assert actual_output["tool_calls"] == []
+    assert actual_output["type"] == "ai"
+    
+    # Check response metadata core fields
+    response_metadata = actual_output["response_metadata"]
+    assert response_metadata["id"] == "msg_017fMG9SRDFTBhcD1ibtN1nK"
+    assert response_metadata["model"] == "claude-2.1"
+    assert response_metadata["model_name"] == "claude-2.1"
+    assert response_metadata["stop_reason"] == "end_turn"
+    assert response_metadata["stop_sequence"] is None
+    
+    # Check usage fields that should always be present
+    usage = response_metadata["usage"]
+    assert usage["input_tokens"] == 19
+    assert usage["output_tokens"] == 22
+    # Optional fields that may not be present in newer versions
+    # cache_creation_input_tokens, cache_read_input_tokens, server_tool_use
+    
+    # Check usage metadata
+    usage_metadata = actual_output["usage_metadata"]
+    assert usage_metadata["input_token_details"] == {}
+    assert usage_metadata["input_tokens"] == 19
+    assert usage_metadata["output_tokens"] == 22
+    assert usage_metadata["total_tokens"] == 41
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 0, (
