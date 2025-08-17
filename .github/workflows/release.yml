@@ -97,7 +97,6 @@ jobs:
         run: |
           find . -name "*.pyc" -delete
           find . -name "__pycache__" -type d -exec rm -rf {} + || true
-          poetry cache clear pypi --all || true
 
       - run: mkdir instrumentations-dist
       - run: cp packages/opentelemetry-instrumentation-*/dist/* instrumentations-dist
@@ -162,7 +161,6 @@ jobs:
         run: |
           find . -name "*.pyc" -delete
           find . -name "__pycache__" -type d -exec rm -rf {} + || true
-          poetry cache clear pypi --all || true
 
       - name: Publish release distributions to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
