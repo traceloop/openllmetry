@@ -26,6 +26,15 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Free up disk space
+        run: |
+          sudo apt-get remove -y '^dotnet-.*' '^llvm-.*' 'php.*' '^mongodb-.*' '^mysql-.*' azure-cli google-cloud-cli hhvm google-chrome-stable firefox powershell mono-devel libgl1-mesa-dri
+          sudo apt-get autoremove -y
+          sudo apt-get clean
+          # Remove Docker images
+          docker rmi $(docker images -aq) || true
+          # Show available space
+          df -h
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
@@ -55,6 +64,15 @@ jobs:
         python-version: ["3.11"]
 
     steps:
+      - name: Free up disk space
+        run: |
+          sudo apt-get remove -y '^dotnet-.*' '^llvm-.*' 'php.*' '^mongodb-.*' '^mysql-.*' azure-cli google-cloud-cli hhvm google-chrome-stable firefox powershell mono-devel libgl1-mesa-dri
+          sudo apt-get autoremove -y
+          sudo apt-get clean
+          # Remove Docker images
+          docker rmi $(docker images -aq) || true
+          # Show available space
+          df -h
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
@@ -91,6 +109,15 @@ jobs:
         python-version: ["3.10", "3.11", "3.12"]
 
     steps:
+      - name: Free up disk space
+        run: |
+          sudo apt-get remove -y '^dotnet-.*' '^llvm-.*' 'php.*' '^mongodb-.*' '^mysql-.*' azure-cli google-cloud-cli hhvm google-chrome-stable firefox powershell mono-devel libgl1-mesa-dri
+          sudo apt-get autoremove -y
+          sudo apt-get clean
+          # Remove Docker images
+          docker rmi $(docker images -aq) || true
+          # Show available space
+          df -h
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
