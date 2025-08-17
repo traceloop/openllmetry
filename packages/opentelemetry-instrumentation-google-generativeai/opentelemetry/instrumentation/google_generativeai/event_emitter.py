@@ -2,7 +2,7 @@ from dataclasses import asdict
 from enum import Enum
 from typing import Union
 
-from google.genai.types import GenerateContentResponse
+from google.generativeai.types.generation_types import GenerateContentResponse
 from opentelemetry._events import Event, EventLogger
 from opentelemetry.instrumentation.google_generativeai.event_models import (
     ChoiceEvent,
