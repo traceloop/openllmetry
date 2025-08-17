@@ -42,7 +42,6 @@ jobs:
         run: |
           poetry config virtualenvs.create false
           poetry config virtualenvs.in-project false
-          poetry config installer.max-workers 1
 
       - name: Cache Poetry dependencies
         uses: actions/cache@v4
@@ -97,7 +96,6 @@ jobs:
         run: |
           poetry config virtualenvs.create false
           poetry config virtualenvs.in-project false
-          poetry config installer.max-workers 1
 
       - name: Cache Poetry dependencies
         uses: actions/cache@v4
@@ -125,9 +123,7 @@ jobs:
       - run: npm ci
 
       - name: Install
-        run: |
-          pip install --upgrade pip setuptools wheel
-          npx nx affected -t install --with dev --parallel=3
+        run: npx nx affected -t install --with dev --parallel=3
 
       - name: Build
         run: npx nx affected -t build-release --parallel=3
@@ -165,7 +161,6 @@ jobs:
         run: |
           poetry config virtualenvs.create false
           poetry config virtualenvs.in-project false
-          poetry config installer.max-workers 1
 
       - name: Cache Poetry dependencies
         uses: actions/cache@v4
@@ -201,9 +196,7 @@ jobs:
       - run: npm ci
 
       - name: Install
-        run: |
-          pip install --upgrade pip setuptools wheel
-          npx nx affected -t install --exclude='sample-app' --with dev --parallel=3
+        run: npx nx affected -t install --exclude='sample-app' --with dev --parallel=3
 
       - name: Test
         env:
