@@ -8,7 +8,7 @@ show_missing = true
 
 [tool.poetry]
 name = "traceloop-sdk"
-version = "0.43.1"
+version = "0.45.5"
 description = "Traceloop Software Development Kit (SDK) for Python"
 authors = [
     "Gal Kleinman <gal@traceloop.com>",
@@ -35,7 +35,7 @@ opentelemetry-instrumentation-sqlalchemy = ">=0.50b0"
 opentelemetry-instrumentation-urllib3 = ">=0.50b0"
 opentelemetry-instrumentation-threading = ">=0.50b0"
 opentelemetry-instrumentation-redis = ">=0.50b0"
-opentelemetry-semantic-conventions-ai = "0.4.11"
+opentelemetry-semantic-conventions-ai = "^0.4.12"
 opentelemetry-instrumentation-mistralai = { path = "../opentelemetry-instrumentation-mistralai", develop = true }
 opentelemetry-instrumentation-openai = { path = "../opentelemetry-instrumentation-openai", develop = true }
 opentelemetry-instrumentation-openai-agents = { path = "../opentelemetry-instrumentation-openai-agents", develop = true }
@@ -81,13 +81,17 @@ pytest-sugar = "1.0.0"
 
 [tool.poetry.group.test.dependencies]
 openai = "^1.31.1"
-vcrpy = "^6.0.1"
+vcrpy = "^7.0.0"
 pytest-recording = "^0.13.1"
 pydantic = "<3"
 pytest-asyncio = "^0.23.7"
 anthropic = "^0.25.2"
 langchain = "^0.2.5"
 langchain-openai = "^0.1.15"
+pandas = ">=1.0.0"
+
+[tool.poetry.extras]
+datasets = ["pandas"]
 
 [build-system]
 requires = ["poetry-core"]
