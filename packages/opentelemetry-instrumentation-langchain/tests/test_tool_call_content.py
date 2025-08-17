@@ -6,7 +6,6 @@ This test reproduces the issue reported in GitHub where gen_ai.prompt.X.content
 attributes were missing for assistant messages that contained tool_calls.
 """
 
-import pytest
 from unittest.mock import Mock
 from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 from opentelemetry.instrumentation.langchain.span_utils import set_chat_request
