@@ -120,15 +120,17 @@ def chat_wrapper(
             if is_openai_v1():
                 # Handle LegacyAPIResponse by parsing it first, without mutating original
                 actual_response = response
+                parsed_successfully = False
                 if _is_legacy_api_response(response) and kwargs.get('stream'):
                     try:
                         actual_response = response.parse()
+                        parsed_successfully = True
                     except Exception as e:
                         logger.warning(f"Failed to parse LegacyAPIResponse: {e}")
                         # Fall back to original response
                         actual_response = response
                 
-                return ChatStream(
+                stream = ChatStream(
                     span,
                     actual_response,
                     instance,
@@ -140,6 +142,9 @@ def chat_wrapper(
                     start_time,
                     kwargs,
                 )
+                if parsed_successfully:
+                    stream._response_was_parsed = True
+                return stream
             else:
                 return _build_from_streaming_response(
                     span,
@@ -231,15 +236,17 @@ async def achat_wrapper(
             if is_openai_v1():
                 # Handle LegacyAPIResponse by parsing it first, without mutating original
                 actual_response = response
+                parsed_successfully = False
                 if _is_legacy_api_response(response) and kwargs.get('stream'):
                     try:
                         actual_response = response.parse()
+                        parsed_successfully = True
                     except Exception as e:
                         logger.warning(f"Failed to parse LegacyAPIResponse: {e}")
                         # Fall back to original response
                         actual_response = response
                 
-                return ChatStream(
+                stream = ChatStream(
                     span,
                     actual_response,
                     instance,
@@ -251,6 +258,9 @@ async def achat_wrapper(
                     start_time,
                     kwargs,
                 )
+                if parsed_successfully:
+                    stream._response_was_parsed = True
+                return stream
             else:
                 return _abuild_from_streaming_response(
                     span,
@@ -711,7 +721,23 @@ class ChatStream(ObjectProxy):
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
-        await self.__wrapped__.__aexit__(exc_type, exc_val, exc_tb)
+        cleanup_exception = None
+        try:
+            self._ensure_cleanup()
+        except Exception as e:
+            cleanup_exception = e
+            # Don't re-raise to avoid masking original exception
+
+        result = False
+        if hasattr(self.__wrapped__, "__aexit__"):
+            result = await self.__wrapped__.__aexit__(exc_type, exc_val, exc_tb)
+
+        if cleanup_exception:
+            # Log cleanup exception but don't affect context manager behavior
+            logger.debug(
+                "Error during ChatStream cleanup in __aexit__: %s", cleanup_exception)
+
+        return result
 
     def __iter__(self):
         return self
