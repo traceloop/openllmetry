@@ -94,7 +94,6 @@ jobs:
         run: npx nx run-many -t build-release --projects=tag:instrumentation
 
       - name: Clean up build artifacts
-        if: always()
         run: |
           find . -name "*.pyc" -delete
           find . -name "__pycache__" -type d -exec rm -rf {} + || true
@@ -160,7 +159,6 @@ jobs:
         run: npx nx run traceloop-sdk:build-release
 
       - name: Clean up build artifacts
-        if: always()
         run: |
           find . -name "*.pyc" -delete
           find . -name "__pycache__" -type d -exec rm -rf {} + || true

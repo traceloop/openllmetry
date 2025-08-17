@@ -69,7 +69,6 @@ jobs:
       - run: npx nx affected -t lint --parallel=3
 
       - name: Clean up build artifacts
-        if: always()
         run: |
           find . -name "*.pyc" -delete
           find . -name "__pycache__" -type d -exec rm -rf {} + || true
@@ -131,7 +130,6 @@ jobs:
         run: npx nx affected -t build-release --parallel=3
 
       - name: Clean up build artifacts
-        if: always()
         run: |
           find . -name "*.pyc" -delete
           find . -name "__pycache__" -type d -exec rm -rf {} + || true
@@ -208,7 +206,6 @@ jobs:
         run: npx nx affected -t test --exclude='sample-app' --exclude='opentelemetry-instrumentation-haystack' --parallel=3
 
       - name: Clean up build artifacts
-        if: always()
         run: |
           find . -name "*.pyc" -delete
           find . -name "__pycache__" -type d -exec rm -rf {} + || true
