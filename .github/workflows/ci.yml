@@ -38,40 +38,14 @@ jobs:
       - name: Install Poetry
         uses: snok/install-poetry@v1
 
-      - name: Configure Poetry for CI optimization
-        run: |
-          poetry config virtualenvs.create false
-          poetry config virtualenvs.in-project false
-
-      - name: Cache Poetry dependencies
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pypoetry
-          key: poetry-${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}
-          restore-keys: |
-            poetry-${{ runner.os }}-
-
       - uses: actions/setup-node@v4
         with:
           node-version: 18
-
-      - name: Cache Nx
-        uses: actions/cache@v4
-        with:
-          path: .nx/cache
-          key: nx-${{ runner.os }}-${{ hashFiles('nx.json', 'package-lock.json') }}
-          restore-keys: |
-            nx-${{ runner.os }}-
 
       - uses: nrwl/nx-set-shas@v4
       - run: npm ci
       - run: npx nx affected -t install --with dev
       - run: npx nx affected -t lint --parallel=3
-
-      - name: Clean up build artifacts
-        run: |
-          find . -name "*.pyc" -delete
-          find . -name "__pycache__" -type d -exec rm -rf {} + || true
 
   build-packages:
     name: Build Packages
@@ -92,31 +66,9 @@ jobs:
       - name: Install Poetry
         uses: snok/install-poetry@v1
 
-      - name: Configure Poetry for CI optimization
-        run: |
-          poetry config virtualenvs.create false
-          poetry config virtualenvs.in-project false
-
-      - name: Cache Poetry dependencies
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pypoetry
-          key: poetry-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('**/poetry.lock') }}
-          restore-keys: |
-            poetry-${{ runner.os }}-${{ matrix.python-version }}-
-            poetry-${{ runner.os }}-
-
       - uses: actions/setup-node@v4
         with:
           node-version: 18
-
-      - name: Cache Nx
-        uses: actions/cache@v4
-        with:
-          path: .nx/cache
-          key: nx-${{ runner.os }}-${{ hashFiles('nx.json', 'package-lock.json') }}
-          restore-keys: |
-            nx-${{ runner.os }}-
 
       - uses: nrwl/nx-set-shas@v4
 
@@ -127,11 +79,6 @@ jobs:
 
       - name: Build
         run: npx nx affected -t build-release --parallel=3
-
-      - name: Clean up build artifacts
-        run: |
-          find . -name "*.pyc" -delete
-          find . -name "__pycache__" -type d -exec rm -rf {} + || true
 
   test-packages:
     name: Test Packages
@@ -157,39 +104,9 @@ jobs:
       - name: Install Poetry
         uses: snok/install-poetry@v1
 
-      - name: Configure Poetry for CI optimization
-        run: |
-          poetry config virtualenvs.create false
-          poetry config virtualenvs.in-project false
-
-      - name: Cache Poetry dependencies
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pypoetry
-          key: poetry-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('**/poetry.lock') }}
-          restore-keys: |
-            poetry-${{ runner.os }}-${{ matrix.python-version }}-
-            poetry-${{ runner.os }}-
-
-      - name: Cache pip dependencies
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pip
-          key: pip-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('**/pyproject.toml') }}
-          restore-keys: |
-            pip-${{ runner.os }}-${{ matrix.python-version }}-
-
       - uses: actions/setup-node@v4
         with:
           node-version: 18
-
-      - name: Cache Nx
-        uses: actions/cache@v4
-        with:
-          path: .nx/cache
-          key: nx-${{ runner.os }}-${{ hashFiles('nx.json', 'package-lock.json') }}
-          restore-keys: |
-            nx-${{ runner.os }}-
 
       - uses: nrwl/nx-set-shas@v4
 
@@ -202,8 +119,3 @@ jobs:
         env:
           HAYSTACK_TELEMETRY_ENABLED: False
         run: npx nx affected -t test --exclude='sample-app' --exclude='opentelemetry-instrumentation-haystack' --parallel=3
-
-      - name: Clean up build artifacts
-        run: |
-          find . -name "*.pyc" -delete
-          find . -name "__pycache__" -type d -exec rm -rf {} + || true
