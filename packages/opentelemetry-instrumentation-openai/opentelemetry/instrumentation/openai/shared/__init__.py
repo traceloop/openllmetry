@@ -328,20 +328,39 @@ def _extract_model_name_from_provider_format(model_name):
     return model_name
 
 
-def is_streaming_response(response):
+def _is_legacy_api_response(obj):
+    """Check if object is a LiteLLM LegacyAPIResponse"""
+    return hasattr(obj, 'parse') and callable(getattr(obj, 'parse'))
+
+
+def is_streaming_response(response, kwargs=None):
     if is_openai_v1():
-        return isinstance(response, openai.Stream) or isinstance(
-            response, openai.AsyncStream
-        )
+        # Check if it's directly a stream
+        if isinstance(response, openai.Stream) or isinstance(response, openai.AsyncStream):
+            return True
+        
+        # For LegacyAPIResponse, check if the original request was streaming
+        # Note: LegacyAPIResponse handling is now done at wrapper level
+        if _is_legacy_api_response(response):
+            if kwargs and kwargs.get('stream'):
+                return True
+        
+        return False
 
     return isinstance(response, types.GeneratorType) or isinstance(
         response, types.AsyncGeneratorType
     )
 
 
-def model_as_dict(model):
+def model_as_dict(model, is_streaming=False):
     if isinstance(model, dict):
         return model
+    
+    # For streaming LegacyAPIResponse, we can't extract completion data after streaming
+    # Just return empty dict to prevent crashes - completion data will come from cleanup  
+    if _is_legacy_api_response(model) and is_streaming:
+        return {}
+    
     if _PYDANTIC_VERSION < "2.0.0":
         return model.dict()
     if hasattr(model, "model_dump"):
