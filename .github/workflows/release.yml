@@ -63,14 +63,40 @@ jobs:
       - name: Install Poetry
         uses: snok/install-poetry@v1
 
+      - name: Configure Poetry for CI optimization
+        run: |
+          poetry config virtualenvs.create false
+          poetry config virtualenvs.in-project false
+
+      - name: Cache Poetry dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pypoetry
+          key: poetry-${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}
+          restore-keys: |
+            poetry-${{ runner.os }}-
+
       - uses: actions/setup-node@v4
         with:
           node-version: 18
+
+      - name: Cache Nx
+        uses: actions/cache@v4
+        with:
+          path: .nx/cache
+          key: nx-${{ runner.os }}-${{ hashFiles('nx.json', 'package-lock.json') }}
+          restore-keys: |
+            nx-${{ runner.os }}-
 
       - run: npm ci
 
       - name: Build Instrumentations
         run: npx nx run-many -t build-release --projects=tag:instrumentation
+
+      - name: Clean up build artifacts
+        run: |
+          find . -name "*.pyc" -delete
+          find . -name "__pycache__" -type d -exec rm -rf {} + || true
 
       - run: mkdir instrumentations-dist
       - run: cp packages/opentelemetry-instrumentation-*/dist/* instrumentations-dist
@@ -101,14 +127,40 @@ jobs:
       - name: Install Poetry
         uses: snok/install-poetry@v1
 
+      - name: Configure Poetry for CI optimization
+        run: |
+          poetry config virtualenvs.create false
+          poetry config virtualenvs.in-project false
+
+      - name: Cache Poetry dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pypoetry
+          key: poetry-${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}
+          restore-keys: |
+            poetry-${{ runner.os }}-
+
       - uses: actions/setup-node@v4
         with:
           node-version: 18
+
+      - name: Cache Nx
+        uses: actions/cache@v4
+        with:
+          path: .nx/cache
+          key: nx-${{ runner.os }}-${{ hashFiles('nx.json', 'package-lock.json') }}
+          restore-keys: |
+            nx-${{ runner.os }}-
 
       - run: npm ci
 
       - name: Build Traceloop SDK
         run: npx nx run traceloop-sdk:build-release
+
+      - name: Clean up build artifacts
+        run: |
+          find . -name "*.pyc" -delete
+          find . -name "__pycache__" -type d -exec rm -rf {} + || true
 
       - name: Publish release distributions to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
