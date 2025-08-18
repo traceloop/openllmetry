@@ -1,10 +1,9 @@
-import os
 from typing import Tuple
 
 import pytest
-from langchain import hub
 from langchain.agents import AgentExecutor, create_tool_calling_agent
 from langchain_community.tools.tavily_search import TavilySearchResults
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_openai import ChatOpenAI
 from opentelemetry.sdk._logs import LogData
 from opentelemetry.semconv._incubating.attributes import (
@@ -12,6 +11,16 @@ from opentelemetry.semconv._incubating.attributes import (
 )
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
+)
+
+# Constant prompt template to replace hub.pull("hwchase17/openai-functions-agent")
+OPENAI_FUNCTIONS_AGENT_PROMPT = ChatPromptTemplate.from_messages(
+    [
+        ("system", "You are a helpful assistant"),
+        MessagesPlaceholder("chat_history", optional=True),
+        ("human", "{input}"),
+        MessagesPlaceholder("agent_scratchpad"),
+    ]
 )
 
 
@@ -22,10 +31,7 @@ def test_agents(instrument_legacy, span_exporter, log_exporter):
 
     model = ChatOpenAI(model="gpt-3.5-turbo")
 
-    prompt = hub.pull(
-        "hwchase17/openai-functions-agent",
-        api_key=os.environ["LANGSMITH_API_KEY"],
-    )
+    prompt = OPENAI_FUNCTIONS_AGENT_PROMPT
 
     agent = create_tool_calling_agent(model, tools, prompt)
     agent_executor = AgentExecutor(agent=agent, tools=tools)
@@ -68,10 +74,7 @@ def test_agents_with_events_with_content(
 
     model = ChatOpenAI(model="gpt-3.5-turbo")
 
-    prompt = hub.pull(
-        "hwchase17/openai-functions-agent",
-        api_key=os.environ["LANGSMITH_API_KEY"],
-    )
+    prompt = OPENAI_FUNCTIONS_AGENT_PROMPT
 
     agent = create_tool_calling_agent(model, tools, prompt)
     agent_executor = AgentExecutor(agent=agent, tools=tools)
@@ -166,10 +169,7 @@ def test_agents_with_events_with_no_content(
 
     model = ChatOpenAI(model="gpt-3.5-turbo")
 
-    prompt = hub.pull(
-        "hwchase17/openai-functions-agent",
-        api_key=os.environ["LANGSMITH_API_KEY"],
-    )
+    prompt = OPENAI_FUNCTIONS_AGENT_PROMPT
 
     agent = create_tool_calling_agent(model, tools, prompt)
     agent_executor = AgentExecutor(agent=agent, tools=tools)
