@@ -2,6 +2,8 @@ import sys
 
 from traceloop.sdk.annotation.user_feedback import UserFeedback
 from traceloop.sdk.datasets.datasets import Datasets
+from traceloop.sdk.evaluator.evaluator import Evaluator
+from traceloop.sdk.experiment.experiment import Experiment
 from .http import HTTPClient
 from traceloop.sdk.version import __version__
 
@@ -21,6 +23,8 @@ class Client:
     api_key: str
     user_feedback: UserFeedback
     datasets: Datasets
+    evaluator: Evaluator
+    experiment: Experiment
     _http: HTTPClient
 
     def __init__(
@@ -48,3 +52,5 @@ class Client:
         )
         self.user_feedback = UserFeedback(self._http, self.app_name)
         self.datasets = Datasets(self._http)
+        self.evaluator = Evaluator()
+        self.experiment = Experiment()
