@@ -8,6 +8,12 @@ on:
     branches:
       - "main"
 
+env:
+  POETRY_CACHE_DIR: /tmp/pypoetry-cache
+  POETRY_VENV_IN_PROJECT: false
+  POETRY_INSTALLER_MODERN_INSTALLATION: false
+  PIP_NO_CACHE_DIR: 1
+
 jobs:
   lint-pr:
     name: Lint PR
@@ -28,11 +34,17 @@ jobs:
     steps:
       - name: Free up disk space
         run: |
+          # Remove unnecessary software and cached packages
           sudo apt-get remove -y '^dotnet-.*' '^llvm-.*' 'php.*' '^mongodb-.*' '^mysql-.*' azure-cli google-cloud-cli google-chrome-stable firefox powershell mono-devel libgl1-mesa-dri || true
           sudo apt-get autoremove -y
           sudo apt-get clean
-          # Remove Docker images
-          docker rmi $(docker images -aq) || true
+          # Remove Docker images and containers
+          docker system prune -af || true
+          # Remove additional system files
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL || true
+          sudo rm -rf /imagegeneration || true
+          # Clear APT cache completely
+          sudo rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/* || true
           # Show available space
           df -h
       - uses: actions/checkout@v4
@@ -46,13 +58,20 @@ jobs:
           python-version: 3.11
       - name: Install Poetry
         uses: snok/install-poetry@v1
+        with:
+          version: latest
+          virtualenvs-create: true
+          virtualenvs-in-project: false
+          virtualenvs-path: ~/.cache/pypoetry/virtualenvs
 
       - uses: actions/setup-node@v4
         with:
           node-version: 18
 
       - uses: nrwl/nx-set-shas@v4
-      - run: npm ci
+      - run: npm ci --cache ~/.npm --prefer-offline
+      - name: Clean npm cache
+        run: npm cache clean --force || true
       - run: npx nx affected -t install --with dev
       - run: npx nx affected -t lint --parallel=3
 
@@ -66,11 +85,17 @@ jobs:
     steps:
       - name: Free up disk space
         run: |
+          # Remove unnecessary software and cached packages
           sudo apt-get remove -y '^dotnet-.*' '^llvm-.*' 'php.*' '^mongodb-.*' '^mysql-.*' azure-cli google-cloud-cli google-chrome-stable firefox powershell mono-devel libgl1-mesa-dri || true
           sudo apt-get autoremove -y
           sudo apt-get clean
-          # Remove Docker images
-          docker rmi $(docker images -aq) || true
+          # Remove Docker images and containers
+          docker system prune -af || true
+          # Remove additional system files
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL || true
+          sudo rm -rf /imagegeneration || true
+          # Clear APT cache completely
+          sudo rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/* || true
           # Show available space
           df -h
       - uses: actions/checkout@v4
@@ -83,6 +108,11 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Install Poetry
         uses: snok/install-poetry@v1
+        with:
+          version: latest
+          virtualenvs-create: true
+          virtualenvs-in-project: false
+          virtualenvs-path: ~/.cache/pypoetry/virtualenvs
 
       - uses: actions/setup-node@v4
         with:
@@ -90,13 +120,21 @@ jobs:
 
       - uses: nrwl/nx-set-shas@v4
 
-      - run: npm ci
+      - run: npm ci --cache ~/.npm --prefer-offline
+      - name: Clean npm cache
+        run: npm cache clean --force || true
 
       - name: Install
-        run: npx nx affected -t install --with dev --parallel=3
+        run: npx nx affected -t install --with dev --parallel=2
+
 
       - name: Build
-        run: npx nx affected -t build-release --parallel=3
+        run: npx nx affected -t build-release --parallel=2
+        
+      - name: Clean build artifacts to save space
+        run: |
+          find packages -name "dist" -type d -exec rm -rf {} + || true
+          find packages -name "*.egg-info" -type d -exec rm -rf {} + || true
 
   test-packages:
     name: Test Packages
@@ -111,11 +149,17 @@ jobs:
     steps:
       - name: Free up disk space
         run: |
+          # Remove unnecessary software and cached packages
           sudo apt-get remove -y '^dotnet-.*' '^llvm-.*' 'php.*' '^mongodb-.*' '^mysql-.*' azure-cli google-cloud-cli google-chrome-stable firefox powershell mono-devel libgl1-mesa-dri || true
           sudo apt-get autoremove -y
           sudo apt-get clean
-          # Remove Docker images
-          docker rmi $(docker images -aq) || true
+          # Remove Docker images and containers
+          docker system prune -af || true
+          # Remove additional system files
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL || true
+          sudo rm -rf /imagegeneration || true
+          # Clear APT cache completely
+          sudo rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/* || true
           # Show available space
           df -h
       - uses: actions/checkout@v4
@@ -130,6 +174,11 @@ jobs:
 
       - name: Install Poetry
         uses: snok/install-poetry@v1
+        with:
+          version: latest
+          virtualenvs-create: true
+          virtualenvs-in-project: false
+          virtualenvs-path: ~/.cache/pypoetry/virtualenvs
 
       - uses: actions/setup-node@v4
         with:
@@ -137,12 +186,21 @@ jobs:
 
       - uses: nrwl/nx-set-shas@v4
 
-      - run: npm ci
+      - run: npm ci --cache ~/.npm --prefer-offline
+      - name: Clean npm cache
+        run: npm cache clean --force || true
 
       - name: Install
-        run: npx nx affected -t install --exclude='sample-app' --with dev --parallel=3
+        run: npx nx affected -t install --exclude='sample-app' --with dev --parallel=2
+
 
       - name: Test
         env:
           HAYSTACK_TELEMETRY_ENABLED: False
-        run: npx nx affected -t test --exclude='sample-app' --exclude='opentelemetry-instrumentation-haystack' --parallel=3
+        run: npx nx affected -t test --exclude='sample-app' --exclude='opentelemetry-instrumentation-haystack' --parallel=2
+        
+      - name: Clean test artifacts to save space
+        run: |
+          find packages -name ".pytest_cache" -type d -exec rm -rf {} + || true
+          find packages -name "__pycache__" -type d -exec rm -rf {} + || true
+          find packages -name "*.pyc" -delete || true
