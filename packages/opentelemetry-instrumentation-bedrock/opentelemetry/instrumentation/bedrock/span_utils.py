@@ -274,7 +274,7 @@ def _set_anthropic_messages_span_attributes(
 
 def _count_anthropic_tokens(messages: list[str]):
     global anthropic_client
-    
+
     # Lazy initialization of the Anthropic client
     if anthropic_client is None:
         try:
@@ -285,7 +285,7 @@ def _count_anthropic_tokens(messages: list[str]):
             logger.debug(f"Failed to initialize Anthropic client for token counting: {e}")
             # Return 0 if we can't create the client
             return 0
-    
+
     count = 0
     try:
         for message in messages:
@@ -295,7 +295,7 @@ def _count_anthropic_tokens(messages: list[str]):
         logger = logging.getLogger(__name__)
         logger.debug(f"Failed to count tokens with Anthropic client: {e}")
         return 0
-    
+
     return count
 
 
