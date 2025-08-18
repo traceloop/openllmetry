@@ -38,7 +38,7 @@ def generate_medical_answer(question: str, prompt: Callable[[str], str]) -> str:
 async def run_exp(experiment: Experiment, prompt: Callable[[str], str]):
     """Simple synchronous example without evaluator API calls"""
 
-    with experiment.run() as experiment:
+    with experiment.run(run_name="version-1") as experiment:
         dataset = client.datasets.get_by_slug("medical")
         
         for row in dataset.rows:
@@ -47,11 +47,13 @@ async def run_exp(experiment: Experiment, prompt: Callable[[str], str]):
             print(f"\033[94mMedical user input:\033[0m {row.values['user-description']}")
             print(f"\033[96mMedical LLM answer:\033[0m {answer}")
             
-            eval_result = await client.evaluator.run(
+            # output: o1, o2
+            eval_result = await experiment.run_evaluator(
                 evaluator_slug="medical_advice",
                 input={"completion": answer},
                 timeout_in_sec=120
             )
+
             print(f"\033[93mMedical evaluation result:\033[0m {eval_result.result}")
 
     print("\033[92m✅ Experiment version 1 completed!\033[0m")
@@ -59,7 +61,7 @@ async def run_exp(experiment: Experiment, prompt: Callable[[str], str]):
 
 if __name__ == "__main__":
     print("\033[95m🚀 Running simple experiment example...\033[0m")
-    experiment = Experiment(name="medical-experiment", run_data={"description": "This experiment verifies different prompt versions for a medical question answering model."})
+    experiment = Experiment(id = "1234434324", name="medical-experiment", run_data={"description": "This experiment verifies different prompt versions for a medical question answering model."})
     
     print("\033[95m🔬 Running experiment with clinical guidance prompt...\033[0m")
     asyncio.run(run_exp(experiment, clinical_guidance_prompt))

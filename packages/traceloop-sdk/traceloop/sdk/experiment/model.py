@@ -1,44 +1,24 @@
 from dataclasses import dataclass
 from datetime import datetime
 from typing import List, Dict, Any, Optional
+from pydantic import BaseModel
 
 
-@dataclass
-class EvaluatorRun:
-    """Single evaluator execution data"""
-    evaluator_id: str
-    evaluator_name: str
-    input_data: Dict[str, Any]
-    output_data: Dict[str, Any]
-    runtime_ms: float
-    started_at: datetime
-    completed_at: datetime
-    success: bool
-    error_message: Optional[str] = None
-
-
-@dataclass
-class EvalRun:
-    """Single evaluation run (row + evaluators)"""
-    eval_run_id: str
-    dataset_id: str
-    dataset_name: str
-    dataset_row_id: str
-    variant_name: str
-    started_at: datetime
-    completed_at: Optional[datetime]
-    evaluator_runs: List[EvaluatorRun]
-
-
-@dataclass
-class ExperimentData:
-    """Complete experiment data for API logging"""
+class ExperimentContextData(BaseModel):
+    """Pydantic model for experiment context data"""
     experiment_id: str
-    experiment_name: str
-    created_at: datetime
-    completed_at: Optional[datetime]
+    experiment_slug: Optional[str] = None
+    experiment_run_data: Dict[str, Any]
+    run_id: str
+    run_name: str
+
+class RunContextData(BaseModel):
+    """Pydantic model for run context data"""
+    id: str
+    name: str
+    data: Dict[str, Any]
+    started_at: datetime
+    completed_at: Optional[datetime] = None
     duration_ms: float
-    eval_runs: List[EvalRun]
-    total_evaluator_runs: int
-    success_rate: float
-    metadata: Dict[str, Any]
+
+

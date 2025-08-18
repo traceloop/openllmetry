@@ -11,13 +11,11 @@ class Experiment():
     """Main Experiment class for creating experiment contexts"""
     id: str
     name: str
-    created_at: datetime
     run_data: Dict[str, Any]
  
-    def __init__(self, name: str, run_data: Dict[str, Any]):
+    def __init__(self, name: str, run_data: Dict[str, Any], id: str = str(uuid.uuid4())):
         self.name = name
-        self.created_at = datetime.now()
-        self.id = str(uuid.uuid4())
+        self.id = id
         self.run_data = run_data
         self._http_client = self._get_http_client()
 

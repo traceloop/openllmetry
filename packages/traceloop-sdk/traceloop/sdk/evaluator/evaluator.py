@@ -40,7 +40,7 @@ class Evaluator:
                   input: Dict[str, str], 
                   timeout_in_sec: int = 120,
                   client: Optional[httpx.AsyncClient] = None,
-                  experiment_id: Optional[str] = None
+                  context_data: Optional[Dict[str, str]] = None
                   ) -> ExecutionResponse:
         """
         Execute evaluator with input schema mapping and wait for result
