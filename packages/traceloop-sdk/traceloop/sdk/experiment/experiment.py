@@ -2,41 +2,18 @@ import json
 import time
 import uuid
 from datetime import datetime
-from typing import Dict, Any, Optional, List
-import httpx
+from typing import Dict, Any, Optional
 
 from .model import EvaluatorRun, EvalRun, ExperimentData
-from traceloop.sdk.version import __version__
 from traceloop.sdk.evaluator.evaluator import Evaluator as BaseEvaluator
+from traceloop.sdk.client.http import HTTPClient
 
 
 class ExperimentContext:
     """Context manager for experiments that automatically logs results on exit"""
     
-    def __init__(self, name: str, api_client: Optional[httpx.Client] = None):
-        self.experiment_id = str(uuid.uuid4())
-        self.experiment_name = name
-        self.created_at = datetime.now()
-        self.completed_at: Optional[datetime] = None
-        self.eval_runs: List[EvalRun] = []
-        self.current_eval_run: Optional[EvalRun] = None
-        self.api_client = api_client or self._create_default_client()
-        
-    def _create_default_client(self) -> httpx.Client:
-        """Create default HTTP client"""
-        import os
-        api_key = os.environ.get("TRACELOOP_API_KEY", "")
-        api_endpoint = os.environ.get("TRACELOOP_BASE_URL", "https://api.traceloop.com")
-        
-        return httpx.Client(
-            base_url=api_endpoint,
-            headers={
-                "Authorization": f"Bearer {api_key}",
-                "Content-Type": "application/json",
-                "User-Agent": f"traceloop-sdk/{__version__}"
-            },
-            timeout=30.0
-        )
+    def __init__(self, http: HTTPClient):
+        self.api_client = http
         
     def __enter__(self):
         return self
