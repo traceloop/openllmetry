@@ -14,10 +14,11 @@ class Experiment():
     created_at: datetime
     run_data: Dict[str, Any]
  
-    def __init__(self, name: str):
+    def __init__(self, name: str, run_data: Dict[str, Any]):
         self.name = name
         self.created_at = datetime.now()
         self.id = str(uuid.uuid4())
+        self.run_data = run_data
         self._http_client = self._get_http_client()
 
     def _get_http_client(self) -> HTTPClient:
