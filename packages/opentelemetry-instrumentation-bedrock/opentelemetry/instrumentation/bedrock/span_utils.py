@@ -12,6 +12,10 @@ from opentelemetry.semconv_ai import (
     SpanAttributes,
 )
 
+GUARDRAIL_ID_KEY = "aws.bedrock.guardrail.id"
+PROMPT_FILTER_KEY = "prompt_filter_results"
+CONTENT_FILTER_KEY = "content_filter_results"
+
 anthropic_client = None
 
 
@@ -78,9 +82,12 @@ def set_model_span_attributes(
     response_body,
     headers,
     metric_params,
+    kwargs,
 ):
     response_model = response_body.get("model")
     response_id = response_body.get("id")
+
+    _set_span_attribute(span, GUARDRAIL_ID_KEY, _guardrail_value(kwargs))
 
     _set_span_attribute(span, SpanAttributes.LLM_SYSTEM, provider)
     _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, model)
@@ -111,6 +118,18 @@ def set_model_span_attributes(
             span, request_body, response_body, metric_params
         )
 
+def _guardrail_value(request_body):
+    identifier = request_body.get("guardrailIdentifier")
+    if identifier is not None:
+        version = request_body.get("guardrailVersion")
+        return f"{identifier}:{version}"
+    return None
+
+def set_guardrail_attributes(span, input_filters, output_filters):
+    if input_filters:
+        _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.{PROMPT_FILTER_KEY}", json.dumps(input_filters, default=str))
+    if output_filters:
+        _set_span_attribute(span, f"{SpanAttributes.LLM_COMPLETIONS}.{CONTENT_FILTER_KEY}", json.dumps(output_filters, default=str))
 
 def _set_prompt_span_attributes(span, request_body):
     _set_span_attribute(
@@ -611,6 +630,10 @@ def set_converse_model_span_attributes(span, provider, model, kwargs):
     _set_span_attribute(
         span, SpanAttributes.LLM_REQUEST_TYPE, LLMRequestTypeValues.CHAT.value
     )
+
+    guardrail_config = kwargs.get("guardrailConfig")
+    if guardrail_config:
+        _set_span_attribute(span, GUARDRAIL_ID_KEY, _guardrail_value(guardrail_config))
 
     config = {}
     if "inferenceConfig" in kwargs:
