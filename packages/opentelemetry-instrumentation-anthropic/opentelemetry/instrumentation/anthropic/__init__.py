@@ -81,32 +81,32 @@ WRAPPED_METHODS = [
         "method": "stream",
         "span_name": "anthropic.chat",
     },
-    # # Beta API methods (regular Anthropic SDK)
-    # {
-    #     "package": "anthropic.resources.beta.messages.messages",
-    #     "object": "Messages",
-    #     "method": "create",
-    #     "span_name": "anthropic.chat",
-    # },
-    # {
-    #     "package": "anthropic.resources.beta.messages.messages",
-    #     "object": "Messages",
-    #     "method": "stream",
-    #     "span_name": "anthropic.chat",
-    # },
-    # # Beta API methods (Bedrock SDK)
-    # {
-    #     "package": "anthropic.lib.bedrock._beta_messages",
-    #     "object": "Messages",
-    #     "method": "create",
-    #     "span_name": "anthropic.chat",
-    # },
-    # {
-    #     "package": "anthropic.lib.bedrock._beta_messages",
-    #     "object": "Messages",
-    #     "method": "stream",
-    #     "span_name": "anthropic.chat",
-    # },
+    # Beta API methods (regular Anthropic SDK)
+    {
+        "package": "anthropic.resources.beta.messages.messages",
+        "object": "Messages",
+        "method": "create",
+        "span_name": "anthropic.chat",
+    },
+    {
+        "package": "anthropic.resources.beta.messages.messages",
+        "object": "Messages",
+        "method": "stream",
+        "span_name": "anthropic.chat",
+    },
+    # Beta API methods (Bedrock SDK)
+    {
+        "package": "anthropic.lib.bedrock._beta_messages",
+        "object": "Messages",
+        "method": "create",
+        "span_name": "anthropic.chat",
+    },
+    {
+        "package": "anthropic.lib.bedrock._beta_messages",
+        "object": "Messages",
+        "method": "stream",
+        "span_name": "anthropic.chat",
+    },
 ]
 
 WRAPPED_AMETHODS = [
@@ -122,32 +122,32 @@ WRAPPED_AMETHODS = [
         "method": "create",
         "span_name": "anthropic.chat",
     },
-    # # Beta API async methods (regular Anthropic SDK)
-    # {
-    #     "package": "anthropic.resources.beta.messages.messages",
-    #     "object": "AsyncMessages",
-    #     "method": "create",
-    #     "span_name": "anthropic.chat",
-    # },
-    # {
-    #     "package": "anthropic.resources.beta.messages.messages",
-    #     "object": "AsyncMessages",
-    #     "method": "stream",
-    #     "span_name": "anthropic.chat",
-    # },
-    # # Beta API async methods (Bedrock SDK)
-    # {
-    #     "package": "anthropic.lib.bedrock._beta_messages",
-    #     "object": "AsyncMessages",
-    #     "method": "create",
-    #     "span_name": "anthropic.chat",
-    # },
-    # {
-    #     "package": "anthropic.lib.bedrock._beta_messages",
-    #     "object": "AsyncMessages",
-    #     "method": "stream",
-    #     "span_name": "anthropic.chat",
-    # },
+    # Beta API async methods (regular Anthropic SDK)
+    {
+        "package": "anthropic.resources.beta.messages.messages",
+        "object": "AsyncMessages",
+        "method": "create",
+        "span_name": "anthropic.chat",
+    },
+    {
+        "package": "anthropic.resources.beta.messages.messages",
+        "object": "AsyncMessages",
+        "method": "stream",
+        "span_name": "anthropic.chat",
+    },
+    # Beta API async methods (Bedrock SDK)
+    {
+        "package": "anthropic.lib.bedrock._beta_messages",
+        "object": "AsyncMessages",
+        "method": "create",
+        "span_name": "anthropic.chat",
+    },
+    {
+        "package": "anthropic.lib.bedrock._beta_messages",
+        "object": "AsyncMessages",
+        "method": "stream",
+        "span_name": "anthropic.chat",
+    },
 ]
 
 
@@ -182,14 +182,35 @@ async def _aset_token_usage(
     token_histogram: Histogram = None,
     choice_counter: Counter = None,
 ):
-    from opentelemetry.instrumentation.anthropic.utils import _aextract_response_data
+    import inspect
 
-    response = await _aextract_response_data(response)
+    # If we get a coroutine, await it
+    if inspect.iscoroutine(response):
+        try:
+            response = await response
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.debug(f"Failed to await coroutine response: {e}")
+            return
 
-    if usage := response.get("usage"):
-        prompt_tokens = usage.input_tokens
-        cache_read_tokens = dict(usage).get("cache_read_input_tokens", 0) or 0
-        cache_creation_tokens = dict(usage).get("cache_creation_input_tokens", 0) or 0
+    # Handle with_raw_response wrapped responses first
+    if response and hasattr(response, "parse") and callable(response.parse):
+        try:
+            response = response.parse()
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.debug(f"Failed to parse with_raw_response: {e}")
+            return
+
+    # Safely get usage attribute without extracting the whole object
+    usage = getattr(response, "usage", None) if response else None
+
+    if usage:
+        prompt_tokens = getattr(usage, "input_tokens", 0)
+        cache_read_tokens = getattr(usage, "cache_read_input_tokens", 0) or 0
+        cache_creation_tokens = getattr(usage, "cache_creation_input_tokens", 0) or 0
     else:
         prompt_tokens = await acount_prompt_tokens_from_request(anthropic, request)
         cache_read_tokens = 0
@@ -206,18 +227,18 @@ async def _aset_token_usage(
             },
         )
 
-    if usage := response.get("usage"):
-        completion_tokens = usage.output_tokens
+    if usage:
+        completion_tokens = getattr(usage, "output_tokens", 0)
     else:
         completion_tokens = 0
         if hasattr(anthropic, "count_tokens"):
-            if response.get("completion"):
+            completion_attr = getattr(response, "completion", None)
+            content_attr = getattr(response, "content", None)
+            if completion_attr:
+                completion_tokens = await anthropic.count_tokens(completion_attr)
+            elif content_attr and len(content_attr) > 0:
                 completion_tokens = await anthropic.count_tokens(
-                    response.get("completion")
-                )
-            elif response.get("content"):
-                completion_tokens = await anthropic.count_tokens(
-                    response.get("content")[0].text
+                    content_attr[0].text
                 )
 
     if (
@@ -236,9 +257,11 @@ async def _aset_token_usage(
     total_tokens = input_tokens + completion_tokens
 
     choices = 0
-    if isinstance(response.get("content"), list):
-        choices = len(response.get("content"))
-    elif response.get("completion"):
+    content_attr = getattr(response, "content", None)
+    completion_attr = getattr(response, "completion", None)
+    if isinstance(content_attr, list):
+        choices = len(content_attr)
+    elif completion_attr:
         choices = 1
 
     if choices > 0 and choice_counter:
@@ -246,7 +269,7 @@ async def _aset_token_usage(
             choices,
             attributes={
                 **metric_attributes,
-                SpanAttributes.LLM_RESPONSE_STOP_REASON: response.get("stop_reason"),
+                SpanAttributes.LLM_RESPONSE_STOP_REASON: getattr(response, "stop_reason", None),
             },
         )
 
@@ -276,14 +299,32 @@ def _set_token_usage(
     token_histogram: Histogram = None,
     choice_counter: Counter = None,
 ):
-    from opentelemetry.instrumentation.anthropic.utils import _extract_response_data
+    import inspect
 
-    response = _extract_response_data(response)
+    # If we get a coroutine, we cannot process it in sync context
+    if inspect.iscoroutine(response):
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.warning(f"_set_token_usage received coroutine {response} - token usage processing skipped")
+        return
 
-    if usage := response.get("usage"):
-        prompt_tokens = usage.input_tokens
-        cache_read_tokens = dict(usage).get("cache_read_input_tokens", 0) or 0
-        cache_creation_tokens = dict(usage).get("cache_creation_input_tokens", 0) or 0
+    # Handle with_raw_response wrapped responses first
+    if response and hasattr(response, "parse") and callable(response.parse):
+        try:
+            response = response.parse()
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.debug(f"Failed to parse with_raw_response: {e}")
+            return
+
+    # Safely get usage attribute without extracting the whole object
+    usage = getattr(response, "usage", None) if response else None
+
+    if usage:
+        prompt_tokens = getattr(usage, "input_tokens", 0)
+        cache_read_tokens = getattr(usage, "cache_read_input_tokens", 0) or 0
+        cache_creation_tokens = getattr(usage, "cache_creation_input_tokens", 0) or 0
     else:
         prompt_tokens = count_prompt_tokens_from_request(anthropic, request)
         cache_read_tokens = 0
@@ -300,16 +341,18 @@ def _set_token_usage(
             },
         )
 
-    if usage := response.get("usage"):
-        completion_tokens = usage.output_tokens
+    if usage:
+        completion_tokens = getattr(usage, "output_tokens", 0)
     else:
         completion_tokens = 0
         if hasattr(anthropic, "count_tokens"):
-            if response.get("completion"):
-                completion_tokens = anthropic.count_tokens(response.get("completion"))
-            elif response.get("content"):
+            completion_attr = getattr(response, "completion", None)
+            content_attr = getattr(response, "content", None)
+            if completion_attr:
+                completion_tokens = anthropic.count_tokens(completion_attr)
+            elif content_attr and len(content_attr) > 0:
                 completion_tokens = anthropic.count_tokens(
-                    response.get("content")[0].text
+                    content_attr[0].text
                 )
 
     if (
@@ -328,9 +371,11 @@ def _set_token_usage(
     total_tokens = input_tokens + completion_tokens
 
     choices = 0
-    if isinstance(response.get("content"), list):
-        choices = len(response.get("content"))
-    elif response.get("completion"):
+    content_attr = getattr(response, "content", None)
+    completion_attr = getattr(response, "completion", None)
+    if isinstance(content_attr, list):
+        choices = len(content_attr)
+    elif completion_attr:
         choices = 1
 
     if choices > 0 and choice_counter:
@@ -338,7 +383,7 @@ def _set_token_usage(
             choices,
             attributes={
                 **metric_attributes,
-                SpanAttributes.LLM_RESPONSE_STOP_REASON: response.get("stop_reason"),
+                SpanAttributes.LLM_RESPONSE_STOP_REASON: getattr(response, "stop_reason", None),
             },
         )
 
