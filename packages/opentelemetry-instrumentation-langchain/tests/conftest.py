@@ -1,6 +1,7 @@
 """Unit tests configuration module."""
 
 import os
+import sys
 
 import pytest
 from opentelemetry._events import get_event_logger
@@ -148,6 +149,30 @@ def environment():
         os.environ["LANGSMITH_API_KEY"] = "test"
 
 
+@pytest.fixture(autouse=True)
+def force_langsmith_requests():
+    """Force langsmith to use requests instead of httpx for VCR compatibility."""
+    # For Python 3.11+, we need to ensure langsmith uses requests instead of httpx
+    # since VCR has better support for requests
+    if sys.version_info >= (3, 11):
+        import requests
+
+        # Monkey patch langsmith to always use requests session
+        try:
+            import langsmith.client
+
+            original_init = langsmith.client.Client.__init__
+
+            def patched_init(self, *args, **kwargs):
+                if "session" not in kwargs:
+                    kwargs["session"] = requests.Session()
+                return original_init(self, *args, **kwargs)
+
+            langsmith.client.Client.__init__ = patched_init
+        except ImportError:
+            pass  # langsmith not available
+
+
 @pytest.fixture(scope="module")
 def vcr_config():
     def before_record_request(request):
@@ -171,6 +196,11 @@ def vcr_config():
 
     return {
         "filter_headers": ["authorization", "x-api-key"],
-        "match_on": ["method", "scheme", "host", "port", "path", "query"],
+        "match_on": ["method", "scheme", "host", "port", "path"],
         "before_record_request": before_record_request,
+        "ignore_localhost": True,
+        "decode_compressed_response": True,
+        # Ensure VCR captures both requests and httpx
+        "serializer": "yaml",
+        "cassette_library_dir": "tests/cassettes",
     }
