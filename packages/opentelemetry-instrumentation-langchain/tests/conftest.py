@@ -161,14 +161,14 @@ def force_langsmith_requests():
         try:
             import langsmith.client
 
-            original_init = langsmith.client.Client.__init__
+            original_langsmith_init = langsmith.client.Client.__init__
 
-            def patched_init(self, *args, **kwargs):
+            def patched_langsmith_init(self, *args, **kwargs):
                 if "session" not in kwargs:
                     kwargs["session"] = requests.Session()
-                return original_init(self, *args, **kwargs)
+                return original_langsmith_init(self, *args, **kwargs)
 
-            langsmith.client.Client.__init__ = patched_init
+            langsmith.client.Client.__init__ = patched_langsmith_init
         except ImportError:
             pass  # langsmith not available
 
@@ -195,12 +195,10 @@ def vcr_config():
         return request
 
     return {
-        "filter_headers": ["authorization", "x-api-key"],
+        "filter_headers": ["authorization", "x-api-key", "user-agent"],
         "match_on": ["method", "scheme", "host", "port", "path"],
         "before_record_request": before_record_request,
         "ignore_localhost": True,
         "decode_compressed_response": True,
-        # Ensure VCR captures both requests and httpx
-        "serializer": "yaml",
-        "cassette_library_dir": "tests/cassettes",
+        "allow_playback_repeats": True,
     }
