@@ -7,7 +7,8 @@ from .model import (
     InputExtractor,
     InputSchemaMapping,
     ExecuteEvaluatorRequest,
-    ExecuteEvaluatorResponse
+    ExecuteEvaluatorResponse,
+    ExecutionResponse
 )
 from .stream_client import SSEClient
 
@@ -38,8 +39,9 @@ class Evaluator:
                   evaluator_slug: str,
                   input: Dict[str, str], 
                   timeout_in_sec: int = 120,
-                  client: Optional[httpx.AsyncClient] = None
-                  ) -> Dict[str, Any]:
+                  client: Optional[httpx.AsyncClient] = None,
+                  experiment_id: Optional[str] = None
+                  ) -> ExecutionResponse:
         """
         Execute evaluator with input schema mapping and wait for result
         
@@ -50,7 +52,7 @@ class Evaluator:
             timeout_in_sec: Timeout in seconds for execution
         
         Returns:
-            Dict[str, Any]: The evaluation result from SSE stream
+            ExecutionResponse: The evaluation result from SSE stream
         """
         schema_mapping = InputSchemaMapping(root={k: InputExtractor(source=v) for k, v in input.items()})
         request = ExecuteEvaluatorRequest(input_schema_mapping=schema_mapping, source="experiments")
