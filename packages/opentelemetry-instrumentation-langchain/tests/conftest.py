@@ -144,8 +144,6 @@ def environment():
         os.environ["COHERE_API_KEY"] = "test"
     if not os.environ.get("TAVILY_API_KEY"):
         os.environ["TAVILY_API_KEY"] = "test"
-    if not os.environ.get("LANGSMITH_API_KEY"):
-        os.environ["LANGSMITH_API_KEY"] = "test"
 
 
 @pytest.fixture(scope="module")
