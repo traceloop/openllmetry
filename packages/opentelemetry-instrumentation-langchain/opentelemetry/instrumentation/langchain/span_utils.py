@@ -176,17 +176,17 @@ def set_chat_request(
                         span, f"{SpanAttributes.LLM_PROMPTS}.{i}", tool_calls
                     )
 
-                else:
-                    content = (
-                        msg.content
-                        if isinstance(msg.content, str)
-                        else json.dumps(msg.content, cls=CallbackFilteredJSONEncoder)
-                    )
-                    _set_span_attribute(
-                        span,
-                        f"{SpanAttributes.LLM_PROMPTS}.{i}.content",
-                        content,
-                    )
+                # Always set content if it exists, regardless of tool_calls presence
+                content = (
+                    msg.content
+                    if isinstance(msg.content, str)
+                    else json.dumps(msg.content, cls=CallbackFilteredJSONEncoder)
+                )
+                _set_span_attribute(
+                    span,
+                    f"{SpanAttributes.LLM_PROMPTS}.{i}.content",
+                    content,
+                )
 
                 if msg.type == "tool" and hasattr(msg, "tool_call_id"):
                     _set_span_attribute(
