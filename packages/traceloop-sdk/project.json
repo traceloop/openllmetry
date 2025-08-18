@@ -38,7 +38,7 @@
       "options": {
         "silent": false,
         "args": "",
-        "cacheDir": ".cache/pypoetry",
+        "cacheDir": "/tmp/pypoetry-cache",
         "verbose": false,
         "debug": false
       }
