@@ -1,10 +1,9 @@
 import os
 import json
-import subprocess
 import requests
 from pathlib import Path
 from datetime import datetime
-from typing import Dict, Any
+from typing import Any
 from strands import Agent, tool
 from strands.models.litellm import LiteLLMModel
 from traceloop.sdk import Traceloop
@@ -25,6 +24,7 @@ shared_memory = {
     "trip_plans": {},
     "bookings": []
 }
+
 
 def add_to_memory(agent_name: str, action: str, data: Any):
     """Add information to shared memory."""
@@ -49,13 +49,13 @@ def research_destination(destination: str) -> str:
             params={"q": query, "format": "json", "no_html": "1", "skip_disambig": "1"}
         )
         data = response.json()
-        
+
         results = []
         if "RelatedTopics" in data:
             for topic in data["RelatedTopics"][:3]:
                 if "Text" in topic:
                     results.append(topic["Text"])
-        
+
         research_info = "\n".join(results) if results else f"Limited information available for {destination}"
         add_to_memory("research_agent", "destination_research", {"destination": destination, "info": research_info})
         return research_info
@@ -66,7 +66,11 @@ def research_destination(destination: str) -> str:
 @tool
 def get_weather_forecast(city: str, dates: str = "") -> str:
     """Get weather information for travel planning."""
-    weather_info = f"Weather forecast for {city}: Generally pleasant with temperatures 20-25°C. {dates} looks good for travel with sunny skies and light winds."
+    weather_info = (
+        f"Weather forecast for {city}: Generally pleasant with "
+        f"temperatures 20-25°C. {dates} looks good for travel with "
+        f"sunny skies and light winds."
+    )
     add_to_memory("research_agent", "weather_check", {"city": city, "dates": dates, "forecast": weather_info})
     return weather_info
 
@@ -75,9 +79,9 @@ def get_weather_forecast(city: str, dates: str = "") -> str:
 @tool
 def create_itinerary(destination: str, duration: str, interests: str) -> str:
     """Create detailed travel itinerary based on research and preferences."""
-    # Check memory for research data
-    research_data = shared_memory.get("research_data", {})
-    
+    # Check memory for research data (available for enhancement)
+    _ = shared_memory.get("research_data", {})
+
     itinerary = f"""🗓️ {duration} Itinerary for {destination}
 
 Based on your interests in {interests}:
@@ -103,8 +107,12 @@ Day 4: Relaxation & Departure
 - Departure preparations
 
 Note: Itinerary customized based on {interests} preferences."""
-    
-    add_to_memory("planning_agent", "itinerary_created", {"destination": destination, "duration": duration, "itinerary": itinerary})
+
+    add_to_memory("planning_agent",
+                  "itinerary_created",
+                  {"destination": destination,
+                   "duration": duration,
+                   "itinerary": itinerary})
     shared_memory["trip_plans"][destination] = itinerary
     return itinerary
 
@@ -112,16 +120,17 @@ Note: Itinerary customized based on {interests} preferences."""
 @tool
 def estimate_budget(destination: str, duration: str, travelers: int = 1) -> str:
     """Estimate travel budget for the trip."""
-    base_cost = 150  # per day per person
+    # Base cost per day per person (available for enhancement)
+    _ = 150
     days = int(duration.split()[0]) if duration.split()[0].isdigit() else 3
-    
+
     accommodation = days * 100 * travelers
-    meals = days * 50 * travelers 
+    meals = days * 50 * travelers
     activities = days * 75 * travelers
     transport = 500 * travelers
-    
+
     total = accommodation + meals + activities + transport
-    
+
     budget_breakdown = f"""💰 Budget Estimate for {destination} ({duration})
 
 Accommodation: ${accommodation}
@@ -132,8 +141,10 @@ Transport: ${transport}
 Total: ${total} for {travelers} traveler(s)
 
 Note: Estimates in USD, actual costs may vary."""
-    
-    add_to_memory("planning_agent", "budget_estimated", {"destination": destination, "total": total, "breakdown": budget_breakdown})
+
+    add_to_memory(
+        "planning_agent", "budget_estimated", {
+            "destination": destination, "total": total, "breakdown": budget_breakdown})
     return budget_breakdown
 
 
@@ -156,8 +167,13 @@ Dates: {dates}
 2. ComfortFly - $980 (1 stop, 8h 30m)
 
 Note: Prices are estimates. Book within 24h to secure these rates."""
-    
-    add_to_memory("booking_agent", "flight_search", {"origin": origin, "destination": destination, "dates": dates, "results": flight_results})
+
+    add_to_memory("booking_agent",
+                  "flight_search",
+                  {"origin": origin,
+                   "destination": destination,
+                   "dates": dates,
+                   "results": flight_results})
     return flight_results
 
 
@@ -182,8 +198,13 @@ Guests: {guests}
 6. City Hostel Plus - $45/night (Shared/Private Rooms)
 
 All hotels include WiFi. Prices per night before taxes."""
-    
-    add_to_memory("booking_agent", "hotel_search", {"destination": destination, "checkin": checkin, "checkout": checkout, "results": hotel_results})
+
+    add_to_memory("booking_agent",
+                  "hotel_search",
+                  {"destination": destination,
+                   "checkin": checkin,
+                   "checkout": checkout,
+                   "results": hotel_results})
     return hotel_results
 
 
@@ -225,7 +246,7 @@ def save_trip_plan(destination: str, plan_data: str) -> str:
     try:
         filename = f"trip_plan_{destination.lower().replace(' ', '_')}_{datetime.now().strftime('%Y%m%d')}.txt"
         path = Path(filename)
-        
+
         full_plan = f"""Travel Plan for {destination}
 Generated: {datetime.now().strftime('%Y-%m-%d %H:%M')}
 
@@ -233,7 +254,7 @@ Generated: {datetime.now().strftime('%Y-%m-%d %H:%M')}
 
 --- Memory Context ---
 {json.dumps(shared_memory, indent=2)}"""
-        
+
         path.write_text(full_plan, encoding='utf-8')
         add_to_memory("system", "plan_saved", {"destination": destination, "filename": filename})
         return f"✅ Trip plan saved to {filename}"
@@ -248,7 +269,7 @@ def search_web(query: str, topic: str = "general") -> str:
         tavily_api_key = os.getenv("TAVILY_API_KEY")
         if not tavily_api_key:
             return "❌ Tavily API key required. Set TAVILY_API_KEY environment variable."
-        
+
         response = requests.post(
             "https://api.tavily.com/search",
             headers={
@@ -264,25 +285,25 @@ def search_web(query: str, topic: str = "general") -> str:
             },
             timeout=10
         )
-        
+
         if response.status_code == 200:
             data = response.json()
             results = f"🌐 **Web Search Results for:** {query}\n\n"
-            
+
             if "answer" in data and data["answer"]:
                 results += f"**Answer:** {data['answer']}\n\n"
-            
+
             if "results" in data:
                 results += "**Sources:**\n"
                 for i, result in enumerate(data["results"], 1):
                     title = result.get("title", "Result")
                     content = result.get("content", "")[:100] + "..."
                     results += f"{i}. {title}\n   {content}\n\n"
-            
+
             return results
         else:
             return f"❌ Search API error: {response.status_code}"
-            
+
     except Exception as e:
         return f"Search error: {str(e)}"
 
@@ -293,64 +314,71 @@ def create_agents():
     if not openai_api_key:
         print("Please set OPENAI_API_KEY environment variable")
         exit(1)
-    
+
     # Configure LiteLLM model
     model = LiteLLMModel(
         model_id="gpt-4o-mini",
         params={"max_tokens": 1500, "temperature": 0.7}
     )
-    
+
     # Research Agent - Now with real web search capabilities
     research_agent = Agent(
         model=model,
-        tools=[research_destination, get_weather_forecast, search_web, get_memory_context],
-        system_prompt="You are a Travel Research Specialist with access to real-time web data. Your expertise includes:\n" +
-                     "- Live destination research using current web information\n" +
-                     "- Real weather forecasts and climate data\n" +
-                     "- Up-to-date travel advisories and requirements\n" +
-                     "- Current events and local information\n" +
-                     "Always provide accurate, real-time travel information."
+        tools=[
+            research_destination,
+            get_weather_forecast,
+            search_web,
+            get_memory_context],
+        system_prompt=(
+            "You are a Travel Research Specialist with access to "
+            "real-time web data. Your expertise includes:\n"
+            "- Live destination research using current web information\n"
+            "- Real weather forecasts and climate data\n"
+            "- Up-to-date travel advisories and requirements\n"
+            "- Current events and local information\n"
+            "Always provide accurate, real-time travel information."
+        )
     )
-    
+
     # Planning Agent - Specialized in itinerary creation
     planning_agent = Agent(
         model=model,
         tools=[create_itinerary, estimate_budget, get_memory_context, save_trip_plan],
         system_prompt="You are a Trip Planning Specialist. Your expertise includes:\n" +
-                     "- Creating detailed, personalized itineraries\n" +
-                     "- Budget estimation and financial planning\n" +
-                     "- Optimizing travel schedules and logistics\n" +
-                     "- Balancing activities with traveler preferences\n" +
-                     "Create well-structured, realistic travel plans."
+        "- Creating detailed, personalized itineraries\n" +
+        "- Budget estimation and financial planning\n" +
+        "- Optimizing travel schedules and logistics\n" +
+        "- Balancing activities with traveler preferences\n" +
+        "Create well-structured, realistic travel plans."
     )
-    
+
     # Booking Agent - Specialized in reservations
     booking_agent = Agent(
         model=model,
         tools=[search_flights, search_hotels, get_memory_context],
         system_prompt="You are a Travel Booking Specialist. Your expertise includes:\n" +
-                     "- Finding the best flight deals and options\n" +
-                     "- Locating suitable accommodations\n" +
-                     "- Comparing prices and amenities\n" +
-                     "- Providing booking recommendations and alternatives\n" +
-                     "Help travelers find the best deals within their budget."
+        "- Finding the best flight deals and options\n" +
+        "- Locating suitable accommodations\n" +
+        "- Comparing prices and amenities\n" +
+        "- Providing booking recommendations and alternatives\n" +
+        "Help travelers find the best deals within their budget."
     )
-    
+
     # Coordinator Agent - Orchestrates the team
     coordinator_agent = Agent(
         model=model,
         tools=[handoff_to_research_agent, handoff_to_planning_agent, handoff_to_booking_agent, get_memory_context],
         system_prompt="You are the Travel Coordinator. You orchestrate a team of specialists:\n" +
-                     "- Research Agent: destination info, weather, attractions\n" +
-                     "- Planning Agent: itineraries, budgets, logistics\n" +
-                     "- Booking Agent: flights, hotels, reservations\n" +
-                     "\nAnalyze user requests and delegate to the appropriate specialist. " +
-                     "Coordinate between agents to provide comprehensive travel assistance."
+        "- Research Agent: destination info, weather, attractions\n" +
+        "- Planning Agent: itineraries, budgets, logistics\n" +
+        "- Booking Agent: flights, hotels, reservations\n" +
+        "\nAnalyze user requests and delegate to the appropriate specialist. " +
+        "Coordinate between agents to provide comprehensive travel assistance."
     )
-    
+
     return {
         "research": research_agent,
-        "planning": planning_agent, 
+        "planning": planning_agent,
         "booking": booking_agent,
         "coordinator": coordinator_agent
     }
@@ -360,46 +388,51 @@ def demo_multi_agent_conversation(agents):
     """Demonstrate multi-agent travel planning workflow with real APIs."""
     print("🌍 Welcome to the Multi-Agent Travel Planning System!\n")
     print("⚡ Now powered by real-time web search and live data!\n")
-    
+
     # Check API keys
     tavily_key = os.getenv("TAVILY_API_KEY")
     weather_key = os.getenv("OPENWEATHER_API_KEY")
-    
+
     print("🔑 API Status:")
     print(f"   Tavily Search: {'✅ Ready' if tavily_key else '❌ Missing TAVILY_API_KEY'}")
     print(f"   Weather Data: {'✅ Ready' if weather_key else '❌ Missing OPENWEATHER_API_KEY'}")
     print()
-    
+
     if not tavily_key:
         print("💡 To get real search results, sign up at https://tavily.com and set TAVILY_API_KEY")
         print("💡 For weather data, get free API key at https://openweathermap.org and set OPENWEATHER_API_KEY\n")
-    
+
     # Simulate a complex travel planning request
-    user_request = "I want to plan a 4-day trip to Tokyo in April 2025. I'm interested in technology, food, and traditional culture. I need help with research, planning, and finding flights from San Francisco."
-    
+    user_request = (
+        "I want to plan a 4-day trip to Tokyo in April 2025. I'm interested in "
+        "technology, food, and traditional culture. I need help with research, "
+        "planning, and finding flights from San Francisco."
+    )
+
     print(f"User Request: {user_request}\n")
     print("=" * 80)
-    
+
     # Step 1: Coordinator analyzes and delegates
     print("🤖 Travel Coordinator analyzing request...")
     coord_response = agents["coordinator"](user_request)
     print(f"Coordinator: {coord_response.message['content'][0]['text']}\n")
-    
+
     # Step 2: Research Agent gathers information
     print("🔍 Research Agent investigating Tokyo...")
     research_response = agents["research"]("Research Tokyo for a technology and culture enthusiast visiting in April")
     print(f"Research Agent: {research_response.message['content'][0]['text']}\n")
-    
+
     # Step 3: Planning Agent creates itinerary
     print("🗺️ Planning Agent creating itinerary...")
-    planning_response = agents["planning"]("Create a 4-day Tokyo itinerary focusing on technology, food, and traditional culture")
+    planning_response = agents["planning"](
+        "Create a 4-day Tokyo itinerary focusing on technology, food, and traditional culture")
     print(f"Planning Agent: {planning_response.message['content'][0]['text']}\n")
-    
+
     # Step 4: Booking Agent finds options
     print("💼 Booking Agent searching flights and hotels...")
     booking_response = agents["booking"]("Find flights from San Francisco to Tokyo in April and hotel options")
     print(f"Booking Agent: {booking_response.message['content'][0]['text']}\n")
-    
+
     print("=" * 80)
     print("🎉 Multi-agent travel planning complete!")
     print(f"\n📊 Memory entries created: {len(shared_memory['conversation_history'])}")
