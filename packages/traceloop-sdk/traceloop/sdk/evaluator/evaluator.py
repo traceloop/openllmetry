@@ -1,0 +1,87 @@
+import os
+import httpx
+from typing import Dict, Any, Optional
+
+from traceloop.sdk.version import __version__
+from .model import (
+    InputExtractor,
+    InputSchemaMapping,
+    ExecuteEvaluatorRequest,
+    ExecuteEvaluatorResponse
+)
+from .stream_client import SSEClient
+
+
+class Evaluator:
+    """
+    Evaluator class for executing evaluators with SSE streaming
+    """
+
+    @classmethod
+    def _create_async_client(cls) -> httpx.AsyncClient:
+        """Create new async HTTP client"""
+        api_key = os.environ.get("TRACELOOP_API_KEY", "")
+        if not api_key:
+            raise ValueError("TRACELOOP_API_KEY environment variable is required")
+
+        return httpx.AsyncClient(
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json",
+                "User-Agent": f"traceloop-sdk/{__version__}"
+            },
+            timeout=httpx.Timeout(120.0)
+        )
+
+    @classmethod
+    async def run(cls, 
+                  evaluator_slug: str,
+                  input: Dict[str, str], 
+                  timeout_in_sec: int = 120,
+                  client: Optional[httpx.AsyncClient] = None
+                  ) -> Dict[str, Any]:
+        """
+        Execute evaluator with input schema mapping and wait for result
+        
+        Args:
+            evaluator_slug: Slug of the evaluator to execute
+            input: Dict mapping evaluator input field names to their values. {field_name: value, ...}
+            client: Shared HTTP client for connection reuse
+            timeout_in_sec: Timeout in seconds for execution
+        
+        Returns:
+            Dict[str, Any]: The evaluation result from SSE stream
+        """
+        schema_mapping = InputSchemaMapping(root={k: InputExtractor(source=v) for k, v in input.items()})
+        request = ExecuteEvaluatorRequest(input_schema_mapping=schema_mapping, source="experiments")
+
+        api_endpoint = os.environ.get("TRACELOOP_BASE_URL", "https://api.traceloop.com")
+        body = request.model_dump()
+
+        if client is None:
+            client = cls._create_async_client()
+
+        full_url = f"{api_endpoint}/v2/evaluators/slug/{evaluator_slug}/execute"
+        print(f"Evaluator full URL: {full_url}")
+        # Make API call to trigger evaluator
+        response = await client.post(
+            full_url,
+            json=body,
+            timeout=timeout_in_sec
+        )
+
+        if response.status_code != 200:
+            raise Exception(f"Failed to execute evaluator {evaluator_slug}: {response.status_code}")
+
+        result_data = response.json()
+        execute_response = ExecuteEvaluatorResponse(**result_data)
+
+        # Wait for SSE result using async SSE client with shared HTTP client
+        sse_client = SSEClient(shared_client=client)
+        sse_result = await sse_client.wait_for_result(
+            execute_response.execution_id,
+            execute_response.stream_url, 
+            timeout_in_sec
+        )
+        return sse_result
+    
