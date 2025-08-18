@@ -27,6 +27,7 @@ from langchain_core.outputs import (
     LLMResult,
 )
 from opentelemetry import context as context_api
+from opentelemetry.context import get_value
 from opentelemetry.instrumentation.langchain.event_emitter import emit_event
 from opentelemetry.instrumentation.langchain.event_models import (
     ChoiceEvent,
@@ -391,6 +392,10 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
             return
 
+        # Check for existing Traceloop context first
+        existing_workflow_name = get_value("workflow_name")
+        existing_entity_path = get_value("entity_path")
+
         workflow_name = ""
         entity_path = ""
 
@@ -402,7 +407,9 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         )
 
         if kind == TraceloopSpanKindValues.WORKFLOW:
-            workflow_name = name
+            # Respect existing Traceloop decorator context if present
+            workflow_name = existing_workflow_name or name
+            entity_path = existing_entity_path or ""
         else:
             workflow_name = self.get_workflow_name(parent_run_id)
             entity_path = self.get_entity_path(parent_run_id)
@@ -724,6 +731,11 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         return parent_span.workflow_name
 
     def get_entity_path(self, parent_run_id: str):
+        # Check for existing Traceloop context first
+        existing_entity_path = get_value("entity_path")
+        if existing_entity_path:
+            return existing_entity_path
+            
         parent_span = self.get_parent_span(parent_run_id)
 
         if parent_span is None:
