@@ -27,7 +27,6 @@ from langchain_core.outputs import (
     LLMResult,
 )
 from opentelemetry import context as context_api
-from opentelemetry.context import get_value
 from opentelemetry.instrumentation.langchain.event_emitter import emit_event
 from opentelemetry.instrumentation.langchain.event_models import (
     ChoiceEvent,
@@ -393,8 +392,8 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             return
 
         # Check for existing Traceloop context first
-        existing_workflow_name = get_value("workflow_name")
-        existing_entity_path = get_value("entity_path")
+        existing_workflow_name = context_api.get_value("workflow_name")
+        existing_entity_path = context_api.get_value("entity_path")
 
         workflow_name = ""
         entity_path = ""
@@ -412,7 +411,8 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             entity_path = existing_entity_path or ""
         else:
             workflow_name = self.get_workflow_name(parent_run_id)
-            entity_path = self.get_entity_path(parent_run_id)
+            # Build entity path combining Traceloop context with LangChain component
+            entity_path = self._build_hybrid_entity_path(parent_run_id, name)
 
         span = self._create_task_span(
             run_id,
@@ -731,11 +731,8 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         return parent_span.workflow_name
 
     def get_entity_path(self, parent_run_id: str):
-        # Check for existing Traceloop context first
-        existing_entity_path = get_value("entity_path")
-        if existing_entity_path:
-            return existing_entity_path
-            
+        # Use original LangChain chaining logic (no Traceloop context check here)
+        # This method is now only used as fallback when no Traceloop context exists
         parent_span = self.get_parent_span(parent_run_id)
 
         if parent_span is None:
@@ -749,6 +746,26 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             return f"{parent_span.entity_name}"
         else:
             return f"{parent_span.entity_path}.{parent_span.entity_name}"
+
+    def _build_hybrid_entity_path(self, parent_run_id: str, component_name: str) -> str:
+        """
+        Build entity path by combining Traceloop context with LangChain component names.
+        This ensures we preserve Traceloop decorator hierarchy while still showing LangChain components.
+        """
+        # Check if we have existing Traceloop context
+        existing_entity_path = context_api.get_value("entity_path")
+        
+        if existing_entity_path is not None:
+            # We have Traceloop context - add LangChain component to it
+            if existing_entity_path == "":
+                # Root level - just use component name
+                return component_name
+            else:
+                # Add component to existing path
+                return f"{existing_entity_path}.{component_name}"
+        
+        # No Traceloop context - use original LangChain chaining logic
+        return self.get_entity_path(parent_run_id)
 
     def _handle_error(
         self,
