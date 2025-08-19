@@ -1,7 +1,7 @@
 import os
 import uuid
 from datetime import datetime
-from typing import Dict, Any
+from typing import Dict, Any, List
 
 from .experiment_context import ExperimentContext   
 from traceloop.sdk.client.http import HTTPClient
@@ -31,5 +31,15 @@ class Experiment():
     def run(self) -> ExperimentContext:
         """Create a new experiment context"""
         return ExperimentContext(self)
+    
+    def run_experiment(self, 
+                       task: Callable[[Any], Any],
+                       evaluator_slugs: List[str] = [],
+                       dataset_slugs: List[str] = [],
+                       run_id: str = str(uuid.uuid4()),
+                       run_name: str = ""
+                       ) -> Experiment:
+        """Create a new experiment context"""
+        return Experiment(self.id, self.name, self.run_data, run_name)
     
     
