@@ -752,6 +752,12 @@ async def _awrap(
 def is_metrics_enabled() -> bool:
     return (os.getenv("TRACELOOP_METRICS_ENABLED") or "true").lower() == "true"
 
+def should_keep_inline_images():
+    return (os.getenv("TRACELOOP_KEEP_INLINE_IMAGES") or "false").lower() == "true"
+
+default_upload_base64_image = lambda trace_id, span_id, image_name, base64_image_url: f"data:image/{image_name.split('.')[-1]};base64,{base64_image_url}" \
+    if should_keep_inline_images() \
+    else lambda: ""
 
 class AnthropicInstrumentor(BaseInstrumentor):
     """An instrumentor for Anthropic's client library."""
@@ -770,7 +776,11 @@ class AnthropicInstrumentor(BaseInstrumentor):
         Config.exception_logger = exception_logger
         Config.enrich_token_usage = enrich_token_usage
         Config.get_common_metrics_attributes = get_common_metrics_attributes
-        Config.upload_base64_image = upload_base64_image
+        # do not override if already set
+        if not Config.upload_base64_image:
+            Config.upload_base64_image = upload_base64_image \
+                if upload_base64_image is not None \
+                else default_upload_base64_image
         Config.use_legacy_attributes = use_legacy_attributes
 
     def instrumentation_dependencies(self) -> Collection[str]:
