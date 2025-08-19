@@ -1,12 +1,12 @@
 """
 Example usage of the Experiment context manager
 """
+import asyncio
 import sys
 import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 from traceloop.sdk import Traceloop
-from traceloop.sdk.experiment import Experiment
 from openai import OpenAI
 from medical_prompts import clinical_guidance_prompt, educational_prompt
 from typing import Callable
@@ -53,37 +53,33 @@ def run_experiment_example():
     
     # Run experiment with clinical guidance prompt
     print("\033[95m🔬 Running experiment with clinical guidance prompt...\033[0m")
-    experiment_id, results = client.experiment.run(
+    asyncio.run(client.experiment.run(
         dataset_slug="medical",
         task=medical_task_clinical,
         evaluators=["medical_advice"],
-        experiment_name="medical-clinical-guidance",
-        concurrency=5,
+        experiment_slug="medical-clinical-guidance",
         exit_on_error=False,
-        dry_run=False
-    )
+    ))
     
-    if results:
-        print(f"\033[92m✅ Experiment {experiment_id} completed with {len(results['results'])} results!\033[0m")
-        if results['errors']:
-            print(f"\033[91m❌ {len(results['errors'])} errors occurred\033[0m")
+    # if results:
+    #     print(f"\033[92m✅ Experiment {experiment_id} completed with {len(results['results'])} results!\033[0m")
+    #     if results['errors']:
+    #         print(f"\033[91m❌ {len(results['errors'])} errors occurred\033[0m")
     
     # Run experiment with educational prompt  
     print("\033[95m📚 Running experiment with educational prompt...\033[0m")
-    experiment_id_2, results_2 = client.experiment.run(
+    asyncio.run(client.experiment.run(
         dataset_slug="medical",
         task=medical_task_educational,
         evaluators=["medical_advice"],
-        experiment_name="medical-educational",
-        concurrency=5,
+        experiment_slug="medical-educational",
         exit_on_error=False,
-        dry_run=False
-    )
+    ))
     
-    if results_2:
-        print(f"\033[92m✅ Experiment {experiment_id_2} completed with {len(results_2['results'])} results!\033[0m")
-        if results_2['errors']:
-            print(f"\033[91m❌ {len(results_2['errors'])} errors occurred\033[0m")
+    # if results_2:
+    #     print(f"\033[92m✅ Experiment {experiment_id_2} completed with {len(results_2['results'])} results!\033[0m")
+    #     if results_2['errors']:
+    #         print(f"\033[91m❌ {len(results_2['errors'])} errors occurred\033[0m")
 
 
 if __name__ == "__main__":

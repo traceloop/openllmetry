@@ -16,7 +16,7 @@ class Experiment():
  
     def __init__(self, http_client: HTTPClient):
         self._datasets = Datasets(http_client)
-        self._evaluator = Evaluator(http_client)
+        self._evaluator = Evaluator()
         self._http_client = http_client
 
     async def run(
@@ -43,10 +43,11 @@ class Experiment():
         """
         run_id = str(uuid.uuid4())
 
-        if experiment_slug:
-            experiment = self._get_experiment_by_slug(experiment_slug)
-        else:
-            experiment = self._create_experiment()
+        if not experiment_slug:
+            experiment_slug = "exp-" + str(uuid.uuid4())[:11]
+        
+        experiment = self._get_experiment_by_slug(experiment_slug, dataset_slugs=[dataset_slug])
+        
         
         if dataset_slug:
             dataset = self._datasets.get_by_slug(dataset_slug)
@@ -61,12 +62,12 @@ class Experiment():
                 result = task(row)
                 task_id = str(uuid.uuid4())
                 context_data = RunContextData(
-                    experiment_id=experiment_id,
+                    experiment_id=experiment["id"],
                     run_id=run_id,
                     task_id=task_id,
                     task_input=row.values,
                     task_output=result,
-                    dataset_ids=[dataset.id],
+                    dataset_ids=experiment["dataset_ids"],
                     evaluator_slugs=evaluators,
                     evaluator_versions=None
                 )
@@ -80,6 +81,7 @@ class Experiment():
                                 evaluator_slug=evaluator_slug,
                                 input={"completion": result},
                                 timeout_in_sec=120,
+                                context_data=context_data.model_dump()
                             )
                             eval_results[evaluator_slug] = eval_result.result
                         except Exception as e:
@@ -129,27 +131,18 @@ class Experiment():
             "experiment_id": experiment_id
         }
     
-    def _get_experiment_by_slug(self, experiment_slug: str) -> Dict[str, Any]:
+    def _get_experiment_by_slug(self, experiment_slug: str, dataset_slugs: Optional[List[str]] = None, metadata: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """Get experiment by slug from API"""
-        response = self._http_client.get(f"/v2/experiments/{experiment_slug}")
-        if response.status_code == 200:
-            return response.json()
-        else:
-            raise Exception(f"Experiment with slug '{experiment_slug}' not found")
-    
-    def _create_experiment(self, dataset_ids: Optional[List[str]] = None, metadata: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-        """Create a new experiment"""
-        experiment_slug = "exp-" + str(uuid.uuid4())[:11]
         body = CreateExperimentRequest(
             slug=experiment_slug,
-            dataset_ids=dataset_ids,
+            dataset_slugs=dataset_slugs,
             metadata=metadata
         )
-        response = self._http_client.post("/v2/experiments", json=body.model_dump())
-        if response.status_code == 201:
-            return response.json()
-        else:
-            raise Exception("Failed to create experiment")
+        response = self._http_client.put("/experiments", body.model_dump(mode="json"))
+        if response is None:
+            raise Exception(f"Failed to create or fetch experiment with slug '{experiment_slug}'")
+        return response
+    
     
     
     

@@ -26,7 +26,7 @@ class RunContextData(BaseModel):
 class CreateExperimentRequest(BaseModel):
     """Pydantic model for create experiment request"""
     slug: str
-    dataset_ids: Optional[List[str]] = None
+    dataset_slugs: Optional[List[str]] = None
     metadata: Optional[Dict[str, Any]] = None
     
 
