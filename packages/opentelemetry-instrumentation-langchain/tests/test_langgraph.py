@@ -46,13 +46,13 @@ def test_langgraph_invoke(instrument_legacy, span_exporter):
     assert openai_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
     assert openai_span.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "gpt-4o"
     assert (
-        openai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
+        openai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"]
     ) == "You are a mathematician."
-    assert (openai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"]) == "system"
+    assert (openai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.role"]) == "system"
     assert (
-        openai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.content"]
+        openai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.1.content"]
     ) == user_request
-    assert (openai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.role"]) == "user"
+    assert (openai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.1.role"]) == "user"
     assert (
         openai_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"]
         == response

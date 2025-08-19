@@ -235,12 +235,12 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
                 if input_data:
                     for i, message in enumerate(input_data):
                         if hasattr(message, 'role') and hasattr(message, 'content'):
-                            otel_span.set_attribute(f"{SpanAttributes.LLM_PROMPTS}.{i}.role", message.role)
-                            otel_span.set_attribute(f"{SpanAttributes.LLM_PROMPTS}.{i}.content", message.content)
+                            otel_span.set_attribute(f"{GenAIAttributes.GEN_AI_PROMPT}.{i}.role", message.role)
+                            otel_span.set_attribute(f"{GenAIAttributes.GEN_AI_PROMPT}.{i}.content", message.content)
                         elif isinstance(message, dict):
                             if 'role' in message and 'content' in message:
-                                otel_span.set_attribute(f"{SpanAttributes.LLM_PROMPTS}.{i}.role", message['role'])
-                                otel_span.set_attribute(f"{SpanAttributes.LLM_PROMPTS}.{i}.content", message['content'])
+                                otel_span.set_attribute(f"{GenAIAttributes.GEN_AI_PROMPT}.{i}.role", message['role'])
+                                otel_span.set_attribute(f"{GenAIAttributes.GEN_AI_PROMPT}.{i}.content", message['content'])
 
                 # Add function/tool specifications to the request using OpenAI semantic conventions
                 response = getattr(span_data, 'response', None)

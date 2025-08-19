@@ -41,7 +41,7 @@ def test_streaming_with_api_usage_capture(
 
     # Verify that the response content is meaningful
     assert len(response_content) > 0
-    assert span.attributes.get(SpanAttributes.LLM_RESPONSE_MODEL) == "deepseek-chat"
+    assert span.attributes.get(GenAIAttributes.GEN_AI_RESPONSE_MODEL) == "deepseek-chat"
 
 
 @pytest.mark.vcr

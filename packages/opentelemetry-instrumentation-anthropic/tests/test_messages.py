@@ -2497,10 +2497,10 @@ def test_anthropic_message_stream_manager_legacy(
     ]
     anthropic_span = spans[0]
     assert (
-        anthropic_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
+        anthropic_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"]
         == "Tell me a joke about OpenTelemetry"
     )
-    assert (anthropic_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"]) == "user"
+    assert (anthropic_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.role"]) == "user"
     assert (
         anthropic_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
         == response_content
@@ -2687,10 +2687,10 @@ async def test_async_anthropic_message_stream_manager_legacy(
     ]
     anthropic_span = spans[0]
     assert (
-        anthropic_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
+        anthropic_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"]
         == "Tell me a joke about OpenTelemetry"
     )
-    assert (anthropic_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"]) == "user"
+    assert (anthropic_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.role"]) == "user"
     assert (
         anthropic_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
         == response_content

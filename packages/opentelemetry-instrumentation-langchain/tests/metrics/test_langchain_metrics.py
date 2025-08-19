@@ -130,7 +130,7 @@ def test_llm_chain_streaming_metrics(instrument_legacy, reader, llm):
 
 def verify_token_metrics(data_points):
     for data_point in data_points:
-        assert data_point.attributes[SpanAttributes.LLM_TOKEN_TYPE] in [
+        assert data_point.attributes[GenAIAttributes.GEN_AI_TOKEN_TYPE] in [
             "output",
             "input",
         ]
@@ -236,7 +236,7 @@ def test_langgraph_metrics(instrument_legacy, reader, openai_client):
     assert token_usage_data_point.sum > 0
     assert (
         token_usage_data_point.attributes[SpanAttributes.LLM_SYSTEM] == "openai"
-        and token_usage_data_point.attributes[SpanAttributes.LLM_TOKEN_TYPE] in ["input", "output"]
+        and token_usage_data_point.attributes[GenAIAttributes.GEN_AI_TOKEN_TYPE] in ["input", "output"]
     )
 
     duration_metric = next(

@@ -140,17 +140,17 @@ async def aset_input_attributes(span, kwargs):
                     for tool_num, tool_use_block in enumerate(tool_use_blocks):
                         set_span_attribute(
                             span,
-                            f"{SpanAttributes.LLM_PROMPTS}.{prompt_index}.tool_calls.{tool_num}.id",
+                            f"{GenAIAttributes.GEN_AI_PROMPT}.{prompt_index}.tool_calls.{tool_num}.id",
                             tool_use_block.get("id"),
                         )
                         set_span_attribute(
                             span,
-                            f"{SpanAttributes.LLM_PROMPTS}.{prompt_index}.tool_calls.{tool_num}.name",
+                            f"{GenAIAttributes.GEN_AI_PROMPT}.{prompt_index}.tool_calls.{tool_num}.name",
                             tool_use_block.get("name"),
                         )
                         set_span_attribute(
                             span,
-                            f"{SpanAttributes.LLM_PROMPTS}.{prompt_index}.tool_calls.{tool_num}.arguments",
+                            f"{GenAIAttributes.GEN_AI_PROMPT}.{prompt_index}.tool_calls.{tool_num}.arguments",
                             json.dumps(tool_use_block.get("input")),
                         )
 
