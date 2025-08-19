@@ -157,7 +157,7 @@ def guardrail_converse(span, response, vendor, model, metric_params):
         SpanAttributes.LLM_SYSTEM: "bedrock",
     }
     input_filters = None
-    output_filters = None
+    output_filters = []
     if "trace" in response and "guardrail" in response["trace"]:
         guardrail = response["trace"]["guardrail"]
         if "inputAssessment" in guardrail:
@@ -170,7 +170,7 @@ def guardrail_converse(span, response, vendor, model, metric_params):
             attrs[GuardrailAttributes.GUARDRAIL] = guardrail_id
             guardrail_infos = guardrail["outputAssessments"][guardrail_id]
             for guardrail_info in guardrail_infos:
-                output_filters = _handle(Type.OUTPUT, guardrail_info, attrs, metric_params)
+                output_filters.append(_handle(Type.OUTPUT, guardrail_info, attrs, metric_params))
     if is_guardrail_activated(response):
         metric_params.guardrail_activation.add(1, attrs)
         set_guardrail_attributes(span, input_filters, output_filters)
@@ -178,7 +178,7 @@ def guardrail_converse(span, response, vendor, model, metric_params):
 
 def guardrail_handling(span, response_body, vendor, model, metric_params):
     input_filters = None
-    output_filters = None
+    output_filters = []
     if "amazon-bedrock-guardrailAction" in response_body:
         attrs = {
             "gen_ai.vendor": vendor,
@@ -199,7 +199,7 @@ def guardrail_handling(span, response_body, vendor, model, metric_params):
                     guardrail_id = next(iter(output))
                     attrs[GuardrailAttributes.GUARDRAIL] = guardrail_id
                     guardrail_info = outputs[0][guardrail_id]
-                    output_filters = _handle(Type.OUTPUT, guardrail_info, attrs, metric_params)
+                    output_filters.append(_handle(Type.OUTPUT, guardrail_info, attrs, metric_params))
 
         if is_guardrail_activated(response_body):
             metric_params.guardrail_activation.add(1, attrs)

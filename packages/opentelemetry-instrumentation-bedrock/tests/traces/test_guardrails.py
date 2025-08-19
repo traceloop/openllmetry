@@ -68,6 +68,8 @@ def test_guardrail_invoke(instrument_legacy, brt, span_exporter, log_exporter):
     assert input_guardrail["sensitive"]["pii"] == []
     assert input_guardrail["sensitive"]["regex"] == []
 
+    assert len(output_guardrail) == 1
+    output_guardrail = output_guardrail[0]
     assert output_guardrail["topic"] == []
     assert output_guardrail["content"] == []
     assert output_guardrail["words"] == []
@@ -206,6 +208,8 @@ def test_guardrail_converse(
     assert input_guardrail["sensitive"]["pii"] == []
     assert input_guardrail["sensitive"]["regex"] == []
 
+    assert len(output_guardrail) == 1
+    output_guardrail = output_guardrail[0]
     assert output_guardrail["topic"] == []
     assert output_guardrail["content"] == []
     assert output_guardrail["words"] == []
@@ -287,6 +291,8 @@ def test_guardrail_converse_stream(
     assert input_guardrail["sensitive"]["pii"] == []
     assert input_guardrail["sensitive"]["regex"] == []
 
+    assert len(output_guardrail) == 1
+    output_guardrail = output_guardrail[0]
     assert output_guardrail["topic"] == []
     assert output_guardrail["content"] == []
     assert output_guardrail["words"] == []
