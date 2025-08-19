@@ -244,7 +244,7 @@ def _set_span_completions(span, response):
 
     response = _extract_response_data(response)
     index = 0
-    prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{index}"
+    prefix = f"{GenAIAttributes.GEN_AI_COMPLETION}.{index}"
     set_span_attribute(span, f"{prefix}.finish_reason", response.get("stop_reason"))
     if response.get("role"):
         set_span_attribute(span, f"{prefix}.role", response.get("role"))

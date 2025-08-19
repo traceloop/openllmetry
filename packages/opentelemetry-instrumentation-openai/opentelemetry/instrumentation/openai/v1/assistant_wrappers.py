@@ -192,7 +192,7 @@ def messages_list_wrapper(tracer, wrapped, instance, args, kwargs):
 
         completion_index = 0
         for msg in messages:
-            prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{completion_index}"
+            prefix = f"{GenAIAttributes.GEN_AI_COMPLETION}.{completion_index}"
             content = msg.get("content")
 
             message_content = content[0].get("text").get("value")

@@ -7,7 +7,7 @@ from langchain_openai import ChatOpenAI
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
-from opentelemetry.semconv_ai import Meters, SpanAttributes
+from opentelemetry.semconv_ai import Meters
 from langgraph.graph import StateGraph
 from openai import OpenAI
 
@@ -235,7 +235,7 @@ def test_langgraph_metrics(instrument_legacy, reader, openai_client):
     token_usage_data_point = token_usage_metric.data.data_points[0]
     assert token_usage_data_point.sum > 0
     assert (
-        token_usage_data_point.attributes[SpanAttributes.LLM_SYSTEM] == "openai"
+        token_usage_data_point.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "openai"
         and token_usage_data_point.attributes[GenAIAttributes.GEN_AI_TOKEN_TYPE] in ["input", "output"]
     )
 
@@ -250,7 +250,7 @@ def test_langgraph_metrics(instrument_legacy, reader, openai_client):
     assert duration_metric is not None
     duration_data_point = duration_metric.data.data_points[0]
     assert duration_data_point.sum > 0
-    assert duration_data_point.attributes[SpanAttributes.LLM_SYSTEM] == "openai"
+    assert duration_data_point.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "openai"
 
     generation_choices_metric = next(
         (
@@ -264,7 +264,7 @@ def test_langgraph_metrics(instrument_legacy, reader, openai_client):
     generation_choices_data_points = generation_choices_metric.data.data_points
     for data_point in generation_choices_data_points:
         assert (
-            data_point.attributes[SpanAttributes.LLM_SYSTEM]
+            data_point.attributes[GenAIAttributes.GEN_AI_SYSTEM]
             == "openai"
         )
         assert data_point.value > 0

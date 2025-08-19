@@ -245,7 +245,7 @@ def _wrap(
         name,
         kind=SpanKind.CLIENT,
         attributes={
-            GenAIAttributes.GEN_AI_SYSTEM: "Groq",
+            GenAIAttributes.GEN_AI_SYSTEM: "groq",
             SpanAttributes.LLM_REQUEST_TYPE: LLMRequestTypeValues.COMPLETION.value,
         },
     )
@@ -327,7 +327,7 @@ async def _awrap(
         name,
         kind=SpanKind.CLIENT,
         attributes={
-            GenAIAttributes.GEN_AI_SYSTEM: "Groq",
+            GenAIAttributes.GEN_AI_SYSTEM: "groq",
             SpanAttributes.LLM_REQUEST_TYPE: LLMRequestTypeValues.COMPLETION.value,
         },
     )

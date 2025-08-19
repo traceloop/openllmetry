@@ -366,7 +366,7 @@ def test_completion_streaming(
         == "Tell me a joke about opentelemetry"
     )
     assert open_ai_span.attributes.get(
-        f"{SpanAttributes.LLM_COMPLETIONS}.0.content"
+        f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content"
     )
     assert (
         open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)

@@ -3,6 +3,9 @@ from openai import OpenAI
 from typing import TypedDict
 from langgraph.graph import StateGraph
 from opentelemetry import trace
+from opentelemetry.semconv._incubating.attributes import (
+    gen_ai_attributes as GenAIAttributes,
+)
 from opentelemetry.semconv_ai import SpanAttributes
 from opentelemetry.trace import INVALID_SPAN
 
@@ -44,7 +47,7 @@ def test_langgraph_invoke(instrument_legacy, span_exporter):
 
     assert openai_span.parent.span_id == calculate_task_span.context.span_id
     assert openai_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
-    assert openai_span.attributes[SpanAttributes.LLM_REQUEST_MODEL] == "gpt-4o"
+    assert openai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL] == "gpt-4o"
     assert (
         openai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"]
     ) == "You are a mathematician."
@@ -54,17 +57,16 @@ def test_langgraph_invoke(instrument_legacy, span_exporter):
     ) == user_request
     assert (openai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.1.role"]) == "user"
     assert (
-        openai_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"]
+        openai_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content"]
         == response
     )
     assert (
-        openai_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.role"]
+        openai_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.0.role"]
     ) == "assistant"
 
-    assert openai_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 24
-    assert openai_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS] == 11
+    assert openai_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 24
+    assert openai_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 11
     assert openai_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 35
-    assert openai_span.attributes[SpanAttributes.LLM_USAGE_CACHE_READ_INPUT_TOKENS] == 0
 
 
 @pytest.mark.vcr

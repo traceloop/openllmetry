@@ -9,7 +9,9 @@ attributes were missing for assistant messages that contained tool_calls.
 from unittest.mock import Mock
 from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 from opentelemetry.instrumentation.langchain.span_utils import set_chat_request
-from opentelemetry.semconv_ai import SpanAttributes
+from opentelemetry.semconv._incubating.attributes import (
+    gen_ai_attributes as GenAIAttributes,
+)
 
 
 def test_assistant_message_with_tool_calls_includes_content():

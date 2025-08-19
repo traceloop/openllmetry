@@ -254,7 +254,7 @@ def test_prompt_management_with_tools(exporter, openai_client):
     spans = exporter.get_finished_spans()
     open_ai_span = spans[0]
     completion = open_ai_span.attributes.get(
-        f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.0.name"
+        f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.0.name"
     )
     assert completion == "get_joke"
 
@@ -270,7 +270,7 @@ def test_prompt_management_with_response_format(exporter, openai_client):
     spans = exporter.get_finished_spans()
     open_ai_span = spans[0]
     completion = open_ai_span.attributes.get(
-        f"{SpanAttributes.LLM_COMPLETIONS}.0.content"
+        f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content"
     )
     try:
         json.loads(completion)

@@ -1,5 +1,9 @@
 import pytest
 from openai import OpenAI
+from opentelemetry.semconv._incubating.attributes import (
+    gen_ai_attributes as GenAIAttributes,
+)
+
 from opentelemetry.semconv_ai import SpanAttributes
 
 
@@ -35,8 +39,8 @@ def test_streaming_with_api_usage_capture(
     assert span.name == "openai.chat"
 
     # Check that token usage is captured from API response
-    assert span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) > 0
-    assert span.attributes.get(SpanAttributes.LLM_USAGE_COMPLETION_TOKENS) > 0
+    assert span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS) > 0
+    assert span.attributes.get(GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS) > 0
     assert span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS) > 0
 
     # Verify that the response content is meaningful
@@ -64,8 +68,8 @@ def test_streaming_with_api_usage_and_events(
     span = spans[0]
 
     # Check that usage metrics are captured from API response
-    assert span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) > 0
-    assert span.attributes.get(SpanAttributes.LLM_USAGE_COMPLETION_TOKENS) > 0
+    assert span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS) > 0
+    assert span.attributes.get(GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS) > 0
 
     # Check event logs
     logs = log_exporter.get_finished_logs()
