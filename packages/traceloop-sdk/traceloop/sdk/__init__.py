@@ -2,7 +2,7 @@ import os
 import sys
 from pathlib import Path
 
-from typing import Callable, Optional, Set
+from typing import Callable, List, Optional, Set, Union
 from colorama import Fore
 from opentelemetry.sdk.trace import SpanProcessor, ReadableSpan
 from opentelemetry.sdk.trace.sampling import Sampler
@@ -59,7 +59,7 @@ class Traceloop:
         metrics_headers: Dict[str, str] = None,
         logging_exporter: LogExporter = None,
         logging_headers: Dict[str, str] = None,
-        processor: Optional[SpanProcessor] = None,
+        processor: Optional[Union[SpanProcessor, List[SpanProcessor]]] = None,
         propagator: TextMapPropagator = None,
         sampler: Optional[Sampler] = None,
         traceloop_sync_enabled: bool = False,
@@ -154,7 +154,11 @@ class Traceloop:
             span_postprocess_callback=span_postprocess_callback,
         )
 
-        if not is_metrics_enabled() or not metrics_exporter and exporter:
+        metrics_disabled_by_config = not is_metrics_enabled()
+        has_custom_spans_pipeline = processor or exporter
+        custom_trace_without_custom_metrics = has_custom_spans_pipeline and not metrics_exporter
+
+        if metrics_disabled_by_config or custom_trace_without_custom_metrics:
             print(Fore.YELLOW + "Metrics are disabled" + Fore.RESET)
         else:
             metrics_endpoint = os.getenv("TRACELOOP_METRICS_ENDPOINT") or api_endpoint
@@ -206,6 +210,49 @@ class Traceloop:
 
     def set_prompt(template: str, variables: dict, version: int):
         set_external_prompt_tracing_context(template, variables, version)
+
+    @staticmethod
+    def get_default_span_processor(
+        disable_batch: bool = False,
+        api_endpoint: Optional[str] = None,
+        api_key: Optional[str] = None,
+        headers: Optional[Dict[str, str]] = None,
+        exporter: Optional[SpanExporter] = None
+    ) -> SpanProcessor:
+        """
+        Creates and returns the default Traceloop span processor.
+
+        This function allows users to get the default Traceloop span processor
+        to combine it with their custom processors when using the processors parameter.
+
+        Args:
+            disable_batch: If True, uses SimpleSpanProcessor, otherwise BatchSpanProcessor
+            api_endpoint: The endpoint URL for the exporter (uses current config if None)
+            headers: Headers for the exporter (uses current config if None)
+            exporter: Custom exporter to use (creates default if None)
+
+        Returns:
+            SpanProcessor: The default Traceloop span processor
+
+        Example:
+            # Get the default processor and combine with custom one
+            default_processor = Traceloop.get_default_span_processor()
+            custom_processor = MyCustomSpanProcessor()
+
+            Traceloop.init(
+                processors=[default_processor, custom_processor]
+            )
+        """
+        from traceloop.sdk.tracing.tracing import get_default_span_processor
+        if headers is None:
+            if api_key is None:
+                api_key = os.getenv("TRACELOOP_API_KEY")
+            headers = {
+                "Authorization": f"Bearer {api_key}",
+            }
+        if api_endpoint is None:
+            api_endpoint = os.getenv("TRACELOOP_BASE_URL")
+        return get_default_span_processor(disable_batch, api_endpoint, headers, exporter)
 
     @staticmethod
     def get():

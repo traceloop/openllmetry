@@ -39,9 +39,9 @@ def test_rag_with_chroma(instrument_legacy, span_exporter):
 
     spans = span_exporter.get_finished_spans()
     assert {
-        "BaseQueryEngine.workflow",
-        "BaseSynthesizer.task",
-        "LLM.task",
+        "RetrieverQueryEngine.workflow",
+        "CompactAndRefine.task",
+        "DefaultRefineProgram.task",
         "openai.chat",
         "RetrieverQueryEngine.task",
         "chroma.add",
@@ -50,10 +50,10 @@ def test_rag_with_chroma(instrument_legacy, span_exporter):
     }.issubset({span.name for span in spans})
 
     query_pipeline_span = next(
-        span for span in spans if span.name == "BaseQueryEngine.workflow"
+        span for span in spans if span.name == "RetrieverQueryEngine.workflow"
     )
     synthesize_span = next(
-        span for span in spans if span.name == "BaseSynthesizer.task"
+        span for span in spans if span.name == "CompactAndRefine.task"
     )
     llm_span = next(span for span in spans if span.name == "openai.chat")
 

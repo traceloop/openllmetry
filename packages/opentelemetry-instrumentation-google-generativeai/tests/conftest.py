@@ -2,7 +2,7 @@
 
 import os
 
-import google.generativeai as genai
+from google import genai
 import pytest
 from opentelemetry.instrumentation.google_generativeai import (
     GoogleGenerativeAiInstrumentor,
@@ -53,9 +53,8 @@ def fixture_event_logger_provider(log_exporter):
 
 @pytest.fixture
 def genai_client():
-    genai.configure(api_key=os.environ["GOOGLE_API_KEY"])
-
-    return genai.GenerativeModel("gemini-1.5-flash")
+    client = genai.Client(api_key=os.environ["GOOGLE_API_KEY"])
+    return client.models
 
 
 @pytest.fixture(scope="function")

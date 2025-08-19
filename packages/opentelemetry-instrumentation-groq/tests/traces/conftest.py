@@ -83,7 +83,7 @@ def async_groq_client():
 
 @pytest.fixture(scope="function")
 def instrument_legacy(reader, tracer_provider, meter_provider):
-    instrumentor = GroqInstrumentor(enrich_token_usage=True)
+    instrumentor = GroqInstrumentor()
     instrumentor.instrument(
         tracer_provider=tracer_provider,
         meter_provider=meter_provider,
@@ -102,7 +102,6 @@ def instrument_with_content(
 
     instrumentor = GroqInstrumentor(
         use_legacy_attributes=False,
-        enrich_token_usage=True,
     )
     instrumentor.instrument(
         tracer_provider=tracer_provider,
@@ -123,7 +122,7 @@ def instrument_with_no_content(
     os.environ.update({TRACELOOP_TRACE_CONTENT: "False"})
 
     instrumentor = GroqInstrumentor(
-        use_legacy_attributes=False, enrich_token_usage=True
+        use_legacy_attributes=False
     )
     instrumentor.instrument(
         tracer_provider=tracer_provider,

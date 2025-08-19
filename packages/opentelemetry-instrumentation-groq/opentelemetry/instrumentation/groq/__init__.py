@@ -388,14 +388,12 @@ class GroqInstrumentor(BaseInstrumentor):
 
     def __init__(
         self,
-        enrich_token_usage: bool = False,
         exception_logger=None,
         use_legacy_attributes: bool = True,
         get_common_metrics_attributes: Callable[[], dict] = lambda: {},
     ):
         super().__init__()
         Config.exception_logger = exception_logger
-        Config.enrich_token_usage = enrich_token_usage
         Config.get_common_metrics_attributes = get_common_metrics_attributes
         Config.use_legacy_attributes = use_legacy_attributes
 

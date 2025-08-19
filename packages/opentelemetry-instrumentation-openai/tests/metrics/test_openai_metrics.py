@@ -134,9 +134,11 @@ def test_chat_parsed_completion_metrics(instrument_legacy, reader, openai_client
 
 
 @pytest.mark.vcr
-def test_chat_streaming_metrics(instrument_legacy, reader, openai_client):
-    response = openai_client.chat.completions.create(
-        model="gpt-3.5-turbo",
+def test_chat_streaming_metrics(instrument_legacy, reader, deepseek_client):
+    # Since there isn't an official OpenAI API,
+    # using a deepseek API that offers compatibility with the OpenAI standard.
+    response = deepseek_client.chat.completions.create(
+        model="deepseek-chat",
         messages=[
             {
                 "role": "system",
@@ -212,9 +214,10 @@ def test_chat_streaming_metrics(instrument_legacy, reader, openai_client):
                     assert (
                         data_point.attributes.get(GenAIAttributes.GEN_AI_SYSTEM) == "openai"
                     )
+                    # Add `deepseek-chat` to the list of models since it's a alternative to OpenAI API
                     assert str(
                         data_point.attributes[GenAIAttributes.GEN_AI_RESPONSE_MODEL]
-                    ) in ("gpt-3.5-turbo", "gpt-3.5-turbo-0125", "gpt-4o-2024-08-06")
+                    ) in ("gpt-3.5-turbo", "gpt-3.5-turbo-0125", "gpt-4o-2024-08-06", "deepseek-chat")
                     assert data_point.attributes["gen_ai.operation.name"] == "chat"
                     assert data_point.attributes["server.address"] != ""
 

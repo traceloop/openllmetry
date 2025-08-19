@@ -12,7 +12,6 @@ from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
 
-GEN_AI_SYSTEM = "gen_ai.system"
 GEN_AI_SYSTEM_ANTHROPIC = "anthropic"
 _PYDANTIC_VERSION = version("pydantic")
 
@@ -63,24 +62,160 @@ def dont_throw(func):
     return async_wrapper if asyncio.iscoroutinefunction(func) else sync_wrapper
 
 
+async def _aextract_response_data(response):
+    """Async version of _extract_response_data that can await coroutines."""
+    import inspect
+
+    # If we get a coroutine, await it
+    if inspect.iscoroutine(response):
+        try:
+            response = await response
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.debug(f"Failed to await coroutine response: {e}")
+            return {}
+
+    if isinstance(response, dict):
+        return response
+
+    # Handle with_raw_response wrapped responses
+    if hasattr(response, 'parse') and callable(response.parse):
+        try:
+            # For with_raw_response, parse() gives us the actual response object
+            parsed_response = response.parse()
+            if not isinstance(parsed_response, dict):
+                parsed_response = parsed_response.__dict__
+            return parsed_response
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.debug(f"Failed to parse response: {e}, response type: {type(response)}")
+
+    # Fallback to __dict__ for regular response objects
+    if hasattr(response, '__dict__'):
+        response_dict = response.__dict__
+        return response_dict
+
+    return {}
+
+
+def _extract_response_data(response):
+    """Extract the actual response data from both regular and with_raw_response wrapped responses."""
+    import inspect
+
+    # If we get a coroutine, we cannot process it in sync context
+    if inspect.iscoroutine(response):
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.warning(f"_extract_response_data received coroutine {response} - response processing skipped")
+        return {}
+
+    if isinstance(response, dict):
+        return response
+
+    # Handle with_raw_response wrapped responses
+    if hasattr(response, 'parse') and callable(response.parse):
+        try:
+            # For with_raw_response, parse() gives us the actual response object
+            parsed_response = response.parse()
+            if not isinstance(parsed_response, dict):
+                parsed_response = parsed_response.__dict__
+            return parsed_response
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.debug(f"Failed to parse response: {e}, response type: {type(response)}")
+
+    # Fallback to __dict__ for regular response objects
+    if hasattr(response, '__dict__'):
+        response_dict = response.__dict__
+        return response_dict
+
+    return {}
+
+
 @dont_throw
-def shared_metrics_attributes(response):
-    if not isinstance(response, dict):
-        response = response.__dict__
+async def ashared_metrics_attributes(response):
+    import inspect
+
+    # If we get a coroutine, await it
+    if inspect.iscoroutine(response):
+        try:
+            response = await response
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.debug(f"Failed to await coroutine response: {e}")
+            response = None
+
+    # If it's already a dict (e.g., from streaming), use it directly
+    if isinstance(response, dict):
+        model = response.get("model")
+    else:
+        # Handle with_raw_response wrapped responses first
+        if response and hasattr(response, "parse") and callable(response.parse):
+            try:
+                response = response.parse()
+            except Exception as e:
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.debug(f"Failed to parse with_raw_response: {e}")
+                response = None
+
+        # Safely get model attribute without extracting the whole object
+        model = getattr(response, "model", None) if response else None
 
     common_attributes = Config.get_common_metrics_attributes()
 
     return {
         **common_attributes,
-        GEN_AI_SYSTEM: GEN_AI_SYSTEM_ANTHROPIC,
-        GenAIAttributes.GEN_AI_RESPONSE_MODEL: response.get("model"),
+        GenAIAttributes.GEN_AI_SYSTEM: GEN_AI_SYSTEM_ANTHROPIC,
+        GenAIAttributes.GEN_AI_RESPONSE_MODEL: model,
+    }
+
+
+@dont_throw
+def shared_metrics_attributes(response):
+    import inspect
+
+    # If we get a coroutine, we cannot process it in sync context
+    if inspect.iscoroutine(response):
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.warning(f"shared_metrics_attributes received coroutine {response} - using None for model")
+        response = None
+
+    # If it's already a dict (e.g., from streaming), use it directly
+    if isinstance(response, dict):
+        model = response.get("model")
+    else:
+        # Handle with_raw_response wrapped responses first
+        if response and hasattr(response, "parse") and callable(response.parse):
+            try:
+                response = response.parse()
+            except Exception as e:
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.debug(f"Failed to parse with_raw_response: {e}")
+                response = None
+
+        # Safely get model attribute without extracting the whole object
+        model = getattr(response, "model", None) if response else None
+
+    common_attributes = Config.get_common_metrics_attributes()
+
+    return {
+        **common_attributes,
+        GenAIAttributes.GEN_AI_SYSTEM: GEN_AI_SYSTEM_ANTHROPIC,
+        GenAIAttributes.GEN_AI_RESPONSE_MODEL: model,
     }
 
 
 @dont_throw
 def error_metrics_attributes(exception):
     return {
-        GEN_AI_SYSTEM: GEN_AI_SYSTEM_ANTHROPIC,
+        GenAIAttributes.GEN_AI_SYSTEM: GEN_AI_SYSTEM_ANTHROPIC,
         "error.type": exception.__class__.__name__,
     }
 

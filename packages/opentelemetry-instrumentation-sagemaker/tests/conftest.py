@@ -49,7 +49,7 @@ def fixture_event_logger_provider(log_exporter):
 
 @pytest.fixture(scope="function")
 def instrument_legacy(tracer_provider):
-    instrumentor = SageMakerInstrumentor(enrich_token_usage=True)
+    instrumentor = SageMakerInstrumentor()
     instrumentor.instrument(
         tracer_provider=tracer_provider,
     )
@@ -64,7 +64,7 @@ def instrument_with_content(tracer_provider, event_logger_provider):
     os.environ.update({TRACELOOP_TRACE_CONTENT: "True"})
 
     instrumentor = SageMakerInstrumentor(
-        enrich_token_usage=True, use_legacy_attributes=False
+        use_legacy_attributes=False
     )
     instrumentor.instrument(
         tracer_provider=tracer_provider,
@@ -82,7 +82,7 @@ def instrument_with_no_content(tracer_provider, event_logger_provider):
     os.environ.update({TRACELOOP_TRACE_CONTENT: "False"})
 
     instrumentor = SageMakerInstrumentor(
-        enrich_token_usage=True, use_legacy_attributes=False
+        use_legacy_attributes=False
     )
     instrumentor.instrument(
         tracer_provider=tracer_provider,

@@ -179,17 +179,17 @@ def set_chat_request(
                         span, f"{GenAIAttributes.GEN_AI_PROMPT}.{i}", tool_calls
                     )
 
-                else:
-                    content = (
-                        msg.content
-                        if isinstance(msg.content, str)
-                        else json.dumps(msg.content, cls=CallbackFilteredJSONEncoder)
-                    )
-                    _set_span_attribute(
-                        span,
-                        f"{GenAIAttributes.GEN_AI_PROMPT}.{i}.content",
-                        content,
-                    )
+                # Always set content if it exists, regardless of tool_calls presence
+                content = (
+                    msg.content
+                    if isinstance(msg.content, str)
+                    else json.dumps(msg.content, cls=CallbackFilteredJSONEncoder)
+                )
+                _set_span_attribute(
+                    span,
+                    f"{GenAIAttributes.GEN_AI_PROMPT}.{i}.content",
+                    content,
+                )
 
                 if msg.type == "tool" and hasattr(msg, "tool_call_id"):
                     _set_span_attribute(
@@ -346,8 +346,8 @@ def set_chat_response_usage(
                     input_tokens,
                     attributes={
                         GenAIAttributes.GEN_AI_SYSTEM: vendor,
-                        SpanAttributes.LLM_TOKEN_TYPE: "input",
-                        SpanAttributes.LLM_RESPONSE_MODEL: model_name,
+                        GenAIAttributes.GEN_AI_TOKEN_TYPE: "input",
+                        GenAIAttributes.GEN_AI_RESPONSE_MODEL: model_name,
                     },
                 )
 
@@ -356,8 +356,8 @@ def set_chat_response_usage(
                     output_tokens,
                     attributes={
                         GenAIAttributes.GEN_AI_SYSTEM: vendor,
-                        SpanAttributes.LLM_TOKEN_TYPE: "output",
-                        SpanAttributes.LLM_RESPONSE_MODEL: model_name,
+                        GenAIAttributes.GEN_AI_TOKEN_TYPE: "output",
+                        GenAIAttributes.GEN_AI_RESPONSE_MODEL: model_name,
                     },
                 )
 
@@ -371,6 +371,11 @@ def extract_model_name_from_response_metadata(response: LLMResult) -> str:
                 and (model_name := generation.message.response_metadata.get("model_name"))
             ):
                 return model_name
+
+
+def _extract_model_name_from_association_metadata(metadata: Optional[dict[str, Any]] = None) -> str:
+    if metadata:
+        return metadata.get("ls_model_name") or "unknown"
     return "unknown"
 
 

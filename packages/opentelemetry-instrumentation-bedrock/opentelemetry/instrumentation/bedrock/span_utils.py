@@ -12,7 +12,7 @@ from opentelemetry.semconv_ai import (
     SpanAttributes,
 )
 
-anthropic_client = anthropic.Anthropic()
+anthropic_client = None
 
 
 def _set_span_attribute(span, name, value):
@@ -273,9 +273,29 @@ def _set_anthropic_messages_span_attributes(
 
 
 def _count_anthropic_tokens(messages: list[str]):
+    global anthropic_client
+
+    # Lazy initialization of the Anthropic client
+    if anthropic_client is None:
+        try:
+            anthropic_client = anthropic.Anthropic()
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.debug(f"Failed to initialize Anthropic client for token counting: {e}")
+            # Return 0 if we can't create the client
+            return 0
+
     count = 0
-    for message in messages:
-        count += anthropic_client.count_tokens(text=message)
+    try:
+        for message in messages:
+            count += anthropic_client.count_tokens(text=message)
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.debug(f"Failed to count tokens with Anthropic client: {e}")
+        return 0
+
     return count
 
 
