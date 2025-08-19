@@ -1,7 +1,6 @@
 """
 Example usage of the Experiment context manager
 """
-import asyncio
 import sys
 import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
@@ -19,14 +18,14 @@ def generate_medical_answer(question: str, prompt: Callable[[str], str]) -> str:
     """
     Generate a medical answer using OpenAI and the clinical guidance prompt
     """
-    client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+    openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
     
-    prompt = prompt(question)
+    prompt_text = prompt(question)
     
-    response = client.chat.completions.create(
+    response = openai_client.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=[
-            {"role": "user", "content": prompt}
+            {"role": "user", "content": prompt_text}
         ],
         temperature=0.7,
         max_tokens=500
@@ -34,36 +33,59 @@ def generate_medical_answer(question: str, prompt: Callable[[str], str]) -> str:
     
     return response.choices[0].message.content
 
+def medical_task_clinical(row):
+    """Task function for clinical guidance prompt"""
+    answer = generate_medical_answer(row.values["user-description"], clinical_guidance_prompt)
+    print(f"\033[94mMedical user input:\033[0m {row.values['user-description']}")
+    print(f"\033[96mMedical LLM answer:\033[0m {answer}")
+    return answer
 
-async def run_exp(experiment: Experiment, prompt: Callable[[str], str]):
-    """Simple synchronous example without evaluator API calls"""
+def medical_task_educational(row):
+    """Task function for educational prompt"""
+    answer = generate_medical_answer(row.values["user-description"], educational_prompt)
+    print(f"\033[94mMedical user input:\033[0m {row.values['user-description']}")
+    print(f"\033[96mMedical LLM answer:\033[0m {answer}")
+    return answer
 
-    with experiment.run() as experiment:
-        dataset = client.datasets.get_by_slug("medical")
-        
-        for row in dataset.rows:
 
-            answer = generate_medical_answer(row.values["user-description"], prompt)
-            print(f"\033[94mMedical user input:\033[0m {row.values['user-description']}")
-            print(f"\033[96mMedical LLM answer:\033[0m {answer}")
-            
-            eval_result = await client.evaluator.run(
-                evaluator_slug="medical_advice",
-                input={"completion": answer},
-                timeout_in_sec=120
-            )
-            print(f"\033[93mMedical evaluation result:\033[0m {eval_result.result}")
-
-    print("\033[92m✅ Experiment version 1 completed!\033[0m")
+def run_experiment_example():
+    """Example using the new run_experiment API"""
+    
+    # Run experiment with clinical guidance prompt
+    print("\033[95m🔬 Running experiment with clinical guidance prompt...\033[0m")
+    experiment_id, results = client.experiment.run(
+        dataset_slug="medical",
+        task=medical_task_clinical,
+        evaluators=["medical_advice"],
+        experiment_name="medical-clinical-guidance",
+        concurrency=5,
+        exit_on_error=False,
+        dry_run=False
+    )
+    
+    if results:
+        print(f"\033[92m✅ Experiment {experiment_id} completed with {len(results['results'])} results!\033[0m")
+        if results['errors']:
+            print(f"\033[91m❌ {len(results['errors'])} errors occurred\033[0m")
+    
+    # Run experiment with educational prompt  
+    print("\033[95m📚 Running experiment with educational prompt...\033[0m")
+    experiment_id_2, results_2 = client.experiment.run(
+        dataset_slug="medical",
+        task=medical_task_educational,
+        evaluators=["medical_advice"],
+        experiment_name="medical-educational",
+        concurrency=5,
+        exit_on_error=False,
+        dry_run=False
+    )
+    
+    if results_2:
+        print(f"\033[92m✅ Experiment {experiment_id_2} completed with {len(results_2['results'])} results!\033[0m")
+        if results_2['errors']:
+            print(f"\033[91m❌ {len(results_2['errors'])} errors occurred\033[0m")
 
 
 if __name__ == "__main__":
-    print("\033[95m🚀 Running simple experiment example...\033[0m")
-    experiment = Experiment(name="medical-experiment", run_data={"description": "This experiment verifies different prompt versions for a medical question answering model."})
-    
-    print("\033[95m🔬 Running experiment with clinical guidance prompt...\033[0m")
-    asyncio.run(run_exp(experiment, clinical_guidance_prompt))
-
-    # Run experiment with educational prompt
-    print("\033[95m📚 Running experiment with educational prompt...\033[0m")
-    asyncio.run(run_exp(experiment, educational_prompt))
+    print("\033[95m🚀 Running experiment example with new API...\033[0m")
+    run_experiment_example()
