@@ -82,6 +82,7 @@ def should_emit_events() -> bool:
 
     return not Config.use_legacy_attributes
 
+
 def model_as_dict(model):
     if _PYDANTIC_VERSION < "2.0.0":
         return model.dict()

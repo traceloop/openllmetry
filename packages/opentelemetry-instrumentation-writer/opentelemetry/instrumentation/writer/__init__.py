@@ -7,15 +7,14 @@ from typing import Collection, Union
 
 from opentelemetry._events import EventLogger, get_event_logger
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
-from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY, unwrap
-from opentelemetry.metrics import Counter, Histogram, Meter, get_meter
-from opentelemetry.semconv._incubating.metrics import gen_ai_metrics as GenAIMetrics
+from opentelemetry.instrumentation.utils import (_SUPPRESS_INSTRUMENTATION_KEY,
+                                                 unwrap)
+from opentelemetry.metrics import Histogram, Meter, get_meter
+from opentelemetry.semconv._incubating.metrics import \
+    gen_ai_metrics as GenAIMetrics
 from opentelemetry.semconv_ai import (
-    SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
-    LLMRequestTypeValues,
-    Meters,
-    SpanAttributes,
-)
+    SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY, LLMRequestTypeValues, Meters,
+    SpanAttributes)
 from opentelemetry.trace import SpanKind, get_tracer
 from opentelemetry.trace.status import Status, StatusCode
 from wrapt import wrap_function_wrapper
@@ -23,25 +22,15 @@ from writerai._streaming import AsyncStream, Stream
 
 from opentelemetry import context as context_api
 from opentelemetry.instrumentation.writer.config import Config
-from opentelemetry.instrumentation.writer.span_utils import (
-    set_input_attributes,
-    set_model_input_attributes,
-    set_model_response_attributes,
-    set_response_attributes,
-    set_model_streaming_response_attributes,
-    set_streaming_response_attributes,
-)
-from opentelemetry.instrumentation.writer.utils import (
-    error_metrics_attributes,
-    model_as_dict,
-    response_attributes,
-    should_emit_events,
-)
 from opentelemetry.instrumentation.writer.event_emitter import (
-    emit_streaming_response_events,
-    emit_message_events,
-    emit_choice_events,
-)
+    emit_choice_events, emit_message_events, emit_streaming_response_events)
+from opentelemetry.instrumentation.writer.span_utils import (
+    set_input_attributes, set_model_input_attributes,
+    set_model_response_attributes, set_model_streaming_response_attributes,
+    set_response_attributes, set_streaming_response_attributes)
+from opentelemetry.instrumentation.writer.utils import (
+    error_metrics_attributes, model_as_dict, response_attributes,
+    should_emit_events)
 from opentelemetry.instrumentation.writer.version import __version__
 
 logger = logging.getLogger(__name__)
@@ -83,15 +72,11 @@ def is_streaming_response(response):
 
 
 def _process_streaming_chunk(chunk):
-
     chunk_dict = model_as_dict(chunk)
-    
-    if not chunk_dict.get("choices"):
-        return None, None, None
 
-    choice = chunk_dict["choices"][0]
+    choice = chunk_dict.get("choices", [{}])[0]
     delta = choice.get("delta", {})
-    
+
     content = delta.get("content") if delta else choice.get("text")
     finish_reason = choice.get("finish_reason")
 
@@ -104,7 +89,7 @@ def _handle_streaming_response(
     span, accumulated_content, finish_reason, usage, event_logger
 ):
     set_model_streaming_response_attributes(span, usage)
-    
+
     if should_emit_events() and event_logger:
         emit_streaming_response_events(accumulated_content, finish_reason, event_logger)
     else:
@@ -113,24 +98,40 @@ def _handle_streaming_response(
         )
 
 
-def _create_stream_processor(response, span, event_logger):
+def _create_stream_processor(
+    response,
+    span,
+    event_logger,
+    start_time,
+    streaming_time_to_first_token,
+    streaming_time_to_generate,
+):
     accumulated_content = ""
     finish_reason = None
     usage = None
 
+    first_token_time = time.time()
+    streaming_time_to_first_token.record(
+        first_token_time - start_time,
+        attributes={SpanAttributes.LLM_SYSTEM: "Writer", "stream": True},
+    )
+
     for chunk in response:
         content, chunk_finish_reason, chunk_usage = _process_streaming_chunk(chunk)
-        
+
         if content:
             accumulated_content += content
-        
         if chunk_finish_reason:
             finish_reason = chunk_finish_reason
-        
         if chunk_usage:
             usage = chunk_usage
-        
+
         yield chunk
+
+    streaming_time_to_generate.record(
+        time.time() - first_token_time,
+        attributes={SpanAttributes.LLM_SYSTEM: "Writer", "stream": True},
+    )
 
     _handle_streaming_response(
         span, accumulated_content, finish_reason, usage, event_logger
@@ -142,24 +143,42 @@ def _create_stream_processor(response, span, event_logger):
     span.end()
 
 
-async def _create_async_stream_processor(response, span, event_logger):
+async def _create_async_stream_processor(
+    response,
+    span,
+    event_logger,
+    start_time,
+    streaming_time_to_first_token,
+    streaming_time_to_generate,
+):
     accumulated_content = ""
     finish_reason = None
     usage = None
 
+    first_token_time = time.time()
+    streaming_time_to_first_token.record(
+        first_token_time - start_time,
+        attributes={SpanAttributes.LLM_SYSTEM: "Writer", "stream": True},
+    )
+
     async for chunk in response:
         content, chunk_finish_reason, chunk_usage = _process_streaming_chunk(chunk)
-        
+
         if content:
             accumulated_content += content
-        
+
         if chunk_finish_reason:
             finish_reason = chunk_finish_reason
-        
+
         if chunk_usage:
             usage = chunk_usage
-        
+
         yield chunk
+
+    streaming_time_to_generate.record(
+        time.time() - first_token_time,
+        attributes={SpanAttributes.LLM_SYSTEM: "Writer", "stream": True},
+    )
 
     _handle_streaming_response(
         span, accumulated_content, finish_reason, usage, event_logger
@@ -197,7 +216,6 @@ def _with_tracer_wrapper(func):
         duration_histogram,
         streaming_time_to_first_token,
         streaming_time_to_generate,
-        choice_counter,
         event_logger,
         to_wrap,
     ):
@@ -208,7 +226,6 @@ def _with_tracer_wrapper(func):
                 duration_histogram,
                 streaming_time_to_first_token,
                 streaming_time_to_generate,
-                choice_counter,
                 event_logger,
                 to_wrap,
                 wrapped,
@@ -220,6 +237,7 @@ def _with_tracer_wrapper(func):
         return wrapper
 
     return _with_chat_telemetry
+
 
 def _handle_response(span, response, token_histogram, event_logger):
     set_model_response_attributes(span, response, token_histogram)
@@ -236,7 +254,6 @@ def _wrap(
     duration_histogram: Histogram,
     streaming_time_to_first_token: Histogram,
     streaming_time_to_generate: Histogram,
-    choice_counter: Counter,
     event_logger: Union[EventLogger, None],
     to_wrap,
     wrapped,
@@ -278,7 +295,14 @@ def _wrap(
 
     if is_streaming_response(response):
         try:
-            return _create_stream_processor(response, span, event_logger)
+            return _create_stream_processor(
+                response,
+                span,
+                event_logger,
+                start_time,
+                streaming_time_to_first_token,
+                streaming_time_to_generate,
+            )
         except Exception as ex:
             logger.warning(
                 "Failed to process streaming response for writer span, error: %s",
@@ -320,7 +344,6 @@ async def _awrap(
     duration_histogram: Histogram,
     streaming_time_to_first_token: Histogram,
     streaming_time_to_generate: Histogram,
-    choice_counter: Counter,
     event_logger: Union[EventLogger, None],
     to_wrap,
     wrapped,
@@ -362,7 +385,14 @@ async def _awrap(
 
     if is_streaming_response(response):
         try:
-            return _create_async_stream_processor(response, span, event_logger)
+            return _create_async_stream_processor(
+                response,
+                span,
+                event_logger,
+                start_time,
+                streaming_time_to_first_token,
+                streaming_time_to_generate,
+            )
         except Exception as ex:
             logger.warning(
                 "Failed to process streaming response for writer span, error: %s",
@@ -422,18 +452,11 @@ def _build_metrics(meter: Meter):
         description="Time from first token to completion in streaming responses",
     )
 
-    choice_counter = meter.create_counter(
-        name=Meters.LLM_GENERATION_CHOICES,
-        unit="choice",
-        description="Number of choices returned by chat completions call",
-    )
-
     return (
         token_histogram,
         duration_histogram,
         streaming_time_to_first_token,
         streaming_time_to_generate,
-        choice_counter,
     )
 
 
@@ -465,7 +488,6 @@ class WriterInstrumentor(BaseInstrumentor):
                 duration_histogram,
                 streaming_time_to_first_token,
                 streaming_time_to_generate,
-                choice_counter,
             ) = _build_metrics(meter)
         else:
             (
@@ -473,8 +495,7 @@ class WriterInstrumentor(BaseInstrumentor):
                 duration_histogram,
                 streaming_time_to_first_token,
                 streaming_time_to_generate,
-                choice_counter,
-            ) = (None, None, None, None, None)
+            ) = (None, None, None, None)
 
         event_logger = None
         if not Config.use_legacy_attributes:
@@ -498,7 +519,6 @@ class WriterInstrumentor(BaseInstrumentor):
                         duration_histogram,
                         streaming_time_to_first_token,
                         streaming_time_to_generate,
-                        choice_counter,
                         event_logger,
                         wrapped_method,
                     ),
@@ -520,7 +540,6 @@ class WriterInstrumentor(BaseInstrumentor):
                         duration_histogram,
                         streaming_time_to_first_token,
                         streaming_time_to_generate,
-                        choice_counter,
                         event_logger,
                         wrapped_method,
                     ),

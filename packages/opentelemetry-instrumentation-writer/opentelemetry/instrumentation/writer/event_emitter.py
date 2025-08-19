@@ -3,16 +3,15 @@ from enum import Enum
 from typing import Union
 
 from opentelemetry._events import Event, EventLogger
-from opentelemetry.instrumentation.writer.event_models import ChoiceEvent, MessageEvent
-from opentelemetry.instrumentation.writer.utils import (
-    dont_throw,
-    should_emit_events,
-    should_send_prompts,
-    model_as_dict,
-)
-from opentelemetry.semconv._incubating.attributes import (
-    gen_ai_attributes as GenAIAttributes,
-)
+from opentelemetry.semconv._incubating.attributes import \
+    gen_ai_attributes as GenAIAttributes
+
+from opentelemetry.instrumentation.writer.event_models import (ChoiceEvent,
+                                                               MessageEvent)
+from opentelemetry.instrumentation.writer.utils import (dont_throw,
+                                                        model_as_dict,
+                                                        should_emit_events,
+                                                        should_send_prompts)
 
 
 class Roles(Enum):
@@ -37,8 +36,7 @@ def emit_message_events(kwargs: dict, event_logger):
     for message in kwargs.get("messages", []):
         emit_event(
             MessageEvent(
-                content=message.get("content"), 
-                role=message.get("role", "unknown")
+                content=message.get("content"), role=message.get("role", "unknown")
             ),
             event_logger=event_logger,
         )
@@ -47,9 +45,10 @@ def emit_message_events(kwargs: dict, event_logger):
 @dont_throw
 def emit_choice_events(response, event_logger):
     response_dict = model_as_dict(response)
-    
+
     for choice in response_dict.get("choices", []):
         message = choice.get("message")
+
         if message:
             emit_event(
                 ChoiceEvent(
