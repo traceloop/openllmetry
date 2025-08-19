@@ -2,8 +2,10 @@ import json
 
 import pytest
 from opentelemetry.semconv_ai import SpanAttributes
-from opentelemetry.instrumentation.bedrock.span_utils import GUARDRAIL_ID_KEY, PROMPT_FILTER_KEY, CONTENT_FILTER_KEY
-
+from opentelemetry.instrumentation.bedrock.span_utils import PROMPT_FILTER_KEY, CONTENT_FILTER_KEY
+from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
+    AWS_BEDROCK_GUARDRAIL_ID
+)
 
 guardrailId = "5zwrmdlsra2e"
 guardrailVersion = "DRAFT"
@@ -55,7 +57,7 @@ def test_guardrail_invoke(instrument_legacy, brt, span_exporter, log_exporter):
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "completion"
 
     # Assert on guardrail data
-    assert bedrock_span.attributes[GUARDRAIL_ID_KEY] == f"{guardrailId}:{guardrailVersion}"
+    assert bedrock_span.attributes[AWS_BEDROCK_GUARDRAIL_ID] == f"{guardrailId}:{guardrailVersion}"
     assert bedrock_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.{PROMPT_FILTER_KEY}"] != ""
     assert bedrock_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.{CONTENT_FILTER_KEY}"] != ""
 
@@ -126,7 +128,7 @@ def test_guardrail_invoke_stream(instrument_legacy, brt, span_exporter, log_expo
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "completion"
 
     # Assert on guardrail data
-    assert bedrock_span.attributes[GUARDRAIL_ID_KEY] == f"{guardrailId}:{guardrailVersion}"
+    assert bedrock_span.attributes[AWS_BEDROCK_GUARDRAIL_ID] == f"{guardrailId}:{guardrailVersion}"
     assert bedrock_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.{PROMPT_FILTER_KEY}"] != ""
     assert bedrock_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.{CONTENT_FILTER_KEY}") is None
 
@@ -195,7 +197,7 @@ def test_guardrail_converse(
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
 
     # Assert on guardrail data
-    assert bedrock_span.attributes[GUARDRAIL_ID_KEY] == f"{guardrailId}:{guardrailVersion}"
+    assert bedrock_span.attributes[AWS_BEDROCK_GUARDRAIL_ID] == f"{guardrailId}:{guardrailVersion}"
     assert bedrock_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.{PROMPT_FILTER_KEY}"] != ""
     assert bedrock_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.{CONTENT_FILTER_KEY}"] != ""
 
@@ -278,7 +280,7 @@ def test_guardrail_converse_stream(
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
 
     # Assert on guardrail data
-    assert bedrock_span.attributes[GUARDRAIL_ID_KEY] == f"{guardrailId}:{guardrailVersion}"
+    assert bedrock_span.attributes[AWS_BEDROCK_GUARDRAIL_ID] == f"{guardrailId}:{guardrailVersion}"
     assert bedrock_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.{PROMPT_FILTER_KEY}"] != ""
     assert bedrock_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.{CONTENT_FILTER_KEY}"] != ""
 

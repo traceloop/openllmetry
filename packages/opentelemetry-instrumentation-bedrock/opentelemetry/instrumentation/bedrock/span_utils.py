@@ -6,13 +6,13 @@ from opentelemetry.instrumentation.bedrock.config import Config
 from opentelemetry.instrumentation.bedrock.utils import should_send_prompts
 from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
     GEN_AI_RESPONSE_ID,
+    AWS_BEDROCK_GUARDRAIL_ID
 )
 from opentelemetry.semconv_ai import (
     LLMRequestTypeValues,
     SpanAttributes,
 )
 
-GUARDRAIL_ID_KEY = "aws.bedrock.guardrail.id"
 PROMPT_FILTER_KEY = "prompt_filter_results"
 CONTENT_FILTER_KEY = "content_filter_results"
 
@@ -87,7 +87,7 @@ def set_model_span_attributes(
     response_model = response_body.get("model")
     response_id = response_body.get("id")
 
-    _set_span_attribute(span, GUARDRAIL_ID_KEY, _guardrail_value(kwargs))
+    _set_span_attribute(span, AWS_BEDROCK_GUARDRAIL_ID, _guardrail_value(kwargs))
 
     _set_span_attribute(span, SpanAttributes.LLM_SYSTEM, provider)
     _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, model)
@@ -644,7 +644,7 @@ def set_converse_model_span_attributes(span, provider, model, kwargs):
 
     guardrail_config = kwargs.get("guardrailConfig")
     if guardrail_config:
-        _set_span_attribute(span, GUARDRAIL_ID_KEY, _guardrail_value(guardrail_config))
+        _set_span_attribute(span, AWS_BEDROCK_GUARDRAIL_ID, _guardrail_value(guardrail_config))
 
     config = {}
     if "inferenceConfig" in kwargs:
