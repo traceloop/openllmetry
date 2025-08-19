@@ -239,6 +239,12 @@ class SpanAttributes:
     QDRANT_SEARCH_COLLECTION_NAME = "qdrant.search.collection_name"
     QDRANT_SEARCH_BATCH_COLLECTION_NAME = "qdrant.search_batch.collection_name"
     QDRANT_SEARCH_BATCH_REQUESTS_COUNT = "qdrant.search_batch.requests_count"
+
+    QDRANT_QUERY_POINTS_COLLECTION_NAME = "qdrant.query_points.collection_name"
+    QDRANT_QUERY_POINTS_GROUPS_COLLECTION_NAME = "qdrant.query_points_groups.collection_name"
+    QDRANT_QUERY_BATCH_POINTS_COLLECTION_NAME = "qdrant.query_batch_points.collection_name"
+    QDRANT_QUERY_BATCH_POINTS_REQUESTS_COUNT = "qdrant.query_batch_points.requests_count"
+
     QDRANT_UPLOAD_COLLECTION_NAME = "qdrant.upload_collection.collection_name"
     QDRANT_UPLOAD_POINTS_COUNT = "qdrant.upload_collection.points_count"
     QDRANT_UPSERT_COLLECTION_NAME = "qdrant.upsert.collection_name"
