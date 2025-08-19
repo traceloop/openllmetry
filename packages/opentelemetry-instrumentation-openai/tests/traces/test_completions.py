@@ -29,10 +29,10 @@ def test_completion(instrument_legacy, span_exporter, log_exporter, openai_clien
     ]
     open_ai_span = spans[0]
     assert (
-        open_ai_span.attributes[f"{SpanAttributes.GEN_AI_PROMPT}.0.user"]
+        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.user"]
         == "Tell me a joke about opentelemetry"
     )
-    assert open_ai_span.attributes.get(f"{SpanAttributes.GEN_AI_COMPLETION}.0.content")
+    assert open_ai_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content")
     assert (
         open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)
         == "https://api.openai.com/v1/"
@@ -145,10 +145,10 @@ async def test_async_completion(
     ]
     open_ai_span = spans[0]
     assert (
-        open_ai_span.attributes[f"{SpanAttributes.GEN_AI_PROMPT}.0.user"]
+        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.user"]
         == "Tell me a joke about opentelemetry"
     )
-    assert open_ai_span.attributes.get(f"{SpanAttributes.GEN_AI_COMPLETION}.0.content")
+    assert open_ai_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content")
     assert (
         open_ai_span.attributes.get("gen_ai.response.id")
         == "cmpl-8wq43c8U5ZZCQBX5lrSpsANwcd3OF"
@@ -253,10 +253,10 @@ def test_completion_langchain_style(
     ]
     open_ai_span = spans[0]
     assert (
-        open_ai_span.attributes[f"{SpanAttributes.GEN_AI_PROMPT}.0.user"]
+        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.user"]
         == "Tell me a joke about opentelemetry"
     )
-    assert open_ai_span.attributes.get(f"{SpanAttributes.GEN_AI_COMPLETION}.0.content")
+    assert open_ai_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content")
     assert (
         open_ai_span.attributes.get("gen_ai.response.id")
         == "cmpl-8wq43QD6R2WqfxXLpYsRvSAIn9LB9"
@@ -368,11 +368,11 @@ def test_completion_streaming(
         ]
         open_ai_span = spans[0]
         assert (
-            open_ai_span.attributes[f"{SpanAttributes.GEN_AI_PROMPT}.0.user"]
+            open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.user"]
             == "Tell me a joke about opentelemetry"
         )
         assert open_ai_span.attributes.get(
-            f"{SpanAttributes.GEN_AI_COMPLETION}.0.content"
+            f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content"
         )
         assert (
             open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)
@@ -381,10 +381,10 @@ def test_completion_streaming(
 
         # check token usage attributes for stream
         completion_tokens = open_ai_span.attributes.get(
-            SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
+            GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
         )
         prompt_tokens = open_ai_span.attributes.get(
-            SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS
+            GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS
         )
         total_tokens = open_ai_span.attributes.get(
             SpanAttributes.LLM_USAGE_TOTAL_TOKENS
@@ -438,10 +438,10 @@ def test_completion_streaming_with_events_with_content(
 
         # check token usage attributes for stream
         completion_tokens = open_ai_span.attributes.get(
-            SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
+            GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
         )
         prompt_tokens = open_ai_span.attributes.get(
-            SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS
+            GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS
         )
         total_tokens = open_ai_span.attributes.get(
             SpanAttributes.LLM_USAGE_TOTAL_TOKENS
@@ -511,10 +511,10 @@ def test_completion_streaming_with_events_with_no_content(
 
         # check token usage attributes for stream
         completion_tokens = open_ai_span.attributes.get(
-            SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
+            GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
         )
         prompt_tokens = open_ai_span.attributes.get(
-            SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS
+            GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS
         )
         total_tokens = open_ai_span.attributes.get(
             SpanAttributes.LLM_USAGE_TOTAL_TOKENS
@@ -564,10 +564,10 @@ async def test_async_completion_streaming(
     ]
     open_ai_span = spans[0]
     assert (
-        open_ai_span.attributes[f"{SpanAttributes.GEN_AI_PROMPT}.0.user"]
+        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.user"]
         == "Tell me a joke about opentelemetry"
     )
-    assert open_ai_span.attributes.get(f"{SpanAttributes.GEN_AI_COMPLETION}.0.content")
+    assert open_ai_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content")
     assert (
         open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)
         == "https://api.openai.com/v1/"
@@ -935,7 +935,7 @@ def test_completion_exception(instrument_legacy, span_exporter, openai_client):
     ]
     open_ai_span = spans[0]
     assert (
-        open_ai_span.attributes[f"{SpanAttributes.GEN_AI_PROMPT}.0.user"]
+        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.user"]
         == "Tell me a joke about opentelemetry"
     )
     assert open_ai_span.status.status_code == StatusCode.ERROR
@@ -967,7 +967,7 @@ async def test_async_completion_exception(instrument_legacy, span_exporter, asyn
     ]
     open_ai_span = spans[0]
     assert (
-        open_ai_span.attributes[f"{SpanAttributes.GEN_AI_PROMPT}.0.user"]
+        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.user"]
         == "Tell me a joke about opentelemetry"
     )
     assert open_ai_span.status.status_code == StatusCode.ERROR

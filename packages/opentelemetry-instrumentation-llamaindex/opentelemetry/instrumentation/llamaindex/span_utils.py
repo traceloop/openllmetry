@@ -3,6 +3,9 @@ from opentelemetry.instrumentation.llamaindex.utils import (
     dont_throw,
     should_send_prompts,
 )
+from opentelemetry.semconv._incubating.attributes import (
+    gen_ai_attributes as GenAIAttributes,
+)
 from opentelemetry.semconv_ai import (
     LLMRequestTypeValues,
     SpanAttributes,
@@ -17,10 +20,10 @@ def set_llm_chat_request(event, span) -> None:
     if should_send_prompts():
         for idx, message in enumerate(event.messages):
             span.set_attribute(
-                f"{SpanAttributes.GEN_AI_PROMPT}.{idx}.role", message.role.value
+                f"{GenAIAttributes.GEN_AI_PROMPT}.{idx}.role", message.role.value
             )
             span.set_attribute(
-                f"{SpanAttributes.GEN_AI_PROMPT}.{idx}.content", message.content
+                f"{GenAIAttributes.GEN_AI_PROMPT}.{idx}.content", message.content
             )
 
 
@@ -36,9 +39,9 @@ def set_llm_chat_request_model_attributes(event, span):
     if "llm" in model_dict:
         model_dict = model_dict.get("llm", {})
 
-    span.set_attribute(SpanAttributes.GEN_AI_REQUEST_MODEL, model_dict.get("model"))
+    span.set_attribute(GenAIAttributes.GEN_AI_REQUEST_MODEL, model_dict.get("model"))
     span.set_attribute(
-        SpanAttributes.GEN_AI_REQUEST_TEMPERATURE, model_dict.get("temperature")
+        GenAIAttributes.GEN_AI_REQUEST_TEMPERATURE, model_dict.get("temperature")
     )
 
 
@@ -51,17 +54,17 @@ def set_llm_chat_response(event, span) -> None:
     if should_send_prompts():
         for idx, message in enumerate(event.messages):
             span.set_attribute(
-                f"{SpanAttributes.GEN_AI_PROMPT}.{idx}.role", message.role.value
+                f"{GenAIAttributes.GEN_AI_PROMPT}.{idx}.role", message.role.value
             )
             span.set_attribute(
-                f"{SpanAttributes.GEN_AI_PROMPT}.{idx}.content", message.content
+                f"{GenAIAttributes.GEN_AI_PROMPT}.{idx}.content", message.content
             )
         span.set_attribute(
-            f"{SpanAttributes.GEN_AI_COMPLETION}.0.role",
+            f"{GenAIAttributes.GEN_AI_COMPLETION}.0.role",
             response.message.role.value,
         )
         span.set_attribute(
-            f"{SpanAttributes.GEN_AI_COMPLETION}.0.content",
+            f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content",
             response.message.content,
         )
 
@@ -77,16 +80,16 @@ def set_llm_chat_response_model_attributes(event, span):
         return
 
     span.set_attribute(
-        SpanAttributes.GEN_AI_RESPONSE_MODEL,
+        GenAIAttributes.GEN_AI_RESPONSE_MODEL,
         (
             raw.get("model") if "model" in raw else raw.model
         ),  # raw can be Any, not just ChatCompletion
     )
     if usage := raw.get("usage") if "usage" in raw else raw.usage:
         span.set_attribute(
-            SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS, usage.completion_tokens
+            GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS, usage.completion_tokens
         )
-        span.set_attribute(SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS, usage.prompt_tokens)
+        span.set_attribute(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS, usage.prompt_tokens)
         span.set_attribute(SpanAttributes.LLM_USAGE_TOTAL_TOKENS, usage.total_tokens)
     if choices := raw.choices:
         span.set_attribute(
@@ -98,11 +101,11 @@ def set_llm_chat_response_model_attributes(event, span):
 def set_llm_predict_response(event, span) -> None:
     if should_send_prompts():
         span.set_attribute(
-            f"{SpanAttributes.GEN_AI_COMPLETION}.role",
+            f"{GenAIAttributes.GEN_AI_COMPLETION}.role",
             MessageRole.ASSISTANT.value,
         )
         span.set_attribute(
-            f"{SpanAttributes.GEN_AI_COMPLETION}.content",
+            f"{GenAIAttributes.GEN_AI_COMPLETION}.content",
             event.output,
         )
 

@@ -29,6 +29,9 @@ from opentelemetry.instrumentation.openai.utils import (
     should_send_prompts,
 )
 from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
+from opentelemetry.semconv._incubating.attributes import (
+    gen_ai_attributes as GenAIAttributes,
+)
 from opentelemetry.semconv_ai import (
     SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
     LLMRequestTypeValues,
@@ -157,7 +160,7 @@ def _set_prompts(span, prompt):
 
     _set_span_attribute(
         span,
-        f"{SpanAttributes.GEN_AI_PROMPT}.0.user",
+        f"{GenAIAttributes.GEN_AI_PROMPT}.0.user",
         prompt[0] if isinstance(prompt, list) else prompt,
     )
 
@@ -169,7 +172,7 @@ def _set_completions(span, choices):
 
     for choice in choices:
         index = choice.get("index")
-        prefix = f"{SpanAttributes.GEN_AI_COMPLETION}.{index}"
+        prefix = f"{GenAIAttributes.GEN_AI_COMPLETION}.{index}"
         _set_span_attribute(
             span, f"{prefix}.finish_reason", choice.get("finish_reason")
         )

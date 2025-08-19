@@ -21,6 +21,9 @@ from opentelemetry.instrumentation.vertexai.span_utils import (
 )
 from opentelemetry.instrumentation.vertexai.utils import dont_throw, should_emit_events
 from opentelemetry.instrumentation.vertexai.version import __version__
+from opentelemetry.semconv._incubating.attributes import (
+    gen_ai_attributes as GenAIAttributes,
+)
 from opentelemetry.semconv_ai import (
     SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
     LLMRequestTypeValues,
@@ -229,7 +232,7 @@ async def _awrap(tracer, event_logger, to_wrap, wrapped, instance, args, kwargs)
         name,
         kind=SpanKind.CLIENT,
         attributes={
-            SpanAttributes.GEN_AI_SYSTEM: "Google",
+            GenAIAttributes.GEN_AI_SYSTEM: "Google",
             SpanAttributes.LLM_REQUEST_TYPE: LLMRequestTypeValues.COMPLETION.value,
         },
     )
@@ -273,7 +276,7 @@ def _wrap(tracer, event_logger, to_wrap, wrapped, instance, args, kwargs):
         name,
         kind=SpanKind.CLIENT,
         attributes={
-            SpanAttributes.GEN_AI_SYSTEM: "Google",
+            GenAIAttributes.GEN_AI_SYSTEM: "Google",
             SpanAttributes.LLM_REQUEST_TYPE: LLMRequestTypeValues.COMPLETION.value,
         },
     )

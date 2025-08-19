@@ -27,20 +27,20 @@ def test_imported_model_completion(instrument_legacy, brt, span_exporter, log_ex
     imported_model_span = spans[0]
 
     assert (
-        imported_model_span.attributes[SpanAttributes.GEN_AI_REQUEST_MODEL]
+        imported_model_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL]
         == "arn:aws:sagemaker:us-east-1:767398002385:endpoint/endpoint-quick-start-idr7y"
     )
     assert (
         imported_model_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "completion"
     )
-    assert imported_model_span.attributes[SpanAttributes.GEN_AI_SYSTEM] == "AWS"
+    assert imported_model_span.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "AWS"
     assert imported_model_span.attributes.get("gen_ai.response.id") is None
-    assert imported_model_span.attributes[SpanAttributes.GEN_AI_REQUEST_MAX_TOKENS] == 100
-    assert imported_model_span.attributes[SpanAttributes.GEN_AI_REQUEST_TEMPERATURE] == 0.5
-    assert imported_model_span.attributes[SpanAttributes.GEN_AI_REQUEST_TOP_P] == 2
+    assert imported_model_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS] == 100
+    assert imported_model_span.attributes[GenAIAttributes.GEN_AI_REQUEST_TEMPERATURE] == 0.5
+    assert imported_model_span.attributes[GenAIAttributes.GEN_AI_REQUEST_TOP_P] == 2
 
     assert (
-        imported_model_span.attributes[f"{SpanAttributes.GEN_AI_PROMPT}.0.content"]
+        imported_model_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"]
         == prompt
     )
     assert data is not None
@@ -69,17 +69,17 @@ def test_imported_model_completion_with_events_with_content(
     imported_model_span = spans[0]
 
     assert (
-        imported_model_span.attributes[SpanAttributes.GEN_AI_REQUEST_MODEL]
+        imported_model_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL]
         == "arn:aws:sagemaker:us-east-1:767398002385:endpoint/endpoint-quick-start-idr7y"
     )
     assert (
         imported_model_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "completion"
     )
-    assert imported_model_span.attributes[SpanAttributes.GEN_AI_SYSTEM] == "AWS"
+    assert imported_model_span.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "AWS"
     assert imported_model_span.attributes.get("gen_ai.response.id") is None
-    assert imported_model_span.attributes[SpanAttributes.GEN_AI_REQUEST_MAX_TOKENS] == 100
-    assert imported_model_span.attributes[SpanAttributes.GEN_AI_REQUEST_TEMPERATURE] == 0.5
-    assert imported_model_span.attributes[SpanAttributes.GEN_AI_REQUEST_TOP_P] == 2
+    assert imported_model_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS] == 100
+    assert imported_model_span.attributes[GenAIAttributes.GEN_AI_REQUEST_TEMPERATURE] == 0.5
+    assert imported_model_span.attributes[GenAIAttributes.GEN_AI_REQUEST_TOP_P] == 2
 
     assert data is not None
 
@@ -117,17 +117,17 @@ def test_imported_model_completion_with_events_with_no_content(
     imported_model_span = spans[0]
 
     assert (
-        imported_model_span.attributes[SpanAttributes.GEN_AI_REQUEST_MODEL]
+        imported_model_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL]
         == "arn:aws:sagemaker:us-east-1:767398002385:endpoint/endpoint-quick-start-idr7y"
     )
     assert (
         imported_model_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "completion"
     )
-    assert imported_model_span.attributes[SpanAttributes.GEN_AI_SYSTEM] == "AWS"
+    assert imported_model_span.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "AWS"
     assert imported_model_span.attributes.get("gen_ai.response.id") is None
-    assert imported_model_span.attributes[SpanAttributes.GEN_AI_REQUEST_MAX_TOKENS] == 100
-    assert imported_model_span.attributes[SpanAttributes.GEN_AI_REQUEST_TEMPERATURE] == 0.5
-    assert imported_model_span.attributes[SpanAttributes.GEN_AI_REQUEST_TOP_P] == 2
+    assert imported_model_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS] == 100
+    assert imported_model_span.attributes[GenAIAttributes.GEN_AI_REQUEST_TEMPERATURE] == 0.5
+    assert imported_model_span.attributes[GenAIAttributes.GEN_AI_REQUEST_TOP_P] == 2
 
     assert data is not None
 

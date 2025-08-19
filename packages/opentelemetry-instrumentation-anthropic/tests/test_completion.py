@@ -34,10 +34,10 @@ def test_anthropic_completion_legacy(
 
     anthropic_span = spans[0]
     assert (
-        anthropic_span.attributes[f"{SpanAttributes.GEN_AI_PROMPT}.0.user"]
+        anthropic_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.user"]
         == f"{HUMAN_PROMPT}\nHello world\n{AI_PROMPT}"
     )
-    assert anthropic_span.attributes.get(f"{SpanAttributes.GEN_AI_COMPLETION}.0.content")
+    assert anthropic_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content")
     assert (
         anthropic_span.attributes.get("gen_ai.response.id")
         == "compl_01EjfrPvPEsRDRUKD6VoBxtK"

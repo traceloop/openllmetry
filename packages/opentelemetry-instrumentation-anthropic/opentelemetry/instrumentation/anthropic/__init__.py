@@ -127,7 +127,7 @@ async def _aset_token_usage(
             input_tokens,
             attributes={
                 **metric_attributes,
-                SpanAttributes.GEN_AI_TOKEN_TYPE: "input",
+                GenAIAttributes.GEN_AI_TOKEN_TYPE: "input",
             },
         )
 
@@ -154,7 +154,7 @@ async def _aset_token_usage(
             completion_tokens,
             attributes={
                 **metric_attributes,
-                SpanAttributes.GEN_AI_TOKEN_TYPE: "output",
+                GenAIAttributes.GEN_AI_TOKEN_TYPE: "output",
             },
         )
 
@@ -175,18 +175,18 @@ async def _aset_token_usage(
             },
         )
 
-    set_span_attribute(span, SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS, input_tokens)
+    set_span_attribute(span, GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS, input_tokens)
     set_span_attribute(
-        span, SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS, completion_tokens
+        span, GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS, completion_tokens
     )
     set_span_attribute(span, SpanAttributes.LLM_USAGE_TOTAL_TOKENS, total_tokens)
 
     set_span_attribute(
-        span, SpanAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS, cache_read_tokens
+        span, GenAIAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS, cache_read_tokens
     )
     set_span_attribute(
         span,
-        SpanAttributes.GEN_AI_USAGE_CACHE_CREATION_INPUT_TOKENS,
+        GenAIAttributes.GEN_AI_USAGE_CACHE_CREATION_INPUT_TOKENS,
         cache_creation_tokens,
     )
 
@@ -220,7 +220,7 @@ def _set_token_usage(
             input_tokens,
             attributes={
                 **metric_attributes,
-                SpanAttributes.GEN_AI_TOKEN_TYPE: "input",
+                GenAIAttributes.GEN_AI_TOKEN_TYPE: "input",
             },
         )
 
@@ -245,7 +245,7 @@ def _set_token_usage(
             completion_tokens,
             attributes={
                 **metric_attributes,
-                SpanAttributes.GEN_AI_TOKEN_TYPE: "output",
+                GenAIAttributes.GEN_AI_TOKEN_TYPE: "output",
             },
         )
 
@@ -266,18 +266,18 @@ def _set_token_usage(
             },
         )
 
-    set_span_attribute(span, SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS, input_tokens)
+    set_span_attribute(span, GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS, input_tokens)
     set_span_attribute(
-        span, SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS, completion_tokens
+        span, GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS, completion_tokens
     )
     set_span_attribute(span, SpanAttributes.LLM_USAGE_TOTAL_TOKENS, total_tokens)
 
     set_span_attribute(
-        span, SpanAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS, cache_read_tokens
+        span, GenAIAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS, cache_read_tokens
     )
     set_span_attribute(
         span,
-        SpanAttributes.GEN_AI_USAGE_CACHE_CREATION_INPUT_TOKENS,
+        GenAIAttributes.GEN_AI_USAGE_CACHE_CREATION_INPUT_TOKENS,
         cache_creation_tokens,
     )
 
@@ -397,7 +397,7 @@ def _wrap(
         name,
         kind=SpanKind.CLIENT,
         attributes={
-            SpanAttributes.GEN_AI_SYSTEM: "Anthropic",
+            GenAIAttributes.GEN_AI_SYSTEM: "Anthropic",
             SpanAttributes.LLM_REQUEST_TYPE: LLMRequestTypeValues.COMPLETION.value,
         },
     )
@@ -494,7 +494,7 @@ async def _awrap(
         name,
         kind=SpanKind.CLIENT,
         attributes={
-            SpanAttributes.GEN_AI_SYSTEM: "Anthropic",
+            GenAIAttributes.GEN_AI_SYSTEM: "Anthropic",
             SpanAttributes.LLM_REQUEST_TYPE: LLMRequestTypeValues.COMPLETION.value,
         },
     )

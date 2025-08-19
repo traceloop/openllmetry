@@ -2,8 +2,8 @@ from opentelemetry.instrumentation.cohere.utils import (
     dont_throw,
     should_send_prompts,
 )
-from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
-    GEN_AI_RESPONSE_ID,
+from opentelemetry.semconv._incubating.attributes import (
+    gen_ai_attributes as GenAIAttributes,
 )
 from opentelemetry.semconv_ai import (
     LLMRequestTypeValues,
@@ -26,32 +26,32 @@ def set_input_attributes(span, llm_request_type, kwargs):
 
     if should_send_prompts():
         if llm_request_type == LLMRequestTypeValues.COMPLETION:
-            _set_span_attribute(span, f"{SpanAttributes.GEN_AI_PROMPT}.0.role", "user")
+            _set_span_attribute(span, f"{GenAIAttributes.GEN_AI_PROMPT}.0.role", "user")
             _set_span_attribute(
-                span, f"{SpanAttributes.GEN_AI_PROMPT}.0.content", kwargs.get("prompt")
+                span, f"{GenAIAttributes.GEN_AI_PROMPT}.0.content", kwargs.get("prompt")
             )
         elif llm_request_type == LLMRequestTypeValues.CHAT:
-            _set_span_attribute(span, f"{SpanAttributes.GEN_AI_PROMPT}.0.role", "user")
+            _set_span_attribute(span, f"{GenAIAttributes.GEN_AI_PROMPT}.0.role", "user")
             _set_span_attribute(
-                span, f"{SpanAttributes.GEN_AI_PROMPT}.0.content", kwargs.get("message")
+                span, f"{GenAIAttributes.GEN_AI_PROMPT}.0.content", kwargs.get("message")
             )
         elif llm_request_type == LLMRequestTypeValues.RERANK:
             for index, document in enumerate(kwargs.get("documents")):
                 _set_span_attribute(
-                    span, f"{SpanAttributes.GEN_AI_PROMPT}.{index}.role", "system"
+                    span, f"{GenAIAttributes.GEN_AI_PROMPT}.{index}.role", "system"
                 )
                 _set_span_attribute(
-                    span, f"{SpanAttributes.GEN_AI_PROMPT}.{index}.content", document
+                    span, f"{GenAIAttributes.GEN_AI_PROMPT}.{index}.content", document
                 )
 
             _set_span_attribute(
                 span,
-                f"{SpanAttributes.GEN_AI_PROMPT}.{len(kwargs.get('documents'))}.role",
+                f"{GenAIAttributes.GEN_AI_PROMPT}.{len(kwargs.get('documents'))}.role",
                 "user",
             )
             _set_span_attribute(
                 span,
-                f"{SpanAttributes.GEN_AI_PROMPT}.{len(kwargs.get('documents'))}.content",
+                f"{GenAIAttributes.GEN_AI_PROMPT}.{len(kwargs.get('documents'))}.content",
                 kwargs.get("query"),
             )
 
@@ -75,14 +75,14 @@ def set_span_request_attributes(span, kwargs):
     if not span.is_recording():
         return
 
-    _set_span_attribute(span, SpanAttributes.GEN_AI_REQUEST_MODEL, kwargs.get("model"))
+    _set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_MODEL, kwargs.get("model"))
     _set_span_attribute(
-        span, SpanAttributes.GEN_AI_REQUEST_MAX_TOKENS, kwargs.get("max_tokens_to_sample")
+        span, GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS, kwargs.get("max_tokens_to_sample")
     )
     _set_span_attribute(
-        span, SpanAttributes.GEN_AI_REQUEST_TEMPERATURE, kwargs.get("temperature")
+        span, GenAIAttributes.GEN_AI_REQUEST_TEMPERATURE, kwargs.get("temperature")
     )
-    _set_span_attribute(span, SpanAttributes.GEN_AI_REQUEST_TOP_P, kwargs.get("top_p"))
+    _set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_TOP_P, kwargs.get("top_p"))
     _set_span_attribute(
         span, SpanAttributes.LLM_FREQUENCY_PENALTY, kwargs.get("frequency_penalty")
     )
@@ -93,9 +93,9 @@ def set_span_request_attributes(span, kwargs):
 
 def _set_span_chat_response(span, response):
     index = 0
-    prefix = f"{SpanAttributes.GEN_AI_COMPLETION}.{index}"
+    prefix = f"{GenAIAttributes.GEN_AI_COMPLETION}.{index}"
     _set_span_attribute(span, f"{prefix}.content", response.text)
-    _set_span_attribute(span, GEN_AI_RESPONSE_ID, response.response_id)
+    _set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_ID, response.response_id)
 
     # Cohere v4
     if hasattr(response, "token_count"):
@@ -106,12 +106,12 @@ def _set_span_chat_response(span, response):
         )
         _set_span_attribute(
             span,
-            SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS,
+            GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS,
             response.token_count.get("response_tokens"),
         )
         _set_span_attribute(
             span,
-            SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS,
+            GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS,
             response.token_count.get("prompt_tokens"),
         )
 
@@ -127,33 +127,33 @@ def _set_span_chat_response(span, response):
         )
         _set_span_attribute(
             span,
-            SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS,
+            GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS,
             output_tokens,
         )
         _set_span_attribute(
             span,
-            SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS,
+            GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS,
             input_tokens,
         )
 
 
 def _set_span_generations_response(span, response):
-    _set_span_attribute(span, GEN_AI_RESPONSE_ID, response.id)
+    _set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_ID, response.id)
     if hasattr(response, "generations"):
         generations = response.generations  # Cohere v5
     else:
         generations = response  # Cohere v4
 
     for index, generation in enumerate(generations):
-        prefix = f"{SpanAttributes.GEN_AI_COMPLETION}.{index}"
+        prefix = f"{GenAIAttributes.GEN_AI_COMPLETION}.{index}"
         _set_span_attribute(span, f"{prefix}.content", generation.text)
         _set_span_attribute(span, f"gen_ai.response.{index}.id", generation.id)
 
 
 def _set_span_rerank_response(span, response):
-    _set_span_attribute(span, GEN_AI_RESPONSE_ID, response.id)
+    _set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_ID, response.id)
     for idx, doc in enumerate(response.results):
-        prefix = f"{SpanAttributes.GEN_AI_COMPLETION}.{idx}"
+        prefix = f"{GenAIAttributes.GEN_AI_COMPLETION}.{idx}"
         _set_span_attribute(span, f"{prefix}.role", "assistant")
         content = f"Doc {doc.index}, Score: {doc.relevance_score}"
         if doc.document:

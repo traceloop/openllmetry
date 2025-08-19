@@ -31,24 +31,24 @@ def test_ollama_chat_legacy(
     spans = span_exporter.get_finished_spans()
     ollama_span = spans[0]
     assert ollama_span.name == "ollama.chat"
-    assert ollama_span.attributes.get(f"{SpanAttributes.GEN_AI_SYSTEM}") == "Ollama"
+    assert ollama_span.attributes.get(f"{GenAIAttributes.GEN_AI_SYSTEM}") == "Ollama"
     assert ollama_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
     assert not ollama_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
-    assert ollama_span.attributes.get(f"{SpanAttributes.GEN_AI_REQUEST_MODEL}") == "llama3"
+    assert ollama_span.attributes.get(f"{GenAIAttributes.GEN_AI_REQUEST_MODEL}") == "llama3"
     assert (
-        ollama_span.attributes.get(f"{SpanAttributes.GEN_AI_PROMPT}.0.content")
+        ollama_span.attributes.get(f"{GenAIAttributes.GEN_AI_PROMPT}.0.content")
         == "Tell me a joke about OpenTelemetry"
     )
     assert (
-        ollama_span.attributes.get(f"{SpanAttributes.GEN_AI_COMPLETION}.0.content")
+        ollama_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content")
         == response["message"]["content"]
     )
-    assert ollama_span.attributes.get(SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 17
+    assert ollama_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 17
     assert ollama_span.attributes.get(
         SpanAttributes.LLM_USAGE_TOTAL_TOKENS
     ) == ollama_span.attributes.get(
-        SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
-    ) + ollama_span.attributes.get(SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS)
+        GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
+    ) + ollama_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS)
 
     logs = log_exporter.get_finished_logs()
     assert (
@@ -73,16 +73,16 @@ def test_ollama_chat_with_events_with_content(
     spans = span_exporter.get_finished_spans()
     ollama_span = spans[0]
     assert ollama_span.name == "ollama.chat"
-    assert ollama_span.attributes.get(f"{SpanAttributes.GEN_AI_SYSTEM}") == "Ollama"
+    assert ollama_span.attributes.get(f"{GenAIAttributes.GEN_AI_SYSTEM}") == "Ollama"
     assert ollama_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
     assert not ollama_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
-    assert ollama_span.attributes.get(f"{SpanAttributes.GEN_AI_REQUEST_MODEL}") == "llama3"
-    assert ollama_span.attributes.get(SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 17
+    assert ollama_span.attributes.get(f"{GenAIAttributes.GEN_AI_REQUEST_MODEL}") == "llama3"
+    assert ollama_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 17
     assert ollama_span.attributes.get(
         SpanAttributes.LLM_USAGE_TOTAL_TOKENS
     ) == ollama_span.attributes.get(
-        SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
-    ) + ollama_span.attributes.get(SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS)
+        GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
+    ) + ollama_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS)
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2
@@ -121,16 +121,16 @@ def test_ollama_chat_with_events_with_no_content(
     spans = span_exporter.get_finished_spans()
     ollama_span = spans[0]
     assert ollama_span.name == "ollama.chat"
-    assert ollama_span.attributes.get(f"{SpanAttributes.GEN_AI_SYSTEM}") == "Ollama"
+    assert ollama_span.attributes.get(f"{GenAIAttributes.GEN_AI_SYSTEM}") == "Ollama"
     assert ollama_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
     assert not ollama_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
-    assert ollama_span.attributes.get(f"{SpanAttributes.GEN_AI_REQUEST_MODEL}") == "llama3"
-    assert ollama_span.attributes.get(SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 17
+    assert ollama_span.attributes.get(f"{GenAIAttributes.GEN_AI_REQUEST_MODEL}") == "llama3"
+    assert ollama_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 17
     assert ollama_span.attributes.get(
         SpanAttributes.LLM_USAGE_TOTAL_TOKENS
     ) == ollama_span.attributes.get(
-        SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
-    ) + ollama_span.attributes.get(SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS)
+        GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
+    ) + ollama_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS)
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2
@@ -177,27 +177,27 @@ def test_ollama_chat_tool_calls_legacy(
     spans = span_exporter.get_finished_spans()
     ollama_span = spans[0]
     assert ollama_span.name == "ollama.chat"
-    assert ollama_span.attributes.get(f"{SpanAttributes.GEN_AI_SYSTEM}") == "Ollama"
+    assert ollama_span.attributes.get(f"{GenAIAttributes.GEN_AI_SYSTEM}") == "Ollama"
     assert ollama_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
     assert not ollama_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert (
-        ollama_span.attributes.get(f"{SpanAttributes.GEN_AI_REQUEST_MODEL}") == "llama3.1"
+        ollama_span.attributes.get(f"{GenAIAttributes.GEN_AI_REQUEST_MODEL}") == "llama3.1"
     )
     assert (
         f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.0.content"
         not in ollama_span.attributes
     )
     assert (
-        ollama_span.attributes[f"{SpanAttributes.GEN_AI_PROMPT}.0.tool_calls.0.name"]
+        ollama_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.tool_calls.0.name"]
         == "get_current_weather"
     )
     assert (
-        ollama_span.attributes[f"{SpanAttributes.GEN_AI_PROMPT}.0.tool_calls.0.arguments"]
+        ollama_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.tool_calls.0.arguments"]
         == '{"location": "San Francisco"}'
     )
 
     assert (
-        ollama_span.attributes[f"{SpanAttributes.GEN_AI_PROMPT}.1.content"]
+        ollama_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.1.content"]
         == "The weather in San Francisco is 70 degrees and sunny."
     )
 
@@ -237,11 +237,11 @@ def test_ollama_chat_tool_calls_with_events_with_content(
     ollama_span = spans[0]
 
     assert ollama_span.name == "ollama.chat"
-    assert ollama_span.attributes.get(f"{SpanAttributes.GEN_AI_SYSTEM}") == "Ollama"
+    assert ollama_span.attributes.get(f"{GenAIAttributes.GEN_AI_SYSTEM}") == "Ollama"
     assert ollama_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
     assert not ollama_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert (
-        ollama_span.attributes.get(f"{SpanAttributes.GEN_AI_REQUEST_MODEL}") == "llama3.1"
+        ollama_span.attributes.get(f"{GenAIAttributes.GEN_AI_REQUEST_MODEL}") == "llama3.1"
     )
 
     logs = log_exporter.get_finished_logs()
@@ -312,11 +312,11 @@ def test_ollama_chat_tool_calls_with_events_with_no_content(
     ollama_span = spans[0]
 
     assert ollama_span.name == "ollama.chat"
-    assert ollama_span.attributes.get(f"{SpanAttributes.GEN_AI_SYSTEM}") == "Ollama"
+    assert ollama_span.attributes.get(f"{GenAIAttributes.GEN_AI_SYSTEM}") == "Ollama"
     assert ollama_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
     assert not ollama_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert (
-        ollama_span.attributes.get(f"{SpanAttributes.GEN_AI_REQUEST_MODEL}") == "llama3.1"
+        ollama_span.attributes.get(f"{GenAIAttributes.GEN_AI_REQUEST_MODEL}") == "llama3.1"
     )
 
     logs = log_exporter.get_finished_logs()
@@ -372,24 +372,24 @@ def test_ollama_streaming_chat_legacy(
     spans = span_exporter.get_finished_spans()
     ollama_span = spans[0]
     assert ollama_span.name == "ollama.chat"
-    assert ollama_span.attributes.get(f"{SpanAttributes.GEN_AI_SYSTEM}") == "Ollama"
+    assert ollama_span.attributes.get(f"{GenAIAttributes.GEN_AI_SYSTEM}") == "Ollama"
     assert ollama_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
     assert ollama_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
-    assert ollama_span.attributes.get(f"{SpanAttributes.GEN_AI_REQUEST_MODEL}") == "llama3"
+    assert ollama_span.attributes.get(f"{GenAIAttributes.GEN_AI_REQUEST_MODEL}") == "llama3"
     assert (
-        ollama_span.attributes.get(f"{SpanAttributes.GEN_AI_PROMPT}.0.content")
+        ollama_span.attributes.get(f"{GenAIAttributes.GEN_AI_PROMPT}.0.content")
         == "Tell me a joke about OpenTelemetry"
     )
     assert (
-        ollama_span.attributes.get(f"{SpanAttributes.GEN_AI_COMPLETION}.0.content")
+        ollama_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content")
         == response
     )
-    assert ollama_span.attributes.get(SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 17
+    assert ollama_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 17
     assert ollama_span.attributes.get(
         SpanAttributes.LLM_USAGE_TOTAL_TOKENS
     ) == ollama_span.attributes.get(
-        SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
-    ) + ollama_span.attributes.get(SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS)
+        GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
+    ) + ollama_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS)
 
     logs = log_exporter.get_finished_logs()
     assert (
@@ -419,16 +419,16 @@ def test_ollama_streaming_chat_with_events_with_content(
     spans = span_exporter.get_finished_spans()
     ollama_span = spans[0]
     assert ollama_span.name == "ollama.chat"
-    assert ollama_span.attributes.get(f"{SpanAttributes.GEN_AI_SYSTEM}") == "Ollama"
+    assert ollama_span.attributes.get(f"{GenAIAttributes.GEN_AI_SYSTEM}") == "Ollama"
     assert ollama_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
     assert ollama_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
-    assert ollama_span.attributes.get(f"{SpanAttributes.GEN_AI_REQUEST_MODEL}") == "llama3"
-    assert ollama_span.attributes.get(SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 17
+    assert ollama_span.attributes.get(f"{GenAIAttributes.GEN_AI_REQUEST_MODEL}") == "llama3"
+    assert ollama_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 17
     assert ollama_span.attributes.get(
         SpanAttributes.LLM_USAGE_TOTAL_TOKENS
     ) == ollama_span.attributes.get(
-        SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
-    ) + ollama_span.attributes.get(SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS)
+        GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
+    ) + ollama_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS)
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2
@@ -472,16 +472,16 @@ def test_ollama_streaming_chat_with_events_with_no_content(
     spans = span_exporter.get_finished_spans()
     ollama_span = spans[0]
     assert ollama_span.name == "ollama.chat"
-    assert ollama_span.attributes.get(f"{SpanAttributes.GEN_AI_SYSTEM}") == "Ollama"
+    assert ollama_span.attributes.get(f"{GenAIAttributes.GEN_AI_SYSTEM}") == "Ollama"
     assert ollama_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
     assert ollama_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
-    assert ollama_span.attributes.get(f"{SpanAttributes.GEN_AI_REQUEST_MODEL}") == "llama3"
-    assert ollama_span.attributes.get(SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 17
+    assert ollama_span.attributes.get(f"{GenAIAttributes.GEN_AI_REQUEST_MODEL}") == "llama3"
+    assert ollama_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 17
     assert ollama_span.attributes.get(
         SpanAttributes.LLM_USAGE_TOTAL_TOKENS
     ) == ollama_span.attributes.get(
-        SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
-    ) + ollama_span.attributes.get(SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS)
+        GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
+    ) + ollama_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS)
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2
@@ -517,25 +517,25 @@ async def test_ollama_async_chat_legacy(
     spans = span_exporter.get_finished_spans()
     ollama_span = spans[0]
     assert ollama_span.name == "ollama.chat"
-    assert ollama_span.attributes.get(f"{SpanAttributes.GEN_AI_SYSTEM}") == "Ollama"
+    assert ollama_span.attributes.get(f"{GenAIAttributes.GEN_AI_SYSTEM}") == "Ollama"
     assert ollama_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
     assert not ollama_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
-    assert ollama_span.attributes.get(f"{SpanAttributes.GEN_AI_REQUEST_MODEL}") == "llama3"
+    assert ollama_span.attributes.get(f"{GenAIAttributes.GEN_AI_REQUEST_MODEL}") == "llama3"
     assert (
-        ollama_span.attributes.get(f"{SpanAttributes.GEN_AI_PROMPT}.0.content")
+        ollama_span.attributes.get(f"{GenAIAttributes.GEN_AI_PROMPT}.0.content")
         == "Tell me a joke about OpenTelemetry"
     )
     assert (
-        ollama_span.attributes.get(f"{SpanAttributes.GEN_AI_COMPLETION}.0.content")
+        ollama_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content")
         == response["message"]["content"]
     )
     # For some reason, async ollama chat doesn't report prompt token usage back
-    # assert ollama_span.attributes.get(SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 17
+    # assert ollama_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 17
     assert ollama_span.attributes.get(
         SpanAttributes.LLM_USAGE_TOTAL_TOKENS
     ) == ollama_span.attributes.get(
-        SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
-    ) + ollama_span.attributes.get(SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS)
+        GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
+    ) + ollama_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS)
 
     logs = log_exporter.get_finished_logs()
     assert (
@@ -561,17 +561,17 @@ async def test_ollama_async_chat_with_events_with_content(
     spans = span_exporter.get_finished_spans()
     ollama_span = spans[0]
     assert ollama_span.name == "ollama.chat"
-    assert ollama_span.attributes.get(f"{SpanAttributes.GEN_AI_SYSTEM}") == "Ollama"
+    assert ollama_span.attributes.get(f"{GenAIAttributes.GEN_AI_SYSTEM}") == "Ollama"
     assert ollama_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
     assert not ollama_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
-    assert ollama_span.attributes.get(f"{SpanAttributes.GEN_AI_REQUEST_MODEL}") == "llama3"
+    assert ollama_span.attributes.get(f"{GenAIAttributes.GEN_AI_REQUEST_MODEL}") == "llama3"
     # For some reason, async ollama chat doesn't report prompt token usage back
-    # assert ollama_span.attributes.get(SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 17
+    # assert ollama_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 17
     assert ollama_span.attributes.get(
         SpanAttributes.LLM_USAGE_TOTAL_TOKENS
     ) == ollama_span.attributes.get(
-        SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
-    ) + ollama_span.attributes.get(SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS)
+        GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
+    ) + ollama_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS)
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2
@@ -611,17 +611,17 @@ async def test_ollama_async_chat_with_events_with_no_content(
     spans = span_exporter.get_finished_spans()
     ollama_span = spans[0]
     assert ollama_span.name == "ollama.chat"
-    assert ollama_span.attributes.get(f"{SpanAttributes.GEN_AI_SYSTEM}") == "Ollama"
+    assert ollama_span.attributes.get(f"{GenAIAttributes.GEN_AI_SYSTEM}") == "Ollama"
     assert ollama_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
     assert not ollama_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
-    assert ollama_span.attributes.get(f"{SpanAttributes.GEN_AI_REQUEST_MODEL}") == "llama3"
+    assert ollama_span.attributes.get(f"{GenAIAttributes.GEN_AI_REQUEST_MODEL}") == "llama3"
     # For some reason, async ollama chat doesn't report prompt token usage back
-    # assert ollama_span.attributes.get(SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 17
+    # assert ollama_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 17
     assert ollama_span.attributes.get(
         SpanAttributes.LLM_USAGE_TOTAL_TOKENS
     ) == ollama_span.attributes.get(
-        SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
-    ) + ollama_span.attributes.get(SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS)
+        GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
+    ) + ollama_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS)
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2
@@ -662,24 +662,24 @@ async def test_ollama_async_streaming_chat_legacy(
     spans = span_exporter.get_finished_spans()
     ollama_span = spans[0]
     assert ollama_span.name == "ollama.chat"
-    assert ollama_span.attributes.get(f"{SpanAttributes.GEN_AI_SYSTEM}") == "Ollama"
+    assert ollama_span.attributes.get(f"{GenAIAttributes.GEN_AI_SYSTEM}") == "Ollama"
     assert ollama_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
     assert ollama_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
-    assert ollama_span.attributes.get(f"{SpanAttributes.GEN_AI_REQUEST_MODEL}") == "llama3"
+    assert ollama_span.attributes.get(f"{GenAIAttributes.GEN_AI_REQUEST_MODEL}") == "llama3"
     assert (
-        ollama_span.attributes.get(f"{SpanAttributes.GEN_AI_PROMPT}.0.content")
+        ollama_span.attributes.get(f"{GenAIAttributes.GEN_AI_PROMPT}.0.content")
         == "Tell me a joke about OpenTelemetry"
     )
     assert (
-        ollama_span.attributes.get(f"{SpanAttributes.GEN_AI_COMPLETION}.0.content")
+        ollama_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content")
         == response
     )
-    assert ollama_span.attributes.get(SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 17
+    assert ollama_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 17
     assert ollama_span.attributes.get(
         SpanAttributes.LLM_USAGE_TOTAL_TOKENS
     ) == ollama_span.attributes.get(
-        SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
-    ) + ollama_span.attributes.get(SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS)
+        GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
+    ) + ollama_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS)
 
     logs = log_exporter.get_finished_logs()
     assert (
@@ -710,16 +710,16 @@ async def test_ollama_async_streaming_chat_with_events_with_content(
     spans = span_exporter.get_finished_spans()
     ollama_span = spans[0]
     assert ollama_span.name == "ollama.chat"
-    assert ollama_span.attributes.get(f"{SpanAttributes.GEN_AI_SYSTEM}") == "Ollama"
+    assert ollama_span.attributes.get(f"{GenAIAttributes.GEN_AI_SYSTEM}") == "Ollama"
     assert ollama_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
     assert ollama_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
-    assert ollama_span.attributes.get(f"{SpanAttributes.GEN_AI_REQUEST_MODEL}") == "llama3"
-    assert ollama_span.attributes.get(SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 17
+    assert ollama_span.attributes.get(f"{GenAIAttributes.GEN_AI_REQUEST_MODEL}") == "llama3"
+    assert ollama_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 17
     assert ollama_span.attributes.get(
         SpanAttributes.LLM_USAGE_TOTAL_TOKENS
     ) == ollama_span.attributes.get(
-        SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
-    ) + ollama_span.attributes.get(SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS)
+        GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
+    ) + ollama_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS)
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2
@@ -764,16 +764,16 @@ async def test_ollama_async_streaming_chat_with_events_with_no_content(
     spans = span_exporter.get_finished_spans()
     ollama_span = spans[0]
     assert ollama_span.name == "ollama.chat"
-    assert ollama_span.attributes.get(f"{SpanAttributes.GEN_AI_SYSTEM}") == "Ollama"
+    assert ollama_span.attributes.get(f"{GenAIAttributes.GEN_AI_SYSTEM}") == "Ollama"
     assert ollama_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
     assert ollama_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
-    assert ollama_span.attributes.get(f"{SpanAttributes.GEN_AI_REQUEST_MODEL}") == "llama3"
-    assert ollama_span.attributes.get(SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 17
+    assert ollama_span.attributes.get(f"{GenAIAttributes.GEN_AI_REQUEST_MODEL}") == "llama3"
+    assert ollama_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 17
     assert ollama_span.attributes.get(
         SpanAttributes.LLM_USAGE_TOTAL_TOKENS
     ) == ollama_span.attributes.get(
-        SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
-    ) + ollama_span.attributes.get(SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS)
+        GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
+    ) + ollama_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS)
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2
@@ -805,17 +805,17 @@ def test_token_histogram_recording():
     token_histogram.record.assert_any_call(
         7,
         attributes={
-            SpanAttributes.GEN_AI_SYSTEM: "Ollama",
-            SpanAttributes.GEN_AI_TOKEN_TYPE: "input",
-            SpanAttributes.GEN_AI_RESPONSE_MODEL: "llama3",
+            GenAIAttributes.GEN_AI_SYSTEM: "Ollama",
+            GenAIAttributes.GEN_AI_TOKEN_TYPE: "input",
+            GenAIAttributes.GEN_AI_RESPONSE_MODEL: "llama3",
         },
     )
     token_histogram.record.assert_any_call(
         10,
         attributes={
-            SpanAttributes.GEN_AI_SYSTEM: "Ollama",
-            SpanAttributes.GEN_AI_TOKEN_TYPE: "output",
-            SpanAttributes.GEN_AI_RESPONSE_MODEL: "llama3",
+            GenAIAttributes.GEN_AI_SYSTEM: "Ollama",
+            GenAIAttributes.GEN_AI_TOKEN_TYPE: "output",
+            GenAIAttributes.GEN_AI_RESPONSE_MODEL: "llama3",
         },
     )
 

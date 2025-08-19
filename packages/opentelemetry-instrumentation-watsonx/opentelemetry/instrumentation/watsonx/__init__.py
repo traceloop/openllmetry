@@ -25,6 +25,9 @@ from opentelemetry.instrumentation.watsonx.utils import (
 )
 from opentelemetry.instrumentation.watsonx.version import __version__
 from opentelemetry.metrics import Counter, Histogram, get_meter
+from opentelemetry.semconv._incubating.attributes import (
+    gen_ai_attributes as GenAIAttributes,
+)
 from opentelemetry.semconv_ai import (
     SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
     LLMRequestTypeValues,
@@ -132,13 +135,13 @@ def _set_input_attributes(span, instance, kwargs):
             for index, input in enumerate(prompt):
                 _set_span_attribute(
                     span,
-                    f"{SpanAttributes.GEN_AI_PROMPT}.{index}.user",
+                    f"{GenAIAttributes.GEN_AI_PROMPT}.{index}.user",
                     input,
                 )
         else:
             _set_span_attribute(
                 span,
-                f"{SpanAttributes.GEN_AI_PROMPT}.0.user",
+                f"{GenAIAttributes.GEN_AI_PROMPT}.0.user",
                 prompt,
             )
 
@@ -147,7 +150,7 @@ def set_model_input_attributes(span, instance):
     if not span.is_recording():
         return
 
-    _set_span_attribute(span, SpanAttributes.GEN_AI_REQUEST_MODEL, instance.model_id)
+    _set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_MODEL, instance.model_id)
     # Set other attributes
     modelParameters = instance.params
     if modelParameters is not None:
@@ -172,7 +175,7 @@ def set_model_input_attributes(span, instance):
             modelParameters.get("min_new_tokens", None),
         )
         _set_span_attribute(
-            span, SpanAttributes.GEN_AI_REQUEST_TOP_K, modelParameters.get("top_k", None)
+            span, GenAIAttributes.GEN_AI_REQUEST_TOP_K, modelParameters.get("top_k", None)
         )
         _set_span_attribute(
             span,
@@ -181,11 +184,11 @@ def set_model_input_attributes(span, instance):
         )
         _set_span_attribute(
             span,
-            SpanAttributes.GEN_AI_REQUEST_TEMPERATURE,
+            GenAIAttributes.GEN_AI_REQUEST_TEMPERATURE,
             modelParameters.get("temperature", None),
         )
         _set_span_attribute(
-            span, SpanAttributes.GEN_AI_REQUEST_TOP_P, modelParameters.get("top_p", None)
+            span, GenAIAttributes.GEN_AI_REQUEST_TOP_P, modelParameters.get("top_p", None)
         )
 
 
@@ -194,7 +197,7 @@ def _set_stream_response_attributes(span, stream_response):
         return
     _set_span_attribute(
         span,
-        f"{SpanAttributes.GEN_AI_COMPLETION}.0.content",
+        f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content",
         stream_response.get("generated_text"),
     )
 
@@ -203,16 +206,16 @@ def _set_model_stream_response_attributes(span, stream_response):
     if not span.is_recording():
         return
     _set_span_attribute(
-        span, SpanAttributes.GEN_AI_RESPONSE_MODEL, stream_response.get("model_id")
+        span, GenAIAttributes.GEN_AI_RESPONSE_MODEL, stream_response.get("model_id")
     )
     _set_span_attribute(
         span,
-        SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS,
+        GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS,
         stream_response.get("input_token_count"),
     )
     _set_span_attribute(
         span,
-        SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS,
+        GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS,
         stream_response.get("generated_token_count"),
     )
     total_token = stream_response.get("input_token_count") + stream_response.get(
@@ -235,14 +238,14 @@ def _set_completion_content_attributes(
         if should_send_prompts():
             _set_span_attribute(
                 span,
-                f"{SpanAttributes.GEN_AI_COMPLETION}.{index}.content",
+                f"{GenAIAttributes.GEN_AI_COMPLETION}.{index}.content",
                 results[0]["generated_text"],
             )
         model_id = response.get("model_id")
 
         if response_counter:
             attributes_with_reason = {
-                SpanAttributes.GEN_AI_RESPONSE_MODEL: model_id,
+                GenAIAttributes.GEN_AI_RESPONSE_MODEL: model_id,
                 SpanAttributes.LLM_RESPONSE_STOP_REASON: results[0]["stop_reason"],
             }
             response_counter.add(1, attributes=attributes_with_reason)
@@ -289,7 +292,7 @@ def _set_response_attributes(
 
     if model_id is None:
         return
-    _set_span_attribute(span, SpanAttributes.GEN_AI_RESPONSE_MODEL, model_id)
+    _set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_MODEL, model_id)
 
     shared_attributes = _metric_shared_attributes(response_model=model_id)
 
@@ -298,12 +301,12 @@ def _set_response_attributes(
     if token_histogram:
         attributes_with_token_type = {
             **shared_attributes,
-            SpanAttributes.GEN_AI_TOKEN_TYPE: "output",
+            GenAIAttributes.GEN_AI_TOKEN_TYPE: "output",
         }
         token_histogram.record(completion_token, attributes=attributes_with_token_type)
         attributes_with_token_type = {
             **shared_attributes,
-            SpanAttributes.GEN_AI_TOKEN_TYPE: "input",
+            GenAIAttributes.GEN_AI_TOKEN_TYPE: "input",
         }
         token_histogram.record(prompt_token, attributes=attributes_with_token_type)
 
@@ -321,12 +324,12 @@ def set_model_response_attributes(
     if (prompt_token + completion_token) != 0:
         _set_span_attribute(
             span,
-            SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS,
+            GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS,
             completion_token,
         )
         _set_span_attribute(
             span,
-            SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS,
+            GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS,
             prompt_token,
         )
         _set_span_attribute(
@@ -409,14 +412,14 @@ def _build_and_set_stream_response(
     if token_histogram:
         attributes_with_token_type = {
             **shared_attributes,
-            SpanAttributes.GEN_AI_TOKEN_TYPE: "output",
+            GenAIAttributes.GEN_AI_TOKEN_TYPE: "output",
         }
         token_histogram.record(
             stream_generated_token_count, attributes=attributes_with_token_type
         )
         attributes_with_token_type = {
             **shared_attributes,
-            SpanAttributes.GEN_AI_TOKEN_TYPE: "input",
+            GenAIAttributes.GEN_AI_TOKEN_TYPE: "input",
         }
         token_histogram.record(
             stream_input_token_count, attributes=attributes_with_token_type
@@ -436,8 +439,8 @@ def _build_and_set_stream_response(
 
 def _metric_shared_attributes(response_model: str, is_streaming: bool = False):
     return {
-        SpanAttributes.GEN_AI_RESPONSE_MODEL: response_model,
-        SpanAttributes.GEN_AI_SYSTEM: "watsonx",
+        GenAIAttributes.GEN_AI_RESPONSE_MODEL: response_model,
+        GenAIAttributes.GEN_AI_SYSTEM: "watsonx",
         "stream": is_streaming,
     }
 
@@ -561,7 +564,7 @@ def _wrap(
         name,
         kind=SpanKind.CLIENT,
         attributes={
-            SpanAttributes.GEN_AI_SYSTEM: "Watsonx",
+            GenAIAttributes.GEN_AI_SYSTEM: "Watsonx",
             SpanAttributes.LLM_REQUEST_TYPE: LLMRequestTypeValues.COMPLETION.value,
         },
     )

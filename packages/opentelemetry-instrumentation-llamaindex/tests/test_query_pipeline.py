@@ -10,7 +10,9 @@ from llama_index.core.query_pipeline import QueryPipeline
 from llama_index.core.response_synthesizers import TreeSummarize
 from llama_index.llms.openai import OpenAI
 from llama_index.postprocessor.cohere_rerank import CohereRerank
-from opentelemetry.semconv_ai import SpanAttributes
+from opentelemetry.semconv._incubating.attributes import (
+    gen_ai_attributes as GenAIAttributes,
+)
 
 
 @pytest.mark.vcr
@@ -75,27 +77,27 @@ def test_query_pipeline(instrument_legacy, span_exporter):
     assert llm_span_1.parent is not None
     assert llm_span_2.parent is not None
 
-    assert llm_span_1.attributes[SpanAttributes.GEN_AI_REQUEST_MODEL] == "gpt-3.5-turbo"
+    assert llm_span_1.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL] == "gpt-3.5-turbo"
     assert (
-        llm_span_1.attributes[SpanAttributes.GEN_AI_RESPONSE_MODEL] == "gpt-3.5-turbo-0125"
+        llm_span_1.attributes[GenAIAttributes.GEN_AI_RESPONSE_MODEL] == "gpt-3.5-turbo-0125"
     )
-    assert llm_span_1.attributes[f"{SpanAttributes.GEN_AI_PROMPT}.0.content"] == (
+    assert llm_span_1.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"] == (
         "Please generate a question about Paul Graham's life regarding the following topic YCombinator"
     )
-    assert llm_span_1.attributes[f"{SpanAttributes.GEN_AI_COMPLETION}.0.content"] == (
+    assert llm_span_1.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content"] == (
         "What role did Paul Graham play in the founding and development of YCombinator, and "
         "how has his involvement shaped the trajectory of the company?"
     )
 
-    assert llm_span_2.attributes[SpanAttributes.GEN_AI_REQUEST_MODEL] == "gpt-3.5-turbo"
+    assert llm_span_2.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL] == "gpt-3.5-turbo"
     assert (
-        llm_span_2.attributes[SpanAttributes.GEN_AI_RESPONSE_MODEL] == "gpt-3.5-turbo-0125"
+        llm_span_2.attributes[GenAIAttributes.GEN_AI_RESPONSE_MODEL] == "gpt-3.5-turbo-0125"
     )
-    assert llm_span_2.attributes[f"{SpanAttributes.GEN_AI_PROMPT}.0.content"].startswith(
+    assert llm_span_2.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"].startswith(
         "You are an expert Q&A system that is trusted around the world."
     )
     assert llm_span_2.attributes[
-        f"{SpanAttributes.GEN_AI_COMPLETION}.0.content"
+        f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content"
     ].startswith(
         "Paul Graham played a pivotal role in the founding and development of Y Combinator."
     )

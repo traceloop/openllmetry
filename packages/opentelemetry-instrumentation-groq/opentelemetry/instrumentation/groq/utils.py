@@ -5,7 +5,9 @@ from importlib.metadata import version
 
 from opentelemetry import context as context_api
 from opentelemetry.instrumentation.groq.config import Config
-from opentelemetry.semconv_ai import SpanAttributes
+from opentelemetry.semconv._incubating.attributes import (
+    gen_ai_attributes as GenAIAttributes,
+)
 
 GEN_AI_SYSTEM = "gen_ai.system"
 GEN_AI_SYSTEM_GROQ = "groq"
@@ -60,7 +62,7 @@ def shared_metrics_attributes(response):
     return {
         **common_attributes,
         GEN_AI_SYSTEM: GEN_AI_SYSTEM_GROQ,
-        SpanAttributes.GEN_AI_RESPONSE_MODEL: response_dict.get("model"),
+        GenAIAttributes.GEN_AI_RESPONSE_MODEL: response_dict.get("model"),
     }
 
 

@@ -41,22 +41,22 @@ def test_cohere_completion(instrument_legacy, brt, span_exporter, log_exporter):
 
     # Assert on model name
     assert (
-        bedrock_span.attributes[SpanAttributes.GEN_AI_REQUEST_MODEL] == "command-text-v14"
+        bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL] == "command-text-v14"
     )
 
     # Assert on vendor
-    assert bedrock_span.attributes[SpanAttributes.GEN_AI_SYSTEM] == "AWS"
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "AWS"
 
     # Assert on request type
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "completion"
 
     # Assert on prompt
-    assert bedrock_span.attributes[f"{SpanAttributes.GEN_AI_PROMPT}.0.user"] == prompt
+    assert bedrock_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.user"] == prompt
 
     # Assert on response
     generated_text = response_body["generations"][0]["text"]
     assert (
-        bedrock_span.attributes[f"{SpanAttributes.GEN_AI_COMPLETION}.0.content"]
+        bedrock_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content"]
         == generated_text
     )
     assert (
@@ -65,9 +65,9 @@ def test_cohere_completion(instrument_legacy, brt, span_exporter, log_exporter):
     )
 
     # Assert on other request parameters
-    assert bedrock_span.attributes[SpanAttributes.GEN_AI_REQUEST_MAX_TOKENS] == 200
-    assert bedrock_span.attributes[SpanAttributes.GEN_AI_REQUEST_TEMPERATURE] == 0.5
-    assert bedrock_span.attributes[SpanAttributes.GEN_AI_REQUEST_TOP_P] == 0.5
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS] == 200
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_TEMPERATURE] == 0.5
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_TOP_P] == 0.5
 
     logs = log_exporter.get_finished_logs()
     assert (
@@ -103,11 +103,11 @@ def test_cohere_completion_with_events_with_no_content(
 
     # Assert on model name
     assert (
-        bedrock_span.attributes[SpanAttributes.GEN_AI_REQUEST_MODEL] == "command-text-v14"
+        bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL] == "command-text-v14"
     )
 
     # Assert on vendor
-    assert bedrock_span.attributes[SpanAttributes.GEN_AI_SYSTEM] == "AWS"
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "AWS"
 
     # Assert on request type
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "completion"
@@ -119,9 +119,9 @@ def test_cohere_completion_with_events_with_no_content(
     )
 
     # Assert on other request parameters
-    assert bedrock_span.attributes[SpanAttributes.GEN_AI_REQUEST_MAX_TOKENS] == 200
-    assert bedrock_span.attributes[SpanAttributes.GEN_AI_REQUEST_TEMPERATURE] == 0.5
-    assert bedrock_span.attributes[SpanAttributes.GEN_AI_REQUEST_TOP_P] == 0.5
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS] == 200
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_TEMPERATURE] == 0.5
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_TOP_P] == 0.5
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2
@@ -171,11 +171,11 @@ def test_cohere_completion_with_events_with_content(
 
     # Assert on model name
     assert (
-        bedrock_span.attributes[SpanAttributes.GEN_AI_REQUEST_MODEL] == "command-text-v14"
+        bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL] == "command-text-v14"
     )
 
     # Assert on vendor
-    assert bedrock_span.attributes[SpanAttributes.GEN_AI_SYSTEM] == "AWS"
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "AWS"
 
     # Assert on request type
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "completion"
@@ -188,9 +188,9 @@ def test_cohere_completion_with_events_with_content(
     )
 
     # Assert on other request parameters
-    assert bedrock_span.attributes[SpanAttributes.GEN_AI_REQUEST_MAX_TOKENS] == 200
-    assert bedrock_span.attributes[SpanAttributes.GEN_AI_REQUEST_TEMPERATURE] == 0.5
-    assert bedrock_span.attributes[SpanAttributes.GEN_AI_REQUEST_TOP_P] == 0.5
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS] == 200
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_TEMPERATURE] == 0.5
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_TOP_P] == 0.5
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2

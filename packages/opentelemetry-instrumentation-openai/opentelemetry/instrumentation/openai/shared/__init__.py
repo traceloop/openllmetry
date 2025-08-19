@@ -1,6 +1,8 @@
 import json
 import logging
 import types
+import openai
+import pydantic
 from importlib.metadata import version
 
 from opentelemetry.instrumentation.openai.shared.config import Config
@@ -9,14 +11,12 @@ from opentelemetry.instrumentation.openai.utils import (
     is_openai_v1,
     should_record_stream_token_usage,
 )
-from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
-    GEN_AI_RESPONSE_ID,
+from opentelemetry.semconv._incubating.attributes import (
+    gen_ai_attributes as GenAIAttributes,
 )
 from opentelemetry.semconv_ai import SpanAttributes
 from opentelemetry.trace.propagation import set_span_in_context
 from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
-import openai
-import pydantic
 
 OPENAI_LLM_USAGE_TOKEN_TYPES = ["prompt_tokens", "completion_tokens"]
 PROMPT_FILTER_KEY = "prompt_filter_results"
@@ -112,7 +112,7 @@ def _set_request_attributes(span, kwargs, instance=None):
 
     base_url = _get_openai_base_url(instance) if instance else ""
     vendor = _get_vendor_from_url(base_url)
-    _set_span_attribute(span, SpanAttributes.GEN_AI_SYSTEM, vendor)
+    _set_span_attribute(span, GenAIAttributes.GEN_AI_SYSTEM, vendor)
 
     model = kwargs.get("model")
     if vendor == "AWS" and model and "." in model:
@@ -120,14 +120,14 @@ def _set_request_attributes(span, kwargs, instance=None):
     elif vendor == "OpenRouter":
         model = _extract_model_name_from_provider_format(model)
 
-    _set_span_attribute(span, SpanAttributes.GEN_AI_REQUEST_MODEL, model)
+    _set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_MODEL, model)
     _set_span_attribute(
-        span, SpanAttributes.GEN_AI_REQUEST_MAX_TOKENS, kwargs.get("max_tokens")
+        span, GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS, kwargs.get("max_tokens")
     )
     _set_span_attribute(
-        span, SpanAttributes.GEN_AI_REQUEST_TEMPERATURE, kwargs.get("temperature")
+        span, GenAIAttributes.GEN_AI_REQUEST_TEMPERATURE, kwargs.get("temperature")
     )
-    _set_span_attribute(span, SpanAttributes.GEN_AI_REQUEST_TOP_P, kwargs.get("top_p"))
+    _set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_TOP_P, kwargs.get("top_p"))
     _set_span_attribute(
         span, SpanAttributes.LLM_FREQUENCY_PENALTY, kwargs.get("frequency_penalty")
     )
@@ -197,7 +197,7 @@ def _set_response_attributes(span, response):
     if "error" in response:
         _set_span_attribute(
             span,
-            f"{SpanAttributes.GEN_AI_PROMPT}.{PROMPT_ERROR}",
+            f"{GenAIAttributes.GEN_AI_PROMPT}.{PROMPT_ERROR}",
             json.dumps(response.get("error")),
         )
         return
@@ -205,8 +205,8 @@ def _set_response_attributes(span, response):
     response_model = response.get("model")
     if response_model:
         response_model = _extract_model_name_from_provider_format(response_model)
-    _set_span_attribute(span, SpanAttributes.GEN_AI_RESPONSE_MODEL, response_model)
-    _set_span_attribute(span, GEN_AI_RESPONSE_ID, response.get("id"))
+    _set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_MODEL, response_model)
+    _set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_ID, response.get("id"))
 
     _set_span_attribute(
         span,
@@ -226,16 +226,16 @@ def _set_response_attributes(span, response):
     )
     _set_span_attribute(
         span,
-        SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS,
+        GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS,
         usage.get("completion_tokens"),
     )
     _set_span_attribute(
-        span, SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS, usage.get("prompt_tokens")
+        span, GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS, usage.get("prompt_tokens")
     )
     prompt_tokens_details = dict(usage.get("prompt_tokens_details", {}))
     _set_span_attribute(
         span,
-        SpanAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS,
+        GenAIAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS,
         prompt_tokens_details.get("cached_tokens", 0),
     )
     return
@@ -245,7 +245,7 @@ def _log_prompt_filter(span, response_dict):
     if response_dict.get("prompt_filter_results"):
         _set_span_attribute(
             span,
-            f"{SpanAttributes.GEN_AI_PROMPT}.{PROMPT_FILTER_KEY}",
+            f"{GenAIAttributes.GEN_AI_PROMPT}.{PROMPT_FILTER_KEY}",
             json.dumps(response_dict.get("prompt_filter_results")),
         )
 
@@ -257,11 +257,11 @@ def _set_span_stream_usage(span, prompt_tokens, completion_tokens):
 
     if isinstance(completion_tokens, int) and completion_tokens >= 0:
         _set_span_attribute(
-            span, SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS, completion_tokens
+            span, GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS, completion_tokens
         )
 
     if isinstance(prompt_tokens, int) and prompt_tokens >= 0:
-        _set_span_attribute(span, SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS, prompt_tokens)
+        _set_span_attribute(span, GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS, prompt_tokens)
 
     if (
         isinstance(prompt_tokens, int)
@@ -402,8 +402,8 @@ def metric_shared_attributes(
 
     return {
         **attributes,
-        SpanAttributes.GEN_AI_SYSTEM: vendor,
-        SpanAttributes.GEN_AI_RESPONSE_MODEL: response_model,
+        GenAIAttributes.GEN_AI_SYSTEM: vendor,
+        GenAIAttributes.GEN_AI_RESPONSE_MODEL: response_model,
         "gen_ai.operation.name": operation,
         "server.address": server_address,
         "stream": is_streaming,

@@ -18,11 +18,11 @@ def test_cohere_completion_legacy(
     spans = span_exporter.get_finished_spans()
     cohere_span = spans[0]
     assert cohere_span.name == "cohere.completion"
-    assert cohere_span.attributes.get(SpanAttributes.GEN_AI_SYSTEM) == "Cohere"
+    assert cohere_span.attributes.get(GenAIAttributes.GEN_AI_SYSTEM) == "Cohere"
     assert cohere_span.attributes.get(SpanAttributes.LLM_REQUEST_TYPE) == "completion"
-    assert cohere_span.attributes.get(SpanAttributes.GEN_AI_REQUEST_MODEL) == "command"
+    assert cohere_span.attributes.get(GenAIAttributes.GEN_AI_REQUEST_MODEL) == "command"
     assert (
-        cohere_span.attributes.get(f"{SpanAttributes.GEN_AI_COMPLETION}.0.content")
+        cohere_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content")
         == res.generations[0].text
     )
     assert (
@@ -50,9 +50,9 @@ def test_cohere_completion_with_events_with_content(
     spans = span_exporter.get_finished_spans()
     cohere_span = spans[0]
     assert cohere_span.name == "cohere.completion"
-    assert cohere_span.attributes.get(SpanAttributes.GEN_AI_SYSTEM) == "Cohere"
+    assert cohere_span.attributes.get(GenAIAttributes.GEN_AI_SYSTEM) == "Cohere"
     assert cohere_span.attributes.get(SpanAttributes.LLM_REQUEST_TYPE) == "completion"
-    assert cohere_span.attributes.get(SpanAttributes.GEN_AI_REQUEST_MODEL) == "command"
+    assert cohere_span.attributes.get(GenAIAttributes.GEN_AI_REQUEST_MODEL) == "command"
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2
@@ -78,9 +78,9 @@ def test_cohere_completion_with_events_with_no_content(
     spans = span_exporter.get_finished_spans()
     cohere_span = spans[0]
     assert cohere_span.name == "cohere.completion"
-    assert cohere_span.attributes.get(SpanAttributes.GEN_AI_SYSTEM) == "Cohere"
+    assert cohere_span.attributes.get(GenAIAttributes.GEN_AI_SYSTEM) == "Cohere"
     assert cohere_span.attributes.get(SpanAttributes.LLM_REQUEST_TYPE) == "completion"
-    assert cohere_span.attributes.get(SpanAttributes.GEN_AI_REQUEST_MODEL) == "command"
+    assert cohere_span.attributes.get(GenAIAttributes.GEN_AI_REQUEST_MODEL) == "command"
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2

@@ -3,7 +3,9 @@ from opentelemetry.instrumentation.openai.shared.event_emitter import emit_event
 from opentelemetry.instrumentation.openai.shared.event_models import ChoiceEvent
 from opentelemetry.instrumentation.openai.utils import should_emit_events
 from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
-from opentelemetry.semconv_ai import SpanAttributes
+from opentelemetry.semconv._incubating.attributes import (
+    gen_ai_attributes as GenAIAttributes,
+)
 from opentelemetry.trace import Status, StatusCode
 from typing_extensions import override
 
@@ -24,12 +26,12 @@ class EventHandleWrapper(AssistantEventHandler):
     def on_end(self):
         _set_span_attribute(
             self._span,
-            SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS,
+            GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS,
             self._prompt_tokens,
         )
         _set_span_attribute(
             self._span,
-            SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS,
+            GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS,
             self._completion_tokens,
         )
         self._original_handler.on_end()
@@ -118,12 +120,12 @@ class EventHandleWrapper(AssistantEventHandler):
         if not should_emit_events():
             _set_span_attribute(
                 self._span,
-                f"{SpanAttributes.GEN_AI_COMPLETION}.{self._current_text_index}.role",
+                f"{GenAIAttributes.GEN_AI_COMPLETION}.{self._current_text_index}.role",
                 "assistant",
             )
             _set_span_attribute(
                 self._span,
-                f"{SpanAttributes.GEN_AI_COMPLETION}.{self._current_text_index}.content",
+                f"{GenAIAttributes.GEN_AI_COMPLETION}.{self._current_text_index}.content",
                 text.value,
             )
 

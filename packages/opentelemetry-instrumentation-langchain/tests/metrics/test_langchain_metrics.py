@@ -3,6 +3,9 @@ import pytest
 from langchain.chains import LLMChain
 from langchain.prompts import PromptTemplate
 from langchain_openai import ChatOpenAI
+from opentelemetry.semconv._incubating.attributes import (
+    gen_ai_attributes as GenAIAttributes,
+)
 from opentelemetry.semconv_ai import Meters, SpanAttributes
 
 
@@ -37,13 +40,13 @@ def test_llm_chain_metrics(instrument_legacy, reader, chain):
                 if metric.name == Meters.LLM_TOKEN_USAGE:
                     found_token_metric = True
                     for data_point in metric.data.data_points:
-                        assert data_point.attributes[SpanAttributes.GEN_AI_TOKEN_TYPE] in [
+                        assert data_point.attributes[GenAIAttributes.GEN_AI_TOKEN_TYPE] in [
                             "output",
                             "input",
                         ]
                         assert data_point.sum > 0
                         assert (
-                            data_point.attributes[SpanAttributes.GEN_AI_SYSTEM]
+                            data_point.attributes[GenAIAttributes.GEN_AI_SYSTEM]
                             == "openai"
                         )
 
@@ -57,7 +60,7 @@ def test_llm_chain_metrics(instrument_legacy, reader, chain):
                     )
                     for data_point in metric.data.data_points:
                         assert (
-                            data_point.attributes[SpanAttributes.GEN_AI_SYSTEM]
+                            data_point.attributes[GenAIAttributes.GEN_AI_SYSTEM]
                             == "openai"
                         )
 
@@ -89,13 +92,13 @@ def test_llm_chain_streaming_metrics(instrument_legacy, reader, llm):
                 if metric.name == Meters.LLM_TOKEN_USAGE:
                     found_token_metric = True
                     for data_point in metric.data.data_points:
-                        assert data_point.attributes[SpanAttributes.GEN_AI_TOKEN_TYPE] in [
+                        assert data_point.attributes[GenAIAttributes.GEN_AI_TOKEN_TYPE] in [
                             "output",
                             "input",
                         ]
                         assert data_point.sum > 0
                         assert (
-                            data_point.attributes[SpanAttributes.GEN_AI_SYSTEM]
+                            data_point.attributes[GenAIAttributes.GEN_AI_SYSTEM]
                             == "openai"
                         )
 
@@ -109,7 +112,7 @@ def test_llm_chain_streaming_metrics(instrument_legacy, reader, llm):
                     )
                     for data_point in metric.data.data_points:
                         assert (
-                            data_point.attributes[SpanAttributes.GEN_AI_SYSTEM]
+                            data_point.attributes[GenAIAttributes.GEN_AI_SYSTEM]
                             == "openai"
                         )
 

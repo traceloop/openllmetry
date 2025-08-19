@@ -9,6 +9,9 @@ from llama_index.core import (
 )
 from llama_index.embeddings.openai import OpenAIEmbedding
 from llama_index.vector_stores.chroma import ChromaVectorStore
+from opentelemetry.semconv._incubating.attributes import (
+    gen_ai_attributes as GenAIAttributes,
+)
 from opentelemetry.semconv_ai import SpanAttributes
 
 
@@ -58,16 +61,16 @@ def test_rag_with_chroma(instrument_legacy, span_exporter):
     assert synthesize_span.parent is not None
     assert llm_span.parent is not None
 
-    assert llm_span.attributes[SpanAttributes.GEN_AI_REQUEST_MODEL] == "gpt-3.5-turbo"
+    assert llm_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL] == "gpt-3.5-turbo"
     assert (
-        llm_span.attributes[SpanAttributes.GEN_AI_RESPONSE_MODEL] == "gpt-3.5-turbo-0125"
+        llm_span.attributes[GenAIAttributes.GEN_AI_RESPONSE_MODEL] == "gpt-3.5-turbo-0125"
     )
-    assert llm_span.attributes[f"{SpanAttributes.GEN_AI_PROMPT}.0.content"].startswith(
+    assert llm_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"].startswith(
         "You are an expert Q&A system that is trusted around the world."
     )
-    assert llm_span.attributes[f"{SpanAttributes.GEN_AI_COMPLETION}.0.content"] == (
+    assert llm_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content"] == (
         "The author worked on writing and programming before college."
     )
-    assert llm_span.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 10
-    assert llm_span.attributes[SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 2070
+    assert llm_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 10
+    assert llm_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 2070
     assert llm_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 2080

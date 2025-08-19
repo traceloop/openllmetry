@@ -37,19 +37,19 @@ def test_anthropic_2_completion(instrument_legacy, brt, span_exporter, log_expor
 
     anthropic_span = spans[0]
     assert (
-        anthropic_span.attributes[f"{SpanAttributes.GEN_AI_PROMPT}.0.user"]
+        anthropic_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.user"]
         == "Human: Tell me a joke about opentelemetry Assistant:"
     )
     assert (
-        anthropic_span.attributes.get(f"{SpanAttributes.GEN_AI_COMPLETION}.0.content")
+        anthropic_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content")
         == completion
     )
 
-    assert anthropic_span.attributes.get(SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 13
+    assert anthropic_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 13
     assert anthropic_span.attributes.get(
-        SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
+        GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
     ) + anthropic_span.attributes.get(
-        SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS
+        GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS
     ) == anthropic_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS)
     # Bedrock does not return the response id for claude-v2:1
     assert anthropic_span.attributes.get("gen_ai.response.id") is None
@@ -87,11 +87,11 @@ def test_anthropic_2_completion_with_events_with_content(
 
     anthropic_span = spans[0]
 
-    assert anthropic_span.attributes.get(SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 13
+    assert anthropic_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 13
     assert anthropic_span.attributes.get(
-        SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
+        GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
     ) + anthropic_span.attributes.get(
-        SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS
+        GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS
     ) == anthropic_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS)
     # Bedrock does not return the response id for claude-v2:1
     assert anthropic_span.attributes.get("gen_ai.response.id") is None
@@ -143,11 +143,11 @@ def test_anthropic_2_completion_with_events_with_no_content(
 
     anthropic_span = spans[0]
 
-    assert anthropic_span.attributes.get(SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 13
+    assert anthropic_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 13
     assert anthropic_span.attributes.get(
-        SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
+        GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
     ) + anthropic_span.attributes.get(
-        SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS
+        GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS
     ) == anthropic_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS)
     # Bedrock does not return the response id for claude-v2:1
     assert anthropic_span.attributes.get("gen_ai.response.id") is None
@@ -203,23 +203,23 @@ def test_anthropic_3_completion_complex_content(
 
     anthropic_span = spans[0]
     assert json.loads(
-        anthropic_span.attributes[f"{SpanAttributes.GEN_AI_PROMPT}.0.content"]
+        anthropic_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"]
     ) == [
         {"type": "text", "text": "Tell me a joke about opentelemetry"},
     ]
 
     assert (
         json.loads(
-            anthropic_span.attributes.get(f"{SpanAttributes.GEN_AI_COMPLETION}.0.content")
+            anthropic_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content")
         )
         == completion
     )
 
-    assert anthropic_span.attributes.get(SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 16
+    assert anthropic_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 16
     assert anthropic_span.attributes.get(
-        SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
+        GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
     ) + anthropic_span.attributes.get(
-        SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS
+        GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS
     ) == anthropic_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS)
     assert (
         anthropic_span.attributes.get("gen_ai.response.id")
@@ -267,11 +267,11 @@ def test_anthropic_3_completion_complex_content_with_events_with_content(
 
     anthropic_span = spans[0]
 
-    assert anthropic_span.attributes.get(SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 16
+    assert anthropic_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 16
     assert anthropic_span.attributes.get(
-        SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
+        GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
     ) + anthropic_span.attributes.get(
-        SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS
+        GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS
     ) == anthropic_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS)
     assert (
         anthropic_span.attributes.get("gen_ai.response.id")
@@ -337,11 +337,11 @@ def test_anthropic_3_completion_complex_content_with_events_with_no_content(
 
     anthropic_span = spans[0]
 
-    assert anthropic_span.attributes.get(SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 16
+    assert anthropic_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 16
     assert anthropic_span.attributes.get(
-        SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
+        GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
     ) + anthropic_span.attributes.get(
-        SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS
+        GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS
     ) == anthropic_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS)
     assert (
         anthropic_span.attributes.get("gen_ai.response.id")
@@ -404,13 +404,13 @@ def test_anthropic_3_completion_streaming(
 
     anthropic_span = spans[0]
     assert json.loads(
-        anthropic_span.attributes[f"{SpanAttributes.GEN_AI_PROMPT}.0.content"]
+        anthropic_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"]
     ) == [
         {"type": "text", "text": "Tell me a joke about opentelemetry"},
     ]
 
     assert json.loads(
-        anthropic_span.attributes.get(f"{SpanAttributes.GEN_AI_COMPLETION}.0.content")
+        anthropic_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content")
     ) == [
         {
             "type": "text",
@@ -418,11 +418,11 @@ def test_anthropic_3_completion_streaming(
         }
     ]
 
-    assert anthropic_span.attributes.get(SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 16
+    assert anthropic_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 16
     assert anthropic_span.attributes.get(
-        SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
+        GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
     ) + anthropic_span.attributes.get(
-        SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS
+        GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS
     ) == anthropic_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS)
     assert (
         anthropic_span.attributes.get("gen_ai.response.id")
@@ -475,11 +475,11 @@ def test_anthropic_3_completion_streaming_with_events_with_content(
 
     anthropic_span = spans[0]
 
-    assert anthropic_span.attributes.get(SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 16
+    assert anthropic_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 16
     assert anthropic_span.attributes.get(
-        SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
+        GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
     ) + anthropic_span.attributes.get(
-        SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS
+        GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS
     ) == anthropic_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS)
     assert (
         anthropic_span.attributes.get("gen_ai.response.id")
@@ -546,11 +546,11 @@ def test_anthropic_3_completion_streaming_with_events_with_no_content(
 
     anthropic_span = spans[0]
 
-    assert anthropic_span.attributes.get(SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 16
+    assert anthropic_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 16
     assert anthropic_span.attributes.get(
-        SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
+        GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
     ) + anthropic_span.attributes.get(
-        SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS
+        GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS
     ) == anthropic_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS)
     assert (
         anthropic_span.attributes.get("gen_ai.response.id")
@@ -606,22 +606,22 @@ def test_anthropic_3_completion_string_content(
 
     anthropic_span = spans[0]
     assert (
-        json.loads(anthropic_span.attributes[f"{SpanAttributes.GEN_AI_PROMPT}.0.content"])
+        json.loads(anthropic_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"])
         == "Tell me a joke about opentelemetry"
     )
 
     assert (
         json.loads(
-            anthropic_span.attributes.get(f"{SpanAttributes.GEN_AI_COMPLETION}.0.content")
+            anthropic_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content")
         )
         == completion
     )
 
-    assert anthropic_span.attributes.get(SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 16
+    assert anthropic_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 16
     assert anthropic_span.attributes.get(
-        SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
+        GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
     ) + anthropic_span.attributes.get(
-        SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS
+        GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS
     ) == anthropic_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS)
     assert (
         anthropic_span.attributes.get("gen_ai.response.id")
@@ -667,11 +667,11 @@ def test_anthropic_3_completion_string_content_with_events_with_content(
 
     anthropic_span = spans[0]
 
-    assert anthropic_span.attributes.get(SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 16
+    assert anthropic_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 16
     assert anthropic_span.attributes.get(
-        SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
+        GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
     ) + anthropic_span.attributes.get(
-        SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS
+        GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS
     ) == anthropic_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS)
     assert (
         anthropic_span.attributes.get("gen_ai.response.id")
@@ -730,11 +730,11 @@ def test_anthropic_3_completion_string_content_with_events_with_no_content(
 
     anthropic_span = spans[0]
 
-    assert anthropic_span.attributes.get(SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 16
+    assert anthropic_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 16
     assert anthropic_span.attributes.get(
-        SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
+        GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
     ) + anthropic_span.attributes.get(
-        SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS
+        GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS
     ) == anthropic_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS)
     assert (
         anthropic_span.attributes.get("gen_ai.response.id")
@@ -784,24 +784,24 @@ def test_anthropic_cross_region(instrument_legacy, brt, span_exporter, log_expor
 
     # Assert on model name and vendor
     assert (
-        anthropic_span.attributes[SpanAttributes.GEN_AI_REQUEST_MODEL]
+        anthropic_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL]
         == "claude-3-7-sonnet-20250219-v1"
     )
-    assert anthropic_span.attributes[SpanAttributes.GEN_AI_SYSTEM] == "AWS"
+    assert anthropic_span.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "AWS"
 
     assert anthropic_span.attributes[
-        f"{SpanAttributes.GEN_AI_PROMPT}.0.content"
+        f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"
     ] == json.dumps(messages[0]["content"])
     assert (
-        anthropic_span.attributes.get(f"{SpanAttributes.GEN_AI_COMPLETION}.0.content")
+        anthropic_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content")
         == completion
     )
 
-    assert anthropic_span.attributes.get(SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 20
+    assert anthropic_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 20
     assert anthropic_span.attributes.get(
-        SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
+        GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
     ) + anthropic_span.attributes.get(
-        SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS
+        GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS
     ) == anthropic_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS)
     # Bedrock does not return the response id for claude-v2:1
     assert anthropic_span.attributes.get("gen_ai.response.id") is None
@@ -840,16 +840,16 @@ def test_anthropic_cross_region_with_events_with_content(
 
     # Assert on model name and vendor
     assert (
-        anthropic_span.attributes[SpanAttributes.GEN_AI_REQUEST_MODEL]
+        anthropic_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL]
         == "claude-3-7-sonnet-20250219-v1"
     )
-    assert anthropic_span.attributes[SpanAttributes.GEN_AI_SYSTEM] == "AWS"
+    assert anthropic_span.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "AWS"
 
-    assert anthropic_span.attributes.get(SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 20
+    assert anthropic_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 20
     assert anthropic_span.attributes.get(
-        SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
+        GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
     ) + anthropic_span.attributes.get(
-        SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS
+        GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS
     ) == anthropic_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS)
     # Bedrock does not return the response id for claude-v2:1
     assert anthropic_span.attributes.get("gen_ai.response.id") is None
@@ -906,16 +906,16 @@ def test_anthropic_cross_region_with_events_with_no_content(
 
     # Assert on model name and vendor
     assert (
-        anthropic_span.attributes[SpanAttributes.GEN_AI_REQUEST_MODEL]
+        anthropic_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL]
         == "claude-3-7-sonnet-20250219-v1"
     )
-    assert anthropic_span.attributes[SpanAttributes.GEN_AI_SYSTEM] == "AWS"
+    assert anthropic_span.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "AWS"
 
-    assert anthropic_span.attributes.get(SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 20
+    assert anthropic_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 20
     assert anthropic_span.attributes.get(
-        SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
+        GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
     ) + anthropic_span.attributes.get(
-        SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS
+        GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS
     ) == anthropic_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS)
     # Bedrock does not return the response id for claude-v2:1
     assert anthropic_span.attributes.get("gen_ai.response.id") is None

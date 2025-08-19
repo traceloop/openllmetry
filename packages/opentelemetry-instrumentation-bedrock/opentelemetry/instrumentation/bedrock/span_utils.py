@@ -4,8 +4,8 @@ import time
 import anthropic
 from opentelemetry.instrumentation.bedrock.config import Config
 from opentelemetry.instrumentation.bedrock.utils import should_send_prompts
-from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
-    GEN_AI_RESPONSE_ID,
+from opentelemetry.semconv._incubating.attributes import (
+    gen_ai_attributes as GenAIAttributes,
 )
 from opentelemetry.semconv_ai import (
     LLMRequestTypeValues,
@@ -34,12 +34,12 @@ def set_model_message_span_attributes(model_vendor, span, request_body):
             for idx, message in enumerate(request_body.get("messages")):
                 _set_span_attribute(
                     span,
-                    f"{SpanAttributes.GEN_AI_PROMPT}.{idx}.role",
+                    f"{GenAIAttributes.GEN_AI_PROMPT}.{idx}.role",
                     message.get("role"),
                 )
                 _set_span_attribute(
                     span,
-                    f"{SpanAttributes.GEN_AI_PROMPT}.0.content",
+                    f"{GenAIAttributes.GEN_AI_PROMPT}.0.content",
                     json.dumps(message.get("content")),
                 )
     elif model_vendor == "ai21":
@@ -82,10 +82,10 @@ def set_model_span_attributes(
     response_model = response_body.get("model")
     response_id = response_body.get("id")
 
-    _set_span_attribute(span, SpanAttributes.GEN_AI_SYSTEM, provider)
-    _set_span_attribute(span, SpanAttributes.GEN_AI_REQUEST_MODEL, model)
-    _set_span_attribute(span, SpanAttributes.GEN_AI_RESPONSE_MODEL, response_model)
-    _set_span_attribute(span, GEN_AI_RESPONSE_ID, response_id)
+    _set_span_attribute(span, GenAIAttributes.GEN_AI_SYSTEM, provider)
+    _set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_MODEL, model)
+    _set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_MODEL, response_model)
+    _set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_ID, response_id)
 
     if model_vendor == "cohere":
         _set_cohere_span_attributes(span, request_body, response_body, metric_params)
@@ -114,7 +114,7 @@ def set_model_span_attributes(
 
 def _set_prompt_span_attributes(span, request_body):
     _set_span_attribute(
-        span, f"{SpanAttributes.GEN_AI_PROMPT}.0.user", request_body.get("prompt")
+        span, f"{GenAIAttributes.GEN_AI_PROMPT}.0.user", request_body.get("prompt")
     )
 
 
@@ -122,12 +122,12 @@ def _set_cohere_span_attributes(span, request_body, response_body, metric_params
     _set_span_attribute(
         span, SpanAttributes.LLM_REQUEST_TYPE, LLMRequestTypeValues.COMPLETION.value
     )
-    _set_span_attribute(span, SpanAttributes.GEN_AI_REQUEST_TOP_P, request_body.get("p"))
+    _set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_TOP_P, request_body.get("p"))
     _set_span_attribute(
-        span, SpanAttributes.GEN_AI_REQUEST_TEMPERATURE, request_body.get("temperature")
+        span, GenAIAttributes.GEN_AI_REQUEST_TEMPERATURE, request_body.get("temperature")
     )
     _set_span_attribute(
-        span, SpanAttributes.GEN_AI_REQUEST_MAX_TOKENS, request_body.get("max_tokens")
+        span, GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS, request_body.get("max_tokens")
     )
 
     # based on contract at
@@ -154,7 +154,7 @@ def _set_generations_span_attributes(span, response_body):
     for i, generation in enumerate(response_body.get("generations")):
         _set_span_attribute(
             span,
-            f"{SpanAttributes.GEN_AI_COMPLETION}.{i}.content",
+            f"{GenAIAttributes.GEN_AI_COMPLETION}.{i}.content",
             generation.get("text"),
         )
 
@@ -166,14 +166,14 @@ def _set_anthropic_completion_span_attributes(
         span, SpanAttributes.LLM_REQUEST_TYPE, LLMRequestTypeValues.COMPLETION.value
     )
     _set_span_attribute(
-        span, SpanAttributes.GEN_AI_REQUEST_TOP_P, request_body.get("top_p")
+        span, GenAIAttributes.GEN_AI_REQUEST_TOP_P, request_body.get("top_p")
     )
     _set_span_attribute(
-        span, SpanAttributes.GEN_AI_REQUEST_TEMPERATURE, request_body.get("temperature")
+        span, GenAIAttributes.GEN_AI_REQUEST_TEMPERATURE, request_body.get("temperature")
     )
     _set_span_attribute(
         span,
-        SpanAttributes.GEN_AI_REQUEST_MAX_TOKENS,
+        GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS,
         request_body.get("max_tokens_to_sample"),
     )
 
@@ -208,16 +208,16 @@ def _set_anthropic_response_span_attributes(span, response_body):
     if response_body.get("completion") is not None:
         _set_span_attribute(
             span,
-            f"{SpanAttributes.GEN_AI_COMPLETION}.0.content",
+            f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content",
             response_body.get("completion"),
         )
     elif response_body.get("content") is not None:
         _set_span_attribute(
-            span, f"{SpanAttributes.GEN_AI_COMPLETION}.0.content", "assistant"
+            span, f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content", "assistant"
         )
         _set_span_attribute(
             span,
-            f"{SpanAttributes.GEN_AI_COMPLETION}.0.content",
+            f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content",
             json.dumps(response_body.get("content")),
         )
 
@@ -229,14 +229,14 @@ def _set_anthropic_messages_span_attributes(
         span, SpanAttributes.LLM_REQUEST_TYPE, LLMRequestTypeValues.CHAT.value
     )
     _set_span_attribute(
-        span, SpanAttributes.GEN_AI_REQUEST_TOP_P, request_body.get("top_p")
+        span, GenAIAttributes.GEN_AI_REQUEST_TOP_P, request_body.get("top_p")
     )
     _set_span_attribute(
-        span, SpanAttributes.GEN_AI_REQUEST_TEMPERATURE, request_body.get("temperature")
+        span, GenAIAttributes.GEN_AI_REQUEST_TEMPERATURE, request_body.get("temperature")
     )
     _set_span_attribute(
         span,
-        SpanAttributes.GEN_AI_REQUEST_MAX_TOKENS,
+        GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS,
         request_body.get("max_tokens"),
     )
 
@@ -284,13 +284,13 @@ def _set_ai21_span_attributes(span, request_body, response_body, metric_params):
         span, SpanAttributes.LLM_REQUEST_TYPE, LLMRequestTypeValues.COMPLETION.value
     )
     _set_span_attribute(
-        span, SpanAttributes.GEN_AI_REQUEST_TOP_P, request_body.get("topP")
+        span, GenAIAttributes.GEN_AI_REQUEST_TOP_P, request_body.get("topP")
     )
     _set_span_attribute(
-        span, SpanAttributes.GEN_AI_REQUEST_TEMPERATURE, request_body.get("temperature")
+        span, GenAIAttributes.GEN_AI_REQUEST_TEMPERATURE, request_body.get("temperature")
     )
     _set_span_attribute(
-        span, SpanAttributes.GEN_AI_REQUEST_MAX_TOKENS, request_body.get("maxTokens")
+        span, GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS, request_body.get("maxTokens")
     )
 
     _record_usage_to_span(
@@ -305,7 +305,7 @@ def _set_span_completions_attributes(span, response_body):
     for i, completion in enumerate(response_body.get("completions")):
         _set_span_attribute(
             span,
-            f"{SpanAttributes.GEN_AI_COMPLETION}.{i}.content",
+            f"{GenAIAttributes.GEN_AI_COMPLETION}.{i}.content",
             completion.get("data").get("text"),
         )
 
@@ -315,13 +315,13 @@ def _set_llama_span_attributes(span, request_body, response_body, metric_params)
         span, SpanAttributes.LLM_REQUEST_TYPE, LLMRequestTypeValues.COMPLETION.value
     )
     _set_span_attribute(
-        span, SpanAttributes.GEN_AI_REQUEST_TOP_P, request_body.get("top_p")
+        span, GenAIAttributes.GEN_AI_REQUEST_TOP_P, request_body.get("top_p")
     )
     _set_span_attribute(
-        span, SpanAttributes.GEN_AI_REQUEST_TEMPERATURE, request_body.get("temperature")
+        span, GenAIAttributes.GEN_AI_REQUEST_TEMPERATURE, request_body.get("temperature")
     )
     _set_span_attribute(
-        span, SpanAttributes.GEN_AI_REQUEST_MAX_TOKENS, request_body.get("max_gen_len")
+        span, GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS, request_body.get("max_gen_len")
     )
 
     _record_usage_to_span(
@@ -334,28 +334,28 @@ def _set_llama_span_attributes(span, request_body, response_body, metric_params)
 
 def _set_llama_prompt_span_attributes(span, request_body):
     _set_span_attribute(
-        span, f"{SpanAttributes.GEN_AI_PROMPT}.0.content", request_body.get("prompt")
+        span, f"{GenAIAttributes.GEN_AI_PROMPT}.0.content", request_body.get("prompt")
     )
-    _set_span_attribute(span, f"{SpanAttributes.GEN_AI_PROMPT}.0.role", "user")
+    _set_span_attribute(span, f"{GenAIAttributes.GEN_AI_PROMPT}.0.role", "user")
 
 
 def _set_llama_response_span_attributes(span, response_body):
     if response_body.get("generation"):
         _set_span_attribute(
-            span, f"{SpanAttributes.GEN_AI_COMPLETION}.0.role", "assistant"
+            span, f"{GenAIAttributes.GEN_AI_COMPLETION}.0.role", "assistant"
         )
         _set_span_attribute(
             span,
-            f"{SpanAttributes.GEN_AI_COMPLETION}.0.content",
+            f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content",
             response_body.get("generation"),
         )
     else:
         for i, generation in enumerate(response_body.get("generations")):
             _set_span_attribute(
-                span, f"{SpanAttributes.GEN_AI_COMPLETION}.{i}.role", "assistant"
+                span, f"{GenAIAttributes.GEN_AI_COMPLETION}.{i}.role", "assistant"
             )
             _set_span_attribute(
-                span, f"{SpanAttributes.GEN_AI_COMPLETION}.{i}.content", generation
+                span, f"{GenAIAttributes.GEN_AI_COMPLETION}.{i}.content", generation
             )
 
 
@@ -368,21 +368,21 @@ def _set_amazon_span_attributes(
 
     if "textGenerationConfig" in request_body:
         config = request_body.get("textGenerationConfig", {})
-        _set_span_attribute(span, SpanAttributes.GEN_AI_REQUEST_TOP_P, config.get("topP"))
+        _set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_TOP_P, config.get("topP"))
         _set_span_attribute(
-            span, SpanAttributes.GEN_AI_REQUEST_TEMPERATURE, config.get("temperature")
+            span, GenAIAttributes.GEN_AI_REQUEST_TEMPERATURE, config.get("temperature")
         )
         _set_span_attribute(
-            span, SpanAttributes.GEN_AI_REQUEST_MAX_TOKENS, config.get("maxTokenCount")
+            span, GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS, config.get("maxTokenCount")
         )
     elif "inferenceConfig" in request_body:
         config = request_body.get("inferenceConfig", {})
-        _set_span_attribute(span, SpanAttributes.GEN_AI_REQUEST_TOP_P, config.get("topP"))
+        _set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_TOP_P, config.get("topP"))
         _set_span_attribute(
-            span, SpanAttributes.GEN_AI_REQUEST_TEMPERATURE, config.get("temperature")
+            span, GenAIAttributes.GEN_AI_REQUEST_TEMPERATURE, config.get("temperature")
         )
         _set_span_attribute(
-            span, SpanAttributes.GEN_AI_REQUEST_MAX_TOKENS, config.get("maxTokens")
+            span, GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS, config.get("maxTokens")
         )
 
     total_completion_tokens = 0
@@ -419,7 +419,7 @@ def _set_amazon_input_span_attributes(span, request_body):
     if "inputText" in request_body:
         _set_span_attribute(
             span,
-            f"{SpanAttributes.GEN_AI_PROMPT}.0.user",
+            f"{GenAIAttributes.GEN_AI_PROMPT}.0.user",
             request_body.get("inputText"),
         )
     else:
@@ -428,24 +428,24 @@ def _set_amazon_input_span_attributes(span, request_body):
             for idx, prompt in enumerate(request_body["system"]):
                 prompt_idx = idx + 1
                 _set_span_attribute(
-                    span, f"{SpanAttributes.GEN_AI_PROMPT}.{idx}.role", "system"
+                    span, f"{GenAIAttributes.GEN_AI_PROMPT}.{idx}.role", "system"
                 )
                 # TODO: add support for "image"
                 _set_span_attribute(
                     span,
-                    f"{SpanAttributes.GEN_AI_PROMPT}.{idx}.content",
+                    f"{GenAIAttributes.GEN_AI_PROMPT}.{idx}.content",
                     prompt.get("text"),
                 )
         for idx, prompt in enumerate(request_body["messages"]):
             _set_span_attribute(
                 span,
-                f"{SpanAttributes.GEN_AI_PROMPT}.{prompt_idx + idx}.role",
+                f"{GenAIAttributes.GEN_AI_PROMPT}.{prompt_idx + idx}.role",
                 prompt.get("role"),
             )
             # TODO: here we stringify the object, consider moving these to events or prompt.{i}.content.{j}
             _set_span_attribute(
                 span,
-                f"{SpanAttributes.GEN_AI_PROMPT}.{prompt_idx + idx}.content",
+                f"{GenAIAttributes.GEN_AI_PROMPT}.{prompt_idx + idx}.content",
                 json.dumps(prompt.get("content", ""), default=str),
             )
 
@@ -455,13 +455,13 @@ def _set_amazon_response_span_attributes(span, response_body):
         for i, result in enumerate(response_body.get("results")):
             _set_span_attribute(
                 span,
-                f"{SpanAttributes.GEN_AI_COMPLETION}.{i}.content",
+                f"{GenAIAttributes.GEN_AI_COMPLETION}.{i}.content",
                 result.get("outputText"),
             )
     elif "outputText" in response_body:
         _set_span_attribute(
             span,
-            f"{SpanAttributes.GEN_AI_COMPLETION}.0.content",
+            f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content",
             response_body.get("outputText"),
         )
     elif "output" in response_body:
@@ -469,7 +469,7 @@ def _set_amazon_response_span_attributes(span, response_body):
         for idx, msg in enumerate(msgs):
             _set_span_attribute(
                 span,
-                f"{SpanAttributes.GEN_AI_COMPLETION}.{idx}.content",
+                f"{GenAIAttributes.GEN_AI_COMPLETION}.{idx}.content",
                 msg.get("text"),
             )
 
@@ -481,13 +481,13 @@ def _set_imported_model_span_attributes(
         span, SpanAttributes.LLM_REQUEST_TYPE, LLMRequestTypeValues.COMPLETION.value
     )
     _set_span_attribute(
-        span, SpanAttributes.GEN_AI_REQUEST_TOP_P, request_body.get("topP")
+        span, GenAIAttributes.GEN_AI_REQUEST_TOP_P, request_body.get("topP")
     )
     _set_span_attribute(
-        span, SpanAttributes.GEN_AI_REQUEST_TEMPERATURE, request_body.get("temperature")
+        span, GenAIAttributes.GEN_AI_REQUEST_TEMPERATURE, request_body.get("temperature")
     )
     _set_span_attribute(
-        span, SpanAttributes.GEN_AI_REQUEST_MAX_TOKENS, request_body.get("max_tokens")
+        span, GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS, request_body.get("max_tokens")
     )
     prompt_tokens = (
         response_body.get("usage", {}).get("prompt_tokens")
@@ -509,26 +509,26 @@ def _set_imported_model_span_attributes(
 def _set_imported_model_response_span_attributes(span, response_body):
     _set_span_attribute(
         span,
-        f"{SpanAttributes.GEN_AI_COMPLETION}.0.content",
+        f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content",
         response_body.get("generation"),
     )
 
 
 def _set_imported_model_prompt_span_attributes(span, request_body):
     _set_span_attribute(
-        span, f"{SpanAttributes.GEN_AI_PROMPT}.0.content", request_body.get("prompt")
+        span, f"{GenAIAttributes.GEN_AI_PROMPT}.0.content", request_body.get("prompt")
     )
 
 
 def _record_usage_to_span(span, prompt_tokens, completion_tokens, metric_params):
     _set_span_attribute(
         span,
-        SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS,
+        GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS,
         prompt_tokens,
     )
     _set_span_attribute(
         span,
-        SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS,
+        GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS,
         completion_tokens,
     )
     _set_span_attribute(
@@ -557,7 +557,7 @@ def _record_usage_to_span(span, prompt_tokens, completion_tokens, metric_params)
             prompt_tokens,
             attributes={
                 **metric_attributes,
-                SpanAttributes.GEN_AI_TOKEN_TYPE: "input",
+                GenAIAttributes.GEN_AI_TOKEN_TYPE: "input",
             },
         )
     if (
@@ -569,7 +569,7 @@ def _record_usage_to_span(span, prompt_tokens, completion_tokens, metric_params)
             completion_tokens,
             attributes={
                 **metric_attributes,
-                SpanAttributes.GEN_AI_TOKEN_TYPE: "output",
+                GenAIAttributes.GEN_AI_TOKEN_TYPE: "output",
             },
         )
 
@@ -579,15 +579,15 @@ def _metric_shared_attributes(
 ):
     return {
         "vendor": response_vendor,
-        SpanAttributes.GEN_AI_RESPONSE_MODEL: response_model,
-        SpanAttributes.GEN_AI_SYSTEM: "bedrock",
+        GenAIAttributes.GEN_AI_RESPONSE_MODEL: response_model,
+        GenAIAttributes.GEN_AI_SYSTEM: "bedrock",
         "stream": is_streaming,
     }
 
 
 def set_converse_model_span_attributes(span, provider, model, kwargs):
-    _set_span_attribute(span, SpanAttributes.GEN_AI_SYSTEM, provider)
-    _set_span_attribute(span, SpanAttributes.GEN_AI_REQUEST_MODEL, model)
+    _set_span_attribute(span, GenAIAttributes.GEN_AI_SYSTEM, provider)
+    _set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_MODEL, model)
     _set_span_attribute(
         span, SpanAttributes.LLM_REQUEST_TYPE, LLMRequestTypeValues.CHAT.value
     )
@@ -596,12 +596,12 @@ def set_converse_model_span_attributes(span, provider, model, kwargs):
     if "inferenceConfig" in kwargs:
         config = kwargs.get("inferenceConfig")
 
-    _set_span_attribute(span, SpanAttributes.GEN_AI_REQUEST_TOP_P, config.get("topP"))
+    _set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_TOP_P, config.get("topP"))
     _set_span_attribute(
-        span, SpanAttributes.GEN_AI_REQUEST_TEMPERATURE, config.get("temperature")
+        span, GenAIAttributes.GEN_AI_REQUEST_TEMPERATURE, config.get("temperature")
     )
     _set_span_attribute(
-        span, SpanAttributes.GEN_AI_REQUEST_MAX_TOKENS, config.get("maxTokens")
+        span, GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS, config.get("maxTokens")
     )
 
 
@@ -613,25 +613,25 @@ def set_converse_input_prompt_span_attributes(kwargs, span):
         for idx, prompt in enumerate(kwargs["system"]):
             prompt_idx = idx + 1
             _set_span_attribute(
-                span, f"{SpanAttributes.GEN_AI_PROMPT}.{idx}.role", "system"
+                span, f"{GenAIAttributes.GEN_AI_PROMPT}.{idx}.role", "system"
             )
             # TODO: add support for "image"
             _set_span_attribute(
                 span,
-                f"{SpanAttributes.GEN_AI_PROMPT}.{idx}.content",
+                f"{GenAIAttributes.GEN_AI_PROMPT}.{idx}.content",
                 prompt.get("text"),
             )
     if "messages" in kwargs:
         for idx, prompt in enumerate(kwargs["messages"]):
             _set_span_attribute(
                 span,
-                f"{SpanAttributes.GEN_AI_PROMPT}.{prompt_idx+idx}.role",
+                f"{GenAIAttributes.GEN_AI_PROMPT}.{prompt_idx+idx}.role",
                 prompt.get("role"),
             )
             # TODO: here we stringify the object, consider moving these to events or prompt.{i}.content.{j}
             _set_span_attribute(
                 span,
-                f"{SpanAttributes.GEN_AI_PROMPT}.{prompt_idx+idx}.content",
+                f"{GenAIAttributes.GEN_AI_PROMPT}.{prompt_idx+idx}.content",
                 json.dumps(prompt.get("content", ""), default=str),
             )
 
@@ -642,12 +642,12 @@ def set_converse_response_span_attributes(response, span):
     if "output" in response:
         message = response["output"]["message"]
         _set_span_attribute(
-            span, f"{SpanAttributes.GEN_AI_COMPLETION}.0.role", message.get("role")
+            span, f"{GenAIAttributes.GEN_AI_COMPLETION}.0.role", message.get("role")
         )
         for idx, content in enumerate(message["content"]):
             _set_span_attribute(
                 span,
-                f"{SpanAttributes.GEN_AI_COMPLETION}.{idx}.content",
+                f"{GenAIAttributes.GEN_AI_COMPLETION}.{idx}.content",
                 content.get("text"),
             )
 
@@ -655,9 +655,9 @@ def set_converse_response_span_attributes(response, span):
 def set_converse_streaming_response_span_attributes(response, role, span):
     if not should_send_prompts():
         return
-    _set_span_attribute(span, f"{SpanAttributes.GEN_AI_COMPLETION}.0.role", role)
+    _set_span_attribute(span, f"{GenAIAttributes.GEN_AI_COMPLETION}.0.role", role)
     _set_span_attribute(
-        span, f"{SpanAttributes.GEN_AI_COMPLETION}.0.content", "".join(response)
+        span, f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content", "".join(response)
     )
 
 

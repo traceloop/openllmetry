@@ -42,7 +42,7 @@ def test_vision(instrument_legacy, span_exporter, log_exporter, openai_client):
     ]
     open_ai_span = spans[0]
     assert json.loads(
-        open_ai_span.attributes[f"{SpanAttributes.GEN_AI_PROMPT}.0.content"]
+        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"]
     ) == [
         {"type": "text", "text": "What is in this image?"},
         {
@@ -51,7 +51,7 @@ def test_vision(instrument_legacy, span_exporter, log_exporter, openai_client):
         },
     ]
 
-    assert open_ai_span.attributes.get(f"{SpanAttributes.GEN_AI_COMPLETION}.0.content")
+    assert open_ai_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content")
     assert (
         open_ai_span.attributes[SpanAttributes.LLM_OPENAI_API_BASE]
         == "https://api.openai.com/v1/"
@@ -228,7 +228,7 @@ def test_vision_base64(instrument_legacy, span_exporter, log_exporter, openai_cl
     ]
     open_ai_span = spans[0]
     assert json.loads(
-        open_ai_span.attributes[f"{SpanAttributes.GEN_AI_PROMPT}.0.content"]
+        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"]
     ) == [
         {"type": "text", "text": "What is in this image?"},
         {
@@ -237,7 +237,7 @@ def test_vision_base64(instrument_legacy, span_exporter, log_exporter, openai_cl
         },
     ]
 
-    assert open_ai_span.attributes.get(f"{SpanAttributes.GEN_AI_COMPLETION}.0.content")
+    assert open_ai_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content")
     assert (
         open_ai_span.attributes[SpanAttributes.LLM_OPENAI_API_BASE]
         == "https://api.openai.com/v1/"

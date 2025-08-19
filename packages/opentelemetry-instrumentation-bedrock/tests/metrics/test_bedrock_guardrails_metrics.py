@@ -1,7 +1,9 @@
 import json
 
 import pytest
-from opentelemetry.semconv_ai import SpanAttributes
+from opentelemetry.semconv._incubating.attributes import (
+    gen_ai_attributes as GenAIAttributes,
+)
 
 from opentelemetry.instrumentation.bedrock import GuardrailMeters
 
@@ -101,7 +103,7 @@ def assert_guardrails(reader):
                 if metric.name == GuardrailMeters.LLM_BEDROCK_GUARDRAIL_LATENCY:
                     found_latency = True
                     for data_point in metric.data.data_points:
-                        assert data_point.attributes[SpanAttributes.GEN_AI_TOKEN_TYPE] in [
+                        assert data_point.attributes[GenAIAttributes.GEN_AI_TOKEN_TYPE] in [
                             "output",
                             "input",
                         ]
@@ -115,14 +117,14 @@ def assert_guardrails(reader):
                 if metric.name == GuardrailMeters.LLM_BEDROCK_GUARDRAIL_COVERAGE:
                     found_coverage = True
                     for data_point in metric.data.data_points:
-                        assert data_point.attributes[SpanAttributes.GEN_AI_TOKEN_TYPE] in [
+                        assert data_point.attributes[GenAIAttributes.GEN_AI_TOKEN_TYPE] in [
                             "output",
                             "input",
                         ]
                         assert data_point.value > 0
 
                 assert (
-                    metric.data.data_points[0].attributes[SpanAttributes.GEN_AI_SYSTEM]
+                    metric.data.data_points[0].attributes[GenAIAttributes.GEN_AI_SYSTEM]
                     == "bedrock"
                 )
 

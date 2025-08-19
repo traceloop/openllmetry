@@ -18,8 +18,8 @@ from opentelemetry.semconv_ai import (
     TraceloopSpanKindValues,
     Meters,
 )
-from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
-    GEN_AI_COMPLETION,
+from opentelemetry.semconv._incubating.attributes import (
+    gen_ai_attributes as GenAIAttributes,
 )
 from .utils import set_span_attribute, JSONEncoder
 from agents import FunctionTool, WebSearchTool, FileSearchTool, ComputerTool
@@ -360,9 +360,9 @@ def set_model_settings_span_attributes(agent, span):
     settings_dict = vars(model_settings)
 
     key_to_span_attr = {
-        "max_tokens": SpanAttributes.GEN_AI_REQUEST_MAX_TOKENS,
-        "temperature": SpanAttributes.GEN_AI_REQUEST_TEMPERATURE,
-        "top_p": SpanAttributes.GEN_AI_REQUEST_TOP_P,
+        "max_tokens": GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS,
+        "temperature": GenAIAttributes.GEN_AI_REQUEST_TEMPERATURE,
+        "top_p": GenAIAttributes.GEN_AI_REQUEST_TOP_P,
     }
 
     for key, value in settings_dict.items():
@@ -424,17 +424,17 @@ def extract_tool_details(tracer: Tracer, tools):
                     ) as span:
                         try:
                             span.set_attribute(
-                                f"{GEN_AI_COMPLETION}.tool.name", tool_name
+                                f"{GenAIAttributes.GEN_AI_COMPLETION}.tool.name", tool_name
                             )
                             span.set_attribute(
-                                f"{GEN_AI_COMPLETION}.tool.type", "FunctionTool"
+                                f"{GenAIAttributes.GEN_AI_COMPLETION}.tool.type", "FunctionTool"
                             )
                             span.set_attribute(
-                                f"{GEN_AI_COMPLETION}.tool.description",
+                                f"{GenAIAttributes.GEN_AI_COMPLETION}.tool.description",
                                 original_tool.description,
                             )
                             span.set_attribute(
-                                f"{GEN_AI_COMPLETION}.tool.strict_json_schema",
+                                f"{GenAIAttributes.GEN_AI_COMPLETION}.tool.strict_json_schema",
                                 original_tool.strict_json_schema,
                             )
                             span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_INPUT, args_json)
@@ -469,35 +469,35 @@ def extract_tool_details(tracer: Tracer, tools):
             )
 
             if isinstance(tool, WebSearchTool):
-                span.set_attribute(f"{GEN_AI_COMPLETION}.tool.type", "WebSearchTool")
+                span.set_attribute(f"{GenAIAttributes.GEN_AI_COMPLETION}.tool.type", "WebSearchTool")
                 span.set_attribute(
-                    f"{GEN_AI_COMPLETION}.tool.search_context_size",
+                    f"{GenAIAttributes.GEN_AI_COMPLETION}.tool.search_context_size",
                     tool.search_context_size,
                 )
                 if tool.user_location:
                     span.set_attribute(
-                        f"{GEN_AI_COMPLETION}.tool.user_location",
+                        f"{GenAIAttributes.GEN_AI_COMPLETION}.tool.user_location",
                         str(tool.user_location),
                     )
             elif isinstance(tool, FileSearchTool):
-                span.set_attribute(f"{GEN_AI_COMPLETION}.tool.type", "FileSearchTool")
+                span.set_attribute(f"{GenAIAttributes.GEN_AI_COMPLETION}.tool.type", "FileSearchTool")
                 span.set_attribute(
-                    f"{GEN_AI_COMPLETION}.tool.vector_store_ids",
+                    f"{GenAIAttributes.GEN_AI_COMPLETION}.tool.vector_store_ids",
                     str(tool.vector_store_ids),
                 )
                 if tool.max_num_results:
                     span.set_attribute(
-                        f"{GEN_AI_COMPLETION}.tool.max_num_results",
+                        f"{GenAIAttributes.GEN_AI_COMPLETION}.tool.max_num_results",
                         tool.max_num_results,
                     )
                 span.set_attribute(
-                    f"{GEN_AI_COMPLETION}.tool.include_search_results",
+                    f"{GenAIAttributes.GEN_AI_COMPLETION}.tool.include_search_results",
                     tool.include_search_results,
                 )
             elif isinstance(tool, ComputerTool):
-                span.set_attribute(f"{GEN_AI_COMPLETION}.tool.type", "ComputerTool")
+                span.set_attribute(f"{GenAIAttributes.GEN_AI_COMPLETION}.tool.type", "ComputerTool")
                 span.set_attribute(
-                    f"{GEN_AI_COMPLETION}.tool.computer", str(tool.computer)
+                    f"{GenAIAttributes.GEN_AI_COMPLETION}.tool.computer", str(tool.computer)
                 )
 
             span.set_status(Status(StatusCode.OK))
@@ -514,12 +514,12 @@ def set_prompt_attributes(span, message_history):
             content = msg.get("content", None)
             set_span_attribute(
                 span,
-                f"{SpanAttributes.GEN_AI_PROMPT}.{i}.role",
+                f"{GenAIAttributes.GEN_AI_PROMPT}.{i}.role",
                 role,
             )
             set_span_attribute(
                 span,
-                f"{SpanAttributes.GEN_AI_PROMPT}.{i}.content",
+                f"{GenAIAttributes.GEN_AI_PROMPT}.{i}.content",
                 content,
             )
 
@@ -549,18 +549,18 @@ def set_response_content_span_attribute(response, span):
         if roles:
             set_span_attribute(
                 span,
-                f"{SpanAttributes.GEN_AI_COMPLETION}.roles",
+                f"{GenAIAttributes.GEN_AI_COMPLETION}.roles",
                 roles,
             )
         if types:
             set_span_attribute(
                 span,
-                f"{SpanAttributes.GEN_AI_COMPLETION}.types",
+                f"{GenAIAttributes.GEN_AI_COMPLETION}.types",
                 types,
             )
         if contents:
             set_span_attribute(
-                span, f"{SpanAttributes.GEN_AI_COMPLETION}.contents", contents
+                span, f"{GenAIAttributes.GEN_AI_COMPLETION}.contents", contents
             )
 
 
@@ -581,13 +581,13 @@ def set_token_usage_span_attributes(
         if input_tokens is not None:
             set_span_attribute(
                 span,
-                SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS,
+                GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS,
                 input_tokens,
             )
         if output_tokens is not None:
             set_span_attribute(
                 span,
-                SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS,
+                GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS,
                 output_tokens,
             )
         if total_tokens is not None:
@@ -600,18 +600,18 @@ def set_token_usage_span_attributes(
             token_histogram.record(
                 input_tokens,
                 attributes={
-                    SpanAttributes.GEN_AI_SYSTEM: "openai",
-                    SpanAttributes.GEN_AI_TOKEN_TYPE: "input",
-                    SpanAttributes.GEN_AI_RESPONSE_MODEL: model_name,
+                    GenAIAttributes.GEN_AI_SYSTEM: "openai",
+                    GenAIAttributes.GEN_AI_TOKEN_TYPE: "input",
+                    GenAIAttributes.GEN_AI_RESPONSE_MODEL: model_name,
                     "gen_ai.agent.name": agent_name,
                 },
             )
             token_histogram.record(
                 output_tokens,
                 attributes={
-                    SpanAttributes.GEN_AI_SYSTEM: "openai",
-                    SpanAttributes.GEN_AI_TOKEN_TYPE: "output",
-                    SpanAttributes.GEN_AI_RESPONSE_MODEL: model_name,
+                    GenAIAttributes.GEN_AI_SYSTEM: "openai",
+                    GenAIAttributes.GEN_AI_TOKEN_TYPE: "output",
+                    GenAIAttributes.GEN_AI_RESPONSE_MODEL: model_name,
                     "gen_ai.agent.name": agent_name,
                 },
             )

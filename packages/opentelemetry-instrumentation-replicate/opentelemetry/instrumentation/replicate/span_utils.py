@@ -2,7 +2,9 @@ from opentelemetry.instrumentation.replicate.utils import (
     dont_throw,
     should_send_prompts,
 )
-from opentelemetry.semconv_ai import SpanAttributes
+from opentelemetry.semconv._incubating.attributes import (
+    gen_ai_attributes as GenAIAttributes,
+)
 
 
 def _set_span_attribute(span, name, value):
@@ -20,7 +22,7 @@ def set_input_attributes(span, args, kwargs):
     input_attribute = kwargs.get("input")
     if should_send_prompts():
         _set_span_attribute(
-            span, f"{SpanAttributes.GEN_AI_PROMPT}.0.user", input_attribute.get("prompt")
+            span, f"{GenAIAttributes.GEN_AI_PROMPT}.0.user", input_attribute.get("prompt")
         )
 
 
@@ -30,21 +32,21 @@ def set_model_input_attributes(span, args, kwargs):
         return
 
     if args is not None and len(args) > 0:
-        _set_span_attribute(span, SpanAttributes.GEN_AI_REQUEST_MODEL, args[0])
+        _set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_MODEL, args[0])
     elif kwargs.get("version"):
         _set_span_attribute(
-            span, SpanAttributes.GEN_AI_REQUEST_MODEL, kwargs.get("version").id
+            span, GenAIAttributes.GEN_AI_REQUEST_MODEL, kwargs.get("version").id
         )
     else:
-        _set_span_attribute(span, SpanAttributes.GEN_AI_REQUEST_MODEL, "unknown")
+        _set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_MODEL, "unknown")
 
     input_attribute = kwargs.get("input")
 
     _set_span_attribute(
-        span, SpanAttributes.GEN_AI_REQUEST_TEMPERATURE, input_attribute.get("temperature")
+        span, GenAIAttributes.GEN_AI_REQUEST_TEMPERATURE, input_attribute.get("temperature")
     )
     _set_span_attribute(
-        span, SpanAttributes.GEN_AI_REQUEST_TOP_P, input_attribute.get("top_p")
+        span, GenAIAttributes.GEN_AI_REQUEST_TOP_P, input_attribute.get("top_p")
     )
 
 
@@ -53,9 +55,9 @@ def set_response_attributes(span, response):
     if should_send_prompts():
         if isinstance(response, list):
             for index, item in enumerate(response):
-                prefix = f"{SpanAttributes.GEN_AI_COMPLETION}.{index}"
+                prefix = f"{GenAIAttributes.GEN_AI_COMPLETION}.{index}"
                 _set_span_attribute(span, f"{prefix}.content", item)
         elif isinstance(response, str):
             _set_span_attribute(
-                span, f"{SpanAttributes.GEN_AI_COMPLETION}.0.content", response
+                span, f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content", response
             )

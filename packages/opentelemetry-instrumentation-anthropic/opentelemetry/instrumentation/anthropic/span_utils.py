@@ -9,8 +9,8 @@ from opentelemetry.instrumentation.anthropic.utils import (
     model_as_dict,
     should_send_prompts,
 )
-from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
-    GEN_AI_RESPONSE_ID,
+from opentelemetry.semconv._incubating.attributes import (
+    gen_ai_attributes as GenAIAttributes,
 )
 from opentelemetry.semconv_ai import SpanAttributes
 
@@ -73,14 +73,14 @@ async def _dump_content(message_index, content, span):
 async def aset_input_attributes(span, kwargs):
     from opentelemetry.instrumentation.anthropic import set_span_attribute
 
-    set_span_attribute(span, SpanAttributes.GEN_AI_REQUEST_MODEL, kwargs.get("model"))
+    set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_MODEL, kwargs.get("model"))
     set_span_attribute(
-        span, SpanAttributes.GEN_AI_REQUEST_MAX_TOKENS, kwargs.get("max_tokens_to_sample")
+        span, GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS, kwargs.get("max_tokens_to_sample")
     )
     set_span_attribute(
-        span, SpanAttributes.GEN_AI_REQUEST_TEMPERATURE, kwargs.get("temperature")
+        span, GenAIAttributes.GEN_AI_REQUEST_TEMPERATURE, kwargs.get("temperature")
     )
-    set_span_attribute(span, SpanAttributes.GEN_AI_REQUEST_TOP_P, kwargs.get("top_p"))
+    set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_TOP_P, kwargs.get("top_p"))
     set_span_attribute(
         span, SpanAttributes.LLM_FREQUENCY_PENALTY, kwargs.get("frequency_penalty")
     )
@@ -92,7 +92,7 @@ async def aset_input_attributes(span, kwargs):
     if should_send_prompts():
         if kwargs.get("prompt") is not None:
             set_span_attribute(
-                span, f"{SpanAttributes.GEN_AI_PROMPT}.0.user", kwargs.get("prompt")
+                span, f"{GenAIAttributes.GEN_AI_PROMPT}.0.user", kwargs.get("prompt")
             )
 
         elif kwargs.get("messages") is not None:
@@ -101,28 +101,28 @@ async def aset_input_attributes(span, kwargs):
                 has_system_message = True
                 set_span_attribute(
                     span,
-                    f"{SpanAttributes.GEN_AI_PROMPT}.0.content",
+                    f"{GenAIAttributes.GEN_AI_PROMPT}.0.content",
                     await _dump_content(
                         message_index=0, span=span, content=kwargs.get("system")
                     ),
                 )
                 set_span_attribute(
                     span,
-                    f"{SpanAttributes.GEN_AI_PROMPT}.0.role",
+                    f"{GenAIAttributes.GEN_AI_PROMPT}.0.role",
                     "system",
                 )
             for i, message in enumerate(kwargs.get("messages")):
                 prompt_index = i + (1 if has_system_message else 0)
                 set_span_attribute(
                     span,
-                    f"{SpanAttributes.GEN_AI_PROMPT}.{prompt_index}.content",
+                    f"{GenAIAttributes.GEN_AI_PROMPT}.{prompt_index}.content",
                     await _dump_content(
                         message_index=i, span=span, content=message.get("content")
                     ),
                 )
                 set_span_attribute(
                     span,
-                    f"{SpanAttributes.GEN_AI_PROMPT}.{prompt_index}.role",
+                    f"{GenAIAttributes.GEN_AI_PROMPT}.{prompt_index}.role",
                     message.get("role"),
                 )
 
@@ -146,7 +146,7 @@ def _set_span_completions(span, response):
     from opentelemetry.instrumentation.anthropic import set_span_attribute
 
     index = 0
-    prefix = f"{SpanAttributes.GEN_AI_COMPLETION}.{index}"
+    prefix = f"{GenAIAttributes.GEN_AI_COMPLETION}.{index}"
     set_span_attribute(span, f"{prefix}.finish_reason", response.get("stop_reason"))
     if response.get("role"):
         set_span_attribute(span, f"{prefix}.role", response.get("role"))
@@ -177,7 +177,7 @@ def _set_span_completions(span, response):
                 )
                 # increment the index for subsequent content blocks
                 index += 1
-                prefix = f"{SpanAttributes.GEN_AI_COMPLETION}.{index}"
+                prefix = f"{GenAIAttributes.GEN_AI_COMPLETION}.{index}"
                 # set the role to the original role on the next completions
                 set_span_attribute(
                     span,
@@ -213,15 +213,15 @@ def set_response_attributes(span, response):
 
     if not isinstance(response, dict):
         response = response.__dict__
-    set_span_attribute(span, SpanAttributes.GEN_AI_RESPONSE_MODEL, response.get("model"))
-    set_span_attribute(span, GEN_AI_RESPONSE_ID, response.get("id"))
+    set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_MODEL, response.get("model"))
+    set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_ID, response.get("id"))
 
     if response.get("usage"):
         prompt_tokens = response.get("usage").input_tokens
         completion_tokens = response.get("usage").output_tokens
-        set_span_attribute(span, SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS, prompt_tokens)
+        set_span_attribute(span, GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS, prompt_tokens)
         set_span_attribute(
-            span, SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS, completion_tokens
+            span, GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS, completion_tokens
         )
         set_span_attribute(
             span,
@@ -245,7 +245,7 @@ def set_streaming_response_attributes(span, complete_response_events):
     try:
         for event in complete_response_events:
             index = event.get("index")
-            prefix = f"{SpanAttributes.GEN_AI_COMPLETION}.{index}"
+            prefix = f"{GenAIAttributes.GEN_AI_COMPLETION}.{index}"
             set_span_attribute(
                 span, f"{prefix}.finish_reason", event.get("finish_reason")
             )

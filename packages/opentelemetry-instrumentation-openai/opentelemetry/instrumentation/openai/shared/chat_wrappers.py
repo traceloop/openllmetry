@@ -42,6 +42,9 @@ from opentelemetry.instrumentation.openai.utils import (
 from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
 from opentelemetry.metrics import Counter, Histogram
 from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
+from opentelemetry.semconv._incubating.attributes import (
+    gen_ai_attributes as GenAIAttributes,
+)
 from opentelemetry.semconv_ai import (
     SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
     LLMRequestTypeValues,
@@ -363,7 +366,7 @@ def _set_token_counter_metrics(token_counter, usage, shared_attributes):
         if name in OPENAI_LLM_USAGE_TOKEN_TYPES:
             attributes_with_token_type = {
                 **shared_attributes,
-                SpanAttributes.GEN_AI_TOKEN_TYPE: _token_type(name),
+                GenAIAttributes.GEN_AI_TOKEN_TYPE: _token_type(name),
             }
             token_counter.record(val, attributes=attributes_with_token_type)
 
@@ -399,7 +402,7 @@ async def _set_prompts(span, messages):
         return
 
     for i, msg in enumerate(messages):
-        prefix = f"{SpanAttributes.GEN_AI_PROMPT}.{i}"
+        prefix = f"{GenAIAttributes.GEN_AI_PROMPT}.{i}"
         msg = msg if isinstance(msg, dict) else model_as_dict(msg)
 
         _set_span_attribute(span, f"{prefix}.role", msg.get("role"))
@@ -451,7 +454,7 @@ def _set_completions(span, choices):
 
     for choice in choices:
         index = choice.get("index")
-        prefix = f"{SpanAttributes.GEN_AI_COMPLETION}.{index}"
+        prefix = f"{GenAIAttributes.GEN_AI_COMPLETION}.{index}"
         _set_span_attribute(
             span, f"{prefix}.finish_reason", choice.get("finish_reason")
         )
@@ -564,14 +567,14 @@ def _set_streaming_token_metrics(
         if isinstance(prompt_usage, int) and prompt_usage >= 0:
             attributes_with_token_type = {
                 **shared_attributes,
-                SpanAttributes.GEN_AI_TOKEN_TYPE: "input",
+                GenAIAttributes.GEN_AI_TOKEN_TYPE: "input",
             }
             token_counter.record(prompt_usage, attributes=attributes_with_token_type)
 
         if isinstance(completion_usage, int) and completion_usage >= 0:
             attributes_with_token_type = {
                 **shared_attributes,
-                SpanAttributes.GEN_AI_TOKEN_TYPE: "output",
+                GenAIAttributes.GEN_AI_TOKEN_TYPE: "output",
             }
             token_counter.record(
                 completion_usage, attributes=attributes_with_token_type
@@ -763,7 +766,7 @@ def _build_from_streaming_response(
         yield item_to_yield
 
     shared_attributes = {
-        SpanAttributes.GEN_AI_RESPONSE_MODEL: complete_response.get("model") or None,
+        GenAIAttributes.GEN_AI_RESPONSE_MODEL: complete_response.get("model") or None,
         "server.address": _get_openai_base_url(instance),
         "stream": True,
     }
@@ -833,7 +836,7 @@ async def _abuild_from_streaming_response(
         yield item_to_yield
 
     shared_attributes = {
-        SpanAttributes.GEN_AI_RESPONSE_MODEL: complete_response.get("model") or None,
+        GenAIAttributes.GEN_AI_RESPONSE_MODEL: complete_response.get("model") or None,
         "server.address": _get_openai_base_url(instance),
         "stream": True,
     }

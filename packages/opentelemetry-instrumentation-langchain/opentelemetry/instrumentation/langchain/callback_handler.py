@@ -52,8 +52,8 @@ from opentelemetry.instrumentation.langchain.utils import (
 )
 from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
 from opentelemetry.metrics import Histogram
-from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
-    GEN_AI_RESPONSE_ID,
+from opentelemetry.semconv._incubating.attributes import (
+    gen_ai_attributes as GenAIAttributes,
 )
 from opentelemetry.semconv_ai import (
     SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
@@ -297,7 +297,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
 
         vendor = detect_vendor_from_class(_extract_class_name_from_serialized(serialized))
 
-        _set_span_attribute(span, SpanAttributes.GEN_AI_SYSTEM, vendor)
+        _set_span_attribute(span, GenAIAttributes.GEN_AI_SYSTEM, vendor)
         _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TYPE, request_type.value)
 
         return span
@@ -464,15 +464,15 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
                 "model_name"
             ) or response.llm_output.get("model_id")
             if model_name is not None:
-                _set_span_attribute(span, SpanAttributes.GEN_AI_RESPONSE_MODEL, model_name)
+                _set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_MODEL, model_name)
 
                 if self.spans[run_id].request_model is None:
                     _set_span_attribute(
-                        span, SpanAttributes.GEN_AI_REQUEST_MODEL, model_name
+                        span, GenAIAttributes.GEN_AI_REQUEST_MODEL, model_name
                     )
             id = response.llm_output.get("id")
             if id is not None and id != "":
-                _set_span_attribute(span, GEN_AI_RESPONSE_ID, id)
+                _set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_ID, id)
         if model_name is None:
             model_name = extract_model_name_from_response_metadata(response)
         token_usage = (response.llm_output or {}).get("token_usage") or (
@@ -494,10 +494,10 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             )
 
             _set_span_attribute(
-                span, SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS, prompt_tokens
+                span, GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS, prompt_tokens
             )
             _set_span_attribute(
-                span, SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS, completion_tokens
+                span, GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS, completion_tokens
             )
             _set_span_attribute(
                 span, SpanAttributes.LLM_USAGE_TOTAL_TOKENS, total_tokens
@@ -509,9 +509,9 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
                 self.token_histogram.record(
                     prompt_tokens,
                     attributes={
-                        SpanAttributes.GEN_AI_SYSTEM: vendor,
-                        SpanAttributes.GEN_AI_TOKEN_TYPE: "input",
-                        SpanAttributes.GEN_AI_RESPONSE_MODEL: model_name or "unknown",
+                        GenAIAttributes.GEN_AI_SYSTEM: vendor,
+                        GenAIAttributes.GEN_AI_TOKEN_TYPE: "input",
+                        GenAIAttributes.GEN_AI_RESPONSE_MODEL: model_name or "unknown",
                     },
                 )
 
@@ -519,9 +519,9 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
                 self.token_histogram.record(
                     completion_tokens,
                     attributes={
-                        SpanAttributes.GEN_AI_SYSTEM: vendor,
-                        SpanAttributes.GEN_AI_TOKEN_TYPE: "output",
-                        SpanAttributes.GEN_AI_RESPONSE_MODEL: model_name or "unknown",
+                        GenAIAttributes.GEN_AI_SYSTEM: vendor,
+                        GenAIAttributes.GEN_AI_TOKEN_TYPE: "output",
+                        GenAIAttributes.GEN_AI_RESPONSE_MODEL: model_name or "unknown",
                     },
                 )
         set_chat_response_usage(span, response, self.token_histogram, token_usage is None, model_name)
@@ -537,8 +537,8 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         self.duration_histogram.record(
             duration,
             attributes={
-                SpanAttributes.GEN_AI_SYSTEM: vendor,
-                SpanAttributes.GEN_AI_RESPONSE_MODEL: model_name or "unknown",
+                GenAIAttributes.GEN_AI_SYSTEM: vendor,
+                GenAIAttributes.GEN_AI_RESPONSE_MODEL: model_name or "unknown",
             },
         )
 

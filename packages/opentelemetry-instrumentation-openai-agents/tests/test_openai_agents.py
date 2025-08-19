@@ -11,8 +11,8 @@ from opentelemetry.semconv_ai import (
     TraceloopSpanKindValues,
     Meters,
 )
-from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
-    GEN_AI_COMPLETION,
+from opentelemetry.semconv._incubating.attributes import (
+    gen_ai_attributes as GenAIAttributes,
 )
 
 
@@ -41,9 +41,9 @@ def test_agent_spans(exporter, test_agent):
         span.attributes[SpanAttributes.TRACELOOP_SPAN_KIND]
         == TraceloopSpanKindValues.AGENT.value
     )
-    assert span.attributes[SpanAttributes.GEN_AI_REQUEST_TEMPERATURE] == 0.3
-    assert span.attributes[SpanAttributes.GEN_AI_REQUEST_MAX_TOKENS] == 1024
-    assert span.attributes[SpanAttributes.GEN_AI_REQUEST_TOP_P] == 0.2
+    assert span.attributes[GenAIAttributes.GEN_AI_REQUEST_TEMPERATURE] == 0.3
+    assert span.attributes[GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS] == 1024
+    assert span.attributes[GenAIAttributes.GEN_AI_REQUEST_TOP_P] == 0.2
     assert span.attributes["openai.agent.model.frequency_penalty"] == 1.3
     assert span.attributes["gen_ai.agent.name"] == "testAgent"
     assert (
@@ -51,21 +51,21 @@ def test_agent_spans(exporter, test_agent):
         == "You are a helpful assistant that answers all questions"
     )
 
-    assert span.attributes[f"{SpanAttributes.GEN_AI_PROMPT}.0.role"] == "user"
-    assert span.attributes[f"{SpanAttributes.GEN_AI_PROMPT}.0.content"] == "What is AI?"
+    assert span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.role"] == "user"
+    assert span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"] == "What is AI?"
 
-    assert span.attributes[SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS] is not None
+    assert span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] is not None
     assert (
-        span.attributes[SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
+        span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
         is not None)
     assert span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] is not None
 
-    assert span.attributes[f"{SpanAttributes.GEN_AI_COMPLETION}.contents"] is not None
-    assert len(span.attributes[f"{SpanAttributes.GEN_AI_COMPLETION}.contents"]) > 0
-    assert span.attributes[f"{SpanAttributes.GEN_AI_COMPLETION}.roles"] is not None
-    assert len(span.attributes[f"{SpanAttributes.GEN_AI_COMPLETION}.roles"]) > 0
-    assert span.attributes[f"{SpanAttributes.GEN_AI_COMPLETION}.types"] is not None
-    assert len(span.attributes[f"{SpanAttributes.GEN_AI_COMPLETION}.types"]) > 0
+    assert span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.contents"] is not None
+    assert len(span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.contents"]) > 0
+    assert span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.roles"] is not None
+    assert len(span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.roles"]) > 0
+    assert span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.types"] is not None
+    assert len(span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.types"]) > 0
 
     assert span.status.status_code == StatusCode.OK
 
@@ -94,14 +94,14 @@ def test_agent_with_function_tool_spans(exporter, function_tool_agent):
     )
     assert tool_span.kind == tool_span.kind.INTERNAL
 
-    assert tool_span.attributes[f"{GEN_AI_COMPLETION}.tool.name"] == "get_weather"
-    assert tool_span.attributes[f"{GEN_AI_COMPLETION}.tool.type"] == "FunctionTool"
+    assert tool_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.tool.name"] == "get_weather"
+    assert tool_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.tool.type"] == "FunctionTool"
     assert (
-        tool_span.attributes[f"{GEN_AI_COMPLETION}.tool.description"]
+        tool_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.tool.description"]
         == "Gets the current weather for a specified city."
     )
 
-    assert tool_span.attributes[f"{GEN_AI_COMPLETION}.tool.strict_json_schema"] is True
+    assert tool_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.tool.strict_json_schema"] is True
 
     assert agent_span.status.status_code == StatusCode.OK
     assert tool_span.status.status_code == StatusCode.OK
@@ -131,12 +131,12 @@ def test_agent_with_web_search_tool_spans(exporter, web_search_tool_agent):
     )
     assert tool_span.kind == tool_span.kind.INTERNAL
 
-    assert tool_span.attributes[f"{GEN_AI_COMPLETION}.tool.type"] == "WebSearchTool"
+    assert tool_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.tool.type"] == "WebSearchTool"
     assert (
-        tool_span.attributes[f"{GEN_AI_COMPLETION}.tool.search_context_size"]
+        tool_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.tool.search_context_size"]
         is not None
     )
-    assert f"{GEN_AI_COMPLETION}.tool.user_location" not in tool_span.attributes
+    assert f"{GenAIAttributes.GEN_AI_COMPLETION}.tool.user_location" not in tool_span.attributes
 
     assert agent_span.status.status_code == StatusCode.OK
     assert tool_span.status.status_code == StatusCode.OK
@@ -193,7 +193,7 @@ def test_generate_metrics(metrics_test_context, test_agent):
                 if metric.name == Meters.LLM_TOKEN_USAGE:
                     found_token_metric = True
                     for data_point in metric.data.data_points:
-                        assert data_point.attributes[SpanAttributes.GEN_AI_TOKEN_TYPE] in [
+                        assert data_point.attributes[GenAIAttributes.GEN_AI_TOKEN_TYPE] in [
                             "output",
                             "input",
                         ]
@@ -314,11 +314,11 @@ async def test_recipe_workflow_agent_handoffs_with_function_tools(
         == TraceloopSpanKindValues.TOOL.value
     )
     assert (
-        search_tool_span.attributes[f"{GEN_AI_COMPLETION}.tool.name"]
+        search_tool_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.tool.name"]
         == "search_recipes"
     )
     assert (
-        search_tool_span.attributes[f"{GEN_AI_COMPLETION}.tool.type"] == "FunctionTool"
+        search_tool_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.tool.type"] == "FunctionTool"
     )
 
     assert "traceloop.entity.input" in search_tool_span.attributes
@@ -329,11 +329,11 @@ async def test_recipe_workflow_agent_handoffs_with_function_tools(
         == TraceloopSpanKindValues.TOOL.value
     )
     assert (
-        modify_tool_span.attributes[f"{GEN_AI_COMPLETION}.tool.name"]
+        modify_tool_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.tool.name"]
         == "plan_and_apply_recipe_modifications"
     )
     assert (
-        modify_tool_span.attributes[f"{GEN_AI_COMPLETION}.tool.type"] == "FunctionTool"
+        modify_tool_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.tool.type"] == "FunctionTool"
     )
 
     assert "traceloop.entity.input" in modify_tool_span.attributes

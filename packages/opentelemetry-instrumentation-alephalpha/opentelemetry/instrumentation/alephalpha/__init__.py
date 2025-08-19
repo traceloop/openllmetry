@@ -23,6 +23,9 @@ from opentelemetry.instrumentation.utils import (
     _SUPPRESS_INSTRUMENTATION_KEY,
     unwrap,
 )
+from opentelemetry.semconv._incubating.attributes import (
+    gen_ai_attributes as GenAIAttributes,
+) 
 from opentelemetry.semconv_ai import (
     SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
     LLMRequestTypeValues,
@@ -69,7 +72,7 @@ def _handle_message_event(
     event: PromptEvent, span: Span, event_logger: Optional[EventLogger], kwargs
 ):
     if span.is_recording():
-        _set_span_attribute(span, SpanAttributes.GEN_AI_REQUEST_MODEL, kwargs.get("model"))
+        _set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_MODEL, kwargs.get("model"))
 
     if should_emit_events():
         return emit_event(event, event_logger)
@@ -86,9 +89,9 @@ def _handle_completion_event(event: CompletionEvent, span, event_logger, respons
             span, SpanAttributes.LLM_USAGE_TOTAL_TOKENS, input_tokens + output_tokens
         )
         _set_span_attribute(
-            span, SpanAttributes.GEN_AI_USAGE_OUTPUT_TOKENS, output_tokens
+            span, GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS, output_tokens
         )
-        _set_span_attribute(span, SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS, input_tokens)
+        _set_span_attribute(span, GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS, input_tokens)
 
     if should_emit_events():
         emit_event(event, event_logger)
@@ -157,7 +160,7 @@ def _wrap(
         name,
         kind=SpanKind.CLIENT,
         attributes={
-            SpanAttributes.GEN_AI_SYSTEM: "AlephAlpha",
+            GenAIAttributes.GEN_AI_SYSTEM: "AlephAlpha",
             SpanAttributes.LLM_REQUEST_TYPE: llm_request_type.value,
         },
     )

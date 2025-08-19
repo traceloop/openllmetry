@@ -3,6 +3,9 @@ from opentelemetry.instrumentation.alephalpha.event_models import (
     PromptEvent,
 )
 from opentelemetry.semconv_ai import SpanAttributes
+from opentelemetry.semconv._incubating.attributes import (
+    gen_ai_attributes as GenAIAttributes,
+)
 from opentelemetry.trace.span import Span
 
 
@@ -16,10 +19,10 @@ def set_prompt_attributes(event: PromptEvent, span: Span):
         return
 
     if should_send_prompts():
-        _set_span_attribute(span, f"{SpanAttributes.GEN_AI_PROMPT}.0.role", "user")
+        _set_span_attribute(span, f"{GenAIAttributes.GEN_AI_PROMPT}.0.role", "user")
         _set_span_attribute(
             span,
-            f"{SpanAttributes.GEN_AI_PROMPT}.0.content",
+            f"{GenAIAttributes.GEN_AI_PROMPT}.0.content",
             event.content[0].get("data"),
         )
 
@@ -36,9 +39,9 @@ def set_completion_attributes(event: CompletionEvent, span: Span):
     if should_send_prompts():
         _set_span_attribute(
             span,
-            f"{SpanAttributes.GEN_AI_COMPLETION}.0.content",
+            f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content",
             event.message["content"],
         )
         _set_span_attribute(
-            span, f"{SpanAttributes.GEN_AI_COMPLETION}.0.role", "assistant"
+            span, f"{GenAIAttributes.GEN_AI_COMPLETION}.0.role", "assistant"
         )

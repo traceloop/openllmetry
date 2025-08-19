@@ -4,6 +4,9 @@ import dataclasses
 
 import pytest
 from openai import OpenAI, AsyncOpenAI
+from opentelemetry.semconv._incubating.attributes import (
+    gen_ai_attributes as GenAIAttributes,
+)
 from opentelemetry.semconv_ai import SpanAttributes
 from opentelemetry.trace.status import StatusCode
 from traceloop.sdk import Traceloop
@@ -44,8 +47,8 @@ def test_simple_workflow(exporter, openai_client):
         "pirate_joke_generator.workflow",
     ]
     open_ai_span = next(span for span in spans if span.name == "openai.chat")
-    assert open_ai_span.attributes[f"{SpanAttributes.GEN_AI_PROMPT}.0.content"] == "Tell me a joke about OpenTelemetry"
-    assert open_ai_span.attributes.get(f"{SpanAttributes.GEN_AI_COMPLETION}.0.content")
+    assert open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"] == "Tell me a joke about OpenTelemetry"
+    assert open_ai_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content")
     assert open_ai_span.attributes.get("traceloop.prompt.template") == "Tell me a {what} about {subject}"
     assert open_ai_span.attributes.get("traceloop.prompt.template_variables.what") == "joke"
     assert open_ai_span.attributes.get("traceloop.prompt.template_variables.subject") == "OpenTelemetry"
@@ -90,8 +93,8 @@ async def test_simple_aworkflow(exporter, async_openai_client):
         "pirate_joke_generator.workflow",
     ]
     open_ai_span = next(span for span in spans if span.name == "openai.chat")
-    assert open_ai_span.attributes[f"{SpanAttributes.GEN_AI_PROMPT}.0.content"] == "Tell me a joke about OpenTelemetry"
-    assert open_ai_span.attributes.get(f"{SpanAttributes.GEN_AI_COMPLETION}.0.content")
+    assert open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"] == "Tell me a joke about OpenTelemetry"
+    assert open_ai_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content")
     assert open_ai_span.attributes.get("traceloop.prompt.template") == "Tell me a {what} about {subject}"
     assert open_ai_span.attributes.get("traceloop.prompt.template_variables.what") == "joke"
     assert open_ai_span.attributes.get("traceloop.prompt.template_variables.subject") == "OpenTelemetry"

@@ -123,14 +123,14 @@ def test_sequential_chain(instrument_legacy, span_exporter, log_exporter):
 
     openai_span = next(span for span in spans if span.name == "OpenAI.completion")
     assert (
-        openai_span.attributes[SpanAttributes.GEN_AI_REQUEST_MODEL]
+        openai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL]
         == "gpt-3.5-turbo-instruct"
     )
     assert (
-        (openai_span.attributes[SpanAttributes.GEN_AI_RESPONSE_MODEL])
+        (openai_span.attributes[GenAIAttributes.GEN_AI_RESPONSE_MODEL])
         == "gpt-3.5-turbo-instruct"
     )
-    assert openai_span.attributes[f"{SpanAttributes.GEN_AI_PROMPT}.0.content"]
+    assert openai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"]
 
     logs = log_exporter.get_finished_logs()
     assert (
@@ -213,11 +213,11 @@ def test_sequential_chain_with_events_with_content(
 
     openai_span = next(span for span in spans if span.name == "OpenAI.completion")
     assert (
-        openai_span.attributes[SpanAttributes.GEN_AI_REQUEST_MODEL]
+        openai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL]
         == "gpt-3.5-turbo-instruct"
     )
     assert (
-        (openai_span.attributes[SpanAttributes.GEN_AI_RESPONSE_MODEL])
+        (openai_span.attributes[GenAIAttributes.GEN_AI_RESPONSE_MODEL])
         == "gpt-3.5-turbo-instruct"
     )
 
@@ -334,11 +334,11 @@ def test_sequential_chain_with_events_with_no_content(
 
     openai_span = next(span for span in spans if span.name == "OpenAI.completion")
     assert (
-        openai_span.attributes[SpanAttributes.GEN_AI_REQUEST_MODEL]
+        openai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL]
         == "gpt-3.5-turbo-instruct"
     )
     assert (
-        (openai_span.attributes[SpanAttributes.GEN_AI_RESPONSE_MODEL])
+        (openai_span.attributes[GenAIAttributes.GEN_AI_RESPONSE_MODEL])
         == "gpt-3.5-turbo-instruct"
     )
 

@@ -2,7 +2,9 @@ import os
 
 import pytest
 from openai import OpenAI
-from opentelemetry.semconv_ai import SpanAttributes
+from opentelemetry.semconv._incubating.attributes import (
+    gen_ai_attributes as GenAIAttributes,
+)
 from traceloop.sdk.decorators import workflow, task
 
 
@@ -43,8 +45,8 @@ def test_simple_workflow(exporter, openai_client):
         "pirate_joke_generator.workflow",
     ]
     open_ai_span = spans[0]
-    assert open_ai_span.attributes[SpanAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 15
-    assert not open_ai_span.attributes.get(f"{SpanAttributes.GEN_AI_PROMPT}.0.content")
+    assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 15
+    assert not open_ai_span.attributes.get(f"{GenAIAttributes.GEN_AI_PROMPT}.0.content")
     assert not open_ai_span.attributes.get(
-        f"{SpanAttributes.GEN_AI_PROMPT}.0.completions"
+        f"{GenAIAttributes.GEN_AI_PROMPT}.0.completions"
     )
