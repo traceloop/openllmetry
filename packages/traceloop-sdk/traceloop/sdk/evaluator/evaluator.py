@@ -39,6 +39,7 @@ class Evaluator:
                   evaluator_slug: str,
                   input: Dict[str, str], 
                   timeout_in_sec: int = 120,
+                  evaluator_version: Optional[str] = None,
                   client: Optional[httpx.AsyncClient] = None,
                   context_data: Optional[Dict[str, str]] = None
                   ) -> ExecutionResponse:
@@ -48,14 +49,16 @@ class Evaluator:
         Args:
             evaluator_slug: Slug of the evaluator to execute
             input: Dict mapping evaluator input field names to their values. {field_name: value, ...}
-            client: Shared HTTP client for connection reuse
+            client: Shared HTTP client for connection reuse (optional)
+            context_data: Context data to be passed to the evaluator (optional)
+            evaluator_version: Version of the evaluator to execute (optional)
             timeout_in_sec: Timeout in seconds for execution
         
         Returns:
             ExecutionResponse: The evaluation result from SSE stream
         """
         schema_mapping = InputSchemaMapping(root={k: InputExtractor(source=v) for k, v in input.items()})
-        request = ExecuteEvaluatorRequest(input_schema_mapping=schema_mapping, source="experiments")
+        request = ExecuteEvaluatorRequest(input_schema_mapping=schema_mapping, context_data=context_data, evaluator_version=evaluator_version)
 
         api_endpoint = os.environ.get("TRACELOOP_BASE_URL", "https://api.traceloop.com")
         body = request.model_dump()

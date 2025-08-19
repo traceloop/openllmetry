@@ -1,3 +1,4 @@
+from math import exp
 import uuid
 import asyncio
 from typing import Any, List, Callable, Optional, Tuple, Dict
@@ -5,6 +6,7 @@ from traceloop.sdk.client.http import HTTPClient
 from traceloop.sdk.datasets.datasets import Datasets
 from traceloop.sdk.evaluator.evaluator import Evaluator
 from traceloop.sdk.dataset.row import Row   
+from traceloop.sdk.experiment.model import RunContextData, CreateExperimentRequest
 
 class Experiment(): 
     """Main Experiment class for creating experiment contexts"""
@@ -22,7 +24,7 @@ class Experiment():
         task: Callable[[Optional[Row]], Dict[str, Any]],
         dataset_slug: Optional[str] = None,
         evaluators: Optional[List[str]] = None,
-        experiment_name: Optional[str] = None,
+        experiment_slug: Optional[str] = None,
         exit_on_error: bool = False,
     ) -> Tuple[str, Any]:
         """Run an experiment with the given task and evaluators
@@ -39,6 +41,12 @@ class Experiment():
         Returns:
             Tuple of (experiment_id, results)
         """
+        run_id = str(uuid.uuid4())
+
+        if experiment_slug:
+            experiment = self._get_experiment_by_slug(experiment_slug)
+        else:
+            experiment = self._create_experiment()
         
         if dataset_slug:
             dataset = self._datasets.get_by_slug(dataset_slug)
@@ -51,6 +59,17 @@ class Experiment():
             try:
                 # Run the task function
                 result = task(row)
+                task_id = str(uuid.uuid4())
+                context_data = RunContextData(
+                    experiment_id=experiment_id,
+                    run_id=run_id,
+                    task_id=task_id,
+                    task_input=row.values,
+                    task_output=result,
+                    dataset_ids=[dataset.id],
+                    evaluator_slugs=evaluators,
+                    evaluator_versions=None
+                )
                 
                 # Run evaluators if provided
                 eval_results = {}
@@ -101,14 +120,36 @@ class Experiment():
         
         experiment_id = str(uuid.uuid4())
         
-        print(f"Experiment '{experiment_name}' completed with {len(results)} successful results and {len(errors)} errors")
+        print(f"Experiment '{experiment_slug}' completed with {len(results)} successful results and {len(errors)} errors")
         
         return experiment_id, {
             "results": results,
             "errors": errors,
-            "experiment_name": experiment_name,
+            "experiment_name": experiment_slug,
             "experiment_id": experiment_id
         }
+    
+    def _get_experiment_by_slug(self, experiment_slug: str) -> Dict[str, Any]:
+        """Get experiment by slug from API"""
+        response = self._http_client.get(f"/v2/experiments/{experiment_slug}")
+        if response.status_code == 200:
+            return response.json()
+        else:
+            raise Exception(f"Experiment with slug '{experiment_slug}' not found")
+    
+    def _create_experiment(self, dataset_ids: Optional[List[str]] = None, metadata: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        """Create a new experiment"""
+        experiment_slug = "exp-" + str(uuid.uuid4())[:11]
+        body = CreateExperimentRequest(
+            slug=experiment_slug,
+            dataset_ids=dataset_ids,
+            metadata=metadata
+        )
+        response = self._http_client.post("/v2/experiments", json=body.model_dump())
+        if response.status_code == 201:
+            return response.json()
+        else:
+            raise Exception("Failed to create experiment")
     
     
     

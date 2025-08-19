@@ -14,7 +14,8 @@ class InputSchemaMapping(RootModel[Dict[str, InputExtractor]]):
 
 class ExecuteEvaluatorRequest(BaseModel):
     input_schema_mapping: InputSchemaMapping
-    source: str
+    evaluator_version: Optional[str] = None
+    execution_data: Optional[Dict[str, str]] = None
 
 
 class ExecuteEvaluatorResponse(BaseModel):
