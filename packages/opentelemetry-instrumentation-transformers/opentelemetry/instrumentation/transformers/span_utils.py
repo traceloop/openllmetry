@@ -2,6 +2,9 @@ from opentelemetry.instrumentation.transformers.utils import (
     dont_throw,
     should_send_prompts,
 )
+from opentelemetry.semconv._incubating.attributes import (
+    gen_ai_attributes as GenAIAttributes,
+)
 from opentelemetry.semconv_ai import (
     SpanAttributes,
 )
@@ -35,20 +38,20 @@ def set_model_input_attributes(span, instance):
     forward_params = instance._forward_params
 
     _set_span_attribute(
-        span, SpanAttributes.LLM_REQUEST_MODEL, instance.model.config.name_or_path
+        span, GenAIAttributes.GEN_AI_REQUEST_MODEL, instance.model.config.name_or_path
     )
     _set_span_attribute(
-        span, SpanAttributes.LLM_SYSTEM, instance.model.config.model_type
+        span, GenAIAttributes.GEN_AI_SYSTEM, instance.model.config.model_type
     )
     _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TYPE, "completion")
     _set_span_attribute(
-        span, SpanAttributes.LLM_REQUEST_TEMPERATURE, forward_params.get("temperature")
+        span, GenAIAttributes.GEN_AI_REQUEST_TEMPERATURE, forward_params.get("temperature")
     )
     _set_span_attribute(
-        span, SpanAttributes.LLM_REQUEST_TOP_P, forward_params.get("top_p")
+        span, GenAIAttributes.GEN_AI_REQUEST_TOP_P, forward_params.get("top_p")
     )
     _set_span_attribute(
-        span, SpanAttributes.LLM_REQUEST_MAX_TOKENS, forward_params.get("max_length")
+        span, GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS, forward_params.get("max_length")
     )
     _set_span_attribute(
         span,
@@ -69,7 +72,7 @@ def _set_span_completions(span, completions):
         return
 
     for i, completion in enumerate(completions):
-        prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{i}"
+        prefix = f"{GenAIAttributes.GEN_AI_COMPLETION}.{i}"
         _set_span_attribute(span, f"{prefix}.content", completion.get("generated_text"))
 
 
@@ -81,5 +84,5 @@ def _set_span_prompts(span, messages):
         messages = [messages]
 
     for i, msg in enumerate(messages):
-        prefix = f"{SpanAttributes.LLM_PROMPTS}.{i}"
+        prefix = f"{GenAIAttributes.GEN_AI_PROMPT}.{i}"
         _set_span_attribute(span, f"{prefix}.content", msg)

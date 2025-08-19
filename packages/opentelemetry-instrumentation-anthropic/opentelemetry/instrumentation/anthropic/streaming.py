@@ -19,8 +19,8 @@ from opentelemetry.instrumentation.anthropic.utils import (
     should_emit_events,
 )
 from opentelemetry.metrics import Counter, Histogram
-from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
-    GEN_AI_RESPONSE_ID,
+from opentelemetry.semconv._incubating.attributes import (
+    gen_ai_attributes as GenAIAttributes,
 )
 from opentelemetry.semconv_ai import SpanAttributes
 from opentelemetry.trace.status import Status, StatusCode
@@ -87,21 +87,21 @@ def _set_token_usage(
     input_tokens = prompt_tokens + cache_read_tokens + cache_creation_tokens
     total_tokens = input_tokens + completion_tokens
 
-    set_span_attribute(span, SpanAttributes.LLM_USAGE_PROMPT_TOKENS, input_tokens)
+    set_span_attribute(span, GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS, input_tokens)
     set_span_attribute(
-        span, SpanAttributes.LLM_USAGE_COMPLETION_TOKENS, completion_tokens
+        span, GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS, completion_tokens
     )
     set_span_attribute(span, SpanAttributes.LLM_USAGE_TOTAL_TOKENS, total_tokens)
 
     set_span_attribute(
-        span, SpanAttributes.LLM_RESPONSE_MODEL, complete_response.get("model")
+        span, GenAIAttributes.GEN_AI_RESPONSE_MODEL, complete_response.get("model")
     )
     set_span_attribute(
-        span, SpanAttributes.LLM_USAGE_CACHE_READ_INPUT_TOKENS, cache_read_tokens
+        span, SpanAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS, cache_read_tokens
     )
     set_span_attribute(
         span,
-        SpanAttributes.LLM_USAGE_CACHE_CREATION_INPUT_TOKENS,
+        SpanAttributes.GEN_AI_USAGE_CACHE_CREATION_INPUT_TOKENS,
         cache_creation_tokens,
     )
 
@@ -110,7 +110,7 @@ def _set_token_usage(
             input_tokens,
             attributes={
                 **metric_attributes,
-                SpanAttributes.LLM_TOKEN_TYPE: "input",
+                GenAIAttributes.GEN_AI_TOKEN_TYPE: "input",
             },
         )
 
@@ -119,7 +119,7 @@ def _set_token_usage(
             completion_tokens,
             attributes={
                 **metric_attributes,
-                SpanAttributes.LLM_TOKEN_TYPE: "output",
+                GenAIAttributes.GEN_AI_TOKEN_TYPE: "output",
             },
         )
 
@@ -170,7 +170,7 @@ def build_from_streaming_response(
         _process_response_item(item, complete_response)
 
     metric_attributes = shared_metrics_attributes(complete_response)
-    set_span_attribute(span, GEN_AI_RESPONSE_ID, complete_response.get("id"))
+    set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_ID, complete_response.get("id"))
     if duration_histogram:
         duration = time.time() - start_time
         duration_histogram.record(
@@ -245,7 +245,7 @@ async def abuild_from_streaming_response(
             raise e
         _process_response_item(item, complete_response)
 
-    set_span_attribute(span, GEN_AI_RESPONSE_ID, complete_response.get("id"))
+    set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_ID, complete_response.get("id"))
 
     metric_attributes = shared_metrics_attributes(complete_response)
 

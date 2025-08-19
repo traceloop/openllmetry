@@ -1,6 +1,9 @@
 import json
 
 from opentelemetry.instrumentation.sagemaker.utils import should_send_prompts
+from opentelemetry.semconv._incubating.attributes import (
+    gen_ai_attributes as GenAIAttributes,
+)
 from opentelemetry.semconv_ai import (
     SpanAttributes,
 )
@@ -39,7 +42,7 @@ def set_call_span_attributes(span, kwargs, response):
         return
 
     endpoint_name = kwargs.get("EndpointName")
-    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, endpoint_name)
+    _set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_MODEL, endpoint_name)
 
 
 def set_call_request_attributes(span, kwargs):

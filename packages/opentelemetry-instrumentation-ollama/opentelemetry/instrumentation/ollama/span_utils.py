@@ -1,6 +1,9 @@
 import json
 
 from opentelemetry.instrumentation.ollama.utils import dont_throw, should_send_prompts
+from opentelemetry.semconv._incubating.attributes import (
+    gen_ai_attributes as GenAIAttributes,
+)
 from opentelemetry.semconv_ai import (
     LLMRequestTypeValues,
     SpanAttributes,
@@ -22,25 +25,25 @@ def set_input_attributes(span, llm_request_type, kwargs):
         json_data = kwargs.get("json", {})
 
         if llm_request_type == LLMRequestTypeValues.CHAT:
-            _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.0.role", "user")
+            _set_span_attribute(span, f"{GenAIAttributes.GEN_AI_PROMPT}.0.role", "user")
             for index, message in enumerate(json_data.get("messages")):
                 _set_span_attribute(
                     span,
-                    f"{SpanAttributes.LLM_PROMPTS}.{index}.content",
+                    f"{GenAIAttributes.GEN_AI_PROMPT}.{index}.content",
                     message.get("content"),
                 )
                 _set_span_attribute(
                     span,
-                    f"{SpanAttributes.LLM_PROMPTS}.{index}.role",
+                    f"{GenAIAttributes.GEN_AI_PROMPT}.{index}.role",
                     message.get("role"),
                 )
             _set_prompts(span, json_data.get("messages"))
             if json_data.get("tools"):
                 set_tools_attributes(span, json_data.get("tools"))
         else:
-            _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.0.role", "user")
+            _set_span_attribute(span, f"{GenAIAttributes.GEN_AI_PROMPT}.0.role", "user")
             _set_span_attribute(
-                span, f"{SpanAttributes.LLM_PROMPTS}.0.content", json_data.get("prompt")
+                span, f"{GenAIAttributes.GEN_AI_PROMPT}.0.content", json_data.get("prompt")
             )
 
 
@@ -49,7 +52,7 @@ def set_model_input_attributes(span, kwargs):
     if not span.is_recording():
         return
     json_data = kwargs.get("json", {})
-    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, json_data.get("model"))
+    _set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_MODEL, json_data.get("model"))
     _set_span_attribute(
         span, SpanAttributes.LLM_IS_STREAMING, kwargs.get("stream") or False
     )
@@ -64,15 +67,15 @@ def set_response_attributes(span, token_histogram, llm_request_type, response):
         if llm_request_type == LLMRequestTypeValues.COMPLETION:
             _set_span_attribute(
                 span,
-                f"{SpanAttributes.LLM_COMPLETIONS}.0.content",
+                f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content",
                 response.get("response"),
             )
             _set_span_attribute(
-                span, f"{SpanAttributes.LLM_COMPLETIONS}.0.role", "assistant"
+                span, f"{GenAIAttributes.GEN_AI_COMPLETION}.0.role", "assistant"
             )
         elif llm_request_type == LLMRequestTypeValues.CHAT:
             index = 0
-            prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{index}"
+            prefix = f"{GenAIAttributes.GEN_AI_COMPLETION}.{index}"
             _set_span_attribute(
                 span, f"{prefix}.content", response.get("message").get("content")
             )
@@ -86,7 +89,7 @@ def set_model_response_attributes(span, token_histogram, llm_request_type, respo
     if llm_request_type == LLMRequestTypeValues.EMBEDDING or not span.is_recording():
         return
 
-    _set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, response.get("model"))
+    _set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_MODEL, response.get("model"))
 
     input_tokens = response.get("prompt_eval_count") or 0
     output_tokens = response.get("eval_count") or 0
@@ -98,15 +101,15 @@ def set_model_response_attributes(span, token_histogram, llm_request_type, respo
     )
     _set_span_attribute(
         span,
-        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS,
+        GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS,
         output_tokens,
     )
     _set_span_attribute(
         span,
-        SpanAttributes.LLM_USAGE_PROMPT_TOKENS,
+        GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS,
         input_tokens,
     )
-    _set_span_attribute(span, SpanAttributes.LLM_SYSTEM, "Ollama")
+    _set_span_attribute(span, GenAIAttributes.GEN_AI_SYSTEM, "Ollama")
 
     if (
         token_histogram is not None
@@ -116,9 +119,9 @@ def set_model_response_attributes(span, token_histogram, llm_request_type, respo
         token_histogram.record(
             input_tokens,
             attributes={
-                SpanAttributes.LLM_SYSTEM: "Ollama",
-                SpanAttributes.LLM_TOKEN_TYPE: "input",
-                SpanAttributes.LLM_RESPONSE_MODEL: response.get("model"),
+                GenAIAttributes.GEN_AI_SYSTEM: "Ollama",
+                GenAIAttributes.GEN_AI_TOKEN_TYPE: "input",
+                GenAIAttributes.GEN_AI_RESPONSE_MODEL: response.get("model"),
             },
         )
 
@@ -130,9 +133,9 @@ def set_model_response_attributes(span, token_histogram, llm_request_type, respo
         token_histogram.record(
             output_tokens,
             attributes={
-                SpanAttributes.LLM_SYSTEM: "Ollama",
-                SpanAttributes.LLM_TOKEN_TYPE: "output",
-                SpanAttributes.LLM_RESPONSE_MODEL: response.get("model"),
+                GenAIAttributes.GEN_AI_SYSTEM: "Ollama",
+                GenAIAttributes.GEN_AI_TOKEN_TYPE: "output",
+                GenAIAttributes.GEN_AI_RESPONSE_MODEL: response.get("model"),
             },
         )
 
@@ -160,7 +163,7 @@ def _set_prompts(span, messages):
     if not should_send_prompts():
         return
     for i, msg in enumerate(messages):
-        prefix = f"{SpanAttributes.LLM_PROMPTS}.{i}"
+        prefix = f"{GenAIAttributes.GEN_AI_PROMPT}.{i}"
 
         _set_span_attribute(span, f"{prefix}.role", msg.get("role"))
         if msg.get("content"):
