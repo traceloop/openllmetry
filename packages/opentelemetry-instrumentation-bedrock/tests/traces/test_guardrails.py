@@ -1,19 +1,13 @@
 import json
 
 import pytest
-from opentelemetry.sdk._logs import LogData
-from opentelemetry.semconv._incubating.attributes import (
-    event_attributes as EventAttributes,
-)
-from opentelemetry.semconv._incubating.attributes import (
-    gen_ai_attributes as GenAIAttributes,
-)
 from opentelemetry.semconv_ai import SpanAttributes
 from opentelemetry.instrumentation.bedrock.span_utils import GUARDRAIL_ID_KEY, PROMPT_FILTER_KEY, CONTENT_FILTER_KEY
 
 
 guardrailId = "5zwrmdlsra2e"
 guardrailVersion = "DRAFT"
+
 
 @pytest.mark.vcr
 def test_guardrail_invoke(instrument_legacy, brt, span_exporter, log_exporter):
@@ -32,10 +26,15 @@ def test_guardrail_invoke(instrument_legacy, brt, span_exporter, log_exporter):
     contentType = "application/json"
 
     response = brt.invoke_model(
-        body=body, modelId=modelId, accept=accept, contentType=contentType, guardrailIdentifier=guardrailId, guardrailVersion=guardrailVersion
+        body=body,
+        modelId=modelId,
+        accept=accept,
+        contentType=contentType,
+        guardrailIdentifier=guardrailId,
+        guardrailVersion=guardrailVersion
     )
 
-    response_body = json.loads(response.get("body").read())
+    _ = json.loads(response.get("body").read())
 
     spans = span_exporter.get_finished_spans()
     assert len(spans) == 1
@@ -75,6 +74,7 @@ def test_guardrail_invoke(instrument_legacy, brt, span_exporter, log_exporter):
     assert output_guardrail["sensitive"]["pii"] == []
     assert output_guardrail["sensitive"]["regex"] == ["Account Number"]
 
+
 @pytest.mark.vcr
 def test_guardrail_invoke_stream(instrument_legacy, brt, span_exporter, log_exporter):
     body = json.dumps(
@@ -92,7 +92,12 @@ def test_guardrail_invoke_stream(instrument_legacy, brt, span_exporter, log_expo
     contentType = "application/json"
 
     response = brt.invoke_model_with_response_stream(
-        body=body, modelId=modelId, accept=accept, contentType=contentType, guardrailIdentifier=guardrailId, guardrailVersion=guardrailVersion
+        body=body,
+        modelId=modelId,
+        accept=accept,
+        contentType=contentType,
+        guardrailIdentifier=guardrailId,
+        guardrailVersion=guardrailVersion
     )
     # consume events
     stream = response.get('body')
@@ -121,7 +126,7 @@ def test_guardrail_invoke_stream(instrument_legacy, brt, span_exporter, log_expo
     # Assert on guardrail data
     assert bedrock_span.attributes[GUARDRAIL_ID_KEY] == f"{guardrailId}:{guardrailVersion}"
     assert bedrock_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.{PROMPT_FILTER_KEY}"] != ""
-    assert bedrock_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.{CONTENT_FILTER_KEY}") == None
+    assert bedrock_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.{CONTENT_FILTER_KEY}") is None
 
     input_guardrail = json.loads(bedrock_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.{PROMPT_FILTER_KEY}"])
 
@@ -163,7 +168,7 @@ def test_guardrail_converse(
 
     modelId = "amazon.titan-text-express-v1"
 
-    response = brt.converse(
+    _ = brt.converse(
         modelId=modelId,
         messages=messages,
         guardrailConfig=guardrail,
@@ -206,6 +211,7 @@ def test_guardrail_converse(
     assert output_guardrail["words"] == []
     assert output_guardrail["sensitive"]["pii"] == ["ADDRESS"]
     assert output_guardrail["sensitive"]["regex"] == []
+
 
 @pytest.mark.vcr
 def test_guardrail_converse_stream(
@@ -286,4 +292,3 @@ def test_guardrail_converse_stream(
     assert output_guardrail["words"] == []
     assert output_guardrail["sensitive"]["pii"] == ["ADDRESS"]
     assert output_guardrail["sensitive"]["regex"] == []
-

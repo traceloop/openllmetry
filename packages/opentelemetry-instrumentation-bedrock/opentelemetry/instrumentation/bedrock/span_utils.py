@@ -118,6 +118,7 @@ def set_model_span_attributes(
             span, request_body, response_body, metric_params
         )
 
+
 def _guardrail_value(request_body):
     identifier = request_body.get("guardrailIdentifier")
     if identifier is not None:
@@ -125,11 +126,21 @@ def _guardrail_value(request_body):
         return f"{identifier}:{version}"
     return None
 
+
 def set_guardrail_attributes(span, input_filters, output_filters):
     if input_filters:
-        _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.{PROMPT_FILTER_KEY}", json.dumps(input_filters, default=str))
+        _set_span_attribute(
+            span,
+            f"{SpanAttributes.LLM_PROMPTS}.{PROMPT_FILTER_KEY}",
+            json.dumps(input_filters, default=str)
+        )
     if output_filters:
-        _set_span_attribute(span, f"{SpanAttributes.LLM_COMPLETIONS}.{CONTENT_FILTER_KEY}", json.dumps(output_filters, default=str))
+        _set_span_attribute(
+            span,
+            f"{SpanAttributes.LLM_COMPLETIONS}.{CONTENT_FILTER_KEY}",
+            json.dumps(output_filters, default=str)
+        )
+
 
 def _set_prompt_span_attributes(span, request_body):
     _set_span_attribute(

@@ -85,6 +85,7 @@ def handle_sensitive(t: Type, guardrail, attrs, metric_params):
         "regex": [*regex],
     }
 
+
 def handle_topic(t: Type, guardrail, attrs, metric_params):
     blocked_topics = set()
     if "topicPolicy" in guardrail:
@@ -100,6 +101,7 @@ def handle_topic(t: Type, guardrail, attrs, metric_params):
                 },
             )
     return [*blocked_topics]
+
 
 def handle_content(t: Type, guardrail, attrs, metric_params):
     content = set()
@@ -117,6 +119,7 @@ def handle_content(t: Type, guardrail, attrs, metric_params):
                 },
             )
     return [*content]
+
 
 def handle_words(t: Type, guardrail, attrs, metric_params):
     words = set()
@@ -145,6 +148,7 @@ def handle_words(t: Type, guardrail, attrs, metric_params):
                     },
                 )
     return [*words]
+
 
 def guardrail_converse(span, response, vendor, model, metric_params):
     attrs = {
@@ -200,6 +204,7 @@ def guardrail_handling(span, response_body, vendor, model, metric_params):
         if is_guardrail_activated(response_body):
             metric_params.guardrail_activation.add(1, attrs)
             set_guardrail_attributes(span, input_filters, output_filters)
+
 
 def _handle(t: Type, guardrail_info, attrs, metric_params):
     handle_invoke_metrics(t, guardrail_info, attrs, metric_params)
