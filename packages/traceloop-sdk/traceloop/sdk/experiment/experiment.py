@@ -1,7 +1,6 @@
 import uuid
 import asyncio
-from typing import Any, List, Callable, Optional, Tuple
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from typing import Any, List, Callable, Optional, Tuple, Dict
 from traceloop.sdk.client.http import HTTPClient
 from traceloop.sdk.datasets.datasets import Datasets
 from traceloop.sdk.evaluator.evaluator import Evaluator
@@ -18,13 +17,12 @@ class Experiment():
         self._evaluator = Evaluator(http_client)
         self._http_client = http_client
 
-    def run(
+    async def run(
         self,
-        task: Callable[[Optional[Row]], Any],
+        task: Callable[[Optional[Row]], Dict[str, Any]],
         dataset_slug: Optional[str] = None,
         evaluators: Optional[List[str]] = None,
         experiment_name: Optional[str] = None,
-        concurrency: int = 10,
         exit_on_error: bool = False,
     ) -> Tuple[str, Any]:
         """Run an experiment with the given task and evaluators
@@ -49,7 +47,7 @@ class Experiment():
         results = []
         errors = []
         
-        def run_single_row(row):
+        async def run_single_row(row):
             try:
                 # Run the task function
                 result = task(row)
@@ -59,11 +57,11 @@ class Experiment():
                 if evaluators:
                     for evaluator_slug in evaluators:
                         try:
-                            eval_result = asyncio.run(self._evaluator.run(
+                            eval_result = await self._evaluator.run(
                                 evaluator_slug=evaluator_slug,
                                 input={"completion": result},
-                                timeout_in_sec=120
-                            ))
+                                timeout_in_sec=120,
+                            )
                             eval_results[evaluator_slug] = eval_result.result
                         except Exception as e:
                             eval_results[evaluator_slug] = f"Error: {str(e)}"
@@ -80,22 +78,26 @@ class Experiment():
                     raise e
                 return {"error": error_msg}
         
-        # Run tasks with concurrency
-        with ThreadPoolExecutor(max_workers=concurrency) as executor:
-            futures = [executor.submit(run_single_row, row) for row in dataset.rows]
-            
-            for future in as_completed(futures):
-                try:
-                    result = future.result()
-                    if "error" in result:
-                        errors.append(result["error"])
-                    else:
-                        results.append(result)
-                except Exception as e:
-                    error_msg = f"Task execution error: {str(e)}"
-                    errors.append(error_msg)
-                    if exit_on_error:
-                        break
+        semaphore = asyncio.Semaphore(50)
+        
+        async def run_with_semaphore(row):
+            async with semaphore:
+                return await run_single_row(row)
+        
+        tasks = [run_with_semaphore(row) for row in dataset.rows]
+        
+        for completed_task in asyncio.as_completed(tasks):
+            try:
+                result = await completed_task
+                if "error" in result:
+                    errors.append(result["error"])
+                else:
+                    results.append(result)
+            except Exception as e:
+                error_msg = f"Task execution error: {str(e)}"
+                errors.append(error_msg)
+                if exit_on_error:
+                    break
         
         experiment_id = str(uuid.uuid4())
         

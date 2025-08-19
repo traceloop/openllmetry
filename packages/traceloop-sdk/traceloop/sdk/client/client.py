@@ -23,7 +23,6 @@ class Client:
     api_key: str
     user_feedback: UserFeedback
     datasets: Datasets
-    evaluator: Evaluator
     experiment: Experiment
     _http: HTTPClient
 
@@ -52,5 +51,4 @@ class Client:
         )
         self.user_feedback = UserFeedback(self._http, self.app_name)
         self.datasets = Datasets(self._http)
-        self.evaluator = Evaluator()
         self.experiment = Experiment(self._http)
