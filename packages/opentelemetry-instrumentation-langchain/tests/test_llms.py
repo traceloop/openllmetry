@@ -143,7 +143,7 @@ def test_custom_llm(instrument_legacy, span_exporter, log_exporter):
 
     assert hugging_face_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "completion"
     assert hugging_face_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL] == "unknown"
-    assert hugging_face_span.attributes[SpanAttributes.LLM_SYSTEM] == "HuggingFace"
+    assert hugging_face_span.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "HuggingFace"
     assert (
         hugging_face_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"]
         == "System: You are a helpful assistant\nHuman: tell me a short joke"
@@ -277,7 +277,7 @@ def test_openai(instrument_legacy, span_exporter, log_exporter):
 
     assert openai_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
     assert openai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL] == "gpt-4o-mini"
-    assert openai_span.attributes[SpanAttributes.LLM_SYSTEM] == "openai"
+    assert openai_span.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "openai"
     assert (
         (openai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"])
         == "You are a helpful assistant"
@@ -873,7 +873,7 @@ def test_bedrock(instrument_legacy, span_exporter, log_exporter):
         bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL]
         == "anthropic.claude-3-haiku-20240307-v1:0"
     )
-    assert bedrock_span.attributes[SpanAttributes.LLM_SYSTEM] == "AWS"
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "AWS"
     assert (
         (bedrock_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"])
         == "You are a helpful assistant"
@@ -1094,7 +1094,7 @@ def test_trace_propagation(instrument_legacy, span_exporter, log_exporter, LLM):
         VLLMOpenAI: "openai", 
         ChatOpenAI: "openai"
     }
-    assert openai_span.attributes[SpanAttributes.LLM_SYSTEM] == expected_vendors[LLM]
+    assert openai_span.attributes[GenAIAttributes.GEN_AI_SYSTEM] == expected_vendors[LLM]
 
     args, kwargs = send_spy.mock.call_args
     request = args[0]

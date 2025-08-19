@@ -187,7 +187,7 @@ def set_data_attributes(traced_response: TracedData, span: Span):
         if usage.input_tokens_details:
             _set_span_attribute(
                 span,
-                GenAIAttributes.GenAIAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS,
+                GenAIAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS,
                 usage.input_tokens_details.cached_tokens,
             )
         # TODO: add reasoning tokens in output token details

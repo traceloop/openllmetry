@@ -504,7 +504,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             )
 
             # Record token usage metrics
-            vendor = span.attributes.get(SpanAttributes.LLM_SYSTEM, "Langchain")
+            vendor = span.attributes.get(GenAIAttributes.GEN_AI_SYSTEM, "Langchain")
             if prompt_tokens > 0:
                 self.token_histogram.record(
                     prompt_tokens,
@@ -533,7 +533,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
 
         # Record duration
         duration = time.time() - self.spans[run_id].start_time
-        vendor = span.attributes.get(SpanAttributes.LLM_SYSTEM, "Langchain")
+        vendor = span.attributes.get(GenAIAttributes.GEN_AI_SYSTEM, "Langchain")
         self.duration_histogram.record(
             duration,
             attributes={

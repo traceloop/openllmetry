@@ -20,7 +20,7 @@ def test_ollama_generation_legacy(
     spans = span_exporter.get_finished_spans()
     ollama_span = spans[0]
     assert ollama_span.name == "ollama.completion"
-    assert ollama_span.attributes.get(f"{GenAIAttributes.GEN_AI_SYSTEM}") == "Ollama"
+    assert ollama_span.attributes.get(GenAIAttributes.GEN_AI_SYSTEM) == "Ollama"
     assert (
         ollama_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "completion"
     )
