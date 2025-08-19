@@ -58,10 +58,12 @@ class Evaluator:
             ExecutionResponse: The evaluation result from SSE stream
         """
         schema_mapping = InputSchemaMapping(root={k: InputExtractor(source=v) for k, v in input.items()})
-        request = ExecuteEvaluatorRequest(input_schema_mapping=schema_mapping, context_data=context_data, evaluator_version=evaluator_version)
-
-        api_endpoint = os.environ.get("TRACELOOP_BASE_URL", "https://api.traceloop.com")
+        request = ExecuteEvaluatorRequest(input_schema_mapping=schema_mapping, execution_data=context_data, evaluator_version=evaluator_version)
+        # api_endpoint = os.environ.get("TRACELOOP_BASE_URL", "https://api.traceloop.com")
+        api_endpoint = "http://localhost:3001"
         body = request.model_dump()
+
+        print(f"AASA = Evaluator body: {body}")
 
         if client is None:
             client = cls._create_async_client()
@@ -79,6 +81,7 @@ class Evaluator:
             raise Exception(f"Failed to execute evaluator {evaluator_slug}: {response.status_code}")
 
         result_data = response.json()
+        print(f"AASA = Evaluator result data: {result_data}")
         execute_response = ExecuteEvaluatorResponse(**result_data)
 
         # Wait for SSE result using async SSE client with shared HTTP client

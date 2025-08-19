@@ -35,17 +35,22 @@ def generate_medical_answer(question: str, prompt: Callable[[str], str]) -> str:
 
 def medical_task_clinical(row):
     """Task function for clinical guidance prompt"""
-    answer = generate_medical_answer(row.values["user-description"], clinical_guidance_prompt)
-    print(f"\033[94mMedical user input:\033[0m {row.values['user-description']}")
-    print(f"\033[96mMedical LLM answer:\033[0m {answer}")
-    return answer
+    # answer = generate_medical_answer(row.values["user-description"], clinical_guidance_prompt)
+    # print(f"\033[94mMedical user input:\033[0m {row.values['user-description']}")
+    # print(f"\033[96mMedical LLM answer:\033[0m {answer}")
+    user_description = row.values["user-description"]
+    print(f"\033[94mMedical user input:\033[0m {user_description}")
+    return "This is A generated answer for AI doctor"
 
 def medical_task_educational(row):
-    """Task function for educational prompt"""
-    answer = generate_medical_answer(row.values["user-description"], educational_prompt)
-    print(f"\033[94mMedical user input:\033[0m {row.values['user-description']}")
-    print(f"\033[96mMedical LLM answer:\033[0m {answer}")
-    return answer
+    # """Task function for educational prompt"""
+    # answer = generate_medical_answer(row.values["user-description"], educational_prompt)
+    # print(f"\033[94mMedical user input:\033[0m {row.values['user-description']}")
+    # print(f"\033[96mMedical LLM answer:\033[0m {answer}")
+    user_description = row.values["user-description"]
+    print(f"\033[94mMedical user input:\033[0m {user_description}")
+
+    return "This is A generated answer for AI doctor"
 
 
 def run_experiment_example():
@@ -67,14 +72,14 @@ def run_experiment_example():
     #         print(f"\033[91m❌ {len(results['errors'])} errors occurred\033[0m")
     
     # Run experiment with educational prompt  
-    print("\033[95m📚 Running experiment with educational prompt...\033[0m")
-    asyncio.run(client.experiment.run(
-        dataset_slug="medical",
-        task=medical_task_educational,
-        evaluators=["medical_advice"],
-        experiment_slug="medical-educational",
-        exit_on_error=False,
-    ))
+    # print("\033[95m📚 Running experiment with educational prompt...\033[0m")
+    # asyncio.run(client.experiment.run(
+    #     dataset_slug="medical",
+    #     task=medical_task_educational,
+    #     evaluators=["medical_advice"],
+    #     experiment_slug="medical-educational",
+    #     exit_on_error=False,
+    # ))
     
     # if results_2:
     #     print(f"\033[92m✅ Experiment {experiment_id_2} completed with {len(results_2['results'])} results!\033[0m")

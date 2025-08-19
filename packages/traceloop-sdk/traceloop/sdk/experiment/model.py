@@ -18,15 +18,24 @@ class RunContextData(BaseModel):
     run_id: str
     task_id: str
     task_input: Any
-    task_output: Dict[str, Any]
+    task_output: Any
     dataset_ids: List[str]
-    evaluator_slugs: List[str]
-    evaluator_versions: Optional[List[str]] = None
+    evaluator_slug: str
+    evaluator_version: Optional[str] = None
     
 class CreateExperimentRequest(BaseModel):
     """Pydantic model for create experiment request"""
     slug: str
     dataset_slugs: Optional[List[str]] = None
     metadata: Optional[Dict[str, Any]] = None
+
+class ExperimentResponse(BaseModel):
+    """Pydantic model for experiment response"""
+    id: str
+    slug: str
+    metadata: Optional[Dict[str, Any]] = None
+    dataset_ids: Optional[List[str]] = None
+    created_at: datetime
+    updated_at: datetime
     
 
