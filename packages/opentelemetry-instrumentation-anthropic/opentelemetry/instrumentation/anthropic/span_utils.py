@@ -319,7 +319,7 @@ async def aset_response_attributes(span, response):
         completion_tokens = response.get("usage").output_tokens
         set_span_attribute(span, GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS, prompt_tokens)
         set_span_attribute(
-            span, GenAIAttributes.GEN_AI_USAGE_COMPLETION_TOKENS, completion_tokens
+            span, GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS, completion_tokens
         )
         set_span_attribute(
             span,
