@@ -8,20 +8,17 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 from traceloop.sdk import Traceloop
 from openai import OpenAI
-from medical_prompts import clinical_guidance_prompt, educational_prompt
-from typing import Callable
+from medical_prompts import clinical_guidance_prompt
 
 # Initialize Traceloop
 client = Traceloop.init()
 
-def generate_medical_answer(question: str, prompt: Callable[[str], str]) -> str:
+def generate_medical_answer(prompt_text: str) -> str:
     """
     Generate a medical answer using OpenAI and the clinical guidance prompt
     """
     openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-    
-    prompt_text = prompt(question)
-    
+        
     response = openai_client.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=[
@@ -35,12 +32,13 @@ def generate_medical_answer(question: str, prompt: Callable[[str], str]) -> str:
 
 def medical_task_clinical(row):
     """Task function for clinical guidance prompt"""
-    # answer = generate_medical_answer(row.values["user-description"], clinical_guidance_prompt)
+    prompt_text = clinical_guidance_prompt(row.values["user-description"])
+    answer = generate_medical_answer(prompt_text)
     # print(f"\033[94mMedical user input:\033[0m {row.values['user-description']}")
     # print(f"\033[96mMedical LLM answer:\033[0m {answer}")
     user_description = row.values["user-description"]
     print(f"\033[94mMedical user input:\033[0m {user_description}")
-    return "This is A generated answer for AI doctor"
+    return {"completion": answer, "prompt": prompt_text}
 
 def medical_task_educational(row):
     # """Task function for educational prompt"""
@@ -61,8 +59,8 @@ def run_experiment_example():
     asyncio.run(client.experiment.run(
         dataset_slug="medical",
         task=medical_task_clinical,
-        evaluators=["medical_advice"],
-        experiment_slug="medical-clinical-guidance",
+        evaluators=["medical_advice", "medical_advice"],
+        experiment_slug="medical-clinical-guidance-1",
         exit_on_error=False,
     ))
     

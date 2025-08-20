@@ -15,11 +15,11 @@ class ExperimentContextData(BaseModel):
 class RunContextData(BaseModel):
     """Pydantic model for run context data"""
     experiment_id: str
-    run_id: str
+    experiment_run_id: str
     task_id: str
     task_input: Any
     task_output: Any
-    dataset_ids: List[str]
+    dataset_slugs: List[str]
     evaluator_slug: str
     evaluator_version: Optional[str] = None
     

@@ -65,8 +65,8 @@ class Experiment:
         async def run_single_row(row):
             try:
                 # Run the task function
-                result = task(row)
-                print(f"AASA = Result: {result}")
+                task_result = task(row)
+                print(f"AASA = Result: {task_result}")
                 task_id = str(uuid.uuid4())
 
                 # Run evaluators if provided
@@ -77,11 +77,11 @@ class Experiment:
                         try:
                             context_data = RunContextData(
                                 experiment_id=experiment.id,
-                                run_id=run_id,
+                                experiment_run_id=run_id,
                                 task_id=task_id,
                                 task_input=row.values,
-                                task_output=result,
-                                dataset_ids=experiment.dataset_ids or [],
+                                task_output=task_result,
+                                dataset_slugs=[dataset_slug] if dataset_slug else [],
                                 evaluator_slug=evaluator_slug,
                                 evaluator_version=None,
                             )
@@ -89,7 +89,7 @@ class Experiment:
                             print(f"AASA = Evaluator slug: {evaluator_slug}")
                             eval_result = await self._evaluator.run(
                                 evaluator_slug=evaluator_slug,
-                                input={"completion": result},
+                                input=task_result,
                                 timeout_in_sec=120,
                                 context_data=context_data.model_dump(),
                             )
@@ -136,6 +136,8 @@ class Experiment:
         print(
             f"Experiment '{experiment_slug}' completed with {len(results)} successful results and {len(errors)} errors"
         )
+
+        print("\n\nERRORS: ", errors)
 
         return experiment_id, {
             "results": results,

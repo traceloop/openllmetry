@@ -58,7 +58,7 @@ class Evaluator:
             ExecutionResponse: The evaluation result from SSE stream
         """
         schema_mapping = InputSchemaMapping(root={k: InputExtractor(source=v) for k, v in input.items()})
-        request = ExecuteEvaluatorRequest(input_schema_mapping=schema_mapping, execution_data=context_data, evaluator_version=evaluator_version)
+        request = ExecuteEvaluatorRequest(input_schema_mapping=schema_mapping, context_data=context_data, evaluator_version=evaluator_version)
         # api_endpoint = os.environ.get("TRACELOOP_BASE_URL", "https://api.traceloop.com")
         api_endpoint = "http://localhost:3001"
         body = request.model_dump()
