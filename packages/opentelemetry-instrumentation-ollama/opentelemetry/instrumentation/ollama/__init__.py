@@ -311,7 +311,14 @@ def _wrap(
         if duration_histogram:
             duration = end_time - start_time
             attrs = {SpanAttributes.LLM_SYSTEM: "Ollama"}
-            model = kwargs.get("model")
+            # Try to get model from kwargs directly
+            model = None
+            json_data = kwargs.get("json", {})
+            if json_data:
+                model = json_data.get("model")
+            # If not found in request, try to get model from response
+            if not model and response and isinstance(response, dict):
+                model = response.get("model")
             if model is not None:
                 attrs[SpanAttributes.LLM_RESPONSE_MODEL] = model
             duration_histogram.record(duration, attributes=attrs)
@@ -378,7 +385,12 @@ async def _awrap(
         if duration_histogram:
             duration = end_time - start_time
             attrs = {SpanAttributes.LLM_SYSTEM: "Ollama"}
-            model = kwargs.get("model")
+            model = None
+            json_data = kwargs.get("json", {})
+            if json_data:
+                model = json_data.get("model")
+            if not model and response and isinstance(response, dict):
+                model = response.get("model")
             if model is not None:
                 attrs[SpanAttributes.LLM_RESPONSE_MODEL] = model
             duration_histogram.record(duration, attributes=attrs)
