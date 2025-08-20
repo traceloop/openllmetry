@@ -1,7 +1,9 @@
 from dataclasses import dataclass
 from datetime import datetime
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Tuple
 from pydantic import BaseModel
+
+EvaluatorSpec = Tuple[str, Optional[str]] # evaluator_slug, evaluator_version
 
 
 class ExperimentContextData(BaseModel):
@@ -17,11 +19,6 @@ class RunContextData(BaseModel):
     experiment_id: str
     experiment_run_id: str
     task_id: str
-    task_input: Any
-    task_output: Any
-    dataset_slugs: List[str]
-    evaluator_slug: str
-    evaluator_version: Optional[str] = None
     
 class InitExperimentRequest(BaseModel):
     """Pydantic model for create experiment request"""
@@ -52,5 +49,15 @@ class ExperimentInitResponse(BaseModel):
     """Pydantic model for experiment and run response"""
     experiment: ExperimentResponse
     run: ExperimentRunResponse
+
+class CreateTaskRequest(BaseModel):
+    """Pydantic model for create task request"""
+    input: Dict[str, Any]
+    output: Dict[str, Any]
+
+class CreateTaskResponse(BaseModel):
+    """Pydantic model for create task response"""
+    task_id: str
+
 
 

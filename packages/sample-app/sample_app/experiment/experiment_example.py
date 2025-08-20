@@ -59,7 +59,7 @@ def run_experiment_example():
     experiment_id, results = asyncio.run(client.experiment.run(
         dataset_slug="medical",
         task=medical_task_clinical,
-        evaluators=["medical_advice", "medical_advice"],
+        evaluators=[("medical_advice", None)],
         experiment_slug="medical-clinical-guidance-1",
         exit_on_error=False,
     ))

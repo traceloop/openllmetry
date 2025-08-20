@@ -1,4 +1,3 @@
-from re import S
 import cuid
 import asyncio
 from typing import Any, List, Callable, Optional, Tuple, Dict
@@ -10,6 +9,9 @@ from traceloop.sdk.experiment.model import (
     RunContextData,
     InitExperimentRequest,
     ExperimentInitResponse,
+    CreateTaskRequest,
+    CreateTaskResponse,
+    EvaluatorSpec,
 )
 
 
@@ -29,7 +31,7 @@ class Experiment:
         self,
         task: Callable[[Optional[Row]], Dict[str, Any]],
         dataset_slug: Optional[str] = None,
-        evaluators: Optional[List[str]] = None,
+        evaluators: Optional[List[EvaluatorSpec]] = None,
         experiment_slug: Optional[str] = None,
         related_ref: Optional[Dict[str, str]] = None,
         aux: Optional[Dict[str, str]] = None,
@@ -63,7 +65,7 @@ class Experiment:
         experiment = self._init_experiment(
             experiment_slug,
             dataset_slugs=[dataset_slug],
-            evaluator_slugs=evaluators,
+            evaluator_slugs=[evaluator_slug for evaluator_slug, _ in evaluators],
             experiment_metadata=experiment_metadata,
         )
 
@@ -81,28 +83,29 @@ class Experiment:
                 # Run the task function
                 task_result = task(row)
                 print(f"AASA = Result: {task_result}")
-                task_id = str(cuid.cuid())
-
+                task_id = self._create_task(
+                    experiment_slug=experiment_slug,
+                    experiment_run_id=run_id,
+                    task_input=row.values,
+                    task_output=task_result,
+                ).task_id
+                print(f"AASA = Task ID: {task_id}")
                 # Run evaluators if provided
                 eval_results = {}
                 print(f"AASA = Evaluators: {evaluators}")
                 if evaluators:
-                    for evaluator_slug in evaluators:
+                    for evaluator_slug, evaluator_version in evaluators:
                         try:
                             context_data = RunContextData(
                                 experiment_id=experiment.id,
                                 experiment_run_id=run_id,
                                 task_id=task_id,
-                                task_input=row.values,
-                                task_output=task_result,
-                                dataset_slugs=[dataset_slug] if dataset_slug else [],
-                                evaluator_slug=evaluator_slug,
-                                evaluator_version=None,
                             )
 
                             print(f"AASA = Evaluator slug: {evaluator_slug}")
                             eval_result = await self._evaluator.run(
                                 evaluator_slug=evaluator_slug,
+                                evaluator_version=evaluator_version,
                                 input=task_result,
                                 timeout_in_sec=120,
                                 context_data=context_data.model_dump(),
@@ -184,3 +187,23 @@ class Experiment:
                 f"Failed to create or fetch experiment with slug '{experiment_slug}'"
             )
         return ExperimentInitResponse(**response)
+    
+    def _create_task(
+        self,
+        experiment_slug: str,
+        experiment_run_id: str,
+        task_input: Dict[str, Any],
+        task_output: Dict[str, Any],
+    ) -> CreateTaskRequest:
+        body = CreateTaskRequest(
+            input=task_input,
+            output=task_output,
+        )
+        response = self._http_client.post(
+            f"/experiments/{experiment_slug}/runs/{experiment_run_id}/task", body.model_dump(mode="json")
+        )
+        if response is None:
+            raise Exception(
+                f"Failed to create task for experiment '{experiment_slug}'"
+            )
+        return CreateTaskResponse(**response)
