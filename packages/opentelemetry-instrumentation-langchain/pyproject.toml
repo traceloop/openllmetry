@@ -26,7 +26,7 @@ include = "opentelemetry/instrumentation/langchain"
 python = ">=3.9,<4"
 opentelemetry-api = "^1.28.0"
 opentelemetry-instrumentation = ">=0.50b0"
-opentelemetry-semantic-conventions = ">=0.50b0"
+opentelemetry-semantic-conventions = ">=0.55b0"
 opentelemetry-semantic-conventions-ai = "^0.4.12"
 
 [tool.poetry.group.dev.dependencies]
