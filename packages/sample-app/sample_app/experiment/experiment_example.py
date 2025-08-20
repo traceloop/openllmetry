@@ -56,13 +56,16 @@ def run_experiment_example():
     
     # Run experiment with clinical guidance prompt
     print("\033[95m🔬 Running experiment with clinical guidance prompt...\033[0m")
-    asyncio.run(client.experiment.run(
+    experiment_id, results = asyncio.run(client.experiment.run(
         dataset_slug="medical",
         task=medical_task_clinical,
         evaluators=["medical_advice", "medical_advice"],
         experiment_slug="medical-clinical-guidance-1",
         exit_on_error=False,
     ))
+
+    print(f"\nExperiment ID: {experiment_id}\n")
+    print(f"\nResults: {results}")
     
     # if results:
     #     print(f"\033[92m✅ Experiment {experiment_id} completed with {len(results['results'])} results!\033[0m")

@@ -1,5 +1,5 @@
-from math import exp
-import uuid
+from re import S
+import cuid
 import asyncio
 from typing import Any, List, Callable, Optional, Tuple, Dict
 from traceloop.sdk.client.http import HTTPClient
@@ -8,8 +8,8 @@ from traceloop.sdk.evaluator.evaluator import Evaluator
 from traceloop.sdk.dataset.row import Row
 from traceloop.sdk.experiment.model import (
     RunContextData,
-    CreateExperimentRequest,
-    ExperimentResponse,
+    InitExperimentRequest,
+    ExperimentInitResponse,
 )
 
 
@@ -31,6 +31,8 @@ class Experiment:
         dataset_slug: Optional[str] = None,
         evaluators: Optional[List[str]] = None,
         experiment_slug: Optional[str] = None,
+        related_ref: Optional[Dict[str, str]] = None,
+        aux: Optional[Dict[str, str]] = None,
         exit_on_error: bool = False,
     ) -> Tuple[str, Any]:
         """Run an experiment with the given task and evaluators
@@ -47,14 +49,26 @@ class Experiment:
         Returns:
             Tuple of (experiment_id, results)
         """
-        run_id = str(uuid.uuid4())
 
         if not experiment_slug:
-            experiment_slug = "exp-" + str(uuid.uuid4())[:11]
+            experiment_slug = "exp-" + str(cuid.cuid())[:11]
 
-        experiment = self._get_experiment_by_slug(
-            experiment_slug, dataset_slugs=[dataset_slug]
+        experiment_metadata = {
+            key: value for key, value in [
+                ("related_ref", related_ref),
+                ("aux", aux)
+            ] if value is not None
+        }
+
+        experiment = self._init_experiment(
+            experiment_slug,
+            dataset_slugs=[dataset_slug],
+            evaluator_slugs=evaluators,
+            experiment_metadata=experiment_metadata,
         )
+
+        run_id = experiment.run.id
+        print(f"AASA = Run ID: {run_id}")
 
         if dataset_slug:
             dataset = self._datasets.get_by_slug(dataset_slug)
@@ -67,7 +81,7 @@ class Experiment:
                 # Run the task function
                 task_result = task(row)
                 print(f"AASA = Result: {task_result}")
-                task_id = str(uuid.uuid4())
+                task_id = str(cuid.cuid())
 
                 # Run evaluators if provided
                 eval_results = {}
@@ -101,7 +115,7 @@ class Experiment:
                 return {
                     "row_id": getattr(row, "id", None),
                     "input": row.values,
-                    "output": result,
+                    "output": task_result,
                     "evaluations": eval_results,
                 }
             except Exception as e:
@@ -116,7 +130,9 @@ class Experiment:
             async with semaphore:
                 return await run_single_row(row)
 
-        tasks = [run_with_semaphore(row) for row in dataset.rows[:1]]  # Only 1 task for debug
+        tasks = [
+            run_with_semaphore(row) for row in dataset.rows[:1]
+        ]  # Only 1 task for debug
 
         for completed_task in asyncio.as_completed(tasks):
             try:
@@ -131,34 +147,40 @@ class Experiment:
                 if exit_on_error:
                     break
 
-        experiment_id = str(uuid.uuid4())
-
         print(
             f"Experiment '{experiment_slug}' completed with {len(results)} successful results and {len(errors)} errors"
         )
 
         print("\n\nERRORS: ", errors)
 
-        return experiment_id, {
+        return experiment.id, {
             "results": results,
             "errors": errors,
             "experiment_name": experiment_slug,
-            "experiment_id": experiment_id,
+            "experiment_id": experiment.id,
         }
 
-    def _get_experiment_by_slug(
+    def _init_experiment(
         self,
         experiment_slug: str,
         dataset_slugs: Optional[List[str]] = None,
-        metadata: Optional[Dict[str, Any]] = None,
-    ) -> ExperimentResponse:
+        evaluator_slugs: Optional[List[str]] = None,
+        experiment_metadata: Optional[Dict[str, Any]] = None,
+        experiment_run_metadata: Optional[Dict[str, Any]] = None,
+    ) -> ExperimentInitResponse:
         """Get experiment by slug from API"""
-        body = CreateExperimentRequest(
-            slug=experiment_slug, dataset_slugs=dataset_slugs, metadata=metadata
+        body = InitExperimentRequest(
+            slug=experiment_slug,
+            dataset_slugs=dataset_slugs,
+            evaluator_slugs=evaluator_slugs,
+            experiment_metadata=experiment_metadata,
+            experiment_run_metadata=experiment_run_metadata,
         )
-        response = self._http_client.put("/experiments", body.model_dump(mode="json"))
+        response = self._http_client.put(
+            "/experiments/initialize", body.model_dump(mode="json")
+        )
         if response is None:
             raise Exception(
                 f"Failed to create or fetch experiment with slug '{experiment_slug}'"
             )
-        return ExperimentResponse(**response)
+        return ExperimentInitResponse(**response)

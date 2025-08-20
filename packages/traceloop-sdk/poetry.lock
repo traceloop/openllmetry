@@ -386,6 +386,18 @@ files = [
 ]
 
 [[package]]
+name = "cuid"
+version = "0.4"
+description = "Fast, scalable unique ID generation"
+optional = false
+python-versions = "*"
+groups = ["main"]
+markers = "python_version <= \"3.11\" or python_version >= \"3.12\""
+files = [
+    {file = "cuid-0.4.tar.gz", hash = "sha256:74eaba154916a2240405c3631acee708c263ef8fa05a86820b87d0f59f84e978"},
+]
+
+[[package]]
 name = "deprecated"
 version = "1.2.15"
 description = "Python @deprecated decorator to deprecate old python classes, functions or methods."
@@ -3905,4 +3917,4 @@ datasets = []
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10,<4"
-content-hash = "f3df99da8e10b2bdc8646b9629e17ea5aaa8d94158e4803fe57628f672486883"
+content-hash = "2690fac91848d4b8018a1d89b3bef27bc4eab0dfd9e8ca04743feda61c7ca818"
