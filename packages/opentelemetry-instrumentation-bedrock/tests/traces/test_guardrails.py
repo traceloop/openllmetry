@@ -3,7 +3,7 @@ import json
 import pytest
 from opentelemetry.semconv_ai import SpanAttributes
 from opentelemetry.instrumentation.bedrock.span_utils import PROMPT_FILTER_KEY, CONTENT_FILTER_KEY
-from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
+from opentelemetry.semconv._incubating.attributes.aws_attributes import (
     AWS_BEDROCK_GUARDRAIL_ID
 )
 

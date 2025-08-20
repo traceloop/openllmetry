@@ -6,6 +6,8 @@ from opentelemetry.instrumentation.bedrock.config import Config
 from opentelemetry.instrumentation.bedrock.utils import should_send_prompts
 from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
     GEN_AI_RESPONSE_ID,
+)
+from opentelemetry.semconv._incubating.attributes.aws_attributes import (
     AWS_BEDROCK_GUARDRAIL_ID
 )
 from opentelemetry.semconv_ai import (
