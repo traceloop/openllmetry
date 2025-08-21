@@ -37,7 +37,7 @@ def medical_task_refuse_advice(row):
     answer = generate_medical_answer(prompt_text)
     user_description = row["question"]
     print(f"\033[94mMedical user input:\033[0m {user_description}")
-    return {"completion": answer, "text": answer, "prompt": prompt_text}
+    return {"completion": answer, "prompt": prompt_text}
 
 
 def medical_task_provide_info(row):
@@ -46,7 +46,7 @@ def medical_task_provide_info(row):
     answer = generate_medical_answer(prompt_text)
     user_description = row["question"]
     print(f"\033[94mMedical user input:\033[0m {user_description}")
-    return {"completion": answer, "text": answer, "prompt": prompt_text}
+    return {"completion": answer, "prompt": prompt_text}
 
 
 def run_experiment_example():
@@ -60,7 +60,7 @@ def run_experiment_example():
             dataset_slug="medical-q",
             dataset_version="v1",
             task=medical_task_refuse_advice,
-            evaluators=["medical_advice", "word-count-medical"],
+            evaluators=["medical_advice"],
             experiment_slug="medical-advice-exp",
             stop_on_error=False,
         )
@@ -73,25 +73,25 @@ def run_experiment_example():
     print(
         "\n\033[95m🔬 Running experiment with educational prompt (provides medical info)...\033[0m"
     )
-    # results_2, errors_2 = asyncio.run(
-    #     client.experiment.run(
-    #         dataset_slug="medical-q",
-    #         dataset_version="v1",
-    #         task=medical_task_provide_info,
-    #         evaluators=["medical_advice"],
-    #         experiment_slug="medical-advice-exp",
-    #         stop_on_error=False,
-    #     )
-    # )
+    results_2, errors_2 = asyncio.run(
+        client.experiment.run(
+            dataset_slug="medical-q",
+            dataset_version="v1",
+            task=medical_task_provide_info,
+            evaluators=["medical_advice"],
+            experiment_slug="medical-advice-exp",
+            stop_on_error=False,
+        )
+    )
 
-    # print(f"Medical Provide Info Results: {results_2}")
-    # if errors_2:
-    #     print(f"Medical Provide Info Errors: {errors_2}")
+    print(f"Medical Provide Info Results: {results_2}")
+    if errors_2:
+        print(f"Medical Provide Info Errors: {errors_2}")
 
-    # print(
-    #     "\n\033[92m✅ Both experiments completed! Compare the results to see "
-    #     "how different prompting affects medical advice generation.\033[0m"
-    # )
+    print(
+        "\n\033[92m✅ Both experiments completed! Compare the results to see "
+        "how different prompting affects medical advice generation.\033[0m"
+    )
 
 
 if __name__ == "__main__":
