@@ -8,9 +8,9 @@ import os
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from traceloop.sdk import Traceloop
-from openai import OpenAI
-from medical_prompts import refuse_medical_advice_prompt, provide_medical_info_prompt
+from openai import OpenAI  # noqa: E402
+from medical_prompts import refuse_medical_advice_prompt, provide_medical_info_prompt  # noqa: E402
+from traceloop.sdk import Traceloop  # noqa: E402
 
 client = Traceloop.init()
 
@@ -87,7 +87,8 @@ def run_experiment_example():
     print(f"Results: {results_2}")
 
     print(
-        "\n\033[92m✅ Both experiments completed! Compare the results to see how different prompting affects medical advice generation.\033[0m"
+        "\n\033[92m✅ Both experiments completed! Compare the results to see "
+        "how different prompting affects medical advice generation.\033[0m"
     )
 
 
