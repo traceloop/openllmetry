@@ -166,8 +166,9 @@ def assert_message_in_logs(log: LogData, event_name: str, expected_content: dict
         assert log.log_record.body
         assert dict(log.log_record.body) == expected_content
 
+
 def test_imports():
     # Ensure heavy dependencies are not accidentally imported
     import opentelemetry.instrumentation.google_generativeai  # noqa: F401
 
-    assert "google.generai" not in sys.modules
+    assert "google.genai" not in sys.modules
