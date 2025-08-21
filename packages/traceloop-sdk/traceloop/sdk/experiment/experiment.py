@@ -38,6 +38,7 @@ class Experiment:
         related_ref: Optional[Dict[str, str]] = None,
         aux: Optional[Dict[str, str]] = None,
         stop_on_error: bool = False,
+        wait_for_results: bool = True,
     ) -> Tuple[List[TaskResponse], List[str]]:
         """Run an experiment with the given task and evaluators
 
@@ -49,9 +50,10 @@ class Experiment:
             related_ref: Related reference for this experiment run
             aux: Auxiliary information for this experiment run
             stop_on_error: Whether to stop on first error (default: False)
+            wait_for_results: Whether to wait for async tasks to complete (default: True)
 
         Returns:
-            Tuple of (results, errors)
+            Tuple of (results, errors). Returns ([], []) if wait_for_results is False
         """
 
         if not experiment_slug:
@@ -139,7 +141,10 @@ class Experiment:
             async with semaphore:
                 return await run_single_row(row)
 
-        tasks = [run_with_semaphore(row) for row in rows]
+        tasks = [asyncio.create_task(run_with_semaphore(row)) for row in rows]
+
+        if not wait_for_results:
+            return [], []
 
         for completed_task in asyncio.as_completed(tasks):
             try:

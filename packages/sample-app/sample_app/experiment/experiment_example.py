@@ -60,7 +60,7 @@ def run_experiment_example():
             dataset_slug="medical-q",
             dataset_version="v1",
             task=medical_task_refuse_advice,
-            evaluators=["medical_advice"],
+            evaluators=["medical_advice", "word-count-medical"],
             experiment_slug="medical-advice-exp",
             stop_on_error=False,
         )
