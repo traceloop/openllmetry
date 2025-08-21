@@ -1,0 +1,73 @@
+interactions:
+- request:
+    body: '{
+        "model": "palmyra-x4", 
+        "messages": [
+          {
+            "role": "user",
+            "content": "Tell me a joke about OpenTelemetry"
+          }
+        ],
+        "stream": false,
+        "max_tokens": 340,
+        "temperature": 0.7,
+        "top_p": 0.9,
+        "stop": "I am"
+      }'
+    headers:
+      accept:
+      - application/json
+      content-type:
+      - application/json
+      host:
+      - api.writer.com
+    method: POST
+    uri: https://api.writer.com:443/v1/chat
+  response:
+    body:
+      string: '{
+          "id": "57e4f58f-f7b1-41d8-be17-a6279c073aad",
+          "object": "chat.completion",
+          "model": "palmyra-x4",
+          "created": "1715361795",
+          "choices": [
+            {
+              "index": 0,
+              "finish_reason": "stop",
+              "message": {
+                "role": "assistant",
+                "content": "A joke about OpenTelemetry! Here it is:\n\nWhy did the OpenTelemetry span go to therapy?\n\nBecause it was struggling to instrument its issues!\n\n(Get it? \"Instrument\" has a double meaning here, referring both to the act of collecting metrics and traces in OpenTelemetry, as well as working through one''s problems... okay, maybe it''s just a techie joke)",
+                "refusal": null,
+                "tool_calls": [],
+                "graph_data": {
+                  "sources": [],
+                  "status": "finished",
+                  "subqueries": []
+                },
+                "llm_data": null,
+                "translation_data": null,
+                "web_search_data": null
+              }
+            }
+          ],
+          "usage": {
+            "prompt_tokens": 40,
+            "total_tokens": 340,
+            "completion_tokens": 300,
+            "prompt_token_details": {
+              "cached_tokens": 0
+            },
+            "completion_token_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "system_fingerprint": "v1",
+          "service_tier": "standard"
+        }'
+    headers:
+      Content-Type:
+      - application/json; charset=utf-8
+    status:
+      code: 200
+      message: OK
+version: 1
