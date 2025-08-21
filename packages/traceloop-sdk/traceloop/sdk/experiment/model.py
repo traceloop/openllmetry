@@ -10,8 +10,9 @@ EvaluatorDetails = Union[EvaluatorSlug, Tuple[EvaluatorSlug, EvaluatorVersion]]
 class TaskResponse(BaseModel):
     """Model for a single task process (row)"""
 
-    task_result: Dict[str, Any]
-    evaluations: Dict[str, Any]
+    task_result: Optional[Dict[str, Any]] = None
+    evaluations: Dict[str, Any] = {}
+    error: Optional[str] = None
 
 
 class InitExperimentRequest(BaseModel):

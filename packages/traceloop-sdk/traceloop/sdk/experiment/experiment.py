@@ -94,7 +94,7 @@ class Experiment:
         results: List[TaskResponse] = []
         errors: List[str] = []
 
-        async def run_single_row(row):
+        async def run_single_row(row) -> TaskResponse:
             try:
                 task_result = task(row)
                 task_id = self._create_task(
@@ -131,11 +131,11 @@ class Experiment:
                 error_msg = f"Error processing row: {str(e)}"
                 if exit_on_error:
                     raise e
-                return {"error": error_msg}
+                return TaskResponse(error=error_msg)
 
         semaphore = asyncio.Semaphore(50)
 
-        async def run_with_semaphore(row):
+        async def run_with_semaphore(row) -> TaskResponse:
             async with semaphore:
                 return await run_single_row(row)
 
@@ -144,8 +144,8 @@ class Experiment:
         for completed_task in asyncio.as_completed(tasks):
             try:
                 result = await completed_task
-                if "error" in result:
-                    errors.append(result["error"])
+                if result.error:
+                    errors.append(result.error)
                 else:
                     results.append(result)
             except Exception as e:

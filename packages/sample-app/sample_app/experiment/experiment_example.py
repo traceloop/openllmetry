@@ -55,9 +55,9 @@ def run_experiment_example():
     print(
         "\033[95m🔬 Running experiment with clinical guidance prompt (refuses medical advice)...\033[0m"
     )
-    experiment_id_1, results_1 = asyncio.run(
+    results_1, errors_1 = asyncio.run(
         client.experiment.run(
-            dataset_slug="medical",
+            dataset_slug="medical-q",
             dataset_version="v1",
             task=medical_task_refuse_advice,
             evaluators=["medical_advice"],
@@ -66,15 +66,16 @@ def run_experiment_example():
         )
     )
 
-    print(f"\nExperiment ID (Clinical - Refuses): {experiment_id_1}")
-    print(f"Results: {results_1}")
+    print(f"Medical Refuse Advice Results: {results_1}")
+    if errors_1:
+        print(f"Medical Refuse Advice Errors: {errors_1}")
 
     print(
         "\n\033[95m🔬 Running experiment with educational prompt (provides medical info)...\033[0m"
     )
-    experiment_id_2, results_2 = asyncio.run(
+    results_2, errors_2 = asyncio.run(
         client.experiment.run(
-            dataset_slug="medical",
+            dataset_slug="medical-q",
             dataset_version="v1",
             task=medical_task_provide_info,
             evaluators=["medical_advice"],
@@ -83,8 +84,9 @@ def run_experiment_example():
         )
     )
 
-    print(f"\nExperiment ID (Educational - Comprehensive): {experiment_id_2}")
-    print(f"Results: {results_2}")
+    print(f"Medical Provide Info Results: {results_2}")
+    if errors_2:
+        print(f"Medical Provide Info Errors: {errors_2}")
 
     print(
         "\n\033[92m✅ Both experiments completed! Compare the results to see "
