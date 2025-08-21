@@ -98,7 +98,7 @@ class Experiment:
 
         async def run_single_row(row) -> TaskResponse:
             try:
-                task_result = task(row)
+                task_result = await task(row)
                 task_id = self._create_task(
                     experiment_slug=experiment_slug,
                     experiment_run_id=run_id,

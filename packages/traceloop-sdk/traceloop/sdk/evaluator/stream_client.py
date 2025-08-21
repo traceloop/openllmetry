@@ -1,6 +1,5 @@
 import httpx
 import json
-import os
 
 from .model import ExecutionResponse
 
@@ -9,11 +8,7 @@ class SSEClient:
     """Handles Server-Sent Events streaming"""
 
     def __init__(self, shared_client: httpx.AsyncClient):
-        self._api_endpoint = os.environ.get(
-            "TRACELOOP_BASE_URL", "https://api.traceloop.com"
-        )
-        self._api_key = os.environ.get("TRACELOOP_API_KEY", "")
-        self._shared_client = shared_client
+        self.client = shared_client
 
     async def wait_for_result(
         self,
@@ -26,32 +21,20 @@ class SSEClient:
         """
         try:
             headers = {
-                "Authorization": f"Bearer {self._api_key}",
+                "Authorization": f"Bearer {self.client.headers.get('Authorization')}",
                 "Accept": "text/event-stream",
                 "Cache-Control": "no-cache",
             }
 
-            full_stream_url = f"{self._api_endpoint}/v2{stream_url}"
+            full_stream_url = f"{self.client.base_url}/v2{stream_url}"
 
-            # Use shared client if available, otherwise create a new one
-            if self._shared_client:
-                client = self._shared_client
-                async with client.stream(
-                    "GET",
-                    full_stream_url,
-                    headers=headers,
-                    timeout=httpx.Timeout(timeout_in_sec),
-                ) as response:
-                    parsed_result = await self._handle_sse_response(response)
-            else:
-                async with httpx.AsyncClient() as client:
-                    async with client.stream(
-                        "GET",
-                        full_stream_url,
-                        headers=headers,
-                        timeout=httpx.Timeout(timeout_in_sec),
-                    ) as response:
-                        parsed_result = await self._handle_sse_response(response)
+            async with self.client.stream(
+                "GET",
+                full_stream_url,
+                headers=headers,
+                timeout=httpx.Timeout(timeout_in_sec),
+            ) as response:
+                parsed_result = await self._handle_sse_response(response)
 
             if parsed_result.execution_id != execution_id:
                 raise Exception(
