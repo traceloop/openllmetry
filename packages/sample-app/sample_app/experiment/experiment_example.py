@@ -8,9 +8,9 @@ import os
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from openai import OpenAI  # noqa: E402
-from medical_prompts import refuse_medical_advice_prompt, provide_medical_info_prompt  # noqa: E402
-from traceloop.sdk import Traceloop  # noqa: E402
+from openai import OpenAI
+from medical_prompts import refuse_medical_advice_prompt, provide_medical_info_prompt
+from traceloop.sdk import Traceloop
 
 client = Traceloop.init()
 
@@ -33,20 +33,20 @@ def generate_medical_answer(prompt_text: str) -> str:
 
 def medical_task_refuse_advice(row):
     """Task function for refusing medical advice prompt"""
-    prompt_text = refuse_medical_advice_prompt(row["user-description"])
+    prompt_text = refuse_medical_advice_prompt(row["question"])
     answer = generate_medical_answer(prompt_text)
-    user_description = row["user-description"]
+    user_description = row["question"]
     print(f"\033[94mMedical user input:\033[0m {user_description}")
-    return {"completion": answer, "prompt": prompt_text}
+    return {"completion": answer, "text": answer, "prompt": prompt_text}
 
 
 def medical_task_provide_info(row):
     """Task function for providing medical info prompt"""
-    prompt_text = provide_medical_info_prompt(row["user-description"])
+    prompt_text = provide_medical_info_prompt(row["question"])
     answer = generate_medical_answer(prompt_text)
-    user_description = row["user-description"]
+    user_description = row["question"]
     print(f"\033[94mMedical user input:\033[0m {user_description}")
-    return {"completion": answer, "prompt": prompt_text}
+    return {"completion": answer, "text": answer, "prompt": prompt_text}
 
 
 def run_experiment_example():
@@ -73,27 +73,27 @@ def run_experiment_example():
     print(
         "\n\033[95m🔬 Running experiment with educational prompt (provides medical info)...\033[0m"
     )
-    results_2, errors_2 = asyncio.run(
-        client.experiment.run(
-            dataset_slug="medical-q",
-            dataset_version="v1",
-            task=medical_task_provide_info,
-            evaluators=["medical_advice"],
-            experiment_slug="medical-advice-exp",
-            stop_on_error=False,
-        )
-    )
+    # results_2, errors_2 = asyncio.run(
+    #     client.experiment.run(
+    #         dataset_slug="medical-q",
+    #         dataset_version="v1",
+    #         task=medical_task_provide_info,
+    #         evaluators=["medical_advice"],
+    #         experiment_slug="medical-advice-exp",
+    #         stop_on_error=False,
+    #     )
+    # )
 
-    print(f"Medical Provide Info Results: {results_2}")
-    if errors_2:
-        print(f"Medical Provide Info Errors: {errors_2}")
+    # print(f"Medical Provide Info Results: {results_2}")
+    # if errors_2:
+    #     print(f"Medical Provide Info Errors: {errors_2}")
 
-    print(
-        "\n\033[92m✅ Both experiments completed! Compare the results to see "
-        "how different prompting affects medical advice generation.\033[0m"
-    )
+    # print(
+    #     "\n\033[92m✅ Both experiments completed! Compare the results to see "
+    #     "how different prompting affects medical advice generation.\033[0m"
+    # )
 
 
 if __name__ == "__main__":
-    print("\033[95m🚀 Running experiment example with new API...\033[0m")
+    print("\033[95m🚀 Running experiment example\033[0m")
     run_experiment_example()

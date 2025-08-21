@@ -110,18 +110,33 @@ class Experiment:
                 if evaluator_details:
                     for evaluator_slug, evaluator_version in evaluator_details:
                         try:
-                            eval_result = (
-                                await self._evaluator.run_experiment_evaluator(
+                            if wait_for_results:
+                                eval_result = (
+                                    await self._evaluator.run_experiment_evaluator(
+                                        evaluator_slug=evaluator_slug,
+                                        evaluator_version=evaluator_version,
+                                        task_id=task_id,
+                                        experiment_id=experiment.experiment.id,
+                                        experiment_run_id=run_id,
+                                        input=task_result,
+                                        timeout_in_sec=120,
+                                    )
+                                )
+                                eval_results[evaluator_slug] = eval_result.result
+                            else:
+                                await self._evaluator.trigger_experiment_evaluator(
                                     evaluator_slug=evaluator_slug,
                                     evaluator_version=evaluator_version,
                                     task_id=task_id,
                                     experiment_id=experiment.experiment.id,
                                     experiment_run_id=run_id,
                                     input=task_result,
-                                    timeout_in_sec=120,
                                 )
-                            )
-                            eval_results[evaluator_slug] = eval_result.result
+
+                                eval_results[evaluator_slug] = (
+                                    f"Triggered execution of {evaluator_slug}"
+                                )
+
                         except Exception as e:
                             eval_results[evaluator_slug] = f"Error: {str(e)}"
 
@@ -144,6 +159,8 @@ class Experiment:
         tasks = [asyncio.create_task(run_with_semaphore(row)) for row in rows]
 
         if not wait_for_results:
+            # Still need to execute tasks to trigger evaluators, but don't wait for completion
+            await asyncio.gather(*tasks, return_exceptions=True)
             return [], []
 
         for completed_task in asyncio.as_completed(tasks):

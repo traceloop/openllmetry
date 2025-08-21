@@ -35,6 +35,59 @@ class Evaluator:
         )
 
     @classmethod
+    def _build_evaluator_request(
+        cls,
+        task_id: str,
+        experiment_id: str,
+        experiment_run_id: str,
+        input: Dict[str, str],
+        evaluator_version: Optional[str] = None,
+    ) -> ExecuteEvaluatorRequest:
+        """Build evaluator request with common parameters"""
+        schema_mapping = InputSchemaMapping(
+            root={k: InputExtractor(source=v) for k, v in input.items()}
+        )
+        return ExecuteEvaluatorRequest(
+            input_schema_mapping=schema_mapping,
+            evaluator_version=evaluator_version,
+            task_id=task_id,
+            experiment_id=experiment_id,
+            experiment_run_id=experiment_run_id,
+        )
+
+    @classmethod
+    async def _execute_evaluator_request(
+        cls,
+        evaluator_slug: str,
+        request: ExecuteEvaluatorRequest,
+        timeout_in_sec: int = 120,
+        client: Optional[httpx.AsyncClient] = None,
+    ) -> ExecuteEvaluatorResponse:
+        """Execute evaluator request and return response"""
+        api_endpoint = os.environ.get("TRACELOOP_BASE_URL", "https://api.traceloop.com")
+        body = request.model_dump()
+
+        should_close_client = client is None
+        if should_close_client:
+            client = cls._create_async_client()
+        try:
+            full_url = f"{api_endpoint}/v2/evaluators/slug/{evaluator_slug}/execute"
+            response = await client.post(
+                full_url, json=body, timeout=httpx.Timeout(timeout_in_sec)
+            )
+            if response.status_code != 200:
+                raise Exception(
+                    f"Failed to execute evaluator {evaluator_slug}: "
+                    f"{response.status_code} – {response.text}"
+                )
+
+            result_data = response.json()
+            return ExecuteEvaluatorResponse(**result_data)
+        finally:
+            if should_close_client:
+                await client.aclose()
+
+    @classmethod
     async def run_experiment_evaluator(
         cls,
         evaluator_slug: str,
@@ -60,36 +113,18 @@ class Evaluator:
         Returns:
             ExecutionResponse: The evaluation result from SSE stream
         """
-        schema_mapping = InputSchemaMapping(
-            root={k: InputExtractor(source=v) for k, v in input.items()}
+        request = cls._build_evaluator_request(
+            task_id, experiment_id, experiment_run_id, input, evaluator_version
         )
-        request = ExecuteEvaluatorRequest(
-            input_schema_mapping=schema_mapping,
-            evaluator_version=evaluator_version,
-            task_id=task_id,
-            experiment_id=experiment_id,
-            experiment_run_id=experiment_run_id,
-        )
-        api_endpoint = os.environ.get("TRACELOOP_BASE_URL", "https://api.traceloop.com")
-        body = request.model_dump()
-
+        
         should_close_client = client is None
         if should_close_client:
             client = cls._create_async_client()
         try:
-            full_url = f"{api_endpoint}/v2/evaluators/slug/{evaluator_slug}/execute"
-            response = await client.post(
-                full_url, json=body, timeout=httpx.Timeout(timeout_in_sec)
+            execute_response = await cls._execute_evaluator_request(
+                evaluator_slug, request, timeout_in_sec, client
             )
-            if response.status_code != 200:
-                raise Exception(
-                    f"Failed to execute evaluator {evaluator_slug}: "
-                    f"{response.status_code} – {response.text}"
-                )
-
-            result_data = response.json()
-            execute_response = ExecuteEvaluatorResponse(**result_data)
-
+            
             sse_client = SSEClient(shared_client=client)
             sse_result = await sse_client.wait_for_result(
                 execute_response.execution_id,
@@ -100,3 +135,40 @@ class Evaluator:
         finally:
             if should_close_client:
                 await client.aclose()
+
+    @classmethod
+    async def trigger_experiment_evaluator(
+        cls,
+        evaluator_slug: str,
+        task_id: str,
+        experiment_id: str,
+        experiment_run_id: str,
+        input: Dict[str, str],
+        evaluator_version: Optional[str] = None,
+        client: Optional[httpx.AsyncClient] = None,
+    ) -> str:
+        """
+        Trigger evaluator execution without waiting for result (fire-and-forget)
+
+        Args:
+            evaluator_slug: Slug of the evaluator to execute
+            task_id: Task ID for the evaluation
+            experiment_id: Experiment ID
+            experiment_run_id: Experiment run ID
+            input: Dict mapping evaluator input field names to their values
+            evaluator_version: Version of the evaluator to execute (optional)
+            client: Shared HTTP client for connection reuse (optional)
+
+        Returns:
+            str: The execution_id that can be used to check results later
+        """
+        request = cls._build_evaluator_request(
+            task_id, experiment_id, experiment_run_id, input, evaluator_version
+        )
+        
+        execute_response = await cls._execute_evaluator_request(
+            evaluator_slug, request, 120, client
+        )
+        
+        # Return execution_id without waiting for SSE result
+        return execute_response.execution_id
