@@ -43,6 +43,15 @@ class SSEClient:
                     timeout=httpx.Timeout(timeout_in_sec),
                 ) as response:
                     parsed_result = await self._handle_sse_response(response)
+            else:
+                async with httpx.AsyncClient() as client:
+                    async with client.stream(
+                        "GET",
+                        full_stream_url,
+                        headers=headers,
+                        timeout=httpx.Timeout(timeout_in_sec),
+                    ) as response:
+                        parsed_result = await self._handle_sse_response(response)
 
             if parsed_result.execution_id != execution_id:
                 raise Exception(

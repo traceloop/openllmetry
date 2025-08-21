@@ -189,7 +189,7 @@ class Experiment:
         experiment_run_id: str,
         task_input: Dict[str, Any],
         task_output: Dict[str, Any],
-    ) -> CreateTaskRequest:
+    ) -> CreateTaskResponse:
         body = CreateTaskRequest(
             input=task_input,
             output=task_output,
