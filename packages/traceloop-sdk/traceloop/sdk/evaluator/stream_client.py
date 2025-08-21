@@ -9,8 +9,7 @@ class SSEClient:
     """Handles Server-Sent Events streaming"""
 
     def __init__(self, shared_client: httpx.AsyncClient):
-        # self._api_endpoint = os.environ.get("TRACELOOP_BASE_URL", "https://api.traceloop.com")
-        self._api_endpoint = "http://localhost:3001"
+        self._api_endpoint = os.environ.get("TRACELOOP_BASE_URL", "https://api.traceloop.com")
         self._api_key = os.environ.get("TRACELOOP_API_KEY", "")
         self._shared_client = shared_client
 
@@ -66,7 +65,6 @@ class SSEClient:
         """Parse SSE response text into ExecutionResponse"""
         try:
             response_data = json.loads(response_text)
-            print(f"AASA = SSE result data: {response_data}")
             return ExecutionResponse(**response_data)
         except json.JSONDecodeError as e:
             raise Exception(f"Failed to parse SSE result as JSON: {e}")

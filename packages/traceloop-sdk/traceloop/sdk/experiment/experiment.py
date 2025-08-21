@@ -12,7 +12,8 @@ from traceloop.sdk.experiment.model import (
     ExperimentInitResponse,
     CreateTaskRequest,
     CreateTaskResponse,
-    EvaluatorSpec,
+    EvaluatorDetails,
+    TaskResponse,
 )
 
 
@@ -24,12 +25,6 @@ class Experiment:
     _http_client: HTTPClient
 
     def __init__(self, http_client: HTTPClient):
-        #Temp 
-        # dataset_http_client = HTTPClient(
-        #     base_url="https://api-staging.traceloop.com",
-        #     api_key=http_client.api_key,    
-        #     version=http_client.version,
-        # )
         self._datasets = Datasets(http_client)
         self._evaluator = Evaluator()
         self._http_client = http_client
@@ -39,7 +34,7 @@ class Experiment:
         task: Callable[[Optional[Dict[str, Any]]], Dict[str, Any]],
         dataset_slug: Optional[str] = None,
         dataset_version: Optional[str] = None,
-        evaluators: Optional[List[EvaluatorSpec]] = None,
+        evaluators: Optional[List[EvaluatorDetails]] = None,
         experiment_slug: Optional[str] = None,
         related_ref: Optional[Dict[str, str]] = None,
         aux: Optional[Dict[str, str]] = None,
@@ -70,21 +65,24 @@ class Experiment:
             ] if value is not None
         }
 
+        evaluator_details = [
+            (evaluator, None) if isinstance(evaluator, str) else evaluator
+            for evaluator in evaluators
+        ] if evaluators else None
+
         experiment = self._init_experiment(
             experiment_slug,
             dataset_slug=dataset_slug,
             dataset_version=dataset_version,
-            evaluator_slugs=[evaluator_slug for evaluator_slug, _ in evaluators],
+            evaluator_slugs=[slug for slug, _ in evaluator_details] if evaluator_details else None,
             experiment_metadata=experiment_metadata,
         )
 
         run_id = experiment.run.id
-        print(f"AASA = Run ID: {run_id}")
 
         rows = []
         if dataset_slug:
             jsonl_data = self._datasets.get_version_jsonl(dataset_slug, dataset_version)
-            print("AASA = JSONL: ", jsonl_data)
             rows = self._parse_jsonl_to_rows(jsonl_data)
 
         results = []
@@ -92,25 +90,18 @@ class Experiment:
 
         async def run_single_row(row):
             try:
-                # Run the task function
                 task_result = task(row)
-                print(f"AASA = Result: {task_result}")
                 task_id = self._create_task(
                     experiment_slug=experiment_slug,
                     experiment_run_id=run_id,
                     task_input=row,
                     task_output=task_result,
-                ).task_id
-                print(f"AASA = Task ID: {task_id}")
-                # Run evaluators if provided
-                eval_results = {}
-                print(f"AASA = Evaluators: {evaluators}")
-                if evaluators:
-                    for evaluator_slug, evaluator_version in evaluators:
-                        try:
-                            print(f"AASA = Evaluator slug: {evaluator_slug}")
+                ).id
 
-                            print(f"AASA = Evaluator slug: {evaluator_slug}")
+                eval_results = {}
+                if evaluator_details:
+                    for evaluator_slug, evaluator_version in evaluator_details:
+                        try:
                             eval_result = await self._evaluator.run_experiment_evaluator(
                                 evaluator_slug=evaluator_slug,
                                 evaluator_version=evaluator_version,
@@ -120,17 +111,14 @@ class Experiment:
                                 input=task_result,
                                 timeout_in_sec=120,
                             )
-                            print(f"AASA = Evaluator result: {eval_result}")
                             eval_results[evaluator_slug] = eval_result.result
                         except Exception as e:
                             eval_results[evaluator_slug] = f"Error: {str(e)}"
 
-                return {
-                    "row_id": None,
-                    "input": row,
-                    "output": task_result,
-                    "evaluations": eval_results,
-                }
+                return TaskResponse(
+                    task_result=task_result,
+                    evaluations=eval_results,
+                )
             except Exception as e:
                 error_msg = f"Error processing row: {str(e)}"
                 if exit_on_error:
@@ -143,9 +131,7 @@ class Experiment:
             async with semaphore:
                 return await run_single_row(row)
 
-        tasks = [
-            run_with_semaphore(row) for row in rows[:1]
-        ]  # Only 1 task for debug
+        tasks = [run_with_semaphore(row) for row in rows[:1]] #only 1 task for debug
 
         for completed_task in asyncio.as_completed(tasks):
             try:
@@ -160,13 +146,7 @@ class Experiment:
                 if exit_on_error:
                     break
 
-        print(
-            f"Experiment '{experiment_slug}' completed with {len(results)} successful results and {len(errors)} errors"
-        )
-
-        print("\n\nERRORS: ", errors)
-
-        return "hi" # TODO: return results
+        return results, errors
 
     def _init_experiment(
         self,

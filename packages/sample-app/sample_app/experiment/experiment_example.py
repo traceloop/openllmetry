@@ -45,10 +45,10 @@ def medical_task_educational(row):
     # answer = generate_medical_answer(row.values["user-description"], educational_prompt)
     # print(f"\033[94mMedical user input:\033[0m {row.values['user-description']}")
     # print(f"\033[96mMedical LLM answer:\033[0m {answer}")
-    user_description = row.values["user-description"]
+    user_description = row["user-description"]
     print(f"\033[94mMedical user input:\033[0m {user_description}")
 
-    return "This is A generated answer for AI doctor"
+    return {"completion": "This is A generated answer for AI doctor", "prompt": "This is A generated answer for AI doctor"}
 
 
 def run_experiment_example():
@@ -60,7 +60,7 @@ def run_experiment_example():
         dataset_slug="medical",
         dataset_version="v1",
         task=medical_task_clinical,
-        evaluators=[("medical_advice", None), ("medical_advice", None)],
+        evaluators=["medical_advice"],
         experiment_slug="medical-clinical-guidance-1",
         exit_on_error=False,
     ))

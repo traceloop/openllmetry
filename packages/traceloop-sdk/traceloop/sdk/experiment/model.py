@@ -1,27 +1,20 @@
-from dataclasses import dataclass
+from ctypes import Union
 from datetime import datetime
 from typing import List, Dict, Any, Optional, Tuple
 from pydantic import BaseModel
 
-EvaluatorSpec = Tuple[str, Optional[str]] # evaluator_slug, evaluator_version
+EvaluatorVersion = str
+EvaluatorSlug = str
+EvaluatorDetails = Union[EvaluatorSlug, Tuple[EvaluatorSlug, EvaluatorVersion]]
 
 
-class ExperimentContextData(BaseModel):
-    """Pydantic model for experiment context data"""
-    experiment_id: str
-    experiment_slug: Optional[str] = None
-    experiment_run_data: Dict[str, Any]
-    run_id: str
-    run_name: str
+class TaskResponse(BaseModel):
+    """Model for a single task process (row)"""
+    task_result: Dict[str, Any]
+    evaluations: Dict[str, Any]
 
-class RunContextData(BaseModel):
-    """Pydantic model for run context data"""
-    experiment_id: str
-    experiment_run_id: str
-    task_id: str
-    
 class InitExperimentRequest(BaseModel):
-    """Pydantic model for create experiment request"""
+    """Model for initializing an experiment"""
     slug: str
     dataset_slug: Optional[str] = None
     dataset_version: Optional[str] = None
@@ -30,7 +23,7 @@ class InitExperimentRequest(BaseModel):
     experiment_run_metadata: Optional[Dict[str, Any]] = None
 
 class ExperimentResponse(BaseModel):
-    """Pydantic model for experiment response"""
+    """Model for experiment response"""
     id: str
     slug: str
     metadata: Optional[Dict[str, Any]] = None
@@ -38,7 +31,7 @@ class ExperimentResponse(BaseModel):
     updated_at: datetime
 
 class ExperimentRunResponse(BaseModel):
-    """Pydantic model for experiment run response"""
+    """Model for experiment run response"""
     id: str
     metadata: Optional[Dict[str, Any]] = None
     dataset_id: Optional[str] = None
@@ -48,18 +41,18 @@ class ExperimentRunResponse(BaseModel):
     updated_at: datetime
 
 class ExperimentInitResponse(BaseModel):
-    """Pydantic model for experiment and run response"""
+    """Model for experiment and run response"""
     experiment: ExperimentResponse
     run: ExperimentRunResponse
 
 class CreateTaskRequest(BaseModel):
-    """Pydantic model for create task request"""
+    """Model for create task request"""
     input: Dict[str, Any]
     output: Dict[str, Any]
 
 class CreateTaskResponse(BaseModel):
-    """Pydantic model for create task response"""
-    task_id: str
+    """Model for create task response"""
+    id: str
 
 
 

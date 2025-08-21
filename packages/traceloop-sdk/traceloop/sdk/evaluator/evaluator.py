@@ -70,11 +70,8 @@ class Evaluator:
             experiment_id=experiment_id,
             experiment_run_id=experiment_run_id,
         )
-        # api_endpoint = os.environ.get("TRACELOOP_BASE_URL", "https://api.traceloop.com")
-        api_endpoint = "http://localhost:3001"
+        api_endpoint = os.environ.get("TRACELOOP_BASE_URL", "https://api.traceloop.com")
         body = request.model_dump()
-
-        print(f"AASA = Evaluator body: {body}")
 
         if client is None:
             client = cls._create_async_client()
@@ -90,7 +87,6 @@ class Evaluator:
             )
 
         result_data = response.json()
-        print(f"AASA = Evaluator result data: {result_data}")
         execute_response = ExecuteEvaluatorResponse(**result_data)
 
         # Wait for SSE result using async SSE client with shared HTTP client
