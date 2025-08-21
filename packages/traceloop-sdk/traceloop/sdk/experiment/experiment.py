@@ -55,25 +55,32 @@ class Experiment:
         """
 
         if not experiment_slug:
-            experiment_slug = os.getenv("TRACELOOP_EXP_SLUG") or "exp-" + str(cuid.cuid())[:11]
+            experiment_slug = (
+                os.getenv("TRACELOOP_EXP_SLUG") or "exp-" + str(cuid.cuid())[:11]
+            )
 
         experiment_run_metadata = {
-            key: value for key, value in [
-                ("related_ref", related_ref),
-                ("aux", aux)
-            ] if value is not None
+            key: value
+            for key, value in [("related_ref", related_ref), ("aux", aux)]
+            if value is not None
         }
 
-        evaluator_details = [
-            (evaluator, None) if isinstance(evaluator, str) else evaluator
-            for evaluator in evaluators
-        ] if evaluators else None
+        evaluator_details = (
+            [
+                (evaluator, None) if isinstance(evaluator, str) else evaluator
+                for evaluator in evaluators
+            ]
+            if evaluators
+            else None
+        )
 
         experiment = self._init_experiment(
             experiment_slug,
             dataset_slug=dataset_slug,
             dataset_version=dataset_version,
-            evaluator_slugs=[slug for slug, _ in evaluator_details] if evaluator_details else None,
+            evaluator_slugs=[slug for slug, _ in evaluator_details]
+            if evaluator_details
+            else None,
             experiment_run_metadata=experiment_run_metadata,
         )
 
@@ -101,14 +108,16 @@ class Experiment:
                 if evaluator_details:
                     for evaluator_slug, evaluator_version in evaluator_details:
                         try:
-                            eval_result = await self._evaluator.run_experiment_evaluator(
-                                evaluator_slug=evaluator_slug,
-                                evaluator_version=evaluator_version,
-                                task_id=task_id,
-                                experiment_id=experiment.experiment.id,
-                                experiment_run_id=run_id,
-                                input=task_result,
-                                timeout_in_sec=120,
+                            eval_result = (
+                                await self._evaluator.run_experiment_evaluator(
+                                    evaluator_slug=evaluator_slug,
+                                    evaluator_version=evaluator_version,
+                                    task_id=task_id,
+                                    experiment_id=experiment.experiment.id,
+                                    experiment_run_id=run_id,
+                                    input=task_result,
+                                    timeout_in_sec=120,
+                                )
                             )
                             eval_results[evaluator_slug] = eval_result.result
                         except Exception as e:
@@ -173,7 +182,7 @@ class Experiment:
                 f"Failed to create or fetch experiment with slug '{experiment_slug}'"
             )
         return ExperimentInitResponse(**response)
-    
+
     def _create_task(
         self,
         experiment_slug: str,
@@ -186,19 +195,18 @@ class Experiment:
             output=task_output,
         )
         response = self._http_client.post(
-            f"/experiments/{experiment_slug}/runs/{experiment_run_id}/task", body.model_dump(mode="json")
+            f"/experiments/{experiment_slug}/runs/{experiment_run_id}/task",
+            body.model_dump(mode="json"),
         )
         if response is None:
-            raise Exception(
-                f"Failed to create task for experiment '{experiment_slug}'"
-            )
+            raise Exception(f"Failed to create task for experiment '{experiment_slug}'")
         return CreateTaskResponse(**response)
-    
+
     def _parse_jsonl_to_rows(self, jsonl_data: str) -> List[Dict[str, Any]]:
         """Parse JSONL string into list of {col_name: col_value} dictionaries"""
         rows = []
-        lines = jsonl_data.strip().split('\n')
-        
+        lines = jsonl_data.strip().split("\n")
+
         # Skip the first line (columns definition)
         for line in lines[1:]:
             if line.strip():
@@ -208,6 +216,5 @@ class Experiment:
                 except json.JSONDecodeError:
                     # Skip invalid JSON lines
                     continue
-            
+
         return rows
-    

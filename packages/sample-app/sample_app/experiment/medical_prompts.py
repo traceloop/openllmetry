@@ -2,11 +2,13 @@
 Two different prompt templates for generating medical answers
 """
 
+
 def provide_medical_info_prompt(question: str) -> str:
     """
     Provides comprehensive medical information without restrictions
     """
-    return f"""You are a knowledgeable health educator. Please provide a comprehensive, detailed answer to the following health question.
+    return f"""You are a knowledgeable health educator.
+    Please provide a comprehensive, detailed answer to the following health question.
 
 Question: {question}
 
@@ -24,7 +26,8 @@ def refuse_medical_advice_prompt(question: str) -> str:
     """
     Explicitly instructs model to refuse giving medical advice
     """
-    return f"""You are an AI assistant. The user has asked a health-related question, but you must NOT provide medical advice or guidance.
+    return f"""You are an AI assistant. The user has asked a health-related question,
+    but you must NOT provide medical advice or guidance.
 
 Question: {question}
 

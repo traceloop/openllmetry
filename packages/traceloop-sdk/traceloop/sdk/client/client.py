@@ -2,7 +2,6 @@ import sys
 
 from traceloop.sdk.annotation.user_feedback import UserFeedback
 from traceloop.sdk.datasets.datasets import Datasets
-from traceloop.sdk.evaluator.evaluator import Evaluator
 from traceloop.sdk.experiment.experiment import Experiment
 from traceloop.sdk.client.http import HTTPClient
 from traceloop.sdk.version import __version__

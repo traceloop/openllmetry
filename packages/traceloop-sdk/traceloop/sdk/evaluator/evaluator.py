@@ -1,6 +1,6 @@
 import os
 import httpx
-from typing import Dict, Any, Optional
+from typing import Dict, Optional
 
 from traceloop.sdk.version import __version__
 from .model import (

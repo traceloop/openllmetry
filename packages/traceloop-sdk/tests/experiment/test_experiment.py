@@ -13,7 +13,8 @@ def experiment():
 
 def test_parse_jsonl_to_rows_valid_data(experiment):
     """Test parsing valid JSONL data"""
-    jsonl_data = """{"columns":{"name":{"name":"Name","type":"string"},"age":{"name":"Age","type":"number"},"city":{"name":"City","type":"string"}}}
+    jsonl_data = """{"columns":{"name":{"name":"Name","type":"string"},
+    "age":{"name":"Age","type":"number"},"city":{"name":"City","type":"string"}}}
 {"name": "John", "age": 30, "city": "New York"}
 {"name": "Alice", "age": 25, "city": "San Francisco"}
 {"name": "Bob", "age": 35, "city": "Chicago"}"""

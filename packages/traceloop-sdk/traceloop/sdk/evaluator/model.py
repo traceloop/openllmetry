@@ -1,6 +1,6 @@
 import datetime
 from typing import Dict, Any, Optional
-from pydantic import BaseModel, Field, RootModel
+from pydantic import BaseModel, RootModel
 
 
 class InputExtractor(BaseModel):
@@ -9,6 +9,7 @@ class InputExtractor(BaseModel):
 
 class InputSchemaMapping(RootModel[Dict[str, InputExtractor]]):
     """Map of field names to input extractors"""
+
     root: Dict[str, InputExtractor]
 
 
@@ -22,12 +23,14 @@ class ExecuteEvaluatorRequest(BaseModel):
 
 class ExecuteEvaluatorResponse(BaseModel):
     """Response from execute API matching actual structure"""
+
     execution_id: str
     stream_url: str
 
 
 class StreamEvent(BaseModel):
     """Individual event from SSE stream"""
+
     event_type: str  # progress, result, error
     data: Dict[str, Any]
     timestamp: datetime.datetime
@@ -35,6 +38,6 @@ class StreamEvent(BaseModel):
 
 class ExecutionResponse(BaseModel):
     """Complete response structure for evaluator execution"""
+
     execution_id: str
     result: Dict[str, Any]
-    

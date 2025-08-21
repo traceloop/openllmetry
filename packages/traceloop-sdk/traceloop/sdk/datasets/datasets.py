@@ -161,7 +161,7 @@ class Datasets:
         if result is None:
             raise Exception(f"Failed to get dataset {slug} by version {version}")
         return result
-    
+
     def get_version_jsonl(self, slug: str, version: str) -> str:
         """Get a specific version of a dataset as a JSONL string"""
         result = self._http.get(f"datasets/{slug}/versions/{version}/jsonl")
