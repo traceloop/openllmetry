@@ -15,7 +15,9 @@ class InputSchemaMapping(RootModel[Dict[str, InputExtractor]]):
 class ExecuteEvaluatorRequest(BaseModel):
     input_schema_mapping: InputSchemaMapping
     evaluator_version: Optional[str] = None
-    context_data: Optional[Dict[str, Any]] = None
+    task_id: str
+    experiment_id: str
+    experiment_run_id: str
 
 
 class ExecuteEvaluatorResponse(BaseModel):

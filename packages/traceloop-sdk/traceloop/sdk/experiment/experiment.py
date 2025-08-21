@@ -6,7 +6,6 @@ from traceloop.sdk.datasets.datasets import Datasets
 from traceloop.sdk.evaluator.evaluator import Evaluator
 from traceloop.sdk.dataset.row import Row
 from traceloop.sdk.experiment.model import (
-    RunContextData,
     InitExperimentRequest,
     ExperimentInitResponse,
     CreateTaskRequest,
@@ -29,8 +28,9 @@ class Experiment:
 
     async def run(
         self,
-        task: Callable[[Optional[Row]], Dict[str, Any]],
+        task: Callable[[Optional[Dict[str, Any]]], Dict[str, Any]],
         dataset_slug: Optional[str] = None,
+        dataset_version: Optional[str] = None,
         evaluators: Optional[List[EvaluatorSpec]] = None,
         experiment_slug: Optional[str] = None,
         related_ref: Optional[Dict[str, str]] = None,
@@ -64,7 +64,8 @@ class Experiment:
 
         experiment = self._init_experiment(
             experiment_slug,
-            dataset_slugs=[dataset_slug],
+            dataset_slug=dataset_slug,
+            dataset_version=dataset_version,
             evaluator_slugs=[evaluator_slug for evaluator_slug, _ in evaluators],
             experiment_metadata=experiment_metadata,
         )
@@ -73,7 +74,9 @@ class Experiment:
         print(f"AASA = Run ID: {run_id}")
 
         if dataset_slug:
-            dataset = self._datasets.get_by_slug(dataset_slug)
+            csv = self._datasets.get_version_csv(dataset_slug, dataset_version)
+            print("AASA = CSV: ", csv)
+            dataset = self._datasets.get_by_slug(dataset_slug, dataset_version)
 
         results = []
         errors = []
@@ -96,19 +99,17 @@ class Experiment:
                 if evaluators:
                     for evaluator_slug, evaluator_version in evaluators:
                         try:
-                            context_data = RunContextData(
-                                experiment_id=experiment.id,
-                                experiment_run_id=run_id,
-                                task_id=task_id,
-                            )
+                            print(f"AASA = Evaluator slug: {evaluator_slug}")
 
                             print(f"AASA = Evaluator slug: {evaluator_slug}")
-                            eval_result = await self._evaluator.run(
+                            eval_result = await self._evaluator.run_experiment_evaluator(
                                 evaluator_slug=evaluator_slug,
                                 evaluator_version=evaluator_version,
+                                task_id=task_id,
+                                experiment_id=experiment.experiment.id,
+                                experiment_run_id=run_id,
                                 input=task_result,
                                 timeout_in_sec=120,
-                                context_data=context_data.model_dump(),
                             )
                             print(f"AASA = Evaluator result: {eval_result}")
                             eval_results[evaluator_slug] = eval_result.result
@@ -156,17 +157,13 @@ class Experiment:
 
         print("\n\nERRORS: ", errors)
 
-        return experiment.id, {
-            "results": results,
-            "errors": errors,
-            "experiment_name": experiment_slug,
-            "experiment_id": experiment.id,
-        }
+        return "hi" # TODO: return results
 
     def _init_experiment(
         self,
         experiment_slug: str,
-        dataset_slugs: Optional[List[str]] = None,
+        dataset_slug: Optional[str] = None,
+        dataset_version: Optional[str] = None,
         evaluator_slugs: Optional[List[str]] = None,
         experiment_metadata: Optional[Dict[str, Any]] = None,
         experiment_run_metadata: Optional[Dict[str, Any]] = None,
@@ -174,7 +171,8 @@ class Experiment:
         """Get experiment by slug from API"""
         body = InitExperimentRequest(
             slug=experiment_slug,
-            dataset_slugs=dataset_slugs,
+            dataset_slug=dataset_slug,
+            dataset_version=dataset_version,
             evaluator_slugs=evaluator_slugs,
             experiment_metadata=experiment_metadata,
             experiment_run_metadata=experiment_run_metadata,

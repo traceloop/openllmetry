@@ -8,7 +8,7 @@ from .model import (
     InputSchemaMapping,
     ExecuteEvaluatorRequest,
     ExecuteEvaluatorResponse,
-    ExecutionResponse
+    ExecutionResponse,
 )
 from .stream_client import SSEClient
 
@@ -29,23 +29,26 @@ class Evaluator:
             headers={
                 "Authorization": f"Bearer {api_key}",
                 "Content-Type": "application/json",
-                "User-Agent": f"traceloop-sdk/{__version__}"
+                "User-Agent": f"traceloop-sdk/{__version__}",
             },
-            timeout=httpx.Timeout(120.0)
+            timeout=httpx.Timeout(120.0),
         )
 
     @classmethod
-    async def run(cls, 
-                  evaluator_slug: str,
-                  input: Dict[str, str], 
-                  timeout_in_sec: int = 120,
-                  evaluator_version: Optional[str] = None,
-                  client: Optional[httpx.AsyncClient] = None,
-                  context_data: Optional[Dict[str, str]] = None
-                  ) -> ExecutionResponse:
+    async def run_experiment_evaluator(
+        cls,
+        evaluator_slug: str,
+        task_id: str,
+        experiment_id: str,
+        experiment_run_id: str,
+        input: Dict[str, str],
+        timeout_in_sec: int = 120,
+        evaluator_version: Optional[str] = None,
+        client: Optional[httpx.AsyncClient] = None,
+    ) -> ExecutionResponse:
         """
         Execute evaluator with input schema mapping and wait for result
-        
+
         Args:
             evaluator_slug: Slug of the evaluator to execute
             input: Dict mapping evaluator input field names to their values. {field_name: value, ...}
@@ -53,12 +56,20 @@ class Evaluator:
             context_data: Context data to be passed to the evaluator (optional)
             evaluator_version: Version of the evaluator to execute (optional)
             timeout_in_sec: Timeout in seconds for execution
-        
+
         Returns:
             ExecutionResponse: The evaluation result from SSE stream
         """
-        schema_mapping = InputSchemaMapping(root={k: InputExtractor(source=v) for k, v in input.items()})
-        request = ExecuteEvaluatorRequest(input_schema_mapping=schema_mapping, context_data=context_data, evaluator_version=evaluator_version)
+        schema_mapping = InputSchemaMapping(
+            root={k: InputExtractor(source=v) for k, v in input.items()}
+        )
+        request = ExecuteEvaluatorRequest(
+            input_schema_mapping=schema_mapping,
+            evaluator_version=evaluator_version,
+            task_id=task_id,
+            experiment_id=experiment_id,
+            experiment_run_id=experiment_run_id,
+        )
         # api_endpoint = os.environ.get("TRACELOOP_BASE_URL", "https://api.traceloop.com")
         api_endpoint = "http://localhost:3001"
         body = request.model_dump()
@@ -71,14 +82,12 @@ class Evaluator:
         full_url = f"{api_endpoint}/v2/evaluators/slug/{evaluator_slug}/execute"
         print(f"Evaluator full URL: {full_url}")
         # Make API call to trigger evaluator
-        response = await client.post(
-            full_url,
-            json=body,
-            timeout=timeout_in_sec
-        )
+        response = await client.post(full_url, json=body, timeout=timeout_in_sec)
 
         if response.status_code != 200:
-            raise Exception(f"Failed to execute evaluator {evaluator_slug}: {response.status_code}")
+            raise Exception(
+                f"Failed to execute evaluator {evaluator_slug}: {response.status_code}"
+            )
 
         result_data = response.json()
         print(f"AASA = Evaluator result data: {result_data}")
@@ -87,10 +96,6 @@ class Evaluator:
         # Wait for SSE result using async SSE client with shared HTTP client
         sse_client = SSEClient(shared_client=client)
         sse_result = await sse_client.wait_for_result(
-            execute_response.execution_id,
-            execute_response.stream_url, 
-            timeout_in_sec
+            execute_response.execution_id, execute_response.stream_url, timeout_in_sec
         )
         return sse_result
-    
-    

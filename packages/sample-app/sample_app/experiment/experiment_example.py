@@ -32,11 +32,11 @@ def generate_medical_answer(prompt_text: str) -> str:
 
 def medical_task_clinical(row):
     """Task function for clinical guidance prompt"""
-    prompt_text = clinical_guidance_prompt(row.values["user-description"])
+    prompt_text = clinical_guidance_prompt(row["user-description"])
     answer = generate_medical_answer(prompt_text)
     # print(f"\033[94mMedical user input:\033[0m {row.values['user-description']}")
     # print(f"\033[96mMedical LLM answer:\033[0m {answer}")
-    user_description = row.values["user-description"]
+    user_description = row["user-description"]
     print(f"\033[94mMedical user input:\033[0m {user_description}")
     return {"completion": answer, "prompt": prompt_text}
 
@@ -58,8 +58,9 @@ def run_experiment_example():
     print("\033[95m🔬 Running experiment with clinical guidance prompt...\033[0m")
     experiment_id, results = asyncio.run(client.experiment.run(
         dataset_slug="medical",
+        dataset_version="v1",
         task=medical_task_clinical,
-        evaluators=[("medical_advice", None)],
+        evaluators=[("medical_advice", None), ("medical_advice", None)],
         experiment_slug="medical-clinical-guidance-1",
         exit_on_error=False,
     ))

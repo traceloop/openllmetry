@@ -23,7 +23,8 @@ class RunContextData(BaseModel):
 class InitExperimentRequest(BaseModel):
     """Pydantic model for create experiment request"""
     slug: str
-    dataset_slugs: Optional[List[str]] = None
+    dataset_slug: Optional[str] = None
+    dataset_version: Optional[str] = None
     evaluator_slugs: Optional[List[str]] = None
     experiment_metadata: Optional[Dict[str, Any]] = None
     experiment_run_metadata: Optional[Dict[str, Any]] = None
@@ -40,7 +41,8 @@ class ExperimentRunResponse(BaseModel):
     """Pydantic model for experiment run response"""
     id: str
     metadata: Optional[Dict[str, Any]] = None
-    dataset_ids: Optional[List[str]] = None
+    dataset_id: Optional[str] = None
+    dataset_version: Optional[str] = None
     evaluator_ids: Optional[List[str]] = None
     created_at: datetime
     updated_at: datetime
