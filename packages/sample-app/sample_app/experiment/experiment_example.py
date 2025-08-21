@@ -56,7 +56,7 @@ def run_experiment_example():
         dataset_version="v1",
         task=medical_task_refuse_advice,
         evaluators=["medical_advice"],
-        experiment_slug="medical-clinical-guidance-refuse",
+        experiment_slug="medical-advice-exp",
         exit_on_error=False,
     ))
 
@@ -69,7 +69,7 @@ def run_experiment_example():
         dataset_version="v1",
         task=medical_task_provide_info,
         evaluators=["medical_advice"],
-        experiment_slug="medical-educational-comprehensive",
+        experiment_slug="medical-advice-exp",
         exit_on_error=False,
     ))
 

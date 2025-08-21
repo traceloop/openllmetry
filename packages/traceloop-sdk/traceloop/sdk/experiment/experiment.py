@@ -1,6 +1,7 @@
 import cuid
 import asyncio
 import json
+import os
 from typing import Any, List, Callable, Optional, Tuple, Dict
 from traceloop.sdk.client.http import HTTPClient
 from traceloop.sdk.datasets.datasets import Datasets
@@ -37,7 +38,7 @@ class Experiment:
         related_ref: Optional[Dict[str, str]] = None,
         aux: Optional[Dict[str, str]] = None,
         exit_on_error: bool = False,
-    ) -> Tuple[str, Any]:
+    ) -> Tuple[List[TaskResponse], List[str]]:
         """Run an experiment with the given task and evaluators
 
         Args:
@@ -50,13 +51,13 @@ class Experiment:
             client: Traceloop client instance (if not provided, will initialize)
 
         Returns:
-            Tuple of (experiment_id, results)
+            Tuple of (results, errors)
         """
 
         if not experiment_slug:
-            experiment_slug = "exp-" + str(cuid.cuid())[:11]
+            experiment_slug = os.getenv("TRACELOOP_EXP_SLUG") or "exp-" + str(cuid.cuid())[:11]
 
-        experiment_metadata = {
+        experiment_run_metadata = {
             key: value for key, value in [
                 ("related_ref", related_ref),
                 ("aux", aux)
@@ -73,7 +74,7 @@ class Experiment:
             dataset_slug=dataset_slug,
             dataset_version=dataset_version,
             evaluator_slugs=[slug for slug, _ in evaluator_details] if evaluator_details else None,
-            experiment_metadata=experiment_metadata,
+            experiment_run_metadata=experiment_run_metadata,
         )
 
         run_id = experiment.run.id
@@ -83,8 +84,8 @@ class Experiment:
             jsonl_data = self._datasets.get_version_jsonl(dataset_slug, dataset_version)
             rows = self._parse_jsonl_to_rows(jsonl_data)
 
-        results = []
-        errors = []
+        results: List[TaskResponse] = []
+        errors: List[str] = []
 
         async def run_single_row(row):
             try:
