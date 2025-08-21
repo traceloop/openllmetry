@@ -3,10 +3,7 @@ Example usage of the Experiment context manager
 """
 
 import asyncio
-import sys
 import os
-
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from openai import OpenAI
 from medical_prompts import refuse_medical_advice_prompt, provide_medical_info_prompt

@@ -2,7 +2,6 @@ import os
 import httpx
 from typing import Dict, Optional
 
-from traceloop.sdk.version import __version__
 from .model import (
     InputExtractor,
     InputSchemaMapping,
@@ -18,21 +17,11 @@ class Evaluator:
     Evaluator class for executing evaluators with SSE streaming
     """
 
-    @classmethod
-    def _create_async_client(cls) -> httpx.AsyncClient:
-        """Create new async HTTP client"""
-        api_key = os.environ.get("TRACELOOP_API_KEY", "")
-        if not api_key:
-            raise ValueError("TRACELOOP_API_KEY environment variable is required")
+    _async_http_client: httpx.AsyncClient
 
-        return httpx.AsyncClient(
-            headers={
-                "Authorization": f"Bearer {api_key}",
-                "Content-Type": "application/json",
-                "User-Agent": f"traceloop-sdk/{__version__}",
-            },
-            timeout=httpx.Timeout(120.0),
-        )
+    def __init__(self, async_http_client: httpx.AsyncClient):
+        self._async_http_client = async_http_client
+
 
     @classmethod
     def _build_evaluator_request(
@@ -61,15 +50,12 @@ class Evaluator:
         evaluator_slug: str,
         request: ExecuteEvaluatorRequest,
         timeout_in_sec: int = 120,
-        client: Optional[httpx.AsyncClient] = None,
     ) -> ExecuteEvaluatorResponse:
         """Execute evaluator request and return response"""
         api_endpoint = os.environ.get("TRACELOOP_BASE_URL", "https://api.traceloop.com")
         body = request.model_dump()
 
-        should_close_client = client is None
-        if should_close_client:
-            client = cls._create_async_client()
+        client = cls._async_http_client
         try:
             full_url = f"{api_endpoint}/v2/evaluators/slug/{evaluator_slug}/execute"
             response = await client.post(
@@ -84,8 +70,7 @@ class Evaluator:
             result_data = response.json()
             return ExecuteEvaluatorResponse(**result_data)
         finally:
-            if should_close_client:
-                await client.aclose()
+            await client.aclose()
 
     @classmethod
     async def run_experiment_evaluator(
@@ -116,15 +101,13 @@ class Evaluator:
         request = cls._build_evaluator_request(
             task_id, experiment_id, experiment_run_id, input, evaluator_version
         )
-        
-        should_close_client = client is None
-        if should_close_client:
-            client = cls._create_async_client()
+
+        client = cls._async_http_client
         try:
             execute_response = await cls._execute_evaluator_request(
                 evaluator_slug, request, timeout_in_sec, client
             )
-            
+
             sse_client = SSEClient(shared_client=client)
             sse_result = await sse_client.wait_for_result(
                 execute_response.execution_id,
@@ -133,8 +116,7 @@ class Evaluator:
             )
             return sse_result
         finally:
-            if should_close_client:
-                await client.aclose()
+            await client.aclose()
 
     @classmethod
     async def trigger_experiment_evaluator(
@@ -145,7 +127,6 @@ class Evaluator:
         experiment_run_id: str,
         input: Dict[str, str],
         evaluator_version: Optional[str] = None,
-        client: Optional[httpx.AsyncClient] = None,
     ) -> str:
         """
         Trigger evaluator execution without waiting for result (fire-and-forget)
@@ -165,10 +146,10 @@ class Evaluator:
         request = cls._build_evaluator_request(
             task_id, experiment_id, experiment_run_id, input, evaluator_version
         )
-        
+
         execute_response = await cls._execute_evaluator_request(
-            evaluator_slug, request, 120, client
+            evaluator_slug, request, 120, cls._async_http_client
         )
-        
+
         # Return execution_id without waiting for SSE result
         return execute_response.execution_id

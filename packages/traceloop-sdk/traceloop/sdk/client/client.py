@@ -1,10 +1,13 @@
 import sys
+import os
 
 from traceloop.sdk.annotation.user_feedback import UserFeedback
 from traceloop.sdk.datasets.datasets import Datasets
 from traceloop.sdk.experiment.experiment import Experiment
 from traceloop.sdk.client.http import HTTPClient
 from traceloop.sdk.version import __version__
+import httpx
+
 
 
 class Client:
@@ -24,6 +27,7 @@ class Client:
     datasets: Datasets
     experiment: Experiment
     _http: HTTPClient
+    _async_http: httpx.AsyncClient
 
     def __init__(
         self,
@@ -48,6 +52,15 @@ class Client:
         self._http = HTTPClient(
             base_url=self.api_endpoint, api_key=self.api_key, version=__version__
         )
+        self._async_http = httpx.AsyncClient(
+            headers={
+                "Authorization": f"Bearer {self.api_key}",
+                "Content-Type": "application/json",
+                "User-Agent": f"traceloop-sdk/{__version__}",
+            },
+            timeout=httpx.Timeout(120.0),
+        )
         self.user_feedback = UserFeedback(self._http, self.app_name)
         self.datasets = Datasets(self._http)
-        self.experiment = Experiment(self._http)
+        experiment_slug = os.getenv("TRACELOOP_EXP_SLUG")
+        self.experiment = Experiment(self._http, self._async_http, experiment_slug)

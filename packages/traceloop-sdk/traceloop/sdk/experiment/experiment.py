@@ -14,6 +14,7 @@ from traceloop.sdk.experiment.model import (
     EvaluatorDetails,
     TaskResponse,
 )
+import httpx
 
 
 class Experiment:
@@ -22,11 +23,13 @@ class Experiment:
     _datasets: Datasets
     _evaluator: Evaluator
     _http_client: HTTPClient
+    _async_http_client: httpx.AsyncClient
 
-    def __init__(self, http_client: HTTPClient):
+    def __init__(self, http_client: HTTPClient, async_http_client: httpx.AsyncClient, experiment_slug: str):
         self._datasets = Datasets(http_client)
-        self._evaluator = Evaluator()
+        self._evaluator = Evaluator(async_http_client)
         self._http_client = http_client
+        self._experiment_slug = experiment_slug
 
     async def run(
         self,
@@ -57,9 +60,7 @@ class Experiment:
         """
 
         if not experiment_slug:
-            experiment_slug = (
-                os.getenv("TRACELOOP_EXP_SLUG") or "exp-" + str(cuid.cuid())[:11]
-            )
+            experiment_slug = self._experiment_slug or "exp-" + str(cuid.cuid())[:11]
 
         experiment_run_metadata = {
             key: value
