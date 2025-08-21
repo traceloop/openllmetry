@@ -1,10 +1,12 @@
 import cuid
 import asyncio
+import csv
+import json
+from io import StringIO
 from typing import Any, List, Callable, Optional, Tuple, Dict
 from traceloop.sdk.client.http import HTTPClient
 from traceloop.sdk.datasets.datasets import Datasets
 from traceloop.sdk.evaluator.evaluator import Evaluator
-from traceloop.sdk.dataset.row import Row
 from traceloop.sdk.experiment.model import (
     InitExperimentRequest,
     ExperimentInitResponse,
@@ -22,6 +24,12 @@ class Experiment:
     _http_client: HTTPClient
 
     def __init__(self, http_client: HTTPClient):
+        #Temp 
+        # dataset_http_client = HTTPClient(
+        #     base_url="https://api-staging.traceloop.com",
+        #     api_key=http_client.api_key,    
+        #     version=http_client.version,
+        # )
         self._datasets = Datasets(http_client)
         self._evaluator = Evaluator()
         self._http_client = http_client
@@ -73,10 +81,11 @@ class Experiment:
         run_id = experiment.run.id
         print(f"AASA = Run ID: {run_id}")
 
+        rows = []
         if dataset_slug:
-            csv = self._datasets.get_version_csv(dataset_slug, dataset_version)
-            print("AASA = CSV: ", csv)
-            dataset = self._datasets.get_by_slug(dataset_slug, dataset_version)
+            jsonl_data = self._datasets.get_version_jsonl(dataset_slug, dataset_version)
+            print("AASA = JSONL: ", jsonl_data)
+            rows = self._parse_jsonl_to_rows(jsonl_data)
 
         results = []
         errors = []
@@ -89,7 +98,7 @@ class Experiment:
                 task_id = self._create_task(
                     experiment_slug=experiment_slug,
                     experiment_run_id=run_id,
-                    task_input=row.values,
+                    task_input=row,
                     task_output=task_result,
                 ).task_id
                 print(f"AASA = Task ID: {task_id}")
@@ -117,8 +126,8 @@ class Experiment:
                             eval_results[evaluator_slug] = f"Error: {str(e)}"
 
                 return {
-                    "row_id": getattr(row, "id", None),
-                    "input": row.values,
+                    "row_id": None,
+                    "input": row,
                     "output": task_result,
                     "evaluations": eval_results,
                 }
@@ -135,7 +144,7 @@ class Experiment:
                 return await run_single_row(row)
 
         tasks = [
-            run_with_semaphore(row) for row in dataset.rows[:1]
+            run_with_semaphore(row) for row in rows[:1]
         ]  # Only 1 task for debug
 
         for completed_task in asyncio.as_completed(tasks):
@@ -205,3 +214,21 @@ class Experiment:
                 f"Failed to create task for experiment '{experiment_slug}'"
             )
         return CreateTaskResponse(**response)
+    
+    def _parse_jsonl_to_rows(self, jsonl_data: str) -> List[Dict[str, Any]]:
+        """Parse JSONL string into list of {col_name: col_value} dictionaries"""
+        rows = []
+        lines = jsonl_data.strip().split('\n')
+        
+        # Skip the first line (columns definition)
+        for line in lines[1:]:
+            if line.strip():
+                try:
+                    row_data = json.loads(line)
+                    rows.append(row_data)
+                except json.JSONDecodeError:
+                    # Skip invalid JSON lines
+                    continue
+            
+        return rows
+    
