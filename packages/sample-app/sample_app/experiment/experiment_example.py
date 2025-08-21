@@ -10,7 +10,6 @@ from traceloop.sdk import Traceloop
 from openai import OpenAI
 from medical_prompts import refuse_medical_advice_prompt, provide_medical_info_prompt
 
-# Initialize Traceloop
 client = Traceloop.init()
 
 def generate_medical_answer(prompt_text: str) -> str:
@@ -82,3 +81,4 @@ def run_experiment_example():
 if __name__ == "__main__":
     print("\033[95m🚀 Running experiment example with new API...\033[0m")
     run_experiment_example()
+    

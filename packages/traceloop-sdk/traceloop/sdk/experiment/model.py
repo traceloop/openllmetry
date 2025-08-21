@@ -52,6 +52,3 @@ class CreateTaskRequest(BaseModel):
 class CreateTaskResponse(BaseModel):
     """Model for create task response"""
     id: str
-
-
-

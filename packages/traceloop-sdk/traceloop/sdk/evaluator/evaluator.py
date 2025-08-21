@@ -77,8 +77,6 @@ class Evaluator:
             client = cls._create_async_client()
 
         full_url = f"{api_endpoint}/v2/evaluators/slug/{evaluator_slug}/execute"
-        print(f"Evaluator full URL: {full_url}")
-        # Make API call to trigger evaluator
         response = await client.post(full_url, json=body, timeout=timeout_in_sec)
 
         if response.status_code != 200:
@@ -89,7 +87,6 @@ class Evaluator:
         result_data = response.json()
         execute_response = ExecuteEvaluatorResponse(**result_data)
 
-        # Wait for SSE result using async SSE client with shared HTTP client
         sse_client = SSEClient(shared_client=client)
         sse_result = await sse_client.wait_for_result(
             execute_response.execution_id, execute_response.stream_url, timeout_in_sec
