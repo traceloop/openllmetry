@@ -73,22 +73,30 @@ class Evaluator:
         api_endpoint = os.environ.get("TRACELOOP_BASE_URL", "https://api.traceloop.com")
         body = request.model_dump()
 
-        if client is None:
+        should_close_client = client is None
+        if should_close_client:
             client = cls._create_async_client()
-
-        full_url = f"{api_endpoint}/v2/evaluators/slug/{evaluator_slug}/execute"
-        response = await client.post(full_url, json=body, timeout=timeout_in_sec)
-
-        if response.status_code != 200:
-            raise Exception(
-                f"Failed to execute evaluator {evaluator_slug}: {response.status_code}"
+        try:
+            full_url = f"{api_endpoint}/v2/evaluators/slug/{evaluator_slug}/execute"
+            response = await client.post(
+                full_url, json=body, timeout=httpx.Timeout(timeout_in_sec)
             )
+            if response.status_code != 200:
+                raise Exception(
+                    f"Failed to execute evaluator {evaluator_slug}: "
+                    f"{response.status_code} – {response.text}"
+                )
 
-        result_data = response.json()
-        execute_response = ExecuteEvaluatorResponse(**result_data)
+            result_data = response.json()
+            execute_response = ExecuteEvaluatorResponse(**result_data)
 
-        sse_client = SSEClient(shared_client=client)
-        sse_result = await sse_client.wait_for_result(
-            execute_response.execution_id, execute_response.stream_url, timeout_in_sec
-        )
-        return sse_result
+            sse_client = SSEClient(shared_client=client)
+            sse_result = await sse_client.wait_for_result(
+                execute_response.execution_id,
+                execute_response.stream_url,
+                timeout_in_sec,
+            )
+            return sse_result
+        finally:
+            if should_close_client:
+                await client.aclose()
