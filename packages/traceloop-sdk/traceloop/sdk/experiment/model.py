@@ -1,6 +1,6 @@
 from datetime import datetime
 from typing import List, Dict, Any, Optional, Tuple, Union
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 EvaluatorVersion = str
 EvaluatorSlug = str
@@ -11,7 +11,7 @@ class TaskResponse(BaseModel):
     """Model for a single task process (row)"""
 
     task_result: Optional[Dict[str, Any]] = None
-    evaluations: Dict[str, Any] = {}
+    evaluations: Dict[str, Any] = Field(default_factory=dict)
     error: Optional[str] = None
 
 

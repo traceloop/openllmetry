@@ -89,7 +89,7 @@ class Experiment:
         run_id = experiment.run.id
 
         rows = []
-        if dataset_slug:
+        if dataset_slug and dataset_version:
             jsonl_data = self._datasets.get_version_jsonl(dataset_slug, dataset_version)
             rows = self._parse_jsonl_to_rows(jsonl_data)
 
