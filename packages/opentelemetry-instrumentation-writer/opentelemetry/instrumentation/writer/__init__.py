@@ -7,14 +7,15 @@ from typing import Collection, Union
 
 from opentelemetry._events import EventLogger, get_event_logger
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
-from opentelemetry.instrumentation.utils import (_SUPPRESS_INSTRUMENTATION_KEY,
-                                                 unwrap)
+from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY, unwrap
 from opentelemetry.metrics import Histogram, Meter, get_meter
-from opentelemetry.semconv._incubating.metrics import \
-    gen_ai_metrics as GenAIMetrics
+from opentelemetry.semconv._incubating.metrics import gen_ai_metrics as GenAIMetrics
 from opentelemetry.semconv_ai import (
-    SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY, LLMRequestTypeValues, Meters,
-    SpanAttributes)
+    SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
+    LLMRequestTypeValues,
+    Meters,
+    SpanAttributes,
+)
 from opentelemetry.trace import SpanKind, get_tracer
 from opentelemetry.trace.status import Status, StatusCode
 from wrapt import wrap_function_wrapper
@@ -23,14 +24,24 @@ from writerai._streaming import AsyncStream, Stream
 from opentelemetry import context as context_api
 from opentelemetry.instrumentation.writer.config import Config
 from opentelemetry.instrumentation.writer.event_emitter import (
-    emit_choice_events, emit_message_events, emit_streaming_response_events)
+    emit_choice_events,
+    emit_message_events,
+    emit_streaming_response_events,
+)
 from opentelemetry.instrumentation.writer.span_utils import (
-    set_input_attributes, set_model_input_attributes,
-    set_model_response_attributes, set_model_streaming_response_attributes,
-    set_response_attributes, set_streaming_response_attributes)
+    set_input_attributes,
+    set_model_input_attributes,
+    set_model_response_attributes,
+    set_model_streaming_response_attributes,
+    set_response_attributes,
+    set_streaming_response_attributes,
+)
 from opentelemetry.instrumentation.writer.utils import (
-    error_metrics_attributes, model_as_dict, response_attributes,
-    should_emit_events)
+    error_metrics_attributes,
+    model_as_dict,
+    response_attributes,
+    should_emit_events,
+)
 from opentelemetry.instrumentation.writer.version import __version__
 
 logger = logging.getLogger(__name__)
@@ -74,7 +85,11 @@ def is_streaming_response(response):
 def _process_streaming_chunk(chunk):
     chunk_dict = model_as_dict(chunk)
 
-    choice = chunk_dict.get("choices", [{}])[0]
+    choices = chunk_dict.get("choices")
+    choice = {}
+    if choices:
+        choice = choices[0]
+
     delta = choice.get("delta", {})
 
     content = delta.get("content") if delta else choice.get("text")

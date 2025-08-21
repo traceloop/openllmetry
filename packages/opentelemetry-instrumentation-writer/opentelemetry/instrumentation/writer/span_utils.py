@@ -1,13 +1,17 @@
+from opentelemetry.metrics import Histogram
 from opentelemetry.semconv_ai import SpanAttributes
+from opentelemetry.trace import Span
 
-from opentelemetry.instrumentation.writer.utils import (dont_throw,
-                                                        model_as_dict,
-                                                        set_span_attribute,
-                                                        should_send_prompts)
+from opentelemetry.instrumentation.writer.utils import (
+    dont_throw,
+    model_as_dict,
+    set_span_attribute,
+    should_send_prompts,
+)
 
 
 @dont_throw
-def set_input_attributes(span, kwargs):
+def set_input_attributes(span: Span, kwargs: dict) -> None:
     if not span.is_recording():
         return
 
@@ -54,7 +58,7 @@ def set_input_attributes(span, kwargs):
 
 
 @dont_throw
-def set_model_input_attributes(span, kwargs):
+def set_model_input_attributes(span: Span, kwargs: dict) -> None:
     if not span.is_recording():
         return
 
@@ -73,7 +77,9 @@ def set_model_input_attributes(span, kwargs):
 
 
 @dont_throw
-def set_model_response_attributes(span, response, token_histogram):
+def set_model_response_attributes(
+    span: Span, response, token_histogram: Histogram
+) -> None:
     if not span.is_recording():
         return
 
@@ -123,7 +129,7 @@ def set_model_response_attributes(span, response, token_histogram):
 
 
 @dont_throw
-def set_response_attributes(span, response):
+def set_response_attributes(span: Span, response) -> None:
     if not span.is_recording():
         return
 
@@ -134,7 +140,7 @@ def set_response_attributes(span, response):
         _set_completions(span, choices)
 
 
-def _set_completions(span, choices):
+def _set_completions(span: Span, choices: list) -> None:
     if choices is None or not should_send_prompts():
         return
 
@@ -171,8 +177,8 @@ def _set_completions(span, choices):
 
 
 def set_streaming_response_attributes(
-    span, accumulated_content, finish_reason=None, usage=None
-):
+    span: Span, accumulated_content, finish_reason: str = None, usage: dict = None
+) -> None:
     if not span.is_recording() or not should_send_prompts():
         return
 
@@ -184,7 +190,7 @@ def set_streaming_response_attributes(
         set_span_attribute(span, f"{prefix}.finish_reason", finish_reason)
 
 
-def set_model_streaming_response_attributes(span, usage):
+def set_model_streaming_response_attributes(span: Span, usage) -> None:
     if not span.is_recording():
         return
 

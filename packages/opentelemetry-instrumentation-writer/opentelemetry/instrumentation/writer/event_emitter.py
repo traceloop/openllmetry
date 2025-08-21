@@ -3,15 +3,17 @@ from enum import Enum
 from typing import Union
 
 from opentelemetry._events import Event, EventLogger
-from opentelemetry.semconv._incubating.attributes import \
-    gen_ai_attributes as GenAIAttributes
+from opentelemetry.semconv._incubating.attributes import (
+    gen_ai_attributes as GenAIAttributes,
+)
 
-from opentelemetry.instrumentation.writer.event_models import (ChoiceEvent,
-                                                               MessageEvent)
-from opentelemetry.instrumentation.writer.utils import (dont_throw,
-                                                        model_as_dict,
-                                                        should_emit_events,
-                                                        should_send_prompts)
+from opentelemetry.instrumentation.writer.event_models import ChoiceEvent, MessageEvent
+from opentelemetry.instrumentation.writer.utils import (
+    dont_throw,
+    model_as_dict,
+    should_emit_events,
+    should_send_prompts,
+)
 
 
 class Roles(Enum):
@@ -32,18 +34,29 @@ EVENT_ATTRIBUTES = {
 
 
 @dont_throw
-def emit_message_events(kwargs: dict, event_logger):
-    for message in kwargs.get("messages", []):
+def emit_message_events(kwargs: dict, event_logger) -> None:
+    messages = kwargs.get("messages", [])
+
+    if messages:
+        for message in kwargs.get("messages", []):
+            emit_event(
+                MessageEvent(
+                    content=message.get("content"),
+                    role=message.get("role", "unknown"),
+                    tool_calls=message.get("tool_calls", []),
+                ),
+                event_logger=event_logger,
+            )
+
+    elif prompt := kwargs.get("prompt"):
         emit_event(
-            MessageEvent(
-                content=message.get("content"), role=message.get("role", "unknown")
-            ),
+            MessageEvent(content=prompt, role="user"),
             event_logger=event_logger,
         )
 
 
 @dont_throw
-def emit_choice_events(response, event_logger):
+def emit_choice_events(response, event_logger) -> None:
     response_dict = model_as_dict(response)
 
     for choice in response_dict.get("choices", []):
@@ -53,10 +66,11 @@ def emit_choice_events(response, event_logger):
             emit_event(
                 ChoiceEvent(
                     index=choice.get("index", 0),
-                    message={
-                        "content": message.get("content"),
-                        "role": message.get("role", "assistant"),
-                    },
+                    message=MessageEvent(
+                        content=message.get("content"),
+                        role=message.get("role", "assistant"),
+                        tool_calls=message.get("tool_calls", []),
+                    ),
                     finish_reason=choice.get("finish_reason"),
                 ),
                 event_logger=event_logger,
@@ -65,11 +79,11 @@ def emit_choice_events(response, event_logger):
             emit_event(
                 ChoiceEvent(
                     index=choice.get("index", 0),
-                    message={
-                        "content": choice.get("text"),
-                        "role": "assistant",
-                    },
-                    finish_reason=choice.get("finish_reason"),
+                    message=MessageEvent(
+                        content=choice.get("text"),
+                        role="assistant",
+                    ),
+                    finish_reason=choice.get("finish_reason", "unknown"),
                 ),
                 event_logger=event_logger,
             )
@@ -78,12 +92,13 @@ def emit_choice_events(response, event_logger):
 @dont_throw
 def emit_streaming_response_events(
     accumulated_content: str, finish_reason: Union[str, None], event_logger
-):
+) -> None:
     emit_event(
         ChoiceEvent(
             index=0,
             message={"content": accumulated_content, "role": "assistant"},
             finish_reason=finish_reason or "unknown",
+            # TODO add tool_calls definition
         ),
         event_logger,
     )
@@ -107,15 +122,13 @@ def _emit_message_event(event: MessageEvent, event_logger: EventLogger) -> None:
     body = asdict(event)
 
     if event.role in VALID_MESSAGE_ROLES:
-        name = "gen_ai.{}.message".format(event.role)
+        name = f"gen_ai.{event.role}.message"
         body.pop("role", None)
     else:
         name = "gen_ai.user.message"
 
-    if event.role != Roles.ASSISTANT.value and event.tool_calls is not None:
-        del body["tool_calls"]
-    elif event.tool_calls is None:
-        del body["tool_calls"]
+    if event.role != Roles.ASSISTANT.value:
+        body.pop("tool_calls", None)
 
     if not should_send_prompts():
         del body["content"]
@@ -128,16 +141,16 @@ def _emit_message_event(event: MessageEvent, event_logger: EventLogger) -> None:
 
 def _emit_choice_event(event: ChoiceEvent, event_logger: EventLogger) -> None:
     body = asdict(event)
-    if event.message["role"] == Roles.ASSISTANT.value:
+    if event.message.role == Roles.ASSISTANT.value:
         body["message"].pop("role", None)
 
-    if event.tool_calls is None:
-        del body["tool_calls"]
+    if event.message.tool_calls is None:
+        del body["message"]["tool_calls"]
 
     if not should_send_prompts():
         body["message"].pop("content", None)
-        if body.get("tool_calls") is not None:
-            for tool_call in body["tool_calls"]:
+        if body["message"].get("tool_calls") is not None:
+            for tool_call in body["message"]["tool_calls"]:
                 tool_call["function"].pop("arguments", None)
 
     event_logger.emit(

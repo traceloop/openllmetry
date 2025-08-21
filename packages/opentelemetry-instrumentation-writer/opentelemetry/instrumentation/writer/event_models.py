@@ -13,11 +13,6 @@ class ToolCall(TypedDict):
     type: Literal["function"]
 
 
-class CompletionMessage(TypedDict):
-    content: Any
-    role: str = "assistant"
-
-
 @dataclass
 class MessageEvent:
     content: Any
@@ -28,6 +23,5 @@ class MessageEvent:
 @dataclass
 class ChoiceEvent:
     index: int
-    message: CompletionMessage
+    message: MessageEvent
     finish_reason: str = "unknown"
-    tool_calls: Optional[List[ToolCall]] = None
