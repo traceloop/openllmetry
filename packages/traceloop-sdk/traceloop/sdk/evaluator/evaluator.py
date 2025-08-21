@@ -22,7 +22,6 @@ class Evaluator:
     def __init__(self, async_http_client: httpx.AsyncClient):
         self._async_http_client = async_http_client
 
-
     @classmethod
     def _build_evaluator_request(
         cls,

@@ -9,7 +9,6 @@ from traceloop.sdk.version import __version__
 import httpx
 
 
-
 class Client:
     """
     Traceloop Client for interacting with the Traceloop API.

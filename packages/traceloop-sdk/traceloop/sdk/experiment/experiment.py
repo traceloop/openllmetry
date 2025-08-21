@@ -1,7 +1,6 @@
 import cuid
 import asyncio
 import json
-import os
 from typing import Any, List, Callable, Optional, Tuple, Dict
 from traceloop.sdk.client.http import HTTPClient
 from traceloop.sdk.datasets.datasets import Datasets
