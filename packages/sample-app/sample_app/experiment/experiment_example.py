@@ -62,7 +62,7 @@ def run_experiment_example():
             task=medical_task_refuse_advice,
             evaluators=["medical_advice"],
             experiment_slug="medical-advice-exp",
-            exit_on_error=False,
+            stop_on_error=False,
         )
     )
 
@@ -80,7 +80,7 @@ def run_experiment_example():
             task=medical_task_provide_info,
             evaluators=["medical_advice"],
             experiment_slug="medical-advice-exp",
-            exit_on_error=False,
+            stop_on_error=False,
         )
     )
 

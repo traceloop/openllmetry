@@ -37,7 +37,7 @@ class Experiment:
         experiment_slug: Optional[str] = None,
         related_ref: Optional[Dict[str, str]] = None,
         aux: Optional[Dict[str, str]] = None,
-        exit_on_error: bool = False,
+        stop_on_error: bool = False,
     ) -> Tuple[List[TaskResponse], List[str]]:
         """Run an experiment with the given task and evaluators
 
@@ -45,10 +45,10 @@ class Experiment:
             dataset_slug: Slug of the dataset to use
             task: Function to run on each dataset row
             evaluators: List of evaluator slugs to run
-            experiment_name: Name for this experiment run
-            concurrency: Number of concurrent tasks
-            exit_on_error: Whether to exit on first error
-            client: Traceloop client instance (if not provided, will initialize)
+            experiment_slug: Slug for this experiment run
+            related_ref: Related reference for this experiment run
+            aux: Auxiliary information for this experiment run
+            stop_on_error: Whether to stop on first error (default: False)
 
         Returns:
             Tuple of (results, errors)
@@ -129,7 +129,7 @@ class Experiment:
                 )
             except Exception as e:
                 error_msg = f"Error processing row: {str(e)}"
-                if exit_on_error:
+                if stop_on_error:
                     raise e
                 return TaskResponse(error=error_msg)
 
@@ -151,7 +151,7 @@ class Experiment:
             except Exception as e:
                 error_msg = f"Task execution error: {str(e)}"
                 errors.append(error_msg)
-                if exit_on_error:
+                if stop_on_error:
                     break
 
         return results, errors
