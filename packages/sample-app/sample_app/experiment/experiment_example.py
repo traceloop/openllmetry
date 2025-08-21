@@ -8,7 +8,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 from traceloop.sdk import Traceloop
 from openai import OpenAI
-from medical_prompts import clinical_guidance_prompt
+from medical_prompts import refuse_medical_advice_prompt, provide_medical_info_prompt
 
 # Initialize Traceloop
 client = Traceloop.init()
@@ -30,63 +30,53 @@ def generate_medical_answer(prompt_text: str) -> str:
     
     return response.choices[0].message.content
 
-def medical_task_clinical(row):
-    """Task function for clinical guidance prompt"""
-    prompt_text = clinical_guidance_prompt(row["user-description"])
+def medical_task_refuse_advice(row):
+    """Task function for refusing medical advice prompt"""
+    prompt_text = refuse_medical_advice_prompt(row["user-description"])
     answer = generate_medical_answer(prompt_text)
-    # print(f"\033[94mMedical user input:\033[0m {row.values['user-description']}")
-    # print(f"\033[96mMedical LLM answer:\033[0m {answer}")
     user_description = row["user-description"]
     print(f"\033[94mMedical user input:\033[0m {user_description}")
     return {"completion": answer, "prompt": prompt_text}
 
-def medical_task_educational(row):
-    # """Task function for educational prompt"""
-    # answer = generate_medical_answer(row.values["user-description"], educational_prompt)
-    # print(f"\033[94mMedical user input:\033[0m {row.values['user-description']}")
-    # print(f"\033[96mMedical LLM answer:\033[0m {answer}")
+def medical_task_provide_info(row):
+    """Task function for providing medical info prompt"""
+    prompt_text = provide_medical_info_prompt(row["user-description"])
+    answer = generate_medical_answer(prompt_text)
     user_description = row["user-description"]
     print(f"\033[94mMedical user input:\033[0m {user_description}")
-
-    return {"completion": "This is A generated answer for AI doctor", "prompt": "This is A generated answer for AI doctor"}
+    return {"completion": answer, "prompt": prompt_text}
 
 
 def run_experiment_example():
-    """Example using the new run_experiment API"""
+    """Example using the new run_experiment API to compare two different prompt approaches"""
     
-    # Run experiment with clinical guidance prompt
-    print("\033[95m🔬 Running experiment with clinical guidance prompt...\033[0m")
-    experiment_id, results = asyncio.run(client.experiment.run(
+    print("\033[95m🔬 Running experiment with clinical guidance prompt (refuses medical advice)...\033[0m")
+    experiment_id_1, results_1 = asyncio.run(client.experiment.run(
         dataset_slug="medical",
         dataset_version="v1",
-        task=medical_task_clinical,
+        task=medical_task_refuse_advice,
         evaluators=["medical_advice"],
-        experiment_slug="medical-clinical-guidance-1",
+        experiment_slug="medical-clinical-guidance-refuse",
         exit_on_error=False,
     ))
 
-    print(f"\nExperiment ID: {experiment_id}\n")
-    print(f"\nResults: {results}")
+    print(f"\nExperiment ID (Clinical - Refuses): {experiment_id_1}")
+    print(f"Results: {results_1}")
+
+    print("\n\033[95m🔬 Running experiment with educational prompt (provides medical info)...\033[0m")
+    experiment_id_2, results_2 = asyncio.run(client.experiment.run(
+        dataset_slug="medical",
+        dataset_version="v1",
+        task=medical_task_provide_info,
+        evaluators=["medical_advice"],
+        experiment_slug="medical-educational-comprehensive",
+        exit_on_error=False,
+    ))
+
+    print(f"\nExperiment ID (Educational - Comprehensive): {experiment_id_2}")
+    print(f"Results: {results_2}")
     
-    # if results:
-    #     print(f"\033[92m✅ Experiment {experiment_id} completed with {len(results['results'])} results!\033[0m")
-    #     if results['errors']:
-    #         print(f"\033[91m❌ {len(results['errors'])} errors occurred\033[0m")
-    
-    # Run experiment with educational prompt  
-    # print("\033[95m📚 Running experiment with educational prompt...\033[0m")
-    # asyncio.run(client.experiment.run(
-    #     dataset_slug="medical",
-    #     task=medical_task_educational,
-    #     evaluators=["medical_advice"],
-    #     experiment_slug="medical-educational",
-    #     exit_on_error=False,
-    # ))
-    
-    # if results_2:
-    #     print(f"\033[92m✅ Experiment {experiment_id_2} completed with {len(results_2['results'])} results!\033[0m")
-    #     if results_2['errors']:
-    #         print(f"\033[91m❌ {len(results_2['errors'])} errors occurred\033[0m")
+    print("\n\033[92m✅ Both experiments completed! Compare the results to see how different prompting affects medical advice generation.\033[0m")
 
 
 if __name__ == "__main__":

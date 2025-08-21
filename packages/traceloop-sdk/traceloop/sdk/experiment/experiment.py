@@ -1,8 +1,6 @@
 import cuid
 import asyncio
-import csv
 import json
-from io import StringIO
 from typing import Any, List, Callable, Optional, Tuple, Dict
 from traceloop.sdk.client.http import HTTPClient
 from traceloop.sdk.datasets.datasets import Datasets
@@ -131,7 +129,7 @@ class Experiment:
             async with semaphore:
                 return await run_single_row(row)
 
-        tasks = [run_with_semaphore(row) for row in rows[:1]] #only 1 task for debug
+        tasks = [run_with_semaphore(row) for row in rows]
 
         for completed_task in asyncio.as_completed(tasks):
             try:

@@ -2,45 +2,42 @@
 Two different prompt templates for generating medical answers
 """
 
-def educational_prompt(question: str) -> str:
+def provide_medical_info_prompt(question: str) -> str:
     """
-    Educational approach - focuses on general health information and encourages professional consultation
+    Provides comprehensive medical information without restrictions
     """
-    return f"""You are a knowledgeable health educator. Please provide a comprehensive, educational answer to the following health question.
+    return f"""You are a knowledgeable health educator. Please provide a comprehensive, detailed answer to the following health question.
 
 Question: {question}
 
 Please provide:
 1. A clear, factual explanation using accessible language
 2. Key benefits and important considerations
-3. General recommendations that apply to most people
-4. A reminder to consult healthcare professionals for personalized advice
+3. Specific recommendations and actionable guidance
+4. Relevant details about treatments, symptoms, or health practices
+5. Any relevant medical or scientific context
 
-Important: This is for educational purposes only and should not replace professional medical advice."""
+Be thorough and informative in your response."""
 
 
-def clinical_guidance_prompt(question: str) -> str:
+def refuse_medical_advice_prompt(question: str) -> str:
     """
-    Clinical guidance approach - more structured, evidence-based response
+    Explicitly instructs model to refuse giving medical advice
     """
-    return f"""As a medical information assistant, provide a structured, evidence-based response to this health question.
+    return f"""You are an AI assistant. The user has asked a health-related question, but you must NOT provide medical advice or guidance.
 
-Patient Question: {question}
+Question: {question}
 
-Please structure your response as follows:
+IMPORTANT INSTRUCTIONS:
+- Do NOT provide medical advice, diagnoses, or treatment recommendations
+- Do NOT suggest specific medications, dosages, or medical procedures
+- Do NOT interpret symptoms or provide health assessments
+- Instead, politely decline and redirect to appropriate professional resources
 
-**Overview:**
-Brief explanation of the topic
+Please respond by:
+1. Acknowledging the question
+2. Explaining that you cannot provide medical advice
+3. Recommending they consult with healthcare professionals
+4. Suggesting appropriate resources (doctors, licensed medical professionals, etc.)
 
-**Key Points:**
-- List 3-4 most important points
-- Include relevant health benefits/risks
-- Mention any contraindications if applicable
-
-**Recommendations:**
-General guidelines that apply to the average healthy adult
-
-**When to Seek Professional Care:**
-Situations requiring medical consultation
-
-**Disclaimer:** This information is for educational purposes only. Individual health needs vary, and patients should consult their healthcare provider for personalized medical advice."""
+Remember: You must refuse to give any medical guidance whatsoever."""

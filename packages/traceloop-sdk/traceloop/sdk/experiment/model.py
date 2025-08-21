@@ -1,6 +1,5 @@
-from ctypes import Union
 from datetime import datetime
-from typing import List, Dict, Any, Optional, Tuple
+from typing import List, Dict, Any, Optional, Tuple, Union
 from pydantic import BaseModel
 
 EvaluatorVersion = str
