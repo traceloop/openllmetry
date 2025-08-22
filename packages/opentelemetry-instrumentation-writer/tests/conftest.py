@@ -5,16 +5,16 @@ import os
 import pytest
 from opentelemetry.sdk._events import EventLoggerProvider
 from opentelemetry.sdk._logs import LoggerProvider
-from opentelemetry.sdk._logs.export import InMemoryLogExporter, SimpleLogRecordProcessor
+from opentelemetry.sdk._logs.export import (InMemoryLogExporter,
+                                            SimpleLogRecordProcessor)
 from opentelemetry.sdk.metrics import Counter, Histogram, MeterProvider
-from opentelemetry.sdk.metrics.export import (
-    AggregationTemporality,
-    InMemoryMetricReader,
-)
+from opentelemetry.sdk.metrics.export import (AggregationTemporality,
+                                              InMemoryMetricReader)
 from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import SimpleSpanProcessor
-from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
+from opentelemetry.sdk.trace.export.in_memory_span_exporter import \
+    InMemorySpanExporter
 from writerai import AsyncWriter, Writer
 
 from opentelemetry.instrumentation.writer import WriterInstrumentor

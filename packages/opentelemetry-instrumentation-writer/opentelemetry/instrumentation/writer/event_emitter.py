@@ -3,17 +3,15 @@ from enum import Enum
 from typing import Union
 
 from opentelemetry._events import Event, EventLogger
-from opentelemetry.semconv._incubating.attributes import (
-    gen_ai_attributes as GenAIAttributes,
-)
+from opentelemetry.semconv._incubating.attributes import \
+    gen_ai_attributes as GenAIAttributes
 
-from opentelemetry.instrumentation.writer.event_models import ChoiceEvent, MessageEvent
-from opentelemetry.instrumentation.writer.utils import (
-    dont_throw,
-    model_as_dict,
-    should_emit_events,
-    should_send_prompts,
-)
+from opentelemetry.instrumentation.writer.event_models import (ChoiceEvent,
+                                                               MessageEvent)
+from opentelemetry.instrumentation.writer.utils import (dont_throw,
+                                                        model_as_dict,
+                                                        should_emit_events,
+                                                        should_send_prompts)
 
 
 class Roles(Enum):

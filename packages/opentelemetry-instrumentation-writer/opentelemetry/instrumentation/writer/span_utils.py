@@ -2,12 +2,10 @@ from opentelemetry.metrics import Histogram
 from opentelemetry.semconv_ai import SpanAttributes
 from opentelemetry.trace import Span
 
-from opentelemetry.instrumentation.writer.utils import (
-    dont_throw,
-    model_as_dict,
-    set_span_attribute,
-    should_send_prompts,
-)
+from opentelemetry.instrumentation.writer.utils import (dont_throw,
+                                                        model_as_dict,
+                                                        set_span_attribute,
+                                                        should_send_prompts)
 
 
 @dont_throw
