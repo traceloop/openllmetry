@@ -160,7 +160,7 @@ def test_writer_completions_with_events_with_no_content(
         "message": {},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
-    
+
 
 @pytest.mark.vcr
 def test_writer_streaming_completions_legacy(
@@ -168,7 +168,7 @@ def test_writer_streaming_completions_legacy(
 ):
     gen = writer_client.completions.create(
         model="palmyra-x4",
-        prompt = "Tell me a joke about OpenTelemetry",
+        prompt="Tell me a joke about OpenTelemetry",
         temperature=0.7,
         top_p=0.9,
         max_tokens=340,
@@ -186,16 +186,16 @@ def test_writer_streaming_completions_legacy(
     assert writer_span.name == "writerai.completions"
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Writer"
     assert (
-            writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "completion"
+        writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "completion"
     )
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert (
-            writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_MODEL}")
-            == "palmyra-x4"
+        writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_MODEL}")
+        == "palmyra-x4"
     )
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_MAX_TOKENS}") == 340
     assert (
-            writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TEMPERATURE}") == 0.7
+        writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TEMPERATURE}") == 0.7
     )
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TOP_P}") == 0.9
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_CHAT_STOP_SEQUENCES}") == (
@@ -203,17 +203,17 @@ def test_writer_streaming_completions_legacy(
     )
 
     assert (
-            writer_span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.0.content")
-            == "Tell me a joke about OpenTelemetry"
+        writer_span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.0.content")
+        == "Tell me a joke about OpenTelemetry"
     )
     assert (
-            writer_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
-            == response
+        writer_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
+        == response
     )
 
     logs = log_exporter.get_finished_logs()
     assert (
-            len(logs) == 0
+        len(logs) == 0
     ), "Assert that it doesn't emit logs when use_legacy_attributes is True"
 
 
@@ -223,7 +223,7 @@ def test_writer_streaming_completions_with_events_with_content(
 ):
     gen = writer_client.completions.create(
         model="palmyra-x4",
-        prompt = "Tell me a joke about OpenTelemetry",
+        prompt="Tell me a joke about OpenTelemetry",
         temperature=0.7,
         top_p=0.9,
         max_tokens=340,
@@ -241,16 +241,16 @@ def test_writer_streaming_completions_with_events_with_content(
     assert writer_span.name == "writerai.completions"
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Writer"
     assert (
-            writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "completion"
+        writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "completion"
     )
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert (
-            writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_MODEL}")
-            == "palmyra-x4"
+        writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_MODEL}")
+        == "palmyra-x4"
     )
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_MAX_TOKENS}") == 340
     assert (
-            writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TEMPERATURE}") == 0.7
+        writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TEMPERATURE}") == 0.7
     )
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TOP_P}") == 0.9
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_CHAT_STOP_SEQUENCES}") == (
@@ -281,7 +281,7 @@ def test_writer_streaming_completions_with_events_with_no_content(
 ):
     gen = writer_client.completions.create(
         model="palmyra-x4",
-        prompt = "Tell me a joke about OpenTelemetry",
+        prompt="Tell me a joke about OpenTelemetry",
         temperature=0.7,
         top_p=0.9,
         max_tokens=340,
@@ -299,16 +299,16 @@ def test_writer_streaming_completions_with_events_with_no_content(
     assert writer_span.name == "writerai.completions"
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Writer"
     assert (
-            writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "completion"
+        writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "completion"
     )
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert (
-            writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_MODEL}")
-            == "palmyra-x4"
+        writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_MODEL}")
+        == "palmyra-x4"
     )
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_MAX_TOKENS}") == 340
     assert (
-            writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TEMPERATURE}") == 0.7
+        writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TEMPERATURE}") == 0.7
     )
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TOP_P}") == 0.9
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_CHAT_STOP_SEQUENCES}") == (
@@ -327,6 +327,7 @@ def test_writer_streaming_completions_with_events_with_no_content(
         "message": {},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
+
 
 @pytest.mark.vcr
 @pytest.mark.asyncio
@@ -495,6 +496,7 @@ def assert_message_in_logs(log: LogData, event_name: str, expected_content: dict
         assert log.log_record.body
         assert dict(log.log_record.body) == expected_content
 
+
 @pytest.mark.vcr
 @pytest.mark.asyncio
 async def test_writer_async_streaming_completions_legacy(
@@ -502,7 +504,7 @@ async def test_writer_async_streaming_completions_legacy(
 ):
     gen = await writer_client_async.completions.create(
         model="palmyra-x4",
-        prompt = "Tell me a joke about OpenTelemetry",
+        prompt="Tell me a joke about OpenTelemetry",
         temperature=0.7,
         top_p=0.9,
         max_tokens=340,
@@ -520,16 +522,16 @@ async def test_writer_async_streaming_completions_legacy(
     assert writer_span.name == "writerai.completions"
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Writer"
     assert (
-            writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "completion"
+        writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "completion"
     )
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert (
-            writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_MODEL}")
-            == "palmyra-x4"
+        writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_MODEL}")
+        == "palmyra-x4"
     )
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_MAX_TOKENS}") == 340
     assert (
-            writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TEMPERATURE}") == 0.7
+        writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TEMPERATURE}") == 0.7
     )
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TOP_P}") == 0.9
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_CHAT_STOP_SEQUENCES}") == (
@@ -537,18 +539,19 @@ async def test_writer_async_streaming_completions_legacy(
     )
 
     assert (
-            writer_span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.0.content")
-            == "Tell me a joke about OpenTelemetry"
+        writer_span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.0.content")
+        == "Tell me a joke about OpenTelemetry"
     )
     assert (
-            writer_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
-            == response
+        writer_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
+        == response
     )
 
     logs = log_exporter.get_finished_logs()
     assert (
-            len(logs) == 0
+        len(logs) == 0
     ), "Assert that it doesn't emit logs when use_legacy_attributes is True"
+
 
 @pytest.mark.vcr
 @pytest.mark.asyncio
@@ -557,7 +560,7 @@ async def test_writer_async_streaming_completions_with_events_with_content(
 ):
     gen = await writer_client_async.completions.create(
         model="palmyra-x4",
-        prompt = "Tell me a joke about OpenTelemetry",
+        prompt="Tell me a joke about OpenTelemetry",
         temperature=0.7,
         top_p=0.9,
         max_tokens=340,
@@ -575,16 +578,16 @@ async def test_writer_async_streaming_completions_with_events_with_content(
     assert writer_span.name == "writerai.completions"
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Writer"
     assert (
-            writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "completion"
+        writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "completion"
     )
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert (
-            writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_MODEL}")
-            == "palmyra-x4"
+        writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_MODEL}")
+        == "palmyra-x4"
     )
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_MAX_TOKENS}") == 340
     assert (
-            writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TEMPERATURE}") == 0.7
+        writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TEMPERATURE}") == 0.7
     )
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TOP_P}") == 0.9
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_CHAT_STOP_SEQUENCES}") == (
@@ -616,7 +619,7 @@ async def test_writer_async_streaming_completions_with_events_with_no_content(
 ):
     gen = await writer_client_async.completions.create(
         model="palmyra-x4",
-        prompt = "Tell me a joke about OpenTelemetry",
+        prompt="Tell me a joke about OpenTelemetry",
         temperature=0.7,
         top_p=0.9,
         max_tokens=340,
@@ -634,16 +637,16 @@ async def test_writer_async_streaming_completions_with_events_with_no_content(
     assert writer_span.name == "writerai.completions"
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Writer"
     assert (
-            writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "completion"
+        writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "completion"
     )
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert (
-            writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_MODEL}")
-            == "palmyra-x4"
+        writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_MODEL}")
+        == "palmyra-x4"
     )
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_MAX_TOKENS}") == 340
     assert (
-            writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TEMPERATURE}") == 0.7
+        writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TEMPERATURE}") == 0.7
     )
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TOP_P}") == 0.9
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_CHAT_STOP_SEQUENCES}") == (

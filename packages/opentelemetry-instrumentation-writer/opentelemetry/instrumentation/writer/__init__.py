@@ -319,7 +319,6 @@ def _wrap(
                     attributes=response_attributes(response),
                 )
 
-            # Process non-streaming response attributes and events
             _handle_response(span, response, token_histogram, event_logger)
 
         except Exception as ex:  # pylint: disable=broad-except
@@ -410,7 +409,6 @@ async def _awrap(
                     attributes=response_attributes(response),
                 )
 
-            # Process non-streaming response attributes and events
             _handle_response(span, response, token_histogram, event_logger)
 
         except Exception as ex:  # pylint: disable=broad-except
