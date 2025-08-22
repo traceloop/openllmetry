@@ -26,6 +26,8 @@ from writerai.types import (
     Completion,
     CompletionChunk,
 )
+from writerai.types.chat_completion import ChatCompletionChoice
+from writerai.types.chat_completion_message import ChatCompletionMessage
 from writerai.types.completion import Choice
 
 from opentelemetry import context as context_api
@@ -101,7 +103,29 @@ def _update_accumulated_response(accumulated_response, chunk):
         if chunk.created:
             accumulated_response.created = chunk.created
 
-        # TODO choices handling
+        if chunk.choices and chunk.choices[0].delta and chunk.choices[0].delta.content:
+            if accumulated_response.choices and accumulated_response.choices[0].message:
+                accumulated_response.choices[0].message.content += chunk.choices[
+                    0
+                ].delta.content
+                # TODO handling of streaming tool calls request
+            else:
+                accumulated_response.choices = [
+                    ChatCompletionChoice(
+                        index=0,
+                        finish_reason="stop",
+                        message=ChatCompletionMessage(
+                            content=chunk.choices[0].delta.content,
+                            role="assistant",
+                            tool_calls=[],
+                        ),
+                    )
+                ]
+
+        if chunk.choices and chunk.choices[0].finish_reason:
+            accumulated_response.choices[0].message.finish_reason = chunk.choices[
+                0
+            ].finish_reason
 
     elif isinstance(accumulated_response, Completion) and isinstance(
         chunk, CompletionChunk
