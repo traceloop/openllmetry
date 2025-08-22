@@ -1,4 +1,3 @@
-import os
 import httpx
 from typing import Dict, Optional
 
@@ -18,13 +17,14 @@ class Evaluator:
     """
 
     _async_http_client: httpx.AsyncClient
+    _api_endpoint: str
 
-    def __init__(self, async_http_client: httpx.AsyncClient):
+    def __init__(self, async_http_client: httpx.AsyncClient, api_endpoint: str):
         self._async_http_client = async_http_client
+        self._api_endpoint = api_endpoint
 
-    @classmethod
+    @staticmethod
     def _build_evaluator_request(
-        cls,
         task_id: str,
         experiment_id: str,
         experiment_run_id: str,
@@ -43,37 +43,29 @@ class Evaluator:
             experiment_run_id=experiment_run_id,
         )
 
-    @classmethod
     async def _execute_evaluator_request(
-        cls,
+        self,
         evaluator_slug: str,
         request: ExecuteEvaluatorRequest,
         timeout_in_sec: int = 120,
     ) -> ExecuteEvaluatorResponse:
         """Execute evaluator request and return response"""
-        api_endpoint = os.environ.get("TRACELOOP_BASE_URL", "https://api.traceloop.com")
         body = request.model_dump()
-
-        client = cls._async_http_client
-        try:
-            full_url = f"{api_endpoint}/v2/evaluators/slug/{evaluator_slug}/execute"
-            response = await client.post(
-                full_url, json=body, timeout=httpx.Timeout(timeout_in_sec)
+        client = self._async_http_client
+        full_url = f"{self._api_endpoint}/v2/evaluators/slug/{evaluator_slug}/execute"
+        response = await client.post(
+            full_url, json=body, timeout=httpx.Timeout(timeout_in_sec)
+        )
+        if response.status_code != 200:
+            raise Exception(
+                f"Failed to execute evaluator {evaluator_slug}: "
+                f"{response.status_code} – {response.text}"
             )
-            if response.status_code != 200:
-                raise Exception(
-                    f"Failed to execute evaluator {evaluator_slug}: "
-                    f"{response.status_code} – {response.text}"
-                )
+        result_data = response.json()
+        return ExecuteEvaluatorResponse(**result_data)
 
-            result_data = response.json()
-            return ExecuteEvaluatorResponse(**result_data)
-        except Exception as e:
-            raise Exception(f"Failed to execute evaluator {evaluator_slug}. Error: {e}")
-
-    @classmethod
     async def run_experiment_evaluator(
-        cls,
+        self,
         evaluator_slug: str,
         task_id: str,
         experiment_id: str,
@@ -81,7 +73,6 @@ class Evaluator:
         input: Dict[str, str],
         timeout_in_sec: int = 120,
         evaluator_version: Optional[str] = None,
-        client: Optional[httpx.AsyncClient] = None,
     ) -> ExecutionResponse:
         """
         Execute evaluator with input schema mapping and wait for result
@@ -97,29 +88,23 @@ class Evaluator:
         Returns:
             ExecutionResponse: The evaluation result from SSE stream
         """
-        request = cls._build_evaluator_request(
+        request = self._build_evaluator_request(
             task_id, experiment_id, experiment_run_id, input, evaluator_version
         )
 
-        client = cls._async_http_client
-        try:
-            execute_response = await cls._execute_evaluator_request(
-                evaluator_slug, request, timeout_in_sec, client
-            )
+        execute_response = await self._execute_evaluator_request(
+            evaluator_slug, request, timeout_in_sec
+        )
+        sse_client = SSEClient(shared_client=self._async_http_client)
+        sse_result = await sse_client.wait_for_result(
+            execute_response.execution_id,
+            execute_response.stream_url,
+            timeout_in_sec,
+        )
+        return sse_result
 
-            sse_client = SSEClient(shared_client=client)
-            sse_result = await sse_client.wait_for_result(
-                execute_response.execution_id,
-                execute_response.stream_url,
-                timeout_in_sec,
-            )
-            return sse_result
-        except Exception as e:
-            raise Exception(f"Failed to execute evaluator {evaluator_slug}. Error: {e}")
-
-    @classmethod
     async def trigger_experiment_evaluator(
-        cls,
+        self,
         evaluator_slug: str,
         task_id: str,
         experiment_id: str,
@@ -142,12 +127,12 @@ class Evaluator:
         Returns:
             str: The execution_id that can be used to check results later
         """
-        request = cls._build_evaluator_request(
+        request = self._build_evaluator_request(
             task_id, experiment_id, experiment_run_id, input, evaluator_version
         )
 
-        execute_response = await cls._execute_evaluator_request(
-            evaluator_slug, request, 120, cls._async_http_client
+        execute_response = await self._execute_evaluator_request(
+            evaluator_slug, request, 120
         )
 
         # Return execution_id without waiting for SSE result

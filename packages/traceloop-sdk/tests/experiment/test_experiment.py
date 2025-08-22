@@ -8,6 +8,7 @@ from traceloop.sdk.client.http import HTTPClient
 def experiment():
     """Create an Experiment instance with mocked HTTP client"""
     mock_http_client = Mock(spec=HTTPClient)
+    mock_http_client.base_url = "https://api.example.com"
     mock_async_http_client = Mock()
     experiment_slug = "test-experiment"
     return Experiment(mock_http_client, mock_async_http_client, experiment_slug)
