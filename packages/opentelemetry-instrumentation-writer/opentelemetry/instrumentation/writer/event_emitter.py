@@ -89,21 +89,6 @@ def emit_choice_events(response, event_logger) -> None:
             )
 
 
-@dont_throw
-def emit_streaming_response_events(
-    accumulated_content: str, finish_reason: Union[str, None], event_logger
-) -> None:
-    emit_event(
-        ChoiceEvent(
-            index=0,
-            message={"content": accumulated_content, "role": "assistant"},
-            finish_reason=finish_reason or "unknown",
-            # TODO add tool_calls definition
-        ),
-        event_logger,
-    )
-
-
 def emit_event(
     event: Union[MessageEvent, ChoiceEvent], event_logger: Union[EventLogger, None]
 ) -> None:

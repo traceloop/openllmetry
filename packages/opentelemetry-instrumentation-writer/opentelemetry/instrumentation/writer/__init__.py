@@ -20,25 +20,29 @@ from opentelemetry.trace import SpanKind, get_tracer
 from opentelemetry.trace.status import Status, StatusCode
 from wrapt import wrap_function_wrapper
 from writerai._streaming import AsyncStream, Stream
+from writerai.types import (
+    ChatCompletion,
+    ChatCompletionChunk,
+    Completion,
+    CompletionChunk,
+)
+from writerai.types.completion import Choice
 
 from opentelemetry import context as context_api
 from opentelemetry.instrumentation.writer.config import Config
 from opentelemetry.instrumentation.writer.event_emitter import (
     emit_choice_events,
     emit_message_events,
-    emit_streaming_response_events,
 )
 from opentelemetry.instrumentation.writer.span_utils import (
     set_input_attributes,
     set_model_input_attributes,
     set_model_response_attributes,
-    set_model_streaming_response_attributes,
     set_response_attributes,
-    set_streaming_response_attributes,
 )
 from opentelemetry.instrumentation.writer.utils import (
     error_metrics_attributes,
-    model_as_dict,
+    initialize_accumulated_response,
     response_attributes,
     should_emit_events,
 )
@@ -82,34 +86,34 @@ def is_streaming_response(response):
     return isinstance(response, Stream) or isinstance(response, AsyncStream)
 
 
-def _process_streaming_chunk(chunk):
-    chunk_dict = model_as_dict(chunk)
+def _update_accumulated_response(accumulated_response, chunk):
+    if isinstance(accumulated_response, ChatCompletion) and isinstance(
+        chunk, ChatCompletionChunk
+    ):
+        if chunk.service_tier:
+            accumulated_response.service_tier = chunk.service_tier
+        if chunk.system_fingerprint:
+            accumulated_response.system_fingerprint = chunk.system_fingerprint
+        if chunk.model:
+            accumulated_response.model = chunk.model
+        if chunk.usage:
+            accumulated_response.usage = chunk.usage
+        if chunk.created:
+            accumulated_response.created = chunk.created
 
-    choices = chunk_dict.get("choices")
-    choice = {}
-    if choices:
-        choice = choices[0]
+        # TODO choices handling
 
-    delta = choice.get("delta", {})
-
-    content = delta.get("content") if delta else choice.get("text")
-    finish_reason = choice.get("finish_reason")
-
-    usage = chunk_dict.get("usage")
-
-    return content, finish_reason, usage
-
-
-def _handle_streaming_response(
-    span, accumulated_content, finish_reason, usage, event_logger
-):
-    set_model_streaming_response_attributes(span, usage)
-
-    if should_emit_events() and event_logger:
-        emit_streaming_response_events(accumulated_content, finish_reason, event_logger)
+    elif isinstance(accumulated_response, Completion) and isinstance(
+        chunk, CompletionChunk
+    ):
+        if chunk.value:
+            if accumulated_response.choices and accumulated_response.choices[0].text:
+                accumulated_response.choices[0].text += chunk.value
+            else:
+                accumulated_response.choices = [Choice(text=chunk.value)]
     else:
-        set_streaming_response_attributes(
-            span, accumulated_content, finish_reason, usage
+        raise ValueError(
+            f"Accumulated response and chunk types mismatch: {type(accumulated_response)}, {type(chunk)}"
         )
 
 
@@ -120,10 +124,9 @@ def _create_stream_processor(
     start_time,
     streaming_time_to_first_token,
     streaming_time_to_generate,
+    token_histogram,
 ):
-    accumulated_content = ""
-    finish_reason = None
-    usage = None
+    accumulated_response = initialize_accumulated_response(response)
 
     first_token_time = time.time()
     streaming_time_to_first_token.record(
@@ -132,14 +135,7 @@ def _create_stream_processor(
     )
 
     for chunk in response:
-        content, chunk_finish_reason, chunk_usage = _process_streaming_chunk(chunk)
-
-        if content:
-            accumulated_content += content
-        if chunk_finish_reason:
-            finish_reason = chunk_finish_reason
-        if chunk_usage:
-            usage = chunk_usage
+        _update_accumulated_response(accumulated_response, chunk)
 
         yield chunk
 
@@ -148,9 +144,7 @@ def _create_stream_processor(
         attributes={SpanAttributes.LLM_SYSTEM: "Writer", "stream": True},
     )
 
-    _handle_streaming_response(
-        span, accumulated_content, finish_reason, usage, event_logger
-    )
+    _handle_response(span, accumulated_response, token_histogram, event_logger)
 
     if span.is_recording():
         span.set_status(Status(StatusCode.OK))
@@ -165,10 +159,9 @@ async def _create_async_stream_processor(
     start_time,
     streaming_time_to_first_token,
     streaming_time_to_generate,
+    token_histogram,
 ):
-    accumulated_content = ""
-    finish_reason = None
-    usage = None
+    accumulated_response = initialize_accumulated_response(response)
 
     first_token_time = time.time()
     streaming_time_to_first_token.record(
@@ -177,16 +170,7 @@ async def _create_async_stream_processor(
     )
 
     async for chunk in response:
-        content, chunk_finish_reason, chunk_usage = _process_streaming_chunk(chunk)
-
-        if content:
-            accumulated_content += content
-
-        if chunk_finish_reason:
-            finish_reason = chunk_finish_reason
-
-        if chunk_usage:
-            usage = chunk_usage
+        _update_accumulated_response(accumulated_response, chunk)
 
         yield chunk
 
@@ -195,9 +179,7 @@ async def _create_async_stream_processor(
         attributes={SpanAttributes.LLM_SYSTEM: "Writer", "stream": True},
     )
 
-    _handle_streaming_response(
-        span, accumulated_content, finish_reason, usage, event_logger
-    )
+    _handle_response(span, accumulated_response, token_histogram, event_logger)
 
     if span.is_recording():
         span.set_status(Status(StatusCode.OK))
@@ -317,6 +299,7 @@ def _wrap(
                 start_time,
                 streaming_time_to_first_token,
                 streaming_time_to_generate,
+                token_histogram,
             )
         except Exception as ex:
             logger.warning(
@@ -407,6 +390,7 @@ async def _awrap(
                 start_time,
                 streaming_time_to_first_token,
                 streaming_time_to_generate,
+                token_histogram,
             )
         except Exception as ex:
             logger.warning(

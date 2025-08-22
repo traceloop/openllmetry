@@ -174,35 +174,3 @@ def _set_completions(span: Span, choices: list) -> None:
         elif choice.get("text") is not None:
             set_span_attribute(span, f"{prefix}.role", "assistant")
             set_span_attribute(span, f"{prefix}.content", choice.get("text"))
-
-
-def set_streaming_response_attributes(
-    span: Span, accumulated_content, finish_reason: str = None, usage: dict = None
-) -> None:
-    if not span.is_recording() or not should_send_prompts():
-        return
-
-    prefix = f"{SpanAttributes.LLM_COMPLETIONS}.0"
-    set_span_attribute(span, f"{prefix}.role", "assistant")
-    set_span_attribute(span, f"{prefix}.content", accumulated_content)
-
-    if finish_reason:
-        set_span_attribute(span, f"{prefix}.finish_reason", finish_reason)
-
-
-def set_model_streaming_response_attributes(span: Span, usage) -> None:
-    if not span.is_recording():
-        return
-
-    if usage:
-        set_span_attribute(
-            span,
-            SpanAttributes.LLM_USAGE_COMPLETION_TOKENS,
-            usage.get("completion_tokens"),
-        )
-        set_span_attribute(
-            span, SpanAttributes.LLM_USAGE_PROMPT_TOKENS, usage.get("prompt_tokens")
-        )
-        set_span_attribute(
-            span, SpanAttributes.LLM_USAGE_TOTAL_TOKENS, usage.get("total_tokens")
-        )

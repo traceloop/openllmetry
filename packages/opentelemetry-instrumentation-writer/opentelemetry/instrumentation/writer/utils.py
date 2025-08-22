@@ -6,6 +6,7 @@ from typing import Any
 
 from opentelemetry.semconv_ai import SpanAttributes
 from opentelemetry.trace import Span
+from writerai.types import ChatCompletion, Completion
 
 from opentelemetry import context as context_api
 from opentelemetry.instrumentation.writer import Config
@@ -94,3 +95,16 @@ def model_as_dict(model) -> dict:
         return model_as_dict(model.parse())
     else:
         return model
+
+
+def initialize_accumulated_response(stream):
+    request_url = stream.response.request.url.path
+
+    if "chat" in request_url:
+        return ChatCompletion(
+            id="", choices=[], created=0, model="", object="chat.completion"
+        )
+    elif "completions" in request_url:
+        return Completion(choices=[])
+    else:
+        raise ValueError(f"Unknown stream type. Request url: {request_url}")
