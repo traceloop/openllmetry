@@ -68,8 +68,8 @@ class Evaluator:
 
             result_data = response.json()
             return ExecuteEvaluatorResponse(**result_data)
-        finally:
-            await client.aclose()
+        except Exception as e:
+            raise Exception(f"Failed to execute evaluator {evaluator_slug}. Error: {e}")
 
     @classmethod
     async def run_experiment_evaluator(
@@ -114,8 +114,8 @@ class Evaluator:
                 timeout_in_sec,
             )
             return sse_result
-        finally:
-            await client.aclose()
+        except Exception as e:
+            raise Exception(f"Failed to execute evaluator {evaluator_slug}. Error: {e}")
 
     @classmethod
     async def trigger_experiment_evaluator(

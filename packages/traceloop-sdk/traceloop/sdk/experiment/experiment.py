@@ -22,7 +22,6 @@ class Experiment:
     _datasets: Datasets
     _evaluator: Evaluator
     _http_client: HTTPClient
-    _async_http_client: httpx.AsyncClient
 
     def __init__(self, http_client: HTTPClient, async_http_client: httpx.AsyncClient, experiment_slug: str):
         self._datasets = Datasets(http_client)
