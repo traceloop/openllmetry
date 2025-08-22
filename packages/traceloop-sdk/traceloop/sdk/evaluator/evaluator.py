@@ -17,11 +17,9 @@ class Evaluator:
     """
 
     _async_http_client: httpx.AsyncClient
-    _api_endpoint: str
 
-    def __init__(self, async_http_client: httpx.AsyncClient, api_endpoint: str):
+    def __init__(self, async_http_client: httpx.AsyncClient):
         self._async_http_client = async_http_client
-        self._api_endpoint = api_endpoint
 
     @staticmethod
     def _build_evaluator_request(
@@ -52,7 +50,7 @@ class Evaluator:
         """Execute evaluator request and return response"""
         body = request.model_dump()
         client = self._async_http_client
-        full_url = f"{self._api_endpoint}/v2/evaluators/slug/{evaluator_slug}/execute"
+        full_url = f"/v2/evaluators/slug/{evaluator_slug}/execute"
         response = await client.post(
             full_url, json=body, timeout=httpx.Timeout(timeout_in_sec)
         )

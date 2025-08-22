@@ -52,6 +52,7 @@ class Client:
             base_url=self.api_endpoint, api_key=self.api_key, version=__version__
         )
         self._async_http = httpx.AsyncClient(
+            base_url=self.api_endpoint,
             headers={
                 "Authorization": f"Bearer {self.api_key}",
                 "Content-Type": "application/json",
