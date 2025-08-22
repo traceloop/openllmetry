@@ -62,11 +62,8 @@ interactions:
       Server:
       - cloudflare
       Set-Cookie:
-      - __cf_bm=jX.KUMPkmrNujZSfeuVtMejn4n2PXQaJ3UfUay23P24-1755597883-1.0.1.1-9j.IZbYn18B5_zSzmKk4UiJjJCLcrFYA6ZLrF0PNLj7dxXj04b.6C_PI8gqNZTf9tUIjFc2GT4POtucEG1zuFwrpazBNp8NcBNvFuohWo.U;
-        path=/; expires=Tue, 19-Aug-25 10:34:43 GMT; domain=.api.openai.com; HttpOnly;
-        Secure; SameSite=None
-      - _cfuvid=AU4qexISo77wiSZaphwvH1qVqT4f4U0O.KzH8aCZHjA-1755597883835-0.0.1.1-604800000;
-        path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
+      - REDACTED
+      - REDACTED
       Strict-Transport-Security:
       - max-age=31536000; includeSubDomains; preload
       Transfer-Encoding:
@@ -80,11 +77,11 @@ interactions:
       cf-cache-status:
       - DYNAMIC
       openai-organization:
-      - user-mktczbuqo14ok5zq3zvvus0l
+      - REDACTED
       openai-processing-ms:
       - '3082'
       openai-project:
-      - proj_HqO8HnKp7rJsjrDN6n3Y0TPc
+      - REDACTED
       openai-version:
       - '2020-10-01'
       x-envoy-upstream-service-time:

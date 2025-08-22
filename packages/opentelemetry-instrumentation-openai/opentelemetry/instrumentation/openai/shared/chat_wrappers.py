@@ -328,18 +328,17 @@ def _handle_response(
     usage = response_dict.get("usage")
     reasoning_tokens = None
     if usage:
-        # Try dict-style access first (common when response_dict is a dict)
-        try:
-            tokens_details = usage.get("completion_tokens_details")
-        except Exception:
-            # Fallback to attribute access for object-like usage
-            tokens_details = getattr(usage, "completion_tokens_details", None)
+        # Support both dict-style and object-style `usage`
+        tokens_details = (
+            usage.get("completion_tokens_details") if isinstance(usage, dict)
+            else getattr(usage, "completion_tokens_details", None)
+        )
 
         if tokens_details:
-            if isinstance(tokens_details, dict):
-                reasoning_tokens = tokens_details.get("reasoning_tokens")
-            else:
-                reasoning_tokens = getattr(tokens_details, "reasoning_tokens", None)
+            reasoning_tokens = (
+                tokens_details.get("reasoning_tokens", None) if isinstance(tokens_details, dict)
+                else getattr(tokens_details, "reasoning_tokens", None)
+            )
 
     _set_span_attribute(
         span,

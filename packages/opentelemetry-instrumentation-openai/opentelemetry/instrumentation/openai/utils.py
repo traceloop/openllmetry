@@ -21,6 +21,7 @@ TRACELOOP_TRACE_CONTENT = "TRACELOOP_TRACE_CONTENT"
 def is_openai_v1():
     return pkg_version.parse(_OPENAI_VERSION) >= pkg_version.parse("1.0.0")
 
+
 def is_reasoning_supported():
     # Reasoning has been introduced in OpenAI API on Dec 17, 2024
     #     as per https://platform.openai.com/docs/changelog.

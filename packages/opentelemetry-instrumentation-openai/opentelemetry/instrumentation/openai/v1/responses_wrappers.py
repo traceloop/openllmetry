@@ -205,18 +205,17 @@ def set_data_attributes(traced_response: TracedData, span: Span):
 
         # Usage - count of reasoning tokens
         reasoning_tokens = None
-        # Try dict-style access first (common when response_dict is a dict)
-        try:
-            tokens_details = usage.get("output_tokens_details")
-        except Exception as e:
-            # Fallback to attribute access for object-like usage
-            tokens_details = getattr(usage, "output_tokens_details", None)
+        # Support both dict-style and object-style `usage`
+        tokens_details = (
+            usage.get("output_tokens_details") if isinstance(usage, dict)
+            else getattr(usage, "output_tokens_details", None)
+        )
 
         if tokens_details:
-            if isinstance(tokens_details, dict):
-                reasoning_tokens = tokens_details.get("reasoning_tokens", None)
-            else:
-                reasoning_tokens = getattr(tokens_details, "reasoning_tokens", None)
+            reasoning_tokens = (
+                tokens_details.get("reasoning_tokens", None) if isinstance(tokens_details, dict)
+                else getattr(tokens_details, "reasoning_tokens", None)
+            )
 
         _set_span_attribute(
             span,
@@ -462,10 +461,16 @@ def responses_get_or_create_wrapper(tracer: Tracer, wrapped, instance, args, kwa
                 ),
                 response_model=existing_data.get("response_model", ""),
                 # Reasoning attributes
-                request_reasoning_summary=kwargs.get("reasoning", {})\
-                            .get("summary", existing_data.get("request_reasoning_summary")),
-                request_reasoning_effort=kwargs.get("reasoning", {})\
-                            .get("effort", existing_data.get("request_reasoning_effort")),
+                request_reasoning_summary=(
+                    kwargs.get("reasoning", {}).get(
+                        "summary", existing_data.get("request_reasoning_summary")
+                    )
+                ),
+                request_reasoning_effort=(
+                    kwargs.get("reasoning", {}).get(
+                        "effort", existing_data.get("request_reasoning_effort")
+                    )
+                ),
                 response_reasoning_effort=kwargs.get("reasoning", {}).get("effort"),
             )
         except Exception:
@@ -519,10 +524,16 @@ def responses_get_or_create_wrapper(tracer: Tracer, wrapped, instance, args, kwa
             request_model=existing_data.get("request_model", kwargs.get("model")),
             response_model=existing_data.get("response_model", parsed_response.model),
             # Reasoning attributes
-            request_reasoning_summary=kwargs.get("reasoning", {})\
-                        .get("summary", existing_data.get("request_reasoning_summary")),
-            request_reasoning_effort=kwargs.get("reasoning", {})\
-                        .get("effort", existing_data.get("request_reasoning_effort")),
+            request_reasoning_summary=(
+                kwargs.get("reasoning", {}).get(
+                    "summary", existing_data.get("request_reasoning_summary")
+                )
+            ),
+            request_reasoning_effort=(
+                kwargs.get("reasoning", {}).get(
+                    "effort", existing_data.get("request_reasoning_effort")
+                )
+            ),
             response_reasoning_effort=kwargs.get("reasoning", {}).get("effort"),
         )
         responses[parsed_response.id] = traced_data
@@ -576,10 +587,16 @@ async def async_responses_get_or_create_wrapper(
                 request_model=kwargs.get("model", existing_data.get("request_model")),
                 response_model=existing_data.get("response_model"),
                 # Reasoning attributes
-                request_reasoning_summary=kwargs.get("reasoning", {})\
-                            .get("summary", existing_data.get("request_reasoning_summary")),
-                request_reasoning_effort=kwargs.get("reasoning", {})\
-                            .get("effort", existing_data.get("request_reasoning_effort")),
+                request_reasoning_summary=(
+                    kwargs.get("reasoning", {}).get(
+                        "summary", existing_data.get("request_reasoning_summary")
+                    )
+                ),
+                request_reasoning_effort=(
+                    kwargs.get("reasoning", {}).get(
+                        "effort", existing_data.get("request_reasoning_effort")
+                    )
+                ),
                 response_reasoning_effort=kwargs.get("reasoning", {}).get("effort"),
             )
         except Exception:
@@ -634,10 +651,16 @@ async def async_responses_get_or_create_wrapper(
             request_model=existing_data.get("request_model", kwargs.get("model")),
             response_model=existing_data.get("response_model", parsed_response.model),
             # Reasoning attributes
-            request_reasoning_summary=kwargs.get("reasoning", {})\
-                        .get("summary", existing_data.get("request_reasoning_summary")),
-            request_reasoning_effort=kwargs.get("reasoning", {})\
-                        .get("effort", existing_data.get("request_reasoning_effort")),
+            request_reasoning_summary=(
+                kwargs.get("reasoning", {}).get(
+                    "summary", existing_data.get("request_reasoning_summary")
+                )
+            ),
+            request_reasoning_effort=(
+                kwargs.get("reasoning", {}).get(
+                    "effort", existing_data.get("request_reasoning_effort")
+                )
+            ),
             response_reasoning_effort=kwargs.get("reasoning", {}).get("effort"),
         )
         responses[parsed_response.id] = traced_data
