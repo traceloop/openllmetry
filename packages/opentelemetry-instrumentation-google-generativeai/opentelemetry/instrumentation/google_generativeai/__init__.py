@@ -13,7 +13,7 @@ from opentelemetry.instrumentation.google_generativeai.event_emitter import (
     emit_message_events,
 )
 from opentelemetry.instrumentation.google_generativeai.span_utils import (
-    set_input_attributes,
+    set_input_attributes_sync,
     set_model_request_attributes,
     set_model_response_attributes,
     set_response_attributes,
@@ -103,7 +103,7 @@ def _handle_request(span, args, kwargs, llm_model, event_logger):
     if should_emit_events() and event_logger:
         emit_message_events(args, kwargs, event_logger)
     else:
-        set_input_attributes(span, args, kwargs, llm_model)
+        set_input_attributes_sync(span, args, kwargs, llm_model)
 
     set_model_request_attributes(span, kwargs, llm_model)
 
@@ -249,10 +249,12 @@ def _wrap(
 class GoogleGenerativeAiInstrumentor(BaseInstrumentor):
     """An instrumentor for Google Generative AI's client library."""
 
-    def __init__(self, exception_logger=None, use_legacy_attributes=True):
+    def __init__(self, exception_logger=None, use_legacy_attributes=True, upload_base64_image=None):
         super().__init__()
         Config.exception_logger = exception_logger
         Config.use_legacy_attributes = use_legacy_attributes
+        if upload_base64_image:
+            Config.upload_base64_image = upload_base64_image
 
     def instrumentation_dependencies(self) -> Collection[str]:
         return ("google-genai >= 1.0.0",)
