@@ -3,6 +3,7 @@ import json
 import base64
 import logging
 import asyncio
+import threading
 from opentelemetry.instrumentation.vertexai.utils import dont_throw, should_send_prompts
 from opentelemetry.instrumentation.vertexai.config import Config
 from opentelemetry.semconv_ai import SpanAttributes
@@ -64,8 +65,23 @@ async def _process_image_part(item, trace_id, span_id, content_index):
         return None
 
 
+def run_async(method):
+    """Handle async method in sync context, following OpenAI's battle-tested approach"""
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        loop = None
+
+    if loop and loop.is_running():
+        thread = threading.Thread(target=lambda: asyncio.run(method))
+        thread.start()
+        thread.join()
+    else:
+        asyncio.run(method)
+
+
 def _process_image_part_sync(item, trace_id, span_id, content_index):
-    """Synchronous version of image part processing"""
+    """Synchronous version of image part processing using OpenAI's pattern"""
     if not Config.upload_base64_image:
         return None
 
@@ -78,8 +94,14 @@ def _process_image_part_sync(item, trace_id, span_id, content_index):
         binary_data = item.inline_data.data
         base64_string = base64.b64encode(binary_data).decode('utf-8')
 
-        # Use asyncio.run to call the async upload function in sync context
-        url = asyncio.run(Config.upload_base64_image(trace_id, span_id, image_name, base64_string))
+        # Use OpenAI's run_async pattern to handle the async upload function
+        url = None
+
+        async def upload_task():
+            nonlocal url
+            url = await Config.upload_base64_image(trace_id, span_id, image_name, base64_string)
+
+        run_async(upload_task())
 
         return {
             "type": "image_url",
