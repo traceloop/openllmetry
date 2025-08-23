@@ -43,7 +43,7 @@ def _is_image_part(item):
 async def _process_image_part(item, trace_id, span_id, content_index):
     """Process a Google GenAI Part object containing image data"""
     if not Config.upload_base64_image:
-        return item
+        return None
 
     try:
         # Extract format from mime type (e.g., 'image/jpeg' -> 'jpeg')
@@ -64,17 +64,14 @@ async def _process_image_part(item, trace_id, span_id, content_index):
         }
     except Exception as e:
         logger.warning(f"Failed to process image part: {e}")
-        # Return fallback in OpenAI-compatible format
-        return {
-            "type": "image_url",
-            "image_url": {"url": "/fallback/async_image"}
-        }
+        # Return None to skip adding this image to the span
+        return None
 
 
 def _process_image_part_sync(item, trace_id, span_id, content_index):
     """Synchronous version of image part processing"""
     if not Config.upload_base64_image:
-        return item
+        return None
 
     try:
         # Extract format from mime type (e.g., 'image/jpeg' -> 'jpeg')
@@ -86,11 +83,7 @@ def _process_image_part_sync(item, trace_id, span_id, content_index):
         base64_string = base64.b64encode(binary_data).decode('utf-8')
 
         # Use asyncio.run to call the async upload function in sync context
-        try:
-            url = asyncio.run(Config.upload_base64_image(trace_id, span_id, image_name, base64_string))
-        except Exception as upload_error:
-            logger.warning(f"Failed to upload image: {upload_error}")
-            url = f"/image/{image_name}"  # Fallback URL
+        url = asyncio.run(Config.upload_base64_image(trace_id, span_id, image_name, base64_string))
 
         return {
             "type": "image_url",
@@ -98,11 +91,8 @@ def _process_image_part_sync(item, trace_id, span_id, content_index):
         }
     except Exception as e:
         logger.warning(f"Failed to process image part sync: {e}")
-        # Return fallback in OpenAI-compatible format
-        return {
-            "type": "image_url",
-            "image_url": {"url": "/fallback/sync_image"}
-        }
+        # Return None to skip adding this image to the span
+        return None
 
 
 @dont_throw
@@ -142,7 +132,8 @@ async def set_input_attributes(span, args, kwargs, llm_model):
                             processed_image = await _process_image_part(
                                 part, span.context.trace_id, span.context.span_id, j
                             )
-                            processed_content.append(processed_image)
+                            if processed_image is not None:
+                                processed_content.append(processed_image)
                         else:
                             # Other part types
                             processed_content.append({"type": "text", "text": str(part)})
@@ -154,7 +145,8 @@ async def set_input_attributes(span, args, kwargs, llm_model):
                     processed_image = await _process_image_part(
                         content, span.context.trace_id, span.context.span_id, 0
                     )
-                    processed_content.append(processed_image)
+                    if processed_image is not None:
+                        processed_content.append(processed_image)
                 else:
                     # Other content types
                     processed_content.append({"type": "text", "text": str(content)})
@@ -185,14 +177,16 @@ async def set_input_attributes(span, args, kwargs, llm_model):
                         processed_image = await _process_image_part(
                             subarg, span.context.trace_id, span.context.span_id, j
                         )
-                        processed_content.append(processed_image)
+                        if processed_image is not None:
+                            processed_content.append(processed_image)
                     else:
                         processed_content.append({"type": "text", "text": str(subarg)})
             elif _is_image_part(arg):
                 processed_image = await _process_image_part(
                     arg, span.context.trace_id, span.context.span_id, 0
                 )
-                processed_content.append(processed_image)
+                if processed_image is not None:
+                    processed_content.append(processed_image)
             else:
                 processed_content.append({"type": "text", "text": str(arg)})
 
@@ -253,7 +247,8 @@ def set_input_attributes_sync(span, args, kwargs, llm_model):
                             processed_image = _process_image_part_sync(
                                 part, span.context.trace_id, span.context.span_id, j
                             )
-                            processed_content.append(processed_image)
+                            if processed_image is not None:
+                                processed_content.append(processed_image)
                         else:
                             # Other part types
                             processed_content.append({"type": "text", "text": str(part)})
@@ -265,7 +260,8 @@ def set_input_attributes_sync(span, args, kwargs, llm_model):
                     processed_image = _process_image_part_sync(
                         content, span.context.trace_id, span.context.span_id, 0
                     )
-                    processed_content.append(processed_image)
+                    if processed_image is not None:
+                        processed_content.append(processed_image)
                 else:
                     # Other content types
                     processed_content.append({"type": "text", "text": str(content)})
@@ -296,14 +292,16 @@ def set_input_attributes_sync(span, args, kwargs, llm_model):
                         processed_image = _process_image_part_sync(
                             subarg, span.context.trace_id, span.context.span_id, j
                         )
-                        processed_content.append(processed_image)
+                        if processed_image is not None:
+                            processed_content.append(processed_image)
                     else:
                         processed_content.append({"type": "text", "text": str(subarg)})
             elif _is_image_part(arg):
                 processed_image = _process_image_part_sync(
                     arg, span.context.trace_id, span.context.span_id, 0
                 )
-                processed_content.append(processed_image)
+                if processed_image is not None:
+                    processed_content.append(processed_image)
             else:
                 processed_content.append({"type": "text", "text": str(arg)})
 

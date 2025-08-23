@@ -24,35 +24,35 @@ def _is_base64_image_part(item):
         # Check if it has the Part attributes we expect
         if not hasattr(item, 'inline_data') or not hasattr(item, 'mime_type'):
             return False
-        
+
         # Check if it's an image mime type and has inline data
         if item.mime_type and 'image/' in item.mime_type and item.inline_data:
             # Check if the inline_data has actual data
             if hasattr(item.inline_data, 'data') and item.inline_data.data:
                 return True
-                
+
         return False
-    except:
+    except Exception:
         return False
 
 
 async def _process_image_part(item, trace_id, span_id, content_index):
     """Process a VertexAI Part object containing image data"""
     if not Config.upload_base64_image:
-        return item
-    
+        return None
+
     try:
         # Extract format from mime type (e.g., 'image/jpeg' -> 'jpeg')
         image_format = item.mime_type.split('/')[1] if item.mime_type else 'unknown'
         image_name = f"content_{content_index}.{image_format}"
-        
+
         # Convert binary data to base64 string for upload
         binary_data = item.inline_data.data
         base64_string = base64.b64encode(binary_data).decode('utf-8')
-        
+
         # Upload the base64 data
         url = await Config.upload_base64_image(trace_id, span_id, image_name, base64_string)
-        
+
         # Return OpenAI-compatible format for consistency across LLM providers
         return {
             "type": "image_url",
@@ -60,45 +60,35 @@ async def _process_image_part(item, trace_id, span_id, content_index):
         }
     except Exception as e:
         logger.warning(f"Failed to process image part: {e}")
-        # Return fallback in OpenAI-compatible format
-        return {
-            "type": "image_url",
-            "image_url": {"url": "/fallback/async_image"}
-        }
+        # Return None to skip adding this image to the span
+        return None
 
 
 def _process_image_part_sync(item, trace_id, span_id, content_index):
     """Synchronous version of image part processing"""
     if not Config.upload_base64_image:
-        return item
-    
+        return None
+
     try:
         # Extract format from mime type (e.g., 'image/jpeg' -> 'jpeg')
         image_format = item.mime_type.split('/')[1] if item.mime_type else 'unknown'
         image_name = f"content_{content_index}.{image_format}"
-        
+
         # Convert binary data to base64 string for upload
         binary_data = item.inline_data.data
         base64_string = base64.b64encode(binary_data).decode('utf-8')
-        
+
         # Use asyncio.run to call the async upload function in sync context
-        try:
-            url = asyncio.run(Config.upload_base64_image(trace_id, span_id, image_name, base64_string))
-        except Exception as upload_error:
-            logger.warning(f"Failed to upload image: {upload_error}")
-            url = f"/image/{image_name}"  # Fallback URL
-        
+        url = asyncio.run(Config.upload_base64_image(trace_id, span_id, image_name, base64_string))
+
         return {
             "type": "image_url",
             "image_url": {"url": url}
         }
     except Exception as e:
         logger.warning(f"Failed to process image part sync: {e}")
-        # Return fallback in OpenAI-compatible format
-        return {
-            "type": "image_url",
-            "image_url": {"url": "/fallback/sync_image"}
-        }
+        # Return None to skip adding this image to the span
+        return None
 
 
 @dont_throw
@@ -110,14 +100,14 @@ async def set_input_attributes(span, args):
         # Process each argument (following OpenAI pattern of deep copying and processing)
         for i, arg in enumerate(args):
             prefix = f"{SpanAttributes.LLM_PROMPTS}.{i}"
-            
+
             if isinstance(arg, str):
                 # Simple text argument in OpenAI format
                 _set_span_attribute(span, f"{prefix}.content", json.dumps([{"type": "text", "text": arg}]))
             elif isinstance(arg, list):
                 # List of mixed content (text strings and Part objects) - deep copy and process
                 content = copy.deepcopy(arg)
-                
+
                 # Process each item in the content list using OpenAI-compatible format
                 processed_content = []
                 for j, item in enumerate(content):
@@ -125,18 +115,19 @@ async def set_input_attributes(span, args):
                         # Convert text to OpenAI format
                         processed_content.append({"type": "text", "text": item})
                     elif _is_base64_image_part(item):
-                        # Process image part 
+                        # Process image part
                         processed_item = await _process_image_part(
                             item, span.context.trace_id, span.context.span_id, j
                         )
-                        processed_content.append(processed_item)
+                        if processed_item is not None:
+                            processed_content.append(processed_item)
                     elif hasattr(item, 'text'):
                         # Text part to OpenAI format
                         processed_content.append({"type": "text", "text": item.text})
                     else:
                         # Other types as text
                         processed_content.append({"type": "text", "text": str(item)})
-                
+
                 # Store the processed content as JSON
                 _set_span_attribute(span, f"{prefix}.content", json.dumps(processed_content))
             else:
@@ -145,7 +136,8 @@ async def set_input_attributes(span, args):
                     processed_arg = await _process_image_part(
                         arg, span.context.trace_id, span.context.span_id, 0
                     )
-                    _set_span_attribute(span, f"{prefix}.content", json.dumps([processed_arg]))
+                    if processed_arg is not None:
+                        _set_span_attribute(span, f"{prefix}.content", json.dumps([processed_arg]))
                 elif hasattr(arg, 'text'):
                     _set_span_attribute(span, f"{prefix}.content", json.dumps([{"type": "text", "text": arg.text}]))
                 else:
@@ -153,7 +145,7 @@ async def set_input_attributes(span, args):
 
 
 # Sync version with image processing support
-@dont_throw  
+@dont_throw
 def set_input_attributes_sync(span, args):
     """Synchronous version with image processing support"""
     if not span.is_recording():
@@ -162,14 +154,14 @@ def set_input_attributes_sync(span, args):
         # Process each argument (following OpenAI pattern)
         for i, arg in enumerate(args):
             prefix = f"{SpanAttributes.LLM_PROMPTS}.{i}"
-            
+
             if isinstance(arg, str):
                 # Simple text argument in OpenAI format
                 _set_span_attribute(span, f"{prefix}.content", json.dumps([{"type": "text", "text": arg}]))
             elif isinstance(arg, list):
                 # List of mixed content (text strings and Part objects) - deep copy and process
                 content = copy.deepcopy(arg)
-                
+
                 # Process each item in the content list using OpenAI-compatible format
                 processed_content = []
                 for j, item in enumerate(content):
@@ -181,14 +173,15 @@ def set_input_attributes_sync(span, args):
                         processed_item = _process_image_part_sync(
                             item, span.context.trace_id, span.context.span_id, j
                         )
-                        processed_content.append(processed_item)
+                        if processed_item is not None:
+                            processed_content.append(processed_item)
                     elif hasattr(item, 'text'):
                         # Text part to OpenAI format
                         processed_content.append({"type": "text", "text": item.text})
                     else:
                         # Other types as text
                         processed_content.append({"type": "text", "text": str(item)})
-                
+
                 # Store the processed content as JSON
                 _set_span_attribute(span, f"{prefix}.content", json.dumps(processed_content))
             else:
@@ -197,7 +190,8 @@ def set_input_attributes_sync(span, args):
                     processed_arg = _process_image_part_sync(
                         arg, span.context.trace_id, span.context.span_id, 0
                     )
-                    _set_span_attribute(span, f"{prefix}.content", json.dumps([processed_arg]))
+                    if processed_arg is not None:
+                        _set_span_attribute(span, f"{prefix}.content", json.dumps([processed_arg]))
                 elif hasattr(arg, 'text'):
                     _set_span_attribute(span, f"{prefix}.content", json.dumps([{"type": "text", "text": arg.text}]))
                 else:
