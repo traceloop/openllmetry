@@ -7,6 +7,8 @@ from typing import Any
 from opentelemetry.semconv_ai import SpanAttributes
 from opentelemetry.trace import Span
 from writerai.types import ChatCompletion, Completion
+from writerai.types.chat_completion import ChatCompletionChoice
+from writerai.types.chat_completion_message import ChatCompletionMessage
 
 from opentelemetry import context as context_api
 from opentelemetry.instrumentation.writer import Config
@@ -102,7 +104,21 @@ def initialize_accumulated_response(stream):
 
     if "chat" in request_url:
         return ChatCompletion(
-            id="", choices=[], created=0, model="", object="chat.completion"
+            id="",
+            choices=[
+                ChatCompletionChoice(
+                    index=0,
+                    finish_reason="stop",
+                    message=ChatCompletionMessage(
+                        content="",
+                        role="assistant",
+                        tool_calls=[],
+                    ),
+                )
+            ],
+            created=0,
+            model="",
+            object="chat.completion",
         )
     elif "completions" in request_url:
         return Completion(choices=[])

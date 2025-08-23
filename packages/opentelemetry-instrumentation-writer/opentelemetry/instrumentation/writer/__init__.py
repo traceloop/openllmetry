@@ -21,8 +21,6 @@ from wrapt import wrap_function_wrapper
 from writerai._streaming import AsyncStream, Stream
 from writerai.types import (ChatCompletion, ChatCompletionChunk, Completion,
                             CompletionChunk)
-from writerai.types.chat_completion import ChatCompletionChoice
-from writerai.types.chat_completion_message import ChatCompletionMessage
 from writerai.types.completion import Choice
 
 from opentelemetry import context as context_api
@@ -90,27 +88,45 @@ def _update_accumulated_response(accumulated_response, chunk):
         if chunk.created:
             accumulated_response.created = chunk.created
 
-        if chunk.choices and chunk.choices[0].delta and chunk.choices[0].delta.content:
-            if accumulated_response.choices and accumulated_response.choices[0].message:
+        if chunk.choices and chunk.choices[0].delta:
+            if chunk.choices[0].delta.content:
                 accumulated_response.choices[0].message.content += chunk.choices[
                     0
                 ].delta.content
-                # TODO handling of streaming tool calls request
-            else:
-                accumulated_response.choices = [
-                    ChatCompletionChoice(
-                        index=0,
-                        finish_reason="stop",
-                        message=ChatCompletionMessage(
-                            content=chunk.choices[0].delta.content,
-                            role="assistant",
-                            tool_calls=[],
-                        ),
+            if chunk.choices[0].delta.tool_calls:
+                try:
+                    tool_call = accumulated_response.choices[0].message.tool_calls[
+                        chunk.choices[0].delta.tool_calls[0].index
+                    ]
+                    if name := chunk.choices[0].delta.tool_calls[0].function.name:
+                        tool_call["function"]["name"] += name
+                    if (
+                        arguments := chunk.choices[0]
+                        .delta.tool_calls[0]
+                        .function.arguments
+                    ):
+                        tool_call["function"]["arguments"] += arguments
+                except IndexError:
+                    accumulated_response.choices[0].message.tool_calls.append(
+                        {
+                            "index": chunk.choices[0].delta.tool_calls[0].index,
+                            "id": chunk.choices[0].delta.tool_calls[0].id,
+                            "type": chunk.choices[0].delta.tool_calls[0].type,
+                            "function": {
+                                "name": chunk.choices[0]
+                                .delta.tool_calls[0]
+                                .function.name
+                                or "",
+                                "arguments": chunk.choices[0]
+                                .delta.tool_calls[0]
+                                .function.arguments
+                                or "",
+                            },
+                        }
                     )
-                ]
 
         if chunk.choices and chunk.choices[0].finish_reason:
-            accumulated_response.choices[0].message.finish_reason = chunk.choices[
+            accumulated_response.choices[0].finish_reason = chunk.choices[
                 0
             ].finish_reason
 
