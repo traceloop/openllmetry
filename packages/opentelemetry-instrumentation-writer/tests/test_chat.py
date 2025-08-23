@@ -1098,6 +1098,287 @@ def test_writer_streaming_chat_tool_calls_with_events_with_no_content(
 
 
 @pytest.mark.vcr
+def test_writer_chat_tool_call_request_legacy(
+    instrument_legacy, writer_client, span_exporter, log_exporter
+):
+    response = writer_client.chat.chat(
+        model="palmyra-x4",
+        messages=[
+            {"role": "user", "content": "What is the weather like in Zakopane today?"},
+        ],
+        tools=[
+            {
+                "function": {
+                    "description": "Return weather in the specific location.",
+                    "name": "get_weather",
+                    "parameters": {
+                        "properties": {
+                            "location": {
+                                "description": "Location to return weather at",
+                                "type": "string",
+                            },
+                        },
+                        "required": ["location"],
+                        "type": "object",
+                    },
+                },
+                "type": "function",
+            }
+        ],
+        stream=False,
+        max_tokens=340,
+        temperature=0.7,
+        top_p=0.9,
+        stop="I am",
+    )
+
+    spans = span_exporter.get_finished_spans()
+    writer_span = spans[0]
+    assert writer_span.name == "writerai.chat"
+    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Writer"
+    assert writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
+    assert not writer_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
+    assert (
+        writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_MODEL}")
+        == "palmyra-x4"
+    )
+    assert writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_MAX_TOKENS}") == 340
+    assert (
+        writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TEMPERATURE}") == 0.7
+    )
+    assert writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TOP_P}") == 0.9
+    assert (
+        writer_span.attributes.get(f"{SpanAttributes.LLM_CHAT_STOP_SEQUENCES}")
+        == "I am"
+    )
+
+    assert writer_span.attributes.get(
+        SpanAttributes.LLM_USAGE_TOTAL_TOKENS
+    ) == writer_span.attributes.get(
+        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
+    ) + writer_span.attributes.get(
+        SpanAttributes.LLM_USAGE_PROMPT_TOKENS
+    )
+
+    assert (
+        writer_span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.0.content")
+        == "What is the weather like in Zakopane today?"
+    )
+
+    assert (
+        writer_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.finish_reason"]
+        == response.choices[0].finish_reason
+    )
+    assert (
+        writer_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.0.id"]
+        == response.choices[0].message.tool_calls[0].id
+    )
+    assert (
+        writer_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.0.name"]
+        == response.choices[0].message.tool_calls[0].function.name
+    )
+    assert (
+        writer_span.attributes[
+            f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.0.arguments"
+        ]
+        == response.choices[0].message.tool_calls[0].function.arguments
+    )
+    assert (
+        writer_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.role")
+        == response.choices[0].message.role
+    )
+
+    logs = log_exporter.get_finished_logs()
+    assert (
+        len(logs) == 0
+    ), "Assert that it doesn't emit logs when use_legacy_attributes is True"
+
+
+@pytest.mark.vcr
+def test_writer_chat_tool_call_request_with_events_with_content(
+    instrument_with_content, writer_client, span_exporter, log_exporter
+):
+    response = writer_client.chat.chat(
+        model="palmyra-x4",
+        messages=[
+            {"role": "user", "content": "What is the weather like in Zakopane today?"},
+        ],
+        tools=[
+            {
+                "function": {
+                    "description": "Return weather in the specific location.",
+                    "name": "get_weather",
+                    "parameters": {
+                        "properties": {
+                            "location": {
+                                "description": "Location to return weather at",
+                                "type": "string",
+                            },
+                        },
+                        "required": ["location"],
+                        "type": "object",
+                    },
+                },
+                "type": "function",
+            }
+        ],
+        stream=False,
+        max_tokens=340,
+        temperature=0.7,
+        top_p=0.9,
+        stop="I am",
+    )
+
+    spans = span_exporter.get_finished_spans()
+    writer_span = spans[0]
+
+    assert writer_span.name == "writerai.chat"
+    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Writer"
+    assert writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
+    assert not writer_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
+    assert (
+        writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_MODEL}")
+        == "palmyra-x4"
+    )
+    assert writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_MAX_TOKENS}") == 340
+    assert (
+        writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TEMPERATURE}") == 0.7
+    )
+    assert writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TOP_P}") == 0.9
+    assert (
+        writer_span.attributes.get(f"{SpanAttributes.LLM_CHAT_STOP_SEQUENCES}")
+        == "I am"
+    )
+
+    assert writer_span.attributes.get(
+        SpanAttributes.LLM_USAGE_TOTAL_TOKENS
+    ) == writer_span.attributes.get(
+        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
+    ) + writer_span.attributes.get(
+        SpanAttributes.LLM_USAGE_PROMPT_TOKENS
+    )
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 2
+
+    assert_message_in_logs(
+        logs[0],
+        "gen_ai.user.message",
+        {"content": "What is the weather like in Zakopane today?"},
+    )
+
+    choice_event = {
+        "index": 0,
+        "finish_reason": response.choices[0].finish_reason,
+        "message": {
+            "content": response.choices[0].message.content,
+            "tool_calls": [
+                {
+                    "id": response.choices[0].message.tool_calls[0].id,
+                    "function": {
+                        "arguments": response.choices[0]
+                        .message.tool_calls[0]
+                        .function.arguments,
+                        "name": response.choices[0].message.tool_calls[0].function.name,
+                    },
+                    "type": response.choices[0].message.tool_calls[0].type,
+                    "index": None,
+                }
+            ],
+        },
+    }
+    assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
+
+
+@pytest.mark.vcr
+def test_writer_chat_tool_call_request_with_events_with_no_content(
+    instrument_with_no_content, writer_client, span_exporter, log_exporter
+):
+    response = writer_client.chat.chat(
+        model="palmyra-x4",
+        messages=[
+            {"role": "user", "content": "What is the weather like in Zakopane today?"},
+        ],
+        tools=[
+            {
+                "function": {
+                    "description": "Return weather in the specific location.",
+                    "name": "get_weather",
+                    "parameters": {
+                        "properties": {
+                            "location": {
+                                "description": "Location to return weather at",
+                                "type": "string",
+                            },
+                        },
+                        "required": ["location"],
+                        "type": "object",
+                    },
+                },
+                "type": "function",
+            }
+        ],
+        stream=False,
+        max_tokens=340,
+        temperature=0.7,
+        top_p=0.9,
+        stop="I am",
+    )
+
+    spans = span_exporter.get_finished_spans()
+    writer_span = spans[0]
+
+    assert writer_span.name == "writerai.chat"
+    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Writer"
+    assert writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
+    assert not writer_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
+    assert (
+        writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_MODEL}")
+        == "palmyra-x4"
+    )
+    assert writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_MAX_TOKENS}") == 340
+    assert (
+        writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TEMPERATURE}") == 0.7
+    )
+    assert writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TOP_P}") == 0.9
+    assert (
+        writer_span.attributes.get(f"{SpanAttributes.LLM_CHAT_STOP_SEQUENCES}")
+        == "I am"
+    )
+
+    assert writer_span.attributes.get(
+        SpanAttributes.LLM_USAGE_TOTAL_TOKENS
+    ) == writer_span.attributes.get(
+        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
+    ) + writer_span.attributes.get(
+        SpanAttributes.LLM_USAGE_PROMPT_TOKENS
+    )
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 2
+
+    assert_message_in_logs(logs[0], "gen_ai.user.message", {})
+
+    choice_event = {
+        "index": 0,
+        "finish_reason": response.choices[0].finish_reason,
+        "message": {
+            "tool_calls": [
+                {
+                    "id": response.choices[0].message.tool_calls[0].id,
+                    "function": {
+                        "name": response.choices[0].message.tool_calls[0].function.name,
+                    },
+                    "type": response.choices[0].message.tool_calls[0].type,
+                    "index": None,
+                }
+            ],
+        },
+    }
+    assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
+
+
+@pytest.mark.vcr
 @pytest.mark.asyncio
 async def test_writer_async_chat_legacy(
     instrument_legacy, writer_client_async, span_exporter, log_exporter
@@ -2206,3 +2487,287 @@ async def test_writer_async_streaming_chat_tool_calls_with_events_with_no_conten
         "message": {"tool_calls": []},
     }
     assert_message_in_logs(logs[3], "gen_ai.choice", choice_event)
+
+
+@pytest.mark.vcr
+@pytest.mark.asyncio
+async def test_writer_async_chat_tool_call_request_legacy(
+    instrument_legacy, writer_client_async, span_exporter, log_exporter
+):
+    response = await writer_client_async.chat.chat(
+        model="palmyra-x4",
+        messages=[
+            {"role": "user", "content": "What is the weather like in Zakopane today?"},
+        ],
+        tools=[
+            {
+                "function": {
+                    "description": "Return weather in the specific location.",
+                    "name": "get_weather",
+                    "parameters": {
+                        "properties": {
+                            "location": {
+                                "description": "Location to return weather at",
+                                "type": "string",
+                            },
+                        },
+                        "required": ["location"],
+                        "type": "object",
+                    },
+                },
+                "type": "function",
+            }
+        ],
+        stream=False,
+        max_tokens=340,
+        temperature=0.7,
+        top_p=0.9,
+        stop="I am",
+    )
+
+    spans = span_exporter.get_finished_spans()
+    writer_span = spans[0]
+    assert writer_span.name == "writerai.chat"
+    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Writer"
+    assert writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
+    assert not writer_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
+    assert (
+        writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_MODEL}")
+        == "palmyra-x4"
+    )
+    assert writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_MAX_TOKENS}") == 340
+    assert (
+        writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TEMPERATURE}") == 0.7
+    )
+    assert writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TOP_P}") == 0.9
+    assert (
+        writer_span.attributes.get(f"{SpanAttributes.LLM_CHAT_STOP_SEQUENCES}")
+        == "I am"
+    )
+
+    assert writer_span.attributes.get(
+        SpanAttributes.LLM_USAGE_TOTAL_TOKENS
+    ) == writer_span.attributes.get(
+        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
+    ) + writer_span.attributes.get(
+        SpanAttributes.LLM_USAGE_PROMPT_TOKENS
+    )
+
+    assert (
+        writer_span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.0.content")
+        == "What is the weather like in Zakopane today?"
+    )
+
+    assert (
+        writer_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.finish_reason"]
+        == response.choices[0].finish_reason
+    )
+    assert (
+        writer_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.0.id"]
+        == response.choices[0].message.tool_calls[0].id
+    )
+    assert (
+        writer_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.0.name"]
+        == response.choices[0].message.tool_calls[0].function.name
+    )
+    assert (
+        writer_span.attributes[
+            f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.0.arguments"
+        ]
+        == response.choices[0].message.tool_calls[0].function.arguments
+    )
+    assert (
+        writer_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.role")
+        == response.choices[0].message.role
+    )
+
+    logs = log_exporter.get_finished_logs()
+    assert (
+        len(logs) == 0
+    ), "Assert that it doesn't emit logs when use_legacy_attributes is True"
+
+
+@pytest.mark.vcr
+@pytest.mark.asyncio
+async def test_writer_async_chat_tool_call_request_with_events_with_content(
+    instrument_with_content, writer_client_async, span_exporter, log_exporter
+):
+    response = await writer_client_async.chat.chat(
+        model="palmyra-x4",
+        messages=[
+            {"role": "user", "content": "What is the weather like in Zakopane today?"},
+        ],
+        tools=[
+            {
+                "function": {
+                    "description": "Return weather in the specific location.",
+                    "name": "get_weather",
+                    "parameters": {
+                        "properties": {
+                            "location": {
+                                "description": "Location to return weather at",
+                                "type": "string",
+                            },
+                        },
+                        "required": ["location"],
+                        "type": "object",
+                    },
+                },
+                "type": "function",
+            }
+        ],
+        stream=False,
+        max_tokens=340,
+        temperature=0.7,
+        top_p=0.9,
+        stop="I am",
+    )
+
+    spans = span_exporter.get_finished_spans()
+    writer_span = spans[0]
+
+    assert writer_span.name == "writerai.chat"
+    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Writer"
+    assert writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
+    assert not writer_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
+    assert (
+        writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_MODEL}")
+        == "palmyra-x4"
+    )
+    assert writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_MAX_TOKENS}") == 340
+    assert (
+        writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TEMPERATURE}") == 0.7
+    )
+    assert writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TOP_P}") == 0.9
+    assert (
+        writer_span.attributes.get(f"{SpanAttributes.LLM_CHAT_STOP_SEQUENCES}")
+        == "I am"
+    )
+
+    assert writer_span.attributes.get(
+        SpanAttributes.LLM_USAGE_TOTAL_TOKENS
+    ) == writer_span.attributes.get(
+        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
+    ) + writer_span.attributes.get(
+        SpanAttributes.LLM_USAGE_PROMPT_TOKENS
+    )
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 2
+
+    assert_message_in_logs(
+        logs[0],
+        "gen_ai.user.message",
+        {"content": "What is the weather like in Zakopane today?"},
+    )
+
+    choice_event = {
+        "index": 0,
+        "finish_reason": response.choices[0].finish_reason,
+        "message": {
+            "content": response.choices[0].message.content,
+            "tool_calls": [
+                {
+                    "id": response.choices[0].message.tool_calls[0].id,
+                    "function": {
+                        "arguments": response.choices[0]
+                        .message.tool_calls[0]
+                        .function.arguments,
+                        "name": response.choices[0].message.tool_calls[0].function.name,
+                    },
+                    "type": response.choices[0].message.tool_calls[0].type,
+                    "index": None,
+                }
+            ],
+        },
+    }
+    assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
+
+
+@pytest.mark.vcr
+@pytest.mark.asyncio
+async def test_writer_async_chat_tool_call_request_with_events_with_no_content(
+    instrument_with_no_content, writer_client_async, span_exporter, log_exporter
+):
+    response = await writer_client_async.chat.chat(
+        model="palmyra-x4",
+        messages=[
+            {"role": "user", "content": "What is the weather like in Zakopane today?"},
+        ],
+        tools=[
+            {
+                "function": {
+                    "description": "Return weather in the specific location.",
+                    "name": "get_weather",
+                    "parameters": {
+                        "properties": {
+                            "location": {
+                                "description": "Location to return weather at",
+                                "type": "string",
+                            },
+                        },
+                        "required": ["location"],
+                        "type": "object",
+                    },
+                },
+                "type": "function",
+            }
+        ],
+        stream=False,
+        max_tokens=340,
+        temperature=0.7,
+        top_p=0.9,
+        stop="I am",
+    )
+
+    spans = span_exporter.get_finished_spans()
+    writer_span = spans[0]
+
+    assert writer_span.name == "writerai.chat"
+    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Writer"
+    assert writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
+    assert not writer_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
+    assert (
+        writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_MODEL}")
+        == "palmyra-x4"
+    )
+    assert writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_MAX_TOKENS}") == 340
+    assert (
+        writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TEMPERATURE}") == 0.7
+    )
+    assert writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TOP_P}") == 0.9
+    assert (
+        writer_span.attributes.get(f"{SpanAttributes.LLM_CHAT_STOP_SEQUENCES}")
+        == "I am"
+    )
+
+    assert writer_span.attributes.get(
+        SpanAttributes.LLM_USAGE_TOTAL_TOKENS
+    ) == writer_span.attributes.get(
+        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
+    ) + writer_span.attributes.get(
+        SpanAttributes.LLM_USAGE_PROMPT_TOKENS
+    )
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 2
+
+    assert_message_in_logs(logs[0], "gen_ai.user.message", {})
+
+    choice_event = {
+        "index": 0,
+        "finish_reason": response.choices[0].finish_reason,
+        "message": {
+            "tool_calls": [
+                {
+                    "id": response.choices[0].message.tool_calls[0].id,
+                    "function": {
+                        "name": response.choices[0].message.tool_calls[0].function.name,
+                    },
+                    "type": response.choices[0].message.tool_calls[0].type,
+                    "index": None,
+                }
+            ],
+        },
+    }
+    assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
