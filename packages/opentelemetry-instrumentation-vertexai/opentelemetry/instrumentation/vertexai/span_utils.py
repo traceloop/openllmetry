@@ -79,13 +79,7 @@ def _process_image_part_sync(item, trace_id, span_id, content_index):
         base64_string = base64.b64encode(binary_data).decode('utf-8')
 
         # Use asyncio.run to call the async upload function in sync context
-        try:
-            url = asyncio.run(Config.upload_base64_image(trace_id, span_id, image_name, base64_string))
-        except RuntimeError as e:
-            if "asyncio.run() cannot be called from a running event loop" in str(e):
-                logger.warning("Cannot use asyncio.run in sync context with running event loop, skipping image upload")
-                return None
-            raise
+        url = asyncio.run(Config.upload_base64_image(trace_id, span_id, image_name, base64_string))
 
         return {
             "type": "image_url",
