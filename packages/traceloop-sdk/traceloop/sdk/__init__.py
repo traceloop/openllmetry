@@ -205,6 +205,7 @@ class Traceloop:
             )
             return Traceloop.__client
 
+    @staticmethod
     def set_association_properties(properties: dict) -> None:
         set_association_properties(properties)
 
