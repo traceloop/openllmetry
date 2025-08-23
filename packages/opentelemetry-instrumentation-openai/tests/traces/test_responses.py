@@ -3,6 +3,7 @@ import json
 import pytest
 
 from openai import OpenAI
+from opentelemetry.instrumentation.openai.utils import is_reasoning_supported
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
 
 
@@ -149,3 +150,29 @@ def test_responses_tool_calls(instrument_legacy, span_exporter: InMemorySpanExpo
         span.attributes["gen_ai.response.id"]
         == "resp_685ff8928dc4819aac45e085ba66838101c537ddeff5c2a2"
     )
+
+
+@pytest.mark.vcr
+@pytest.mark.skipif(not is_reasoning_supported(),
+                    reason="Reasoning is not supported in older OpenAI library versions")
+def test_responses_reasoning(instrument_legacy, span_exporter: InMemorySpanExporter,
+                             openai_client: OpenAI):
+    openai_client.responses.create(
+        model="gpt-5-nano",
+        input="Count r's in strawberry",
+        reasoning={
+            "effort": "low", "summary": None
+        },
+    )
+
+    spans = span_exporter.get_finished_spans()
+    assert len(spans) == 1
+    span = spans[0]
+
+    assert span.attributes["gen_ai.request.reasoning_effort"] == "low"
+    assert span.attributes["gen_ai.request.reasoning_summary"] == ()
+
+    assert span.attributes["gen_ai.response.reasoning_effort"] == "low"
+    assert span.attributes["gen_ai.completion.0.reasoning"] == ()  # reasoning summary
+
+    assert span.attributes["gen_ai.usage.reasoning_tokens"] > 0
