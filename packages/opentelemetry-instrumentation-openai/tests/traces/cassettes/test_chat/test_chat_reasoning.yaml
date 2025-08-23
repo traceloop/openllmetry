@@ -1,0 +1,106 @@
+interactions:
+- request:
+    body: '{"messages": [{"role": "user", "content": "Count r''s in strawberry"}],
+      "model": "gpt-5-nano", "reasoning_effort": "low"}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '120'
+      content-type:
+      - application/json
+      host:
+      - api.openai.com
+      user-agent:
+      - OpenAI/Python 1.99.7
+      x-stainless-arch:
+      - x64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - Linux
+      x-stainless-package-version:
+      - 1.99.7
+      x-stainless-read-timeout:
+      - '600'
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.13.5
+    method: POST
+    uri: https://api.openai.com/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA3SSQY/bIBCF7/4VIy7bSvbKceTGzrHtsadVe2pWFguTQIMBwbhtusp/ryBp7FV3
+        Lxz45j3mzfBcADAt2RaYUJzE6E316cPnb2P9havuT3t8iA9K0bHfONXiqf7IyqRwTz9Q0D/VvXCj
+        N0ja2QsWATlhcl1t2rbtN11XZzA6iSbJDp6qtrLcuqqpm7aqu6reXMXKaYGRbeF7AQDwnM/UppX4
+        m20hW+WbEWPkB2TbWxEAC86kG8Zj1JG4JVbOUDhLaHPn653d2a8KAwIPCKQCItyFOzBIhCGCtrBj
+        kQL/9YQhnHYM3nkXdYoZYV1CVwK3Evr398sXAu6nyFNIOxmzANxaRzyrU7bHKznf0uy11VENAXl0
+        NnUYyXmW6bkAeMzTmV4EZj640dNA7ojZdrW62LF5JTNsmu5KyRE3C7Duy1f8BonEtYmL+TLBhUI5
+        S+dl8ElqtwDFIt3/7bzmfUmu7WGRp2/efGAGQqAnlIMPKLV4GXouC5g+7VtltznnllnE8FMLHEhj
+        SLuQuOeTufwlFk+RcBz22h4w+KDzh0rrLs7FXwAAAP//AwBrW0kCUgMAAA==
+    headers:
+      CF-RAY:
+      - 9718d3ff7b437f99-MAA
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 19 Aug 2025 10:04:43 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - REDACTED
+      - REDACTED
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains; preload
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      access-control-expose-headers:
+      - X-Request-ID
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      openai-organization:
+      - REDACTED
+      openai-processing-ms:
+      - '3082'
+      openai-project:
+      - REDACTED
+      openai-version:
+      - '2020-10-01'
+      x-envoy-upstream-service-time:
+      - '3130'
+      x-ratelimit-limit-requests:
+      - '500'
+      x-ratelimit-limit-tokens:
+      - '200000'
+      x-ratelimit-remaining-requests:
+      - '499'
+      x-ratelimit-remaining-tokens:
+      - '199992'
+      x-ratelimit-reset-requests:
+      - 120ms
+      x-ratelimit-reset-tokens:
+      - 2ms
+      x-request-id:
+      - req_fb455d524b7f4775956fba99734cc8d9
+    status:
+      code: 200
+      message: OK
+version: 1
