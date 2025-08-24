@@ -1,3 +1,9 @@
+## v0.46.1 (2025-08-24)
+
+### Fix
+
+- **google-generativeai,vertexai**: image support for Gemini models (#3340)
+
 ## v0.46.0 (2025-08-24)
 
 ### Feat
