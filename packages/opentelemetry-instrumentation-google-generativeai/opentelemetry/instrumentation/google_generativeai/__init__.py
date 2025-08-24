@@ -283,7 +283,7 @@ class GoogleGenerativeAiInstrumentor(BaseInstrumentor):
                 f"{wrap_object}.{wrap_method}",
                 (
                     _awrap(tracer, event_logger, wrapped_method)
-                    if wrap_method == "generate_content_async"
+                    if wrap_object == "AsyncModels"
                     else _wrap(tracer, event_logger, wrapped_method)
                 ),
             )
