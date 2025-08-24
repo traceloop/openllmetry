@@ -55,8 +55,8 @@ async def _process_image_part(item, trace_id, span_id, content_index):
         binary_data = item.inline_data.data
         base64_string = base64.b64encode(binary_data).decode('utf-8')
 
-        # Upload the base64 data
-        url = await Config.upload_base64_image(trace_id, span_id, image_name, base64_string)
+        # Upload the base64 data - convert IDs to strings
+        url = await Config.upload_base64_image(str(trace_id), str(span_id), image_name, base64_string)
 
         # Return OpenAI-compatible format for consistency across LLM providers
         return {
@@ -103,7 +103,7 @@ def _process_image_part_sync(item, trace_id, span_id, content_index):
 
         async def upload_task():
             nonlocal url
-            url = await Config.upload_base64_image(trace_id, span_id, image_name, base64_string)
+            url = await Config.upload_base64_image(str(trace_id), str(span_id), image_name, base64_string)
 
         run_async(upload_task())
 
@@ -115,6 +115,90 @@ def _process_image_part_sync(item, trace_id, span_id, content_index):
         logger.warning(f"Failed to process image part sync: {e}")
         # Return None to skip adding this image to the span
         return None
+
+
+async def _process_content_item(content_item, span):
+    """Process a single content item, handling different types (Content objects, strings, Parts)"""
+    processed_content = []
+
+    if hasattr(content_item, "parts"):
+        # Content with parts (Google GenAI Content object)
+        for part_index, part in enumerate(content_item.parts):
+            processed_part = await _process_content_part(part, span, part_index)
+            if processed_part is not None:
+                processed_content.append(processed_part)
+    elif isinstance(content_item, str):
+        # Direct string in the list
+        processed_content.append({"type": "text", "text": content_item})
+    elif _is_image_part(content_item):
+        # Direct Part object that's an image
+        processed_image = await _process_image_part(
+            content_item, span.context.trace_id, span.context.span_id, 0
+        )
+        if processed_image is not None:
+            processed_content.append(processed_image)
+    else:
+        # Other content types
+        processed_content.append({"type": "text", "text": str(content_item)})
+
+    return processed_content
+
+
+async def _process_content_part(part, span, part_index):
+    """Process a single part within a Content object"""
+    if hasattr(part, "text") and part.text:
+        return {"type": "text", "text": part.text}
+    elif _is_image_part(part):
+        return await _process_image_part(
+            part, span.context.trace_id, span.context.span_id, part_index
+        )
+    else:
+        # Other part types
+        return {"type": "text", "text": str(part)}
+
+
+def _set_prompt_attributes(span, prompt_index, processed_content, content_item):
+    """Set span attributes for a processed prompt"""
+    _set_span_attribute(
+        span,
+        f"{SpanAttributes.LLM_PROMPTS}.{prompt_index}.content",
+        json.dumps(processed_content),
+    )
+    _set_span_attribute(
+        span,
+        f"{SpanAttributes.LLM_PROMPTS}.{prompt_index}.role",
+        getattr(content_item, "role", "user"),
+    )
+
+
+async def _process_argument(argument, span):
+    """Process a single argument from args list"""
+    processed_content = []
+
+    if isinstance(argument, str):
+        processed_content.append({"type": "text", "text": argument})
+    elif isinstance(argument, list):
+        for sub_index, sub_item in enumerate(argument):
+            if isinstance(sub_item, str):
+                processed_content.append({"type": "text", "text": sub_item})
+            elif _is_image_part(sub_item):
+                processed_image = await _process_image_part(
+                    sub_item, span.context.trace_id, span.context.span_id, sub_index
+                )
+                if processed_image is not None:
+                    processed_content.append(processed_image)
+            else:
+                processed_content.append({"type": "text", "text": str(sub_item)})
+    elif _is_image_part(argument):
+        processed_image = await _process_image_part(
+            argument, span.context.trace_id, span.context.span_id, 0
+        )
+        if processed_image is not None:
+            processed_content.append(processed_image)
+    else:
+        processed_content.append({"type": "text", "text": str(argument)})
+
+    return processed_content
 
 
 @dont_throw
@@ -142,85 +226,25 @@ async def set_input_attributes(span, args, kwargs, llm_model):
             )
         elif isinstance(contents, list):
             # Process content list - could be mixed text and Part objects
-            for i, content in enumerate(contents):
-                processed_content = []
-
-                if hasattr(content, "parts"):
-                    # Content with parts (Google GenAI Content object)
-                    for j, part in enumerate(content.parts):
-                        if hasattr(part, "text") and part.text:
-                            processed_content.append({"type": "text", "text": part.text})
-                        elif _is_image_part(part):
-                            processed_image = await _process_image_part(
-                                part, span.context.trace_id, span.context.span_id, j
-                            )
-                            if processed_image is not None:
-                                processed_content.append(processed_image)
-                        else:
-                            # Other part types
-                            processed_content.append({"type": "text", "text": str(part)})
-                elif isinstance(content, str):
-                    # Direct string in the list
-                    processed_content.append({"type": "text", "text": content})
-                elif _is_image_part(content):
-                    # Direct Part object that's an image
-                    processed_image = await _process_image_part(
-                        content, span.context.trace_id, span.context.span_id, 0
-                    )
-                    if processed_image is not None:
-                        processed_content.append(processed_image)
-                else:
-                    # Other content types
-                    processed_content.append({"type": "text", "text": str(content)})
+            for prompt_index, content_item in enumerate(contents):
+                processed_content = await _process_content_item(content_item, span)
 
                 if processed_content:
-                    _set_span_attribute(
-                        span,
-                        f"{SpanAttributes.LLM_PROMPTS}.{i}.content",
-                        json.dumps(processed_content),
-                    )
-                    _set_span_attribute(
-                        span,
-                        f"{SpanAttributes.LLM_PROMPTS}.{i}.role",
-                        getattr(content, "role", "user"),
-                    )
+                    _set_prompt_attributes(span, prompt_index, processed_content, content_item)
     elif args and len(args) > 0:
         # Handle args - process each argument
-        for i, arg in enumerate(args):
-            processed_content = []
-
-            if isinstance(arg, str):
-                processed_content.append({"type": "text", "text": arg})
-            elif isinstance(arg, list):
-                for j, subarg in enumerate(arg):
-                    if isinstance(subarg, str):
-                        processed_content.append({"type": "text", "text": subarg})
-                    elif _is_image_part(subarg):
-                        processed_image = await _process_image_part(
-                            subarg, span.context.trace_id, span.context.span_id, j
-                        )
-                        if processed_image is not None:
-                            processed_content.append(processed_image)
-                    else:
-                        processed_content.append({"type": "text", "text": str(subarg)})
-            elif _is_image_part(arg):
-                processed_image = await _process_image_part(
-                    arg, span.context.trace_id, span.context.span_id, 0
-                )
-                if processed_image is not None:
-                    processed_content.append(processed_image)
-            else:
-                processed_content.append({"type": "text", "text": str(arg)})
+        for arg_index, argument in enumerate(args):
+            processed_content = await _process_argument(argument, span)
 
             if processed_content:
                 _set_span_attribute(
                     span,
-                    f"{SpanAttributes.LLM_PROMPTS}.{i}.content",
+                    f"{SpanAttributes.LLM_PROMPTS}.{arg_index}.content",
                     json.dumps(processed_content),
                 )
                 _set_span_attribute(
                     span,
-                    f"{SpanAttributes.LLM_PROMPTS}.{i}.role",
+                    f"{SpanAttributes.LLM_PROMPTS}.{arg_index}.role",
                     "user",
                 )
     elif "prompt" in kwargs:

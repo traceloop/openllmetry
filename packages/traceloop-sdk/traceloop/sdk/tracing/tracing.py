@@ -423,7 +423,7 @@ def init_tracer_provider(resource: Resource, sampler: Optional[Sampler] = None) 
 
 def init_instrumentations(
     should_enrich_metrics: bool,
-    base64_image_uploader: Callable[[str, str, str], str],
+    base64_image_uploader: Callable[[str, str, str, str], str],
     instruments: Optional[Set[Instruments]] = None,
     block_instruments: Optional[Set[Instruments]] = None,
 ):
@@ -559,7 +559,7 @@ def init_instrumentations(
 
 
 def init_openai_instrumentor(
-    should_enrich_metrics: bool, base64_image_uploader: Callable[[str, str, str], str]
+    should_enrich_metrics: bool, base64_image_uploader: Callable[[str, str, str, str], str]
 ):
     try:
         if is_package_installed("openai"):
@@ -583,7 +583,7 @@ def init_openai_instrumentor(
 
 
 def init_anthropic_instrumentor(
-    should_enrich_metrics: bool, base64_image_uploader: Callable[[str, str, str], str]
+    should_enrich_metrics: bool, base64_image_uploader: Callable[[str, str, str, str], str]
 ):
     try:
         if is_package_installed("anthropic"):
