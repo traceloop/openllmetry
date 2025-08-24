@@ -429,7 +429,8 @@ async def _process_image_item(item, trace_id, span_id, message_index, content_in
     image_format = item["image_url"]["url"].split(";")[0].split("/")[1]
     image_name = f"message_{message_index}_content_{content_index}.{image_format}"
     base64_string = item["image_url"]["url"].split(",")[1]
-    url = await Config.upload_base64_image(trace_id, span_id, image_name, base64_string)
+    # Convert trace_id and span_id to strings as expected by upload function
+    url = await Config.upload_base64_image(str(trace_id), str(span_id), image_name, base64_string)
 
     return {"type": "image_url", "image_url": {"url": url}}
 
