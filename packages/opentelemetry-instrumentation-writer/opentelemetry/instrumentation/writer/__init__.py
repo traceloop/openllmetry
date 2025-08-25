@@ -13,8 +13,7 @@ from opentelemetry.metrics import Histogram, Meter, get_meter
 from opentelemetry.semconv._incubating.metrics import \
     gen_ai_metrics as GenAIMetrics
 from opentelemetry.semconv_ai import (
-    SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY, LLMRequestTypeValues, Meters,
-    SpanAttributes)
+    SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY, Meters, SpanAttributes)
 from opentelemetry.trace import SpanKind, get_tracer
 from opentelemetry.trace.status import Status, StatusCode
 from wrapt import wrap_function_wrapper
@@ -32,7 +31,7 @@ from opentelemetry.instrumentation.writer.span_utils import (
     set_model_response_attributes, set_response_attributes)
 from opentelemetry.instrumentation.writer.utils import (
     error_metrics_attributes, initialize_accumulated_response,
-    response_attributes, should_emit_events)
+    request_type_by_method, response_attributes, should_emit_events)
 from opentelemetry.instrumentation.writer.version import __version__
 
 logger = logging.getLogger(__name__)
@@ -74,6 +73,7 @@ def is_streaming_response(response):
 
 
 def _update_accumulated_response(accumulated_response, chunk):
+    # TODO add multiple choices handling
     if isinstance(accumulated_response, ChatCompletion) and isinstance(
         chunk, ChatCompletionChunk
     ):
@@ -149,29 +149,39 @@ def _create_stream_processor(
     span,
     event_logger,
     start_time,
+    duration_histogram,
     streaming_time_to_first_token,
     streaming_time_to_generate,
     token_histogram,
+    method,
 ):
     accumulated_response = initialize_accumulated_response(response)
 
     first_token_time = time.time()
-    streaming_time_to_first_token.record(
-        first_token_time - start_time,
-        attributes={SpanAttributes.LLM_SYSTEM: "Writer", "stream": True},
-    )
 
     for chunk in response:
         _update_accumulated_response(accumulated_response, chunk)
 
         yield chunk
 
+    last_token_time = time.time()
+
+    metrics_attributes = response_attributes(accumulated_response, method)
+    metrics_attributes.update({"stream": True})
+
+    streaming_time_to_first_token.record(
+        first_token_time - start_time,
+        attributes=metrics_attributes,
+    )
     streaming_time_to_generate.record(
-        time.time() - first_token_time,
-        attributes={SpanAttributes.LLM_SYSTEM: "Writer", "stream": True},
+        last_token_time - first_token_time,
+        attributes=metrics_attributes,
+    )
+    duration_histogram.record(
+        last_token_time - start_time, attributes=metrics_attributes
     )
 
-    _handle_response(span, accumulated_response, token_histogram, event_logger)
+    _handle_response(span, accumulated_response, token_histogram, event_logger, method)
 
     if span.is_recording():
         span.set_status(Status(StatusCode.OK))
@@ -184,29 +194,39 @@ async def _create_async_stream_processor(
     span,
     event_logger,
     start_time,
+    duration_histogram,
     streaming_time_to_first_token,
     streaming_time_to_generate,
     token_histogram,
+    method,
 ):
     accumulated_response = initialize_accumulated_response(response)
 
     first_token_time = time.time()
-    streaming_time_to_first_token.record(
-        first_token_time - start_time,
-        attributes={SpanAttributes.LLM_SYSTEM: "Writer", "stream": True},
-    )
 
     async for chunk in response:
         _update_accumulated_response(accumulated_response, chunk)
 
         yield chunk
 
+    last_token_time = time.time()
+
+    metrics_attributes = response_attributes(accumulated_response, method)
+    metrics_attributes.update({"stream": True})
+
+    streaming_time_to_first_token.record(
+        first_token_time - start_time,
+        attributes=metrics_attributes,
+    )
     streaming_time_to_generate.record(
-        time.time() - first_token_time,
-        attributes={SpanAttributes.LLM_SYSTEM: "Writer", "stream": True},
+        last_token_time - first_token_time,
+        attributes=metrics_attributes,
+    )
+    duration_histogram.record(
+        last_token_time - start_time, attributes=metrics_attributes
     )
 
-    _handle_response(span, accumulated_response, token_histogram, event_logger)
+    _handle_response(span, accumulated_response, token_histogram, event_logger, method)
 
     if span.is_recording():
         span.set_status(Status(StatusCode.OK))
@@ -220,15 +240,6 @@ def _handle_input(span, kwargs, event_logger):
         emit_message_events(kwargs, event_logger)
     else:
         set_input_attributes(span, kwargs)
-
-
-def _request_type_by_method(method_name):
-    if method_name == "chat":
-        return LLMRequestTypeValues.CHAT
-    elif method_name == "create":
-        return LLMRequestTypeValues.COMPLETION
-    else:
-        return LLMRequestTypeValues.UNKNOWN
 
 
 def _with_tracer_wrapper(func):
@@ -263,8 +274,8 @@ def _with_tracer_wrapper(func):
     return _with_chat_telemetry
 
 
-def _handle_response(span, response, token_histogram, event_logger):
-    set_model_response_attributes(span, response, token_histogram)
+def _handle_response(span, response, token_histogram, event_logger, method):
+    set_model_response_attributes(span, response, token_histogram, method)
     if should_emit_events() and event_logger:
         emit_choice_events(response, event_logger)
     else:
@@ -292,7 +303,7 @@ def _wrap(
         return wrapped(*args, **kwargs)
 
     name = to_wrap.get("span_name")
-    request_type = _request_type_by_method(to_wrap.get("method"))
+    request_type = request_type_by_method(to_wrap.get("method"))
 
     span = tracer.start_span(
         name,
@@ -324,9 +335,11 @@ def _wrap(
                 span,
                 event_logger,
                 start_time,
+                duration_histogram,
                 streaming_time_to_first_token,
                 streaming_time_to_generate,
                 token_histogram,
+                to_wrap.get("method"),
             )
         except Exception as ex:
             logger.warning(
@@ -343,10 +356,12 @@ def _wrap(
                 duration = end_time - start_time
                 duration_histogram.record(
                     duration,
-                    attributes=response_attributes(response),
+                    attributes=response_attributes(response, to_wrap.get("method")),
                 )
 
-            _handle_response(span, response, token_histogram, event_logger)
+            _handle_response(
+                span, response, token_histogram, event_logger, to_wrap.get("method")
+            )
 
         except Exception as ex:  # pylint: disable=broad-except
             logger.warning(
@@ -382,7 +397,7 @@ async def _awrap(
         return await wrapped(*args, **kwargs)
 
     name = to_wrap.get("span_name")
-    request_type = _request_type_by_method(to_wrap.get("method"))
+    request_type = request_type_by_method(to_wrap.get("method"))
 
     span = tracer.start_span(
         name,
@@ -414,9 +429,11 @@ async def _awrap(
                 span,
                 event_logger,
                 start_time,
+                duration_histogram,
                 streaming_time_to_first_token,
                 streaming_time_to_generate,
                 token_histogram,
+                to_wrap.get("method"),
             )
         except Exception as ex:
             logger.warning(
@@ -433,10 +450,12 @@ async def _awrap(
                 duration = end_time - start_time
                 duration_histogram.record(
                     duration,
-                    attributes=response_attributes(response),
+                    attributes=response_attributes(response, to_wrap.get("method")),
                 )
 
-            _handle_response(span, response, token_histogram, event_logger)
+            _handle_response(
+                span, response, token_histogram, event_logger, to_wrap.get("method")
+            )
 
         except Exception as ex:  # pylint: disable=broad-except
             logger.warning(

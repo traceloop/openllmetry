@@ -4,7 +4,7 @@ import traceback
 from importlib.metadata import version
 from typing import Any
 
-from opentelemetry.semconv_ai import SpanAttributes
+from opentelemetry.semconv_ai import LLMRequestTypeValues, SpanAttributes
 from opentelemetry.trace import Span
 from writerai.types import ChatCompletion, Completion
 from writerai.types.chat_completion import ChatCompletionChoice
@@ -69,13 +69,23 @@ def error_metrics_attributes(exception) -> dict:
     }
 
 
+def request_type_by_method(method_name):
+    if method_name == "chat":
+        return LLMRequestTypeValues.CHAT
+    elif method_name == "create":
+        return LLMRequestTypeValues.COMPLETION
+    else:
+        return LLMRequestTypeValues.UNKNOWN
+
+
 @dont_throw
-def response_attributes(response) -> dict:
+def response_attributes(response, method) -> dict:
     response_dict = model_as_dict(response)
 
     return {
         GEN_AI_SYSTEM: GEN_AI_SYSTEM_WRITER,
         SpanAttributes.LLM_RESPONSE_MODEL: response_dict.get("model"),
+        SpanAttributes.LLM_REQUEST_TYPE: request_type_by_method(method).value,
     }
 
 

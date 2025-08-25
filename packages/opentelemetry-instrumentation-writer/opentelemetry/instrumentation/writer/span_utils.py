@@ -4,6 +4,7 @@ from opentelemetry.trace import Span
 
 from opentelemetry.instrumentation.writer.utils import (dont_throw,
                                                         model_as_dict,
+                                                        response_attributes,
                                                         set_span_attribute,
                                                         should_send_prompts)
 
@@ -76,7 +77,7 @@ def set_model_input_attributes(span: Span, kwargs: dict) -> None:
 
 @dont_throw
 def set_model_response_attributes(
-    span: Span, response, token_histogram: Histogram
+    span: Span, response, token_histogram: Histogram, method: str
 ) -> None:
     if not span.is_recording():
         return
@@ -99,17 +100,17 @@ def set_model_response_attributes(
         )
         set_span_attribute(span, SpanAttributes.LLM_USAGE_PROMPT_TOKENS, prompt_tokens)
 
+    metrics_attributes = response_attributes(response, method)
+
     if (
         isinstance(prompt_tokens, int)
         and prompt_tokens >= 0
         and token_histogram is not None
     ):
+        metrics_attributes.update({SpanAttributes.LLM_TOKEN_TYPE: "input"})
         token_histogram.record(
             prompt_tokens,
-            attributes={
-                SpanAttributes.LLM_TOKEN_TYPE: "input",
-                SpanAttributes.LLM_RESPONSE_MODEL: response_dict.get("model"),
-            },
+            attributes=metrics_attributes,
         )
 
     if (
@@ -117,12 +118,10 @@ def set_model_response_attributes(
         and completion_tokens >= 0
         and token_histogram is not None
     ):
+        metrics_attributes.update({SpanAttributes.LLM_TOKEN_TYPE: "output"})
         token_histogram.record(
             completion_tokens,
-            attributes={
-                SpanAttributes.LLM_TOKEN_TYPE: "output",
-                SpanAttributes.LLM_RESPONSE_MODEL: response_dict.get("model"),
-            },
+            attributes=metrics_attributes,
         )
 
 
