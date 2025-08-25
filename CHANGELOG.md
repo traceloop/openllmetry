@@ -1,3 +1,11 @@
+## v0.45.6 (2025-08-18)
+
+### Fix
+
+- **anthropic**: fix with_raw_response wrapper consistency and re-enable beta API instrumentation (#3297)
+- **langchain**: include content attribute when assistant messages have tool calls (#3287)
+- **google-genai**: migrate Google Generative AI instrumentation to googleapis/python-genai (#3282)
+
 ## v0.45.5 (2025-08-15)
 
 ### Fix

@@ -136,27 +136,78 @@ def _extract_response_data(response):
 
 @dont_throw
 async def ashared_metrics_attributes(response):
-    response = await _aextract_response_data(response)
+    import inspect
+
+    # If we get a coroutine, await it
+    if inspect.iscoroutine(response):
+        try:
+            response = await response
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.debug(f"Failed to await coroutine response: {e}")
+            response = None
+
+    # If it's already a dict (e.g., from streaming), use it directly
+    if isinstance(response, dict):
+        model = response.get("model")
+    else:
+        # Handle with_raw_response wrapped responses first
+        if response and hasattr(response, "parse") and callable(response.parse):
+            try:
+                response = response.parse()
+            except Exception as e:
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.debug(f"Failed to parse with_raw_response: {e}")
+                response = None
+
+        # Safely get model attribute without extracting the whole object
+        model = getattr(response, "model", None) if response else None
 
     common_attributes = Config.get_common_metrics_attributes()
 
     return {
         **common_attributes,
         GEN_AI_SYSTEM: GEN_AI_SYSTEM_ANTHROPIC,
-        SpanAttributes.LLM_RESPONSE_MODEL: response.get("model"),
+        SpanAttributes.LLM_RESPONSE_MODEL: model,
     }
 
 
 @dont_throw
 def shared_metrics_attributes(response):
-    response = _extract_response_data(response)
+    import inspect
+
+    # If we get a coroutine, we cannot process it in sync context
+    if inspect.iscoroutine(response):
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.warning(f"shared_metrics_attributes received coroutine {response} - using None for model")
+        response = None
+
+    # If it's already a dict (e.g., from streaming), use it directly
+    if isinstance(response, dict):
+        model = response.get("model")
+    else:
+        # Handle with_raw_response wrapped responses first
+        if response and hasattr(response, "parse") and callable(response.parse):
+            try:
+                response = response.parse()
+            except Exception as e:
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.debug(f"Failed to parse with_raw_response: {e}")
+                response = None
+
+        # Safely get model attribute without extracting the whole object
+        model = getattr(response, "model", None) if response else None
 
     common_attributes = Config.get_common_metrics_attributes()
 
     return {
         **common_attributes,
         GEN_AI_SYSTEM: GEN_AI_SYSTEM_ANTHROPIC,
-        SpanAttributes.LLM_RESPONSE_MODEL: response.get("model"),
+        SpanAttributes.LLM_RESPONSE_MODEL: model,
     }
 
 

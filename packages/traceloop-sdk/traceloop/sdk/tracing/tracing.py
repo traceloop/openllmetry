@@ -890,20 +890,16 @@ def init_pymysql_instrumentor():
 
 
 def init_bedrock_instrumentor(should_enrich_metrics: bool):
-    try:
-        if is_package_installed("boto3"):
-            from opentelemetry.instrumentation.bedrock import BedrockInstrumentor
+    if is_package_installed("boto3"):
+        from opentelemetry.instrumentation.bedrock import BedrockInstrumentor
 
-            instrumentor = BedrockInstrumentor(
-                exception_logger=lambda e: Telemetry().log_exception(e),
-                enrich_token_usage=should_enrich_metrics,
-            )
-            if not instrumentor.is_instrumented_by_opentelemetry:
-                instrumentor.instrument()
-            return True
-    except Exception as e:
-        logging.error(f"Error initializing Bedrock instrumentor: {e}")
-        Telemetry().log_exception(e)
+        instrumentor = BedrockInstrumentor(
+            exception_logger=lambda e: Telemetry().log_exception(e),
+            enrich_token_usage=should_enrich_metrics,
+        )
+        if not instrumentor.is_instrumented_by_opentelemetry:
+            instrumentor.instrument()
+        return True
     return False
 
 

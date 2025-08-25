@@ -282,7 +282,7 @@ def _handle_stream_call(span, kwargs, response, metric_params, event_logger):
         metric_params.is_stream = True
 
         prompt_caching_handling(headers, provider, model, metric_params)
-        guardrail_handling(response_body, provider, model, metric_params)
+        guardrail_handling(span, response_body, provider, model, metric_params)
 
         if span.is_recording():
             set_model_span_attributes(
@@ -294,6 +294,7 @@ def _handle_stream_call(span, kwargs, response, metric_params, event_logger):
                 response_body,
                 headers,
                 metric_params,
+                kwargs,
             )
         if should_emit_events() and event_logger:
             emit_message_events(event_logger, kwargs)
@@ -326,7 +327,7 @@ def _handle_call(span: Span, kwargs, response, metric_params, event_logger):
     metric_params.is_stream = False
 
     prompt_caching_handling(headers, provider, model, metric_params)
-    guardrail_handling(response_body, provider, model, metric_params)
+    guardrail_handling(span, response_body, provider, model, metric_params)
 
     if span.is_recording():
         set_model_span_attributes(
@@ -338,6 +339,7 @@ def _handle_call(span: Span, kwargs, response, metric_params, event_logger):
             response_body,
             headers,
             metric_params,
+            kwargs,
         )
 
     if should_emit_events() and event_logger:
@@ -351,7 +353,7 @@ def _handle_call(span: Span, kwargs, response, metric_params, event_logger):
 @dont_throw
 def _handle_converse(span, kwargs, response, metric_params, event_logger):
     (provider, model_vendor, model) = _get_vendor_model(kwargs.get("modelId"))
-    guardrail_converse(response, provider, model, metric_params)
+    guardrail_converse(span, response, provider, model, metric_params)
 
     set_converse_model_span_attributes(span, provider, model, kwargs)
 
@@ -392,7 +394,7 @@ def _handle_converse_stream(span, kwargs, response, metric_params, event_logger)
                     role = event["messageStart"]["role"]
                 elif "metadata" in event:
                     # last message sent
-                    guardrail_converse(event["metadata"], provider, model, metric_params)
+                    guardrail_converse(span, event["metadata"], provider, model, metric_params)
                     converse_usage_record(span, event["metadata"], metric_params)
                     span.end()
                 elif "messageStop" in event:

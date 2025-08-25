@@ -66,3 +66,38 @@ def test_ollama_streaming_time_to_generate_metrics(instrument_legacy, reader):
             assert dp.attributes.get(SpanAttributes.LLM_SYSTEM) == "Ollama"
             assert dp.attributes.get(SpanAttributes.LLM_RESPONSE_MODEL) is not None
             break
+
+
+@pytest.mark.vcr
+def test_ollama_operation_duration_includes_model_attribute(instrument_legacy, reader):
+    """Test that LLM_OPERATION_DURATION metric includes gen_ai.response.model attribute."""
+    ollama.chat(
+        model="gemma3:1b",
+        messages=[
+            {"role": "user", "content": "Hello, this is a test for model attribute."},
+        ],
+    )
+
+    points = _collect_metrics(reader)
+
+    operation_duration_found = False
+    model_attribute_found = False
+
+    for name, dp in points:
+        if name == Meters.LLM_OPERATION_DURATION:
+            operation_duration_found = True
+            # Check that the metric has both required attributes
+            assert dp.attributes.get(SpanAttributes.LLM_SYSTEM) == "Ollama", \
+                "LLM_OPERATION_DURATION should have gen_ai.system attribute"
+
+            model_name = dp.attributes.get(SpanAttributes.LLM_RESPONSE_MODEL)
+            if model_name is not None:
+                model_attribute_found = True
+                assert model_name == "gemma3:1b", \
+                    f"Expected model 'gemma3:1b', but got '{model_name}'"
+
+            assert dp.sum > 0, "Operation duration should be greater than 0"
+            break
+
+    assert operation_duration_found, "LLM_OPERATION_DURATION metric not found"
+    assert model_attribute_found, "gen_ai.response.model attribute not found in LLM_OPERATION_DURATION metric"
