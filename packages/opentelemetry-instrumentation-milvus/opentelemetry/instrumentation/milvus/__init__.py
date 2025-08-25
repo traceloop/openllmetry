@@ -85,6 +85,13 @@ class MilvusInstrumentor(BaseInstrumentor):
         return _instruments
 
     def _instrument(self, **kwargs):
+        # Set default values in case metrics are disabled
+        query_duration_metric = None
+        distance_metric = None
+        insert_units_metric = None
+        upsert_units_metric = None
+        delete_units_metric = None
+
         if is_metrics_enabled():
             meter_provider = kwargs.get("meter_provider")
             meter = get_meter(__name__, __version__, meter_provider)
