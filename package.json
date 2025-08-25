@@ -5,7 +5,7 @@
   "scripts": {},
   "private": true,
   "devDependencies": {
-    "@nxlv/python": "^20.14.0",
+    "@nxlv/python": "^21.2.0",
     "nx": "^20.8.1"
   },
   "workspaces": [
