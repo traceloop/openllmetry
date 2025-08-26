@@ -49,7 +49,7 @@ class HTTPClient:
             response.raise_for_status()
 
             content_type = response.headers.get("content-type", "").lower()
-            if "text/csv" in content_type:
+            if "text/csv" in content_type or "application/x-ndjson" in content_type:
                 return response.text
             else:
                 return response.json()
