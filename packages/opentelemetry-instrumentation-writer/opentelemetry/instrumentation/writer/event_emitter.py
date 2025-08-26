@@ -67,7 +67,7 @@ def emit_choice_events(response, event_logger) -> None:
                     message=MessageEvent(
                         content=message.get("content"),
                         role=message.get("role", "assistant"),
-                        tool_calls=message.get("tool_calls", []),
+                        tool_calls=message.get("tool_calls") or [],
                     ),
                     finish_reason=choice.get("finish_reason"),
                 ),

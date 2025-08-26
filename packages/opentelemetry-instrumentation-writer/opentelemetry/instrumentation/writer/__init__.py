@@ -30,7 +30,8 @@ from opentelemetry.instrumentation.writer.span_utils import (
     set_input_attributes, set_model_input_attributes,
     set_model_response_attributes, set_response_attributes)
 from opentelemetry.instrumentation.writer.utils import (
-    error_metrics_attributes, initialize_accumulated_response,
+    enhance_list_size, error_metrics_attributes,
+    initialize_accumulated_response, initialize_choice, initialize_tool_call,
     request_type_by_method, response_attributes, should_emit_events)
 from opentelemetry.instrumentation.writer.version import __version__
 
@@ -88,47 +89,64 @@ def _update_accumulated_response(accumulated_response, chunk):
         if chunk.created:
             accumulated_response.created = chunk.created
 
-        if chunk.choices and chunk.choices[0].delta:
-            if chunk.choices[0].delta.content:
-                accumulated_response.choices[0].message.content += chunk.choices[
-                    0
-                ].delta.content
-            if chunk.choices[0].delta.tool_calls:
-                try:
-                    tool_call = accumulated_response.choices[0].message.tool_calls[
-                        chunk.choices[0].delta.tool_calls[0].index
-                    ]
+        if chunk.choices:
+            choice_index = chunk.choices[0].index
+
+            try:
+                accumulated_response.choices[choice_index]
+            except IndexError:
+                enhance_list_size(accumulated_response.choices, choice_index + 1)
+                accumulated_response.choices[choice_index] = initialize_choice()
+
+            if finish_reason := chunk.choices[0].finish_reason:
+                accumulated_response.choices[choice_index].finish_reason = finish_reason
+            accumulated_response.choices[choice_index].index = choice_index
+
+            if chunk.choices[0].delta:
+                if content := chunk.choices[0].delta.content:
+                    accumulated_response.choices[
+                        choice_index
+                    ].message.content += content
+                if role := chunk.choices[0].delta.role:
+                    accumulated_response.choices[choice_index].message.role = role
+                if chunk.choices[0].delta.tool_calls:
+                    tool_index = chunk.choices[0].delta.tool_calls[0].index
+
+                    try:
+                        accumulated_response.choices[choice_index].message.tool_calls[
+                            tool_index
+                        ]
+                    except IndexError:
+                        enhance_list_size(
+                            accumulated_response.choices[
+                                choice_index
+                            ].message.tool_calls,
+                            tool_index + 1,
+                        )
+                        accumulated_response.choices[choice_index].message.tool_calls[
+                            tool_index
+                        ] = initialize_tool_call()
+
                     if name := chunk.choices[0].delta.tool_calls[0].function.name:
-                        tool_call["function"]["name"] += name
+                        accumulated_response.choices[choice_index].message.tool_calls[
+                            tool_index
+                        ].function.name += name
                     if (
                         arguments := chunk.choices[0]
                         .delta.tool_calls[0]
                         .function.arguments
                     ):
-                        tool_call["function"]["arguments"] += arguments
-                except IndexError:
-                    accumulated_response.choices[0].message.tool_calls.append(
-                        {
-                            "index": chunk.choices[0].delta.tool_calls[0].index,
-                            "id": chunk.choices[0].delta.tool_calls[0].id,
-                            "type": chunk.choices[0].delta.tool_calls[0].type,
-                            "function": {
-                                "name": chunk.choices[0]
-                                .delta.tool_calls[0]
-                                .function.name
-                                or "",
-                                "arguments": chunk.choices[0]
-                                .delta.tool_calls[0]
-                                .function.arguments
-                                or "",
-                            },
-                        }
-                    )
+                        accumulated_response.choices[choice_index].message.tool_calls[
+                            tool_index
+                        ].function.arguments += arguments
+                    if tool_id := chunk.choices[0].delta.tool_calls[0].id:
+                        accumulated_response.choices[choice_index].message.tool_calls[
+                            tool_index
+                        ].id = tool_id
 
-        if chunk.choices and chunk.choices[0].finish_reason:
-            accumulated_response.choices[0].finish_reason = chunk.choices[
-                0
-            ].finish_reason
+                    accumulated_response.choices[choice_index].message.tool_calls[
+                        tool_index
+                    ].index = tool_index
 
     elif isinstance(accumulated_response, Completion) and isinstance(
         chunk, CompletionChunk

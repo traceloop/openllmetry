@@ -9,6 +9,7 @@ from opentelemetry.trace import Span
 from writerai.types import ChatCompletion, Completion
 from writerai.types.chat_completion import ChatCompletionChoice
 from writerai.types.chat_completion_message import ChatCompletionMessage
+from writerai.types.shared.tool_call import Function, ToolCall
 
 from opentelemetry import context as context_api
 from opentelemetry.instrumentation.writer import Config
@@ -115,17 +116,7 @@ def initialize_accumulated_response(stream):
     if "chat" in request_url:
         return ChatCompletion(
             id="",
-            choices=[
-                ChatCompletionChoice(
-                    index=0,
-                    finish_reason="stop",
-                    message=ChatCompletionMessage(
-                        content="",
-                        role="assistant",
-                        tool_calls=[],
-                    ),
-                )
-            ],
+            choices=[],
             created=0,
             model="",
             object="chat.completion",
@@ -134,3 +125,32 @@ def initialize_accumulated_response(stream):
         return Completion(choices=[])
     else:
         raise ValueError(f"Unknown stream type. Request url: {request_url}")
+
+
+def initialize_choice():
+    return ChatCompletionChoice(
+        index=0,
+        finish_reason="stop",
+        message=ChatCompletionMessage(
+            content="",
+            role="assistant",
+            tool_calls=[],
+        ),
+    )
+
+
+def initialize_tool_call():
+    return ToolCall(
+        id="", function=Function(name="", arguments=""), type="function", index=0
+    )
+
+
+def enhance_list_size(current_list, desired_size):
+    if current_list is None:
+        current_list = [None] * desired_size
+    else:
+        if desired_size < len(current_list):
+            raise ValueError(
+                f"Desired size ({desired_size} can't be less than actual size ({len(current_list)})."
+            )
+        current_list += [None] * (desired_size - len(current_list))

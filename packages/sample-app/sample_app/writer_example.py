@@ -1,6 +1,5 @@
 import json
 import os
-import warnings
 
 from writerai import Writer
 from dotenv import load_dotenv
@@ -13,8 +12,6 @@ from dataclasses import dataclass
 
 if "TRACELOOP_METRICS_ENABLED" not in os.environ:
     os.environ["TRACELOOP_METRICS_ENABLED"] = "true"
-
-warnings.filterwarnings('ignore', category=UserWarning)
 
 load_dotenv()
 
