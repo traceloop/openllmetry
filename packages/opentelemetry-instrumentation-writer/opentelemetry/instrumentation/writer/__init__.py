@@ -70,7 +70,7 @@ WRAPPED_AMETHODS = [
 
 
 def is_streaming_response(response):
-    return isinstance(response, Stream) or isinstance(response, AsyncStream)
+    return isinstance(response, (Stream, AsyncStream))
 
 
 def _update_accumulated_response(accumulated_response, chunk):
@@ -89,7 +89,7 @@ def _update_accumulated_response(accumulated_response, chunk):
             accumulated_response.created = chunk.created
 
         if chunk.choices:
-            choice_index = chunk.choices[0].index
+            choice_index = chunk.choices[0].index or 0
 
             try:
                 accumulated_response.choices[choice_index]
@@ -109,7 +109,7 @@ def _update_accumulated_response(accumulated_response, chunk):
                 if role := chunk.choices[0].delta.role:
                     accumulated_response.choices[choice_index].message.role = role
                 if chunk.choices[0].delta.tool_calls:
-                    tool_index = chunk.choices[0].delta.tool_calls[0].index
+                    tool_index = chunk.choices[0].delta.tool_calls[0].index or 0
 
                     try:
                         accumulated_response.choices[choice_index].message.tool_calls[
