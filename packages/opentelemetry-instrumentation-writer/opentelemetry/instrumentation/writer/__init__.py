@@ -174,9 +174,12 @@ def _create_stream_processor(
 ):
     accumulated_response = initialize_accumulated_response(response)
 
-    first_token_time = time.time()
+    first_token_time = None
 
     for chunk in response:
+        if first_token_time is None:
+            first_token_time = time.time()
+
         _update_accumulated_response(accumulated_response, chunk)
 
         yield chunk
@@ -186,12 +189,13 @@ def _create_stream_processor(
     metrics_attributes = response_attributes(accumulated_response, method)
     metrics_attributes.update({"stream": True})
 
+    ttft = (first_token_time or last_token_time) - start_time
     streaming_time_to_first_token.record(
-        first_token_time - start_time,
+        ttft,
         attributes=metrics_attributes,
     )
     streaming_time_to_generate.record(
-        last_token_time - first_token_time,
+        last_token_time - (first_token_time or last_token_time),
         attributes=metrics_attributes,
     )
     duration_histogram.record(
@@ -219,9 +223,12 @@ async def _create_async_stream_processor(
 ):
     accumulated_response = initialize_accumulated_response(response)
 
-    first_token_time = time.time()
+    first_token_time = None
 
     async for chunk in response:
+        if first_token_time is None:
+            first_token_time = time.time()
+
         _update_accumulated_response(accumulated_response, chunk)
 
         yield chunk
@@ -231,12 +238,13 @@ async def _create_async_stream_processor(
     metrics_attributes = response_attributes(accumulated_response, method)
     metrics_attributes.update({"stream": True})
 
+    ttft = (first_token_time or last_token_time) - start_time
     streaming_time_to_first_token.record(
-        first_token_time - start_time,
+        ttft,
         attributes=metrics_attributes,
     )
     streaming_time_to_generate.record(
-        last_token_time - first_token_time,
+        last_token_time - (first_token_time or last_token_time),
         attributes=metrics_attributes,
     )
     duration_histogram.record(
@@ -326,7 +334,7 @@ def _wrap(
         name,
         kind=SpanKind.CLIENT,
         attributes={
-            SpanAttributes.LLM_SYSTEM: "Writer",
+            SpanAttributes.LLM_SYSTEM: "writer",
             SpanAttributes.LLM_REQUEST_TYPE: request_type.value,
         },
     )
@@ -336,14 +344,18 @@ def _wrap(
     start_time = time.time()
     try:
         response = wrapped(*args, **kwargs)
-    except Exception as e:  # pylint: disable=broad-except
+    except Exception as ex:  # pylint: disable=broad-except
         end_time = time.time()
 
         if duration_histogram:
             duration = end_time - start_time
-            duration_histogram.record(duration, attributes=error_metrics_attributes(e))
+            duration_histogram.record(duration, attributes=error_metrics_attributes(ex))
 
-        raise e
+        if span.is_recording():
+            span.set_status(Status(StatusCode.ERROR))
+
+        span.end()
+        raise ex
 
     if is_streaming_response(response):
         try:
@@ -363,9 +375,12 @@ def _wrap(
                 "Failed to process streaming response for writer span, error: %s",
                 str(ex),
             )
-            span.set_status(Status(StatusCode.ERROR))
+            if span.is_recording():
+                span.set_status(Status(StatusCode.ERROR))
+
             span.end()
-            raise
+            raise ex
+
     elif response:
         end_time = time.time()
         try:
@@ -420,7 +435,7 @@ async def _awrap(
         name,
         kind=SpanKind.CLIENT,
         attributes={
-            SpanAttributes.LLM_SYSTEM: "Writer",
+            SpanAttributes.LLM_SYSTEM: "writer",
             SpanAttributes.LLM_REQUEST_TYPE: request_type.value,
         },
     )
@@ -430,14 +445,18 @@ async def _awrap(
     start_time = time.time()
     try:
         response = await wrapped(*args, **kwargs)
-    except Exception as e:  # pylint: disable=broad-except
+    except Exception as ex:  # pylint: disable=broad-except
         end_time = time.time()
 
         if duration_histogram:
             duration = end_time - start_time
-            duration_histogram.record(duration, attributes=error_metrics_attributes(e))
+            duration_histogram.record(duration, attributes=error_metrics_attributes(ex))
 
-        raise e
+        if span.is_recording():
+            span.set_status(Status(StatusCode.ERROR))
+
+        span.end()
+        raise ex
 
     if is_streaming_response(response):
         try:
@@ -457,9 +476,12 @@ async def _awrap(
                 "Failed to process streaming response for writer span, error: %s",
                 str(ex),
             )
-            span.set_status(Status(StatusCode.ERROR))
+            if span.is_recording():
+                span.set_status(Status(StatusCode.ERROR))
+
             span.end()
-            raise
+            raise ex
+
     elif response:
         end_time = time.time()
         try:

@@ -25,7 +25,7 @@ def test_writer_completions_legacy(
     writer_span = spans[0]
 
     assert writer_span.name == "writerai.completions"
-    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Writer"
+    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "writer"
     assert (
         writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "completion"
     )
@@ -75,7 +75,7 @@ def test_writer_completions_with_events_with_content(
     spans = span_exporter.get_finished_spans()
     writer_span = spans[0]
     assert writer_span.name == "writerai.completions"
-    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Writer"
+    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "writer"
     assert (
         writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "completion"
     )
@@ -128,7 +128,7 @@ def test_writer_completions_with_events_with_no_content(
     spans = span_exporter.get_finished_spans()
     writer_span = spans[0]
     assert writer_span.name == "writerai.completions"
-    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Writer"
+    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "writer"
     assert (
         writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "completion"
     )
@@ -182,7 +182,7 @@ def test_writer_streaming_completions_legacy(
     spans = span_exporter.get_finished_spans()
     writer_span = spans[0]
     assert writer_span.name == "writerai.completions"
-    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Writer"
+    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "writer"
     assert (
         writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "completion"
     )
@@ -237,7 +237,7 @@ def test_writer_streaming_completions_with_events_with_content(
     spans = span_exporter.get_finished_spans()
     writer_span = spans[0]
     assert writer_span.name == "writerai.completions"
-    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Writer"
+    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "writer"
     assert (
         writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "completion"
     )
@@ -295,7 +295,7 @@ def test_writer_streaming_completions_with_events_with_no_content(
     spans = span_exporter.get_finished_spans()
     writer_span = spans[0]
     assert writer_span.name == "writerai.completions"
-    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Writer"
+    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "writer"
     assert (
         writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "completion"
     )
@@ -347,7 +347,7 @@ async def test_writer_async_completions_legacy(
 
     assert writer_span.name == "writerai.completions"
     assert writer_span.name == "writerai.completions"
-    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Writer"
+    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "writer"
     assert (
         writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "completion"
     )
@@ -398,7 +398,7 @@ async def test_writer_async_completions_with_events_with_content(
     spans = span_exporter.get_finished_spans()
     writer_span = spans[0]
     assert writer_span.name == "writerai.completions"
-    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Writer"
+    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "writer"
     assert (
         writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "completion"
     )
@@ -452,7 +452,7 @@ async def test_writer_async_completions_with_events_with_no_content(
     spans = span_exporter.get_finished_spans()
     writer_span = spans[0]
     assert writer_span.name == "writerai.completions"
-    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Writer"
+    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "writer"
     assert (
         writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "completion"
     )
@@ -518,7 +518,7 @@ async def test_writer_async_streaming_completions_legacy(
     spans = span_exporter.get_finished_spans()
     writer_span = spans[0]
     assert writer_span.name == "writerai.completions"
-    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Writer"
+    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "writer"
     assert (
         writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "completion"
     )
@@ -574,7 +574,7 @@ async def test_writer_async_streaming_completions_with_events_with_content(
     spans = span_exporter.get_finished_spans()
     writer_span = spans[0]
     assert writer_span.name == "writerai.completions"
-    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Writer"
+    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "writer"
     assert (
         writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "completion"
     )
@@ -633,7 +633,7 @@ async def test_writer_async_streaming_completions_with_events_with_no_content(
     spans = span_exporter.get_finished_spans()
     writer_span = spans[0]
     assert writer_span.name == "writerai.completions"
-    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Writer"
+    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "writer"
     assert (
         writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "completion"
     )

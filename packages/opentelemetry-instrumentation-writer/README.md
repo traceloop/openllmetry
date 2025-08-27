@@ -1,7 +1,7 @@
 # OpenTelemetry Writer Instrumentation
 
 <a href="https://pypi.org/project/opentelemetry-instrumentation-writer/">
-    <img src="https://badge.fury.io/py/opentelemetry-instrumentation-writer.svg">
+    <img alt="PyPI version" src="https://badge.fury.io/py/opentelemetry-instrumentation-writer.svg">
 </a>
 
 This library allows tracing calls to any of Writer's endpoints sent with the official [Writer Python Library](https://github.com/writer/writer-python).

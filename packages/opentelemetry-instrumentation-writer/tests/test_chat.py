@@ -43,7 +43,7 @@ def test_writer_chat_legacy(
     writer_span = spans[0]
 
     assert writer_span.name == "writerai.chat"
-    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Writer"
+    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "writer"
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
     assert not writer_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert (
@@ -105,7 +105,7 @@ def test_writer_chat_with_events_with_content(
     writer_span = spans[0]
 
     assert writer_span.name == "writerai.chat"
-    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Writer"
+    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "writer"
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
     assert not writer_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert (
@@ -169,7 +169,7 @@ def test_writer_chat_with_events_with_no_content(
     writer_span = spans[0]
 
     assert writer_span.name == "writerai.chat"
-    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Writer"
+    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "writer"
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
     assert not writer_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert (
@@ -262,7 +262,7 @@ def test_writer_chat_tool_calls_legacy(
     spans = span_exporter.get_finished_spans()
     writer_span = spans[0]
     assert writer_span.name == "writerai.chat"
-    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Writer"
+    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "writer"
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
     assert not writer_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert (
@@ -377,7 +377,7 @@ def test_writer_chat_tool_calls_with_events_with_content(
     writer_span = spans[0]
 
     assert writer_span.name == "writerai.chat"
-    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Writer"
+    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "writer"
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
     assert not writer_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert (
@@ -495,7 +495,7 @@ def test_writer_chat_tool_calls_with_events_with_no_content(
     writer_span = spans[0]
 
     assert writer_span.name == "writerai.chat"
-    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Writer"
+    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "writer"
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
     assert not writer_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert (
@@ -576,7 +576,7 @@ def test_writer_streaming_chat_legacy(
     spans = span_exporter.get_finished_spans()
     writer_span = spans[0]
     assert writer_span.name == "writerai.chat"
-    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Writer"
+    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "writer"
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert (
@@ -643,7 +643,7 @@ def test_writer_streaming_chat_with_events_with_content(
     spans = span_exporter.get_finished_spans()
     writer_span = spans[0]
     assert writer_span.name == "writerai.chat"
-    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Writer"
+    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "writer"
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert (
@@ -714,7 +714,7 @@ def test_writer_streaming_chat_with_events_with_no_content(
     spans = span_exporter.get_finished_spans()
     writer_span = spans[0]
     assert writer_span.name == "writerai.chat"
-    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Writer"
+    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "writer"
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert (
@@ -813,7 +813,7 @@ def test_writer_streaming_chat_tool_calls_legacy(
     spans = span_exporter.get_finished_spans()
     writer_span = spans[0]
     assert writer_span.name == "writerai.chat"
-    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Writer"
+    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "writer"
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert (
@@ -934,7 +934,7 @@ def test_writer_streaming_chat_tool_calls_with_events_with_content(
     writer_span = spans[0]
 
     assert writer_span.name == "writerai.chat"
-    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Writer"
+    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "writer"
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert (
@@ -1058,7 +1058,7 @@ def test_writer_streaming_chat_tool_calls_with_events_with_no_content(
     writer_span = spans[0]
 
     assert writer_span.name == "writerai.chat"
-    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Writer"
+    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "writer"
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert (
@@ -1149,7 +1149,7 @@ def test_writer_chat_tool_call_request_legacy(
     spans = span_exporter.get_finished_spans()
     writer_span = spans[0]
     assert writer_span.name == "writerai.chat"
-    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Writer"
+    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "writer"
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
     assert not writer_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert (
@@ -1247,7 +1247,7 @@ def test_writer_chat_tool_call_request_with_events_with_content(
     writer_span = spans[0]
 
     assert writer_span.name == "writerai.chat"
-    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Writer"
+    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "writer"
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
     assert not writer_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert (
@@ -1343,7 +1343,7 @@ def test_writer_chat_tool_call_request_with_events_with_no_content(
     writer_span = spans[0]
 
     assert writer_span.name == "writerai.chat"
-    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Writer"
+    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "writer"
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
     assert not writer_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert (
@@ -1434,7 +1434,7 @@ def test_writer_streaming_chat_tool_call_request_legacy(
     spans = span_exporter.get_finished_spans()
     writer_span = spans[0]
     assert writer_span.name == "writerai.chat"
-    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Writer"
+    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "writer"
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert (
@@ -1536,7 +1536,7 @@ def test_writer_streaming_chat_tool_call_request_with_events_with_content(
     writer_span = spans[0]
 
     assert writer_span.name == "writerai.chat"
-    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Writer"
+    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "writer"
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert (
@@ -1634,7 +1634,7 @@ def test_writer_streaming_chat_tool_call_request_with_events_with_no_content(
     writer_span = spans[0]
 
     assert writer_span.name == "writerai.chat"
-    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Writer"
+    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "writer"
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert (
@@ -1707,7 +1707,7 @@ def test_writer_chat_multiple_choices_legacy(
     writer_span = spans[0]
 
     assert writer_span.name == "writerai.chat"
-    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Writer"
+    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "writer"
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
     assert not writer_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert (
@@ -1775,7 +1775,7 @@ def test_writer_chat_multiple_choices_with_events_with_content(
     writer_span = spans[0]
 
     assert writer_span.name == "writerai.chat"
-    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Writer"
+    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "writer"
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
     assert not writer_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert (
@@ -1848,7 +1848,7 @@ def test_writer_chat_multiple_choices_with_events_with_no_content(
     writer_span = spans[0]
 
     assert writer_span.name == "writerai.chat"
-    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Writer"
+    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "writer"
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
     assert not writer_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert (
@@ -1924,7 +1924,7 @@ def test_writer_streaming_chat_multiple_choices_legacy(
     spans = span_exporter.get_finished_spans()
     writer_span = spans[0]
     assert writer_span.name == "writerai.chat"
-    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Writer"
+    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "writer"
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert (
@@ -1998,7 +1998,7 @@ def test_writer_streaming_chat_multiple_choices_with_events_with_content(
     spans = span_exporter.get_finished_spans()
     writer_span = spans[0]
     assert writer_span.name == "writerai.chat"
-    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Writer"
+    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "writer"
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert (
@@ -2079,7 +2079,7 @@ def test_writer_streaming_chat_multiple_choices_with_events_with_no_content(
     spans = span_exporter.get_finished_spans()
     writer_span = spans[0]
     assert writer_span.name == "writerai.chat"
-    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Writer"
+    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "writer"
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert (
@@ -2166,7 +2166,7 @@ def test_writer_chat_multiple_tool_call_requests_legacy(
     spans = span_exporter.get_finished_spans()
     writer_span = spans[0]
     assert writer_span.name == "writerai.chat"
-    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Writer"
+    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "writer"
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
     assert not writer_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert (
@@ -2273,7 +2273,7 @@ def test_writer_chat_multiple_tool_call_requests_with_events_with_content(
     writer_span = spans[0]
 
     assert writer_span.name == "writerai.chat"
-    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Writer"
+    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "writer"
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
     assert not writer_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert (
@@ -2374,7 +2374,7 @@ def test_writer_chat_multiple_tool_call_requests_with_events_with_no_content(
     writer_span = spans[0]
 
     assert writer_span.name == "writerai.chat"
-    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Writer"
+    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "writer"
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
     assert not writer_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert (
@@ -2478,7 +2478,7 @@ def test_writer_streaming_chat_multiple_tool_call_requests_legacy(
     spans = span_exporter.get_finished_spans()
     writer_span = spans[0]
     assert writer_span.name == "writerai.chat"
-    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Writer"
+    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "writer"
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert (
@@ -2597,7 +2597,7 @@ def test_writer_streaming_chat_multiple_tool_call_requests_with_events_with_cont
     writer_span = spans[0]
 
     assert writer_span.name == "writerai.chat"
-    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Writer"
+    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "writer"
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert (
@@ -2710,7 +2710,7 @@ def test_writer_streaming_chat_multiple_tool_call_requests_with_events_with_no_c
     writer_span = spans[0]
 
     assert writer_span.name == "writerai.chat"
-    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Writer"
+    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "writer"
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert (
@@ -2782,7 +2782,7 @@ async def test_writer_async_chat_legacy(
     spans = span_exporter.get_finished_spans()
     writer_span = spans[0]
     assert writer_span.name == "writerai.chat"
-    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Writer"
+    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "writer"
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
     assert not writer_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert (
@@ -2844,7 +2844,7 @@ async def test_writer_async_chat_with_events_with_content(
     spans = span_exporter.get_finished_spans()
     writer_span = spans[0]
     assert writer_span.name == "writerai.chat"
-    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Writer"
+    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "writer"
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
     assert not writer_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert (
@@ -2909,7 +2909,7 @@ async def test_writer_async_chat_with_events_with_no_content(
     spans = span_exporter.get_finished_spans()
     writer_span = spans[0]
     assert writer_span.name == "writerai.chat"
-    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Writer"
+    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "writer"
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
     assert not writer_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert (
@@ -3003,7 +3003,7 @@ async def test_writer_async_chat_tool_calls_legacy(
     spans = span_exporter.get_finished_spans()
     writer_span = spans[0]
     assert writer_span.name == "writerai.chat"
-    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Writer"
+    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "writer"
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
     assert not writer_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert (
@@ -3119,7 +3119,7 @@ async def test_writer_async_chat_tool_calls_with_events_with_content(
     writer_span = spans[0]
 
     assert writer_span.name == "writerai.chat"
-    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Writer"
+    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "writer"
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
     assert not writer_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert (
@@ -3238,7 +3238,7 @@ async def test_writer_async_chat_tool_calls_with_events_with_no_content(
     writer_span = spans[0]
 
     assert writer_span.name == "writerai.chat"
-    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Writer"
+    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "writer"
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
     assert not writer_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert (
@@ -3320,7 +3320,7 @@ async def test_writer_async_streaming_chat_legacy(
     spans = span_exporter.get_finished_spans()
     writer_span = spans[0]
     assert writer_span.name == "writerai.chat"
-    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Writer"
+    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "writer"
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert (
@@ -3388,7 +3388,7 @@ async def test_writer_async_streaming_chat_with_events_with_content(
     spans = span_exporter.get_finished_spans()
     writer_span = spans[0]
     assert writer_span.name == "writerai.chat"
-    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Writer"
+    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "writer"
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert (
@@ -3460,7 +3460,7 @@ async def test_writer_async_streaming_chat_with_events_with_no_content(
     spans = span_exporter.get_finished_spans()
     writer_span = spans[0]
     assert writer_span.name == "writerai.chat"
-    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Writer"
+    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "writer"
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert (
@@ -3560,7 +3560,7 @@ async def test_writer_async_streaming_chat_tool_calls_legacy(
     spans = span_exporter.get_finished_spans()
     writer_span = spans[0]
     assert writer_span.name == "writerai.chat"
-    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Writer"
+    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "writer"
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert (
@@ -3682,7 +3682,7 @@ async def test_writer_async_streaming_chat_tool_calls_with_events_with_content(
     writer_span = spans[0]
 
     assert writer_span.name == "writerai.chat"
-    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Writer"
+    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "writer"
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert (
@@ -3807,7 +3807,7 @@ async def test_writer_async_streaming_chat_tool_calls_with_events_with_no_conten
     writer_span = spans[0]
 
     assert writer_span.name == "writerai.chat"
-    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Writer"
+    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "writer"
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert (
@@ -3899,7 +3899,7 @@ async def test_writer_async_chat_tool_call_request_legacy(
     spans = span_exporter.get_finished_spans()
     writer_span = spans[0]
     assert writer_span.name == "writerai.chat"
-    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Writer"
+    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "writer"
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
     assert not writer_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert (
@@ -3998,7 +3998,7 @@ async def test_writer_async_chat_tool_call_request_with_events_with_content(
     writer_span = spans[0]
 
     assert writer_span.name == "writerai.chat"
-    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Writer"
+    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "writer"
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
     assert not writer_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert (
@@ -4095,7 +4095,7 @@ async def test_writer_async_chat_tool_call_request_with_events_with_no_content(
     writer_span = spans[0]
 
     assert writer_span.name == "writerai.chat"
-    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Writer"
+    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "writer"
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
     assert not writer_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert (
@@ -4187,7 +4187,7 @@ async def test_writer_async_streaming_chat_tool_call_request_legacy(
     spans = span_exporter.get_finished_spans()
     writer_span = spans[0]
     assert writer_span.name == "writerai.chat"
-    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Writer"
+    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "writer"
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert (
@@ -4290,7 +4290,7 @@ async def test_writer_async_streaming_chat_tool_call_request_with_events_with_co
     writer_span = spans[0]
 
     assert writer_span.name == "writerai.chat"
-    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Writer"
+    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "writer"
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert (
@@ -4389,7 +4389,7 @@ async def test_writer_async_streaming_chat_tool_call_request_with_events_with_no
     writer_span = spans[0]
 
     assert writer_span.name == "writerai.chat"
-    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Writer"
+    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "writer"
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert (
@@ -4463,7 +4463,7 @@ async def test_writer_async_chat_multiple_choices_legacy(
     writer_span = spans[0]
 
     assert writer_span.name == "writerai.chat"
-    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Writer"
+    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "writer"
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
     assert not writer_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert (
@@ -4532,7 +4532,7 @@ async def test_writer_async_chat_multiple_choices_with_events_with_content(
     writer_span = spans[0]
 
     assert writer_span.name == "writerai.chat"
-    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Writer"
+    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "writer"
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
     assert not writer_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert (
@@ -4606,7 +4606,7 @@ async def test_writer_async_chat_multiple_choices_with_events_with_no_content(
     writer_span = spans[0]
 
     assert writer_span.name == "writerai.chat"
-    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Writer"
+    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "writer"
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
     assert not writer_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert (
@@ -4683,7 +4683,7 @@ async def test_writer_async_streaming_chat_multiple_choices_legacy(
     spans = span_exporter.get_finished_spans()
     writer_span = spans[0]
     assert writer_span.name == "writerai.chat"
-    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Writer"
+    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "writer"
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert (
@@ -4758,7 +4758,7 @@ async def test_writer_async_streaming_chat_multiple_choices_with_events_with_con
     spans = span_exporter.get_finished_spans()
     writer_span = spans[0]
     assert writer_span.name == "writerai.chat"
-    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Writer"
+    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "writer"
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert (
@@ -4840,7 +4840,7 @@ async def test_writer_async_streaming_chat_multiple_choices_with_events_with_no_
     spans = span_exporter.get_finished_spans()
     writer_span = spans[0]
     assert writer_span.name == "writerai.chat"
-    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Writer"
+    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "writer"
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert (
@@ -4928,7 +4928,7 @@ async def test_writer_async_chat_multiple_tool_call_requests_legacy(
     spans = span_exporter.get_finished_spans()
     writer_span = spans[0]
     assert writer_span.name == "writerai.chat"
-    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Writer"
+    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "writer"
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
     assert not writer_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert (
@@ -5036,7 +5036,7 @@ async def test_writer_async_chat_multiple_tool_call_requests_with_events_with_co
     writer_span = spans[0]
 
     assert writer_span.name == "writerai.chat"
-    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Writer"
+    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "writer"
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
     assert not writer_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert (
@@ -5138,7 +5138,7 @@ async def test_writer_async_chat_multiple_tool_call_requests_with_events_with_no
     writer_span = spans[0]
 
     assert writer_span.name == "writerai.chat"
-    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Writer"
+    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "writer"
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
     assert not writer_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert (
@@ -5243,7 +5243,7 @@ async def test_writer_async_streaming_chat_multiple_tool_call_requests_legacy(
     spans = span_exporter.get_finished_spans()
     writer_span = spans[0]
     assert writer_span.name == "writerai.chat"
-    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Writer"
+    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "writer"
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert (
@@ -5363,7 +5363,7 @@ async def test_writer_async_streaming_chat_multiple_tool_call_requests_with_even
     writer_span = spans[0]
 
     assert writer_span.name == "writerai.chat"
-    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Writer"
+    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "writer"
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert (
@@ -5477,7 +5477,7 @@ async def test_writer_async_streaming_chat_multiple_tool_call_requests_with_even
     writer_span = spans[0]
 
     assert writer_span.name == "writerai.chat"
-    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "Writer"
+    assert writer_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "writer"
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "chat"
     assert writer_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert (
