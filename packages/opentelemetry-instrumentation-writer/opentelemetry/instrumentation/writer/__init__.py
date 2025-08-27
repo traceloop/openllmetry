@@ -173,41 +173,52 @@ def _create_stream_processor(
     method,
 ):
     accumulated_response = initialize_accumulated_response(response)
-
     first_token_time = None
+    last_token_time = start_time
+    error: Exception | None = None
 
-    for chunk in response:
-        if first_token_time is None:
-            first_token_time = time.time()
+    try:
+        for chunk in response:
+            if first_token_time is None:
+                first_token_time = time.time()
 
-        _update_accumulated_response(accumulated_response, chunk)
+            _update_accumulated_response(accumulated_response, chunk)
 
-        yield chunk
+            yield chunk
 
-    last_token_time = time.time()
+        last_token_time = time.time()
+    except Exception as ex:
+        error = ex
+        if span.is_recording():
+            span.set_status(Status(StatusCode.ERROR))
+        raise
+    finally:
+        metrics_attributes = response_attributes(accumulated_response, method)
+        metrics_attributes.update({"stream": True})
 
-    metrics_attributes = response_attributes(accumulated_response, method)
-    metrics_attributes.update({"stream": True})
+        if streaming_time_to_first_token:
+            ttft = (first_token_time or last_token_time) - start_time
+            streaming_time_to_first_token.record(ttft, attributes=metrics_attributes)
 
-    ttft = (first_token_time or last_token_time) - start_time
-    streaming_time_to_first_token.record(
-        ttft,
-        attributes=metrics_attributes,
-    )
-    streaming_time_to_generate.record(
-        last_token_time - (first_token_time or last_token_time),
-        attributes=metrics_attributes,
-    )
-    duration_histogram.record(
-        last_token_time - start_time, attributes=metrics_attributes
-    )
+        if streaming_time_to_generate:
+            streaming_time_to_generate.record(
+                last_token_time - (first_token_time or last_token_time),
+                attributes=metrics_attributes,
+            )
 
-    _handle_response(span, accumulated_response, token_histogram, event_logger, method)
+        if duration_histogram:
+            duration_histogram.record(
+                last_token_time - start_time, attributes=metrics_attributes
+            )
 
-    if span.is_recording():
-        span.set_status(Status(StatusCode.OK))
+        _handle_response(
+            span, accumulated_response, token_histogram, event_logger, method
+        )
 
-    span.end()
+        if span.is_recording() and error is None:
+            span.set_status(Status(StatusCode.OK))
+
+        span.end()
 
 
 async def _create_async_stream_processor(
@@ -222,41 +233,52 @@ async def _create_async_stream_processor(
     method,
 ):
     accumulated_response = initialize_accumulated_response(response)
-
     first_token_time = None
+    last_token_time = start_time
+    error: Exception | None = None
 
-    async for chunk in response:
-        if first_token_time is None:
-            first_token_time = time.time()
+    try:
+        async for chunk in response:
+            if first_token_time is None:
+                first_token_time = time.time()
 
-        _update_accumulated_response(accumulated_response, chunk)
+            _update_accumulated_response(accumulated_response, chunk)
 
-        yield chunk
+            yield chunk
 
-    last_token_time = time.time()
+        last_token_time = time.time()
+    except Exception as ex:
+        error = ex
+        if span.is_recording():
+            span.set_status(Status(StatusCode.ERROR))
+        raise
+    finally:
+        metrics_attributes = response_attributes(accumulated_response, method)
+        metrics_attributes.update({"stream": True})
 
-    metrics_attributes = response_attributes(accumulated_response, method)
-    metrics_attributes.update({"stream": True})
+        if streaming_time_to_first_token:
+            ttft = (first_token_time or last_token_time) - start_time
+            streaming_time_to_first_token.record(ttft, attributes=metrics_attributes)
 
-    ttft = (first_token_time or last_token_time) - start_time
-    streaming_time_to_first_token.record(
-        ttft,
-        attributes=metrics_attributes,
-    )
-    streaming_time_to_generate.record(
-        last_token_time - (first_token_time or last_token_time),
-        attributes=metrics_attributes,
-    )
-    duration_histogram.record(
-        last_token_time - start_time, attributes=metrics_attributes
-    )
+        if streaming_time_to_generate:
+            streaming_time_to_generate.record(
+                last_token_time - (first_token_time or last_token_time),
+                attributes=metrics_attributes,
+            )
 
-    _handle_response(span, accumulated_response, token_histogram, event_logger, method)
+        if duration_histogram:
+            duration_histogram.record(
+                last_token_time - start_time, attributes=metrics_attributes
+            )
 
-    if span.is_recording():
-        span.set_status(Status(StatusCode.OK))
+        _handle_response(
+            span, accumulated_response, token_histogram, event_logger, method
+        )
 
-    span.end()
+        if span.is_recording() and error is None:
+            span.set_status(Status(StatusCode.OK))
+
+        span.end()
 
 
 def _handle_input(span, kwargs, event_logger):
@@ -355,7 +377,7 @@ def _wrap(
             span.set_status(Status(StatusCode.ERROR))
 
         span.end()
-        raise ex
+        raise
 
     if is_streaming_response(response):
         try:
@@ -379,7 +401,7 @@ def _wrap(
                 span.set_status(Status(StatusCode.ERROR))
 
             span.end()
-            raise ex
+            raise
 
     elif response:
         end_time = time.time()
@@ -456,7 +478,7 @@ async def _awrap(
             span.set_status(Status(StatusCode.ERROR))
 
         span.end()
-        raise ex
+        raise
 
     if is_streaming_response(response):
         try:
@@ -480,7 +502,7 @@ async def _awrap(
                 span.set_status(Status(StatusCode.ERROR))
 
             span.end()
-            raise ex
+            raise
 
     elif response:
         end_time = time.time()

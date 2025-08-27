@@ -2134,7 +2134,7 @@ def test_writer_chat_multiple_tool_call_requests_legacy(
             {
                 "role": "user",
                 "content": "What is the weather like in "
-                           "Zakopane, Warsaw, Lodz, Katowice, Krakow, Poznan and Lublin today?",
+                "Zakopane, Warsaw, Lodz, Katowice, Krakow, Poznan and Lublin today?",
             },
         ],
         tools=[
@@ -2240,7 +2240,7 @@ def test_writer_chat_multiple_tool_call_requests_with_events_with_content(
             {
                 "role": "user",
                 "content": "What is the weather like in "
-                           "Zakopane, Warsaw, Lodz, Katowice, Krakow, Poznan and Lublin today?",
+                "Zakopane, Warsaw, Lodz, Katowice, Krakow, Poznan and Lublin today?",
             },
         ],
         tools=[
@@ -2341,7 +2341,7 @@ def test_writer_chat_multiple_tool_call_requests_with_events_with_no_content(
             {
                 "role": "user",
                 "content": "What is the weather like in "
-                           "Zakopane, Warsaw, Lodz, Katowice, Krakow, Poznan and Lublin today?",
+                "Zakopane, Warsaw, Lodz, Katowice, Krakow, Poznan and Lublin today?",
             },
         ],
         tools=[
@@ -2434,7 +2434,7 @@ def test_writer_streaming_chat_multiple_tool_call_requests_legacy(
             {
                 "role": "user",
                 "content": "What is the weather like in "
-                           "Zakopane, Warsaw, Lodz, Katowice, Krakow, Poznan and Lublin today?",
+                "Zakopane, Warsaw, Lodz, Katowice, Krakow, Poznan and Lublin today?",
             },
         ],
         tools=[
@@ -2552,7 +2552,7 @@ def test_writer_streaming_chat_multiple_tool_call_requests_with_events_with_cont
             {
                 "role": "user",
                 "content": "What is the weather like in "
-                           "Zakopane, Warsaw, Lodz, Katowice, Krakow, Poznan and Lublin today?",
+                "Zakopane, Warsaw, Lodz, Katowice, Krakow, Poznan and Lublin today?",
             },
         ],
         tools=[
@@ -2665,7 +2665,7 @@ def test_writer_streaming_chat_multiple_tool_call_requests_with_events_with_no_c
             {
                 "role": "user",
                 "content": "What is the weather like in "
-                           "Zakopane, Warsaw, Lodz, Katowice, Krakow, Poznan and Lublin today?",
+                "Zakopane, Warsaw, Lodz, Katowice, Krakow, Poznan and Lublin today?",
             },
         ],
         tools=[
@@ -4896,7 +4896,7 @@ async def test_writer_async_chat_multiple_tool_call_requests_legacy(
             {
                 "role": "user",
                 "content": "What is the weather like in "
-                           "Zakopane, Warsaw, Lodz, Katowice, Krakow, Poznan and Lublin today?",
+                "Zakopane, Warsaw, Lodz, Katowice, Krakow, Poznan and Lublin today?",
             }
         ],
         tools=[
@@ -5003,7 +5003,7 @@ async def test_writer_async_chat_multiple_tool_call_requests_with_events_with_co
             {
                 "role": "user",
                 "content": "What is the weather like in "
-                           "Zakopane, Warsaw, Lodz, Katowice, Krakow, Poznan and Lublin today?",
+                "Zakopane, Warsaw, Lodz, Katowice, Krakow, Poznan and Lublin today?",
             }
         ],
         tools=[
@@ -5105,7 +5105,7 @@ async def test_writer_async_chat_multiple_tool_call_requests_with_events_with_no
             {
                 "role": "user",
                 "content": "What is the weather like in "
-                           "Zakopane, Warsaw, Lodz, Katowice, Krakow, Poznan and Lublin today?",
+                "Zakopane, Warsaw, Lodz, Katowice, Krakow, Poznan and Lublin today?",
             }
         ],
         tools=[
@@ -5199,7 +5199,7 @@ async def test_writer_async_streaming_chat_multiple_tool_call_requests_legacy(
             {
                 "role": "user",
                 "content": "What is the weather like in "
-                           "Zakopane, Warsaw, Lodz, Katowice, Krakow, Poznan and Lublin today?",
+                "Zakopane, Warsaw, Lodz, Katowice, Krakow, Poznan and Lublin today?",
             }
         ],
         tools=[
@@ -5318,7 +5318,7 @@ async def test_writer_async_streaming_chat_multiple_tool_call_requests_with_even
             {
                 "role": "user",
                 "content": "What is the weather like in "
-                           "Zakopane, Warsaw, Lodz, Katowice, Krakow, Poznan and Lublin today?",
+                "Zakopane, Warsaw, Lodz, Katowice, Krakow, Poznan and Lublin today?",
             }
         ],
         tools=[
@@ -5432,7 +5432,7 @@ async def test_writer_async_streaming_chat_multiple_tool_call_requests_with_even
             {
                 "role": "user",
                 "content": "What is the weather like in "
-                           "Zakopane, Warsaw, Lodz, Katowice, Krakow, Poznan and Lublin today?",
+                "Zakopane, Warsaw, Lodz, Katowice, Krakow, Poznan and Lublin today?",
             }
         ],
         tools=[
