@@ -74,7 +74,6 @@ def is_streaming_response(response):
 
 
 def _update_accumulated_response(accumulated_response, chunk):
-    # TODO add multiple choices handling
     if isinstance(accumulated_response, ChatCompletion) and isinstance(
         chunk, ChatCompletionChunk
     ):
