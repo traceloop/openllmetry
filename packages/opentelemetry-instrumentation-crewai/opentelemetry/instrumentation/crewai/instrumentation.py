@@ -27,16 +27,10 @@ class CrewAIInstrumentor(BaseInstrumentor):
         meter_provider = kwargs.get("meter_provider")
         meter = get_meter(__name__, __version__, meter_provider)
 
+        token_histogram = None
+        duration_histogram = None
         if is_metrics_enabled():
-            (
-                token_histogram,
-                duration_histogram,
-            ) = _create_metrics(meter)
-        else:
-            (
-                token_histogram,
-                duration_histogram,
-            ) = (None, None, None, None)
+            token_histogram, duration_histogram = _create_metrics(meter)
 
         wrap_function_wrapper("crewai.crew", "Crew.kickoff",
                               wrap_kickoff(tracer, duration_histogram, token_histogram))

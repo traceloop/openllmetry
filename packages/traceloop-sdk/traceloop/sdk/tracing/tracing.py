@@ -423,7 +423,7 @@ def init_tracer_provider(resource: Resource, sampler: Optional[Sampler] = None) 
 
 def init_instrumentations(
     should_enrich_metrics: bool,
-    base64_image_uploader: Callable[[str, str, str], str],
+    base64_image_uploader: Callable[[str, str, str, str], str],
     instruments: Optional[Set[Instruments]] = None,
     block_instruments: Optional[Set[Instruments]] = None,
 ):
@@ -458,7 +458,7 @@ def init_instrumentations(
             if init_crewai_instrumentor():
                 instrument_set = True
         elif instrument == Instruments.GOOGLE_GENERATIVEAI:
-            if init_google_generativeai_instrumentor():
+            if init_google_generativeai_instrumentor(should_enrich_metrics, base64_image_uploader):
                 instrument_set = True
         elif instrument == Instruments.GROQ:
             if init_groq_instrumentor():
@@ -527,7 +527,9 @@ def init_instrumentations(
             if init_urllib3_instrumentor():
                 instrument_set = True
         elif instrument == Instruments.VERTEXAI:
-            if init_vertexai_instrumentor():
+            if init_vertexai_instrumentor(
+                should_enrich_metrics, base64_image_uploader
+            ):
                 instrument_set = True
         elif instrument == Instruments.WATSONX:
             if init_watsonx_instrumentor():
@@ -560,7 +562,7 @@ def init_instrumentations(
 
 
 def init_openai_instrumentor(
-    should_enrich_metrics: bool, base64_image_uploader: Callable[[str, str, str], str]
+    should_enrich_metrics: bool, base64_image_uploader: Callable[[str, str, str, str], str]
 ):
     try:
         if is_package_installed("openai"):
@@ -584,7 +586,7 @@ def init_openai_instrumentor(
 
 
 def init_anthropic_instrumentor(
-    should_enrich_metrics: bool, base64_image_uploader: Callable[[str, str, str], str]
+    should_enrich_metrics: bool, base64_image_uploader: Callable[[str, str, str, str], str]
 ):
     try:
         if is_package_installed("anthropic"):
@@ -678,7 +680,9 @@ def init_chroma_instrumentor():
     return False
 
 
-def init_google_generativeai_instrumentor():
+def init_google_generativeai_instrumentor(
+    should_enrich_metrics: bool, base64_image_uploader: Callable[[str, str, str, str], str]
+):
     try:
         if is_package_installed("google-generativeai") or is_package_installed("google-genai"):
             Telemetry().capture("instrumentation:gemini:init")
@@ -688,6 +692,7 @@ def init_google_generativeai_instrumentor():
 
             instrumentor = GoogleGenerativeAiInstrumentor(
                 exception_logger=lambda e: Telemetry().log_exception(e),
+                upload_base64_image=base64_image_uploader,
             )
             if not instrumentor.is_instrumented_by_opentelemetry:
                 instrumentor.instrument()
@@ -938,7 +943,9 @@ def init_replicate_instrumentor():
     return False
 
 
-def init_vertexai_instrumentor():
+def init_vertexai_instrumentor(
+    should_enrich_metrics: bool, base64_image_uploader: Callable[[str, str, str, str], str]
+):
     try:
         if is_package_installed("google-cloud-aiplatform"):
             Telemetry().capture("instrumentation:vertexai:init")
@@ -946,6 +953,7 @@ def init_vertexai_instrumentor():
 
             instrumentor = VertexAIInstrumentor(
                 exception_logger=lambda e: Telemetry().log_exception(e),
+                upload_base64_image=base64_image_uploader,
             )
             if not instrumentor.is_instrumented_by_opentelemetry:
                 instrumentor.instrument()

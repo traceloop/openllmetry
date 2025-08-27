@@ -1,3 +1,25 @@
+## v0.46.1 (2025-08-24)
+
+### Fix
+
+- **google-generativeai,vertexai**: image support for Gemini models (#3340)
+
+## v0.46.0 (2025-08-24)
+
+### Feat
+
+- **openai**: add reasoning attributes (#3336)
+- **semantic-conventions-ai**: Add reasoning attributes (#3330)
+- **experiment**: Add run experiment capabilities (#3331)
+
+### Fix
+
+- **traceloop-sdk**: bump logging instrumentation to support newer otel versions (#3339)
+- **traceloop-sdk**: add @staticmethod decorator to set_association_properties (#3341)
+- **google-genai**: update logic for deciding whether to use awrap or wrap in the Google Generative AI Instrumentation (#3329)
+- **ollama**: missing response model attr in operation duration metric (#3328)
+- **bedrock**: add guardrail on span attributes (#3326)
+
 ## v0.45.6 (2025-08-18)
 
 ### Fix
