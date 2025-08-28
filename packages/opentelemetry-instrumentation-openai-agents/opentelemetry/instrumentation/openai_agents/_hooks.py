@@ -292,8 +292,40 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
 
                     # Extract completions and add directly to response span using OpenAI semantic conventions
                     if hasattr(response, 'output') and response.output:
-                        for i, output in enumerate(response.output):
-                            # Handle different output types
+                        # Group outputs by type: separate tool calls from content
+                        tool_calls = []
+                        content_outputs = []
+                        
+                        for output in response.output:
+                            if hasattr(output, 'name'):  # Tool call
+                                tool_calls.append(output)
+                            else:  # Content output
+                                content_outputs.append(output)
+                        
+                        completion_index = 0
+                        
+                        # Handle tool calls as a single completion with multiple tool_calls
+                        if tool_calls:
+                            otel_span.set_attribute(f"{SpanAttributes.LLM_COMPLETIONS}.{completion_index}.role", "assistant")
+                            otel_span.set_attribute(f"{SpanAttributes.LLM_COMPLETIONS}.{completion_index}.content", "")
+                            otel_span.set_attribute(f"{SpanAttributes.LLM_COMPLETIONS}.{completion_index}.finish_reason", "tool_calls")
+                            
+                            for tool_index, output in enumerate(tool_calls):
+                                tool_name = getattr(output, 'name', 'unknown_tool')
+                                arguments = getattr(output, 'arguments', '{}')
+                                tool_call_id = getattr(output, 'call_id', f"call_{tool_index}")
+                                
+                                otel_span.set_attribute(
+                                    f"{SpanAttributes.LLM_COMPLETIONS}.{completion_index}.tool_calls.{tool_index}.name", tool_name)
+                                otel_span.set_attribute(
+                                    f"{SpanAttributes.LLM_COMPLETIONS}.{completion_index}.tool_calls.{tool_index}.arguments", arguments)
+                                otel_span.set_attribute(
+                                    f"{SpanAttributes.LLM_COMPLETIONS}.{completion_index}.tool_calls.{tool_index}.id", tool_call_id)
+                            
+                            completion_index += 1
+                        
+                        # Handle content outputs as separate completions
+                        for output in content_outputs:
                             if hasattr(output, 'content') and output.content:
                                 # Text message with content array (ResponseOutputMessage)
                                 content_text = ""
@@ -303,39 +335,31 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
 
                                 if content_text:
                                     otel_span.set_attribute(
-                                        f"{SpanAttributes.LLM_COMPLETIONS}.{i}.content", content_text)
+                                        f"{SpanAttributes.LLM_COMPLETIONS}.{completion_index}.content", content_text)
                                     otel_span.set_attribute(
-                                        f"{SpanAttributes.LLM_COMPLETIONS}.{i}.role", getattr(
+                                        f"{SpanAttributes.LLM_COMPLETIONS}.{completion_index}.role", getattr(
                                             output, 'role', 'assistant'))
-
-                            elif hasattr(output, 'name'):
-                                # Function/tool call (ResponseFunctionToolCall) - use OpenAI tool call format
-                                tool_name = getattr(output, 'name', 'unknown_tool')
-                                arguments = getattr(output, 'arguments', '{}')
-                                tool_call_id = getattr(output, 'call_id', f"call_{i}")
-
-                                # Set completion with tool call following OpenAI format
-                                otel_span.set_attribute(f"{SpanAttributes.LLM_COMPLETIONS}.{i}.role", "assistant")
-                                otel_span.set_attribute(
-                                    f"{SpanAttributes.LLM_COMPLETIONS}.{i}.finish_reason", "tool_calls")
-                                otel_span.set_attribute(
-                                    f"{SpanAttributes.LLM_COMPLETIONS}.{i}.tool_calls.0.name", tool_name)
-                                otel_span.set_attribute(
-                                    f"{SpanAttributes.LLM_COMPLETIONS}.{i}.tool_calls.0.arguments", arguments)
-                                otel_span.set_attribute(
-                                    f"{SpanAttributes.LLM_COMPLETIONS}.{i}.tool_calls.0.id", tool_call_id)
+                                    
+                                    # Add finish reason if available
+                                    if hasattr(response, 'finish_reason'):
+                                        otel_span.set_attribute(
+                                            f"{SpanAttributes.LLM_COMPLETIONS}.{completion_index}.finish_reason", response.finish_reason)
+                                    
+                                    completion_index += 1
 
                             elif hasattr(output, 'text'):
                                 # Direct text content
-                                otel_span.set_attribute(f"{SpanAttributes.LLM_COMPLETIONS}.{i}.content", output.text)
+                                otel_span.set_attribute(f"{SpanAttributes.LLM_COMPLETIONS}.{completion_index}.content", output.text)
                                 otel_span.set_attribute(
-                                    f"{SpanAttributes.LLM_COMPLETIONS}.{i}.role", getattr(
+                                    f"{SpanAttributes.LLM_COMPLETIONS}.{completion_index}.role", getattr(
                                         output, 'role', 'assistant'))
-
-                            # Add finish reason if available (for non-tool-call cases)
-                            if hasattr(response, 'finish_reason') and not hasattr(output, 'name'):
-                                otel_span.set_attribute(
-                                    f"{SpanAttributes.LLM_COMPLETIONS}.{i}.finish_reason", response.finish_reason)
+                                
+                                # Add finish reason if available
+                                if hasattr(response, 'finish_reason'):
+                                    otel_span.set_attribute(
+                                        f"{SpanAttributes.LLM_COMPLETIONS}.{completion_index}.finish_reason", response.finish_reason)
+                                
+                                completion_index += 1
 
                     # Extract usage data and add directly to response span
                     if hasattr(response, 'usage') and response.usage:
@@ -395,8 +419,40 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
 
                     # Extract completions and add directly to response span using OpenAI semantic conventions
                     if hasattr(response, 'output') and response.output:
-                        for i, output in enumerate(response.output):
-                            # Handle different output types
+                        # Group outputs by type: separate tool calls from content
+                        tool_calls = []
+                        content_outputs = []
+                        
+                        for output in response.output:
+                            if hasattr(output, 'name'):  # Tool call
+                                tool_calls.append(output)
+                            else:  # Content output
+                                content_outputs.append(output)
+                        
+                        completion_index = 0
+                        
+                        # Handle tool calls as a single completion with multiple tool_calls
+                        if tool_calls:
+                            otel_span.set_attribute(f"{SpanAttributes.LLM_COMPLETIONS}.{completion_index}.role", "assistant")
+                            otel_span.set_attribute(f"{SpanAttributes.LLM_COMPLETIONS}.{completion_index}.content", "")
+                            otel_span.set_attribute(f"{SpanAttributes.LLM_COMPLETIONS}.{completion_index}.finish_reason", "tool_calls")
+                            
+                            for tool_index, output in enumerate(tool_calls):
+                                tool_name = getattr(output, 'name', 'unknown_tool')
+                                arguments = getattr(output, 'arguments', '{}')
+                                tool_call_id = getattr(output, 'call_id', f"call_{tool_index}")
+                                
+                                otel_span.set_attribute(
+                                    f"{SpanAttributes.LLM_COMPLETIONS}.{completion_index}.tool_calls.{tool_index}.name", tool_name)
+                                otel_span.set_attribute(
+                                    f"{SpanAttributes.LLM_COMPLETIONS}.{completion_index}.tool_calls.{tool_index}.arguments", arguments)
+                                otel_span.set_attribute(
+                                    f"{SpanAttributes.LLM_COMPLETIONS}.{completion_index}.tool_calls.{tool_index}.id", tool_call_id)
+                            
+                            completion_index += 1
+                        
+                        # Handle content outputs as separate completions
+                        for output in content_outputs:
                             if hasattr(output, 'content') and output.content:
                                 # Text message with content array (ResponseOutputMessage)
                                 content_text = ""
@@ -406,39 +462,31 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
 
                                 if content_text:
                                     otel_span.set_attribute(
-                                        f"{SpanAttributes.LLM_COMPLETIONS}.{i}.content", content_text)
+                                        f"{SpanAttributes.LLM_COMPLETIONS}.{completion_index}.content", content_text)
                                     otel_span.set_attribute(
-                                        f"{SpanAttributes.LLM_COMPLETIONS}.{i}.role", getattr(
+                                        f"{SpanAttributes.LLM_COMPLETIONS}.{completion_index}.role", getattr(
                                             output, 'role', 'assistant'))
-
-                            elif hasattr(output, 'name'):
-                                # Function/tool call (ResponseFunctionToolCall) - use OpenAI tool call format
-                                tool_name = getattr(output, 'name', 'unknown_tool')
-                                arguments = getattr(output, 'arguments', '{}')
-                                tool_call_id = getattr(output, 'call_id', f"call_{i}")
-
-                                # Set completion with tool call following OpenAI format
-                                otel_span.set_attribute(f"{SpanAttributes.LLM_COMPLETIONS}.{i}.role", "assistant")
-                                otel_span.set_attribute(
-                                    f"{SpanAttributes.LLM_COMPLETIONS}.{i}.finish_reason", "tool_calls")
-                                otel_span.set_attribute(
-                                    f"{SpanAttributes.LLM_COMPLETIONS}.{i}.tool_calls.0.name", tool_name)
-                                otel_span.set_attribute(
-                                    f"{SpanAttributes.LLM_COMPLETIONS}.{i}.tool_calls.0.arguments", arguments)
-                                otel_span.set_attribute(
-                                    f"{SpanAttributes.LLM_COMPLETIONS}.{i}.tool_calls.0.id", tool_call_id)
+                                    
+                                    # Add finish reason if available
+                                    if hasattr(response, 'finish_reason'):
+                                        otel_span.set_attribute(
+                                            f"{SpanAttributes.LLM_COMPLETIONS}.{completion_index}.finish_reason", response.finish_reason)
+                                    
+                                    completion_index += 1
 
                             elif hasattr(output, 'text'):
                                 # Direct text content
-                                otel_span.set_attribute(f"{SpanAttributes.LLM_COMPLETIONS}.{i}.content", output.text)
+                                otel_span.set_attribute(f"{SpanAttributes.LLM_COMPLETIONS}.{completion_index}.content", output.text)
                                 otel_span.set_attribute(
-                                    f"{SpanAttributes.LLM_COMPLETIONS}.{i}.role", getattr(
+                                    f"{SpanAttributes.LLM_COMPLETIONS}.{completion_index}.role", getattr(
                                         output, 'role', 'assistant'))
-
-                            # Add finish reason if available (for non-tool-call cases)
-                            if hasattr(response, 'finish_reason') and not hasattr(output, 'name'):
-                                otel_span.set_attribute(
-                                    f"{SpanAttributes.LLM_COMPLETIONS}.{i}.finish_reason", response.finish_reason)
+                                
+                                # Add finish reason if available
+                                if hasattr(response, 'finish_reason'):
+                                    otel_span.set_attribute(
+                                        f"{SpanAttributes.LLM_COMPLETIONS}.{completion_index}.finish_reason", response.finish_reason)
+                                
+                                completion_index += 1
 
                     # Extract usage data and add directly to response span
                     if hasattr(response, 'usage') and response.usage:
