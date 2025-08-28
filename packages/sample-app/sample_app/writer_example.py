@@ -42,11 +42,14 @@ tools = [
 
 """---------------------------------------- Chat tool definition ----------------------------------------"""
 
+
 @tool(name="get_weather")
 def get_weather(location: str) -> str:
     return f"Weather in {location}: sunny, 25 deg above 0, wind is 2 m/s south."
 
+
 """---------------------------------------- Subsidiary functions ----------------------------------------"""
+
 
 @dataclass
 class StreamResult:
@@ -117,6 +120,7 @@ def _process_tool_call_chunk(
 
     if tool_call_chunk.function and tool_call_chunk.function.arguments:
         current_tool_call['function']['arguments'] += tool_call_chunk.function.arguments
+
 
 """---------------------------------------- Usage example ----------------------------------------"""
 

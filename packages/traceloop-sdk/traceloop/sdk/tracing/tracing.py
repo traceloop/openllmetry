@@ -1001,6 +1001,7 @@ def init_weaviate_instrumentor():
         Telemetry().log_exception(e)
     return False
 
+
 def init_writer_instrumentor():
     try:
         if is_package_installed("writer-sdk"):
