@@ -1,3 +1,15 @@
+## v0.46.2 (2025-08-29)
+
+### Fix
+
+- **vertexai**: add missing role attributes when handling images (#3347)
+- **sdk**: manual logging example + fix span ended error (#3352)
+- **sdk**: support disabling all instrumentations (#3353)
+- **openai-agents**: support json inputs (#3354)
+- **openai**: reasoning jsons weren't stored
+- **crewai**: fix unpack error when metrics are disabled (#3345)
+- **milvus**: Set default values when metrics are disabled (#3344)
+
 ## v0.46.1 (2025-08-24)
 
 ### Fix

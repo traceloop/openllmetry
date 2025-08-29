@@ -1,0 +1,136 @@
+interactions:
+- request:
+    body: '{"input": "Explain why the sky is blue", "model": "gpt-5-nano", "reasoning":
+      {"effort": "medium", "summary": "auto"}}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '117'
+      content-type:
+      - application/json
+      host:
+      - api.openai.com
+      user-agent:
+      - OpenAI/Python 1.99.7
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.99.7
+      x-stainless-read-timeout:
+      - '600'
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.12.1
+    method: POST
+    uri: https://api.openai.com/v1/responses
+  response:
+    body:
+      string: !!binary |
+        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
+    headers:
+      CF-RAY:
+      - 976ca80d3f1b7ba8-ATL
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Fri, 29 Aug 2025 14:15:00 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=4X6ZZLnfh2KwRaDYPexu3cVi.S70CP2KXHJ4o9KJm_c-1756476900-1.0.1.1-oFYXZO_g3o_KecbSI2nIucGow2iOr6n2aBduzuDb3SOG6ifghvO5vmIEARlAYRY9N6Ng7O1rjvz.3U99XuWNeImgEn7PYjU1wVinR3ok1v8;
+        path=/; expires=Fri, 29-Aug-25 14:45:00 GMT; domain=.api.openai.com; HttpOnly;
+        Secure; SameSite=None
+      - _cfuvid=AhlPesKdlPTJRagqm0vfPBxmzKgdliO2M6vF4aqgF6o-1756476900286-0.0.1.1-604800000;
+        path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '15702'
+      openai-project:
+      - proj_tzz1TbPPOXaf6j9tEkVUBIAa
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-envoy-upstream-service-time:
+      - '15705'
+      x-ratelimit-limit-requests:
+      - '30000'
+      x-ratelimit-limit-tokens:
+      - '180000000'
+      x-ratelimit-remaining-requests:
+      - '29999'
+      x-ratelimit-remaining-tokens:
+      - '179999772'
+      x-ratelimit-reset-requests:
+      - 2ms
+      x-ratelimit-reset-tokens:
+      - 0s
+      x-request-id:
+      - req_b7ecb107303db8e856f73c2b708f0cb2
+    status:
+      code: 200
+      message: OK
+version: 1
