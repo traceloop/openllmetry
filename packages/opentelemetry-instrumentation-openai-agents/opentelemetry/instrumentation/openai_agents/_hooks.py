@@ -236,11 +236,17 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
                     for i, message in enumerate(input_data):
                         if hasattr(message, 'role') and hasattr(message, 'content'):
                             otel_span.set_attribute(f"{SpanAttributes.LLM_PROMPTS}.{i}.role", message.role)
-                            otel_span.set_attribute(f"{SpanAttributes.LLM_PROMPTS}.{i}.content", message.content)
+                            content = message.content
+                            if isinstance(content, dict):
+                                content = json.dumps(content)
+                            otel_span.set_attribute(f"{SpanAttributes.LLM_PROMPTS}.{i}.content", content)
                         elif isinstance(message, dict):
                             if 'role' in message and 'content' in message:
                                 otel_span.set_attribute(f"{SpanAttributes.LLM_PROMPTS}.{i}.role", message['role'])
-                                otel_span.set_attribute(f"{SpanAttributes.LLM_PROMPTS}.{i}.content", message['content'])
+                                content = message['content']
+                                if isinstance(content, dict):
+                                    content = json.dumps(content)
+                                otel_span.set_attribute(f"{SpanAttributes.LLM_PROMPTS}.{i}.content", content)
 
                 # Add function/tool specifications to the request using OpenAI semantic conventions
                 response = getattr(span_data, 'response', None)
@@ -365,11 +371,17 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
                     for i, message in enumerate(input_data):
                         if hasattr(message, 'role') and hasattr(message, 'content'):
                             otel_span.set_attribute(f"gen_ai.prompt.{i}.role", message.role)
-                            otel_span.set_attribute(f"gen_ai.prompt.{i}.content", message.content)
+                            content = message.content
+                            if isinstance(content, dict):
+                                content = json.dumps(content)
+                            otel_span.set_attribute(f"gen_ai.prompt.{i}.content", content)
                         elif isinstance(message, dict):
                             if 'role' in message and 'content' in message:
                                 otel_span.set_attribute(f"gen_ai.prompt.{i}.role", message['role'])
-                                otel_span.set_attribute(f"gen_ai.prompt.{i}.content", message['content'])
+                                content = message['content']
+                                if isinstance(content, dict):
+                                    content = json.dumps(content)
+                                otel_span.set_attribute(f"gen_ai.prompt.{i}.content", content)
 
                 response = getattr(span_data, 'response', None)
                 if response:
