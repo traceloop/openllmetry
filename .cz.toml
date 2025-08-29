@@ -62,6 +62,8 @@ version_files = [
     "packages/opentelemetry-instrumentation-weaviate/opentelemetry/instrumentation/weaviate/version.py",
     "packages/opentelemetry-instrumentation-llamaindex/pyproject.toml:^version",
     "packages/opentelemetry-instrumentation-llamaindex/opentelemetry/instrumentation/llamaindex/version.py",
+    "packages/opentelemetry-instrumentation-writer/pyproject.toml:^version",
+    "packages/opentelemetry-instrumentation-writer/opentelemetry/instrumentation/writer/version.py",
     "packages/traceloop-sdk/pyproject.toml:^version",
     "packages/traceloop-sdk/traceloop/sdk/version.py",
 ]
