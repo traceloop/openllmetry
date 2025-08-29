@@ -237,7 +237,7 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
                         if hasattr(message, 'role') and hasattr(message, 'content'):
                             otel_span.set_attribute(f"{SpanAttributes.LLM_PROMPTS}.{i}.role", message.role)
                             content = message.content
-                            if isinstance(content, dict):
+                            if not isinstance(content, str):
                                 content = json.dumps(content)
                             otel_span.set_attribute(f"{SpanAttributes.LLM_PROMPTS}.{i}.content", content)
                         elif isinstance(message, dict):
