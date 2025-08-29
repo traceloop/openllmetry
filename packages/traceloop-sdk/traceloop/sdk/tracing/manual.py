@@ -1,7 +1,9 @@
 from contextlib import contextmanager
+from opentelemetry import context
 from opentelemetry.semconv_ai import SpanAttributes
-from opentelemetry.trace import Span
+from opentelemetry.trace import Span, set_span_in_context
 from pydantic import BaseModel
+from typing import Optional
 from traceloop.sdk.tracing.context_manager import get_tracer
 
 
@@ -14,8 +16,8 @@ class LLMUsage(BaseModel):
     prompt_tokens: int
     completion_tokens: int
     total_tokens: int
-    cache_creation_input_tokens: int
-    cache_read_input_tokens: int
+    cache_creation_input_tokens: Optional[int] = None
+    cache_read_input_tokens: Optional[int] = None
 
 
 class LLMSpan:
@@ -55,24 +57,28 @@ class LLMSpan:
         self._span.set_attribute(
             SpanAttributes.LLM_USAGE_TOTAL_TOKENS, usage.total_tokens
         )
-        self._span.set_attribute(
-            SpanAttributes.LLM_USAGE_CACHE_CREATION_INPUT_TOKENS,
-            usage.cache_creation_input_tokens,
-        )
-        self._span.set_attribute(
-            SpanAttributes.LLM_USAGE_CACHE_READ_INPUT_TOKENS,
-            usage.cache_read_input_tokens,
-        )
+        if usage.cache_creation_input_tokens is not None:
+            self._span.set_attribute(
+                SpanAttributes.LLM_USAGE_CACHE_CREATION_INPUT_TOKENS,
+                usage.cache_creation_input_tokens,
+            )
+        if usage.cache_read_input_tokens is not None:
+            self._span.set_attribute(
+                SpanAttributes.LLM_USAGE_CACHE_READ_INPUT_TOKENS,
+                usage.cache_read_input_tokens,
+            )
 
 
 @contextmanager
 def track_llm_call(vendor: str, type: str):
     with get_tracer() as tracer:
-        with tracer.start_as_current_span(name=f"{vendor}.{type}") as span:
-            span.set_attribute(SpanAttributes.LLM_SYSTEM, vendor)
-            span.set_attribute(SpanAttributes.LLM_REQUEST_TYPE, type)
-            llm_span = LLMSpan(span)
-            try:
-                yield llm_span
-            finally:
-                span.end()
+        span = tracer.start_span(name=f"{vendor}.{type}")
+        span.set_attribute(SpanAttributes.LLM_SYSTEM, vendor)
+        span.set_attribute(SpanAttributes.LLM_REQUEST_TYPE, type)
+        ctx = set_span_in_context(span)
+        token = context.attach(ctx)
+        try:
+            yield LLMSpan(span)
+        finally:
+            context.detach(token)
+            span.end()
