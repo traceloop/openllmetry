@@ -418,9 +418,15 @@ def set_data_attributes(traced_response: TracedData, span: Span):
                 )
                 tool_call_index += 1
             elif block_dict.get("type") == "reasoning":
-                _set_span_attribute(
-                    span, f"{GEN_AI_COMPLETION}.0.reasoning", block_dict.get("summary")
-                )
+                reasoning_summary = block_dict.get("summary")
+                if reasoning_summary is not None and reasoning_summary != []:
+                    if isinstance(reasoning_summary, (dict, list)):
+                        reasoning_value = json.dumps(reasoning_summary)
+                    else:
+                        reasoning_value = reasoning_summary
+                    _set_span_attribute(
+                        span, f"{GEN_AI_COMPLETION}.0.reasoning", reasoning_value
+                    )
             # TODO: handle other block types, in particular other calls
 
 
