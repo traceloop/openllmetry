@@ -428,9 +428,10 @@ def init_instrumentations(
     block_instruments: Optional[Set[Instruments]] = None,
 ):
     block_instruments = block_instruments or set()
-    instruments = instruments or set(
+    # explictly test for None since empty set is a False value
+    instruments = instruments if instruments is not None else set(
         Instruments
-    )  # Use all instruments if none specified
+    )
 
     # Remove any instruments that were explicitly blocked
     instruments = instruments - block_instruments
