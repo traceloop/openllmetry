@@ -189,7 +189,7 @@ def test_responses_reasoning_dict_issue(instrument_legacy, span_exporter: InMemo
         model="gpt-5-nano",
         input="Explain why the sky is blue",
         reasoning={
-            "effort": "medium", 
+            "effort": "medium",
             "summary": "auto"
         },
     )
@@ -201,7 +201,6 @@ def test_responses_reasoning_dict_issue(instrument_legacy, span_exporter: InMemo
     # Verify the reasoning attributes are properly set without causing warnings
     assert span.attributes["gen_ai.request.reasoning_effort"] == "medium"
     assert span.attributes["gen_ai.request.reasoning_summary"] == "auto"
-    
     # This should not cause an "Invalid type dict" warning and should contain serialized reasoning
     assert "gen_ai.completion.0.reasoning" in span.attributes
     # The reasoning should be serialized as JSON since it contains complex data
