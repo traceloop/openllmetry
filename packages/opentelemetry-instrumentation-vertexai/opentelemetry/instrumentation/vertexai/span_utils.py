@@ -216,6 +216,11 @@ async def set_input_attributes(span, args):
             if processed_content:
                 _set_span_attribute(
                     span,
+                    f"{SpanAttributes.LLM_PROMPTS}.{arg_index}.role",
+                    "user"
+                )
+                _set_span_attribute(
+                    span,
                     f"{SpanAttributes.LLM_PROMPTS}.{arg_index}.content",
                     json.dumps(processed_content)
                 )
@@ -233,6 +238,11 @@ def set_input_attributes_sync(span, args):
             processed_content = _process_vertexai_argument_sync(argument, span)
 
             if processed_content:
+                _set_span_attribute(
+                    span,
+                    f"{SpanAttributes.LLM_PROMPTS}.{arg_index}.role",
+                    "user"
+                )
                 _set_span_attribute(
                     span,
                     f"{SpanAttributes.LLM_PROMPTS}.{arg_index}.content",
