@@ -85,7 +85,7 @@ class TracerWrapper(object):
                 return obj
 
             obj.__image_uploader = image_uploader
-            obj.__resource = Resource(attributes=TracerWrapper.resource_attributes)
+            obj.__resource = Resource.create(TracerWrapper.resource_attributes)
             obj.__tracer_provider = init_tracer_provider(resource=obj.__resource, sampler=sampler)
 
             # Handle multiple processors case
