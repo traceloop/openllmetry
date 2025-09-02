@@ -21,6 +21,32 @@ def test_resource_attributes(exporter, openai_client):
     assert open_ai_span.resource.attributes["service.name"] == "test"
 
 
+@pytest.mark.vcr
+def test_resource_includes_sdk_attributes(exporter, openai_client):
+    """Test that resource attributes include OpenTelemetry SDK default attributes."""
+    openai_client.chat.completions.create(
+        model="gpt-3.5-turbo",
+        messages=[{"role": "user", "content": "Tell me a joke about opentelemetry"}],
+    )
+
+    spans = exporter.get_finished_spans()
+    span = spans[0]
+    resource_attrs = span.resource.attributes
+
+    assert resource_attrs["something"] == "yes"
+    assert resource_attrs["service.name"] == "test"
+
+    assert "telemetry.sdk.language" in resource_attrs
+    assert "telemetry.sdk.name" in resource_attrs
+    assert "telemetry.sdk.version" in resource_attrs
+
+    # Verify the actual values
+    assert resource_attrs["telemetry.sdk.language"] == "python"
+    assert resource_attrs["telemetry.sdk.name"] == "opentelemetry"
+    assert isinstance(resource_attrs["telemetry.sdk.version"], str)
+    assert len(resource_attrs["telemetry.sdk.version"]) > 0
+
+
 def test_custom_span_processor(exporter_with_custom_span_processor):
     @workflow()
     def run_workflow():
