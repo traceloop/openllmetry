@@ -1,21 +1,25 @@
 import os
 import asyncio
-import google.generativeai as genai
+import google.genai as genai
 from traceloop.sdk import Traceloop
 from traceloop.sdk.decorators import workflow
 
-Traceloop.init(app_name="gemini_example")
+# Initialize with console exporter for debugging
+Traceloop.init(
+    app_name="gemini_example",
+)
 
-genai.configure(api_key=os.environ.get("GENAI_API_KEY"))
+# Configure client with API key
+client = genai.Client(api_key=os.environ.get("GENAI_API_KEY"))
 
 
 @workflow("predict")
 def predict_text() -> str:
     """Ideation example with a Large Language Model"""
 
-    model = genai.GenerativeModel("gemini-1.5-pro-002")
-    response = model.generate_content(
-        "Give me ten interview questions for the role of program manager.",
+    response = client.models.generate_content(
+        model="gemini-1.5-pro-002",
+        contents="Give me ten interview questions for the role of program manager.",
     )
 
     return response.text
@@ -25,9 +29,9 @@ def predict_text() -> str:
 async def async_predict_text() -> str:
     """Async Ideation example with a Large Language Model"""
 
-    model = genai.GenerativeModel("gemini-1.5-pro-002")
-    response = await model.generate_content_async(
-        "Give me ten interview questions for the role of program manager.",
+    response = client.models.generate_content(
+        model="gemini-1.5-pro-002",
+        contents="Give me ten interview questions for the role of program manager.",
     )
 
     return response.text
@@ -37,12 +41,18 @@ async def async_predict_text() -> str:
 def chat() -> str:
     """Chat example with a Large Language Model"""
 
-    model = genai.GenerativeModel("gemini-1.5-pro-002")
-    chat = model.start_chat()
-    response = chat.send_message("Hello, how are you?")
-    response = chat.send_message("What is the capital of France?")
+    # For chat, we'll simulate with multiple generate_content calls
+    response1 = client.models.generate_content(
+        model="gemini-1.5-pro-002",
+        contents="Hello, how are you?",
+    )
+    
+    response2 = client.models.generate_content(
+        model="gemini-1.5-pro-002",
+        contents="What is the capital of France?",
+    )
 
-    return response.text
+    return response2.text
 
 
 if __name__ == "__main__":
