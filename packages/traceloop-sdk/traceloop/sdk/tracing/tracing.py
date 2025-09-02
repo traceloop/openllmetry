@@ -428,9 +428,10 @@ def init_instrumentations(
     block_instruments: Optional[Set[Instruments]] = None,
 ):
     block_instruments = block_instruments or set()
-    instruments = instruments or set(
+    # explictly test for None since empty set is a False value
+    instruments = instruments if instruments is not None else set(
         Instruments
-    )  # Use all instruments if none specified
+    )
 
     # Remove any instruments that were explicitly blocked
     instruments = instruments - block_instruments
@@ -536,6 +537,9 @@ def init_instrumentations(
                 instrument_set = True
         elif instrument == Instruments.WEAVIATE:
             if init_weaviate_instrumentor():
+                instrument_set = True
+        elif instrument == Instruments.WRITER:
+            if init_writer_instrumentor():
                 instrument_set = True
         else:
             print(Fore.RED + f"Warning: {instrument} instrumentation does not exist.")
@@ -995,6 +999,24 @@ def init_weaviate_instrumentor():
             return True
     except Exception as e:
         logging.warning(f"Error initializing Weaviate instrumentor: {e}")
+        Telemetry().log_exception(e)
+    return False
+
+
+def init_writer_instrumentor():
+    try:
+        if is_package_installed("writer-sdk"):
+            Telemetry().capture("instrumentation:writer:init")
+            from opentelemetry.instrumentation.writer import WriterInstrumentor
+
+            instrumentor = WriterInstrumentor(
+                exception_logger=lambda e: Telemetry().log_exception(e),
+            )
+            if not instrumentor.is_instrumented_by_opentelemetry:
+                instrumentor.instrument()
+            return True
+    except Exception as e:
+        logging.error(f"Error initializing Writer instrumentor: {e}")
         Telemetry().log_exception(e)
     return False
 
