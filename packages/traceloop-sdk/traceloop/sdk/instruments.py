@@ -8,6 +8,7 @@ class Instruments(Enum):
     CHROMA = "chroma"
     COHERE = "cohere"
     CREWAI = "crewai"
+    CREW = "crewai"  # deprecated alias; remove in future major version
     GOOGLE_GENERATIVEAI = "google_generativeai"
     GROQ = "groq"
     HAYSTACK = "haystack"
