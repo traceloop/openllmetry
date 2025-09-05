@@ -15,6 +15,7 @@ from opentelemetry.semconv._incubating.attributes import (
 )
 from opentelemetry.semconv_ai import SpanAttributes
 from opentelemetry.trace import StatusCode
+from opentelemetry.instrumentation.openai.utils import is_reasoning_supported
 
 from .utils import assert_request_contains_tracecontext, spy_decorator
 
@@ -1473,6 +1474,30 @@ def test_chat_history_message_pydantic(span_exporter, openai_client):
         == second_user_message["content"]
     )
     assert second_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.2.role"] == "user"
+
+
+@pytest.mark.vcr
+@pytest.mark.skipif(not is_reasoning_supported(),
+                    reason="Reasoning is not supported in older OpenAI library versions")
+def test_chat_reasoning(instrument_legacy, span_exporter,
+                        log_exporter, openai_client):
+    openai_client.chat.completions.create(
+        model="gpt-5-nano",
+        messages=[
+            {
+                "role": "user",
+                "content": "Count r's in strawberry"
+            }
+        ],
+        reasoning_effort="low",
+    )
+
+    spans = span_exporter.get_finished_spans()
+    assert len(spans) >= 1
+    span = spans[-1]
+
+    assert span.attributes["gen_ai.request.reasoning_effort"] == "low"
+    assert span.attributes["gen_ai.usage.reasoning_tokens"] > 0
 
 
 def test_chat_exception(instrument_legacy, span_exporter, openai_client):

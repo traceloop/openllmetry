@@ -205,6 +205,7 @@ class Traceloop:
             )
             return Traceloop.__client
 
+    @staticmethod
     def set_association_properties(properties: dict) -> None:
         set_association_properties(properties)
 
@@ -251,7 +252,7 @@ class Traceloop:
                 "Authorization": f"Bearer {api_key}",
             }
         if api_endpoint is None:
-            api_endpoint = os.getenv("TRACELOOP_BASE_URL")
+            api_endpoint = os.getenv("TRACELOOP_BASE_URL") or "https://api.traceloop.com"
         return get_default_span_processor(disable_batch, api_endpoint, headers, exporter)
 
     @staticmethod

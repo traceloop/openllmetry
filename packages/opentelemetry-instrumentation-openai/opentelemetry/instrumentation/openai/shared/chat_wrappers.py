@@ -288,6 +288,14 @@ async def _handle_request(span, kwargs, instance):
     if Config.enable_trace_context_propagation:
         propagate_trace_context(span, kwargs)
 
+    # Reasoning request attributes
+    reasoning_effort = kwargs.get("reasoning_effort")
+    _set_span_attribute(
+        span,
+        SpanAttributes.LLM_REQUEST_REASONING_EFFORT,
+        reasoning_effort or ()
+    )
+
 
 @dont_throw
 def _handle_response(
@@ -318,6 +326,28 @@ def _handle_response(
 
     # span attributes
     _set_response_attributes(span, response_dict)
+
+    # Reasoning usage attributes
+    usage = response_dict.get("usage")
+    reasoning_tokens = None
+    if usage:
+        # Support both dict-style and object-style `usage`
+        tokens_details = (
+            usage.get("completion_tokens_details") if isinstance(usage, dict)
+            else getattr(usage, "completion_tokens_details", None)
+        )
+
+        if tokens_details:
+            reasoning_tokens = (
+                tokens_details.get("reasoning_tokens", None) if isinstance(tokens_details, dict)
+                else getattr(tokens_details, "reasoning_tokens", None)
+            )
+
+    _set_span_attribute(
+        span,
+        SpanAttributes.LLM_USAGE_REASONING_TOKENS,
+        reasoning_tokens or 0,
+    )
 
     if should_emit_events():
         if response.choices is not None:
@@ -402,7 +432,8 @@ async def _process_image_item(item, trace_id, span_id, message_index, content_in
     image_format = item["image_url"]["url"].split(";")[0].split("/")[1]
     image_name = f"message_{message_index}_content_{content_index}.{image_format}"
     base64_string = item["image_url"]["url"].split(",")[1]
-    url = await Config.upload_base64_image(trace_id, span_id, image_name, base64_string)
+    # Convert trace_id and span_id to strings as expected by upload function
+    url = await Config.upload_base64_image(str(trace_id), str(span_id), image_name, base64_string)
 
     return {"type": "image_url", "image_url": {"url": url}}
 

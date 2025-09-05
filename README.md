@@ -130,6 +130,7 @@ OpenLLMetry can instrument everything that [OpenTelemetry already instruments](h
 - ✅ [Together AI](https://together.xyz/)
 - ✅ [Aleph Alpha](https://www.aleph-alpha.com/)
 - ✅ [Groq](https://groq.com/)
+- ✅ [WRITER](https://writer.com/)
 
 ### Vector DBs
 

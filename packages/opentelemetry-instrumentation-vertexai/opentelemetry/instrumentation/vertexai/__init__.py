@@ -15,6 +15,7 @@ from opentelemetry.instrumentation.vertexai.event_emitter import (
 )
 from opentelemetry.instrumentation.vertexai.span_utils import (
     set_input_attributes,
+    set_input_attributes_sync,
     set_model_input_attributes,
     set_model_response_attributes,
     set_response_attributes,
@@ -181,12 +182,12 @@ async def _abuild_from_streaming_response(span, event_logger, response, llm_mode
 
 
 @dont_throw
-def _handle_request(span, event_logger, args, kwargs, llm_model):
+async def _handle_request(span, event_logger, args, kwargs, llm_model):
     set_model_input_attributes(span, kwargs, llm_model)
     if should_emit_events():
         emit_prompt_events(args, event_logger)
     else:
-        set_input_attributes(span, args)
+        await set_input_attributes(span, args)
 
 
 def _handle_response(span, event_logger, response, llm_model):
@@ -226,6 +227,11 @@ async def _awrap(tracer, event_logger, to_wrap, wrapped, instance, args, kwargs)
         llm_model = instance._model_id
     if hasattr(instance, "_model_name"):
         llm_model = instance._model_name.replace("publishers/google/models/", "")
+    # For ChatSession, try to get model from the parent model object
+    if hasattr(instance, "_model") and hasattr(instance._model, "_model_name"):
+        llm_model = instance._model._model_name.replace("publishers/google/models/", "")
+    elif hasattr(instance, "_model") and hasattr(instance._model, "_model_id"):
+        llm_model = instance._model._model_id
 
     name = to_wrap.get("span_name")
     span = tracer.start_span(
@@ -237,7 +243,7 @@ async def _awrap(tracer, event_logger, to_wrap, wrapped, instance, args, kwargs)
         },
     )
 
-    _handle_request(span, event_logger, args, kwargs, llm_model)
+    await _handle_request(span, event_logger, args, kwargs, llm_model)
 
     response = await wrapped(*args, **kwargs)
 
@@ -270,6 +276,11 @@ def _wrap(tracer, event_logger, to_wrap, wrapped, instance, args, kwargs):
         llm_model = instance._model_id
     if hasattr(instance, "_model_name"):
         llm_model = instance._model_name.replace("publishers/google/models/", "")
+    # For ChatSession, try to get model from the parent model object
+    if hasattr(instance, "_model") and hasattr(instance._model, "_model_name"):
+        llm_model = instance._model._model_name.replace("publishers/google/models/", "")
+    elif hasattr(instance, "_model") and hasattr(instance._model, "_model_id"):
+        llm_model = instance._model._model_id
 
     name = to_wrap.get("span_name")
     span = tracer.start_span(
@@ -281,7 +292,12 @@ def _wrap(tracer, event_logger, to_wrap, wrapped, instance, args, kwargs):
         },
     )
 
-    _handle_request(span, event_logger, args, kwargs, llm_model)
+    # Use sync version for non-async wrapper to avoid image processing for now
+    set_model_input_attributes(span, kwargs, llm_model)
+    if should_emit_events():
+        emit_prompt_events(args, event_logger)
+    else:
+        set_input_attributes_sync(span, args)
 
     response = wrapped(*args, **kwargs)
 
@@ -304,10 +320,12 @@ def _wrap(tracer, event_logger, to_wrap, wrapped, instance, args, kwargs):
 class VertexAIInstrumentor(BaseInstrumentor):
     """An instrumentor for VertextAI's client library."""
 
-    def __init__(self, exception_logger=None, use_legacy_attributes=True):
+    def __init__(self, exception_logger=None, use_legacy_attributes=True, upload_base64_image=None):
         super().__init__()
         Config.exception_logger = exception_logger
         Config.use_legacy_attributes = use_legacy_attributes
+        if upload_base64_image:
+            Config.upload_base64_image = upload_base64_image
 
     def instrumentation_dependencies(self) -> Collection[str]:
         return _instruments

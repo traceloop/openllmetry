@@ -316,7 +316,14 @@ def _wrap(
         if duration_histogram:
             duration = end_time - start_time
             attrs = {GenAIAttributes.GEN_AI_SYSTEM: "Ollama"}
-            model = kwargs.get("model")
+            # Try to get model from response, then fallback to request
+            model = None
+            if isinstance(response, dict):
+                model = response.get("model")
+            if not model:
+                json_data = kwargs.get("json", {})
+                if json_data:
+                    model = json_data.get("model")
             if model is not None:
                 attrs[GenAIAttributes.GEN_AI_RESPONSE_MODEL] = model
             duration_histogram.record(duration, attributes=attrs)
@@ -383,7 +390,14 @@ async def _awrap(
         if duration_histogram:
             duration = end_time - start_time
             attrs = {GenAIAttributes.GEN_AI_SYSTEM: "Ollama"}
-            model = kwargs.get("model")
+            # Try to get model from response, then fallback to request
+            model = None
+            if isinstance(response, dict):
+                model = response.get("model")
+            if not model:
+                json_data = kwargs.get("json", {})
+                if json_data:
+                    model = json_data.get("model")
             if model is not None:
                 attrs[GenAIAttributes.GEN_AI_RESPONSE_MODEL] = model
             duration_histogram.record(duration, attributes=attrs)

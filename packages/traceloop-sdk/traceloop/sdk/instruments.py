@@ -7,7 +7,8 @@ class Instruments(Enum):
     BEDROCK = "bedrock"
     CHROMA = "chroma"
     COHERE = "cohere"
-    CREW = "crew"
+    CREWAI = "crewai"
+    CREW = "crewai"  # deprecated alias; remove in future major version
     GOOGLE_GENERATIVEAI = "google_generativeai"
     GROQ = "groq"
     HAYSTACK = "haystack"
@@ -34,3 +35,4 @@ class Instruments(Enum):
     VERTEXAI = "vertexai"
     WATSONX = "watsonx"
     WEAVIATE = "weaviate"
+    WRITER = "writer"

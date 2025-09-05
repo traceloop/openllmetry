@@ -24,6 +24,73 @@ def mock_instrumentor():
 
 
 @pytest.mark.vcr
+def test_dict_content_serialization(exporter):
+    """Test that dictionary content in messages is properly serialized to JSON strings."""
+    import json
+    from agents import Agent, Runner
+
+    # Create a simple agent
+    test_agent = Agent(
+        name="TestAgent",
+        instructions="You are a helpful assistant.",
+        model="gpt-4o",
+    )
+
+    # Create a query with structured content as array of objects (multimodal format)
+    # This should create dict structures that need serialization
+    structured_query = [
+        {
+            "role": "user",
+            "content": [
+                {"type": "input_text", "text": "Hello, can you help me?"}
+            ]
+        },
+        {
+            "role": "assistant",
+            "content": [
+                {"type": "output_text", "text": "Of course! How can I help you?"}
+            ]
+        },
+        {
+            "role": "user",
+            "content": [
+                {"type": "input_text", "text": "What is the weather like?"}
+            ]
+        }
+    ]
+
+    # Run the agent with structured content
+    Runner.run_sync(test_agent, structured_query)
+
+    spans = exporter.get_finished_spans()
+
+    # Look for any spans with prompt/content attributes
+    for span in spans:
+        for attr_name, attr_value in span.attributes.items():
+            prompt_content_check = (
+                ("prompt" in attr_name and "content" in attr_name) or
+                ("gen_ai.prompt" in attr_name and "content" in attr_name)
+            )
+            if prompt_content_check:
+                # All content attributes should be strings, not dicts
+                error_msg = (
+                    f"Attribute {attr_name} should be a string, "
+                    f"got {type(attr_value)}: {attr_value}"
+                )
+                assert isinstance(attr_value, str), error_msg
+
+                # If it looks like JSON, verify it can be parsed
+                if attr_value.startswith('{') and attr_value.endswith('}'):
+                    try:
+                        json.loads(attr_value)
+                    except json.JSONDecodeError:
+                        # If it fails to parse, that's still fine - just not JSON
+                        pass
+
+    # The test passes if no dict type warnings occurred (all content attributes are strings)
+
+
+@pytest.mark.vcr
 def test_agent_spans(exporter, test_agent):
     query = "What is AI?"
     Runner.run_sync(

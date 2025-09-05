@@ -85,7 +85,7 @@ class TracerWrapper(object):
                 return obj
 
             obj.__image_uploader = image_uploader
-            obj.__resource = Resource(attributes=TracerWrapper.resource_attributes)
+            obj.__resource = Resource.create(TracerWrapper.resource_attributes)
             obj.__tracer_provider = init_tracer_provider(resource=obj.__resource, sampler=sampler)
 
             # Handle multiple processors case
@@ -423,14 +423,15 @@ def init_tracer_provider(resource: Resource, sampler: Optional[Sampler] = None) 
 
 def init_instrumentations(
     should_enrich_metrics: bool,
-    base64_image_uploader: Callable[[str, str, str], str],
+    base64_image_uploader: Callable[[str, str, str, str], str],
     instruments: Optional[Set[Instruments]] = None,
     block_instruments: Optional[Set[Instruments]] = None,
 ):
     block_instruments = block_instruments or set()
-    instruments = instruments or set(
+    # explictly test for None since empty set is a False value
+    instruments = instruments if instruments is not None else set(
         Instruments
-    )  # Use all instruments if none specified
+    )
 
     # Remove any instruments that were explicitly blocked
     instruments = instruments - block_instruments
@@ -454,11 +455,11 @@ def init_instrumentations(
         elif instrument == Instruments.COHERE:
             if init_cohere_instrumentor():
                 instrument_set = True
-        elif instrument == Instruments.CREW:
+        elif instrument == Instruments.CREWAI:
             if init_crewai_instrumentor():
                 instrument_set = True
         elif instrument == Instruments.GOOGLE_GENERATIVEAI:
-            if init_google_generativeai_instrumentor():
+            if init_google_generativeai_instrumentor(should_enrich_metrics, base64_image_uploader):
                 instrument_set = True
         elif instrument == Instruments.GROQ:
             if init_groq_instrumentor():
@@ -527,13 +528,18 @@ def init_instrumentations(
             if init_urllib3_instrumentor():
                 instrument_set = True
         elif instrument == Instruments.VERTEXAI:
-            if init_vertexai_instrumentor():
+            if init_vertexai_instrumentor(
+                should_enrich_metrics, base64_image_uploader
+            ):
                 instrument_set = True
         elif instrument == Instruments.WATSONX:
             if init_watsonx_instrumentor():
                 instrument_set = True
         elif instrument == Instruments.WEAVIATE:
             if init_weaviate_instrumentor():
+                instrument_set = True
+        elif instrument == Instruments.WRITER:
+            if init_writer_instrumentor():
                 instrument_set = True
         else:
             print(Fore.RED + f"Warning: {instrument} instrumentation does not exist.")
@@ -557,7 +563,7 @@ def init_instrumentations(
 
 
 def init_openai_instrumentor(
-    should_enrich_metrics: bool, base64_image_uploader: Callable[[str, str, str], str]
+    should_enrich_metrics: bool, base64_image_uploader: Callable[[str, str, str, str], str]
 ):
     try:
         if is_package_installed("openai"):
@@ -581,7 +587,7 @@ def init_openai_instrumentor(
 
 
 def init_anthropic_instrumentor(
-    should_enrich_metrics: bool, base64_image_uploader: Callable[[str, str, str], str]
+    should_enrich_metrics: bool, base64_image_uploader: Callable[[str, str, str, str], str]
 ):
     try:
         if is_package_installed("anthropic"):
@@ -675,7 +681,9 @@ def init_chroma_instrumentor():
     return False
 
 
-def init_google_generativeai_instrumentor():
+def init_google_generativeai_instrumentor(
+    should_enrich_metrics: bool, base64_image_uploader: Callable[[str, str, str, str], str]
+):
     try:
         if is_package_installed("google-generativeai") or is_package_installed("google-genai"):
             Telemetry().capture("instrumentation:gemini:init")
@@ -685,6 +693,7 @@ def init_google_generativeai_instrumentor():
 
             instrumentor = GoogleGenerativeAiInstrumentor(
                 exception_logger=lambda e: Telemetry().log_exception(e),
+                upload_base64_image=base64_image_uploader,
             )
             if not instrumentor.is_instrumented_by_opentelemetry:
                 instrumentor.instrument()
@@ -935,7 +944,9 @@ def init_replicate_instrumentor():
     return False
 
 
-def init_vertexai_instrumentor():
+def init_vertexai_instrumentor(
+    should_enrich_metrics: bool, base64_image_uploader: Callable[[str, str, str, str], str]
+):
     try:
         if is_package_installed("google-cloud-aiplatform"):
             Telemetry().capture("instrumentation:vertexai:init")
@@ -943,6 +954,7 @@ def init_vertexai_instrumentor():
 
             instrumentor = VertexAIInstrumentor(
                 exception_logger=lambda e: Telemetry().log_exception(e),
+                upload_base64_image=base64_image_uploader,
             )
             if not instrumentor.is_instrumented_by_opentelemetry:
                 instrumentor.instrument()
@@ -987,6 +999,24 @@ def init_weaviate_instrumentor():
             return True
     except Exception as e:
         logging.warning(f"Error initializing Weaviate instrumentor: {e}")
+        Telemetry().log_exception(e)
+    return False
+
+
+def init_writer_instrumentor():
+    try:
+        if is_package_installed("writer-sdk"):
+            Telemetry().capture("instrumentation:writer:init")
+            from opentelemetry.instrumentation.writer import WriterInstrumentor
+
+            instrumentor = WriterInstrumentor(
+                exception_logger=lambda e: Telemetry().log_exception(e),
+            )
+            if not instrumentor.is_instrumented_by_opentelemetry:
+                instrumentor.instrument()
+            return True
+    except Exception as e:
+        logging.error(f"Error initializing Writer instrumentor: {e}")
         Telemetry().log_exception(e)
     return False
 
