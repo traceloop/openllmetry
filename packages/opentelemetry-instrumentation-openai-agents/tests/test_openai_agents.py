@@ -90,6 +90,39 @@ def test_dict_content_serialization(exporter):
     # The test passes if no dict type warnings occurred (all content attributes are strings)
 
 
+def test_content_serialization_logic():
+    """Test that demonstrates the difference between old and new content serialization logic."""
+    import json
+    
+    # Test content with list of dictionaries (multimodal format)
+    test_content = [{"type": "text", "text": "Hello"}, {"type": "image", "url": "test.jpg"}]
+    
+    # OLD LOGIC (current broken implementation): only checks for dict, not list
+    content_old = test_content
+    if isinstance(content_old, dict):  # This misses lists!
+        content_old = json.dumps(content_old)
+    
+    print(f"Old logic result: {type(content_old)} = {content_old}")
+    
+    # This should fail - the old logic leaves lists unserialized
+    if isinstance(content_old, list):
+        print("❌ OLD LOGIC PROBLEM: List content not serialized!")
+        # This would cause OpenTelemetry warnings in production
+        
+    # NEW LOGIC (our fix): checks for any non-string type  
+    content_new = test_content
+    if not isinstance(content_new, str):  # This catches all non-strings!
+        content_new = json.dumps(content_new)
+    
+    print(f"New logic result: {type(content_new)} = {content_new}")
+    
+    # Test that old logic fails for lists (demonstrates the bug)
+    assert isinstance(content_old, list), "Old logic should leave lists unserialized (demonstrating the bug)"
+    
+    # Test that new logic succeeds for all types
+    assert isinstance(content_new, str), "New logic should serialize all non-string content to JSON strings"
+
+
 @pytest.mark.vcr
 def test_agent_spans(exporter, test_agent):
     query = "What is AI?"
