@@ -1,7 +1,10 @@
 import json
 
 import pytest
-from opentelemetry.semconv_ai import Meters, SpanAttributes
+from opentelemetry.semconv._incubating.attributes import (
+    gen_ai_attributes as GenAIAttributes,
+)
+from opentelemetry.semconv_ai import Meters
 
 
 @pytest.mark.vcr
@@ -44,7 +47,7 @@ def test_invoke_model_metrics(test_context, brt):
                 if metric.name == Meters.LLM_TOKEN_USAGE:
                     found_token_metric = True
                     for data_point in metric.data.data_points:
-                        assert data_point.attributes[SpanAttributes.LLM_TOKEN_TYPE] in [
+                        assert data_point.attributes[GenAIAttributes.GEN_AI_TOKEN_TYPE] in [
                             "output",
                             "input",
                         ]
@@ -60,7 +63,7 @@ def test_invoke_model_metrics(test_context, brt):
                     )
 
                 assert (
-                    metric.data.data_points[0].attributes[SpanAttributes.LLM_SYSTEM]
+                    metric.data.data_points[0].attributes[GenAIAttributes.GEN_AI_SYSTEM]
                     == "bedrock"
                 )
 

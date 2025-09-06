@@ -10,8 +10,8 @@ from opentelemetry.instrumentation.anthropic.utils import (
     should_send_prompts,
     _extract_response_data,
 )
-from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
-    GEN_AI_RESPONSE_ID,
+from opentelemetry.semconv._incubating.attributes import (
+    gen_ai_attributes as GenAIAttributes,
 )
 from opentelemetry.semconv_ai import SpanAttributes
 
@@ -74,14 +74,14 @@ async def _dump_content(message_index, content, span):
 async def aset_input_attributes(span, kwargs):
     from opentelemetry.instrumentation.anthropic import set_span_attribute
 
-    set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, kwargs.get("model"))
+    set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_MODEL, kwargs.get("model"))
     set_span_attribute(
-        span, SpanAttributes.LLM_REQUEST_MAX_TOKENS, kwargs.get("max_tokens_to_sample")
+        span, GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS, kwargs.get("max_tokens_to_sample")
     )
     set_span_attribute(
-        span, SpanAttributes.LLM_REQUEST_TEMPERATURE, kwargs.get("temperature")
+        span, GenAIAttributes.GEN_AI_REQUEST_TEMPERATURE, kwargs.get("temperature")
     )
-    set_span_attribute(span, SpanAttributes.LLM_REQUEST_TOP_P, kwargs.get("top_p"))
+    set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_TOP_P, kwargs.get("top_p"))
     set_span_attribute(
         span, SpanAttributes.LLM_FREQUENCY_PENALTY, kwargs.get("frequency_penalty")
     )
@@ -93,7 +93,7 @@ async def aset_input_attributes(span, kwargs):
     if should_send_prompts():
         if kwargs.get("prompt") is not None:
             set_span_attribute(
-                span, f"{SpanAttributes.LLM_PROMPTS}.0.user", kwargs.get("prompt")
+                span, f"{GenAIAttributes.GEN_AI_PROMPT}.0.user", kwargs.get("prompt")
             )
 
         elif kwargs.get("messages") is not None:
@@ -102,14 +102,14 @@ async def aset_input_attributes(span, kwargs):
                 has_system_message = True
                 set_span_attribute(
                     span,
-                    f"{SpanAttributes.LLM_PROMPTS}.0.content",
+                    f"{GenAIAttributes.GEN_AI_PROMPT}.0.content",
                     await _dump_content(
                         message_index=0, span=span, content=kwargs.get("system")
                     ),
                 )
                 set_span_attribute(
                     span,
-                    f"{SpanAttributes.LLM_PROMPTS}.0.role",
+                    f"{GenAIAttributes.GEN_AI_PROMPT}.0.role",
                     "system",
                 )
             for i, message in enumerate(kwargs.get("messages")):
@@ -126,29 +126,31 @@ async def aset_input_attributes(span, kwargs):
                     content = other_blocks
                 set_span_attribute(
                     span,
-                    f"{SpanAttributes.LLM_PROMPTS}.{prompt_index}.content",
-                    await _dump_content(message_index=i, span=span, content=content),
+                    f"{GenAIAttributes.GEN_AI_PROMPT}.{prompt_index}.content",
+                    await _dump_content(
+                        message_index=i, span=span, content=message.get("content")
+                    ),
                 )
                 set_span_attribute(
                     span,
-                    f"{SpanAttributes.LLM_PROMPTS}.{prompt_index}.role",
+                    f"{GenAIAttributes.GEN_AI_PROMPT}.{prompt_index}.role",
                     message.get("role"),
                 )
                 if tool_use_blocks:
                     for tool_num, tool_use_block in enumerate(tool_use_blocks):
                         set_span_attribute(
                             span,
-                            f"{SpanAttributes.LLM_PROMPTS}.{prompt_index}.tool_calls.{tool_num}.id",
+                            f"{GenAIAttributes.GEN_AI_PROMPT}.{prompt_index}.tool_calls.{tool_num}.id",
                             tool_use_block.get("id"),
                         )
                         set_span_attribute(
                             span,
-                            f"{SpanAttributes.LLM_PROMPTS}.{prompt_index}.tool_calls.{tool_num}.name",
+                            f"{GenAIAttributes.GEN_AI_PROMPT}.{prompt_index}.tool_calls.{tool_num}.name",
                             tool_use_block.get("name"),
                         )
                         set_span_attribute(
                             span,
-                            f"{SpanAttributes.LLM_PROMPTS}.{prompt_index}.tool_calls.{tool_num}.arguments",
+                            f"{GenAIAttributes.GEN_AI_PROMPT}.{prompt_index}.tool_calls.{tool_num}.arguments",
                             json.dumps(tool_use_block.get("input")),
                         )
 
@@ -174,7 +176,7 @@ async def _aset_span_completions(span, response):
 
     response = await _aextract_response_data(response)
     index = 0
-    prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{index}"
+    prefix = f"{GenAIAttributes.GEN_AI_COMPLETION}.{index}"
     set_span_attribute(span, f"{prefix}.finish_reason", response.get("stop_reason"))
     if response.get("role"):
         set_span_attribute(span, f"{prefix}.role", response.get("role"))
@@ -205,7 +207,7 @@ async def _aset_span_completions(span, response):
                 )
                 # increment the index for subsequent content blocks
                 index += 1
-                prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{index}"
+                prefix = f"{GenAIAttributes.GEN_AI_COMPLETION}.{index}"
                 # set the role to the original role on the next completions
                 set_span_attribute(
                     span,
@@ -242,7 +244,7 @@ def _set_span_completions(span, response):
 
     response = _extract_response_data(response)
     index = 0
-    prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{index}"
+    prefix = f"{GenAIAttributes.GEN_AI_COMPLETION}.{index}"
     set_span_attribute(span, f"{prefix}.finish_reason", response.get("stop_reason"))
     if response.get("role"):
         set_span_attribute(span, f"{prefix}.role", response.get("role"))
@@ -273,7 +275,7 @@ def _set_span_completions(span, response):
                 )
                 # increment the index for subsequent content blocks
                 index += 1
-                prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{index}"
+                prefix = f"{GenAIAttributes.GEN_AI_COMPLETION}.{index}"
                 # set the role to the original role on the next completions
                 set_span_attribute(
                     span,
@@ -309,15 +311,15 @@ async def aset_response_attributes(span, response):
     from opentelemetry.instrumentation.anthropic.utils import _aextract_response_data
 
     response = await _aextract_response_data(response)
-    set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, response.get("model"))
-    set_span_attribute(span, GEN_AI_RESPONSE_ID, response.get("id"))
+    set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_MODEL, response.get("model"))
+    set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_ID, response.get("id"))
 
     if response.get("usage"):
         prompt_tokens = response.get("usage").input_tokens
         completion_tokens = response.get("usage").output_tokens
-        set_span_attribute(span, SpanAttributes.LLM_USAGE_PROMPT_TOKENS, prompt_tokens)
+        set_span_attribute(span, GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS, prompt_tokens)
         set_span_attribute(
-            span, SpanAttributes.LLM_USAGE_COMPLETION_TOKENS, completion_tokens
+            span, GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS, completion_tokens
         )
         set_span_attribute(
             span,
@@ -333,15 +335,15 @@ def set_response_attributes(span, response):
     from opentelemetry.instrumentation.anthropic import set_span_attribute
 
     response = _extract_response_data(response)
-    set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, response.get("model"))
-    set_span_attribute(span, GEN_AI_RESPONSE_ID, response.get("id"))
+    set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_MODEL, response.get("model"))
+    set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_ID, response.get("id"))
 
     if response.get("usage"):
         prompt_tokens = response.get("usage").input_tokens
         completion_tokens = response.get("usage").output_tokens
-        set_span_attribute(span, SpanAttributes.LLM_USAGE_PROMPT_TOKENS, prompt_tokens)
+        set_span_attribute(span, GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS, prompt_tokens)
         set_span_attribute(
-            span, SpanAttributes.LLM_USAGE_COMPLETION_TOKENS, completion_tokens
+            span, GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS, completion_tokens
         )
         set_span_attribute(
             span,
@@ -364,7 +366,7 @@ def set_streaming_response_attributes(span, complete_response_events):
 
     index = 0
     for event in complete_response_events:
-        prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{index}"
+        prefix = f"{GenAIAttributes.GEN_AI_COMPLETION}.{index}"
         set_span_attribute(span, f"{prefix}.finish_reason", event.get("finish_reason"))
         role = "thinking" if event.get("type") == "thinking" else "assistant"
         # Thinking is added as a separate completion, so we need to increment the index

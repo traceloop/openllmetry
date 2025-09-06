@@ -27,7 +27,12 @@ from opentelemetry.instrumentation.utils import (
     unwrap,
 )
 from opentelemetry.metrics import Histogram, Meter, get_meter
-from opentelemetry.semconv._incubating.metrics import gen_ai_metrics as GenAIMetrics
+from opentelemetry.semconv._incubating.attributes import (
+    gen_ai_attributes as GenAIAttributes,
+)
+from opentelemetry.semconv._incubating.metrics import (
+    gen_ai_metrics as GenAIMetrics,
+)
 from opentelemetry.semconv_ai import (
     SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
     LLMRequestTypeValues,
@@ -107,7 +112,7 @@ def _accumulate_streaming_response(
             first_token_time = time.perf_counter()
             streaming_time_to_first_token.record(
                 first_token_time - start_time,
-                attributes={SpanAttributes.LLM_SYSTEM: "Ollama"},
+                attributes={GenAIAttributes.GEN_AI_SYSTEM: "Ollama"},
             )
             first_token = False
         yield res
@@ -125,8 +130,8 @@ def _accumulate_streaming_response(
         streaming_time_to_generate.record(
             time.perf_counter() - first_token_time,
             attributes={
-                SpanAttributes.LLM_SYSTEM: "Ollama",
-                SpanAttributes.LLM_RESPONSE_MODEL: model_name,
+                GenAIAttributes.GEN_AI_SYSTEM: "Ollama",
+                GenAIAttributes.GEN_AI_RESPONSE_MODEL: model_name,
             },
         )
 
@@ -171,7 +176,7 @@ async def _aaccumulate_streaming_response(
             first_token_time = time.perf_counter()
             streaming_time_to_first_token.record(
                 first_token_time - start_time,
-                attributes={SpanAttributes.LLM_SYSTEM: "Ollama"},
+                attributes={GenAIAttributes.GEN_AI_SYSTEM: "Ollama"},
             )
             first_token = False
         yield res
@@ -189,8 +194,8 @@ async def _aaccumulate_streaming_response(
         streaming_time_to_generate.record(
             time.perf_counter() - first_token_time,
             attributes={
-                SpanAttributes.LLM_SYSTEM: "Ollama",
-                SpanAttributes.LLM_RESPONSE_MODEL: model_name,
+                GenAIAttributes.GEN_AI_SYSTEM: "Ollama",
+                GenAIAttributes.GEN_AI_RESPONSE_MODEL: model_name,
             },
         )
 
@@ -297,7 +302,7 @@ def _wrap(
         name,
         kind=SpanKind.CLIENT,
         attributes={
-            SpanAttributes.LLM_SYSTEM: "Ollama",
+            GenAIAttributes.GEN_AI_SYSTEM: "Ollama",
             SpanAttributes.LLM_REQUEST_TYPE: llm_request_type.value,
         },
     )
@@ -310,7 +315,7 @@ def _wrap(
     if response:
         if duration_histogram:
             duration = end_time - start_time
-            attrs = {SpanAttributes.LLM_SYSTEM: "Ollama"}
+            attrs = {GenAIAttributes.GEN_AI_SYSTEM: "Ollama"}
             # Try to get model from response, then fallback to request
             model = None
             if isinstance(response, dict):
@@ -320,7 +325,7 @@ def _wrap(
                 if json_data:
                     model = json_data.get("model")
             if model is not None:
-                attrs[SpanAttributes.LLM_RESPONSE_MODEL] = model
+                attrs[GenAIAttributes.GEN_AI_RESPONSE_MODEL] = model
             duration_histogram.record(duration, attributes=attrs)
 
         if kwargs.get("stream"):
@@ -371,7 +376,7 @@ async def _awrap(
         name,
         kind=SpanKind.CLIENT,
         attributes={
-            SpanAttributes.LLM_SYSTEM: "Ollama",
+            GenAIAttributes.GEN_AI_SYSTEM: "Ollama",
             SpanAttributes.LLM_REQUEST_TYPE: llm_request_type.value,
         },
     )
@@ -384,7 +389,7 @@ async def _awrap(
     if response:
         if duration_histogram:
             duration = end_time - start_time
-            attrs = {SpanAttributes.LLM_SYSTEM: "Ollama"}
+            attrs = {GenAIAttributes.GEN_AI_SYSTEM: "Ollama"}
             # Try to get model from response, then fallback to request
             model = None
             if isinstance(response, dict):
@@ -394,7 +399,7 @@ async def _awrap(
                 if json_data:
                     model = json_data.get("model")
             if model is not None:
-                attrs[SpanAttributes.LLM_RESPONSE_MODEL] = model
+                attrs[GenAIAttributes.GEN_AI_RESPONSE_MODEL] = model
             duration_histogram.record(duration, attributes=attrs)
 
         if kwargs.get("stream"):
