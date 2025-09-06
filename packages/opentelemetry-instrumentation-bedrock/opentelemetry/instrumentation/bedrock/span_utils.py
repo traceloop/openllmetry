@@ -90,7 +90,7 @@ def set_model_span_attributes(
     response_id = response_body.get("id")
 
     _set_span_attribute(span, AWS_BEDROCK_GUARDRAIL_ID, _guardrail_value(kwargs))
-  
+
     _set_span_attribute(span, GenAIAttributes.GEN_AI_SYSTEM, provider)
     _set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_MODEL, model)
     _set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_MODEL, response_model)

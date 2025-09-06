@@ -5,7 +5,6 @@ from openai import OpenAI
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
-from opentelemetry.semconv_ai import SpanAttributes
 from traceloop.sdk.prompts import get_prompt
 from traceloop.sdk.prompts.client import PromptRegistryClient
 

@@ -628,7 +628,7 @@ def test_chat_streaming(instrument_legacy, span_exporter, log_exporter, mock_ope
         == "Tell me a joke about opentelemetry"
     )
     assert open_ai_span.attributes.get(
-        f"{SpanAttributes.GEN_AI_COMPLETION}.0.content")
+        f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content")
     assert (
         open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)
         == "http://localhost:5002/v1/"

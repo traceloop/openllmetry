@@ -6,6 +6,7 @@ from opentelemetry.semconv._incubating.attributes import (
 from opentelemetry.semconv._incubating.metrics import (
     gen_ai_metrics as GenAIMetrics,
 )
+from opentelemetry.semconv_ai import SpanAttributes
 from opentelemetry.semconv_ai import Meters
 
 

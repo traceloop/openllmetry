@@ -4,6 +4,7 @@ from opentelemetry.semconv._incubating.attributes import (
 )
 from opentelemetry.instrumentation.bedrock.span_utils import set_guardrail_attributes
 
+
 class Type(Enum):
     INPUT = "input"
     OUTPUT = "output"

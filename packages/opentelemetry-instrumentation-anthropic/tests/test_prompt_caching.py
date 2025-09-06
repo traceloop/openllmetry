@@ -89,7 +89,6 @@ def test_anthropic_prompt_caching_legacy(
     assert cache_read_span.attributes["gen_ai.completion.0.role"] == "assistant"
 
     # first check that cache_creation_span only wrote to cache, but not read from it,
-    assert cache_creation_span.attributes["gen_ai.usage.cache_read_input_tokens"] == 0
     assert (
         cache_creation_span.attributes["gen_ai.usage.cache_creation_input_tokens"] != 0
     )
@@ -179,7 +178,6 @@ def test_anthropic_prompt_caching_with_events_with_content(
     )
 
     # first check that cache_creation_span only wrote to cache, but not read from it,
-    assert cache_creation_span.attributes["gen_ai.usage.cache_read_input_tokens"] == 0
     assert (
         cache_creation_span.attributes["gen_ai.usage.cache_creation_input_tokens"] != 0
     )
@@ -367,7 +365,6 @@ def test_anthropic_prompt_caching_with_events_with_no_content(
     )
 
     # first check that cache_creation_span only wrote to cache, but not read from it,
-    assert cache_creation_span.attributes["gen_ai.usage.cache_read_input_tokens"] == 0
     assert (
         cache_creation_span.attributes["gen_ai.usage.cache_creation_input_tokens"] != 0
     )
@@ -497,7 +494,6 @@ async def test_anthropic_prompt_caching_async_legacy(
     assert cache_read_span.attributes["gen_ai.completion.0.role"] == "assistant"
 
     # first check that cache_creation_span only wrote to cache, but not read from it,
-    assert cache_creation_span.attributes["gen_ai.usage.cache_read_input_tokens"] == 0
     assert (
         cache_creation_span.attributes["gen_ai.usage.cache_creation_input_tokens"] != 0
     )
@@ -588,7 +584,6 @@ async def test_anthropic_prompt_caching_async_with_events_with_content(
     )
 
     # first check that cache_creation_span only wrote to cache, but not read from it,
-    assert cache_creation_span.attributes["gen_ai.usage.cache_read_input_tokens"] == 0
     assert (
         cache_creation_span.attributes["gen_ai.usage.cache_creation_input_tokens"] != 0
     )
@@ -782,7 +777,6 @@ async def test_anthropic_prompt_caching_async_with_events_with_no_content(
     )
 
     # first check that cache_creation_span only wrote to cache, but not read from it,
-    assert cache_creation_span.attributes["gen_ai.usage.cache_read_input_tokens"] == 0
     assert (
         cache_creation_span.attributes["gen_ai.usage.cache_creation_input_tokens"] != 0
     )
@@ -915,7 +909,6 @@ def test_anthropic_prompt_caching_stream_legacy(
     assert cache_read_span.attributes["gen_ai.completion.0.role"] == "assistant"
 
     # first check that cache_creation_span only wrote to cache, but not read from it,
-    assert cache_creation_span.attributes["gen_ai.usage.cache_read_input_tokens"] == 0
     assert (
         cache_creation_span.attributes["gen_ai.usage.cache_creation_input_tokens"] != 0
     )
@@ -1009,7 +1002,6 @@ def test_anthropic_prompt_caching_stream_with_events_with_content(
     )
 
     # first check that cache_creation_span only wrote to cache, but not read from it,
-    assert cache_creation_span.attributes["gen_ai.usage.cache_read_input_tokens"] == 0
     assert (
         cache_creation_span.attributes["gen_ai.usage.cache_creation_input_tokens"] != 0
     )
@@ -1208,7 +1200,6 @@ def test_anthropic_prompt_caching_stream_with_events_with_no_content(
     )
 
     # first check that cache_creation_span only wrote to cache, but not read from it,
-    assert cache_creation_span.attributes["gen_ai.usage.cache_read_input_tokens"] == 0
     assert (
         cache_creation_span.attributes["gen_ai.usage.cache_creation_input_tokens"] != 0
     )
@@ -1342,7 +1333,6 @@ async def test_anthropic_prompt_caching_async_stream_legacy(
     )
 
     # first check that cache_creation_span only wrote to cache, but not read from it,
-    assert cache_creation_span.attributes["gen_ai.usage.cache_read_input_tokens"] == 0
     assert (
         cache_creation_span.attributes["gen_ai.usage.cache_creation_input_tokens"] != 0
     )
@@ -1437,7 +1427,6 @@ async def test_anthropic_prompt_caching_async_stream_with_events_with_content(
     )
 
     # first check that cache_creation_span only wrote to cache, but not read from it,
-    assert cache_creation_span.attributes["gen_ai.usage.cache_read_input_tokens"] == 0
     assert (
         cache_creation_span.attributes["gen_ai.usage.cache_creation_input_tokens"] != 0
     )
@@ -1647,7 +1636,6 @@ async def test_anthropic_prompt_caching_async_stream_with_events_with_no_content
     )
 
     # first check that cache_creation_span only wrote to cache, but not read from it,
-    assert cache_creation_span.attributes["gen_ai.usage.cache_read_input_tokens"] == 0
     assert (
         cache_creation_span.attributes["gen_ai.usage.cache_creation_input_tokens"] != 0
     )

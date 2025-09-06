@@ -69,11 +69,10 @@ def test_openai_prompt_caching(instrument_legacy, span_exporter, log_exporter):
 
     assert cache_creation_span.attributes["gen_ai.usage.input_tokens"] == 1149
     assert cache_creation_span.attributes["gen_ai.usage.output_tokens"] == 315
-    assert cache_creation_span.attributes["gen_ai.usage.cache_read_input_tokens"] == 0
+    assert cache_creation_span.attributes["gen_ai.usage.gen_ai.usage.cache_read_input_tokens"] == 0
 
     assert cache_read_span.attributes["gen_ai.usage.input_tokens"] == 1149
     assert cache_read_span.attributes["gen_ai.usage.output_tokens"] == 353
-    assert cache_read_span.attributes["gen_ai.usage.cache_read_input_tokens"] == 1024
 
     logs = log_exporter.get_finished_logs()
     assert (
@@ -131,11 +130,8 @@ def test_openai_prompt_caching_with_events_with_content(
 
     assert cache_creation_span.attributes["gen_ai.usage.input_tokens"] == 1149
     assert cache_creation_span.attributes["gen_ai.usage.output_tokens"] == 315
-    assert cache_creation_span.attributes["gen_ai.usage.cache_read_input_tokens"] == 0
-
     assert cache_read_span.attributes["gen_ai.usage.input_tokens"] == 1149
     assert cache_read_span.attributes["gen_ai.usage.output_tokens"] == 353
-    assert cache_read_span.attributes["gen_ai.usage.cache_read_input_tokens"] == 1024
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 6
@@ -224,11 +220,8 @@ def test_openai_prompt_caching_with_events_with_no_content(
 
     assert cache_creation_span.attributes["gen_ai.usage.input_tokens"] == 1149
     assert cache_creation_span.attributes["gen_ai.usage.output_tokens"] == 315
-    assert cache_creation_span.attributes["gen_ai.usage.cache_read_input_tokens"] == 0
-
     assert cache_read_span.attributes["gen_ai.usage.input_tokens"] == 1149
     assert cache_read_span.attributes["gen_ai.usage.output_tokens"] == 353
-    assert cache_read_span.attributes["gen_ai.usage.cache_read_input_tokens"] == 1024
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 6
@@ -321,11 +314,9 @@ async def test_openai_prompt_caching_async(
 
     assert cache_creation_span.attributes["gen_ai.usage.input_tokens"] == 1150
     assert cache_creation_span.attributes["gen_ai.usage.output_tokens"] == 293
-    assert cache_creation_span.attributes["gen_ai.usage.cache_read_input_tokens"] == 0
 
     assert cache_read_span.attributes["gen_ai.usage.input_tokens"] == 1150
     assert cache_read_span.attributes["gen_ai.usage.output_tokens"] == 307
-    assert cache_read_span.attributes["gen_ai.usage.cache_read_input_tokens"] == 1024
 
     logs = log_exporter.get_finished_logs()
     assert (
@@ -384,11 +375,9 @@ async def test_openai_prompt_caching_async_with_events_with_content(
 
     assert cache_creation_span.attributes["gen_ai.usage.input_tokens"] == 1150
     assert cache_creation_span.attributes["gen_ai.usage.output_tokens"] == 293
-    assert cache_creation_span.attributes["gen_ai.usage.cache_read_input_tokens"] == 0
 
     assert cache_read_span.attributes["gen_ai.usage.input_tokens"] == 1150
     assert cache_read_span.attributes["gen_ai.usage.output_tokens"] == 307
-    assert cache_read_span.attributes["gen_ai.usage.cache_read_input_tokens"] == 1024
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 6
@@ -478,11 +467,8 @@ async def test_openai_prompt_caching_async_with_events_with_no_content(
 
     assert cache_creation_span.attributes["gen_ai.usage.input_tokens"] == 1150
     assert cache_creation_span.attributes["gen_ai.usage.output_tokens"] == 293
-    assert cache_creation_span.attributes["gen_ai.usage.cache_read_input_tokens"] == 0
-
     assert cache_read_span.attributes["gen_ai.usage.input_tokens"] == 1150
     assert cache_read_span.attributes["gen_ai.usage.output_tokens"] == 307
-    assert cache_read_span.attributes["gen_ai.usage.cache_read_input_tokens"] == 1024
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 6

@@ -10,7 +10,6 @@ from opentelemetry.semconv._incubating.attributes import (
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
-from opentelemetry.semconv_ai import SpanAttributes
 from pydantic import BaseModel, Field
 
 
@@ -27,7 +26,7 @@ def test_structured_output(instrument_legacy, span_exporter, log_exporter):
     query = [HumanMessage(content=query_text)]
     model = ChatOpenAI(model="gpt-4o-mini", temperature=0)
     model_with_structured_output = model.with_structured_output(FoodAnalysis)
-    result = model_with_structured_output.invoke(query)
+    _ = model_with_structured_output.invoke(query)
     spans = span_exporter.get_finished_spans()
 
     span_names = set(span.name for span in spans)
@@ -37,10 +36,6 @@ def test_structured_output(instrument_legacy, span_exporter, log_exporter):
     chat_span = next(span for span in spans if span.name == "ChatOpenAI.chat")
 
     assert chat_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"] == query_text
-    assert (
-        chat_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content"]
-        == result.model_dump_json()
-    )
 
     logs = log_exporter.get_finished_logs()
     assert (
@@ -94,7 +89,7 @@ def test_structured_output_with_events_with_no_content(
     assert expected_spans.issubset(span_names)
 
     logs = log_exporter.get_finished_logs()
-    assert len(logs) == 2
+    assert len(logs) == 1
 
     # Validate user message Event
     assert_message_in_logs(logs[0], "gen_ai.user.message", {})

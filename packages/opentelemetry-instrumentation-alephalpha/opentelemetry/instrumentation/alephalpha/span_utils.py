@@ -2,7 +2,6 @@ from opentelemetry.instrumentation.alephalpha.event_models import (
     CompletionEvent,
     PromptEvent,
 )
-from opentelemetry.semconv_ai import SpanAttributes
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )

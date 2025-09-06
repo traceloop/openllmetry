@@ -275,7 +275,7 @@ def set_input_attributes_sync(span, args, kwargs, llm_model):
             _set_span_attribute(
                 span,
                 f"{GenAIAttributes.GEN_AI_PROMPT}.0.content",
-                prompt,
+                json.dumps([{"type": "text", "text": contents}]),
             )
             _set_span_attribute(
                 span,
