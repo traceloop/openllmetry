@@ -27,6 +27,7 @@ from langchain_core.outputs import (
     LLMResult,
 )
 from opentelemetry import context as context_api
+from opentelemetry.instrumentation.langchain.config import Config
 from opentelemetry.instrumentation.langchain.event_emitter import emit_event
 from opentelemetry.instrumentation.langchain.event_models import (
     ChoiceEvent,
@@ -290,7 +291,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             for key, value in sanitized_metadata.items():
                 _set_span_attribute(
                     span,
-                    f"{SpanAttributes.TRACELOOP_ASSOCIATION_PROPERTIES}.{key}",
+                    f"{Config.metadata_key_prefix}.{key}",
                     value,
                 )
 
