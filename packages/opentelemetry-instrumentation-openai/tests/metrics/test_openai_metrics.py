@@ -47,12 +47,15 @@ def test_chat_completion_metrics(instrument_legacy, reader, openai_client):
                         ]
                         assert len(data_point.attributes["server.address"]) > 0
                         assert data_point.sum > 0
+                        # Check request model attribute
+                        assert data_point.attributes["gen_ai.request.model"] == "gpt-3.5-turbo"
 
                 if metric.name == Meters.LLM_GENERATION_CHOICES:
                     found_choice_metric = True
                     for data_point in metric.data.data_points:
                         assert data_point.value >= 1
                         assert len(data_point.attributes["server.address"]) > 0
+                        assert data_point.attributes["gen_ai.request.model"] == "gpt-3.5-turbo"
 
                 if metric.name == Meters.LLM_OPERATION_DURATION:
                     found_duration_metric = True
@@ -64,6 +67,10 @@ def test_chat_completion_metrics(instrument_legacy, reader, openai_client):
                     )
                     assert all(
                         len(data_point.attributes["server.address"]) > 0
+                        for data_point in metric.data.data_points
+                    )
+                    assert all(
+                        data_point.attributes["gen_ai.request.model"] == "gpt-3.5-turbo"
                         for data_point in metric.data.data_points
                     )
 
