@@ -1,3 +1,16 @@
+## v0.47.0 (2025-09-10)
+
+### Feat
+
+- **writer**: initial implementation (#3209)
+
+### Fix
+
+- **crewai**: Update CrewAI instrumentation name (#3363)
+- **sample-app**: Update google genai package (#3358)
+- **traceloop-sdk**: include telemetry SDK attributes in tracing (#3359)
+- **sdk**: get default span processor don't work without a base URL (#3360)
+
 ## v0.46.2 (2025-08-29)
 
 ### Fix
