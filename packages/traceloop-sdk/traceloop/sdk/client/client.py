@@ -54,7 +54,7 @@ class Client:
         self._async_http = httpx.AsyncClient(
             base_url=self.api_endpoint,
             headers={
-                "Authorization": self.api_key,
+                "Authorization": f"Bearer {self.api_key}",
                 "Content-Type": "application/json",
                 "User-Agent": f"traceloop-sdk/{__version__}",
             },
