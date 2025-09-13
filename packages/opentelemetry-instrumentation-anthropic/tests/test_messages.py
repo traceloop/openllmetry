@@ -2871,7 +2871,6 @@ async def test_anthropic_streaming_helper_methods_legacy(
         assert hasattr(stream, 'until_done')
 
     spans = span_exporter.get_finished_spans()
-    print(f"Number of spans created: {len(spans)}")
     assert len(spans) == 1, f"Expected 1 span, got {len(spans)}"
     assert spans[0].name == "anthropic.chat"
 
