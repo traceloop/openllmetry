@@ -7,7 +7,6 @@ from opentelemetry.semconv._incubating.attributes import (
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
-from opentelemetry.semconv_ai import SpanAttributes
 
 from .utils import verify_metrics
 
@@ -34,10 +33,10 @@ def test_anthropic_completion_legacy(
 
     anthropic_span = spans[0]
     assert (
-        anthropic_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.user"]
+        anthropic_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.user"]
         == f"{HUMAN_PROMPT}\nHello world\n{AI_PROMPT}"
     )
-    assert anthropic_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
+    assert anthropic_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content")
     assert (
         anthropic_span.attributes.get("gen_ai.response.id")
         == "compl_01EjfrPvPEsRDRUKD6VoBxtK"

@@ -6,6 +6,9 @@ import asyncio
 import threading
 from opentelemetry.instrumentation.vertexai.utils import dont_throw, should_send_prompts
 from opentelemetry.instrumentation.vertexai.config import Config
+from opentelemetry.semconv._incubating.attributes import (
+    gen_ai_attributes as GenAIAttributes,
+)
 from opentelemetry.semconv_ai import SpanAttributes
 
 
@@ -216,12 +219,12 @@ async def set_input_attributes(span, args):
             if processed_content:
                 _set_span_attribute(
                     span,
-                    f"{SpanAttributes.LLM_PROMPTS}.{arg_index}.role",
+                    f"{GenAIAttributes.GEN_AI_PROMPT}.{arg_index}.role",
                     "user"
                 )
                 _set_span_attribute(
                     span,
-                    f"{SpanAttributes.LLM_PROMPTS}.{arg_index}.content",
+                    f"{GenAIAttributes.GEN_AI_PROMPT}.{arg_index}.content",
                     json.dumps(processed_content)
                 )
 
@@ -240,12 +243,12 @@ def set_input_attributes_sync(span, args):
             if processed_content:
                 _set_span_attribute(
                     span,
-                    f"{SpanAttributes.LLM_PROMPTS}.{arg_index}.role",
+                    f"{GenAIAttributes.GEN_AI_PROMPT}.{arg_index}.role",
                     "user"
                 )
                 _set_span_attribute(
                     span,
-                    f"{SpanAttributes.LLM_PROMPTS}.{arg_index}.content",
+                    f"{GenAIAttributes.GEN_AI_PROMPT}.{arg_index}.content",
                     json.dumps(processed_content)
                 )
 
@@ -254,18 +257,18 @@ def set_input_attributes_sync(span, args):
 def set_model_input_attributes(span, kwargs, llm_model):
     if not span.is_recording():
         return
-    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, llm_model)
+    _set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_MODEL, llm_model)
     _set_span_attribute(
-        span, f"{SpanAttributes.LLM_PROMPTS}.0.user", kwargs.get("prompt")
+        span, f"{GenAIAttributes.GEN_AI_PROMPT}.0.user", kwargs.get("prompt")
     )
     _set_span_attribute(
-        span, SpanAttributes.LLM_REQUEST_TEMPERATURE, kwargs.get("temperature")
+        span, GenAIAttributes.GEN_AI_REQUEST_TEMPERATURE, kwargs.get("temperature")
     )
     _set_span_attribute(
-        span, SpanAttributes.LLM_REQUEST_MAX_TOKENS, kwargs.get("max_output_tokens")
+        span, GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS, kwargs.get("max_output_tokens")
     )
-    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TOP_P, kwargs.get("top_p"))
-    _set_span_attribute(span, SpanAttributes.LLM_TOP_K, kwargs.get("top_k"))
+    _set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_TOP_P, kwargs.get("top_p"))
+    _set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_TOP_K, kwargs.get("top_k"))
     _set_span_attribute(
         span, SpanAttributes.LLM_PRESENCE_PENALTY, kwargs.get("presence_penalty")
     )
@@ -278,10 +281,10 @@ def set_model_input_attributes(span, kwargs, llm_model):
 def set_response_attributes(span, llm_model, generation_text):
     if not span.is_recording() or not should_send_prompts():
         return
-    _set_span_attribute(span, f"{SpanAttributes.LLM_COMPLETIONS}.0.role", "assistant")
+    _set_span_attribute(span, f"{GenAIAttributes.GEN_AI_COMPLETION}.0.role", "assistant")
     _set_span_attribute(
         span,
-        f"{SpanAttributes.LLM_COMPLETIONS}.0.content",
+        f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content",
         generation_text,
     )
 
@@ -290,7 +293,7 @@ def set_response_attributes(span, llm_model, generation_text):
 def set_model_response_attributes(span, llm_model, token_usage):
     if not span.is_recording():
         return
-    _set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, llm_model)
+    _set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_MODEL, llm_model)
 
     if token_usage:
         _set_span_attribute(
@@ -300,11 +303,11 @@ def set_model_response_attributes(span, llm_model, token_usage):
         )
         _set_span_attribute(
             span,
-            SpanAttributes.LLM_USAGE_COMPLETION_TOKENS,
+            GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS,
             token_usage.candidates_token_count,
         )
         _set_span_attribute(
             span,
-            SpanAttributes.LLM_USAGE_PROMPT_TOKENS,
+            GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS,
             token_usage.prompt_token_count,
         )
