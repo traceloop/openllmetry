@@ -47,7 +47,7 @@ def test_mistralai_chat_legacy(
     ) + mistral_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS)
     assert (
         mistral_span.attributes.get("gen_ai.response.id")
-        == "d5f25c4c1e29441db526ce7db3400010"
+        == "e9459fcd56c742e0875167c9926c6aae"
     )
 
     logs = log_exporter.get_finished_logs()
@@ -85,7 +85,7 @@ def test_mistralai_chat_with_events_with_content(
     ) + mistral_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS)
     assert (
         mistral_span.attributes.get("gen_ai.response.id")
-        == "d5f25c4c1e29441db526ce7db3400010"
+        == "864dc78a89b648cba3962647b8df4d3e"
     )
 
     logs = log_exporter.get_finished_logs()
@@ -101,9 +101,7 @@ def test_mistralai_chat_with_events_with_content(
         "index": 0,
         "finish_reason": "stop",
         "message": {
-            "content": "Why did the OpenTelemetry go to therapy?\n\nBecause it had too many traces and couldn't "
-            "handle it!\n\n(For non-developers, OpenTelemetry is a set of APIs, libraries, agents, and instrumentation"
-            " that standardize how you collect, generate, transport, and consume telemetry data.)",
+            "content": "Why did OpenTelemetry join a band?\n\nBecause it wanted to hit those performance metrics right on the beat!\n\n(Bonus: It also has a wide range of instrumentation options, making it a versatile addition to any musical ensemble.)",
         },
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
@@ -138,7 +136,7 @@ def test_mistralai_chat_with_events_with_no_content(
     ) + mistral_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS)
     assert (
         mistral_span.attributes.get("gen_ai.response.id")
-        == "d5f25c4c1e29441db526ce7db3400010"
+        == "b8b26a4542e14918b00f2886dc7913a6"
     )
 
     logs = log_exporter.get_finished_logs()
@@ -171,7 +169,7 @@ def test_mistralai_streaming_chat_legacy(
 
     response = ""
     for res in gen:
-        response += res.choices[0].delta.content
+        response += res.data.choices[0].delta.content
 
     spans = span_exporter.get_finished_spans()
     mistral_span = spans[0]
@@ -199,7 +197,7 @@ def test_mistralai_streaming_chat_legacy(
     ) + mistral_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS)
     assert (
         mistral_span.attributes.get("gen_ai.response.id")
-        == "937738cd542a461da86a967ad7c2c8db"
+        == "6dc321029f5d4aa5899c1b38c9657a61"
     )
 
     logs = log_exporter.get_finished_logs()
@@ -221,7 +219,7 @@ def test_mistralai_streaming_chat_with_events_with_content(
 
     response = ""
     for res in gen:
-        response += res.choices[0].delta.content
+        response += res.data.choices[0].delta.content
 
     spans = span_exporter.get_finished_spans()
     mistral_span = spans[0]
@@ -241,7 +239,7 @@ def test_mistralai_streaming_chat_with_events_with_content(
     ) + mistral_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS)
     assert (
         mistral_span.attributes.get("gen_ai.response.id")
-        == "937738cd542a461da86a967ad7c2c8db"
+        == "d3a0f557943648c49fb019bc65a64334"
     )
 
     logs = log_exporter.get_finished_logs()
@@ -257,9 +255,7 @@ def test_mistralai_streaming_chat_with_events_with_content(
         "index": 0,
         "finish_reason": "stop",
         "message": {
-            "content": "Why did OpenTelemetry bring a map to the party?\n\nBecause it heard there would be a lot of "
-            "tracing!\n\n(For those not familiar, OpenTelemetry is an open-source project for standardizing "
-            "observability data.)"
+            "content": "Why did OpenTelemetry bring a map to the party?\n\nBecause it wanted to trace all the connections!\n\n(This joke is for those who appreciate a dash of tech humor in their day.)"
         },
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
@@ -278,7 +274,7 @@ def test_mistralai_streaming_chat_with_events_with_no_content(
 
     response = ""
     for res in gen:
-        response += res.choices[0].delta.content
+        response += res.data.choices[0].delta.content
 
     spans = span_exporter.get_finished_spans()
     mistral_span = spans[0]
@@ -298,7 +294,7 @@ def test_mistralai_streaming_chat_with_events_with_no_content(
     ) + mistral_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS)
     assert (
         mistral_span.attributes.get("gen_ai.response.id")
-        == "937738cd542a461da86a967ad7c2c8db"
+        == "d663cffc326049acb5df51b0a1d60fb6"
     )
 
     logs = log_exporter.get_finished_logs()
@@ -357,7 +353,7 @@ async def test_mistralai_async_chat_legacy(
     ) + mistral_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS)
     assert (
         mistral_span.attributes.get("gen_ai.response.id")
-        == "84e3f907fd2045eba99a91a50a6c5a53"
+        == "bda521177c084183bba5eaf32ad99027"
     )
 
     logs = log_exporter.get_finished_logs()
@@ -397,7 +393,7 @@ async def test_mistralai_async_chat_with_events_with_content(
     ) + mistral_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS)
     assert (
         mistral_span.attributes.get("gen_ai.response.id")
-        == "84e3f907fd2045eba99a91a50a6c5a53"
+        == "cdd110acbcaf4cfc8a031783168d6389"
     )
 
     logs = log_exporter.get_finished_logs()
@@ -413,8 +409,7 @@ async def test_mistralai_async_chat_with_events_with_content(
         "index": 0,
         "finish_reason": "stop",
         "message": {
-            "content": "Why did OpenTelemetry bring a map to the party?\n\nBecause it wanted to trace the route of "
-            "the good conversations!\n\n(I'm here to bring a smile, not to code or explain complex systems!)",
+            "content": "Here's a light-hearted joke about OpenTelemetry, a popular open-source system for generating, collecting, analyzing, and acting on telemetry data:\n\nWhy did OpenTelemetry join a rock band?\n\nBecause it wanted to monitor the metrics, span the genres, and distributed the beat!\n\nOf course, it's all in good fun and meant to be a playful way to explain the purpose of OpenTelemetry in a humorous manner. OpenTelemetry is a powerful tool for improving the performance, reliability, and efficiency of distributed systems, and it's essential for any modern software development.",
         },
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
@@ -451,7 +446,7 @@ async def test_mistralai_async_chat_with_events_with_no_content(
     ) + mistral_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS)
     assert (
         mistral_span.attributes.get("gen_ai.response.id")
-        == "84e3f907fd2045eba99a91a50a6c5a53"
+        == "d9f0293174c549028d43ab5f90607618"
     )
 
     logs = log_exporter.get_finished_logs()
@@ -485,7 +480,7 @@ async def test_mistralai_async_streaming_chat_legacy(
 
     response = ""
     async for res in gen:
-        response += res.choices[0].delta.content
+        response += res.data.choices[0].delta.content
 
     spans = span_exporter.get_finished_spans()
     mistral_span = spans[0]
@@ -510,7 +505,7 @@ async def test_mistralai_async_streaming_chat_legacy(
     ) + mistral_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS)
     assert (
         mistral_span.attributes.get("gen_ai.response.id")
-        == "8b811019d651417b913b5c16b32732e2"
+        == "6dc321029f5d4aa5899c1b38c9657a61"
     )
 
     logs = log_exporter.get_finished_logs()
@@ -533,7 +528,7 @@ async def test_mistralai_async_streaming_chat_with_events_with_content(
 
     response = ""
     async for res in gen:
-        response += res.choices[0].delta.content
+        response += res.data.choices[0].delta.content
 
     spans = span_exporter.get_finished_spans()
     mistral_span = spans[0]
@@ -550,7 +545,7 @@ async def test_mistralai_async_streaming_chat_with_events_with_content(
     ) + mistral_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS)
     assert (
         mistral_span.attributes.get("gen_ai.response.id")
-        == "8b811019d651417b913b5c16b32732e2"
+        == "9c4b9456d7c642149a28f46bb36c3247"
     )
 
     logs = log_exporter.get_finished_logs()
@@ -566,10 +561,7 @@ async def test_mistralai_async_streaming_chat_with_events_with_content(
         "index": 0,
         "finish_reason": "stop",
         "message": {
-            "content": "Why did the OpenTelemetry library join a band?\n\nBecause it wanted to create beautiful, "
-            "instrumented, and distributed melodies!\n\n(Note: This is a play on words, as OpenTelemetry helps "
-            "developers to collect distributed traces, so they can monitor and improve the performance of their "
-            "applications.)"
+            "content": "Why did OpenTelemetry join a band?\n\nBecause it wanted to help create beautiful, well-instrumented symphonies!\n\n(OpenTelemetry is an open-source, vendor-neutral observability solution for collecting, processing, and exporting telemetry data. It's often used in software development to monitor and improve application performance.)"
         },
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
@@ -589,7 +581,7 @@ async def test_mistralai_async_streaming_chat_with_events_with_no_content(
 
     response = ""
     async for res in gen:
-        response += res.choices[0].delta.content
+        response += res.data.choices[0].delta.content
 
     spans = span_exporter.get_finished_spans()
     mistral_span = spans[0]
@@ -606,7 +598,7 @@ async def test_mistralai_async_streaming_chat_with_events_with_no_content(
     ) + mistral_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS)
     assert (
         mistral_span.attributes.get("gen_ai.response.id")
-        == "8b811019d651417b913b5c16b32732e2"
+        == "f5edd68bc31641f7a74d8d419da04b62"
     )
 
     logs = log_exporter.get_finished_logs()

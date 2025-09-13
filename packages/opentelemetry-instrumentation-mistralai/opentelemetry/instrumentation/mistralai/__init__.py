@@ -97,7 +97,7 @@ def _set_input_attributes(span, llm_request_type, to_wrap, kwargs):
                     message.role,
                 )
         else:
-            input = kwargs.get("input")
+            input = kwargs.get("input") or kwargs.get("inputs")
 
             if isinstance(input, str):
                 _set_span_attribute(
@@ -106,7 +106,7 @@ def _set_input_attributes(span, llm_request_type, to_wrap, kwargs):
                 _set_span_attribute(
                     span, f"{SpanAttributes.LLM_PROMPTS}.0.content", input
                 )
-            else:
+            elif input:
                 for index, prompt in enumerate(input):
                     _set_span_attribute(
                         span,
@@ -210,15 +210,18 @@ def _accumulate_streaming_response(span, event_logger, llm_request_type, respons
     for res in response:
         yield res
 
-        if res.model:
-            accumulated_response.model = res.model
-        if res.usage:
-            accumulated_response.usage = res.usage
+        # Handle new CompletionEvent structure with .data attribute
+        chunk_data = res.data if hasattr(res, 'data') else res
+        
+        if chunk_data.model:
+            accumulated_response.model = chunk_data.model
+        if chunk_data.usage:
+            accumulated_response.usage = chunk_data.usage
         # Id is the same for all chunks, so it's safe to overwrite it every time
-        if res.id:
-            accumulated_response.id = res.id
+        if chunk_data.id:
+            accumulated_response.id = chunk_data.id
 
-        for idx, choice in enumerate(res.choices):
+        for idx, choice in enumerate(chunk_data.choices):
             if len(accumulated_response.choices) <= idx:
                 accumulated_response.choices.append(
                     ChatCompletionChoice(
@@ -252,15 +255,18 @@ async def _aaccumulate_streaming_response(
     async for res in response:
         yield res
 
-        if res.model:
-            accumulated_response.model = res.model
-        if res.usage:
-            accumulated_response.usage = res.usage
+        # Handle new CompletionEvent structure with .data attribute
+        chunk_data = res.data if hasattr(res, 'data') else res
+        
+        if chunk_data.model:
+            accumulated_response.model = chunk_data.model
+        if chunk_data.usage:
+            accumulated_response.usage = chunk_data.usage
         # Id is the same for all chunks, so it's safe to overwrite it every time
-        if res.id:
-            accumulated_response.id = res.id
+        if chunk_data.id:
+            accumulated_response.id = chunk_data.id
 
-        for idx, choice in enumerate(res.choices):
+        for idx, choice in enumerate(chunk_data.choices):
             if len(accumulated_response.choices) <= idx:
                 accumulated_response.choices.append(
                     ChatCompletionChoice(
@@ -318,7 +324,7 @@ def _emit_message_events(method_wrapped: str, args, kwargs, event_logger):
 
     # Handle embedding events
     elif method_wrapped == "mistralai.embeddings":
-        embedding_input = args[0] if len(args) > 0 else kwargs.get("input", [])
+        embedding_input = args[0] if len(args) > 0 else (kwargs.get("input") or kwargs.get("inputs", []))
         if isinstance(embedding_input, str):
             emit_event(MessageEvent(content=embedding_input, role="user"), event_logger)
         elif isinstance(embedding_input, list):
@@ -457,7 +463,7 @@ async def _awrap(
     _handle_input(span, event_logger, args, kwargs, to_wrap)
 
     if to_wrap.get("streaming"):
-        response = wrapped(*args, **kwargs)
+        response = await wrapped(*args, **kwargs)
     else:
         response = await wrapped(*args, **kwargs)
 
