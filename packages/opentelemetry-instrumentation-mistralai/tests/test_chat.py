@@ -1,5 +1,5 @@
 import pytest
-from mistralai.models.chat_completion import ChatMessage
+from mistralai.models import UserMessage
 from opentelemetry.sdk._logs import LogData
 from opentelemetry.semconv._incubating.attributes import (
     event_attributes as EventAttributes,
@@ -14,10 +14,10 @@ from opentelemetry.semconv_ai import SpanAttributes
 def test_mistralai_chat_legacy(
     instrument_legacy, mistralai_client, span_exporter, log_exporter
 ):
-    response = mistralai_client.chat(
+    response = mistralai_client.chat.complete(
         model="mistral-tiny",
         messages=[
-            ChatMessage(role="user", content="Tell me a joke about OpenTelemetry"),
+            UserMessage(content="Tell me a joke about OpenTelemetry"),
         ],
     )
 
@@ -60,10 +60,10 @@ def test_mistralai_chat_legacy(
 def test_mistralai_chat_with_events_with_content(
     instrument_with_content, mistralai_client, span_exporter, log_exporter
 ):
-    mistralai_client.chat(
+    mistralai_client.chat.complete(
         model="mistral-tiny",
         messages=[
-            ChatMessage(role="user", content="Tell me a joke about OpenTelemetry"),
+            UserMessage(content="Tell me a joke about OpenTelemetry"),
         ],
     )
 
@@ -113,10 +113,10 @@ def test_mistralai_chat_with_events_with_content(
 def test_mistralai_chat_with_events_with_no_content(
     instrument_with_no_content, mistralai_client, span_exporter, log_exporter
 ):
-    mistralai_client.chat(
+    mistralai_client.chat.complete(
         model="mistral-tiny",
         messages=[
-            ChatMessage(role="user", content="Tell me a joke about OpenTelemetry"),
+            UserMessage(content="Tell me a joke about OpenTelemetry"),
         ],
     )
 
@@ -162,10 +162,10 @@ def test_mistralai_chat_with_events_with_no_content(
 def test_mistralai_streaming_chat_legacy(
     instrument_legacy, mistralai_client, span_exporter, log_exporter
 ):
-    gen = mistralai_client.chat_stream(
+    gen = mistralai_client.chat.stream(
         model="mistral-tiny",
         messages=[
-            ChatMessage(role="user", content="Tell me a joke about OpenTelemetry"),
+            UserMessage(content="Tell me a joke about OpenTelemetry"),
         ],
     )
 
@@ -212,10 +212,10 @@ def test_mistralai_streaming_chat_legacy(
 def test_mistralai_streaming_chat_with_events_with_content(
     instrument_with_content, mistralai_client, span_exporter, log_exporter
 ):
-    gen = mistralai_client.chat_stream(
+    gen = mistralai_client.chat.stream(
         model="mistral-tiny",
         messages=[
-            ChatMessage(role="user", content="Tell me a joke about OpenTelemetry"),
+            UserMessage(content="Tell me a joke about OpenTelemetry"),
         ],
     )
 
@@ -269,10 +269,10 @@ def test_mistralai_streaming_chat_with_events_with_content(
 def test_mistralai_streaming_chat_with_events_with_no_content(
     instrument_with_no_content, mistralai_client, span_exporter, log_exporter
 ):
-    gen = mistralai_client.chat_stream(
+    gen = mistralai_client.chat.stream(
         model="mistral-tiny",
         messages=[
-            ChatMessage(role="user", content="Tell me a joke about OpenTelemetry"),
+            UserMessage(content="Tell me a joke about OpenTelemetry"),
         ],
     )
 
@@ -323,10 +323,10 @@ def test_mistralai_streaming_chat_with_events_with_no_content(
 async def test_mistralai_async_chat_legacy(
     instrument_legacy, mistralai_async_client, span_exporter, log_exporter
 ):
-    response = await mistralai_async_client.chat(
+    response = await mistralai_async_client.chat.complete_async(
         model="mistral-tiny",
         messages=[
-            ChatMessage(role="user", content="Tell me a joke about OpenTelemetry"),
+            UserMessage(content="Tell me a joke about OpenTelemetry"),
         ],
     )
 
@@ -371,10 +371,10 @@ async def test_mistralai_async_chat_legacy(
 async def test_mistralai_async_chat_with_events_with_content(
     instrument_with_content, mistralai_async_client, span_exporter, log_exporter
 ):
-    await mistralai_async_client.chat(
+    await mistralai_async_client.chat.complete_async(
         model="mistral-tiny",
         messages=[
-            ChatMessage(role="user", content="Tell me a joke about OpenTelemetry"),
+            UserMessage(content="Tell me a joke about OpenTelemetry"),
         ],
     )
 
@@ -425,10 +425,10 @@ async def test_mistralai_async_chat_with_events_with_content(
 async def test_mistralai_async_chat_with_events_with_no_content(
     instrument_with_no_content, mistralai_async_client, span_exporter, log_exporter
 ):
-    await mistralai_async_client.chat(
+    await mistralai_async_client.chat.complete_async(
         model="mistral-tiny",
         messages=[
-            ChatMessage(role="user", content="Tell me a joke about OpenTelemetry"),
+            UserMessage(content="Tell me a joke about OpenTelemetry"),
         ],
     )
 
@@ -476,10 +476,10 @@ async def test_mistralai_async_chat_with_events_with_no_content(
 async def test_mistralai_async_streaming_chat_legacy(
     instrument_legacy, mistralai_async_client, span_exporter, log_exporter
 ):
-    gen = await mistralai_async_client.chat_stream(
+    gen = await mistralai_async_client.chat.stream_async(
         model="mistral-tiny",
         messages=[
-            ChatMessage(role="user", content="Tell me a joke about OpenTelemetry"),
+            UserMessage(content="Tell me a joke about OpenTelemetry"),
         ],
     )
 
@@ -524,10 +524,10 @@ async def test_mistralai_async_streaming_chat_legacy(
 async def test_mistralai_async_streaming_chat_with_events_with_content(
     instrument_with_content, mistralai_async_client, span_exporter, log_exporter
 ):
-    gen = await mistralai_async_client.chat_stream(
+    gen = await mistralai_async_client.chat.stream_async(
         model="mistral-tiny",
         messages=[
-            ChatMessage(role="user", content="Tell me a joke about OpenTelemetry"),
+            UserMessage(content="Tell me a joke about OpenTelemetry"),
         ],
     )
 
@@ -580,10 +580,10 @@ async def test_mistralai_async_streaming_chat_with_events_with_content(
 async def test_mistralai_async_streaming_chat_with_events_with_no_content(
     instrument_with_no_content, mistralai_async_client, span_exporter, log_exporter
 ):
-    gen = await mistralai_async_client.chat_stream(
+    gen = await mistralai_async_client.chat.stream_async(
         model="mistral-tiny",
         messages=[
-            ChatMessage(role="user", content="Tell me a joke about OpenTelemetry"),
+            UserMessage(content="Tell me a joke about OpenTelemetry"),
         ],
     )
 

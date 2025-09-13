@@ -35,31 +35,36 @@ from opentelemetry.trace import SpanKind, get_tracer
 from opentelemetry.trace.status import Status, StatusCode
 from wrapt import wrap_function_wrapper
 
-from mistralai.models.chat_completion import (
+from mistralai.models import (
     ChatCompletionResponse,
-    ChatCompletionResponseChoice,
-    ChatMessage,
+    ChatCompletionChoice,
+    AssistantMessage,
+    UserMessage,
+    SystemMessage,
+    UsageInfo,
+    EmbeddingResponse,
 )
-from mistralai.models.common import UsageInfo
-from mistralai.models.embeddings import EmbeddingResponse
 
 logger = logging.getLogger(__name__)
 
-_instruments = ("mistralai >= 0.2.0, < 1",)
+_instruments = ("mistralai >= 1.0.0",)
 
 WRAPPED_METHODS = [
     {
-        "method": "chat",
+        "method": "complete",
+        "module": "chat",
         "span_name": "mistralai.chat",
         "streaming": False,
     },
     {
-        "method": "chat_stream",
+        "method": "stream",
+        "module": "chat", 
         "span_name": "mistralai.chat",
         "streaming": True,
     },
     {
-        "method": "embeddings",
+        "method": "create",
+        "module": "embeddings",
         "span_name": "mistralai.embeddings",
         "streaming": False,
     },
@@ -216,9 +221,9 @@ def _accumulate_streaming_response(span, event_logger, llm_request_type, respons
         for idx, choice in enumerate(res.choices):
             if len(accumulated_response.choices) <= idx:
                 accumulated_response.choices.append(
-                    ChatCompletionResponseChoice(
+                    ChatCompletionChoice(
                         index=idx,
-                        message=ChatMessage(role="assistant", content=""),
+                        message=AssistantMessage(role="assistant", content=""),
                         finish_reason=None,
                     )
                 )
@@ -258,9 +263,9 @@ async def _aaccumulate_streaming_response(
         for idx, choice in enumerate(res.choices):
             if len(accumulated_response.choices) <= idx:
                 accumulated_response.choices.append(
-                    ChatCompletionResponseChoice(
+                    ChatCompletionChoice(
                         index=idx,
-                        message=ChatMessage(role="assistant", content=""),
+                        message=AssistantMessage(role="assistant", content=""),
                         finish_reason=None,
                     )
                 )
@@ -287,9 +292,9 @@ def _with_tracer_wrapper(func):
 
 
 def _llm_request_type_by_method(method_name):
-    if method_name == "chat" or method_name == "chat_stream":
+    if method_name == "complete" or method_name == "stream":
         return LLMRequestTypeValues.CHAT
-    elif method_name == "embeddings":
+    elif method_name == "create":
         return LLMRequestTypeValues.EMBEDDING
     else:
         return LLMRequestTypeValues.UNKNOWN
@@ -301,7 +306,7 @@ def _emit_message_events(method_wrapped: str, args, kwargs, event_logger):
     if method_wrapped == "mistralai.chat":
         messages = args[0] if len(args) > 0 else kwargs.get("messages", [])
         for message in messages:
-            if isinstance(message, ChatMessage):
+            if isinstance(message, (UserMessage, AssistantMessage, SystemMessage)):
                 role = message.role
                 content = message.content
             elif isinstance(message, dict):
@@ -495,21 +500,25 @@ class MistralAiInstrumentor(BaseInstrumentor):
 
         for wrapped_method in WRAPPED_METHODS:
             wrap_method = wrapped_method.get("method")
+            module_name = wrapped_method.get("module")
+            
+            # Wrap sync methods on the class
             wrap_function_wrapper(
-                "mistralai.client",
-                f"MistralClient.{wrap_method}",
+                f"mistralai.{module_name}",
+                f"{module_name.capitalize()}.{wrap_method}",
                 _wrap(tracer, event_logger, wrapped_method),
             )
+            # Wrap async methods on the class
             wrap_function_wrapper(
-                "mistralai.async_client",
-                f"MistralAsyncClient.{wrap_method}",
+                f"mistralai.{module_name}",
+                f"{module_name.capitalize()}.{wrap_method}_async",
                 _awrap(tracer, event_logger, wrapped_method),
             )
 
     def _uninstrument(self, **kwargs):
         for wrapped_method in WRAPPED_METHODS:
-            unwrap("mistralai.client.MistralClient", wrapped_method.get("method"))
-            unwrap(
-                "mistralai.async_client.MistralAsyncClient",
-                wrapped_method.get("method"),
-            )
+            wrap_method = wrapped_method.get("method")
+            module_name = wrapped_method.get("module")
+            
+            unwrap(f"mistralai.{module_name}.{module_name.capitalize()}", wrap_method)
+            unwrap(f"mistralai.{module_name}.{module_name.capitalize()}", f"{wrap_method}_async")
