@@ -1,7 +1,6 @@
 interactions:
 - request:
-    body: '{"messages": [{"role": "user", "content": "Tell me a joke about OpenTelemetry"}],
-      "safe_prompt": false, "model": "mistral-tiny", "stream": false}'
+    body: '{"model":"mistral-tiny","messages":[{"content":"Tell me a joke about OpenTelemetry","role":"user"}],"stream":false}'
     headers:
       accept:
       - application/json
@@ -10,30 +9,29 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '145'
+      - '115'
       content-type:
       - application/json
       host:
       - api.mistral.ai
       user-agent:
-      - mistral-client-python/0.2.0
+      - mistral-client-python/1.9.10
     method: POST
     uri: https://api.mistral.ai/v1/chat/completions
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAAAzyRQY8TMQyF/0rWF0AKaGbbaWkuSNw4cUHiwKLKTdxOIImj2IWOqv53lKLu0U/f
-        e5afrxADOPi4ptVxN2yP4XlYT3TA3Q53I04DbvyE0wos8OEXeQUHfkb94DnXRBq5gAXfCJUCuHE7
-        bjbb4XlaWcgcKIGDHEUbpvcay9LZmaMnAffjCrEEuoAbLGQSwROBu0LjROAARaIoFu0eLkql7/4+
-        LybEYL5WKt8oUSZtizm0WE4GTcZqlI3OZCo2XT69lJfymTyehUxU8xeLUrgjDT3dwcZnJcPH+3Bi
-        DsZz+UNNsB8nTz3i7Zc32czUqFsfyyTHRNYU1q56DmS4GbrUhLGY//1cjCyilOXpHVhQ5rT3mJKA
-        K+eUbhaOsUSZ941QuIADUa5gIfGpNj48uJ8Wzo96auNcda/8m4qAG8eeq5helWnbC3t851Veb263
-        fwAAAP//AwBaDk/J7QEAAA==
+        H4sIAAAAAAAAA0SQwYobMRBEf6W3L5uAEuxd2+OZSyC3nPYSyCEbjCz1WLKl7kFqsRmM/z2MQzbX
+        oqh6VVeMHgf0/bh66p/X3cZtN/3qae83z/a4HfvVbtXt1ns06ApZJY/Dutt23bbf9DuDWTwlHDDH
+        qsWmTxp5RoOt2hPhcMWpSJ70oHIhrjis1wZV1KZ3pdsbdJKnRBqF3+VddzMoxzM5xQFdsPr5v2uB
+        CRIdVRx+XjGyp984rAyOkWMNh0K2CuOAVWVCg5nqP54iiXBAW2usallx4ZF0cDaligO3lBYeVuKl
+        +EeYwUcPLxPxd0qUScsMZ4kMFo6W/ZdXfuWv5GyrBFHhzbKSBxUIlCbIrUYHUxHfHJUKR1KlAo09
+        laXfgwaCyFVLy8RaH2GiMkrJlh3BUhddNfD3e8hkOfJpbAmWN6TG5Y5qYEm6EE33uBJmDRkigwvk
+        LvAWNYBtKtne2Yp1kU8PC/mHl4udDVSBqI8VshQCGcHC1Bg02GXmWS5k4NgUvkGQ6T4zW08wS4Oa
+        Y6KHj3i7/br9AQAA//8DAJkOfeVLAgAA
     headers:
-      CF-Cache-Status:
-      - DYNAMIC
       CF-RAY:
-      - 8898667d8c2a8e48-TLV
+      - 97e6f9d33d360d50-VIE
       Connection:
       - keep-alive
       Content-Encoding:
@@ -41,21 +39,49 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Sat, 25 May 2024 20:50:54 GMT
+      - Sat, 13 Sep 2025 10:31:36 GMT
       Server:
       - cloudflare
+      Set-Cookie:
+      - __cf_bm=4O8DJ8mkzFjYcdV.vzn032Fv25NCGCjTtL5P7FPgCq4-1757759496-1.0.1.1-9snhFQCGv5G.HUJYV92QhVYZrONPCNy3JphujYdbBxCFhSJWUtIs0IbccgEgV_pJdKw1hHZmLf9ZeVPsMm8JjzKYbRAS0M5zWdrpEwW3Ptg;
+        path=/; expires=Sat, 13-Sep-25 11:01:36 GMT; domain=.mistral.ai; HttpOnly;
+        Secure; SameSite=None
+      - _cfuvid=77QsBdxDqjX_ghHJbaPcvNsOMgIQI_M5elYCNEiBkns-1757759496782-0.0.1.1-604800000;
+        path=/; domain=.mistral.ai; HttpOnly; Secure; SameSite=None
+      Strict-Transport-Security:
+      - max-age=15552000; includeSubDomains
       Transfer-Encoding:
       - chunked
       access-control-allow-origin:
       - '*'
       alt-svc:
       - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      mistral-correlation-id:
+      - 019942a1-6052-7921-b641-1ffed226bec6
+      x-envoy-upstream-service-time:
+      - '484'
       x-kong-proxy-latency:
-      - '6'
+      - '9'
       x-kong-request-id:
-      - 9695304667dcf5089c27ca7e9e074810
+      - 019942a1-6052-7921-b641-1ffed226bec6
       x-kong-upstream-latency:
-      - '739'
+      - '484'
+      x-ratelimit-limit-req-10-second:
+      - '60'
+      x-ratelimit-limit-tokens-minute:
+      - '2000000'
+      x-ratelimit-limit-tokens-month:
+      - '10000000000'
+      x-ratelimit-remaining-req-10-second:
+      - '51'
+      x-ratelimit-remaining-tokens-minute:
+      - '1999147'
+      x-ratelimit-remaining-tokens-month:
+      - '9999999147'
+      x-ratelimit-tokens-query-cost:
+      - '78'
     status:
       code: 200
       message: OK

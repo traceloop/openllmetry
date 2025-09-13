@@ -3,8 +3,7 @@
 import os
 
 import pytest
-from mistralai.async_client import MistralAsyncClient
-from mistralai.client import MistralClient
+from mistralai import Mistral
 from opentelemetry.instrumentation.mistralai import MistralAiInstrumentor
 from opentelemetry.instrumentation.mistralai.utils import TRACELOOP_TRACE_CONTENT
 from opentelemetry.sdk._events import EventLoggerProvider
@@ -50,12 +49,12 @@ def fixture_event_logger_provider(log_exporter):
 
 @pytest.fixture
 def mistralai_client():
-    return MistralClient(api_key=os.environ.get("MISTRAL_API_KEY"))
+    return Mistral(api_key=os.environ.get("MISTRAL_API_KEY"))
 
 
 @pytest.fixture
 def mistralai_async_client():
-    return MistralAsyncClient(api_key=os.environ.get("MISTRAL_API_KEY"))
+    return Mistral(api_key=os.environ.get("MISTRAL_API_KEY"))
 
 
 @pytest.fixture(scope="function")
