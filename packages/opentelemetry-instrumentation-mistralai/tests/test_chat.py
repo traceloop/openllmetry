@@ -101,7 +101,12 @@ def test_mistralai_chat_with_events_with_content(
         "index": 0,
         "finish_reason": "stop",
         "message": {
-            "content": "Why did OpenTelemetry join a band?\n\nBecause it wanted to hit those performance metrics right on the beat!\n\n(Bonus: It also has a wide range of instrumentation options, making it a versatile addition to any musical ensemble.)",
+            "content": (
+                "Why did OpenTelemetry join a band?\n\n"
+                "Because it wanted to hit those performance metrics right on the beat!\n\n"
+                "(Bonus: It also has a wide range of instrumentation options, "
+                "making it a versatile addition to any musical ensemble.)"
+            ),
         },
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
@@ -255,7 +260,11 @@ def test_mistralai_streaming_chat_with_events_with_content(
         "index": 0,
         "finish_reason": "stop",
         "message": {
-            "content": "Why did OpenTelemetry bring a map to the party?\n\nBecause it wanted to trace all the connections!\n\n(This joke is for those who appreciate a dash of tech humor in their day.)"
+            "content": (
+                "Why did OpenTelemetry bring a map to the party?\n\n"
+                "Because it wanted to trace all the connections!\n\n"
+                "(This joke is for those who appreciate a dash of tech humor in their day.)"
+            )
         },
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
@@ -409,7 +418,16 @@ async def test_mistralai_async_chat_with_events_with_content(
         "index": 0,
         "finish_reason": "stop",
         "message": {
-            "content": "Here's a light-hearted joke about OpenTelemetry, a popular open-source system for generating, collecting, analyzing, and acting on telemetry data:\n\nWhy did OpenTelemetry join a rock band?\n\nBecause it wanted to monitor the metrics, span the genres, and distributed the beat!\n\nOf course, it's all in good fun and meant to be a playful way to explain the purpose of OpenTelemetry in a humorous manner. OpenTelemetry is a powerful tool for improving the performance, reliability, and efficiency of distributed systems, and it's essential for any modern software development.",
+            "content": (
+                "Here's a light-hearted joke about OpenTelemetry, a popular open-source system "
+                "for generating, collecting, analyzing, and acting on telemetry data:\n\n"
+                "Why did OpenTelemetry join a rock band?\n\n"
+                "Because it wanted to monitor the metrics, span the genres, and distributed the beat!\n\n"
+                "Of course, it's all in good fun and meant to be a playful way to explain the purpose "
+                "of OpenTelemetry in a humorous manner. OpenTelemetry is a powerful tool for improving "
+                "the performance, reliability, and efficiency of distributed systems, and it's essential "
+                "for any modern software development."
+            ),
         },
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
@@ -561,7 +579,13 @@ async def test_mistralai_async_streaming_chat_with_events_with_content(
         "index": 0,
         "finish_reason": "stop",
         "message": {
-            "content": "Why did OpenTelemetry join a band?\n\nBecause it wanted to help create beautiful, well-instrumented symphonies!\n\n(OpenTelemetry is an open-source, vendor-neutral observability solution for collecting, processing, and exporting telemetry data. It's often used in software development to monitor and improve application performance.)"
+            "content": (
+                "Why did OpenTelemetry join a band?\n\n"
+                "Because it wanted to help create beautiful, well-instrumented symphonies!\n\n"
+                "(OpenTelemetry is an open-source, vendor-neutral observability solution for "
+                "collecting, processing, and exporting telemetry data. It's often used in "
+                "software development to monitor and improve application performance.)"
+            )
         },
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)

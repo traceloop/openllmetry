@@ -58,7 +58,7 @@ WRAPPED_METHODS = [
     },
     {
         "method": "stream",
-        "module": "chat", 
+        "module": "chat",
         "span_name": "mistralai.chat",
         "streaming": True,
     },
@@ -212,7 +212,6 @@ def _accumulate_streaming_response(span, event_logger, llm_request_type, respons
 
         # Handle new CompletionEvent structure with .data attribute
         chunk_data = res.data if hasattr(res, 'data') else res
-        
         if chunk_data.model:
             accumulated_response.model = chunk_data.model
         if chunk_data.usage:
@@ -257,7 +256,6 @@ async def _aaccumulate_streaming_response(
 
         # Handle new CompletionEvent structure with .data attribute
         chunk_data = res.data if hasattr(res, 'data') else res
-        
         if chunk_data.model:
             accumulated_response.model = chunk_data.model
         if chunk_data.usage:
@@ -507,7 +505,6 @@ class MistralAiInstrumentor(BaseInstrumentor):
         for wrapped_method in WRAPPED_METHODS:
             wrap_method = wrapped_method.get("method")
             module_name = wrapped_method.get("module")
-            
             # Wrap sync methods on the class
             wrap_function_wrapper(
                 f"mistralai.{module_name}",
@@ -525,6 +522,5 @@ class MistralAiInstrumentor(BaseInstrumentor):
         for wrapped_method in WRAPPED_METHODS:
             wrap_method = wrapped_method.get("method")
             module_name = wrapped_method.get("module")
-            
             unwrap(f"mistralai.{module_name}.{module_name.capitalize()}", wrap_method)
             unwrap(f"mistralai.{module_name}.{module_name.capitalize()}", f"{wrap_method}_async")

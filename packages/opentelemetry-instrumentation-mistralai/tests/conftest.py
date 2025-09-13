@@ -52,7 +52,7 @@ def mistralai_client():
     return Mistral(api_key=os.environ.get("MISTRAL_API_KEY"))
 
 
-@pytest.fixture  
+@pytest.fixture
 def mistralai_async_client():
     return Mistral(api_key=os.environ.get("MISTRAL_API_KEY"))
 
