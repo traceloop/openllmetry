@@ -2848,7 +2848,6 @@ async def test_anthropic_streaming_helper_methods_legacy(
     instrument_legacy, async_anthropic_client, span_exporter, log_exporter, reader
 ):
     """Test that streaming helper methods like get_final_message() work with instrumentation"""
-    
     # Test async stream with get_final_message
     async with async_anthropic_client.messages.stream(
         max_tokens=1024,
@@ -2865,7 +2864,6 @@ async def test_anthropic_streaming_helper_methods_legacy(
         assert message is not None
         assert hasattr(message, 'content')
         assert len(message.content) > 0
-        
         # Test that the stream still has other helper methods available
         assert hasattr(stream, 'text_stream')
         assert hasattr(stream, 'until_done')
@@ -2881,7 +2879,6 @@ async def test_anthropic_text_stream_helper_method_legacy(
     instrument_legacy, async_anthropic_client, span_exporter
 ):
     """Test that text_stream() helper method works with instrumentation"""
-    
     async with async_anthropic_client.messages.stream(
         max_tokens=1024,
         messages=[
@@ -2896,27 +2893,24 @@ async def test_anthropic_text_stream_helper_method_legacy(
         text_content = ""
         async for text in stream.text_stream:
             text_content += text
-        
         assert len(text_content) > 0
-        
     spans = span_exporter.get_finished_spans()
     print(f"Number of spans created: {len(spans)}")
     assert len(spans) == 1, f"Expected 1 span, got {len(spans)}"
     assert spans[0].name == "anthropic.chat"
 
 
-@pytest.mark.vcr()  
+@pytest.mark.vcr()
 def test_anthropic_sync_streaming_helper_methods_legacy(
     instrument_legacy, anthropic_client, span_exporter
 ):
     """Test that sync streaming helper methods work with instrumentation"""
-    
     # Test sync stream - this should work similarly without helper methods causing issues
     with anthropic_client.messages.stream(
         max_tokens=1024,
         messages=[
             {
-                "role": "user", 
+                "role": "user",
                 "content": "Say hello there!",
             }
         ],
@@ -2926,9 +2920,7 @@ def test_anthropic_sync_streaming_helper_methods_legacy(
         events = []
         for event in stream:
             events.append(event)
-        
         assert len(events) > 0
-        
     spans = span_exporter.get_finished_spans()
     assert len(spans) == 1
     assert spans[0].name == "anthropic.chat"
