@@ -1,3 +1,5 @@
+import dataclasses
+import json
 import logging
 import os
 import traceback
@@ -45,3 +47,31 @@ def should_emit_events() -> bool:
     and if the event logger is not None.
     """
     return not Config.use_legacy_attributes
+
+
+def dump_object(obj):
+    try:
+        if hasattr(obj, "model_dump_json") and callable(obj.model_dump_json):
+            return obj.model_dump_json()
+    except Exception:
+        pass
+    try:
+        return json.dumps(obj)
+    except Exception:
+        return ""
+
+
+def to_dict(obj):
+    try:
+        if hasattr(obj, "model_dump") and callable(obj.model_dump):
+            return obj.model_dump()
+    except Exception:
+        pass
+    if isinstance(obj, dict):
+        return obj
+    if dataclasses.is_dataclass(obj):
+        return dataclasses.asdict(obj)
+    try:
+        return dict(obj)
+    except Exception:
+        return obj
