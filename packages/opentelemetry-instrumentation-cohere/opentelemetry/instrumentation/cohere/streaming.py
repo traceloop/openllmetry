@@ -18,48 +18,53 @@ DEFAULT_MESSAGE = {
 }
 
 
+@dont_throw
 def process_chat_v1_streaming_response(span, event_logger, llm_request_type, response):
     # This naive version assumes we've always successfully streamed till the end
     # and have received a StreamEndChatResponse, which includes the full response
     final_response = None
-    for item in response:
-        span.add_event(name=f"{SpanAttributes.LLM_CONTENT_COMPLETION_CHUNK}")
+    try:
+        for item in response:
+            span.add_event(name=f"{SpanAttributes.LLM_CONTENT_COMPLETION_CHUNK}")
 
-        item_to_yield = item
-        if getattr(item, "event_type", None) == "stream-end" and hasattr(item, "response"):
-            final_response = item.response
+            item_to_yield = item
+            if getattr(item, "event_type", None) == "stream-end" and hasattr(item, "response"):
+                final_response = item.response
 
-        yield item_to_yield
+            yield item_to_yield
 
-    set_span_response_attributes(span, final_response)
-    if should_emit_events():
-        emit_response_events(event_logger, llm_request_type, final_response)
-    elif should_send_prompts():
-        _set_span_chat_response(span, final_response)
-    span.set_status(Status(StatusCode.OK))
-    span.end()
+        set_span_response_attributes(span, final_response)
+        if should_emit_events():
+            emit_response_events(event_logger, llm_request_type, final_response)
+        elif should_send_prompts():
+            _set_span_chat_response(span, final_response)
+        span.set_status(Status(StatusCode.OK))
+    finally:
+        span.end()
 
 
+@dont_throw
 async def aprocess_chat_v1_streaming_response(span, event_logger, llm_request_type, response):
     # This naive version assumes we've always successfully streamed till the end
     # and have received a StreamEndChatResponse, which includes the full response
     final_response = None
-    async for item in response:
-        span.add_event(name=f"{SpanAttributes.LLM_CONTENT_COMPLETION_CHUNK}")
+    try:
+        async for item in response:
+            span.add_event(name=f"{SpanAttributes.LLM_CONTENT_COMPLETION_CHUNK}")
 
-        item_to_yield = item
-        if getattr(item, "event_type", None) == "stream-end" and hasattr(item, "response"):
-            final_response = item.response
+            item_to_yield = item
+            if getattr(item, "event_type", None) == "stream-end" and hasattr(item, "response"):
+                final_response = item.response
 
-        yield item_to_yield
-
-    set_span_response_attributes(span, final_response)
-    if should_emit_events():
-        emit_response_events(event_logger, llm_request_type, final_response)
-    elif should_send_prompts():
-        _set_span_chat_response(span, final_response)
-    span.set_status(Status(StatusCode.OK))
-    span.end()
+            yield item_to_yield
+        set_span_response_attributes(span, final_response)
+        if should_emit_events():
+            emit_response_events(event_logger, llm_request_type, final_response)
+        elif should_send_prompts():
+            _set_span_chat_response(span, final_response)
+        span.set_status(Status(StatusCode.OK))
+    finally:
+        span.end()
 
 
 @dont_throw
@@ -71,28 +76,34 @@ def process_chat_v2_streaming_response(span, event_logger, llm_request_type, res
         "id": "",
         "error": None,
     }
-    current_content_item = {}
-    current_tool_call_item = {}
-    for item in response:
-        span.add_event(name=f"{SpanAttributes.LLM_CONTENT_COMPLETION_CHUNK}")
-        item_to_yield = item
-        try:
-            _accumulate_stream_item(item, current_content_item, current_tool_call_item, final_response)
-        except Exception:
-            pass
-        yield item_to_yield
+    current_content_item = {"type": "text", "thinking": None, "text": ""}
+    current_tool_call_item = {
+        "id": "",
+        "type": "function",
+        "function": {"name": "", "arguments": "", "description": ""},
+    }
+    try:
+        for item in response:
+            span.add_event(name=f"{SpanAttributes.LLM_CONTENT_COMPLETION_CHUNK}")
+            item_to_yield = item
+            try:
+                _accumulate_stream_item(item, current_content_item, current_tool_call_item, final_response)
+            except Exception:
+                pass
+            yield item_to_yield
 
-    set_span_response_attributes(span, final_response)
-    if should_emit_events():
-        emit_response_events(event_logger, llm_request_type, final_response)
-    elif should_send_prompts():
-        _set_span_chat_response(span, final_response)
+        set_span_response_attributes(span, final_response)
+        if should_emit_events():
+            emit_response_events(event_logger, llm_request_type, final_response)
+        elif should_send_prompts():
+            _set_span_chat_response(span, final_response)
 
-    if final_response.get("error"):
-        span.set_status(Status(StatusCode.ERROR, final_response.get("error")))
-        span.record_exception(final_response.get("error"))
-    else:
-        span.set_status(Status(StatusCode.OK))
+        if final_response.get("error"):
+            span.set_status(Status(StatusCode.ERROR, final_response.get("error")))
+            span.record_exception(final_response.get("error"))
+        else:
+            span.set_status(Status(StatusCode.OK))
+    finally:
         span.end()
 
 
@@ -153,7 +164,7 @@ def _accumulate_stream_item(item, current_content_item, current_tool_call_item, 
             existing_text = current_content_item.get("text")
             current_content_item["text"] = (existing_text or "") + new_text
     elif item_dict.get("type") == "content-end":
-        final_response["message"]["content"].append(current_content_item)
+        final_response["message"]["content"].append({**current_content_item})
     elif item_dict.get("type") == "tool-plan-delta":
         new_tool_plan = ((item_dict.get("delta") or {}).get("message") or {}).get("tool_plan")
         if new_tool_plan:

@@ -238,7 +238,7 @@ def _wrap(
                 span.set_status(Status(StatusCode.ERROR, str(e)))
                 span.record_exception(e)
                 span.end()
-                raise
+            raise
 
         if to_wrap.get("stream_process_func"):
             return to_wrap.get("stream_process_func")(span, event_logger, llm_request_type, response)
@@ -284,7 +284,8 @@ async def _awrap(
             if span.is_recording():
                 span.set_status(Status(StatusCode.ERROR, str(e)))
                 span.record_exception(e)
-                raise
+                span.end()
+            raise
 
         set_span_response_attributes(span, response)
         _handle_response_content(span, event_logger, llm_request_type, response)
