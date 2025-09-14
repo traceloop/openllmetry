@@ -148,7 +148,7 @@ async def aprocess_chat_v2_streaming_response(span, event_logger, llm_request_ty
 def _accumulate_stream_item(item, current_content_item, current_tool_call_item, final_response):
     item_dict = to_dict(item)
     if item_dict.get("type") == "message-start":
-        final_response["message"] = (item_dict.get("delta") or {}).get("message") or DEFAULT_MESSAGE
+        final_response["message"] = (item_dict.get("delta") or {}).get("message") or {**DEFAULT_MESSAGE}
         final_response["id"] = item_dict.get("id")
     elif item_dict.get("type") == "content-start":
         new_content_item = ((item_dict.get("delta") or {}).get("message") or {}).get("content")
